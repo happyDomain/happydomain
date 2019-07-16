@@ -16,7 +16,7 @@
   </thead>
   <tbody>
     <tr ng-repeat="zone in zones | filter: query">
-      <td ng-click="show(zone)">
+      <td ng-click="show(zone)" class="text-monospace">
 	{{ zone | stripHTML }}
       </td>
       <td>
