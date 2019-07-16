@@ -18,7 +18,7 @@ func init() {
 	router.DELETE("/api/zones/:zone/", apiHandler(zoneHandler(delRR)))
 }
 
-func getZones(p httprouter.Params, body io.Reader) (Response) {
+func getZones(p httprouter.Params, body io.Reader) Response {
 	return APIResponse{
 		response: map[string][]string{
 			"zones": []string{
@@ -28,9 +28,8 @@ func getZones(p httprouter.Params, body io.Reader) (Response) {
 	}
 }
 
-
-func zoneHandler(f func(string, io.Reader) (Response)) func(httprouter.Params, io.Reader) (Response) {
-	return func(ps httprouter.Params, body io.Reader) (Response) {
+func zoneHandler(f func(string, io.Reader) Response) func(httprouter.Params, io.Reader) Response {
+	return func(ps httprouter.Params, body io.Reader) Response {
 		zone := ps.ByName("zone")
 
 		if zone[len(zone)-1] != '.' {
@@ -43,7 +42,7 @@ func zoneHandler(f func(string, io.Reader) (Response)) func(httprouter.Params, i
 	}
 }
 
-func axfrZone(zone string, body io.Reader) (Response) {
+func axfrZone(zone string, body io.Reader) Response {
 	t := new(dns.Transfer)
 
 	m := new(dns.Msg)
@@ -51,11 +50,11 @@ func axfrZone(zone string, body io.Reader) (Response) {
 	m.SetAxfr(zone)
 	m.SetTsig("ddns.", dns.HmacSHA256, 300, time.Now().Unix())
 
-	c, err := t.In(m, "127.0.0.1:53")
+	c, err := t.In(m, DefaultNameServer)
 	if err != nil {
 		return APIErrorResponse{
 			status: http.StatusInternalServerError,
-			err: err,
+			err:    err,
 		}
 	}
 
@@ -67,7 +66,7 @@ func axfrZone(zone string, body io.Reader) (Response) {
 	}
 
 	if len(rrs) > 0 {
-		rrs = rrs[0:len(rrs)-1]
+		rrs = rrs[0 : len(rrs)-1]
 	}
 
 	return APIResponse{
@@ -81,7 +80,7 @@ type uploadedRR struct {
 	RR string `json:"rr"`
 }
 
-func addRR(zone string, body io.Reader) (Response) {
+func addRR(zone string, body io.Reader) Response {
 	var urr uploadedRR
 	err := json.NewDecoder(body).Decode(&urr)
 	if err != nil {
@@ -109,23 +108,23 @@ func addRR(zone string, body io.Reader) (Response) {
 	c.TsigSecret = map[string]string{"ddns.": "so6ZGir4GPAqINNh9U5c3A=="}
 	m.SetTsig("ddns.", dns.HmacSHA256, 300, time.Now().Unix())
 
-	in, rtt, err := c.Exchange(m, "127.0.0.1:53")
+	in, rtt, err := c.Exchange(m, DefaultNameServer)
 	if err != nil {
 		return APIErrorResponse{
 			status: http.StatusInternalServerError,
-			err: err,
+			err:    err,
 		}
 	}
 
 	return APIResponse{
 		response: map[string]interface{}{
-			"in": *in,
+			"in":  *in,
 			"rtt": rtt,
 		},
 	}
 }
 
-func delRR(zone string, body io.Reader) (Response) {
+func delRR(zone string, body io.Reader) Response {
 	var urr uploadedRR
 	err := json.NewDecoder(body).Decode(&urr)
 	if err != nil {
@@ -153,17 +152,17 @@ func delRR(zone string, body io.Reader) (Response) {
 	c.TsigSecret = map[string]string{"ddns.": "so6ZGir4GPAqINNh9U5c3A=="}
 	m.SetTsig("ddns.", dns.HmacSHA256, 300, time.Now().Unix())
 
-	in, rtt, err := c.Exchange(m, "127.0.0.1:53")
+	in, rtt, err := c.Exchange(m, DefaultNameServer)
 	if err != nil {
 		return APIErrorResponse{
 			status: http.StatusInternalServerError,
-			err: err,
+			err:    err,
 		}
 	}
 
 	return APIResponse{
 		response: map[string]interface{}{
-			"in": *in,
+			"in":  *in,
 			"rtt": rtt,
 		},
 	}

@@ -11,8 +11,6 @@ import (
 	"git.nemunai.re/libredns/api"
 )
 
-var DefaultNameServer = "127.0.0.1:53"
-
 type ResponseWriterPrefix struct {
 	real   http.ResponseWriter
 	prefix string
@@ -58,7 +56,7 @@ func main() {
 	var bind = flag.String("bind", ":8081", "Bind port/socket")
 	var dsn = flag.String("dsn", DSNGenerator(), "DSN to connect to the MySQL server")
 	var baseURL = flag.String("baseurl", "/", "URL prepended to each URL")
-	flag.StringVar(&DefaultNameServer, "defaultns", DefaultNameServer, "Adress to the default name server")
+	flag.StringVar(&api.DefaultNameServer, "defaultns", api.DefaultNameServer, "Adress to the default name server")
 	flag.Parse()
 
 	// Sanitize options
