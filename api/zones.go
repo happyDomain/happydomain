@@ -12,19 +12,79 @@ import (
 )
 
 func init() {
-	router.GET("/api/zones/", apiHandler(getZones))
-	router.GET("/api/zones/:zone/", apiHandler(zoneHandler(axfrZone)))
-	router.PUT("/api/zones/:zone/", apiHandler(zoneHandler(addRR)))
-	router.DELETE("/api/zones/:zone/", apiHandler(zoneHandler(delRR)))
+	router.GET("/api/zones", apiHandler(getZones))
+	router.POST("/api/zones", apiHandler(addZone))
+	router.DELETE("/api/zones/:zone", apiHandler(zoneHandler(delZone)))
+	router.GET("/api/zones/:zone", apiHandler(zoneHandler(getZone)))
+	router.GET("/api/zones/:zone/rr", apiHandler(zoneHandler(axfrZone)))
+	router.POST("/api/zones/:zone/rr", apiHandler(zoneHandler(addRR)))
+	router.DELETE("/api/zones/:zone/rr", apiHandler(zoneHandler(delRR)))
 }
+
+var tmpZones = []string{}
 
 func getZones(p httprouter.Params, body io.Reader) Response {
 	return APIResponse{
-		response: map[string][]string{
-			"zones": []string{
-				"adlin2020.p0m.fr.",
-			},
-		},
+		response: tmpZones,
+	}
+}
+
+func existsZone(zone string) bool {
+	for _, z := range tmpZones {
+		if z == zone {
+			return true
+		}
+	}
+	return false
+}
+
+type uploadedZone struct {
+	Zone string `json:"domainName"`
+}
+
+func addZone(p httprouter.Params, body io.Reader) Response {
+	var uz uploadedZone
+	err := json.NewDecoder(body).Decode(&uz)
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	if uz.Zone[len(uz.Zone)-1] != '.' {
+		uz.Zone = uz.Zone + "."
+	}
+
+	if existsZone(uz.Zone) {
+		return APIErrorResponse{
+			err: errors.New("This zone already exists."),
+		}
+	} else {
+		tmpZones = append(tmpZones, uz.Zone)
+		return getZone(uz.Zone, body)
+	}
+}
+
+func delZone(zone string, body io.Reader) Response {
+	index := -1
+
+	for i := range tmpZones {
+		if tmpZones[i] == zone {
+			index = i
+			break
+		}
+	}
+
+	if index == -1 {
+		return APIErrorResponse{
+			err: errors.New("This zone doesn't exist."),
+		}
+	}
+
+	tmpZones = append(tmpZones[:index], tmpZones[index+1:]...)
+
+	return APIResponse{
+		response: true,
 	}
 }
 
@@ -32,13 +92,22 @@ func zoneHandler(f func(string, io.Reader) Response) func(httprouter.Params, io.
 	return func(ps httprouter.Params, body io.Reader) Response {
 		zone := ps.ByName("zone")
 
-		if zone[len(zone)-1] != '.' {
+		if !existsZone(zone) {
 			return APIErrorResponse{
-				err: errors.New("Not a valid full qualified domain name"),
+				status: http.StatusNotFound,
+				err:    errors.New("Domain not found"),
 			}
 		}
 
 		return f(zone, body)
+	}
+}
+
+func getZone(zone string, body io.Reader) Response {
+	return APIResponse{
+		response: map[string]interface{}{
+			"dn": zone,
+		},
 	}
 }
 
@@ -59,10 +128,13 @@ func axfrZone(zone string, body io.Reader) Response {
 	}
 
 	response := <-c
-	var rrs []string
+	var rrs []map[string]interface{}
 
 	for _, rr := range response.RR {
-		rrs = append(rrs, rr.String())
+		rrs = append(rrs, map[string]interface{}{
+			"string": rr.String(),
+			"fields": rr,
+		})
 	}
 
 	if len(rrs) > 0 {
@@ -70,14 +142,12 @@ func axfrZone(zone string, body io.Reader) Response {
 	}
 
 	return APIResponse{
-		response: map[string][]string{
-			"rr": rrs,
-		},
+		response: rrs,
 	}
 }
 
 type uploadedRR struct {
-	RR string `json:"rr"`
+	RR string `json:"string"`
 }
 
 func addRR(zone string, body io.Reader) Response {
@@ -118,8 +188,9 @@ func addRR(zone string, body io.Reader) Response {
 
 	return APIResponse{
 		response: map[string]interface{}{
-			"in":  *in,
-			"rtt": rtt,
+			"in":     *in,
+			"rtt":    rtt,
+			"string": rr.String(),
 		},
 	}
 }
