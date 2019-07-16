@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -159,7 +160,7 @@ func addRR(zone string, body io.Reader) Response {
 		}
 	}
 
-	rr, err := dns.NewRR(urr.RR)
+	rr, err := dns.NewRR(fmt.Sprintf("$ORIGIN %s\n$TTL %d\n%s", zone, 3600, urr.RR))
 	if err != nil {
 		return APIErrorResponse{
 			err: err,
