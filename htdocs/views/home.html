@@ -1,0 +1,58 @@
+<div class="jumbotron mt-2">
+  <h1>
+    Bienvenue {{ isLogged.login }} chez LibreDNS&nbsp;!
+  </h1>
+  <p class="lead text-muted">L'hébergement vraiment pas cher (mais DIY)</p>
+
+  <hr class="my-4">
+
+  <h2 ng-if="!isLogged">
+    Connectez-vous&nbsp;!
+  </h2>
+
+  <h2 ng-if="isLogged">
+    Qu'allons-nous faire aujourd'hui&nbsp;?
+  </h2>
+
+  <div ng-controller="ProgressionController" ng-if="isLogged">
+    <span class="badge" ng-class="{'badge-success': mychallenges[100], 'badge-danger': !mychallenges[100]}">HTTP</span>
+    <span class="badge" ng-class="{'badge-success': mychallenges[101], 'badge-danger': !mychallenges[101]}">HTTPS</span>
+    <span class="badge" ng-class="{'badge-success': mychallenges[102], 'badge-danger': !mychallenges[102]}">DNS</span>
+  </div>
+</div>
+
+<div class="card-deck">
+  <div class="card">
+    <img src="img/patrick-lindenberg-191841-unsplash.jpg" class="card-img-top" alt="Endangered technic">
+    <div class="card-body">
+      <h5 class="card-title">Service de stockage</h5>
+      <p class="card-text">Découvrez dès maintenant notre offre de stockage redondé révolutionaire.</p>
+      <p class="card-text"><small class="text-muted">À partir de 0 € TTC/mois + l'achat du matériel</small></p>
+      <a href="https://fr.wikipedia.org/wiki/RAID_(informatique)" class="btn btn-primary" target="_blank">Découvrir maintenant&nbsp;!</a>
+    </div>
+  </div>
+  <div class="card">
+    <img src="img/patryk-gradys-128898-unsplash.jpg" class="card-img-top" alt="Dark, button, power and powerstation">
+    <div class="card-body">
+      <h5 class="card-title">Service de supervision</h5>
+      <p class="card-text">Nos équipes sont à votre disposition pour écrire des scripts shell de monitoring. Vous pouvez aussi choisir d'investir dans des technologies plus novatrices.</p>
+      <p class="card-text"><small class="text-muted">À partir de 0 € TTC/mois</small></p>
+      <a href="https://www.elastic.co/elk-stack" class="btn btn-primary" target="_blank">Découvrir maintenant&nbsp;!</a>
+    </div>
+  </div>
+  <div class="card">
+    <img src="img/imgix-391808-unsplash.jpg" class="card-img-top" alt="Data Servers">
+    <div class="card-body">
+      <h5 class="card-title">Service d'arrangement</h5>
+      <p class="card-text">Fini les mélis-mélos de câbles, apprenez dès aujourd'hui l'art de ne jamais croiser deux câbles.</p>
+      <p class="card-text"><small class="text-muted">Bientôt disponible</small></p>
+      <a href="https://www.reddit.com/r/cableporn/" class="btn btn-primary" target="_blank">Découvrir maintenant&nbsp;!</a>
+    </div>
+  </div>
+</div>
+
+<hr class="my-4">
+
+<p class="lead mb-4">
+  Nous faisons aussi des tunnels et noms de domaine. Devis gratuit sur demande.
+</p>

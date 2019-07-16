@@ -1,0 +1,28 @@
+<h2>{{zone.dn}}</h2>
+
+<div ng-show="zone" ng-controller="RRController">
+  <h3>
+    Resource Record ({{ rrs.length }})
+    <button type="button" ng-click="addRR()" class="float-right btn btn-sm btn-primary ml-2"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add RR</button>
+  </h3>
+
+  <p><input type="search" class="form-control form-control-sm" placeholder="Search" ng-model="query" autofocus></p>
+  <table class="table table-hover table-bordered table-striped table-sm">
+    <tbody>
+      <tr ng-repeat="rr in rrs | filter: query">
+	<td ng-if="!rr.edit">
+	  {{ rr.string }}
+	</td>
+	<td ng-if="rr.edit">
+	  <form ng-submit="newRR(rr)">
+	    <input class="form-control" ng-model="rr.string">
+	  </form>
+	</td>
+	<td>
+	  <button type="button" ng-click="deleteRR(rr)" class="btn btn-sm btn-danger" ng-if="!rr.edit && rr.fields.Hdr.Rrtype != 6"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>
+	  <button type="button" ng-click="newRR(rr)" class="btn btn-sm btn-success" ng-if="rr.edit"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></button>
+	</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

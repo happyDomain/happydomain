@@ -57,6 +57,7 @@ func main() {
 	var dsn = flag.String("dsn", DSNGenerator(), "DSN to connect to the MySQL server")
 	var baseURL = flag.String("baseurl", "/", "URL prepended to each URL")
 	flag.StringVar(&api.DefaultNameServer, "defaultns", api.DefaultNameServer, "Adress to the default name server")
+	flag.StringVar(&StaticDir, "static", StaticDir, "Directory containing static files")
 	flag.Parse()
 
 	// Sanitize options
