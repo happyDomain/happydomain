@@ -17,7 +17,7 @@
       <tbody>
         <tr v-for="(zone, index) in zones" v-bind:key="index">
           <td @click="show(zone)" class="text-monospace">
-            {{ zone }}
+            {{ zone.domain }}
           </td>
           <td>
             <button type="button" @click="show(zone)" class="btn btn-sm btn-primary"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
@@ -80,14 +80,22 @@ export default {
     attachZone (dn) {
       axios
         .post('/api/zones', {
-          domainName: this.toAttachDN
+          domain: this.toAttachDN
         })
-        .then(response => (this.zones.push(response.data.dn)))
+        .then(
+          (response) => {
+            if (this.zones == null) this.zones = []
+            this.zones.push(response.data)
+          },
+          (error) => {
+            alert('Unable to attach the given zone: ' + error.response.data.errmsg)
+          }
+        )
     },
 
-    deleteZone (dn) {
+    deleteZone (zone) {
       axios
-        .delete('/api/zones/' + dn)
+        .delete('/api/zones/' + zone.domain)
         .then(response => (
           axios
             .get('/api/zones')
@@ -95,8 +103,8 @@ export default {
         ))
     },
 
-    show (dn) {
-      this.$router.push('/zones/' + dn)
+    show (zone) {
+      this.$router.push('/zones/' + zone.domain)
     },
 
     modalShown () {

@@ -1,4 +1,4 @@
-package main
+package libredns
 
 import (
 	"database/sql"
@@ -59,9 +59,10 @@ func DBCreate() error {
 	if _, err := db.Exec(`
 CREATE TABLE IF NOT EXISTS users(
   id_user INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
-  username VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
   password BINARY(64) NOT NULL,
-  email VARCHAR(255) NOT NULL
+  salt BINARY(8) NOT NULL,
+  registration_time TIMESTAMP NOT NULL
 ) DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 `); err != nil {
 		return err

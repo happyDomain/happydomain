@@ -10,6 +10,8 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/miekg/dns"
+
+	"git.nemunai.re/libredns/struct"
 )
 
 func init() {
@@ -22,29 +24,20 @@ func init() {
 	router.DELETE("/api/zones/:zone/rr", apiHandler(zoneHandler(delRR)))
 }
 
-var tmpZones = []string{}
-
 func getZones(p httprouter.Params, body io.Reader) Response {
-	return APIResponse{
-		response: tmpZones,
-	}
-}
-
-func existsZone(zone string) bool {
-	for _, z := range tmpZones {
-		if z == zone {
-			return true
+	if zones, err := libredns.GetZones(); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	} else {
+		return APIResponse{
+			response: zones,
 		}
 	}
-	return false
-}
-
-type uploadedZone struct {
-	Zone string `json:"domainName"`
 }
 
 func addZone(p httprouter.Params, body io.Reader) Response {
-	var uz uploadedZone
+	var uz libredns.Zone
 	err := json.NewDecoder(body).Decode(&uz)
 	if err != nil {
 		return APIErrorResponse{
@@ -52,72 +45,69 @@ func addZone(p httprouter.Params, body io.Reader) Response {
 		}
 	}
 
-	if uz.Zone[len(uz.Zone)-1] != '.' {
-		uz.Zone = uz.Zone + "."
+	if len(uz.DomainName) <= 2 {
+		return APIErrorResponse{
+			err: errors.New("The given zone is invalid."),
+		}
 	}
 
-	if existsZone(uz.Zone) {
+	if uz.DomainName[len(uz.DomainName)-1] != '.' {
+		uz.DomainName = uz.DomainName + "."
+	}
+
+	if libredns.ZoneExists(uz.DomainName) {
 		return APIErrorResponse{
 			err: errors.New("This zone already exists."),
 		}
-	} else {
-		tmpZones = append(tmpZones, uz.Zone)
-		return getZone(uz.Zone, body)
-	}
-}
-
-func delZone(zone string, body io.Reader) Response {
-	index := -1
-
-	for i := range tmpZones {
-		if tmpZones[i] == zone {
-			index = i
-			break
-		}
-	}
-
-	if index == -1 {
+	} else if zone, err := uz.NewZone(); err != nil {
 		return APIErrorResponse{
-			err: errors.New("This zone doesn't exist."),
+			err: err,
 		}
-	}
-
-	tmpZones = append(tmpZones[:index], tmpZones[index+1:]...)
-
-	return APIResponse{
-		response: true,
+	} else {
+		return APIResponse{
+			response: zone,
+		}
 	}
 }
 
-func zoneHandler(f func(string, io.Reader) Response) func(httprouter.Params, io.Reader) Response {
-	return func(ps httprouter.Params, body io.Reader) Response {
-		zone := ps.ByName("zone")
+func delZone(zone libredns.Zone, body io.Reader) Response {
+	if _, err := zone.Delete(); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	} else {
+		return APIResponse{
+			response: true,
+		}
+	}
+}
 
-		if !existsZone(zone) {
+func zoneHandler(f func(libredns.Zone, io.Reader) Response) func(httprouter.Params, io.Reader) Response {
+	return func(ps httprouter.Params, body io.Reader) Response {
+		if zone, err := libredns.GetZoneByDN(ps.ByName("zone")); err != nil {
 			return APIErrorResponse{
 				status: http.StatusNotFound,
 				err:    errors.New("Domain not found"),
 			}
+		} else {
+			return f(zone, body)
 		}
-
-		return f(zone, body)
 	}
 }
 
-func getZone(zone string, body io.Reader) Response {
+func getZone(zone libredns.Zone, body io.Reader) Response {
 	return APIResponse{
-		response: map[string]interface{}{
-			"dn": zone,
-		},
+		response: zone,
 	}
 }
 
-func axfrZone(zone string, body io.Reader) Response {
+func axfrZone(zone libredns.Zone, body io.Reader) Response {
 	t := new(dns.Transfer)
 
 	m := new(dns.Msg)
+	m.SetEdns0(4096, true)
 	t.TsigSecret = map[string]string{"ddns.": "so6ZGir4GPAqINNh9U5c3A=="}
-	m.SetAxfr(zone)
+	m.SetAxfr(zone.DomainName)
 	m.SetTsig("ddns.", dns.HmacSHA256, 300, time.Now().Unix())
 
 	c, err := t.In(m, DefaultNameServer)
@@ -151,7 +141,7 @@ type uploadedRR struct {
 	RR string `json:"string"`
 }
 
-func addRR(zone string, body io.Reader) Response {
+func addRR(zone libredns.Zone, body io.Reader) Response {
 	var urr uploadedRR
 	err := json.NewDecoder(body).Decode(&urr)
 	if err != nil {
@@ -160,7 +150,7 @@ func addRR(zone string, body io.Reader) Response {
 		}
 	}
 
-	rr, err := dns.NewRR(fmt.Sprintf("$ORIGIN %s\n$TTL %d\n%s", zone, 3600, urr.RR))
+	rr, err := dns.NewRR(fmt.Sprintf("$ORIGIN %s\n$TTL %d\n%s", zone.DomainName, 3600, urr.RR))
 	if err != nil {
 		return APIErrorResponse{
 			err: err,
@@ -171,7 +161,7 @@ func addRR(zone string, body io.Reader) Response {
 	m.Id = dns.Id()
 	m.Opcode = dns.OpcodeUpdate
 	m.Question = make([]dns.Question, 1)
-	m.Question[0] = dns.Question{zone, dns.TypeSOA, dns.ClassINET}
+	m.Question[0] = dns.Question{zone.DomainName, dns.TypeSOA, dns.ClassINET}
 
 	m.Insert([]dns.RR{rr})
 
@@ -196,7 +186,7 @@ func addRR(zone string, body io.Reader) Response {
 	}
 }
 
-func delRR(zone string, body io.Reader) Response {
+func delRR(zone libredns.Zone, body io.Reader) Response {
 	var urr uploadedRR
 	err := json.NewDecoder(body).Decode(&urr)
 	if err != nil {
@@ -216,7 +206,7 @@ func delRR(zone string, body io.Reader) Response {
 	m.Id = dns.Id()
 	m.Opcode = dns.OpcodeUpdate
 	m.Question = make([]dns.Question, 1)
-	m.Question[0] = dns.Question{zone, dns.TypeSOA, dns.ClassINET}
+	m.Question[0] = dns.Question{zone.DomainName, dns.TypeSOA, dns.ClassINET}
 
 	m.Remove([]dns.RR{rr})
 
