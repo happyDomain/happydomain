@@ -37,20 +37,61 @@
     >
       <form ref="form" @submit.stop.prevent="handleSubmit">
         <b-form-group
-          :state="domainNameState"
+          :state="newForm.domainNameState"
           label="Domain name"
           label-for="dn-input"
           invalid-feedback="Domain name is required"
         >
           <b-form-input
             id="dn-input"
-            v-model="toAttachDN"
-            :state="domainNameState"
+            v-model="newForm.domain"
+            :state="newForm.domainNameState"
             required
             placeholder="example.com"
             ref="domainname"
           ></b-form-input>
           <small id="dnHelp" class="form-text text-muted">Fill here the domain name you would like to manage with LibreDNS.</small>
+        </b-form-group>
+        <b-form-group
+          :state="newForm.domainServerState"
+          label="Server"
+          label-for="srv-input"
+        >
+          <b-form-input
+            id="srv-input"
+            v-model="newForm.server"
+            :state="newForm.domainServerState"
+            placeholder="ns0.libredns.com"
+            ref="domainserver"
+          ></b-form-input>
+        </b-form-group>
+        <b-form-group
+          :state="newForm.keyNameState"
+          label="Dynamic DNS Update Key Name"
+          label-for="keyname-input"
+        >
+          <b-form-input
+            id="heyname-input"
+            v-model="newForm.keyname"
+            :state="newForm.keynameState"
+            required
+            placeholder="foo"
+            ref="keyname"
+          ></b-form-input>
+        </b-form-group>
+        <b-form-group
+          :state="newForm.keyBlobState"
+          label="Dynamic DNS Update Key"
+          label-for="keyblob-input"
+        >
+          <b-form-input
+            id="heyblob-input"
+            v-model="newForm.keyblob"
+            :state="newForm.keyblobState"
+            required
+            placeholder="bar=="
+            ref="keyblob"
+          ></b-form-input>
         </b-form-group>
       </form>
     </b-modal>
@@ -65,7 +106,7 @@ export default {
   data: function () {
     return {
       domainNameState: null,
-      toAttachDN: '',
+      newForm: {},
       zones: []
     }
   },
@@ -77,10 +118,13 @@ export default {
   },
 
   methods: {
-    attachZone (dn) {
+    attachZone () {
       axios
         .post('/api/zones', {
-          domain: this.toAttachDN
+          domain: this.newForm.domain,
+          server: this.newForm.server,
+          keyname: this.newForm.keyname,
+          keyblob: this.newForm.keyblob
         })
         .then(
           (response) => {
@@ -112,13 +156,19 @@ export default {
     },
 
     resetModal () {
-      this.toAttachDN = ''
-      this.domainNameState = null
+      this.newForm.domain = ''
+      this.newForm.server = ''
+      this.newForm.keyname = ''
+      this.newForm.keyblob = ''
+      this.newForm.domainNameState = null
+      this.newForm.domainServerState = null
+      this.newForm.keyNameState = null
+      this.newForm.keyBlobState = null
     },
 
     checkFormValidity () {
       const valid = this.$refs.form.checkValidity()
-      this.domainNameState = valid ? 'valid' : 'invalid'
+      this.newForm.domainNameState = valid ? 'valid' : 'invalid'
       return valid
     },
 
@@ -132,7 +182,7 @@ export default {
         return
       }
 
-      this.attachZone(this.toAttachDN)
+      this.attachZone()
 
       this.$nextTick(() => {
         this.$refs.modal.hide()

@@ -1,6 +1,7 @@
 package libredns
 
 import (
+	"encoding/base64"
 )
 
 type Zone struct {
@@ -8,18 +9,19 @@ type Zone struct {
 	DomainName string `json:"domain"`
 	Server     string `json:"server,omitempty"`
 	KeyName    string `json:"keyname,omitempty"`
+	KeyAlgo    string `json:"algorithm,omitempty"`
 	KeyBlob    []byte `json:"keyblob,omitempty"`
 }
 
 func GetZones() (zones []Zone, err error) {
-	if rows, errr := DBQuery("SELECT id_zone, domain, server, key_name, key_blob FROM zones"); errr != nil {
+	if rows, errr := DBQuery("SELECT id_zone, domain, server, key_name, key_algo, key_blob FROM zones"); errr != nil {
 		return nil, errr
 	} else {
 		defer rows.Close()
 
 		for rows.Next() {
 			var z Zone
-			if err = rows.Scan(&z.Id, &z.DomainName, &z.Server, &z.KeyName, &z.KeyBlob); err != nil {
+			if err = rows.Scan(&z.Id, &z.DomainName, &z.Server, &z.KeyName, &z.KeyAlgo, &z.KeyBlob); err != nil {
 				return
 			}
 			zones = append(zones, z)
@@ -33,12 +35,12 @@ func GetZones() (zones []Zone, err error) {
 }
 
 func GetZone(id int) (z Zone, err error) {
-	err = DBQueryRow("SELECT id_user, domain, server, key_name, key_blob FROM zones WHERE id_zone=?", id).Scan(&z.Id, &z.DomainName, &z.Server, &z.KeyName, &z.KeyBlob)
+	err = DBQueryRow("SELECT id_user, domain, server, key_name, key_algo, key_blob FROM zones WHERE id_zone=?", id).Scan(&z.Id, &z.DomainName, &z.Server, &z.KeyName, &z.KeyAlgo, &z.KeyBlob)
 	return
 }
 
 func GetZoneByDN(dn string) (z Zone, err error) {
-	err = DBQueryRow("SELECT id_zone, domain, server, key_name, key_blob FROM zones WHERE domain=?", dn).Scan(&z.Id, &z.DomainName, &z.Server, &z.KeyName, &z.KeyBlob)
+	err = DBQueryRow("SELECT id_zone, domain, server, key_name, key_algo, key_blob FROM zones WHERE domain=?", dn).Scan(&z.Id, &z.DomainName, &z.Server, &z.KeyName, &z.KeyAlgo, &z.KeyBlob)
 	return
 }
 
@@ -49,7 +51,7 @@ func ZoneExists(dn string) bool {
 }
 
 func (z *Zone) NewZone() (Zone, error) {
-	if res, err := DBExec("INSERT INTO zones (domain, server, key_name, key_blob) VALUES (?, ?, ?, ?)", z.DomainName, z.Server, z.KeyName, z.KeyBlob); err != nil {
+	if res, err := DBExec("INSERT INTO zones (domain, server, key_name, key_algo, key_blob) VALUES (?, ?, ?, ?, ?)", z.DomainName, z.Server, z.KeyName, z.KeyAlgo, z.KeyBlob); err != nil {
 		return *z, err
 	} else if z.Id, err = res.LastInsertId(); err != nil {
 		return *z, err
@@ -59,7 +61,7 @@ func (z *Zone) NewZone() (Zone, error) {
 }
 
 func (z *Zone) Update() (int64, error) {
-	if res, err := DBExec("UPDATE zones SET domain = ? WHERE id_zone = ?", z.DomainName, z.Id); err != nil {
+	if res, err := DBExec("UPDATE zones SET domain = ?, key_name = ?, key_algo = ?, key_blob = ? WHERE id_zone = ?", z.DomainName, z.KeyName, z.KeyAlgo, z.KeyBlob, z.Id); err != nil {
 		return 0, err
 	} else if nb, err := res.RowsAffected(); err != nil {
 		return 0, err
@@ -76,6 +78,10 @@ func (z *Zone) Delete() (int64, error) {
 	} else {
 		return nb, err
 	}
+}
+
+func (z *Zone) Base64KeyBlob() string {
+	return base64.StdEncoding.EncodeToString(z.KeyBlob)
 }
 
 func ClearZones() (int64, error) {

@@ -55,6 +55,10 @@ func addZone(p httprouter.Params, body io.Reader) Response {
 		uz.DomainName = uz.DomainName + "."
 	}
 
+	if len(uz.KeyName) > 1 && uz.KeyName[len(uz.KeyName)-1] != '.' {
+		uz.KeyName = uz.KeyName + "."
+	}
+
 	if libredns.ZoneExists(uz.DomainName) {
 		return APIErrorResponse{
 			err: errors.New("This zone already exists."),
@@ -106,9 +110,9 @@ func axfrZone(zone libredns.Zone, body io.Reader) Response {
 
 	m := new(dns.Msg)
 	m.SetEdns0(4096, true)
-	t.TsigSecret = map[string]string{"ddns.": "so6ZGir4GPAqINNh9U5c3A=="}
+	t.TsigSecret = map[string]string{zone.KeyName: zone.Base64KeyBlob()}
 	m.SetAxfr(zone.DomainName)
-	m.SetTsig("ddns.", dns.HmacSHA256, 300, time.Now().Unix())
+	m.SetTsig(zone.KeyName, zone.KeyAlgo, 300, time.Now().Unix())
 
 	c, err := t.In(m, DefaultNameServer)
 	if err != nil {
@@ -166,8 +170,8 @@ func addRR(zone libredns.Zone, body io.Reader) Response {
 	m.Insert([]dns.RR{rr})
 
 	c := new(dns.Client)
-	c.TsigSecret = map[string]string{"ddns.": "so6ZGir4GPAqINNh9U5c3A=="}
-	m.SetTsig("ddns.", dns.HmacSHA256, 300, time.Now().Unix())
+	c.TsigSecret = map[string]string{zone.KeyName: zone.Base64KeyBlob()}
+	m.SetTsig(zone.KeyName, zone.KeyAlgo, 300, time.Now().Unix())
 
 	in, rtt, err := c.Exchange(m, DefaultNameServer)
 	if err != nil {
@@ -211,8 +215,8 @@ func delRR(zone libredns.Zone, body io.Reader) Response {
 	m.Remove([]dns.RR{rr})
 
 	c := new(dns.Client)
-	c.TsigSecret = map[string]string{"ddns.": "so6ZGir4GPAqINNh9U5c3A=="}
-	m.SetTsig("ddns.", dns.HmacSHA256, 300, time.Now().Unix())
+	c.TsigSecret = map[string]string{zone.KeyName: zone.Base64KeyBlob()}
+	m.SetTsig(zone.KeyName, zone.KeyAlgo, 300, time.Now().Unix())
 
 	in, rtt, err := c.Exchange(m, DefaultNameServer)
 	if err != nil {
