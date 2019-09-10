@@ -60,8 +60,8 @@ func DBCreate() error {
 CREATE TABLE IF NOT EXISTS users(
   id_user INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
   email VARCHAR(255) NOT NULL UNIQUE,
-  password BINARY(64) NOT NULL,
-  salt BINARY(8) NOT NULL,
+  password BINARY(92) NOT NULL,
+  salt BINARY(64) NOT NULL,
   registration_time TIMESTAMP NOT NULL
 ) DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 `); err != nil {
