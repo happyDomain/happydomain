@@ -1,13 +1,18 @@
 package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
+
+	"git.nemunai.re/libredns/struct"
 )
 
 type Response interface {
@@ -68,5 +73,44 @@ func apiHandler(f func(httprouter.Params, io.Reader) (Response)) func(http.Respo
 		}
 
 		f(ps, r.Body).WriteResponse(w)
+	}
+}
+
+func apiAuthHandler(f func(libredns.User, httprouter.Params, io.Reader) (Response)) func(http.ResponseWriter, *http.Request, httprouter.Params) {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		if addr := r.Header.Get("X-Forwarded-For"); addr != "" {
+			r.RemoteAddr = addr
+		}
+		log.Printf("%s \"%s %s\" [%s]\n", r.RemoteAddr, r.Method, r.URL.Path, r.UserAgent())
+
+		// Read the body
+		if r.ContentLength < 0 || r.ContentLength > 6553600 {
+			http.Error(w, fmt.Sprintf("{errmsg:\"Request too large or request size unknown\"}"), http.StatusRequestEntityTooLarge)
+			return
+		}
+
+		if flds := strings.Fields(r.Header.Get("Authorization")); len(flds) != 2 || flds[0] != "Bearer" {
+			APIErrorResponse{
+				err: errors.New("Authorization required"),
+				status: http.StatusUnauthorized,
+			}.WriteResponse(w)
+		} else if sessionid, err := base64.StdEncoding.DecodeString(flds[1]); err != nil {
+			APIErrorResponse{
+				err: err,
+				status: http.StatusUnauthorized,
+			}.WriteResponse(w)
+		} else if session, err := libredns.GetSession(sessionid); err != nil {
+			APIErrorResponse{
+				err: err,
+				status: http.StatusUnauthorized,
+			}.WriteResponse(w)
+		} else if std, err := libredns.GetUser(int(session.IdUser)); err != nil {
+			APIErrorResponse{
+				err: err,
+				status: http.StatusUnauthorized,
+			}.WriteResponse(w)
+		} else {
+			f(std, ps, r.Body).WriteResponse(w)
+		}
 	}
 }

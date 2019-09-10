@@ -68,6 +68,16 @@ CREATE TABLE IF NOT EXISTS users(
 		return err
 	}
 	if _, err := db.Exec(`
+CREATE TABLE IF NOT EXISTS user_sessions(
+  id_session BLOB(255) NOT NULL,
+  id_user INTEGER NOT NULL,
+  time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(id_user) REFERENCES users(id_user)
+);
+`); err != nil {
+		return err
+	}
+	if _, err := db.Exec(`
 CREATE TABLE IF NOT EXISTS zones(
   id_zone INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
   domain VARCHAR(255) NOT NULL,

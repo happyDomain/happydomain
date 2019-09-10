@@ -37,12 +37,12 @@ func GetUsers() (users []User, err error) {
 }
 
 func GetUser(id int) (u User, err error) {
-	err = DBQueryRow("SELECT id_user, email, password, salt, registration_time WHERE id_user=?", id).Scan(&u.Id, &u.Email, &u.password, &u.salt, &u.RegistrationTime)
+	err = DBQueryRow("SELECT id_user, email, password, salt, registration_time FROM users WHERE id_user=?", id).Scan(&u.Id, &u.Email, &u.password, &u.salt, &u.RegistrationTime)
 	return
 }
 
 func GetUserByEmail(email string) (u User, err error) {
-	err = DBQueryRow("SELECT id_user, email, password, salt, registration_time WHERE email=?", email).Scan(&u.Id, &u.Email, &u.password, &u.salt, &u.RegistrationTime)
+	err = DBQueryRow("SELECT id_user, email, password, salt, registration_time FROM users WHERE email=?", email).Scan(&u.Id, &u.Email, &u.password, &u.salt, &u.RegistrationTime)
 	return
 }
 
@@ -72,7 +72,21 @@ func NewUser(email string, password string) (User, error) {
 	}
 }
 
-func (u User) Update() (int64, error) {
+func (u *User) CheckAuth(password string) bool {
+	pass := GenPassword(password, u.salt)
+	if len(pass) != len(u.password) {
+		return false
+	} else {
+		for k := range pass {
+			if pass[k] != u.password[k] {
+				return false
+			}
+		}
+		return true
+	}
+}
+
+func (u *User) Update() (int64, error) {
 	if res, err := DBExec("UPDATE users SET email = ?, password = ?, salt = ?, registration_time = ? WHERE id_user = ?", u.Email, u.password, u.salt, u.RegistrationTime, u.Id); err != nil {
 		return 0, err
 	} else if nb, err := res.RowsAffected(); err != nil {
@@ -82,7 +96,7 @@ func (u User) Update() (int64, error) {
 	}
 }
 
-func (u User) Delete() (int64, error) {
+func (u *User) Delete() (int64, error) {
 	if res, err := DBExec("DELETE FROM users WHERE id_user = ?", u.Id); err != nil {
 		return 0, err
 	} else if nb, err := res.RowsAffected(); err != nil {
