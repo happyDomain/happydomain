@@ -43,11 +43,8 @@ import axios from 'axios'
 function updateSession (t) {
   if (sessionStorage.token !== undefined) {
     t.session = sessionStorage.token
-    axios.get('/api/users/auth', {
-      headers: {
-        'Authorization': 'Bearer '.concat(t.session)
-      }
-    })
+    axios.defaults.headers.common['Authorization'] = 'Bearer '.concat(sessionStorage.token)
+    axios.get('/api/users/auth')
       .then(
         (response) => {
           t.loggedUser = response.data
@@ -57,7 +54,6 @@ function updateSession (t) {
           t.session = null
           t.loggedUser = null
           sessionStorage.token = undefined
-          t.$router.push('/')
         }
       )
   }
@@ -88,6 +84,7 @@ export default {
     logout () {
       sessionStorage.token = undefined
       updateSession(this)
+      this.$router.push('/')
     },
 
     login (email, password) {
