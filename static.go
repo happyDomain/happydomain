@@ -31,6 +31,30 @@ func init() {
 			fwd_request(w, r, DevProxy)
 		}
 	})
+	api.Router().GET("/join", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		if DevProxy == "" {
+			if data, err := Asset("htdocs/dist/index.html"); err != nil {
+				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
+			} else {
+				w.Write(data)
+			}
+		} else {
+			r.URL.Path = "/"
+			fwd_request(w, r, DevProxy)
+		}
+	})
+	api.Router().GET("/login", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		if DevProxy == "" {
+			if data, err := Asset("htdocs/dist/index.html"); err != nil {
+				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
+			} else {
+				w.Write(data)
+			}
+		} else {
+			r.URL.Path = "/"
+			fwd_request(w, r, DevProxy)
+		}
+	})
 	api.Router().GET("/zones/*_", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if DevProxy == "" {
 			if data, err := Asset("htdocs/dist/index.html"); err != nil {

@@ -11,17 +11,31 @@ const routes = [
     component: Home
   },
   {
+    path: '/login',
+    name: 'login',
+    component: function () {
+      return import(/* webpackChunkName: "login" */ '../views/login.vue')
+    }
+  },
+  {
+    path: '/join',
+    name: 'signup',
+    component: function () {
+      return import(/* webpackChunkName: "signup" */ '../views/signup.vue')
+    }
+  },
+  {
     path: '/zones',
     name: 'zones',
     component: function () {
-      return import(/* webpackChunkName: "about" */ '../views/zone-list.vue')
+      return import(/* webpackChunkName: "zone-list" */ '../views/zone-list.vue')
     }
   },
   {
     path: '/zones/:zone',
     name: 'zone',
     component: function () {
-      return import(/* webpackChunkName: "about" */ '../views/zone.vue')
+      return import(/* webpackChunkName: "zone" */ '../views/zone.vue')
     }
   }
 ]

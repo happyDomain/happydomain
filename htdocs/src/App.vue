@@ -18,13 +18,15 @@
       </b-collapse>
 
       <b-navbar-nav class="ml-auto">
-        <b-nav-item-dropdown right>
-          <template slot="button-content"><div class="btn btn-sm btn-secondary">nemunaire</div></template>
+        <b-nav-item-dropdown right v-if="loggedUser">
+          <template slot="button-content"><div class="btn btn-sm btn-secondary">{{ loggedUser.email }}</div></template>
           <b-dropdown-item>Some example text that's free-flowing within the dropdown menu.</b-dropdown-item>
           <b-dropdown-item href="#">Action</b-dropdown-item>
           <b-dropdown-item href="#">Another action</b-dropdown-item>
-          <b-dropdown-item href="#">Something else here</b-dropdown-item>
+          <b-dropdown-item @click="logout()">Logout</b-dropdown-item>
         </b-nav-item-dropdown>
+        <b-button v-if="!loggedUser" variant="success" @click="signup()"><span class="glyphicon glyphicon-user" aria-hidden="true"></span> Sign up</b-button>
+        <b-button v-if="!loggedUser" variant="primary" class="ml-2" @click="signin()"><span class="glyphicon glyphicon-user" aria-hidden="true"></span> Sign in</b-button>
       </b-navbar-nav>
     </b-navbar>
     <div class="progress" style="background-color: #aee64e; height: 3px; border-radius: 0;">
@@ -34,3 +36,79 @@
     <router-view/>
   </div>
 </template>
+
+<script>
+import axios from 'axios'
+
+function updateSession (t) {
+  if (sessionStorage.token !== undefined) {
+    t.session = sessionStorage.token
+    axios.get('/api/users/auth', {
+      headers: {
+        'Authorization': 'Bearer '.concat(t.session)
+      }
+    })
+      .then(
+        (response) => {
+          t.loggedUser = response.data
+        },
+        (error) => {
+          console.error('Invalid session, your have been logged out:', error.response.errmsg)
+          t.session = null
+          t.loggedUser = null
+          sessionStorage.token = undefined
+          t.$router.push('/')
+        }
+      )
+  }
+}
+
+export default {
+
+  data: function () {
+    return {
+      loggedUser: null,
+      session: null
+    }
+  },
+
+  mounted () {
+    this.$on('login', this.login)
+    updateSession(this)
+  },
+
+  methods: {
+    signin () {
+      this.$router.push('/login')
+    },
+    signup () {
+      this.$router.push('/join')
+    },
+
+    logout () {
+      sessionStorage.token = undefined
+      updateSession(this)
+    },
+
+    login (email, password) {
+      axios
+        .post('/api/users/auth', {
+          'email': email,
+          'password': password
+        })
+        .then(
+          (response) => {
+            if (response.data.id_session) {
+              sessionStorage.token = response.data.id_session
+            }
+            updateSession(this)
+            this.$router.push('/')
+          },
+          (error) => {
+            alert('An error occurs when trying to login: ' + error.response.data.errmsg)
+          }
+        )
+    }
+  }
+}
+</script>
