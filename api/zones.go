@@ -105,6 +105,16 @@ func getZone(zone happydns.Zone, body io.Reader) Response {
 	}
 }
 
+func normalizeNSServer(srv string) string {
+	if srv == "" {
+		return DefaultNameServer
+	} else if strings.Index(srv, ":") > -1 {
+		return srv
+	} else {
+		return srv + ":53"
+	}
+}
+
 func axfrZone(zone happydns.Zone, body io.Reader) Response {
 	t := new(dns.Transfer)
 
@@ -114,7 +124,7 @@ func axfrZone(zone happydns.Zone, body io.Reader) Response {
 	m.SetAxfr(zone.DomainName)
 	m.SetTsig(zone.KeyName, zone.KeyAlgo, 300, time.Now().Unix())
 
-	c, err := t.In(m, DefaultNameServer)
+	c, err := t.In(m, normalizeNSServer(zone.Server))
 	if err != nil {
 		return APIErrorResponse{
 			status: http.StatusInternalServerError,
@@ -173,7 +183,7 @@ func addRR(zone happydns.Zone, body io.Reader) Response {
 	c.TsigSecret = map[string]string{zone.KeyName: zone.Base64KeyBlob()}
 	m.SetTsig(zone.KeyName, zone.KeyAlgo, 300, time.Now().Unix())
 
-	in, rtt, err := c.Exchange(m, DefaultNameServer)
+	in, rtt, err := c.Exchange(m, normalizeNSServer(zone.Server))
 	if err != nil {
 		return APIErrorResponse{
 			status: http.StatusInternalServerError,
@@ -218,7 +228,7 @@ func delRR(zone happydns.Zone, body io.Reader) Response {
 	c.TsigSecret = map[string]string{zone.KeyName: zone.Base64KeyBlob()}
 	m.SetTsig(zone.KeyName, zone.KeyAlgo, 300, time.Now().Unix())
 
-	in, rtt, err := c.Exchange(m, DefaultNameServer)
+	in, rtt, err := c.Exchange(m, normalizeNSServer(zone.Server))
 	if err != nil {
 		return APIErrorResponse{
 			status: http.StatusInternalServerError,
