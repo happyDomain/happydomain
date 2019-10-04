@@ -11,7 +11,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/miekg/dns"
 
-	"git.nemunai.re/libredns/struct"
+	"git.happydns.org/happydns/struct"
 )
 
 func init() {
@@ -25,7 +25,7 @@ func init() {
 }
 
 func getZones(p httprouter.Params, body io.Reader) Response {
-	if zones, err := libredns.GetZones(); err != nil {
+	if zones, err := happydns.GetZones(); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
@@ -37,7 +37,7 @@ func getZones(p httprouter.Params, body io.Reader) Response {
 }
 
 func addZone(p httprouter.Params, body io.Reader) Response {
-	var uz libredns.Zone
+	var uz happydns.Zone
 	err := json.NewDecoder(body).Decode(&uz)
 	if err != nil {
 		return APIErrorResponse{
@@ -59,7 +59,7 @@ func addZone(p httprouter.Params, body io.Reader) Response {
 		uz.KeyName = uz.KeyName + "."
 	}
 
-	if libredns.ZoneExists(uz.DomainName) {
+	if happydns.ZoneExists(uz.DomainName) {
 		return APIErrorResponse{
 			err: errors.New("This zone already exists."),
 		}
@@ -74,7 +74,7 @@ func addZone(p httprouter.Params, body io.Reader) Response {
 	}
 }
 
-func delZone(zone libredns.Zone, body io.Reader) Response {
+func delZone(zone happydns.Zone, body io.Reader) Response {
 	if _, err := zone.Delete(); err != nil {
 		return APIErrorResponse{
 			err: err,
@@ -86,9 +86,9 @@ func delZone(zone libredns.Zone, body io.Reader) Response {
 	}
 }
 
-func zoneHandler(f func(libredns.Zone, io.Reader) Response) func(httprouter.Params, io.Reader) Response {
+func zoneHandler(f func(happydns.Zone, io.Reader) Response) func(httprouter.Params, io.Reader) Response {
 	return func(ps httprouter.Params, body io.Reader) Response {
-		if zone, err := libredns.GetZoneByDN(ps.ByName("zone")); err != nil {
+		if zone, err := happydns.GetZoneByDN(ps.ByName("zone")); err != nil {
 			return APIErrorResponse{
 				status: http.StatusNotFound,
 				err:    errors.New("Domain not found"),
@@ -99,13 +99,13 @@ func zoneHandler(f func(libredns.Zone, io.Reader) Response) func(httprouter.Para
 	}
 }
 
-func getZone(zone libredns.Zone, body io.Reader) Response {
+func getZone(zone happydns.Zone, body io.Reader) Response {
 	return APIResponse{
 		response: zone,
 	}
 }
 
-func axfrZone(zone libredns.Zone, body io.Reader) Response {
+func axfrZone(zone happydns.Zone, body io.Reader) Response {
 	t := new(dns.Transfer)
 
 	m := new(dns.Msg)
@@ -145,7 +145,7 @@ type uploadedRR struct {
 	RR string `json:"string"`
 }
 
-func addRR(zone libredns.Zone, body io.Reader) Response {
+func addRR(zone happydns.Zone, body io.Reader) Response {
 	var urr uploadedRR
 	err := json.NewDecoder(body).Decode(&urr)
 	if err != nil {
@@ -190,7 +190,7 @@ func addRR(zone libredns.Zone, body io.Reader) Response {
 	}
 }
 
-func delRR(zone libredns.Zone, body io.Reader) Response {
+func delRR(zone happydns.Zone, body io.Reader) Response {
 	var urr uploadedRR
 	err := json.NewDecoder(body).Decode(&urr)
 	if err != nil {

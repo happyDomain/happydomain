@@ -8,8 +8,8 @@ import (
 	"path"
 	"strings"
 
-	"git.nemunai.re/libredns/api"
-	"git.nemunai.re/libredns/struct"
+	"git.happydns.org/happydns/api"
+	"git.happydns.org/happydns/struct"
 )
 
 type ResponseWriterPrefix struct {
@@ -56,7 +56,7 @@ func main() {
 	// Read parameters from command line
 	flag.StringVar(&DevProxy, "dev", DevProxy, "Proxify traffic to this host for static assets")
 	var bind = flag.String("bind", ":8081", "Bind port/socket")
-	var dsn = flag.String("dsn", libredns.DSNGenerator(), "DSN to connect to the MySQL server")
+	var dsn = flag.String("dsn", happydns.DSNGenerator(), "DSN to connect to the MySQL server")
 	var baseURL = flag.String("baseurl", "/", "URL prepended to each URL")
 	flag.StringVar(&api.DefaultNameServer, "defaultns", api.DefaultNameServer, "Adress to the default name server")
 	flag.Parse()
@@ -72,13 +72,13 @@ func main() {
 
 	// Initialize contents
 	log.Println("Opening database...")
-	if err := libredns.DBInit(*dsn); err != nil {
+	if err := happydns.DBInit(*dsn); err != nil {
 		log.Fatal("Cannot open the database: ", err)
 	}
-	defer libredns.DBClose()
+	defer happydns.DBClose()
 
 	log.Println("Creating database...")
-	if err := libredns.DBCreate(); err != nil {
+	if err := happydns.DBCreate(); err != nil {
 		log.Fatal("Cannot create database: ", err)
 	}
 

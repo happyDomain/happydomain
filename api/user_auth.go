@@ -8,7 +8,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"git.nemunai.re/libredns/struct"
+	"git.happydns.org/happydns/struct"
 )
 
 var AuthFunc = checkAuth
@@ -20,7 +20,7 @@ func init() {
 	}))
 }
 
-func validateAuthToken(u libredns.User, _ httprouter.Params, _ io.Reader) (Response) {
+func validateAuthToken(u happydns.User, _ httprouter.Params, _ io.Reader) (Response) {
 	return APIResponse{
 		response: u,
 	}
@@ -39,7 +39,7 @@ func dummyAuth(_ httprouter.Params, body io.Reader) Response {
 		}
 	}
 
-	if user, err := libredns.GetUserByEmail(lf.Email); err != nil {
+	if user, err := happydns.GetUserByEmail(lf.Email); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
@@ -69,7 +69,7 @@ func checkAuth(_ httprouter.Params, body io.Reader) Response {
 		}
 	}
 
-	if user, err := libredns.GetUserByEmail(lf.Email); err != nil {
+	if user, err := happydns.GetUserByEmail(lf.Email); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}

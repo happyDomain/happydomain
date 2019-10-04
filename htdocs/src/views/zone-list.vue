@@ -50,7 +50,7 @@
             placeholder="example.com"
             ref="domainname"
           ></b-form-input>
-          <small id="dnHelp" class="form-text text-muted">Fill here the domain name you would like to manage with LibreDNS.</small>
+          <small id="dnHelp" class="form-text text-muted">Fill here the domain name you would like to manage with HappyDNS.</small>
         </b-form-group>
         <b-form-group
           :state="newForm.domainServerState"
@@ -61,7 +61,7 @@
             id="srv-input"
             v-model="newForm.server"
             :state="newForm.domainServerState"
-            placeholder="ns0.libredns.com"
+            placeholder="ns0.happydns.org"
             ref="domainserver"
           ></b-form-input>
         </b-form-group>

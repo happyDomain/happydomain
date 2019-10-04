@@ -7,7 +7,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"git.nemunai.re/libredns/struct"
+	"git.happydns.org/happydns/struct"
 )
 
 func init() {
@@ -16,7 +16,7 @@ func init() {
 }
 
 func listUsers(_ httprouter.Params, _ io.Reader) Response {
-	if users, err := libredns.GetUsers(); err != nil {
+	if users, err := happydns.GetUsers(); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
@@ -47,7 +47,7 @@ func registerUser(p httprouter.Params, body io.Reader) Response {
 		}
 	}
 
-	if user, err := libredns.NewUser(uu.Email, uu.Password); err != nil {
+	if user, err := happydns.NewUser(uu.Email, uu.Password); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}

@@ -1,4 +1,4 @@
-package libredns
+package happydns
 
 import (
 	"database/sql"
@@ -13,10 +13,10 @@ var db *sql.DB
 
 // DSNGenerator returns DSN filed with values from environment
 func DSNGenerator() string {
-	db_user := "libredns"
-	db_password := "libredns"
+	db_user := "happydns"
+	db_password := "happydns"
 	db_host := ""
-	db_db := "libredns"
+	db_db := "happydns"
 
 	if v, exists := os.LookupEnv("MYSQL_HOST"); exists {
 		db_host = v

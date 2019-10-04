@@ -12,7 +12,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"git.nemunai.re/libredns/struct"
+	"git.happydns.org/happydns/struct"
 )
 
 type Response interface {
@@ -76,7 +76,7 @@ func apiHandler(f func(httprouter.Params, io.Reader) (Response)) func(http.Respo
 	}
 }
 
-func apiAuthHandler(f func(libredns.User, httprouter.Params, io.Reader) (Response)) func(http.ResponseWriter, *http.Request, httprouter.Params) {
+func apiAuthHandler(f func(happydns.User, httprouter.Params, io.Reader) (Response)) func(http.ResponseWriter, *http.Request, httprouter.Params) {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if addr := r.Header.Get("X-Forwarded-For"); addr != "" {
 			r.RemoteAddr = addr
@@ -99,12 +99,12 @@ func apiAuthHandler(f func(libredns.User, httprouter.Params, io.Reader) (Respons
 				err: err,
 				status: http.StatusUnauthorized,
 			}.WriteResponse(w)
-		} else if session, err := libredns.GetSession(sessionid); err != nil {
+		} else if session, err := happydns.GetSession(sessionid); err != nil {
 			APIErrorResponse{
 				err: err,
 				status: http.StatusUnauthorized,
 			}.WriteResponse(w)
-		} else if std, err := libredns.GetUser(int(session.IdUser)); err != nil {
+		} else if std, err := happydns.GetUser(int(session.IdUser)); err != nil {
 			APIErrorResponse{
 				err: err,
 				status: http.StatusUnauthorized,

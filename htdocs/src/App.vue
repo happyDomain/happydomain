@@ -2,7 +2,7 @@
   <div id="app">
     <b-navbar size="lg" type="dark" variant="dark" sticky class="text-light">
       <b-navbar-brand class="navbar-brand" to="/">
-        <img alt="LibreDNS" src="<%= BASE_URL %>img/logo.png" style="height: 30px">
+        <img alt="HappyDNS" src="<%= BASE_URL %>img/logo.png" style="height: 30px">
       </b-navbar-brand>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#adminMenu" aria-controls="adminMenu" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>

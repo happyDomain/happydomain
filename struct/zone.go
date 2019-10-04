@@ -1,4 +1,4 @@
-package libredns
+package happydns
 
 import (
 	"encoding/base64"

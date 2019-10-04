@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"path"
 
-	"git.nemunai.re/libredns/api"
+	"git.happydns.org/happydns/api"
 
 	"github.com/julienschmidt/httprouter"
 )
