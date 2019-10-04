@@ -80,11 +80,13 @@ CREATE TABLE IF NOT EXISTS user_sessions(
 	if _, err := db.Exec(`
 CREATE TABLE IF NOT EXISTS zones(
   id_zone INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  id_user INTEGER NOT NULL,
   domain VARCHAR(255) NOT NULL,
   server VARCHAR(255),
   key_name VARCHAR(255) NOT NULL,
   key_algo ENUM("hmac-md5.sig-alg.reg.int.", "hmac-sha1.", "hmac-sha224.", "hmac-sha256.", "hmac-sha384.", "hmac-sha512.") NOT NULL DEFAULT "hmac-sha256.",
-  key_blob BLOB NOT NULL
+  key_blob BLOB NOT NULL,
+  FOREIGN KEY(id_user) REFERENCES users(id_user)
 ) DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 `); err != nil {
 		return err

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
@@ -15,17 +16,17 @@ import (
 )
 
 func init() {
-	router.GET("/api/zones", apiHandler(getZones))
-	router.POST("/api/zones", apiHandler(addZone))
-	router.DELETE("/api/zones/:zone", apiHandler(zoneHandler(delZone)))
-	router.GET("/api/zones/:zone", apiHandler(zoneHandler(getZone)))
-	router.GET("/api/zones/:zone/rr", apiHandler(zoneHandler(axfrZone)))
-	router.POST("/api/zones/:zone/rr", apiHandler(zoneHandler(addRR)))
-	router.DELETE("/api/zones/:zone/rr", apiHandler(zoneHandler(delRR)))
+	router.GET("/api/zones", apiAuthHandler(getZones))
+	router.POST("/api/zones", apiAuthHandler(addZone))
+	router.DELETE("/api/zones/:zone", apiAuthHandler(zoneHandler(delZone)))
+	router.GET("/api/zones/:zone", apiAuthHandler(zoneHandler(getZone)))
+	router.GET("/api/zones/:zone/rr", apiAuthHandler(zoneHandler(axfrZone)))
+	router.POST("/api/zones/:zone/rr", apiAuthHandler(zoneHandler(addRR)))
+	router.DELETE("/api/zones/:zone/rr", apiAuthHandler(zoneHandler(delRR)))
 }
 
-func getZones(p httprouter.Params, body io.Reader) Response {
-	if zones, err := happydns.GetZones(); err != nil {
+func getZones(u happydns.User, p httprouter.Params, body io.Reader) Response {
+	if zones, err := u.GetZones(); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
@@ -36,7 +37,7 @@ func getZones(p httprouter.Params, body io.Reader) Response {
 	}
 }
 
-func addZone(p httprouter.Params, body io.Reader) Response {
+func addZone(u happydns.User, p httprouter.Params, body io.Reader) Response {
 	var uz happydns.Zone
 	err := json.NewDecoder(body).Decode(&uz)
 	if err != nil {
@@ -63,7 +64,7 @@ func addZone(p httprouter.Params, body io.Reader) Response {
 		return APIErrorResponse{
 			err: errors.New("This zone already exists."),
 		}
-	} else if zone, err := uz.NewZone(); err != nil {
+	} else if zone, err := uz.NewZone(u); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
@@ -86,9 +87,9 @@ func delZone(zone happydns.Zone, body io.Reader) Response {
 	}
 }
 
-func zoneHandler(f func(happydns.Zone, io.Reader) Response) func(httprouter.Params, io.Reader) Response {
-	return func(ps httprouter.Params, body io.Reader) Response {
-		if zone, err := happydns.GetZoneByDN(ps.ByName("zone")); err != nil {
+func zoneHandler(f func(happydns.Zone, io.Reader) Response) func(happydns.User, httprouter.Params, io.Reader) Response {
+	return func(u happydns.User, ps httprouter.Params, body io.Reader) Response {
+		if zone, err := u.GetZoneByDN(ps.ByName("zone")); err != nil {
 			return APIErrorResponse{
 				status: http.StatusNotFound,
 				err:    errors.New("Domain not found"),

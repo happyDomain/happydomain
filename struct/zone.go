@@ -6,6 +6,7 @@ import (
 
 type Zone struct {
 	Id         int64  `json:"id"`
+	idUser     int64
 	DomainName string `json:"domain"`
 	Server     string `json:"server,omitempty"`
 	KeyName    string `json:"keyname,omitempty"`
@@ -14,14 +15,35 @@ type Zone struct {
 }
 
 func GetZones() (zones []Zone, err error) {
-	if rows, errr := DBQuery("SELECT id_zone, domain, server, key_name, key_algo, key_blob FROM zones"); errr != nil {
+	if rows, errr := DBQuery("SELECT id_zone, id_user, domain, server, key_name, key_algo, key_blob FROM zones"); errr != nil {
 		return nil, errr
 	} else {
 		defer rows.Close()
 
 		for rows.Next() {
 			var z Zone
-			if err = rows.Scan(&z.Id, &z.DomainName, &z.Server, &z.KeyName, &z.KeyAlgo, &z.KeyBlob); err != nil {
+			if err = rows.Scan(&z.Id, &z.idUser, &z.DomainName, &z.Server, &z.KeyName, &z.KeyAlgo, &z.KeyBlob); err != nil {
+				return
+			}
+			zones = append(zones, z)
+		}
+		if err = rows.Err(); err != nil {
+			return
+		}
+
+		return
+	}
+}
+
+func (u *User) GetZones() (zones []Zone, err error) {
+	if rows, errr := DBQuery("SELECT id_zone, id_user, domain, server, key_name, key_algo, key_blob FROM zones WHERE id_user = ?", u.Id); errr != nil {
+		return nil, errr
+	} else {
+		defer rows.Close()
+
+		for rows.Next() {
+			var z Zone
+			if err = rows.Scan(&z.Id, &z.idUser, &z.DomainName, &z.Server, &z.KeyName, &z.KeyAlgo, &z.KeyBlob); err != nil {
 				return
 			}
 			zones = append(zones, z)
@@ -35,12 +57,22 @@ func GetZones() (zones []Zone, err error) {
 }
 
 func GetZone(id int) (z Zone, err error) {
-	err = DBQueryRow("SELECT id_user, domain, server, key_name, key_algo, key_blob FROM zones WHERE id_zone=?", id).Scan(&z.Id, &z.DomainName, &z.Server, &z.KeyName, &z.KeyAlgo, &z.KeyBlob)
+	err = DBQueryRow("SELECT id_zone, id_user, domain, server, key_name, key_algo, key_blob FROM zones WHERE id_zone=?", id).Scan(&z.Id, &z.idUser, &z.DomainName, &z.Server, &z.KeyName, &z.KeyAlgo, &z.KeyBlob)
+	return
+}
+
+func (u *User) GetZone(id int) (z Zone, err error) {
+	err = DBQueryRow("SELECT id_zone, id_user, domain, server, key_name, key_algo, key_blob FROM zones WHERE id_zone=? AND id_user=?", id, u.Id).Scan(&z.Id, &z.idUser, &z.DomainName, &z.Server, &z.KeyName, &z.KeyAlgo, &z.KeyBlob)
 	return
 }
 
 func GetZoneByDN(dn string) (z Zone, err error) {
-	err = DBQueryRow("SELECT id_zone, domain, server, key_name, key_algo, key_blob FROM zones WHERE domain=?", dn).Scan(&z.Id, &z.DomainName, &z.Server, &z.KeyName, &z.KeyAlgo, &z.KeyBlob)
+	err = DBQueryRow("SELECT id_zone, id_user, domain, server, key_name, key_algo, key_blob FROM zones WHERE domain=?", dn).Scan(&z.Id, &z.idUser, &z.DomainName, &z.Server, &z.KeyName, &z.KeyAlgo, &z.KeyBlob)
+	return
+}
+
+func (u *User) GetZoneByDN(dn string) (z Zone, err error) {
+	err = DBQueryRow("SELECT id_zone, id_user, domain, server, key_name, key_algo, key_blob FROM zones WHERE domain=? AND id_user=?", dn, u.Id).Scan(&z.Id, &z.idUser, &z.DomainName, &z.Server, &z.KeyName, &z.KeyAlgo, &z.KeyBlob)
 	return
 }
 
@@ -50,8 +82,8 @@ func ZoneExists(dn string) bool {
 	return err == nil && z == 1
 }
 
-func (z *Zone) NewZone() (Zone, error) {
-	if res, err := DBExec("INSERT INTO zones (domain, server, key_name, key_algo, key_blob) VALUES (?, ?, ?, ?, ?)", z.DomainName, z.Server, z.KeyName, z.KeyAlgo, z.KeyBlob); err != nil {
+func (z *Zone) NewZone(u User) (Zone, error) {
+	if res, err := DBExec("INSERT INTO zones (id_user, domain, server, key_name, key_blob) VALUES (?, ?, ?, ?, ?)", u.Id, z.DomainName, z.Server, z.KeyName, z.KeyBlob); err != nil {
 		return *z, err
 	} else if z.Id, err = res.LastInsertId(); err != nil {
 		return *z, err
@@ -66,6 +98,17 @@ func (z *Zone) Update() (int64, error) {
 	} else if nb, err := res.RowsAffected(); err != nil {
 		return 0, err
 	} else {
+		return nb, err
+	}
+}
+
+func (z *Zone) UpdateOwner(u User) (int64, error) {
+	if res, err := DBExec("UPDATE zones SET id_user = ? WHERE id_zone = ?", u.Id, z.Id); err != nil {
+		return 0, err
+	} else if nb, err := res.RowsAffected(); err != nil {
+		return 0, err
+	} else {
+		z.idUser = u.Id
 		return nb, err
 	}
 }
