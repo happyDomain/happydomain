@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS zones(
   key_name VARCHAR(255) NOT NULL,
   key_algo ENUM("hmac-md5.sig-alg.reg.int.", "hmac-sha1.", "hmac-sha224.", "hmac-sha256.", "hmac-sha384.", "hmac-sha512.") NOT NULL DEFAULT "hmac-sha256.",
   key_blob BLOB NOT NULL,
+  storage_facility ENUM("live", "history") NOT NULL DEFAULT "live",
   FOREIGN KEY(id_user) REFERENCES users(id_user)
 ) DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 `); err != nil {

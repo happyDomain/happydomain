@@ -92,6 +92,10 @@
             placeholder="bar=="
             ref="keyblob"
           ></b-form-input>
+          <b-form-group label="Storage facility">
+            <b-form-radio v-model="newForm.storage_facility" name="storage-facility" value="live">Live only</b-form-radio>
+            <b-form-radio v-model="newForm.storage_facility" name="storage-facility" value="historical">With history</b-form-radio>
+          </b-form-group>
         </b-form-group>
       </form>
     </b-modal>
@@ -106,7 +110,7 @@ export default {
   data: function () {
     return {
       domainNameState: null,
-      newForm: {},
+      newForm: { storage_facility: 'live' },
       zones: []
     }
   },
@@ -160,6 +164,7 @@ export default {
       this.newForm.server = ''
       this.newForm.keyname = ''
       this.newForm.keyblob = ''
+      this.newForm.storage_facility = 'live'
       this.newForm.domainNameState = null
       this.newForm.domainServerState = null
       this.newForm.keyNameState = null
