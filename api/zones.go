@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -117,15 +118,25 @@ func normalizeNSServer(srv string) string {
 }
 
 func axfrZone(zone happydns.Zone, body io.Reader) Response {
-	t := new(dns.Transfer)
+	d := net.Dialer{}
+	con, err := d.Dial("tcp", normalizeNSServer(zone.Server))
+	if err != nil {
+		return APIErrorResponse{
+			status: http.StatusInternalServerError,
+			err: err,
+		}
+	}
+	defer con.Close()
 
 	m := new(dns.Msg)
 	m.SetEdns0(4096, true)
-	t.TsigSecret = map[string]string{zone.KeyName: zone.Base64KeyBlob()}
 	m.SetAxfr(zone.DomainName)
 	m.SetTsig(zone.KeyName, zone.KeyAlgo, 300, time.Now().Unix())
 
-	c, err := t.In(m, normalizeNSServer(zone.Server))
+	dnscon := &dns.Conn{Conn:con}
+	transfer := &dns.Transfer{Conn: dnscon, TsigSecret: map[string]string{zone.KeyName: zone.Base64KeyBlob()}}
+	c, err := transfer.In(m, normalizeNSServer(zone.Server))
+
 	if err != nil {
 		return APIErrorResponse{
 			status: http.StatusInternalServerError,
@@ -133,14 +144,19 @@ func axfrZone(zone happydns.Zone, body io.Reader) Response {
 		}
 	}
 
-	response := <-c
 	var rrs []map[string]interface{}
+	for {
+		response, ok := <-c
+		if !ok {
+			break
+		}
 
-	for _, rr := range response.RR {
-		rrs = append(rrs, map[string]interface{}{
-			"string": rr.String(),
-			"fields": rr,
-		})
+		for _, rr := range response.RR {
+			rrs = append(rrs, map[string]interface{}{
+				"string": rr.String(),
+				"fields": rr,
+			})
+		}
 	}
 
 	if len(rrs) > 0 {
