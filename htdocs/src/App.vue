@@ -24,6 +24,8 @@
 
     <router-view/>
 
+    <b-toaster name="b-toaster-content-right" style="position: fixed; top: 70px; right: 0; z-index: 10; min-width: 30vw;"></b-toaster>
+
     <div class="mt-5 pt-3 pb-5 bg-dark text-light" style="border-top: 3px solid #aee64e; box-shadow: 0 0 12px 0 #08334833">
       <b-container>
         <b-row>
@@ -105,7 +107,13 @@ export default {
             this.$router.push('/')
           },
           (error) => {
-            alert('An error occurs when trying to login: ' + error.response.data.errmsg)
+            this.$bvToast.toast(
+              `An error occurs when trying to login: ` + error.response.data.errmsg, {
+                title: 'Login error',
+                autoHideDelay: 5000,
+                toaster: 'b-toaster-content-right'
+              }
+            )
           }
         )
     }
