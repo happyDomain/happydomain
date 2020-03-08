@@ -33,9 +33,24 @@ const routes = [
   },
   {
     path: '/zones/:zone',
-    name: 'zone',
     component: function () {
       return import(/* webpackChunkName: "zone" */ '../views/zone.vue')
+    },
+    children: [
+      {
+        path: '',
+        name: 'zone',
+        component: function () {
+          return import(/* webpackChunkName: "zone" */ '../views/zone-details.vue')
+        }
+      }
+    ]
+  },
+  {
+    path: '/zones/:zone/records',
+    name: 'zone-records',
+    component: function () {
+      return import(/* webpackChunkName: "zone" */ '../views/zone-records.vue')
     }
   }
 ]
