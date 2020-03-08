@@ -55,6 +55,18 @@ func init() {
 			fwd_request(w, r, DevProxy)
 		}
 	})
+	api.Router().GET("/services/*_", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		if DevProxy == "" {
+			if data, err := Asset("htdocs/dist/index.html"); err != nil {
+				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
+			} else {
+				w.Write(data)
+			}
+		} else {
+			r.URL.Path = "/"
+			fwd_request(w, r, DevProxy)
+		}
+	})
 	api.Router().GET("/zones/*_", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if DevProxy == "" {
 			if data, err := Asset("htdocs/dist/index.html"); err != nil {
@@ -73,6 +85,7 @@ func init() {
 			if data, err := Asset(path.Join(StaticDir, r.URL.Path)); err != nil {
 				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
 			} else {
+				w.Header().Set("Content-Type", "text/css")
 				w.Write(data)
 			}
 		} else {

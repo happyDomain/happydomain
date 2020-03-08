@@ -43,6 +43,13 @@ const routes = [
         component: function () {
           return import(/* webpackChunkName: "zone" */ '../views/zone-details.vue')
         }
+      },
+      {
+        path: 'services',
+        name: 'zone-services',
+        component: function () {
+          return import(/* webpackChunkName: "zone" */ '../views/zone-services.vue')
+        }
       }
     ]
   },
