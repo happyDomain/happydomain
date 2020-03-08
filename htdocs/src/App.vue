@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <b-navbar size="lg" type="dark" variant="dark" sticky class="text-light">
+    <b-navbar style="border-bottom: 3px solid #aee64e; box-shadow: 0 0 12px 0 #08334833">
       <b-navbar-brand class="navbar-brand" to="/">
         <img alt="HappyDNS" src="<%= BASE_URL %>img/logo.png" style="height: 30px">
       </b-navbar-brand>
@@ -10,30 +10,33 @@
 
       <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
 
-      <b-collapse id="nav-collapse" is-nav>
-        <b-navbar-nav>
-          <b-nav-item to="/zones">Zones</b-nav-item>
-          <b-nav-item to="/users" disabled>Users</b-nav-item>
-        </b-navbar-nav>
-      </b-collapse>
-
       <b-navbar-nav class="ml-auto">
         <b-nav-item-dropdown right v-if="loggedUser">
-          <template slot="button-content"><div class="btn btn-sm btn-secondary">{{ loggedUser.email }}</div></template>
-          <b-dropdown-item>Some example text that's free-flowing within the dropdown menu.</b-dropdown-item>
-          <b-dropdown-item href="#">Action</b-dropdown-item>
-          <b-dropdown-item href="#">Another action</b-dropdown-item>
+          <template slot="button-content"><div class="btn btn-sm btn-secondary"><b-icon icon="person" aria-hidden="true"></b-icon> {{ loggedUser.email }}</div></template>
+          <b-dropdown-item href="#">My Profile</b-dropdown-item>
+          <b-dropdown-divider></b-dropdown-divider>
           <b-dropdown-item @click="logout()">Logout</b-dropdown-item>
         </b-nav-item-dropdown>
-        <b-button v-if="!loggedUser" variant="success" @click="signup()"><span class="glyphicon glyphicon-user" aria-hidden="true"></span> Sign up</b-button>
-        <b-button v-if="!loggedUser" variant="primary" class="ml-2" @click="signin()"><span class="glyphicon glyphicon-user" aria-hidden="true"></span> Sign in</b-button>
+        <b-button v-if="!loggedUser" variant="outline-success" @click="signup()"><b-icon icon="person-fill" aria-hidden="true"></b-icon> Sign up</b-button>
+        <b-button v-if="!loggedUser" variant="primary" class="ml-2" @click="signin()"><b-icon icon="person-fill" aria-hidden="true"></b-icon> Sign in</b-button>
       </b-navbar-nav>
     </b-navbar>
-    <div class="progress" style="background-color: #aee64e; height: 3px; border-radius: 0;">
-      <div class="progress-bar bg-secondary" role="progressbar" style="width: 0%"></div>
-    </div>
 
     <router-view/>
+
+    <div class="mt-5 pt-3 pb-5 bg-dark text-light" style="border-top: 3px solid #aee64e; box-shadow: 0 0 12px 0 #08334833">
+      <b-container>
+        <b-row>
+          <b-col md="4">
+            &copy; HappyDNS 2019-2020 All rights reserved
+          </b-col>
+          <b-col md="4">
+          </b-col>
+          <b-col md="4">
+          </b-col>
+        </b-row>
+      </b-container>
+    </div>
   </div>
 </template>
 
@@ -53,7 +56,7 @@ function updateSession (t) {
           console.error('Invalid session, your have been logged out:', error.response.errmsg)
           t.session = null
           t.loggedUser = null
-          sessionStorage.token = undefined
+          delete sessionStorage.token
         }
       )
   }
@@ -69,8 +72,8 @@ export default {
   },
 
   mounted () {
-    this.$on('login', this.login)
     updateSession(this)
+    this.$on('login', this.login)
   },
 
   methods: {
