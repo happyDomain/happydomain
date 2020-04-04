@@ -55,10 +55,18 @@ function updateSession (t) {
           t.loggedUser = response.data
         },
         (error) => {
-          console.error('Invalid session, your have been logged out:', error.response.errmsg)
+          t.$bvToast.toast(
+            `Invalid session, your have been logged out: ` + error.response.data.errmsg + `. Please login again.`, {
+              title: 'Authentication timeout',
+              autoHideDelay: 5000,
+              variant: 'danger',
+              toaster: 'b-toaster-content-right'
+            }
+          )
           t.session = null
           t.loggedUser = null
           delete sessionStorage.token
+          t.$router.replace('/login')
         }
       )
   }

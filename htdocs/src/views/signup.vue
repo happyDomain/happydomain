@@ -101,7 +101,14 @@ export default {
           })
           .then(
             (response) => {
-              alert('Registration successfully performed: userid=' + response.data.response.id)
+              this.$bvToast.toast(
+                `Login now`, {
+                  title: 'Registration successfully performed!',
+                  autoHideDelay: 5000,
+                  href: 'login',
+                  toaster: 'b-toaster-content-right'
+                }
+              )
               this.$router.push('/')
             },
             (error) => {
