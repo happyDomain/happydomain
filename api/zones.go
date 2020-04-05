@@ -13,7 +13,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happydns/struct"
+	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/storage"
 )
 
 func init() {
@@ -26,8 +27,8 @@ func init() {
 	router.DELETE("/api/zones/:zone/rr", apiAuthHandler(zoneHandler(delRR)))
 }
 
-func getZones(u happydns.User, p httprouter.Params, body io.Reader) Response {
-	if zones, err := u.GetZones(); err != nil {
+func getZones(u *happydns.User, p httprouter.Params, body io.Reader) Response {
+	if zones, err := storage.MainStore.GetZones(u); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
@@ -38,7 +39,7 @@ func getZones(u happydns.User, p httprouter.Params, body io.Reader) Response {
 	}
 }
 
-func addZone(u happydns.User, p httprouter.Params, body io.Reader) Response {
+func addZone(u *happydns.User, p httprouter.Params, body io.Reader) Response {
 	var uz happydns.Zone
 	err := json.NewDecoder(body).Decode(&uz)
 	if err != nil {
@@ -61,23 +62,23 @@ func addZone(u happydns.User, p httprouter.Params, body io.Reader) Response {
 		uz.KeyName = uz.KeyName + "."
 	}
 
-	if happydns.ZoneExists(uz.DomainName) {
+	if storage.MainStore.ZoneExists(uz.DomainName) {
 		return APIErrorResponse{
 			err: errors.New("This zone already exists."),
 		}
-	} else if zone, err := uz.NewZone(u); err != nil {
+	} else if err := storage.MainStore.CreateZone(u, &uz); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
 	} else {
 		return APIResponse{
-			response: zone,
+			response: uz,
 		}
 	}
 }
 
-func delZone(zone happydns.Zone, body io.Reader) Response {
-	if _, err := zone.Delete(); err != nil {
+func delZone(zone *happydns.Zone, body io.Reader) Response {
+	if err := storage.MainStore.DeleteZone(zone); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
@@ -88,9 +89,9 @@ func delZone(zone happydns.Zone, body io.Reader) Response {
 	}
 }
 
-func zoneHandler(f func(happydns.Zone, io.Reader) Response) func(happydns.User, httprouter.Params, io.Reader) Response {
-	return func(u happydns.User, ps httprouter.Params, body io.Reader) Response {
-		if zone, err := u.GetZoneByDN(ps.ByName("zone")); err != nil {
+func zoneHandler(f func(*happydns.Zone, io.Reader) Response) func(*happydns.User, httprouter.Params, io.Reader) Response {
+	return func(u *happydns.User, ps httprouter.Params, body io.Reader) Response {
+		if zone, err := storage.MainStore.GetZoneByDN(u, ps.ByName("zone")); err != nil {
 			return APIErrorResponse{
 				status: http.StatusNotFound,
 				err:    errors.New("Domain not found"),
@@ -101,7 +102,7 @@ func zoneHandler(f func(happydns.Zone, io.Reader) Response) func(happydns.User, 
 	}
 }
 
-func getZone(zone happydns.Zone, body io.Reader) Response {
+func getZone(zone *happydns.Zone, body io.Reader) Response {
 	return APIResponse{
 		response: zone,
 	}
@@ -117,13 +118,13 @@ func normalizeNSServer(srv string) string {
 	}
 }
 
-func axfrZone(zone happydns.Zone, body io.Reader) Response {
+func axfrZone(zone *happydns.Zone, body io.Reader) Response {
 	d := net.Dialer{}
 	con, err := d.Dial("tcp", normalizeNSServer(zone.Server))
 	if err != nil {
 		return APIErrorResponse{
 			status: http.StatusInternalServerError,
-			err: err,
+			err:    err,
 		}
 	}
 	defer con.Close()
@@ -133,7 +134,7 @@ func axfrZone(zone happydns.Zone, body io.Reader) Response {
 	m.SetAxfr(zone.DomainName)
 	m.SetTsig(zone.KeyName, zone.KeyAlgo, 300, time.Now().Unix())
 
-	dnscon := &dns.Conn{Conn:con}
+	dnscon := &dns.Conn{Conn: con}
 	transfer := &dns.Transfer{Conn: dnscon, TsigSecret: map[string]string{zone.KeyName: zone.Base64KeyBlob()}}
 	c, err := transfer.In(m, normalizeNSServer(zone.Server))
 
@@ -172,7 +173,7 @@ type uploadedRR struct {
 	RR string `json:"string"`
 }
 
-func addRR(zone happydns.Zone, body io.Reader) Response {
+func addRR(zone *happydns.Zone, body io.Reader) Response {
 	var urr uploadedRR
 	err := json.NewDecoder(body).Decode(&urr)
 	if err != nil {
@@ -217,7 +218,7 @@ func addRR(zone happydns.Zone, body io.Reader) Response {
 	}
 }
 
-func delRR(zone happydns.Zone, body io.Reader) Response {
+func delRR(zone *happydns.Zone, body io.Reader) Response {
 	var urr uploadedRR
 	err := json.NewDecoder(body).Decode(&urr)
 	if err != nil {

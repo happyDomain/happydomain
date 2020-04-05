@@ -7,7 +7,8 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"git.happydns.org/happydns/struct"
+	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/storage"
 )
 
 func init() {
@@ -16,7 +17,7 @@ func init() {
 }
 
 func listUsers(_ httprouter.Params, _ io.Reader) Response {
-	if users, err := happydns.GetUsers(); err != nil {
+	if users, err := storage.MainStore.GetUsers(); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
@@ -28,8 +29,8 @@ func listUsers(_ httprouter.Params, _ io.Reader) Response {
 }
 
 type UploadedUser struct {
-	Email            string
-	Password         string
+	Email    string
+	Password string
 }
 
 func registerUser(p httprouter.Params, body io.Reader) Response {
@@ -48,6 +49,10 @@ func registerUser(p httprouter.Params, body io.Reader) Response {
 	}
 
 	if user, err := happydns.NewUser(uu.Email, uu.Password); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	} else if err := storage.MainStore.CreateUser(user); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}

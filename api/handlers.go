@@ -12,7 +12,8 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"git.happydns.org/happydns/struct"
+	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/storage"
 )
 
 type Response interface {
@@ -58,8 +59,7 @@ func (r APIErrorResponse) WriteResponse(w http.ResponseWriter) {
 	http.Error(w, fmt.Sprintf("{\"errmsg\":%q}", r.err.Error()), r.status)
 }
 
-
-func apiHandler(f func(httprouter.Params, io.Reader) (Response)) func(http.ResponseWriter, *http.Request, httprouter.Params) {
+func apiHandler(f func(httprouter.Params, io.Reader) Response) func(http.ResponseWriter, *http.Request, httprouter.Params) {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if addr := r.Header.Get("X-Forwarded-For"); addr != "" {
 			r.RemoteAddr = addr
@@ -76,7 +76,7 @@ func apiHandler(f func(httprouter.Params, io.Reader) (Response)) func(http.Respo
 	}
 }
 
-func apiAuthHandler(f func(happydns.User, httprouter.Params, io.Reader) (Response)) func(http.ResponseWriter, *http.Request, httprouter.Params) {
+func apiAuthHandler(f func(*happydns.User, httprouter.Params, io.Reader) Response) func(http.ResponseWriter, *http.Request, httprouter.Params) {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if addr := r.Header.Get("X-Forwarded-For"); addr != "" {
 			r.RemoteAddr = addr
@@ -91,22 +91,22 @@ func apiAuthHandler(f func(happydns.User, httprouter.Params, io.Reader) (Respons
 
 		if flds := strings.Fields(r.Header.Get("Authorization")); len(flds) != 2 || flds[0] != "Bearer" {
 			APIErrorResponse{
-				err: errors.New("Authorization required"),
+				err:    errors.New("Authorization required"),
 				status: http.StatusUnauthorized,
 			}.WriteResponse(w)
 		} else if sessionid, err := base64.StdEncoding.DecodeString(flds[1]); err != nil {
 			APIErrorResponse{
-				err: err,
+				err:    err,
 				status: http.StatusUnauthorized,
 			}.WriteResponse(w)
-		} else if session, err := happydns.GetSession(sessionid); err != nil {
+		} else if session, err := storage.MainStore.GetSession(sessionid); err != nil {
 			APIErrorResponse{
-				err: err,
+				err:    err,
 				status: http.StatusUnauthorized,
 			}.WriteResponse(w)
-		} else if std, err := happydns.GetUser(int(session.IdUser)); err != nil {
+		} else if std, err := storage.MainStore.GetUser(int(session.IdUser)); err != nil {
 			APIErrorResponse{
-				err: err,
+				err:    err,
 				status: http.StatusUnauthorized,
 			}.WriteResponse(w)
 		} else {

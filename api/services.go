@@ -5,7 +5,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"git.happydns.org/happydns/struct"
+	"git.happydns.org/happydns/model"
 )
 
 func init() {

@@ -8,19 +8,20 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"git.happydns.org/happydns/struct"
+	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/storage"
 )
 
 var AuthFunc = checkAuth
 
 func init() {
 	router.GET("/api/users/auth", apiAuthHandler(validateAuthToken))
-	router.POST("/api/users/auth", apiHandler(func(ps httprouter.Params, b io.Reader) (Response) {
+	router.POST("/api/users/auth", apiHandler(func(ps httprouter.Params, b io.Reader) Response {
 		return AuthFunc(ps, b)
 	}))
 }
 
-func validateAuthToken(u happydns.User, _ httprouter.Params, _ io.Reader) (Response) {
+func validateAuthToken(u *happydns.User, _ httprouter.Params, _ io.Reader) Response {
 	return APIResponse{
 		response: u,
 	}
@@ -39,13 +40,19 @@ func dummyAuth(_ httprouter.Params, body io.Reader) Response {
 		}
 	}
 
-	if user, err := happydns.GetUserByEmail(lf.Email); err != nil {
+	if user, err := storage.MainStore.GetUserByEmail(lf.Email); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
 	} else {
-		session, err := user.NewSession()
+		session, err := happydns.NewSession(user)
 		if err != nil {
+			return APIErrorResponse{
+				err: err,
+			}
+		}
+
+		if err := storage.MainStore.CreateSession(session); err != nil {
 			return APIErrorResponse{
 				err: err,
 			}
@@ -69,18 +76,24 @@ func checkAuth(_ httprouter.Params, body io.Reader) Response {
 		}
 	}
 
-	if user, err := happydns.GetUserByEmail(lf.Email); err != nil {
+	if user, err := storage.MainStore.GetUserByEmail(lf.Email); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
 	} else if !user.CheckAuth(lf.Password) {
 		return APIErrorResponse{
-			err: errors.New(`{"status": "Invalid username or password"}`),
+			err:    errors.New(`{"status": "Invalid username or password"}`),
 			status: http.StatusUnauthorized,
 		}
 	} else {
-		session, err := user.NewSession()
+		session, err := happydns.NewSession(user)
 		if err != nil {
+			return APIErrorResponse{
+				err: err,
+			}
+		}
+
+		if err := storage.MainStore.CreateSession(session); err != nil {
 			return APIErrorResponse{
 				err: err,
 			}

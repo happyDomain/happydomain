@@ -9,7 +9,8 @@ import (
 	"strings"
 
 	"git.happydns.org/happydns/api"
-	"git.happydns.org/happydns/struct"
+	"git.happydns.org/happydns/storage"
+	"git.happydns.org/happydns/storage/mysql"
 )
 
 type ResponseWriterPrefix struct {
@@ -56,7 +57,7 @@ func main() {
 	// Read parameters from command line
 	flag.StringVar(&DevProxy, "dev", DevProxy, "Proxify traffic to this host for static assets")
 	var bind = flag.String("bind", ":8081", "Bind port/socket")
-	var dsn = flag.String("dsn", happydns.DSNGenerator(), "DSN to connect to the MySQL server")
+	var dsn = flag.String("dsn", database.DSNGenerator(), "DSN to connect to the MySQL server")
 	var baseURL = flag.String("baseurl", "/", "URL prepended to each URL")
 	flag.StringVar(&api.DefaultNameServer, "defaultns", api.DefaultNameServer, "Adress to the default name server")
 	flag.Parse()
@@ -72,14 +73,16 @@ func main() {
 
 	// Initialize contents
 	log.Println("Opening database...")
-	if err := happydns.DBInit(*dsn); err != nil {
+	if store, err := database.NewMySQLStorage(*dsn); err != nil {
 		log.Fatal("Cannot open the database: ", err)
+	} else {
+		storage.MainStore = store
 	}
-	defer happydns.DBClose()
+	defer storage.MainStore.Close()
 
-	log.Println("Creating database...")
-	if err := happydns.DBCreate(); err != nil {
-		log.Fatal("Cannot create database: ", err)
+	log.Println("Do database migrations...")
+	if err := storage.MainStore.DoMigration(); err != nil {
+		log.Fatal("Cannot migrate database: ", err)
 	}
 
 	// Serve content
