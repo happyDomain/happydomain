@@ -96,13 +96,13 @@ export default {
       } else if (valid) {
         axios
           .post('/api/users', {
-            'email': this.signupForm.email,
-            'password': this.signupForm.password
+            email: this.signupForm.email,
+            password: this.signupForm.password
           })
           .then(
             (response) => {
               this.$bvToast.toast(
-                `Login now`, {
+                'Login now', {
                   title: 'Registration successfully performed!',
                   autoHideDelay: 5000,
                   href: 'login',

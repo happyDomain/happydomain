@@ -120,7 +120,7 @@ export default {
     newRR (idx) {
       axios
         .post('/api/zones/' + this.$route.params.zone + '/rr', {
-          'string': this.rrsFiltered[idx].string
+          string: this.rrsFiltered[idx].string
         })
         .then(
           (response) => {
@@ -136,9 +136,11 @@ export default {
 
     deleteRR (idx) {
       axios
-        .delete('/api/zones/' + this.$route.params.zone + '/rr', { data: {
-          'string': this.rrsFiltered[idx].string
-        } })
+        .delete('/api/zones/' + this.$route.params.zone + '/rr', {
+          data: {
+            string: this.rrsFiltered[idx].string
+          }
+        })
         .then(
           (response) => {
             axios

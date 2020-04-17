@@ -48,7 +48,7 @@ import axios from 'axios'
 function updateSession (t) {
   if (sessionStorage.token !== undefined) {
     t.session = sessionStorage.token
-    axios.defaults.headers.common['Authorization'] = 'Bearer '.concat(sessionStorage.token)
+    axios.defaults.headers.common.Authorization = 'Bearer '.concat(sessionStorage.token)
     axios.get('/api/users/auth')
       .then(
         (response) => {
@@ -56,7 +56,7 @@ function updateSession (t) {
         },
         (error) => {
           t.$bvToast.toast(
-            `Invalid session, your have been logged out: ` + error.response.data.errmsg + `. Please login again.`, {
+            'Invalid session, your have been logged out: ' + error.response.data.errmsg + '. Please login again.', {
               title: 'Authentication timeout',
               autoHideDelay: 5000,
               variant: 'danger',
@@ -103,8 +103,8 @@ export default {
     login (email, password) {
       axios
         .post('/api/users/auth', {
-          'email': email,
-          'password': password
+          email: email,
+          password: password
         })
         .then(
           (response) => {
@@ -116,7 +116,7 @@ export default {
           },
           (error) => {
             this.$bvToast.toast(
-              `An error occurs when trying to login: ` + error.response.data.errmsg, {
+              'An error occurs when trying to login: ' + error.response.data.errmsg, {
                 title: 'Login error',
                 autoHideDelay: 5000,
                 toaster: 'b-toaster-content-right'
