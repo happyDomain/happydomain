@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"git.happydns.org/happydns/api"
+	"git.happydns.org/happydns/config"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -17,22 +18,25 @@ import (
 //go:generate go fmt bindata.go
 
 const StaticDir string = "htdocs/dist"
-var DevProxy string
 
 func init() {
 	api.Router().GET("/", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		if DevProxy == "" {
+		opts := r.Context().Value("opts").(*config.Options)
+
+		if opts.DevProxy == "" {
 			if data, err := Asset("htdocs/dist/index.html"); err != nil {
 				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
 			} else {
 				w.Write(data)
 			}
 		} else {
-			fwd_request(w, r, DevProxy)
+			fwd_request(w, r, opts.DevProxy)
 		}
 	})
 	api.Router().GET("/join", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		if DevProxy == "" {
+		opts := r.Context().Value("opts").(*config.Options)
+
+		if opts.DevProxy == "" {
 			if data, err := Asset("htdocs/dist/index.html"); err != nil {
 				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
 			} else {
@@ -40,11 +44,13 @@ func init() {
 			}
 		} else {
 			r.URL.Path = "/"
-			fwd_request(w, r, DevProxy)
+			fwd_request(w, r, opts.DevProxy)
 		}
 	})
 	api.Router().GET("/login", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		if DevProxy == "" {
+		opts := r.Context().Value("opts").(*config.Options)
+
+		if opts.DevProxy == "" {
 			if data, err := Asset("htdocs/dist/index.html"); err != nil {
 				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
 			} else {
@@ -52,11 +58,13 @@ func init() {
 			}
 		} else {
 			r.URL.Path = "/"
-			fwd_request(w, r, DevProxy)
+			fwd_request(w, r, opts.DevProxy)
 		}
 	})
 	api.Router().GET("/services/*_", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		if DevProxy == "" {
+		opts := r.Context().Value("opts").(*config.Options)
+
+		if opts.DevProxy == "" {
 			if data, err := Asset("htdocs/dist/index.html"); err != nil {
 				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
 			} else {
@@ -64,11 +72,13 @@ func init() {
 			}
 		} else {
 			r.URL.Path = "/"
-			fwd_request(w, r, DevProxy)
+			fwd_request(w, r, opts.DevProxy)
 		}
 	})
 	api.Router().GET("/zones/*_", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		if DevProxy == "" {
+		opts := r.Context().Value("opts").(*config.Options)
+
+		if opts.DevProxy == "" {
 			if data, err := Asset("htdocs/dist/index.html"); err != nil {
 				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
 			} else {
@@ -76,12 +86,14 @@ func init() {
 			}
 		} else {
 			r.URL.Path = "/"
-			fwd_request(w, r, DevProxy)
+			fwd_request(w, r, opts.DevProxy)
 		}
 	})
 
 	api.Router().GET("/css/*_", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		if DevProxy == "" {
+		opts := r.Context().Value("opts").(*config.Options)
+
+		if opts.DevProxy == "" {
 			if data, err := Asset(path.Join(StaticDir, r.URL.Path)); err != nil {
 				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
 			} else {
@@ -89,33 +101,39 @@ func init() {
 				w.Write(data)
 			}
 		} else {
-			fwd_request(w, r, DevProxy)
+			fwd_request(w, r, opts.DevProxy)
 		}
 	})
 	api.Router().GET("/fonts/*_", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		if DevProxy == "" {
+		opts := r.Context().Value("opts").(*config.Options)
+
+		if opts.DevProxy == "" {
 			if data, err := Asset(path.Join(StaticDir, r.URL.Path)); err != nil {
 				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
 			} else {
 				w.Write(data)
 			}
 		} else {
-			fwd_request(w, r, DevProxy)
+			fwd_request(w, r, opts.DevProxy)
 		}
 	})
 	api.Router().GET("/img/*_", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		if DevProxy == "" {
+		opts := r.Context().Value("opts").(*config.Options)
+
+		if opts.DevProxy == "" {
 			if data, err := Asset(path.Join(StaticDir, r.URL.Path)); err != nil {
 				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
 			} else {
 				w.Write(data)
 			}
 		} else {
-			fwd_request(w, r, DevProxy)
+			fwd_request(w, r, opts.DevProxy)
 		}
 	})
 	api.Router().GET("/js/*_", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		if DevProxy == "" {
+		opts := r.Context().Value("opts").(*config.Options)
+
+		if opts.DevProxy == "" {
 			if data, err := Asset(path.Join(StaticDir, r.URL.Path)); err != nil {
 				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
 			} else {
@@ -123,23 +141,27 @@ func init() {
 				w.Write(data)
 			}
 		} else {
-			fwd_request(w, r, DevProxy)
+			fwd_request(w, r, opts.DevProxy)
 		}
 	})
 
 	api.Router().GET("/favicon.ico", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		if DevProxy == "" {
+		opts := r.Context().Value("opts").(*config.Options)
+
+		if opts.DevProxy == "" {
 			if data, err := Asset(path.Join(StaticDir, r.URL.Path)); err != nil {
 				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
 			} else {
 				w.Write(data)
 			}
 		} else {
-			fwd_request(w, r, DevProxy)
+			fwd_request(w, r, opts.DevProxy)
 		}
 	})
 	api.Router().GET("/manifest.json", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		if DevProxy == "" {
+		opts := r.Context().Value("opts").(*config.Options)
+
+		if opts.DevProxy == "" {
 			if data, err := Asset(path.Join(StaticDir, r.URL.Path)); err != nil {
 				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
 			} else {
@@ -147,22 +169,26 @@ func init() {
 				w.Write(data)
 			}
 		} else {
-			fwd_request(w, r, DevProxy)
+			fwd_request(w, r, opts.DevProxy)
 		}
 	})
 	api.Router().GET("/robots.txt", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		if DevProxy == "" {
+		opts := r.Context().Value("opts").(*config.Options)
+
+		if opts.DevProxy == "" {
 			if data, err := Asset(path.Join(StaticDir, r.URL.Path)); err != nil {
 				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
 			} else {
 				w.Write(data)
 			}
 		} else {
-			fwd_request(w, r, DevProxy)
+			fwd_request(w, r, opts.DevProxy)
 		}
 	})
 	api.Router().GET("/service-worker.js", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		if DevProxy == "" {
+		opts := r.Context().Value("opts").(*config.Options)
+
+		if opts.DevProxy == "" {
 			if data, err := Asset(path.Join(StaticDir, r.URL.Path)); err != nil {
 				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
 			} else {
@@ -170,7 +196,7 @@ func init() {
 				w.Write(data)
 			}
 		} else {
-			fwd_request(w, r, DevProxy)
+			fwd_request(w, r, opts.DevProxy)
 		}
 	})
 }

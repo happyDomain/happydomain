@@ -13,6 +13,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/storage"
 )
@@ -27,7 +28,7 @@ func init() {
 	router.DELETE("/api/zones/:zone/rr", apiAuthHandler(zoneHandler(delRR)))
 }
 
-func getZones(u *happydns.User, p httprouter.Params, body io.Reader) Response {
+func getZones(_ *config.Options, u *happydns.User, p httprouter.Params, body io.Reader) Response {
 	if zones, err := storage.MainStore.GetZones(u); err != nil {
 		return APIErrorResponse{
 			err: err,
@@ -39,7 +40,7 @@ func getZones(u *happydns.User, p httprouter.Params, body io.Reader) Response {
 	}
 }
 
-func addZone(u *happydns.User, p httprouter.Params, body io.Reader) Response {
+func addZone(_ *config.Options, u *happydns.User, p httprouter.Params, body io.Reader) Response {
 	var uz happydns.Zone
 	err := json.NewDecoder(body).Decode(&uz)
 	if err != nil {
@@ -77,7 +78,7 @@ func addZone(u *happydns.User, p httprouter.Params, body io.Reader) Response {
 	}
 }
 
-func delZone(zone *happydns.Zone, body io.Reader) Response {
+func delZone(_ *config.Options, zone *happydns.Zone, body io.Reader) Response {
 	if err := storage.MainStore.DeleteZone(zone); err != nil {
 		return APIErrorResponse{
 			err: err,
@@ -89,28 +90,28 @@ func delZone(zone *happydns.Zone, body io.Reader) Response {
 	}
 }
 
-func zoneHandler(f func(*happydns.Zone, io.Reader) Response) func(*happydns.User, httprouter.Params, io.Reader) Response {
-	return func(u *happydns.User, ps httprouter.Params, body io.Reader) Response {
+func zoneHandler(f func(*config.Options, *happydns.Zone, io.Reader) Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) Response {
+	return func(opts *config.Options, u *happydns.User, ps httprouter.Params, body io.Reader) Response {
 		if zone, err := storage.MainStore.GetZoneByDN(u, ps.ByName("zone")); err != nil {
 			return APIErrorResponse{
 				status: http.StatusNotFound,
 				err:    errors.New("Domain not found"),
 			}
 		} else {
-			return f(zone, body)
+			return f(opts, zone, body)
 		}
 	}
 }
 
-func getZone(zone *happydns.Zone, body io.Reader) Response {
+func getZone(_ *config.Options, zone *happydns.Zone, body io.Reader) Response {
 	return APIResponse{
 		response: zone,
 	}
 }
 
-func normalizeNSServer(srv string) string {
+func normalizeNSServer(opts *config.Options, srv string) string {
 	if srv == "" {
-		return DefaultNameServer
+		return opts.DefaultNameServer
 	} else if strings.Index(srv, ":") > -1 {
 		return srv
 	} else {
@@ -118,9 +119,9 @@ func normalizeNSServer(srv string) string {
 	}
 }
 
-func axfrZone(zone *happydns.Zone, body io.Reader) Response {
+func axfrZone(opts *config.Options, zone *happydns.Zone, body io.Reader) Response {
 	d := net.Dialer{}
-	con, err := d.Dial("tcp", normalizeNSServer(zone.Server))
+	con, err := d.Dial("tcp", normalizeNSServer(opts, zone.Server))
 	if err != nil {
 		return APIErrorResponse{
 			status: http.StatusInternalServerError,
@@ -136,7 +137,7 @@ func axfrZone(zone *happydns.Zone, body io.Reader) Response {
 
 	dnscon := &dns.Conn{Conn: con}
 	transfer := &dns.Transfer{Conn: dnscon, TsigSecret: map[string]string{zone.KeyName: zone.Base64KeyBlob()}}
-	c, err := transfer.In(m, normalizeNSServer(zone.Server))
+	c, err := transfer.In(m, normalizeNSServer(opts, zone.Server))
 
 	if err != nil {
 		return APIErrorResponse{
@@ -173,7 +174,7 @@ type uploadedRR struct {
 	RR string `json:"string"`
 }
 
-func addRR(zone *happydns.Zone, body io.Reader) Response {
+func addRR(opts *config.Options, zone *happydns.Zone, body io.Reader) Response {
 	var urr uploadedRR
 	err := json.NewDecoder(body).Decode(&urr)
 	if err != nil {
@@ -201,7 +202,7 @@ func addRR(zone *happydns.Zone, body io.Reader) Response {
 	c.TsigSecret = map[string]string{zone.KeyName: zone.Base64KeyBlob()}
 	m.SetTsig(zone.KeyName, zone.KeyAlgo, 300, time.Now().Unix())
 
-	in, rtt, err := c.Exchange(m, normalizeNSServer(zone.Server))
+	in, rtt, err := c.Exchange(m, normalizeNSServer(opts, zone.Server))
 	if err != nil {
 		return APIErrorResponse{
 			status: http.StatusInternalServerError,
@@ -218,7 +219,7 @@ func addRR(zone *happydns.Zone, body io.Reader) Response {
 	}
 }
 
-func delRR(zone *happydns.Zone, body io.Reader) Response {
+func delRR(opts *config.Options, zone *happydns.Zone, body io.Reader) Response {
 	var urr uploadedRR
 	err := json.NewDecoder(body).Decode(&urr)
 	if err != nil {
@@ -246,7 +247,7 @@ func delRR(zone *happydns.Zone, body io.Reader) Response {
 	c.TsigSecret = map[string]string{zone.KeyName: zone.Base64KeyBlob()}
 	m.SetTsig(zone.KeyName, zone.KeyAlgo, 300, time.Now().Unix())
 
-	in, rtt, err := c.Exchange(m, normalizeNSServer(zone.Server))
+	in, rtt, err := c.Exchange(m, normalizeNSServer(opts, zone.Server))
 	if err != nil {
 		return APIErrorResponse{
 			status: http.StatusInternalServerError,

@@ -12,6 +12,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
+	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/storage"
 )
@@ -59,7 +60,7 @@ func (r APIErrorResponse) WriteResponse(w http.ResponseWriter) {
 	http.Error(w, fmt.Sprintf("{\"errmsg\":%q}", r.err.Error()), r.status)
 }
 
-func apiHandler(f func(httprouter.Params, io.Reader) Response) func(http.ResponseWriter, *http.Request, httprouter.Params) {
+func apiHandler(f func(*config.Options, httprouter.Params, io.Reader) Response) func(http.ResponseWriter, *http.Request, httprouter.Params) {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if addr := r.Header.Get("X-Forwarded-For"); addr != "" {
 			r.RemoteAddr = addr
@@ -72,11 +73,12 @@ func apiHandler(f func(httprouter.Params, io.Reader) Response) func(http.Respons
 			return
 		}
 
-		f(ps, r.Body).WriteResponse(w)
+		opts := r.Context().Value("opts").(*config.Options)
+		f(opts, ps, r.Body).WriteResponse(w)
 	}
 }
 
-func apiAuthHandler(f func(*happydns.User, httprouter.Params, io.Reader) Response) func(http.ResponseWriter, *http.Request, httprouter.Params) {
+func apiAuthHandler(f func(*config.Options, *happydns.User, httprouter.Params, io.Reader) Response) func(http.ResponseWriter, *http.Request, httprouter.Params) {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if addr := r.Header.Get("X-Forwarded-For"); addr != "" {
 			r.RemoteAddr = addr
@@ -110,7 +112,8 @@ func apiAuthHandler(f func(*happydns.User, httprouter.Params, io.Reader) Respons
 				status: http.StatusUnauthorized,
 			}.WriteResponse(w)
 		} else {
-			f(std, ps, r.Body).WriteResponse(w)
+			opts := r.Context().Value("opts").(*config.Options)
+			f(opts, std, ps, r.Body).WriteResponse(w)
 		}
 	}
 }

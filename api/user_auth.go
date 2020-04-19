@@ -8,6 +8,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
+	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/storage"
 )
@@ -16,12 +17,12 @@ var AuthFunc = checkAuth
 
 func init() {
 	router.GET("/api/users/auth", apiAuthHandler(validateAuthToken))
-	router.POST("/api/users/auth", apiHandler(func(ps httprouter.Params, b io.Reader) Response {
+	router.POST("/api/users/auth", apiHandler(func(_ *config.Options, ps httprouter.Params, b io.Reader) Response {
 		return AuthFunc(ps, b)
 	}))
 }
 
-func validateAuthToken(u *happydns.User, _ httprouter.Params, _ io.Reader) Response {
+func validateAuthToken(_ *config.Options, u *happydns.User, _ httprouter.Params, _ io.Reader) Response {
 	return APIResponse{
 		response: u,
 	}

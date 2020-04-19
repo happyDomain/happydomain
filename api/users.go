@@ -7,6 +7,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
+	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/storage"
 )
@@ -33,7 +34,7 @@ type UploadedUser struct {
 	Password string
 }
 
-func registerUser(p httprouter.Params, body io.Reader) Response {
+func registerUser(opts *config.Options, p httprouter.Params, body io.Reader) Response {
 	var uu UploadedUser
 	err := json.NewDecoder(body).Decode(&uu)
 	if err != nil {

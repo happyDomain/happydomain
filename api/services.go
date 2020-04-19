@@ -5,6 +5,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
+	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
 )
 
@@ -13,7 +14,7 @@ func init() {
 	//router.POST("/api/services", apiHandler(newService))
 }
 
-func listServices(_ httprouter.Params, _ io.Reader) Response {
+func listServices(_ *config.Options, _ httprouter.Params, _ io.Reader) Response {
 	if services, err := happydns.GetServices(); err != nil {
 		return APIErrorResponse{
 			err: err,

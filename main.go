@@ -1,14 +1,14 @@
 package main
 
 import (
-	"flag"
+	"context"
 	"log"
 	"net/http"
 	"net/url"
-	"path"
 	"strings"
 
 	"git.happydns.org/happydns/api"
+	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/storage"
 	"git.happydns.org/happydns/storage/mysql"
 )
@@ -33,20 +33,22 @@ func (r ResponseWriterPrefix) Write(z []byte) (int, error) {
 	return r.real.Write(z)
 }
 
-func StripPrefix(prefix string, h http.Handler) http.Handler {
-	if prefix == "" {
-		return h
-	}
+func StripPrefix(opts *config.Options, h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if prefix != "/" && r.URL.Path == "/" {
-			http.Redirect(w, r, prefix+"/", http.StatusFound)
-		} else if p := strings.TrimPrefix(r.URL.Path, prefix); len(p) < len(r.URL.Path) {
+		// Add in the context's request options
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, "opts", opts)
+		r = r.WithContext(ctx)
+
+		if opts.BaseURL != "" && r.URL.Path == "/" {
+			http.Redirect(w, r, opts.BaseURL+"/", http.StatusFound)
+		} else if p := strings.TrimPrefix(r.URL.Path, opts.BaseURL); len(p) < len(r.URL.Path) {
 			r2 := new(http.Request)
 			*r2 = *r
 			r2.URL = new(url.URL)
 			*r2.URL = *r.URL
 			r2.URL.Path = p
-			h.ServeHTTP(ResponseWriterPrefix{w, prefix}, r2)
+			h.ServeHTTP(ResponseWriterPrefix{w, opts.BaseURL}, r2)
 		} else {
 			h.ServeHTTP(w, r)
 		}
@@ -54,26 +56,17 @@ func StripPrefix(prefix string, h http.Handler) http.Handler {
 }
 
 func main() {
-	// Read parameters from command line
-	flag.StringVar(&DevProxy, "dev", DevProxy, "Proxify traffic to this host for static assets")
-	var bind = flag.String("bind", ":8081", "Bind port/socket")
-	var dsn = flag.String("dsn", database.DSNGenerator(), "DSN to connect to the MySQL server")
-	var baseURL = flag.String("baseurl", "/", "URL prepended to each URL")
-	flag.StringVar(&api.DefaultNameServer, "defaultns", api.DefaultNameServer, "Adress to the default name server")
-	flag.Parse()
+	var err error
 
-	// Sanitize options
-	if *baseURL != "/" {
-		tmp := path.Clean(*baseURL)
-		baseURL = &tmp
-	} else {
-		tmp := ""
-		baseURL = &tmp
+	// Load and parse options
+	var opts *config.Options
+	if opts, err = config.ConsolidateConfig(); err != nil {
+		log.Fatal(err)
 	}
 
 	// Initialize contents
 	log.Println("Opening database...")
-	if store, err := database.NewMySQLStorage(*dsn); err != nil {
+	if store, err := database.NewMySQLStorage(opts.DSN); err != nil {
 		log.Fatal("Cannot open the database: ", err)
 	} else {
 		storage.MainStore = store
@@ -81,13 +74,13 @@ func main() {
 	defer storage.MainStore.Close()
 
 	log.Println("Do database migrations...")
-	if err := storage.MainStore.DoMigration(); err != nil {
+	if err = storage.MainStore.DoMigration(); err != nil {
 		log.Fatal("Cannot migrate database: ", err)
 	}
 
 	// Serve content
-	log.Println("Ready, listening on", *bind)
-	if err := http.ListenAndServe(*bind, StripPrefix(*baseURL, api.Router())); err != nil {
+	log.Println("Ready, listening on", opts.Bind)
+	if err = http.ListenAndServe(opts.Bind, StripPrefix(opts, api.Router())); err != nil {
 		log.Fatal("Unable to listen and serve: ", err)
 	}
 }
