@@ -40,7 +40,7 @@ func registerUser(opts *config.Options, p httprouter.Params, body io.Reader) Res
 		return APIErrorResponse{
 			err: err,
 		}
-	} else if err := storage.UsersStore.CreateUser(user); err != nil {
+	} else if err := storage.MainStore.CreateUser(user); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}

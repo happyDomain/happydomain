@@ -101,12 +101,12 @@ func apiAuthHandler(f func(*config.Options, *happydns.User, httprouter.Params, i
 				err:    err,
 				status: http.StatusUnauthorized,
 			}.WriteResponse(w)
-		} else if session, err := storage.UsersStore.GetSession(sessionid); err != nil {
+		} else if session, err := storage.MainStore.GetSession(sessionid); err != nil {
 			APIErrorResponse{
 				err:    err,
 				status: http.StatusUnauthorized,
 			}.WriteResponse(w)
-		} else if std, err := storage.UsersStore.GetUser(int(session.IdUser)); err != nil {
+		} else if std, err := storage.MainStore.GetUser(int(session.IdUser)); err != nil {
 			APIErrorResponse{
 				err:    err,
 				status: http.StatusUnauthorized,

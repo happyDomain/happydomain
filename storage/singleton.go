@@ -1,6 +1,3 @@
 package storage
 
-var (
-	MainStore  Storage
-	UsersStore UserStorage
-)
+var MainStore Storage
