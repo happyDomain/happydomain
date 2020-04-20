@@ -1,8 +1,8 @@
 <template>
   <div>
     <div class="text-light mb-5" style="background-image: radial-gradient(circle at top left,rgba(255,255,128,0.5) 0%,rgba(128,128,128,0.4) 58%),url(/img/ian-dooley-TevqnfbI0Zc-unsplash.jpg); background-size: cover;">
-      <h1 class="text-center display-1" style="padding-top: 20vh; padding-bottom: 5vh; text-shadow: white 0px 0px 15px">
-        HappyDNS
+      <h1 class="text-center display-1" style="padding-top: 20vh; padding-bottom: 5vh; text-shadow: white 0px 0px 10px; font-family: 'Fortheenas01';font-weight: bold">
+        happy<span style="font-family: 'Fortheenas01 Bold';margin-left:.1em;">DNS</span>
       </h1>
       <h2 class="text-center d-1" style="padding-bottom: 30vh; text-shadow: white 0px 0px 10px">
         Finally a simple interface for domain names

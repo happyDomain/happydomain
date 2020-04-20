@@ -1,8 +1,8 @@
 <template>
   <div id="app">
     <b-navbar style="border-bottom: 3px solid #aee64e; box-shadow: 0 0 12px 0 #08334833">
-      <b-navbar-brand class="navbar-brand" to="/">
-        <img alt="HappyDNS" src="<%= BASE_URL %>img/logo.png" style="height: 30px">
+      <b-navbar-brand class="navbar-brand" to="/" style="font-family: 'Fortheenas01';font-weight:bold;">
+        happy<span style="font-family: 'Fortheenas01 Bold';margin-left:.1em;">DNS</span>
       </b-navbar-brand>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#adminMenu" aria-controls="adminMenu" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -30,7 +30,7 @@
       <b-container>
         <b-row>
           <b-col md="4">
-            &copy; HappyDNS 2019-2020 All rights reserved
+            &copy; <span style="font-family: 'Fortheenas01';font-weight:bold;">happy<span style="font-family: 'Fortheenas01 Bold';margin-left:.1em;">DNS</span></span> 2019-2020 All rights reserved
           </b-col>
           <b-col md="4">
           </b-col>

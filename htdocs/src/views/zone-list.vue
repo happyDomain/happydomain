@@ -1,6 +1,6 @@
 <template>
   <b-container class="mt-4">
-    <h1 class="text-center mb-4">Welcome to HappyDNS!</h1>
+    <h1 class="text-center mb-4">Welcome to <span style="font-family: 'Fortheenas01';font-weight:bold;">happy<span style="font-family: 'Fortheenas01 Bold';margin-left:.1em;">DNS</span></span>!</h1>
     <b-row>
     <div class="offset-md-2 col-md-8">
     <b-list-group>
