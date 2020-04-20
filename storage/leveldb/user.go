@@ -65,7 +65,7 @@ func (s *LevelDBStorage) UserExists(email string) bool {
 }
 
 func (s *LevelDBStorage) CreateUser(u *happydns.User) error {
-	key, id, err := s.findKey("user-")
+	key, id, err := s.findInt63Key("user-")
 	if err != nil {
 		return err
 	}
@@ -83,6 +83,10 @@ func (s *LevelDBStorage) DeleteUser(u *happydns.User) error {
 }
 
 func (s *LevelDBStorage) ClearUsers() error {
+	if err := s.ClearSessions(); err != nil {
+		return err
+	}
+
 	tx, err := s.db.OpenTransaction()
 	if err != nil {
 		return err

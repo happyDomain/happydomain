@@ -1,9 +1,10 @@
 package database // import "happydns.org/storage/leveldb"
 
 import (
+	crand "crypto/rand"
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	mrand "math/rand"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/iterator"
@@ -53,11 +54,28 @@ func (s *LevelDBStorage) put(key string, v interface{}) error {
 	return s.db.Put([]byte(key), data, nil)
 }
 
-func (s *LevelDBStorage) findKey(prefix string) (key string, id int64, err error) {
+func (s *LevelDBStorage) findInt63Key(prefix string) (key string, id int64, err error) {
 	found := true
 	for found {
-		id = rand.Int63()
+		id = mrand.Int63()
 		key = fmt.Sprintf("%s%d", prefix, id)
+
+		found, err = s.db.Has([]byte(key), nil)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (s *LevelDBStorage) findBytesKey(prefix string, len int) (key string, id []byte, err error) {
+	id = make([]byte, len)
+	found := true
+	for found {
+		if _, err = crand.Read(id); err != nil {
+			return
+		}
+		key = fmt.Sprintf("%s%x", prefix, id)
 
 		found, err = s.db.Has([]byte(key), nil)
 		if err != nil {

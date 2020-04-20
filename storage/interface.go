@@ -12,7 +12,7 @@ type Storage interface {
 	CreateSession(session *happydns.Session) error
 	UpdateSession(session *happydns.Session) error
 	DeleteSession(session *happydns.Session) error
-	ClearSession() error
+	ClearSessions() error
 
 	GetUsers() (happydns.Users, error)
 	GetUser(id int) (*happydns.User, error)
@@ -37,6 +37,12 @@ type Storage interface {
 type UserStorage interface {
 	DoMigration() error
 	Close() error
+
+	GetSession(id []byte) (*happydns.Session, error)
+	CreateSession(session *happydns.Session) error
+	UpdateSession(session *happydns.Session) error
+	DeleteSession(session *happydns.Session) error
+	ClearSessions() error
 
 	GetUsers() (happydns.Users, error)
 	GetUser(id int) (*happydns.User, error)

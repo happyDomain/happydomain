@@ -34,7 +34,7 @@ func (s *MySQLStorage) DeleteSession(session *happydns.Session) error {
 	return err
 }
 
-func (s *MySQLStorage) ClearSession() error {
+func (s *MySQLStorage) ClearSessions() error {
 	_, err := s.db.Exec("DELETE FROM user_sessions")
 	return err
 }

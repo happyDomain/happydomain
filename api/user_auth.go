@@ -64,7 +64,7 @@ func dummyAuth(_ httprouter.Params, body io.Reader) Response {
 			}
 		}
 
-		if err := storage.MainStore.CreateSession(session); err != nil {
+		if err := storage.UsersStore.CreateSession(session); err != nil {
 			return APIErrorResponse{
 				err: err,
 			}
@@ -105,7 +105,7 @@ func checkAuth(_ httprouter.Params, body io.Reader) Response {
 			}
 		}
 
-		if err := storage.MainStore.CreateSession(session); err != nil {
+		if err := storage.UsersStore.CreateSession(session); err != nil {
 			return APIErrorResponse{
 				err: err,
 			}
