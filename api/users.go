@@ -13,20 +13,7 @@ import (
 )
 
 func init() {
-	router.GET("/api/users", apiHandler(listUsers))
 	router.POST("/api/users", apiHandler(registerUser))
-}
-
-func listUsers(_ httprouter.Params, _ io.Reader) Response {
-	if users, err := storage.MainStore.GetUsers(); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	} else {
-		return APIResponse{
-			response: users,
-		}
-	}
 }
 
 type UploadedUser struct {

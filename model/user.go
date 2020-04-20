@@ -8,33 +8,46 @@ import (
 )
 
 type User struct {
-	Id               int64  `json:"id"`
-	Email            string `json:"email"`
+	Id               int64
+	Email            string
 	Password         []byte
 	Salt             []byte
-	RegistrationTime *time.Time `json:"registration_time"`
+	RegistrationTime *time.Time
 }
 
 type Users []*User
 
 func GenPassword(password string, salt []byte) []byte {
-	return hmac.New(sha512.New512_224, []byte(password)).Sum([]byte(salt))
+	return hmac.New(sha512.New512_224, []byte(password)).Sum(salt)
 }
 
-func NewUser(email string, password string) (*User, error) {
-	salt := make([]byte, 64)
-	if _, err := rand.Read(salt); err != nil {
-		return nil, err
-	}
-	hashedpass := GenPassword(password, salt)
+func NewUser(email string, password string) (u *User, err error) {
 	t := time.Now()
-	return &User{
+
+	u = &User{
 		Id:               0,
 		Email:            email,
-		Password:         hashedpass,
-		Salt:             salt,
 		RegistrationTime: &t,
-	}, nil
+	}
+
+	err = u.DefinePassword(password)
+
+	return
+}
+
+// DefinePassword computes the expected hash for the given password and also
+// renew the User's Salt.
+func (u *User) DefinePassword(password string) error {
+	// Renew salt
+	u.Salt = make([]byte, 64)
+	if _, err := rand.Read(u.Salt); err != nil {
+		return err
+	}
+
+	// Compute password hash
+	u.Password = GenPassword(password, u.Salt)
+
+	return nil
 }
 
 func (u *User) CheckAuth(password string) bool {

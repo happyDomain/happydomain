@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 
@@ -22,9 +23,19 @@ func init() {
 	}))
 }
 
+type DisplayUser struct {
+	Id               int64      `json:"id"`
+	Email            string     `json:"email"`
+	RegistrationTime *time.Time `json:"registration_time,omitempty"`
+}
+
 func validateAuthToken(_ *config.Options, u *happydns.User, _ httprouter.Params, _ io.Reader) Response {
 	return APIResponse{
-		response: u,
+		response: &DisplayUser{
+			Id:               u.Id,
+			Email:            u.Email,
+			RegistrationTime: u.RegistrationTime,
+		},
 	}
 }
 
@@ -83,7 +94,7 @@ func checkAuth(_ httprouter.Params, body io.Reader) Response {
 		}
 	} else if !user.CheckAuth(lf.Password) {
 		return APIErrorResponse{
-			err:    errors.New(`{"status": "Invalid username or password"}`),
+			err:    errors.New(`Invalid username or password`),
 			status: http.StatusUnauthorized,
 		}
 	} else {
