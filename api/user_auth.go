@@ -52,7 +52,7 @@ func dummyAuth(_ httprouter.Params, body io.Reader) Response {
 		}
 	}
 
-	if user, err := storage.MainStore.GetUserByEmail(lf.Email); err != nil {
+	if user, err := storage.UsersStore.GetUserByEmail(lf.Email); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
@@ -88,7 +88,7 @@ func checkAuth(_ httprouter.Params, body io.Reader) Response {
 		}
 	}
 
-	if user, err := storage.MainStore.GetUserByEmail(lf.Email); err != nil {
+	if user, err := storage.UsersStore.GetUserByEmail(lf.Email); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}

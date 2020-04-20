@@ -2,7 +2,7 @@
 
 package database // import "happydns.org/database"
 
-const schemaVersion = 1
+const schemaVersion = 2
 
 var schemaRevisions = map[uint16]string{
 	1: `CREATE TABLE schema_version (
@@ -35,5 +35,20 @@ CREATE TABLE zones (
   storage_facility ENUM("live", "history") NOT NULL DEFAULT "live",
   FOREIGN KEY(id_user) REFERENCES users(id_user)
 ) DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+`,
+	2: `ALTER TABLE user_sessions
+  DROP FOREIGN KEY user_sessions_ibfk_1;
+
+ALTER TABLE zones
+  DROP FOREIGN KEY zones_ibfk_1;
+
+ALTER TABLE users
+  CHANGE id_user id_user BIGINT NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE user_sessions
+  CHANGE id_user id_user BIGINT NOT NULL;
+
+ALTER TABLE zones
+  CHANGE id_user id_user BIGINT NOT NULL;
 `,
 }

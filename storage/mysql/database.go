@@ -72,6 +72,7 @@ func (s *MySQLStorage) DoMigration() error {
 		}
 
 		if err := tx.Commit(); err != nil {
+			tx.Rollback()
 			return err
 		}
 	}

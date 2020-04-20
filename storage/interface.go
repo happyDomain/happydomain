@@ -33,3 +33,17 @@ type Storage interface {
 	DeleteZone(z *happydns.Zone) error
 	ClearZones() error
 }
+
+type UserStorage interface {
+	DoMigration() error
+	Close() error
+
+	GetUsers() (happydns.Users, error)
+	GetUser(id int) (*happydns.User, error)
+	GetUserByEmail(email string) (*happydns.User, error)
+	UserExists(email string) bool
+	CreateUser(user *happydns.User) error
+	UpdateUser(user *happydns.User) error
+	DeleteUser(user *happydns.User) error
+	ClearUsers() error
+}

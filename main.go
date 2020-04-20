@@ -3,14 +3,17 @@ package main
 import (
 	"context"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"git.happydns.org/happydns/api"
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/storage"
-	"git.happydns.org/happydns/storage/mysql"
+	leveldb "git.happydns.org/happydns/storage/leveldb"
+	mysql "git.happydns.org/happydns/storage/mysql"
 )
 
 type ResponseWriterPrefix struct {
@@ -58,6 +61,8 @@ func StripPrefix(opts *config.Options, h http.Handler) http.Handler {
 func main() {
 	var err error
 
+	rand.Seed(time.Now().UTC().UnixNano())
+
 	// Load and parse options
 	var opts *config.Options
 	if opts, err = config.ConsolidateConfig(); err != nil {
@@ -66,16 +71,26 @@ func main() {
 
 	// Initialize contents
 	log.Println("Opening database...")
-	if store, err := database.NewMySQLStorage(opts.DSN); err != nil {
+	if store, err := mysql.NewMySQLStorage(opts.DSN); err != nil {
 		log.Fatal("Cannot open the database: ", err)
 	} else {
 		storage.MainStore = store
 	}
 	defer storage.MainStore.Close()
 
+	if store, err := leveldb.NewLevelDBStorage("happydns.db"); err != nil {
+		log.Fatal("Cannot open the database: ", err)
+	} else {
+		storage.UsersStore = store
+	}
+	defer storage.UsersStore.Close()
+
 	log.Println("Do database migrations...")
 	if err = storage.MainStore.DoMigration(); err != nil {
 		log.Fatal("Cannot migrate database: ", err)
+	}
+	if err = storage.UsersStore.DoMigration(); err != nil {
+		log.Fatal("Cannot migrate users database: ", err)
 	}
 
 	// Serve content
