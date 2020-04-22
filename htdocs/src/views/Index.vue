@@ -4,7 +4,7 @@
 
 <script>
 import Home from '@/views/Home'
-import ZoneList from '@/views/zone-list'
+import ZoneList from '@/views/domain-list'
 
 export default {
   data () {

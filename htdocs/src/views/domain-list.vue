@@ -5,10 +5,10 @@
     <div class="offset-md-2 col-md-8">
     <b-list-group>
       <b-list-group-item v-if="loading" class="text-center">
-        <b-spinner variant="secondary" label="Spinning"></b-spinner> Retrieving your zones...
+        <b-spinner variant="secondary" label="Spinning"></b-spinner> Retrieving your domains...
       </b-list-group-item>
-      <b-list-group-item :to="'zones/' + zone.domain" v-for="(zone, index) in zones" v-bind:key="index" class="d-flex justify-content-between align-items-center">
-        {{ zone.domain }}
+      <b-list-group-item :to="'domains/' + domain.domain" v-for="(domain, index) in domains" v-bind:key="index" class="d-flex justify-content-between align-items-center">
+        {{ domain.domain }}
         <b-badge variant="success">OK</b-badge>
       </b-list-group-item>
     </b-list-group>
@@ -19,9 +19,9 @@
             <b-input-group-prepend>
               <b-icon icon="plus"></b-icon>
             </b-input-group-prepend>
-            <input placeholder="my.new.zone" v-model="newForm.domain" style="border:none; flex: 1 1 auto;">
+            <input placeholder="my.new.domain" v-model="newForm.domain" style="border:none; flex: 1 1 auto;">
             <b-input-group-append v-show="newForm.domain.length">
-              <b-button type="submit" variant="outline-primary">Add new zone</b-button>
+              <b-button type="submit" variant="outline-primary">Add new domain</b-button>
             </b-input-group-append>
           </b-input-group>
         </b-list-group-item>
@@ -31,9 +31,9 @@
       </b-row>
 
     <b-modal
-      id="newZoneModal"
+      id="newDomainModal"
       ref="modal"
-      title="Attach new zone"
+      title="Attach new domain"
       @show="resetModal"
       @shown="modalShown"
       @ok="handleOk"
@@ -115,25 +115,25 @@ export default {
       domainNameState: null,
       loading: true,
       newForm: { domain: '', storage_facility: 'live' },
-      zones: []
+      domains: []
     }
   },
 
   mounted () {
     setTimeout(() =>
       axios
-        .get('/api/zones')
-        .then(response => { this.zones = response.data; this.loading = false; return true })
+        .get('/api/domains')
+        .then(response => { this.domains = response.data; this.loading = false; return true })
     , 100)
   },
 
   methods: {
-    show (zone) {
-      this.$router.push('/zones/' + zone.domain)
+    show (domain) {
+      this.$router.push('/domains/' + domain.domain)
     },
 
     showModal () {
-      this.$bvModal.show('newZoneModal')
+      this.$bvModal.show('newDomainModal')
     },
 
     modalShown () {
@@ -162,9 +162,9 @@ export default {
       this.handleSubmit()
     },
 
-    attachZone () {
+    attachDomain () {
       axios
-        .post('/api/zones', {
+        .post('/api/domains', {
           domain: this.newForm.domain,
           server: this.newForm.server,
           keyname: this.newForm.keyname,
@@ -173,11 +173,11 @@ export default {
         })
         .then(
           (response) => {
-            if (this.zones == null) this.zones = []
-            this.zones.push(response.data)
+            if (this.domains == null) this.domains = []
+            this.domains.push(response.data)
           },
           (error) => {
-            alert('Unable to attach the given zone: ' + error.response.data.errmsg)
+            alert('Unable to attach the given domain: ' + error.response.data.errmsg)
           }
         )
     },
@@ -187,7 +187,7 @@ export default {
         return
       }
 
-      this.attachZone()
+      this.attachDomain()
 
       this.$nextTick(() => {
         this.$refs.modal.hide()

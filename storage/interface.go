@@ -8,6 +8,16 @@ type Storage interface {
 	DoMigration() error
 	Close() error
 
+	GetDomains(u *happydns.User) (happydns.Domains, error)
+	GetDomain(u *happydns.User, id int) (*happydns.Domain, error)
+	GetDomainByDN(u *happydns.User, dn string) (*happydns.Domain, error)
+	DomainExists(dn string) bool
+	CreateDomain(u *happydns.User, z *happydns.Domain) error
+	UpdateDomain(z *happydns.Domain) error
+	UpdateDomainOwner(z *happydns.Domain, newOwner *happydns.User) error
+	DeleteDomain(z *happydns.Domain) error
+	ClearDomains() error
+
 	GetSession(id []byte) (*happydns.Session, error)
 	CreateSession(session *happydns.Session) error
 	UpdateSession(session *happydns.Session) error
@@ -22,14 +32,4 @@ type Storage interface {
 	UpdateUser(user *happydns.User) error
 	DeleteUser(user *happydns.User) error
 	ClearUsers() error
-
-	GetZones(u *happydns.User) (happydns.Zones, error)
-	GetZone(u *happydns.User, id int) (*happydns.Zone, error)
-	GetZoneByDN(u *happydns.User, dn string) (*happydns.Zone, error)
-	ZoneExists(dn string) bool
-	CreateZone(u *happydns.User, z *happydns.Zone) error
-	UpdateZone(z *happydns.Zone) error
-	UpdateZoneOwner(z *happydns.Zone, newOwner *happydns.User) error
-	DeleteZone(z *happydns.Zone) error
-	ClearZones() error
 }

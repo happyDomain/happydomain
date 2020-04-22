@@ -5,8 +5,8 @@
       <b-button-group v-show="rrs && rrs.length" class="float-right ml-2" size="sm" variant="secondary">
         <b-button :pressed.sync="showDNSSEC">DNSSEC</b-button>
       </b-button-group>
-      <router-link :to="'/zones/' + zone.domain" class="btn"><b-icon icon="chevron-left"></b-icon></router-link>
-      {{ zone.domain }}
+      <router-link :to="'/domains/' + domain.domain" class="btn"><b-icon icon="chevron-left"></b-icon></router-link>
+      {{ domain.domain }}
       <small class="text-muted">Resource Records <span v-if="rrs && rrs.length">({{ rrsFiltered.length }}/{{ rrs.length }})</span></small>
     </h2>
     <b-alert variant="danger" :show="error.length != 0"><strong>Error:</strong> {{ error }}</b-alert>
@@ -74,7 +74,7 @@ export default {
       expandrrs: {},
       rrs: [],
       query: '',
-      zone: {}
+      domain: {}
     }
   },
 
@@ -94,13 +94,13 @@ export default {
   },
 
   mounted () {
-    var myzone = this.$route.params.zone
+    var mydomain = this.$route.params.domain
     axios
-      .get('/api/zones/' + myzone)
-      .then(response => (this.zone = response.data))
+      .get('/api/domains/' + mydomain)
+      .then(response => (this.domain = response.data))
 
     axios
-      .get('/api/zones/' + myzone + '/rr')
+      .get('/api/domains/' + mydomain + '/rr')
       .then(
         (response) => (this.rrs = response.data),
         (error) => (this.error = error.response.data.errmsg)
@@ -119,24 +119,24 @@ export default {
 
     newRR (idx) {
       axios
-        .post('/api/zones/' + this.$route.params.zone + '/rr', {
+        .post('/api/domains/' + this.$route.params.domain + '/rr', {
           string: this.rrsFiltered[idx].string
         })
         .then(
           (response) => {
             axios
-              .get('/api/zones/' + this.$route.params.zone + '/rr')
+              .get('/api/domains/' + this.$route.params.domain + '/rr')
               .then(response => (this.rrs = response.data))
           },
           (error) => {
-            alert('An error occurs when trying to add RR to zone: ' + error.response.data.errmsg)
+            alert('An error occurs when trying to add RR to the zone: ' + error.response.data.errmsg)
           }
         )
     },
 
     deleteRR (idx) {
       axios
-        .delete('/api/zones/' + this.$route.params.zone + '/rr', {
+        .delete('/api/domains/' + this.$route.params.domain + '/rr', {
           data: {
             string: this.rrsFiltered[idx].string
           }
@@ -144,11 +144,11 @@ export default {
         .then(
           (response) => {
             axios
-              .get('/api/zones/' + this.$route.params.zone + '/rr')
+              .get('/api/domains/' + this.$route.params.domain + '/rr')
               .then(response => (this.rrs = response.data))
           },
           (error) => {
-            alert('An error occurs when trying to delete RR in zone: ' + error.response.data.errmsg)
+            alert('An error occurs when trying to delete RR in the zone: ' + error.response.data.errmsg)
           }
         )
     }

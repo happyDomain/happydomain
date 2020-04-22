@@ -26,39 +26,39 @@ const routes = [
     }
   },
   {
-    path: '/zones',
-    name: 'zones',
+    path: '/domains',
+    name: 'domains',
     component: function () {
-      return import(/* webpackChunkName: "zone-list" */ '../views/zone-list.vue')
+      return import(/* webpackChunkName: "domain-list" */ '../views/domain-list.vue')
     }
   },
   {
-    path: '/zones/:zone',
+    path: '/domains/:zone',
     component: function () {
-      return import(/* webpackChunkName: "zone" */ '../views/zone.vue')
+      return import(/* webpackChunkName: "domain" */ '../views/domain.vue')
     },
     children: [
       {
         path: '',
-        name: 'zone',
+        name: 'domain-source',
         component: function () {
-          return import(/* webpackChunkName: "zone" */ '../views/zone-details.vue')
+          return import(/* webpackChunkName: "domain-source" */ '../views/domain-source.vue')
         }
       },
       {
         path: 'services',
         name: 'zone-services',
         component: function () {
-          return import(/* webpackChunkName: "zone" */ '../views/zone-services.vue')
+          return import(/* webpackChunkName: "zone-services" */ '../views/zone-services.vue')
         }
       }
     ]
   },
   {
-    path: '/zones/:zone/records',
+    path: '/zones/:domain/records',
     name: 'zone-records',
     component: function () {
-      return import(/* webpackChunkName: "zone" */ '../views/zone-records.vue')
+      return import(/* webpackChunkName: "zone-records" */ '../views/zone-records.vue')
     }
   }
 ]
