@@ -13,6 +13,8 @@ import (
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/storage"
 	leveldb "git.happydns.org/happydns/storage/leveldb"
+
+	_ "git.happydns.org/happydns/sources/ddns"
 )
 
 type ResponseWriterPrefix struct {

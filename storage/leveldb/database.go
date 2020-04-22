@@ -57,7 +57,8 @@ func (s *LevelDBStorage) put(key string, v interface{}) error {
 func (s *LevelDBStorage) findInt63Key(prefix string) (key string, id int64, err error) {
 	found := true
 	for found {
-		id = mrand.Int63()
+		// max random id is 2^53 to fit on float64 without loosing precision (JSON limitation)
+		id = mrand.Int63n(1 << 53)
 		key = fmt.Sprintf("%s%d", prefix, id)
 
 		found, err = s.db.Has([]byte(key), nil)

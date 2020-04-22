@@ -5,9 +5,9 @@ import (
 )
 
 type Domain struct {
-	Id         int64 `json:"id"`
-	IdUser     int64
-	IdSource   int64
+	Id         int64  `json:"id"`
+	IdUser     int64  `json:"id_owner"`
+	IdSource   int64  `json:"id_source"`
 	DomainName string `json:"domain"`
 }
 
@@ -21,10 +21,10 @@ func (d *Domain) NormalizedNSServer() string {
 	}
 }
 
-func NewDomain(u *User, s Source, dn string) (d *Domain) {
+func NewDomain(u *User, st *SourceType, dn string) (d *Domain) {
 	d = &Domain{
-		IdUser: u.Id,
-		//IdSource:   s.GetId(),
+		IdUser:     u.Id,
+		IdSource:   st.Id,
 		DomainName: dn,
 	}
 

@@ -24,6 +24,14 @@ type Storage interface {
 	DeleteSession(session *happydns.Session) error
 	ClearSessions() error
 
+	GetSourceTypes(u *happydns.User) ([]happydns.SourceType, error)
+	GetSource(u *happydns.User, id int64) (*happydns.SourceCombined, error)
+	CreateSource(u *happydns.User, s happydns.Source, comment string) (*happydns.SourceCombined, error)
+	UpdateSource(s *happydns.SourceCombined) error
+	UpdateSourceOwner(s *happydns.SourceCombined, newOwner *happydns.User) error
+	DeleteSource(s *happydns.SourceType) error
+	ClearSources() error
+
 	GetUsers() (happydns.Users, error)
 	GetUser(id int) (*happydns.User, error)
 	GetUserByEmail(email string) (*happydns.User, error)
