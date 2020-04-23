@@ -9,11 +9,23 @@ import (
 
 type SourceCreator func() happydns.Source
 
-var sources map[string]SourceCreator = map[string]SourceCreator{}
+type Source struct {
+	Creator SourceCreator
+	Infos   SourceInfos
+}
 
-func RegisterSource(name string, creator SourceCreator) {
+var sources map[string]Source = map[string]Source{}
+
+func RegisterSource(name string, creator SourceCreator, infos SourceInfos) {
 	log.Println("Registering new source:", name)
-	sources[name] = creator
+	sources[name] = Source{
+		creator,
+		infos,
+	}
+}
+
+func GetSources() *map[string]Source {
+	return &sources
 }
 
 func FindSource(name string) (happydns.Source, error) {
@@ -22,5 +34,5 @@ func FindSource(name string) (happydns.Source, error) {
 		return nil, fmt.Errorf("Unable to find corresponding source for `%s`.", name)
 	}
 
-	return src(), nil
+	return src.Creator(), nil
 }

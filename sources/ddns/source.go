@@ -12,10 +12,10 @@ import (
 )
 
 type DDNSServer struct {
-	Server  string `json:"server,omitempty"`
-	KeyName string `json:"keyname,omitempty"`
-	KeyAlgo string `json:"algorithm,omitempty"`
-	KeyBlob []byte `json:"keyblob,omitempty"`
+	Server  string `json:"server,omitempty" happydns:"label=Server,placeholder=127.0.0.1"`
+	KeyName string `json:"keyname,omitempty" happydns:"label=Key Name,placeholder=ddns."`
+	KeyAlgo string `json:"algorithm,omitempty" happydns:"label=Key Algorithm,default=hmac-sha256.,choices=hmac-md5.sig-alg.reg.int.;hmac-sha1.;hmac-sha224.;hmac-sha256.;hmac-sha384.;hmac-sha512."`
+	KeyBlob []byte `json:"keyblob,omitempty" happydns:"label=Secret Key,placeholder=a0b1c2d3e4f5=="`
 }
 
 func (s *DDNSServer) base64KeyBlob() string {
@@ -111,5 +111,8 @@ func (s *DDNSServer) DeleteRR(domain *happydns.Domain, rr dns.RR) error {
 func init() {
 	sources.RegisterSource("git.happydns.org/happydns/sources/ddns/DDNSServer", func() happydns.Source {
 		return &DDNSServer{}
+	}, sources.SourceInfos{
+		Name:        "Dynamic DNS",
+		Description: "If your zone is hosted on an authoritative name server that support Dynamic DNS (RFC 2136), such as Bind, Knot, ...",
 	})
 }
