@@ -21,6 +21,9 @@ type field struct {
 	Placeholder string   `json:"placeholder,omitempty"`
 	Default     string   `json:"default,omitempty"`
 	Choices     []string `json:"choices,omitempty"`
+	Required    bool     `json:"required,omitempty"`
+	Secret      bool     `json:"secret,omitempty"`
+	Description string   `json:"description,omitempty"`
 }
 
 func getSourceSpecs(_ *config.Options, p httprouter.Params, body io.Reader) Response {
@@ -66,11 +69,20 @@ func getSourceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Respo
 					f.Placeholder = kv[1]
 				case "default":
 					f.Default = kv[1]
+				case "description":
+					f.Description = kv[1]
 				case "choices":
 					f.Choices = strings.Split(kv[1], ";")
 				}
 			} else {
-				f.Label = kv[0]
+				switch strings.ToLower(kv[0]) {
+				case "required":
+					f.Required = true
+				case "secret":
+					f.Secret = true
+				default:
+					f.Label = kv[0]
+				}
 			}
 		}
 		fields = append(fields, f)
