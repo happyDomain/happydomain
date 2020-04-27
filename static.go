@@ -89,6 +89,20 @@ func init() {
 			fwd_request(w, r, opts.DevProxy)
 		}
 	})
+	api.Router().GET("/sources/*_", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		opts := r.Context().Value("opts").(*config.Options)
+
+		if opts.DevProxy == "" {
+			if data, err := Asset("htdocs/dist/index.html"); err != nil {
+				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
+			} else {
+				w.Write(data)
+			}
+		} else {
+			r.URL.Path = "/"
+			fwd_request(w, r, opts.DevProxy)
+		}
+	})
 	api.Router().GET("/zones/*_", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		opts := r.Context().Value("opts").(*config.Options)
 

@@ -27,58 +27,63 @@
   </div>
 
   <div v-if="step === 1">
-    <h3>
-      <button type="button" @click="step--" class="btn font-weight-bolder"><b-icon icon="chevron-left"></b-icon></button>
-      {{ sources[source_specs_selected].name }}
-    </h3>
+    <b-row>
+      <b-col lg="4" md="5">
+        <h3>
+          {{ sources[source_specs_selected].name }}
+        </h3>
 
-    <p class="text-muted">{{ sources[source_specs_selected].description }}</p>
+        <p class="text-muted text-justify">{{ sources[source_specs_selected].description }}</p>
+      </b-col>
 
-    <form @submit.stop.prevent="submitNewSource" v-if="!loading">
+      <b-col lg="8" md="7">
+        <form @submit.stop.prevent="submitNewSource" v-if="!loading">
 
-      <b-form-group
-        id="input-spec-name"
-        label="Name your source:"
-        label-for="source-name"
-        description="Give an explicit name in order to easily find this service."
-        >
-        <b-form-input
-          id="source-name"
-          v-model="new_source_name"
-          required
-          :placeholder="sources[source_specs_selected].name + ' 1'"
-          ></b-form-input>
-      </b-form-group>
+          <b-form-group
+            id="input-spec-name"
+            label="Name your source:"
+            label-for="source-name"
+            description="Give an explicit name in order to easily find this service."
+            >
+            <b-form-input
+              id="source-name"
+              v-model="new_source_name"
+              required
+              :placeholder="sources[source_specs_selected].name + ' 1'"
+              ></b-form-input>
+          </b-form-group>
 
-      <b-form-group
-        v-for="(spec, index) in source_specs"
-        v-bind:key="index"
-        :id="'input-spec-' + index"
-        :label="spec.label"
-        :label-for="'spec-' + index"
-        :description="spec.description"
-        >
-        <b-form-input
-          :id="'spec-' + index"
-          v-model="spec.value"
-          :required="spec.required !== undefined && spec.required"
-          :placeholder="spec.placeholder"
-          v-if="spec.choices === undefined"
-          ></b-form-input>
-        <b-form-select
-          :id="'spec-' + index"
-          v-model="spec.value"
-          :required="spec.required !== undefined && spec.required"
-          :options="spec.choices"
-          v-if="spec.choices !== undefined"
-          ></b-form-select>
-      </b-form-group>
+          <b-form-group
+            v-for="(spec, index) in source_specs"
+            v-bind:key="index"
+            :id="'input-spec-' + index"
+            :label="spec.label"
+            :label-for="'spec-' + index"
+            :description="spec.description"
+            >
+            <b-form-input
+              :id="'spec-' + index"
+              v-model="spec.value"
+              :required="spec.required !== undefined && spec.required"
+              :placeholder="spec.placeholder"
+              v-if="spec.choices === undefined"
+              ></b-form-input>
+            <b-form-select
+              :id="'spec-' + index"
+              v-model="spec.value"
+              :required="spec.required !== undefined && spec.required"
+              :options="spec.choices"
+              v-if="spec.choices !== undefined"
+              ></b-form-select>
+          </b-form-group>
 
-      <div class="ml-3 mr-3">
-        <b-button type="button" variant="secondary" @click="step--">&lt; Use another source</b-button>
-        <b-button class="float-right" type="submit" variant="primary">Add this source &gt;</b-button>
-      </div>
-    </form>
+          <div class="ml-3 mr-3">
+            <b-button type="button" variant="secondary" @click="step--">&lt; Use another source</b-button>
+            <b-button class="float-right" type="submit" variant="primary">Add this source &gt;</b-button>
+          </div>
+        </form>
+      </b-col>
+    </b-row>
   </div>
 
 </b-container>
