@@ -1,7 +1,10 @@
 package api
 
 import (
+	"bytes"
+	"errors"
 	"io"
+	"net/http"
 	"reflect"
 	"strings"
 
@@ -40,10 +43,28 @@ func getSourceSpecs(_ *config.Options, p httprouter.Params, body io.Reader) Resp
 	}
 }
 
+func getSourceSpecImg(ssid string) Response {
+	if cnt, ok := sources.Icons[strings.TrimSuffix(ssid, ".png")]; ok {
+		return &FileResponse{
+			contentType: "image/png",
+			content:     bytes.NewBuffer(cnt),
+		}
+	} else {
+		return APIErrorResponse{
+			status: http.StatusNotFound,
+			err:    errors.New("Icon not found."),
+		}
+	}
+}
+
 func getSourceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Response {
 	ssid := string(p.ByName("ssid"))
 	if len(ssid) > 1 {
 		ssid = ssid[1:]
+	}
+
+	if strings.HasSuffix(ssid, ".png") {
+		return getSourceSpecImg(ssid)
 	}
 
 	src, err := sources.FindSource(ssid)

@@ -8,8 +8,8 @@
 
     <div class="d-flex flex-row justify-content-around flex-wrap align-self-center" v-if="!loading && mySources.length > 0">
       <div type="button" @click="selectExistingSource(src)" class="p-3 source" v-for="(src, index) in mySources" v-bind:key="index">
-        <img :src="sources[src['_srctype']].icon" :alt="sources[src['_srctype']].name">
-        Utiliser {{ src.comment }}
+        <img :src="'/api/source_specs/' + src._srctype + '.png'" :alt="sources[src['_srctype']].name">
+        {{ src._comment }}
       </div>
     </div>
 
@@ -17,9 +17,9 @@
 
     <div class="d-flex flex-row justify-content-around flex-wrap align-self-center" v-if="!loading">
       <div type="button" @click="selectNewSource(index)" class="p-3 source" v-for="(src, index) in sources" v-bind:key="index">
-        <img :src="src.icon" :alt="src.icon">
-        Utiliser {{ src.name }}<br>
-        <p class="text-muted">
+        <img :src="'/api/source_specs/' + index + '.png'" :alt="src.name">
+        {{ src.name }}<br>
+        <p class="text-muted" style="position: absolute;font-size: 80%;margin-top: 10.5em;width: 20%">
           {{ src.description }}
         </p>
       </div>
@@ -29,6 +29,9 @@
   <div v-if="step === 1">
     <b-row>
       <b-col lg="4" md="5">
+        <div class="text-center mb-3">
+          <img :src="'/api/source_specs/' + source_specs_selected + '.png'" :alt="sources[source_specs_selected].name" style="max-width: 100%; max-height: 10em">
+        </div>
         <h3>
           {{ sources[source_specs_selected].name }}
         </h3>
