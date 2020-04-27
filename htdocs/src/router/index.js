@@ -55,6 +55,13 @@ const routes = [
     ]
   },
   {
+    path: '/domains/:domain/new',
+    name: 'domain-new',
+    component: function () {
+      return import(/* webpackChunkName: "domain-new" */ '../views/domain-new.vue')
+    }
+  },
+  {
     path: '/zones/:domain/records',
     name: 'zone-records',
     component: function () {
