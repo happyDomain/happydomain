@@ -33,7 +33,7 @@ const routes = [
     }
   },
   {
-    path: '/domains/:zone',
+    path: '/domains/:domain',
     component: function () {
       return import(/* webpackChunkName: "domain" */ '../views/domain.vue')
     },
