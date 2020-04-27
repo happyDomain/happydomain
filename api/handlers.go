@@ -21,6 +21,17 @@ type Response interface {
 	WriteResponse(http.ResponseWriter)
 }
 
+type FileResponse struct {
+	contentType string
+	content     io.WriterTo
+}
+
+func (r *FileResponse) WriteResponse(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", r.contentType)
+	w.WriteHeader(http.StatusOK)
+	r.content.WriteTo(w)
+}
+
 type APIResponse struct {
 	response interface{}
 }
