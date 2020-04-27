@@ -14,6 +14,7 @@
         <b-nav-item-dropdown right v-if="loggedUser">
           <template slot="button-content"><div class="btn btn-sm btn-secondary"><b-icon icon="person" aria-hidden="true"></b-icon> {{ loggedUser.email }}</div></template>
           <b-dropdown-item to="/domains/">My domains</b-dropdown-item>
+          <b-dropdown-item to="/sources/">My sources</b-dropdown-item>
           <b-dropdown-item to="#">My Profile</b-dropdown-item>
           <b-dropdown-divider></b-dropdown-divider>
           <b-dropdown-item @click="logout()">Logout</b-dropdown-item>

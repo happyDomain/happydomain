@@ -62,6 +62,13 @@ const routes = [
     }
   },
   {
+    path: '/sources',
+    name: 'source-list',
+    component: function () {
+      return import(/* webpackChunkName: "source-list" */ '../views/source-list.vue')
+    }
+  },
+  {
     path: '/sources/:source',
     name: 'source-update',
     component: function () {
