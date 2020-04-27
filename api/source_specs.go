@@ -17,6 +17,7 @@ func init() {
 }
 
 type field struct {
+	Id          string   `json:"id"`
 	Label       string   `json:"label,omitempty"`
 	Placeholder string   `json:"placeholder,omitempty"`
 	Default     string   `json:"default,omitempty"`
@@ -56,9 +57,20 @@ func getSourceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Respo
 
 	fields := []field{}
 	for i := 0; i < srcType.NumField(); i += 1 {
+		jsonTag := srcType.Field(i).Tag.Get("json")
+		jsonTuples := strings.Split(jsonTag, ",")
+
+		f := field{}
+
+		if len(jsonTuples) > 0 && len(jsonTuples[0]) > 0 {
+			f.Id = jsonTuples[0]
+		} else {
+			f.Id = srcType.Field(i).Name
+		}
+
 		tag := srcType.Field(i).Tag.Get("happydns")
 		tuples := strings.Split(tag, ",")
-		f := field{}
+
 		for _, t := range tuples {
 			kv := strings.SplitN(t, "=", 2)
 			if len(kv) > 1 {
