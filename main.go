@@ -15,6 +15,7 @@ import (
 	leveldb "git.happydns.org/happydns/storage/leveldb"
 
 	_ "git.happydns.org/happydns/sources/ddns"
+	_ "git.happydns.org/happydns/sources/ovh"
 )
 
 type ResponseWriterPrefix struct {
