@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <b-navbar style="border-bottom: 3px solid #aee64e; box-shadow: 0 0 12px 0 #08334833">
+    <b-navbar style="border-bottom: 3px solid #aee64e; box-shadow: 0 0 12px 0 #08334833; z-index:2">
       <b-navbar-brand class="navbar-brand" to="/" style="font-family: 'Fortheenas01';font-weight:bold;">
         happy<span style="font-family: 'Fortheenas01 Bold';margin-left:.1em;">DNS</span>
       </b-navbar-brand>
@@ -28,7 +28,7 @@
 
     <b-toaster name="b-toaster-content-right" style="position: fixed; top: 70px; right: 0; z-index: 10; min-width: 30vw;"></b-toaster>
 
-    <div class="mt-5 pt-3 pb-5 bg-dark text-light" style="border-top: 3px solid #aee64e; box-shadow: 0 0 12px 0 #08334833">
+    <div class="pt-3 pb-5 bg-dark text-light" style="border-top: 3px solid #aee64e; box-shadow: 0 0 12px 0 #08334833; z-index: 2">
       <b-container>
         <b-row>
           <b-col md="4">

@@ -1,5 +1,5 @@
 <template>
-<b-container class="mt-4">
+<b-container class="mt-4 mb-5">
   <b-button type="button" @click="newSource" variant="primary" class="float-right">
     <b-icon icon="plus"></b-icon>
     Add new source

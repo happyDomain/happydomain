@@ -1,11 +1,11 @@
 <template>
-  <b-container class="mt-2">
+  <b-container fluid>
     <b-row>
       <b-col cols="3" class="text-right" style="background-color: #EAFFEC">
         <router-link to="/domains/" class="btn font-weight-bolder"><b-icon icon="chevron-up"></b-icon></router-link>
       </b-col>
       <b-col cols="9">
-        <h2 class="mt-2 mb-3">
+        <h2 class="mt-3 mb-3">
           {{ domain.domain }}
         </h2>
       </b-col>
@@ -30,7 +30,7 @@
           </b-nav>
         </b-navbar>
       </b-col>
-      <b-col cols="9">
+      <b-col cols="9" class="mb-5">
         <router-view :domain="domain"></router-view>
       </b-col>
     </b-row>

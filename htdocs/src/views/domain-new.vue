@@ -1,35 +1,43 @@
 <template>
-<b-container class="mt-4">
+<b-container fluid class="mt-4">
 
-  <h1 class="text-center mb-4">Select the source where lives your domain <code>{{ $route.params.domain }}</code></h1>
+  <h1 class="text-center mb-4">
+    <button type="button" @click="$router.go(-1)" class="btn font-weight-bolder"><b-icon icon="chevron-left"></b-icon></button>
+    Select the source where lives your domain <code>{{ $route.params.domain }}</code>
+  </h1>
+  <hr style="margin-bottom:0">
 
-  <div v-if="step === 0">
-    <h3 v-if="mySources.length > 0">Existing sources</h3>
+  <b-row v-if="step === 0" class="mb-5">
+    <b-col>
+      <h3 v-if="mySources.length > 0">Your existing sources</h3>
 
-    <div class="d-flex flex-row justify-content-around flex-wrap align-self-center" v-if="!loading && mySources.length > 0">
-      <div type="button" @click="selectExistingSource(src)" class="p-3 source" v-for="(src, index) in mySources" v-bind:key="index">
-        <img :src="'/api/source_specs/' + src._srctype + '.png'" :alt="sources[src['_srctype']].name">
-        {{ src._comment }}
+      <div class="d-flex flex-row justify-content-around flex-wrap align-self-center" v-if="!loading && mySources.length > 0">
+        <div type="button" @click="selectExistingSource(src)" class="p-3 source" v-for="(src, index) in mySources" v-bind:key="index">
+          <img :src="'/api/source_specs/' + src._srctype + '.png'" :alt="sources[src['_srctype']].name">
+          {{ src._comment }}
+        </div>
       </div>
-    </div>
 
-    <h3 v-if="!loading">New source</h3>
+    </b-col>
+    <b-col lg="6" v-if="sources">
+      <h3>Use a new source</h3>
 
-    <div class="d-flex flex-row justify-content-around flex-wrap align-self-center" v-if="!loading">
-      <div type="button" @click="selectNewSource(index)" class="p-3 source" v-for="(src, index) in sources" v-bind:key="index">
-        <img :src="'/api/source_specs/' + index + '.png'" :alt="src.name">
-        {{ src.name }}<br>
-        <p class="text-muted" style="position: absolute;font-size: 80%;margin-top: 10.5em;width: 20%">
-          {{ src.description }}
-        </p>
+      <div class="d-flex flex-row justify-content-around flex-wrap align-self-center" v-if="!loading">
+        <div type="button" @click="selectNewSource(index)" class="p-3 source" v-for="(src, index) in sources" v-bind:key="index">
+          <img :src="'/api/source_specs/' + index + '.png'" :alt="src.name">
+          {{ src.name }}<br>
+          <p class="text-muted" style="position: absolute;font-size: 80%;margin-top: 10.5em;width: 20%">
+            {{ src.description }}
+          </p>
+        </div>
       </div>
-    </div>
-  </div>
+    </b-col>
+  </b-row>
 
   <div v-if="step === 1">
     <b-row>
-      <b-col lg="4" md="5">
-        <div class="text-center mb-3">
+      <b-col lg="4" md="5" style="background-color: #EAFFEC">
+        <div class="text-center mb-3 mt-2">
           <img :src="'/api/source_specs/' + source_specs_selected + '.png'" :alt="sources[source_specs_selected].name" style="max-width: 100%; max-height: 10em">
         </div>
         <h3>
@@ -40,7 +48,7 @@
       </b-col>
 
       <b-col lg="8" md="7">
-        <form @submit.stop.prevent="submitNewSource" v-if="!loading">
+        <form @submit.stop.prevent="submitNewSource" v-if="!loading" class="mt-2 mb-5">
 
           <b-form-group
             id="input-spec-name"
@@ -215,8 +223,9 @@ export default {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 2.5%;
-    width: 20%;
+    margin: 2.5% 0;
+    width: 30%;
+    max-width: 200px;
     height: 150px;
     text-align: center;
     vertical-align: middle;

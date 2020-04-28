@@ -1,14 +1,14 @@
 <template>
-<b-container class="mt-4">
+<b-container fluid class="mt-4">
 
   <h1 class="text-center mb-4">
     <button type="button" @click="$router.go(-1)" class="btn font-weight-bolder"><b-icon icon="chevron-left"></b-icon></button>
     Updating your domain name source <em>{{ mySource._comment }}</em>
   </h1>
-  <hr>
+  <hr style="margin-bottom:0">
 
   <b-row>
-    <b-col lg="4" md="5">
+    <b-col lg="4" md="5" style="background-color: #EAFFEC">
       <div class="text-center mb-3">
         <img :src="'/api/source_specs/' + source_specs_selected + '.png'" :alt="sources[source_specs_selected].name" style="max-width: 100%; max-height: 10em">
       </div>
@@ -20,7 +20,7 @@
     </b-col>
 
     <b-col lg="8" md="7">
-      <form @submit.stop.prevent="submitSource" v-if="!loading">
+      <form @submit.stop.prevent="submitSource" v-if="!loading" class="mt-2 mb-5">
 
         <b-form-group
           id="input-spec-name"
