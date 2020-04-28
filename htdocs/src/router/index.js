@@ -76,6 +76,20 @@ const routes = [
     }
   },
   {
+    path: '/tools/client',
+    name: 'tools-client',
+    component: function () {
+      return import(/* webpackChunkName: "tools-client" */ '../views/tools-client.vue')
+    }
+  },
+  {
+    path: '/tools/client/:domain',
+    name: 'tools-client-domain',
+    component: function () {
+      return import(/* webpackChunkName: "tools-client" */ '../views/tools-client.vue')
+    }
+  },
+  {
     path: '/zones/:domain/records',
     name: 'zone-records',
     component: function () {
