@@ -11,7 +11,7 @@
     <b-col>
       <h3 v-if="mySources.length > 0">Your existing sources</h3>
 
-      <div class="d-flex flex-row justify-content-around flex-wrap align-self-center" v-if="!loading && mySources.length > 0">
+      <div class="d-flex flex-row justify-content-around flex-wrap align-self-center" v-if="!isLoading && mySources.length > 0">
         <div type="button" @click="selectExistingSource(src)" class="p-3 source" v-for="(src, index) in mySources" v-bind:key="index">
           <img :src="'/api/source_specs/' + src._srctype + '.png'" :alt="sources[src['_srctype']].name">
           {{ src._comment }}
@@ -22,7 +22,7 @@
     <b-col lg="6" v-if="sources">
       <h3>Use a new source</h3>
 
-      <div class="d-flex flex-row justify-content-around flex-wrap align-self-center" v-if="!loading">
+      <div class="d-flex flex-row justify-content-around flex-wrap align-self-center" v-if="!isLoading">
         <div type="button" @click="selectNewSource(index)" class="p-3 source" v-for="(src, index) in sources" v-bind:key="index">
           <img :src="'/api/source_specs/' + index + '.png'" :alt="src.name">
           {{ src.name }}<br>
@@ -34,7 +34,7 @@
     </b-col>
   </b-row>
 
-  <div v-if="step === 1">
+  <div v-if="step & 1">
     <b-row>
       <b-col lg="4" md="5" style="background-color: #EAFFEC">
         <div class="text-center mb-3 mt-2">
@@ -48,7 +48,7 @@
       </b-col>
 
       <b-col lg="8" md="7">
-        <form @submit.stop.prevent="submitNewSource" v-if="!loading" class="mt-2 mb-5">
+        <form @submit.stop.prevent="submitNewSource" v-if="!isLoading" class="mt-2 mb-5">
 
           <b-form-group
             id="input-spec-name"
@@ -89,12 +89,16 @@
           </b-form-group>
 
           <div class="ml-3 mr-3">
-            <b-button type="button" variant="secondary" @click="step--">&lt; Use another source</b-button>
+            <b-button type="button" variant="secondary" @click="step=step&(~1)">&lt; Use another source</b-button>
             <b-button class="float-right" type="submit" variant="primary">Add this source &gt;</b-button>
           </div>
         </form>
       </b-col>
     </b-row>
+  </div>
+
+  <div v-if="step & 2 && isLoading" class="text-center">
+    <b-spinner variant="secondary" label="Spinning"></b-spinner> Validating source...
   </div>
 
 </b-container>
@@ -107,11 +111,10 @@ export default {
 
   data: function () {
     return {
-      loading: true,
-      mySources: [],
+      mySources: null,
       new_source_name: '',
-      sources: {},
-      source_specs: {},
+      sources: null,
+      source_specs: null,
       source_specs_selected: null,
       step: 0
     }
@@ -120,27 +123,53 @@ export default {
   mounted () {
     axios
       .get('/api/sources')
-      .then(response => { this.mySources = response.data; this.loading = Object.keys(this.sources).length === 0; return true })
+      .then(response => (this.mySources = response.data))
     axios
       .get('/api/source_specs')
-      .then(response => { this.sources = response.data; this.loading = false; return true })
+      .then(response => (this.sources = response.data))
+  },
+
+  computed: {
+    isLoading () {
+      if (this.step === 0) {
+        return this.mySources == null || this.sources == null
+      } else if (this.step & 1) {
+        return this.source_specs_selected == null || this.source_specs == null
+      } else if (this.step & 2) {
+        return true
+      } else {
+        return false
+      }
+    }
   },
 
   methods: {
 
     selectNewSource (sourceSpec) {
-      this.step = 1
-      this.loading = true
+      this.step |= 1
       this.source_specs_selected = sourceSpec
       axios
         .get('/api/source_specs/' + sourceSpec)
-        .then(response => { this.source_specs = response.data; this.loading = false; return true })
+        .then(
+          response => {
+            this.source_specs = response.data
+          },
+          error => {
+            this.step &= ~1
+            this.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: 'An error occurs when creating the source!',
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+          }
+        )
     },
 
     selectExistingSource (source) {
-      console.log(source)
-      this.step = 2
-      this.loading = true
+      this.step |= 2
 
       axios
         .post('/api/domains', {
@@ -162,7 +191,7 @@ export default {
             this.$router.push('/')
           },
           (error) => {
-            console.log(error.data)
+            this.step &= ~2
             this.$bvToast.toast(
               error.data.errmsg, {
                 title: 'An error occurs when creating the source!',
@@ -189,8 +218,6 @@ export default {
           mySource.Source[spec.id] = spec.default
         }
       })
-
-      console.log(mySource)
 
       axios
         .post('/api/sources', mySource)

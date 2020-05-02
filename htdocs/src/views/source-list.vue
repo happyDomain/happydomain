@@ -12,7 +12,7 @@
       <div class="text-right">
       </div>
       <b-list-group>
-        <b-list-group-item v-if="loading" class="text-center">
+        <b-list-group-item v-if="isLoading" class="text-center">
           <b-spinner variant="secondary" label="Spinning"></b-spinner> Retrieving your sources...
         </b-list-group-item>
         <b-list-group-item :to="'/sources/' + source._id" v-for="(source, index) in sources" v-bind:key="index" class="d-flex justify-content-between align-items-center">
@@ -40,7 +40,6 @@ export default {
   data: function () {
     return {
       domains: null,
-      loading: true,
       sources: null,
       sources_specs: null
     }
@@ -76,33 +75,20 @@ export default {
       }
 
       return ret
+    },
+
+    isLoading () {
+      return this.domains == null || this.sources == null || this.sources_specs == null
     }
   },
 
   methods: {
-    checkLoading () {
-      this.loading = this.domains == null || this.sources == null || this.sources_specs == null
-      return this.loading
-    },
-
     show (source) {
       this.$router.push('/sources/' + source.source)
     },
 
     newSource () {
       this.$router.push('/sources/new')
-    }
-  },
-
-  watch: {
-    domains: function () {
-      this.checkLoading()
-    },
-    sources: function () {
-      this.checkLoading()
-    },
-    sources_specs: function () {
-      this.checkLoading()
     }
   }
 }

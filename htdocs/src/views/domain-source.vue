@@ -1,5 +1,9 @@
 <template>
-  <div>
+<div>
+  <div v-if="isLoading">
+    <b-spinner variant="secondary" label="Spinning"></b-spinner> Retrieving source information...
+  </div>
+  <div v-if="!isLoading">
     <h3 class="text-primary">Source parameters <router-link :to="'/sources/' + source._id" class="badge badge-info">Change</router-link></h3>
     <p>
       <span class="text-secondary">Name</span><br>
@@ -15,6 +19,7 @@
       <strong>{{ source.Source[spec.id] }}</strong>
     </p>
   </div>
+</div>
 </template>
 
 <script>
@@ -24,24 +29,31 @@ export default {
 
   data: function () {
     return {
-      source: {},
-      source_specs: {},
-      specs: {}
+      source: null,
+      source_specs: null,
+      specs: null
     }
   },
 
   mounted () {
     axios
       .get('/api/source_specs')
-      .then(response => (
+      .then(response => {
         this.specs = response.data
-      ))
+      })
+    if (this.domain != null) {
+      this.updDomain()
+    }
   },
 
-  props: ['domain'],
+  computed: {
+    isLoading () {
+      return this.source == null || this.source_specs == null || this.specs == null
+    }
+  },
 
-  watch: {
-    domain: function (domain) {
+  methods: {
+    updDomain () {
       axios
         .get('/api/sources/' + this.domain.id_source)
         .then(
@@ -54,6 +66,14 @@ export default {
                 this.source_specs = response.data
               ))
           })
+    }
+  },
+
+  props: ['domain'],
+
+  watch: {
+    domain: function (domain) {
+      this.updDomain()
     }
   }
 }

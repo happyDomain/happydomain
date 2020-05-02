@@ -4,7 +4,7 @@
   <b-row>
     <div class="offset-md-2 col-md-8">
       <b-list-group>
-        <b-list-group-item v-if="loading" class="text-center">
+        <b-list-group-item v-if="isLoading" class="text-center">
           <b-spinner variant="secondary" label="Spinning"></b-spinner> Retrieving your domains...
         </b-list-group-item>
         <b-list-group-item :to="'/domains/' + domain.domain" v-for="(domain, index) in domains" v-bind:key="index" class="d-flex justify-content-between align-items-center">
@@ -13,7 +13,7 @@
         </b-list-group-item>
       </b-list-group>
       <b-list-group class="mt-2">
-        <form @submit.stop.prevent="submitNewDomain" v-if="!loading">
+        <form @submit.stop.prevent="submitNewDomain" v-if="!isLoading">
           <b-list-group-item class="d-flex justify-content-between align-items-center">
             <b-input-group>
               <template v-slot:prepend>
@@ -43,10 +43,9 @@ export default {
 
   data: function () {
     return {
-      loading: true,
       newDomain: '',
       newDomainState: null,
-      domains: []
+      domains: null
     }
   },
 
@@ -54,8 +53,14 @@ export default {
     setTimeout(() =>
       axios
         .get('/api/domains')
-        .then(response => { this.domains = response.data; this.loading = false; return true })
+        .then(response => (this.domains = response.data))
     , 100)
+  },
+
+  computed: {
+    isLoading () {
+      return this.domains == null
+    }
   },
 
   methods: {
