@@ -70,10 +70,18 @@ const routes = [
   },
   {
     path: '/sources/:source',
-    name: 'source-update',
     component: function () {
-      return import(/* webpackChunkName: "source-update" */ '../views/source-update.vue')
-    }
+      return import(/* webpackChunkName: "source" */ '../views/source.vue')
+    },
+    children: [
+      {
+        path: '',
+        name: 'source-update',
+        component: function () {
+          return import(/* webpackChunkName: "source-update" */ '../views/source-update.vue')
+        }
+      }
+    ]
   },
   {
     path: '/tools/client',
