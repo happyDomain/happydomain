@@ -52,13 +52,29 @@ func addDomain(_ *config.Options, u *happydns.User, p httprouter.Params, body io
 		}
 	}
 
-	if uz.DomainName[len(uz.DomainName)-1] != '.' {
-		uz.DomainName = uz.DomainName + "."
+	uz.DomainName = dns.Fqdn(uz.DomainName)
+
+	if _, ok := dns.IsDomainName(uz.DomainName); !ok {
+		return APIErrorResponse{
+			err: fmt.Errorf("%q is not a valid domain name.", uz.DomainName),
+		}
+	}
+
+	source, err := storage.MainStore.GetSource(u, uz.IdSource)
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
 	}
 
 	if storage.MainStore.DomainExists(uz.DomainName) {
 		return APIErrorResponse{
-			err: errors.New("This domain already exists."),
+			err: errors.New("This domain has already been imported."),
+		}
+
+	} else if err := source.DomainExists(uz.DomainName); err != nil {
+		return APIErrorResponse{
+			err: err,
 		}
 	} else if err := storage.MainStore.CreateDomain(u, &uz); err != nil {
 		return APIErrorResponse{

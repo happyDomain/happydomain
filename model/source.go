@@ -6,6 +6,7 @@ import (
 
 type Source interface {
 	Validate() error
+	DomainExists(string) error
 	ImportZone(*Domain) ([]dns.RR, error)
 	AddRR(*Domain, dns.RR) error
 	DeleteRR(*Domain, dns.RR) error

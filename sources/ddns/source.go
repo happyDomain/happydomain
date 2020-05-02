@@ -33,6 +33,29 @@ func (s *DDNSServer) Validate() error {
 	return nil
 }
 
+func (s *DDNSServer) DomainExists(fqdn string) error {
+	d := net.Dialer{}
+	con, err := d.Dial("tcp", s.Server)
+	if err != nil {
+		return err
+	}
+	defer con.Close()
+
+	m := new(dns.Msg)
+	m.SetEdns0(4096, true)
+	m.SetAxfr(fqdn)
+	m.SetTsig(s.KeyName, s.KeyAlgo, 300, time.Now().Unix())
+
+	dnscon := &dns.Conn{Conn: con}
+	transfer := &dns.Transfer{Conn: dnscon, TsigSecret: map[string]string{s.KeyName: s.base64KeyBlob()}}
+	_, err = transfer.In(m, s.Server)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *DDNSServer) ImportZone(dn *happydns.Domain) (rrs []dns.RR, err error) {
 	d := net.Dialer{}
 	con, errr := d.Dial("tcp", s.Server)

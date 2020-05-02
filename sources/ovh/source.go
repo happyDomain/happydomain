@@ -49,6 +49,23 @@ func (s *OVHAPI) Validate() error {
 	return nil
 }
 
+func (s *OVHAPI) DomainExists(fqdn string) (err error) {
+	var client *ovh.Client
+	client, err = s.newClient()
+	if err != nil {
+		return
+	}
+
+	var zone struct{ Name string }
+
+	err = client.Get(fmt.Sprintf("/domain/zone/%s", strings.TrimSuffix(fqdn, ".")), &zone)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 func (s *OVHAPI) ImportZone(dn *happydns.Domain) (rrs []dns.RR, err error) {
 	var client *ovh.Client
 	client, err = s.newClient()
