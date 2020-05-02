@@ -80,6 +80,13 @@ const routes = [
         component: function () {
           return import(/* webpackChunkName: "source-update" */ '../views/source-update.vue')
         }
+      },
+      {
+        path: 'domains',
+        name: 'source-list-domains',
+        component: function () {
+          return import(/* webpackChunkName: "source-list-domains" */ '../views/source-list-domains.vue')
+        }
       }
     ]
   },

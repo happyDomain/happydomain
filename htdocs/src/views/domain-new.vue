@@ -65,7 +65,7 @@
           </b-form-group>
 
           <b-form-group
-            v-for="(spec, index) in source_specs"
+            v-for="(spec, index) in source_specs.fields"
             v-bind:key="index"
             :id="'input-spec-' + index"
             :label="spec.label"
@@ -210,7 +210,7 @@ export default {
         Source: {}
       }
 
-      this.source_specs.forEach(function (spec) {
+      this.source_specs.fields.forEach(function (spec) {
         if (spec.value) {
           mySource.Source[spec.id] = spec.value
         } else if (spec.default) {

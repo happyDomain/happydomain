@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"strconv"
@@ -21,6 +22,8 @@ func init() {
 	router.GET("/api/sources/:sid", apiAuthHandler(sourceHandler(getSource)))
 	router.PUT("/api/sources/:sid", apiAuthHandler(sourceHandler(updateSource)))
 	router.DELETE("/api/sources/:sid", apiAuthHandler(sourceHandler(deleteSource)))
+
+	router.GET("/api/sources/:sid/domains", apiAuthHandler(sourceHandler(getDomainsHostedBySource)))
 }
 
 func getSources(_ *config.Options, u *happydns.User, p httprouter.Params, body io.Reader) Response {
@@ -137,6 +140,25 @@ func deleteSource(_ *config.Options, s *happydns.SourceCombined, u *happydns.Use
 	} else {
 		return APIResponse{
 			response: nil,
+		}
+	}
+}
+
+func getDomainsHostedBySource(_ *config.Options, s *happydns.SourceCombined, u *happydns.User, body io.Reader) Response {
+	sr, ok := s.Source.(sources.ListDomainsSource)
+	if !ok {
+		return APIErrorResponse{
+			err: fmt.Errorf("Source doesn't support domain listing."),
+		}
+	}
+
+	if domains, err := sr.ListDomains(); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	} else {
+		return APIResponse{
+			response: domains,
 		}
 	}
 }

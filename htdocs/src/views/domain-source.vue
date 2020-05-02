@@ -14,7 +14,7 @@
       <strong :title="source._srctype">{{ specs[source._srctype].name }}</strong><br>
       <span class="text-muted">{{ specs[source._srctype].description }}</span>
     </p>
-    <p v-for="(spec,index) in source_specs" v-bind:key="index" v-show="!spec.secret">
+    <p v-for="(spec,index) in source_specs.fields" v-bind:key="index" v-show="!spec.secret">
       <span class="text-secondary">{{ spec.label }}</span><br>
       <strong>{{ source.Source[spec.id] }}</strong>
     </p>

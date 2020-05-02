@@ -57,6 +57,11 @@ func getSourceSpecImg(ssid string) Response {
 	}
 }
 
+type viewSourceSpec struct {
+	Fields       []field  `json:"fields,omitempty"`
+	Capabilities []string `json:"capabilities,omitempty"`
+}
+
 func getSourceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Response {
 	ssid := string(p.ByName("ssid"))
 	if len(ssid) > 1 {
@@ -121,7 +126,13 @@ func getSourceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Respo
 		fields = append(fields, f)
 	}
 
+	var caps []string
+
+	if _, ok := src.(sources.ListDomainsSource); ok {
+		caps = append(caps, "ListDomains")
+	}
+
 	return APIResponse{
-		response: fields,
+		response: viewSourceSpec{fields, caps},
 	}
 }

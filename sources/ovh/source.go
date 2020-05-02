@@ -27,6 +27,25 @@ func (s *OVHAPI) newClient() (*ovh.Client, error) {
 	)
 }
 
+func (s *OVHAPI) ListDomains() (zones []string, err error) {
+	var client *ovh.Client
+	client, err = s.newClient()
+	if err != nil {
+		return
+	}
+
+	err = client.Get("/domain/zone", &zones)
+	if err != nil {
+		return
+	}
+
+	for i, zone := range zones {
+		zones[i] = dns.Fqdn(zone)
+	}
+
+	return
+}
+
 func (s *OVHAPI) Validate() error {
 	client, err := s.newClient()
 	if err != nil {
