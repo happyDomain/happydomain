@@ -178,8 +178,7 @@ export default {
         })
         .then(
           (response) => {
-            console.log(response.data)
-            this.$bvToast.toast(
+            this.$root.$bvToast.toast(
               'Great! ' + response.data.domain + ' has been added. You can manage it right now.', {
                 title: 'New domain attached to happyDNS!',
                 autoHideDelay: 5000,
@@ -193,7 +192,7 @@ export default {
           (error) => {
             this.step &= ~2
             this.$bvToast.toast(
-              error.data.errmsg, {
+              error.response.data.errmsg, {
                 title: 'An error occurs when creating the source!',
                 autoHideDelay: 5000,
                 variant: 'danger',
@@ -226,9 +225,8 @@ export default {
             this.selectExistingSource(response.data)
           },
           (error) => {
-            console.log(error.data)
             this.$bvToast.toast(
-              error.data.errmsg, {
+              error.response.data.errmsg, {
                 title: 'An error occurs when creating the source!',
                 autoHideDelay: 5000,
                 variant: 'danger',

@@ -128,7 +128,7 @@ export default {
         .put('/api/sources/' + this.mySource._id, this.mySource)
         .then(
           (response) => {
-            this.$bvToast.toast(
+            this.$root.$bvToast.toast(
               'Great! ' + response.data.domain + ' has been added. You can manage it right now.', {
                 title: 'New domain attached to happyDNS!',
                 autoHideDelay: 5000,
@@ -140,9 +140,8 @@ export default {
             this.$router.push(this.prevRoute)
           },
           (error) => {
-            console.log(error.data)
             this.$bvToast.toast(
-              error.data.errmsg, {
+              error.response.data.errmsg, {
                 title: 'An error occurs when creating the source!',
                 autoHideDelay: 5000,
                 variant: 'danger',

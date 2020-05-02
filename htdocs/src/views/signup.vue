@@ -101,7 +101,7 @@ export default {
           })
           .then(
             (response) => {
-              this.$bvToast.toast(
+              this.$root.$bvToast.toast(
                 'Login now', {
                   title: 'Registration successfully performed!',
                   autoHideDelay: 5000,
