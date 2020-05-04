@@ -8,7 +8,10 @@
           <b-spinner variant="secondary" label="Spinning"></b-spinner> Retrieving your domains...
         </b-list-group-item>
         <b-list-group-item :to="'/domains/' + domain.domain" v-for="(domain, index) in domains" v-bind:key="index" class="d-flex justify-content-between align-items-center">
-          {{ domain.domain }}
+          <div>
+            <img :src="'/api/source_specs/' + sources[domain.id_source]._srctype + '.png'" :alt="sources[domain.id_source]._srctype" :title="sources[domain.id_source]._srctype" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em" v-if="sources[domain.id_source]">
+            {{ domain.domain }}
+          </div>
           <b-badge variant="success">OK</b-badge>
         </b-list-group-item>
       </b-list-group>
@@ -45,7 +48,8 @@ export default {
     return {
       newDomain: '',
       newDomainState: null,
-      domains: null
+      domains: null,
+      sources: {}
     }
   },
 
@@ -53,7 +57,16 @@ export default {
     setTimeout(() =>
       axios
         .get('/api/domains')
-        .then(response => (this.domains = response.data))
+        .then(response => {
+          this.domains = response.data
+          this.domains.forEach(function (domain) {
+            axios
+              .get('/api/sources/' + domain.id_source)
+              .then(response => {
+                this.$set(this.sources, domain.id_source, response.data)
+              })
+          }, this)
+        })
     , 100)
   },
 
