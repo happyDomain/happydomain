@@ -12,6 +12,20 @@ const routes = [
     }
   },
   {
+    path: '/fr/',
+    name: 'home-fr',
+    component: function () {
+      return import(/* webpackChunkName: "Index" */ '@/views/Index.vue')
+    }
+  },
+  {
+    path: '/en/',
+    name: 'home-en',
+    component: function () {
+      return import(/* webpackChunkName: "Index" */ '@/views/Index.vue')
+    }
+  },
+  {
     path: '/login',
     name: 'login',
     component: function () {
