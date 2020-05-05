@@ -40,7 +40,7 @@ type Storage interface {
 	Close() error
 
 	GetDomains(u *happydns.User) (happydns.Domains, error)
-	GetDomain(u *happydns.User, id int) (*happydns.Domain, error)
+	GetDomain(u *happydns.User, id int64) (*happydns.Domain, error)
 	GetDomainByDN(u *happydns.User, dn string) (*happydns.Domain, error)
 	DomainExists(dn string) bool
 	CreateDomain(u *happydns.User, z *happydns.Domain) error
@@ -64,7 +64,7 @@ type Storage interface {
 	ClearSources() error
 
 	GetUsers() (happydns.Users, error)
-	GetUser(id int) (*happydns.User, error)
+	GetUser(id int64) (*happydns.User, error)
 	GetUserByEmail(email string) (*happydns.User, error)
 	UserExists(email string) bool
 	CreateUser(user *happydns.User) error

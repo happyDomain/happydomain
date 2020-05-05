@@ -56,7 +56,7 @@ func (s *MySQLStorage) GetUsers() (users happydns.Users, err error) {
 	}
 }
 
-func (s *MySQLStorage) GetUser(id int) (u *happydns.User, err error) {
+func (s *MySQLStorage) GetUser(id int64) (u *happydns.User, err error) {
 	u = &happydns.User{}
 	err = s.db.QueryRow("SELECT id_user, email, password, salt, registration_time FROM users WHERE id_user=?", id).Scan(&u.Id, &u.Email, &u.Password, &u.Salt, &u.RegistrationTime)
 	return

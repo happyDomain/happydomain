@@ -60,7 +60,7 @@ func (s *LevelDBStorage) GetDomains(u *happydns.User) (domains happydns.Domains,
 	return
 }
 
-func (s *LevelDBStorage) GetDomain(u *happydns.User, id int) (z *happydns.Domain, err error) {
+func (s *LevelDBStorage) GetDomain(u *happydns.User, id int64) (z *happydns.Domain, err error) {
 	z = &happydns.Domain{}
 	err = s.get(fmt.Sprintf("domain-%d", id), &z)
 

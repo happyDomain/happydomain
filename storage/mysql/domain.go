@@ -56,7 +56,7 @@ func (s *MySQLStorage) GetDomains(u *happydns.User) (domains happydns.Domains, e
 	}
 }
 
-func (s *MySQLStorage) GetDomain(u *happydns.User, id int) (z *happydns.Domain, err error) {
+func (s *MySQLStorage) GetDomain(u *happydns.User, id int64) (z *happydns.Domain, err error) {
 	z = &happydns.Domain{}
 	err = s.db.QueryRow("SELECT id_domain, id_user, id_source, domain FROM domains WHERE id_domain=? AND id_user=?", id, u.Id).Scan(&z.Id, &z.IdUser, &z.IdSource, &z.DomainName)
 	return

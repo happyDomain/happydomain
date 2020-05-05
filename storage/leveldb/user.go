@@ -56,7 +56,7 @@ func (s *LevelDBStorage) GetUsers() (users happydns.Users, err error) {
 	return
 }
 
-func (s *LevelDBStorage) GetUser(id int) (u *happydns.User, err error) {
+func (s *LevelDBStorage) GetUser(id int64) (u *happydns.User, err error) {
 	u = &happydns.User{}
 	err = s.get(fmt.Sprintf("user-%d", id), &u)
 	return
