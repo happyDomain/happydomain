@@ -37,8 +37,8 @@
   <b-row>
     <div class="offset-md-2 col-md-8">
       <b-list-group>
-        <b-list-group-item v-if="isLoading" class="text-center">
-          <b-spinner variant="secondary" label="Spinning"></b-spinner> Retrieving your domains...
+        <b-list-group-item v-if="isLoading" class="d-flex justify-content-center align-items-center">
+          <b-spinner variant="primary" label="Spinning" class="mr-3"></b-spinner> Retrieving your domains...
         </b-list-group-item>
         <b-list-group-item :to="'/domains/' + domain.domain" v-for="(domain, index) in domains" v-bind:key="index" class="d-flex justify-content-between align-items-center">
           <div>

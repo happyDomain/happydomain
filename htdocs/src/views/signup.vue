@@ -96,8 +96,8 @@
         ></b-form-input>
     </b-form-group>
     <div class="d-flex justify-content-around">
-      <b-button type="submit" variant="success">Sign up!</b-button>
-      <router-link to="/login" class="btn btn-outline-primary">Already member?</router-link>
+      <b-button type="submit" variant="primary">Sign up!</b-button>
+      <b-button to="/login" variant="outline-dark">Already member?</b-button>
     </div>
   </form>
         </b-card>

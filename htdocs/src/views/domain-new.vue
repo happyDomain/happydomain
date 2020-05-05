@@ -69,7 +69,7 @@
 
   <div v-if="step & 1">
     <b-row>
-      <b-col lg="4" md="5" style="background-color: #EAFFEC">
+      <b-col lg="4" md="5" class="bg-light">
         <div class="text-center mb-3 mt-2">
           <img :src="'/api/source_specs/' + source_specs_selected + '.png'" :alt="sources[source_specs_selected].name" style="max-width: 100%; max-height: 10em">
         </div>
@@ -130,8 +130,8 @@
     </b-row>
   </div>
 
-  <div v-if="step & 2 && isLoading" class="text-center">
-    <b-spinner variant="secondary" label="Spinning"></b-spinner> Validating source...
+  <div v-if="step & 2 && isLoading" class="d-flex justify-content-center align-items-center">
+    <b-spinner variant="primary" label="Spinning" class="mr-3"></b-spinner> Validating source...
   </div>
 
 </b-container>

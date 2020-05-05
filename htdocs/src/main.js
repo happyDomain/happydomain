@@ -34,8 +34,7 @@ import App from './App.vue'
 import { BootstrapVue, BootstrapVueIcons } from 'bootstrap-vue'
 import router from './router'
 
-import 'bootstrap/dist/css/bootstrap.min.css'
-import 'bootstrap-vue/dist/bootstrap-vue.min.css'
+import './custom.scss'
 
 Vue.use(BootstrapVue)
 Vue.use(BootstrapVueIcons)

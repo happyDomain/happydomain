@@ -45,8 +45,11 @@
       <div class="text-right">
       </div>
       <b-list-group>
-        <b-list-group-item v-if="isLoading" class="text-center">
-          <b-spinner variant="secondary" label="Spinning"></b-spinner> Retrieving your sources...
+        <b-list-group-item v-if="isLoading" class="d-flex justify-content-center align-items-center">
+          <b-spinner variant="primary" label="Spinning" class="mr-3"></b-spinner> Retrieving your sources...
+        </b-list-group-item>
+        <b-list-group-item v-if="!isLoading && sources.length == 0" class="text-center">
+          You have no source defined currently. Try <a to="new">adding one</a>!
         </b-list-group-item>
         <b-list-group-item :to="'/sources/' + source._id" v-for="(source, index) in sources" v-bind:key="index" class="d-flex justify-content-between align-items-center">
           <div>

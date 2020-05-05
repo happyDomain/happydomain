@@ -1,0 +1,27 @@
+$teal: #1cb487;
+$primary: $teal;
+$blue: #20a7c9;
+$info: $blue;
+$purple: #360b48;
+$secondary: $purple;
+$yellow: #c99720;
+$green: #20c943;
+$red: #c92052;
+
+$enable-shadows: true;
+$enable-gradients: true;
+$enable-responsive-font-sizes: true;
+
+@import '~bootstrap';
+@import '~bootstrap-vue';
+
+nav.navbar {
+    box-shadow: 0 0px 3px 0 $primary;
+    border-bottom: 1px solid $primary;
+    transition: padding 1s;
+    z-index: 2;
+}
+
+footer {
+    border-top: 3px solid #9332bb;
+}

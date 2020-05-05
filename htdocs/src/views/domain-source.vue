@@ -33,22 +33,27 @@
 
 <template>
 <div>
-  <div v-if="isLoading">
-    <b-spinner variant="secondary" label="Spinning"></b-spinner> Retrieving source information...
+  <div v-if="isLoading" class="mt-5 d-flex justify-content-center align-items-center">
+    <b-spinner variant="primary" label="Spinning" class="mr-3"></b-spinner> Retrieving source information...
   </div>
   <div v-if="!isLoading">
-    <h3 class="text-primary">Source parameters <router-link :to="'/sources/' + source._id" class="badge badge-info">Change</router-link></h3>
+    <h2 class="mt-3 mb-3">
+      {{ domain.domain }}
+      <small class="text-muted">
+        Source parameters
+      </small>
+    </h2>
     <p>
-      <span class="text-secondary">Name</span><br>
+      <span class="text-primary">Name</span><br>
       <strong>{{ source._comment }}</strong>
     </p>
     <p>
-      <span class="text-secondary">Source type</span><br>
+      <span class="text-primary">Source type</span><br>
       <strong :title="source._srctype">{{ specs[source._srctype].name }}</strong><br>
       <span class="text-muted">{{ specs[source._srctype].description }}</span>
     </p>
     <p v-for="(spec,index) in source_specs.fields" v-bind:key="index" v-show="!spec.secret">
-      <span class="text-secondary">{{ spec.label }}</span><br>
+      <span class="text-primary">{{ spec.label }}</span><br>
       <strong>{{ source.Source[spec.id] }}</strong>
     </p>
   </div>

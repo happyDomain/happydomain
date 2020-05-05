@@ -150,7 +150,7 @@ export default {
 </script>
 
 <style>
-  .form-group label {
+.form-group label {
     font-weight: bold;
-  }
+}
 </style>

@@ -80,8 +80,8 @@
               ></b-form-input>
           </b-form-group>
           <div class="d-flex justify-content-around">
-            <b-button type="submit" variant="success">Go!</b-button>
-            <b-button type="button" variant="outline-primary">Forgotten password?</b-button>
+            <b-button type="submit" variant="primary">Go!</b-button>
+            <b-button type="button" variant="outline-dark">Forgotten password?</b-button>
           </div>
         </form>
         </b-card>
