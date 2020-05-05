@@ -62,9 +62,13 @@ func getSources(_ *config.Options, u *happydns.User, p httprouter.Params, body i
 		return APIErrorResponse{
 			err: err,
 		}
-	} else {
+	} else if len(sources) > 0 {
 		return APIResponse{
 			response: sources,
+		}
+	} else {
+		return APIResponse{
+			response: []happydns.Source{},
 		}
 	}
 }

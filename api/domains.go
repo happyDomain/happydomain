@@ -61,9 +61,13 @@ func getDomains(_ *config.Options, u *happydns.User, p httprouter.Params, body i
 		return APIErrorResponse{
 			err: err,
 		}
-	} else {
+	} else if len(domains) > 0 {
 		return APIResponse{
 			response: domains,
+		}
+	} else {
+		return APIResponse{
+			response: []happydns.Domain{},
 		}
 	}
 }
