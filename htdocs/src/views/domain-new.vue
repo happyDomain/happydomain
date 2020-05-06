@@ -36,7 +36,7 @@
 
   <h1 class="text-center mb-4">
     <button type="button" @click="$router.go(-1)" class="btn font-weight-bolder"><b-icon icon="chevron-left"></b-icon></button>
-    Select the source where lives your domain <code>{{ $route.params.domain }}</code>
+    Select the source where lives your domain <span class="text-monospace">{{ $route.params.domain }}</span>
   </h1>
   <hr style="margin-bottom:0">
 

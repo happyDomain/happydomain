@@ -41,8 +41,10 @@
           <b-spinner variant="primary" label="Spinning" class="mr-3"></b-spinner> Retrieving your domains...
         </b-list-group-item>
         <b-list-group-item :to="'/domains/' + domain.domain" v-for="(domain, index) in domains" v-bind:key="index" class="d-flex justify-content-between align-items-center">
-          <div>
-            <img :src="'/api/source_specs/' + sources[domain.id_source]._srctype + '.png'" :alt="sources[domain.id_source]._srctype" :title="sources[domain.id_source]._srctype" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em" v-if="sources[domain.id_source]">
+          <div class="text-monospace">
+            <div class="d-inline-block text-center" style="width: 50px;">
+              <img :src="'/api/source_specs/' + sources[domain.id_source]._srctype + '.png'" :alt="sources[domain.id_source]._srctype" :title="sources[domain.id_source]._srctype" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em" v-if="sources[domain.id_source]">
+            </div>
             {{ domain.domain }}
           </div>
           <b-badge variant="success">OK</b-badge>
@@ -57,7 +59,7 @@
                   <b-icon icon="plus" style="width: 2.3em; height: 2.3rem; margin-left: -.5em"></b-icon>
                 </b-input-group-prepend>
               </template>
-              <b-form-input placeholder="my.new.domain" ref="newdomain" v-model="newDomain" @update="validateNewDomain" :state="newDomainState" style="border:none;box-shadow:none;z-index:0"></b-form-input>
+              <b-form-input placeholder="my.new.domain" ref="newdomain" v-model="newDomain" @update="validateNewDomain" :state="newDomainState" class="text-monospace" style="border:none;box-shadow:none;z-index:0"></b-form-input>
               <template v-slot:append>
                 <b-input-group-append v-show="newDomain.length">
                   <b-button type="submit" variant="outline-primary">Add new domain</b-button>

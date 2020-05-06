@@ -39,7 +39,7 @@
         <b-button :pressed.sync="showDNSSEC">DNSSEC</b-button>
       </b-button-group>
       <router-link :to="'/domains/' + domain.domain" class="btn"><b-icon icon="chevron-left"></b-icon></router-link>
-      {{ domain.domain }}
+      <span class="text-monospace">{{ domain.domain }}</span>
       <small class="text-muted">Resource Records <span v-if="rrs && rrs.length">({{ rrsFiltered.length }}/{{ rrs.length }})</span></small>
     </h2>
     <b-alert variant="danger" :show="error.length != 0"><strong>Error:</strong> {{ error }}</b-alert>

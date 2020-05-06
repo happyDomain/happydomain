@@ -38,7 +38,7 @@
   </div>
   <div v-if="!isLoading">
     <h2 class="mt-3 mb-3">
-      {{ domain.domain }}
+      <span class="text-monospace">{{ domain.domain }}</span>
       <small class="text-muted">
         Source parameters
       </small>
