@@ -59,11 +59,11 @@
             <b-list-group-item class="d-flex justify-content-between align-items-center">
               <b-input-group>
                 <template v-slot:prepend>
-                  <b-input-group-prepend @click="$refs.newdomain.focus()">
-                    <b-icon icon="plus" style="width: 2.3em; height: 2.3rem; margin-left: -.5em" />
+                  <b-input-group-prepend style="width: 50px" @click="$refs.newdomain.focus()">
+                    <b-icon icon="plus" style="width: 100%; height: 2.3rem; margin-right: -.6em; margin-left: -.6em" />
                   </b-input-group-prepend>
                 </template>
-                <b-form-input ref="newdomain" v-model="newDomain" placeholder="my.new.domain" :state="newDomainState" class="text-monospace" style="border:none;box-shadow:none;z-index:0" @update="validateNewDomain" />
+                <b-form-input ref="newdomain" v-model="newDomain" placeholder="my.new.domain." :state="newDomainState" class="text-monospace" style="border:none;box-shadow:none;z-index:0" @update="validateNewDomain" />
                 <template v-slot:append>
                   <b-input-group-append v-show="newDomain.length">
                     <b-button type="submit" variant="outline-primary">
