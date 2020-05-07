@@ -36,6 +36,7 @@ import (
 	"errors"
 	"io"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
@@ -73,6 +74,10 @@ func runResolver(_ *config.Options, u *happydns.User, _ httprouter.Params, body 
 		}
 
 		urr.Resolver = cConf.Servers[rand.Intn(len(cConf.Servers))]
+	}
+
+	if strings.Count(urr.Resolver, ":") > 0 && urr.Resolver[0] != '[' {
+		urr.Resolver = "[" + urr.Resolver + "]"
 	}
 
 	client := dns.Client{Timeout: time.Second * 5}
