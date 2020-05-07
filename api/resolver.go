@@ -35,6 +35,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"math/rand"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
@@ -61,6 +62,17 @@ func runResolver(_ *config.Options, u *happydns.User, _ httprouter.Params, body 
 		return APIErrorResponse{
 			err: err,
 		}
+	}
+
+	if urr.Resolver == "Local" {
+		cConf, err := dns.ClientConfigFromFile("/etc/resolv.conf")
+		if err != nil {
+			return APIErrorResponse{
+				err: err,
+			}
+		}
+
+		urr.Resolver = cConf.Servers[rand.Intn(len(cConf.Servers))]
 	}
 
 	client := dns.Client{Timeout: time.Second * 5}

@@ -110,9 +110,9 @@ export default {
     return {
       request_pending: false,
       existing_types: ['ANY', 'A', 'AAAA', 'NS', 'SRV', 'MX', 'TXT'],
-      existing_resolvers: ['192.168.0.254', '1.1.1.1', '8.8.8.8', '9.9.9.9'],
+      existing_resolvers: ['Local', '1.1.1.1', '8.8.8.8', '9.9.9.9'],
       form: {
-        resolver: '192.168.0.254',
+        resolver: 'Local',
         type: 'ANY'
       },
       show_responses: [],
