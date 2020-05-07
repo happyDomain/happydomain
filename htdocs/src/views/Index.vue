@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <component :is="homeComponent"></component>
+  <component :is="homeComponent" />
 </template>
 
 <script>

@@ -32,38 +32,41 @@
   -->
 
 <template>
-<b-container fluid class="mt-4">
+  <b-container fluid class="mt-4">
+    <h1 class="text-center mb-4">
+      <button type="button" class="btn font-weight-bolder" @click="$router.go(-1)">
+        <b-icon icon="chevron-left" />
+      </button>
+      Updating your domain name source <em v-if="mySource">{{ mySource._comment }}</em>
+    </h1>
+    <hr style="margin-bottom:0">
 
-  <h1 class="text-center mb-4">
-    <button type="button" @click="$router.go(-1)" class="btn font-weight-bolder"><b-icon icon="chevron-left"></b-icon></button>
-    Updating your domain name source <em v-if="mySource">{{ mySource._comment }}</em>
-  </h1>
-  <hr style="margin-bottom:0">
+    <b-row>
+      <b-col v-if="source_specs_selected && sources" lg="4" md="5" class="bg-light">
+        <div class="text-center mb-3">
+          <img :src="'/api/source_specs/' + source_specs_selected + '.png'" :alt="sources[source_specs_selected].name" style="max-width: 100%; max-height: 10em">
+        </div>
+        <h3>
+          {{ sources[source_specs_selected].name }}
+        </h3>
 
-  <b-row>
-    <b-col lg="4" md="5" class="bg-light" v-if="source_specs_selected && sources">
-      <div class="text-center mb-3">
-        <img :src="'/api/source_specs/' + source_specs_selected + '.png'" :alt="sources[source_specs_selected].name" style="max-width: 100%; max-height: 10em">
-      </div>
-      <h3>
-        {{ sources[source_specs_selected].name }}
-      </h3>
+        <p class="text-muted text-justify">
+          {{ sources[source_specs_selected].description }}
+        </p>
 
-      <p class="text-muted text-justify">{{ sources[source_specs_selected].description }}</p>
+        <div class="text-center">
+          <b-button v-if="source_specs && source_specs.capabilities && source_specs.capabilities.indexOf('ListDomains') > -1" type="button" variant="secondary" @click="showListImportableDomain()">
+            <b-icon icon="list-task" />
+            List importable domains
+          </b-button>
+        </div>
+      </b-col>
 
-      <div class="text-center">
-        <b-button type="button" variant="secondary" @click="showListImportableDomain()" v-if="source_specs && source_specs.capabilities && source_specs.capabilities.indexOf('ListDomains') > -1">
-          <b-icon icon="list-task" />
-          List importable domains
-        </b-button>
-      </div>
-    </b-col>
-
-    <b-col lg="8" md="7">
-      <router-view :parentLoading="isLoading" :mySource="mySource" :sources="sources" :source_specs="source_specs" :source_specs_selected="source_specs_selected"></router-view>
-    </b-col>
-  </b-row>
-</b-container>
+      <b-col lg="8" md="7">
+        <router-view :parent-loading="isLoading" :my-source="mySource" :sources="sources" :source-specs="source_specs" :source-specs-selected="source_specs_selected" />
+      </b-col>
+    </b-row>
+  </b-container>
 </template>
 
 <script>
@@ -77,6 +80,12 @@ export default {
       sources: null,
       source_specs: null,
       source_specs_selected: null
+    }
+  },
+
+  computed: {
+    isLoading () {
+      return this.mySource == null || this.sources == null || this.source_specs == null || this.source_specs_selected == null
     }
   },
 
@@ -102,12 +111,6 @@ export default {
         this.sources = response.data
         return true
       })
-  },
-
-  computed: {
-    isLoading () {
-      return this.mySource == null || this.sources == null || this.source_specs == null || this.source_specs_selected == null
-    }
   },
 
   methods: {

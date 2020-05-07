@@ -43,63 +43,69 @@
       <b-col sm="8">
         <b-card header-tag="div">
           <template v-slot:header>
-            <h6 class="mb-0 font-weight-bold">Join our nice platform in less than 2 minutes!</h6>
+            <h6 class="mb-0 font-weight-bold">
+              Join our nice platform in less than 2 minutes!
+            </h6>
           </template>
-  <form class="container mt-2" @submit.stop.prevent="goSignUp" ref="form">
-    <b-form-group
-      :state="signupForm.emailState"
-      label="Email address"
-      label-for="email-input"
-      invalid-feedback="Email address is required"
-      >
-      <b-form-input
-        id="email-input"
-        v-model="signupForm.email"
-        :state="signupForm.emailState"
-        required
-        autofocus
-        type="email"
-        placeholder="jPostel@isi.edu"
-        ref="signupemail"
-        ></b-form-input>
-    </b-form-group>
-    <b-form-group
-      :state="signupForm.passwordState"
-      label="Password"
-      label-for="password-input"
-      invalid-feedback="Password is required"
-      >
-      <b-form-input
-        type="password"
-        id="password-input"
-        v-model="signupForm.password"
-        :state="signupForm.passwordState"
-        required
-        placeholder="xXxXxXxXxX"
-        ref="signuppassword"
-        ></b-form-input>
-    </b-form-group>
-    <b-form-group
-      :state="signupForm.passwordConfirmState"
-      label="Password confirmation"
-      label-for="passwordconfirm-input"
-      invalid-feedback="Password confirmation is required"
-      >
-      <b-form-input
-        type="password"
-        id="passwordconfirm-input"
-        v-model="signupForm.passwordConfirm"
-        :state="signupForm.passwordConfirmState"
-        required
-        placeholder="xXxXxXxXxX"
-        ref="signuppasswordconfirm"
-        ></b-form-input>
-    </b-form-group>
-    <div class="d-flex justify-content-around">
-      <b-button type="submit" variant="primary">Sign up!</b-button>
-      <b-button to="/login" variant="outline-dark">Already member?</b-button>
-    </div>
-  </form>
+          <form ref="form" class="container mt-2" @submit.stop.prevent="goSignUp">
+            <b-form-group
+              :state="signupForm.emailState"
+              label="Email address"
+              label-for="email-input"
+              invalid-feedback="Email address is required"
+            >
+              <b-form-input
+                id="email-input"
+                ref="signupemail"
+                v-model="signupForm.email"
+                :state="signupForm.emailState"
+                required
+                autofocus
+                type="email"
+                placeholder="jPostel@isi.edu"
+              />
+            </b-form-group>
+            <b-form-group
+              :state="signupForm.passwordState"
+              label="Password"
+              label-for="password-input"
+              invalid-feedback="Password is required"
+            >
+              <b-form-input
+                id="password-input"
+                ref="signuppassword"
+                v-model="signupForm.password"
+                type="password"
+                :state="signupForm.passwordState"
+                required
+                placeholder="xXxXxXxXxX"
+              />
+            </b-form-group>
+            <b-form-group
+              :state="signupForm.passwordConfirmState"
+              label="Password confirmation"
+              label-for="passwordconfirm-input"
+              invalid-feedback="Password confirmation is required"
+            >
+              <b-form-input
+                id="passwordconfirm-input"
+                ref="signuppasswordconfirm"
+                v-model="signupForm.passwordConfirm"
+                type="password"
+                :state="signupForm.passwordConfirmState"
+                required
+                placeholder="xXxXxXxXxX"
+              />
+            </b-form-group>
+            <div class="d-flex justify-content-around">
+              <b-button type="submit" variant="primary">
+                Sign up!
+              </b-button>
+              <b-button to="/login" variant="outline-dark">
+                Already member?
+              </b-button>
+            </div>
+          </form>
         </b-card>
       </b-col>
     </b-row>

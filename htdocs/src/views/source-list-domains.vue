@@ -32,31 +32,34 @@
   -->
 
 <template>
-<b-container class="mt-4 mb-5">
-  <h1 class="text-center mb-4">
-    Domains living on <span v-if="mySource">{{ mySource._comment }}</span>
-  </h1>
-  <b-row>
-    <b-col offset-md="2" md="8">
-      <div class="text-right">
-      </div>
-      <b-list-group>
-        <b-list-group-item v-if="isLoading" class="text-center">
-          <b-spinner variant="secondary" label="Spinning"></b-spinner> Asking provider for the existing domains...
-        </b-list-group-item>
-        <b-list-group-item v-for="(domain, index) in domains" v-bind:key="index" class="d-flex justify-content-between align-items-center">
-          <div>
-            {{ domain }}
-          </div>
-          <div>
-            <b-badge class="ml-1" variant="success" v-if="myDomains.indexOf(domain) > -1"><b-icon icon="check" /> Already managed</b-badge>
-            <b-button type="button" class="ml-1" variant="primary" size="sm" @click="importDomain(domain)" v-else>Add now</b-button>
-          </div>
-        </b-list-group-item>
-      </b-list-group>
-    </b-col>
-  </b-row>
-</b-container>
+  <b-container class="mt-4 mb-5">
+    <h1 class="text-center mb-4">
+      Domains living on <span v-if="mySource">{{ mySource._comment }}</span>
+    </h1>
+    <b-row>
+      <b-col offset-md="2" md="8">
+        <div class="text-right" />
+        <b-list-group>
+          <b-list-group-item v-if="isLoading" class="text-center">
+            <b-spinner variant="secondary" label="Spinning" /> Asking provider for the existing domains...
+          </b-list-group-item>
+          <b-list-group-item v-for="(domain, index) in domains" :key="index" class="d-flex justify-content-between align-items-center">
+            <div>
+              {{ domain }}
+            </div>
+            <div>
+              <b-badge v-if="myDomains.indexOf(domain) > -1" class="ml-1" variant="success">
+                <b-icon icon="check" /> Already managed
+              </b-badge>
+              <b-button v-else type="button" class="ml-1" variant="primary" size="sm" @click="importDomain(domain)">
+                Add now
+              </b-button>
+            </div>
+          </b-list-group-item>
+        </b-list-group>
+      </b-col>
+    </b-row>
+  </b-container>
 </template>
 
 <script>
@@ -64,10 +67,27 @@ import axios from 'axios'
 
 export default {
 
+  props: {
+    parentLoading: {
+      type: Function,
+      required: true
+    },
+    mySource: {
+      type: Object,
+      required: true
+    }
+  },
+
   data: function () {
     return {
       myDomains: null,
       domains: null
+    }
+  },
+
+  computed: {
+    isLoading () {
+      return this.parentLoading || this.domains == null || this.myDomains == null
     }
   },
 
@@ -84,12 +104,6 @@ export default {
         })
         this.myDomains = domains
       })
-  },
-
-  computed: {
-    isLoading () {
-      return this.parentLoading || this.domains == null || this.myDomains == null
-    }
   },
 
   methods: {
@@ -124,8 +138,6 @@ export default {
           }
         )
     }
-  },
-
-  props: ['parentLoading', 'mySource']
+  }
 }
 </script>

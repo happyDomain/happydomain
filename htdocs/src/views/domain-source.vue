@@ -32,32 +32,32 @@
   -->
 
 <template>
-<div>
-  <div v-if="isLoading" class="mt-5 d-flex justify-content-center align-items-center">
-    <b-spinner variant="primary" label="Spinning" class="mr-3"></b-spinner> Retrieving source information...
+  <div>
+    <div v-if="isLoading" class="mt-5 d-flex justify-content-center align-items-center">
+      <b-spinner variant="primary" label="Spinning" class="mr-3" /> Retrieving source information...
+    </div>
+    <div v-if="!isLoading">
+      <h2 class="mt-3 mb-3">
+        <span class="text-monospace">{{ domain.domain }}</span>
+        <small class="text-muted">
+          Source parameters
+        </small>
+      </h2>
+      <p>
+        <span class="text-primary">Name</span><br>
+        <strong>{{ source._comment }}</strong>
+      </p>
+      <p>
+        <span class="text-primary">Source type</span><br>
+        <strong :title="source._srctype">{{ specs[source._srctype].name }}</strong><br>
+        <span class="text-muted">{{ specs[source._srctype].description }}</span>
+      </p>
+      <p v-for="(spec,index) in source_specs.fields" v-show="!spec.secret" :key="index">
+        <span class="text-primary">{{ spec.label }}</span><br>
+        <strong>{{ source.Source[spec.id] }}</strong>
+      </p>
+    </div>
   </div>
-  <div v-if="!isLoading">
-    <h2 class="mt-3 mb-3">
-      <span class="text-monospace">{{ domain.domain }}</span>
-      <small class="text-muted">
-        Source parameters
-      </small>
-    </h2>
-    <p>
-      <span class="text-primary">Name</span><br>
-      <strong>{{ source._comment }}</strong>
-    </p>
-    <p>
-      <span class="text-primary">Source type</span><br>
-      <strong :title="source._srctype">{{ specs[source._srctype].name }}</strong><br>
-      <span class="text-muted">{{ specs[source._srctype].description }}</span>
-    </p>
-    <p v-for="(spec,index) in source_specs.fields" v-bind:key="index" v-show="!spec.secret">
-      <span class="text-primary">{{ spec.label }}</span><br>
-      <strong>{{ source.Source[spec.id] }}</strong>
-    </p>
-  </div>
-</div>
 </template>
 
 <script>
@@ -65,11 +65,30 @@ import axios from 'axios'
 
 export default {
 
+  props: {
+    domain: {
+      type: Object,
+      required: true
+    }
+  },
+
   data: function () {
     return {
       source: null,
       source_specs: null,
       specs: null
+    }
+  },
+
+  computed: {
+    isLoading () {
+      return this.source == null || this.source_specs == null || this.specs == null
+    }
+  },
+
+  watch: {
+    domain: function (domain) {
+      this.updDomain()
     }
   },
 
@@ -81,12 +100,6 @@ export default {
       })
     if (this.domain != null) {
       this.updDomain()
-    }
-  },
-
-  computed: {
-    isLoading () {
-      return this.source == null || this.source_specs == null || this.specs == null
     }
   },
 
@@ -104,14 +117,6 @@ export default {
                 this.source_specs = response.data
               ))
           })
-    }
-  },
-
-  props: ['domain'],
-
-  watch: {
-    domain: function (domain) {
-      this.updDomain()
     }
   }
 }

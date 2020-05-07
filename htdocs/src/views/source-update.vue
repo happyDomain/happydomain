@@ -32,67 +32,90 @@
   -->
 
 <template>
-<form @submit.stop.prevent="submitSource" v-if="!isLoading" class="mt-2 mb-5">
-  <div class="float-right">
-    <b-button type="button" variant="outline-primary" @click="edit=true" v-if="!edit">
-      <b-icon icon="pencil" />
-      Edit
-    </b-button>
-    <b-button type="button" variant="primary" @click="submitSource()" v-else>
-      <b-icon icon="check" />
-      Update this source
-    </b-button>
-  </div>
+  <form v-if="!isLoading" class="mt-2 mb-5" @submit.stop.prevent="submitSource">
+    <div class="float-right">
+      <b-button v-if="!edit" type="button" variant="outline-primary" @click="edit=true">
+        <b-icon icon="pencil" />
+        Edit
+      </b-button>
+      <b-button v-else type="button" variant="primary" @click="submitSource()">
+        <b-icon icon="check" />
+        Update this source
+      </b-button>
+    </div>
 
-  <b-form-group
-    id="input-spec-name"
-    label="Source's name"
-    label-for="source-name"
-    :description="edit?'Give an explicit name in order to easily find this service.':''"
+    <b-form-group
+      id="input-spec-name"
+      label="Source's name"
+      label-for="source-name"
+      :description="edit?'Give an explicit name in order to easily find this service.':''"
     >
-    <b-form-input
-      id="source-name"
-      v-model="mySource._comment"
-      required
-      :placeholder="sources[source_specs_selected].name + ' 1'"
-      :plaintext="!edit"
-      ></b-form-input>
-  </b-form-group>
+      <b-form-input
+        id="source-name"
+        v-model="mySource._comment"
+        required
+        :placeholder="sources[sourceSpecsSelected].name + ' 1'"
+        :plaintext="!edit"
+      />
+    </b-form-group>
 
-  <hr>
+    <hr>
 
-  <b-form-group
-    v-for="(spec, index) in source_specs.fields"
-    v-bind:key="index"
-    :id="'input-spec-' + index"
-    :label="spec.label"
-    :label-for="'spec-' + index"
-    :description="edit?spec.description:''"
-    v-show="edit || !spec.secret"
+    <b-form-group
+      v-for="(spec, index) in sourceSpecs.fields"
+      v-show="edit || !spec.secret"
+      :id="'input-spec-' + index"
+      :key="index"
+      :label="spec.label"
+      :label-for="'spec-' + index"
+      :description="edit?spec.description:''"
     >
-    <b-form-input
-      :id="'spec-' + index"
-      v-model="mySource.Source[spec.id]"
-      :required="spec.required !== undefined && spec.required"
-      :placeholder="spec.placeholder"
-      :plaintext="!edit"
-      v-if="!edit || spec.choices === undefined"
-      ></b-form-input>
-    <b-form-select
-      :id="'spec-' + index"
-      v-model="mySource.Source[spec.id]"
-      :required="spec.required !== undefined && spec.required"
-      :options="spec.choices"
-      v-if="edit && spec.choices !== undefined"
-      ></b-form-select>
-  </b-form-group>
-</form>
+      <b-form-input
+        v-if="!edit || spec.choices === undefined"
+        :id="'spec-' + index"
+        v-model="mySource.Source[spec.id]"
+        :required="spec.required !== undefined && spec.required"
+        :placeholder="spec.placeholder"
+        :plaintext="!edit"
+      />
+      <b-form-select
+        v-if="edit && spec.choices !== undefined"
+        :id="'spec-' + index"
+        v-model="mySource.Source[spec.id]"
+        :required="spec.required !== undefined && spec.required"
+        :options="spec.choices"
+      />
+    </b-form-group>
+  </form>
 </template>
 
 <script>
 import axios from 'axios'
 
 export default {
+
+  props: {
+    parentLoading: {
+      type: Boolean,
+      required: true
+    },
+    mySource: {
+      type: Object,
+      default: null
+    },
+    sources: {
+      type: Object,
+      default: null
+    },
+    sourceSpecs: {
+      type: Object,
+      default: null
+    },
+    sourceSpecsSelected: {
+      type: String,
+      default: null
+    }
+  },
 
   data: function () {
     return {
@@ -143,9 +166,7 @@ export default {
         )
     }
 
-  },
-
-  props: ['parentLoading', 'mySource', 'sources', 'source_specs', 'source_specs_selected']
+  }
 }
 </script>
 

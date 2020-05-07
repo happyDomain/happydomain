@@ -32,75 +32,73 @@
   -->
 
 <template>
-<b-container class="mt-4 mb-5">
-  <h1 class="text-center mb-4">
-    DNS resolver
-  </h1>
-  <b-row class="mb-4">
-    <b-col offset-md="2" md="8">
-      <form @submit.stop.prevent="submitRequest" class="mb-5">
-
-        <b-form-group
-          id="input-resolver"
-          label="Resolver"
-          label-for="resolver"
-          description="Give an explicit name in order to easily find this service."
+  <b-container class="mt-4 mb-5">
+    <h1 class="text-center mb-4">
+      DNS resolver
+    </h1>
+    <b-row class="mb-4">
+      <b-col offset-md="2" md="8">
+        <form class="mb-5" @submit.stop.prevent="submitRequest">
+          <b-form-group
+            id="input-resolver"
+            label="Resolver"
+            label-for="resolver"
+            description="Give an explicit name in order to easily find this service."
           >
-          <b-form-select
-            id="resolver"
-            v-model="form.resolver"
-            required
-            :options="existing_resolvers"
-            ></b-form-select>
-        </b-form-group>
+            <b-form-select
+              id="resolver"
+              v-model="form.resolver"
+              required
+              :options="existing_resolvers"
+            />
+          </b-form-group>
 
-        <b-form-group
-          id="input-domain"
-          label="Domain or subdomain"
-          label-for="domain"
-          description="spec.description"
+          <b-form-group
+            id="input-domain"
+            label="Domain or subdomain"
+            label-for="domain"
+            description="spec.description"
           >
-          <b-form-input
-            id="domain"
-            v-model="form.domain"
-            required
-            placeholder="happydns.org"
-            ></b-form-input>
-        </b-form-group>
+            <b-form-input
+              id="domain"
+              v-model="form.domain"
+              required
+              placeholder="happydns.org"
+            />
+          </b-form-group>
 
-        <b-form-group
-          id="input-type"
-          label="Field"
-          label-for="type"
-          description="spec.type"
+          <b-form-group
+            id="input-type"
+            label="Field"
+            label-for="type"
+            description="spec.type"
           >
-          <b-form-select
-            id="type"
-            v-model="form.type"
-            required
-            :options="existing_types"
-            ></b-form-select>
-        </b-form-group>
+            <b-form-select
+              id="type"
+              v-model="form.type"
+              required
+              :options="existing_types"
+            />
+          </b-form-group>
 
-        <div class="ml-3 mr-3">
-          <b-button class="float-right" type="submit" variant="primary" :disabled="request_pending">
-            <b-spinner label="Spinning" small v-if="request_pending"></b-spinner>
-            Run the request!
-          </b-button>
-        </div>
-      </form>
-    </b-col>
-  </b-row>
+          <div class="ml-3 mr-3">
+            <b-button class="float-right" type="submit" variant="primary" :disabled="request_pending">
+              <b-spinner v-if="request_pending" label="Spinning" small />
+              Run the request!
+            </b-button>
+          </div>
+        </form>
+      </b-col>
+    </b-row>
 
-  <b-row v-if="responses.length">
-    <b-col offset-md="1" md="10">
-      <b-alert v-for="(response,index) in responses" v-bind:key="index" v-model="show_responses[index]" variant="success" dismissible>
-        <pre>{{response}}</pre>
-      </b-alert>
-    </b-col>
-  </b-row>
-
-</b-container>
+    <b-row v-if="responses.length">
+      <b-col offset-md="1" md="10">
+        <b-alert v-for="(response,index) in responses" :key="index" v-model="show_responses[index]" variant="success" dismissible>
+          <pre>{{ response }}</pre>
+        </b-alert>
+      </b-col>
+    </b-row>
+  </b-container>
 </template>
 
 <script>

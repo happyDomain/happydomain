@@ -32,52 +32,66 @@
   -->
 
 <template>
-<div id="app">
-  <b-navbar :class="loggedUser?'p-0':''">
-    <b-container>
-      <b-navbar-brand class="navbar-brand" to="/" style="font-family: 'Fortheenas01';font-weight:bold;">
-        happy<span style="font-family: 'Fortheenas01 Bold';margin-left:.1em;">DNS</span>
-      </b-navbar-brand>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#adminMenu" aria-controls="adminMenu" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+  <div id="app">
+    <b-navbar :class="loggedUser?'p-0':''">
+      <b-container>
+        <b-navbar-brand class="navbar-brand" to="/" style="font-family: 'Fortheenas01';font-weight:bold;">
+          happy<span style="font-family: 'Fortheenas01 Bold';margin-left:.1em;">DNS</span>
+        </b-navbar-brand>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#adminMenu" aria-controls="adminMenu" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon" />
+        </button>
 
-      <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
+        <b-navbar-toggle target="nav-collapse" />
 
-      <b-navbar-nav class="ml-auto">
-        <b-nav-item-dropdown right v-if="loggedUser">
-          <template slot="button-content"><b-button size="sm" variant="dark"><b-icon icon="person" aria-hidden="true"></b-icon> {{ loggedUser.email }}</b-button></template>
-          <b-dropdown-item to="/domains/">My domains</b-dropdown-item>
-          <b-dropdown-item to="/sources/">My sources</b-dropdown-item>
-          <b-dropdown-divider></b-dropdown-divider>
-          <b-dropdown-item to="/tools/client">DNS client</b-dropdown-item>
-          <b-dropdown-divider></b-dropdown-divider>
-          <b-dropdown-item @click="logout()">Logout</b-dropdown-item>
-        </b-nav-item-dropdown>
-        <b-button v-if="!loggedUser" variant="outline-dark" to="/join"><b-icon icon="person-plus-fill" aria-hidden="true"></b-icon> Sign up</b-button>
-        <b-button v-if="!loggedUser" variant="primary" class="ml-2" to="/login"><b-icon icon="person-check" aria-hidden="true"></b-icon> Sign in</b-button>
-      </b-navbar-nav>
-    </b-container>
-  </b-navbar>
+        <b-navbar-nav class="ml-auto">
+          <b-nav-item-dropdown v-if="loggedUser" right>
+            <template slot="button-content">
+              <b-button size="sm" variant="dark">
+                <b-icon icon="person" aria-hidden="true" /> {{ loggedUser.email }}
+              </b-button>
+            </template>
+            <b-dropdown-item to="/domains/">
+              My domains
+            </b-dropdown-item>
+            <b-dropdown-item to="/sources/">
+              My sources
+            </b-dropdown-item>
+            <b-dropdown-divider />
+            <b-dropdown-item to="/tools/client">
+              DNS client
+            </b-dropdown-item>
+            <b-dropdown-divider />
+            <b-dropdown-item @click="logout()">
+              Logout
+            </b-dropdown-item>
+          </b-nav-item-dropdown>
+          <b-button v-if="!loggedUser" variant="outline-dark" to="/join">
+            <b-icon icon="person-plus-fill" aria-hidden="true" /> Sign up
+          </b-button>
+          <b-button v-if="!loggedUser" variant="primary" class="ml-2" to="/login">
+            <b-icon icon="person-check" aria-hidden="true" /> Sign in
+          </b-button>
+        </b-navbar-nav>
+      </b-container>
+    </b-navbar>
 
-  <router-view/>
+    <router-view />
 
-  <b-toaster name="b-toaster-content-right" style="position: fixed; top: 70px; right: 0; z-index: 10; min-width: 30vw;"></b-toaster>
+    <b-toaster name="b-toaster-content-right" style="position: fixed; top: 70px; right: 0; z-index: 10; min-width: 30vw;" />
 
-  <footer class="pt-2 pb-2 bg-dark text-light">
-    <b-container>
-      <b-row>
-        <b-col md="12" lg="6">
-          &copy; <span style="font-family: 'Fortheenas01';font-weight:bold;">happy<span style="font-family: 'Fortheenas01 Bold';margin-left:.1em;">DNS</span></span> 2019-2020 All rights reserved
-        </b-col>
-        <b-col md="6" lg="3">
-        </b-col>
-        <b-col md="6" lg="3">
-        </b-col>
-      </b-row>
-    </b-container>
-  </footer>
-</div>
+    <footer class="pt-2 pb-2 bg-dark text-light">
+      <b-container>
+        <b-row>
+          <b-col md="12" lg="6">
+            &copy; <span style="font-family: 'Fortheenas01';font-weight:bold;">happy<span style="font-family: 'Fortheenas01 Bold';margin-left:.1em;">DNS</span></span> 2019-2020 All rights reserved
+          </b-col>
+          <b-col md="6" lg="3" />
+          <b-col md="6" lg="3" />
+        </b-row>
+      </b-container>
+    </footer>
+  </div>
 </template>
 
 <script>

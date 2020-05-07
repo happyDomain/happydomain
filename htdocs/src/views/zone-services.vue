@@ -34,7 +34,7 @@
 <template>
   <div>
     <div class="d-flex flex-row justify-content-around flex-wrap align-self-center">
-      <div class="p-3 service" v-for="(svc, index) in services" v-bind:key="index">
+      <div v-for="(svc, index) in services" :key="index" class="p-3 service">
         <img :src="svc.logo" :alt="svc.name">
         Utiliser {{ svc.name }}
       </div>

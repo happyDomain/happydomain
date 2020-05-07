@@ -32,46 +32,52 @@
   -->
 
 <template>
-<b-container class="mt-4 mb-5">
-  <h1 class="text-center mb-4">Welcome to <span style="font-family: 'Fortheenas01';font-weight:bold;">happy<span style="font-family: 'Fortheenas01 Bold';margin-left:.1em;">DNS</span></span>!</h1>
-  <b-row>
-    <div class="offset-md-2 col-md-8">
-      <b-list-group>
-        <b-list-group-item v-if="isLoading" class="d-flex justify-content-center align-items-center">
-          <b-spinner variant="primary" label="Spinning" class="mr-3"></b-spinner> Retrieving your domains...
-        </b-list-group-item>
-        <b-list-group-item :to="'/domains/' + domain.domain" v-for="(domain, index) in domains" v-bind:key="index" class="d-flex justify-content-between align-items-center">
-          <div class="text-monospace">
-            <div class="d-inline-block text-center" style="width: 50px;">
-              <img :src="'/api/source_specs/' + sources[domain.id_source]._srctype + '.png'" :alt="sources[domain.id_source]._srctype" :title="sources[domain.id_source]._srctype" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em" v-if="sources[domain.id_source]">
-            </div>
-            {{ domain.domain }}
-          </div>
-          <b-badge variant="success">OK</b-badge>
-        </b-list-group-item>
-      </b-list-group>
-      <b-list-group class="mt-2">
-        <form @submit.stop.prevent="submitNewDomain" v-if="!isLoading">
-          <b-list-group-item class="d-flex justify-content-between align-items-center">
-            <b-input-group>
-              <template v-slot:prepend>
-                <b-input-group-prepend @click="$refs.newdomain.focus()">
-                  <b-icon icon="plus" style="width: 2.3em; height: 2.3rem; margin-left: -.5em"></b-icon>
-                </b-input-group-prepend>
-              </template>
-              <b-form-input placeholder="my.new.domain" ref="newdomain" v-model="newDomain" @update="validateNewDomain" :state="newDomainState" class="text-monospace" style="border:none;box-shadow:none;z-index:0"></b-form-input>
-              <template v-slot:append>
-                <b-input-group-append v-show="newDomain.length">
-                  <b-button type="submit" variant="outline-primary">Add new domain</b-button>
-                </b-input-group-append>
-              </template>
-            </b-input-group>
+  <b-container class="mt-4 mb-5">
+    <h1 class="text-center mb-4">
+      Welcome to <span style="font-family: 'Fortheenas01';font-weight:bold;">happy<span style="font-family: 'Fortheenas01 Bold';margin-left:.1em;">DNS</span></span>!
+    </h1>
+    <b-row>
+      <div class="offset-md-2 col-md-8">
+        <b-list-group>
+          <b-list-group-item v-if="isLoading" class="d-flex justify-content-center align-items-center">
+            <b-spinner variant="primary" label="Spinning" class="mr-3" /> Retrieving your domains...
           </b-list-group-item>
-        </form>
-      </b-list-group>
-    </div>
-  </b-row>
-</b-container>
+          <b-list-group-item v-for="(domain, index) in domains" :key="index" :to="'/domains/' + domain.domain" class="d-flex justify-content-between align-items-center">
+            <div class="text-monospace">
+              <div class="d-inline-block text-center" style="width: 50px;">
+                <img v-if="sources[domain.id_source]" :src="'/api/source_specs/' + sources[domain.id_source]._srctype + '.png'" :alt="sources[domain.id_source]._srctype" :title="sources[domain.id_source]._srctype" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+              </div>
+              {{ domain.domain }}
+            </div>
+            <b-badge variant="success">
+              OK
+            </b-badge>
+          </b-list-group-item>
+        </b-list-group>
+        <b-list-group class="mt-2">
+          <form v-if="!isLoading" @submit.stop.prevent="submitNewDomain">
+            <b-list-group-item class="d-flex justify-content-between align-items-center">
+              <b-input-group>
+                <template v-slot:prepend>
+                  <b-input-group-prepend @click="$refs.newdomain.focus()">
+                    <b-icon icon="plus" style="width: 2.3em; height: 2.3rem; margin-left: -.5em" />
+                  </b-input-group-prepend>
+                </template>
+                <b-form-input ref="newdomain" v-model="newDomain" placeholder="my.new.domain" :state="newDomainState" class="text-monospace" style="border:none;box-shadow:none;z-index:0" @update="validateNewDomain" />
+                <template v-slot:append>
+                  <b-input-group-append v-show="newDomain.length">
+                    <b-button type="submit" variant="outline-primary">
+                      Add new domain
+                    </b-button>
+                  </b-input-group-append>
+                </template>
+              </b-input-group>
+            </b-list-group-item>
+          </form>
+        </b-list-group>
+      </div>
+    </b-row>
+  </b-container>
 </template>
 
 <script>
@@ -85,6 +91,12 @@ export default {
       newDomainState: null,
       domains: null,
       sources: {}
+    }
+  },
+
+  computed: {
+    isLoading () {
+      return this.domains == null
     }
   },
 
@@ -103,12 +115,6 @@ export default {
           }, this)
         })
     , 100)
-  },
-
-  computed: {
-    isLoading () {
-      return this.domains == null
-    }
   },
 
   methods: {

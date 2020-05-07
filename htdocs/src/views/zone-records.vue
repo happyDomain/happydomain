@@ -34,40 +34,62 @@
 <template>
   <div class="container mt-2">
     <h2>
-      <b-button @click="addRR()" class="float-right ml-2" size="sm" variant="primary" v-show="rrs && rrs.length"><b-icon icon="plus" aria-hidden="true"></b-icon> Add RR</b-button>
+      <b-button v-show="rrs && rrs.length" class="float-right ml-2" size="sm" variant="primary" @click="addRR()">
+        <b-icon icon="plus" aria-hidden="true" /> Add RR
+      </b-button>
       <b-button-group v-show="rrs && rrs.length" class="float-right ml-2" size="sm" variant="secondary">
-        <b-button :pressed.sync="showDNSSEC">DNSSEC</b-button>
+        <b-button :pressed.sync="showDNSSEC">
+          DNSSEC
+        </b-button>
       </b-button-group>
-      <router-link :to="'/domains/' + domain.domain" class="btn"><b-icon icon="chevron-left"></b-icon></router-link>
+      <router-link :to="'/domains/' + domain.domain" class="btn">
+        <b-icon icon="chevron-left" />
+      </router-link>
       <span class="text-monospace">{{ domain.domain }}</span>
       <small class="text-muted">Resource Records <span v-if="rrs && rrs.length">({{ rrsFiltered.length }}/{{ rrs.length }})</span></small>
     </h2>
-    <b-alert variant="danger" :show="error.length != 0"><strong>Error:</strong> {{ error }}</b-alert>
+    <b-alert variant="danger" :show="error.length != 0">
+      <strong>Error:</strong> {{ error }}
+    </b-alert>
     <div v-show="rrs.length">
       <table class="table table-hover table-bordered table-striped table-sm" style="table-layout: fixed;">
         <thead>
           <tr>
             <th>resource records</th>
-            <th style="width: 5%;">act</th>
+            <th style="width: 5%;">
+              act
+            </th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(rr, index) in rrsFiltered" v-bind:key="index">
+          <tr v-for="(rr, index) in rrsFiltered" :key="index">
             <td v-if="!rr.edit" style="overflow:hidden; text-overflow: ellipsis;white-space: nowrap;">
-              <b-icon @click="toogleRR(index)" icon="chevron-right" v-if="!expandrrs[index]"></b-icon>
-              <b-icon @click="toogleRR(index)" icon="chevron-down" v-if="expandrrs[index]"></b-icon>
-              <span @click="toogleRR(index)" class="text-monospace" :title="rr.string">{{ rr.string }}</span>
-              <div class="row" v-show="expandrrs[index]">
+              <b-icon v-if="!expandrrs[index]" icon="chevron-right" @click="toogleRR(index)" />
+              <b-icon v-if="expandrrs[index]" icon="chevron-down" @click="toogleRR(index)" />
+              <span class="text-monospace" :title="rr.string" @click="toogleRR(index)">{{ rr.string }}</span>
+              <div v-show="expandrrs[index]" class="row">
                 <dl class="col-sm-6 row">
-                  <dt class="col-sm-3 text-right">Class</dt>
-                  <dd class="col-sm-9 text-muted text-monospace">{{ rr.fields.Hdr.Class | nsclass }}</dd>
-                  <dt class="col-sm-3 text-right">TTL</dt>
-                  <dd class="col-sm-9 text-muted text-monospace">{{ rr.fields.Hdr.Ttl }}</dd>
-                  <dt class="col-sm-3 text-right">RRType</dt>
-                  <dd class="col-sm-9 text-muted text-monospace">{{ rr.fields.Hdr.Rrtype | nsrrtype }}</dd>
+                  <dt class="col-sm-3 text-right">
+                    Class
+                  </dt>
+                  <dd class="col-sm-9 text-muted text-monospace">
+                    {{ rr.fields.Hdr.Class | nsclass }}
+                  </dd>
+                  <dt class="col-sm-3 text-right">
+                    TTL
+                  </dt>
+                  <dd class="col-sm-9 text-muted text-monospace">
+                    {{ rr.fields.Hdr.Ttl }}
+                  </dd>
+                  <dt class="col-sm-3 text-right">
+                    RRType
+                  </dt>
+                  <dd class="col-sm-9 text-muted text-monospace">
+                    {{ rr.fields.Hdr.Rrtype | nsrrtype }}
+                  </dd>
                 </dl>
                 <ul class="col-sm-6" style="list-style: none">
-                  <li v-for="(v,k) in rr.fields" v-bind:key="k">
+                  <li v-for="(v,k) in rr.fields" :key="k">
                     <strong class="float-left mr-2">{{ k }}</strong> <span class="text-muted text-monospace" style="display:block;overflow:hidden; text-overflow: ellipsis;white-space: nowrap;" :title="v">{{ v }}</span>
                   </li>
                 </ul>
@@ -75,20 +97,23 @@
             </td>
             <td v-if="rr.edit">
               <form @submit.stop.prevent="newRR(index)">
-                <input autofocus class="form-control text-monospace" v-model="rr.string">
+                <input v-model="rr.string" autofocus class="form-control text-monospace">
               </form>
             </td>
             <td>
-              <button type="button" @click="deleteRR(index)" class="btn btn-sm btn-danger" v-if="!rr.edit && rr.fields.Hdr.Rrtype != 6"><b-icon icon="trash-fill" aria-hidden="true"></b-icon></button>
-              <button type="button" @click="newRR(index)" class="btn btn-sm btn-success" v-if="rr.edit"><b-icon icon="check" aria-hidden="true"></b-icon></button>
+              <button v-if="!rr.edit && rr.fields.Hdr.Rrtype != 6" type="button" class="btn btn-sm btn-danger" @click="deleteRR(index)">
+                <b-icon icon="trash-fill" aria-hidden="true" />
+              </button>
+              <button v-if="rr.edit" type="button" class="btn btn-sm btn-success" @click="newRR(index)">
+                <b-icon icon="check" aria-hidden="true" />
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
-
     </div>
-    <div class="text-center mt-5" v-if="!rrs.length && error.length == 0">
-      <b-spinner label="Spinning"></b-spinner>
+    <div v-if="!rrs.length && error.length == 0" class="text-center mt-5">
+      <b-spinner label="Spinning" />
       <p>Loading records&nbsp;&hellip;</p>
     </div>
   </div>
