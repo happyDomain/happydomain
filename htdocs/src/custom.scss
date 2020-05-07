@@ -55,8 +55,7 @@ footer {
   font-family: 'Fantasque Sans Mono';
   src: local('Fantasque Sans Mono Bold'),
        url('/fonts/FantasqueSansMono-Bold.woff2') format('woff2'),
-       url('/fonts/FantasqueSansMono-Bold.woff') format('woff'), /* Firefox >= 3.6, any other modern browser */
-       url('/fonts/FantasqueSansMono-Bold.svg#FantasqueSansMono-Bold') format('svg'); /* Chrome < 4, Legacy iOS */
+       url('/fonts/FantasqueSansMono-Bold.woff') format('woff');
   font-weight: 700;
   font-style: normal;
 }
@@ -64,8 +63,7 @@ footer {
   font-family: 'Fantasque Sans Mono';
   src: local('Fantasque Sans Mono BoldItalic'),
        url('/fonts/FantasqueSansMono-BoldItalic.woff2') format('woff2'),
-       url('/fonts/FantasqueSansMono-BoldItalic.woff') format('woff'), /* Firefox >= 3.6, any other modern browser */
-       url('/fonts/FantasqueSansMono-BoldItalic.svg#FantasqueSansMono-BoldItalic') format('svg'); /* Chrome < 4, Legacy iOS */
+       url('/fonts/FantasqueSansMono-BoldItalic.woff') format('woff');
   font-weight: 700;
   font-style: italic;
 }
@@ -73,8 +71,7 @@ footer {
   font-family: 'Fantasque Sans Mono';
   src: local('Fantasque Sans Mono Italic'),
        url('/fonts/FantasqueSansMono-Italic.woff2') format('woff2'),
-       url('/fonts/FantasqueSansMono-Italic.woff') format('woff'), /* Firefox >= 3.6, any other modern browser */
-       url('/fonts/FantasqueSansMono-Italic.svg#FantasqueSansMono-Italic') format('svg'); /* Chrome < 4, Legacy iOS */
+       url('/fonts/FantasqueSansMono-Italic.woff') format('woff');
   font-weight: 400;
   font-style: italic;
 }
@@ -83,8 +80,7 @@ footer {
   src: local('Fantasque Sans Mono'),
        local('Fantasque Sans Mono Regular'),
        url('/fonts/FantasqueSansMono-Regular.woff2') format('woff2'),
-       url('/fonts/FantasqueSansMono-Regular.woff') format('woff'), /* Firefox >= 3.6, any other modern browser */
-       url('/fonts/FantasqueSansMono-Regular.svg#FantasqueSansMono-Regular') format('svg'); /* Chrome < 4, Legacy iOS */
+       url('/fonts/FantasqueSansMono-Regular.woff') format('woff');
   font-weight: 400;
   font-style: normal;
 }

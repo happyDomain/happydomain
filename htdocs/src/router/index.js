@@ -87,14 +87,14 @@ const routes = [
         path: '',
         name: 'domain-source',
         component: function () {
-          return import(/* webpackChunkName: "domain-source" */ '../views/domain-source.vue')
+          return import(/* webpackChunkName: "domain" */ '../views/domain-source.vue')
         }
       },
       {
         path: 'services',
         name: 'zone-services',
         component: function () {
-          return import(/* webpackChunkName: "zone-services" */ '../views/zone-services.vue')
+          return import(/* webpackChunkName: "domain" */ '../views/zone-services.vue')
         }
       }
     ]
@@ -103,14 +103,14 @@ const routes = [
     path: '/domains/:domain/new',
     name: 'domain-new',
     component: function () {
-      return import(/* webpackChunkName: "domain-new" */ '../views/domain-new.vue')
+      return import(/* webpackChunkName: "domain" */ '../views/domain-new.vue')
     }
   },
   {
     path: '/sources',
     name: 'source-list',
     component: function () {
-      return import(/* webpackChunkName: "source-list" */ '../views/source-list.vue')
+      return import(/* webpackChunkName: "source" */ '../views/source-list.vue')
     }
   },
   {
@@ -123,14 +123,14 @@ const routes = [
         path: '',
         name: 'source-update',
         component: function () {
-          return import(/* webpackChunkName: "source-update" */ '../views/source-update.vue')
+          return import(/* webpackChunkName: "source" */ '../views/source-update.vue')
         }
       },
       {
         path: 'domains',
         name: 'source-list-domains',
         component: function () {
-          return import(/* webpackChunkName: "source-list-domains" */ '../views/source-list-domains.vue')
+          return import(/* webpackChunkName: "source" */ '../views/source-list-domains.vue')
         }
       }
     ]
@@ -153,7 +153,7 @@ const routes = [
     path: '/zones/:domain/records',
     name: 'zone-records',
     component: function () {
-      return import(/* webpackChunkName: "zone-records" */ '../views/zone-records.vue')
+      return import(/* webpackChunkName: "domain" */ '../views/zone-records.vue')
     }
   }
 ]
