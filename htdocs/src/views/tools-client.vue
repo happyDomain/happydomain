@@ -32,13 +32,13 @@
   -->
 
 <template>
-  <b-container class="mt-4 mb-5">
-    <h1 class="text-center mb-4">
+  <b-container class="mt-3" :fluid="responses.length?true:false">
+    <h1 class="text-center mb-3">
       DNS resolver
     </h1>
-    <b-row class="mb-4">
-      <b-col offset-md="2" md="8">
-        <form class="mb-5" @submit.stop.prevent="submitRequest">
+    <b-row>
+      <b-col :offset-md="responses.length?0:2" :md="responses.length?4:8" :class="responses.length?'bg-light':'' + 'pb-5 pt-4'">
+        <form class="pt-3 pb-5" @submit.stop.prevent="submitRequest">
           <b-form-group
             id="input-resolver"
             label="Resolver"
@@ -89,11 +89,8 @@
           </div>
         </form>
       </b-col>
-    </b-row>
-
-    <b-row v-if="responses.length">
-      <b-col offset-md="1" md="10">
-        <b-alert v-for="(response,index) in responses" :key="index" v-model="show_responses[index]" variant="success" dismissible>
+      <b-col v-if="responses.length" md="8">
+        <b-alert v-for="(response,index) in responses" :key="index" v-model="show_responses[index]" variant="primary" dismissible>
           <pre>{{ response }}</pre>
         </b-alert>
       </b-col>
@@ -120,6 +117,23 @@ export default {
     }
   },
 
+  watch: {
+    show_responses: function (responses, oldval) {
+      if (responses.length === 0) {
+        return
+      }
+
+      for (var k in responses) {
+        if (responses[k]) {
+          return
+        }
+      }
+
+      this.show_responses = []
+      this.responses = []
+    }
+  },
+
   mounted () {
     if (this.$route.params.domain) {
       this.form.type = 'A'
@@ -137,6 +151,17 @@ export default {
           (response) => {
             this.show_responses.unshift(true)
             this.responses.unshift(response.data)
+            this.request_pending = false
+          },
+          (error) => {
+            this.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: 'An error occurs when trying to resolve the domain.',
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
             this.request_pending = false
           })
     }
