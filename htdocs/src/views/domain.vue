@@ -75,7 +75,19 @@ export default {
     var mydomain = this.$route.params.domain
     axios
       .get('/api/domains/' + mydomain)
-      .then(response => (this.domain = response.data))
+      .then(
+        response => (this.domain = response.data),
+        error => {
+          this.$root.$bvToast.toast(
+            'Unfortunately, we were unable to retrieve information for the domain ' + this.$route.params.domain + ': ' + error.response.data.errmsg, {
+              title: 'Unable to retrieve domain information',
+              autoHideDelay: 5000,
+              variant: 'danger',
+              toaster: 'b-toaster-content-right'
+            }
+          )
+          this.$router.push('/domains/')
+        })
   },
 
   methods: {
