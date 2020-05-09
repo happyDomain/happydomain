@@ -92,9 +92,9 @@ const routes = [
       },
       {
         path: 'services',
-        name: 'zone-services',
+        name: 'domain-services',
         component: function () {
-          return import(/* webpackChunkName: "domain" */ '../views/zone-services.vue')
+          return import(/* webpackChunkName: "domain" */ '../views/domain-services.vue')
         }
       }
     ]

@@ -29,28 +29,44 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package happydns
+package svcs
 
 import (
 	"github.com/miekg/dns"
+
+	"git.happydns.org/happydns/model"
 )
 
-// Service represents a service provided by one or more DNS record.
-type Service interface {
-	// genRRs generates corresponding RRs.
-	GenRRs(domain string, ttl uint32) []dns.RR
+type Origin struct {
+	SOA *dns.SOA `json:"SOA,omitempty" happydns:"label=Origin,description=Start of Authority"`
 }
 
-type ServiceType struct {
-	Type    string `json:"_svctype"`
-	Id      int64  `json:"_id"`
-	OwnerId int64  `json:"_ownerid"`
-	Domain  string `json:"_domain"`
-	Ttl     uint32 `json:"_ttl"`
-	Comment string `json:"_comment,omitempty"`
+func (s *Origin) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
+	if s.SOA != nil {
+		rrs = append(rrs, s.SOA)
+	}
+
+	return
 }
 
-type ServiceCombined struct {
-	Service
-	ServiceType
+func origin_analyze(a *Analyzer) error {
+	return nil
+}
+
+func init() {
+	RegisterService(
+		"git.happydns.org/happydns/services/origin/Origin",
+		func() happydns.Service {
+			return &Origin{}
+		},
+		origin_analyze,
+		ServiceInfos{
+			Name:        "Origin",
+			Description: "This is the root of your domain",
+			Categories: []string{
+				"internal",
+			},
+		},
+		100,
+	)
 }

@@ -29,28 +29,56 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package happydns
+package svcs
 
 import (
-	"github.com/miekg/dns"
+	"log"
+	"sort"
+
+	"git.happydns.org/happydns/model"
 )
 
-// Service represents a service provided by one or more DNS record.
-type Service interface {
-	// genRRs generates corresponding RRs.
-	GenRRs(domain string, ttl uint32) []dns.RR
+type ServiceCreator func() happydns.Service
+type ServiceAnalyzer func(*Analyzer) error
+
+type svc struct {
+	Creator  ServiceCreator
+	Analyzer ServiceAnalyzer
+	Infos    ServiceInfos
+	Weight   uint32
 }
 
-type ServiceType struct {
-	Type    string `json:"_svctype"`
-	Id      int64  `json:"_id"`
-	OwnerId int64  `json:"_ownerid"`
-	Domain  string `json:"_domain"`
-	Ttl     uint32 `json:"_ttl"`
-	Comment string `json:"_comment,omitempty"`
+type ByWeight []*svc
+
+func (a ByWeight) Len() int           { return len(a) }
+func (a ByWeight) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByWeight) Less(i, j int) bool { return a[i].Weight < a[j].Weight }
+
+var Services map[string]*svc = map[string]*svc{}
+
+var ordered_services []*svc
+
+func RegisterService(name string, creator ServiceCreator, analyzer ServiceAnalyzer, infos ServiceInfos, weight uint32) {
+	log.Println("Registering new service:", name)
+	Services[name] = &svc{
+		creator,
+		analyzer,
+		infos,
+		weight,
+	}
+	ordered_services = nil
 }
 
-type ServiceCombined struct {
-	Service
-	ServiceType
+func OrderedServices() []*svc {
+	if ordered_services == nil {
+		// Create the list
+		for _, svc := range Services {
+			ordered_services = append(ordered_services, svc)
+		}
+
+		// Sort the list
+		sort.Sort(ByWeight(ordered_services))
+	}
+
+	return ordered_services
 }

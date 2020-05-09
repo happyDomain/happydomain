@@ -46,10 +46,17 @@ new Vue({
   render: function (h) { return h(App) }
 }).$mount('#app')
 
-Vue.filter('toto', function (input, filter) {
-  console.log(input)
-  return input
-})
+var tagsToReplace = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;'
+}
+Vue.prototype.escapeHTML = function (str) {
+  return str.replace(/[&<>]/g, function (tag) {
+    return tagsToReplace[tag] || tag
+  })
+}
+
 Vue.filter('nsclass', function (input) {
   switch (input) {
     case 1:

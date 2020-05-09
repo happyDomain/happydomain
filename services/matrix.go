@@ -29,28 +29,64 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package happydns
+package svcs
 
 import (
+	"strings"
+
 	"github.com/miekg/dns"
+
+	"git.happydns.org/happydns/model"
 )
 
-// Service represents a service provided by one or more DNS record.
-type Service interface {
-	// genRRs generates corresponding RRs.
-	GenRRs(domain string, ttl uint32) []dns.RR
+type MatrixIM struct {
+	Matrix []*SRV `json:"matrix"`
 }
 
-type ServiceType struct {
-	Type    string `json:"_svctype"`
-	Id      int64  `json:"_id"`
-	OwnerId int64  `json:"_ownerid"`
-	Domain  string `json:"_domain"`
-	Ttl     uint32 `json:"_ttl"`
-	Comment string `json:"_comment,omitempty"`
+func (s *MatrixIM) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
+	for _, matrix := range s.Matrix {
+		rrs = append(rrs, matrix.GenRRs("_matrix._tcp."+domain, ttl)...)
+	}
+	return
 }
 
-type ServiceCombined struct {
-	Service
-	ServiceType
+func matrix_analyze(a *Analyzer) error {
+	matrixDomains := map[string]*MatrixIM{}
+
+	for _, record := range a.searchRR(AnalyzerRecordFilter{Prefix: "_matrix._tcp.", Type: dns.TypeSRV}) {
+		if srv := parseSRV(record); srv != nil {
+			domain := strings.TrimPrefix(record.Header().Name, "_matrix._tcp.")
+
+			if _, ok := matrixDomains[domain]; !ok {
+				matrixDomains[domain] = &MatrixIM{}
+			}
+
+			matrixDomains[domain].Matrix = append(matrixDomains[domain].Matrix, srv)
+
+			a.useRR(
+				record,
+				domain,
+				matrixDomains[domain],
+			)
+		}
+	}
+	return nil
+}
+
+func init() {
+	RegisterService(
+		"git.happydns.org/happydns/services/MatrixIM",
+		func() happydns.Service {
+			return &MatrixIM{}
+		},
+		matrix_analyze,
+		ServiceInfos{
+			Name:        "Matrix IM",
+			Description: "This indicates a Matrix IM server",
+			Categories: []string{
+				"im",
+			},
+		},
+		0,
+	)
 }

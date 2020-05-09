@@ -29,28 +29,36 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package happydns
+package svcs
 
 import (
 	"github.com/miekg/dns"
+
+	"git.happydns.org/happydns/model"
 )
 
-// Service represents a service provided by one or more DNS record.
-type Service interface {
-	// genRRs generates corresponding RRs.
-	GenRRs(domain string, ttl uint32) []dns.RR
+type Orphan struct {
+	RR dns.RR
 }
 
-type ServiceType struct {
-	Type    string `json:"_svctype"`
-	Id      int64  `json:"_id"`
-	OwnerId int64  `json:"_ownerid"`
-	Domain  string `json:"_domain"`
-	Ttl     uint32 `json:"_ttl"`
-	Comment string `json:"_comment,omitempty"`
+func (s *Orphan) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
+	rrs = append(rrs, s.RR)
+
+	return
 }
 
-type ServiceCombined struct {
-	Service
-	ServiceType
+func init() {
+	RegisterService(
+		"git.happydns.org/happydns/services/Orphan",
+		func() happydns.Service {
+			return &Orphan{}
+		},
+		nil,
+		ServiceInfos{
+			Name:        "Orphan Record",
+			Description: "",
+			Categories:  []string{},
+		},
+		99999999,
+	)
 }

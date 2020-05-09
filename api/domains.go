@@ -49,8 +49,10 @@ import (
 func init() {
 	router.GET("/api/domains", apiAuthHandler(getDomains))
 	router.POST("/api/domains", apiAuthHandler(addDomain))
+
 	router.DELETE("/api/domains/:domain", apiAuthHandler(domainHandler(delDomain)))
 	router.GET("/api/domains/:domain", apiAuthHandler(domainHandler(getDomain)))
+
 	router.GET("/api/domains/:domain/rr", apiAuthHandler(domainHandler(axfrDomain)))
 	router.POST("/api/domains/:domain/rr", apiAuthHandler(domainHandler(addRR)))
 	router.DELETE("/api/domains/:domain/rr", apiAuthHandler(domainHandler(delRR)))

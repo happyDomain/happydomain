@@ -29,28 +29,12 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package happydns
+package svcs
 
-import (
-	"github.com/miekg/dns"
-)
+import ()
 
-// Service represents a service provided by one or more DNS record.
-type Service interface {
-	// genRRs generates corresponding RRs.
-	GenRRs(domain string, ttl uint32) []dns.RR
-}
-
-type ServiceType struct {
-	Type    string `json:"_svctype"`
-	Id      int64  `json:"_id"`
-	OwnerId int64  `json:"_ownerid"`
-	Domain  string `json:"_domain"`
-	Ttl     uint32 `json:"_ttl"`
-	Comment string `json:"_comment,omitempty"`
-}
-
-type ServiceCombined struct {
-	Service
-	ServiceType
+type ServiceInfos struct {
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Categories  []string `json:"categories"`
 }

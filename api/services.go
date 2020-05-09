@@ -38,21 +38,55 @@ import (
 
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/services"
+	"git.happydns.org/happydns/storage"
 )
 
 func init() {
 	router.GET("/api/services", apiHandler(listServices))
 	//router.POST("/api/services", apiHandler(newService))
+
+	router.POST("/api/domains/:domain/analyze", apiAuthHandler(domainHandler(analyzeDomain)))
 }
 
 func listServices(_ *config.Options, _ httprouter.Params, _ io.Reader) Response {
-	if services, err := happydns.GetServices(); err != nil {
+	ret := map[string]svcs.ServiceInfos{}
+
+	for k, svc := range svcs.Services {
+		ret[k] = svc.Infos
+	}
+
+	return APIResponse{
+		response: ret,
+	}
+}
+
+func analyzeDomain(opts *config.Options, domain *happydns.Domain, body io.Reader) Response {
+	source, err := storage.MainStore.GetSource(&happydns.User{Id: domain.IdUser}, domain.IdSource)
+	if err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
-	} else {
-		return APIResponse{
-			response: services,
+	}
+
+	zone, err := source.ImportZone(domain)
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
 		}
+	}
+
+	services, aliases, err := svcs.AnalyzeZone(domain.DomainName, zone)
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	return APIResponse{
+		response: map[string]interface{}{
+			"aliases":  aliases,
+			"services": services,
+		},
 	}
 }
