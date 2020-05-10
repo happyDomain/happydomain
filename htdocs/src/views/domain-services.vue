@@ -99,11 +99,18 @@ export default {
 
       var domains = Object.keys(this.myServices.services)
       domains.sort(function (a, b) {
-        var pnb = ((a.match(/\./g) || []).length) - ((b.match(/\./g) || []).length)
-        if (pnb === 0) {
-          pnb = a.localeCompare(b)
+        var as = a.split('.').reverse()
+        var bs = b.split('.').reverse()
+
+        var maxDepth = Math.min(as.length, bs.length)
+        for (var i = 0; i < maxDepth; i++) {
+          var cmp = as[i].localeCompare(bs[i])
+          if (cmp !== 0) {
+            return cmp
+          }
         }
-        return pnb
+
+        return as.length - bs.length
       })
 
       return domains
