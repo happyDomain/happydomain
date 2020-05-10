@@ -32,6 +32,7 @@
 package svcs
 
 import (
+	"fmt"
 	"log"
 	"sort"
 
@@ -54,13 +55,13 @@ func (a ByWeight) Len() int           { return len(a) }
 func (a ByWeight) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByWeight) Less(i, j int) bool { return a[i].Weight < a[j].Weight }
 
-var Services map[string]*svc = map[string]*svc{}
+var services map[string]*svc = map[string]*svc{}
 
 var ordered_services []*svc
 
 func RegisterService(name string, creator ServiceCreator, analyzer ServiceAnalyzer, infos ServiceInfos, weight uint32) {
 	log.Println("Registering new service:", name)
-	Services[name] = &svc{
+	services[name] = &svc{
 		creator,
 		analyzer,
 		infos,
@@ -72,7 +73,7 @@ func RegisterService(name string, creator ServiceCreator, analyzer ServiceAnalyz
 func OrderedServices() []*svc {
 	if ordered_services == nil {
 		// Create the list
-		for _, svc := range Services {
+		for _, svc := range services {
 			ordered_services = append(ordered_services, svc)
 		}
 
@@ -81,4 +82,17 @@ func OrderedServices() []*svc {
 	}
 
 	return ordered_services
+}
+
+func GetServices() *map[string]*svc {
+	return &services
+}
+
+func FindService(name string) (happydns.Service, error) {
+	svc, ok := services[name]
+	if !ok {
+		return nil, fmt.Errorf("Unable to find corresponding service for `%s`.", name)
+	}
+
+	return svc.Creator(), nil
 }

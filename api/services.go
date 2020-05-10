@@ -52,7 +52,7 @@ func init() {
 func listServices(_ *config.Options, _ httprouter.Params, _ io.Reader) Response {
 	ret := map[string]svcs.ServiceInfos{}
 
-	for k, svc := range svcs.Services {
+	for k, svc := range *svcs.GetServices() {
 		ret[k] = svc.Infos
 	}
 
