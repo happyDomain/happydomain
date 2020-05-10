@@ -53,9 +53,10 @@
       </h2>
       <b-list-group v-show="!hideDomain[index]" v-for="(svc, idx) in myServices.services[dn]" :key="idx">
         <b-list-group-item @click="toogleRR(index, idx)" button>
-          {{ services[svc._svctype].name }}
+          <strong>{{ services[svc._svctype].name }}</strong> <span v-if="svc._comment" class="text-muted">{{ svc._comment }}</span>
           <span class="text-muted" v-if="services[svc._svctype].comment">{{ services[svc._svctype].comment }}</span>
-          <b-badge v-for="(categorie, idcat) in services[svc._svctype].categories" :key="idcat" class="float-right">{{ categorie }}</b-badge>
+          <b-badge v-for="(categorie, idcat) in services[svc._svctype].categories" :key="idcat" class="float-right ml-1">{{ categorie }}</b-badge>
+          <b-badge v-if="svc._tmp_hint_nb && svc._tmp_hint_nb > 1" variant="danger" class="float-right ml-1">{{ svc._tmp_hint_nb }}</b-badge>
         </b-list-group-item>
         <b-list-group-item v-if="expandrrs['' + index + '.' + idx]">
           {{ svc }}

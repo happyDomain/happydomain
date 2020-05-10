@@ -32,6 +32,7 @@
 package svcs
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"regexp"
@@ -53,6 +54,47 @@ type TLSA struct {
 
 type TLSAs struct {
 	TLSA []*TLSA `json:"tlsa,omitempty"`
+}
+
+func (ss *TLSAs) GetNbResources() int {
+	return len(ss.TLSA)
+}
+
+func (ss *TLSAs) GenComment(origin string) string {
+	mapProto := map[string][]uint16{}
+protoloop:
+	for _, tlsa := range ss.TLSA {
+		for _, port := range mapProto[tlsa.Proto] {
+			if port == tlsa.Port {
+				continue protoloop
+			}
+		}
+		mapProto[tlsa.Proto] = append(mapProto[tlsa.Proto], tlsa.Port)
+	}
+
+	var buffer bytes.Buffer
+	first := true
+	for proto, ports := range mapProto {
+		if !first {
+			buffer.WriteString(" - ")
+		} else {
+			first = !first
+		}
+		buffer.WriteString(proto)
+		buffer.WriteString(" (")
+		firstport := true
+		for _, port := range ports {
+			if !firstport {
+				buffer.WriteString(", ")
+			} else {
+				firstport = !firstport
+			}
+			buffer.WriteString(strconv.Itoa(int(port)))
+		}
+		buffer.WriteString(")")
+	}
+
+	return buffer.String()
 }
 
 func (ss *TLSAs) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {

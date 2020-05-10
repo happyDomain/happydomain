@@ -32,7 +32,9 @@
 package svcs
 
 import (
+	"bytes"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -44,6 +46,53 @@ type XMPP struct {
 	Client []*SRV `json:"client,omitempty"`
 	Server []*SRV `json:"server,omitempty"`
 	Jabber []*SRV `json:"jabber,omitempty"`
+}
+
+func (s *XMPP) GetNbResources() (max int) {
+	for _, i := range []int{len(s.Client), len(s.Server), len(s.Jabber)} {
+		if i > max {
+			max = i
+		}
+	}
+	return
+}
+
+func (s *XMPP) GenComment(origin string) string {
+	dest := map[string][]uint16{}
+
+destloop:
+	for _, srv := range append(append(s.Client, s.Server...), s.Jabber...) {
+		for _, port := range dest[srv.Target] {
+			if port == srv.Port {
+				continue destloop
+			}
+		}
+		dest[srv.Target] = append(dest[srv.Target], srv.Port)
+	}
+
+	var buffer bytes.Buffer
+	first := true
+	for dn, ports := range dest {
+		if !first {
+			buffer.WriteString("; ")
+		} else {
+			first = !first
+		}
+		buffer.WriteString(strings.TrimSuffix(dn, "."+origin))
+		buffer.WriteString(" (")
+		firstport := true
+		for _, port := range ports {
+			if !firstport {
+				buffer.WriteString(", ")
+			} else {
+				firstport = !firstport
+			}
+			buffer.WriteString(strconv.Itoa(int(port)))
+		}
+		buffer.WriteString(")")
+	}
+
+	return buffer.String()
 }
 
 func (s *XMPP) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {

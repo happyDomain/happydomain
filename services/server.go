@@ -32,6 +32,8 @@
 package svcs
 
 import (
+	"bytes"
+	"fmt"
 	"net"
 
 	"github.com/miekg/dns"
@@ -49,6 +51,31 @@ type Server struct {
 	A     *net.IP  `json:"A,omitempty" happydns:"label=ipv4,description=Server's IPv4"`
 	AAAA  *net.IP  `json:"AAAA,omitempty" happydns:"label=ipv6,description=Server's IPv6"`
 	SSHFP []*SSHFP `json:"SSHFP,omitempty" happydns:"label=SSH Fingerprint,description=Server's SSH fingerprint"`
+}
+
+func (s *Server) GetNbResources() int {
+	return 1
+}
+
+func (s *Server) GenComment(origin string) string {
+	var buffer bytes.Buffer
+
+	if s.A != nil {
+		buffer.WriteString(s.A.String())
+		if s.AAAA != nil {
+			buffer.WriteString("; ")
+		}
+	}
+
+	if s.AAAA != nil {
+		buffer.WriteString(s.AAAA.String())
+	}
+
+	if s.SSHFP != nil {
+		buffer.WriteString(fmt.Sprintf(" + %d SSHFP", len(s.SSHFP)))
+	}
+
+	return buffer.String()
 }
 
 func (s *Server) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
@@ -96,9 +123,6 @@ func server_analyze(a *Analyzer) error {
 
 	for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeA}, AnalyzerRecordFilter{Type: dns.TypeAAAA}, AnalyzerRecordFilter{Type: dns.TypeSSHFP}) {
 		domain := record.Header().Name
-		if _, ok := pool[domain]; !ok {
-			pool[domain] = []dns.RR{}
-		}
 
 		pool[domain] = append(pool[domain], record)
 	}

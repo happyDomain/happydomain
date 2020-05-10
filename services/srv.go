@@ -34,6 +34,7 @@ package svcs
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/miekg/dns"
 
@@ -45,6 +46,14 @@ type SRV struct {
 	Port     uint16 `json:"port,omitempty"`
 	Weight   uint16 `json:"weight,omitempty"`
 	Priority uint16 `json:"priority,omitempty"`
+}
+
+func (s *SRV) GetNbResources() int {
+	return 1
+}
+
+func (s *SRV) GenComment(origin string) string {
+	return fmt.Sprintf("%s:%d", strings.TrimSuffix(s.Target, "."+origin), s.Port)
 }
 
 func (s *SRV) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
@@ -84,6 +93,14 @@ type UnknownSRV struct {
 	Name  string `json:"name"`
 	Proto string `json:"proto"`
 	SRV   []*SRV `json:"srv"`
+}
+
+func (s *UnknownSRV) GetNbResources() int {
+	return len(s.SRV)
+}
+
+func (s *UnknownSRV) GenComment(origin string) string {
+	return fmt.Sprintf("%s (%s)", s.Name, s.Proto)
 }
 
 func (s *UnknownSRV) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {

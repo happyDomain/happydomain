@@ -49,6 +49,14 @@ type OpenPGP struct {
 	PublicKey  []byte `json:"pubkey"`
 }
 
+func (s *OpenPGP) GetNbResources() int {
+	return 1
+}
+
+func (s *OpenPGP) GenComment(origin string) string {
+	return fmt.Sprintf("%s", s.Username)
+}
+
 func (s *OpenPGP) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
 	if len(s.PublicKey) > 0 {
 		if s.Username != "" {
@@ -75,6 +83,14 @@ type SMimeCert struct {
 	Selector     uint8  `json:"selector"`
 	MatchingType uint8  `json:"matchingtype"`
 	Certificate  []byte `json:"certificate"`
+}
+
+func (s *SMimeCert) GetNbResources() int {
+	return 1
+}
+
+func (s *SMimeCert) GenComment(origin string) string {
+	return fmt.Sprintf("%s", s.Username)
 }
 
 func (s *SMimeCert) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {

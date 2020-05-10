@@ -32,30 +32,75 @@
 package svcs
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
 )
 
 type Origin struct {
-	SOA *dns.SOA `json:"SOA,omitempty" happydns:"label=Origin,description=Start of Authority"`
+	Ns      string
+	Mbox    string
+	Serial  uint32
+	Refresh uint32
+	Retry   uint32
+	Expire  uint32
+	Minttl  uint32
+}
+
+func (s *Origin) GetNbResources() int {
+	return 1
+}
+
+func (s *Origin) GenComment(origin string) string {
+	return fmt.Sprintf("%s %s %d", strings.TrimSuffix(s.Ns, "."+origin), strings.TrimSuffix(s.Mbox, "."+origin), s.Serial)
 }
 
 func (s *Origin) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
-	if s.SOA != nil {
-		rrs = append(rrs, s.SOA)
-	}
-
+	rrs = append(rrs, &dns.SOA{
+		Hdr: dns.RR_Header{
+			Name:   domain,
+			Rrtype: dns.TypeSOA,
+			Class:  dns.ClassINET,
+			Ttl:    ttl,
+		},
+		Ns:      s.Ns,
+		Mbox:    s.Mbox,
+		Serial:  s.Serial,
+		Refresh: s.Refresh,
+		Retry:   s.Retry,
+		Expire:  s.Expire,
+		Minttl:  s.Minttl,
+	})
 	return
 }
 
 func origin_analyze(a *Analyzer) error {
+	for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeSOA}) {
+		if soa, ok := record.(*dns.SOA); ok {
+			a.useRR(
+				record,
+				soa.Header().Name,
+				&Origin{
+					Ns:      soa.Ns,
+					Mbox:    soa.Mbox,
+					Serial:  soa.Serial,
+					Refresh: soa.Refresh,
+					Retry:   soa.Retry,
+					Expire:  soa.Expire,
+					Minttl:  soa.Minttl,
+				},
+			)
+		}
+	}
 	return nil
 }
 
 func init() {
 	RegisterService(
-		"git.happydns.org/happydns/services/origin/Origin",
+		"git.happydns.org/happydns/services/Origin",
 		func() happydns.Service {
 			return &Origin{}
 		},

@@ -37,17 +37,22 @@ import (
 
 // Service represents a service provided by one or more DNS record.
 type Service interface {
+	GetNbResources() int
+	GenComment(origin string) string
 	// genRRs generates corresponding RRs.
 	GenRRs(domain string, ttl uint32) []dns.RR
 }
 
 type ServiceType struct {
-	Type    string `json:"_svctype"`
-	Id      int64  `json:"_id"`
-	OwnerId int64  `json:"_ownerid"`
-	Domain  string `json:"_domain"`
-	Ttl     uint32 `json:"_ttl"`
-	Comment string `json:"_comment,omitempty"`
+	Type        string   `json:"_svctype"`
+	Id          int64    `json:"_id,omitempty"`
+	OwnerId     int64    `json:"_ownerid,omitempty"`
+	Domain      string   `json:"_domain"`
+	Ttl         uint32   `json:"_ttl"`
+	Comment     string   `json:"_comment,omitempty"`
+	UserComment string   `json:"_mycomment,omitempty"`
+	Aliases     []string `json:"_aliases,omitempty"`
+	NbResources int      `json:"_tmp_hint_nb"`
 }
 
 type ServiceCombined struct {

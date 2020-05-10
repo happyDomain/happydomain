@@ -44,7 +44,6 @@ import (
 type Analyzer struct {
 	origin   string
 	zone     []dns.RR
-	zoneInit []dns.RR
 	services map[string][]*happydns.ServiceCombined
 	aliases  map[string][]string
 }
@@ -91,20 +90,20 @@ func (a *Analyzer) useRR(rr dns.RR, domain string, svc happydns.Service) error {
 		return errors.New("Record not found.")
 	}
 
-	if _, ok := a.services[domain]; !ok {
-		a.services[domain] = []*happydns.ServiceCombined{}
-	}
-
 	for _, service := range a.services[domain] {
 		if service.Service == svc {
+			service.Comment = svc.GenComment(a.origin)
+			service.NbResources = svc.GetNbResources()
 			return nil
 		}
 	}
 
 	a.services[domain] = append(a.services[domain], &happydns.ServiceCombined{svc, happydns.ServiceType{
-		Type:   reflect.Indirect(reflect.ValueOf(svc)).Type().PkgPath() + "/" + reflect.Indirect(reflect.ValueOf(svc)).Type().Name(),
-		Domain: domain,
-		Ttl:    rr.Header().Ttl,
+		Type:        reflect.Indirect(reflect.ValueOf(svc)).Type().PkgPath() + "/" + reflect.Indirect(reflect.ValueOf(svc)).Type().Name(),
+		Domain:      domain,
+		Ttl:         rr.Header().Ttl,
+		Comment:     svc.GenComment(a.origin),
+		NbResources: svc.GetNbResources(),
 	}})
 
 	return nil
@@ -114,7 +113,6 @@ func AnalyzeZone(origin string, zone []dns.RR) (svcs map[string][]*happydns.Serv
 	a := Analyzer{
 		origin:   origin,
 		zone:     zone,
-		zoneInit: zone,
 		services: map[string][]*happydns.ServiceCombined{},
 		aliases:  map[string][]string{},
 	}
@@ -147,9 +145,6 @@ func AnalyzeZone(origin string, zone []dns.RR) (svcs map[string][]*happydns.Serv
 			// Ignore in zone CNAMEs
 			if cname, ok := record.(*dns.CNAME); ok {
 				if strings.HasSuffix(cname.Target, origin) {
-					if _, ok := a.aliases[cname.Target]; !ok {
-						a.aliases[cname.Target] = []string{}
-					}
 					a.aliases[cname.Target] = append(a.aliases[cname.Target], record.Header().Name)
 
 					if _, ok := a.services[cname.Target]; ok {
@@ -157,19 +152,15 @@ func AnalyzeZone(origin string, zone []dns.RR) (svcs map[string][]*happydns.Serv
 					}
 				}
 			}
-
-			// TODO: handle aliases
-		}
-
-		if _, ok := svcs[record.Header().Name]; !ok {
-			svcs[record.Header().Name] = []*happydns.ServiceCombined{}
 		}
 
 		orphan := &Orphan{record}
 		svcs[record.Header().Name] = append(svcs[record.Header().Name], &happydns.ServiceCombined{orphan, happydns.ServiceType{
-			Type:   reflect.Indirect(reflect.ValueOf(orphan)).Type().PkgPath() + "/" + reflect.Indirect(reflect.ValueOf(orphan)).Type().Name(),
-			Domain: origin,
-			Ttl:    record.Header().Ttl,
+			Type:        reflect.Indirect(reflect.ValueOf(orphan)).Type().PkgPath() + "/" + reflect.Indirect(reflect.ValueOf(orphan)).Type().Name(),
+			Domain:      origin,
+			Ttl:         record.Header().Ttl,
+			NbResources: 1,
+			Comment:     orphan.GenComment(a.origin),
 		}})
 	}
 

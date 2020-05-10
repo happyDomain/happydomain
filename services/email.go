@@ -32,6 +32,8 @@
 package svcs
 
 import (
+	"bytes"
+	"fmt"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -100,6 +102,61 @@ type EMail struct {
 	DKIM    map[string]*DKIM `json:"dkim,omitempty"`
 	DMARC   *DMARC           `json:"dmarc,omitempty"`
 	MTA_STS *MTA_STS         `json:"mta_sts,omitempty"`
+}
+
+func (s *EMail) GetNbResources() int {
+	return len(s.MX)
+}
+
+func (s *EMail) GenComment(origin string) string {
+	poolMX := map[string]int{}
+
+	for _, mx := range s.MX {
+		labels := dns.SplitDomainName(mx.Target)
+		nbLabel := len(labels)
+
+		var dn string
+		if len(labels[nbLabel-2]) < 4 {
+			dn = strings.Join(labels[nbLabel-3:], ".") + "."
+		} else {
+			dn = strings.Join(labels[nbLabel-2:], ".") + "."
+		}
+
+		poolMX[dn] += 1
+	}
+
+	var buffer bytes.Buffer
+	first := true
+
+	for dn, nb := range poolMX {
+		if !first {
+			buffer.WriteString("; ")
+		} else {
+			first = !first
+		}
+		buffer.WriteString(strings.TrimSuffix(dn, "."+origin))
+		if nb > 1 {
+			buffer.WriteString(fmt.Sprintf(" ×%d", nb))
+		}
+	}
+
+	if s.SPF != nil {
+		buffer.WriteString(" + SPF")
+	}
+
+	if s.DKIM != nil {
+		buffer.WriteString(" + DKIM")
+	}
+
+	if s.DMARC != nil {
+		buffer.WriteString(" + DMARC")
+	}
+
+	if s.MTA_STS != nil {
+		buffer.WriteString(" + MTA-STS")
+	}
+
+	return buffer.String()
 }
 
 func (s *EMail) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {

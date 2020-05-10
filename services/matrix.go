@@ -32,6 +32,8 @@
 package svcs
 
 import (
+	"bytes"
+	"strconv"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -41,6 +43,49 @@ import (
 
 type MatrixIM struct {
 	Matrix []*SRV `json:"matrix"`
+}
+
+func (s *MatrixIM) GetNbResources() int {
+	return len(s.Matrix)
+}
+
+func (s *MatrixIM) GenComment(origin string) string {
+	dest := map[string][]uint16{}
+
+destloop:
+	for _, srv := range s.Matrix {
+		for _, port := range dest[srv.Target] {
+			if port == srv.Port {
+				continue destloop
+			}
+		}
+		dest[srv.Target] = append(dest[srv.Target], srv.Port)
+	}
+
+	var buffer bytes.Buffer
+	first := true
+	for dn, ports := range dest {
+		dn = strings.TrimSuffix(dn, "."+origin)
+		if !first {
+			buffer.WriteString("; ")
+		} else {
+			first = !first
+		}
+		buffer.WriteString(dn)
+		buffer.WriteString(" (")
+		firstport := true
+		for _, port := range ports {
+			if !firstport {
+				buffer.WriteString(", ")
+			} else {
+				firstport = !firstport
+			}
+			buffer.WriteString(strconv.Itoa(int(port)))
+		}
+		buffer.WriteString(")")
+	}
+
+	return buffer.String()
 }
 
 func (s *MatrixIM) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {

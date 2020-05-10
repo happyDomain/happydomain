@@ -32,6 +32,9 @@
 package svcs
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
@@ -39,6 +42,14 @@ import (
 
 type Orphan struct {
 	RR dns.RR
+}
+
+func (s *Orphan) GetNbResources() int {
+	return 1
+}
+
+func (s *Orphan) GenComment(origin string) string {
+	return fmt.Sprintf("%s", s.RR.String()[strings.LastIndex(s.RR.Header().String(), "\tIN\t")+4:])
 }
 
 func (s *Orphan) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
