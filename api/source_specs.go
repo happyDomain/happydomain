@@ -50,7 +50,7 @@ func init() {
 	router.GET("/api/source_specs/*ssid", apiHandler(getSourceSpec))
 }
 
-type field struct {
+type source_field struct {
 	Id          string   `json:"id"`
 	Label       string   `json:"label,omitempty"`
 	Placeholder string   `json:"placeholder,omitempty"`
@@ -89,8 +89,8 @@ func getSourceSpecImg(ssid string) Response {
 }
 
 type viewSourceSpec struct {
-	Fields       []field  `json:"fields,omitempty"`
-	Capabilities []string `json:"capabilities,omitempty"`
+	Fields       []source_field `json:"fields,omitempty"`
+	Capabilities []string       `json:"capabilities,omitempty"`
 }
 
 func getSourceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Response {
@@ -112,12 +112,12 @@ func getSourceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Respo
 
 	srcType := reflect.Indirect(reflect.ValueOf(src)).Type()
 
-	fields := []field{}
+	fields := []source_field{}
 	for i := 0; i < srcType.NumField(); i += 1 {
 		jsonTag := srcType.Field(i).Tag.Get("json")
 		jsonTuples := strings.Split(jsonTag, ",")
 
-		f := field{}
+		f := source_field{}
 
 		if len(jsonTuples) > 0 && len(jsonTuples[0]) > 0 {
 			f.Id = jsonTuples[0]
