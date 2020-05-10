@@ -34,34 +34,51 @@
 <template>
   <div v-if="!isLoading" class="pt-3">
     <div v-for="(dn, index) in sortedDomains" :key="index">
-      <h2 :id="dn" :class="index !== 0 ? 'mt-4' : ''">
-        <b-icon v-if="hideDomain[index]" icon="chevron-right" @click="toogleHideDomain(index)" />
-        <b-icon v-if="!hideDomain[index]" icon="chevron-down" @click="toogleHideDomain(index)" />
-        <span class="text-monospace" @click="toogleHideDomain(index)">{{ dn }}</span>
-        <a :href="'#' + dn" class="float-right">
-          <b-icon icon="link45deg" />
-        </a>
-        <b-badge class="ml-2" v-if="myServices.aliases && myServices.aliases[dn]" v-b-popover.hover.focus="{ customClass: 'text-monospace', html: true, content: myServices.aliases[dn].map(function(alias) { return escapeHTML(alias) }).join('<br>') }">+ {{ myServices.aliases[dn].length }} aliases</b-badge>
-        <b-button type="button" variant="primary" size="sm" class="ml-2">
-          <b-icon icon="plus" />
-          Add a service
-        </b-button>
-        <b-button type="button" variant="outline-primary" size="sm" class="ml-2">
+      <div v-if="isCNAME(dn)">
+        <h2 :id="dn" :class="index !== 0 ? 'mt-4' : ''">
           <b-icon icon="link" />
-          Add an alias
-        </b-button>
-      </h2>
-      <b-list-group v-show="!hideDomain[index]" v-for="(svc, idx) in myServices.services[dn]" :key="idx">
-        <b-list-group-item @click="toogleRR(index, idx)" button>
-          <strong>{{ services[svc._svctype].name }}</strong> <span v-if="svc._comment" class="text-muted">{{ svc._comment }}</span>
-          <span class="text-muted" v-if="services[svc._svctype].comment">{{ services[svc._svctype].comment }}</span>
-          <b-badge v-for="(categorie, idcat) in services[svc._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">{{ categorie }}</b-badge>
-          <b-badge v-if="svc._tmp_hint_nb && svc._tmp_hint_nb > 1" variant="danger" class="float-right ml-1">{{ svc._tmp_hint_nb }}</b-badge>
-        </b-list-group-item>
-        <b-list-group-item v-if="expandrrs['' + index + '.' + idx]">
-          {{ svc }}
-        </b-list-group-item>
-      </b-list-group>
+          <span class="text-monospace">{{ dn }}</span>
+          <a :href="'#' + dn" class="float-right">
+            <b-icon icon="link45deg" />
+          </a>
+          <b-icon icon="arrow-right" />
+          <span class="text-monospace">{{ myServices.services[dn][0].Service.Target }}</span>
+          <b-button type="button" variant="outline-danger" size="sm" class="ml-2">
+            <b-icon icon="x-circle" />
+            Drop alias
+          </b-button>
+        </h2>
+      </div>
+      <div v-else>
+        <h2 :id="dn" :class="index !== 0 ? 'mt-4' : ''">
+          <b-icon v-if="hideDomain[index]" icon="chevron-right" @click="toogleHideDomain(index)" />
+          <b-icon v-if="!hideDomain[index]" icon="chevron-down" @click="toogleHideDomain(index)" />
+          <span class="text-monospace" @click="toogleHideDomain(index)">{{ dn }}</span>
+          <a :href="'#' + dn" class="float-right">
+            <b-icon icon="link45deg" />
+          </a>
+          <b-badge class="ml-2" v-if="myServices.aliases && myServices.aliases[dn]" v-b-popover.hover.focus="{ customClass: 'text-monospace', html: true, content: myServices.aliases[dn].map(function(alias) { return escapeHTML(alias) }).join('<br>') }">+ {{ myServices.aliases[dn].length }} aliases</b-badge>
+          <b-button type="button" variant="primary" size="sm" class="ml-2">
+            <b-icon icon="plus" />
+            Add a service
+          </b-button>
+          <b-button type="button" variant="outline-primary" size="sm" class="ml-2">
+            <b-icon icon="link" />
+            Add an alias
+          </b-button>
+        </h2>
+        <b-list-group v-show="!hideDomain[index]" v-for="(svc, idx) in myServices.services[dn]" :key="idx">
+          <b-list-group-item @click="toogleRR(index, idx)" button>
+            <strong>{{ services[svc._svctype].name }}</strong> <span v-if="svc._comment" class="text-muted">{{ svc._comment }}</span>
+            <span class="text-muted" v-if="services[svc._svctype].comment">{{ services[svc._svctype].comment }}</span>
+            <b-badge v-for="(categorie, idcat) in services[svc._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">{{ categorie }}</b-badge>
+            <b-badge v-if="svc._tmp_hint_nb && svc._tmp_hint_nb > 1" variant="danger" class="float-right ml-1">{{ svc._tmp_hint_nb }}</b-badge>
+          </b-list-group-item>
+          <b-list-group-item v-if="expandrrs['' + index + '.' + idx]">
+            {{ svc }}
+          </b-list-group-item>
+        </b-list-group>
+      </div>
     </div>
   </div>
 </template>
@@ -160,6 +177,10 @@ export default {
           window.scrollTo(0, document.getElementById(hash).offsetTop)
         }, 500)
       }
+    },
+
+    isCNAME (dn) {
+      return this.myServices.services[dn].length === 1 && this.myServices.services[dn][0]._svctype === 'git.happydns.org/happydns/services/CNAME'
     },
 
     pullDomain () {

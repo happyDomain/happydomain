@@ -90,6 +90,11 @@ func (a *Analyzer) useRR(rr dns.RR, domain string, svc happydns.Service) error {
 		return errors.New("Record not found.")
 	}
 
+	// svc nil, just drop the record from the zone (probably handle another way)
+	if svc == nil {
+		return nil
+	}
+
 	for _, service := range a.services[domain] {
 		if service.Service == svc {
 			service.Comment = svc.GenComment(a.origin)
@@ -138,20 +143,6 @@ func AnalyzeZone(origin string, zone []dns.RR) (svcs map[string][]*happydns.Serv
 			record.Header().Rrtype == dns.TypeDNSKEY ||
 			record.Header().Rrtype == dns.TypeRRSIG {
 			continue
-		}
-
-		// Handle CNAME as Aliases
-		if record.Header().Rrtype == dns.TypeCNAME {
-			// Ignore in zone CNAMEs
-			if cname, ok := record.(*dns.CNAME); ok {
-				if strings.HasSuffix(cname.Target, origin) {
-					a.aliases[cname.Target] = append(a.aliases[cname.Target], record.Header().Name)
-
-					if _, ok := a.services[cname.Target]; ok {
-						continue
-					}
-				}
-			}
 		}
 
 		orphan := &Orphan{record}
