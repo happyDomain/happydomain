@@ -96,12 +96,21 @@ func (t *MTA_STS) String() string {
 	return strings.Join(t.Fields, ";")
 }
 
+type TLS_RPT struct {
+	Fields []string
+}
+
+func (t *TLS_RPT) String() string {
+	return strings.Join(t.Fields, ";")
+}
+
 type EMail struct {
 	MX      []MX             `json:"mx,omitempty"`
 	SPF     *SPF             `json:"spf,omitempty"`
 	DKIM    map[string]*DKIM `json:"dkim,omitempty"`
 	DMARC   *DMARC           `json:"dmarc,omitempty"`
 	MTA_STS *MTA_STS         `json:"mta_sts,omitempty"`
+	TLS_RPT *TLS_RPT         `json:"tls_rpt,omitempty"`
 }
 
 func (s *EMail) GetNbResources() int {
@@ -154,6 +163,10 @@ func (s *EMail) GenComment(origin string) string {
 
 	if s.MTA_STS != nil {
 		buffer.WriteString(" + MTA-STS")
+	}
+
+	if s.TLS_RPT != nil {
+		buffer.WriteString(" + TLS Reporting")
 	}
 
 	return buffer.String()
@@ -220,6 +233,18 @@ func (s *EMail) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
 				Ttl:    ttl,
 			},
 			Txt: []string{s.MTA_STS.String()},
+		})
+	}
+
+	if s.TLS_RPT != nil {
+		rrs = append(rrs, &dns.TXT{
+			Hdr: dns.RR_Header{
+				Name:   "_smtp._tls." + domain,
+				Rrtype: dns.TypeTXT,
+				Class:  dns.ClassINET,
+				Ttl:    ttl,
+			},
+			Txt: []string{s.TLS_RPT.String()},
 		})
 	}
 	return
@@ -316,6 +341,22 @@ func email_analyze(a *Analyzer) (err error) {
 
 			if txt, ok := record.(*dns.TXT); ok {
 				service.MTA_STS.Fields = append(service.MTA_STS.Fields, strings.Split(strings.Join(txt.Txt, ""), ";")...)
+			}
+
+			err = a.useRR(record, domain, service)
+			if err != nil {
+				return
+			}
+		}
+
+		// Is there MTA-STS record?
+		for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_smtp._tls." + domain}) {
+			if service.TLS_RPT == nil {
+				service.TLS_RPT = &TLS_RPT{}
+			}
+
+			if txt, ok := record.(*dns.TXT); ok {
+				service.TLS_RPT.Fields = append(service.TLS_RPT.Fields, strings.Split(strings.Join(txt.Txt, ""), ";")...)
 			}
 
 			err = a.useRR(record, domain, service)
