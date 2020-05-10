@@ -32,19 +32,84 @@
   -->
 
 <template>
-  <h-subdomain-list :domain="domain" />
+  <b-list-group-item v-if="!isLoading">
+    <div class="text-center">
+      <b-button v-if="!editService" type="button" size="sm" variant="outline-primary" class="mx-1" @click="toogleServiceEdit()">
+        <b-icon icon="pencil" />
+        Edit
+      </b-button>
+      <b-button v-else type="button" size="sm" variant="primary" class="mx-1" @click="submitService(index, idx)">
+        <b-icon icon="check" />
+        Save those modifications
+      </b-button>
+      <b-button type="button" size="sm" variant="outline-danger" class="mx-1">
+        <b-icon icon="trash" />
+        Delete
+      </b-button>
+    </div>
+    <h-form-data
+      :edit="editService"
+      :fields="services_specs.fields"
+      v-model="service.Service"
+    />
+  </b-list-group-item>
 </template>
 
 <script>
+import axios from 'axios'
+
 export default {
+  name: 'HResourceForm',
+
   components: {
-    hSubdomainList: () => import('@/components/hSubdomainList')
+    hFormData: () => import('@/components/hFormData')
   },
 
   props: {
-    domain: {
+    service: {
       type: Object,
       required: true
+    }
+  },
+
+  data: function () {
+    return {
+      editService: false,
+      services_specs: null
+    }
+  },
+
+  computed: {
+    isLoading () {
+      return this.services_specs == null
+    }
+  },
+
+  watch: {
+    service: function () {
+      this.pullServiceSpecs()
+    }
+  },
+
+  created () {
+    if (this.service !== undefined) {
+      this.pullServiceSpecs()
+    }
+  },
+
+  methods: {
+    pullServiceSpecs () {
+      axios
+        .get('/api/service_specs/' + this.service._svctype)
+        .then(
+          (response) => {
+            this.services_specs = response.data
+          }
+        )
+    },
+
+    toogleServiceEdit () {
+      this.editService = !this.editService
     }
   }
 }

@@ -32,20 +32,50 @@
   -->
 
 <template>
-  <h-subdomain-list :domain="domain" />
+  <div class="mt-2">
+    <b-form-row
+      v-for="(spec, index) in fields"
+      :key="index"
+      v-show="edit || value[spec.id]"
+    >
+      <label :for="'spec-' + index" :title="spec.label" class="col-md-3 col-form-label text-truncate text-right text-primary">{{ spec.label }}</label>
+      <b-col md="9">
+        <b-form-input
+          v-if="spec.choices === undefined"
+          :id="'spec-' + index"
+          v-model="value[spec.id]"
+          size="sm"
+          class="font-weight-bold"
+          :required="spec.required !== undefined && spec.required"
+          :placeholder="spec.placeholder"
+          :plaintext="!edit"
+        />
+        <b-form-select
+          v-if="spec.choices !== undefined"
+          :id="'spec-' + index"
+          v-model="value[spec.id]"
+          size="sm"
+          :required="spec.required !== undefined && spec.required"
+          :options="spec.choices"
+        />
+        <p style="line-height: 1.1">
+          <small class="text-muted">{{ spec.description }}</small>
+        </p>
+      </b-col>
+    </b-form-row>
+  </div>
 </template>
 
 <script>
 export default {
-  components: {
-    hSubdomainList: () => import('@/components/hSubdomainList')
+  name: 'HFormData',
+  model: {
+    prop: 'value'
   },
-
   props: {
-    domain: {
-      type: Object,
-      required: true
-    }
+    edit: Boolean,
+    fields: Array,
+    value: Object
   }
 }
 </script>

@@ -32,19 +32,62 @@
   -->
 
 <template>
-  <h-subdomain-list :domain="domain" />
+  <b-list-group v-if="!isLoading">
+    <b-list-group-item button @click="toogleShowDetails()">
+      <strong>{{ services[service._svctype].name }}</strong> <span v-if="service._comment" class="text-muted">{{ service._comment }}</span>
+      <span v-if="services[service._svctype].comment" class="text-muted">{{ services[service._svctype].comment }}</span>
+      <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">
+        {{ categorie }}
+      </b-badge>
+      <b-badge v-if="service._tmp_hint_nb && service._tmp_hint_nb > 1" variant="danger" class="float-right ml-1">
+        {{ service._tmp_hint_nb }}
+      </b-badge>
+    </b-list-group-item>
+    <h-resource-form v-if="showDetails" :service="service" />
+  </b-list-group>
 </template>
 
 <script>
+import axios from 'axios'
+
 export default {
+  name: 'HResourceItem',
+
   components: {
-    hSubdomainList: () => import('@/components/hSubdomainList')
+    hResourceForm: () => import('@/components/hResourceForm')
   },
 
   props: {
-    domain: {
+    service: {
       type: Object,
       required: true
+    }
+  },
+
+  data: function () {
+    return {
+      showDetails: false,
+      services: null
+    }
+  },
+
+  computed: {
+    isLoading () {
+      return this.services == null
+    }
+  },
+
+  created () {
+    axios
+      .get('/api/services')
+      .then(
+        (response) => (this.services = response.data)
+      )
+  },
+
+  methods: {
+    toogleShowDetails () {
+      this.showDetails = !this.showDetails
     }
   }
 }
