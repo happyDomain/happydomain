@@ -193,7 +193,7 @@ func init() {
 				"email",
 			},
 		},
-		0,
+		1,
 	)
 	RegisterService(
 		"git.happydns.org/happydns/services/SMimeCert",
@@ -208,6 +208,6 @@ func init() {
 				"email",
 			},
 		},
-		0,
+		1,
 	)
 }
