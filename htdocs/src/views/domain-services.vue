@@ -57,7 +57,7 @@
           <a :href="'#' + dn" class="float-right">
             <b-icon icon="link45deg" />
           </a>
-          <b-badge class="ml-2" v-if="myServices.aliases && myServices.aliases[dn]" v-b-popover.hover.focus="{ customClass: 'text-monospace', html: true, content: myServices.aliases[dn].map(function(alias) { return escapeHTML(alias) }).join('<br>') }">+ {{ myServices.aliases[dn].length }} aliases</b-badge>
+          <b-badge class="ml-2" v-if="myServices.aliases && myServices.aliases[dn]" v-b-popover.hover.focus="{ customClass: 'text-monospace', html: true, content: aliasPopoverCnt(dn) }">+ {{ myServices.aliases[dn].length }} aliases</b-badge>
           <b-button type="button" variant="primary" size="sm" class="ml-2">
             <b-icon icon="plus" />
             Add a service
@@ -181,6 +181,16 @@ export default {
 
     isCNAME (dn) {
       return this.myServices.services[dn].length === 1 && this.myServices.services[dn][0]._svctype === 'git.happydns.org/happydns/services/CNAME'
+    },
+
+    aliasPopoverCnt (dn) {
+      return this.myServices.aliases[dn].map(function (alias) {
+        if (this.myServices.services[alias]) {
+          return '<a href="#' + this.escapeHTML(alias) + '">' + this.escapeHTML(alias) + '</a>'
+        } else {
+          return this.escapeHTML(alias)
+        }
+      }, this).join('<br>')
     },
 
     pullDomain () {
