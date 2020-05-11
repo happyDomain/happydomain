@@ -89,3 +89,13 @@ footer {
   font-weight: 400;
   font-style: normal;
 }
+
+@each $breakpoint in map-keys($grid-breakpoints) {
+    @include media-breakpoint-up($breakpoint) {
+        $infix: breakpoint-infix($breakpoint, $grid-breakpoints);
+
+        .text#{$infix}-left   { text-align: left !important; }
+        .text#{$infix}-right  { text-align: right !important; }
+        .text#{$infix}-center { text-align: center !important; }
+    }
+}

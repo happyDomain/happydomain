@@ -38,8 +38,8 @@
       :key="index"
       v-show="edit || value[spec.id]"
     >
-      <label :for="'spec-' + index" :title="spec.label" class="col-md-3 col-form-label text-truncate text-right text-primary">{{ spec.label }}</label>
-      <b-col md="9">
+      <label :for="'spec-' + index" :title="spec.label" class="col-md-4 col-form-label text-truncate text-md-right text-primary">{{ spec.label }}</label>
+      <b-col md="8">
         <b-form-input
           v-if="spec.choices === undefined"
           :id="'spec-' + index"
