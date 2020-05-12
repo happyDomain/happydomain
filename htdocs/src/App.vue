@@ -97,52 +97,66 @@
 <script>
 import axios from 'axios'
 
-function updateSession (t) {
-  if (sessionStorage.token !== undefined) {
-    t.session = sessionStorage.token
-    axios.defaults.headers.common.Authorization = 'Bearer '.concat(sessionStorage.token)
-    axios.get('/api/users/auth')
-      .then(
-        (response) => {
-          t.loggedUser = response.data
-        },
-        (error) => {
-          t.$bvToast.toast(
-            'Invalid session, your have been logged out: ' + error.response.data.errmsg + '. Please login again.', {
-              title: 'Authentication timeout',
-              autoHideDelay: 5000,
-              variant: 'danger',
-              toaster: 'b-toaster-content-right'
-            }
-          )
-          t.session = null
-          t.loggedUser = null
-          delete sessionStorage.token
-          t.$router.replace('/login')
-        }
-      )
-  }
-}
-
 export default {
 
   data: function () {
     return {
-      loggedUser: null,
-      session: null
+      loggedUser: null
     }
   },
 
   mounted () {
-    updateSession(this)
+    if (sessionStorage.loggedUser) {
+      this.loggedUser = JSON.parse(sessionStorage.loggedUser)
+    }
+    this.updateSession()
     this.$on('login', this.login)
   },
 
   methods: {
     logout () {
-      sessionStorage.token = undefined
-      updateSession(this)
-      this.$router.push('/')
+      axios
+        .post('/api/users/auth/logout')
+        .then(
+          (response) => {
+            delete sessionStorage.loggedUser
+            this.loggedUser = null
+            this.updateSession()
+            this.$router.push('/')
+          },
+          (error) => {
+            this.$bvToast.toast(
+              'An error occurs when trying to logout: ' + error.response.data.errmsg, {
+                title: 'Logout error',
+                autoHideDelay: 5000,
+                toaster: 'b-toaster-content-right'
+              }
+            )
+          }
+        )
+    },
+
+    updateSession () {
+      axios.get('/api/users/auth')
+        .then(
+          (response) => {
+            sessionStorage.loggedUser = JSON.stringify(response.data)
+            this.loggedUser = response.data
+          },
+          (error) => {
+            delete sessionStorage.loggedUser
+            this.loggedUser = null
+            this.$root.$bvToast.toast(
+              'Invalid session, your have been logged out: ' + error.response.data.errmsg + '. Please login again.', {
+                title: 'Authentication timeout',
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+            this.$router.replace('/login')
+          }
+        )
     },
 
     login (email, password) {
@@ -153,13 +167,13 @@ export default {
         })
         .then(
           (response) => {
-            if (response.data.id_session) {
-              sessionStorage.token = response.data.id_session
-            }
-            updateSession(this)
+            sessionStorage.loggedUser = JSON.stringify(response.data)
+            this.loggedUser = response.data
             this.$router.push('/')
           },
           (error) => {
+            delete sessionStorage.loggedUser
+            this.loggedUser = null
             this.$bvToast.toast(
               'An error occurs when trying to login: ' + error.response.data.errmsg, {
                 title: 'Login error',

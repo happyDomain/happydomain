@@ -34,7 +34,6 @@ package api
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -138,14 +137,28 @@ func apiAuthHandler(f func(*config.Options, *happydns.User, httprouter.Params, i
 			return
 		}
 
-		if flds := strings.Fields(r.Header.Get("Authorization")); len(flds) != 2 || flds[0] != "Bearer" {
+		var sessionid []byte
+
+		if cookie, err := r.Cookie("happydns_session"); err == nil {
+			if sessionid, err = base64.StdEncoding.DecodeString(cookie.Value); err != nil {
+				APIErrorResponse{
+					err:    fmt.Errorf("Unable to authenticate request due to invalid cookie value: %w", err),
+					status: http.StatusUnauthorized,
+				}.WriteResponse(w)
+				return
+			}
+		} else if flds := strings.Fields(r.Header.Get("Authorization")); len(flds) == 2 && flds[0] == "Bearer" {
+			if sessionid, err = base64.StdEncoding.DecodeString(flds[1]); err != nil {
+				APIErrorResponse{
+					err:    fmt.Errorf("Unable to authenticate request due to invalid Authorization header value: %w", err),
+					status: http.StatusUnauthorized,
+				}.WriteResponse(w)
+			}
+		}
+
+		if sessionid == nil || len(sessionid) == 0 {
 			APIErrorResponse{
-				err:    errors.New("Authorization required"),
-				status: http.StatusUnauthorized,
-			}.WriteResponse(w)
-		} else if sessionid, err := base64.StdEncoding.DecodeString(flds[1]); err != nil {
-			APIErrorResponse{
-				err:    err,
+				err:    fmt.Errorf("Authorization required"),
 				status: http.StatusUnauthorized,
 			}.WriteResponse(w)
 		} else if session, err := storage.MainStore.GetSession(sessionid); err != nil {

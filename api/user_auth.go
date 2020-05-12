@@ -32,9 +32,11 @@
 package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
 	"net/http"
 	"time"
 
@@ -48,10 +50,11 @@ import (
 var AuthFunc = checkAuth
 
 func init() {
-	router.GET("/api/users/auth", apiAuthHandler(validateAuthToken))
-	router.POST("/api/users/auth", apiHandler(func(_ *config.Options, ps httprouter.Params, b io.Reader) Response {
-		return AuthFunc(ps, b)
+	router.GET("/api/users/auth", apiAuthHandler(displayAuthToken))
+	router.POST("/api/users/auth", apiHandler(func(opts *config.Options, ps httprouter.Params, b io.Reader) Response {
+		return AuthFunc(opts, ps, b)
 	}))
+	router.POST("/api/users/auth/logout", apiHandler(logout))
 }
 
 type DisplayUser struct {
@@ -60,13 +63,78 @@ type DisplayUser struct {
 	RegistrationTime *time.Time `json:"registration_time,omitempty"`
 }
 
-func validateAuthToken(_ *config.Options, u *happydns.User, _ httprouter.Params, _ io.Reader) Response {
+func currentUser(u *happydns.User) *DisplayUser {
+	return &DisplayUser{
+		Id:               u.Id,
+		Email:            u.Email,
+		RegistrationTime: u.RegistrationTime,
+	}
+}
+
+func displayAuthToken(_ *config.Options, u *happydns.User, _ httprouter.Params, _ io.Reader) Response {
 	return APIResponse{
-		response: &DisplayUser{
-			Id:               u.Id,
-			Email:            u.Email,
-			RegistrationTime: u.RegistrationTime,
-		},
+		response: currentUser(u),
+	}
+}
+
+func completeAuth(opts *config.Options, email string, service string) Response {
+	var usr *happydns.User
+	var err error
+
+	if !storage.MainStore.UserExists(email) {
+		now := time.Now()
+		usr = &happydns.User{
+			Email:            email,
+			RegistrationTime: &now,
+		}
+		if err = storage.MainStore.CreateUser(usr); err != nil {
+			return APIErrorResponse{
+				err: err,
+			}
+		}
+	} else if usr, err = storage.MainStore.GetUserByEmail(email); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	log.Printf("New user logged as %q\n", usr.Email)
+
+	var session *happydns.Session
+	if session, err = happydns.NewSession(usr); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	} else if err = storage.MainStore.CreateSession(session); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	return APIResponse{
+		response: currentUser(usr),
+		cookies: []*http.Cookie{&http.Cookie{
+			Name:     "happydns_session",
+			Value:    base64.StdEncoding.EncodeToString(session.Id),
+			Path:     opts.BaseURL + "/",
+			Expires:  time.Now().Add(30 * 24 * time.Hour),
+			Secure:   opts.DevProxy == "",
+			HttpOnly: true,
+		}},
+	}
+}
+
+func logout(opts *config.Options, _ httprouter.Params, body io.Reader) Response {
+	return APIResponse{
+		response: true,
+		cookies: []*http.Cookie{&http.Cookie{
+			Name:     "happydns_session",
+			Value:    "",
+			Path:     opts.BaseURL + "/",
+			Expires:  time.Unix(0, 0),
+			Secure:   opts.DevProxy == "",
+			HttpOnly: true,
+		}},
 	}
 }
 
@@ -75,7 +143,7 @@ type loginForm struct {
 	Password string
 }
 
-func dummyAuth(_ httprouter.Params, body io.Reader) Response {
+func dummyAuth(opts *config.Options, _ httprouter.Params, body io.Reader) Response {
 	var lf loginForm
 	if err := json.NewDecoder(body).Decode(&lf); err != nil {
 		return APIErrorResponse{
@@ -88,30 +156,11 @@ func dummyAuth(_ httprouter.Params, body io.Reader) Response {
 			err: err,
 		}
 	} else {
-		session, err := happydns.NewSession(user)
-		if err != nil {
-			return APIErrorResponse{
-				err: err,
-			}
-		}
-
-		if err := storage.MainStore.CreateSession(session); err != nil {
-			return APIErrorResponse{
-				err: err,
-			}
-		}
-
-		res := map[string]interface{}{}
-		res["status"] = "OK"
-		res["id_session"] = session.Id
-
-		return APIResponse{
-			response: res,
-		}
+		return completeAuth(opts, user.Email, "dummy")
 	}
 }
 
-func checkAuth(_ httprouter.Params, body io.Reader) Response {
+func checkAuth(opts *config.Options, _ httprouter.Params, body io.Reader) Response {
 	var lf loginForm
 	if err := json.NewDecoder(body).Decode(&lf); err != nil {
 		return APIErrorResponse{
@@ -129,25 +178,6 @@ func checkAuth(_ httprouter.Params, body io.Reader) Response {
 			status: http.StatusUnauthorized,
 		}
 	} else {
-		session, err := happydns.NewSession(user)
-		if err != nil {
-			return APIErrorResponse{
-				err: err,
-			}
-		}
-
-		if err := storage.MainStore.CreateSession(session); err != nil {
-			return APIErrorResponse{
-				err: err,
-			}
-		}
-
-		res := map[string]interface{}{}
-		res["status"] = "OK"
-		res["id_session"] = session.Id
-
-		return APIResponse{
-			response: res,
-		}
+		return completeAuth(opts, user.Email, "local")
 	}
 }
