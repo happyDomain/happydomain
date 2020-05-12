@@ -65,9 +65,14 @@ func (r *FileResponse) WriteResponse(w http.ResponseWriter) {
 
 type APIResponse struct {
 	response interface{}
+	cookies  []*http.Cookie
 }
 
 func (r APIResponse) WriteResponse(w http.ResponseWriter) {
+	for _, cookie := range r.cookies {
+		http.SetCookie(w, cookie)
+	}
+
 	if str, found := r.response.(string); found {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
