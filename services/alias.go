@@ -133,7 +133,7 @@ func alias_analyze(a *Analyzer) error {
 func init() {
 	RegisterService(
 		func() happydns.Service {
-			return &CNAME{}
+			return &SpecialCNAME{}
 		},
 		specialalias_analyze,
 		ServiceInfos{

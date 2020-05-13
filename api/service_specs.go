@@ -103,10 +103,11 @@ func getServiceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Resp
 		return getSourceSpecImg(ssid)
 	}
 
-	svc, err := svcs.FindService(ssid)
+	svc, err := svcs.FindSubService(ssid)
 	if err != nil {
 		return APIErrorResponse{
-			err: err,
+			err:    err,
+			status: http.StatusNotFound,
 		}
 	}
 

@@ -41,6 +41,7 @@ import (
 )
 
 type ServiceCreator func() happydns.Service
+type SubServiceCreator func() interface{}
 type ServiceAnalyzer func(*Analyzer) error
 
 type svc struct {
@@ -56,12 +57,19 @@ func (a ByWeight) Len() int           { return len(a) }
 func (a ByWeight) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByWeight) Less(i, j int) bool { return a[i].Weight < a[j].Weight }
 
-var services map[string]*svc = map[string]*svc{}
-
-var ordered_services []*svc
+var (
+	services         map[string]*svc              = map[string]*svc{}
+	subServices      map[string]SubServiceCreator = map[string]SubServiceCreator{}
+	pathToSvcsModule string                       = "git.happydns.org/happydns/services"
+	ordered_services []*svc
+)
 
 func RegisterService(creator ServiceCreator, analyzer ServiceAnalyzer, infos ServiceInfos, weight uint32, aliases ...string) {
-	name := reflect.Indirect(reflect.ValueOf(creator())).Type().String()
+	// Invalidate ordered_services, which serve as cache
+	ordered_services = nil
+
+	baseType := reflect.Indirect(reflect.ValueOf(creator())).Type()
+	name := baseType.String()
 	log.Println("Registering new service:", name)
 
 	svc := &svc{
@@ -72,11 +80,41 @@ func RegisterService(creator ServiceCreator, analyzer ServiceAnalyzer, infos Ser
 	}
 	services[name] = svc
 
+	// Register aliases
 	for _, alias := range aliases {
 		services[alias] = svc
 	}
 
-	ordered_services = nil
+	// Register sub types
+	RegisterSubServices(baseType)
+}
+
+func RegisterSubServices(t reflect.Type) {
+	if t.Kind() == reflect.Struct && t.PkgPath() == pathToSvcsModule {
+		if _, ok := subServices[t.String()]; !ok {
+			log.Println("Registering new subservice:", t.String())
+
+			subServices[t.String()] = func() interface{} {
+				return reflect.New(t).Interface()
+			}
+		}
+
+		for i := 0; i < t.NumField(); i += 1 {
+			RegisterSubServices(t.Field(i).Type)
+		}
+	} else if t.Kind() == reflect.Array || t.Kind() == reflect.Map || t.Kind() == reflect.Ptr || t.Kind() == reflect.Slice {
+		RegisterSubServices(t.Elem())
+	} else if t.PkgPath() == pathToSvcsModule {
+		if _, ok := subServices[t.String()]; ok {
+			return
+		}
+
+		log.Println("Registering new subservice:", t.String())
+
+		subServices[t.String()] = func() interface{} {
+			return reflect.New(t).Interface()
+		}
+	}
 }
 
 func OrderedServices() []*svc {
@@ -104,4 +142,14 @@ func FindService(name string) (happydns.Service, error) {
 	}
 
 	return svc.Creator(), nil
+}
+
+func FindSubService(name string) (interface{}, error) {
+	if svc, ok := services[name]; ok {
+		return svc.Creator(), nil
+	} else if ssvc, ok := subServices[name]; ok {
+		return ssvc(), nil
+	} else {
+		return nil, fmt.Errorf("Unable to find corresponding service `%s`.", name)
+	}
 }
