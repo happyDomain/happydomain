@@ -34,6 +34,7 @@ package svcs
 import (
 	"fmt"
 	"log"
+	"reflect"
 	"sort"
 
 	"git.happydns.org/happydns/model"
@@ -59,14 +60,22 @@ var services map[string]*svc = map[string]*svc{}
 
 var ordered_services []*svc
 
-func RegisterService(name string, creator ServiceCreator, analyzer ServiceAnalyzer, infos ServiceInfos, weight uint32) {
+func RegisterService(creator ServiceCreator, analyzer ServiceAnalyzer, infos ServiceInfos, weight uint32, aliases ...string) {
+	name := reflect.Indirect(reflect.ValueOf(creator())).Type().String()
 	log.Println("Registering new service:", name)
-	services[name] = &svc{
+
+	svc := &svc{
 		creator,
 		analyzer,
 		infos,
 		weight,
 	}
+	services[name] = svc
+
+	for _, alias := range aliases {
+		services[alias] = svc
+	}
+
 	ordered_services = nil
 }
 

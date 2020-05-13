@@ -132,7 +132,6 @@ func alias_analyze(a *Analyzer) error {
 
 func init() {
 	RegisterService(
-		"git.happydns.org/happydns/services/SpecialCNAME",
 		func() happydns.Service {
 			return &CNAME{}
 		},
@@ -147,7 +146,6 @@ func init() {
 		99999997,
 	)
 	RegisterService(
-		"git.happydns.org/happydns/services/CNAME",
 		func() happydns.Service {
 			return &CNAME{}
 		},

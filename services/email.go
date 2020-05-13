@@ -371,7 +371,6 @@ func email_analyze(a *Analyzer) (err error) {
 
 func init() {
 	RegisterService(
-		"git.happydns.org/happydns/services/EMail",
 		func() happydns.Service {
 			return &EMail{}
 		},

@@ -144,7 +144,6 @@ func srv_analyze(a *Analyzer) error {
 
 func init() {
 	RegisterService(
-		"git.happydns.org/happydns/services/UnknownSRV",
 		func() happydns.Service {
 			return &SRV{}
 		},

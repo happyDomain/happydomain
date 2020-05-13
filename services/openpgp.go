@@ -181,7 +181,6 @@ func smimea_analyze(a *Analyzer) (err error) {
 
 func init() {
 	RegisterService(
-		"git.happydns.org/happydns/services/OpenPGP",
 		func() happydns.Service {
 			return &OpenPGP{}
 		},
@@ -196,7 +195,6 @@ func init() {
 		1,
 	)
 	RegisterService(
-		"git.happydns.org/happydns/services/SMimeCert",
 		func() happydns.Service {
 			return &SMimeCert{}
 		},

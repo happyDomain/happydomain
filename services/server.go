@@ -164,7 +164,6 @@ next_pool:
 
 func init() {
 	RegisterService(
-		"git.happydns.org/happydns/services/Server",
 		func() happydns.Service {
 			return &Server{}
 		},

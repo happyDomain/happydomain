@@ -110,7 +110,7 @@ export default {
     },
 
     isCNAME () {
-      return this.services.length === 1 && this.services[0]._svctype === 'git.happydns.org/happydns/services/CNAME'
+      return this.services.length === 1 && this.services[0]._svctype === 'svcs.CNAME'
     },
 
     aliasPopoverCnt () {

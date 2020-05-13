@@ -167,7 +167,6 @@ func tlsa_analyze(a *Analyzer) (err error) {
 
 func init() {
 	RegisterService(
-		"git.happydns.org/happydns/services/TLSAs",
 		func() happydns.Service {
 			return &TLSAs{}
 		},

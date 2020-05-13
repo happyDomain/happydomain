@@ -60,7 +60,6 @@ func (s *Orphan) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
 
 func init() {
 	RegisterService(
-		"git.happydns.org/happydns/services/Orphan",
 		func() happydns.Service {
 			return &Orphan{}
 		},

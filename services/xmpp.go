@@ -146,7 +146,6 @@ func xmpp_analyze(a *Analyzer) error {
 
 func init() {
 	RegisterService(
-		"git.happydns.org/happydns/services/XMPP",
 		func() happydns.Service {
 			return &XMPP{}
 		},

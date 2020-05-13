@@ -120,7 +120,6 @@ func matrix_analyze(a *Analyzer) error {
 
 func init() {
 	RegisterService(
-		"git.happydns.org/happydns/services/MatrixIM",
 		func() happydns.Service {
 			return &MatrixIM{}
 		},

@@ -101,7 +101,6 @@ func origin_analyze(a *Analyzer) error {
 
 func init() {
 	RegisterService(
-		"git.happydns.org/happydns/services/Origin",
 		func() happydns.Service {
 			return &Origin{}
 		},
