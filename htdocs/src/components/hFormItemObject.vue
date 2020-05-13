@@ -32,33 +32,42 @@
   -->
 
 <template>
-  <b-list-group v-if="!isLoading">
-    <b-list-group-item button @click="toogleShowDetails()">
-      <strong>{{ services[service._svctype].name }}</strong> <span v-if="service._comment" class="text-muted">{{ service._comment }}</span>
-      <span v-if="services[service._svctype].comment" class="text-muted">{{ services[service._svctype].comment }}</span>
-      <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">
-        {{ categorie }}
-      </b-badge>
-      <b-badge v-if="service._tmp_hint_nb && service._tmp_hint_nb > 1" variant="danger" class="float-right ml-1">
-        {{ service._tmp_hint_nb }}
-      </b-badge>
-    </b-list-group-item>
-    <h-resource-form v-if="showDetails" :service="service" />
-  </b-list-group>
+  <div v-if="service_specs" class="mb-2">
+    <h-form-row
+      v-for="(spec, index) in service_specs.fields"
+      :key="index"
+      v-model="value[spec.id]"
+      :edit="edit"
+      :index="index"
+      :spec="spec"
+    />
+  </div>
 </template>
 
 <script>
 import ServicesApi from '@/services/ServicesApi'
 
 export default {
-  name: 'HResourceItem',
+  name: 'HFormItemObject',
 
   components: {
-    hResourceForm: () => import('@/components/hResourceForm')
+    hFormRow: () => import('@/components/hFormRow')
   },
 
   props: {
-    service: {
+    edit: {
+      type: Boolean,
+      default: false
+    },
+    index: {
+      type: Number,
+      required: true
+    },
+    spec: {
+      type: Object,
+      default: null
+    },
+    value: {
       type: Object,
       required: true
     }
@@ -66,27 +75,31 @@ export default {
 
   data: function () {
     return {
-      showDetails: false,
-      services: null
+      service_specs: null
     }
   },
 
-  computed: {
-    isLoading () {
-      return this.services == null
+  watch: {
+    spec: function () {
+      this.pullServiceSpecs()
     }
   },
 
   created () {
-    ServicesApi.getServices()
-      .then(
-        (response) => (this.services = response.data)
-      )
+    if (this.spec) {
+      this.pullServiceSpecs()
+    }
   },
 
   methods: {
-    toogleShowDetails () {
-      this.showDetails = !this.showDetails
+    pullServiceSpecs () {
+      var type = this.spec.type[0] === '*' ? this.spec.type.substr(1) : this.spec.type
+      ServicesApi.getServiceSpecs(type)
+        .then(
+          (response) => {
+            this.service_specs = response.data
+          }
+        )
     }
   }
 }

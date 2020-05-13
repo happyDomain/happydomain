@@ -33,7 +33,7 @@
 
 <template>
   <b-list-group-item v-if="!isLoading">
-    <div class="text-center">
+    <div class="text-right">
       <b-button v-if="!editService" type="button" size="sm" variant="outline-primary" class="mx-1" @click="toogleServiceEdit()">
         <b-icon icon="pencil" />
         Edit
@@ -48,15 +48,15 @@
       </b-button>
     </div>
     <h-form-data
-      :edit="editService"
-      :fields="services_specs.fields"
       v-model="service.Service"
+      :edit="editService"
+      :fields="service_specs.fields"
     />
   </b-list-group-item>
 </template>
 
 <script>
-import axios from 'axios'
+import ServicesApi from '@/services/ServicesApi'
 
 export default {
   name: 'HResourceForm',
@@ -75,13 +75,13 @@ export default {
   data: function () {
     return {
       editService: false,
-      services_specs: null
+      service_specs: null
     }
   },
 
   computed: {
     isLoading () {
-      return this.services_specs == null
+      return this.service_specs == null
     }
   },
 
@@ -99,11 +99,10 @@ export default {
 
   methods: {
     pullServiceSpecs () {
-      axios
-        .get('/api/service_specs/' + this.service._svctype)
+      ServicesApi.getServiceSpecs(this.service._svctype)
         .then(
           (response) => {
-            this.services_specs = response.data
+            this.service_specs = response.data
           }
         )
     },

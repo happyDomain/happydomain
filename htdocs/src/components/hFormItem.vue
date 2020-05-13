@@ -32,61 +32,66 @@
   -->
 
 <template>
-  <b-list-group v-if="!isLoading">
-    <b-list-group-item button @click="toogleShowDetails()">
-      <strong>{{ services[service._svctype].name }}</strong> <span v-if="service._comment" class="text-muted">{{ service._comment }}</span>
-      <span v-if="services[service._svctype].comment" class="text-muted">{{ services[service._svctype].comment }}</span>
-      <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">
-        {{ categorie }}
-      </b-badge>
-      <b-badge v-if="service._tmp_hint_nb && service._tmp_hint_nb > 1" variant="danger" class="float-right ml-1">
-        {{ service._tmp_hint_nb }}
-      </b-badge>
-    </b-list-group-item>
-    <h-resource-form v-if="showDetails" :service="service" />
-  </b-list-group>
+  <component :is="itemComponent" v-model="value" :edit="edit" :spec="spec" :index="index" />
 </template>
 
 <script>
-import ServicesApi from '@/services/ServicesApi'
+import HFormItemArray from '@/components/hFormItemArray'
+import HFormItemMap from '@/components/hFormItemMap'
+import HFormItemObject from '@/components/hFormItemObject'
+import HFormItemValue from '@/components/hFormItemValue'
 
 export default {
-  name: 'HResourceItem',
-
-  components: {
-    hResourceForm: () => import('@/components/hResourceForm')
-  },
+  name: 'HFormItem',
 
   props: {
-    service: {
+    edit: {
+      type: Boolean,
+      default: false
+    },
+    index: {
+      type: Number,
+      required: true
+    },
+    spec: {
       type: Object,
+      default: null
+    },
+    // eslint-disable-next-line
+    value: {
       required: true
     }
   },
 
-  data: function () {
+  data () {
     return {
-      showDetails: false,
-      services: null
+      itemComponent: ''
     }
   },
 
-  computed: {
-    isLoading () {
-      return this.services == null
+  watch: {
+    'spec.type': function (type) {
+      this.findComponent()
     }
   },
 
-  created () {
-    ServicesApi.getServices()
-      .then(
-        (response) => (this.services = response.data)
-      )
+  mounted () {
+    if (this.spec) {
+      this.findComponent()
+    }
   },
 
   methods: {
-    toogleShowDetails () {
-      this.showDetails = !this.showDetails
+    findComponent () {
+      if (Array.isArray(this.value)) {
+        this.itemComponent = HFormItemArray
+      } else if (this.spec.type.substr(0, 3) === 'map') {
+        this.itemComponent = HFormItemMap
+      } else if (typeof this.value === 'object') {
+        this.itemComponent = HFormItemObject
+      } else {
+        this.itemComponent = HFormItemValue
+      }
     }
   }
 }

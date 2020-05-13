@@ -32,61 +32,63 @@
   -->
 
 <template>
-  <b-list-group v-if="!isLoading">
-    <b-list-group-item button @click="toogleShowDetails()">
-      <strong>{{ services[service._svctype].name }}</strong> <span v-if="service._comment" class="text-muted">{{ service._comment }}</span>
-      <span v-if="services[service._svctype].comment" class="text-muted">{{ services[service._svctype].comment }}</span>
-      <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">
-        {{ categorie }}
-      </b-badge>
-      <b-badge v-if="service._tmp_hint_nb && service._tmp_hint_nb > 1" variant="danger" class="float-right ml-1">
-        {{ service._tmp_hint_nb }}
-      </b-badge>
-    </b-list-group-item>
-    <h-resource-form v-if="showDetails" :service="service" />
-  </b-list-group>
+  <b-input-group size="sm" :append="unit">
+    <b-form-select
+      v-if="edit && spec.choices !== undefined"
+      :id="'spec-' + index"
+      v-model="val"
+      :required="spec.required !== undefined && spec.required"
+      :options="spec.choices"
+      />
+    <b-form-input
+      v-else
+      :id="'spec-' + index"
+      v-model.lazy="val"
+      class="font-weight-bold"
+      :required="spec.required !== undefined && spec.required"
+      :placeholder="spec.placeholder"
+      :plaintext="!edit"
+      />
+  </b-input-group>
 </template>
 
 <script>
-import ServicesApi from '@/services/ServicesApi'
-
 export default {
-  name: 'HResourceItem',
-
-  components: {
-    hResourceForm: () => import('@/components/hResourceForm')
-  },
-
+  name: 'HFormItemValue',
   props: {
-    service: {
-      type: Object,
-      required: true
-    }
+    edit: Boolean,
+    index: Number,
+    spec: Object,
+    value: {}
   },
-
-  data: function () {
-    return {
-      showDetails: false,
-      services: null
-    }
-  },
-
   computed: {
-    isLoading () {
-      return this.services == null
+    unit () {
+      if (this.spec.type === 'time.Duration') {
+        return 's'
+      } else {
+        return null
+      }
+    },
+    val: {
+      get () {
+        if (this.spec.type === 'time.Duration') {
+          return this.value / 1000000000
+        } else {
+          return this.value
+        }
+      },
+      set (value) {
+        if (this.spec.type === 'time.Duration') {
+          this.$emit('input', value * 1000000000)
+        } else {
+          this.$emit('input', value)
+        }
+      }
     }
   },
-
-  created () {
-    ServicesApi.getServices()
-      .then(
-        (response) => (this.services = response.data)
-      )
-  },
-
   methods: {
-    toogleShowDetails () {
-      this.showDetails = !this.showDetails
+    isArray () {
+      return this.spec.type.substr(0, 2) === '[]'
     }
   }
 }

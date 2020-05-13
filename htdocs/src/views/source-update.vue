@@ -34,11 +34,11 @@
 <template>
   <form v-if="!isLoading" class="mt-2 mb-5" @submit.stop.prevent="submitSource">
     <div class="float-right">
-      <b-button v-if="!edit" type="button" variant="outline-primary" @click="edit=true">
+      <b-button v-if="!edit" type="button" size="sm" variant="outline-primary" @click="edit=true">
         <b-icon icon="pencil" />
         Edit
       </b-button>
-      <b-button v-else type="button" variant="primary" @click="submitSource()">
+      <b-button v-else type="button" size="sm" variant="primary" @click="submitSource()">
         <b-icon icon="check" />
         Update this source
       </b-button>

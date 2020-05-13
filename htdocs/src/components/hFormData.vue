@@ -33,49 +33,36 @@
 
 <template>
   <div class="mt-2">
-    <b-form-row
+    <h-form-row
       v-for="(spec, index) in fields"
       :key="index"
-      v-show="edit || value[spec.id]"
-    >
-      <label :for="'spec-' + index" :title="spec.label" class="col-md-4 col-form-label text-truncate text-md-right text-primary">{{ spec.label }}</label>
-      <b-col md="8">
-        <b-form-input
-          v-if="spec.choices === undefined"
-          :id="'spec-' + index"
-          v-model="value[spec.id]"
-          size="sm"
-          class="font-weight-bold"
-          :required="spec.required !== undefined && spec.required"
-          :placeholder="spec.placeholder"
-          :plaintext="!edit"
-        />
-        <b-form-select
-          v-if="spec.choices !== undefined"
-          :id="'spec-' + index"
-          v-model="value[spec.id]"
-          size="sm"
-          :required="spec.required !== undefined && spec.required"
-          :options="spec.choices"
-        />
-        <p style="line-height: 1.1">
-          <small class="text-muted">{{ spec.description }}</small>
-        </p>
-      </b-col>
-    </b-form-row>
+      v-model="value[spec.id]"
+      :edit="edit"
+      :index="index"
+      :spec="spec"
+    />
   </div>
 </template>
 
 <script>
 export default {
   name: 'HFormData',
-  model: {
-    prop: 'value'
+  components: {
+    hFormRow: () => import('@/components/hFormRow')
   },
   props: {
-    edit: Boolean,
-    fields: Array,
-    value: Object
+    edit: {
+      type: Boolean,
+      default: false
+    },
+    fields: {
+      type: Array,
+      required: true
+    },
+    value: {
+      type: Object,
+      required: true
+    }
   }
 }
 </script>
