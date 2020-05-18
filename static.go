@@ -37,6 +37,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 
 	"git.happydns.org/happydns/api"
 	"git.happydns.org/happydns/config"
@@ -64,6 +65,34 @@ func init() {
 			fwd_request(w, r, opts.DevProxy)
 		}
 	})
+
+	// Create a dedicated route for all assets not behind a known static directory
+	rootFiles, _ := AssetDir(StaticDir)
+	for _, rfile := range rootFiles {
+		if _, err := AssetDir(path.Join(StaticDir, rfile)); err != nil {
+			api.Router().GET("/"+rfile, func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+				opts := r.Context().Value("opts").(*config.Options)
+
+				if opts.DevProxy == "" {
+					if data, err := Asset(path.Join(StaticDir, r.URL.Path)); err == nil {
+						if strings.HasSuffix(r.URL.Path, ".js") {
+							w.Header().Set("Content-Type", "text/javascript")
+						} else if strings.HasSuffix(r.URL.Path, ".json") {
+							w.Header().Set("Content-Type", "application/json")
+						} else if strings.HasSuffix(r.URL.Path, ".css") {
+							w.Header().Set("Content-Type", "text/css")
+						}
+						w.Write(data)
+					} else {
+						fmt.Fprintf(w, "{\"errmsg\":%q}", err)
+					}
+				} else {
+					fwd_request(w, r, opts.DevProxy)
+				}
+			})
+		}
+	}
+
 	api.Router().GET("/domains/*_", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		opts := r.Context().Value("opts").(*config.Options)
 
@@ -232,61 +261,6 @@ func init() {
 		}
 	})
 	api.Router().GET("/js/*_", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		opts := r.Context().Value("opts").(*config.Options)
-
-		if opts.DevProxy == "" {
-			if data, err := Asset(path.Join(StaticDir, r.URL.Path)); err != nil {
-				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
-			} else {
-				w.Header().Set("Content-Type", "text/javascript")
-				w.Write(data)
-			}
-		} else {
-			fwd_request(w, r, opts.DevProxy)
-		}
-	})
-
-	api.Router().GET("/favicon.ico", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		opts := r.Context().Value("opts").(*config.Options)
-
-		if opts.DevProxy == "" {
-			if data, err := Asset(path.Join(StaticDir, r.URL.Path)); err != nil {
-				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
-			} else {
-				w.Write(data)
-			}
-		} else {
-			fwd_request(w, r, opts.DevProxy)
-		}
-	})
-	api.Router().GET("/manifest.json", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		opts := r.Context().Value("opts").(*config.Options)
-
-		if opts.DevProxy == "" {
-			if data, err := Asset(path.Join(StaticDir, r.URL.Path)); err != nil {
-				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
-			} else {
-				w.Header().Set("Content-Type", "application/json")
-				w.Write(data)
-			}
-		} else {
-			fwd_request(w, r, opts.DevProxy)
-		}
-	})
-	api.Router().GET("/robots.txt", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		opts := r.Context().Value("opts").(*config.Options)
-
-		if opts.DevProxy == "" {
-			if data, err := Asset(path.Join(StaticDir, r.URL.Path)); err != nil {
-				fmt.Fprintf(w, "{\"errmsg\":%q}", err)
-			} else {
-				w.Write(data)
-			}
-		} else {
-			fwd_request(w, r, opts.DevProxy)
-		}
-	})
-	api.Router().GET("/service-worker.js", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		opts := r.Context().Value("opts").(*config.Options)
 
 		if opts.DevProxy == "" {
