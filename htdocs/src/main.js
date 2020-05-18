@@ -34,12 +34,14 @@ import App from './App.vue'
 import { BootstrapVue, BootstrapVueIcons } from 'bootstrap-vue'
 import router from './router'
 
+import './registerServiceWorker.js'
+
 import './app.scss'
 
 Vue.use(BootstrapVue)
 Vue.use(BootstrapVueIcons)
 
-Vue.config.productionTip = false
+Vue.config.productionTip = process.env.NODE_ENV === 'production'
 
 new Vue({
   router,
