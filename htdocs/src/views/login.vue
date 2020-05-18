@@ -65,6 +65,7 @@
                 autofocus
                 type="email"
                 placeholder="pMockapetris@usc.edu"
+                autocomplete="username"
               />
             </b-form-group>
             <b-form-group
@@ -81,6 +82,7 @@
                 :state="loginForm.passwordState"
                 required
                 placeholder="xXxXxXxXxX"
+                autocomplete="current-password"
               />
             </b-form-group>
             <div class="d-flex justify-content-around">

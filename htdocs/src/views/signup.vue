@@ -63,6 +63,7 @@
                 autofocus
                 type="email"
                 placeholder="jPostel@isi.edu"
+                autocomplete="username"
               />
             </b-form-group>
             <b-form-group
@@ -79,6 +80,7 @@
                 :state="signupForm.passwordState"
                 required
                 placeholder="xXxXxXxXxX"
+                autocomplete="new-password"
               />
             </b-form-group>
             <b-form-group
