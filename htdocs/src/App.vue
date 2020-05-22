@@ -116,7 +116,7 @@ export default {
   methods: {
     logout () {
       axios
-        .post('/api/users/auth/logout')
+        .post('/api/auth/logout')
         .then(
           (response) => {
             delete sessionStorage.loggedUser
@@ -137,7 +137,7 @@ export default {
     },
 
     updateSession () {
-      axios.get('/api/users/auth')
+      axios.get('/api/auth')
         .then(
           (response) => {
             sessionStorage.loggedUser = JSON.stringify(response.data)
@@ -163,7 +163,7 @@ export default {
 
     login (email, password) {
       axios
-        .post('/api/users/auth', {
+        .post('/api/auth', {
           email: email,
           password: password
         })
