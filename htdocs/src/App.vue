@@ -144,17 +144,19 @@ export default {
             this.loggedUser = response.data
           },
           (error) => {
-            delete sessionStorage.loggedUser
-            this.loggedUser = null
-            this.$root.$bvToast.toast(
-              'Invalid session, your have been logged out: ' + error.response.data.errmsg + '. Please login again.', {
-                title: 'Authentication timeout',
-                autoHideDelay: 5000,
-                variant: 'danger',
-                toaster: 'b-toaster-content-right'
-              }
-            )
-            this.$router.replace('/login')
+            if (sessionStorage.loggedUser) {
+              delete sessionStorage.loggedUser
+              this.loggedUser = null
+              this.$root.$bvToast.toast(
+                'Invalid session, your have been logged out: ' + error.response.data.errmsg + '. Please login again.', {
+                  title: 'Authentication timeout',
+                  autoHideDelay: 5000,
+                  variant: 'danger',
+                  toaster: 'b-toaster-content-right'
+                }
+              )
+              this.$router.replace('/login')
+            }
           }
         )
     },
