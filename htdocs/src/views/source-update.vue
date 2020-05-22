@@ -140,7 +140,7 @@ export default {
 
     submitSource () {
       axios
-        .put('/api/sources/' + this.mySource._id, this.mySource)
+        .put('/api/sources/' + encodeURIComponent(this.mySource._id), this.mySource)
         .then(
           (response) => {
             this.$root.$bvToast.toast(

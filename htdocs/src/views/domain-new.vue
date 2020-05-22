@@ -188,7 +188,7 @@ export default {
       this.step |= 1
       this.source_specs_selected = sourceSpec
       axios
-        .get('/api/source_specs/' + sourceSpec)
+        .get('/api/source_specs/' + encodeURIComponent(sourceSpec))
         .then(
           response => {
             this.source_specs = response.data
@@ -222,7 +222,7 @@ export default {
                 title: 'New domain attached to happyDNS!',
                 autoHideDelay: 5000,
                 variant: 'success',
-                href: 'domains/' + response.data.domain,
+                href: 'domains/' + encodeURIComponent(response.data.domain),
                 toaster: 'b-toaster-content-right'
               }
             )

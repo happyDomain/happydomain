@@ -107,7 +107,7 @@ export default {
   methods: {
     detachDomain () {
       axios
-        .delete('/api/domains/' + this.domain.domain)
+        .delete('/api/domains/' + encodeURIComponent(this.domain.domain))
         .then(response => (
           this.$router.push('/domains/')
         ))

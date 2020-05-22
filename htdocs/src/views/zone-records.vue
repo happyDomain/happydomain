@@ -154,11 +154,11 @@ export default {
   mounted () {
     var mydomain = this.$route.params.domain
     axios
-      .get('/api/domains/' + mydomain)
+      .get('/api/domains/' + encodeURIComponent(mydomain))
       .then(response => (this.domain = response.data))
 
     axios
-      .get('/api/domains/' + mydomain + '/rr')
+      .get('/api/domains/' + encodeURIComponent(mydomain) + '/rr')
       .then(
         (response) => (this.rrs = response.data),
         (error) => (this.error = error.response.data.errmsg)
@@ -177,13 +177,13 @@ export default {
 
     newRR (idx) {
       axios
-        .post('/api/domains/' + this.$route.params.domain + '/rr', {
+        .post('/api/domains/' + encodeURIComponent(this.$route.params.domain) + '/rr', {
           string: this.rrsFiltered[idx].string
         })
         .then(
           (response) => {
             axios
-              .get('/api/domains/' + this.$route.params.domain + '/rr')
+              .get('/api/domains/' + encodeURIComponent(this.$route.params.domain) + '/rr')
               .then(response => (this.rrs = response.data))
           },
           (error) => {
@@ -194,7 +194,7 @@ export default {
 
     deleteRR (idx) {
       axios
-        .delete('/api/domains/' + this.$route.params.domain + '/rr', {
+        .delete('/api/domains/' + encodeURIComponent(this.$route.params.domain) + '/rr', {
           data: {
             string: this.rrsFiltered[idx].string
           }
@@ -202,7 +202,7 @@ export default {
         .then(
           (response) => {
             axios
-              .get('/api/domains/' + this.$route.params.domain + '/rr')
+              .get('/api/domains/' + encodeURIComponent(this.$route.params.domain) + '/rr')
               .then(response => (this.rrs = response.data))
           },
           (error) => {

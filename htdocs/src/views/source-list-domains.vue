@@ -93,7 +93,7 @@ export default {
 
   mounted () {
     axios
-      .get('/api/sources/' + this.$route.params.source + '/domains')
+      .get('/api/sources/' + encodeURIComponent(this.$route.params.source) + '/domains')
       .then(response => (this.domains = response.data))
     axios
       .get('/api/domains')

@@ -91,13 +91,13 @@ export default {
 
   mounted () {
     axios
-      .get('/api/sources/' + this.$route.params.source)
+      .get('/api/sources/' + encodeURIComponent(this.$route.params.source))
       .then(response => {
         this.mySource = response.data
         this.source_specs_selected = this.mySource._srctype
 
         axios
-          .get('/api/source_specs/' + this.mySource._srctype)
+          .get('/api/source_specs/' + encodeURIComponent(this.mySource._srctype))
           .then(response => {
             this.source_specs = response.data
             return true
@@ -115,7 +115,7 @@ export default {
 
   methods: {
     showListImportableDomain () {
-      this.$router.push('/sources/' + this.$route.params.source + '/domains')
+      this.$router.push('/sources/' + encodeURIComponent(this.$route.params.source) + '/domains')
     }
   }
 }

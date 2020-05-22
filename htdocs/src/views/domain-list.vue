@@ -108,7 +108,7 @@ export default {
           this.domains = response.data
           this.domains.forEach(function (domain) {
             axios
-              .get('/api/sources/' + domain.id_source)
+              .get('/api/sources/' + encodeURIComponent(domain.id_source))
               .then(response => {
                 this.$set(this.sources, domain.id_source, response.data)
               })
@@ -119,7 +119,7 @@ export default {
 
   methods: {
     show (domain) {
-      this.$router.push('/domains/' + domain.domain)
+      this.$router.push('/domains/' + encodeURIComponent(domain.domain))
     },
 
     validateNewDomain () {
@@ -151,7 +151,7 @@ export default {
 
     submitNewDomain () {
       if (this.validateNewDomain()) {
-        this.$router.push('/domains/' + this.newDomain + '/new')
+        this.$router.push('/domains/' + encodeURIComponent(this.newDomain) + '/new')
       }
     }
 

@@ -123,7 +123,7 @@ export default {
 
   methods: {
     show (source) {
-      this.$router.push('/sources/' + source.source)
+      this.$router.push('/sources/' + encodeURIComponent(source.source))
     },
 
     newSource () {

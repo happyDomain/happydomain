@@ -106,13 +106,13 @@ export default {
   methods: {
     updDomain () {
       axios
-        .get('/api/sources/' + this.domain.id_source)
+        .get('/api/sources/' + encodeURIComponent(this.domain.id_source))
         .then(
           (response) => {
             this.source = response.data
 
             axios
-              .get('/api/source_specs/' + this.source._srctype)
+              .get('/api/source_specs/' + encodeURIComponent(this.source._srctype))
               .then(response => (
                 this.source_specs = response.data
               ))

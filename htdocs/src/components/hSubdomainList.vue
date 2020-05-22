@@ -115,7 +115,7 @@ export default {
 
     pullDomain () {
       axios
-        .post('/api/domains/' + this.domain.domain + '/analyze')
+        .post('/api/domains/' + encodeURIComponent(this.domain.domain) + '/analyze')
         .then(
           (response) => {
             this.myServices = response.data
@@ -130,7 +130,7 @@ export default {
                 toaster: 'b-toaster-content-right'
               }
             )
-            this.$router.push('/domains/' + this.domain.domain)
+            this.$router.push('/domains/' + encodeURIComponent(this.domain.domain))
           }
         )
     }
