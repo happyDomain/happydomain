@@ -2,7 +2,7 @@
 
 package database // import "happydns.org/database"
 
-const schemaVersion = 3
+const schemaVersion = 4
 
 var schemaRevisions = map[uint16]string{
 	1: `CREATE TABLE schema_version (
@@ -63,5 +63,10 @@ ALTER TABLE zones
   DROP COLUMN storage_facility;
 
 RENAME TABLE zones TO domains;
+`,
+	4: `ALTER TABLE users
+  DROP COLUMN salt;
+ALTER TABLE users
+  MODIFY COLUMN password VARBINARY(255);
 `,
 }

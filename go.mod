@@ -8,5 +8,6 @@ require (
 	github.com/miekg/dns v1.1.29
 	github.com/ovh/go-ovh v0.0.0-20181109152953-ba5adb4cf014
 	github.com/syndtr/goleveldb v1.0.0
+	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	gopkg.in/ini.v1 v1.55.0 // indirect
 )
