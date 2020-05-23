@@ -43,6 +43,7 @@ import (
 
 type Options struct {
 	Bind              string
+	ExternalURL       string
 	BaseURL           string
 	DevProxy          string
 	DSN               string
@@ -53,6 +54,7 @@ func ConsolidateConfig() (opts *Options, err error) {
 	// Define defaults options
 	opts = &Options{
 		Bind:              ":8081",
+		ExternalURL:       "http://localhost:8081",
 		BaseURL:           "/",
 		DSN:               database.DSNGenerator(),
 		DefaultNameServer: "127.0.0.1:53",
