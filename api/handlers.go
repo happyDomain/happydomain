@@ -95,6 +95,7 @@ func (r APIResponse) WriteResponse(w http.ResponseWriter) {
 type APIErrorResponse struct {
 	status int
 	err    error
+	href   string
 }
 
 func (r APIErrorResponse) WriteResponse(w http.ResponseWriter) {
@@ -103,7 +104,11 @@ func (r APIErrorResponse) WriteResponse(w http.ResponseWriter) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	http.Error(w, fmt.Sprintf("{\"errmsg\":%q}", r.err.Error()), r.status)
+	if len(r.href) == 0 {
+		http.Error(w, fmt.Sprintf("{\"errmsg\":%q}", r.err.Error()), r.status)
+	} else {
+		http.Error(w, fmt.Sprintf("{\"errmsg\":%q,\"href\":%q}", r.err.Error(), r.href), r.status)
+	}
 }
 
 func apiHandler(f func(*config.Options, httprouter.Params, io.Reader) Response) func(http.ResponseWriter, *http.Request, httprouter.Params) {
