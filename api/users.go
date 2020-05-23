@@ -34,17 +34,28 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"log"
+	"net/http"
+	"net/mail"
+	"strconv"
+	"strings"
+	"unicode"
 
 	"github.com/julienschmidt/httprouter"
 
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/storage"
+	"git.happydns.org/happydns/utils"
 )
 
 func init() {
 	router.POST("/api/users", apiHandler(registerUser))
+	router.PATCH("/api/users", apiHandler(resendValidationLink))
+	router.GET("/api/users/:uid", apiAuthHandler(sameUserHandler(getUser)))
+	router.POST("/api/users/:uid/email", apiHandler(userHandler(validateUserAddress)))
 }
 
 type UploadedUser struct {
@@ -52,18 +63,73 @@ type UploadedUser struct {
 	Password string
 }
 
+func sendValidationLink(opts *config.Options, user *happydns.User) error {
+	var toName string
+	if n := strings.Index(user.Email, "+"); n > 0 {
+		toName = user.Email[0:n]
+	} else {
+		toName = user.Email[0:strings.Index(user.Email, "@")]
+	}
+	if len(toName) > 1 {
+		toNameCopy := strings.Replace(toName, ".", " ", -1)
+		toName = ""
+		lastRuneIsSpace := true
+		for _, runeValue := range toNameCopy {
+			if lastRuneIsSpace {
+				lastRuneIsSpace = false
+				toName += string(unicode.ToTitle(runeValue))
+			} else {
+				toName += string(runeValue)
+			}
+
+			if unicode.IsSpace(runeValue) || unicode.IsPunct(runeValue) || unicode.IsSymbol(runeValue) {
+				lastRuneIsSpace = true
+			}
+		}
+	}
+
+	log.Println("test to", user.Email, toName)
+	return utils.SendMail(
+		&mail.Address{Name: toName, Address: user.Email},
+		"Your new account on happyDNS",
+		`Welcome to happyDNS!
+--------------------
+
+Hi `+toName+`,
+
+We are pleased that you created an account on our great domain name
+management platform!
+
+In order to validate your account, please follow this link now:
+
+[Validate my account](`+opts.GetRegistrationURL(user)+`)`,
+	)
+}
+
 func registerUser(opts *config.Options, p httprouter.Params, body io.Reader) Response {
 	var uu UploadedUser
 	err := json.NewDecoder(body).Decode(&uu)
 	if err != nil {
 		return APIErrorResponse{
-			err: err,
+			err: fmt.Errorf("Something is wrong in received data: %w", err),
 		}
 	}
 
-	if len(uu.Email) <= 3 {
+	if len(uu.Email) <= 3 || strings.Index(uu.Email, "@") == -1 {
 		return APIErrorResponse{
 			err: errors.New("The given email is invalid."),
+		}
+	}
+
+	if len(uu.Password) <= 7 {
+		return APIErrorResponse{
+			err: errors.New("The given email is invalid."),
+		}
+	}
+
+	if storage.MainStore.UserExists(uu.Email) {
+		return APIErrorResponse{
+			err: errors.New("An account already exists with the given address. Try login now."),
 		}
 	}
 
@@ -75,9 +141,121 @@ func registerUser(opts *config.Options, p httprouter.Params, body io.Reader) Res
 		return APIErrorResponse{
 			err: err,
 		}
+	} else if sendValidationLink(opts, user); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
 	} else {
 		return APIResponse{
 			response: user,
+		}
+	}
+}
+
+func resendValidationLink(opts *config.Options, p httprouter.Params, body io.Reader) Response {
+	var uu UploadedUser
+	err := json.NewDecoder(body).Decode(&uu)
+	if err != nil {
+		return APIErrorResponse{
+			err: fmt.Errorf("Something is wrong in received data: %w", err),
+		}
+	}
+
+	if user, err := storage.MainStore.GetUserByEmail(uu.Email); err != nil {
+		log.Println(err)
+		return APIErrorResponse{
+			err:    errors.New("If this address exists in our database, you'll receive a new validation link."),
+			status: http.StatusOK,
+		}
+	} else if user.EmailValidated != nil {
+		return APIErrorResponse{
+			err:    errors.New("If this address exists in our database, you'll receive a new validation link."),
+			status: http.StatusOK,
+		}
+	} else if err = sendValidationLink(opts, user); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	} else {
+		return APIErrorResponse{
+			err:    errors.New("If this address exists in our database, you'll receive a new validation link."),
+			status: http.StatusOK,
+		}
+	}
+}
+
+func sameUserHandler(f func(*config.Options, *happydns.User, io.Reader) Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) Response {
+	return func(opts *config.Options, u *happydns.User, ps httprouter.Params, body io.Reader) Response {
+		if uid, err := strconv.ParseInt(ps.ByName("uid"), 16, 64); err != nil {
+			return APIErrorResponse{
+				status: http.StatusNotFound,
+				err:    fmt.Errorf("Invalid user identifier given: %w", err),
+			}
+		} else if user, err := storage.MainStore.GetUser(uid); err != nil {
+			return APIErrorResponse{
+				status: http.StatusNotFound,
+				err:    errors.New("User not found"),
+			}
+		} else if user.Id != u.Id {
+			return APIErrorResponse{
+				status: http.StatusNotFound,
+				err:    errors.New("User not found"),
+			}
+		} else {
+			return f(opts, user, body)
+		}
+	}
+}
+
+func getUser(opts *config.Options, user *happydns.User, _ io.Reader) Response {
+	return APIResponse{
+		response: user,
+	}
+}
+
+func userHandler(f func(*config.Options, *happydns.User, io.Reader) Response) func(*config.Options, httprouter.Params, io.Reader) Response {
+	return func(opts *config.Options, ps httprouter.Params, body io.Reader) Response {
+		if uid, err := strconv.ParseInt(ps.ByName("uid"), 16, 64); err != nil {
+			return APIErrorResponse{
+				status: http.StatusNotFound,
+				err:    fmt.Errorf("Invalid user identifier given: %w", err),
+			}
+		} else if user, err := storage.MainStore.GetUser(uid); err != nil {
+			return APIErrorResponse{
+				status: http.StatusNotFound,
+				err:    errors.New("User not found"),
+			}
+		} else {
+			return f(opts, user, body)
+		}
+	}
+}
+
+type UploadedAddressValidation struct {
+	Key string
+}
+
+func validateUserAddress(opts *config.Options, user *happydns.User, body io.Reader) Response {
+	var uav UploadedAddressValidation
+	err := json.NewDecoder(body).Decode(&uav)
+	if err != nil {
+		return APIErrorResponse{
+			err: fmt.Errorf("Something is wrong in received data: %w", err),
+		}
+	}
+
+	if err := user.ValidateEmail(uav.Key); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	} else if err := storage.MainStore.UpdateUser(user); err != nil {
+		return APIErrorResponse{
+			status: http.StatusNotFound,
+			err:    errors.New("User not found"),
+		}
+	} else {
+		return APIResponse{
+			response: true,
 		}
 	}
 }

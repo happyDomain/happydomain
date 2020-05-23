@@ -174,7 +174,13 @@ func checkAuth(opts *config.Options, _ httprouter.Params, body io.Reader) Respon
 		}
 	} else if !user.CheckAuth(lf.Password) {
 		return APIErrorResponse{
-			err:    errors.New(`Invalid username or password`),
+			err:    errors.New(`Invalid username or password.`),
+			status: http.StatusUnauthorized,
+		}
+	} else if user.EmailValidated == nil {
+		return APIErrorResponse{
+			err:    errors.New(`Please validate your e-mail address before your first login.`),
+			href:   "/email-validation",
 			status: http.StatusUnauthorized,
 		}
 	} else {

@@ -164,6 +164,7 @@ const mailHTMLTpl = `
 </html>`
 
 const mailTXTTpl = `{{ .Content }}
---
+
+-- 
 Fred - customer support @ happyDNS
 Legal notice: https://www.happydns.org/en/legal-notice/`

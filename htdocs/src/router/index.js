@@ -71,6 +71,13 @@ const routes = [
     }
   },
   {
+    path: '/email-validation',
+    name: 'email-validation',
+    component: function () {
+      return import(/* webpackChunkName: "signup" */ '../views/email-validation.vue')
+    }
+  },
+  {
     path: '/domains',
     name: 'domains',
     component: function () {

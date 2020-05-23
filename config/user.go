@@ -29,75 +29,14 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package happydns
+package config
 
 import (
-	"crypto/hmac"
-	"crypto/sha512"
-	"encoding/base64"
 	"fmt"
-	"time"
 
-	"golang.org/x/crypto/bcrypt"
+	"git.happydns.org/happydns/model"
 )
 
-type User struct {
-	Id               int64
-	Email            string
-	Password         []byte
-	RegistrationTime *time.Time
-	EmailValidated   *time.Time
-}
-
-type Users []*User
-
-func NewUser(email string, password string) (u *User, err error) {
-	t := time.Now()
-
-	u = &User{
-		Id:               0,
-		Email:            email,
-		RegistrationTime: &t,
-	}
-
-	err = u.DefinePassword(password)
-
-	return
-}
-
-func (u *User) DefinePassword(password string) (err error) {
-	u.Password, err = bcrypt.GenerateFromPassword([]byte(password), 0)
-
-	return
-}
-
-func (u *User) CheckAuth(password string) bool {
-	return bcrypt.CompareHashAndPassword(u.Password, []byte(password)) == nil
-}
-
-const RegistrationHashValidity = 24 * time.Hour
-
-func (u *User) GenRegistrationHash(previous bool) string {
-	date := time.Now()
-	if previous {
-		date = date.Add(RegistrationHashValidity * -1)
-	}
-	date = date.Truncate(RegistrationHashValidity)
-
-	return base64.StdEncoding.EncodeToString(
-		hmac.New(
-			sha512.New,
-			[]byte(u.RegistrationTime.Format(time.RFC3339Nano)),
-		).Sum(date.AppendFormat([]byte{}, time.RFC3339)),
-	)
-}
-
-func (u *User) ValidateEmail(key string) error {
-	if key == u.GenRegistrationHash(false) || key == u.GenRegistrationHash(true) {
-		now := time.Now()
-		u.EmailValidated = &now
-		return nil
-	}
-
-	return fmt.Errorf("The validation address link you follow is invalid or has expired (it is valid during %d hours)", RegistrationHashValidity/time.Hour)
+func (o *Options) GetRegistrationURL(u *happydns.User) string {
+	return fmt.Sprintf("%s%s/email-validation?u=%x&k=%s", o.ExternalURL, o.BaseURL, u.Id, u.GenRegistrationHash(false))
 }
