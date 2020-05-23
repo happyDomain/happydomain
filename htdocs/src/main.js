@@ -31,15 +31,87 @@
 
 import Vue from 'vue'
 import App from './App.vue'
-import { BootstrapVue, BootstrapVueIcons } from 'bootstrap-vue'
 import router from './router'
+import {
+  AlertPlugin,
+  BadgePlugin,
+  BIcon,
+  BIconArrowRight,
+  BIconCheck,
+  BIconChevronDown,
+  BIconChevronLeft,
+  BIconChevronRight,
+  BIconChevronUp,
+  BIconLink,
+  BIconLink45deg,
+  BIconListTask,
+  BIconPencil,
+  BIconPerson,
+  BIconPersonCheck,
+  BIconPersonPlusFill,
+  BIconPlus,
+  BIconTrash,
+  BIconTrashFill,
+  BIconXCircle,
+  ButtonGroupPlugin,
+  ButtonPlugin,
+  CardPlugin,
+  DropdownPlugin,
+  FormPlugin,
+  FormCheckboxPlugin,
+  FormGroupPlugin,
+  FormInputPlugin,
+  FormRadioPlugin,
+  FormSelectPlugin,
+  InputGroupPlugin,
+  LayoutPlugin,
+  ListGroupPlugin,
+  NavbarPlugin,
+  SpinnerPlugin,
+  ToastPlugin
+} from 'bootstrap-vue'
 
 import './registerServiceWorker.js'
 
 import './app.scss'
 
-Vue.use(BootstrapVue)
-Vue.use(BootstrapVueIcons)
+Vue.use(AlertPlugin)
+Vue.use(BadgePlugin)
+Vue.use(ButtonGroupPlugin)
+Vue.use(ButtonPlugin)
+Vue.use(CardPlugin)
+Vue.use(DropdownPlugin)
+Vue.use(FormPlugin)
+Vue.use(FormCheckboxPlugin)
+Vue.use(FormInputPlugin)
+Vue.use(FormGroupPlugin)
+Vue.use(FormRadioPlugin)
+Vue.use(FormSelectPlugin)
+Vue.use(LayoutPlugin)
+Vue.use(InputGroupPlugin)
+Vue.use(ListGroupPlugin)
+Vue.use(NavbarPlugin)
+Vue.use(SpinnerPlugin)
+Vue.use(ToastPlugin)
+
+Vue.component('BIcon', BIcon)
+Vue.component('BIconArrowRight', BIconArrowRight)
+Vue.component('BIconCheck', BIconCheck)
+Vue.component('BIconChevronDown', BIconChevronDown)
+Vue.component('BIconChevronLeft', BIconChevronLeft)
+Vue.component('BIconChevronRight', BIconChevronRight)
+Vue.component('BIconChevronUp', BIconChevronUp)
+Vue.component('BIconLink', BIconLink)
+Vue.component('BIconLink45deg', BIconLink45deg)
+Vue.component('BIconListTask', BIconListTask)
+Vue.component('BIconPencil', BIconPencil)
+Vue.component('BIconPerson', BIconPerson)
+Vue.component('BIconPersonCheck', BIconPersonCheck)
+Vue.component('BIconPersonPlusFill', BIconPersonPlusFill)
+Vue.component('BIconPlus', BIconPlus)
+Vue.component('BIconTrash', BIconTrash)
+Vue.component('BIconTrashFill', BIconTrashFill)
+Vue.component('BIconXCircle', BIconXCircle)
 
 Vue.config.productionTip = process.env.NODE_ENV === 'production'
 
