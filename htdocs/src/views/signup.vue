@@ -49,55 +49,66 @@
           </template>
           <form ref="form" class="container mt-2" @submit.stop.prevent="goSignUp">
             <b-form-group
-              :state="signupForm.emailState"
+              :state="emailState"
               label="Email address"
               label-for="email-input"
-              invalid-feedback="Email address is required"
+              invalid-feedback="A valid e-mail address is required."
             >
+              <template v-slot:description>
+                You'll use your address to <strong>identify</strong> yourself on the platform, and it could be used to contact you for <strong>security related operations</strong>.
+              </template>
               <b-form-input
                 id="email-input"
                 ref="signupemail"
                 v-model="signupForm.email"
-                :state="signupForm.emailState"
+                :state="emailState"
                 required
                 autofocus
+                lazy
                 type="email"
                 placeholder="jPostel@isi.edu"
                 autocomplete="username"
               />
             </b-form-group>
             <b-form-group
-              :state="signupForm.passwordState"
+              :state="passwordState"
               label="Password"
               label-for="password-input"
-              invalid-feedback="Password is required"
+              invalid-feedback="Password has to be strong enough: at least 8 characters with numbers, low case characters and high case characters."
             >
               <b-form-input
                 id="password-input"
                 ref="signuppassword"
                 v-model="signupForm.password"
                 type="password"
-                :state="signupForm.passwordState"
+                :state="passwordState"
                 required
                 placeholder="xXxXxXxXxX"
                 autocomplete="new-password"
               />
             </b-form-group>
             <b-form-group
-              :state="signupForm.passwordConfirmState"
+              :state="passwordConfirmState"
               label="Password confirmation"
               label-for="passwordconfirm-input"
-              invalid-feedback="Password confirmation is required"
+              invalid-feedback="Password and its confirmation doesn't match."
             >
               <b-form-input
                 id="passwordconfirm-input"
                 ref="signuppasswordconfirm"
                 v-model="signupForm.passwordConfirm"
                 type="password"
-                :state="signupForm.passwordConfirmState"
+                :state="passwordConfirmState"
                 required
                 placeholder="xXxXxXxXxX"
               />
+            </b-form-group>
+            <b-form-group>
+              <b-form-checkbox
+                v-model="signupForm.wantReceiveUpdate"
+              >
+                Keep me informed of future big improvements
+              </b-form-checkbox>
             </b-form-group>
             <div class="d-flex justify-content-around">
               <b-button type="submit" variant="primary">
@@ -121,7 +132,33 @@ export default {
 
   data: function () {
     return {
-      signupForm: {}
+      signupForm: {
+        email: '',
+        password: '',
+        passwordConfirm: ''
+      }
+    }
+  },
+
+  computed: {
+    emailState () {
+      if (this.signupForm.email.length === 0) {
+        return null
+      }
+      return /.+@.+\..+/i.test(this.signupForm.email)
+    },
+    passwordState () {
+      if (this.signupForm.password.length === 0) {
+        return null
+      }
+      return this.signupForm.password.length > 15 || (
+        /[A-Z]/.test(this.signupForm.password) && /[a-z]/.test(this.signupForm.password) && /[0-9]/.test(this.signupForm.password) && (/\W/.test(this.signupForm.password) || this.signupForm.password.length >= 8))
+    },
+    passwordConfirmState () {
+      if (this.signupForm.passwordConfirm.length === 0) {
+        return null
+      }
+      return this.signupForm.password === this.signupForm.passwordConfirm
     }
   },
 
@@ -131,10 +168,7 @@ export default {
       this.signupForm.emailState = valid ? 'valid' : 'invalid'
       this.signupForm.passwordState = valid ? 'valid' : 'invalid'
 
-      if (this.signupForm.password !== this.signupForm.passwordConfirm) {
-        this.signupForm.passwordState = 'invalid'
-        this.signupForm.passwordConfirmState = 'invalid'
-      } else if (valid) {
+      if (valid) {
         axios
           .post('/api/users', {
             email: this.signupForm.email,
@@ -143,17 +177,24 @@ export default {
           .then(
             (response) => {
               this.$root.$bvToast.toast(
-                'Login now', {
+                'Please check your inbox in order to valiate your e-mail address.', {
                   title: 'Registration successfully performed!',
                   autoHideDelay: 5000,
-                  href: 'login',
+                  variant: 'success',
                   toaster: 'b-toaster-content-right'
                 }
               )
-              this.$router.push('/')
+              this.$router.push('/login')
             },
             (error) => {
-              alert('An error occurs when trying to register: ' + error.response.data.errmsg)
+              this.$bvToast.toast(
+                error.response.data.errmsg, {
+                  title: 'Registration problem',
+                  autoHideDelay: 5000,
+                  variant: 'danger',
+                  toaster: 'b-toaster-content-right'
+                }
+              )
             }
           )
       }
