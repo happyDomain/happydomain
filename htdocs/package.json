@@ -10,9 +10,9 @@
   "dependencies": {
     "axios": "^0.19.2",
     "bootstrap": "^4.5.0",
-    "bootstrap-vue": "^2.14.0",
+    "bootstrap-vue": "^2.15.0",
     "vue": "^2.6.11",
-    "vue-router": "^3.1.6"
+    "vue-router": "^3.2.0"
   },
   "devDependencies": {
     "@vue/cli-plugin-eslint": "^4.0.0-rc.0",
@@ -26,7 +26,7 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
     "eslint-plugin-vue": "^6.2.2",
-    "lint-staged": "^10.2.2",
+    "lint-staged": "^10.2.6",
     "node-sass": "^4.14.1",
     "register-service-worker": "^1.7.1",
     "sass-loader": "^8.0.2",
