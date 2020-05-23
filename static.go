@@ -48,6 +48,8 @@ import (
 //go:generate yarn --cwd htdocs --offline build
 //go:generate go-bindata -ignore "\\.go|\\.less" -pkg "main" -o "bindata.go" htdocs/dist/...
 //go:generate go fmt bindata.go
+//go:generate go-bindata -ignore "\\.go|\\.less" -pkg "utils" -o "utils/bindata.go" htdocs/dist/img/happydns.png
+//go:generate go fmt utils/bindata.go
 
 const StaticDir string = "htdocs/dist"
 
