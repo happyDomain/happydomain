@@ -78,6 +78,13 @@ const routes = [
     }
   },
   {
+    path: '/forgotten-password',
+    name: 'forgotten-password',
+    component: function () {
+      return import(/* webpackChunkName: "forgotten-password" */ '../views/forgotten-password.vue')
+    }
+  },
+  {
     path: '/domains',
     name: 'domains',
     component: function () {

@@ -36,7 +36,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/mail"
 	"strconv"
@@ -53,18 +52,19 @@ import (
 
 func init() {
 	router.POST("/api/users", apiHandler(registerUser))
-	router.PATCH("/api/users", apiHandler(resendValidationLink))
+	router.PATCH("/api/users", apiHandler(specialUserOperations))
 	router.GET("/api/users/:uid", apiAuthHandler(sameUserHandler(getUser)))
 	router.POST("/api/users/:uid/email", apiHandler(userHandler(validateUserAddress)))
+	router.POST("/api/users/:uid/recovery", apiHandler(userHandler(recoverUserAccount)))
 }
 
 type UploadedUser struct {
+	Kind     string
 	Email    string
 	Password string
 }
 
-func sendValidationLink(opts *config.Options, user *happydns.User) error {
-	var toName string
+func genUsername(user *happydns.User) (toName string) {
 	if n := strings.Index(user.Email, "+"); n > 0 {
 		toName = user.Email[0:n]
 	} else {
@@ -87,8 +87,11 @@ func sendValidationLink(opts *config.Options, user *happydns.User) error {
 			}
 		}
 	}
+	return
+}
 
-	log.Println("test to", user.Email, toName)
+func sendValidationLink(opts *config.Options, user *happydns.User) error {
+	toName := genUsername(user)
 	return utils.SendMail(
 		&mail.Address{Name: toName, Address: user.Email},
 		"Your new account on happyDNS",
@@ -103,6 +106,21 @@ management platform!
 In order to validate your account, please follow this link now:
 
 [Validate my account](`+opts.GetRegistrationURL(user)+`)`,
+	)
+}
+
+func sendRecoveryLink(opts *config.Options, user *happydns.User) error {
+	toName := genUsername(user)
+	return utils.SendMail(
+		&mail.Address{Name: toName, Address: user.Email},
+		"Recover you happyDNS account",
+		`Hi `+toName+`,
+
+You've just ask on our platform to recover your account.
+
+In order to define a new password, please follow this link now:
+
+[Recover my account](`+opts.GetAccountRecoveryURL(user)+`)`,
 	)
 }
 
@@ -152,7 +170,7 @@ func registerUser(opts *config.Options, p httprouter.Params, body io.Reader) Res
 	}
 }
 
-func resendValidationLink(opts *config.Options, p httprouter.Params, body io.Reader) Response {
+func specialUserOperations(opts *config.Options, p httprouter.Params, body io.Reader) Response {
 	var uu UploadedUser
 	err := json.NewDecoder(body).Decode(&uu)
 	if err != nil {
@@ -161,27 +179,46 @@ func resendValidationLink(opts *config.Options, p httprouter.Params, body io.Rea
 		}
 	}
 
+	res := APIErrorResponse{
+		err:    errors.New("If this address exists in our database, you'll receive a new e-mail."),
+		status: http.StatusOK,
+	}
+
 	if user, err := storage.MainStore.GetUserByEmail(uu.Email); err != nil {
-		log.Println(err)
-		return APIErrorResponse{
-			err:    errors.New("If this address exists in our database, you'll receive a new validation link."),
-			status: http.StatusOK,
-		}
-	} else if user.EmailValidated != nil {
-		return APIErrorResponse{
-			err:    errors.New("If this address exists in our database, you'll receive a new validation link."),
-			status: http.StatusOK,
-		}
-	} else if err = sendValidationLink(opts, user); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		return res
 	} else {
-		return APIErrorResponse{
-			err:    errors.New("If this address exists in our database, you'll receive a new validation link."),
-			status: http.StatusOK,
+		if uu.Kind == "recovery" {
+			if user.EmailValidated == nil {
+				if err = sendValidationLink(opts, user); err != nil {
+					return APIErrorResponse{
+						err: err,
+					}
+
+				}
+			} else {
+				if err = sendRecoveryLink(opts, user); err != nil {
+					return APIErrorResponse{
+						err: err,
+					}
+
+				} else if err := storage.MainStore.UpdateUser(user); err != nil {
+					return APIErrorResponse{
+						err: fmt.Errorf("An error occurs when trying to recover your account: %w", err),
+					}
+				}
+			}
+		} else if uu.Kind == "validation" {
+			if user.EmailValidated != nil {
+				return res
+			} else if err = sendValidationLink(opts, user); err != nil {
+				return APIErrorResponse{
+					err: err,
+				}
+			}
 		}
 	}
+
+	return res
 }
 
 func sameUserHandler(f func(*config.Options, *happydns.User, io.Reader) Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) Response {
@@ -245,6 +282,44 @@ func validateUserAddress(opts *config.Options, user *happydns.User, body io.Read
 	}
 
 	if err := user.ValidateEmail(uav.Key); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	} else if err := storage.MainStore.UpdateUser(user); err != nil {
+		return APIErrorResponse{
+			status: http.StatusNotFound,
+			err:    errors.New("User not found"),
+		}
+	} else {
+		return APIResponse{
+			response: true,
+		}
+	}
+}
+
+type UploadedAccountRecovery struct {
+	Key      string
+	Password string
+}
+
+func recoverUserAccount(opts *config.Options, user *happydns.User, body io.Reader) Response {
+	var uar UploadedAccountRecovery
+	err := json.NewDecoder(body).Decode(&uar)
+	if err != nil {
+		return APIErrorResponse{
+			err: fmt.Errorf("Something is wrong in received data: %w", err),
+		}
+	}
+
+	if err := user.CanRecoverAccount(uar.Key); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	} else if len(uar.Password) == 0 {
+		return APIResponse{
+			response: false,
+		}
+	} else if err := user.DefinePassword(uar.Password); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}

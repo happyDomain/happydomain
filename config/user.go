@@ -33,10 +33,15 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 
 	"git.happydns.org/happydns/model"
 )
 
+func (o *Options) GetAccountRecoveryURL(u *happydns.User) string {
+	return fmt.Sprintf("%s%s/forgotten-password?u=%x&k=%s", o.ExternalURL, o.BaseURL, u.Id, url.QueryEscape(u.GenAccountRecoveryHash(false)))
+}
+
 func (o *Options) GetRegistrationURL(u *happydns.User) string {
-	return fmt.Sprintf("%s%s/email-validation?u=%x&k=%s", o.ExternalURL, o.BaseURL, u.Id, u.GenRegistrationHash(false))
+	return fmt.Sprintf("%s%s/email-validation?u=%x&k=%s", o.ExternalURL, o.BaseURL, u.Id, url.QueryEscape(u.GenRegistrationHash(false)))
 }

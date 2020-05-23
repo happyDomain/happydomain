@@ -33,6 +33,7 @@ package happydns
 
 import (
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha512"
 	"encoding/base64"
 	"fmt"
@@ -42,11 +43,12 @@ import (
 )
 
 type User struct {
-	Id               int64
-	Email            string
-	Password         []byte
-	RegistrationTime *time.Time
-	EmailValidated   *time.Time
+	Id                  int64
+	Email               string
+	Password            []byte
+	RegistrationTime    *time.Time
+	EmailValidated      *time.Time
+	PasswordRecoveryKey []byte `json:",omitempty"`
 }
 
 type Users []*User
@@ -67,6 +69,7 @@ func NewUser(email string, password string) (u *User, err error) {
 
 func (u *User) DefinePassword(password string) (err error) {
 	u.Password, err = bcrypt.GenerateFromPassword([]byte(password), 0)
+	u.PasswordRecoveryKey = nil
 
 	return
 }
@@ -100,4 +103,39 @@ func (u *User) ValidateEmail(key string) error {
 	}
 
 	return fmt.Errorf("The validation address link you follow is invalid or has expired (it is valid during %d hours)", RegistrationHashValidity/time.Hour)
+}
+
+const AccountRecoveryHashValidity = 2 * time.Hour
+
+func (u *User) GenAccountRecoveryHash(previous bool) string {
+	if u.PasswordRecoveryKey == nil {
+		u.PasswordRecoveryKey = make([]byte, 64)
+		if _, err := rand.Read(u.PasswordRecoveryKey); err != nil {
+			return ""
+		}
+	}
+	date := time.Now()
+	date = date.Truncate(AccountRecoveryHashValidity)
+	if previous {
+		date = date.Add(AccountRecoveryHashValidity * -1)
+	}
+
+	if len(u.PasswordRecoveryKey) == 0 {
+		return ""
+	}
+
+	return base64.StdEncoding.EncodeToString(
+		hmac.New(
+			sha512.New,
+			u.PasswordRecoveryKey,
+		).Sum(date.AppendFormat([]byte{}, time.RFC3339)),
+	)
+}
+
+func (u *User) CanRecoverAccount(key string) error {
+	if key == u.GenAccountRecoveryHash(false) || key == u.GenAccountRecoveryHash(true) {
+		return nil
+	}
+
+	return fmt.Errorf("The account recovery link you follow is invalid or has expired (it is valid during %d hours)", AccountRecoveryHashValidity/time.Hour)
 }

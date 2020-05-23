@@ -41,12 +41,9 @@
       <b-spinner variant="primary" label="Spinning" class="mr-3" /> Please wait
     </div>
 
-    <b-form v-else ref="form" class="mt-2" @submit.stop.prevent="goResend">
+    <b-form v-else-if="user === ''" ref="formMail" @submit.stop.prevent="goSendLink">
       <p>
-        In order to validate your e-mail address, please check your inbox, and follow the link contained in the message.
-      </p>
-      <p>
-        If you need a new confirmation e-mail, just enter your address in the form below.
+        In order to recover your account, we'll send you an e-mail containing a link that will allow you to redefine your password.
       </p>
       <b-form-row>
         <label for="email-input" class="col-md-4 col-form-label text-truncate text-md-right font-weight-bold">Email address</label>
@@ -66,7 +63,47 @@
       </b-form-row>
       <b-form-row class="mt-3">
         <b-button class="offset-sm-4 col-sm-4" type="submit" variant="primary">
-          Re-send the confirmation e-mail
+          Send me an e-mail to recover my account
+        </b-button>
+      </b-form-row>
+    </b-form>
+
+    <b-form v-else ref="formRecover" @submit.stop.prevent="goRecover">
+      <p>
+        In order to recover your account, please fill the following form, with a fresh password.
+      </p>
+      <b-form-row>
+        <label for="password-input" class="col-md-4 col-form-label text-truncate text-md-right font-weight-bold">New password</label>
+        <b-col md="6">
+          <b-form-input
+            id="password-input"
+            ref="recoverpassword"
+            v-model="password"
+            type="password"
+            :state="passwordState"
+            required
+            placeholder="xXxXxXxXxX"
+            autocomplete="new-password"
+          />
+        </b-col>
+      </b-form-row>
+      <b-form-row class="mt-2">
+        <label for="passwordconfirm-input" class="col-md-4 col-form-label text-truncate text-md-right font-weight-bold">Password confirmation</label>
+        <b-col md="6">
+          <b-form-input
+            id="passwordconfirm-input"
+            ref="recoverpasswordconfirm"
+            v-model="passwordConfirm"
+            type="password"
+            :state="passwordConfirmState"
+            required
+            placeholder="xXxXxXxXxX"
+          />
+        </b-col>
+      </b-form-row>
+      <b-form-row class="mt-3">
+        <b-button class="offset-sm-4 col-sm-4" type="submit" variant="primary">
+          Redefine my password
         </b-button>
       </b-form-row>
     </b-form>
@@ -82,71 +119,115 @@ export default {
     return {
       email: '',
       emailState: null,
-      error: null
+      error: null,
+      password: '',
+      passwordConfirm: '',
+      user: null
     }
   },
 
   computed: {
     isLoading () {
-      return this.error === null
+      return this.error === null || this.user === null
+    },
+    passwordState () {
+      if (this.password.length === 0) {
+        return null
+      }
+      return this.password.length > 15 || (
+        /[A-Z]/.test(this.password) && /[a-z]/.test(this.password) && /[0-9]/.test(this.password) && (/\W/.test(this.password) || this.password.length >= 8))
+    },
+    passwordConfirmState () {
+      if (this.passwordConfirm.length === 0) {
+        return null
+      }
+      return this.password === this.passwordConfirm
     }
   },
 
   mounted () {
     if (this.$route.query.u) {
       axios
-        .post('/api/users/' + encodeURIComponent(this.$route.query.u) + '/email', {
+        .post('/api/users/' + encodeURIComponent(this.$route.query.u) + '/recovery', {
           key: this.$route.query.k
         })
         .then(
           (response) => {
             this.error = ''
-            this.$root.$bvToast.toast(
-              'Ready to login!', {
-                title: 'Your new e-mail address is now validated!',
-                autoHideDelay: 5000,
-                variant: 'success',
-                toaster: 'b-toaster-content-right'
-              }
-            )
-            this.$router.push('/login')
+            this.user = this.$route.query.u
           },
           (error) => {
             this.error = error.response.data.errmsg
+            this.user = ''
           }
         )
     } else {
       this.error = ''
+      this.user = ''
     }
   },
 
   methods: {
-    goResend () {
-      const valid = this.$refs.form.checkValidity()
+    goSendLink () {
+      const valid = this.$refs.formMail.checkValidity()
       this.emailState = valid
 
       if (valid) {
         axios
           .patch('/api/users', {
-            kind: 'validation',
+            kind: 'recovery',
             email: this.email
           })
           .then(
             (response) => {
               this.$root.$bvToast.toast(
-                'Please check your inbox in order to valiate your e-mail address.', {
-                  title: 'Confirmation e-mail sent!',
+                'Please check your inbox in order to recover your account.', {
+                  title: 'Password recovery email send!',
                   autoHideDelay: 5000,
                   variant: 'success',
                   toaster: 'b-toaster-content-right'
                 }
               )
-              this.$router.push('/email-validation')
+              this.$router.push('/')
             },
             (error) => {
               this.$bvToast.toast(
                 error.response.data.errmsg, {
-                  title: 'Registration problem',
+                  title: 'Password recovery problem',
+                  autoHideDelay: 5000,
+                  variant: 'danger',
+                  toaster: 'b-toaster-content-right'
+                }
+              )
+            }
+          )
+      }
+    },
+    goRecover () {
+      const valid = this.$refs.formRecover.checkValidity()
+
+      if (valid && this.user) {
+        axios
+          .post('/api/users/' + encodeURIComponent(this.user) + '/recovery', {
+            key: this.$route.query.k,
+            password: this.password
+          })
+          .then(
+            (response) => {
+              this.$root.$bvToast.toast(
+                'You can now login with your new password.', {
+                  title: 'Password redefined successfully!',
+                  autoHideDelay: 5000,
+                  variant: 'success',
+                  toaster: 'b-toaster-content-right'
+                }
+              )
+              this.$router.push('/login')
+            },
+            (error) => {
+              this.$bvToast.toast(
+                error.response.data.errmsg, {
+                  title: 'Password recovery problem',
                   autoHideDelay: 5000,
                   variant: 'danger',
                   toaster: 'b-toaster-content-right'

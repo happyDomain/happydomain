@@ -89,7 +89,7 @@
               <b-button type="submit" variant="primary">
                 Go!
               </b-button>
-              <b-button type="button" variant="outline-dark">
+              <b-button to="/forgotten-password" variant="outline-dark">
                 Forgotten password?
               </b-button>
             </div>
