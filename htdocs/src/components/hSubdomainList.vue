@@ -114,6 +114,9 @@ export default {
     },
 
     pullDomain () {
+      if (this.domain === undefined || this.domain.domain === undefined) {
+        return
+      }
       axios
         .post('/api/domains/' + encodeURIComponent(this.domain.domain) + '/analyze')
         .then(
