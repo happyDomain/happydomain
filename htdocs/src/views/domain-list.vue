@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <b-container class="mt-4 mb-5">
+  <b-container class="pt-4 pb-5">
     <h1 class="text-center mb-4">
       Welcome to <span style="font-family: 'Fortheenas01';font-weight:bold;">happy<span style="font-family: 'Fortheenas01 Bold';margin-left:.1em;">DNS</span></span>!
     </h1>

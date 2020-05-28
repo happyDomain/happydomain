@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <b-container class="mt-4 mb-5">
+  <b-container class="pt-4 pb-5">
     <b-button type="button" variant="primary" class="float-right" @click="newSource">
       <b-icon icon="plus" />
       Add new source

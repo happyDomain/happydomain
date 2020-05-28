@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <b-container style="margin-top: 10vh; margin-bottom: 10vh;">
+  <b-container style="padding-top: 10vh; padding-bottom: 10vh;">
     <b-alert v-if="error !== null" variant="danger" :show="error.length > 0">
       {{ error }}
     </b-alert>

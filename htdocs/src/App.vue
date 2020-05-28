@@ -76,7 +76,7 @@
       </b-container>
     </b-navbar>
 
-    <router-view />
+    <router-view style="min-height: 80vh" />
 
     <b-toaster name="b-toaster-content-right" style="position: fixed; top: 70px; right: 0; z-index: 10; min-width: 30vw;" />
 

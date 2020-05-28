@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <b-container style="margin-top: 10vh; margin-bottom: 10vh;">
+  <b-container style="padding-top: 10vh; padding-bottom: 10vh;">
     <b-row>
       <b-col sm="4" class="d-none d-sm-flex align-items-center">
         <div>
