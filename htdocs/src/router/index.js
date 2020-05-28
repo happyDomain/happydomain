@@ -169,6 +169,13 @@ const routes = [
     component: function () {
       return import(/* webpackChunkName: "domain" */ '../views/zone-records.vue')
     }
+  },
+  {
+    path: '*',
+    name: 'non-found',
+    component: function () {
+      return import(/* webpackChunkName: "not-found" */ '../views/404.vue')
+    }
   }
 ]
 
