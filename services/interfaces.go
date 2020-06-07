@@ -37,4 +37,5 @@ type ServiceInfos struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	Categories  []string `json:"categories"`
+	Tabs        bool     `json:"tabs,omitempty"`
 }

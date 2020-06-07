@@ -70,6 +70,7 @@ import {
   PopoverPlugin,
   SpinnerPlugin,
   TablePlugin,
+  TabsPlugin,
   ToastPlugin
 } from 'bootstrap-vue'
 
@@ -96,6 +97,7 @@ Vue.use(NavbarPlugin)
 Vue.use(PopoverPlugin)
 Vue.use(SpinnerPlugin)
 Vue.use(TablePlugin)
+Vue.use(TabsPlugin)
 Vue.use(ToastPlugin)
 
 Vue.component('BIcon', BIcon)

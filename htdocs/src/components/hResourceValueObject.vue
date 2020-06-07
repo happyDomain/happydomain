@@ -33,29 +33,56 @@
 
 <template>
   <div v-if="service_specs && type" class="mb-2">
-    <div v-if="editToolbar" class="text-right mb-2">
-      <b-button v-if="!serviceEdit" type="button" size="sm" variant="outline-primary" class="mx-1" @click="toogleServiceEdit()">
-        <b-icon icon="pencil" />
-        Edit
-      </b-button>
-      <b-button v-else type="button" size="sm" variant="primary" class="mx-1" @click="submitService(index, idx)">
-        <b-icon icon="check" />
-        Save those modifications
-      </b-button>
-      <b-button type="button" size="sm" variant="outline-danger" class="mx-1">
-        <b-icon icon="trash" />
-        Delete
-      </b-button>
-    </div>
-    <h-resource-value
-      v-for="(spec, index) in service_specs.fields"
-      :key="index"
-      v-model="value[spec.id]"
-      :edit="editChildren"
-      :services="services"
-      :specs="spec"
-      :type="spec.type"
+    <b-tabs v-if="services[type] && services[type].tabs" content-class="mt-3" fill>
+      <b-tab v-for="(spec, index) in service_specs.fields" :key="index" :active="index === 0">
+        <template v-slot:title>
+          {{ spec.id }}
+          <b-badge v-if="spec.type.substr(0,2) === '[]'" variant="light" pill>
+            {{ value[spec.id].length }}
+          </b-badge>
+          <b-badge v-if="spec.type.substr(0,3) === 'map'" variant="light" pill>
+            {{ Object.keys(value[spec.id]).length }}
+          </b-badge>
+        </template>
+        <h-resource-value
+          v-if="value[spec.id]"
+          v-model="value[spec.id]"
+          :edit="editChildren"
+          :edit-toolbar="editToolbar"
+          :services="services"
+          :specs="spec"
+          :type="spec.type"
+        />
+        <b-button v-else>
+          Create {{ spec.id }}
+        </b-button>
+      </b-tab>
+    </b-tabs>
+    <div v-else>
+      <div v-if="editToolbar" class="text-right mb-2">
+        <b-button v-if="!serviceEdit" type="button" size="sm" variant="outline-primary" class="mx-1" @click="toogleServiceEdit()">
+          <b-icon icon="pencil" />
+          Edit
+        </b-button>
+        <b-button v-else type="button" size="sm" variant="primary" class="mx-1" @click="submitService(index, idx)">
+          <b-icon icon="check" />
+          Save those modifications
+        </b-button>
+        <b-button type="button" size="sm" variant="outline-danger" class="mx-1">
+          <b-icon icon="trash" />
+          Delete
+        </b-button>
+      </div>
+      <h-resource-value
+        v-for="(spec, index) in service_specs.fields"
+        :key="index"
+        v-model="value[spec.id]"
+        :edit="editChildren"
+        :services="services"
+        :specs="spec"
+        :type="spec.type"
       />
+    </div>
   </div>
 </template>
 
