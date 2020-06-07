@@ -32,61 +32,44 @@
   -->
 
 <template>
-  <b-list-group v-if="!isLoading">
-    <b-list-group-item button @click="toogleShowDetails()">
-      <strong>{{ services[service._svctype].name }}</strong> <span v-if="service._comment" class="text-muted">{{ service._comment }}</span>
-      <span v-if="services[service._svctype].comment" class="text-muted">{{ services[service._svctype].comment }}</span>
-      <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">
-        {{ categorie }}
-      </b-badge>
-      <b-badge v-if="service._tmp_hint_nb && service._tmp_hint_nb > 1" variant="danger" class="float-right ml-1">
-        {{ service._tmp_hint_nb }}
-      </b-badge>
-    </b-list-group-item>
-    <h-resource-form v-if="showDetails" :service="service" />
-  </b-list-group>
+  <b-form-row
+    v-show="edit || value"
+  >
+    <label v-if="specs.label" :for="'spec-' + index" :title="specs.label" class="col-md-4 col-form-label text-truncate text-md-right text-primary">{{ specs.label }}</label>
+    <label v-else :for="'spec-' + index" :title="specs.label" class="col-md-4 col-form-label text-truncate text-md-right text-primary">{{ specs.id }}</label>
+    <b-col md="8">
+      <h-resource-value-input-raw v-model="value" :edit="edit" :index="index" :specs="specs" />
+      <p v-if="specs.description" class="text-justify" style="line-height: 1.1">
+        <small class="text-muted">{{ specs.description }}</small>
+      </p>
+    </b-col>
+  </b-form-row>
 </template>
 
 <script>
-import ServicesApi from '@/services/ServicesApi'
-
 export default {
-  name: 'HResourceItem',
+  name: 'HResourceValueInput',
 
   components: {
-    hResourceForm: () => import('@/components/hResourceForm')
+    hResourceValueInputRaw: () => import('@/components/hResourceValueInputRaw')
   },
 
   props: {
-    service: {
-      type: Object,
+    edit: {
+      type: Boolean,
+      default: false
+    },
+    index: {
+      type: Number,
       required: true
-    }
-  },
-
-  data: function () {
-    return {
-      showDetails: false,
-      services: null
-    }
-  },
-
-  computed: {
-    isLoading () {
-      return this.services == null
-    }
-  },
-
-  created () {
-    ServicesApi.getServices()
-      .then(
-        (response) => (this.services = response.data)
-      )
-  },
-
-  methods: {
-    toogleShowDetails () {
-      this.showDetails = !this.showDetails
+    },
+    specs: {
+      type: Object,
+      default: null
+    },
+    // eslint-disable-next-line
+    value: {
+      required: true
     }
   }
 }

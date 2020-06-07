@@ -32,43 +32,85 @@
   -->
 
 <template>
-  <div v-if="service_specs">
-    <h-form-item v-for="(val, idx) in value" :key="idx" v-model="value[idx]" :spec="service_specs" :edit="edit" :index="index" style="border-bottom: 1px solid gray" />
-  </div>
+  <component :is="itemComponent" v-model="value" :edit="edit" :edit-toolbar="editToolbar" :index="index" :services="services" :specs="specs" :type="type" />
 </template>
 
 <script>
-export default {
-  name: 'HFormItemArray',
+import HResourceValueTable from '@/components/hResourceValueTable'
+import HResourceValueMap from '@/components/hResourceValueMap'
+import HResourceValueObject from '@/components/hResourceValueObject'
+import HResourceValueInput from '@/components/hResourceValueInput'
+import HResourceValueInputRaw from '@/components/hResourceValueInputRaw'
 
-  components: {
-    hFormItem: () => import('@/components/hFormItem')
-  },
+export default {
+  name: 'HResourceValue',
 
   props: {
     edit: {
       type: Boolean,
       default: false
     },
+    editToolbar: {
+      type: Boolean,
+      default: false
+    },
     index: {
       type: Number,
+      default: NaN
+    },
+    noDecorate: {
+      type: Boolean,
+      default: false
+    },
+    services: {
+      type: Object,
       required: true
     },
-    spec: {
+    specs: {
       type: Object,
       default: null
     },
+    type: {
+      type: String,
+      required: true
+    },
+    // eslint-disable-next-line
     value: {
-      type: Array,
       required: true
     }
   },
 
-  computed: {
-    service_specs () {
-      var newSpec = Object.assign({}, this.spec)
-      newSpec.type = newSpec.type.substr(2)
-      return newSpec
+  data () {
+    return {
+      itemComponent: ''
+    }
+  },
+
+  watch: {
+    type: function () {
+      this.findComponent()
+    }
+  },
+
+  mounted () {
+    if (this.type) {
+      this.findComponent()
+    }
+  },
+
+  methods: {
+    findComponent () {
+      if (Array.isArray(this.value)) {
+        this.itemComponent = HResourceValueTable
+      } else if (this.type.substr(0, 3) === 'map') {
+        this.itemComponent = HResourceValueMap
+      } else if (typeof this.value === 'object' || this.type.substr(0, 6) === '*svcs.') {
+        this.itemComponent = HResourceValueObject
+      } else if (this.noDecorate) {
+        this.itemComponent = HResourceValueInputRaw
+      } else {
+        this.itemComponent = HResourceValueInput
+      }
     }
   }
 }

@@ -32,83 +32,72 @@
   -->
 
 <template>
-  <b-list-group-item v-if="!isLoading">
-    <div class="text-right">
-      <b-button v-if="!editService" type="button" size="sm" variant="outline-primary" class="mx-1" @click="toogleServiceEdit()">
-        <b-icon icon="pencil" />
-        Edit
-      </b-button>
-      <b-button v-else type="button" size="sm" variant="primary" class="mx-1" @click="submitService(index, idx)">
-        <b-icon icon="check" />
-        Save those modifications
-      </b-button>
-      <b-button type="button" size="sm" variant="outline-danger" class="mx-1">
-        <b-icon icon="trash" />
-        Delete
-      </b-button>
-    </div>
-    <h-form-data
-      v-model="service.Service"
-      :edit="editService"
-      :fields="service_specs.fields"
+  <b-input-group size="sm" :append="unit">
+    <b-form-select
+      v-if="edit && specs.choices !== undefined"
+      :id="'spec-' + index"
+      v-model="val"
+      :required="specs.required !== undefined && specs.required"
+      :options="specs.choices"
     />
-  </b-list-group-item>
+    <b-form-input
+      v-else
+      :id="'spec-' + index"
+      v-model.lazy="val"
+      class="font-weight-bold"
+      :required="specs.required !== undefined && specs.required"
+      :placeholder="specs.placeholder"
+      :plaintext="!edit"
+    />
+  </b-input-group>
 </template>
 
 <script>
-import ServicesApi from '@/services/ServicesApi'
-
 export default {
-  name: 'HResourceForm',
-
-  components: {
-    hFormData: () => import('@/components/hFormData')
-  },
+  name: 'HResourceValueInputRaw',
 
   props: {
-    service: {
+    edit: {
+      type: Boolean,
+      default: false
+    },
+    index: {
+      type: Number,
+      required: true
+    },
+    specs: {
       type: Object,
+      default: null
+    },
+    // eslint-disable-next-line
+    value: {
       required: true
     }
   },
 
-  data: function () {
-    return {
-      editService: false,
-      service_specs: null
-    }
-  },
-
   computed: {
-    isLoading () {
-      return this.service_specs == null
-    }
-  },
-
-  watch: {
-    service: function () {
-      this.pullServiceSpecs()
-    }
-  },
-
-  created () {
-    if (this.service !== undefined) {
-      this.pullServiceSpecs()
-    }
-  },
-
-  methods: {
-    pullServiceSpecs () {
-      ServicesApi.getServiceSpecs(this.service._svctype)
-        .then(
-          (response) => {
-            this.service_specs = response.data
-          }
-        )
+    unit () {
+      if (this.specs.type === 'time.Duration') {
+        return 's'
+      } else {
+        return null
+      }
     },
-
-    toogleServiceEdit () {
-      this.editService = !this.editService
+    val: {
+      get () {
+        if (this.specs.type === 'time.Duration') {
+          return this.value / 1000000000
+        } else {
+          return this.value
+        }
+      },
+      set (value) {
+        if (this.specs.type === 'time.Duration') {
+          this.$emit('input', value * 1000000000)
+        } else {
+          this.$emit('input', value)
+        }
+      }
     }
   }
 }

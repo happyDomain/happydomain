@@ -32,36 +32,63 @@
   -->
 
 <template>
-  <div>
-    <b-container v-for="(val, key) in value" :key="key">
-      <label :title="key" class="col-md-4 col-form-label text-truncate text-md-right text-primary">{{ key }}</label>
-      <b-col md="8">
-        <h-form-item v-for="(val, key) in Object.keys(value)" :key="key" v-model="value[key]" :spec="service_specs" :edit="edit" :index="index" />
-      </b-col>
-    </b-container>
-  </div>
+  <b-list-group v-if="!isLoading">
+    <b-list-group-item button @click="toogleShowDetails()">
+      <strong :title="services[service._svctype].description">{{ services[service._svctype].name }}</strong> <span v-if="service._comment" class="text-muted">{{ service._comment }}</span>
+      <span v-if="services[service._svctype].comment" class="text-muted">{{ services[service._svctype].comment }}</span>
+      <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">
+        {{ categorie }}
+      </b-badge>
+      <b-badge v-if="service._tmp_hint_nb && service._tmp_hint_nb > 1" variant="danger" class="float-right ml-1">
+        {{ service._tmp_hint_nb }}
+      </b-badge>
+    </b-list-group-item>
+    <b-list-group-item v-if="showDetails">
+      <h-resource-value v-model="service.Service" edit-toolbar :services="services" :type="service._svctype" />
+    </b-list-group-item>
+  </b-list-group>
 </template>
 
 <script>
+import ServicesApi from '@/services/ServicesApi'
+
 export default {
-  name: 'HFormItemMap',
+  name: 'HDomainService',
 
   components: {
-    hFormItem: () => import('@/components/hFormItem')
+    hResourceValue: () => import('@/components/hResourceValue')
   },
 
   props: {
-    edit: Boolean,
-    index: Number,
-    spec: Object,
-    value: {}
+    service: {
+      type: Object,
+      required: true
+    }
+  },
+
+  data: function () {
+    return {
+      showDetails: false,
+      services: null
+    }
   },
 
   computed: {
-    service_specs () {
-      var newSpec = Object.assign({}, this.spec)
-      newSpec.type = newSpec.type.substr(11)
-      return newSpec
+    isLoading () {
+      return this.services == null
+    }
+  },
+
+  created () {
+    ServicesApi.getServices()
+      .then(
+        (response) => (this.services = response.data)
+      )
+  },
+
+  methods: {
+    toogleShowDetails () {
+      this.showDetails = !this.showDetails
     }
   }
 }

@@ -67,7 +67,9 @@ import {
   LayoutPlugin,
   ListGroupPlugin,
   NavbarPlugin,
+  PopoverPlugin,
   SpinnerPlugin,
+  TablePlugin,
   ToastPlugin
 } from 'bootstrap-vue'
 
@@ -91,7 +93,9 @@ Vue.use(LayoutPlugin)
 Vue.use(InputGroupPlugin)
 Vue.use(ListGroupPlugin)
 Vue.use(NavbarPlugin)
+Vue.use(PopoverPlugin)
 Vue.use(SpinnerPlugin)
+Vue.use(TablePlugin)
 Vue.use(ToastPlugin)
 
 Vue.component('BIcon', BIcon)

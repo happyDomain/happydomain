@@ -32,63 +32,43 @@
   -->
 
 <template>
-  <b-input-group size="sm" :append="unit">
-    <b-form-select
-      v-if="edit && spec.choices !== undefined"
-      :id="'spec-' + index"
-      v-model="val"
-      :required="spec.required !== undefined && spec.required"
-      :options="spec.choices"
-      />
-    <b-form-input
-      v-else
-      :id="'spec-' + index"
-      v-model.lazy="val"
-      class="font-weight-bold"
-      :required="spec.required !== undefined && spec.required"
-      :placeholder="spec.placeholder"
-      :plaintext="!edit"
-      />
-  </b-input-group>
+  <div v-if="service_specs">
+    <h-form-item v-for="(val, idx) in value" :key="idx" v-model="value[idx]" :spec="service_specs" :edit="edit" :index="index" style="border-bottom: 1px solid gray" />
+  </div>
 </template>
 
 <script>
 export default {
-  name: 'HFormItemValue',
-  props: {
-    edit: Boolean,
-    index: Number,
-    spec: Object,
-    value: {}
+  name: 'HResourceValueArray',
+
+  components: {
+    hResourceValue: () => import('@/components/hResourceValue')
   },
-  computed: {
-    unit () {
-      if (this.spec.type === 'time.Duration') {
-        return 's'
-      } else {
-        return null
-      }
+
+  props: {
+    edit: {
+      type: Boolean,
+      default: false
     },
-    val: {
-      get () {
-        if (this.spec.type === 'time.Duration') {
-          return this.value / 1000000000
-        } else {
-          return this.value
-        }
-      },
-      set (value) {
-        if (this.spec.type === 'time.Duration') {
-          this.$emit('input', value * 1000000000)
-        } else {
-          this.$emit('input', value)
-        }
-      }
+    index: {
+      type: Number,
+      required: true
+    },
+    spec: {
+      type: Object,
+      default: null
+    },
+    value: {
+      type: Array,
+      required: true
     }
   },
-  methods: {
-    isArray () {
-      return this.spec.type.substr(0, 2) === '[]'
+
+  computed: {
+    service_specs () {
+      var newSpec = Object.assign({}, this.spec)
+      newSpec.type = newSpec.type.substr(2)
+      return newSpec
     }
   }
 }

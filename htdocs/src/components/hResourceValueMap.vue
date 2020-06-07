@@ -32,15 +32,32 @@
   -->
 
 <template>
-  <div v-if="service_specs" class="mb-2">
-    <h-form-row
-      v-for="(spec, index) in service_specs.fields"
-      :key="index"
-      v-model="value[spec.id]"
-      :edit="edit"
-      :index="index"
-      :spec="spec"
-    />
+  <div ng-if="!isLoading()">
+    <div class="text-right">
+      <b-button v-if="!edit" type="button" size="sm" variant="outline-primary" class="mx-1" @click="toogleServiceEdit()">
+        <b-icon icon="pencil" />
+        Edit
+      </b-button>
+      <b-button v-else type="button" size="sm" variant="primary" class="mx-1" @click="submitService(index, idx)">
+        <b-icon icon="check" />
+        Save those modifications
+      </b-button>
+      <b-button type="button" size="sm" variant="outline-danger" class="mx-1">
+        <b-icon icon="trash" />
+        Delete
+      </b-button>
+    </div>
+    <div v-for="(val,key) in value" :key="key">
+      <h3>{{ key }}</h3>
+      <h-resource-value
+        v-model="value[key]"
+        :edit="edit"
+        :services="services"
+        :specs="service_specs"
+        :type="main_type"
+      />
+      <hr>
+    </div>
   </div>
 </template>
 
@@ -48,10 +65,10 @@
 import ServicesApi from '@/services/ServicesApi'
 
 export default {
-  name: 'HFormItemObject',
+  name: 'HResourceValueMap',
 
   components: {
-    hFormRow: () => import('@/components/hFormRow')
+    hResourceValue: () => import('@/components/hResourceValue')
   },
 
   props: {
@@ -59,13 +76,17 @@ export default {
       type: Boolean,
       default: false
     },
-    index: {
-      type: Number,
+    services: {
+      type: Object,
       required: true
     },
-    spec: {
+    specs: {
       type: Object,
       default: null
+    },
+    type: {
+      type: String,
+      required: true
     },
     value: {
       type: Object,
@@ -75,31 +96,56 @@ export default {
 
   data: function () {
     return {
+      key_type: '',
+      main_type: '',
       service_specs: null
     }
   },
 
+  computed: {
+    isLoading () {
+      return this.service_specs == null
+    },
+    fieldsNames () {
+      var ret = []
+      this.service_specs.fields.forEach(function (sspec) {
+        ret.push({
+          key: sspec.id,
+          sortable: true
+        })
+      })
+      return ret
+    }
+  },
+
   watch: {
-    spec: function () {
+    type: function () {
+      this.key_type = this.type.substr(this.type.indexOf('[') + 1, this.type.indexOf(']') - this.type.indexOf('['))
+      this.main_type = this.type.substr(this.type.indexOf(']') + 1)
       this.pullServiceSpecs()
     }
   },
 
   created () {
-    if (this.spec) {
+    if (this.type !== undefined) {
+      this.key_type = this.type.substr(this.type.indexOf('[') + 1, this.type.indexOf(']') - this.type.indexOf('['))
+      this.main_type = this.type.substr(this.type.indexOf(']') + 1)
       this.pullServiceSpecs()
     }
   },
 
   methods: {
     pullServiceSpecs () {
-      var type = this.spec.type[0] === '*' ? this.spec.type.substr(1) : this.spec.type
-      ServicesApi.getServiceSpecs(type)
+      ServicesApi.getServiceSpecs(this.main_type)
         .then(
           (response) => {
             this.service_specs = response.data
           }
         )
+    },
+
+    toogleServiceEdit () {
+      this.edit = !this.edit
     }
   }
 }
