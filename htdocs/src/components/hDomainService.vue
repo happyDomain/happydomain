@@ -32,37 +32,31 @@
   -->
 
 <template>
-  <b-list-group-item v-if="!isLoading">
-    <div class="text-right">
-      <b-button v-if="!editService" type="button" size="sm" variant="outline-primary" class="mx-1" @click="toogleServiceEdit()">
-        <b-icon icon="pencil" />
-        Edit
-      </b-button>
-      <b-button v-else type="button" size="sm" variant="primary" class="mx-1" @click="submitService(index, idx)">
-        <b-icon icon="check" />
-        Save those modifications
-      </b-button>
-      <b-button type="button" size="sm" variant="outline-danger" class="mx-1">
-        <b-icon icon="trash" />
-        Delete
-      </b-button>
-    </div>
-    <h-form-data
-      v-model="service.Service"
-      :edit="editService"
-      :fields="service_specs.fields"
-    />
-  </b-list-group-item>
+  <b-list-group v-if="!isLoading">
+    <b-list-group-item button @click="toogleShowDetails()">
+      <strong :title="services[service._svctype].description">{{ services[service._svctype].name }}</strong> <span v-if="service._comment" class="text-muted">{{ service._comment }}</span>
+      <span v-if="services[service._svctype].comment" class="text-muted">{{ services[service._svctype].comment }}</span>
+      <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">
+        {{ categorie }}
+      </b-badge>
+      <b-badge v-if="service._tmp_hint_nb && service._tmp_hint_nb > 1" variant="danger" class="float-right ml-1">
+        {{ service._tmp_hint_nb }}
+      </b-badge>
+    </b-list-group-item>
+    <b-list-group-item v-if="showDetails">
+      <h-resource-value v-model="service.Service" edit-toolbar :services="services" :type="service._svctype" />
+    </b-list-group-item>
+  </b-list-group>
 </template>
 
 <script>
 import ServicesApi from '@/services/ServicesApi'
 
 export default {
-  name: 'HResourceForm',
+  name: 'HDomainService',
 
   components: {
-    hFormData: () => import('@/components/hFormData')
+    hResourceValue: () => import('@/components/hResourceValue')
   },
 
   props: {
@@ -74,41 +68,27 @@ export default {
 
   data: function () {
     return {
-      editService: false,
-      service_specs: null
+      showDetails: false,
+      services: null
     }
   },
 
   computed: {
     isLoading () {
-      return this.service_specs == null
-    }
-  },
-
-  watch: {
-    service: function () {
-      this.pullServiceSpecs()
+      return this.services == null
     }
   },
 
   created () {
-    if (this.service !== undefined) {
-      this.pullServiceSpecs()
-    }
+    ServicesApi.getServices()
+      .then(
+        (response) => (this.services = response.data)
+      )
   },
 
   methods: {
-    pullServiceSpecs () {
-      ServicesApi.getServiceSpecs(this.service._svctype)
-        .then(
-          (response) => {
-            this.service_specs = response.data
-          }
-        )
-    },
-
-    toogleServiceEdit () {
-      this.editService = !this.editService
+    toogleShowDetails () {
+      this.showDetails = !this.showDetails
     }
   }
 }

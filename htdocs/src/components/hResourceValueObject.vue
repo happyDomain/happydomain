@@ -32,66 +32,107 @@
   -->
 
 <template>
-  <component :is="itemComponent" v-model="value" :edit="edit" :spec="spec" :index="index" />
+  <div v-if="service_specs && type" class="mb-2">
+    <div v-if="editToolbar" class="text-right mb-2">
+      <b-button v-if="!serviceEdit" type="button" size="sm" variant="outline-primary" class="mx-1" @click="toogleServiceEdit()">
+        <b-icon icon="pencil" />
+        Edit
+      </b-button>
+      <b-button v-else type="button" size="sm" variant="primary" class="mx-1" @click="submitService(index, idx)">
+        <b-icon icon="check" />
+        Save those modifications
+      </b-button>
+      <b-button type="button" size="sm" variant="outline-danger" class="mx-1">
+        <b-icon icon="trash" />
+        Delete
+      </b-button>
+    </div>
+    <h-resource-value
+      v-for="(spec, index) in service_specs.fields"
+      :key="index"
+      v-model="value[spec.id]"
+      :edit="editChildren"
+      :services="services"
+      :specs="spec"
+      :type="spec.type"
+      />
+  </div>
 </template>
 
 <script>
-import HFormItemArray from '@/components/hFormItemArray'
-import HFormItemMap from '@/components/hFormItemMap'
-import HFormItemObject from '@/components/hFormItemObject'
-import HFormItemValue from '@/components/hFormItemValue'
+import ServicesApi from '@/services/ServicesApi'
 
 export default {
-  name: 'HFormItem',
+  name: 'HResourceValueObject',
+
+  components: {
+    hResourceValue: () => import('@/components/hResourceValue')
+  },
 
   props: {
     edit: {
       type: Boolean,
       default: false
     },
-    index: {
-      type: Number,
+    editToolbar: {
+      type: Boolean,
+      default: false
+    },
+    services: {
+      type: Object,
       required: true
     },
-    spec: {
+    specs: {
       type: Object,
       default: null
     },
-    // eslint-disable-next-line
+    type: {
+      type: String,
+      required: true
+    },
     value: {
+      type: Object,
       required: true
     }
   },
 
   data () {
     return {
-      itemComponent: ''
+      serviceEdit: false,
+      service_specs: null
+    }
+  },
+
+  computed: {
+    editChildren () {
+      return this.edit || this.serviceEdit
     }
   },
 
   watch: {
-    'spec.type': function (type) {
-      this.findComponent()
+    type: function () {
+      this.pullServiceSpecs()
     }
   },
 
-  mounted () {
-    if (this.spec) {
-      this.findComponent()
+  created () {
+    if (this.type !== undefined) {
+      this.pullServiceSpecs()
     }
   },
 
   methods: {
-    findComponent () {
-      if (Array.isArray(this.value)) {
-        this.itemComponent = HFormItemArray
-      } else if (this.spec.type.substr(0, 3) === 'map') {
-        this.itemComponent = HFormItemMap
-      } else if (typeof this.value === 'object') {
-        this.itemComponent = HFormItemObject
-      } else {
-        this.itemComponent = HFormItemValue
-      }
+    pullServiceSpecs () {
+      ServicesApi.getServiceSpecs(this.type)
+        .then(
+          (response) => {
+            this.service_specs = response.data
+          }
+        )
+    },
+
+    toogleServiceEdit () {
+      this.serviceEdit = !this.serviceEdit
     }
   }
 }

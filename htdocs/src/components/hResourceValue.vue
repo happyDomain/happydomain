@@ -32,63 +32,85 @@
   -->
 
 <template>
-  <b-input-group size="sm" :append="unit">
-    <b-form-select
-      v-if="edit && spec.choices !== undefined"
-      :id="'spec-' + index"
-      v-model="val"
-      :required="spec.required !== undefined && spec.required"
-      :options="spec.choices"
-      />
-    <b-form-input
-      v-else
-      :id="'spec-' + index"
-      v-model.lazy="val"
-      class="font-weight-bold"
-      :required="spec.required !== undefined && spec.required"
-      :placeholder="spec.placeholder"
-      :plaintext="!edit"
-      />
-  </b-input-group>
+  <component :is="itemComponent" v-model="value" :edit="edit" :edit-toolbar="editToolbar" :index="index" :services="services" :specs="specs" :type="type" />
 </template>
 
 <script>
+import HResourceValueTable from '@/components/hResourceValueTable'
+import HResourceValueMap from '@/components/hResourceValueMap'
+import HResourceValueObject from '@/components/hResourceValueObject'
+import HResourceValueInput from '@/components/hResourceValueInput'
+import HResourceValueInputRaw from '@/components/hResourceValueInputRaw'
+
 export default {
-  name: 'HFormItemValue',
+  name: 'HResourceValue',
+
   props: {
-    edit: Boolean,
-    index: Number,
-    spec: Object,
-    value: {}
-  },
-  computed: {
-    unit () {
-      if (this.spec.type === 'time.Duration') {
-        return 's'
-      } else {
-        return null
-      }
+    edit: {
+      type: Boolean,
+      default: false
     },
-    val: {
-      get () {
-        if (this.spec.type === 'time.Duration') {
-          return this.value / 1000000000
-        } else {
-          return this.value
-        }
-      },
-      set (value) {
-        if (this.spec.type === 'time.Duration') {
-          this.$emit('input', value * 1000000000)
-        } else {
-          this.$emit('input', value)
-        }
-      }
+    editToolbar: {
+      type: Boolean,
+      default: false
+    },
+    index: {
+      type: Number,
+      default: NaN
+    },
+    noDecorate: {
+      type: Boolean,
+      default: false
+    },
+    services: {
+      type: Object,
+      required: true
+    },
+    specs: {
+      type: Object,
+      default: null
+    },
+    type: {
+      type: String,
+      required: true
+    },
+    // eslint-disable-next-line
+    value: {
+      required: true
     }
   },
+
+  data () {
+    return {
+      itemComponent: ''
+    }
+  },
+
+  watch: {
+    type: function () {
+      this.findComponent()
+    }
+  },
+
+  mounted () {
+    if (this.type) {
+      this.findComponent()
+    }
+  },
+
   methods: {
-    isArray () {
-      return this.spec.type.substr(0, 2) === '[]'
+    findComponent () {
+      if (Array.isArray(this.value)) {
+        this.itemComponent = HResourceValueTable
+      } else if (this.type.substr(0, 3) === 'map') {
+        this.itemComponent = HResourceValueMap
+      } else if (typeof this.value === 'object' || this.type.substr(0, 6) === '*svcs.') {
+        this.itemComponent = HResourceValueObject
+      } else if (this.noDecorate) {
+        this.itemComponent = HResourceValueInputRaw
+      } else {
+        this.itemComponent = HResourceValueInput
+      }
     }
   }
 }

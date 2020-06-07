@@ -32,18 +32,29 @@
   -->
 
 <template>
-  <div v-if="service_specs">
-    <h-form-item v-for="(val, idx) in value" :key="idx" v-model="value[idx]" :spec="service_specs" :edit="edit" :index="index" style="border-bottom: 1px solid gray" />
-  </div>
+  <b-input-group size="sm" :append="unit">
+    <b-form-select
+      v-if="edit && specs.choices !== undefined"
+      :id="'spec-' + index"
+      v-model="val"
+      :required="specs.required !== undefined && specs.required"
+      :options="specs.choices"
+    />
+    <b-form-input
+      v-else
+      :id="'spec-' + index"
+      v-model.lazy="val"
+      class="font-weight-bold"
+      :required="specs.required !== undefined && specs.required"
+      :placeholder="specs.placeholder"
+      :plaintext="!edit"
+    />
+  </b-input-group>
 </template>
 
 <script>
 export default {
-  name: 'HFormItemArray',
-
-  components: {
-    hFormItem: () => import('@/components/hFormItem')
-  },
+  name: 'HResourceValueInputRaw',
 
   props: {
     edit: {
@@ -54,21 +65,39 @@ export default {
       type: Number,
       required: true
     },
-    spec: {
+    specs: {
       type: Object,
       default: null
     },
+    // eslint-disable-next-line
     value: {
-      type: Array,
       required: true
     }
   },
 
   computed: {
-    service_specs () {
-      var newSpec = Object.assign({}, this.spec)
-      newSpec.type = newSpec.type.substr(2)
-      return newSpec
+    unit () {
+      if (this.specs.type === 'time.Duration') {
+        return 's'
+      } else {
+        return null
+      }
+    },
+    val: {
+      get () {
+        if (this.specs.type === 'time.Duration') {
+          return this.value / 1000000000
+        } else {
+          return this.value
+        }
+      },
+      set (value) {
+        if (this.specs.type === 'time.Duration') {
+          this.$emit('input', value * 1000000000)
+        } else {
+          this.$emit('input', value)
+        }
+      }
     }
   }
 }

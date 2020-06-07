@@ -69,7 +69,7 @@
         </b-button>
       </h2>
       <div v-show="showResources">
-        <h-resource-item v-for="(svc, idx) in services" :key="idx" :service="svc" />
+        <h-domain-service v-for="(svc, idx) in services" :key="idx" :service="svc" />
       </div>
     </div>
   </div>
@@ -80,7 +80,7 @@ export default {
   name: 'HSubdomainItem',
 
   components: {
-    hResourceItem: () => import('@/components/hResourceItem')
+    hDomainService: () => import('@/components/hDomainService')
   },
 
   props: {
