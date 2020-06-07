@@ -381,6 +381,7 @@ func init() {
 			Categories: []string{
 				"email",
 			},
+			Tabs: true,
 		},
 		1,
 	)
