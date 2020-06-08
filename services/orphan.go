@@ -33,7 +33,6 @@ package svcs
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/miekg/dns"
 
@@ -41,7 +40,7 @@ import (
 )
 
 type Orphan struct {
-	RR dns.RR
+	RR string
 }
 
 func (s *Orphan) GetNbResources() int {
@@ -49,11 +48,14 @@ func (s *Orphan) GetNbResources() int {
 }
 
 func (s *Orphan) GenComment(origin string) string {
-	return fmt.Sprintf("%s", s.RR.String()[strings.LastIndex(s.RR.Header().String(), "\tIN\t")+4:])
+	return s.RR
 }
 
 func (s *Orphan) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
-	rrs = append(rrs, s.RR)
+	rr, _ := dns.NewRR(fmt.Sprintf("%s %d IN %s", domain, ttl, s.RR))
+	if rr != nil {
+		rrs = append(rrs, rr)
+	}
 
 	return
 }
