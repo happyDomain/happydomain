@@ -44,8 +44,8 @@ import (
 )
 
 type TLSA struct {
-	Port         uint16 `json:"port"`
-	Proto        string `json:"proto"`
+	Proto        string `json:"proto" happydns:"label=Protocol,description=Protocol used to establish the connection.,choices=tcp;udp"`
+	Port         uint16 `json:"port" happydns:"label=Service Port,description=Port number where people will establish the connection."`
 	CertUsage    uint8  `json:"certusage"`
 	Selector     uint8  `json:"selector"`
 	MatchingType uint8  `json:"matchingtype"`

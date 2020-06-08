@@ -103,11 +103,20 @@ export default {
       var ret = []
       if (this.service_specs && this.service_specs.fields) {
         this.service_specs.fields.forEach(function (sspec, idx) {
-          ret.push({
-            key: sspec.id,
-            sortable: true,
-            index: idx
-          })
+          if (sspec.label) {
+            ret.push({
+              key: sspec.id,
+              sortable: true,
+              index: idx,
+              label: sspec.label
+            })
+          } else {
+            ret.push({
+              key: sspec.id,
+              sortable: true,
+              index: idx
+            })
+          }
         })
       } else if (this.specs.label) {
         ret.push({ key: 'value', label: this.specs.label })

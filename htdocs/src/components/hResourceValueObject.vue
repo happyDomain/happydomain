@@ -36,7 +36,7 @@
     <b-tabs v-if="services[type] && services[type].tabs" content-class="mt-3" fill>
       <b-tab v-for="(spec, index) in service_specs.fields" :key="index" :active="index === 0">
         <template v-slot:title>
-          {{ spec.id }}
+          {{ spec | hLabel }}
           <b-badge v-if="spec.type.substr(0,2) === '[]'" variant="light" pill>
             {{ value[spec.id].length }}
           </b-badge>
