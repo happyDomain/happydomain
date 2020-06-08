@@ -51,10 +51,10 @@ var AuthFunc = checkAuth
 
 func init() {
 	router.GET("/api/auth", apiAuthHandler(displayAuthToken))
-	router.POST("/api/auth", apiHandler(func(opts *config.Options, ps httprouter.Params, b io.Reader) Response {
+	router.POST("/api/auth", ApiHandler(func(opts *config.Options, ps httprouter.Params, b io.Reader) Response {
 		return AuthFunc(opts, ps, b)
 	}))
-	router.POST("/api/auth/logout", apiHandler(logout))
+	router.POST("/api/auth/logout", ApiHandler(logout))
 }
 
 type DisplayUser struct {

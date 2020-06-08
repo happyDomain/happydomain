@@ -46,8 +46,8 @@ import (
 )
 
 func init() {
-	router.GET("/api/source_specs", apiHandler(getSourceSpecs))
-	router.GET("/api/source_specs/*ssid", apiHandler(getSourceSpec))
+	router.GET("/api/source_specs", ApiHandler(getSourceSpecs))
+	router.GET("/api/source_specs/*ssid", ApiHandler(getSourceSpec))
 }
 
 type source_field struct {

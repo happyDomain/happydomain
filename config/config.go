@@ -43,6 +43,7 @@ import (
 
 type Options struct {
 	Bind              string
+	AdminBind         string
 	ExternalURL       string
 	BaseURL           string
 	DevProxy          string
@@ -54,6 +55,7 @@ func ConsolidateConfig() (opts *Options, err error) {
 	// Define defaults options
 	opts = &Options{
 		Bind:              ":8081",
+		AdminBind:         "./happydns.sock",
 		ExternalURL:       "http://localhost:8081",
 		BaseURL:           "/",
 		DSN:               database.DSNGenerator(),

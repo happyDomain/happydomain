@@ -43,8 +43,8 @@ import (
 )
 
 func init() {
-	router.GET("/api/services", apiHandler(listServices))
-	//router.POST("/api/services", apiHandler(newService))
+	router.GET("/api/services", ApiHandler(listServices))
+	//router.POST("/api/services", ApiHandler(newService))
 
 	router.POST("/api/domains/:domain/analyze", apiAuthHandler(domainHandler(analyzeDomain)))
 }

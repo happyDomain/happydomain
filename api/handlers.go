@@ -92,6 +92,19 @@ func (r APIResponse) WriteResponse(w http.ResponseWriter) {
 	}
 }
 
+func NewAPIResponse(response interface{}, err error) Response {
+	if err != nil {
+		return APIErrorResponse{
+			status: http.StatusBadRequest,
+			err:    err,
+		}
+	} else {
+		return APIResponse{
+			response: response,
+		}
+	}
+}
+
 type APIErrorResponse struct {
 	status int
 	err    error
@@ -111,7 +124,14 @@ func (r APIErrorResponse) WriteResponse(w http.ResponseWriter) {
 	}
 }
 
-func apiHandler(f func(*config.Options, httprouter.Params, io.Reader) Response) func(http.ResponseWriter, *http.Request, httprouter.Params) {
+func NewAPIErrorResponse(status int, err error) APIErrorResponse {
+	return APIErrorResponse{
+		status: status,
+		err:    err,
+	}
+}
+
+func ApiHandler(f func(*config.Options, httprouter.Params, io.Reader) Response) func(http.ResponseWriter, *http.Request, httprouter.Params) {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if addr := r.Header.Get("X-Forwarded-For"); addr != "" {
 			r.RemoteAddr = addr
