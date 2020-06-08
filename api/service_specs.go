@@ -46,8 +46,8 @@ import (
 )
 
 func init() {
-	router.GET("/api/service_specs", apiHandler(getServiceSpecs))
-	router.GET("/api/service_specs/*ssid", apiHandler(getServiceSpec))
+	router.GET("/api/service_specs", ApiHandler(getServiceSpecs))
+	router.GET("/api/service_specs/*ssid", ApiHandler(getServiceSpec))
 }
 
 type service_field struct {

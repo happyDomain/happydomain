@@ -91,7 +91,7 @@ func getSource(_ *config.Options, s *happydns.SourceCombined, u *happydns.User, 
 	}
 }
 
-func decodeSource(body io.Reader) (*happydns.SourceCombined, error) {
+func DecodeSource(body io.Reader) (*happydns.SourceCombined, error) {
 	cnt, err := ioutil.ReadAll(body)
 	if err != nil {
 		return nil, err
@@ -127,7 +127,7 @@ func decodeSource(body io.Reader) (*happydns.SourceCombined, error) {
 }
 
 func addSource(_ *config.Options, u *happydns.User, p httprouter.Params, body io.Reader) Response {
-	src, err := decodeSource(body)
+	src, err := DecodeSource(body)
 	if err != nil {
 		return APIErrorResponse{
 			err: err,
@@ -146,7 +146,7 @@ func addSource(_ *config.Options, u *happydns.User, p httprouter.Params, body io
 }
 
 func updateSource(_ *config.Options, s *happydns.SourceCombined, u *happydns.User, body io.Reader) Response {
-	src, err := decodeSource(body)
+	src, err := DecodeSource(body)
 	if err != nil {
 		return APIErrorResponse{
 			err: err,

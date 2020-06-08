@@ -51,11 +51,11 @@ import (
 )
 
 func init() {
-	router.POST("/api/users", apiHandler(registerUser))
-	router.PATCH("/api/users", apiHandler(specialUserOperations))
+	router.POST("/api/users", ApiHandler(registerUser))
+	router.PATCH("/api/users", ApiHandler(specialUserOperations))
 	router.GET("/api/users/:uid", apiAuthHandler(sameUserHandler(getUser)))
-	router.POST("/api/users/:uid/email", apiHandler(userHandler(validateUserAddress)))
-	router.POST("/api/users/:uid/recovery", apiHandler(userHandler(recoverUserAccount)))
+	router.POST("/api/users/:uid/email", ApiHandler(userHandler(validateUserAddress)))
+	router.POST("/api/users/:uid/recovery", ApiHandler(userHandler(recoverUserAccount)))
 }
 
 type UploadedUser struct {

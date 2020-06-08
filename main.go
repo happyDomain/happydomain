@@ -33,13 +33,19 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math/rand"
+	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
+	"git.happydns.org/happydns/admin"
 	"git.happydns.org/happydns/api"
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/storage"
@@ -116,9 +122,51 @@ func main() {
 		log.Fatal("Cannot migrate database: ", err)
 	}
 
-	// Serve content
-	log.Println("Ready, listening on", opts.Bind)
-	if err = http.ListenAndServe(opts.Bind, StripPrefix(opts, api.Router())); err != nil {
-		log.Fatal("Unable to listen and serve: ", err)
+	// Prepare graceful shutdown
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+
+	if opts.AdminBind != "" {
+		adminSrv := &http.Server{
+			Addr:    opts.AdminBind,
+			Handler: StripPrefix(opts, admin.Router()),
+		}
+
+		go func() {
+			if !strings.Contains(opts.AdminBind, ":") {
+				if _, err := os.Stat(opts.AdminBind); !os.IsNotExist(err) {
+					if err := os.Remove(opts.AdminBind); err != nil {
+						log.Fatal(err)
+					}
+				}
+
+				unixListener, err := net.Listen("unix", opts.AdminBind)
+				if err != nil {
+					log.Fatal(err)
+				}
+				log.Fatal(adminSrv.Serve(unixListener))
+			} else {
+				log.Fatal(adminSrv.ListenAndServe())
+			}
+		}()
+		log.Println(fmt.Sprintf("Admin listening on %s", opts.AdminBind))
 	}
+
+	srv := &http.Server{
+		Addr:    opts.Bind,
+		Handler: StripPrefix(opts, api.Router()),
+	}
+
+	// Serve content
+	go func() {
+		log.Fatal(srv.ListenAndServe())
+	}()
+	log.Println(fmt.Sprintf("Ready, listening on %s", opts.Bind))
+
+	// Wait shutdown signal
+	<-interrupt
+
+	log.Print("The service is shutting down...")
+	srv.Shutdown(context.Background())
+	log.Println("done")
 }

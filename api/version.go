@@ -40,7 +40,7 @@ import (
 )
 
 func init() {
-	router.GET("/api/version", apiHandler(showVersion))
+	router.GET("/api/version", ApiHandler(showVersion))
 }
 
 func showVersion(_ *config.Options, _ httprouter.Params, _ io.Reader) Response {
