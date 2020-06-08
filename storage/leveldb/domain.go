@@ -132,6 +132,11 @@ func (s *LevelDBStorage) DeleteDomain(z *happydns.Domain) error {
 }
 
 func (s *LevelDBStorage) ClearDomains() error {
+	err := s.ClearZones()
+	if err != nil {
+		return err
+	}
+
 	tx, err := s.db.OpenTransaction()
 	if err != nil {
 		return err

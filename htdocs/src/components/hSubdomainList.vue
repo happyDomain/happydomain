@@ -51,6 +51,10 @@ export default {
     domain: {
       type: Object,
       required: true
+    },
+    zoneMeta: {
+      type: Object,
+      required: true
     }
   },
 
@@ -67,7 +71,7 @@ export default {
     },
 
     sortedDomains () {
-      if (this.myServices === null) {
+      if (this.myServices == null) {
         return []
       }
 
@@ -93,13 +97,16 @@ export default {
 
   watch: {
     domain: function () {
-      this.pullDomain()
+      this.pullZone()
+    },
+    zoneMeta: function () {
+      this.pullZone()
     }
   },
 
   created () {
-    if (this.domain !== undefined) {
-      this.pullDomain()
+    if (this.domain !== undefined && this.domain.domain !== undefined && this.zoneMeta !== undefined) {
+      this.pullZone()
     }
   },
 
@@ -113,12 +120,9 @@ export default {
       }
     },
 
-    pullDomain () {
-      if (this.domain === undefined || this.domain.domain === undefined) {
-        return
-      }
+    pullZone () {
       axios
-        .post('/api/domains/' + encodeURIComponent(this.domain.domain) + '/analyze')
+        .get('/api/domains/' + encodeURIComponent(this.domain.domain) + '/zone/' + encodeURIComponent(this.zoneMeta.id))
         .then(
           (response) => {
             this.myServices = response.data

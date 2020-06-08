@@ -32,35 +32,21 @@
 package happydns
 
 import (
-	"strings"
+	"time"
 )
 
-type Domain struct {
-	Id          int64      `json:"id"`
-	IdUser      int64      `json:"id_owner"`
-	IdSource    int64      `json:"id_source"`
-	DomainName  string     `json:"domain"`
-	ZoneHistory []ZoneMeta `json:"zone_history"`
+type ZoneMeta struct {
+	Id int64 `json:"id"`
 }
 
-type Domains []*Domain
-
-func (d *Domain) NormalizedNSServer() string {
-	if strings.Index(d.DomainName, ":") > -1 {
-		return d.DomainName
-	} else {
-		return d.DomainName + ":53"
-	}
-}
-
-func NewDomain(u *User, st *SourceType, dn string) (d *Domain) {
-	d = &Domain{
-		IdUser:     u.Id,
-		IdSource:   st.Id,
-		DomainName: dn,
-	}
-
-	d.DomainName = d.NormalizedNSServer()
-
-	return
+type Zone struct {
+	Id           int64                         `json:"id"`
+	IdAuthor     int64                         `json:"id_author"`
+	DefaultTTL   uint32                        `json:"default_ttl"`
+	LastModified *time.Time                    `json:"last_modified,omitempty"`
+	CommitMsg    *string                       `json:"commit_message,omitempty"`
+	CommitDate   *time.Time                    `json:"commit_date,omitempty"`
+	Published    *time.Time                    `json:"published,omitempty"`
+	Aliases      map[string][]string           `json:"aliases"`
+	Services     map[string][]*ServiceCombined `json:"services"`
 }

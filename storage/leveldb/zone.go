@@ -29,38 +29,62 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package happydns
+package database
 
 import (
-	"strings"
+	"fmt"
+
+	"git.happydns.org/happydns/model"
+
+	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
-type Domain struct {
-	Id          int64      `json:"id"`
-	IdUser      int64      `json:"id_owner"`
-	IdSource    int64      `json:"id_source"`
-	DomainName  string     `json:"domain"`
-	ZoneHistory []ZoneMeta `json:"zone_history"`
-}
-
-type Domains []*Domain
-
-func (d *Domain) NormalizedNSServer() string {
-	if strings.Index(d.DomainName, ":") > -1 {
-		return d.DomainName
-	} else {
-		return d.DomainName + ":53"
-	}
-}
-
-func NewDomain(u *User, st *SourceType, dn string) (d *Domain) {
-	d = &Domain{
-		IdUser:     u.Id,
-		IdSource:   st.Id,
-		DomainName: dn,
-	}
-
-	d.DomainName = d.NormalizedNSServer()
-
+func (s *LevelDBStorage) GetZone(id int64) (z *happydns.Zone, err error) {
+	z = &happydns.Zone{}
+	err = s.get(fmt.Sprintf("domain.zone-%d", id), &z)
 	return
+}
+
+func (s *LevelDBStorage) CreateZone(z *happydns.Zone) error {
+	key, id, err := s.findInt63Key("domain.zone-")
+	if err != nil {
+		return err
+	}
+
+	z.Id = id
+	return s.put(key, z)
+}
+
+func (s *LevelDBStorage) UpdateZone(z *happydns.Zone) error {
+	return s.put(fmt.Sprintf("domain.zone-%d", z.Id), z)
+}
+
+func (s *LevelDBStorage) DeleteZone(z *happydns.Zone) error {
+	return s.delete(fmt.Sprintf("domain.zone-%d", z.Id))
+}
+
+func (s *LevelDBStorage) ClearZones() error {
+	tx, err := s.db.OpenTransaction()
+	if err != nil {
+		return err
+	}
+
+	iter := tx.NewIterator(util.BytesPrefix([]byte("domain.zone-")), nil)
+	defer iter.Release()
+
+	for iter.Next() {
+		err = tx.Delete(iter.Key(), nil)
+		if err != nil {
+			tx.Discard()
+			return err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		tx.Discard()
+		return err
+	}
+
+	return nil
 }
