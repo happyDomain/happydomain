@@ -42,10 +42,11 @@ import (
 )
 
 type Analyzer struct {
-	origin   string
-	zone     []dns.RR
-	services map[string][]*happydns.ServiceCombined
-	aliases  map[string][]string
+	origin     string
+	zone       []dns.RR
+	services   map[string][]*happydns.ServiceCombined
+	aliases    map[string][]string
+	defaultTTL uint32
 }
 
 type AnalyzerRecordFilter struct {
@@ -103,10 +104,15 @@ func (a *Analyzer) useRR(rr dns.RR, domain string, svc happydns.Service) error {
 		}
 	}
 
+	var ttl uint32 = 0
+	if rr.Header().Ttl != a.defaultTTL {
+		ttl = rr.Header().Ttl
+	}
+
 	a.services[domain] = append(a.services[domain], &happydns.ServiceCombined{svc, happydns.ServiceType{
 		Type:        reflect.Indirect(reflect.ValueOf(svc)).Type().String(),
 		Domain:      domain,
-		Ttl:         rr.Header().Ttl,
+		Ttl:         ttl,
 		Comment:     svc.GenComment(a.origin),
 		NbResources: svc.GetNbResources(),
 	}})
@@ -114,12 +120,31 @@ func (a *Analyzer) useRR(rr dns.RR, domain string, svc happydns.Service) error {
 	return nil
 }
 
-func AnalyzeZone(origin string, zone []dns.RR) (svcs map[string][]*happydns.ServiceCombined, aliases map[string][]string, err error) {
+func getMostUsedTTL(zone []dns.RR) uint32 {
+	ttls := map[uint32]int{}
+	for _, rr := range zone {
+		ttls[rr.Header().Ttl] += 1
+	}
+
+	var max uint32 = 0
+	for k, v := range ttls {
+		if w, ok := ttls[max]; !ok || v > w {
+			max = k
+		}
+	}
+
+	return max
+}
+
+func AnalyzeZone(origin string, zone []dns.RR) (svcs map[string][]*happydns.ServiceCombined, aliases map[string][]string, defaultTTL uint32, err error) {
+	defaultTTL = getMostUsedTTL(zone)
+
 	a := Analyzer{
-		origin:   origin,
-		zone:     zone,
-		services: map[string][]*happydns.ServiceCombined{},
-		aliases:  map[string][]string{},
+		origin:     origin,
+		zone:       zone,
+		services:   map[string][]*happydns.ServiceCombined{},
+		aliases:    map[string][]string{},
+		defaultTTL: defaultTTL,
 	}
 
 	// Find services between all registered ones
