@@ -31,11 +31,45 @@
 
 package svcs
 
-import ()
+import (
+	"encoding/json"
+
+	"git.happydns.org/happydns/model"
+)
 
 type ServiceInfos struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	Categories  []string `json:"categories"`
 	Tabs        bool     `json:"tabs,omitempty"`
+}
+
+type serviceCombined struct {
+	Service happydns.Service
+}
+
+func UnmarshalServiceJSON(svc *happydns.ServiceCombined, b []byte) (err error) {
+	var svcType happydns.ServiceType
+	err = json.Unmarshal(b, &svcType)
+	if err != nil {
+		return
+	}
+
+	var tsvc happydns.Service
+	tsvc, err = FindService(svcType.Type)
+
+	mySvc := &serviceCombined{
+		tsvc,
+	}
+
+	err = json.Unmarshal(b, mySvc)
+
+	svc.Service = tsvc
+	svc.ServiceType = svcType
+
+	return
+}
+
+func init() {
+	happydns.UnmarshalServiceJSON = UnmarshalServiceJSON
 }

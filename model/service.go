@@ -59,3 +59,9 @@ type ServiceCombined struct {
 	Service
 	ServiceType
 }
+
+var UnmarshalServiceJSON func(*ServiceCombined, []byte) error
+
+func (svc *ServiceCombined) UnmarshalJSON(b []byte) error {
+	return UnmarshalServiceJSON(svc, b)
+}

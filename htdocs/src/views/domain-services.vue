@@ -32,10 +32,12 @@
   -->
 
 <template>
-  <h-subdomain-list :domain="domain" />
+  <h-subdomain-list v-if="selectedHistory" :domain="domain" :zone-meta="selectedHistory" />
 </template>
 
 <script>
+import axios from 'axios'
+
 export default {
   components: {
     hSubdomainList: () => import('@/components/hSubdomainList')
@@ -45,6 +47,41 @@ export default {
     domain: {
       type: Object,
       required: true
+    }
+  },
+
+  data: function () {
+    return {
+      selectedHistory: null
+    }
+  },
+
+  watch: {
+    domain: function () {
+      this.pullDomain()
+    }
+  },
+
+  created () {
+    if (this.domain !== undefined && this.domain.domain !== undefined) {
+      this.pullDomain()
+    }
+  },
+
+  methods: {
+    pullDomain () {
+      if (this.domain.zone_history === null || this.domain.zone_history.length === 0) {
+        axios
+          .post('/api/domains/' + encodeURIComponent(this.domain.domain) + '/import_zone')
+          .then(
+            (response) => {
+              this.$parent.$emit('updateDomainInfo')
+              // this.selectedHistory = response.data
+            }
+          )
+      } else {
+        this.selectedHistory = this.domain.zone_history[0]
+      }
     }
   }
 }
