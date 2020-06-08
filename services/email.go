@@ -105,12 +105,12 @@ func (t *TLS_RPT) String() string {
 }
 
 type EMail struct {
-	MX      []MX             `json:"mx,omitempty"`
-	SPF     *SPF             `json:"spf,omitempty"`
-	DKIM    map[string]*DKIM `json:"dkim,omitempty"`
-	DMARC   *DMARC           `json:"dmarc,omitempty"`
-	MTA_STS *MTA_STS         `json:"mta_sts,omitempty"`
-	TLS_RPT *TLS_RPT         `json:"tls_rpt,omitempty"`
+	MX      []MX             `json:"mx,omitempty" happydns:"label=EMail Servers"`
+	SPF     *SPF             `json:"spf,omitempty" happydns:"label=Sender Policy Framework"`
+	DKIM    map[string]*DKIM `json:"dkim,omitempty" happydns:"label=Domain Keys"`
+	DMARC   *DMARC           `json:"dmarc,omitempty" happydns:"label=DMARC"`
+	MTA_STS *MTA_STS         `json:"mta_sts,omitempty" happydns:"label=Strict Transport Security"`
+	TLS_RPT *TLS_RPT         `json:"tls_rpt,omitempty" happydns:"label=TLS Reporting"`
 }
 
 func (s *EMail) GetNbResources() int {

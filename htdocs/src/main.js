@@ -137,6 +137,13 @@ Vue.prototype.escapeHTML = function (str) {
   })
 }
 
+Vue.filter('hLabel', function (input) {
+  if (input.label) {
+    return input.label
+  } else {
+    return input.id
+  }
+})
 Vue.filter('nsclass', function (input) {
   switch (input) {
     case 1:
