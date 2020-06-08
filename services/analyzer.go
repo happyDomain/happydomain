@@ -32,7 +32,9 @@
 package svcs
 
 import (
+	"crypto/sha1"
 	"errors"
+	"io"
 	"reflect"
 	"strings"
 
@@ -104,12 +106,16 @@ func (a *Analyzer) useRR(rr dns.RR, domain string, svc happydns.Service) error {
 		}
 	}
 
+	hash := sha1.New()
+	io.WriteString(hash, rr.String())
+
 	var ttl uint32 = 0
 	if rr.Header().Ttl != a.defaultTTL {
 		ttl = rr.Header().Ttl
 	}
 
 	a.services[domain] = append(a.services[domain], &happydns.ServiceCombined{svc, happydns.ServiceType{
+		Id:          hash.Sum(nil),
 		Type:        reflect.Indirect(reflect.ValueOf(svc)).Type().String(),
 		Domain:      domain,
 		Ttl:         ttl,
@@ -170,8 +176,14 @@ func AnalyzeZone(origin string, zone []dns.RR) (svcs map[string][]*happydns.Serv
 			continue
 		}
 
+		domain := strings.TrimSuffix(strings.TrimSuffix(record.Header().Name, "."+a.origin), a.origin)
+
+		hash := sha1.New()
+		io.WriteString(hash, record.String())
+
 		orphan := &Orphan{record.String()[strings.LastIndex(record.Header().String(), "\tIN\t")+4:]}
 		svcs[record.Header().Name] = append(svcs[record.Header().Name], &happydns.ServiceCombined{orphan, happydns.ServiceType{
+			Id:          hash.Sum(nil),
 			Type:        reflect.Indirect(reflect.ValueOf(orphan)).Type().String(),
 			Domain:      origin,
 			Ttl:         record.Header().Ttl,

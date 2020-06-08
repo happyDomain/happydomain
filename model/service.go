@@ -45,7 +45,7 @@ type Service interface {
 
 type ServiceType struct {
 	Type        string   `json:"_svctype"`
-	Id          int64    `json:"_id,omitempty"`
+	Id          []byte   `json:"_id,omitempty"`
 	OwnerId     int64    `json:"_ownerid,omitempty"`
 	Domain      string   `json:"_domain"`
 	Ttl         uint32   `json:"_ttl"`
