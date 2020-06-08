@@ -76,7 +76,7 @@ func analyzeDomain(opts *config.Options, domain *happydns.Domain, body io.Reader
 		}
 	}
 
-	services, aliases, err := svcs.AnalyzeZone(domain.DomainName, zone)
+	services, aliases, defaultTTL, err := svcs.AnalyzeZone(domain.DomainName, zone)
 	if err != nil {
 		return APIErrorResponse{
 			err: err,
@@ -85,8 +85,9 @@ func analyzeDomain(opts *config.Options, domain *happydns.Domain, body io.Reader
 
 	return APIResponse{
 		response: map[string]interface{}{
-			"aliases":  aliases,
-			"services": services,
+			"aliases":    aliases,
+			"services":   services,
+			"defaultTTL": defaultTTL,
 		},
 	}
 }
