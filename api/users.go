@@ -40,6 +40,7 @@ import (
 	"net/mail"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/julienschmidt/httprouter"
@@ -90,7 +91,7 @@ func genUsername(user *happydns.User) (toName string) {
 	return
 }
 
-func sendValidationLink(opts *config.Options, user *happydns.User) error {
+func SendValidationLink(opts *config.Options, user *happydns.User) error {
 	toName := genUsername(user)
 	return utils.SendMail(
 		&mail.Address{Name: toName, Address: user.Email},
@@ -109,7 +110,7 @@ In order to validate your account, please follow this link now:
 	)
 }
 
-func sendRecoveryLink(opts *config.Options, user *happydns.User) error {
+func SendRecoveryLink(opts *config.Options, user *happydns.User) error {
 	toName := genUsername(user)
 	return utils.SendMail(
 		&mail.Address{Name: toName, Address: user.Email},
@@ -159,7 +160,7 @@ func registerUser(opts *config.Options, p httprouter.Params, body io.Reader) Res
 		return APIErrorResponse{
 			err: err,
 		}
-	} else if sendValidationLink(opts, user); err != nil {
+	} else if SendValidationLink(opts, user); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
@@ -189,14 +190,14 @@ func specialUserOperations(opts *config.Options, p httprouter.Params, body io.Re
 	} else {
 		if uu.Kind == "recovery" {
 			if user.EmailValidated == nil {
-				if err = sendValidationLink(opts, user); err != nil {
+				if err = SendValidationLink(opts, user); err != nil {
 					return APIErrorResponse{
 						err: err,
 					}
 
 				}
 			} else {
-				if err = sendRecoveryLink(opts, user); err != nil {
+				if err = SendRecoveryLink(opts, user); err != nil {
 					return APIErrorResponse{
 						err: err,
 					}
@@ -210,7 +211,7 @@ func specialUserOperations(opts *config.Options, p httprouter.Params, body io.Re
 		} else if uu.Kind == "validation" {
 			if user.EmailValidated != nil {
 				return res
-			} else if err = sendValidationLink(opts, user); err != nil {
+			} else if err = SendValidationLink(opts, user); err != nil {
 				return APIErrorResponse{
 					err: err,
 				}
@@ -309,6 +310,11 @@ func recoverUserAccount(opts *config.Options, user *happydns.User, body io.Reade
 		return APIErrorResponse{
 			err: fmt.Errorf("Something is wrong in received data: %w", err),
 		}
+	}
+
+	if user.RegistrationTime == nil {
+		now := time.Now()
+		user.RegistrationTime = &now
 	}
 
 	if err := user.CanRecoverAccount(uar.Key); err != nil {
