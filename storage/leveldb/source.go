@@ -90,9 +90,6 @@ func (s *LevelDBStorage) GetSource(u *happydns.User, id int64) (src *happydns.So
 	}
 
 	err = decodeData(v, src)
-	if err != nil {
-		return
-	}
 
 	return
 }
