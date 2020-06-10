@@ -32,6 +32,7 @@
 package admin
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -58,6 +59,10 @@ func init() {
 	router.GET("/api/zones/:zoneid", api.ApiHandler(zoneHandler(getZone)))
 	router.PUT("/api/zones/:zoneid", api.ApiHandler(zoneHandler(updateZone)))
 	router.DELETE("/api/zones/:zoneid", api.ApiHandler(deleteZone))
+
+	router.GET("/api/users/:userid/domains/:domain/zones/:zoneid/:serviceid", api.ApiHandler(zoneHandler(getZoneService)))
+	router.PUT("/api/users/:userid/domains/:domain/zones/:zoneid/:serviceid", api.ApiHandler(zoneHandler(updateZoneService)))
+	router.PATCH("/api/users/:userid/domains/:domain/zones/:zoneid", api.ApiHandler(zoneHandler(patchZoneService)))
 }
 
 func getUserDomainZones(_ *config.Options, domain *happydns.Domain, _ httprouter.Params, _ io.Reader) api.Response {
@@ -113,6 +118,50 @@ func updateZone(_ *config.Options, zone *happydns.Zone, _ httprouter.Params, bod
 	uz.Id = zone.Id
 
 	return api.NewAPIResponse(uz, storage.MainStore.UpdateZone(uz))
+}
+
+func getZoneService(_ *config.Options, zone *happydns.Zone, ps httprouter.Params, body io.Reader) api.Response {
+	serviceid, err := base64.StdEncoding.DecodeString(ps.ByName("serviceid"))
+	if err != nil {
+		return api.NewAPIErrorResponse(http.StatusBadRequest, err)
+	}
+
+	return api.NewAPIResponse(zone.FindService(serviceid), nil)
+}
+
+func updateZoneService(_ *config.Options, zone *happydns.Zone, ps httprouter.Params, body io.Reader) api.Response {
+	serviceid, err := base64.StdEncoding.DecodeString(ps.ByName("serviceid"))
+	if err != nil {
+		return api.NewAPIErrorResponse(http.StatusBadRequest, err)
+	}
+
+	usc := &happydns.ServiceCombined{}
+	err = json.NewDecoder(body).Decode(&usc)
+	if err != nil {
+		return api.NewAPIErrorResponse(http.StatusBadRequest, fmt.Errorf("Something is wrong in received data: %w", err))
+	}
+
+	err = zone.EraseService(usc.Domain, serviceid, usc)
+	if err != nil {
+		return api.NewAPIErrorResponse(http.StatusBadRequest, err)
+	}
+
+	return api.NewAPIResponse(zone.Services, storage.MainStore.UpdateZone(zone))
+}
+
+func patchZoneService(_ *config.Options, zone *happydns.Zone, _ httprouter.Params, body io.Reader) api.Response {
+	usc := &happydns.ServiceCombined{}
+	err := json.NewDecoder(body).Decode(&usc)
+	if err != nil {
+		return api.NewAPIErrorResponse(http.StatusBadRequest, fmt.Errorf("Something is wrong in received data: %w", err))
+	}
+
+	err = zone.EraseService(usc.Domain, usc.Id, usc)
+	if err != nil {
+		return api.NewAPIErrorResponse(http.StatusBadRequest, err)
+	}
+
+	return api.NewAPIResponse(zone.Services, storage.MainStore.UpdateZone(zone))
 }
 
 func deleteZone(opts *config.Options, ps httprouter.Params, body io.Reader) api.Response {

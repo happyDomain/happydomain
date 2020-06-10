@@ -34,5 +34,9 @@ import Api from '@/services/Api'
 export default {
   getZone (domain, id) {
     return Api().get('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id))
+  },
+
+  updateZoneService (domain, id, service) {
+    return Api().patch('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id), service)
   }
 }

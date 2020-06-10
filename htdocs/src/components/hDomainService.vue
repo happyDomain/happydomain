@@ -44,13 +44,14 @@
       </b-badge>
     </b-list-group-item>
     <b-list-group-item v-if="showDetails">
-      <h-resource-value v-model="service.Service" edit-toolbar :services="services" :type="service._svctype" />
+      <h-resource-value v-model="service.Service" edit-toolbar :services="services" :type="service._svctype" @saveService="saveService(service, $event)" />
     </b-list-group-item>
   </b-list-group>
 </template>
 
 <script>
 import ServiceSpecsApi from '@/services/ServiceSpecsApi'
+import ZoneApi from '@/services/ZoneApi'
 
 export default {
   name: 'HDomainService',
@@ -95,6 +96,31 @@ export default {
   },
 
   methods: {
+    saveService (service, cbSuccess, cbFail) {
+      ZoneApi.updateZoneService(this.origin, this.zoneMeta.id, service)
+        .then(
+          (response) => {
+            this.$emit('updateMyServices', response.data)
+            if (cbSuccess != null) {
+              cbSuccess()
+            }
+          },
+          (error) => {
+            this.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: 'An error occurs when updating the service!',
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+            if (cbFail != null) {
+              cbFail(error)
+            }
+          }
+        )
+    },
+
     toogleShowDetails () {
       this.showDetails = !this.showDetails
     }

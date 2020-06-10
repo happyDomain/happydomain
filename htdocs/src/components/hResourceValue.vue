@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <component :is="itemComponent" :value="value" @input="$emit('input', $event)" :edit="edit" :edit-toolbar="editToolbar" :index="index" :services="services" :specs="specs" :type="type" @saveService="$emit('saveService')" />
+  <component :is="itemComponent" :value="value" @input="$emit('input', $event)" :edit="edit" :edit-toolbar="editToolbar" :index="index" :services="services" :specs="specs" :type="type" @saveService="$emit('saveService', $event)" />
 </template>
 
 <script>

@@ -94,6 +94,8 @@ export default {
       set (value) {
         if (this.specs.type === 'time.Duration') {
           this.$emit('input', value * 1000000000)
+        } else if (this.specs.type === 'int' || this.specs.type === 'int8' || this.specs.type === 'int16' || this.specs.type === 'int32' || this.specs.type === 'int64' || this.specs.type === 'uint' || this.specs.type === 'uint8' || this.specs.type === 'uint16' || this.specs.type === 'uint32' || this.specs.type === 'uint64') {
+          this.$emit('input', parseInt(value, 10))
         } else {
           this.$emit('input', value)
         }

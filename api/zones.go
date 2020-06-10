@@ -32,7 +32,9 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -47,6 +49,7 @@ import (
 
 func init() {
 	router.GET("/api/domains/:domain/zone/:zoneid", apiAuthHandler(zoneHandler(getZone)))
+	router.PATCH("/api/domains/:domain/zone/:zoneid", apiAuthHandler(zoneHandler(updateZoneService)))
 
 	router.POST("/api/domains/:domain/import_zone", apiAuthHandler(domainHandler(importZone)))
 }
@@ -144,5 +147,33 @@ func importZone(opts *config.Options, domain *happydns.Domain, body io.Reader) R
 
 	return APIResponse{
 		response: myZone.Id,
+	}
+}
+
+func updateZoneService(opts *config.Options, domain *happydns.Domain, zone *happydns.Zone, body io.Reader) Response {
+	usc := &happydns.ServiceCombined{}
+	err := json.NewDecoder(body).Decode(&usc)
+	if err != nil {
+		return APIErrorResponse{
+			err: fmt.Errorf("Something is wrong in received data: %w", err),
+		}
+	}
+
+	err = zone.EraseService(usc.Domain, usc.Id, usc)
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	err = storage.MainStore.UpdateZone(zone)
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	return APIResponse{
+		response: zone,
 	}
 }

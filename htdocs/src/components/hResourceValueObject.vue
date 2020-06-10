@@ -52,7 +52,7 @@
           :services="services"
           :specs="spec"
           :type="spec.type"
-          @saveService="$emit('saveService')"
+          @saveService="$emit('saveService', $event)"
         />
         <b-button v-else>
           Create {{ spec.id }}
@@ -65,7 +65,7 @@
           <b-icon icon="pencil" />
           Edit
         </b-button>
-        <b-button v-else type="button" size="sm" variant="primary" class="mx-1" @click="$emit('saveService')">
+        <b-button v-else type="button" size="sm" variant="primary" class="mx-1" @click="$emit('saveService', editDone)">
           <b-icon icon="check" />
           Save those modifications
         </b-button>
@@ -82,7 +82,7 @@
         :services="services"
         :specs="spec"
         :type="spec.type"
-        @saveService="$emit('saveService')"
+        @saveService="$emit('saveService', $event)"
       />
     </div>
   </div>
@@ -151,6 +151,10 @@ export default {
   },
 
   methods: {
+    editDone () {
+      this.serviceEdit = false
+    },
+
     pullServiceSpecs () {
       ServiceSpecsApi.getServiceSpecs(this.type)
         .then(

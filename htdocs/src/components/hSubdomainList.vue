@@ -33,7 +33,7 @@
 
 <template>
   <div v-if="!isLoading" class="pt-3">
-    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :dn="dn" :origin="domain.domain" :services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="myServices.aliases[dn]===undefined?[]:myServices.aliases[dn]" :zone-meta="zoneMeta" />
+    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :dn="dn" :origin="domain.domain" :services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="myServices.aliases[dn]===undefined?[]:myServices.aliases[dn]" :zone-meta="zoneMeta" @updateMyServices="updateMyServices($event)" />
   </div>
 </template>
 
@@ -142,6 +142,10 @@ export default {
             this.$router.push('/domains/' + encodeURIComponent(this.domain.domain))
           }
         )
+    },
+
+    updateMyServices (myS) {
+      this.myServices = myS
     }
   }
 }
