@@ -105,10 +105,10 @@ const routes = [
         }
       },
       {
-        path: 'services',
-        name: 'domain-services',
+        path: 'abstract',
+        name: 'domain-abstract',
         component: function () {
-          return import(/* webpackChunkName: "domain" */ '../views/domain-services.vue')
+          return import(/* webpackChunkName: "domain" */ '../views/domain-abstract.vue')
         }
       }
     ]
