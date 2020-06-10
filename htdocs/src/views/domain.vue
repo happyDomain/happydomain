@@ -49,8 +49,8 @@
           <b-nav-item :to="'/domains/' + domain.domain" :active="$route.name == 'domain-source'">
             Domain source
           </b-nav-item>
-          <b-nav-item :to="'/domains/' + domain.domain + '/services'" :active="$route.name == 'domain-services'">
-            View services
+          <b-nav-item :to="'/domains/' + domain.domain + '/abstract'" :active="$route.name == 'domain-abstract'">
+            Abstract zone
           </b-nav-item>
           <b-nav-item :to="'/zones/' + domain.domain + '/records'" :active="$route.name == 'zone-records'">
             View records
