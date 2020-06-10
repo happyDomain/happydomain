@@ -32,7 +32,13 @@
   -->
 
 <template>
-  <h-subdomain-list v-if="selectedHistory" :domain="domain" :zone-meta="selectedHistory" />
+  <div>
+    <div v-if="importInProgress" class="mt-4 text-center">
+      <b-spinner label="Spinning" />
+      <p>Please wait while we are importing your domain&nbsp;&hellip;</p>
+    </div>
+    <h-subdomain-list v-if="!importInProgress && selectedHistory" :domain="domain" :zone-meta="selectedHistory" />
+  </div>
 </template>
 
 <script>
@@ -52,6 +58,7 @@ export default {
 
   data: function () {
     return {
+      importInProgress: false,
       selectedHistory: null
     }
   },
@@ -71,12 +78,14 @@ export default {
   methods: {
     pullDomain () {
       if (this.domain.zone_history === null || this.domain.zone_history.length === 0) {
+        this.importInProgress = true
         axios
           .post('/api/domains/' + encodeURIComponent(this.domain.domain) + '/import_zone')
           .then(
             (response) => {
+              this.importInProgress = false
+              this.selectedHistory = response.data
               this.$parent.$emit('updateDomainInfo')
-              // this.selectedHistory = response.data
             }
           )
       } else {

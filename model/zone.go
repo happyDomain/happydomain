@@ -32,6 +32,8 @@
 package happydns
 
 import (
+	"bytes"
+	"errors"
 	"time"
 )
 
@@ -49,4 +51,29 @@ type Zone struct {
 	Published    *time.Time                    `json:"published,omitempty"`
 	Aliases      map[string][]string           `json:"aliases"`
 	Services     map[string][]*ServiceCombined `json:"services"`
+}
+
+func (z *Zone) FindService(id []byte) *ServiceCombined {
+	for _, services := range z.Services {
+		for _, svc := range services {
+			if bytes.Equal(svc.Id, id) {
+				return svc
+			}
+		}
+	}
+
+	return nil
+}
+
+func (z *Zone) EraseService(domain string, id []byte, s *ServiceCombined) error {
+	if services, ok := z.Services[domain]; ok {
+		for k, svc := range services {
+			if bytes.Equal(svc.Id, id) {
+				z.Services[domain][k] = s
+				return nil
+			}
+		}
+	}
+
+	return errors.New("Service not found")
 }

@@ -50,7 +50,7 @@
 </template>
 
 <script>
-import ServicesApi from '@/services/ServicesApi'
+import ServiceSpecsApi from '@/services/ServiceSpecsApi'
 
 export default {
   name: 'HDomainService',
@@ -60,7 +60,15 @@ export default {
   },
 
   props: {
+    origin: {
+      type: String,
+      required: true
+    },
     service: {
+      type: Object,
+      required: true
+    },
+    zoneMeta: {
       type: Object,
       required: true
     }
@@ -80,7 +88,7 @@ export default {
   },
 
   created () {
-    ServicesApi.getServices()
+    ServiceSpecsApi.getServiceSpecs()
       .then(
         (response) => (this.services = response.data)
       )

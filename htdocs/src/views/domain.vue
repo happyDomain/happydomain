@@ -86,22 +86,8 @@ export default {
   },
 
   mounted () {
-    var mydomain = this.$route.params.domain
-    axios
-      .get('/api/domains/' + mydomain)
-      .then(
-        response => (this.domain = response.data),
-        error => {
-          this.$root.$bvToast.toast(
-            'Unfortunately, we were unable to retrieve information for the domain ' + this.$route.params.domain + ': ' + error.response.data.errmsg, {
-              title: 'Unable to retrieve domain information',
-              autoHideDelay: 5000,
-              variant: 'danger',
-              toaster: 'b-toaster-content-right'
-            }
-          )
-          this.$router.push('/domains/')
-        })
+    this.updateDomainInfo()
+    this.$on('updateDomainInfo', this.updateDomainInfo)
   },
 
   methods: {
@@ -111,6 +97,25 @@ export default {
         .then(response => (
           this.$router.push('/domains/')
         ))
+    },
+
+    updateDomainInfo () {
+      var mydomain = this.$route.params.domain
+      axios
+        .get('/api/domains/' + encodeURIComponent(mydomain))
+        .then(
+          response => (this.domain = response.data),
+          error => {
+            this.$root.$bvToast.toast(
+              'Unfortunately, we were unable to retrieve information for the domain ' + this.$route.params.domain + ': ' + error.response.data.errmsg, {
+                title: 'Unable to retrieve domain information',
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+            this.$router.push('/domains/')
+          })
     }
   }
 }

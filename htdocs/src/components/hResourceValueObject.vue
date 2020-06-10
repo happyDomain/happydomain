@@ -52,6 +52,7 @@
           :services="services"
           :specs="spec"
           :type="spec.type"
+          @saveService="$emit('saveService')"
         />
         <b-button v-else>
           Create {{ spec.id }}
@@ -64,7 +65,7 @@
           <b-icon icon="pencil" />
           Edit
         </b-button>
-        <b-button v-else type="button" size="sm" variant="primary" class="mx-1" @click="submitService(index, idx)">
+        <b-button v-else type="button" size="sm" variant="primary" class="mx-1" @click="$emit('saveService')">
           <b-icon icon="check" />
           Save those modifications
         </b-button>
@@ -81,13 +82,14 @@
         :services="services"
         :specs="spec"
         :type="spec.type"
+        @saveService="$emit('saveService')"
       />
     </div>
   </div>
 </template>
 
 <script>
-import ServicesApi from '@/services/ServicesApi'
+import ServiceSpecsApi from '@/services/ServiceSpecsApi'
 
 export default {
   name: 'HResourceValueObject',
@@ -150,7 +152,7 @@ export default {
 
   methods: {
     pullServiceSpecs () {
-      ServicesApi.getServiceSpecs(this.type)
+      ServiceSpecsApi.getServiceSpecs(this.type)
         .then(
           (response) => {
             this.service_specs = response.data
