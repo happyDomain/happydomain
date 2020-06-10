@@ -69,7 +69,7 @@
         </b-button>
       </h2>
       <div v-show="showResources">
-        <h-domain-service v-for="(svc, idx) in services" :key="idx" :service="svc" />
+        <h-domain-service v-for="(svc, idx) in services" :key="idx" :origin="origin" :service="svc" :zone-meta="zoneMeta" />
       </div>
     </div>
   </div>
@@ -92,8 +92,16 @@ export default {
       type: String,
       required: true
     },
+    origin: {
+      type: String,
+      required: true
+    },
     services: {
       type: Array,
+      required: true
+    },
+    zoneMeta: {
+      type: Object,
       required: true
     }
   },

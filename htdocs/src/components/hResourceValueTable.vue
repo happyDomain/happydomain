@@ -40,14 +40,14 @@
         </b-button>
       </template>
       <template v-slot:cell()="row">
-        <h-resource-value v-if="service_specs.fields" v-model="row.item[row.field.key]" :edit="edit_row.indexOf(row.index) >= 0" :index="row.index" :services="services" :specs="service_specs.fields[row.field.index]" :type="service_specs.fields[row.field.index].type" no-decorate />
-        <h-resource-value v-else v-model="row.item" :edit="edit_row.indexOf(row.index) >= 0" :index="row.index" :services="services" :specs="specs" :type="row_type" no-decorate />
+        <h-resource-value v-if="service_specs.fields" v-model="row.item[row.field.key]" :edit="edit_row.indexOf(row.index) >= 0" :index="row.index" :services="services" :specs="service_specs.fields[row.field.index]" :type="service_specs.fields[row.field.index].type" no-decorate @saveService="$emit('saveService')" />
+        <h-resource-value v-else v-model="row.item" :edit="edit_row.indexOf(row.index) >= 0" :index="row.index" :services="services" :specs="specs" :type="row_type" no-decorate @saveService="$emit('saveService')" />
       </template>
       <template v-slot:cell(_actions)="row">
         <b-button v-if="edit_row.indexOf(row.index) < 0" size="sm" title="Edit" variant="outline-primary" class="mx-1" @click="editService(row)">
           <b-icon icon="pencil" />
         </b-button>
-        <b-button v-else type="button" title="Save the modifications" size="sm" variant="primary" class="mx-1" @click="submitService(row.item)">
+        <b-button v-else type="button" title="Save the modifications" size="sm" variant="primary" class="mx-1" @click="$emit('saveService')">
           <b-icon icon="check" />
         </b-button>
         <b-button type="button" title="Delete" size="sm" variant="outline-danger" class="mx-1" @click="deleteService(row.item)">
@@ -59,7 +59,7 @@
 </template>
 
 <script>
-import ServicesApi from '@/services/ServicesApi'
+import ServiceSpecsApi from '@/services/ServiceSpecsApi'
 
 export default {
   name: 'HResourceValueTable',
@@ -147,7 +147,7 @@ export default {
       if (this.row_type === 'string') {
         this.service_specs = {}
       } else {
-        ServicesApi.getServiceSpecs(this.row_type)
+        ServiceSpecsApi.getServiceSpecs(this.row_type)
           .then(
             (response) => {
               this.service_specs = response.data

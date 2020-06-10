@@ -33,36 +33,50 @@
 
 <template>
   <div ng-if="!isLoading()">
-    <div class="text-right">
-      <b-button v-if="!edit" type="button" size="sm" variant="outline-primary" class="mx-1" @click="toogleServiceEdit()">
-        <b-icon icon="pencil" />
-        Edit
-      </b-button>
-      <b-button v-else type="button" size="sm" variant="primary" class="mx-1" @click="submitService(index, idx)">
-        <b-icon icon="check" />
-        Save those modifications
-      </b-button>
-      <b-button type="button" size="sm" variant="outline-danger" class="mx-1">
-        <b-icon icon="trash" />
-        Delete
-      </b-button>
-    </div>
     <div v-for="(val,key) in value" :key="key">
-      <h3>{{ key }}</h3>
+      <b-row>
+        <b-col>
+          <h3>
+            <span v-if="!editKeys[key]">{{ key }}</span>
+            <b-input-group v-else>
+              <b-form-input v-model="newKeys[key]" />
+              <template v-slot:append>
+                <b-button v-if="editKeys[key]" type="button" size="sm" variant="primary" @click="rename(key)">
+                  <b-icon icon="check" />
+                  Rename
+                </b-button>
+              </template>
+            </b-input-group>
+            <b-button v-if="!editKeys[key]" type="button" size="sm" variant="link" @click="toogleKeyEdit(key)">
+              <b-icon icon="pencil" />
+            </b-button>
+          </h3>
+        </b-col>
+        <b-col sm="auto">
+          <b-button type="button" size="sm" variant="outline-danger" class="mx-1 float-right">
+            <b-icon icon="trash" />
+            Delete
+          </b-button>
+        </b-col>
+      </b-row>
       <h-resource-value
         v-model="value[key]"
-        :edit="edit"
         :services="services"
         :specs="service_specs"
         :type="main_type"
+        @saveService="$emit('saveService')"
       />
       <hr>
     </div>
+    <b-button>
+      Add new {{ specs.id }}
+    </b-button>
   </div>
 </template>
 
 <script>
-import ServicesApi from '@/services/ServicesApi'
+import ServiceSpecsApi from '@/services/ServiceSpecsApi'
+import Vue from 'vue'
 
 export default {
   name: 'HResourceValueMap',
@@ -72,10 +86,6 @@ export default {
   },
 
   props: {
-    edit: {
-      type: Boolean,
-      default: false
-    },
     services: {
       type: Object,
       required: true
@@ -96,6 +106,8 @@ export default {
 
   data: function () {
     return {
+      editKeys: {},
+      newKeys: {},
       key_type: '',
       main_type: '',
       service_specs: null
@@ -136,7 +148,7 @@ export default {
 
   methods: {
     pullServiceSpecs () {
-      ServicesApi.getServiceSpecs(this.main_type)
+      ServiceSpecsApi.getServiceSpecs(this.main_type)
         .then(
           (response) => {
             this.service_specs = response.data
@@ -144,8 +156,17 @@ export default {
         )
     },
 
-    toogleServiceEdit () {
-      this.edit = !this.edit
+    rename (key) {
+      if (key !== this.newKeys[key]) {
+        Vue.set(this.value, this.newKeys[key], this.value[key])
+        Vue.delete(this.value, key)
+      }
+      Vue.delete(this.editKeys, key)
+    },
+
+    toogleKeyEdit (key) {
+      Vue.set(this.newKeys, key, key)
+      Vue.set(this.editKeys, key, !this.editKeys[key])
     }
   }
 }

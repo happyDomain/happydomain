@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <component :is="itemComponent" v-model="value" :edit="edit" :edit-toolbar="editToolbar" :index="index" :services="services" :specs="specs" :type="type" />
+  <component :is="itemComponent" :value="value" @input="$emit('input', $event)" :edit="edit" :edit-toolbar="editToolbar" :index="index" :services="services" :specs="specs" :type="type" @saveService="$emit('saveService')" />
 </template>
 
 <script>

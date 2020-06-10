@@ -33,12 +33,12 @@
 
 <template>
   <div v-if="!isLoading" class="pt-3">
-    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :dn="dn" :services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="myServices.aliases[dn]===undefined?[]:myServices.aliases[dn]" />
+    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :dn="dn" :origin="domain.domain" :services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="myServices.aliases[dn]===undefined?[]:myServices.aliases[dn]" :zone-meta="zoneMeta" />
   </div>
 </template>
 
 <script>
-import axios from 'axios'
+import ZoneApi from '@/services/ZoneApi'
 
 export default {
   name: 'HSubdomainList',
@@ -67,7 +67,7 @@ export default {
 
   computed: {
     isLoading () {
-      return this.myServices == null
+      return this.myServices == null && this.zoneMeta === undefined
     },
 
     sortedDomains () {
@@ -105,9 +105,7 @@ export default {
   },
 
   created () {
-    if (this.domain !== undefined && this.domain.domain !== undefined && this.zoneMeta !== undefined) {
-      this.pullZone()
-    }
+    this.pullZone()
   },
 
   methods: {
@@ -121,8 +119,12 @@ export default {
     },
 
     pullZone () {
-      axios
-        .get('/api/domains/' + encodeURIComponent(this.domain.domain) + '/zone/' + encodeURIComponent(this.zoneMeta.id))
+      if (this.domain === undefined || this.domain.domain === undefined || this.zoneMeta === undefined || this.zoneMeta.id === undefined) {
+        return
+      }
+
+      ZoneApi
+        .getZone(this.domain.domain, this.zoneMeta.id)
         .then(
           (response) => {
             this.myServices = response.data

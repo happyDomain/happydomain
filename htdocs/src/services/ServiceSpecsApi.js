@@ -32,11 +32,12 @@
 import Api from '@/services/Api'
 
 export default {
-  getServices (domain) {
-    return Api().get('/api/service_specs')
-  },
-  updateService (service) {
-    var serviceType = serviceType[0] === '*' ? serviceType.substr(1) : serviceType
-    return Api().get('/api/service_specs/' + serviceType)
+  getServiceSpecs (serviceType) {
+    if (serviceType != null) {
+      serviceType = serviceType[0] === '*' ? serviceType.substr(1) : serviceType
+      return Api().get('/api/service_specs/' + serviceType)
+    } else {
+      return Api().get('/api/service_specs')
+    }
   }
 }

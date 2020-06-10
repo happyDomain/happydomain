@@ -38,7 +38,7 @@
     <label v-if="specs.label" :for="'spec-' + index" :title="specs.label" class="col-md-4 col-form-label text-truncate text-md-right text-primary">{{ specs.label }}</label>
     <label v-else :for="'spec-' + index" :title="specs.label" class="col-md-4 col-form-label text-truncate text-md-right text-primary">{{ specs.id }}</label>
     <b-col md="8">
-      <h-resource-value-input-raw v-model="value" :edit="edit" :index="index" :specs="specs" />
+      <h-resource-value-input-raw v-model="val" :edit="edit" :index="index" :specs="specs" />
       <p v-if="specs.description" class="text-justify" style="line-height: 1.1">
         <small class="text-muted">{{ specs.description }}</small>
       </p>
@@ -70,6 +70,17 @@ export default {
     // eslint-disable-next-line
     value: {
       required: true
+    }
+  },
+
+  computed: {
+    val: {
+      get () {
+        return this.value
+      },
+      set (val) {
+        this.$emit('input', val)
+      }
     }
   }
 }
