@@ -188,7 +188,7 @@ export default {
                   toaster: 'b-toaster-content-right'
                 }
               )
-              this.$router.push('/')
+              this.$router.push('/login')
             },
             (error) => {
               this.$bvToast.toast(
