@@ -33,25 +33,28 @@
 
 <template>
   <div v-if="!isLoading">
-    <b-table hover striped :fields="fieldsNames" :items="value" sort-icon-left>
+    <b-table hover striped :fields="fieldsNames" :items="tmp_values" sort-icon-left>
       <template v-slot:head(_actions)>
         <b-button size="sm" title="Add item" variant="outline-secondary" class="mx-1" @click="addRow()">
           <b-icon icon="plus" /> Add
         </b-button>
       </template>
       <template v-slot:cell()="row">
-        <h-resource-value v-if="service_specs.fields" v-model="row.item[row.field.key]" :edit="edit_row.indexOf(row.index) >= 0" :index="row.index" :services="services" :specs="service_specs.fields[row.field.index]" :type="service_specs.fields[row.field.index].type" no-decorate @saveService="$emit('saveService', $event)" />
-        <h-resource-value v-else v-model="row.item" :edit="edit_row.indexOf(row.index) >= 0" :index="row.index" :services="services" :specs="specs" :type="row_type" no-decorate @saveService="$emit('saveService', $event)" />
+        <h-resource-value v-if="service_specs.fields" v-model="row.item[row.field.key]" :edit="row.item._edit" :index="row.index" :services="services" :specs="service_specs.fields[row.field.index]" :type="service_specs.fields[row.field.index].type" no-decorate @saveService="$emit('saveService', $event)" />
+        <h-resource-value v-else v-model="row.item[row.field.key]" :edit="row.item._edit" :index="row.index" :services="services" :specs="specs" :type="row_type" no-decorate @saveService="$emit('saveService', $event)" />
       </template>
       <template v-slot:cell(_actions)="row">
-        <b-button v-if="edit_row.indexOf(row.index) < 0" size="sm" title="Edit" variant="outline-primary" class="mx-1" @click="editService(row)">
+        <b-button v-if="!row.item._edit" size="sm" title="Edit" variant="outline-primary" class="mx-1" @click="row.item._edit = !row.item._edit">
           <b-icon icon="pencil" />
         </b-button>
-        <b-button v-else type="button" title="Save the modifications" size="sm" variant="primary" class="mx-1" @click="$emit('saveService', function () { editDone(row) })">
+        <b-button v-else type="button" title="Save the modifications" size="sm" variant="primary" class="mx-1" @click="saveRow(row)">
           <b-icon icon="check" />
         </b-button>
-        <b-button type="button" title="Delete" size="sm" variant="outline-danger" class="mx-1" @click="deleteService(row.item)">
+        <b-button v-if="!row.item._edit" type="button" title="Delete" size="sm" variant="outline-danger" class="mx-1" @click="deleteRow(row)">
           <b-icon icon="trash" />
+        </b-button>
+        <b-button v-else type="button" title="Cancel" size="sm" variant="danger" class="mx-1" @click="cancelEdit(row)">
+          <b-icon icon="x-circle" />
         </b-button>
       </template>
     </b-table>
@@ -89,9 +92,9 @@ export default {
 
   data: function () {
     return {
-      edit_row: [],
       row_type: '',
-      service_specs: null
+      service_specs: null,
+      tmp_values: []
     }
   },
 
@@ -130,26 +133,25 @@ export default {
 
   watch: {
     service: function () {
-      this.row_type = this.type.substr(2)
       this.pullServiceSpecs()
+    },
+    value: function () {
+      this.updateValues()
     }
   },
 
   created () {
     if (this.type !== undefined) {
-      this.row_type = this.type.substr(2)
       this.pullServiceSpecs()
+    }
+    if (this.value !== undefined) {
+      this.updateValues()
     }
   },
 
   methods: {
-    editDone (row) {
-      if (this.edit_row.indexOf(row.index) >= 0) {
-        this.edit_row.splice(this.edit_row.indexOf(row.index), 1)
-      }
-    },
-
     pullServiceSpecs () {
+      this.row_type = this.type.substr(2)
       if (this.row_type === 'string') {
         this.service_specs = {}
       } else {
@@ -162,12 +164,54 @@ export default {
       }
     },
 
-    editService (row) {
-      if (this.edit_row.indexOf(row.index) >= 0) {
-        this.edit_row.splice(this.edit_row.indexOf(row.index), 1)
+    addRow () {
+      this.tmp_values.push({ _key: this.value.length, _edit: true })
+    },
+
+    cancelEdit (row) {
+      row.item._edit = false
+      if (typeof this.value[row.item._key] === 'object') {
+        Object.keys(this.value[row.item._key]).forEach(function (k) {
+          row.item[k] = this.value[row.item._key][k]
+        }, this)
       } else {
-        this.edit_row.push(row.index)
+        row.item.value = this.value[row.item._key]
       }
+    },
+
+    deleteRow (row) {
+      this.value.splice(row.item._key, 1)
+      this.$emit('saveService')
+    },
+
+    saveRow (row) {
+      if (this.service_specs && this.service_specs.fields) {
+        var val = {}
+        this.service_specs.fields.forEach(function (sspec, idx) {
+          val[sspec.id] = row.item[sspec.id]
+        }, this)
+
+        if (this.value[row.item._key] !== undefined) {
+          this.value[row.item._key] = val
+        } else {
+          this.value.push(val)
+        }
+      } else {
+        this.value[row.item._key] = row.item.value
+      }
+      this.$emit('saveService')
+    },
+
+    updateValues () {
+      this.tmp_values = []
+
+      this.value.forEach(function (v, k) {
+        if (typeof v === 'object') {
+          this.tmp_values.push(Object.assign({ _key: k, _edit: false }, v))
+        } else {
+          this.tmp_values.push({ _key: k, _edit: false, value: v })
+        }
+      }, this)
     }
   }
 }
