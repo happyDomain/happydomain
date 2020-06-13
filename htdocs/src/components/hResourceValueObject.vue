@@ -37,10 +37,10 @@
       <b-tab v-for="(spec, index) in service_specs.fields" :key="index" :active="index === 0">
         <template v-slot:title>
           {{ spec | hLabel }}
-          <b-badge v-if="spec.type.substr(0,2) === '[]'" variant="light" pill>
+          <b-badge v-if="value[spec.id] && spec.type.substr(0,2) === '[]'" variant="light" pill>
             {{ value[spec.id].length }}
           </b-badge>
-          <b-badge v-if="spec.type.substr(0,3) === 'map'" variant="light" pill>
+          <b-badge v-else-if="value[spec.id] && spec.type.substr(0,3) === 'map'" variant="light" pill>
             {{ Object.keys(value[spec.id]).length }}
           </b-badge>
         </template>
@@ -54,14 +54,14 @@
           :type="spec.type"
           @saveService="$emit('saveService', $event)"
         />
-        <b-button v-else>
+        <b-button v-else @click="createObject(spec)">
           Create {{ spec.id }}
         </b-button>
       </b-tab>
     </b-tabs>
     <div v-else>
       <div v-if="editToolbar" class="text-right mb-2">
-        <b-button v-if="!serviceEdit" type="button" size="sm" variant="outline-primary" class="mx-1" @click="toogleServiceEdit()">
+        <b-button v-if="!editChildren" type="button" size="sm" variant="outline-primary" class="mx-1" @click="toogleServiceEdit()">
           <b-icon icon="pencil" />
           Edit
         </b-button>
@@ -69,7 +69,7 @@
           <b-icon icon="check" />
           Save those modifications
         </b-button>
-        <b-button type="button" size="sm" variant="outline-danger" class="mx-1">
+        <b-button type="button" size="sm" variant="outline-danger" class="mx-1" @click="deleteObject()">
           <b-icon icon="trash" />
           Delete
         </b-button>
@@ -90,6 +90,7 @@
 
 <script>
 import ServiceSpecsApi from '@/services/ServiceSpecsApi'
+import Vue from 'vue'
 
 export default {
   name: 'HResourceValueObject',
@@ -151,6 +152,20 @@ export default {
   },
 
   methods: {
+    createObject (spec) {
+      if (spec.type.substr(0, 2) === '[]') {
+        Vue.set(this.value, spec.id, [{ _edit: true }])
+      } else {
+        Vue.set(this.value, spec.id, {})
+        this.serviceEdit = true
+      }
+    },
+
+    deleteObject () {
+      this.$emit('input', undefined)
+      this.$emit('saveService')
+    },
+
     editDone () {
       this.serviceEdit = false
     },
