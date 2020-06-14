@@ -137,6 +137,15 @@ Vue.prototype.escapeHTML = function (str) {
   })
 }
 
+Vue.filter('fqdn', function (input, origin) {
+  if (input[-1] === '.') {
+    return input
+  } else if (input === '') {
+    return origin
+  } else {
+    return input + '.' + origin
+  }
+})
 Vue.filter('hLabel', function (input) {
   if (input.label) {
     return input.label
