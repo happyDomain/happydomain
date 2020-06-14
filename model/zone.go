@@ -82,7 +82,11 @@ func (z *Zone) EraseService(subdomain string, origin string, id []byte, s *Servi
 					if subdomain == "" && svc.Type == "svcs.Origin" {
 						return errors.New("You cannot delete this service. It is mandatory.")
 					}
-					z.Services[subdomain] = append(z.Services[subdomain][:k], z.Services[subdomain][k+1:]...)
+					if len(z.Services[subdomain]) <= 1 {
+						delete(z.Services, subdomain)
+					} else {
+						z.Services[subdomain] = append(z.Services[subdomain][:k], z.Services[subdomain][k+1:]...)
+					}
 				} else {
 					s.Comment = s.GenComment(origin)
 					s.NbResources = s.GetNbResources()
