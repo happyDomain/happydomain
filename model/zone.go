@@ -53,23 +53,37 @@ type Zone struct {
 	Services     map[string][]*ServiceCombined `json:"services"`
 }
 
-func (z *Zone) FindService(id []byte) *ServiceCombined {
-	for _, services := range z.Services {
-		for _, svc := range services {
-			if bytes.Equal(svc.Id, id) {
-				return svc
-			}
+func (z *Zone) FindService(id []byte) (string, *ServiceCombined) {
+	for subdomain := range z.Services {
+		if svc := z.FindSubdomainService(subdomain, id); svc != nil {
+			return subdomain, svc
+		}
+	}
+
+	return "", nil
+}
+
+func (z *Zone) FindSubdomainService(domain string, id []byte) *ServiceCombined {
+	for _, svc := range z.Services[domain] {
+		if bytes.Equal(svc.Id, id) {
+			return svc
 		}
 	}
 
 	return nil
 }
 
-func (z *Zone) EraseService(domain string, id []byte, s *ServiceCombined) error {
-	if services, ok := z.Services[domain]; ok {
+func (z *Zone) EraseService(subdomain string, origin string, id []byte, s *ServiceCombined) error {
+	if services, ok := z.Services[subdomain]; ok {
 		for k, svc := range services {
 			if bytes.Equal(svc.Id, id) {
-				z.Services[domain][k] = s
+				if s == nil {
+					z.Services[subdomain] = append(z.Services[subdomain][:k], z.Services[subdomain][k+1:]...)
+				} else {
+					s.Comment = s.GenComment(origin)
+					s.NbResources = s.GetNbResources()
+					z.Services[subdomain][k] = s
+				}
 				return nil
 			}
 		}

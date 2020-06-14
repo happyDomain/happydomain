@@ -86,7 +86,7 @@ export default {
     },
     value: {
       type: Array,
-      required: true
+      default: null
     }
   },
 
@@ -165,7 +165,9 @@ export default {
     },
 
     addRow () {
-      this.tmp_values.push({ _key: this.value.length, _edit: true })
+      if ((this.value == null && this.tmp_values.length <= 1) || (this.value != null && this.tmp_values.length <= this.value.length)) {
+        this.tmp_values.push({ _key: this.tmp_values.length, _edit: true })
+      }
     },
 
     cancelEdit (row) {
@@ -191,11 +193,17 @@ export default {
           val[sspec.id] = row.item[sspec.id]
         }, this)
 
-        if (this.value[row.item._key] !== undefined) {
+        if (this.value !== null && this.value[row.item._key] !== undefined) {
           this.value[row.item._key] = val
+          this.$emit('input', this.value)
+        } else if (this.value === null) {
+          this.$emit('input', [val])
         } else {
           this.value.push(val)
+          this.$emit('input', this.value)
         }
+      } else if (this.value === null) {
+        this.$emit('input', [row.item.value])
       } else {
         this.value[row.item._key] = row.item.value
       }
@@ -205,13 +213,15 @@ export default {
     updateValues () {
       this.tmp_values = []
 
-      this.value.forEach(function (v, k) {
-        if (typeof v === 'object') {
-          this.tmp_values.push(Object.assign({ _key: k, _edit: false }, v))
-        } else {
-          this.tmp_values.push({ _key: k, _edit: false, value: v })
-        }
-      }, this)
+      if (this.value !== null) {
+        this.value.forEach(function (v, k) {
+          if (typeof v === 'object') {
+            this.tmp_values.push(Object.assign({ _key: k, _edit: false }, v))
+          } else {
+            this.tmp_values.push({ _key: k, _edit: false, value: v })
+          }
+        }, this)
+      }
     }
   }
 }

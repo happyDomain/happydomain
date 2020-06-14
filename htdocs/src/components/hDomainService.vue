@@ -44,7 +44,7 @@
       </b-badge>
     </b-list-group-item>
     <b-list-group-item v-if="showDetails">
-      <h-resource-value v-model="service.Service" edit-toolbar :services="services" :type="service._svctype" @saveService="saveService(service, $event)" />
+      <h-resource-value v-model="service.Service" edit-toolbar :services="services" :type="service._svctype" @deleteService="deleteService(service, $event)" @saveService="saveService(service, $event)" />
     </b-list-group-item>
   </b-list-group>
 </template>
@@ -96,29 +96,52 @@ export default {
   },
 
   methods: {
-    saveService (service, cbSuccess, cbFail) {
-      ZoneApi.updateZoneService(this.origin, this.zoneMeta.id, service)
+    deleteService (service) {
+      this.showDetails = false
+      ZoneApi.deleteZoneService(this.origin, this.zoneMeta.id, service)
         .then(
           (response) => {
             this.$emit('updateMyServices', response.data)
-            if (cbSuccess != null) {
-              cbSuccess()
-            }
           },
           (error) => {
             this.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'An error occurs when updating the service!',
+                title: 'An error occurs when deleting the service!',
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'
               }
             )
-            if (cbFail != null) {
-              cbFail(error)
+          })
+    },
+
+    saveService (service, cbSuccess, cbFail) {
+      if (service.Service === undefined) {
+        this.deleteService(service)
+      } else {
+        ZoneApi.updateZoneService(this.origin, this.zoneMeta.id, service)
+          .then(
+            (response) => {
+              this.$emit('updateMyServices', response.data)
+              if (cbSuccess != null) {
+                cbSuccess()
+              }
+            },
+            (error) => {
+              this.$bvToast.toast(
+                error.response.data.errmsg, {
+                  title: 'An error occurs when updating the service!',
+                  autoHideDelay: 5000,
+                  variant: 'danger',
+                  toaster: 'b-toaster-content-right'
+                }
+              )
+              if (cbFail != null) {
+                cbFail(error)
+              }
             }
-          }
-        )
+          )
+      }
     },
 
     toogleShowDetails () {

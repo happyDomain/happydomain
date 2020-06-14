@@ -52,20 +52,25 @@
           :services="services"
           :specs="spec"
           :type="spec.type"
-          @saveService="$emit('saveService', $event)"
+          @saveService="serviceEdit=false;$emit('saveService', $event)"
         />
-        <b-button v-else @click="createObject(spec)">
+        <b-button v-else :disable="value['']" @click="createObject(spec)">
           Create {{ spec.id }}
         </b-button>
       </b-tab>
     </b-tabs>
+    <div v-else-if="!value">
+      <b-button @click="createObject(spec)">
+        Create {{ spec.id }}
+      </b-button>
+    </div>
     <div v-else>
       <div v-if="editToolbar" class="text-right mb-2">
         <b-button v-if="!editChildren" type="button" size="sm" variant="outline-primary" class="mx-1" @click="toogleServiceEdit()">
           <b-icon icon="pencil" />
           Edit
         </b-button>
-        <b-button v-else type="button" size="sm" variant="primary" class="mx-1" @click="$emit('saveService', editDone)">
+        <b-button v-else type="button" size="sm" variant="primary" class="mx-1" @click="saveObject()">
           <b-icon icon="check" />
           Save those modifications
         </b-button>
@@ -77,11 +82,12 @@
       <h-resource-value
         v-for="(spec, index) in service_specs.fields"
         :key="index"
-        v-model="value[spec.id]"
+        :value="val[spec.id]"
         :edit="editChildren"
         :services="services"
         :specs="spec"
         :type="spec.type"
+        @input="val[spec.id] = $event;$emit('input', val)"
         @saveService="$emit('saveService', $event)"
       />
     </div>
@@ -122,14 +128,15 @@ export default {
     },
     value: {
       type: Object,
-      required: true
+      default: null
     }
   },
 
   data () {
     return {
       serviceEdit: false,
-      service_specs: null
+      service_specs: null,
+      val: {}
     }
   },
 
@@ -142,12 +149,18 @@ export default {
   watch: {
     type: function () {
       this.pullServiceSpecs()
+    },
+    value: function () {
+      this.updateValues()
     }
   },
 
   created () {
     if (this.type !== undefined) {
       this.pullServiceSpecs()
+    }
+    if (this.value !== undefined) {
+      this.updateValues()
     }
   },
 
@@ -166,10 +179,6 @@ export default {
       this.$emit('saveService')
     },
 
-    editDone () {
-      this.serviceEdit = false
-    },
-
     pullServiceSpecs () {
       ServiceSpecsApi.getServiceSpecs(this.type)
         .then(
@@ -179,8 +188,23 @@ export default {
         )
     },
 
+    saveObject () {
+      var vm = this
+      this.$emit('saveService', function () {
+        vm.serviceEdit = false
+      })
+    },
+
     toogleServiceEdit () {
       this.serviceEdit = !this.serviceEdit
+    },
+
+    updateValues () {
+      if (this.value != null) {
+        this.val = Object.assign({}, this.value)
+      } else {
+        this.val = {}
+      }
     }
   }
 }

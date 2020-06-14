@@ -39,11 +39,15 @@
           <h3>
             <span v-if="!editKeys[key]">{{ key }}</span>
             <b-input-group v-else>
-              <b-form-input v-model="newKeys[key]" />
+              <b-form-input
+                v-model="newKeys[key]"
+                :placeholder="specs.id + ' key name'"
+              />
               <template v-slot:append>
                 <b-button v-if="editKeys[key]" type="button" size="sm" variant="primary" @click="rename(key)">
                   <b-icon icon="check" />
-                  Rename
+                  <span v-if="key">Rename</span>
+                  <span v-else>Create new {{ specs.id }} key</span>
                 </b-button>
               </template>
             </b-input-group>
@@ -52,14 +56,21 @@
             </b-button>
           </h3>
         </b-col>
-        <b-col sm="auto">
-          <b-button type="button" size="sm" variant="outline-danger" class="mx-1 float-right">
+        <b-col v-if="!key || !editKeys[key]" sm="auto">
+          <b-button type="button" size="sm" variant="outline-danger" class="mx-1" @click="deleteKey(key)">
             <b-icon icon="trash" />
             Delete
           </b-button>
         </b-col>
+        <b-col v-else sm="auto">
+          <b-button type="button" variant="outline-danger" class="mx-1" @click="cancelKeyEdit(key)">
+            <b-icon icon="x-circle" />
+            Cancel edit
+          </b-button>
+        </b-col>
       </b-row>
       <h-resource-value
+        v-if="key"
         v-model="value[key]"
         :services="services"
         :specs="service_specs"
@@ -68,7 +79,7 @@
       />
       <hr>
     </div>
-    <b-button>
+    <b-button @click="createKey()">
       Add new {{ specs.id }}
     </b-button>
   </div>
@@ -132,7 +143,7 @@ export default {
 
   watch: {
     type: function () {
-      this.key_type = this.type.substr(this.type.indexOf('[') + 1, this.type.indexOf(']') - this.type.indexOf('['))
+      this.key_type = this.type.substr(this.type.indexOf('[') + 1, this.type.indexOf(']') - this.type.indexOf('[') - 1)
       this.main_type = this.type.substr(this.type.indexOf(']') + 1)
       this.pullServiceSpecs()
     }
@@ -140,7 +151,7 @@ export default {
 
   created () {
     if (this.type !== undefined) {
-      this.key_type = this.type.substr(this.type.indexOf('[') + 1, this.type.indexOf(']') - this.type.indexOf('['))
+      this.key_type = this.type.substr(this.type.indexOf('[') + 1, this.type.indexOf(']') - this.type.indexOf('[') - 1)
       this.main_type = this.type.substr(this.type.indexOf(']') + 1)
       this.pullServiceSpecs()
     }
@@ -156,17 +167,42 @@ export default {
         )
     },
 
+    cancelKeyEdit (key) {
+      Vue.delete(this.editKeys, key)
+    },
+
+    createKey () {
+      var newObj = {}
+      if (this.main_type.substr(0, 2) === '[]') {
+        newObj = []
+      }
+      Vue.set(this.value, '', newObj)
+      this.toogleKeyEdit('', true)
+    },
+
+    deleteKey (key) {
+      Vue.delete(this.value, key)
+      if (Object.keys(this.value).length === 0) {
+        this.$emit('input', undefined)
+        this.$emit('saveService')
+      }
+    },
+
     rename (key) {
       if (key !== this.newKeys[key]) {
         Vue.set(this.value, this.newKeys[key], this.value[key])
         Vue.delete(this.value, key)
       }
       Vue.delete(this.editKeys, key)
+      this.$emit('saveService')
     },
 
-    toogleKeyEdit (key) {
+    toogleKeyEdit (key, forceValue) {
       Vue.set(this.newKeys, key, key)
-      Vue.set(this.editKeys, key, !this.editKeys[key])
+      if (forceValue == null) {
+        forceValue = !this.editKeys[key]
+      }
+      Vue.set(this.editKeys, key, forceValue)
     }
   }
 }
