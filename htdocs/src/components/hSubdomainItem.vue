@@ -42,7 +42,7 @@
         </a>
         <b-icon icon="arrow-right" />
         <span class="text-monospace">{{ services[0].Service.Target }}</span>
-        <b-button type="button" variant="outline-danger" size="sm" class="ml-2">
+        <b-button type="button" variant="outline-danger" size="sm" class="ml-2" @click="deleteCNAME()">
           <b-icon icon="x-circle" />
           Drop alias
         </b-button>
@@ -76,6 +76,8 @@
 </template>
 
 <script>
+import ZoneApi from '@/services/ZoneApi'
+
 export default {
   name: 'HSubdomainItem',
 
@@ -129,6 +131,24 @@ export default {
           return this.escapeHTML(alias)
         }
       }, this).join('<br>')
+    },
+
+    deleteCNAME () {
+      ZoneApi.deleteZoneService(this.origin, this.zoneMeta.id, this.services[0])
+        .then(
+          (response) => {
+            this.$emit('updateMyServices', response.data)
+          },
+          (error) => {
+            this.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: 'An error occurs when deleting the service!',
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+          })
     },
 
     pluralizeAlias (count) {
