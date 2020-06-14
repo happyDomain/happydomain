@@ -74,7 +74,7 @@
           <b-icon icon="check" />
           Save those modifications
         </b-button>
-        <b-button type="button" size="sm" variant="outline-danger" class="mx-1" @click="deleteObject()">
+        <b-button v-if="type !== 'svcs.Origin'" type="button" size="sm" variant="outline-danger" class="mx-1" @click="deleteObject()">
           <b-icon icon="trash" />
           Delete
         </b-button>
