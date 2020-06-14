@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <component :is="itemComponent" :value="value" @input="$emit('input', $event)" :edit="edit" :edit-toolbar="editToolbar" :index="index" :services="services" :specs="specs" :type="type" @saveService="$emit('saveService', $event)" />
+  <component :is="itemComponent" :value="value" :edit="edit" :edit-toolbar="editToolbar" :index="index" :services="services" :specs="specs" :type="type" @input="$emit('input', $event)" @deleteService="$emit('deleteService', $event)" @saveService="$emit('saveService', $event)" />
 </template>
 
 <script>
@@ -100,7 +100,7 @@ export default {
 
   methods: {
     findComponent () {
-      if (Array.isArray(this.value)) {
+      if (Array.isArray(this.value) || (this.type.substr(0, 2) === '[]' && this.type !== '[]byte' && this.type !== '[]uint8')) {
         this.itemComponent = HResourceValueTable
       } else if (this.type.substr(0, 3) === 'map') {
         this.itemComponent = HResourceValueMap

@@ -32,6 +32,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -50,11 +51,14 @@ import (
 func init() {
 	router.GET("/api/domains/:domain/zone/:zoneid", apiAuthHandler(zoneHandler(getZone)))
 	router.PATCH("/api/domains/:domain/zone/:zoneid", apiAuthHandler(zoneHandler(updateZoneService)))
+	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain", apiAuthHandler(zoneHandler(getZoneSubdomain)))
+	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain/*serviceid", apiAuthHandler(zoneHandler(getZoneService)))
+	router.DELETE("/api/domains/:domain/zone/:zoneid/:subdomain/*serviceid", apiAuthHandler(zoneHandler(deleteZoneService)))
 
 	router.POST("/api/domains/:domain/import_zone", apiAuthHandler(domainHandler(importZone)))
 }
 
-func zoneHandler(f func(*config.Options, *happydns.Domain, *happydns.Zone, io.Reader) Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) Response {
+func zoneHandler(f func(*config.Options, *happydns.Domain, *happydns.Zone, httprouter.Params, io.Reader) Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) Response {
 	return func(opts *config.Options, u *happydns.User, ps httprouter.Params, body io.Reader) Response {
 		zoneid, err := strconv.ParseInt(ps.ByName("zoneid"), 10, 64)
 		if err != nil {
@@ -85,15 +89,37 @@ func zoneHandler(f func(*config.Options, *happydns.Domain, *happydns.Zone, io.Re
 					err:    errors.New("Zone not found"),
 				}
 			} else {
-				return f(opts, domain, zone, body)
+				return f(opts, domain, zone, ps, body)
 			}
 		})(opts, u, ps, body)
 	}
 }
 
-func getZone(opts *config.Options, domain *happydns.Domain, zone *happydns.Zone, body io.Reader) Response {
+func getZone(opts *config.Options, domain *happydns.Domain, zone *happydns.Zone, _ httprouter.Params, body io.Reader) Response {
 	return APIResponse{
 		response: zone,
+	}
+}
+
+func getZoneSubdomain(opts *config.Options, domain *happydns.Domain, zone *happydns.Zone, ps httprouter.Params, body io.Reader) Response {
+	return APIResponse{
+		response: map[string]interface{}{
+			"aliases":  zone.Aliases[ps.ByName("subdomain")],
+			"services": zone.Services[ps.ByName("subdomain")],
+		},
+	}
+}
+
+func getZoneService(opts *config.Options, domain *happydns.Domain, zone *happydns.Zone, ps httprouter.Params, body io.Reader) Response {
+	serviceid, err := base64.StdEncoding.DecodeString(ps.ByName("serviceid")[1:])
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	return APIResponse{
+		response: zone.FindSubdomainService(ps.ByName("subdomain"), serviceid),
 	}
 }
 
@@ -150,7 +176,7 @@ func importZone(opts *config.Options, domain *happydns.Domain, body io.Reader) R
 	}
 }
 
-func updateZoneService(opts *config.Options, domain *happydns.Domain, zone *happydns.Zone, body io.Reader) Response {
+func updateZoneService(opts *config.Options, domain *happydns.Domain, zone *happydns.Zone, _ httprouter.Params, body io.Reader) Response {
 	usc := &happydns.ServiceCombined{}
 	err := json.NewDecoder(body).Decode(&usc)
 	if err != nil {
@@ -159,7 +185,34 @@ func updateZoneService(opts *config.Options, domain *happydns.Domain, zone *happ
 		}
 	}
 
-	err = zone.EraseService(usc.Domain, usc.Id, usc)
+	err = zone.EraseService(usc.Domain, domain.DomainName, usc.Id, usc)
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	err = storage.MainStore.UpdateZone(zone)
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	return APIResponse{
+		response: zone,
+	}
+}
+
+func deleteZoneService(opts *config.Options, domain *happydns.Domain, zone *happydns.Zone, ps httprouter.Params, body io.Reader) Response {
+	serviceid, err := base64.StdEncoding.DecodeString(ps.ByName("serviceid")[1:])
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	err = zone.EraseService(ps.ByName("subdomain"), domain.DomainName, serviceid, nil)
 	if err != nil {
 		return APIErrorResponse{
 			err: err,
