@@ -36,7 +36,7 @@
     <div v-if="isCNAME()">
       <h2 :id="dn">
         <b-icon icon="link" />
-        <span class="text-monospace">{{ dn }}</span>
+        <span class="text-monospace">{{ dn | fqdn(origin) }}</span>
         <a :href="'#' + dn" class="float-right">
           <b-icon icon="link45deg" />
         </a>
@@ -52,7 +52,7 @@
       <h2 :id="dn">
         <b-icon v-if="!showResources" icon="chevron-right" @click="toogleShowResources()" />
         <b-icon v-if="showResources" icon="chevron-down" @click="toogleShowResources()" />
-        <span class="text-monospace" @click="toogleShowResources()">{{ dn }}</span>
+        <span class="text-monospace" @click="toogleShowResources()">{{ dn | fqdn(origin) }}</span>
         <a :href="'#' + dn" class="float-right">
           <b-icon icon="link45deg" />
         </a>

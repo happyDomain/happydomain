@@ -98,6 +98,9 @@ func (a *Analyzer) useRR(rr dns.RR, domain string, svc happydns.Service) error {
 		return nil
 	}
 
+	// Remove origin to get an relative domain here
+	domain = strings.TrimSuffix(strings.TrimSuffix(domain, "."+a.origin), a.origin)
+
 	for _, service := range a.services[domain] {
 		if service.Service == svc {
 			service.Comment = svc.GenComment(a.origin)
@@ -182,10 +185,10 @@ func AnalyzeZone(origin string, zone []dns.RR) (svcs map[string][]*happydns.Serv
 		io.WriteString(hash, record.String())
 
 		orphan := &Orphan{record.String()[strings.LastIndex(record.Header().String(), "\tIN\t")+4:]}
-		svcs[record.Header().Name] = append(svcs[record.Header().Name], &happydns.ServiceCombined{orphan, happydns.ServiceType{
+		svcs[domain] = append(svcs[domain], &happydns.ServiceCombined{orphan, happydns.ServiceType{
 			Id:          hash.Sum(nil),
 			Type:        reflect.Indirect(reflect.ValueOf(orphan)).Type().String(),
-			Domain:      origin,
+			Domain:      domain,
 			Ttl:         record.Header().Ttl,
 			NbResources: 1,
 			Comment:     orphan.GenComment(a.origin),
