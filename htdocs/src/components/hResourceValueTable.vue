@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <div v-if="!isLoading">
+  <div v-if="!isLoading && (edit || tmp_values.length > 0)">
     <b-table hover striped :fields="fieldsNames" :items="tmp_values" sort-icon-left>
       <template v-slot:head(_actions)>
         <b-button size="sm" title="Add item" variant="outline-secondary" class="mx-1" @click="addRow()">
@@ -72,6 +72,10 @@ export default {
   },
 
   props: {
+    edit: {
+      type: Boolean,
+      required: true
+    },
     services: {
       type: Object,
       required: true

@@ -57,6 +57,14 @@
           </h3>
         </b-col>
         <b-col v-if="!key || !editKeys[key]" sm="auto">
+          <b-button v-if="!editChildrenKeys[key]" type="button" size="sm" variant="outline-primary" class="mx-1" @click="toogleChildrenEdit(key)">
+            <b-icon icon="pencil" />
+            Edit
+          </b-button>
+          <b-button v-else type="button" size="sm" variant="primary" class="mx-1" @click="saveObject(key)">
+            <b-icon icon="check" />
+            Save those modifications
+          </b-button>
           <b-button type="button" size="sm" variant="outline-danger" class="mx-1" @click="deleteKey(key)">
             <b-icon icon="trash" />
             Delete
@@ -72,6 +80,7 @@
       <h-resource-value
         v-if="key"
         v-model="value[key]"
+        :edit="editChildrenKeys[key]"
         :services="services"
         :specs="service_specs"
         :type="main_type"
@@ -117,6 +126,7 @@ export default {
 
   data: function () {
     return {
+      editChildrenKeys: {},
       editKeys: {},
       newKeys: {},
       key_type: '',
@@ -195,6 +205,17 @@ export default {
       }
       Vue.delete(this.editKeys, key)
       this.$emit('saveService')
+    },
+
+    saveObject (key) {
+      var vm = this
+      this.$emit('saveService', function () {
+        Vue.set(vm.editChildrenKeys, key, false)
+      })
+    },
+
+    toogleChildrenEdit (key) {
+      Vue.set(this.editChildrenKeys, key, !this.editChildrenKeys[key])
     },
 
     toogleKeyEdit (key, forceValue) {
