@@ -36,6 +36,10 @@ export default {
     return Api().get('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id))
   },
 
+  addZoneService (domain, id, subdomain, service) {
+    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(subdomain), service)
+  },
+
   deleteZoneService (domain, id, service) {
     return Api().delete('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(service._domain) + '/' + encodeURIComponent(service._id))
   },

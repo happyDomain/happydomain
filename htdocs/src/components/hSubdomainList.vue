@@ -33,18 +33,34 @@
 
 <template>
   <div v-if="!isLoading" class="pt-3">
-    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :dn="dn" :origin="domain.domain" :services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="myServices.aliases[dn]===undefined?[]:myServices.aliases[dn]" :zone-meta="zoneMeta" @updateMyServices="updateMyServices($event)" />
+    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :dn="dn" :origin="domain.domain" :services="services" :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="myServices.aliases[dn]===undefined?[]:myServices.aliases[dn]" :zone-meta="zoneMeta" @updateMyServices="updateMyServices($event)" @addNewService="addNewService($event)" />
+    <b-modal id="modal-addSvc" title="Add a new service" :size="modal && modal.step === 1 ? 'lg' : ''" @ok="handleModalOk">
+      <p class="my-4" v-if="modal && modal.step === 0">Select a new service to add to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:</p>
+      <p class="my-4" v-if="modal && modal.step === 1">Fill the information for the {{ services[modal.svcSelected].name }} at <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:</p>
+      <b-list-group v-if="modal && modal.step == 0">
+        <b-list-group-item v-for="(svc, idx) in services" :key="idx" :active="modal.svcSelected === idx" button @click="modal.svcSelected = idx">
+          {{ svc.name }}
+          <small class="text-muted">{{ svc.description }}</small>
+          <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
+            {{ categorie }}
+          </b-badge>
+        </b-list-group-item>
+      </b-list-group>
+      <h-resource-value v-else-if="modal && modal.step == 1" v-model="modal.svcData" edit :services="services" :type="modal.svcSelected" />
+    </b-modal>
   </div>
 </template>
 
 <script>
+import ServiceSpecsApi from '@/services/ServiceSpecsApi'
 import ZoneApi from '@/services/ZoneApi'
 
 export default {
   name: 'HSubdomainList',
 
   components: {
-    hSubdomainItem: () => import('@/components/hSubdomainItem')
+    hSubdomainItem: () => import('@/components/hSubdomainItem'),
+    hResourceValue: () => import('@/components/hResourceValue')
   },
 
   props: {
@@ -61,13 +77,15 @@ export default {
   data: function () {
     return {
       hideDomain: {},
-      myServices: null
+      modal: null,
+      myServices: null,
+      services: null
     }
   },
 
   computed: {
     isLoading () {
-      return this.myServices == null && this.zoneMeta === undefined
+      return this.myServices == null && this.zoneMeta === undefined && this.services == null
     },
 
     sortedDomains () {
@@ -106,15 +124,59 @@ export default {
 
   created () {
     this.pullZone()
+
+    ServiceSpecsApi.getServiceSpecs()
+      .then(
+        (response) => (this.services = response.data)
+      )
   },
 
   methods: {
+    addNewService (subdomain) {
+      this.modal = {
+        dn: subdomain,
+        step: 0,
+        svcData: {},
+        svcSelected: null
+      }
+      this.$bvModal.show('modal-addSvc')
+    },
+
     goToAnchor () {
       var hash = this.$route.hash.substr(1)
       if (!this.isLoading && hash.length > 0) {
         setTimeout(function () {
           window.scrollTo(0, document.getElementById(hash).offsetTop)
         }, 500)
+      }
+    },
+
+    handleModalOk (bvModalEvt) {
+      bvModalEvt.preventDefault()
+
+      if (this.modal.step === 0 && this.modal.svcSelected !== null) {
+        this.modal.step = 1
+      } else if (this.modal.step === 1 && this.modal.svcSelected !== null) {
+        ZoneApi
+          .addZoneService(this.domain.domain, this.zoneMeta.id, this.modal.dn, {Service: this.modal.svcData, _svctype: this.modal.svcSelected})
+          .then(
+            (response) => {
+              this.myServices = response.data
+              this.$nextTick(() => {
+                this.$bvModal.hide('modal-addSvc')
+              })
+            },
+            (error) => {
+              this.$root.$bvToast.toast(
+                error.response.data.errmsg, {
+                  title: 'Unable to add the new service',
+                  autoHideDelay: 5000,
+                  variant: 'danger',
+                  toaster: 'b-toaster-content-right'
+                }
+              )
+            }
+          )
       }
     },
 
