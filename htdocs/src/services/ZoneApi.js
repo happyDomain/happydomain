@@ -37,6 +37,9 @@ export default {
   },
 
   addZoneService (domain, id, subdomain, service) {
+    if (subdomain === '') {
+      subdomain = '@'
+    }
     return Api().post('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(subdomain), service)
   },
 

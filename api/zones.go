@@ -105,10 +105,11 @@ func getZone(opts *config.Options, domain *happydns.Domain, zone *happydns.Zone,
 }
 
 func getZoneSubdomain(opts *config.Options, domain *happydns.Domain, zone *happydns.Zone, ps httprouter.Params, body io.Reader) Response {
+	subdomain := strings.TrimSuffix(ps.ByName("subdomain"), "@")
 	return APIResponse{
 		response: map[string]interface{}{
-			"aliases":  zone.Aliases[ps.ByName("subdomain")],
-			"services": zone.Services[ps.ByName("subdomain")],
+			"aliases":  zone.Aliases[subdomain],
+			"services": zone.Services[subdomain],
 		},
 	}
 }
@@ -128,7 +129,7 @@ func addZoneService(opts *config.Options, domain *happydns.Domain, zone *happydn
 		}
 	}
 
-	subdomain := strings.TrimSuffix(strings.TrimSuffix(ps.ByName("subdomain"), "."+domain.DomainName), domain.DomainName)
+	subdomain := strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(ps.ByName("subdomain"), "."+domain.DomainName), "@"), domain.DomainName)
 
 	records := usc.Service.GenRRs(subdomain, usc.Ttl)
 	if len(records) == 0 {
