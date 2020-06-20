@@ -32,6 +32,7 @@
 package api
 
 import (
+	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -39,6 +40,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 
@@ -52,6 +54,7 @@ func init() {
 	router.GET("/api/domains/:domain/zone/:zoneid", apiAuthHandler(zoneHandler(getZone)))
 	router.PATCH("/api/domains/:domain/zone/:zoneid", apiAuthHandler(zoneHandler(updateZoneService)))
 	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain", apiAuthHandler(zoneHandler(getZoneSubdomain)))
+	router.POST("/api/domains/:domain/zone/:zoneid/:subdomain", apiAuthHandler(zoneHandler(addZoneService)))
 	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain/*serviceid", apiAuthHandler(zoneHandler(getZoneService)))
 	router.DELETE("/api/domains/:domain/zone/:zoneid/:subdomain/*serviceid", apiAuthHandler(zoneHandler(deleteZoneService)))
 
@@ -107,6 +110,52 @@ func getZoneSubdomain(opts *config.Options, domain *happydns.Domain, zone *happy
 			"aliases":  zone.Aliases[ps.ByName("subdomain")],
 			"services": zone.Services[ps.ByName("subdomain")],
 		},
+	}
+}
+
+func addZoneService(opts *config.Options, domain *happydns.Domain, zone *happydns.Zone, ps httprouter.Params, body io.Reader) Response {
+	usc := &happydns.ServiceCombined{}
+	err := json.NewDecoder(body).Decode(&usc)
+	if err != nil {
+		return APIErrorResponse{
+			err: fmt.Errorf("Something is wrong in received data: %w", err),
+		}
+	}
+
+	if usc.Service == nil {
+		return APIErrorResponse{
+			err: fmt.Errorf("Unable to parse the given service."),
+		}
+	}
+
+	subdomain := strings.TrimSuffix(strings.TrimSuffix(ps.ByName("subdomain"), "."+domain.DomainName), domain.DomainName)
+
+	records := usc.Service.GenRRs(subdomain, usc.Ttl)
+	if len(records) == 0 {
+		return APIErrorResponse{
+			err: fmt.Errorf("No record can be generated from your service."),
+		}
+	}
+
+	hash := sha1.New()
+	io.WriteString(hash, records[0].String())
+
+	usc.Id = hash.Sum(nil)
+	usc.Domain = subdomain
+	usc.NbResources = usc.Service.GetNbResources()
+	usc.Comment = usc.Service.GenComment(domain.DomainName)
+
+	zone.Services[subdomain] = append(zone.Services[subdomain], usc)
+
+	err = storage.MainStore.UpdateZone(zone)
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	return APIResponse{
+		response: zone,
 	}
 }
 
@@ -172,7 +221,7 @@ func importZone(opts *config.Options, domain *happydns.Domain, body io.Reader) R
 	}
 
 	return APIResponse{
-		response: myZone.Id,
+		response: happydns.ZoneMeta{myZone.Id},
 	}
 }
 

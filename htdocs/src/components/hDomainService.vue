@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <b-list-group v-if="!isLoading">
+  <b-list-group>
     <b-list-group-item button @click="toogleShowDetails()">
       <strong :title="services[service._svctype].description">{{ services[service._svctype].name }}</strong> <span v-if="service._comment" class="text-muted">{{ service._comment }}</span>
       <span v-if="services[service._svctype].comment" class="text-muted">{{ services[service._svctype].comment }}</span>
@@ -50,7 +50,6 @@
 </template>
 
 <script>
-import ServiceSpecsApi from '@/services/ServiceSpecsApi'
 import ZoneApi from '@/services/ZoneApi'
 
 export default {
@@ -69,6 +68,10 @@ export default {
       type: Object,
       required: true
     },
+    services: {
+      type: Object,
+      required: true
+    },
     zoneMeta: {
       type: Object,
       required: true
@@ -77,22 +80,8 @@ export default {
 
   data: function () {
     return {
-      showDetails: false,
-      services: null
+      showDetails: false
     }
-  },
-
-  computed: {
-    isLoading () {
-      return this.services == null
-    }
-  },
-
-  created () {
-    ServiceSpecsApi.getServiceSpecs()
-      .then(
-        (response) => (this.services = response.data)
-      )
   },
 
   methods: {

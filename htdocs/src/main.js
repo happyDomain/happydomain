@@ -66,6 +66,7 @@ import {
   InputGroupPlugin,
   LayoutPlugin,
   ListGroupPlugin,
+  ModalPlugin,
   NavbarPlugin,
   PopoverPlugin,
   SpinnerPlugin,
@@ -93,6 +94,7 @@ Vue.use(FormSelectPlugin)
 Vue.use(LayoutPlugin)
 Vue.use(InputGroupPlugin)
 Vue.use(ListGroupPlugin)
+Vue.use(ModalPlugin)
 Vue.use(NavbarPlugin)
 Vue.use(PopoverPlugin)
 Vue.use(SpinnerPlugin)

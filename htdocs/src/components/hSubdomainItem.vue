@@ -41,7 +41,7 @@
           <b-icon icon="link45deg" />
         </a>
         <b-icon icon="arrow-right" />
-        <span class="text-monospace">{{ services[0].Service.Target }}</span>
+        <span class="text-monospace">{{ zoneServices[0].Service.Target }}</span>
         <b-button type="button" variant="outline-danger" size="sm" class="ml-2" @click="deleteCNAME()">
           <b-icon icon="x-circle" />
           Drop alias
@@ -59,17 +59,17 @@
         <b-badge v-if="aliases.length > 0" v-b-popover.hover.focus="{ customClass: 'text-monospace', html: true, content: aliasPopoverCnt(dn) }" class="ml-2">
           + {{ pluralizeAlias(aliases.length) }}
         </b-badge>
-        <b-button type="button" variant="primary" size="sm" class="ml-2">
+        <b-button type="button" variant="primary" size="sm" class="ml-2" @click="$emit('addNewService', dn)">
           <b-icon icon="plus" />
           Add a service
         </b-button>
-        <b-button type="button" variant="outline-primary" size="sm" class="ml-2">
+        <b-button type="button" variant="outline-primary" size="sm" class="ml-2" @click="$emit('addNewAlias', dn)">
           <b-icon icon="link" />
           Add an alias
         </b-button>
       </h2>
       <div v-show="showResources">
-        <h-domain-service v-for="(svc, idx) in services" :key="idx" :origin="origin" :service="svc" :zone-meta="zoneMeta" @updateMyServices="$emit('updateMyServices', $event)" />
+        <h-domain-service v-for="(svc, idx) in zoneServices" :key="idx" :origin="origin" :service="svc" :services="services" :zone-meta="zoneMeta" @updateMyServices="$emit('updateMyServices', $event)" />
       </div>
     </div>
   </div>
@@ -99,11 +99,15 @@ export default {
       required: true
     },
     services: {
-      type: Array,
+      type: Object,
       required: true
     },
     zoneMeta: {
       type: Object,
+      required: true
+    },
+    zoneServices: {
+      type: Array,
       required: true
     }
   },
@@ -120,12 +124,12 @@ export default {
     },
 
     isCNAME () {
-      return this.services.length === 1 && this.services[0]._svctype === 'svcs.CNAME'
+      return this.zoneServices.length === 1 && this.zoneServices[0]._svctype === 'svcs.CNAME'
     },
 
     aliasPopoverCnt () {
       return this.aliases.map(function (alias) {
-        if (this.services[alias]) {
+        if (alias[-1] !== '.') {
           return '<a href="#' + this.escapeHTML(alias) + '">' + this.escapeHTML(alias) + '</a>'
         } else {
           return this.escapeHTML(alias)
@@ -134,7 +138,7 @@ export default {
     },
 
     deleteCNAME () {
-      ZoneApi.deleteZoneService(this.origin, this.zoneMeta.id, this.services[0])
+      ZoneApi.deleteZoneService(this.origin, this.zoneMeta.id, this.zoneServices[0])
         .then(
           (response) => {
             this.$emit('updateMyServices', response.data)
