@@ -50,6 +50,7 @@ import {
   BIconPersonCheck,
   BIconPersonPlusFill,
   BIconPlus,
+  BIconServer,
   BIconTrash,
   BIconTrashFill,
   BIconXCircle,
@@ -117,6 +118,7 @@ Vue.component('BIconPerson', BIconPerson)
 Vue.component('BIconPersonCheck', BIconPersonCheck)
 Vue.component('BIconPersonPlusFill', BIconPersonPlusFill)
 Vue.component('BIconPlus', BIconPlus)
+Vue.component('BIconServer', BIconServer)
 Vue.component('BIconTrash', BIconTrash)
 Vue.component('BIconTrashFill', BIconTrashFill)
 Vue.component('BIconXCircle', BIconXCircle)

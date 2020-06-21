@@ -33,11 +33,17 @@
 
 <template>
   <div v-if="!isLoading" class="pt-3">
-    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :dn="dn" :origin="domain.domain" :services="services" :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="myServices.aliases[dn]===undefined?[]:myServices.aliases[dn]" :zone-meta="zoneMeta" @updateMyServices="updateMyServices($event)" @addNewService="addNewService($event)" />
-    <b-modal id="modal-addSvc" title="Add a new service" :size="modal && modal.step === 1 ? 'lg' : ''" @ok="handleModalOk">
-      <p class="my-4" v-if="modal && modal.step === 0">Select a new service to add to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:</p>
-      <p class="my-4" v-if="modal && modal.step === 1">Fill the information for the {{ services[modal.svcSelected].name }} at <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:</p>
-      <b-list-group v-if="modal && modal.step == 0">
+    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :dn="dn" :origin="domain.domain" :services="services" :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="myServices.aliases[dn]===undefined?[]:myServices.aliases[dn]" :zone-meta="zoneMeta" @updateMyServices="updateMyServices($event)" @addSubdomain="addSubdomain()" @addNewService="addNewService($event)" />
+    <b-modal id="modal-addSvc" title="Add a new service" :size="modal && modal.step === 2 ? 'lg' : ''" @ok="handleModalOk">
+      <p v-if="modal && modal.step === 0">
+        Add a new subdomain under <span class="text-monospace">{{ domain.domain }}</span>:
+        <b-input-group :append="'.' + domain.domain">
+          <b-input v-model="modal.dn" autofocus />
+        </b-input-group>
+      </p>
+      <p v-if="modal && modal.step === 1">Select a new service to add to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:</p>
+      <p v-if="modal && modal.step === 2">Fill the information for the {{ services[modal.svcSelected].name }} at <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:</p>
+      <b-list-group v-if="modal && modal.step === 1">
         <b-list-group-item v-for="(svc, idx) in services" :key="idx" :active="modal.svcSelected === idx" button @click="modal.svcSelected = idx">
           {{ svc.name }}
           <small class="text-muted">{{ svc.description }}</small>
@@ -46,7 +52,7 @@
           </b-badge>
         </b-list-group-item>
       </b-list-group>
-      <h-resource-value v-else-if="modal && modal.step == 1" v-model="modal.svcData" edit :services="services" :type="modal.svcSelected" />
+      <h-resource-value v-else-if="modal && modal.step === 2" v-model="modal.svcData" edit :services="services" :type="modal.svcSelected" />
     </b-modal>
   </div>
 </template>
@@ -135,6 +141,16 @@ export default {
     addNewService (subdomain) {
       this.modal = {
         dn: subdomain,
+        step: 1,
+        svcData: {},
+        svcSelected: null
+      }
+      this.$bvModal.show('modal-addSvc')
+    },
+
+    addSubdomain () {
+      this.modal = {
+        dn: '',
         step: 0,
         svcData: {},
         svcSelected: null
@@ -154,11 +170,13 @@ export default {
     handleModalOk (bvModalEvt) {
       bvModalEvt.preventDefault()
 
-      if (this.modal.step === 0 && this.modal.svcSelected !== null) {
+      if (this.modal.step === 0 && this.modal.dn !== '') {
         this.modal.step = 1
       } else if (this.modal.step === 1 && this.modal.svcSelected !== null) {
+        this.modal.step = 2
+      } else if (this.modal.step === 2 && this.modal.svcSelected !== null) {
         ZoneApi
-          .addZoneService(this.domain.domain, this.zoneMeta.id, this.modal.dn, {Service: this.modal.svcData, _svctype: this.modal.svcSelected})
+          .addZoneService(this.domain.domain, this.zoneMeta.id, this.modal.dn, { Service: this.modal.svcData, _svctype: this.modal.svcSelected })
           .then(
             (response) => {
               this.myServices = response.data

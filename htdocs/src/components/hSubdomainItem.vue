@@ -67,6 +67,10 @@
           <b-icon icon="link" />
           Add an alias
         </b-button>
+        <b-button v-if="dn === ''" type="button" variant="outline-secondary" size="sm" class="ml-2" @click="$emit('addSubdomain')">
+          <b-icon icon="server" />
+          Add a subdomain
+        </b-button>
       </h2>
       <div v-show="showResources">
         <h-domain-service v-for="(svc, idx) in zoneServices" :key="idx" :origin="origin" :service="svc" :services="services" :zone-meta="zoneMeta" @updateMyServices="$emit('updateMyServices', $event)" />
