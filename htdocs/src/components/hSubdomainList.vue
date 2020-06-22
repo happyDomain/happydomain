@@ -39,24 +39,26 @@
       <template v-slot:modal-title>
         Add a new service to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>
       </template>
-      <p v-if="modal && modal.step === 0">
-        Add a new subdomain under <span class="text-monospace">{{ domain.domain }}</span>:
-        <b-input-group :append="'.' + domain.domain">
-          <b-input v-model="modal.dn" autofocus />
-        </b-input-group>
-      </p>
-      <p v-if="modal && modal.step === 1">Select a new service to add to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:</p>
-      <p v-if="modal && modal.step === 2">Fill the information for the {{ services[modal.svcSelected].name }} at <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:</p>
-      <b-list-group v-if="modal && modal.step === 1">
-        <b-list-group-item v-for="(svc, idx) in services" :key="idx" :active="modal.svcSelected === idx" button @click="modal.svcSelected = idx">
-          {{ svc.name }}
-          <small class="text-muted">{{ svc.description }}</small>
-          <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
-            {{ categorie }}
-          </b-badge>
-        </b-list-group-item>
-      </b-list-group>
-      <h-resource-value v-else-if="modal && modal.step === 2" v-model="modal.svcData" edit :services="services" :type="modal.svcSelected" />
+      <form v-if="modal" @submit.stop.prevent="handleModalSvcOk">
+        <p v-if="modal.step === 0">
+          Add a new subdomain under <span class="text-monospace">{{ domain.domain }}</span>:
+          <b-input-group :append="'.' + domain.domain">
+            <b-input v-model="modal.dn" autofocus />
+          </b-input-group>
+        </p>
+        <p v-else-if="modal.step === 1">Select a new service to add to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:</p>
+        <p v-else-if="modal.step === 2">Fill the information for the {{ services[modal.svcSelected].name }} at <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:</p>
+        <b-list-group v-if="modal.step === 1">
+          <b-list-group-item v-for="(svc, idx) in services" :key="idx" :active="modal.svcSelected === idx" button @click="modal.svcSelected = idx">
+            {{ svc.name }}
+            <small class="text-muted">{{ svc.description }}</small>
+            <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
+              {{ categorie }}
+            </b-badge>
+          </b-list-group-item>
+        </b-list-group>
+        <h-resource-value v-else-if="modal.step === 2" v-model="modal.svcData" edit :services="services" :type="modal.svcSelected" />
+      </form>
     </b-modal>
 
     <b-modal id="modal-addAlias" title="Add a new alias" @ok="handleModalAliasSubmit">
