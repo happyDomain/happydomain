@@ -108,20 +108,8 @@ func specialalias_analyze(a *Analyzer) error {
 func alias_analyze(a *Analyzer) error {
 	for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME}) {
 		if cname, ok := record.(*dns.CNAME); ok {
-			var newrr happydns.Service
-
-			if _, ok := a.services[cname.Target]; ok {
-				a.aliases[cname.Target] = append(a.aliases[cname.Target], record.Header().Name)
-				// Don't add extra domain in list if CNAME is the only one listed for it
-				if _, ok := a.services[record.Header().Name]; ok {
-					newrr = &CNAME{
-						Target: cname.Target,
-					}
-				}
-			} else {
-				newrr = &CNAME{
-					Target: cname.Target,
-				}
+			newrr := &CNAME{
+				Target: strings.TrimSuffix(cname.Target, "."+a.origin),
 			}
 
 			a.useRR(record, cname.Header().Name, newrr)

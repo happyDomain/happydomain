@@ -33,7 +33,7 @@
 
 <template>
   <div v-if="!isLoading" class="pt-3">
-    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :dn="dn" :origin="domain.domain" :services="services" :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="myServices.aliases[dn]===undefined?[]:myServices.aliases[dn]" :zone-meta="zoneMeta" @updateMyServices="updateMyServices($event)" @addSubdomain="addSubdomain()" @addNewAlias="addNewAlias($event)" @addNewService="addNewService($event)" />
+    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :dn="dn" :origin="domain.domain" :services="services" :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="aliases[dn]===undefined?[]:aliases[dn]" :zone-meta="zoneMeta" @updateMyServices="updateMyServices($event)" @addSubdomain="addSubdomain()" @addNewAlias="addNewAlias($event)" @addNewService="addNewService($event)" />
 
     <b-modal id="modal-addSvc" :size="modal && modal.step === 2 ? 'lg' : ''" @ok="handleModalSvcOk">
       <template v-slot:modal-title>
@@ -105,6 +105,23 @@ export default {
   },
 
   computed: {
+    aliases () {
+      var ret = {}
+
+      for (const dn in this.myServices.services) {
+        this.myServices.services[dn].forEach(function (svc) {
+          if (svc._svctype === 'svcs.CNAME') {
+            if (!ret[svc.Service.Target]) {
+              ret[svc.Service.Target] = []
+            }
+            ret[svc.Service.Target].push(dn)
+          }
+        })
+      }
+
+      return ret
+    },
+
     isLoading () {
       return this.myServices == null && this.zoneMeta === undefined && this.services == null
     },
