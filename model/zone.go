@@ -49,7 +49,6 @@ type Zone struct {
 	CommitMsg    *string                       `json:"commit_message,omitempty"`
 	CommitDate   *time.Time                    `json:"commit_date,omitempty"`
 	Published    *time.Time                    `json:"published,omitempty"`
-	Aliases      map[string][]string           `json:"aliases"`
 	Services     map[string][]*ServiceCombined `json:"services"`
 }
 

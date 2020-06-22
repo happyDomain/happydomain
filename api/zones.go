@@ -108,7 +108,6 @@ func getZoneSubdomain(opts *config.Options, domain *happydns.Domain, zone *happy
 	subdomain := strings.TrimSuffix(ps.ByName("subdomain"), "@")
 	return APIResponse{
 		response: map[string]interface{}{
-			"aliases":  zone.Aliases[subdomain],
 			"services": zone.Services[subdomain],
 		},
 	}
@@ -188,7 +187,7 @@ func importZone(opts *config.Options, domain *happydns.Domain, body io.Reader) R
 		}
 	}
 
-	services, aliases, defaultTTL, err := svcs.AnalyzeZone(domain.DomainName, zone)
+	services, defaultTTL, err := svcs.AnalyzeZone(domain.DomainName, zone)
 	if err != nil {
 		return APIErrorResponse{
 			err: err,
@@ -198,7 +197,6 @@ func importZone(opts *config.Options, domain *happydns.Domain, body io.Reader) R
 	myZone := &happydns.Zone{
 		IdAuthor:   domain.IdUser,
 		DefaultTTL: defaultTTL,
-		Aliases:    aliases,
 		Services:   services,
 	}
 

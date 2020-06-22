@@ -47,7 +47,6 @@ type Analyzer struct {
 	origin     string
 	zone       []dns.RR
 	services   map[string][]*happydns.ServiceCombined
-	aliases    map[string][]string
 	defaultTTL uint32
 }
 
@@ -145,14 +144,13 @@ func getMostUsedTTL(zone []dns.RR) uint32 {
 	return max
 }
 
-func AnalyzeZone(origin string, zone []dns.RR) (svcs map[string][]*happydns.ServiceCombined, aliases map[string][]string, defaultTTL uint32, err error) {
+func AnalyzeZone(origin string, zone []dns.RR) (svcs map[string][]*happydns.ServiceCombined, defaultTTL uint32, err error) {
 	defaultTTL = getMostUsedTTL(zone)
 
 	a := Analyzer{
 		origin:     origin,
 		zone:       zone,
 		services:   map[string][]*happydns.ServiceCombined{},
-		aliases:    map[string][]string{},
 		defaultTTL: defaultTTL,
 	}
 
@@ -194,8 +192,6 @@ func AnalyzeZone(origin string, zone []dns.RR) (svcs map[string][]*happydns.Serv
 			Comment:     orphan.GenComment(a.origin),
 		}})
 	}
-
-	aliases = a.aliases
 
 	return
 }
