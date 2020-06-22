@@ -33,8 +33,12 @@
 
 <template>
   <div v-if="!isLoading" class="pt-3">
-    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :dn="dn" :origin="domain.domain" :services="services" :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="myServices.aliases[dn]===undefined?[]:myServices.aliases[dn]" :zone-meta="zoneMeta" @updateMyServices="updateMyServices($event)" @addSubdomain="addSubdomain()" @addNewService="addNewService($event)" />
-    <b-modal id="modal-addSvc" title="Add a new service" :size="modal && modal.step === 2 ? 'lg' : ''" @ok="handleModalOk">
+    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :dn="dn" :origin="domain.domain" :services="services" :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="myServices.aliases[dn]===undefined?[]:myServices.aliases[dn]" :zone-meta="zoneMeta" @updateMyServices="updateMyServices($event)" @addSubdomain="addSubdomain()" @addNewAlias="addNewAlias($event)" @addNewService="addNewService($event)" />
+
+    <b-modal id="modal-addSvc" :size="modal && modal.step === 2 ? 'lg' : ''" @ok="handleModalSvcOk">
+      <template v-slot:modal-title>
+        Add a new service to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>
+      </template>
       <p v-if="modal && modal.step === 0">
         Add a new subdomain under <span class="text-monospace">{{ domain.domain }}</span>:
         <b-input-group :append="'.' + domain.domain">
@@ -53,6 +57,15 @@
         </b-list-group-item>
       </b-list-group>
       <h-resource-value v-else-if="modal && modal.step === 2" v-model="modal.svcData" edit :services="services" :type="modal.svcSelected" />
+    </b-modal>
+
+    <b-modal id="modal-addAlias" title="Add a new alias" @ok="handleModalAliasSubmit">
+      <form v-if="modal && modal.dn != null" @submit.stop.prevent="handleModalAliasSubmit">
+        Add an alias pointing to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
+        <b-input-group :append="'.' + domain.domain">
+          <b-input v-model="modal.alias" autofocus />
+        </b-input-group>
+      </form>
     </b-modal>
   </div>
 </template>
@@ -148,6 +161,14 @@ export default {
       this.$bvModal.show('modal-addSvc')
     },
 
+    addNewAlias (subdomain) {
+      this.modal = {
+        dn: subdomain,
+        alias: ''
+      }
+      this.$bvModal.show('modal-addAlias')
+    },
+
     addSubdomain () {
       this.modal = {
         dn: '',
@@ -167,7 +188,7 @@ export default {
       }
     },
 
-    handleModalOk (bvModalEvt) {
+    handleModalSvcOk (bvModalEvt) {
       bvModalEvt.preventDefault()
 
       if (this.modal.step === 0 && this.modal.dn !== '') {
@@ -182,6 +203,33 @@ export default {
               this.myServices = response.data
               this.$nextTick(() => {
                 this.$bvModal.hide('modal-addSvc')
+              })
+            },
+            (error) => {
+              this.$root.$bvToast.toast(
+                error.response.data.errmsg, {
+                  title: 'Unable to add the new service',
+                  autoHideDelay: 5000,
+                  variant: 'danger',
+                  toaster: 'b-toaster-content-right'
+                }
+              )
+            }
+          )
+      }
+    },
+
+    handleModalAliasSubmit (bvModalEvt) {
+      bvModalEvt.preventDefault()
+
+      if (this.modal.alias) {
+        ZoneApi
+          .addZoneService(this.domain.domain, this.zoneMeta.id, this.modal.alias, { Service: { target: this.modal.dn }, _svctype: 'svcs.CNAME' })
+          .then(
+            (response) => {
+              this.myServices = response.data
+              this.$nextTick(() => {
+                this.$bvModal.hide('modal-addAlias')
               })
             },
             (error) => {
