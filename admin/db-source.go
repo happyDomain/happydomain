@@ -52,6 +52,8 @@ func init() {
 	router.GET("/api/users/:userid/sources/:source", api.ApiHandler(userHandler(sourceHandler(getUserSource))))
 	router.PUT("/api/users/:userid/sources/:source", api.ApiHandler(userHandler(sourceHandler(updateUserSource))))
 	router.DELETE("/api/users/:userid/sources/:source", api.ApiHandler(userHandler(sourceHandler(deleteUserSource))))
+
+	router.DELETE("/api/sources", api.ApiHandler(clearSources))
 }
 
 func getUserSources(_ *config.Options, user *happydns.User, _ httprouter.Params, _ io.Reader) api.Response {
@@ -100,4 +102,8 @@ func updateUserSource(_ *config.Options, source *happydns.SourceCombined, _ http
 
 func deleteUserSource(_ *config.Options, source *happydns.SourceCombined, _ httprouter.Params, _ io.Reader) api.Response {
 	return api.NewAPIResponse(true, storage.MainStore.DeleteSource(&source.SourceType))
+}
+
+func clearSources(_ *config.Options, _ httprouter.Params, _ io.Reader) api.Response {
+	return api.NewAPIResponse(true, storage.MainStore.ClearSources())
 }

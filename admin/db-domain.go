@@ -52,7 +52,9 @@ func init() {
 
 	router.GET("/api/users/:userid/domains/:domain", api.ApiHandler(userHandler(domainHandler(getUserDomain))))
 	router.PUT("/api/users/:userid/domains/:domain", api.ApiHandler(userHandler(domainHandler(updateUserDomain))))
-	router.DELETE("/api/users/:userid/domains/:domain", api.ApiHandler(userHandler(domainHandler(deleteUserDomain))))
+	router.DELETE("/api/users/:userid/domains/:domain", api.ApiHandler(userHandler(deleteUserDomain)))
+
+	router.DELETE("/api/domains", api.ApiHandler(clearDomains))
 }
 
 func getUserDomains(_ *config.Options, user *happydns.User, _ httprouter.Params, _ io.Reader) api.Response {
@@ -113,6 +115,19 @@ func updateUserDomain(_ *config.Options, domain *happydns.Domain, _ httprouter.P
 	return api.NewAPIResponse(ud, storage.MainStore.UpdateDomain(ud))
 }
 
-func deleteUserDomain(_ *config.Options, domain *happydns.Domain, _ httprouter.Params, _ io.Reader) api.Response {
-	return api.NewAPIResponse(true, storage.MainStore.DeleteDomain(domain))
+func deleteUserDomain(_ *config.Options, user *happydns.User, ps httprouter.Params, _ io.Reader) api.Response {
+	domainid, err := strconv.ParseInt(ps.ByName("domain"), 10, 64)
+	if err != nil {
+		domain, err := storage.MainStore.GetDomainByDN(user, ps.ByName("domain"))
+		if err != nil {
+			return api.NewAPIErrorResponse(http.StatusNotFound, err)
+		} else {
+			domainid = domain.Id
+		}
+	}
+	return api.NewAPIResponse(true, storage.MainStore.DeleteDomain(&happydns.Domain{Id: domainid}))
+}
+
+func clearDomains(_ *config.Options, _ httprouter.Params, _ io.Reader) api.Response {
+	return api.NewAPIResponse(true, storage.MainStore.ClearDomains())
 }
