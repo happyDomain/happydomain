@@ -110,11 +110,11 @@ func getSourceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Respo
 		}
 	}
 
-	srcType := reflect.Indirect(reflect.ValueOf(src)).Type()
+	srcMeta := reflect.Indirect(reflect.ValueOf(src)).Type()
 
 	fields := []source_field{}
-	for i := 0; i < srcType.NumField(); i += 1 {
-		jsonTag := srcType.Field(i).Tag.Get("json")
+	for i := 0; i < srcMeta.NumField(); i += 1 {
+		jsonTag := srcMeta.Field(i).Tag.Get("json")
 		jsonTuples := strings.Split(jsonTag, ",")
 
 		f := source_field{}
@@ -122,10 +122,10 @@ func getSourceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Respo
 		if len(jsonTuples) > 0 && len(jsonTuples[0]) > 0 {
 			f.Id = jsonTuples[0]
 		} else {
-			f.Id = srcType.Field(i).Name
+			f.Id = srcMeta.Field(i).Name
 		}
 
-		tag := srcType.Field(i).Tag.Get("happydns")
+		tag := srcMeta.Field(i).Tag.Get("happydns")
 		tuples := strings.Split(tag, ",")
 
 		for _, t := range tuples {

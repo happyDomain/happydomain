@@ -53,7 +53,7 @@ func (d *Domain) NormalizedNSServer() string {
 	}
 }
 
-func NewDomain(u *User, st *SourceType, dn string) (d *Domain) {
+func NewDomain(u *User, st *SourceMeta, dn string) (d *Domain) {
 	d = &Domain{
 		IdUser:     u.Id,
 		IdSource:   st.Id,

@@ -57,7 +57,7 @@ func init() {
 }
 
 func getUserSources(_ *config.Options, user *happydns.User, _ httprouter.Params, _ io.Reader) api.Response {
-	return api.NewAPIResponse(storage.MainStore.GetSourceTypes(user))
+	return api.NewAPIResponse(storage.MainStore.GetSourceMetas(user))
 }
 
 func newUserSource(_ *config.Options, user *happydns.User, _ httprouter.Params, body io.Reader) api.Response {
@@ -101,7 +101,7 @@ func updateUserSource(_ *config.Options, source *happydns.SourceCombined, _ http
 }
 
 func deleteUserSource(_ *config.Options, source *happydns.SourceCombined, _ httprouter.Params, _ io.Reader) api.Response {
-	return api.NewAPIResponse(true, storage.MainStore.DeleteSource(&source.SourceType))
+	return api.NewAPIResponse(true, storage.MainStore.DeleteSource(&source.SourceMeta))
 }
 
 func clearSources(_ *config.Options, _ httprouter.Params, _ io.Reader) api.Response {
