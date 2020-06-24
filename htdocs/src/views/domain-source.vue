@@ -105,6 +105,9 @@ export default {
 
   methods: {
     updDomain () {
+      if (this.domain === undefined || this.domain.id_source === undefined) {
+        return
+      }
       axios
         .get('/api/sources/' + encodeURIComponent(this.domain.id_source))
         .then(
