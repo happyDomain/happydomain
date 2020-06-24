@@ -37,6 +37,7 @@ import (
 
 type Storage interface {
 	DoMigration() error
+	Tidy() error
 	Close() error
 
 	GetDomains(u *happydns.User) (happydns.Domains, error)

@@ -33,6 +33,7 @@ package database
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 
 	"github.com/syndtr/goleveldb/leveldb"
@@ -41,6 +42,12 @@ import (
 	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/sources"
 )
+
+func (s *LevelDBStorage) getSourceType(id []byte) (srcType *happydns.SourceType, err error) {
+	srcType = &happydns.SourceType{}
+	err = decodeData(id, srcType)
+	return
+}
 
 func (s *LevelDBStorage) GetSourceTypes(u *happydns.User) (srcs []happydns.SourceType, err error) {
 	iter := s.search("source-")
@@ -138,6 +145,46 @@ func (s *LevelDBStorage) ClearSources() error {
 
 	for iter.Next() {
 		err = tx.Delete(iter.Key(), nil)
+		if err != nil {
+			tx.Discard()
+			return err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		tx.Discard()
+		return err
+	}
+
+	return nil
+}
+
+func (s *LevelDBStorage) TidySources() error {
+	tx, err := s.db.OpenTransaction()
+	if err != nil {
+		return err
+	}
+
+	iter := tx.NewIterator(util.BytesPrefix([]byte("source-")), nil)
+	defer iter.Release()
+
+	for iter.Next() {
+		srcType, err := s.getSourceType(iter.Key())
+
+		if err != nil {
+			// Drop unreadable sources
+			log.Printf("Deleting unreadable source (%w): %v\n", err, srcType)
+			err = tx.Delete(iter.Key(), nil)
+		} else {
+			_, err = s.GetUser(srcType.OwnerId)
+			if err == leveldb.ErrNotFound {
+				// Drop sources of unexistant users
+				log.Printf("Deleting orphan source (user %d not found): %v\n", srcType.OwnerId, srcType)
+				err = tx.Delete(iter.Key(), nil)
+			}
+		}
+
 		if err != nil {
 			tx.Discard()
 			return err

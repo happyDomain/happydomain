@@ -33,6 +33,7 @@ package database
 
 import (
 	"fmt"
+	"log"
 
 	"git.happydns.org/happydns/model"
 
@@ -60,9 +61,18 @@ func (s *LevelDBStorage) GetDomains(u *happydns.User) (domains happydns.Domains,
 	return
 }
 
-func (s *LevelDBStorage) GetDomain(u *happydns.User, id int64) (z *happydns.Domain, err error) {
+func (s *LevelDBStorage) getDomain(id string) (z *happydns.Domain, err error) {
 	z = &happydns.Domain{}
-	err = s.get(fmt.Sprintf("domain-%d", id), &z)
+	err = s.get(id, z)
+	return
+}
+
+func (s *LevelDBStorage) GetDomain(u *happydns.User, id int64) (z *happydns.Domain, err error) {
+	z, err = s.getDomain(fmt.Sprintf("domain-%d", id))
+
+	if err != nil {
+		return
+	}
 
 	if z.IdUser != u.Id {
 		z = nil
@@ -147,6 +157,46 @@ func (s *LevelDBStorage) ClearDomains() error {
 
 	for iter.Next() {
 		err = tx.Delete(iter.Key(), nil)
+		if err != nil {
+			tx.Discard()
+			return err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		tx.Discard()
+		return err
+	}
+
+	return nil
+}
+
+func (s *LevelDBStorage) TidyDomains() error {
+	tx, err := s.db.OpenTransaction()
+	if err != nil {
+		return err
+	}
+
+	iter := tx.NewIterator(util.BytesPrefix([]byte("domain-")), nil)
+	defer iter.Release()
+
+	for iter.Next() {
+		domain, err := s.getDomain(string(iter.Key()))
+
+		if err == nil {
+			_, err = s.GetUser(domain.IdUser)
+			if err == leveldb.ErrNotFound {
+				// Drop domain of unexistant users
+				err = tx.Delete(iter.Key(), nil)
+				log.Printf("Deleting orphan domain (user %d not found): %v\n", domain.IdUser, domain)
+			}
+		} else {
+			// Drop domain of unexistant users
+			log.Printf("Deleting unreadable domain (%w): %v\n", err, domain)
+			err = tx.Delete(iter.Key(), nil)
+		}
+
 		if err != nil {
 			tx.Discard()
 			return err

@@ -59,6 +59,15 @@ func (s *LevelDBStorage) DoMigration() error {
 	return nil
 }
 
+func (s *LevelDBStorage) Tidy() error {
+	for _, tidy := range []func() error{s.TidySessions, s.TidySources, s.TidyDomains, s.TidyZones} {
+		if err := tidy(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *LevelDBStorage) Close() error {
 	return s.db.Close()
 }
