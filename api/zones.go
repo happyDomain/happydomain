@@ -41,6 +41,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 
@@ -74,7 +75,7 @@ func zoneHandler(f func(*config.Options, *happydns.Domain, *happydns.Zone, httpr
 			// Check that the zoneid exists in the domain history
 			found := false
 			for _, v := range domain.ZoneHistory {
-				if v.Id == zoneid {
+				if v == zoneid {
 					found = true
 					break
 				}
@@ -195,9 +196,12 @@ func importZone(opts *config.Options, domain *happydns.Domain, body io.Reader) R
 	}
 
 	myZone := &happydns.Zone{
-		IdAuthor:   domain.IdUser,
-		DefaultTTL: defaultTTL,
-		Services:   services,
+		ZoneMeta: happydns.ZoneMeta{
+			IdAuthor:     domain.IdUser,
+			DefaultTTL:   defaultTTL,
+			LastModified: time.Now(),
+		},
+		Services: services,
 	}
 
 	err = storage.MainStore.CreateZone(myZone)
@@ -208,9 +212,7 @@ func importZone(opts *config.Options, domain *happydns.Domain, body io.Reader) R
 	}
 
 	domain.ZoneHistory = append(
-		[]happydns.ZoneMeta{
-			happydns.ZoneMeta{myZone.Id},
-		}, domain.ZoneHistory...)
+		[]int64{myZone.Id}, domain.ZoneHistory...)
 
 	err = storage.MainStore.UpdateDomain(domain)
 	if err != nil {
@@ -220,7 +222,7 @@ func importZone(opts *config.Options, domain *happydns.Domain, body io.Reader) R
 	}
 
 	return APIResponse{
-		response: happydns.ZoneMeta{myZone.Id},
+		response: &myZone.ZoneMeta,
 	}
 }
 
@@ -239,6 +241,8 @@ func updateZoneService(opts *config.Options, domain *happydns.Domain, zone *happ
 			err: err,
 		}
 	}
+
+	zone.LastModified = time.Now()
 
 	err = storage.MainStore.UpdateZone(zone)
 	if err != nil {
@@ -266,6 +270,8 @@ func deleteZoneService(opts *config.Options, domain *happydns.Domain, zone *happ
 			err: err,
 		}
 	}
+
+	zone.LastModified = time.Now()
 
 	err = storage.MainStore.UpdateZone(zone)
 	if err != nil {

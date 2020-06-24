@@ -36,11 +36,11 @@ import (
 )
 
 type Domain struct {
-	Id          int64      `json:"id"`
-	IdUser      int64      `json:"id_owner"`
-	IdSource    int64      `json:"id_source"`
-	DomainName  string     `json:"domain"`
-	ZoneHistory []ZoneMeta `json:"zone_history"`
+	Id          int64   `json:"id"`
+	IdUser      int64   `json:"id_owner"`
+	IdSource    int64   `json:"id_source"`
+	DomainName  string  `json:"domain"`
+	ZoneHistory []int64 `json:"zone_history"`
 }
 
 type Domains []*Domain

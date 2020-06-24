@@ -75,6 +75,7 @@ type Storage interface {
 	ClearUsers() error
 
 	GetZone(id int64) (*happydns.Zone, error)
+	GetZoneMeta(id int64) (*happydns.ZoneMeta, error)
 	CreateZone(zone *happydns.Zone) error
 	UpdateZone(zone *happydns.Zone) error
 	DeleteZone(zone *happydns.Zone) error
