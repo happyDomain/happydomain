@@ -52,7 +52,7 @@ func init() {
 
 	router.GET("/api/sources/:sid", apiAuthHandler(sourceHandler(getSource)))
 	router.PUT("/api/sources/:sid", apiAuthHandler(sourceHandler(updateSource)))
-	router.DELETE("/api/sources/:sid", apiAuthHandler(sourceHandler(deleteSource)))
+	router.DELETE("/api/sources/:sid", apiAuthHandler(sourceTypeHandler(deleteSource)))
 
 	router.GET("/api/sources/:sid/domains", apiAuthHandler(sourceHandler(getDomainsHostedBySource)))
 }
@@ -69,6 +69,18 @@ func getSources(_ *config.Options, u *happydns.User, p httprouter.Params, body i
 	} else {
 		return APIResponse{
 			response: []happydns.Source{},
+		}
+	}
+}
+
+func sourceTypeHandler(f func(*config.Options, *happydns.SourceType, *happydns.User, io.Reader) Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) Response {
+	return func(opts *config.Options, u *happydns.User, ps httprouter.Params, body io.Reader) Response {
+		if sid, err := strconv.ParseInt(string(ps.ByName("sid")), 10, 64); err != nil {
+			return APIErrorResponse{err: err}
+		} else if srcType, err := storage.MainStore.GetSourceType(u, sid); err != nil {
+			return APIErrorResponse{err: err}
+		} else {
+			return f(opts, srcType, u, body)
 		}
 	}
 }
@@ -167,8 +179,8 @@ func updateSource(_ *config.Options, s *happydns.SourceCombined, u *happydns.Use
 	}
 }
 
-func deleteSource(_ *config.Options, s *happydns.SourceCombined, u *happydns.User, body io.Reader) Response {
-	if err := storage.MainStore.DeleteSource(&s.SourceType); err != nil {
+func deleteSource(_ *config.Options, st *happydns.SourceType, u *happydns.User, body io.Reader) Response {
+	if err := storage.MainStore.DeleteSource(st); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
