@@ -70,6 +70,27 @@ func (s *LevelDBStorage) GetSourceTypes(u *happydns.User) (srcs []happydns.Sourc
 	return
 }
 
+func (s *LevelDBStorage) GetSourceType(u *happydns.User, id int64) (srcType *happydns.SourceType, err error) {
+	var v []byte
+	v, err = s.db.Get([]byte(fmt.Sprintf("source-%d", id)), nil)
+	if err != nil {
+		return
+	}
+
+	srcType = new(happydns.SourceType)
+	err = decodeData(v, &srcType)
+	if err != nil {
+		return
+	}
+
+	if srcType.OwnerId != u.Id {
+		srcType = nil
+		err = leveldb.ErrNotFound
+	}
+
+	return
+}
+
 func (s *LevelDBStorage) GetSource(u *happydns.User, id int64) (src *happydns.SourceCombined, err error) {
 	var v []byte
 	v, err = s.db.Get([]byte(fmt.Sprintf("source-%d", id)), nil)

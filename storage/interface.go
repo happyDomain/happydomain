@@ -58,6 +58,7 @@ type Storage interface {
 
 	GetSourceTypes(u *happydns.User) ([]happydns.SourceType, error)
 	GetSource(u *happydns.User, id int64) (*happydns.SourceCombined, error)
+	GetSourceType(u *happydns.User, id int64) (*happydns.SourceType, error)
 	CreateSource(u *happydns.User, s happydns.Source, comment string) (*happydns.SourceCombined, error)
 	UpdateSource(s *happydns.SourceCombined) error
 	UpdateSourceOwner(s *happydns.SourceCombined, newOwner *happydns.User) error
