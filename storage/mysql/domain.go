@@ -74,7 +74,7 @@ func (s *MySQLStorage) DomainExists(dn string) bool {
 	return err == nil && z == 1
 }
 
-func (s *MySQLStorage) CreateDomain(u *happydns.User, src happydns.SourceType, z *happydns.Domain) error {
+func (s *MySQLStorage) CreateDomain(u *happydns.User, src happydns.SourceMeta, z *happydns.Domain) error {
 	if res, err := s.db.Exec("INSERT INTO domains (id_user, id_source, domain) VALUES (?, ?, ?)", u.Id, src.Id, z.DomainName); err != nil {
 		return err
 	} else if z.Id, err = res.LastInsertId(); err != nil {

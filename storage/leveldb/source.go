@@ -43,48 +43,48 @@ import (
 	"git.happydns.org/happydns/sources"
 )
 
-func (s *LevelDBStorage) getSourceType(id []byte) (srcType *happydns.SourceType, err error) {
-	srcType = &happydns.SourceType{}
-	err = decodeData(id, srcType)
+func (s *LevelDBStorage) getSourceMeta(id []byte) (srcMeta *happydns.SourceMeta, err error) {
+	srcMeta = &happydns.SourceMeta{}
+	err = decodeData(id, srcMeta)
 	return
 }
 
-func (s *LevelDBStorage) GetSourceTypes(u *happydns.User) (srcs []happydns.SourceType, err error) {
+func (s *LevelDBStorage) GetSourceMetas(u *happydns.User) (srcs []happydns.SourceMeta, err error) {
 	iter := s.search("source-")
 	defer iter.Release()
 
 	for iter.Next() {
-		var srcType happydns.SourceType
-		err = decodeData(iter.Value(), &srcType)
+		var srcMeta happydns.SourceMeta
+		err = decodeData(iter.Value(), &srcMeta)
 		if err != nil {
 			return
 		}
 
-		if srcType.OwnerId != u.Id {
+		if srcMeta.OwnerId != u.Id {
 			continue
 		}
 
-		srcs = append(srcs, srcType)
+		srcs = append(srcs, srcMeta)
 	}
 
 	return
 }
 
-func (s *LevelDBStorage) GetSourceType(u *happydns.User, id int64) (srcType *happydns.SourceType, err error) {
+func (s *LevelDBStorage) GetSourceMeta(u *happydns.User, id int64) (srcMeta *happydns.SourceMeta, err error) {
 	var v []byte
 	v, err = s.db.Get([]byte(fmt.Sprintf("source-%d", id)), nil)
 	if err != nil {
 		return
 	}
 
-	srcType = new(happydns.SourceType)
-	err = decodeData(v, &srcType)
+	srcMeta = new(happydns.SourceMeta)
+	err = decodeData(v, &srcMeta)
 	if err != nil {
 		return
 	}
 
-	if srcType.OwnerId != u.Id {
-		srcType = nil
+	if srcMeta.OwnerId != u.Id {
+		srcMeta = nil
 		err = leveldb.ErrNotFound
 	}
 
@@ -98,23 +98,23 @@ func (s *LevelDBStorage) GetSource(u *happydns.User, id int64) (src *happydns.So
 		return
 	}
 
-	var srcType happydns.SourceType
-	err = decodeData(v, &srcType)
+	var srcMeta happydns.SourceMeta
+	err = decodeData(v, &srcMeta)
 	if err != nil {
 		return
 	}
 
-	if srcType.OwnerId != u.Id {
+	if srcMeta.OwnerId != u.Id {
 		src = nil
 		err = leveldb.ErrNotFound
 	}
 
 	var tsrc happydns.Source
-	tsrc, err = sources.FindSource(srcType.Type)
+	tsrc, err = sources.FindSource(srcMeta.Type)
 
 	src = &happydns.SourceCombined{
 		tsrc,
-		srcType,
+		srcMeta,
 	}
 
 	err = decodeData(v, src)
@@ -132,7 +132,7 @@ func (s *LevelDBStorage) CreateSource(u *happydns.User, src happydns.Source, com
 
 	st := &happydns.SourceCombined{
 		src,
-		happydns.SourceType{
+		happydns.SourceMeta{
 			Type:    sType.PkgPath() + "/" + sType.Name(),
 			Id:      id,
 			OwnerId: u.Id,
@@ -151,7 +151,7 @@ func (s *LevelDBStorage) UpdateSourceOwner(src *happydns.SourceCombined, newOwne
 	return s.UpdateSource(src)
 }
 
-func (s *LevelDBStorage) DeleteSource(src *happydns.SourceType) error {
+func (s *LevelDBStorage) DeleteSource(src *happydns.SourceMeta) error {
 	return s.delete(fmt.Sprintf("source-%d", src.Id))
 }
 
@@ -191,17 +191,17 @@ func (s *LevelDBStorage) TidySources() error {
 	defer iter.Release()
 
 	for iter.Next() {
-		srcType, err := s.getSourceType(iter.Key())
+		srcMeta, err := s.getSourceMeta(iter.Key())
 
 		if err != nil {
 			// Drop unreadable sources
-			log.Printf("Deleting unreadable source (%w): %v\n", err, srcType)
+			log.Printf("Deleting unreadable source (%w): %v\n", err, srcMeta)
 			err = tx.Delete(iter.Key(), nil)
 		} else {
-			_, err = s.GetUser(srcType.OwnerId)
+			_, err = s.GetUser(srcMeta.OwnerId)
 			if err == leveldb.ErrNotFound {
 				// Drop sources of unexistant users
-				log.Printf("Deleting orphan source (user %d not found): %v\n", srcType.OwnerId, srcType)
+				log.Printf("Deleting orphan source (user %d not found): %v\n", srcMeta.OwnerId, srcMeta)
 				err = tx.Delete(iter.Key(), nil)
 			}
 		}

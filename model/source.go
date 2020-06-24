@@ -43,7 +43,7 @@ type Source interface {
 	DeleteRR(*Domain, dns.RR) error
 }
 
-type SourceType struct {
+type SourceMeta struct {
 	Type    string `json:"_srctype"`
 	Id      int64  `json:"_id"`
 	OwnerId int64  `json:"_ownerid"`
@@ -52,5 +52,5 @@ type SourceType struct {
 
 type SourceCombined struct {
 	Source
-	SourceType
+	SourceMeta
 }
