@@ -63,6 +63,8 @@ func init() {
 	router.POST("/api/users/:userid/send_validation_email", api.ApiHandler(userHandler(sendValidateUserEmail)))
 	router.POST("/api/users/:userid/validation_link", api.ApiHandler(userHandler(emailValidationLink)))
 	router.POST("/api/users/:userid/validate_email", api.ApiHandler(userHandler(validateEmail)))
+
+	router.POST("/api/tidy", api.ApiHandler(tidyDB))
 }
 
 func getUsers(_ *config.Options, _ httprouter.Params, _ io.Reader) api.Response {
@@ -170,4 +172,8 @@ func validateEmail(_ *config.Options, user *happydns.User, _ httprouter.Params, 
 	now := time.Now()
 	user.EmailValidated = &now
 	return api.NewAPIResponse(user, storage.MainStore.UpdateUser(user))
+}
+
+func tidyDB(_ *config.Options, _ httprouter.Params, _ io.Reader) api.Response {
+	return api.NewAPIResponse(true, storage.MainStore.Tidy())
 }

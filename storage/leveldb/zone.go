@@ -33,6 +33,9 @@ package database
 
 import (
 	"fmt"
+	"log"
+	"strconv"
+	"strings"
 
 	"git.happydns.org/happydns/model"
 
@@ -42,6 +45,17 @@ import (
 func (s *LevelDBStorage) GetZone(id int64) (z *happydns.Zone, err error) {
 	z = &happydns.Zone{}
 	err = s.get(fmt.Sprintf("domain.zone-%d", id), &z)
+	return
+}
+
+func (s *LevelDBStorage) getZoneMeta(id string) (z *happydns.ZoneMeta, err error) {
+	z = &happydns.ZoneMeta{}
+	err = s.get(id, z)
+	return
+}
+
+func (s *LevelDBStorage) GetZoneMeta(id int64) (z *happydns.ZoneMeta, err error) {
+	z, err = s.getZoneMeta(fmt.Sprintf("domain.zone-%d", id))
 	return
 }
 
@@ -74,6 +88,66 @@ func (s *LevelDBStorage) ClearZones() error {
 
 	for iter.Next() {
 		err = tx.Delete(iter.Key(), nil)
+		if err != nil {
+			tx.Discard()
+			return err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		tx.Discard()
+		return err
+	}
+
+	return nil
+}
+
+func (s *LevelDBStorage) TidyZones() error {
+	tx, err := s.db.OpenTransaction()
+	if err != nil {
+		return err
+	}
+
+	iter := tx.NewIterator(util.BytesPrefix([]byte("domain-")), nil)
+	defer iter.Release()
+
+	var referencedZones []int64
+
+	for iter.Next() {
+		domain, _ := s.getDomain(string(iter.Key()))
+
+		if domain != nil {
+			for _, zh := range domain.ZoneHistory {
+				referencedZones = append(referencedZones, zh)
+			}
+		}
+	}
+
+	iter = tx.NewIterator(util.BytesPrefix([]byte("domain.zone-")), nil)
+	defer iter.Release()
+
+	for iter.Next() {
+		if zoneId, err := strconv.ParseInt(strings.TrimPrefix(string(iter.Key()), "domain.zone-"), 10, 64); err != nil {
+			// Drop zones with invalid ID
+			log.Printf("Deleting unindentified zone: key=%s\n", iter.Key())
+			err = tx.Delete(iter.Key(), nil)
+		} else {
+			foundZone := false
+			for _, zid := range referencedZones {
+				if zid == zoneId {
+					foundZone = true
+					break
+				}
+			}
+
+			if !foundZone {
+				// Drop orphan zones
+				log.Printf("Deleting orphan zone: %d\n", zoneId)
+				err = tx.Delete(iter.Key(), nil)
+			}
+		}
+
 		if err != nil {
 			tx.Discard()
 			return err
