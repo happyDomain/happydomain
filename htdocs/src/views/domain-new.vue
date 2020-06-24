@@ -43,11 +43,11 @@
 
     <b-row v-if="step === 0" class="mb-5">
       <b-col>
-        <h3 v-if="mySources.length > 0">
+        <h3 v-if="mySources && mySources.length > 0">
           Your existing sources
         </h3>
 
-        <div v-if="!isLoading && mySources.length > 0" class="d-flex flex-row justify-content-around flex-wrap align-self-center">
+        <div v-if="!isLoading && mySources && mySources.length > 0" class="d-flex flex-row justify-content-around flex-wrap align-self-center">
           <div v-for="(src, index) in mySources" :key="index" type="button" class="p-3 source" @click="selectExistingSource(src)">
             <img :src="'/api/source_specs/' + src._srctype + '.png'" :alt="sources[src['_srctype']].name">
             {{ src._comment }}
