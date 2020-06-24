@@ -149,9 +149,37 @@ func domainHandler(f func(*config.Options, *happydns.Domain, io.Reader) Response
 	}
 }
 
+type apiDomain struct {
+	Id          int64               `json:"id"`
+	IdUser      int64               `json:"id_owner"`
+	IdSource    int64               `json:"id_source"`
+	DomainName  string              `json:"domain"`
+	ZoneHistory []happydns.ZoneMeta `json:"zone_history"`
+}
+
 func getDomain(_ *config.Options, domain *happydns.Domain, body io.Reader) Response {
+	ret := &apiDomain{
+		Id:          domain.Id,
+		IdUser:      domain.IdUser,
+		IdSource:    domain.IdSource,
+		DomainName:  domain.DomainName,
+		ZoneHistory: []happydns.ZoneMeta{},
+	}
+
+	for _, zm := range domain.ZoneHistory {
+		zoneMeta, err := storage.MainStore.GetZoneMeta(zm)
+
+		if err != nil {
+			return APIErrorResponse{
+				err: err,
+			}
+		}
+
+		ret.ZoneHistory = append(ret.ZoneHistory, *zoneMeta)
+	}
+
 	return APIResponse{
-		response: domain,
+		response: ret,
 	}
 }
 

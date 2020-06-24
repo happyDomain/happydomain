@@ -38,18 +38,18 @@ import (
 )
 
 type ZoneMeta struct {
-	Id int64 `json:"id"`
+	Id           int64      `json:"id"`
+	IdAuthor     int64      `json:"id_author"`
+	DefaultTTL   uint32     `json:"default_ttl"`
+	LastModified time.Time  `json:"last_modified,omitempty"`
+	CommitMsg    *string    `json:"commit_message,omitempty"`
+	CommitDate   *time.Time `json:"commit_date,omitempty"`
+	Published    *time.Time `json:"published,omitempty"`
 }
 
 type Zone struct {
-	Id           int64                         `json:"id"`
-	IdAuthor     int64                         `json:"id_author"`
-	DefaultTTL   uint32                        `json:"default_ttl"`
-	LastModified *time.Time                    `json:"last_modified,omitempty"`
-	CommitMsg    *string                       `json:"commit_message,omitempty"`
-	CommitDate   *time.Time                    `json:"commit_date,omitempty"`
-	Published    *time.Time                    `json:"published,omitempty"`
-	Services     map[string][]*ServiceCombined `json:"services"`
+	ZoneMeta
+	Services map[string][]*ServiceCombined `json:"services"`
 }
 
 func (z *Zone) FindService(id []byte) (string, *ServiceCombined) {

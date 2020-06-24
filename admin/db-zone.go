@@ -100,7 +100,7 @@ func zoneHandler(f func(*config.Options, *happydns.Domain, *happydns.Zone, httpr
 			// Check that the zoneid exists in the domain history
 			found := false
 			for _, v := range domain.ZoneHistory {
-				if v.Id == zoneid {
+				if v == zoneid {
 					found = true
 					break
 				}
@@ -185,6 +185,6 @@ func deleteZone(opts *config.Options, ps httprouter.Params, body io.Reader) api.
 	if err != nil {
 		return api.NewAPIErrorResponse(http.StatusNotFound, err)
 	} else {
-		return api.NewAPIResponse(true, storage.MainStore.DeleteZone(&happydns.Zone{Id: zoneid}))
+		return api.NewAPIResponse(true, storage.MainStore.DeleteZone(&happydns.Zone{ZoneMeta: happydns.ZoneMeta{Id: zoneid}}))
 	}
 }
