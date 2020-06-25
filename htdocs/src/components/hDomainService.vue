@@ -72,8 +72,8 @@ export default {
       type: Object,
       required: true
     },
-    zoneMeta: {
-      type: Object,
+    zoneId: {
+      type: Number,
       required: true
     }
   },
@@ -87,7 +87,7 @@ export default {
   methods: {
     deleteService (service) {
       this.showDetails = false
-      ZoneApi.deleteZoneService(this.origin, this.zoneMeta.id, service)
+      ZoneApi.deleteZoneService(this.origin, this.zoneId, service)
         .then(
           (response) => {
             this.$emit('updateMyServices', response.data)
@@ -108,7 +108,7 @@ export default {
       if (service.Service === undefined) {
         this.deleteService(service)
       } else {
-        ZoneApi.updateZoneService(this.origin, this.zoneMeta.id, service)
+        ZoneApi.updateZoneService(this.origin, this.zoneId, service)
           .then(
             (response) => {
               this.$emit('updateMyServices', response.data)

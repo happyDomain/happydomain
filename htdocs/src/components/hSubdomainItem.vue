@@ -73,7 +73,7 @@
         </b-button>
       </h2>
       <div v-show="showResources">
-        <h-domain-service v-for="(svc, idx) in zoneServices" :key="idx" :origin="origin" :service="svc" :services="services" :zone-meta="zoneMeta" @updateMyServices="$emit('updateMyServices', $event)" />
+        <h-domain-service v-for="(svc, idx) in zoneServices" :key="idx" :origin="origin" :service="svc" :services="services" :zone-id="zoneId" @updateMyServices="$emit('updateMyServices', $event)" />
       </div>
     </div>
   </div>
@@ -106,8 +106,8 @@ export default {
       type: Object,
       required: true
     },
-    zoneMeta: {
-      type: Object,
+    zoneId: {
+      type: Number,
       required: true
     },
     zoneServices: {
@@ -142,7 +142,7 @@ export default {
     },
 
     deleteCNAME () {
-      ZoneApi.deleteZoneService(this.origin, this.zoneMeta.id, this.zoneServices[0])
+      ZoneApi.deleteZoneService(this.origin, this.zoneId, this.zoneServices[0])
         .then(
           (response) => {
             this.$emit('updateMyServices', response.data)
