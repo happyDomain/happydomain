@@ -41,6 +41,7 @@ type Source interface {
 	ImportZone(*Domain) ([]dns.RR, error)
 	AddRR(*Domain, dns.RR) error
 	DeleteRR(*Domain, dns.RR) error
+	UpdateSOA(*Domain, *dns.SOA, bool) error
 }
 
 type SourceMeta struct {

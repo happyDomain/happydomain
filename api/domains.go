@@ -124,7 +124,7 @@ func addDomain(_ *config.Options, u *happydns.User, p httprouter.Params, body io
 	}
 }
 
-func delDomain(_ *config.Options, domain *happydns.Domain, body io.Reader) Response {
+func delDomain(_ *config.Options, domain *happydns.Domain, _ httprouter.Params, body io.Reader) Response {
 	if err := storage.MainStore.DeleteDomain(domain); err != nil {
 		return APIErrorResponse{
 			err: err,
@@ -136,7 +136,7 @@ func delDomain(_ *config.Options, domain *happydns.Domain, body io.Reader) Respo
 	}
 }
 
-func domainHandler(f func(*config.Options, *happydns.Domain, io.Reader) Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) Response {
+func domainHandler(f func(*config.Options, *happydns.Domain, httprouter.Params, io.Reader) Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) Response {
 	return func(opts *config.Options, u *happydns.User, ps httprouter.Params, body io.Reader) Response {
 		if domain, err := storage.MainStore.GetDomainByDN(u, ps.ByName("domain")); err != nil {
 			return APIErrorResponse{
@@ -144,7 +144,7 @@ func domainHandler(f func(*config.Options, *happydns.Domain, io.Reader) Response
 				err:    errors.New("Domain not found"),
 			}
 		} else {
-			return f(opts, domain, body)
+			return f(opts, domain, ps, body)
 		}
 	}
 }
@@ -157,7 +157,7 @@ type apiDomain struct {
 	ZoneHistory []happydns.ZoneMeta `json:"zone_history"`
 }
 
-func getDomain(_ *config.Options, domain *happydns.Domain, body io.Reader) Response {
+func getDomain(_ *config.Options, domain *happydns.Domain, _ httprouter.Params, body io.Reader) Response {
 	ret := &apiDomain{
 		Id:          domain.Id,
 		IdUser:      domain.IdUser,
@@ -183,7 +183,7 @@ func getDomain(_ *config.Options, domain *happydns.Domain, body io.Reader) Respo
 	}
 }
 
-func axfrDomain(opts *config.Options, domain *happydns.Domain, body io.Reader) Response {
+func axfrDomain(opts *config.Options, domain *happydns.Domain, _ httprouter.Params, body io.Reader) Response {
 	source, err := storage.MainStore.GetSource(&happydns.User{Id: domain.IdUser}, domain.IdSource)
 	if err != nil {
 		return APIErrorResponse{
@@ -215,7 +215,7 @@ type uploadedRR struct {
 	RR string `json:"string"`
 }
 
-func addRR(opts *config.Options, domain *happydns.Domain, body io.Reader) Response {
+func addRR(opts *config.Options, domain *happydns.Domain, _ httprouter.Params, body io.Reader) Response {
 	var urr uploadedRR
 	err := json.NewDecoder(body).Decode(&urr)
 	if err != nil {
@@ -253,7 +253,7 @@ func addRR(opts *config.Options, domain *happydns.Domain, body io.Reader) Respon
 	}
 }
 
-func delRR(opts *config.Options, domain *happydns.Domain, body io.Reader) Response {
+func delRR(opts *config.Options, domain *happydns.Domain, _ httprouter.Params, body io.Reader) Response {
 	var urr uploadedRR
 	err := json.NewDecoder(body).Decode(&urr)
 	if err != nil {

@@ -44,22 +44,28 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/services"
+	"git.happydns.org/happydns/sources"
 	"git.happydns.org/happydns/storage"
 )
 
 func init() {
 	router.GET("/api/domains/:domain/zone/:zoneid", apiAuthHandler(zoneHandler(getZone)))
 	router.PATCH("/api/domains/:domain/zone/:zoneid", apiAuthHandler(zoneHandler(updateZoneService)))
+
 	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain", apiAuthHandler(zoneHandler(getZoneSubdomain)))
 	router.POST("/api/domains/:domain/zone/:zoneid/:subdomain", apiAuthHandler(zoneHandler(addZoneService)))
 	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain/*serviceid", apiAuthHandler(zoneHandler(getZoneService)))
 	router.DELETE("/api/domains/:domain/zone/:zoneid/:subdomain/*serviceid", apiAuthHandler(zoneHandler(deleteZoneService)))
 
 	router.POST("/api/domains/:domain/import_zone", apiAuthHandler(domainHandler(importZone)))
+	router.POST("/api/domains/:domain/view_zone/:zoneid", apiAuthHandler(zoneHandler(viewZone)))
+	router.POST("/api/domains/:domain/apply_zone/:zoneid", apiAuthHandler(zoneHandler(applyZone)))
+	router.POST("/api/domains/:domain/diff_zones/:zoneid1/:zoneid2", apiAuthHandler(domainHandler(diffZones)))
 }
 
 func zoneHandler(f func(*config.Options, *happydns.Domain, *happydns.Zone, httprouter.Params, io.Reader) Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) Response {
@@ -71,16 +77,9 @@ func zoneHandler(f func(*config.Options, *happydns.Domain, *happydns.Zone, httpr
 			}
 		}
 
-		return domainHandler(func(opts *config.Options, domain *happydns.Domain, body io.Reader) Response {
+		return domainHandler(func(opts *config.Options, domain *happydns.Domain, ps httprouter.Params, body io.Reader) Response {
 			// Check that the zoneid exists in the domain history
-			found := false
-			for _, v := range domain.ZoneHistory {
-				if v == zoneid {
-					found = true
-					break
-				}
-			}
-			if !found {
+			if !domain.HasZone(zoneid) {
 				return APIErrorResponse{
 					status: http.StatusNotFound,
 					err:    errors.New("Zone not found"),
@@ -173,7 +172,7 @@ func getZoneService(opts *config.Options, domain *happydns.Domain, zone *happydn
 	}
 }
 
-func importZone(opts *config.Options, domain *happydns.Domain, body io.Reader) Response {
+func importZone(opts *config.Options, domain *happydns.Domain, _ httprouter.Params, body io.Reader) Response {
 	source, err := storage.MainStore.GetSource(&happydns.User{Id: domain.IdUser}, domain.IdSource)
 	if err != nil {
 		return APIErrorResponse{
@@ -223,6 +222,180 @@ func importZone(opts *config.Options, domain *happydns.Domain, body io.Reader) R
 
 	return APIResponse{
 		response: &myZone.ZoneMeta,
+	}
+}
+
+func diffZones(opts *config.Options, domain *happydns.Domain, ps httprouter.Params, body io.Reader) Response {
+	zoneid1, err := strconv.ParseInt(ps.ByName("zoneid1"), 10, 64)
+	if err != nil && ps.ByName("zoneid1") != "@" {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	zoneid2, err := strconv.ParseInt(ps.ByName("zoneid2"), 10, 64)
+	if err != nil && ps.ByName("zoneid2") != "@" {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	if zoneid1 == 0 && zoneid2 == 0 {
+		return APIErrorResponse{
+			err: fmt.Errorf("Both zoneId can't reference the live version"),
+		}
+	}
+
+	var zone1 []dns.RR
+	var zone2 []dns.RR
+
+	if zoneid1 == 0 || zoneid2 == 0 {
+		source, err := storage.MainStore.GetSource(&happydns.User{Id: domain.IdUser}, domain.IdSource)
+		if err != nil {
+			return APIErrorResponse{
+				err: err,
+			}
+		}
+
+		if zoneid1 == 0 {
+			zone1, err = source.ImportZone(domain)
+		}
+		if zoneid2 == 0 {
+			zone2, err = source.ImportZone(domain)
+		}
+
+		if err != nil {
+			return APIErrorResponse{
+				err: err,
+			}
+		}
+	}
+
+	if zoneid1 != 0 {
+		if !domain.HasZone(zoneid1) {
+			return APIErrorResponse{
+				status: http.StatusNotFound,
+				err:    errors.New("Zone A not found"),
+			}
+		} else if z1, err := storage.MainStore.GetZone(zoneid1); err != nil {
+			return APIErrorResponse{
+				status: http.StatusNotFound,
+				err:    errors.New("Zone A not found"),
+			}
+		} else {
+			zone1 = z1.GenerateRRs(domain.DomainName)
+		}
+	}
+
+	if zoneid2 != 0 {
+		if !domain.HasZone(zoneid2) {
+			return APIErrorResponse{
+				status: http.StatusNotFound,
+				err:    errors.New("Zone B not found"),
+			}
+		} else if z2, err := storage.MainStore.GetZone(zoneid2); err != nil {
+			return APIErrorResponse{
+				status: http.StatusNotFound,
+				err:    errors.New("Zone B not found"),
+			}
+		} else {
+			zone2 = z2.GenerateRRs(domain.DomainName)
+		}
+	}
+
+	toAdd, toDel := sources.DiffZones(zone1, zone2)
+
+	var rrAdd []string
+	for _, rr := range toAdd {
+		rrAdd = append(rrAdd, rr.String())
+	}
+
+	var rrDel []string
+	for _, rr := range toDel {
+		rrDel = append(rrDel, rr.String())
+	}
+
+	return APIResponse{
+		response: map[string]interface{}{
+			"toAdd": rrAdd,
+			"toDel": rrDel,
+		},
+	}
+}
+
+func applyZone(opts *config.Options, domain *happydns.Domain, zone *happydns.Zone, _ httprouter.Params, body io.Reader) Response {
+	source, err := storage.MainStore.GetSource(&happydns.User{Id: domain.IdUser}, domain.IdSource)
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	newSOA, err := sources.ApplyZone(source, domain, zone.GenerateRRs(domain.DomainName))
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	// Update serial
+	if newSOA != nil {
+		for _, svc := range zone.Services[""] {
+			if origin, ok := svc.Service.(*svcs.Origin); ok {
+				origin.Serial = newSOA.Serial
+				break
+			}
+		}
+	}
+
+	// Create a new zone in history for futher updates
+	newZone := zone.DerivateNew()
+	//newZone.IdAuthor = //TODO get current user id
+	err = storage.MainStore.CreateZone(newZone)
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	domain.ZoneHistory = append(
+		[]int64{newZone.Id}, domain.ZoneHistory...)
+
+	err = storage.MainStore.UpdateDomain(domain)
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	// Commit changes in previous zone
+	now := time.Now()
+	// zone.ZoneMeta.IdAuthor = // TODO get current user id
+	zone.ZoneMeta.Published = &now
+
+	zone.LastModified = time.Now()
+
+	err = storage.MainStore.UpdateZone(zone)
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	return APIResponse{
+		response: newZone.ZoneMeta,
+	}
+}
+
+func viewZone(opts *config.Options, domain *happydns.Domain, zone *happydns.Zone, _ httprouter.Params, body io.Reader) Response {
+	var ret string
+
+	for _, rr := range zone.GenerateRRs(domain.DomainName) {
+		ret += rr.String() + "\n"
+	}
+
+	return APIResponse{
+		response: ret,
 	}
 }
 

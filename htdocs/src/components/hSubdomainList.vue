@@ -35,7 +35,7 @@
   <div v-if="!isLoading" class="pt-3">
     <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :dn="dn" :origin="domain.domain" :services="services" :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="aliases[dn]===undefined?[]:aliases[dn]" :zone-meta="zoneMeta" @updateMyServices="updateMyServices($event)" @addSubdomain="addSubdomain()" @addNewAlias="addNewAlias($event)" @addNewService="addNewService($event)" />
 
-    <b-modal id="modal-addSvc" :size="modal && modal.step === 2 ? 'lg' : ''" @ok="handleModalSvcOk">
+    <b-modal id="modal-addSvc" :size="modal && modal.step === 2 ? 'lg' : ''" scrollable @ok="handleModalSvcOk">
       <template v-slot:modal-title>
         Add a new service to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>
       </template>
@@ -46,8 +46,12 @@
             <b-input v-model="modal.dn" autofocus />
           </b-input-group>
         </p>
-        <p v-else-if="modal.step === 1">Select a new service to add to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:</p>
-        <p v-else-if="modal.step === 2">Fill the information for the {{ services[modal.svcSelected].name }} at <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:</p>
+        <p v-else-if="modal.step === 1">
+          Select a new service to add to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
+        </p>
+        <p v-else-if="modal.step === 2">
+          Fill the information for the {{ services[modal.svcSelected].name }} at <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
+        </p>
         <b-list-group v-if="modal.step === 1">
           <b-list-group-item v-for="(svc, idx) in services" :key="idx" :active="modal.svcSelected === idx" button @click="modal.svcSelected = idx">
             {{ svc.name }}

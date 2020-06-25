@@ -232,6 +232,72 @@ func (s *OVHAPI) DeleteRR(dn *happydns.Domain, rr dns.RR) (err error) {
 	return
 }
 
+type OVH_SOA struct {
+	Server  string `json:"server"`
+	Email   string `json:"email"`
+	Serial  uint32 `json:"serial"`
+	Refresh uint32 `json:"refresh"`
+	Expire  uint32 `json:"expire"`
+	NxTtl   uint32 `json:"nxDomainTtl"`
+	Ttl     uint32 `json:"ttl"`
+}
+
+func (s *OVHAPI) UpdateSOA(dn *happydns.Domain, newSOA *dns.SOA, refreshSerial bool) (err error) {
+	var client *ovh.Client
+	client, err = s.newClient()
+	if err != nil {
+		return
+	}
+
+	// Get current SOA
+	var curSOA OVH_SOA
+	err = client.Get(
+		fmt.Sprintf("/domain/zone/%s/soa", strings.TrimSuffix(dn.DomainName, ".")),
+		&curSOA)
+	if err != nil {
+		return
+	}
+
+	// Is there any change?
+	changes := false
+	if curSOA.Server != newSOA.Ns {
+		curSOA.Server = newSOA.Ns
+		changes = true
+	}
+	if curSOA.Email != newSOA.Mbox {
+		curSOA.Email = newSOA.Mbox
+		changes = true
+	}
+	if curSOA.Refresh != newSOA.Refresh {
+		curSOA.Refresh = newSOA.Refresh
+		changes = true
+	}
+	if curSOA.Expire != newSOA.Expire {
+		curSOA.Expire = newSOA.Expire
+		changes = true
+	}
+	if curSOA.NxTtl != newSOA.Minttl {
+		curSOA.NxTtl = newSOA.Minttl
+		changes = true
+	}
+
+	// OVH handles automatically serial update, so only force non-refresh
+	if !refreshSerial && curSOA.Serial != newSOA.Serial {
+		curSOA.Serial = newSOA.Serial
+		changes = true
+	}
+	newSOA.Serial = curSOA.Serial
+
+	if changes {
+		err = client.Post(fmt.Sprintf("/domain/zone/%s/refresh", strings.TrimSuffix(dn.DomainName, ".")), nil, nil)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
 func init() {
 	sources.RegisterSource("git.happydns.org/happydns/sources/ovh/OVHAPI", func() happydns.Source {
 		return &OVHAPI{}

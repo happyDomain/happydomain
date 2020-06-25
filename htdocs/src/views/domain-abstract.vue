@@ -37,12 +37,36 @@
       <b-spinner label="Spinning" />
       <p>Please wait while we are importing your domain&nbsp;&hellip;</p>
     </div>
-    <h-subdomain-list v-if="!importInProgress && selectedHistory" :domain="domain" :zone-meta="selectedHistory" />
+    <div v-else-if="selectedHistory">
+      <div class="mt-2 text-right">
+        <b-button size="sm" class="mx-1" @click="importZone()"><b-icon icon="cloud-download" aria-hidden="true" /> Re-import</b-button>
+        <b-button size="sm" class="mx-1" @click="viewZone()"><b-icon icon="list-ul" aria-hidden="true" /> View</b-button>
+        <b-button size="sm" variant="success" class="mx-1" @click="showDiff()"><b-icon icon="cloud-upload" aria-hidden="true" /> Apply</b-button>
+      </div>
+      <h-subdomain-list :domain="domain" :zone-meta="selectedHistory" />
+    </div>
+
+    <b-modal id="modal-viewZone" title="View zone" size="lg" scrollable ok-only>
+      <pre style="overflow: initial">{{ zoneContent }}</pre>
+    </b-modal>
+
+    <b-modal id="modal-applyZone" size="lg" scrollable @ok="applyDiff()">
+      <template v-slot:modal-title>
+        Review the modifications that will be applied to <span class="text-monospace">{{ domain.domain }}</span>
+      </template>
+      <div v-for="(line, n) in zoneDiffAdd" :key="'a' + n" class="text-monospace text-success" style="white-space: nowrap">
+        +{{ line }}
+      </div>
+      <div v-for="(line, n) in zoneDiffDel" :key="'d' + n" class="text-monospace text-danger" style="white-space: nowrap">
+        -{{ line }}
+      </div>
+    </b-modal>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
+import ZoneApi from '@/services/ZoneApi'
 
 export default {
   components: {
@@ -59,7 +83,10 @@ export default {
   data: function () {
     return {
       importInProgress: false,
-      selectedHistory: null
+      selectedHistory: null,
+      zoneContent: null,
+      zoneDiffAdd: null,
+      zoneDiffDel: null
     }
   },
 
@@ -78,19 +105,91 @@ export default {
   methods: {
     pullDomain () {
       if (this.domain.zone_history === null || this.domain.zone_history.length === 0) {
-        this.importInProgress = true
-        axios
-          .post('/api/domains/' + encodeURIComponent(this.domain.domain) + '/import_zone')
-          .then(
-            (response) => {
-              this.importInProgress = false
-              this.selectedHistory = response.data
-              this.$parent.$emit('updateDomainInfo')
-            }
-          )
+        this.importZone()
       } else {
         this.selectedHistory = this.domain.zone_history[0]
       }
+    },
+
+    importZone () {
+      this.importInProgress = true
+      axios
+        .post('/api/domains/' + encodeURIComponent(this.domain.domain) + '/import_zone')
+        .then(
+          (response) => {
+            this.importInProgress = false
+            this.selectedHistory = response.data
+            this.$parent.$emit('updateDomainInfo')
+          }
+        )
+    },
+
+    showDiff () {
+      ZoneApi.diffZone(this.domain.domain, '@', this.selectedHistory.id)
+        .then(
+          (response) => {
+            if (response.data.toAdd == null && response.data.toDel == null) {
+              this.$bvModal.msgBoxOk('There is no changes to apply! Current zone is in sync with the server.')
+            } else {
+              this.zoneDiffAdd = response.data.toAdd
+              this.zoneDiffDel = response.data.toDel
+              this.$bvModal.show('modal-applyZone')
+            }
+          },
+          (error) => {
+            this.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: 'An error occurs when applying the zone!',
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+          })
+    },
+
+    applyDiff () {
+      ZoneApi.applyZone(this.domain.domain, this.selectedHistory.id)
+        .then(
+          (response) => {
+            this.$bvToast.toast(
+              '!', {
+                title: 'Zone applied successfully!',
+                autoHideDelay: 5000,
+                variant: 'success',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+          },
+          (error) => {
+            this.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: 'An error occurs when applying the zone!',
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+          })
+    },
+
+    viewZone () {
+      ZoneApi.viewZone(this.domain.domain, this.selectedHistory.id)
+        .then(
+          (response) => {
+            this.zoneContent = response.data
+            this.$bvModal.show('modal-viewZone')
+          },
+          (error) => {
+            this.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: 'An error occurs when applying the zone!',
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+          })
     }
   }
 }

@@ -53,6 +53,15 @@ func (d *Domain) NormalizedNSServer() string {
 	}
 }
 
+func (d *Domain) HasZone(zoneId int64) (found bool) {
+	for _, v := range d.ZoneHistory {
+		if v == zoneId {
+			return true
+		}
+	}
+	return
+}
+
 func NewDomain(u *User, st *SourceMeta, dn string) (d *Domain) {
 	d = &Domain{
 		IdUser:     u.Id,
