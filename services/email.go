@@ -39,6 +39,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/utils"
 )
 
 type MX struct {
@@ -196,7 +197,7 @@ func (s *EMail) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
 				Class:  dns.ClassINET,
 				Ttl:    ttl,
 			},
-			Txt: []string{"\"v=spf1\" " + s.SPF.String()},
+			Txt: utils.SplitN("v=spf1 "+s.SPF.String(), 255),
 		})
 	}
 
@@ -208,7 +209,7 @@ func (s *EMail) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
 				Class:  dns.ClassINET,
 				Ttl:    ttl,
 			},
-			Txt: []string{d.String()},
+			Txt: utils.SplitN(d.String(), 255),
 		})
 	}
 
@@ -220,7 +221,7 @@ func (s *EMail) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
 				Class:  dns.ClassINET,
 				Ttl:    ttl,
 			},
-			Txt: []string{s.DMARC.String()},
+			Txt: utils.SplitN(s.DMARC.String(), 255),
 		})
 	}
 
@@ -232,7 +233,7 @@ func (s *EMail) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
 				Class:  dns.ClassINET,
 				Ttl:    ttl,
 			},
-			Txt: []string{s.MTA_STS.String()},
+			Txt: utils.SplitN(s.MTA_STS.String(), 255),
 		})
 	}
 
@@ -244,7 +245,7 @@ func (s *EMail) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
 				Class:  dns.ClassINET,
 				Ttl:    ttl,
 			},
-			Txt: []string{s.TLS_RPT.String()},
+			Txt: utils.SplitN(s.TLS_RPT.String(), 255),
 		})
 	}
 	return

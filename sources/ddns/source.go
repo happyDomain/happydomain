@@ -162,6 +162,20 @@ func (s *DDNSServer) DeleteRR(domain *happydns.Domain, rr dns.RR) error {
 	return err
 }
 
+func (s *DDNSServer) UpdateSOA(domain *happydns.Domain, newSOA *dns.SOA, refreshSerial bool) (err error) {
+	if refreshSerial {
+		now := time.Now()
+		todaySerial := uint32(now.Year()*1000000 + int(now.Month())*10000 + now.Day()*100)
+		if newSOA.Serial >= todaySerial {
+			newSOA.Serial += 1
+		} else {
+			newSOA.Serial = todaySerial
+		}
+	}
+
+	return s.AddRR(domain, newSOA)
+}
+
 func init() {
 	sources.RegisterSource("git.happydns.org/happydns/sources/ddns/DDNSServer", func() happydns.Source {
 		return &DDNSServer{}

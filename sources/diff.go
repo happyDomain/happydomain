@@ -29,64 +29,83 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package api
+package sources // import "happydns.org/sources"
 
 import (
-	"io"
+	"github.com/miekg/dns"
 
-	"github.com/julienschmidt/httprouter"
-
-	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
-	"git.happydns.org/happydns/services"
-	"git.happydns.org/happydns/storage"
 )
 
-func init() {
-	router.GET("/api/services", ApiHandler(listServices))
-	//router.POST("/api/services", ApiHandler(newService))
+func DiffZones(a []dns.RR, b []dns.RR) (toAdd []dns.RR, toDel []dns.RR) {
+loopDel:
+	for _, rrA := range a {
+		for _, rrB := range b {
+			if rrA.String() == rrB.String() {
+				continue loopDel
+			}
+		}
 
-	router.POST("/api/domains/:domain/analyze", apiAuthHandler(domainHandler(analyzeDomain)))
+		toDel = append(toDel, rrA)
+	}
+
+loopAdd:
+	for _, rrB := range b {
+		for _, rrA := range a {
+			if rrB.String() == rrA.String() {
+				continue loopAdd
+			}
+		}
+
+		toAdd = append(toAdd, rrB)
+	}
+
+	return
 }
 
-func listServices(_ *config.Options, _ httprouter.Params, _ io.Reader) Response {
-	ret := map[string]svcs.ServiceInfos{}
-
-	for k, svc := range *svcs.GetServices() {
-		ret[k] = svc.Infos
+func DiffZone(s happydns.Source, domain *happydns.Domain, rrs []dns.RR) (toAdd []dns.RR, toDel []dns.RR, err error) {
+	// Get the actuals RR-set
+	var current []dns.RR
+	current, err = s.ImportZone(domain)
+	if err != nil {
+		return
 	}
 
-	return APIResponse{
-		response: ret,
-	}
+	toAdd, toDel = DiffZones(current, rrs)
+	return
 }
 
-func analyzeDomain(opts *config.Options, domain *happydns.Domain, _ httprouter.Params, body io.Reader) Response {
-	source, err := storage.MainStore.GetSource(&happydns.User{Id: domain.IdUser}, domain.IdSource)
+func ApplyZone(s happydns.Source, domain *happydns.Domain, rrs []dns.RR) (*dns.SOA, error) {
+	toAdd, toDel, err := DiffZone(s, domain, rrs)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
+		return nil, err
+	}
+
+	var newSOA *dns.SOA
+
+	// Apply diff
+	for _, rr := range toDel {
+		if rr.Header().Rrtype == dns.TypeSOA {
+			continue
+		}
+		if err := s.DeleteRR(domain, rr); err != nil {
+			return nil, err
+		}
+	}
+	for _, rr := range toAdd {
+		if rr.Header().Rrtype == dns.TypeSOA {
+			newSOA = rr.(*dns.SOA)
+			continue
+		}
+		if err := s.AddRR(domain, rr); err != nil {
+			return nil, err
 		}
 	}
 
-	zone, err := source.ImportZone(domain)
-	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+	// Update SOA record
+	if newSOA != nil {
+		err = s.UpdateSOA(domain, newSOA, false)
 	}
 
-	services, defaultTTL, err := svcs.AnalyzeZone(domain.DomainName, zone)
-	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	}
-
-	return APIResponse{
-		response: map[string]interface{}{
-			"services":   services,
-			"defaultTTL": defaultTTL,
-		},
-	}
+	return newSOA, err
 }

@@ -29,64 +29,29 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package api
+package utils
 
-import (
-	"io"
+import ()
 
-	"github.com/julienschmidt/httprouter"
-
-	"git.happydns.org/happydns/config"
-	"git.happydns.org/happydns/model"
-	"git.happydns.org/happydns/services"
-	"git.happydns.org/happydns/storage"
-)
-
-func init() {
-	router.GET("/api/services", ApiHandler(listServices))
-	//router.POST("/api/services", ApiHandler(newService))
-
-	router.POST("/api/domains/:domain/analyze", apiAuthHandler(domainHandler(analyzeDomain)))
-}
-
-func listServices(_ *config.Options, _ httprouter.Params, _ io.Reader) Response {
-	ret := map[string]svcs.ServiceInfos{}
-
-	for k, svc := range *svcs.GetServices() {
-		ret[k] = svc.Infos
+// SplitN splits a string into N sized string chunks.
+// This function is a copy of https://github.com/miekg/dns/blob/master/types.go#L1509
+// awaiting its exportation
+func SplitN(s string, n int) []string {
+	if len(s) < n {
+		return []string{s}
 	}
+	sx := []string{}
+	p, i := 0, n
+	for {
+		if i <= len(s) {
+			sx = append(sx, s[p:i])
+		} else {
+			sx = append(sx, s[p:])
+			break
 
-	return APIResponse{
-		response: ret,
-	}
-}
-
-func analyzeDomain(opts *config.Options, domain *happydns.Domain, _ httprouter.Params, body io.Reader) Response {
-	source, err := storage.MainStore.GetSource(&happydns.User{Id: domain.IdUser}, domain.IdSource)
-	if err != nil {
-		return APIErrorResponse{
-			err: err,
 		}
+		p, i = p+n, i+n
 	}
 
-	zone, err := source.ImportZone(domain)
-	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	}
-
-	services, defaultTTL, err := svcs.AnalyzeZone(domain.DomainName, zone)
-	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	}
-
-	return APIResponse{
-		response: map[string]interface{}{
-			"services":   services,
-			"defaultTTL": defaultTTL,
-		},
-	}
+	return sx
 }

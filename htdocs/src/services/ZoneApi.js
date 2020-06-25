@@ -36,6 +36,18 @@ export default {
     return Api().get('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id))
   },
 
+  applyZone (domain, id) {
+    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/apply_zone/' + encodeURIComponent(id))
+  },
+
+  diffZone (domain, id1, id2) {
+    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/diff_zones/' + encodeURIComponent(id1) + '/' + encodeURIComponent(id2))
+  },
+
+  viewZone (domain, id) {
+    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/view_zone/' + encodeURIComponent(id))
+  },
+
   addZoneService (domain, id, subdomain, service) {
     if (subdomain === '') {
       subdomain = '@'

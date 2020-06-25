@@ -35,6 +35,8 @@ import (
 	"bytes"
 	"errors"
 	"time"
+
+	"github.com/miekg/dns"
 )
 
 type ZoneMeta struct {
@@ -50,6 +52,21 @@ type ZoneMeta struct {
 type Zone struct {
 	ZoneMeta
 	Services map[string][]*ServiceCombined `json:"services"`
+}
+
+func (z *Zone) DerivateNew() *Zone {
+	newZone := new(Zone)
+
+	newZone.ZoneMeta.IdAuthor = z.ZoneMeta.IdAuthor
+	newZone.ZoneMeta.DefaultTTL = z.ZoneMeta.DefaultTTL
+	newZone.ZoneMeta.LastModified = time.Now()
+	newZone.Services = map[string][]*ServiceCombined{}
+
+	for subdomain, svcs := range z.Services {
+		newZone.Services[subdomain] = svcs
+	}
+
+	return newZone
 }
 
 func (z *Zone) FindService(id []byte) (string, *ServiceCombined) {
@@ -97,4 +114,25 @@ func (z *Zone) EraseService(subdomain string, origin string, id []byte, s *Servi
 	}
 
 	return errors.New("Service not found")
+}
+
+func (z *Zone) GenerateRRs(origin string) (rrs []dns.RR) {
+	for subdomain, svcs := range z.Services {
+		if subdomain == "" {
+			subdomain = origin
+		} else {
+			subdomain += "." + origin
+		}
+		for _, svc := range svcs {
+			var ttl uint32
+			if svc.Ttl == 0 {
+				ttl = z.DefaultTTL
+			} else {
+				ttl = svc.Ttl
+			}
+			rrs = append(rrs, svc.GenRRs(subdomain, ttl)...)
+		}
+	}
+
+	return
 }

@@ -37,6 +37,8 @@ import {
   BadgePlugin,
   BIcon,
   BIconArrowRight,
+  BIconCloudDownload,
+  BIconCloudUpload,
   BIconCheck,
   BIconChevronDown,
   BIconChevronLeft,
@@ -45,6 +47,7 @@ import {
   BIconLink,
   BIconLink45deg,
   BIconListTask,
+  BIconListUl,
   BIconPencil,
   BIconPerson,
   BIconPersonCheck,
@@ -105,6 +108,8 @@ Vue.use(ToastPlugin)
 
 Vue.component('BIcon', BIcon)
 Vue.component('BIconArrowRight', BIconArrowRight)
+Vue.component('BIconCloudDownload', BIconCloudDownload)
+Vue.component('BIconCloudUpload', BIconCloudUpload)
 Vue.component('BIconCheck', BIconCheck)
 Vue.component('BIconChevronDown', BIconChevronDown)
 Vue.component('BIconChevronLeft', BIconChevronLeft)
@@ -113,6 +118,7 @@ Vue.component('BIconChevronUp', BIconChevronUp)
 Vue.component('BIconLink', BIconLink)
 Vue.component('BIconLink45deg', BIconLink45deg)
 Vue.component('BIconListTask', BIconListTask)
+Vue.component('BIconListUl', BIconListUl)
 Vue.component('BIconPencil', BIconPencil)
 Vue.component('BIconPerson', BIconPerson)
 Vue.component('BIconPersonCheck', BIconPersonCheck)
