@@ -38,12 +38,21 @@
       <p>Please wait while we are importing your domain&nbsp;&hellip;</p>
     </div>
     <div v-else-if="selectedHistory">
-      <div class="mt-2 text-right">
-        <b-button size="sm" class="mx-1" @click="importZone()"><b-icon icon="cloud-download" aria-hidden="true" /> Re-import</b-button>
-        <b-button size="sm" class="mx-1" @click="viewZone()"><b-icon icon="list-ul" aria-hidden="true" /> View</b-button>
-        <b-button size="sm" variant="success" class="mx-1" @click="showDiff()"><b-icon icon="cloud-upload" aria-hidden="true" /> Apply</b-button>
-      </div>
-      <h-subdomain-list :domain="domain" :zone-meta="selectedHistory" />
+      <b-row class="mt-2">
+        <b-col auto class="text-right">
+          <b-form inline>
+            <label class="mr-2" for="zhistory">History:</label>
+            <b-form-select v-model="selectedHistory" :options="domain.zone_history" value-field="id" text-field="last_modified" id="zhistory"></b-form-select>
+          </b-form>
+        </b-col>
+        <b-col auto class="text-right">
+          <b-button size="sm" class="mx-1" @click="importZone()"><b-icon icon="cloud-download" aria-hidden="true" /> Re-import</b-button>
+          <b-button size="sm" class="mx-1" @click="viewZone()"><b-icon icon="list-ul" aria-hidden="true" /> View</b-button>
+          <b-button v-if="selectedHistory === domain.zone_history[0].id" size="sm" variant="success" class="mx-1" @click="showDiff()"><b-icon icon="cloud-upload" aria-hidden="true" /> Propagate</b-button>
+          <b-button v-else size="sm" variant="warning" class="mx-1" @click="showDiff()"><b-icon icon="cloud-upload" aria-hidden="true" /> Rollback</b-button>
+        </b-col>
+      </b-row>
+      <h-subdomain-list :domain="domain" :zone-id="selectedHistory" />
     </div>
 
     <b-modal id="modal-viewZone" title="View zone" size="lg" scrollable ok-only>
@@ -107,7 +116,7 @@ export default {
       if (this.domain.zone_history === null || this.domain.zone_history.length === 0) {
         this.importZone()
       } else {
-        this.selectedHistory = this.domain.zone_history[0]
+        this.selectedHistory = this.domain.zone_history[0].id
       }
     },
 
@@ -118,14 +127,14 @@ export default {
         .then(
           (response) => {
             this.importInProgress = false
-            this.selectedHistory = response.data
+            this.selectedHistory = response.data.id
             this.$parent.$emit('updateDomainInfo')
           }
         )
     },
 
     showDiff () {
-      ZoneApi.diffZone(this.domain.domain, '@', this.selectedHistory.id)
+      ZoneApi.diffZone(this.domain.domain, '@', this.selectedHistory)
         .then(
           (response) => {
             if (response.data.toAdd == null && response.data.toDel == null) {
@@ -149,7 +158,7 @@ export default {
     },
 
     applyDiff () {
-      ZoneApi.applyZone(this.domain.domain, this.selectedHistory.id)
+      ZoneApi.applyZone(this.domain.domain, this.selectedHistory)
         .then(
           (response) => {
             this.$bvToast.toast(
@@ -174,7 +183,7 @@ export default {
     },
 
     viewZone () {
-      ZoneApi.viewZone(this.domain.domain, this.selectedHistory.id)
+      ZoneApi.viewZone(this.domain.domain, this.selectedHistory)
         .then(
           (response) => {
             this.zoneContent = response.data

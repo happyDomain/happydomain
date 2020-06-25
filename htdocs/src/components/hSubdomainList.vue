@@ -33,7 +33,7 @@
 
 <template>
   <div v-if="!isLoading" class="pt-3">
-    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :dn="dn" :origin="domain.domain" :services="services" :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="aliases[dn]===undefined?[]:aliases[dn]" :zone-meta="zoneMeta" @updateMyServices="updateMyServices($event)" @addSubdomain="addSubdomain()" @addNewAlias="addNewAlias($event)" @addNewService="addNewService($event)" />
+    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :dn="dn" :origin="domain.domain" :services="services" :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="aliases[dn]===undefined?[]:aliases[dn]" :zone-id="zoneId" @updateMyServices="updateMyServices($event)" @addSubdomain="addSubdomain()" @addNewAlias="addNewAlias($event)" @addNewService="addNewService($event)" />
 
     <b-modal id="modal-addSvc" :size="modal && modal.step === 2 ? 'lg' : ''" scrollable @ok="handleModalSvcOk">
       <template v-slot:modal-title>
@@ -93,8 +93,8 @@ export default {
       type: Object,
       required: true
     },
-    zoneMeta: {
-      type: Object,
+    zoneId: {
+      type: Number,
       required: true
     }
   },
@@ -127,7 +127,7 @@ export default {
     },
 
     isLoading () {
-      return this.myServices == null && this.zoneMeta === undefined && this.services == null
+      return this.myServices == null && this.zoneId === undefined && this.services == null
     },
 
     sortedDomains () {
@@ -159,7 +159,7 @@ export default {
     domain: function () {
       this.pullZone()
     },
-    zoneMeta: function () {
+    zoneId: function () {
       this.pullZone()
     }
   },
@@ -220,7 +220,7 @@ export default {
         this.modal.step = 2
       } else if (this.modal.step === 2 && this.modal.svcSelected !== null) {
         ZoneApi
-          .addZoneService(this.domain.domain, this.zoneMeta.id, this.modal.dn, { Service: this.modal.svcData, _svctype: this.modal.svcSelected })
+          .addZoneService(this.domain.domain, this.zoneId, this.modal.dn, { Service: this.modal.svcData, _svctype: this.modal.svcSelected })
           .then(
             (response) => {
               this.myServices = response.data
@@ -247,7 +247,7 @@ export default {
 
       if (this.modal.alias) {
         ZoneApi
-          .addZoneService(this.domain.domain, this.zoneMeta.id, this.modal.alias, { Service: { target: this.modal.dn }, _svctype: 'svcs.CNAME' })
+          .addZoneService(this.domain.domain, this.zoneId, this.modal.alias, { Service: { target: this.modal.dn }, _svctype: 'svcs.CNAME' })
           .then(
             (response) => {
               this.myServices = response.data
@@ -270,12 +270,12 @@ export default {
     },
 
     pullZone () {
-      if (this.domain === undefined || this.domain.domain === undefined || this.zoneMeta === undefined || this.zoneMeta.id === undefined) {
+      if (this.domain === undefined || this.domain.domain === undefined || this.zoneId === undefined) {
         return
       }
 
       ZoneApi
-        .getZone(this.domain.domain, this.zoneMeta.id)
+        .getZone(this.domain.domain, this.zoneId)
         .then(
           (response) => {
             this.myServices = response.data
