@@ -99,9 +99,9 @@ const routes = [
     children: [
       {
         path: '',
-        name: 'domain-source',
+        name: 'domain-home',
         component: function () {
-          return import(/* webpackChunkName: "domain" */ '../views/domain-source.vue')
+          return import(/* webpackChunkName: "domain" */ '../views/domain-home.vue')
         }
       },
       {
@@ -109,6 +109,13 @@ const routes = [
         name: 'domain-abstract',
         component: function () {
           return import(/* webpackChunkName: "domain" */ '../views/domain-abstract.vue')
+        }
+      },
+      {
+        path: 'source',
+        name: 'domain-source',
+        component: function () {
+          return import(/* webpackChunkName: "domain" */ '../views/domain-source.vue')
         }
       }
     ]

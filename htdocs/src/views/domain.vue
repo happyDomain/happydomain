@@ -46,8 +46,8 @@
           <b-icon icon="chevron-up" />
         </router-link>
         <b-nav pills vertical variant="secondary">
-          <b-nav-item :to="'/domains/' + domain.domain" :active="$route.name == 'domain-source'">
-            Domain source
+          <b-nav-item :to="'/domains/' + domain.domain" :active="$route.name == 'domain-home'">
+            Summary
           </b-nav-item>
           <b-nav-item :to="'/domains/' + domain.domain + '/abstract'" :active="$route.name == 'domain-abstract'">
             Abstract zone
@@ -57,6 +57,9 @@
           </b-nav-item>
           <b-nav-item :to="'/domain/' + domain.domain + '/monitoring'" :active="$route.name == 'domain-monitoring'">
             Monitoring
+          </b-nav-item>
+          <b-nav-item :to="'/domains/' + domain.domain + '/source'" :active="$route.name == 'domain-source'">
+            Domain source
           </b-nav-item>
           <hr>
           <b-nav-form>
