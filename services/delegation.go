@@ -37,6 +37,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/utils"
 )
 
 type DS struct {
@@ -66,10 +67,6 @@ func (s *Delegation) GenComment(origin string) string {
 
 func (s *Delegation) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	for _, ns := range s.NameServers {
-		if ns[len(ns)-1] != '.' {
-			ns += origin
-		}
-
 		rrs = append(rrs, &dns.NS{
 			Hdr: dns.RR_Header{
 				Name:   domain,
@@ -77,7 +74,7 @@ func (s *Delegation) GenRRs(domain string, ttl uint32, origin string) (rrs []dns
 				Class:  dns.ClassINET,
 				Ttl:    ttl,
 			},
-			Ns: ns,
+			Ns: utils.DomainFQDN(ns, origin),
 		})
 	}
 	for _, ds := range s.DS {

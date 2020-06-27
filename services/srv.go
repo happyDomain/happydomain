@@ -39,6 +39,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/utils"
 )
 
 type SRV struct {
@@ -57,11 +58,6 @@ func (s *SRV) GenComment(origin string) string {
 }
 
 func (s *SRV) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
-	target := s.Target
-	if target[len(target)-1] != '.' {
-		target += origin
-	}
-
 	rrs = append(rrs, &dns.SRV{
 		Hdr: dns.RR_Header{
 			Name:   domain,
@@ -72,7 +68,7 @@ func (s *SRV) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 		Priority: s.Priority,
 		Weight:   s.Weight,
 		Port:     s.Port,
-		Target:   target,
+		Target:   utils.DomainFQDN(s.Target, origin),
 	})
 	return
 }

@@ -176,11 +176,6 @@ func (s *EMail) GenComment(origin string) string {
 func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	if len(s.MX) > 0 {
 		for _, mx := range s.MX {
-			target := mx.Target
-			if target[len(target)-1] != '.' {
-				target += origin
-			}
-
 			rrs = append(rrs, &dns.MX{
 				Hdr: dns.RR_Header{
 					Name:   domain,
@@ -188,7 +183,7 @@ func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) 
 					Class:  dns.ClassINET,
 					Ttl:    ttl,
 				},
-				Mx:         target,
+				Mx:         utils.DomainFQDN(mx.Target, origin),
 				Preference: mx.Preference,
 			})
 		}

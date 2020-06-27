@@ -67,3 +67,15 @@ func IsDNSSECType(rrtype uint16) bool {
 		rrtype == dns.TypeDNSKEY ||
 		rrtype == dns.TypeRRSIG
 }
+
+// DomainFQDN normalizes the domain by adding the origin if it is relative (not
+// ended by .).
+func DomainFQDN(subdomain string, origin string) string {
+	if subdomain == "" || subdomain[len(subdomain)-1] == '.' {
+		return subdomain
+	} else if subdomain == "@" {
+		return origin
+	} else {
+		return subdomain + "." + origin
+	}
+}
