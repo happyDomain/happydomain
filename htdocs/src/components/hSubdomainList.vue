@@ -43,7 +43,7 @@
         <p v-if="modal.step === 0">
           Add a new subdomain under <span class="text-monospace">{{ domain.domain }}</span>:
           <b-input-group :append="'.' + domain.domain">
-            <b-input v-model="modal.dn" autofocus />
+            <b-input v-model="modal.dn" autofocus class="text-monospace" placeholder="new.subdomain" :state="modal.newDomainState" @update="validateNewSubdomain" />
           </b-input-group>
         </p>
         <p v-else-if="modal.step === 1">
@@ -69,7 +69,7 @@
       <form v-if="modal && modal.dn != null" @submit.stop.prevent="handleModalAliasSubmit">
         Add an alias pointing to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
         <b-input-group :append="'.' + domain.domain">
-          <b-input v-model="modal.alias" autofocus />
+          <b-input v-model="modal.alias" autofocus class="text-monospace" placeholder="new.subdomain" :state="modal.newDomainState" @update="validateNewAlias" />
         </b-input-group>
       </form>
     </b-modal>
@@ -215,7 +215,9 @@ export default {
       bvModalEvt.preventDefault()
 
       if (this.modal.step === 0 && this.modal.dn !== '') {
-        this.modal.step = 1
+        if (this.validateNewSubdomain()) {
+          this.modal.step = 1
+        }
       } else if (this.modal.step === 1 && this.modal.svcSelected !== null) {
         this.modal.step = 2
       } else if (this.modal.step === 2 && this.modal.svcSelected !== null) {
@@ -246,26 +248,28 @@ export default {
       bvModalEvt.preventDefault()
 
       if (this.modal.alias) {
-        ZoneApi
-          .addZoneService(this.domain.domain, this.zoneId, this.modal.alias, { Service: { target: this.modal.dn }, _svctype: 'svcs.CNAME' })
-          .then(
-            (response) => {
-              this.myServices = response.data
-              this.$nextTick(() => {
-                this.$bvModal.hide('modal-addAlias')
-              })
-            },
-            (error) => {
-              this.$root.$bvToast.toast(
-                error.response.data.errmsg, {
-                  title: 'Unable to add the new service',
-                  autoHideDelay: 5000,
-                  variant: 'danger',
-                  toaster: 'b-toaster-content-right'
-                }
-              )
-            }
-          )
+        if (this.validateNewAlias()) {
+          ZoneApi
+            .addZoneService(this.domain.domain, this.zoneId, this.modal.alias, { Service: { target: this.modal.dn || '@' }, _svctype: 'svcs.CNAME' })
+            .then(
+              (response) => {
+                this.myServices = response.data
+                this.$nextTick(() => {
+                  this.$bvModal.hide('modal-addAlias')
+                })
+              },
+              (error) => {
+                this.$root.$bvToast.toast(
+                  error.response.data.errmsg, {
+                    title: 'Unable to add the new service',
+                    autoHideDelay: 5000,
+                    variant: 'danger',
+                    toaster: 'b-toaster-content-right'
+                  }
+                )
+              }
+            )
+        }
       }
     },
 
@@ -297,6 +301,47 @@ export default {
 
     updateMyServices (myS) {
       this.myServices = myS
+    },
+
+    validateDomain (dn) {
+      var ret = null
+      if (dn.length !== 0) {
+        ret = dn.length >= 1 && dn.length <= 254
+
+        if (ret) {
+          var domains = dn.split('.')
+
+          var newDomainState = ret
+          domains.forEach(function (domain) {
+            newDomainState &= domain.length >= 1 && domain.length <= 63
+            newDomainState &= domain[0] !== '-' && domain[domain.length - 1] !== '-'
+            newDomainState &= /^[a-zA-Z0-9]([a-zA-Z0-9-]?[a-zA-Z0-9])*$/.test(domain)
+          })
+          ret = newDomainState > 0
+        }
+      }
+
+      return ret
+    },
+
+    validateNewAlias () {
+      if (this.myServices.services) {
+        for (const dn in this.myServices.services) {
+          if (this.modal.alias === dn) {
+            this.modal.newDomainState = false
+            return false
+          }
+        }
+      }
+
+      this.modal.newDomainState = this.validateDomain(this.modal.alias)
+
+      return this.modal.newDomainState
+    },
+
+    validateNewSubdomain () {
+      this.modal.newDomainState = this.validateDomain(this.modal.dn)
+      return this.modal.newDomainState
     }
   }
 }
