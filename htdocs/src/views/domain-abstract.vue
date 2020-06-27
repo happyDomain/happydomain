@@ -67,6 +67,23 @@
       <template v-slot:modal-title>
         Review the modifications that will be applied to <span class="text-monospace">{{ domain.domain }}</span>
       </template>
+      <template v-slot:modal-footer="{ ok, cancel }">
+        <div v-if="zoneDiffAdd != null || zoneDiffDel !== null">
+          <span class="text-success">
+            {{ zoneDiffAdd.length }}&nbsp;addition{{ zoneDiffAdd.length > 1 ? 's' : '' }}
+          </span>
+          &ndash;
+          <span class="text-danger">
+            {{ zoneDiffDel.length }}&nbsp;deletion{{ zoneDiffDel.length > 1 ? 's' : '' }}
+          </span>
+        </div>
+        <b-button variant="secondary" @click="cancel()">
+          Cancel
+        </b-button>
+        <b-button variant="success" :disabled="ok-disabled" @click="ok()">
+          Apply modifications
+        </b-button>
+      </template>
       <div v-if="zoneDiffAdd === null || zoneDiffDel === null" class="my-2 text-center">
         <b-spinner label="Spinning" />
         <p>Please wait while we export your zone&nbsp;&hellip;</p>
