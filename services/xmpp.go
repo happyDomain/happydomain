@@ -95,17 +95,17 @@ destloop:
 	return buffer.String()
 }
 
-func (s *XMPP) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
+func (s *XMPP) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	for _, jabber := range s.Client {
-		rrs = append(rrs, jabber.GenRRs("_jabber._tcp."+domain, ttl)...)
+		rrs = append(rrs, jabber.GenRRs("_jabber._tcp."+domain, ttl, origin)...)
 	}
 
 	for _, client := range s.Client {
-		rrs = append(rrs, client.GenRRs("_xmpp-client._tcp."+domain, ttl)...)
+		rrs = append(rrs, client.GenRRs("_xmpp-client._tcp."+domain, ttl, origin)...)
 	}
 
 	for _, server := range s.Server {
-		rrs = append(rrs, server.GenRRs("_xmpp-server._tcp."+domain, ttl)...)
+		rrs = append(rrs, server.GenRRs("_xmpp-server._tcp."+domain, ttl, origin)...)
 	}
 
 	return

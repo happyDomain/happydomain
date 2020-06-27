@@ -130,7 +130,7 @@ func addZoneService(opts *config.Options, domain *happydns.Domain, zone *happydn
 
 	subdomain := strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(ps.ByName("subdomain"), "."+domain.DomainName), "@"), domain.DomainName)
 
-	records := usc.Service.GenRRs(subdomain, usc.Ttl)
+	records := usc.Service.GenRRs(subdomain, usc.Ttl, domain.DomainName)
 	if len(records) == 0 {
 		return APIErrorResponse{
 			err: fmt.Errorf("No record can be generated from your service."),

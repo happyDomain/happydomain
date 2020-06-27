@@ -173,9 +173,14 @@ func (s *EMail) GenComment(origin string) string {
 	return buffer.String()
 }
 
-func (s *EMail) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
+func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	if len(s.MX) > 0 {
 		for _, mx := range s.MX {
+			target := mx.Target
+			if target[len(target)-1] != '.' {
+				target += origin
+			}
+
 			rrs = append(rrs, &dns.MX{
 				Hdr: dns.RR_Header{
 					Name:   domain,
@@ -183,7 +188,7 @@ func (s *EMail) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
 					Class:  dns.ClassINET,
 					Ttl:    ttl,
 				},
-				Mx:         mx.Target,
+				Mx:         target,
 				Preference: mx.Preference,
 			})
 		}

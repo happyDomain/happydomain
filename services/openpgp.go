@@ -57,7 +57,7 @@ func (s *OpenPGP) GenComment(origin string) string {
 	return fmt.Sprintf("%s", s.Username)
 }
 
-func (s *OpenPGP) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
+func (s *OpenPGP) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	if len(s.PublicKey) > 0 {
 		if s.Username != "" {
 			s.Identifier = fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
@@ -65,7 +65,7 @@ func (s *OpenPGP) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
 
 		rrs = append(rrs, &dns.OPENPGPKEY{
 			Hdr: dns.RR_Header{
-				Name:   fmt.Sprintf("_%s._openpgpkey.%d", s.Identifier, domain),
+				Name:   fmt.Sprintf("_%s._openpgpkey.%s", s.Identifier, domain),
 				Rrtype: dns.TypeOPENPGPKEY,
 				Class:  dns.ClassINET,
 				Ttl:    ttl,
@@ -93,7 +93,7 @@ func (s *SMimeCert) GenComment(origin string) string {
 	return fmt.Sprintf("%s", s.Username)
 }
 
-func (s *SMimeCert) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
+func (s *SMimeCert) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	if len(s.Certificate) > 0 {
 		if s.Username != "" {
 			s.Identifier = fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
@@ -101,7 +101,7 @@ func (s *SMimeCert) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
 
 		rrs = append(rrs, &dns.SMIMEA{
 			Hdr: dns.RR_Header{
-				Name:   fmt.Sprintf("_%s._smimecert.%d", s.Identifier, domain),
+				Name:   fmt.Sprintf("_%s._smimecert.%s", s.Identifier, domain),
 				Rrtype: dns.TypeSMIMEA,
 				Class:  dns.ClassINET,
 				Ttl:    ttl,

@@ -51,7 +51,7 @@ func (s *Orphan) GenComment(origin string) string {
 	return s.RR
 }
 
-func (s *Orphan) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
+func (s *Orphan) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	rr, _ := dns.NewRR(fmt.Sprintf("%s %d IN %s", domain, ttl, s.RR))
 	if rr != nil {
 		rrs = append(rrs, rr)

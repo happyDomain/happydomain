@@ -40,7 +40,7 @@ type Service interface {
 	GetNbResources() int
 	GenComment(origin string) string
 	// genRRs generates corresponding RRs.
-	GenRRs(domain string, ttl uint32) []dns.RR
+	GenRRs(domain string, ttl uint32, origin string) []dns.RR
 }
 
 type ServiceType struct {

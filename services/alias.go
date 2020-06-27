@@ -52,7 +52,12 @@ func (s *CNAME) GenComment(origin string) string {
 	return strings.TrimSuffix(s.Target, "."+origin)
 }
 
-func (s *CNAME) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
+func (s *CNAME) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
+	target := s.Target
+	if target[len(target)-1] != '.' {
+		target += origin
+	}
+
 	rrs = append(rrs, &dns.CNAME{
 		Hdr: dns.RR_Header{
 			Name:   domain,
@@ -60,7 +65,7 @@ func (s *CNAME) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
 			Class:  dns.ClassINET,
 			Ttl:    ttl,
 		},
-		Target: s.Target,
+		Target: target,
 	})
 	return
 }
@@ -78,7 +83,12 @@ func (s *SpecialCNAME) GenComment(origin string) string {
 	return "(" + s.SubDomain + ") -> " + strings.TrimSuffix(s.Target, "."+origin)
 }
 
-func (s *SpecialCNAME) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
+func (s *SpecialCNAME) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
+	target := s.Target
+	if target[len(target)-1] != '.' {
+		target += origin
+	}
+
 	rrs = append(rrs, &dns.CNAME{
 		Hdr: dns.RR_Header{
 			Name:   s.SubDomain + "." + domain,
@@ -86,7 +96,7 @@ func (s *SpecialCNAME) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
 			Class:  dns.ClassINET,
 			Ttl:    ttl,
 		},
-		Target: s.Target,
+		Target: target,
 	})
 	return
 }

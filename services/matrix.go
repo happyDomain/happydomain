@@ -88,9 +88,9 @@ destloop:
 	return buffer.String()
 }
 
-func (s *MatrixIM) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
+func (s *MatrixIM) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	for _, matrix := range s.Matrix {
-		rrs = append(rrs, matrix.GenRRs("_matrix._tcp."+domain, ttl)...)
+		rrs = append(rrs, matrix.GenRRs("_matrix._tcp."+domain, ttl, origin)...)
 	}
 	return
 }
