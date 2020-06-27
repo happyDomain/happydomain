@@ -55,14 +55,22 @@
       <h-subdomain-list :domain="domain" :zone-id="selectedHistory" />
     </div>
 
-    <b-modal id="modal-viewZone" title="View zone" size="lg" scrollable ok-only>
-      <pre style="overflow: initial">{{ zoneContent }}</pre>
+    <b-modal id="modal-viewZone" title="View zone" size="lg" scrollable ok-only :ok-disabled="zoneContent === null">
+      <div v-if="zoneContent === null" class="my-2 text-center">
+        <b-spinner label="Spinning" />
+        <p>Please wait while we format your zone&nbsp;&hellip;</p>
+      </div>
+      <pre v-else style="overflow: initial">{{ zoneContent }}</pre>
     </b-modal>
 
-    <b-modal id="modal-applyZone" size="lg" scrollable @ok="applyDiff()">
+    <b-modal id="modal-applyZone" size="lg" scrollable :ok-disabled="zoneDiffAdd === null || zoneDiffDel === null" @ok="applyDiff()">
       <template v-slot:modal-title>
         Review the modifications that will be applied to <span class="text-monospace">{{ domain.domain }}</span>
       </template>
+      <div v-if="zoneDiffAdd === null || zoneDiffDel === null" class="my-2 text-center">
+        <b-spinner label="Spinning" />
+        <p>Please wait while we export your zone&nbsp;&hellip;</p>
+      </div>
       <div v-for="(line, n) in zoneDiffAdd" :key="'a' + n" class="text-monospace text-success" style="white-space: nowrap">
         +{{ line }}
       </div>
@@ -134,6 +142,9 @@ export default {
     },
 
     showDiff () {
+      this.zoneDiffAdd = null
+      this.zoneDiffDel = null
+      this.$bvModal.show('modal-applyZone')
       ZoneApi.diffZone(this.domain.domain, '@', this.selectedHistory)
         .then(
           (response) => {
@@ -142,13 +153,13 @@ export default {
             } else {
               this.zoneDiffAdd = response.data.toAdd
               this.zoneDiffDel = response.data.toDel
-              this.$bvModal.show('modal-applyZone')
             }
           },
           (error) => {
+            this.$bvModal.hide('modal-applyZone')
             this.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'An error occurs when applying the zone!',
+                title: 'An error occurs when exporting the zone!',
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'
@@ -183,16 +194,18 @@ export default {
     },
 
     viewZone () {
+      this.zoneContent = null
+      this.$bvModal.show('modal-viewZone')
       ZoneApi.viewZone(this.domain.domain, this.selectedHistory)
         .then(
           (response) => {
             this.zoneContent = response.data
-            this.$bvModal.show('modal-viewZone')
           },
           (error) => {
+            this.$bvModal.hide('modal-viewZone')
             this.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'An error occurs when applying the zone!',
+                title: 'An error occurs when exporting the zone!',
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'
