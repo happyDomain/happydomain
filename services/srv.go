@@ -43,9 +43,9 @@ import (
 
 type SRV struct {
 	Target   string `json:"target"`
-	Port     uint16 `json:"port,omitempty"`
-	Weight   uint16 `json:"weight,omitempty"`
-	Priority uint16 `json:"priority,omitempty"`
+	Port     uint16 `json:"port"`
+	Weight   uint16 `json:"weight"`
+	Priority uint16 `json:"priority"`
 }
 
 func (s *SRV) GetNbResources() int {
