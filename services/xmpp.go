@@ -43,9 +43,9 @@ import (
 )
 
 type XMPP struct {
-	Client []*SRV `json:"client,omitempty"`
-	Server []*SRV `json:"server,omitempty"`
-	Jabber []*SRV `json:"jabber,omitempty"`
+	Client []*SRV `json:"client,omitempty" happydns:"label=Client Connection"`
+	Server []*SRV `json:"server,omitempty" happydns:"label=Server Connection"`
+	Jabber []*SRV `json:"jabber,omitempty" happydns:"label=Jabber Connection (legacy)"`
 }
 
 func (s *XMPP) GetNbResources() (max int) {

@@ -33,6 +33,10 @@
 
 <template>
   <div v-if="!isLoading && (edit || tmp_values.length > 0)">
+    <h4 v-if="specs.label" class="mt-1 text-primary">
+      {{ specs.label }}
+      <small v-if="specs.description" class="text-muted">{{ specs.description }}</small>
+    </h4>
     <b-table hover striped :fields="fieldsNames" :items="tmp_values" sort-icon-left>
       <template v-slot:head(_actions)>
         <b-button size="sm" title="Add item" variant="outline-secondary" class="mx-1" @click="addRow()">
