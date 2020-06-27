@@ -33,7 +33,7 @@
 
 <template>
   <b-form-row
-    v-show="edit || value"
+    v-show="edit || value != null"
   >
     <label v-if="specs.label" :for="'spec-' + index" :title="specs.label" class="col-md-4 col-form-label text-truncate text-md-right text-primary">{{ specs.label }}</label>
     <label v-else :for="'spec-' + index" :title="specs.label" class="col-md-4 col-form-label text-truncate text-md-right text-primary">{{ specs.id }}</label>
