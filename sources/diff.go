@@ -35,11 +35,15 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/utils"
 )
 
-func DiffZones(a []dns.RR, b []dns.RR) (toAdd []dns.RR, toDel []dns.RR) {
+func DiffZones(a []dns.RR, b []dns.RR, skipDNSSEC bool) (toAdd []dns.RR, toDel []dns.RR) {
 loopDel:
 	for _, rrA := range a {
+		if skipDNSSEC && utils.IsDNSSECType(rrA.Header().Rrtype) {
+			continue
+		}
 		for _, rrB := range b {
 			if rrA.String() == rrB.String() {
 				continue loopDel
@@ -51,6 +55,9 @@ loopDel:
 
 loopAdd:
 	for _, rrB := range b {
+		if skipDNSSEC && utils.IsDNSSECType(rrB.Header().Rrtype) {
+			continue
+		}
 		for _, rrA := range a {
 			if rrB.String() == rrA.String() {
 				continue loopAdd
@@ -63,7 +70,7 @@ loopAdd:
 	return
 }
 
-func DiffZone(s happydns.Source, domain *happydns.Domain, rrs []dns.RR) (toAdd []dns.RR, toDel []dns.RR, err error) {
+func DiffZone(s happydns.Source, domain *happydns.Domain, rrs []dns.RR, skipDNSSEC bool) (toAdd []dns.RR, toDel []dns.RR, err error) {
 	// Get the actuals RR-set
 	var current []dns.RR
 	current, err = s.ImportZone(domain)
@@ -71,12 +78,12 @@ func DiffZone(s happydns.Source, domain *happydns.Domain, rrs []dns.RR) (toAdd [
 		return
 	}
 
-	toAdd, toDel = DiffZones(current, rrs)
+	toAdd, toDel = DiffZones(current, rrs, skipDNSSEC)
 	return
 }
 
-func ApplyZone(s happydns.Source, domain *happydns.Domain, rrs []dns.RR) (*dns.SOA, error) {
-	toAdd, toDel, err := DiffZone(s, domain, rrs)
+func ApplyZone(s happydns.Source, domain *happydns.Domain, rrs []dns.RR, skipDNSSEC bool) (*dns.SOA, error) {
+	toAdd, toDel, err := DiffZone(s, domain, rrs, skipDNSSEC)
 	if err != nil {
 		return nil, err
 	}

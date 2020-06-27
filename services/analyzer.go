@@ -41,6 +41,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/utils"
 )
 
 type Analyzer struct {
@@ -170,10 +171,7 @@ func AnalyzeZone(origin string, zone []dns.RR) (svcs map[string][]*happydns.Serv
 	// Consider records not used by services as Orphan
 	for _, record := range a.zone {
 		// Skip DNSSEC records
-		if record.Header().Rrtype == dns.TypeNSEC ||
-			record.Header().Rrtype == dns.TypeNSEC3 ||
-			record.Header().Rrtype == dns.TypeDNSKEY ||
-			record.Header().Rrtype == dns.TypeRRSIG {
+		if utils.IsDNSSECType(record.Header().Rrtype) {
 			continue
 		}
 
