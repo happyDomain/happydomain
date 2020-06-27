@@ -38,6 +38,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/utils"
 )
 
 type CNAME struct {
@@ -53,11 +54,6 @@ func (s *CNAME) GenComment(origin string) string {
 }
 
 func (s *CNAME) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
-	target := s.Target
-	if target[len(target)-1] != '.' {
-		target += origin
-	}
-
 	rrs = append(rrs, &dns.CNAME{
 		Hdr: dns.RR_Header{
 			Name:   domain,
@@ -65,7 +61,7 @@ func (s *CNAME) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) 
 			Class:  dns.ClassINET,
 			Ttl:    ttl,
 		},
-		Target: target,
+		Target: utils.DomainFQDN(s.Target, origin),
 	})
 	return
 }
@@ -84,11 +80,6 @@ func (s *SpecialCNAME) GenComment(origin string) string {
 }
 
 func (s *SpecialCNAME) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
-	target := s.Target
-	if target[len(target)-1] != '.' {
-		target += origin
-	}
-
 	rrs = append(rrs, &dns.CNAME{
 		Hdr: dns.RR_Header{
 			Name:   s.SubDomain + "." + domain,
@@ -96,7 +87,7 @@ func (s *SpecialCNAME) GenRRs(domain string, ttl uint32, origin string) (rrs []d
 			Class:  dns.ClassINET,
 			Ttl:    ttl,
 		},
-		Target: target,
+		Target: utils.DomainFQDN(s.Target, origin),
 	})
 	return
 }

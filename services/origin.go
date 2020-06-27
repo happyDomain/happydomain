@@ -39,6 +39,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/utils"
 )
 
 type Origin struct {
@@ -66,14 +67,6 @@ func (s *Origin) GenComment(origin string) string {
 }
 
 func (s *Origin) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
-	ns := s.Ns
-	if ns[len(ns)-1] != '.' {
-		ns += origin
-	}
-	mbox := s.Mbox
-	if mbox[len(mbox)-1] != '.' {
-		mbox += origin
-	}
 	rrs = append(rrs, &dns.SOA{
 		Hdr: dns.RR_Header{
 			Name:   domain,
@@ -81,8 +74,8 @@ func (s *Origin) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR)
 			Class:  dns.ClassINET,
 			Ttl:    ttl,
 		},
-		Ns:      ns,
-		Mbox:    mbox,
+		Ns:      utils.DomainFQDN(s.Ns, origin),
+		Mbox:    utils.DomainFQDN(s.Mbox, origin),
 		Serial:  s.Serial,
 		Refresh: uint32(s.Refresh.Seconds()),
 		Retry:   uint32(s.Retry.Seconds()),
@@ -90,10 +83,6 @@ func (s *Origin) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR)
 		Minttl:  uint32(s.Negttl.Seconds()),
 	})
 	for _, ns := range s.NameServers {
-		if ns[len(ns)-1] != '.' {
-			ns += origin
-		}
-
 		rrs = append(rrs, &dns.NS{
 			Hdr: dns.RR_Header{
 				Name:   domain,
@@ -101,7 +90,7 @@ func (s *Origin) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR)
 				Class:  dns.ClassINET,
 				Ttl:    ttl,
 			},
-			Ns: ns,
+			Ns: utils.DomainFQDN(ns, origin),
 		})
 	}
 	return
