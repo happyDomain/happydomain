@@ -51,7 +51,7 @@
         <b-button v-if="!row.item._edit" size="sm" title="Edit" variant="outline-primary" class="mx-1" @click="row.item._edit = !row.item._edit">
           <b-icon icon="pencil" />
         </b-button>
-        <b-button v-else type="button" title="Save the modifications" size="sm" variant="primary" class="mx-1" @click="saveRow(row)">
+        <b-button v-else type="button" title="Save the modifications" size="sm" variant="success" class="mx-1" @click="saveRow(row)">
           <b-icon icon="check" />
         </b-button>
         <b-button v-if="!row.item._edit" type="button" title="Delete" size="sm" variant="outline-danger" class="mx-1" @click="deleteRow(row)">

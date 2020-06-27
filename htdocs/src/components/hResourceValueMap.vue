@@ -61,7 +61,7 @@
             <b-icon icon="pencil" />
             Edit
           </b-button>
-          <b-button v-else type="button" size="sm" variant="primary" class="mx-1" @click="saveObject(key)">
+          <b-button v-else type="button" size="sm" variant="success" class="mx-1" @click="saveObject(key)">
             <b-icon icon="check" />
             Save those modifications
           </b-button>
