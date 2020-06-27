@@ -303,7 +303,7 @@ func diffZones(opts *config.Options, domain *happydns.Domain, ps httprouter.Para
 		}
 	}
 
-	toAdd, toDel := sources.DiffZones(zone1, zone2)
+	toAdd, toDel := sources.DiffZones(zone1, zone2, true)
 
 	var rrAdd []string
 	for _, rr := range toAdd {
@@ -331,7 +331,7 @@ func applyZone(opts *config.Options, domain *happydns.Domain, zone *happydns.Zon
 		}
 	}
 
-	newSOA, err := sources.ApplyZone(source, domain, zone.GenerateRRs(domain.DomainName))
+	newSOA, err := sources.ApplyZone(source, domain, zone.GenerateRRs(domain.DomainName), true)
 	if err != nil {
 		return APIErrorResponse{
 			err: err,
