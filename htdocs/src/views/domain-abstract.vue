@@ -63,28 +63,28 @@
       <pre v-else style="overflow: initial">{{ zoneContent }}</pre>
     </b-modal>
 
-    <b-modal id="modal-applyZone" size="lg" scrollable :ok-disabled="zoneDiffAdd === null || zoneDiffDel === null" @ok="applyDiff()">
+    <b-modal id="modal-applyZone" size="lg" scrollable @ok="applyDiff()">
       <template v-slot:modal-title>
         Review the modifications that will be applied to <span class="text-monospace">{{ domain.domain }}</span>
       </template>
       <template v-slot:modal-footer="{ ok, cancel }">
-        <div v-if="zoneDiffAdd != null || zoneDiffDel !== null">
-          <span class="text-success">
-            {{ zoneDiffAdd.length }}&nbsp;addition{{ zoneDiffAdd.length > 1 ? 's' : '' }}
+        <div v-if="zoneDiffAdd || zoneDiffDel">
+          <span class="text-success" v-if="zoneDiffAdd">
+            {{ (zoneDiffAdd || []).length }}&nbsp;addition{{ (zoneDiffAdd || []).length > 1 ? 's' : '' }}
           </span>
           &ndash;
           <span class="text-danger">
-            {{ zoneDiffDel.length }}&nbsp;deletion{{ zoneDiffDel.length > 1 ? 's' : '' }}
+            {{ (zoneDiffDel || []).length }}&nbsp;deletion{{ (zoneDiffDel || []).length > 1 ? 's' : '' }}
           </span>
         </div>
         <b-button variant="secondary" @click="cancel()">
           Cancel
         </b-button>
-        <b-button variant="success" :disabled="ok-disabled" @click="ok()">
+        <b-button variant="success" :disabled="zoneDiffAdd === null && zoneDiffDel === null" @click="ok()">
           Apply modifications
         </b-button>
       </template>
-      <div v-if="zoneDiffAdd === null || zoneDiffDel === null" class="my-2 text-center">
+      <div v-if="zoneDiffAdd === null && zoneDiffDel === null" class="my-2 text-center">
         <b-spinner label="Spinning" />
         <p>Please wait while we export your zone&nbsp;&hellip;</p>
       </div>
@@ -166,6 +166,7 @@ export default {
         .then(
           (response) => {
             if (response.data.toAdd == null && response.data.toDel == null) {
+              this.$bvModal.hide('modal-applyZone')
               this.$bvModal.msgBoxOk('There is no changes to apply! Current zone is in sync with the server.')
             } else {
               this.zoneDiffAdd = response.data.toAdd
