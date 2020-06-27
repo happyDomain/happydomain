@@ -59,7 +59,15 @@ func (s *Origin) GenComment(origin string) string {
 	return fmt.Sprintf("%s %s %d", strings.TrimSuffix(s.Ns, "."+origin), strings.TrimSuffix(s.Mbox, "."+origin), s.Serial)
 }
 
-func (s *Origin) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
+func (s *Origin) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
+	ns := s.Ns
+	if ns[len(ns)-1] != '.' {
+		ns += origin
+	}
+	mbox := s.Mbox
+	if mbox[len(mbox)-1] != '.' {
+		mbox += origin
+	}
 	rrs = append(rrs, &dns.SOA{
 		Hdr: dns.RR_Header{
 			Name:   domain,
@@ -67,8 +75,8 @@ func (s *Origin) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
 			Class:  dns.ClassINET,
 			Ttl:    ttl,
 		},
-		Ns:      s.Ns,
-		Mbox:    s.Mbox,
+		Ns:      ns,
+		Mbox:    mbox,
 		Serial:  s.Serial,
 		Refresh: uint32(s.Refresh.Seconds()),
 		Retry:   uint32(s.Retry.Seconds()),

@@ -56,7 +56,12 @@ func (s *SRV) GenComment(origin string) string {
 	return fmt.Sprintf("%s:%d", strings.TrimSuffix(s.Target, "."+origin), s.Port)
 }
 
-func (s *SRV) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
+func (s *SRV) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
+	target := s.Target
+	if target[len(target)-1] != '.' {
+		target += origin
+	}
+
 	rrs = append(rrs, &dns.SRV{
 		Hdr: dns.RR_Header{
 			Name:   domain,
@@ -67,7 +72,7 @@ func (s *SRV) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
 		Priority: s.Priority,
 		Weight:   s.Weight,
 		Port:     s.Port,
-		Target:   s.Target,
+		Target:   target,
 	})
 	return
 }
@@ -103,9 +108,9 @@ func (s *UnknownSRV) GenComment(origin string) string {
 	return fmt.Sprintf("%s (%s)", s.Name, s.Proto)
 }
 
-func (s *UnknownSRV) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
+func (s *UnknownSRV) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	for _, service := range s.SRV {
-		rrs = append(rrs, service.GenRRs(fmt.Sprintf("_%s._%s.%s", s.Name, s.Proto, domain), ttl)...)
+		rrs = append(rrs, service.GenRRs(fmt.Sprintf("_%s._%s.%s", s.Name, s.Proto, domain), ttl, origin)...)
 	}
 	return
 }

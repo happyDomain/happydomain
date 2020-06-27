@@ -97,12 +97,12 @@ protoloop:
 	return buffer.String()
 }
 
-func (ss *TLSAs) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
+func (ss *TLSAs) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	for _, s := range ss.TLSA {
 		if len(s.Certificate) > 0 {
 			rrs = append(rrs, &dns.TLSA{
 				Hdr: dns.RR_Header{
-					Name:   fmt.Sprintf("_%d._%s.%d", s.Port, s.Proto, domain),
+					Name:   fmt.Sprintf("_%d._%s.%s", s.Port, s.Proto, domain),
 					Rrtype: dns.TypeTLSA,
 					Class:  dns.ClassINET,
 					Ttl:    ttl,

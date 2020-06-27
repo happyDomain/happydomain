@@ -78,7 +78,7 @@ func (s *Server) GenComment(origin string) string {
 	return buffer.String()
 }
 
-func (s *Server) GenRRs(domain string, ttl uint32) (rrs []dns.RR) {
+func (s *Server) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	if s.A != nil {
 		rrs = append(rrs, &dns.A{
 			Hdr: dns.RR_Header{

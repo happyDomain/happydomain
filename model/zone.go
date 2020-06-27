@@ -130,7 +130,7 @@ func (z *Zone) GenerateRRs(origin string) (rrs []dns.RR) {
 			} else {
 				ttl = svc.Ttl
 			}
-			rrs = append(rrs, svc.GenRRs(subdomain, ttl)...)
+			rrs = append(rrs, svc.GenRRs(subdomain, ttl, origin)...)
 		}
 	}
 
