@@ -38,7 +38,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/config"
@@ -58,8 +57,8 @@ func init() {
 	router.DELETE("/api/domains/:domain/rr", apiAuthHandler(domainHandler(delRR)))
 }
 
-func getDomains(_ *config.Options, u *happydns.User, p httprouter.Params, body io.Reader) Response {
-	if domains, err := storage.MainStore.GetDomains(u); err != nil {
+func getDomains(_ *config.Options, req *RequestResources, body io.Reader) Response {
+	if domains, err := storage.MainStore.GetDomains(req.User); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
@@ -74,7 +73,7 @@ func getDomains(_ *config.Options, u *happydns.User, p httprouter.Params, body i
 	}
 }
 
-func addDomain(_ *config.Options, u *happydns.User, p httprouter.Params, body io.Reader) Response {
+func addDomain(_ *config.Options, req *RequestResources, body io.Reader) Response {
 	var uz happydns.Domain
 	err := json.NewDecoder(body).Decode(&uz)
 	if err != nil {
@@ -97,7 +96,7 @@ func addDomain(_ *config.Options, u *happydns.User, p httprouter.Params, body io
 		}
 	}
 
-	source, err := storage.MainStore.GetSource(u, uz.IdSource)
+	source, err := storage.MainStore.GetSource(req.User, uz.IdSource)
 	if err != nil {
 		return APIErrorResponse{
 			err: err,
@@ -113,7 +112,7 @@ func addDomain(_ *config.Options, u *happydns.User, p httprouter.Params, body io
 		return APIErrorResponse{
 			err: err,
 		}
-	} else if err := storage.MainStore.CreateDomain(u, &uz); err != nil {
+	} else if err := storage.MainStore.CreateDomain(req.User, &uz); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
@@ -124,8 +123,8 @@ func addDomain(_ *config.Options, u *happydns.User, p httprouter.Params, body io
 	}
 }
 
-func delDomain(_ *config.Options, domain *happydns.Domain, _ httprouter.Params, body io.Reader) Response {
-	if err := storage.MainStore.DeleteDomain(domain); err != nil {
+func delDomain(_ *config.Options, req *RequestResources, body io.Reader) Response {
+	if err := storage.MainStore.DeleteDomain(req.Domain); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
@@ -136,15 +135,16 @@ func delDomain(_ *config.Options, domain *happydns.Domain, _ httprouter.Params, 
 	}
 }
 
-func domainHandler(f func(*config.Options, *happydns.Domain, httprouter.Params, io.Reader) Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) Response {
-	return func(opts *config.Options, u *happydns.User, ps httprouter.Params, body io.Reader) Response {
-		if domain, err := storage.MainStore.GetDomainByDN(u, ps.ByName("domain")); err != nil {
+func domainHandler(f func(*config.Options, *RequestResources, io.Reader) Response) func(*config.Options, *RequestResources, io.Reader) Response {
+	return func(opts *config.Options, req *RequestResources, body io.Reader) Response {
+		var err error
+		if req.Domain, err = storage.MainStore.GetDomainByDN(req.User, req.Ps.ByName("domain")); err != nil {
 			return APIErrorResponse{
 				status: http.StatusNotFound,
 				err:    errors.New("Domain not found"),
 			}
 		} else {
-			return f(opts, domain, ps, body)
+			return f(opts, req, body)
 		}
 	}
 }
@@ -157,16 +157,16 @@ type apiDomain struct {
 	ZoneHistory []happydns.ZoneMeta `json:"zone_history"`
 }
 
-func getDomain(_ *config.Options, domain *happydns.Domain, _ httprouter.Params, body io.Reader) Response {
+func getDomain(_ *config.Options, req *RequestResources, body io.Reader) Response {
 	ret := &apiDomain{
-		Id:          domain.Id,
-		IdUser:      domain.IdUser,
-		IdSource:    domain.IdSource,
-		DomainName:  domain.DomainName,
+		Id:          req.Domain.Id,
+		IdUser:      req.Domain.IdUser,
+		IdSource:    req.Domain.IdSource,
+		DomainName:  req.Domain.DomainName,
 		ZoneHistory: []happydns.ZoneMeta{},
 	}
 
-	for _, zm := range domain.ZoneHistory {
+	for _, zm := range req.Domain.ZoneHistory {
 		zoneMeta, err := storage.MainStore.GetZoneMeta(zm)
 
 		if err != nil {
@@ -183,15 +183,15 @@ func getDomain(_ *config.Options, domain *happydns.Domain, _ httprouter.Params, 
 	}
 }
 
-func axfrDomain(opts *config.Options, domain *happydns.Domain, _ httprouter.Params, body io.Reader) Response {
-	source, err := storage.MainStore.GetSource(&happydns.User{Id: domain.IdUser}, domain.IdSource)
+func axfrDomain(opts *config.Options, req *RequestResources, body io.Reader) Response {
+	source, err := storage.MainStore.GetSource(req.User, req.Domain.IdSource)
 	if err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
 	}
 
-	rrs, err := source.ImportZone(domain)
+	rrs, err := source.ImportZone(req.Domain)
 	if err != nil {
 		return APIErrorResponse{
 			err: err,
@@ -215,7 +215,7 @@ type uploadedRR struct {
 	RR string `json:"string"`
 }
 
-func addRR(opts *config.Options, domain *happydns.Domain, _ httprouter.Params, body io.Reader) Response {
+func addRR(opts *config.Options, req *RequestResources, body io.Reader) Response {
 	var urr uploadedRR
 	err := json.NewDecoder(body).Decode(&urr)
 	if err != nil {
@@ -224,21 +224,21 @@ func addRR(opts *config.Options, domain *happydns.Domain, _ httprouter.Params, b
 		}
 	}
 
-	rr, err := dns.NewRR(fmt.Sprintf("$ORIGIN %s\n$TTL %d\n%s", domain.DomainName, 3600, urr.RR))
+	rr, err := dns.NewRR(fmt.Sprintf("$ORIGIN %s\n$TTL %d\n%s", req.Domain.DomainName, 3600, urr.RR))
 	if err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
 	}
 
-	source, err := storage.MainStore.GetSource(&happydns.User{Id: domain.IdUser}, domain.IdSource)
+	source, err := storage.MainStore.GetSource(req.User, req.Domain.IdSource)
 	if err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
 	}
 
-	err = source.AddRR(domain, rr)
+	err = source.AddRR(req.Domain, rr)
 	if err != nil {
 		return APIErrorResponse{
 			status: http.StatusInternalServerError,
@@ -253,7 +253,7 @@ func addRR(opts *config.Options, domain *happydns.Domain, _ httprouter.Params, b
 	}
 }
 
-func delRR(opts *config.Options, domain *happydns.Domain, _ httprouter.Params, body io.Reader) Response {
+func delRR(opts *config.Options, req *RequestResources, body io.Reader) Response {
 	var urr uploadedRR
 	err := json.NewDecoder(body).Decode(&urr)
 	if err != nil {
@@ -269,14 +269,14 @@ func delRR(opts *config.Options, domain *happydns.Domain, _ httprouter.Params, b
 		}
 	}
 
-	source, err := storage.MainStore.GetSource(&happydns.User{Id: domain.IdUser}, domain.IdSource)
+	source, err := storage.MainStore.GetSource(req.User, req.Domain.IdSource)
 	if err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
 	}
 
-	err = source.DeleteRR(domain, rr)
+	err = source.DeleteRR(req.Domain, rr)
 	if err != nil {
 		return APIErrorResponse{
 			status: http.StatusInternalServerError,
