@@ -38,8 +38,6 @@ import (
 	"io/ioutil"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
-
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/sources"
@@ -57,8 +55,8 @@ func init() {
 	router.GET("/api/sources/:sid/domains", apiAuthHandler(sourceHandler(getDomainsHostedBySource)))
 }
 
-func getSources(_ *config.Options, u *happydns.User, p httprouter.Params, body io.Reader) Response {
-	if sources, err := storage.MainStore.GetSourceMetas(u); err != nil {
+func getSources(_ *config.Options, req *RequestResources, body io.Reader) Response {
+	if sources, err := storage.MainStore.GetSourceMetas(req.User); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
@@ -73,33 +71,34 @@ func getSources(_ *config.Options, u *happydns.User, p httprouter.Params, body i
 	}
 }
 
-func sourceMetaHandler(f func(*config.Options, *happydns.SourceMeta, *happydns.User, io.Reader) Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) Response {
-	return func(opts *config.Options, u *happydns.User, ps httprouter.Params, body io.Reader) Response {
-		if sid, err := strconv.ParseInt(string(ps.ByName("sid")), 10, 64); err != nil {
+func sourceMetaHandler(f func(*config.Options, *RequestResources, io.Reader) Response) func(*config.Options, *RequestResources, io.Reader) Response {
+	return func(opts *config.Options, req *RequestResources, body io.Reader) Response {
+		if sid, err := strconv.ParseInt(string(req.Ps.ByName("sid")), 10, 64); err != nil {
 			return APIErrorResponse{err: err}
-		} else if srcMeta, err := storage.MainStore.GetSourceMeta(u, sid); err != nil {
+		} else if req.SourceMeta, err = storage.MainStore.GetSourceMeta(req.User, sid); err != nil {
 			return APIErrorResponse{err: err}
 		} else {
-			return f(opts, srcMeta, u, body)
+			return f(opts, req, body)
 		}
 	}
 }
 
-func sourceHandler(f func(*config.Options, *happydns.SourceCombined, *happydns.User, io.Reader) Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) Response {
-	return func(opts *config.Options, u *happydns.User, ps httprouter.Params, body io.Reader) Response {
-		if sid, err := strconv.ParseInt(string(ps.ByName("sid")), 10, 64); err != nil {
+func sourceHandler(f func(*config.Options, *RequestResources, io.Reader) Response) func(*config.Options, *RequestResources, io.Reader) Response {
+	return func(opts *config.Options, req *RequestResources, body io.Reader) Response {
+		if sid, err := strconv.ParseInt(string(req.Ps.ByName("sid")), 10, 64); err != nil {
 			return APIErrorResponse{err: err}
-		} else if source, err := storage.MainStore.GetSource(u, sid); err != nil {
+		} else if req.Source, err = storage.MainStore.GetSource(req.User, sid); err != nil {
 			return APIErrorResponse{err: err}
 		} else {
-			return f(opts, source, u, body)
+			req.SourceMeta = &req.Source.SourceMeta
+			return f(opts, req, body)
 		}
 	}
 }
 
-func getSource(_ *config.Options, s *happydns.SourceCombined, u *happydns.User, body io.Reader) Response {
+func getSource(_ *config.Options, req *RequestResources, body io.Reader) Response {
 	return APIResponse{
-		response: s,
+		response: req.Source,
 	}
 }
 
@@ -138,7 +137,7 @@ func DecodeSource(body io.Reader) (*happydns.SourceCombined, error) {
 	return src, nil
 }
 
-func addSource(_ *config.Options, u *happydns.User, p httprouter.Params, body io.Reader) Response {
+func addSource(_ *config.Options, req *RequestResources, body io.Reader) Response {
 	src, err := DecodeSource(body)
 	if err != nil {
 		return APIErrorResponse{
@@ -146,7 +145,7 @@ func addSource(_ *config.Options, u *happydns.User, p httprouter.Params, body io
 		}
 	}
 
-	if s, err := storage.MainStore.CreateSource(u, src.Source, src.Comment); err != nil {
+	if s, err := storage.MainStore.CreateSource(req.User, src.Source, src.Comment); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
@@ -157,7 +156,7 @@ func addSource(_ *config.Options, u *happydns.User, p httprouter.Params, body io
 	}
 }
 
-func updateSource(_ *config.Options, s *happydns.SourceCombined, u *happydns.User, body io.Reader) Response {
+func updateSource(_ *config.Options, req *RequestResources, body io.Reader) Response {
 	src, err := DecodeSource(body)
 	if err != nil {
 		return APIErrorResponse{
@@ -165,8 +164,8 @@ func updateSource(_ *config.Options, s *happydns.SourceCombined, u *happydns.Use
 		}
 	}
 
-	src.Id = s.Id
-	src.OwnerId = s.OwnerId
+	src.Id = req.Source.Id
+	src.OwnerId = req.Source.OwnerId
 
 	if err := storage.MainStore.UpdateSource(src); err != nil {
 		return APIErrorResponse{
@@ -179,8 +178,8 @@ func updateSource(_ *config.Options, s *happydns.SourceCombined, u *happydns.Use
 	}
 }
 
-func deleteSource(_ *config.Options, st *happydns.SourceMeta, u *happydns.User, body io.Reader) Response {
-	if err := storage.MainStore.DeleteSource(st); err != nil {
+func deleteSource(_ *config.Options, req *RequestResources, body io.Reader) Response {
+	if err := storage.MainStore.DeleteSource(req.SourceMeta); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
@@ -191,8 +190,8 @@ func deleteSource(_ *config.Options, st *happydns.SourceMeta, u *happydns.User, 
 	}
 }
 
-func getDomainsHostedBySource(_ *config.Options, s *happydns.SourceCombined, u *happydns.User, body io.Reader) Response {
-	sr, ok := s.Source.(sources.ListDomainsSource)
+func getDomainsHostedBySource(_ *config.Options, req *RequestResources, body io.Reader) Response {
+	sr, ok := req.Source.Source.(sources.ListDomainsSource)
 	if !ok {
 		return APIErrorResponse{
 			err: fmt.Errorf("Source doesn't support domain listing."),

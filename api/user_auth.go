@@ -71,9 +71,9 @@ func currentUser(u *happydns.User) *DisplayUser {
 	}
 }
 
-func displayAuthToken(_ *config.Options, u *happydns.User, _ httprouter.Params, _ io.Reader) Response {
+func displayAuthToken(_ *config.Options, req *RequestResources, _ io.Reader) Response {
 	return APIResponse{
-		response: currentUser(u),
+		response: currentUser(req.User),
 	}
 }
 

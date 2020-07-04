@@ -222,9 +222,9 @@ func specialUserOperations(opts *config.Options, p httprouter.Params, body io.Re
 	return res
 }
 
-func sameUserHandler(f func(*config.Options, *happydns.User, io.Reader) Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) Response {
-	return func(opts *config.Options, u *happydns.User, ps httprouter.Params, body io.Reader) Response {
-		if uid, err := strconv.ParseInt(ps.ByName("uid"), 16, 64); err != nil {
+func sameUserHandler(f func(*config.Options, *RequestResources, io.Reader) Response) func(*config.Options, *RequestResources, io.Reader) Response {
+	return func(opts *config.Options, req *RequestResources, body io.Reader) Response {
+		if uid, err := strconv.ParseInt(req.Ps.ByName("uid"), 16, 64); err != nil {
 			return APIErrorResponse{
 				status: http.StatusNotFound,
 				err:    fmt.Errorf("Invalid user identifier given: %w", err),
@@ -234,20 +234,20 @@ func sameUserHandler(f func(*config.Options, *happydns.User, io.Reader) Response
 				status: http.StatusNotFound,
 				err:    errors.New("User not found"),
 			}
-		} else if user.Id != u.Id {
+		} else if user.Id != req.User.Id {
 			return APIErrorResponse{
 				status: http.StatusNotFound,
 				err:    errors.New("User not found"),
 			}
 		} else {
-			return f(opts, user, body)
+			return f(opts, req, body)
 		}
 	}
 }
 
-func getUser(opts *config.Options, user *happydns.User, _ io.Reader) Response {
+func getUser(opts *config.Options, req *RequestResources, _ io.Reader) Response {
 	return APIResponse{
-		response: user,
+		response: req.User,
 	}
 }
 

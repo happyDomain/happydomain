@@ -37,7 +37,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 
 	"git.happydns.org/happydns/config"
-	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/services"
 	"git.happydns.org/happydns/storage"
 )
@@ -61,22 +60,22 @@ func listServices(_ *config.Options, _ httprouter.Params, _ io.Reader) Response 
 	}
 }
 
-func analyzeDomain(opts *config.Options, domain *happydns.Domain, _ httprouter.Params, body io.Reader) Response {
-	source, err := storage.MainStore.GetSource(&happydns.User{Id: domain.IdUser}, domain.IdSource)
+func analyzeDomain(opts *config.Options, req *RequestResources, body io.Reader) Response {
+	source, err := storage.MainStore.GetSource(req.User, req.Domain.IdSource)
 	if err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
 	}
 
-	zone, err := source.ImportZone(domain)
+	zone, err := source.ImportZone(req.Domain)
 	if err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
 	}
 
-	services, defaultTTL, err := svcs.AnalyzeZone(domain.DomainName, zone)
+	services, defaultTTL, err := svcs.AnalyzeZone(req.Domain.DomainName, zone)
 	if err != nil {
 		return APIErrorResponse{
 			err: err,

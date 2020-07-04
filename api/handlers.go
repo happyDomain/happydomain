@@ -149,7 +149,17 @@ func ApiHandler(f func(*config.Options, httprouter.Params, io.Reader) Response) 
 	}
 }
 
-func apiAuthHandler(f func(*config.Options, *happydns.User, httprouter.Params, io.Reader) Response) func(http.ResponseWriter, *http.Request, httprouter.Params) {
+type RequestResources struct {
+	Domain     *happydns.Domain
+	Ps         httprouter.Params
+	Session    *happydns.Session
+	Source     *happydns.SourceCombined
+	SourceMeta *happydns.SourceMeta
+	User       *happydns.User
+	Zone       *happydns.Zone
+}
+
+func apiAuthHandler(f func(*config.Options, *RequestResources, io.Reader) Response) func(http.ResponseWriter, *http.Request, httprouter.Params) {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if addr := r.Header.Get("X-Forwarded-For"); addr != "" {
 			r.RemoteAddr = addr
@@ -191,14 +201,19 @@ func apiAuthHandler(f func(*config.Options, *happydns.User, httprouter.Params, i
 				err:    err,
 				status: http.StatusUnauthorized,
 			}.WriteResponse(w)
-		} else if std, err := storage.MainStore.GetUser(session.IdUser); err != nil {
+		} else if user, err := storage.MainStore.GetUser(session.IdUser); err != nil {
 			APIErrorResponse{
 				err:    err,
 				status: http.StatusUnauthorized,
 			}.WriteResponse(w)
 		} else {
 			opts := r.Context().Value("opts").(*config.Options)
-			f(opts, std, ps, r.Body).WriteResponse(w)
+			req := &RequestResources{
+				Ps:      ps,
+				Session: session,
+				User:    user,
+			}
+			f(opts, req, r.Body).WriteResponse(w)
 		}
 	}
 }
