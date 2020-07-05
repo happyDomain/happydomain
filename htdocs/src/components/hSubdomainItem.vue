@@ -40,8 +40,8 @@
           <b-icon icon="link45deg" />
         </a>
         <span class="text-monospace">{{ dn | fqdn(origin) }}</span>
-          <b-icon icon="arrow-right" />
-          <span class="text-monospace">{{ zoneServices[0].Service.Target }}</span>
+        <b-icon icon="arrow-right" />
+        <span class="text-monospace">{{ zoneServices[0].Service.Target }}</span>
         <b-button type="button" variant="outline-danger" size="sm" class="ml-2" @click="deleteCNAME()">
           <b-icon icon="x-circle" />
           Drop alias
@@ -72,8 +72,8 @@
           Add a subdomain
         </b-button>
       </h2>
-      <div v-show="showResources">
-        <h-domain-service v-for="(svc, idx) in zoneServices" :key="idx" :origin="origin" :service="svc" :services="services" :zone-id="zoneId" @updateMyServices="$emit('updateMyServices', $event)" />
+      <div v-show="showResources" :class="showResources && displayCard ? 'd-flex justify-content-around flex-wrap' : ''">
+        <h-domain-service v-for="(svc, idx) in zoneServices" :key="idx" :display-card="displayCard" :origin="origin" :service="svc" :services="services" :zone-id="zoneId" @showServiceWindow="$emit('showServiceWindow', $event)" @updateMyServices="$emit('updateMyServices', $event)" />
       </div>
     </div>
   </div>
@@ -93,6 +93,10 @@ export default {
     aliases: {
       type: Array,
       required: true
+    },
+    displayCard: {
+      type: Boolean,
+      default: false
     },
     dn: {
       type: String,

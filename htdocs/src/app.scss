@@ -34,6 +34,10 @@ footer {
     background-color: $gray-600;
 }
 
+.card-hover:hover {
+    background: $gray-100;
+}
+
 @font-face {
     font-family: 'Montserrat';
     font-style: normal;

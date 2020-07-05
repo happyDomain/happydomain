@@ -33,7 +33,7 @@
 
 <template>
   <div v-if="!isLoading" class="pt-3">
-    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :dn="dn" :origin="domain.domain" :services="services" :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="aliases[dn]===undefined?[]:aliases[dn]" :zone-id="zoneId" @updateMyServices="updateMyServices($event)" @addSubdomain="addSubdomain()" @addNewAlias="addNewAlias($event)" @addNewService="addNewService($event)" />
+    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :display-card="displayCard" :dn="dn" :origin="domain.domain" :services="services" :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="aliases[dn]===undefined?[]:aliases[dn]" :zone-id="zoneId" @showServiceWindow="showServiceWindow($event)" @updateMyServices="updateMyServices($event)" @addSubdomain="addSubdomain()" @addNewAlias="addNewAlias($event)" @addNewService="addNewService($event)" />
 
     <b-modal id="modal-addSvc" :size="modal && modal.step === 2 ? 'lg' : ''" scrollable @ok="handleModalSvcOk">
       <template v-slot:modal-title>
@@ -52,7 +52,7 @@
         <p v-else-if="modal.step === 2">
           Fill the information for the {{ services[modal.svcSelected].name }} at <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
         </p>
-        <b-list-group v-if="modal.step === 1">
+        <b-list-group v-if="modal.step === 1" class="mb-2">
           <b-list-group-item v-for="(svc, idx) in services" :key="idx" :active="modal.svcSelected === idx" button @click="modal.svcSelected = idx">
             {{ svc.name }}
             <small class="text-muted">{{ svc.description }}</small>
@@ -61,7 +61,16 @@
             </b-badge>
           </b-list-group-item>
         </b-list-group>
-        <h-resource-value v-else-if="modal.step === 2" v-model="modal.svcData" edit :services="services" :type="modal.svcSelected" />
+        <h-resource-value v-else-if="modal.step === 2" v-model="modal.svcData" edit :services="services" :type="modal.svcSelected" @input="modal.svcData = $event" />
+      </form>
+    </b-modal>
+
+    <b-modal id="modal-updSvc" size="xl" scrollable @ok="handleUpdateSvc">
+      <template v-slot:modal-title>
+        Update <span v-if="modal.svcData._svctype" :title="services[modal.svcData._svctype].description">{{ services[modal.svcData._svctype].name }} </span>on <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>
+      </template>
+      <form v-if="modal" @submit.stop.prevent="handleUpdateSvc">
+        <h-resource-value v-model="modal.svcData.Service" edit :services="services" :type="modal.svcData._svctype" @input="modal.svcData.Service = $event" />
       </form>
     </b-modal>
 
@@ -92,6 +101,10 @@ export default {
     domain: {
       type: Object,
       required: true
+    },
+    displayCard: {
+      type: Boolean,
+      default: false
     },
     zoneId: {
       type: Number,
@@ -202,6 +215,14 @@ export default {
       this.$bvModal.show('modal-addSvc')
     },
 
+    showServiceWindow (service) {
+      this.modal = {
+        dn: service._domain,
+        svcData: service
+      }
+      this.$bvModal.show('modal-updSvc')
+    },
+
     goToAnchor () {
       var hash = this.$route.hash.substr(1)
       if (!this.isLoading && hash.length > 0) {
@@ -242,6 +263,33 @@ export default {
             }
           )
       }
+    },
+
+    handleUpdateSvc (bvModalEvt) {
+      bvModalEvt.preventDefault()
+
+      ZoneApi.updateZoneService(this.domain.domain, this.zoneId, this.modal.svcData)
+        .then(
+          (response) => {
+            this.updateMyServices(response.data)
+            this.$nextTick(() => {
+              this.$bvModal.hide('modal-updSvc')
+            })
+          },
+          (error) => {
+            this.$nextTick(() => {
+              this.$bvModal.hide('modal-updSvc')
+              this.$bvToast.toast(
+                error.response.data.errmsg, {
+                  title: 'An error occurs when updating the service!',
+                  autoHideDelay: 5000,
+                  variant: 'danger',
+                  toaster: 'b-toaster-content-right'
+                }
+              )
+            })
+          }
+        )
     },
 
     handleModalAliasSubmit (bvModalEvt) {
