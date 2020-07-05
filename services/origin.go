@@ -138,7 +138,7 @@ func init() {
 		origin_analyze,
 		ServiceInfos{
 			Name:        "Origin",
-			Description: "This is the root of your domain",
+			Description: "This is the root of your domain.",
 			Categories: []string{
 				"internal",
 			},

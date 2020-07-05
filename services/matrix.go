@@ -126,7 +126,7 @@ func init() {
 		matrix_analyze,
 		ServiceInfos{
 			Name:        "Matrix IM",
-			Description: "This indicates a Matrix IM server",
+			Description: "Communicate on Matrix using your domain.",
 			Categories: []string{
 				"im",
 			},

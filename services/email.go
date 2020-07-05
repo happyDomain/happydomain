@@ -378,7 +378,7 @@ func init() {
 		email_analyze,
 		ServiceInfos{
 			Name:        "E-Mail",
-			Description: "",
+			Description: "Send and receive e-mail with this domain.",
 			Categories: []string{
 				"email",
 			},

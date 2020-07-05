@@ -173,7 +173,7 @@ func init() {
 		tlsa_analyze,
 		ServiceInfos{
 			Name:        "TLSA records",
-			Description: "",
+			Description: "Publish TLS certificates exposed by your services.",
 			Categories: []string{
 				"tls",
 			},
