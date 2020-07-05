@@ -187,7 +187,7 @@ func init() {
 		openpgpkey_analyze,
 		ServiceInfos{
 			Name:        "PGP Key",
-			Description: "",
+			Description: "Let users retrieve PGP key automatically.",
 			Categories: []string{
 				"email",
 			},
@@ -201,7 +201,7 @@ func init() {
 		smimea_analyze,
 		ServiceInfos{
 			Name:        "SMimeCert",
-			Description: "",
+			Description: "Publish S/MIME certificate.",
 			Categories: []string{
 				"email",
 			},

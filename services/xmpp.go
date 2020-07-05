@@ -152,7 +152,7 @@ func init() {
 		xmpp_analyze,
 		ServiceInfos{
 			Name:        "XMPP IM",
-			Description: "This indicates a XMPP IM server",
+			Description: "Communicate over XMPP with your domain.",
 			Categories: []string{
 				"im",
 			},

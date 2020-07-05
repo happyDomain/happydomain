@@ -151,7 +151,7 @@ func init() {
 		srv_analyze,
 		ServiceInfos{
 			Name:        "Service Record",
-			Description: "This indicates a service",
+			Description: "Indicate to dedicated software existance of the given service in the domain.",
 			Categories: []string{
 				"service",
 			},

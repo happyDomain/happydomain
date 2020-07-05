@@ -170,7 +170,7 @@ func init() {
 		server_analyze,
 		ServiceInfos{
 			Name:        "Server",
-			Description: "This is a server",
+			Description: "A computer will respond to some requests.",
 			Categories: []string{
 				"server",
 			},

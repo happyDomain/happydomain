@@ -68,7 +68,7 @@ func init() {
 		nil,
 		ServiceInfos{
 			Name:        "Orphan Record",
-			Description: "",
+			Description: "This record is not yet handled by happyDNS. Ask us to support it.",
 			Categories:  []string{},
 		},
 		99999999,

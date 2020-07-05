@@ -127,7 +127,7 @@ func init() {
 		specialalias_analyze,
 		ServiceInfos{
 			Name:        "SubAlias",
-			Description: "This is a service alias to another domain/service",
+			Description: "A service alias to another domain/service.",
 			Categories: []string{
 				"internal",
 			},
@@ -141,7 +141,7 @@ func init() {
 		alias_analyze,
 		ServiceInfos{
 			Name:        "Alias",
-			Description: "This is an alias to another domain",
+			Description: "An alias to another domain.",
 			Categories: []string{
 				"internal",
 			},
