@@ -44,6 +44,7 @@ import {
   BIconChevronLeft,
   BIconChevronRight,
   BIconChevronUp,
+  BIconGridFill,
   BIconLink,
   BIconLink45deg,
   BIconListTask,
@@ -115,6 +116,7 @@ Vue.component('BIconChevronDown', BIconChevronDown)
 Vue.component('BIconChevronLeft', BIconChevronLeft)
 Vue.component('BIconChevronRight', BIconChevronRight)
 Vue.component('BIconChevronUp', BIconChevronUp)
+Vue.component('BIconGridFill', BIconGridFill)
 Vue.component('BIconLink', BIconLink)
 Vue.component('BIconLink45deg', BIconLink45deg)
 Vue.component('BIconListTask', BIconListTask)

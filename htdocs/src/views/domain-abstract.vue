@@ -39,20 +39,38 @@
     </div>
     <div v-else-if="selectedHistory">
       <b-row class="mt-2">
-        <b-col auto class="text-right">
+        <b-col cols="auto" class="mr-auto">
           <b-form inline>
             <label class="mr-2" for="zhistory">History:</label>
-            <b-form-select v-model="selectedHistory" :options="domain.zone_history" value-field="id" text-field="last_modified" id="zhistory"></b-form-select>
+            <b-form-select id="zhistory" v-model="selectedHistory" :options="domain.zone_history" value-field="id" text-field="last_modified" style="max-width:70%;" />
           </b-form>
         </b-col>
-        <b-col auto class="text-right">
-          <b-button size="sm" class="mx-1" @click="importZone()"><b-icon icon="cloud-download" aria-hidden="true" /> Re-import</b-button>
-          <b-button size="sm" class="mx-1" @click="viewZone()"><b-icon icon="list-ul" aria-hidden="true" /> View</b-button>
-          <b-button v-if="selectedHistory === domain.zone_history[0].id" size="sm" variant="success" class="mx-1" @click="showDiff()"><b-icon icon="cloud-upload" aria-hidden="true" /> Propagate</b-button>
-          <b-button v-else size="sm" variant="warning" class="mx-1" @click="showDiff()"><b-icon icon="cloud-upload" aria-hidden="true" /> Rollback</b-button>
+        <b-col cols="auto" class="text-center ml-auto mr-auto">
+          <b-button-group>
+            <b-button size="sm" :variant="displayCard ? 'secondary' : 'outline-secondary'" title="Grid view (easiest)" @click="toogleGridView()">
+              <b-icon icon="grid-fill" aria-hidden="true" />
+            </b-button>
+            <b-button size="sm" :variant="displayCard ? 'outline-secondary' : 'secondary'" title="List view (fastest)" @click="toogleListView()">
+              <b-icon icon="list-ul" aria-hidden="true" />
+            </b-button>
+          </b-button-group>
+        </b-col>
+        <b-col cols="auto" class="text-right ml-auto">
+          <b-button size="sm" class="mx-1" @click="importZone()">
+            <b-icon icon="cloud-download" aria-hidden="true" /> Re-import
+          </b-button>
+          <b-button size="sm" class="mx-1" @click="viewZone()">
+            <b-icon icon="list-ul" aria-hidden="true" /> View
+          </b-button>
+          <b-button v-if="selectedHistory === domain.zone_history[0].id" size="sm" variant="success" class="mx-1" @click="showDiff()">
+            <b-icon icon="cloud-upload" aria-hidden="true" /> Propagate
+          </b-button>
+          <b-button v-else size="sm" variant="warning" class="mx-1" @click="showDiff()">
+            <b-icon icon="cloud-upload" aria-hidden="true" /> Rollback
+          </b-button>
         </b-col>
       </b-row>
-      <h-subdomain-list :domain="domain" :zone-id="selectedHistory" />
+      <h-subdomain-list :display-card="displayCard" :domain="domain" :zone-id="selectedHistory" />
     </div>
 
     <b-modal id="modal-viewZone" title="View zone" size="lg" scrollable ok-only :ok-disabled="zoneContent === null">
@@ -69,7 +87,7 @@
       </template>
       <template v-slot:modal-footer="{ ok, cancel }">
         <div v-if="zoneDiffAdd || zoneDiffDel">
-          <span class="text-success" v-if="zoneDiffAdd">
+          <span v-if="zoneDiffAdd" class="text-success">
             {{ (zoneDiffAdd || []).length }}&nbsp;addition{{ (zoneDiffAdd || []).length > 1 ? 's' : '' }}
           </span>
           &ndash;
@@ -116,6 +134,7 @@ export default {
 
   data: function () {
     return {
+      displayCard: true,
       importInProgress: false,
       selectedHistory: null,
       zoneContent: null,
@@ -131,6 +150,9 @@ export default {
   },
 
   created () {
+    if (localStorage && localStorage.getItem('displayCard')) {
+      this.displayCard = localStorage.getItem('displayCard') === 'true'
+    }
     if (this.domain !== undefined && this.domain.domain !== undefined) {
       this.pullDomain()
     }
@@ -209,6 +231,20 @@ export default {
               }
             )
           })
+    },
+
+    toogleGridView () {
+      this.displayCard = true
+      if (localStorage) {
+        localStorage.setItem('displayCard', true)
+      }
+    },
+
+    toogleListView () {
+      this.displayCard = false
+      if (localStorage) {
+        localStorage.setItem('displayCard', false)
+      }
     },
 
     viewZone () {

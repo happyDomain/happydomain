@@ -32,21 +32,32 @@
   -->
 
 <template>
-  <b-list-group>
-    <b-list-group-item button @click="toogleShowDetails()">
+  <component :is="displayCard ? 'b-card' : 'b-list-group'" :class="displayCard ? 'card-hover' : ''" :style="displayCard ? 'width: 32%; min-width: 225px; margin-bottom: 1em; cursor: pointer;' : ''" no-body>
+    <b-card-body v-if="displayCard" @click="$emit('showServiceWindow', service)">
+      <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">
+        {{ categorie }}
+      </b-badge>
+      <b-card-title>
+        {{ services[service._svctype].name }}
+      </b-card-title>
+      <b-card-sub-title class="mb-2">
+        {{ services[service._svctype].description }}
+      </b-card-sub-title>
+      <b-card-text>
+        <span v-if="service._comment">{{ service._comment }}</span>
+      </b-card-text>
+    </b-card-body>
+    <b-list-group-item v-else button @click="toogleShowDetails()">
       <strong :title="services[service._svctype].description">{{ services[service._svctype].name }}</strong> <span v-if="service._comment" class="text-muted">{{ service._comment }}</span>
       <span v-if="services[service._svctype].comment" class="text-muted">{{ services[service._svctype].comment }}</span>
       <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">
         {{ categorie }}
       </b-badge>
-      <b-badge v-if="service._tmp_hint_nb && service._tmp_hint_nb > 1" variant="danger" class="float-right ml-1">
-        {{ service._tmp_hint_nb }}
-      </b-badge>
     </b-list-group-item>
     <b-list-group-item v-if="showDetails">
       <h-resource-value v-model="service.Service" edit-toolbar :services="services" :type="service._svctype" @deleteService="deleteService(service, $event)" @saveService="saveService(service, $event)" />
     </b-list-group-item>
-  </b-list-group>
+  </component>
 </template>
 
 <script>
@@ -60,6 +71,10 @@ export default {
   },
 
   props: {
+    displayCard: {
+      type: Boolean,
+      default: false
+    },
     origin: {
       type: String,
       required: true
