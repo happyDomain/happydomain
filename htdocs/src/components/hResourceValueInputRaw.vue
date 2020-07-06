@@ -35,14 +35,14 @@
   <b-input-group size="sm" :append="unit">
     <b-form-select
       v-if="edit && specs.choices !== undefined"
-      :id="'spec-' + index"
+      :id="'spec-' + index + '-' + specs.id"
       v-model="val"
       :required="specs.required !== undefined && specs.required"
       :options="specs.choices"
     />
     <b-form-input
       v-else
-      :id="'spec-' + index"
+      :id="'spec-' + index + '-' + specs.id"
       v-model.lazy="val"
       class="font-weight-bold"
       :required="specs.required !== undefined && specs.required"

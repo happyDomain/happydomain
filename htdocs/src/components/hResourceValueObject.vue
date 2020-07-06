@@ -49,6 +49,7 @@
           v-model="value[spec.id]"
           :edit="editChildren"
           :edit-toolbar="editToolbar"
+          :index="index"
           :services="services"
           :specs="spec"
           :type="spec.type"
@@ -82,11 +83,12 @@
       <h-resource-value
         v-for="(spec, index) in service_specs.fields"
         :key="index"
-        :value="val[spec.id]"
         :edit="editChildren"
+        :index="index"
         :services="services"
         :specs="spec"
         :type="spec.type"
+        :value="val[spec.id]"
         @input="val[spec.id] = $event;$emit('input', val)"
         @saveService="$emit('saveService', $event)"
       />
