@@ -42,6 +42,10 @@
         <span class="text-monospace">{{ dn | fqdn(origin) }}</span>
         <b-icon icon="arrow-right" />
         <span class="text-monospace">{{ zoneServices[0].Service.Target }}</span>
+        <b-button type="button" variant="primary" size="sm" class="ml-2" @click="$emit('addNewService', dn)">
+          <b-icon icon="plus" />
+          Add service
+        </b-button>
         <b-button type="button" variant="outline-danger" size="sm" class="ml-2" @click="deleteCNAME()">
           <b-icon icon="x-circle" />
           Drop alias
