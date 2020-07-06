@@ -37,11 +37,35 @@ import (
 	"git.happydns.org/happydns/model"
 )
 
+type ServiceRestrictions struct {
+	// Alone restricts the service to be the only one for a given subdomain.
+	Alone bool `json:"alone,omitempty"`
+
+	// ExclusiveRR restricts the service to be present along with others given types.
+	ExclusiveRR []string `json:"exclusive,omitempty"`
+
+	// GLUE allows a service to be present under Leaf, as GLUE record.
+	GLUE bool `json:"glue,omitempty"`
+
+	// Leaf restricts the creation of subdomains under this kind of service (blocks NearAlone).
+	Leaf bool `json:"leaf,omitempty"`
+
+	// NearAlone allows a service to be present along with Alone restricted services (eg. services that will create sub-subdomain from their given subdomain).
+	NearAlone bool `json:"nearAlone,omitempty"`
+
+	// RootOnly restricts the service to be present at the root of the domain only.
+	RootOnly bool `json:"rootOnly,omitempty"`
+
+	// Single restricts the service to be present only once per subdomain.
+	Single bool `json:"single,omitempty"`
+}
+
 type ServiceInfos struct {
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Categories  []string `json:"categories"`
-	Tabs        bool     `json:"tabs,omitempty"`
+	Name         string              `json:"name"`
+	Description  string              `json:"description"`
+	Categories   []string            `json:"categories"`
+	Tabs         bool                `json:"tabs,omitempty"`
+	Restrictions ServiceRestrictions `json:"restrictions,omitempty"`
 }
 
 type serviceCombined struct {

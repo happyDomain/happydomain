@@ -191,6 +191,9 @@ func init() {
 			Categories: []string{
 				"email",
 			},
+			Restrictions: ServiceRestrictions{
+				NearAlone: true,
+			},
 		},
 		1,
 	)
@@ -204,6 +207,9 @@ func init() {
 			Description: "Publish S/MIME certificate.",
 			Categories: []string{
 				"email",
+			},
+			Restrictions: ServiceRestrictions{
+				NearAlone: true,
 			},
 		},
 		1,

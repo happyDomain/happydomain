@@ -174,6 +174,9 @@ func init() {
 			Categories: []string{
 				"server",
 			},
+			Restrictions: ServiceRestrictions{
+				GLUE: true,
+			},
 		},
 		100,
 	)

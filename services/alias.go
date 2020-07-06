@@ -131,6 +131,9 @@ func init() {
 			Categories: []string{
 				"internal",
 			},
+			Restrictions: ServiceRestrictions{
+				NearAlone: true,
+			},
 		},
 		99999997,
 	)
@@ -144,6 +147,10 @@ func init() {
 			Description: "An alias to another domain.",
 			Categories: []string{
 				"internal",
+			},
+			Restrictions: ServiceRestrictions{
+				Alone:  true,
+				Single: true,
 			},
 		},
 		99999998,

@@ -53,9 +53,15 @@
           Fill the information for the {{ services[modal.svcSelected].name }} at <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
         </p>
         <b-list-group v-if="modal.step === 1" class="mb-2">
-          <b-list-group-item v-for="(svc, idx) in services" :key="idx" :active="modal.svcSelected === idx" button @click="modal.svcSelected = idx">
+          <b-list-group-item v-for="(svc, idx) in availableNewServices" :key="idx" :active="modal.svcSelected === idx" button @click="modal.svcSelected = idx">
             {{ svc.name }}
             <small class="text-muted">{{ svc.description }}</small>
+            <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
+              {{ categorie }}
+            </b-badge>
+          </b-list-group-item>
+          <b-list-group-item v-for="(svc, idx) in disabledNewServices" :key="idx" :active="modal.svcSelected === idx" disabled @click="modal.svcSelected = idx">
+            <span :title="svc.description">{{ svc.name }}</span> <small class="font-italic text-danger">{{ filteredNewServices[idx] }}</small>
             <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
               {{ categorie }}
             </b-badge>
@@ -134,6 +140,119 @@ export default {
             ret[svc.Service.Target].push(dn)
           }
         })
+      }
+
+      return ret
+    },
+
+    availableNewServices () {
+      var ret = {}
+
+      for (const type in this.services) {
+        if (this.filteredNewServices[type] == null) {
+          ret[type] = this.services[type]
+        }
+      }
+
+      return ret
+    },
+
+    disabledNewServices () {
+      var ret = {}
+
+      for (const type in this.services) {
+        if (this.filteredNewServices[type] != null) {
+          ret[type] = this.services[type]
+        }
+      }
+
+      return ret
+    },
+
+    filteredNewServices () {
+      var ret = {}
+
+      for (const type in this.services) {
+        const svc = this.services[type]
+
+        if (svc.restrictions) {
+          // Handle Alone restriction: only nearAlone are allowed.
+          if (svc.restrictions.alone && this.myServices.services[this.modal.dn]) {
+            var found = false
+            for (const k in this.myServices.services[this.modal.dn]) {
+              const s = this.myServices.services[this.modal.dn][k]
+              if (s._svctype !== type && this.services[s._svctype].restrictions && !this.services[s._svctype].restrictions.nearAlone) {
+                found = true
+                break
+              }
+            }
+            if (found) {
+              ret[type] = 'has to be the only one in the subdomain.'
+              continue
+            }
+          }
+
+          // Handle Exclusive restriction: service can't be present along with another listed one.
+          if (svc.restrictions.exclusive && this.myServices.services[this.modal.dn]) {
+            found = null
+            for (const k in this.myServices.services[this.modal.dn]) {
+              const s = this.myServices.services[this.modal.dn][k]
+              for (const i in svc.restrictions.exclusive) {
+                if (s._svctype === svc.restrictions.exclusive[i]) {
+                  found = s._svctype
+                  break
+                }
+              }
+            }
+            if (found) {
+              ret[type] = 'cannot be present along with ' + this.services[found].name + '.'
+              continue
+            }
+          }
+
+          // Handle rootOnly restriction.
+          if (svc.restrictions.rootOnly && this.modal.dn !== '') {
+            ret[type] = 'can only be present at the root of your domain.'
+            continue
+          }
+
+          // Handle Single restriction: only one instance of the service per subdomain.
+          if (svc.restrictions.single && this.myServices.services[this.modal.dn]) {
+            found = false
+            for (const k in this.myServices.services[this.modal.dn]) {
+              const s = this.myServices.services[this.modal.dn][k]
+              if (s._svctype === type) {
+                found = true
+                break
+              }
+            }
+            if (found) {
+              ret[type] = 'can only be present once per subdomain.'
+              continue
+            }
+          }
+
+          // Handle presence of Alone and Leaf service in subdomain already.
+          var oneAlone = null
+          var oneLeaf = null
+          for (const k in this.myServices.services[this.modal.dn]) {
+            const s = this.myServices.services[this.modal.dn][k]
+            if (this.services[s._svctype].restrictions && this.services[s._svctype].restrictions.alone) {
+              oneAlone = s._svctype
+            }
+            if (this.services[s._svctype].restrictions && this.services[s._svctype].restrictions.leaf) {
+              oneLeaf = s._svctype
+            }
+          }
+          if (oneAlone && oneAlone !== type && !svc.restrictions.nearAlone) {
+            ret[type] = 'cannot be present along with ' + this.services[oneAlone].name + ', that requires to be the only one in this subdomain.'
+            continue
+          }
+          if (oneLeaf && oneLeaf !== type && !svc.restrictions.glue) {
+            ret[type] = 'cannot be present along with ' + this.services[oneAlone].name + ', that requires to don\'t have subdomains.'
+            continue
+          }
+        }
       }
 
       return ret

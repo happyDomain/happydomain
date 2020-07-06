@@ -130,6 +130,10 @@ func init() {
 			Categories: []string{
 				"im",
 			},
+			Restrictions: ServiceRestrictions{
+				NearAlone: true,
+				Single:    true,
+			},
 		},
 		1,
 	)
