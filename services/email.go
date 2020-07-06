@@ -290,7 +290,18 @@ func email_analyze(a *Analyzer) (err error) {
 			}
 
 			if txt, ok := record.(*dns.TXT); ok {
-				service.SPF.Content += strings.TrimSpace(strings.Join(txt.Txt, "")) + " "
+				fields := strings.Fields(service.SPF.Content + " " + strings.TrimPrefix(strings.TrimSpace(strings.Join(txt.Txt, "")), "v=spf1"))
+
+				for i := 0; i < len(fields); i += 1 {
+					for j := i + 1; j < len(fields); j += 1 {
+						if fields[i] == fields[j] {
+							fields = append(fields[:j], fields[j+1:]...)
+							j -= 1
+						}
+					}
+				}
+
+				service.SPF.Content = strings.Join(fields, " ")
 			}
 
 			err = a.useRR(record, domain, service)
