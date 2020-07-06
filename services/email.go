@@ -383,6 +383,9 @@ func init() {
 				"email",
 			},
 			Tabs: true,
+			Restrictions: ServiceRestrictions{
+				Single: true,
+			},
 		},
 		1,
 	)

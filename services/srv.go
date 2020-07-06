@@ -155,6 +155,9 @@ func init() {
 			Categories: []string{
 				"service",
 			},
+			Restrictions: ServiceRestrictions{
+				NearAlone: true,
+			},
 		},
 		99999,
 	)

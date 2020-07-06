@@ -142,6 +142,10 @@ func init() {
 			Categories: []string{
 				"internal",
 			},
+			Restrictions: ServiceRestrictions{
+				RootOnly: true,
+				Single:   true,
+			},
 		},
 		0,
 	)

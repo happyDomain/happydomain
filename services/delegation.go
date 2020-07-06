@@ -147,6 +147,12 @@ func init() {
 			Categories: []string{
 				"internal",
 			},
+			Restrictions: ServiceRestrictions{
+				Alone:       true,
+				Leaf:        true,
+				ExclusiveRR: []string{"svcs.Origin"},
+				Single:      true,
+			},
 		},
 		1,
 	)

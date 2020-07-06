@@ -177,6 +177,10 @@ func init() {
 			Categories: []string{
 				"tls",
 			},
+			Restrictions: ServiceRestrictions{
+				NearAlone: true,
+				Single:    true,
+			},
 		},
 		100,
 	)
