@@ -75,6 +75,17 @@
       <template v-slot:modal-title>
         Update <span v-if="modal.svcData._svctype" :title="services[modal.svcData._svctype].description">{{ services[modal.svcData._svctype].name }} </span>on <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>
       </template>
+      <template v-slot:modal-footer="{ ok, cancel }">
+        <b-button variant="danger" :disabled="modal.svcData._svctype === 'svcs.Origin'" @click="deleteService(modal.svcData)">
+          Delete service
+        </b-button>
+        <b-button variant="secondary" @click="cancel()">
+          Cancel
+        </b-button>
+        <b-button variant="success" @click="ok()">
+          Update service
+        </b-button>
+      </template>
       <form v-if="modal" @submit.stop.prevent="handleUpdateSvc">
         <h-resource-value v-model="modal.svcData.Service" edit :services="services" :type="modal.svcData._svctype" @input="modal.svcData.Service = $event" />
       </form>
@@ -340,6 +351,25 @@ export default {
         svcData: service
       }
       this.$bvModal.show('modal-updSvc')
+    },
+
+    deleteService (service) {
+      this.$bvModal.hide('modal-updSvc')
+      ZoneApi.deleteZoneService(this.domain.domain, this.zoneId, service)
+        .then(
+          (response) => {
+            this.updateMyServices(response.data)
+          },
+          (error) => {
+            this.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: 'An error occurs when deleting the service!',
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+          })
     },
 
     goToAnchor () {
