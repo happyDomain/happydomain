@@ -46,28 +46,39 @@
             <b-input v-model="modal.dn" autofocus class="text-monospace" placeholder="new.subdomain" :state="modal.newDomainState" @update="validateNewSubdomain" />
           </b-input-group>
         </p>
-        <p v-else-if="modal.step === 1">
-          Select a new service to add to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
-        </p>
-        <p v-else-if="modal.step === 2">
-          Fill the information for the {{ services[modal.svcSelected].name }} at <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
-        </p>
-        <b-list-group v-if="modal.step === 1" class="mb-2">
-          <b-list-group-item v-for="(svc, idx) in availableNewServices" :key="idx" :active="modal.svcSelected === idx" button @click="modal.svcSelected = idx">
-            {{ svc.name }}
-            <small class="text-muted">{{ svc.description }}</small>
-            <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
-              {{ categorie }}
-            </b-badge>
-          </b-list-group-item>
-          <b-list-group-item v-for="(svc, idx) in disabledNewServices" :key="idx" :active="modal.svcSelected === idx" disabled @click="modal.svcSelected = idx">
-            <span :title="svc.description">{{ svc.name }}</span> <small class="font-italic text-danger">{{ filteredNewServices[idx] }}</small>
-            <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
-              {{ categorie }}
-            </b-badge>
-          </b-list-group-item>
-        </b-list-group>
-        <h-resource-value v-else-if="modal.step === 2" v-model="modal.svcData" edit :services="services" :type="modal.svcSelected" @input="modal.svcData = $event" />
+        <b-tabs v-else-if="modal.step === 1" class="mb-2" content-class="mt-3">
+          <b-tab title="Services" active>
+            <p>
+              Select a new service to add to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
+            </p>
+            <b-list-group v-if="modal.step === 1">
+              <b-list-group-item v-for="(svc, idx) in availableNewServices" :key="idx" :active="modal.svcSelected === idx" button @click="modal.svcSelected = idx">
+                {{ svc.name }}
+                <small class="text-muted">{{ svc.description }}</small>
+                <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
+                  {{ categorie }}
+                </b-badge>
+              </b-list-group-item>
+              <b-list-group-item v-for="(svc, idx) in disabledNewServices" :key="idx" :active="modal.svcSelected === idx" disabled @click="modal.svcSelected = idx">
+                <span :title="svc.description">{{ svc.name }}</span> <small class="font-italic text-danger">{{ filteredNewServices[idx] }}</small>
+                <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
+                  {{ categorie }}
+                </b-badge>
+              </b-list-group-item>
+            </b-list-group>
+          </b-tab>
+          <b-tab title="Providers">
+            <p>
+              Select a new provider to add to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
+            </p>
+          </b-tab>
+        </b-tabs>
+        <div v-else-if="modal.step === 2">
+          <p>
+            Fill the information for the {{ services[modal.svcSelected].name }} at <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
+          </p>
+          <h-resource-value v-model="modal.svcData" edit :services="services" :type="modal.svcSelected" @input="modal.svcData = $event" />
+        </div>
       </form>
     </b-modal>
 
