@@ -32,6 +32,7 @@
 package ovh // import "happydns.org/sources/ovh"
 
 import (
+	"flag"
 	"fmt"
 	"strings"
 
@@ -42,18 +43,21 @@ import (
 	"git.happydns.org/happydns/sources"
 )
 
+var (
+	appKey    string
+	appSecret string
+)
+
 type OVHAPI struct {
 	Endpoint    string `json:"endpoint,omitempty" happydns:"label=Endpoint,default=ovh-eu,choices=ovh-eu;ovh-us;ovh-ca;soyoustart-eu;soyoustart-ca;kimsufi-eu;kimsufi-ca,required"`
-	AppKey      string `json:"appkey,omitempty" happydns:"label=Application Key,placeholder=xxxxxxxxxx,required"`
-	AppSecret   string `json:"appsecret,omitempty" happydns:"label=Application Secret,placeholder=xxxxxxxxxx,required,secret"`
 	ConsumerKey string `json:"consumerkey,omitempty" happydns:"label=Consumer Key,placeholder=xxxxxxxxxx,required"`
 }
 
 func (s *OVHAPI) newClient() (*ovh.Client, error) {
 	return ovh.NewClient(
 		s.Endpoint,
-		s.AppKey,
-		s.AppSecret,
+		appKey,
+		appSecret,
 		s.ConsumerKey,
 	)
 }
@@ -299,6 +303,9 @@ func (s *OVHAPI) UpdateSOA(dn *happydns.Domain, newSOA *dns.SOA, refreshSerial b
 }
 
 func init() {
+	flag.StringVar(&appKey, "ovh-application-key", "", "Application Key for using the OVH API")
+	flag.StringVar(&appSecret, "ovh-application-secret", "", "Application Secret for using the OVH API")
+
 	sources.RegisterSource("git.happydns.org/happydns/sources/ovh/OVHAPI", func() happydns.Source {
 		return &OVHAPI{}
 	}, sources.SourceInfos{
