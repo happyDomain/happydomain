@@ -32,44 +32,25 @@
   -->
 
 <template>
-  <component :is="displayCard ? 'b-card' : 'b-list-group'" :class="displayCard ? 'card-hover' : ''" :style="displayCard ? 'width: 32%; min-width: 225px; margin-bottom: 1em; cursor: pointer;' : ''" no-body>
-    <b-card-body v-if="displayCard" @click="$emit('showServiceWindow', service)">
-      <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">
-        {{ categorie }}
-      </b-badge>
-      <b-card-title>
-        {{ services[service._svctype].name }}
-      </b-card-title>
-      <b-card-sub-title class="mb-2">
-        {{ services[service._svctype].description }}
-      </b-card-sub-title>
-      <b-card-text>
-        <span v-if="service._comment">{{ service._comment }}</span>
-      </b-card-text>
-    </b-card-body>
-    <b-list-group-item v-else button @click="toogleShowDetails()">
-      <strong :title="services[service._svctype].description">{{ services[service._svctype].name }}</strong> <span v-if="service._comment" class="text-muted">{{ service._comment }}</span>
-      <span v-if="services[service._svctype].comment" class="text-muted">{{ services[service._svctype].comment }}</span>
-      <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">
-        {{ categorie }}
-      </b-badge>
-    </b-list-group-item>
-    <b-list-group-item v-if="showDetails">
-      <h-editable-service edit-toolbar :origin="origin" :service="service" :services="services" :zone-id="zoneId" @updateMyServices="$emit('updateMyServices', $event)" />
-    </b-list-group-item>
-  </component>
+  <h-resource-value v-model="service.Service" :edit="edit" :edit-toolbar="editToolbar" :services="services" :type="service._svctype" @deleteService="deleteService($event)" @saveService="saveService($event)" />
 </template>
 
 <script>
+import ZoneApi from '@/services/ZoneApi'
+
 export default {
-  name: 'HDomainService',
+  name: 'HEditableService',
 
   components: {
-    hEditableService: () => import('@/components/hEditableService')
+    hResourceValue: () => import('@/components/hResourceValue')
   },
 
   props: {
-    displayCard: {
+    edit: {
+      type: Boolean,
+      default: false
+    },
+    editToolbar: {
       type: Boolean,
       default: false
     },
@@ -91,15 +72,52 @@ export default {
     }
   },
 
-  data: function () {
-    return {
-      showDetails: false
-    }
-  },
-
   methods: {
-    toogleShowDetails () {
-      this.showDetails = !this.showDetails
+    deleteService () {
+      ZoneApi.deleteZoneService(this.origin, this.zoneId, this.service)
+        .then(
+          (response) => {
+            this.$emit('updateMyServices', response.data)
+          },
+          (error) => {
+            this.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: 'An error occurs when deleting the service!',
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+          })
+    },
+
+    saveService (cbSuccess, cbFail) {
+      if (this.service.Service === undefined) {
+        this.deleteService()
+      } else {
+        ZoneApi.updateZoneService(this.origin, this.zoneId, this.service)
+          .then(
+            (response) => {
+              this.$emit('updateMyServices', response.data)
+              if (cbSuccess != null) {
+                cbSuccess()
+              }
+            },
+            (error) => {
+              this.$bvToast.toast(
+                error.response.data.errmsg, {
+                  title: 'An error occurs when updating the service!',
+                  autoHideDelay: 5000,
+                  variant: 'danger',
+                  toaster: 'b-toaster-content-right'
+                }
+              )
+              if (cbFail != null) {
+                cbFail(error)
+              }
+            }
+          )
+      }
     }
   }
 }
