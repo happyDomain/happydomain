@@ -29,36 +29,49 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package config // import "happydns.org/config"
+package database
 
 import (
 	"flag"
-	"fmt"
+	"os"
 
 	"git.happydns.org/happydns/storage"
 )
 
-func (o *Options) declareFlags() {
-	flag.StringVar(&o.DevProxy, "dev", o.DevProxy, "Proxify traffic to this host for static assets")
-	flag.StringVar(&o.AdminBind, "admin-bind", o.AdminBind, "Bind port/socket for administration interface")
-	flag.StringVar(&o.Bind, "bind", ":8081", "Bind port/socket")
-	flag.StringVar(&o.ExternalURL, "externalurl", o.ExternalURL, "Begining of the URL, before the base, that should be used eg. in mails")
-	flag.StringVar(&o.BaseURL, "baseurl", o.BaseURL, "URL prepended to each URL")
-	flag.StringVar(&o.DefaultNameServer, "default-ns", o.DefaultNameServer, "Adress to the default name server")
-	flag.StringVar(&o.StorageEngine, "storage-engine", "leveldb", fmt.Sprintf("Select the storage engine between %v", storage.GetStorageEngines()))
+var dsn string
 
-	// Others flags are declared in some other files likes sources, storages, ... when they need specials configurations
+func init() {
+	storage.StorageEngines["mysql"] = Instantiate
+
+	flag.StringVar(&dsn, "mysql-dsn", DSNGenerator(), "DSN to connect to the MySQL server")
 }
 
-func (o *Options) parseCLI() error {
-	flag.Parse()
+// DSNGenerator returns DSN filed with values from environment
+func DSNGenerator() string {
+	db_user := "happydns"
+	db_password := "happydns"
+	db_host := ""
+	db_db := "happydns"
 
-	for _, conf := range flag.Args() {
-		err := o.parseFile(conf)
-		if err != nil {
-			return err
-		}
+	if v, exists := os.LookupEnv("MYSQL_HOST"); exists {
+		db_host = v
+	}
+	if v, exists := os.LookupEnv("MYSQL_PASSWORD"); exists {
+		db_password = v
+	} else if v, exists := os.LookupEnv("MYSQL_ROOT_PASSWORD"); exists {
+		db_user = "root"
+		db_password = v
+	}
+	if v, exists := os.LookupEnv("MYSQL_USER"); exists {
+		db_user = v
+	}
+	if v, exists := os.LookupEnv("MYSQL_DATABASE"); exists {
+		db_db = v
 	}
 
-	return nil
+	return db_user + ":" + db_password + "@" + db_host + "/" + db_db
+}
+
+func Instantiate() (storage.Storage, error) {
+	return NewMySQLStorage(dsn)
 }

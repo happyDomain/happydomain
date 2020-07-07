@@ -32,13 +32,11 @@
 package config // import "happydns.org/config"
 
 import (
-	"fmt"
+	"flag"
 	"log"
 	"os"
 	"path"
 	"strings"
-
-	"git.happydns.org/happydns/storage/mysql"
 )
 
 type Options struct {
@@ -47,8 +45,8 @@ type Options struct {
 	ExternalURL       string
 	BaseURL           string
 	DevProxy          string
-	DSN               string
 	DefaultNameServer string
+	StorageEngine     string
 }
 
 func ConsolidateConfig() (opts *Options, err error) {
@@ -58,9 +56,11 @@ func ConsolidateConfig() (opts *Options, err error) {
 		AdminBind:         "./happydns.sock",
 		ExternalURL:       "http://localhost:8081",
 		BaseURL:           "/",
-		DSN:               database.DSNGenerator(),
 		DefaultNameServer: "127.0.0.1:53",
+		StorageEngine:     "leveldb",
 	}
+
+	opts.declareFlags()
 
 	// Establish a list of possible configuration file locations
 	configLocations := []string{
@@ -109,36 +109,14 @@ func ConsolidateConfig() (opts *Options, err error) {
 
 func (o *Options) parseLine(line string) (err error) {
 	fields := strings.SplitN(line, "=", 2)
-	key := strings.TrimSpace(fields[0])
+	orig_key := strings.TrimSpace(fields[0])
 	value := strings.TrimSpace(fields[1])
 
-	key = strings.TrimPrefix(key, "HAPPYDNS_")
-	key = strings.Replace(key, "_", "", -1)
-	key = strings.ToUpper(key)
+	key := strings.TrimPrefix(orig_key, "HAPPYDNS_")
+	key = strings.Replace(key, "_", "-", -1)
+	key = strings.ToLower(key)
 
-	switch key {
-	case "DEVPROXY":
-		err = parseString(&o.DevProxy, value)
-	}
+	err = flag.Set(key, value)
 
 	return
-}
-
-func parseString(store *string, value string) error {
-	*store = value
-	return nil
-}
-
-func parseBool(store *bool, value string) error {
-	value = strings.ToLower(value)
-
-	if value == "1" || value == "yes" || value == "true" || value == "on" {
-		*store = true
-	} else if value == "" || value == "0" || value == "no" || value == "false" || value == "off" {
-		*store = false
-	} else {
-		return fmt.Errorf("%s is not a valid bool value", value)
-	}
-
-	return nil
 }
