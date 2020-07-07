@@ -98,7 +98,7 @@
         </b-button>
       </template>
       <form v-if="modal" @submit.stop.prevent="handleUpdateSvc">
-        <h-resource-value v-model="modal.svcData.Service" edit :services="services" :type="modal.svcData._svctype" @input="modal.svcData.Service = $event" />
+        <h-resource-value v-model="modal.svcData.Service" edit :services="services" :type="modal.svcData._svctype" @input="modal.svcData.Service = $event" @saveService="fakeSaveService" />
       </form>
     </b-modal>
 
@@ -381,6 +381,12 @@ export default {
               }
             )
           })
+    },
+
+    fakeSaveService (cbSuccess) {
+      if (cbSuccess) {
+        cbSuccess()
+      }
     },
 
     goToAnchor () {
