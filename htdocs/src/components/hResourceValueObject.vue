@@ -53,7 +53,7 @@
           :services="services"
           :specs="spec"
           :type="spec.type"
-          @saveService="serviceEdit=false;$emit('saveService', $event)"
+          @saveService="$emit('saveService', function () { serviceEdit=false; if ($event) { $event() } })"
         />
         <b-button v-else :disable="value['']" @click="createObject(spec)">
           Create {{ spec.id }}

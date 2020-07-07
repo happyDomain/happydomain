@@ -215,7 +215,10 @@ export default {
       } else {
         this.value[row.item._key] = row.item.value
       }
-      this.$emit('saveService')
+
+      this.$emit('saveService', function () {
+        row.item._edit = false
+      })
     },
 
     updateValues () {
