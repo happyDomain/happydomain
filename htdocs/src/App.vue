@@ -78,7 +78,7 @@
 
     <router-view style="min-height: 80vh" />
 
-    <b-toaster name="b-toaster-content-right" style="position: fixed; top: 70px; right: 0; z-index: 10; min-width: 30vw;" />
+    <b-toaster name="b-toaster-content-right" style="position: fixed; top: 70px; right: 0; z-index: 1042; min-width: 30vw;" />
 
     <footer class="pt-2 pb-2 bg-dark text-light">
       <b-container>
