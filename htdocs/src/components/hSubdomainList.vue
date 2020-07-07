@@ -87,13 +87,15 @@
         Update <span v-if="modal.svcData._svctype" :title="services[modal.svcData._svctype].description">{{ services[modal.svcData._svctype].name }} </span>on <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>
       </template>
       <template v-slot:modal-footer="{ ok, cancel }">
-        <b-button variant="danger" :disabled="modal.svcData._svctype === 'svcs.Origin'" @click="deleteService(modal.svcData)">
+        <b-button variant="danger" :disabled="deleteServiceInProgress || modal.svcData._svctype === 'svcs.Origin'" @click="deleteService(modal.svcData)">
+          <b-spinner v-if="deleteServiceInProgress" label="Spinning" small />
           Delete service
         </b-button>
         <b-button variant="secondary" @click="cancel()">
           Cancel
         </b-button>
-        <b-button variant="success" @click="ok()">
+        <b-button variant="success" :disabled="updateServiceInProgress" @click="ok()">
+          <b-spinner v-if="updateServiceInProgress" label="Spinning" small />
           Update service
         </b-button>
       </template>
@@ -142,10 +144,12 @@ export default {
 
   data: function () {
     return {
+      deleteServiceInProgress: false,
       hideDomain: {},
       modal: null,
       myServices: null,
-      services: null
+      services: null,
+      updateServiceInProgress: false
     }
   },
 
@@ -365,13 +369,16 @@ export default {
     },
 
     deleteService (service) {
-      this.$bvModal.hide('modal-updSvc')
+      this.deleteServiceInProgress = true
       ZoneApi.deleteZoneService(this.domain.domain, this.zoneId, service)
         .then(
           (response) => {
+            this.$bvModal.hide('modal-updSvc')
+            this.deleteServiceInProgress = false
             this.updateMyServices(response.data)
           },
           (error) => {
+            this.deleteServiceInProgress = false
             this.$bvToast.toast(
               error.response.data.errmsg, {
                 title: 'An error occurs when deleting the service!',
@@ -434,17 +441,20 @@ export default {
     handleUpdateSvc (bvModalEvt) {
       bvModalEvt.preventDefault()
 
+      this.updateServiceInProgress = true
       ZoneApi.updateZoneService(this.domain.domain, this.zoneId, this.modal.svcData)
         .then(
           (response) => {
             this.updateMyServices(response.data)
             this.$nextTick(() => {
               this.$bvModal.hide('modal-updSvc')
+              this.updateServiceInProgress = false
             })
           },
           (error) => {
             this.$nextTick(() => {
               this.$bvModal.hide('modal-updSvc')
+              this.updateServiceInProgress = false
               this.$bvToast.toast(
                 error.response.data.errmsg, {
                   title: 'An error occurs when updating the service!',
