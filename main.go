@@ -49,10 +49,11 @@ import (
 	"git.happydns.org/happydns/api"
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/storage"
-	leveldb "git.happydns.org/happydns/storage/leveldb"
 
 	_ "git.happydns.org/happydns/sources/ddns"
 	_ "git.happydns.org/happydns/sources/ovh"
+
+	_ "git.happydns.org/happydns/storage/leveldb"
 )
 
 type ResponseWriterPrefix struct {
@@ -108,13 +109,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Initialize contents
-	log.Println("Opening database...")
-	if store, err := leveldb.NewLevelDBStorage("happydns.db"); err != nil {
-		log.Fatal("Cannot open the database: ", err)
+	// Initialize storage
+	if s, ok := storage.StorageEngines[opts.StorageEngine]; !ok {
+		log.Fatal(fmt.Sprintf("Unexistant storage engine: %q, please select one between: %v", opts.StorageEngine, storage.GetStorageEngines()))
 	} else {
-		defer store.Close()
-		storage.MainStore = store
+		log.Println("Opening database...")
+		if store, err := s(); err != nil {
+			log.Fatal("Cannot open the database: ", err)
+		} else {
+			defer store.Close()
+			storage.MainStore = store
+		}
 	}
 
 	log.Println("Do database migrations...")
