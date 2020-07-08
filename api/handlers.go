@@ -214,6 +214,10 @@ func apiAuthHandler(f func(*config.Options, *RequestResources, io.Reader) Respon
 				User:    user,
 			}
 			f(opts, req, r.Body).WriteResponse(w)
+
+			if session.HasChanged() {
+				storage.MainStore.UpdateSession(session)
+			}
 		}
 	}
 }

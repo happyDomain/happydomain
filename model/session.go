@@ -37,9 +37,11 @@ import (
 )
 
 type Session struct {
-	Id     []byte    `json:"id"`
-	IdUser int64     `json:"login"`
-	Time   time.Time `json:"time"`
+	Id      []byte                 `json:"id"`
+	IdUser  int64                  `json:"login"`
+	Time    time.Time              `json:"time"`
+	Content map[string]interface{} `json:"content,omitempty"`
+	changed bool
 }
 
 func NewSession(user *User) (s *Session, err error) {
@@ -54,4 +56,37 @@ func NewSession(user *User) (s *Session, err error) {
 	}
 
 	return
+}
+
+func (s *Session) HasChanged() bool {
+	return s.changed
+}
+
+func (s *Session) SetValue(key string, value interface{}) {
+	if s.Content == nil && value != nil {
+		s.Content = map[string]interface{}{}
+	}
+
+	if value == nil {
+		if s.Content == nil {
+			return
+		} else if _, ok := s.Content[key]; !ok {
+			return
+		} else {
+			delete(s.Content, key)
+			s.changed = true
+		}
+	} else {
+		s.Content[key] = value
+		s.changed = true
+	}
+}
+
+func (s *Session) GetValue(key string, value interface{}) (ok bool) {
+	value, ok = s.Content[key]
+	return
+}
+
+func (s *Session) DropKey(key string) {
+	s.SetValue(key, nil)
 }
