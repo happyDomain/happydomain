@@ -32,26 +32,22 @@
   -->
 
 <template>
-  <b-form-row
-    v-show="alwaysShow || edit || value != null"
-  >
-    <label v-if="specs.label" :for="'spec-' + index + '-' + specs.id" :title="specs.label" class="col-md-4 col-form-label text-truncate text-md-right text-primary">{{ specs.label }}</label>
-    <label v-else :for="'spec-' + index + '-' + specs.id" :title="specs.label" class="col-md-4 col-form-label text-truncate text-md-right text-primary">{{ specs.id }}</label>
-    <b-col md="8">
-      <h-resource-value-input-raw v-model="val" :edit="edit" :index="index" :specs="specs" />
-      <p v-if="specs.description" class="text-justify" style="line-height: 1.1">
-        <small class="text-muted">{{ specs.description }}</small>
-      </p>
-    </b-col>
-  </b-form-row>
+  <h-resource-value-input
+    :always-show="alwaysShow"
+    :edit="edit"
+    :index="index"
+    :specs="specs"
+    :value="value"
+    @input="$emit('input', $event)"
+  />
 </template>
 
 <script>
 export default {
-  name: 'HResourceValueInput',
+  name: 'HResourceValueSimpleInput',
 
   components: {
-    hResourceValueInputRaw: () => import('@/components/hResourceValueInputRaw')
+    hResourceValueInput: () => import('@/components/hResourceValueInput')
   },
 
   props: {
@@ -59,17 +55,41 @@ export default {
       type: Boolean,
       default: false
     },
+    choices: {
+      type: Array,
+      default: undefined
+    },
+    description: {
+      type: String,
+      default: ''
+    },
     edit: {
       type: Boolean,
       default: false
+    },
+    id: {
+      type: String,
+      required: true
     },
     index: {
       type: Number,
       required: true
     },
-    specs: {
-      type: Object,
-      default: null
+    label: {
+      type: String,
+      default: ''
+    },
+    placeholder: {
+      type: String,
+      default: ''
+    },
+    required: {
+      type: Boolean,
+      default: false
+    },
+    type: {
+      type: String,
+      default: 'string'
     },
     // eslint-disable-next-line
     value: {
@@ -78,12 +98,15 @@ export default {
   },
 
   computed: {
-    val: {
-      get () {
-        return this.value
-      },
-      set (val) {
-        this.$emit('input', val)
+    specs () {
+      return {
+        choices: this.choices,
+        description: this.description,
+        id: this.id,
+        label: this.label,
+        placeholder: this.placeholder,
+        required: this.required,
+        type: this.type
       }
     }
   }

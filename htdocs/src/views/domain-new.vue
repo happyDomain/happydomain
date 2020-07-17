@@ -73,19 +73,16 @@
 
         <b-col lg="8" md="7">
           <form v-if="!isLoading" class="mt-2 mb-5" @submit.stop.prevent="submitNewSource">
-            <b-form-group
-              id="input-spec-name"
-              label="Name your source:"
-              label-for="source-name"
+            <h-resource-value-simple-input
+              id="src-name"
+              v-model="new_source_name"
+              edit
+              :index="0"
+              label="Name your source"
               description="Give an explicit name in order to easily find this service."
-            >
-              <b-form-input
-                id="source-name"
-                v-model="new_source_name"
-                required
-                :placeholder="sources[source_specs_selected].name + ' 1'"
-              />
-            </b-form-group>
+              :placeholder="sources[source_specs_selected].name + ' 1'"
+              required
+            />
 
             <h-fields v-model="source_specs_values" edit :fields="source_specs.fields" />
 
@@ -116,6 +113,7 @@ export default {
   components: {
     hFields: () => import('@/components/hFields'),
     hNewSourceSelector: () => import('@/components/hNewSourceSelector'),
+    hResourceValueSimpleInput: () => import('@/components/hResourceValueSimpleInput'),
     hUserSourceSelector: () => import('@/components/hUserSourceSelector')
   },
 
