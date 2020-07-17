@@ -100,29 +100,7 @@
               />
             </b-form-group>
 
-            <b-form-group
-              v-for="(spec, index) in source_specs.fields"
-              :id="'input-spec-' + index"
-              :key="index"
-              :label="spec.label"
-              :label-for="'spec-' + index"
-              :description="spec.description"
-            >
-              <b-form-input
-                v-if="spec.choices === undefined"
-                :id="'spec-' + index"
-                v-model="spec.value"
-                :required="spec.required !== undefined && spec.required"
-                :placeholder="spec.placeholder"
-              />
-              <b-form-select
-                v-if="spec.choices !== undefined"
-                :id="'spec-' + index"
-                v-model="spec.value"
-                :required="spec.required !== undefined && spec.required"
-                :options="spec.choices"
-              />
-            </b-form-group>
+            <h-fields v-model="source_specs_values" edit :fields="source_specs.fields" />
 
             <div class="ml-3 mr-3">
               <b-button type="button" variant="secondary" @click="step=step&(~1)">
@@ -148,6 +126,10 @@ import axios from 'axios'
 
 export default {
 
+  components: {
+    hFields: () => import('@/components/hFields'),
+  },
+
   data: function () {
     return {
       mySources: null,
@@ -155,6 +137,7 @@ export default {
       sources: null,
       source_specs: null,
       source_specs_selected: null,
+      source_specs_values: {},
       step: 0
     }
   },
@@ -246,16 +229,8 @@ export default {
       var mySource = {
         _srctype: this.source_specs_selected,
         _comment: this.new_source_name,
-        Source: {}
+        Source: this.source_specs_values
       }
-
-      this.source_specs.fields.forEach(function (spec) {
-        if (spec.value) {
-          mySource.Source[spec.id] = spec.value
-        } else if (spec.default) {
-          mySource.Source[spec.id] = spec.default
-        }
-      })
 
       axios
         .post('/api/sources', mySource)

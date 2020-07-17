@@ -36,7 +36,7 @@
     <div v-if="isLoading" class="mt-5 d-flex justify-content-center align-items-center">
       <b-spinner variant="primary" label="Spinning" class="mr-3" /> Retrieving source information...
     </div>
-    <div v-if="!isLoading">
+    <div v-else>
       <h2 class="mt-3 mb-3">
         <span class="text-monospace">{{ domain.domain }}</span>
         <small class="text-muted">

@@ -50,17 +50,6 @@ func init() {
 	router.GET("/api/source_specs/*ssid", ApiHandler(getSourceSpec))
 }
 
-type source_field struct {
-	Id          string   `json:"id"`
-	Label       string   `json:"label,omitempty"`
-	Placeholder string   `json:"placeholder,omitempty"`
-	Default     string   `json:"default,omitempty"`
-	Choices     []string `json:"choices,omitempty"`
-	Required    bool     `json:"required,omitempty"`
-	Secret      bool     `json:"secret,omitempty"`
-	Description string   `json:"description,omitempty"`
-}
-
 func getSourceSpecs(_ *config.Options, p httprouter.Params, body io.Reader) Response {
 	srcs := sources.GetSources()
 
@@ -89,12 +78,13 @@ func getSourceSpecImg(ssid string) Response {
 }
 
 type viewSourceSpec struct {
-	Fields       []source_field `json:"fields,omitempty"`
-	Capabilities []string       `json:"capabilities,omitempty"`
+	Fields       []sources.SourceField `json:"fields,omitempty"`
+	Capabilities []string              `json:"capabilities,omitempty"`
 }
 
 func getSourceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Response {
 	ssid := string(p.ByName("ssid"))
+	// Remove the leading slash
 	if len(ssid) > 1 {
 		ssid = ssid[1:]
 	}
@@ -112,12 +102,14 @@ func getSourceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Respo
 
 	srcMeta := reflect.Indirect(reflect.ValueOf(src)).Type()
 
-	fields := []source_field{}
+	fields := []sources.SourceField{}
 	for i := 0; i < srcMeta.NumField(); i += 1 {
 		jsonTag := srcMeta.Field(i).Tag.Get("json")
 		jsonTuples := strings.Split(jsonTag, ",")
 
-		f := source_field{}
+		f := sources.SourceField{
+			Type: srcMeta.Field(i).Type.String(),
+		}
 
 		if len(jsonTuples) > 0 && len(jsonTuples[0]) > 0 {
 			f.Id = jsonTuples[0]

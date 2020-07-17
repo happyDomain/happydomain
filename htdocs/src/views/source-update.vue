@@ -61,31 +61,7 @@
 
     <hr>
 
-    <b-form-group
-      v-for="(spec, index) in sourceSpecs.fields"
-      v-show="edit || !spec.secret"
-      :id="'input-spec-' + index"
-      :key="index"
-      :label="spec.label"
-      :label-for="'spec-' + index"
-      :description="edit?spec.description:''"
-    >
-      <b-form-input
-        v-if="!edit || spec.choices === undefined"
-        :id="'spec-' + index"
-        v-model="mySource.Source[spec.id]"
-        :required="spec.required !== undefined && spec.required"
-        :placeholder="spec.placeholder"
-        :plaintext="!edit"
-      />
-      <b-form-select
-        v-if="edit && spec.choices !== undefined"
-        :id="'spec-' + index"
-        v-model="mySource.Source[spec.id]"
-        :required="spec.required !== undefined && spec.required"
-        :options="spec.choices"
-      />
-    </b-form-group>
+    <h-fields v-model="mySource.Source" :edit="edit" :fields="sourceSpecs.fields" />
   </form>
 </template>
 
@@ -93,6 +69,10 @@
 import axios from 'axios'
 
 export default {
+
+  components: {
+    hFields: () => import('@/components/hFields')
+  },
 
   props: {
     parentLoading: {

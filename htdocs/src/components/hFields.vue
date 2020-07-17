@@ -32,86 +32,91 @@
   -->
 
 <template>
-  <component :is="itemComponent" :value="value" :edit="edit" :edit-toolbar="editToolbar" :index="index" :services="services" :specs="specs" :type="type" @input="$emit('input', $event)" @deleteService="$emit('deleteService', $event)" @saveService="$emit('saveService', $event)" />
+  <div>
+    <h-resource-value
+      v-for="(specs, index) in fields"
+      v-show="edit || !specs.secret"
+      :key="index"
+      :edit="edit"
+      :index="index"
+      :specs="specs"
+      type="string"
+      :value="val[specs.id]"
+      @input="val[specs.id] = $event;$emit('input', val)"
+    />
+  </div>
 </template>
 
 <script>
-import HResourceValueTable from '@/components/hResourceValueTable'
-import HResourceValueMap from '@/components/hResourceValueMap'
-import HResourceValueObject from '@/components/hResourceValueObject'
-import HResourceValueInput from '@/components/hResourceValueInput'
-import HResourceValueInputRaw from '@/components/hResourceValueInputRaw'
-
 export default {
-  name: 'HResourceValue',
+  name: 'HFields',
+
+  components: {
+    hResourceValue: () => import('@/components/hResourceValue')
+  },
 
   props: {
     edit: {
       type: Boolean,
       default: false
     },
-    editToolbar: {
-      type: Boolean,
-      default: false
-    },
-    index: {
-      type: Number,
-      default: NaN
-    },
-    noDecorate: {
-      type: Boolean,
-      default: false
-    },
-    services: {
-      type: Object,
-      default: null
-    },
-    specs: {
-      type: Object,
-      default: null
-    },
-    type: {
-      type: String,
+    fields: {
+      type: Array,
       required: true
     },
-    // eslint-disable-next-line
     value: {
+      type: Object,
       required: true
     }
   },
 
   data () {
     return {
-      itemComponent: ''
+      val: {}
     }
   },
 
   watch: {
-    type: function () {
-      this.findComponent()
+    fields: function () {
+      this.fieldsUpdated()
+    },
+    value: function () {
+      this.updateValues()
     }
   },
 
-  mounted () {
-    if (this.type) {
-      this.findComponent()
+  created () {
+    if (this.value !== undefined) {
+      this.updateValues()
     }
   },
 
   methods: {
-    findComponent () {
-      if (Array.isArray(this.value) || (this.type.substr(0, 2) === '[]' && this.type !== '[]byte' && this.type !== '[]uint8')) {
-        this.itemComponent = HResourceValueTable
-      } else if (this.type.substr(0, 3) === 'map') {
-        this.itemComponent = HResourceValueMap
-      } else if (typeof this.value === 'object' || this.type.substr(0, 6) === '*svcs.') {
-        this.itemComponent = HResourceValueObject
-      } else if (this.noDecorate) {
-        this.itemComponent = HResourceValueInputRaw
+    fieldsUpdated () {
+      var changed = false
+      for (const i in this.fields) {
+        if (this.value[this.fields[i].id] === undefined && this.fields[i].default) {
+          this.val[this.fields[i].id] = this.fields[i].default
+          changed = true
+        }
+      }
+      if (changed) {
+        this.$emit('input', this.val)
+      }
+    },
+
+    updateValues () {
+      if (this.value != null) {
+        this.val = Object.assign({}, this.value)
       } else {
-        this.itemComponent = HResourceValueInput
+        this.val = {}
+      }
+
+      if (this.fields !== undefined) {
+        this.fieldsUpdated()
       }
     }
   }
+
 }
 </script>
