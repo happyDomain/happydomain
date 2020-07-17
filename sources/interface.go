@@ -31,7 +31,9 @@
 
 package sources // import "happydns.org/sources"
 
-import ()
+import (
+	"git.happydns.org/happydns/model"
+)
 
 type SourceInfos struct {
 	Name        string `json:"name"`
@@ -40,4 +42,16 @@ type SourceInfos struct {
 
 type ListDomainsSource interface {
 	ListDomains() ([]string, error)
+}
+
+type SourceField struct {
+	Id          string   `json:"id"`
+	Type        string   `json:"type"`
+	Label       string   `json:"label,omitempty"`
+	Placeholder string   `json:"placeholder,omitempty"`
+	Default     string   `json:"default,omitempty"`
+	Choices     []string `json:"choices,omitempty"`
+	Required    bool     `json:"required,omitempty"`
+	Secret      bool     `json:"secret,omitempty"`
+	Description string   `json:"description,omitempty"`
 }
