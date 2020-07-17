@@ -179,6 +179,22 @@ func updateSource(_ *config.Options, req *RequestResources, body io.Reader) Resp
 }
 
 func deleteSource(_ *config.Options, req *RequestResources, body io.Reader) Response {
+	// Check if the source has no more domain associated
+	domains, err := storage.MainStore.GetDomains(req.User)
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	for _, domain := range domains {
+		if domain.IdSource == req.SourceMeta.Id {
+			return APIErrorResponse{
+				err: fmt.Errorf("You cannot delete this source because there is still some domains associated with it."),
+			}
+		}
+	}
+
 	if err := storage.MainStore.DeleteSource(req.SourceMeta); err != nil {
 		return APIErrorResponse{
 			err: err,
