@@ -33,14 +33,17 @@ package happydns
 
 import (
 	"crypto/rand"
+	"encoding/json"
+	"fmt"
+	mrand "math/rand"
 	"time"
 )
 
 type Session struct {
-	Id      []byte                 `json:"id"`
-	IdUser  int64                  `json:"login"`
-	Time    time.Time              `json:"time"`
-	Content map[string]interface{} `json:"content,omitempty"`
+	Id      []byte            `json:"id"`
+	IdUser  int64             `json:"login"`
+	Time    time.Time         `json:"time"`
+	Content map[string][]byte `json:"content,omitempty"`
 	changed bool
 }
 
@@ -62,9 +65,22 @@ func (s *Session) HasChanged() bool {
 	return s.changed
 }
 
+func (s *Session) FindNewKey(prefix string) (key string, id int64) {
+	for {
+		// max random id is 2^53 to fit on float64 without loosing precision (JSON limitation)
+		id = mrand.Int63n(1 << 53)
+		key = fmt.Sprintf("%s%d", prefix, id)
+
+		if _, ok := s.Content[key]; !ok {
+			return
+		}
+	}
+	return
+}
+
 func (s *Session) SetValue(key string, value interface{}) {
 	if s.Content == nil && value != nil {
-		s.Content = map[string]interface{}{}
+		s.Content = map[string][]byte{}
 	}
 
 	if value == nil {
@@ -77,14 +93,19 @@ func (s *Session) SetValue(key string, value interface{}) {
 			s.changed = true
 		}
 	} else {
-		s.Content[key] = value
+		s.Content[key], _ = json.Marshal(value)
 		s.changed = true
 	}
 }
 
-func (s *Session) GetValue(key string, value interface{}) (ok bool) {
-	value, ok = s.Content[key]
-	return
+func (s *Session) GetValue(key string, value interface{}) bool {
+	if v, ok := s.Content[key]; !ok {
+		return false
+	} else if json.Unmarshal(v, value) != nil {
+		return false
+	} else {
+		return true
+	}
 }
 
 func (s *Session) DropKey(key string) {
