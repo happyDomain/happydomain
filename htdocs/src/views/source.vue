@@ -54,10 +54,14 @@
           {{ sources[source_specs_selected].description }}
         </p>
 
-        <div class="text-center">
-          <b-button v-if="source_specs && source_specs.capabilities && source_specs.capabilities.indexOf('ListDomains') > -1" type="button" variant="secondary" @click="showListImportableDomain()">
+        <div class="text-center mb-2">
+          <b-button v-if="source_specs && source_specs.capabilities && source_specs.capabilities.indexOf('ListDomains') > -1" type="button" variant="secondary" class="mb-1" @click="showListImportableDomain()">
             <b-icon icon="list-task" />
             List importable domains
+          </b-button>
+          <b-button type="button" variant="danger" class="mb-1" @click="deleteSource()">
+            <b-icon icon="trash-fill" />
+            Delete this source
           </b-button>
         </div>
       </b-col>
@@ -114,6 +118,24 @@ export default {
   },
 
   methods: {
+    deleteSource () {
+      axios
+        .delete('/api/sources/' + encodeURIComponent(this.$route.params.source))
+        .then(
+          response => {
+            this.$router.push('/sources/')
+          },
+          error => {
+            this.$root.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: 'Something went wrong during source deletion',
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+          })
+    },
     showListImportableDomain () {
       this.$router.push('/sources/' + encodeURIComponent(this.$route.params.source) + '/domains')
     }
