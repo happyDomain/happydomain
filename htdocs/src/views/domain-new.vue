@@ -43,29 +43,16 @@
 
     <b-row v-if="step === 0" class="mb-5">
       <b-col>
-        <h3 v-if="mySources && mySources.length > 0">
+        <h3>
           Your existing sources
         </h3>
 
-        <div v-if="!isLoading && mySources && mySources.length > 0" class="d-flex flex-row justify-content-around flex-wrap align-self-center">
-          <div v-for="(src, index) in mySources" :key="index" type="button" class="p-3 source" @click="selectExistingSource(src)">
-            <img :src="'/api/source_specs/' + src._srctype + '.png'" :alt="sources[src['_srctype']].name">
-            {{ src._comment }}
-          </div>
-        </div>
+        <h-user-source-selector :sources="sources" @sourceSelected="selectExistingSource" />
       </b-col>
-      <b-col v-if="sources" lg="6">
+      <b-col lg="6">
         <h3>Use a new source</h3>
 
-        <div v-if="!isLoading" class="d-flex flex-row justify-content-around flex-wrap align-self-center">
-          <div v-for="(src, index) in sources" :key="index" type="button" class="p-3 source" @click="selectNewSource(index)">
-            <img :src="'/api/source_specs/' + index + '.png'" :alt="src.name">
-            {{ src.name }}<br>
-            <p class="text-muted" style="position: absolute;font-size: 80%;margin-top: 10.5em;width: 20%">
-              {{ src.description }}
-            </p>
-          </div>
-        </div>
+        <h-new-source-selector @sourceSelected="selectNewSource" />
       </b-col>
     </b-row>
 
@@ -128,11 +115,12 @@ export default {
 
   components: {
     hFields: () => import('@/components/hFields'),
+    hNewSourceSelector: () => import('@/components/hNewSourceSelector'),
+    hUserSourceSelector: () => import('@/components/hUserSourceSelector')
   },
 
   data: function () {
     return {
-      mySources: null,
       new_source_name: '',
       sources: null,
       source_specs: null,
@@ -145,7 +133,7 @@ export default {
   computed: {
     isLoading () {
       if (this.step === 0) {
-        return this.mySources == null || this.sources == null
+        return this.sources == null
       } else if (this.step & 1) {
         return this.source_specs_selected == null || this.source_specs == null
       } else if (this.step & 2) {
@@ -158,16 +146,13 @@ export default {
 
   mounted () {
     axios
-      .get('/api/sources')
-      .then(response => (this.mySources = response.data))
-    axios
       .get('/api/source_specs')
       .then(response => (this.sources = response.data))
   },
 
   methods: {
 
-    selectNewSource (sourceSpec) {
+    selectNewSource (_, sourceSpec) {
       this.step |= 1
       this.source_specs_selected = sourceSpec
       axios
@@ -254,24 +239,3 @@ export default {
   }
 }
 </script>
-
-<style>
-.source {
-    box-shadow: 2px 2px black;
-    border: 1px solid black;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 2.5% 0;
-    width: 30%;
-    max-width: 200px;
-    height: 150px;
-    text-align: center;
-    vertical-align: middle;
-}
-.source img {
-    max-width: 100%;
-    max-height: 90%;
-    padding: 2%;
-}
-</style>
