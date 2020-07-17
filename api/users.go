@@ -52,6 +52,8 @@ import (
 )
 
 func init() {
+	router.GET("/api/session", apiAuthHandler(getSession))
+	router.DELETE("/api/session", apiAuthHandler(clearSession))
 	router.POST("/api/users", ApiHandler(registerUser))
 	router.PATCH("/api/users", ApiHandler(specialUserOperations))
 	router.GET("/api/users/:uid", apiAuthHandler(sameUserHandler(getUser)))
@@ -338,5 +340,18 @@ func recoverUserAccount(opts *config.Options, user *happydns.User, body io.Reade
 		return APIResponse{
 			response: true,
 		}
+	}
+}
+
+func getSession(opts *config.Options, req *RequestResources, body io.Reader) Response {
+	return APIResponse{
+		response: req.Session,
+	}
+}
+
+func clearSession(opts *config.Options, req *RequestResources, body io.Reader) Response {
+	req.Session.ClearSession()
+	return APIResponse{
+		response: true,
 	}
 }
