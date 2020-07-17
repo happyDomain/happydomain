@@ -84,7 +84,7 @@ func main() {
 		}
 
 		d.Sources = append(d.Sources, srcFile)
-		d.Map["git.happydns.org/happydns/"+strings.TrimSuffix(srcFile, ".png")] = data
+		d.Map[strings.Replace(strings.TrimPrefix(strings.TrimSuffix(srcFile, ".png"), "sources/"), "/", ".", -1)] = data
 	}
 
 	f, err := os.Create(dir + "/icons.go")

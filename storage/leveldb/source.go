@@ -133,7 +133,7 @@ func (s *LevelDBStorage) CreateSource(u *happydns.User, src happydns.Source, com
 	st := &happydns.SourceCombined{
 		src,
 		happydns.SourceMeta{
-			Type:    sType.PkgPath() + "/" + sType.Name(),
+			Type:    sType.String(),
 			Id:      id,
 			OwnerId: u.Id,
 			Comment: comment,

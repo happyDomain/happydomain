@@ -177,7 +177,7 @@ func (s *DDNSServer) UpdateSOA(domain *happydns.Domain, newSOA *dns.SOA, refresh
 }
 
 func init() {
-	sources.RegisterSource("git.happydns.org/happydns/sources/ddns/DDNSServer", func() happydns.Source {
+	sources.RegisterSource(func() happydns.Source {
 		return &DDNSServer{}
 	}, sources.SourceInfos{
 		Name:        "Dynamic DNS",
