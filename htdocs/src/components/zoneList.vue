@@ -84,6 +84,7 @@
 import axios from 'axios'
 
 export default {
+  name: 'zoneList',
 
   data: function () {
     return {
@@ -101,20 +102,18 @@ export default {
   },
 
   mounted () {
-    setTimeout(() =>
-      axios
-        .get('/api/domains')
-        .then(response => {
-          this.domains = response.data
-          this.domains.forEach(function (domain) {
-            axios
-              .get('/api/sources/' + encodeURIComponent(domain.id_source))
-              .then(response => {
-                this.$set(this.sources, domain.id_source, response.data)
-              })
-          }, this)
-        })
-    , 100)
+    axios
+      .get('/api/domains')
+      .then(response => {
+        this.domains = response.data
+        this.domains.forEach(function (domain) {
+          axios
+            .get('/api/sources/' + encodeURIComponent(domain.id_source))
+            .then(response => {
+              this.$set(this.sources, domain.id_source, response.data)
+            })
+        }, this)
+      })
   },
 
   methods: {

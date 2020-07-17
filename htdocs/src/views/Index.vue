@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import ZoneList from '@/views/domain-list'
+import ZoneList from '@/components/zoneList'
 
 export default {
   beforeRouteEnter (to, from, next) {
