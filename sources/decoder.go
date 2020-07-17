@@ -34,6 +34,7 @@ package sources // import "happydns.org/sources"
 import (
 	"fmt"
 	"log"
+	"reflect"
 
 	"git.happydns.org/happydns/model"
 )
@@ -47,8 +48,11 @@ type Source struct {
 
 var sources map[string]Source = map[string]Source{}
 
-func RegisterSource(name string, creator SourceCreator, infos SourceInfos) {
+func RegisterSource(creator SourceCreator, infos SourceInfos) {
+	baseType := reflect.Indirect(reflect.ValueOf(creator())).Type()
+	name := baseType.String()
 	log.Println("Registering new source:", name)
+
 	sources[name] = Source{
 		creator,
 		infos,

@@ -306,7 +306,7 @@ func init() {
 	flag.StringVar(&appKey, "ovh-application-key", "", "Application Key for using the OVH API")
 	flag.StringVar(&appSecret, "ovh-application-secret", "", "Application Secret for using the OVH API")
 
-	sources.RegisterSource("git.happydns.org/happydns/sources/ovh/OVHAPI", func() happydns.Source {
+	sources.RegisterSource(func() happydns.Source {
 		return &OVHAPI{}
 	}, sources.SourceInfos{
 		Name:        "OVH",
