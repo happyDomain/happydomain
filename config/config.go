@@ -33,6 +33,7 @@ package config // import "happydns.org/config"
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path"
@@ -47,6 +48,15 @@ type Options struct {
 	DevProxy          string
 	DefaultNameServer string
 	StorageEngine     string
+}
+
+func (o *Options) BuildURL(url string) string {
+	return fmt.Sprintf("%s%s%s", o.ExternalURL, o.BaseURL, url)
+}
+
+func (o *Options) BuildURL_noescape(url string, args ...interface{}) string {
+	args = append([]interface{}{o.ExternalURL, o.BaseURL}, args...)
+	return fmt.Sprintf("%s%s"+url, args...)
 }
 
 func ConsolidateConfig() (opts *Options, err error) {
