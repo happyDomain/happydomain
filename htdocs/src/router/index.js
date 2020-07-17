@@ -135,6 +135,28 @@ const routes = [
     }
   },
   {
+    path: '/sources/new',
+    component: function () {
+      return import(/* webpackChunkName: "source-new" */ '../views/source-new.vue')
+    },
+    children: [
+      {
+        path: '',
+        name: 'source-new-choice',
+        component: function () {
+          return import(/* webpackChunkName: "source-new" */ '../views/source-new-choice.vue')
+        }
+      },
+      {
+        path: ':provider/:state',
+        name: 'source-new-state',
+        component: function () {
+          return import(/* webpackChunkName: "source-new" */ '../views/source-new-state.vue')
+        }
+      }
+    ]
+  },
+  {
     path: '/sources/:source',
     component: function () {
       return import(/* webpackChunkName: "source" */ '../views/source.vue')

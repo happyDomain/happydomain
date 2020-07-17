@@ -29,55 +29,23 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package sources // import "happydns.org/sources"
+import Api from '@/services/Api'
 
-import (
-	"errors"
-
-	"git.happydns.org/happydns/config"
-	"git.happydns.org/happydns/model"
-)
-
-type SourceInfos struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
+export default {
+  getSourceSettings (source, state, settings, srcName, recallid) {
+    if (!state) {
+      state = 0
+    }
+    var data = { state: state }
+    if (settings) {
+      data.Source = settings
+    }
+    if (srcName) {
+      data.name = srcName
+    }
+    if (recallid) {
+      data.recall = parseInt(recallid)
+    }
+    return Api().post('/api/source_settings/' + source, data)
+  }
 }
-
-type ListDomainsSource interface {
-	ListDomains() ([]string, error)
-}
-
-type SourceField struct {
-	Id          string   `json:"id"`
-	Type        string   `json:"type"`
-	Label       string   `json:"label,omitempty"`
-	Placeholder string   `json:"placeholder,omitempty"`
-	Default     string   `json:"default,omitempty"`
-	Choices     []string `json:"choices,omitempty"`
-	Required    bool     `json:"required,omitempty"`
-	Secret      bool     `json:"secret,omitempty"`
-	Description string   `json:"description,omitempty"`
-}
-
-type CustomForm struct {
-	BeforeText          string        `json:"beforeText,omitempty"`
-	SideText            string        `json:"sideText,omitempty"`
-	AfterText           string        `json:"afterText,omitempty"`
-	Fields              []SourceField `json:"fields"`
-	NextButtonText      string        `json:"nextButtonText,omitempty"`
-	PreviousButtonText  string        `json:"previousButtonText,omitempty"`
-	NextButtonLink      string        `json:"nextButtonLink,omitempty"`
-	NextButtonState     int32         `json:"nextButtonState,omitempty"`
-	PreviousButtonState int32         `json:"previousButtonState,omitempty"`
-}
-
-type GenRecallID func() int64
-
-type CustomSettingsForm interface {
-	DisplaySettingsForm(int32, *config.Options, *happydns.Session, GenRecallID) (*CustomForm, error)
-}
-
-var (
-	DoneForm   = errors.New("Done")
-	CancelForm = errors.New("Cancel")
-)

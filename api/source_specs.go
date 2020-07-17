@@ -155,6 +155,10 @@ func getSourceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Respo
 		caps = append(caps, "ListDomains")
 	}
 
+	if _, ok := src.(sources.CustomSettingsForm); ok {
+		caps = append(caps, "CustomSettingsForm")
+	}
+
 	return APIResponse{
 		response: viewSourceSpec{fields, caps},
 	}
