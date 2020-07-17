@@ -50,7 +50,7 @@ var (
 
 type OVHAPI struct {
 	Endpoint    string `json:"endpoint,omitempty" happydns:"label=Endpoint,default=ovh-eu,choices=ovh-eu;ovh-us;ovh-ca;soyoustart-eu;soyoustart-ca;kimsufi-eu;kimsufi-ca,required"`
-	ConsumerKey string `json:"consumerkey,omitempty" happydns:"label=Consumer Key,placeholder=xxxxxxxxxx,required"`
+	ConsumerKey string `json:"consumerkey,omitempty" happydns:"label=Consumer Key,placeholder=xxxxxxxxxx,required,description=The endpoint depends on your service's seller (OVH/SoYouStart/Kimsufi) and the datacenter location (eu/us/ca). Choose 'ovh-eu' if unsure."`
 }
 
 func (s *OVHAPI) newClient() (*ovh.Client, error) {
