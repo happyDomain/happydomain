@@ -111,3 +111,8 @@ func (s *Session) GetValue(key string, value interface{}) bool {
 func (s *Session) DropKey(key string) {
 	s.SetValue(key, nil)
 }
+
+func (s *Session) ClearSession() {
+	s.Content = nil
+	s.changed = true
+}
