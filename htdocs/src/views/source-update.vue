@@ -44,20 +44,17 @@
       </b-button>
     </div>
 
-    <b-form-group
-      id="input-spec-name"
+    <h-resource-value-simple-input
+      id="src-name"
+      v-model="mySource._comment"
+      always-show
+      :edit="edit"
+      :index="0"
       label="Source's name"
-      label-for="source-name"
       :description="edit?'Give an explicit name in order to easily find this service.':''"
-    >
-      <b-form-input
-        id="source-name"
-        v-model="mySource._comment"
-        required
-        :placeholder="sources[sourceSpecsSelected].name + ' 1'"
-        :plaintext="!edit"
-      />
-    </b-form-group>
+      :placeholder="sources[sourceSpecsSelected].name + ' 1'"
+      required
+    />
 
     <hr>
 
@@ -71,7 +68,8 @@ import axios from 'axios'
 export default {
 
   components: {
-    hFields: () => import('@/components/hFields')
+    hFields: () => import('@/components/hFields'),
+    hResourceValueSimpleInput: () => import('@/components/hResourceValueSimpleInput')
   },
 
   props: {
