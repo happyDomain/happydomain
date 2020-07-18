@@ -65,6 +65,13 @@ import axios from 'axios'
 export default {
   name: 'SourceList',
 
+  props: {
+    emitNewIfEmpty: {
+      type: Boolean,
+      default: false
+    }
+  },
+
   data: function () {
     return {
       domains: null,
@@ -100,14 +107,19 @@ export default {
     setTimeout(() => {
       axios
         .get('/api/domains')
-        .then(response => { this.domains = response.data; return true })
+        .then(response => { this.domains = response.data })
       axios
         .get('/api/sources')
-        .then(response => { this.sources = response.data; return true })
+        .then(response => {
+          this.sources = response.data
+          if (this.sources.length === 0 && this.execNewIfEmpty) {
+            this.$emit('newSource')
+          }
+        })
     }, 100)
     axios
       .get('/api/source_specs')
-      .then(response => { this.sources_specs = response.data; return true })
+      .then(response => { this.sources_specs = response.data })
   },
 
   methods: {
