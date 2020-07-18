@@ -29,80 +29,80 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package api
+package sources // import "happydns.org/sources"
 
 import (
-	"bytes"
-	"errors"
-	"io"
-	"net/http"
+	"reflect"
 	"strings"
 
-	"github.com/julienschmidt/httprouter"
-
-	"git.happydns.org/happydns/config"
-	"git.happydns.org/happydns/sources"
+	"git.happydns.org/happydns/model"
 )
 
-func init() {
-	router.GET("/api/source_specs", ApiHandler(getSourceSpecs))
-	router.GET("/api/source_specs/*ssid", ApiHandler(getSourceSpec))
+type SourceField struct {
+	Id          string   `json:"id"`
+	Type        string   `json:"type"`
+	Label       string   `json:"label,omitempty"`
+	Placeholder string   `json:"placeholder,omitempty"`
+	Default     string   `json:"default,omitempty"`
+	Choices     []string `json:"choices,omitempty"`
+	Required    bool     `json:"required,omitempty"`
+	Secret      bool     `json:"secret,omitempty"`
+	Description string   `json:"description,omitempty"`
 }
 
-func getSourceSpecs(_ *config.Options, p httprouter.Params, body io.Reader) Response {
-	srcs := sources.GetSources()
+func GenSourceField(field reflect.StructField) (f *SourceField) {
+	jsonTag := field.Tag.Get("json")
+	jsonTuples := strings.Split(jsonTag, ",")
 
-	ret := map[string]sources.SourceInfos{}
-	for k, src := range *srcs {
-		ret[k] = src.Infos
+	f = &SourceField{
+		Type: field.Type.String(),
 	}
 
-	return APIResponse{
-		response: ret,
-	}
-}
-
-func getSourceSpecImg(ssid string) Response {
-	if cnt, ok := sources.Icons[strings.TrimSuffix(ssid, ".png")]; ok {
-		return &FileResponse{
-			contentType: "image/png",
-			content:     bytes.NewBuffer(cnt),
-		}
+	if len(jsonTuples) > 0 && len(jsonTuples[0]) > 0 {
+		f.Id = jsonTuples[0]
 	} else {
-		return APIErrorResponse{
-			status: http.StatusNotFound,
-			err:    errors.New("Icon not found."),
+		f.Id = field.Name
+	}
+
+	tag := field.Tag.Get("happydns")
+	tuples := strings.Split(tag, ",")
+
+	for _, t := range tuples {
+		kv := strings.SplitN(t, "=", 2)
+		if len(kv) > 1 {
+			switch strings.ToLower(kv[0]) {
+			case "label":
+				f.Label = kv[1]
+			case "placeholder":
+				f.Placeholder = kv[1]
+			case "default":
+				f.Default = kv[1]
+			case "description":
+				f.Description = kv[1]
+			case "choices":
+				f.Choices = strings.Split(kv[1], ";")
+			}
+		} else {
+			switch strings.ToLower(kv[0]) {
+			case "required":
+				f.Required = true
+			case "secret":
+				f.Secret = true
+			default:
+				f.Label = kv[0]
+			}
 		}
 	}
+	return
 }
 
-type viewSourceSpec struct {
-	Fields       []*sources.SourceField `json:"fields,omitempty"`
-	Capabilities []string               `json:"capabilities,omitempty"`
-}
+func GenSourceFields(src happydns.Source) (fields []*SourceField) {
+	if src != nil {
+		srcMeta := reflect.Indirect(reflect.ValueOf(src)).Type()
 
-func getSourceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Response {
-	ssid := string(p.ByName("ssid"))
-	// Remove the leading slash
-	if len(ssid) > 1 {
-		ssid = ssid[1:]
-	}
-
-	if strings.HasSuffix(ssid, ".png") {
-		return getSourceSpecImg(ssid)
-	}
-
-	src, err := sources.FindSource(ssid)
-	if err != nil {
-		return APIErrorResponse{
-			err: err,
+		for i := 0; i < srcMeta.NumField(); i += 1 {
+			fields = append(fields, GenSourceField(srcMeta.Field(i)))
 		}
 	}
-
-	return APIResponse{
-		response: viewSourceSpec{
-			Fields:       sources.GenSourceFields(src),
-			Capabilities: sources.GetSourceCapabilities(src),
-		},
-	}
+	return
 }

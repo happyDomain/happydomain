@@ -47,28 +47,16 @@ type ListDomainsSource interface {
 	ListDomains() ([]string, error)
 }
 
-type SourceField struct {
-	Id          string   `json:"id"`
-	Type        string   `json:"type"`
-	Label       string   `json:"label,omitempty"`
-	Placeholder string   `json:"placeholder,omitempty"`
-	Default     string   `json:"default,omitempty"`
-	Choices     []string `json:"choices,omitempty"`
-	Required    bool     `json:"required,omitempty"`
-	Secret      bool     `json:"secret,omitempty"`
-	Description string   `json:"description,omitempty"`
-}
-
 type CustomForm struct {
-	BeforeText          string        `json:"beforeText,omitempty"`
-	SideText            string        `json:"sideText,omitempty"`
-	AfterText           string        `json:"afterText,omitempty"`
-	Fields              []SourceField `json:"fields"`
-	NextButtonText      string        `json:"nextButtonText,omitempty"`
-	PreviousButtonText  string        `json:"previousButtonText,omitempty"`
-	NextButtonLink      string        `json:"nextButtonLink,omitempty"`
-	NextButtonState     int32         `json:"nextButtonState,omitempty"`
-	PreviousButtonState int32         `json:"previousButtonState,omitempty"`
+	BeforeText          string         `json:"beforeText,omitempty"`
+	SideText            string         `json:"sideText,omitempty"`
+	AfterText           string         `json:"afterText,omitempty"`
+	Fields              []*SourceField `json:"fields"`
+	NextButtonText      string         `json:"nextButtonText,omitempty"`
+	PreviousButtonText  string         `json:"previousButtonText,omitempty"`
+	NextButtonLink      string         `json:"nextButtonLink,omitempty"`
+	NextButtonState     int32          `json:"nextButtonState,omitempty"`
+	PreviousButtonState int32          `json:"previousButtonState,omitempty"`
 }
 
 type GenRecallID func() int64
@@ -81,3 +69,25 @@ var (
 	DoneForm   = errors.New("Done")
 	CancelForm = errors.New("Cancel")
 )
+
+func GetSourceCapabilities(src happydns.Source) (caps []string) {
+	if _, ok := src.(ListDomainsSource); ok {
+		caps = append(caps, "ListDomains")
+	}
+
+	if _, ok := src.(CustomSettingsForm); ok {
+		caps = append(caps, "CustomSettingsForm")
+	}
+
+	return
+}
+
+func GenDefaultSettingsForm(src happydns.Source) *CustomForm {
+	return &CustomForm{
+		Fields:              GenSourceFields(src),
+		NextButtonText:      "Create",
+		NextButtonState:     1,
+		PreviousButtonText:  "Use another source",
+		PreviousButtonState: -1,
+	}
+}
