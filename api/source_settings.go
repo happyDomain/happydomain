@@ -67,13 +67,6 @@ func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.
 		}
 	}
 
-	csf, ok := src.(sources.CustomSettingsForm)
-	if !ok {
-		return APIErrorResponse{
-			err: fmt.Errorf("%q has no custom settings", ssid),
-		}
-	}
-
 	var uss SourceSettingsState
 	uss.Source = src
 	err = json.NewDecoder(body).Decode(&uss)
@@ -88,12 +81,24 @@ func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.
 		req.Session.GetValue(fmt.Sprintf("source-creation-%d-name", *uss.Recall), &uss.Name)
 	}
 
-	form, err := csf.DisplaySettingsForm(uss.State, cfg, req.Session, func() int64 {
-		key, recallid := req.Session.FindNewKey("source-creation-")
-		req.Session.SetValue(key, src)
-		req.Session.SetValue(key+"-name", uss.Name)
-		return recallid
-	})
+	var form *sources.CustomForm
+
+	csf, ok := src.(sources.CustomSettingsForm)
+	if !ok {
+		if uss.State == 1 {
+			err = sources.DoneForm
+		} else {
+			form = sources.GenDefaultSettingsForm(src)
+		}
+	} else {
+		form, err = csf.DisplaySettingsForm(uss.State, cfg, req.Session, func() int64 {
+			key, recallid := req.Session.FindNewKey("source-creation-")
+			req.Session.SetValue(key, src)
+			req.Session.SetValue(key+"-name", uss.Name)
+			return recallid
+		})
+	}
+
 	if err != nil {
 		if err != sources.DoneForm {
 			return APIErrorResponse{
