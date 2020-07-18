@@ -51,7 +51,7 @@ func init() {
 
 	router.GET("/api/users/:userid/sources/:source", api.ApiHandler(userHandler(sourceHandler(getUserSource))))
 	router.PUT("/api/users/:userid/sources/:source", api.ApiHandler(userHandler(sourceHandler(updateUserSource))))
-	router.DELETE("/api/users/:userid/sources/:source", api.ApiHandler(userHandler(sourceHandler(deleteUserSource))))
+	router.DELETE("/api/users/:userid/sources/:source", api.ApiHandler(userHandler(sourceMetaHandler(deleteUserSource))))
 
 	router.DELETE("/api/sources", api.ApiHandler(clearSources))
 }
@@ -68,6 +68,22 @@ func newUserSource(_ *config.Options, user *happydns.User, _ httprouter.Params, 
 	us.Id = 0
 
 	return api.NewAPIResponse(storage.MainStore.CreateSource(user, us, ""))
+}
+
+func sourceMetaHandler(f func(*config.Options, *happydns.SourceMeta, httprouter.Params, io.Reader) api.Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) api.Response {
+	return func(opts *config.Options, user *happydns.User, ps httprouter.Params, body io.Reader) api.Response {
+		sourceid, err := strconv.ParseInt(ps.ByName("source"), 10, 64)
+		if err != nil {
+			return api.NewAPIErrorResponse(http.StatusNotFound, err)
+		} else {
+			srcMeta, err := storage.MainStore.GetSourceMeta(user, sourceid)
+			if err != nil {
+				return api.NewAPIErrorResponse(http.StatusNotFound, err)
+			} else {
+				return f(opts, srcMeta, ps, body)
+			}
+		}
+	}
 }
 
 func sourceHandler(f func(*config.Options, *happydns.SourceCombined, httprouter.Params, io.Reader) api.Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) api.Response {
@@ -100,8 +116,8 @@ func updateUserSource(_ *config.Options, source *happydns.SourceCombined, _ http
 	return api.NewAPIResponse(us, storage.MainStore.UpdateSource(us))
 }
 
-func deleteUserSource(_ *config.Options, source *happydns.SourceCombined, _ httprouter.Params, _ io.Reader) api.Response {
-	return api.NewAPIResponse(true, storage.MainStore.DeleteSource(&source.SourceMeta))
+func deleteUserSource(_ *config.Options, srcMeta *happydns.SourceMeta, _ httprouter.Params, _ io.Reader) api.Response {
+	return api.NewAPIResponse(true, storage.MainStore.DeleteSource(srcMeta))
 }
 
 func clearSources(_ *config.Options, _ httprouter.Params, _ io.Reader) api.Response {
