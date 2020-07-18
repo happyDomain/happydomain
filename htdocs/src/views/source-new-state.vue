@@ -56,38 +56,8 @@
       </b-col>
 
       <b-col lg="8" md="7">
-        <form class="mt-2 mb-5" @submit.stop.prevent="submitSettings">
-          <p v-if="form.beforeText" class="lead text-indent">
-            {{ form.beforeText }}
-          </p>
-
-          <h-resource-value-simple-input
-            v-if="$route.params.state === '0'"
-            id="src-name"
-            v-model="mySrcName"
-            edit
-            :index="0"
-            label="Name your source"
-            description="Give an explicit name in order to easily find this service."
-            :placeholder="sourceSpecs[$route.params.provider].name + ' 1'"
-            required
-          />
-
-          <h-fields v-if="form.fields" v-model="settings" edit :fields="form.fields" />
-
-          <p v-if="form.afterText">
-            {{ form.afterText }}
-          </p>
-
-          <div class="d-flex justify-content-end">
-            <b-button v-if="form.previousButtonText" type="button" variant="outline-secondary" class="mx-1" @click="previousState()">
-              {{ form.previousButtonText }}
-            </b-button>
-            <b-button v-if="form.nextButtonText" type="button" variant="primary" class="mx-1" @click="submitSettings()">
-              {{ form.nextButtonText }}
-            </b-button>
-          </div>
-        </form>
+        <h-source-state v-model="settings" class="mt-2 mb-2" :form="form" :source-name="sourceSpecs[$route.params.provider].name" :state="parseInt($route.params.state)" @submit="submitSettings" />
+        <h-source-state-buttons class="d-flex justify-content-end" :form="form" @previousState="previousState" @nextState="submitSettings" />
       </b-col>
     </b-row>
   </b-container>
@@ -100,15 +70,17 @@ import SourceSpecsApi from '@/services/SourceSpecsApi'
 export default {
 
   components: {
-    hFields: () => import('@/components/hFields'),
-    hResourceValueSimpleInput: () => import('@/components/hResourceValueSimpleInput')
+    hSourceState: () => import('@/components/hSourceState'),
+    hSourceStateButtons: () => import('@/components/hSourceStateButtons')
   },
 
   data: function () {
     return {
       form: null,
-      mySrcName: '',
-      settings: {},
+      settings: {
+        Source: {},
+        _comment: ''
+      },
       sourceSpecs: null
     }
   },
@@ -124,9 +96,11 @@ export default {
   },
 
   methods: {
-    loadState (toState, settings, name, recallid) {
+    loadState (toState, settings, recallid) {
       var mySource = this.$route.params.provider
-      SourceSettingsApi.getSourceSettings(mySource, toState, settings, name, recallid)
+      var source = settings ? settings.Source : null
+      var srcName = settings ? settings._comment : null
+      SourceSettingsApi.getSourceSettings(mySource, toState, source, srcName, recallid)
         .then(
           response => {
             if (response.data.fields !== undefined) {
@@ -166,7 +140,7 @@ export default {
         if (this.form.previousButtonState === -1) {
           this.$router.push('/sources/new/')
         } else {
-          this.loadState(this.form.previousButtonState, this.settings, this.mySrcName)
+          this.loadState(this.form.previousButtonState, this.settings)
         }
       }
     },
@@ -176,7 +150,7 @@ export default {
         if (this.form.nextButtonState === -1) {
           this.$router.push('/sources/new/')
         } else {
-          this.loadState(this.form.nextButtonState, this.settings, this.mySrcName)
+          this.loadState(this.form.nextButtonState, this.settings)
         }
       } else if (this.form.nextButtonLink !== undefined) {
         window.location = this.form.nextButtonLink
@@ -201,7 +175,7 @@ export default {
             this.$router.push('/sources/new/')
           })
 
-      this.loadState(state, null, null, this.$route.query.recall)
+      this.loadState(state, null, this.$route.query.recall)
     }
   }
 }
