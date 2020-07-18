@@ -47,8 +47,8 @@ const (
 )
 
 func settingsForm(edit bool) *sources.CustomForm {
-	srcFields := []sources.SourceField{
-		sources.SourceField{
+	srcFields := []*sources.SourceField{
+		&sources.SourceField{
 			Id:          "endpoint",
 			Type:        "string",
 			Label:       "Endpoint",
@@ -60,7 +60,7 @@ func settingsForm(edit bool) *sources.CustomForm {
 	}
 
 	if edit {
-		srcFields = append(srcFields, sources.SourceField{
+		srcFields = append(srcFields, &sources.SourceField{
 			Id:          "consumerkey",
 			Type:        "string",
 			Label:       "Consumer Key",
@@ -69,13 +69,10 @@ func settingsForm(edit bool) *sources.CustomForm {
 		})
 	}
 
-	return &sources.CustomForm{
-		Fields:              srcFields,
-		NextButtonText:      "Next >",
-		PreviousButtonText:  "Cancel",
-		NextButtonState:     1,
-		PreviousButtonState: -1,
-	}
+	form := sources.GenDefaultSettingsForm(nil)
+	form.Fields = srcFields
+	form.NextButtonText = "Next >"
+	return form
 }
 
 func settingsAskCredentials(cfg *config.Options, recallid int64, endpoint string, session *happydns.Session) (*sources.CustomForm, error) {
