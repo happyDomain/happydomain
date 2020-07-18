@@ -95,11 +95,23 @@ export default {
 
   methods: {
     detachDomain () {
-      axios
-        .delete('/api/domains/' + encodeURIComponent(this.domain.domain))
-        .then(response => (
-          this.$router.push('/domains/')
-        ))
+      this.$bvModal.msgBoxConfirm('This action will permanently remove the domain ' + this.domain.domain + ' from your managed domains. All history and abstracted zones will be discarded. This action will not delete or unregister your domain from your provider, nor alterate what is currently served. It will only affect what you see in happyDNS. Are you sure you want to continue?', {
+        title: 'Confirm Domain Removal',
+        size: 'lg',
+        okVariant: 'danger',
+        okTitle: 'Discard',
+        cancelVariant: 'outline-secondary',
+        cancelTitle: 'Keep my domain in happyDNS'
+      })
+        .then(value => {
+          if (value) {
+            axios
+              .delete('/api/domains/' + encodeURIComponent(this.domain.domain))
+              .then(response => (
+                this.$router.push('/domains/')
+              ))
+          }
+        })
     },
 
     updateDomainInfo () {
