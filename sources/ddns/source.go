@@ -34,6 +34,7 @@ package ddns // import "happydns.org/sources/ddns"
 import (
 	"encoding/base64"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/miekg/dns"
@@ -49,24 +50,34 @@ type DDNSServer struct {
 	KeyBlob []byte `json:"keyblob,omitempty" happydns:"label=Secret Key,placeholder=a0b1c2d3e4f5==,required,secret"`
 }
 
+func (s *DDNSServer) serverURI() string {
+	if strings.Contains(s.Server, ":") {
+		return s.Server
+	} else {
+		return s.Server + ":53"
+	}
+}
+
 func (s *DDNSServer) base64KeyBlob() string {
 	return base64.StdEncoding.EncodeToString(s.KeyBlob)
 }
 
 func (s *DDNSServer) Validate() error {
 	d := net.Dialer{}
-	con, err := d.Dial("tcp", s.Server)
+	con, err := d.Dial("tcp", s.serverURI())
 	if err != nil {
 		return err
 	}
 	defer con.Close()
+
+	s.KeyName = dns.Fqdn(s.KeyName)
 
 	return nil
 }
 
 func (s *DDNSServer) DomainExists(fqdn string) error {
 	d := net.Dialer{}
-	con, err := d.Dial("tcp", s.Server)
+	con, err := d.Dial("tcp", s.serverURI())
 	if err != nil {
 		return err
 	}
@@ -79,7 +90,7 @@ func (s *DDNSServer) DomainExists(fqdn string) error {
 
 	dnscon := &dns.Conn{Conn: con}
 	transfer := &dns.Transfer{Conn: dnscon, TsigSecret: map[string]string{s.KeyName: s.base64KeyBlob()}}
-	_, err = transfer.In(m, s.Server)
+	_, err = transfer.In(m, s.serverURI())
 	if err != nil {
 		return err
 	}
@@ -89,7 +100,7 @@ func (s *DDNSServer) DomainExists(fqdn string) error {
 
 func (s *DDNSServer) ImportZone(dn *happydns.Domain) (rrs []dns.RR, err error) {
 	d := net.Dialer{}
-	con, errr := d.Dial("tcp", s.Server)
+	con, errr := d.Dial("tcp", s.serverURI())
 	if errr != nil {
 		err = errr
 		return
@@ -103,7 +114,7 @@ func (s *DDNSServer) ImportZone(dn *happydns.Domain) (rrs []dns.RR, err error) {
 
 	dnscon := &dns.Conn{Conn: con}
 	transfer := &dns.Transfer{Conn: dnscon, TsigSecret: map[string]string{s.KeyName: s.base64KeyBlob()}}
-	c, errr := transfer.In(m, s.Server)
+	c, errr := transfer.In(m, s.serverURI())
 
 	if errr != nil {
 		err = errr
@@ -141,7 +152,7 @@ func (s *DDNSServer) AddRR(domain *happydns.Domain, rr dns.RR) error {
 	c.TsigSecret = map[string]string{s.KeyName: s.base64KeyBlob()}
 	m.SetTsig(s.KeyName, s.KeyAlgo, 300, time.Now().Unix())
 
-	_, _, err := c.Exchange(m, s.Server)
+	_, _, err := c.Exchange(m, s.serverURI())
 	return err
 }
 
@@ -158,7 +169,7 @@ func (s *DDNSServer) DeleteRR(domain *happydns.Domain, rr dns.RR) error {
 	c.TsigSecret = map[string]string{s.KeyName: s.base64KeyBlob()}
 	m.SetTsig(s.KeyName, s.KeyAlgo, 300, time.Now().Unix())
 
-	_, _, err := c.Exchange(m, s.Server)
+	_, _, err := c.Exchange(m, s.serverURI())
 	return err
 }
 
