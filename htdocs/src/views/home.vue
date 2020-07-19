@@ -32,36 +32,35 @@
   -->
 
 <template>
-  <component :is="homeComponent" />
+  <b-container class="pt-4 pb-5">
+    <h1 class="text-center mb-4">
+      Welcome to <span style="font-family: 'Fortheenas01';font-weight:bold;">happy<span style="font-family: 'Fortheenas01 Bold';margin-left:.1em;">DNS</span></span>!
+    </h1>
+    <b-row>
+      <b-col offset-md="2" md="8">
+        <b-alert :show="noDomain" dismissible>
+          <strong>Hi! It seems this is your first time here.</strong>
+          To begin, enter a domain name you want to manage, in the form just below.
+        </b-alert>
+        <zone-list ref="zlist" @noDomain="noDomainChange" />
+      </b-col>
+    </b-row>
+  </b-container>
 </template>
 
 <script>
-import Home from '@/views/home'
-
 export default {
-  beforeRouteEnter (to, from, next) {
-    next(vm => {
-      if (sessionStorage.loggedUser === undefined) {
-        if (to.path === '/') {
-          var preferedLang = navigator.language.split('-')[0] || process.env.VUE_APP_I18N_LOCALE || 'en'
-          if (preferedLang !== 'en' && preferedLang !== 'fr') {
-            preferedLang = 'en'
-          }
-          window.location.href = '/' + preferedLang + '/'
-        } else {
-          next({ path: '/login' })
-        }
-      } else {
-        if (to.path !== '/') {
-          next({ path: '/domains/' })
-        }
-      }
-    })
+  components: {
+    ZoneList: () => import('@/components/ZoneList')
   },
-
   data () {
     return {
-      homeComponent: sessionStorage.loggedUser !== undefined ? Home : ''
+      noDomain: false
+    }
+  },
+  methods: {
+    noDomainChange (state) {
+      setTimeout(() => (this.noDomain = state), 1420)
     }
   }
 }
