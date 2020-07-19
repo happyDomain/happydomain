@@ -42,7 +42,7 @@
     <b-list-group-item v-for="(source, index) in sources" :key="index" button class="d-flex justify-content-between align-items-center" @click="selectSource(source)">
       <div>
         <div class="d-inline-block text-center" style="width: 50px;">
-          <img v-if="sources_specs" :src="'/api/source_specs/' + source._srctype + '.png'" :alt="sources_specs[source._srctype].name" :title="sources_specs[source._srctype].name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+          <img v-if="sourceSpecs" :src="'/api/source_specs/' + source._srctype + '.png'" :alt="sourceSpecs[source._srctype].name" :title="sourceSpecs[source._srctype].name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
         </div>
         <span v-if="source._comment">{{ source._comment }}</span>
         <em v-else>No name</em>
@@ -51,8 +51,8 @@
         <b-badge class="ml-1" :variant="domain_in_sources[index] > 0 ? 'success' : 'danger'">
           {{ domain_in_sources[index] }} domain(s) associated
         </b-badge>
-        <b-badge class="ml-1" variant="secondary" :title="source._srctype">
-          {{ sources_specs[source._srctype].name }}
+        <b-badge v-if="sourceSpecs" class="ml-1" variant="secondary" :title="source._srctype">
+          {{ sourceSpecs[source._srctype].name }}
         </b-badge>
       </div>
     </b-list-group-item>
@@ -61,9 +61,12 @@
 
 <script>
 import axios from 'axios'
+import SourceSpecs from '@/mixins/sourceSpecs'
 
 export default {
   name: 'SourceList',
+
+  mixins: [SourceSpecs],
 
   props: {
     emitNewIfEmpty: {
@@ -75,8 +78,7 @@ export default {
   data: function () {
     return {
       domains: null,
-      sources: null,
-      sources_specs: null
+      sources: null
     }
   },
 
@@ -99,7 +101,7 @@ export default {
     },
 
     isLoading () {
-      return this.domains == null || this.sources == null || this.sources_specs == null
+      return this.domains == null || this.sources == null || this.sourceSpecs == null
     }
   },
 
@@ -108,9 +110,6 @@ export default {
       .get('/api/domains')
       .then(response => { this.domains = response.data })
     this.updateSources()
-    axios
-      .get('/api/source_specs')
-      .then(response => { this.sources_specs = response.data })
   },
 
   methods: {

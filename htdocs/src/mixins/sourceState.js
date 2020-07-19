@@ -30,16 +30,13 @@
 // knowledge of the CeCILL license and that you accept its terms.
 
 import SourceSettingsApi from '@/services/SourceSettingsApi'
-import SourceSpecsApi from '@/services/SourceSpecsApi'
 
 export default {
   data () {
     return {
       form: null,
-      mySource: null,
       settings: null,
-      state: 0,
-      sourceSpecs: null
+      state: 0
     }
   },
 
@@ -56,7 +53,7 @@ export default {
 
   methods: {
     loadState (toState, recallid, cbSuccess, cbFail) {
-      SourceSettingsApi.getSourceSettings(this.mySource, toState, this.settings, recallid)
+      SourceSettingsApi.getSourceSettings(this.sourceSpecsSelected, toState, this.settings, recallid)
         .then(
           response => {
             if (response.data.form) {
@@ -108,21 +105,7 @@ export default {
     },
 
     updateSourceSettingsForm () {
-      SourceSpecsApi.getSourceSpecs()
-        .then(
-          response => (this.sourceSpecs = response.data),
-          error => {
-            this.$root.$bvToast.toast(
-              error.response.data.errmsg, {
-                title: 'Something went wrong during source configuration',
-                autoHideDelay: 5000,
-                variant: 'danger',
-                toaster: 'b-toaster-content-right'
-              }
-            )
-          })
-
-      if (this.mySource && this.state >= 0) {
+      if (this.sourceSpecsSelected && this.state >= 0) {
         this.loadState(this.state, this.$route.query.recall)
       }
     }
