@@ -33,11 +33,17 @@
 
 <template>
   <div>
-    <b-button v-if="form.previousButtonText" type="button" variant="outline-secondary" class="mx-1" @click="$emit('previousState')">
+    <b-button v-if="(!form.previousEditButtonText || !edit) && form.previousButtonText" type="button" variant="outline-secondary" class="mx-1" @click="$emit('previousState')">
       {{ form.previousButtonText }}
     </b-button>
-    <b-button v-if="form.nextButtonText" type="button" variant="primary" class="mx-1" @click="$emit('nextState')">
+    <b-button v-if="(!form.nextEditButtonText || !edit) && form.nextButtonText" type="button" variant="primary" class="mx-1" @click="$emit('nextState')">
       {{ form.nextButtonText }}
+    </b-button>
+    <b-button v-if="edit && form.previousEditButtonText" type="button" variant="outline-secondary" class="mx-1" @click="$emit('previousState')">
+      {{ form.previousEditButtonText }}
+    </b-button>
+    <b-button v-if="edit && form.nextEditButtonText" type="button" variant="primary" class="mx-1" @click="$emit('nextState')">
+      {{ form.nextEditButtonText }}
     </b-button>
   </div>
 </template>
@@ -47,6 +53,10 @@ export default {
   name: 'HSourceStateButtons',
 
   props: {
+    edit: {
+      type: Boolean,
+      default: false
+    },
     form: {
       type: Object,
       required: true

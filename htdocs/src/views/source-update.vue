@@ -33,44 +33,45 @@
 
 <template>
   <form v-if="!isLoading" class="mt-2 mb-5" @submit.stop.prevent="submitSource">
-    <div class="float-right">
-      <b-button v-if="!edit" type="button" size="sm" variant="outline-primary" @click="edit=true">
-        <b-icon icon="pencil" />
-        Edit
-      </b-button>
-      <b-button v-else type="button" size="sm" variant="primary" @click="submitSource()">
-        <b-icon icon="check" />
-        Update this source
-      </b-button>
-    </div>
+    <b-button v-if="!edit" class="float-right" type="button" size="sm" variant="outline-primary" @click="editSource()">
+      <b-icon icon="pencil" />
+      Edit
+    </b-button>
 
     <h-resource-value-simple-input
+      v-if="!edit"
       id="src-name"
       v-model="mySource._comment"
       always-show
-      :edit="edit"
       :index="0"
       label="Source's name"
       :description="edit?'Give an explicit name in order to easily find this service.':''"
       :placeholder="sources[sourceSpecsSelected].name + ' 1'"
       required
     />
+    <h-source-state v-else-if="form" v-model="settings" class="mt-2 mb-2" :form="form" :source-name="sources[sourceSpecsSelected].name" :state="state" @submit="nextState" />
 
     <hr>
 
-    <h-fields v-model="mySource.Source" :edit="edit" :fields="sourceSpecs.fields" />
+    <h-fields v-if="!edit" v-model="mySource.Source" :fields="sourceSpecs.fields" />
+
+    <h-source-state-buttons v-else-if="form" class="d-flex justify-content-end" edit :form="form" @previousState="previousState" @nextState="nextState" />
   </form>
 </template>
 
 <script>
-import axios from 'axios'
+import SourceState from '@/mixins/sourceState'
 
 export default {
 
   components: {
     hFields: () => import('@/components/hFields'),
-    hResourceValueSimpleInput: () => import('@/components/hResourceValueSimpleInput')
+    hResourceValueSimpleInput: () => import('@/components/hResourceValueSimpleInput'),
+    hSourceState: () => import('@/components/hSourceState'),
+    hSourceStateButtons: () => import('@/components/hSourceStateButtons')
   },
+
+  mixins: [SourceState],
 
   props: {
     parentLoading: {
@@ -115,41 +116,48 @@ export default {
   },
 
   methods: {
+    editSource () {
+      this.settings = Object.assign({}, this.mySource)
+      this.loadState(0)
+      this.edit = true
+    },
 
-    submitSource () {
-      axios
-        .put('/api/sources/' + encodeURIComponent(this.mySource._id), this.mySource)
-        .then(
-          (response) => {
-            this.$root.$bvToast.toast(
-              'Great! ' + response.data.domain + ' has been updated!', {
-                title: 'Source updated successfully',
-                autoHideDelay: 5000,
-                variant: 'success',
-                toaster: 'b-toaster-content-right'
-              }
-            )
-            this.$router.push(this.prevRoute)
-          },
-          (error) => {
-            this.$bvToast.toast(
-              error.response.data.errmsg, {
-                title: 'An error occurs when creating the source!',
-                autoHideDelay: 5000,
-                variant: 'danger',
-                toaster: 'b-toaster-content-right'
+    previousState () {
+      if (this.form.previousButtonState <= 0) {
+        this.state = this.form.previousButtonState
+        this.form = null
+        this.edit = false
+      } else {
+        this.loadState(this.form.previousButtonState)
+      }
+    },
+
+    nextState () {
+      if (this.form) {
+        if (this.form.nextButtonState !== undefined) {
+          if (this.form.nextButtonState === -1) {
+            this.state = this.form.nextButtonState
+            this.form = null
+          } else {
+            this.loadState(
+              this.form.nextButtonState,
+              null,
+              (_, newSource) => {
+                if (newSource) {
+                  this.$emit('updateMySource', newSource)
+                  this.edit = false
+                }
               }
             )
           }
-        )
+        } else if (this.form.nextButtonLink !== undefined) {
+          window.location = this.form.nextButtonLink
+        }
+      } else {
+        this.loadState(0)
+      }
     }
 
   }
 }
 </script>
-
-<style>
-.form-group label {
-    font-weight: bold;
-}
-</style>
