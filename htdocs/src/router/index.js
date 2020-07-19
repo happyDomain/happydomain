@@ -88,7 +88,7 @@ const routes = [
     path: '/domains',
     name: 'domains',
     component: function () {
-      return import(/* webpackChunkName: "zone-list" */ '../components/zoneList.vue')
+      return import(/* webpackChunkName: "zone-list" */ '../views/home.vue')
     }
   },
   {
