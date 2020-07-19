@@ -39,69 +39,22 @@
       </button>
       Select the source where lives your domain <span class="text-monospace">{{ $route.params.domain }}</span>
     </h1>
-    <hr style="margin-bottom:0">
 
-    <b-row v-if="step === 0" class="mb-5">
-      <b-col>
-        <h3>
-          Your existing sources
-        </h3>
+    <div v-if="validating" class="d-flex justify-content-center align-items-center">
+      <b-spinner variant="primary" label="Spinning" class="mr-3" /> Validating domain &hellip;
+    </div>
 
-        <h-user-source-selector :sources="sources" @sourceSelected="selectExistingSource" />
-      </b-col>
-      <b-col lg="6">
-        <h3>Use a new source</h3>
+    <b-row v-else>
+      <b-col offset-md="2" md="8">
+        <source-list ref="sourceList" emit-new-if-empty @newSource="newSource" @sourceSelected="selectExistingSource" />
 
-        <h-new-source-selector @sourceSelected="selectNewSource" />
+        <p class="text-center mt-3">
+          Can't find the source here? <a href="#" @click.prevent="newSource">Add it now!</a>
+        </p>
       </b-col>
     </b-row>
 
-    <div v-if="step & 1">
-      <b-row>
-        <b-col lg="4" md="5" class="bg-light">
-          <div class="text-center mb-3 mt-2">
-            <img :src="'/api/source_specs/' + source_specs_selected + '.png'" :alt="sources[source_specs_selected].name" style="max-width: 100%; max-height: 10em">
-          </div>
-          <h3>
-            {{ sources[source_specs_selected].name }}
-          </h3>
-
-          <p class="text-muted text-justify">
-            {{ sources[source_specs_selected].description }}
-          </p>
-        </b-col>
-
-        <b-col lg="8" md="7">
-          <form v-if="!isLoading" class="mt-2 mb-5" @submit.stop.prevent="submitNewSource">
-            <h-resource-value-simple-input
-              id="src-name"
-              v-model="new_source_name"
-              edit
-              :index="0"
-              label="Name your source"
-              description="Give an explicit name in order to easily find this service."
-              :placeholder="sources[source_specs_selected].name + ' 1'"
-              required
-            />
-
-            <h-fields v-model="source_specs_values" edit :fields="source_specs.fields" />
-
-            <div class="ml-3 mr-3">
-              <b-button type="button" variant="secondary" @click="step=step&(~1)">
-                &lt; Use another source
-              </b-button>
-              <b-button class="float-right" type="submit" variant="primary">
-                Add this source &gt;
-              </b-button>
-            </div>
-          </form>
-        </b-col>
-      </b-row>
-    </div>
-
-    <div v-if="step & 2 && isLoading" class="d-flex justify-content-center align-items-center">
-      <b-spinner variant="primary" label="Spinning" class="mr-3" /> Validating source...
-    </div>
+    <h-modal-add-source ref="addSrcModal" @done="doneAdd" />
   </b-container>
 </template>
 
@@ -111,70 +64,27 @@ import axios from 'axios'
 export default {
 
   components: {
-    hFields: () => import('@/components/hFields'),
-    hNewSourceSelector: () => import('@/components/hNewSourceSelector'),
-    hResourceValueSimpleInput: () => import('@/components/hResourceValueSimpleInput'),
-    hUserSourceSelector: () => import('@/components/hUserSourceSelector')
+    hModalAddSource: () => import('@/components/hModalAddSource'),
+    sourceList: () => import('@/components/sourceList')
   },
 
   data: function () {
     return {
-      new_source_name: '',
-      sources: null,
-      source_specs: null,
-      source_specs_selected: null,
-      source_specs_values: {},
-      step: 0
+      validating: false
     }
-  },
-
-  computed: {
-    isLoading () {
-      if (this.step === 0) {
-        return this.sources == null
-      } else if (this.step & 1) {
-        return this.source_specs_selected == null || this.source_specs == null
-      } else if (this.step & 2) {
-        return true
-      } else {
-        return false
-      }
-    }
-  },
-
-  mounted () {
-    axios
-      .get('/api/source_specs')
-      .then(response => (this.sources = response.data))
   },
 
   methods: {
+    doneAdd () {
+      this.$refs.sourceList.updateSources()
+    },
 
-    selectNewSource (_, sourceSpec) {
-      this.step |= 1
-      this.source_specs_selected = sourceSpec
-      axios
-        .get('/api/source_specs/' + encodeURIComponent(sourceSpec))
-        .then(
-          response => {
-            this.source_specs = response.data
-          },
-          error => {
-            this.step &= ~1
-            this.$bvToast.toast(
-              error.response.data.errmsg, {
-                title: 'An error occurs when creating the source!',
-                autoHideDelay: 5000,
-                variant: 'danger',
-                toaster: 'b-toaster-content-right'
-              }
-            )
-          }
-        )
+    newSource () {
+      this.$refs.addSrcModal.show()
     },
 
     selectExistingSource (source) {
-      this.step |= 2
+      this.validating = true
 
       axios
         .post('/api/domains', {
@@ -188,43 +98,16 @@ export default {
                 title: 'New domain attached to happyDNS!',
                 autoHideDelay: 5000,
                 variant: 'success',
-                href: 'domains/' + encodeURIComponent(response.data.domain),
                 toaster: 'b-toaster-content-right'
               }
             )
-            this.$router.push('/')
+            this.$router.push('/domains/' + encodeURIComponent(response.data.domain))
           },
           (error) => {
-            this.step &= ~2
+            this.validating = false
             this.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'An error occurs when creating the source!',
-                autoHideDelay: 5000,
-                variant: 'danger',
-                toaster: 'b-toaster-content-right'
-              }
-            )
-          }
-        )
-    },
-
-    submitNewSource () {
-      var mySource = {
-        _srctype: this.source_specs_selected,
-        _comment: this.new_source_name,
-        Source: this.source_specs_values
-      }
-
-      axios
-        .post('/api/sources', mySource)
-        .then(
-          (response) => {
-            this.selectExistingSource(response.data)
-          },
-          (error) => {
-            this.$bvToast.toast(
-              error.response.data.errmsg, {
-                title: 'An error occurs when creating the source!',
+                title: 'An error occurs when adding the domain!',
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'
@@ -233,7 +116,6 @@ export default {
           }
         )
     }
-
   }
 }
 </script>

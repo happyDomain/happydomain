@@ -32,20 +32,17 @@
 import Api from '@/services/Api'
 
 export default {
-  getSourceSettings (source, state, settings, srcName, recallid) {
+  getSourceSettings (source, state, settings, recallid) {
     if (!state) {
       state = 0
     }
-    var data = { state: state }
-    if (settings) {
-      data.Source = settings
+    if (!settings) {
+      settings = {}
     }
-    if (srcName) {
-      data.name = srcName
-    }
+    settings.state = state
     if (recallid) {
-      data.recall = parseInt(recallid)
+      settings.recall = parseInt(recallid)
     }
-    return Api().post('/api/source_settings/' + source, data)
+    return Api().post('/api/source_settings/' + source, settings)
   }
 }

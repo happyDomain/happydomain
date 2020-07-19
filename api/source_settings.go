@@ -48,9 +48,16 @@ func init() {
 
 type SourceSettingsState struct {
 	happydns.Source
-	Name   string `json:"name"`
-	State  int32  `json:"state"`
-	Recall *int64 `json:"recall,omitempty"`
+	Name     string  `json:"_comment"`
+	State    int32   `json:"state"`
+	Recall   *int64  `json:"recall,omitempty"`
+	Redirect *string `json:"redirect,omitempty"`
+}
+
+type SourceSettingsResponse struct {
+	happydns.Source `json:"Source,omitempty"`
+	From            *sources.CustomForm `json:"form,omitempty"`
+	Redirect        *string             `json:"redirect,omitempty"`
 }
 
 func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.Reader) Response {
@@ -79,6 +86,7 @@ func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.
 	if uss.Recall != nil {
 		req.Session.GetValue(fmt.Sprintf("source-creation-%d", *uss.Recall), src)
 		req.Session.GetValue(fmt.Sprintf("source-creation-%d-name", *uss.Recall), &uss.Name)
+		req.Session.GetValue(fmt.Sprintf("source-creation-%d-next", *uss.Recall), &uss.Redirect)
 	}
 
 	var form *sources.CustomForm
@@ -95,6 +103,9 @@ func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.
 			key, recallid := req.Session.FindNewKey("source-creation-")
 			req.Session.SetValue(key, src)
 			req.Session.SetValue(key+"-name", uss.Name)
+			if uss.Redirect != nil {
+				req.Session.SetValue(key+"-next", *uss.Redirect)
+			}
 			return recallid
 		})
 	}
@@ -114,12 +125,17 @@ func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.
 			}
 		} else {
 			return APIResponse{
-				response: s,
+				response: SourceSettingsResponse{
+					Source:   s,
+					Redirect: uss.Redirect,
+				},
 			}
 		}
 	}
 
 	return APIResponse{
-		response: form,
+		response: SourceSettingsResponse{
+			From: form,
+		},
 	}
 }
