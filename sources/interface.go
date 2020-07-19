@@ -48,15 +48,17 @@ type ListDomainsSource interface {
 }
 
 type CustomForm struct {
-	BeforeText          string         `json:"beforeText,omitempty"`
-	SideText            string         `json:"sideText,omitempty"`
-	AfterText           string         `json:"afterText,omitempty"`
-	Fields              []*SourceField `json:"fields"`
-	NextButtonText      string         `json:"nextButtonText,omitempty"`
-	PreviousButtonText  string         `json:"previousButtonText,omitempty"`
-	NextButtonLink      string         `json:"nextButtonLink,omitempty"`
-	NextButtonState     int32          `json:"nextButtonState,omitempty"`
-	PreviousButtonState int32          `json:"previousButtonState,omitempty"`
+	BeforeText             string         `json:"beforeText,omitempty"`
+	SideText               string         `json:"sideText,omitempty"`
+	AfterText              string         `json:"afterText,omitempty"`
+	Fields                 []*SourceField `json:"fields"`
+	NextButtonText         string         `json:"nextButtonText,omitempty"`
+	NextEditButtonText     string         `json:"nextEditButtonText,omitempty"`
+	PreviousButtonText     string         `json:"previousButtonText,omitempty"`
+	PreviousEditButtonText string         `json:"previousEditButtonText,omitempty"`
+	NextButtonLink         string         `json:"nextButtonLink,omitempty"`
+	NextButtonState        int32          `json:"nextButtonState,omitempty"`
+	PreviousButtonState    int32          `json:"previousButtonState,omitempty"`
 }
 
 type GenRecallID func() int64
@@ -84,10 +86,12 @@ func GetSourceCapabilities(src happydns.Source) (caps []string) {
 
 func GenDefaultSettingsForm(src happydns.Source) *CustomForm {
 	return &CustomForm{
-		Fields:              GenSourceFields(src),
-		NextButtonText:      "Create",
-		NextButtonState:     1,
-		PreviousButtonText:  "Use another source",
-		PreviousButtonState: -1,
+		Fields:                 GenSourceFields(src),
+		NextButtonText:         "Create",
+		NextEditButtonText:     "Update",
+		NextButtonState:        1,
+		PreviousButtonText:     "Use another source",
+		PreviousEditButtonText: "Cancel",
+		PreviousButtonState:    -1,
 	}
 }

@@ -66,7 +66,7 @@ export default {
             } else if (response.data.Source) {
               this.$root.$bvToast.toast(
                 'Done', {
-                  title: (response.data.Source._comment ? response.data.Source._comment : 'Your new source') + ' has been added.',
+                  title: (response.data.Source._comment ? response.data.Source._comment : 'Your new source') + ' has been ' + (this.settings._id ? 'updated' : 'added') + '.',
                   autoHideDelay: 5000,
                   variant: 'success',
                   toaster: 'b-toaster-content-right'

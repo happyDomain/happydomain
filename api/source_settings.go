@@ -48,6 +48,7 @@ func init() {
 
 type SourceSettingsState struct {
 	happydns.Source
+	Id       int64   `json:"_id,omitempty"`
 	Name     string  `json:"_comment"`
 	State    int32   `json:"state"`
 	Recall   *int64  `json:"recall,omitempty"`
@@ -119,16 +120,42 @@ func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.
 			return APIErrorResponse{
 				err: err,
 			}
-		} else if s, err := storage.MainStore.CreateSource(req.User, src, uss.Name); err != nil {
-			return APIErrorResponse{
-				err: err,
+		} else if uss.Id == 0 {
+			// Create a new Source
+			if s, err := storage.MainStore.CreateSource(req.User, src, uss.Name); err != nil {
+				return APIErrorResponse{
+					err: err,
+				}
+			} else {
+				return APIResponse{
+					response: SourceSettingsResponse{
+						Source:   s,
+						Redirect: uss.Redirect,
+					},
+				}
 			}
 		} else {
-			return APIResponse{
-				response: SourceSettingsResponse{
-					Source:   s,
-					Redirect: uss.Redirect,
-				},
+			// Update an existing Source
+			if s, err := storage.MainStore.GetSource(req.User, uss.Id); err != nil {
+				return APIErrorResponse{
+					err: err,
+				}
+			} else {
+				s.Comment = uss.Name
+				s.Source = uss.Source
+
+				if err := storage.MainStore.UpdateSource(s); err != nil {
+					return APIErrorResponse{
+						err: err,
+					}
+				} else {
+					return APIResponse{
+						response: SourceSettingsResponse{
+							Source:   s,
+							Redirect: uss.Redirect,
+						},
+					}
+				}
 			}
 		}
 	}
