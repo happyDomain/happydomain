@@ -64,8 +64,7 @@
 </template>
 
 <script>
-import SourceSettingsApi from '@/services/SourceSettingsApi'
-import SourceSpecsApi from '@/services/SourceSpecsApi'
+import SourceState from '@/mixins/sourceState'
 
 export default {
 
@@ -74,74 +73,36 @@ export default {
     hSourceStateButtons: () => import('@/components/hSourceStateButtons')
   },
 
-  data: function () {
-    return {
-      form: null,
-      settings: {
-        Source: {},
-        _comment: ''
-      },
-      sourceSpecs: null
-    }
-  },
+  mixins: [SourceState],
 
-  computed: {
-    isLoading () {
-      return this.form == null || this.sourceSpecs == null
-    }
-  },
-
-  mounted () {
-    this.updateSourceSettingsForm()
+  created () {
+    this.mySource = this.$route.params.provider
+    this.state = parseInt(this.$route.params.state)
   },
 
   methods: {
-    loadState (toState, settings, recallid) {
-      var mySource = this.$route.params.provider
-      var source = settings ? settings.Source : null
-      var srcName = settings ? settings._comment : null
-      SourceSettingsApi.getSourceSettings(mySource, toState, source, srcName, recallid)
-        .then(
-          response => {
-            if (response.data.fields !== undefined) {
-              if (settings) {
-                this.$router.push('/sources/new/' + encodeURIComponent(mySource) + '/' + toState)
-              }
-              this.form = response.data
-            } else {
-              this.$root.$bvToast.toast(
-                'Done', {
-                  title: response.data._comment ? response.data._comment : 'Your new source' + ' has been added.',
-                  autoHideDelay: 5000,
-                  variant: 'success',
-                  toaster: 'b-toaster-content-right'
-                }
-              )
-              this.$router.push('/sources/' + encodeURIComponent(response.data._id))
-            }
-          },
-          error => {
-            this.$root.$bvToast.toast(
-              error.response.data.errmsg, {
-                title: 'Something went wrong during source configuration validation',
-                autoHideDelay: 5000,
-                variant: 'danger',
-                toaster: 'b-toaster-content-right'
-              }
-            )
-            if (!settings) {
-              this.$router.push('/sources/new')
-            }
-          })
-    },
-
     previousState () {
       if (this.form.previousButtonState !== undefined) {
         if (this.form.previousButtonState === -1) {
           this.$router.push('/sources/new/')
         } else {
-          this.loadState(this.form.previousButtonState, this.settings)
+          this.loadState(
+            this.form.previousButtonState,
+            null,
+            this.reactOnSuccess,
+            () => {
+              this.$router.push('/sources/new')
+            }
+          )
         }
+      }
+    },
+
+    reactOnSuccess (toState, newSource) {
+      if (newSource) {
+        this.$router.push('/sources/' + encodeURIComponent(newSource._id))
+      } else {
+        this.$router.push('/sources/new/' + encodeURIComponent(this.mySource) + '/' + toState)
       }
     },
 
@@ -150,32 +111,11 @@ export default {
         if (this.form.nextButtonState === -1) {
           this.$router.push('/sources/new/')
         } else {
-          this.loadState(this.form.nextButtonState, this.settings)
+          this.loadState(this.form.nextButtonState, null, this.reactOnSuccess)
         }
       } else if (this.form.nextButtonLink !== undefined) {
         window.location = this.form.nextButtonLink
       }
-    },
-
-    updateSourceSettingsForm () {
-      var state = parseInt(this.$route.params.state)
-
-      SourceSpecsApi.getSourceSpecs()
-        .then(
-          response => (this.sourceSpecs = response.data),
-          error => {
-            this.$root.$bvToast.toast(
-              error.response.data.errmsg, {
-                title: 'Something went wrong during source configuration',
-                autoHideDelay: 5000,
-                variant: 'danger',
-                toaster: 'b-toaster-content-right'
-              }
-            )
-            this.$router.push('/sources/new/')
-          })
-
-      this.loadState(state, null, this.$route.query.recall)
     }
   }
 }

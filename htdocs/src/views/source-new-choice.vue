@@ -32,7 +32,11 @@
   -->
 
 <template>
-  <h-new-source-selector @sourceSelected="selectNewSource" />
+  <b-row class="my-3">
+    <b-col offset-md="2" md="8">
+      <h-new-source-selector @sourceSelected="selectNewSource" />
+    </b-col>
+  </b-row>
 </template>
 
 <script>
@@ -43,7 +47,7 @@ export default {
   },
 
   methods: {
-    selectNewSource (src, index) {
+    selectNewSource (index, src) {
       this.$router.push('/sources/new/' + encodeURIComponent(index) + '/0')
     }
   }

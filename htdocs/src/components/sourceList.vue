@@ -42,7 +42,7 @@
     <b-list-group-item v-for="(source, index) in sources" :key="index" button class="d-flex justify-content-between align-items-center" @click="selectSource(source)">
       <div>
         <div class="d-inline-block text-center" style="width: 50px;">
-          <img :src="'/api/source_specs/' + source._srctype + '.png'" :alt="sources_specs[source._srctype].name" :title="sources_specs[source._srctype].name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+          <img v-if="sources_specs" :src="'/api/source_specs/' + source._srctype + '.png'" :alt="sources_specs[source._srctype].name" :title="sources_specs[source._srctype].name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
         </div>
         <span v-if="source._comment">{{ source._comment }}</span>
         <em v-else>No name</em>
@@ -104,19 +104,10 @@ export default {
   },
 
   mounted () {
-    setTimeout(() => {
-      axios
-        .get('/api/domains')
-        .then(response => { this.domains = response.data })
-      axios
-        .get('/api/sources')
-        .then(response => {
-          this.sources = response.data
-          if (this.sources.length === 0 && this.execNewIfEmpty) {
-            this.$emit('newSource')
-          }
-        })
-    }, 100)
+    axios
+      .get('/api/domains')
+      .then(response => { this.domains = response.data })
+    this.updateSources()
     axios
       .get('/api/source_specs')
       .then(response => { this.sources_specs = response.data })
@@ -125,6 +116,17 @@ export default {
   methods: {
     selectSource (source) {
       this.$emit('sourceSelected', source)
+    },
+
+    updateSources () {
+      axios
+        .get('/api/sources')
+        .then(response => {
+          this.sources = response.data
+          if (this.sources.length === 0 && this.emitNewIfEmpty) {
+            this.$emit('newSource')
+          }
+        })
     }
   }
 }

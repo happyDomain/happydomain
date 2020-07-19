@@ -32,15 +32,18 @@
   -->
 
 <template>
-  <div v-if="!isLoading" class="d-flex flex-row justify-content-around flex-wrap align-self-center">
-    <div v-for="(src, index) in sources" :key="index" type="button" class="p-3 source" @click="$emit('sourceSelected', src, index)">
-      <img :src="'/api/source_specs/' + index + '.png'" :alt="src.name">
-      {{ src.name }}<br>
-      <p class="text-muted" style="position: absolute;font-size: 80%;margin-top: 10.5em;width: 20%">
-        {{ src.description }}
-      </p>
-    </div>
-  </div>
+  <b-list-group>
+    <b-list-group-item v-if="isLoading" class="d-flex justify-content-center align-items-center">
+      <b-spinner variant="primary" label="Spinning" class="mr-3" /> Retrieving usable sources...
+    </b-list-group-item>
+    <b-list-group-item v-for="(src, idx) in sources" :key="idx" :active="srcSelected === idx" button @click="selectSource(idx)">
+      <div class="d-inline-block text-center" style="width: 50px;">
+        <img :src="'/api/source_specs/' + idx + '.png'" :alt="src.name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+      </div>
+      <strong>{{ src.name }}</strong> &ndash;
+      <small class="text-muted" :title="src.description">{{ src.description }}</small>
+    </b-list-group-item>
+  </b-list-group>
 </template>
 
 <script>
@@ -49,9 +52,17 @@ import axios from 'axios'
 export default {
   name: 'HNewSourceSelector',
 
+  props: {
+    value: {
+      type: String,
+      default: null
+    }
+  },
+
   data: function () {
     return {
-      sources: null
+      sources: null,
+      srcSelected: null
     }
   },
 
@@ -65,27 +76,16 @@ export default {
     axios
       .get('/api/source_specs')
       .then(response => (this.sources = response.data))
+  },
+
+  methods: {
+    selectSource (idx) {
+      if (this.value !== null) {
+        this.srcSelected = idx
+        this.$emit('input', this.srcSelected)
+      }
+      this.$emit('sourceSelected', idx)
+    }
   }
 }
 </script>
-
-<style>
-.source {
-    box-shadow: 2px 2px black;
-    border: 1px solid black;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 2.5% 0;
-    width: 30%;
-    max-width: 200px;
-    height: 150px;
-    text-align: center;
-    vertical-align: middle;
-}
-.source img {
-    max-width: 100%;
-    max-height: 90%;
-    padding: 2%;
-}
-</style>
