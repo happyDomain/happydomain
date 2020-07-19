@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <b-modal id="modal-add-source" scrollable size="lg" title="New Source Form" :ok-title="state >= 0 ? 'OK' : 'Next >'" :ok-disabled="!mySource" @ok="handleModalSourceSubmit">
+  <b-modal id="modal-add-source" scrollable size="lg" title="New Source Form" :ok-title="state >= 0 ? 'OK' : 'Next >'" :ok-disabled="!sourceSpecsSelected" @ok="handleModalSourceSubmit">
     <template v-if="state >= 0 && form" v-slot:modal-footer>
       <h-source-state-buttons :form="form" @previousState="handleModalSourcePrevious" @nextState="handleModalSourceSubmit" />
     </template>
@@ -41,16 +41,17 @@
       <p>
         First, you need to select the provider hosting your domain:
       </p>
-      <h-new-source-selector v-model="mySource" />
+      <h-new-source-selector v-model="sourceSpecsSelected" />
     </div>
 
-    <div v-else-if="mySource">
-      <h-source-state v-model="settings" class="mt-2 mb-2" :form="form" :source-name="sourceSpecs[mySource].name" :state="state" @submit="handleModalSourceSubmit" />
+    <div v-else-if="sourceSpecsSelected">
+      <h-source-state v-model="settings" class="mt-2 mb-2" :form="form" :source-name="sourceSpecs[sourceSpecsSelected].name" :state="state" @submit="handleModalSourceSubmit" />
     </div>
   </b-modal>
 </template>
 
 <script>
+import SourceSpecs from '@/mixins/sourceSpecs'
 import SourceState from '@/mixins/sourceState'
 
 export default {
@@ -62,7 +63,13 @@ export default {
     hSourceStateButtons: () => import('@/components/hSourceStateButtons')
   },
 
-  mixins: [SourceState],
+  mixins: [SourceSpecs, SourceState],
+
+  data () {
+    return {
+      sourceSpecsSelected: null
+    }
+  },
 
   methods: {
     handleModalSourcePrevious () {
@@ -108,7 +115,7 @@ export default {
     },
 
     show () {
-      this.mySource = ''
+      this.sourceSpecsSelected = ''
       this.resetSettings()
       this.settings.redirect = window.location.pathname
       this.state = -1

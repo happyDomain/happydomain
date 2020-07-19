@@ -64,6 +64,7 @@
 </template>
 
 <script>
+import SourceSpecs from '@/mixins/sourceSpecs'
 import SourceState from '@/mixins/sourceState'
 
 export default {
@@ -73,11 +74,18 @@ export default {
     hSourceStateButtons: () => import('@/components/hSourceStateButtons')
   },
 
-  mixins: [SourceState],
+  mixins: [SourceSpecs, SourceState],
+
+  data () {
+    return {
+      sourceSpecsSelected: null
+    }
+  },
 
   created () {
-    this.mySource = this.$route.params.provider
+    this.sourceSpecsSelected = this.$route.params.provider
     this.state = parseInt(this.$route.params.state)
+    this.updateSourceSpecs()
   },
 
   methods: {
