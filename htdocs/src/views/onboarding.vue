@@ -54,9 +54,10 @@
           I already own domain(s)
         </h3>
         <p class="text-justify text-indent my-4">
-          Use <h-logo height="19" /> as a remplacement interface to your usual domain name provider. It'll still rely on your provider's infrastructure, you'll just take benefit from our simple interface. As a first step, choose your provider:
+          Use <h-logo height="19" /> as a remplacement interface to your usual domain name provider. It'll still rely on your provider's infrastructure, you'll just take benefit from our simple interface. As a first step, <span v-if="noSource">choose your provider:</span><span v-else>choose between already configured providers or <router-link to="/sources/new">add a new one</router-link>:</span>
         </p>
-        <h-new-source-selector @sourceSelected="selectNewSource" />
+        <source-list v-if="!noSource" emit-new-if-empty no-label @newSource="noSource = true" @sourceSelected="selectExistingSource" />
+        <h-new-source-selector v-if="noSource" @sourceSelected="selectNewSource" />
       </b-card>
     </b-card-group>
 
@@ -79,9 +80,20 @@
 <script>
 export default {
   components: {
-    hNewSourceSelector: () => import('@/components/hNewSourceSelector')
+    hNewSourceSelector: () => import('@/components/hNewSourceSelector'),
+    sourceList: () => import('@/components/sourceList')
   },
+
+  data () {
+    return {
+      noSource: false
+    }
+  },
+
   methods: {
+    selectExistingSource (src) {
+      this.$router.push('/sources/' + encodeURIComponent(src._id) + '/domains')
+    },
     selectNewSource (index, src) {
       this.$router.push('/sources/new/' + encodeURIComponent(index) + '/0')
     }
