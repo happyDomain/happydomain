@@ -55,7 +55,7 @@
 
     <h-fields v-if="!edit" v-model="mySource.Source" :fields="sourceSpecs.fields" />
 
-    <h-source-state-buttons v-else-if="form" class="d-flex justify-content-end" edit :form="form" @previousState="previousState" @nextState="nextState" />
+    <h-source-state-buttons v-else-if="form" class="d-flex justify-content-end" edit :form="form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previousState="previousState" @nextState="nextState" />
   </form>
 </template>
 
@@ -123,21 +123,25 @@ export default {
     },
 
     previousState () {
+      this.previousIsWorking = true
       if (this.form.previousButtonState <= 0) {
         this.state = this.form.previousButtonState
         this.form = null
         this.edit = false
+        this.previousIsWorking = false
       } else {
         this.loadState(this.form.previousButtonState)
       }
     },
 
     nextState () {
+      this.nextIsWorking = true
       if (this.form) {
         if (this.form.nextButtonState !== undefined) {
           if (this.form.nextButtonState === -1) {
             this.state = this.form.nextButtonState
             this.form = null
+            this.nextIsWorking = false
           } else {
             this.loadState(
               this.form.nextButtonState,

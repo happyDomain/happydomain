@@ -34,7 +34,7 @@
 <template>
   <b-modal id="modal-add-source" scrollable size="lg" title="New Source Form" :ok-title="state >= 0 ? 'OK' : 'Next >'" :ok-disabled="!sourceSpecsSelected" @ok="handleModalSourceSubmit">
     <template v-if="state >= 0 && form" v-slot:modal-footer>
-      <h-source-state-buttons :form="form" @previousState="handleModalSourcePrevious" @nextState="handleModalSourceSubmit" />
+      <h-source-state-buttons :form="form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previousState="handleModalSourcePrevious" @nextState="handleModalSourceSubmit" />
     </template>
 
     <div v-if="state < 0">
@@ -73,9 +73,11 @@ export default {
 
   methods: {
     handleModalSourcePrevious () {
+      this.previousIsWorking = true
       if (this.form.previousButtonState <= 0) {
         this.state = this.form.previousButtonState
         this.form = null
+        this.previousIsWorking = false
       } else {
         this.loadState(this.form.previousButtonState)
       }
@@ -85,6 +87,7 @@ export default {
       if (bvModalEvt) {
         bvModalEvt.preventDefault()
       }
+      this.nextIsWorking = true
       if (this.form) {
         if (this.form.nextButtonState !== undefined) {
           if (this.form.nextButtonState === -1) {
