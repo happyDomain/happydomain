@@ -32,51 +32,53 @@
   -->
 
 <template>
-  <b-container fluid class="mt-4">
-    <h1 class="text-center mb-4">
-      <button type="button" class="btn font-weight-bolder" @click="$router.go(-1)">
-        <b-icon icon="chevron-left" />
-      </button>
-      Select the source where lives your domain <span class="text-monospace">{{ $route.params.domain }}</span>
-    </h1>
-
-    <div v-if="validatingNewDomain" class="d-flex justify-content-center align-items-center">
-      <b-spinner variant="primary" label="Spinning" class="mr-3" /> Validating domain &hellip;
-    </div>
-
-    <b-row v-else>
-      <b-col offset-md="2" md="8">
-        <source-list ref="sourceList" emit-new-if-empty @newSource="newSource" @sourceSelected="selectExistingSource($event, $route.params.domain, true)" />
-
-        <p class="text-center mt-3">
-          Can't find the source here? <a href="#" @click.prevent="newSource">Add it now!</a>
-        </p>
-      </b-col>
-    </b-row>
-
-    <h-modal-add-source ref="addSrcModal" @done="doneAdd" />
-  </b-container>
+  <b-list-group>
+    <form @submit.stop.prevent="$emit('submit', $event)">
+      <b-list-group-item class="d-flex justify-content-between align-items-center">
+        <b-input-group>
+          <template v-slot:prepend>
+            <b-input-group-prepend style="width: 50px" @click="$refs.lginput.focus()">
+              <b-icon icon="plus" style="width: 100%; height: 2.3rem; margin-right: -.6em; margin-left: -.6em" />
+            </b-input-group-prepend>
+          </template>
+          <b-form-input ref="lginput" :autofocus="autofocus" :class="inputClass" :placeholder="placeholder" :state="value.length ? state : null" style="border:none;box-shadow:none;z-index:0" :value="value" @input="$emit('input', $event)" @update="$emit('update', $event)" />
+          <template v-slot:append>
+            <b-input-group-append v-show="value.length">
+              <b-button type="submit" variant="outline-primary">
+                Add new domain
+              </b-button>
+            </b-input-group-append>
+          </template>
+        </b-input-group>
+      </b-list-group-item>
+    </form>
+  </b-list-group>
 </template>
 
 <script>
-import AddDomainToSource from '@/mixins/addDomainToSource'
-
 export default {
+  name: 'HListGroupInput',
 
-  components: {
-    hModalAddSource: () => import('@/components/hModalAddSource'),
-    sourceList: () => import('@/components/sourceList')
-  },
-
-  mixins: [AddDomainToSource],
-
-  methods: {
-    doneAdd () {
-      this.$refs.sourceList.updateSources()
+  props: {
+    autofocus: {
+      type: Boolean,
+      default: false
     },
-
-    newSource () {
-      this.$refs.addSrcModal.show()
+    inputClass: {
+      type: String,
+      default: ''
+    },
+    placeholder: {
+      type: String,
+      default: ''
+    },
+    state: {
+      type: Boolean,
+      default: null
+    },
+    value: {
+      type: String,
+      required: true
     }
   }
 }

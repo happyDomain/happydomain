@@ -33,46 +33,52 @@
 
 <template>
   <b-container class="mt-4 mb-5">
-    <h1 class="text-center mb-4">
-      Domains living on <span v-if="mySource">{{ mySource._comment }}</span>
-    </h1>
-    <b-row>
-      <b-col offset-md="2" md="8">
-        <div class="text-right" />
-        <b-list-group>
-          <b-list-group-item v-if="isLoading" class="text-center">
-            <b-spinner variant="secondary" label="Spinning" /> Asking provider for the existing domains...
-          </b-list-group-item>
-          <b-list-group-item v-for="(domain, index) in domains" :key="index" class="d-flex justify-content-between align-items-center">
-            <div>
-              {{ domain }}
-            </div>
-            <div>
-              <b-badge v-if="myDomains.indexOf(domain) > -1" class="ml-1" variant="success">
-                <b-icon icon="check" /> Already managed
-              </b-badge>
-              <b-button v-else type="button" class="ml-1" variant="primary" size="sm" @click="importDomain(domain)">
-                Add now
-              </b-button>
-            </div>
-          </b-list-group-item>
-        </b-list-group>
-      </b-col>
-    </b-row>
+    <h3 class="text-center mb-4">
+      Domains living on <em v-if="mySource">{{ mySource._comment }}</em>
+    </h3>
+    <b-list-group>
+      <b-list-group-item v-if="isLoading" class="text-center">
+        <b-spinner variant="secondary" label="Spinning" /> Asking provider for the existing domains...
+      </b-list-group-item>
+      <b-list-group-item v-for="(domain, index) in domainsList" :key="index" class="d-flex justify-content-between align-items-center" :to="myDomains.indexOf(domain) > -1 ? '/domains/' + encodeURIComponent(domain) : ''">
+        <div>
+          {{ domain }}
+        </div>
+        <div>
+          <b-badge v-if="myDomains.indexOf(domain) > -1" class="ml-1" variant="success">
+            <b-icon icon="check" /> Already managed
+          </b-badge>
+          <b-button v-else type="button" class="ml-1" variant="primary" size="sm" @click="importDomain(domain)">
+            Add now
+          </b-button>
+        </div>
+      </b-list-group-item>
+      <b-list-group-item v-if="noDomainsList && !isLoading && domainsList.length === 0" class="text-center">
+        This provider doesn't permit to list existing domains. Use the form below to add one.
+      </b-list-group-item>
+    </b-list-group>
+    <h-list-group-input v-if="noDomainsList" v-model="newDomain" autofocus class="mt-2" placeholder="my.new.domain." :state="newDomainState" input-class="text-monospace" @submit="submitNewDomain" @update="validateNewDomain" />
   </b-container>
 </template>
 
 <script>
 import axios from 'axios'
+import ListGroupInputNewDomain from '@/mixins/listGroupInputNewDomain'
 
 export default {
 
+  mixins: [ListGroupInputNewDomain],
+
   props: {
     parentLoading: {
-      type: Function,
+      type: Boolean,
       required: true
     },
     mySource: {
+      type: Object,
+      required: true
+    },
+    sourceSpecs: {
       type: Object,
       required: true
     }
@@ -80,30 +86,48 @@ export default {
 
   data: function () {
     return {
+      domains: null,
       myDomains: null,
-      domains: null
+      noDomainsList: false
     }
   },
 
   computed: {
+    domainsList () {
+      if (this.isLoading) {
+        return []
+      } else if (this.noDomainsList) {
+        var ret = []
+
+        for (const i in this.myDomains) {
+          if (this.myDomains[i].id_source === this.mySource.id) {
+            ret.push(this.myDomains[i])
+          }
+        }
+
+        return ret
+      } else {
+        return this.domains
+      }
+    },
     isLoading () {
-      return this.parentLoading || this.domains == null || this.myDomains == null
+      return this.parentLoading || (this.domains == null && !this.noDomainsList) || this.myDomains == null
+    }
+  },
+
+  watch: {
+    sourceSpecs: function () {
+      if (this.sourceSpecs) {
+        this.listImportableDomains()
+      }
     }
   },
 
   mounted () {
-    axios
-      .get('/api/sources/' + encodeURIComponent(this.$route.params.source) + '/domains')
-      .then(response => (this.domains = response.data))
-    axios
-      .get('/api/domains')
-      .then(response => {
-        var domains = []
-        response.data.forEach(function (domain) {
-          domains.push(domain.domain)
-        })
-        this.myDomains = domains
-      })
+    if (this.sourceSpecs) {
+      this.listImportableDomains()
+    }
+    this.refreshDomains()
   },
 
   methods: {
@@ -137,6 +161,43 @@ export default {
             )
           }
         )
+    },
+
+    listImportableDomains () {
+      if (!this.sourceSpecs.capabilities || this.sourceSpecs.capabilities.indexOf('ListDomains') === -1) {
+        this.noDomainsList = true
+        return
+      }
+
+      axios
+        .get('/api/sources/' + encodeURIComponent(this.$route.params.source) + '/domains')
+        .then(
+          response => (this.domains = response.data),
+          error => {
+            this.$root.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: 'An error occurs when trying to access domain\'s list.',
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+            this.$router.replace('/sources/' + encodeURIComponent(this.mySource._id))
+          })
+    },
+
+    refreshDomains () {
+      this.myDomains = null
+      this.newDomain = ''
+      axios
+        .get('/api/domains')
+        .then(response => {
+          var domains = []
+          response.data.forEach(function (domain) {
+            domains.push(domain.domain)
+          })
+          this.myDomains = domains
+        })
     }
   }
 }

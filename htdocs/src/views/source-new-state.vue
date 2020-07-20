@@ -108,7 +108,7 @@ export default {
 
     reactOnSuccess (toState, newSource) {
       if (newSource) {
-        this.$router.push('/sources/' + encodeURIComponent(newSource._id))
+        this.$router.push('/sources/' + encodeURIComponent(newSource._id) + '/domains')
       } else {
         this.$router.push('/sources/new/' + encodeURIComponent(this.mySource) + '/' + toState)
       }
