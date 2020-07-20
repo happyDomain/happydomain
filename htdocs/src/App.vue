@@ -35,8 +35,8 @@
   <div id="app">
     <b-navbar :class="loggedUser?'p-0':''">
       <b-container>
-        <b-navbar-brand class="navbar-brand" to="/" style="font-family: 'Fortheenas01';font-weight:bold;">
-          happy<span style="font-family: 'Fortheenas01 Bold';margin-left:.1em;">DNS</span>
+        <b-navbar-brand class="navbar-brand" to="/">
+          <h-logo height="25" />
         </b-navbar-brand>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#adminMenu" aria-controls="adminMenu" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon" />
@@ -84,7 +84,9 @@
       <b-container>
         <b-row>
           <b-col md="12" lg="6">
-            &copy; <span style="font-family: 'Fortheenas01';font-weight:bold;">happy<span style="font-family: 'Fortheenas01 Bold';margin-left:.1em;">DNS</span></span> 2019-2020 All rights reserved
+            &copy;
+            <h-logo color="#fff" height="17" />
+            2019-2020 All rights reserved
           </b-col>
           <b-col md="6" lg="3" />
           <b-col md="6" lg="3" />
