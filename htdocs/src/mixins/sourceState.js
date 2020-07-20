@@ -35,6 +35,8 @@ export default {
   data () {
     return {
       form: null,
+      nextIsWorking: false,
+      previousIsWorking: false,
       settings: null,
       state: 0
     }
@@ -56,6 +58,8 @@ export default {
       SourceSettingsApi.getSourceSettings(this.sourceSpecsSelected, toState, this.settings, recallid)
         .then(
           response => {
+            this.previousIsWorking = false
+            this.nextIsWorking = false
             if (response.data.form) {
               this.form = response.data.form
               this.state = toState
@@ -84,6 +88,8 @@ export default {
             }
           },
           error => {
+            this.previousIsWorking = false
+            this.nextIsWorking = false
             this.$root.$bvToast.toast(
               error.response.data.errmsg, {
                 title: 'Something went wrong during source configuration validation',

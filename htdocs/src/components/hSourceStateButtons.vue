@@ -33,16 +33,20 @@
 
 <template>
   <div>
-    <b-button v-if="(!form.previousEditButtonText || !edit) && form.previousButtonText" type="button" variant="outline-secondary" class="mx-1" @click="$emit('previousState')">
+    <b-button v-if="(!form.previousEditButtonText || !edit) && form.previousButtonText" type="button" variant="outline-secondary" class="mx-1" :disabled="btnDisabled" @click="$emit('previousState')">
+      <b-spinner v-if="previousIsWorking" label="Spinning" small />
       {{ form.previousButtonText }}
     </b-button>
-    <b-button v-if="(!form.nextEditButtonText || !edit) && form.nextButtonText" type="button" variant="primary" class="mx-1" @click="$emit('nextState')">
+    <b-button v-if="(!form.nextEditButtonText || !edit) && form.nextButtonText" type="button" variant="primary" class="mx-1" :disabled="btnDisabled" @click="$emit('nextState')">
+      <b-spinner v-if="nextIsWorking" label="Spinning" small />
       {{ form.nextButtonText }}
     </b-button>
-    <b-button v-if="edit && form.previousEditButtonText" type="button" variant="outline-secondary" class="mx-1" @click="$emit('previousState')">
+    <b-button v-if="edit && form.previousEditButtonText" type="button" variant="outline-secondary" class="mx-1" :disabled="btnDisabled" @click="$emit('previousState')">
+      <b-spinner v-if="previousIsWorking" label="Spinning" small />
       {{ form.previousEditButtonText }}
     </b-button>
-    <b-button v-if="edit && form.nextEditButtonText" type="button" variant="primary" class="mx-1" @click="$emit('nextState')">
+    <b-button v-if="edit && form.nextEditButtonText" type="button" variant="primary" class="mx-1" :disabled="btnDisabled" @click="$emit('nextState')">
+      <b-spinner v-if="nextIsWorking" label="Spinning" small />
       {{ form.nextEditButtonText }}
     </b-button>
   </div>
@@ -60,6 +64,20 @@ export default {
     form: {
       type: Object,
       required: true
+    },
+    nextIsWorking: {
+      type: Boolean,
+      default: false
+    },
+    previousIsWorking: {
+      type: Boolean,
+      default: false
+    }
+  },
+
+  computed: {
+    btnDisabled () {
+      return this.nextIsWorking || this.previousIsWorking
     }
   }
 }

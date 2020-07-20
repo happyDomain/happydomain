@@ -57,7 +57,7 @@
 
       <b-col lg="8" md="7">
         <h-source-state v-model="settings" class="mt-2 mb-2" :form="form" :source-name="sourceSpecs[$route.params.provider].name" :state="parseInt($route.params.state)" @submit="submitSettings" />
-        <h-source-state-buttons class="d-flex justify-content-end" :form="form" @previousState="previousState" @nextState="submitSettings" />
+        <h-source-state-buttons class="d-flex justify-content-end" :form="form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previousState="previousState" @nextState="submitSettings" />
       </b-col>
     </b-row>
   </b-container>
@@ -90,6 +90,7 @@ export default {
 
   methods: {
     previousState () {
+      this.previousIsWorking = true
       if (this.form.previousButtonState !== undefined) {
         if (this.form.previousButtonState === -1) {
           this.$router.push('/sources/new/')
@@ -115,6 +116,7 @@ export default {
     },
 
     submitSettings () {
+      this.nextIsWorking = true
       if (this.form.nextButtonState !== undefined) {
         if (this.form.nextButtonState === -1) {
           this.$router.push('/sources/new/')
