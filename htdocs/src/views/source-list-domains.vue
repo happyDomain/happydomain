@@ -144,7 +144,7 @@ export default {
                 title: 'New domain attached to happyDNS!',
                 autoHideDelay: 5000,
                 variant: 'success',
-                href: 'domains/' + response.data.domain,
+                href: '/domains/' + response.data.domain,
                 toaster: 'b-toaster-content-right'
               }
             )
