@@ -47,7 +47,7 @@
       :index="0"
       label="Name your source"
       description="Give an explicit name in order to easily find this service."
-      :placeholder="sourceName + ' 1'"
+      :placeholder="sourceName + ' account 1'"
       required
       :value="val._comment"
       @input="val._comment = $event;$emit('input', val)"
