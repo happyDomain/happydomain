@@ -36,12 +36,14 @@
     <b-list-group-item v-if="isLoading" class="d-flex justify-content-center align-items-center">
       <b-spinner variant="primary" label="Spinning" class="mr-3" /> Retrieving usable sources...
     </b-list-group-item>
-    <b-list-group-item v-for="(src, idx) in sources" :key="idx" :active="srcSelected === idx" button @click="selectSource(idx)">
-      <div class="d-inline-block text-center" style="width: 50px;">
+    <b-list-group-item v-for="(src, idx) in sources" :key="idx" :active="srcSelected === idx" button class="d-flex" @click="selectSource(idx)">
+      <div class="align-self-center text-center" style="min-width:50px;width:50px;">
         <img :src="'/api/source_specs/' + idx + '.png'" :alt="src.name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
       </div>
-      <strong>{{ src.name }}</strong> &ndash;
-      <small class="text-muted" :title="src.description">{{ src.description }}</small>
+      <div class="align-self-center" style="line-height: 1.1">
+        <strong>{{ src.name }}</strong> &ndash;
+        <small class="text-muted" :title="src.description">{{ src.description }}</small>
+      </div>
     </b-list-group-item>
   </b-list-group>
 </template>
