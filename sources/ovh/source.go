@@ -310,6 +310,6 @@ func init() {
 		return &OVHAPI{}
 	}, sources.SourceInfos{
 		Name:        "OVH",
-		Description: "Hosting",
+		Description: "European hosting provider.",
 	})
 }
