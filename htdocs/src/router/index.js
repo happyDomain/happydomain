@@ -85,10 +85,17 @@ const routes = [
     }
   },
   {
+    path: '/onboarding',
+    name: 'onboarding',
+    component: function () {
+      return import(/* webpackChunkName: "home" */ '../views/onboarding.vue')
+    }
+  },
+  {
     path: '/domains',
     name: 'domains',
     component: function () {
-      return import(/* webpackChunkName: "zone-list" */ '../views/home.vue')
+      return import(/* webpackChunkName: "home" */ '../views/home.vue')
     }
   },
   {

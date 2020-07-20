@@ -38,11 +38,7 @@
     </h1>
     <b-row>
       <b-col offset-md="2" md="8">
-        <b-alert :show="noDomain" dismissible>
-          <strong>Hi! It seems this is your first time here.</strong>
-          To begin, enter a domain name you want to manage, in the form just below.
-        </b-alert>
-        <zone-list ref="zlist" @noDomain="noDomainChange" />
+        <zone-list ref="zlist" @noDomain="firstTimeAct" />
       </b-col>
     </b-row>
   </b-container>
@@ -53,14 +49,11 @@ export default {
   components: {
     ZoneList: () => import('@/components/ZoneList')
   },
-  data () {
-    return {
-      noDomain: false
-    }
-  },
   methods: {
-    noDomainChange (state) {
-      setTimeout(() => (this.noDomain = state), 1420)
+    firstTimeAct (state) {
+      if (state) {
+        this.$router.replace('/onboarding')
+      }
     }
   }
 }
