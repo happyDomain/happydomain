@@ -58,10 +58,11 @@ export default {
           response => {
             if (response.data.form) {
               this.form = response.data.form
-              if (cbSuccess) {
+              this.state = toState
+              if (response.data.redirect && window.location.pathname !== response.data.redirect) {
+                this.$router.push(response.data.redirect)
+              } else if (cbSuccess) {
                 cbSuccess(toState)
-              } else {
-                this.state = toState
               }
             } else if (response.data.Source) {
               this.$root.$bvToast.toast(
@@ -72,12 +73,13 @@ export default {
                   toaster: 'b-toaster-content-right'
                 }
               )
+              this.state = toState
               if (response.data.redirect && window.location.pathname !== response.data.redirect) {
                 this.$router.push(response.data.redirect)
               } else if (cbSuccess) {
                 cbSuccess(toState, response.data.Source)
               } else {
-                this.state = toState
+                this.$router.push('/sources/' + encodeURIComponent(response.data.Source._id) + '/domains')
               }
             }
           },

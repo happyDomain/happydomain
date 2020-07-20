@@ -87,7 +87,7 @@ export default {
     },
     state: {
       type: Number,
-      default: 1
+      default: 0
     },
     value: {
       type: Object,
