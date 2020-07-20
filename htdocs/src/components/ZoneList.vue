@@ -49,40 +49,21 @@
         </b-badge>
       </b-list-group-item>
     </b-list-group>
-    <b-list-group class="mt-2">
-      <form v-if="!isLoading" @submit.stop.prevent="submitNewDomain">
-        <b-list-group-item class="d-flex justify-content-between align-items-center">
-          <b-input-group>
-            <template v-slot:prepend>
-              <b-input-group-prepend style="width: 50px" @click="$refs.newdomain.focus()">
-                <b-icon icon="plus" style="width: 100%; height: 2.3rem; margin-right: -.6em; margin-left: -.6em" />
-              </b-input-group-prepend>
-            </template>
-            <b-form-input ref="newdomain" v-model="newDomain" autofocus placeholder="my.new.domain." :state="newDomainState" class="text-monospace" style="border:none;box-shadow:none;z-index:0" @update="validateNewDomain" />
-            <template v-slot:append>
-              <b-input-group-append v-show="newDomain.length">
-                <b-button type="submit" variant="outline-primary">
-                  Add new domain
-                </b-button>
-              </b-input-group-append>
-            </template>
-          </b-input-group>
-        </b-list-group-item>
-      </form>
-    </b-list-group>
+    <h-list-group-input v-if="!isLoading" v-model="newDomain" autofocus class="mt-2" placeholder="my.new.domain." :state="newDomainState" input-class="text-monospace" @submit="submitNewDomain" @update="validateNewDomain" />
   </div>
 </template>
 
 <script>
 import axios from 'axios'
+import ListGroupInputNewDomain from '@/mixins/listGroupInputNewDomain'
 
 export default {
   name: 'ZoneList',
 
+  mixins: [ListGroupInputNewDomain],
+
   data: function () {
     return {
-      newDomain: '',
-      newDomainState: null,
       domains: null,
       sources: {}
     }
@@ -118,41 +99,7 @@ export default {
   methods: {
     show (domain) {
       this.$router.push('/domains/' + encodeURIComponent(domain.domain))
-    },
-
-    validateNewDomain () {
-      if (this.newDomain.length === 0) {
-        this.newDomainState = null
-      } else {
-        this.newDomainState = this.newDomain.length >= 4 && this.newDomain.length <= 254
-
-        if (this.newDomainState) {
-          var domains = this.newDomain.split('.')
-
-          // Remove the last . if any, it's ok
-          if (domains[domains.length - 1] === '') {
-            domains.pop()
-          }
-
-          var newDomainState = this.newDomainState
-          domains.forEach(function (domain) {
-            newDomainState &= domain.length >= 1 && domain.length <= 63
-            newDomainState &= domain[0] !== '-' && domain[domain.length - 1] !== '-'
-            newDomainState &= /^[a-zA-Z0-9]([a-zA-Z0-9-]?[a-zA-Z0-9])*$/.test(domain)
-          })
-          this.newDomainState = newDomainState > 0
-        }
-      }
-
-      return this.newDomainState
-    },
-
-    submitNewDomain () {
-      if (this.validateNewDomain()) {
-        this.$router.push('/domains/' + encodeURIComponent(this.newDomain) + '/new')
-      }
     }
-
   }
 }
 </script>
