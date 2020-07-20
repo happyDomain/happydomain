@@ -77,7 +77,6 @@ export default {
                   toaster: 'b-toaster-content-right'
                 }
               )
-              this.state = toState
               if (response.data.redirect && window.location.pathname !== response.data.redirect) {
                 this.$router.push(response.data.redirect)
               } else if (cbSuccess) {
@@ -102,6 +101,49 @@ export default {
               cbFail(error.response.data)
             }
           })
+    },
+
+    nextState (bvModalEvt) {
+      if (bvModalEvt) {
+        bvModalEvt.preventDefault()
+      }
+      this.nextIsWorking = true
+      if (this.form) {
+        if (this.form.nextButtonLink !== undefined) {
+          window.location = this.form.nextButtonLink
+        } else if (this.form.nextButtonState === -1) {
+          this.state = this.form.nextButtonState
+          this.form = null
+          this.nextButtonState = false
+        } else if (this.form.nextButtonState) {
+          this.loadState(
+            this.form.nextButtonState,
+            null,
+            this.reactOnSuccess
+          )
+        } else {
+          this.loadState(0)
+        }
+      } else {
+        this.loadState(0)
+      }
+    },
+
+    previousState () {
+      this.previousIsWorking = true
+      if (this.form.previousButtonState <= 0) {
+        this.state = this.form.previousButtonState
+        this.form = null
+        this.previousIsWorking = false
+      } else if (this.form.previousButtonState) {
+        this.loadState(
+          this.form.previousButtonState,
+          null,
+          this.reactOnSuccess
+        )
+      } else {
+        this.loadState(0)
+      }
     },
 
     resetSettings () {
