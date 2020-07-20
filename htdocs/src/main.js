@@ -80,6 +80,8 @@ import {
   ToastPlugin
 } from 'bootstrap-vue'
 
+import HLogo from '@/components/logo.vue'
+
 import './registerServiceWorker.js'
 
 import './app.scss'
@@ -130,6 +132,8 @@ Vue.component('BIconServer', BIconServer)
 Vue.component('BIconTrash', BIconTrash)
 Vue.component('BIconTrashFill', BIconTrashFill)
 Vue.component('BIconXCircle', BIconXCircle)
+
+Vue.component('HLogo', HLogo)
 
 Vue.config.productionTip = process.env.NODE_ENV === 'production'
 

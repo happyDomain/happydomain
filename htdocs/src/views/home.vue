@@ -34,7 +34,7 @@
 <template>
   <b-container class="pt-4 pb-5">
     <h1 class="text-center mb-4">
-      Welcome to <span style="font-family: 'Fortheenas01';font-weight:bold;">happy<span style="font-family: 'Fortheenas01 Bold';margin-left:.1em;">DNS</span></span>!
+      Welcome to <h-logo height="40" />!
     </h1>
     <b-row>
       <b-col offset-md="2" md="8">
