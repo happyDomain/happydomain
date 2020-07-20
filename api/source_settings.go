@@ -87,6 +87,7 @@ func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.
 	if uss.Recall != nil {
 		req.Session.GetValue(fmt.Sprintf("source-creation-%d", *uss.Recall), src)
 		req.Session.GetValue(fmt.Sprintf("source-creation-%d-name", *uss.Recall), &uss.Name)
+		req.Session.GetValue(fmt.Sprintf("source-creation-%d-id", *uss.Recall), &uss.Id)
 		req.Session.GetValue(fmt.Sprintf("source-creation-%d-next", *uss.Recall), &uss.Redirect)
 	}
 
@@ -104,6 +105,7 @@ func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.
 			key, recallid := req.Session.FindNewKey("source-creation-")
 			req.Session.SetValue(key, src)
 			req.Session.SetValue(key+"-name", uss.Name)
+			req.Session.SetValue(key+"-id", uss.Id)
 			if uss.Redirect != nil {
 				req.Session.SetValue(key+"-next", *uss.Redirect)
 			}
