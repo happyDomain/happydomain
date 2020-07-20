@@ -47,7 +47,7 @@
         <span v-if="source._comment">{{ source._comment }}</span>
         <em v-else>No name</em>
       </div>
-      <div>
+      <div v-if="!noLabel">
         <b-badge class="ml-1" :variant="domain_in_sources[index] > 0 ? 'success' : 'danger'">
           {{ domain_in_sources[index] }} domain(s) associated
         </b-badge>
@@ -70,6 +70,10 @@ export default {
 
   props: {
     emitNewIfEmpty: {
+      type: Boolean,
+      default: false
+    },
+    noLabel: {
       type: Boolean,
       default: false
     }
