@@ -56,8 +56,10 @@
       </b-col>
 
       <b-col lg="8" md="7">
-        <h-source-state v-model="settings" class="mt-2 mb-2" :form="form" :source-name="sourceSpecs[$route.params.provider].name" :state="parseInt($route.params.state)" @submit="submitSettings" />
-        <h-source-state-buttons class="d-flex justify-content-end" :form="form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previousState="previousState" @nextState="submitSettings" />
+        <b-form @submit.stop.prevent="nextState">
+          <h-source-state v-model="settings" class="mt-2 mb-2" :form="form" :source-name="sourceSpecs[$route.params.provider].name" :state="parseInt($route.params.state)" />
+          <h-source-state-buttons class="d-flex justify-content-end" :form="form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previousState="previousState" />
+        </b-form>
       </b-col>
     </b-row>
   </b-container>
@@ -82,6 +84,16 @@ export default {
     }
   },
 
+  watch: {
+    state: function (state) {
+      if (state === -1) {
+        this.$router.push('/sources/new/')
+      } else if (state !== undefined && state !== this.$route.params.state) {
+        this.$router.push('/sources/new/' + encodeURIComponent(this.sourceSpecsSelected) + '/' + state)
+      }
+    }
+  },
+
   created () {
     this.sourceSpecsSelected = this.$route.params.provider
     this.state = parseInt(this.$route.params.state)
@@ -89,42 +101,9 @@ export default {
   },
 
   methods: {
-    previousState () {
-      this.previousIsWorking = true
-      if (this.form.previousButtonState !== undefined) {
-        if (this.form.previousButtonState === -1) {
-          this.$router.push('/sources/new/')
-        } else {
-          this.loadState(
-            this.form.previousButtonState,
-            null,
-            this.reactOnSuccess,
-            () => {
-              this.$router.push('/sources/new')
-            }
-          )
-        }
-      }
-    },
-
     reactOnSuccess (toState, newSource) {
       if (newSource) {
         this.$router.push('/sources/' + encodeURIComponent(newSource._id) + '/domains')
-      } else {
-        this.$router.push('/sources/new/' + encodeURIComponent(this.mySource) + '/' + toState)
-      }
-    },
-
-    submitSettings () {
-      this.nextIsWorking = true
-      if (this.form.nextButtonState !== undefined) {
-        if (this.form.nextButtonState === -1) {
-          this.$router.push('/sources/new/')
-        } else {
-          this.loadState(this.form.nextButtonState, null, this.reactOnSuccess)
-        }
-      } else if (this.form.nextButtonLink !== undefined) {
-        window.location = this.form.nextButtonLink
       }
     }
   }

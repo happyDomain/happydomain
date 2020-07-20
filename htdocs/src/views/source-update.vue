@@ -32,8 +32,8 @@
   -->
 
 <template>
-  <form v-if="!isLoading" class="mt-2 mb-5" @submit.stop.prevent="submitSource">
-    <b-button v-if="!edit" class="float-right" type="button" size="sm" variant="outline-primary" @click="editSource()">
+  <b-form v-if="!isLoading" class="mt-2 mb-5" @submit.stop.prevent="nextState">
+    <b-button v-if="!edit" class="float-right" type="button" size="sm" variant="outline-primary" @click="editSource">
       <b-icon icon="pencil" />
       Edit
     </b-button>
@@ -49,14 +49,14 @@
       :placeholder="sources[sourceSpecsSelected].name + ' 1'"
       required
     />
-    <h-source-state v-else-if="form" v-model="settings" class="mt-2 mb-2" :form="form" :source-name="sources[sourceSpecsSelected].name" :state="state" @submit="nextState" />
+    <h-source-state v-else-if="form" v-model="settings" class="mt-2 mb-2" :form="form" :source-name="sources[sourceSpecsSelected].name" :state="state" />
 
     <hr>
 
     <h-fields v-if="!edit" v-model="mySource.Source" :fields="sourceSpecs.fields" />
 
-    <h-source-state-buttons v-else-if="form" class="d-flex justify-content-end" edit :form="form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previousState="previousState" @nextState="nextState" />
-  </form>
+    <h-source-state-buttons v-else-if="form" class="d-flex justify-content-end" edit :form="form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previousState="previousState" />
+  </b-form>
 </template>
 
 <script>
@@ -98,20 +98,21 @@ export default {
 
   data: function () {
     return {
-      edit: false,
-      prevRoute: null
+      edit: false
     }
-  },
-
-  beforeRouteEnter (to, from, next) {
-    next(vm => {
-      vm.prevRoute = from
-    })
   },
 
   computed: {
     isLoading () {
       return this.parentLoading
+    }
+  },
+
+  watch: {
+    state: function (state) {
+      if (state === -1) {
+        this.edit = false
+      }
     }
   },
 
@@ -122,46 +123,12 @@ export default {
       this.edit = true
     },
 
-    previousState () {
-      this.previousIsWorking = true
-      if (this.form.previousButtonState <= 0) {
-        this.state = this.form.previousButtonState
-        this.form = null
+    reactOnSuccess (toState, newSource) {
+      if (newSource) {
+        this.$emit('updateMySource', newSource)
         this.edit = false
-        this.previousIsWorking = false
-      } else {
-        this.loadState(this.form.previousButtonState)
-      }
-    },
-
-    nextState () {
-      this.nextIsWorking = true
-      if (this.form) {
-        if (this.form.nextButtonState !== undefined) {
-          if (this.form.nextButtonState === -1) {
-            this.state = this.form.nextButtonState
-            this.form = null
-            this.nextIsWorking = false
-          } else {
-            this.loadState(
-              this.form.nextButtonState,
-              null,
-              (_, newSource) => {
-                if (newSource) {
-                  this.$emit('updateMySource', newSource)
-                  this.edit = false
-                }
-              }
-            )
-          }
-        } else if (this.form.nextButtonLink !== undefined) {
-          window.location = this.form.nextButtonLink
-        }
-      } else {
-        this.loadState(0)
       }
     }
-
   }
 }
 </script>

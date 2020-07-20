@@ -32,9 +32,9 @@
   -->
 
 <template>
-  <b-modal id="modal-add-source" scrollable size="lg" title="New Source Form" :ok-title="state >= 0 ? 'OK' : 'Next >'" :ok-disabled="!sourceSpecsSelected" @ok="handleModalSourceSubmit">
+  <b-modal id="modal-add-source" scrollable size="lg" title="New Source Form" ok-title="Next >" :ok-disabled="!sourceSpecsSelected" @ok="nextState">
     <template v-if="state >= 0 && form" v-slot:modal-footer>
-      <h-source-state-buttons :form="form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previousState="handleModalSourcePrevious" @nextState="handleModalSourceSubmit" />
+      <h-source-state-buttons :form="form" submit-form="source-state-form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previousState="previousState" />
     </template>
 
     <div v-if="state < 0">
@@ -44,9 +44,9 @@
       <h-new-source-selector v-model="sourceSpecsSelected" />
     </div>
 
-    <div v-else-if="sourceSpecsSelected">
-      <h-source-state v-model="settings" class="mt-2 mb-2" :form="form" :source-name="sourceSpecs[sourceSpecsSelected].name" :state="state" @submit="handleModalSourceSubmit" />
-    </div>
+    <b-form v-else-if="sourceSpecsSelected" id="source-state-form" @submit.stop.prevent="nextState">
+      <h-source-state v-model="settings" class="mt-2 mb-2" :form="form" :source-name="sourceSpecs[sourceSpecsSelected].name" :state="state" />
+    </b-form>
   </b-modal>
 </template>
 
@@ -72,49 +72,14 @@ export default {
   },
 
   methods: {
-    handleModalSourcePrevious () {
-      this.previousIsWorking = true
-      if (this.form.previousButtonState <= 0) {
-        this.state = this.form.previousButtonState
-        this.form = null
-        this.previousIsWorking = false
-      } else {
-        this.loadState(this.form.previousButtonState)
-      }
-    },
-
-    handleModalSourceSubmit (bvModalEvt) {
-      if (bvModalEvt) {
-        bvModalEvt.preventDefault()
-      }
-      this.nextIsWorking = true
-      if (this.form) {
-        if (this.form.nextButtonState !== undefined) {
-          if (this.form.nextButtonState === -1) {
-            this.state = this.form.nextButtonState
-            this.form = null
-          } else {
-            this.loadState(
-              this.form.nextButtonState,
-              null,
-              (_, newSource) => {
-                if (newSource) {
-                  this.hide()
-                  this.$emit('done', newSource)
-                }
-              }
-            )
-          }
-        } else if (this.form.nextButtonLink !== undefined) {
-          window.location = this.form.nextButtonLink
-        }
-      } else {
-        this.loadState(0)
-      }
-    },
-
     hide () {
       this.$bvModal.hide('modal-add-source')
+    },
+
+    reactOnSuccess (toState, newSource) {
+      if (newSource) {
+        this.hide()
+      }
     },
 
     show () {

@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <form @submit.stop.prevent="$emit('submit')">
+  <div>
     <p v-if="form.beforeText" class="lead text-indent">
       {{ form.beforeText }}
     </p>
@@ -64,7 +64,7 @@
     <p v-if="form.afterText">
       {{ form.afterText }}
     </p>
-  </form>
+  </div>
 </template>
 
 <script>

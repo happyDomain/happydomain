@@ -37,7 +37,7 @@
       <b-spinner v-if="previousIsWorking" label="Spinning" small />
       {{ form.previousButtonText }}
     </b-button>
-    <b-button v-if="(!form.nextEditButtonText || !edit) && form.nextButtonText" type="button" variant="primary" class="mx-1" :disabled="btnDisabled" @click="$emit('nextState')">
+    <b-button v-if="(!form.nextEditButtonText || !edit) && form.nextButtonText" type="submit" variant="primary" class="mx-1" :disabled="btnDisabled" :form="submitForm">
       <b-spinner v-if="nextIsWorking" label="Spinning" small />
       {{ form.nextButtonText }}
     </b-button>
@@ -45,7 +45,7 @@
       <b-spinner v-if="previousIsWorking" label="Spinning" small />
       {{ form.previousEditButtonText }}
     </b-button>
-    <b-button v-if="edit && form.nextEditButtonText" type="button" variant="primary" class="mx-1" :disabled="btnDisabled" @click="$emit('nextState')">
+    <b-button v-if="edit && form.nextEditButtonText" type="submit" variant="primary" class="mx-1" :disabled="btnDisabled" :form="submitForm">
       <b-spinner v-if="nextIsWorking" label="Spinning" small />
       {{ form.nextEditButtonText }}
     </b-button>
@@ -72,6 +72,10 @@ export default {
     previousIsWorking: {
       type: Boolean,
       default: false
+    },
+    submitForm: {
+      type: String,
+      default: null
     }
   },
 
