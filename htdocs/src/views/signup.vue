@@ -127,8 +127,11 @@
 
 <script>
 import axios from 'axios'
+import PasswordChecks from '@/mixins/passwordChecks'
 
 export default {
+
+  mixins: [PasswordChecks],
 
   data: function () {
     return {
@@ -146,19 +149,6 @@ export default {
         return null
       }
       return /.+@.+\..+/i.test(this.signupForm.email)
-    },
-    passwordState () {
-      if (this.signupForm.password.length === 0) {
-        return null
-      }
-      return this.signupForm.password.length > 15 || (
-        /[A-Z]/.test(this.signupForm.password) && /[a-z]/.test(this.signupForm.password) && /[0-9]/.test(this.signupForm.password) && (/\W/.test(this.signupForm.password) || this.signupForm.password.length >= 8))
-    },
-    passwordConfirmState () {
-      if (this.signupForm.passwordConfirm.length === 0) {
-        return null
-      }
-      return this.signupForm.password === this.signupForm.passwordConfirm
     }
   },
 

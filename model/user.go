@@ -37,6 +37,7 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"fmt"
+	"regexp"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -67,7 +68,29 @@ func NewUser(email string, password string) (u *User, err error) {
 	return
 }
 
+func (u *User) CheckPasswordConstraints(password string) (err error) {
+	if len(password) < 8 {
+		return fmt.Errorf("Password has to be at least 8 characters long.")
+	}
+
+	if !regexp.MustCompile(`[a-z]`).MatchString(password) {
+		return fmt.Errorf("Password has to contain lower case letters.")
+	} else if !regexp.MustCompile(`[A-Z]`).MatchString(password) {
+		return fmt.Errorf("Password has to contain upper case letters.")
+	} else if !regexp.MustCompile(`[0-9]`).MatchString(password) {
+		return fmt.Errorf("Password has to contain numbers.")
+	} else if len(password) < 11 && !regexp.MustCompile(`[^a-zA-Z0-9]`).MatchString(password) {
+		return fmt.Errorf("Password has to be longer or contain symbols.")
+	}
+
+	return nil
+}
+
 func (u *User) DefinePassword(password string) (err error) {
+	if err = u.CheckPasswordConstraints(password); err != nil {
+		return
+	}
+
 	u.Password, err = bcrypt.GenerateFromPassword([]byte(password), 0)
 	u.PasswordRecoveryKey = nil
 
