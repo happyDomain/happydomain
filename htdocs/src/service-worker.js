@@ -68,7 +68,7 @@ clientsClaim()
 precacheAndRoute(self.__WB_MANIFEST)
 
 const handler = createHandlerBoundToURL('/index.html')
-const navigationRoute = new NavigationRoute(handler, { denylist: [new RegExp('^/fr/'), new RegExp('^/en/'), new RegExp('^/img/screenshots/')] })
+const navigationRoute = new NavigationRoute(handler, { denylist: [new RegExp('^/api/'), new RegExp('^/fr/'), new RegExp('^/en/'), new RegExp('^/img/screenshots/')] })
 registerRoute(navigationRoute)
 
 registerRoute(
