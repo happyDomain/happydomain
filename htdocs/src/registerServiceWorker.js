@@ -40,9 +40,12 @@ if (process.env.NODE_ENV === 'production') {
         'App is being served from cache by a service worker.\n' +
         'For more details, visit https://goo.gl/AFskqB'
       )
+      sessionStorage.removeItem('happyUpdate')
     },
-    registered () {
+    registered (reg) {
       console.log('Service worker has been registered.')
+      // Looking for update each hour
+      setInterval(function (reg) { reg.update() }, 3600000, reg)
     },
     cached () {
       console.log('Content has been cached for offline use.')
@@ -52,6 +55,7 @@ if (process.env.NODE_ENV === 'production') {
     },
     updated () {
       console.log('New content is available; please refresh.')
+      sessionStorage.setItem('happyUpdate', '1')
     },
     offline () {
       console.log('No internet connection found. App is running in offline mode.')
