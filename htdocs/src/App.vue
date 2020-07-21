@@ -62,6 +62,10 @@
               DNS client
             </b-dropdown-item>
             <b-dropdown-divider />
+            <b-dropdown-item to="/me">
+              My account
+            </b-dropdown-item>
+            <b-dropdown-divider />
             <b-dropdown-item @click="logout()">
               Logout
             </b-dropdown-item>
