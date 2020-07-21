@@ -170,7 +170,8 @@ func checkAuth(opts *config.Options, _ httprouter.Params, body io.Reader) Respon
 
 	if user, err := storage.MainStore.GetUserByEmail(lf.Email); err != nil {
 		return APIErrorResponse{
-			err: err,
+			err:    errors.New(`Invalid username or password.`),
+			status: http.StatusUnauthorized,
 		}
 	} else if !user.CheckAuth(lf.Password) {
 		return APIErrorResponse{

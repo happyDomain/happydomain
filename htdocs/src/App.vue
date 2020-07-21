@@ -131,7 +131,7 @@ export default {
           },
           (error) => {
             this.$bvToast.toast(
-              'An error occurs when trying to logout: ' + error.response.data.errmsg, {
+              error.response.data.errmsg, {
                 title: 'Logout error',
                 autoHideDelay: 5000,
                 toaster: 'b-toaster-content-right'
@@ -196,7 +196,7 @@ export default {
             delete sessionStorage.loggedUser
             this.loggedUser = null
             this.$bvToast.toast(
-              'An error occurs when trying to login: ' + error.response.data.errmsg, {
+              error.response.data.errmsg, {
                 title: 'Login error',
                 autoHideDelay: 5000,
                 toaster: 'b-toaster-content-right'
