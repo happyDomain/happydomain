@@ -50,6 +50,7 @@ import (
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/storage"
 
+	_ "git.happydns.org/happydns/sources/alwaysdata"
 	_ "git.happydns.org/happydns/sources/ddns"
 	_ "git.happydns.org/happydns/sources/ovh"
 
