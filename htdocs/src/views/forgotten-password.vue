@@ -78,7 +78,7 @@
           <b-form-input
             id="password-input"
             ref="recoverpassword"
-            v-model="password"
+            v-model="signupForm.password"
             type="password"
             :state="passwordState"
             required
@@ -93,7 +93,7 @@
           <b-form-input
             id="passwordconfirm-input"
             ref="recoverpasswordconfirm"
-            v-model="passwordConfirm"
+            v-model="signupForm.passwordConfirm"
             type="password"
             :state="passwordConfirmState"
             required
@@ -112,16 +112,21 @@
 
 <script>
 import axios from 'axios'
+import PasswordChecks from '@/mixins/passwordChecks'
 
 export default {
+
+  mixins: [PasswordChecks],
 
   data: function () {
     return {
       email: '',
       emailState: null,
       error: null,
-      password: '',
-      passwordConfirm: '',
+      signupForm: {
+        password: '',
+        passwordConfirm: ''
+      },
       user: null
     }
   },
@@ -129,19 +134,6 @@ export default {
   computed: {
     isLoading () {
       return this.error === null || this.user === null
-    },
-    passwordState () {
-      if (this.password.length === 0) {
-        return null
-      }
-      return this.password.length > 15 || (
-        /[A-Z]/.test(this.password) && /[a-z]/.test(this.password) && /[0-9]/.test(this.password) && (/\W/.test(this.password) || this.password.length >= 8))
-    },
-    passwordConfirmState () {
-      if (this.passwordConfirm.length === 0) {
-        return null
-      }
-      return this.password === this.passwordConfirm
     }
   },
 
@@ -210,7 +202,7 @@ export default {
         axios
           .post('/api/users/' + encodeURIComponent(this.user) + '/recovery', {
             key: this.$route.query.k,
-            password: this.password
+            password: this.signupForm.password
           })
           .then(
             (response) => {
