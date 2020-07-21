@@ -33,13 +33,13 @@
 
 <template>
   <div v-if="!isLoading" class="pt-3">
-    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :display-card="displayCard" :dn="dn" :origin="domain.domain" :services="services" :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="aliases[dn]===undefined?[]:aliases[dn]" :zone-id="zoneId" @showServiceWindow="showServiceWindow($event)" @updateMyServices="updateMyServices($event)" @addSubdomain="addSubdomain()" @addNewAlias="addNewAlias($event)" @addNewService="addNewService($event)" />
+    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :display-card="displayCard" :dn="dn" :origin="domain.domain" :services="services" :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="aliases[dn]===undefined?[]:aliases[dn]" :zone-id="zoneId" @showServiceWindow="showServiceWindow" @updateMyServices="updateMyServices" @addSubdomain="addSubdomain" @addNewAlias="addNewAlias" @addNewService="addNewService" />
 
     <b-modal id="modal-addSvc" :size="modal && modal.step === 2 ? 'lg' : ''" scrollable @ok="handleModalSvcOk">
       <template v-slot:modal-title>
         Add a new service to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>
       </template>
-      <form v-if="modal" @submit.stop.prevent="handleModalSvcOk">
+      <form v-if="modal" id="addSvcForm" @submit.stop.prevent="handleModalSvcOk">
         <p v-if="modal.step === 0">
           Add a new subdomain under <span class="text-monospace">{{ domain.domain }}</span>:
           <b-input-group :append="'.' + domain.domain">
@@ -84,10 +84,10 @@
 
     <b-modal id="modal-updSvc" size="xl" scrollable @ok="handleUpdateSvc">
       <template v-slot:modal-title>
-        Update <span v-if="modal.svcData._svctype" :title="services[modal.svcData._svctype].description">{{ services[modal.svcData._svctype].name }} </span>on <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>
+        Update <span v-if="modal.svcData && modal.svcData._svctype" :title="services[modal.svcData._svctype].description">{{ services[modal.svcData._svctype].name }} </span>on <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>
       </template>
       <template v-slot:modal-footer="{ ok, cancel }">
-        <b-button variant="danger" :disabled="deleteServiceInProgress || modal.svcData._svctype === 'svcs.Origin'" @click="deleteService(modal.svcData)">
+        <b-button :disabled="deleteServiceInProgress || !modal.svcData || modal.svcData._svctype === 'svcs.Origin'" variant="danger" @click="deleteService(modal.svcData)">
           <b-spinner v-if="deleteServiceInProgress" label="Spinning" small />
           Delete service
         </b-button>
@@ -99,7 +99,7 @@
           Update service
         </b-button>
       </template>
-      <form v-if="modal" @submit.stop.prevent="handleUpdateSvc">
+      <form v-if="modal && modal.svcData" @submit.stop.prevent="handleUpdateSvc">
         <h-resource-value v-model="modal.svcData.Service" edit :services="services" :type="modal.svcData._svctype" @input="modal.svcData.Service = $event" @saveService="fakeSaveService" />
       </form>
     </b-modal>
