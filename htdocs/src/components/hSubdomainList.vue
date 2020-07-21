@@ -39,6 +39,17 @@
       <template v-slot:modal-title>
         Add a new service to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>
       </template>
+      <template v-slot:modal-footer="{ ok, cancel }">
+        <b-button variant="secondary" @click="cancel()">
+          Cancel
+        </b-button>
+        <b-button v-if="modal.step === 2" form="addSvcForm" type="submit" variant="primary">
+          Add service
+        </b-button>
+        <b-button v-else form="addSvcForm" type="submit" variant="primary">
+          Continue
+        </b-button>
+      </template>
       <form v-if="modal" id="addSvcForm" @submit.stop.prevent="handleModalSvcOk">
         <p v-if="modal.step === 0">
           Add a new subdomain under <span class="text-monospace">{{ domain.domain }}</span>:
@@ -94,18 +105,26 @@
         <b-button variant="secondary" @click="cancel()">
           Cancel
         </b-button>
-        <b-button variant="success" :disabled="updateServiceInProgress" @click="ok()">
+        <b-button :disabled="updateServiceInProgress" form="updSvcForm" type="submit" variant="success">
           <b-spinner v-if="updateServiceInProgress" label="Spinning" small />
           Update service
         </b-button>
       </template>
-      <form v-if="modal && modal.svcData" @submit.stop.prevent="handleUpdateSvc">
+      <form v-if="modal && modal.svcData" id="updSvcForm" @submit.stop.prevent="handleUpdateSvc">
         <h-resource-value v-model="modal.svcData.Service" edit :services="services" :type="modal.svcData._svctype" @input="modal.svcData.Service = $event" @saveService="fakeSaveService" />
       </form>
     </b-modal>
 
     <b-modal id="modal-addAlias" title="Add a new alias" @ok="handleModalAliasSubmit">
-      <form v-if="modal && modal.dn != null" @submit.stop.prevent="handleModalAliasSubmit">
+      <template v-slot:modal-footer="{ ok, cancel }">
+        <b-button variant="secondary" @click="cancel()">
+          Cancel
+        </b-button>
+        <b-button form="addAliasForm" type="submit" variant="primary">
+          Add alias
+        </b-button>
+      </template>
+      <form v-if="modal && modal.dn != null" id="addAliasForm" @submit.stop.prevent="handleModalAliasSubmit">
         Add an alias pointing to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
         <b-input-group :append="'.' + domain.domain">
           <b-input v-model="modal.alias" autofocus class="text-monospace" placeholder="new.subdomain" :state="modal.newDomainState" @update="validateNewAlias" />
