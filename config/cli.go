@@ -45,7 +45,7 @@ func (o *Options) declareFlags() {
 	flag.StringVar(&o.ExternalURL, "externalurl", o.ExternalURL, "Begining of the URL, before the base, that should be used eg. in mails")
 	flag.StringVar(&o.BaseURL, "baseurl", o.BaseURL, "URL prepended to each URL")
 	flag.StringVar(&o.DefaultNameServer, "default-ns", o.DefaultNameServer, "Adress to the default name server")
-	flag.StringVar(&o.StorageEngine, "storage-engine", "leveldb", fmt.Sprintf("Select the storage engine between %v", storage.GetStorageEngines()))
+	flag.Var(&o.StorageEngine, "storage-engine", fmt.Sprintf("Select the storage engine between %v", storage.GetStorageEngines()))
 
 	// Others flags are declared in some other files likes sources, storages, ... when they need specials configurations
 }

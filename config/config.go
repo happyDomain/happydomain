@@ -38,6 +38,8 @@ import (
 	"os"
 	"path"
 	"strings"
+
+	"git.happydns.org/happydns/storage"
 )
 
 type Options struct {
@@ -47,7 +49,7 @@ type Options struct {
 	BaseURL           string
 	DevProxy          string
 	DefaultNameServer string
-	StorageEngine     string
+	StorageEngine     storage.StorageEngine
 }
 
 func (o *Options) BuildURL(url string) string {
@@ -67,7 +69,7 @@ func ConsolidateConfig() (opts *Options, err error) {
 		ExternalURL:       "http://localhost:8081",
 		BaseURL:           "/",
 		DefaultNameServer: "127.0.0.1:53",
-		StorageEngine:     "leveldb",
+		StorageEngine:     storage.StorageEngine("leveldb"),
 	}
 
 	opts.declareFlags()

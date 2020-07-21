@@ -31,15 +31,42 @@
 
 package storage
 
+import (
+	"fmt"
+)
+
+// StorageEngine defines an interface that handle configuration throught custom
+// flag.
+type StorageEngine string
+
+func (i *StorageEngine) String() string {
+	return string(*i)
+}
+
+func (i *StorageEngine) Set(value string) (err error) {
+	se := StorageEngine(value)
+	if _, ok := StorageEngines[se]; !ok {
+		return fmt.Errorf("Unexistant storage engine: please select one between: %v", GetStorageEngines())
+	}
+	*i = se
+	return nil
+}
+
+// MainStore is the singleton holding the database connection.
 var MainStore Storage
 
+// StorageInstanciation is a function that a Storage implementation
+// has to expose in order to be usable in configuration.
 type StorageInstanciation func() (Storage, error)
 
-var StorageEngines = map[string]StorageInstanciation{}
+// StorageEngines lists all Storage implementations declared, with a
+// way to instanciate automatically each.
+var StorageEngines = map[StorageEngine]StorageInstanciation{}
 
+// GetStorageEngines returns all declared Storage implementation.
 func GetStorageEngines() (se []string) {
 	for k := range StorageEngines {
-		se = append(se, k)
+		se = append(se, string(k))
 	}
 
 	return
