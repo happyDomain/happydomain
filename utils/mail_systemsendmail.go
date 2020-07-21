@@ -32,32 +32,44 @@
 package utils
 
 import (
-	"crypto/rand"
-	"encoding/base64"
-	"strings"
+	"io"
+	"os"
+	"os/exec"
 )
 
-// GeneratePassword randomly generates a secure 12 chars long password.
-func GeneratePassword() (password string, err error) {
-	// This will make a 12 chars long password
-	b := make([]byte, 9)
+// sendmail contains the path to the sendmail command
+const sendmail = "/usr/sbin/sendmail"
 
-	if _, err = rand.Read(b); err != nil {
-		return
+// SystemSendmail uses the sendmail command to send message
+type SystemSendmail struct{}
+
+// Send sends an e-mail to the given recipients using the sendmail command.
+func (t *SystemSendmail) Send(from string, to []string, msg io.WriterTo) error {
+	cmd := exec.Command(sendmail, "-t")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	pw, err := cmd.StdinPipe()
+	if err != nil {
+		return err
 	}
 
-	password = base64.StdEncoding.EncodeToString(b)
-
-	// Avoid hard to read characters
-	for _, i := range [][2]string{
-		{"v", "*"}, {"u", "("},
-		{"l", "%"}, {"1", "?"},
-		{"o", "@"}, {"O", "!"}, {"0", ">"},
-		// This one is to avoid problem with openssl
-		{"/", "^"},
-	} {
-		password = strings.Replace(password, i[0], i[1], -1)
+	err = cmd.Start()
+	if err != nil {
+		return err
 	}
 
-	return
+	if _, err = msg.WriteTo(pw); err != nil {
+		return err
+	}
+
+	if err = pw.Close(); err != nil {
+		return err
+	}
+
+	if err = cmd.Wait(); err != nil {
+		return err
+	}
+
+	return nil
 }

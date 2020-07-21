@@ -35,8 +35,6 @@ import (
 	"bytes"
 	"io"
 	"net/mail"
-	"os"
-	"os/exec"
 	"text/template"
 
 	gomail "github.com/go-mail/mail"
@@ -46,13 +44,20 @@ import (
 	"github.com/yuin/goldmark/renderer/html"
 )
 
-const sendmail = "/usr/sbin/sendmail"
-
 var (
-	MailFrom                 = mail.Address{Name: "Fred From happyDNS", Address: "contact@happyDNS.org"}
+	// MailFrom holds the content of the From field for all e-mails that
+	// will be send.
+	MailFrom = mail.Address{Name: "Fred From happyDNS", Address: "contact@happyDNS.org"}
+
+	// SendMethod is a pointer to the current global method used to send
+	// e-mails.
 	SendMethod gomail.Sender = &SystemSendmail{}
 )
 
+// SendMail takes a content writen in Markdown to send it to the given user. It
+// uses Markdown to create a HTML version of the message and leave the Markdown
+// format in the text version. To perform sending, it relies on the SendMethod
+// global variable.
 func SendMail(to *mail.Address, subject, content string) (err error) {
 	m := gomail.NewMessage()
 	m.SetHeader("From", MailFrom.String())
@@ -117,37 +122,4 @@ func SendMail(to *mail.Address, subject, content string) (err error) {
 	}
 
 	return
-}
-
-type SystemSendmail struct{}
-
-// system_sendmail uses the sendmail command to submit the given message
-func (t *SystemSendmail) Send(from string, to []string, msg io.WriterTo) error {
-	cmd := exec.Command(sendmail, "-t")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	pw, err := cmd.StdinPipe()
-	if err != nil {
-		return err
-	}
-
-	err = cmd.Start()
-	if err != nil {
-		return err
-	}
-
-	if _, err = msg.WriteTo(pw); err != nil {
-		return err
-	}
-
-	if err = pw.Close(); err != nil {
-		return err
-	}
-
-	if err = cmd.Wait(); err != nil {
-		return err
-	}
-
-	return nil
 }

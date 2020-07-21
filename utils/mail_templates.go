@@ -31,6 +31,7 @@
 
 package utils
 
+// mailHTMLTpl is the HTML template used for email.
 const mailHTMLTpl = `
 <!DOCTYPE html>
 <html lang="{{ .Lang }}">
@@ -163,8 +164,9 @@ const mailHTMLTpl = `
   </body>
 </html>`
 
+// mailHTMLTpl is the template used for text emails.
 const mailTXTTpl = `{{ .Content }}
 
--- 
+--
 Fred - customer support @ happyDNS
 Legal notice: https://www.happydns.org/en/legal-notice/`
