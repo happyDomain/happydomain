@@ -92,6 +92,13 @@ const routes = [
     }
   },
   {
+    path: '/me',
+    name: 'me',
+    component: function () {
+      return import(/* webpackChunkName: "me" */ '../views/me.vue')
+    }
+  },
+  {
     path: '/domains',
     name: 'domains',
     component: function () {

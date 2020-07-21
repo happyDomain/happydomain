@@ -57,7 +57,9 @@ func init() {
 	router.POST("/api/users", ApiHandler(registerUser))
 	router.PATCH("/api/users", ApiHandler(specialUserOperations))
 	router.GET("/api/users/:uid", apiAuthHandler(sameUserHandler(getUser)))
+	router.POST("/api/users/:uid/delete", apiAuthHandler(sameUserHandler(deleteUser)))
 	router.POST("/api/users/:uid/email", ApiHandler(userHandler(validateUserAddress)))
+	router.POST("/api/users/:uid/new_password", apiAuthHandler(sameUserHandler(changePassword)))
 	router.POST("/api/users/:uid/recovery", ApiHandler(userHandler(recoverUserAccount)))
 }
 
@@ -231,12 +233,7 @@ func sameUserHandler(f func(*config.Options, *RequestResources, io.Reader) Respo
 				status: http.StatusNotFound,
 				err:    fmt.Errorf("Invalid user identifier given: %w", err),
 			}
-		} else if user, err := storage.MainStore.GetUser(uid); err != nil {
-			return APIErrorResponse{
-				status: http.StatusNotFound,
-				err:    errors.New("User not found"),
-			}
-		} else if user.Id != req.User.Id {
+		} else if uid != req.User.Id {
 			return APIErrorResponse{
 				status: http.StatusNotFound,
 				err:    errors.New("User not found"),
@@ -251,6 +248,72 @@ func getUser(opts *config.Options, req *RequestResources, _ io.Reader) Response 
 	return APIResponse{
 		response: req.User,
 	}
+}
+
+type passwordForm struct {
+	Current         string
+	Password        string
+	PasswordConfirm string
+}
+
+func changePassword(opts *config.Options, req *RequestResources, body io.Reader) Response {
+	var lf passwordForm
+	if err := json.NewDecoder(body).Decode(&lf); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	if !req.User.CheckAuth(lf.Current) {
+		return APIErrorResponse{
+			err:    errors.New(`Invalid password.`),
+			status: http.StatusForbidden,
+		}
+	}
+
+	if lf.Password != lf.PasswordConfirm {
+		return APIErrorResponse{
+			err: errors.New(`The new password and its confirmation are different.`),
+		}
+	}
+
+	if err := req.User.DefinePassword(lf.Password); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	if err := storage.MainStore.UpdateUser(req.User); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	return logout(opts, req.Ps, body)
+}
+
+func deleteUser(opts *config.Options, req *RequestResources, body io.Reader) Response {
+	var lf passwordForm
+	if err := json.NewDecoder(body).Decode(&lf); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	if !req.User.CheckAuth(lf.Password) {
+		return APIErrorResponse{
+			err:    errors.New(`Invalid password.`),
+			status: http.StatusForbidden,
+		}
+	}
+
+	if err := storage.MainStore.DeleteUser(req.User); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	return logout(opts, req.Ps, body)
 }
 
 func userHandler(f func(*config.Options, *happydns.User, io.Reader) Response) func(*config.Options, httprouter.Params, io.Reader) Response {
