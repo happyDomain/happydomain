@@ -33,6 +33,7 @@ package utils
 
 import (
 	"bytes"
+	"flag"
 	"io"
 	"net/mail"
 	"text/template"
@@ -44,15 +45,41 @@ import (
 	"github.com/yuin/goldmark/renderer/html"
 )
 
+// mailAddress defines an interface that handle mail.Address configuration
+// throught custom flag.
+type mailAddress struct {
+	*mail.Address
+}
+
+func (i *mailAddress) String() string {
+	if i.Address == nil {
+		return ""
+	}
+	return i.Address.String()
+}
+
+func (i *mailAddress) Set(value string) error {
+	v, err := mail.ParseAddress(value)
+	if err != nil {
+		return err
+	}
+	*i.Address = *v
+	return nil
+}
+
 var (
 	// MailFrom holds the content of the From field for all e-mails that
 	// will be send.
-	MailFrom = mail.Address{Name: "Fred From happyDNS", Address: "contact@happyDNS.org"}
+	MailFrom = mail.Address{Name: "happyDNS", Address: "happydns@localhost"}
 
 	// SendMethod is a pointer to the current global method used to send
 	// e-mails.
 	SendMethod gomail.Sender = &SystemSendmail{}
 )
+
+func init() {
+	flag.Var(&mailAddress{&MailFrom}, "mail-from", "Define the sender name and address for all e-mail sent")
+}
 
 // SendMail takes a content writen in Markdown to send it to the given user. It
 // uses Markdown to create a HTML version of the message and leave the Markdown
