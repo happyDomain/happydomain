@@ -113,6 +113,9 @@ export default {
     }
     this.updateSession()
     this.$on('login', this.login)
+
+    setInterval(function (vm) { vm.checkForUpdate() }, 360000, this)
+    this.checkForUpdate()
   },
 
   methods: {
@@ -161,6 +164,20 @@ export default {
             }
           }
         )
+    },
+
+    checkForUpdate () {
+      if (sessionStorage.getItem('happyUpdate')) {
+        this.$bvToast.toast(
+          'A new version of happyDNS is already available. To enable it, please click here to refresh the page.', {
+            title: 'An update is available!',
+            variant: 'primary',
+            autoHideDelay: 360000,
+            href: window.location.pathname,
+            toaster: 'b-toaster-content-right'
+          }
+        )
+      }
     },
 
     login (email, password) {
