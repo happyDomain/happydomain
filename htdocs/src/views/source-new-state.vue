@@ -32,11 +32,11 @@
   -->
 
 <template>
-  <b-container fluid>
+  <b-container style="min-height: inherit" fluid>
     <div v-if="isLoading" class="mt-5 d-flex justify-content-center align-items-center">
       <b-spinner variant="primary" label="Spinning" class="mr-3" /> Retrieving the source settings' form...
     </div>
-    <b-row v-else>
+    <b-row v-else style="min-height: inherit">
       <b-col lg="4" md="5" class="bg-light">
         <div class="text-center mb-3">
           <img :src="'/api/source_specs/' + $route.params.provider + '.png'" :alt="sourceSpecs[$route.params.provider].name" style="max-width: 100%; max-height: 10em">

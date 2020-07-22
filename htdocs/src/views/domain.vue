@@ -40,7 +40,7 @@
       <b-spinner label="Spinning" />
       <p>Loading the domain&nbsp;&hellip;</p>
     </div>
-    <b-row>
+    <b-row style="min-height: inherit">
       <b-col sm="4" md="3" class="bg-light pb-5">
         <router-link to="/domains/" class="btn font-weight-bolder">
           <b-icon icon="chevron-up" />
@@ -53,7 +53,7 @@
             Abstract zone
           </b-nav-item>
           <b-nav-item :to="'/zones/' + domain.domain + '/records'" :active="$route.name == 'zone-records'">
-            View records
+            Live records
           </b-nav-item>
           <b-nav-item :to="'/domain/' + domain.domain + '/monitoring'" :active="$route.name == 'domain-monitoring'">
             Monitoring
