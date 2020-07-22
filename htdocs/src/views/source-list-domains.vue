@@ -53,7 +53,10 @@
           </b-button>
         </div>
       </b-list-group-item>
-      <b-list-group-item v-if="noDomainsList && !isLoading && domainsList.length === 0" class="text-center">
+      <b-list-group-item v-if="!noDomainsList && !isLoading && domainsList.length === 0" class="text-center">
+        It appears you don't have any domain name registered on this provider.
+      </b-list-group-item>
+      <b-list-group-item v-else-if="noDomainsList && !isLoading && domainsList.length === 0" class="text-center">
         This provider doesn't permit to list existing domains. Use the form below to add one.
       </b-list-group-item>
     </b-list-group>
