@@ -54,6 +54,7 @@ func init() {
 	router.PUT("/api/users/:userid/domains/:domain", api.ApiHandler(userHandler(domainHandler(updateUserDomain))))
 	router.DELETE("/api/users/:userid/domains/:domain", api.ApiHandler(userHandler(deleteUserDomain)))
 
+	router.GET("/api/domains", api.ApiHandler(getAllDomains))
 	router.DELETE("/api/domains", api.ApiHandler(clearDomains))
 }
 
@@ -96,6 +97,25 @@ func domainHandler(f func(*config.Options, *happydns.Domain, httprouter.Params, 
 
 func getUserDomain(_ *config.Options, domain *happydns.Domain, _ httprouter.Params, _ io.Reader) api.Response {
 	return api.NewAPIResponse(domain, nil)
+}
+
+func getAllDomains(_ *config.Options, _ httprouter.Params, _ io.Reader) api.Response {
+	var domains happydns.Domains
+
+	users, err := storage.MainStore.GetUsers()
+	if err != nil {
+		return api.NewAPIResponse(nil, fmt.Errorf("Unable to retrieve users list: %w", err))
+	}
+	for _, user := range users {
+		usersDomains, err := storage.MainStore.GetDomains(user)
+		if err != nil {
+			return api.NewAPIResponse(nil, fmt.Errorf("Unable to retrieve %s's domains: %w", user.Email, err))
+		}
+
+		domains = append(domains, usersDomains...)
+	}
+
+	return api.NewAPIResponse(domains, nil)
 }
 
 func updateUserDomain(_ *config.Options, domain *happydns.Domain, _ httprouter.Params, body io.Reader) api.Response {

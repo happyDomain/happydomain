@@ -53,6 +53,7 @@ func init() {
 	router.PUT("/api/users/:userid/sources/:source", api.ApiHandler(userHandler(sourceHandler(updateUserSource))))
 	router.DELETE("/api/users/:userid/sources/:source", api.ApiHandler(userHandler(sourceMetaHandler(deleteUserSource))))
 
+	router.GET("/api/sources", api.ApiHandler(getAllSources))
 	router.DELETE("/api/sources", api.ApiHandler(clearSources))
 }
 
@@ -104,6 +105,25 @@ func sourceHandler(f func(*config.Options, *happydns.SourceCombined, httprouter.
 
 func getUserSource(_ *config.Options, source *happydns.SourceCombined, _ httprouter.Params, _ io.Reader) api.Response {
 	return api.NewAPIResponse(source, nil)
+}
+
+func getAllSources(_ *config.Options, _ httprouter.Params, _ io.Reader) api.Response {
+	var sources []happydns.SourceMeta
+
+	users, err := storage.MainStore.GetUsers()
+	if err != nil {
+		return api.NewAPIResponse(nil, fmt.Errorf("Unable to retrieve users list: %w", err))
+	}
+	for _, user := range users {
+		usersSources, err := storage.MainStore.GetSourceMetas(user)
+		if err != nil {
+			return api.NewAPIResponse(nil, fmt.Errorf("Unable to retrieve %s's sources: %w", user.Email, err))
+		}
+
+		sources = append(sources, usersSources...)
+	}
+
+	return api.NewAPIResponse(sources, nil)
 }
 
 func updateUserSource(_ *config.Options, source *happydns.SourceCombined, _ httprouter.Params, body io.Reader) api.Response {
