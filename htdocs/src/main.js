@@ -57,6 +57,7 @@ import {
   BIconServer,
   BIconTrash,
   BIconTrashFill,
+  BIconThreeDots,
   BIconXCircle,
   ButtonGroupPlugin,
   ButtonPlugin,
@@ -131,6 +132,7 @@ Vue.component('BIconPlus', BIconPlus)
 Vue.component('BIconServer', BIconServer)
 Vue.component('BIconTrash', BIconTrash)
 Vue.component('BIconTrashFill', BIconTrashFill)
+Vue.component('BIconThreeDots', BIconThreeDots)
 Vue.component('BIconXCircle', BIconXCircle)
 
 Vue.component('HLogo', HLogo)

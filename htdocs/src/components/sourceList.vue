@@ -47,13 +47,26 @@
         <span v-if="source._comment">{{ source._comment }}</span>
         <em v-else>No name</em>
       </div>
-      <div v-if="!noLabel">
-        <b-badge class="ml-1" :variant="domain_in_sources[index] > 0 ? 'success' : 'danger'">
-          {{ domain_in_sources[index] }} domain(s) associated
-        </b-badge>
-        <b-badge v-if="sourceSpecs" class="ml-1" variant="secondary" :title="source._srctype">
-          {{ sourceSpecs[source._srctype].name }}
-        </b-badge>
+      <div class="d-flex">
+        <div v-if="!noLabel">
+          <b-badge class="ml-1" :variant="domain_in_sources[index] > 0 ? 'success' : 'danger'">
+            {{ domain_in_sources[index] }} domain(s) associated
+          </b-badge>
+          <b-badge v-if="sourceSpecs" class="ml-1" variant="secondary" :title="source._srctype">
+            {{ sourceSpecs[source._srctype].name }}
+          </b-badge>
+        </div>
+        <b-dropdown no-caret size="sm" style="margin-right: -10px" variant="link">
+          <template v-slot:button-content>
+            <b-icon icon="three-dots" />
+          </template>
+          <b-dropdown-item>
+            Update settings
+          </b-dropdown-item>
+          <b-dropdown-item @click="deleteSource($event, source)">
+            Delete source
+          </b-dropdown-item>
+        </b-dropdown>
       </div>
     </b-list-group-item>
   </b-list-group>
@@ -62,6 +75,7 @@
 <script>
 import axios from 'axios'
 import SourceSpecs from '@/mixins/sourceSpecs'
+import SourceApi from '@/services/SourcesApi'
 
 export default {
   name: 'SourceList',
@@ -130,13 +144,37 @@ export default {
   },
 
   methods: {
+    deleteSource (event, source) {
+      event.stopPropagation()
+      SourceApi.deleteSource(source)
+        .then(
+          response => {
+            this.updateSources()
+            this.$bvToast.toast(
+              'The source has been deleted with success.', {
+                title: 'Source deleted with success',
+                autoHideDelay: 5000,
+                variant: 'success',
+                toaster: 'b-toaster-content-right'
+              })
+          },
+          error => {
+            this.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: 'An error occurs when trying to delete the source:',
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              })
+          })
+    },
+
     selectSource (source) {
       this.$emit('sourceSelected', source)
     },
 
     updateSources () {
-      axios
-        .get('/api/sources')
+      SourceApi.getSources()
         .then(response => {
           this.sources = response.data
           if (this.sources.length === 0 && this.emitNewIfEmpty) {
