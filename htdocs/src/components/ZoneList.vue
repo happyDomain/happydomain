@@ -37,7 +37,7 @@
       <b-list-group-item v-if="isLoading" class="d-flex justify-content-center align-items-center">
         <b-spinner variant="primary" label="Spinning" class="mr-3" /> Retrieving your domains...
       </b-list-group-item>
-      <b-list-group-item v-for="(domain, index) in domains" :key="index" :to="'/domains/' + domain.domain" class="d-flex justify-content-between align-items-center">
+      <b-list-group-item v-for="(domain, index) in sortedDomains" :key="index" :to="'/domains/' + domain.domain" class="d-flex justify-content-between align-items-center">
         <div class="text-monospace">
           <div class="d-inline-block text-center" style="width: 50px;">
             <img v-if="sources[domain.id_source]" :src="'/api/source_specs/' + sources[domain.id_source]._srctype + '/icon.png'" :alt="sources[domain.id_source]._srctype" :title="sources[domain.id_source]._srctype" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
@@ -55,12 +55,13 @@
 
 <script>
 import axios from 'axios'
+import DomainCompare from '@/mixins/domainCompare'
 import ListGroupInputNewDomain from '@/mixins/listGroupInputNewDomain'
 
 export default {
   name: 'ZoneList',
 
-  mixins: [ListGroupInputNewDomain],
+  mixins: [DomainCompare, ListGroupInputNewDomain],
 
   data: function () {
     return {
@@ -72,6 +73,19 @@ export default {
   computed: {
     isLoading () {
       return this.domains == null
+    },
+
+    sortedDomains () {
+      if (!this.domains) {
+        return []
+      }
+
+      var ret = this.domains
+
+      var vm = this
+      ret.sort(function (a, b) { return vm.domainCompare(a.domain, b.domain) })
+
+      return ret
     }
   },
 

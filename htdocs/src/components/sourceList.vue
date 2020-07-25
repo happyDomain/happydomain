@@ -39,7 +39,7 @@
     <b-list-group-item v-if="!isLoading && sources.length == 0" class="text-center">
       You have no source defined currently. Try <a href="#" @click.prevent="$emit('newSource')">adding one</a>!
     </b-list-group-item>
-    <b-list-group-item v-for="(source, index) in sources" :key="index" button class="d-flex justify-content-between align-items-center" @click="selectSource(source)">
+    <b-list-group-item v-for="(source, index) in sortedSources" :key="index" button class="d-flex justify-content-between align-items-center" @click="selectSource(source)">
       <div>
         <div class="d-inline-block text-center" style="width: 50px;">
           <img v-if="sourceSpecs" :src="'/api/source_specs/' + source._srctype + '/icon.png'" :alt="sourceSpecs[source._srctype].name" :title="sourceSpecs[source._srctype].name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
@@ -106,6 +106,19 @@ export default {
 
     isLoading () {
       return this.domains == null || this.sources == null || this.sourceSpecs == null
+    },
+
+    sortedSources () {
+      if (!this.sources || !this.sourceSpecs) {
+        return []
+      }
+
+      var ret = this.sources
+
+      var vm = this
+      ret.sort(function (a, b) { return vm.sourceSpecs[a._srctype].name.localeCompare(vm.sourceSpecs[b._srctype].name) })
+
+      return ret
     }
   },
 

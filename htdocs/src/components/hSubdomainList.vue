@@ -135,6 +135,7 @@
 </template>
 
 <script>
+import DomainCompare from '@/mixins/domainCompare'
 import ServiceSpecsApi from '@/services/ServiceSpecsApi'
 import ZoneApi from '@/services/ZoneApi'
 
@@ -145,6 +146,8 @@ export default {
     hSubdomainItem: () => import('@/components/hSubdomainItem'),
     hResourceValue: () => import('@/components/hResourceValue')
   },
+
+  mixins: [DomainCompare],
 
   props: {
     domain: {
@@ -313,20 +316,7 @@ export default {
       }
 
       var domains = Object.keys(this.myServices.services)
-      domains.sort(function (a, b) {
-        var as = a.split('.').reverse()
-        var bs = b.split('.').reverse()
-
-        var maxDepth = Math.min(as.length, bs.length)
-        for (var i = 0; i < maxDepth; i++) {
-          var cmp = as[i].localeCompare(bs[i])
-          if (cmp !== 0) {
-            return cmp
-          }
-        }
-
-        return as.length - bs.length
-      })
+      domains.sort(this.domainCompare)
 
       return domains
     }
