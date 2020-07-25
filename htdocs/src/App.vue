@@ -80,7 +80,7 @@
       </b-container>
     </b-navbar>
 
-    <router-view style="min-height: 80vh" />
+    <router-view :logged-user="loggedUser" style="min-height: 80vh" />
 
     <b-toaster name="b-toaster-content-right" style="position: fixed; top: 70px; right: 0; z-index: 1042; min-width: 30vw;" />
 
@@ -107,7 +107,7 @@ export default {
 
   data: function () {
     return {
-      loggedUser: null
+      loggedUser: undefined
     }
   },
 
@@ -153,9 +153,9 @@ export default {
             this.loggedUser = response.data
           },
           (error) => {
+            this.loggedUser = null
             if (sessionStorage.loggedUser) {
               delete sessionStorage.loggedUser
-              this.loggedUser = null
               this.$root.$bvToast.toast(
                 'Invalid session, your have been logged out: ' + error.response.data.errmsg + '. Please login again.', {
                   title: 'Authentication timeout',

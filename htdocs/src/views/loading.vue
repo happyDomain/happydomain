@@ -32,53 +32,7 @@
   -->
 
 <template>
-  <component :is="homeComponent" />
+  <b-container class="pt-4 pb-5 text-center">
+    <b-spinner variant="primary" label="Spinning" class="mr-3" /> Loading your account &hellip;
+  </b-container>
 </template>
-
-<script>
-import Home from '@/views/home'
-import Loading from '@/views/loading'
-
-export default {
-  props: {
-    // eslint-disable-next-line
-    loggedUser: {}
-  },
-
-  computed: {
-    homeComponent () {
-      return this.loggedUser ? Home : Loading
-    }
-  },
-
-  watch: {
-    loggedUser (user) {
-      this.redirectGuests()
-    }
-  },
-
-  mounted () {
-    this.redirectGuests()
-  },
-
-  methods: {
-    redirectGuests () {
-      // Check if the user is logged
-      // If the user is logged, it already displays domain's lists
-      if (this.loggedUser !== undefined && !this.loggedUser) {
-        if (window.location.href === '/') {
-          // Not logged at home-page -> redirect to static commercial presentation
-          var preferedLang = navigator.language.split('-')[0] || process.env.VUE_APP_I18N_LOCALE || 'en'
-          if (preferedLang !== 'en' && preferedLang !== 'fr') {
-            preferedLang = 'en'
-          }
-          window.location.href = '/' + preferedLang + '/'
-        } else {
-          // No commercial site -> login page
-          this.$router.replace('/login')
-        }
-      }
-    }
-  }
-}
-</script>
