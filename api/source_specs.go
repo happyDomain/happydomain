@@ -46,7 +46,8 @@ import (
 
 func init() {
 	router.GET("/api/source_specs", ApiHandler(getSourceSpecs))
-	router.GET("/api/source_specs/*ssid", ApiHandler(getSourceSpec))
+	router.GET("/api/source_specs/:ssid", ApiHandler(getSourceSpec))
+	router.GET("/api/source_specs/:ssid/icon.png", ApiHandler(getSourceSpecIcon))
 }
 
 func getSourceSpecs(_ *config.Options, p httprouter.Params, body io.Reader) Response {
@@ -62,7 +63,9 @@ func getSourceSpecs(_ *config.Options, p httprouter.Params, body io.Reader) Resp
 	}
 }
 
-func getSourceSpecImg(ssid string) Response {
+func getSourceSpecIcon(_ *config.Options, p httprouter.Params, body io.Reader) Response {
+	ssid := string(p.ByName("ssid"))
+
 	if cnt, ok := sources.Icons[strings.TrimSuffix(ssid, ".png")]; ok {
 		return &FileResponse{
 			contentType: "image/png",
@@ -83,14 +86,6 @@ type viewSourceSpec struct {
 
 func getSourceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Response {
 	ssid := string(p.ByName("ssid"))
-	// Remove the leading slash
-	if len(ssid) > 1 {
-		ssid = ssid[1:]
-	}
-
-	if strings.HasSuffix(ssid, ".png") {
-		return getSourceSpecImg(ssid)
-	}
 
 	src, err := sources.FindSource(ssid)
 	if err != nil {

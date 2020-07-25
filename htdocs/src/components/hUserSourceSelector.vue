@@ -34,7 +34,7 @@
 <template>
   <div v-if="!isLoading && mySources && mySources.length > 0" class="d-flex flex-row justify-content-around flex-wrap align-self-center">
     <div v-for="(src, index) in mySources" :key="index" type="button" class="p-3 source" @click="$emit('sourceSelected', src, index)">
-      <img :src="'/api/source_specs/' + src._srctype + '.png'" :alt="altNames[src['_srctype']].name">
+      <img :src="'/api/source_specs/' + src._srctype + '/icon.png'" :alt="altNames[src['_srctype']].name">
       {{ src._comment }}
     </div>
   </div>

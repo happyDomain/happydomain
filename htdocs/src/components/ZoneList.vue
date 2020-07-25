@@ -40,7 +40,7 @@
       <b-list-group-item v-for="(domain, index) in domains" :key="index" :to="'/domains/' + domain.domain" class="d-flex justify-content-between align-items-center">
         <div class="text-monospace">
           <div class="d-inline-block text-center" style="width: 50px;">
-            <img v-if="sources[domain.id_source]" :src="'/api/source_specs/' + sources[domain.id_source]._srctype + '.png'" :alt="sources[domain.id_source]._srctype" :title="sources[domain.id_source]._srctype" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+            <img v-if="sources[domain.id_source]" :src="'/api/source_specs/' + sources[domain.id_source]._srctype + '/icon.png'" :alt="sources[domain.id_source]._srctype" :title="sources[domain.id_source]._srctype" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
           </div>
           {{ domain.domain }}
         </div>

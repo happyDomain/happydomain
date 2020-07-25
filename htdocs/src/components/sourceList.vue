@@ -42,7 +42,7 @@
     <b-list-group-item v-for="(source, index) in sources" :key="index" button class="d-flex justify-content-between align-items-center" @click="selectSource(source)">
       <div>
         <div class="d-inline-block text-center" style="width: 50px;">
-          <img v-if="sourceSpecs" :src="'/api/source_specs/' + source._srctype + '.png'" :alt="sourceSpecs[source._srctype].name" :title="sourceSpecs[source._srctype].name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+          <img v-if="sourceSpecs" :src="'/api/source_specs/' + source._srctype + '/icon.png'" :alt="sourceSpecs[source._srctype].name" :title="sourceSpecs[source._srctype].name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
         </div>
         <span v-if="source._comment">{{ source._comment }}</span>
         <em v-else>No name</em>

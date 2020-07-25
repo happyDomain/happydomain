@@ -47,7 +47,7 @@ import (
 
 func init() {
 	router.GET("/api/service_specs", ApiHandler(getServiceSpecs))
-	router.GET("/api/service_specs/*ssid", ApiHandler(getServiceSpec))
+	router.GET("/api/service_specs/:ssid", ApiHandler(getServiceSpec))
 }
 
 type service_field struct {
@@ -95,13 +95,6 @@ type viewServiceSpec struct {
 
 func getServiceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Response {
 	ssid := string(p.ByName("ssid"))
-	if len(ssid) > 1 {
-		ssid = ssid[1:]
-	}
-
-	if strings.HasSuffix(ssid, ".png") {
-		return getSourceSpecImg(ssid)
-	}
 
 	svc, err := svcs.FindSubService(ssid)
 	if err != nil {

@@ -44,7 +44,7 @@
     <b-row style="min-height: inherit">
       <b-col v-if="source_specs_selected && sources" lg="4" md="5" class="bg-light">
         <div class="text-center mb-3">
-          <img :src="'/api/source_specs/' + source_specs_selected + '.png'" :alt="sources[source_specs_selected].name" style="max-width: 100%; max-height: 10em">
+          <img :src="'/api/source_specs/' + source_specs_selected + '/icon.png'" :alt="sources[source_specs_selected].name" style="max-width: 100%; max-height: 10em">
         </div>
         <h3>
           {{ sources[source_specs_selected].name }}

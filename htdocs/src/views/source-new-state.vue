@@ -39,7 +39,7 @@
     <b-row v-else style="min-height: inherit">
       <b-col lg="4" md="5" class="bg-light">
         <div class="text-center mb-3">
-          <img :src="'/api/source_specs/' + $route.params.provider + '.png'" :alt="sourceSpecs[$route.params.provider].name" style="max-width: 100%; max-height: 10em">
+          <img :src="'/api/source_specs/' + $route.params.provider + '/icon.png'" :alt="sourceSpecs[$route.params.provider].name" style="max-width: 100%; max-height: 10em">
         </div>
         <h3>
           {{ sourceSpecs[$route.params.provider].name }}
