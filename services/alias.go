@@ -133,6 +133,9 @@ func init() {
 			},
 			Restrictions: ServiceRestrictions{
 				NearAlone: true,
+				NeedTypes: []uint16{
+					dns.TypeCNAME,
+				},
 			},
 		},
 		99999997,
@@ -151,6 +154,9 @@ func init() {
 			Restrictions: ServiceRestrictions{
 				Alone:  true,
 				Single: true,
+				NeedTypes: []uint16{
+					dns.TypeCNAME,
+				},
 			},
 		},
 		99999998,

@@ -396,6 +396,9 @@ func init() {
 			Tabs: true,
 			Restrictions: ServiceRestrictions{
 				Single: true,
+				NeedTypes: []uint16{
+					dns.TypeMX,
+				},
 			},
 		},
 		1,

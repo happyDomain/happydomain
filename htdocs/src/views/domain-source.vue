@@ -56,12 +56,21 @@
         <span class="text-primary">{{ spec.label }}</span><br>
         <strong>{{ source.Source[spec.id] }}</strong>
       </p>
+      <p v-if="availableTypes.length">
+        <span class="text-primary">{{ $t('source.available-types') }}</span>
+        <ul style="column-count: 4;">
+          <li v-for="(t, i) in availableTypes" :key="i">
+            {{ t | nsrrtype }}
+          </li>
+        </ul>
+      </p>
     </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios'
+import SourcesApi from '@/services/SourcesApi'
+import SourceSpecsApi from '@/services/SourceSpecsApi'
 
 export default {
 
@@ -74,6 +83,7 @@ export default {
 
   data: function () {
     return {
+      availableTypes: [],
       source: null,
       source_specs: null,
       specs: null
@@ -93,8 +103,7 @@ export default {
   },
 
   mounted () {
-    axios
-      .get('/api/source_specs')
+    SourceSpecsApi.getSourceSpecs()
       .then(response => {
         this.specs = response.data
       })
@@ -108,16 +117,19 @@ export default {
       if (this.domain === undefined || this.domain.id_source === undefined) {
         return
       }
-      axios
-        .get('/api/sources/' + encodeURIComponent(this.domain.id_source))
+      SourcesApi.getSource(this.domain.id_source)
         .then(
           (response) => {
             this.source = response.data
 
-            axios
-              .get('/api/source_specs/' + encodeURIComponent(this.source._srctype))
+            SourceSpecsApi.getSourceSpecs(this.source._srctype)
               .then(response => (
                 this.source_specs = response.data
+              ))
+
+            SourcesApi.getAvailableResourceTypes(this.domain.id_source)
+              .then(response => (
+                this.availableTypes = response.data
               ))
           })
     }

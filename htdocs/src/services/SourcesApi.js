@@ -36,6 +36,10 @@ export default {
     return Api().get('/api/sources/' + encodeURIComponent(srcId))
   },
 
+  getAvailableResourceTypes (srcId) {
+    return Api().get('/api/sources/' + encodeURIComponent(srcId) + '/available_resource_types')
+  },
+
   getSources () {
     return Api().get('/api/sources')
   },

@@ -95,6 +95,30 @@ func doJSON(req *http.Request, v interface{}) (err error) {
 }
 
 func (s *GandiAPI) ListAvailableTypes() (types []uint16) {
+	types = []uint16{
+		dns.TypeA,
+		dns.TypeAAAA,
+		//dns.TypeALIAS,
+		dns.TypeCAA,
+		dns.TypeCDS,
+		dns.TypeCNAME,
+		dns.TypeDNAME,
+		dns.TypeDS,
+		dns.TypeKEY,
+		dns.TypeLOC,
+		dns.TypeMX,
+		dns.TypeNS,
+		dns.TypeOPENPGPKEY,
+		dns.TypePTR,
+		dns.TypeSPF,
+		dns.TypeSOA,
+		dns.TypeSRV,
+		dns.TypeSSHFP,
+		dns.TypeTLSA,
+		dns.TypeTXT,
+		//dns.TypeWKS,
+	}
+
 	req, err := s.newRequest("GET", "https://api.gandi.net/v5/livedns/dns/rrtypes", nil)
 	if err != nil {
 		return
@@ -107,6 +131,7 @@ func (s *GandiAPI) ListAvailableTypes() (types []uint16) {
 		return
 	}
 
+	types = []uint16{}
 	for _, r := range rrtypes {
 		if t, ok := dns.StringToType[r]; ok {
 			types = append(types, t)

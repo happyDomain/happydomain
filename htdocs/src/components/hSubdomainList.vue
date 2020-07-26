@@ -137,6 +137,7 @@
 <script>
 import DomainCompare from '@/mixins/domainCompare'
 import ServiceSpecsApi from '@/services/ServiceSpecsApi'
+import SourcesApi from '@/services/SourcesApi'
 import ZoneApi from '@/services/ZoneApi'
 
 export default {
@@ -166,6 +167,7 @@ export default {
 
   data: function () {
     return {
+      availableResourceTypes: [],
       deleteServiceInProgress: false,
       hideDomain: {},
       modal: null,
@@ -224,6 +226,16 @@ export default {
         const svc = this.services[type]
 
         if (svc.restrictions) {
+          // Handle NeedTypes restriction: hosting provider need to support given types.
+          if (svc.restrictions.needTypes) {
+            for (const k in svc.restrictions.needTypes) {
+              if (this.availableResourceTypes.indexOf(svc.restrictions.needTypes[k]) < 0) {
+                ret[type] = 'is not available on this domain name hosting provider.'
+                continue
+              }
+            }
+          }
+
           // Handle Alone restriction: only nearAlone are allowed.
           if (svc.restrictions.alone && this.myServices.services[this.modal.dn]) {
             var found = false
@@ -307,7 +319,7 @@ export default {
     },
 
     isLoading () {
-      return this.myServices == null && this.zoneId === undefined && this.services === {}
+      return this.myServices == null && this.availableResourceTypes.length > 0 && this.zoneId === undefined && this.services === {}
     },
 
     sortedDomains () {
@@ -337,6 +349,13 @@ export default {
     ServiceSpecsApi.getServiceSpecs()
       .then(
         (response) => (this.services = response.data)
+      )
+
+    SourcesApi.getAvailableResourceTypes(this.domain.id_source)
+      .then(
+        (response) => {
+          this.availableResourceTypes = response.data
+        }
       )
   },
 

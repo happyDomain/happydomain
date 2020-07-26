@@ -53,6 +53,9 @@ type ServiceRestrictions struct {
 	// NearAlone allows a service to be present along with Alone restricted services (eg. services that will create sub-subdomain from their given subdomain).
 	NearAlone bool `json:"nearAlone,omitempty"`
 
+	// NeedTypes restricts the service to sources that are compatibles with ALL the given types.
+	NeedTypes []uint16 `json:"needTypes,omitempty"`
+
 	// RootOnly restricts the service to be present at the root of the domain only.
 	RootOnly bool `json:"rootOnly,omitempty"`
 

@@ -152,6 +152,9 @@ func init() {
 				Leaf:        true,
 				ExclusiveRR: []string{"svcs.Origin"},
 				Single:      true,
+				NeedTypes: []uint16{
+					dns.TypeNS,
+				},
 			},
 		},
 		1,

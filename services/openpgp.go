@@ -194,6 +194,9 @@ func init() {
 			},
 			Restrictions: ServiceRestrictions{
 				NearAlone: true,
+				NeedTypes: []uint16{
+					dns.TypeOPENPGPKEY,
+				},
 			},
 		},
 		1,
@@ -211,6 +214,9 @@ func init() {
 			},
 			Restrictions: ServiceRestrictions{
 				NearAlone: true,
+				NeedTypes: []uint16{
+					dns.TypeSMIMEA,
+				},
 			},
 		},
 		1,

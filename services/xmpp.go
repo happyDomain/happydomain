@@ -160,6 +160,9 @@ func init() {
 			Restrictions: ServiceRestrictions{
 				NearAlone: true,
 				Single:    true,
+				NeedTypes: []uint16{
+					dns.TypeSRV,
+				},
 			},
 		},
 		1,

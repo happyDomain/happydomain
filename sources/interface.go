@@ -36,6 +36,9 @@ import (
 
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/utils"
+
+	"github.com/miekg/dns"
 )
 
 // SourceInfos describes the purpose of a user usable source.
@@ -52,6 +55,12 @@ type ListDomainsSource interface {
 	// ListDomains retrieves the list of avaiable domains inside the Source.
 	ListDomains() ([]string, error)
 }
+
+type LimitedResourceTypesSource interface {
+	ListAvailableTypes() []uint16
+}
+
+var DefaultAvailableTypes []uint16
 
 // CustomForm is used to create a form with several steps when creating or updating source's settings.
 type CustomForm struct {
@@ -116,6 +125,10 @@ func GetSourceCapabilities(src happydns.Source) (caps []string) {
 		caps = append(caps, "CustomSettingsForm")
 	}
 
+	if _, ok := src.(LimitedResourceTypesSource); ok {
+		caps = append(caps, "LimitedResourceTypes")
+	}
+
 	return
 }
 
@@ -129,5 +142,13 @@ func GenDefaultSettingsForm(src happydns.Source) *CustomForm {
 		PreviousButtonText:     "Use another source",
 		PreviousEditButtonText: "Cancel",
 		PreviousButtonState:    -1,
+	}
+}
+
+func init() {
+	for t := range dns.TypeToRR {
+		if !utils.IsDNSSECType(t) {
+			DefaultAvailableTypes = append(DefaultAvailableTypes, t)
+		}
 	}
 }

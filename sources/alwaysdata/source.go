@@ -102,6 +102,21 @@ func doTxt(req *http.Request) (txt []byte, err error) {
 	return
 }
 
+func (s *AlwaysdataAPI) ListAvailableTypes() (types []uint16) {
+	return []uint16{
+		dns.TypeA,
+		dns.TypeAAAA,
+		dns.TypeCAA,
+		dns.TypeCNAME,
+		dns.TypeMX,
+		dns.TypeNS,
+		dns.TypePTR,
+		dns.TypeSOA,
+		dns.TypeSRV,
+		dns.TypeTXT,
+	}
+}
+
 type alwaysdataInfo struct {
 	Id   int64  `json:"id"`
 	Name string `json:"name"`

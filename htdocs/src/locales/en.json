@@ -213,6 +213,7 @@
     "update": "Update service"
   },
   "source": {
+    "available-types": "Resources Types available",
     "delete": "@:common.delete this @:source.kind",
     "find": "Can't find your @:source.kind here?",
     "name-your": "Name your @:source.kind",

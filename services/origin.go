@@ -145,6 +145,9 @@ func init() {
 			Restrictions: ServiceRestrictions{
 				RootOnly: true,
 				Single:   true,
+				NeedTypes: []uint16{
+					dns.TypeSOA,
+				},
 			},
 		},
 		0,

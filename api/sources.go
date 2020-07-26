@@ -53,6 +53,8 @@ func init() {
 	router.DELETE("/api/sources/:sid", apiAuthHandler(sourceMetaHandler(deleteSource)))
 
 	router.GET("/api/sources/:sid/domains", apiAuthHandler(sourceHandler(getDomainsHostedBySource)))
+
+	router.GET("/api/sources/:sid/available_resource_types", apiAuthHandler(sourceHandler(getAvailableResourceTypes)))
 }
 
 func getSources(_ *config.Options, req *RequestResources, body io.Reader) Response {
@@ -221,6 +223,20 @@ func getDomainsHostedBySource(_ *config.Options, req *RequestResources, body io.
 	} else {
 		return APIResponse{
 			response: domains,
+		}
+	}
+}
+
+func getAvailableResourceTypes(_ *config.Options, req *RequestResources, body io.Reader) Response {
+	lrt, ok := req.Source.Source.(sources.LimitedResourceTypesSource)
+	if !ok {
+		// Return all types known to be supported by happyDNS
+		return APIResponse{
+			response: sources.DefaultAvailableTypes,
+		}
+	} else {
+		return APIResponse{
+			response: lrt.ListAvailableTypes(),
 		}
 	}
 }
