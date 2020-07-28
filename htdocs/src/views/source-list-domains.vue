@@ -40,12 +40,12 @@
       <b-list-group-item v-if="isLoading" class="text-center">
         <b-spinner variant="secondary" label="Spinning" /> Asking provider for the existing domains...
       </b-list-group-item>
-      <b-list-group-item v-for="(domain, index) in domainsList" :key="index" class="d-flex justify-content-between align-items-center" :to="myDomains.indexOf(domain) > -1 ? '/domains/' + encodeURIComponent(domain) : ''">
+      <b-list-group-item v-for="(domain, index) in domainsList" :key="index" class="d-flex justify-content-between align-items-center" :to="haveDomain(domain) ? '/domains/' + encodeURIComponent(domain) : ''">
         <div>
           {{ domain }}
         </div>
         <div>
-          <b-badge v-if="myDomains.indexOf(domain) > -1" class="ml-1" variant="success">
+          <b-badge v-if="haveDomain(domain)" class="ml-1" variant="success">
             <b-icon icon="check" /> Already managed
           </b-badge>
           <b-button v-else type="button" class="ml-1" variant="primary" size="sm" @click="importDomain(domain)">
@@ -97,14 +97,14 @@ export default {
 
   computed: {
     domainsList () {
-      if (this.isLoading) {
+      if (this.isLoading && !this.mySource) {
         return []
       } else if (this.noDomainsList) {
         var ret = []
 
         for (const i in this.myDomains) {
-          if (this.myDomains[i].id_source === this.mySource.id) {
-            ret.push(this.myDomains[i])
+          if (this.myDomains[i].id_source === this.mySource._id) {
+            ret.push(this.myDomains[i].domain)
           }
         }
 
@@ -134,6 +134,15 @@ export default {
   },
 
   methods: {
+    haveDomain (domain) {
+      for (const i in this.myDomains) {
+        if (this.myDomains[i].domain === domain) {
+          return true
+        }
+      }
+      return false
+    },
+
     importDomain (domain) {
       axios
         .post('/api/domains', {
@@ -151,7 +160,7 @@ export default {
                 toaster: 'b-toaster-content-right'
               }
             )
-            this.myDomains.push(response.data.domain)
+            this.myDomains.push(response.data)
           },
           (error) => {
             this.$bvToast.toast(
@@ -195,11 +204,7 @@ export default {
       axios
         .get('/api/domains')
         .then(response => {
-          var domains = []
-          response.data.forEach(function (domain) {
-            domains.push(domain.domain)
-          })
-          this.myDomains = domains
+          this.myDomains = response.data
         })
     }
   }
