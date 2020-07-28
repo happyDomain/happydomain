@@ -78,6 +78,7 @@ export default {
 
     reactOnSuccess (toState, newSource) {
       if (newSource) {
+        this.$emit('updateMySources', newSource)
         this.hide()
       }
     },

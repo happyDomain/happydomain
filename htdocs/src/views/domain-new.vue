@@ -54,7 +54,7 @@
       </b-col>
     </b-row>
 
-    <h-modal-add-source ref="addSrcModal" @updateMySource="doneAdd" />
+    <h-modal-add-source ref="addSrcModal" @updateMySources="doneAdd" />
   </b-container>
 </template>
 
