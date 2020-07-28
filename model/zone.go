@@ -39,21 +39,37 @@ import (
 	"github.com/miekg/dns"
 )
 
+// ZoneMeta holds the metadata associated to a Zone.
 type ZoneMeta struct {
-	Id           int64      `json:"id"`
-	IdAuthor     int64      `json:"id_author"`
-	DefaultTTL   uint32     `json:"default_ttl"`
-	LastModified time.Time  `json:"last_modified,omitempty"`
-	CommitMsg    *string    `json:"commit_message,omitempty"`
-	CommitDate   *time.Time `json:"commit_date,omitempty"`
-	Published    *time.Time `json:"published,omitempty"`
+	// Id is the Zone's identifier.
+	Id int64 `json:"id"`
+
+	// IdAuthor is the User's identifier for the current Zone.
+	IdAuthor int64 `json:"id_author"`
+
+	// DefaultTTL is the TTL to use when no TTL has been defined for a record in this Zone.
+	DefaultTTL uint32 `json:"default_ttl"`
+
+	// LastModified holds the time when the last modification has been made on this Zone.
+	LastModified time.Time `json:"last_modified,omitempty"`
+
+	// CommitMsg is a message defined by the User to give a label to this Zone revision.
+	CommitMsg *string `json:"commit_message,omitempty"`
+
+	// CommitDate is the time when the commit has been made.
+	CommitDate *time.Time `json:"commit_date,omitempty"`
+
+	// Published indicates whether the Zone has already been published or not.
+	Published *time.Time `json:"published,omitempty"`
 }
 
+// Zone contains ZoneMeta + map of services by subdomains.
 type Zone struct {
 	ZoneMeta
 	Services map[string][]*ServiceCombined `json:"services"`
 }
 
+// DerivateNew creates a new Zone from the current one, by copying all fields.
 func (z *Zone) DerivateNew() *Zone {
 	newZone := new(Zone)
 
@@ -69,6 +85,7 @@ func (z *Zone) DerivateNew() *Zone {
 	return newZone
 }
 
+// FindService finds the Service identified by the given id.
 func (z *Zone) FindService(id []byte) (string, *ServiceCombined) {
 	for subdomain := range z.Services {
 		if svc := z.FindSubdomainService(subdomain, id); svc != nil {
@@ -79,6 +96,7 @@ func (z *Zone) FindService(id []byte) (string, *ServiceCombined) {
 	return "", nil
 }
 
+// FindSubdomainService finds the Service identified by the given id, only under the given subdomain.
 func (z *Zone) FindSubdomainService(domain string, id []byte) *ServiceCombined {
 	for _, svc := range z.Services[domain] {
 		if bytes.Equal(svc.Id, id) {
@@ -89,6 +107,8 @@ func (z *Zone) FindSubdomainService(domain string, id []byte) *ServiceCombined {
 	return nil
 }
 
+// EraseService overwrites the Service identified by the given id, under the given subdomain.
+// The the new service is nil, it removes the existing Service instead of overwrite it.
 func (z *Zone) EraseService(subdomain string, origin string, id []byte, s *ServiceCombined) error {
 	if services, ok := z.Services[subdomain]; ok {
 		for k, svc := range services {
@@ -116,6 +136,7 @@ func (z *Zone) EraseService(subdomain string, origin string, id []byte, s *Servi
 	return errors.New("Service not found")
 }
 
+// GenerateRRs returns all the reals records of the Zone.
 func (z *Zone) GenerateRRs(origin string) (rrs []dns.RR) {
 	for subdomain, svcs := range z.Services {
 		if subdomain == "" {

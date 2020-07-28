@@ -334,6 +334,7 @@ func init() {
 	})
 }
 
+// fwd_request proxifies the given Request to the fwd URL.
 func fwd_request(w http.ResponseWriter, r *http.Request, fwd string) {
 	if u, err := url.Parse(fwd); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

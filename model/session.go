@@ -39,14 +39,25 @@ import (
 	"time"
 )
 
+// Session holds informatin about a User's currently connected.
 type Session struct {
-	Id      []byte            `json:"id"`
-	IdUser  int64             `json:"login"`
-	Time    time.Time         `json:"time"`
+	// Id is the Session's identifier.
+	Id []byte `json:"id"`
+
+	// IdUser is the User's identifier of the Session.
+	IdUser int64 `json:"login"`
+
+	// Time holds the creation date of the Session.
+	Time time.Time `json:"time"`
+
+	// Content stores data filled by other modules.
 	Content map[string][]byte `json:"content,omitempty"`
+
+	// changed indicates if Content has changed since its loading.
 	changed bool
 }
 
+// NewSession fills a new Session structure.
 func NewSession(user *User) (s *Session, err error) {
 	session_id := make([]byte, 255)
 	_, err = rand.Read(session_id)
@@ -61,10 +72,13 @@ func NewSession(user *User) (s *Session, err error) {
 	return
 }
 
+// HasChanged tells if the Session has changed since its last loading.
 func (s *Session) HasChanged() bool {
 	return s.changed
 }
 
+// FindNewKey returns a key and an identifier appended to the given
+// prefix, that is available in the User's Session.
 func (s *Session) FindNewKey(prefix string) (key string, id int64) {
 	for {
 		// max random id is 2^53 to fit on float64 without loosing precision (JSON limitation)
@@ -78,6 +92,9 @@ func (s *Session) FindNewKey(prefix string) (key string, id int64) {
 	return
 }
 
+// SetValue defines, erase or delete a content to stores at the given
+// key. If the key is already defined, it erases its content. If the
+// given value is nil, it deletes the key.
 func (s *Session) SetValue(key string, value interface{}) {
 	if s.Content == nil && value != nil {
 		s.Content = map[string][]byte{}
@@ -98,6 +115,8 @@ func (s *Session) SetValue(key string, value interface{}) {
 	}
 }
 
+// GetValue retrieves data stored at the given key. Returns true if
+// the key exists and if the value has been filled correctly.
 func (s *Session) GetValue(key string, value interface{}) bool {
 	if v, ok := s.Content[key]; !ok {
 		return false
@@ -108,10 +127,12 @@ func (s *Session) GetValue(key string, value interface{}) bool {
 	}
 }
 
+// DropKey removes the given key from the Session's Content.
 func (s *Session) DropKey(key string) {
 	s.SetValue(key, nil)
 }
 
+// ClearSession removes all content from the Session.
 func (s *Session) ClearSession() {
 	s.Content = nil
 	s.changed = true

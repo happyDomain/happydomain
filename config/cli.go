@@ -38,6 +38,7 @@ import (
 	"git.happydns.org/happydns/storage"
 )
 
+// declareFlags registers flags for the structure Options.
 func (o *Options) declareFlags() {
 	flag.StringVar(&o.DevProxy, "dev", o.DevProxy, "Proxify traffic to this host for static assets")
 	flag.StringVar(&o.AdminBind, "admin-bind", o.AdminBind, "Bind port/socket for administration interface")
@@ -50,6 +51,7 @@ func (o *Options) declareFlags() {
 	// Others flags are declared in some other files likes sources, storages, ... when they need specials configurations
 }
 
+// parseCLI parse the flags and treats extra args as configuration filename.
 func (o *Options) parseCLI() error {
 	flag.Parse()
 

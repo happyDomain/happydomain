@@ -32,27 +32,34 @@
 package happydns
 
 import (
-	"strings"
+	"github.com/miekg/dns"
 )
 
+// Domain holds information about a domain name own by a User.
 type Domain struct {
-	Id          int64   `json:"id"`
-	IdUser      int64   `json:"id_owner"`
-	IdSource    int64   `json:"id_source"`
-	DomainName  string  `json:"domain"`
+	// Id is the Domain's identifier in the database.
+	Id int64 `json:"id"`
+
+	// IdUser is the identifier of the Domain's Owner.
+	IdUser int64 `json:"id_owner"`
+
+	// IsSource is the identifier of the Source used to access and edit the
+	// Domain.
+	IdSource int64 `json:"id_source"`
+
+	// DomainName is the FQDN of the managed Domain.
+	DomainName string `json:"domain"`
+
+	// ZoneHistory are the identifiers to the Zone attached to the current
+	// Domain.
 	ZoneHistory []int64 `json:"zone_history"`
 }
 
+// Domains is an array of Domain.
 type Domains []*Domain
 
-func (d *Domain) NormalizedNSServer() string {
-	if strings.Index(d.DomainName, ":") > -1 {
-		return d.DomainName
-	} else {
-		return d.DomainName + ":53"
-	}
-}
-
+// HasZone checks if the given Zone's identifier is part of this Domain
+// history.
 func (d *Domain) HasZone(zoneId int64) (found bool) {
 	for _, v := range d.ZoneHistory {
 		if v == zoneId {
@@ -62,14 +69,13 @@ func (d *Domain) HasZone(zoneId int64) (found bool) {
 	return
 }
 
+// NewDomain fills a new Domain structure.
 func NewDomain(u *User, st *SourceMeta, dn string) (d *Domain) {
 	d = &Domain{
 		IdUser:     u.Id,
 		IdSource:   st.Id,
-		DomainName: dn,
+		DomainName: dns.Fqdn(dn),
 	}
-
-	d.DomainName = d.NormalizedNSServer()
 
 	return
 }

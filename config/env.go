@@ -37,6 +37,8 @@ import (
 	"strings"
 )
 
+// parseEnvironmentVariables analyzes all the environment variables to find
+// each one starting by HAPPYDNS_
 func (o *Options) parseEnvironmentVariables() (err error) {
 	for _, line := range os.Environ() {
 		if strings.HasPrefix(line, "HAPPYDNS_") {

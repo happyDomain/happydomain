@@ -35,22 +35,44 @@ import (
 	"github.com/miekg/dns"
 )
 
+// Source is where Domains and Zones can be managed.
 type Source interface {
+	// Validate tells if the Source's settings are good.
 	Validate() error
+
+	// DomainExists tells if the given domain exists for the Source.
 	DomainExists(string) error
+
+	// ImportZone retrieves all RRs for the given Domain.
 	ImportZone(*Domain) ([]dns.RR, error)
+
+	// AddRR adds an RR in the zone of the given Domain.
 	AddRR(*Domain, dns.RR) error
+
+	// DeleteRR removes the given RR in the zone of the given Domain.
 	DeleteRR(*Domain, dns.RR) error
+
+	// UpdateSOA tries to update the Zone's SOA record, according to the
+	// given parameters.
 	UpdateSOA(*Domain, *dns.SOA, bool) error
 }
 
+// SourceMeta holds the metadata associated to a Source.
 type SourceMeta struct {
-	Type    string `json:"_srctype"`
-	Id      int64  `json:"_id"`
-	OwnerId int64  `json:"_ownerid"`
+	// Type is the string representation of the Source's type.
+	Type string `json:"_srctype"`
+
+	// Id is the Source's identifier.
+	Id int64 `json:"_id"`
+
+	// OwnerId is the User's identifier for the current Source.
+	OwnerId int64 `json:"_ownerid"`
+
+	// Comment is a string that helps user to distinguish the Source.
 	Comment string `json:"_comment,omitempty"`
 }
 
+// SourceCombined combined SourceMeta + Source
 type SourceCombined struct {
 	Source
 	SourceMeta

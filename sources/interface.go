@@ -38,40 +38,75 @@ import (
 	"git.happydns.org/happydns/model"
 )
 
+// SourceInfos describes the purpose of a user usable source.
 type SourceInfos struct {
-	Name        string `json:"name"`
+	// Name is the name displayed.
+	Name string `json:"name"`
+
+	// Description is a brief description of what the source is.
 	Description string `json:"description"`
 }
 
+// ListDomainsSource are functions to declare when we can retrives a list of managable domains from the given Source.
 type ListDomainsSource interface {
+	// ListDomains retrieves the list of avaiable domains inside the Source.
 	ListDomains() ([]string, error)
 }
 
+// CustomForm is used to create a form with several steps when creating or updating source's settings.
 type CustomForm struct {
-	BeforeText             string         `json:"beforeText,omitempty"`
-	SideText               string         `json:"sideText,omitempty"`
-	AfterText              string         `json:"afterText,omitempty"`
-	Fields                 []*SourceField `json:"fields"`
-	NextButtonText         string         `json:"nextButtonText,omitempty"`
-	NextEditButtonText     string         `json:"nextEditButtonText,omitempty"`
-	PreviousButtonText     string         `json:"previousButtonText,omitempty"`
-	PreviousEditButtonText string         `json:"previousEditButtonText,omitempty"`
-	NextButtonLink         string         `json:"nextButtonLink,omitempty"`
-	NextButtonState        int32          `json:"nextButtonState,omitempty"`
-	PreviousButtonState    int32          `json:"previousButtonState,omitempty"`
+	// BeforeText is the text presented before the fields.
+	BeforeText string `json:"beforeText,omitempty"`
+
+	// SideText is displayed in the sidebar, after any already existing text. When a sidebar is avaiable.
+	SideText string `json:"sideText,omitempty"`
+
+	// AfterText is the text presented after the fields and before the buttons
+	AfterText string `json:"afterText,omitempty"`
+
+	// Fields are the fields presented to the User.
+	Fields []*SourceField `json:"fields"`
+
+	// NextButtonText is the next button content.
+	NextButtonText string `json:"nextButtonText,omitempty"`
+
+	// NextEditButtonText is the next button content when updating the settings (if not set, NextButtonText is used instead).
+	NextEditButtonText string `json:"nextEditButtonText,omitempty"`
+
+	// PreviousButtonText is previous/cancel button content.
+	PreviousButtonText string `json:"previousButtonText,omitempty"`
+
+	// PreviousEditButtonText is the previous/cancel button content when updating the settings (if not set, NextButtonText is used instead).
+	PreviousEditButtonText string `json:"previousEditButtonText,omitempty"`
+
+	// NextButtonLink is the target of the next button, exclusive with NextButtonState.
+	NextButtonLink string `json:"nextButtonLink,omitempty"`
+
+	// NextButtonState is the step number asked when submiting the form.
+	NextButtonState int32 `json:"nextButtonState,omitempty"`
+
+	// PreviousButtonState is the step number to go when hitting the previous button.
+	PreviousButtonState int32 `json:"previousButtonState,omitempty"`
 }
 
+// GenRecallID
 type GenRecallID func() int64
 
+// CustomSettingsForm are functions to declare when we want to display a custom user experience when asking for Source's settings.
 type CustomSettingsForm interface {
+	// DisplaySettingsForm generates the CustomForm corresponding to the asked target state.
 	DisplaySettingsForm(int32, *config.Options, *happydns.Session, GenRecallID) (*CustomForm, error)
 }
 
 var (
-	DoneForm   = errors.New("Done")
+	// DoneForm is the error raised when there is no more step to display, and edition is OK.
+	DoneForm = errors.New("Done")
+
+	// CancelForm is the error raised when there is no more step to display and should redirect to the previous page.
 	CancelForm = errors.New("Cancel")
 )
 
+// GetSourceCapabilities lists available capabilities for the given Source.
 func GetSourceCapabilities(src happydns.Source) (caps []string) {
 	if _, ok := src.(ListDomainsSource); ok {
 		caps = append(caps, "ListDomains")
@@ -84,6 +119,7 @@ func GetSourceCapabilities(src happydns.Source) (caps []string) {
 	return
 }
 
+// GenDefaultSettingsForm generates a generic CustomForm presenting all the fields in one page.
 func GenDefaultSettingsForm(src happydns.Source) *CustomForm {
 	return &CustomForm{
 		Fields:                 GenSourceFields(src),

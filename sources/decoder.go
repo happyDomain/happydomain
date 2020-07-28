@@ -39,15 +39,19 @@ import (
 	"git.happydns.org/happydns/model"
 )
 
+// SourceCreator abstract the instanciation of a Source
 type SourceCreator func() happydns.Source
 
+// Source aggregates way of create a Source and information about it.
 type Source struct {
 	Creator SourceCreator
 	Infos   SourceInfos
 }
 
+// sources stores all existing Source in happyDNS.
 var sources map[string]Source = map[string]Source{}
 
+// RegisterSource declares the existence of the given Source.
 func RegisterSource(creator SourceCreator, infos SourceInfos) {
 	baseType := reflect.Indirect(reflect.ValueOf(creator())).Type()
 	name := baseType.String()
@@ -59,10 +63,12 @@ func RegisterSource(creator SourceCreator, infos SourceInfos) {
 	}
 }
 
+// GetSources retrieves the list of all existing Sources.
 func GetSources() *map[string]Source {
 	return &sources
 }
 
+// FindSource returns the Source corresponding to the given name, or an error if it doesn't exist.
 func FindSource(name string) (happydns.Source, error) {
 	src, ok := sources[name]
 	if !ok {

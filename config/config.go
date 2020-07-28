@@ -42,25 +42,47 @@ import (
 	"git.happydns.org/happydns/storage"
 )
 
+// Options stores the configuration of the software.
 type Options struct {
-	Bind              string
-	AdminBind         string
-	ExternalURL       string
-	BaseURL           string
-	DevProxy          string
+	// Bind is the address:port used to bind the main interface with API.
+	Bind string
+
+	// AdminBind is the address:port or unix socket used to serve the admin
+	// API.
+	AdminBind string
+
+	// ExternalURL keeps the URL used in communications (such as email,
+	// ...), when it needs to use complete URL, not only relative parts.
+	ExternalURL string
+
+	// BaseURL is the relative path where begins the root of the app.
+	BaseURL string
+
+	// DevProxy is the URL that override static assets.
+	DevProxy string
+
+	// DefaultNameServer is the NS server suggested by default.
 	DefaultNameServer string
-	StorageEngine     storage.StorageEngine
+
+	// StorageEngine points to the storage engine used.
+	StorageEngine storage.StorageEngine
 }
 
+// BuildURL appends the given url to the absolute ExternalURL.
 func (o *Options) BuildURL(url string) string {
 	return fmt.Sprintf("%s%s%s", o.ExternalURL, o.BaseURL, url)
 }
 
+// BuildURL_noescape build an URL containing formater.
 func (o *Options) BuildURL_noescape(url string, args ...interface{}) string {
 	args = append([]interface{}{o.ExternalURL, o.BaseURL}, args...)
 	return fmt.Sprintf("%s%s"+url, args...)
 }
 
+// ConsolidateConfig fills an Options struct by reading configuration from
+// config files, environment, then command line.
+//
+// Should be called only one time.
 func ConsolidateConfig() (opts *Options, err error) {
 	// Define defaults options
 	opts = &Options{
@@ -119,6 +141,8 @@ func ConsolidateConfig() (opts *Options, err error) {
 	return
 }
 
+// parseLine treats a config line and place the read value in the variable
+// declared to the corresponding flag.
 func (o *Options) parseLine(line string) (err error) {
 	fields := strings.SplitN(line, "=", 2)
 	orig_key := strings.TrimSpace(fields[0])

@@ -38,6 +38,7 @@ import (
 	"git.happydns.org/happydns/utils"
 )
 
+// DiffZones extracts the differences between the a and b lists.
 func DiffZones(a []dns.RR, b []dns.RR, skipDNSSEC bool) (toAdd []dns.RR, toDel []dns.RR) {
 loopDel:
 	for _, rrA := range a {
@@ -70,6 +71,7 @@ loopAdd:
 	return
 }
 
+// DiffZone computes the difference between the current online zone and the one given in argument.
 func DiffZone(s happydns.Source, domain *happydns.Domain, rrs []dns.RR, skipDNSSEC bool) (toAdd []dns.RR, toDel []dns.RR, err error) {
 	// Get the actuals RR-set
 	var current []dns.RR
@@ -82,6 +84,7 @@ func DiffZone(s happydns.Source, domain *happydns.Domain, rrs []dns.RR, skipDNSS
 	return
 }
 
+// ApplyZone sent the given records to the Source.
 func ApplyZone(s happydns.Source, domain *happydns.Domain, rrs []dns.RR, skipDNSSEC bool) (*dns.SOA, error) {
 	toAdd, toDel, err := DiffZone(s, domain, rrs, skipDNSSEC)
 	if err != nil {

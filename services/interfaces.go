@@ -72,8 +72,10 @@ type serviceCombined struct {
 	Service happydns.Service
 }
 
+// UnmarshalServiceJSON implements the UnmarshalJSON function for the
+// encoding/json module.
 func UnmarshalServiceJSON(svc *happydns.ServiceCombined, b []byte) (err error) {
-	var svcType happydns.ServiceType
+	var svcType happydns.ServiceMeta
 	err = json.Unmarshal(b, &svcType)
 	if err != nil {
 		return
@@ -89,11 +91,14 @@ func UnmarshalServiceJSON(svc *happydns.ServiceCombined, b []byte) (err error) {
 	err = json.Unmarshal(b, mySvc)
 
 	svc.Service = tsvc
-	svc.ServiceType = svcType
+	svc.ServiceMeta = svcType
 
 	return
 }
 
 func init() {
+	// Register the UnmarshalServiceJSON variable thats points to the
+	// Service's UnmarshalJSON implementation that can't be made in model
+	// module due to cyclic dependancy.
 	happydns.UnmarshalServiceJSON = UnmarshalServiceJSON
 }

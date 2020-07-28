@@ -43,17 +43,31 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// User represents an account.
 type User struct {
-	Id                  int64
-	Email               string
-	Password            []byte
-	RegistrationTime    *time.Time
-	EmailValidated      *time.Time
+	// Id is the User's identifier.
+	Id int64
+
+	// Email is the User's login and mean of contact.
+	Email string
+
+	// Password is hashed
+	Password []byte
+
+	// RegistrationTime is the time when the User has register is account.
+	RegistrationTime *time.Time
+
+	// EmailValidated is the time when the User validate its email address.
+	EmailValidated *time.Time
+
+	// PasswordRecoveryKey is a string generated when User asks to recover its account.
 	PasswordRecoveryKey []byte `json:",omitempty"`
 }
 
+// Users is a group of User.
 type Users []*User
 
+// NewUser fills a new User structure.
 func NewUser(email string, password string) (u *User, err error) {
 	t := time.Now()
 
@@ -68,6 +82,7 @@ func NewUser(email string, password string) (u *User, err error) {
 	return
 }
 
+// CheckPasswordConstraints checks the given password is strong enough.
 func (u *User) CheckPasswordConstraints(password string) (err error) {
 	if len(password) < 8 {
 		return fmt.Errorf("Password has to be at least 8 characters long.")
@@ -86,6 +101,7 @@ func (u *User) CheckPasswordConstraints(password string) (err error) {
 	return nil
 }
 
+// DefinePassword erases the current User's password by the new one given.
 func (u *User) DefinePassword(password string) (err error) {
 	if err = u.CheckPasswordConstraints(password); err != nil {
 		return
@@ -97,12 +113,16 @@ func (u *User) DefinePassword(password string) (err error) {
 	return
 }
 
+// CheckAuth compares the given password to the hashed one in the User struct.
 func (u *User) CheckAuth(password string) bool {
 	return bcrypt.CompareHashAndPassword(u.Password, []byte(password)) == nil
 }
 
+// RegistrationHashValidity is the time during which the email validation link is at least valid.
 const RegistrationHashValidity = 24 * time.Hour
 
+// GenRegistrationHash generates the validation hash for the current or previous period.
+// The hash computation is based on some already filled fields in the structure.
 func (u *User) GenRegistrationHash(previous bool) string {
 	date := time.Now()
 	if previous {
@@ -118,6 +138,7 @@ func (u *User) GenRegistrationHash(previous bool) string {
 	)
 }
 
+// ValidateEmail tries to validate the email address by comparing the given key to the expected one.
 func (u *User) ValidateEmail(key string) error {
 	if key == u.GenRegistrationHash(false) || key == u.GenRegistrationHash(true) {
 		now := time.Now()
@@ -128,8 +149,12 @@ func (u *User) ValidateEmail(key string) error {
 	return fmt.Errorf("The validation address link you follow is invalid or has expired (it is valid during %d hours)", RegistrationHashValidity/time.Hour)
 }
 
+// AccountRecoveryHashValidityis the time during which the recovery link is at least valid.
 const AccountRecoveryHashValidity = 2 * time.Hour
 
+// GenAccountRecoveryHash generates the recovery hash for the current or previous period.
+// It updates the User structure in some cases, when it needs to generate a new recovery key,
+// so don't forget to save the changes made.
 func (u *User) GenAccountRecoveryHash(previous bool) string {
 	if u.PasswordRecoveryKey == nil {
 		u.PasswordRecoveryKey = make([]byte, 64)
@@ -155,6 +180,7 @@ func (u *User) GenAccountRecoveryHash(previous bool) string {
 	)
 }
 
+// CanRecoverAccount checks if the given key is a valid recovery hash.
 func (u *User) CanRecoverAccount(key string) error {
 	if key == u.GenAccountRecoveryHash(false) || key == u.GenAccountRecoveryHash(true) {
 		return nil

@@ -117,7 +117,7 @@ func (a *Analyzer) useRR(rr dns.RR, domain string, svc happydns.Service) error {
 		ttl = rr.Header().Ttl
 	}
 
-	a.services[domain] = append(a.services[domain], &happydns.ServiceCombined{svc, happydns.ServiceType{
+	a.services[domain] = append(a.services[domain], &happydns.ServiceCombined{svc, happydns.ServiceMeta{
 		Id:          hash.Sum(nil),
 		Type:        reflect.Indirect(reflect.ValueOf(svc)).Type().String(),
 		Domain:      domain,
@@ -181,7 +181,7 @@ func AnalyzeZone(origin string, zone []dns.RR) (svcs map[string][]*happydns.Serv
 		io.WriteString(hash, record.String())
 
 		orphan := &Orphan{record.String()[strings.LastIndex(record.Header().String(), "\tIN\t")+4:]}
-		svcs[domain] = append(svcs[domain], &happydns.ServiceCombined{orphan, happydns.ServiceType{
+		svcs[domain] = append(svcs[domain], &happydns.ServiceCombined{orphan, happydns.ServiceMeta{
 			Id:          hash.Sum(nil),
 			Type:        reflect.Indirect(reflect.ValueOf(orphan)).Type().String(),
 			Domain:      domain,

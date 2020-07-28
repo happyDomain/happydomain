@@ -38,6 +38,8 @@ import (
 	"strings"
 )
 
+// parseFile opens the file at the given filename path, then treat each line
+// not starting with '#' as a configuration statement.
 func (o *Options) parseFile(filename string) error {
 	fp, err := os.Open(filename)
 	if err != nil {
