@@ -33,6 +33,7 @@ package ddns // import "happydns.org/sources/ddns"
 
 import (
 	"encoding/base64"
+	"fmt"
 	"net"
 	"strings"
 	"time"
@@ -85,14 +86,23 @@ func (s *DDNSServer) DomainExists(fqdn string) error {
 
 	m := new(dns.Msg)
 	m.SetEdns0(4096, true)
-	m.SetAxfr(fqdn)
+	m.SetQuestion(fqdn, dns.TypeSOA)
+
+	c := new(dns.Client)
+	c.TsigSecret = map[string]string{s.KeyName: s.base64KeyBlob()}
 	m.SetTsig(s.KeyName, s.KeyAlgo, 300, time.Now().Unix())
 
-	dnscon := &dns.Conn{Conn: con}
-	transfer := &dns.Transfer{Conn: dnscon, TsigSecret: map[string]string{s.KeyName: s.base64KeyBlob()}}
-	_, err = transfer.In(m, s.serverURI())
+	r, _, err := c.Exchange(m, s.serverURI())
 	if err != nil {
 		return err
+	}
+
+	// Check that the response is OK
+	if r == nil {
+		return fmt.Errorf("Response is nil")
+	}
+	if r.Rcode != dns.RcodeSuccess {
+		return fmt.Errorf("Failed to get a valid answer from name server. Check that the domain %q lives on this server.", fqdn)
 	}
 
 	return nil
