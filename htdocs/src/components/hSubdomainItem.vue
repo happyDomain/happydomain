@@ -46,6 +46,10 @@
           <b-icon icon="plus" />
           Add service
         </b-button>
+        <b-button type="button" variant="outline-info" size="sm" class="ml-2" @click="$emit('showServiceWindow', zoneServices[0])">
+          <b-icon icon="pencil" />
+          Edit target
+        </b-button>
         <b-button type="button" variant="outline-danger" size="sm" class="ml-2" @click="deleteCNAME()">
           <b-icon icon="x-circle" />
           Drop alias
