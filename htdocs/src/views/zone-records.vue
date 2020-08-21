@@ -62,7 +62,7 @@
           </tr>
         </thead>
         <tbody>
-          <h-record v-for="(rr, index) in rrsFiltered" act-btn :record="rr" :key="index" @save-rr="newRR(index)" @delete-rr="deleteRR(index)" />
+          <h-record v-for="(rr, index) in rrsFiltered" :key="index" act-btn :record="rr" @save-rr="newRR(index)" @delete-rr="deleteRR(index)" />
         </tbody>
       </table>
     </div>
@@ -75,7 +75,6 @@
 
 <script>
 import axios from 'axios'
-import Vue from 'vue'
 
 export default {
 

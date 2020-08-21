@@ -456,6 +456,11 @@ func deleteZoneService(opts *config.Options, req *RequestResources, body io.Read
 	}
 }
 
+type serviceRecord struct {
+	String string  `json:"string"`
+	Fields *dns.RR `json:"fields,omitempty"`
+}
+
 func getServiceRecords(opts *config.Options, req *RequestResources, body io.Reader) Response {
 	serviceid, err := hex.DecodeString(req.Ps.ByName("serviceid"))
 	if err != nil {
@@ -471,7 +476,20 @@ func getServiceRecords(opts *config.Options, req *RequestResources, body io.Read
 		}
 	}
 
+	subdomain := req.Ps.ByName("subdomain")
+	if subdomain == "" {
+		subdomain = "@"
+	}
+
+	var ret []serviceRecord
+	for _, rr := range svc.GenRRs(subdomain, 3600, req.Domain.DomainName) {
+		ret = append(ret, serviceRecord{
+			String: rr.String(),
+			Fields: &rr,
+		})
+	}
+
 	return APIResponse{
-		response: svc.GenRRs(req.Ps.ByName("subdomain"), 3600, req.Domain.DomainName),
+		response: ret,
 	}
 }

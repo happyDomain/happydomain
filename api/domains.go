@@ -198,11 +198,11 @@ func axfrDomain(opts *config.Options, req *RequestResources, body io.Reader) Res
 		}
 	}
 
-	var ret []map[string]interface{}
+	var ret []serviceRecord
 	for _, rr := range rrs {
-		ret = append(ret, map[string]interface{}{
-			"string": rr.String(),
-			"fields": rr,
+		ret = append(ret, serviceRecord{
+			String: rr.String(),
+			Fields: &rr,
 		})
 	}
 
@@ -247,8 +247,9 @@ func addRR(opts *config.Options, req *RequestResources, body io.Reader) Response
 	}
 
 	return APIResponse{
-		response: map[string]interface{}{
-			"string": rr.String(),
+		response: serviceRecord{
+			String: rr.String(),
+			Fields: &rr,
 		},
 	}
 }

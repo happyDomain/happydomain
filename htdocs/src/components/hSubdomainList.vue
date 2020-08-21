@@ -33,7 +33,7 @@
 
 <template>
   <div v-if="!isLoading" class="pt-3">
-    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :display-card="displayCard" :dn="dn" :origin="domain.domain" :services="services" :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="aliases[dn]===undefined?[]:aliases[dn]" :zone-id="zoneId" @showServiceWindow="showServiceWindow" @updateMyServices="updateMyServices" @addSubdomain="addSubdomain" @addNewAlias="addNewAlias" @addNewService="addNewService" />
+    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :display-format="displayFormat" :dn="dn" :origin="domain.domain" :services="services" :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="aliases[dn]===undefined?[]:aliases[dn]" :zone-id="zoneId" @showServiceWindow="showServiceWindow" @updateMyServices="updateMyServices" @addSubdomain="addSubdomain" @addNewAlias="addNewAlias" @addNewService="addNewService" />
 
     <b-modal id="modal-addSvc" :size="modal && modal.step === 2 ? 'lg' : ''" scrollable @ok="handleModalSvcOk">
       <template v-slot:modal-title>
@@ -154,9 +154,9 @@ export default {
       type: Object,
       required: true
     },
-    displayCard: {
-      type: Boolean,
-      default: false
+    displayFormat: {
+      type: String,
+      default: 'grid'
     },
     zoneId: {
       type: Number,

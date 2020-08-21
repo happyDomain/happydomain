@@ -32,8 +32,8 @@
   -->
 
 <template>
-  <component :is="displayCard ? 'b-card' : 'b-list-group'" :class="displayCard ? 'card-hover' : ''" :style="displayCard ? 'width: 32%; min-width: 225px; margin-bottom: 1em; cursor: pointer;' : ''" no-body>
-    <b-card-body v-if="displayCard" @click="$emit('showServiceWindow', service)">
+  <component :is="displayFormat === 'grid' ? 'b-card' : 'b-list-group'" :class="displayFormat !== 'list' ? 'card-hover' : ''" :style="displayFormat === 'grid' ? 'width: 32%; min-width: 225px; margin-bottom: 1em; cursor: pointer;' : displayFormat === 'records' ? 'margin-bottom: .5em; cursor: pointer;' : ''" no-body>
+    <b-card-body v-if="displayFormat === 'grid'" @click="$emit('showServiceWindow', service)">
       <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">
         {{ categorie }}
       </b-badge>
@@ -47,7 +47,8 @@
         <span v-if="service._comment">{{ service._comment }}</span>
       </b-card-text>
     </b-card-body>
-    <b-list-group-item v-else button @click="toogleShowDetails()">
+
+    <b-list-group-item v-else-if="displayFormat === 'list'" button @click="toogleShowDetails()">
       <strong :title="services[service._svctype].description">{{ services[service._svctype].name }}</strong> <span v-if="service._comment" class="text-muted">{{ service._comment }}</span>
       <span v-if="services[service._svctype].comment" class="text-muted">{{ services[service._svctype].comment }}</span>
       <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">
@@ -57,21 +58,39 @@
     <b-list-group-item v-if="showDetails">
       <h-editable-service edit-toolbar :origin="origin" :service="service" :services="services" :zone-id="zoneId" @updateMyServices="$emit('updateMyServices', $event)" />
     </b-list-group-item>
+
+    <b-list-group-item v-else-if="displayFormat === 'records'" @click="$emit('showServiceWindow', service)">
+      <strong :title="services[service._svctype].description">{{ services[service._svctype].name }}</strong> <span v-if="service._comment" class="text-muted">{{ service._comment }}</span>
+      <span v-if="services[service._svctype].comment" class="text-muted">{{ services[service._svctype].comment }}</span>
+      <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">
+        {{ categorie }}
+      </b-badge>
+    </b-list-group-item>
+    <b-list-group-item v-if="displayFormat === 'records' && serviceRecords" class="p-0">
+      <table class="table table-hover table-bordered table-striped table-sm m-0">
+        <tbody>
+          <h-record v-for="(rr, irr) in serviceRecords" :key="irr" :record="rr" />
+        </tbody>
+      </table>
+    </b-list-group-item>
   </component>
 </template>
 
 <script>
+import ZoneApi from '@/services/ZoneApi'
+
 export default {
   name: 'HDomainService',
 
   components: {
-    hEditableService: () => import('@/components/hEditableService')
+    hEditableService: () => import('@/components/hEditableService'),
+    hRecord: () => import('@/components/hRecord')
   },
 
   props: {
-    displayCard: {
-      type: Boolean,
-      default: false
+    displayFormat: {
+      type: String,
+      default: 'grid'
     },
     origin: {
       type: String,
@@ -93,11 +112,33 @@ export default {
 
   data: function () {
     return {
+      serviceRecords: null,
       showDetails: false
     }
   },
 
+  watch: {
+    displayFormat: function (df) {
+      if (df === 'records' && !this.serviceRecords) {
+        this.getServiceRecords()
+      }
+    }
+  },
+
+  mounted () {
+    if (this.displayFormat === 'records') {
+      this.getServiceRecords()
+    }
+  },
+
   methods: {
+    getServiceRecords () {
+      ZoneApi.getServiceRecords(this.origin, this.zoneId, this.service)
+        .then(response => {
+          this.serviceRecords = response.data
+        })
+    },
+
     toogleShowDetails () {
       this.showDetails = !this.showDetails
     }

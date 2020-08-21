@@ -108,7 +108,10 @@
       "list": {
         "title": "List view (fastest)"
       },
-      "source-parameters": "Hosting parameters"
+      "source-parameters": "Hosting parameters",
+      "records": {
+        "title": "List records (advanced)"
+      }
     }
   },
   "email":{

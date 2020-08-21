@@ -53,6 +53,9 @@
             <b-button size="sm" :variant="displayFormat === 'list' ? 'secondary' : 'outline-secondary'" :title="$t('domains.views.list')" @click="toogleListView()">
               <b-icon icon="list-ul" aria-hidden="true" />
             </b-button>
+            <b-button size="sm" :variant="displayFormat === 'records' ? 'secondary' : 'outline-secondary'" :title="$t('domains.views.records')" @click="toogleRecordsView()">
+              <b-icon icon="list-ul" aria-hidden="true" />
+            </b-button>
           </b-button-group>
         </b-col>
         <b-col cols="auto" class="text-right ml-auto">
@@ -70,7 +73,7 @@
           </b-button>
         </b-col>
       </b-row>
-      <h-subdomain-list :display-card="displayCard" :domain="domain" :zone-id="selectedHistory" />
+      <h-subdomain-list :display-format="displayFormat" :domain="domain" :zone-id="selectedHistory" />
     </div>
 
     <b-modal id="modal-viewZone" :title="$t('domains.view.title')" size="lg" scrollable ok-only :ok-disabled="zoneContent === null">
@@ -136,7 +139,7 @@ export default {
 
   data: function () {
     return {
-      displayCard: true,
+      displayFormat: 'grid',
       importInProgress: false,
       selectedHistory: null,
       zoneContent: null,
@@ -152,8 +155,8 @@ export default {
   },
 
   created () {
-    if (localStorage && localStorage.getItem('displayCard')) {
-      this.displayCard = localStorage.getItem('displayCard') === 'true'
+    if (localStorage && localStorage.getItem('displayFormat')) {
+      this.displayFormat = localStorage.getItem('displayFormat')
     }
     if (this.domain !== undefined && this.domain.domain !== undefined) {
       this.pullDomain()
@@ -236,16 +239,23 @@ export default {
     },
 
     toogleGridView () {
-      this.displayCard = true
+      this.displayFormat = 'grid'
       if (localStorage) {
-        localStorage.setItem('displayCard', true)
+        localStorage.setItem('displayFormat', 'grid')
       }
     },
 
     toogleListView () {
-      this.displayCard = false
+      this.displayFormat = 'list'
       if (localStorage) {
-        localStorage.setItem('displayCard', false)
+        localStorage.setItem('displayFormat', 'list')
+      }
+    },
+
+    toogleRecordsView () {
+      this.displayFormat = 'records'
+      if (localStorage) {
+        localStorage.setItem('displayFormat', 'records')
       }
     },
 

@@ -105,7 +105,7 @@ export default {
   methods: {
     toogleRR () {
       this.expand = !this.expand
-    },
+    }
 
   }
 
