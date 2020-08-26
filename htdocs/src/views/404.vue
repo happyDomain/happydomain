@@ -33,9 +33,9 @@
 
 <template>
   <b-container style="padding-top: 10vh; padding-bottom: 10vh;">
-    <h2>Page not found</h2>
+    <h2>{{ $t('errors.404.title') }}</h2>
     <p>
-      The page you are look for was not found.
+      {{ $t('errors.404.content') }}
     </p>
   </b-container>
 </template>

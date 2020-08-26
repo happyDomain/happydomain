@@ -52,29 +52,29 @@
               </b-button>
             </template>
             <b-dropdown-item to="/domains/">
-              My domains
+              {{ $t('menu.my-domains') }}
             </b-dropdown-item>
             <b-dropdown-item to="/sources/">
-              My sources
+              {{ $t('menu.my-sources') }}
             </b-dropdown-item>
             <b-dropdown-divider />
             <b-dropdown-item to="/tools/client">
-              DNS client
+              {{ $t('menu.dns-client') }}
             </b-dropdown-item>
             <b-dropdown-divider />
             <b-dropdown-item to="/me">
-              My account
+              {{ $t('menu.my-account') }}
             </b-dropdown-item>
             <b-dropdown-divider />
             <b-dropdown-item @click="logout()">
-              Logout
+              {{ $t('menu.logout') }}
             </b-dropdown-item>
           </b-nav-item-dropdown>
           <b-button v-if="!loggedUser" variant="outline-dark" to="/join">
-            <b-icon icon="person-plus-fill" aria-hidden="true" /> Sign up
+            <b-icon icon="person-plus-fill" aria-hidden="true" /> {{ $t('menu.signup') }}
           </b-button>
           <b-button v-if="!loggedUser" variant="primary" class="ml-2" to="/login">
-            <b-icon icon="person-check" aria-hidden="true" /> Sign in
+            <b-icon icon="person-check" aria-hidden="true" /> {{ $t('menu.signin') }}
           </b-button>
         </b-navbar-nav>
       </b-container>
@@ -137,7 +137,7 @@ export default {
           (error) => {
             this.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'Logout error',
+                title: this.$t('errors.logout'),
                 autoHideDelay: 5000,
                 toaster: 'b-toaster-content-right'
               }
@@ -158,8 +158,8 @@ export default {
             if (sessionStorage.loggedUser) {
               delete sessionStorage.loggedUser
               this.$root.$bvToast.toast(
-                'Invalid session, your have been logged out: ' + error.response.data.errmsg + '. Please login again.', {
-                  title: 'Authentication timeout',
+                this.$t('errors.session.content', { err: error.response.data.errmsg }), {
+                  title: this.$t('errors.session.title'),
                   autoHideDelay: 5000,
                   variant: 'danger',
                   toaster: 'b-toaster-content-right'
@@ -175,8 +175,8 @@ export default {
       if (sessionStorage.getItem('happyUpdate') && !this.alreadyShownUpdate) {
         this.alreadyShownUpdate = true
         this.$bvToast.toast(
-          'A new version of happyDNS is already available. To enable it, please click here to refresh the page.', {
-            title: 'An update is available!',
+          this.$t('upgrade.content'), {
+            title: this.$t('upgrade.title'),
             variant: 'primary',
             href: window.location.pathname,
             noAutoHide: true,
@@ -203,7 +203,7 @@ export default {
             this.loggedUser = null
             this.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'Login error',
+                title: this.$t('errors.login'),
                 autoHideDelay: 5000,
                 toaster: 'b-toaster-content-right'
               }

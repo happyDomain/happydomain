@@ -86,6 +86,7 @@ import HLogo from '@/components/logo.vue'
 import './registerServiceWorker.js'
 
 import './app.scss'
+import i18n from './i18n'
 
 Vue.use(AlertPlugin)
 Vue.use(BadgePlugin)
@@ -141,6 +142,7 @@ Vue.config.productionTip = process.env.NODE_ENV === 'production'
 
 new Vue({
   router,
+  i18n,
   render: function (h) { return h(App) }
 }).$mount('#app')
 

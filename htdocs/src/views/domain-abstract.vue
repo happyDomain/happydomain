@@ -35,76 +35,78 @@
   <div>
     <div v-if="importInProgress" class="mt-4 text-center">
       <b-spinner label="Spinning" />
-      <p>Please wait while we are importing your domain&nbsp;&hellip;</p>
+      <p>{{ $t('domains.wait.importing') }}</p>
     </div>
     <div v-else-if="selectedHistory">
       <b-row class="mt-2">
         <b-col cols="auto" class="mr-auto">
           <b-form inline>
-            <label class="mr-2" for="zhistory">History:</label>
+            <label class="mr-2" for="zhistory">{{ $t('domains.history') }}:</label>
             <b-form-select id="zhistory" v-model="selectedHistory" :options="domain.zone_history" value-field="id" text-field="last_modified" style="max-width:70%;" />
           </b-form>
         </b-col>
         <b-col cols="auto" class="text-center ml-auto mr-auto">
           <b-button-group>
-            <b-button size="sm" :variant="displayCard ? 'secondary' : 'outline-secondary'" title="Grid view (easiest)" @click="toogleGridView()">
+            <b-button size="sm" :variant="displayFormat === 'grid' ? 'secondary' : 'outline-secondary'" :title="$t('domains.views.grid')" @click="toogleGridView()">
               <b-icon icon="grid-fill" aria-hidden="true" />
             </b-button>
-            <b-button size="sm" :variant="displayCard ? 'outline-secondary' : 'secondary'" title="List view (fastest)" @click="toogleListView()">
+            <b-button size="sm" :variant="displayFormat === 'list' ? 'secondary' : 'outline-secondary'" :title="$t('domains.views.list')" @click="toogleListView()">
               <b-icon icon="list-ul" aria-hidden="true" />
             </b-button>
           </b-button-group>
         </b-col>
         <b-col cols="auto" class="text-right ml-auto">
           <b-button size="sm" class="mx-1" @click="importZone()">
-            <b-icon icon="cloud-download" aria-hidden="true" /> Re-import
+            <b-icon icon="cloud-download" aria-hidden="true" /> {{ $t('domains.actions.reimport') }}
           </b-button>
           <b-button size="sm" class="mx-1" @click="viewZone()">
-            <b-icon icon="list-ul" aria-hidden="true" /> View
+            <b-icon icon="list-ul" aria-hidden="true" /> {{ $t('domains.actions.view') }}
           </b-button>
           <b-button v-if="selectedHistory === domain.zone_history[0].id" size="sm" variant="success" class="mx-1" @click="showDiff()">
-            <b-icon icon="cloud-upload" aria-hidden="true" /> Propagate
+            <b-icon icon="cloud-upload" aria-hidden="true" /> {{ $t('domains.actions.propagate') }}
           </b-button>
           <b-button v-else size="sm" variant="warning" class="mx-1" @click="showDiff()">
-            <b-icon icon="cloud-upload" aria-hidden="true" /> Rollback
+            <b-icon icon="cloud-upload" aria-hidden="true" /> {{ $t('domains.actions.rollback') }}
           </b-button>
         </b-col>
       </b-row>
       <h-subdomain-list :display-card="displayCard" :domain="domain" :zone-id="selectedHistory" />
     </div>
 
-    <b-modal id="modal-viewZone" title="View zone" size="lg" scrollable ok-only :ok-disabled="zoneContent === null">
+    <b-modal id="modal-viewZone" :title="$t('domains.view.title')" size="lg" scrollable ok-only :ok-disabled="zoneContent === null">
       <div v-if="zoneContent === null" class="my-2 text-center">
         <b-spinner label="Spinning" />
-        <p>Please wait while we format your zone&nbsp;&hellip;</p>
+        <p>{{ $t('domains.wait.formating') }}</p>
       </div>
       <pre v-else style="overflow: initial">{{ zoneContent }}</pre>
     </b-modal>
 
     <b-modal id="modal-applyZone" size="lg" scrollable @ok="applyDiff()">
       <template v-slot:modal-title>
-        Review the modifications that will be applied to <span class="text-monospace">{{ domain.domain }}</span>
+        <i18n path="domains.view.description" tag="span">
+          <span class="text-monospace">{{ domain.domain }}</span>
+        </i18n>
       </template>
       <template v-slot:modal-footer="{ ok, cancel }">
         <div v-if="zoneDiffAdd || zoneDiffDel">
           <span v-if="zoneDiffAdd" class="text-success">
-            {{ (zoneDiffAdd || []).length }}&nbsp;addition{{ (zoneDiffAdd || []).length > 1 ? 's' : '' }}
+            {{ $tc('domains.apply.additions', (zoneDiffAdd || []).length) }}
           </span>
           &ndash;
           <span class="text-danger">
-            {{ (zoneDiffDel || []).length }}&nbsp;deletion{{ (zoneDiffDel || []).length > 1 ? 's' : '' }}
+            {{ $tc('domains.apply.deletions', (zoneDiffAdd || []).length) }}
           </span>
         </div>
         <b-button variant="secondary" @click="cancel()">
-          Cancel
+          {{ $t('common.cancel') }}
         </b-button>
         <b-button variant="success" :disabled="zoneDiffAdd === null && zoneDiffDel === null" @click="ok()">
-          Apply modifications
+          {{ $t('domains.apply.button') }}
         </b-button>
       </template>
       <div v-if="zoneDiffAdd === null && zoneDiffDel === null" class="my-2 text-center">
         <b-spinner label="Spinning" />
-        <p>Please wait while we export your zone&nbsp;&hellip;</p>
+        <p>{{ $t('domains.wait.exporting') }}</p>
       </div>
       <div v-for="(line, n) in zoneDiffAdd" :key="'a' + n" class="text-monospace text-success" style="white-space: nowrap">
         +{{ line }}
@@ -189,7 +191,7 @@ export default {
           (response) => {
             if (response.data.toAdd == null && response.data.toDel == null) {
               this.$bvModal.hide('modal-applyZone')
-              this.$bvModal.msgBoxOk('There is no changes to apply! Current zone is in sync with the server.')
+              this.$bvModal.msgBoxOk(this.$t('domains.apply.nochange'))
             } else {
               this.zoneDiffAdd = response.data.toAdd
               this.zoneDiffDel = response.data.toDel
@@ -199,7 +201,7 @@ export default {
             this.$bvModal.hide('modal-applyZone')
             this.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'An error occurs when exporting the zone!',
+                title: this.$t('errors.occurs', { when: 'exporting the zone' }),
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'
@@ -213,8 +215,8 @@ export default {
         .then(
           (response) => {
             this.$bvToast.toast(
-              '!', {
-                title: 'Zone applied successfully!',
+              this.$t('domains.apply.done.description'), {
+                title: this.$t('domains.apply.done.title'),
                 autoHideDelay: 5000,
                 variant: 'success',
                 toaster: 'b-toaster-content-right'
@@ -224,7 +226,7 @@ export default {
           (error) => {
             this.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'An error occurs when applying the zone!',
+                title: this.$t('errors.occurs', { when: 'applying the zone' }),
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'
@@ -259,7 +261,7 @@ export default {
             this.$bvModal.hide('modal-viewZone')
             this.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'An error occurs when exporting the zone!',
+                title: this.$t('errors.occurs', { when: 'exporting the zone' }),
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'

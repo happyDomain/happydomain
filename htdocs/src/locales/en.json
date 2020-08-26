@@ -1,0 +1,70 @@
+{
+  "common": {
+    "appname": "happyDNS",
+    "cancel": "Cancel",
+    "no": "No",
+    "yes": "Yes"
+  },
+  "domains": {
+    "actions": {
+      "reimport": "Re-import",
+      "view": "View",
+      "propagate": "Propagate",
+      "rollback": "Rollback"
+    },
+    "apply": {
+      "additions": "no additions | {count} addition | {count} additions",
+      "button": "Apply modifications",
+      "deletions": "no deletions | {count} deletion | {count} deletions",
+      "done": {
+        "title": "Zone applied successfully!",
+        "description": "!"
+      },
+      "nochange": "There is no changes to apply! Current zone is in sync with the server."
+    },
+    "history": "History",
+    "view": {
+      "title": "View zone",
+      "description": "Review the modifications that will be applied to {0}"
+    },
+    "views": {
+      "grid": {
+        "title": "Grid view (easiest)"
+      },
+      "list": {
+        "title": "List view (fastest)"
+      }
+    },
+    "wait": {
+      "exporting": "Please wait while we export your zone&nbsp;&hellip;",
+      "formating": "Please wait while we format your zone&nbsp;&hellip;",
+      "importing": "Please wait while we are importing your domain&nbsp;&hellip;"
+    }
+  },
+  "errors": {
+    "occurs": "An error occurs when {when}!",
+    "404": {
+      "title": "Page not found",
+      "content": "The page you are look for was not found."
+    },
+    "login": "Login error",
+    "logout": "Logout error",
+    "session": {
+      "title": "Authentication timeout",
+      "content": "Invalid session, your have been logged out: {err}. Please login again."
+    }
+  },
+  "menu": {
+    "my-domains": "My domains",
+    "my-sources": "My sources",
+    "dns-client": "DNS client",
+    "my-account": "My account",
+    "logout": "Logout",
+    "signup": "Sign up",
+    "signin": "Sign in"
+  },
+  "upgrade": {
+    "title": "An update is available!",
+    "content": "A new version of happyDNS is already available. To enable it, please click here to refresh the page."
+  }
+}
