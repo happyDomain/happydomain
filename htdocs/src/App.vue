@@ -107,6 +107,7 @@ export default {
 
   data: function () {
     return {
+      alreadyShownUpdate: false,
       loggedUser: undefined
     }
   },
@@ -118,8 +119,8 @@ export default {
     this.updateSession()
     this.$on('login', this.login)
 
-    setInterval(function (vm) { vm.checkForUpdate(360000) }, 360000, this)
-    setTimeout(function (vm) { vm.checkForUpdate(360000 - 42000) }, 42000, this)
+    setInterval(function (vm) { vm.checkForUpdate() }, 360000, this)
+    setTimeout(function (vm) { vm.checkForUpdate() }, 42000, this)
   },
 
   methods: {
@@ -171,13 +172,14 @@ export default {
     },
 
     checkForUpdate (timeout) {
-      if (sessionStorage.getItem('happyUpdate')) {
+      if (sessionStorage.getItem('happyUpdate') && !this.alreadyShownUpdate) {
+        this.alreadyShownUpdate = true
         this.$bvToast.toast(
           'A new version of happyDNS is already available. To enable it, please click here to refresh the page.', {
             title: 'An update is available!',
             variant: 'primary',
-            autoHideDelay: timeout,
             href: window.location.pathname,
+            noAutoHide: true,
             toaster: 'b-toaster-content-right'
           }
         )
