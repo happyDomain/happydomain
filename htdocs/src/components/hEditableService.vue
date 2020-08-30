@@ -82,7 +82,7 @@ export default {
           (error) => {
             this.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'An error occurs when deleting the service!',
+                title: this.$t('errors.occurs', { when: 'deleting the service' }),
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'
@@ -106,7 +106,7 @@ export default {
             (error) => {
               this.$bvToast.toast(
                 error.response.data.errmsg, {
-                  title: 'An error occurs when updating the service!',
+                  title: this.$t('errors.occurs', { when: 'updating the service' }),
                   autoHideDelay: 5000,
                   variant: 'danger',
                   toaster: 'b-toaster-content-right'

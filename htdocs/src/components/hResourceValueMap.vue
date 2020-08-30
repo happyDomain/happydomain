@@ -46,8 +46,8 @@
               <template v-slot:append>
                 <b-button v-if="editKeys[key]" type="button" size="sm" variant="primary" @click="rename(key)">
                   <b-icon icon="check" />
-                  <span v-if="key">Rename</span>
-                  <span v-else>Create new {{ specs.id }} key</span>
+                  <span v-if="key">{{ $t('common.rename') }}</span>
+                  <span v-else>{{ $t('domains.create-new-key', { id: 'specs.id' }) }}</span>
                 </b-button>
               </template>
             </b-input-group>
@@ -59,21 +59,21 @@
         <b-col v-if="!key || !editKeys[key]" sm="auto">
           <b-button v-if="!editChildrenKeys[key]" type="button" size="sm" variant="outline-primary" class="mx-1" @click="toogleChildrenEdit(key)">
             <b-icon icon="pencil" />
-            Edit
+            {{ $t('common.edit') }}
           </b-button>
           <b-button v-else type="button" size="sm" variant="success" class="mx-1" @click="saveObject(key)">
             <b-icon icon="check" />
-            Save those modifications
+            {{ $t('domains.save-modifications') }}
           </b-button>
           <b-button type="button" size="sm" variant="outline-danger" class="mx-1" @click="deleteKey(key)">
             <b-icon icon="trash" />
-            Delete
+            {{ $t('common.delete') }}
           </b-button>
         </b-col>
         <b-col v-else sm="auto">
           <b-button type="button" variant="outline-danger" class="mx-1" @click="cancelKeyEdit(key)">
             <b-icon icon="x-circle" />
-            Cancel edit
+            {{ $t('common.cancel-edit') }}
           </b-button>
         </b-col>
       </b-row>
@@ -89,7 +89,7 @@
       <hr>
     </div>
     <b-button @click="createKey()">
-      Add new {{ specs.id }}
+      {{ $t('common.add-new-thing', { thing: 'specs.id' }) }}
     </b-button>
   </div>
 </template>

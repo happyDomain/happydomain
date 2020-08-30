@@ -39,7 +39,7 @@
 
     <div v-if="state < 0">
       <p>
-        First, you need to select the provider hosting your domain:
+        {{ $t('domains.select-provider') }}
       </p>
       <h-new-source-selector v-model="sourceSpecsSelected" />
     </div>

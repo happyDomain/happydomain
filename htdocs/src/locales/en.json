@@ -1,8 +1,14 @@
 {
   "common": {
+    "add-new-thing": "Add new {thing}",
     "appname": "happyDNS",
     "cancel": "Cancel",
+    "cancel-edit": "@:common.cancel edit",
+    "create-thing": "Create {thing}",
+    "delete": "Delete",
+    "edit": "Edit",
     "no": "No",
+    "rename": "Rename",
     "yes": "Yes"
   },
   "domains": {
@@ -12,6 +18,7 @@
       "propagate": "Propagate",
       "rollback": "Rollback"
     },
+    "add-new": "Add new domain",
     "apply": {
       "additions": "no additions | {count} addition | {count} additions",
       "button": "Apply modifications",
@@ -22,7 +29,10 @@
       },
       "nochange": "There is no changes to apply! Current zone is in sync with the server."
     },
+    "create-new-key": "Create new {id} key",
     "history": "History",
+    "save-modifications": "Save those modifications",
+    "select-provider": "First, you need to select the provider hosting your domain:",
     "view": {
       "title": "View zone",
       "description": "Review the modifications that will be applied to {0}"

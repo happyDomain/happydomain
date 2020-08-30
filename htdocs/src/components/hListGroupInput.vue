@@ -45,7 +45,7 @@
           <template v-slot:append>
             <b-input-group-append v-show="value.length">
               <b-button type="submit" variant="outline-primary">
-                Add new domain
+                {{ $t('domains.add-new') }}
               </b-button>
             </b-input-group-append>
           </template>

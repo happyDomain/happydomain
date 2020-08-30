@@ -56,28 +56,28 @@
           @saveService="$emit('saveService', function () { serviceEdit=false; if ($event) { $event() } })"
         />
         <b-button v-else :disable="value['']" @click="createObject(spec)">
-          Create {{ spec.id }}
+          {{ $t('common.create-thing', { thing: 'spec.id' }) }}
         </b-button>
       </b-tab>
     </b-tabs>
     <div v-else-if="!value">
       <b-button @click="createObject(spec)">
-        Create {{ spec.id }}
+        {{ $t('common.create-thing', { thing: 'spec.id' }) }}
       </b-button>
     </div>
     <div v-else>
       <div v-if="editToolbar" class="text-right mb-2">
         <b-button v-if="!editChildren" type="button" size="sm" variant="outline-primary" class="mx-1" @click="toogleServiceEdit()">
           <b-icon icon="pencil" />
-          Edit
+          {{ $t('common.edit') }}
         </b-button>
         <b-button v-else type="button" size="sm" variant="success" class="mx-1" @click="saveObject()">
           <b-icon icon="check" />
-          Save those modifications
+          {{ $t('domains.save-modifications') }}
         </b-button>
         <b-button v-if="type !== 'svcs.Origin'" type="button" size="sm" variant="outline-danger" class="mx-1" @click="deleteObject()">
           <b-icon icon="trash" />
-          Delete
+          {{ $t('common.delete') }}
         </b-button>
       </div>
       <h-resource-value
