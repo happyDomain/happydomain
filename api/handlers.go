@@ -39,6 +39,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 
@@ -106,14 +107,19 @@ func NewAPIResponse(response interface{}, err error) Response {
 }
 
 type APIErrorResponse struct {
-	status int
-	err    error
-	href   string
+	status  int
+	err     error
+	href    string
+	cookies []*http.Cookie
 }
 
 func (r APIErrorResponse) WriteResponse(w http.ResponseWriter) {
 	if r.status == 0 {
 		r.status = http.StatusBadRequest
+	}
+
+	for _, cookie := range r.cookies {
+		http.SetCookie(w, cookie)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -172,6 +178,8 @@ func apiAuthHandler(f func(*config.Options, *RequestResources, io.Reader) Respon
 			return
 		}
 
+		opts := r.Context().Value("opts").(*config.Options)
+
 		var sessionid []byte
 
 		if cookie, err := r.Cookie("happydns_session"); err == nil {
@@ -179,6 +187,14 @@ func apiAuthHandler(f func(*config.Options, *RequestResources, io.Reader) Respon
 				APIErrorResponse{
 					err:    fmt.Errorf("Unable to authenticate request due to invalid cookie value: %w", err),
 					status: http.StatusUnauthorized,
+					cookies: []*http.Cookie{&http.Cookie{
+						Name:     "happydns_session",
+						Value:    "",
+						Path:     opts.BaseURL + "/",
+						Expires:  time.Unix(0, 0),
+						Secure:   opts.DevProxy == "",
+						HttpOnly: true,
+					}},
 				}.WriteResponse(w)
 				return
 			}
@@ -200,14 +216,29 @@ func apiAuthHandler(f func(*config.Options, *RequestResources, io.Reader) Respon
 			APIErrorResponse{
 				err:    err,
 				status: http.StatusUnauthorized,
+				cookies: []*http.Cookie{&http.Cookie{
+					Name:     "happydns_session",
+					Value:    "",
+					Path:     opts.BaseURL + "/",
+					Expires:  time.Unix(0, 0),
+					Secure:   opts.DevProxy == "",
+					HttpOnly: true,
+				}},
 			}.WriteResponse(w)
 		} else if user, err := storage.MainStore.GetUser(session.IdUser); err != nil {
 			APIErrorResponse{
 				err:    err,
 				status: http.StatusUnauthorized,
+				cookies: []*http.Cookie{&http.Cookie{
+					Name:     "happydns_session",
+					Value:    "",
+					Path:     opts.BaseURL + "/",
+					Expires:  time.Unix(0, 0),
+					Secure:   opts.DevProxy == "",
+					HttpOnly: true,
+				}},
 			}.WriteResponse(w)
 		} else {
-			opts := r.Context().Value("opts").(*config.Options)
 			req := &RequestResources{
 				Ps:      ps,
 				Session: session,
