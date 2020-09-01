@@ -1,0 +1,25 @@
+---
+kind: pipeline
+type: docker
+name: default
+
+platform:
+  os: linux
+  arch: arm64
+
+steps:
+- name: frontend
+  image: node:alpine
+  commands:
+  - apk --no-cache add python2 build-base
+  - yarn config set network-timeout 100000
+  - yarn --cwd htdocs install
+  - yarn --cwd htdocs --offline build
+
+- name: backend
+  image: golang:alpine
+  commands:
+  - apk --no-cache add go-bindata
+  - sed -i '/yarn --cwd htdocs --offline build/d' static.go
+  - go generate
+  - go build
