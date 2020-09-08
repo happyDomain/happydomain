@@ -44,15 +44,15 @@
         <span class="text-monospace">{{ zoneServices[0].Service.Target }}</span>
         <b-button type="button" variant="primary" size="sm" class="ml-2" @click="$emit('addNewService', dn)">
           <b-icon icon="plus" />
-          Add service
+          {{ $t('domains.add-service') }}
         </b-button>
         <b-button type="button" variant="outline-info" size="sm" class="ml-2" @click="$emit('showServiceWindow', zoneServices[0])">
           <b-icon icon="pencil" />
-          Edit target
+          {{ $t('domains.edit-target') }}
         </b-button>
         <b-button type="button" variant="outline-danger" size="sm" class="ml-2" @click="deleteCNAME()">
           <b-icon icon="x-circle" />
-          Drop alias
+          {{ $t('domains.drop-alias') }}
         </b-button>
       </h2>
     </div>
@@ -69,15 +69,15 @@
         </b-badge>
         <b-button type="button" variant="primary" size="sm" class="ml-2" @click="$emit('addNewService', dn)">
           <b-icon icon="plus" />
-          Add a service
+          {{ $t('domains.add-a-service') }}
         </b-button>
         <b-button type="button" variant="outline-primary" size="sm" class="ml-2" @click="$emit('addNewAlias', dn)">
           <b-icon icon="link" />
-          Add an alias
+          {{ $t('domains.add-an-alias') }}
         </b-button>
         <b-button v-if="dn === ''" type="button" variant="outline-secondary" size="sm" class="ml-2" @click="$emit('addSubdomain')">
           <b-icon icon="server" />
-          Add a subdomain
+          {{ $t('domains.add-a-subdomain') }}
         </b-button>
       </h2>
       <div v-show="showResources" :class="showResources && displayCard ? 'd-flex justify-content-around flex-wrap' : ''">
@@ -162,7 +162,7 @@ export default {
           (error) => {
             this.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'An error occurs when deleting the service!',
+                title: this.$t('errors.occurs', { when: 'deleting the service' }),
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'

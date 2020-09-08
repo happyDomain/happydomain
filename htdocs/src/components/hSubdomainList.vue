@@ -41,13 +41,13 @@
       </template>
       <template v-slot:modal-footer="{ ok, cancel }">
         <b-button variant="secondary" @click="cancel()">
-          Cancel
+          {{ $t('common.cancel') }}
         </b-button>
         <b-button v-if="modal.step === 2" form="addSvcForm" type="submit" variant="primary">
-          Add service
+          {{ $t('domains.add-service') }}
         </b-button>
         <b-button v-else form="addSvcForm" type="submit" variant="primary">
-          Continue
+          {{ $t('common.continue') }}
         </b-button>
       </template>
       <form v-if="modal" id="addSvcForm" @submit.stop.prevent="handleModalSvcOk">
@@ -100,14 +100,14 @@
       <template v-slot:modal-footer="{ ok, cancel }">
         <b-button :disabled="deleteServiceInProgress || !modal.svcData || modal.svcData._svctype === 'svcs.Origin'" variant="danger" @click="deleteService(modal.svcData)">
           <b-spinner v-if="deleteServiceInProgress" label="Spinning" small />
-          Delete service
+          {{ $t('service.delete') }}
         </b-button>
         <b-button variant="secondary" @click="cancel()">
-          Cancel
+          {{ $t('common.cancel') }}
         </b-button>
         <b-button :disabled="updateServiceInProgress" form="updSvcForm" type="submit" variant="success">
           <b-spinner v-if="updateServiceInProgress" label="Spinning" small />
-          Update service
+          {{ $t('service.update') }}
         </b-button>
       </template>
       <form v-if="modal && modal.svcData" id="updSvcForm" @submit.stop.prevent="handleUpdateSvc">
@@ -118,10 +118,10 @@
     <b-modal id="modal-addAlias" title="Add a new alias" @ok="handleModalAliasSubmit">
       <template v-slot:modal-footer="{ ok, cancel }">
         <b-button variant="secondary" @click="cancel()">
-          Cancel
+          {{ $t('common.cancel') }}
         </b-button>
         <b-button form="addAliasForm" type="submit" variant="primary">
-          Add alias
+          {{ $t('domains.add-alias') }}
         </b-button>
       </template>
       <form v-if="modal && modal.dn != null" id="addAliasForm" @submit.stop.prevent="handleModalAliasSubmit">

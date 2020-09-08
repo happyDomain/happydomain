@@ -37,7 +37,7 @@
       {{ form.beforeText }}
     </p>
     <p v-else>
-      Please fill the following fields:
+      {{ $t('domains.please-fill-fields') }}
     </p>
 
     <h-resource-value-simple-input
@@ -46,7 +46,7 @@
       edit
       :index="0"
       label="Name your source"
-      description="Give an explicit name in order to easily find this service."
+      :description="$t('domains.give-explicit-name')"
       :placeholder="sourceName + ' account 1'"
       required
       :value="val._comment"

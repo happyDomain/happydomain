@@ -48,16 +48,16 @@
         <h-resource-value v-else v-model="row.item[row.field.key]" :edit="row.item._edit" :index="row.index" :services="services" :specs="specs" :type="row_type" no-decorate @saveService="$emit('saveService', $event)" />
       </template>
       <template v-slot:cell(_actions)="row">
-        <b-button v-if="!row.item._edit" size="sm" title="Edit" variant="outline-primary" class="mx-1" @click="row.item._edit = !row.item._edit">
+        <b-button v-if="!row.item._edit" size="sm" :title="$t('common.edit')" variant="outline-primary" class="mx-1" @click="row.item._edit = !row.item._edit">
           <b-icon icon="pencil" />
         </b-button>
-        <b-button v-else type="button" title="Save the modifications" size="sm" variant="success" class="mx-1" @click="saveRow(row)">
+        <b-button v-else type="button" :title="$t('domains.save-modifications')" size="sm" variant="success" class="mx-1" @click="saveRow(row)">
           <b-icon icon="check" />
         </b-button>
-        <b-button v-if="!row.item._edit" type="button" title="Delete" size="sm" variant="outline-danger" class="mx-1" @click="deleteRow(row)">
+        <b-button v-if="!row.item._edit" type="button" :title="$t('common.delete')" size="sm" variant="outline-danger" class="mx-1" @click="deleteRow(row)">
           <b-icon icon="trash" />
         </b-button>
-        <b-button v-else type="button" title="Cancel" size="sm" variant="danger" class="mx-1" @click="cancelEdit(row)">
+        <b-button v-else type="button" :title="$t('common.cancel')" size="sm" variant="danger" class="mx-1" @click="cancelEdit(row)">
           <b-icon icon="x-circle" />
         </b-button>
       </template>

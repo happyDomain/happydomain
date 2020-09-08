@@ -4,6 +4,7 @@
     "appname": "happyDNS",
     "cancel": "Cancel",
     "cancel-edit": "@:common.cancel edit",
+    "continue": "Continue",
     "create-thing": "Create {thing}",
     "delete": "Delete",
     "edit": "Edit",
@@ -18,7 +19,12 @@
       "propagate": "Propagate",
       "rollback": "Rollback"
     },
+    "add-a-subdomain": "Add a subdomain",
+    "add-a-service": "Add a service",
+    "add-alias": "Add alias",
+    "add-an-alias": "Add an alias",
     "add-new": "Add new domain",
+    "add-service": "Add service",
     "apply": {
       "additions": "no additions | {count} addition | {count} additions",
       "button": "Apply modifications",
@@ -30,7 +36,11 @@
       "nochange": "There is no changes to apply! Current zone is in sync with the server."
     },
     "create-new-key": "Create new {id} key",
+    "drop-alias": "Drop alias",
+    "edit-target": "@:common.edit target",
+    "give-explicit-name": "Give an explicit name in order to easily find this service.",
     "history": "History",
+    "please-fill-fields": "Please fill the following fields:",
     "save-modifications": "Save those modifications",
     "select-provider": "First, you need to select the provider hosting your domain:",
     "view": {
@@ -72,6 +82,10 @@
     "logout": "Logout",
     "signup": "Sign up",
     "signin": "Sign in"
+  },
+  "service": {
+    "delete": "@:common.delete service",
+    "update": "Update service"
   },
   "upgrade": {
     "title": "An update is available!",
