@@ -120,6 +120,7 @@ func completeAuth(opts *config.Options, email string, service string) Response {
 			Expires:  time.Now().Add(30 * 24 * time.Hour),
 			Secure:   opts.DevProxy == "",
 			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
 		}},
 	}
 }
