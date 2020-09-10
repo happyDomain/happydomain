@@ -14,9 +14,9 @@ TODO
 Building
 --------
 
-### Dependancies
+### Dependencies
 
-In order to build the happyDNS project, you'll need the following dependancies:
+In order to build the happyDNS project, you'll need the following dependencies:
 
 * `go` at least version 1.13
 * `go-bindata`
@@ -28,7 +28,7 @@ In order to build the happyDNS project, you'll need the following dependancies:
 
 1. First, I'll need to prepare the frontend.
 
-Go inside the `htdocs/` directory and install the node modules dependancies:
+Go inside the `htdocs/` directory and install the node modules dependencies:
 
 ```
 cd htdocs/
