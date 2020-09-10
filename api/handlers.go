@@ -48,8 +48,25 @@ import (
 	"git.happydns.org/happydns/storage"
 )
 
+type ResponseLogger struct {
+	Status int
+	Log    string
+	Err    error
+	Size   int64
+}
+
+func logResponse(r *http.Request, l ResponseLogger) {
+	log.Printf("%s %d \"%s %s\" %d \"%s\" %d\n", r.RemoteAddr, l.Status, r.Method, r.URL.Path, r.ContentLength, r.UserAgent(), l.Size)
+	if l.Log != "" {
+		log.Println("  " + strings.TrimSpace(l.Log))
+	}
+	if l.Err != nil {
+		log.Println("  " + l.Err.Error())
+	}
+}
+
 type Response interface {
-	WriteResponse(http.ResponseWriter)
+	WriteResponse(http.ResponseWriter) ResponseLogger
 }
 
 type FileResponse struct {
@@ -57,10 +74,16 @@ type FileResponse struct {
 	content     io.WriterTo
 }
 
-func (r *FileResponse) WriteResponse(w http.ResponseWriter) {
+func (r *FileResponse) WriteResponse(w http.ResponseWriter) (res ResponseLogger) {
 	w.Header().Set("Content-Type", r.contentType)
 	w.WriteHeader(http.StatusOK)
-	r.content.WriteTo(w)
+	n, err := r.content.WriteTo(w)
+
+	return ResponseLogger{
+		Status: http.StatusOK,
+		Err:    err,
+		Size:   n,
+	}
 }
 
 type APIResponse struct {
@@ -68,8 +91,10 @@ type APIResponse struct {
 	cookies  []*http.Cookie
 }
 
-func (r APIResponse) WriteResponse(w http.ResponseWriter) {
+func (r APIResponse) WriteResponse(w http.ResponseWriter) ResponseLogger {
+	log := ""
 	for _, cookie := range r.cookies {
+		log += fmt.Sprintf(" cookie=%s,expires=%d", cookie.Name, cookie.Expires)
 		http.SetCookie(w, cookie)
 	}
 
@@ -86,10 +111,21 @@ func (r APIResponse) WriteResponse(w http.ResponseWriter) {
 	} else if j, err := json.Marshal(r.response); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		http.Error(w, fmt.Sprintf("{\"errmsg\":%q}", err), http.StatusInternalServerError)
+
+		return ResponseLogger{
+			Status: http.StatusInternalServerError,
+			Log:    log,
+			Err:    err,
+		}
 	} else {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(j)
+	}
+
+	return ResponseLogger{
+		Status: http.StatusOK,
+		Log:    log,
 	}
 }
 
@@ -111,15 +147,19 @@ type APIErrorResponse struct {
 	err     error
 	href    string
 	cookies []*http.Cookie
+	cause   error
 }
 
-func (r APIErrorResponse) WriteResponse(w http.ResponseWriter) {
+func (r APIErrorResponse) WriteResponse(w http.ResponseWriter) ResponseLogger {
+	log := ""
+
 	if r.status == 0 {
 		r.status = http.StatusBadRequest
 	}
 
 	for _, cookie := range r.cookies {
 		http.SetCookie(w, cookie)
+		log += fmt.Sprintf(" cookie=%s,expires=%d", cookie.Name, cookie.Expires)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -127,6 +167,13 @@ func (r APIErrorResponse) WriteResponse(w http.ResponseWriter) {
 		http.Error(w, fmt.Sprintf("{\"errmsg\":%q}", r.err.Error()), r.status)
 	} else {
 		http.Error(w, fmt.Sprintf("{\"errmsg\":%q,\"href\":%q}", r.err.Error(), r.href), r.status)
+		log += fmt.Sprintf(" href=%s", r.href)
+	}
+
+	return ResponseLogger{
+		Status: r.status,
+		Log:    log + " " + r.err.Error(),
+		Err:    r.cause,
 	}
 }
 
@@ -142,7 +189,6 @@ func ApiHandler(f func(*config.Options, httprouter.Params, io.Reader) Response) 
 		if addr := r.Header.Get("X-Forwarded-For"); addr != "" {
 			r.RemoteAddr = addr
 		}
-		log.Printf("%s \"%s %s\" [%s]\n", r.RemoteAddr, r.Method, r.URL.Path, r.UserAgent())
 
 		// Read the body
 		if r.ContentLength < 0 || r.ContentLength > 6553600 {
@@ -151,7 +197,7 @@ func ApiHandler(f func(*config.Options, httprouter.Params, io.Reader) Response) 
 		}
 
 		opts := r.Context().Value("opts").(*config.Options)
-		f(opts, ps, r.Body).WriteResponse(w)
+		logResponse(r, f(opts, ps, r.Body).WriteResponse(w))
 	}
 }
 
@@ -170,7 +216,6 @@ func apiAuthHandler(f func(*config.Options, *RequestResources, io.Reader) Respon
 		if addr := r.Header.Get("X-Forwarded-For"); addr != "" {
 			r.RemoteAddr = addr
 		}
-		log.Printf("%s \"%s %s\" [%s]\n", r.RemoteAddr, r.Method, r.URL.Path, r.UserAgent())
 
 		// Read the body
 		if r.ContentLength < 0 || r.ContentLength > 6553600 {
@@ -184,36 +229,37 @@ func apiAuthHandler(f func(*config.Options, *RequestResources, io.Reader) Respon
 
 		if cookie, err := r.Cookie("happydns_session"); err == nil {
 			if sessionid, err = base64.StdEncoding.DecodeString(cookie.Value); err != nil {
-				APIErrorResponse{
-					err:    fmt.Errorf("Unable to authenticate request due to invalid cookie value: %w", err),
-					status: http.StatusUnauthorized,
-					cookies: []*http.Cookie{&http.Cookie{
-						Name:     "happydns_session",
-						Value:    "",
-						Path:     opts.BaseURL + "/",
-						Expires:  time.Unix(0, 0),
-						Secure:   opts.DevProxy == "",
-						HttpOnly: true,
-					}},
-				}.WriteResponse(w)
+				logResponse(r,
+					APIErrorResponse{
+						err:    fmt.Errorf("Unable to authenticate request due to invalid cookie value: %w", err),
+						status: http.StatusUnauthorized,
+						cookies: []*http.Cookie{&http.Cookie{
+							Name:     "happydns_session",
+							Value:    "",
+							Path:     opts.BaseURL + "/",
+							Expires:  time.Unix(0, 0),
+							Secure:   opts.DevProxy == "",
+							HttpOnly: true,
+						}},
+					}.WriteResponse(w))
 				return
 			}
 		} else if flds := strings.Fields(r.Header.Get("Authorization")); len(flds) == 2 && flds[0] == "Bearer" {
 			if sessionid, err = base64.StdEncoding.DecodeString(flds[1]); err != nil {
-				APIErrorResponse{
+				logResponse(r, APIErrorResponse{
 					err:    fmt.Errorf("Unable to authenticate request due to invalid Authorization header value: %w", err),
 					status: http.StatusUnauthorized,
-				}.WriteResponse(w)
+				}.WriteResponse(w))
 			}
 		}
 
 		if sessionid == nil || len(sessionid) == 0 {
-			APIErrorResponse{
+			logResponse(r, APIErrorResponse{
 				err:    fmt.Errorf("Authorization required"),
 				status: http.StatusUnauthorized,
-			}.WriteResponse(w)
+			}.WriteResponse(w))
 		} else if session, err := storage.MainStore.GetSession(sessionid); err != nil {
-			APIErrorResponse{
+			logResponse(r, APIErrorResponse{
 				err:    err,
 				status: http.StatusUnauthorized,
 				cookies: []*http.Cookie{&http.Cookie{
@@ -224,9 +270,9 @@ func apiAuthHandler(f func(*config.Options, *RequestResources, io.Reader) Respon
 					Secure:   opts.DevProxy == "",
 					HttpOnly: true,
 				}},
-			}.WriteResponse(w)
+			}.WriteResponse(w))
 		} else if user, err := storage.MainStore.GetUser(session.IdUser); err != nil {
-			APIErrorResponse{
+			logResponse(r, APIErrorResponse{
 				err:    err,
 				status: http.StatusUnauthorized,
 				cookies: []*http.Cookie{&http.Cookie{
@@ -237,14 +283,14 @@ func apiAuthHandler(f func(*config.Options, *RequestResources, io.Reader) Respon
 					Secure:   opts.DevProxy == "",
 					HttpOnly: true,
 				}},
-			}.WriteResponse(w)
+			}.WriteResponse(w))
 		} else {
 			req := &RequestResources{
 				Ps:      ps,
 				Session: session,
 				User:    user,
 			}
-			f(opts, req, r.Body).WriteResponse(w)
+			logResponse(r, f(opts, req, r.Body).WriteResponse(w))
 
 			if session.HasChanged() {
 				storage.MainStore.UpdateSession(session)

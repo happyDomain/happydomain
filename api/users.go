@@ -36,6 +36,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/mail"
 	"strconv"
@@ -169,6 +170,7 @@ func registerUser(opts *config.Options, p httprouter.Params, body io.Reader) Res
 			err: err,
 		}
 	} else {
+		log.Printf("New user registerd: %s", user.Email)
 		return APIResponse{
 			response: user,
 		}
@@ -190,6 +192,7 @@ func specialUserOperations(opts *config.Options, p httprouter.Params, body io.Re
 	}
 
 	if user, err := storage.MainStore.GetUserByEmail(uu.Email); err != nil {
+		res.cause = err
 		return res
 	} else {
 		if uu.Kind == "recovery" {
@@ -198,19 +201,19 @@ func specialUserOperations(opts *config.Options, p httprouter.Params, body io.Re
 					return APIErrorResponse{
 						err: err,
 					}
-
 				}
+				log.Printf("Sent validation link to: %s", user.Email)
 			} else {
 				if err = SendRecoveryLink(opts, user); err != nil {
 					return APIErrorResponse{
 						err: err,
 					}
-
 				} else if err := storage.MainStore.UpdateUser(user); err != nil {
 					return APIErrorResponse{
 						err: fmt.Errorf("An error occurs when trying to recover your account: %w", err),
 					}
 				}
+				log.Printf("Sent recovery link to: %s", user.Email)
 			}
 		} else if uu.Kind == "validation" {
 			if user.EmailValidated != nil {
@@ -220,6 +223,7 @@ func specialUserOperations(opts *config.Options, p httprouter.Params, body io.Re
 					err: err,
 				}
 			}
+			log.Printf("Sent validation link to: %s", user.Email)
 		}
 	}
 
@@ -289,6 +293,7 @@ func changePassword(opts *config.Options, req *RequestResources, body io.Reader)
 		}
 	}
 
+	log.Printf("Change password for user %s", req.User.Email)
 	return logout(opts, req.Ps, body)
 }
 
@@ -313,6 +318,7 @@ func deleteUser(opts *config.Options, req *RequestResources, body io.Reader) Res
 		}
 	}
 
+	log.Printf("User deleted: %s", req.User.Email)
 	return logout(opts, req.Ps, body)
 }
 
@@ -400,6 +406,7 @@ func recoverUserAccount(opts *config.Options, user *happydns.User, body io.Reade
 			err:    errors.New("User not found"),
 		}
 	} else {
+		log.Printf("User recovered: %s", user.Email)
 		return APIResponse{
 			response: true,
 		}

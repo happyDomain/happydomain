@@ -92,6 +92,7 @@ func completeAuth(opts *config.Options, email string, service string) Response {
 				err: err,
 			}
 		}
+		log.Printf("Create new user after successful service=%q login %q\n", service, usr)
 	} else if usr, err = storage.MainStore.GetUserByEmail(email); err != nil {
 		return APIErrorResponse{
 			err: err,
