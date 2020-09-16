@@ -44,18 +44,25 @@
         <b-card header-tag="div">
           <template v-slot:header>
             <h6 class="mb-0 font-weight-bold">
-              Join our nice platform in less than 2 minutes!
+              {{ $t('account.signup.join-call') }}
             </h6>
           </template>
           <form ref="form" class="container mt-2" @submit.stop.prevent="goSignUp">
             <b-form-group
               :state="emailState"
-              label="Email address"
+              :label="$t('email.address')"
               label-for="email-input"
-              invalid-feedback="A valid e-mail address is required."
+              :invalid-feedback="$t('errors.address-valid')"
             >
               <template v-slot:description>
-                You'll use your address to <strong>identify</strong> yourself on the platform, and it could be used to contact you for <strong>security related operations</strong>.
+                <i18n path="account.signup.address-why">
+                  <template v-slot:identify>
+                    <strong>{{ $t('account.signup.identify') }}</strong>
+                  </template>
+                  <template v-slot:security-operations>
+                    <strong>{{ $t('account.signup.security-operations') }}</strong>
+                  </template>
+                </i18n>
               </template>
               <b-form-input
                 id="email-input"
@@ -72,9 +79,9 @@
             </b-form-group>
             <b-form-group
               :state="passwordState"
-              label="Password"
+              :label="$t('common.password')"
               label-for="password-input"
-              invalid-feedback="Password has to be strong enough: at least 8 characters with numbers, low case characters and high case characters."
+              :invalid-feedback="$t('errors.password-weak')"
             >
               <b-form-input
                 id="password-input"
@@ -89,9 +96,9 @@
             </b-form-group>
             <b-form-group
               :state="passwordConfirmState"
-              label="Password confirmation"
+              :label="$t('password.confirmation')"
               label-for="passwordconfirm-input"
-              invalid-feedback="Password and its confirmation doesn't match."
+              :invalid-feedback="$t('errors.password-match')"
             >
               <b-form-input
                 id="passwordconfirm-input"
@@ -107,15 +114,15 @@
               <b-form-checkbox
                 v-model="signupForm.wantReceiveUpdate"
               >
-                Keep me informed of future big improvements
+                {{ $t('account.signup.receive-update') }}
               </b-form-checkbox>
             </b-form-group>
             <div class="d-flex justify-content-around">
               <b-button type="submit" variant="primary">
-                Sign up!
+                {{ $t('account.signup.signup') }}
               </b-button>
               <b-button to="/login" variant="outline-dark">
-                Already member?
+                {{ $t('account.signup.already') }}
               </b-button>
             </div>
           </form>
@@ -166,20 +173,18 @@ export default {
           })
           .then(
             (response) => {
-              this.$root.$bvToast.toast(
-                'Please check your inbox in order to valiate your e-mail address.', {
-                  title: 'Registration successfully performed!',
-                  autoHideDelay: 5000,
-                  variant: 'success',
-                  toaster: 'b-toaster-content-right'
-                }
-              )
+              this.$root.$bvToast.toast(this.$t('email.instruction.check-inbox'), {
+                title: this.$t('account.signup.success'),
+                autoHideDelay: 5000,
+                variant: 'success',
+                toaster: 'b-toaster-content-right'
+              })
               this.$router.push('/login')
             },
             (error) => {
               this.$bvToast.toast(
                 error.response.data.errmsg, {
-                  title: 'Registration problem',
+                  title: this.$t('errors.registration'),
                   autoHideDelay: 5000,
                   variant: 'danger',
                   toaster: 'b-toaster-content-right'

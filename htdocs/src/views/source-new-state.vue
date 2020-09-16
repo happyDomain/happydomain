@@ -34,7 +34,7 @@
 <template>
   <b-container style="min-height: inherit" fluid>
     <div v-if="isLoading" class="mt-5 d-flex justify-content-center align-items-center">
-      <b-spinner variant="primary" label="Spinning" class="mr-3" /> Retrieving the source settings' form...
+      <b-spinner variant="primary" :label="$t('common.spinning')" class="mr-3" /> {{ $t('wait.retrieving-setting') }}
     </div>
     <b-row v-else style="min-height: inherit">
       <b-col lg="4" md="5" class="bg-light">

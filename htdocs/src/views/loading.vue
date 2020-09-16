@@ -33,6 +33,6 @@
 
 <template>
   <b-container class="pt-4 pb-5 text-center">
-    <b-spinner variant="primary" label="Spinning" class="mr-3" /> Loading your account &hellip;
+    <b-spinner variant="primary" :label="$t('common.spinning')" class="mr-3" /> {{ $t('wait.loading-account') }}
   </b-container>
 </template>

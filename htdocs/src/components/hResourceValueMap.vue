@@ -47,7 +47,7 @@
                 <b-button v-if="editKeys[key]" type="button" size="sm" variant="primary" @click="rename(key)">
                   <b-icon icon="check" />
                   <span v-if="key">{{ $t('common.rename') }}</span>
-                  <span v-else>{{ $t('domains.create-new-key', { id: 'specs.id' }) }}</span>
+                  <span v-else>{{ $t('domains.create-new-key', { id: specs.id }) }}</span>
                 </b-button>
               </template>
             </b-input-group>
@@ -89,7 +89,7 @@
       <hr>
     </div>
     <b-button @click="createKey()">
-      {{ $t('common.add-new-thing', { thing: 'specs.id' }) }}
+      {{ $t('common.add-new-thing', { thing: specs.id }) }}
     </b-button>
   </div>
 </template>

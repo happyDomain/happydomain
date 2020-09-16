@@ -113,8 +113,8 @@
       </table>
     </div>
     <div v-if="!rrs.length && error.length == 0" class="text-center mt-5">
-      <b-spinner label="Spinning" />
-      <p>Loading records&nbsp;&hellip;</p>
+      <b-spinner :label="$t('common.spinning')" />
+      <p>{{ $t('wait.loading-record') }}</p>
     </div>
   </div>
 </template>
@@ -187,7 +187,7 @@ export default {
               .then(response => (this.rrs = response.data))
           },
           (error) => {
-            alert('An error occurs when trying to add RR to the zone: ' + error.response.data.errmsg)
+            alert(this.$t('errors.rr-add') + ' ' + error.response.data.errmsg)
           }
         )
     },
@@ -206,7 +206,7 @@ export default {
               .then(response => (this.rrs = response.data))
           },
           (error) => {
-            alert('An error occurs when trying to delete RR in the zone: ' + error.response.data.errmsg)
+            alert(this.$t('errors.rr-delete') + ' ' + error.response.data.errmsg)
           }
         )
     }

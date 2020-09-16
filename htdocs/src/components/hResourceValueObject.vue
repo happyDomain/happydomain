@@ -56,13 +56,13 @@
           @saveService="$emit('saveService', function () { serviceEdit=false; if ($event) { $event() } })"
         />
         <b-button v-else :disable="value['']" @click="createObject(spec)">
-          {{ $t('common.create-thing', { thing: 'spec.id' }) }}
+          {{ $t('common.create-thing', { thing: spec.id }) }}
         </b-button>
       </b-tab>
     </b-tabs>
     <div v-else-if="!value">
       <b-button @click="createObject(spec)">
-        {{ $t('common.create-thing', { thing: 'spec.id' }) }}
+        {{ $t('common.create-thing', { thing: spec.id }) }}
       </b-button>
     </div>
     <div v-else>

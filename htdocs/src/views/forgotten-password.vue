@@ -38,15 +38,15 @@
     </b-alert>
 
     <div v-if="isLoading" class="text-center">
-      <b-spinner variant="primary" label="Spinning" class="mr-3" /> Please wait
+      <b-spinner variant="primary" :label="$t('common.spinning')" class="mr-3" /> {{ $t('wait.wait') }}
     </div>
 
     <b-form v-else-if="user === ''" ref="formMail" @submit.stop.prevent="goSendLink">
       <p>
-        In order to recover your account, we'll send you an e-mail containing a link that will allow you to redefine your password.
+        {{ $t('email.recover') }}.
       </p>
       <b-form-row>
-        <label for="email-input" class="col-md-4 col-form-label text-truncate text-md-right font-weight-bold">Email address</label>
+        <label for="email-input" class="col-md-4 col-form-label text-truncate text-md-right font-weight-bold">{{ $t('email.address') }}</label>
         <b-col md="6">
           <b-form-input
             id="email-input"
@@ -63,17 +63,17 @@
       </b-form-row>
       <b-form-row class="mt-3">
         <b-button class="offset-sm-4 col-sm-4" type="submit" variant="primary">
-          Send me an e-mail to recover my account
+          {{ $t('email.send-recover') }}
         </b-button>
       </b-form-row>
     </b-form>
 
     <b-form v-else ref="formRecover" @submit.stop.prevent="goRecover">
       <p>
-        In order to recover your account, please fill the following form, with a fresh password.
+        {{ $t('password.fill') }}
       </p>
       <b-form-row>
-        <label for="password-input" class="col-md-4 col-form-label text-truncate text-md-right font-weight-bold">New password</label>
+        <label for="password-input" class="col-md-4 col-form-label text-truncate text-md-right font-weight-bold">{{ $t('password.new') }}</label>
         <b-col md="6">
           <b-form-input
             id="password-input"
@@ -88,7 +88,7 @@
         </b-col>
       </b-form-row>
       <b-form-row class="mt-2">
-        <label for="passwordconfirm-input" class="col-md-4 col-form-label text-truncate text-md-right font-weight-bold">Password confirmation</label>
+        <label for="passwordconfirm-input" class="col-md-4 col-form-label text-truncate text-md-right font-weight-bold">{{ $t('password.confirmation') }}</label>
         <b-col md="6">
           <b-form-input
             id="passwordconfirm-input"
@@ -103,7 +103,7 @@
       </b-form-row>
       <b-form-row class="mt-3">
         <b-button class="offset-sm-4 col-sm-4" type="submit" variant="primary">
-          Redefine my password
+          {{ $t('password.redefine') }}
         </b-button>
       </b-form-row>
     </b-form>
@@ -173,8 +173,8 @@ export default {
           .then(
             (response) => {
               this.$root.$bvToast.toast(
-                'Please check your inbox in order to recover your account.', {
-                  title: 'Password recovery email send!',
+                this.$t('email.instruction.check-inbox'), {
+                  title: this.$t('email.sent-recovery'),
                   autoHideDelay: 5000,
                   variant: 'success',
                   toaster: 'b-toaster-content-right'
@@ -185,7 +185,7 @@ export default {
             (error) => {
               this.$bvToast.toast(
                 error.response.data.errmsg, {
-                  title: 'Password recovery problem',
+                  title: this.$t('errors.recovery'),
                   autoHideDelay: 5000,
                   variant: 'danger',
                   toaster: 'b-toaster-content-right'
@@ -207,8 +207,8 @@ export default {
           .then(
             (response) => {
               this.$root.$bvToast.toast(
-                'You can now login with your new password.', {
-                  title: 'Password redefined successfully!',
+                this.$t('password.success'), {
+                  title: this.$t('password.redefined'),
                   autoHideDelay: 5000,
                   variant: 'success',
                   toaster: 'b-toaster-content-right'
@@ -219,7 +219,7 @@ export default {
             (error) => {
               this.$bvToast.toast(
                 error.response.data.errmsg, {
-                  title: 'Password recovery problem',
+                  title: this.$t('errors.recovery'),
                   autoHideDelay: 5000,
                   variant: 'danger',
                   toaster: 'b-toaster-content-right'

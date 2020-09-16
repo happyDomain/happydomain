@@ -35,7 +35,7 @@
   <b-form v-if="!isLoading" class="mt-2 mb-5" @submit.stop.prevent="nextState">
     <b-button v-if="!edit" class="float-right" type="button" size="sm" variant="outline-primary" @click="editSource">
       <b-icon icon="pencil" />
-      Edit
+      {{ $t('common.edit') }}
     </b-button>
 
     <h-resource-value-simple-input
@@ -44,7 +44,7 @@
       v-model="mySource._comment"
       always-show
       :index="0"
-      label="Source's name"
+      :label="$t('source.source-name')"
       :description="edit?'Give an explicit name in order to easily find this service.':''"
       :placeholder="sources[sourceSpecsSelected].name + ' 1'"
       required

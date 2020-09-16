@@ -39,7 +39,7 @@
 
     <div v-if="state < 0">
       <p>
-        {{ $t('domains.select-provider') }}
+        {{ $t('source.select-provider') }}
       </p>
       <h-new-source-selector v-model="sourceSpecsSelected" />
     </div>

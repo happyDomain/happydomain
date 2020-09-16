@@ -48,7 +48,7 @@
         </span>
         <b-button type="button" variant="primary" size="sm" class="ml-2" @click="$emit('addNewService', dn)">
           <b-icon icon="plus" />
-          {{ $t('domains.add-service') }}
+          {{ $t('service.add') }}
         </b-button>
         <b-button type="button" variant="outline-info" size="sm" class="ml-2" @click="$emit('showServiceWindow', zoneServices[0])">
           <b-icon icon="pencil" />
@@ -67,10 +67,10 @@
           <a :href="'#' + dn" class="float-right" style="text-indent:0;z-index:2;position:relative">
             <b-icon icon="link45deg" />
           </a>
-          <span class="text-monospace" @click="toogleShowResources()" :title="dn | fqdn(origin)">{{ dn | fqdn(origin) }}</span>
+          <span class="text-monospace" :title="dn | fqdn(origin)" @click="toogleShowResources()">{{ dn | fqdn(origin) }}</span>
         </span>
         <b-badge v-if="aliases.length > 0" v-b-popover.hover.focus="{ customClass: 'text-monospace', html: true, content: aliasPopoverCnt(dn) }" class="ml-2" style="text-indent:0;">
-          + {{ pluralizeAlias(aliases.length) }}
+          + {{ $tc('domains.n-aliases', aliases.length) }}
         </b-badge>
         <b-button type="button" variant="primary" size="sm" class="ml-2" @click="$emit('addNewService', dn)">
           <b-icon icon="plus" />
@@ -174,14 +174,6 @@ export default {
               }
             )
           })
-    },
-
-    pluralizeAlias (count) {
-      if (count === 1) {
-        return '1 alias'
-      } else {
-        return count + ' aliases'
-      }
     }
   }
 }

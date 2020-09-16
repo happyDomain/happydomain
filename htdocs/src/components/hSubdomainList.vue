@@ -44,7 +44,7 @@
           {{ $t('common.cancel') }}
         </b-button>
         <b-button v-if="modal.step === 2" form="addSvcForm" type="submit" variant="primary">
-          {{ $t('domains.add-service') }}
+          {{ $t('service.add') }}
         </b-button>
         <b-button v-else form="addSvcForm" type="submit" variant="primary">
           {{ $t('common.continue') }}

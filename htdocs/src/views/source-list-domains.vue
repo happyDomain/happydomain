@@ -33,12 +33,12 @@
 
 <template>
   <b-container class="mt-4 mb-5">
-    <h3 class="text-center mb-4">
-      Domains living on <em v-if="mySource">{{ mySource._comment }}</em>
-    </h3>
+    <i18n path="source.source" tag="h3" class="text-center mb-4">
+      <em v-if="mySource">{{ mySource._comment }}</em>
+    </i18n>
     <b-list-group>
       <b-list-group-item v-if="isLoading" class="text-center">
-        <b-spinner variant="secondary" label="Spinning" /> Asking provider for the existing domains...
+        <b-spinner variant="secondary" :label="$t('common.spinning')" /> {{ $t('wait.asking-domains') }}
       </b-list-group-item>
       <b-list-group-item v-for="(domain, index) in domainsList" :key="index" class="d-flex justify-content-between align-items-center" :to="haveDomain(domain) ? '/domains/' + encodeURIComponent(domain) : ''">
         <div>
@@ -46,18 +46,18 @@
         </div>
         <div>
           <b-badge v-if="haveDomain(domain)" class="ml-1" variant="success">
-            <b-icon icon="check" /> Already managed
+            <b-icon icon="check" /> {{ $t('service.already') }}
           </b-badge>
           <b-button v-else type="button" class="ml-1" variant="primary" size="sm" @click="importDomain(domain)">
-            Add now
+            {{ $t('domains.add-now') }}
           </b-button>
         </div>
       </b-list-group-item>
       <b-list-group-item v-if="!noDomainsList && !isLoading && domainsList.length === 0" class="text-center">
-        It appears you don't have any domain name registered on this provider.
+        {{ $t('errors.domain-have') }}
       </b-list-group-item>
       <b-list-group-item v-else-if="noDomainsList && !isLoading && domainsList.length === 0" class="text-center">
-        This provider doesn't permit to list existing domains. Use the form below to add one.
+        {{ $t('errors.domain-list') }}
       </b-list-group-item>
     </b-list-group>
     <h-list-group-input v-if="noDomainsList" v-model="newDomain" autofocus class="mt-2" placeholder="my.new.domain." :state="newDomainState" input-class="text-monospace" @submit="submitNewDomain" @update="validateNewDomain" />
@@ -152,8 +152,8 @@ export default {
         .then(
           (response) => {
             this.$bvToast.toast(
-              'Great! ' + response.data.domain + ' has been added. You can manage it right now.', {
-                title: 'New domain attached to happyDNS!',
+              this.$t('domains.added-success'), { domain: response.data.domain }, {
+                title: this.$t('domains.attached-new'),
                 autoHideDelay: 5000,
                 variant: 'success',
                 href: '/domains/' + response.data.domain,
@@ -165,7 +165,7 @@ export default {
           (error) => {
             this.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'An error occurs when attaching the domain to happyDNS',
+                title: this.$t('errors.domain-attach'),
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'
@@ -188,7 +188,7 @@ export default {
           error => {
             this.$root.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'An error occurs when trying to access domain\'s list.',
+                title: this.$t('errors.domain-access'),
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'

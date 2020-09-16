@@ -34,21 +34,21 @@
 <template>
   <div>
     <div v-if="isLoading" class="mt-5 d-flex justify-content-center align-items-center">
-      <b-spinner variant="primary" label="Spinning" class="mr-3" /> Retrieving source information...
+      <b-spinner variant="primary" label="Spinning" class="mr-3" /> {{ $t('wait.retrieving') }}
     </div>
     <div v-else>
       <h2 class="mt-3 mb-3">
         <span class="text-monospace">{{ domain.domain }}</span>
         <small class="text-muted">
-          Source parameters
+          {{ $t('domains.views.source-parameters') }}
         </small>
       </h2>
       <p>
-        <span class="text-primary">Name</span><br>
+        <span class="text-primary">{{ $t('common.name') }}</span><br>
         <strong>{{ source._comment }}</strong>
       </p>
       <p>
-        <span class="text-primary">Source type</span><br>
+        <span class="text-primary">{{ $t('source.source-type') }}</span><br>
         <strong :title="source._srctype">{{ specs[source._srctype].name }}</strong><br>
         <span class="text-muted">{{ specs[source._srctype].description }}</span>
       </p>

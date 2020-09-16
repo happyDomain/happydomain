@@ -36,9 +36,9 @@
     <b-row>
       <b-col sm="4" class="d-none d-sm-flex align-items-center">
         <div>
-          Don't already have an account on our beautiful platform?
+          {{ $t('account.ask-have') }}
           <router-link to="/join" variant="outline-primary" class="font-weight-bold">
-            Join now!
+            {{ $t('account.join') }}
           </router-link>
         </div>
       </b-col>
@@ -46,15 +46,15 @@
         <b-card header-tag="div">
           <template v-slot:header>
             <h6 class="mb-0 font-weight-bold">
-              Happy to see you again!
+              {{ $t('account.see-again') }}
             </h6>
           </template>
           <form ref="form" @submit.stop.prevent="testlogin">
             <b-form-group
               :state="loginForm.emailState"
-              label="Email address"
+              :label="$t('email.address')"
               label-for="email-input"
-              invalid-feedback="Email address is required"
+              :invalid-feedback="$t('errors.address')"
             >
               <b-form-input
                 id="email-input"
@@ -70,9 +70,9 @@
             </b-form-group>
             <b-form-group
               :state="loginForm.passwordState"
-              label="Password"
+              :label="$t('common.password')"
               label-for="password-input"
-              invalid-feedback="Password is required"
+              :invalid-feedback="$t('errors.password')"
             >
               <b-form-input
                 id="password-input"
@@ -87,10 +87,10 @@
             </b-form-group>
             <div class="d-flex justify-content-around">
               <b-button type="submit" variant="primary">
-                Go!
+                {{ $t('common.go') }}
               </b-button>
               <b-button to="/forgotten-password" variant="outline-dark">
-                Forgotten password?
+                {{ $t('password.forgotten') }}
               </b-button>
             </div>
           </form>

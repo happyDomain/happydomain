@@ -37,7 +37,8 @@
       <button type="button" class="btn font-weight-bolder" @click="$router.go(-1)">
         <b-icon icon="chevron-left" />
       </button>
-      Select the source where lives your domain
+      <i18n path="source.select-source">
+      </i18n>
     </h1>
     <hr style="margin-bottom:0">
     <router-view />

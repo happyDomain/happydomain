@@ -34,8 +34,8 @@
 <template>
   <div>
     <div v-if="importInProgress" class="mt-4 text-center">
-      <b-spinner label="Spinning" />
-      <p>{{ $t('domains.wait.importing') }}</p>
+      <b-spinner :label="$t('common.spinning')" />
+      <p>{{ $t('wait.importing') }}</p>
     </div>
     <div v-else-if="selectedHistory">
       <b-row class="mt-2">
@@ -76,7 +76,7 @@
     <b-modal id="modal-viewZone" :title="$t('domains.view.title')" size="lg" scrollable ok-only :ok-disabled="zoneContent === null">
       <div v-if="zoneContent === null" class="my-2 text-center">
         <b-spinner label="Spinning" />
-        <p>{{ $t('domains.wait.formating') }}</p>
+        <p>{{ $t('wait.formating') }}</p>
       </div>
       <pre v-else style="overflow: initial">{{ zoneContent }}</pre>
     </b-modal>
@@ -106,7 +106,7 @@
       </template>
       <div v-if="zoneDiffAdd === null && zoneDiffDel === null" class="my-2 text-center">
         <b-spinner label="Spinning" />
-        <p>{{ $t('domains.wait.exporting') }}</p>
+        <p>{{ $t('wait.exporting') }}</p>
       </div>
       <div v-for="(line, n) in zoneDiffAdd" :key="'a' + n" class="text-monospace text-success" style="white-space: nowrap">
         +{{ line }}

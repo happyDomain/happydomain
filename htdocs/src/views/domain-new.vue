@@ -37,11 +37,13 @@
       <button type="button" class="btn font-weight-bolder" @click="$router.go(-1)">
         <b-icon icon="chevron-left" />
       </button>
-      Select the source where lives your domain <span class="text-monospace">{{ $route.params.domain }}</span>
+      <i18n path="source.select-source" tag="span">
+        <span class="text-monospace">{{ $route.params.domain }}</span>
+      </i18n>
     </h1>
 
     <div v-if="validatingNewDomain" class="d-flex justify-content-center align-items-center">
-      <b-spinner variant="primary" label="Spinning" class="mr-3" /> Validating domain &hellip;
+      <b-spinner variant="primary" label="Spinning" class="mr-3" /> {{ $t('wait.validating') }};
     </div>
 
     <b-row v-else>
@@ -49,7 +51,7 @@
         <source-list ref="sourceList" emit-new-if-empty @newSource="newSource" @sourceSelected="selectExistingSource($event, $route.params.domain, true)" />
 
         <p class="text-center mt-3">
-          Can't find the source here? <a href="#" @click.prevent="newSource">Add it now!</a>
+          {{ $t('domains.find-source') }} <a href="#" @click.prevent="newSource">{{ $t('domains.add-now') }}</a>
         </p>
       </b-col>
     </b-row>

@@ -34,11 +34,11 @@
 <template>
   <b-container fluid>
     <b-alert variant="danger" :show="error.length != 0">
-      <strong>Error:</strong> {{ error }}
+      <strong>{{ $t('errors.error') }}</strong> {{ error }}
     </b-alert>
     <div v-if="!domain && error.length == 0" class="text-center">
       <b-spinner label="Spinning" />
-      <p>Loading the domain&nbsp;&hellip;</p>
+      <p>{{ $t('wait.loading') }}</p>
     </div>
     <b-row style="min-height: inherit">
       <b-col sm="4" md="3" class="bg-light pb-5">
@@ -47,24 +47,24 @@
         </router-link>
         <b-nav pills vertical variant="secondary">
           <b-nav-item :to="'/domains/' + domain.domain" :active="$route.name == 'domain-home'">
-            Summary
+            {{ $t('domains.view.summary') }}
           </b-nav-item>
           <b-nav-item :to="'/domains/' + domain.domain + '/abstract'" :active="$route.name == 'domain-abstract'">
-            Abstract zone
+            {{ $t('domains.view.abstract') }}
           </b-nav-item>
           <b-nav-item :to="'/zones/' + domain.domain + '/records'" :active="$route.name == 'zone-records'">
-            Live records
+            {{ $t('domains.view.live') }}
           </b-nav-item>
           <b-nav-item :to="'/domain/' + domain.domain + '/monitoring'" :active="$route.name == 'domain-monitoring'">
-            Monitoring
+            {{ $t('domains.view.monitoring') }}
           </b-nav-item>
           <b-nav-item :to="'/domains/' + domain.domain + '/source'" :active="$route.name == 'domain-source'">
-            Domain source
+            {{ $t('domains.view.source') }}
           </b-nav-item>
           <hr>
           <b-nav-form>
             <b-button type="button" variant="outline-danger" @click="detachDomain()">
-              <b-icon icon="trash-fill" /> Stop managing this domain
+              <b-icon icon="trash-fill" /> {{ $t('domains.stop') }}
             </b-button>
           </b-nav-form>
         </b-nav>
@@ -95,13 +95,13 @@ export default {
 
   methods: {
     detachDomain () {
-      this.$bvModal.msgBoxConfirm('This action will permanently remove the domain ' + this.domain.domain + ' from your managed domains. All history and abstracted zones will be discarded. This action will not delete or unregister your domain from your provider, nor alterate what is currently served. It will only affect what you see in happyDNS. Are you sure you want to continue?', {
-        title: 'Confirm Domain Removal',
+      this.$bvModal.msgBoxConfirm(this.$t('domains.alert.remove', { domain: this.domain.domain }), {
+        title: this.$t('domains.removal'),
         size: 'lg',
         okVariant: 'danger',
-        okTitle: 'Discard',
+        okTitle: this.$t('domains.discard'),
         cancelVariant: 'outline-secondary',
-        cancelTitle: 'Keep my domain in happyDNS'
+        cancelTitle: this.$t('domains.view.cancel-title')
       })
         .then(value => {
           if (value) {
@@ -121,14 +121,12 @@ export default {
         .then(
           response => (this.domain = response.data),
           error => {
-            this.$root.$bvToast.toast(
-              'Unfortunately, we were unable to retrieve information for the domain ' + this.$route.params.domain + ': ' + error.response.data.errmsg, {
-                title: 'Unable to retrieve domain information',
-                autoHideDelay: 5000,
-                variant: 'danger',
-                toaster: 'b-toaster-content-right'
-              }
-            )
+            this.$root.$bvToast.toast(this.$t('domains.alert.unable-retrieve.description', { domain: this.$route.params.domain }) + ' ' + error.response.data.errmsg, {
+              title: this.$t('domains.alert.unable-retrieve.title'),
+              autoHideDelay: 5000,
+              variant: 'danger',
+              toaster: 'b-toaster-content-right'
+            })
             this.$router.push('/domains/')
           })
     }

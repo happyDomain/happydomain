@@ -34,16 +34,16 @@
 <template>
   <b-container class="mt-3" :fluid="responses.length?true:false">
     <h1 class="text-center mb-3">
-      DNS resolver
+      {{ $t('menu.dns-resolver') }}
     </h1>
     <b-row>
       <b-col :offset-md="responses.length?0:2" :md="responses.length?4:8" :class="responses.length?'bg-light':'' + 'pb-5 pt-4'">
         <form class="pt-3 pb-5" @submit.stop.prevent="submitRequest">
           <b-form-group
             id="input-resolver"
-            label="Resolver"
+            :label="$t('common.resolver')"
             label-for="resolver"
-            description="Give an explicit name in order to easily find this service."
+            :description="$t('domains.give-explicit-name')"
           >
             <b-form-select
               id="resolver"
@@ -55,9 +55,9 @@
 
           <b-form-group
             id="input-domain"
-            label="Domain or subdomain"
+            :label="$t('common.domain')"
             label-for="domain"
-            description="spec.description"
+            :description="$t('common.description')"
           >
             <b-form-input
               id="domain"
@@ -69,9 +69,9 @@
 
           <b-form-group
             id="input-type"
-            label="Field"
+            :label="$t('common.field')"
             label-for="type"
-            description="spec.type"
+            :description="$t('common.type')"
           >
             <b-form-select
               id="type"
@@ -83,8 +83,8 @@
 
           <div class="ml-3 mr-3">
             <b-button class="float-right" type="submit" variant="primary" :disabled="request_pending">
-              <b-spinner v-if="request_pending" label="Spinning" small />
-              Run the request!
+              <b-spinner v-if="request_pending" :label="$t('common.spinning')" small />
+              {{ $t('common.run') }}
             </b-button>
           </div>
         </form>
@@ -156,7 +156,7 @@ export default {
           (error) => {
             this.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'An error occurs when trying to resolve the domain.',
+                title: this.$t('errors.resolve'),
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'

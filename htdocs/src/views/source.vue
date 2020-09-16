@@ -37,7 +37,7 @@
       <button type="button" class="btn font-weight-bolder" @click="$router.go(-1)">
         <b-icon icon="chevron-left" />
       </button>
-      Updating your domain name source <em v-if="mySource">{{ mySource._comment }}</em>
+      {{ $t('wait.updating') }} <em v-if="mySource">{{ mySource._comment }}</em>
     </h1>
     <hr style="margin-bottom:0">
 
@@ -57,11 +57,11 @@
         <div class="text-center mb-2">
           <b-button v-if="source_specs && source_specs.capabilities && source_specs.capabilities.indexOf('ListDomains') > -1" type="button" variant="secondary" class="mb-1" @click="showListImportableDomain()">
             <b-icon icon="list-task" />
-            List importable domains
+            {{ $t('domains.list') }}
           </b-button>
           <b-button type="button" variant="danger" class="mb-1" @click="deleteSource()">
             <b-icon icon="trash-fill" />
-            Delete this source
+            {{ $t('domains.delete-source') }}
           </b-button>
         </div>
       </b-col>
@@ -128,7 +128,7 @@ export default {
           error => {
             this.$root.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'Something went wrong during source deletion',
+                title: this.$t('errors.source-delete'),
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'

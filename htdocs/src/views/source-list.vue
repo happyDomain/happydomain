@@ -35,10 +35,10 @@
   <b-container class="pt-4 pb-5">
     <b-button type="button" variant="primary" class="float-right" @click="newSource">
       <b-icon icon="plus" />
-      Add new source
+      {{ $t('common.add-new-thing', { thing: $t('source.kind') }) }}
     </b-button>
     <h1 class="text-center mb-4">
-      Your sources
+      {{ $t('source.title') }}
     </h1>
     <b-row>
       <b-col offset-md="2" md="8">

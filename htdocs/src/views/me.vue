@@ -34,13 +34,13 @@
 <template>
   <b-container class="my-4">
     <h2 id="password-change">
-      Change my password
+      {{ $t('password.change') }}
     </h2>
     <b-row>
       <b-card class="offset-md-2 col-8">
         <b-form @submit.stop.prevent="sendChPassword">
           <b-form-group
-            label="Enter your current password"
+            :label="$t('password.enter')"
             label-for="currentPassword-input"
           >
             <b-form-input
@@ -54,9 +54,9 @@
           </b-form-group>
           <b-form-group
             :state="passwordState"
-            label="Enter your new password"
+            :label="$t('password.enter-new')"
             label-for="password-input"
-            invalid-feedback="Password has to be strong enough: at least 8 characters with numbers, low case characters and high case characters."
+            :invalid-feedback="$t('errors.password-weak')"
           >
             <b-form-input
               id="password-input"
@@ -71,9 +71,9 @@
           </b-form-group>
           <b-form-group
             :state="passwordConfirmState"
-            label="Confirm your new password"
+            :label="$t('password.confirm-new')"
             label-for="passwordconfirm-input"
-            invalid-feedback="Password and its confirmation doesn't match."
+            :invalid-feedback="$t('errors.password-match')"
           >
             <b-form-input
               id="passwordconfirm-input"
@@ -87,7 +87,7 @@
           </b-form-group>
           <div class="d-flex justify-content-around">
             <b-button type="submit" variant="primary">
-              Change password
+              {{ $t('password.change') }}
             </b-button>
           </div>
         </b-form>
@@ -95,29 +95,29 @@
     </b-row>
     <hr>
     <h2 id="delete-account">
-      Delete my account
+      {{ $t('account.delete.delete') }}
     </h2>
     <b-row>
       <b-card class="offset-md-2 col-8">
         <p>
-          If you want to delete your account and all data associated with it, press the button below:
+          {{ $t('account.delete.confirm') }}
         </p>
         <b-button type="button" variant="danger" @click="askAccountDeletion">
-          Delete my account
+          {{ $t('account.delete.delete') }}
         </b-button>
         <p class="mt-2 text-muted" style="line-height: 1.1">
           <small>
-            Your domains owned on others platforms will not be affected by the deletion, they'll continue to respond with the current dataset.
+            {{ $t('account.delete.consequence') }}
           </small>
         </p>
       </b-card>
     </b-row>
-    <b-modal id="delete-account-modal" title="Delete Your Account" ok-variant="danger" ok-title="Delete my account" cancel-variant="primary" @ok="deleteMyAccount">
+    <b-modal id="delete-account-modal" :title="$t('account.delete.delete')" ok-variant="danger" :ok-title="$t('account.delete.delete')" cancel-variant="primary" @ok="deleteMyAccount">
       <p>
-        By confirming the deletion, you'll permanently and irrevocably delete your account from our database and will loose easy access to our easy management interface for your domains.
+        {{ $t('account.delete.confirm-twice') }}
       </p>
       <b-form-group
-        label="To ensure this is really you, please enter your password:"
+        :label="$t('account.delete.confirm-password')"
         label-for="currentPassword-forDeletion"
       >
         <b-form-input
@@ -133,7 +133,7 @@
       </b-form-group>
       <p class="text-muted" style="line-height: 1.1">
         <small>
-          For technical reason, your account will be deleted right after your validation, but some data from your account will persist until the next database clean up.
+          {{ $t('account.delete.remain-data') }}
         </small>
       </p>
     </b-modal>
@@ -185,8 +185,8 @@ export default {
         .then(
           response => {
             this.$root.$bvToast.toast(
-              'Your account have been successfully deleted. We hope to see you back soon.', {
-                title: 'Account Deleted',
+              this.$t('account.delete.success'), {
+                title: this.$t('account.delete.deleted'),
                 variant: 'primary',
                 toaster: 'b-toaster-content-right'
               }
@@ -196,7 +196,7 @@ export default {
           error => {
             this.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'An error occurs when trying to delete your account',
+                title: this.$t('errors.account-delete'),
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'
@@ -210,20 +210,18 @@ export default {
         .post('/api/users/' + encodeURIComponent(this.loggedUser.id.toString(16)) + '/new_password', this.signupForm)
         .then(
           response => {
-            this.$root.$bvToast.toast(
-              'Your account\'s password has been changed with success.', {
-                title: 'Password Successfully Changed',
-                autoHideDelay: 5000,
-                variant: 'success',
-                toaster: 'b-toaster-content-right'
-              }
-            )
+            this.$root.$bvToast.toast(this.$t('password.success-change'), {
+              title: this.$t('password.changed'),
+              autoHideDelay: 5000,
+              variant: 'success',
+              toaster: 'b-toaster-content-right'
+            })
             this.$router.push('/')
           },
           error => {
             this.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'Unable to change your password account',
+                title: this.$t('errors.password-change'),
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'

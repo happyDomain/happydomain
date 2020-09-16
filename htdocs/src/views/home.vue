@@ -33,9 +33,9 @@
 
 <template>
   <b-container class="pt-4 pb-5">
-    <h1 class="text-center mb-4">
-      Welcome to <h-logo height="40" />!
-    </h1>
+    <i18n path="common.welcome" tag="h1" class="text-center mb-4">
+      <h-logo height="40" />
+    </i18n>
     <b-row>
       <b-col offset-md="2" md="8">
         <zone-list ref="zlist" @noDomain="firstTimeAct" />

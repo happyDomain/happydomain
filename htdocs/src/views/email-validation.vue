@@ -38,18 +38,18 @@
     </b-alert>
 
     <div v-if="isLoading" class="text-center">
-      <b-spinner variant="primary" label="Spinning" class="mr-3" /> Please wait
+      <b-spinner variant="primary" :label="$t('common.spinning')" class="mr-3" /> {{ $t('wait.wait') }}
     </div>
 
     <b-form v-else ref="form" class="mt-2" @submit.stop.prevent="goResend">
       <p>
-        In order to validate your e-mail address, please check your inbox, and follow the link contained in the message.
+        {{ $t('email.instruction.validate-address') }}
       </p>
       <p>
-        If you need a new confirmation e-mail, just enter your address in the form below.
+        {{ $t('email.instruction.new-confirmation') }}
       </p>
       <b-form-row>
-        <label for="email-input" class="col-md-4 col-form-label text-truncate text-md-right font-weight-bold">Email address</label>
+        <label for="email-input" class="col-md-4 col-form-label text-truncate text-md-right font-weight-bold">{{ $t('email.address') }}</label>
         <b-col md="6">
           <b-form-input
             id="email-input"
@@ -66,7 +66,7 @@
       </b-form-row>
       <b-form-row class="mt-3">
         <b-button class="offset-sm-4 col-sm-4" type="submit" variant="primary">
-          Re-send the confirmation e-mail
+          {{ $t('email.send-again') }}
         </b-button>
       </b-form-row>
     </b-form>
@@ -102,8 +102,8 @@ export default {
           (response) => {
             this.error = ''
             this.$root.$bvToast.toast(
-              'Ready to login!', {
-                title: 'Your new e-mail address is now validated!',
+              this.$t('account.ready-login'), {
+                title: this.$t('email.instruction.validated'),
                 autoHideDelay: 5000,
                 variant: 'success',
                 toaster: 'b-toaster-content-right'
@@ -134,8 +134,8 @@ export default {
           .then(
             (response) => {
               this.$root.$bvToast.toast(
-                'Please check your inbox in order to valiate your e-mail address.', {
-                  title: 'Confirmation e-mail sent!',
+                this.$t('email.instruction.check-inbox'), {
+                  title: this.$t('email.sent'),
                   autoHideDelay: 5000,
                   variant: 'success',
                   toaster: 'b-toaster-content-right'
@@ -146,7 +146,7 @@ export default {
             (error) => {
               this.$bvToast.toast(
                 error.response.data.errmsg, {
-                  title: 'Registration problem',
+                  title: this.$t('errors.registration'),
                   autoHideDelay: 5000,
                   variant: 'danger',
                   toaster: 'b-toaster-content-right'
