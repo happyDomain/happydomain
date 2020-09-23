@@ -48,7 +48,7 @@ type DDNSServer struct {
 	Server  string `json:"server,omitempty" happydns:"label=Server,placeholder=127.0.0.1"`
 	KeyName string `json:"keyname,omitempty" happydns:"label=Key Name,placeholder=ddns.,required"`
 	KeyAlgo string `json:"algorithm,omitempty" happydns:"label=Key Algorithm,default=hmac-sha256.,choices=hmac-md5.sig-alg.reg.int.;hmac-sha1.;hmac-sha224.;hmac-sha256.;hmac-sha384.;hmac-sha512.,required"`
-	KeyBlob []byte `json:"keyblob,omitempty" happydns:"label=Secret Key,placeholder=a0b1c2d3e4f5==,required,secret"`
+	KeyBlob []byte `json:"keyblob,omitempty" happydns:"label=Secret Key,placeholder=a0b1c2d3e4f5==,required,secret,base64"`
 }
 
 func (s *DDNSServer) serverURI() string {

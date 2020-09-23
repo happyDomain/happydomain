@@ -43,8 +43,9 @@
     <b-form-input
       v-else
       :id="'spec-' + index + '-' + specs.id"
-      v-model.lazy="val"
+      v-model="val"
       class="font-weight-bold"
+      lazy
       :required="specs.required !== undefined && specs.required"
       :placeholder="specs.placeholder"
       :plaintext="!edit"
@@ -87,6 +88,14 @@ export default {
       get () {
         if (this.specs.type === 'time.Duration') {
           return this.value / 1000000000
+        } else if (this.specs.type === '[]uint8') {
+          const raw = atob(this.value)
+          let result = ''
+          for (let i = 0; i < raw.length; i++) {
+            const hex = raw.charCodeAt(i).toString(16)
+            result += (hex.length === 2 ? hex : '0' + hex)
+          }
+          return result.toUpperCase()
         } else {
           return this.value
         }
@@ -96,6 +105,14 @@ export default {
           this.$emit('input', value * 1000000000)
         } else if (this.specs.type === 'int' || this.specs.type === 'int8' || this.specs.type === 'int16' || this.specs.type === 'int32' || this.specs.type === 'int64' || this.specs.type === 'uint' || this.specs.type === 'uint8' || this.specs.type === 'uint16' || this.specs.type === 'uint32' || this.specs.type === 'uint64') {
           this.$emit('input', parseInt(value, 10))
+        } else if (this.specs.type === '[]uint8') {
+          let res = ''
+          if (value.length % 2) {
+            res = ('0' + value).match(/\w{2}/g).map(function (a) { return String.fromCharCode(parseInt(a, 16)) }).join('')
+          } else {
+            res = value.match(/\w{2}/g).map(function (a) { return String.fromCharCode(parseInt(a, 16)) }).join('')
+          }
+          this.$emit('input', btoa(res))
         } else {
           this.$emit('input', value)
         }

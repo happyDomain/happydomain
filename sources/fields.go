@@ -108,6 +108,8 @@ func GenSourceField(field reflect.StructField) (f *SourceField) {
 				f.Required = true
 			case "secret":
 				f.Secret = true
+			case "base64":
+				f.Type = "[]byte"
 			default:
 				f.Label = kv[0]
 			}
