@@ -34,14 +34,18 @@
 <template>
   <div>
     <div v-if="isCNAME()">
-      <h2 :id="dn" style="text-indent:-2em;padding-left:2em;">
-        <b-icon icon="link" />
-        <a :href="'#' + dn" class="float-right" style="text-indent:0;">
-          <b-icon icon="link45deg" />
-        </a>
-        <span class="text-monospace">{{ dn | fqdn(origin) }}</span>
-        <b-icon icon="arrow-right" />
-        <span class="text-monospace">{{ zoneServices[0].Service.Target }}</span>
+      <h2 :id="dn" style="text-indent:-1em;padding-left:1em;overflow-x:hidden;text-overflow:ellipsis">
+        <span style="white-space: nowrap">
+          <b-icon icon="link" />
+          <a :href="'#' + dn" class="float-right" style="text-indent:0;z-index:2;position:relative">
+            <b-icon icon="link45deg" />
+          </a>
+          <span class="text-monospace" :title="dn | fqdn(origin)">{{ dn | fqdn(origin) }}</span>
+        </span>
+        <span style="white-space: nowrap">
+          <b-icon icon="arrow-right" />
+          <span class="text-monospace">{{ zoneServices[0].Service.Target }}</span>
+        </span>
         <b-button type="button" variant="primary" size="sm" class="ml-2" @click="$emit('addNewService', dn)">
           <b-icon icon="plus" />
           {{ $t('domains.add-service') }}
@@ -57,13 +61,14 @@
       </h2>
     </div>
     <div v-else>
-      <h2 :id="dn" style="text-indent:-2em;padding-left:2em;">
-        <b-icon v-if="!showResources" icon="chevron-right" @click="toogleShowResources()" />
-        <b-icon v-if="showResources" icon="chevron-down" @click="toogleShowResources()" />
-        <span class="text-monospace" @click="toogleShowResources()">{{ dn | fqdn(origin) }}</span>
-        <a :href="'#' + dn" class="float-right" style="text-indent:0;">
-          <b-icon icon="link45deg" />
-        </a>
+      <h2 :id="dn" style="text-indent:-1em;padding-left:1em;overflow-x:hidden;text-overflow:ellipsis">
+        <span style="white-space: nowrap">
+          <b-icon :icon="showResources?'chevron-down':'chevron-right'" @click="toogleShowResources()" />
+          <a :href="'#' + dn" class="float-right" style="text-indent:0;z-index:2;position:relative">
+            <b-icon icon="link45deg" />
+          </a>
+          <span class="text-monospace" @click="toogleShowResources()" :title="dn | fqdn(origin)">{{ dn | fqdn(origin) }}</span>
+        </span>
         <b-badge v-if="aliases.length > 0" v-b-popover.hover.focus="{ customClass: 'text-monospace', html: true, content: aliasPopoverCnt(dn) }" class="ml-2" style="text-indent:0;">
           + {{ pluralizeAlias(aliases.length) }}
         </b-badge>
