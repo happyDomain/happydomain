@@ -51,7 +51,7 @@
         <source-list ref="sourceList" emit-new-if-empty @newSource="newSource" @sourceSelected="selectExistingSource($event, $route.params.domain, true)" />
 
         <p class="text-center mt-3">
-          {{ $t('domains.find-source') }} <a href="#" @click.prevent="newSource">{{ $t('domains.add-now') }}</a>
+          {{ $t('source.find') }} <a href="#" @click.prevent="newSource">{{ $t('domains.add-now') }}</a>
         </p>
       </b-col>
     </b-row>

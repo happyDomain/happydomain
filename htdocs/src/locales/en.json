@@ -80,19 +80,15 @@
     },
     "attached-new": "New domain attached to happyDNS!",
     "create-new-key": "Create new {id} key",
-    "delete-source": "Delete this source",
     "discard": "Discard",
     "drop-alias": "Drop alias",
     "edit-target": "@:common.edit target",
-    "find-source": "Can't find the source here?",
     "give-explicit-name": "Give an explicit name in order to easily find this service.",
     "history": "History",
     "list": "List importable domains",
     "n-aliases": "{n} alias | {n} aliases",
-    "name-your-source": "Name your source",
     "please-fill-fields": "Please fill the following fields:",
     "removal": "Confirm Domain Removal",
-    "source": "Domains living on {0}",
     "save-modifications": "Save those modifications",
     "stop": "Stop managing this domain",
     "view": {
@@ -102,7 +98,7 @@
       "live": "Live records",
       "monitoring": "Monitoring",
       "summary": "Summary",
-      "source": "Domain source",
+      "source": "Domain host",
       "title": "View zone"
     },
     "views": {
@@ -112,7 +108,7 @@
       "list": {
         "title": "List view (fastest)"
       },
-      "source-parameters": "Source parameters"
+      "source-parameters": "Hosting parameters"
     }
   },
   "email":{
@@ -162,7 +158,7 @@
   },
   "menu": {
     "my-domains": "My domains",
-    "my-sources": "My sources",
+    "my-sources": "My domains' hosts",
     "dns-client": "DNS client",
     "dns-resolver": "DNS resolver",
     "my-account": "My account",
@@ -214,12 +210,16 @@
     "update": "Update service"
   },
   "source": {
-    "kind": "source",
+    "delete": "@:common.delete this @:source.kind",
+    "find": "Can't find your @:source.kind here?",
+    "name-your": "Name your @:source.kind",
+    "source": "Domains living on {0}",
+    "kind": "domain's host",
     "select-provider": "First, you need to select the provider hosting your domain:",
-    "select-source": "Select the source where lives your domain {0}",
-    "source-name": "Source's name",
-    "source-type": "Source type",
-    "title": "Your sources"
+    "select-source": "Select the place where your domain {0} is hosted",
+    "source-name": "Host's name",
+    "source-type": "Hosting type",
+    "title": "Your domains' hosts"
   },
   "upgrade": {
     "title": "An update is available!",
@@ -233,9 +233,9 @@
     "loading": "Loading the domain …",
     "loading-account": "Loading your account …",
     "loading-record": "Loading records …",
-    "retrieving": "Retrieving source information...",
-    "retrieving-setting": "Retrieving the source settings' form...",
-    "updating": "Updating your domain name source",
+    "retrieving": "Retrieving hosting information...",
+    "retrieving-setting": "Retrieving host settings' form...",
+    "updating": "Updating your domain name host",
     "validating": "Validating domain …",
     "wait": "Please wait"
   }

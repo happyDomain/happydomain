@@ -61,7 +61,7 @@
           </b-button>
           <b-button type="button" variant="danger" class="mb-1" @click="deleteSource()">
             <b-icon icon="trash-fill" />
-            {{ $t('domains.delete-source') }}
+            {{ $t('source.delete') }}
           </b-button>
         </div>
       </b-col>

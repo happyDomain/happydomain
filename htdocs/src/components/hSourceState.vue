@@ -45,7 +45,7 @@
       id="src-name"
       edit
       :index="0"
-      :label="$t('domains.name-your-source')"
+      :label="$t('source.name-your')"
       :description="$t('domains.give-explicit-name')"
       :placeholder="sourceName + ' account 1'"
       required
