@@ -462,7 +462,6 @@ export default {
           },
           (error) => {
             this.$nextTick(() => {
-              this.$bvModal.hide('modal-updSvc')
               this.updateServiceInProgress = false
               this.$bvToast.toast(
                 error.response.data.errmsg, {
