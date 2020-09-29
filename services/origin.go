@@ -69,7 +69,7 @@ func (s *Origin) GenComment(origin string) string {
 func (s *Origin) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	rrs = append(rrs, &dns.SOA{
 		Hdr: dns.RR_Header{
-			Name:   domain,
+			Name:   utils.DomainJoin(domain),
 			Rrtype: dns.TypeSOA,
 			Class:  dns.ClassINET,
 			Ttl:    ttl,
@@ -85,7 +85,7 @@ func (s *Origin) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR)
 	for _, ns := range s.NameServers {
 		rrs = append(rrs, &dns.NS{
 			Hdr: dns.RR_Header{
-				Name:   domain,
+				Name:   utils.DomainJoin(domain),
 				Rrtype: dns.TypeNS,
 				Class:  dns.ClassINET,
 				Ttl:    ttl,

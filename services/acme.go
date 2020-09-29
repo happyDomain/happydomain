@@ -37,6 +37,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/utils"
 )
 
 type ACMEChallenge struct {
@@ -54,7 +55,7 @@ func (s *ACMEChallenge) GenComment(origin string) string {
 func (s *ACMEChallenge) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	rrs = append(rrs, &dns.TXT{
 		Hdr: dns.RR_Header{
-			Name:   "_acme-challenge." + domain,
+			Name:   utils.DomainJoin("_acme-challenge", domain),
 			Rrtype: dns.TypeTXT,
 			Class:  dns.ClassINET,
 			Ttl:    ttl,

@@ -41,6 +41,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/utils"
 )
 
 type OpenPGP struct {
@@ -65,7 +66,7 @@ func (s *OpenPGP) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR
 
 		rrs = append(rrs, &dns.OPENPGPKEY{
 			Hdr: dns.RR_Header{
-				Name:   fmt.Sprintf("%s._openpgpkey.%s", s.Identifier, domain),
+				Name:   utils.DomainJoin(fmt.Sprintf("%s._openpgpkey", s.Identifier), domain),
 				Rrtype: dns.TypeOPENPGPKEY,
 				Class:  dns.ClassINET,
 				Ttl:    ttl,
@@ -101,7 +102,7 @@ func (s *SMimeCert) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.
 
 		rrs = append(rrs, &dns.SMIMEA{
 			Hdr: dns.RR_Header{
-				Name:   fmt.Sprintf("%s._smimecert.%s", s.Identifier, domain),
+				Name:   utils.DomainJoin(fmt.Sprintf("%s._smimecert", s.Identifier), domain),
 				Rrtype: dns.TypeSMIMEA,
 				Class:  dns.ClassINET,
 				Ttl:    ttl,

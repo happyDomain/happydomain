@@ -41,6 +41,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/utils"
 )
 
 type TLSA struct {
@@ -102,7 +103,7 @@ func (ss *TLSAs) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR)
 		if len(s.Certificate) > 0 {
 			rrs = append(rrs, &dns.TLSA{
 				Hdr: dns.RR_Header{
-					Name:   fmt.Sprintf("_%d._%s.%s", s.Port, s.Proto, domain),
+					Name:   utils.DomainJoin(fmt.Sprintf("_%d._%s", s.Port, s.Proto), domain),
 					Rrtype: dns.TypeTLSA,
 					Class:  dns.ClassINET,
 					Ttl:    ttl,

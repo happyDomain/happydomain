@@ -56,7 +56,7 @@ func (s *CNAME) GenComment(origin string) string {
 func (s *CNAME) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	rrs = append(rrs, &dns.CNAME{
 		Hdr: dns.RR_Header{
-			Name:   domain,
+			Name:   utils.DomainJoin(domain),
 			Rrtype: dns.TypeCNAME,
 			Class:  dns.ClassINET,
 			Ttl:    ttl,
@@ -82,7 +82,7 @@ func (s *SpecialCNAME) GenComment(origin string) string {
 func (s *SpecialCNAME) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	rrs = append(rrs, &dns.CNAME{
 		Hdr: dns.RR_Header{
-			Name:   s.SubDomain + "." + domain,
+			Name:   utils.DomainJoin(s.SubDomain, domain),
 			Rrtype: dns.TypeCNAME,
 			Class:  dns.ClassINET,
 			Ttl:    ttl,

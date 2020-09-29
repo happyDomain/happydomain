@@ -39,6 +39,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/utils"
 )
 
 type SSHFP struct {
@@ -82,7 +83,7 @@ func (s *Server) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR)
 	if s.A != nil {
 		rrs = append(rrs, &dns.A{
 			Hdr: dns.RR_Header{
-				Name:   domain,
+				Name:   utils.DomainJoin(domain),
 				Rrtype: dns.TypeA,
 				Class:  dns.ClassINET,
 				Ttl:    ttl,
@@ -93,7 +94,7 @@ func (s *Server) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR)
 	if s.AAAA != nil {
 		rrs = append(rrs, &dns.AAAA{
 			Hdr: dns.RR_Header{
-				Name:   domain,
+				Name:   utils.DomainJoin(domain),
 				Rrtype: dns.TypeAAAA,
 				Class:  dns.ClassINET,
 				Ttl:    ttl,
@@ -104,7 +105,7 @@ func (s *Server) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR)
 	for _, sshfp := range s.SSHFP {
 		rrs = append(rrs, &dns.SSHFP{
 			Hdr: dns.RR_Header{
-				Name:   domain,
+				Name:   utils.DomainJoin(domain),
 				Rrtype: dns.TypeSSHFP,
 				Class:  dns.ClassINET,
 				Ttl:    ttl,

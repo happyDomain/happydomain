@@ -178,7 +178,7 @@ func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) 
 		for _, mx := range s.MX {
 			rrs = append(rrs, &dns.MX{
 				Hdr: dns.RR_Header{
-					Name:   domain,
+					Name:   utils.DomainJoin(domain),
 					Rrtype: dns.TypeMX,
 					Class:  dns.ClassINET,
 					Ttl:    ttl,
@@ -192,7 +192,7 @@ func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) 
 	if s.SPF != nil {
 		rrs = append(rrs, &dns.TXT{
 			Hdr: dns.RR_Header{
-				Name:   domain,
+				Name:   utils.DomainJoin(domain),
 				Rrtype: dns.TypeTXT,
 				Class:  dns.ClassINET,
 				Ttl:    ttl,
@@ -204,7 +204,7 @@ func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) 
 	for selector, d := range s.DKIM {
 		rrs = append(rrs, &dns.TXT{
 			Hdr: dns.RR_Header{
-				Name:   selector + "._domainkey." + domain,
+				Name:   utils.DomainJoin(selector+"._domainkey", domain),
 				Rrtype: dns.TypeTXT,
 				Class:  dns.ClassINET,
 				Ttl:    ttl,
@@ -216,7 +216,7 @@ func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) 
 	if s.DMARC != nil {
 		rrs = append(rrs, &dns.TXT{
 			Hdr: dns.RR_Header{
-				Name:   "_dmarc." + domain,
+				Name:   utils.DomainJoin("_dmarc", domain),
 				Rrtype: dns.TypeTXT,
 				Class:  dns.ClassINET,
 				Ttl:    ttl,
@@ -228,7 +228,7 @@ func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) 
 	if s.MTA_STS != nil {
 		rrs = append(rrs, &dns.TXT{
 			Hdr: dns.RR_Header{
-				Name:   "_mta-sts." + domain,
+				Name:   utils.DomainJoin("_mta-sts", domain),
 				Rrtype: dns.TypeTXT,
 				Class:  dns.ClassINET,
 				Ttl:    ttl,
@@ -240,7 +240,7 @@ func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) 
 	if s.TLS_RPT != nil {
 		rrs = append(rrs, &dns.TXT{
 			Hdr: dns.RR_Header{
-				Name:   "_smtp._tls." + domain,
+				Name:   utils.DomainJoin("_smtp._tls", domain),
 				Rrtype: dns.TypeTXT,
 				Class:  dns.ClassINET,
 				Ttl:    ttl,

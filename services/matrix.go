@@ -39,6 +39,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/utils"
 )
 
 type MatrixIM struct {
@@ -90,7 +91,7 @@ destloop:
 
 func (s *MatrixIM) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	for _, matrix := range s.Matrix {
-		rrs = append(rrs, matrix.GenRRs("_matrix._tcp."+domain, ttl, origin)...)
+		rrs = append(rrs, matrix.GenRRs(utils.DomainJoin("_matrix._tcp", domain), ttl, origin)...)
 	}
 	return
 }

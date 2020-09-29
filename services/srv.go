@@ -106,7 +106,7 @@ func (s *UnknownSRV) GenComment(origin string) string {
 
 func (s *UnknownSRV) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	for _, service := range s.SRV {
-		rrs = append(rrs, service.GenRRs(fmt.Sprintf("_%s._%s.%s", s.Name, s.Proto, domain), ttl, origin)...)
+		rrs = append(rrs, service.GenRRs(utils.DomainJoin(fmt.Sprintf("_%s._%s", s.Name, s.Proto), domain), ttl, origin)...)
 	}
 	return
 }

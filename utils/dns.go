@@ -79,3 +79,24 @@ func DomainFQDN(subdomain string, origin string) string {
 		return subdomain + "." + origin
 	}
 }
+
+// DomainJoin appends each relative domains passed as argument.
+func DomainJoin(domains ...string) (ret string) {
+	for _, d := range domains {
+		if d == "@" {
+			break
+		} else if d != "" {
+			ret += "." + d
+		}
+
+		if ret[len(ret)-1] == '.' {
+			break
+		}
+	}
+
+	if len(ret) >= 1 {
+		ret = ret[1:]
+	}
+
+	return
+}

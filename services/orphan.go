@@ -52,7 +52,7 @@ func (s *Orphan) GenComment(origin string) string {
 }
 
 func (s *Orphan) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
-	rr, _ := dns.NewRR(fmt.Sprintf("%s %d IN %s", domain, ttl, s.RR))
+	rr, _ := dns.NewRR(fmt.Sprintf("$ORIGIN %s\n%s %d IN %s", origin, domain, ttl, s.RR))
 	if rr != nil {
 		rrs = append(rrs, rr)
 	}
