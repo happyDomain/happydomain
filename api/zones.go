@@ -33,7 +33,7 @@ package api
 
 import (
 	"crypto/sha1"
-	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -58,8 +58,8 @@ func init() {
 
 	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain", apiAuthHandler(domainHandler(zoneHandler(getZoneSubdomain))))
 	router.POST("/api/domains/:domain/zone/:zoneid/:subdomain", apiAuthHandler(domainHandler(zoneHandler(addZoneService))))
-	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain/*serviceid", apiAuthHandler(domainHandler(zoneHandler(getZoneService))))
-	router.DELETE("/api/domains/:domain/zone/:zoneid/:subdomain/*serviceid", apiAuthHandler(domainHandler(zoneHandler(deleteZoneService))))
+	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain/:serviceid", apiAuthHandler(domainHandler(zoneHandler(getZoneService))))
+	router.DELETE("/api/domains/:domain/zone/:zoneid/:subdomain/:serviceid", apiAuthHandler(domainHandler(zoneHandler(deleteZoneService))))
 
 	router.POST("/api/domains/:domain/import_zone", apiAuthHandler(domainHandler(importZone)))
 	router.POST("/api/domains/:domain/view_zone/:zoneid", apiAuthHandler(domainHandler(zoneHandler(viewZone))))
@@ -157,7 +157,7 @@ func addZoneService(opts *config.Options, req *RequestResources, body io.Reader)
 }
 
 func getZoneService(opts *config.Options, req *RequestResources, body io.Reader) Response {
-	serviceid, err := base64.StdEncoding.DecodeString(req.Ps.ByName("serviceid")[1:])
+	serviceid, err := hex.DecodeString(req.Ps.ByName("serviceid"))
 	if err != nil {
 		return APIErrorResponse{
 			err: err,
@@ -427,7 +427,7 @@ func updateZoneService(opts *config.Options, req *RequestResources, body io.Read
 }
 
 func deleteZoneService(opts *config.Options, req *RequestResources, body io.Reader) Response {
-	serviceid, err := base64.StdEncoding.DecodeString(req.Ps.ByName("serviceid")[1:])
+	serviceid, err := hex.DecodeString(req.Ps.ByName("serviceid"))
 	if err != nil {
 		return APIErrorResponse{
 			err: err,

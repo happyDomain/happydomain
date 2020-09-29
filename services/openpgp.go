@@ -44,9 +44,9 @@ import (
 )
 
 type OpenPGP struct {
-	Username   string `json:"username,omitempty"`
-	Identifier string `json:"identifier,omitempty"`
-	PublicKey  []byte `json:"pubkey"`
+	Username   string              `json:"username,omitempty"`
+	Identifier string              `json:"identifier,omitempty"`
+	PublicKey  happydns.HexaString `json:"pubkey"`
 }
 
 func (s *OpenPGP) GetNbResources() int {
@@ -65,7 +65,7 @@ func (s *OpenPGP) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR
 
 		rrs = append(rrs, &dns.OPENPGPKEY{
 			Hdr: dns.RR_Header{
-				Name:   fmt.Sprintf("_%s._openpgpkey.%s", s.Identifier, domain),
+				Name:   fmt.Sprintf("%s._openpgpkey.%s", s.Identifier, domain),
 				Rrtype: dns.TypeOPENPGPKEY,
 				Class:  dns.ClassINET,
 				Ttl:    ttl,
@@ -77,12 +77,12 @@ func (s *OpenPGP) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR
 }
 
 type SMimeCert struct {
-	Username     string `json:"username,omitempty"`
-	Identifier   string `json:"identifier,omitempty"`
-	CertUsage    uint8  `json:"certusage"`
-	Selector     uint8  `json:"selector"`
-	MatchingType uint8  `json:"matchingtype"`
-	Certificate  []byte `json:"certificate"`
+	Username     string              `json:"username,omitempty"`
+	Identifier   string              `json:"identifier,omitempty"`
+	CertUsage    uint8               `json:"certusage"`
+	Selector     uint8               `json:"selector"`
+	MatchingType uint8               `json:"matchingtype"`
+	Certificate  happydns.HexaString `json:"certificate"`
 }
 
 func (s *SMimeCert) GetNbResources() int {
@@ -101,7 +101,7 @@ func (s *SMimeCert) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.
 
 		rrs = append(rrs, &dns.SMIMEA{
 			Hdr: dns.RR_Header{
-				Name:   fmt.Sprintf("_%s._smimecert.%s", s.Identifier, domain),
+				Name:   fmt.Sprintf("%s._smimecert.%s", s.Identifier, domain),
 				Rrtype: dns.TypeSMIMEA,
 				Class:  dns.ClassINET,
 				Ttl:    ttl,

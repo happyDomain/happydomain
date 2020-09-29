@@ -53,7 +53,7 @@ type ServiceMeta struct {
 	Type string `json:"_svctype"`
 
 	// Id is the Service's identifier.
-	Id []byte `json:"_id,omitempty"`
+	Id HexaString `json:"_id,omitempty"`
 
 	// OwnerId is the User's identifier for the current Service.
 	OwnerId int64 `json:"_ownerid,omitempty"`
