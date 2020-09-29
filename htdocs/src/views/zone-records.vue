@@ -62,53 +62,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(rr, index) in rrsFiltered" :key="index">
-            <td v-if="!rr.edit" style="overflow:hidden; text-overflow: ellipsis;white-space: nowrap;">
-              <b-icon v-if="!expandrrs[index]" icon="chevron-right" @click="toogleRR(index)" />
-              <b-icon v-if="expandrrs[index]" icon="chevron-down" @click="toogleRR(index)" />
-              <span class="text-monospace" :title="rr.string" @click="toogleRR(index)">{{ rr.string }}</span>
-              <div v-show="expandrrs[index]" class="row">
-                <dl class="col-sm-6 row">
-                  <dt class="col-sm-3 text-right">
-                    Class
-                  </dt>
-                  <dd class="col-sm-9 text-muted text-monospace">
-                    {{ rr.fields.Hdr.Class | nsclass }}
-                  </dd>
-                  <dt class="col-sm-3 text-right">
-                    TTL
-                  </dt>
-                  <dd class="col-sm-9 text-muted text-monospace">
-                    {{ rr.fields.Hdr.Ttl }}
-                  </dd>
-                  <dt class="col-sm-3 text-right">
-                    RRType
-                  </dt>
-                  <dd class="col-sm-9 text-muted text-monospace">
-                    {{ rr.fields.Hdr.Rrtype | nsrrtype }}
-                  </dd>
-                </dl>
-                <ul class="col-sm-6" style="list-style: none">
-                  <li v-for="(v,k) in rr.fields" :key="k">
-                    <strong class="float-left mr-2">{{ k }}</strong> <span class="text-muted text-monospace" style="display:block;overflow:hidden; text-overflow: ellipsis;white-space: nowrap;" :title="v">{{ v }}</span>
-                  </li>
-                </ul>
-              </div>
-            </td>
-            <td v-if="rr.edit">
-              <form @submit.stop.prevent="newRR(index)">
-                <input v-model="rr.string" autofocus class="form-control text-monospace">
-              </form>
-            </td>
-            <td>
-              <button v-if="!rr.edit && rr.fields.Hdr.Rrtype != 6" type="button" class="btn btn-sm btn-danger" @click="deleteRR(index)">
-                <b-icon icon="trash-fill" aria-hidden="true" />
-              </button>
-              <button v-if="rr.edit" type="button" class="btn btn-sm btn-success" @click="newRR(index)">
-                <b-icon icon="check" aria-hidden="true" />
-              </button>
-            </td>
-          </tr>
+          <h-record v-for="(rr, index) in rrsFiltered" act-btn :record="rr" :key="index" @save-rr="newRR(index)" @delete-rr="deleteRR(index)" />
         </tbody>
       </table>
     </div>
@@ -125,11 +79,14 @@ import Vue from 'vue'
 
 export default {
 
+  components: {
+    hRecord: () => import('@/components/hRecord')
+  },
+
   data: function () {
     return {
       showDNSSEC: false,
       error: '',
-      expandrrs: {},
       rrs: [],
       query: '',
       domain: {}
@@ -166,10 +123,6 @@ export default {
   },
 
   methods: {
-    toogleRR (idx) {
-      Vue.set(this.expandrrs, idx, !this.expandrrs[idx])
-    },
-
     addRR () {
       this.rrs.push({ edit: true })
       window.scrollTo(0, document.body.scrollHeight)
