@@ -61,5 +61,9 @@ export default {
 
   updateZoneService (domain, id, service) {
     return Api().patch('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id), service)
+  },
+
+  getServiceRecords (domain, id, service) {
+    return Api().get('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(service._domain) + '/' + encodeURIComponent(service._id) + '/records')
   }
 }

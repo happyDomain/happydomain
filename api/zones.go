@@ -60,6 +60,7 @@ func init() {
 	router.POST("/api/domains/:domain/zone/:zoneid/:subdomain", apiAuthHandler(domainHandler(zoneHandler(addZoneService))))
 	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain/:serviceid", apiAuthHandler(domainHandler(zoneHandler(getZoneService))))
 	router.DELETE("/api/domains/:domain/zone/:zoneid/:subdomain/:serviceid", apiAuthHandler(domainHandler(zoneHandler(deleteZoneService))))
+	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain/:serviceid/records", apiAuthHandler(domainHandler(zoneHandler(getServiceRecords))))
 
 	router.POST("/api/domains/:domain/import_zone", apiAuthHandler(domainHandler(importZone)))
 	router.POST("/api/domains/:domain/view_zone/:zoneid", apiAuthHandler(domainHandler(zoneHandler(viewZone))))
@@ -452,5 +453,25 @@ func deleteZoneService(opts *config.Options, req *RequestResources, body io.Read
 
 	return APIResponse{
 		response: req.Zone,
+	}
+}
+
+func getServiceRecords(opts *config.Options, req *RequestResources, body io.Reader) Response {
+	serviceid, err := hex.DecodeString(req.Ps.ByName("serviceid"))
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	svc := req.Zone.FindSubdomainService(req.Ps.ByName("subdomain"), serviceid)
+	if svc == nil {
+		return APIErrorResponse{
+			err: errors.New("Service not found"),
+		}
+	}
+
+	return APIResponse{
+		response: svc.GenRRs(req.Ps.ByName("subdomain"), 3600, req.Domain.DomainName),
 	}
 }
