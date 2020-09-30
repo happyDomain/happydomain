@@ -47,14 +47,14 @@
         </b-col>
         <b-col cols="auto" class="text-center ml-auto mr-auto">
           <b-button-group>
-            <b-button size="sm" :variant="displayFormat === 'grid' ? 'secondary' : 'outline-secondary'" :title="$t('domains.views.grid')" @click="toogleGridView()">
+            <b-button size="sm" :variant="displayFormat === 'grid' ? 'secondary' : 'outline-secondary'" :title="$t('domains.views.grid.title')" @click="toogleGridView()">
               <b-icon icon="grid-fill" aria-hidden="true" />
             </b-button>
-            <b-button size="sm" :variant="displayFormat === 'list' ? 'secondary' : 'outline-secondary'" :title="$t('domains.views.list')" @click="toogleListView()">
+            <b-button size="sm" :variant="displayFormat === 'list' ? 'secondary' : 'outline-secondary'" :title="$t('domains.views.list.title')" @click="toogleListView()">
               <b-icon icon="list-ul" aria-hidden="true" />
             </b-button>
-            <b-button size="sm" :variant="displayFormat === 'records' ? 'secondary' : 'outline-secondary'" :title="$t('domains.views.records')" @click="toogleRecordsView()">
-              <b-icon icon="list-ul" aria-hidden="true" />
+            <b-button size="sm" :variant="displayFormat === 'records' ? 'secondary' : 'outline-secondary'" :title="$t('domains.views.records.title')" @click="toogleRecordsView()">
+              <b-icon icon="menu-button-wide-fill" aria-hidden="true" />
             </b-button>
           </b-button-group>
         </b-col>
