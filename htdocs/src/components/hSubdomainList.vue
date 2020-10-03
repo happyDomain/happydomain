@@ -170,7 +170,7 @@ export default {
       hideDomain: {},
       modal: null,
       myServices: null,
-      services: null,
+      services: {},
       updateServiceInProgress: false
     }
   },
@@ -307,7 +307,7 @@ export default {
     },
 
     isLoading () {
-      return this.myServices == null && this.zoneId === undefined && this.services == null
+      return this.myServices == null && this.zoneId === undefined && this.services === {}
     },
 
     sortedDomains () {

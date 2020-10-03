@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <component :is="displayFormat === 'grid' ? 'b-card' : 'b-list-group'" :class="displayFormat !== 'list' ? 'card-hover' : ''" :style="displayFormat === 'grid' ? 'width: 32%; min-width: 225px; margin-bottom: 1em; cursor: pointer;' : displayFormat === 'records' ? 'margin-bottom: .5em; cursor: pointer;' : ''" no-body>
+  <component v-if="services[service._svctype]" :is="displayFormat === 'grid' ? 'b-card' : 'b-list-group'" :class="displayFormat !== 'list' ? 'card-hover' : ''" :style="displayFormat === 'grid' ? 'width: 32%; min-width: 225px; margin-bottom: 1em; cursor: pointer;' : displayFormat === 'records' ? 'margin-bottom: .5em; cursor: pointer;' : ''" no-body>
     <b-card-body v-if="displayFormat === 'grid'" @click="$emit('showServiceWindow', service)">
       <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">
         {{ categorie }}
