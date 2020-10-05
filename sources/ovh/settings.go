@@ -38,6 +38,7 @@ import (
 	"github.com/ovh/go-ovh/ovh"
 
 	"git.happydns.org/happydns/config"
+	"git.happydns.org/happydns/forms"
 	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/sources"
 )
@@ -46,9 +47,9 @@ const (
 	SESSION_CKEY = "ovh-consumerkey"
 )
 
-func settingsForm(edit bool) *sources.CustomForm {
-	srcFields := []*sources.SourceField{
-		&sources.SourceField{
+func settingsForm(edit bool) *forms.CustomForm {
+	srcFields := []*forms.Field{
+		&forms.Field{
 			Id:          "endpoint",
 			Type:        "string",
 			Label:       "Endpoint",
@@ -60,7 +61,7 @@ func settingsForm(edit bool) *sources.CustomForm {
 	}
 
 	if edit {
-		srcFields = append(srcFields, &sources.SourceField{
+		srcFields = append(srcFields, &forms.Field{
 			Id:          "consumerkey",
 			Type:        "string",
 			Label:       "Consumer Key",
@@ -75,7 +76,7 @@ func settingsForm(edit bool) *sources.CustomForm {
 	return form
 }
 
-func settingsAskCredentials(cfg *config.Options, recallid int64, endpoint string, session *happydns.Session) (*sources.CustomForm, error) {
+func settingsAskCredentials(cfg *config.Options, recallid int64, endpoint string, session *happydns.Session) (*forms.CustomForm, error) {
 	client, err := ovh.NewClient(endpoint, appKey, appSecret, "")
 	if err != nil {
 		return nil, fmt.Errorf("Unable to generate Consumer key, as OVH client can't be created: %w", err)
@@ -95,7 +96,7 @@ func settingsAskCredentials(cfg *config.Options, recallid int64, endpoint string
 	session.SetValue(SESSION_CKEY, response.ConsumerKey)
 
 	// Return some explanation to the user
-	return &sources.CustomForm{
+	return &forms.CustomForm{
 		BeforeText:          "In order allows happyDNS to get and update yours domains, you have to let us access them. To avoid storing your credentials, we will store a unique token that will be associated with your account. For this purpose, you will be redirected to an OVH login screen. The registration will automatically continue",
 		NextButtonText:      "Go to OVH",
 		PreviousButtonText:  "< Previous",
@@ -104,7 +105,7 @@ func settingsAskCredentials(cfg *config.Options, recallid int64, endpoint string
 	}, nil
 }
 
-func (s *OVHAPI) DisplaySettingsForm(state int32, cfg *config.Options, session *happydns.Session, genRecallId sources.GenRecallID) (*sources.CustomForm, error) {
+func (s *OVHAPI) DisplaySettingsForm(state int32, cfg *config.Options, session *happydns.Session, genRecallId forms.GenRecallID) (*forms.CustomForm, error) {
 	switch state {
 	case 0:
 		return settingsForm(s.ConsumerKey != ""), nil
@@ -115,7 +116,7 @@ func (s *OVHAPI) DisplaySettingsForm(state int32, cfg *config.Options, session *
 			recallid := genRecallId()
 			return settingsAskCredentials(cfg, recallid, s.Endpoint, session)
 		} else {
-			return nil, sources.DoneForm
+			return nil, forms.DoneForm
 		}
 	case 2:
 		var consumerKey string
@@ -126,9 +127,9 @@ func (s *OVHAPI) DisplaySettingsForm(state int32, cfg *config.Options, session *
 		} else {
 			s.ConsumerKey = consumerKey
 			session.DropKey(SESSION_CKEY)
-			return nil, sources.DoneForm
+			return nil, forms.DoneForm
 		}
 	default:
-		return nil, sources.CancelForm
+		return nil, forms.CancelForm
 	}
 }

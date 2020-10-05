@@ -44,24 +44,24 @@ type ServiceCreator func() happydns.Service
 type SubServiceCreator func() interface{}
 type ServiceAnalyzer func(*Analyzer) error
 
-type svc struct {
+type Svc struct {
 	Creator  ServiceCreator
 	Analyzer ServiceAnalyzer
 	Infos    ServiceInfos
 	Weight   uint32
 }
 
-type ByWeight []*svc
+type ByWeight []*Svc
 
 func (a ByWeight) Len() int           { return len(a) }
 func (a ByWeight) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByWeight) Less(i, j int) bool { return a[i].Weight < a[j].Weight }
 
 var (
-	services         map[string]*svc              = map[string]*svc{}
+	services         map[string]*Svc              = map[string]*Svc{}
 	subServices      map[string]SubServiceCreator = map[string]SubServiceCreator{}
 	pathToSvcsModule string                       = "git.happydns.org/happydns/services"
-	ordered_services []*svc
+	ordered_services []*Svc
 )
 
 func RegisterService(creator ServiceCreator, analyzer ServiceAnalyzer, infos ServiceInfos, weight uint32, aliases ...string) {
@@ -72,7 +72,7 @@ func RegisterService(creator ServiceCreator, analyzer ServiceAnalyzer, infos Ser
 	name := baseType.String()
 	log.Println("Registering new service:", name)
 
-	svc := &svc{
+	svc := &Svc{
 		creator,
 		analyzer,
 		infos,
@@ -117,7 +117,7 @@ func RegisterSubServices(t reflect.Type) {
 	}
 }
 
-func OrderedServices() []*svc {
+func OrderedServices() []*Svc {
 	if ordered_services == nil {
 		// Create the list
 		for _, svc := range services {
@@ -131,7 +131,7 @@ func OrderedServices() []*svc {
 	return ordered_services
 }
 
-func GetServices() *map[string]*svc {
+func GetServices() *map[string]*Svc {
 	return &services
 }
 

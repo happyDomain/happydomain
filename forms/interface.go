@@ -29,76 +29,28 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package api
+package forms // import "happydns.org/forms"
 
 import (
-	"bytes"
 	"errors"
-	"io"
-	"net/http"
-	"strings"
-
-	"github.com/julienschmidt/httprouter"
 
 	"git.happydns.org/happydns/config"
-	"git.happydns.org/happydns/forms"
-	"git.happydns.org/happydns/sources"
+	"git.happydns.org/happydns/model"
 )
 
-func init() {
-	router.GET("/api/source_specs", ApiHandler(getSourceSpecs))
-	router.GET("/api/source_specs/:ssid", ApiHandler(getSourceSpec))
-	router.GET("/api/source_specs/:ssid/icon.png", ApiHandler(getSourceSpecIcon))
+// GenRecallID
+type GenRecallID func() int64
+
+// CustomSettingsForm are functions to declare when we want to display a custom user experience when asking for Source's settings.
+type CustomSettingsForm interface {
+	// DisplaySettingsForm generates the CustomForm corresponding to the asked target state.
+	DisplaySettingsForm(int32, *config.Options, *happydns.Session, GenRecallID) (*CustomForm, error)
 }
 
-func getSourceSpecs(_ *config.Options, p httprouter.Params, body io.Reader) Response {
-	srcs := sources.GetSources()
+var (
+	// DoneForm is the error raised when there is no more step to display, and edition is OK.
+	DoneForm = errors.New("Done")
 
-	ret := map[string]sources.SourceInfos{}
-	for k, src := range *srcs {
-		ret[k] = src.Infos
-	}
-
-	return APIResponse{
-		response: ret,
-	}
-}
-
-func getSourceSpecIcon(_ *config.Options, p httprouter.Params, body io.Reader) Response {
-	ssid := string(p.ByName("ssid"))
-
-	if cnt, ok := sources.Icons[strings.TrimSuffix(ssid, ".png")]; ok {
-		return &FileResponse{
-			contentType: "image/png",
-			content:     bytes.NewBuffer(cnt),
-		}
-	} else {
-		return APIErrorResponse{
-			status: http.StatusNotFound,
-			err:    errors.New("Icon not found."),
-		}
-	}
-}
-
-type viewSourceSpec struct {
-	Fields       []*forms.Field `json:"fields,omitempty"`
-	Capabilities []string       `json:"capabilities,omitempty"`
-}
-
-func getSourceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Response {
-	ssid := string(p.ByName("ssid"))
-
-	src, err := sources.FindSource(ssid)
-	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	}
-
-	return APIResponse{
-		response: viewSourceSpec{
-			Fields:       sources.GenSourceFields(src),
-			Capabilities: sources.GetSourceCapabilities(src),
-		},
-	}
-}
+	// CancelForm is the error raised when there is no more step to display and should redirect to the previous page.
+	CancelForm = errors.New("Cancel")
+)

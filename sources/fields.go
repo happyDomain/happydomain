@@ -35,46 +35,16 @@ import (
 	"reflect"
 	"strings"
 
+	"git.happydns.org/happydns/forms"
 	"git.happydns.org/happydns/model"
 )
 
-// SourceField
-type SourceField struct {
-	// Id is the field identifier.
-	Id string `json:"id"`
-
-	// Type is the string representation of the field's type.
-	Type string `json:"type"`
-
-	// Label is the title given to the field, displayed as <label> tag on the interface.
-	Label string `json:"label,omitempty"`
-
-	// Placeholder is the placeholder attribute of the corresponding <input> tag.
-	Placeholder string `json:"placeholder,omitempty"`
-
-	// Default is the preselected value or the default value in case the field is not filled by the user.
-	Default string `json:"default,omitempty"`
-
-	// Choices holds the differents choices shown to the user in <select> tag.
-	Choices []string `json:"choices,omitempty"`
-
-	// Required indicates whether the field has to be filled or not.
-	Required bool `json:"required,omitempty"`
-
-	// Secret indicates if the field contains sensitive information such as API key, in order to hide
-	// the field when not needed. When typing, it doesn't hide characters like in password input.
-	Secret bool `json:"secret,omitempty"`
-
-	// Description stores an helpfull sentence describing the field.
-	Description string `json:"description,omitempty"`
-}
-
 // GenSourceField generates a generic SourceField based on the happydns tag.
-func GenSourceField(field reflect.StructField) (f *SourceField) {
+func GenSourceField(field reflect.StructField) (f *forms.Field) {
 	jsonTag := field.Tag.Get("json")
 	jsonTuples := strings.Split(jsonTag, ",")
 
-	f = &SourceField{
+	f = &forms.Field{
 		Type: field.Type.String(),
 	}
 
@@ -117,7 +87,7 @@ func GenSourceField(field reflect.StructField) (f *SourceField) {
 }
 
 // GenSourceFields generates corresponding SourceFields of the given Source.
-func GenSourceFields(src happydns.Source) (fields []*SourceField) {
+func GenSourceFields(src happydns.Source) (fields []*forms.Field) {
 	if src != nil {
 		srcMeta := reflect.Indirect(reflect.ValueOf(src)).Type()
 

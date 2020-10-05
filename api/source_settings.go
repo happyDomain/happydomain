@@ -37,6 +37,7 @@ import (
 	"io"
 
 	"git.happydns.org/happydns/config"
+	"git.happydns.org/happydns/forms"
 	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/sources"
 	"git.happydns.org/happydns/storage"
@@ -57,8 +58,8 @@ type SourceSettingsState struct {
 
 type SourceSettingsResponse struct {
 	happydns.Source `json:"Source,omitempty"`
-	From            *sources.CustomForm `json:"form,omitempty"`
-	Redirect        *string             `json:"redirect,omitempty"`
+	From            *forms.CustomForm `json:"form,omitempty"`
+	Redirect        *string           `json:"redirect,omitempty"`
 }
 
 func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.Reader) Response {
@@ -91,12 +92,12 @@ func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.
 		req.Session.GetValue(fmt.Sprintf("source-creation-%d-next", *uss.Recall), &uss.Redirect)
 	}
 
-	var form *sources.CustomForm
+	var form *forms.CustomForm
 
-	csf, ok := src.(sources.CustomSettingsForm)
+	csf, ok := src.(forms.CustomSettingsForm)
 	if !ok {
 		if uss.State == 1 {
-			err = sources.DoneForm
+			err = forms.DoneForm
 		} else {
 			form = sources.GenDefaultSettingsForm(src)
 		}
@@ -114,7 +115,7 @@ func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.
 	}
 
 	if err != nil {
-		if err != sources.DoneForm {
+		if err != forms.DoneForm {
 			return APIErrorResponse{
 				err: err,
 			}

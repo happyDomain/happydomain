@@ -29,76 +29,37 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package api
+package forms // import "happydns.org/forms"
 
-import (
-	"bytes"
-	"errors"
-	"io"
-	"net/http"
-	"strings"
+import ()
 
-	"github.com/julienschmidt/httprouter"
+// Field
+type Field struct {
+	// Id is the field identifier.
+	Id string `json:"id"`
 
-	"git.happydns.org/happydns/config"
-	"git.happydns.org/happydns/forms"
-	"git.happydns.org/happydns/sources"
-)
+	// Type is the string representation of the field's type.
+	Type string `json:"type"`
 
-func init() {
-	router.GET("/api/source_specs", ApiHandler(getSourceSpecs))
-	router.GET("/api/source_specs/:ssid", ApiHandler(getSourceSpec))
-	router.GET("/api/source_specs/:ssid/icon.png", ApiHandler(getSourceSpecIcon))
-}
+	// Label is the title given to the field, displayed as <label> tag on the interface.
+	Label string `json:"label,omitempty"`
 
-func getSourceSpecs(_ *config.Options, p httprouter.Params, body io.Reader) Response {
-	srcs := sources.GetSources()
+	// Placeholder is the placeholder attribute of the corresponding <input> tag.
+	Placeholder string `json:"placeholder,omitempty"`
 
-	ret := map[string]sources.SourceInfos{}
-	for k, src := range *srcs {
-		ret[k] = src.Infos
-	}
+	// Default is the preselected value or the default value in case the field is not filled by the user.
+	Default string `json:"default,omitempty"`
 
-	return APIResponse{
-		response: ret,
-	}
-}
+	// Choices holds the differents choices shown to the user in <select> tag.
+	Choices []string `json:"choices,omitempty"`
 
-func getSourceSpecIcon(_ *config.Options, p httprouter.Params, body io.Reader) Response {
-	ssid := string(p.ByName("ssid"))
+	// Required indicates whether the field has to be filled or not.
+	Required bool `json:"required,omitempty"`
 
-	if cnt, ok := sources.Icons[strings.TrimSuffix(ssid, ".png")]; ok {
-		return &FileResponse{
-			contentType: "image/png",
-			content:     bytes.NewBuffer(cnt),
-		}
-	} else {
-		return APIErrorResponse{
-			status: http.StatusNotFound,
-			err:    errors.New("Icon not found."),
-		}
-	}
-}
+	// Secret indicates if the field contains sensitive information such as API key, in order to hide
+	// the field when not needed. When typing, it doesn't hide characters like in password input.
+	Secret bool `json:"secret,omitempty"`
 
-type viewSourceSpec struct {
-	Fields       []*forms.Field `json:"fields,omitempty"`
-	Capabilities []string       `json:"capabilities,omitempty"`
-}
-
-func getSourceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Response {
-	ssid := string(p.ByName("ssid"))
-
-	src, err := sources.FindSource(ssid)
-	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	}
-
-	return APIResponse{
-		response: viewSourceSpec{
-			Fields:       sources.GenSourceFields(src),
-			Capabilities: sources.GetSourceCapabilities(src),
-		},
-	}
+	// Description stores an helpfull sentence describing the field.
+	Description string `json:"description,omitempty"`
 }
