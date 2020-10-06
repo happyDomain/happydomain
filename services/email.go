@@ -255,7 +255,7 @@ func email_analyze(a *Analyzer) (err error) {
 	services := map[string]*EMail{}
 
 	// Handle only MX records
-	for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeMX}) {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeMX}) {
 		if mx, ok := record.(*dns.MX); ok {
 			dn := mx.Header().Name
 
@@ -271,7 +271,7 @@ func email_analyze(a *Analyzer) (err error) {
 				},
 			)
 
-			err = a.useRR(
+			err = a.UseRR(
 				record,
 				dn,
 				services[dn],
@@ -284,7 +284,7 @@ func email_analyze(a *Analyzer) (err error) {
 
 	for domain, service := range services {
 		// Is there SPF record?
-		for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: domain, Contains: "v=spf1"}) {
+		for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: domain, Contains: "v=spf1"}) {
 			if service.SPF == nil {
 				service.SPF = &SPF{}
 			}
@@ -304,7 +304,7 @@ func email_analyze(a *Analyzer) (err error) {
 				service.SPF.Content = strings.Join(fields, " ")
 			}
 
-			err = a.useRR(record, domain, service)
+			err = a.UseRR(record, domain, service)
 			if err != nil {
 				return
 			}
@@ -312,7 +312,7 @@ func email_analyze(a *Analyzer) (err error) {
 
 		service.DKIM = map[string]*DKIM{}
 		// Is there DKIM record?
-		for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, SubdomainsOf: "_domainkey." + domain}) {
+		for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, SubdomainsOf: "_domainkey." + domain}) {
 			selector := strings.TrimSuffix(record.Header().Name, "._domainkey."+domain)
 
 			if _, ok := service.DKIM[selector]; !ok {
@@ -323,14 +323,14 @@ func email_analyze(a *Analyzer) (err error) {
 				service.DKIM[selector].Fields = append(service.DKIM[selector].Fields, strings.Split(strings.Join(txt.Txt, ""), ";")...)
 			}
 
-			err = a.useRR(record, domain, service)
+			err = a.UseRR(record, domain, service)
 			if err != nil {
 				return
 			}
 		}
 
 		// Is there DMARC record?
-		for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_dmarc." + domain}) {
+		for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_dmarc." + domain}) {
 			if service.DMARC == nil {
 				service.DMARC = &DMARC{}
 			}
@@ -339,14 +339,14 @@ func email_analyze(a *Analyzer) (err error) {
 				service.DMARC.Fields = append(service.DMARC.Fields, strings.Split(strings.Join(txt.Txt, ""), ";")...)
 			}
 
-			err = a.useRR(record, domain, service)
+			err = a.UseRR(record, domain, service)
 			if err != nil {
 				return
 			}
 		}
 
 		// Is there MTA-STS record?
-		for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_mta-sts." + domain}) {
+		for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_mta-sts." + domain}) {
 			if service.MTA_STS == nil {
 				service.MTA_STS = &MTA_STS{}
 			}
@@ -355,14 +355,14 @@ func email_analyze(a *Analyzer) (err error) {
 				service.MTA_STS.Fields = append(service.MTA_STS.Fields, strings.Split(strings.Join(txt.Txt, ""), ";")...)
 			}
 
-			err = a.useRR(record, domain, service)
+			err = a.UseRR(record, domain, service)
 			if err != nil {
 				return
 			}
 		}
 
 		// Is there MTA-STS record?
-		for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_smtp._tls." + domain}) {
+		for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_smtp._tls." + domain}) {
 			if service.TLS_RPT == nil {
 				service.TLS_RPT = &TLS_RPT{}
 			}
@@ -371,7 +371,7 @@ func email_analyze(a *Analyzer) (err error) {
 				service.TLS_RPT.Fields = append(service.TLS_RPT.Fields, strings.Split(strings.Join(txt.Txt, ""), ";")...)
 			}
 
-			err = a.useRR(record, domain, service)
+			err = a.UseRR(record, domain, service)
 			if err != nil {
 				return
 			}

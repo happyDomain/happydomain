@@ -94,10 +94,10 @@ func (s *SpecialCNAME) GenRRs(domain string, ttl uint32, origin string) (rrs []d
 
 func specialalias_analyze(a *Analyzer) error {
 	// Try handle specials domains using CNAME
-	for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME, Prefix: "_"}) {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME, Prefix: "_"}) {
 		subdomains := SRV_DOMAIN.FindStringSubmatch(record.Header().Name)
 		if cname, ok := record.(*dns.CNAME); len(subdomains) == 4 && ok {
-			a.useRR(record, subdomains[3], &SpecialCNAME{
+			a.UseRR(record, subdomains[3], &SpecialCNAME{
 				SubDomain: fmt.Sprintf("_%s._%s", subdomains[1], subdomains[2]),
 				Target:    cname.Target,
 			})
@@ -107,13 +107,13 @@ func specialalias_analyze(a *Analyzer) error {
 }
 
 func alias_analyze(a *Analyzer) error {
-	for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME}) {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME}) {
 		if cname, ok := record.(*dns.CNAME); ok {
 			newrr := &CNAME{
 				Target: strings.TrimSuffix(cname.Target, "."+a.origin),
 			}
 
-			a.useRR(record, cname.Header().Name, newrr)
+			a.UseRR(record, cname.Header().Name, newrr)
 		}
 	}
 	return nil

@@ -61,7 +61,7 @@ type AnalyzerRecordFilter struct {
 	Ttl          uint32
 }
 
-func (a *Analyzer) searchRR(arrs ...AnalyzerRecordFilter) (rrs []dns.RR) {
+func (a *Analyzer) SearchRR(arrs ...AnalyzerRecordFilter) (rrs []dns.RR) {
 	for _, record := range a.zone {
 		for _, arr := range arrs {
 			if strings.HasPrefix(record.Header().Name, arr.Prefix) &&
@@ -79,7 +79,7 @@ func (a *Analyzer) searchRR(arrs ...AnalyzerRecordFilter) (rrs []dns.RR) {
 	return
 }
 
-func (a *Analyzer) useRR(rr dns.RR, domain string, svc happydns.Service) error {
+func (a *Analyzer) UseRR(rr dns.RR, domain string, svc happydns.Service) error {
 	found := false
 	for k, record := range a.zone {
 		if record == rr {

@@ -124,7 +124,7 @@ var (
 
 func tlsa_analyze(a *Analyzer) (err error) {
 	pool := map[string]*TLSAs{}
-	for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeTLSA}) {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTLSA}) {
 		subdomains := TLSA_DOMAIN.FindStringSubmatch(record.Header().Name)
 		if tlsa, ok := record.(*dns.TLSA); len(subdomains) == 4 && ok {
 			var port uint64
@@ -152,7 +152,7 @@ func tlsa_analyze(a *Analyzer) (err error) {
 				},
 			)
 
-			err = a.useRR(
+			err = a.UseRR(
 				record,
 				subdomains[3],
 				pool[subdomains[3]],

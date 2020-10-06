@@ -97,7 +97,7 @@ func (s *Origin) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR)
 }
 
 func origin_analyze(a *Analyzer) error {
-	for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeSOA}) {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeSOA}) {
 		if soa, ok := record.(*dns.SOA); ok {
 			origin := &Origin{
 				Ns:      soa.Ns,
@@ -109,16 +109,16 @@ func origin_analyze(a *Analyzer) error {
 				Negttl:  time.Duration(soa.Minttl) * time.Second,
 			}
 
-			a.useRR(
+			a.UseRR(
 				record,
 				soa.Header().Name,
 				origin,
 			)
 
-			for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeNS, Domain: soa.Header().Name}) {
+			for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeNS, Domain: soa.Header().Name}) {
 				if ns, ok := record.(*dns.NS); ok {
 					origin.NameServers = append(origin.NameServers, ns.Ns)
-					a.useRR(
+					a.UseRR(
 						record,
 						ns.Header().Name,
 						origin,

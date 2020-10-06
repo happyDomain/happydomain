@@ -93,19 +93,7 @@ type viewServiceSpec struct {
 	Fields []service_field `json:"fields,omitempty"`
 }
 
-func getServiceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Response {
-	ssid := string(p.ByName("ssid"))
-
-	svc, err := svcs.FindSubService(ssid)
-	if err != nil {
-		return APIErrorResponse{
-			err:    err,
-			status: http.StatusNotFound,
-		}
-	}
-
-	svcType := reflect.Indirect(reflect.ValueOf(svc)).Type()
-
+func getSpecs(svcType reflect.Type) viewServiceSpec {
 	fields := []service_field{}
 	for i := 0; i < svcType.NumField(); i += 1 {
 		jsonTag := svcType.Field(i).Tag.Get("json")
@@ -153,7 +141,21 @@ func getServiceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Resp
 		fields = append(fields, f)
 	}
 
+	return viewServiceSpec{fields}
+}
+
+func getServiceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Response {
+	ssid := string(p.ByName("ssid"))
+
+	svc, err := svcs.FindSubService(ssid)
+	if err != nil {
+		return APIErrorResponse{
+			err:    err,
+			status: http.StatusNotFound,
+		}
+	}
+
 	return APIResponse{
-		response: viewServiceSpec{fields},
+		response: getSpecs(reflect.Indirect(reflect.ValueOf(svc)).Type()),
 	}
 }

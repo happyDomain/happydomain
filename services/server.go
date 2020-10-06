@@ -122,7 +122,7 @@ func (s *Server) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR)
 func server_analyze(a *Analyzer) error {
 	pool := map[string][]dns.RR{}
 
-	for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeA}, AnalyzerRecordFilter{Type: dns.TypeAAAA}, AnalyzerRecordFilter{Type: dns.TypeSSHFP}) {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeA}, AnalyzerRecordFilter{Type: dns.TypeAAAA}, AnalyzerRecordFilter{Type: dns.TypeSSHFP}) {
 		domain := record.Header().Name
 
 		pool[domain] = append(pool[domain], record)
@@ -156,7 +156,7 @@ next_pool:
 		}
 
 		for _, rr := range rrs {
-			a.useRR(rr, dn, s)
+			a.UseRR(rr, dn, s)
 		}
 	}
 

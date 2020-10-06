@@ -97,7 +97,7 @@ func (s *Delegation) GenRRs(domain string, ttl uint32, origin string) (rrs []dns
 func delegation_analyze(a *Analyzer) error {
 	delegations := map[string]*Delegation{}
 
-	for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeNS}) {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeNS}) {
 		if ns, ok := record.(*dns.NS); ok {
 			if _, ok := delegations[ns.Header().Name]; !ok {
 				delegations[ns.Header().Name] = &Delegation{}
@@ -105,7 +105,7 @@ func delegation_analyze(a *Analyzer) error {
 
 			delegations[ns.Header().Name].NameServers = append(delegations[ns.Header().Name].NameServers, ns.Ns)
 
-			a.useRR(
+			a.UseRR(
 				record,
 				ns.Header().Name,
 				delegations[ns.Header().Name],
@@ -114,7 +114,7 @@ func delegation_analyze(a *Analyzer) error {
 	}
 
 	for subdomain := range delegations {
-		for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeDS, Domain: subdomain}) {
+		for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeDS, Domain: subdomain}) {
 			if ds, ok := record.(*dns.DS); ok {
 				delegations[subdomain].DS = append(delegations[subdomain].DS, DS{
 					KeyTag:     ds.KeyTag,
@@ -123,7 +123,7 @@ func delegation_analyze(a *Analyzer) error {
 					Digest:     ds.Digest,
 				})
 
-				a.useRR(
+				a.UseRR(
 					record,
 					subdomain,
 					delegations[subdomain],

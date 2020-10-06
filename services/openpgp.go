@@ -117,7 +117,7 @@ func (s *SMimeCert) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.
 }
 
 func openpgpkey_analyze(a *Analyzer) (err error) {
-	for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeOPENPGPKEY, Contains: "._openpgpkey."}) {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeOPENPGPKEY, Contains: "._openpgpkey."}) {
 		if openpgpkey, ok := record.(*dns.OPENPGPKEY); ok {
 			domain := record.Header().Name
 			domain = domain[strings.Index(domain, "._openpgpkey")+13:]
@@ -130,7 +130,7 @@ func openpgpkey_analyze(a *Analyzer) (err error) {
 				return
 			}
 
-			err = a.useRR(
+			err = a.UseRR(
 				record,
 				domain,
 				&OpenPGP{
@@ -147,7 +147,7 @@ func openpgpkey_analyze(a *Analyzer) (err error) {
 }
 
 func smimea_analyze(a *Analyzer) (err error) {
-	for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeSMIMEA, Contains: "._smimecert."}) {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeSMIMEA, Contains: "._smimecert."}) {
 		if smimecert, ok := record.(*dns.SMIMEA); ok {
 			domain := record.Header().Name
 			domain = domain[strings.Index(domain, "._smimecert")+12:]
@@ -160,7 +160,7 @@ func smimea_analyze(a *Analyzer) (err error) {
 				return
 			}
 
-			err = a.useRR(
+			err = a.UseRR(
 				record,
 				domain,
 				&SMimeCert{

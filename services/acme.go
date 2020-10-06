@@ -66,10 +66,10 @@ func (s *ACMEChallenge) GenRRs(domain string, ttl uint32, origin string) (rrs []
 }
 
 func acmechallenge_analyze(a *Analyzer) error {
-	for _, record := range a.searchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_acme-challenge"}) {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_acme-challenge"}) {
 		domain := strings.TrimPrefix(record.Header().Name, "_acme-challenge.")
 		if txt, ok := record.(*dns.TXT); ok {
-			a.useRR(record, domain, &ACMEChallenge{
+			a.UseRR(record, domain, &ACMEChallenge{
 				Challenge: strings.Join(txt.Txt, ""),
 			})
 		}

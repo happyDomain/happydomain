@@ -45,10 +45,10 @@ import (
 
 func init() {
 	router.POST("/api/source_settings/*ssid", apiAuthHandler(getSourceSettingsState))
+	//router.POST("/api/domains/:domain/zone/:zoneid/:subdomain/provider_settings/:psid", apiAuthHandler(getSourceSettingsState))
 }
 
-type SourceSettingsState struct {
-	happydns.Source
+type FormState struct {
 	Id       int64   `json:"_id,omitempty"`
 	Name     string  `json:"_comment"`
 	State    int32   `json:"state"`
@@ -56,10 +56,19 @@ type SourceSettingsState struct {
 	Redirect *string `json:"redirect,omitempty"`
 }
 
+type SourceSettingsState struct {
+	FormState
+	happydns.Source
+}
+
+type FormResponse struct {
+	From     *forms.CustomForm `json:"form,omitempty"`
+	Redirect *string           `json:"redirect,omitempty"`
+}
+
 type SourceSettingsResponse struct {
+	FormResponse
 	happydns.Source `json:"Source,omitempty"`
-	From            *forms.CustomForm `json:"form,omitempty"`
-	Redirect        *string           `json:"redirect,omitempty"`
 }
 
 func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.Reader) Response {
@@ -132,8 +141,8 @@ func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.
 			} else {
 				return APIResponse{
 					response: SourceSettingsResponse{
-						Source:   s,
-						Redirect: uss.Redirect,
+						Source:       s,
+						FormResponse: FormResponse{Redirect: uss.Redirect},
 					},
 				}
 			}
@@ -154,8 +163,8 @@ func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.
 				} else {
 					return APIResponse{
 						response: SourceSettingsResponse{
-							Source:   s,
-							Redirect: uss.Redirect,
+							Source:       s,
+							FormResponse: FormResponse{Redirect: uss.Redirect},
 						},
 					}
 				}
@@ -165,7 +174,7 @@ func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.
 
 	return APIResponse{
 		response: SourceSettingsResponse{
-			From: form,
+			FormResponse: FormResponse{From: form},
 		},
 	}
 }

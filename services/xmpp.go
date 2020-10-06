@@ -113,7 +113,7 @@ func (s *XMPP) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 }
 
 func xmpp_subanalyze(a *Analyzer, prefix string, xmppDomains map[string]*XMPP, field string) error {
-	for _, record := range a.searchRR(AnalyzerRecordFilter{Prefix: prefix, Type: dns.TypeSRV}) {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Prefix: prefix, Type: dns.TypeSRV}) {
 		if srv := parseSRV(record); srv != nil {
 			domain := strings.TrimPrefix(record.Header().Name, prefix)
 
@@ -124,7 +124,7 @@ func xmpp_subanalyze(a *Analyzer, prefix string, xmppDomains map[string]*XMPP, f
 			v := reflect.Indirect(reflect.ValueOf(xmppDomains[domain]))
 			v.FieldByName(field).Set(reflect.Append(v.FieldByName(field), reflect.ValueOf(srv)))
 
-			a.useRR(
+			a.UseRR(
 				record,
 				domain,
 				xmppDomains[domain],

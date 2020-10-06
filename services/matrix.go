@@ -99,7 +99,7 @@ func (s *MatrixIM) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.R
 func matrix_analyze(a *Analyzer) error {
 	matrixDomains := map[string]*MatrixIM{}
 
-	for _, record := range a.searchRR(AnalyzerRecordFilter{Prefix: "_matrix._tcp.", Type: dns.TypeSRV}) {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Prefix: "_matrix._tcp.", Type: dns.TypeSRV}) {
 		if srv := parseSRV(record); srv != nil {
 			domain := strings.TrimPrefix(record.Header().Name, "_matrix._tcp.")
 
@@ -109,7 +109,7 @@ func matrix_analyze(a *Analyzer) error {
 
 			matrixDomains[domain].Matrix = append(matrixDomains[domain].Matrix, srv)
 
-			a.useRR(
+			a.UseRR(
 				record,
 				domain,
 				matrixDomains[domain],
