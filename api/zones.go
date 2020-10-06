@@ -57,10 +57,10 @@ func init() {
 	router.PATCH("/api/domains/:domain/zone/:zoneid", apiAuthHandler(domainHandler(zoneHandler(updateZoneService))))
 
 	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain", apiAuthHandler(domainHandler(zoneHandler(getZoneSubdomain))))
-	router.POST("/api/domains/:domain/zone/:zoneid/:subdomain", apiAuthHandler(domainHandler(zoneHandler(addZoneService))))
-	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain/:serviceid", apiAuthHandler(domainHandler(zoneHandler(getZoneService))))
-	router.DELETE("/api/domains/:domain/zone/:zoneid/:subdomain/:serviceid", apiAuthHandler(domainHandler(zoneHandler(deleteZoneService))))
-	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain/:serviceid/records", apiAuthHandler(domainHandler(zoneHandler(getServiceRecords))))
+	router.POST("/api/domains/:domain/zone/:zoneid/:subdomain/services", apiAuthHandler(domainHandler(zoneHandler(addZoneService))))
+	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain/services/:serviceid", apiAuthHandler(domainHandler(zoneHandler(getZoneService))))
+	router.DELETE("/api/domains/:domain/zone/:zoneid/:subdomain/services/:serviceid", apiAuthHandler(domainHandler(zoneHandler(deleteZoneService))))
+	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain/services/:serviceid/records", apiAuthHandler(domainHandler(zoneHandler(getServiceRecords))))
 
 	router.POST("/api/domains/:domain/import_zone", apiAuthHandler(domainHandler(importZone)))
 	router.POST("/api/domains/:domain/view_zone/:zoneid", apiAuthHandler(domainHandler(zoneHandler(viewZone))))

@@ -52,11 +52,11 @@ export default {
     if (subdomain === '') {
       subdomain = '@'
     }
-    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(subdomain), service)
+    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(subdomain) + '/services', service)
   },
 
   deleteZoneService (domain, id, service) {
-    return Api().delete('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(service._domain) + '/' + encodeURIComponent(service._id))
+    return Api().delete('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(service._domain) + '/services/' + encodeURIComponent(service._id))
   },
 
   updateZoneService (domain, id, service) {
@@ -64,6 +64,6 @@ export default {
   },
 
   getServiceRecords (domain, id, service) {
-    return Api().get('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(service._domain) + '/' + encodeURIComponent(service._id) + '/records')
+    return Api().get('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(service._domain) + '/services/' + encodeURIComponent(service._id) + '/records')
   }
 }
