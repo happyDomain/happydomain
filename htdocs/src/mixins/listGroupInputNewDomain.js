@@ -76,7 +76,7 @@ export default {
     submitNewDomain () {
       if (this.validateNewDomain()) {
         if (this.mySource) {
-          this.selectExistingSource(this.mySource, this.newDomain)
+          this.addDomainToSource(this.mySource, this.newDomain)
         } else {
           this.$router.push('/domains/' + encodeURIComponent(this.newDomain) + '/new')
         }

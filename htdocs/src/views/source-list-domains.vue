@@ -144,35 +144,10 @@ export default {
     },
 
     importDomain (domain) {
-      axios
-        .post('/api/domains', {
-          id_source: this.mySource._id,
-          domain: domain
-        })
-        .then(
-          (response) => {
-            this.$bvToast.toast(
-              this.$t('domains.added-success'), { domain: response.data.domain }, {
-                title: this.$t('domains.attached-new'),
-                autoHideDelay: 5000,
-                variant: 'success',
-                href: '/domains/' + response.data.domain,
-                toaster: 'b-toaster-content-right'
-              }
-            )
-            this.myDomains.push(response.data)
-          },
-          (error) => {
-            this.$bvToast.toast(
-              error.response.data.errmsg, {
-                title: this.$t('errors.domain-attach'),
-                autoHideDelay: 5000,
-                variant: 'danger',
-                toaster: 'b-toaster-content-right'
-              }
-            )
-          }
-        )
+      var vm = this
+      this.addDomainToSource(this.mySource, domain, null, function (data) {
+        vm.myDomains.push(data)
+      })
     },
 
     listImportableDomains () {

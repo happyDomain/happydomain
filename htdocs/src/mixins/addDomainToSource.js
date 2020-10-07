@@ -39,7 +39,7 @@ export default {
   },
 
   methods: {
-    selectExistingSource (source, domain, redirect) {
+    addDomainToSource (source, domain, redirect, cbSUccess) {
       this.validatingNewDomain = true
 
       axios
@@ -50,14 +50,17 @@ export default {
         .then(
           (response) => {
             this.$root.$bvToast.toast(
-              'Great! ' + response.data.domain + ' has been added. You can manage it right now.', {
-                title: 'New domain attached to happyDNS!',
+              this.$t('domains.added-success', { domain: response.data.domain }), {
+                title: this.$t('domains.attached-new'),
                 autoHideDelay: 5000,
                 variant: 'success',
+                href: '/domains/' + response.data.domain,
                 toaster: 'b-toaster-content-right'
               }
             )
-            if (redirect) {
+            if (cbSUccess) {
+              cbSUccess(response.data)
+            } else if (redirect) {
               this.$router.push('/domains/' + encodeURIComponent(response.data.domain))
             } else if (this.refreshDomains) {
               this.refreshDomains()
@@ -69,7 +72,7 @@ export default {
             this.validatingNewDomain = false
             this.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'An error occurs when adding the domain!',
+                title: this.$t('errors.domain-attach'),
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'

@@ -48,7 +48,7 @@
 
     <b-row v-else>
       <b-col offset-md="2" md="8">
-        <source-list ref="sourceList" emit-new-if-empty @newSource="newSource" @sourceSelected="selectExistingSource($event, $route.params.domain, true)" />
+        <source-list ref="sourceList" emit-new-if-empty @newSource="newSource" @sourceSelected="addDomainToSource($event, $route.params.domain, true)" />
 
         <p class="text-center mt-3">
           {{ $t('source.find') }} <a href="#" @click.prevent="newSource">{{ $t('domains.add-now') }}</a>
