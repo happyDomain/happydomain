@@ -89,7 +89,7 @@ func DomainJoin(domains ...string) (ret string) {
 			ret += "." + d
 		}
 
-		if ret[len(ret)-1] == '.' {
+		if len(ret) > 0 && ret[len(ret)-1] == '.' {
 			break
 		}
 	}

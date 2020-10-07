@@ -126,7 +126,9 @@ func (s *EMail) GenComment(origin string) string {
 		nbLabel := len(labels)
 
 		var dn string
-		if len(labels[nbLabel-2]) < 4 {
+		if nbLabel <= 2 {
+			dn = mx.Target
+		} else if len(labels[nbLabel-2]) < 4 {
 			dn = strings.Join(labels[nbLabel-3:], ".") + "."
 		} else {
 			dn = strings.Join(labels[nbLabel-2:], ".") + "."
