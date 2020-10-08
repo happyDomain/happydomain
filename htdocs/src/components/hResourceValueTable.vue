@@ -173,9 +173,7 @@ export default {
     },
 
     addRow () {
-      if ((this.value == null && this.tmp_values.length <= 1) || (this.value != null && this.tmp_values.length <= this.value.length)) {
-        this.tmp_values.push({ _key: this.tmp_values.length, _edit: true })
-      }
+      this.tmp_values.push({ _key: this.tmp_values.length, _edit: true })
     },
 
     cancelEdit (row) {
