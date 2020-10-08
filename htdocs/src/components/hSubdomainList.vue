@@ -88,7 +88,7 @@
           <p>
             Fill the information for the {{ services[modal.svcSelected].name }} at <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
           </p>
-          <h-resource-value v-model="modal.svcData" edit :services="services" :type="modal.svcSelected" @input="modal.svcData = $event" />
+          <h-resource-value ref="addModalResources" v-model="modal.svcData" edit :services="services" :type="modal.svcSelected" @input="modal.svcData = $event" />
         </div>
       </form>
     </b-modal>
@@ -111,7 +111,7 @@
         </b-button>
       </template>
       <form v-if="modal && modal.svcData" id="updSvcForm" @submit.stop.prevent="handleUpdateSvc">
-        <h-resource-value v-model="modal.svcData.Service" edit :services="services" :type="modal.svcData._svctype" @input="modal.svcData.Service = $event" @saveService="fakeSaveService" />
+        <h-resource-value ref="updModalResources" v-model="modal.svcData.Service" edit :services="services" :type="modal.svcData._svctype" @input="modal.svcData.Service = $event" @saveService="fakeSaveService" />
       </form>
     </b-modal>
 
@@ -443,8 +443,8 @@ export default {
       } else if (this.modal.step === 1 && this.modal.svcSelected !== null) {
         this.modal.step = 2
       } else if (this.modal.step === 2 && this.modal.svcSelected !== null) {
-        ZoneApi
-          .addZoneService(this.domain.domain, this.zoneId, this.modal.dn, { Service: this.modal.svcData, _svctype: this.modal.svcSelected })
+        this.$refs.addModalResources.saveChildrenValues()
+        ZoneApi.addZoneService(this.domain.domain, this.zoneId, this.modal.dn, { Service: this.modal.svcData, _svctype: this.modal.svcSelected })
           .then(
             (response) => {
               this.myServices = response.data
@@ -468,6 +468,8 @@ export default {
 
     handleUpdateSvc (bvModalEvt) {
       bvModalEvt.preventDefault()
+
+      this.$refs.updModalResources.saveChildrenValues()
 
       this.updateServiceInProgress = true
       ZoneApi.updateZoneService(this.domain.domain, this.zoneId, this.modal.svcData)

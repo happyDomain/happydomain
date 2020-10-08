@@ -46,6 +46,7 @@
         </template>
         <h-resource-value
           v-if="value[spec.id]"
+          ref="fieldsTabs"
           v-model="value[spec.id]"
           :edit="editChildren"
           :edit-toolbar="editToolbar"
@@ -83,6 +84,7 @@
       <h-resource-value
         v-for="(spec, index) in service_specs.fields"
         :key="index"
+        ref="fieldsElseCase"
         :edit="editChildren"
         :index="index"
         :services="services"
@@ -188,6 +190,20 @@ export default {
             this.service_specs = response.data
           }
         )
+    },
+
+    saveChildrenValues () {
+      if (this.$refs.fieldsTabs) {
+        this.$refs.fieldsTabs.forEach(function (field) {
+          field.saveChildrenValues()
+        })
+      }
+
+      if (this.$refs.fieldsElseCase) {
+        this.$refs.fieldsElseCase.forEach(function (field) {
+          field.saveChildrenValues()
+        })
+      }
     },
 
     saveObject () {

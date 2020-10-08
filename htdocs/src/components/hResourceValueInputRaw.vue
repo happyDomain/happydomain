@@ -102,6 +102,10 @@ export default {
         }
       }
     }
+  },
+
+  methods: {
+    saveChildrenValues () {}
   }
 }
 </script>

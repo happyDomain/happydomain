@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <h-resource-value v-model="service.Service" :edit="edit" :edit-toolbar="editToolbar" :services="services" :type="service._svctype" @deleteService="deleteService($event)" @saveService="saveService($event)" />
+  <h-resource-value ref="myChild" v-model="service.Service" :edit="edit" :edit-toolbar="editToolbar" :services="services" :type="service._svctype" @deleteService="deleteService($event)" @saveService="saveService($event)" />
 </template>
 
 <script>
@@ -89,6 +89,10 @@ export default {
               }
             )
           })
+    },
+
+    saveChildrenValues () {
+      this.$refs.myChild.saveChildrenValues()
     },
 
     saveService (cbSuccess, cbFail) {

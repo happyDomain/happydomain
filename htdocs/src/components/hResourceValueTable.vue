@@ -194,6 +194,12 @@ export default {
       this.$emit('saveService')
     },
 
+    saveChildrenValues () {
+      this.tmp_values.forEach(function (row, idx) {
+        this.saveRow({ item: row })
+      }, this)
+    },
+
     saveRow (row) {
       if (this.service_specs && this.service_specs.fields) {
         var val = {}

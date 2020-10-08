@@ -207,6 +207,20 @@ export default {
       this.$emit('saveService')
     },
 
+    saveChildrenValues () {
+      for (const key in this.editChildrenKeys) {
+        if (this.editChildrenKeys[key]) {
+          this.saveObject(key)
+        }
+      }
+
+      for (const key in this.editKeys) {
+        if (this.editKeys[key]) {
+          this.rename(key)
+        }
+      }
+    },
+
     saveObject (key) {
       var vm = this
       this.$emit('saveService', function () {
