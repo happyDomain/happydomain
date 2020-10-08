@@ -120,27 +120,33 @@ export default {
   watch: {
     displayFormat: function (df) {
       if (df === 'records' && !this.serviceRecords) {
-        this.getServiceRecords()
+        this.updateServiceRecords()
+      }
+    },
+
+    service: function (svc) {
+      if (this.serviceRecords) {
+        this.updateServiceRecords()
       }
     }
   },
 
   mounted () {
-    if (this.displayFormat === 'records') {
-      this.getServiceRecords()
-    }
+    this.updateServiceRecords()
   },
 
   methods: {
-    getServiceRecords () {
-      ZoneApi.getServiceRecords(this.origin, this.zoneId, this.service)
-        .then(response => {
-          this.serviceRecords = response.data
-        })
-    },
-
     toogleShowDetails () {
       this.showDetails = !this.showDetails
+    },
+
+    updateServiceRecords () {
+      if (this.displayFormat === 'records') {
+        ZoneApi.getServiceRecords(this.origin, this.zoneId, this.service)
+          .then(response => {
+            this.serviceRecords = response.data
+          })
+      }
     }
   }
 }
