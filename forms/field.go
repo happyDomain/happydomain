@@ -31,7 +31,10 @@
 
 package forms // import "happydns.org/forms"
 
-import ()
+import (
+	"reflect"
+	"strings"
+)
 
 // Field
 type Field struct {
@@ -62,4 +65,76 @@ type Field struct {
 
 	// Description stores an helpfull sentence describing the field.
 	Description string `json:"description,omitempty"`
+}
+
+// GenField generates a generic Field based on the happydns tag.
+func GenField(field reflect.StructField) (f *Field) {
+	jsonTag := field.Tag.Get("json")
+	jsonTuples := strings.Split(jsonTag, ",")
+
+	f = &Field{
+		Type: field.Type.String(),
+	}
+
+	if len(jsonTuples) > 0 && len(jsonTuples[0]) > 0 {
+		f.Id = jsonTuples[0]
+	} else {
+		f.Id = field.Name
+	}
+
+	tag := field.Tag.Get("happydns")
+	tuples := strings.Split(tag, ",")
+
+	for _, t := range tuples {
+		kv := strings.SplitN(t, "=", 2)
+		if len(kv) > 1 {
+			switch strings.ToLower(kv[0]) {
+			case "label":
+				f.Label = kv[1]
+			case "placeholder":
+				f.Placeholder = kv[1]
+			case "default":
+				f.Default = kv[1]
+			case "description":
+				f.Description = kv[1]
+			case "choices":
+				f.Choices = strings.Split(kv[1], ";")
+			}
+		} else {
+			switch strings.ToLower(kv[0]) {
+			case "required":
+				f.Required = true
+			case "secret":
+				f.Secret = true
+			default:
+				f.Label = kv[0]
+			}
+		}
+	}
+	return
+}
+
+// GenStructFields generates corresponding SourceFields of the given Source.
+func GenStructFields(data interface{}) (fields []*Field) {
+	if data != nil {
+		dataMeta := reflect.Indirect(reflect.ValueOf(data)).Type()
+
+		for i := 0; i < dataMeta.NumField(); i += 1 {
+			fields = append(fields, GenField(dataMeta.Field(i)))
+		}
+	}
+	return
+}
+
+// GenDefaultSettingsForm generates a generic CustomForm presenting all the fields in one page.
+func GenDefaultSettingsForm(data interface{}) *CustomForm {
+	return &CustomForm{
+		Fields:                 GenStructFields(data),
+		NextButtonText:         "Create",
+		NextEditButtonText:     "Update",
+		NextButtonState:        1,
+		PreviousButtonText:     "Use another source",
+		PreviousEditButtonText: "Cancel",
+		PreviousButtonState:    -1,
+	}
 }

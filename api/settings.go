@@ -33,7 +33,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 
 	"git.happydns.org/happydns/config"
@@ -48,22 +47,9 @@ func init() {
 	//router.POST("/api/domains/:domain/zone/:zoneid/:subdomain/provider_settings/:psid", apiAuthHandler(getSourceSettingsState))
 }
 
-type FormState struct {
-	Id       int64   `json:"_id,omitempty"`
-	Name     string  `json:"_comment"`
-	State    int32   `json:"state"`
-	Recall   *int64  `json:"recall,omitempty"`
-	Redirect *string `json:"redirect,omitempty"`
-}
-
 type SourceSettingsState struct {
 	FormState
 	happydns.Source
-}
-
-type FormResponse struct {
-	From     *forms.CustomForm `json:"form,omitempty"`
-	Redirect *string           `json:"redirect,omitempty"`
 }
 
 type SourceSettingsResponse struct {
@@ -94,34 +80,7 @@ func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.
 		}
 	}
 
-	if uss.Recall != nil {
-		req.Session.GetValue(fmt.Sprintf("source-creation-%d", *uss.Recall), src)
-		req.Session.GetValue(fmt.Sprintf("source-creation-%d-name", *uss.Recall), &uss.Name)
-		req.Session.GetValue(fmt.Sprintf("source-creation-%d-id", *uss.Recall), &uss.Id)
-		req.Session.GetValue(fmt.Sprintf("source-creation-%d-next", *uss.Recall), &uss.Redirect)
-	}
-
-	var form *forms.CustomForm
-
-	csf, ok := src.(forms.CustomSettingsForm)
-	if !ok {
-		if uss.State == 1 {
-			err = forms.DoneForm
-		} else {
-			form = sources.GenDefaultSettingsForm(src)
-		}
-	} else {
-		form, err = csf.DisplaySettingsForm(uss.State, cfg, req.Session, func() int64 {
-			key, recallid := req.Session.FindNewKey("source-creation-")
-			req.Session.SetValue(key, src)
-			req.Session.SetValue(key+"-name", uss.Name)
-			req.Session.SetValue(key+"-id", uss.Id)
-			if uss.Redirect != nil {
-				req.Session.SetValue(key+"-next", *uss.Redirect)
-			}
-			return recallid
-		})
-	}
+	form, err := formDoState(cfg, req, &uss.FormState, src, forms.GenDefaultSettingsForm)
 
 	if err != nil {
 		if err != forms.DoneForm {

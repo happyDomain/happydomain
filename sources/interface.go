@@ -77,19 +77,6 @@ func GetSourceCapabilities(src happydns.Source) (caps []string) {
 	return
 }
 
-// GenDefaultSettingsForm generates a generic CustomForm presenting all the fields in one page.
-func GenDefaultSettingsForm(src happydns.Source) *forms.CustomForm {
-	return &forms.CustomForm{
-		Fields:                 GenSourceFields(src),
-		NextButtonText:         "Create",
-		NextEditButtonText:     "Update",
-		NextButtonState:        1,
-		PreviousButtonText:     "Use another source",
-		PreviousEditButtonText: "Cancel",
-		PreviousButtonState:    -1,
-	}
-}
-
 func init() {
 	for t := range dns.TypeToRR {
 		if !utils.IsDNSSECType(t) {

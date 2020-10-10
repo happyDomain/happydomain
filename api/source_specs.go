@@ -97,7 +97,7 @@ func getSourceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Respo
 
 	return APIResponse{
 		response: viewSourceSpec{
-			Fields:       sources.GenSourceFields(src),
+			Fields:       forms.GenStructFields(src),
 			Capabilities: sources.GetSourceCapabilities(src),
 		},
 	}

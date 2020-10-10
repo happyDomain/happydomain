@@ -29,71 +29,56 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package sources // import "happydns.org/sources"
+package api
 
 import (
-	"reflect"
-	"strings"
+	"fmt"
 
+	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/forms"
-	"git.happydns.org/happydns/model"
 )
 
-// GenSourceField generates a generic SourceField based on the happydns tag.
-func GenSourceField(field reflect.StructField) (f *forms.Field) {
-	jsonTag := field.Tag.Get("json")
-	jsonTuples := strings.Split(jsonTag, ",")
-
-	f = &forms.Field{
-		Type: field.Type.String(),
-	}
-
-	if len(jsonTuples) > 0 && len(jsonTuples[0]) > 0 {
-		f.Id = jsonTuples[0]
-	} else {
-		f.Id = field.Name
-	}
-
-	tag := field.Tag.Get("happydns")
-	tuples := strings.Split(tag, ",")
-
-	for _, t := range tuples {
-		kv := strings.SplitN(t, "=", 2)
-		if len(kv) > 1 {
-			switch strings.ToLower(kv[0]) {
-			case "label":
-				f.Label = kv[1]
-			case "placeholder":
-				f.Placeholder = kv[1]
-			case "default":
-				f.Default = kv[1]
-			case "description":
-				f.Description = kv[1]
-			case "choices":
-				f.Choices = strings.Split(kv[1], ";")
-			}
-		} else {
-			switch strings.ToLower(kv[0]) {
-			case "required":
-				f.Required = true
-			case "secret":
-				f.Secret = true
-			default:
-				f.Label = kv[0]
-			}
-		}
-	}
-	return
+type FormState struct {
+	Id       int64   `json:"_id,omitempty"`
+	IdB      []byte  `json:"_id,omitempty"`
+	Name     string  `json:"_comment"`
+	State    int32   `json:"state"`
+	Recall   *int64  `json:"recall,omitempty"`
+	Redirect *string `json:"redirect,omitempty"`
 }
 
-// GenSourceFields generates corresponding SourceFields of the given Source.
-func GenSourceFields(src happydns.Source) (fields []*forms.Field) {
-	if src != nil {
-		srcMeta := reflect.Indirect(reflect.ValueOf(src)).Type()
+type FormResponse struct {
+	From     *forms.CustomForm `json:"form,omitempty"`
+	Redirect *string           `json:"redirect,omitempty"`
+}
 
-		for i := 0; i < srcMeta.NumField(); i += 1 {
-			fields = append(fields, GenSourceField(srcMeta.Field(i)))
-		}
+func formDoState(cfg *config.Options, req *RequestResources, fs *FormState, data interface{}, defaultForm func(interface{}) *forms.CustomForm) (form *forms.CustomForm, err error) {
+	if fs.Recall != nil {
+		req.Session.GetValue(fmt.Sprintf("form-%d", *fs.Recall), data)
+		req.Session.GetValue(fmt.Sprintf("form-%d-name", *fs.Recall), &fs.Name)
+		req.Session.GetValue(fmt.Sprintf("form-%d-id", *fs.Recall), &fs.Id)
+		req.Session.GetValue(fmt.Sprintf("form-%d-idb", *fs.Recall), &fs.IdB)
+		req.Session.GetValue(fmt.Sprintf("form-%d-next", *fs.Recall), &fs.Redirect)
 	}
-	return
+
+	csf, ok := data.(forms.CustomSettingsForm)
+	if !ok {
+		if fs.State == 1 {
+			err = forms.DoneForm
+		} else {
+			form = defaultForm(data)
+		}
+		return
+	} else {
+		return csf.DisplaySettingsForm(fs.State, cfg, req.Session, func() int64 {
+			key, recallid := req.Session.FindNewKey("form-")
+			req.Session.SetValue(key, data)
+			req.Session.SetValue(key+"-id", fs.Id)
+			req.Session.SetValue(key+"-idb", fs.IdB)
+			if fs.Redirect != nil {
+				req.Session.SetValue(key+"-next", *fs.Redirect)
+			}
+			return recallid
+		})
+	}
 }

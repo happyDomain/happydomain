@@ -40,7 +40,6 @@ import (
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/forms"
 	"git.happydns.org/happydns/model"
-	"git.happydns.org/happydns/sources"
 )
 
 const (
@@ -70,7 +69,7 @@ func settingsForm(edit bool) *forms.CustomForm {
 		})
 	}
 
-	form := sources.GenDefaultSettingsForm(nil)
+	form := forms.GenDefaultSettingsForm(nil)
 	form.Fields = srcFields
 	form.NextButtonText = "Next >"
 	return form
