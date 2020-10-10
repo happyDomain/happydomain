@@ -138,6 +138,7 @@
 import DomainCompare from '@/mixins/domainCompare'
 import ServiceSpecsApi from '@/services/ServiceSpecsApi'
 import SourcesApi from '@/services/SourcesApi'
+import ValidateDomain from '@/mixins/validateDomain'
 import ZoneApi from '@/services/ZoneApi'
 
 export default {
@@ -148,7 +149,7 @@ export default {
     hResourceValue: () => import('@/components/hResourceValue')
   },
 
-  mixins: [DomainCompare],
+  mixins: [DomainCompare, ValidateDomain],
 
   props: {
     domain: {
@@ -556,27 +557,6 @@ export default {
       this.myServices = myS
     },
 
-    validateDomain (dn) {
-      var ret = null
-      if (dn.length !== 0) {
-        ret = dn.length >= 1 && dn.length <= 254
-
-        if (ret) {
-          var domains = dn.split('.')
-
-          var newDomainState = ret
-          domains.forEach(function (domain) {
-            newDomainState &= domain.length >= 1 && domain.length <= 63
-            newDomainState &= domain[0] !== '-' && domain[domain.length - 1] !== '-'
-            newDomainState &= /^(\*|[a-zA-Z0-9]([a-zA-Z0-9-]?[a-zA-Z0-9])*)$/.test(domain)
-          })
-          ret = newDomainState > 0
-        }
-      }
-
-      return ret
-    },
-
     validateNewAlias () {
       if (this.myServices.services) {
         for (const dn in this.myServices.services) {
@@ -587,13 +567,8 @@ export default {
         }
       }
 
-      this.modal.newDomainState = this.validateDomain(this.modal.alias)
+      this.modal.newDomainState = this.validateDomain(this.modal.alias, true)
 
-      return this.modal.newDomainState
-    },
-
-    validateNewSubdomain () {
-      this.modal.newDomainState = this.validateDomain(this.modal.dn)
       return this.modal.newDomainState
     }
   }

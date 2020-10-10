@@ -29,37 +29,32 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-import AddDomainToSource from '@/mixins/addDomainToSource'
-import ValidateDomain from '@/mixins/validateDomain'
-
 export default {
-  components: {
-    hListGroupInput: () => import('@/components/hListGroupInput')
-  },
-
-  mixins: [AddDomainToSource, ValidateDomain],
-
-  data () {
-    return {
-      newDomain: '',
-      newDomainState: null
-    }
-  },
-
   methods: {
-    validateNewDomain () {
-      this.newDomainState = this.validateDomain(this.newDomain)
-      return this.newDomainState
-    },
+    validateDomain (dn, subdomain) {
+      var ret = null
+      if (dn.length !== 0) {
+        ret = dn.length >= 1 && dn.length <= 254
 
-    submitNewDomain () {
-      if (this.validateNewDomain()) {
-        if (this.mySource) {
-          this.addDomainToSource(this.mySource, this.newDomain)
-        } else {
-          this.$router.push('/domains/' + encodeURIComponent(this.newDomain) + '/new')
+        if (ret) {
+          var domains = dn.split('.')
+
+          // Remove the last . if any, it's ok
+          if (!subdomain && domains[domains.length - 1] === '') {
+            domains.pop()
+          }
+
+          var newDomainState = ret
+          domains.forEach(function (domain) {
+            newDomainState &= domain.length >= 1 && domain.length <= 63
+            newDomainState &= domain[0] !== '-' && domain[domain.length - 1] !== '-'
+            newDomainState &= /^(\*|[a-zA-Z0-9]([a-zA-Z0-9-]?[a-zA-Z0-9])*)$/.test(domain)
+          })
+          ret = newDomainState > 0
         }
       }
+
+      return ret
     }
   }
 }
