@@ -59,7 +59,7 @@ export default {
     return Api().delete('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(service._domain) + '/services/' + encodeURIComponent(service._id))
   },
 
-  updateZoneService (domain, id, service) {
+  updateZoneService (domain, id, subdomain, service) {
     return Api().patch('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id), service)
   },
 

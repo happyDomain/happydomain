@@ -33,87 +33,32 @@
 
 <template>
   <div v-if="!isLoading" class="pt-3">
-    <h-subdomain-item v-for="(dn, index) in sortedDomains" :key="index" :display-format="displayFormat" :dn="dn" :origin="domain.domain" :services="services" :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]" :aliases="aliases[dn]===undefined?[]:aliases[dn]" :zone-id="zoneId" @showServiceWindow="showServiceWindow" @updateMyServices="updateMyServices" @addSubdomain="addSubdomain" @addNewAlias="addNewAlias" @addNewService="addNewService" />
+    <h-subdomain-item
+      v-for="(dn, index) in sortedDomains"
+      :key="index"
+      :display-format="displayFormat"
+      :dn="dn"
+      :origin="domain.domain"
+      :services="services"
+      :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]"
+      :aliases="aliases[dn]===undefined?[]:aliases[dn]"
+      :zone-id="zoneId"
+      @showServiceWindow="showServiceWindow"
+      @updateMyServices="updateMyServices"
+      @addSubdomain="addSubdomain"
+      @addNewAlias="addNewAlias"
+      @addNewService="addNewService"
+    />
 
-    <b-modal id="modal-addSvc" :size="modal && modal.step === 2 ? 'lg' : ''" scrollable @ok="handleModalSvcOk">
-      <template v-slot:modal-title>
-        Add a new service to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>
-      </template>
-      <template v-slot:modal-footer="{ ok, cancel }">
-        <b-button variant="secondary" @click="cancel()">
-          {{ $t('common.cancel') }}
-        </b-button>
-        <b-button v-if="modal.step === 2" form="addSvcForm" type="submit" variant="primary">
-          {{ $t('service.add') }}
-        </b-button>
-        <b-button v-else form="addSvcForm" type="submit" variant="primary">
-          {{ $t('common.continue') }}
-        </b-button>
-      </template>
-      <form v-if="modal" id="addSvcForm" @submit.stop.prevent="handleModalSvcOk">
-        <p v-if="modal.step === 0">
-          Add a new subdomain under <span class="text-monospace">{{ domain.domain }}</span>:
-          <b-input-group :append="'.' + domain.domain">
-            <b-input v-model="modal.dn" autofocus class="text-monospace" placeholder="new.subdomain" :state="modal.newDomainState" @update="validateNewSubdomain" />
-          </b-input-group>
-        </p>
-        <b-tabs v-else-if="modal.step === 1" class="mb-2" content-class="mt-3">
-          <b-tab title="Services" active>
-            <p>
-              Select a new service to add to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
-            </p>
-            <b-list-group v-if="modal.step === 1">
-              <b-list-group-item v-for="(svc, idx) in availableNewServices" :key="idx" :active="modal.svcSelected === idx" button @click="modal.svcSelected = idx">
-                {{ svc.name }}
-                <small class="text-muted">{{ svc.description }}</small>
-                <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
-                  {{ categorie }}
-                </b-badge>
-              </b-list-group-item>
-              <b-list-group-item v-for="(svc, idx) in disabledNewServices" :key="idx" :active="modal.svcSelected === idx" disabled @click="modal.svcSelected = idx">
-                <span :title="svc.description">{{ svc.name }}</span> <small class="font-italic text-danger">{{ filteredNewServices[idx] }}</small>
-                <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
-                  {{ categorie }}
-                </b-badge>
-              </b-list-group-item>
-            </b-list-group>
-          </b-tab>
-          <b-tab title="Providers">
-            <p>
-              Select a new provider to add to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
-            </p>
-          </b-tab>
-        </b-tabs>
-        <div v-else-if="modal.step === 2">
-          <p>
-            Fill the information for the {{ services[modal.svcSelected].name }} at <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
-          </p>
-          <h-resource-value ref="addModalResources" v-model="modal.svcData" edit :services="services" :type="modal.svcSelected" @input="modal.svcData = $event" />
-        </div>
-      </form>
-    </b-modal>
-
-    <b-modal id="modal-updSvc" size="xl" scrollable @ok="handleUpdateSvc">
-      <template v-slot:modal-title>
-        Update <span v-if="modal.svcData && modal.svcData._svctype" :title="services[modal.svcData._svctype].description">{{ services[modal.svcData._svctype].name }} </span>on <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>
-      </template>
-      <template v-slot:modal-footer="{ ok, cancel }">
-        <b-button :disabled="deleteServiceInProgress || !modal.svcData || modal.svcData._svctype === 'abstract.Origin'" variant="danger" @click="deleteService(modal.svcData)">
-          <b-spinner v-if="deleteServiceInProgress" label="Spinning" small />
-          {{ $t('service.delete') }}
-        </b-button>
-        <b-button variant="secondary" @click="cancel()">
-          {{ $t('common.cancel') }}
-        </b-button>
-        <b-button :disabled="updateServiceInProgress" form="updSvcForm" type="submit" variant="success">
-          <b-spinner v-if="updateServiceInProgress" label="Spinning" small />
-          {{ $t('service.update') }}
-        </b-button>
-      </template>
-      <form v-if="modal && modal.svcData" id="updSvcForm" @submit.stop.prevent="handleUpdateSvc">
-        <h-resource-value ref="updModalResources" v-model="modal.svcData.Service" edit :services="services" :type="modal.svcData._svctype" @input="modal.svcData.Service = $event" @saveService="fakeSaveService" />
-      </form>
-    </b-modal>
+    <h-modal-service
+      v-if="myServices"
+      ref="modalService"
+      :domain="domain"
+      :my-services="myServices"
+      :services="services"
+      :zone-id="zoneId"
+      @updateMyServices="updateMyServices"
+    />
 
     <b-modal id="modal-addAlias" title="Add a new alias" @ok="handleModalAliasSubmit">
       <template v-slot:modal-footer="{ ok, cancel }">
@@ -137,7 +82,6 @@
 <script>
 import DomainCompare from '@/mixins/domainCompare'
 import ServiceSpecsApi from '@/services/ServiceSpecsApi'
-import SourcesApi from '@/services/SourcesApi'
 import ValidateDomain from '@/mixins/validateDomain'
 import ZoneApi from '@/services/ZoneApi'
 
@@ -145,8 +89,8 @@ export default {
   name: 'HSubdomainList',
 
   components: {
-    hSubdomainItem: () => import('@/components/hSubdomainItem'),
-    hResourceValue: () => import('@/components/hResourceValue')
+    hModalService: () => import('@/components/hModalService'),
+    hSubdomainItem: () => import('@/components/hSubdomainItem')
   },
 
   mixins: [DomainCompare, ValidateDomain],
@@ -168,8 +112,6 @@ export default {
 
   data: function () {
     return {
-      availableResourceTypes: [],
-      deleteServiceInProgress: false,
       hideDomain: {},
       modal: null,
       myServices: null,
@@ -196,131 +138,8 @@ export default {
       return ret
     },
 
-    availableNewServices () {
-      var ret = {}
-
-      for (const type in this.services) {
-        if (this.filteredNewServices[type] == null) {
-          ret[type] = this.services[type]
-        }
-      }
-
-      return ret
-    },
-
-    disabledNewServices () {
-      var ret = {}
-
-      for (const type in this.services) {
-        if (this.filteredNewServices[type] != null) {
-          ret[type] = this.services[type]
-        }
-      }
-
-      return ret
-    },
-
-    filteredNewServices () {
-      var ret = {}
-
-      for (const type in this.services) {
-        const svc = this.services[type]
-
-        if (svc.restrictions) {
-          // Handle NeedTypes restriction: hosting provider need to support given types.
-          if (svc.restrictions.needTypes) {
-            for (const k in svc.restrictions.needTypes) {
-              if (this.availableResourceTypes.indexOf(svc.restrictions.needTypes[k]) < 0) {
-                ret[type] = 'is not available on this domain name hosting provider.'
-                continue
-              }
-            }
-          }
-
-          // Handle Alone restriction: only nearAlone are allowed.
-          if (svc.restrictions.alone && this.myServices.services[this.modal.dn]) {
-            var found = false
-            for (const k in this.myServices.services[this.modal.dn]) {
-              const s = this.myServices.services[this.modal.dn][k]
-              if (s._svctype !== type && this.services[s._svctype].restrictions && !this.services[s._svctype].restrictions.nearAlone) {
-                found = true
-                break
-              }
-            }
-            if (found) {
-              ret[type] = 'has to be the only one in the subdomain.'
-              continue
-            }
-          }
-
-          // Handle Exclusive restriction: service can't be present along with another listed one.
-          if (svc.restrictions.exclusive && this.myServices.services[this.modal.dn]) {
-            found = null
-            for (const k in this.myServices.services[this.modal.dn]) {
-              const s = this.myServices.services[this.modal.dn][k]
-              for (const i in svc.restrictions.exclusive) {
-                if (s._svctype === svc.restrictions.exclusive[i]) {
-                  found = s._svctype
-                  break
-                }
-              }
-            }
-            if (found) {
-              ret[type] = 'cannot be present along with ' + this.services[found].name + '.'
-              continue
-            }
-          }
-
-          // Handle rootOnly restriction.
-          if (svc.restrictions.rootOnly && this.modal.dn !== '') {
-            ret[type] = 'can only be present at the root of your domain.'
-            continue
-          }
-
-          // Handle Single restriction: only one instance of the service per subdomain.
-          if (svc.restrictions.single && this.myServices.services[this.modal.dn]) {
-            found = false
-            for (const k in this.myServices.services[this.modal.dn]) {
-              const s = this.myServices.services[this.modal.dn][k]
-              if (s._svctype === type) {
-                found = true
-                break
-              }
-            }
-            if (found) {
-              ret[type] = 'can only be present once per subdomain.'
-              continue
-            }
-          }
-
-          // Handle presence of Alone and Leaf service in subdomain already.
-          var oneAlone = null
-          var oneLeaf = null
-          for (const k in this.myServices.services[this.modal.dn]) {
-            const s = this.myServices.services[this.modal.dn][k]
-            if (this.services[s._svctype].restrictions && this.services[s._svctype].restrictions.alone) {
-              oneAlone = s._svctype
-            }
-            if (this.services[s._svctype].restrictions && this.services[s._svctype].restrictions.leaf) {
-              oneLeaf = s._svctype
-            }
-          }
-          if (oneAlone && oneAlone !== type && !svc.restrictions.nearAlone) {
-            ret[type] = 'cannot be present along with ' + this.services[oneAlone].name + ', that requires to be the only one in this subdomain.'
-            continue
-          }
-          if (oneLeaf && oneLeaf !== type && !svc.restrictions.glue) {
-            ret[type] = 'cannot be present along with ' + this.services[oneAlone].name + ', that requires to don\'t have subdomains.'
-            continue
-          }
-        }
-      }
-
-      return ret
-    },
-
     isLoading () {
-      return this.myServices == null && this.availableResourceTypes.length > 0 && this.zoneId === undefined && this.services === {}
+      return this.myServices == null && this.zoneId === undefined && this.services === {}
     },
 
     sortedDomains () {
@@ -351,24 +170,11 @@ export default {
       .then(
         (response) => (this.services = response.data)
       )
-
-    SourcesApi.getAvailableResourceTypes(this.domain.id_source)
-      .then(
-        (response) => {
-          this.availableResourceTypes = response.data
-        }
-      )
   },
 
   methods: {
     addNewService (subdomain) {
-      this.modal = {
-        dn: subdomain,
-        step: 1,
-        svcData: {},
-        svcSelected: null
-      }
-      this.$bvModal.show('modal-addSvc')
+      this.$refs.modalService.show(subdomain)
     },
 
     addNewAlias (subdomain) {
@@ -380,43 +186,11 @@ export default {
     },
 
     addSubdomain () {
-      this.modal = {
-        dn: '',
-        step: 0,
-        svcData: {},
-        svcSelected: null
-      }
-      this.$bvModal.show('modal-addSvc')
+      this.$refs.modalService.show()
     },
 
     showServiceWindow (service) {
-      this.modal = {
-        dn: service._domain,
-        svcData: service
-      }
-      this.$bvModal.show('modal-updSvc')
-    },
-
-    deleteService (service) {
-      this.deleteServiceInProgress = true
-      ZoneApi.deleteZoneService(this.domain.domain, this.zoneId, service)
-        .then(
-          (response) => {
-            this.$bvModal.hide('modal-updSvc')
-            this.deleteServiceInProgress = false
-            this.updateMyServices(response.data)
-          },
-          (error) => {
-            this.deleteServiceInProgress = false
-            this.$bvToast.toast(
-              error.response.data.errmsg, {
-                title: 'An error occurs when deleting the service!',
-                autoHideDelay: 5000,
-                variant: 'danger',
-                toaster: 'b-toaster-content-right'
-              }
-            )
-          })
+      this.$refs.modalService.show(service._domain, service)
     },
 
     fakeSaveService (cbSuccess) {
@@ -432,70 +206,6 @@ export default {
           window.scrollTo(0, document.getElementById(hash).offsetTop)
         }, 500)
       }
-    },
-
-    handleModalSvcOk (bvModalEvt) {
-      bvModalEvt.preventDefault()
-
-      if (this.modal.step === 0 && this.modal.dn !== '') {
-        if (this.validateNewSubdomain()) {
-          this.modal.step = 1
-        }
-      } else if (this.modal.step === 1 && this.modal.svcSelected !== null) {
-        this.modal.step = 2
-      } else if (this.modal.step === 2 && this.modal.svcSelected !== null) {
-        this.$refs.addModalResources.saveChildrenValues()
-        ZoneApi.addZoneService(this.domain.domain, this.zoneId, this.modal.dn, { Service: this.modal.svcData, _svctype: this.modal.svcSelected })
-          .then(
-            (response) => {
-              this.myServices = response.data
-              this.$nextTick(() => {
-                this.$bvModal.hide('modal-addSvc')
-              })
-            },
-            (error) => {
-              this.$root.$bvToast.toast(
-                error.response.data.errmsg, {
-                  title: 'Unable to add the new service',
-                  autoHideDelay: 5000,
-                  variant: 'danger',
-                  toaster: 'b-toaster-content-right'
-                }
-              )
-            }
-          )
-      }
-    },
-
-    handleUpdateSvc (bvModalEvt) {
-      bvModalEvt.preventDefault()
-
-      this.$refs.updModalResources.saveChildrenValues()
-
-      this.updateServiceInProgress = true
-      ZoneApi.updateZoneService(this.domain.domain, this.zoneId, this.modal.svcData)
-        .then(
-          (response) => {
-            this.updateMyServices(response.data)
-            this.$nextTick(() => {
-              this.$bvModal.hide('modal-updSvc')
-              this.updateServiceInProgress = false
-            })
-          },
-          (error) => {
-            this.$nextTick(() => {
-              this.updateServiceInProgress = false
-              this.$bvToast.toast(
-                error.response.data.errmsg, {
-                  title: 'An error occurs when updating the service!',
-                  autoHideDelay: 5000,
-                  variant: 'danger',
-                  toaster: 'b-toaster-content-right'
-                }
-              )
-            })
-          }
-        )
     },
 
     handleModalAliasSubmit (bvModalEvt) {
