@@ -29,7 +29,7 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package svcs
+package abstract
 
 import (
 	"fmt"
@@ -39,6 +39,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/services"
 	"git.happydns.org/happydns/utils"
 )
 
@@ -96,8 +97,8 @@ func (s *Origin) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR)
 	return
 }
 
-func origin_analyze(a *Analyzer) error {
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeSOA}) {
+func origin_analyze(a *svcs.Analyzer) error {
+	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeSOA}) {
 		if soa, ok := record.(*dns.SOA); ok {
 			origin := &Origin{
 				Ns:      soa.Ns,
@@ -115,7 +116,7 @@ func origin_analyze(a *Analyzer) error {
 				origin,
 			)
 
-			for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeNS, Domain: soa.Header().Name}) {
+			for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS, Domain: soa.Header().Name}) {
 				if ns, ok := record.(*dns.NS); ok {
 					origin.NameServers = append(origin.NameServers, ns.Ns)
 					a.UseRR(
@@ -131,18 +132,19 @@ func origin_analyze(a *Analyzer) error {
 }
 
 func init() {
-	RegisterService(
+	svcs.RegisterService(
 		func() happydns.Service {
 			return &Origin{}
 		},
 		origin_analyze,
-		ServiceInfos{
+		svcs.ServiceInfos{
 			Name:        "Origin",
 			Description: "This is the root of your domain.",
+			Family:      svcs.Abstract,
 			Categories: []string{
 				"internal",
 			},
-			Restrictions: ServiceRestrictions{
+			Restrictions: svcs.ServiceRestrictions{
 				RootOnly: true,
 				Single:   true,
 				NeedTypes: []uint16{

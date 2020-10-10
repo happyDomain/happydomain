@@ -29,7 +29,7 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package svcs
+package abstract
 
 import (
 	"bytes"
@@ -39,11 +39,12 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/services"
 	"git.happydns.org/happydns/utils"
 )
 
 type MatrixIM struct {
-	Matrix []*SRV `json:"matrix"`
+	Matrix []*svcs.SRV `json:"matrix"`
 }
 
 func (s *MatrixIM) GetNbResources() int {
@@ -96,11 +97,11 @@ func (s *MatrixIM) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.R
 	return
 }
 
-func matrix_analyze(a *Analyzer) error {
+func matrix_analyze(a *svcs.Analyzer) error {
 	matrixDomains := map[string]*MatrixIM{}
 
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Prefix: "_matrix._tcp.", Type: dns.TypeSRV}) {
-		if srv := parseSRV(record); srv != nil {
+	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Prefix: "_matrix._tcp.", Type: dns.TypeSRV}) {
+		if srv := svcs.ParseSRV(record); srv != nil {
 			domain := strings.TrimPrefix(record.Header().Name, "_matrix._tcp.")
 
 			if _, ok := matrixDomains[domain]; !ok {
@@ -120,18 +121,19 @@ func matrix_analyze(a *Analyzer) error {
 }
 
 func init() {
-	RegisterService(
+	svcs.RegisterService(
 		func() happydns.Service {
 			return &MatrixIM{}
 		},
 		matrix_analyze,
-		ServiceInfos{
+		svcs.ServiceInfos{
 			Name:        "Matrix IM",
 			Description: "Communicate on Matrix using your domain.",
+			Family:      svcs.Abstract,
 			Categories: []string{
 				"im",
 			},
-			Restrictions: ServiceRestrictions{
+			Restrictions: svcs.ServiceRestrictions{
 				NearAlone: true,
 				Single:    true,
 				NeedTypes: []uint16{

@@ -29,7 +29,7 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package svcs
+package abstract
 
 import (
 	"crypto/sha256"
@@ -41,6 +41,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/services"
 	"git.happydns.org/happydns/utils"
 )
 
@@ -116,8 +117,8 @@ func (s *SMimeCert) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.
 	return
 }
 
-func openpgpkey_analyze(a *Analyzer) (err error) {
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeOPENPGPKEY, Contains: "._openpgpkey."}) {
+func openpgpkey_analyze(a *svcs.Analyzer) (err error) {
+	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeOPENPGPKEY, Contains: "._openpgpkey."}) {
 		if openpgpkey, ok := record.(*dns.OPENPGPKEY); ok {
 			domain := record.Header().Name
 			domain = domain[strings.Index(domain, "._openpgpkey")+13:]
@@ -146,8 +147,8 @@ func openpgpkey_analyze(a *Analyzer) (err error) {
 	return
 }
 
-func smimea_analyze(a *Analyzer) (err error) {
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeSMIMEA, Contains: "._smimecert."}) {
+func smimea_analyze(a *svcs.Analyzer) (err error) {
+	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeSMIMEA, Contains: "._smimecert."}) {
 		if smimecert, ok := record.(*dns.SMIMEA); ok {
 			domain := record.Header().Name
 			domain = domain[strings.Index(domain, "._smimecert")+12:]
@@ -181,18 +182,19 @@ func smimea_analyze(a *Analyzer) (err error) {
 }
 
 func init() {
-	RegisterService(
+	svcs.RegisterService(
 		func() happydns.Service {
 			return &OpenPGP{}
 		},
 		openpgpkey_analyze,
-		ServiceInfos{
+		svcs.ServiceInfos{
 			Name:        "PGP Key",
 			Description: "Let users retrieve PGP key automatically.",
+			Family:      svcs.Abstract,
 			Categories: []string{
 				"email",
 			},
-			Restrictions: ServiceRestrictions{
+			Restrictions: svcs.ServiceRestrictions{
 				NearAlone: true,
 				NeedTypes: []uint16{
 					dns.TypeOPENPGPKEY,
@@ -201,18 +203,19 @@ func init() {
 		},
 		1,
 	)
-	RegisterService(
+	svcs.RegisterService(
 		func() happydns.Service {
 			return &SMimeCert{}
 		},
 		smimea_analyze,
-		ServiceInfos{
+		svcs.ServiceInfos{
 			Name:        "SMimeCert",
 			Description: "Publish S/MIME certificate.",
+			Family:      svcs.Abstract,
 			Categories: []string{
 				"email",
 			},
-			Restrictions: ServiceRestrictions{
+			Restrictions: svcs.ServiceRestrictions{
 				NearAlone: true,
 				NeedTypes: []uint16{
 					dns.TypeSMIMEA,

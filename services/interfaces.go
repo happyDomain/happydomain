@@ -33,6 +33,7 @@ package svcs
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"git.happydns.org/happydns/model"
 )
@@ -66,6 +67,7 @@ type ServiceRestrictions struct {
 type ServiceInfos struct {
 	Name         string              `json:"name"`
 	Description  string              `json:"description"`
+	Family       string              `json:"family"`
 	Categories   []string            `json:"categories"`
 	Tabs         bool                `json:"tabs,omitempty"`
 	Restrictions ServiceRestrictions `json:"restrictions,omitempty"`
@@ -73,6 +75,14 @@ type ServiceInfos struct {
 
 type serviceCombined struct {
 	Service happydns.Service
+}
+
+type ServiceNotFoundError struct {
+	name string
+}
+
+func (err ServiceNotFoundError) Error() string {
+	return fmt.Sprintf("Unable to find corresponding service for `%s`.", err.name)
 }
 
 // UnmarshalServiceJSON implements the UnmarshalJSON function for the
@@ -86,6 +96,9 @@ func UnmarshalServiceJSON(svc *happydns.ServiceCombined, b []byte) (err error) {
 
 	var tsvc happydns.Service
 	tsvc, err = FindService(svcType.Type)
+	if err != nil {
+		return
+	}
 
 	mySvc := &serviceCombined{
 		tsvc,

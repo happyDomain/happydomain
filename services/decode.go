@@ -36,8 +36,14 @@ import (
 	"log"
 	"reflect"
 	"sort"
+	"strings"
 
 	"git.happydns.org/happydns/model"
+)
+
+const (
+	Abstract = "abstract"
+	Provider = "provider"
 )
 
 type ServiceCreator func() happydns.Service
@@ -90,7 +96,7 @@ func RegisterService(creator ServiceCreator, analyzer ServiceAnalyzer, infos Ser
 }
 
 func RegisterSubServices(t reflect.Type) {
-	if t.Kind() == reflect.Struct && t.PkgPath() == pathToSvcsModule {
+	if t.Kind() == reflect.Struct && strings.HasPrefix(t.PkgPath(), pathToSvcsModule) {
 		if _, ok := subServices[t.String()]; !ok {
 			log.Println("Registering new subservice:", t.String())
 
@@ -138,7 +144,7 @@ func GetServices() *map[string]*Svc {
 func FindService(name string) (happydns.Service, error) {
 	svc, ok := services[name]
 	if !ok {
-		return nil, fmt.Errorf("Unable to find corresponding service for `%s`.", name)
+		return nil, ServiceNotFoundError{name}
 	}
 
 	return svc.Creator(), nil

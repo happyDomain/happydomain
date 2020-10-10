@@ -29,7 +29,7 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package svcs
+package abstract
 
 import (
 	"fmt"
@@ -37,19 +37,13 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/services"
 	"git.happydns.org/happydns/utils"
 )
 
-type DS struct {
-	KeyTag     uint16 `json:"keytag" happydns:"label=Key Tag"`
-	Algorithm  uint8  `json:"algorithm" happydns:"label=Algorithm"`
-	DigestType uint8  `json:"digestType" happydns:"label=Digest Type"`
-	Digest     string `json:"digest" happydns:"label=Digest"`
-}
-
 type Delegation struct {
-	NameServers []string `json:"ns" happydns:"label=Name Servers"`
-	DS          []DS     `json:"ds" happydns:"label=Delegation Signer"`
+	NameServers []string  `json:"ns" happydns:"label=Name Servers"`
+	DS          []svcs.DS `json:"ds" happydns:"label=Delegation Signer"`
 }
 
 func (s *Delegation) GetNbResources() int {
@@ -94,10 +88,10 @@ func (s *Delegation) GenRRs(domain string, ttl uint32, origin string) (rrs []dns
 	return
 }
 
-func delegation_analyze(a *Analyzer) error {
+func delegation_analyze(a *svcs.Analyzer) error {
 	delegations := map[string]*Delegation{}
 
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeNS}) {
+	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS}) {
 		if ns, ok := record.(*dns.NS); ok {
 			if _, ok := delegations[ns.Header().Name]; !ok {
 				delegations[ns.Header().Name] = &Delegation{}
@@ -114,9 +108,9 @@ func delegation_analyze(a *Analyzer) error {
 	}
 
 	for subdomain := range delegations {
-		for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeDS, Domain: subdomain}) {
+		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeDS, Domain: subdomain}) {
 			if ds, ok := record.(*dns.DS); ok {
-				delegations[subdomain].DS = append(delegations[subdomain].DS, DS{
+				delegations[subdomain].DS = append(delegations[subdomain].DS, svcs.DS{
 					KeyTag:     ds.KeyTag,
 					Algorithm:  ds.Algorithm,
 					DigestType: ds.DigestType,
@@ -136,18 +130,19 @@ func delegation_analyze(a *Analyzer) error {
 }
 
 func init() {
-	RegisterService(
+	svcs.RegisterService(
 		func() happydns.Service {
 			return &Delegation{}
 		},
 		delegation_analyze,
-		ServiceInfos{
+		svcs.ServiceInfos{
 			Name:        "Delegation",
 			Description: "Delegate this subdomain to another name server",
+			Family:      svcs.Abstract,
 			Categories: []string{
 				"internal",
 			},
-			Restrictions: ServiceRestrictions{
+			Restrictions: svcs.ServiceRestrictions{
 				Alone:       true,
 				Leaf:        true,
 				ExclusiveRR: []string{"svcs.Origin"},

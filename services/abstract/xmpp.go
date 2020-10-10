@@ -29,7 +29,7 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package svcs
+package abstract
 
 import (
 	"bytes"
@@ -40,13 +40,14 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/services"
 	"git.happydns.org/happydns/utils"
 )
 
 type XMPP struct {
-	Client []*SRV `json:"client,omitempty" happydns:"label=Client Connection"`
-	Server []*SRV `json:"server,omitempty" happydns:"label=Server Connection"`
-	Jabber []*SRV `json:"jabber,omitempty" happydns:"label=Jabber Connection (legacy)"`
+	Client []*svcs.SRV `json:"client,omitempty" happydns:"label=Client Connection"`
+	Server []*svcs.SRV `json:"server,omitempty" happydns:"label=Server Connection"`
+	Jabber []*svcs.SRV `json:"jabber,omitempty" happydns:"label=Jabber Connection (legacy)"`
 }
 
 func (s *XMPP) GetNbResources() (max int) {
@@ -112,9 +113,9 @@ func (s *XMPP) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	return
 }
 
-func xmpp_subanalyze(a *Analyzer, prefix string, xmppDomains map[string]*XMPP, field string) error {
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Prefix: prefix, Type: dns.TypeSRV}) {
-		if srv := parseSRV(record); srv != nil {
+func xmpp_subanalyze(a *svcs.Analyzer, prefix string, xmppDomains map[string]*XMPP, field string) error {
+	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Prefix: prefix, Type: dns.TypeSRV}) {
+		if srv := svcs.ParseSRV(record); srv != nil {
 			domain := strings.TrimPrefix(record.Header().Name, prefix)
 
 			if _, ok := xmppDomains[domain]; !ok {
@@ -135,7 +136,7 @@ func xmpp_subanalyze(a *Analyzer, prefix string, xmppDomains map[string]*XMPP, f
 	return nil
 }
 
-func xmpp_analyze(a *Analyzer) error {
+func xmpp_analyze(a *svcs.Analyzer) error {
 	xmppDomains := map[string]*XMPP{}
 
 	xmpp_subanalyze(a, "_jabber._tcp.", xmppDomains, "Jabber")
@@ -146,18 +147,19 @@ func xmpp_analyze(a *Analyzer) error {
 }
 
 func init() {
-	RegisterService(
+	svcs.RegisterService(
 		func() happydns.Service {
 			return &XMPP{}
 		},
 		xmpp_analyze,
-		ServiceInfos{
+		svcs.ServiceInfos{
 			Name:        "XMPP IM",
 			Description: "Communicate over XMPP with your domain.",
+			Family:      svcs.Abstract,
 			Categories: []string{
 				"im",
 			},
-			Restrictions: ServiceRestrictions{
+			Restrictions: svcs.ServiceRestrictions{
 				NearAlone: true,
 				Single:    true,
 				NeedTypes: []uint16{

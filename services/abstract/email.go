@@ -29,7 +29,7 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package svcs
+package abstract
 
 import (
 	"bytes"
@@ -39,79 +39,17 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/services"
 	"git.happydns.org/happydns/utils"
 )
 
-type MX struct {
-	Target     string `json:"target"`
-	Preference uint16 `json:"preference,omitempty"`
-}
-
-type SPFDirective struct {
-	Qualifier byte
-	Mechanism string
-}
-
-type SPFModifier struct {
-	Name      string
-	Mechanism string
-}
-
-type SPFExplanation struct {
-	DomainSpec string
-}
-
-type SPFRedirect struct {
-	DomainSpec string
-}
-
-type SPF struct {
-	Content string
-}
-
-func (t *SPF) String() string {
-	return t.Content
-}
-
-type DKIM struct {
-	Fields []string
-}
-
-func (t *DKIM) String() string {
-	return strings.Join(t.Fields, "; ")
-}
-
-type DMARC struct {
-	Fields []string
-}
-
-func (t *DMARC) String() string {
-	return strings.Join(t.Fields, ";")
-}
-
-type MTA_STS struct {
-	Fields []string
-}
-
-func (t *MTA_STS) String() string {
-	return strings.Join(t.Fields, ";")
-}
-
-type TLS_RPT struct {
-	Fields []string
-}
-
-func (t *TLS_RPT) String() string {
-	return strings.Join(t.Fields, ";")
-}
-
 type EMail struct {
-	MX      []MX             `json:"mx,omitempty" happydns:"label=EMail Servers"`
-	SPF     *SPF             `json:"spf,omitempty" happydns:"label=Sender Policy Framework"`
-	DKIM    map[string]*DKIM `json:"dkim,omitempty" happydns:"label=Domain Keys"`
-	DMARC   *DMARC           `json:"dmarc,omitempty" happydns:"label=DMARC"`
-	MTA_STS *MTA_STS         `json:"mta_sts,omitempty" happydns:"label=Strict Transport Security"`
-	TLS_RPT *TLS_RPT         `json:"tls_rpt,omitempty" happydns:"label=TLS Reporting"`
+	MX      []svcs.MX             `json:"mx,omitempty" happydns:"label=EMail Servers"`
+	SPF     *svcs.SPF             `json:"spf,omitempty" happydns:"label=Sender Policy Framework"`
+	DKIM    map[string]*svcs.DKIM `json:"dkim,omitempty" happydns:"label=Domain Keys"`
+	DMARC   *svcs.DMARC           `json:"dmarc,omitempty" happydns:"label=DMARC"`
+	MTA_STS *svcs.MTA_STS         `json:"mta_sts,omitempty" happydns:"label=Strict Transport Security"`
+	TLS_RPT *svcs.TLS_RPT         `json:"tls_rpt,omitempty" happydns:"label=TLS Reporting"`
 }
 
 func (s *EMail) GetNbResources() int {
@@ -253,11 +191,11 @@ func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) 
 	return
 }
 
-func email_analyze(a *Analyzer) (err error) {
+func email_analyze(a *svcs.Analyzer) (err error) {
 	services := map[string]*EMail{}
 
 	// Handle only MX records
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeMX}) {
+	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeMX}) {
 		if mx, ok := record.(*dns.MX); ok {
 			dn := mx.Header().Name
 
@@ -267,7 +205,7 @@ func email_analyze(a *Analyzer) (err error) {
 
 			services[dn].MX = append(
 				services[dn].MX,
-				MX{
+				svcs.MX{
 					Target:     mx.Mx,
 					Preference: mx.Preference,
 				},
@@ -286,9 +224,9 @@ func email_analyze(a *Analyzer) (err error) {
 
 	for domain, service := range services {
 		// Is there SPF record?
-		for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: domain, Contains: "v=spf1"}) {
+		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: domain, Contains: "v=spf1"}) {
 			if service.SPF == nil {
-				service.SPF = &SPF{}
+				service.SPF = &svcs.SPF{}
 			}
 
 			if txt, ok := record.(*dns.TXT); ok {
@@ -312,13 +250,13 @@ func email_analyze(a *Analyzer) (err error) {
 			}
 		}
 
-		service.DKIM = map[string]*DKIM{}
+		service.DKIM = map[string]*svcs.DKIM{}
 		// Is there DKIM record?
-		for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, SubdomainsOf: "_domainkey." + domain}) {
+		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, SubdomainsOf: "_domainkey." + domain}) {
 			selector := strings.TrimSuffix(record.Header().Name, "._domainkey."+domain)
 
 			if _, ok := service.DKIM[selector]; !ok {
-				service.DKIM[selector] = &DKIM{}
+				service.DKIM[selector] = &svcs.DKIM{}
 			}
 
 			if txt, ok := record.(*dns.TXT); ok {
@@ -332,9 +270,9 @@ func email_analyze(a *Analyzer) (err error) {
 		}
 
 		// Is there DMARC record?
-		for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_dmarc." + domain}) {
+		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_dmarc." + domain}) {
 			if service.DMARC == nil {
-				service.DMARC = &DMARC{}
+				service.DMARC = &svcs.DMARC{}
 			}
 
 			if txt, ok := record.(*dns.TXT); ok {
@@ -348,9 +286,9 @@ func email_analyze(a *Analyzer) (err error) {
 		}
 
 		// Is there MTA-STS record?
-		for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_mta-sts." + domain}) {
+		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_mta-sts." + domain}) {
 			if service.MTA_STS == nil {
-				service.MTA_STS = &MTA_STS{}
+				service.MTA_STS = &svcs.MTA_STS{}
 			}
 
 			if txt, ok := record.(*dns.TXT); ok {
@@ -364,9 +302,9 @@ func email_analyze(a *Analyzer) (err error) {
 		}
 
 		// Is there MTA-STS record?
-		for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_smtp._tls." + domain}) {
+		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_smtp._tls." + domain}) {
 			if service.TLS_RPT == nil {
-				service.TLS_RPT = &TLS_RPT{}
+				service.TLS_RPT = &svcs.TLS_RPT{}
 			}
 
 			if txt, ok := record.(*dns.TXT); ok {
@@ -384,19 +322,20 @@ func email_analyze(a *Analyzer) (err error) {
 }
 
 func init() {
-	RegisterService(
+	svcs.RegisterService(
 		func() happydns.Service {
 			return &EMail{}
 		},
 		email_analyze,
-		ServiceInfos{
+		svcs.ServiceInfos{
 			Name:        "E-Mail",
 			Description: "Send and receive e-mail with this domain.",
+			Family:      svcs.Abstract,
 			Categories: []string{
 				"email",
 			},
 			Tabs: true,
-			Restrictions: ServiceRestrictions{
+			Restrictions: svcs.ServiceRestrictions{
 				Single: true,
 				NeedTypes: []uint16{
 					dns.TypeMX,

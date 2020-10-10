@@ -29,7 +29,7 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package svcs
+package abstract
 
 import (
 	"bytes"
@@ -39,19 +39,14 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydns/services"
 	"git.happydns.org/happydns/utils"
 )
 
-type SSHFP struct {
-	Algorithm   uint8  `json:"algorithm"`
-	Type        uint8  `json:"type"`
-	FingerPrint string `json:"fingerprint"`
-}
-
 type Server struct {
-	A     *net.IP  `json:"A,omitempty" happydns:"label=ipv4,description=Server's IPv4"`
-	AAAA  *net.IP  `json:"AAAA,omitempty" happydns:"label=ipv6,description=Server's IPv6"`
-	SSHFP []*SSHFP `json:"SSHFP,omitempty" happydns:"label=SSH Fingerprint,description=Server's SSH fingerprint"`
+	A     *net.IP       `json:"A,omitempty" happydns:"label=ipv4,description=Server's IPv4"`
+	AAAA  *net.IP       `json:"AAAA,omitempty" happydns:"label=ipv6,description=Server's IPv6"`
+	SSHFP []*svcs.SSHFP `json:"SSHFP,omitempty" happydns:"label=SSH Fingerprint,description=Server's SSH fingerprint"`
 }
 
 func (s *Server) GetNbResources() int {
@@ -119,10 +114,10 @@ func (s *Server) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR)
 	return
 }
 
-func server_analyze(a *Analyzer) error {
+func server_analyze(a *svcs.Analyzer) error {
 	pool := map[string][]dns.RR{}
 
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeA}, AnalyzerRecordFilter{Type: dns.TypeAAAA}, AnalyzerRecordFilter{Type: dns.TypeSSHFP}) {
+	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeA}, svcs.AnalyzerRecordFilter{Type: dns.TypeAAAA}, svcs.AnalyzerRecordFilter{Type: dns.TypeSSHFP}) {
 		domain := record.Header().Name
 
 		pool[domain] = append(pool[domain], record)
@@ -147,7 +142,7 @@ next_pool:
 				s.AAAA = &rr.(*dns.AAAA).AAAA
 			} else if rr.Header().Rrtype == dns.TypeSSHFP {
 				sshfp := rr.(*dns.SSHFP)
-				s.SSHFP = append(s.SSHFP, &SSHFP{
+				s.SSHFP = append(s.SSHFP, &svcs.SSHFP{
 					Algorithm:   sshfp.Algorithm,
 					Type:        sshfp.Type,
 					FingerPrint: sshfp.FingerPrint,
@@ -164,18 +159,19 @@ next_pool:
 }
 
 func init() {
-	RegisterService(
+	svcs.RegisterService(
 		func() happydns.Service {
 			return &Server{}
 		},
 		server_analyze,
-		ServiceInfos{
+		svcs.ServiceInfos{
 			Name:        "Server",
 			Description: "A computer will respond to some requests.",
+			Family:      svcs.Abstract,
 			Categories: []string{
 				"server",
 			},
-			Restrictions: ServiceRestrictions{
+			Restrictions: svcs.ServiceRestrictions{
 				GLUE: true,
 			},
 		},

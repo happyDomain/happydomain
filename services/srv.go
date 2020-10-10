@@ -73,7 +73,7 @@ func (s *SRV) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 	return
 }
 
-func parseSRV(record dns.RR) (ret *SRV) {
+func ParseSRV(record dns.RR) (ret *SRV) {
 	if srv, ok := record.(*dns.SRV); ok {
 		ret = &SRV{
 			Priority: srv.Priority,
@@ -116,7 +116,7 @@ func srv_analyze(a *Analyzer) error {
 
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeSRV}) {
 		subdomains := SRV_DOMAIN.FindStringSubmatch(record.Header().Name)
-		if srv := parseSRV(record); len(subdomains) == 4 && srv != nil {
+		if srv := ParseSRV(record); len(subdomains) == 4 && srv != nil {
 			svc := subdomains[1] + "." + subdomains[2]
 			domain := subdomains[3]
 

@@ -48,6 +48,7 @@ import (
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/services"
+	"git.happydns.org/happydns/services/abstract"
 	"git.happydns.org/happydns/sources"
 	"git.happydns.org/happydns/storage"
 )
@@ -339,7 +340,7 @@ func applyZone(opts *config.Options, req *RequestResources, body io.Reader) Resp
 	// Update serial
 	if newSOA != nil {
 		for _, svc := range req.Zone.Services[""] {
-			if origin, ok := svc.Service.(*svcs.Origin); ok {
+			if origin, ok := svc.Service.(*abstract.Origin); ok {
 				origin.Serial = newSOA.Serial
 				break
 			}

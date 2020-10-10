@@ -31,69 +31,9 @@
 
 package svcs
 
-import (
-	"strings"
+import ()
 
-	"github.com/miekg/dns"
-
-	"git.happydns.org/happydns/model"
-	"git.happydns.org/happydns/utils"
-)
-
-type ACMEChallenge struct {
-	Challenge string
-}
-
-func (s *ACMEChallenge) GetNbResources() int {
-	return 1
-}
-
-func (s *ACMEChallenge) GenComment(origin string) string {
-	return s.Challenge
-}
-
-func (s *ACMEChallenge) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
-	rrs = append(rrs, &dns.TXT{
-		Hdr: dns.RR_Header{
-			Name:   utils.DomainJoin("_acme-challenge", domain),
-			Rrtype: dns.TypeTXT,
-			Class:  dns.ClassINET,
-			Ttl:    ttl,
-		},
-		Txt: []string{s.Challenge},
-	})
-	return
-}
-
-func acmechallenge_analyze(a *Analyzer) error {
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_acme-challenge"}) {
-		domain := strings.TrimPrefix(record.Header().Name, "_acme-challenge.")
-		if txt, ok := record.(*dns.TXT); ok {
-			a.UseRR(record, domain, &ACMEChallenge{
-				Challenge: strings.Join(txt.Txt, ""),
-			})
-		}
-	}
-	return nil
-}
-
-func init() {
-	RegisterService(
-		func() happydns.Service {
-			return &ACMEChallenge{}
-		},
-		acmechallenge_analyze,
-		ServiceInfos{
-			Name:        "ACME Challenge",
-			Description: "Temporary record to prove that you are in possession of the sub-domain.",
-			Categories: []string{
-				"temporary",
-				"tls",
-			},
-			Restrictions: ServiceRestrictions{
-				NearAlone: true,
-			},
-		},
-		2,
-	)
+type MX struct {
+	Target     string `json:"target"`
+	Preference uint16 `json:"preference,omitempty"`
 }
