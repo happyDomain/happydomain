@@ -85,6 +85,22 @@ func (z *Zone) DerivateNew() *Zone {
 	return newZone
 }
 
+func (z *Zone) AppendService(subdomain string, origin string, svc *ServiceCombined) error {
+	hash, err := ValidateService(svc.Service, subdomain, origin)
+	if err != nil {
+		return err
+	}
+
+	svc.Id = hash
+	svc.Domain = subdomain
+	svc.NbResources = svc.Service.GetNbResources()
+	svc.Comment = svc.Service.GenComment(origin)
+
+	z.Services[subdomain] = append(z.Services[subdomain], svc)
+
+	return nil
+}
+
 // FindService finds the Service identified by the given id.
 func (z *Zone) FindService(id []byte) (string, *ServiceCombined) {
 	for subdomain := range z.Services {
@@ -96,12 +112,40 @@ func (z *Zone) FindService(id []byte) (string, *ServiceCombined) {
 	return "", nil
 }
 
+func (z *Zone) findSubdomainService(subdomain string, id []byte) (int, *ServiceCombined) {
+	if services, ok := z.Services[subdomain]; ok {
+		for k, svc := range services {
+			if bytes.Equal(svc.Id, id) {
+				return k, svc
+			}
+		}
+	}
+
+	return -1, nil
+}
+
 // FindSubdomainService finds the Service identified by the given id, only under the given subdomain.
 func (z *Zone) FindSubdomainService(domain string, id []byte) *ServiceCombined {
-	for _, svc := range z.Services[domain] {
-		if bytes.Equal(svc.Id, id) {
-			return svc
+	_, svc := z.findSubdomainService(domain, id)
+	return svc
+}
+
+func (z *Zone) eraseService(subdomain, origin string, old *ServiceCombined, idx int, new *ServiceCombined) error {
+	if new == nil {
+		// Disallow removing SOA
+		if subdomain == "" && old.Type == "abstract.Origin" {
+			return errors.New("You cannot delete this service. It is mandatory.")
 		}
+
+		if len(z.Services[subdomain]) <= 1 {
+			delete(z.Services, subdomain)
+		} else {
+			z.Services[subdomain] = append(z.Services[subdomain][:idx], z.Services[subdomain][idx+1:]...)
+		}
+	} else {
+		new.Comment = new.GenComment(origin)
+		new.NbResources = new.GetNbResources()
+		z.Services[subdomain][idx] = new
 	}
 
 	return nil
@@ -110,27 +154,16 @@ func (z *Zone) FindSubdomainService(domain string, id []byte) *ServiceCombined {
 // EraseService overwrites the Service identified by the given id, under the given subdomain.
 // The the new service is nil, it removes the existing Service instead of overwrite it.
 func (z *Zone) EraseService(subdomain string, origin string, id []byte, s *ServiceCombined) error {
-	if services, ok := z.Services[subdomain]; ok {
-		for k, svc := range services {
-			if bytes.Equal(svc.Id, id) {
-				if s == nil {
-					// Disallow removing SOA
-					if subdomain == "" && svc.Type == "abstract.Origin" {
-						return errors.New("You cannot delete this service. It is mandatory.")
-					}
-					if len(z.Services[subdomain]) <= 1 {
-						delete(z.Services, subdomain)
-					} else {
-						z.Services[subdomain] = append(z.Services[subdomain][:k], z.Services[subdomain][k+1:]...)
-					}
-				} else {
-					s.Comment = s.GenComment(origin)
-					s.NbResources = s.GetNbResources()
-					z.Services[subdomain][k] = s
-				}
-				return nil
-			}
-		}
+	if idx, svc := z.findSubdomainService(subdomain, id); svc != nil {
+		return z.eraseService(subdomain, origin, svc, idx, s)
+	}
+
+	return errors.New("Service not found")
+}
+
+func (z *Zone) EraseServiceWithoutMeta(subdomain string, origin string, id []byte, s Service) error {
+	if idx, svc := z.findSubdomainService(subdomain, id); svc != nil {
+		return z.eraseService(subdomain, origin, svc, idx, &ServiceCombined{Service: s, ServiceMeta: svc.ServiceMeta})
 	}
 
 	return errors.New("Service not found")

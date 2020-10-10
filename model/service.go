@@ -32,6 +32,10 @@
 package happydns
 
 import (
+	"crypto/sha1"
+	"fmt"
+	"io"
+
 	"github.com/miekg/dns"
 )
 
@@ -92,4 +96,16 @@ var UnmarshalServiceJSON func(*ServiceCombined, []byte) error
 // the encoding/json module.
 func (svc *ServiceCombined) UnmarshalJSON(b []byte) error {
 	return UnmarshalServiceJSON(svc, b)
+}
+
+func ValidateService(svc Service, subdomain, origin string) ([]byte, error) {
+	records := svc.GenRRs(subdomain, 0, origin)
+	if len(records) == 0 {
+		return nil, fmt.Errorf("No record can be generated from your service.")
+	} else {
+		hash := sha1.New()
+		io.WriteString(hash, records[0].String())
+
+		return hash.Sum(nil), nil
+	}
 }

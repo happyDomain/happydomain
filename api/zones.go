@@ -32,7 +32,6 @@
 package api
 
 import (
-	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -129,22 +128,12 @@ func addZoneService(opts *config.Options, req *RequestResources, body io.Reader)
 
 	subdomain := strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(req.Ps.ByName("subdomain"), "."+req.Domain.DomainName), "@"), req.Domain.DomainName)
 
-	records := usc.Service.GenRRs(subdomain, usc.Ttl, req.Domain.DomainName)
-	if len(records) == 0 {
+	err = req.Zone.AppendService(subdomain, req.Domain.DomainName, usc)
+	if err != nil {
 		return APIErrorResponse{
-			err: fmt.Errorf("No record can be generated from your service."),
+			err: err,
 		}
 	}
-
-	hash := sha1.New()
-	io.WriteString(hash, records[0].String())
-
-	usc.Id = hash.Sum(nil)
-	usc.Domain = subdomain
-	usc.NbResources = usc.Service.GetNbResources()
-	usc.Comment = usc.Service.GenComment(req.Domain.DomainName)
-
-	req.Zone.Services[subdomain] = append(req.Zone.Services[subdomain], usc)
 
 	err = storage.MainStore.UpdateZone(req.Zone)
 	if err != nil {
