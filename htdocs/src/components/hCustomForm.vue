@@ -32,43 +32,42 @@
   -->
 
 <template>
-  <h-custom-form :form="form" :value="val.Source" @input="val.Source = $event; $emit('input', val)">
-    <h-resource-value-simple-input
-      v-if="state === 0"
-      id="src-name"
+  <div>
+    <p v-if="form.beforeText" class="lead text-indent">
+      {{ form.beforeText }}
+    </p>
+    <p v-else>
+      {{ $t('domains.please-fill-fields') }}
+    </p>
+
+    <slot />
+
+    <h-fields
+      v-if="form.fields && val"
       edit
-      :index="0"
-      :label="$t('source.name-your')"
-      :description="$t('domains.give-explicit-name')"
-      :placeholder="sourceName + ' account 1'"
-      required
-      :value="val._comment"
-      @input="val._comment = $event;$emit('input', val)"
+      :fields="form.fields"
+      :value="val"
+      @input="val = $event;$emit('input', val)"
     />
-  </h-custom-form>
+
+    <p v-if="form.afterText">
+      {{ form.afterText }}
+    </p>
+  </div>
 </template>
 
 <script>
 export default {
-  name: 'HSourceState',
+  name: 'HCustomForm',
 
   components: {
-    hCustomForm: () => import('@/components/hCustomForm'),
-    hResourceValueSimpleInput: () => import('@/components/hResourceValueSimpleInput')
+    hFields: () => import('@/components/hFields')
   },
 
   props: {
     form: {
       type: Object,
       required: true
-    },
-    sourceName: {
-      type: String,
-      required: true
-    },
-    state: {
-      type: Number,
-      default: 0
     },
     value: {
       type: Object,
@@ -100,12 +99,6 @@ export default {
         this.val = Object.assign({}, this.value)
       } else {
         this.val = {}
-      }
-      if (this.val.Source === undefined) {
-        this.val.Source = {}
-      }
-      if (this.val._comment === undefined) {
-        this.val._comment = ''
       }
     }
   }

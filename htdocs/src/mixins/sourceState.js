@@ -29,135 +29,15 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
+import CustomForm from '@/mixins/customForm'
 import SourceSettingsApi from '@/services/SourceSettingsApi'
 
 export default {
-  data () {
-    return {
-      form: null,
-      nextIsWorking: false,
-      previousIsWorking: false,
-      settings: null,
-      state: 0
-    }
-  },
-
-  computed: {
-    isLoading () {
-      return this.form == null || this.sourceSpecs == null
-    }
-  },
-
-  mounted () {
-    this.resetSettings()
-    this.updateSourceSettingsForm()
-  },
+  mixins: [CustomForm],
 
   methods: {
-    loadState (toState, recallid, cbSuccess, cbFail) {
-      SourceSettingsApi.getSourceSettings(this.sourceSpecsSelected, toState, this.settings, recallid)
-        .then(
-          response => {
-            this.previousIsWorking = false
-            this.nextIsWorking = false
-            if (response.data.form) {
-              this.form = response.data.form
-              this.state = toState
-              if (response.data.redirect && window.location.pathname !== response.data.redirect) {
-                this.$router.push(response.data.redirect)
-              } else if (cbSuccess) {
-                cbSuccess(toState)
-              }
-            } else if (response.data.Source) {
-              this.$root.$bvToast.toast(
-                'Done', {
-                  title: (response.data.Source._comment ? response.data.Source._comment : 'Your new source') + ' has been ' + (this.settings._id ? 'updated' : 'added') + '.',
-                  autoHideDelay: 5000,
-                  variant: 'success',
-                  toaster: 'b-toaster-content-right'
-                }
-              )
-              if (response.data.redirect && window.location.pathname !== response.data.redirect) {
-                this.$router.push(response.data.redirect)
-              } else if (cbSuccess) {
-                cbSuccess(toState, response.data.Source)
-              } else {
-                this.$router.push('/sources/' + encodeURIComponent(response.data.Source._id) + '/domains')
-              }
-            }
-          },
-          error => {
-            this.previousIsWorking = false
-            this.nextIsWorking = false
-            this.$root.$bvToast.toast(
-              error.response.data.errmsg, {
-                title: 'Something went wrong during source configuration validation',
-                autoHideDelay: 5000,
-                variant: 'danger',
-                toaster: 'b-toaster-content-right'
-              }
-            )
-            if (cbFail) {
-              cbFail(error.response.data)
-            }
-          })
-    },
-
-    nextState (bvModalEvt) {
-      if (bvModalEvt) {
-        bvModalEvt.preventDefault()
-      }
-      this.nextIsWorking = true
-      if (this.form) {
-        if (this.form.nextButtonLink !== undefined) {
-          window.location = this.form.nextButtonLink
-        } else if (this.form.nextButtonState === -1) {
-          this.state = this.form.nextButtonState
-          this.form = null
-          this.nextButtonState = false
-        } else if (this.form.nextButtonState) {
-          this.loadState(
-            this.form.nextButtonState,
-            null,
-            this.reactOnSuccess
-          )
-        } else {
-          this.loadState(0)
-        }
-      } else {
-        this.loadState(0)
-      }
-    },
-
-    previousState () {
-      this.previousIsWorking = true
-      if (this.form.previousButtonState <= 0) {
-        this.state = this.form.previousButtonState
-        this.form = null
-        this.previousIsWorking = false
-      } else if (this.form.previousButtonState) {
-        this.loadState(
-          this.form.previousButtonState,
-          null,
-          this.reactOnSuccess
-        )
-      } else {
-        this.loadState(0)
-      }
-    },
-
-    resetSettings () {
-      this.settings = {
-        Source: {},
-        _comment: '',
-        redirect: null
-      }
-    },
-
-    updateSourceSettingsForm () {
-      if (this.sourceSpecsSelected && this.state >= 0) {
-        this.loadState(this.state, this.$route.query.recall)
-      }
+    getFormSettings (state, settings, recallid) {
+      return SourceSettingsApi.getSourceSettings(this.sourceSpecsSelected, state, settings, recallid)
     }
   }
 }
