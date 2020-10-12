@@ -88,6 +88,8 @@ export default {
       this.resetSettings()
       this.settings.redirect = window.location.pathname
       this.state = -1
+      this.resetSettings()
+      this.updateSettingsForm()
       this.$bvModal.show('modal-add-source')
     }
   }

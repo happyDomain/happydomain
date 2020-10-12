@@ -98,6 +98,8 @@ export default {
     this.sourceSpecsSelected = this.$route.params.provider
     this.state = parseInt(this.$route.params.state)
     this.updateSourceSpecs()
+    this.resetSettings()
+    this.updateSettingsForm()
   },
 
   methods: {

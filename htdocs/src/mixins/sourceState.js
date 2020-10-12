@@ -41,11 +41,6 @@ export default {
     }
   },
 
-  mounted () {
-    this.resetSettings()
-    this.updateSettingsForm()
-  },
-
   methods: {
     getFormSettings (state, settings, recallid) {
       return SourceSettingsApi.getSourceSettings(this.sourceSpecsSelected, state, settings, recallid)

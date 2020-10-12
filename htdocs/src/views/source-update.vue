@@ -116,6 +116,11 @@ export default {
     }
   },
 
+  mounted () {
+    this.resetSettings()
+    this.updateSettingsForm()
+  },
+
   methods: {
     editSource () {
       this.settings = Object.assign({}, this.mySource)
