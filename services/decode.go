@@ -78,6 +78,8 @@ func RegisterService(creator ServiceCreator, analyzer ServiceAnalyzer, infos Ser
 	name := baseType.String()
 	log.Println("Registering new service:", name)
 
+	infos.Type = name
+
 	svc := &Svc{
 		creator,
 		analyzer,
