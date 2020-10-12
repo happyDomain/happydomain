@@ -65,11 +65,6 @@ func main() {
 	dir := os.Args[1]
 	pkg := os.Args[2]
 
-	srcFiles, err := filepath.Glob(dir + "/*/*.png")
-	if err != nil {
-		panic(err)
-	}
-
 	d := valTpl{
 		Directory: dir,
 		Package:   pkg,
@@ -77,14 +72,25 @@ func main() {
 		Map:       map[string][]byte{},
 	}
 
-	for _, srcFile := range srcFiles {
-		data, err := ioutil.ReadFile(srcFile)
-		if err != nil {
-			panic(err)
-		}
+	err := filepath.Walk(dir, func(srcFile string, info os.FileInfo, err error) error {
+		if filepath.Ext(srcFile) == ".png" {
+			data, err := ioutil.ReadFile(srcFile)
+			if err != nil {
+				return err
+			}
 
-		d.Sources = append(d.Sources, srcFile)
-		d.Map[strings.Replace(strings.TrimPrefix(strings.TrimSuffix(srcFile, ".png"), "sources/"), "/", ".", -1)] = data
+			d.Sources = append(d.Sources, srcFile)
+			fPath := strings.Split(strings.TrimPrefix(strings.TrimSuffix(srcFile, ".png"), dir+"/"), "/")
+			fPathLen := len(fPath) - 2
+			if fPathLen < 0 {
+				fPathLen = 0
+			}
+			d.Map[strings.Join(fPath[fPathLen:], ".")] = data
+		}
+		return nil
+	})
+	if err != nil {
+		panic(err)
 	}
 
 	f, err := os.Create(dir + "/icons.go")
