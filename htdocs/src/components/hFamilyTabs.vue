@@ -35,35 +35,55 @@
   <b-tabs :content-class="contentClass">
     <b-tab title="All" active>
       <b-list-group>
-        <b-list-group-item v-for="(svc, idx) in availableNewServices()" :key="idx" :active="value === idx" button @click="$emit('input', idx)">
-          {{ svc.name }}
-          <small class="text-muted">{{ svc.description }}</small>
-          <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
-            {{ categorie }}
-          </b-badge>
+        <b-list-group-item v-for="(svc, idx) in availableNewServices()" :key="idx" :active="value === idx" button class="d-flex" @click="$emit('input', idx)">
+          <div v-if="svc._svcicon" class="d-inline-block align-self-center text-center" style="width: 75px;">
+            <img :src="svc._svcicon" :alt="svc.name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+          </div>
+          <div>
+            {{ svc.name }}
+            <small class="text-muted">{{ svc.description }}</small>
+            <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
+              {{ categorie }}
+            </b-badge>
+          </div>
         </b-list-group-item>
-        <b-list-group-item v-for="(svc, idx) in disabledNewServices()" :key="idx" :active="value === idx" disabled @click="$emit('input', idx)">
-          <span :title="svc.description">{{ svc.name }}</span> <small class="font-italic text-danger">{{ filteredNewServices[idx] }}</small>
-          <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
-            {{ categorie }}
-          </b-badge>
+        <b-list-group-item v-for="(svc, idx) in disabledNewServices()" :key="idx" :active="value === idx" class="d-flex" disabled @click="$emit('input', idx)">
+          <div v-if="svc._svcicon" class="d-inline-block align-self-center text-center" style="width: 75px;">
+            <img :src="svc._svcicon" :alt="svc.name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+          </div>
+          <div>
+            <span :title="svc.description">{{ svc.name }}</span> <small class="font-italic text-danger">{{ filteredNewServices[idx] }}</small>
+            <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
+              {{ categorie }}
+            </b-badge>
+          </div>
         </b-list-group-item>
       </b-list-group>
     </b-tab>
     <b-tab v-for="(family, idxf) in families" :key="idxf" :title="family.label">
       <b-list-group>
-        <b-list-group-item v-for="(svc, idx) in availableNewServices(family.family)" :key="idx" :active="value === idx" button @click="$emit('input', idx)">
-          {{ svc.name }}
-          <small class="text-muted">{{ svc.description }}</small>
-          <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
-            {{ categorie }}
-          </b-badge>
+        <b-list-group-item v-for="(svc, idx) in availableNewServices(family.family)" :key="idx" :active="value === idx" button class="d-flex" @click="$emit('input', idx)">
+          <div v-if="svc._svcicon" class="d-inline-block align-self-center text-center" style="width: 75px;">
+            <img :src="svc._svcicon" :alt="svc.name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+          </div>
+          <div>
+            {{ svc.name }}
+            <small class="text-muted">{{ svc.description }}</small>
+            <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
+              {{ categorie }}
+            </b-badge>
+          </div>
         </b-list-group-item>
-        <b-list-group-item v-for="(svc, idx) in disabledNewServices(family.family)" :key="idx" :active="value === idx" disabled @click="$emit('input', idx)">
-          <span :title="svc.description">{{ svc.name }}</span> <small class="font-italic text-danger">{{ filteredNewServices[idx] }}</small>
-          <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
-            {{ categorie }}
-          </b-badge>
+        <b-list-group-item v-for="(svc, idx) in disabledNewServices(family.family)" :key="idx" :active="value === idx" class="d-flex" disabled @click="$emit('input', idx)">
+          <div v-if="svc._svcicon" class="d-inline-block align-self-center text-center" style="width: 75px;">
+            <img :src="svc._svcicon" :alt="svc.name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+          </div>
+          <div>
+            <span :title="svc.description">{{ svc.name }}</span> <small class="font-italic text-danger">{{ filteredNewServices[idx] }}</small>
+            <b-badge v-for="(categorie, idcat) in svc.categories" :key="idcat" variant="gray" class="float-right ml-1">
+              {{ categorie }}
+            </b-badge>
+          </div>
         </b-list-group-item>
       </b-list-group>
     </b-tab>

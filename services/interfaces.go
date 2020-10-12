@@ -67,6 +67,7 @@ type ServiceRestrictions struct {
 type ServiceInfos struct {
 	Name         string              `json:"name"`
 	Type         string              `json:"_svctype"`
+	Icon         string              `json:"_svcicon,omitempty"`
 	Description  string              `json:"description"`
 	Family       string              `json:"family"`
 	Categories   []string            `json:"categories"`

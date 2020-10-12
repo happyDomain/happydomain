@@ -48,6 +48,7 @@ import (
 func init() {
 	router.GET("/api/service_specs", ApiHandler(getServiceSpecs))
 	router.GET("/api/service_specs/:ssid", ApiHandler(getServiceSpec))
+	router.GET("/api/service_specs/:ssid/icon.png", ApiHandler(getServiceSpecIcon))
 }
 
 type service_field struct {
@@ -75,7 +76,9 @@ func getServiceSpecs(_ *config.Options, p httprouter.Params, body io.Reader) Res
 	}
 }
 
-func getServiceSpecImg(ssid string) Response {
+func getServiceSpecIcon(_ *config.Options, p httprouter.Params, body io.Reader) Response {
+	ssid := string(p.ByName("ssid"))
+
 	if cnt, ok := svcs.Icons[strings.TrimSuffix(ssid, ".png")]; ok {
 		return &FileResponse{
 			contentType: "image/png",

@@ -78,7 +78,11 @@ func RegisterService(creator ServiceCreator, analyzer ServiceAnalyzer, infos Ser
 	name := baseType.String()
 	log.Println("Registering new service:", name)
 
+	// Override given parameters by true one
 	infos.Type = name
+	if _, ok := Icons[name]; ok {
+		infos.Icon = "/api/service_specs/" + name + "/icon.png"
+	}
 
 	svc := &Svc{
 		creator,
