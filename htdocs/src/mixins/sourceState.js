@@ -35,6 +35,17 @@ import SourceSettingsApi from '@/services/SourceSettingsApi'
 export default {
   mixins: [CustomForm],
 
+  computed: {
+    isLoading () {
+      return this.form == null || this.sourceSpecs == null
+    }
+  },
+
+  mounted () {
+    this.resetSettings()
+    this.updateSettingsForm()
+  },
+
   methods: {
     getFormSettings (state, settings, recallid) {
       return SourceSettingsApi.getSourceSettings(this.sourceSpecsSelected, state, settings, recallid)

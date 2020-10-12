@@ -35,8 +35,23 @@ export default {
   getServices (domain) {
     return Api().get('/api/service_specs')
   },
+
+  getFormSettings (domain, id, subdomain, service, state, settings, recallid) {
+    if (!state) {
+      state = 0
+    }
+    if (!settings) {
+      settings = {}
+    }
+    settings.state = state
+    if (recallid) {
+      settings.recall = parseInt(recallid)
+    }
+    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(subdomain) + '/services/' + encodeURIComponent(service), settings)
+  },
+
   updateService (service) {
-    var serviceType = serviceType[0] === '*' ? serviceType.substr(1) : serviceType
+    var serviceType = service[0] === '*' ? service.substr(1) : service
     return Api().get('/api/service_specs/' + serviceType)
   }
 }

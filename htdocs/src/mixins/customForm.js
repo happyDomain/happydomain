@@ -40,18 +40,6 @@ export default {
     }
   },
 
-  computed: {
-    isLoading () {
-      return this.form == null || this.sourceSpecs == null
-    }
-  },
-
-  mounted () {
-    console.log('mounted customform')
-    this.resetSettings()
-    this.updateSettingsForm()
-  },
-
   methods: {
     loadState (toState, recallid, cbSuccess, cbFail) {
       this.getFormSettings(toState, this.settings, recallid)

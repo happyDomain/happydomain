@@ -36,11 +36,13 @@
     <h-resource-value
       v-for="(specs, index) in fields"
       v-show="edit || !specs.secret"
+      ref="child"
       :key="index"
       :edit="edit"
       :index="index"
+      :services="services"
       :specs="specs"
-      type="string"
+      :type="specs.type"
       :value="val[specs.id]"
       @input="val[specs.id] = $event;$emit('input', val)"
     />
@@ -63,6 +65,10 @@ export default {
     fields: {
       type: Array,
       required: true
+    },
+    services: {
+      type: Object,
+      default: () => {}
     },
     value: {
       type: Object,
@@ -103,6 +109,12 @@ export default {
       if (changed) {
         this.$emit('input', this.val)
       }
+    },
+
+    saveChildrenValues () {
+      this.$refs.child.forEach(function (row) {
+        row.saveChildrenValues()
+      }, this)
     },
 
     updateValues () {

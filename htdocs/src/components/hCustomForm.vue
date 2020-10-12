@@ -42,10 +42,23 @@
 
     <slot />
 
+    <h-resource-value
+      v-if="type"
+      ref="resource"
+      edit
+      :services="services"
+      :specs="{}"
+      :type="type"
+      :value="val"
+      @input="val = $event;$emit('input', val)"
+    />
+
     <h-fields
-      v-if="form.fields && val"
+      v-else-if="form.fields && val"
+      ref="resource"
       edit
       :fields="form.fields"
+      :services="services"
       :value="val"
       @input="val = $event;$emit('input', val)"
     />
@@ -61,13 +74,22 @@ export default {
   name: 'HCustomForm',
 
   components: {
-    hFields: () => import('@/components/hFields')
+    hFields: () => import('@/components/hFields'),
+    hResourceValue: () => import('@/components/hResourceValue')
   },
 
   props: {
     form: {
       type: Object,
       required: true
+    },
+    services: {
+      type: Object,
+      default: () => {}
+    },
+    type: {
+      type: String,
+      default: ''
     },
     value: {
       type: Object,
@@ -94,6 +116,10 @@ export default {
   },
 
   methods: {
+    saveChildrenValues () {
+      this.$refs.resource.saveChildrenValues()
+    },
+
     updateValues () {
       if (this.value != null) {
         this.val = Object.assign({}, this.value)

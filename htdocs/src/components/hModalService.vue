@@ -90,16 +90,16 @@
         </b-tab>
       </b-tabs>
       <div v-else-if="step === 2">
-        <p>
-          Fill the information for the {{ services[svcSelected].name }} at <span class="text-monospace">{{ dn | fqdn(domain.domain) }}</span>:
-        </p>
-        <h-resource-value ref="addModalResources" v-model="svcData.Service" edit :services="services" :type="svcSelected" />
+        <h-custom-form v-if="form" ref="addModalResources" v-model="svcData.Service" :form="form" :services="services" :type="svcSelected" />
+        <b-spinner v-else label="Spinning" />
       </div>
     </form>
   </b-modal>
 </template>
 
 <script>
+import CustomForm from '@/mixins/customForm'
+import ServicesApi from '@/services/ServicesApi'
 import SourcesApi from '@/services/SourcesApi'
 import ValidateDomain from '@/mixins/validateDomain'
 import ZoneApi from '@/services/ZoneApi'
@@ -108,10 +108,10 @@ export default {
   name: 'HModalAddService',
 
   components: {
-    hResourceValue: () => import('@/components/hResourceValue')
+    hCustomForm: () => import('@/components/hCustomForm')
   },
 
-  mixins: [ValidateDomain],
+  mixins: [CustomForm, ValidateDomain],
 
   props: {
     domain: {
@@ -311,6 +311,10 @@ export default {
           })
     },
 
+    getFormSettings (state, settings, recallid) {
+      return ServicesApi.getFormSettings(this.domain.domain, this.zoneId, this.dn, this.svcSelected, state, settings, recallid)
+    },
+
     handleModalSvcOk (bvModalEvt) {
       bvModalEvt.preventDefault()
 
@@ -321,6 +325,8 @@ export default {
       } else if (this.step === 1 && this.svcSelected !== null) {
         this.step = 2
         this.svcData = { Service: {}, _svctype: this.svcSelected }
+        this.resetSettings()
+        this.updateSettingsForm()
       } else if (this.step === 2 && this.svcSelected !== null) {
         this.$refs.addModalResources.saveChildrenValues()
 
@@ -371,6 +377,7 @@ export default {
         this.svcSelected = data._svctype
         this.svcData = data
         this.update = true
+        this.updateSettingsForm()
       } else {
         this.svcSelected = null
         this.svcData = { Service: {} }
