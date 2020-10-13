@@ -57,6 +57,7 @@
 import axios from 'axios'
 import DomainCompare from '@/mixins/domainCompare'
 import ListGroupInputNewDomain from '@/mixins/listGroupInputNewDomain'
+import SourcesApi from '@/services/SourcesApi'
 
 export default {
   name: 'ZoneList',
@@ -101,11 +102,12 @@ export default {
       .then(response => {
         this.domains = response.data
         this.domains.forEach(function (domain) {
-          axios
-            .get('/api/sources/' + encodeURIComponent(domain.id_source))
-            .then(response => {
-              this.$set(this.sources, domain.id_source, response.data)
-            })
+          if (!this.sources[domain.id_source]) {
+            SourcesApi.getSource(domain.id_source)
+              .then(response => {
+                this.$set(this.sources, domain.id_source, response.data)
+              })
+          }
         }, this)
       })
   },

@@ -32,7 +32,20 @@
   -->
 
 <template>
-  <component :is="itemComponent" ref="myChild" :value="value" :edit="edit" :edit-toolbar="editToolbar" :index="index" :services="services" :specs="specs" :type="type" @input="$emit('input', $event)" @deleteService="$emit('deleteService', $event)" @saveService="$emit('saveService', $event)" />
+  <component
+    :is="itemComponent"
+    ref="myChild"
+    :value="value"
+    :edit="edit"
+    :edit-toolbar="editToolbar"
+    :index="index"
+    :services="services"
+    :specs="specs"
+    :type="type"
+    @input="$emit('input', $event)"
+    @deleteService="$emit('deleteService', $event)"
+    @saveService="$emit('saveService', $event)"
+  />
 </template>
 
 <script>
