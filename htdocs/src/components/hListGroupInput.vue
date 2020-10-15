@@ -41,7 +41,17 @@
               <b-icon icon="plus" style="width: 100%; height: 2.3rem; margin-right: -.6em; margin-left: -.6em" />
             </b-input-group-prepend>
           </template>
-          <b-form-input ref="lginput" :autofocus="autofocus" :class="inputClass" :placeholder="placeholder" :state="value.length ? state : null" style="border:none;box-shadow:none;z-index:0" :value="value" @input="$emit('input', $event)" @update="$emit('update', $event)" />
+          <b-form-input
+            ref="lginput"
+            :autofocus="autofocus"
+            :class="inputClass"
+            :placeholder="placeholder"
+            :state="value.length ? state : null"
+            style="border:none;box-shadow:none;z-index:0"
+            :value="value"
+            @input="$emit('input', $event)"
+            @update="$emit('update', $event)"
+          />
           <template v-slot:append>
             <b-input-group-append v-show="value.length">
               <b-button type="submit" variant="outline-primary">

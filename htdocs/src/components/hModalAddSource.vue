@@ -32,9 +32,23 @@
   -->
 
 <template>
-  <b-modal id="modal-add-source" scrollable size="lg" title="New Source Form" ok-title="Next >" :ok-disabled="!sourceSpecsSelected" @ok="nextState">
+  <b-modal
+    id="modal-add-source"
+    scrollable
+    size="lg"
+    title="New Source Form"
+    ok-title="Next >"
+    :ok-disabled="!sourceSpecsSelected"
+    @ok="nextState"
+  >
     <template v-if="state >= 0 && form" v-slot:modal-footer>
-      <h-source-state-buttons :form="form" submit-form="source-state-form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previousState="previousState" />
+      <h-source-state-buttons
+        :form="form"
+        submit-form="source-state-form"
+        :next-is-working="nextIsWorking"
+        :previous-is-working="previousIsWorking"
+        @previousState="previousState"
+      />
     </template>
 
     <div v-if="state < 0">
@@ -45,7 +59,13 @@
     </div>
 
     <b-form v-else-if="sourceSpecsSelected" id="source-state-form" @submit.stop.prevent="nextState">
-      <h-source-state v-model="settings" class="mt-2 mb-2" :form="form" :source-name="sourceSpecs[sourceSpecsSelected].name" :state="state" />
+      <h-source-state
+        v-model="settings"
+        class="mt-2 mb-2"
+        :form="form"
+        :source-name="sourceSpecs[sourceSpecsSelected].name"
+        :state="state"
+      />
     </b-form>
   </b-modal>
 </template>

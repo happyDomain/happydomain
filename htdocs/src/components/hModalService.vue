@@ -37,21 +37,42 @@
       Add a new service to <span class="text-monospace">{{ dn | fqdn(domain.domain) }}</span>
     </template>
     <template v-slot:modal-footer="{ ok, cancel }">
-      <b-button v-if="update" :disabled="deleteServiceInProgress || !svcData || svcData._svctype === 'abstract.Origin'" variant="danger" @click="deleteService(svcData)">
+      <b-button
+        v-if="update"
+        :disabled="deleteServiceInProgress || !svcData || svcData._svctype === 'abstract.Origin'"
+        variant="danger"
+        @click="deleteService(svcData)"
+      >
         <b-spinner v-if="deleteServiceInProgress" label="Spinning" small />
         {{ $t('service.delete') }}
       </b-button>
       <b-button variant="secondary" @click="cancel()">
         {{ $t('common.cancel') }}
       </b-button>
-      <b-button v-if="step === 2 && update" :disabled="addServiceInProgress" form="addSvcForm" type="submit" variant="success">
+      <b-button
+        v-if="step === 2 && update"
+        :disabled="addServiceInProgress"
+        form="addSvcForm"
+        type="submit"
+        variant="success"
+      >
         <b-spinner v-if="addServiceInProgress" label="Spinning" small />
         {{ $t('service.update') }}
       </b-button>
-      <b-button v-else-if="step === 2" form="addSvcForm" type="submit" variant="primary">
+      <b-button
+        v-else-if="step === 2"
+        form="addSvcForm"
+        type="submit"
+        variant="primary"
+      >
         {{ $t('service.add') }}
       </b-button>
-      <b-button v-else form="addSvcForm" type="submit" variant="primary">
+      <b-button
+        v-else
+        form="addSvcForm"
+        type="submit"
+        variant="primary"
+      >
         {{ $t('common.continue') }}
       </b-button>
     </template>
@@ -59,12 +80,35 @@
       <p v-if="step === 0">
         Add a new subdomain under <span class="text-monospace">{{ domain.domain }}</span>:
         <b-input-group :append="'.' + domain.domain">
-          <b-input v-model="dn" autofocus class="text-monospace" placeholder="new.subdomain" :state="newDomainState" @update="validateNewSubdomain" />
+          <b-input
+            v-model="dn"
+            autofocus
+            class="text-monospace"
+            placeholder="new.subdomain"
+            :state="newDomainState"
+            @update="validateNewSubdomain"
+          />
         </b-input-group>
       </p>
-      <h-family-tabs v-else-if="step === 1" v-model="svcSelected" class="mb-2" content-class="mt-3" :domain="domain" :dn="dn" :my-services="myServices" :services="services" />
+      <h-family-tabs
+        v-else-if="step === 1"
+        v-model="svcSelected"
+        class="mb-2"
+        content-class="mt-3"
+        :domain="domain"
+        :dn="dn"
+        :my-services="myServices"
+        :services="services"
+      />
       <div v-else-if="step === 2">
-        <h-custom-form v-if="form" ref="addModalResources" v-model="svcData.Service" :form="form" :services="services" :type="svcSelected" />
+        <h-custom-form
+          v-if="form"
+          ref="addModalResources"
+          v-model="svcData.Service"
+          :form="form"
+          :services="services"
+          :type="svcSelected"
+        />
         <b-spinner v-else label="Spinning" />
       </div>
     </form>
