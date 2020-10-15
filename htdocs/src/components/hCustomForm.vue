@@ -118,6 +118,7 @@ export default {
   methods: {
     saveChildrenValues () {
       this.$refs.resource.saveChildrenValues()
+      this.$emit('input', this.val)
     },
 
     updateValues () {
