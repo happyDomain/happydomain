@@ -48,11 +48,14 @@ type GSuite struct {
 func (s *GSuite) GenKnownSvcs() []happydns.Service {
 	knownSvc := &abstract.EMail{
 		MX: []svcs.MX{
-			svcs.MX{Target: "ASPMX.L.GOOGLE.COM.", Preference: 1},
-			svcs.MX{Target: "ALT1.ASPMX.L.GOOGLE.COM.", Preference: 5},
-			svcs.MX{Target: "ALT2.ASPMX.L.GOOGLE.COM.", Preference: 5},
-			svcs.MX{Target: "ALT3.ASPMX.L.GOOGLE.COM.", Preference: 10},
-			svcs.MX{Target: "ALT4.ASPMX.L.GOOGLE.COM.", Preference: 10},
+			svcs.MX{Target: "aspmx.l.google.com.", Preference: 1},
+			svcs.MX{Target: "alt1.aspmx.l.google.com.", Preference: 5},
+			svcs.MX{Target: "alt2.aspmx.l.google.com.", Preference: 5},
+			svcs.MX{Target: "alt3.aspmx.l.google.com.", Preference: 10},
+			svcs.MX{Target: "alt4.aspmx.l.google.com.", Preference: 10},
+		},
+		SPF: &svcs.SPF{
+			Content: "include:_spf.google.com ~all",
 		},
 	}
 
@@ -85,7 +88,62 @@ func (s *GSuite) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR)
 	return
 }
 
-func gsuite_analyze(a *svcs.Analyzer) error {
+func gsuite_analyze(a *svcs.Analyzer) (err error) {
+	var googlemx []string
+
+	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeMX}) {
+		if mx, ok := record.(*dns.MX); ok {
+			if strings.ToLower(mx.Mx) == "aspmx.l.google.com." {
+				googlemx = append(googlemx, mx.Header().Name)
+				break
+			}
+		}
+	}
+
+	if len(googlemx) > 0 {
+		for _, dn := range googlemx {
+			googlerr := &GSuite{}
+
+			for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeMX, Domain: dn}) {
+				if mx, ok := record.(*dns.MX); ok {
+					if strings.HasSuffix(mx.Mx, "mx-verification.google.com.") {
+						googlerr.ValidationCode = mx.Mx
+						if err = a.UseRR(
+							record,
+							dn,
+							googlerr,
+						); err != nil {
+							return
+						}
+					} else if strings.HasSuffix(mx.Mx, "google.com.") {
+						if err = a.UseRR(
+							record,
+							dn,
+							googlerr,
+						); err != nil {
+							return
+						}
+					}
+				}
+			}
+
+			for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: dn}) {
+				if txt, ok := record.(*dns.TXT); ok {
+					content := strings.Join(txt.Txt, "")
+					if strings.HasPrefix(content, "v=spf1") && strings.Contains(content, "_spf.google.com") {
+						if err = a.UseRR(
+							record,
+							dn,
+							googlerr,
+						); err != nil {
+							return
+						}
+					}
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
