@@ -4,7 +4,7 @@ happyDNS
 Finally a simple, modern and open source interface for domain name.
 
 It consists of a HTTP REST API written in Golang (primarily based on https://github.com/miekg/dns) with a nice web interface written in Vue.js.
-It runs as a single stateless Linux binary, backed by a database (currently: LevelDB, more SGBD to come soon).
+It runs as a single stateless Linux binary, backed by a database (currently: LevelDB, more to come soon).
 
 Features
 --------
@@ -26,29 +26,25 @@ In order to build the happyDNS project, you'll need the following dependencies:
 
 ### Instructions
 
-1. First, I'll need to prepare the frontend.
-
-Go inside the `htdocs/` directory and install the node modules dependencies:
+1. First, you'll need to prepare the frontend, by installing the node modules dependencies:
 
 ```
-cd htdocs/
-yarn install
+yarn --cwd htdocs install
 ```
 
-2. Generates assets files used by Go code:
+2. Then, generates assets files used by Go code:
 
 ```
-cd .. # Go back to the root of the project
 go generate
 ```
 
-3. Build the Go code:
+3. Finaly, build the Go code:
 
 ```
-go build
+go build -v
 ```
 
-The command will create a binary `happydns` you can use standalone.
+This last command will create a binary `happydns` you can use standalone.
 
 
 Install at home
@@ -61,7 +57,7 @@ You can simply launch the following command in your terminal:
 ./happydns
 ```
 
-After some initialization, it should show you:
+After some initializations, it should show you:
 
     Admin listening on ./happydns.sock
     Ready, listening on :8081
@@ -80,10 +76,13 @@ The help command `./happydns -help` can show you the available engines. By examp
 
 #### LevelDB
 
+LevelDB is a small embedded key-value store (as SQLite it doesn't require an additional daemon to work).
+
     -leveldb-path string
     	Path to the LevelDB Database (default "happydns.db")
 
-By default, a new directory is created near the binary, called `happydns.db`. This directory contains the database used by the program. You can change it to a more
+By default, a new directory is created near the binary, called `happydns.db`. This directory contains the database used by the program.
+You can change it to a more meaningful/persistant path.
 
 
 ### Persistant configuration
@@ -141,8 +140,7 @@ In one terminal, run `happydns` with the following arguments:
 In another terminal, run the node part:
 
 ```
-cd htdocs/
-yarn run serve
+yarn --cwd htdocs run serve
 ```
 
-With this setup, static assets integrated inside the go binary will not be used, instead it'll forward all request for static assets to the node server, that do dynamic reload, etc.
+With this setup, static assets integrated inside the go binary will not be used, instead it'll forward all requests for static assets to the node server, that do dynamic reload, etc.
