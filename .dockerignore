@@ -1,0 +1,5 @@
+happydns
+bindata.go
+vendor/
+happydns.db/
+htdocs/node_modules/
