@@ -98,7 +98,7 @@
       "live": "Live records",
       "monitoring": "Monitoring",
       "summary": "Summary",
-      "source": "Domain host",
+      "source": "Domain hoster",
       "title": "View zone"
     },
     "views": {
@@ -161,7 +161,7 @@
   },
   "menu": {
     "my-domains": "My domains",
-    "my-sources": "My domains' hosts",
+    "my-sources": "My domains' hosters",
     "dns-client": "DNS client",
     "dns-resolver": "DNS resolver",
     "my-account": "My account",
@@ -218,12 +218,12 @@
     "find": "Can't find your @:source.kind here?",
     "name-your": "Name your @:source.kind",
     "source": "Domains living on {0}",
-    "kind": "domain's host",
+    "kind": "domain's hoster",
     "select-provider": "First, you need to select the provider hosting your domain:",
     "select-source": "Select the place where your domain {0} is hosted",
     "source-name": "Host's name",
     "source-type": "Hosting type",
-    "title": "Your domains' hosts"
+    "title": "Your domains' hosters"
   },
   "upgrade": {
     "title": "An update is available!",
