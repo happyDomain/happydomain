@@ -37,7 +37,7 @@
       <b-spinner :label="$t('common.spinning')" />
       <p>{{ $t('wait.importing') }}</p>
     </div>
-    <div v-else-if="selectedHistory">
+    <div v-else-if="selectedHistory && domain.zone_history.length > 0">
       <b-row class="mt-2">
         <b-col cols="auto" class="mr-auto">
           <b-form inline>
