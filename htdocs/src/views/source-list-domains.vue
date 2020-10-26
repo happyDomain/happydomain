@@ -36,153 +36,29 @@
     <i18n path="source.source" tag="h3" class="text-center mb-4">
       <em v-if="mySource">{{ mySource._comment }}</em>
     </i18n>
-    <b-list-group>
-      <b-list-group-item v-if="isLoading" class="text-center">
-        <b-spinner variant="secondary" :label="$t('common.spinning')" /> {{ $t('wait.asking-domains') }}
-      </b-list-group-item>
-      <b-list-group-item v-for="(domain, index) in domainsList" :key="index" class="d-flex justify-content-between align-items-center" :to="haveDomain(domain) ? '/domains/' + encodeURIComponent(domain) : ''">
-        <div>
-          {{ domain }}
-        </div>
-        <div>
-          <b-badge v-if="haveDomain(domain)" class="ml-1" variant="success">
-            <b-icon icon="check" /> {{ $t('service.already') }}
-          </b-badge>
-          <b-button v-else type="button" class="ml-1" variant="primary" size="sm" @click="importDomain(domain)">
-            {{ $t('domains.add-now') }}
-          </b-button>
-        </div>
-      </b-list-group-item>
-      <b-list-group-item v-if="!noDomainsList && !isLoading && domainsList.length === 0" class="text-center">
-        {{ $t('errors.domain-have') }}
-      </b-list-group-item>
-      <b-list-group-item v-else-if="noDomainsList && !isLoading && domainsList.length === 0" class="text-center">
-        {{ $t('errors.domain-list') }}
-      </b-list-group-item>
-    </b-list-group>
-    <h-list-group-input-new-domain v-if="noDomainsList" autofocus class="mt-2" />
+    <h-source-list-domains ref="dlist" show-already-imported :source="mySource" />
+    <h-list-group-input-new-domain v-if="$refs.dlist && $refs.dlist.noDomainsList" autofocus class="mt-2" />
   </b-container>
 </template>
 
 <script>
-import axios from 'axios'
-
 export default {
 
   components: {
-    hListGroupInputNewDomain: () => import('@/components/hListGroupInputNewDomain')
+    hListGroupInputNewDomain: () => import('@/components/hListGroupInputNewDomain'),
+    hSourceListDomains: () => import('@/components/hSourceListDomains')
   },
 
   props: {
-    parentLoading: {
-      type: Boolean,
-      required: true
-    },
     mySource: {
       type: Object,
       required: true
-    },
-    sourceSpecs: {
-      type: Object,
-      required: true
     }
   },
 
-  data: function () {
-    return {
-      domains: null,
-      myDomains: null,
-      noDomainsList: false
-    }
-  },
-
-  computed: {
-    domainsList () {
-      if (this.isLoading && !this.mySource) {
-        return []
-      } else if (this.noDomainsList) {
-        var ret = []
-
-        for (const i in this.myDomains) {
-          if (this.myDomains[i].id_source === this.mySource._id) {
-            ret.push(this.myDomains[i].domain)
-          }
-        }
-
-        return ret
-      } else {
-        return this.domains
-      }
-    },
-    isLoading () {
-      return this.parentLoading || (this.domains == null && !this.noDomainsList) || this.myDomains == null
-    }
-  },
-
-  watch: {
-    sourceSpecs: function () {
-      if (this.sourceSpecs) {
-        this.listImportableDomains()
-      }
-    }
-  },
-
-  mounted () {
-    if (this.sourceSpecs) {
-      this.listImportableDomains()
-    }
-    this.refreshDomains()
-  },
-
-  methods: {
-    haveDomain (domain) {
-      for (const i in this.myDomains) {
-        if (this.myDomains[i].domain === domain) {
-          return true
-        }
-      }
-      return false
-    },
-
-    importDomain (domain) {
-      var vm = this
-      this.addDomainToSource(this.mySource, domain, null, function (data) {
-        vm.myDomains.push(data)
-      })
-    },
-
-    listImportableDomains () {
-      if (!this.sourceSpecs.capabilities || this.sourceSpecs.capabilities.indexOf('ListDomains') === -1) {
-        this.noDomainsList = true
-        return
-      }
-
-      axios
-        .get('/api/sources/' + encodeURIComponent(this.$route.params.source) + '/domains')
-        .then(
-          response => (this.domains = response.data),
-          error => {
-            this.$root.$bvToast.toast(
-              error.response.data.errmsg, {
-                title: this.$t('errors.domain-access'),
-                autoHideDelay: 5000,
-                variant: 'danger',
-                toaster: 'b-toaster-content-right'
-              }
-            )
-            this.$router.replace('/sources/' + encodeURIComponent(this.mySource._id))
-          })
-    },
-
-    refreshDomains () {
-      this.myDomains = null
-      this.newDomain = ''
-      axios
-        .get('/api/domains')
-        .then(response => {
-          this.myDomains = response.data
-        })
-    }
+  created () {
+    this.$store.dispatch('domains/getAllMyDomains')
+    this.$store.dispatch('sources/getAllMySources')
   }
 }
 </script>

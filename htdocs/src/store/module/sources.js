@@ -30,21 +30,39 @@
 // knowledge of the CeCILL license and that you accept its terms.
 
 import Vue from 'vue'
-import Vuex from 'vuex'
+import SourcesApi from '@/api/sources'
 
-import domains from './module/domains'
-import sources from './module/sources'
-import sourceSpecs from './module/sourceSpecs'
+export default {
+  namespaced: true,
 
-Vue.use(Vuex)
-
-const debug = process.env.NODE_ENV !== 'production'
-
-export default new Vuex.Store({
-  modules: {
-    domains,
-    sources,
-    sourceSpecs
+  state: {
+    all: null
   },
-  strict: debug
-})
+
+  getters: {
+    sources_getAll: state => state.all
+  },
+
+  actions: {
+    getAllMySources ({ commit }) {
+      SourcesApi.listSources()
+        .then(
+          response => {
+            commit('setSources', response.data)
+          })
+      // TODO: handle errors here
+    }
+  },
+
+  mutations: {
+    setSources (state, sources) {
+      if (Array.isArray(sources)) {
+        var srcs = {}
+        sources.map(src => { srcs[src._id] = src })
+        Vue.set(state, 'all', srcs)
+      } else {
+        Vue.set(state, 'all', sources)
+      }
+    }
+  }
+}

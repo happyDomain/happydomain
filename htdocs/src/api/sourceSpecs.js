@@ -29,22 +29,14 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-import Vue from 'vue'
-import Vuex from 'vuex'
+import Api from '@/api/api'
 
-import domains from './module/domains'
-import sources from './module/sources'
-import sourceSpecs from './module/sourceSpecs'
-
-Vue.use(Vuex)
-
-const debug = process.env.NODE_ENV !== 'production'
-
-export default new Vuex.Store({
-  modules: {
-    domains,
-    sources,
-    sourceSpecs
+export default {
+  listSourceSpecs () {
+    return Api().get('/api/source_specs')
   },
-  strict: debug
-})
+
+  getSourceSpecs (sourceType) {
+    return Api().get('/api/source_specs/' + encodeURIComponent(sourceType))
+  }
+}

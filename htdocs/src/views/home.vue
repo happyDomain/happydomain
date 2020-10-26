@@ -37,26 +37,95 @@
       <h-logo height="40" />
     </i18n>
     <b-row>
-      <b-col offset-md="2" md="8">
-        <zone-list ref="zlist" @noDomain="firstTimeAct" />
-        <h-list-group-input-new-domain v-if="$refs.zlist && !$refs.zlist.isLoading" autofocus class="mt-2" />
+      <b-col md="8">
+        <h-zone-list ref="zlist" button :domains="filteredDomains" @click="showDomain($event)">
+          <template #badges>
+            <b-badge variant="success">
+              OK
+            </b-badge>
+          </template>
+        </h-zone-list>
+        <b-card v-if="filteredSource && $refs.zlist && !$refs.zlist.isLoading" no-body :class="filteredDomains.length > 0 ? 'mt-4' : ''">
+          <template v-if="!$refs.newDomains || !$refs.newDomains.noDomainsList" slot="header">
+            <div class="d-flex justify-content-between">
+              <i18n path="source.source">
+                <em>{{ filteredSource._comment }}</em>
+              </i18n>
+            </div>
+          </template>
+          <h-source-list-domains ref="newDomains" :source="filteredSource" />
+        </b-card>
+        <h-list-group-input-new-domain v-if="$refs.zlist && !$refs.zlist.isLoading && (!filteredSource || ($refs.newDomains && $refs.newDomains.noDomainsList))" autofocus class="mt-2" :my-source="filteredSource" />
+      </b-col>
+      <b-col md="4">
+        <b-card no-body class="mt-3 mt-md-0">
+          <template slot="header">
+            <div class="d-flex justify-content-between">
+              <i18n path="source.title" />
+              <b-button size="sm" variant="light" @click="newSource">
+                <b-icon icon="plus" />
+              </b-button>
+            </div>
+          </template>
+          <h-source-list no-label flush @source-selected="filteredSource = $event" />
+        </b-card>
       </b-col>
     </b-row>
   </b-container>
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
+
 export default {
+
   components: {
     hListGroupInputNewDomain: () => import('@/components/hListGroupInputNewDomain'),
-    ZoneList: () => import('@/components/ZoneList')
+    hSourceListDomains: () => import('@/components/hSourceListDomains'),
+    hSourceList: () => import('@/components/sourceList'),
+    hZoneList: () => import('@/components/ZoneList')
   },
-  methods: {
-    firstTimeAct (state) {
-      if (state) {
+
+  data: function () {
+    return {
+      filteredSource: null
+    }
+  },
+
+  computed: {
+    filteredDomains () {
+      if (this.sortedDomains && this.filteredSource) {
+        return this.sortedDomains.filter(d => d.id_source === this.filteredSource._id)
+      } else {
+        return this.sortedDomains
+      }
+    },
+
+    ...mapGetters('domains', ['sortedDomains'])
+  },
+
+  watch: {
+    sortedDomains: function (domains) {
+      if (domains.length === 0) {
         this.$router.replace('/onboarding')
       }
     }
+  },
+
+  created () {
+    this.$store.dispatch('domains/getAllMyDomains')
+    this.$store.dispatch('sources/getAllMySources')
+  },
+
+  methods: {
+    newSource () {
+      this.$router.push('/sources/new')
+    },
+
+    showDomain (domain) {
+      this.$router.push('/domains/' + encodeURIComponent(domain.domain))
+    }
   }
+
 }
 </script>

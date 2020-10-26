@@ -48,6 +48,13 @@ export default {
 
   mixins: [AddDomainToSource, ValidateDomain],
 
+  props: {
+    mySource: {
+      type: Object,
+      default: null
+    }
+  },
+
   data () {
     return {
       newDomain: '',
@@ -64,7 +71,10 @@ export default {
     submitNewDomain () {
       if (this.validateNewDomain()) {
         if (this.mySource) {
-          this.addDomainToSource(this.mySource, this.newDomain)
+          this.addDomainToSource(this.mySource, this.newDomain, null, () => {
+            this.$store.dispatch('domains/getAllMyDomains')
+            this.newDomain = ''
+          })
         } else {
           this.$router.push('/domains/' + encodeURIComponent(this.newDomain) + '/new')
         }

@@ -237,8 +237,9 @@
     "loading": "Loading the domain …",
     "loading-account": "Loading your account …",
     "loading-record": "Loading records …",
-    "retrieving": "Retrieving hosting information...",
+    "retrieving-domains": "Retrieving your domains...",
     "retrieving-setting": "Retrieving host settings' form...",
+    "retrieving-source": "Retrieving hosting information...",
     "updating": "Updating your domain name host",
     "validating": "Validating domain …",
     "wait": "Please wait"

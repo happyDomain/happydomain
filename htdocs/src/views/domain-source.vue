@@ -34,7 +34,7 @@
 <template>
   <div>
     <div v-if="isLoading" class="mt-5 d-flex justify-content-center align-items-center">
-      <b-spinner variant="primary" label="Spinning" class="mr-3" /> {{ $t('wait.retrieving') }}
+      <b-spinner variant="primary" label="Spinning" class="mr-3" /> {{ $t('wait.retrieving-source') }}
     </div>
     <div v-else>
       <h2 class="mt-3 mb-3">

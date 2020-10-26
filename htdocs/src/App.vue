@@ -112,6 +112,10 @@ export default {
     }
   },
 
+  created () {
+    this.$store.dispatch('sourceSpecs/getAllSourceSpecs')
+  },
+
   mounted () {
     if (sessionStorage.loggedUser) {
       this.loggedUser = JSON.parse(sessionStorage.loggedUser)

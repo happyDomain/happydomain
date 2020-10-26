@@ -41,6 +41,7 @@ export default {
   },
 
   getters: {
+    domains_getAll: state => state.all,
     sortedDomains: state => state.all
   },
 

@@ -32,102 +32,61 @@
   -->
 
 <template>
-  <div>
-    <b-list-group>
-      <b-list-group-item v-if="isLoading" class="d-flex justify-content-center align-items-center">
-        <b-spinner variant="primary" label="Spinning" class="mr-3" /> Retrieving your domains...
-      </b-list-group-item>
-      <b-list-group-item v-for="(domain, index) in sortedDomains" :key="index" :to="'/domains/' + domain.domain" class="d-flex justify-content-between align-items-center">
-        <div class="text-monospace">
-          <div class="d-inline-block text-center" style="width: 50px;">
-            <img v-if="sources[domain.id_source]" :src="'/api/source_specs/' + sources[domain.id_source]._srctype + '/icon.png'" :alt="sources[domain.id_source]._srctype" :title="sources[domain.id_source]._srctype" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
-          </div>
-          {{ domain.domain }}
+  <b-list-group>
+    <b-list-group-item v-if="isLoading" class="d-flex justify-content-center align-items-center">
+      <b-spinner variant="primary" :label="$t('common.spinning')" class="mr-3" /> <i18n :path="loadingStr" />
+    </b-list-group-item>
+    <slot v-else-if="domains.length === 0" name="no-domain" />
+    <b-list-group-item
+      v-for="(domain, index) in domains"
+      v-else
+      :key="index"
+      :button="button"
+      class="d-flex justify-content-between align-items-center"
+      @click="$emit('click', domain)"
+    >
+      <div class="text-monospace">
+        <div class="d-inline-block text-center" style="width: 50px;">
+          <img v-if="sources_getAll[domain.id_source]" :src="'/api/source_specs/' + sources_getAll[domain.id_source]._srctype + '/icon.png'" :alt="sources_getAll[domain.id_source]._srctype" :title="sources_getAll[domain.id_source]._srctype" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
         </div>
-        <b-badge variant="success">
-          OK
-        </b-badge>
-      </b-list-group-item>
-    </b-list-group>
-  </div>
+        {{ domain.domain }}
+      </div>
+      <slot name="badges" :domain="domain" />
+    </b-list-group-item>
+  </b-list-group>
 </template>
 
 <script>
-import axios from 'axios'
-import SourcesApi from '@/services/SourcesApi'
-import { domainCompare } from '@/utils/domainCompare'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'ZoneList',
 
   props: {
-    inSource: {
-      type: Object,
+    button: {
+      type: Boolean,
+      default: false
+    },
+    domains: {
+      type: Array,
       default: null
-    }
-  },
-
-  data: function () {
-    return {
-      domains: null,
-      sources: {}
+    },
+    loadingStr: {
+      type: String,
+      default: 'wait.retrieving-domains'
+    },
+    parentIsLoading: {
+      type: Boolean,
+      default: false
     }
   },
 
   computed: {
     isLoading () {
-      return this.domains == null
+      return this.parentIsLoading || this.domains == null || this.sources_getAll == null
     },
 
-    sortedDomains () {
-      if (!this.domains) {
-        return []
-      }
-
-      var ret = []
-
-      if (this.inSource == null) {
-        ret = this.domains
-      } else {
-        for (var d in this.domains) {
-          if (this.domains[d].id_source === this.inSource._id) {
-            ret.push(this.domains[d])
-          }
-        }
-      }
-
-      ret.sort(function (a, b) { return domainCompare(a.domain, b.domain) })
-
-      return ret
-    }
-  },
-
-  watch: {
-    domains: function (domains) {
-      this.$emit('no-domain', this.domains.length === 0)
-    }
-  },
-
-  mounted () {
-    axios
-      .get('/api/domains')
-      .then(response => {
-        this.domains = response.data
-        this.domains.forEach(function (domain) {
-          if (!this.sources[domain.id_source]) {
-            SourcesApi.getSource(domain.id_source)
-              .then(response => {
-                this.$set(this.sources, domain.id_source, response.data)
-              })
-          }
-        }, this)
-      })
-  },
-
-  methods: {
-    show (domain) {
-      this.$router.push('/domains/' + encodeURIComponent(domain.domain))
-    }
+    ...mapGetters('sources', ['sources_getAll'])
   }
 }
 </script>
