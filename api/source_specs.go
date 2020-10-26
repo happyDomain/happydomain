@@ -56,6 +56,7 @@ func getSourceSpecs(_ *config.Options, p httprouter.Params, body io.Reader) Resp
 
 	ret := map[string]sources.SourceInfos{}
 	for k, src := range *srcs {
+		src.Infos.Capabilities = sources.GetSourceCapabilities(src.Creator())
 		ret[k] = src.Infos
 	}
 

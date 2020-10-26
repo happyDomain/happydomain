@@ -46,6 +46,9 @@ type SourceInfos struct {
 
 	// Description is a brief description of what the source is.
 	Description string `json:"description"`
+
+	// Capabilites is a list of special ability of the source (automatically filled).
+	Capabilities []string `json:"capabilities,omitempty"`
 }
 
 // ListDomainsSource are functions to declare when we can retrives a list of managable domains from the given Source.
