@@ -88,6 +88,7 @@ import './registerServiceWorker.js'
 
 import './app.scss'
 import i18n from './i18n'
+import store from './store'
 
 Vue.use(AlertPlugin)
 Vue.use(BadgePlugin)
@@ -143,9 +144,10 @@ Vue.component('HLogo', HLogo)
 Vue.config.productionTip = process.env.NODE_ENV === 'production'
 
 new Vue({
+  store,
   router,
   i18n,
-  render: function (h) { return h(App) }
+  render: h => h(App)
 }).$mount('#app')
 
 var tagsToReplace = {
