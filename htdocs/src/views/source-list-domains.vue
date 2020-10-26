@@ -60,17 +60,18 @@
         {{ $t('errors.domain-list') }}
       </b-list-group-item>
     </b-list-group>
-    <h-list-group-input v-if="noDomainsList" v-model="newDomain" autofocus class="mt-2" placeholder="my.new.domain." :state="newDomainState" input-class="text-monospace" @submit="submitNewDomain" @update="validateNewDomain" />
+    <h-list-group-input-new-domain v-if="noDomainsList" autofocus class="mt-2" />
   </b-container>
 </template>
 
 <script>
 import axios from 'axios'
-import ListGroupInputNewDomain from '@/mixins/listGroupInputNewDomain'
 
 export default {
 
-  mixins: [ListGroupInputNewDomain],
+  components: {
+    hListGroupInputNewDomain: () => import('@/components/hListGroupInputNewDomain')
+  },
 
   props: {
     parentLoading: {

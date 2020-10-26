@@ -32,29 +32,42 @@
   -->
 
 <template>
-  <b-container class="pt-4 pb-5">
-    <i18n path="common.welcome" tag="h1" class="text-center mb-4">
-      <h-logo height="40" />
-    </i18n>
-    <b-row>
-      <b-col offset-md="2" md="8">
-        <zone-list ref="zlist" @noDomain="firstTimeAct" />
-        <h-list-group-input-new-domain v-if="$refs.zlist && !$refs.zlist.isLoading" autofocus class="mt-2" />
-      </b-col>
-    </b-row>
-  </b-container>
+  <h-list-group-input v-model="newDomain" placeholder="my.new.domain." :state="newDomainState" input-class="text-monospace" @submit="submitNewDomain" @update="validateNewDomain" />
 </template>
 
 <script>
+import AddDomainToSource from '@/mixins/addDomainToSource'
+import ValidateDomain from '@/mixins/validateDomain'
+
 export default {
+  name: 'HListGroupInputNewDomain',
+
   components: {
-    hListGroupInputNewDomain: () => import('@/components/hListGroupInputNewDomain'),
-    ZoneList: () => import('@/components/ZoneList')
+    hListGroupInput: () => import('@/components/hListGroupInput')
   },
+
+  mixins: [AddDomainToSource, ValidateDomain],
+
+  data () {
+    return {
+      newDomain: '',
+      newDomainState: null
+    }
+  },
+
   methods: {
-    firstTimeAct (state) {
-      if (state) {
-        this.$router.replace('/onboarding')
+    validateNewDomain () {
+      this.newDomainState = this.validateDomain(this.newDomain)
+      return this.newDomainState
+    },
+
+    submitNewDomain () {
+      if (this.validateNewDomain()) {
+        if (this.mySource) {
+          this.addDomainToSource(this.mySource, this.newDomain)
+        } else {
+          this.$router.push('/domains/' + encodeURIComponent(this.newDomain) + '/new')
+        }
       }
     }
   }

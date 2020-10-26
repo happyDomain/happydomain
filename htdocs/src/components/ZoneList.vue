@@ -49,20 +49,18 @@
         </b-badge>
       </b-list-group-item>
     </b-list-group>
-    <h-list-group-input v-if="!isLoading" v-model="newDomain" autofocus class="mt-2" placeholder="my.new.domain." :state="newDomainState" input-class="text-monospace" @submit="submitNewDomain" @update="validateNewDomain" />
   </div>
 </template>
 
 <script>
 import axios from 'axios'
 import DomainCompare from '@/mixins/domainCompare'
-import ListGroupInputNewDomain from '@/mixins/listGroupInputNewDomain'
 import SourcesApi from '@/services/SourcesApi'
 
 export default {
   name: 'ZoneList',
 
-  mixins: [DomainCompare, ListGroupInputNewDomain],
+  mixins: [DomainCompare],
 
   data: function () {
     return {
