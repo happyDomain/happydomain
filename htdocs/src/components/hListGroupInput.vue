@@ -36,7 +36,7 @@
     <form @submit.stop.prevent="$emit('submit', $event)">
       <b-list-group-item class="d-flex justify-content-between align-items-center">
         <b-input-group>
-          <template v-slot:prepend>
+          <template #prepend>
             <b-input-group-prepend style="width: 50px" @click="$refs.lginput.focus()">
               <b-icon icon="plus" style="width: 100%; height: 2.3rem; margin-right: -.6em; margin-left: -.6em" />
             </b-input-group-prepend>
@@ -52,7 +52,7 @@
             @input="$emit('input', $event)"
             @update="$emit('update', $event)"
           />
-          <template v-slot:append>
+          <template #append>
             <b-input-group-append v-show="value.length">
               <b-button type="submit" variant="outline-primary">
                 {{ $t('common.add-new-thing', { thing: $t('domains.kind') }) }}

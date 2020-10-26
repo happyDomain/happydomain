@@ -35,7 +35,7 @@
   <div v-if="service_specs && type" class="mb-2">
     <b-tabs v-if="services[type] && services[type].tabs" content-class="mt-3" fill>
       <b-tab v-for="(spec, index) in service_specs.fields" :key="index" :active="index === 0">
-        <template v-slot:title>
+        <template #title>
           {{ spec | hLabel }}
           <b-badge v-if="value[spec.id] && spec.type.substr(0,2) === '[]'" variant="light" pill>
             {{ value[spec.id].length }}
@@ -47,14 +47,14 @@
         <h-resource-value
           v-if="value[spec.id]"
           ref="fieldsTabs"
-          v-model="value[spec.id]"
+          v-model="val[spec.id]"
           :edit="editChildren"
           :edit-toolbar="editToolbar"
           :index="index"
           :services="services"
           :specs="spec"
           :type="spec.type"
-          @saveService="$emit('saveService', function () { serviceEdit=false; if ($event) { $event() } })"
+          @save-service="$emit('save-service', function () { serviceEdit=false; if ($event) { $event() } })"
         />
         <b-button v-else :disable="value['']" @click="createObject(spec)">
           {{ $t('common.create-thing', { thing: spec.id }) }}
@@ -92,7 +92,7 @@
         :type="spec.type"
         :value="val[spec.id]"
         @input="val[spec.id] = $event;$emit('input', val)"
-        @saveService="$emit('saveService', $event)"
+        @save-service="$emit('save-service', $event)"
       />
     </div>
   </div>
@@ -180,7 +180,7 @@ export default {
 
     deleteObject () {
       this.$emit('input', undefined)
-      this.$emit('saveService')
+      this.$emit('save-service')
     },
 
     pullServiceSpecs () {
@@ -208,7 +208,7 @@ export default {
 
     saveObject () {
       var vm = this
-      this.$emit('saveService', function () {
+      this.$emit('save-service', function () {
         vm.serviceEdit = false
       })
     },

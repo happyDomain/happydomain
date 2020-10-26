@@ -41,13 +41,13 @@
     :ok-disabled="!sourceSpecsSelected"
     @ok="nextState"
   >
-    <template v-if="state >= 0 && form" v-slot:modal-footer>
+    <template v-if="state >= 0 && form" #modal-footer>
       <h-source-state-buttons
         :form="form"
         submit-form="source-state-form"
         :next-is-working="nextIsWorking"
         :previous-is-working="previousIsWorking"
-        @previousState="previousState"
+        @previous-state="previousState"
       />
     </template>
 
@@ -98,7 +98,7 @@ export default {
 
     reactOnSuccess (toState, newSource) {
       if (newSource) {
-        this.$emit('updateMySources', newSource)
+        this.$emit('update-my-sources', newSource)
         this.hide()
       }
     },

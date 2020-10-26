@@ -43,8 +43,8 @@
     :specs="specs"
     :type="type"
     @input="$emit('input', $event)"
-    @deleteService="$emit('deleteService', $event)"
-    @saveService="$emit('saveService', $event)"
+    @delete-service="$emit('delete-service', $event)"
+    @save-service="$emit('save-service', $event)"
   />
 </template>
 

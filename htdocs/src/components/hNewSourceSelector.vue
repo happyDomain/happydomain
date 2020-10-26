@@ -86,7 +86,7 @@ export default {
         this.srcSelected = idx
         this.$emit('input', this.srcSelected)
       }
-      this.$emit('sourceSelected', idx)
+      this.$emit('source-selected', idx)
     }
   }
 }

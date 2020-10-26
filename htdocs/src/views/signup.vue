@@ -42,7 +42,7 @@
       </b-col>
       <b-col sm="8">
         <b-card header-tag="div">
-          <template v-slot:header>
+          <template #header>
             <h6 class="mb-0 font-weight-bold">
               {{ $t('account.signup.join-call') }}
             </h6>
@@ -54,12 +54,12 @@
               label-for="email-input"
               :invalid-feedback="$t('errors.address-valid')"
             >
-              <template v-slot:description>
+              <template #description>
                 <i18n path="account.signup.address-why">
-                  <template v-slot:identify>
+                  <template #identify>
                     <strong>{{ $t('account.signup.identify') }}</strong>
                   </template>
-                  <template v-slot:security-operations>
+                  <template #security-operations>
                     <strong>{{ $t('account.signup.security-operations') }}</strong>
                   </template>
                 </i18n>

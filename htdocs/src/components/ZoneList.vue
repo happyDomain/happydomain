@@ -104,7 +104,7 @@ export default {
 
   watch: {
     domains: function (domains) {
-      this.$emit('noDomain', this.domains.length === 0)
+      this.$emit('no-domain', this.domains.length === 0)
     }
   },
 

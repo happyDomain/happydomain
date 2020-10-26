@@ -67,7 +67,7 @@
     </td>
     <td v-if="record.edit && actBtn">
       <form @submit.stop.prevent="$emit('save-rr')">
-        <input v-model="record.string" autofocus class="form-control text-monospace">
+        <input autofocus class="form-control text-monospace" :value="record.string" @input="r = record; r.string = $event; $emit('input', r)">
       </form>
     </td>
     <td v-if="actBtn">

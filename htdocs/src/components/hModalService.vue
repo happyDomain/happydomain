@@ -33,10 +33,10 @@
 
 <template>
   <b-modal id="modal-addSvc" :size="step === 2 ? 'lg' : ''" scrollable @ok="handleModalSvcOk">
-    <template v-slot:modal-title>
+    <template #modal-title>
       Add a new service to <span class="text-monospace">{{ dn | fqdn(domain.domain) }}</span>
     </template>
-    <template v-slot:modal-footer="{ ok, cancel }">
+    <template #modal-footer="{ cancel }">
       <b-button
         v-if="update"
         :disabled="deleteServiceInProgress || !svcData || svcData._svctype === 'abstract.Origin'"
@@ -171,7 +171,7 @@ export default {
           (response) => {
             this.$bvModal.hide('modal-addSvc')
             this.deleteServiceInProgress = false
-            this.$emit('updateMyServices', response.data)
+            this.$emit('update-my-services', response.data)
           },
           (error) => {
             this.deleteServiceInProgress = false
@@ -215,7 +215,7 @@ export default {
         func(this.domain.domain, this.zoneId, this.dn, this.svcData)
           .then(
             (response) => {
-              this.$emit('updateMyServices', response.data)
+              this.$emit('update-my-services', response.data)
               this.$nextTick(() => {
                 this.$bvModal.hide('modal-addSvc')
               })

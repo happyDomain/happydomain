@@ -37,14 +37,16 @@
       <b-spinner variant="primary" label="Spinning" class="mr-3" /> Retrieving your sources...
     </b-list-group-item>
     <b-list-group-item v-if="!isLoading && sources.length == 0" class="text-center">
-      You have no source defined currently. Try <a href="#" @click.prevent="$emit('newSource')">adding one</a>!
+      You have no source defined currently. Try <a href="#" @click.prevent="$emit('new-source')">adding one</a>!
     </b-list-group-item>
     <b-list-group-item v-for="(source, index) in sortedSources" :key="index" :active="selectedSource && selectedSource._id === source._id" button class="d-flex justify-content-between align-items-center" @click="selectSource(source)">
       <div class="d-flex">
         <div class="text-center" style="width: 50px;">
           <img v-if="sourceSpecs" :src="'/api/source_specs/' + source._srctype + '/icon.png'" :alt="sourceSpecs[source._srctype].name" :title="sourceSpecs[source._srctype].name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
         </div>
-        <div v-if="source._comment" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ source._comment }}</div>
+        <div v-if="source._comment" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          {{ source._comment }}
+        </div>
         <em v-else>No name</em>
       </div>
       <div v-if="!(noLabel && noDropdown)" class="d-flex">
@@ -57,7 +59,7 @@
           </b-badge>
         </div>
         <b-dropdown v-if="!noDropdown" no-caret size="sm" style="margin-right: -10px" variant="link">
-          <template v-slot:button-content>
+          <template #button-content>
             <b-icon icon="three-dots" />
           </template>
           <b-dropdown-item @click="updateSource($event, source)">
@@ -180,7 +182,7 @@ export default {
       } else {
         this.selectedSource = source
       }
-      this.$emit('sourceSelected', this.selectedSource)
+      this.$emit('source-selected', this.selectedSource)
     },
 
     updateSource (event, source) {
@@ -193,7 +195,7 @@ export default {
         .then(response => {
           this.sources = response.data
           if (this.sources.length === 0 && this.emitNewIfEmpty) {
-            this.$emit('newSource')
+            this.$emit('new-source')
           }
         })
     }

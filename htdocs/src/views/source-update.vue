@@ -41,21 +41,34 @@
     <h-resource-value-simple-input
       v-if="!edit"
       id="src-name"
-      v-model="mySource._comment"
       always-show
       :index="0"
       :label="$t('source.source-name')"
       :description="edit?'Give an explicit name in order to easily find this service.':''"
       :placeholder="sources[sourceSpecsSelected].name + ' 1'"
       required
+      :value="mySource._comment"
+      @input="v = mySource; v._comment = $event; $emit('input', v)"
     />
-    <h-source-state v-else-if="form" v-model="settings" class="mt-2 mb-2" :form="form" :source-name="sources[sourceSpecsSelected].name" :state="state" />
+    <h-source-state
+      v-else-if="form"
+      v-model="settings"
+      class="mt-2 mb-2"
+      :form="form"
+      :source-name="sources[sourceSpecsSelected].name"
+      :state="state"
+    />
 
     <hr>
 
-    <h-fields v-if="!edit" v-model="mySource.Source" :fields="sourceSpecs.fields" />
+    <h-fields
+      v-if="!edit"
+      :fields="sourceSpecs.fields"
+      :value="mySource.Source"
+      @input="v = mySource; v.Source = $event; $emit('input', v)"
+    />
 
-    <h-source-state-buttons v-else-if="form" class="d-flex justify-content-end" edit :form="form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previousState="previousState" />
+    <h-source-state-buttons v-else-if="form" class="d-flex justify-content-end" edit :form="form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previous-state="previousState" />
   </b-form>
 </template>
 
@@ -130,7 +143,7 @@ export default {
 
     reactOnSuccess (toState, newSource) {
       if (newSource) {
-        this.$emit('updateMySource', newSource)
+        this.$emit('update-my-source', newSource)
         this.edit = false
       }
     }

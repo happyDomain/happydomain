@@ -34,13 +34,13 @@
 <template>
   <h-resource-value
     ref="myChild"
-    v-model="service.Service"
     :edit="edit"
     :edit-toolbar="editToolbar"
     :services="services"
     :type="service._svctype"
-    @deleteService="deleteService($event)"
-    @saveService="saveService($event)"
+    :value="service.Service"
+    @delete-service="deleteService($event)"
+    @save-service="saveService($event)"
   />
 </template>
 
@@ -86,7 +86,7 @@ export default {
       ZoneApi.deleteZoneService(this.origin, this.zoneId, this.service)
         .then(
           (response) => {
-            this.$emit('updateMyServices', response.data)
+            this.$emit('update-my-services', response.data)
           },
           (error) => {
             this.$bvToast.toast(
@@ -111,7 +111,7 @@ export default {
         ZoneApi.updateZoneService(this.origin, this.zoneId, this.service)
           .then(
             (response) => {
-              this.$emit('updateMyServices', response.data)
+              this.$emit('update-my-services', response.data)
               if (cbSuccess != null) {
                 cbSuccess()
               }

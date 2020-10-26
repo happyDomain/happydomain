@@ -43,7 +43,7 @@
                 v-model="newKeys[key]"
                 :placeholder="specs.id + ' key name'"
               />
-              <template v-slot:append>
+              <template #append>
                 <b-button v-if="editKeys[key]" type="button" size="sm" variant="primary" @click="rename(key)">
                   <b-icon icon="check" />
                   <span v-if="key">{{ $t('common.rename') }}</span>
@@ -79,12 +79,12 @@
       </b-row>
       <h-resource-value
         v-if="key"
-        v-model="value[key]"
+        v-model="val[key]"
         :edit="editChildrenKeys[key]"
         :services="services"
         :specs="service_specs"
         :type="main_type"
-        @saveService="$emit('saveService')"
+        @save-service="$emit('save-service')"
       />
       <hr>
     </div>
@@ -139,6 +139,7 @@ export default {
     isLoading () {
       return this.service_specs == null
     },
+
     fieldsNames () {
       var ret = []
       this.service_specs.fields.forEach(function (sspec) {
@@ -148,6 +149,15 @@ export default {
         })
       })
       return ret
+    },
+
+    val: {
+      get () {
+        return this.value
+      },
+      set (value) {
+        this.$emit('input', value)
+      }
     }
   },
 
@@ -194,7 +204,7 @@ export default {
       Vue.delete(this.value, key)
       if (Object.keys(this.value).length === 0) {
         this.$emit('input', undefined)
-        this.$emit('saveService')
+        this.$emit('save-service')
       }
     },
 
@@ -204,7 +214,7 @@ export default {
         Vue.delete(this.value, key)
       }
       Vue.delete(this.editKeys, key)
-      this.$emit('saveService')
+      this.$emit('save-service')
     },
 
     saveChildrenValues () {
@@ -223,7 +233,7 @@ export default {
 
     saveObject (key) {
       var vm = this
-      this.$emit('saveService', function () {
+      this.$emit('save-service', function () {
         Vue.set(vm.editChildrenKeys, key, false)
       })
     },

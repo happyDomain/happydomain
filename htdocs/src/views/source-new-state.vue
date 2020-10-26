@@ -58,7 +58,7 @@
       <b-col lg="8" md="7">
         <b-form @submit.stop.prevent="nextState">
           <h-source-state v-model="settings" class="mt-2 mb-2" :form="form" :source-name="sourceSpecs[$route.params.provider].name" :state="parseInt($route.params.state)" />
-          <h-source-state-buttons class="d-flex justify-content-end" :form="form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previousState="previousState" />
+          <h-source-state-buttons class="d-flex justify-content-end" :form="form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previous-state="previousState" />
         </b-form>
       </b-col>
     </b-row>

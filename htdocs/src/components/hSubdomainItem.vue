@@ -46,11 +46,11 @@
           <b-icon icon="arrow-right" />
           <span class="text-monospace">{{ zoneServices[0].Service.Target }}</span>
         </span>
-        <b-button type="button" variant="primary" size="sm" class="ml-2" @click="$emit('addNewService', dn)">
+        <b-button type="button" variant="primary" size="sm" class="ml-2" @click="$emit('add-new-service', dn)">
           <b-icon icon="plus" />
           {{ $t('service.add') }}
         </b-button>
-        <b-button type="button" variant="outline-info" size="sm" class="ml-2" @click="$emit('showServiceWindow', zoneServices[0])">
+        <b-button type="button" variant="outline-info" size="sm" class="ml-2" @click="$emit('show-service-window', zoneServices[0])">
           <b-icon icon="pencil" />
           {{ $t('domains.edit-target') }}
         </b-button>
@@ -72,21 +72,21 @@
         <b-badge v-if="aliases.length > 0" v-b-popover.hover.focus="{ customClass: 'text-monospace', html: true, content: aliasPopoverCnt(dn) }" class="ml-2" style="text-indent:0;">
           + {{ $tc('domains.n-aliases', aliases.length) }}
         </b-badge>
-        <b-button type="button" variant="primary" size="sm" class="ml-2" @click="$emit('addNewService', dn)">
+        <b-button type="button" variant="primary" size="sm" class="ml-2" @click="$emit('add-new-service', dn)">
           <b-icon icon="plus" />
           {{ $t('domains.add-a-service') }}
         </b-button>
-        <b-button type="button" variant="outline-primary" size="sm" class="ml-2" @click="$emit('addNewAlias', dn)">
+        <b-button type="button" variant="outline-primary" size="sm" class="ml-2" @click="$emit('add-new-alias', dn)">
           <b-icon icon="link" />
           {{ $t('domains.add-an-alias') }}
         </b-button>
-        <b-button v-if="dn === ''" type="button" variant="outline-secondary" size="sm" class="ml-2" @click="$emit('addSubdomain')">
+        <b-button v-if="dn === ''" type="button" variant="outline-secondary" size="sm" class="ml-2" @click="$emit('add-subdomain')">
           <b-icon icon="server" />
           {{ $t('domains.add-a-subdomain') }}
         </b-button>
       </h2>
       <div v-show="showResources" :class="showResources && displayFormat === 'grid' ? 'd-flex justify-content-around flex-wrap' : ''">
-        <h-domain-service v-for="(svc, idx) in zoneServices" :key="idx" :display-format="displayFormat" :origin="origin" :service="svc" :services="services" :zone-id="zoneId" @showServiceWindow="$emit('showServiceWindow', $event)" @updateMyServices="$emit('updateMyServices', $event)" />
+        <h-domain-service v-for="(svc, idx) in zoneServices" :key="idx" :display-format="displayFormat" :origin="origin" :service="svc" :services="services" :zone-id="zoneId" @show-service-window="$emit('show-service-window', $event)" @update-my-services="$emit('update-my-services', $event)" />
       </div>
     </div>
   </div>
@@ -162,7 +162,7 @@ export default {
       ZoneApi.deleteZoneService(this.origin, this.zoneId, this.zoneServices[0])
         .then(
           (response) => {
-            this.$emit('updateMyServices', response.data)
+            this.$emit('update-my-services', response.data)
           },
           (error) => {
             this.$bvToast.toast(

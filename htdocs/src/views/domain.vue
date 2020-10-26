@@ -90,7 +90,7 @@ export default {
 
   mounted () {
     this.updateDomainInfo()
-    this.$on('updateDomainInfo', this.updateDomainInfo)
+    this.$on('update-domain-info', this.updateDomainInfo)
   },
 
   methods: {

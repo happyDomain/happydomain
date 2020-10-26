@@ -42,7 +42,7 @@
     </h1>
     <b-row>
       <b-col offset-md="2" md="8">
-        <source-list @newSource="newSource" @sourceSelected="click" />
+        <source-list @new-source="newSource" @source-selected="click" />
       </b-col>
     </b-row>
   </b-container>

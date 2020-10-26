@@ -65,7 +65,7 @@ export default {
             } else if (this.refreshDomains) {
               this.refreshDomains()
             } else {
-              this.$emit('domainAdded', response.data)
+              this.$emit('domain-added', response.data)
             }
           },
           (error) => {

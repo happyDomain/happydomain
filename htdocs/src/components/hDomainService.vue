@@ -33,7 +33,7 @@
 
 <template>
   <component :is="displayFormat === 'grid' ? 'b-card' : 'b-list-group'" v-if="services[service._svctype]" :class="displayFormat !== 'list' ? 'card-hover' : ''" :style="displayFormat === 'grid' ? 'width: 32%; min-width: 225px; margin-bottom: 1em; cursor: pointer;' : displayFormat === 'records' ? 'margin-bottom: .5em; cursor: pointer;' : ''" no-body>
-    <b-card-body v-if="displayFormat === 'grid'" @click="$emit('showServiceWindow', service)">
+    <b-card-body v-if="displayFormat === 'grid'" @click="$emit('show-service-window', service)">
       <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">
         {{ categorie }}
       </b-badge>
@@ -56,10 +56,10 @@
       </b-badge>
     </b-list-group-item>
     <b-list-group-item v-if="showDetails">
-      <h-editable-service edit-toolbar :origin="origin" :service="service" :services="services" :zone-id="zoneId" @updateMyServices="$emit('updateMyServices', $event)" />
+      <h-editable-service edit-toolbar :origin="origin" :service="service" :services="services" :zone-id="zoneId" @update-my-services="$emit('update-my-services', $event)" />
     </b-list-group-item>
 
-    <b-list-group-item v-else-if="displayFormat === 'records'" @click="$emit('showServiceWindow', service)">
+    <b-list-group-item v-else-if="displayFormat === 'records'" @click="$emit('show-service-window', service)">
       <strong :title="services[service._svctype].description">{{ services[service._svctype].name }}</strong> <span v-if="service._comment" class="text-muted">{{ service._comment }}</span>
       <span v-if="services[service._svctype].comment" class="text-muted">{{ services[service._svctype].comment }}</span>
       <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">

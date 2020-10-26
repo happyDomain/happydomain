@@ -34,7 +34,7 @@
 <template>
   <b-row class="my-3">
     <b-col offset-md="2" md="8">
-      <h-new-source-selector @sourceSelected="selectNewSource" />
+      <h-new-source-selector @source-selected="selectNewSource" />
     </b-col>
   </b-row>
 </template>

@@ -67,7 +67,7 @@
       </b-col>
 
       <b-col lg="8" md="7">
-        <router-view v-if="!isLoading" :parent-loading="isLoading" :my-source="mySource" :sources="sources" :source-specs="source_specs" :source-specs-selected="source_specs_selected" @updateMySource="updateMySource" />
+        <router-view v-if="!isLoading" :parent-loading="isLoading" :my-source="mySource" :sources="sources" :source-specs="source_specs" :source-specs-selected="source_specs_selected" @update-my-source="updateMySource" />
       </b-col>
     </b-row>
   </b-container>

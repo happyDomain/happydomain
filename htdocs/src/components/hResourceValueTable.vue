@@ -38,16 +38,16 @@
       <small v-if="specs.description" class="text-muted">{{ specs.description }}</small>
     </h4>
     <b-table hover striped :fields="fieldsNames" :items="tmp_values" sort-icon-left>
-      <template v-slot:head(_actions)>
+      <template #head(_actions)>
         <b-button size="sm" :title="$t('common.add-new-thing', {thing: 'item'})" variant="outline-secondary" class="mx-1" @click="addRow()">
           <b-icon icon="plus" /> {{ $t('common.add') }}
         </b-button>
       </template>
-      <template v-slot:cell()="row">
-        <h-resource-value v-if="service_specs.fields" v-model="row.item[row.field.key]" :edit="row.item._edit" :index="row.index" :services="services" :specs="service_specs.fields[row.field.index]" :type="service_specs.fields[row.field.index].type" no-decorate @saveService="$emit('saveService', $event)" />
-        <h-resource-value v-else v-model="row.item[row.field.key]" :edit="row.item._edit" :index="row.index" :services="services" :specs="specs" :type="row_type" no-decorate @saveService="$emit('saveService', $event)" />
+      <template #cell()="row">
+        <h-resource-value v-if="service_specs.fields" v-model="row.item[row.field.key]" :edit="row.item._edit" :index="row.index" :services="services" :specs="service_specs.fields[row.field.index]" :type="service_specs.fields[row.field.index].type" no-decorate @save-service="$emit('save-service', $event)" />
+        <h-resource-value v-else v-model="row.item[row.field.key]" :edit="row.item._edit" :index="row.index" :services="services" :specs="specs" :type="row_type" no-decorate @save-service="$emit('save-service', $event)" />
       </template>
-      <template v-slot:cell(_actions)="row">
+      <template #cell(_actions)="row">
         <b-button v-if="!row.item._edit" size="sm" :title="$t('common.edit')" variant="outline-primary" class="mx-1" @click="row.item._edit = !row.item._edit">
           <b-icon icon="pencil" />
         </b-button>
@@ -136,6 +136,15 @@ export default {
       }
       ret.push({ key: '_actions', label: '' })
       return ret
+    },
+
+    val: {
+      get () {
+        return this.value
+      },
+      set (value) {
+        this.$emit('input', value)
+      }
     }
   },
 
@@ -188,8 +197,8 @@ export default {
     },
 
     deleteRow (row) {
-      this.value.splice(row.item._key, 1)
-      this.$emit('saveService')
+      this.val.splice(row.item._key, 1)
+      this.$emit('save-service')
     },
 
     saveChildrenValues () {
@@ -206,21 +215,19 @@ export default {
         }, this)
 
         if (this.value !== null && this.value[row.item._key] !== undefined) {
-          this.value[row.item._key] = val
-          this.$emit('input', this.value)
+          this.val[row.item._key] = val
         } else if (this.value === null) {
           this.$emit('input', [val])
         } else {
-          this.value.push(val)
-          this.$emit('input', this.value)
+          this.val.push(val)
         }
       } else if (this.value === null) {
         this.$emit('input', [row.item.value])
       } else {
-        this.value[row.item._key] = row.item.value
+        this.val[row.item._key] = row.item.value
       }
 
-      this.$emit('saveService', function () {
+      this.$emit('save-service', function () {
         row.item._edit = false
       })
     },

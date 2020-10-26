@@ -54,10 +54,10 @@
         </h3>
         <p class="text-justify text-indent my-4">
           <i18n path="onboarding.use" tag="span">
-            <template v-slot:happyDNS>
+            <template #happyDNS>
               <h-logo height="19" />
             </template>
-            <template v-slot:first-step>
+            <template #first-step>
               <span v-if="noSource">{{ $t('onboarding.suggest-source') }}</span><i18n path="onboarding.choose-configured" tag="span">
                 <router-link to="/sources/new">
                   {{ $t('onboarding.add-one') }}
@@ -66,8 +66,8 @@
             </template>
           </i18n>
         </p>
-        <source-list v-if="!noSource" emit-new-if-empty no-label @newSource="noSource = true" @sourceSelected="selectExistingSource" />
-        <h-new-source-selector v-if="noSource" @sourceSelected="selectNewSource" />
+        <source-list v-if="!noSource" emit-new-if-empty no-label @new-source="noSource = true" @source-selected="selectExistingSource" />
+        <h-new-source-selector v-if="noSource" @source-selected="selectNewSource" />
       </b-card>
     </b-card-group>
 

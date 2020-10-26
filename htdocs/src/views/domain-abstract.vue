@@ -85,12 +85,12 @@
     </b-modal>
 
     <b-modal id="modal-applyZone" size="lg" scrollable @ok="applyDiff()">
-      <template v-slot:modal-title>
+      <template #modal-title>
         <i18n path="domains.view.description" tag="span">
           <span class="text-monospace">{{ domain.domain }}</span>
         </i18n>
       </template>
-      <template v-slot:modal-footer="{ ok, cancel }">
+      <template #modal-footer="{ ok, cancel }">
         <div v-if="zoneDiffAdd || zoneDiffDel">
           <span v-if="zoneDiffAdd" class="text-success">
             {{ $tc('domains.apply.additions', (zoneDiffAdd || []).length) }}
@@ -180,7 +180,7 @@ export default {
           (response) => {
             this.importInProgress = false
             this.selectedHistory = response.data.id
-            this.$parent.$emit('updateDomainInfo')
+            this.$parent.$emit('update-domain-info')
           }
         )
     },

@@ -44,7 +44,7 @@
       </b-col>
       <b-col sm="8">
         <b-card header-tag="div">
-          <template v-slot:header>
+          <template #header>
             <h6 class="mb-0 font-weight-bold">
               {{ $t('account.see-again') }}
             </h6>

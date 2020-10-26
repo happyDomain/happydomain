@@ -48,7 +48,7 @@
 
     <b-row v-else>
       <b-col offset-md="2" md="8">
-        <source-list ref="sourceList" emit-new-if-empty @newSource="newSource" @sourceSelected="addDomainToSource($event, $route.params.domain, true)" />
+        <source-list ref="sourceList" emit-new-if-empty @new-source="newSource" @source-selected="addDomainToSource($event, $route.params.domain, true)" />
 
         <p class="text-center mt-3">
           {{ $t('source.find') }} <a href="#" @click.prevent="newSource">{{ $t('domains.add-now') }}</a>
@@ -56,7 +56,7 @@
       </b-col>
     </b-row>
 
-    <h-modal-add-source ref="addSrcModal" @updateMySources="doneAdd" />
+    <h-modal-add-source ref="addSrcModal" @update-my-sources="doneAdd" />
   </b-container>
 </template>
 

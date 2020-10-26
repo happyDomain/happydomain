@@ -33,7 +33,7 @@
 
 <template>
   <div>
-    <b-button v-if="(!form.previousEditButtonText || !edit) && form.previousButtonText" type="button" variant="outline-secondary" class="mx-1" :disabled="btnDisabled" @click="$emit('previousState')">
+    <b-button v-if="(!form.previousEditButtonText || !edit) && form.previousButtonText" type="button" variant="outline-secondary" class="mx-1" :disabled="btnDisabled" @click="$emit('previous-state')">
       <b-spinner v-if="previousIsWorking" label="Spinning" small />
       {{ form.previousButtonText }}
     </b-button>
@@ -41,7 +41,7 @@
       <b-spinner v-if="nextIsWorking" label="Spinning" small />
       {{ form.nextButtonText }}
     </b-button>
-    <b-button v-if="edit && form.previousEditButtonText" type="button" variant="outline-secondary" class="mx-1" :disabled="btnDisabled" @click="$emit('previousState')">
+    <b-button v-if="edit && form.previousEditButtonText" type="button" variant="outline-secondary" class="mx-1" :disabled="btnDisabled" @click="$emit('previous-state')">
       <b-spinner v-if="previousIsWorking" label="Spinning" small />
       {{ form.previousEditButtonText }}
     </b-button>

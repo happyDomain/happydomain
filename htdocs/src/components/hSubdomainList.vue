@@ -43,11 +43,11 @@
       :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]"
       :aliases="aliases[dn]===undefined?[]:aliases[dn]"
       :zone-id="zoneId"
-      @showServiceWindow="showServiceWindow"
-      @updateMyServices="updateMyServices"
-      @addSubdomain="addSubdomain"
-      @addNewAlias="addNewAlias"
-      @addNewService="addNewService"
+      @show-service-window="showServiceWindow"
+      @update-my-services="updateMyServices"
+      @add-subdomain="addSubdomain"
+      @add-new-alias="addNewAlias"
+      @add-new-service="addNewService"
     />
 
     <h-modal-service
@@ -57,11 +57,11 @@
       :my-services="myServices"
       :services="services"
       :zone-id="zoneId"
-      @updateMyServices="updateMyServices"
+      @update-my-services="updateMyServices"
     />
 
     <b-modal id="modal-addAlias" title="Add a new alias" @ok="handleModalAliasSubmit">
-      <template v-slot:modal-footer="{ ok, cancel }">
+      <template #modal-footer="{ cancel }">
         <b-button variant="secondary" @click="cancel()">
           {{ $t('common.cancel') }}
         </b-button>
