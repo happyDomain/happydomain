@@ -39,15 +39,15 @@
     <b-list-group-item v-if="!isLoading && sources.length == 0" class="text-center">
       You have no source defined currently. Try <a href="#" @click.prevent="$emit('newSource')">adding one</a>!
     </b-list-group-item>
-    <b-list-group-item v-for="(source, index) in sortedSources" :key="index" button class="d-flex justify-content-between align-items-center" @click="selectSource(source)">
-      <div>
-        <div class="d-inline-block text-center" style="width: 50px;">
+    <b-list-group-item v-for="(source, index) in sortedSources" :key="index" :active="selectedSource && selectedSource._id === source._id" button class="d-flex justify-content-between align-items-center" @click="selectSource(source)">
+      <div class="d-flex">
+        <div class="text-center" style="width: 50px;">
           <img v-if="sourceSpecs" :src="'/api/source_specs/' + source._srctype + '/icon.png'" :alt="sourceSpecs[source._srctype].name" :title="sourceSpecs[source._srctype].name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
         </div>
-        <span v-if="source._comment">{{ source._comment }}</span>
+        <div v-if="source._comment" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ source._comment }}</div>
         <em v-else>No name</em>
       </div>
-      <div class="d-flex">
+      <div v-if="!(noLabel && noDropdown)" class="d-flex">
         <div v-if="!noLabel">
           <b-badge class="ml-1" :variant="domain_in_sources[index] > 0 ? 'success' : 'danger'">
             {{ domain_in_sources[index] }} domain(s) associated
@@ -56,11 +56,11 @@
             {{ sourceSpecs[source._srctype].name }}
           </b-badge>
         </div>
-        <b-dropdown no-caret size="sm" style="margin-right: -10px" variant="link">
+        <b-dropdown v-if="!noDropdown" no-caret size="sm" style="margin-right: -10px" variant="link">
           <template v-slot:button-content>
             <b-icon icon="three-dots" />
           </template>
-          <b-dropdown-item>
+          <b-dropdown-item @click="updateSource($event, source)">
             Update settings
           </b-dropdown-item>
           <b-dropdown-item @click="deleteSource($event, source)">
@@ -87,6 +87,10 @@ export default {
       type: Boolean,
       default: false
     },
+    noDropdown: {
+      type: Boolean,
+      default: false
+    },
     noLabel: {
       type: Boolean,
       default: false
@@ -96,6 +100,7 @@ export default {
   data: function () {
     return {
       domains: null,
+      selectedSource: null,
       sources: null
     }
   },
@@ -170,7 +175,17 @@ export default {
     },
 
     selectSource (source) {
-      this.$emit('sourceSelected', source)
+      if (this.selectedSource != null && this.selectedSource._id === source._id) {
+        this.selectedSource = null
+      } else {
+        this.selectedSource = source
+      }
+      this.$emit('sourceSelected', this.selectedSource)
+    },
+
+    updateSource (event, source) {
+      event.stopPropagation()
+      this.$router.push('/sources/' + encodeURIComponent(source._id))
     },
 
     updateSources () {

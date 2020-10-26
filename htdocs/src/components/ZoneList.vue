@@ -62,6 +62,13 @@ export default {
 
   mixins: [DomainCompare],
 
+  props: {
+    inSource: {
+      type: Object,
+      default: null
+    }
+  },
+
   data: function () {
     return {
       domains: null,
@@ -79,7 +86,17 @@ export default {
         return []
       }
 
-      var ret = this.domains
+      var ret = []
+
+      if (this.inSource == null) {
+        ret = this.domains
+      } else {
+        for (var d in this.domains) {
+          if (this.domains[d].id_source === this.inSource._id) {
+            ret.push(this.domains[d])
+          }
+        }
+      }
 
       var vm = this
       ret.sort(function (a, b) { return vm.domainCompare(a.domain, b.domain) })
