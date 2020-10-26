@@ -80,10 +80,10 @@
 </template>
 
 <script>
-import DomainCompare from '@/mixins/domainCompare'
 import ServiceSpecsApi from '@/services/ServiceSpecsApi'
 import ValidateDomain from '@/mixins/validateDomain'
 import ZoneApi from '@/services/ZoneApi'
+import { domainCompare } from '@/utils/domainCompare'
 
 export default {
   name: 'HSubdomainList',
@@ -93,7 +93,7 @@ export default {
     hSubdomainItem: () => import('@/components/hSubdomainItem')
   },
 
-  mixins: [DomainCompare, ValidateDomain],
+  mixins: [ValidateDomain],
 
   props: {
     domain: {
@@ -148,7 +148,7 @@ export default {
       }
 
       var domains = Object.keys(this.myServices.services)
-      domains.sort(this.domainCompare)
+      domains.sort(domainCompare)
 
       return domains
     }

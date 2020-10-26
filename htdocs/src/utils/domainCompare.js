@@ -29,21 +29,17 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-export default {
-  methods: {
-    domainCompare (a, b) {
-      var as = a.split('.').reverse()
-      var bs = b.split('.').reverse()
+export function domainCompare (a, b) {
+  var as = a.split('.').reverse()
+  var bs = b.split('.').reverse()
 
-      var maxDepth = Math.min(as.length, bs.length)
-      for (var i = 0; i < maxDepth; i++) {
-        var cmp = as[i].localeCompare(bs[i])
-        if (cmp !== 0) {
-          return cmp
-        }
-      }
-
-      return as.length - bs.length
+  var maxDepth = Math.min(as.length, bs.length)
+  for (var i = 0; i < maxDepth; i++) {
+    var cmp = as[i].localeCompare(bs[i])
+    if (cmp !== 0) {
+      return cmp
     }
   }
+
+  return as.length - bs.length
 }

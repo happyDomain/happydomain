@@ -54,13 +54,11 @@
 
 <script>
 import axios from 'axios'
-import DomainCompare from '@/mixins/domainCompare'
 import SourcesApi from '@/services/SourcesApi'
+import { domainCompare } from '@/utils/domainCompare'
 
 export default {
   name: 'ZoneList',
-
-  mixins: [DomainCompare],
 
   props: {
     inSource: {
@@ -98,8 +96,7 @@ export default {
         }
       }
 
-      var vm = this
-      ret.sort(function (a, b) { return vm.domainCompare(a.domain, b.domain) })
+      ret.sort(function (a, b) { return domainCompare(a.domain, b.domain) })
 
       return ret
     }
