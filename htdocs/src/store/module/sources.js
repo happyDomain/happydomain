@@ -40,6 +40,16 @@ export default {
   },
 
   getters: {
+    sortedSources: state => {
+      var ret = []
+      for (var i in state.all) {
+        if (state.all[i]._id) {
+          ret.push(state.all[i])
+        }
+      }
+      ret.sort(function (a, b) { return a._srctype.localeCompare(b._srctype) })
+      return ret
+    },
     sources_getAll: state => state.all
   },
 

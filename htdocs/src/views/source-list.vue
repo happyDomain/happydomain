@@ -55,6 +55,11 @@ export default {
     sourceList: () => import('@/components/sourceList')
   },
 
+  created () {
+    this.$store.dispatch('domains/getAllMyDomains')
+    this.$store.dispatch('sources/getAllMySources')
+  },
+
   methods: {
     click (source) {
       this.$router.push('/sources/' + encodeURIComponent(source._id))

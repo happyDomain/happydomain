@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <b-container class="pb-4">
+  <b-container class="pt-3 pb-4">
     <i18n path="common.welcome" tag="h1" class="text-center mb-4">
       <h-logo height="40" />
     </i18n>
@@ -67,7 +67,7 @@
           </i18n>
         </p>
         <source-list v-if="!noSource" emit-new-if-empty no-label @new-source="noSource = true" @source-selected="selectExistingSource" />
-        <h-new-source-selector v-if="noSource" @source-selected="selectNewSource" />
+        <h-new-source-selector v-else @source-selected="selectNewSource" />
       </b-card>
     </b-card-group>
 
@@ -101,6 +101,10 @@ export default {
     return {
       noSource: false
     }
+  },
+
+  created () {
+    this.$store.dispatch('sources/getAllMySources')
   },
 
   methods: {

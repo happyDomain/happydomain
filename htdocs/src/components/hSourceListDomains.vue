@@ -80,8 +80,7 @@ export default {
 
   data: function () {
     return {
-      importableDomains: null,
-      noDomainsList: false
+      importableDomains: null
     }
   },
 
@@ -106,6 +105,10 @@ export default {
       return ret.map(d => ({ domain: d, id_source: this.source._id }))
     },
 
+    noDomainsList () {
+      return !this.sourceSpecs_getAll[this.source._srctype] || !this.sourceSpecs_getAll[this.source._srctype].capabilities || this.sourceSpecs_getAll[this.source._srctype].capabilities.indexOf('ListDomains') === -1
+    },
+
     ...mapGetters('sourceSpecs', ['sourceSpecs_getAll']),
     ...mapGetters('domains', ['domains_getAll'])
   },
@@ -122,6 +125,11 @@ export default {
     }
   },
 
+  mounted () {
+    if (this.source) {
+      this.getImportableDomains()
+    }
+  },
 
   methods: {
     haveDomain (domain) {
@@ -137,11 +145,9 @@ export default {
 
     getImportableDomains () {
       this.importableDomains = null
-      if (!this.sourceSpecs_getAll[this.source._srctype] || !this.sourceSpecs_getAll[this.source._srctype].capabilities || this.sourceSpecs_getAll[this.source._srctype].capabilities.indexOf('ListDomains') === -1) {
-        this.noDomainsList = true
+      if (this.noDomainsList) {
         return
       }
-      this.noDomainsList = false
 
       SourcesApi.listSourceDomains(this.source._id)
         .then(

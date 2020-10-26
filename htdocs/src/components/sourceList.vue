@@ -36,13 +36,13 @@
     <b-list-group-item v-if="isLoading" class="d-flex justify-content-center align-items-center">
       <b-spinner variant="primary" label="Spinning" class="mr-3" /> Retrieving your sources...
     </b-list-group-item>
-    <b-list-group-item v-if="!isLoading && sources.length == 0" class="text-center">
+    <b-list-group-item v-if="!isLoading && sources_getAll.length == 0" class="text-center">
       You have no source defined currently. Try <a href="#" @click.prevent="$emit('new-source')">adding one</a>!
     </b-list-group-item>
     <b-list-group-item v-for="(source, index) in sortedSources" :key="index" :active="selectedSource && selectedSource._id === source._id" button class="d-flex justify-content-between align-items-center" @click="selectSource(source)">
       <div class="d-flex">
         <div class="text-center" style="width: 50px;">
-          <img v-if="sourceSpecs" :src="'/api/source_specs/' + source._srctype + '/icon.png'" :alt="sourceSpecs[source._srctype].name" :title="sourceSpecs[source._srctype].name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+          <img v-if="sourceSpecs_getAll" :src="'/api/source_specs/' + source._srctype + '/icon.png'" :alt="sourceSpecs_getAll[source._srctype].name" :title="sourceSpecs_getAll[source._srctype].name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
         </div>
         <div v-if="source._comment" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
           {{ source._comment }}
@@ -51,11 +51,11 @@
       </div>
       <div v-if="!(noLabel && noDropdown)" class="d-flex">
         <div v-if="!noLabel">
-          <b-badge class="ml-1" :variant="domain_in_sources[index] > 0 ? 'success' : 'danger'">
-            {{ domain_in_sources[index] }} domain(s) associated
+          <b-badge class="ml-1" :variant="domain_in_sources[source._id] > 0 ? 'success' : 'danger'">
+            {{ domain_in_sources[source._id] }} domain(s) associated
           </b-badge>
-          <b-badge v-if="sourceSpecs" class="ml-1" variant="secondary" :title="source._srctype">
-            {{ sourceSpecs[source._srctype].name }}
+          <b-badge v-if="sourceSpecs_getAll" class="ml-1" variant="secondary" :title="source._srctype">
+            {{ sourceSpecs_getAll[source._srctype].name }}
           </b-badge>
         </div>
         <b-dropdown v-if="!noDropdown" no-caret size="sm" style="margin-right: -10px" variant="link">
@@ -75,14 +75,12 @@
 </template>
 
 <script>
-import axios from 'axios'
-import SourceSpecs from '@/mixins/sourceSpecs'
+import { mapGetters } from 'vuex'
+
 import SourceApi from '@/services/SourcesApi'
 
 export default {
   name: 'SourceList',
-
-  mixins: [SourceSpecs],
 
   props: {
     emitNewIfEmpty: {
@@ -101,9 +99,7 @@ export default {
 
   data: function () {
     return {
-      domains: null,
-      selectedSource: null,
-      sources: null
+      selectedSource: null
     }
   },
 
@@ -111,43 +107,39 @@ export default {
     domain_in_sources () {
       var ret = {}
 
-      if (this.domains != null && this.sources != null) {
-        this.sources.forEach(function (source, idx) {
-          ret[idx] = 0
-          this.domains.forEach(function (domain) {
-            if (domain.id_source === source._id) {
-              ret[idx]++
-            }
-          })
-        }, this)
+      if (this.sources_getAll != null) {
+        for (var i in this.sources_getAll) {
+          ret[i] = 0
+        }
+      }
+
+      if (this.domains_getAll != null) {
+        this.domains_getAll.forEach(function (domain) {
+          if (!ret[domain.id_source]) {
+            ret[domain.id_source] = 0
+          }
+          ret[domain.id_source]++
+        })
       }
 
       return ret
     },
 
     isLoading () {
-      return this.domains == null || this.sources == null || this.sourceSpecs == null
+      return (!this.noLabel && this.domains_getAll == null) || this.sources_getAll == null || this.sourceSpecs_getAll == null
     },
 
-    sortedSources () {
-      if (!this.sources || !this.sourceSpecs) {
-        return []
-      }
-
-      var ret = this.sources
-
-      var vm = this
-      ret.sort(function (a, b) { return vm.sourceSpecs[a._srctype].name.localeCompare(vm.sourceSpecs[b._srctype].name) })
-
-      return ret
-    }
+    ...mapGetters('domains', ['domains_getAll']),
+    ...mapGetters('sources', ['sortedSources', 'sources_getAll']),
+    ...mapGetters('sourceSpecs', ['sourceSpecs_getAll'])
   },
 
-  mounted () {
-    axios
-      .get('/api/domains')
-      .then(response => { this.domains = response.data })
-    this.updateSources()
+  watch: {
+    sources_getAll: function (sources) {
+      if (Object.keys(sources).length === 0 && this.emitNewIfEmpty) {
+        this.$emit('new-source')
+      }
+    }
   },
 
   methods: {
@@ -156,7 +148,7 @@ export default {
       SourceApi.deleteSource(source)
         .then(
           response => {
-            this.updateSources()
+            this.$store.dispatch('sources/getAllMySources')
             this.$bvToast.toast(
               'The source has been deleted with success.', {
                 title: 'Source deleted with success',
@@ -188,16 +180,6 @@ export default {
     updateSource (event, source) {
       event.stopPropagation()
       this.$router.push('/sources/' + encodeURIComponent(source._id))
-    },
-
-    updateSources () {
-      SourceApi.getSources()
-        .then(response => {
-          this.sources = response.data
-          if (this.sources.length === 0 && this.emitNewIfEmpty) {
-            this.$emit('new-source')
-          }
-        })
     }
   }
 }
