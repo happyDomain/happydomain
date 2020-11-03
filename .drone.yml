@@ -1,7 +1,44 @@
 ---
 kind: pipeline
 type: docker
-name: default
+name: build-amd64
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: frontend
+  image: node:alpine
+  commands:
+  - apk --no-cache add python2 build-base
+  - yarn config set network-timeout 100000
+  - yarn --cwd htdocs install
+  - yarn --cwd htdocs --offline build
+
+- name: backend
+  image: golang:alpine
+  commands:
+  - apk --no-cache add go-bindata
+  - sed -i '/yarn --cwd htdocs --offline build/d' static.go
+  - go generate
+  - go build
+
+- name: publish
+  image: plugins/docker
+  settings:
+    repo: happydns/happydns
+    auto_tag: true
+    auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+
+---
+kind: pipeline
+type: docker
+name: build-arm64
 
 platform:
   os: linux
@@ -23,3 +60,39 @@ steps:
   - sed -i '/yarn --cwd htdocs --offline build/d' static.go
   - go generate
   - go build
+
+- name: publish
+  image: plugins/docker
+  settings:
+    repo: happydns/happydns
+    auto_tag: true
+    auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+
+---
+kind: pipeline
+name: docker-manifest
+
+steps:
+- name: publish
+  image: plugins/manifest
+  settings:
+    auto_tag: true
+    ignore_missing: true
+    spec: .drone-manifest.yml
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+
+trigger:
+  event:
+  - push
+  - tag
+
+depends_on:
+- build-amd64
+- build-arm64
