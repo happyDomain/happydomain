@@ -6,6 +6,7 @@ RUN apk --no-cache add python2 build-base
 
 COPY htdocs/ htdocs/
 
+RUN yarn config set network-timeout 100000
 RUN yarn --cwd htdocs install
 RUN yarn --cwd htdocs --offline build
 
