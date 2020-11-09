@@ -24,6 +24,11 @@ steps:
   - go generate -v
   - go build -v -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
 
+- name: vet
+  image: golang:alpine
+  commands:
+  - go vet -v
+
 - name: deploy
   image: appleboy/drone-scp
   settings:
