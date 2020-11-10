@@ -27,6 +27,7 @@ steps:
 - name: vet
   image: golang:alpine
   commands:
+  - apk --no-cache add build-base
   - go vet -v
 
 - name: deploy
@@ -208,7 +209,7 @@ steps:
 - name: backend armel
   image: golang:alpine
   commands:
-  - apk --no-cache add go-bindata
+  - apk --no-cache add go-bindata build-base
   - sed -i '/yarn --cwd htdocs --offline build/d' static.go
   - go generate -v
   - go build -v -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
@@ -252,6 +253,7 @@ steps:
 - name: backend armhf
   image: golang:alpine
   commands:
+  - apk --no-cache add build-base
   - go build -v -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
   environment:
     GOARM: 6
@@ -293,6 +295,7 @@ steps:
 - name: backend armv7
   image: golang:alpine
   commands:
+  - apk --no-cache add build-base
   - go build -v -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
   environment:
     GOARM: 7
