@@ -1,0 +1,11 @@
+FROM alpine
+
+EXPOSE 8081
+
+CMD ["happydns"]
+
+ENV HAPPYDNS_LEVELDB_PATH=/data/happydns.db
+
+VOLUME /data
+
+COPY happydns /usr/sbin/happydns

@@ -142,6 +142,7 @@ steps:
   - sed -i '/yarn --cwd htdocs --offline build/d' static.go
   - go generate -v
   - go build -v -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+  - ln happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydns
 
 - name: deploy
   image: appleboy/drone-scp
@@ -183,6 +184,7 @@ steps:
     repo: happydns/happydns
     auto_tag: true
     auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+    dockerfile: Dockerfile-builded
     username:
       from_secret: docker_username
     password:
@@ -297,6 +299,7 @@ steps:
   commands:
   - apk --no-cache add build-base
   - go build -v -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
+  - ln happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7 happydns
   environment:
     GOARM: 7
 
@@ -333,6 +336,18 @@ steps:
   when:
     event:
       - tag
+
+- name: publish
+  image: plugins/docker
+  settings:
+    repo: happydns/happydns
+    auto_tag: true
+    auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+    dockerfile: Dockerfile-builded
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
 
 ---
 kind: pipeline
