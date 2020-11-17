@@ -33,67 +33,214 @@
 
 <template>
   <b-container fluid>
-    <b-alert variant="danger" :show="error.length != 0">
-      <strong>{{ $t('errors.error') }}</strong> {{ error }}
-    </b-alert>
-    <div v-if="!domain && error.length == 0" class="text-center">
+    <div v-if="!domain" class="mt-5 text-center">
       <b-spinner label="Spinning" />
       <p>{{ $t('wait.loading') }}</p>
     </div>
-    <b-row style="min-height: inherit">
-      <b-col sm="4" md="3" class="bg-light pb-5">
-        <router-link to="/domains/" class="btn font-weight-bolder">
-          <b-icon icon="chevron-up" />
-        </router-link>
-        <b-nav pills vertical variant="secondary">
-          <b-nav-item :to="'/domains/' + domain.domain" :active="$route.name == 'domain-home'">
-            {{ $t('domains.view.summary') }}
-          </b-nav-item>
-          <b-nav-item :to="'/domains/' + domain.domain + '/abstract'" :active="$route.name == 'domain-abstract'">
-            {{ $t('domains.view.abstract') }}
-          </b-nav-item>
-          <b-nav-item :to="'/zones/' + domain.domain + '/records'" :active="$route.name == 'zone-records'">
-            {{ $t('domains.view.live') }}
-          </b-nav-item>
-          <b-nav-item :to="'/domain/' + domain.domain + '/monitoring'" :active="$route.name == 'domain-monitoring'">
-            {{ $t('domains.view.monitoring') }}
-          </b-nav-item>
-          <b-nav-item :to="'/domains/' + domain.domain + '/source'" :active="$route.name == 'domain-source'">
-            {{ $t('domains.view.source') }}
-          </b-nav-item>
-          <hr>
-          <b-nav-form>
-            <b-button type="button" variant="outline-danger" @click="detachDomain()">
-              <b-icon icon="trash-fill" /> {{ $t('domains.stop') }}
+    <b-row v-else style="min-height: inherit">
+      <b-col sm="4" md="3" class="bg-light pt-2 pb-2 sticky-top d-flex flex-column justify-content-between" style="height: 100vh; overflow-y: auto; z-index: 5">
+        <b-row>
+          <b-col class="pr-0" sm="auto">
+            <router-link to="/domains/" class="btn font-weight-bolder">
+              <b-icon icon="chevron-up" />
+            </router-link>
+          </b-col>
+          <b-col class="pl-0">
+            <b-form-select :value="domain.domain" :options="sortedDomains" value-field="domain" text-field="domain" @input="changeDomain($event)" />
+          </b-col>
+        </b-row>
+
+        <b-form class="mt-3">
+          <label class="font-weight-bolder" for="zhistory">{{ $t('domains.history') }}:</label>
+          <b-form-select id="zhistory" v-model="selectedHistory" :options="domain.zone_history" value-field="id" text-field="last_modified" />
+        </b-form>
+
+        <b-button-group class="mt-3 w-100">
+          <b-button size="sm" variant="outline-info" :title="$t('domains.actions.view')" @click="viewZone">
+            <b-icon icon="list-ul" aria-hidden="true" /><br>
+            {{ $t('domains.actions.view') }}
+          </b-button>
+          <b-button v-if="selectedHistory === domain.zone_history[0].id" size="sm" variant="success" :title="$t('domains.actions.propagate')" @click="showDiff">
+            <b-icon icon="cloud-upload" aria-hidden="true" /><br>
+            {{ $t('domains.actions.propagate') }}
+          </b-button>
+          <b-button v-else size="sm" variant="warning" :title="$t('domains.actions.rollback')" @click="showDiff">
+            <b-icon icon="cloud-upload" aria-hidden="true" /><br>
+            {{ $t('domains.actions.rollback') }}
+          </b-button>
+        </b-button-group>
+
+        <hr>
+
+        <b-form class="mt-3">
+          <label class="font-weight-bolder">{{ $t('domains.views.as') }}</label>
+          <b-button-group class="w-100">
+            <b-button :variant="displayFormat === 'grid' ? 'secondary' : 'outline-secondary'" :title="$t('domains.views.grid.title')" @click="toogleGridView()">
+              <b-icon icon="grid-fill" aria-hidden="true" /><br>
+              {{ $t('domains.views.grid.label') }}
             </b-button>
-          </b-nav-form>
-        </b-nav>
+            <b-button :variant="displayFormat === 'list' ? 'secondary' : 'outline-secondary'" :title="$t('domains.views.list.title')" @click="toogleListView()">
+              <b-icon icon="list-ul" aria-hidden="true" /><br>
+              {{ $t('domains.views.list.label') }}
+            </b-button>
+            <b-button :variant="displayFormat === 'records' ? 'secondary' : 'outline-secondary'" :title="$t('domains.views.records.title')" @click="toogleRecordsView()">
+              <b-icon icon="menu-button-wide-fill" aria-hidden="true" /><br>
+              {{ $t('domains.views.records.label') }}
+            </b-button>
+          </b-button-group>
+        </b-form>
+
+        <hr>
+
+        <b-button class="w-100" type="button" variant="outline-danger" @click="detachDomain()">
+          <b-icon icon="trash-fill" /> {{ $t('domains.stop') }}
+        </b-button>
+
+        <b-form v-if="sources_getAll && sources_getAll[domain.id_source]" class="mt-5">
+          <label class="font-weight-bolder">{{ $t('domains.view.source') }}:</label>
+          <div class="pr-2 pl-2">
+            <b-button class="p-3 w-100 text-left" type="button" variant="outline-info" @click="goToSource()">
+              <div class="d-inline-block text-center" style="width: 50px;">
+                <img :src="'/api/source_specs/' + sources_getAll[domain.id_source]._srctype + '/icon.png'" :alt="sources_getAll[domain.id_source]._srctype" :title="sources_getAll[domain.id_source]._srctype" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+              </div>
+              {{ sources_getAll[domain.id_source]._comment }}
+            </b-button>
+          </div>
+        </b-form>
       </b-col>
+
       <b-col sm="8" md="9" class="mb-5">
-        <router-view :domain="domain" />
+        <div v-if="importInProgress" class="mt-4 text-center">
+          <b-spinner :label="$t('common.spinning')" />
+          <p>{{ $t('wait.importing') }}</p>
+        </div>
+        <h-subdomain-list v-else-if="selectedHistory && domain.zone_history.length > 0" :display-format="displayFormat" :domain="domain" :zone-id="selectedHistory" />
       </b-col>
     </b-row>
+
+    <b-modal id="modal-viewZone" :title="$t('domains.view.title')" size="lg" scrollable ok-only :ok-disabled="zoneContent === null">
+      <div v-if="zoneContent === null" class="my-2 text-center">
+        <b-spinner label="Spinning" />
+        <p>{{ $t('wait.formating') }}</p>
+      </div>
+      <pre v-else style="overflow: initial">{{ zoneContent }}</pre>
+    </b-modal>
+
+    <b-modal id="modal-applyZone" size="lg" scrollable @ok="applyDiff()">
+      <template #modal-title>
+        <i18n path="domains.view.description" tag="span">
+          <span class="text-monospace">{{ domain.domain }}</span>
+        </i18n>
+      </template>
+      <template #modal-footer="{ ok, cancel }">
+        <div v-if="zoneDiffAdd || zoneDiffDel">
+          <span v-if="zoneDiffAdd" class="text-success">
+            {{ $tc('domains.apply.additions', (zoneDiffAdd || []).length) }}
+          </span>
+          &ndash;
+          <span class="text-danger">
+            {{ $tc('domains.apply.deletions', (zoneDiffAdd || []).length) }}
+          </span>
+        </div>
+        <b-button variant="secondary" @click="cancel()">
+          {{ $t('common.cancel') }}
+        </b-button>
+        <b-button variant="success" :disabled="zoneDiffAdd === null && zoneDiffDel === null" @click="ok()">
+          {{ $t('domains.apply.button') }}
+        </b-button>
+      </template>
+      <div v-if="zoneDiffAdd === null && zoneDiffDel === null" class="my-2 text-center">
+        <b-spinner label="Spinning" />
+        <p>{{ $t('wait.exporting') }}</p>
+      </div>
+      <div v-for="(line, n) in zoneDiffAdd" :key="'a' + n" class="text-monospace text-success" style="white-space: nowrap">
+        +{{ line }}
+      </div>
+      <div v-for="(line, n) in zoneDiffDel" :key="'d' + n" class="text-monospace text-danger" style="white-space: nowrap">
+        -{{ line }}
+      </div>
+    </b-modal>
   </b-container>
 </template>
 
 <script>
-import axios from 'axios'
+import { mapGetters } from 'vuex'
+import DomainsApi from '@/api/domains'
+import ZonesApi from '@/api/zones'
 
 export default {
+  components: {
+    hSubdomainList: () => import('@/components/hSubdomainList')
+  },
 
   data: function () {
     return {
-      error: '',
-      domain: {}
+      displayFormat: 'grid',
+      importInProgress: false,
+      selectedHistory: null,
+      zoneContent: null,
+      zoneDiffAdd: null,
+      zoneDiffDel: null
     }
   },
 
-  mounted () {
+  computed: {
+    domain () {
+      return this.domains_getDetailed[this.$route.params.domain]
+    },
+
+    ...mapGetters('domains', ['domains_getDetailed', 'sortedDomains']),
+    ...mapGetters('sources', ['sources_getAll'])
+  },
+
+  watch: {
+    domain: function () {
+      this.pullDomain()
+      if (!this.selectedHistory && this.domain.zone_history.length !== 0) {
+        this.selectedHistory = this.domain.zone_history[0].id
+      }
+    }
+  },
+
+  created () {
+    if (localStorage && localStorage.getItem('displayFormat')) {
+      this.displayFormat = localStorage.getItem('displayFormat')
+    }
+    this.$store.dispatch('domains/getAllMyDomains')
+    this.$store.dispatch('sources/getAllMySources')
     this.updateDomainInfo()
-    this.$on('update-domain-info', this.updateDomainInfo)
   },
 
   methods: {
+    pullDomain () {
+      if (this.domain.zone_history === null || this.domain.zone_history.length === 0) {
+        this.importZone()
+      } else {
+        this.selectedHistory = this.domain.zone_history[0].id
+      }
+    },
+
+    importZone () {
+      this.importInProgress = true
+      ZonesApi.importZone(this.domain.domain)
+        .then(
+          (response) => {
+            this.importInProgress = false
+            this.updateDomainInfo()
+            this.selectedHistory = response.data.id
+          }
+        )
+    },
+
+    changeDomain (newDomain) {
+      this.$router.push('/domains/' + encodeURIComponent(newDomain))
+      this.updateDomainInfo()
+    },
+
+    goToSource () {
+      this.$router.push('/sources/' + encodeURIComponent(this.domain.id_source))
+    },
+
     detachDomain () {
       this.$bvModal.msgBoxConfirm(this.$t('domains.alert.remove', { domain: this.domain.domain }), {
         title: this.$t('domains.removal'),
@@ -105,30 +252,114 @@ export default {
       })
         .then(value => {
           if (value) {
-            axios
-              .delete('/api/domains/' + encodeURIComponent(this.domain.domain))
-              .then(response => (
-                this.$router.push('/domains/')
-              ))
+            DomainsApi.detachDomain(this.domain.domain)
+              .then(
+                () => {
+                  this.$store.dispatch('domains/dropDomain', this.domain.domain)
+                  this.$router.push('/domains/')
+                }
+              )
           }
         })
     },
 
-    updateDomainInfo () {
-      var mydomain = this.$route.params.domain
-      axios
-        .get('/api/domains/' + encodeURIComponent(mydomain))
+    toogleGridView () {
+      this.displayFormat = 'grid'
+      if (localStorage) {
+        localStorage.setItem('displayFormat', 'grid')
+      }
+    },
+
+    toogleListView () {
+      this.displayFormat = 'list'
+      if (localStorage) {
+        localStorage.setItem('displayFormat', 'list')
+      }
+    },
+
+    toogleRecordsView () {
+      this.displayFormat = 'records'
+      if (localStorage) {
+        localStorage.setItem('displayFormat', 'records')
+      }
+    },
+
+    showDiff () {
+      this.zoneDiffAdd = null
+      this.zoneDiffDel = null
+      this.$bvModal.show('modal-applyZone')
+      ZonesApi.diffZone(this.domain.domain, '@', this.selectedHistory)
         .then(
-          response => (this.domain = response.data),
-          error => {
-            this.$root.$bvToast.toast(this.$t('domains.alert.unable-retrieve.description', { domain: this.$route.params.domain }) + ' ' + error.response.data.errmsg, {
-              title: this.$t('domains.alert.unable-retrieve.title'),
-              autoHideDelay: 5000,
-              variant: 'danger',
-              toaster: 'b-toaster-content-right'
-            })
-            this.$router.push('/domains/')
+          (response) => {
+            if (response.data.toAdd == null && response.data.toDel == null) {
+              this.$bvModal.hide('modal-applyZone')
+              this.$bvModal.msgBoxOk(this.$t('domains.apply.nochange'))
+            } else {
+              this.zoneDiffAdd = response.data.toAdd
+              this.zoneDiffDel = response.data.toDel
+            }
+          },
+          (error) => {
+            this.$bvModal.hide('modal-applyZone')
+            this.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: this.$t('errors.occurs', { when: 'exporting the zone' }),
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
           })
+    },
+
+    applyDiff () {
+      ZonesApi.applyZone(this.domain.domain, this.selectedHistory)
+        .then(
+          (response) => {
+            this.$bvToast.toast(
+              this.$t('domains.apply.done.description'), {
+                title: this.$t('domains.apply.done.title'),
+                autoHideDelay: 5000,
+                variant: 'success',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+          },
+          (error) => {
+            this.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: this.$t('errors.occurs', { when: 'applying the zone' }),
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+          })
+    },
+
+    viewZone () {
+      this.zoneContent = null
+      this.$bvModal.show('modal-viewZone')
+      ZonesApi.viewZone(this.domain.domain, this.selectedHistory)
+        .then(
+          (response) => {
+            this.zoneContent = response.data
+          },
+          (error) => {
+            this.$bvModal.hide('modal-viewZone')
+            this.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: this.$t('errors.occurs', { when: 'exporting the zone' }),
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+          })
+    },
+
+    updateDomainInfo () {
+      this.$store.dispatch('domains/getDomainDetails', this.$route.params.domain)
     }
   }
 }

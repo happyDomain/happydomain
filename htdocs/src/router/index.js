@@ -107,32 +107,10 @@ const routes = [
   },
   {
     path: '/domains/:domain',
+    name: 'domain-abstract',
     component: function () {
       return import(/* webpackChunkName: "domain" */ '../views/domain.vue')
-    },
-    children: [
-      {
-        path: '',
-        name: 'domain-home',
-        component: function () {
-          return import(/* webpackChunkName: "domain" */ '../views/domain-home.vue')
-        }
-      },
-      {
-        path: 'abstract',
-        name: 'domain-abstract',
-        component: function () {
-          return import(/* webpackChunkName: "domain" */ '../views/domain-abstract.vue')
-        }
-      },
-      {
-        path: 'source',
-        name: 'domain-source',
-        component: function () {
-          return import(/* webpackChunkName: "domain" */ '../views/domain-source.vue')
-        }
-      }
-    ]
+    }
   },
   {
     path: '/domains/:domain/new',

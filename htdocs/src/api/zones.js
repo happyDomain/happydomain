@@ -32,15 +32,42 @@
 import Api from '@/api/api'
 
 export default {
-  detachDomain (domain) {
-    return Api().delete('/api/domains/' + encodeURIComponent(domain))
+  getZone (domain, id) {
+    return Api().get('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id))
   },
 
-  getDomain (domain) {
-    return Api().get('/api/domains/' + encodeURIComponent(domain))
+  applyZone (domain, id) {
+    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/apply_zone/' + encodeURIComponent(id))
   },
 
-  listDomains () {
-    return Api().get('/api/domains')
+  diffZone (domain, id1, id2) {
+    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/diff_zones/' + encodeURIComponent(id1) + '/' + encodeURIComponent(id2))
+  },
+
+  viewZone (domain, id) {
+    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/view_zone/' + encodeURIComponent(id))
+  },
+
+  importZone (domain) {
+    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/import_zone')
+  },
+
+  addZoneService (domain, id, subdomain, service) {
+    if (subdomain === '') {
+      subdomain = '@'
+    }
+    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(subdomain) + '/services', service)
+  },
+
+  deleteZoneService (domain, id, service) {
+    return Api().delete('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(service._domain) + '/services/' + encodeURIComponent(service._id))
+  },
+
+  updateZoneService (domain, id, subdomain, service) {
+    return Api().patch('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id), service)
+  },
+
+  getServiceRecords (domain, id, service) {
+    return Api().get('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(service._domain) + '/services/' + encodeURIComponent(service._id) + '/records')
   }
 }

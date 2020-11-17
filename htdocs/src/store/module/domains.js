@@ -37,15 +37,21 @@ export default {
   namespaced: true,
 
   state: {
-    all: null
+    all: null,
+    detailed: {}
   },
 
   getters: {
     domains_getAll: state => state.all,
+    domains_getDetailed: state => state.detailed,
     sortedDomains: state => state.all
   },
 
   actions: {
+    dropDomain ({ commit }, domain) {
+      commit('removeDomain', domain)
+    },
+
     getAllMyDomains ({ commit }) {
       DomainsApi.listDomains()
         .then(
@@ -53,10 +59,30 @@ export default {
             commit('setDomains', response.data)
           })
       // TODO: handle errors here
+    },
+
+    getDomainDetails ({ commit }, domain) {
+      DomainsApi.getDomain(domain)
+        .then(
+          response => {
+            var details = response.data
+            commit('setDomainDetailed', { domain, details })
+          }
+        )
+      // TODO: handle errors here
     }
   },
 
   mutations: {
+    removeDomain (state, domain) {
+      Vue.delete(state.detailed, domain)
+      Vue.set(state, 'all', null)
+    },
+
+    setDomainDetailed (state, { domain, details }) {
+      Vue.set(state.detailed, domain, details)
+    },
+
     setDomains (state, domains) {
       domains.sort(function (a, b) { return domainCompare(a.domain, b.domain) })
       Vue.set(state, 'all', domains)

@@ -32,51 +32,77 @@
   -->
 
 <template>
-  <div v-if="!isLoading" class="pt-3">
-    <h-subdomain-item
-      v-for="(dn, index) in sortedDomains"
-      :key="index"
-      :display-format="displayFormat"
-      :dn="dn"
-      :origin="domain.domain"
-      :services="services"
-      :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]"
-      :aliases="aliases[dn]===undefined?[]:aliases[dn]"
-      :zone-id="zoneId"
-      @show-service-window="showServiceWindow"
-      @update-my-services="updateMyServices"
-      @add-subdomain="addSubdomain"
-      @add-new-alias="addNewAlias"
-      @add-new-service="addNewService"
-    />
+  <b-row v-if="!isLoading" class="pt-3">
+    <b-col :sm="showSubdomainsList?9:null">
+      <b-button v-show="!showSubdomainsList" class="float-right sticky-top" variant="outline-secondary" @click="showSubdomainsList = !showSubdomainsList">
+        <b-icon icon="list" aria-hidden="true" /><br>
+      </b-button>
 
-    <h-modal-service
-      v-if="myServices"
-      ref="modalService"
-      :domain="domain"
-      :my-services="myServices"
-      :services="services"
-      :zone-id="zoneId"
-      @update-my-services="updateMyServices"
-    />
+      <h-subdomain-item
+        v-for="(dn, index) in sortedDomains"
+        :key="index"
+        :display-format="displayFormat"
+        :dn="dn"
+        :origin="domain.domain"
+        :show-subdomains-list="showSubdomainsList"
+        :services="services"
+        :zone-services="myServices.services[dn]===undefined?[]:myServices.services[dn]"
+        :aliases="aliases[dn]===undefined?[]:aliases[dn]"
+        :zone-id="zoneId"
+        @show-service-window="showServiceWindow"
+        @update-my-services="updateMyServices"
+        @add-subdomain="addSubdomain"
+        @add-new-alias="addNewAlias"
+        @add-new-service="addNewService"
+      />
 
-    <b-modal id="modal-addAlias" title="Add a new alias" @ok="handleModalAliasSubmit">
-      <template #modal-footer="{ cancel }">
-        <b-button variant="secondary" @click="cancel()">
-          {{ $t('common.cancel') }}
-        </b-button>
-        <b-button form="addAliasForm" type="submit" variant="primary">
-          {{ $t('domains.add-alias') }}
-        </b-button>
-      </template>
-      <form v-if="modal && modal.dn != null" id="addAliasForm" @submit.stop.prevent="handleModalAliasSubmit">
-        Add an alias pointing to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
-        <b-input-group :append="'.' + domain.domain">
-          <b-input v-model="modal.alias" autofocus class="text-monospace" placeholder="new.subdomain" :state="modal.newDomainState" @update="validateNewAlias" />
-        </b-input-group>
-      </form>
-    </b-modal>
-  </div>
+      <h-modal-service
+        v-if="myServices"
+        ref="modalService"
+        :domain="domain"
+        :my-services="myServices"
+        :services="services"
+        :zone-id="zoneId"
+        @update-my-services="updateMyServices"
+      />
+
+      <b-modal id="modal-addAlias" title="Add a new alias" @ok="handleModalAliasSubmit">
+        <template #modal-footer="{ cancel }">
+          <b-button variant="secondary" @click="cancel()">
+            {{ $t('common.cancel') }}
+          </b-button>
+          <b-button form="addAliasForm" type="submit" variant="primary">
+            {{ $t('domains.add-alias') }}
+          </b-button>
+        </template>
+        <form v-if="modal && modal.dn != null" id="addAliasForm" @submit.stop.prevent="handleModalAliasSubmit">
+          Add an alias pointing to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
+          <b-input-group :append="'.' + domain.domain">
+            <b-input v-model="modal.alias" autofocus class="text-monospace" placeholder="new.subdomain" :state="modal.newDomainState" @update="validateNewAlias" />
+          </b-input-group>
+        </form>
+      </b-modal>
+    </b-col>
+    <b-col v-show="showSubdomainsList" sm="3" class="sticky-top" style="height: 100vh; overflow-y: auto; z-index: 5">
+      <b-button v-show="showSubdomainsList" class="float-right mb-2" variant="secondary" @click="showSubdomainsList = !showSubdomainsList">
+        <b-icon icon="list" aria-hidden="true" /><br>
+      </b-button>
+      <b-button type="button" variant="outline-secondary" size="sm" class="ml-2 w-100" @click="addSubdomain()">
+        <b-icon icon="server" />
+        {{ $t('domains.add-a-subdomain') }}
+      </b-button>
+      <a
+        v-for="(dn, index) in sortedDomains"
+        :key="index"
+        :href="'#' + (dn?dn:'@')"
+        :title="dn | fqdn(domain.domain)"
+        class="d-block text-truncate text-monospace text-muted"
+        :style="'max-width: none; padding-left: ' + (dn === '' ? 0 : (dn.split('.').length * 10)) + 'px'"
+      >
+        {{ dn | fqdn(domain.domain) }}
+      </a>
+    </b-col>
+  </b-row>
 </template>
 
 <script>
@@ -116,6 +142,7 @@ export default {
       modal: null,
       myServices: null,
       services: {},
+      showSubdomainsList: false,
       updateServiceInProgress: false
     }
   },

@@ -51,9 +51,9 @@
     "kind": "domain",
     "actions": {
       "reimport": "Re-import",
-      "view": "View",
-      "propagate": "Propagate",
-      "rollback": "Rollback"
+      "view": "View my zone",
+      "propagate": "Publish my changes",
+      "rollback": "Rollback to this version"
     },
     "alert": {
       "remove": "This action will permanently remove the domain {domain} from your managed domains. All history and abstracted zones will be discarded. This action will not delete or unregister your domain from your provider, nor alterate what is currently served. It will only affect what you see in happyDNS. Are you sure you want to continue?",
@@ -98,19 +98,23 @@
       "live": "Live records",
       "monitoring": "Monitoring",
       "summary": "Summary",
-      "source": "Domain hoster",
+      "source": "Zone hosted on",
       "title": "View zone"
     },
     "views": {
+      "as": "View as:",
       "grid": {
-        "title": "Grid view (easiest)"
+        "title": "Grid view (easiest)",
+        "label": "Grid"
       },
       "list": {
-        "title": "List view (fastest)"
+        "title": "List view (fastest)",
+        "label": "List"
       },
       "source-parameters": "Hosting parameters",
       "records": {
-        "title": "List records (advanced)"
+        "title": "List records (advanced)",
+        "label": "Records"
       }
     }
   },

@@ -32,19 +32,27 @@
   -->
 
 <template>
-  <component :is="displayFormat === 'grid' ? 'b-card' : 'b-list-group'" v-if="services[service._svctype]" :class="displayFormat !== 'list' ? 'card-hover' : ''" :style="displayFormat === 'grid' ? 'width: 32%; min-width: 225px; margin-bottom: 1em; cursor: pointer;' : displayFormat === 'records' ? 'margin-bottom: .5em; cursor: pointer;' : ''" no-body>
+  <component :is="displayFormat === 'grid' ? 'b-card' : 'b-list-group'" v-if="!service || services[service._svctype]" :class="displayFormat !== 'list' ? 'card-hover' : ''" :style="(!service ? 'border-style: dashed; ' : '') + (displayFormat === 'grid' ? 'width: 32%; min-width: 225px; margin-bottom: 1em; cursor: pointer;' : displayFormat === 'records' ? 'margin-bottom: .5em; cursor: pointer;' : '')" no-body>
     <b-card-body v-if="displayFormat === 'grid'" @click="$emit('show-service-window', service)">
-      <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="float-right ml-1">
-        {{ categorie }}
-      </b-badge>
-      <b-card-title>
+      <div v-if="service" class="float-right">
+        <b-badge v-for="(categorie, idcat) in services[service._svctype].categories" :key="idcat" variant="gray" class="ml-1">
+          {{ categorie }}
+        </b-badge>
+      </div>
+      <b-card-title v-if="service">
         {{ services[service._svctype].name }}
       </b-card-title>
-      <b-card-sub-title class="mb-2">
+      <b-card-title v-else>
+        <b-icon icon="plus" /> New service
+      </b-card-title>
+      <b-card-sub-title v-if="service" class="mb-2">
         {{ services[service._svctype].description }}
       </b-card-sub-title>
+      <b-card-sub-title v-else class="mb-2">
+        Click here to add a new service to this subdomain.
+      </b-card-sub-title>
       <b-card-text>
-        <span v-if="service._comment">{{ service._comment }}</span>
+        <span v-if="service && service._comment">{{ service._comment }}</span>
       </b-card-text>
     </b-card-body>
 
@@ -98,7 +106,7 @@ export default {
     },
     service: {
       type: Object,
-      required: true
+      default: null
     },
     services: {
       type: Object,

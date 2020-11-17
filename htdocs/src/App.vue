@@ -33,7 +33,7 @@
 
 <template>
   <div id="app">
-    <b-navbar :class="loggedUser?'p-0':''">
+    <b-navbar :class="loggedUser?'p-0':''" style="position: relative; z-index: 15">
       <b-container>
         <b-navbar-brand class="navbar-brand" to="/">
           <h-logo height="25" />

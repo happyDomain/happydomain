@@ -34,7 +34,7 @@
 <template>
   <div>
     <div v-if="isCNAME()">
-      <h2 :id="dn" style="text-indent:-1em;padding-left:1em;overflow-x:hidden;text-overflow:ellipsis">
+      <h2 :id="dn" class="sticky-top" style="background: white; text-indent:-1em;padding-left:1em;overflow-x:hidden;text-overflow:ellipsis">
         <span style="white-space: nowrap">
           <b-icon icon="link" />
           <a :href="'#' + dn" class="float-right" style="text-indent:0;z-index:2;position:relative">
@@ -61,7 +61,7 @@
       </h2>
     </div>
     <div v-else>
-      <h2 :id="dn" style="text-indent:-1em;padding-left:1em;overflow-x:hidden;text-overflow:ellipsis">
+      <h2 :id="dn?dn:'@'" class="sticky-top" style="background: white; text-indent:-1em;padding-left:1em;overflow-x:hidden;text-overflow:ellipsis">
         <span style="white-space: nowrap">
           <b-icon :icon="showResources?'chevron-down':'chevron-right'" @click="toogleShowResources()" />
           <a :href="'#' + dn" class="float-right" style="text-indent:0;z-index:2;position:relative">
@@ -72,7 +72,7 @@
         <b-badge v-if="aliases.length > 0" v-b-popover.hover.focus="{ customClass: 'text-monospace', html: true, content: aliasPopoverCnt(dn) }" class="ml-2" style="text-indent:0;">
           + {{ $tc('domains.n-aliases', aliases.length) }}
         </b-badge>
-        <b-button type="button" variant="primary" size="sm" class="ml-2" @click="$emit('add-new-service', dn)">
+        <b-button v-if="displayFormat !== 'grid'" type="button" variant="primary" size="sm" class="ml-2" @click="$emit('add-new-service', dn)">
           <b-icon icon="plus" />
           {{ $t('domains.add-a-service') }}
         </b-button>
@@ -80,13 +80,14 @@
           <b-icon icon="link" />
           {{ $t('domains.add-an-alias') }}
         </b-button>
-        <b-button v-if="dn === ''" type="button" variant="outline-secondary" size="sm" class="ml-2" @click="$emit('add-subdomain')">
+        <b-button v-if="!showSubdomainsList && !dn" type="button" variant="outline-secondary" size="sm" class="ml-2" @click="$emit('add-subdomain')">
           <b-icon icon="server" />
           {{ $t('domains.add-a-subdomain') }}
         </b-button>
       </h2>
       <div v-show="showResources" :class="showResources && displayFormat === 'grid' ? 'd-flex justify-content-around flex-wrap' : ''">
         <h-domain-service v-for="(svc, idx) in zoneServices" :key="idx" :display-format="displayFormat" :origin="origin" :service="svc" :services="services" :zone-id="zoneId" @show-service-window="$emit('show-service-window', $event)" @update-my-services="$emit('update-my-services', $event)" />
+        <h-domain-service v-if="displayFormat === 'grid'" :display-format="displayFormat" :origin="origin" :services="services" :zone-id="zoneId" @show-service-window="$emit('add-new-service', dn)" />
       </div>
     </div>
   </div>
@@ -118,6 +119,10 @@ export default {
     origin: {
       type: String,
       required: true
+    },
+    showSubdomainsList: {
+      type: Boolean,
+      default: false
     },
     services: {
       type: Object,

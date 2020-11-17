@@ -47,6 +47,7 @@ import {
   BIconGridFill,
   BIconLink,
   BIconLink45deg,
+  BIconList,
   BIconListTask,
   BIconListUl,
   BIconMenuButtonWideFill,
@@ -125,6 +126,7 @@ Vue.component('BIconChevronUp', BIconChevronUp)
 Vue.component('BIconGridFill', BIconGridFill)
 Vue.component('BIconLink', BIconLink)
 Vue.component('BIconLink45deg', BIconLink45deg)
+Vue.component('BIconList', BIconList)
 Vue.component('BIconListTask', BIconListTask)
 Vue.component('BIconListUl', BIconListUl)
 Vue.component('BIconMenuButtonWideFill', BIconMenuButtonWideFill)

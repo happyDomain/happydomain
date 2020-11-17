@@ -36,7 +36,7 @@
     <td v-if="!record.edit" style="overflow:hidden; text-overflow: ellipsis;white-space: nowrap;">
       <b-icon v-if="!expand" icon="chevron-right" @click="toogleRR()" />
       <b-icon v-if="expand" icon="chevron-down" @click="toogleRR()" />
-      <span class="text-monospace" :title="record.string" @click="toogleRR()">{{ record.string }}</span>
+      <span class="text-monospace text-truncate" :title="record.string" @click="toogleRR()">{{ record.string }}</span>
       <div v-show="expand" class="row">
         <dl class="col-sm-6 row">
           <dt class="col-sm-3 text-right">
