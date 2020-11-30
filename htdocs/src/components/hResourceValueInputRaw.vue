@@ -39,6 +39,8 @@
       v-model="val"
       :required="specs.required !== undefined && specs.required"
       :options="specs.choices"
+      @focus="$emit('focus')"
+      @blur="$emit('blur')"
     />
     <b-form-input
       v-else
@@ -49,6 +51,8 @@
       :required="specs.required !== undefined && specs.required"
       :placeholder="specs.placeholder"
       :plaintext="!edit"
+      @focus="$emit('focus')"
+      @blur="$emit('blur')"
     />
   </b-input-group>
 </template>
