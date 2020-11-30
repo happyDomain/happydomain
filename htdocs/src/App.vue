@@ -45,6 +45,10 @@
         <b-navbar-toggle target="nav-collapse" />
 
         <b-navbar-nav class="ml-auto">
+          <b-nav-form>
+            <h-help />
+          </b-nav-form>
+
           <b-nav-item-dropdown v-if="loggedUser" right>
             <template slot="button-content">
               <b-button size="sm" variant="dark">
@@ -104,6 +108,10 @@
 import axios from 'axios'
 
 export default {
+
+  components: {
+    hHelp: () => import('@/components/hHelp')
+  },
 
   data: function () {
     return {
