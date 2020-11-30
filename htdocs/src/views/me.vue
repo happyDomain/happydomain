@@ -33,6 +33,26 @@
 
 <template>
   <b-container class="my-4">
+    <h2 id="settings">
+      {{ $t('settings.title') }}
+    </h2>
+    <b-row>
+      <b-card v-if="settings" class="offset-md-2 col-8">
+        <b-form @submit.stop.prevent="saveSettings">
+          <b-form-group
+            :label="$t('settings.language')"
+            label-for="language-select"
+          >
+            <b-form-select id="language-select" v-model="settings.language" :options="languages" />
+          </b-form-group>
+          <div class="d-flex justify-content-around">
+            <b-button type="submit" variant="primary">
+              {{ $t('settings.save') }}
+            </b-button>
+          </div>
+        </b-form>
+      </b-card>
+    </b-row>
     <h2 id="password-change">
       {{ $t('password.change') }}
     </h2>
@@ -151,6 +171,7 @@ export default {
     return {
       deletePassword: '',
       loggedUser: null,
+      settings: null,
       signupForm: {
         current: '',
         password: '',
@@ -161,7 +182,13 @@ export default {
 
   computed: {
     isLoading () {
-      return this.loggedUser != null
+      return this.loggedUser != null || this.settings != null
+    },
+    languages () {
+      return {
+        en: 'English',
+        fr: 'Français'
+      }
     }
   },
 
@@ -170,6 +197,11 @@ export default {
       .then(
         (response) => {
           this.loggedUser = response.data
+          axios.get('/api/users/' + encodeURIComponent(this.loggedUser.id.toString(16)) + '/settings')
+            .then(
+              (response) => {
+                this.settings = response.data
+              })
         })
   },
 
@@ -197,6 +229,31 @@ export default {
             this.$bvToast.toast(
               error.response.data.errmsg, {
                 title: this.$t('errors.account-delete'),
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+          })
+    },
+
+    saveSettings () {
+      axios
+        .post('/api/users/' + encodeURIComponent(this.loggedUser.id.toString(16)) + '/settings', this.settings)
+        .then(
+          response => {
+            this.settings = response.data
+            this.$root.$bvToast.toast(this.$t('settings.success'), {
+              title: this.$t('settings.success-change'),
+              autoHideDelay: 5000,
+              variant: 'success',
+              toaster: 'b-toaster-content-right'
+            })
+          },
+          error => {
+            this.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: this.$t('errors.settings-change'),
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'

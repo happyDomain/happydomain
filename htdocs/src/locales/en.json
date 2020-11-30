@@ -157,6 +157,7 @@
     "registration": "Registration problem",
     "rr-add": "An error occurs when trying to add RR to the zone:",
     "rr-delete": "An error occurs when trying to delete RR in the zone:",
+    "settings-change": "Unable to change your settings",
     "source-delete": "Something went wrong during source deletion",
     "session": {
       "title": "Authentication timeout",
@@ -215,6 +216,13 @@
     "already": "Already managed",
     "delete": "@:common.delete service",
     "update": "Update service"
+  },
+  "settings": {
+    "language": "Language",
+    "save": "Save settings",
+    "title": "Settings",
+    "success": "Continue to enjoy happyDNS.",
+    "success-change": "Your settings has been saved."
   },
   "source": {
     "available-types": "Resources Types available",

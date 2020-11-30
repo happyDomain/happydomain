@@ -62,6 +62,9 @@ type User struct {
 
 	// PasswordRecoveryKey is a string generated when User asks to recover its account.
 	PasswordRecoveryKey []byte `json:",omitempty"`
+
+	// Settings holds the settings for an account.
+	Settings UserSettings `json:settings,omitempty`
 }
 
 // Users is a group of User.

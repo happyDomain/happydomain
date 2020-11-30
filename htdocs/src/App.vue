@@ -156,6 +156,9 @@ export default {
           (response) => {
             sessionStorage.loggedUser = JSON.stringify(response.data)
             this.loggedUser = response.data
+            if (this.loggedUser.settings && this.loggedUser.settings.language && this.$i18n.locale !== this.loggedUser.settings.language) {
+              this.$i18n.locale = this.loggedUser.settings.language
+            }
           },
           (error) => {
             this.loggedUser = null

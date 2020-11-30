@@ -58,6 +58,8 @@ func init() {
 	router.POST("/api/users", ApiHandler(registerUser))
 	router.PATCH("/api/users", ApiHandler(specialUserOperations))
 	router.GET("/api/users/:uid", apiAuthHandler(sameUserHandler(getUser)))
+	router.GET("/api/users/:uid/settings", apiAuthHandler(sameUserHandler(getUserSettings)))
+	router.POST("/api/users/:uid/settings", apiAuthHandler(sameUserHandler(changeUserSettings)))
 	router.POST("/api/users/:uid/delete", apiAuthHandler(sameUserHandler(deleteUser)))
 	router.POST("/api/users/:uid/email", ApiHandler(userHandler(validateUserAddress)))
 	router.POST("/api/users/:uid/new_password", apiAuthHandler(sameUserHandler(changePassword)))
@@ -251,6 +253,33 @@ func sameUserHandler(f func(*config.Options, *RequestResources, io.Reader) Respo
 func getUser(opts *config.Options, req *RequestResources, _ io.Reader) Response {
 	return APIResponse{
 		response: req.User,
+	}
+}
+
+func getUserSettings(opts *config.Options, req *RequestResources, _ io.Reader) Response {
+	return APIResponse{
+		response: req.User.Settings,
+	}
+}
+
+func changeUserSettings(opts *config.Options, req *RequestResources, body io.Reader) Response {
+	var us happydns.UserSettings
+	if err := json.NewDecoder(body).Decode(&us); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	req.User.Settings = us
+
+	if err := storage.MainStore.UpdateUser(req.User); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	return APIResponse{
+		response: req.User.Settings,
 	}
 }
 

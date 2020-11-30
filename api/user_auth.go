@@ -58,9 +58,10 @@ func init() {
 }
 
 type DisplayUser struct {
-	Id               int64      `json:"id"`
-	Email            string     `json:"email"`
-	RegistrationTime *time.Time `json:"registration_time,omitempty"`
+	Id               int64                 `json:"id"`
+	Email            string                `json:"email"`
+	RegistrationTime *time.Time            `json:"registration_time,omitempty"`
+	Settings         happydns.UserSettings `json:"settings,omitempty"`
 }
 
 func currentUser(u *happydns.User) *DisplayUser {
@@ -68,6 +69,7 @@ func currentUser(u *happydns.User) *DisplayUser {
 		Id:               u.Id,
 		Email:            u.Email,
 		RegistrationTime: u.RegistrationTime,
+		Settings:         u.Settings,
 	}
 }
 
