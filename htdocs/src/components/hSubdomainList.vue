@@ -76,10 +76,18 @@
           </b-button>
         </template>
         <form v-if="modal && modal.dn != null" id="addAliasForm" @submit.stop.prevent="handleModalAliasSubmit">
-          Add an alias pointing to <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>:
+          <i18n path="domains.alias-creation">
+            <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>
+          </i18n>
           <b-input-group :append="'.' + domain.domain">
             <b-input v-model="modal.alias" autofocus class="text-monospace" placeholder="new.subdomain" :state="modal.newDomainState" @update="validateNewAlias" />
           </b-input-group>
+          <div v-show="modal.alias" class="mt-3 text-center">
+            {{ $t('domains.alias-creation-sample') }}
+            <span class="text-monospace text-no-wrap">{{ modal.alias | fqdn(domain.domain) }}</span>
+            <b-icon class="mr-1 ml-1" icon="arrow-right" />
+            <span class="text-monospace text-no-wrap">{{ modal.dn | fqdn(domain.domain) }}</span>
+          </div>
         </form>
       </b-modal>
     </b-col>

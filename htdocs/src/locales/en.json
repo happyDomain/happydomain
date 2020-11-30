@@ -69,6 +69,8 @@
     "add-an-alias": "Add an alias",
     "add-now": "Add it now!",
     "added-success": "Great! {domain} has been added. You can manage it right now.",
+    "alias-creation": "Add an alias pointing to {0}:",
+    "alias-creation-sample": "This will create the alias:",
     "apply": {
       "additions": "no additions | {count} addition | {count} additions",
       "button": "Apply modifications",
