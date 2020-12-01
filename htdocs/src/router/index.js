@@ -150,25 +150,10 @@ const routes = [
   },
   {
     path: '/sources/:source',
+    name: 'source-update',
     component: function () {
       return import(/* webpackChunkName: "source" */ '../views/source.vue')
-    },
-    children: [
-      {
-        path: '',
-        name: 'source-update',
-        component: function () {
-          return import(/* webpackChunkName: "source" */ '../views/source-update.vue')
-        }
-      },
-      {
-        path: 'domains',
-        name: 'source-list-domains',
-        component: function () {
-          return import(/* webpackChunkName: "source" */ '../views/source-list-domains.vue')
-        }
-      }
-    ]
+    }
   },
   {
     path: '/tools/client',

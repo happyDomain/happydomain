@@ -42,23 +42,19 @@
     <hr style="margin-bottom:0">
 
     <b-row style="min-height: inherit">
-      <b-col v-if="source_specs_selected && sources" lg="4" md="5" class="bg-light">
+      <b-col v-if="sourceSpecsSelected && sources" lg="4" md="5" class="bg-light">
         <div class="text-center mb-3">
-          <img :src="'/api/source_specs/' + source_specs_selected + '/icon.png'" :alt="sources[source_specs_selected].name" style="max-width: 100%; max-height: 10em">
+          <img :src="'/api/source_specs/' + sourceSpecsSelected + '/icon.png'" :alt="sources[sourceSpecsSelected].name" style="max-width: 100%; max-height: 10em">
         </div>
         <h3>
-          {{ sources[source_specs_selected].name }}
+          {{ sources[sourceSpecsSelected].name }}
         </h3>
 
         <p class="text-muted text-justify">
-          {{ sources[source_specs_selected].description }}
+          {{ sources[sourceSpecsSelected].description }}
         </p>
 
         <div class="text-center mb-2">
-          <b-button v-if="source_specs && source_specs.capabilities && source_specs.capabilities.indexOf('ListDomains') > -1" type="button" variant="secondary" class="mb-1" @click="showListImportableDomain()">
-            <b-icon icon="list-task" />
-            {{ $t('domains.list') }}
-          </b-button>
           <b-button type="button" variant="danger" class="mb-1" @click="deleteSource()">
             <b-icon icon="trash-fill" />
             {{ $t('source.delete') }}
@@ -67,43 +63,68 @@
       </b-col>
 
       <b-col lg="8" md="7">
-        <router-view v-if="!isLoading" :parent-loading="isLoading" :my-source="mySource" :sources="sources" :source-specs="source_specs" :source-specs-selected="source_specs_selected" @update-my-source="updateMySource" />
+        <b-form v-if="!isLoading" class="mt-2 mb-5" @submit.stop.prevent="nextState">
+          <h-source-state
+            v-if="form"
+            v-model="settings"
+            class="mt-2 mb-2"
+            :form="form"
+            :source-name="sources[sourceSpecsSelected].name"
+            :state="state"
+          />
+
+          <hr>
+
+          <h-source-state-buttons v-if="form" class="d-flex justify-content-end" edit :form="form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previous-state="previousState" />
+        </b-form>
       </b-col>
     </b-row>
   </b-container>
 </template>
 
 <script>
+import SourceState from '@/mixins/sourceState'
 import axios from 'axios'
 
 export default {
+
+  components: {
+    hSourceState: () => import('@/components/hSourceState'),
+    hSourceStateButtons: () => import('@/components/hSourceStateButtons')
+  },
+
+  mixins: [SourceState],
 
   data: function () {
     return {
       mySource: null,
       sources: null,
-      source_specs: null,
-      source_specs_selected: null
+      sourceSpecs: null,
+      sourceSpecsSelected: null
     }
   },
 
   computed: {
-    isLoading () {
-      return this.mySource == null || this.sources == null || this.source_specs == null || this.source_specs_selected == null
+    isLoadingHere () {
+      return this.mySource == null || this.sources == null || this.sourceSpecs == null || this.sourceSpecsSelected == null || this.settings == null || this.isLoading
     }
   },
 
   mounted () {
+    this.resetSettings()
     axios
       .get('/api/sources/' + encodeURIComponent(this.$route.params.source))
       .then(response => {
         this.mySource = response.data
-        this.source_specs_selected = this.mySource._srctype
+        this.settings = this.mySource
+        this.sourceSpecsSelected = this.mySource._srctype
 
         axios
           .get('/api/source_specs/' + encodeURIComponent(this.mySource._srctype))
           .then(response => {
-            this.source_specs = response.data
+            this.sourceSpecs = response.data
+
+            this.loadState(0)
             return true
           })
 
@@ -139,8 +160,10 @@ export default {
     showListImportableDomain () {
       this.$router.push('/sources/' + encodeURIComponent(this.$route.params.source) + '/domains')
     },
-    updateMySource (newSource) {
-      this.mySource = newSource
+    reactOnSuccess (toState, newSource) {
+      if (newSource) {
+        this.mySource = newSource
+      }
     }
   }
 }
