@@ -39,12 +39,11 @@ import (
 )
 
 type FormState struct {
-	Id       int64   `json:"_id,omitempty"`
-	IdB      []byte  `json:"_id,omitempty"`
-	Name     string  `json:"_comment"`
-	State    int32   `json:"state"`
-	Recall   *int64  `json:"recall,omitempty"`
-	Redirect *string `json:"redirect,omitempty"`
+	Id       interface{} `json:"_id,omitempty"`
+	Name     string      `json:"_comment"`
+	State    int32       `json:"state"`
+	Recall   *int64      `json:"recall,omitempty"`
+	Redirect *string     `json:"redirect,omitempty"`
 }
 
 type FormResponse struct {
@@ -57,7 +56,6 @@ func formDoState(cfg *config.Options, req *RequestResources, fs *FormState, data
 		req.Session.GetValue(fmt.Sprintf("form-%d", *fs.Recall), data)
 		req.Session.GetValue(fmt.Sprintf("form-%d-name", *fs.Recall), &fs.Name)
 		req.Session.GetValue(fmt.Sprintf("form-%d-id", *fs.Recall), &fs.Id)
-		req.Session.GetValue(fmt.Sprintf("form-%d-idb", *fs.Recall), &fs.IdB)
 		req.Session.GetValue(fmt.Sprintf("form-%d-next", *fs.Recall), &fs.Redirect)
 	}
 
@@ -74,7 +72,6 @@ func formDoState(cfg *config.Options, req *RequestResources, fs *FormState, data
 			key, recallid := req.Session.FindNewKey("form-")
 			req.Session.SetValue(key, data)
 			req.Session.SetValue(key+"-id", fs.Id)
-			req.Session.SetValue(key+"-idb", fs.IdB)
 			if fs.Redirect != nil {
 				req.Session.SetValue(key+"-next", *fs.Redirect)
 			}

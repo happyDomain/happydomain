@@ -86,7 +86,7 @@ func getServiceSettingsState(cfg *config.Options, req *RequestResources, body io
 			return APIErrorResponse{
 				err: err,
 			}
-		} else if ups.Id == 0 {
+		} else if ups.Id == nil {
 			// Append a new Service
 			if err = req.Zone.AppendService(string(req.Ps.ByName("subdomain")), req.Domain.DomainName, &happydns.ServiceCombined{Service: ups.Service}); err != nil {
 				return APIErrorResponse{
@@ -106,7 +106,7 @@ func getServiceSettingsState(cfg *config.Options, req *RequestResources, body io
 			}
 		} else {
 			// Update an existing Service
-			if err = req.Zone.EraseServiceWithoutMeta(string(req.Ps.ByName("subdomain")), req.Domain.DomainName, ups.IdB, ups); err != nil {
+			if err = req.Zone.EraseServiceWithoutMeta(string(req.Ps.ByName("subdomain")), req.Domain.DomainName, ups.Id.([]byte), ups); err != nil {
 				return APIErrorResponse{
 					err: err,
 				}

@@ -91,7 +91,7 @@ func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.
 			return APIErrorResponse{
 				err: err,
 			}
-		} else if uss.Id == 0 {
+		} else if uss.Id == nil {
 			// Create a new Source
 			if s, err := storage.MainStore.CreateSource(req.User, src, uss.Name); err != nil {
 				return APIErrorResponse{
@@ -107,7 +107,7 @@ func getSourceSettingsState(cfg *config.Options, req *RequestResources, body io.
 			}
 		} else {
 			// Update an existing Source
-			if s, err := storage.MainStore.GetSource(req.User, uss.Id); err != nil {
+			if s, err := storage.MainStore.GetSource(req.User, int64(uss.Id.(float64))); err != nil {
 				return APIErrorResponse{
 					err: err,
 				}
