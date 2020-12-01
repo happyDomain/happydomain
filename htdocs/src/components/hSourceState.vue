@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <h-custom-form :form="form" :value="val.Source" @input="val.Source = $event; $emit('input', val)">
+  <h-custom-form v-if="val" :form="form" :value="val.Source" @input="val.Source = $event; $emit('input', val)">
     <h-resource-value-simple-input
       v-if="state === 0"
       id="src-name"
@@ -78,7 +78,7 @@ export default {
 
   data () {
     return {
-      val: {}
+      val: null
     }
   },
 
@@ -96,17 +96,17 @@ export default {
 
   methods: {
     updateValues () {
+      let nVal = {}
       if (this.value != null) {
-        this.val = Object.assign({}, this.value)
-      } else {
-        this.val = {}
+        nVal = Object.assign({}, this.value)
       }
-      if (this.val.Source === undefined) {
-        this.val.Source = {}
+      if (nVal.Source === undefined) {
+        nVal.Source = {}
       }
-      if (this.val._comment === undefined) {
-        this.val._comment = ''
+      if (nVal._comment === undefined) {
+        nVal._comment = ''
       }
+      this.val = nVal
     }
   }
 }
