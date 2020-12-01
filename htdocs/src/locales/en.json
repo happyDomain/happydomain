@@ -221,6 +221,13 @@
     "update": "Update service"
   },
   "settings": {
+    "fieldhint": {
+      "title": "Display hint for form fields",
+      "hide": "Hide",
+      "tooltip": "Tooltip near field",
+      "focused": "Under field when focused",
+      "always": "Under field, always"
+    },
     "language": "Language",
     "save": "Save settings",
     "title": "Settings",

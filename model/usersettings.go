@@ -35,5 +35,6 @@ import ()
 
 // UserSettings represents the settings for an account.
 type UserSettings struct {
-	Language string `json:"language,omitempty"`
+	Language  string `json:"language,omitempty"`
+	FieldHint int    `json:"fieldhint"`
 }

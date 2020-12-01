@@ -45,6 +45,16 @@
           >
             <b-form-select id="language-select" v-model="settings.language" :options="languages" />
           </b-form-group>
+          <b-form-group
+            :label="$t('settings.fieldhint.title')"
+            label-for="fieldhint-select"
+          >
+            <b-form-select
+              id="fieldhint-select"
+              v-model="settings.fieldhint"
+              :options="[{value: 0, text: $t('settings.fieldhint.hide')}, {value: 1, text: $t('settings.fieldhint.tooltip')}, {value: 2, text: $t('settings.fieldhint.focused')}, {value: 3, text: $t('settings.fieldhint.always')}]"
+            />
+          </b-form-group>
           <div class="d-flex justify-content-around">
             <b-button type="submit" variant="primary">
               {{ $t('settings.save') }}
