@@ -60,7 +60,7 @@
             <b-icon icon="list-ul" aria-hidden="true" /><br>
             {{ $t('domains.actions.view') }}
           </b-button>
-          <b-button v-if="selectedHistory === domain.zone_history[0].id" size="sm" variant="success" :title="$t('domains.actions.propagate')" @click="showDiff">
+          <b-button v-if="domain.zone_history.length && selectedHistory === domain.zone_history[0].id" size="sm" variant="success" :title="$t('domains.actions.propagate')" @click="showDiff">
             <b-icon icon="cloud-upload" aria-hidden="true" /><br>
             {{ $t('domains.actions.propagate') }}
           </b-button>
