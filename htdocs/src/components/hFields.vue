@@ -99,15 +99,10 @@ export default {
 
   methods: {
     fieldsUpdated () {
-      var changed = false
       for (const i in this.fields) {
         if (this.value[this.fields[i].id] === undefined && this.fields[i].default) {
           this.val[this.fields[i].id] = this.fields[i].default
-          changed = true
         }
-      }
-      if (changed) {
-        this.$emit('input', this.val)
       }
     },
 
