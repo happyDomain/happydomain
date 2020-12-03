@@ -34,7 +34,7 @@
 <template>
   <div>
     <div v-if="isCNAME()">
-      <h2 :id="dn" class="sticky-top" style="background: white; text-indent:-1em;padding-left:1em;overflow-x:hidden;text-overflow:ellipsis">
+      <h2 :id="dn" class="sticky-top" style="background: white; text-indent:-1em;padding-left:1em;overflow-x:hidden;text-overflow:ellipsis;z-index: 14">
         <span style="white-space: nowrap">
           <b-icon icon="link" />
           <a :href="'#' + dn" class="float-right" style="text-indent:0;z-index:2;position:relative">
@@ -61,7 +61,7 @@
       </h2>
     </div>
     <div v-else>
-      <h2 :id="dn?dn:'@'" class="sticky-top" style="background: white; text-indent:-1em;padding-left:1em;overflow-x:hidden;text-overflow:ellipsis">
+      <h2 :id="dn?dn:'@'" class="sticky-top" style="background: white; text-indent:-1em;padding-left:1em;overflow-x:hidden;text-overflow:ellipsis;z-index: 14">
         <span style="white-space: nowrap">
           <b-icon :icon="showResources?'chevron-down':'chevron-right'" @click="toogleShowResources()" />
           <a :href="'#' + dn" class="float-right" style="text-indent:0;z-index:2;position:relative">

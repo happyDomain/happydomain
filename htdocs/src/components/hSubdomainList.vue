@@ -34,7 +34,7 @@
 <template>
   <b-row v-if="!isLoading" class="pt-3">
     <b-col :sm="showSubdomainsList?9:null">
-      <b-button v-show="!showSubdomainsList" class="float-right sticky-top" variant="outline-secondary" @click="showSubdomainsList = !showSubdomainsList">
+      <b-button v-show="!showSubdomainsList" class="float-right" variant="outline-secondary" @click="showSubdomainsList = !showSubdomainsList">
         <b-icon icon="list" aria-hidden="true" /><br>
       </b-button>
 
@@ -91,7 +91,7 @@
         </form>
       </b-modal>
     </b-col>
-    <b-col v-show="showSubdomainsList" sm="3" class="sticky-top" style="height: 100vh; overflow-y: auto; z-index: 5">
+    <b-col v-show="showSubdomainsList" sm="3" class="sticky-top" style="margin-top: -10px; padding-top: 10px; height: 100vh; overflow-y: auto; z-index: 5">
       <b-button v-show="showSubdomainsList" class="float-right mb-2" variant="secondary" @click="showSubdomainsList = !showSubdomainsList">
         <b-icon icon="list" aria-hidden="true" /><br>
       </b-button>
