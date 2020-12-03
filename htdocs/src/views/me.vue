@@ -252,6 +252,7 @@ export default {
         .post('/api/users/' + encodeURIComponent(this.loggedUser.id.toString(16)) + '/settings', this.settings)
         .then(
           response => {
+            this.$store.dispatch('user/updateSettings')
             this.settings = response.data
             this.$root.$bvToast.toast(this.$t('settings.success'), {
               title: this.$t('settings.success-change'),

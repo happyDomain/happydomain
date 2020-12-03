@@ -33,7 +33,7 @@
 
 <template>
   <div id="app">
-    <b-navbar :class="loggedUser?'p-0':''" style="position: relative; z-index: 15">
+    <b-navbar :class="user_isLogged?'p-0':''" style="position: relative; z-index: 15">
       <b-container>
         <b-navbar-brand class="navbar-brand" to="/">
           <h-logo height="25" />
@@ -45,14 +45,14 @@
         <b-navbar-toggle target="nav-collapse" />
 
         <b-navbar-nav class="ml-auto">
-          <b-nav-form>
+          <b-nav-form v-if="user_isLogged">
             <h-help />
           </b-nav-form>
 
-          <b-nav-item-dropdown v-if="loggedUser" right>
+          <b-nav-item-dropdown v-if="user_isLogged" right>
             <template slot="button-content">
               <b-button size="sm" variant="dark">
-                <b-icon icon="person" aria-hidden="true" /> {{ loggedUser.email }}
+                <b-icon icon="person" aria-hidden="true" /> {{ user_getSession.email }}
               </b-button>
             </template>
             <b-dropdown-item to="/domains/">
@@ -74,17 +74,17 @@
               {{ $t('menu.logout') }}
             </b-dropdown-item>
           </b-nav-item-dropdown>
-          <b-button v-if="!loggedUser" variant="outline-dark" to="/join">
+          <b-button v-if="!user_isLogged" variant="outline-dark" to="/join">
             <b-icon icon="person-plus-fill" aria-hidden="true" /> {{ $t('menu.signup') }}
           </b-button>
-          <b-button v-if="!loggedUser" variant="primary" class="ml-2" to="/login">
+          <b-button v-if="!user_isLogged" variant="primary" class="ml-2" to="/login">
             <b-icon icon="person-check" aria-hidden="true" /> {{ $t('menu.signin') }}
           </b-button>
         </b-navbar-nav>
       </b-container>
     </b-navbar>
 
-    <router-view :logged-user="loggedUser" style="min-height: 80vh" />
+    <router-view style="min-height: 80vh" />
 
     <b-toaster name="b-toaster-content-right" style="position: fixed; top: 70px; right: 0; z-index: 1042; min-width: 30vw;" />
 
@@ -105,7 +105,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+import { mapGetters } from 'vuex'
 
 export default {
 
@@ -115,35 +115,37 @@ export default {
 
   data: function () {
     return {
-      alreadyShownUpdate: false,
-      loggedUser: undefined
+      alreadyShownUpdate: false
+    }
+  },
+
+  computed: {
+    ...mapGetters('user', ['user_getSession', 'user_getSettings', 'user_isLogged'])
+  },
+
+  watch: {
+    user_getSettings: function (settings) {
+      if (settings && settings.language && this.$i18n.locale !== settings.language) {
+        this.$i18n.locale = settings.language
+      }
     }
   },
 
   created () {
     this.$store.dispatch('sourceSpecs/getAllSourceSpecs')
+    this.$store.dispatch('user/retrieveSession').catch(() => {})
   },
 
   mounted () {
-    if (sessionStorage.loggedUser) {
-      this.loggedUser = JSON.parse(sessionStorage.loggedUser)
-    }
-    this.updateSession()
-    this.$on('login', this.login)
-
     setInterval(function (vm) { vm.checkForUpdate() }, 360000, this)
     setTimeout(function (vm) { vm.checkForUpdate() }, 42000, this)
   },
 
   methods: {
     logout () {
-      axios
-        .post('/api/auth/logout')
+      this.$store.dispatch('user/logout')
         .then(
           (response) => {
-            delete sessionStorage.loggedUser
-            this.loggedUser = null
-            this.updateSession()
             this.$router.push('/')
           },
           (error) => {
@@ -154,34 +156,6 @@ export default {
                 toaster: 'b-toaster-content-right'
               }
             )
-          }
-        )
-    },
-
-    updateSession () {
-      axios.get('/api/auth')
-        .then(
-          (response) => {
-            sessionStorage.loggedUser = JSON.stringify(response.data)
-            this.loggedUser = response.data
-            if (this.loggedUser.settings && this.loggedUser.settings.language && this.$i18n.locale !== this.loggedUser.settings.language) {
-              this.$i18n.locale = this.loggedUser.settings.language
-            }
-          },
-          (error) => {
-            this.loggedUser = null
-            if (sessionStorage.loggedUser) {
-              delete sessionStorage.loggedUser
-              this.$root.$bvToast.toast(
-                this.$t('errors.session.content', { err: error.response.data.errmsg }), {
-                  title: this.$t('errors.session.title'),
-                  autoHideDelay: 5000,
-                  variant: 'danger',
-                  toaster: 'b-toaster-content-right'
-                }
-              )
-              this.$router.replace('/login')
-            }
           }
         )
     },
@@ -199,32 +173,6 @@ export default {
           }
         )
       }
-    },
-
-    login (email, password) {
-      axios
-        .post('/api/auth', {
-          email: email,
-          password: password
-        })
-        .then(
-          (response) => {
-            sessionStorage.loggedUser = JSON.stringify(response.data)
-            this.loggedUser = response.data
-            this.$router.push('/')
-          },
-          (error) => {
-            delete sessionStorage.loggedUser
-            this.loggedUser = null
-            this.$bvToast.toast(
-              error.response.data.errmsg, {
-                title: this.$t('errors.login'),
-                autoHideDelay: 5000,
-                toaster: 'b-toaster-content-right'
-              }
-            )
-          }
-        )
     }
   }
 }

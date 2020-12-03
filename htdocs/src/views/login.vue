@@ -115,7 +115,21 @@ export default {
       this.loginForm.emailState = valid ? 'valid' : 'invalid'
       this.loginForm.passwordState = valid ? 'valid' : 'invalid'
       if (valid) {
-        this.$parent.$emit('login', this.loginForm.email, this.loginForm.password)
+        this.$store.dispatch('user/login', this.loginForm)
+          .then(
+            (response) => {
+              this.$router.push('/')
+            },
+            (error) => {
+              this.$bvToast.toast(
+                error.response.data.errmsg, {
+                  title: this.$t('errors.login'),
+                  autoHideDelay: 5000,
+                  toaster: 'b-toaster-content-right'
+                }
+              )
+            }
+          )
       }
     }
   }

@@ -36,23 +36,20 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import Home from '@/views/home'
 import Loading from '@/views/loading'
 
 export default {
-  props: {
-    // eslint-disable-next-line
-    loggedUser: {}
-  },
-
   computed: {
     homeComponent () {
-      return this.loggedUser ? Home : Loading
-    }
+      return this.user_isLogged ? Home : Loading
+    },
+    ...mapGetters('user', ['user_isLogged'])
   },
 
   watch: {
-    loggedUser (user) {
+    user_isLogged () {
       this.redirectGuests()
     }
   },
@@ -65,7 +62,7 @@ export default {
     redirectGuests () {
       // Check if the user is logged
       // If the user is logged, it already displays domain's lists
-      if (this.loggedUser !== undefined && !this.loggedUser) {
+      if (!this.user_isLogged) {
         if (window.location.href === '/') {
           // Not logged at home-page -> redirect to static commercial presentation
           var preferedLang = navigator.language.split('-')[0] || process.env.VUE_APP_I18N_LOCALE || 'en'

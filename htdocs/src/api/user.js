@@ -29,24 +29,18 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-import Vue from 'vue'
-import Vuex from 'vuex'
+import Api from '@/api/api'
 
-import domains from './module/domains'
-import sources from './module/sources'
-import sourceSpecs from './module/sourceSpecs'
-import user from './module/user'
-
-Vue.use(Vuex)
-
-const debug = process.env.NODE_ENV !== 'production'
-
-export default new Vuex.Store({
-  modules: {
-    domains,
-    sources,
-    sourceSpecs,
-    user
+export default {
+  getSession () {
+    return Api().get('/api/auth')
   },
-  strict: debug
-})
+
+  login (email, password) {
+    return Api().post('/api/auth', { email, password })
+  },
+
+  logout () {
+    return Api().post('/api/auth/logout')
+  }
+}
