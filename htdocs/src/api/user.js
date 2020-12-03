@@ -42,5 +42,9 @@ export default {
 
   logout () {
     return Api().post('/api/auth/logout')
+  },
+
+  register ({ email, password }) {
+    return Api().post('/api/users', { email, password })
   }
 }

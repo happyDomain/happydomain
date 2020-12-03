@@ -133,7 +133,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+import UserApi from '@/api/user'
 import PasswordChecks from '@/mixins/passwordChecks'
 
 export default {
@@ -166,11 +166,7 @@ export default {
       this.signupForm.passwordState = valid ? 'valid' : 'invalid'
 
       if (valid) {
-        axios
-          .post('/api/users', {
-            email: this.signupForm.email,
-            password: this.signupForm.password
-          })
+        UserApi.register(this.signupForm)
           .then(
             (response) => {
               this.$root.$bvToast.toast(this.$t('email.instruction.check-inbox'), {
