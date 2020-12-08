@@ -41,21 +41,27 @@
       :edit="edit"
       :index="index"
       :services="services"
+      :show-description="shouldShowDescription(index)"
       :specs="specs"
       :type="specs.type"
       :value="val[specs.id]"
+      @focus="focusChanged(index)"
       @input="val[specs.id] = $event;$emit('input', val)"
     />
   </div>
 </template>
 
 <script>
+import FieldsDescription from '@/mixins/fieldsDescription'
+
 export default {
   name: 'HFields',
 
   components: {
     hResourceValue: () => import('@/components/hResourceValue')
   },
+
+  mixins: [FieldsDescription],
 
   props: {
     edit: {

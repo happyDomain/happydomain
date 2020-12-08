@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <h-custom-form v-if="val" :form="form" :value="val.Source" @input="val.Source = $event; $emit('input', val)">
+  <h-custom-form v-if="val" :form="form" :value="val.Source" @focus="$emit('focus', $event)" @input="val.Source = $event; $emit('input', val)">
     <h-resource-value-simple-input
       v-if="state === 0"
       id="src-name"
@@ -43,6 +43,7 @@
       :placeholder="sourceName + ' account 1'"
       required
       :value="val._comment"
+      @focus="$emit('focus', $event)"
       @input="val._comment = $event;$emit('input', val)"
     />
   </h-custom-form>

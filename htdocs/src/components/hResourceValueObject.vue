@@ -52,8 +52,10 @@
           :edit-toolbar="editToolbar"
           :index="index"
           :services="services"
+          :show-description="shouldShowDescription(index)"
           :specs="spec"
           :type="spec.type"
+          @focus="focusChanged(index)"
           @save-service="$emit('save-service', function () { serviceEdit=false; if ($event) { $event() } })"
         />
         <b-button v-else :disable="value['']" @click="createObject(spec)">
@@ -88,9 +90,11 @@
         :edit="editChildren"
         :index="index"
         :services="services"
+        :show-description="shouldShowDescription(index)"
         :specs="spec"
         :type="spec.type"
         :value="val[spec.id]"
+        @focus="focusChanged(index)"
         @input="val[spec.id] = $event;$emit('input', val)"
         @save-service="$emit('save-service', $event)"
       />
@@ -99,6 +103,7 @@
 </template>
 
 <script>
+import FieldsDescription from '@/mixins/fieldsDescription'
 import ServiceSpecsApi from '@/services/ServiceSpecsApi'
 import Vue from 'vue'
 
@@ -108,6 +113,8 @@ export default {
   components: {
     hResourceValue: () => import('@/components/hResourceValue')
   },
+
+  mixins: [FieldsDescription],
 
   props: {
     edit: {

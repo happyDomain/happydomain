@@ -40,8 +40,10 @@
     :edit-toolbar="editToolbar"
     :index="index"
     :services="services"
+    :show-description="showDescription"
     :specs="specs"
     :type="type"
+    @focus="$emit('focus', $event)"
     @input="$emit('input', $event)"
     @delete-service="$emit('delete-service', $event)"
     @save-service="$emit('save-service', $event)"
@@ -78,6 +80,10 @@ export default {
     services: {
       type: Object,
       default: null
+    },
+    showDescription: {
+      type: Boolean,
+      default: true
     },
     specs: {
       type: Object,

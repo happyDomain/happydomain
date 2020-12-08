@@ -50,6 +50,7 @@
       :specs="{}"
       :type="type"
       :value="val"
+      @focus="$emit('focus', $event)"
       @input="val = $event;$emit('input', val)"
     />
 
@@ -60,6 +61,7 @@
       :fields="form.fields"
       :services="services"
       :value="val"
+      @focus="$emit('focus', $event)"
       @input="val = $event;$emit('input', val)"
     />
 

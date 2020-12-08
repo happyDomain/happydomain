@@ -38,8 +38,8 @@
     <label v-if="specs.label" :for="'spec-' + index + '-' + specs.id" :title="specs.label" class="col-md-4 col-form-label text-truncate text-md-right text-primary">{{ specs.label }}</label>
     <label v-else :for="'spec-' + index + '-' + specs.id" :title="specs.label" class="col-md-4 col-form-label text-truncate text-md-right text-primary">{{ specs.id }}</label>
     <b-col md="8">
-      <h-resource-value-input-raw v-model="val" :edit="edit" :index="index" :specs="specs" @focus="show_description = true" @blur="show_description = false" />
-      <p v-if="specs.description" v-show="user_getSettings.fieldhint > 2 || (user_getSettings.fieldhint > 1 && show_description)" class="text-justify" style="line-height: 1.1">
+      <h-resource-value-input-raw v-model="val" :edit="edit" :index="index" :specs="specs" @focus="$emit('focus')" />
+      <p v-if="specs.description" v-show="showDescription || specs.choices !== undefined" class="text-justify" style="line-height: 1.1">
         <small class="text-muted">{{ specs.description }}</small>
       </p>
     </b-col>
@@ -47,8 +47,6 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-
 export default {
   name: 'HResourceValueInput',
 
@@ -68,6 +66,10 @@ export default {
     index: {
       type: Number,
       required: true
+    },
+    showDescription: {
+      type: Boolean,
+      default: true
     },
     specs: {
       type: Object,
@@ -93,9 +95,7 @@ export default {
       set (val) {
         this.$emit('input', val)
       }
-    },
-
-    ...mapGetters('user', ['user_getSettings'])
+    }
   },
 
   methods: {
