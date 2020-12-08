@@ -56,6 +56,7 @@
           :specs="spec"
           :type="spec.type"
           @focus="focusChanged(index)"
+          @input="val[spec.id] = $event;$emit('input', val)"
           @save-service="$emit('save-service', function () { serviceEdit=false; if ($event) { $event() } })"
         />
         <b-button v-else :disable="value['']" @click="createObject(spec)">
@@ -64,8 +65,8 @@
       </b-tab>
     </b-tabs>
     <div v-else-if="!value">
-      <b-button @click="createObject(spec)">
-        {{ $t('common.create-thing', { thing: spec.id }) }}
+      <b-button @click="createObject(service_specs)">
+        {{ $t('common.create-thing', { thing: service_specs.id }) }}
       </b-button>
     </div>
     <div v-else>
