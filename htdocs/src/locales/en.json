@@ -154,7 +154,7 @@
     "password": "Password is required",
     "password-change": "Unable to change your password account",
     "password-match": "Password and its confirmation doesn't match.",
-    "password-weak": "Password needs to be stronger: at least 8 digits with numbers, low case and high case characters.",
+    "password-weak": "Password needs to be stronger: at least 8 characters with numbers, low case and high case characters.",
     "recovery": "Password recovery problem",
     "resolve": "An error occurs when trying to resolve the domain.",
     "registration": "Registration problem",
