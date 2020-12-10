@@ -316,13 +316,26 @@ func changePassword(opts *config.Options, req *RequestResources, body io.Reader)
 		}
 	}
 
-	if err := storage.MainStore.UpdateUser(req.User); err != nil {
+	var sessions []*happydns.Session
+	var err error
+	if sessions, err = storage.MainStore.GetUserSessions(req.User); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	if err = storage.MainStore.UpdateUser(req.User); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
 	}
 
 	log.Printf("Change password for user %s", req.User.Email)
+
+	for _, session := range sessions {
+		storage.MainStore.DeleteSession(session)
+	}
+
 	return logout(opts, req.Ps, body)
 }
 
@@ -341,13 +354,26 @@ func deleteUser(opts *config.Options, req *RequestResources, body io.Reader) Res
 		}
 	}
 
-	if err := storage.MainStore.DeleteUser(req.User); err != nil {
+	var sessions []*happydns.Session
+	var err error
+	if sessions, err = storage.MainStore.GetUserSessions(req.User); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	if err = storage.MainStore.DeleteUser(req.User); err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
 	}
 
 	log.Printf("User deleted: %s", req.User.Email)
+
+	for _, session := range sessions {
+		storage.MainStore.DeleteSession(session)
+	}
+
 	return logout(opts, req.Ps, body)
 }
 

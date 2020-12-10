@@ -79,6 +79,9 @@ type Storage interface {
 	// GetSession retrieves the Session with the given identifier.
 	GetSession(id []byte) (*happydns.Session, error)
 
+	// GetUserSessions retrieves all Session for the given User.
+	GetUserSessions(user *happydns.User) ([]*happydns.Session, error)
+
 	// CreateSession creates a record in the database for the given Session.
 	CreateSession(session *happydns.Session) error
 
