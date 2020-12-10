@@ -42,7 +42,7 @@ export default {
 
   methods: {
     openHelp () {
-      window.open('https://help.happydns.org/' + encodeURIComponent(this.$i18n.locale) + '/' + this.$router.history.current.name)
+      window.open('https://help.happydns.org/' + encodeURIComponent(this.$i18n.locale) + '/pages/' + this.$router.history.current.name)
     }
   }
 }
