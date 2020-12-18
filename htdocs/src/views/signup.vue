@@ -166,6 +166,7 @@ export default {
       this.signupForm.passwordState = valid ? 'valid' : 'invalid'
 
       if (valid) {
+        this.signupForm.lang = this.$i18n.locale
         UserApi.register(this.signupForm)
           .then(
             (response) => {
