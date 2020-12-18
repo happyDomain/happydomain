@@ -67,9 +67,11 @@ func init() {
 }
 
 type UploadedUser struct {
-	Kind     string
-	Email    string
-	Password string
+	Kind       string
+	Email      string
+	Password   string
+	Language   string `json:"lang,omitempty"`
+	Newsletter bool   `json:"wantReceiveUpdate,omitempty"`
 }
 
 func genUsername(user *happydns.User) (toName string) {
@@ -163,18 +165,24 @@ func registerUser(opts *config.Options, p httprouter.Params, body io.Reader) Res
 		return APIErrorResponse{
 			err: err,
 		}
-	} else if err := storage.MainStore.CreateUser(user); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	} else if SendValidationLink(opts, user); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
 	} else {
-		log.Printf("New user registerd: %s", user.Email)
-		return APIResponse{
-			response: user,
+		user.Settings = *happydns.DefaultUserSettings()
+		user.Settings.Language = uu.Language
+		user.Settings.Newsletter = uu.Newsletter
+
+		if err := storage.MainStore.CreateUser(user); err != nil {
+			return APIErrorResponse{
+				err: err,
+			}
+		} else if SendValidationLink(opts, user); err != nil {
+			return APIErrorResponse{
+				err: err,
+			}
+		} else {
+			log.Printf("New user registerd: %s", user.Email)
+			return APIResponse{
+				response: user,
+			}
 		}
 	}
 }

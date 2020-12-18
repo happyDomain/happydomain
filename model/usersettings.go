@@ -35,6 +35,20 @@ import ()
 
 // UserSettings represents the settings for an account.
 type UserSettings struct {
-	Language  string `json:"language,omitempty"`
-	FieldHint int    `json:"fieldhint"`
+	// Language saves the locale defined by the user.
+	Language string `json:"language,omitempty"`
+
+	// Newsletter indicates wether the user wants to receive the newsletter or not.
+	Newsletter bool `json:"newsletter,omitempty"`
+
+	// FieldHint stores the way form hints are displayed.
+	FieldHint int `json:"fieldhint"`
+}
+
+func DefaultUserSettings() *UserSettings {
+	return &UserSettings{
+		Language:   "en",
+		Newsletter: false,
+		FieldHint:  2,
+	}
 }
