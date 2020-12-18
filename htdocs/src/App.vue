@@ -44,8 +44,8 @@
 
         <b-navbar-toggle target="nav-collapse" />
 
-        <b-navbar-nav class="ml-auto">
-          <b-nav-form v-if="user_isLogged">
+        <b-navbar-nav v-if="user_isLogged" class="ml-auto">
+          <b-nav-form>
             <h-help />
           </b-nav-form>
 
@@ -74,12 +74,20 @@
               {{ $t('menu.logout') }}
             </b-dropdown-item>
           </b-nav-item-dropdown>
-          <b-button v-if="!user_isLogged" variant="outline-dark" to="/join">
+        </b-navbar-nav>
+        <b-navbar-nav v-else class="ml-auto">
+          <b-button variant="outline-dark" to="/join">
             <b-icon icon="person-plus-fill" aria-hidden="true" /> {{ $t('menu.signup') }}
           </b-button>
-          <b-button v-if="!user_isLogged" variant="primary" class="ml-2" to="/login">
+          <b-button variant="primary" class="ml-2" to="/login">
             <b-icon icon="person-check" aria-hidden="true" /> {{ $t('menu.signin') }}
           </b-button>
+
+          <b-nav-item-dropdown :text="$i18n.locale" right>
+            <b-dropdown-item v-for="(lid, lang) in languages" :key="lid" @click="chLanguage(lang)">
+              {{ languages[lang] }}
+            </b-dropdown-item>
+          </b-nav-item-dropdown>
         </b-navbar-nav>
       </b-container>
     </b-navbar>
@@ -106,12 +114,14 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import Languages from '@/mixins/languages'
 
 export default {
-
   components: {
     hHelp: () => import('@/components/hHelp')
   },
+
+  mixins: [Languages],
 
   data: function () {
     return {
@@ -158,6 +168,10 @@ export default {
             )
           }
         )
+    },
+
+    chLanguage (lang) {
+      this.$i18n.locale = lang
     },
 
     checkForUpdate (timeout) {

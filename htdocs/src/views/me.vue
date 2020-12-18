@@ -173,9 +173,10 @@
 <script>
 import axios from 'axios'
 import PasswordChecks from '@/mixins/passwordChecks'
+import Languages from '@/mixins/languages'
 
 export default {
-  mixins: [PasswordChecks],
+  mixins: [PasswordChecks, Languages],
 
   data () {
     return {
@@ -193,12 +194,6 @@ export default {
   computed: {
     isLoading () {
       return this.loggedUser != null || this.settings != null
-    },
-    languages () {
-      return {
-        en: 'English',
-        fr: 'Français'
-      }
     }
   },
 
