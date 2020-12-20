@@ -191,13 +191,23 @@ func importZone(opts *config.Options, req *RequestResources, body io.Reader) Res
 		Services: services,
 	}
 
+	// Create history zone
 	err = storage.MainStore.CreateZone(myZone)
 	if err != nil {
 		return APIErrorResponse{
 			err: err,
 		}
 	}
+	req.Domain.ZoneHistory = append(
+		[]int64{myZone.Id}, req.Domain.ZoneHistory...)
 
+	// Create wip zone
+	err = storage.MainStore.CreateZone(myZone)
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
 	req.Domain.ZoneHistory = append(
 		[]int64{myZone.Id}, req.Domain.ZoneHistory...)
 
