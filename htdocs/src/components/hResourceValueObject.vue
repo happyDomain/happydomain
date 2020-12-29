@@ -76,7 +76,7 @@
           <b-icon icon="check" />
           {{ $t('domains.save-modifications') }}
         </b-button>
-        <b-button v-if="type !== 'svcs.Origin'" type="button" size="sm" variant="outline-danger" class="mx-1" @click="deleteObject()">
+        <b-button v-if="type !== 'abstract.Origin'" type="button" size="sm" variant="outline-danger" class="mx-1" @click="deleteObject()">
           <b-icon icon="trash" />
           {{ $t('common.delete') }}
         </b-button>

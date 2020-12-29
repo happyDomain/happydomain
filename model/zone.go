@@ -115,7 +115,7 @@ func (z *Zone) EraseService(subdomain string, origin string, id []byte, s *Servi
 			if bytes.Equal(svc.Id, id) {
 				if s == nil {
 					// Disallow removing SOA
-					if subdomain == "" && svc.Type == "svcs.Origin" {
+					if subdomain == "" && svc.Type == "abstract.Origin" {
 						return errors.New("You cannot delete this service. It is mandatory.")
 					}
 					if len(z.Services[subdomain]) <= 1 {

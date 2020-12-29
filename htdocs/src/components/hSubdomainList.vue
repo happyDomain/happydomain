@@ -98,7 +98,7 @@
         Update <span v-if="modal.svcData && modal.svcData._svctype" :title="services[modal.svcData._svctype].description">{{ services[modal.svcData._svctype].name }} </span>on <span class="text-monospace">{{ modal.dn | fqdn(domain.domain) }}</span>
       </template>
       <template v-slot:modal-footer="{ ok, cancel }">
-        <b-button :disabled="deleteServiceInProgress || !modal.svcData || modal.svcData._svctype === 'svcs.Origin'" variant="danger" @click="deleteService(modal.svcData)">
+        <b-button :disabled="deleteServiceInProgress || !modal.svcData || modal.svcData._svctype === 'abstract.Origin'" variant="danger" @click="deleteService(modal.svcData)">
           <b-spinner v-if="deleteServiceInProgress" label="Spinning" small />
           {{ $t('service.delete') }}
         </b-button>

@@ -145,7 +145,7 @@ func init() {
 			Restrictions: svcs.ServiceRestrictions{
 				Alone:       true,
 				Leaf:        true,
-				ExclusiveRR: []string{"svcs.Origin"},
+				ExclusiveRR: []string{"abstract.Origin"},
 				Single:      true,
 				NeedTypes: []uint16{
 					dns.TypeNS,
