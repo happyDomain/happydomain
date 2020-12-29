@@ -15,13 +15,13 @@
         "ready-login": "Prêt à entrer !",
         "signup": {
             "already": "Déjà inscrit ?",
-            "join-call": "Rejoignez notre joli service en moins de deux minutes !",
-            "address-why": "Vous utiliserez votre adresse pour vous {identify} et nous pouvons vous contacter en cas d'{security-operations}.",
+            "join-call": "Rejoignez notre sympathique service en moins de deux minutes !",
+            "address-why": "Nous utiliserons votre adresse pour vous {identify} et pour vous contacter en cas d'{security-operations}.",
             "identify": "identifier",
-            "security-operations": "actions liées à la sécurité",
+            "security-operations": "événements liés à la sécurité",
             "receive-update": "Tenez-moi informé des futures améliorations",
-            "signup": "Inscription !",
-            "success": "Enregistrement effectué !"
+            "signup": "Je m'inscris !",
+            "success": "Votre compte a été créé avec succès !"
         },
         "see-again": "Ravi de vous revoir !"
     },
@@ -33,30 +33,29 @@
         "continue": "Continuer",
         "create-thing": "Créer {thing}",
         "delete": "Supprimer",
-        "description": "",
         "domain": "Domaine ou sous-domaine",
         "edit": "Modifier",
         "field": "Champ",
-        "go": "Lancer !",
+        "go": "C'est parti !",
         "name": "Nom",
         "password": "Mot de passe",
         "rename": "Renommer",
         "resolver": "Résolveur",
         "run": "Lancer l'opération !",
-        "spinning": "",
-        "type": "",
-        "welcome": "Bienvenue à  {0} !"
+        "spinning": "Chargement",
+        "welcome": "Bienvenue à  {0} !",
+        "help": "Besoin d'aide ?"
     },
     "domains": {
         "kind": "domaine",
         "actions": {
             "reimport": "Importer à nouveau",
-            "view": "Vue",
+            "view": "Voir la zone",
             "propagate": "Diffuser",
-            "rollback": "Annulation"
+            "rollback": "Revenir à cette version"
         },
         "alert": {
-            "remove": "Cette action enlèvera définitivement le domaine {domain} de votre liste. L'historique et les zones abstraites seront supprimés. Cela ne supprimera ni n'affectera votre domaine auprès de votre fournisseur, ni ne modifiera ce qui est actuellement diffusé. Cela concerne seulement que ce que vous voyez dans happyDNS. Etes-vous certain de continuer ?",
+            "remove": "Cette action retirera définitivement le domaine {domain} de votre liste. L'historique et les zones abstraites seront supprimés. Cela ne supprimera ni n'affectera votre domaine auprès de votre fournisseur, ni ne modifiera ce qui est actuellement diffusé. Cela concerne seulement que ce que vous voyez dans happyDNS. Êtes-vous certain de vouloir continuer ?",
             "unable-retrieve": {
                 "description": "Malheureusement, nous ne parvenons pas à obtenir les informations du domaine {domain} :",
                 "title": "Impossible de récupérer les informations du domaine"
@@ -70,10 +69,10 @@
         "added-success": "Bravo ! {domain} a été ajouté. Vous pouvez désormais le gérer.",
         "apply": {
             "additions": "pas d'ajout | {count} ajout | {count} ajouts",
-            "button": "Faire les modifications",
+            "button": "Appliquer les modifications",
             "deletions": "pas de suppression | {count} suppression | {count} suppressions",
             "done": {
-                "title": "Zone modifiée !",
+                "title": "Zone propagée avec succès !",
                 "description": "!"
             },
             "nochange": "Il n'y a pas de changement à faire ! Cette zone est synchronisée avec le serveur."
@@ -81,38 +80,44 @@
         "attached-new": "Nouveau domaine lié à happyDNS!\n",
         "create-new-key": "Créer une nouvelle clé {id}.",
         "discard": "Abandon",
-        "drop-alias": "Abandon de l'alias",
-        "edit-target": "@:common.edit cible",
+        "drop-alias": "Supprimer l'alias",
+        "edit-target": "@:common.edit destination",
         "give-explicit-name": "Donnez un nom explicite afin de trouver facilement ce service.",
         "history": "Historique",
         "list": "Liste des domaines importables",
-        "n-aliases": "",
+        "n-aliases": "{n} alias | {n} alias",
         "please-fill-fields": "Veuilez remplir les champs suivants:",
         "removal": "Confirmer la suppression du domaine",
         "save-modifications": "Enregistrer ces modifications",
         "stop": "Arrêter de gérer ce domaine",
         "view": {
-            "abstract": "Zone d'abstraction",
+            "abstract": "Zone abstraite",
             "cancel-title": "Conserver mon domaine dans happyDNS",
-            "description": "Revoir les modifications qui seront appliquées à {0}",
+            "description": "Valider les modifications qui seront appliquées à {0}",
             "live": "Enregistrements actifs",
             "monitoring": "Suivi",
-            "summary": "Sommaire",
-            "source": "Hôte de domaine",
-            "title": "Vue de la zone"
+            "summary": "Résumé",
+            "source": "Hébergeur du domaine",
+            "title": "Voir la zone"
         },
         "views": {
             "grid": {
-                "title": "Vue quadrillée (la plus lisible)"
+                "title": "Vue en grille (la plus lisible)",
+                "label": "Grille"
             },
             "list": {
-                "title": "Vue en liste (la plus rapide)"
+                "title": "Vue en liste (la plus rapide)",
+                "label": "Liste"
             },
             "source-parameters": "Paramètres d'hébergement",
             "records": {
-                "title": "Liste des enregistrements (avancés)"
-            }
-        }
+                "title": "Liste des enregistrements (avancés)",
+                "label": "Enregistrements"
+            },
+            "as": "Voir comme :"
+        },
+        "alias-creation": "Ajouter un alias pointant sur {0} :",
+        "alias-creation-sample": "Cela va créer cet alias :"
     },
     "email": {
         "address": "Adresse électronique",
@@ -130,48 +135,49 @@
     },
     "errors": {
         "404": {
-            "title": "Page non trouvée",
+            "title": "Page introuvable",
             "content": "La page que vous recherchez n'a pas été trouvée."
         },
-        "account-delete": "Une erreur s'est produite lorsque vous essayez de supprimer votre compte",
-        "address": "L'adresse électronique est obligatoire\n",
-        "address-valid": "Une adresse électronique valide est demandée",
-        "domain-access": "Une erreur s'est produite en essayant d'accéder à la liste des domaines.\n",
-        "domain-attach": "Une erreur s'est produite lors de l'attachement du domaine à happyDNS\n",
+        "account-delete": "Une erreur s'est produite lors de la suppression de votre compte",
+        "address": "L'adresse électronique est obligatoire",
+        "address-valid": "Une adresse électronique valide est obligatoire",
+        "domain-access": "Une erreur s'est produite en essayant d'accéder à la liste des domaines.",
+        "domain-attach": "Une erreur s'est produite lors de l'attachement du domaine à happyDNS",
         "domain-have": "Il semble que vous n'ayez pas de nom de domaine enregistré chez ce fournisseur.",
         "domain-list": "Ce fournisseur ne permet pas de répertorier les domaines existants. Utilisez le formulaire ci-dessous pour en ajouter un.",
         "error": "Erreur",
-        "login": "Erreur de login",
+        "login": "Erreur de connexion",
         "logout": "Erreur de déconnexion",
         "occurs": "Une erreur se produit lorsque {when} !",
         "password": "Le mot de passe est obligatoire",
         "password-change": "Impossible de modifier votre mot de passe",
-        "password-match": "Le mot de passe et sa confirmation ne correspondent pas.\n",
-        "password-weak": "Le mot de passe doit être plus robuste : au moins 8 chiffres incluant des chiffres, des caractères minuscules et majuscules.\n",
-        "recovery": "Problème de récupération du mot de passe\n",
-        "resolve": "Une erreur s'est produite en essayant de résoudre le domaine.\n",
-        "registration": "Problème d'enregistrement\n",
+        "password-match": "Le mot de passe et sa confirmation ne correspondent pas.",
+        "password-weak": "Le mot de passe doit être plus robuste : au moins 8 caractères incluant des chiffres, des minuscules et majuscules.",
+        "recovery": "Problème de récupération du mot de passe",
+        "resolve": "Une erreur s'est produite en essayant de résoudre le domaine.",
+        "registration": "Problème d'inscription",
         "rr-add": "Une erreur se produit en ajoutant RR à la zone :",
         "rr-delete": "Une erreur se produit en supprimant RR dans la zone :",
         "source-delete": "Une erreur s'est produite lors de la suppression de la source",
         "session": {
             "title": "Délai d'authentification",
-            "content": "Session non valide, vous avez été déconnecté : {err}. Veuillez vous reconnecter.\n"
-        }
+            "content": "Session invalide, vous avez été déconnecté : {err}. Veuillez vous connecter à nouveau."
+        },
+        "settings-change": "Impossible de changer vos paramètres"
     },
     "menu": {
         "my-domains": "Mes domaines",
-        "my-sources": "Les hôtes de mes domaines",
+        "my-sources": "Les hébergeurs de mes domaines",
         "dns-client": "Client DNS",
         "dns-resolver": "Résolveur DNS",
         "my-account": "Mon compte",
-        "logout": "Déconnexion",
+        "logout": "Se déconnecter",
         "signup": "S'inscrire",
         "signin": "S'identifier"
     },
     "onboarding": {
         "add-one": "ajouter un domaine",
-        "choose-configured": "choisir entre les fournisseurs déjà configurés ou {0} :\n",
+        "choose-configured": "choisir entre les fournisseurs déjà configurés ou {0} :",
         "suggest-source": "choisir votre fournisseur",
         "use": "Utilisez {happyDNS} comme interface de remplacement de votre fournisseur de noms de domaine habituel. Il continuera à s'appuyer sur l'infrastructure de votre fournisseur, vous n'aurez qu'à profiter de notre interface simple. Dans un premier temps, {first-step}",
         "no-sale": {
@@ -179,15 +185,15 @@
             "description": "{0} ne fournit pas encore de domaine. Pour commencer à utiliser notre interface, vous devez vous procurer un domaine auprès de l'un des fournisseurs répertoriés",
             "buy-advice": "Nous vous donnerons prochainement des conseils sur la manière de se procurer facilement un nom de domaine. Restez donc à l'écoute et contactez-nous si vous souhaitez nous aider à élaborer un guide complet."
         },
-        "own": "Je dispose déjà d'un domaine\n",
+        "own": "Je dispose déjà d'un domaine",
         "questions": {
             "hosting": {
-                "q": "Je ne veux plus dépendre de mon fournisseur d'hébergement de nom de domaine. Puis-je héberger mon nom de domaine sur votre infrastructure\n",
-                "a": "Nous fournirons cette information dans un avenir proche, car elle figure sur notre manifeste. Nous avons choisi de faire passer le message que les noms de domaine sont accessibles à tous grâce à cette interface conviviale, avant de nous attaquer à la protection de la vie privée, à la censure, ...\n"
+                "q": "Je ne veux plus dépendre de mon fournisseur d'hébergement de nom de domaine. Puis-je héberger mon nom de domaine sur votre infrastructure",
+                "a": "Nous fournirons cette information dans un avenir proche, car elle figure sur notre manifeste. Nous avons choisi de faire passer le message que les noms de domaine sont accessibles à tous grâce à cette interface conviviale, avant de nous attaquer à la protection de la vie privée, à la censure, ..."
             },
             "secondary": {
-                "q": "J'ai ma propre infrastructure, puis-je utiliser {0} comme serveur secondaire faisant autorité ?\n",
-                "a": "Nous proposerons cette fonctionnalité dans un proche avenir, dès que notre infrastructure de serveurs de noms sera en service.\n"
+                "q": "J'ai ma propre infrastructure, puis-je utiliser {0} comme serveur secondaire faisant autorité ?",
+                "a": "Nous proposerons cette fonctionnalité dans un proche avenir, dès que notre infrastructure de serveurs de noms sera en service."
             }
         }
     },
@@ -197,20 +203,20 @@
         "confirm-new": "Confirmez votre nouveau mot de passe",
         "confirmation": "Confirmation du mot de passe",
         "enter": "Entrez votre mot de passe actuel",
-        "enter-new": "Entrez votre nouveau mot de passe\n",
-        "fill": "Afin de récupérer votre compte, veuillez remplir le formulaire suivant, avec un nouveau mot de passe.\n",
-        "forgotten": "Mot de passe oublié ?\n",
+        "enter-new": "Entrez votre nouveau mot de passe",
+        "fill": "Afin de récupérer votre compte, veuillez remplir le formulaire suivant, avec un nouveau mot de passe.",
+        "forgotten": "Mot de passe oublié ?",
         "new": "Nouveau mot de passe",
         "redefine": "Redéfinir mon mot de passe",
         "redefined": "Mot de passe redéfini avec succès !",
         "success": "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.",
-        "success-change": "Le mot de passe de votre compte a été modifié avec succès.\n"
+        "success-change": "Le mot de passe de votre compte a été modifié avec succès."
     },
     "service": {
-        "add": "Ajout d'un service\n",
+        "add": "Ajout d'un service",
         "already": "Déjà géré",
-        "delete": "@:common.delete service\n",
-        "update": "Service de mise à jour"
+        "delete": "@:common.delete ce service",
+        "update": "Mettre à jour le service"
     },
     "source": {
         "delete": "@:common.delete ce @:source.kind",
@@ -218,16 +224,16 @@
         "name-your": "Indiquez votre @:source.kind",
         "source": "Domaines résidant sur {0}",
         "kind": "L'hébergeur du domaine",
-        "select-provider": "Sélectionnez d'abord l'hébergeur de votre domaine:",
+        "select-provider": "Sélectionnez d'abord l'hébergeur de votre domaine :",
         "select-source": "Sélectionnez l'endroit où votre domaine {0} est hébergé",
         "source-name": "Nom de l'hébergeur",
         "source-type": "Type d'hébergement",
-        "title": "Les hôtes de vos domaines",
+        "title": "Les hébergeurs de vos domaines",
         "available-types": "Types de ressources disponibles"
     },
     "upgrade": {
         "title": "Une mise à jour est disponible !",
-        "content": "Une nouvelle version de happyDNS est déjà disponible. Pour l'activer, veuillez cliquer ici pour rafraîchir la page."
+        "content": "Une nouvelle version d'happyDNS est disponible. Pour l'activer, vous pouvez cliquer ici pour rafraîchir la page."
     },
     "wait": {
         "asking-domains": "Demande en cours chez l'hébergeur des domaines existants ...",
@@ -241,8 +247,21 @@
         "updating": "Mise à jour de l'hôte de votre domaine",
         "validating": "Validation du domaine ...",
         "wait": "Attendez",
-        "retrieving-domains": "",
-        "retrieving-source": ""
+        "retrieving-domains": "Récupération de vos domaines...",
+        "retrieving-source": "Récupération des informations sur l'hébergement..."
     },
-    "testpoe": "test de POE"
+    "settings": {
+        "fieldhint": {
+            "title": "Affichage des descriptions des champs",
+            "hide": "Cacher",
+            "tooltip": "Infobulle près du champ",
+            "focused": "Sous le champ, lorsqu'il a la main",
+            "always": "Sous le champ, tout le temps"
+        },
+        "language": "Langue",
+        "save": "Enregistrer les paramètres",
+        "title": "Paramètres",
+        "success": "",
+        "success-change": "Vos paramètres ont été sauvegardés."
+    }
 }

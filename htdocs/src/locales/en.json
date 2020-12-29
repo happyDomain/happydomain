@@ -33,7 +33,6 @@
     "continue": "Continue",
     "create-thing": "Create {thing}",
     "delete": "Delete",
-    "description": "spec.description",
     "domain": "Domain or subdomain",
     "edit": "Edit",
     "field": "Field",
@@ -45,7 +44,6 @@
     "resolver": "Resolver",
     "run": "Run the request!",
     "spinning": "Spinning",
-    "type": "spec.type",
     "welcome": "Welcome to {0}!"
   },
   "domains": {
@@ -217,8 +215,8 @@
   "service": {
     "add": "Add service",
     "already": "Already managed",
-    "delete": "@:common.delete service",
-    "update": "Update service"
+    "delete": "@:common.delete the service",
+    "update": "Update the service"
   },
   "settings": {
     "fieldhint": {
