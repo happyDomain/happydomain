@@ -37,6 +37,11 @@
       Add a new service to <span class="text-monospace">{{ dn | fqdn(domain.domain) }}</span>
     </template>
     <template #modal-footer="{ cancel }">
+      <h-help
+        v-if="step === 2"
+        :href="helpHref"
+        variant="info"
+      />
       <b-button
         v-if="update"
         :disabled="deleteServiceInProgress || !svcData || svcData._svctype === 'abstract.Origin'"
@@ -126,7 +131,8 @@ export default {
 
   components: {
     hCustomForm: () => import('@/components/hCustomForm'),
-    hFamilyTabs: () => import('@/components/hFamilyTabs')
+    hFamilyTabs: () => import('@/components/hFamilyTabs'),
+    hHelp: () => import('@/components/hHelp')
   },
 
   mixins: [CustomForm, ValidateDomain],
@@ -147,6 +153,22 @@ export default {
     zoneId: {
       type: Number,
       required: true
+    }
+  },
+
+  computed: {
+    helpHref () {
+      const svcPart = this.svcData._svctype.toLowerCase().split('.')
+      if (svcPart.length === 2) {
+        if (svcPart[0] === 'svcs') {
+          return 'records/' + svcPart[1].toUpperCase()
+        } else if (svcPart[0] === 'abstract') {
+          return 'services/' + svcPart[1]
+        } else if (svcPart[0] === 'provider') {
+          return 'services/providers/' + svcPart[1]
+        }
+      }
+      return svcPart[svcPart.length - 1]
     }
   },
 
