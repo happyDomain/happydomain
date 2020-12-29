@@ -46,7 +46,7 @@
 
         <b-navbar-nav v-if="user_isLogged" class="ml-auto">
           <b-nav-form>
-            <h-help />
+            <h-help size="sm" />
           </b-nav-form>
 
           <b-nav-item-dropdown v-if="user_isLogged" right>
@@ -76,7 +76,7 @@
           </b-nav-item-dropdown>
         </b-navbar-nav>
         <b-navbar-nav v-else class="ml-auto">
-          <h-help class="mr-2" variant="link" />
+          <h-help class="mr-2" size="sm" variant="link" />
 
           <b-button variant="outline-dark" to="/join">
             <b-icon icon="person-plus-fill" aria-hidden="true" /> {{ $t('menu.signup') }}

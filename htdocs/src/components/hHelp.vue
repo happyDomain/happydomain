@@ -31,8 +31,9 @@
     knowledge of the CeCILL license and that you accept its terms.
   -->
 <template>
-  <b-button size="sm" target="_blank" :variant="variant" @click="openHelp">
+  <b-button :size="size" target="_blank" :variant="variant" @click="openHelp">
     <b-icon icon="question-circle-fill" :title="$t('common.help')" />
+    <slot></slot>
   </b-button>
 </template>
 
@@ -41,6 +42,14 @@ export default {
   name: 'HHelp',
 
   props: {
+    href: {
+      type: String,
+      default: ''
+    },
+    size: {
+      type: String,
+      default: ''
+    },
     variant: {
       type: String,
       default: 'primary'
@@ -49,7 +58,11 @@ export default {
 
   methods: {
     openHelp () {
-      window.open('https://help.happydns.org/' + encodeURIComponent(this.$i18n.locale) + '/pages/' + this.$router.history.current.name)
+      if (!this.href) {
+        window.open('https://help.happydns.org/' + encodeURIComponent(this.$i18n.locale) + '/pages/' + this.$router.history.current.name)
+      } else {
+        window.open('https://help.happydns.org/' + encodeURIComponent(this.$i18n.locale) + '/' + this.href)
+      }
     }
   }
 }
