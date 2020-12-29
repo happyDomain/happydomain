@@ -31,7 +31,7 @@
     knowledge of the CeCILL license and that you accept its terms.
   -->
 <template>
-  <b-button size="sm" target="_blank" variant="primary" @click="openHelp">
+  <b-button size="sm" target="_blank" :variant="variant" @click="openHelp">
     <b-icon icon="question-circle-fill" :title="$t('common.help')" />
   </b-button>
 </template>
@@ -39,6 +39,13 @@
 <script>
 export default {
   name: 'HHelp',
+
+  props: {
+    variant: {
+      type: String,
+      default: 'primary'
+    }
+  },
 
   methods: {
     openHelp () {

@@ -76,6 +76,8 @@
           </b-nav-item-dropdown>
         </b-navbar-nav>
         <b-navbar-nav v-else class="ml-auto">
+          <h-help class="mr-2" variant="link" />
+
           <b-button variant="outline-dark" to="/join">
             <b-icon icon="person-plus-fill" aria-hidden="true" /> {{ $t('menu.signup') }}
           </b-button>
