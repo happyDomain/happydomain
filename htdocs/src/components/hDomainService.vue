@@ -92,7 +92,7 @@ export default {
 
   components: {
     hEditableService: () => import('@/components/hEditableService'),
-    hRecord: () => import('@/components/hRecord')
+    hRecord: () => import('@/components/hLinedRecord')
   },
 
   props: {
