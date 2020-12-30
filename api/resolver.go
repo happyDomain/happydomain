@@ -110,6 +110,6 @@ func runResolver(_ *config.Options, ps httprouter.Params, body io.Reader) Respon
 	}
 
 	return APIResponse{
-		response: r.String(),
+		response: r,
 	}
 }

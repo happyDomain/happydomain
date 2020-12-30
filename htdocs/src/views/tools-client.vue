@@ -32,12 +32,12 @@
   -->
 
 <template>
-  <b-container class="mt-3" :fluid="responses.length?true:false">
+  <b-container class="mt-3" :fluid="responses?true:false">
     <h1 class="text-center mb-3">
       {{ $t('menu.dns-resolver') }}
     </h1>
     <b-row>
-      <b-col :offset-md="responses.length?0:2" :md="responses.length?4:8" :class="responses.length?'bg-light':'' + 'pb-5 pt-4'">
+      <b-col :offset-md="responses?0:2" :md="responses?4:8" :class="responses?'bg-light':'' + 'pb-5 pt-4'">
         <form class="pt-3 pb-5" @submit.stop.prevent="submitRequest">
           <b-form-group
             id="input-domain"
@@ -121,6 +121,15 @@
                 placeholder="127.0.0.1"
               />
             </b-form-group>
+
+            <b-form-checkbox
+              id="showDNSSEC"
+              v-model="showDNSSEC"
+              name="showDNSSEC"
+              class="mb-3"
+            >
+              {{ $t('resolver.showDNSSEC') }}
+            </b-form-checkbox>
           </b-collapse>
 
           <div class="ml-3 mr-3">
@@ -131,10 +140,18 @@
           </div>
         </form>
       </b-col>
-      <b-col v-if="responses.length" md="8">
-        <b-alert v-for="(response,index) in responses" :key="index" v-model="show_responses[index]" variant="primary" dismissible>
-          <pre>{{ response }}</pre>
-        </b-alert>
+      <b-col v-if="responses" md="8">
+        <div v-for="(rrs,type) in responseByType" :key="type">
+          <h3>{{ $tc('common.records', rrs.length, { type: $options.filters.nsrrtype(type) }) }}</h3>
+          <table class="table table-hover table-sm">
+            <thead>
+              <h-record-head :rrtype="type" />
+            </thead>
+            <tbody>
+              <h-record v-for="(rr,index) in rrs" :key="index" :record="rr" />
+            </tbody>
+          </table>
+        </div>
       </b-col>
     </b-row>
   </b-container>
@@ -145,10 +162,51 @@ import axios from 'axios'
 
 export default {
 
+  components: {
+    hRecord: () => import('@/components/hRecord'),
+    hRecordHead: () => import('@/components/hRecordHead')
+  },
+
+  watch: {
+    $route (n) {
+      if (n.params.domain && n.params.domain !== this.form.domain) {
+        this.form.domain = n.params.domain
+        this.submitRequest()
+      }
+    }
+  },
+
+  computed: {
+    responseByType () {
+      const ret = {}
+
+      for (const i in this.filteredResponses) {
+        if (!ret[this.filteredResponses[i].Hdr.Rrtype]) {
+          ret[this.filteredResponses[i].Hdr.Rrtype] = []
+        }
+        ret[this.filteredResponses[i].Hdr.Rrtype].push(this.filteredResponses[i])
+      }
+
+      return ret
+    },
+
+    filteredResponses () {
+      if (!this.responses) {
+        return []
+      }
+
+      if (this.showDNSSEC) {
+        return this.responses
+      } else {
+        return this.responses.filter(rr => (rr.Hdr.Rrtype !== 46 && rr.Hdr.Rrtype !== 47 && rr.Hdr.Rrtype !== 50))
+      }
+    }
+  },
+
   data: function () {
     return {
       request_pending: false,
-      existing_types: ['ANY', 'A', 'AAAA', 'NS', 'SRV', 'MX', 'TXT'],
+      existing_types: ['ANY', 'A', 'AAAA', 'NS', 'SRV', 'MX', 'TXT', 'SOA'],
       existing_resolvers: {
         Unfiltered:
         [
@@ -213,31 +271,13 @@ export default {
         resolver: 'local',
         type: 'ANY'
       },
-      show_responses: [],
-      responses: []
-    }
-  },
-
-  watch: {
-    show_responses: function (responses, oldval) {
-      if (responses.length === 0) {
-        return
-      }
-
-      for (var k in responses) {
-        if (responses[k]) {
-          return
-        }
-      }
-
-      this.show_responses = []
-      this.responses = []
+      responses: null,
+      showDNSSEC: false
     }
   },
 
   mounted () {
     if (this.$route.params.domain) {
-      this.form.type = 'A'
       this.form.domain = this.$route.params.domain
       this.submitRequest()
     }
@@ -250,8 +290,7 @@ export default {
         .post('/api/resolver', this.form)
         .then(
           (response) => {
-            this.show_responses.unshift(true)
-            this.responses.unshift(response.data)
+            this.responses = response.data.Answer
             this.request_pending = false
           },
           (error) => {
@@ -265,6 +304,9 @@ export default {
             )
             this.request_pending = false
           })
+      if (this.$route.params.domain !== this.form.domain) {
+        this.$router.push('/tools/client/' + encodeURIComponent(this.form.domain))
+      }
     }
   }
 }

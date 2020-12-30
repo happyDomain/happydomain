@@ -79,7 +79,7 @@ import axios from 'axios'
 export default {
 
   components: {
-    hRecord: () => import('@/components/hRecord')
+    hRecord: () => import('@/components/hLinedRecord')
   },
 
   data: function () {
