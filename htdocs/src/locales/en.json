@@ -212,6 +212,15 @@
     "success": "You can now login with your new password.",
     "success-change": "Your account's password has been changed with success."
   },
+  "resolver": {
+    "advanced": "With custom settings?",
+    "custom": "Custom resolver",
+    "custom-description": "Enter the addresse (a domain name or an IP) of the resolver you want to use.",
+    "domain-description": "Indicate the domain you search the records. For example, you can try {0}.",
+    "field-description": "What kind of DNS record you want to see. For example: A is for IPv4, AAAA is for IPv6, ... {0}",
+    "field-description-more-info": "More information here",
+    "resolver-description": "This is the server we will ask for the information."
+  },
   "service": {
     "add": "Add service",
     "already": "Already managed",

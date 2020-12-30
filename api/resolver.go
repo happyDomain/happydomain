@@ -51,6 +51,7 @@ func init() {
 
 type resolverRequest struct {
 	Resolver   string `json:"resolver"`
+	Custom     string `json:"custom,omitempty"`
 	DomainName string `json:"domain"`
 	Type       string `json:"type"`
 }
@@ -64,7 +65,11 @@ func runResolver(_ *config.Options, ps httprouter.Params, body io.Reader) Respon
 		}
 	}
 
-	if urr.Resolver == "Local" {
+	urr.DomainName = dns.Fqdn(urr.DomainName)
+
+	if urr.Resolver == "custom" {
+		urr.Resolver = urr.Custom
+	} else if urr.Resolver == "local" {
 		cConf, err := dns.ClientConfigFromFile("/etc/resolv.conf")
 		if err != nil {
 			return APIErrorResponse{

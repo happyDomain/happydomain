@@ -40,25 +40,17 @@
       <b-col :offset-md="responses.length?0:2" :md="responses.length?4:8" :class="responses.length?'bg-light':'' + 'pb-5 pt-4'">
         <form class="pt-3 pb-5" @submit.stop.prevent="submitRequest">
           <b-form-group
-            id="input-resolver"
-            :label="$t('common.resolver')"
-            label-for="resolver"
-            :description="$t('domains.give-explicit-name')"
-          >
-            <b-form-select
-              id="resolver"
-              v-model="form.resolver"
-              required
-              :options="existing_resolvers"
-            />
-          </b-form-group>
-
-          <b-form-group
             id="input-domain"
             :label="$t('common.domain')"
             label-for="domain"
-            :description="$t('common.description')"
           >
+            <template slot="description">
+              <i18n path="resolver.domain-description">
+                <router-link to="/tools/client/wikipedia.org" class="text-monospaced">
+                  wikipedia.org
+                </router-link>
+              </i18n>
+            </template>
             <b-form-input
               id="domain"
               v-model="form.domain"
@@ -67,19 +59,69 @@
             />
           </b-form-group>
 
-          <b-form-group
-            id="input-type"
-            :label="$t('common.field')"
-            label-for="type"
-            :description="$t('common.type')"
-          >
-            <b-form-select
-              id="type"
-              v-model="form.type"
-              required
-              :options="existing_types"
-            />
-          </b-form-group>
+          <div class="text-center mb-3">
+            <b-button v-b-toggle.resolver-advanced-settings variant="secondary">
+              {{ $t('resolver.advanced') }}
+            </b-button>
+          </div>
+
+          <b-collapse id="resolver-advanced-settings">
+            <b-form-group
+              id="input-type"
+              :label="$t('common.field')"
+              label-for="type"
+            >
+              <template slot="description">
+                <i18n path="resolver.field-description">
+                  <a href="//help.happydns.org/tools/resolver" target="_blank">{{ $t('resolver.field-description-more-info') }}</a>
+                </i18n>
+              </template>
+              <b-form-select
+                id="type"
+                v-model="form.type"
+                required
+                :options="existing_types"
+              />
+            </b-form-group>
+
+            <b-form-group
+              id="input-resolver"
+              :label="$t('common.resolver')"
+              label-for="resolver"
+              :description="$t('resolver.resolver-description')"
+            >
+              <b-form-select
+                id="resolver"
+                v-model="form.resolver"
+                required
+              >
+                <b-form-select-option-group
+                  v-for="(group, gname) in existing_resolvers"
+                  :key="gname"
+                  :label="gname"
+                  :options="group"
+                />
+                <b-form-select-option value="custom">
+                  {{ $t('resolver.custom') }}
+                </b-form-select-option>
+              </b-form-select>
+            </b-form-group>
+
+            <b-form-group
+              v-show="form.resolver === 'custom'"
+              id="input-custom-resolver"
+              :label="$t('resolver.custom')"
+              label-for="custom-resolver"
+              :description="$t('resolver.custom-description')"
+            >
+              <b-form-input
+                id="custom-resolver"
+                v-model="form.custom"
+                :required="form.resolver === 'custom'"
+                placeholder="127.0.0.1"
+              />
+            </b-form-group>
+          </b-collapse>
 
           <div class="ml-3 mr-3">
             <b-button class="float-right" type="submit" variant="primary" :disabled="request_pending">
@@ -107,9 +149,68 @@ export default {
     return {
       request_pending: false,
       existing_types: ['ANY', 'A', 'AAAA', 'NS', 'SRV', 'MX', 'TXT'],
-      existing_resolvers: ['Local', '1.1.1.1', '8.8.8.8', '9.9.9.9'],
+      existing_resolvers: {
+        Unfiltered:
+        [
+          { value: 'local', text: 'Local resolver' },
+          { value: '1.1.1.1', text: 'Cloudflare DNS resolver' },
+          { value: '4.2.2.1', text: 'Level3 resolver' },
+          { value: '8.8.8.8', text: 'Google Public DNS resolver' },
+          { value: '9.9.9.10', text: 'Quad9 DNS resolver without security blocklist' },
+          { value: '64.6.64.6', text: 'Verisign DNS resolver' },
+          { value: '74.82.42.42', text: 'Hurricane Electric DNS resolver' },
+          { value: '208.67.222.222', text: 'OpenDNS resolver' },
+          { value: '8.26.56.26', text: 'Comodo Secure DNS resolver' },
+          { value: '199.85.126.10', text: 'Norton ConnectSafe DNS resolver' },
+          { value: '198.54.117.10', text: 'SafeServe DNS resolver' },
+          { value: '84.200.69.80', text: 'DNS.WATCH resolver' },
+          { value: '185.121.177.177', text: 'OpenNIC DNS resolver' },
+          { value: '37.235.1.174', text: 'FreeDNS resolver' },
+          { value: '80.80.80.80', text: 'Freenom World DNS resolver' },
+          { value: '216.131.65.63', text: 'StrongDNS resolver' },
+          { value: '94.140.14.140', text: 'AdGuard non-filtering DNS resolver' },
+          { value: '91.239.100.100', text: 'Uncensored DNS resolver' },
+          { value: '216.146.35.35', text: 'Dyn DNS resolver' },
+          { value: '77.88.8.8', text: 'Yandex.DNS resolver' },
+          { value: '129.250.35.250', text: 'NTT DNS resolver' },
+          { value: '223.5.5.5', text: 'AliDNS resolver' },
+          { value: '1.2.4.8', text: 'CNNIC SDNS resolver' },
+          { value: '119.29.29.29', text: 'DNSPod resolver' },
+          { value: '114.215.126.16', text: 'oneDNS resolver' },
+          { value: '124.251.124.251', text: 'cloudxns resolver' },
+          { value: '114.114.114.114', text: 'Baidu DNS resolver' },
+          { value: '156.154.70.1', text: 'DNS Advantage resolver' },
+          { value: '87.118.111.215', text: 'FoolDNS resolver' },
+          { value: '101.101.101.101', text: 'Quad 101 DNS resolver' },
+          { value: '114.114.114.114', text: '114DNS resolver' },
+          { value: '168.95.1.1', text: 'HiNet DNS resolver' },
+          { value: '80.67.169.12', text: 'French Data Network DNS resolver' },
+          { value: '81.218.119.11', text: 'GreenTeamDNS resolver' },
+          { value: '208.76.50.50', text: 'SmartViper DNS resolver' },
+          { value: '23.253.163.53', text: 'Alternate DNS resolver' },
+          { value: '109.69.8.51', text: 'puntCAT DNS resolver' },
+          { value: '156.154.70.1', text: 'Neustar DNS resolver' },
+          { value: '101.226.4.6', text: 'DNSpai resolver' }
+          // Your open resolver here? Don't hesitate to contribute to the project!
+        ],
+        Filtered: [
+          { value: '1.1.1.2', text: 'Cloudflare Malware Blocking Only DNS resolver' },
+          { value: '1.1.1.3', text: 'Cloudflare Malware and Adult Content Blocking Only DNS resolver' },
+          { value: '9.9.9.9', text: 'Quad9 DNS resolver' },
+          { value: '94.140.14.14', text: 'AdGuard default DNS resolver' },
+          { value: '94.140.14.15', text: 'AdGuard family protection DNS resolver' },
+          { value: '77.88.8.2', text: 'Yandex.DNS Safe resolver' },
+          { value: '77.88.8.3', text: 'Yandex.DNS Family resolver' },
+          { value: '156.154.70.2', text: 'DNS Advantage Threat Protection resolver' },
+          { value: '156.154.70.3', text: 'DNS Advantage Family Secure resolver' },
+          { value: '156.154.70.4', text: 'DNS Advantage Business Secure resolver' },
+          { value: '185.228.168.168', text: 'CleanBrowsing Family Filter DNS resolver' },
+          { value: '185.228.168.10', text: 'CleanBrowsing Adult Filter DNS resolver' }
+          // Your open resolver here? Don't hesitate to contribute to the project!
+        ]
+      },
       form: {
-        resolver: 'Local',
+        resolver: 'local',
         type: 'ANY'
       },
       show_responses: [],
