@@ -39,13 +39,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/config"
 )
 
 func init() {
-	router.POST("/api/resolver", apiAuthHandler(runResolver))
+	router.POST("/api/resolver", ApiHandler(runResolver))
 }
 
 type resolverRequest struct {
@@ -54,7 +55,7 @@ type resolverRequest struct {
 	Type       string `json:"type"`
 }
 
-func runResolver(_ *config.Options, req *RequestResources, body io.Reader) Response {
+func runResolver(_ *config.Options, ps httprouter.Params, body io.Reader) Response {
 	var urr resolverRequest
 	err := json.NewDecoder(body).Decode(&urr)
 	if err != nil {

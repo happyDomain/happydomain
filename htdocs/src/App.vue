@@ -78,6 +78,10 @@
         <b-navbar-nav v-else class="ml-auto">
           <h-help class="mr-2" size="sm" variant="link" />
 
+          <b-button class="mr-2" variant="info" to="/tools/client">
+            <b-icon icon="list" aria-hidden="true" /> {{ $t('menu.dns-client') }}
+          </b-button>
+
           <b-button variant="outline-dark" to="/join">
             <b-icon icon="person-plus-fill" aria-hidden="true" /> {{ $t('menu.signup') }}
           </b-button>
