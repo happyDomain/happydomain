@@ -151,7 +151,7 @@ func registerUser(opts *config.Options, p httprouter.Params, body io.Reader) Res
 
 	if len(uu.Password) <= 7 {
 		return APIErrorResponse{
-			err: errors.New("The given email is invalid."),
+			err: errors.New("The given password is invalid."),
 		}
 	}
 

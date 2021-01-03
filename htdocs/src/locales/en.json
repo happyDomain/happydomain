@@ -140,6 +140,7 @@
       "content": "The page you are look for was not found."
     },
     "account-delete": "An error occurs when trying to delete your account",
+    "account-no-auth": "You're using happyDNS without authentication. You cannot manage other account properties.",
     "address": "Email address is required",
     "address-valid": "A valid email address is required",
     "domain-access": "An error occurs when trying to access domain's list.",
@@ -173,6 +174,7 @@
     "dns-resolver": "DNS resolver",
     "my-account": "My account",
     "logout": "Logout",
+    "quick-menu": "Quick Access",
     "signup": "Sign up",
     "signin": "Sign in"
   },

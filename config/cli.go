@@ -47,6 +47,7 @@ func (o *Options) declareFlags() {
 	flag.StringVar(&o.BaseURL, "baseurl", o.BaseURL, "URL prepended to each URL")
 	flag.StringVar(&o.DefaultNameServer, "default-ns", o.DefaultNameServer, "Adress to the default name server")
 	flag.Var(&o.StorageEngine, "storage-engine", fmt.Sprintf("Select the storage engine between %v", storage.GetStorageEngines()))
+	flag.BoolVar(&o.NoAuth, "no-auth", false, "Disable user access control, use default account")
 
 	// Others flags are declared in some other files likes sources, storages, ... when they need specials configurations
 }

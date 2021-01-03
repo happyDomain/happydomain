@@ -63,85 +63,90 @@
         </b-form>
       </b-card>
     </b-row>
-    <h2 id="password-change">
-      {{ $t('password.change') }}
-    </h2>
-    <b-row>
-      <b-card class="offset-md-2 col-8">
-        <b-form @submit.stop.prevent="sendChPassword">
-          <b-form-group
-            :label="$t('password.enter')"
-            label-for="currentPassword-input"
-          >
-            <b-form-input
-              id="currentPassword-input"
-              v-model="signupForm.current"
-              type="password"
-              required
-              placeholder="xXxXxXxXxX"
-              autocomplete="current-password"
-            />
-          </b-form-group>
-          <b-form-group
-            :state="passwordState"
-            :label="$t('password.enter-new')"
-            label-for="password-input"
-            :invalid-feedback="$t('errors.password-weak')"
-          >
-            <b-form-input
-              id="password-input"
-              ref="signuppassword"
-              v-model="signupForm.password"
-              type="password"
+    <div v-if="loggedUser && loggedUser.email !== '_no_auth'">
+      <h2 id="password-change">
+        {{ $t('password.change') }}
+      </h2>
+      <b-row>
+        <b-card class="offset-md-2 col-8">
+          <b-form @submit.stop.prevent="sendChPassword">
+            <b-form-group
+              :label="$t('password.enter')"
+              label-for="currentPassword-input"
+            >
+              <b-form-input
+                id="currentPassword-input"
+                v-model="signupForm.current"
+                type="password"
+                required
+                placeholder="xXxXxXxXxX"
+                autocomplete="current-password"
+              />
+            </b-form-group>
+            <b-form-group
               :state="passwordState"
-              required
-              placeholder="xXxXxXxXxX"
-              autocomplete="new-password"
-            />
-          </b-form-group>
-          <b-form-group
-            :state="passwordConfirmState"
-            :label="$t('password.confirm-new')"
-            label-for="passwordconfirm-input"
-            :invalid-feedback="$t('errors.password-match')"
-          >
-            <b-form-input
-              id="passwordconfirm-input"
-              ref="signuppasswordconfirm"
-              v-model="signupForm.passwordConfirm"
-              type="password"
+              :label="$t('password.enter-new')"
+              label-for="password-input"
+              :invalid-feedback="$t('errors.password-weak')"
+            >
+              <b-form-input
+                id="password-input"
+                ref="signuppassword"
+                v-model="signupForm.password"
+                type="password"
+                :state="passwordState"
+                required
+                placeholder="xXxXxXxXxX"
+                autocomplete="new-password"
+              />
+            </b-form-group>
+            <b-form-group
               :state="passwordConfirmState"
-              required
-              placeholder="xXxXxXxXxX"
-            />
-          </b-form-group>
-          <div class="d-flex justify-content-around">
-            <b-button type="submit" variant="primary">
-              {{ $t('password.change') }}
-            </b-button>
-          </div>
-        </b-form>
-      </b-card>
-    </b-row>
-    <hr>
-    <h2 id="delete-account">
-      {{ $t('account.delete.delete') }}
-    </h2>
-    <b-row>
-      <b-card class="offset-md-2 col-8">
-        <p>
-          {{ $t('account.delete.confirm') }}
-        </p>
-        <b-button type="button" variant="danger" @click="askAccountDeletion">
-          {{ $t('account.delete.delete') }}
-        </b-button>
-        <p class="mt-2 text-muted" style="line-height: 1.1">
-          <small>
-            {{ $t('account.delete.consequence') }}
-          </small>
-        </p>
-      </b-card>
-    </b-row>
+              :label="$t('password.confirm-new')"
+              label-for="passwordconfirm-input"
+              :invalid-feedback="$t('errors.password-match')"
+            >
+              <b-form-input
+                id="passwordconfirm-input"
+                ref="signuppasswordconfirm"
+                v-model="signupForm.passwordConfirm"
+                type="password"
+                :state="passwordConfirmState"
+                required
+                placeholder="xXxXxXxXxX"
+              />
+            </b-form-group>
+            <div class="d-flex justify-content-around">
+              <b-button type="submit" variant="primary">
+                {{ $t('password.change') }}
+              </b-button>
+            </div>
+          </b-form>
+        </b-card>
+      </b-row>
+      <hr>
+      <h2 id="delete-account">
+        {{ $t('account.delete.delete') }}
+      </h2>
+      <b-row>
+        <b-card class="offset-md-2 col-8">
+          <p>
+            {{ $t('account.delete.confirm') }}
+          </p>
+          <b-button type="button" variant="danger" @click="askAccountDeletion">
+            {{ $t('account.delete.delete') }}
+          </b-button>
+          <p class="mt-2 text-muted" style="line-height: 1.1">
+            <small>
+              {{ $t('account.delete.consequence') }}
+            </small>
+          </p>
+        </b-card>
+      </b-row>
+    </div>
+    <div v-else class="m-5 alert alert-secondary">
+      {{ $t('errors.account-no-auth') }}
+    </div>
     <b-modal id="delete-account-modal" :title="$t('account.delete.delete')" ok-variant="danger" :ok-title="$t('account.delete.delete')" cancel-variant="primary" @ok="deleteMyAccount">
       <p>
         {{ $t('account.delete.confirm-twice') }}

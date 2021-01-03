@@ -211,7 +211,7 @@ type RequestResources struct {
 	Zone       *happydns.Zone
 }
 
-func apiAuthHandler(f func(*config.Options, *RequestResources, io.Reader) Response) func(http.ResponseWriter, *http.Request, httprouter.Params) {
+func apiOptionalAuthHandler(noauthcb func(*config.Options, *RequestResources, io.Reader) Response, authcb func(*config.Options, *RequestResources, io.Reader) Response) func(http.ResponseWriter, *http.Request, httprouter.Params) {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if addr := r.Header.Get("X-Forwarded-For"); addr != "" {
 			r.RemoteAddr = addr
@@ -253,48 +253,61 @@ func apiAuthHandler(f func(*config.Options, *RequestResources, io.Reader) Respon
 			}
 		}
 
-		if sessionid == nil || len(sessionid) == 0 {
-			logResponse(r, APIErrorResponse{
-				err:    fmt.Errorf("Authorization required"),
-				status: http.StatusUnauthorized,
-			}.WriteResponse(w))
-		} else if session, err := storage.MainStore.GetSession(sessionid); err != nil {
-			logResponse(r, APIErrorResponse{
-				err:    err,
-				status: http.StatusUnauthorized,
-				cookies: []*http.Cookie{&http.Cookie{
-					Name:     "happydns_session",
-					Value:    "",
-					Path:     opts.BaseURL + "/",
-					Expires:  time.Unix(0, 0),
-					Secure:   opts.DevProxy == "",
-					HttpOnly: true,
-				}},
-			}.WriteResponse(w))
-		} else if user, err := storage.MainStore.GetUser(session.IdUser); err != nil {
-			logResponse(r, APIErrorResponse{
-				err:    err,
-				status: http.StatusUnauthorized,
-				cookies: []*http.Cookie{&http.Cookie{
-					Name:     "happydns_session",
-					Value:    "",
-					Path:     opts.BaseURL + "/",
-					Expires:  time.Unix(0, 0),
-					Secure:   opts.DevProxy == "",
-					HttpOnly: true,
-				}},
-			}.WriteResponse(w))
-		} else {
-			req := &RequestResources{
-				Ps:      ps,
-				Session: session,
-				User:    user,
-			}
-			logResponse(r, f(opts, req, r.Body).WriteResponse(w))
+		var err error
+		req := &RequestResources{
+			Ps: ps,
+		}
 
-			if session.HasChanged() {
-				storage.MainStore.UpdateSession(session)
-			}
+		if sessionid == nil || len(sessionid) == 0 {
+			logResponse(r, noauthcb(opts, req, r.Body).WriteResponse(w))
+		} else if req.Session, err = storage.MainStore.GetSession(sessionid); err != nil {
+			logResponse(r, APIErrorResponse{
+				err:    err,
+				status: http.StatusUnauthorized,
+				cookies: []*http.Cookie{&http.Cookie{
+					Name:     "happydns_session",
+					Value:    "",
+					Path:     opts.BaseURL + "/",
+					Expires:  time.Unix(0, 0),
+					Secure:   opts.DevProxy == "",
+					HttpOnly: true,
+				}},
+			}.WriteResponse(w))
+		} else if req.User, err = storage.MainStore.GetUser(req.Session.IdUser); err != nil {
+			logResponse(r, APIErrorResponse{
+				err:    err,
+				status: http.StatusUnauthorized,
+				cookies: []*http.Cookie{&http.Cookie{
+					Name:     "happydns_session",
+					Value:    "",
+					Path:     opts.BaseURL + "/",
+					Expires:  time.Unix(0, 0),
+					Secure:   opts.DevProxy == "",
+					HttpOnly: true,
+				}},
+			}.WriteResponse(w))
+		} else if req.User.Email == NO_AUTH_ACCOUNT && !opts.NoAuth {
+			logResponse(r, noauthcb(opts, req, r.Body).WriteResponse(w))
+		} else {
+			logResponse(r, authcb(opts, req, r.Body).WriteResponse(w))
 		}
 	}
+
+}
+
+func apiAuthHandler(f func(*config.Options, *RequestResources, io.Reader) Response) func(http.ResponseWriter, *http.Request, httprouter.Params) {
+	return apiOptionalAuthHandler(func(opts *config.Options, req *RequestResources, _ io.Reader) Response {
+		return APIErrorResponse{
+			err:    fmt.Errorf("Authorization required"),
+			status: http.StatusUnauthorized,
+		}
+	}, func(opts *config.Options, req *RequestResources, r io.Reader) Response {
+		response := f(opts, req, r)
+
+		if req.Session.HasChanged() {
+			storage.MainStore.UpdateSession(req.Session)
+		}
+
+		return response
+	})
 }

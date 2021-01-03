@@ -35,6 +35,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -47,10 +48,12 @@ import (
 	"git.happydns.org/happydns/storage"
 )
 
+const NO_AUTH_ACCOUNT = "_no_auth"
+
 var AuthFunc = checkAuth
 
 func init() {
-	router.GET("/api/auth", apiAuthHandler(displayAuthToken))
+	router.GET("/api/auth", apiOptionalAuthHandler(displayNotAuthToken, displayAuthToken))
 	router.POST("/api/auth", ApiHandler(func(opts *config.Options, ps httprouter.Params, b io.Reader) Response {
 		return AuthFunc(opts, ps, b)
 	}))
@@ -70,6 +73,17 @@ func currentUser(u *happydns.User) *DisplayUser {
 		Email:            u.Email,
 		RegistrationTime: u.RegistrationTime,
 		Settings:         u.Settings,
+	}
+}
+
+func displayNotAuthToken(opts *config.Options, req *RequestResources, _ io.Reader) Response {
+	if opts.NoAuth {
+		return completeAuth(opts, NO_AUTH_ACCOUNT, NO_AUTH_ACCOUNT)
+	} else {
+		return APIErrorResponse{
+			err:    fmt.Errorf("Authorization required"),
+			status: http.StatusUnauthorized,
+		}
 	}
 }
 

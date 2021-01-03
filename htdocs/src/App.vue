@@ -51,8 +51,11 @@
 
           <b-nav-item-dropdown v-if="user_isLogged" right>
             <template slot="button-content">
-              <b-button size="sm" variant="dark">
+              <b-button v-if="user_getSession.email !== '_no_auth'" size="sm" variant="dark">
                 <b-icon icon="person" aria-hidden="true" /> {{ user_getSession.email }}
+              </b-button>
+              <b-button v-else size="sm" variant="secondary">
+                {{ $t('menu.quick-menu') }}
               </b-button>
             </template>
             <b-dropdown-item to="/domains/">
@@ -69,8 +72,8 @@
             <b-dropdown-item to="/me">
               {{ $t('menu.my-account') }}
             </b-dropdown-item>
-            <b-dropdown-divider />
-            <b-dropdown-item @click="logout()">
+            <b-dropdown-divider v-if="user_getSession.email !== '_no_auth'" />
+            <b-dropdown-item v-if="user_getSession.email !== '_no_auth'" @click="logout()">
               {{ $t('menu.logout') }}
             </b-dropdown-item>
           </b-nav-item-dropdown>

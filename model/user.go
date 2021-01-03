@@ -80,7 +80,9 @@ func NewUser(email string, password string) (u *User, err error) {
 		RegistrationTime: &t,
 	}
 
-	err = u.DefinePassword(password)
+	if len(password) != 0 {
+		err = u.DefinePassword(password)
+	}
 
 	return
 }
@@ -118,6 +120,10 @@ func (u *User) DefinePassword(password string) (err error) {
 
 // CheckAuth compares the given password to the hashed one in the User struct.
 func (u *User) CheckAuth(password string) bool {
+	if len(password) < 8 {
+		return false
+	}
+
 	return bcrypt.CompareHashAndPassword(u.Password, []byte(password)) == nil
 }
 

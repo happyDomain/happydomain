@@ -66,6 +66,9 @@ type Options struct {
 
 	// StorageEngine points to the storage engine used.
 	StorageEngine storage.StorageEngine
+
+	// NoAuth controls if there is user access control or not.
+	NoAuth bool
 }
 
 // BuildURL appends the given url to the absolute ExternalURL.
