@@ -58,7 +58,7 @@
               <h-logo height="19" />
             </template>
             <template #first-step>
-              <span v-if="noSource">{{ $t('onboarding.suggest-source') }}</span><i18n path="onboarding.choose-configured" tag="span">
+              <span v-if="noSource">{{ $t('onboarding.suggest-source') }}</span><i18n v-else path="onboarding.choose-configured" tag="span">
                 <router-link to="/sources/new">
                   {{ $t('onboarding.add-one') }}
                 </router-link>

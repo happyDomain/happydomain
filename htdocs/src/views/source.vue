@@ -32,16 +32,16 @@
   -->
 
 <template>
-  <b-container fluid class="mt-4">
-    <h1 class="text-center mb-4">
+  <b-container class="d-flex flex-column mt-4" fluid>
+    <h1 class="text-center mb-3">
       <button type="button" class="btn font-weight-bolder" @click="$router.go(-1)">
         <b-icon icon="chevron-left" />
       </button>
       {{ $t('wait.updating') }} <em v-if="mySource">{{ mySource._comment }}</em>
     </h1>
-    <hr style="margin-bottom:0">
+    <hr class="mt-0 mb-0">
 
-    <b-row style="min-height: inherit">
+    <b-row class="flex-grow-1">
       <b-col v-if="sourceSpecsSelected && sources" lg="4" md="5" class="bg-light">
         <div class="text-center mb-3">
           <img :src="'/api/source_specs/' + sourceSpecsSelected + '/icon.png'" :alt="sources[sourceSpecsSelected].name" style="max-width: 100%; max-height: 10em">

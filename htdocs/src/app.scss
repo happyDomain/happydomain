@@ -18,6 +18,18 @@ $font-family-monospace: 'Fantasque Sans Mono', SFMono-Regular, Menlo, Monaco, Co
 @import '~bootstrap';
 @import '~bootstrap-vue';
 
+body {
+    display: flex;
+    flex-direction: column;
+    min-height:100%;
+}
+#app {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    justify-content: space-between !important;
+}
+
 nav.navbar {
     box-shadow: 0 0px 3px 0 $primary;
     border-bottom: 1px solid $primary;

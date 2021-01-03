@@ -38,11 +38,6 @@
         <b-navbar-brand class="navbar-brand" to="/">
           <h-logo height="25" />
         </b-navbar-brand>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#adminMenu" aria-controls="adminMenu" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon" />
-        </button>
-
-        <b-navbar-toggle target="nav-collapse" />
 
         <b-navbar-nav v-if="user_isLogged" class="ml-auto">
           <b-nav-form>
@@ -101,7 +96,7 @@
       </b-container>
     </b-navbar>
 
-    <router-view style="min-height: 80vh" />
+    <router-view class="flex-grow-1" />
 
     <b-toaster name="b-toaster-content-right" style="position: fixed; top: 70px; right: 0; z-index: 1042; min-width: 30vw;" />
 

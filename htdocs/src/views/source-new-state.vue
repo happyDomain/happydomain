@@ -32,11 +32,11 @@
   -->
 
 <template>
-  <b-container style="min-height: inherit" fluid>
+  <div class="d-flex flex-column">
     <div v-if="isLoading" class="mt-5 d-flex justify-content-center align-items-center">
       <b-spinner variant="primary" :label="$t('common.spinning')" class="mr-3" /> {{ $t('wait.retrieving-setting') }}
     </div>
-    <b-row v-else style="min-height: inherit">
+    <b-row v-else class="flex-grow-1">
       <b-col lg="4" md="5" class="bg-light">
         <div class="text-center mb-3">
           <img :src="'/api/source_specs/' + $route.params.provider + '/icon.png'" :alt="sourceSpecs[$route.params.provider].name" style="max-width: 100%; max-height: 10em">
@@ -62,7 +62,7 @@
         </b-form>
       </b-col>
     </b-row>
-  </b-container>
+  </div>
 </template>
 
 <script>

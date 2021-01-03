@@ -83,7 +83,7 @@
             <b-input v-model="modal.alias" autofocus class="text-monospace" placeholder="new.subdomain" :state="modal.newDomainState" @update="validateNewAlias" />
           </b-input-group>
           <div v-show="modal.alias" class="mt-3 text-center">
-            {{ $t('domains.alias-creation-sample') }}
+            {{ $t('domains.alias-creation-sample') }}<br>
             <span class="text-monospace text-no-wrap">{{ modal.alias | fqdn(domain.domain) }}</span>
             <b-icon class="mr-1 ml-1" icon="arrow-right" />
             <span class="text-monospace text-no-wrap">{{ modal.dn | fqdn(domain.domain) }}</span>

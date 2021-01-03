@@ -32,12 +32,12 @@
   -->
 
 <template>
-  <b-container class="mt-3" :fluid="responses?true:false">
-    <h1 class="text-center mb-3">
-      {{ $t('menu.dns-resolver') }}
-    </h1>
-    <b-row>
-      <b-col :offset-md="responses?0:2" :md="responses?4:8" :class="responses?'bg-light':'' + 'pb-5 pt-4'">
+  <b-container class="d-flex flex-column" :fluid="responses?true:false">
+    <b-row class="flex-grow-1">
+      <b-col :offset-md="responses?0:2" :md="responses?4:8" :class="(responses?'bg-light ':'') + 'pt-4 pb-5 sticky-top'">
+        <h1 class="text-center mb-3">
+          {{ $t('menu.dns-resolver') }}
+        </h1>
         <form class="pt-3 pb-5" @submit.stop.prevent="submitRequest">
           <b-form-group
             id="input-domain"
@@ -140,7 +140,7 @@
           </div>
         </form>
       </b-col>
-      <b-col v-if="responses" md="8">
+      <b-col v-if="responses" md="8" class="pt-2">
         <div v-for="(rrs,type) in responseByType" :key="type">
           <h3>{{ $tc('common.records', rrs.length, { type: $options.filters.nsrrtype(type) }) }}</h3>
           <table class="table table-hover table-sm">
@@ -165,42 +165,6 @@ export default {
   components: {
     hRecord: () => import('@/components/hRecord'),
     hRecordHead: () => import('@/components/hRecordHead')
-  },
-
-  watch: {
-    $route (n) {
-      if (n.params.domain && n.params.domain !== this.form.domain) {
-        this.form.domain = n.params.domain
-        this.submitRequest()
-      }
-    }
-  },
-
-  computed: {
-    responseByType () {
-      const ret = {}
-
-      for (const i in this.filteredResponses) {
-        if (!ret[this.filteredResponses[i].Hdr.Rrtype]) {
-          ret[this.filteredResponses[i].Hdr.Rrtype] = []
-        }
-        ret[this.filteredResponses[i].Hdr.Rrtype].push(this.filteredResponses[i])
-      }
-
-      return ret
-    },
-
-    filteredResponses () {
-      if (!this.responses) {
-        return []
-      }
-
-      if (this.showDNSSEC) {
-        return this.responses
-      } else {
-        return this.responses.filter(rr => (rr.Hdr.Rrtype !== 46 && rr.Hdr.Rrtype !== 47 && rr.Hdr.Rrtype !== 50))
-      }
-    }
   },
 
   data: function () {
@@ -273,6 +237,44 @@ export default {
       },
       responses: null,
       showDNSSEC: false
+    }
+  },
+
+  computed: {
+    responseByType () {
+      const ret = {}
+
+      for (const i in this.filteredResponses) {
+        if (!ret[this.filteredResponses[i].Hdr.Rrtype]) {
+          ret[this.filteredResponses[i].Hdr.Rrtype] = []
+        }
+        ret[this.filteredResponses[i].Hdr.Rrtype].push(this.filteredResponses[i])
+      }
+
+      return ret
+    },
+
+    filteredResponses () {
+      if (!this.responses) {
+        return []
+      }
+
+      if (this.showDNSSEC) {
+        return this.responses
+      } else {
+        return this.responses.filter(rr => (rr.Hdr.Rrtype !== 46 && rr.Hdr.Rrtype !== 47 && rr.Hdr.Rrtype !== 50))
+      }
+    }
+  },
+
+  watch: {
+    $route (n) {
+      if (n.params.domain && (!this.response || n.params.domain !== this.form.domain)) {
+        this.form.domain = n.params.domain
+        this.submitRequest()
+      } else if (!n.params.domain && this.responses) {
+        this.responses = null
+      }
     }
   },
 

@@ -32,14 +32,14 @@
   -->
 
 <template>
-  <b-container fluid class="mt-4">
-    <h1 class="text-center mb-4">
+  <b-container class="d-flex flex-column mt-4" fluid>
+    <h1 class="text-center mb-3">
       <button type="button" class="btn font-weight-bolder" @click="$router.go(-1)">
         <b-icon icon="chevron-left" />
       </button>
       <i18n path="source.select-source" />
     </h1>
-    <hr style="margin-bottom:0">
-    <router-view />
+    <hr class="mt-0 mb-0">
+    <router-view class="flex-grow-1" />
   </b-container>
 </template>
