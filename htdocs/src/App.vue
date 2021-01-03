@@ -61,7 +61,7 @@
             </b-dropdown-item>
             <b-dropdown-divider />
             <b-dropdown-item to="/tools/client">
-              {{ $t('menu.dns-client') }}
+              {{ $t('menu.dns-resolver') }}
             </b-dropdown-item>
             <b-dropdown-divider />
             <b-dropdown-item to="/me">
@@ -77,7 +77,7 @@
           <h-help class="mr-2" size="sm" variant="link" />
 
           <b-button class="mr-2" variant="info" to="/tools/client">
-            <b-icon icon="list" aria-hidden="true" /> {{ $t('menu.dns-client') }}
+            <b-icon icon="list" aria-hidden="true" /> {{ $t('menu.dns-resolver') }}
           </b-button>
 
           <b-button variant="outline-dark" to="/join">

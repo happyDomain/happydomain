@@ -170,7 +170,6 @@
   "menu": {
     "my-domains": "My domains",
     "my-sources": "My domains' hosters",
-    "dns-client": "DNS client",
     "dns-resolver": "DNS resolver",
     "my-account": "My account",
     "logout": "Logout",
