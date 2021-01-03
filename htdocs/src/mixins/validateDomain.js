@@ -32,19 +32,19 @@
 export default {
   methods: {
     validateDomain (dn, subdomain) {
-      var ret = null
+      let ret = null
       if (dn.length !== 0) {
         ret = dn.length >= 1 && dn.length <= 254
 
         if (ret) {
-          var domains = dn.split('.')
+          const domains = dn.split('.')
 
           // Remove the last . if any, it's ok
           if (!subdomain && domains[domains.length - 1] === '') {
             domains.pop()
           }
 
-          var newDomainState = ret
+          let newDomainState = ret
           domains.forEach(function (domain) {
             newDomainState &= domain.length >= 1 && domain.length <= 63
             newDomainState &= domain[0] !== '-' && domain[domain.length - 1] !== '-'

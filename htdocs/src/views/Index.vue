@@ -65,7 +65,7 @@ export default {
       if (!this.user_isLogged) {
         if (window.location.href === '/') {
           // Not logged at home-page -> redirect to static commercial presentation
-          var preferedLang = navigator.language.split('-')[0] || process.env.VUE_APP_I18N_LOCALE || 'en'
+          let preferedLang = navigator.language.split('-')[0] || process.env.VUE_APP_I18N_LOCALE || 'en'
           if (preferedLang !== 'en' && preferedLang !== 'fr') {
             preferedLang = 'en'
           }

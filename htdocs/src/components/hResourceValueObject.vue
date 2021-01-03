@@ -215,7 +215,7 @@ export default {
     },
 
     saveObject () {
-      var vm = this
+      const vm = this
       this.$emit('save-service', function () {
         vm.serviceEdit = false
       })

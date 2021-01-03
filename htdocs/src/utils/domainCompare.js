@@ -30,12 +30,12 @@
 // knowledge of the CeCILL license and that you accept its terms.
 
 export function domainCompare (a, b) {
-  var as = a.split('.').reverse()
-  var bs = b.split('.').reverse()
+  const as = a.split('.').reverse()
+  const bs = b.split('.').reverse()
 
-  var maxDepth = Math.min(as.length, bs.length)
-  for (var i = 0; i < maxDepth; i++) {
-    var cmp = as[i].localeCompare(bs[i])
+  const maxDepth = Math.min(as.length, bs.length)
+  for (let i = 0; i < maxDepth; i++) {
+    const cmp = as[i].localeCompare(bs[i])
     if (cmp !== 0) {
       return cmp
     }

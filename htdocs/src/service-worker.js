@@ -29,7 +29,7 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-import { skipWaiting, setCacheNameDetails, clientsClaim } from 'workbox-core'
+import { setCacheNameDetails, clientsClaim } from 'workbox-core'
 import { createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching'
 import { NavigationRoute, registerRoute } from 'workbox-routing'
 import * as strategies from 'workbox-strategies'
@@ -62,13 +62,13 @@ self.addEventListener('activate', (event) => {
   }
 })
 
-skipWaiting()
+self.skipWaiting()
 clientsClaim()
 
 precacheAndRoute(self.__WB_MANIFEST)
 
 const handler = createHandlerBoundToURL('/index.html')
-const navigationRoute = new NavigationRoute(handler, { denylist: [new RegExp('^/api/'), new RegExp('^/fr/'), new RegExp('^/en/'), new RegExp('^/img/screenshots/')] })
+const navigationRoute = new NavigationRoute(handler, { denylist: [/^\/api\//, /^\/fr\//, /^\/en\//, /^\/img\/screenshots\//] })
 registerRoute(navigationRoute)
 
 registerRoute(
@@ -83,7 +83,7 @@ registerRoute(
   })
 )
 registerRoute(
-  new RegExp('/api/service_specs/.*'),
+  /\/api\/service_specs\/.*/,
   new strategies.CacheFirst({
     cacheName: 'service-specs-cache',
     plugins: [
@@ -107,7 +107,7 @@ registerRoute(
   })
 )
 registerRoute(
-  new RegExp('/api/source_specs/.*'),
+  /\/api\/source_specs\/.*/,
   new strategies.CacheFirst({
     cacheName: 'source-specs-cache',
     plugins: [

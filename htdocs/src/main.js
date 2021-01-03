@@ -154,7 +154,7 @@ new Vue({
   render: h => h(App)
 }).$mount('#app')
 
-var tagsToReplace = {
+const tagsToReplace = {
   '&': '&amp;',
   '<': '&lt;',
   '>': '&gt;'

@@ -41,8 +41,8 @@ export default {
 
   getters: {
     sortedSources: state => {
-      var ret = []
-      for (var i in state.all) {
+      const ret = []
+      for (const i in state.all) {
         if (state.all[i]._id) {
           ret.push(state.all[i])
         }
@@ -67,8 +67,8 @@ export default {
   mutations: {
     setSources (state, sources) {
       if (Array.isArray(sources)) {
-        var srcs = {}
-        sources.map(src => { srcs[src._id] = src })
+        const srcs = {}
+        sources.forEach(src => { srcs[src._id] = src })
         Vue.set(state, 'all', srcs)
       } else {
         Vue.set(state, 'all', sources)

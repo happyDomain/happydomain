@@ -33,7 +33,7 @@
 <template>
   <b-button :size="size" target="_blank" :variant="variant" @click="openHelp">
     <b-icon icon="question-circle-fill" :title="$t('common.help')" />
-    <slot></slot>
+    <slot />
   </b-button>
 </template>
 

@@ -156,6 +156,19 @@ export default {
     }
   },
 
+  data: function () {
+    return {
+      addServiceInProgress: false,
+      deleteServiceInProgress: false,
+      dn: '',
+      newDomainState: null,
+      step: 0,
+      svcData: {},
+      svcSelected: null,
+      update: false
+    }
+  },
+
   computed: {
     helpHref () {
       const svcPart = this.svcData._svctype.toLowerCase().split('.')
@@ -169,19 +182,6 @@ export default {
         }
       }
       return svcPart[svcPart.length - 1]
-    }
-  },
-
-  data: function () {
-    return {
-      addServiceInProgress: false,
-      deleteServiceInProgress: false,
-      dn: '',
-      newDomainState: null,
-      step: 0,
-      svcData: {},
-      svcSelected: null,
-      update: false
     }
   },
 
@@ -227,7 +227,7 @@ export default {
       } else if (this.step === 2 && this.svcSelected !== null) {
         this.$refs.addModalResources.saveChildrenValues()
 
-        var func = null
+        let func = null
         if (this.update) {
           func = ZoneApi.updateZoneService
         } else {

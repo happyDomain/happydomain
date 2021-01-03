@@ -157,7 +157,7 @@ export default {
 
   computed: {
     aliases () {
-      var ret = {}
+      const ret = {}
 
       for (const dn in this.myServices.services) {
         this.myServices.services[dn].forEach(function (svc) {
@@ -182,7 +182,7 @@ export default {
         return []
       }
 
-      var domains = Object.keys(this.myServices.services)
+      const domains = Object.keys(this.myServices.services)
       domains.sort(domainCompare)
 
       return domains
@@ -235,7 +235,7 @@ export default {
     },
 
     goToAnchor () {
-      var hash = this.$route.hash.substr(1)
+      const hash = this.$route.hash.substr(1)
       if (!this.isLoading && hash.length > 0) {
         setTimeout(function () {
           window.scrollTo(0, document.getElementById(hash).offsetTop)

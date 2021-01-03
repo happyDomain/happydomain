@@ -65,7 +65,7 @@ export default {
       DomainsApi.getDomain(domain)
         .then(
           response => {
-            var details = response.data
+            const details = response.data
             commit('setDomainDetailed', { domain, details })
           }
         )

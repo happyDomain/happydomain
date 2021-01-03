@@ -33,7 +33,7 @@
 
 <template>
   <div ng-if="!isLoading()">
-    <div v-for="(val,key) in value" :key="key">
+    <div v-for="(v,key) in value" :key="key">
       <b-row>
         <b-col>
           <h3>
@@ -79,7 +79,7 @@
       </b-row>
       <h-resource-value
         v-if="key"
-        v-model="val[key]"
+        v-model="v[key]"
         :edit="editChildrenKeys[key]"
         :services="services"
         :specs="service_specs"
@@ -141,7 +141,7 @@ export default {
     },
 
     fieldsNames () {
-      var ret = []
+      const ret = []
       this.service_specs.fields.forEach(function (sspec) {
         ret.push({
           key: sspec.id,
@@ -192,7 +192,7 @@ export default {
     },
 
     createKey () {
-      var newObj = {}
+      let newObj = {}
       if (this.main_type.substr(0, 2) === '[]') {
         newObj = []
       }
@@ -232,7 +232,7 @@ export default {
     },
 
     saveObject (key) {
-      var vm = this
+      const vm = this
       this.$emit('save-service', function () {
         Vue.set(vm.editChildrenKeys, key, false)
       })

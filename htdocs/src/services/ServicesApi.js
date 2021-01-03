@@ -51,7 +51,7 @@ export default {
   },
 
   updateService (service) {
-    var serviceType = service[0] === '*' ? service.substr(1) : service
+    const serviceType = service[0] === '*' ? service.substr(1) : service
     return Api().get('/api/service_specs/' + serviceType)
   }
 }

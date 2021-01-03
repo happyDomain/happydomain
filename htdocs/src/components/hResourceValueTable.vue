@@ -111,7 +111,7 @@ export default {
       return this.service_specs === null
     },
     fieldsNames () {
-      var ret = []
+      const ret = []
       if (this.service_specs && this.service_specs.fields) {
         this.service_specs.fields.forEach(function (sspec, idx) {
           if (sspec.label) {
@@ -209,7 +209,7 @@ export default {
 
     saveRow (row) {
       if (this.service_specs && this.service_specs.fields) {
-        var val = {}
+        const val = {}
         this.service_specs.fields.forEach(function (sspec, idx) {
           val[sspec.id] = row.item[sspec.id]
         }, this)

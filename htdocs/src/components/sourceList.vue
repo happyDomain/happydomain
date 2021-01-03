@@ -105,10 +105,10 @@ export default {
 
   computed: {
     domain_in_sources () {
-      var ret = {}
+      const ret = {}
 
       if (this.sources_getAll != null) {
-        for (var i in this.sources_getAll) {
+        for (const i in this.sources_getAll) {
           ret[i] = 0
         }
       }

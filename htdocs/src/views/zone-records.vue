@@ -94,11 +94,11 @@ export default {
 
   computed: {
     rrsFiltered: function () {
-      var ret = []
+      const ret = []
       if (this.rrs === null) {
         return ret
       }
-      for (var k in this.rrs) {
+      for (const k in this.rrs) {
         if (this.showDNSSEC || this.rrs[k].fields === undefined || (this.rrs[k].fields.Hdr.Rrtype !== 46 && this.rrs[k].fields.Hdr.Rrtype !== 47 && this.rrs[k].fields.Hdr.Rrtype !== 50)) {
           ret.push(this.rrs[k])
         }
@@ -108,7 +108,7 @@ export default {
   },
 
   mounted () {
-    var mydomain = this.$route.params.domain
+    const mydomain = this.$route.params.domain
     axios
       .get('/api/domains/' + encodeURIComponent(mydomain))
       .then(response => (this.domain = response.data))
