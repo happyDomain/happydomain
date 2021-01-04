@@ -42,7 +42,7 @@
     <b-list-group-item v-for="(source, index) in sortedSources" :key="index" :active="selectedSource && selectedSource._id === source._id" button class="d-flex justify-content-between align-items-center" @click="selectSource(source)">
       <div class="d-flex">
         <div class="text-center" style="width: 50px;">
-          <img v-if="sourceSpecs_getAll" :src="'/api/source_specs/' + source._srctype + '/icon.png'" :alt="sourceSpecs_getAll[source._srctype].name" :title="sourceSpecs_getAll[source._srctype].name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+          <img v-if="sourceSpecs_getAll && sourceSpecs_getAll[source._srctype]" :src="'/api/source_specs/' + source._srctype + '/icon.png'" :alt="sourceSpecs_getAll[source._srctype].name" :title="sourceSpecs_getAll[source._srctype].name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
         </div>
         <div v-if="source._comment" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
           {{ source._comment }}
@@ -54,7 +54,7 @@
           <b-badge class="ml-1" :variant="domain_in_sources[source._id] > 0 ? 'success' : 'danger'">
             {{ domain_in_sources[source._id] }} domain(s) associated
           </b-badge>
-          <b-badge v-if="sourceSpecs_getAll" class="ml-1" variant="secondary" :title="source._srctype">
+          <b-badge v-if="sourceSpecs_getAll && sourceSpecs_getAll[source._srctype]" class="ml-1" variant="secondary" :title="source._srctype">
             {{ sourceSpecs_getAll[source._srctype].name }}
           </b-badge>
         </div>
