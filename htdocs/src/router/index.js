@@ -156,6 +156,13 @@ const routes = [
     }
   },
   {
+    path: '/sources/:source/domains',
+    name: 'source-update',
+    component: function () {
+      return import(/* webpackChunkName: "home" */ '../views/home.vue')
+    }
+  },
+  {
     path: '/tools/client',
     name: 'tools-client',
     component: function () {

@@ -55,6 +55,10 @@
         </p>
 
         <div class="text-center mb-2">
+          <b-button v-if="source_specs && source_specs.capabilities && source_specs.capabilities.indexOf('ListDomains') > -1" type="button" variant="secondary" class="mb-1" @click="showListImportableDomain()">
+            <b-icon icon="list-task" />
+            {{ $t('domains.list') }}
+          </b-button>
           <b-button type="button" variant="danger" class="mb-1" @click="deleteSource()">
             <b-icon icon="trash-fill" />
             {{ $t('source.delete') }}
@@ -156,9 +160,6 @@ export default {
               }
             )
           })
-    },
-    showListImportableDomain () {
-      this.$router.push('/sources/' + encodeURIComponent(this.$route.params.source) + '/domains')
     },
     reactOnSuccess (toState, newSource) {
       if (newSource) {

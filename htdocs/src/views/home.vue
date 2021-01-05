@@ -46,16 +46,19 @@
           </template>
         </h-zone-list>
         <b-card v-if="filteredSource && $refs.zlist && !$refs.zlist.isLoading" no-body :class="filteredDomains.length > 0 ? 'mt-4' : ''">
-          <template v-if="!$refs.newDomains || !$refs.newDomains.noDomainsList" slot="header">
+          <template v-if="!noDomainsList" slot="header">
             <div class="d-flex justify-content-between">
               <i18n path="source.source">
                 <em>{{ filteredSource._comment }}</em>
               </i18n>
+              <b-button v-if="$refs.newDomains && $refs.newDomains.listImportableDomains.length > 0" type="button" variant="secondary" size="sm" @click="$refs.newDomains.importAllDomains()">
+                {{ $t('source.import-domains') }}
+              </b-button>
             </div>
           </template>
-          <h-source-list-domains ref="newDomains" :source="filteredSource" />
+          <h-source-list-domains ref="newDomains" :source="filteredSource" @no-domains-list-change="noDomainsList = $event" />
         </b-card>
-        <h-list-group-input-new-domain v-if="$refs.zlist && !$refs.zlist.isLoading && (!filteredSource || ($refs.newDomains && $refs.newDomains.noDomainsList))" autofocus class="mt-2" :my-source="filteredSource" />
+        <h-list-group-input-new-domain v-if="$refs.zlist && !$refs.zlist.isLoading && (!filteredSource || noDomainsList)" autofocus class="mt-2" :my-source="filteredSource" />
       </b-col>
       <b-col md="4">
         <b-card no-body class="mt-3 mt-md-0">
@@ -67,7 +70,7 @@
               </b-button>
             </div>
           </template>
-          <h-source-list no-label flush @source-selected="filteredSource = $event" />
+          <h-source-list ref="sourceList" no-label flush :selected-source="filteredSource" @source-selected="filteredSource = $event" />
         </b-card>
       </b-col>
     </b-row>
@@ -88,6 +91,7 @@ export default {
 
   data: function () {
     return {
+      noDomainsList: true,
       filteredSource: null
     }
   },
@@ -106,7 +110,7 @@ export default {
 
   watch: {
     sortedDomains: function (domains) {
-      if (domains.length === 0) {
+      if (this.$route.params.source === undefined && domains.length === 0) {
         this.$router.replace('/onboarding')
       }
     }
@@ -115,6 +119,12 @@ export default {
   created () {
     this.$store.dispatch('domains/getAllMyDomains')
     this.$store.dispatch('sources/getAllMySources')
+  },
+
+  mounted () {
+    if (this.$route.params.source) {
+      this.filteredSource = { _id: parseInt(this.$route.params.source) }
+    }
   },
 
   methods: {

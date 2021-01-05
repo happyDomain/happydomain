@@ -51,6 +51,13 @@
         {{ $t('errors.domain-have') }}
       </b-list-group-item>
     </template>
+    <template v-else-if="listImportableDomains.length === 0" #no-domain>
+      <b-list-group-item class="text-center">
+        <i18n path="errors.domain-all-imported">
+          {{ sourceSpecs_getAll[source._srctype].name }}
+        </i18n>
+      </b-list-group-item>
+    </template>
   </h-zone-list>
 </template>
 
@@ -114,6 +121,10 @@ export default {
   },
 
   watch: {
+    noDomainsList: function (ndl) {
+      this.$emit('no-domains-list-change', ndl)
+    },
+
     source: function () {
       this.getImportableDomains()
     },
@@ -129,11 +140,20 @@ export default {
     if (this.source) {
       this.getImportableDomains()
     }
+    this.$emit('no-domains-list-change', this.noDomainsList)
   },
 
   methods: {
     haveDomain (domain) {
       return this.domains_getAll.find(i => i.domain === domain.domain)
+    },
+
+    importAllDomains () {
+      this.listImportableDomains.forEach((domain) => {
+        if (!this.haveDomain(domain)) {
+          this.importDomain(domain)
+        }
+      })
     },
 
     importDomain (domain) {

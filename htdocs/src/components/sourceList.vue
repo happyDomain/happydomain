@@ -39,7 +39,7 @@
     <b-list-group-item v-if="!isLoading && sources_getAll.length == 0" class="text-center">
       You have no source defined currently. Try <a href="#" @click.prevent="$emit('new-source')">adding one</a>!
     </b-list-group-item>
-    <b-list-group-item v-for="(source, index) in sortedSources" :key="index" :active="selectedSource && selectedSource._id === source._id" button class="d-flex justify-content-between align-items-center" @click="selectSource(source)">
+    <b-list-group-item v-for="(source, index) in sortedSources" :key="index" :active="mySelectedSource && mySelectedSource._id === source._id" button class="d-flex justify-content-between align-items-center" @click="selectSource(source)">
       <div class="d-flex">
         <div class="text-center" style="width: 50px;">
           <img v-if="sourceSpecs_getAll && sourceSpecs_getAll[source._srctype]" :src="'/api/source_specs/' + source._srctype + '/icon.png'" :alt="sourceSpecs_getAll[source._srctype].name" :title="sourceSpecs_getAll[source._srctype].name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
@@ -94,12 +94,16 @@ export default {
     noLabel: {
       type: Boolean,
       default: false
+    },
+    selectedSource: {
+      type: Object,
+      default: null
     }
   },
 
   data: function () {
     return {
-      selectedSource: null
+      mySelectedSource: null
     }
   },
 
@@ -135,10 +139,33 @@ export default {
   },
 
   watch: {
+    selectedSource: function (source) {
+      if (source !== this.mySelectedSource && this.sources_getAll[source._id]) {
+        this.selectSource(source ? this.sources_getAll[source._id] : null)
+      }
+    },
+
     sources_getAll: function (sources) {
+      // handle emitNewIfEmpty
       if (Object.keys(sources).length === 0 && this.emitNewIfEmpty) {
         this.$emit('new-source')
       }
+
+      // handle case when waiting for sources to select one
+      if (this.selectedSource && this.selectedSource !== this.mySelectedSource) {
+        this.selectSource(sources[this.selectedSource._id])
+      }
+
+      // handle deletion of selected source
+      if (this.mySelectedSource && !sources[this.mySelectedSource._id]) {
+        this.selectSource(null)
+      }
+    }
+  },
+
+  mounted () {
+    if (this.selectedSource && this.sources_getAll) {
+      this.selectSource(this.sources_getAll[this.selectedSource._id])
     }
   },
 
@@ -169,12 +196,12 @@ export default {
     },
 
     selectSource (source) {
-      if (this.selectedSource != null && this.selectedSource._id === source._id) {
-        this.selectedSource = null
+      if (this.mySelectedSource != null && source && this.mySelectedSource._id === source._id) {
+        this.mySelectedSource = null
       } else {
-        this.selectedSource = source
+        this.mySelectedSource = source
       }
-      this.$emit('source-selected', this.selectedSource)
+      this.$emit('source-selected', this.mySelectedSource)
     },
 
     updateSource (event, source) {
