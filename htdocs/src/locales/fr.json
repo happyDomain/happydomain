@@ -1,6 +1,6 @@
 {
     "account": {
-        "ask-have": "Vous n'avez pas encore de compte sur notre belle plateforme ?",
+        "ask-have": "Vous n'avez pas encore de compte sur notre sympathique plateforme ?",
         "delete": {
             "delete": "Supprimer mon compte",
             "deleted": "Compte supprimé",
@@ -43,19 +43,20 @@
         "resolver": "Résolveur",
         "run": "Lancer l'opération !",
         "spinning": "Chargement",
-        "welcome": "Bienvenue à  {0} !",
-        "help": "Besoin d'aide ?"
+        "welcome": "Bienvenue sur {0} !",
+        "help": "Besoin d'aide ?",
+        "records": "aucun enregistrement {type} | enregistrement {type} | enregistrements {type}"
     },
     "domains": {
         "kind": "domaine",
         "actions": {
             "reimport": "Importer à nouveau",
-            "view": "Voir la zone",
-            "propagate": "Diffuser",
+            "view": "Voir ma zone",
+            "propagate": "Diffuser mes changements",
             "rollback": "Revenir à cette version"
         },
         "alert": {
-            "remove": "Cette action retirera définitivement le domaine {domain} de votre liste. L'historique et les zones abstraites seront supprimés. Cela ne supprimera ni n'affectera votre domaine auprès de votre fournisseur, ni ne modifiera ce qui est actuellement diffusé. Cela concerne seulement que ce que vous voyez dans happyDNS. Êtes-vous certain de vouloir continuer ?",
+            "remove": "Cette action retirera définitivement le domaine {domain} de votre liste. L'historique et les zones abstraites seront supprimés. Cela ne supprimera ni n'affectera votre domaine auprès de votre fournisseur, ni ne modifiera ce qui est actuellement diffusé. Cela ne concerne seulement que ce que vous voyez dans happyDNS. Êtes-vous certain de vouloir continuer ?",
             "unable-retrieve": {
                 "description": "Malheureusement, nous ne parvenons pas à obtenir les informations du domaine {domain} :",
                 "title": "Impossible de récupérer les informations du domaine"
@@ -79,14 +80,14 @@
         },
         "attached-new": "Nouveau domaine lié à happyDNS!\n",
         "create-new-key": "Créer une nouvelle clé {id}.",
-        "discard": "Abandon",
+        "discard": "Supprimer",
         "drop-alias": "Supprimer l'alias",
         "edit-target": "@:common.edit destination",
         "give-explicit-name": "Donnez un nom explicite afin de trouver facilement ce service.",
         "history": "Historique",
         "list": "Liste des domaines importables",
         "n-aliases": "{n} alias | {n} alias",
-        "please-fill-fields": "Veuilez remplir les champs suivants:",
+        "please-fill-fields": "Veuillez remplir les champs suivants:",
         "removal": "Confirmer la suppression du domaine",
         "save-modifications": "Enregistrer ces modifications",
         "stop": "Arrêter de gérer ce domaine",
@@ -97,7 +98,7 @@
             "live": "Enregistrements actifs",
             "monitoring": "Suivi",
             "summary": "Résumé",
-            "source": "Hébergeur du domaine",
+            "source": "Zone hébergée par",
             "title": "Voir la zone"
         },
         "views": {
@@ -111,13 +112,15 @@
             },
             "source-parameters": "Paramètres d'hébergement",
             "records": {
-                "title": "Liste des enregistrements (avancés)",
+                "title": "Liste avec les enregistrements (avancés)",
                 "label": "Enregistrements"
             },
             "as": "Voir comme :"
         },
         "alias-creation": "Ajouter un alias pointant sur {0} :",
-        "alias-creation-sample": "Cela va créer cet alias :"
+        "alias-creation-sample": "Cela va créer cet alias :",
+        "placeholder-new": "mon.nouveau.domaine.",
+        "form-new-subdomain": "Ajout d'un sous-domaine sous {0} :"
     },
     "email": {
         "address": "Adresse électronique",
@@ -163,17 +166,19 @@
             "title": "Délai d'authentification",
             "content": "Session invalide, vous avez été déconnecté : {err}. Veuillez vous connecter à nouveau."
         },
-        "settings-change": "Impossible de changer vos paramètres"
+        "settings-change": "Impossible de changer vos paramètres",
+        "account-no-auth": "",
+        "domain-all-imported": "Ce compte sur {0} ne contient plus aucun domaine à importer."
     },
     "menu": {
         "my-domains": "Mes domaines",
         "my-sources": "Les hébergeurs de mes domaines",
-        "dns-client": "Client DNS",
         "dns-resolver": "Résolveur DNS",
         "my-account": "Mon compte",
         "logout": "Se déconnecter",
         "signup": "S'inscrire",
-        "signin": "S'identifier"
+        "signin": "S'identifier",
+        "quick-menu": "Accès rapide"
     },
     "onboarding": {
         "add-one": "ajouter un domaine",
@@ -216,20 +221,24 @@
         "add": "Ajout d'un service",
         "already": "Déjà géré",
         "delete": "@:common.delete ce service",
-        "update": "Mettre à jour le service"
+        "update": "Mettre à jour le service",
+        "form-new": "Ajout d'une service sur {0}"
     },
     "source": {
         "delete": "@:common.delete ce @:source.kind",
         "find": "Vous ne trouvez pas votre @:source.kind ici ?",
         "name-your": "Indiquez votre @:source.kind",
-        "source": "Domaines résidant sur {0}",
+        "source": "Domaines existant sur {0}",
         "kind": "L'hébergeur du domaine",
         "select-provider": "Sélectionnez d'abord l'hébergeur de votre domaine :",
         "select-source": "Sélectionnez l'endroit où votre domaine {0} est hébergé",
         "source-name": "Nom de l'hébergeur",
         "source-type": "Type d'hébergement",
         "title": "Les hébergeurs de vos domaines",
-        "available-types": "Types de ressources disponibles"
+        "available-types": "Types de ressources disponibles",
+        "import-domains": "Importer tous les domaines",
+        "new-form": "Nouvel hébergeur de domaines",
+        "update": "Changer @:source.kind"
     },
     "upgrade": {
         "title": "Une mise à jour est disponible !",
@@ -261,7 +270,35 @@
         "language": "Langue",
         "save": "Enregistrer les paramètres",
         "title": "Paramètres",
-        "success": "",
+        "success": "Vous pouvez continuer d'apprécier happyDNS.",
         "success-change": "Vos paramètres ont été sauvegardés."
+    },
+    "record": {
+        "A": "Adresse IPv4",
+        "AAAA": "Adresse IPv6",
+        "Expire": "",
+        "Mbox": "E-mail de l'administrateur",
+        "Minttl": "",
+        "Mx": "Serveur de courriels",
+        "Ns": "Serveur de noms",
+        "Preference": "Préférences",
+        "Priority": "Priorité",
+        "Refresh": "Rafraîchissement",
+        "Retry": "Prochaine tentative",
+        "Serial": "N° série",
+        "Target": "Cible",
+        "Txt": "Données",
+        "Weight": "Poids"
+    },
+    "resolver": {
+        "advanced": "Besoin de paramètres personnalisés ?",
+        "custom": "Résolveur spécifique",
+        "custom-description": "Indiquez l'adresse (un nom de domaine ou une IP) du résolveur que vous souhaitez utiliser.",
+        "domain-description": "Indiquez le domaine dont vous souhaitez consulter les enregistrements. Par exemple, vous pouvez essayer {0}.",
+        "field-description": "Quel type d'enregistrement DNS vous souhaitez voir. Par exemple : A est utilisé pour les IPv4, AAAA pour les IPv6, .... {0}",
+        "field-description-more-info": "Plus d'information ici",
+        "resolver-description": "Il s'agit du serveur à qui nous allons demander les informations.",
+        "ttl": "Temps de cache restant",
+        "showDNSSEC": "Afficher les enregistrements DNSSEC dans la réponse (s'il y en a)"
     }
 }

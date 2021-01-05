@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <h-list-group-input v-model="newDomain" placeholder="my.new.domain." :state="newDomainState" input-class="text-monospace" @submit="submitNewDomain" @update="validateNewDomain" />
+  <h-list-group-input v-model="newDomain" :placeholder="$t('domains.placeholder-new')" :state="newDomainState" input-class="text-monospace" @submit="submitNewDomain" @update="validateNewDomain" />
 </template>
 
 <script>

@@ -34,7 +34,9 @@
 <template>
   <b-modal id="modal-addSvc" :size="step === 2 ? 'lg' : ''" scrollable @ok="handleModalSvcOk">
     <template #modal-title>
-      Add a new service to <span class="text-monospace">{{ dn | fqdn(domain.domain) }}</span>
+      <i18n path="service.form-new">
+        <span class="text-monospace">{{ dn | fqdn(domain.domain) }}</span>
+      </i18n>
     </template>
     <template #modal-footer="{ cancel }">
       <h-help
@@ -83,7 +85,9 @@
     </template>
     <form id="addSvcForm" @submit.stop.prevent="handleModalSvcOk">
       <p v-if="step === 0">
-        Add a new subdomain under <span class="text-monospace">{{ domain.domain }}</span>:
+        <i18n path="domains.form-new-subdomain">
+          <span class="text-monospace">{{ domain.domain }}</span>
+        </i18n>
         <b-input-group :append="'.' + domain.domain">
           <b-input
             v-model="dn"

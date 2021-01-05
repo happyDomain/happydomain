@@ -63,10 +63,10 @@
             <b-icon icon="three-dots" />
           </template>
           <b-dropdown-item @click="updateSource($event, source)">
-            Update settings
+            {{ $t('source.update') }}
           </b-dropdown-item>
           <b-dropdown-item @click="deleteSource($event, source)">
-            Delete source
+            {{ $t('source.delete') }}
           </b-dropdown-item>
         </b-dropdown>
       </div>

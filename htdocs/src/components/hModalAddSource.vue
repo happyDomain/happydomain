@@ -36,7 +36,7 @@
     id="modal-add-source"
     scrollable
     size="lg"
-    title="New Source Form"
+    :title="$t('source.new-form')"
     ok-title="Next >"
     :ok-disabled="!sourceSpecsSelected"
     @ok="nextState"
