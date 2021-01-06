@@ -106,7 +106,7 @@
           <b-col md="12" lg="6">
             &copy;
             <h-logo color="#fff" height="17" />
-            2019-2020 All rights reserved
+            2019-2021 All rights reserved
           </b-col>
           <b-col md="6" lg="3" />
           <b-col md="6" lg="3" />
