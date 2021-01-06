@@ -8,6 +8,7 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/miekg/dns v1.1.29
 	github.com/ovh/go-ovh v0.0.0-20181109152953-ba5adb4cf014
+	github.com/oze4/godaddygo v1.3.17
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/yuin/goldmark v1.1.30
