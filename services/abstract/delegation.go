@@ -92,6 +92,10 @@ func delegation_analyze(a *svcs.Analyzer) error {
 	delegations := map[string]*Delegation{}
 
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS}) {
+		if record.Header().Name == a.GetOrigin() {
+			continue
+		}
+
 		if ns, ok := record.(*dns.NS); ok {
 			if _, ok := delegations[ns.Header().Name]; !ok {
 				delegations[ns.Header().Name] = &Delegation{}

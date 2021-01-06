@@ -51,6 +51,10 @@ type Analyzer struct {
 	defaultTTL uint32
 }
 
+func (a *Analyzer) GetOrigin() string {
+	return a.origin
+}
+
 type AnalyzerRecordFilter struct {
 	Prefix       string
 	Domain       string
