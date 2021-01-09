@@ -43,6 +43,9 @@ export default {
     if (!settings) {
       settings = {}
     }
+    if (subdomain === '') {
+      subdomain = '@'
+    }
     settings.state = state
     if (recallid) {
       settings.recall = parseInt(recallid)
