@@ -37,7 +37,7 @@ import { ExpirationPlugin } from 'workbox-expiration'
 
 setCacheNameDetails({ prefix: 'happyDNS' })
 
-const LATEST_VERSION = 'v0.7'
+const LATEST_VERSION = 'v0.8'
 
 self.addEventListener('activate', (event) => {
   console.log(`%c ${LATEST_VERSION} `, 'background: #ddd; color: #0000ff')
