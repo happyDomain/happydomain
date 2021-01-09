@@ -60,7 +60,11 @@ export default {
   },
 
   deleteZoneService (domain, id, service) {
-    return Api().delete('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(service._domain) + '/services/' + encodeURIComponent(service._id))
+    let subdomain = service._domain
+    if (subdomain === '') {
+      subdomain = '@'
+    }
+    return Api().delete('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(subdomain) + '/services/' + encodeURIComponent(service._id))
   },
 
   updateZoneService (domain, id, subdomain, service) {
@@ -68,6 +72,10 @@ export default {
   },
 
   getServiceRecords (domain, id, service) {
-    return Api().get('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(service._domain) + '/services/' + encodeURIComponent(service._id) + '/records')
+    let subdomain = service._domain
+    if (subdomain === '') {
+      subdomain = '@'
+    }
+    return Api().get('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(subdomain) + '/services/' + encodeURIComponent(service._id) + '/records')
   }
 }

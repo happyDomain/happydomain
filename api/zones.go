@@ -435,7 +435,9 @@ func deleteZoneService(opts *config.Options, req *RequestResources, body io.Read
 		}
 	}
 
-	err = req.Zone.EraseService(req.Ps.ByName("subdomain"), req.Domain.DomainName, serviceid, nil)
+	subdomain := strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(req.Ps.ByName("subdomain"), "."+req.Domain.DomainName), "@"), req.Domain.DomainName)
+
+	err = req.Zone.EraseService(subdomain, req.Domain.DomainName, serviceid, nil)
 	if err != nil {
 		return APIErrorResponse{
 			err: err,

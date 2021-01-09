@@ -116,7 +116,7 @@
 <script>
 import ServiceSpecsApi from '@/services/ServiceSpecsApi'
 import ValidateDomain from '@/mixins/validateDomain'
-import ZoneApi from '@/services/ZoneApi'
+import ZoneApi from '@/api/zones'
 import { domainCompare } from '@/utils/domainCompare'
 
 export default {

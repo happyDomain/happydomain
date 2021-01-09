@@ -85,7 +85,7 @@
 </template>
 
 <script>
-import ZoneApi from '@/services/ZoneApi'
+import ZoneApi from '@/api/zones'
 
 export default {
   name: 'HDomainService',

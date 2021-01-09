@@ -128,7 +128,7 @@
 import CustomForm from '@/mixins/customForm'
 import ServicesApi from '@/services/ServicesApi'
 import ValidateDomain from '@/mixins/validateDomain'
-import ZoneApi from '@/services/ZoneApi'
+import ZoneApi from '@/api/zones'
 
 export default {
   name: 'HModalAddService',
