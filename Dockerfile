@@ -47,3 +47,4 @@ ENV HAPPYDNS_LEVELDB_PATH=/data/happydns.db
 VOLUME /data
 
 COPY --from=gobuild /go/src/git.happydns.org/happydns/happydns /usr/sbin/happydns
+COPY hadmin.sh /usr/bin/hadmin
