@@ -67,6 +67,10 @@ func (i *mailAddress) Set(value string) error {
 	return nil
 }
 
+type sendMethod interface {
+	PrepareAndSend(...*gomail.Message) error
+}
+
 var (
 	// MailFrom holds the content of the From field for all e-mails that
 	// will be send.
@@ -74,7 +78,7 @@ var (
 
 	// SendMethod is a pointer to the current global method used to send
 	// e-mails.
-	SendMethod gomail.Sender = &SystemSendmail{}
+	SendMethod sendMethod = &SystemSendmail{}
 )
 
 func init() {
@@ -144,7 +148,7 @@ func SendMail(to *mail.Address, subject, content string) (err error) {
 		})
 	}
 
-	if err = gomail.Send(SendMethod, m); err != nil {
+	if err = SendMethod.PrepareAndSend(m); err != nil {
 		return
 	}
 

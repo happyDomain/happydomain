@@ -35,6 +35,8 @@ import (
 	"io"
 	"os"
 	"os/exec"
+
+	gomail "github.com/go-mail/mail"
 )
 
 // sendmail contains the path to the sendmail command
@@ -43,7 +45,6 @@ const sendmail = "/usr/sbin/sendmail"
 // SystemSendmail uses the sendmail command to send message
 type SystemSendmail struct{}
 
-// Send sends an e-mail to the given recipients using the sendmail command.
 func (t *SystemSendmail) Send(from string, to []string, msg io.WriterTo) error {
 	cmd := exec.Command(sendmail, "-t")
 	cmd.Stdout = os.Stdout
@@ -72,4 +73,10 @@ func (t *SystemSendmail) Send(from string, to []string, msg io.WriterTo) error {
 	}
 
 	return nil
+}
+
+// Send sends an e-mail to the given recipients using the sendmail command.
+func (t *SystemSendmail) PrepareAndSend(m ...*gomail.Message) (err error) {
+	err = gomail.Send(t, m...)
+	return
 }
