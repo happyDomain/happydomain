@@ -39,6 +39,7 @@ import {
   BIconArrowRight,
   BIconCloudDownload,
   BIconCloudUpload,
+  BIconChatRightText,
   BIconCheck,
   BIconChevronDown,
   BIconChevronLeft,
@@ -119,6 +120,7 @@ Vue.component('BIcon', BIcon)
 Vue.component('BIconArrowRight', BIconArrowRight)
 Vue.component('BIconCloudDownload', BIconCloudDownload)
 Vue.component('BIconCloudUpload', BIconCloudUpload)
+Vue.component('BIconChatRightText', BIconChatRightText)
 Vue.component('BIconCheck', BIconCheck)
 Vue.component('BIconChevronDown', BIconChevronDown)
 Vue.component('BIconChevronLeft', BIconChevronLeft)
