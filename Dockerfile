@@ -46,7 +46,12 @@ ENV HAPPYDNS_LEVELDB_PATH=/data/happydns.db
 
 VOLUME /data
 
-RUN adduser --system --no-create-home --uid 15353 happydns && chown happydns /data
+RUN apk add --no-cache \
+        curl \
+        jq \
+    && \
+    adduser --system --no-create-home --uid 15353 happydns && \
+    chown happydns /data
 USER happydns
 
 COPY --from=gobuild /go/src/git.happydns.org/happydns/happydns /usr/sbin/happydns
