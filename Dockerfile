@@ -44,15 +44,16 @@ ENTRYPOINT ["/usr/sbin/happydns"]
 
 ENV HAPPYDNS_LEVELDB_PATH=/data/happydns.db
 
-VOLUME /data
-
 RUN apk add --no-cache \
         curl \
         jq \
     && \
     adduser --system --no-create-home --uid 15353 happydns && \
-    chown happydns /data
+    mkdir /data && chown happydns /data
 USER happydns
+WORKDIR /data
+
+VOLUME /data
 
 COPY --from=gobuild /go/src/git.happydns.org/happydns/happydns /usr/sbin/happydns
 COPY hadmin.sh /usr/bin/hadmin
