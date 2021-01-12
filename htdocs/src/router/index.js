@@ -157,7 +157,7 @@ const routes = [
   },
   {
     path: '/sources/:source/domains',
-    name: 'source-update',
+    name: 'source-update-domains',
     component: function () {
       return import(/* webpackChunkName: "home" */ '../views/home.vue')
     }
