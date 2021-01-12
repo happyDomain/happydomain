@@ -33,9 +33,10 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
 	"math/rand"
+	"net/http"
 	"strings"
 	"time"
 
@@ -152,12 +153,38 @@ func runResolver(_ *config.Options, ps httprouter.Params, body io.Reader) Respon
 
 	if r == nil {
 		return APIErrorResponse{
-			err: errors.New("response is nil"),
+			err:    fmt.Errorf("No response to display."),
+			status: http.StatusNoContent,
 		}
-	}
-	if r.Rcode != dns.RcodeSuccess {
+	} else if r.Rcode == dns.RcodeFormatError {
 		return APIErrorResponse{
-			err: errors.New("failed to get a valid answer"),
+			err:    fmt.Errorf("DNS request mal formated."),
+			status: http.StatusBadRequest,
+		}
+	} else if r.Rcode == dns.RcodeServerFailure {
+		return APIErrorResponse{
+			err:    fmt.Errorf("Resolver returns an error (most likely something is wrong in %q).", urr.DomainName),
+			status: http.StatusInternalServerError,
+		}
+	} else if r.Rcode == dns.RcodeNameError {
+		return APIErrorResponse{
+			err:    fmt.Errorf("The domain %q was not found.", urr.DomainName),
+			status: http.StatusNotFound,
+		}
+	} else if r.Rcode == dns.RcodeNotImplemented {
+		return APIErrorResponse{
+			err:    fmt.Errorf("Resolver returns the request hits non implemented code."),
+			status: http.StatusInternalServerError,
+		}
+	} else if r.Rcode == dns.RcodeRefused {
+		return APIErrorResponse{
+			err:    fmt.Errorf("Resolver refused to treat our request."),
+			status: http.StatusForbidden,
+		}
+	} else if r.Rcode != dns.RcodeSuccess {
+		return APIErrorResponse{
+			err:    fmt.Errorf("Resolver returns %s.", dns.RcodeToString[r.Rcode]),
+			status: http.StatusNotAcceptable,
 		}
 	}
 
