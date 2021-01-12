@@ -140,7 +140,10 @@
           </div>
         </form>
       </b-col>
-      <b-col v-if="responses" md="8" class="pt-2">
+      <b-col v-if="responses === 'no-answer'" md="8" class="pt-2">
+        <h3>{{ $tc('common.records', 0, { type: form.type }) }}</h3>
+      </b-col>
+      <b-col v-else-if="responses" md="8" class="pt-2">
         <div v-for="(rrs,type) in responseByType" :key="type">
           <h3>{{ $tc('common.records', rrs.length, { type: $options.filters.nsrrtype(type) }) }}</h3>
           <table class="table table-hover table-sm">
@@ -292,7 +295,11 @@ export default {
         .post('/api/resolver', this.form)
         .then(
           (response) => {
-            this.responses = response.data.Answer
+            if (response.data.Answer) {
+              this.responses = response.data.Answer
+            } else {
+              this.responses = 'no-answer'
+            }
             this.request_pending = false
           },
           (error) => {
