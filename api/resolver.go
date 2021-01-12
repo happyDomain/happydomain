@@ -45,6 +45,10 @@ import (
 	"git.happydns.org/happydns/config"
 )
 
+var (
+	RRToAskForANY = []uint16{dns.TypeSOA, dns.TypeA, dns.TypeAAAA, dns.TypeNS, dns.TypeMX, dns.TypeTXT}
+)
+
 func init() {
 	router.POST("/api/resolver", ApiHandler(runResolver))
 }
@@ -54,6 +58,53 @@ type resolverRequest struct {
 	Custom     string `json:"custom,omitempty"`
 	DomainName string `json:"domain"`
 	Type       string `json:"type"`
+}
+
+func resolverANYQuestion(client dns.Client, resolver string, dn string) (r *dns.Msg, err error) {
+	var response *dns.Msg
+
+	for _, rrType := range RRToAskForANY {
+		m := new(dns.Msg)
+		m.Question = append(m.Question, dns.Question{
+			Name:   dn,
+			Qtype:  rrType,
+			Qclass: dns.ClassINET,
+		})
+		m.RecursionDesired = true
+		m.SetEdns0(4096, true)
+
+		response, _, err = client.Exchange(m, resolver)
+		if err != nil {
+			return
+		}
+
+		if len(response.Answer) > 0 {
+			if r == nil {
+				r = response
+				r.Question[0].Qtype = dns.TypeANY
+			} else {
+				r.Answer = append(r.Answer, response.Answer...)
+			}
+		}
+	}
+
+	if r == nil {
+		r = response
+		r.Question[0].Qtype = dns.TypeANY
+	}
+
+	return
+}
+
+func resolverQuestion(client dns.Client, resolver string, dn string, rrType uint16) (*dns.Msg, error) {
+	m := new(dns.Msg)
+	m.SetQuestion(dn, rrType)
+	m.RecursionDesired = true
+	m.SetEdns0(4096, true)
+
+	r, _, err := client.Exchange(m, resolver)
+
+	return r, err
 }
 
 func runResolver(_ *config.Options, ps httprouter.Params, body io.Reader) Response {
@@ -86,12 +137,13 @@ func runResolver(_ *config.Options, ps httprouter.Params, body io.Reader) Respon
 
 	client := dns.Client{Timeout: time.Second * 5}
 
-	m := new(dns.Msg)
-	m.SetQuestion(urr.DomainName, dns.StringToType[urr.Type])
-	m.RecursionDesired = true
-	m.SetEdns0(4096, true)
-
-	r, _, err := client.Exchange(m, urr.Resolver+":53")
+	var r *dns.Msg
+	rrType := dns.StringToType[urr.Type]
+	if rrType == dns.TypeANY {
+		r, err = resolverANYQuestion(client, urr.Resolver+":53", urr.DomainName)
+	} else {
+		r, err = resolverQuestion(client, urr.Resolver+":53", urr.DomainName, rrType)
+	}
 	if err != nil {
 		return APIErrorResponse{
 			err: err,
