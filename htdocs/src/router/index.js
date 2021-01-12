@@ -177,6 +177,20 @@ const routes = [
     }
   },
   {
+    path: '/resolver',
+    name: 'tools-resolver',
+    component: function () {
+      return import(/* webpackChunkName: "tools-client" */ '../views/tools-client.vue')
+    }
+  },
+  {
+    path: '/resolver/:domain',
+    name: 'tools-resolver-domain',
+    component: function () {
+      return import(/* webpackChunkName: "tools-client" */ '../views/tools-client.vue')
+    }
+  },
+  {
     path: '/zones/:domain/records',
     name: 'zone-records',
     component: function () {

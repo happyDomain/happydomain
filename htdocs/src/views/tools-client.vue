@@ -46,7 +46,7 @@
           >
             <template slot="description">
               <i18n path="resolver.domain-description">
-                <router-link to="/tools/client/wikipedia.org" class="text-monospaced">
+                <router-link to="/resolver/wikipedia.org" class="text-monospaced">
                   wikipedia.org
                 </router-link>
               </i18n>
@@ -307,7 +307,7 @@ export default {
             this.request_pending = false
           })
       if (this.$route.params.domain !== this.form.domain) {
-        this.$router.push('/tools/client/' + encodeURIComponent(this.form.domain))
+        this.$router.push('/resolver/' + encodeURIComponent(this.form.domain))
       }
     }
   }

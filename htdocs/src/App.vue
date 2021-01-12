@@ -60,7 +60,7 @@
               {{ $t('menu.my-sources') }}
             </b-dropdown-item>
             <b-dropdown-divider />
-            <b-dropdown-item to="/tools/client">
+            <b-dropdown-item to="/resolver">
               {{ $t('menu.dns-resolver') }}
             </b-dropdown-item>
             <b-dropdown-divider />
@@ -76,7 +76,7 @@
         <b-navbar-nav v-else class="ml-auto">
           <h-help class="mr-2" size="sm" variant="link" />
 
-          <b-button class="mr-2" variant="info" to="/tools/client">
+          <b-button class="mr-2" variant="info" to="/resolver">
             <b-icon icon="list" aria-hidden="true" /> {{ $t('menu.dns-resolver') }}
           </b-button>
 
