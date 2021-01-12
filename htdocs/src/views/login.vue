@@ -101,11 +101,23 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
+
 export default {
 
   data: function () {
     return {
       loginForm: {}
+    }
+  },
+
+  computed: {
+    ...mapGetters('user', ['user_isLogged'])
+  },
+
+  mounted () {
+    if (this.user_isLogged) {
+      this.$router.replace('/')
     }
   },
 

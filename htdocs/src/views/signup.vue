@@ -133,6 +133,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import UserApi from '@/api/user'
 import PasswordChecks from '@/mixins/passwordChecks'
 
@@ -156,6 +157,13 @@ export default {
         return null
       }
       return /.+@.+\..+/i.test(this.signupForm.email)
+    },
+    ...mapGetters('user', ['user_isLogged'])
+  },
+
+  mounted () {
+    if (this.user_isLogged) {
+      this.$router.replace('/')
     }
   },
 

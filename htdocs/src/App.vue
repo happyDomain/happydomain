@@ -142,6 +142,11 @@ export default {
   },
 
   watch: {
+    user_isLogged: function (isLogged) {
+      if (isLogged && (this.$route.name === 'login' || this.$route.name === 'signup')) {
+        this.$router.replace('/')
+      }
+    },
     user_getSettings: function (settings) {
       if (settings && settings.language && this.$i18n.locale !== settings.language) {
         this.$i18n.locale = settings.language
