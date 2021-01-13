@@ -100,7 +100,12 @@
 
     <b-toaster name="b-toaster-content-right" style="position: fixed; top: 70px; right: 0; z-index: 1042; min-width: 30vw;" />
 
-    <a id="voxpeople" :href="'https://framaforms.org/quel-est-votre-avis-sur-happydns-1610366701?u=' + (user_isLogged?user_getSession.id:0) + '&amp;p=' + $router.history.current.name + '&amp;l=' + $i18n.locale" target="_blank">
+    <a
+      id="voxpeople"
+      :href="'https://framaforms.org/quel-est-votre-avis-sur-happydns-1610366701?u=' + (user_isLogged?user_getSession.id:0) + '&amp;p=' + $router.history.current.name + '&amp;l=' + $i18n.locale"
+      target="_blank"
+      :title="$t('common.survey')"
+    >
       <b-icon icon="chat-right-text" style="width: 2vw; height: 2vw;" />
     </a>
 

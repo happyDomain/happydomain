@@ -45,7 +45,8 @@
         "spinning": "Chargement",
         "welcome": "Bienvenue sur {0} !",
         "help": "Besoin d'aide ?",
-        "records": "aucun enregistrement {type} | enregistrement {type} | enregistrements {type}"
+        "records": "aucun enregistrement {type} | enregistrement {type} | enregistrements {type}",
+        "survey": "Une remarque ? un commentaire à partager ? N'hésitez pas à nous écrire !"
     },
     "domains": {
         "kind": "domaine",
@@ -167,7 +168,7 @@
             "content": "Session invalide, vous avez été déconnecté : {err}. Veuillez vous connecter à nouveau."
         },
         "settings-change": "Impossible de changer vos paramètres",
-        "account-no-auth": "",
+        "account-no-auth": "Vous utilisez happyDNS sans authentification. Vous ne pouvez pas changer d'autre paramètre de votre compte.",
         "domain-all-imported": "Ce compte sur {0} ne contient plus aucun domaine à importer."
     },
     "menu": {
