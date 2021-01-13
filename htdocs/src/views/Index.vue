@@ -63,7 +63,7 @@ export default {
       // Check if the user is logged
       // If the user is logged, it already displays domain's lists
       if (!this.user_isLogged) {
-        if (window.location.href === '/') {
+        if (this.$route.path === '/') {
           // Not logged at home-page -> redirect to static commercial presentation
           let preferedLang = navigator.language.split('-')[0] || process.env.VUE_APP_I18N_LOCALE || 'en'
           if (preferedLang !== 'en' && preferedLang !== 'fr') {
