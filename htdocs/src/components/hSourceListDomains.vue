@@ -171,7 +171,13 @@ export default {
 
       SourcesApi.listSourceDomains(this.source._id)
         .then(
-          response => (this.importableDomains = response.data),
+          response => {
+            if (response.data === null) {
+              this.importableDomains = []
+            } else {
+              this.importableDomains = response.data
+            }
+          },
           error => {
             this.$root.$bvToast.toast(
               error.response.data.errmsg, {
