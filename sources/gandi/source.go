@@ -167,6 +167,71 @@ func (s *GandiAPI) ListDomains() (zones []string, err error) {
 	return
 }
 
+func (s *GandiAPI) ListDomainsWithActions() (zones []sources.ImportableDomain, err error) {
+	var req *http.Request
+	req, err = s.newRequest("GET", "https://api.gandi.net/v5/domain/domains", nil)
+	if err != nil {
+		return
+	}
+
+	domains := []gandiDomainInfo{}
+
+	err = doJSON(req, &domains)
+	if err != nil {
+		return
+	}
+
+	var migratedDomains []string
+	migratedDomains, err = s.ListDomains()
+	if err != nil {
+		return
+	}
+
+	zones = []sources.ImportableDomain{}
+domains:
+	for _, d := range domains {
+		for _, dn := range migratedDomains {
+			if dns.Fqdn(d.FQDN) == dn {
+				continue domains
+			}
+		}
+		zones = append(zones, sources.ImportableDomain{
+			FQDN:      dns.Fqdn(d.FQDN),
+			State:     "warning",
+			Msg:       "Migration to the LiveDNS API required.",
+			Btn:       "domains.actions.do-migration",
+			BtnAction: "migrate-livedns",
+		})
+	}
+
+	return
+}
+
+func (s *GandiAPI) ActionOnListedDomain(dn string, act string) (res bool, err error) {
+	if act != "migrate-livedns" {
+		return false, fmt.Errorf("Unable to handle %q action for this domaine", act)
+	}
+
+	var buf bytes.Buffer
+	err = json.NewEncoder(&buf).Encode(map[string]interface{}{
+		"fqdn": strings.TrimSuffix(dn, "."),
+		"zone": nil,
+	})
+	if err != nil {
+		return
+	}
+
+	var req *http.Request
+	req, err = s.newRequest("POST", "https://api.gandi.net/v5/livedns/domains", &buf)
+	if err != nil {
+		return
+	}
+
+	err = doJSON(req, nil)
+	res = err == nil
+	return
+}
+
 func (s *GandiAPI) Validate() (err error) {
 	var req *http.Request
 	req, err = s.newRequest("GET", "https://api.gandi.net/v5/billing/info", nil)
