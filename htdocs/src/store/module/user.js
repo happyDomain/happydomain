@@ -112,6 +112,7 @@ export default {
           Vue.set(state, 'session', JSON.parse(sessionStorage.loggedUser))
         } catch {
           Vue.set(state, 'session', null)
+          sessionStorage.clear()
         }
       }
     },
@@ -123,6 +124,7 @@ export default {
 
     logout (state) {
       Vue.set(state, 'session', null)
+      sessionStorage.clear()
     }
   }
 }
