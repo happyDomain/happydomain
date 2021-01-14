@@ -48,6 +48,14 @@ export default {
     return Api().get('/api/sources/' + encodeURIComponent(srcId) + '/domains')
   },
 
+  listSourceDomainsWithActions (srcId) {
+    return Api().get('/api/sources/' + encodeURIComponent(srcId) + '/domains_with_actions')
+  },
+
+  doSourceDomainsAction (srcId, fqdn, action) {
+    return Api().post('/api/sources/' + encodeURIComponent(srcId) + '/domains_with_actions', { fqdn, action })
+  },
+
   deleteSource (source) {
     return Api().delete('/api/sources/' + encodeURIComponent(source._id))
   }

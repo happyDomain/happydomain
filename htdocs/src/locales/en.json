@@ -51,6 +51,7 @@
     "domains": {
         "kind": "domain",
         "actions": {
+            "do-migration": "Migrate now",
             "reimport": "Re-import",
             "view": "View my zone",
             "propagate": "Publish my changes",

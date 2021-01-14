@@ -36,6 +36,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"strconv"
 
 	"git.happydns.org/happydns/config"
@@ -53,6 +54,9 @@ func init() {
 	router.DELETE("/api/sources/:sid", apiAuthHandler(sourceMetaHandler(deleteSource)))
 
 	router.GET("/api/sources/:sid/domains", apiAuthHandler(sourceHandler(getDomainsHostedBySource)))
+
+	router.GET("/api/sources/:sid/domains_with_actions", apiAuthHandler(sourceHandler(getDomainsWithActionsHostedBySource)))
+	router.POST("/api/sources/:sid/domains_with_actions", apiAuthHandler(sourceHandler(doDomainsWithActionsHostedBySource)))
 
 	router.GET("/api/sources/:sid/available_resource_types", apiAuthHandler(sourceHandler(getAvailableResourceTypes)))
 }
@@ -224,6 +228,58 @@ func getDomainsHostedBySource(_ *config.Options, req *RequestResources, body io.
 		return APIResponse{
 			response: domains,
 		}
+	}
+}
+
+func getDomainsWithActionsHostedBySource(_ *config.Options, req *RequestResources, body io.Reader) Response {
+	sr, ok := req.Source.Source.(sources.ListDomainsWithActionsSource)
+	if !ok {
+		return APIErrorResponse{
+			err: fmt.Errorf("Source doesn't support domain listing."),
+		}
+	}
+
+	if domains, err := sr.ListDomainsWithActions(); err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	} else {
+		return APIResponse{
+			response: domains,
+		}
+	}
+}
+
+func doDomainsWithActionsHostedBySource(_ *config.Options, req *RequestResources, body io.Reader) Response {
+	sr, ok := req.Source.Source.(sources.ListDomainsWithActionsSource)
+	if !ok {
+		return APIErrorResponse{
+			err: fmt.Errorf("Source doesn't support domain listing."),
+		}
+	}
+
+	var us sources.ImportableDomain
+	err := json.NewDecoder(body).Decode(&us)
+	if err != nil {
+		return APIErrorResponse{
+			err: err,
+		}
+	}
+
+	if len(us.FQDN) == 0 {
+		return APIErrorResponse{
+			err: fmt.Errorf("Domain to act on not filled"),
+		}
+	}
+
+	success, err := sr.ActionOnListedDomain(us.FQDN, us.BtnAction)
+	status := http.StatusBadRequest
+	if success {
+		status = http.StatusOK
+	}
+	return APIErrorResponse{
+		err:    err,
+		status: status,
 	}
 }
 

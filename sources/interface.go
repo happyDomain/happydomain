@@ -51,10 +51,37 @@ type SourceInfos struct {
 	Capabilities []string `json:"capabilities,omitempty"`
 }
 
+// ImportableDomain is a structure dedicated to handle actions associated with special domains.
+type ImportableDomain struct {
+	// FQDN is the domain FQDN.
+	FQDN string `json:"fqdn"`
+
+	// State represents the importable state of the domaine between: danger, warning, info, success.
+	State string `json:"state,omitempty"`
+
+	// Msg is the message to display to the user.
+	Msg string `json:"message,omitempty"`
+
+	// Btn is the label to display on the button (no message = no button).
+	Btn string `json:"btn,omitempty"`
+
+	// BtnAction is the name of the event raised by clicking on the button.
+	BtnAction string `json:"action,omitempty"`
+}
+
 // ListDomainsSource are functions to declare when we can retrives a list of managable domains from the given Source.
 type ListDomainsSource interface {
 	// ListDomains retrieves the list of avaiable domains inside the Source.
 	ListDomains() ([]string, error)
+}
+
+// ListDomainsWithActionsSource are functions to declare when we can retrives a list of domains from the given Source, but not directly importable, it requires or can handle actions.
+type ListDomainsWithActionsSource interface {
+	// ListDomains retrieves the list of avaiable domains inside the Source.
+	ListDomainsWithActions() ([]ImportableDomain, error)
+
+	// ActionOnListedDomain calls the action designated on the button for the given domain.
+	ActionOnListedDomain(string, string) (bool, error)
 }
 
 type LimitedResourceTypesSource interface {
@@ -67,6 +94,10 @@ var DefaultAvailableTypes []uint16
 func GetSourceCapabilities(src happydns.Source) (caps []string) {
 	if _, ok := src.(ListDomainsSource); ok {
 		caps = append(caps, "ListDomains")
+	}
+
+	if _, ok := src.(ListDomainsWithActionsSource); ok {
+		caps = append(caps, "ListDomainsWithActions")
 	}
 
 	if _, ok := src.(forms.CustomSettingsForm); ok {

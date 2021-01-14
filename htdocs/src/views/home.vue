@@ -56,7 +56,7 @@
               </b-button>
             </div>
           </template>
-          <h-source-list-domains ref="newDomains" :source="filteredSource" @no-domains-list-change="noDomainsList = $event" />
+          <h-source-list-domains ref="newDomains" :source="filteredSource" show-domains-with-actions @no-domains-list-change="noDomainsList = $event" />
         </b-card>
         <h-list-group-input-new-domain v-if="$refs.zlist && !$refs.zlist.isLoading && (!filteredSource || noDomainsList)" autofocus class="mt-2" :my-source="filteredSource" />
       </b-col>

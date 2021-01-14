@@ -34,11 +34,21 @@
 <template>
   <h-zone-list :domains="listImportableDomains" loading-str="wait.asking-domains" :parent-is-loading="isLoading">
     <template #badges="{ domain }">
-      <b-badge v-if="haveDomain(domain)" class="ml-1" variant="success">
+      <b-badge v-if="domain.state" class="ml-1" :variant="domain.state">
+        <b-icon v-if="domain.state === 'success'" icon="check" />
+        <b-icon v-else-if="domain.state === 'info'" icon="exclamation-circle" />
+        <b-icon v-else-if="domain.state === 'warning'" icon="exclamation-triangle" />
+        <b-icon v-else-if="domain.state === 'danger'" icon="exclamation-octagon" />
+        {{ domain.message }}
+      </b-badge>
+      <b-badge v-else-if="haveDomain(domain)" class="ml-1" variant="success">
         <b-icon icon="check" /> {{ $t('service.already') }}
       </b-badge>
       <b-button v-else type="button" class="ml-1" variant="primary" size="sm" @click="importDomain(domain)">
         {{ $t('domains.add-now') }}
+      </b-button>
+      <b-button v-if="domain.btn" type="button" class="ml-1" :variant="domain.state" size="sm" @click="doDomainAction(domain)">
+        {{ $t(domain.btn) }}
       </b-button>
     </template>
     <template v-if="noDomainsList" #no-domain>
@@ -79,6 +89,10 @@ export default {
       type: Boolean,
       default: false
     },
+    showDomainsWithActions: {
+      type: Boolean,
+      default: false
+    },
     source: {
       type: Object,
       required: true
@@ -87,6 +101,7 @@ export default {
 
   data: function () {
     return {
+      domainsWithActions: null,
       importableDomains: null
     }
   },
@@ -101,7 +116,7 @@ export default {
         return []
       }
 
-      var ret = this.importableDomains
+      let ret = this.importableDomains
 
       if (!this.showAlreadyImported) {
         ret = ret.filter(
@@ -109,7 +124,15 @@ export default {
         )
       }
 
-      return ret.map(d => ({ domain: d, id_source: this.source._id }))
+      ret = ret.map(d => ({ domain: d, id_source: this.source._id }))
+
+      if (this.domainsWithActions && this.showDomainsWithActions) {
+        this.domainsWithActions.forEach((dwa) => {
+          ret.push({ domain: dwa.fqdn, state: dwa.state, message: dwa.message, btn: dwa.btn, action: dwa.action, id_source: this.source._id })
+        })
+      }
+
+      return ret
     },
 
     noDomainsList () {
@@ -144,20 +167,48 @@ export default {
   },
 
   methods: {
+    doDomainAction (domain) {
+      SourcesApi.doSourceDomainsAction(this.source._id, domain.domain, domain.action)
+        .then(
+          response => {
+            this.$store.dispatch('domains/getAllMyDomains')
+            if (response.data.errmsg) {
+              this.$root.$bvToast.toast(
+                response.data.errmsg, {
+                  title: this.$t('domains.attached-new'),
+                  autoHideDelay: 5000,
+                  variant: 'success',
+                  toaster: 'b-toaster-content-right'
+                }
+              )
+            }
+          },
+          error => {
+            this.$root.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: this.$t('errors.domain-attach'),
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+          })
+    },
+
     haveDomain (domain) {
       return this.domains_getAll.find(i => i.domain === domain.domain)
     },
 
     importAllDomains () {
       this.listImportableDomains.forEach((domain) => {
-        if (!this.haveDomain(domain)) {
+        if (!domain.state && !this.haveDomain(domain)) {
           this.importDomain(domain)
         }
       })
     },
 
     importDomain (domain) {
-      var vm = this
+      const vm = this
       this.addDomainToSource(this.source, domain.domain, null, function (data) {
         vm.$store.dispatch('domains/getAllMyDomains')
       })
@@ -188,6 +239,24 @@ export default {
               }
             )
             this.$router.replace('/sources/' + encodeURIComponent(this.mySource._id))
+          })
+
+      if (!this.showDomainsWithActions || this.sourceSpecs_getAll[this.source._srctype].capabilities.indexOf('ListDomainsWithActions') === -1) {
+        return
+      }
+
+      SourcesApi.listSourceDomainsWithActions(this.source._id)
+        .then(
+          response => (this.domainsWithActions = response.data),
+          error => {
+            this.$root.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: this.$t('errors.domain-access'),
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
           })
     }
   }

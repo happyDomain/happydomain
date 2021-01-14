@@ -45,6 +45,9 @@ import {
   BIconChevronLeft,
   BIconChevronRight,
   BIconChevronUp,
+  BIconExclamationCircle,
+  BIconExclamationOctagon,
+  BIconExclamationTriangle,
   BIconGridFill,
   BIconLink,
   BIconLink45deg,
@@ -126,6 +129,9 @@ Vue.component('BIconChevronDown', BIconChevronDown)
 Vue.component('BIconChevronLeft', BIconChevronLeft)
 Vue.component('BIconChevronRight', BIconChevronRight)
 Vue.component('BIconChevronUp', BIconChevronUp)
+Vue.component('BIconExclamationCircle', BIconExclamationCircle)
+Vue.component('BIconExclamationOctagon', BIconExclamationOctagon)
+Vue.component('BIconExclamationTriangle', BIconExclamationTriangle)
 Vue.component('BIconGridFill', BIconGridFill)
 Vue.component('BIconLink', BIconLink)
 Vue.component('BIconLink45deg', BIconLink45deg)
