@@ -56,8 +56,8 @@ func init() {
 	router.PUT("/api/users/:userid/domains/:domain/zones/:zoneid", api.ApiHandler(userHandler(zoneHandler(updateZone))))
 	router.DELETE("/api/users/:userid/domains/:domain/zones/:zoneid", api.ApiHandler(deleteZone))
 
-	router.GET("/api/zones/:zoneid", api.ApiHandler(userHandler(zoneHandler(getZone))))
-	router.PUT("/api/zones/:zoneid", api.ApiHandler(userHandler(zoneHandler(updateZone))))
+	router.GET("/api/zones/:zoneid", api.ApiHandler(zoneWoUserHandler(getZone)))
+	router.PUT("/api/zones/:zoneid", api.ApiHandler(zoneWoUserHandler(updateZone)))
 	router.DELETE("/api/zones/:zoneid", api.ApiHandler(deleteZone))
 
 	router.GET("/api/users/:userid/domains/:domain/zones/:zoneid/*serviceid", api.ApiHandler(userHandler(zoneHandler(getZoneService))))
@@ -87,6 +87,22 @@ func newUserDomainZone(_ *config.Options, domain *happydns.Domain, _ httprouter.
 	uz.Id = 0
 
 	return api.NewAPIResponse(uz, storage.MainStore.CreateZone(uz))
+}
+
+func zoneWoUserHandler(f func(*config.Options, *happydns.Domain, *happydns.Zone, httprouter.Params, io.Reader) api.Response) func(*config.Options, httprouter.Params, io.Reader) api.Response {
+	return func(opts *config.Options, ps httprouter.Params, body io.Reader) api.Response {
+		zoneid, err := strconv.ParseInt(ps.ByName("zoneid"), 10, 64)
+		if err != nil {
+			return api.NewAPIErrorResponse(http.StatusNotFound, err)
+		}
+
+		zone, err := storage.MainStore.GetZone(zoneid)
+		if err != nil {
+			return api.NewAPIErrorResponse(http.StatusNotFound, err)
+		} else {
+			return f(opts, nil, zone, ps, body)
+		}
+	}
 }
 
 func zoneHandler(f func(*config.Options, *happydns.Domain, *happydns.Zone, httprouter.Params, io.Reader) api.Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) api.Response {
