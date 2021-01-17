@@ -44,8 +44,14 @@ import (
 )
 
 func (s *LevelDBStorage) getSourceMeta(id []byte) (srcMeta *happydns.SourceMeta, err error) {
+	var v []byte
+	v, err = s.db.Get(id, nil)
+	if err != nil {
+		return
+	}
+
 	srcMeta = &happydns.SourceMeta{}
-	err = decodeData(id, srcMeta)
+	err = decodeData(v, srcMeta)
 	return
 }
 

@@ -185,14 +185,22 @@ func (s *LevelDBStorage) TidyDomains() error {
 		domain, err := s.getDomain(string(iter.Key()))
 
 		if err == nil {
-			_, err = s.GetUser(domain.IdUser)
+			var u *happydns.User
+			u, err = s.GetUser(domain.IdUser)
 			if err == leveldb.ErrNotFound {
 				// Drop domain of unexistant users
 				err = tx.Delete(iter.Key(), nil)
 				log.Printf("Deleting orphan domain (user %d not found): %v\n", domain.IdUser, domain)
 			}
+
+			_, err = s.GetSource(u, domain.IdSource)
+			if err == leveldb.ErrNotFound {
+				// Drop domain of unexistant source
+				err = tx.Delete(iter.Key(), nil)
+				log.Printf("Deleting orphan domain (source %d not found): %v\n", domain.IdSource, domain)
+			}
 		} else {
-			// Drop domain of unexistant users
+			// Drop unreadable domains
 			log.Printf("Deleting unreadable domain (%w): %v\n", err, domain)
 			err = tx.Delete(iter.Key(), nil)
 		}
