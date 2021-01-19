@@ -86,7 +86,8 @@
               />
             </b-form-group>
             <div class="d-flex justify-content-around">
-              <b-button type="submit" variant="primary">
+              <b-button :disabled="formSent" type="submit" variant="primary">
+                <b-spinner v-if="formSent" label="Spinning" small />
                 {{ $t('common.go') }}
               </b-button>
               <b-button to="/forgotten-password" variant="outline-dark">
@@ -107,6 +108,7 @@ export default {
 
   data: function () {
     return {
+      formSent: false,
       loginForm: {}
     }
   },
@@ -127,12 +129,15 @@ export default {
       this.loginForm.emailState = valid ? 'valid' : 'invalid'
       this.loginForm.passwordState = valid ? 'valid' : 'invalid'
       if (valid) {
+        this.formSent = true
         this.$store.dispatch('user/login', this.loginForm)
           .then(
             (response) => {
+              this.formSent = false
               this.$router.push('/')
             },
             (error) => {
+              this.formSent = false
               this.$bvToast.toast(
                 error.response.data.errmsg, {
                   title: this.$t('errors.login'),

@@ -102,7 +102,8 @@
         </b-col>
       </b-form-row>
       <b-form-row class="mt-3">
-        <b-button class="offset-sm-4 col-sm-4" type="submit" variant="primary">
+        <b-button class="offset-sm-4 col-sm-4" :disabled="formSent" type="submit" variant="primary">
+          <b-spinner v-if="formSent" label="Spinning" small />
           {{ $t('password.redefine') }}
         </b-button>
       </b-form-row>
@@ -122,6 +123,7 @@ export default {
     return {
       email: '',
       emailState: null,
+      formSent: false,
       error: null,
       signupForm: {
         password: '',
@@ -165,6 +167,7 @@ export default {
       this.emailState = valid
 
       if (valid) {
+        this.formSent = true
         axios
           .patch('/api/users', {
             kind: 'recovery',
@@ -172,6 +175,7 @@ export default {
           })
           .then(
             (response) => {
+              this.formSent = false
               this.$root.$bvToast.toast(
                 this.$t('email.instruction.check-inbox'), {
                   title: this.$t('email.sent-recovery'),
@@ -183,6 +187,7 @@ export default {
               this.$router.push('/login')
             },
             (error) => {
+              this.formSent = false
               this.$bvToast.toast(
                 error.response.data.errmsg, {
                   title: this.$t('errors.recovery'),
@@ -199,6 +204,7 @@ export default {
       const valid = this.$refs.formRecover.checkValidity()
 
       if (valid && this.user) {
+        this.formSent = true
         axios
           .post('/api/users/' + encodeURIComponent(this.user) + '/recovery', {
             key: this.$route.query.k,
@@ -206,6 +212,7 @@ export default {
           })
           .then(
             (response) => {
+              this.formSent = false
               this.$root.$bvToast.toast(
                 this.$t('password.success'), {
                   title: this.$t('password.redefined'),
@@ -217,6 +224,7 @@ export default {
               this.$router.push('/login')
             },
             (error) => {
+              this.formSent = false
               this.$bvToast.toast(
                 error.response.data.errmsg, {
                   title: this.$t('errors.recovery'),
