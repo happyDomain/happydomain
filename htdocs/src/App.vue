@@ -102,7 +102,7 @@
 
     <a
       id="voxpeople"
-      :href="'https://framaforms.org/quel-est-votre-avis-sur-happydns-1610366701?u=' + (user_isLogged?user_getSession.id:0) + '&amp;p=' + $router.history.current.name + '&amp;l=' + $i18n.locale"
+      :href="'https://framaforms.org/quel-est-votre-avis-sur-happydns-1610366701?u=' + (user_isLogged?user_getSession.id:0) + '&amp;i=' + instancename + '&amp;p=' + $router.history.current.name + '&amp;l=' + $i18n.locale"
       target="_blank"
       :title="$t('common.survey')"
     >
@@ -143,6 +143,9 @@ export default {
   },
 
   computed: {
+    instancename () {
+      return window.location.hostname
+    },
     ...mapGetters('user', ['user_getSession', 'user_getSettings', 'user_isLogged'])
   },
 
