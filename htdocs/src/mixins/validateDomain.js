@@ -48,7 +48,7 @@ export default {
           domains.forEach(function (domain) {
             newDomainState &= domain.length >= 1 && domain.length <= 63
             newDomainState &= domain[0] !== '-' && domain[domain.length - 1] !== '-'
-            newDomainState &= /^(\*|[a-zA-Z0-9]([a-zA-Z0-9-]?[a-zA-Z0-9])*)$/.test(domain)
+            newDomainState &= /^(\*|_?[a-zA-Z0-9]([a-zA-Z0-9-]?[a-zA-Z0-9])*)$/.test(domain)
           })
           ret = newDomainState > 0
         }
