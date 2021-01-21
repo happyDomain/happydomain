@@ -37,9 +37,6 @@
       <h2 :id="dn" class="sticky-top" style="background: white; text-indent:-1em;padding-left:1em;overflow-x:hidden;text-overflow:ellipsis;z-index: 14">
         <span style="white-space: nowrap">
           <b-icon icon="link" />
-          <a :href="'#' + dn" class="float-right" style="text-indent:0;z-index:2;position:relative">
-            <b-icon icon="link45deg" />
-          </a>
           <span class="text-monospace" :title="dn | fqdn(origin)">{{ dn | fqdn(origin) }}</span>
         </span>
         <span style="white-space: nowrap">
@@ -64,9 +61,6 @@
       <h2 :id="dn?dn:'@'" class="sticky-top" style="background: white; text-indent:-1em;padding-left:1em;overflow-x:hidden;text-overflow:ellipsis;z-index: 14">
         <span style="white-space: nowrap">
           <b-icon :icon="showResources?'chevron-down':'chevron-right'" @click="toogleShowResources()" />
-          <a :href="'#' + dn" class="float-right" style="text-indent:0;z-index:2;position:relative">
-            <b-icon icon="link45deg" />
-          </a>
           <span class="text-monospace" :title="dn | fqdn(origin)" @click="toogleShowResources()">{{ dn | fqdn(origin) }}</span>
         </span>
         <b-badge v-if="aliases.length > 0" v-b-popover.hover.focus="{ customClass: 'text-monospace', html: true, content: aliasPopoverCnt(dn) }" class="ml-2" style="text-indent:0;">
