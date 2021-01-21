@@ -122,6 +122,7 @@
         "alias-creation": "Add an alias pointing to {0}:",
         "alias-creation-sample": "This will create the alias:",
         "placeholder-new": "my.new.domain.",
+        "placeholder-new-sub": "new.subdomain",
         "form-new-subdomain": "Add a new subdomain under {0}:"
     },
     "email": {

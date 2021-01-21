@@ -35,7 +35,7 @@
   <b-modal id="modal-addSvc" :size="step === 2 ? 'lg' : ''" scrollable @ok="handleModalSvcOk">
     <template #modal-title>
       <i18n path="service.form-new">
-        <span class="text-monospace">{{ dn | fqdn(domain.domain) }}</span>
+        <span class="text-monospace">{{ realSubDomain }}</span>
       </i18n>
     </template>
     <template #modal-footer="{ cancel }">
@@ -88,12 +88,12 @@
         <i18n path="domains.form-new-subdomain">
           <span class="text-monospace">{{ domain.domain }}</span>
         </i18n>
-        <b-input-group :append="'.' + domain.domain">
+        <b-input-group :append="newDomainAppend">
           <b-input
             v-model="dn"
             autofocus
             class="text-monospace"
-            placeholder="new.subdomain"
+            :placeholder="$t('domains.placeholder-new-sub')"
             :state="newDomainState"
             @update="validateNewSubdomain"
           />
@@ -174,6 +174,10 @@ export default {
   },
 
   computed: {
+    endsWithOrigin () {
+      return this.dn.length > this.domain.domain.length && (this.dn.substring(this.dn.length - this.domain.domain.length) === this.domain.domain || this.dn.substring(this.dn.length - this.domain.domain.length + 1) === this.domain.domain.substring(0, this.domain.domain.length - 1))
+    },
+
     helpHref () {
       const svcPart = this.svcData._svctype.toLowerCase().split('.')
       if (svcPart.length === 2) {
@@ -186,6 +190,20 @@ export default {
         }
       }
       return svcPart[svcPart.length - 1]
+    },
+
+    newDomainAppend () {
+      if (this.endsWithOrigin) {
+        return null
+      } else if (this.dn.length > 0) {
+        return '.' + this.domain.domain
+      } else {
+        return this.domain.domain
+      }
+    },
+
+    realSubDomain () {
+      return this.dn + (this.newDomainAppend ? this.newDomainAppend : '')
     }
   },
 
@@ -222,6 +240,13 @@ export default {
       if (this.step === 0 && this.dn !== '') {
         if (this.validateNewSubdomain()) {
           this.step = 1
+          if (this.endsWithOrigin) {
+            if (this.dn.substring(this.dn.length - this.domain.domain.length) === this.domain.domain) {
+              this.dn = this.dn.substring(0, this.dn.length - this.domain.domain.length - 1)
+            } else {
+              this.dn = this.dn.substring(0, this.dn.length - this.domain.domain.length)
+            }
+          }
         }
       } else if (this.step === 1 && this.svcSelected !== null) {
         this.step = 2
@@ -289,7 +314,11 @@ export default {
     },
 
     validateNewSubdomain () {
-      this.newDomainState = this.validateDomain(this.dn, true)
+      this.newDomainState = this.validateDomain(
+        this.dn,
+        // true, except when it ends with the origin name
+        !(this.dn.length > this.domain.domain.length && this.dn.substring(this.dn.length - this.domain.domain.length) === this.domain.domain)
+      )
       return this.newDomainState
     }
   }
