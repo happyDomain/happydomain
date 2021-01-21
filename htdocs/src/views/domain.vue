@@ -139,7 +139,7 @@
           </span>
           &ndash;
           <span class="text-danger">
-            {{ $tc('domains.apply.deletions', (zoneDiffAdd || []).length) }}
+            {{ $tc('domains.apply.deletions', (zoneDiffDel || []).length) }}
           </span>
         </div>
         <b-button variant="secondary" @click="cancel()">
