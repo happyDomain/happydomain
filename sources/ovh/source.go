@@ -233,6 +233,13 @@ func (s *OVHAPI) DeleteRR(dn *happydns.Domain, rr dns.RR) (err error) {
 		}
 	}
 
+	// There is a bug in OVH API : SPF fields are considered as TXT
+	// If we are here and record is TXT, search it in SPF records
+	if _, ok := rr.(*dns.TXT); ok {
+		rr.Header().Rrtype = dns.TypeSPF
+		s.DeleteRR(dn, rr)
+	}
+
 	return
 }
 
