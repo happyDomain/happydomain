@@ -54,9 +54,15 @@
             <b-form-input
               id="domain"
               v-model="form.domain"
+              list="my-domains"
               required
               placeholder="happydns.org"
             />
+            <datalist v-if="sortedDomains" id="my-domains">
+              <option v-for="dn in sortedDomains" :key="dn.id">
+                {{ dn.domain }}
+              </option>
+            </datalist>
           </b-form-group>
 
           <div class="text-center mb-3">
@@ -162,6 +168,7 @@
 
 <script>
 import axios from 'axios'
+import { mapGetters } from 'vuex'
 
 export default {
 
@@ -267,10 +274,19 @@ export default {
       } else {
         return this.responses.filter(rr => (rr.Hdr.Rrtype !== 46 && rr.Hdr.Rrtype !== 47 && rr.Hdr.Rrtype !== 50))
       }
-    }
+    },
+
+    ...mapGetters('domains', ['sortedDomains']),
+    ...mapGetters('user', ['user_isLogged'])
   },
 
   watch: {
+    user_isLogged: function (isLogged) {
+      if (isLogged) {
+        this.$store.dispatch('domains/getAllMyDomains')
+      }
+    },
+
     $route (n) {
       if (n.params.domain && (!this.response || n.params.domain !== this.form.domain)) {
         this.form.domain = n.params.domain
@@ -282,6 +298,9 @@ export default {
   },
 
   mounted () {
+    if (this.user_isLogged) {
+      this.$store.dispatch('domains/getAllMyDomains')
+    }
     if (this.$route.params.domain) {
       this.form.domain = this.$route.params.domain
       this.submitRequest()
