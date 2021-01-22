@@ -11,10 +11,46 @@ steps:
 - name: frontend
   image: node:alpine
   commands:
-  - apk --no-cache add python2 build-base
+  - apk --no-cache add python2 build-base tar
   - yarn config set network-timeout 100000
   - yarn --cwd htdocs install
+  - tar --transform="s@.@./happydns-${DRONE_COMMIT}@" --exclude-vcs --exclude=./htdocs/node_modules/.cache -czf /dev/shm/happydns-src.tar.gz .
+  - mv /dev/shm/happydns-src.tar.gz .
   - yarn --cwd htdocs --offline build
+
+- name: deploy sources
+  image: appleboy/drone-scp
+  settings:
+    tar_tmp_path: /tmp/
+    host: get.happydns.org
+    target: /var/www/happydns.org/get/${DRONE_BRANCH//\//-}
+    source: happydns-src.tar.gz
+    username:
+      from_secret: ssh_username
+    key:
+      from_secret: deploy_key
+    port:
+      from_secret: ssh_port
+  when:
+    event:
+      - push
+
+- name: deploy sources for release
+  image: appleboy/drone-scp
+  settings:
+    tar_tmp_path: /tmp/
+    host: get.happydns.org
+    target: /var/www/happydns.org/get/${DRONE_TAG}
+    source: happydns-src.tar.gz
+    username:
+      from_secret: ssh_username
+    key:
+      from_secret: deploy_key
+    port:
+      from_secret: ssh_port
+  when:
+    event:
+      - tag
 
 - name: backend
   image: golang:alpine
