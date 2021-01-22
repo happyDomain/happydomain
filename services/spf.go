@@ -31,7 +31,9 @@
 
 package svcs
 
-import ()
+import (
+	"strings"
+)
 
 type SPFDirective struct {
 	Qualifier byte
@@ -56,5 +58,9 @@ type SPF struct {
 }
 
 func (t *SPF) String() string {
-	return t.Content
+	var ret = t.Content
+	if !strings.HasPrefix(ret, "v=spf1") {
+		ret = "v=spf1 " + ret
+	}
+	return ret
 }

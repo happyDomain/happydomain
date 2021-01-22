@@ -137,7 +137,7 @@ func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) 
 				Class:  dns.ClassINET,
 				Ttl:    ttl,
 			},
-			Txt: utils.SplitN("v=spf1 "+s.SPF.String(), 255),
+			Txt: utils.SplitN(s.SPF.String(), 255),
 		})
 	}
 
@@ -276,7 +276,7 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 			}
 
 			if txt, ok := record.(*dns.TXT); ok {
-				service.DMARC.Fields = append(service.DMARC.Fields, strings.Split(strings.Join(txt.Txt, ""), ";")...)
+				service.DMARC.Fields = append(service.DMARC.Fields, strings.Split(strings.TrimPrefix(strings.Join(txt.Txt, ""), "v=DMARC1;"), ";")...)
 			}
 
 			err = a.UseRR(record, domain, service)

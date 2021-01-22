@@ -40,5 +40,9 @@ type DMARC struct {
 }
 
 func (t *DMARC) String() string {
-	return strings.Join(t.Fields, ";")
+	var fields = t.Fields[:]
+	if len(t.Fields) == 0 || t.Fields[0] != "v=DMARC1" {
+		fields = append([]string{"v=DMARC1"}, fields...)
+	}
+	return strings.Join(fields, ";")
 }
