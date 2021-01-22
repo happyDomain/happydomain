@@ -76,7 +76,7 @@
             "deletions": "no deletions | {count} deletion | {count} deletions",
             "done": {
                 "title": "Zone applied successfully!",
-                "description": "!"
+                "description": "Your zone {zone} have been successfully propagated!"
             },
             "nochange": "There is no changes to apply! Current zone is in sync with the server."
         },

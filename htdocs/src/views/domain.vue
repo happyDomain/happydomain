@@ -322,7 +322,7 @@ export default {
             this.$bvModal.hide('modal-applyZone')
             this.propagationInProgress = false
             this.$bvToast.toast(
-              this.$t('domains.apply.done.description'), {
+              this.$t('domains.apply.done.description', { zone: this.domain.domain }), {
                 title: this.$t('domains.apply.done.title'),
                 autoHideDelay: 5000,
                 variant: 'success',
