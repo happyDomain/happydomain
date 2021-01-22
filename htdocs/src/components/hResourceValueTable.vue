@@ -37,7 +37,7 @@
       {{ specs.label }}
       <small v-if="specs.description" class="text-muted">{{ specs.description }}</small>
     </h4>
-    <b-table hover striped :fields="fieldsNames" :items="tmp_values" sort-icon-left>
+    <b-table hover striped :fields="fieldsNames" :items="tmp_values" sort-icon-left @sort-changed="isSorted = ($event.sortBy !== null)">
       <template #head(_actions)>
         <b-button size="sm" :title="$t('common.add-new-thing', {thing: 'item'})" variant="outline-secondary" class="mx-1" @click="addRow()">
           <b-icon icon="plus" /> {{ $t('common.add') }}
@@ -59,6 +59,12 @@
         </b-button>
         <b-button v-else type="button" :title="$t('common.cancel')" size="sm" variant="danger" class="mx-1" @click="cancelEdit(row)">
           <b-icon icon="x-circle" />
+        </b-button>
+        <b-button v-if="!isSorted" type="button" :disabled="row.index == 0" :title="$t('common.move-up')" size="sm" variant="outline-secondary" class="mx-1" @click="moveUp(row)">
+          <b-icon icon="chevron-up" />
+        </b-button>
+        <b-button v-if="!isSorted" type="button" :disabled="row.index == tmp_values.length - 1" :title="$t('common.move-down')" size="sm" variant="outline-secondary" class="mx-1" @click="moveDown(row)">
+          <b-icon icon="chevron-down" />
         </b-button>
       </template>
     </b-table>
@@ -100,6 +106,7 @@ export default {
 
   data: function () {
     return {
+      isSorted: false,
       row_type: '',
       service_specs: null,
       tmp_values: []
@@ -194,6 +201,16 @@ export default {
       } else {
         row.item.value = this.value[row.item._key]
       }
+    },
+
+    moveDown (row) {
+      const f = this.val.splice(row.item._key, 1)[0]
+      this.val.splice(row.item._key + 1, 0, f)
+    },
+
+    moveUp (row) {
+      const f = this.val.splice(row.item._key, 1)[0]
+      this.val.splice(row.item._key - 1, 0, f)
     },
 
     deleteRow (row) {
