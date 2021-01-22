@@ -126,7 +126,7 @@
       <pre v-else style="overflow: initial">{{ zoneContent }}</pre>
     </b-modal>
 
-    <b-modal id="modal-applyZone" size="lg" scrollable @ok="applyDiff()">
+    <b-modal id="modal-applyZone" size="lg" scrollable @ok.prevent="applyDiff()">
       <template #modal-title>
         <i18n path="domains.view.description" tag="span">
           <span class="text-monospace">{{ domain.domain }}</span>
@@ -145,7 +145,8 @@
         <b-button variant="secondary" @click="cancel()">
           {{ $t('common.cancel') }}
         </b-button>
-        <b-button variant="success" :disabled="zoneDiffAdd === null && zoneDiffDel === null" @click="ok()">
+        <b-button variant="success" :disabled="propagationInProgress || (zoneDiffAdd === null && zoneDiffDel === null)" @click="ok()">
+          <b-spinner v-if="propagationInProgress" label="Spinning" />
           {{ $t('domains.apply.button') }}
         </b-button>
       </template>
@@ -177,6 +178,7 @@ export default {
     return {
       displayFormat: 'grid',
       importInProgress: false,
+      propagationInProgress: false,
       selectedHistory: null,
       zoneContent: null,
       zoneDiffAdd: null,
@@ -313,9 +315,12 @@ export default {
     },
 
     applyDiff () {
+      this.propagationInProgress = true
       ZonesApi.applyZone(this.domain.domain, this.selectedHistory)
         .then(
           (response) => {
+            this.$bvModal.hide('modal-applyZone')
+            this.propagationInProgress = false
             this.$bvToast.toast(
               this.$t('domains.apply.done.description'), {
                 title: this.$t('domains.apply.done.title'),
@@ -326,6 +331,7 @@ export default {
             )
           },
           (error) => {
+            this.propagationInProgress = false
             this.$bvToast.toast(
               error.response.data.errmsg, {
                 title: this.$t('errors.occurs', { when: 'applying the zone' }),
