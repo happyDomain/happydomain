@@ -113,6 +113,10 @@ func (z *Zone) FindService(id []byte) (string, *ServiceCombined) {
 }
 
 func (z *Zone) findSubdomainService(subdomain string, id []byte) (int, *ServiceCombined) {
+	if subdomain == "@" {
+		subdomain = ""
+	}
+
 	if services, ok := z.Services[subdomain]; ok {
 		for k, svc := range services {
 			if bytes.Equal(svc.Id, id) {

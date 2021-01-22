@@ -471,16 +471,16 @@ func getServiceRecords(opts *config.Options, req *RequestResources, body io.Read
 		}
 	}
 
-	svc := req.Zone.FindSubdomainService(req.Ps.ByName("subdomain"), serviceid)
+	subdomain := req.Ps.ByName("subdomain")
+	if subdomain == "" {
+		subdomain = "@"
+	}
+
+	svc := req.Zone.FindSubdomainService(subdomain, serviceid)
 	if svc == nil {
 		return APIErrorResponse{
 			err: errors.New("Service not found"),
 		}
-	}
-
-	subdomain := req.Ps.ByName("subdomain")
-	if subdomain == "" {
-		subdomain = "@"
 	}
 
 	var ret []serviceRecord
