@@ -31,6 +31,7 @@
 
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+import store from '@/store/index'
 
 Vue.use(VueRouter)
 
@@ -61,6 +62,9 @@ const routes = [
     name: 'login',
     component: function () {
       return import(/* webpackChunkName: "login" */ '../views/login.vue')
+    },
+    meta: {
+      guest: true
     }
   },
   {
@@ -68,6 +72,9 @@ const routes = [
     name: 'signup',
     component: function () {
       return import(/* webpackChunkName: "signup" */ '../views/signup.vue')
+    },
+    meta: {
+      guest: true
     }
   },
   {
@@ -75,6 +82,9 @@ const routes = [
     name: 'email-validation',
     component: function () {
       return import(/* webpackChunkName: "signup" */ '../views/email-validation.vue')
+    },
+    meta: {
+      guest: true
     }
   },
   {
@@ -82,6 +92,9 @@ const routes = [
     name: 'forgotten-password',
     component: function () {
       return import(/* webpackChunkName: "forgotten-password" */ '../views/forgotten-password.vue')
+    },
+    meta: {
+      guest: true
     }
   },
   {
@@ -89,6 +102,9 @@ const routes = [
     name: 'onboarding',
     component: function () {
       return import(/* webpackChunkName: "home" */ '../views/onboarding.vue')
+    },
+    meta: {
+      requiresAuth: true
     }
   },
   {
@@ -96,6 +112,9 @@ const routes = [
     name: 'me',
     component: function () {
       return import(/* webpackChunkName: "me" */ '../views/me.vue')
+    },
+    meta: {
+      requiresAuth: true
     }
   },
   {
@@ -103,6 +122,9 @@ const routes = [
     name: 'domains',
     component: function () {
       return import(/* webpackChunkName: "home" */ '../views/home.vue')
+    },
+    meta: {
+      requiresAuth: true
     }
   },
   {
@@ -110,6 +132,9 @@ const routes = [
     name: 'domain-abstract',
     component: function () {
       return import(/* webpackChunkName: "domain" */ '../views/domain.vue')
+    },
+    meta: {
+      requiresAuth: true
     }
   },
   {
@@ -117,6 +142,9 @@ const routes = [
     name: 'domain-new',
     component: function () {
       return import(/* webpackChunkName: "domain" */ '../views/domain-new.vue')
+    },
+    meta: {
+      requiresAuth: true
     }
   },
   {
@@ -124,6 +152,9 @@ const routes = [
     name: 'source-list',
     component: function () {
       return import(/* webpackChunkName: "source" */ '../views/source-list.vue')
+    },
+    meta: {
+      requiresAuth: true
     }
   },
   {
@@ -137,6 +168,9 @@ const routes = [
         name: 'source-new-choice',
         component: function () {
           return import(/* webpackChunkName: "source-new" */ '../views/source-new-choice.vue')
+        },
+        meta: {
+          requiresAuth: true
         }
       },
       {
@@ -144,6 +178,9 @@ const routes = [
         name: 'source-new-state',
         component: function () {
           return import(/* webpackChunkName: "source-new" */ '../views/source-new-state.vue')
+        },
+        meta: {
+          requiresAuth: true
         }
       }
     ]
@@ -153,6 +190,9 @@ const routes = [
     name: 'source-update',
     component: function () {
       return import(/* webpackChunkName: "source" */ '../views/source.vue')
+    },
+    meta: {
+      requiresAuth: true
     }
   },
   {
@@ -160,6 +200,9 @@ const routes = [
     name: 'source-update-domains',
     component: function () {
       return import(/* webpackChunkName: "home" */ '../views/home.vue')
+    },
+    meta: {
+      requiresAuth: true
     }
   },
   {
@@ -195,6 +238,9 @@ const routes = [
     name: 'zone-records',
     component: function () {
       return import(/* webpackChunkName: "domain" */ '../views/zone-records.vue')
+    },
+    meta: {
+      requiresAuth: true
     }
   },
   {
@@ -210,6 +256,27 @@ const router = new VueRouter({
   mode: 'history',
   base: process.env.BASE_URL,
   routes
+})
+
+router.beforeEach((to, from, next) => {
+  if (to.matched.some(record => record.meta.requiresAuth)) {
+    if (store.getters['user/user_getSession'] == null) {
+      next({
+        path: '/login',
+        params: { nextUrl: to.fullPath }
+      })
+    } else {
+      next()
+    }
+  } else if (to.matched.some(record => record.meta.guest)) {
+    if (store.getters['user/user_getSession'] == null) {
+      next()
+    } else {
+      next({ name: 'home' })
+    }
+  } else {
+    next()
+  }
 })
 
 export default router
