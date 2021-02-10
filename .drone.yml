@@ -374,7 +374,7 @@ steps:
       - tag
 
 - name: publish
-  image: plugins/docker
+  image: plugins/docker:linux-arm
   settings:
     repo: happydns/happydns
     auto_tag: true
