@@ -141,27 +141,51 @@ func (s *GandiAPI) ListAvailableTypes() (types []uint16) {
 	return
 }
 
+type gandiOrganization struct {
+	SharingId string `json:"id"`
+}
+
 type gandiDomainInfo struct {
 	FQDN string `json:"fqdn"`
 	Href string `json:"domain_href"`
 }
 
 func (s *GandiAPI) ListDomains() (zones []string, err error) {
+	// Get all account organizations
 	var req *http.Request
-	req, err = s.newRequest("GET", "https://api.gandi.net/v5/livedns/domains", nil)
+	req, err = s.newRequest("GET", "https://api.gandi.net/v5/organization/organizations", nil)
 	if err != nil {
 		return
 	}
 
-	domains := []gandiDomainInfo{}
+	organizations := []gandiOrganization{}
 
-	err = doJSON(req, &domains)
+	err = doJSON(req, &organizations)
 	if err != nil {
 		return
 	}
 
-	for _, d := range domains {
-		zones = append(zones, dns.Fqdn(d.FQDN))
+	for _, org := range organizations {
+		var sharingurl = ""
+		if len(org.SharingId) > 0 {
+			sharingurl = fmt.Sprintf("sharing_id=%s", org.SharingId)
+		}
+
+		req, err = s.newRequest("GET", "https://api.gandi.net/v5/livedns/domains?"+sharingurl, nil)
+		if err != nil {
+			return
+		}
+
+		domains := []gandiDomainInfo{}
+
+		err = doJSON(req, &domains)
+		if err != nil {
+			return
+		}
+
+		for _, d := range domains {
+			zones = append(zones, dns.Fqdn(d.FQDN))
+		}
 	}
 
 	return
