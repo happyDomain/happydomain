@@ -63,7 +63,7 @@
         {{ categorie }}
       </b-badge>
     </b-list-group-item>
-    <b-list-group-item v-if="showDetails">
+    <b-list-group-item v-if="displayFormat === 'list' && showDetails">
       <h-editable-service edit-toolbar :origin="origin" :service="service" :services="services" :zone-id="zoneId" @update-my-services="$emit('update-my-services', $event)" />
     </b-list-group-item>
 
