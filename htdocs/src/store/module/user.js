@@ -36,12 +36,14 @@ export default {
   namespaced: true,
 
   state: {
+    initialized: false,
     session: null
   },
 
   getters: {
     user_getSession: state => state.session,
     user_getSettings: state => state.session ? state.session.settings : null,
+    user_initialized: state => state.initialized,
     user_isLogged: state => state.session != null
   },
 
@@ -114,17 +116,20 @@ export default {
           Vue.set(state, 'session', null)
           sessionStorage.clear()
         }
+        Vue.set(state, 'initialized', true)
       }
     },
 
     auth_success (state, session) {
       Vue.set(state, 'session', session)
       sessionStorage.loggedUser = JSON.stringify(session)
+      Vue.set(state, 'initialized', true)
     },
 
     logout (state) {
       Vue.set(state, 'session', null)
       sessionStorage.clear()
+      Vue.set(state, 'initialized', true)
     }
   }
 }

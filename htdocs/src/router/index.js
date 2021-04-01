@@ -259,23 +259,38 @@ const router = new VueRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  if (to.matched.some(record => record.meta.requiresAuth)) {
-    if (store.getters['user/user_getSession'] == null) {
-      next({
-        path: '/login',
-        params: { nextUrl: to.fullPath }
-      })
+  function routerProceed () {
+    if (to.matched.some(record => record.meta.requiresAuth)) {
+      if (store.getters['user/user_getSession'] == null) {
+        next({
+          path: '/login',
+          params: { nextUrl: to.fullPath }
+        })
+      } else {
+        next()
+      }
+    } else if (to.matched.some(record => record.meta.guest)) {
+      if (store.getters['user/user_getSession'] == null) {
+        next()
+      } else {
+        next({ name: 'home' })
+      }
     } else {
       next()
     }
-  } else if (to.matched.some(record => record.meta.guest)) {
-    if (store.getters['user/user_getSession'] == null) {
-      next()
-    } else {
-      next({ name: 'home' })
-    }
+  }
+
+  if (!store.state.user.initialized) {
+    store.watch(
+      (state) => state.user.initialized,
+      (value) => {
+        if (value) {
+          routerProceed()
+        }
+      }
+    )
   } else {
-    next()
+    routerProceed()
   }
 })
 
