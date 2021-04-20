@@ -41,6 +41,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
+	"git.happydns.org/happydns/actions"
 	"git.happydns.org/happydns/api"
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
@@ -161,11 +162,11 @@ func resetUserPasswd(_ *config.Options, user *happydns.User, _ httprouter.Params
 }
 
 func sendRecoverUserAcct(opts *config.Options, user *happydns.User, _ httprouter.Params, body io.Reader) api.Response {
-	return api.NewAPIResponse(true, api.SendRecoveryLink(opts, user))
+	return api.NewAPIResponse(true, actions.SendRecoveryLink(opts, user))
 }
 
 func sendValidateUserEmail(opts *config.Options, user *happydns.User, _ httprouter.Params, body io.Reader) api.Response {
-	return api.NewAPIResponse(true, api.SendValidationLink(opts, user))
+	return api.NewAPIResponse(true, actions.SendValidationLink(opts, user))
 }
 
 func validateEmail(_ *config.Options, user *happydns.User, _ httprouter.Params, body io.Reader) api.Response {

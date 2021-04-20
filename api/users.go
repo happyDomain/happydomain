@@ -38,18 +38,16 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/mail"
 	"strconv"
 	"strings"
 	"time"
-	"unicode"
 
 	"github.com/julienschmidt/httprouter"
 
+	"git.happydns.org/happydns/actions"
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/storage"
-	"git.happydns.org/happydns/utils"
 )
 
 func init() {
@@ -72,66 +70,6 @@ type UploadedUser struct {
 	Password   string
 	Language   string `json:"lang,omitempty"`
 	Newsletter bool   `json:"wantReceiveUpdate,omitempty"`
-}
-
-func genUsername(user *happydns.User) (toName string) {
-	if n := strings.Index(user.Email, "+"); n > 0 {
-		toName = user.Email[0:n]
-	} else {
-		toName = user.Email[0:strings.Index(user.Email, "@")]
-	}
-	if len(toName) > 1 {
-		toNameCopy := strings.Replace(toName, ".", " ", -1)
-		toName = ""
-		lastRuneIsSpace := true
-		for _, runeValue := range toNameCopy {
-			if lastRuneIsSpace {
-				lastRuneIsSpace = false
-				toName += string(unicode.ToTitle(runeValue))
-			} else {
-				toName += string(runeValue)
-			}
-
-			if unicode.IsSpace(runeValue) || unicode.IsPunct(runeValue) || unicode.IsSymbol(runeValue) {
-				lastRuneIsSpace = true
-			}
-		}
-	}
-	return
-}
-
-func SendValidationLink(opts *config.Options, user *happydns.User) error {
-	toName := genUsername(user)
-	return utils.SendMail(
-		&mail.Address{Name: toName, Address: user.Email},
-		"Your new account on happyDNS",
-		`Welcome to happyDNS!
---------------------
-
-Hi `+toName+`,
-
-We are pleased that you created an account on our great domain name
-management platform!
-
-In order to validate your account, please follow this link now:
-
-[Validate my account](`+opts.GetRegistrationURL(user)+`)`,
-	)
-}
-
-func SendRecoveryLink(opts *config.Options, user *happydns.User) error {
-	toName := genUsername(user)
-	return utils.SendMail(
-		&mail.Address{Name: toName, Address: user.Email},
-		"Recover you happyDNS account",
-		`Hi `+toName+`,
-
-You've just ask on our platform to recover your account.
-
-In order to define a new password, please follow this link now:
-
-[Recover my account](`+opts.GetAccountRecoveryURL(user)+`)`,
-	)
 }
 
 func registerUser(opts *config.Options, p httprouter.Params, body io.Reader) Response {
@@ -174,7 +112,7 @@ func registerUser(opts *config.Options, p httprouter.Params, body io.Reader) Res
 			return APIErrorResponse{
 				err: err,
 			}
-		} else if SendValidationLink(opts, user); err != nil {
+		} else if actions.SendValidationLink(opts, user); err != nil {
 			return APIErrorResponse{
 				err: err,
 			}
@@ -207,14 +145,14 @@ func specialUserOperations(opts *config.Options, p httprouter.Params, body io.Re
 	} else {
 		if uu.Kind == "recovery" {
 			if user.EmailValidated == nil {
-				if err = SendValidationLink(opts, user); err != nil {
+				if err = actions.SendValidationLink(opts, user); err != nil {
 					return APIErrorResponse{
 						err: err,
 					}
 				}
 				log.Printf("Sent validation link to: %s", user.Email)
 			} else {
-				if err = SendRecoveryLink(opts, user); err != nil {
+				if err = actions.SendRecoveryLink(opts, user); err != nil {
 					return APIErrorResponse{
 						err: err,
 					}
@@ -228,7 +166,7 @@ func specialUserOperations(opts *config.Options, p httprouter.Params, body io.Re
 		} else if uu.Kind == "validation" {
 			if user.EmailValidated != nil {
 				return res
-			} else if err = SendValidationLink(opts, user); err != nil {
+			} else if err = actions.SendValidationLink(opts, user); err != nil {
 				return APIErrorResponse{
 					err: err,
 				}

@@ -18,6 +18,7 @@ RUN apk add --no-cache go-bindata
 WORKDIR /go/src/git.happydns.org/happydns
 
 COPY --from=nodebuild /go/src/git.happydns.org/happydns/ ./
+COPY actions ./actions
 COPY admin ./admin
 COPY api ./api
 COPY config ./config
