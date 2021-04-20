@@ -147,7 +147,7 @@
         </form>
       </b-col>
       <b-col v-if="responses === 'no-answer'" md="8" class="pt-2">
-        <h3>{{ $tc('common.records', 0, { type: form.type }) }}</h3>
+        <h3>{{ $tc('common.records', 0, { type: question.type }) }}</h3>
       </b-col>
       <b-col v-else-if="responses" md="8" class="pt-2">
         <div v-for="(rrs,type) in responseByType" :key="type">
@@ -245,6 +245,7 @@ export default {
         resolver: 'local',
         type: 'ANY'
       },
+      question: null,
       responses: null,
       showDNSSEC: false
     }
@@ -314,6 +315,7 @@ export default {
         .post('/api/resolver', this.form)
         .then(
           (response) => {
+            this.question = Object.assign({}, this.form)
             if (response.data.Answer) {
               this.responses = response.data.Answer
             } else {
