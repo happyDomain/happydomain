@@ -38,7 +38,6 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
 	"strings"
@@ -48,6 +47,7 @@ import (
 	"git.happydns.org/happydns/admin"
 	"git.happydns.org/happydns/api"
 	"git.happydns.org/happydns/config"
+	"git.happydns.org/happydns/internal/app"
 	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/storage"
 
@@ -61,48 +61,6 @@ import (
 
 	_ "git.happydns.org/happydns/storage/leveldb"
 )
-
-type ResponseWriterPrefix struct {
-	real   http.ResponseWriter
-	prefix string
-}
-
-func (r ResponseWriterPrefix) Header() http.Header {
-	return r.real.Header()
-}
-
-func (r ResponseWriterPrefix) WriteHeader(s int) {
-	if v, exists := r.real.Header()["Location"]; exists {
-		r.real.Header().Set("Location", r.prefix+v[0])
-	}
-	r.real.WriteHeader(s)
-}
-
-func (r ResponseWriterPrefix) Write(z []byte) (int, error) {
-	return r.real.Write(z)
-}
-
-func StripPrefix(opts *config.Options, h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Add in the context's request options
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "opts", opts)
-		r = r.WithContext(ctx)
-
-		if opts.BaseURL != "" && r.URL.Path == "/" {
-			http.Redirect(w, r, opts.BaseURL+"/", http.StatusFound)
-		} else if p := strings.TrimPrefix(r.URL.Path, opts.BaseURL); len(p) < len(r.URL.Path) {
-			r2 := new(http.Request)
-			*r2 = *r
-			r2.URL = new(url.URL)
-			*r2.URL = *r.URL
-			r2.URL.Path = p
-			h.ServeHTTP(ResponseWriterPrefix{w, opts.BaseURL}, r2)
-		} else {
-			h.ServeHTTP(w, r)
-		}
-	})
-}
 
 func main() {
 	var err error
@@ -154,10 +112,11 @@ func main() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
+	var adminSrv *http.Server
 	if opts.AdminBind != "" {
-		adminSrv := &http.Server{
+		adminSrv = &http.Server{
 			Addr:    opts.AdminBind,
-			Handler: StripPrefix(opts, admin.Router()),
+			Handler: admin.Router(),
 		}
 
 		go func() {
@@ -180,21 +139,16 @@ func main() {
 		log.Println(fmt.Sprintf("Admin listening on %s", opts.AdminBind))
 	}
 
-	srv := &http.Server{
-		Addr:    opts.Bind,
-		Handler: StripPrefix(opts, api.Router()),
-	}
-
-	// Serve content
-	go func() {
-		log.Fatal(srv.ListenAndServe())
-	}()
-	log.Println(fmt.Sprintf("Ready, listening on %s", opts.Bind))
+	a := app.NewApp(opts)
+	go a.Start()
 
 	// Wait shutdown signal
 	<-interrupt
 
-	log.Print("The service is shutting down...")
-	srv.Shutdown(context.Background())
-	log.Println("done")
+	log.Println("Stopping the service...")
+	a.Stop()
+	if adminSrv != nil {
+		adminSrv.Shutdown(context.Background())
+	}
+	log.Println("Stopped")
 }

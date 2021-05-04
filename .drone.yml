@@ -13,10 +13,10 @@ steps:
   commands:
   - apk --no-cache add python2 build-base tar
   - yarn config set network-timeout 100000
-  - yarn --cwd htdocs install
-  - tar --transform="s@.@./happydns-${DRONE_COMMIT}@" --exclude-vcs --exclude=./htdocs/node_modules/.cache -czf /dev/shm/happydns-src.tar.gz .
+  - yarn --cwd ui install
+  - tar --transform="s@.@./happydns-${DRONE_COMMIT}@" --exclude-vcs --exclude=./ui/node_modules/.cache -czf /dev/shm/happydns-src.tar.gz .
   - mv /dev/shm/happydns-src.tar.gz .
-  - yarn --cwd htdocs --offline build
+  - yarn --cwd ui --offline build
 
 - name: deploy sources
   image: appleboy/drone-scp
@@ -55,8 +55,7 @@ steps:
 - name: backend
   image: golang:alpine
   commands:
-  - apk --no-cache add go-bindata
-  - sed -i '/yarn --cwd htdocs --offline build/d' static.go
+  - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
   - go build -v -tags netgo -ldflags '-w' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
   environment:
@@ -173,14 +172,13 @@ steps:
   commands:
   - apk --no-cache add python2 build-base
   - yarn config set network-timeout 100000
-  - yarn --cwd htdocs install
-  - yarn --cwd htdocs --offline build
+  - yarn --cwd ui install
+  - yarn --cwd ui --offline build
 
 - name: backend
   image: golang:alpine
   commands:
-  - apk --no-cache add go-bindata
-  - sed -i '/yarn --cwd htdocs --offline build/d' static.go
+  - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
   - go build -v -tags netgo -ldflags '-w' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
   - ln happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydns
@@ -291,14 +289,14 @@ steps:
   commands:
   - apk --no-cache add python2 build-base
   - yarn config set network-timeout 100000
-  - yarn --cwd htdocs install
-  - yarn --cwd htdocs --offline build
+  - yarn --cwd ui install
+  - yarn --cwd ui --offline build
 
 - name: backend armel
   image: golang:alpine
   commands:
-  - apk --no-cache add go-bindata build-base
-  - sed -i '/yarn --cwd htdocs --offline build/d' static.go
+  - apk --no-cache add build-base
+  - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
   - go build -v -tags netgo -ldflags '-w' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
   environment:
