@@ -33,13 +33,11 @@ package admin
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happydns/api"
 	"git.happydns.org/happydns/config"
@@ -47,160 +45,132 @@ import (
 	"git.happydns.org/happydns/storage"
 )
 
-func init() {
-	router.GET("/api/users/:userid/domains/:domain/zones", api.ApiHandler(userHandler(domainHandler(getUserDomainZones))))
-	router.PUT("/api/users/:userid/domains/:domain/zones", api.ApiHandler(userHandler(domainHandler(updateUserDomainZones))))
-	router.POST("/api/users/:userid/domains/:domain/zones", api.ApiHandler(userHandler(domainHandler(newUserDomainZone))))
+func declareZonesRoutes(opts *config.Options, router *gin.RouterGroup) {
+	router.GET("/zones", getUserDomainZones)
+	router.PUT("/zones", updateUserDomainZones)
+	router.POST("/zones", newUserDomainZone)
 
-	router.GET("/api/users/:userid/domains/:domain/zones/:zoneid", api.ApiHandler(userHandler(zoneHandler(getZone))))
-	router.PUT("/api/users/:userid/domains/:domain/zones/:zoneid", api.ApiHandler(userHandler(zoneHandler(updateZone))))
-	router.DELETE("/api/users/:userid/domains/:domain/zones/:zoneid", api.ApiHandler(deleteZone))
+	router.DELETE("/zones/:zoneid", deleteZone)
 
-	router.GET("/api/zones/:zoneid", api.ApiHandler(zoneWoUserHandler(getZone)))
-	router.PUT("/api/zones/:zoneid", api.ApiHandler(zoneWoUserHandler(updateZone)))
-	router.DELETE("/api/zones/:zoneid", api.ApiHandler(deleteZone))
+	apiZonesRoutes := router.Group("/zones/:zoneid")
+	apiZonesRoutes.Use(api.ZoneHandler)
 
-	router.GET("/api/users/:userid/domains/:domain/zones/:zoneid/*serviceid", api.ApiHandler(userHandler(zoneHandler(getZoneService))))
-	router.PUT("/api/users/:userid/domains/:domain/zones/:zoneid/*serviceid", api.ApiHandler(userHandler(zoneHandler(updateZoneService))))
-	router.PATCH("/api/users/:userid/domains/:domain/zones/:zoneid", api.ApiHandler(userHandler(zoneHandler(patchZoneService))))
+	apiZonesRoutes.GET("", api.GetZone)
+	apiZonesRoutes.PUT("", updateZone)
+	apiZonesRoutes.PATCH("", patchZoneService)
+
+	apiZonesRoutes.GET("/*serviceid", getZoneService)
+	apiZonesRoutes.PUT("/*serviceid", updateZoneService)
 }
 
-func getUserDomainZones(_ *config.Options, domain *happydns.Domain, _ httprouter.Params, _ io.Reader) api.Response {
-	return api.NewAPIResponse(domain.ZoneHistory, nil)
+func getUserDomainZones(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+
+	c.JSON(http.StatusOK, domain.ZoneHistory)
 }
 
-func updateUserDomainZones(_ *config.Options, domain *happydns.Domain, _ httprouter.Params, body io.Reader) api.Response {
-	err := json.NewDecoder(body).Decode(&domain.ZoneHistory)
+func updateUserDomainZones(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+
+	err := c.ShouldBindJSON(&domain.ZoneHistory)
 	if err != nil {
-		return api.NewAPIErrorResponse(http.StatusBadRequest, fmt.Errorf("Something is wrong in received data: %w", err))
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 
-	return api.NewAPIResponse(domain, storage.MainStore.UpdateDomain(domain))
+	ApiResponse(c, domain, storage.MainStore.UpdateDomain(domain))
 }
 
-func newUserDomainZone(_ *config.Options, domain *happydns.Domain, _ httprouter.Params, body io.Reader) api.Response {
+func newUserDomainZone(c *gin.Context) {
 	uz := &happydns.Zone{}
-	err := json.NewDecoder(body).Decode(&uz)
+	err := c.ShouldBindJSON(&uz)
 	if err != nil {
-		return api.NewAPIErrorResponse(http.StatusBadRequest, fmt.Errorf("Something is wrong in received data: %w", err))
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 	uz.Id = 0
 
-	return api.NewAPIResponse(uz, storage.MainStore.CreateZone(uz))
+	ApiResponse(c, uz, storage.MainStore.CreateZone(uz))
 }
 
-func zoneWoUserHandler(f func(*config.Options, *happydns.Domain, *happydns.Zone, httprouter.Params, io.Reader) api.Response) func(*config.Options, httprouter.Params, io.Reader) api.Response {
-	return func(opts *config.Options, ps httprouter.Params, body io.Reader) api.Response {
-		zoneid, err := strconv.ParseInt(ps.ByName("zoneid"), 10, 64)
-		if err != nil {
-			return api.NewAPIErrorResponse(http.StatusNotFound, err)
-		}
+func updateZone(c *gin.Context) {
+	zone := c.MustGet("zone").(*happydns.Zone)
 
-		zone, err := storage.MainStore.GetZone(zoneid)
-		if err != nil {
-			return api.NewAPIErrorResponse(http.StatusNotFound, err)
-		} else {
-			return f(opts, nil, zone, ps, body)
-		}
-	}
-}
-
-func zoneHandler(f func(*config.Options, *happydns.Domain, *happydns.Zone, httprouter.Params, io.Reader) api.Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) api.Response {
-	return func(opts *config.Options, user *happydns.User, ps httprouter.Params, body io.Reader) api.Response {
-		return domainHandler(func(opts *config.Options, domain *happydns.Domain, ps httprouter.Params, body io.Reader) api.Response {
-			zoneid, err := strconv.ParseInt(ps.ByName("zoneid"), 10, 64)
-			if err != nil {
-				return api.NewAPIErrorResponse(http.StatusNotFound, err)
-			}
-
-			// Check that the zoneid exists in the domain history
-			found := false
-			for _, v := range domain.ZoneHistory {
-				if v == zoneid {
-					found = true
-					break
-				}
-			}
-			if !found {
-				return api.NewAPIErrorResponse(http.StatusNotFound, fmt.Errorf("Zone not found"))
-			}
-
-			zone, err := storage.MainStore.GetZone(zoneid)
-			if err != nil {
-				return api.NewAPIErrorResponse(http.StatusNotFound, err)
-			} else {
-				return f(opts, domain, zone, ps, body)
-			}
-		})(opts, user, ps, body)
-	}
-}
-
-func getZone(_ *config.Options, domain *happydns.Domain, zone *happydns.Zone, _ httprouter.Params, _ io.Reader) api.Response {
-	return api.NewAPIResponse(zone, nil)
-}
-
-func updateZone(_ *config.Options, domain *happydns.Domain, zone *happydns.Zone, _ httprouter.Params, body io.Reader) api.Response {
 	uz := &happydns.Zone{}
-	err := json.NewDecoder(body).Decode(&uz)
+	err := c.ShouldBindJSON(&uz)
 	if err != nil {
-		return api.NewAPIErrorResponse(http.StatusBadRequest, fmt.Errorf("Something is wrong in received data: %w", err))
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 	uz.Id = zone.Id
 
-	return api.NewAPIResponse(uz, storage.MainStore.UpdateZone(uz))
+	ApiResponse(c, uz, storage.MainStore.UpdateZone(uz))
 }
 
-func getZoneService(_ *config.Options, domain *happydns.Domain, zone *happydns.Zone, ps httprouter.Params, body io.Reader) api.Response {
-	serviceid, err := base64.StdEncoding.DecodeString(ps.ByName("serviceid")[1:])
+func getZoneService(c *gin.Context) {
+	zone := c.MustGet("zone").(*happydns.Zone)
+
+	serviceid, err := base64.StdEncoding.DecodeString(c.Param("serviceid")[1:])
 	if err != nil {
-		return api.NewAPIErrorResponse(http.StatusBadRequest, err)
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": err.Error()})
+		return
 	}
 
 	_, svc := zone.FindService(serviceid)
 
-	return api.NewAPIResponse(svc, nil)
+	c.JSON(http.StatusOK, svc)
 }
 
-func updateZoneService(_ *config.Options, domain *happydns.Domain, zone *happydns.Zone, ps httprouter.Params, body io.Reader) api.Response {
-	serviceid, err := base64.StdEncoding.DecodeString(ps.ByName("serviceid")[1:])
+func updateZoneService(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+	zone := c.MustGet("zone").(*happydns.Zone)
+
+	serviceid, err := base64.StdEncoding.DecodeString(c.Param("serviceid")[1:])
 	if err != nil {
-		return api.NewAPIErrorResponse(http.StatusBadRequest, err)
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": err.Error()})
+		return
 	}
 
 	usc := &happydns.ServiceCombined{}
-	err = json.NewDecoder(body).Decode(&usc)
+	err = c.ShouldBindJSON(&usc)
 	if err != nil {
-		return api.NewAPIErrorResponse(http.StatusBadRequest, fmt.Errorf("Something is wrong in received data: %w", err))
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 
 	err = zone.EraseService(usc.Domain, domain.DomainName, serviceid, usc)
 	if err != nil {
-		return api.NewAPIErrorResponse(http.StatusBadRequest, err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
 	}
 
-	return api.NewAPIResponse(zone.Services, storage.MainStore.UpdateZone(zone))
+	ApiResponse(c, zone.Services, storage.MainStore.UpdateZone(zone))
 }
 
-func patchZoneService(_ *config.Options, domain *happydns.Domain, zone *happydns.Zone, _ httprouter.Params, body io.Reader) api.Response {
+func patchZoneService(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+	zone := c.MustGet("zone").(*happydns.Zone)
+
 	usc := &happydns.ServiceCombined{}
-	err := json.NewDecoder(body).Decode(&usc)
+	err := c.ShouldBindJSON(&usc)
 	if err != nil {
-		return api.NewAPIErrorResponse(http.StatusBadRequest, fmt.Errorf("Something is wrong in received data: %w", err))
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 
 	err = zone.EraseService(usc.Domain, domain.DomainName, usc.Id, usc)
 	if err != nil {
-		return api.NewAPIErrorResponse(http.StatusBadRequest, err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 	}
 
-	return api.NewAPIResponse(zone.Services, storage.MainStore.UpdateZone(zone))
+	ApiResponse(c, zone.Services, storage.MainStore.UpdateZone(zone))
 }
 
-func deleteZone(opts *config.Options, ps httprouter.Params, body io.Reader) api.Response {
-	zoneid, err := strconv.ParseInt(ps.ByName("zoneid"), 10, 64)
+func deleteZone(c *gin.Context) {
+	zoneid, err := strconv.ParseInt(c.Param("zoneid"), 10, 64)
 	if err != nil {
-		return api.NewAPIErrorResponse(http.StatusNotFound, err)
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": err.Error()})
 	} else {
-		return api.NewAPIResponse(true, storage.MainStore.DeleteZone(&happydns.Zone{ZoneMeta: happydns.ZoneMeta{Id: zoneid}}))
+		ApiResponse(c, true, storage.MainStore.DeleteZone(&happydns.Zone{ZoneMeta: happydns.ZoneMeta{Id: zoneid}}))
 	}
 }

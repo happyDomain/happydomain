@@ -34,8 +34,11 @@ package api
 import (
 	"fmt"
 
+	"github.com/gin-gonic/gin"
+
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/forms"
+	"git.happydns.org/happydns/model"
 )
 
 type FormState struct {
@@ -51,12 +54,14 @@ type FormResponse struct {
 	Redirect *string           `json:"redirect,omitempty"`
 }
 
-func formDoState(cfg *config.Options, req *RequestResources, fs *FormState, data interface{}, defaultForm func(interface{}) *forms.CustomForm) (form *forms.CustomForm, err error) {
+func formDoState(cfg *config.Options, c *gin.Context, fs *FormState, data interface{}, defaultForm func(interface{}) *forms.CustomForm) (form *forms.CustomForm, err error) {
+	session := c.MustGet("MySession").(*happydns.Session)
+
 	if fs.Recall != nil {
-		req.Session.GetValue(fmt.Sprintf("form-%d", *fs.Recall), data)
-		req.Session.GetValue(fmt.Sprintf("form-%d-name", *fs.Recall), &fs.Name)
-		req.Session.GetValue(fmt.Sprintf("form-%d-id", *fs.Recall), &fs.Id)
-		req.Session.GetValue(fmt.Sprintf("form-%d-next", *fs.Recall), &fs.Redirect)
+		session.GetValue(fmt.Sprintf("form-%d", *fs.Recall), data)
+		session.GetValue(fmt.Sprintf("form-%d-name", *fs.Recall), &fs.Name)
+		session.GetValue(fmt.Sprintf("form-%d-id", *fs.Recall), &fs.Id)
+		session.GetValue(fmt.Sprintf("form-%d-next", *fs.Recall), &fs.Redirect)
 	}
 
 	csf, ok := data.(forms.CustomSettingsForm)
@@ -68,12 +73,12 @@ func formDoState(cfg *config.Options, req *RequestResources, fs *FormState, data
 		}
 		return
 	} else {
-		return csf.DisplaySettingsForm(fs.State, cfg, req.Session, func() int64 {
-			key, recallid := req.Session.FindNewKey("form-")
-			req.Session.SetValue(key, data)
-			req.Session.SetValue(key+"-id", fs.Id)
+		return csf.DisplaySettingsForm(fs.State, cfg, session, func() int64 {
+			key, recallid := session.FindNewKey("form-")
+			session.SetValue(key, data)
+			session.SetValue(key+"-id", fs.Id)
 			if fs.Redirect != nil {
-				req.Session.SetValue(key+"-next", *fs.Redirect)
+				session.SetValue(key+"-next", *fs.Redirect)
 			}
 			return recallid
 		})

@@ -32,26 +32,29 @@
 package api
 
 import (
-	"bytes"
-	"errors"
-	"io"
+	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/forms"
+	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/sources"
 )
 
-func init() {
-	router.GET("/api/source_specs", ApiHandler(getSourceSpecs))
-	router.GET("/api/source_specs/:ssid", ApiHandler(getSourceSpec))
-	router.GET("/api/source_specs/:ssid/icon.png", ApiHandler(getSourceSpecIcon))
+func declareSourceSpecsRoutes(router *gin.RouterGroup) {
+	router.GET("/source_specs", getSourceSpecs)
+
+	router.GET("/source_specs/:ssid/icon.png", getSourceSpecIcon)
+
+	apiSourceSpecsRoutes := router.Group("/source_specs/:ssid")
+	apiSourceSpecsRoutes.Use(SourceSpecsHandler)
+
+	apiSourceSpecsRoutes.GET("", getSourceSpec)
 }
 
-func getSourceSpecs(_ *config.Options, p httprouter.Params, body io.Reader) Response {
+func getSourceSpecs(c *gin.Context) {
 	srcs := sources.GetSources()
 
 	ret := map[string]sources.SourceInfos{}
@@ -60,25 +63,31 @@ func getSourceSpecs(_ *config.Options, p httprouter.Params, body io.Reader) Resp
 		ret[k] = src.Infos
 	}
 
-	return APIResponse{
-		response: ret,
+	c.JSON(http.StatusOK, ret)
+}
+
+func getSourceSpecIcon(c *gin.Context) {
+	ssid := string(c.Param("ssid"))
+
+	if cnt, ok := sources.Icons[strings.TrimSuffix(ssid, ".png")]; ok {
+		c.Data(http.StatusOK, "image/png", cnt)
+	} else {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Icon not found."})
 	}
 }
 
-func getSourceSpecIcon(_ *config.Options, p httprouter.Params, body io.Reader) Response {
-	ssid := string(p.ByName("ssid"))
+func SourceSpecsHandler(c *gin.Context) {
+	ssid := string(c.Param("ssid"))
 
-	if cnt, ok := sources.Icons[strings.TrimSuffix(ssid, ".png")]; ok {
-		return &FileResponse{
-			contentType: "image/png",
-			content:     bytes.NewBuffer(cnt),
-		}
-	} else {
-		return APIErrorResponse{
-			status: http.StatusNotFound,
-			err:    errors.New("Icon not found."),
-		}
+	src, err := sources.FindSource(ssid)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find source: %w", err)})
+		return
 	}
+
+	c.Set("sourcetype", src)
+
+	c.Next()
 }
 
 type viewSourceSpec struct {
@@ -86,20 +95,11 @@ type viewSourceSpec struct {
 	Capabilities []string       `json:"capabilities,omitempty"`
 }
 
-func getSourceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Response {
-	ssid := string(p.ByName("ssid"))
+func getSourceSpec(c *gin.Context) {
+	src := c.MustGet("sourcetype").(happydns.Source)
 
-	src, err := sources.FindSource(ssid)
-	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	}
-
-	return APIResponse{
-		response: viewSourceSpec{
-			Fields:       forms.GenStructFields(src),
-			Capabilities: sources.GetSourceCapabilities(src),
-		},
-	}
+	c.JSON(http.StatusOK, viewSourceSpec{
+		Fields:       forms.GenStructFields(src),
+		Capabilities: sources.GetSourceCapabilities(src),
+	})
 }

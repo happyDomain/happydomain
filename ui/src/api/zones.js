@@ -37,7 +37,7 @@ export default {
   },
 
   applyZone (domain, id) {
-    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/apply_zone/' + encodeURIComponent(id))
+    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/apply_changes')
   },
 
   diffZone (domain, id1, id2) {
@@ -45,7 +45,7 @@ export default {
   },
 
   viewZone (domain, id) {
-    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/view_zone/' + encodeURIComponent(id))
+    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/view')
   },
 
   importZone (domain) {

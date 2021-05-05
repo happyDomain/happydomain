@@ -32,12 +32,12 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
@@ -45,84 +45,121 @@ import (
 	"git.happydns.org/happydns/storage"
 )
 
-func init() {
-	router.GET("/api/sources", apiAuthHandler(getSources))
-	router.POST("/api/sources", apiAuthHandler(addSource))
+func declareSourcesRoutes(cfg *config.Options, router *gin.RouterGroup) {
+	router.GET("/sources", getSources)
+	router.POST("/sources", addSource)
 
-	router.GET("/api/sources/:sid", apiAuthHandler(sourceHandler(getSource)))
-	router.PUT("/api/sources/:sid", apiAuthHandler(sourceHandler(updateSource)))
-	router.DELETE("/api/sources/:sid", apiAuthHandler(sourceMetaHandler(deleteSource)))
+	apiSourcesMetaRoutes := router.Group("/sources/:sid")
+	apiSourcesMetaRoutes.Use(SourceMetaHandler)
 
-	router.GET("/api/sources/:sid/domains", apiAuthHandler(sourceHandler(getDomainsHostedBySource)))
+	apiSourcesMetaRoutes.DELETE("", deleteSource)
 
-	router.GET("/api/sources/:sid/domains_with_actions", apiAuthHandler(sourceHandler(getDomainsWithActionsHostedBySource)))
-	router.POST("/api/sources/:sid/domains_with_actions", apiAuthHandler(sourceHandler(doDomainsWithActionsHostedBySource)))
+	apiSourcesRoutes := router.Group("/sources/:sid")
+	apiSourcesRoutes.Use(SourceHandler)
 
-	router.GET("/api/sources/:sid/available_resource_types", apiAuthHandler(sourceHandler(getAvailableResourceTypes)))
+	apiSourcesRoutes.GET("", GetSource)
+	apiSourcesRoutes.PUT("", UpdateSource)
+
+	apiSourcesRoutes.GET("/domains", getDomainsHostedBySource)
+
+	apiSourcesRoutes.GET("/domains_with_actions", getDomainsWithActionsHostedBySource)
+	apiSourcesRoutes.POST("/domains_with_actions", doDomainsWithActionsHostedBySource)
+
+	apiSourcesRoutes.GET("/available_resource_types", getAvailableResourceTypes)
 }
 
-func getSources(_ *config.Options, req *RequestResources, body io.Reader) Response {
-	if sources, err := storage.MainStore.GetSourceMetas(req.User); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	} else if len(sources) > 0 {
-		return APIResponse{
-			response: sources,
-		}
-	} else {
-		return APIResponse{
-			response: []happydns.Source{},
-		}
-	}
-}
+func getSources(c *gin.Context) {
+	user := c.MustGet("LoggedUser").(*happydns.User)
 
-func sourceMetaHandler(f func(*config.Options, *RequestResources, io.Reader) Response) func(*config.Options, *RequestResources, io.Reader) Response {
-	return func(opts *config.Options, req *RequestResources, body io.Reader) Response {
-		if sid, err := strconv.ParseInt(string(req.Ps.ByName("sid")), 10, 64); err != nil {
-			return APIErrorResponse{err: err}
-		} else if req.SourceMeta, err = storage.MainStore.GetSourceMeta(req.User, sid); err != nil {
-			return APIErrorResponse{err: err}
-		} else {
-			return f(opts, req, body)
-		}
-	}
-}
-
-func sourceHandler(f func(*config.Options, *RequestResources, io.Reader) Response) func(*config.Options, *RequestResources, io.Reader) Response {
-	return func(opts *config.Options, req *RequestResources, body io.Reader) Response {
-		if sid, err := strconv.ParseInt(string(req.Ps.ByName("sid")), 10, 64); err != nil {
-			return APIErrorResponse{err: err}
-		} else if req.Source, err = storage.MainStore.GetSource(req.User, sid); err != nil {
-			return APIErrorResponse{err: err}
-		} else {
-			req.SourceMeta = &req.Source.SourceMeta
-			return f(opts, req, body)
-		}
-	}
-}
-
-func getSource(_ *config.Options, req *RequestResources, body io.Reader) Response {
-	return APIResponse{
-		response: req.Source,
-	}
-}
-
-func DecodeSource(body io.Reader) (*happydns.SourceCombined, error) {
-	cnt, err := ioutil.ReadAll(body)
+	sources, err := storage.MainStore.GetSourceMetas(user)
 	if err != nil {
-		return nil, err
+		log.Println("%s unable to GetSourceMetas(%s): %w", c.ClientIP(), user.Email, err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to list your sources. Please try again later."})
+		return
 	}
 
+	if len(sources) == 0 {
+		c.JSON(http.StatusNoContent, []happydns.Source{})
+	}
+
+	c.JSON(http.StatusOK, sources)
+
+}
+
+func SourceMetaHandler(c *gin.Context) {
+	// Extract source ID
+	sid, err := strconv.ParseInt(string(c.Param("sid")), 10, 64)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Invalid source id: %w", err)})
+		return
+	}
+
+	// Get a valid user
+	user := myUser(c)
+	if user == nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "User not defined."})
+		return
+	}
+
+	// Retrieve source meta
+	sourcemeta, err := storage.MainStore.GetSourceMeta(user, sid)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Source not found."})
+		return
+	}
+
+	// Continue
+	c.Set("sourcemeta", sourcemeta)
+
+	c.Next()
+}
+
+func SourceHandler(c *gin.Context) {
+	// Extract source ID
+	sid, err := strconv.ParseInt(string(c.Param("sid")), 10, 64)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Invalid source id: %w", err)})
+		return
+	}
+
+	// Get a valid user
+	user := myUser(c)
+	if user == nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "User not defined."})
+		return
+	}
+
+	// Retrieve source
+	source, err := storage.MainStore.GetSource(user, sid)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Source not found."})
+		return
+	}
+
+	// Continue
+	c.Set("source", source)
+	c.Set("sourcemeta", source.SourceMeta)
+
+	c.Next()
+}
+
+func GetSource(c *gin.Context) {
+	source := c.MustGet("source").(*happydns.SourceCombined)
+
+	c.JSON(http.StatusOK, source)
+}
+
+func DecodeSource(c *gin.Context) (*happydns.SourceCombined, int, error) {
 	var ust happydns.SourceMeta
-	err = json.Unmarshal(cnt, &ust)
+	err := c.ShouldBindJSON(&ust)
 	if err != nil {
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	us, err := sources.FindSource(ust.Type)
 	if err != nil {
-		return nil, err
+		log.Printf("%s: unable to find source %s: %w", c.ClientIP(), ust.Type, err)
+		return nil, http.StatusInternalServerError, fmt.Errorf("Sorry, we were unable to find the kind of source in our database. Please report this issue.")
 	}
 
 	src := &happydns.SourceCombined{
@@ -130,146 +167,143 @@ func DecodeSource(body io.Reader) (*happydns.SourceCombined, error) {
 		ust,
 	}
 
-	err = json.Unmarshal(cnt, &src)
+	err = c.ShouldBindJSON(&src)
 	if err != nil {
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	err = src.Validate()
 	if err != nil {
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
-	return src, nil
+	return src, http.StatusOK, nil
 }
 
-func addSource(_ *config.Options, req *RequestResources, body io.Reader) Response {
-	src, err := DecodeSource(body)
+func addSource(c *gin.Context) {
+	user := c.MustGet("LoggedUser").(*happydns.User)
+
+	src, statuscode, err := DecodeSource(c)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		c.AbortWithStatusJSON(statuscode, gin.H{"errmsg": err.Error()})
+		return
 	}
 
-	if s, err := storage.MainStore.CreateSource(req.User, src.Source, src.Comment); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	} else {
-		return APIResponse{
-			response: s,
-		}
+	s, err := storage.MainStore.CreateSource(user, src.Source, src.Comment)
+	if err != nil {
+		log.Println("%s unable to CreateSource: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to create the given source. Please try again later."})
+		return
 	}
+
+	c.JSON(http.StatusOK, s)
 }
 
-func updateSource(_ *config.Options, req *RequestResources, body io.Reader) Response {
-	src, err := DecodeSource(body)
+func UpdateSource(c *gin.Context) {
+	source := c.MustGet("source").(*happydns.SourceCombined)
+
+	src, statuscode, err := DecodeSource(c)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		c.AbortWithStatusJSON(statuscode, gin.H{"errmsg": err.Error()})
+		return
 	}
 
-	src.Id = req.Source.Id
-	src.OwnerId = req.Source.OwnerId
+	src.Id = source.Id
+	src.OwnerId = source.OwnerId
 
 	if err := storage.MainStore.UpdateSource(src); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	} else {
-		return APIResponse{
-			response: src,
-		}
+		log.Println("%s unable to UpdateSource: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update the source. Please try again later."})
+		return
 	}
+
+	c.JSON(http.StatusOK, src)
 }
 
-func deleteSource(_ *config.Options, req *RequestResources, body io.Reader) Response {
+func deleteSource(c *gin.Context) {
+	user := c.MustGet("LoggedUser").(*happydns.User)
+	sourcemeta := c.MustGet("sourcemeta").(*happydns.SourceMeta)
+
 	// Check if the source has no more domain associated
-	domains, err := storage.MainStore.GetDomains(req.User)
+	domains, err := storage.MainStore.GetDomains(user)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Println("%s unable to GetDomains for user id=%x email=%s: %w", c.ClientIP(), user.Id, user.Email, err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to perform this action. Please try again later."})
+		return
 	}
 
 	for _, domain := range domains {
-		if domain.IdSource == req.SourceMeta.Id {
-			return APIErrorResponse{
-				err: fmt.Errorf("You cannot delete this source because there is still some domains associated with it."),
-			}
+		if domain.IdSource == sourcemeta.Id {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "You cannot delete this source because there is still some domains associated with it."})
+			return
 		}
 	}
 
-	if err := storage.MainStore.DeleteSource(req.SourceMeta); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	} else {
-		return APIResponse{
-			response: nil,
-		}
+	if err := storage.MainStore.DeleteSource(sourcemeta); err != nil {
+		log.Println("%s unable to DeleteSource %x for user id=%x email=%s: %w", c.ClientIP(), sourcemeta.Id, user.Id, user.Email, err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to delete your source. Please try again later."})
+		return
 	}
+
+	c.JSON(http.StatusNoContent, nil)
 }
 
-func getDomainsHostedBySource(_ *config.Options, req *RequestResources, body io.Reader) Response {
-	sr, ok := req.Source.Source.(sources.ListDomainsSource)
+func getDomainsHostedBySource(c *gin.Context) {
+	source := c.MustGet("source").(*happydns.SourceCombined)
+
+	sr, ok := source.Source.(sources.ListDomainsSource)
 	if !ok {
-		return APIErrorResponse{
-			err: fmt.Errorf("Source doesn't support domain listing."),
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "Source doesn't support domain listing."})
+		return
 	}
 
-	if domains, err := sr.ListDomains(); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	} else {
-		return APIResponse{
-			response: domains,
-		}
+	domains, err := sr.ListDomains()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
 	}
+
+	c.JSON(http.StatusOK, domains)
 }
 
-func getDomainsWithActionsHostedBySource(_ *config.Options, req *RequestResources, body io.Reader) Response {
-	sr, ok := req.Source.Source.(sources.ListDomainsWithActionsSource)
+func getDomainsWithActionsHostedBySource(c *gin.Context) {
+	source := c.MustGet("source").(*happydns.SourceCombined)
+
+	sr, ok := source.Source.(sources.ListDomainsWithActionsSource)
 	if !ok {
-		return APIErrorResponse{
-			err: fmt.Errorf("Source doesn't support domain listing."),
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "Source doesn't support domain listing."})
+		return
 	}
 
-	if domains, err := sr.ListDomainsWithActions(); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	} else {
-		return APIResponse{
-			response: domains,
-		}
+	domains, err := sr.ListDomainsWithActions()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
 	}
+
+	c.JSON(http.StatusOK, domains)
 }
 
-func doDomainsWithActionsHostedBySource(_ *config.Options, req *RequestResources, body io.Reader) Response {
-	sr, ok := req.Source.Source.(sources.ListDomainsWithActionsSource)
+func doDomainsWithActionsHostedBySource(c *gin.Context) {
+	source := c.MustGet("source").(*happydns.SourceCombined)
+
+	sr, ok := source.Source.(sources.ListDomainsWithActionsSource)
 	if !ok {
-		return APIErrorResponse{
-			err: fmt.Errorf("Source doesn't support domain listing."),
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "Source doesn't support domain listing."})
+		return
 	}
 
 	var us sources.ImportableDomain
-	err := json.NewDecoder(body).Decode(&us)
+	err := c.ShouldBindJSON(&us)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Printf("%s sends invalid ImportableDomain JSON: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 
 	if len(us.FQDN) == 0 {
-		return APIErrorResponse{
-			err: fmt.Errorf("Domain to act on not filled"),
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "Domain to act on not filled"})
+		return
 	}
 
 	success, err := sr.ActionOnListedDomain(us.FQDN, us.BtnAction)
@@ -277,22 +311,17 @@ func doDomainsWithActionsHostedBySource(_ *config.Options, req *RequestResources
 	if success {
 		status = http.StatusOK
 	}
-	return APIErrorResponse{
-		err:    err,
-		status: status,
-	}
+	c.JSON(status, err.Error())
 }
 
-func getAvailableResourceTypes(_ *config.Options, req *RequestResources, body io.Reader) Response {
-	lrt, ok := req.Source.Source.(sources.LimitedResourceTypesSource)
+func getAvailableResourceTypes(c *gin.Context) {
+	source := c.MustGet("source").(*happydns.SourceCombined)
+
+	lrt, ok := source.Source.(sources.LimitedResourceTypesSource)
 	if !ok {
 		// Return all types known to be supported by happyDNS
-		return APIResponse{
-			response: sources.DefaultAvailableTypes,
-		}
-	} else {
-		return APIResponse{
-			response: lrt.ListAvailableTypes(),
-		}
+		c.JSON(http.StatusOK, sources.DefaultAvailableTypes)
 	}
+
+	c.JSON(http.StatusOK, lrt.ListAvailableTypes())
 }

@@ -32,13 +32,11 @@
 package admin
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happydns/api"
 	"git.happydns.org/happydns/config"
@@ -46,108 +44,100 @@ import (
 	"git.happydns.org/happydns/storage"
 )
 
-func init() {
-	router.GET("/api/users/:userid/domains", api.ApiHandler(userHandler(getUserDomains)))
-	router.POST("/api/users/:userid/domains", api.ApiHandler(userHandler(newUserDomain)))
-
-	router.GET("/api/users/:userid/domains/:domain", api.ApiHandler(userHandler(domainHandler(getUserDomain))))
-	router.PUT("/api/users/:userid/domains/:domain", api.ApiHandler(userHandler(domainHandler(updateUserDomain))))
-	router.DELETE("/api/users/:userid/domains/:domain", api.ApiHandler(userHandler(deleteUserDomain)))
-
-	router.GET("/api/domains", api.ApiHandler(getAllDomains))
-	router.DELETE("/api/domains", api.ApiHandler(clearDomains))
-}
-
-func getUserDomains(_ *config.Options, user *happydns.User, _ httprouter.Params, _ io.Reader) api.Response {
-	return api.NewAPIResponse(storage.MainStore.GetDomains(user))
-}
-
-func newUserDomain(_ *config.Options, user *happydns.User, _ httprouter.Params, body io.Reader) api.Response {
-	ud := &happydns.Domain{}
-	err := json.NewDecoder(body).Decode(&ud)
-	if err != nil {
-		return api.NewAPIErrorResponse(http.StatusBadRequest, fmt.Errorf("Something is wrong in received data: %w", err))
-	}
-	ud.Id = 0
-	ud.IdUser = user.Id
-
-	return api.NewAPIResponse(ud, storage.MainStore.CreateDomain(user, ud))
-}
-
-func domainHandler(f func(*config.Options, *happydns.Domain, httprouter.Params, io.Reader) api.Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) api.Response {
-	return func(opts *config.Options, user *happydns.User, ps httprouter.Params, body io.Reader) api.Response {
-		domainid, err := strconv.ParseInt(ps.ByName("domain"), 10, 64)
-		if err != nil {
-			domain, err := storage.MainStore.GetDomainByDN(user, ps.ByName("domain"))
-			if err != nil {
-				return api.NewAPIErrorResponse(http.StatusNotFound, err)
-			} else {
-				return f(opts, domain, ps, body)
-			}
+func declareDomainsRoutes(opts *config.Options, router *gin.RouterGroup) {
+	router.GET("/domains", func(c *gin.Context) {
+		if _, exists := c.Get("user"); exists {
+			api.GetDomains(c)
 		} else {
-			domain, err := storage.MainStore.GetDomain(user, domainid)
-			if err != nil {
-				return api.NewAPIErrorResponse(http.StatusNotFound, err)
-			} else {
-				return f(opts, domain, ps, body)
-			}
+			getAllDomains(c)
 		}
-	}
+	})
+	router.POST("/domains", newDomain)
+
+	router.DELETE("/domains/:domain", deleteUserDomain)
+
+	apiDomainsRoutes := router.Group("/domains/:domain")
+	apiDomainsRoutes.Use(api.DomainHandler)
+
+	apiDomainsRoutes.GET("", api.GetDomain)
+	apiDomainsRoutes.PUT("", updateUserDomain)
+
+	declareZonesRoutes(opts, apiDomainsRoutes)
 }
 
-func getUserDomain(_ *config.Options, domain *happydns.Domain, _ httprouter.Params, _ io.Reader) api.Response {
-	return api.NewAPIResponse(domain, nil)
-}
-
-func getAllDomains(_ *config.Options, _ httprouter.Params, _ io.Reader) api.Response {
+func getAllDomains(c *gin.Context) {
 	var domains happydns.Domains
 
 	users, err := storage.MainStore.GetUsers()
 	if err != nil {
-		return api.NewAPIResponse(nil, fmt.Errorf("Unable to retrieve users list: %w", err))
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Unable to retrieve users list: %w", err)})
+		return
 	}
 	for _, user := range users {
 		usersDomains, err := storage.MainStore.GetDomains(user)
 		if err != nil {
-			return api.NewAPIResponse(nil, fmt.Errorf("Unable to retrieve %s's domains: %w", user.Email, err))
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Unable to retrieve %s's domains: %w", user.Email, err)})
+			return
 		}
 
 		domains = append(domains, usersDomains...)
 	}
 
-	return api.NewAPIResponse(domains, nil)
+	ApiResponse(c, domains, nil)
 }
 
-func updateUserDomain(_ *config.Options, domain *happydns.Domain, _ httprouter.Params, body io.Reader) api.Response {
+func newDomain(c *gin.Context) {
+	user := c.MustGet("user").(*happydns.User)
+
 	ud := &happydns.Domain{}
-	err := json.NewDecoder(body).Decode(&ud)
+	err := c.ShouldBindJSON(&ud)
 	if err != nil {
-		return api.NewAPIErrorResponse(http.StatusBadRequest, fmt.Errorf("Something is wrong in received data: %w", err))
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
+	}
+	ud.Id = 0
+	ud.IdUser = user.Id
+
+	ApiResponse(c, ud, storage.MainStore.CreateDomain(user, ud))
+}
+
+func updateUserDomain(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+
+	ud := &happydns.Domain{}
+	err := c.ShouldBindJSON(&ud)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 	ud.Id = domain.Id
 
 	if ud.IdUser != domain.IdUser {
 		if err := storage.MainStore.UpdateDomainOwner(domain, &happydns.User{Id: ud.IdUser}); err != nil {
-			return api.NewAPIErrorResponse(http.StatusBadRequest, err)
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+			return
 		}
 	}
 
-	return api.NewAPIResponse(ud, storage.MainStore.UpdateDomain(ud))
+	ApiResponse(c, ud, storage.MainStore.UpdateDomain(ud))
 }
 
-func deleteUserDomain(_ *config.Options, user *happydns.User, ps httprouter.Params, _ io.Reader) api.Response {
-	domainid, err := strconv.ParseInt(ps.ByName("domain"), 10, 64)
+func deleteUserDomain(c *gin.Context) {
+	user := c.MustGet("user").(*happydns.User)
+
+	domainid, err := strconv.ParseInt(c.Param("domain"), 10, 64)
 	if err != nil {
-		domain, err := storage.MainStore.GetDomainByDN(user, ps.ByName("domain"))
+		domain, err := storage.MainStore.GetDomainByDN(user, c.Param("domain"))
 		if err != nil {
-			return api.NewAPIErrorResponse(http.StatusNotFound, err)
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": err.Error()})
+			return
 		} else {
 			domainid = domain.Id
 		}
 	}
-	return api.NewAPIResponse(true, storage.MainStore.DeleteDomain(&happydns.Domain{Id: domainid}))
+	ApiResponse(c, true, storage.MainStore.DeleteDomain(&happydns.Domain{Id: domainid}))
 }
 
-func clearDomains(_ *config.Options, _ httprouter.Params, _ io.Reader) api.Response {
-	return api.NewAPIResponse(true, storage.MainStore.ClearDomains())
+func clearDomains(c *gin.Context) {
+	ApiResponse(c, true, storage.MainStore.ClearDomains())
 }

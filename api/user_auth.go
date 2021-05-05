@@ -33,15 +33,12 @@ package api
 
 import (
 	"encoding/base64"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
@@ -52,12 +49,24 @@ const NO_AUTH_ACCOUNT = "_no_auth"
 
 var AuthFunc = checkAuth
 
-func init() {
-	router.GET("/api/auth", apiOptionalAuthHandler(displayNotAuthToken, displayAuthToken))
-	router.POST("/api/auth", ApiHandler(func(opts *config.Options, ps httprouter.Params, b io.Reader) Response {
-		return AuthFunc(opts, ps, b)
-	}))
-	router.POST("/api/auth/logout", ApiHandler(logout))
+func declareAuthenticationRoutes(opts *config.Options, router *gin.RouterGroup) {
+	router.POST("/auth", func(c *gin.Context) {
+		AuthFunc(opts, c)
+	})
+	router.POST("/auth/logout", func(c *gin.Context) {
+		logout(opts, c)
+	})
+
+	apiAuthRoutes := router.Group("/auth")
+	apiAuthRoutes.Use(authMiddleware(opts, true))
+
+	apiAuthRoutes.GET("", func(c *gin.Context) {
+		if _, exists := c.Get("MySession"); exists {
+			displayAuthToken(c)
+		} else {
+			displayNotAuthToken(opts, c)
+		}
+	})
 }
 
 type DisplayUser struct {
@@ -76,24 +85,22 @@ func currentUser(u *happydns.User) *DisplayUser {
 	}
 }
 
-func displayNotAuthToken(opts *config.Options, req *RequestResources, _ io.Reader) Response {
-	if opts.NoAuth {
-		return completeAuth(opts, NO_AUTH_ACCOUNT, NO_AUTH_ACCOUNT)
-	} else {
-		return APIErrorResponse{
-			err:    fmt.Errorf("Authorization required"),
-			status: http.StatusUnauthorized,
-		}
+func displayNotAuthToken(opts *config.Options, c *gin.Context) {
+	if !opts.NoAuth {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "Authorization required"})
+		return
 	}
+
+	completeAuth(opts, c, NO_AUTH_ACCOUNT, NO_AUTH_ACCOUNT)
 }
 
-func displayAuthToken(_ *config.Options, req *RequestResources, _ io.Reader) Response {
-	return APIResponse{
-		response: currentUser(req.User),
-	}
+func displayAuthToken(c *gin.Context) {
+	user := c.MustGet("LoggedUser").(*happydns.User)
+
+	c.JSON(http.StatusOK, currentUser(user))
 }
 
-func completeAuth(opts *config.Options, email string, service string) Response {
+func completeAuth(opts *config.Options, c *gin.Context, email string, service string) {
 	var usr *happydns.User
 	var err error
 
@@ -104,56 +111,46 @@ func completeAuth(opts *config.Options, email string, service string) Response {
 			RegistrationTime: &now,
 		}
 		if err = storage.MainStore.CreateUser(usr); err != nil {
-			return APIErrorResponse{
-				err: err,
-			}
+			log.Printf("%s: unable to CreateUser in completeAuth: %w", c.ClientIP(), err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to create your account. Please try again later."})
+			return
 		}
-		log.Printf("Create new user after successful service=%q login %q\n", service, usr)
+		log.Printf("%s: Creates new user after successful service=%q login %q\n", c.ClientIP(), service, usr)
 	} else if usr, err = storage.MainStore.GetUserByEmail(email); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Printf("%s: unable to find User in completeAuth: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to access your account. Please try again later."})
+		return
 	}
 
-	log.Printf("New user logged as %q\n", usr.Email)
+	log.Printf("%s now logged as %q\n", c.ClientIP(), usr.Email)
 
 	var session *happydns.Session
 	if session, err = happydns.NewSession(usr); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Printf("%s: unable to NewSession in completeAuth: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to create your session. Please try again later."})
+		return
 	} else if err = storage.MainStore.CreateSession(session); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Printf("%s: unable to CreateSession in completeAuth: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to create your session. Please try again later."})
+		return
 	}
 
-	return APIResponse{
-		response: currentUser(usr),
-		cookies: []*http.Cookie{&http.Cookie{
-			Name:     "happydns_session",
-			Value:    base64.StdEncoding.EncodeToString(session.Id),
-			Path:     opts.BaseURL + "/",
-			Expires:  time.Now().Add(30 * 24 * time.Hour),
-			Secure:   opts.DevProxy == "",
-			HttpOnly: true,
-			SameSite: http.SameSiteStrictMode,
-		}},
-	}
+	c.SetCookie(
+		COOKIE_NAME, // name
+		base64.StdEncoding.EncodeToString(session.Id), // value
+		30*24*3600,          // maxAge
+		opts.BaseURL+"/",    // path
+		"",                  // domain
+		opts.DevProxy == "", // secure
+		true,                // httpOnly
+	)
+
+	c.JSON(http.StatusOK, currentUser(usr))
 }
 
-func logout(opts *config.Options, _ httprouter.Params, body io.Reader) Response {
-	return APIResponse{
-		response: true,
-		cookies: []*http.Cookie{&http.Cookie{
-			Name:     "happydns_session",
-			Value:    "",
-			Path:     opts.BaseURL + "/",
-			Expires:  time.Unix(0, 0),
-			Secure:   opts.DevProxy == "",
-			HttpOnly: true,
-		}},
-	}
+func logout(opts *config.Options, c *gin.Context) {
+	c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
+	c.JSON(http.StatusOK, true)
 }
 
 type loginForm struct {
@@ -161,48 +158,50 @@ type loginForm struct {
 	Password string
 }
 
-func dummyAuth(opts *config.Options, _ httprouter.Params, body io.Reader) Response {
+func dummyAuth(opts *config.Options, c *gin.Context) {
 	var lf loginForm
-	if err := json.NewDecoder(body).Decode(&lf); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+	if err := c.ShouldBindJSON(&lf); err != nil {
+		log.Printf("%s sends invalid LoginForm JSON: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 
-	if user, err := storage.MainStore.GetUserByEmail(lf.Email); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	} else {
-		return completeAuth(opts, user.Email, "dummy")
+	user, err := storage.MainStore.GetUserByEmail(lf.Email)
+	if err != nil {
+		log.Printf("%s user's email (%s) not found: %w", c.ClientIP(), lf.Email, err)
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "Invalid username or password."})
+		return
 	}
+
+	completeAuth(opts, c, user.Email, "dummy")
 }
 
-func checkAuth(opts *config.Options, _ httprouter.Params, body io.Reader) Response {
+func checkAuth(opts *config.Options, c *gin.Context) {
 	var lf loginForm
-	if err := json.NewDecoder(body).Decode(&lf); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+	if err := c.ShouldBindJSON(&lf); err != nil {
+		log.Printf("%s sends invalid LoginForm JSON: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 
-	if user, err := storage.MainStore.GetUserByEmail(lf.Email); err != nil {
-		return APIErrorResponse{
-			err:    errors.New(`Invalid username or password.`),
-			status: http.StatusUnauthorized,
-		}
-	} else if !user.CheckAuth(lf.Password) {
-		return APIErrorResponse{
-			err:    errors.New(`Invalid username or password.`),
-			status: http.StatusUnauthorized,
-		}
-	} else if user.EmailValidated == nil {
-		return APIErrorResponse{
-			err:    errors.New(`Please validate your e-mail address before your first login.`),
-			href:   "/email-validation",
-			status: http.StatusUnauthorized,
-		}
-	} else {
-		return completeAuth(opts, user.Email, "local")
+	user, err := storage.MainStore.GetUserByEmail(lf.Email)
+	if err != nil {
+		log.Printf("%s user's email (%s) not found: %w", c.ClientIP(), lf.Email, err)
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "Invalid username or password."})
+		return
 	}
+
+	if !user.CheckAuth(lf.Password) {
+		log.Printf("%s tries to login as %q, but sent an invalid password", c.ClientIP(), lf.Email)
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "Invalid username or password."})
+		return
+	}
+
+	if user.EmailValidated == nil {
+		log.Printf("%s tries to login as %q, but sent an invalid password", c.ClientIP(), lf.Email)
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "Please validate your e-mail address before your first login.", "href": "/email-validation"})
+		return
+	}
+
+	completeAuth(opts, c, user.Email, "local")
 }

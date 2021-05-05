@@ -32,8 +32,11 @@
 package api
 
 import (
-	"encoding/json"
-	"io"
+	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/forms"
@@ -42,8 +45,10 @@ import (
 	"git.happydns.org/happydns/storage"
 )
 
-func init() {
-	router.POST("/api/domains/:domain/zone/:zoneid/:subdomain/services/*psid", apiAuthHandler(domainHandler(zoneHandler(getServiceSettingsState))))
+func declareServiceSettingsRoutes(cfg *config.Options, router *gin.RouterGroup) {
+	router.POST("/services/*psid", func(c *gin.Context) {
+		getServiceSettingsState(cfg, c)
+	})
 }
 
 type ServiceSettingsState struct {
@@ -56,8 +61,12 @@ type ServiceSettingsResponse struct {
 	Services map[string][]*happydns.ServiceCombined `json:"services,omitempty"`
 }
 
-func getServiceSettingsState(cfg *config.Options, req *RequestResources, body io.Reader) Response {
-	psid := string(req.Ps.ByName("psid"))
+func getServiceSettingsState(cfg *config.Options, c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+	zone := c.MustGet("zone").(*happydns.Zone)
+	subdomain := c.MustGet("subdomain").(string)
+
+	psid := string(c.Param("psid"))
 	// Remove the leading slash
 	if len(psid) > 1 {
 		psid = psid[1:]
@@ -65,69 +74,53 @@ func getServiceSettingsState(cfg *config.Options, req *RequestResources, body io
 
 	pvr, err := svcs.FindService(psid)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		c.AbortWithStatusJSON(http.StatusNotFound, fmt.Sprintf("Unable to find this service: %w", err))
+		return
 	}
 
 	var ups ServiceSettingsState
 	ups.Service = pvr
-	err = json.NewDecoder(body).Decode(&ups)
+	err = c.ShouldBindJSON(&ups)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Printf("%s sends invalid ServiceSettingsState JSON: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 
-	form, err := formDoState(cfg, req, &ups.FormState, ups.Service, forms.GenDefaultSettingsForm)
+	form, err := formDoState(cfg, c, &ups.FormState, ups.Service, forms.GenDefaultSettingsForm)
 
 	if err != nil {
 		if err != forms.DoneForm {
-			return APIErrorResponse{
-				err: err,
-			}
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+			return
 		} else if ups.Id == nil {
 			// Append a new Service
-			if err = req.Zone.AppendService(string(req.Ps.ByName("subdomain")), req.Domain.DomainName, &happydns.ServiceCombined{Service: ups.Service}); err != nil {
-				return APIErrorResponse{
-					err: err,
-				}
-			} else if err = storage.MainStore.UpdateZone(req.Zone); err != nil {
-				return APIErrorResponse{
-					err: err,
-				}
-			} else {
-				return APIResponse{
-					response: ServiceSettingsResponse{
-						Services:     req.Zone.Services,
-						FormResponse: FormResponse{Redirect: ups.Redirect},
-					},
-				}
-			}
+			err = zone.AppendService(subdomain, domain.DomainName, &happydns.ServiceCombined{Service: ups.Service})
+			return
 		} else {
 			// Update an existing Service
-			if err = req.Zone.EraseServiceWithoutMeta(string(req.Ps.ByName("subdomain")), req.Domain.DomainName, ups.Id.([]byte), ups); err != nil {
-				return APIErrorResponse{
-					err: err,
-				}
-			} else if err = storage.MainStore.UpdateZone(req.Zone); err != nil {
-				return APIErrorResponse{
-					err: err,
-				}
-			} else {
-				return APIResponse{
-					response: ServiceSettingsResponse{
-						Services:     req.Zone.Services,
-						FormResponse: FormResponse{Redirect: ups.Redirect},
-					},
-				}
-			}
+			err = zone.EraseServiceWithoutMeta(subdomain, domain.DomainName, ups.Id.([]byte), ups)
 		}
+
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+			return
+		}
+
+		err = storage.MainStore.UpdateZone(zone)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, ServiceSettingsResponse{
+			Services:     zone.Services,
+			FormResponse: FormResponse{Redirect: ups.Redirect},
+		})
+		return
 	}
 
-	return APIResponse{
-		response: SourceSettingsResponse{
-			FormResponse: FormResponse{From: form},
-		},
-	}
+	c.JSON(http.StatusOK, SourceSettingsResponse{
+		FormResponse: FormResponse{From: form},
+	})
 }

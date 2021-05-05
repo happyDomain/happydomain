@@ -37,16 +37,21 @@ import (
 	"git.happydns.org/happydns/config"
 )
 
-var routes []func(*config.Options, *gin.RouterGroup)
-
-func AddRoutes(f func(*config.Options, *gin.RouterGroup)) {
-	routes = append(routes, f)
-}
-
 func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 	apiRoutes := router.Group("/api")
 
-	for _, r := range routes {
-		r(cfg, apiRoutes)
-	}
+	declareAuthenticationRoutes(cfg, apiRoutes)
+	declareResolverRoutes(apiRoutes)
+	declareServiceSpecsRoutes(apiRoutes)
+	declareSourceSpecsRoutes(apiRoutes)
+	declareUsersRoutes(cfg, apiRoutes)
+	DeclareVersionRoutes(apiRoutes)
+
+	apiAuthRoutes := router.Group("/api")
+	apiAuthRoutes.Use(authMiddleware(cfg, false))
+
+	declareDomainsRoutes(cfg, apiAuthRoutes)
+	declareSourcesRoutes(cfg, apiAuthRoutes)
+	declareSourceSettingsRoutes(cfg, apiAuthRoutes)
+	declareUsersAuthRoutes(cfg, apiAuthRoutes)
 }

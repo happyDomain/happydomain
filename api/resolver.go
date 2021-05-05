@@ -32,26 +32,23 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
+	"log"
 	"math/rand"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 	"github.com/miekg/dns"
-
-	"git.happydns.org/happydns/config"
 )
 
 var (
 	RRToAskForANY = []uint16{dns.TypeSOA, dns.TypeA, dns.TypeAAAA, dns.TypeNS, dns.TypeMX, dns.TypeTXT}
 )
 
-func init() {
-	router.POST("/api/resolver", ApiHandler(runResolver))
+func declareResolverRoutes(router *gin.RouterGroup) {
+	router.POST("/resolver", runResolver)
 }
 
 type resolverRequest struct {
@@ -108,13 +105,12 @@ func resolverQuestion(client dns.Client, resolver string, dn string, rrType uint
 	return r, err
 }
 
-func runResolver(_ *config.Options, ps httprouter.Params, body io.Reader) Response {
+func runResolver(c *gin.Context) {
 	var urr resolverRequest
-	err := json.NewDecoder(body).Decode(&urr)
-	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+	if err := c.ShouldBindJSON(&urr); err != nil {
+		log.Printf("%s sends invalid ResolverRequest JSON: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 
 	urr.DomainName = dns.Fqdn(urr.DomainName)
@@ -124,9 +120,9 @@ func runResolver(_ *config.Options, ps httprouter.Params, body io.Reader) Respon
 	} else if urr.Resolver == "local" {
 		cConf, err := dns.ClientConfigFromFile("/etc/resolv.conf")
 		if err != nil {
-			return APIErrorResponse{
-				err: err,
-			}
+			log.Printf("%s unable to load ClientConfigFromFile: %w", c.ClientIP(), err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to perform the request. Please try again later."})
+			return
 		}
 
 		urr.Resolver = cConf.Servers[rand.Intn(len(cConf.Servers))]
@@ -139,6 +135,7 @@ func runResolver(_ *config.Options, ps httprouter.Params, body io.Reader) Respon
 	client := dns.Client{Timeout: time.Second * 5}
 
 	var r *dns.Msg
+	var err error
 	rrType := dns.StringToType[urr.Type]
 	if rrType == dns.TypeANY {
 		r, err = resolverANYQuestion(client, urr.Resolver+":53", urr.DomainName)
@@ -146,49 +143,32 @@ func runResolver(_ *config.Options, ps httprouter.Params, body io.Reader) Respon
 		r, err = resolverQuestion(client, urr.Resolver+":53", urr.DomainName, rrType)
 	}
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
 	}
 
 	if r == nil {
-		return APIErrorResponse{
-			err:    fmt.Errorf("No response to display."),
-			status: http.StatusNoContent,
-		}
+		c.AbortWithStatusJSON(http.StatusNoContent, gin.H{"errmsg": "No response to display."})
+		return
 	} else if r.Rcode == dns.RcodeFormatError {
-		return APIErrorResponse{
-			err:    fmt.Errorf("DNS request mal formated."),
-			status: http.StatusBadRequest,
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "DNS request mal formated."})
+		return
 	} else if r.Rcode == dns.RcodeServerFailure {
-		return APIErrorResponse{
-			err:    fmt.Errorf("Resolver returns an error (most likely something is wrong in %q).", urr.DomainName),
-			status: http.StatusInternalServerError,
-		}
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Resolver returns an error (most likely something is wrong in %q).", urr.DomainName)})
+		return
 	} else if r.Rcode == dns.RcodeNameError {
-		return APIErrorResponse{
-			err:    fmt.Errorf("The domain %q was not found.", urr.DomainName),
-			status: http.StatusNotFound,
-		}
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("The domain %q was not found.", urr.DomainName)})
+		return
 	} else if r.Rcode == dns.RcodeNotImplemented {
-		return APIErrorResponse{
-			err:    fmt.Errorf("Resolver returns the request hits non implemented code."),
-			status: http.StatusInternalServerError,
-		}
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Resolver returns the request hits non implemented code."})
+		return
 	} else if r.Rcode == dns.RcodeRefused {
-		return APIErrorResponse{
-			err:    fmt.Errorf("Resolver refused to treat our request."),
-			status: http.StatusForbidden,
-		}
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errmsg": "Resolver refused to treat our request."})
+		return
 	} else if r.Rcode != dns.RcodeSuccess {
-		return APIErrorResponse{
-			err:    fmt.Errorf("Resolver returns %s.", dns.RcodeToString[r.Rcode]),
-			status: http.StatusNotAcceptable,
-		}
+		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"errmsg": fmt.Errorf("Resolver returns %s.", dns.RcodeToString[r.Rcode])})
+		return
 	}
 
-	return APIResponse{
-		response: r,
-	}
+	c.JSON(http.StatusOK, r)
 }

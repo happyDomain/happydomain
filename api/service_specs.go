@@ -32,23 +32,25 @@
 package api
 
 import (
-	"bytes"
-	"errors"
-	"io"
+	"fmt"
 	"net/http"
 	"reflect"
 	"strings"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/services"
 )
 
-func init() {
-	router.GET("/api/service_specs", ApiHandler(getServiceSpecs))
-	router.GET("/api/service_specs/:ssid", ApiHandler(getServiceSpec))
-	router.GET("/api/service_specs/:ssid/icon.png", ApiHandler(getServiceSpecIcon))
+func declareServiceSpecsRoutes(router *gin.RouterGroup) {
+	router.GET("/service_specs", getServiceSpecs)
+
+	router.GET("/service_specs/:ssid/icon.png", getServiceSpecIcon)
+
+	apiServiceSpecsRoutes := router.Group("/service_specs/:ssid")
+	apiServiceSpecsRoutes.Use(ServiceSpecsHandler)
+
+	apiServiceSpecsRoutes.GET("", getServiceSpec)
 }
 
 type service_field struct {
@@ -63,7 +65,7 @@ type service_field struct {
 	Description string   `json:"description,omitempty"`
 }
 
-func getServiceSpecs(_ *config.Options, p httprouter.Params, body io.Reader) Response {
+func getServiceSpecs(c *gin.Context) {
 	services := svcs.GetServices()
 
 	ret := map[string]svcs.ServiceInfos{}
@@ -71,25 +73,31 @@ func getServiceSpecs(_ *config.Options, p httprouter.Params, body io.Reader) Res
 		ret[k] = service.Infos
 	}
 
-	return APIResponse{
-		response: ret,
+	c.JSON(http.StatusOK, ret)
+}
+
+func getServiceSpecIcon(c *gin.Context) {
+	ssid := string(c.Param("ssid"))
+
+	if cnt, ok := svcs.Icons[strings.TrimSuffix(ssid, ".png")]; ok {
+		c.Data(http.StatusOK, "image/png", cnt)
+	} else {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Icon not found."})
 	}
 }
 
-func getServiceSpecIcon(_ *config.Options, p httprouter.Params, body io.Reader) Response {
-	ssid := string(p.ByName("ssid"))
+func ServiceSpecsHandler(c *gin.Context) {
+	ssid := string(c.Param("ssid"))
 
-	if cnt, ok := svcs.Icons[strings.TrimSuffix(ssid, ".png")]; ok {
-		return &FileResponse{
-			contentType: "image/png",
-			content:     bytes.NewBuffer(cnt),
-		}
-	} else {
-		return APIErrorResponse{
-			status: http.StatusNotFound,
-			err:    errors.New("Icon not found."),
-		}
+	svc, err := svcs.FindSubService(ssid)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find specs: %w", err)})
+		return
 	}
+
+	c.Set("servicetype", reflect.Indirect(reflect.ValueOf(svc)).Type())
+
+	c.Next()
 }
 
 type viewServiceSpec struct {
@@ -147,18 +155,8 @@ func getSpecs(svcType reflect.Type) viewServiceSpec {
 	return viewServiceSpec{fields}
 }
 
-func getServiceSpec(_ *config.Options, p httprouter.Params, body io.Reader) Response {
-	ssid := string(p.ByName("ssid"))
+func getServiceSpec(c *gin.Context) {
+	svctype := c.MustGet("servicetype").(reflect.Type)
 
-	svc, err := svcs.FindSubService(ssid)
-	if err != nil {
-		return APIErrorResponse{
-			err:    err,
-			status: http.StatusNotFound,
-		}
-	}
-
-	return APIResponse{
-		response: getSpecs(reflect.Indirect(reflect.ValueOf(svc)).Type()),
-	}
+	c.JSON(http.StatusOK, getSpecs(svctype))
 }

@@ -32,12 +32,11 @@
 package api
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
+	"log"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/config"
@@ -45,108 +44,114 @@ import (
 	"git.happydns.org/happydns/storage"
 )
 
-func init() {
-	router.GET("/api/domains", apiAuthHandler(getDomains))
-	router.POST("/api/domains", apiAuthHandler(addDomain))
+func declareDomainsRoutes(cfg *config.Options, router *gin.RouterGroup) {
+	router.GET("/domains", GetDomains)
+	router.POST("/domains", addDomain)
 
-	router.DELETE("/api/domains/:domain", apiAuthHandler(domainHandler(delDomain)))
-	router.GET("/api/domains/:domain", apiAuthHandler(domainHandler(getDomain)))
+	apiDomainsRoutes := router.Group("/domains/:domain")
+	apiDomainsRoutes.Use(DomainHandler)
 
-	router.GET("/api/domains/:domain/rr", apiAuthHandler(domainHandler(axfrDomain)))
-	router.POST("/api/domains/:domain/rr", apiAuthHandler(domainHandler(addRR)))
-	router.DELETE("/api/domains/:domain/rr", apiAuthHandler(domainHandler(delRR)))
+	apiDomainsRoutes.GET("", GetDomain)
+	apiDomainsRoutes.DELETE("", delDomain)
+
+	apiDomainsRoutes.GET("/rr", axfrDomain)
+	apiDomainsRoutes.POST("/rr", prepareRR(addRR))
+	apiDomainsRoutes.DELETE("/rr", prepareRR(delRR))
+
+	declareZonesRoutes(cfg, apiDomainsRoutes)
 }
 
-func getDomains(_ *config.Options, req *RequestResources, body io.Reader) Response {
-	if domains, err := storage.MainStore.GetDomains(req.User); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+func GetDomains(c *gin.Context) {
+	user := myUser(c)
+	if user == nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "User not defined"})
+		return
+	}
+
+	if domains, err := storage.MainStore.GetDomains(user); err != nil {
+		log.Printf("%s: An error occurs when trying to GetDomains: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": err})
 	} else if len(domains) > 0 {
-		return APIResponse{
-			response: domains,
-		}
+		c.JSON(http.StatusOK, domains)
 	} else {
-		return APIResponse{
-			response: []happydns.Domain{},
-		}
+		c.JSON(http.StatusOK, []happydns.Domain{})
 	}
 }
 
-func addDomain(_ *config.Options, req *RequestResources, body io.Reader) Response {
+func addDomain(c *gin.Context) {
 	var uz happydns.Domain
-	err := json.NewDecoder(body).Decode(&uz)
+	err := c.ShouldBindJSON(&uz)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Printf("%s sends invalid Domain JSON: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 
 	if len(uz.DomainName) <= 2 {
-		return APIErrorResponse{
-			err: errors.New("The given domain is invalid."),
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "The given domain is invalid."})
+		return
 	}
 
 	uz.DomainName = dns.Fqdn(uz.DomainName)
 
 	if _, ok := dns.IsDomainName(uz.DomainName); !ok {
-		return APIErrorResponse{
-			err: fmt.Errorf("%q is not a valid domain name.", uz.DomainName),
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("%q is not a valid domain name.", uz.DomainName)})
+		return
 	}
 
-	source, err := storage.MainStore.GetSource(req.User, uz.IdSource)
+	user := c.MustGet("LoggedUser").(*happydns.User)
+
+	source, err := storage.MainStore.GetSource(user, uz.IdSource)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to find the provider.")})
+		return
 	}
 
 	if storage.MainStore.DomainExists(uz.DomainName) {
-		return APIErrorResponse{
-			err: errors.New("This domain has already been imported."),
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "This domain has already been imported."})
+		return
 
 	} else if err := source.DomainExists(uz.DomainName); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	} else if err := storage.MainStore.CreateDomain(req.User, &uz); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
+	} else if err := storage.MainStore.CreateDomain(user, &uz); err != nil {
+		log.Printf("%s was unable to CreateDomain: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are unable to create your domain now."})
+		return
 	} else {
-		return APIResponse{
-			response: uz,
-		}
+		c.JSON(http.StatusOK, uz)
 	}
 }
 
-func delDomain(_ *config.Options, req *RequestResources, body io.Reader) Response {
-	if err := storage.MainStore.DeleteDomain(req.Domain); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	} else {
-		return APIResponse{
-			response: true,
-		}
+func DomainHandler(c *gin.Context) {
+	// Get a valid user
+	user := myUser(c)
+	if user == nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "User not defined."})
+		return
 	}
-}
 
-func domainHandler(f func(*config.Options, *RequestResources, io.Reader) Response) func(*config.Options, *RequestResources, io.Reader) Response {
-	return func(opts *config.Options, req *RequestResources, body io.Reader) Response {
-		var err error
-		if req.Domain, err = storage.MainStore.GetDomainByDN(req.User, req.Ps.ByName("domain")); err != nil {
-			return APIErrorResponse{
-				status: http.StatusNotFound,
-				err:    errors.New("Domain not found"),
-			}
-		} else {
-			return f(opts, req, body)
-		}
+	domain, err := storage.MainStore.GetDomainByDN(user, c.Param("domain"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Domain not found"})
+		return
 	}
+
+	// If source is provided, check that the domain is a parent of the source
+	var source *happydns.SourceMeta
+	if src, exists := c.Get("source"); exists {
+		source = &src.(*happydns.SourceCombined).SourceMeta
+	} else if src, exists := c.Get("sourcemeta"); exists {
+		source = src.(*happydns.SourceMeta)
+	}
+	if source != nil && source.Id != domain.IdSource {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Domain not found (not child of source)"})
+		return
+	}
+
+	c.Set("domain", domain)
+
+	c.Next()
 }
 
 type apiDomain struct {
@@ -157,45 +162,53 @@ type apiDomain struct {
 	ZoneHistory []happydns.ZoneMeta `json:"zone_history"`
 }
 
-func getDomain(_ *config.Options, req *RequestResources, body io.Reader) Response {
+func GetDomain(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
 	ret := &apiDomain{
-		Id:          req.Domain.Id,
-		IdUser:      req.Domain.IdUser,
-		IdSource:    req.Domain.IdSource,
-		DomainName:  req.Domain.DomainName,
+		Id:          domain.Id,
+		IdUser:      domain.IdUser,
+		IdSource:    domain.IdSource,
+		DomainName:  domain.DomainName,
 		ZoneHistory: []happydns.ZoneMeta{},
 	}
 
-	for _, zm := range req.Domain.ZoneHistory {
+	for _, zm := range domain.ZoneHistory {
 		zoneMeta, err := storage.MainStore.GetZoneMeta(zm)
 
 		if err != nil {
-			return APIErrorResponse{
-				err: err,
-			}
+			log.Println("%s: An error occurs in getDomain, when retrieving a meta history: %w", c.ClientIP(), err)
+		} else {
+			ret.ZoneHistory = append(ret.ZoneHistory, *zoneMeta)
 		}
-
-		ret.ZoneHistory = append(ret.ZoneHistory, *zoneMeta)
 	}
 
-	return APIResponse{
-		response: ret,
-	}
+	c.JSON(http.StatusOK, ret)
 }
 
-func axfrDomain(opts *config.Options, req *RequestResources, body io.Reader) Response {
-	source, err := storage.MainStore.GetSource(req.User, req.Domain.IdSource)
-	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+func delDomain(c *gin.Context) {
+	if err := storage.MainStore.DeleteDomain(c.MustGet("domain").(*happydns.Domain)); err != nil {
+		log.Printf("%s was unable to DeleteDomain: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Unable to delete your domain: %w", err)})
+		return
 	}
 
-	rrs, err := source.ImportZone(req.Domain)
+	c.JSON(http.StatusOK, true)
+}
+
+func axfrDomain(c *gin.Context) {
+	user := c.MustGet("LoggedUser").(*happydns.User)
+	domain := c.MustGet("domain").(*happydns.Domain)
+
+	source, err := storage.MainStore.GetSource(user, domain.IdSource)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find your provider: %w", err)})
+		return
+	}
+
+	rrs, err := source.ImportZone(domain)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
 	}
 
 	var ret []serviceRecord
@@ -206,86 +219,64 @@ func axfrDomain(opts *config.Options, req *RequestResources, body io.Reader) Res
 		})
 	}
 
-	return APIResponse{
-		response: ret,
-	}
+	c.JSON(http.StatusOK, ret)
 }
 
 type uploadedRR struct {
 	RR string `json:"string"`
 }
 
-func addRR(opts *config.Options, req *RequestResources, body io.Reader) Response {
-	var urr uploadedRR
-	err := json.NewDecoder(body).Decode(&urr)
-	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	}
+func prepareRR(next func(c *gin.Context, source *happydns.SourceCombined, domain *happydns.Domain, rr dns.RR)) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := c.MustGet("LoggedUser").(*happydns.User)
+		domain := c.MustGet("domain").(*happydns.Domain)
 
-	rr, err := dns.NewRR(fmt.Sprintf("$ORIGIN %s\n$TTL %d\n%s", req.Domain.DomainName, 3600, urr.RR))
-	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	}
+		var urr uploadedRR
 
-	source, err := storage.MainStore.GetSource(req.User, req.Domain.IdSource)
-	if err != nil {
-		return APIErrorResponse{
-			err: err,
+		err := c.ShouldBindJSON(&urr)
+		if err != nil {
+			log.Printf("%s sends invalid RR JSON: %w", c.ClientIP(), err)
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+			return
 		}
-	}
 
-	err = source.AddRR(req.Domain, rr)
-	if err != nil {
-		return APIErrorResponse{
-			status: http.StatusInternalServerError,
-			err:    err,
+		rr, err := dns.NewRR(fmt.Sprintf("$ORIGIN %s\n$TTL %d\n%s", domain.DomainName, 3600, urr.RR))
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("There is an error in the given RR: %w", err)})
+			return
 		}
-	}
 
-	return APIResponse{
-		response: serviceRecord{
-			String: rr.String(),
-			Fields: &rr,
-		},
+		source, err := storage.MainStore.GetSource(user, domain.IdSource)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find the required source: %w", err)})
+			return
+		}
+
+		next(c, source, domain, rr)
 	}
 }
 
-func delRR(opts *config.Options, req *RequestResources, body io.Reader) Response {
-	var urr uploadedRR
-	err := json.NewDecoder(body).Decode(&urr)
+func addRR(c *gin.Context, source *happydns.SourceCombined, domain *happydns.Domain, rr dns.RR) {
+	err := source.AddRR(domain, rr)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Printf("%c: Unable to AddRR: %s", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Sorry, we are unable to add the RR. Please retry or try later...")})
+		return
 	}
 
-	rr, err := dns.NewRR(urr.RR)
+	c.JSON(http.StatusOK, serviceRecord{
+		String: rr.String(),
+		Fields: &rr,
+	})
+}
+
+func delRR(c *gin.Context, source *happydns.SourceCombined, domain *happydns.Domain, rr dns.RR) {
+	err := source.DeleteRR(domain, rr)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Printf("%c: Unable to DelRR: %s", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Sorry, we are unable to delete the RR. Please retry or try later...")})
+		return
 	}
 
-	source, err := storage.MainStore.GetSource(req.User, req.Domain.IdSource)
-	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	}
-
-	err = source.DeleteRR(req.Domain, rr)
-	if err != nil {
-		return APIErrorResponse{
-			status: http.StatusInternalServerError,
-			err:    err,
-		}
-	}
-
-	return APIResponse{
-		response: true,
-	}
+	c.JSON(http.StatusOK, true)
 }

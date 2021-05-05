@@ -33,15 +33,14 @@ package api
 
 import (
 	"encoding/hex"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/config"
@@ -52,139 +51,168 @@ import (
 	"git.happydns.org/happydns/storage"
 )
 
-func init() {
-	router.GET("/api/domains/:domain/zone/:zoneid", apiAuthHandler(domainHandler(zoneHandler(getZone))))
-	router.PATCH("/api/domains/:domain/zone/:zoneid", apiAuthHandler(domainHandler(zoneHandler(updateZoneService))))
+func declareZonesRoutes(cfg *config.Options, router *gin.RouterGroup) {
+	router.POST("/import_zone", importZone)
+	router.POST("/diff_zones/:zoneid1/:zoneid2", diffZones)
 
-	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain", apiAuthHandler(domainHandler(zoneHandler(getZoneSubdomain))))
-	router.POST("/api/domains/:domain/zone/:zoneid/:subdomain/services", apiAuthHandler(domainHandler(zoneHandler(addZoneService))))
-	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain/services/:serviceid", apiAuthHandler(domainHandler(zoneHandler(getZoneService))))
-	router.DELETE("/api/domains/:domain/zone/:zoneid/:subdomain/services/:serviceid", apiAuthHandler(domainHandler(zoneHandler(deleteZoneService))))
-	router.GET("/api/domains/:domain/zone/:zoneid/:subdomain/services/:serviceid/records", apiAuthHandler(domainHandler(zoneHandler(getServiceRecords))))
+	apiZonesRoutes := router.Group("/zone/:zoneid")
+	apiZonesRoutes.Use(ZoneHandler)
 
-	router.POST("/api/domains/:domain/import_zone", apiAuthHandler(domainHandler(importZone)))
-	router.POST("/api/domains/:domain/view_zone/:zoneid", apiAuthHandler(domainHandler(zoneHandler(viewZone))))
-	router.POST("/api/domains/:domain/apply_zone/:zoneid", apiAuthHandler(domainHandler(zoneHandler(applyZone))))
-	router.POST("/api/domains/:domain/diff_zones/:zoneid1/:zoneid2", apiAuthHandler(domainHandler(diffZones)))
+	apiZonesRoutes.POST("/view", viewZone)
+	apiZonesRoutes.POST("/apply_changes", applyZone)
+
+	apiZonesRoutes.GET("", GetZone)
+	apiZonesRoutes.PATCH("", UpdateZoneService)
+
+	apiZonesSubdomainRoutes := apiZonesRoutes.Group("/:subdomain")
+	apiZonesSubdomainRoutes.Use(subdomainHandler)
+	apiZonesSubdomainRoutes.GET("", getZoneSubdomain)
+	apiZonesSubdomainRoutes.POST("/services", addZoneService)
+
+	declareServiceSettingsRoutes(cfg, apiZonesSubdomainRoutes)
+
+	apiZonesSubdomainServiceIdRoutes := apiZonesSubdomainRoutes.Group("/services/:serviceid")
+	apiZonesSubdomainServiceIdRoutes.Use(serviceIdHandler)
+	apiZonesSubdomainServiceIdRoutes.GET("", getZoneService)
+	apiZonesSubdomainServiceIdRoutes.DELETE("", deleteZoneService)
+	apiZonesSubdomainServiceIdRoutes.GET("/records", getServiceRecords)
 }
 
-func zoneHandler(f func(*config.Options, *RequestResources, io.Reader) Response) func(*config.Options, *RequestResources, io.Reader) Response {
-	return func(opts *config.Options, req *RequestResources, body io.Reader) Response {
-		zoneid, err := strconv.ParseInt(req.Ps.ByName("zoneid"), 10, 64)
-		if err != nil {
-			return APIErrorResponse{
-				err: err,
-			}
-		}
-
-		// Check that the zoneid exists in the domain history
-		if !req.Domain.HasZone(zoneid) {
-			return APIErrorResponse{
-				status: http.StatusNotFound,
-				err:    errors.New("Zone not found"),
-			}
-		}
-
-		if req.Zone, err = storage.MainStore.GetZone(zoneid); err != nil {
-			return APIErrorResponse{
-				status: http.StatusNotFound,
-				err:    errors.New("Zone not found"),
-			}
-		} else {
-			return f(opts, req, body)
-		}
-	}
-}
-
-func getZone(opts *config.Options, req *RequestResources, body io.Reader) Response {
-	return APIResponse{
-		response: req.Zone,
-	}
-}
-
-func getZoneSubdomain(opts *config.Options, req *RequestResources, body io.Reader) Response {
-	subdomain := strings.TrimSuffix(req.Ps.ByName("subdomain"), "@")
-	return APIResponse{
-		response: map[string]interface{}{
-			"services": req.Zone.Services[subdomain],
-		},
-	}
-}
-
-func addZoneService(opts *config.Options, req *RequestResources, body io.Reader) Response {
-	usc := &happydns.ServiceCombined{}
-	err := json.NewDecoder(body).Decode(&usc)
+func loadZoneFromId(domain *happydns.Domain, id string) (*happydns.Zone, int, error) {
+	zoneid, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		return APIErrorResponse{
-			err: fmt.Errorf("Something is wrong in received data: %w", err),
-		}
+		return nil, http.StatusBadRequest, fmt.Errorf("Invalid zoneid: %q", id)
+	}
+
+	// Check that the zoneid exists in the domain history
+	if !domain.HasZone(zoneid) {
+		return nil, http.StatusNotFound, fmt.Errorf("Zone not found: %q", id)
+	}
+
+	zone, err := storage.MainStore.GetZone(zoneid)
+	if err != nil {
+		return nil, http.StatusNotFound, fmt.Errorf("Zone not found: %q", id)
+	}
+
+	return zone, http.StatusOK, nil
+}
+
+func ZoneHandler(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+
+	zone, statuscode, err := loadZoneFromId(domain, c.Param("zoneid"))
+	if err != nil {
+		c.AbortWithStatusJSON(statuscode, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	c.Set("zone", zone)
+
+	c.Next()
+}
+
+func GetZone(c *gin.Context) {
+	zone := c.MustGet("zone").(*happydns.Zone)
+
+	c.JSON(http.StatusOK, zone)
+}
+
+func subdomainHandler(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+
+	subdomain := strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(c.Param("subdomain"), "."+domain.DomainName), "@"), domain.DomainName)
+
+	c.Set("subdomain", subdomain)
+
+	c.Next()
+}
+
+func getZoneSubdomain(c *gin.Context) {
+	zone := c.MustGet("zone").(*happydns.Zone)
+	subdomain := c.MustGet("subdomain").(string)
+
+	c.JSON(http.StatusOK, gin.H{"services": zone.Services[subdomain]})
+}
+
+func addZoneService(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+	zone := c.MustGet("zone").(*happydns.Zone)
+	subdomain := c.MustGet("subdomain").(string)
+
+	usc := &happydns.ServiceCombined{}
+	err := c.ShouldBindJSON(&usc)
+	if err != nil {
+		log.Printf("%s sends invalid service JSON: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 
 	if usc.Service == nil {
-		return APIErrorResponse{
-			err: fmt.Errorf("Unable to parse the given service."),
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "Unable to parse the given service."})
+		return
 	}
 
-	subdomain := strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(req.Ps.ByName("subdomain"), "."+req.Domain.DomainName), "@"), req.Domain.DomainName)
-
-	err = req.Zone.AppendService(subdomain, req.Domain.DomainName, usc)
+	err = zone.AppendService(subdomain, domain.DomainName, usc)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to add service: %w", err)})
+		return
 	}
 
-	err = storage.MainStore.UpdateZone(req.Zone)
+	err = storage.MainStore.UpdateZone(zone)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Printf("%s: Unable to UpdateZone in updateZoneService: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your zone. Please retry later."})
+		return
 	}
 
-	return APIResponse{
-		response: req.Zone,
-	}
+	c.JSON(http.StatusOK, zone)
 }
 
-func getZoneService(opts *config.Options, req *RequestResources, body io.Reader) Response {
-	serviceid, err := hex.DecodeString(req.Ps.ByName("serviceid"))
+func serviceIdHandler(c *gin.Context) {
+	serviceid, err := hex.DecodeString(c.Param("serviceid"))
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Bad service identifier: %w", err)})
+		return
 	}
 
-	return APIResponse{
-		response: req.Zone.FindSubdomainService(req.Ps.ByName("subdomain"), serviceid),
-	}
+	c.Set("serviceid", serviceid)
+
+	c.Next()
 }
 
-func importZone(opts *config.Options, req *RequestResources, body io.Reader) Response {
-	source, err := storage.MainStore.GetSource(req.User, req.Domain.IdSource)
+func getZoneService(c *gin.Context) {
+	zone := c.MustGet("zone").(*happydns.Zone)
+	serviceid := c.MustGet("serviceid").([]byte)
+	subdomain := c.MustGet("subdomain").(string)
+
+	c.JSON(http.StatusOK, zone.FindSubdomainService(subdomain, serviceid))
+}
+
+func importZone(c *gin.Context) {
+	user := c.MustGet("LoggedUser").(*happydns.User)
+	domain := c.MustGet("domain").(*happydns.Domain)
+
+	source, err := storage.MainStore.GetSource(user, domain.IdSource)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find your provider: %w", err)})
+		return
 	}
 
-	zone, err := source.ImportZone(req.Domain)
+	zone, err := source.ImportZone(domain)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
 	}
 
-	services, defaultTTL, err := svcs.AnalyzeZone(req.Domain.DomainName, zone)
+	services, defaultTTL, err := svcs.AnalyzeZone(domain.DomainName, zone)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
 	}
 
 	myZone := &happydns.Zone{
 		ZoneMeta: happydns.ZoneMeta{
-			IdAuthor:     req.Domain.IdUser,
+			IdAuthor:     domain.IdUser,
 			DefaultTTL:   defaultTTL,
 			LastModified: time.Now(),
 		},
@@ -194,111 +222,68 @@ func importZone(opts *config.Options, req *RequestResources, body io.Reader) Res
 	// Create history zone
 	err = storage.MainStore.CreateZone(myZone)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Printf("%s: unable to CreateZone in importZone: %w\n", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are unable to create your zone."})
+		return
 	}
-	req.Domain.ZoneHistory = append(
-		[]int64{myZone.Id}, req.Domain.ZoneHistory...)
+	domain.ZoneHistory = append(
+		[]int64{myZone.Id}, domain.ZoneHistory...)
 
 	// Create wip zone
 	err = storage.MainStore.CreateZone(myZone)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Printf("%s: unable to CreateZone2 in importZone: %w\n", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are unable to create your zone."})
+		return
 	}
-	req.Domain.ZoneHistory = append(
-		[]int64{myZone.Id}, req.Domain.ZoneHistory...)
+	domain.ZoneHistory = append(
+		[]int64{myZone.Id}, domain.ZoneHistory...)
 
-	err = storage.MainStore.UpdateDomain(req.Domain)
+	err = storage.MainStore.UpdateDomain(domain)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Printf("%s: unable to UpdateDomain in importZone: %w\n", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are unable to create your zone."})
+		return
 	}
 
-	return APIResponse{
-		response: &myZone.ZoneMeta,
+	c.JSON(http.StatusOK, &myZone.ZoneMeta)
+}
+
+func loadRecordsFromZoneId(user *happydns.User, domain *happydns.Domain, id string) ([]dns.RR, int, error) {
+	if id == "@" {
+		source, err := storage.MainStore.GetSource(user, domain.IdSource)
+		if err != nil {
+			return nil, http.StatusNotFound, fmt.Errorf("Unable to find the given source: %q for %q", domain.IdSource, domain.DomainName)
+		}
+
+		rrs, err := source.ImportZone(domain)
+
+		// statuscode should not be significant if err is nil
+		return rrs, http.StatusBadRequest, err
+	} else {
+		zone, statuscode, err := loadZoneFromId(domain, id)
+		if err != nil {
+			return nil, statuscode, err
+		}
+
+		return zone.GenerateRRs(domain.DomainName), http.StatusOK, err
 	}
 }
 
-func diffZones(opts *config.Options, req *RequestResources, body io.Reader) Response {
-	zoneid1, err := strconv.ParseInt(req.Ps.ByName("zoneid1"), 10, 64)
-	if err != nil && req.Ps.ByName("zoneid1") != "@" {
-		return APIErrorResponse{
-			err: err,
-		}
+func diffZones(c *gin.Context) {
+	user := c.MustGet("LoggedUser").(*happydns.User)
+	domain := c.MustGet("domain").(*happydns.Domain)
+
+	zone1, statuscode, err := loadRecordsFromZoneId(user, domain, c.Param("zoneid1"))
+	if err != nil {
+		c.AbortWithStatusJSON(statuscode, gin.H{"errmsg": err.Error()})
+		return
 	}
 
-	zoneid2, err := strconv.ParseInt(req.Ps.ByName("zoneid2"), 10, 64)
-	if err != nil && req.Ps.ByName("zoneid2") != "@" {
-		return APIErrorResponse{
-			err: err,
-		}
-	}
-
-	if zoneid1 == 0 && zoneid2 == 0 {
-		return APIErrorResponse{
-			err: fmt.Errorf("Both zoneId can't reference the live version"),
-		}
-	}
-
-	var zone1 []dns.RR
-	var zone2 []dns.RR
-
-	if zoneid1 == 0 || zoneid2 == 0 {
-		source, err := storage.MainStore.GetSource(req.User, req.Domain.IdSource)
-		if err != nil {
-			return APIErrorResponse{
-				err: err,
-			}
-		}
-
-		if zoneid1 == 0 {
-			zone1, err = source.ImportZone(req.Domain)
-		}
-		if zoneid2 == 0 {
-			zone2, err = source.ImportZone(req.Domain)
-		}
-
-		if err != nil {
-			return APIErrorResponse{
-				err: err,
-			}
-		}
-	}
-
-	if zoneid1 != 0 {
-		if !req.Domain.HasZone(zoneid1) {
-			return APIErrorResponse{
-				status: http.StatusNotFound,
-				err:    errors.New("Zone A not found"),
-			}
-		} else if z1, err := storage.MainStore.GetZone(zoneid1); err != nil {
-			return APIErrorResponse{
-				status: http.StatusNotFound,
-				err:    errors.New("Zone A not found"),
-			}
-		} else {
-			zone1 = z1.GenerateRRs(req.Domain.DomainName)
-		}
-	}
-
-	if zoneid2 != 0 {
-		if !req.Domain.HasZone(zoneid2) {
-			return APIErrorResponse{
-				status: http.StatusNotFound,
-				err:    errors.New("Zone B not found"),
-			}
-		} else if z2, err := storage.MainStore.GetZone(zoneid2); err != nil {
-			return APIErrorResponse{
-				status: http.StatusNotFound,
-				err:    errors.New("Zone B not found"),
-			}
-		} else {
-			zone2 = z2.GenerateRRs(req.Domain.DomainName)
-		}
+	zone2, statuscode, err := loadRecordsFromZoneId(user, domain, c.Param("zoneid2"))
+	if err != nil {
+		c.AbortWithStatusJSON(statuscode, gin.H{"errmsg": err.Error()})
+		return
 	}
 
 	toAdd, toDel := sources.DiffZones(zone1, zone2, true)
@@ -313,32 +298,33 @@ func diffZones(opts *config.Options, req *RequestResources, body io.Reader) Resp
 		rrDel = append(rrDel, rr.String())
 	}
 
-	return APIResponse{
-		response: map[string]interface{}{
-			"toAdd": rrAdd,
-			"toDel": rrDel,
-		},
-	}
+	c.JSON(http.StatusOK, gin.H{
+		"toAdd": rrAdd,
+		"toDel": rrDel,
+	})
 }
 
-func applyZone(opts *config.Options, req *RequestResources, body io.Reader) Response {
-	source, err := storage.MainStore.GetSource(req.User, req.Domain.IdSource)
+func applyZone(c *gin.Context) {
+	user := c.MustGet("LoggedUser").(*happydns.User)
+	domain := c.MustGet("domain").(*happydns.Domain)
+	zone := c.MustGet("zone").(*happydns.Zone)
+
+	source, err := storage.MainStore.GetSource(user, domain.IdSource)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find your provider: %w", err)})
+		return
 	}
 
-	newSOA, err := sources.ApplyZone(source, req.Domain, req.Zone.GenerateRRs(req.Domain.DomainName), true)
+	newSOA, err := sources.ApplyZone(source, domain, zone.GenerateRRs(domain.DomainName), true)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Printf("%s: unable to ApplyZone in applyZone", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Unable to create the diff. Please retry later or contact an administrator."})
+		return
 	}
 
 	// Update serial
 	if newSOA != nil {
-		for _, svc := range req.Zone.Services[""] {
+		for _, svc := range zone.Services[""] {
 			if origin, ok := svc.Service.(*abstract.Origin); ok {
 				origin.Serial = newSOA.Serial
 				break
@@ -347,115 +333,107 @@ func applyZone(opts *config.Options, req *RequestResources, body io.Reader) Resp
 	}
 
 	// Create a new zone in history for futher updates
-	newZone := req.Zone.DerivateNew()
+	newZone := zone.DerivateNew()
 	//newZone.IdAuthor = //TODO get current user id
 	err = storage.MainStore.CreateZone(newZone)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Printf("%s was unable to CreateZone", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are unable to create the zone now."})
+		return
 	}
 
-	req.Domain.ZoneHistory = append(
-		[]int64{newZone.Id}, req.Domain.ZoneHistory...)
+	domain.ZoneHistory = append(
+		[]int64{newZone.Id}, domain.ZoneHistory...)
 
-	err = storage.MainStore.UpdateDomain(req.Domain)
+	err = storage.MainStore.UpdateDomain(domain)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Printf("%s was unable to UpdateDomain", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are unable to create the zone now."})
+		return
 	}
 
 	// Commit changes in previous zone
 	now := time.Now()
 	// zone.ZoneMeta.IdAuthor = // TODO get current user id
-	req.Zone.ZoneMeta.Published = &now
+	zone.ZoneMeta.Published = &now
 
-	req.Zone.LastModified = time.Now()
+	zone.LastModified = time.Now()
 
-	err = storage.MainStore.UpdateZone(req.Zone)
+	err = storage.MainStore.UpdateZone(zone)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Printf("%s was unable to UpdateZone", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are unable to create the zone now."})
+		return
 	}
 
-	return APIResponse{
-		response: newZone.ZoneMeta,
-	}
+	c.JSON(http.StatusOK, newZone.ZoneMeta)
 }
 
-func viewZone(opts *config.Options, req *RequestResources, body io.Reader) Response {
+func viewZone(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+	zone := c.MustGet("zone").(*happydns.Zone)
+
 	var ret string
 
-	for _, rr := range req.Zone.GenerateRRs(req.Domain.DomainName) {
+	for _, rr := range zone.GenerateRRs(domain.DomainName) {
 		ret += rr.String() + "\n"
 	}
 
-	return APIResponse{
-		response: ret,
-	}
+	c.JSON(http.StatusOK, ret)
 }
 
-func updateZoneService(opts *config.Options, req *RequestResources, body io.Reader) Response {
+func UpdateZoneService(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+	zone := c.MustGet("zone").(*happydns.Zone)
+
 	usc := &happydns.ServiceCombined{}
-	err := json.NewDecoder(body).Decode(&usc)
+	err := c.ShouldBindJSON(&usc)
 	if err != nil {
-		return APIErrorResponse{
-			err: fmt.Errorf("Something is wrong in received data: %w", err),
-		}
+		log.Printf("%s sends invalid domain JSON: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 
-	err = req.Zone.EraseService(usc.Domain, req.Domain.DomainName, usc.Id, usc)
+	err = zone.EraseService(usc.Domain, domain.DomainName, usc.Id, usc)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to delete service: %w", err)})
+		return
 	}
 
-	req.Zone.LastModified = time.Now()
+	zone.LastModified = time.Now()
 
-	err = storage.MainStore.UpdateZone(req.Zone)
+	err = storage.MainStore.UpdateZone(zone)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Printf("%s: Unable to UpdateZone in updateZoneService: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your zone. Please retry later."})
+		return
 	}
 
-	return APIResponse{
-		response: req.Zone,
-	}
+	c.JSON(http.StatusOK, zone)
 }
 
-func deleteZoneService(opts *config.Options, req *RequestResources, body io.Reader) Response {
-	serviceid, err := hex.DecodeString(req.Ps.ByName("serviceid"))
+func deleteZoneService(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+	zone := c.MustGet("zone").(*happydns.Zone)
+	serviceid := c.MustGet("serviceid").([]byte)
+	subdomain := c.MustGet("subdomain").(string)
+
+	err := zone.EraseService(subdomain, domain.DomainName, serviceid, nil)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to delete service: %w", err)})
+		return
 	}
 
-	subdomain := strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(req.Ps.ByName("subdomain"), "."+req.Domain.DomainName), "@"), req.Domain.DomainName)
+	zone.LastModified = time.Now()
 
-	err = req.Zone.EraseService(subdomain, req.Domain.DomainName, serviceid, nil)
+	err = storage.MainStore.UpdateZone(zone)
 	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+		log.Printf("%s: Unable to UpdateZone in deleteZoneService: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your zone. Please retry later."})
+		return
 	}
 
-	req.Zone.LastModified = time.Now()
-
-	err = storage.MainStore.UpdateZone(req.Zone)
-	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	}
-
-	return APIResponse{
-		response: req.Zone,
-	}
+	c.JSON(http.StatusOK, zone)
 }
 
 type serviceRecord struct {
@@ -463,35 +441,25 @@ type serviceRecord struct {
 	Fields *dns.RR `json:"fields,omitempty"`
 }
 
-func getServiceRecords(opts *config.Options, req *RequestResources, body io.Reader) Response {
-	serviceid, err := hex.DecodeString(req.Ps.ByName("serviceid"))
-	if err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	}
+func getServiceRecords(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+	zone := c.MustGet("zone").(*happydns.Zone)
+	serviceid := c.MustGet("serviceid").([]byte)
+	subdomain := c.MustGet("subdomain").(string)
 
-	subdomain := req.Ps.ByName("subdomain")
-	if subdomain == "" {
-		subdomain = "@"
-	}
-
-	svc := req.Zone.FindSubdomainService(subdomain, serviceid)
+	svc := zone.FindSubdomainService(subdomain, serviceid)
 	if svc == nil {
-		return APIErrorResponse{
-			err: errors.New("Service not found"),
-		}
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Service not found."})
+		return
 	}
 
 	var ret []serviceRecord
-	for _, rr := range svc.GenRRs(subdomain, 3600, req.Domain.DomainName) {
+	for _, rr := range svc.GenRRs(subdomain, 3600, domain.DomainName) {
 		ret = append(ret, serviceRecord{
 			String: rr.String(),
 			Fields: &rr,
 		})
 	}
 
-	return APIResponse{
-		response: ret,
-	}
+	c.JSON(http.StatusOK, ret)
 }

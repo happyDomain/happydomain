@@ -1,4 +1,4 @@
-// Copyright or © or Copr. happyDNS (2020)
+// Copyright or © or Copr. happyDNS (2021)
 //
 // contact@happydns.org
 //
@@ -29,64 +29,61 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package api
+package app
 
 import (
-	"fmt"
+	"context"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydns/model"
-	"git.happydns.org/happydns/services"
-	"git.happydns.org/happydns/storage"
+	"git.happydns.org/happydns/api"
+	"git.happydns.org/happydns/config"
+	"git.happydns.org/happydns/ui"
 )
 
-func declareServiceRoutes(router *gin.RouterGroup) {
-	router.GET("/services", listServices)
-	//router.POST("/services", newService)
-
-	//router.POST("/domains/:domain/analyze", analyzeDomain)
+type App struct {
+	router *gin.Engine
+	cfg    *config.Options
+	srv    *http.Server
 }
 
-func listServices(c *gin.Context) {
-	ret := map[string]svcs.ServiceInfos{}
-
-	for k, svc := range *svcs.GetServices() {
-		ret[k] = svc.Infos
+func NewApp(cfg *config.Options) App {
+	if cfg.DevProxy == "" {
+		gin.SetMode(gin.ReleaseMode)
 	}
 
-	c.JSON(http.StatusOK, ret)
+	gin.ForceConsoleColor()
+	router := gin.New()
+	router.Use(gin.Logger(), gin.Recovery())
+
+	api.DeclareRoutes(cfg, router)
+	ui.DeclareRoutes(cfg, router)
+
+	app := App{
+		router: router,
+		cfg:    cfg,
+	}
+
+	return app
 }
 
-func analyzeDomain(c *gin.Context) {
-	domain := c.MustGet("domain").(*happydns.Domain)
-	user := myUser(c)
-	if user == nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "User not defined"})
-		return
+func (app *App) Start() {
+	app.srv = &http.Server{
+		Addr:    app.cfg.Bind,
+		Handler: app.router,
 	}
 
-	source, err := storage.MainStore.GetSource(user, domain.IdSource)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to get the related source: %w", err)})
-		return
+	if err := app.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("listen: %s\n", err)
 	}
-
-	zone, err := source.ImportZone(domain)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to import zone: %w", err)})
-		return
+}
+func (app *App) Stop() {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := app.srv.Shutdown(ctx); err != nil {
+		log.Fatal("Server Shutdown:", err)
 	}
-
-	services, defaultTTL, err := svcs.AnalyzeZone(domain.DomainName, zone)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("An error occurs during analysis: %w", err)})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"services":   services,
-		"defaultTTL": defaultTTL,
-	})
 }

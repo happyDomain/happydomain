@@ -33,11 +33,9 @@ package admin
 
 import (
 	"fmt"
-	"io"
 	"net/http"
-	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happydns/api"
 	"git.happydns.org/happydns/config"
@@ -45,101 +43,76 @@ import (
 	"git.happydns.org/happydns/storage"
 )
 
-func init() {
-	router.GET("/api/users/:userid/sources", api.ApiHandler(userHandler(getUserSources)))
-	router.POST("/api/users/:userid/sources", api.ApiHandler(userHandler(newUserSource)))
+func declareSourcesRoutes(opts *config.Options, router *gin.RouterGroup) {
+	router.GET("/sources", getSources)
+	router.POST("/sources", newUserSource)
 
-	router.GET("/api/users/:userid/sources/:source", api.ApiHandler(userHandler(sourceHandler(getUserSource))))
-	router.PUT("/api/users/:userid/sources/:source", api.ApiHandler(userHandler(sourceHandler(updateUserSource))))
-	router.DELETE("/api/users/:userid/sources/:source", api.ApiHandler(userHandler(sourceMetaHandler(deleteUserSource))))
+	apiSourcesMetaRoutes := router.Group("/sources/:sid")
+	apiSourcesMetaRoutes.Use(api.SourceMetaHandler)
 
-	router.GET("/api/sources", api.ApiHandler(getAllSources))
-	router.DELETE("/api/sources", api.ApiHandler(clearSources))
+	apiSourcesMetaRoutes.PUT("", api.UpdateSource)
+	apiSourcesMetaRoutes.DELETE("", deleteUserSource)
+
+	apiSourcesRoutes := router.Group("/sources/:sid")
+	apiSourcesRoutes.Use(api.SourceHandler)
+
+	apiSourcesRoutes.GET("", api.GetSource)
+
+	declareDomainsRoutes(opts, apiSourcesRoutes)
 }
 
-func getUserSources(_ *config.Options, user *happydns.User, _ httprouter.Params, _ io.Reader) api.Response {
-	return api.NewAPIResponse(storage.MainStore.GetSourceMetas(user))
+func getSources(c *gin.Context) {
+	user, exists := c.Get("user")
+	if exists {
+		srcmeta, err := storage.MainStore.GetSourceMetas(user.(*happydns.User))
+		ApiResponse(c, srcmeta, err)
+	} else {
+		var sources []happydns.SourceMeta
+
+		users, err := storage.MainStore.GetUsers()
+		if err != nil {
+			ApiResponse(c, nil, fmt.Errorf("Unable to retrieve users list: %w", err))
+			return
+		}
+		for _, user := range users {
+			usersSources, err := storage.MainStore.GetSourceMetas(user)
+			if err != nil {
+				ApiResponse(c, nil, fmt.Errorf("Unable to retrieve %s's sources: %w", user.Email, err))
+				return
+			}
+
+			sources = append(sources, usersSources...)
+		}
+
+		ApiResponse(c, sources, nil)
+	}
 }
 
-func newUserSource(_ *config.Options, user *happydns.User, _ httprouter.Params, body io.Reader) api.Response {
-	us, err := api.DecodeSource(body)
+func newUserSource(c *gin.Context) {
+	user, exists := c.Get("user")
+
+	if !exists {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "No user specified."})
+		return
+	}
+
+	us, _, err := api.DecodeSource(c)
 	if err != nil {
-		return api.NewAPIErrorResponse(http.StatusBadRequest, fmt.Errorf("Something is wrong in received data: %w", err))
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 	us.Id = 0
 
-	return api.NewAPIResponse(storage.MainStore.CreateSource(user, us, ""))
+	src, err := storage.MainStore.CreateSource(user.(*happydns.User), us, "")
+	ApiResponse(c, src, err)
 }
 
-func sourceMetaHandler(f func(*config.Options, *happydns.SourceMeta, httprouter.Params, io.Reader) api.Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) api.Response {
-	return func(opts *config.Options, user *happydns.User, ps httprouter.Params, body io.Reader) api.Response {
-		sourceid, err := strconv.ParseInt(ps.ByName("source"), 10, 64)
-		if err != nil {
-			return api.NewAPIErrorResponse(http.StatusNotFound, err)
-		} else {
-			srcMeta, err := storage.MainStore.GetSourceMeta(user, sourceid)
-			if err != nil {
-				return api.NewAPIErrorResponse(http.StatusNotFound, err)
-			} else {
-				return f(opts, srcMeta, ps, body)
-			}
-		}
-	}
+func deleteUserSource(c *gin.Context) {
+	srcMeta := c.MustGet("sourcemeta").(*happydns.SourceMeta)
+
+	ApiResponse(c, true, storage.MainStore.DeleteSource(srcMeta))
 }
 
-func sourceHandler(f func(*config.Options, *happydns.SourceCombined, httprouter.Params, io.Reader) api.Response) func(*config.Options, *happydns.User, httprouter.Params, io.Reader) api.Response {
-	return func(opts *config.Options, user *happydns.User, ps httprouter.Params, body io.Reader) api.Response {
-		sourceid, err := strconv.ParseInt(ps.ByName("source"), 10, 64)
-		if err != nil {
-			return api.NewAPIErrorResponse(http.StatusNotFound, err)
-		} else {
-			source, err := storage.MainStore.GetSource(user, sourceid)
-			if err != nil {
-				return api.NewAPIErrorResponse(http.StatusNotFound, err)
-			} else {
-				return f(opts, source, ps, body)
-			}
-		}
-	}
-}
-
-func getUserSource(_ *config.Options, source *happydns.SourceCombined, _ httprouter.Params, _ io.Reader) api.Response {
-	return api.NewAPIResponse(source, nil)
-}
-
-func getAllSources(_ *config.Options, _ httprouter.Params, _ io.Reader) api.Response {
-	var sources []happydns.SourceMeta
-
-	users, err := storage.MainStore.GetUsers()
-	if err != nil {
-		return api.NewAPIResponse(nil, fmt.Errorf("Unable to retrieve users list: %w", err))
-	}
-	for _, user := range users {
-		usersSources, err := storage.MainStore.GetSourceMetas(user)
-		if err != nil {
-			return api.NewAPIResponse(nil, fmt.Errorf("Unable to retrieve %s's sources: %w", user.Email, err))
-		}
-
-		sources = append(sources, usersSources...)
-	}
-
-	return api.NewAPIResponse(sources, nil)
-}
-
-func updateUserSource(_ *config.Options, source *happydns.SourceCombined, _ httprouter.Params, body io.Reader) api.Response {
-	us, err := api.DecodeSource(body)
-	if err != nil {
-		return api.NewAPIErrorResponse(http.StatusBadRequest, fmt.Errorf("Something is wrong in received data: %w", err))
-	}
-	us.Id = source.Id
-
-	return api.NewAPIResponse(us, storage.MainStore.UpdateSource(us))
-}
-
-func deleteUserSource(_ *config.Options, srcMeta *happydns.SourceMeta, _ httprouter.Params, _ io.Reader) api.Response {
-	return api.NewAPIResponse(true, storage.MainStore.DeleteSource(srcMeta))
-}
-
-func clearSources(_ *config.Options, _ httprouter.Params, _ io.Reader) api.Response {
-	return api.NewAPIResponse(true, storage.MainStore.ClearSources())
+func clearSources(c *gin.Context) {
+	ApiResponse(c, true, storage.MainStore.ClearSources())
 }

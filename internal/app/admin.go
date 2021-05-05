@@ -1,4 +1,4 @@
-// Copyright or © or Copr. happyDNS (2020)
+// Copyright or © or Copr. happyDNS (2021)
 //
 // contact@happydns.org
 //
@@ -29,14 +29,74 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package api
+package app
 
 import (
-	"github.com/julienschmidt/httprouter"
+	"context"
+	"log"
+	"net"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/gin-gonic/gin"
+
+	"git.happydns.org/happydns/admin"
+	"git.happydns.org/happydns/config"
 )
 
-var router = httprouter.New()
+type Admin struct {
+	router *gin.Engine
+	cfg    *config.Options
+	srv    *http.Server
+}
 
-func Router() *httprouter.Router {
-	return router
+func NewAdmin(cfg *config.Options) Admin {
+	if cfg.DevProxy == "" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	gin.ForceConsoleColor()
+	router := gin.New()
+	router.Use(gin.Logger(), gin.Recovery())
+
+	admin.DeclareRoutes(cfg, router)
+
+	app := Admin{
+		router: router,
+		cfg:    cfg,
+	}
+
+	return app
+}
+
+func (app *Admin) Start() {
+	app.srv = &http.Server{
+		Addr:    app.cfg.AdminBind,
+		Handler: app.router,
+	}
+
+	if !strings.Contains(app.cfg.AdminBind, ":") {
+		if _, err := os.Stat(app.cfg.AdminBind); !os.IsNotExist(err) {
+			if err := os.Remove(app.cfg.AdminBind); err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		unixListener, err := net.Listen("unix", app.cfg.AdminBind)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Fatal(app.srv.Serve(unixListener))
+	} else if err := app.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("admin listen: %s\n", err)
+	}
+}
+func (app *Admin) Stop() {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := app.srv.Shutdown(ctx); err != nil {
+		log.Fatal("Admin Server Shutdown:", err)
+	}
 }

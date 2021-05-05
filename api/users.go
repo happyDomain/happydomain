@@ -32,17 +32,14 @@
 package api
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happydns/actions"
 	"git.happydns.org/happydns/config"
@@ -50,18 +47,47 @@ import (
 	"git.happydns.org/happydns/storage"
 )
 
-func init() {
-	router.GET("/api/session", apiAuthHandler(getSession))
-	router.DELETE("/api/session", apiAuthHandler(clearSession))
-	router.POST("/api/users", ApiHandler(registerUser))
-	router.PATCH("/api/users", ApiHandler(specialUserOperations))
-	router.GET("/api/users/:uid", apiAuthHandler(sameUserHandler(getUser)))
-	router.GET("/api/users/:uid/settings", apiAuthHandler(sameUserHandler(getUserSettings)))
-	router.POST("/api/users/:uid/settings", apiAuthHandler(sameUserHandler(changeUserSettings)))
-	router.POST("/api/users/:uid/delete", apiAuthHandler(sameUserHandler(deleteUser)))
-	router.POST("/api/users/:uid/email", ApiHandler(userHandler(validateUserAddress)))
-	router.POST("/api/users/:uid/new_password", apiAuthHandler(sameUserHandler(changePassword)))
-	router.POST("/api/users/:uid/recovery", ApiHandler(userHandler(recoverUserAccount)))
+func declareUsersRoutes(opts *config.Options, router *gin.RouterGroup) {
+	router.POST("/users", func(c *gin.Context) {
+		registerUser(opts, c)
+	})
+	router.PATCH("/users", func(c *gin.Context) {
+		specialUserOperations(opts, c)
+	})
+
+	apiUserRoutes := router.Group("/users/:uid")
+	apiUserRoutes.Use(userHandler)
+
+	apiUserRoutes.POST("/email", validateUserAddress)
+	apiUserRoutes.POST("/recovery", recoverUserAccount)
+}
+
+func declareUsersAuthRoutes(opts *config.Options, router *gin.RouterGroup) {
+	router.GET("/session", getSession)
+	router.DELETE("/session", clearSession)
+
+	apiUserRoutes := router.Group("/users/:uid")
+	apiUserRoutes.Use(userHandler)
+	apiUserRoutes.Use(SameUserHandler)
+
+	apiUserRoutes.GET("", getUser)
+	apiUserRoutes.GET("/settings", getUserSettings)
+	apiUserRoutes.POST("/settings", changeUserSettings)
+	apiUserRoutes.POST("/delete", func(c *gin.Context) {
+		deleteUser(opts, c)
+	})
+	apiUserRoutes.POST("/new_password", func(c *gin.Context) {
+		changePassword(opts, c)
+	})
+}
+
+func myUser(c *gin.Context) (user *happydns.User) {
+	if u, exists := c.Get("LoggedUser"); exists {
+		user = u.(*happydns.User)
+	} else if u, exists := c.Get("user"); exists {
+		user = u.(*happydns.User)
+	}
+	return
 }
 
 type UploadedUser struct {
@@ -72,161 +98,161 @@ type UploadedUser struct {
 	Newsletter bool   `json:"wantReceiveUpdate,omitempty"`
 }
 
-func registerUser(opts *config.Options, p httprouter.Params, body io.Reader) Response {
+func registerUser(opts *config.Options, c *gin.Context) {
 	var uu UploadedUser
-	err := json.NewDecoder(body).Decode(&uu)
+	err := c.ShouldBindJSON(&uu)
 	if err != nil {
-		return APIErrorResponse{
-			err: fmt.Errorf("Something is wrong in received data: %w", err),
-		}
+		log.Printf("%s sends invalid User JSON: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 
 	if len(uu.Email) <= 3 || strings.Index(uu.Email, "@") == -1 {
-		return APIErrorResponse{
-			err: errors.New("The given email is invalid."),
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "The given email is invalid."})
+		return
 	}
 
 	if len(uu.Password) <= 7 {
-		return APIErrorResponse{
-			err: errors.New("The given password is invalid."),
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "The given password is invalid."})
+		return
 	}
 
 	if storage.MainStore.UserExists(uu.Email) {
-		return APIErrorResponse{
-			err: errors.New("An account already exists with the given address. Try login now."),
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "An account already exists with the given address. Try login now."})
+		return
 	}
 
-	if user, err := happydns.NewUser(uu.Email, uu.Password); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	} else {
-		user.Settings = *happydns.DefaultUserSettings()
-		user.Settings.Language = uu.Language
-		user.Settings.Newsletter = uu.Newsletter
-
-		if err := storage.MainStore.CreateUser(user); err != nil {
-			return APIErrorResponse{
-				err: err,
-			}
-		} else if actions.SendValidationLink(opts, user); err != nil {
-			return APIErrorResponse{
-				err: err,
-			}
-		} else {
-			log.Printf("New user registerd: %s", user.Email)
-			return APIResponse{
-				response: user,
-			}
-		}
+	user, err := happydns.NewUser(uu.Email, uu.Password)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
 	}
+
+	user.Settings = *happydns.DefaultUserSettings()
+	user.Settings.Language = uu.Language
+	user.Settings.Newsletter = uu.Newsletter
+
+	if err := storage.MainStore.CreateUser(user); err != nil {
+		log.Printf("%s: unable to CreateUser in registerUser: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to create your account. Please try again later."})
+		return
+	}
+
+	if actions.SendValidationLink(opts, user); err != nil {
+		log.Printf("%s: unable to SendValidationLink in registerUser: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to sent email validation link. Please try again later."})
+		return
+	}
+
+	log.Printf("%s: registers new user: %s", c.ClientIP(), user.Email)
+
+	c.JSON(http.StatusOK, user)
 }
 
-func specialUserOperations(opts *config.Options, p httprouter.Params, body io.Reader) Response {
+func specialUserOperations(opts *config.Options, c *gin.Context) {
 	var uu UploadedUser
-	err := json.NewDecoder(body).Decode(&uu)
+	err := c.ShouldBindJSON(&uu)
 	if err != nil {
-		return APIErrorResponse{
-			err: fmt.Errorf("Something is wrong in received data: %w", err),
-		}
+		log.Printf("%s sends invalid User JSON: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 
-	res := APIErrorResponse{
-		err:    errors.New("If this address exists in our database, you'll receive a new e-mail."),
-		status: http.StatusOK,
-	}
+	res := gin.H{"errmsg": "If this address exists in our database, you'll receive a new e-mail."}
 
 	if user, err := storage.MainStore.GetUserByEmail(uu.Email); err != nil {
-		res.cause = err
-		return res
+		log.Printf("%c: unable to retrieve user %q: %w", c.ClientIP(), uu.Email, err)
+		c.JSON(http.StatusOK, res)
+		return
 	} else {
 		if uu.Kind == "recovery" {
 			if user.EmailValidated == nil {
 				if err = actions.SendValidationLink(opts, user); err != nil {
-					return APIErrorResponse{
-						err: err,
-					}
+					log.Printf("%s: unable to SendValidationLink in specialUserOperations: %w", c.ClientIP(), err)
+					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to sent email validation link. Please try again later."})
+					return
 				}
-				log.Printf("Sent validation link to: %s", user.Email)
+
+				log.Printf("%s: Sent validation link to: %s", c.ClientIP(), user.Email)
 			} else {
 				if err = actions.SendRecoveryLink(opts, user); err != nil {
-					return APIErrorResponse{
-						err: err,
-					}
-				} else if err := storage.MainStore.UpdateUser(user); err != nil {
-					return APIErrorResponse{
-						err: fmt.Errorf("An error occurs when trying to recover your account: %w", err),
-					}
+					log.Printf("%s: unable to SendRecoveryLink in specialUserOperations: %w", c.ClientIP(), err)
+					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to sent accont recovery link. Please try again later."})
+					return
 				}
-				log.Printf("Sent recovery link to: %s", user.Email)
+
+				if err := storage.MainStore.UpdateUser(user); err != nil {
+					log.Printf("%s: unable to UpdateUser in specialUserOperations: %w", c.ClientIP(), err)
+					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
+					return
+				}
+
+				log.Printf("%s: Sent recovery link to: %s", c.ClientIP(), user.Email)
 			}
 		} else if uu.Kind == "validation" {
+			// Email have already been validated, do nothing
 			if user.EmailValidated != nil {
-				return res
-			} else if err = actions.SendValidationLink(opts, user); err != nil {
-				return APIErrorResponse{
-					err: err,
-				}
+				c.JSON(http.StatusOK, res)
+				return
 			}
-			log.Printf("Sent validation link to: %s", user.Email)
+
+			if err = actions.SendValidationLink(opts, user); err != nil {
+				log.Printf("%s: unable to SendValidationLink 2 in specialUserOperations: %w", c.ClientIP(), err)
+				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to sent email validation link. Please try again later."})
+				return
+			}
+
+			log.Printf("%s: Sent validation link to: %s", c.ClientIP(), user.Email)
 		}
 	}
 
-	return res
+	c.JSON(http.StatusOK, res)
 }
 
-func sameUserHandler(f func(*config.Options, *RequestResources, io.Reader) Response) func(*config.Options, *RequestResources, io.Reader) Response {
-	return func(opts *config.Options, req *RequestResources, body io.Reader) Response {
-		if uid, err := strconv.ParseInt(req.Ps.ByName("uid"), 16, 64); err != nil {
-			return APIErrorResponse{
-				status: http.StatusNotFound,
-				err:    fmt.Errorf("Invalid user identifier given: %w", err),
-			}
-		} else if uid != req.User.Id {
-			return APIErrorResponse{
-				status: http.StatusNotFound,
-				err:    errors.New("User not found"),
-			}
-		} else {
-			return f(opts, req, body)
-		}
+func SameUserHandler(c *gin.Context) {
+	myuser := c.MustGet("LoggedUser").(*happydns.User)
+	user := c.MustGet("user").(*happydns.User)
+
+	if user.Id != myuser.Id {
+		log.Printf("%s: tries to do action as %s (logged %s)", c.ClientIP(), myuser, user)
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errmsg": "Not authorized"})
+		return
 	}
+
+	c.Next()
 }
 
-func getUser(opts *config.Options, req *RequestResources, _ io.Reader) Response {
-	return APIResponse{
-		response: req.User,
-	}
+func getUser(c *gin.Context) {
+	user := c.MustGet("user").(*happydns.User)
+
+	c.JSON(http.StatusOK, user)
 }
 
-func getUserSettings(opts *config.Options, req *RequestResources, _ io.Reader) Response {
-	return APIResponse{
-		response: req.User.Settings,
-	}
+func getUserSettings(c *gin.Context) {
+	user := c.MustGet("user").(*happydns.User)
+
+	c.JSON(http.StatusOK, user.Settings)
 }
 
-func changeUserSettings(opts *config.Options, req *RequestResources, body io.Reader) Response {
+func changeUserSettings(c *gin.Context) {
+	user := c.MustGet("user").(*happydns.User)
+
 	var us happydns.UserSettings
-	if err := json.NewDecoder(body).Decode(&us); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+	if err := c.ShouldBindJSON(&us); err != nil {
+		log.Printf("%s sends invalid UserSettings JSON: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 
-	req.User.Settings = us
+	user.Settings = us
 
-	if err := storage.MainStore.UpdateUser(req.User); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+	if err := storage.MainStore.UpdateUser(user); err != nil {
+		log.Printf("%s: unable to UpdateUser in changeUserSettings: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
+		return
 	}
 
-	return APIResponse{
-		response: req.User.Settings,
-	}
+	c.JSON(http.StatusOK, user.Settings)
 }
 
 type passwordForm struct {
@@ -235,139 +261,153 @@ type passwordForm struct {
 	PasswordConfirm string
 }
 
-func changePassword(opts *config.Options, req *RequestResources, body io.Reader) Response {
+func changePassword(opts *config.Options, c *gin.Context) {
+	user := c.MustGet("user").(*happydns.User)
+
 	var lf passwordForm
-	if err := json.NewDecoder(body).Decode(&lf); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+	if err := c.ShouldBindJSON(&lf); err != nil {
+		log.Printf("%s sends invalid passwordForm JSON: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 
-	if !req.User.CheckAuth(lf.Current) {
-		return APIErrorResponse{
-			err:    errors.New(`Invalid password.`),
-			status: http.StatusForbidden,
-		}
+	if !user.CheckAuth(lf.Current) {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errmsg": "The given current password is invalid."})
+		return
 	}
 
 	if lf.Password != lf.PasswordConfirm {
-		return APIErrorResponse{
-			err: errors.New(`The new password and its confirmation are different.`),
-		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "The new password and its confirmation are different."})
+		return
 	}
 
-	if err := req.User.DefinePassword(lf.Password); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+	if err := user.DefinePassword(lf.Password); err != nil {
+		log.Printf("%s: unable to DefinePassword in changePassword: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
+		return
 	}
 
-	var sessions []*happydns.Session
-	var err error
-	if sessions, err = storage.MainStore.GetUserSessions(req.User); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+	// Retrieve all user's sessions to disconnect them
+	sessions, err := storage.MainStore.GetUserSessions(user)
+	if err != nil {
+		log.Printf("%s: unable to GetUserSessions in changePassword: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
+		return
 	}
 
-	if err = storage.MainStore.UpdateUser(req.User); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+	if err = storage.MainStore.UpdateUser(user); err != nil {
+		log.Printf("%s: unable to DefinePassword in changePassword: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
+		return
 	}
 
-	log.Printf("Change password for user %s", req.User.Email)
+	log.Printf("%s changes password for user %s", c.ClientIP(), user.Email)
 
 	for _, session := range sessions {
-		storage.MainStore.DeleteSession(session)
+		err = storage.MainStore.DeleteSession(session)
+		if err != nil {
+			log.Println("%s: unable to delete session (password changed): %w", c.ClientIP(), err)
+		}
 	}
 
-	return logout(opts, req.Ps, body)
+	logout(opts, c)
 }
 
-func deleteUser(opts *config.Options, req *RequestResources, body io.Reader) Response {
+func deleteUser(opts *config.Options, c *gin.Context) {
+	user := c.MustGet("user").(*happydns.User)
+
 	var lf passwordForm
-	if err := json.NewDecoder(body).Decode(&lf); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+	if err := c.ShouldBindJSON(&lf); err != nil {
+		log.Printf("%s sends invalid passwordForm JSON: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 
-	if !req.User.CheckAuth(lf.Password) {
-		return APIErrorResponse{
-			err:    errors.New(`Invalid password.`),
-			status: http.StatusForbidden,
-		}
+	if !user.CheckAuth(lf.Current) {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errmsg": "The given current password is invalid."})
+		return
 	}
 
-	var sessions []*happydns.Session
-	var err error
-	if sessions, err = storage.MainStore.GetUserSessions(req.User); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+	// Retrieve all user's sessions to disconnect them
+	sessions, err := storage.MainStore.GetUserSessions(user)
+	if err != nil {
+		log.Printf("%s: unable to GetUserSessions in deleteUser: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
+		return
 	}
 
-	if err = storage.MainStore.DeleteUser(req.User); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
+	if err = storage.MainStore.DeleteUser(user); err != nil {
+		log.Printf("%s: unable to DefinePassword in deleteuser: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
+		return
 	}
 
-	log.Printf("User deleted: %s", req.User.Email)
+	log.Printf("%s: deletes user: %s", c.ClientIP(), user.Email)
 
 	for _, session := range sessions {
-		storage.MainStore.DeleteSession(session)
-	}
-
-	return logout(opts, req.Ps, body)
-}
-
-func userHandler(f func(*config.Options, *happydns.User, io.Reader) Response) func(*config.Options, httprouter.Params, io.Reader) Response {
-	return func(opts *config.Options, ps httprouter.Params, body io.Reader) Response {
-		if uid, err := strconv.ParseInt(ps.ByName("uid"), 16, 64); err != nil {
-			return APIErrorResponse{
-				status: http.StatusNotFound,
-				err:    fmt.Errorf("Invalid user identifier given: %w", err),
-			}
-		} else if user, err := storage.MainStore.GetUser(uid); err != nil {
-			return APIErrorResponse{
-				status: http.StatusNotFound,
-				err:    errors.New("User not found"),
-			}
-		} else {
-			return f(opts, user, body)
+		err = storage.MainStore.DeleteSession(session)
+		if err != nil {
+			log.Println("%s: unable to delete session (drop account): %w", c.ClientIP(), err)
 		}
 	}
+
+	logout(opts, c)
+}
+
+func UserHandlerBase(c *gin.Context) (*happydns.User, error) {
+	uid, err := strconv.ParseInt(c.Param("uid"), 16, 64)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid user identifier given: %w", err)
+	}
+
+	user, err := storage.MainStore.GetUser(uid)
+	if err != nil {
+		return nil, fmt.Errorf("User not found")
+	}
+
+	return user, nil
+}
+
+func userHandler(c *gin.Context) {
+	user, err := UserHandlerBase(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	c.Set("user", user)
+
+	c.Next()
 }
 
 type UploadedAddressValidation struct {
 	Key string
 }
 
-func validateUserAddress(opts *config.Options, user *happydns.User, body io.Reader) Response {
+func validateUserAddress(c *gin.Context) {
+	user := c.MustGet("user").(*happydns.User)
+
 	var uav UploadedAddressValidation
-	err := json.NewDecoder(body).Decode(&uav)
+	err := c.ShouldBindJSON(&uav)
 	if err != nil {
-		return APIErrorResponse{
-			err: fmt.Errorf("Something is wrong in received data: %w", err),
-		}
+		log.Printf("%s sends invalid AddressValidation JSON: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 
 	if err := user.ValidateEmail(uav.Key); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	} else if err := storage.MainStore.UpdateUser(user); err != nil {
-		return APIErrorResponse{
-			status: http.StatusNotFound,
-			err:    errors.New("User not found"),
-		}
-	} else {
-		return APIResponse{
-			response: true,
-		}
+		log.Printf("%s bad email validation key: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Bad validation key: %w", err)})
+		return
 	}
+
+	if err := storage.MainStore.UpdateUser(user); err != nil {
+		log.Printf("%s: unable to UpdateUser in ValidateUserAddress: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
+		return
+	}
+
+	c.JSON(http.StatusOK, true)
 }
 
 type UploadedAccountRecovery struct {
@@ -375,13 +415,15 @@ type UploadedAccountRecovery struct {
 	Password string
 }
 
-func recoverUserAccount(opts *config.Options, user *happydns.User, body io.Reader) Response {
+func recoverUserAccount(c *gin.Context) {
+	user := c.MustGet("user").(*happydns.User)
+
 	var uar UploadedAccountRecovery
-	err := json.NewDecoder(body).Decode(&uar)
+	err := c.ShouldBindJSON(&uar)
 	if err != nil {
-		return APIErrorResponse{
-			err: fmt.Errorf("Something is wrong in received data: %w", err),
-		}
+		log.Printf("%s sends invalid AccountRecovey JSON: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
 	}
 
 	if user.RegistrationTime == nil {
@@ -390,39 +432,40 @@ func recoverUserAccount(opts *config.Options, user *happydns.User, body io.Reade
 	}
 
 	if err := user.CanRecoverAccount(uar.Key); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	} else if len(uar.Password) == 0 {
-		return APIResponse{
-			response: false,
-		}
-	} else if err := user.DefinePassword(uar.Password); err != nil {
-		return APIErrorResponse{
-			err: err,
-		}
-	} else if err := storage.MainStore.UpdateUser(user); err != nil {
-		return APIErrorResponse{
-			status: http.StatusNotFound,
-			err:    errors.New("User not found"),
-		}
-	} else {
-		log.Printf("User recovered: %s", user.Email)
-		return APIResponse{
-			response: true,
-		}
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errmsg": err.Error()})
+		return
 	}
+
+	if len(uar.Password) == 0 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "Password can't be empty!"})
+		return
+	}
+
+	if err := user.DefinePassword(uar.Password); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	if err := storage.MainStore.UpdateUser(user); err != nil {
+		log.Printf("%s: unable to UpdateUser in recoverUserAccount: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
+		return
+	}
+
+	log.Printf("%s: User recovered: %s", c.ClientIP(), user.Email)
+	c.JSON(http.StatusOK, true)
 }
 
-func getSession(opts *config.Options, req *RequestResources, body io.Reader) Response {
-	return APIResponse{
-		response: req.Session,
-	}
+func getSession(c *gin.Context) {
+	session := c.MustGet("MySession").(*happydns.Session)
+
+	c.JSON(http.StatusOK, session)
 }
 
-func clearSession(opts *config.Options, req *RequestResources, body io.Reader) Response {
-	req.Session.ClearSession()
-	return APIResponse{
-		response: true,
-	}
+func clearSession(c *gin.Context) {
+	session := c.MustGet("MySession").(*happydns.Session)
+
+	session.ClearSession()
+
+	c.JSON(http.StatusOK, true)
 }

@@ -32,19 +32,15 @@
 package api
 
 import (
-	"io"
+	"net/http"
 
-	"github.com/julienschmidt/httprouter"
-
-	"git.happydns.org/happydns/config"
+	"github.com/gin-gonic/gin"
 )
 
-func init() {
-	router.GET("/api/version", ApiHandler(showVersion))
+func DeclareVersionRoutes(router *gin.RouterGroup) {
+	router.GET("/version", showVersion)
 }
 
-func showVersion(_ *config.Options, _ httprouter.Params, _ io.Reader) Response {
-	return APIResponse{
-		response: map[string]interface{}{"version": 0.1},
-	}
+func showVersion(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"version": 0.1})
 }

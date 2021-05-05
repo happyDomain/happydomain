@@ -1,4 +1,4 @@
-// Copyright or © or Copr. happyDNS (2020)
+// Copyright or © or Copr. happyDNS (2021)
 //
 // contact@happydns.org
 //
@@ -32,11 +32,27 @@
 package admin
 
 import (
-	"github.com/julienschmidt/httprouter"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+
+	"git.happydns.org/happydns/api"
+	"git.happydns.org/happydns/config"
 )
 
-var router = httprouter.New()
+func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
+	apiRoutes := router.Group("/api")
 
-func Router() *httprouter.Router {
-	return router
+	declareDomainsRoutes(cfg, apiRoutes)
+	declareSessionsRoutes(cfg, apiRoutes)
+	declareSourcesRoutes(cfg, apiRoutes)
+	declareUsersRoutes(cfg, apiRoutes)
+	api.DeclareVersionRoutes(apiRoutes)
+}
+
+func ApiResponse(c *gin.Context, data interface{}, err error) {
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+	}
+	c.JSON(http.StatusOK, data)
 }

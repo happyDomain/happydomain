@@ -33,48 +33,55 @@ package admin
 
 import (
 	"encoding/base64"
-	"io"
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydns/api"
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/storage"
 )
 
-func init() {
-	router.DELETE("/api/sessions", api.ApiHandler(deleteSessions))
+func declareSessionsRoutes(opts *config.Options, router *gin.RouterGroup) {
+	router.DELETE("/sessions", deleteSessions)
 
-	router.GET("/api/sessions/:sessionid", api.ApiHandler(sessionHandler(getSession)))
-	router.DELETE("/api/sessions/:sessionid", api.ApiHandler(sessionHandler(deleteSession)))
+	apiSessionsRoutes := router.Group("/sessions/:sessionid")
+	apiSessionsRoutes.Use(sessionHandler)
+
+	apiSessionsRoutes.GET("", getSession)
+	apiSessionsRoutes.DELETE("", deleteSession)
 }
 
-func deleteSessions(_ *config.Options, _ httprouter.Params, _ io.Reader) api.Response {
-	return api.NewAPIResponse(true, storage.MainStore.ClearSessions())
+func deleteSessions(c *gin.Context) {
+	ApiResponse(c, true, storage.MainStore.ClearSessions())
 }
 
-func sessionHandler(f func(*config.Options, *happydns.Session, httprouter.Params, io.Reader) api.Response) func(*config.Options, httprouter.Params, io.Reader) api.Response {
-	return func(opts *config.Options, ps httprouter.Params, body io.Reader) api.Response {
-		sessionid, err := base64.StdEncoding.DecodeString(ps.ByName("sessionid"))
-		if err != nil {
-			return api.NewAPIErrorResponse(http.StatusNotFound, err)
-		} else {
-			session, err := storage.MainStore.GetSession(sessionid)
-			if err != nil {
-				return api.NewAPIErrorResponse(http.StatusNotFound, err)
-			} else {
-				return f(opts, session, ps, body)
-			}
-		}
+func sessionHandler(c *gin.Context) {
+	sessionid, err := base64.StdEncoding.DecodeString(c.Param("sessionid"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": err.Error()})
+		return
 	}
+
+	session, err := storage.MainStore.GetSession(sessionid)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	c.Set("session", session)
+
+	c.Next()
 }
 
-func getSession(_ *config.Options, session *happydns.Session, _ httprouter.Params, _ io.Reader) api.Response {
-	return api.NewAPIResponse(session, nil)
+func getSession(c *gin.Context) {
+	session := c.MustGet("session").(*happydns.Session)
+
+	c.JSON(http.StatusOK, session)
 }
 
-func deleteSession(_ *config.Options, session *happydns.Session, _ httprouter.Params, _ io.Reader) api.Response {
-	return api.NewAPIResponse(true, storage.MainStore.DeleteSession(session))
+func deleteSession(c *gin.Context) {
+	session := c.MustGet("session").(*happydns.Session)
+
+	ApiResponse(c, true, storage.MainStore.DeleteSession(session))
 }
