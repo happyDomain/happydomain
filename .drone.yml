@@ -58,13 +58,17 @@ steps:
   - apk --no-cache add go-bindata
   - sed -i '/yarn --cwd htdocs --offline build/d' static.go
   - go generate -v
-  - go build -v -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+  environment:
+    CGO_ENABLED: 0
 
 - name: vet
   image: golang:alpine
   commands:
   - apk --no-cache add build-base
   - go vet -v
+  environment:
+    CGO_ENABLED: 0
 
 - name: deploy
   image: appleboy/drone-scp
@@ -103,8 +107,9 @@ steps:
 - name: build macOS
   image: golang:alpine
   commands:
-  - go build -v -o happydns-darwin-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w' -o happydns-darwin-${DRONE_STAGE_ARCH}
   environment:
+    CGO_ENABLED: 0
     GOOS: darwin
     GOARCH: amd64
 
@@ -177,8 +182,10 @@ steps:
   - apk --no-cache add go-bindata
   - sed -i '/yarn --cwd htdocs --offline build/d' static.go
   - go generate -v
-  - go build -v -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
   - ln happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydns
+  environment:
+    CGO_ENABLED: 0
 
 - name: deploy
   image: appleboy/drone-scp
@@ -250,8 +257,9 @@ steps:
   - apk --no-cache add go-bindata build-base
   - sed -i '/yarn --cwd htdocs --offline build/d' static.go
   - go generate -v
-  - go build -v -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
+  - go build -v -tags netgo -ldflags '-w' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
   environment:
+    CGO_ENABLED: 0
     GOARM: 5
 
 - name: deploy armel
@@ -292,8 +300,9 @@ steps:
   image: golang:alpine
   commands:
   - apk --no-cache add build-base
-  - go build -v -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
+  - go build -v -tags netgo -ldflags '-w' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
   environment:
+    CGO_ENABLED: 0
     GOARM: 6
 
 - name: deploy armhf
@@ -334,9 +343,10 @@ steps:
   image: golang:alpine
   commands:
   - apk --no-cache add build-base
-  - go build -v -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
+  - go build -v -tags netgo -ldflags '-w' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
   - ln happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7 happydns
   environment:
+    CGO_ENABLED: 0
     GOARM: 7
 
 - name: deploy armv7

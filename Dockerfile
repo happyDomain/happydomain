@@ -34,7 +34,7 @@ COPY generate.go go.mod go.sum main.go static.go ./
 RUN sed -i '/yarn --cwd htdocs --offline build/d' static.go && \
     go get -d -v && \
     go generate -v && \
-    go build -v
+    go build -v -ldflags '-w'
 
 
 FROM alpine
