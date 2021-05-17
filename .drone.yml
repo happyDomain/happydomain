@@ -221,6 +221,49 @@ steps:
     event:
       - tag
 
+- name: build macOS
+  image: golang:alpine
+  commands:
+  - go build -v -tags netgo -ldflags '-w' -o happydns-darwin-${DRONE_STAGE_ARCH}
+  environment:
+    CGO_ENABLED: 0
+    GOOS: darwin
+    GOARCH: arm64
+
+- name: deploy macOS
+  image: appleboy/drone-scp
+  settings:
+    tar_tmp_path: /tmp/
+    host: get.happydns.org
+    target: /var/www/happydns.org/get/${DRONE_BRANCH//\//-}
+    source: happydns-darwin-${DRONE_STAGE_ARCH}
+    username:
+      from_secret: ssh_username
+    key:
+      from_secret: deploy_key
+    port:
+      from_secret: ssh_port
+  when:
+    event:
+      - push
+
+- name: deploy macOS release
+  image: appleboy/drone-scp
+  settings:
+    tar_tmp_path: /tmp/
+    host: get.happydns.org
+    target: /var/www/happydns.org/get/${DRONE_TAG}
+    source: happydns-darwin-${DRONE_STAGE_ARCH}
+    username:
+      from_secret: ssh_username
+    key:
+      from_secret: deploy_key
+    port:
+      from_secret: ssh_port
+  when:
+    event:
+      - tag
+
 - name: publish
   image: plugins/docker
   settings:
