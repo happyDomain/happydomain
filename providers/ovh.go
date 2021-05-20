@@ -35,6 +35,7 @@ import (
 	"flag"
 
 	"github.com/StackExchange/dnscontrol/v3/providers"
+	_ "github.com/StackExchange/dnscontrol/v3/providers/ovh"
 
 	"git.happydns.org/happydns/model"
 )

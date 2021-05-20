@@ -66,7 +66,7 @@ var providersList map[string]Provider = map[string]Provider{}
 // RegisterProvider declares the existence of the given Provider.
 func RegisterProvider(creator ProviderCreator, infos ProviderInfos) {
 	baseType := reflect.Indirect(reflect.ValueOf(creator())).Type()
-	name := baseType.String()
+	name := baseType.Name()
 	log.Println("Registering new provider:", name)
 
 	providersList[name] = Provider{

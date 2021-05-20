@@ -32,14 +32,62 @@
   -->
 
 <template>
-  <b-container class="d-flex flex-column mt-4" fluid>
-    <h1 class="text-center mb-3">
-      <button type="button" class="btn font-weight-bolder" @click="$router.go(-1)">
-        <b-icon icon="chevron-left" />
-      </button>
-      <i18n path="source.select-source" />
-    </h1>
-    <hr class="mt-0 mb-0">
-    <router-view class="flex-grow-1" />
-  </b-container>
+  <b-list-group>
+    <b-list-group-item v-if="isLoading" class="d-flex justify-content-center align-items-center">
+      <b-spinner variant="primary" label="Spinning" class="mr-3" /> Retrieving usable providers...
+    </b-list-group-item>
+    <b-list-group-item v-for="(src, idx) in providers" :key="idx" :active="srcSelected === idx" button class="d-flex" @click="selectProvider(idx)">
+      <div class="align-self-center text-center" style="min-width:50px;width:50px;">
+        <img :src="'/api/source_specs/' + idx + '/icon.png'" :alt="src.name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+      </div>
+      <div class="align-self-center" style="line-height: 1.1">
+        <strong>{{ src.name }}</strong> &ndash;
+        <small class="text-muted" :title="src.description">{{ src.description }}</small>
+      </div>
+    </b-list-group-item>
+  </b-list-group>
 </template>
+
+<script>
+import axios from 'axios'
+
+export default {
+  name: 'HNewProviderSelector',
+
+  props: {
+    value: {
+      type: String,
+      default: null
+    }
+  },
+
+  data: function () {
+    return {
+      providers: null,
+      srcSelected: null
+    }
+  },
+
+  computed: {
+    isLoading () {
+      return this.providers == null
+    }
+  },
+
+  mounted () {
+    axios
+      .get('/api/providers/_specs')
+      .then(response => (this.providers = response.data))
+  },
+
+  methods: {
+    selectProvider (idx) {
+      if (this.value !== null) {
+        this.srcSelected = idx
+        this.$emit('input', this.srcSelected)
+      }
+      this.$emit('provider-selected', idx)
+    }
+  }
+}
+</script>

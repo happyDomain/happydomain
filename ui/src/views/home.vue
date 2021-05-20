@@ -45,32 +45,32 @@
             </b-badge>
           </template>
         </h-zone-list>
-        <b-card v-if="filteredSource && $refs.zlist && !$refs.zlist.isLoading" no-body :class="filteredDomains.length > 0 ? 'mt-4' : ''">
+        <b-card v-if="filteredProvider && $refs.zlist && !$refs.zlist.isLoading" no-body :class="filteredDomains.length > 0 ? 'mt-4' : ''">
           <template v-if="!noDomainsList" slot="header">
             <div class="d-flex justify-content-between">
-              <i18n path="source.source">
-                <em>{{ filteredSource._comment }}</em>
+              <i18n path="provider.provider">
+                <em>{{ filteredProvider._comment }}</em>
               </i18n>
               <b-button v-if="$refs.newDomains && $refs.newDomains.listImportableDomains.length > 0" type="button" variant="secondary" size="sm" @click="$refs.newDomains.importAllDomains()">
-                {{ $t('source.import-domains') }}
+                {{ $t('provider.import-domains') }}
               </b-button>
             </div>
           </template>
-          <h-source-list-domains ref="newDomains" :source="filteredSource" show-domains-with-actions @no-domains-list-change="noDomainsList = $event" />
+          <h-provider-list-domains ref="newDomains" :provider="filteredProvider" show-domains-with-actions @no-domains-list-change="noDomainsList = $event" />
         </b-card>
-        <h-list-group-input-new-domain v-if="$refs.zlist && !$refs.zlist.isLoading && (!filteredSource || noDomainsList)" autofocus class="mt-2" :my-source="filteredSource" />
+        <h-list-group-input-new-domain v-if="$refs.zlist && !$refs.zlist.isLoading && (!filteredProvider || noDomainsList)" autofocus class="mt-2" :my-provider="filteredProvider" />
       </b-col>
       <b-col md="4">
         <b-card no-body class="mt-3 mt-md-0">
           <template slot="header">
             <div class="d-flex justify-content-between">
-              <i18n path="source.title" />
-              <b-button size="sm" variant="light" @click="newSource">
+              <i18n path="provider.title" />
+              <b-button size="sm" variant="light" @click="newProvider">
                 <b-icon icon="plus" />
               </b-button>
             </div>
           </template>
-          <h-source-list ref="sourceList" no-label flush :selected-source="filteredSource" @source-selected="filteredSource = $event" />
+          <h-provider-list ref="providerList" no-label flush :selected-provider="filteredProvider" @provider-selected="filteredProvider = $event" />
         </b-card>
       </b-col>
     </b-row>
@@ -84,22 +84,22 @@ export default {
 
   components: {
     hListGroupInputNewDomain: () => import('@/components/hListGroupInputNewDomain'),
-    hSourceListDomains: () => import('@/components/hSourceListDomains'),
-    hSourceList: () => import('@/components/sourceList'),
+    hProviderListDomains: () => import('@/components/hProviderListDomains'),
+    hProviderList: () => import('@/components/providerList'),
     hZoneList: () => import('@/components/ZoneList')
   },
 
   data: function () {
     return {
       noDomainsList: true,
-      filteredSource: null
+      filteredProvider: null
     }
   },
 
   computed: {
     filteredDomains () {
-      if (this.sortedDomains && this.filteredSource) {
-        return this.sortedDomains.filter(d => d.id_source === this.filteredSource._id)
+      if (this.sortedDomains && this.filteredProvider) {
+        return this.sortedDomains.filter(d => d.id_provider === this.filteredProvider._id)
       } else {
         return this.sortedDomains
       }
@@ -110,7 +110,7 @@ export default {
 
   watch: {
     sortedDomains: function (domains) {
-      if (this.$route.params.source === undefined && domains.length === 0) {
+      if (this.$route.params.provider === undefined && domains.length === 0) {
         this.$router.replace('/onboarding')
       }
     }
@@ -118,18 +118,18 @@ export default {
 
   created () {
     this.$store.dispatch('domains/getAllMyDomains')
-    this.$store.dispatch('sources/getAllMySources')
+    this.$store.dispatch('providers/getAllMyProviders')
   },
 
   mounted () {
-    if (this.$route.params.source) {
-      this.filteredSource = { _id: parseInt(this.$route.params.source) }
+    if (this.$route.params.provider) {
+      this.filteredProvider = { _id: parseInt(this.$route.params.provider) }
     }
   },
 
   methods: {
-    newSource () {
-      this.$router.push('/sources/new')
+    newProvider () {
+      this.$router.push('/providers/new')
     },
 
     showDomain (domain) {

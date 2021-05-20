@@ -34,72 +34,74 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happydns/forms"
 	"git.happydns.org/happydns/model"
-	"git.happydns.org/happydns/sources"
+	"git.happydns.org/happydns/providers"
 )
 
-func declareSourceSpecsRoutes(router *gin.RouterGroup) {
-	router.GET("/source_specs", getSourceSpecs)
+func declareProviderSpecsRoutes(router *gin.RouterGroup) {
+	router.GET("/providers/_specs", listProviders)
 
-	router.GET("/source_specs/:ssid/icon.png", getSourceSpecIcon)
+	router.GET("/providers/_specs/:ssid/icon.png", getProviderSpecIcon)
 
-	apiSourceSpecsRoutes := router.Group("/source_specs/:ssid")
-	apiSourceSpecsRoutes.Use(SourceSpecsHandler)
+	apiProviderSpecsRoutes := router.Group("/providers/_specs/:ssid")
+	apiProviderSpecsRoutes.Use(ProviderSpecsHandler)
 
-	apiSourceSpecsRoutes.GET("", getSourceSpec)
+	apiProviderSpecsRoutes.GET("", getProviderSpec)
 }
 
-func getSourceSpecs(c *gin.Context) {
-	srcs := sources.GetSources()
+func listProviders(c *gin.Context) {
+	srcs := providers.GetProviders()
 
-	ret := map[string]sources.SourceInfos{}
+	ret := map[string]providers.ProviderInfos{}
 	for k, src := range *srcs {
-		src.Infos.Capabilities = sources.GetSourceCapabilities(src.Creator())
 		ret[k] = src.Infos
 	}
 
 	c.JSON(http.StatusOK, ret)
 }
 
-func getSourceSpecIcon(c *gin.Context) {
-	ssid := string(c.Param("ssid"))
+func getProviderSpecIcon(c *gin.Context) {
+	/*
+		ssid := string(c.Param("ssid"))
 
-	if cnt, ok := sources.Icons[strings.TrimSuffix(ssid, ".png")]; ok {
+		cnt, ok := providers.Icons[strings.TrimSuffix(ssid, ".png")]
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Icon not found."})
+		}
+
 		c.Data(http.StatusOK, "image/png", cnt)
-	} else {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Icon not found."})
-	}
+	*/
+	c.AbortWithStatusJSON(http.StatusNotImplemented, gin.H{"errmsg": "Icon not found."})
 }
 
-func SourceSpecsHandler(c *gin.Context) {
+func ProviderSpecsHandler(c *gin.Context) {
 	ssid := string(c.Param("ssid"))
 
-	src, err := sources.FindSource(ssid)
+	src, err := providers.FindProvider(ssid)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find source: %w", err)})
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find provider: %w", err)})
 		return
 	}
 
-	c.Set("sourcetype", src)
+	c.Set("providertype", src)
 
 	c.Next()
 }
 
-type viewSourceSpec struct {
+type viewProviderSpec struct {
 	Fields       []*forms.Field `json:"fields,omitempty"`
 	Capabilities []string       `json:"capabilities,omitempty"`
 }
 
-func getSourceSpec(c *gin.Context) {
-	src := c.MustGet("sourcetype").(happydns.Source)
+func getProviderSpec(c *gin.Context) {
+	src := c.MustGet("providertype").(happydns.Provider)
 
-	c.JSON(http.StatusOK, viewSourceSpec{
-		Fields:       forms.GenStructFields(src),
-		Capabilities: sources.GetSourceCapabilities(src),
+	c.JSON(http.StatusOK, viewProviderSpec{
+		Fields: forms.GenStructFields(src),
+		//Capabilities: providers.GetProviderCapabilities(src),
 	})
 }

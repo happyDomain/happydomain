@@ -33,8 +33,9 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 
 import domains from './module/domains'
+import providers from './module/providers'
+import providerSpecs from './module/providerSpecs'
 import sources from './module/sources'
-import sourceSpecs from './module/sourceSpecs'
 import user from './module/user'
 
 Vue.use(Vuex)
@@ -44,8 +45,9 @@ const debug = process.env.NODE_ENV !== 'production'
 export default new Vuex.Store({
   modules: {
     domains,
+    providers,
+    providerSpecs,
     sources,
-    sourceSpecs,
     user
   },
   strict: debug

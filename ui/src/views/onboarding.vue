@@ -58,16 +58,16 @@
               <h-logo height="19" />
             </template>
             <template #first-step>
-              <span v-if="noSource">{{ $t('onboarding.suggest-source') }}</span><i18n v-else path="onboarding.choose-configured" tag="span">
-                <router-link to="/sources/new">
+              <span v-if="noProvider">{{ $t('onboarding.suggest-provider') }}</span><i18n v-else path="onboarding.choose-configured" tag="span">
+                <router-link to="/providers/new">
                   {{ $t('onboarding.add-one') }}
                 </router-link>
               </i18n>
             </template>
           </i18n>
         </p>
-        <source-list v-if="!noSource" emit-new-if-empty no-label @new-source="noSource = true" @source-selected="selectExistingSource" />
-        <h-new-source-selector v-else @source-selected="selectNewSource" />
+        <provider-list v-if="!noProvider" emit-new-if-empty no-label @new-provider="noProvider = true" @provider-selected="selectExistingProvider" />
+        <h-new-provider-selector v-else @provider-selected="selectNewProvider" />
       </b-card>
     </b-card-group>
 
@@ -93,26 +93,26 @@
 <script>
 export default {
   components: {
-    hNewSourceSelector: () => import('@/components/hNewSourceSelector'),
-    sourceList: () => import('@/components/sourceList')
+    hNewProviderSelector: () => import('@/components/hNewProviderSelector'),
+    providerList: () => import('@/components/providerList')
   },
 
   data () {
     return {
-      noSource: false
+      noProvider: false
     }
   },
 
   created () {
-    this.$store.dispatch('sources/getAllMySources')
+    this.$store.dispatch('providers/getAllMyProviders')
   },
 
   methods: {
-    selectExistingSource (src) {
-      this.$router.push('/sources/' + encodeURIComponent(src._id) + '/domains')
+    selectExistingProvider (src) {
+      this.$router.push('/providers/' + encodeURIComponent(src._id) + '/domains')
     },
-    selectNewSource (index, src) {
-      this.$router.push('/sources/new/' + encodeURIComponent(index) + '/0')
+    selectNewProvider (index, src) {
+      this.$router.push('/providers/new/' + encodeURIComponent(index) + '/0')
     }
   }
 }

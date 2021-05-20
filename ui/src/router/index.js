@@ -148,26 +148,26 @@ const routes = [
     }
   },
   {
-    path: '/sources',
-    name: 'source-list',
+    path: '/providers',
+    name: 'provider-list',
     component: function () {
-      return import(/* webpackChunkName: "source" */ '../views/source-list.vue')
+      return import(/* webpackChunkName: "provider" */ '../views/provider-list.vue')
     },
     meta: {
       requiresAuth: true
     }
   },
   {
-    path: '/sources/new',
+    path: '/providers/new',
     component: function () {
-      return import(/* webpackChunkName: "source-new" */ '../views/source-new.vue')
+      return import(/* webpackChunkName: "provider-new" */ '../views/provider-new.vue')
     },
     children: [
       {
         path: '',
-        name: 'source-new-choice',
+        name: 'provider-new-choice',
         component: function () {
-          return import(/* webpackChunkName: "source-new" */ '../views/source-new-choice.vue')
+          return import(/* webpackChunkName: "provider-new" */ '../views/provider-new-choice.vue')
         },
         meta: {
           requiresAuth: true
@@ -175,9 +175,9 @@ const routes = [
       },
       {
         path: ':provider/:state',
-        name: 'source-new-state',
+        name: 'provider-new-state',
         component: function () {
-          return import(/* webpackChunkName: "source-new" */ '../views/source-new-state.vue')
+          return import(/* webpackChunkName: "provider-new" */ '../views/provider-new-state.vue')
         },
         meta: {
           requiresAuth: true
@@ -186,18 +186,18 @@ const routes = [
     ]
   },
   {
-    path: '/sources/:source',
-    name: 'source-update',
+    path: '/providers/:provider',
+    name: 'provider-update',
     component: function () {
-      return import(/* webpackChunkName: "source" */ '../views/source.vue')
+      return import(/* webpackChunkName: "provider" */ '../views/provider.vue')
     },
     meta: {
       requiresAuth: true
     }
   },
   {
-    path: '/sources/:source/domains',
-    name: 'source-update-domains',
+    path: '/providers/:provider/domains',
+    name: 'provider-update-domains',
     component: function () {
       return import(/* webpackChunkName: "home" */ '../views/home.vue')
     },

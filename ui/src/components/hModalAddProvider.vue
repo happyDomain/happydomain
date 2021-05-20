@@ -33,18 +33,18 @@
 
 <template>
   <b-modal
-    id="modal-add-source"
+    id="modal-add-provider"
     scrollable
     size="lg"
-    :title="$t('source.new-form')"
+    :title="$t('provider.new-form')"
     ok-title="Next >"
-    :ok-disabled="!sourceSpecsSelected"
+    :ok-disabled="!providerSpecsSelected"
     @ok="nextState"
   >
     <template v-if="state >= 0 && form" #modal-footer>
-      <h-source-state-buttons
+      <h-provider-state-buttons
         :form="form"
-        submit-form="source-state-form"
+        submit-form="provider-state-form"
         :next-is-working="nextIsWorking"
         :previous-is-working="previousIsWorking"
         @previous-state="previousState"
@@ -53,17 +53,17 @@
 
     <div v-if="state < 0">
       <p>
-        {{ $t('source.select-provider') }}
+        {{ $t('provider.select-provider') }}
       </p>
-      <h-new-source-selector v-model="sourceSpecsSelected" />
+      <h-new-provider-selector v-model="providerSpecsSelected" />
     </div>
 
-    <b-form v-else-if="sourceSpecsSelected" id="source-state-form" @submit.stop.prevent="nextState">
-      <h-source-state
+    <b-form v-else-if="providerSpecsSelected" id="provider-state-form" @submit.stop.prevent="nextState">
+      <h-provider-state
         v-model="settings"
         class="mt-2 mb-2"
         :form="form"
-        :source-name="sourceSpecs[sourceSpecsSelected].name"
+        :provider-name="providerSpecs_getAll[providerSpecsSelected].name"
         :state="state"
       />
     </b-form>
@@ -71,46 +71,50 @@
 </template>
 
 <script>
-import SourceSpecs from '@/mixins/sourceSpecs'
-import SourceState from '@/mixins/sourceState'
+import ProviderState from '@/mixins/providerState'
+import { mapGetters } from 'vuex'
 
 export default {
-  name: 'HModalAddSource',
+  name: 'HModalAddProvider',
 
   components: {
-    hNewSourceSelector: () => import('@/components/hNewSourceSelector'),
-    hSourceState: () => import('@/components/hSourceState'),
-    hSourceStateButtons: () => import('@/components/hSourceStateButtons')
+    hNewProviderSelector: () => import('@/components/hNewProviderSelector'),
+    hProviderState: () => import('@/components/hProviderState'),
+    hProviderStateButtons: () => import('@/components/hProviderStateButtons')
   },
 
-  mixins: [SourceSpecs, SourceState],
+  mixins: [ProviderState],
 
   data () {
     return {
-      sourceSpecsSelected: null
+      providerSpecsSelected: null
     }
+  },
+
+  computed: {
+    ...mapGetters('providerSpecs', ['providerSpecs_getAll'])
   },
 
   methods: {
     hide () {
-      this.$bvModal.hide('modal-add-source')
+      this.$bvModal.hide('modal-add-provider')
     },
 
-    reactOnSuccess (toState, newSource) {
-      if (newSource) {
-        this.$emit('update-my-sources', newSource)
+    reactOnSuccess (toState, newProvider) {
+      if (newProvider) {
+        this.$emit('update-my-providers', newProvider)
         this.hide()
       }
     },
 
     show () {
-      this.sourceSpecsSelected = ''
+      this.providerSpecsSelected = ''
       this.resetSettings()
       this.settings.redirect = window.location.pathname
       this.state = -1
       this.resetSettings()
       this.updateSettingsForm()
-      this.$bvModal.show('modal-add-source')
+      this.$bvModal.show('modal-add-provider')
     }
   }
 }

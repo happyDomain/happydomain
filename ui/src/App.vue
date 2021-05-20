@@ -163,7 +163,7 @@ export default {
   },
 
   created () {
-    this.$store.dispatch('sourceSpecs/getAllSourceSpecs')
+    this.$store.dispatch('providerSpecs/getAllProviderSpecs')
     this.$store.dispatch('user/retrieveSession').catch(() => {})
   },
 

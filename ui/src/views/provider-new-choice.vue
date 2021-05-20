@@ -34,7 +34,7 @@
 <template>
   <b-row class="my-3">
     <b-col offset-md="2" md="8">
-      <h-new-source-selector @source-selected="selectNewSource" />
+      <h-new-provider-selector @provider-selected="selectNewProvider" />
     </b-col>
   </b-row>
 </template>
@@ -43,12 +43,12 @@
 export default {
 
   components: {
-    hNewSourceSelector: () => import('@/components/hNewSourceSelector')
+    hNewProviderSelector: () => import('@/components/hNewProviderSelector')
   },
 
   methods: {
-    selectNewSource (index, src) {
-      this.$router.push('/sources/new/' + encodeURIComponent(index) + '/0')
+    selectNewProvider (index, src) {
+      this.$router.push('/providers/new/' + encodeURIComponent(index) + '/0')
     }
   }
 }

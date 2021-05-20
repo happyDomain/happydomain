@@ -29,20 +29,34 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-import Api from '@/services/Api'
+import Vue from 'vue'
+import ProviderSpecsApi from '@/api/providerSpecs'
 
 export default {
-  getSourceSettings (source, state, settings, recallid) {
-    if (!state) {
-      state = 0
+  namespaced: true,
+
+  state: {
+    all: null
+  },
+
+  getters: {
+    providerSpecs_getAll: state => state.all
+  },
+
+  actions: {
+    getAllProviderSpecs ({ commit }) {
+      ProviderSpecsApi.listProviderSpecs()
+        .then(
+          response => {
+            commit('setProviderSpecs', response.data)
+          })
+      // TODO: handle errors here
     }
-    if (!settings) {
-      settings = {}
+  },
+
+  mutations: {
+    setProviderSpecs (state, providerSpecs) {
+      Vue.set(state, 'all', providerSpecs)
     }
-    settings.state = state
-    if (recallid) {
-      settings.recall = parseInt(recallid)
-    }
-    return Api().post('/api/source_settings/' + source, settings)
   }
 }

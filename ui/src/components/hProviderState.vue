@@ -32,41 +32,82 @@
   -->
 
 <template>
-  <b-container class="pt-4 pb-5">
-    <b-button type="button" variant="primary" class="float-right" @click="newSource">
-      <b-icon icon="plus" />
-      {{ $t('common.add-new-thing', { thing: $t('source.kind') }) }}
-    </b-button>
-    <h1 class="text-center mb-4">
-      {{ $t('source.title') }}
-    </h1>
-    <b-row>
-      <b-col offset-md="2" md="8">
-        <source-list @new-source="newSource" @source-selected="click" />
-      </b-col>
-    </b-row>
-  </b-container>
+  <h-custom-form v-if="val" :form="form" :value="val.Provider" @focus="$emit('focus', $event)" @input="val.Provider = $event; $emit('input', val)">
+    <h-resource-value-simple-input
+      v-if="state === 0"
+      id="src-name"
+      edit
+      :index="0"
+      :label="$t('provider.name-your')"
+      :description="$t('domains.give-explicit-name')"
+      :placeholder="providerName + ' account 1'"
+      required
+      :value="val._comment"
+      @focus="$emit('focus', $event)"
+      @input="val._comment = $event;$emit('input', val)"
+    />
+  </h-custom-form>
 </template>
 
 <script>
 export default {
+  name: 'HProviderState',
 
   components: {
-    sourceList: () => import('@/components/sourceList')
+    hCustomForm: () => import('@/components/hCustomForm'),
+    hResourceValueSimpleInput: () => import('@/components/hResourceValueSimpleInput')
   },
 
-  created () {
-    this.$store.dispatch('domains/getAllMyDomains')
-    this.$store.dispatch('sources/getAllMySources')
+  props: {
+    form: {
+      type: Object,
+      required: true
+    },
+    providerName: {
+      type: String,
+      required: true
+    },
+    state: {
+      type: Number,
+      default: 0
+    },
+    value: {
+      type: Object,
+      required: true
+    }
+  },
+
+  data () {
+    return {
+      val: null
+    }
+  },
+
+  watch: {
+    value: function () {
+      this.updateValues()
+    }
+  },
+
+  mounted () {
+    if (this.value) {
+      this.updateValues()
+    }
   },
 
   methods: {
-    click (source) {
-      this.$router.push('/sources/' + encodeURIComponent(source._id))
-    },
-
-    newSource () {
-      this.$router.push('/sources/new')
+    updateValues () {
+      let nVal = {}
+      if (this.value != null) {
+        nVal = Object.assign({}, this.value)
+      }
+      if (nVal.provider === undefined) {
+        nVal.provider = {}
+      }
+      if (nVal._comment === undefined) {
+        nVal._comment = ''
+      }
+      this.val = nVal
     }
   }
 }

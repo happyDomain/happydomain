@@ -37,7 +37,7 @@
       <button type="button" class="btn font-weight-bolder" @click="$router.go(-1)">
         <b-icon icon="chevron-left" />
       </button>
-      <i18n path="source.select-source" tag="span">
+      <i18n path="provider.select-provider" tag="span">
         <span class="text-monospace">{{ $route.params.domain }}</span>
       </i18n>
     </h1>
@@ -48,36 +48,36 @@
 
     <b-row v-else>
       <b-col offset-md="2" md="8">
-        <source-list ref="sourceList" emit-new-if-empty @new-source="newSource" @source-selected="addDomainToSource($event, $route.params.domain, true)" />
+        <provider-list ref="providerList" emit-new-if-empty @new-provider="newProvider" @provider-selected="addDomainToProvider($event, $route.params.domain, true)" />
 
         <p class="text-center mt-3">
-          {{ $t('source.find') }} <a href="#" @click.prevent="newSource">{{ $t('domains.add-now') }}</a>
+          {{ $t('provider.find') }} <a href="#" @click.prevent="newProvider">{{ $t('domains.add-now') }}</a>
         </p>
       </b-col>
     </b-row>
 
-    <h-modal-add-source ref="addSrcModal" @update-my-sources="doneAdd" />
+    <h-modal-add-provider ref="addSrcModal" @update-my-providers="doneAdd" />
   </b-container>
 </template>
 
 <script>
-import AddDomainToSource from '@/mixins/addDomainToSource'
+import AddDomainToProvider from '@/mixins/addDomainToProvider'
 
 export default {
 
   components: {
-    hModalAddSource: () => import('@/components/hModalAddSource'),
-    sourceList: () => import('@/components/sourceList')
+    hModalAddProvider: () => import('@/components/hModalAddProvider'),
+    providerList: () => import('@/components/providerList')
   },
 
-  mixins: [AddDomainToSource],
+  mixins: [AddDomainToProvider],
 
   methods: {
     doneAdd () {
-      this.$refs.sourceList.updateSources()
+      this.$refs.providerList.updateProviders()
     },
 
-    newSource () {
+    newProvider () {
       this.$refs.addSrcModal.show()
     }
   }

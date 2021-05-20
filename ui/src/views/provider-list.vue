@@ -32,61 +32,41 @@
   -->
 
 <template>
-  <b-list-group>
-    <b-list-group-item v-if="isLoading" class="d-flex justify-content-center align-items-center">
-      <b-spinner variant="primary" label="Spinning" class="mr-3" /> Retrieving usable sources...
-    </b-list-group-item>
-    <b-list-group-item v-for="(src, idx) in sources" :key="idx" :active="srcSelected === idx" button class="d-flex" @click="selectSource(idx)">
-      <div class="align-self-center text-center" style="min-width:50px;width:50px;">
-        <img :src="'/api/source_specs/' + idx + '/icon.png'" :alt="src.name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
-      </div>
-      <div class="align-self-center" style="line-height: 1.1">
-        <strong>{{ src.name }}</strong> &ndash;
-        <small class="text-muted" :title="src.description">{{ src.description }}</small>
-      </div>
-    </b-list-group-item>
-  </b-list-group>
+  <b-container class="pt-4 pb-5">
+    <b-button type="button" variant="primary" class="float-right" @click="newProvider">
+      <b-icon icon="plus" />
+      {{ $t('common.add-new-thing', { thing: $t('provider.kind') }) }}
+    </b-button>
+    <h1 class="text-center mb-4">
+      {{ $t('provider.title') }}
+    </h1>
+    <b-row>
+      <b-col offset-md="2" md="8">
+        <provider-list @new-provider="newProvider" @provider-selected="click" />
+      </b-col>
+    </b-row>
+  </b-container>
 </template>
 
 <script>
-import axios from 'axios'
-
 export default {
-  name: 'HNewSourceSelector',
 
-  props: {
-    value: {
-      type: String,
-      default: null
-    }
+  components: {
+    providerList: () => import('@/components/providerList')
   },
 
-  data: function () {
-    return {
-      sources: null,
-      srcSelected: null
-    }
-  },
-
-  computed: {
-    isLoading () {
-      return this.sources == null
-    }
-  },
-
-  mounted () {
-    axios
-      .get('/api/source_specs')
-      .then(response => (this.sources = response.data))
+  created () {
+    this.$store.dispatch('domains/getAllMyDomains')
+    this.$store.dispatch('providers/getAllMyProviders')
   },
 
   methods: {
-    selectSource (idx) {
-      if (this.value !== null) {
-        this.srcSelected = idx
-        this.$emit('input', this.srcSelected)
-      }
-      this.$emit('source-selected', idx)
+    click (provider) {
+      this.$router.push('/providers/' + encodeURIComponent(provider._id))
+    },
+
+    newProvider () {
+      this.$router.push('/providers/new')
     }
   }
 }

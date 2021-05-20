@@ -41,28 +41,28 @@ import (
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/forms"
 	"git.happydns.org/happydns/model"
-	"git.happydns.org/happydns/sources"
+	"git.happydns.org/happydns/providers"
 	"git.happydns.org/happydns/storage"
 )
 
-func declareSourceSettingsRoutes(cfg *config.Options, router *gin.RouterGroup) {
-	router.POST("/source_settings/*ssid", func(c *gin.Context) {
-		getSourceSettingsState(cfg, c)
+func declareProviderSettingsRoutes(cfg *config.Options, router *gin.RouterGroup) {
+	router.POST("/providers/_specs/:ssid/settings", func(c *gin.Context) {
+		getProviderSettingsState(cfg, c)
 	})
-	//router.POST("/domains/:domain/zone/:zoneid/:subdomain/provider_settings/:psid", getSourceSettingsState)
+	//router.POST("/domains/:domain/zone/:zoneid/:subdomain/provider_settings/:psid", getProviderSettingsState)
 }
 
-type SourceSettingsState struct {
+type ProviderSettingsState struct {
 	FormState
-	happydns.Source
+	happydns.Provider
 }
 
-type SourceSettingsResponse struct {
+type ProviderSettingsResponse struct {
 	FormResponse
-	happydns.Source `json:"Source,omitempty"`
+	happydns.Provider `json:"Provider,omitempty"`
 }
 
-func getSourceSettingsState(cfg *config.Options, c *gin.Context) {
+func getProviderSettingsState(cfg *config.Options, c *gin.Context) {
 	user := myUser(c)
 	if user == nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "User not defined"})
@@ -70,22 +70,18 @@ func getSourceSettingsState(cfg *config.Options, c *gin.Context) {
 	}
 
 	ssid := string(c.Param("ssid"))
-	// Remove the leading slash
-	if len(ssid) > 1 {
-		ssid = ssid[1:]
-	}
 
-	src, err := sources.FindSource(ssid)
+	src, err := providers.FindProvider(ssid)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find your source: %w", err)})
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find your provider: %w", err)})
 		return
 	}
 
-	var uss SourceSettingsState
-	uss.Source = src
+	var uss ProviderSettingsState
+	uss.Provider = src
 	err = c.ShouldBindJSON(&uss)
 	if err != nil {
-		log.Printf("%s sends invalid SourceSettingsState JSON: %w", c.ClientIP(), err)
+		log.Printf("%s sends invalid ProviderSettingsState JSON: %w", c.ClientIP(), err)
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
 		return
 
@@ -97,47 +93,47 @@ func getSourceSettingsState(cfg *config.Options, c *gin.Context) {
 		if err != forms.DoneForm {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 			return
-		} else if err = src.Validate(); err != nil {
+		} else if _, err = src.NewDNSServiceProvider(); err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 			return
 		} else if uss.Id == nil {
-			// Create a new Source
-			s, err := storage.MainStore.CreateSource(user, src, uss.Name)
+			// Create a new Provider
+			s, err := storage.MainStore.CreateProvider(user, src, uss.Name)
 			if err != nil {
 				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 				return
 			}
 
-			c.JSON(http.StatusOK, SourceSettingsResponse{
-				Source:       s,
+			c.JSON(http.StatusOK, ProviderSettingsResponse{
+				Provider:     s,
 				FormResponse: FormResponse{Redirect: uss.Redirect},
 			})
 			return
 		} else {
-			// Update an existing Source
-			s, err := storage.MainStore.GetSource(user, int64(uss.Id.(float64)))
+			// Update an existing Provider
+			s, err := storage.MainStore.GetProvider(user, int64(uss.Id.(float64)))
 			if err != nil {
 				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 				return
 			}
 			s.Comment = uss.Name
-			s.Source = uss.Source
+			s.Provider = uss.Provider
 
-			err = storage.MainStore.UpdateSource(s)
+			err = storage.MainStore.UpdateProvider(s)
 			if err != nil {
 				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 				return
 			}
 
-			c.JSON(http.StatusOK, SourceSettingsResponse{
-				Source:       s,
+			c.JSON(http.StatusOK, ProviderSettingsResponse{
+				Provider:     s,
 				FormResponse: FormResponse{Redirect: uss.Redirect},
 			})
 			return
 		}
 	}
 
-	c.JSON(http.StatusOK, SourceSettingsResponse{
+	c.JSON(http.StatusOK, ProviderSettingsResponse{
 		FormResponse: FormResponse{From: form},
 	})
 }

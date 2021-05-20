@@ -120,7 +120,7 @@ func getServiceSettingsState(cfg *config.Options, c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SourceSettingsResponse{
+	c.JSON(http.StatusOK, ProviderSettingsResponse{
 		FormResponse: FormResponse{From: form},
 	})
 }

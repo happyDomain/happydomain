@@ -64,7 +64,7 @@
     <template v-else-if="listImportableDomains.length === 0" #no-domain>
       <b-list-group-item class="text-center">
         <i18n path="errors.domain-all-imported">
-          {{ sourceSpecs_getAll[source._srctype].name }}
+          {{ sourceSpecs_getAll[provider._srctype].name }}
         </i18n>
       </b-list-group-item>
     </template>
@@ -73,8 +73,8 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import SourcesApi from '@/api/sources'
-import AddDomainToSource from '@/mixins/addDomainToSource'
+import ProvidersApi from '@/api/providers'
+import AddDomainToProvider from '@/mixins/addDomainToProvider'
 
 export default {
 
@@ -82,7 +82,7 @@ export default {
     hZoneList: () => import('@/components/ZoneList')
   },
 
-  mixins: [AddDomainToSource],
+  mixins: [AddDomainToProvider],
 
   props: {
     showAlreadyImported: {
@@ -93,7 +93,7 @@ export default {
       type: Boolean,
       default: false
     },
-    source: {
+    provider: {
       type: Object,
       required: true
     }
@@ -124,11 +124,11 @@ export default {
         )
       }
 
-      ret = ret.map(d => ({ domain: d, id_source: this.source._id }))
+      ret = ret.map(d => ({ domain: d, id_provider: this.provider._id }))
 
       if (this.domainsWithActions && this.showDomainsWithActions) {
         this.domainsWithActions.forEach((dwa) => {
-          ret.push({ domain: dwa.fqdn, state: dwa.state, message: dwa.message, btn: dwa.btn, action: dwa.action, id_source: this.source._id })
+          ret.push({ domain: dwa.fqdn, state: dwa.state, message: dwa.message, btn: dwa.btn, action: dwa.action, id_provider: this.provider._id })
         })
       }
 
@@ -136,7 +136,7 @@ export default {
     },
 
     noDomainsList () {
-      return !this.sourceSpecs_getAll[this.source._srctype] || !this.sourceSpecs_getAll[this.source._srctype].capabilities || this.sourceSpecs_getAll[this.source._srctype].capabilities.indexOf('ListDomains') === -1
+      return !this.sourceSpecs_getAll[this.provider._srctype] || !this.sourceSpecs_getAll[this.provider._srctype].capabilities || this.sourceSpecs_getAll[this.provider._srctype].capabilities.indexOf('ListDomains') === -1
     },
 
     ...mapGetters('sourceSpecs', ['sourceSpecs_getAll']),
@@ -148,7 +148,7 @@ export default {
       this.$emit('no-domains-list-change', ndl)
     },
 
-    source: function () {
+    provider: function () {
       this.getImportableDomains()
     },
 
@@ -160,7 +160,7 @@ export default {
   },
 
   mounted () {
-    if (this.source) {
+    if (this.provider) {
       this.getImportableDomains()
     }
     this.$emit('no-domains-list-change', this.noDomainsList)
@@ -168,7 +168,7 @@ export default {
 
   methods: {
     doDomainAction (domain) {
-      SourcesApi.doSourceDomainsAction(this.source._id, domain.domain, domain.action)
+      ProvidersApi.doProviderDomainsAction(this.provider._id, domain.domain, domain.action)
         .then(
           response => {
             this.$store.dispatch('domains/getAllMyDomains')
@@ -209,7 +209,7 @@ export default {
 
     importDomain (domain) {
       const vm = this
-      this.addDomainToSource(this.source, domain.domain, null, function (data) {
+      this.addDomainToProvider(this.provider, domain.domain, null, function (data) {
         vm.$store.dispatch('domains/getAllMyDomains')
       })
     },
@@ -220,7 +220,7 @@ export default {
         return
       }
 
-      SourcesApi.listSourceDomains(this.source._id)
+      ProvidersApi.listProviderDomains(this.provider._id)
         .then(
           response => {
             if (response.data === null) {
@@ -238,14 +238,14 @@ export default {
                 toaster: 'b-toaster-content-right'
               }
             )
-            this.$router.replace('/sources/' + encodeURIComponent(this.mySource._id))
+            this.$router.replace('/providers/' + encodeURIComponent(this.myProvider._id))
           })
 
-      if (!this.showDomainsWithActions || this.sourceSpecs_getAll[this.source._srctype].capabilities.indexOf('ListDomainsWithActions') === -1) {
+      if (!this.showDomainsWithActions || this.sourceSpecs_getAll[this.provider._srctype].capabilities.indexOf('ListDomainsWithActions') === -1) {
         return
       }
 
-      SourcesApi.listSourceDomainsWithActions(this.source._id)
+      ProvidersApi.listProviderDomainsWithActions(this.provider._id)
         .then(
           response => (this.domainsWithActions = response.data),
           error => {

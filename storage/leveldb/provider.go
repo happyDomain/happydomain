@@ -139,7 +139,7 @@ func (s *LevelDBStorage) CreateProvider(u *happydns.User, src happydns.Provider,
 	st := &happydns.ProviderCombined{
 		src,
 		happydns.ProviderMeta{
-			Type:    sType.String(),
+			Type:    sType.Name(),
 			Id:      id,
 			OwnerId: u.Id,
 			Comment: comment,

@@ -37,49 +37,49 @@
       <button type="button" class="btn font-weight-bolder" @click="$router.go(-1)">
         <b-icon icon="chevron-left" />
       </button>
-      {{ $t('wait.updating') }} <em v-if="mySource">{{ mySource._comment }}</em>
+      {{ $t('wait.updating') }} <em v-if="myProvider">{{ myProvider._comment }}</em>
     </h1>
     <hr class="mt-0 mb-0">
 
     <b-row class="flex-grow-1">
-      <b-col v-if="sourceSpecsSelected && sources" lg="4" md="5" class="bg-light">
+      <b-col v-if="providerSpecsSelected && providerSpecs_getAll" lg="4" md="5" class="bg-light">
         <div class="text-center mb-3">
-          <img :src="'/api/source_specs/' + sourceSpecsSelected + '/icon.png'" :alt="sources[sourceSpecsSelected].name" style="max-width: 100%; max-height: 10em">
+          <img :src="'/api/providers/_specs/' + providerSpecsSelected + '/icon.png'" :alt="providerSpecs_getAll[providerSpecsSelected].name" style="max-width: 100%; max-height: 10em">
         </div>
         <h3>
-          {{ sources[sourceSpecsSelected].name }}
+          {{ providerSpecs_getAll[providerSpecsSelected].name }}
         </h3>
 
         <p class="text-muted text-justify">
-          {{ sources[sourceSpecsSelected].description }}
+          {{ providerSpecs_getAll[providerSpecsSelected].description }}
         </p>
 
         <div class="text-center mb-2">
-          <b-button v-if="source_specs && source_specs.capabilities && source_specs.capabilities.indexOf('ListDomains') > -1" type="button" variant="secondary" class="mb-1" @click="showListImportableDomain()">
+          <b-button v-if="providerSpecs_getAll[providerSpecsSelected] && providerSpecs_getAll[providerSpecsSelected].capabilities && providerSpecs_getAll[providerSpecsSelected].capabilities.indexOf('ListDomains') > -1" type="button" variant="secondary" class="mb-1" @click="showListImportableDomain()">
             <b-icon icon="list-task" />
             {{ $t('domains.list') }}
           </b-button>
-          <b-button type="button" variant="danger" class="mb-1" @click="deleteSource()">
+          <b-button type="button" variant="danger" class="mb-1" @click="deleteProvider()">
             <b-icon icon="trash-fill" />
-            {{ $t('source.delete') }}
+            {{ $t('provider.delete') }}
           </b-button>
         </div>
       </b-col>
 
       <b-col lg="8" md="7">
         <b-form v-if="!isLoading" class="mt-2 mb-5" @submit.stop.prevent="nextState">
-          <h-source-state
+          <h-provider-state
             v-if="form"
             v-model="settings"
             class="mt-2 mb-2"
             :form="form"
-            :source-name="sources[sourceSpecsSelected].name"
+            :provider-name="providerSpecs_getAll[providerSpecsSelected].name"
             :state="state"
           />
 
           <hr>
 
-          <h-source-state-buttons v-if="form" class="d-flex justify-content-end" edit :form="form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previous-state="previousState" />
+          <h-provider-state-buttons v-if="form" class="d-flex justify-content-end" edit :form="form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previous-state="previousState" />
         </b-form>
       </b-col>
     </b-row>
@@ -87,73 +87,57 @@
 </template>
 
 <script>
-import SourceState from '@/mixins/sourceState'
-import axios from 'axios'
+import ProvidersApi from '@/api/providers'
+import ProviderState from '@/mixins/providerState'
+import { mapGetters } from 'vuex'
 
 export default {
 
   components: {
-    hSourceState: () => import('@/components/hSourceState'),
-    hSourceStateButtons: () => import('@/components/hSourceStateButtons')
+    hProviderState: () => import('@/components/hProviderState'),
+    hProviderStateButtons: () => import('@/components/hProviderStateButtons')
   },
 
-  mixins: [SourceState],
+  mixins: [ProviderState],
 
   data: function () {
     return {
-      mySource: null,
-      sources: null,
-      sourceSpecs: null,
-      sourceSpecsSelected: null
+      myProvider: null,
+      providerSpecsSelected: null
     }
   },
 
   computed: {
-    isLoadingHere () {
-      return this.mySource == null || this.sources == null || this.sourceSpecs == null || this.sourceSpecsSelected == null || this.settings == null || this.isLoading
-    }
+    isLoading () {
+      return this.myProvider == null || this.providerSpecs_getAll == null || this.providerSpecsSelected == null || this.settings == null || this.providerState_isLoading
+    },
+
+    ...mapGetters('providerSpecs', ['providerSpecs_getAll'])
   },
 
   mounted () {
     this.resetSettings()
-    axios
-      .get('/api/sources/' + encodeURIComponent(this.$route.params.source))
+    ProvidersApi.getProvider(this.$route.params.provider)
       .then(response => {
-        this.mySource = response.data
-        this.settings = this.mySource
-        this.sourceSpecsSelected = this.mySource._srctype
-
-        axios
-          .get('/api/source_specs/' + encodeURIComponent(this.mySource._srctype))
-          .then(response => {
-            this.sourceSpecs = response.data
-
-            this.loadState(0)
-            return true
-          })
-
-        return true
-      })
-    axios
-      .get('/api/source_specs')
-      .then(response => {
-        this.sources = response.data
+        this.myProvider = response.data
+        this.settings = this.myProvider
+        this.providerSpecsSelected = this.myProvider._srctype
+        this.loadState(0)
         return true
       })
   },
 
   methods: {
-    deleteSource () {
-      axios
-        .delete('/api/sources/' + encodeURIComponent(this.$route.params.source))
+    deleteProvider () {
+      ProvidersApi.deleteProvider(this.$route.params.provider)
         .then(
           response => {
-            this.$router.push('/sources/')
+            this.$router.push('/providers/')
           },
           error => {
             this.$root.$bvToast.toast(
               error.response.data.errmsg, {
-                title: this.$t('errors.source-delete'),
+                title: this.$t('errors.provider-delete'),
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'
@@ -161,9 +145,9 @@ export default {
             )
           })
     },
-    reactOnSuccess (toState, newSource) {
-      if (newSource) {
-        this.mySource = newSource
+    reactOnSuccess (toState, newProvider) {
+      if (newProvider) {
+        this.myProvider = newProvider
       }
     }
   }

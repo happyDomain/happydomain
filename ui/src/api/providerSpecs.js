@@ -29,34 +29,14 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-import Vue from 'vue'
-import SourceSpecsApi from '@/api/sourceSpecs'
+import Api from '@/api/api'
 
 export default {
-  namespaced: true,
-
-  state: {
-    all: null
+  listProviderSpecs () {
+    return Api().get('/api/providers/_specs')
   },
 
-  getters: {
-    sourceSpecs_getAll: state => state.all
-  },
-
-  actions: {
-    getAllSourceSpecs ({ commit }) {
-      SourceSpecsApi.listSourceSpecs()
-        .then(
-          response => {
-            commit('setSourceSpecs', response.data)
-          })
-      // TODO: handle errors here
-    }
-  },
-
-  mutations: {
-    setSourceSpecs (state, sourceSpecs) {
-      Vue.set(state, 'all', sourceSpecs)
-    }
+  getProviderSpecs (providerType) {
+    return Api().get('/api/providers/_specs/' + encodeURIComponent(providerType))
   }
 }

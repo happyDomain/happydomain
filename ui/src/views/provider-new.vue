@@ -32,83 +32,14 @@
   -->
 
 <template>
-  <h-custom-form v-if="val" :form="form" :value="val.Source" @focus="$emit('focus', $event)" @input="val.Source = $event; $emit('input', val)">
-    <h-resource-value-simple-input
-      v-if="state === 0"
-      id="src-name"
-      edit
-      :index="0"
-      :label="$t('source.name-your')"
-      :description="$t('domains.give-explicit-name')"
-      :placeholder="sourceName + ' account 1'"
-      required
-      :value="val._comment"
-      @focus="$emit('focus', $event)"
-      @input="val._comment = $event;$emit('input', val)"
-    />
-  </h-custom-form>
+  <b-container class="d-flex flex-column mt-4" fluid>
+    <h1 class="text-center mb-3">
+      <button type="button" class="btn font-weight-bolder" @click="$router.go(-1)">
+        <b-icon icon="chevron-left" />
+      </button>
+      <i18n path="provider.select-provider" />
+    </h1>
+    <hr class="mt-0 mb-0">
+    <router-view class="flex-grow-1" />
+  </b-container>
 </template>
-
-<script>
-export default {
-  name: 'HSourceState',
-
-  components: {
-    hCustomForm: () => import('@/components/hCustomForm'),
-    hResourceValueSimpleInput: () => import('@/components/hResourceValueSimpleInput')
-  },
-
-  props: {
-    form: {
-      type: Object,
-      required: true
-    },
-    sourceName: {
-      type: String,
-      required: true
-    },
-    state: {
-      type: Number,
-      default: 0
-    },
-    value: {
-      type: Object,
-      required: true
-    }
-  },
-
-  data () {
-    return {
-      val: null
-    }
-  },
-
-  watch: {
-    value: function () {
-      this.updateValues()
-    }
-  },
-
-  mounted () {
-    if (this.value) {
-      this.updateValues()
-    }
-  },
-
-  methods: {
-    updateValues () {
-      let nVal = {}
-      if (this.value != null) {
-        nVal = Object.assign({}, this.value)
-      }
-      if (nVal.Source === undefined) {
-        nVal.Source = {}
-      }
-      if (nVal._comment === undefined) {
-        nVal._comment = ''
-      }
-      this.val = nVal
-    }
-  }
-}
-</script>

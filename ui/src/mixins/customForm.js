@@ -55,10 +55,10 @@ export default {
               } else if (cbSuccess) {
                 cbSuccess(toState)
               }
-            } else if (response.data.Source) {
+            } else if (response.data.Provider) {
               this.$root.$bvToast.toast(
                 'Done', {
-                  title: (response.data.Source._comment ? response.data.Source._comment : 'Your new source') + ' has been ' + (this.settings._id ? 'updated' : 'added') + '.',
+                  title: (response.data.Provider._comment ? response.data.Provider._comment : 'Your new provider') + ' has been ' + (this.settings._id ? 'updated' : 'added') + '.',
                   autoHideDelay: 5000,
                   variant: 'success',
                   toaster: 'b-toaster-content-right'
@@ -67,9 +67,9 @@ export default {
               if (response.data.redirect && window.location.pathname !== response.data.redirect) {
                 this.$router.push(response.data.redirect)
               } else if (cbSuccess) {
-                cbSuccess(toState, response.data.Source)
+                cbSuccess(toState, response.data.Provider)
               } else {
-                this.$router.push('/sources/' + encodeURIComponent(response.data.Source._id) + '/domains')
+                this.$router.push('/providers/' + encodeURIComponent(response.data.Provider._id) + '/domains')
               }
             }
           },
@@ -78,7 +78,7 @@ export default {
             this.nextIsWorking = false
             this.$root.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'Something went wrong during source configuration validation',
+                title: 'Something went wrong during provider configuration validation',
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'
@@ -135,7 +135,7 @@ export default {
 
     resetSettings () {
       this.settings = {
-        Source: {},
+        Provider: {},
         Service: {},
         _comment: '',
         redirect: null

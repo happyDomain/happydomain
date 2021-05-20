@@ -29,57 +29,20 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-import axios from 'axios'
+import Api from '@/services/Api'
 
 export default {
-  data () {
-    return {
-      validatingNewDomain: false
+  getProviderSettings (provider, state, settings, recallid) {
+    if (!state) {
+      state = 0
     }
-  },
-
-  methods: {
-    addDomainToSource (source, domain, redirect, cbSUccess) {
-      this.validatingNewDomain = true
-
-      axios
-        .post('/api/domains', {
-          id_source: source._id,
-          domain: domain
-        })
-        .then(
-          (response) => {
-            this.$root.$bvToast.toast(
-              this.$t('domains.added-success', { domain: response.data.domain }), {
-                title: this.$t('domains.attached-new'),
-                autoHideDelay: 5000,
-                variant: 'success',
-                href: '/domains/' + response.data.domain,
-                toaster: 'b-toaster-content-right'
-              }
-            )
-            if (cbSUccess) {
-              cbSUccess(response.data)
-            } else if (redirect) {
-              this.$router.push('/domains/' + encodeURIComponent(response.data.domain))
-            } else if (this.refreshDomains) {
-              this.refreshDomains()
-            } else {
-              this.$emit('domain-added', response.data)
-            }
-          },
-          (error) => {
-            this.validatingNewDomain = false
-            this.$bvToast.toast(
-              error.response.data.errmsg, {
-                title: this.$t('errors.domain-attach'),
-                autoHideDelay: 5000,
-                variant: 'danger',
-                toaster: 'b-toaster-content-right'
-              }
-            )
-          }
-        )
+    if (!settings) {
+      settings = {}
     }
+    settings.state = state
+    if (recallid) {
+      settings.recall = parseInt(recallid)
+    }
+    return Api().post('/api/providers/_specs/' + encodeURIComponent(provider) + '/settings', settings)
   }
 }

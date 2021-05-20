@@ -91,7 +91,7 @@
 </template>
 
 <script>
-import SourcesApi from '@/services/SourcesApi'
+import ProvidersApi from '@/api/providers'
 
 export default {
   name: 'HFamilyTabs',
@@ -154,7 +154,7 @@ export default {
   },
 
   created () {
-    SourcesApi.getAvailableResourceTypes(this.domain.id_source)
+    ProvidersApi.getAvailableResourceTypes(this.domain.id_provider)
       .then(
         (response) => {
           this.availableResourceTypes = response.data
@@ -164,7 +164,7 @@ export default {
 
   methods: {
     analyzeRestrictions (allServices) {
-      var ret = {}
+      const ret = {}
 
       for (const type in allServices) {
         const svc = allServices[type]
@@ -180,9 +180,11 @@ export default {
             }
           }
 
+          let found = false
+
           // Handle Alone restriction: only nearAlone are allowed.
           if (svc.restrictions.alone && this.myServices.services[this.dn]) {
-            var found = false
+            found = false
             for (const k in this.myServices.services[this.dn]) {
               const s = this.myServices.services[this.dn][k]
               if (s._svctype !== type && allServices[s._svctype].restrictions && !allServices[s._svctype].restrictions.nearAlone) {
@@ -262,8 +264,8 @@ export default {
           }
 
           // Handle presence of Alone and Leaf service in subdomain already.
-          var oneAlone = null
-          var oneLeaf = null
+          let oneAlone = null
+          let oneLeaf = null
           for (const k in this.myServices.services[this.dn]) {
             const s = this.myServices.services[this.dn][k]
             if (this.services[s._svctype] && this.services[s._svctype].restrictions && this.services[s._svctype].restrictions.alone) {
@@ -288,7 +290,7 @@ export default {
     },
 
     availableNewServices (family) {
-      var ret = {}
+      const ret = {}
 
       for (const type in this.services) {
         if (this.filteredNewServices[type] == null && (family === undefined || family === this.services[type].family)) {
@@ -300,7 +302,7 @@ export default {
     },
 
     disabledNewServices (family) {
-      var ret = {}
+      const ret = {}
 
       for (const type in this.services) {
         if (this.filteredNewServices[type] != null && (family === undefined || family === this.services[type].family)) {

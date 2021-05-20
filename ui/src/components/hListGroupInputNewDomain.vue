@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import AddDomainToSource from '@/mixins/addDomainToSource'
+import AddDomainToProvider from '@/mixins/addDomainToProvider'
 import ValidateDomain from '@/mixins/validateDomain'
 
 export default {
@@ -46,10 +46,10 @@ export default {
     hListGroupInput: () => import('@/components/hListGroupInput')
   },
 
-  mixins: [AddDomainToSource, ValidateDomain],
+  mixins: [AddDomainToProvider, ValidateDomain],
 
   props: {
-    mySource: {
+    myProvider: {
       type: Object,
       default: null
     }
@@ -70,8 +70,8 @@ export default {
 
     submitNewDomain () {
       if (this.validateNewDomain()) {
-        if (this.mySource) {
-          this.addDomainToSource(this.mySource, this.newDomain, null, () => {
+        if (this.myProvider) {
+          this.addDomainToProvider(this.myProvider, this.newDomain, null, () => {
             this.$store.dispatch('domains/getAllMyDomains')
             this.newDomain = ''
           })

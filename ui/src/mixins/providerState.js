@@ -29,14 +29,21 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-import Api from '@/api/api'
+import CustomForm from '@/mixins/customForm'
+import ProviderSettingsApi from '@/api/providerSettings'
 
 export default {
-  listSourceSpecs () {
-    return Api().get('/api/source_specs')
+  mixins: [CustomForm],
+
+  computed: {
+    providerState_isLoading () {
+      return this.form == null
+    }
   },
 
-  getSourceSpecs (sourceType) {
-    return Api().get('/api/source_specs/' + encodeURIComponent(sourceType))
+  methods: {
+    getFormSettings (state, settings, recallid) {
+      return ProviderSettingsApi.getProviderSettings(this.providerSpecsSelected, state, settings, recallid)
+    }
   }
 }

@@ -41,9 +41,9 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 	apiRoutes := router.Group("/api")
 
 	declareAuthenticationRoutes(cfg, apiRoutes)
+	declareProviderSpecsRoutes(apiRoutes)
 	declareResolverRoutes(apiRoutes)
 	declareServiceSpecsRoutes(apiRoutes)
-	declareSourceSpecsRoutes(apiRoutes)
 	declareUsersRoutes(cfg, apiRoutes)
 	DeclareVersionRoutes(apiRoutes)
 
@@ -52,7 +52,7 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 
 	declareDomainsRoutes(cfg, apiAuthRoutes)
 	declareProvidersRoutes(cfg, apiAuthRoutes)
+	declareProviderSettingsRoutes(cfg, apiAuthRoutes)
 	declareSourcesRoutes(cfg, apiAuthRoutes)
-	declareSourceSettingsRoutes(cfg, apiAuthRoutes)
 	declareUsersAuthRoutes(cfg, apiAuthRoutes)
 }

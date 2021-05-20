@@ -39,14 +39,14 @@
     <b-row v-else class="flex-grow-1">
       <b-col lg="4" md="5" class="bg-light">
         <div class="text-center mb-3">
-          <img :src="'/api/source_specs/' + $route.params.provider + '/icon.png'" :alt="sourceSpecs[$route.params.provider].name" style="max-width: 100%; max-height: 10em">
+          <img :src="'/api/provider_specs/' + $route.params.provider + '/icon.png'" :alt="providerSpecs_getAll[$route.params.provider].name" style="max-width: 100%; max-height: 10em">
         </div>
         <h3>
-          {{ sourceSpecs[$route.params.provider].name }}
+          {{ providerSpecs_getAll[$route.params.provider].name }}
         </h3>
 
         <p class="text-muted text-justify">
-          {{ sourceSpecs[$route.params.provider].description }}
+          {{ providerSpecs_getAll[$route.params.provider].description }}
         </p>
 
         <hr v-if="form.sideText">
@@ -57,8 +57,8 @@
 
       <b-col lg="8" md="7">
         <b-form @submit.stop.prevent="nextState">
-          <h-source-state v-model="settings" class="mt-2 mb-2" :form="form" :source-name="sourceSpecs[$route.params.provider].name" :state="parseInt($route.params.state)" />
-          <h-source-state-buttons class="d-flex justify-content-end" :form="form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previous-state="previousState" />
+          <h-provider-state v-model="settings" class="mt-2 mb-2" :form="form" :provider-name="providerSpecs_getAll[$route.params.provider].name" :state="parseInt($route.params.state)" />
+          <h-provider-state-buttons class="d-flex justify-content-end" :form="form" :next-is-working="nextIsWorking" :previous-is-working="previousIsWorking" @previous-state="previousState" />
         </b-form>
       </b-col>
     </b-row>
@@ -66,46 +66,53 @@
 </template>
 
 <script>
-import SourceSpecs from '@/mixins/sourceSpecs'
-import SourceState from '@/mixins/sourceState'
+import ProviderState from '@/mixins/providerState'
+import { mapGetters } from 'vuex'
 
 export default {
 
   components: {
-    hSourceState: () => import('@/components/hSourceState'),
-    hSourceStateButtons: () => import('@/components/hSourceStateButtons')
+    hProviderState: () => import('@/components/hProviderState'),
+    hProviderStateButtons: () => import('@/components/hProviderStateButtons')
   },
 
-  mixins: [SourceSpecs, SourceState],
+  mixins: [ProviderState],
 
   data () {
     return {
-      sourceSpecsSelected: null
+      providerSpecsSelected: null
     }
+  },
+
+  computed: {
+    isLoading () {
+      return this.providerState_isLoading || this.providerSpecs_getAll == null
+    },
+
+    ...mapGetters('providerSpecs', ['providerSpecs_getAll'])
   },
 
   watch: {
     state: function (state) {
       if (state === -1) {
-        this.$router.push('/sources/new/')
+        this.$router.push('/providers/new/')
       } else if (state !== undefined && state !== this.$route.params.state) {
-        this.$router.push('/sources/new/' + encodeURIComponent(this.sourceSpecsSelected) + '/' + state)
+        this.$router.push('/providers/new/' + encodeURIComponent(this.providerSpecsSelected) + '/' + state)
       }
     }
   },
 
   created () {
-    this.sourceSpecsSelected = this.$route.params.provider
+    this.providerSpecsSelected = this.$route.params.provider
     this.state = parseInt(this.$route.params.state)
-    this.updateSourceSpecs()
     this.resetSettings()
     this.updateSettingsForm()
   },
 
   methods: {
-    reactOnSuccess (toState, newSource) {
-      if (newSource) {
-        this.$router.push('/sources/' + encodeURIComponent(newSource._id) + '/domains')
+    reactOnSuccess (toState, newProvider) {
+      if (newProvider) {
+        this.$router.push('/providers/' + encodeURIComponent(newProvider._id) + '/domains')
       }
     }
   }

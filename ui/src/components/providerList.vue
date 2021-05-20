@@ -34,39 +34,39 @@
 <template>
   <b-list-group>
     <b-list-group-item v-if="isLoading" class="d-flex justify-content-center align-items-center">
-      <b-spinner variant="primary" label="Spinning" class="mr-3" /> Retrieving your sources...
+      <b-spinner variant="primary" label="Spinning" class="mr-3" /> Retrieving your providers...
     </b-list-group-item>
-    <b-list-group-item v-if="!isLoading && sources_getAll.length == 0" class="text-center">
-      You have no source defined currently. Try <a href="#" @click.prevent="$emit('new-source')">adding one</a>!
+    <b-list-group-item v-if="!isLoading && providers_getAll.length == 0" class="text-center">
+      You have no provider defined currently. Try <a href="#" @click.prevent="$emit('new-provider')">adding one</a>!
     </b-list-group-item>
-    <b-list-group-item v-for="(source, index) in sortedSources" :key="index" :active="mySelectedSource && mySelectedSource._id === source._id" button class="d-flex justify-content-between align-items-center" @click="selectSource(source)">
+    <b-list-group-item v-for="(provider, index) in sortedProviders" :key="index" :active="mySelectedProvider && mySelectedProvider._id === provider._id" button class="d-flex justify-content-between align-items-center" @click="selectProvider(provider)">
       <div class="d-flex">
         <div class="text-center" style="width: 50px;">
-          <img v-if="sourceSpecs_getAll && sourceSpecs_getAll[source._srctype]" :src="'/api/source_specs/' + source._srctype + '/icon.png'" :alt="sourceSpecs_getAll[source._srctype].name" :title="sourceSpecs_getAll[source._srctype].name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+          <img v-if="providerSpecs_getAll && providerSpecs_getAll[provider._srctype]" :src="'/api/providers/_specs/' + provider._srctype + '/icon.png'" :alt="providerSpecs_getAll[provider._srctype].name" :title="providerSpecs_getAll[provider._srctype].name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
         </div>
-        <div v-if="source._comment" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-          {{ source._comment }}
+        <div v-if="provider._comment" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          {{ provider._comment }}
         </div>
         <em v-else>No name</em>
       </div>
       <div v-if="!(noLabel && noDropdown)" class="d-flex">
         <div v-if="!noLabel">
-          <b-badge class="ml-1" :variant="domain_in_sources[source._id] > 0 ? 'success' : 'danger'">
-            {{ domain_in_sources[source._id] }} domain(s) associated
+          <b-badge class="ml-1" :variant="domain_in_providers[provider._id] > 0 ? 'success' : 'danger'">
+            {{ domain_in_providers[provider._id] }} domain(s) associated
           </b-badge>
-          <b-badge v-if="sourceSpecs_getAll && sourceSpecs_getAll[source._srctype]" class="ml-1" variant="secondary" :title="source._srctype">
-            {{ sourceSpecs_getAll[source._srctype].name }}
+          <b-badge v-if="providerSpecs_getAll && providerSpecs_getAll[provider._srctype]" class="ml-1" variant="secondary" :title="provider._srctype">
+            {{ providerSpecs_getAll[provider._srctype].name }}
           </b-badge>
         </div>
         <b-dropdown v-if="!noDropdown" no-caret size="sm" style="margin-right: -10px" variant="link">
           <template #button-content>
             <b-icon icon="three-dots" />
           </template>
-          <b-dropdown-item @click="updateSource($event, source)">
-            {{ $t('source.update') }}
+          <b-dropdown-item @click="updateProvider($event, provider)">
+            {{ $t('provider.update') }}
           </b-dropdown-item>
-          <b-dropdown-item @click="deleteSource($event, source)">
-            {{ $t('source.delete') }}
+          <b-dropdown-item @click="deleteProvider($event, provider)">
+            {{ $t('provider.delete') }}
           </b-dropdown-item>
         </b-dropdown>
       </div>
@@ -77,10 +77,10 @@
 <script>
 import { mapGetters } from 'vuex'
 
-import SourceApi from '@/services/SourcesApi'
+import ProviderApi from '@/api/providers'
 
 export default {
-  name: 'SourceList',
+  name: 'ProviderList',
 
   props: {
     emitNewIfEmpty: {
@@ -95,7 +95,7 @@ export default {
       type: Boolean,
       default: false
     },
-    selectedSource: {
+    selectedProvider: {
       type: Object,
       default: null
     }
@@ -103,26 +103,26 @@ export default {
 
   data: function () {
     return {
-      mySelectedSource: null
+      mySelectedProvider: null
     }
   },
 
   computed: {
-    domain_in_sources () {
+    domain_in_providers () {
       const ret = {}
 
-      if (this.sources_getAll != null) {
-        for (const i in this.sources_getAll) {
+      if (this.providers_getAll != null) {
+        for (const i in this.providers_getAll) {
           ret[i] = 0
         }
       }
 
       if (this.domains_getAll != null) {
         this.domains_getAll.forEach(function (domain) {
-          if (!ret[domain.id_source]) {
-            ret[domain.id_source] = 0
+          if (!ret[domain.id_provider]) {
+            ret[domain.id_provider] = 0
           }
-          ret[domain.id_source]++
+          ret[domain.id_provider]++
         })
       }
 
@@ -130,55 +130,55 @@ export default {
     },
 
     isLoading () {
-      return (!this.noLabel && this.domains_getAll == null) || this.sources_getAll == null || this.sourceSpecs_getAll == null
+      return (!this.noLabel && this.domains_getAll == null) || this.providers_getAll == null || this.providerSpecs_getAll == null
     },
 
     ...mapGetters('domains', ['domains_getAll']),
-    ...mapGetters('sources', ['sortedSources', 'sources_getAll']),
-    ...mapGetters('sourceSpecs', ['sourceSpecs_getAll'])
+    ...mapGetters('providers', ['sortedProviders', 'providers_getAll']),
+    ...mapGetters('providerSpecs', ['providerSpecs_getAll'])
   },
 
   watch: {
-    selectedSource: function (source) {
-      if (source !== this.mySelectedSource && this.sources_getAll[source._id]) {
-        this.selectSource(source ? this.sources_getAll[source._id] : null)
+    selectedProvider: function (provider) {
+      if (provider !== this.mySelectedProvider && this.providers_getAll[provider._id]) {
+        this.selectProvider(provider ? this.providers_getAll[provider._id] : null)
       }
     },
 
-    sources_getAll: function (sources) {
+    providers_getAll: function (providers) {
       // handle emitNewIfEmpty
-      if (Object.keys(sources).length === 0 && this.emitNewIfEmpty) {
-        this.$emit('new-source')
+      if (Object.keys(providers).length === 0 && this.emitNewIfEmpty) {
+        this.$emit('new-provider')
       }
 
-      // handle case when waiting for sources to select one
-      if (this.selectedSource && this.selectedSource !== this.mySelectedSource) {
-        this.selectSource(sources[this.selectedSource._id])
+      // handle case when waiting for providers to select one
+      if (this.selectedProvider && this.selectedProvider !== this.mySelectedProvider) {
+        this.selectProvider(providers[this.selectedProvider._id])
       }
 
-      // handle deletion of selected source
-      if (this.mySelectedSource && !sources[this.mySelectedSource._id]) {
-        this.selectSource(null)
+      // handle deletion of selected provider
+      if (this.mySelectedProvider && !providers[this.mySelectedProvider._id]) {
+        this.selectProvider(null)
       }
     }
   },
 
   mounted () {
-    if (this.selectedSource && this.sources_getAll) {
-      this.selectSource(this.sources_getAll[this.selectedSource._id])
+    if (this.selectedProvider && this.providers_getAll) {
+      this.selectProvider(this.providers_getAll[this.selectedProvider._id])
     }
   },
 
   methods: {
-    deleteSource (event, source) {
+    deleteProvider (event, provider) {
       event.stopPropagation()
-      SourceApi.deleteSource(source)
+      ProviderApi.deleteProvider(provider)
         .then(
           response => {
-            this.$store.dispatch('sources/getAllMySources')
+            this.$store.dispatch('providers/getAllMyProviders')
             this.$bvToast.toast(
-              'The source has been deleted with success.', {
-                title: 'Source deleted with success',
+              'The provider has been deleted with success.', {
+                title: 'Provider deleted with success',
                 autoHideDelay: 5000,
                 variant: 'success',
                 toaster: 'b-toaster-content-right'
@@ -187,7 +187,7 @@ export default {
           error => {
             this.$bvToast.toast(
               error.response.data.errmsg, {
-                title: 'An error occurs when trying to delete the source:',
+                title: 'An error occurs when trying to delete the provider:',
                 autoHideDelay: 5000,
                 variant: 'danger',
                 toaster: 'b-toaster-content-right'
@@ -195,18 +195,18 @@ export default {
           })
     },
 
-    selectSource (source) {
-      if (this.mySelectedSource != null && source && this.mySelectedSource._id === source._id) {
-        this.mySelectedSource = null
+    selectProvider (provider) {
+      if (this.mySelectedProvider != null && provider && this.mySelectedProvider._id === provider._id) {
+        this.mySelectedProvider = null
       } else {
-        this.mySelectedSource = source
+        this.mySelectedProvider = provider
       }
-      this.$emit('source-selected', this.mySelectedSource)
+      this.$emit('provider-selected', this.mySelectedProvider)
     },
 
-    updateSource (event, source) {
+    updateProvider (event, provider) {
       event.stopPropagation()
-      this.$router.push('/sources/' + encodeURIComponent(source._id))
+      this.$router.push('/providers/' + encodeURIComponent(provider._id))
     }
   }
 }

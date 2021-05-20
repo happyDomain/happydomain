@@ -47,7 +47,7 @@
     >
       <div class="text-monospace">
         <div class="d-inline-block text-center" style="width: 50px;">
-          <img v-if="sources_getAll[domain.id_source]" :src="'/api/source_specs/' + sources_getAll[domain.id_source]._srctype + '/icon.png'" :alt="sources_getAll[domain.id_source]._srctype" :title="sources_getAll[domain.id_source]._srctype" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+          <img v-if="providers_getAll[domain.id_provider]" :src="'/api/providers/_specs/' + providers_getAll[domain.id_provider]._srctype + '/icon.png'" :alt="providers_getAll[domain.id_provider]._srctype" :title="providers_getAll[domain.id_provider]._srctype" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
         </div>
         {{ domain.domain }}
       </div>
@@ -83,10 +83,10 @@ export default {
 
   computed: {
     isLoading () {
-      return this.parentIsLoading || this.domains == null || this.sources_getAll == null
+      return this.parentIsLoading || this.domains == null || this.providers_getAll == null
     },
 
-    ...mapGetters('sources', ['sources_getAll'])
+    ...mapGetters('providers', ['providers_getAll'])
   }
 }
 </script>

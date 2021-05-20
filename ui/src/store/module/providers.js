@@ -29,22 +29,50 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-import Api from '@/services/Api'
+import Vue from 'vue'
+import ProvidersApi from '@/api/providers'
 
 export default {
-  getSource (srcId) {
-    return Api().get('/api/sources/' + encodeURIComponent(srcId))
+  namespaced: true,
+
+  state: {
+    all: null
   },
 
-  getAvailableResourceTypes (srcId) {
-    return Api().get('/api/sources/' + encodeURIComponent(srcId) + '/available_resource_types')
+  getters: {
+    sortedProviders: state => {
+      const ret = []
+      for (const i in state.all) {
+        if (state.all[i]._id) {
+          ret.push(state.all[i])
+        }
+      }
+      ret.sort(function (a, b) { return a._srctype.localeCompare(b._srctype) })
+      return ret
+    },
+    providers_getAll: state => state.all
   },
 
-  getSources () {
-    return Api().get('/api/sources')
+  actions: {
+    getAllMyProviders ({ commit }) {
+      ProvidersApi.listProviders()
+        .then(
+          response => {
+            commit('setProviders', response.data)
+          })
+      // TODO: handle errors here
+    }
   },
 
-  deleteSource (source) {
-    return Api().delete('/api/sources/' + encodeURIComponent(source._id))
+  mutations: {
+    setProviders (state, providers) {
+      if (Array.isArray(providers)) {
+        const srcs = {}
+        providers.forEach(src => { srcs[src._id] = src })
+        Vue.set(state, 'all', srcs)
+      } else {
+        Vue.set(state, 'all', providers)
+      }
+    }
   }
 }

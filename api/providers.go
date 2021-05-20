@@ -35,6 +35,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -45,12 +46,13 @@ import (
 )
 
 func declareProvidersRoutes(cfg *config.Options, router *gin.RouterGroup) {
-	router.GET("/list_providers", listProviders)
-
 	router.GET("/providers", getProviders)
 	router.POST("/providers", addProvider)
 
-	//router.GET("/api/providers/:sid", apiAuthHandler(providerHandler(getProvider)))
+	apiProviderRoutes := router.Group("/providers/:pid")
+	apiProviderRoutes.Use(ProviderHandler)
+
+	apiProviderRoutes.GET("", getProvider)
 	//router.PUT("/api/providers/:sid", apiAuthHandler(providerHandler(updateProvider)))
 	//router.DELETE("/api/providers/:sid", apiAuthHandler(providerMetaHandler(deleteProvider)))
 
@@ -60,17 +62,6 @@ func declareProvidersRoutes(cfg *config.Options, router *gin.RouterGroup) {
 	//router.POST("/api/providers/:sid/domains_with_actions", apiAuthHandler(providerHandler(doDomainsWithActionsHostedByProvider)))
 
 	//router.GET("/api/providers/:sid/available_resource_types", apiAuthHandler(providerHandler(getAvailableResourceTypes)))
-}
-
-func listProviders(c *gin.Context) {
-	srcs := providers.GetProviders()
-
-	ret := map[string]providers.ProviderInfos{}
-	for k, src := range *srcs {
-		ret[k] = src.Infos
-	}
-
-	c.JSON(http.StatusOK, ret)
 }
 
 func getProviders(c *gin.Context) {
@@ -115,6 +106,41 @@ func DecodeProvider(c *gin.Context) (*happydns.ProviderCombined, int, error) {
 	}
 
 	return src, http.StatusOK, nil
+}
+
+func ProviderHandler(c *gin.Context) {
+	// Extract provider ID
+	pid, err := strconv.ParseInt(string(c.Param("pid")), 10, 64)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Invalid provider id: %w", err)})
+		return
+	}
+
+	// Get a valid user
+	user := myUser(c)
+	if user == nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "User not defined."})
+		return
+	}
+
+	// Retrieve provider
+	provider, err := storage.MainStore.GetProvider(user, pid)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Provider not found."})
+		return
+	}
+
+	// Continue
+	c.Set("provider", provider)
+	c.Set("providermeta", provider.ProviderMeta)
+
+	c.Next()
+}
+
+func getProvider(c *gin.Context) {
+	provider := c.MustGet("provider").(*happydns.ProviderCombined)
+
+	c.JSON(http.StatusOK, provider)
 }
 
 func addProvider(c *gin.Context) {
