@@ -35,6 +35,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/StackExchange/dnscontrol/v3/models"
 	"github.com/StackExchange/dnscontrol/v3/providers"
 	"github.com/miekg/dns"
 )
@@ -114,4 +115,20 @@ func (p *ProviderCombined) ImportZone(dn *Domain) (rrs []dns.RR, err error) {
 	}
 
 	return
+}
+
+func (p *ProviderCombined) GetDomainCorrections(dc *models.DomainConfig) (rrs []*models.Correction, err error) {
+	var s providers.DNSServiceProvider
+	s, err = p.NewDNSServiceProvider()
+	if err != nil {
+		return
+	}
+
+	defer func() {
+		if a := recover(); a != nil {
+			err = fmt.Errorf("%s", a)
+		}
+	}()
+
+	return s.GetDomainCorrections(dc)
 }

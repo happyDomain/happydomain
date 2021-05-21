@@ -40,14 +40,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/StackExchange/dnscontrol/v3/models"
 	"github.com/gin-gonic/gin"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/services"
-	"git.happydns.org/happydns/services/abstract"
-	"git.happydns.org/happydns/sources"
 	"git.happydns.org/happydns/storage"
 )
 
@@ -249,58 +248,42 @@ func importZone(c *gin.Context) {
 	c.JSON(http.StatusOK, &myZone.ZoneMeta)
 }
 
-func loadRecordsFromZoneId(user *happydns.User, domain *happydns.Domain, id string) ([]dns.RR, int, error) {
-	if id == "@" {
-		source, err := storage.MainStore.GetSource(user, domain.IdProvider)
-		if err != nil {
-			return nil, http.StatusNotFound, fmt.Errorf("Unable to find the given source: %q for %q", domain.IdProvider, domain.DomainName)
-		}
-
-		rrs, err := source.ImportZone(domain)
-
-		// statuscode should not be significant if err is nil
-		return rrs, http.StatusBadRequest, err
-	} else {
-		zone, statuscode, err := loadZoneFromId(domain, id)
-		if err != nil {
-			return nil, statuscode, err
-		}
-
-		return zone.GenerateRRs(domain.DomainName), http.StatusOK, err
-	}
-}
-
 func diffZones(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 	domain := c.MustGet("domain").(*happydns.Domain)
 
-	zone1, statuscode, err := loadRecordsFromZoneId(user, domain, c.Param("zoneid1"))
+	if c.Param("zoneid1") != "@" {
+		c.AbortWithStatusJSON(http.StatusNotImplemented, gin.H{"errmsg": "Diff between two zone is not implemented."})
+		return
+	}
+
+	provider, err := storage.MainStore.GetProvider(user, domain.IdProvider)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, fmt.Errorf("Unable to find the given source: %q for %q", domain.IdProvider, domain.DomainName))
+		return
+	}
+
+	zone, statuscode, err := loadZoneFromId(domain, c.Param("zoneid2"))
 	if err != nil {
 		c.AbortWithStatusJSON(statuscode, gin.H{"errmsg": err.Error()})
 		return
 	}
 
-	zone2, statuscode, err := loadRecordsFromZoneId(user, domain, c.Param("zoneid2"))
-	if err != nil {
-		c.AbortWithStatusJSON(statuscode, gin.H{"errmsg": err.Error()})
-		return
+	dc := &models.DomainConfig{
+		Name:    strings.TrimSuffix(domain.DomainName, "."),
+		Records: models.RRstoRCs(zone.GenerateRRs(domain.DomainName), strings.TrimSuffix(domain.DomainName, ".")),
 	}
 
-	toAdd, toDel := sources.DiffZones(zone1, zone2, true)
+	corrections, err := provider.GetDomainCorrections(dc)
 
-	var rrAdd []string
-	for _, rr := range toAdd {
-		rrAdd = append(rrAdd, rr.String())
-	}
-
-	var rrDel []string
-	for _, rr := range toDel {
-		rrDel = append(rrDel, rr.String())
+	var rrCorected []string
+	for _, c := range corrections {
+		rrCorected = append(rrCorected, c.Msg)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"toAdd": rrAdd,
-		"toDel": rrDel,
+		"toAdd": rrCorected,
+		"toDel": nil,
 	})
 }
 
@@ -309,26 +292,22 @@ func applyZone(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 	zone := c.MustGet("zone").(*happydns.Zone)
 
-	source, err := storage.MainStore.GetSource(user, domain.IdProvider)
+	provider, err := storage.MainStore.GetProvider(user, domain.IdProvider)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find your provider: %w", err)})
+		c.AbortWithStatusJSON(http.StatusNotFound, fmt.Errorf("Unable to find the given provider: %q for %q", domain.IdProvider, domain.DomainName))
 		return
 	}
 
-	newSOA, err := sources.ApplyZone(source, domain, zone.GenerateRRs(domain.DomainName), true)
-	if err != nil {
-		log.Printf("%s: unable to ApplyZone in applyZone", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Unable to create the diff. Please retry later or contact an administrator."})
-		return
+	dc := &models.DomainConfig{
+		Name:    strings.TrimSuffix(domain.DomainName, "."),
+		Records: models.RRstoRCs(zone.GenerateRRs(domain.DomainName), strings.TrimSuffix(domain.DomainName, ".")),
 	}
 
-	// Update serial
-	if newSOA != nil {
-		for _, svc := range zone.Services[""] {
-			if origin, ok := svc.Service.(*abstract.Origin); ok {
-				origin.Serial = newSOA.Serial
-				break
-			}
+	corrections, err := provider.GetDomainCorrections(dc)
+	for _, cr := range corrections {
+		err := cr.F()
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to update the zone: %s", err.Error())})
 		}
 	}
 
