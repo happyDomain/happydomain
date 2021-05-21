@@ -37,6 +37,7 @@ import (
 	"net/http"
 	"strconv"
 
+	dnscontrol "github.com/StackExchange/dnscontrol/v3/providers"
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happydns/config"
@@ -56,7 +57,7 @@ func declareProvidersRoutes(cfg *config.Options, router *gin.RouterGroup) {
 	//router.PUT("/api/providers/:sid", apiAuthHandler(providerHandler(updateProvider)))
 	//router.DELETE("/api/providers/:sid", apiAuthHandler(providerMetaHandler(deleteProvider)))
 
-	//router.GET("/api/providers/:sid/domains", apiAuthHandler(providerHandler(getDomainsHostedByProvider)))
+	apiProviderRoutes.GET("/domains", getDomainsHostedByProvider)
 
 	//router.GET("/api/providers/:sid/domains_with_actions", apiAuthHandler(providerHandler(getDomainsWithActionsHostedByProvider)))
 	//router.POST("/api/providers/:sid/domains_with_actions", apiAuthHandler(providerHandler(doDomainsWithActionsHostedByProvider)))
@@ -160,4 +161,28 @@ func addProvider(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, s)
+}
+
+func getDomainsHostedByProvider(c *gin.Context) {
+	provider := c.MustGet("provider").(*happydns.ProviderCombined)
+
+	p, err := provider.NewDNSServiceProvider()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to instantiate the provider: %s", err.Error())})
+		return
+	}
+
+	sr, ok := p.(dnscontrol.ZoneLister)
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "Provider doesn't support domain listing."})
+		return
+	}
+
+	domains, err := sr.ListZones()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, domains)
 }

@@ -58,7 +58,11 @@ func (s *DDNSServer) NewDNSServiceProvider() (providers.DNSServiceProvider, erro
 		config["update-key"] = config["transfer-key"]
 	}
 
-	return providers.CreateDNSProvider("AXFRDDNS", config, nil)
+	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
+}
+
+func (s *DDNSServer) DNSControlName() string {
+	return "AXFRDDNS"
 }
 
 func init() {

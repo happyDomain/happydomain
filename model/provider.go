@@ -43,6 +43,7 @@ import (
 // Provider is where Domains and Zones can be managed.
 type Provider interface {
 	NewDNSServiceProvider() (providers.DNSServiceProvider, error)
+	DNSControlName() string
 }
 
 // ProviderMeta holds the metadata associated to a Provider.

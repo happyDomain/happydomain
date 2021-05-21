@@ -55,7 +55,11 @@ func (s *OVHAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
 		"app-secret-key": appSecret,
 		"consumer-key":   s.ConsumerKey,
 	}
-	return providers.CreateDNSProvider("OVH", config, nil)
+	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
+}
+
+func (s *OVHAPI) DNSControlName() string {
+	return "OVH"
 }
 
 func init() {

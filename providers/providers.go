@@ -36,6 +36,8 @@ import (
 	"log"
 	"reflect"
 
+	"github.com/StackExchange/dnscontrol/v3/providers"
+
 	"git.happydns.org/happydns/model"
 )
 
@@ -69,6 +71,8 @@ func RegisterProvider(creator ProviderCreator, infos ProviderInfos) {
 	name := baseType.Name()
 	log.Println("Registering new provider:", name)
 
+	infos.Capabilities = GetProviderCapabilities(creator())
+
 	providersList[name] = Provider{
 		creator,
 		infos,
@@ -88,4 +92,13 @@ func FindProvider(name string) (happydns.Provider, error) {
 	}
 
 	return src.Creator(), nil
+}
+
+// GetProviderCapabilities lists available capabilities for the given Provider.
+func GetProviderCapabilities(prvd happydns.Provider) (caps []string) {
+	if providers.ProviderHasCapability(prvd.DNSControlName(), providers.CanGetZones) {
+		caps = append(caps, "ListDomains")
+	}
+
+	return
 }

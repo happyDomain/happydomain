@@ -101,7 +101,7 @@ func getProviderSpec(c *gin.Context) {
 	src := c.MustGet("providertype").(happydns.Provider)
 
 	c.JSON(http.StatusOK, viewProviderSpec{
-		Fields: forms.GenStructFields(src),
-		//Capabilities: providers.GetProviderCapabilities(src),
+		Fields:       forms.GenStructFields(src),
+		Capabilities: providers.GetProviderCapabilities(src),
 	})
 }
