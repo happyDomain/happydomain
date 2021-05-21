@@ -101,7 +101,7 @@ func addDomain(c *gin.Context) {
 
 	user := c.MustGet("LoggedUser").(*happydns.User)
 
-	source, err := storage.MainStore.GetSource(user, uz.IdSource)
+	provider, err := storage.MainStore.GetProvider(user, uz.IdProvider)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to find the provider.")})
 		return
@@ -111,7 +111,7 @@ func addDomain(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "This domain has already been imported."})
 		return
 
-	} else if err := source.DomainExists(uz.DomainName); err != nil {
+	} else if err := provider.DomainExists(uz.DomainName); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 		return
 	} else if err := storage.MainStore.CreateDomain(user, &uz); err != nil {
@@ -144,7 +144,7 @@ func DomainHandler(c *gin.Context) {
 	} else if src, exists := c.Get("sourcemeta"); exists {
 		source = src.(*happydns.SourceMeta)
 	}
-	if source != nil && source.Id != domain.IdSource {
+	if source != nil && source.Id != domain.IdProvider {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Domain not found (not child of source)"})
 		return
 	}
@@ -167,7 +167,7 @@ func GetDomain(c *gin.Context) {
 	ret := &apiDomain{
 		Id:          domain.Id,
 		IdUser:      domain.IdUser,
-		IdSource:    domain.IdSource,
+		IdSource:    domain.IdProvider,
 		DomainName:  domain.DomainName,
 		ZoneHistory: []happydns.ZoneMeta{},
 	}
@@ -188,7 +188,7 @@ func GetDomain(c *gin.Context) {
 func delDomain(c *gin.Context) {
 	if err := storage.MainStore.DeleteDomain(c.MustGet("domain").(*happydns.Domain)); err != nil {
 		log.Printf("%s was unable to DeleteDomain: %w", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Unable to delete your domain: %w", err)})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Unable to delete your domain: %s", err.Error())})
 		return
 	}
 
@@ -199,9 +199,9 @@ func axfrDomain(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 	domain := c.MustGet("domain").(*happydns.Domain)
 
-	source, err := storage.MainStore.GetSource(user, domain.IdSource)
+	source, err := storage.MainStore.GetSource(user, domain.IdProvider)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find your provider: %w", err)})
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find your provider: %s", err.Error())})
 		return
 	}
 
@@ -246,7 +246,7 @@ func prepareRR(next func(c *gin.Context, source *happydns.SourceCombined, domain
 			return
 		}
 
-		source, err := storage.MainStore.GetSource(user, domain.IdSource)
+		source, err := storage.MainStore.GetSource(user, domain.IdProvider)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find the required source: %w", err)})
 			return

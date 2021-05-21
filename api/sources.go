@@ -233,7 +233,7 @@ func deleteSource(c *gin.Context) {
 	}
 
 	for _, domain := range domains {
-		if domain.IdSource == sourcemeta.Id {
+		if domain.IdProvider == sourcemeta.Id {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "You cannot delete this source because there is still some domains associated with it."})
 			return
 		}

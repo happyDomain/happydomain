@@ -43,9 +43,9 @@ type Domain struct {
 	// IdUser is the identifier of the Domain's Owner.
 	IdUser int64 `json:"id_owner"`
 
-	// IsSource is the identifier of the Source used to access and edit the
+	// IsProvider is the identifier of the Provider used to access and edit the
 	// Domain.
-	IdSource int64 `json:"id_source"`
+	IdProvider int64 `json:"id_provider"`
 
 	// DomainName is the FQDN of the managed Domain.
 	DomainName string `json:"domain"`
@@ -70,10 +70,10 @@ func (d *Domain) HasZone(zoneId int64) (found bool) {
 }
 
 // NewDomain fills a new Domain structure.
-func NewDomain(u *User, st *SourceMeta, dn string) (d *Domain) {
+func NewDomain(u *User, st *ProviderMeta, dn string) (d *Domain) {
 	d = &Domain{
 		IdUser:     u.Id,
-		IdSource:   st.Id,
+		IdProvider: st.Id,
 		DomainName: dns.Fqdn(dn),
 	}
 

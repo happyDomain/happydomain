@@ -67,7 +67,7 @@ func analyzeDomain(c *gin.Context) {
 		return
 	}
 
-	source, err := storage.MainStore.GetSource(user, domain.IdSource)
+	source, err := storage.MainStore.GetSource(user, domain.IdProvider)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to get the related source: %w", err)})
 		return

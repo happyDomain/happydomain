@@ -100,7 +100,7 @@ func DecodeProvider(c *gin.Context) (*happydns.ProviderCombined, int, error) {
 		return nil, http.StatusBadRequest, err
 	}
 
-	_, err = src.NewDNSServiceProvider()
+	err = src.Validate()
 	if err != nil {
 		return nil, http.StatusBadRequest, err
 	}

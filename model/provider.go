@@ -32,7 +32,11 @@
 package happydns
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/StackExchange/dnscontrol/v3/providers"
+	"github.com/miekg/dns"
 )
 
 // Provider is where Domains and Zones can be managed.
@@ -59,4 +63,55 @@ type ProviderMeta struct {
 type ProviderCombined struct {
 	Provider
 	ProviderMeta
+}
+
+func (p *ProviderCombined) Validate() (err error) {
+	_, err = p.NewDNSServiceProvider()
+	return
+}
+
+func (p *ProviderCombined) DomainExists(fqdn string) (err error) {
+	var s providers.DNSServiceProvider
+	s, err = p.NewDNSServiceProvider()
+	if err != nil {
+		return
+	}
+
+	defer func() {
+		if a := recover(); a != nil {
+			err = fmt.Errorf("%s", a)
+		}
+	}()
+
+	_, err = s.GetZoneRecords(strings.TrimSuffix(fqdn, "."))
+	if err != nil {
+		return
+	}
+
+	return nil
+}
+
+func (p *ProviderCombined) ImportZone(dn *Domain) (rrs []dns.RR, err error) {
+	var s providers.DNSServiceProvider
+	s, err = p.NewDNSServiceProvider()
+	if err != nil {
+		return
+	}
+
+	defer func() {
+		if a := recover(); a != nil {
+			err = fmt.Errorf("%s", a)
+		}
+	}()
+
+	rcs, err := s.GetZoneRecords(strings.TrimSuffix(dn.DomainName, "."))
+	if err != nil {
+		return rrs, err
+	}
+
+	for _, rc := range rcs {
+		rrs = append(rrs, rc.ToRR())
+	}
+
+	return
 }

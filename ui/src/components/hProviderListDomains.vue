@@ -64,7 +64,7 @@
     <template v-else-if="listImportableDomains.length === 0" #no-domain>
       <b-list-group-item class="text-center">
         <i18n path="errors.domain-all-imported">
-          {{ sourceSpecs_getAll[provider._srctype].name }}
+          {{ providerSpecs_getAll[provider._srctype].name }}
         </i18n>
       </b-list-group-item>
     </template>
@@ -136,10 +136,10 @@ export default {
     },
 
     noDomainsList () {
-      return !this.sourceSpecs_getAll[this.provider._srctype] || !this.sourceSpecs_getAll[this.provider._srctype].capabilities || this.sourceSpecs_getAll[this.provider._srctype].capabilities.indexOf('ListDomains') === -1
+      return !this.providerSpecs_getAll[this.provider._srctype] || !this.providerSpecs_getAll[this.provider._srctype].capabilities || this.providerSpecs_getAll[this.provider._srctype].capabilities.indexOf('ListDomains') === -1
     },
 
-    ...mapGetters('sourceSpecs', ['sourceSpecs_getAll']),
+    ...mapGetters('providerSpecs', ['providerSpecs_getAll']),
     ...mapGetters('domains', ['domains_getAll'])
   },
 
@@ -152,7 +152,7 @@ export default {
       this.getImportableDomains()
     },
 
-    sourceSpecs_getAll: function (ss) {
+    providerSpecs_getAll: function (ss) {
       if (ss) {
         this.getImportableDomains()
       }
@@ -241,7 +241,7 @@ export default {
             this.$router.replace('/providers/' + encodeURIComponent(this.myProvider._id))
           })
 
-      if (!this.showDomainsWithActions || this.sourceSpecs_getAll[this.provider._srctype].capabilities.indexOf('ListDomainsWithActions') === -1) {
+      if (!this.showDomainsWithActions || this.providerSpecs_getAll[this.provider._srctype].capabilities.indexOf('ListDomainsWithActions') === -1) {
         return
       }
 

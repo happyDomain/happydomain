@@ -192,13 +192,13 @@ func importZone(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 	domain := c.MustGet("domain").(*happydns.Domain)
 
-	source, err := storage.MainStore.GetSource(user, domain.IdSource)
+	provider, err := storage.MainStore.GetProvider(user, domain.IdProvider)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find your provider: %w", err)})
 		return
 	}
 
-	zone, err := source.ImportZone(domain)
+	zone, err := provider.ImportZone(domain)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 		return
@@ -251,9 +251,9 @@ func importZone(c *gin.Context) {
 
 func loadRecordsFromZoneId(user *happydns.User, domain *happydns.Domain, id string) ([]dns.RR, int, error) {
 	if id == "@" {
-		source, err := storage.MainStore.GetSource(user, domain.IdSource)
+		source, err := storage.MainStore.GetSource(user, domain.IdProvider)
 		if err != nil {
-			return nil, http.StatusNotFound, fmt.Errorf("Unable to find the given source: %q for %q", domain.IdSource, domain.DomainName)
+			return nil, http.StatusNotFound, fmt.Errorf("Unable to find the given source: %q for %q", domain.IdProvider, domain.DomainName)
 		}
 
 		rrs, err := source.ImportZone(domain)
@@ -309,7 +309,7 @@ func applyZone(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 	zone := c.MustGet("zone").(*happydns.Zone)
 
-	source, err := storage.MainStore.GetSource(user, domain.IdSource)
+	source, err := storage.MainStore.GetSource(user, domain.IdProvider)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find your provider: %w", err)})
 		return

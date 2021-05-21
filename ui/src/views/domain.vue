@@ -230,6 +230,18 @@ export default {
             this.importInProgress = false
             this.updateDomainInfo()
             this.selectedHistory = response.data.id
+          },
+          (error) => {
+            this.importInProgress = false
+            this.$root.$bvToast.toast(
+              error.response.data.errmsg, {
+                title: this.$t('errors.occurs', { when: 'importing the zone' }),
+                autoHideDelay: 5000,
+                variant: 'danger',
+                toaster: 'b-toaster-content-right'
+              }
+            )
+            this.$router.push('/domains/')
           }
         )
     },
