@@ -157,7 +157,7 @@ func DomainHandler(c *gin.Context) {
 type apiDomain struct {
 	Id          int64               `json:"id"`
 	IdUser      int64               `json:"id_owner"`
-	IdSource    int64               `json:"id_source"`
+	IdProvider  int64               `json:"id_provider"`
 	DomainName  string              `json:"domain"`
 	ZoneHistory []happydns.ZoneMeta `json:"zone_history"`
 }
@@ -167,7 +167,7 @@ func GetDomain(c *gin.Context) {
 	ret := &apiDomain{
 		Id:          domain.Id,
 		IdUser:      domain.IdUser,
-		IdSource:    domain.IdProvider,
+		IdProvider:  domain.IdProvider,
 		DomainName:  domain.DomainName,
 		ZoneHistory: []happydns.ZoneMeta{},
 	}

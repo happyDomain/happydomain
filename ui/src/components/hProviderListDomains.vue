@@ -120,7 +120,7 @@ export default {
 
       if (!this.showAlreadyImported) {
         ret = ret.filter(
-          d => !this.domains_getAll.find(i => i.domain === d)
+          d => !this.domains_getAll.find(i => i.domain === d + '.')
         )
       }
 
@@ -230,6 +230,8 @@ export default {
             }
           },
           error => {
+            this.$emit('no-domains-list-change', true)
+            this.importableDomains = false
             this.$root.$bvToast.toast(
               error.response.data.errmsg, {
                 title: this.$t('errors.domain-access'),
@@ -238,7 +240,6 @@ export default {
                 toaster: 'b-toaster-content-right'
               }
             )
-            this.$router.replace('/providers/' + encodeURIComponent(this.myProvider._id))
           })
 
       if (!this.showDomainsWithActions || this.providerSpecs_getAll[this.provider._srctype].capabilities.indexOf('ListDomainsWithActions') === -1) {

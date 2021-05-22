@@ -50,12 +50,16 @@ func declareProvidersRoutes(cfg *config.Options, router *gin.RouterGroup) {
 	router.GET("/providers", getProviders)
 	router.POST("/providers", addProvider)
 
+	apiProvidersMetaRoutes := router.Group("/providers/:pid")
+	apiProvidersMetaRoutes.Use(ProviderMetaHandler)
+
+	apiProvidersMetaRoutes.DELETE("", deleteProvider)
+
 	apiProviderRoutes := router.Group("/providers/:pid")
 	apiProviderRoutes.Use(ProviderHandler)
 
 	apiProviderRoutes.GET("", getProvider)
-	//router.PUT("/api/providers/:sid", apiAuthHandler(providerHandler(updateProvider)))
-	//router.DELETE("/api/providers/:sid", apiAuthHandler(providerMetaHandler(deleteProvider)))
+	apiProviderRoutes.PUT("", UpdateProvider)
 
 	apiProviderRoutes.GET("/domains", getDomainsHostedByProvider)
 
@@ -107,6 +111,34 @@ func DecodeProvider(c *gin.Context) (*happydns.ProviderCombined, int, error) {
 	}
 
 	return src, http.StatusOK, nil
+}
+
+func ProviderMetaHandler(c *gin.Context) {
+	// Extract provider ID
+	pid, err := strconv.ParseInt(string(c.Param("pid")), 10, 64)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Invalid provider id: %s", err.Error())})
+		return
+	}
+
+	// Get a valid user
+	user := myUser(c)
+	if user == nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "User not defined."})
+		return
+	}
+
+	// Retrieve provider meta
+	providermeta, err := storage.MainStore.GetProviderMeta(user, pid)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Provider not found."})
+		return
+	}
+
+	// Continue
+	c.Set("providermeta", providermeta)
+
+	c.Next()
 }
 
 func ProviderHandler(c *gin.Context) {
@@ -161,6 +193,55 @@ func addProvider(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, s)
+}
+
+func UpdateProvider(c *gin.Context) {
+	provider := c.MustGet("provider").(*happydns.ProviderCombined)
+
+	src, statuscode, err := DecodeProvider(c)
+	if err != nil {
+		c.AbortWithStatusJSON(statuscode, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	src.Id = provider.Id
+	src.OwnerId = provider.OwnerId
+
+	if err := storage.MainStore.UpdateProvider(src); err != nil {
+		log.Println("%s unable to UpdateProvider: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update the provider. Please try again later."})
+		return
+	}
+
+	c.JSON(http.StatusOK, src)
+}
+
+func deleteProvider(c *gin.Context) {
+	user := c.MustGet("LoggedUser").(*happydns.User)
+	providermeta := c.MustGet("providermeta").(*happydns.ProviderMeta)
+
+	// Check if the provider has no more domain associated
+	domains, err := storage.MainStore.GetDomains(user)
+	if err != nil {
+		log.Println("%s unable to GetDomains for user id=%x email=%s: %w", c.ClientIP(), user.Id, user.Email, err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to perform this action. Please try again later."})
+		return
+	}
+
+	for _, domain := range domains {
+		if domain.IdProvider == providermeta.Id {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "You cannot delete this provider because there is still some domains associated with it."})
+			return
+		}
+	}
+
+	if err := storage.MainStore.DeleteProvider(providermeta); err != nil {
+		log.Println("%s unable to DeleteProvider %x for user id=%x email=%s: %w", c.ClientIP(), providermeta.Id, user.Id, user.Email, err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to delete your provider. Please try again later."})
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
 }
 
 func getDomainsHostedByProvider(c *gin.Context) {

@@ -96,14 +96,14 @@
           <b-icon icon="trash-fill" /> {{ $t('domains.stop') }}
         </b-button>
 
-        <b-form v-if="sources_getAll && sources_getAll[domain.id_source]" class="mt-5">
-          <label class="font-weight-bolder">{{ $t('domains.view.source') }}:</label>
+        <b-form v-if="providers_getAll && providers_getAll[domain.id_provider]" class="mt-5">
+          <label class="font-weight-bolder">{{ $t('domains.view.provider') }}:</label>
           <div class="pr-2 pl-2">
-            <b-button class="p-3 w-100 text-left" type="button" variant="outline-info" @click="goToSource()">
+            <b-button class="p-3 w-100 text-left" type="button" variant="outline-info" @click="goToProvider()">
               <div class="d-inline-block text-center" style="width: 50px;">
                 <img :src="'/api/providers/_specs/' + providers_getAll[domain.id_provider]._srctype + '/icon.png'" :alt="providers_getAll[domain.id_provider]._srctype" :title="providers_getAll[domain.id_provider]._srctype" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
               </div>
-              {{ sources_getAll[domain.id_source]._comment }}
+              {{ providers_getAll[domain.id_provider]._comment }}
             </b-button>
           </div>
         </b-form>
@@ -192,7 +192,7 @@ export default {
     },
 
     ...mapGetters('domains', ['domains_getDetailed', 'sortedDomains']),
-    ...mapGetters('sources', ['sources_getAll'])
+    ...mapGetters('providers', ['providers_getAll'])
   },
 
   watch: {
@@ -209,7 +209,7 @@ export default {
       this.displayFormat = localStorage.getItem('displayFormat')
     }
     this.$store.dispatch('domains/getAllMyDomains')
-    this.$store.dispatch('sources/getAllMySources')
+    this.$store.dispatch('providers/getAllMyProviders')
     this.updateDomainInfo()
   },
 
@@ -251,8 +251,8 @@ export default {
       this.updateDomainInfo()
     },
 
-    goToSource () {
-      this.$router.push('/sources/' + encodeURIComponent(this.domain.id_source))
+    goToProvider () {
+      this.$router.push('/providers/' + encodeURIComponent(this.domain.id_provider))
     },
 
     detachDomain () {
