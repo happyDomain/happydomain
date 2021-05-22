@@ -35,7 +35,6 @@ import Vuex from 'vuex'
 import domains from './module/domains'
 import providers from './module/providers'
 import providerSpecs from './module/providerSpecs'
-import sources from './module/sources'
 import user from './module/user'
 
 Vue.use(Vuex)
@@ -47,7 +46,6 @@ export default new Vuex.Store({
     domains,
     providers,
     providerSpecs,
-    sources,
     user
   },
   strict: debug

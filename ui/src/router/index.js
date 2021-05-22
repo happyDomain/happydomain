@@ -234,16 +234,6 @@ const routes = [
     }
   },
   {
-    path: '/zones/:domain/records',
-    name: 'zone-records',
-    component: function () {
-      return import(/* webpackChunkName: "domain" */ '../views/zone-records.vue')
-    },
-    meta: {
-      requiresAuth: true
-    }
-  },
-  {
     path: '*',
     name: 'non-found',
     component: function () {

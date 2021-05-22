@@ -53,6 +53,5 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 	declareDomainsRoutes(cfg, apiAuthRoutes)
 	declareProvidersRoutes(cfg, apiAuthRoutes)
 	declareProviderSettingsRoutes(cfg, apiAuthRoutes)
-	declareSourcesRoutes(cfg, apiAuthRoutes)
 	declareUsersAuthRoutes(cfg, apiAuthRoutes)
 }

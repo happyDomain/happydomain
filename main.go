@@ -46,11 +46,6 @@ import (
 	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/storage"
 
-	_ "git.happydns.org/happydns/sources/alwaysdata"
-	_ "git.happydns.org/happydns/sources/ddns"
-	_ "git.happydns.org/happydns/sources/gandi"
-	_ "git.happydns.org/happydns/sources/godaddy"
-
 	_ "git.happydns.org/happydns/services/providers/google"
 
 	_ "git.happydns.org/happydns/storage/leveldb"

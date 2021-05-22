@@ -29,15 +29,32 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-import Api from '@/services/Api'
+import Api from '@/api/api'
 
 export default {
-  getServiceSpecs (serviceType) {
-    if (serviceType != null) {
-      serviceType = serviceType[0] === '*' ? serviceType.substr(1) : serviceType
-      return Api().get('/api/service_specs/' + serviceType)
-    } else {
-      return Api().get('/api/service_specs')
+  getServices (domain) {
+    return Api().get('/api/service_specs')
+  },
+
+  getFormSettings (domain, id, subdomain, service, state, settings, recallid) {
+    if (!state) {
+      state = 0
     }
+    if (!settings) {
+      settings = {}
+    }
+    if (subdomain === '') {
+      subdomain = '@'
+    }
+    settings.state = state
+    if (recallid) {
+      settings.recall = parseInt(recallid)
+    }
+    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/' + encodeURIComponent(subdomain) + '/services/' + encodeURIComponent(service), settings)
+  },
+
+  updateService (service) {
+    const serviceType = service[0] === '*' ? service.substr(1) : service
+    return Api().get('/api/service_specs/' + serviceType)
   }
 }

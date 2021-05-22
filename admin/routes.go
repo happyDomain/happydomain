@@ -44,8 +44,8 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 	apiRoutes := router.Group("/api")
 
 	declareDomainsRoutes(cfg, apiRoutes)
+	declareProvidersRoutes(cfg, apiRoutes)
 	declareSessionsRoutes(cfg, apiRoutes)
-	declareSourcesRoutes(cfg, apiRoutes)
 	declareUsersRoutes(cfg, apiRoutes)
 	api.DeclareVersionRoutes(apiRoutes)
 }

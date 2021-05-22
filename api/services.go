@@ -67,13 +67,13 @@ func analyzeDomain(c *gin.Context) {
 		return
 	}
 
-	source, err := storage.MainStore.GetSource(user, domain.IdProvider)
+	provider, err := storage.MainStore.GetProvider(user, domain.IdProvider)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to get the related source: %w", err)})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to get the related provider: %w", err)})
 		return
 	}
 
-	zone, err := source.ImportZone(domain)
+	zone, err := provider.ImportZone(domain)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to import zone: %w", err)})
 		return

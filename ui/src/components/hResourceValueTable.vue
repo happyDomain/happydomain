@@ -72,7 +72,7 @@
 </template>
 
 <script>
-import ServiceSpecsApi from '@/services/ServiceSpecsApi'
+import ServiceSpecsApi from '@/api/serviceSpecs'
 
 export default {
   name: 'HResourceValueTable',

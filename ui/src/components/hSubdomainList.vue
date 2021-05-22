@@ -114,7 +114,7 @@
 </template>
 
 <script>
-import ServiceSpecsApi from '@/services/ServiceSpecsApi'
+import ServiceSpecsApi from '@/api/serviceSpecs'
 import ValidateDomain from '@/mixins/validateDomain'
 import ZoneApi from '@/api/zones'
 import { domainCompare } from '@/utils/domainCompare'

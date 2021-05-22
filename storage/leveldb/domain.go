@@ -193,11 +193,11 @@ func (s *LevelDBStorage) TidyDomains() error {
 				log.Printf("Deleting orphan domain (user %d not found): %v\n", domain.IdUser, domain)
 			}
 
-			_, err = s.GetSource(u, domain.IdProvider)
+			_, err = s.GetProvider(u, domain.IdProvider)
 			if err == leveldb.ErrNotFound {
-				// Drop domain of unexistant source
+				// Drop domain of unexistant provider
 				err = tx.Delete(iter.Key(), nil)
-				log.Printf("Deleting orphan domain (source %d not found): %v\n", domain.IdProvider, domain)
+				log.Printf("Deleting orphan domain (provider %d not found): %v\n", domain.IdProvider, domain)
 			}
 		} else {
 			// Drop unreadable domains

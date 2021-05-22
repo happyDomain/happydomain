@@ -43,31 +43,31 @@ import (
 	"git.happydns.org/happydns/storage"
 )
 
-func declareSourcesRoutes(opts *config.Options, router *gin.RouterGroup) {
-	router.GET("/sources", getSources)
-	router.POST("/sources", newUserSource)
+func declareProvidersRoutes(opts *config.Options, router *gin.RouterGroup) {
+	router.GET("/providers", getProviders)
+	router.POST("/providers", newUserProvider)
 
-	apiSourcesMetaRoutes := router.Group("/sources/:sid")
-	apiSourcesMetaRoutes.Use(api.SourceMetaHandler)
+	apiProvidersMetaRoutes := router.Group("/providers/:sid")
+	apiProvidersMetaRoutes.Use(api.ProviderMetaHandler)
 
-	apiSourcesMetaRoutes.PUT("", api.UpdateSource)
-	apiSourcesMetaRoutes.DELETE("", deleteUserSource)
+	apiProvidersMetaRoutes.PUT("", api.UpdateProvider)
+	apiProvidersMetaRoutes.DELETE("", deleteUserProvider)
 
-	apiSourcesRoutes := router.Group("/sources/:sid")
-	apiSourcesRoutes.Use(api.SourceHandler)
+	apiProvidersRoutes := router.Group("/providers/:sid")
+	apiProvidersRoutes.Use(api.ProviderHandler)
 
-	apiSourcesRoutes.GET("", api.GetSource)
+	apiProvidersRoutes.GET("", api.GetProvider)
 
-	declareDomainsRoutes(opts, apiSourcesRoutes)
+	declareDomainsRoutes(opts, apiProvidersRoutes)
 }
 
-func getSources(c *gin.Context) {
+func getProviders(c *gin.Context) {
 	user, exists := c.Get("user")
 	if exists {
-		srcmeta, err := storage.MainStore.GetSourceMetas(user.(*happydns.User))
+		srcmeta, err := storage.MainStore.GetProviderMetas(user.(*happydns.User))
 		ApiResponse(c, srcmeta, err)
 	} else {
-		var sources []happydns.SourceMeta
+		var providers []happydns.ProviderMeta
 
 		users, err := storage.MainStore.GetUsers()
 		if err != nil {
@@ -75,20 +75,20 @@ func getSources(c *gin.Context) {
 			return
 		}
 		for _, user := range users {
-			usersSources, err := storage.MainStore.GetSourceMetas(user)
+			usersProviders, err := storage.MainStore.GetProviderMetas(user)
 			if err != nil {
-				ApiResponse(c, nil, fmt.Errorf("Unable to retrieve %s's sources: %w", user.Email, err))
+				ApiResponse(c, nil, fmt.Errorf("Unable to retrieve %s's providers: %w", user.Email, err))
 				return
 			}
 
-			sources = append(sources, usersSources...)
+			providers = append(providers, usersProviders...)
 		}
 
-		ApiResponse(c, sources, nil)
+		ApiResponse(c, providers, nil)
 	}
 }
 
-func newUserSource(c *gin.Context) {
+func newUserProvider(c *gin.Context) {
 	user, exists := c.Get("user")
 
 	if !exists {
@@ -96,23 +96,23 @@ func newUserSource(c *gin.Context) {
 		return
 	}
 
-	us, _, err := api.DecodeSource(c)
+	us, _, err := api.DecodeProvider(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
 		return
 	}
 	us.Id = 0
 
-	src, err := storage.MainStore.CreateSource(user.(*happydns.User), us, "")
+	src, err := storage.MainStore.CreateProvider(user.(*happydns.User), us, "")
 	ApiResponse(c, src, err)
 }
 
-func deleteUserSource(c *gin.Context) {
-	srcMeta := c.MustGet("sourcemeta").(*happydns.SourceMeta)
+func deleteUserProvider(c *gin.Context) {
+	srcMeta := c.MustGet("providermeta").(*happydns.ProviderMeta)
 
-	ApiResponse(c, true, storage.MainStore.DeleteSource(srcMeta))
+	ApiResponse(c, true, storage.MainStore.DeleteProvider(srcMeta))
 }
 
-func clearSources(c *gin.Context) {
-	ApiResponse(c, true, storage.MainStore.ClearSources())
+func clearProviders(c *gin.Context) {
+	ApiResponse(c, true, storage.MainStore.ClearProviders())
 }

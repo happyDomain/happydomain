@@ -25,8 +25,8 @@ COPY config ./config
 COPY forms ./forms
 COPY generators ./generators
 COPY model ./model
+COPY providers ./providers
 COPY services ./services
-COPY sources ./sources
 COPY storage ./storage
 COPY utils ./utils
 COPY generate.go go.mod go.sum main.go static.go ./

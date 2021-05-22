@@ -54,10 +54,6 @@ func declareDomainsRoutes(cfg *config.Options, router *gin.RouterGroup) {
 	apiDomainsRoutes.GET("", GetDomain)
 	apiDomainsRoutes.DELETE("", delDomain)
 
-	apiDomainsRoutes.GET("/rr", axfrDomain)
-	apiDomainsRoutes.POST("/rr", prepareRR(addRR))
-	apiDomainsRoutes.DELETE("/rr", prepareRR(delRR))
-
 	declareZonesRoutes(cfg, apiDomainsRoutes)
 }
 
@@ -189,92 +185,6 @@ func delDomain(c *gin.Context) {
 	if err := storage.MainStore.DeleteDomain(c.MustGet("domain").(*happydns.Domain)); err != nil {
 		log.Printf("%s was unable to DeleteDomain: %w", c.ClientIP(), err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Unable to delete your domain: %s", err.Error())})
-		return
-	}
-
-	c.JSON(http.StatusOK, true)
-}
-
-func axfrDomain(c *gin.Context) {
-	user := c.MustGet("LoggedUser").(*happydns.User)
-	domain := c.MustGet("domain").(*happydns.Domain)
-
-	source, err := storage.MainStore.GetSource(user, domain.IdProvider)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find your provider: %s", err.Error())})
-		return
-	}
-
-	rrs, err := source.ImportZone(domain)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
-		return
-	}
-
-	var ret []serviceRecord
-	for _, rr := range rrs {
-		ret = append(ret, serviceRecord{
-			String: rr.String(),
-			Fields: &rr,
-		})
-	}
-
-	c.JSON(http.StatusOK, ret)
-}
-
-type uploadedRR struct {
-	RR string `json:"string"`
-}
-
-func prepareRR(next func(c *gin.Context, source *happydns.SourceCombined, domain *happydns.Domain, rr dns.RR)) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		user := c.MustGet("LoggedUser").(*happydns.User)
-		domain := c.MustGet("domain").(*happydns.Domain)
-
-		var urr uploadedRR
-
-		err := c.ShouldBindJSON(&urr)
-		if err != nil {
-			log.Printf("%s sends invalid RR JSON: %w", c.ClientIP(), err)
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
-			return
-		}
-
-		rr, err := dns.NewRR(fmt.Sprintf("$ORIGIN %s\n$TTL %d\n%s", domain.DomainName, 3600, urr.RR))
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("There is an error in the given RR: %w", err)})
-			return
-		}
-
-		source, err := storage.MainStore.GetSource(user, domain.IdProvider)
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find the required source: %w", err)})
-			return
-		}
-
-		next(c, source, domain, rr)
-	}
-}
-
-func addRR(c *gin.Context, source *happydns.SourceCombined, domain *happydns.Domain, rr dns.RR) {
-	err := source.AddRR(domain, rr)
-	if err != nil {
-		log.Printf("%c: Unable to AddRR: %s", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Sorry, we are unable to add the RR. Please retry or try later...")})
-		return
-	}
-
-	c.JSON(http.StatusOK, serviceRecord{
-		String: rr.String(),
-		Fields: &rr,
-	})
-}
-
-func delRR(c *gin.Context, source *happydns.SourceCombined, domain *happydns.Domain, rr dns.RR) {
-	err := source.DeleteRR(domain, rr)
-	if err != nil {
-		log.Printf("%c: Unable to DelRR: %s", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Sorry, we are unable to delete the RR. Please retry or try later...")})
 		return
 	}
 

@@ -125,8 +125,8 @@
 </template>
 
 <script>
+import ServicesApi from '@/api/services'
 import CustomForm from '@/mixins/customForm'
-import ServicesApi from '@/services/ServicesApi'
 import ValidateDomain from '@/mixins/validateDomain'
 import ZoneApi from '@/api/zones'
 

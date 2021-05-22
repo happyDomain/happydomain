@@ -58,15 +58,10 @@ func declareProvidersRoutes(cfg *config.Options, router *gin.RouterGroup) {
 	apiProviderRoutes := router.Group("/providers/:pid")
 	apiProviderRoutes.Use(ProviderHandler)
 
-	apiProviderRoutes.GET("", getProvider)
+	apiProviderRoutes.GET("", GetProvider)
 	apiProviderRoutes.PUT("", UpdateProvider)
 
 	apiProviderRoutes.GET("/domains", getDomainsHostedByProvider)
-
-	//router.GET("/api/providers/:sid/domains_with_actions", apiAuthHandler(providerHandler(getDomainsWithActionsHostedByProvider)))
-	//router.POST("/api/providers/:sid/domains_with_actions", apiAuthHandler(providerHandler(doDomainsWithActionsHostedByProvider)))
-
-	//router.GET("/api/providers/:sid/available_resource_types", apiAuthHandler(providerHandler(getAvailableResourceTypes)))
 }
 
 func getProviders(c *gin.Context) {
@@ -170,7 +165,7 @@ func ProviderHandler(c *gin.Context) {
 	c.Next()
 }
 
-func getProvider(c *gin.Context) {
+func GetProvider(c *gin.Context) {
 	provider := c.MustGet("provider").(*happydns.ProviderCombined)
 
 	c.JSON(http.StatusOK, provider)

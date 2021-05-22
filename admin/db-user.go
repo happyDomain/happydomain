@@ -74,7 +74,7 @@ func declareUsersRoutes(opts *config.Options, router *gin.RouterGroup) {
 	apiUsersRoutes.POST("/validate_email", validateEmail)
 
 	declareDomainsRoutes(opts, apiUsersRoutes)
-	declareSourcesRoutes(opts, apiUsersRoutes)
+	declareProvidersRoutes(opts, apiUsersRoutes)
 
 	router.POST("/tidy", tidyDB)
 }

@@ -95,7 +95,7 @@
 </template>
 
 <script>
-import ServiceSpecsApi from '@/services/ServiceSpecsApi'
+import ServiceSpecsApi from '@/api/serviceSpecs'
 import Vue from 'vue'
 
 export default {

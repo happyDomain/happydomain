@@ -104,8 +104,8 @@
 </template>
 
 <script>
+import ServiceSpecsApi from '@/api/serviceSpecs'
 import FieldsDescription from '@/mixins/fieldsDescription'
-import ServiceSpecsApi from '@/services/ServiceSpecsApi'
 import Vue from 'vue'
 
 export default {

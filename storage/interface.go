@@ -120,32 +120,6 @@ type Storage interface {
 	// ClearSessions deletes all Sessions present in the database.
 	ClearSessions() error
 
-	// SOURCES ----------------------------------------------------
-
-	// GetSourceMetas retrieves source's metadatas of all sources own by the given User.
-	GetSourceMetas(u *happydns.User) ([]happydns.SourceMeta, error)
-
-	// GetSourceMeta retrieves the metadatas for the Source with the given identifier and owner.
-	GetSourceMeta(u *happydns.User, id int64) (*happydns.SourceMeta, error)
-
-	// GetSource retrieves the full Source with the given identifier and owner.
-	GetSource(u *happydns.User, id int64) (*happydns.SourceCombined, error)
-
-	// CreateSource creates a record in the database for the given Source.
-	CreateSource(u *happydns.User, s happydns.Source, comment string) (*happydns.SourceCombined, error)
-
-	// UpdateSource updates the fields of the given Source.
-	UpdateSource(s *happydns.SourceCombined) error
-
-	// UpdateSourceOwner updates the owner of the given Source.
-	UpdateSourceOwner(s *happydns.SourceCombined, newOwner *happydns.User) error
-
-	// DeleteSource removes the given Source from the database.
-	DeleteSource(s *happydns.SourceMeta) error
-
-	// ClearSources deletes all Sources present in the database.
-	ClearSources() error
-
 	// USERS ------------------------------------------------------
 
 	// GetUsers retrieves the list of known Users.

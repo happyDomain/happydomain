@@ -56,8 +56,8 @@
             <b-dropdown-item to="/domains/">
               {{ $t('menu.my-domains') }}
             </b-dropdown-item>
-            <b-dropdown-item to="/sources/">
-              {{ $t('menu.my-sources') }}
+            <b-dropdown-item to="/providers/">
+              {{ $t('menu.my-providers') }}
             </b-dropdown-item>
             <b-dropdown-divider />
             <b-dropdown-item to="/resolver">
