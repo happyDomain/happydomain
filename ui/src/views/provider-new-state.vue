@@ -39,7 +39,7 @@
     <b-row v-else class="flex-grow-1">
       <b-col lg="4" md="5" class="bg-light">
         <div class="text-center mb-3">
-          <img :src="'/api/provider_specs/' + $route.params.provider + '/icon.png'" :alt="providerSpecs_getAll[$route.params.provider].name" style="max-width: 100%; max-height: 10em">
+          <img :src="'/api/providers/_specs/' + $route.params.provider + '/icon.png'" :alt="providerSpecs_getAll[$route.params.provider].name" style="max-width: 100%; max-height: 10em">
         </div>
         <h3>
           {{ providerSpecs_getAll[$route.params.provider].name }}

@@ -101,7 +101,7 @@
           <div class="pr-2 pl-2">
             <b-button class="p-3 w-100 text-left" type="button" variant="outline-info" @click="goToSource()">
               <div class="d-inline-block text-center" style="width: 50px;">
-                <img :src="'/api/source_specs/' + sources_getAll[domain.id_source]._srctype + '/icon.png'" :alt="sources_getAll[domain.id_source]._srctype" :title="sources_getAll[domain.id_source]._srctype" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+                <img :src="'/api/providers/_specs/' + providers_getAll[domain.id_provider]._srctype + '/icon.png'" :alt="providers_getAll[domain.id_provider]._srctype" :title="providers_getAll[domain.id_provider]._srctype" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
               </div>
               {{ sources_getAll[domain.id_source]._comment }}
             </b-button>

@@ -34,6 +34,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -45,9 +46,9 @@ import (
 func declareProviderSpecsRoutes(router *gin.RouterGroup) {
 	router.GET("/providers/_specs", listProviders)
 
-	router.GET("/providers/_specs/:ssid/icon.png", getProviderSpecIcon)
+	router.GET("/providers/_specs/:psid/icon.png", getProviderSpecIcon)
 
-	apiProviderSpecsRoutes := router.Group("/providers/_specs/:ssid")
+	apiProviderSpecsRoutes := router.Group("/providers/_specs/:psid")
 	apiProviderSpecsRoutes.Use(ProviderSpecsHandler)
 
 	apiProviderSpecsRoutes.GET("", getProviderSpec)
@@ -65,17 +66,14 @@ func listProviders(c *gin.Context) {
 }
 
 func getProviderSpecIcon(c *gin.Context) {
-	/*
-		ssid := string(c.Param("ssid"))
+	psid := string(c.Param("psid"))
 
-		cnt, ok := providers.Icons[strings.TrimSuffix(ssid, ".png")]
-		if !ok {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Icon not found."})
-		}
+	cnt, ok := providers.Icons[strings.TrimSuffix(psid, ".png")]
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Icon not found."})
+	}
 
-		c.Data(http.StatusOK, "image/png", cnt)
-	*/
-	c.AbortWithStatusJSON(http.StatusNotImplemented, gin.H{"errmsg": "Icon not found."})
+	c.Data(http.StatusOK, "image/png", cnt)
 }
 
 func ProviderSpecsHandler(c *gin.Context) {
