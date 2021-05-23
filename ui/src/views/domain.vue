@@ -133,32 +133,25 @@
         </i18n>
       </template>
       <template #modal-footer="{ ok, cancel }">
-        <div v-if="zoneDiffAdd || zoneDiffDel">
-          <span v-if="zoneDiffAdd" class="text-success">
-            {{ $tc('domains.apply.additions', (zoneDiffAdd || []).length) }}
-          </span>
-          &ndash;
-          <span class="text-danger">
-            {{ $tc('domains.apply.deletions', (zoneDiffDel || []).length) }}
+        <div v-if="zoneDiff">
+          <span v-if="zoneDiff" class="text-success">
+            {{ $tc('domains.apply.additions', (zoneDiff || []).length) }}
           </span>
         </div>
         <b-button variant="secondary" @click="cancel()">
           {{ $t('common.cancel') }}
         </b-button>
-        <b-button variant="success" :disabled="propagationInProgress || (zoneDiffAdd === null && zoneDiffDel === null)" @click="ok()">
+        <b-button variant="success" :disabled="propagationInProgress || zoneDiff === null" @click="ok()">
           <b-spinner v-if="propagationInProgress" label="Spinning" />
           {{ $t('domains.apply.button') }}
         </b-button>
       </template>
-      <div v-if="zoneDiffAdd === null && zoneDiffDel === null" class="my-2 text-center">
+      <div v-if="zoneDiff === null" class="my-2 text-center">
         <b-spinner label="Spinning" />
         <p>{{ $t('wait.exporting') }}</p>
       </div>
-      <div v-for="(line, n) in zoneDiffAdd" :key="'a' + n" class="text-monospace text-success" style="white-space: nowrap">
-        +{{ line }}
-      </div>
-      <div v-for="(line, n) in zoneDiffDel" :key="'d' + n" class="text-monospace text-danger" style="white-space: nowrap">
-        -{{ line }}
+      <div v-for="(line, n) in zoneDiffAnalyzed" :key="'diff' + n" :class="'text-monospace ' + line.className" style="padding-left: 1em; text-indent: -1em;">
+        {{ line.msg }}
       </div>
     </b-modal>
   </b-container>
@@ -181,14 +174,39 @@ export default {
       propagationInProgress: false,
       selectedHistory: null,
       zoneContent: null,
-      zoneDiffAdd: null,
-      zoneDiffDel: null
+      zoneDiff: null
     }
   },
 
   computed: {
     domain () {
       return this.domains_getDetailed[this.$route.params.domain]
+    },
+
+    zoneDiffAnalyzed () {
+      if (!this.zoneDiff) {
+        return null
+      }
+
+      return this.zoneDiff.map(
+        (msg) => {
+          var className = ''
+          if (/^MODIFY/.test(msg)) {
+            className = 'text-warning'
+          } else if (/^CREATE/.test(msg)) {
+            className = 'text-success'
+          } else if (/^DELETE/.test(msg)) {
+            className = 'text-danger'
+          } else if (/^REFRESH/.test(msg)) {
+            className = 'text-info'
+          }
+
+          return {
+            className,
+            msg
+          }
+        }
+      )
     },
 
     ...mapGetters('domains', ['domains_getDetailed', 'sortedDomains']),
@@ -299,18 +317,16 @@ export default {
     },
 
     showDiff () {
-      this.zoneDiffAdd = null
-      this.zoneDiffDel = null
+      this.zoneDiff = null
       this.$bvModal.show('modal-applyZone')
       ZonesApi.diffZone(this.domain.domain, '@', this.selectedHistory)
         .then(
           (response) => {
-            if (response.data.toAdd == null && response.data.toDel == null) {
+            if (response.data == null) {
               this.$bvModal.hide('modal-applyZone')
               this.$bvModal.msgBoxOk(this.$t('domains.apply.nochange'))
             } else {
-              this.zoneDiffAdd = response.data.toAdd
-              this.zoneDiffDel = response.data.toDel
+              this.zoneDiff = response.data
             }
           },
           (error) => {

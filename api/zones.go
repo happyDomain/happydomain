@@ -281,10 +281,7 @@ func diffZones(c *gin.Context) {
 		rrCorected = append(rrCorected, c.Msg)
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"toAdd": rrCorected,
-		"toDel": nil,
-	})
+	c.JSON(http.StatusOK, rrCorected)
 }
 
 func applyZone(c *gin.Context) {
