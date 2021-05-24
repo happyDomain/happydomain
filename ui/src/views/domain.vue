@@ -134,24 +134,54 @@
       </template>
       <template #modal-footer="{ ok, cancel }">
         <div v-if="zoneDiff">
-          <span v-if="zoneDiff" class="text-success">
-            {{ $tc('domains.apply.additions', (zoneDiff || []).length) }}
+          <span v-if="zoneDiffCreated.length" class="text-success">
+            {{ $tc('domains.apply.additions', (selectedDiffCreated || []).length) }}
+          </span>
+          <span v-if="zoneDiffCreated.length && zoneDiffDeleted.length">
+            &ndash;
+          </span>
+          <span v-if="zoneDiffDeleted.length" class="text-danger">
+            {{ $tc('domains.apply.deletions', (selectedDiffDeleted || []).length) }}
+          </span>
+          <span v-if="(zoneDiffCreated.length || zoneDiffDeleted.length) && zoneDiffModified.length">
+            &ndash;
+          </span>
+          <span v-if="zoneDiffModified.length" class="text-warning">
+            {{ $tc('domains.apply.modifications', (selectedDiffModified || []).length) }}
+          </span>
+          <span v-if="(zoneDiffCreated.length || zoneDiffDeleted.length || zoneDiffModified.length) && (zoneDiff.length - zoneDiffCreated.length - zoneDiffDeleted.length - zoneDiffModified.length !== 0)">
+            &ndash;
+          </span>
+          <span v-if="zoneDiff.length - zoneDiffCreated.length - zoneDiffDeleted.length - zoneDiffModified.length !== 0" class="text-info">
+            {{ $tc('domains.apply.others', selectedDiff.length - selectedDiffCreated.length - selectedDiffDeleted.length - selectedDiffModified.length) }}
           </span>
         </div>
-        <b-button variant="secondary" @click="cancel()">
-          {{ $t('common.cancel') }}
-        </b-button>
-        <b-button variant="success" :disabled="propagationInProgress || zoneDiff === null" @click="ok()">
-          <b-spinner v-if="propagationInProgress" label="Spinning" />
-          {{ $t('domains.apply.button') }}
-        </b-button>
+        <div class="d-flex">
+          <b-button class="mr-1" variant="secondary" @click="cancel()">
+            {{ $t('common.cancel') }}
+          </b-button>
+          <b-button variant="success" :disabled="propagationInProgress || zoneDiff === null || selectedDiff.length === 0" @click="ok()">
+            <b-spinner v-if="propagationInProgress" label="Spinning" />
+            {{ $t('domains.apply.button') }}
+          </b-button>
+        </div>
       </template>
       <div v-if="zoneDiff === null" class="my-2 text-center">
         <b-spinner label="Spinning" />
         <p>{{ $t('wait.exporting') }}</p>
       </div>
-      <div v-for="(line, n) in zoneDiffAnalyzed" :key="'diff' + n" :class="'text-monospace ' + line.className" style="padding-left: 1em; text-indent: -1em;">
-        {{ line.msg }}
+      <div v-for="(line, n) in zoneDiffAnalyzed" :key="'diff' + n">
+        <b-form-checkbox
+          v-model="selectedDiff"
+          :value="line.msg"
+        >
+          <div
+            :class="'col text-monospace ' + line.className"
+            style="padding-left: 1em; text-indent: -1em;"
+          >
+            {{ line.msg }}
+          </div>
+        </b-form-checkbox>
       </div>
     </b-modal>
   </b-container>
@@ -172,6 +202,7 @@ export default {
       displayFormat: 'grid',
       importInProgress: false,
       propagationInProgress: false,
+      selectedDiff: [],
       selectedHistory: null,
       zoneContent: null,
       zoneDiff: null
@@ -183,6 +214,30 @@ export default {
       return this.domains_getDetailed[this.$route.params.domain]
     },
 
+    selectedDiffCreated () {
+      if (!this.selectedDiff) {
+        return null
+      }
+
+      return this.selectedDiff.filter((msg) => (/^CREATE/.test(msg)))
+    },
+
+    selectedDiffDeleted () {
+      if (!this.selectedDiff) {
+        return null
+      }
+
+      return this.selectedDiff.filter((msg) => (/^DELETE/.test(msg)))
+    },
+
+    selectedDiffModified () {
+      if (!this.selectedDiff) {
+        return null
+      }
+
+      return this.selectedDiff.filter((msg) => (/^MODIFY/.test(msg)))
+    },
+
     zoneDiffAnalyzed () {
       if (!this.zoneDiff) {
         return null
@@ -190,7 +245,7 @@ export default {
 
       return this.zoneDiff.map(
         (msg) => {
-          var className = ''
+          let className = ''
           if (/^MODIFY/.test(msg)) {
             className = 'text-warning'
           } else if (/^CREATE/.test(msg)) {
@@ -207,6 +262,30 @@ export default {
           }
         }
       )
+    },
+
+    zoneDiffCreated () {
+      if (!this.zoneDiff) {
+        return null
+      }
+
+      return this.zoneDiff.filter((msg) => (/^CREATE/.test(msg)))
+    },
+
+    zoneDiffDeleted () {
+      if (!this.zoneDiff) {
+        return null
+      }
+
+      return this.zoneDiff.filter((msg) => (/^DELETE/.test(msg)))
+    },
+
+    zoneDiffModified () {
+      if (!this.zoneDiff) {
+        return null
+      }
+
+      return this.zoneDiff.filter((msg) => (/^MODIFY/.test(msg)))
     },
 
     ...mapGetters('domains', ['domains_getDetailed', 'sortedDomains']),
@@ -327,6 +406,7 @@ export default {
               this.$bvModal.msgBoxOk(this.$t('domains.apply.nochange'))
             } else {
               this.zoneDiff = response.data
+              this.selectedDiff = response.data
             }
           },
           (error) => {
@@ -344,7 +424,7 @@ export default {
 
     applyDiff () {
       this.propagationInProgress = true
-      ZonesApi.applyZone(this.domain.domain, this.selectedHistory)
+      ZonesApi.applyZone(this.domain.domain, this.selectedHistory, this.selectedDiff)
         .then(
           (response) => {
             this.$bvModal.hide('modal-applyZone')

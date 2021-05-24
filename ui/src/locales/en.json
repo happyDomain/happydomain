@@ -78,7 +78,9 @@
                 "title": "Zone applied successfully!",
                 "description": "Your zone {zone} have been successfully propagated!"
             },
-            "nochange": "There is no changes to apply! Current zone is in sync with the server."
+            "modifications": "no modification | {count} modification | {count} modifications",
+            "nochange": "There is no changes to apply! Current zone is in sync with the server.",
+            "others": "no other change | {count} other change | {count} others changes"
         },
         "attached-new": "New domain attached to happyDNS!",
         "create-new-key": "Create new {id} key",

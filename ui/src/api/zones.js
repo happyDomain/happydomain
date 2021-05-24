@@ -36,8 +36,8 @@ export default {
     return Api().get('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id))
   },
 
-  applyZone (domain, id) {
-    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/apply_changes')
+  applyZone (domain, id, selectedDiffs) {
+    return Api().post('/api/domains/' + encodeURIComponent(domain) + '/zone/' + encodeURIComponent(id) + '/apply_changes', selectedDiffs)
   },
 
   diffZone (domain, id1, id2) {
