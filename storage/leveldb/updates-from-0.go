@@ -33,6 +33,7 @@ package database
 
 import (
 	"bytes"
+	"log"
 )
 
 type sourceMeta struct {
@@ -48,9 +49,17 @@ func migrateFrom0(s *LevelDBStorage) (err error) {
 
 	for iter.Next() {
 		src := iter.Value()
+		for src[0] == '"' {
+			err = decodeData(src, &src)
+			if err != nil {
+				return
+			}
+		}
+
+		src = bytes.Replace(src, []byte("\"Source\":"), []byte("\"Provider\":"), 1)
 
 		var srcMeta sourceMeta
-		err = decodeData(iter.Value(), &srcMeta)
+		err = decodeData(src, &srcMeta)
 		if err != nil {
 			return
 		}
@@ -60,21 +69,39 @@ func migrateFrom0(s *LevelDBStorage) (err error) {
 		switch srcMeta.Type {
 		case "ddns.DDNSServer":
 			newType = "DDNSServer"
+		case "DDNSServer":
+			newType = "DDNSServer"
 		case "gandi.GandiAPI":
+			newType = "GandiAPI"
+		case "GandiAPI":
 			newType = "GandiAPI"
 		case "ovh.OVHAPI":
 			newType = "OVHAPI"
+		case "OVHAPI":
+			newType = "OVHAPI"
 		default:
 			// Keep other source type to update in future version
+			log.Printf("Migrating v0 -> v1: skip %s (%s)...", iter.Key(), srcMeta.Type)
 			continue
 		}
 
 		if newType != "" {
-			bytes.Replace(src, []byte(srcMeta.Type), []byte(newType), 1)
+			src = bytes.Replace(src, []byte(srcMeta.Type), []byte(newType), 1)
+
+			if newType == "DDNSServer" {
+				src = bytes.Replace(src, []byte("\"hmac-md5.sig-alg.reg.int.\""), []byte("\"hmac-md5\""), 1)
+				src = bytes.Replace(src, []byte("\"hmac-sha1.\""), []byte("\"hmac-sha1\""), 1)
+				src = bytes.Replace(src, []byte("\"hmac-sha256.\""), []byte("\"hmac-sha256\""), 1)
+				src = bytes.Replace(src, []byte("\"hmac-sha512.\""), []byte("\"hmac-sha512\""), 1)
+				src = bytes.Replace(src, []byte(".\""), []byte("\""), 1)
+			}
 		}
 
 		newKey := bytes.Replace(iter.Key(), []byte("source-"), []byte("provider-"), 1)
-		err = s.put(string(newKey), src)
+
+		log.Printf("Migrating v0 -> v1: %s to %s (%s)...", iter.Key(), newKey, newType)
+
+		err = s.db.Put(newKey, src, nil)
 		if err != nil {
 			return
 		}

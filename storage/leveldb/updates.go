@@ -31,7 +31,10 @@
 
 package database
 
-import ()
+import (
+	"fmt"
+	"log"
+)
 
 type LevelDBMigrationFunc func(s *LevelDBStorage) error
 
@@ -62,7 +65,12 @@ func (s *LevelDBStorage) DoMigration() (err error) {
 		return
 	}
 
+	if version > len(migrations) {
+		return fmt.Errorf("Your database has revision %d, which is newer than the revision this happyDNS version can handle (max DB revision %d). Please update happyDNS", version, len(migrations))
+	}
+
 	for v, migration := range migrations[version:] {
+		log.Printf("Doing migration from %d to %d", v, v+1)
 		// Do the migration
 		if err = migration(s); err != nil {
 			return
@@ -72,6 +80,7 @@ func (s *LevelDBStorage) DoMigration() (err error) {
 		if err = s.put("version", v+1); err != nil {
 			return
 		}
+		log.Printf("Migration from %d to %d DONE!", v, v+1)
 	}
 
 	return nil
