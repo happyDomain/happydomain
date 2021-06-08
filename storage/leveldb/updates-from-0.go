@@ -1,4 +1,4 @@
-// Copyright or © or Copr. happyDNS (2020)
+// Copyright or © or Copr. happyDNS (2021)
 //
 // contact@happydns.org
 //
@@ -31,48 +31,59 @@
 
 package database
 
-import ()
+import (
+	"bytes"
+)
 
-type LevelDBMigrationFunc func(s *LevelDBStorage) error
-
-var migrations []LevelDBMigrationFunc = []LevelDBMigrationFunc{
-	migrateFrom0,
+type sourceMeta struct {
+	Type    string `json:"_srctype"`
+	Id      int64  `json:"_id"`
+	OwnerId int64  `json:"_ownerid"`
+	Comment string `json:"_comment,omitempty"`
 }
 
-func (s *LevelDBStorage) DoMigration() (err error) {
-	found := false
+func migrateFrom0(s *LevelDBStorage) (err error) {
+	iter := s.search("source-")
+	defer iter.Release()
 
-	found, err = s.db.Has([]byte("version"), nil)
-	if err != nil {
-		return
-	}
+	for iter.Next() {
+		src := iter.Value()
 
-	var version int
+		var srcMeta sourceMeta
+		err = decodeData(iter.Value(), &srcMeta)
+		if err != nil {
+			return
+		}
 
-	if !found {
-		version = len(migrations)
-		err = s.put("version", version)
+		newType := ""
+
+		switch srcMeta.Type {
+		case "ddns.DDNSServer":
+			newType = "DDNSServer"
+		case "gandi.GandiAPI":
+			newType = "GandiAPI"
+		case "ovh.OVHAPI":
+			newType = "OVHAPI"
+		default:
+			// Keep other source type to update in future version
+			continue
+		}
+
+		if newType != "" {
+			bytes.Replace(src, []byte(srcMeta.Type), []byte(newType), 1)
+		}
+
+		newKey := bytes.Replace(iter.Key(), []byte("source-"), []byte("provider-"), 1)
+		err = s.put(string(newKey), src)
+		if err != nil {
+			return
+		}
+
+		err = s.delete(string(iter.Key()))
 		if err != nil {
 			return
 		}
 	}
 
-	err = s.get("version", &version)
-	if err != nil {
-		return
-	}
-
-	for v, migration := range migrations[version:] {
-		// Do the migration
-		if err = migration(s); err != nil {
-			return
-		}
-
-		// Save the step
-		if err = s.put("version", v+1); err != nil {
-			return
-		}
-	}
-
-	return nil
+	return
 }

@@ -47,12 +47,16 @@ type LevelDBStorage struct {
 }
 
 // NewMySQLStorage establishes the connection to the database
-func NewLevelDBStorage(path string) (*LevelDBStorage, error) {
-	if db, err := leveldb.OpenFile(path, nil); err != nil {
-		return nil, err
-	} else {
-		return &LevelDBStorage{db}, nil
+func NewLevelDBStorage(path string) (s *LevelDBStorage, err error) {
+	var db *leveldb.DB
+
+	db, err = leveldb.OpenFile(path, nil)
+	if err != nil {
+		return
 	}
+
+	s = &LevelDBStorage{db}
+	return
 }
 
 func (s *LevelDBStorage) Tidy() error {
