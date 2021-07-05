@@ -11,7 +11,7 @@
 // circulated by CEA, CNRS and INRIA at the following URL
 // "http://www.cecill.info".
 //
-// As a counterpart to the access to the source code and rights to copy, modify
+// As a counterpart to the access to the provider code and rights to copy, modify
 // and redistribute granted by the license, users are provided only with a
 // limited warranty and the software's author, the holder of the economic
 // rights, and the successive licensors have only limited liability.
@@ -29,30 +29,42 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package api
+package providers // import "happydns.org/providers"
 
 import (
-	"github.com/gin-gonic/gin"
+	"encoding/base64"
+	"strings"
 
-	"git.happydns.org/happydns/config"
+	"github.com/StackExchange/dnscontrol/v3/providers"
+
+	"git.happydns.org/happydns/model"
 )
 
-func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
-	apiRoutes := router.Group("/api")
+type DDNSServer struct {
+	Server  string `json:"server,omitempty" happydns:"label=Server,placeholder=127.0.0.1"`
+	KeyName string `json:"keyname,omitempty" happydns:"label=Key Name,placeholder=ddns.,required"`
+	KeyAlgo string `json:"algorithm,omitempty" happydns:"label=Key Algorithm,default=hmac-sha256.,choices=hmac-md5.sig-alg.reg.int.;hmac-sha1.;hmac-sha224.;hmac-sha256.;hmac-sha384.;hmac-sha512.,required"`
+	KeyBlob []byte `json:"keyblob,omitempty" happydns:"label=Secret Key,placeholder=a0b1c2d3e4f5==,required,secret"`
+}
 
-	declareAuthenticationRoutes(cfg, apiRoutes)
-	declareResolverRoutes(apiRoutes)
-	declareServiceSpecsRoutes(apiRoutes)
-	declareSourceSpecsRoutes(apiRoutes)
-	declareUsersRoutes(cfg, apiRoutes)
-	DeclareVersionRoutes(apiRoutes)
+func (s *DDNSServer) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
+	config := map[string]string{
+		"master": s.Server,
+	}
 
-	apiAuthRoutes := router.Group("/api")
-	apiAuthRoutes.Use(authMiddleware(cfg, false))
+	if s.KeyName != "" {
+		config["transfer-key"] = strings.Join([]string{s.KeyAlgo, s.KeyName, base64.StdEncoding.EncodeToString(s.KeyBlob)}, ":")
+		config["update-key"] = config["transfer-key"]
+	}
 
-	declareDomainsRoutes(cfg, apiAuthRoutes)
-	declareProvidersRoutes(cfg, apiAuthRoutes)
-	declareSourcesRoutes(cfg, apiAuthRoutes)
-	declareSourceSettingsRoutes(cfg, apiAuthRoutes)
-	declareUsersAuthRoutes(cfg, apiAuthRoutes)
+	return providers.CreateDNSProvider("AXFRDDNS", config, nil)
+}
+
+func init() {
+	RegisterProvider(func() happydns.Provider {
+		return &DDNSServer{}
+	}, ProviderInfos{
+		Name:        "Dynamic DNS",
+		Description: "If your zone is hosted on an authoritative name server that support Dynamic DNS (RFC 2136), such as Bind, Knot, ...",
+	})
 }

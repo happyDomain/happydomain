@@ -11,7 +11,7 @@
 // circulated by CEA, CNRS and INRIA at the following URL
 // "http://www.cecill.info".
 //
-// As a counterpart to the access to the source code and rights to copy, modify
+// As a counterpart to the access to the provider code and rights to copy, modify
 // and redistribute granted by the license, users are provided only with a
 // limited warranty and the software's author, the holder of the economic
 // rights, and the successive licensors have only limited liability.
@@ -29,30 +29,42 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package api
+package providers // import "happydns.org/providers"
 
 import (
-	"github.com/gin-gonic/gin"
+	"flag"
 
-	"git.happydns.org/happydns/config"
+	"github.com/StackExchange/dnscontrol/v3/providers"
+
+	"git.happydns.org/happydns/model"
 )
 
-func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
-	apiRoutes := router.Group("/api")
+var (
+	appKey    string
+	appSecret string
+)
 
-	declareAuthenticationRoutes(cfg, apiRoutes)
-	declareResolverRoutes(apiRoutes)
-	declareServiceSpecsRoutes(apiRoutes)
-	declareSourceSpecsRoutes(apiRoutes)
-	declareUsersRoutes(cfg, apiRoutes)
-	DeclareVersionRoutes(apiRoutes)
+type OVHAPI struct {
+	ConsumerKey string `json:"consumerkey,omitempty" happydns:"required"`
+}
 
-	apiAuthRoutes := router.Group("/api")
-	apiAuthRoutes.Use(authMiddleware(cfg, false))
+func (s *OVHAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
+	config := map[string]string{
+		"app-key":        appKey,
+		"app-secret-key": appSecret,
+		"consumer-key":   s.ConsumerKey,
+	}
+	return providers.CreateDNSProvider("OVH", config, nil)
+}
 
-	declareDomainsRoutes(cfg, apiAuthRoutes)
-	declareProvidersRoutes(cfg, apiAuthRoutes)
-	declareSourcesRoutes(cfg, apiAuthRoutes)
-	declareSourceSettingsRoutes(cfg, apiAuthRoutes)
-	declareUsersAuthRoutes(cfg, apiAuthRoutes)
+func init() {
+	flag.StringVar(&appKey, "ovh-application-key", "", "Application Key for using the OVH API")
+	flag.StringVar(&appSecret, "ovh-application-secret", "", "Application Secret for using the OVH API")
+
+	RegisterProvider(func() happydns.Provider {
+		return &OVHAPI{}
+	}, ProviderInfos{
+		Name:        "OVH",
+		Description: "European hosting provider.",
+	})
 }

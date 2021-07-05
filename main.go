@@ -50,7 +50,6 @@ import (
 	_ "git.happydns.org/happydns/sources/ddns"
 	_ "git.happydns.org/happydns/sources/gandi"
 	_ "git.happydns.org/happydns/sources/godaddy"
-	_ "git.happydns.org/happydns/sources/ovh"
 
 	_ "git.happydns.org/happydns/services/providers/google"
 

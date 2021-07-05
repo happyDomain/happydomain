@@ -29,7 +29,7 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package ovh // import "happydns.org/sources/ovh"
+package providers // import "happydns.org/providers"
 
 import (
 	"errors"
@@ -75,14 +75,14 @@ func settingsForm(edit bool) *forms.CustomForm {
 	return form
 }
 
-func settingsAskCredentials(cfg *config.Options, recallid int64, endpoint string, session *happydns.Session) (*forms.CustomForm, error) {
-	client, err := ovh.NewClient(endpoint, appKey, appSecret, "")
+func settingsAskCredentials(cfg *config.Options, recallid int64, session *happydns.Session) (*forms.CustomForm, error) {
+	client, err := ovh.NewClient("ovh-eu", appKey, appSecret, "")
 	if err != nil {
 		return nil, fmt.Errorf("Unable to generate Consumer key, as OVH client can't be created: %w", err)
 	}
 
 	// Generate customer key
-	ckReq := client.NewCkRequestWithRedirection(cfg.BuildURL_noescape("/sources/new/ovh.OVHAPI/2?recall=%d", recallid))
+	ckReq := client.NewCkRequestWithRedirection(cfg.BuildURL_noescape("/providers/new/ovh.OVHAPI/2?recall=%d", recallid))
 	ckReq.AddRecursiveRules(ovh.ReadWrite, "/domain")
 	ckReq.AddRules(ovh.ReadOnly, "/me")
 
@@ -109,19 +109,15 @@ func (s *OVHAPI) DisplaySettingsForm(state int32, cfg *config.Options, session *
 	case 0:
 		return settingsForm(s.ConsumerKey != ""), nil
 	case 1:
-		if s.Endpoint == "" {
-			return nil, errors.New("You need to fill the End Point. Choose 'ovh-eu' if you're unsure.")
-		} else if s.ConsumerKey == "" {
+		if s.ConsumerKey == "" {
 			recallid := genRecallId()
-			return settingsAskCredentials(cfg, recallid, s.Endpoint, session)
+			return settingsAskCredentials(cfg, recallid, session)
 		} else {
 			return nil, forms.DoneForm
 		}
 	case 2:
 		var consumerKey string
-		if s.Endpoint == "" {
-			return nil, errors.New("You need to fill the End Point. Choose 'ovh-eu' if you're unsure.")
-		} else if ok := session.GetValue(SESSION_CKEY, &consumerKey); !ok {
+		if ok := session.GetValue(SESSION_CKEY, &consumerKey); !ok {
 			return nil, errors.New("Something wierd has happend, as you were not in a consumer key registration process. Please retry.")
 		} else {
 			s.ConsumerKey = consumerKey

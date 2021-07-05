@@ -1,4 +1,4 @@
-// Copyright or © or Copr. happyDNS (2021)
+// Copyright or © or Copr. happyDNS (2020)
 //
 // contact@happydns.org
 //
@@ -11,7 +11,7 @@
 // circulated by CEA, CNRS and INRIA at the following URL
 // "http://www.cecill.info".
 //
-// As a counterpart to the access to the source code and rights to copy, modify
+// As a counterpart to the access to the provider code and rights to copy, modify
 // and redistribute granted by the license, users are provided only with a
 // limited warranty and the software's author, the holder of the economic
 // rights, and the successive licensors have only limited liability.
@@ -29,30 +29,34 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package api
+package happydns
 
 import (
-	"github.com/gin-gonic/gin"
-
-	"git.happydns.org/happydns/config"
+	"github.com/StackExchange/dnscontrol/v3/providers"
 )
 
-func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
-	apiRoutes := router.Group("/api")
+// Provider is where Domains and Zones can be managed.
+type Provider interface {
+	NewDNSServiceProvider() (providers.DNSServiceProvider, error)
+}
 
-	declareAuthenticationRoutes(cfg, apiRoutes)
-	declareResolverRoutes(apiRoutes)
-	declareServiceSpecsRoutes(apiRoutes)
-	declareSourceSpecsRoutes(apiRoutes)
-	declareUsersRoutes(cfg, apiRoutes)
-	DeclareVersionRoutes(apiRoutes)
+// ProviderMeta holds the metadata associated to a Provider.
+type ProviderMeta struct {
+	// Type is the string representation of the Provider's type.
+	Type string `json:"_srctype"`
 
-	apiAuthRoutes := router.Group("/api")
-	apiAuthRoutes.Use(authMiddleware(cfg, false))
+	// Id is the Provider's identifier.
+	Id int64 `json:"_id"`
 
-	declareDomainsRoutes(cfg, apiAuthRoutes)
-	declareProvidersRoutes(cfg, apiAuthRoutes)
-	declareSourcesRoutes(cfg, apiAuthRoutes)
-	declareSourceSettingsRoutes(cfg, apiAuthRoutes)
-	declareUsersAuthRoutes(cfg, apiAuthRoutes)
+	// OwnerId is the User's identifier for the current Provider.
+	OwnerId int64 `json:"_ownerid"`
+
+	// Comment is a string that helps user to distinguish the Provider.
+	Comment string `json:"_comment,omitempty"`
+}
+
+// ProviderCombined combined ProviderMeta + Provider
+type ProviderCombined struct {
+	Provider
+	ProviderMeta
 }

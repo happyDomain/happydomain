@@ -74,6 +74,32 @@ type Storage interface {
 	// ClearDomains deletes all Domains present in the database.
 	ClearDomains() error
 
+	// PROVIDERS ----------------------------------------------------
+
+	// GetProviderMetas retrieves provider's metadatas of all providers own by the given User.
+	GetProviderMetas(u *happydns.User) ([]happydns.ProviderMeta, error)
+
+	// GetProviderMeta retrieves the metadatas for the Provider with the given identifier and owner.
+	GetProviderMeta(u *happydns.User, id int64) (*happydns.ProviderMeta, error)
+
+	// GetProvider retrieves the full Provider with the given identifier and owner.
+	GetProvider(u *happydns.User, id int64) (*happydns.ProviderCombined, error)
+
+	// CreateProvider creates a record in the database for the given Provider.
+	CreateProvider(u *happydns.User, s happydns.Provider, comment string) (*happydns.ProviderCombined, error)
+
+	// UpdateProvider updates the fields of the given Provider.
+	UpdateProvider(s *happydns.ProviderCombined) error
+
+	// UpdateProviderOwner updates the owner of the given Provider.
+	UpdateProviderOwner(s *happydns.ProviderCombined, newOwner *happydns.User) error
+
+	// DeleteProvider removes the given Provider from the database.
+	DeleteProvider(s *happydns.ProviderMeta) error
+
+	// ClearProviders deletes all Providers present in the database.
+	ClearProviders() error
+
 	// SESSIONS ---------------------------------------------------
 
 	// GetSession retrieves the Session with the given identifier.
