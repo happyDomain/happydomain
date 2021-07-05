@@ -66,6 +66,11 @@ func (ss *TXT) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 
 func txt_analyze(a *Analyzer) (err error) {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT}) {
+		// Skip DNSSEC record added by dnscontrol
+		if strings.HasPrefix(record.Header().Name, "__dnssec.") {
+			continue
+		}
+
 		if txt, ok := record.(*dns.TXT); ok {
 			err = a.UseRR(
 				record,

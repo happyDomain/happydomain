@@ -178,6 +178,9 @@ func AnalyzeZone(origin string, zone []dns.RR) (svcs map[string][]*happydns.Serv
 		if utils.IsDNSSECType(record.Header().Rrtype) {
 			continue
 		}
+		if record.Header().Name == "__dnssec."+origin && record.Header().Rrtype == dns.TypeTXT {
+			continue
+		}
 
 		domain := strings.TrimSuffix(strings.TrimSuffix(record.Header().Name, "."+a.origin), a.origin)
 
