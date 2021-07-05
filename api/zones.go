@@ -269,9 +269,15 @@ func diffZones(c *gin.Context) {
 		return
 	}
 
+	records, err := models.RRstoRCs(zone.GenerateRRs(domain.DomainName), strings.TrimSuffix(domain.DomainName, "."))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
+	}
+
 	dc := &models.DomainConfig{
 		Name:    strings.TrimSuffix(domain.DomainName, "."),
-		Records: models.RRstoRCs(zone.GenerateRRs(domain.DomainName), strings.TrimSuffix(domain.DomainName, ".")),
+		Records: records,
 	}
 
 	corrections, err := provider.GetDomainCorrections(dc)
@@ -295,9 +301,15 @@ func applyZone(c *gin.Context) {
 		return
 	}
 
+	records, err := models.RRstoRCs(zone.GenerateRRs(domain.DomainName), strings.TrimSuffix(domain.DomainName, "."))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
+	}
+
 	dc := &models.DomainConfig{
 		Name:    strings.TrimSuffix(domain.DomainName, "."),
-		Records: models.RRstoRCs(zone.GenerateRRs(domain.DomainName), strings.TrimSuffix(domain.DomainName, ".")),
+		Records: records,
 	}
 
 	corrections, err := provider.GetDomainCorrections(dc)
