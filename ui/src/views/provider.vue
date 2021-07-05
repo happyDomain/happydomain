@@ -55,10 +55,10 @@
         </p>
 
         <div class="text-center mb-2">
-          <b-button v-if="providerSpecs_getAll[providerSpecsSelected] && providerSpecs_getAll[providerSpecsSelected].capabilities && providerSpecs_getAll[providerSpecsSelected].capabilities.indexOf('ListDomains') > -1" type="button" variant="secondary" class="mb-1" @click="showListImportableDomain()">
+          <router-link v-if="providerSpecs_getAll[providerSpecsSelected] && providerSpecs_getAll[providerSpecsSelected].capabilities && providerSpecs_getAll[providerSpecsSelected].capabilities.indexOf('ListDomains') > -1" type="button" variant="secondary" class="btn btn-secondary mb-1" :to="'/providers/' + myProvider._id + '/domains'">
             <b-icon icon="list-task" />
             {{ $t('domains.list') }}
-          </b-button>
+          </router-link>
           <b-button type="button" variant="danger" class="mb-1" @click="deleteProvider()">
             <b-icon icon="trash-fill" />
             {{ $t('provider.delete') }}
