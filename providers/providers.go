@@ -37,6 +37,7 @@ import (
 	"reflect"
 
 	"github.com/StackExchange/dnscontrol/v3/providers"
+	"github.com/miekg/dns"
 
 	"git.happydns.org/happydns/model"
 )
@@ -96,8 +97,29 @@ func FindProvider(name string) (happydns.Provider, error) {
 
 // GetProviderCapabilities lists available capabilities for the given Provider.
 func GetProviderCapabilities(prvd happydns.Provider) (caps []string) {
+	// Features
 	if providers.ProviderHasCapability(prvd.DNSControlName(), providers.CanGetZones) {
 		caps = append(caps, "ListDomains")
+	}
+
+	// Compatible RR
+	for _, v := range []uint16{dns.TypeA, dns.TypeAAAA, dns.TypeCNAME, dns.TypeNS, dns.TypeTXT} {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", v, dns.TypeToString[v]))
+	}
+	if providers.ProviderHasCapability(prvd.DNSControlName(), providers.CanUseOPENPGPKEY) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeOPENPGPKEY, dns.TypeToString[dns.TypeOPENPGPKEY]))
+	}
+	if providers.ProviderHasCapability(prvd.DNSControlName(), providers.CanUseSOA) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeSOA, dns.TypeToString[dns.TypeSOA]))
+	}
+	if providers.ProviderHasCapability(prvd.DNSControlName(), providers.CanUseSRV) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeSRV, dns.TypeToString[dns.TypeSRV]))
+	}
+	if providers.ProviderHasCapability(prvd.DNSControlName(), providers.CanUseSSHFP) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeSSHFP, dns.TypeToString[dns.TypeSSHFP]))
+	}
+	if providers.ProviderHasCapability(prvd.DNSControlName(), providers.CanUseTLSA) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeTLSA, dns.TypeToString[dns.TypeTLSA]))
 	}
 
 	return

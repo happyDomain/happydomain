@@ -91,7 +91,7 @@
 </template>
 
 <script>
-import ProvidersApi from '@/api/providers'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'HFamilyTabs',
@@ -149,21 +149,46 @@ export default {
     },
 
     filteredNewServices () {
-      return this.analyzeRestrictions(this.services)
+      return this.analyzeRestrictions(this.services, this.availableResourceTypes)
+    },
+
+    ...mapGetters('providers', ['providers_getAll']),
+    ...mapGetters('providerSpecs', ['providerSpecs_getAll'])
+  },
+
+  watch: {
+    providers_getAll: function (t) {
+      this.loadProviderSpecs(t)
+    },
+    providerSpecs_getAll: function (t) {
+      this.loadProviderSpecs(t)
     }
   },
 
   created () {
-    ProvidersApi.getAvailableResourceTypes(this.domain.id_provider)
-      .then(
-        (response) => {
-          this.availableResourceTypes = response.data
-        }
-      )
+    if (this.providerSpecs_getAll !== null && this.providers_getAll !== null) {
+      this.loadProviderSpecs(this.providerSpecs_getAll)
+    }
   },
 
   methods: {
-    analyzeRestrictions (allServices) {
+    loadProviderSpecs (specs) {
+      if (this.providerSpecs_getAll === null || this.providers_getAll === null) {
+        return
+      }
+
+      const availableResourceTypes = []
+
+      specs[this.providers_getAll[this.domain.id_provider]._srctype].capabilities.forEach(function (i) {
+        if (i.startsWith('rr-')) {
+          availableResourceTypes.push(parseInt(i.substr(3, i.indexOf('-', 4) - 3)))
+        }
+      })
+
+      this.availableResourceTypes = availableResourceTypes
+    },
+
+    analyzeRestrictions (allServices, availableResourceTypes) {
       const ret = {}
 
       for (const type in allServices) {
@@ -173,7 +198,7 @@ export default {
           // Handle NeedTypes restriction: hosting provider need to support given types.
           if (svc.restrictions.needTypes) {
             for (const k in svc.restrictions.needTypes) {
-              if (this.availableResourceTypes.indexOf(svc.restrictions.needTypes[k]) < 0) {
+              if (availableResourceTypes.indexOf(svc.restrictions.needTypes[k]) < 0) {
                 ret[type] = 'is not available on this domain name hosting provider.'
                 continue
               }
