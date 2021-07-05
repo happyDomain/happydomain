@@ -56,14 +56,14 @@ func (s *Server) GetNbResources() int {
 func (s *Server) GenComment(origin string) string {
 	var buffer bytes.Buffer
 
-	if s.A != nil {
+	if s.A != nil && len(*s.A) != 0 {
 		buffer.WriteString(s.A.String())
-		if s.AAAA != nil {
+		if s.AAAA != nil && len(*s.AAAA) != 0 {
 			buffer.WriteString("; ")
 		}
 	}
 
-	if s.AAAA != nil {
+	if s.AAAA != nil && len(*s.AAAA) != 0 {
 		buffer.WriteString(s.AAAA.String())
 	}
 
@@ -75,7 +75,7 @@ func (s *Server) GenComment(origin string) string {
 }
 
 func (s *Server) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
-	if s.A != nil {
+	if s.A != nil && len(*s.A) != 0 {
 		rrs = append(rrs, &dns.A{
 			Hdr: dns.RR_Header{
 				Name:   utils.DomainJoin(domain),
@@ -86,7 +86,7 @@ func (s *Server) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR)
 			A: *s.A,
 		})
 	}
-	if s.AAAA != nil {
+	if s.AAAA != nil && len(*s.AAAA) != 0 {
 		rrs = append(rrs, &dns.AAAA{
 			Hdr: dns.RR_Header{
 				Name:   utils.DomainJoin(domain),
