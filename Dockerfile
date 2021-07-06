@@ -4,11 +4,11 @@ WORKDIR /go/src/git.happydns.org/happydns
 
 RUN apk --no-cache add python2 build-base
 
-COPY htdocs/ htdocs/
+COPY ui/ ui/
 
 RUN yarn config set network-timeout 100000
-RUN yarn --cwd htdocs install
-RUN yarn --cwd htdocs --offline build
+RUN yarn --cwd ui install
+RUN yarn --cwd ui --offline build
 
 
 FROM golang:alpine as gobuild
@@ -24,14 +24,15 @@ COPY api ./api
 COPY config ./config
 COPY forms ./forms
 COPY generators ./generators
+COPY internal ./internal
 COPY model ./model
 COPY providers ./providers
 COPY services ./services
 COPY storage ./storage
 COPY utils ./utils
-COPY generate.go go.mod go.sum main.go static.go ./
+COPY generate.go go.mod go.sum main.go ./
 
-RUN sed -i '/yarn --cwd htdocs --offline build/d' static.go && \
+RUN sed -i '/yarn --offline build/d' ui/assets.go && \
     go get -d -v && \
     go generate -v && \
     go build -v -ldflags '-w'
