@@ -2,8 +2,6 @@ module git.happydns.org/happydns
 
 go 1.16
 
-replace github.com/StackExchange/dnscontrol/v3 v3.10.1 => github.com/nemunaire/dnscontrol/v3 v3.10.2
-
 require (
 	github.com/StackExchange/dnscontrol/v3 v3.10.1
 	github.com/gin-gonic/gin v1.7.2
@@ -27,3 +25,5 @@ require (
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/mail.v2 v2.3.1 // indirect
 )
+
+replace github.com/StackExchange/dnscontrol/v3 => github.com/nemunaire/dnscontrol/v3 v3.10.22
