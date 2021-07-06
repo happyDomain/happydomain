@@ -36,6 +36,20 @@ import (
 	"log"
 )
 
+func migrateFrom0(s *LevelDBStorage) (err error) {
+	err = migrateFrom0_sourcesProvider(s)
+	if err != nil {
+		return
+	}
+
+	err = migrateFrom0_reparentDomains(s)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 type sourceMeta struct {
 	Type    string `json:"_srctype"`
 	Id      int64  `json:"_id"`
@@ -43,7 +57,7 @@ type sourceMeta struct {
 	Comment string `json:"_comment,omitempty"`
 }
 
-func migrateFrom0(s *LevelDBStorage) (err error) {
+func migrateFrom0_sourcesProvider(s *LevelDBStorage) (err error) {
 	iter := s.search("source-")
 	defer iter.Release()
 
@@ -107,6 +121,26 @@ func migrateFrom0(s *LevelDBStorage) (err error) {
 		}
 
 		err = s.delete(string(iter.Key()))
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func migrateFrom0_reparentDomains(s *LevelDBStorage) (err error) {
+	iter := s.search("domain-")
+	defer iter.Release()
+
+	for iter.Next() {
+		domstr := iter.Value()
+
+		domstr = bytes.Replace(domstr, []byte("\"id_source\":"), []byte("\"id_provider\":"), 1)
+
+		log.Printf("Migrating v0 -> v1: %s...", iter.Key())
+
+		err = s.db.Put(iter.Key(), domstr, nil)
 		if err != nil {
 			return
 		}
