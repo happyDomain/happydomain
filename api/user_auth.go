@@ -36,6 +36,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -138,18 +139,26 @@ func completeAuth(opts *config.Options, c *gin.Context, email string, service st
 	c.SetCookie(
 		COOKIE_NAME, // name
 		base64.StdEncoding.EncodeToString(session.Id), // value
-		30*24*3600,          // maxAge
-		opts.BaseURL+"/",    // path
-		"",                  // domain
-		opts.DevProxy == "", // secure
-		true,                // httpOnly
+		30*24*3600,       // maxAge
+		opts.BaseURL+"/", // path
+		"",               // domain
+		opts.DevProxy == "" && !strings.HasPrefix(opts.ExternalURL, "http://"), // secure
+		true, // httpOnly
 	)
 
 	c.JSON(http.StatusOK, currentUser(usr))
 }
 
 func logout(opts *config.Options, c *gin.Context) {
-	c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
+	c.SetCookie(
+		COOKIE_NAME,
+		"",
+		-1,
+		opts.BaseURL+"/",
+		"",
+		opts.DevProxy == "" && !strings.HasPrefix(opts.ExternalURL, "http://"),
+		true,
+	)
 	c.JSON(http.StatusOK, true)
 }
 
