@@ -102,7 +102,7 @@
             "live": "Live records",
             "monitoring": "Monitoring",
             "summary": "Summary",
-            "source": "Zone hosted on",
+            "provider": "Zone hosted on",
             "title": "View zone"
         },
         "views": {
@@ -114,7 +114,7 @@
                 "title": "List view (fastest)",
                 "label": "List"
             },
-            "source-parameters": "Hosting parameters",
+            "provider-parameters": "Hosting parameters",
             "records": {
                 "title": "List records (advanced)",
                 "label": "Records"
@@ -161,12 +161,12 @@
         "password-change": "Unable to change your password account",
         "password-match": "Password and its confirmation doesn't match.",
         "password-weak": "Password needs to be stronger: at least 8 characters with numbers, low case and high case characters.",
+        "provider-delete": "Something went wrong during provider deletion",
         "recovery": "Password recovery problem",
         "resolve": "An error occurs when trying to resolve the domain.",
         "registration": "Registration problem",
         "rr-add": "An error occurs when trying to add RR to the zone:",
         "rr-delete": "An error occurs when trying to delete RR in the zone:",
-        "source-delete": "Something went wrong during source deletion",
         "session": {
             "title": "Authentication timeout",
             "content": "Invalid session, your have been logged out: {err}. Please login again."
@@ -177,7 +177,7 @@
     },
     "menu": {
         "my-domains": "My domains",
-        "my-sources": "My domains' hosters",
+        "my-providers": "My domains' providers",
         "dns-resolver": "DNS resolver",
         "my-account": "My account",
         "logout": "Logout",
@@ -188,7 +188,7 @@
     "onboarding": {
         "add-one": "add a new one",
         "choose-configured": "choose between already configured providers or {0}:",
-        "suggest-source": "choose your provider:",
+        "suggest-provider": "choose your provider:",
         "use": "Use {happyDNS} as a remplacement interface to your usual domain name provider. It'll still rely on your provider's infrastructure, you'll just take benefit from our simple interface. As a first step, {first-step}",
         "no-sale": {
             "title": "I don't own any domain",
@@ -229,21 +229,21 @@
         "update": "Update the service",
         "form-new": "Add a new service to {0}"
     },
-    "source": {
-        "delete": "@:common.delete this @:source.kind",
-        "find": "Can't find your @:source.kind here?",
-        "name-your": "Name your @:source.kind",
-        "source": "Domains living on {0}",
-        "kind": "domain's hoster",
+    "provider": {
+        "delete": "@:common.delete this @:provider.kind",
+        "find": "Can't find your @:provider.kind here?",
+        "name-your": "Name your @:provider.kind",
+        "provider": "Domains living on {0}",
+        "kind": "domain's provider",
         "select-provider": "First, you need to select the provider hosting your domain:",
         "select-source": "Select the place where your domain {0} is hosted",
-        "source-name": "Host's name",
-        "source-type": "Hosting type",
-        "title": "Your domains' hosters",
+        "provider-name": "Host's name",
+        "provider-type": "Hosting provider type",
+        "title": "Your domains' providers",
         "available-types": "Resources Types available",
         "import-domains": "Import all domains",
-        "new-form": "New @:source.kind form",
-        "update": "Update @:source.kind"
+        "new-form": "New @:provider.kind form",
+        "update": "Update @:provider.kind"
     },
     "upgrade": {
         "title": "An update is available!",
@@ -262,7 +262,7 @@
         "validating": "Validating domain …",
         "wait": "Please wait",
         "retrieving-domains": "Retrieving your domains...",
-        "retrieving-source": "Retrieving hosting information..."
+        "retrieving-provider": "Retrieving hosting provider information..."
     },
     "settings": {
         "fieldhint": {
