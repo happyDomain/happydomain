@@ -35,8 +35,11 @@ import (
 	"bytes"
 	"flag"
 	"io"
+	"io/fs"
 	"net/mail"
 	"text/template"
+
+	"git.happydns.org/happydns/ui"
 
 	gomail "github.com/go-mail/mail"
 	"github.com/yuin/goldmark"
@@ -135,7 +138,7 @@ func SendMail(to *mail.Address, subject, content string) (err error) {
 		return
 	}
 
-	if data, err := Asset("htdocs/dist/img/happydns.png"); err != nil {
+	if data, err := fs.ReadFile(ui.GetEmbedFS(), "dist/img/happydns.png"); err != nil {
 		m.EmbedReader("happydns.png", bytes.NewReader(data))
 	}
 

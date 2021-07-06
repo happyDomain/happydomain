@@ -14,6 +14,10 @@ var _assets embed.FS
 
 var Assets http.FileSystem
 
+func GetEmbedFS() embed.FS {
+	return _assets
+}
+
 func init() {
 	sub, err := fs.Sub(_assets, "dist")
 	if err != nil {
