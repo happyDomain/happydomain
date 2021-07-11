@@ -312,12 +312,34 @@ func applyZone(c *gin.Context) {
 		Records: records,
 	}
 
+	var wantedCorrections []string
+	err = c.ShouldBindJSON(&wantedCorrections)
+	if err != nil {
+		log.Printf("%s sends invalid string array JSON: %w", c.ClientIP(), err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		return
+	}
+
 	corrections, err := provider.GetDomainCorrections(dc)
 	for _, cr := range corrections {
-		err := cr.F()
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to update the zone: %s", err.Error())})
+		for ic, wc := range wantedCorrections {
+			if wc == cr.Msg {
+				log.Printf("%s: apply correction: %s", domain.DomainName, cr.Msg)
+				err := cr.F()
+
+				if err != nil {
+					c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to update the zone: %s", err.Error())})
+				}
+
+				wantedCorrections = append(wantedCorrections[:ic], wantedCorrections[ic+1:]...)
+
+				break
+			}
 		}
+	}
+
+	if len(wantedCorrections) > 0 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to perform the following changes: %s", wantedCorrections)})
 	}
 
 	// Create a new zone in history for futher updates
