@@ -82,7 +82,7 @@ func settingsAskCredentials(cfg *config.Options, recallid int64, session *happyd
 	}
 
 	// Generate customer key
-	ckReq := client.NewCkRequestWithRedirection(cfg.BuildURL_noescape("/providers/new/ovh.OVHAPI/2?recall=%d", recallid))
+	ckReq := client.NewCkRequestWithRedirection(cfg.BuildURL_noescape("/providers/new/OVHAPI/2?recall=%d", recallid))
 	ckReq.AddRecursiveRules(ovh.ReadWrite, "/domain")
 	ckReq.AddRules(ovh.ReadOnly, "/me")
 
