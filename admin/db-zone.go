@@ -74,7 +74,7 @@ func updateUserDomainZones(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&domain.ZoneHistory)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 
@@ -85,7 +85,7 @@ func newUserDomainZone(c *gin.Context) {
 	uz := &happydns.Zone{}
 	err := c.ShouldBindJSON(&uz)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 	uz.Id = 0
@@ -99,7 +99,7 @@ func updateZone(c *gin.Context) {
 	uz := &happydns.Zone{}
 	err := c.ShouldBindJSON(&uz)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 	uz.Id = zone.Id
@@ -134,7 +134,7 @@ func updateZoneService(c *gin.Context) {
 	usc := &happydns.ServiceCombined{}
 	err = c.ShouldBindJSON(&usc)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 
@@ -154,7 +154,7 @@ func patchZoneService(c *gin.Context) {
 	usc := &happydns.ServiceCombined{}
 	err := c.ShouldBindJSON(&usc)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 

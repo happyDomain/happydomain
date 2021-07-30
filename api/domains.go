@@ -65,7 +65,7 @@ func GetDomains(c *gin.Context) {
 	}
 
 	if domains, err := storage.MainStore.GetDomains(user); err != nil {
-		log.Printf("%s: An error occurs when trying to GetDomains: %w", c.ClientIP(), err)
+		log.Printf("%s: An error occurs when trying to GetDomains: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": err})
 	} else if len(domains) > 0 {
 		c.JSON(http.StatusOK, domains)
@@ -78,8 +78,8 @@ func addDomain(c *gin.Context) {
 	var uz happydns.Domain
 	err := c.ShouldBindJSON(&uz)
 	if err != nil {
-		log.Printf("%s sends invalid Domain JSON: %w", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		log.Printf("%s sends invalid Domain JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 
@@ -111,7 +111,7 @@ func addDomain(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 		return
 	} else if err := storage.MainStore.CreateDomain(user, &uz); err != nil {
-		log.Printf("%s was unable to CreateDomain: %w", c.ClientIP(), err)
+		log.Printf("%s was unable to CreateDomain: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are unable to create your domain now."})
 		return
 	} else {
@@ -172,7 +172,7 @@ func GetDomain(c *gin.Context) {
 		zoneMeta, err := storage.MainStore.GetZoneMeta(zm)
 
 		if err != nil {
-			log.Println("%s: An error occurs in getDomain, when retrieving a meta history: %w", c.ClientIP(), err)
+			log.Println("%s: An error occurs in getDomain, when retrieving a meta history: %s", c.ClientIP(), err.Error())
 		} else {
 			ret.ZoneHistory = append(ret.ZoneHistory, *zoneMeta)
 		}
@@ -183,7 +183,7 @@ func GetDomain(c *gin.Context) {
 
 func delDomain(c *gin.Context) {
 	if err := storage.MainStore.DeleteDomain(c.MustGet("domain").(*happydns.Domain)); err != nil {
-		log.Printf("%s was unable to DeleteDomain: %w", c.ClientIP(), err)
+		log.Printf("%s was unable to DeleteDomain: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Unable to delete your domain: %s", err.Error())})
 		return
 	}

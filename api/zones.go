@@ -141,8 +141,8 @@ func addZoneService(c *gin.Context) {
 	usc := &happydns.ServiceCombined{}
 	err := c.ShouldBindJSON(&usc)
 	if err != nil {
-		log.Printf("%s sends invalid service JSON: %w", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		log.Printf("%s sends invalid service JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 
@@ -153,13 +153,13 @@ func addZoneService(c *gin.Context) {
 
 	err = zone.AppendService(subdomain, domain.DomainName, usc)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to add service: %w", err)})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to add service: %s", err.Error())})
 		return
 	}
 
 	err = storage.MainStore.UpdateZone(zone)
 	if err != nil {
-		log.Printf("%s: Unable to UpdateZone in updateZoneService: %w", c.ClientIP(), err)
+		log.Printf("%s: Unable to UpdateZone in updateZoneService: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your zone. Please retry later."})
 		return
 	}
@@ -170,7 +170,7 @@ func addZoneService(c *gin.Context) {
 func serviceIdHandler(c *gin.Context) {
 	serviceid, err := hex.DecodeString(c.Param("serviceid"))
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Bad service identifier: %w", err)})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Bad service identifier: %s", err.Error())})
 		return
 	}
 
@@ -193,7 +193,7 @@ func importZone(c *gin.Context) {
 
 	provider, err := storage.MainStore.GetProvider(user, domain.IdProvider)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find your provider: %w", err)})
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find your provider: %s", err.Error())})
 		return
 	}
 
@@ -221,7 +221,7 @@ func importZone(c *gin.Context) {
 	// Create history zone
 	err = storage.MainStore.CreateZone(myZone)
 	if err != nil {
-		log.Printf("%s: unable to CreateZone in importZone: %w\n", c.ClientIP(), err.Error())
+		log.Printf("%s: unable to CreateZone in importZone: %s\n", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are unable to create your zone."})
 		return
 	}
@@ -231,7 +231,7 @@ func importZone(c *gin.Context) {
 	// Create wip zone
 	err = storage.MainStore.CreateZone(myZone)
 	if err != nil {
-		log.Printf("%s: unable to CreateZone2 in importZone: %w\n", c.ClientIP(), err.Error())
+		log.Printf("%s: unable to CreateZone2 in importZone: %s\n", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are unable to create your zone."})
 		return
 	}
@@ -240,7 +240,7 @@ func importZone(c *gin.Context) {
 
 	err = storage.MainStore.UpdateDomain(domain)
 	if err != nil {
-		log.Printf("%s: unable to UpdateDomain in importZone: %w\n", c.ClientIP(), err.Error())
+		log.Printf("%s: unable to UpdateDomain in importZone: %s\n", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are unable to create your zone."})
 		return
 	}
@@ -315,8 +315,8 @@ func applyZone(c *gin.Context) {
 	var wantedCorrections []string
 	err = c.ShouldBindJSON(&wantedCorrections)
 	if err != nil {
-		log.Printf("%s sends invalid string array JSON: %w", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		log.Printf("%s sends invalid string array JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 
@@ -399,14 +399,14 @@ func UpdateZoneService(c *gin.Context) {
 	usc := &happydns.ServiceCombined{}
 	err := c.ShouldBindJSON(&usc)
 	if err != nil {
-		log.Printf("%s sends invalid domain JSON: %w", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		log.Printf("%s sends invalid domain JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 
 	err = zone.EraseService(usc.Domain, domain.DomainName, usc.Id, usc)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to delete service: %w", err)})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to delete service: %s", err.Error())})
 		return
 	}
 
@@ -414,7 +414,7 @@ func UpdateZoneService(c *gin.Context) {
 
 	err = storage.MainStore.UpdateZone(zone)
 	if err != nil {
-		log.Printf("%s: Unable to UpdateZone in updateZoneService: %w", c.ClientIP(), err)
+		log.Printf("%s: Unable to UpdateZone in updateZoneService: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your zone. Please retry later."})
 		return
 	}
@@ -430,7 +430,7 @@ func deleteZoneService(c *gin.Context) {
 
 	err := zone.EraseService(subdomain, domain.DomainName, serviceid, nil)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to delete service: %w", err)})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to delete service: %s", err.Error())})
 		return
 	}
 
@@ -438,7 +438,7 @@ func deleteZoneService(c *gin.Context) {
 
 	err = storage.MainStore.UpdateZone(zone)
 	if err != nil {
-		log.Printf("%s: Unable to UpdateZone in deleteZoneService: %w", c.ClientIP(), err)
+		log.Printf("%s: Unable to UpdateZone in deleteZoneService: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your zone. Please retry later."})
 		return
 	}

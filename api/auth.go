@@ -54,12 +54,12 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 		if cookie, err := c.Cookie(COOKIE_NAME); err == nil {
 			if sessionid, err = base64.StdEncoding.DecodeString(cookie); err != nil {
 				c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Unable to authenticate request due to invalid cookie value: %w", err)})
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Unable to authenticate request due to invalid cookie value: %s", err.Error())})
 				return
 			}
 		} else if flds := strings.Fields(c.GetHeader("Authorization")); len(flds) == 2 && flds[0] == "Bearer" {
 			if sessionid, err = base64.StdEncoding.DecodeString(flds[1]); err != nil {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Unable to authenticate request due to invalid Authorization header value: %w", err)})
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Unable to authenticate request due to invalid Authorization header value: %s", err.Error())})
 				return
 			}
 		}
@@ -72,7 +72,7 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 
 		session, err := storage.MainStore.GetSession(sessionid)
 		if err != nil {
-			log.Printf("%s tries an invalid session: %w", c.ClientIP(), err)
+			log.Printf("%s tries an invalid session: %s", c.ClientIP(), err.Error())
 			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Your session has expired. Please reconnect.")})
 			return
@@ -82,7 +82,7 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 
 		user, err := storage.MainStore.GetUser(session.IdUser)
 		if err != nil {
-			log.Printf("%s has a correct session, but related user is invalid: %w", c.ClientIP(), err)
+			log.Printf("%s has a correct session, but related user is invalid: %s", c.ClientIP(), err.Error())
 			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Something goes wrong with your session. Please reconnect.")})
 			return

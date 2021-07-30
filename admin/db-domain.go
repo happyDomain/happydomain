@@ -70,13 +70,13 @@ func getAllDomains(c *gin.Context) {
 
 	users, err := storage.MainStore.GetUsers()
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Unable to retrieve users list: %w", err)})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Unable to retrieve users list: %s", err.Error())})
 		return
 	}
 	for _, user := range users {
 		usersDomains, err := storage.MainStore.GetDomains(user)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Unable to retrieve %s's domains: %w", user.Email, err)})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Unable to retrieve %s's domains: %s", user.Email, err.Error())})
 			return
 		}
 
@@ -92,7 +92,7 @@ func newDomain(c *gin.Context) {
 	ud := &happydns.Domain{}
 	err := c.ShouldBindJSON(&ud)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 	ud.Id = 0
@@ -107,7 +107,7 @@ func updateUserDomain(c *gin.Context) {
 	ud := &happydns.Domain{}
 	err := c.ShouldBindJSON(&ud)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 	ud.Id = domain.Id

@@ -108,8 +108,8 @@ func resolverQuestion(client dns.Client, resolver string, dn string, rrType uint
 func runResolver(c *gin.Context) {
 	var urr resolverRequest
 	if err := c.ShouldBindJSON(&urr); err != nil {
-		log.Printf("%s sends invalid ResolverRequest JSON: %w", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		log.Printf("%s sends invalid ResolverRequest JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 
@@ -120,7 +120,7 @@ func runResolver(c *gin.Context) {
 	} else if urr.Resolver == "local" {
 		cConf, err := dns.ClientConfigFromFile("/etc/resolv.conf")
 		if err != nil {
-			log.Printf("%s unable to load ClientConfigFromFile: %w", c.ClientIP(), err)
+			log.Printf("%s unable to load ClientConfigFromFile: %s", c.ClientIP(), err.Error())
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to perform the request. Please try again later."})
 			return
 		}

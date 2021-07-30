@@ -81,7 +81,7 @@ func ProviderSpecsHandler(c *gin.Context) {
 
 	src, err := providers.FindProvider(ssid)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find provider: %w", err)})
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find provider: %s", err.Error())})
 		return
 	}
 

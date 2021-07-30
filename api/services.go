@@ -69,19 +69,19 @@ func analyzeDomain(c *gin.Context) {
 
 	provider, err := storage.MainStore.GetProvider(user, domain.IdProvider)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to get the related provider: %w", err)})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to get the related provider: %s", err.Error())})
 		return
 	}
 
 	zone, err := provider.ImportZone(domain)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to import zone: %w", err)})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to import zone: %s", err.Error())})
 		return
 	}
 
 	services, defaultTTL, err := svcs.AnalyzeZone(domain.DomainName, zone)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("An error occurs during analysis: %w", err)})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("An error occurs during analysis: %s", err.Error())})
 		return
 	}
 

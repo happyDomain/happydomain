@@ -102,8 +102,8 @@ func registerUser(opts *config.Options, c *gin.Context) {
 	var uu UploadedUser
 	err := c.ShouldBindJSON(&uu)
 	if err != nil {
-		log.Printf("%s sends invalid User JSON: %w", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		log.Printf("%s sends invalid User JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 
@@ -133,13 +133,13 @@ func registerUser(opts *config.Options, c *gin.Context) {
 	user.Settings.Newsletter = uu.Newsletter
 
 	if err := storage.MainStore.CreateUser(user); err != nil {
-		log.Printf("%s: unable to CreateUser in registerUser: %w", c.ClientIP(), err)
+		log.Printf("%s: unable to CreateUser in registerUser: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to create your account. Please try again later."})
 		return
 	}
 
 	if actions.SendValidationLink(opts, user); err != nil {
-		log.Printf("%s: unable to SendValidationLink in registerUser: %w", c.ClientIP(), err)
+		log.Printf("%s: unable to SendValidationLink in registerUser: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to sent email validation link. Please try again later."})
 		return
 	}
@@ -153,22 +153,22 @@ func specialUserOperations(opts *config.Options, c *gin.Context) {
 	var uu UploadedUser
 	err := c.ShouldBindJSON(&uu)
 	if err != nil {
-		log.Printf("%s sends invalid User JSON: %w", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		log.Printf("%s sends invalid User JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 
 	res := gin.H{"errmsg": "If this address exists in our database, you'll receive a new e-mail."}
 
 	if user, err := storage.MainStore.GetUserByEmail(uu.Email); err != nil {
-		log.Printf("%c: unable to retrieve user %q: %w", c.ClientIP(), uu.Email, err)
+		log.Printf("%c: unable to retrieve user %q: %s", c.ClientIP(), uu.Email, err.Error())
 		c.JSON(http.StatusOK, res)
 		return
 	} else {
 		if uu.Kind == "recovery" {
 			if user.EmailValidated == nil {
 				if err = actions.SendValidationLink(opts, user); err != nil {
-					log.Printf("%s: unable to SendValidationLink in specialUserOperations: %w", c.ClientIP(), err)
+					log.Printf("%s: unable to SendValidationLink in specialUserOperations: %s", c.ClientIP(), err.Error())
 					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to sent email validation link. Please try again later."})
 					return
 				}
@@ -176,13 +176,13 @@ func specialUserOperations(opts *config.Options, c *gin.Context) {
 				log.Printf("%s: Sent validation link to: %s", c.ClientIP(), user.Email)
 			} else {
 				if err = actions.SendRecoveryLink(opts, user); err != nil {
-					log.Printf("%s: unable to SendRecoveryLink in specialUserOperations: %w", c.ClientIP(), err)
+					log.Printf("%s: unable to SendRecoveryLink in specialUserOperations: %s", c.ClientIP(), err.Error())
 					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to sent accont recovery link. Please try again later."})
 					return
 				}
 
 				if err := storage.MainStore.UpdateUser(user); err != nil {
-					log.Printf("%s: unable to UpdateUser in specialUserOperations: %w", c.ClientIP(), err)
+					log.Printf("%s: unable to UpdateUser in specialUserOperations: %s", c.ClientIP(), err.Error())
 					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
 					return
 				}
@@ -197,7 +197,7 @@ func specialUserOperations(opts *config.Options, c *gin.Context) {
 			}
 
 			if err = actions.SendValidationLink(opts, user); err != nil {
-				log.Printf("%s: unable to SendValidationLink 2 in specialUserOperations: %w", c.ClientIP(), err)
+				log.Printf("%s: unable to SendValidationLink 2 in specialUserOperations: %s", c.ClientIP(), err.Error())
 				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to sent email validation link. Please try again later."})
 				return
 			}
@@ -239,15 +239,15 @@ func changeUserSettings(c *gin.Context) {
 
 	var us happydns.UserSettings
 	if err := c.ShouldBindJSON(&us); err != nil {
-		log.Printf("%s sends invalid UserSettings JSON: %w", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		log.Printf("%s sends invalid UserSettings JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 
 	user.Settings = us
 
 	if err := storage.MainStore.UpdateUser(user); err != nil {
-		log.Printf("%s: unable to UpdateUser in changeUserSettings: %w", c.ClientIP(), err)
+		log.Printf("%s: unable to UpdateUser in changeUserSettings: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
 		return
 	}
@@ -266,8 +266,8 @@ func changePassword(opts *config.Options, c *gin.Context) {
 
 	var lf passwordForm
 	if err := c.ShouldBindJSON(&lf); err != nil {
-		log.Printf("%s sends invalid passwordForm JSON: %w", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		log.Printf("%s sends invalid passwordForm JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 
@@ -282,7 +282,7 @@ func changePassword(opts *config.Options, c *gin.Context) {
 	}
 
 	if err := user.DefinePassword(lf.Password); err != nil {
-		log.Printf("%s: unable to DefinePassword in changePassword: %w", c.ClientIP(), err)
+		log.Printf("%s: unable to DefinePassword in changePassword: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
 		return
 	}
@@ -290,13 +290,13 @@ func changePassword(opts *config.Options, c *gin.Context) {
 	// Retrieve all user's sessions to disconnect them
 	sessions, err := storage.MainStore.GetUserSessions(user)
 	if err != nil {
-		log.Printf("%s: unable to GetUserSessions in changePassword: %w", c.ClientIP(), err)
+		log.Printf("%s: unable to GetUserSessions in changePassword: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
 		return
 	}
 
 	if err = storage.MainStore.UpdateUser(user); err != nil {
-		log.Printf("%s: unable to DefinePassword in changePassword: %w", c.ClientIP(), err)
+		log.Printf("%s: unable to DefinePassword in changePassword: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
 		return
 	}
@@ -306,7 +306,7 @@ func changePassword(opts *config.Options, c *gin.Context) {
 	for _, session := range sessions {
 		err = storage.MainStore.DeleteSession(session)
 		if err != nil {
-			log.Println("%s: unable to delete session (password changed): %w", c.ClientIP(), err)
+			log.Println("%s: unable to delete session (password changed): %s", c.ClientIP(), err.Error())
 		}
 	}
 
@@ -318,8 +318,8 @@ func deleteUser(opts *config.Options, c *gin.Context) {
 
 	var lf passwordForm
 	if err := c.ShouldBindJSON(&lf); err != nil {
-		log.Printf("%s sends invalid passwordForm JSON: %w", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		log.Printf("%s sends invalid passwordForm JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 
@@ -331,13 +331,13 @@ func deleteUser(opts *config.Options, c *gin.Context) {
 	// Retrieve all user's sessions to disconnect them
 	sessions, err := storage.MainStore.GetUserSessions(user)
 	if err != nil {
-		log.Printf("%s: unable to GetUserSessions in deleteUser: %w", c.ClientIP(), err)
+		log.Printf("%s: unable to GetUserSessions in deleteUser: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
 		return
 	}
 
 	if err = storage.MainStore.DeleteUser(user); err != nil {
-		log.Printf("%s: unable to DefinePassword in deleteuser: %w", c.ClientIP(), err)
+		log.Printf("%s: unable to DefinePassword in deleteuser: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
 		return
 	}
@@ -347,7 +347,7 @@ func deleteUser(opts *config.Options, c *gin.Context) {
 	for _, session := range sessions {
 		err = storage.MainStore.DeleteSession(session)
 		if err != nil {
-			log.Println("%s: unable to delete session (drop account): %w", c.ClientIP(), err)
+			log.Println("%s: unable to delete session (drop account): %s", c.ClientIP(), err.Error())
 		}
 	}
 
@@ -390,19 +390,19 @@ func validateUserAddress(c *gin.Context) {
 	var uav UploadedAddressValidation
 	err := c.ShouldBindJSON(&uav)
 	if err != nil {
-		log.Printf("%s sends invalid AddressValidation JSON: %w", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		log.Printf("%s sends invalid AddressValidation JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 
 	if err := user.ValidateEmail(uav.Key); err != nil {
-		log.Printf("%s bad email validation key: %w", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Bad validation key: %w", err)})
+		log.Printf("%s bad email validation key: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Bad validation key: %s", err.Error())})
 		return
 	}
 
 	if err := storage.MainStore.UpdateUser(user); err != nil {
-		log.Printf("%s: unable to UpdateUser in ValidateUserAddress: %w", c.ClientIP(), err)
+		log.Printf("%s: unable to UpdateUser in ValidateUserAddress: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
 		return
 	}
@@ -421,8 +421,8 @@ func recoverUserAccount(c *gin.Context) {
 	var uar UploadedAccountRecovery
 	err := c.ShouldBindJSON(&uar)
 	if err != nil {
-		log.Printf("%s sends invalid AccountRecovey JSON: %w", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		log.Printf("%s sends invalid AccountRecovey JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 
@@ -447,7 +447,7 @@ func recoverUserAccount(c *gin.Context) {
 	}
 
 	if err := storage.MainStore.UpdateUser(user); err != nil {
-		log.Printf("%s: unable to UpdateUser in recoverUserAccount: %w", c.ClientIP(), err)
+		log.Printf("%s: unable to UpdateUser in recoverUserAccount: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
 		return
 	}

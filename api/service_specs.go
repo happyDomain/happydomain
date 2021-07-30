@@ -91,7 +91,7 @@ func ServiceSpecsHandler(c *gin.Context) {
 
 	svc, err := svcs.FindSubService(ssid)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find specs: %w", err)})
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find specs: %s", err.Error())})
 		return
 	}
 

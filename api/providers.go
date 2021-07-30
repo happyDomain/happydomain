@@ -86,7 +86,7 @@ func DecodeProvider(c *gin.Context) (*happydns.ProviderCombined, int, error) {
 
 	us, err := providers.FindProvider(ust.Type)
 	if err != nil {
-		log.Printf("%s: unable to find provider %s: %w", c.ClientIP(), ust.Type, err)
+		log.Printf("%s: unable to find provider %s: %s", c.ClientIP(), ust.Type, err.Error())
 		return nil, http.StatusInternalServerError, fmt.Errorf("Sorry, we were unable to find the kind of provider in our database. Please report this issue.")
 	}
 
@@ -140,7 +140,7 @@ func ProviderHandler(c *gin.Context) {
 	// Extract provider ID
 	pid, err := strconv.ParseInt(string(c.Param("pid")), 10, 64)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Invalid provider id: %w", err)})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Invalid provider id: %s", err.Error())})
 		return
 	}
 
@@ -182,7 +182,7 @@ func addProvider(c *gin.Context) {
 
 	s, err := storage.MainStore.CreateProvider(user, src.Provider, src.Comment)
 	if err != nil {
-		log.Println("%s unable to CreateProvider: %w", c.ClientIP(), err)
+		log.Println("%s unable to CreateProvider: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to create the given provider. Please try again later."})
 		return
 	}
@@ -203,7 +203,7 @@ func UpdateProvider(c *gin.Context) {
 	src.OwnerId = provider.OwnerId
 
 	if err := storage.MainStore.UpdateProvider(src); err != nil {
-		log.Println("%s unable to UpdateProvider: %w", c.ClientIP(), err)
+		log.Println("%s unable to UpdateProvider: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update the provider. Please try again later."})
 		return
 	}
@@ -218,7 +218,7 @@ func deleteProvider(c *gin.Context) {
 	// Check if the provider has no more domain associated
 	domains, err := storage.MainStore.GetDomains(user)
 	if err != nil {
-		log.Println("%s unable to GetDomains for user id=%x email=%s: %w", c.ClientIP(), user.Id, user.Email, err)
+		log.Println("%s unable to GetDomains for user id=%x email=%s: %s", c.ClientIP(), user.Id, user.Email, err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to perform this action. Please try again later."})
 		return
 	}
@@ -231,7 +231,7 @@ func deleteProvider(c *gin.Context) {
 	}
 
 	if err := storage.MainStore.DeleteProvider(providermeta); err != nil {
-		log.Println("%s unable to DeleteProvider %x for user id=%x email=%s: %w", c.ClientIP(), providermeta.Id, user.Id, user.Email, err)
+		log.Println("%s unable to DeleteProvider %x for user id=%x email=%s: %s", c.ClientIP(), providermeta.Id, user.Id, user.Email, err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to delete your provider. Please try again later."})
 		return
 	}

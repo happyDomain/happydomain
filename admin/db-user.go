@@ -103,7 +103,7 @@ func newUser(c *gin.Context) {
 	uu := &happydns.User{}
 	err := c.ShouldBindJSON(&uu)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 	uu.Id = 0
@@ -127,7 +127,7 @@ func updateUser(c *gin.Context) {
 	uu := &happydns.User{}
 	err := c.ShouldBindJSON(&uu)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 	uu.Id = user.Id
@@ -163,7 +163,7 @@ func resetUserPasswd(c *gin.Context) {
 	urp := &resetPassword{}
 	err := c.ShouldBindJSON(&urp)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 

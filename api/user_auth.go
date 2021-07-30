@@ -112,13 +112,13 @@ func completeAuth(opts *config.Options, c *gin.Context, email string, service st
 			RegistrationTime: &now,
 		}
 		if err = storage.MainStore.CreateUser(usr); err != nil {
-			log.Printf("%s: unable to CreateUser in completeAuth: %w", c.ClientIP(), err)
+			log.Printf("%s: unable to CreateUser in completeAuth: %s", c.ClientIP(), err.Error())
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to create your account. Please try again later."})
 			return
 		}
 		log.Printf("%s: Creates new user after successful service=%q login %q\n", c.ClientIP(), service, usr)
 	} else if usr, err = storage.MainStore.GetUserByEmail(email); err != nil {
-		log.Printf("%s: unable to find User in completeAuth: %w", c.ClientIP(), err)
+		log.Printf("%s: unable to find User in completeAuth: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to access your account. Please try again later."})
 		return
 	}
@@ -127,11 +127,11 @@ func completeAuth(opts *config.Options, c *gin.Context, email string, service st
 
 	var session *happydns.Session
 	if session, err = happydns.NewSession(usr); err != nil {
-		log.Printf("%s: unable to NewSession in completeAuth: %w", c.ClientIP(), err)
+		log.Printf("%s: unable to NewSession in completeAuth: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to create your session. Please try again later."})
 		return
 	} else if err = storage.MainStore.CreateSession(session); err != nil {
-		log.Printf("%s: unable to CreateSession in completeAuth: %w", c.ClientIP(), err)
+		log.Printf("%s: unable to CreateSession in completeAuth: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to create your session. Please try again later."})
 		return
 	}
@@ -170,14 +170,14 @@ type loginForm struct {
 func dummyAuth(opts *config.Options, c *gin.Context) {
 	var lf loginForm
 	if err := c.ShouldBindJSON(&lf); err != nil {
-		log.Printf("%s sends invalid LoginForm JSON: %w", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		log.Printf("%s sends invalid LoginForm JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 
 	user, err := storage.MainStore.GetUserByEmail(lf.Email)
 	if err != nil {
-		log.Printf("%s user's email (%s) not found: %w", c.ClientIP(), lf.Email, err)
+		log.Printf("%s user's email (%s) not found: %s", c.ClientIP(), lf.Email, err.Error())
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "Invalid username or password."})
 		return
 	}
@@ -188,14 +188,14 @@ func dummyAuth(opts *config.Options, c *gin.Context) {
 func checkAuth(opts *config.Options, c *gin.Context) {
 	var lf loginForm
 	if err := c.ShouldBindJSON(&lf); err != nil {
-		log.Printf("%s sends invalid LoginForm JSON: %w", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		log.Printf("%s sends invalid LoginForm JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 
 	user, err := storage.MainStore.GetUserByEmail(lf.Email)
 	if err != nil {
-		log.Printf("%s user's email (%s) not found: %w", c.ClientIP(), lf.Email, err)
+		log.Printf("%s user's email (%s) not found: %s", c.ClientIP(), lf.Email, err.Error())
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "Invalid username or password."})
 		return
 	}

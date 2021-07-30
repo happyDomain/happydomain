@@ -73,7 +73,7 @@ func getProviderSettingsState(cfg *config.Options, c *gin.Context) {
 
 	src, err := providers.FindProvider(ssid)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find your provider: %w", err)})
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find your provider: %s", err.Error())})
 		return
 	}
 
@@ -81,8 +81,8 @@ func getProviderSettingsState(cfg *config.Options, c *gin.Context) {
 	uss.Provider = src
 	err = c.ShouldBindJSON(&uss)
 	if err != nil {
-		log.Printf("%s sends invalid ProviderSettingsState JSON: %w", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		log.Printf("%s sends invalid ProviderSettingsState JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 
 	}

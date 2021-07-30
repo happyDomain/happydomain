@@ -74,7 +74,7 @@ func getServiceSettingsState(cfg *config.Options, c *gin.Context) {
 
 	pvr, err := svcs.FindService(psid)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, fmt.Sprintf("Unable to find this service: %w", err))
+		c.AbortWithStatusJSON(http.StatusNotFound, fmt.Sprintf("Unable to find this service: %s", err.Error()))
 		return
 	}
 
@@ -82,8 +82,8 @@ func getServiceSettingsState(cfg *config.Options, c *gin.Context) {
 	ups.Service = pvr
 	err = c.ShouldBindJSON(&ups)
 	if err != nil {
-		log.Printf("%s sends invalid ServiceSettingsState JSON: %w", c.ClientIP(), err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %w", err)})
+		log.Printf("%s sends invalid ServiceSettingsState JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
 
