@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/PuerkitoBio/goquery v1.7.1 // indirect
 	github.com/StackExchange/dnscontrol/v3 v3.10.1
-	github.com/gin-gonic/gin v1.7.2
+	github.com/gin-gonic/gin v1.7.3
 	github.com/go-mail/mail v2.3.1+incompatible
 	github.com/go-playground/validator/v10 v10.7.0 // indirect
 	github.com/go-sql-driver/mysql v1.6.0
