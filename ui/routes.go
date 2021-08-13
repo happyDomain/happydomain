@@ -13,6 +13,7 @@ import (
 
 func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 	router.GET("/", serveOrReverse("/", cfg))
+	router.GET("/index.html", serveOrReverse("/", cfg))
 
 	// Routes handled by the showcase
 	router.GET("/en/*_", serveOrReverse("/", cfg))
