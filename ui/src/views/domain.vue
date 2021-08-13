@@ -51,6 +51,15 @@
         </b-row>
 
         <b-form class="mt-3">
+          <b-button
+            class="float-right"
+            variant="outline-secondary"
+            size="sm"
+            :title="$t('domains.actions.reimport')"
+            @click="importZone"
+          >
+            <b-icon icon="cloud-download" />
+          </b-button>
           <label class="font-weight-bolder" for="zhistory">{{ $t('domains.history') }}:</label>
           <b-form-select id="zhistory" v-model="selectedHistory" :options="domain.zone_history" value-field="id" text-field="last_modified" />
         </b-form>
