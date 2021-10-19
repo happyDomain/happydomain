@@ -1,15 +1,31 @@
 package ui
 
 import (
+	"flag"
 	"io"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
+	"text/template"
 
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happydns/config"
 )
+
+var (
+	indexTpl       *template.Template
+	CustomHeadHTML = ""
+	CustomBodyHTML = ""
+)
+
+func init() {
+	flag.StringVar(&CustomHeadHTML, "custom-head-html", CustomHeadHTML, "Add custom HTML right before </head>")
+	flag.StringVar(&CustomBodyHTML, "custom-body-html", CustomBodyHTML, "Add custom HTML right before </body>")
+}
 
 func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 	router.GET("/", serveOrReverse("/", cfg))
@@ -46,6 +62,7 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 
 func serveOrReverse(forced_url string, cfg *config.Options) gin.HandlerFunc {
 	if cfg.DevProxy != "" {
+		// Forward to the Vue dev proxy
 		return func(c *gin.Context) {
 			if u, err := url.Parse(cfg.DevProxy); err != nil {
 				http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
@@ -72,11 +89,34 @@ func serveOrReverse(forced_url string, cfg *config.Options) gin.HandlerFunc {
 				}
 			}
 		}
+	} else if forced_url == "/" {
+		// Serve altered index.html
+		return func(c *gin.Context) {
+			if indexTpl == nil {
+				// Create template from file
+				f, _ := Assets.Open("index.html")
+				v, _ := ioutil.ReadAll(f)
+
+				v2 := strings.Replace(strings.Replace(string(v), "</head>", "{{ .Head }}</head>", 1), "</body>", "{{ .Body }}</body>", 1)
+
+				indexTpl = template.Must(template.New("index.html").Parse(v2))
+			}
+
+			// Serve template
+			if err := indexTpl.ExecuteTemplate(c.Writer, "index.html", map[string]string{
+				"Body": CustomBodyHTML,
+				"Head": CustomHeadHTML,
+			}); err != nil {
+				log.Println("Unable to return index.html:", err.Error())
+			}
+		}
 	} else if forced_url != "" {
+		// Serve forced_url
 		return func(c *gin.Context) {
 			c.FileFromFS(forced_url, Assets)
 		}
 	} else {
+		// Serve requested file
 		return func(c *gin.Context) {
 			c.FileFromFS(c.Request.URL.Path, Assets)
 		}
