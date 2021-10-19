@@ -18,8 +18,7 @@ Building
 
 In order to build the happyDNS project, you'll need the following dependencies:
 
-* `go` at least version 1.13
-* `go-bindata`
+* `go` at least version 1.16
 * `nodejs` tested with version 14.4.0
 * `yarn` tested with version 1.22.4
 
@@ -29,13 +28,14 @@ In order to build the happyDNS project, you'll need the following dependencies:
 1. First, you'll need to prepare the frontend, by installing the node modules dependencies:
 
 ```
-yarn --cwd htdocs install
+yarn --cwd ui install
 ```
 
 2. Then, generates assets files used by Go code:
 
 ```
-go generate
+go generate git.happydns.org/happydns/ui
+go generate git.happydns.org/happydns
 ```
 
 3. Finaly, build the Go code:
@@ -140,7 +140,7 @@ In one terminal, run `happydns` with the following arguments:
 In another terminal, run the node part:
 
 ```
-yarn --cwd htdocs run serve
+yarn --cwd ui run serve
 ```
 
 With this setup, static assets integrated inside the go binary will not be used, instead it'll forward all requests for static assets to the node server, that do dynamic reload, etc.
