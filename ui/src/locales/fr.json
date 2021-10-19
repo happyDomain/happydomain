@@ -272,7 +272,13 @@
         "save": "Enregistrer les paramètres",
         "title": "Paramètres",
         "success": "Vous pouvez continuer d'apprécier happyDNS.",
-        "success-change": "Vos paramètres ont été sauvegardés."
+        "success-change": "Vos paramètres ont été sauvegardés.",
+        "zoneview": {
+            "grid": "Grille (la plus lisible)",
+            "list": "Liste (la plus rapide)",
+            "records": "Liste avec les enregistrements (avancés)",
+            "title": "Voir comme :"
+        }
     },
     "record": {
         "A": "Adresse IPv4",

@@ -106,20 +106,7 @@
             "title": "View zone"
         },
         "views": {
-            "grid": {
-                "title": "Grid view (easiest)",
-                "label": "Grid"
-            },
-            "list": {
-                "title": "List view (fastest)",
-                "label": "List"
-            },
-            "provider-parameters": "Hosting parameters",
-            "records": {
-                "title": "List records (advanced)",
-                "label": "Records"
-            },
-            "as": "View as:"
+            "provider-parameters": "Hosting parameters"
         },
         "alias-creation": "Add an alias pointing to {0}:",
         "alias-creation-sample": "This will create the alias:",
@@ -276,7 +263,13 @@
         "save": "Save settings",
         "title": "Settings",
         "success": "Continue to enjoy happyDNS.",
-        "success-change": "Your settings has been saved."
+        "success-change": "Your settings has been saved.",
+        "zoneview": {
+            "grid": "Grid view (easiest)",
+            "list": "List view (fastest)",
+            "records": "List with records (advanced)",
+            "title": "View zone as"
+        }
     },
     "record": {
         "A": "IPv4 address",

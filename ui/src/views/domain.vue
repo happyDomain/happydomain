@@ -79,27 +79,7 @@
           </b-button>
         </b-button-group>
 
-        <hr>
-
-        <b-form class="mt-3">
-          <label class="font-weight-bolder">{{ $t('domains.views.as') }}</label>
-          <b-button-group class="w-100">
-            <b-button :variant="displayFormat === 'grid' ? 'secondary' : 'outline-secondary'" :title="$t('domains.views.grid.title')" @click="toogleGridView()">
-              <b-icon icon="grid-fill" aria-hidden="true" /><br>
-              {{ $t('domains.views.grid.label') }}
-            </b-button>
-            <b-button :variant="displayFormat === 'list' ? 'secondary' : 'outline-secondary'" :title="$t('domains.views.list.title')" @click="toogleListView()">
-              <b-icon icon="list-ul" aria-hidden="true" /><br>
-              {{ $t('domains.views.list.label') }}
-            </b-button>
-            <b-button :variant="displayFormat === 'records' ? 'secondary' : 'outline-secondary'" :title="$t('domains.views.records.title')" @click="toogleRecordsView()">
-              <b-icon icon="menu-button-wide-fill" aria-hidden="true" /><br>
-              {{ $t('domains.views.records.label') }}
-            </b-button>
-          </b-button-group>
-        </b-form>
-
-        <hr>
+        <div class="flex-fill" />
 
         <b-button class="w-100" type="button" variant="outline-danger" @click="detachDomain()">
           <b-icon icon="trash-fill" /> {{ $t('domains.stop') }}
@@ -208,7 +188,6 @@ export default {
 
   data: function () {
     return {
-      displayFormat: 'grid',
       importInProgress: false,
       propagationInProgress: false,
       selectedDiff: [],
@@ -219,6 +198,17 @@ export default {
   },
 
   computed: {
+    displayFormat () {
+      switch (this.user_getSettings.zoneview) {
+        case 1:
+          return 'list'
+        case 2:
+          return 'records'
+        default:
+          return 'grid'
+      }
+    },
+
     domain () {
       return this.domains_getDetailed[this.$route.params.domain]
     },
@@ -298,7 +288,8 @@ export default {
     },
 
     ...mapGetters('domains', ['domains_getDetailed', 'sortedDomains']),
-    ...mapGetters('providers', ['providers_getAll'])
+    ...mapGetters('providers', ['providers_getAll']),
+    ...mapGetters('user', ['user_getSettings'])
   },
 
   watch: {
@@ -311,9 +302,6 @@ export default {
   },
 
   created () {
-    if (localStorage && localStorage.getItem('displayFormat')) {
-      this.displayFormat = localStorage.getItem('displayFormat')
-    }
     this.$store.dispatch('domains/getAllMyDomains')
     this.$store.dispatch('providers/getAllMyProviders')
     this.updateDomainInfo()
@@ -381,27 +369,6 @@ export default {
               )
           }
         })
-    },
-
-    toogleGridView () {
-      this.displayFormat = 'grid'
-      if (localStorage) {
-        localStorage.setItem('displayFormat', 'grid')
-      }
-    },
-
-    toogleListView () {
-      this.displayFormat = 'list'
-      if (localStorage) {
-        localStorage.setItem('displayFormat', 'list')
-      }
-    },
-
-    toogleRecordsView () {
-      this.displayFormat = 'records'
-      if (localStorage) {
-        localStorage.setItem('displayFormat', 'records')
-      }
     },
 
     showDiff () {

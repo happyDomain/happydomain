@@ -55,6 +55,24 @@
               :options="[{value: 0, text: $t('settings.fieldhint.hide')}, {value: 1, text: $t('settings.fieldhint.tooltip')}, {value: 2, text: $t('settings.fieldhint.focused')}, {value: 3, text: $t('settings.fieldhint.always')}]"
             />
           </b-form-group>
+          <b-form-group
+            :label="$t('settings.zoneview.title')"
+          >
+            <b-button-group class="w-100">
+              <b-button :variant="!settings.zoneview ? 'secondary' : 'outline-secondary'" @click="setSetting('zoneview', 0)">
+                <b-icon icon="grid-fill" aria-hidden="true" /><br>
+                {{ $t('settings.zoneview.grid') }}
+              </b-button>
+              <b-button :variant="settings.zoneview === 1 ? 'secondary' : 'outline-secondary'" @click="setSetting('zoneview', 1)">
+                <b-icon icon="list-ul" aria-hidden="true" /><br>
+                {{ $t('settings.zoneview.list') }}
+              </b-button>
+              <b-button :variant="settings.zoneview === 2 ? 'secondary' : 'outline-secondary'" @click="setSetting('zoneview', 2)">
+                <b-icon icon="menu-button-wide-fill" aria-hidden="true" /><br>
+                {{ $t('settings.zoneview.records') }}
+              </b-button>
+            </b-button-group>
+          </b-form-group>
           <div class="d-flex justify-content-around">
             <b-button type="submit" variant="primary">
               {{ $t('settings.save') }}
@@ -177,6 +195,7 @@
 
 <script>
 import axios from 'axios'
+import Vue from 'vue'
 import PasswordChecks from '@/mixins/passwordChecks'
 import Languages from '@/mixins/languages'
 
@@ -245,6 +264,10 @@ export default {
               }
             )
           })
+    },
+
+    setSetting (setting, value) {
+      Vue.set(this.settings, setting, value)
     },
 
     saveSettings () {

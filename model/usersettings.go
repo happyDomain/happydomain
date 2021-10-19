@@ -33,6 +33,12 @@ package happydns
 
 import ()
 
+const (
+	ZONEVIEW_GRID = iota
+	ZONEVIEW_LIST
+	ZONEVIEW_RECORDS
+)
+
 // UserSettings represents the settings for an account.
 type UserSettings struct {
 	// Language saves the locale defined by the user.
@@ -43,6 +49,9 @@ type UserSettings struct {
 
 	// FieldHint stores the way form hints are displayed.
 	FieldHint int `json:"fieldhint"`
+
+	// ZoneView keeps the view of the zone wanted by the user.
+	ZoneView int `json:"zoneview"`
 }
 
 func DefaultUserSettings() *UserSettings {
@@ -50,5 +59,6 @@ func DefaultUserSettings() *UserSettings {
 		Language:   "en",
 		Newsletter: false,
 		FieldHint:  2,
+		ZoneView:   ZONEVIEW_GRID,
 	}
 }
