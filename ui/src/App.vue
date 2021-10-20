@@ -33,72 +33,14 @@
 
 <template>
   <div id="app">
-    <b-navbar :class="user_isLogged?'p-0':''" style="position: relative; z-index: 15">
-      <b-container>
-        <b-navbar-brand class="navbar-brand" to="/">
-          <h-logo height="25" />
-        </b-navbar-brand>
-
-        <b-navbar-nav v-if="user_isLogged" class="ml-auto">
-          <b-nav-form>
-            <h-help size="sm" />
-          </b-nav-form>
-
-          <b-nav-item-dropdown v-if="user_isLogged" right>
-            <template slot="button-content">
-              <b-button v-if="user_getSession.email !== '_no_auth'" size="sm" variant="dark">
-                <b-icon icon="person" aria-hidden="true" /> {{ user_getSession.email }}
-              </b-button>
-              <b-button v-else size="sm" variant="secondary">
-                {{ $t('menu.quick-menu') }}
-              </b-button>
-            </template>
-            <b-dropdown-item to="/domains/">
-              {{ $t('menu.my-domains') }}
-            </b-dropdown-item>
-            <b-dropdown-item to="/providers/">
-              {{ $t('menu.my-providers') }}
-            </b-dropdown-item>
-            <b-dropdown-divider />
-            <b-dropdown-item to="/resolver">
-              {{ $t('menu.dns-resolver') }}
-            </b-dropdown-item>
-            <b-dropdown-divider />
-            <b-dropdown-item to="/me">
-              {{ $t('menu.my-account') }}
-            </b-dropdown-item>
-            <b-dropdown-divider v-if="user_getSession.email !== '_no_auth'" />
-            <b-dropdown-item v-if="user_getSession.email !== '_no_auth'" @click="logout()">
-              {{ $t('menu.logout') }}
-            </b-dropdown-item>
-          </b-nav-item-dropdown>
-        </b-navbar-nav>
-        <b-navbar-nav v-else class="ml-auto">
-          <h-help class="mr-2" size="sm" variant="link" />
-
-          <b-button class="mr-2" variant="info" to="/resolver">
-            <b-icon icon="list" aria-hidden="true" /> {{ $t('menu.dns-resolver') }}
-          </b-button>
-
-          <b-button variant="outline-dark" to="/join">
-            <b-icon icon="person-plus-fill" aria-hidden="true" /> {{ $t('menu.signup') }}
-          </b-button>
-          <b-button variant="primary" class="ml-2" to="/login">
-            <b-icon icon="person-check" aria-hidden="true" /> {{ $t('menu.signin') }}
-          </b-button>
-
-          <b-nav-item-dropdown :text="$i18n.locale" right>
-            <b-dropdown-item v-for="(lid, lang) in languages" :key="lid" @click="chLanguage(lang)">
-              {{ languages[lang] }}
-            </b-dropdown-item>
-          </b-nav-item-dropdown>
-        </b-navbar-nav>
-      </b-container>
-    </b-navbar>
+    <Header />
 
     <router-view class="flex-grow-1" />
 
-    <b-toaster name="b-toaster-content-right" style="position: fixed; top: 70px; right: 0; z-index: 1042; min-width: 30vw;" />
+    <b-toaster
+      name="b-toaster-content-right"
+      style="position: fixed; top: 70px; right: 0; z-index: 1042; min-width: 30vw;"
+    />
 
     <a
       id="voxpeople"
@@ -106,7 +48,10 @@
       target="_blank"
       :title="$t('common.survey')"
     >
-      <b-icon icon="chat-right-text" style="width: 2vw; height: 2vw;" />
+      <b-icon
+        icon="chat-right-text"
+        style="width: 2vw; height: 2vw;"
+      />
     </a>
 
     <footer class="pt-2 pb-2 bg-dark text-light">
@@ -127,14 +72,11 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import Languages from '@/mixins/languages'
 
 export default {
   components: {
-    hHelp: () => import('@/components/hHelp')
+    Header: () => import('@/components/Header')
   },
-
-  mixins: [Languages],
 
   data: function () {
     return {
@@ -173,28 +115,6 @@ export default {
   },
 
   methods: {
-    logout () {
-      this.$store.dispatch('user/logout')
-        .then(
-          (response) => {
-            this.$router.push('/')
-          },
-          (error) => {
-            this.$bvToast.toast(
-              error.response.data.errmsg, {
-                title: this.$t('errors.logout'),
-                autoHideDelay: 5000,
-                toaster: 'b-toaster-content-right'
-              }
-            )
-          }
-        )
-    },
-
-    chLanguage (lang) {
-      this.$i18n.locale = lang
-    },
-
     checkForUpdate (timeout) {
       if (sessionStorage.getItem('happyUpdate') && !this.alreadyShownUpdate) {
         this.alreadyShownUpdate = true
