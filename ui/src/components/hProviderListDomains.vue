@@ -32,7 +32,11 @@
   -->
 
 <template>
-  <h-zone-list :domains="listImportableDomains" loading-str="wait.asking-domains" :parent-is-loading="isLoading">
+  <h-zone-list
+    :domains="listImportableDomains"
+    loading-str="wait.asking-domains"
+    :parent-is-loading="isLoading"
+  >
     <template #badges="{ domain }">
       <b-badge v-if="domain.state" class="ml-1" :variant="domain.state">
         <b-icon v-if="domain.state === 'success'" icon="check" />

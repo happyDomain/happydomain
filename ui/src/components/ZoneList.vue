@@ -32,28 +32,34 @@
   -->
 
 <template>
-  <b-list-group>
-    <b-list-group-item v-if="isLoading" class="d-flex justify-content-center align-items-center">
-      <b-spinner variant="primary" :label="$t('common.spinning')" class="mr-3" /> <i18n :path="loadingStr" />
-    </b-list-group-item>
+  <div>
+    <div v-if="isLoading" class="d-flex justify-content-center align-items-center">
+      <b-spinner variant="primary" :label="$t('common.spinning')" class="my-2 mr-3" /> <i18n :path="loadingStr" />
+    </div>
     <slot v-else-if="domains.length === 0" name="no-domain" />
-    <b-list-group-item
-      v-for="(domain, index) in domains"
-      v-else
-      :key="index"
-      :button="button"
-      class="d-flex justify-content-between align-items-center"
-      @click="$emit('click', domain)"
-    >
-      <div class="text-monospace">
-        <div class="d-inline-block text-center" style="width: 50px;">
-          <img v-if="providers_getAll[domain.id_provider]" :src="'/api/providers/_specs/' + providers_getAll[domain.id_provider]._srctype + '/icon.png'" :alt="providers_getAll[domain.id_provider]._srctype" :title="providers_getAll[domain.id_provider]._srctype" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
-        </div>
-        {{ domain.domain }}
+    <div v-else v-for="(domains, group) in groups" :key="group" :class="Object.keys(groups).length != 1?'border-top':''">
+      <div v-if="Object.keys(groups).length != 1" class="text-center" style="height: 1em">
+        <h3 class="d-inline-block px-1" style="background: white; position: relative; top: -.65em">{{ group }}</h3>
       </div>
-      <slot name="badges" :domain="domain" />
-    </b-list-group-item>
-  </b-list-group>
+      <h-list
+        :items="domains"
+        :button="button"
+        @click="$emit('click', $event)"
+      >
+        <template #default="{ item }">
+          <div class="text-monospace">
+            <div class="d-inline-block text-center" style="width: 50px;">
+              <img v-if="providers_getAll[item.id_provider]" :src="'/api/providers/_specs/' + providers_getAll[item.id_provider]._srctype + '/icon.png'" :alt="providers_getAll[item.id_provider]._srctype" :title="providers_getAll[item.id_provider]._srctype" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+            </div>
+            {{ item.domain }}
+          </div>
+        </template>
+        <template #badges="{ item }">
+          <slot name="badges" :domain="item" />
+        </template>
+      </h-list>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -62,8 +68,16 @@ import { mapGetters } from 'vuex'
 export default {
   name: 'ZoneList',
 
+  components: {
+    hList: () => import('@/components/hList')
+  },
+
   props: {
     button: {
+      type: Boolean,
+      default: false
+    },
+    displayByGroups: {
       type: Boolean,
       default: false
     },
@@ -82,6 +96,24 @@ export default {
   },
 
   computed: {
+    groups () {
+      if (!this.displayByGroups) {
+        return { null: this.domains }
+      }
+
+      const groups = { }
+
+      this.domains.forEach((domain, index) => {
+        if (groups[domain.group] === undefined) {
+          groups[domain.group] = []
+        }
+
+        groups[domain.group].push(domain)
+      })
+
+      return groups
+    },
+
     isLoading () {
       return this.parentIsLoading || this.domains == null || this.providers_getAll == null
     },

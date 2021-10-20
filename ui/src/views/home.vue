@@ -36,41 +36,81 @@
     <i18n path="common.welcome" tag="h1" class="text-center mb-4">
       <h-logo height="40" />
     </i18n>
+
     <b-row>
-      <b-col md="8">
-        <h-zone-list ref="zlist" button :domains="filteredDomains" @click="showDomain($event)">
+      <b-col md="8" class="order-1 order-md-0">
+        <h-zone-list
+          ref="zlist"
+          button
+          :domains="filteredDomains"
+          @click="showDomain($event)"
+        >
           <template #badges>
             <b-badge variant="success">
               OK
             </b-badge>
           </template>
         </h-zone-list>
-        <b-card v-if="filteredProvider && $refs.zlist && !$refs.zlist.isLoading" no-body :class="filteredDomains.length > 0 ? 'mt-4' : ''">
+        <b-card
+          v-if="filteredProvider && $refs.zlist && !$refs.zlist.isLoading"
+          no-body
+          :class="filteredDomains.length > 0 ? 'mt-4' : ''"
+        >
           <template v-if="!noDomainsList" slot="header">
             <div class="d-flex justify-content-between">
               <i18n path="provider.provider">
                 <em>{{ filteredProvider._comment }}</em>
               </i18n>
-              <b-button v-if="$refs.newDomains && $refs.newDomains.listImportableDomains.length > 0" type="button" variant="secondary" size="sm" @click="$refs.newDomains.importAllDomains()">
+              <b-button
+                v-if="$refs.newDomains && $refs.newDomains.listImportableDomains.length > 0"
+                type="button"
+                variant="secondary"
+                size="sm"
+                @click="$refs.newDomains.importAllDomains()"
+              >
                 {{ $t('provider.import-domains') }}
               </b-button>
             </div>
           </template>
-          <h-provider-list-domains ref="newDomains" :provider="filteredProvider" show-domains-with-actions @no-domains-list-change="noDomainsList = $event" />
+          <h-provider-list-domains
+            ref="newDomains"
+            :provider="filteredProvider"
+            show-domains-with-actions
+            @no-domains-list-change="noDomainsList = $event"
+          />
         </b-card>
-        <h-list-group-input-new-domain v-if="$refs.zlist && !$refs.zlist.isLoading && (!filteredProvider || noDomainsList)" autofocus class="mt-2" :my-provider="filteredProvider" />
+        <h-list-group-input-new-domain
+          v-if="$refs.zlist && !$refs.zlist.isLoading && (!filteredProvider || noDomainsList)"
+          autofocus
+          class="mt-2"
+          :my-provider="filteredProvider"
+        />
       </b-col>
-      <b-col md="4">
-        <b-card no-body class="mt-3 mt-md-0">
+
+      <b-col md="4" class="order-0 order-md-1">
+        <b-card
+          no-body
+          class="mb-3"
+        >
           <template slot="header">
             <div class="d-flex justify-content-between">
               <i18n path="provider.title" />
-              <b-button size="sm" variant="light" @click="newProvider">
+              <b-button
+                size="sm"
+                variant="light"
+                @click="newProvider"
+              >
                 <b-icon icon="plus" />
               </b-button>
             </div>
           </template>
-          <h-provider-list ref="providerList" no-label flush :selected-provider="filteredProvider" @provider-selected="filteredProvider = $event" />
+          <h-provider-list
+            ref="providerList"
+            no-label
+            flush
+            :selected-provider="filteredProvider"
+            @provider-selected="filteredProvider = $event"
+          />
         </b-card>
       </b-col>
     </b-row>
@@ -92,6 +132,7 @@ export default {
   data: function () {
     return {
       noDomainsList: true,
+      filteredGroup: null,
       filteredProvider: null
     }
   },

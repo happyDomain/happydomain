@@ -32,46 +32,53 @@
   -->
 
 <template>
-  <b-list-group>
-    <b-list-group-item v-if="isLoading" class="d-flex justify-content-center align-items-center">
+  <h-list
+    button
+    :is-active="(provider) => mySelectedProvider && mySelectedProvider._id === provider._id"
+    :is-loading="isLoading"
+    :items="sortedProviders"
+    @click="selectProvider($event)"
+  >
+    <template #loading>
       <b-spinner variant="primary" label="Spinning" class="mr-3" /> Retrieving your providers...
-    </b-list-group-item>
-    <b-list-group-item v-if="!isLoading && providers_getAll.length == 0" class="text-center">
+    </template>
+    <template #empty>
       You have no provider defined currently. Try <a href="#" @click.prevent="$emit('new-provider')">adding one</a>!
-    </b-list-group-item>
-    <b-list-group-item v-for="(provider, index) in sortedProviders" :key="index" :active="mySelectedProvider && mySelectedProvider._id === provider._id" button class="d-flex justify-content-between align-items-center" @click="selectProvider(provider)">
+    </template>
+
+    <template #default="{ item }">
       <div class="d-flex">
         <div class="text-center" style="width: 50px;">
-          <img v-if="providerSpecs_getAll && providerSpecs_getAll[provider._srctype]" :src="'/api/providers/_specs/' + provider._srctype + '/icon.png'" :alt="providerSpecs_getAll[provider._srctype].name" :title="providerSpecs_getAll[provider._srctype].name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
+          <img v-if="providerSpecs_getAll && providerSpecs_getAll[item._srctype]" :src="'/api/providers/_specs/' + item._srctype + '/icon.png'" :alt="providerSpecs_getAll[item._srctype].name" :title="providerSpecs_getAll[item._srctype].name" style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em">
         </div>
-        <div v-if="provider._comment" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-          {{ provider._comment }}
+        <div v-if="item._comment" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          {{ item._comment }}
         </div>
         <em v-else>No name</em>
       </div>
       <div v-if="!(noLabel && noDropdown)" class="d-flex">
         <div v-if="!noLabel">
-          <b-badge class="ml-1" :variant="domain_in_providers[provider._id] > 0 ? 'success' : 'danger'">
-            {{ domain_in_providers[provider._id] }} domain(s) associated
+          <b-badge class="ml-1" :variant="domain_in_providers[item._id] > 0 ? 'success' : 'danger'">
+            {{ domain_in_providers[item._id] }} domain(s) associated
           </b-badge>
-          <b-badge v-if="providerSpecs_getAll && providerSpecs_getAll[provider._srctype]" class="ml-1" variant="secondary" :title="provider._srctype">
-            {{ providerSpecs_getAll[provider._srctype].name }}
+          <b-badge v-if="providerSpecs_getAll && providerSpecs_getAll[item._srctype]" class="ml-1" variant="secondary" :title="item._srctype">
+            {{ providerSpecs_getAll[item._srctype].name }}
           </b-badge>
         </div>
         <b-dropdown v-if="!noDropdown" no-caret size="sm" style="margin-right: -10px" variant="link">
           <template #button-content>
             <b-icon icon="three-dots" />
           </template>
-          <b-dropdown-item @click="updateProvider($event, provider)">
+          <b-dropdown-item @click="updateProvider($event, item)">
             {{ $t('provider.update') }}
           </b-dropdown-item>
-          <b-dropdown-item @click="deleteProvider($event, provider)">
+          <b-dropdown-item @click="deleteProvider($event, item)">
             {{ $t('provider.delete') }}
           </b-dropdown-item>
         </b-dropdown>
       </div>
-    </b-list-group-item>
-  </b-list-group>
+    </template>
+  </h-list>
 </template>
 
 <script>
@@ -81,6 +88,10 @@ import ProviderApi from '@/api/providers'
 
 export default {
   name: 'ProviderList',
+
+  components: {
+    hList: () => import('@/components/hList')
+  },
 
   props: {
     emitNewIfEmpty: {
