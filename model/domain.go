@@ -50,6 +50,9 @@ type Domain struct {
 	// DomainName is the FQDN of the managed Domain.
 	DomainName string `json:"domain"`
 
+	// Group is a hint string aims to group domains.
+	Group string `json:"group"`
+
 	// ZoneHistory are the identifiers to the Zone attached to the current
 	// Domain.
 	ZoneHistory []int64 `json:"zone_history"`

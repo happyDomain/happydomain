@@ -114,6 +114,11 @@
         "placeholder-new-sub": "new.subdomain",
         "form-new-subdomain": "Add a new subdomain under {0}:"
     },
+    "domaingroups": {
+        "manage": "Manage your domain's groups",
+        "no-group": "Ungroupped",
+        "title": "Your groups"
+    },
     "email": {
         "address": "Email address",
         "instruction": {

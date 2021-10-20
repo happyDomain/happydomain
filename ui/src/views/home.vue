@@ -112,6 +112,31 @@
             @provider-selected="filteredProvider = $event"
           />
         </b-card>
+
+        <b-card
+          v-if="$refs.zlist && !$refs.zlist.isLoading"
+          no-body
+          class="mb-3"
+        >
+          <template slot="header">
+            <div class="d-flex justify-content-between">
+              <i18n path="domaingroups.title" />
+              <b-button
+                size="sm"
+                variant="light"
+                :title="$t('domaingroups.manage')"
+                @click="showGroupModal"
+              >
+                <b-icon icon="grid-fill" />
+              </b-button>
+            </div>
+          </template>
+          <h-domaingroup-list
+            :domains="sortedDomains"
+            :selected-group="filteredGroup"
+            @group-selected="filteredGroup = $event"
+          />
+        </b-card>
       </b-col>
     </b-row>
   </b-container>
@@ -123,6 +148,7 @@ import { mapGetters } from 'vuex'
 export default {
 
   components: {
+    hDomaingroupList: () => import('@/components/hDomaingroupList'),
     hListGroupInputNewDomain: () => import('@/components/hListGroupInputNewDomain'),
     hProviderListDomains: () => import('@/components/hProviderListDomains'),
     hProviderList: () => import('@/components/providerList'),
@@ -132,15 +158,15 @@ export default {
   data: function () {
     return {
       noDomainsList: true,
-      filteredGroup: null,
+      filteredGroup: '',
       filteredProvider: null
     }
   },
 
   computed: {
     filteredDomains () {
-      if (this.sortedDomains && this.filteredProvider) {
-        return this.sortedDomains.filter(d => d.id_provider === this.filteredProvider._id)
+      if (this.sortedDomains && (this.filteredProvider || this.filteredGroup)) {
+        return this.sortedDomains.filter(d => (!this.filteredProvider || d.id_provider === this.filteredProvider._id) && (this.filteredGroup === '' || d.group === this.filteredGroup || (this.filteredGroup === 'undefined' && d.group === undefined)))
       } else {
         return this.sortedDomains
       }
