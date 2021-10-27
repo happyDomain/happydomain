@@ -150,7 +150,7 @@
             {{ $t('common.cancel') }}
           </b-button>
           <b-button variant="success" :disabled="propagationInProgress || zoneDiff === null || selectedDiff.length === 0" @click="ok()">
-            <b-spinner v-if="propagationInProgress" label="Spinning" />
+            <b-spinner v-if="propagationInProgress" label="Spinning" small />
             {{ $t('domains.apply.button') }}
           </b-button>
         </div>
