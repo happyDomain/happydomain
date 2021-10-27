@@ -56,7 +56,7 @@
 
 <script>
 export default {
-  name: 'hList',
+  name: 'HList',
 
   props: {
     button: {

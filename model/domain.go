@@ -51,7 +51,7 @@ type Domain struct {
 	DomainName string `json:"domain"`
 
 	// Group is a hint string aims to group domains.
-	Group string `json:"group"`
+	Group string `json:"group,omitempty"`
 
 	// ZoneHistory are the identifiers to the Zone attached to the current
 	// Domain.

@@ -70,6 +70,16 @@ export default {
           }
         )
       // TODO: handle errors here
+    },
+
+    updateDomain ({ commit }, domain) {
+      DomainsApi.updateDomain(domain)
+        .then(
+          response => {
+            const details = response.data
+            commit('setDomainDetailed', { domain: domain.domain, details })
+          }
+        )
     }
   },
 

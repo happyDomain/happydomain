@@ -42,5 +42,9 @@ export default {
 
   listDomains () {
     return Api().get('/api/domains')
+  },
+
+  updateDomain (domain) {
+    return Api().put('/api/domains/' + encodeURIComponent(domain.domain), { id: domain.id, id_owner: domain.id_owner, id_provider: domain.id_provider, domain: domain.domain, group: domain.group })
   }
 }

@@ -116,7 +116,8 @@
     },
     "domaingroups": {
         "manage": "Manage your domain's groups",
-        "no-group": "Ungroupped",
+        "new": "New group",
+        "no-group": "Miscellaneous",
         "title": "Your groups"
     },
     "email": {

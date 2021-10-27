@@ -49,7 +49,7 @@
 
 <script>
 export default {
-  name: 'hDomaingroupList',
+  name: 'HDomaingroupList',
 
   components: {
     hList: () => import('@/components/hList')
@@ -76,7 +76,7 @@ export default {
         }
       })
 
-      return Object.keys(groups)
+      return Object.keys(groups).sort()
     }
   },
 

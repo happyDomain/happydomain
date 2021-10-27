@@ -46,7 +46,7 @@
             </router-link>
           </b-col>
           <b-col class="pl-0">
-            <b-form-select :value="domain.domain" :options="sortedDomains" value-field="domain" text-field="domain" @input="changeDomain($event)" />
+            <b-form-select :value="domain.domain" :options="sortedDomainsByGroup" value-field="domain" text-field="domain" @input="changeDomain($event)" />
           </b-col>
         </b-row>
 
@@ -235,6 +235,32 @@ export default {
       }
 
       return this.selectedDiff.filter((msg) => (/^MODIFY/.test(msg)))
+    },
+
+    sortedDomainsByGroup () {
+      if (!this.sortedDomains) {
+        return this.sortedDomains
+      }
+
+      const groups = {}
+      this.sortedDomains.forEach((domain) => {
+        if (!groups[domain.group]) {
+          groups[domain.group] = []
+        }
+
+        groups[domain.group].push(domain)
+      })
+
+      const options = []
+      for (const g in groups) {
+        if (g === 'undefined') {
+          options.push(...groups[g])
+        } else {
+          options.push({ label: g, options: groups[g] })
+        }
+      }
+
+      return options
     },
 
     zoneDiffAnalyzed () {

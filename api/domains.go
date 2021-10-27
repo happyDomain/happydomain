@@ -52,6 +52,7 @@ func declareDomainsRoutes(cfg *config.Options, router *gin.RouterGroup) {
 	apiDomainsRoutes.Use(DomainHandler)
 
 	apiDomainsRoutes.GET("", GetDomain)
+	apiDomainsRoutes.PUT("", UpdateDomain)
 	apiDomainsRoutes.DELETE("", delDomain)
 
 	declareZonesRoutes(cfg, apiDomainsRoutes)
@@ -156,6 +157,7 @@ type apiDomain struct {
 	IdProvider  int64               `json:"id_provider"`
 	DomainName  string              `json:"domain"`
 	ZoneHistory []happydns.ZoneMeta `json:"zone_history"`
+	Group       string              `json:"group,omitempty"`
 }
 
 func GetDomain(c *gin.Context) {
@@ -166,6 +168,7 @@ func GetDomain(c *gin.Context) {
 		IdProvider:  domain.IdProvider,
 		DomainName:  domain.DomainName,
 		ZoneHistory: []happydns.ZoneMeta{},
+		Group:       domain.Group,
 	}
 
 	for _, zm := range domain.ZoneHistory {
@@ -179,6 +182,33 @@ func GetDomain(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, ret)
+}
+
+func UpdateDomain(c *gin.Context) {
+	old := c.MustGet("domain").(*happydns.Domain)
+
+	var domain apiDomain
+	err := c.ShouldBindJSON(&domain)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	if old.Id != domain.Id {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "You cannot change the domain reserved ID"})
+		return
+	}
+
+	old.Group = domain.Group
+
+	err = storage.MainStore.UpdateDomain(old)
+	if err != nil {
+		log.Printf("%s: Unable to UpdateDomain in UpdateDomain: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your domain. Please retry later."})
+		return
+	}
+
+	c.JSON(http.StatusOK, old)
 }
 
 func delDomain(c *gin.Context) {

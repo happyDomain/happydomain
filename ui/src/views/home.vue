@@ -42,6 +42,7 @@
         <h-zone-list
           ref="zlist"
           button
+          display-by-groups
           :domains="filteredDomains"
           @click="showDomain($event)"
         >
@@ -136,6 +137,7 @@
             :selected-group="filteredGroup"
             @group-selected="filteredGroup = $event"
           />
+          <h-domaingroup-modal ref="dgModal" />
         </b-card>
       </b-col>
     </b-row>
@@ -149,6 +151,7 @@ export default {
 
   components: {
     hDomaingroupList: () => import('@/components/hDomaingroupList'),
+    hDomaingroupModal: () => import('@/components/hDomaingroupModal'),
     hListGroupInputNewDomain: () => import('@/components/hListGroupInputNewDomain'),
     hProviderListDomains: () => import('@/components/hProviderListDomains'),
     hProviderList: () => import('@/components/providerList'),
@@ -201,6 +204,10 @@ export default {
 
     showDomain (domain) {
       this.$router.push('/domains/' + encodeURIComponent(domain.domain))
+    },
+
+    showGroupModal () {
+      this.$refs.dgModal.show()
     }
   }
 
