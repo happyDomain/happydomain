@@ -52,14 +52,30 @@ steps:
     event:
       - tag
 
-- name: backend
+- name: backend-commit
   image: golang:alpine
   commands:
   - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
-  - go build -v -tags netgo -ldflags '-w' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
   environment:
     CGO_ENABLED: 0
+  when:
+    event:
+      exclude:
+        - tag
+
+- name: backend-tag
+  image: golang:alpine
+  commands:
+  - sed -i '/yarn --offline build/d' ui/assets.go
+  - go generate -v
+  - go build -v -tags netgo -ldflags '-w -X main.version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+  environment:
+    CGO_ENABLED: 0
+  when:
+    event:
+      - tag
 
 - name: vet
   image: golang:alpine
@@ -103,14 +119,30 @@ steps:
     event:
       - tag
 
-- name: build macOS
+- name: build-commit macOS
   image: golang:alpine
   commands:
-  - go build -v -tags netgo -ldflags '-w' -o happydns-darwin-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-darwin-${DRONE_STAGE_ARCH}
   environment:
     CGO_ENABLED: 0
     GOOS: darwin
     GOARCH: amd64
+  when:
+    event:
+      exclude:
+        - tag
+
+- name: build-tag macOS
+  image: golang:alpine
+  commands:
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-darwin-${DRONE_STAGE_ARCH}
+  environment:
+    CGO_ENABLED: 0
+    GOOS: darwin
+    GOARCH: amd64
+  when:
+    event:
+      - tag
 
 - name: deploy macOS
   image: appleboy/drone-scp
@@ -157,6 +189,12 @@ steps:
     password:
       from_secret: docker_password
 
+trigger:
+  event:
+  - cron
+  - push
+  - tag
+
 ---
 kind: pipeline
 type: docker
@@ -175,15 +213,32 @@ steps:
   - yarn --cwd ui install
   - yarn --cwd ui --offline build
 
-- name: backend
+- name: backend-commit
   image: golang:alpine
   commands:
   - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
-  - go build -v -tags netgo -ldflags '-w' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
   - ln happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydns
   environment:
     CGO_ENABLED: 0
+  when:
+    event:
+      exclude:
+        - tag
+
+- name: backend-tag
+  image: golang:alpine
+  commands:
+  - sed -i '/yarn --offline build/d' ui/assets.go
+  - go generate -v
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+  - ln happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydns
+  environment:
+    CGO_ENABLED: 0
+  when:
+    event:
+      - tag
 
 - name: deploy
   image: appleboy/drone-scp
@@ -219,14 +274,30 @@ steps:
     event:
       - tag
 
-- name: build macOS
+- name: build-commit macOS
   image: golang:alpine
   commands:
-  - go build -v -tags netgo -ldflags '-w' -o happydns-darwin-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-darwin-${DRONE_STAGE_ARCH}
   environment:
     CGO_ENABLED: 0
     GOOS: darwin
     GOARCH: arm64
+  when:
+    event:
+      exclude:
+        - tag
+
+- name: build-tag macOS
+  image: golang:alpine
+  commands:
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-darwin-${DRONE_STAGE_ARCH}
+  environment:
+    CGO_ENABLED: 0
+    GOOS: darwin
+    GOARCH: arm64
+  when:
+    event:
+      - tag
 
 - name: deploy macOS
   image: appleboy/drone-scp
@@ -274,6 +345,12 @@ steps:
     password:
       from_secret: docker_password
 
+trigger:
+  event:
+  - cron
+  - push
+  - tag
+
 ---
 kind: pipeline
 type: docker
@@ -292,16 +369,34 @@ steps:
   - yarn --cwd ui install
   - yarn --cwd ui --offline build
 
-- name: backend armel
+- name: backend-commit armel
   image: golang:alpine
   commands:
   - apk --no-cache add build-base
   - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
-  - go build -v -tags netgo -ldflags '-w' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
   environment:
     CGO_ENABLED: 0
     GOARM: 5
+  when:
+    event:
+      exclude:
+        - tag
+
+- name: backend-tag armel
+  image: golang:alpine
+  commands:
+  - apk --no-cache add build-base
+  - sed -i '/yarn --offline build/d' ui/assets.go
+  - go generate -v
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
+  environment:
+    CGO_ENABLED: 0
+    GOARM: 5
+  when:
+    event:
+      - tag
 
 - name: deploy armel
   image: appleboy/drone-scp
@@ -337,14 +432,30 @@ steps:
     event:
       - tag
 
-- name: backend armhf
+- name: backend-commit armhf
   image: golang:alpine
   commands:
   - apk --no-cache add build-base
-  - go build -v -tags netgo -ldflags '-w' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
   environment:
     CGO_ENABLED: 0
     GOARM: 6
+  when:
+    event:
+      exclude:
+        - tag
+
+- name: backend-tag armhf
+  image: golang:alpine
+  commands:
+  - apk --no-cache add build-base
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
+  environment:
+    CGO_ENABLED: 0
+    GOARM: 6
+  when:
+    event:
+      - tag
 
 - name: deploy armhf
   image: appleboy/drone-scp
@@ -380,15 +491,32 @@ steps:
     event:
       - tag
 
-- name: backend armv7
+- name: backend-commit armv7
   image: golang:alpine
   commands:
   - apk --no-cache add build-base
-  - go build -v -tags netgo -ldflags '-w' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
   - ln happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7 happydns
   environment:
     CGO_ENABLED: 0
     GOARM: 7
+  when:
+    event:
+      exclude:
+        - tag
+
+- name: backend-tag armv7
+  image: golang:alpine
+  commands:
+  - apk --no-cache add build-base
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
+  - ln happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7 happydns
+  environment:
+    CGO_ENABLED: 0
+    GOARM: 7
+  when:
+    event:
+      - tag
 
 - name: deploy armv7
   image: appleboy/drone-scp
@@ -436,6 +564,12 @@ steps:
     password:
       from_secret: docker_password
 
+trigger:
+  event:
+  - cron
+  - push
+  - tag
+
 ---
 kind: pipeline
 name: docker-manifest
@@ -454,6 +588,7 @@ steps:
 
 trigger:
   event:
+  - cron
   - push
   - tag
 

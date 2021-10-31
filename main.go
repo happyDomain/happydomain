@@ -51,9 +51,14 @@ import (
 	_ "git.happydns.org/happydns/storage/leveldb"
 )
 
+var (
+	Version = "custom-build"
+)
+
 func main() {
 	var err error
 
+	log.Println("This is happyDNS", Version)
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	// Load and parse options
