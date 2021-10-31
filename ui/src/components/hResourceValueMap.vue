@@ -33,7 +33,7 @@
 
 <template>
   <div ng-if="!isLoading()">
-    <div v-for="(v,key) in value" :key="key">
+    <div v-for="(v,key) in val" :key="key">
       <b-row>
         <b-col>
           <h3>
@@ -57,14 +57,6 @@
           </h3>
         </b-col>
         <b-col v-if="!key || !editKeys[key]" sm="auto">
-          <b-button v-if="!editChildrenKeys[key]" type="button" size="sm" variant="outline-primary" class="mx-1" @click="toogleChildrenEdit(key)">
-            <b-icon icon="pencil" />
-            {{ $t('common.edit') }}
-          </b-button>
-          <b-button v-else type="button" size="sm" variant="success" class="mx-1" @click="saveObject(key)">
-            <b-icon icon="check" />
-            {{ $t('domains.save-modifications') }}
-          </b-button>
           <b-button type="button" size="sm" variant="outline-danger" class="mx-1" @click="deleteKey(key)">
             <b-icon icon="trash" />
             {{ $t('common.delete') }}
@@ -79,8 +71,9 @@
       </b-row>
       <h-resource-value
         v-if="key"
-        v-model="v[key]"
-        :edit="editChildrenKeys[key]"
+        ref="resource"
+        v-model="val[key]"
+        edit
         :services="services"
         :specs="service_specs"
         :type="main_type"
@@ -126,7 +119,6 @@ export default {
 
   data: function () {
     return {
-      editChildrenKeys: {},
       editKeys: {},
       newKeys: {},
       key_type: '',
@@ -214,32 +206,22 @@ export default {
         Vue.delete(this.value, key)
       }
       Vue.delete(this.editKeys, key)
+      if (key === '') {
+        this.toogleChildrenEdit(this.newKeys[key], true)
+      }
       this.$emit('save-service')
     },
 
     saveChildrenValues () {
-      for (const key in this.editChildrenKeys) {
-        if (this.editChildrenKeys[key]) {
-          this.saveObject(key)
-        }
-      }
+      this.$refs.resource.saveChildrenValues()
 
       for (const key in this.editKeys) {
         if (this.editKeys[key]) {
           this.rename(key)
         }
       }
-    },
 
-    saveObject (key) {
-      const vm = this
-      this.$emit('save-service', function () {
-        Vue.set(vm.editChildrenKeys, key, false)
-      })
-    },
-
-    toogleChildrenEdit (key) {
-      Vue.set(this.editChildrenKeys, key, !this.editChildrenKeys[key])
+      this.$emit('save-service')
     },
 
     toogleKeyEdit (key, forceValue) {
