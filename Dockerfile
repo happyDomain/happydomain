@@ -1,4 +1,4 @@
-FROM node:lts-alpine as nodebuild
+FROM node:14-alpine as nodebuild
 
 WORKDIR /go/src/git.happydns.org/happydns
 
@@ -11,7 +11,7 @@ RUN yarn --cwd ui install
 RUN yarn --cwd ui --offline build
 
 
-FROM golang:alpine as gobuild
+FROM golang:1-alpine as gobuild
 
 RUN apk add --no-cache go-bindata
 
