@@ -17,7 +17,7 @@ require (
 	github.com/ovh/go-ovh v1.1.0
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/ugorji/go v1.2.6 // indirect
-	github.com/yuin/goldmark v1.4.3
+	github.com/yuin/goldmark v1.4.4
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/mail.v2 v2.3.1 // indirect
