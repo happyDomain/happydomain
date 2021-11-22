@@ -6,9 +6,9 @@ RUN apk --no-cache add python2 build-base
 
 COPY ui/ ui/
 
-RUN yarn config set network-timeout 100000
-RUN yarn --cwd ui install
-RUN yarn --cwd ui --offline build
+RUN yarn config set network-timeout 100000 && \
+    yarn --cwd ui install && \
+    yarn --cwd ui --offline build
 
 
 FROM golang:1-alpine as gobuild
@@ -38,7 +38,7 @@ RUN sed -i '/yarn --offline build/d' ui/assets.go && \
     go build -v -ldflags '-w'
 
 
-FROM alpine
+FROM alpine:3.14
 
 EXPOSE 8081
 
