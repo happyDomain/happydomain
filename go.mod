@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/StackExchange/dnscontrol/v3 v3.12.0
-	github.com/gin-gonic/gin v1.7.6
+	github.com/gin-gonic/gin v1.7.7
 	github.com/go-mail/mail v2.3.1+incompatible
 	github.com/go-playground/validator/v10 v10.7.0 // indirect
 	github.com/go-sql-driver/mysql v1.6.0
