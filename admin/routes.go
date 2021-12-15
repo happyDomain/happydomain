@@ -53,6 +53,7 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 func ApiResponse(c *gin.Context, data interface{}, err error) {
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
 	}
 	c.JSON(http.StatusOK, data)
 }
