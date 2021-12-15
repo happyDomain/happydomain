@@ -35,7 +35,6 @@ import (
 	"bytes"
 	"flag"
 	"io"
-	"io/fs"
 	"net/mail"
 	"text/template"
 
@@ -138,8 +137,8 @@ func SendMail(to *mail.Address, subject, content string) (err error) {
 		return
 	}
 
-	if data, err := fs.ReadFile(ui.GetEmbedFS(), "dist/img/happydns.png"); err != nil {
-		m.EmbedReader("happydns.png", bytes.NewReader(data))
+	if data, err := ui.GetEmbedFS().Open("dist/img/happydns.png"); err == nil {
+		m.EmbedReader("happydns.png", data)
 	}
 
 	if t, err := template.New("mailHTML").Parse(mailHTMLTpl); err != nil {
