@@ -141,6 +141,7 @@ export default {
               this.$bvToast.toast(
                 error.response.data.errmsg, {
                   title: this.$t('errors.login'),
+                  variant: 'danger',
                   autoHideDelay: 5000,
                   toaster: 'b-toaster-content-right'
                 }
