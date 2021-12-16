@@ -32,10 +32,21 @@
 import axios from 'axios'
 
 export default () => {
-  return axios.create({
+  const a = axios.create({
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json'
     }
   })
+
+  a.interceptors.response.use((response) => {
+    return response
+  }, (error) => {
+    if (error.response && error.response.status === 401 && error.response.headers && error.response.headers.location) {
+      window.location = error.response.headers.location
+    }
+    return Promise.reject(error)
+  })
+
+  return a
 }

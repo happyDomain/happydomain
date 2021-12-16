@@ -127,6 +127,18 @@ func retrieveSessionFromClaims(claims *UserClaims, user *happydns.User, session_
 	return
 }
 
+func requireLogin(opts *config.Options, c *gin.Context, msg string) {
+	if opts.ExternalAuth.URL != nil {
+		customurl := *opts.ExternalAuth.URL
+		q := customurl.Query()
+		q.Set("errmsg", msg)
+		customurl.RawQuery = q.Encode()
+		c.Header("Location", customurl.String())
+	}
+
+	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": msg})
+}
+
 func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var token string
@@ -143,7 +155,7 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 			if optional {
 				c.Next()
 			} else {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "No authorization token found in cookie nor in Authorization header."})
+				requireLogin(opts, c, "No authorization token found in cookie nor in Authorization header.")
 			}
 			return
 		}
@@ -157,7 +169,7 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 		if err != nil {
 			log.Printf("%s provide a bad JWT claims: %s", c.ClientIP(), err.Error())
 			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Something goes wrong with your session. Please reconnect.")})
+			requireLogin(opts, c, "Something goes wrong with your session. Please reconnect.")
 			return
 		}
 
@@ -165,14 +177,14 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 		if len(claims.Profile.UserId) == 0 {
 			log.Printf("%s: no UserId found in JWT claims", c.ClientIP())
 			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Something goes wrong with your session. Please reconnect.")})
+			requireLogin(opts, c, "Something goes wrong with your session. Please reconnect.")
 			return
 		}
 
 		if claims.Profile.Email == "" {
 			log.Printf("%s: no Email found in JWT claims", c.ClientIP())
 			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Something goes wrong with your session. Please reconnect.")})
+			requireLogin(opts, c, "Something goes wrong with your session. Please reconnect.")
 			return
 		}
 
@@ -181,7 +193,7 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 		if err != nil {
 			log.Printf("%s %s", c.ClientIP(), err.Error())
 			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Something goes wrong with your session. Please reconnect.")})
+			requireLogin(opts, c, "Something goes wrong with your session. Please reconnect.")
 			return
 		}
 
@@ -193,7 +205,7 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 		if err != nil {
 			log.Printf("%s %s", c.ClientIP(), err.Error())
 			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Your session has expired. Please reconnect.")})
+			requireLogin(opts, c, "Your session has expired. Please reconnect.")
 			return
 		}
 

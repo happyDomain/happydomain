@@ -33,6 +33,7 @@ package config // import "happydns.org/config"
 
 import (
 	"encoding/base64"
+	"net/url"
 )
 
 type JWTSecretKey []byte
@@ -48,5 +49,27 @@ func (i *JWTSecretKey) Set(value string) error {
 	}
 
 	*i = z
+	return nil
+}
+
+type URL struct {
+	URL *url.URL
+}
+
+func (i *URL) String() string {
+	if i.URL != nil {
+		return i.URL.String()
+	} else {
+		return ""
+	}
+}
+
+func (i *URL) Set(value string) error {
+	u, err := url.Parse(value)
+	if err != nil {
+		return err
+	}
+
+	i.URL = u
 	return nil
 }

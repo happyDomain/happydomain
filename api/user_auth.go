@@ -94,7 +94,7 @@ func displayAuthToken(c *gin.Context) {
 
 func displayNotAuthToken(opts *config.Options, c *gin.Context) {
 	if !opts.NoAuth {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "Authorization required"})
+		requireLogin(opts, c, "Authorization required")
 		return
 	}
 

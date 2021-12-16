@@ -49,6 +49,7 @@ func (o *Options) declareFlags() {
 	flag.Var(&o.StorageEngine, "storage-engine", fmt.Sprintf("Select the storage engine between %v", storage.GetStorageEngines()))
 	flag.BoolVar(&o.NoAuth, "no-auth", false, "Disable user access control, use default account")
 	flag.Var(&o.JWTSecretKey, "jwt-secret-key", "Secret key used to verify JWT authentication tokens (a random secret is used if undefined)")
+	flag.Var(&o.ExternalAuth, "external-auth", "Base URL to use for login and registration (use embedded forms if left empty)")
 
 	// Others flags are declared in some other files likes sources, storages, ... when they need specials configurations
 }

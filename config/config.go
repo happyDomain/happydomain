@@ -71,6 +71,9 @@ type Options struct {
 	// NoAuth controls if there is user access control or not.
 	NoAuth bool
 
+	// ExternalAuth is the URL of the login form to use instead of the embedded one.
+	ExternalAuth URL
+
 	// JWTSecretKey stores the private key to sign and verify JWT tokens.
 	JWTSecretKey JWTSecretKey
 }
