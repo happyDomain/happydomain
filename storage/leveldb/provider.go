@@ -32,6 +32,7 @@
 package database
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"reflect"
@@ -66,7 +67,7 @@ func (s *LevelDBStorage) GetProviderMetas(u *happydns.User) (srcs []happydns.Pro
 			return
 		}
 
-		if srcMeta.OwnerId != u.Id {
+		if !bytes.Equal(srcMeta.OwnerId, u.Id) {
 			continue
 		}
 
@@ -89,7 +90,7 @@ func (s *LevelDBStorage) GetProviderMeta(u *happydns.User, id int64) (srcMeta *h
 		return
 	}
 
-	if srcMeta.OwnerId != u.Id {
+	if !bytes.Equal(srcMeta.OwnerId, u.Id) {
 		srcMeta = nil
 		err = leveldb.ErrNotFound
 	}
@@ -110,7 +111,7 @@ func (s *LevelDBStorage) GetProvider(u *happydns.User, id int64) (src *happydns.
 		return
 	}
 
-	if srcMeta.OwnerId != u.Id {
+	if !bytes.Equal(srcMeta.OwnerId, u.Id) {
 		src = nil
 		err = leveldb.ErrNotFound
 	}

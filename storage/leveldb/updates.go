@@ -40,6 +40,7 @@ type LevelDBMigrationFunc func(s *LevelDBStorage) error
 
 var migrations []LevelDBMigrationFunc = []LevelDBMigrationFunc{
 	migrateFrom0,
+	migrateFrom1,
 }
 
 func (s *LevelDBStorage) DoMigration() (err error) {
@@ -70,17 +71,17 @@ func (s *LevelDBStorage) DoMigration() (err error) {
 	}
 
 	for v, migration := range migrations[version:] {
-		log.Printf("Doing migration from %d to %d", v, v+1)
+		log.Printf("Doing migration from %d to %d", version+v, version+v+1)
 		// Do the migration
 		if err = migration(s); err != nil {
 			return
 		}
 
 		// Save the step
-		if err = s.put("version", v+1); err != nil {
+		if err = s.put("version", version+v+1); err != nil {
 			return
 		}
-		log.Printf("Migration from %d to %d DONE!", v, v+1)
+		log.Printf("Migration from %d to %d DONE!", version+v, version+v+1)
 	}
 
 	return nil

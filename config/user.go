@@ -39,12 +39,12 @@ import (
 
 // GetAccountRecoveryURL returns the absolute URL corresponding to the recovery
 // URL of the given account.
-func (o *Options) GetAccountRecoveryURL(u *happydns.User) string {
+func (o *Options) GetAccountRecoveryURL(u *happydns.UserAuth) string {
 	return o.BuildURL_noescape("/forgotten-password?u=%x&k=%s", u.Id, url.QueryEscape(u.GenAccountRecoveryHash(false)))
 }
 
 // GetRegistrationURL returns the absolute URL corresponding to the e-mail
 // validation page of the given account.
-func (o *Options) GetRegistrationURL(u *happydns.User) string {
+func (o *Options) GetRegistrationURL(u *happydns.UserAuth) string {
 	return o.BuildURL_noescape("/email-validation?u=%x&k=%s", u.Id, url.QueryEscape(u.GenRegistrationHash(false)))
 }

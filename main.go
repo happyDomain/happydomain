@@ -40,10 +40,8 @@ import (
 	"syscall"
 	"time"
 
-	"git.happydns.org/happydns/api"
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/internal/app"
-	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/storage"
 
 	_ "git.happydns.org/happydns/services/providers/google"
@@ -81,19 +79,6 @@ func main() {
 	}
 
 	if opts.NoAuth {
-		// Check if the default account exists.
-		if !storage.MainStore.UserExists(api.NO_AUTH_ACCOUNT) {
-			if user, err := happydns.NewUser(api.NO_AUTH_ACCOUNT, ""); err != nil {
-				log.Fatal("Unable to create default account:", err)
-			} else {
-				user.Settings = *happydns.DefaultUserSettings()
-				if err := storage.MainStore.CreateUser(user); err != nil {
-					log.Fatal("Unable to create default account in database:", err)
-				} else {
-					log.Println("Default account for NoAuth created.")
-				}
-			}
-		}
 		log.Println("WARNING: NoAuth option has to be use for testing or personnal purpose behind another restriction/authentication method.")
 	}
 

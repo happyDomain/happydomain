@@ -51,6 +51,23 @@ func (s *LevelDBStorage) GetSession(id []byte) (session *happydns.Session, err e
 	return s.getSession(fmt.Sprintf("user.session-%x", id))
 }
 
+func (s *LevelDBStorage) GetAuthUserSessions(user *happydns.UserAuth) (sessions []*happydns.Session, err error) {
+	iter := s.search("user.session-")
+	defer iter.Release()
+
+	for iter.Next() {
+		var s happydns.Session
+
+		err = decodeData(iter.Value(), &s)
+		if err != nil {
+			return
+		}
+		sessions = append(sessions, &s)
+	}
+
+	return
+}
+
 func (s *LevelDBStorage) GetUserSessions(user *happydns.User) (sessions []*happydns.Session, err error) {
 	iter := s.search("user.session-")
 	defer iter.Release()
@@ -69,12 +86,13 @@ func (s *LevelDBStorage) GetUserSessions(user *happydns.User) (sessions []*happy
 }
 
 func (s *LevelDBStorage) CreateSession(session *happydns.Session) error {
-	key, id, err := s.findBytesKey("user.session-", 255)
+	key, id, err := s.findBytesKey("user.session-", 16)
 	if err != nil {
 		return err
 	}
 
 	session.Id = id
+
 	return s.put(key, session)
 }
 

@@ -34,16 +34,13 @@ package admin
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydns/actions"
 	"git.happydns.org/happydns/api"
 	"git.happydns.org/happydns/config"
 	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/storage"
-	"git.happydns.org/happydns/utils"
 )
 
 func declareUsersRoutes(opts *config.Options, router *gin.RouterGroup) {
@@ -57,21 +54,6 @@ func declareUsersRoutes(opts *config.Options, router *gin.RouterGroup) {
 	apiUsersRoutes.GET("", getUser)
 	apiUsersRoutes.PUT("", updateUser)
 	apiUsersRoutes.DELETE("", deleteUser)
-
-	apiUsersRoutes.POST("/recover_link", func(c *gin.Context) {
-		recoverUserAcct(opts, c)
-	})
-	apiUsersRoutes.POST("/reset_password", resetUserPasswd)
-	apiUsersRoutes.POST("/send_recover_email", func(c *gin.Context) {
-		sendRecoverUserAcct(opts, c)
-	})
-	apiUsersRoutes.POST("/send_validation_email", func(c *gin.Context) {
-		sendValidateUserEmail(opts, c)
-	})
-	apiUsersRoutes.POST("/validation_link", func(c *gin.Context) {
-		emailValidationLink(opts, c)
-	})
-	apiUsersRoutes.POST("/validate_email", validateEmail)
 
 	declareDomainsRoutes(opts, apiUsersRoutes)
 	declareProvidersRoutes(opts, apiUsersRoutes)
@@ -106,7 +88,7 @@ func newUser(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
-	uu.Id = 0
+	uu.Id = []byte{}
 
 	ApiResponse(c, uu, storage.MainStore.CreateUser(uu))
 }
@@ -139,69 +121,6 @@ func deleteUser(c *gin.Context) {
 	user := c.MustGet("user").(*happydns.User)
 
 	ApiResponse(c, true, storage.MainStore.DeleteUser(user))
-}
-
-func emailValidationLink(opts *config.Options, c *gin.Context) {
-	user := c.MustGet("user").(*happydns.User)
-
-	ApiResponse(c, opts.GetRegistrationURL(user), nil)
-}
-
-func recoverUserAcct(opts *config.Options, c *gin.Context) {
-	user := c.MustGet("user").(*happydns.User)
-
-	ApiResponse(c, opts.GetAccountRecoveryURL(user), nil)
-}
-
-type resetPassword struct {
-	Password string
-}
-
-func resetUserPasswd(c *gin.Context) {
-	user := c.MustGet("user").(*happydns.User)
-
-	urp := &resetPassword{}
-	err := c.ShouldBindJSON(&urp)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
-		return
-	}
-
-	if urp.Password == "" {
-		urp.Password, err = utils.GeneratePassword()
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": err.Error()})
-			return
-		}
-	}
-
-	err = user.DefinePassword(urp.Password)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": err.Error()})
-		return
-	}
-
-	ApiResponse(c, urp, storage.MainStore.UpdateUser(user))
-}
-
-func sendRecoverUserAcct(opts *config.Options, c *gin.Context) {
-	user := c.MustGet("user").(*happydns.User)
-
-	ApiResponse(c, true, actions.SendRecoveryLink(opts, user))
-}
-
-func sendValidateUserEmail(opts *config.Options, c *gin.Context) {
-	user := c.MustGet("user").(*happydns.User)
-
-	ApiResponse(c, true, actions.SendValidationLink(opts, user))
-}
-
-func validateEmail(c *gin.Context) {
-	user := c.MustGet("user").(*happydns.User)
-
-	now := time.Now()
-	user.EmailValidated = &now
-	ApiResponse(c, user, storage.MainStore.UpdateUser(user))
 }
 
 func tidyDB(c *gin.Context) {

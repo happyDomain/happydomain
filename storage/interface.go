@@ -45,6 +45,32 @@ type Storage interface {
 	// Close shutdown the connection with the database and releases all structure.
 	Close() error
 
+	// AUTH -------------------------------------------------------
+
+	// GetAuthUsers retrieves the list of known Users.
+	GetAuthUsers() (happydns.UserAuths, error)
+
+	// GetAuthUser retrieves the User with the given identifier.
+	GetAuthUser(id []byte) (*happydns.UserAuth, error)
+
+	// GetAuthUserByEmail retrives the User with the given email address.
+	GetAuthUserByEmail(email string) (*happydns.UserAuth, error)
+
+	// AuthUserExists checks if the given email address is already associated to an User.
+	AuthUserExists(email string) bool
+
+	// CreateAuthUser creates a record in the database for the given User.
+	CreateAuthUser(user *happydns.UserAuth) error
+
+	// UpdateAuthUser updates the fields of the given User.
+	UpdateAuthUser(user *happydns.UserAuth) error
+
+	// DeleteAuthUser removes the given User from the database.
+	DeleteAuthUser(user *happydns.UserAuth) error
+
+	// ClearAuthUsers deletes all AuthUsers present in the database.
+	ClearAuthUsers() error
+
 	// DOMAINS ----------------------------------------------------
 
 	// GetDomains retrieves all Domains associated to the given User.
@@ -105,6 +131,9 @@ type Storage interface {
 	// GetSession retrieves the Session with the given identifier.
 	GetSession(id []byte) (*happydns.Session, error)
 
+	// GetAuthUserSessions retrieves all Session for the given AuthUser.
+	GetAuthUserSessions(user *happydns.UserAuth) ([]*happydns.Session, error)
+
 	// GetUserSessions retrieves all Session for the given User.
 	GetUserSessions(user *happydns.User) ([]*happydns.Session, error)
 
@@ -126,13 +155,10 @@ type Storage interface {
 	GetUsers() (happydns.Users, error)
 
 	// GetUser retrieves the User with the given identifier.
-	GetUser(id int64) (*happydns.User, error)
+	GetUser(id []byte) (*happydns.User, error)
 
 	// GetUserByEmail retrives the User with the given email address.
 	GetUserByEmail(email string) (*happydns.User, error)
-
-	// UserExists checks if the given email address is already associated to an User.
-	UserExists(email string) bool
 
 	// CreateUser creates a record in the database for the given User.
 	CreateUser(user *happydns.User) error

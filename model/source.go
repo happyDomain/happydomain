@@ -66,7 +66,7 @@ type SourceMeta struct {
 	Id int64 `json:"_id"`
 
 	// OwnerId is the User's identifier for the current Source.
-	OwnerId int64 `json:"_ownerid"`
+	OwnerId []byte `json:"_ownerid"`
 
 	// Comment is a string that helps user to distinguish the Source.
 	Comment string `json:"_comment,omitempty"`

@@ -1,4 +1,4 @@
-// Copyright or © or Copr. happyDNS (2020)
+// Copyright or © or Copr. happyDNS (2021)
 //
 // contact@happydns.org
 //
@@ -29,47 +29,24 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package happydns
+package config // import "happydns.org/config"
 
 import (
-	"time"
+	"encoding/base64"
 )
 
-// User represents an account.
-type User struct {
-	// Id is the User's identifier.
-	Id HexaString
+type JWTSecretKey []byte
 
-	// Email is the User's login and mean of contact.
-	Email string
-
-	// CreatedAt is the time when the User logs in for the first time.
-	CreatedAt time.Time
-
-	// LastSeen is the time when the User used happyDNS for the last time (in a 12h frame).
-	LastSeen time.Time
-
-	// Settings holds the settings for an account.
-	Settings UserSettings `json:settings,omitempty`
+func (i *JWTSecretKey) String() string {
+	return base64.StdEncoding.EncodeToString(*i)
 }
 
-// Users is a group of User.
-type Users []*User
-
-// NewUser fills a new User structure.
-func NewUser(email string) (u *User, err error) {
-	u = &User{
-		Email:     email,
-		CreatedAt: time.Now(),
+func (i *JWTSecretKey) Set(value string) error {
+	z, err := base64.StdEncoding.DecodeString(value)
+	if err != nil {
+		return err
 	}
 
-	return
-}
-
-// Update updates updatables user fields.
-func (u *User) Update(email string) (err error) {
-	u.Email = email
-	u.LastSeen = time.Now()
-
-	return
+	*i = z
+	return nil
 }

@@ -32,57 +32,154 @@
 package api
 
 import (
-	"encoding/base64"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v4"
 
 	"git.happydns.org/happydns/config"
+	"git.happydns.org/happydns/model"
 	"git.happydns.org/happydns/storage"
 )
 
+type UserProfile struct {
+	UserId        []byte    `json:"userid"`
+	Email         string    `json:"email"`
+	EmailVerified bool      `json:"email_verified"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+type UserClaims struct {
+	Profile UserProfile `json:"profile"`
+	jwt.RegisteredClaims
+}
+
 const COOKIE_NAME = "happydns_session"
+
+var signingMethod = jwt.SigningMethodHS512
+
+func updateUserFromClaims(user *happydns.User, claims *UserClaims) {
+	user.Email = claims.Profile.Email
+	user.LastSeen = time.Now()
+}
+
+func retrieveUserFromClaims(claims *UserClaims) (user *happydns.User, err error) {
+	user, err = storage.MainStore.GetUser(claims.Profile.UserId)
+	if err != nil {
+		// The user doesn't exists yet: create it!
+		user = &happydns.User{
+			Id:        claims.Profile.UserId,
+			Email:     claims.Profile.Email,
+			CreatedAt: time.Now(),
+			LastSeen:  time.Now(),
+			Settings:  *happydns.DefaultUserSettings(),
+		}
+
+		err = storage.MainStore.UpdateUser(user)
+		if err != nil {
+			err = fmt.Errorf("has a correct JWT, but an error occurs when creating the user: %w", err)
+			return
+		}
+	} else if time.Since(user.LastSeen) > time.Hour*12 {
+		// Update user's data when connected more than 12 hours
+		updateUserFromClaims(user, claims)
+
+		err = storage.MainStore.UpdateUser(user)
+		if err != nil {
+			err = fmt.Errorf("has a correct JWT, user has been found, but an error occurs when updating user's information: %w", err)
+			return
+		}
+	}
+
+	return
+}
+
+func retrieveSessionFromClaims(claims *UserClaims, user *happydns.User, session_id []byte) (session *happydns.Session, err error) {
+	session, err = storage.MainStore.GetSession(session_id)
+	if err != nil {
+		// The session doesn't exists yet: create it!
+		session = &happydns.Session{
+			Id:       session_id,
+			IdUser:   claims.Profile.UserId,
+			IssuedAt: time.Now(),
+		}
+
+		err = storage.MainStore.UpdateSession(session)
+		if err != nil {
+			err = fmt.Errorf("has a correct JWT, but an error occurs when creating the session: %w", err)
+			return
+		}
+
+		// Update user's data
+		updateUserFromClaims(user, claims)
+
+		err = storage.MainStore.UpdateUser(user)
+		if err != nil {
+			err = fmt.Errorf("has a correct JWT, session has been created, but an error occurs when updating user's information: %w", err)
+			return
+		}
+	}
+
+	return
+}
 
 func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var sessionid []byte
+		var token string
 
-		// Retrieve the session from cookie or header
+		// Retrieve the token from cookie or header
 		if cookie, err := c.Cookie(COOKIE_NAME); err == nil {
-			if sessionid, err = base64.StdEncoding.DecodeString(cookie); err != nil {
-				c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Unable to authenticate request due to invalid cookie value: %s", err.Error())})
-				return
-			}
+			token = cookie
 		} else if flds := strings.Fields(c.GetHeader("Authorization")); len(flds) == 2 && flds[0] == "Bearer" {
-			if sessionid, err = base64.StdEncoding.DecodeString(flds[1]); err != nil {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Unable to authenticate request due to invalid Authorization header value: %s", err.Error())})
-				return
+			token = flds[1]
+		}
+
+		// Stop here if there is no cookie
+		if len(token) == 0 {
+			if optional {
+				c.Next()
+			} else {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "No authorization token found in cookie nor in Authorization header."})
 			}
-		}
-
-		// Stop here if there is no cookie and we allow no auth
-		if optional && (sessionid == nil || len(sessionid) == 0) {
-			c.Next()
 			return
 		}
 
-		session, err := storage.MainStore.GetSession(sessionid)
+		// Validate the token and retrieve claims
+		claims := &UserClaims{}
+		_, err := jwt.ParseWithClaims(token, claims,
+			func(token *jwt.Token) (interface{}, error) {
+				return []byte(opts.JWTSecretKey), nil
+			}, jwt.WithValidMethods([]string{signingMethod.Name}))
 		if err != nil {
-			log.Printf("%s tries an invalid session: %s", c.ClientIP(), err.Error())
+			log.Printf("%s provide a bad JWT claims: %s", c.ClientIP(), err.Error())
 			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Your session has expired. Please reconnect.")})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Something goes wrong with your session. Please reconnect.")})
 			return
 		}
 
-		c.Set("MySession", session)
+		// Check that required fields are filled
+		if len(claims.Profile.UserId) == 0 {
+			log.Printf("%s: no UserId found in JWT claims", c.ClientIP())
+			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Something goes wrong with your session. Please reconnect.")})
+			return
+		}
 
-		user, err := storage.MainStore.GetUser(session.IdUser)
+		if claims.Profile.Email == "" {
+			log.Printf("%s: no Email found in JWT claims", c.ClientIP())
+			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Something goes wrong with your session. Please reconnect.")})
+			return
+		}
+
+		// Retrieve corresponding user
+		user, err := retrieveUserFromClaims(claims)
 		if err != nil {
-			log.Printf("%s has a correct session, but related user is invalid: %s", c.ClientIP(), err.Error())
+			log.Printf("%s %s", c.ClientIP(), err.Error())
 			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Something goes wrong with your session. Please reconnect.")})
 			return
@@ -90,8 +187,22 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 
 		c.Set("LoggedUser", user)
 
+		// Retrieve the session
+		session_id := append([]byte(claims.Profile.UserId), []byte(claims.ID)...)
+		session, err := retrieveSessionFromClaims(claims, user, session_id)
+		if err != nil {
+			log.Printf("%s %s", c.ClientIP(), err.Error())
+			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": fmt.Sprintf("Your session has expired. Please reconnect.")})
+			return
+		}
+
+		c.Set("MySession", session)
+
+		// We are now ready to continue
 		c.Next()
 
+		// On return, check if the session has changed
 		if session.HasChanged() {
 			storage.MainStore.UpdateSession(session)
 		}

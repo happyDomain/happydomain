@@ -32,6 +32,7 @@
 package admin
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -112,7 +113,7 @@ func updateUserDomain(c *gin.Context) {
 	}
 	ud.Id = domain.Id
 
-	if ud.IdUser != domain.IdUser {
+	if !bytes.Equal(ud.IdUser, domain.IdUser) {
 		if err := storage.MainStore.UpdateDomainOwner(domain, &happydns.User{Id: ud.IdUser}); err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 			return

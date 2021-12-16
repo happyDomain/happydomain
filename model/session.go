@@ -45,10 +45,10 @@ type Session struct {
 	Id []byte `json:"id"`
 
 	// IdUser is the User's identifier of the Session.
-	IdUser int64 `json:"login"`
+	IdUser HexaString `json:"login"`
 
-	// Time holds the creation date of the Session.
-	Time time.Time `json:"time"`
+	// IssuedAt holds the creation date of the Session.
+	IssuedAt time.Time `json:"time"`
 
 	// Content stores data filled by other modules.
 	Content map[string][]byte `json:"content,omitempty"`
@@ -59,13 +59,13 @@ type Session struct {
 
 // NewSession fills a new Session structure.
 func NewSession(user *User) (s *Session, err error) {
-	session_id := make([]byte, 255)
+	session_id := make([]byte, 16)
 	_, err = rand.Read(session_id)
 	if err == nil {
 		s = &Session{
-			Id:     session_id,
-			IdUser: user.Id,
-			Time:   time.Now(),
+			Id:       session_id,
+			IdUser:   user.Id,
+			IssuedAt: time.Now(),
 		}
 	}
 

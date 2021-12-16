@@ -1,4 +1,4 @@
-// Copyright or © or Copr. happyDNS (2020)
+// Copyright or © or Copr. happyDNS (2021)
 //
 // contact@happydns.org
 //
@@ -39,12 +39,12 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
-func (s *LevelDBStorage) GetUsers() (users happydns.Users, err error) {
-	iter := s.search("user-")
+func (s *LevelDBStorage) GetAuthUsers() (users happydns.UserAuths, err error) {
+	iter := s.search("auth-")
 	defer iter.Release()
 
 	for iter.Next() {
-		var u happydns.User
+		var u happydns.UserAuth
 
 		err = decodeData(iter.Value(), &u)
 		if err != nil {
@@ -56,16 +56,16 @@ func (s *LevelDBStorage) GetUsers() (users happydns.Users, err error) {
 	return
 }
 
-func (s *LevelDBStorage) GetUser(id []byte) (u *happydns.User, err error) {
-	u = &happydns.User{}
-	err = s.get(fmt.Sprintf("user-%x", id), &u)
+func (s *LevelDBStorage) GetAuthUser(id []byte) (u *happydns.UserAuth, err error) {
+	u = &happydns.UserAuth{}
+	err = s.get(fmt.Sprintf("auth-%x", id), &u)
 	return
 }
 
-func (s *LevelDBStorage) GetUserByEmail(email string) (u *happydns.User, err error) {
-	var users happydns.Users
+func (s *LevelDBStorage) GetAuthUserByEmail(email string) (u *happydns.UserAuth, err error) {
+	var users happydns.UserAuths
 
-	users, err = s.GetUsers()
+	users, err = s.GetAuthUsers()
 	if err != nil {
 		return
 	}
@@ -80,8 +80,8 @@ func (s *LevelDBStorage) GetUserByEmail(email string) (u *happydns.User, err err
 	return nil, fmt.Errorf("Unable to find user with email address '%s'.", email)
 }
 
-func (s *LevelDBStorage) UserExists(email string) bool {
-	users, err := s.GetUsers()
+func (s *LevelDBStorage) AuthUserExists(email string) bool {
+	users, err := s.GetAuthUsers()
 	if err != nil {
 		return false
 	}
@@ -95,8 +95,8 @@ func (s *LevelDBStorage) UserExists(email string) bool {
 	return false
 }
 
-func (s *LevelDBStorage) CreateUser(u *happydns.User) error {
-	key, id, err := s.findBytesKey("user-", 16)
+func (s *LevelDBStorage) CreateAuthUser(u *happydns.UserAuth) error {
+	key, id, err := s.findBytesKey("auth-", 16)
 	if err != nil {
 		return err
 	}
@@ -105,25 +105,21 @@ func (s *LevelDBStorage) CreateUser(u *happydns.User) error {
 	return s.put(key, u)
 }
 
-func (s *LevelDBStorage) UpdateUser(u *happydns.User) error {
-	return s.put(fmt.Sprintf("user-%x", u.Id), u)
+func (s *LevelDBStorage) UpdateAuthUser(u *happydns.UserAuth) error {
+	return s.put(fmt.Sprintf("auth-%x", u.Id), u)
 }
 
-func (s *LevelDBStorage) DeleteUser(u *happydns.User) error {
-	return s.delete(fmt.Sprintf("user-%x", u.Id))
+func (s *LevelDBStorage) DeleteAuthUser(u *happydns.UserAuth) error {
+	return s.delete(fmt.Sprintf("auth-%x", u.Id))
 }
 
-func (s *LevelDBStorage) ClearUsers() error {
-	if err := s.ClearSessions(); err != nil {
-		return err
-	}
-
+func (s *LevelDBStorage) ClearAuthUsers() error {
 	tx, err := s.db.OpenTransaction()
 	if err != nil {
 		return err
 	}
 
-	iter := tx.NewIterator(util.BytesPrefix([]byte("user-")), nil)
+	iter := tx.NewIterator(util.BytesPrefix([]byte("auth-")), nil)
 	defer iter.Release()
 
 	for iter.Next() {

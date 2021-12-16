@@ -41,7 +41,7 @@ import (
 	"git.happydns.org/happydns/utils"
 )
 
-func genUsername(user *happydns.User) (toName string) {
+func genUsername(user *happydns.UserAuth) (toName string) {
 	if n := strings.Index(user.Email, "+"); n > 0 {
 		toName = user.Email[0:n]
 	} else {
@@ -67,7 +67,7 @@ func genUsername(user *happydns.User) (toName string) {
 	return
 }
 
-func SendValidationLink(opts *config.Options, user *happydns.User) error {
+func SendValidationLink(opts *config.Options, user *happydns.UserAuth) error {
 	toName := genUsername(user)
 	return utils.SendMail(
 		&mail.Address{Name: toName, Address: user.Email},
@@ -86,7 +86,7 @@ In order to validate your account, please follow this link now:
 	)
 }
 
-func SendRecoveryLink(opts *config.Options, user *happydns.User) error {
+func SendRecoveryLink(opts *config.Options, user *happydns.UserAuth) error {
 	toName := genUsername(user)
 	return utils.SendMail(
 		&mail.Address{Name: toName, Address: user.Email},

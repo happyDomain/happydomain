@@ -55,7 +55,7 @@ type ProviderMeta struct {
 	Id int64 `json:"_id"`
 
 	// OwnerId is the User's identifier for the current Provider.
-	OwnerId int64 `json:"_ownerid"`
+	OwnerId HexaString `json:"_ownerid"`
 
 	// Comment is a string that helps user to distinguish the Provider.
 	Comment string `json:"_comment,omitempty"`

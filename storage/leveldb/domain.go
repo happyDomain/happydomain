@@ -32,6 +32,7 @@
 package database
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 
@@ -53,7 +54,7 @@ func (s *LevelDBStorage) GetDomains(u *happydns.User) (domains happydns.Domains,
 			return
 		}
 
-		if z.IdUser == u.Id {
+		if bytes.Equal(z.IdUser, u.Id) {
 			domains = append(domains, &z)
 		}
 	}
@@ -74,7 +75,7 @@ func (s *LevelDBStorage) GetDomain(u *happydns.User, id int64) (z *happydns.Doma
 		return
 	}
 
-	if z.IdUser != u.Id {
+	if !bytes.Equal(z.IdUser, u.Id) {
 		z = nil
 		err = leveldb.ErrNotFound
 	}

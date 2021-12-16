@@ -32,6 +32,7 @@
 package config // import "happydns.org/config"
 
 import (
+	"crypto/rand"
 	"flag"
 	"fmt"
 	"log"
@@ -69,6 +70,9 @@ type Options struct {
 
 	// NoAuth controls if there is user access control or not.
 	NoAuth bool
+
+	// JWTSecretKey stores the private key to sign and verify JWT tokens.
+	JWTSecretKey JWTSecretKey
 }
 
 // BuildURL appends the given url to the absolute ExternalURL.
@@ -139,6 +143,14 @@ func ConsolidateConfig() (opts *Options, err error) {
 		opts.BaseURL = path.Clean(opts.BaseURL)
 	} else {
 		opts.BaseURL = ""
+	}
+
+	if len(opts.JWTSecretKey) == 0 {
+		opts.JWTSecretKey = make([]byte, 32)
+		_, err = rand.Read(opts.JWTSecretKey)
+		if err != nil {
+			return
+		}
 	}
 
 	return

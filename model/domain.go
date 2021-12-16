@@ -41,7 +41,7 @@ type Domain struct {
 	Id int64 `json:"id"`
 
 	// IdUser is the identifier of the Domain's Owner.
-	IdUser int64 `json:"id_owner"`
+	IdUser HexaString `json:"id_owner"`
 
 	// IsProvider is the identifier of the Provider used to access and edit the
 	// Domain.

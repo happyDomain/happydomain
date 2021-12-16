@@ -60,7 +60,7 @@ type ServiceMeta struct {
 	Id HexaString `json:"_id,omitempty"`
 
 	// OwnerId is the User's identifier for the current Service.
-	OwnerId int64 `json:"_ownerid,omitempty"`
+	OwnerId HexaString `json:"_ownerid,omitempty"`
 
 	// Domain contains the abstract domain where this Service relates.
 	Domain string `json:"_domain"`

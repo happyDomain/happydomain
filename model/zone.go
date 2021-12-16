@@ -45,7 +45,7 @@ type ZoneMeta struct {
 	Id int64 `json:"id"`
 
 	// IdAuthor is the User's identifier for the current Zone.
-	IdAuthor int64 `json:"id_author"`
+	IdAuthor HexaString `json:"id_author"`
 
 	// DefaultTTL is the TTL to use when no TTL has been defined for a record in this Zone.
 	DefaultTTL uint32 `json:"default_ttl"`
