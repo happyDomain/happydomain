@@ -20,7 +20,7 @@
       "type": "image/png"
     }
   ],
-  "name": "happyDNS",
-  "short_name": "happyDNS",
+  "name": "happyDomain",
+  "short_name": "happyDomain",
   "start_url": "/"
 }

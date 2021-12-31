@@ -71,8 +71,8 @@ func SendValidationLink(opts *config.Options, user *happydns.UserAuth) error {
 	toName := genUsername(user)
 	return utils.SendMail(
 		&mail.Address{Name: toName, Address: user.Email},
-		"Your new account on happyDNS",
-		`Welcome to happyDNS!
+		"Your new account on happyDomain",
+		`Welcome to happyDomain!
 --------------------
 
 Hi `+toName+`,
@@ -90,7 +90,7 @@ func SendRecoveryLink(opts *config.Options, user *happydns.UserAuth) error {
 	toName := genUsername(user)
 	return utils.SendMail(
 		&mail.Address{Name: toName, Address: user.Email},
-		"Recover you happyDNS account",
+		"Recover you happyDomain account",
 		`Hi `+toName+`,
 
 You've just ask on our platform to recover your account.

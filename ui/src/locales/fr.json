@@ -57,7 +57,7 @@
             "rollback": "Revenir à cette version"
         },
         "alert": {
-            "remove": "Cette action retirera définitivement le domaine {domain} de votre liste. L'historique et les zones abstraites seront supprimés. Cela ne supprimera ni n'affectera votre domaine auprès de votre fournisseur, ni ne modifiera ce qui est actuellement diffusé. Cela ne concerne seulement que ce que vous voyez dans happyDNS. Êtes-vous certain de vouloir continuer ?",
+            "remove": "Cette action retirera définitivement le domaine {domain} de votre liste. L'historique et les zones abstraites seront supprimés. Cela ne supprimera ni n'affectera votre domaine auprès de votre fournisseur, ni ne modifiera ce qui est actuellement diffusé. Cela ne concerne seulement que ce que vous voyez dans happyDomain. Êtes-vous certain de vouloir continuer ?",
             "unable-retrieve": {
                 "description": "Malheureusement, nous ne parvenons pas à obtenir les informations du domaine {domain} :",
                 "title": "Impossible de récupérer les informations du domaine"
@@ -79,7 +79,7 @@
             },
             "nochange": "Il n'y a pas de changement à faire ! Cette zone est synchronisée avec le serveur."
         },
-        "attached-new": "Nouveau domaine lié à happyDNS!\n",
+        "attached-new": "Nouveau domaine lié à happyDomain!\n",
         "create-new-key": "Créer une nouvelle clé {id}.",
         "discard": "Supprimer",
         "drop-alias": "Supprimer l'alias",
@@ -94,7 +94,7 @@
         "stop": "Arrêter de gérer ce domaine",
         "view": {
             "abstract": "Zone abstraite",
-            "cancel-title": "Conserver mon domaine dans happyDNS",
+            "cancel-title": "Conserver mon domaine dans happyDomain",
             "description": "Valider les modifications qui seront appliquées à {0}",
             "live": "Enregistrements actifs",
             "monitoring": "Suivi",
@@ -146,7 +146,7 @@
         "address": "L'adresse électronique est obligatoire",
         "address-valid": "Une adresse électronique valide est obligatoire",
         "domain-access": "Une erreur s'est produite en essayant d'accéder à la liste des domaines.",
-        "domain-attach": "Une erreur s'est produite lors de l'attachement du domaine à happyDNS",
+        "domain-attach": "Une erreur s'est produite lors de l'attachement du domaine à happyDomain",
         "domain-have": "Il semble que vous n'ayez pas de nom de domaine enregistré chez ce fournisseur.",
         "domain-list": "Ce fournisseur ne permet pas de répertorier les domaines existants. Utilisez le formulaire ci-dessous pour en ajouter un.",
         "error": "Erreur",
@@ -168,7 +168,7 @@
             "content": "Session invalide, vous avez été déconnecté : {err}. Veuillez vous connecter à nouveau."
         },
         "settings-change": "Impossible de changer vos paramètres",
-        "account-no-auth": "Vous utilisez happyDNS sans authentification. Vous ne pouvez pas changer d'autre paramètre de votre compte.",
+        "account-no-auth": "Vous utilisez happyDomain sans authentification. Vous ne pouvez pas changer d'autre paramètre de votre compte.",
         "domain-all-imported": "Ce compte sur {0} ne contient plus aucun domaine à importer."
     },
     "menu": {
@@ -185,7 +185,7 @@
         "add-one": "ajouter un domaine",
         "choose-configured": "choisir entre les fournisseurs déjà configurés ou {0} :",
         "suggest-source": "choisir votre fournisseur",
-        "use": "Utilisez {happyDNS} comme interface de remplacement de votre fournisseur de noms de domaine habituel. Il continuera à s'appuyer sur l'infrastructure de votre fournisseur, vous n'aurez qu'à profiter de notre interface simple. Dans un premier temps, {first-step}",
+        "use": "Utilisez {happyDomain} comme interface de remplacement de votre fournisseur de noms de domaine habituel. Il continuera à s'appuyer sur l'infrastructure de votre fournisseur, vous n'aurez qu'à profiter de notre interface simple. Dans un premier temps, {first-step}",
         "no-sale": {
             "title": "Je ne possède aucun domaine",
             "description": "{0} ne fournit pas encore de domaine. Pour commencer à utiliser notre interface, vous devez vous procurer un domaine auprès de l'un des fournisseurs répertoriés",
@@ -243,7 +243,7 @@
     },
     "upgrade": {
         "title": "Une mise à jour est disponible !",
-        "content": "Une nouvelle version d'happyDNS est disponible. Pour l'activer, vous pouvez cliquer ici pour rafraîchir la page."
+        "content": "Une nouvelle version d'happyDomain est disponible. Pour l'activer, vous pouvez cliquer ici pour rafraîchir la page."
     },
     "wait": {
         "asking-domains": "Demande en cours chez l'hébergeur des domaines existants ...",
@@ -271,7 +271,7 @@
         "language": "Langue",
         "save": "Enregistrer les paramètres",
         "title": "Paramètres",
-        "success": "Vous pouvez continuer d'apprécier happyDNS.",
+        "success": "Vous pouvez continuer d'apprécier happyDomain.",
         "success-change": "Vos paramètres ont été sauvegardés.",
         "zoneview": {
             "grid": "Grille (la plus lisible)",

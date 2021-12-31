@@ -1,5 +1,5 @@
-happyDNS
-========
+happyDomain
+===========
 
 Finally a simple, modern and open source interface for domain name.
 
@@ -16,7 +16,7 @@ Building
 
 ### Dependencies
 
-In order to build the happyDNS project, you'll need the following dependencies:
+In order to build the happyDomain project, you'll need the following dependencies:
 
 * `go` at least version 1.16
 * `nodejs` tested with version 14.4.0
@@ -62,7 +62,7 @@ After some initializations, it should show you:
     Admin listening on ./happydns.sock
     Ready, listening on :8081
 
-Go to http://localhost:8081/ to start using happyDNS.
+Go to http://localhost:8081/ to start using happyDomain.
 
 
 ### Database configuration

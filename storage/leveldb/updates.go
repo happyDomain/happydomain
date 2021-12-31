@@ -67,7 +67,7 @@ func (s *LevelDBStorage) DoMigration() (err error) {
 	}
 
 	if version > len(migrations) {
-		return fmt.Errorf("Your database has revision %d, which is newer than the revision this happyDNS version can handle (max DB revision %d). Please update happyDNS", version, len(migrations))
+		return fmt.Errorf("Your database has revision %d, which is newer than the revision this happyDomain version can handle (max DB revision %d). Please update happyDomain", version, len(migrations))
 	}
 
 	for v, migration := range migrations[version:] {

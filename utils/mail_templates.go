@@ -57,7 +57,7 @@ const mailHTMLTpl = `
                             <tbody>
                               <tr>
                                 <td style="border-collapse: collapse; font-size: 30px;">
-                                  <img alt="happyDNS" height="24" src="cid:happydns.png" style="border: 0px; height: 24px; line-height: 0px; outline: none; text-decoration: none; display: block;">
+                                  <img alt="happyDomain" height="24" src="cid:happydomain.png" style="border: 0px; height: 24px; line-height: 0px; outline: none; text-decoration: none; display: block;">
                                 </td>
                               </tr>
                             </tbody>
@@ -90,7 +90,7 @@ const mailHTMLTpl = `
                                 </tr>
                                 <tr>
                                   <td align="left" style="border-collapse: collapse; font-size: 0px; padding: 0px 24px 16px; word-break: break-word;">
-                                    <div style="font-family: Montserrat, Arial; font-size: 16px; line-height: 1.5; text-align: left; color: rgb(50, 54, 63);">Regards,<br>Fred - customer support @ happyDNS</div>
+                                    <div style="font-family: Montserrat, Arial; font-size: 16px; line-height: 1.5; text-align: left; color: rgb(50, 54, 63);">Regards,<br>Fred - customer support @ happyDomain</div>
                                   </td>
                                 </tr>
                               </tbody>
@@ -121,7 +121,7 @@ const mailHTMLTpl = `
                               <tbody>
                                 <tr>
                                   <td align="center" style="border-collapse: collapse; font-size: 0px; padding: 0px; word-break: break-word;">
-                                    <div style="font-family: Montserrat, Arial; font-size: 16px; font-weight: bold; line-height: 1.5; text-align: center; color: rgb(28, 180, 135);">happyDNS, finally a simple interface for domain names.</div>
+                                    <div style="font-family: Montserrat, Arial; font-size: 16px; font-weight: bold; line-height: 1.5; text-align: center; color: rgb(28, 180, 135);">happyDomain, finally a simple interface for domain names.</div>
                                   </td>
                                 </tr>
                               </tbody>
@@ -143,7 +143,7 @@ const mailHTMLTpl = `
                                 <tr>
                                   <td align="center" style="border-collapse: collapse; font-size: 0px; padding: 10px 25px; word-break: break-word;">
                                     <div style="font-family: Montserrat, Arial; font-size: 12px; line-height: 1.5; text-align: center; color: rgb(50, 54, 63);">
-                                      <a href="https://happydns.org/en/legal-notice" style="color: rgb(93, 97, 101);">Legal Notice</a>
+                                      <a href="https://happydomain.org/en/legal-notice" style="color: rgb(93, 97, 101);">Legal Notice</a>
                                     </div>
                                   </td>
                                 </tr>
@@ -168,5 +168,5 @@ const mailHTMLTpl = `
 const mailTXTTpl = `{{ .Content }}
 
 --
-Fred - customer support @ happyDNS
-Legal notice: https://www.happydns.org/en/legal-notice/`
+Fred - customer support @ happyDomain
+Legal notice: https://www.happydomain.org/en/legal-notice/`

@@ -56,7 +56,7 @@ var (
 func main() {
 	var err error
 
-	log.Println("This is happyDNS", Version)
+	log.Println("This is happyDomain", Version)
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	// Load and parse options

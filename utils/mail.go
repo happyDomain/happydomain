@@ -76,7 +76,7 @@ type sendMethod interface {
 var (
 	// MailFrom holds the content of the From field for all e-mails that
 	// will be send.
-	MailFrom = mail.Address{Name: "happyDNS", Address: "happydns@localhost"}
+	MailFrom = mail.Address{Name: "happyDomain", Address: "happydomain@localhost"}
 
 	// SendMethod is a pointer to the current global method used to send
 	// e-mails.

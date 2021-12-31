@@ -35,7 +35,7 @@ import { NavigationRoute, registerRoute } from 'workbox-routing'
 import * as strategies from 'workbox-strategies'
 import { ExpirationPlugin } from 'workbox-expiration'
 
-setCacheNameDetails({ prefix: 'happyDNS' })
+setCacheNameDetails({ prefix: 'happyDomain' })
 
 const LATEST_VERSION = 'v0.9'
 
@@ -44,7 +44,7 @@ self.addEventListener('activate', (event) => {
   if (caches) {
     caches.keys().then((arr) => {
       arr.forEach((key) => {
-        if (key.indexOf('happyDNS-precache') < -1) {
+        if (key.indexOf('happyDomain-precache') < -1) {
           caches.delete(key).then(() => console.log(`%c Cleared ${key}`, 'background: #333; color: #ff0000'))
         } else {
           caches.open(key).then((cache) => {

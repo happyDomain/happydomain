@@ -58,7 +58,7 @@
             "rollback": "Rollback to this version"
         },
         "alert": {
-            "remove": "This action will permanently remove the domain {domain} from your managed domains. All history and abstracted zones will be discarded. This action will not delete or unregister your domain from your provider, nor alterate what is currently served. It will only affect what you see in happyDNS. Are you sure you want to continue?",
+            "remove": "This action will permanently remove the domain {domain} from your managed domains. All history and abstracted zones will be discarded. This action will not delete or unregister your domain from your provider, nor alterate what is currently served. It will only affect what you see in happyDomain. Are you sure you want to continue?",
             "unable-retrieve": {
                 "description": "Unfortunately, we were unable to retrieve information for the domain {domain}:",
                 "title": "Unable to retrieve domain information"
@@ -82,7 +82,7 @@
             "nochange": "There is no changes to apply! Current zone is in sync with the server.",
             "others": "no other change | {count} other change | {count} others changes"
         },
-        "attached-new": "New domain attached to happyDNS!",
+        "attached-new": "New domain attached to happyDomain!",
         "create-new-key": "Create new {id} key",
         "discard": "Discard",
         "drop-alias": "Drop alias",
@@ -97,7 +97,7 @@
         "stop": "Stop managing this domain",
         "view": {
             "abstract": "Abstract zone",
-            "cancel-title": "Keep my domain in happyDNS",
+            "cancel-title": "Keep my domain in happyDomain",
             "description": "Review the modifications that will be applied to {0}",
             "live": "Live records",
             "monitoring": "Monitoring",
@@ -143,7 +143,7 @@
         "address": "Email address is required",
         "address-valid": "A valid email address is required",
         "domain-access": "An error occurs when trying to access domain's list.",
-        "domain-attach": "An error occurs when attaching the domain to happyDNS",
+        "domain-attach": "An error occurs when attaching the domain to happyDomain",
         "domain-have": "It appears you don't have any domain name registered on this provider.",
         "domain-list": "This provider doesn't permit to list existing domains. Use the form below to add one.",
         "error": "Error",
@@ -165,7 +165,7 @@
             "content": "Invalid session, your have been logged out: {err}. Please login again."
         },
         "settings-change": "Unable to change your settings",
-        "account-no-auth": "You're using happyDNS without authentication. You cannot manage other account properties.",
+        "account-no-auth": "You're using happyDomain without authentication. You cannot manage other account properties.",
         "domain-all-imported": "This account on {0} doesn't have any more domain to import."
     },
     "menu": {
@@ -182,7 +182,7 @@
         "add-one": "add a new one",
         "choose-configured": "choose between already configured providers or {0}:",
         "suggest-provider": "choose your provider:",
-        "use": "Use {happyDNS} as a remplacement interface to your usual domain name provider. It'll still rely on your provider's infrastructure, you'll just take benefit from our simple interface. As a first step, {first-step}",
+        "use": "Use {happyDomain} as a remplacement interface to your usual domain name provider. It'll still rely on your provider's infrastructure, you'll just take benefit from our simple interface. As a first step, {first-step}",
         "no-sale": {
             "title": "I don't own any domain",
             "description": "{0} does not sell domain yet. To start using our interface, you need to buy a domain from one of our supported provider",
@@ -240,7 +240,7 @@
     },
     "upgrade": {
         "title": "An update is available!",
-        "content": "A new version of happyDNS is already available. To enable it, please click here to refresh the page."
+        "content": "A new version of happyDomain is already available. To enable it, please click here to refresh the page."
     },
     "wait": {
         "asking-domains": "Asking provider for the existing domains...",
@@ -268,7 +268,7 @@
         "language": "Language",
         "save": "Save settings",
         "title": "Settings",
-        "success": "Continue to enjoy happyDNS.",
+        "success": "Continue to enjoy happyDomain.",
         "success-change": "Your settings has been saved.",
         "zoneview": {
             "grid": "Grid view (easiest)",

@@ -54,7 +54,7 @@
         </h3>
         <p class="text-justify text-indent my-4">
           <i18n path="onboarding.use" tag="span">
-            <template #happyDNS>
+            <template #happyDomain>
               <h-logo height="19" />
             </template>
             <template #first-step>
@@ -66,7 +66,7 @@
             </template>
           </i18n>
         </p>
-        <provider-list v-if="!noProvider" emit-new-if-empty no-label @new-provider="noProvider = true" @provider-selected="selectExistingProvider" />
+        <provider-list v-if="!noProvider" emit-new-if-empty no-label @new-provider="noProvider = true" @provider-selected="selectExistingProvider" style="max-height: 20rem; overflow-y: auto" />
         <h-new-provider-selector v-else @provider-selected="selectNewProvider" />
       </b-card>
     </b-card-group>
