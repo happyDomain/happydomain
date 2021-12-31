@@ -242,7 +242,7 @@ export default {
 
     deleteMyAccount () {
       axios
-        .post('/api/users/' + encodeURIComponent(this.loggedUser.id.toString(16)) + '/delete', { password: this.deletePassword })
+        .post('/api/users/' + encodeURIComponent(this.loggedUser.id.toString(16)) + '/delete', { current: this.deletePassword })
         .then(
           response => {
             this.$root.$bvToast.toast(
