@@ -84,7 +84,7 @@ func authHandler(c *gin.Context) {
 		}
 	}
 
-	c.Set("user", user)
+	c.Set("authuser", user)
 
 	c.Next()
 }
