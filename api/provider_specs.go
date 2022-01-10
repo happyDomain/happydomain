@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2020)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -38,9 +38,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydns/forms"
-	"git.happydns.org/happydns/model"
-	"git.happydns.org/happydns/providers"
+	"git.happydns.org/happydomain/forms"
+	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happydomain/providers"
 )
 
 func declareProviderSpecsRoutes(router *gin.RouterGroup) {

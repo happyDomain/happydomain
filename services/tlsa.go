@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2020)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -40,13 +40,13 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happydns/model"
-	"git.happydns.org/happydns/utils"
+	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happydomain/utils"
 )
 
 type TLSA struct {
-	Proto        string              `json:"proto" happydns:"label=Protocol,description=Protocol used to establish the connection.,choices=tcp;udp"`
-	Port         uint16              `json:"port" happydns:"label=Service Port,description=Port number where people will establish the connection."`
+	Proto        string              `json:"proto" happydomain:"label=Protocol,description=Protocol used to establish the connection.,choices=tcp;udp"`
+	Port         uint16              `json:"port" happydomain:"label=Service Port,description=Port number where people will establish the connection."`
 	CertUsage    uint8               `json:"certusage"`
 	Selector     uint8               `json:"selector"`
 	MatchingType uint8               `json:"matchingtype"`

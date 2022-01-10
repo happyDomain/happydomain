@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2020)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -34,8 +34,8 @@ package svcs
 import ()
 
 type DS struct {
-	KeyTag     uint16 `json:"keytag" happydns:"label=Key Tag"`
-	Algorithm  uint8  `json:"algorithm" happydns:"label=Algorithm"`
-	DigestType uint8  `json:"digestType" happydns:"label=Digest Type"`
-	Digest     string `json:"digest" happydns:"label=Digest"`
+	KeyTag     uint16 `json:"keytag" happydomain:"label=Key Tag"`
+	Algorithm  uint8  `json:"algorithm" happydomain:"label=Algorithm"`
+	DigestType uint8  `json:"digestType" happydomain:"label=Digest Type"`
+	Digest     string `json:"digest" happydomain:"label=Digest"`
 }

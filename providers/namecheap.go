@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2021)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -35,12 +35,12 @@ import (
 	"github.com/StackExchange/dnscontrol/v3/providers"
 	_ "github.com/StackExchange/dnscontrol/v3/providers/namecheap"
 
-	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydomain/model"
 )
 
 type NamecheapAPI struct {
-	APIKey  string `json:"apikey,omitempty" happydns:"label=API Key,placeholder=yourApiKeyFromNameCheap,required"`
-	APIUser string `json:"apiuser,omitempty" happydns:"label=API User,placeholder=yourUsername,required"`
+	APIKey  string `json:"apikey,omitempty" happydoamin:"label=API Key,placeholder=yourApiKeyFromNameCheap,required"`
+	APIUser string `json:"apiuser,omitempty" happydomain:"label=API User,placeholder=yourUsername,required"`
 }
 
 func (s *NamecheapAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {

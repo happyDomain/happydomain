@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2021)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -35,13 +35,13 @@ import (
 	"github.com/StackExchange/dnscontrol/v3/providers"
 	_ "github.com/StackExchange/dnscontrol/v3/providers/hedns"
 
-	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydomain/model"
 )
 
 type HEDNSAPI struct {
-	Username string `json:"username,omitempty" happydns:"label=Username,placeholder=xxxxxxxx,required,description=The username you usually use to log on HE services."`
-	Password string `json:"password,omitempty" happydns:"label=Password,placeholder=xxxxxxxx,required,description=The password associated with you HE account."`
-	TOTP     string `json:"totp,omitempty" happydns:"label=TOTP Key,placeholder=xxxxxxxx,description=If you enabled two factor authentication, you need to paste here your TOTP key."`
+	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=xxxxxxxx,required,description=The username you usually use to log on HE services."`
+	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,description=The password associated with you HE account."`
+	TOTP     string `json:"totp,omitempty" happydomain:"label=TOTP Key,placeholder=xxxxxxxx,description=If you enabled two factor authentication, you need to paste here your TOTP key."`
 }
 
 func (s *HEDNSAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {

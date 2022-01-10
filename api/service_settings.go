@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2020)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -38,11 +38,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydns/config"
-	"git.happydns.org/happydns/forms"
-	"git.happydns.org/happydns/model"
-	"git.happydns.org/happydns/services"
-	"git.happydns.org/happydns/storage"
+	"git.happydns.org/happydomain/config"
+	"git.happydns.org/happydomain/forms"
+	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happydomain/services"
+	"git.happydns.org/happydomain/storage"
 )
 
 func declareServiceSettingsRoutes(cfg *config.Options, router *gin.RouterGroup) {

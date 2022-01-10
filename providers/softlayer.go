@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2021)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -35,12 +35,12 @@ import (
 	"github.com/StackExchange/dnscontrol/v3/providers"
 	_ "github.com/StackExchange/dnscontrol/v3/providers/softlayer"
 
-	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydomain/model"
 )
 
 type SoftLayerAPI struct {
-	Username string `json:"username,omitempty" happydns:"label=Username,placeholder=yourUsername,required"`
-	APIKey   string `json:"api_key,omitempty" happydns:"label=API Key,placeholder=yourApiKeyFromSoftLayer,required"`
+	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=yourUsername,required"`
+	APIKey   string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=yourApiKeyFromSoftLayer,required"`
 }
 
 func (s *SoftLayerAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {

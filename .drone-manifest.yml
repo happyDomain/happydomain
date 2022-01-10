@@ -1,4 +1,4 @@
-image: happydns/happydns:{{#if build.tag}}{{trimPrefix "v" build.tag}}{{else}}latest{{/if}}
+image: happydns/happydomain:{{#if build.tag}}{{trimPrefix "v" build.tag}}{{else}}latest{{/if}}
 {{#if build.tags}}
 tags:
 {{#each build.tags}}
@@ -6,16 +6,16 @@ tags:
 {{/each}}
 {{/if}}
 manifests:
-  - image: happydns/happydns:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}linux-amd64
+  - image: happydns/happydomain:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}linux-amd64
     platform:
       architecture: amd64
       os: linux
-  - image: happydns/happydns:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}linux-arm64
+  - image: happydns/happydomain:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}linux-arm64
     platform:
       architecture: arm64
       os: linux
       variant: v8
-  - image: happydns/happydns:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}linux-arm
+  - image: happydns/happydomain:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}linux-arm
     platform:
       architecture: arm
       os: linux

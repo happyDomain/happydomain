@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2021)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -36,12 +36,12 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happydns/model"
-	"git.happydns.org/happydns/services"
+	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happydomain/services"
 )
 
 type GoogleVerif struct {
-	SiteVerification string `happydns:"label=Site Verification"`
+	SiteVerification string `happydomain:"label=Site Verification"`
 }
 
 func (s *GoogleVerif) GetNbResources() int {

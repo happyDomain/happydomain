@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2020)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -34,7 +34,7 @@ package database
 import (
 	"flag"
 
-	"git.happydns.org/happydns/storage"
+	"git.happydns.org/happydomain/storage"
 )
 
 var path string
@@ -42,7 +42,7 @@ var path string
 func init() {
 	storage.StorageEngines["leveldb"] = Instantiate
 
-	flag.StringVar(&path, "leveldb-path", "happydns.db", "Path to the LevelDB Database")
+	flag.StringVar(&path, "leveldb-path", "happydomain.db", "Path to the LevelDB Database")
 }
 
 func Instantiate() (storage.Storage, error) {

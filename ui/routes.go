@@ -13,7 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydns/config"
+	"git.happydns.org/happydomain/config"
 )
 
 var (

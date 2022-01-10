@@ -1,6 +1,6 @@
 FROM node:14-alpine as nodebuild
 
-WORKDIR /go/src/git.happydns.org/happydns
+WORKDIR /go/src/git.happydns.org/happydomain
 
 RUN apk --no-cache add python2 build-base
 
@@ -15,9 +15,9 @@ FROM golang:1-alpine as gobuild
 
 RUN apk add --no-cache go-bindata
 
-WORKDIR /go/src/git.happydns.org/happydns
+WORKDIR /go/src/git.happydns.org/happydomain
 
-COPY --from=nodebuild /go/src/git.happydns.org/happydns/ ./
+COPY --from=nodebuild /go/src/git.happydns.org/happydomain/ ./
 COPY actions ./actions
 COPY admin ./admin
 COPY api ./api
@@ -42,20 +42,20 @@ FROM alpine:3.15
 
 EXPOSE 8081
 
-ENTRYPOINT ["/usr/sbin/happydns"]
+ENTRYPOINT ["/usr/sbin/happydomain"]
 
-ENV HAPPYDNS_LEVELDB_PATH=/data/happydns.db
+ENV HAPPYDOMAIN_LEVELDB_PATH=/data/happydomain.db
 
 RUN apk add --no-cache \
         curl \
         jq \
     && \
-    adduser --system --no-create-home --uid 15353 happydns && \
-    mkdir /data && chown happydns /data
-USER happydns
+    adduser --system --no-create-home --uid 15353 happydomain && \
+    mkdir /data && chown happydomain /data
+USER happydomain
 WORKDIR /data
 
 VOLUME /data
 
-COPY --from=gobuild /go/src/git.happydns.org/happydns/happydns /usr/sbin/happydns
+COPY --from=gobuild /go/src/git.happydns.org/happydomain/happydomain /usr/sbin/happydomain
 COPY hadmin.sh /usr/bin/hadmin

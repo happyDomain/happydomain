@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2021)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -35,11 +35,11 @@ import (
 	"github.com/StackExchange/dnscontrol/v3/providers"
 	_ "github.com/StackExchange/dnscontrol/v3/providers/hetzner"
 
-	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydomain/model"
 )
 
 type HetznerAPI struct {
-	APIKey string `json:"api_key,omitempty" happydns:"label=API Key,placeholder=xxxxxxxxxx,required,description=Get your API Key on https://dns.hetzner.com/settings/api-token."`
+	APIKey string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,description=Get your API Key on https://dns.hetzner.com/settings/api-token."`
 }
 
 func (s *HetznerAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {

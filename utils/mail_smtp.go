@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2021)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -77,7 +77,7 @@ func (s *smtpSendmailHostname) Set(value string) (err error) {
 }
 
 func (s *smtpSendmailHostname) String() string {
-	return "smtp.happydns.org"
+	return "smtp.happydomain.org"
 }
 
 type smtpSendmailPort struct{}

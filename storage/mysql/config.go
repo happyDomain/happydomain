@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2020)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -35,7 +35,7 @@ import (
 	"flag"
 	"os"
 
-	"git.happydns.org/happydns/storage"
+	"git.happydns.org/happydomain/storage"
 )
 
 var dsn string
@@ -48,10 +48,10 @@ func init() {
 
 // DSNGenerator returns DSN filed with values from environment
 func DSNGenerator() string {
-	db_user := "happydns"
-	db_password := "happydns"
+	db_user := "happydomain"
+	db_password := "happydomain"
 	db_host := ""
-	db_db := "happydns"
+	db_db := "happydomain"
 
 	if v, exists := os.LookupEnv("MYSQL_HOST"); exists {
 		db_host = v

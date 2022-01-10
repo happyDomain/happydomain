@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2021)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -35,13 +35,13 @@ import (
 	"github.com/StackExchange/dnscontrol/v3/providers"
 	_ "github.com/StackExchange/dnscontrol/v3/providers/hexonet"
 
-	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydomain/model"
 )
 
 type HexonetAPI struct {
-	APILogin    string `json:"apilogin,omitempty" happydns:"label=API Login,placeholder=your-hexonet-account-id,required"`
-	APIPassword string `json:"apipassword,omitempty" happydns:"label=API Password,placeholder=your-hexonet-account-password,required"`
-	APIEntity   string `json:"apientity,omitempty" happydns:"label=API Entity,default=LIVE,choices=LIVE;OTE,description=Choose between the LIVE and the OT&E system"`
+	APILogin    string `json:"apilogin,omitempty" happydomain:"label=API Login,placeholder=your-hexonet-account-id,required"`
+	APIPassword string `json:"apipassword,omitempty" happydomain:"label=API Password,placeholder=your-hexonet-account-password,required"`
+	APIEntity   string `json:"apientity,omitempty" happydomain:"label=API Entity,default=LIVE,choices=LIVE;OTE,description=Choose between the LIVE and the OT&E system"`
 }
 
 func (s *HexonetAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {

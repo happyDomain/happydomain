@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2021)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -35,12 +35,12 @@ import (
 	"github.com/StackExchange/dnscontrol/v3/providers"
 	_ "github.com/StackExchange/dnscontrol/v3/providers/hostingde"
 
-	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydomain/model"
 )
 
 type HostingdeAPI struct {
-	Token          string `json:"token,omitempty" happydns:"label=Token,placeholder=your-api-key,required,description=Provide your Hosting.de account access token."`
-	OwnerAccountId string `json:"ownerAccountId,omitempty" happydns:"label=Owner Account,placeholder=xxxxxxxxx,description=Identifier of the account owner."`
+	Token          string `json:"token,omitempty" happydomain:"label=Token,placeholder=your-api-key,required,description=Provide your Hosting.de account access token."`
+	OwnerAccountId string `json:"ownerAccountId,omitempty" happydomain:"label=Owner Account,placeholder=xxxxxxxxx,description=Identifier of the account owner."`
 }
 
 func (s *HostingdeAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {

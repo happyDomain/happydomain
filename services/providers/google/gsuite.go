@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2020)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -36,13 +36,13 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happydns/model"
-	"git.happydns.org/happydns/services"
-	"git.happydns.org/happydns/services/abstract"
+	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happydomain/services"
+	"git.happydns.org/happydomain/services/abstract"
 )
 
 type GSuite struct {
-	ValidationCode string `json:"validationCode,omitempty" happydns:"label=Validation Code,placeholder=abcdef0123.mx-verification.google.com.,description=The verification code will be displayed during the initial domain setup and will not be usefull after Google validation."`
+	ValidationCode string `json:"validationCode,omitempty" happydomain:"label=Validation Code,placeholder=abcdef0123.mx-verification.google.com.,description=The verification code will be displayed during the initial domain setup and will not be usefull after Google validation."`
 }
 
 func (s *GSuite) GenKnownSvcs() []happydns.Service {

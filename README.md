@@ -34,8 +34,8 @@ yarn --cwd ui install
 2. Then, generates assets files used by Go code:
 
 ```
-go generate git.happydns.org/happydns/ui
-go generate git.happydns.org/happydns
+go generate git.happydomain.org/happydomain/ui
+go generate git.happydomain.org/happydomain
 ```
 
 3. Finaly, build the Go code:
@@ -44,7 +44,7 @@ go generate git.happydns.org/happydns
 go build -v
 ```
 
-This last command will create a binary `happydns` you can use standalone.
+This last command will create a binary `happydomain` you can use standalone.
 
 
 Install at home
@@ -54,12 +54,12 @@ The binary comes with sane default options to start with.
 You can simply launch the following command in your terminal:
 
 ```
-./happydns
+./happydomain
 ```
 
 After some initializations, it should show you:
 
-    Admin listening on ./happydns.sock
+    Admin listening on ./happydomain.sock
     Ready, listening on :8081
 
 Go to http://localhost:8081/ to start using happyDomain.
@@ -69,7 +69,7 @@ Go to http://localhost:8081/ to start using happyDomain.
 
 By default, the LevelDB storage engine is used. You can change the storage engine using the option `-storage-engine other-engine`.
 
-The help command `./happydns -help` can show you the available engines. By example:
+The help command `./happydomain -help` can show you the available engines. By example:
 
     -storage-engine value
     	Select the storage engine between [leveldb mysql] (default leveldb)
@@ -79,9 +79,9 @@ The help command `./happydns -help` can show you the available engines. By examp
 LevelDB is a small embedded key-value store (as SQLite it doesn't require an additional daemon to work).
 
     -leveldb-path string
-    	Path to the LevelDB Database (default "happydns.db")
+    	Path to the LevelDB Database (default "happydomain.db")
 
-By default, a new directory is created near the binary, called `happydns.db`. This directory contains the database used by the program.
+By default, a new directory is created near the binary, called `happydomain.db`. This directory contains the database used by the program.
 You can change it to a more meaningful/persistant path.
 
 
@@ -89,16 +89,16 @@ You can change it to a more meaningful/persistant path.
 
 The binary will automatically look for some existing configuration files:
 
-* `./happydns.conf` in the current directory;
-* `$XDG_CONFIG_HOME/happydns/happydns.conf`;
-* `/etc/happydns.conf`.
+* `./happydomain.conf` in the current directory;
+* `$XDG_CONFIG_HOME/happydomain/happydomain.conf`;
+* `/etc/happydomain.conf`.
 
 Only the first file found will be used.
 
 It is also possible to specify a custom path by adding it as argument to the command line:
 
 ```
-./happydns /etc/happydns/config
+./happydomain /etc/happydomain/config
 ```
 
 #### Config file format
@@ -109,18 +109,18 @@ Place on each line the name of the config option and the expected value, separat
 
 ```
 storage-engine=leveldb
-leveldb-path=/var/lib/happydns/db/
+leveldb-path=/var/lib/happydomain/db/
 ```
 
 #### Environment variables
 
-It'll also look for special environment variables, beginning with `HAPPYDNS_`.
+It'll also look for special environment variables, beginning with `HAPPYDOMAIN_`.
 
 You can achieve the same as the previous example, with the following environment variables:
 
 ```
-HAPPYDNS_STORAGE_ENGINE=leveldb
-HAPPYDNS_LEVELDB_PATH=/var/lib/happydns/db/
+HAPPYDOMAIN_STORAGE_ENGINE=leveldb
+HAPPYDOMAIN_LEVELDB_PATH=/var/lib/happydomain/db/
 ```
 
 You just have to replace dash by underscore.
@@ -131,10 +131,10 @@ Development environment
 
 If you want to contribute to the frontend, instead of regenerating the frontend assets each time you made a modification (with `go generate`), you can use the development tools:
 
-In one terminal, run `happydns` with the following arguments:
+In one terminal, run `happydomain` with the following arguments:
 
 ```
-./happydns -dev http://127.0.0.1:8080
+./happydomain -dev http://127.0.0.1:8080
 ```
 
 In another terminal, run the node part:

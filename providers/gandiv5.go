@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2021)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -35,12 +35,12 @@ import (
 	"github.com/StackExchange/dnscontrol/v3/providers"
 	_ "github.com/StackExchange/dnscontrol/v3/providers/gandiv5"
 
-	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydomain/model"
 )
 
 type GandiAPI struct {
-	APIKey    string `json:"api_key,omitempty" happydns:"label=API Key,placeholder=xxxxxxxxxx,required,description=Get your API Key in the Security section under https://account.gandi.net/. Copy the corresponding key."`
-	SharingID string `json:"sharing_id,omitempty" happydns:"label=Sharing ID,placeholder=xxxxxxxxxx,description=If you are member of multiple organizations this identifier selects the one to manage."`
+	APIKey    string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,description=Get your API Key in the Security section under https://account.gandi.net/. Copy the corresponding key."`
+	SharingID string `json:"sharing_id,omitempty" happydomain:"label=Sharing ID,placeholder=xxxxxxxxxx,description=If you are member of multiple organizations this identifier selects the one to manage."`
 }
 
 func (s *GandiAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {

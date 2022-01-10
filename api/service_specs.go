@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2020)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -39,7 +39,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydns/services"
+	"git.happydns.org/happydomain/services"
 )
 
 func declareServiceSpecsRoutes(router *gin.RouterGroup) {
@@ -120,7 +120,7 @@ func getSpecs(svcType reflect.Type) viewServiceSpec {
 			f.Id = svcType.Field(i).Name
 		}
 
-		tag := svcType.Field(i).Tag.Get("happydns")
+		tag := svcType.Field(i).Tag.Get("happydomain")
 		tuples := strings.Split(tag, ",")
 
 		for _, t := range tuples {

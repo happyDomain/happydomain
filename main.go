@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2020)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -40,13 +40,13 @@ import (
 	"syscall"
 	"time"
 
-	"git.happydns.org/happydns/config"
-	"git.happydns.org/happydns/internal/app"
-	"git.happydns.org/happydns/storage"
+	"git.happydns.org/happydomain/config"
+	"git.happydns.org/happydomain/internal/app"
+	"git.happydns.org/happydomain/storage"
 
-	_ "git.happydns.org/happydns/services/providers/google"
+	_ "git.happydns.org/happydomain/services/providers/google"
 
-	_ "git.happydns.org/happydns/storage/leveldb"
+	_ "git.happydns.org/happydomain/storage/leveldb"
 )
 
 var (

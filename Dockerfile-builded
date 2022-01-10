@@ -2,20 +2,20 @@ FROM alpine:3.14
 
 EXPOSE 8081
 
-ENTRYPOINT ["/usr/sbin/happydns"]
+ENTRYPOINT ["/usr/sbin/happydomain"]
 
-ENV HAPPYDNS_LEVELDB_PATH=/data/happydns.db
+ENV HAPPYDOMAIN_LEVELDB_PATH=/data/happydomain.db
 
 RUN apk add --no-cache \
         curl \
         jq \
     && \
-    adduser --system --no-create-home --uid 15353 happydns && \
-    mkdir /data && chown happydns /data
-USER happydns
+    adduser --system --no-create-home --uid 15353 happydomain && \
+    mkdir /data && chown happydomain /data
+USER happydomain
 WORKDIR /data
 
 VOLUME /data
 
-COPY happydns /usr/sbin/happydns
+COPY happydomain /usr/sbin/happydomain
 COPY hadmin.sh /usr/bin/hadmin

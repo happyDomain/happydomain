@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2020)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -67,7 +67,7 @@ type Field struct {
 	Description string `json:"description,omitempty"`
 }
 
-// GenField generates a generic Field based on the happydns tag.
+// GenField generates a generic Field based on the happydomain tag.
 func GenField(field reflect.StructField) (f *Field) {
 	jsonTag := field.Tag.Get("json")
 	jsonTuples := strings.Split(jsonTag, ",")
@@ -82,7 +82,7 @@ func GenField(field reflect.StructField) (f *Field) {
 		f.Id = field.Name
 	}
 
-	tag := field.Tag.Get("happydns")
+	tag := field.Tag.Get("happydomain")
 	tuples := strings.Split(tag, ",")
 
 	for _, t := range tuples {

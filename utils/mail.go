@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2020)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -38,7 +38,7 @@ import (
 	"net/mail"
 	"text/template"
 
-	"git.happydns.org/happydns/ui"
+	"git.happydns.org/happydomain/ui"
 
 	gomail "github.com/go-mail/mail"
 	"github.com/yuin/goldmark"
@@ -137,8 +137,8 @@ func SendMail(to *mail.Address, subject, content string) (err error) {
 		return
 	}
 
-	if data, err := ui.GetEmbedFS().Open("dist/img/happydns.png"); err == nil {
-		m.EmbedReader("happydns.png", data)
+	if data, err := ui.GetEmbedFS().Open("dist/img/happydomain.png"); err == nil {
+		m.EmbedReader("happydomain.png", data)
 	}
 
 	if t, err := template.New("mailHTML").Parse(mailHTMLTpl); err != nil {

@@ -14,40 +14,38 @@ steps:
   - apk --no-cache add python2 build-base tar
   - yarn config set network-timeout 100000
   - yarn --cwd ui install
-  - tar --transform="s@.@./happydns-${DRONE_COMMIT}@" --exclude-vcs --exclude=./ui/node_modules/.cache -czf /dev/shm/happydns-src.tar.gz .
-  - mv /dev/shm/happydns-src.tar.gz .
+  - tar --transform="s@.@./happydomain-${DRONE_COMMIT}@" --exclude-vcs --exclude=./ui/node_modules/.cache -czf /dev/shm/happydomain-src.tar.gz .
+  - mv /dev/shm/happydomain-src.tar.gz .
   - yarn --cwd ui --offline build
 
 - name: deploy sources
-  image: appleboy/drone-scp
+  image: plugins/s3
   settings:
-    tar_tmp_path: /tmp/
-    host: get.happydns.org
-    target: /var/www/happydns.org/get/${DRONE_BRANCH//\//-}
-    source: happydns-src.tar.gz
-    username:
-      from_secret: ssh_username
-    key:
-      from_secret: deploy_key
-    port:
-      from_secret: ssh_port
+    endpoint: https://storage0.nemunai.re
+    path_style: true
+    bucket: happydomain-dl
+    access_key:
+      from_secret: s3_access_key
+    secret_key:
+      from_secret: s3_secret_key
+    source: happydomain-src.tar.gz
+    target: /${DRONE_BRANCH//\//-}/
   when:
     event:
       - push
 
 - name: deploy sources for release
-  image: appleboy/drone-scp
+  image: plugins/s3
   settings:
-    tar_tmp_path: /tmp/
-    host: get.happydns.org
-    target: /var/www/happydns.org/get/${DRONE_TAG}
-    source: happydns-src.tar.gz
-    username:
-      from_secret: ssh_username
-    key:
-      from_secret: deploy_key
-    port:
-      from_secret: ssh_port
+    endpoint: https://storage0.nemunai.re
+    path_style: true
+    bucket: happydomain-dl
+    access_key:
+      from_secret: s3_access_key
+    secret_key:
+      from_secret: s3_secret_key
+    source: happydomain-src.tar.gz
+    target: /${DRONE_TAG}/
   when:
     event:
       - tag
@@ -57,7 +55,7 @@ steps:
   commands:
   - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
   environment:
     CGO_ENABLED: 0
   when:
@@ -70,7 +68,7 @@ steps:
   commands:
   - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
-  - go build -v -tags netgo -ldflags '-w -X main.version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w -X main.version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
   environment:
     CGO_ENABLED: 0
   when:
@@ -86,35 +84,33 @@ steps:
     CGO_ENABLED: 0
 
 - name: deploy
-  image: appleboy/drone-scp
+  image: plugins/s3
   settings:
-    tar_tmp_path: /tmp/
-    host: get.happydns.org
-    target: /var/www/happydns.org/get/${DRONE_BRANCH//\//-}
-    source: happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-    username:
-      from_secret: ssh_username
-    key:
-      from_secret: deploy_key
-    port:
-      from_secret: ssh_port
+    endpoint: https://storage0.nemunai.re
+    path_style: true
+    bucket: happydomain-dl
+    access_key:
+      from_secret: s3_access_key
+    secret_key:
+      from_secret: s3_secret_key
+    source: happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+    target: /${DRONE_BRANCH//\//-}/
   when:
     event:
       - push
 
 - name: deploy release
-  image: appleboy/drone-scp
+  image: plugins/s3
   settings:
-    tar_tmp_path: /tmp/
-    host: get.happydns.org
-    target: /var/www/happydns.org/get/${DRONE_TAG}
-    source: happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-    username:
-      from_secret: ssh_username
-    key:
-      from_secret: deploy_key
-    port:
-      from_secret: ssh_port
+    endpoint: https://storage0.nemunai.re
+    path_style: true
+    bucket: happydomain-dl
+    access_key:
+      from_secret: s3_access_key
+    secret_key:
+      from_secret: s3_secret_key
+    source: happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+    target: /${DRONE_TAG}/
   when:
     event:
       - tag
@@ -122,7 +118,7 @@ steps:
 - name: build-commit macOS
   image: golang:1-alpine
   commands:
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-darwin-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH}
   environment:
     CGO_ENABLED: 0
     GOOS: darwin
@@ -135,7 +131,7 @@ steps:
 - name: build-tag macOS
   image: golang:1-alpine
   commands:
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-darwin-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH}
   environment:
     CGO_ENABLED: 0
     GOOS: darwin
@@ -145,35 +141,33 @@ steps:
       - tag
 
 - name: deploy macOS
-  image: appleboy/drone-scp
+  image: plugins/s3
   settings:
-    tar_tmp_path: /tmp/
-    host: get.happydns.org
-    target: /var/www/happydns.org/get/${DRONE_BRANCH//\//-}
-    source: happydns-darwin-${DRONE_STAGE_ARCH}
-    username:
-      from_secret: ssh_username
-    key:
-      from_secret: deploy_key
-    port:
-      from_secret: ssh_port
+    endpoint: https://storage0.nemunai.re
+    path_style: true
+    bucket: happydomain-dl
+    access_key:
+      from_secret: s3_access_key
+    secret_key:
+      from_secret: s3_secret_key
+    source: happydomain-darwin-${DRONE_STAGE_ARCH}
+    target: /${DRONE_BRANCH//\//-}/
   when:
     event:
       - push
 
 - name: deploy macOS release
-  image: appleboy/drone-scp
+  image: plugins/s3
   settings:
-    tar_tmp_path: /tmp/
-    host: get.happydns.org
-    target: /var/www/happydns.org/get/${DRONE_TAG}
-    source: happydns-darwin-${DRONE_STAGE_ARCH}
-    username:
-      from_secret: ssh_username
-    key:
-      from_secret: deploy_key
-    port:
-      from_secret: ssh_port
+    endpoint: https://storage0.nemunai.re
+    path_style: true
+    bucket: happydomain-dl
+    access_key:
+      from_secret: s3_access_key
+    secret_key:
+      from_secret: s3_secret_key
+    source: happydomain-darwin-${DRONE_STAGE_ARCH}
+    target: /${DRONE_TAG}/
   when:
     event:
       - tag
@@ -181,7 +175,7 @@ steps:
 - name: publish
   image: plugins/docker
   settings:
-    repo: happydns/happydns
+    repo: happydns/happydomain
     auto_tag: true
     auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
     username:
@@ -218,8 +212,8 @@ steps:
   commands:
   - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-  - ln happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydns
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+  - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
   environment:
     CGO_ENABLED: 0
   when:
@@ -232,8 +226,8 @@ steps:
   commands:
   - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-  - ln happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydns
+  - go build -v -tags netgo -ldflags '-w -X main.version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+  - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
   environment:
     CGO_ENABLED: 0
   when:
@@ -241,35 +235,33 @@ steps:
       - tag
 
 - name: deploy
-  image: appleboy/drone-scp
+  image: plugins/s3
   settings:
-    tar_tmp_path: /tmp/
-    host: get.happydns.org
-    target: /var/www/happydns.org/get/${DRONE_BRANCH//\//-}
-    source: happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-    username:
-      from_secret: ssh_username
-    key:
-      from_secret: deploy_key
-    port:
-      from_secret: ssh_port
+    endpoint: https://storage0.nemunai.re
+    path_style: true
+    bucket: happydomain-dl
+    access_key:
+      from_secret: s3_access_key
+    secret_key:
+      from_secret: s3_secret_key
+    source: happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+    target: /${DRONE_BRANCH//\//-}/
   when:
     event:
       - push
 
 - name: deploy release
-  image: appleboy/drone-scp
+  image: plugins/s3
   settings:
-    tar_tmp_path: /tmp/
-    host: get.happydns.org
-    target: /var/www/happydns.org/get/${DRONE_TAG}
-    source: happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-    username:
-      from_secret: ssh_username
-    key:
-      from_secret: deploy_key
-    port:
-      from_secret: ssh_port
+    endpoint: https://storage0.nemunai.re
+    path_style: true
+    bucket: happydomain-dl
+    access_key:
+      from_secret: s3_access_key
+    secret_key:
+      from_secret: s3_secret_key
+    source: happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+    target: /${DRONE_TAG}/
   when:
     event:
       - tag
@@ -277,7 +269,7 @@ steps:
 - name: build-commit macOS
   image: golang:1-alpine
   commands:
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-darwin-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH}
   environment:
     CGO_ENABLED: 0
     GOOS: darwin
@@ -290,7 +282,7 @@ steps:
 - name: build-tag macOS
   image: golang:1-alpine
   commands:
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-darwin-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH}
   environment:
     CGO_ENABLED: 0
     GOOS: darwin
@@ -300,35 +292,33 @@ steps:
       - tag
 
 - name: deploy macOS
-  image: appleboy/drone-scp
+  image: plugins/s3
   settings:
-    tar_tmp_path: /tmp/
-    host: get.happydns.org
-    target: /var/www/happydns.org/get/${DRONE_BRANCH//\//-}
-    source: happydns-darwin-${DRONE_STAGE_ARCH}
-    username:
-      from_secret: ssh_username
-    key:
-      from_secret: deploy_key
-    port:
-      from_secret: ssh_port
+    endpoint: https://storage0.nemunai.re
+    path_style: true
+    bucket: happydomain-dl
+    access_key:
+      from_secret: s3_access_key
+    secret_key:
+      from_secret: s3_secret_key
+    source: happydomain-darwin-${DRONE_STAGE_ARCH}
+    target: /${DRONE_BRANCH//\//-}/
   when:
     event:
       - push
 
 - name: deploy macOS release
-  image: appleboy/drone-scp
+  image: plugins/s3
   settings:
-    tar_tmp_path: /tmp/
-    host: get.happydns.org
-    target: /var/www/happydns.org/get/${DRONE_TAG}
-    source: happydns-darwin-${DRONE_STAGE_ARCH}
-    username:
-      from_secret: ssh_username
-    key:
-      from_secret: deploy_key
-    port:
-      from_secret: ssh_port
+    endpoint: https://storage0.nemunai.re
+    path_style: true
+    bucket: happydomain-dl
+    access_key:
+      from_secret: s3_access_key
+    secret_key:
+      from_secret: s3_secret_key
+    source: happydomain-darwin-${DRONE_STAGE_ARCH}
+    target: /${DRONE_TAG}/
   when:
     event:
       - tag
@@ -336,7 +326,7 @@ steps:
 - name: publish
   image: plugins/docker
   settings:
-    repo: happydns/happydns
+    repo: happydns/happydomain
     auto_tag: true
     auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
     dockerfile: Dockerfile-builded
@@ -375,7 +365,7 @@ steps:
   - apk --no-cache add build-base
   - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
   environment:
     CGO_ENABLED: 0
     GOARM: 5
@@ -390,7 +380,7 @@ steps:
   - apk --no-cache add build-base
   - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
   environment:
     CGO_ENABLED: 0
     GOARM: 5
@@ -399,35 +389,33 @@ steps:
       - tag
 
 - name: deploy armel
-  image: appleboy/drone-scp
+  image: plugins/s3
   settings:
-    tar_tmp_path: /tmp/
-    host: get.happydns.org
-    target: /var/www/happydns.org/get/${DRONE_BRANCH//\//-}
-    source: happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
-    username:
-      from_secret: ssh_username
-    key:
-      from_secret: deploy_key
-    port:
-      from_secret: ssh_port
+    endpoint: https://storage0.nemunai.re
+    path_style: true
+    bucket: happydomain-dl
+    access_key:
+      from_secret: s3_access_key
+    secret_key:
+      from_secret: s3_secret_key
+    source: happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
+    target: /${DRONE_BRANCH//\//-}/
   when:
     event:
       - push
 
 - name: deploy armel release
-  image: appleboy/drone-scp
+  image: plugins/s3
   settings:
-    tar_tmp_path: /tmp/
-    host: get.happydns.org
-    target: /var/www/happydns.org/get/${DRONE_TAG}
-    source: happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
-    username:
-      from_secret: ssh_username
-    key:
-      from_secret: deploy_key
-    port:
-      from_secret: ssh_port
+    endpoint: https://storage0.nemunai.re
+    path_style: true
+    bucket: happydomain-dl
+    access_key:
+      from_secret: s3_access_key
+    secret_key:
+      from_secret: s3_secret_key
+    source: happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
+    target: /${DRONE_TAG}/
   when:
     event:
       - tag
@@ -436,7 +424,7 @@ steps:
   image: golang:1-alpine
   commands:
   - apk --no-cache add build-base
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
   environment:
     CGO_ENABLED: 0
     GOARM: 6
@@ -449,7 +437,7 @@ steps:
   image: golang:1-alpine
   commands:
   - apk --no-cache add build-base
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
   environment:
     CGO_ENABLED: 0
     GOARM: 6
@@ -458,35 +446,33 @@ steps:
       - tag
 
 - name: deploy armhf
-  image: appleboy/drone-scp
+  image: plugins/s3
   settings:
-    tar_tmp_path: /tmp/
-    host: get.happydns.org
-    target: /var/www/happydns.org/get/${DRONE_BRANCH//\//-}
-    source: happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
-    username:
-      from_secret: ssh_username
-    key:
-      from_secret: deploy_key
-    port:
-      from_secret: ssh_port
+    endpoint: https://storage0.nemunai.re
+    path_style: true
+    bucket: happydomain-dl
+    access_key:
+      from_secret: s3_access_key
+    secret_key:
+      from_secret: s3_secret_key
+    source: happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
+    target: /${DRONE_BRANCH//\//-}/
   when:
     event:
       - push
 
 - name: deploy armhf release
-  image: appleboy/drone-scp
+  image: plugins/s3
   settings:
-    tar_tmp_path: /tmp/
-    host: get.happydns.org
-    target: /var/www/happydns.org/get/${DRONE_TAG}
-    source: happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
-    username:
-      from_secret: ssh_username
-    key:
-      from_secret: deploy_key
-    port:
-      from_secret: ssh_port
+    endpoint: https://storage0.nemunai.re
+    path_style: true
+    bucket: happydomain-dl
+    access_key:
+      from_secret: s3_access_key
+    secret_key:
+      from_secret: s3_secret_key
+    source: happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
+    target: /${DRONE_TAG}/
   when:
     event:
       - tag
@@ -495,8 +481,8 @@ steps:
   image: golang:1-alpine
   commands:
   - apk --no-cache add build-base
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
-  - ln happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7 happydns
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
+  - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7 happydomain
   environment:
     CGO_ENABLED: 0
     GOARM: 7
@@ -509,8 +495,8 @@ steps:
   image: golang:1-alpine
   commands:
   - apk --no-cache add build-base
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
-  - ln happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7 happydns
+  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
+  - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7 happydomain
   environment:
     CGO_ENABLED: 0
     GOARM: 7
@@ -519,43 +505,41 @@ steps:
       - tag
 
 - name: deploy armv7
-  image: appleboy/drone-scp
+  image: plugins/s3
   settings:
-    tar_tmp_path: /tmp/
-    host: get.happydns.org
-    target: /var/www/happydns.org/get/${DRONE_BRANCH//\//-}
-    source: happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
-    username:
-      from_secret: ssh_username
-    key:
-      from_secret: deploy_key
-    port:
-      from_secret: ssh_port
+    endpoint: https://storage0.nemunai.re
+    path_style: true
+    bucket: happydomain-dl
+    access_key:
+      from_secret: s3_access_key
+    secret_key:
+      from_secret: s3_secret_key
+    source: happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
+    target: /${DRONE_BRANCH//\//-}/
   when:
     event:
       - push
 
 - name: deploy armv7 release
-  image: appleboy/drone-scp
+  image: plugins/s3
   settings:
-    tar_tmp_path: /tmp/
-    host: get.happydns.org
-    target: /var/www/happydns.org/get/${DRONE_TAG}
-    source: happydns-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
-    username:
-      from_secret: ssh_username
-    key:
-      from_secret: deploy_key
-    port:
-      from_secret: ssh_port
+    endpoint: https://storage0.nemunai.re
+    path_style: true
+    bucket: happydomain-dl
+    access_key:
+      from_secret: s3_access_key
+    secret_key:
+      from_secret: s3_secret_key
+    source: happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
+    target: /${DRONE_TAG}/
   when:
     event:
       - tag
 
 - name: publish
-  image: plugins/docker:linux-arm
+  image: plugins/docker
   settings:
-    repo: happydns/happydns
+    repo: happydns/happydomain
     auto_tag: true
     auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
     dockerfile: Dockerfile-builded
@@ -595,3 +579,4 @@ trigger:
 depends_on:
 - build-amd64
 - build-arm64
+- build-arm

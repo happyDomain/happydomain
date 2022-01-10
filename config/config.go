@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2020)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -40,7 +40,7 @@ import (
 	"path"
 	"strings"
 
-	"git.happydns.org/happydns/storage"
+	"git.happydns.org/happydomain/storage"
 )
 
 // Options stores the configuration of the software.
@@ -97,7 +97,7 @@ func ConsolidateConfig() (opts *Options, err error) {
 	// Define defaults options
 	opts = &Options{
 		Bind:              ":8081",
-		AdminBind:         "./happydns.sock",
+		AdminBind:         "./happydomain.sock",
 		ExternalURL:       "http://localhost:8081",
 		BaseURL:           "/",
 		DefaultNameServer: "127.0.0.1:53",
@@ -108,14 +108,14 @@ func ConsolidateConfig() (opts *Options, err error) {
 
 	// Establish a list of possible configuration file locations
 	configLocations := []string{
-		"happydns.conf",
+		"happydomain.conf",
 	}
 
 	if home, err := os.UserConfigDir(); err == nil {
-		configLocations = append(configLocations, path.Join(home, "happydns", "happydns.conf"))
+		configLocations = append(configLocations, path.Join(home, "happydomain", "happydomain.conf"))
 	}
 
-	configLocations = append(configLocations, path.Join("etc", "happydns.conf"))
+	configLocations = append(configLocations, path.Join("etc", "happydomain.conf"))
 
 	// If config file exists, read configuration from it
 	for _, filename := range configLocations {
@@ -166,7 +166,7 @@ func (o *Options) parseLine(line string) (err error) {
 	orig_key := strings.TrimSpace(fields[0])
 	value := strings.TrimSpace(fields[1])
 
-	key := strings.TrimPrefix(orig_key, "HAPPYDNS_")
+	key := strings.TrimPrefix(strings.TrimPrefix(orig_key, "HAPPYDNS_"), "HAPPYDOMAIN_")
 	key = strings.Replace(key, "_", "-", -1)
 	key = strings.ToLower(key)
 

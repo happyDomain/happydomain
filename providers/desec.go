@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2021)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -35,11 +35,11 @@ import (
 	"github.com/StackExchange/dnscontrol/v3/providers"
 	_ "github.com/StackExchange/dnscontrol/v3/providers/desec"
 
-	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydomain/model"
 )
 
 type DeSECAPI struct {
-	Token string `json:"token,omitempty" happydns:"label=Token,placeholder=your-api-key,required,description=Provide your deSEC access token."`
+	Token string `json:"token,omitempty" happydomain:"label=Token,placeholder=your-api-key,required,description=Provide your deSEC access token."`
 }
 
 func (s *DeSECAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {

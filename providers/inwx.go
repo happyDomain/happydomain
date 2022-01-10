@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2021)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -35,12 +35,12 @@ import (
 	"github.com/StackExchange/dnscontrol/v3/providers"
 	_ "github.com/StackExchange/dnscontrol/v3/providers/inwx"
 
-	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydomain/model"
 )
 
 type INWXAPI struct {
-	Username string `json:"username,omitempty" happydns:"label=Username,placeholder=xxxxxxxx,required,description=The username you usually use to log on INWX services."`
-	Password string `json:"password,omitempty" happydns:"label=Password,placeholder=xxxxxxxx,required,description=The password associated with you INWX account."`
+	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=xxxxxxxx,required,description=The username you usually use to log on INWX services."`
+	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,description=The password associated with you INWX account."`
 }
 
 func (s *INWXAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {

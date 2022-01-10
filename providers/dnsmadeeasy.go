@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2021)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -35,12 +35,12 @@ import (
 	"github.com/StackExchange/dnscontrol/v3/providers"
 	_ "github.com/StackExchange/dnscontrol/v3/providers/dnsmadeeasy"
 
-	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydomain/model"
 )
 
 type DNSMadeEasyAPI struct {
-	ApiKey    string `json:"api_key,omitempty" happydns:"label=API Key,placeholder=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx,required,description=API Key to retrieve from your account: See https://api-docs.dnsmadeeasy.com/."`
-	SecretKey string `json:"secret_key,omitempty" happydns:"label=Secret Key,placeholder=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx,required,description=Secret key that comes with your API Key."`
+	ApiKey    string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx,required,description=API Key to retrieve from your account: See https://api-docs.dnsmadeeasy.com/."`
+	SecretKey string `json:"secret_key,omitempty" happydomain:"label=Secret Key,placeholder=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx,required,description=Secret key that comes with your API Key."`
 }
 
 func (s *DNSMadeEasyAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {

@@ -1,8 +1,8 @@
 #!/bin/sh
 
-[ -z "${HAPPYDNS_SOCKET}" ] &&
-    DEST="./happydns.sock" ||
-        DEST="${HAPPYDNS_SOCKET}"
+[ -z "${HAPPYDOMAIN_SOCKET}" ] &&
+    DEST="./happydomain.sock" ||
+        DEST="${HAPPYDOMAIN_SOCKET}"
 
 [ -S "${DEST}" ] && DEST="--unix-socket $DEST http://localhost"
 

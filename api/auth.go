@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2021)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -41,9 +41,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 
-	"git.happydns.org/happydns/config"
-	"git.happydns.org/happydns/model"
-	"git.happydns.org/happydns/storage"
+	"git.happydns.org/happydomain/config"
+	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happydomain/storage"
 )
 
 type UserProfile struct {
@@ -58,7 +58,7 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 }
 
-const COOKIE_NAME = "happydns_session"
+const COOKIE_NAME = "happydomain_session"
 
 var signingMethod = jwt.SigningMethodHS512
 

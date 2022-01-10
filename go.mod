@@ -1,4 +1,4 @@
-module git.happydns.org/happydns
+module git.happydns.org/happydomain
 
 go 1.16
 

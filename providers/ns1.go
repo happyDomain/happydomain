@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2021)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -35,11 +35,11 @@ import (
 	"github.com/StackExchange/dnscontrol/v3/providers"
 	_ "github.com/StackExchange/dnscontrol/v3/providers/ns1"
 
-	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydomain/model"
 )
 
 type NS1API struct {
-	Token string `json:"api_token,omitempty" happydns:"label=API Key,placeholder=xxxxxxxxxx,required,description=Provide a NS1 account access token."`
+	Token string `json:"api_token,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,description=Provide a NS1 account access token."`
 }
 
 func (s *NS1API) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {

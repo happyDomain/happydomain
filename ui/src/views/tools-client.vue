@@ -1,7 +1,7 @@
 <!--
     Copyright or © or Copr. happyDNS (2020)
 
-    contact@happydns.org
+    contact@happydomain.org
 
     This software is a computer program whose purpose is to provide a modern
     interface to interact with DNS systems.
@@ -56,7 +56,7 @@
               v-model="form.domain"
               list="my-domains"
               required
-              placeholder="happydns.org"
+              placeholder="happydomain.org"
             />
             <datalist v-if="sortedDomains" id="my-domains">
               <option v-for="dn in sortedDomains" :key="dn.id">
@@ -79,7 +79,7 @@
             >
               <template slot="description">
                 <i18n path="resolver.field-description">
-                  <a href="//help.happydns.org/tools/resolver" target="_blank">{{ $t('resolver.field-description-more-info') }}</a>
+                  <a href="//help.happydomain.org/tools/resolver" target="_blank">{{ $t('resolver.field-description-more-info') }}</a>
                 </i18n>
               </template>
               <b-form-select

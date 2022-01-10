@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2020)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -38,7 +38,7 @@ import (
 	"sort"
 	"strings"
 
-	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydomain/model"
 )
 
 const (
@@ -66,7 +66,7 @@ func (a ByWeight) Less(i, j int) bool { return a[i].Weight < a[j].Weight }
 var (
 	services         map[string]*Svc              = map[string]*Svc{}
 	subServices      map[string]SubServiceCreator = map[string]SubServiceCreator{}
-	pathToSvcsModule string                       = "git.happydns.org/happydns/services"
+	pathToSvcsModule string                       = "git.happydns.org/happydomain/services"
 	ordered_services []*Svc
 )
 

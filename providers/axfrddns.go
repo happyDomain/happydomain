@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2021)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -38,14 +38,14 @@ import (
 	"github.com/StackExchange/dnscontrol/v3/providers"
 	_ "github.com/StackExchange/dnscontrol/v3/providers/axfrddns"
 
-	"git.happydns.org/happydns/model"
+	"git.happydns.org/happydomain/model"
 )
 
 type DDNSServer struct {
-	Server  string `json:"server,omitempty" happydns:"label=Server,placeholder=127.0.0.1"`
-	KeyName string `json:"keyname,omitempty" happydns:"label=Key Name,placeholder=ddns,required"`
-	KeyAlgo string `json:"algorithm,omitempty" happydns:"label=Key Algorithm,default=hmac-sha256,choices=hmac-md5;hmac-sha1;hmac-sha256;hmac-sha512,required"`
-	KeyBlob []byte `json:"keyblob,omitempty" happydns:"label=Secret Key,placeholder=a0b1c2d3e4f5==,required,secret"`
+	Server  string `json:"server,omitempty" happydomain:"label=Server,placeholder=127.0.0.1"`
+	KeyName string `json:"keyname,omitempty" happydomain:"label=Key Name,placeholder=ddns,required"`
+	KeyAlgo string `json:"algorithm,omitempty" happydomain:"label=Key Algorithm,default=hmac-sha256,choices=hmac-md5;hmac-sha1;hmac-sha256;hmac-sha512,required"`
+	KeyBlob []byte `json:"keyblob,omitempty" happydomain:"label=Secret Key,placeholder=a0b1c2d3e4f5==,required,secret"`
 }
 
 func (s *DDNSServer) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {

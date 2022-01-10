@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2020)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -38,18 +38,18 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happydns/model"
-	"git.happydns.org/happydns/services"
-	"git.happydns.org/happydns/utils"
+	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happydomain/services"
+	"git.happydns.org/happydomain/utils"
 )
 
 type EMail struct {
-	MX      []svcs.MX             `json:"mx,omitempty" happydns:"label=EMail Servers"`
-	SPF     *svcs.SPF             `json:"spf,omitempty" happydns:"label=Sender Policy Framework"`
-	DKIM    map[string]*svcs.DKIM `json:"dkim,omitempty" happydns:"label=Domain Keys"`
-	DMARC   *svcs.DMARC           `json:"dmarc,omitempty" happydns:"label=DMARC"`
-	MTA_STS *svcs.MTA_STS         `json:"mta_sts,omitempty" happydns:"label=Strict Transport Security"`
-	TLS_RPT *svcs.TLS_RPT         `json:"tls_rpt,omitempty" happydns:"label=TLS Reporting"`
+	MX      []svcs.MX             `json:"mx,omitempty" happydomain:"label=EMail Servers"`
+	SPF     *svcs.SPF             `json:"spf,omitempty" happydomain:"label=Sender Policy Framework"`
+	DKIM    map[string]*svcs.DKIM `json:"dkim,omitempty" happydomain:"label=Domain Keys"`
+	DMARC   *svcs.DMARC           `json:"dmarc,omitempty" happydomain:"label=DMARC"`
+	MTA_STS *svcs.MTA_STS         `json:"mta_sts,omitempty" happydomain:"label=Strict Transport Security"`
+	TLS_RPT *svcs.TLS_RPT         `json:"tls_rpt,omitempty" happydomain:"label=TLS Reporting"`
 }
 
 func (s *EMail) GetNbResources() int {

@@ -1,6 +1,6 @@
 // Copyright or © or Copr. happyDNS (2020)
 //
-// contact@happydns.org
+// contact@happydomain.org
 //
 // This software is a computer program whose purpose is to provide a modern
 // interface to interact with DNS systems.
@@ -38,10 +38,10 @@ import (
 )
 
 // parseEnvironmentVariables analyzes all the environment variables to find
-// each one starting by HAPPYDNS_
+// each one starting by HAPPYDOMAIN_
 func (o *Options) parseEnvironmentVariables() (err error) {
 	for _, line := range os.Environ() {
-		if strings.HasPrefix(line, "HAPPYDNS_") {
+		if strings.HasPrefix(line, "HAPPYDOMAIN_") || strings.HasPrefix(line, "HAPPYDNS_") {
 			err := o.parseLine(line)
 			if err != nil {
 				return fmt.Errorf("error in environment (%q): %w", line, err)
