@@ -35,9 +35,11 @@ import (
 	crand "crypto/rand"
 	"encoding/json"
 	"fmt"
+	"log"
 	mrand "math/rand"
 
 	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/errors"
 	"github.com/syndtr/goleveldb/leveldb/iterator"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
@@ -52,7 +54,16 @@ func NewLevelDBStorage(path string) (s *LevelDBStorage, err error) {
 
 	db, err = leveldb.OpenFile(path, nil)
 	if err != nil {
-		return
+		if _, ok := err.(*errors.ErrCorrupted); ok {
+			log.Println("LevelDB was corrupted; attempting recovery (%s)", err.Error())
+			_, err = leveldb.RecoverFile(path, nil)
+			if err != nil {
+				return
+			}
+			log.Println("LevelDB recovery succeeded!")
+		} else {
+			return
+		}
 	}
 
 	s = &LevelDBStorage{db}
