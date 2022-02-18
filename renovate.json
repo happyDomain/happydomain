@@ -1,3 +1,10 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json"
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "matchPackageNames": ["github.com/yuin/goldmark"],
+      "automerge": true,
+      "automergeType": "branch"
+    }
+  ]
 }
