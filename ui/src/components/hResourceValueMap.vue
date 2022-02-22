@@ -213,7 +213,9 @@ export default {
     },
 
     saveChildrenValues () {
-      this.$refs.resource.saveChildrenValues()
+      for (const i in this.$refs.resource) {
+        this.$refs.resource[i].saveChildrenValues()
+      }
 
       for (const key in this.editKeys) {
         if (this.editKeys[key]) {
