@@ -59,6 +59,7 @@ steps:
   - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
   - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+  - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
   environment:
     CGO_ENABLED: 0
   when:
@@ -72,6 +73,7 @@ steps:
   - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
   - go build -v -tags netgo -ldflags '-w -X main.version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+  - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
   environment:
     CGO_ENABLED: 0
   when:
@@ -181,12 +183,25 @@ steps:
     event:
       - tag
 
-- name: publish
+- name: publish on local registry
+  image: plugins/docker
+  settings:
+    registry: registry.happydomain.org
+    repo: registry.happydomain.org/happydomain
+    auto_tag: true
+    auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+
+- name: publish on Docker Hub
   image: plugins/docker
   settings:
     repo: happydns/happydomain
     auto_tag: true
     auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+    dockerfile: Dockerfile-builded
     username:
       from_secret: docker_username
     password:
@@ -338,7 +353,20 @@ steps:
     event:
       - tag
 
-- name: publish
+- name: publish on local registry
+  image: plugins/docker
+  settings:
+    registry: registry.happydomain.org
+    repo: registry.happydomain.org/happydomain
+    auto_tag: true
+    auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+    dockerfile: Dockerfile-builded
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+
+- name: publish on Docker Hub
   image: plugins/docker
   settings:
     repo: happydns/happydomain
@@ -560,7 +588,20 @@ steps:
     event:
       - tag
 
-- name: publish
+- name: publish on local registry
+  image: plugins/docker
+  settings:
+    registry: registry.happydomain.org
+    repo: registry.happydomain.org/happydomain
+    auto_tag: true
+    auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+    dockerfile: Dockerfile-builded
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+
+- name: publish on Docker Hub
   image: plugins/docker
   settings:
     repo: happydns/happydomain
@@ -583,7 +624,18 @@ kind: pipeline
 name: docker-manifest
 
 steps:
-- name: publish
+- name: publish on local registry
+  image: plugins/manifest
+  settings:
+    auto_tag: true
+    ignore_missing: true
+    spec: .drone-manifest-local.yml
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+
+- name: publish on Docker Hub
   image: plugins/manifest
   settings:
     auto_tag: true
