@@ -358,6 +358,7 @@ steps:
   settings:
     registry: registry.happydomain.org
     repo: registry.happydomain.org/happydomain
+    debug: true
     auto_tag: true
     auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
     dockerfile: Dockerfile-builded
@@ -595,6 +596,7 @@ steps:
     repo: registry.happydomain.org/happydomain
     auto_tag: true
     auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+    debug: true
     dockerfile: Dockerfile-builded
     username:
       from_secret: docker_username
