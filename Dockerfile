@@ -13,7 +13,7 @@ RUN yarn config set network-timeout 100000 && \
 
 FROM golang:1-alpine as gobuild
 
-RUN apk add --no-cache go-bindata
+RUN apk add --no-cache git
 
 WORKDIR /go/src/git.happydns.org/happydomain
 

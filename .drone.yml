@@ -56,6 +56,7 @@ steps:
 - name: backend-commit
   image: golang:1-alpine
   commands:
+  - apk add --no-cache git
   - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
   - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
@@ -70,6 +71,7 @@ steps:
 - name: backend-tag
   image: golang:1-alpine
   commands:
+  - apk add --no-cache git
   - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
   - go build -v -tags netgo -ldflags '-w -X main.version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
@@ -83,7 +85,7 @@ steps:
 - name: vet
   image: golang:1-alpine
   commands:
-  - apk --no-cache add build-base
+  - apk --no-cache add build-base git
   - go vet -v
   environment:
     CGO_ENABLED: 0
@@ -126,6 +128,7 @@ steps:
 - name: build-commit macOS
   image: golang:1-alpine
   commands:
+  - apk add --no-cache git
   - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH}
   environment:
     CGO_ENABLED: 0
@@ -139,6 +142,7 @@ steps:
 - name: build-tag macOS
   image: golang:1-alpine
   commands:
+  - apk add --no-cache git
   - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH}
   environment:
     CGO_ENABLED: 0
@@ -234,6 +238,7 @@ steps:
 - name: backend-commit
   image: golang:1-alpine
   commands:
+  - apk add --no-cache git
   - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
   - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
@@ -248,6 +253,7 @@ steps:
 - name: backend-tag
   image: golang:1-alpine
   commands:
+  - apk add --no-cache git
   - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
   - go build -v -tags netgo -ldflags '-w -X main.version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
@@ -296,6 +302,7 @@ steps:
 - name: build-commit macOS
   image: golang:1-alpine
   commands:
+  - apk add --no-cache git
   - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH}
   environment:
     CGO_ENABLED: 0
@@ -309,6 +316,7 @@ steps:
 - name: build-tag macOS
   image: golang:1-alpine
   commands:
+  - apk add --no-cache git
   - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH}
   environment:
     CGO_ENABLED: 0
@@ -406,7 +414,7 @@ steps:
 - name: backend-commit armel
   image: golang:1-alpine
   commands:
-  - apk --no-cache add build-base
+  - apk --no-cache add build-base git
   - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
   - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
@@ -421,7 +429,7 @@ steps:
 - name: backend-tag armel
   image: golang:1-alpine
   commands:
-  - apk --no-cache add build-base
+  - apk --no-cache add build-base git
   - sed -i '/yarn --offline build/d' ui/assets.go
   - go generate -v
   - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
@@ -470,7 +478,7 @@ steps:
 - name: backend-commit armhf
   image: golang:1-alpine
   commands:
-  - apk --no-cache add build-base
+  - apk --no-cache add build-base git
   - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
   environment:
     CGO_ENABLED: 0
@@ -483,7 +491,7 @@ steps:
 - name: backend-tag armhf
   image: golang:1-alpine
   commands:
-  - apk --no-cache add build-base
+  - apk --no-cache add build-base git
   - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
   environment:
     CGO_ENABLED: 0
@@ -530,7 +538,7 @@ steps:
 - name: backend-commit armv7
   image: golang:1-alpine
   commands:
-  - apk --no-cache add build-base
+  - apk --no-cache add build-base git
   - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
   - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7 happydomain
   environment:
@@ -544,7 +552,7 @@ steps:
 - name: backend-tag armv7
   image: golang:1-alpine
   commands:
-  - apk --no-cache add build-base
+  - apk --no-cache add build-base git
   - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
   - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7 happydomain
   environment:
