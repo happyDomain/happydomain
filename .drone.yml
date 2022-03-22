@@ -187,22 +187,10 @@ steps:
     event:
       - tag
 
-- name: publish on local registry
-  image: plugins/docker
-  settings:
-    registry: registry.happydomain.org
-    repo: registry.happydomain.org/happydomain
-    auto_tag: true
-    auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-    username:
-      from_secret: docker_username
-    password:
-      from_secret: docker_password
-
 - name: publish on Docker Hub
   image: plugins/docker
   settings:
-    repo: happydns/happydomain
+    repo: happydomain/happydomain
     auto_tag: true
     auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
     dockerfile: Dockerfile-builded
@@ -361,24 +349,10 @@ steps:
     event:
       - tag
 
-- name: publish on local registry
-  image: plugins/docker
-  settings:
-    registry: registry.happydomain.org
-    repo: registry.happydomain.org/happydomain
-    debug: true
-    auto_tag: true
-    auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-    dockerfile: Dockerfile-builded
-    username:
-      from_secret: docker_username
-    password:
-      from_secret: docker_password
-
 - name: publish on Docker Hub
   image: plugins/docker
   settings:
-    repo: happydns/happydomain
+    repo: happydomain/happydomain
     auto_tag: true
     auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
     dockerfile: Dockerfile-builded
@@ -597,24 +571,10 @@ steps:
     event:
       - tag
 
-- name: publish on local registry
-  image: plugins/docker
-  settings:
-    registry: registry.happydomain.org
-    repo: registry.happydomain.org/happydomain
-    auto_tag: true
-    auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-    debug: true
-    dockerfile: Dockerfile-builded
-    username:
-      from_secret: docker_username
-    password:
-      from_secret: docker_password
-
 - name: publish on Docker Hub
   image: plugins/docker
   settings:
-    repo: happydns/happydomain
+    repo: happydomain/happydomain
     auto_tag: true
     auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
     dockerfile: Dockerfile-builded
@@ -634,17 +594,6 @@ kind: pipeline
 name: docker-manifest
 
 steps:
-- name: publish on local registry
-  image: plugins/manifest
-  settings:
-    auto_tag: true
-    ignore_missing: true
-    spec: .drone-manifest-local.yml
-    username:
-      from_secret: docker_username
-    password:
-      from_secret: docker_password
-
 - name: publish on Docker Hub
   image: plugins/manifest
   settings:
