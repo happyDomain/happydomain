@@ -95,9 +95,7 @@ export default {
   mounted () {
     if (this.$route.query.u) {
       axios
-        .post('/api/users/' + encodeURIComponent(btoa(this.$route.query.u.match(/\w{2}/g).map(function (a) {
-          return String.fromCharCode(parseInt(a, 16))
-        }).join(''))) + '/email', {
+        .post('/api/users/' + encodeURIComponent(this.$route.query.u) + '/email', {
           key: this.$route.query.k
         })
         .then(
