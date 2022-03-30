@@ -141,24 +141,11 @@ export default {
 
   mounted () {
     if (this.$route.query.u) {
-      axios
-        .post('/api/users/' + encodeURIComponent(this.$route.query.u) + '/recovery', {
-          key: this.$route.query.k
-        })
-        .then(
-          (response) => {
-            this.error = ''
-            this.user = this.$route.query.u
-          },
-          (error) => {
-            this.error = error.response.data.errmsg
-            this.user = ''
-          }
-        )
+      this.user = this.$route.query.u
     } else {
-      this.error = ''
       this.user = ''
     }
+    this.error = ''
   },
 
   methods: {
