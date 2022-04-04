@@ -90,7 +90,7 @@ func SendRecoveryLink(opts *config.Options, user *happydns.UserAuth) error {
 	toName := genUsername(user)
 	return utils.SendMail(
 		&mail.Address{Name: toName, Address: user.Email},
-		"Recover you happyDomain account",
+		"Recover your happyDomain account",
 		`Hi `+toName+`,
 
 You've just ask on our platform to recover your account.
