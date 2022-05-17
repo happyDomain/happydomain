@@ -33,39 +33,31 @@ package providers // import "happydns.org/providers"
 
 import (
 	"github.com/StackExchange/dnscontrol/v3/providers"
-	_ "github.com/StackExchange/dnscontrol/v3/providers/easyname"
+	_ "github.com/StackExchange/dnscontrol/v3/providers/linode"
 
 	"git.happydns.org/happydomain/model"
 )
 
-type EasynameAPI struct {
-	ApiKey string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx,required,description=Your Easyname API key (You must enable API-Access for your account)."`
-	AuthSalt string `json:"authsalt,omitempty" happydomain:"label=API Authentication Salt,placeholder=xxxxxxxx,required,description=Your Easyname API Authentication Salt."`
-	Signsalt string `json:"signsalt,omitempty" happydomain:"label=API Signing Salt,placeholder=xxxxxxxx,description=Your Easyname API Signing Salt."`
-	Email string `json:"email,omitempty" happydomain:"label=Email,placeholder=xxxxxxxx,description=Your Easyname e-mail."`
-	UserId string `json:"userid,omitempty" happydomain:"label=User ID,placeholder=xxxxxxxx,description=Your Easyname User ID."`
+type LinodeAPI struct {
+	Token string `json:"token,omitempty" happydomain:"label=Token,placeholder=xxxxxxxx,required,description=Your Linode Personal Access Token."`
 }
 
-func (s *EasynameAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
+func (s *LinodeAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
 	config := map[string]string{
-		"apikey": s.ApiKey,
-		"authsalt": s.AuthSalt,
-		"signsalt": s.Signsalt,
-		"email": s.Email,
-		"userid": s.UserId,
+		"token": s.Token,
 	}
 	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
 }
 
-func (s *EasynameAPI) DNSControlName() string {
-	return "EASYNAME"
+func (s *LinodeAPI) DNSControlName() string {
+	return "LINODE"
 }
 
 func init() {
 	RegisterProvider(func() happydns.Provider {
-		return &EasynameAPI{}
+		return &LinodeAPI{}
 	}, ProviderInfos{
-		Name:        "Easyname GmbH",
-		Description: "Austrian hosting provider based in Vienna.",
+		Name:        "Linode, LLC",
+		Description: "American cloud hosting company, based in Philadelphia.",
 	})
 }
