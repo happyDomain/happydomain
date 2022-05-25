@@ -2,7 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "packageRules": [
     {
-      "matchPackageNames": ["github.com/yuin/goldmark"],
+      "matchPackageNames": ["alpine", "github.com/yuin/goldmark"],
       "automerge": true,
       "automergeType": "branch"
     }
