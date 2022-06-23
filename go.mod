@@ -12,7 +12,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.0 // indirect
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
-	github.com/miekg/dns v1.1.49
+	github.com/miekg/dns v1.1.50
 	github.com/ovh/go-ovh v1.1.0
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/ugorji/go v1.2.6 // indirect
