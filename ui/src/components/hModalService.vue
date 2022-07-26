@@ -76,6 +76,7 @@
       </b-button>
       <b-button
         v-else
+        :disabled="(step === 0 && !validateNewSubdomain()) || (step === 1 && !svcSelected)"
         form="addSvcForm"
         type="submit"
         variant="primary"
