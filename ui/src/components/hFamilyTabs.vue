@@ -32,7 +32,7 @@
   -->
 
 <template>
-  <b-tabs :content-class="contentClass">
+  <b-tabs nav-class="flex-nowrap" :content-class="contentClass">
     <b-tab title="All" active>
       <b-list-group>
         <b-list-group-item v-for="(svc, idx) in availableNewServices()" :key="idx" :active="value === idx" button class="d-flex" @click="$emit('input', idx)">
