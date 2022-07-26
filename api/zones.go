@@ -259,7 +259,7 @@ func diffZones(c *gin.Context) {
 
 	provider, err := storage.MainStore.GetProvider(user, domain.IdProvider)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, fmt.Errorf("Unable to find the given source: %q for %q", domain.IdProvider, domain.DomainName))
+		c.AbortWithStatusJSON(http.StatusNotFound, fmt.Errorf("Unable to find the given provider: %q for %q", domain.IdProvider, domain.DomainName))
 		return
 	}
 
@@ -281,6 +281,10 @@ func diffZones(c *gin.Context) {
 	}
 
 	corrections, err := provider.GetDomainCorrections(dc)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
+	}
 
 	var rrCorected []string
 	for _, c := range corrections {
