@@ -103,14 +103,23 @@ func GetProviderCapabilities(prvd happydns.Provider) (caps []string) {
 	}
 
 	// Compatible RR
-	for _, v := range []uint16{dns.TypeA, dns.TypeAAAA, dns.TypeCNAME, dns.TypeNS, dns.TypeTXT} {
+	for _, v := range []uint16{dns.TypeA, dns.TypeAAAA, dns.TypeCNAME, dns.TypeMX, dns.TypeNS, dns.TypeTXT} {
 		caps = append(caps, fmt.Sprintf("rr-%d-%s", v, dns.TypeToString[v]))
+	}
+	if providers.ProviderHasCapability(prvd.DNSControlName(), providers.CanUseSOA) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeSOA, dns.TypeToString[dns.TypeSOA]))
+	}
+	if providers.ProviderHasCapability(prvd.DNSControlName(), providers.CanUseCAA) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeCAA, dns.TypeToString[dns.TypeCAA]))
+	}
+	if providers.ProviderHasCapability(prvd.DNSControlName(), providers.CanUseDS) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeDS, dns.TypeToString[dns.TypeDS]))
 	}
 	if providers.ProviderHasCapability(prvd.DNSControlName(), providers.CanUseOPENPGPKEY) {
 		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeOPENPGPKEY, dns.TypeToString[dns.TypeOPENPGPKEY]))
 	}
-	if providers.ProviderHasCapability(prvd.DNSControlName(), providers.CanUseSOA) {
-		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeSOA, dns.TypeToString[dns.TypeSOA]))
+	if providers.ProviderHasCapability(prvd.DNSControlName(), providers.CanUsePTR) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypePTR, dns.TypeToString[dns.TypePTR]))
 	}
 	if providers.ProviderHasCapability(prvd.DNSControlName(), providers.CanUseSRV) {
 		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeSRV, dns.TypeToString[dns.TypeSRV]))
