@@ -79,7 +79,7 @@ footer {
     font-family: 'Montserrat';
     font-style: normal;
     font-weight: 400;
-    src: local('Montserrat Regular'), local('Montserrat-Regular'), url(/fonts/Montserrat.woff2) format('woff2');
+    src: local('Montserrat Regular'), local('Montserrat-Regular'), url(../public/fonts/Montserrat.woff2) format('woff2');
     unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
     font-display: swap;
 }
@@ -87,8 +87,8 @@ footer {
 @font-face {
   font-family: 'Fantasque Sans Mono';
   src: local('Fantasque Sans Mono Bold'),
-       url('/fonts/FantasqueSansMono-Bold.woff2') format('woff2'),
-       url('/fonts/FantasqueSansMono-Bold.woff') format('woff');
+       url('../public/fonts/FantasqueSansMono-Bold.woff2') format('woff2'),
+       url('../public/fonts/FantasqueSansMono-Bold.woff') format('woff');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -96,8 +96,8 @@ footer {
 @font-face {
   font-family: 'Fantasque Sans Mono';
   src: local('Fantasque Sans Mono BoldItalic'),
-       url('/fonts/FantasqueSansMono-BoldItalic.woff2') format('woff2'),
-       url('/fonts/FantasqueSansMono-BoldItalic.woff') format('woff');
+       url('../public/fonts/FantasqueSansMono-BoldItalic.woff2') format('woff2'),
+       url('../public/fonts/FantasqueSansMono-BoldItalic.woff') format('woff');
   font-weight: 700;
   font-style: italic;
   font-display: swap;
@@ -105,8 +105,8 @@ footer {
 @font-face {
   font-family: 'Fantasque Sans Mono';
   src: local('Fantasque Sans Mono Italic'),
-       url('/fonts/FantasqueSansMono-Italic.woff2') format('woff2'),
-       url('/fonts/FantasqueSansMono-Italic.woff') format('woff');
+       url('../public/fonts/FantasqueSansMono-Italic.woff2') format('woff2'),
+       url('../public/fonts/FantasqueSansMono-Italic.woff') format('woff');
   font-weight: 400;
   font-style: italic;
   font-display: swap;
@@ -115,8 +115,8 @@ footer {
   font-family: 'Fantasque Sans Mono';
   src: local('Fantasque Sans Mono'),
        local('Fantasque Sans Mono Regular'),
-       url('/fonts/FantasqueSansMono-Regular.woff2') format('woff2'),
-       url('/fonts/FantasqueSansMono-Regular.woff') format('woff');
+       url('../public/fonts/FantasqueSansMono-Regular.woff2') format('woff2'),
+       url('../public/fonts/FantasqueSansMono-Regular.woff') format('woff');
   font-weight: 400;
   font-style: normal;
   font-display: swap;

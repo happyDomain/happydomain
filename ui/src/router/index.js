@@ -40,28 +40,28 @@ const routes = [
     path: '/',
     name: 'home',
     component: function () {
-      return import(/* webpackChunkName: "Index" */ '@/views/Index.vue')
+      return import(/* webpackChunkName: "Index" */ '@/views/hIndex.vue')
     }
   },
   {
     path: '/fr/',
     name: 'home-fr',
     component: function () {
-      return import(/* webpackChunkName: "Index" */ '@/views/Index.vue')
+      return import(/* webpackChunkName: "Index" */ '@/views/hIndex.vue')
     }
   },
   {
     path: '/en/',
     name: 'home-en',
     component: function () {
-      return import(/* webpackChunkName: "Index" */ '@/views/Index.vue')
+      return import(/* webpackChunkName: "Index" */ '@/views/hIndex.vue')
     }
   },
   {
     path: '/login',
     name: 'login',
     component: function () {
-      return import(/* webpackChunkName: "login" */ '../views/login.vue')
+      return import(/* webpackChunkName: "login" */ '../views/hLogin.vue')
     },
     meta: {
       guest: true
@@ -71,7 +71,7 @@ const routes = [
     path: '/join',
     name: 'signup',
     component: function () {
-      return import(/* webpackChunkName: "signup" */ '../views/signup.vue')
+      return import(/* webpackChunkName: "signup" */ '../views/hSignup.vue')
     },
     meta: {
       guest: true
@@ -81,7 +81,7 @@ const routes = [
     path: '/email-validation',
     name: 'email-validation',
     component: function () {
-      return import(/* webpackChunkName: "signup" */ '../views/email-validation.vue')
+      return import(/* webpackChunkName: "signup" */ '../views/hEmailValidation.vue')
     },
     meta: {
       guest: true
@@ -91,7 +91,7 @@ const routes = [
     path: '/forgotten-password',
     name: 'forgotten-password',
     component: function () {
-      return import(/* webpackChunkName: "forgotten-password" */ '../views/forgotten-password.vue')
+      return import(/* webpackChunkName: "forgotten-password" */ '../views/hForgottenPassword.vue')
     },
     meta: {
       guest: true
@@ -101,7 +101,7 @@ const routes = [
     path: '/onboarding',
     name: 'onboarding',
     component: function () {
-      return import(/* webpackChunkName: "home" */ '../views/onboarding.vue')
+      return import(/* webpackChunkName: "home" */ '../views/hOnboarding.vue')
     },
     meta: {
       requiresAuth: true
@@ -111,7 +111,7 @@ const routes = [
     path: '/me',
     name: 'me',
     component: function () {
-      return import(/* webpackChunkName: "me" */ '../views/me.vue')
+      return import(/* webpackChunkName: "me" */ '../views/hMe.vue')
     },
     meta: {
       requiresAuth: true
@@ -121,7 +121,7 @@ const routes = [
     path: '/domains',
     name: 'domains',
     component: function () {
-      return import(/* webpackChunkName: "home" */ '../views/home.vue')
+      return import(/* webpackChunkName: "home" */ '../views/hHome.vue')
     },
     meta: {
       requiresAuth: true
@@ -131,7 +131,7 @@ const routes = [
     path: '/domains/:domain',
     name: 'domain-abstract',
     component: function () {
-      return import(/* webpackChunkName: "domain" */ '../views/domain.vue')
+      return import(/* webpackChunkName: "domain" */ '../views/hDomain.vue')
     },
     meta: {
       requiresAuth: true
@@ -141,7 +141,7 @@ const routes = [
     path: '/domains/:domain/new',
     name: 'domain-new',
     component: function () {
-      return import(/* webpackChunkName: "domain" */ '../views/domain-new.vue')
+      return import(/* webpackChunkName: "domain" */ '../views/hDomainNew.vue')
     },
     meta: {
       requiresAuth: true
@@ -151,7 +151,7 @@ const routes = [
     path: '/providers',
     name: 'provider-list',
     component: function () {
-      return import(/* webpackChunkName: "provider" */ '../views/provider-list.vue')
+      return import(/* webpackChunkName: "provider" */ '../views/hProviderList.vue')
     },
     meta: {
       requiresAuth: true
@@ -160,14 +160,14 @@ const routes = [
   {
     path: '/providers/new',
     component: function () {
-      return import(/* webpackChunkName: "provider-new" */ '../views/provider-new.vue')
+      return import(/* webpackChunkName: "provider-new" */ '../views/hProviderNew.vue')
     },
     children: [
       {
         path: '',
         name: 'provider-new-choice',
         component: function () {
-          return import(/* webpackChunkName: "provider-new" */ '../views/provider-new-choice.vue')
+          return import(/* webpackChunkName: "provider-new" */ '../views/hProviderNewChoice.vue')
         },
         meta: {
           requiresAuth: true
@@ -177,7 +177,7 @@ const routes = [
         path: ':provider/:state',
         name: 'provider-new-state',
         component: function () {
-          return import(/* webpackChunkName: "provider-new" */ '../views/provider-new-state.vue')
+          return import(/* webpackChunkName: "provider-new" */ '../views/hProviderNewState.vue')
         },
         meta: {
           requiresAuth: true
@@ -189,7 +189,7 @@ const routes = [
     path: '/providers/:provider',
     name: 'provider-update',
     component: function () {
-      return import(/* webpackChunkName: "provider" */ '../views/provider.vue')
+      return import(/* webpackChunkName: "provider" */ '../views/hProvider.vue')
     },
     meta: {
       requiresAuth: true
@@ -199,7 +199,7 @@ const routes = [
     path: '/providers/:provider/domains',
     name: 'provider-update-domains',
     component: function () {
-      return import(/* webpackChunkName: "home" */ '../views/home.vue')
+      return import(/* webpackChunkName: "home" */ '../views/hHome.vue')
     },
     meta: {
       requiresAuth: true
@@ -209,35 +209,35 @@ const routes = [
     path: '/tools/client',
     name: 'tools-client',
     component: function () {
-      return import(/* webpackChunkName: "tools-client" */ '../views/tools-client.vue')
+      return import(/* webpackChunkName: "tools-client" */ '../views/hToolsClient.vue')
     }
   },
   {
     path: '/tools/client/:domain',
     name: 'tools-client-domain',
     component: function () {
-      return import(/* webpackChunkName: "tools-client" */ '../views/tools-client.vue')
+      return import(/* webpackChunkName: "tools-client" */ '../views/hToolsClient.vue')
     }
   },
   {
     path: '/resolver',
     name: 'tools-resolver',
     component: function () {
-      return import(/* webpackChunkName: "tools-client" */ '../views/tools-client.vue')
+      return import(/* webpackChunkName: "tools-client" */ '../views/hToolsClient.vue')
     }
   },
   {
     path: '/resolver/:domain',
     name: 'tools-resolver-domain',
     component: function () {
-      return import(/* webpackChunkName: "tools-client" */ '../views/tools-client.vue')
+      return import(/* webpackChunkName: "tools-client" */ '../views/hToolsClient.vue')
     }
   },
   {
     path: '*',
     name: 'non-found',
     component: function () {
-      return import(/* webpackChunkName: "not-found" */ '../views/404.vue')
+      return import(/* webpackChunkName: "not-found" */ '../views/hNotFound.vue')
     }
   }
 ]

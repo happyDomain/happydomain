@@ -37,7 +37,7 @@
       <b-spinner variant="primary" :label="$t('common.spinning')" class="my-2 mr-3" /> <i18n :path="loadingStr" />
     </div>
     <slot v-else-if="domains.length === 0" name="no-domain" />
-    <div v-else v-for="(domains, group) in groups" :key="group" :class="Object.keys(groups).length != 1?'border-top':''" style="margin-top: 1.4em">
+    <div v-for="(gdomains, group) in groups" v-else :key="group" :class="Object.keys(groups).length != 1?'border-top':''" style="margin-top: 1.4em">
       <div v-if="Object.keys(groups).length != 1" class="text-center" style="height: 1em">
         <h3 class="d-inline-block px-1" style="background: white; position: relative; top: -.65em">
           <i18n v-if="group === 'undefined'" path="domaingroups.no-group" />
@@ -45,7 +45,7 @@
         </h3>
       </div>
       <h-list
-        :items="domains"
+        :items="gdomains"
         :button="button"
         @click="$emit('click', $event)"
       >

@@ -33,7 +33,7 @@
 
 <template>
   <div id="app">
-    <Header />
+    <h-header />
 
     <router-view class="flex-grow-1" />
 
@@ -75,7 +75,7 @@ import { mapGetters } from 'vuex'
 
 export default {
   components: {
-    Header: () => import('@/components/Header')
+    hHeader: () => import('@/components/hHeader')
   },
 
   data: function () {

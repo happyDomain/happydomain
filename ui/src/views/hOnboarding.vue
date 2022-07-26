@@ -66,7 +66,7 @@
             </template>
           </i18n>
         </p>
-        <provider-list v-if="!noProvider" emit-new-if-empty no-label @new-provider="noProvider = true" @provider-selected="selectExistingProvider" style="max-height: 20rem; overflow-y: auto" />
+        <provider-list v-if="!noProvider" emit-new-if-empty no-label style="max-height: 20rem; overflow-y: auto" @new-provider="noProvider = true" @provider-selected="selectExistingProvider" />
         <h-new-provider-selector v-else @provider-selected="selectNewProvider" />
       </b-card>
     </b-card-group>

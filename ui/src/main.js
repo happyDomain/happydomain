@@ -88,7 +88,7 @@ import {
   ToastPlugin
 } from 'bootstrap-vue'
 
-import HLogo from '@/components/logo.vue'
+import HLogo from '@/components/hLogo.vue'
 
 import './registerServiceWorker.js'
 

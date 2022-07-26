@@ -37,8 +37,8 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import Home from '@/views/home'
-import Loading from '@/views/loading'
+import Home from '@/views/hHome'
+import Loading from '@/views/hLoading'
 
 export default {
   computed: {

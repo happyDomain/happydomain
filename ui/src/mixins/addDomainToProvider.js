@@ -45,7 +45,7 @@ export default {
       axios
         .post('/api/domains', {
           id_provider: provider._id,
-          domain: domain
+          domain
         })
         .then(
           (response) => {

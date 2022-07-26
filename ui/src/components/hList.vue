@@ -40,8 +40,8 @@
       <slot name="empty" />
     </b-list-group-item>
     <b-list-group-item
-      v-else
       v-for="(item, index) in items"
+      v-else
       :key="index"
       :active="isActive(item)"
       :button="button"
