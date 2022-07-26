@@ -3,7 +3,7 @@ module git.happydns.org/happydomain
 go 1.16
 
 require (
-	github.com/StackExchange/dnscontrol/v3 v3.15.0
+	github.com/StackExchange/dnscontrol/v3 v3.17.0
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-mail/mail v2.3.1+incompatible
 	github.com/go-playground/validator/v10 v10.7.0 // indirect
@@ -23,4 +23,4 @@ require (
 	gopkg.in/ns1/ns1-go.v2 v2.6.0 // indirect
 )
 
-replace github.com/StackExchange/dnscontrol/v3 => github.com/nemunaire/dnscontrol/v3 v3.15.10
+replace github.com/StackExchange/dnscontrol/v3 => github.com/nemunaire/dnscontrol/v3 v3.17.10
