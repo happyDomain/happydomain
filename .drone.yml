@@ -9,7 +9,7 @@ platform:
 
 steps:
 - name: frontend
-  image: node:14-alpine
+  image: node:14-alpine3.15
   commands:
   - apk --no-cache add python2 build-base tar
   - yarn config set network-timeout 100000
@@ -216,7 +216,7 @@ platform:
 
 steps:
 - name: frontend
-  image: node:14-alpine
+  image: node:14-alpine3.15
   commands:
   - apk --no-cache add python2 build-base
   - yarn config set network-timeout 100000
@@ -378,7 +378,7 @@ platform:
 
 steps:
 - name: frontend
-  image: node:14-alpine
+  image: node:14-alpine3.15
   commands:
   - apk --no-cache add python2 build-base
   - yarn config set network-timeout 100000
