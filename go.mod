@@ -9,7 +9,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/miekg/dns v1.1.50
-	github.com/ovh/go-ovh v1.1.0
+	github.com/ovh/go-ovh v1.2.0
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/yuin/goldmark v1.4.14
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
