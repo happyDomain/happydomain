@@ -12,7 +12,7 @@ require (
 	github.com/ovh/go-ovh v1.3.0
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/yuin/goldmark v1.4.15
-	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
+	golang.org/x/crypto v0.0.0-20220919173607-35f4265a4bc0
 )
 
 require (
