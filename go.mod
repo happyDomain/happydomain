@@ -11,7 +11,7 @@ require (
 	github.com/miekg/dns v1.1.50
 	github.com/ovh/go-ovh v1.3.0
 	github.com/syndtr/goleveldb v1.0.0
-	github.com/yuin/goldmark v1.4.15
+	github.com/yuin/goldmark v1.5.0
 	golang.org/x/crypto v0.0.0-20220919173607-35f4265a4bc0
 )
 
