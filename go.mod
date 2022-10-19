@@ -12,7 +12,7 @@ require (
 	github.com/ovh/go-ovh v1.3.0
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/yuin/goldmark v1.5.2
-	golang.org/x/crypto v0.0.0-20221012134737-56aed061732a
+	golang.org/x/crypto v0.1.0
 )
 
 require (
@@ -249,11 +249,11 @@ require (
 	go.uber.org/zap v1.17.0 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20220613132600-b0d781184e0d // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/net v0.0.0-20220812174116-3211cb980234 // indirect
+	golang.org/x/net v0.1.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220808172628-8227340efae7 // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
-	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
