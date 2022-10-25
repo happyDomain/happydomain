@@ -28,6 +28,15 @@ func init() {
 }
 
 func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
+	if cfg.DevProxy != "" {
+		router.GET("/.svelte-kit/*_", serveOrReverse("", cfg))
+		router.GET("/node_modules/*_", serveOrReverse("", cfg))
+		router.GET("/@vite/*_", serveOrReverse("", cfg))
+		router.GET("/@fs/*_", serveOrReverse("", cfg))
+		router.GET("/src/*_", serveOrReverse("", cfg))
+	}
+	router.GET("/_app/*_", serveOrReverse("", cfg))
+
 	router.GET("/", serveOrReverse("/", cfg))
 	router.GET("/index.html", serveOrReverse("/", cfg))
 

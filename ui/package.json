@@ -1,80 +1,42 @@
 {
-  "name": "happyDomain",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint",
-    "i18n:report": "vue-cli-service i18n:report --src './src/**/*.?(js|vue)' --locales './src/locales/**/*.json'"
-  },
-  "dependencies": {
-    "axios": "^0.27.0",
-    "bootstrap": "^4.6.2",
-    "bootstrap-vue": "^2.22.0",
-    "sass": "^1.54.0",
-    "vue": "^2.7.8",
-    "vue-i18n": "^8.27.2",
-    "vue-router": "^3.5.4",
-    "vuex": "^3.6.2"
-  },
-  "devDependencies": {
-    "@babel/eslint-parser": "^7.18.9",
-    "@intlify/vue-i18n-loader": "^3.3.0",
-    "@vue/cli-plugin-eslint": "^5.0.8",
-    "@vue/cli-plugin-router": "^5.0.8",
-    "@vue/cli-plugin-vuex": "^5.0.8",
-    "@vue/cli-service": "^5.0.8",
-    "@vue/eslint-config-standard": "^7.0.0",
-    "eslint": "^8.0.1",
-    "eslint-config-standard": "^17.0.0",
-    "eslint-plugin-import": "^2.25.2",
-    "eslint-plugin-n": "^15.0.0",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^6.0.0",
-    "eslint-plugin-standard": "^5.0.0",
-    "eslint-plugin-vue": "^9.3.0",
-    "lint-staged": "^13.0.3",
-    "register-service-worker": "^1.7.2",
-    "sass-loader": "^13.0.2",
-    "vue-cli-plugin-i18n": "^2.3.1",
-    "vue-template-compiler": "^2.7.8",
-    "workbox-webpack-plugin": "^6.5.3"
-  },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/recommended",
-      "standard"
-    ],
-    "plugins": [
-      "vue"
-    ],
-    "rules": {
-      "vue/html-closing-bracket-newline": "off",
-      "vue/max-attributes-per-line": "off"
-    }
-  },
-  "postcss": {
-    "plugins": {
-      "autoprefixer": {}
-    }
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not dead"
-  ],
-  "gitHooks": {
-    "pre-commit": "lint-staged"
-  },
-  "lint-staged": {
-    "*.{js,vue}": [
-      "vue-cli-service lint",
-      "git add"
-    ]
-  }
+	"name": "happyDomain",
+	"version": "0.0.1",
+	"private": true,
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"lint": "prettier --plugin-search-dir . --check . && eslint .",
+		"format": "prettier --plugin-search-dir . --write ."
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-auto": "next",
+		"@sveltejs/kit": "next",
+		"@typescript-eslint/eslint-plugin": "^5.27.0",
+		"@typescript-eslint/parser": "^5.27.0",
+		"eslint": "^8.16.0",
+		"eslint-config-prettier": "^8.3.0",
+		"eslint-plugin-svelte3": "^4.0.0",
+		"prettier": "^2.6.2",
+		"prettier-plugin-svelte": "^2.7.0",
+		"svelte": "^3.44.0",
+		"svelte-check": "^2.7.1",
+		"svelte-preprocess": "^4.10.6",
+		"tslib": "^2.3.1",
+		"typescript": "^4.7.4",
+		"vite": "^3.1.0"
+	},
+	"type": "module",
+	"dependencies": {
+		"@sveltejs/adapter-static": "^1.0.0-next.46",
+		"bootstrap": "^5.2.2",
+		"bootstrap-icons": "^1.9.1",
+		"cuid": "^2.1.8",
+		"sass": "^1.55.0",
+		"sass-loader": "^13.1.0",
+		"sveltekit-i18n": "^2.2.2",
+		"sveltestrap": "^5.9.0"
+	}
 }

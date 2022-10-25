@@ -7,8 +7,8 @@ import (
 	"net/http"
 )
 
-//go:generate yarn --offline build
-//go:embed dist
+//go:generate npm run build
+//go:embed all:build
 
 var _assets embed.FS
 
@@ -19,9 +19,9 @@ func GetEmbedFS() embed.FS {
 }
 
 func init() {
-	sub, err := fs.Sub(_assets, "dist")
+	sub, err := fs.Sub(_assets, "build")
 	if err != nil {
-		log.Fatal("Unable to cd to dist/ directory:", err)
+		log.Fatal("Unable to cd to build/ directory:", err)
 	}
 	Assets = http.FS(sub)
 }
