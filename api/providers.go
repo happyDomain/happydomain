@@ -35,7 +35,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 
 	dnscontrol "github.com/StackExchange/dnscontrol/v3/providers"
 	"github.com/gin-gonic/gin"
@@ -110,7 +109,7 @@ func DecodeProvider(c *gin.Context) (*happydns.ProviderCombined, int, error) {
 
 func ProviderMetaHandler(c *gin.Context) {
 	// Extract provider ID
-	pid, err := strconv.ParseInt(string(c.Param("pid")), 10, 64)
+	pid, err := happydns.NewIdentifierFromString(string(c.Param("pid")))
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Invalid provider id: %s", err.Error())})
 		return
@@ -138,7 +137,7 @@ func ProviderMetaHandler(c *gin.Context) {
 
 func ProviderHandler(c *gin.Context) {
 	// Extract provider ID
-	pid, err := strconv.ParseInt(string(c.Param("pid")), 10, 64)
+	pid, err := happydns.NewIdentifierFromString(string(c.Param("pid")))
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Invalid provider id: %s", err.Error())})
 		return
@@ -224,7 +223,7 @@ func deleteProvider(c *gin.Context) {
 	}
 
 	for _, domain := range domains {
-		if domain.IdProvider == providermeta.Id {
+		if domain.IdProvider.Equals(providermeta.Id) {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "You cannot delete this provider because there is still some domains associated with it."})
 			return
 		}

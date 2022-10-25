@@ -46,7 +46,7 @@ import (
 // UserAuth represents an account used for authentication (not used in case of external auth).
 type UserAuth struct {
 	// Id is the User's identifier.
-	Id []byte
+	Id Identifier
 
 	// Email is the User's login and mean of contact.
 	Email string

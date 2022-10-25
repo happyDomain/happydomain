@@ -33,7 +33,7 @@ package api
 
 import (
 	"bytes"
-	"encoding/hex"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"net/http"
@@ -356,7 +356,7 @@ func deleteUser(opts *config.Options, c *gin.Context) {
 }
 
 func UserHandlerBase(c *gin.Context) (*happydns.User, error) {
-	uid, err := hex.DecodeString(c.Param("uid"))
+	uid, err := base64.RawURLEncoding.DecodeString(c.Param("uid"))
 	if err != nil {
 		return nil, fmt.Errorf("Invalid user identifier given: %w", err)
 	}
@@ -382,7 +382,7 @@ func userHandler(c *gin.Context) {
 }
 
 func UserAuthHandlerBase(c *gin.Context) (*happydns.UserAuth, error) {
-	uid, err := hex.DecodeString(c.Param("uid"))
+	uid, err := base64.RawURLEncoding.DecodeString(c.Param("uid"))
 	if err != nil {
 		return nil, fmt.Errorf("Invalid user identifier given: %w", err)
 	}

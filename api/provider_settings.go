@@ -111,7 +111,7 @@ func getProviderSettingsState(cfg *config.Options, c *gin.Context) {
 			return
 		} else {
 			// Update an existing Provider
-			s, err := storage.MainStore.GetProvider(user, int64(uss.Id.(float64)))
+			s, err := storage.MainStore.GetProvider(user, uss.Id.(happydns.Identifier))
 			if err != nil {
 				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 				return

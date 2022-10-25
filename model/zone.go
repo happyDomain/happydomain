@@ -42,10 +42,10 @@ import (
 // ZoneMeta holds the metadata associated to a Zone.
 type ZoneMeta struct {
 	// Id is the Zone's identifier.
-	Id int64 `json:"id"`
+	Id Identifier `json:"id"`
 
 	// IdAuthor is the User's identifier for the current Zone.
-	IdAuthor HexaString `json:"id_author"`
+	IdAuthor Identifier `json:"id_author"`
 
 	// DefaultTTL is the TTL to use when no TTL has been defined for a record in this Zone.
 	DefaultTTL uint32 `json:"default_ttl"`

@@ -1,4 +1,4 @@
-// Copyright or © or Copr. happyDNS (2020)
+// Copyright or © or Copr. happyDNS (2022)
 //
 // contact@happydomain.org
 //
@@ -29,23 +29,60 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package config
+package happydns
 
 import (
+	"bytes"
+	"crypto/rand"
 	"encoding/base64"
-	"net/url"
-
-	"git.happydns.org/happydomain/model"
+	"errors"
 )
 
-// GetAccountRecoveryURL returns the absolute URL corresponding to the recovery
-// URL of the given account.
-func (o *Options) GetAccountRecoveryURL(u *happydns.UserAuth) string {
-	return o.BuildURL_noescape("/forgotten-password?u=%s&k=%s", base64.RawURLEncoding.EncodeToString(u.Id), url.QueryEscape(u.GenAccountRecoveryHash(false)))
+const IDENTIFIER_LEN = 16
+
+type Identifier []byte
+
+func NewIdentifierFromString(src string) (id Identifier, err error) {
+	return base64.RawURLEncoding.DecodeString(src)
 }
 
-// GetRegistrationURL returns the absolute URL corresponding to the e-mail
-// validation page of the given account.
-func (o *Options) GetRegistrationURL(u *happydns.UserAuth) string {
-	return o.BuildURL_noescape("/email-validation?u=%s&k=%s", base64.RawURLEncoding.EncodeToString(u.Id), url.QueryEscape(u.GenRegistrationHash(false)))
+func NewRandomIdentifier() (id Identifier, err error) {
+	id = make([]byte, IDENTIFIER_LEN)
+
+	if _, err = rand.Read(id); err != nil {
+		return
+	}
+
+	return
+}
+
+func (i *Identifier) IsEmpty() bool {
+	return len(*i) == 0
+}
+
+func (i Identifier) Equals(other Identifier) bool {
+	return bytes.Equal(i, other)
+}
+
+func (i *Identifier) String() string {
+	return base64.RawURLEncoding.EncodeToString(*i)
+}
+
+func (i Identifier) MarshalJSON() (dst []byte, err error) {
+	dst = make([]byte, base64.RawURLEncoding.EncodedLen(len(i)))
+	base64.RawURLEncoding.Encode(dst, i)
+	dst = append([]byte{'"'}, dst...)
+	dst = append(dst, '"')
+	return
+}
+
+func (i *Identifier) UnmarshalJSON(src []byte) error {
+	if len(src) < 2 || src[0] != '"' || src[len(src)-1] != '"' {
+		return errors.New("Unvalid character found to encapsulate the JSON value")
+	}
+
+	*i = make([]byte, base64.RawURLEncoding.DecodedLen(len(src)-2))
+	_, err := base64.RawURLEncoding.Decode(*i, src[1:len(src)-1])
+
+	return err
 }

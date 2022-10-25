@@ -34,7 +34,6 @@ package database
 import (
 	"fmt"
 	"log"
-	"strconv"
 	"strings"
 
 	"git.happydns.org/happydomain/model"
@@ -42,9 +41,9 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
-func (s *LevelDBStorage) GetZone(id int64) (z *happydns.Zone, err error) {
+func (s *LevelDBStorage) GetZone(id happydns.Identifier) (z *happydns.Zone, err error) {
 	z = &happydns.Zone{}
-	err = s.get(fmt.Sprintf("domain.zone-%d", id), &z)
+	err = s.get(fmt.Sprintf("domain.zone-%s", id.String()), &z)
 	return
 }
 
@@ -54,13 +53,13 @@ func (s *LevelDBStorage) getZoneMeta(id string) (z *happydns.ZoneMeta, err error
 	return
 }
 
-func (s *LevelDBStorage) GetZoneMeta(id int64) (z *happydns.ZoneMeta, err error) {
-	z, err = s.getZoneMeta(fmt.Sprintf("domain.zone-%d", id))
+func (s *LevelDBStorage) GetZoneMeta(id happydns.Identifier) (z *happydns.ZoneMeta, err error) {
+	z, err = s.getZoneMeta(fmt.Sprintf("domain.zone-%s", id.String()))
 	return
 }
 
 func (s *LevelDBStorage) CreateZone(z *happydns.Zone) error {
-	key, id, err := s.findInt63Key("domain.zone-")
+	key, id, err := s.findIdentifierKey("domain.zone-")
 	if err != nil {
 		return err
 	}
@@ -70,11 +69,11 @@ func (s *LevelDBStorage) CreateZone(z *happydns.Zone) error {
 }
 
 func (s *LevelDBStorage) UpdateZone(z *happydns.Zone) error {
-	return s.put(fmt.Sprintf("domain.zone-%d", z.Id), z)
+	return s.put(fmt.Sprintf("domain.zone-%s", z.Id.String()), z)
 }
 
 func (s *LevelDBStorage) DeleteZone(z *happydns.Zone) error {
-	return s.delete(fmt.Sprintf("domain.zone-%d", z.Id))
+	return s.delete(fmt.Sprintf("domain.zone-%s", z.Id.String()))
 }
 
 func (s *LevelDBStorage) ClearZones() error {
@@ -112,7 +111,7 @@ func (s *LevelDBStorage) TidyZones() error {
 	iter := tx.NewIterator(util.BytesPrefix([]byte("domain-")), nil)
 	defer iter.Release()
 
-	var referencedZones []int64
+	var referencedZones []happydns.Identifier
 
 	for iter.Next() {
 		domain, _ := s.getDomain(string(iter.Key()))
@@ -128,14 +127,14 @@ func (s *LevelDBStorage) TidyZones() error {
 	defer iter.Release()
 
 	for iter.Next() {
-		if zoneId, err := strconv.ParseInt(strings.TrimPrefix(string(iter.Key()), "domain.zone-"), 10, 64); err != nil {
+		if zoneId, err := happydns.NewIdentifierFromString(strings.TrimPrefix(string(iter.Key()), "domain.zone-")); err != nil {
 			// Drop zones with invalid ID
 			log.Printf("Deleting unindentified zone: key=%s\n", iter.Key())
 			err = tx.Delete(iter.Key(), nil)
 		} else {
 			foundZone := false
 			for _, zid := range referencedZones {
-				if zid == zoneId {
+				if zid.Equals(zoneId) {
 					foundZone = true
 					break
 				}
@@ -143,7 +142,7 @@ func (s *LevelDBStorage) TidyZones() error {
 
 			if !foundZone {
 				// Drop orphan zones
-				log.Printf("Deleting orphan zone: %d\n", zoneId)
+				log.Printf("Deleting orphan zone: %s\n", zoneId.String())
 				err = tx.Delete(iter.Key(), nil)
 			}
 		}

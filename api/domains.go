@@ -128,7 +128,13 @@ func DomainHandler(c *gin.Context) {
 		return
 	}
 
-	domain, err := storage.MainStore.GetDomainByDN(user, c.Param("domain"))
+	dnid, err := happydns.NewIdentifierFromString(c.Param("domain"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Invalid domain identifier: %s", err.Error())})
+		return
+	}
+
+	domain, err := storage.MainStore.GetDomain(user, dnid)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Domain not found"})
 		return
@@ -141,7 +147,7 @@ func DomainHandler(c *gin.Context) {
 	} else if src, exists := c.Get("sourcemeta"); exists {
 		source = src.(*happydns.SourceMeta)
 	}
-	if source != nil && source.Id != domain.IdProvider {
+	if source != nil && !source.Id.Equals(domain.IdProvider) {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Domain not found (not child of source)"})
 		return
 	}
@@ -152,9 +158,9 @@ func DomainHandler(c *gin.Context) {
 }
 
 type apiDomain struct {
-	Id          int64               `json:"id"`
-	IdUser      []byte              `json:"id_owner"`
-	IdProvider  int64               `json:"id_provider"`
+	Id          happydns.Identifier `json:"id"`
+	IdUser      happydns.Identifier `json:"id_owner"`
+	IdProvider  happydns.Identifier `json:"id_provider"`
 	DomainName  string              `json:"domain"`
 	ZoneHistory []happydns.ZoneMeta `json:"zone_history"`
 	Group       string              `json:"group,omitempty"`
@@ -194,7 +200,7 @@ func UpdateDomain(c *gin.Context) {
 		return
 	}
 
-	if old.Id != domain.Id {
+	if !old.Id.Equals(domain.Id) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "You cannot change the domain reserved ID"})
 		return
 	}

@@ -35,7 +35,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -88,7 +87,7 @@ func newUserDomainZone(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
-	uz.Id = 0
+	uz.Id = nil
 
 	ApiResponse(c, uz, storage.MainStore.CreateZone(uz))
 }
@@ -167,7 +166,7 @@ func patchZoneService(c *gin.Context) {
 }
 
 func deleteZone(c *gin.Context) {
-	zoneid, err := strconv.ParseInt(c.Param("zoneid"), 10, 64)
+	zoneid, err := happydns.NewIdentifierFromString(c.Param("zoneid"))
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": err.Error()})
 	} else {

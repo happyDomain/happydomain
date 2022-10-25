@@ -71,7 +71,7 @@ func declareAuthenticationRoutes(opts *config.Options, router *gin.RouterGroup) 
 }
 
 type DisplayUser struct {
-	Id        happydns.HexaString   `json:"id"`
+	Id        happydns.Identifier   `json:"id"`
 	Email     string                `json:"email"`
 	CreatedAt time.Time             `json:"created_at,omitempty"`
 	Settings  happydns.UserSettings `json:"settings,omitempty"`

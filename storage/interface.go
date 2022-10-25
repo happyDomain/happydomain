@@ -51,7 +51,7 @@ type Storage interface {
 	GetAuthUsers() (happydns.UserAuths, error)
 
 	// GetAuthUser retrieves the User with the given identifier.
-	GetAuthUser(id []byte) (*happydns.UserAuth, error)
+	GetAuthUser(id happydns.Identifier) (*happydns.UserAuth, error)
 
 	// GetAuthUserByEmail retrives the User with the given email address.
 	GetAuthUserByEmail(email string) (*happydns.UserAuth, error)
@@ -77,7 +77,7 @@ type Storage interface {
 	GetDomains(u *happydns.User) (happydns.Domains, error)
 
 	// GetDomain retrieves the Domain with the given id and owned by the given User.
-	GetDomain(u *happydns.User, id int64) (*happydns.Domain, error)
+	GetDomain(u *happydns.User, id happydns.Identifier) (*happydns.Domain, error)
 
 	// GetDomainByDN is like GetDomain but look for the domain name instead of identifier.
 	GetDomainByDN(u *happydns.User, dn string) (*happydns.Domain, error)
@@ -106,10 +106,10 @@ type Storage interface {
 	GetProviderMetas(u *happydns.User) ([]happydns.ProviderMeta, error)
 
 	// GetProviderMeta retrieves the metadatas for the Provider with the given identifier and owner.
-	GetProviderMeta(u *happydns.User, id int64) (*happydns.ProviderMeta, error)
+	GetProviderMeta(u *happydns.User, id happydns.Identifier) (*happydns.ProviderMeta, error)
 
 	// GetProvider retrieves the full Provider with the given identifier and owner.
-	GetProvider(u *happydns.User, id int64) (*happydns.ProviderCombined, error)
+	GetProvider(u *happydns.User, id happydns.Identifier) (*happydns.ProviderCombined, error)
 
 	// CreateProvider creates a record in the database for the given Provider.
 	CreateProvider(u *happydns.User, s happydns.Provider, comment string) (*happydns.ProviderCombined, error)
@@ -129,7 +129,7 @@ type Storage interface {
 	// SESSIONS ---------------------------------------------------
 
 	// GetSession retrieves the Session with the given identifier.
-	GetSession(id []byte) (*happydns.Session, error)
+	GetSession(id happydns.Identifier) (*happydns.Session, error)
 
 	// GetAuthUserSessions retrieves all Session for the given AuthUser.
 	GetAuthUserSessions(user *happydns.UserAuth) ([]*happydns.Session, error)
@@ -155,7 +155,7 @@ type Storage interface {
 	GetUsers() (happydns.Users, error)
 
 	// GetUser retrieves the User with the given identifier.
-	GetUser(id []byte) (*happydns.User, error)
+	GetUser(id happydns.Identifier) (*happydns.User, error)
 
 	// GetUserByEmail retrives the User with the given email address.
 	GetUserByEmail(email string) (*happydns.User, error)
@@ -175,10 +175,10 @@ type Storage interface {
 	// ZONES ------------------------------------------------------
 
 	// GetZoneMeta retrives metadatas of the Zone with the given identifier.
-	GetZoneMeta(id int64) (*happydns.ZoneMeta, error)
+	GetZoneMeta(id happydns.Identifier) (*happydns.ZoneMeta, error)
 
 	// GetZone retrieves the full Zone (including Services and metadatas) which have the given identifier.
-	GetZone(id int64) (*happydns.Zone, error)
+	GetZone(id happydns.Identifier) (*happydns.Zone, error)
 
 	// CreateZone creates a record in the database for the given Zone.
 	CreateZone(zone *happydns.Zone) error

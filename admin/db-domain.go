@@ -35,7 +35,6 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -96,7 +95,7 @@ func newDomain(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
-	ud.Id = 0
+	ud.Id = nil
 	ud.IdUser = user.Id
 
 	ApiResponse(c, ud, storage.MainStore.CreateDomain(user, ud))
@@ -126,7 +125,7 @@ func updateUserDomain(c *gin.Context) {
 func deleteUserDomain(c *gin.Context) {
 	user := c.MustGet("user").(*happydns.User)
 
-	domainid, err := strconv.ParseInt(c.Param("domain"), 10, 64)
+	domainid, err := happydns.NewIdentifierFromString(c.Param("domain"))
 	if err != nil {
 		domain, err := storage.MainStore.GetDomainByDN(user, c.Param("domain"))
 		if err != nil {

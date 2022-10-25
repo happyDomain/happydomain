@@ -47,8 +47,8 @@ func (s *LevelDBStorage) getSession(id string) (session *happydns.Session, err e
 	return
 }
 
-func (s *LevelDBStorage) GetSession(id []byte) (session *happydns.Session, err error) {
-	return s.getSession(fmt.Sprintf("user.session-%x", id))
+func (s *LevelDBStorage) GetSession(id happydns.Identifier) (session *happydns.Session, err error) {
+	return s.getSession(fmt.Sprintf("user.session-%s", id.String()))
 }
 
 func (s *LevelDBStorage) GetAuthUserSessions(user *happydns.UserAuth) (sessions []*happydns.Session, err error) {
@@ -86,7 +86,7 @@ func (s *LevelDBStorage) GetUserSessions(user *happydns.User) (sessions []*happy
 }
 
 func (s *LevelDBStorage) CreateSession(session *happydns.Session) error {
-	key, id, err := s.findBytesKey("user.session-", 16)
+	key, id, err := s.findIdentifierKey("user.session-")
 	if err != nil {
 		return err
 	}
@@ -97,11 +97,11 @@ func (s *LevelDBStorage) CreateSession(session *happydns.Session) error {
 }
 
 func (s *LevelDBStorage) UpdateSession(session *happydns.Session) error {
-	return s.put(fmt.Sprintf("user.session-%x", session.Id), session)
+	return s.put(fmt.Sprintf("user.session-%s", session.Id.String()), session)
 }
 
 func (s *LevelDBStorage) DeleteSession(session *happydns.Session) error {
-	return s.delete(fmt.Sprintf("user.session-%x", session.Id))
+	return s.delete(fmt.Sprintf("user.session-%s", session.Id.String()))
 }
 
 func (s *LevelDBStorage) ClearSessions() error {
@@ -144,13 +144,13 @@ func (s *LevelDBStorage) TidySessions() error {
 
 		if err != nil {
 			// Drop unreadable sessions
-			log.Printf("Deleting unreadable session (%w): %v\n", err, session)
+			log.Printf("Deleting unreadable session (%s): %v\n", err.Error(), session)
 			err = tx.Delete(iter.Key(), nil)
 		} else {
 			_, err = s.GetUser(session.IdUser)
 			if err == leveldb.ErrNotFound {
 				// Drop session from unexistant users
-				log.Printf("Deleting orphan session (user %d not found): %v\n", session.IdUser, session)
+				log.Printf("Deleting orphan session (user %s not found): %v\n", session.IdUser.String(), session)
 				err = tx.Delete(iter.Key(), nil)
 			}
 		}

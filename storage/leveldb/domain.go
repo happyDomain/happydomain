@@ -68,8 +68,8 @@ func (s *LevelDBStorage) getDomain(id string) (z *happydns.Domain, err error) {
 	return
 }
 
-func (s *LevelDBStorage) GetDomain(u *happydns.User, id int64) (z *happydns.Domain, err error) {
-	z, err = s.getDomain(fmt.Sprintf("domain-%d", id))
+func (s *LevelDBStorage) GetDomain(u *happydns.User, id happydns.Identifier) (z *happydns.Domain, err error) {
+	z, err = s.getDomain(fmt.Sprintf("domain-%s", id.String()))
 
 	if err != nil {
 		return
@@ -119,7 +119,7 @@ func (s *LevelDBStorage) DomainExists(dn string) bool {
 }
 
 func (s *LevelDBStorage) CreateDomain(u *happydns.User, z *happydns.Domain) error {
-	key, id, err := s.findInt63Key("domain-")
+	key, id, err := s.findIdentifierKey("domain-")
 	if err != nil {
 		return err
 	}
@@ -130,16 +130,16 @@ func (s *LevelDBStorage) CreateDomain(u *happydns.User, z *happydns.Domain) erro
 }
 
 func (s *LevelDBStorage) UpdateDomain(z *happydns.Domain) error {
-	return s.put(fmt.Sprintf("domain-%d", z.Id), z)
+	return s.put(fmt.Sprintf("domain-%s", z.Id.String()), z)
 }
 
 func (s *LevelDBStorage) UpdateDomainOwner(z *happydns.Domain, newOwner *happydns.User) error {
 	z.IdUser = newOwner.Id
-	return s.put(fmt.Sprintf("domain-%d", z.Id), z)
+	return s.put(fmt.Sprintf("domain-%s", z.Id.String()), z)
 }
 
 func (s *LevelDBStorage) DeleteDomain(z *happydns.Domain) error {
-	return s.delete(fmt.Sprintf("domain-%d", z.Id))
+	return s.delete(fmt.Sprintf("domain-%s", z.Id.String()))
 }
 
 func (s *LevelDBStorage) ClearDomains() error {
@@ -191,18 +191,18 @@ func (s *LevelDBStorage) TidyDomains() error {
 			if err == leveldb.ErrNotFound {
 				// Drop domain of unexistant users
 				err = tx.Delete(iter.Key(), nil)
-				log.Printf("Deleting orphan domain (user %d not found): %v\n", domain.IdUser, domain)
+				log.Printf("Deleting orphan domain (user %s not found): %v\n", domain.IdUser.String(), domain)
 			}
 
 			_, err = s.GetProvider(u, domain.IdProvider)
 			if err == leveldb.ErrNotFound {
 				// Drop domain of unexistant provider
 				err = tx.Delete(iter.Key(), nil)
-				log.Printf("Deleting orphan domain (provider %d not found): %v\n", domain.IdProvider, domain)
+				log.Printf("Deleting orphan domain (provider %s not found): %v\n", domain.IdProvider.String(), domain)
 			}
 		} else {
 			// Drop unreadable domains
-			log.Printf("Deleting unreadable domain (%w): %v\n", err, domain)
+			log.Printf("Deleting unreadable domain (%s): %v\n", err.Error(), domain)
 			err = tx.Delete(iter.Key(), nil)
 		}
 

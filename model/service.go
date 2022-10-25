@@ -57,10 +57,10 @@ type ServiceMeta struct {
 	Type string `json:"_svctype"`
 
 	// Id is the Service's identifier.
-	Id HexaString `json:"_id,omitempty"`
+	Id Identifier `json:"_id,omitempty"`
 
 	// OwnerId is the User's identifier for the current Service.
-	OwnerId HexaString `json:"_ownerid,omitempty"`
+	OwnerId Identifier `json:"_ownerid,omitempty"`
 
 	// Domain contains the abstract domain where this Service relates.
 	Domain string `json:"_domain"`

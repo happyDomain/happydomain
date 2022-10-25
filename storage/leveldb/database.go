@@ -32,11 +32,11 @@
 package database // import "happydns.org/storage/leveldb"
 
 import (
-	crand "crypto/rand"
 	"encoding/json"
 	"fmt"
 	"log"
-	mrand "math/rand"
+
+	"git.happydns.org/happydomain/model"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/errors"
@@ -105,29 +105,14 @@ func (s *LevelDBStorage) put(key string, v interface{}) error {
 	return s.db.Put([]byte(key), data, nil)
 }
 
-func (s *LevelDBStorage) findInt63Key(prefix string) (key string, id int64, err error) {
+func (s *LevelDBStorage) findIdentifierKey(prefix string) (key string, id happydns.Identifier, err error) {
 	found := true
 	for found {
-		// max random id is 2^53 to fit on float64 without loosing precision (JSON limitation)
-		id = mrand.Int63n(1 << 53)
-		key = fmt.Sprintf("%s%d", prefix, id)
-
-		found, err = s.db.Has([]byte(key), nil)
+		id, err = happydns.NewRandomIdentifier()
 		if err != nil {
 			return
 		}
-	}
-	return
-}
-
-func (s *LevelDBStorage) findBytesKey(prefix string, len int) (key string, id []byte, err error) {
-	id = make([]byte, len)
-	found := true
-	for found {
-		if _, err = crand.Read(id); err != nil {
-			return
-		}
-		key = fmt.Sprintf("%s%x", prefix, id)
+		key = fmt.Sprintf("%s%s", prefix, id.String())
 
 		found, err = s.db.Has([]byte(key), nil)
 		if err != nil {

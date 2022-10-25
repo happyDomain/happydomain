@@ -38,7 +38,7 @@ import (
 // User represents an account.
 type User struct {
 	// Id is the User's identifier.
-	Id HexaString
+	Id Identifier
 
 	// Email is the User's login and mean of contact.
 	Email string

@@ -62,9 +62,9 @@ func (s *LevelDBStorage) GetAuthUsers() (users happydns.UserAuths, err error) {
 	return
 }
 
-func (s *LevelDBStorage) GetAuthUser(id []byte) (u *happydns.UserAuth, err error) {
+func (s *LevelDBStorage) GetAuthUser(id happydns.Identifier) (u *happydns.UserAuth, err error) {
 	u = &happydns.UserAuth{}
-	err = s.get(fmt.Sprintf("auth-%x", id), &u)
+	err = s.get(fmt.Sprintf("auth-%s", id.String()), &u)
 	return
 }
 
@@ -102,7 +102,7 @@ func (s *LevelDBStorage) AuthUserExists(email string) bool {
 }
 
 func (s *LevelDBStorage) CreateAuthUser(u *happydns.UserAuth) error {
-	key, id, err := s.findBytesKey("auth-", 16)
+	key, id, err := s.findIdentifierKey("auth-")
 	if err != nil {
 		return err
 	}
@@ -112,11 +112,11 @@ func (s *LevelDBStorage) CreateAuthUser(u *happydns.UserAuth) error {
 }
 
 func (s *LevelDBStorage) UpdateAuthUser(u *happydns.UserAuth) error {
-	return s.put(fmt.Sprintf("auth-%x", u.Id), u)
+	return s.put(fmt.Sprintf("auth-%s", u.Id.String()), u)
 }
 
 func (s *LevelDBStorage) DeleteAuthUser(u *happydns.UserAuth) error {
-	return s.delete(fmt.Sprintf("auth-%x", u.Id))
+	return s.delete(fmt.Sprintf("auth-%s", u.Id.String()))
 }
 
 func (s *LevelDBStorage) ClearAuthUsers() error {

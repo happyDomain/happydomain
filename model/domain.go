@@ -38,14 +38,14 @@ import (
 // Domain holds information about a domain name own by a User.
 type Domain struct {
 	// Id is the Domain's identifier in the database.
-	Id int64 `json:"id"`
+	Id Identifier `json:"id"`
 
 	// IdUser is the identifier of the Domain's Owner.
-	IdUser HexaString `json:"id_owner"`
+	IdUser Identifier `json:"id_owner"`
 
 	// IsProvider is the identifier of the Provider used to access and edit the
 	// Domain.
-	IdProvider int64 `json:"id_provider"`
+	IdProvider Identifier `json:"id_provider"`
 
 	// DomainName is the FQDN of the managed Domain.
 	DomainName string `json:"domain"`
@@ -55,7 +55,7 @@ type Domain struct {
 
 	// ZoneHistory are the identifiers to the Zone attached to the current
 	// Domain.
-	ZoneHistory []int64 `json:"zone_history"`
+	ZoneHistory []Identifier `json:"zone_history"`
 }
 
 // Domains is an array of Domain.
@@ -63,9 +63,9 @@ type Domains []*Domain
 
 // HasZone checks if the given Zone's identifier is part of this Domain
 // history.
-func (d *Domain) HasZone(zoneId int64) (found bool) {
+func (d *Domain) HasZone(zoneId Identifier) (found bool) {
 	for _, v := range d.ZoneHistory {
-		if v == zoneId {
+		if v.Equals(zoneId) {
 			return true
 		}
 	}

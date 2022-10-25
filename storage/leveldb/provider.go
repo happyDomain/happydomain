@@ -44,7 +44,7 @@ import (
 	"git.happydns.org/happydomain/providers"
 )
 
-func (s *LevelDBStorage) getProviderMeta(id []byte) (srcMeta *happydns.ProviderMeta, err error) {
+func (s *LevelDBStorage) getProviderMeta(id happydns.Identifier) (srcMeta *happydns.ProviderMeta, err error) {
 	var v []byte
 	v, err = s.db.Get(id, nil)
 	if err != nil {
@@ -77,9 +77,9 @@ func (s *LevelDBStorage) GetProviderMetas(u *happydns.User) (srcs []happydns.Pro
 	return
 }
 
-func (s *LevelDBStorage) GetProviderMeta(u *happydns.User, id int64) (srcMeta *happydns.ProviderMeta, err error) {
+func (s *LevelDBStorage) GetProviderMeta(u *happydns.User, id happydns.Identifier) (srcMeta *happydns.ProviderMeta, err error) {
 	var v []byte
-	v, err = s.db.Get([]byte(fmt.Sprintf("provider-%d", id)), nil)
+	v, err = s.db.Get([]byte(fmt.Sprintf("provider-%s", id.String())), nil)
 	if err != nil {
 		return
 	}
@@ -98,9 +98,9 @@ func (s *LevelDBStorage) GetProviderMeta(u *happydns.User, id int64) (srcMeta *h
 	return
 }
 
-func (s *LevelDBStorage) GetProvider(u *happydns.User, id int64) (src *happydns.ProviderCombined, err error) {
+func (s *LevelDBStorage) GetProvider(u *happydns.User, id happydns.Identifier) (src *happydns.ProviderCombined, err error) {
 	var v []byte
-	v, err = s.db.Get([]byte(fmt.Sprintf("provider-%d", id)), nil)
+	v, err = s.db.Get([]byte(fmt.Sprintf("provider-%s", id.String())), nil)
 	if err != nil {
 		return
 	}
@@ -130,7 +130,7 @@ func (s *LevelDBStorage) GetProvider(u *happydns.User, id int64) (src *happydns.
 }
 
 func (s *LevelDBStorage) CreateProvider(u *happydns.User, src happydns.Provider, comment string) (*happydns.ProviderCombined, error) {
-	key, id, err := s.findInt63Key("provider-")
+	key, id, err := s.findIdentifierKey("provider-")
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +150,7 @@ func (s *LevelDBStorage) CreateProvider(u *happydns.User, src happydns.Provider,
 }
 
 func (s *LevelDBStorage) UpdateProvider(src *happydns.ProviderCombined) error {
-	return s.put(fmt.Sprintf("provider-%d", src.Id), src)
+	return s.put(fmt.Sprintf("provider-%s", src.Id.String()), src)
 }
 
 func (s *LevelDBStorage) UpdateProviderOwner(src *happydns.ProviderCombined, newOwner *happydns.User) error {
@@ -159,7 +159,7 @@ func (s *LevelDBStorage) UpdateProviderOwner(src *happydns.ProviderCombined, new
 }
 
 func (s *LevelDBStorage) DeleteProvider(src *happydns.ProviderMeta) error {
-	return s.delete(fmt.Sprintf("provider-%d", src.Id))
+	return s.delete(fmt.Sprintf("provider-%s", src.Id.String()))
 }
 
 func (s *LevelDBStorage) ClearProviders() error {
@@ -202,13 +202,13 @@ func (s *LevelDBStorage) TidyProviders() error {
 
 		if err != nil {
 			// Drop unreadable providers
-			log.Printf("Deleting unreadable provider (%w): %v\n", err, srcMeta)
+			log.Printf("Deleting unreadable provider (%s): %v\n", err.Error(), srcMeta)
 			err = tx.Delete(iter.Key(), nil)
 		} else {
 			_, err = s.GetUser(srcMeta.OwnerId)
 			if err == leveldb.ErrNotFound {
 				// Drop providers of unexistant users
-				log.Printf("Deleting orphan provider (user %d not found): %v\n", srcMeta.OwnerId, srcMeta)
+				log.Printf("Deleting orphan provider (user %s not found): %v\n", srcMeta.OwnerId.String(), srcMeta)
 				err = tx.Delete(iter.Key(), nil)
 			}
 		}

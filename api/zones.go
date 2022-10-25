@@ -32,11 +32,9 @@
 package api
 
 import (
-	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -78,7 +76,7 @@ func declareZonesRoutes(cfg *config.Options, router *gin.RouterGroup) {
 }
 
 func loadZoneFromId(domain *happydns.Domain, id string) (*happydns.Zone, int, error) {
-	zoneid, err := strconv.ParseInt(id, 10, 64)
+	zoneid, err := happydns.NewIdentifierFromString(id)
 	if err != nil {
 		return nil, http.StatusBadRequest, fmt.Errorf("Invalid zoneid: %q", id)
 	}
@@ -168,7 +166,7 @@ func addZoneService(c *gin.Context) {
 }
 
 func serviceIdHandler(c *gin.Context) {
-	serviceid, err := hex.DecodeString(c.Param("serviceid"))
+	serviceid, err := happydns.NewIdentifierFromString(c.Param("serviceid"))
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Bad service identifier: %s", err.Error())})
 		return
@@ -226,7 +224,7 @@ func importZone(c *gin.Context) {
 		return
 	}
 	domain.ZoneHistory = append(
-		[]int64{myZone.Id}, domain.ZoneHistory...)
+		[]happydns.Identifier{myZone.Id}, domain.ZoneHistory...)
 
 	// Create wip zone
 	err = storage.MainStore.CreateZone(myZone)
@@ -236,7 +234,7 @@ func importZone(c *gin.Context) {
 		return
 	}
 	domain.ZoneHistory = append(
-		[]int64{myZone.Id}, domain.ZoneHistory...)
+		[]happydns.Identifier{myZone.Id}, domain.ZoneHistory...)
 
 	err = storage.MainStore.UpdateDomain(domain)
 	if err != nil {
@@ -359,7 +357,7 @@ func applyZone(c *gin.Context) {
 	}
 
 	domain.ZoneHistory = append(
-		[]int64{newZone.Id}, domain.ZoneHistory...)
+		[]happydns.Identifier{newZone.Id}, domain.ZoneHistory...)
 
 	err = storage.MainStore.UpdateDomain(domain)
 	if err != nil {
@@ -431,7 +429,7 @@ func UpdateZoneService(c *gin.Context) {
 func deleteZoneService(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 	zone := c.MustGet("zone").(*happydns.Zone)
-	serviceid := c.MustGet("serviceid").([]byte)
+	serviceid := c.MustGet("serviceid").(happydns.Identifier)
 	subdomain := c.MustGet("subdomain").(string)
 
 	err := zone.EraseService(subdomain, domain.DomainName, serviceid, nil)
@@ -460,7 +458,7 @@ type serviceRecord struct {
 func getServiceRecords(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 	zone := c.MustGet("zone").(*happydns.Zone)
-	serviceid := c.MustGet("serviceid").([]byte)
+	serviceid := c.MustGet("serviceid").(happydns.Identifier)
 	subdomain := c.MustGet("subdomain").(string)
 
 	svc := zone.FindSubdomainService(subdomain, serviceid)

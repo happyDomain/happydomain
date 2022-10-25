@@ -136,7 +136,7 @@ func newUserProvider(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
-	us.Id = 0
+	us.Id = nil
 
 	src, err := storage.MainStore.CreateProvider(user.(*happydns.User), us, "")
 	ApiResponse(c, src, err)
