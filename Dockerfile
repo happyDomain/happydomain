@@ -38,7 +38,7 @@ RUN sed -i '/yarn --offline build/d' ui/assets.go && \
     go build -v -ldflags '-w'
 
 
-FROM alpine:3.16
+FROM alpine:3.17
 
 EXPOSE 8081
 
