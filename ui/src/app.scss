@@ -53,27 +53,6 @@ footer {
     text-indent: 1em;
 }
 
-#voxpeople {
-    background: #cccccc88;
-    position: fixed;
-    bottom: 7vh;
-    right: 4vw;
-    z-index: 1051;
-    height: max(4vw, 4vh);
-    width: max(4vw, 4vh);
-    border-radius: 4vw;
-    border: 3px solid #00000088;
-    box-shadow: 0 0px 3px 0 #9332bb;
-    transition: background 1s, color .5s, border .5s;
-    font-size: max(1.7vw, 1.7vh);
-    color: #00000088;
-}
-#voxpeople:hover {
-    background: #cccccc;
-    border: 3px solid white;
-    color: white;
-}
-
 @font-face {
     font-family: 'Montserrat';
     font-style: normal;
