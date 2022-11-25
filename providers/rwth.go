@@ -44,7 +44,7 @@ type RwthAPI struct {
 
 func (s *RwthAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
 	config := map[string]string{
-		"api_key": s.ApiKey,
+		"api_token": s.ApiKey,
 	}
 	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
 }
