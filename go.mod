@@ -25,6 +25,7 @@ require (
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0 // indirect
+	github.com/G-Core/gcore-dns-sdk-go v0.2.3 // indirect
 	github.com/PuerkitoBio/goquery v1.8.0 // indirect
 	github.com/akamai/AkamaiOPEN-edgegrid-golang v1.2.1 // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
@@ -100,6 +101,7 @@ require (
 	golang.org/x/mod v0.6.0 // indirect
 	golang.org/x/net v0.2.0 // indirect
 	golang.org/x/oauth2 v0.2.0 // indirect
+	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
