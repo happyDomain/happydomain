@@ -1,6 +1,6 @@
 import type UserSettings from './usersettings';
 
-interface User {
+export interface User {
   id: string;
   email: string;
   CreatedAt: Date;
@@ -8,4 +8,9 @@ interface User {
   settings: UserSettings;
 }
 
-export default User;
+export interface SignUpForm {
+    email: string;
+    password: string;
+    wantReceiveUpdate: boolean;
+    lang: string;
+}
