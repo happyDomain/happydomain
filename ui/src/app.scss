@@ -8,6 +8,9 @@ $yellow: #c99720;
 $green: #20c943;
 $red: #c92052;
 
+// Default value make text color on button unreadable
+$min-contrast-ratio: 2.6;
+
 $enable-shadows: true;
 $enable-gradients: true;
 $enable-responsive-font-sizes: true;
