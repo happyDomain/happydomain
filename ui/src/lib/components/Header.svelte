@@ -1,22 +1,30 @@
 <script>
  import {
+     Button,
+     Dropdown,
+     DropdownItem,
+     DropdownMenu,
+     DropdownToggle,
+     Icon,
      Navbar,
      NavbarBrand,
      Nav,
-     NavItem,
  } from 'sveltestrap';
 
  import Logo from '$lib/components/Logo.svelte';
+ import { userSession } from '$lib/stores/usersession';
+ import { config as tsConfig, t, locales, locale } from '$lib/translations';
 
  export { className as class };
  let className = '';
-
- let user_isLogged = false;
 </script>
 
+
 <Navbar
-    container={true}
-    class="{className} {user_isLogged?'p-0':''}"
+    class="{className} {$userSession?'p-0':''}"
+    container
+    expand="xs"
+    light
 >
     <NavbarBrand
         href="/"
@@ -24,12 +32,90 @@
     >
         <Logo />
     </NavbarBrand>
+    <Nav class="ms-auto" navbar>
+        {#if $userSession}
+            <Dropdown nav inNavbar>
+                <DropdownToggle nav caret>
+                    <Button
+                        color="dark"
+                        size="sm"
+                    >
+                        <Icon name="person" />
+                        {#if $userSession.email !== '_no_auth'}
+                            {$userSession.email}
+                        {:else}
+                            {$t('menu.quick-menu')}
+                        {/if}
+                    </Button>
+                </DropdownToggle>
+                <DropdownMenu end>
+                    <DropdownItem href="/domains/">
+                        {$t('menu.my-domains')}
+                    </DropdownItem>
+                    <DropdownItem href="/providers/">
+                        {$t('menu.my-providers')}
+                    </DropdownItem>
+                    <DropdownItem divider />
+                    <DropdownItem href="/resolver">
+                        {$t('menu.dns-resolver')}
+                    </DropdownItem>
+                    <DropdownItem divider />
+                    <DropdownItem href="/me">
+                        {$t('menu.my-account')}
+                    </DropdownItem>
+                    {#if $userSession.email !== '_no_auth'}
+                        <DropdownItem divider />
+                        <DropdownItem on:click={logout}>
+                            {$t('menu.logout')}
+                        </DropdownItem>
+                    {/if}
+                </DropdownMenu>
+            </Dropdown>
+        {:else}
+            <Button
+                class="me-2"
+                color="info"
+                href="/resolver"
+            >
+                <Icon
+                    name="list"
+                    aria-hidden="true"
+                />
+                {$t('menu.dns-resolver')}
+            </Button>
 
-    <Nav navbar>
-    </Nav>
-    <Nav class="ms-auto text-light" navbar>
-        <NavItem>
-            asdf
-        </NavItem>
+            <Button
+                outline
+                color="dark"
+                href="/join"
+            >
+                <Icon
+                    name="person-plus-fill"
+                    aria-hidden="true"
+                />
+                {$t('menu.signup')}
+            </Button>
+            <Button
+                color="primary"
+                class="ms-2"
+                href="/login"
+            >
+                <Icon
+                    name="person-check-fill"
+                    aria-hidden="true"
+                />
+                {$t('menu.signin')}
+            </Button>
+            <Dropdown nav inNavbar>
+                <DropdownToggle nav caret>{$locale}</DropdownToggle>
+                <DropdownMenu end>
+                    {#each $locales as lang}
+                        <DropdownItem on:click={() => $locale = lang}>
+                            {lang}
+                        </DropdownItem>
+                    {/each}
+                </DropdownMenu>
+            </Dropdown>
+        {/if}
     </Nav>
 </Navbar>
