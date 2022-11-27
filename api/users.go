@@ -162,7 +162,7 @@ func specialUserOperations(opts *config.Options, c *gin.Context) {
 	res := gin.H{"errmsg": "If this address exists in our database, you'll receive a new e-mail."}
 
 	if user, err := storage.MainStore.GetAuthUserByEmail(uu.Email); err != nil {
-		log.Printf("%c: unable to retrieve user %q: %s", c.ClientIP(), uu.Email, err.Error())
+		log.Printf("%s: unable to retrieve user %q: %s", c.ClientIP(), uu.Email, err.Error())
 		c.JSON(http.StatusOK, res)
 		return
 	} else {
