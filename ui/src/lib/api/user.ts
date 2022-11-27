@@ -18,3 +18,40 @@ export async function authUser(form: LoginForm): Promise<any> {
     });
     return await handleApiResponse(res);
 }
+
+export async function forgotAccountPassword(email: string): any {
+    const res = await fetch('api/users', {
+        method: 'PATCH',
+        headers: {'Accept': 'application/json'},
+        body: JSON.stringify({
+            email,
+            kind: 'recovery',
+        }),
+    });
+    return await handleApiResponse(res);
+}
+
+export async function recoverAccount(userid: string, key: string, password: string): any {
+    userid = encodeURIComponent(userid);
+    const res = await fetch(`api/users/${userid}/recovery`, {
+        method: 'POST',
+        headers: {'Accept': 'application/json'},
+        body: JSON.stringify({
+            key,
+            password,
+        }),
+    });
+    return await handleApiResponse(res);
+}
+
+export async function validateEmail(userid: string, key: string): any {
+    userid = encodeURIComponent(userid);
+    const res = await fetch(`api/users/${userid}/email`, {
+        method: 'POST',
+        headers: {'Accept': 'application/json'},
+        body: JSON.stringify({
+            key,
+        }),
+    });
+    return await handleApiResponse(res);
+}

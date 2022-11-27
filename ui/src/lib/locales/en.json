@@ -123,6 +123,7 @@
     "email": {
         "address": "Email address",
         "instruction": {
+            "bad-link": "The link you follow is invalid. Check you copy the entier link and retry.",
             "check-inbox": "Please check your inbox in order to validate your e-mail address.",
             "new-confirmation": "If you need a new confirmation e-mail, just enter your address in the form below.",
             "validate-address": "In order to validate your e-mail address, please check your inbox, and follow the link contained in the message.",
