@@ -33,6 +33,7 @@ package database
 
 import (
 	"fmt"
+	"log"
 
 	"git.happydns.org/happydomain/model"
 
@@ -48,9 +49,14 @@ func (s *LevelDBStorage) GetUsers() (users happydns.Users, err error) {
 
 		err = decodeData(iter.Value(), &u)
 		if err != nil {
-			return
+			log.Printf("GetUsers: Unable to decode user %q: %s", iter.Key(), err.Error())
+		} else {
+			users = append(users, &u)
 		}
-		users = append(users, &u)
+	}
+
+	if len(users) > 0 {
+		err = nil
 	}
 
 	return
