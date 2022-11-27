@@ -13,6 +13,14 @@
  import Logo from '$lib/components/Logo.svelte';
  import Toaster from '$lib/components/Toaster.svelte';
  import VoxPeople from '$lib/components/VoxPeople.svelte';
+ import { toasts } from '$lib/stores/toasts';
+
+ window.onunhandledrejection = (e) => {
+     toasts.addErrorToast({
+         message: e.reason,
+         timeout: 7500,
+     })
+ }
 </script>
 
 <svelte:head>
