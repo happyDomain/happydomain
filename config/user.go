@@ -33,7 +33,6 @@ package config
 
 import (
 	"encoding/base64"
-	"net/url"
 
 	"git.happydns.org/happydomain/model"
 )
@@ -41,11 +40,11 @@ import (
 // GetAccountRecoveryURL returns the absolute URL corresponding to the recovery
 // URL of the given account.
 func (o *Options) GetAccountRecoveryURL(u *happydns.UserAuth) string {
-	return o.BuildURL_noescape("/forgotten-password?u=%s&k=%s", base64.RawURLEncoding.EncodeToString(u.Id), url.QueryEscape(u.GenAccountRecoveryHash(false)))
+	return o.BuildURL_noescape("/forgotten-password?u=%s&k=%s", base64.RawURLEncoding.EncodeToString(u.Id), u.GenAccountRecoveryHash(false))
 }
 
 // GetRegistrationURL returns the absolute URL corresponding to the e-mail
 // validation page of the given account.
 func (o *Options) GetRegistrationURL(u *happydns.UserAuth) string {
-	return o.BuildURL_noescape("/email-validation?u=%s&k=%s", base64.RawURLEncoding.EncodeToString(u.Id), url.QueryEscape(u.GenRegistrationHash(false)))
+	return o.BuildURL_noescape("/email-validation?u=%s&k=%s", base64.RawURLEncoding.EncodeToString(u.Id), u.GenRegistrationHash(false))
 }

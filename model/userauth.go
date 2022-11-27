@@ -144,7 +144,7 @@ func (u *UserAuth) GenRegistrationHash(previous bool) string {
 		[]byte(u.CreatedAt.Format(time.RFC3339Nano)),
 	)
 	h.Write(date.AppendFormat([]byte{}, time.RFC3339))
-	return base64.StdEncoding.EncodeToString(h.Sum(nil))
+	return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 }
 
 // ValidateEmail tries to validate the email address by comparing the given key to the expected one.
@@ -186,7 +186,7 @@ func (u *UserAuth) GenAccountRecoveryHash(previous bool) string {
 		u.PasswordRecoveryKey,
 	)
 	h.Write(date.AppendFormat([]byte{}, time.RFC3339))
-	return base64.StdEncoding.EncodeToString(h.Sum(nil))
+	return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 }
 
 // CanRecoverAccount checks if the given key is a valid recovery hash.
