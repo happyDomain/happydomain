@@ -19,19 +19,27 @@ export async function authUser(form: LoginForm): Promise<any> {
     return await handleApiResponse(res);
 }
 
-export async function forgotAccountPassword(email: string): any {
+export async function specialUserOperations(email: string, kind: "recovery"|"validation"): Promise<any> {
     const res = await fetch('api/users', {
         method: 'PATCH',
         headers: {'Accept': 'application/json'},
         body: JSON.stringify({
             email,
-            kind: 'recovery',
+            kind,
         }),
     });
     return await handleApiResponse(res);
 }
 
-export async function recoverAccount(userid: string, key: string, password: string): any {
+export function forgotAccountPassword(email: string): Promise<any> {
+    return specialUserOperations(email, "recovery")
+}
+
+export async function resendValidationEmail(email: string): Promise<any> {
+    return specialUserOperations(email, "validation")
+}
+
+export async function recoverAccount(userid: string, key: string, password: string): Promise<any> {
     userid = encodeURIComponent(userid);
     const res = await fetch(`api/users/${userid}/recovery`, {
         method: 'POST',
@@ -44,7 +52,7 @@ export async function recoverAccount(userid: string, key: string, password: stri
     return await handleApiResponse(res);
 }
 
-export async function validateEmail(userid: string, key: string): any {
+export async function validateEmail(userid: string, key: string): Promise<any> {
     userid = encodeURIComponent(userid);
     const res = await fetch(`api/users/${userid}/email`, {
         method: 'POST',
