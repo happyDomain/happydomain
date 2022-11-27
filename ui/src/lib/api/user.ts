@@ -19,6 +19,14 @@ export async function authUser(form: LoginForm): Promise<any> {
     return await handleApiResponse(res);
 }
 
+export async function logout(): Promise<any> {
+    const res = await fetch('api/auth/logout', {
+        method: 'POST',
+        headers: {'Accept': 'application/json'},
+    });
+    return await handleApiResponse(res);
+}
+
 export async function specialUserOperations(email: string, kind: "recovery"|"validation"): Promise<any> {
     const res = await fetch('api/users', {
         method: 'PATCH',

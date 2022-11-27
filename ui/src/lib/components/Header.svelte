@@ -1,4 +1,6 @@
 <script>
+ import { goto } from '$app/navigation';
+
  import {
      Button,
      Dropdown,
@@ -11,14 +13,34 @@
      Nav,
  } from 'sveltestrap';
 
+ import { logout as APILogout } from '$lib/api/user';
  import Logo from '$lib/components/Logo.svelte';
- import { userSession } from '$lib/stores/usersession';
+ import { userSession, refreshUserSession } from '$lib/stores/usersession';
  import { config as tsConfig, t, locales, locale } from '$lib/translations';
 
  export { className as class };
  let className = '';
-</script>
 
+ function logout() {
+     APILogout().then(
+         () => {
+             refreshUserSession().then(
+                 () => { },
+                 () => {
+                     goto('/');
+                 }
+             )
+         },
+         (error) => {
+             toasts.addErrorToast({
+                 title: $t('errors.logout'),
+                 message: error,
+                 timeout: 20000,
+             })
+         }
+     )
+ }
+</script>
 
 <Navbar
     class="{className} {$userSession?'p-0':''}"
