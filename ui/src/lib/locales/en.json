@@ -16,7 +16,7 @@
         "signup": {
             "already": "Already a member?",
             "join-call": "Join our nice platform in less than 2 minutes!",
-            "address-why": "We'll use your address to {identify} yourself on the platform, and it could be used to contact you for {security-operations}.",
+            "address-why": "We'll use your address to {{identify}} yourself on the platform, and it could be used to contact you for {{security-operations}}.",
             "identify": "identify",
             "security-operations": "security related operations",
             "receive-update": "Keep me informed of future big improvements",
@@ -27,11 +27,11 @@
     },
     "common": {
         "add": "Add",
-        "add-new-thing": "Add new {thing}",
+        "add-new-thing": "Add new {{thing}}",
         "cancel": "Cancel",
         "cancel-edit": "@:common.cancel edit",
         "continue": "Continue",
-        "create-thing": "Create {thing}",
+        "create-thing": "Create {{thing}}",
         "delete": "Delete",
         "domain": "Domain or subdomain",
         "edit": "Edit",
@@ -44,9 +44,9 @@
         "run": "Run the request!",
         "survey": "A remark? a comment to share? Don't hesitate to write us!",
         "spinning": "Spinning",
-        "welcome": "Welcome to {0}!",
+        "welcome": "Welcome to {{0}}!",
         "help": "Help!",
-        "records": "no {type} record | {type} record | {type} records"
+        "records": "{{number:eq; 0:no {{type}} record; 1:{{type}} record; default:{{type}} records}}"
     },
     "domains": {
         "kind": "domain",
@@ -58,9 +58,9 @@
             "rollback": "Rollback to this version"
         },
         "alert": {
-            "remove": "This action will permanently remove the domain {domain} from your managed domains. All history and abstracted zones will be discarded. This action will not delete or unregister your domain from your provider, nor alterate what is currently served. It will only affect what you see in happyDomain. Are you sure you want to continue?",
+            "remove": "This action will permanently remove the domain {{domain}} from your managed domains. All history and abstracted zones will be discarded. This action will not delete or unregister your domain from your provider, nor alterate what is currently served. It will only affect what you see in happyDomain. Are you sure you want to continue?",
             "unable-retrieve": {
-                "description": "Unfortunately, we were unable to retrieve information for the domain {domain}:",
+                "description": "Unfortunately, we were unable to retrieve information for the domain {{domain}}:",
                 "title": "Unable to retrieve domain information"
             }
         },
@@ -69,28 +69,28 @@
         "add-alias": "Add alias",
         "add-an-alias": "Add an alias",
         "add-now": "Add it now!",
-        "added-success": "Great! {domain} has been added. You can manage it right now.",
+        "added-success": "Great! {{domain}} has been added. You can manage it right now.",
         "apply": {
-            "additions": "no additions | {count} addition | {count} additions",
+            "additions": "{{count:eq; 0:no additions; 1:{{count}} addition; default:{{count}} additions}}",
             "button": "Apply modifications",
-            "deletions": "no deletions | {count} deletion | {count} deletions",
+            "deletions": "{{count:eq; 0:no deletions; 1:{{count}} deletion; default:{{count}} deletions}}",
             "done": {
                 "title": "Zone applied successfully!",
-                "description": "Your zone {zone} have been successfully propagated!"
+                "description": "Your zone {{zone}} have been successfully propagated!"
             },
-            "modifications": "no modification | {count} modification | {count} modifications",
+            "modifications": "{{count:eq; 0:no modification; 1:{{count}} modification; default:{{count}} modifications}}",
             "nochange": "There is no changes to apply! Current zone is in sync with the server.",
-            "others": "no other change | {count} other change | {count} others changes"
+            "others": "{{count:eq; 0:no other change; 1:{{count}} other change; default:{{count}} others changes}}"
         },
         "attached-new": "New domain attached to happyDomain!",
-        "create-new-key": "Create new {id} key",
+        "create-new-key": "Create new {{id}} key",
         "discard": "Discard",
         "drop-alias": "Drop alias",
         "edit-target": "@:common.edit target",
         "give-explicit-name": "Give an explicit name in order to easily find this service.",
         "history": "History",
         "list": "List importable domains",
-        "n-aliases": "{n} alias | {n} aliases",
+        "n-aliases": "{{n:lt; 2:{{n}} alias; default:{{n}} aliases}}",
         "please-fill-fields": "Please fill the following fields:",
         "removal": "Confirm Domain Removal",
         "save-modifications": "Save those modifications",
@@ -98,7 +98,7 @@
         "view": {
             "abstract": "Abstract zone",
             "cancel-title": "Keep my domain in happyDomain",
-            "description": "Review the modifications that will be applied to {0}",
+            "description": "Review the modifications that will be applied to {{0}}",
             "live": "Live records",
             "monitoring": "Monitoring",
             "summary": "Summary",
@@ -108,11 +108,11 @@
         "views": {
             "provider-parameters": "Hosting parameters"
         },
-        "alias-creation": "Add an alias pointing to {0}:",
+        "alias-creation": "Add an alias pointing to {{0}}:",
         "alias-creation-sample": "This will create the alias:",
         "placeholder-new": "my.new.domain.",
         "placeholder-new-sub": "new.subdomain",
-        "form-new-subdomain": "Add a new subdomain under {0}:"
+        "form-new-subdomain": "Add a new subdomain under {{0}}:"
     },
     "domaingroups": {
         "manage": "Manage your domain's groups",
@@ -150,7 +150,7 @@
         "error": "Error",
         "login": "Login error",
         "logout": "Logout error",
-        "occurs": "An error occurs when {when}!",
+        "occurs": "An error occurs when {{when}}!",
         "password": "Password is required",
         "password-change": "Unable to change your password account",
         "password-match": "Password and its confirmation doesn't match.",
@@ -163,11 +163,11 @@
         "rr-delete": "An error occurs when trying to delete RR in the zone:",
         "session": {
             "title": "Authentication timeout",
-            "content": "Invalid session, your have been logged out: {err}. Please login again."
+            "content": "Invalid session, your have been logged out: {{err}}. Please login again."
         },
         "settings-change": "Unable to change your settings",
         "account-no-auth": "You're using happyDomain without authentication. You cannot manage other account properties.",
-        "domain-all-imported": "This account on {0} doesn't have any more domain to import."
+        "domain-all-imported": "This account on {{0}} doesn't have any more domain to import."
     },
     "menu": {
         "my-domains": "My domains",
@@ -181,12 +181,12 @@
     },
     "onboarding": {
         "add-one": "add a new one",
-        "choose-configured": "choose between already configured providers or {0}:",
+        "choose-configured": "choose between already configured providers or {{0}}:",
         "suggest-provider": "choose your provider:",
-        "use": "Use {happyDomain} as a remplacement interface to your usual domain name provider. It'll still rely on your provider's infrastructure, you'll just take benefit from our simple interface. As a first step, {first-step}",
+        "use": "Use {{happyDomain}} as a remplacement interface to your usual domain name provider. It'll still rely on your provider's infrastructure, you'll just take benefit from our simple interface. As a first step, {{first-step}}",
         "no-sale": {
             "title": "I don't own any domain",
-            "description": "{0} does not sell domain yet. To start using our interface, you need to buy a domain from one of our supported provider",
+            "description": "{{0}} does not sell domain yet. To start using our interface, you need to buy a domain from one of our supported provider",
             "buy-advice": "We'll provide some guidance in a near future on how to easily buy a domain name. So stay tune and get in touch with us if you'll help us to build a comprehensive guide."
         },
         "own": "I already own a domain",
@@ -196,7 +196,7 @@
                 "a": "We'll provide such feature in a near future, as it's on our manifest. We choose to focus first on spreading the word that domain names are accessibles to everyone through this sweet interface, before targeting privacy, censorship, …"
             },
             "secondary": {
-                "q": "I've my own infrastructure, can I use {0} as secondary authoritative server?",
+                "q": "I've my own infrastructure, can I use {{0}} as secondary authoritative server?",
                 "a": "We'll provide such feature in a near future, as soon as our name server infrastructure is on."
             }
         }
@@ -221,16 +221,16 @@
         "already": "Already managed",
         "delete": "@:common.delete the service",
         "update": "Update the service",
-        "form-new": "Add a new service to {0}"
+        "form-new": "Add a new service to {{0}}"
     },
     "provider": {
         "delete": "@:common.delete this @:provider.kind",
         "find": "Can't find your @:provider.kind here?",
         "name-your": "Name your @:provider.kind",
-        "provider": "Domains living on {0}",
+        "provider": "Domains living on {{0}}",
         "kind": "domain's provider",
         "select-provider": "First, you need to select the provider hosting your domain:",
-        "select-source": "Select the place where your domain {0} is hosted",
+        "select-source": "Select the place where your domain {{0}} is hosted",
         "provider-name": "Host's name",
         "provider-type": "Hosting provider type",
         "title": "Your domains' providers",
@@ -299,8 +299,8 @@
         "advanced": "With custom settings?",
         "custom": "Custom resolver",
         "custom-description": "Enter the addresse (a domain name or an IP) of the resolver you want to use.",
-        "domain-description": "Indicate the domain you search the records. For example, you can try {0}.",
-        "field-description": "What kind of DNS record you want to see. For example: A is for IPv4, AAAA is for IPv6, ... {0}",
+        "domain-description": "Indicate the domain you search the records. For example, you can try {{0}}.",
+        "field-description": "What kind of DNS record you want to see. For example: A is for IPv4, AAAA is for IPv6, ... {{0}}",
         "field-description-more-info": "More information here",
         "resolver-description": "This is the server we will ask for the information.",
         "ttl": "Remaining time in cache",
