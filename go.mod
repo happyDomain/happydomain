@@ -12,7 +12,7 @@ require (
 	github.com/ovh/go-ovh v1.3.0
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/yuin/goldmark v1.5.3
-	golang.org/x/crypto v0.3.0
+	golang.org/x/crypto v0.4.0
 )
 
 require (
@@ -99,11 +99,11 @@ require (
 	github.com/vultr/govultr/v2 v2.17.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/mod v0.6.0 // indirect
-	golang.org/x/net v0.2.0 // indirect
+	golang.org/x/net v0.3.0 // indirect
 	golang.org/x/oauth2 v0.2.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.2.0 // indirect
-	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
 	golang.org/x/tools v0.2.0 // indirect
 	google.golang.org/api v0.103.0 // indirect
