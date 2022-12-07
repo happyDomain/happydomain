@@ -44,7 +44,10 @@
         "run": "Run the request!",
         "survey": "A remark? a comment to share? Don't hesitate to write us!",
         "spinning": "Spinning",
-        "welcome": "Welcome to {{0}}!",
+        "welcome": {
+            "start": "Welcome to ",
+            "end": "!"
+        },
         "help": "Help!",
         "records": "{{number:eq; 0:no {{type}} record; 1:{{type}} record; default:{{type}} records}}"
     },
