@@ -58,8 +58,9 @@ type ProviderSettingsState struct {
 }
 
 type ProviderSettingsResponse struct {
-	FormResponse
-	happydns.Provider `json:"Provider,omitempty"`
+	Provider *happydns.Provider     `json:"Provider,omitempty"`
+	Values   map[string]interface{} `json:"values,omitempty"`
+	Form     *forms.CustomForm      `json:"form,omitempty"`
 }
 
 func getProviderSettingsState(cfg *config.Options, c *gin.Context) {
@@ -87,7 +88,7 @@ func getProviderSettingsState(cfg *config.Options, c *gin.Context) {
 
 	}
 
-	form, err := formDoState(cfg, c, &uss.FormState, src, forms.GenDefaultSettingsForm)
+	form, p, err := formDoState(cfg, c, &uss.FormState, src, forms.GenDefaultSettingsForm)
 
 	if err != nil {
 		if err != forms.DoneForm {
@@ -104,14 +105,11 @@ func getProviderSettingsState(cfg *config.Options, c *gin.Context) {
 				return
 			}
 
-			c.JSON(http.StatusOK, ProviderSettingsResponse{
-				Provider:     s,
-				FormResponse: FormResponse{Redirect: uss.Redirect},
-			})
+			c.JSON(http.StatusOK, s)
 			return
 		} else {
 			// Update an existing Provider
-			s, err := storage.MainStore.GetProvider(user, uss.Id.(happydns.Identifier))
+			s, err := storage.MainStore.GetProvider(user, *uss.Id)
 			if err != nil {
 				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 				return
@@ -125,15 +123,13 @@ func getProviderSettingsState(cfg *config.Options, c *gin.Context) {
 				return
 			}
 
-			c.JSON(http.StatusOK, ProviderSettingsResponse{
-				Provider:     s,
-				FormResponse: FormResponse{Redirect: uss.Redirect},
-			})
+			c.JSON(http.StatusOK, s)
 			return
 		}
 	}
 
 	c.JSON(http.StatusOK, ProviderSettingsResponse{
-		FormResponse: FormResponse{From: form},
+		Form:   form,
+		Values: p,
 	})
 }

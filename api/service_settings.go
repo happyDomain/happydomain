@@ -57,7 +57,6 @@ type ServiceSettingsState struct {
 }
 
 type ServiceSettingsResponse struct {
-	FormResponse
 	Services map[string][]*happydns.ServiceCombined `json:"services,omitempty"`
 }
 
@@ -87,7 +86,7 @@ func getServiceSettingsState(cfg *config.Options, c *gin.Context) {
 		return
 	}
 
-	form, err := formDoState(cfg, c, &ups.FormState, ups.Service, forms.GenDefaultSettingsForm)
+	form, p, err := formDoState(cfg, c, &ups.FormState, ups.Service, forms.GenDefaultSettingsForm)
 
 	if err != nil {
 		if err != forms.DoneForm {
@@ -99,7 +98,7 @@ func getServiceSettingsState(cfg *config.Options, c *gin.Context) {
 			return
 		} else {
 			// Update an existing Service
-			err = zone.EraseServiceWithoutMeta(subdomain, domain.DomainName, ups.Id.([]byte), ups)
+			err = zone.EraseServiceWithoutMeta(subdomain, domain.DomainName, *ups.Id, ups)
 		}
 
 		if err != nil {
@@ -114,13 +113,13 @@ func getServiceSettingsState(cfg *config.Options, c *gin.Context) {
 		}
 
 		c.JSON(http.StatusOK, ServiceSettingsResponse{
-			Services:     zone.Services,
-			FormResponse: FormResponse{Redirect: ups.Redirect},
+			Services: zone.Services,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, ProviderSettingsResponse{
-		FormResponse: FormResponse{From: form},
+		Form:   form,
+		Values: p,
 	})
 }

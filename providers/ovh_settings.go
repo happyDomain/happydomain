@@ -42,10 +42,6 @@ import (
 	"git.happydns.org/happydomain/model"
 )
 
-const (
-	SESSION_CKEY = "ovh-consumerkey"
-)
-
 func settingsForm(edit bool) *forms.CustomForm {
 	srcFields := []*forms.Field{
 		&forms.Field{
@@ -75,56 +71,52 @@ func settingsForm(edit bool) *forms.CustomForm {
 	return form
 }
 
-func settingsAskCredentials(cfg *config.Options, recallid int64, session *happydns.Session) (*forms.CustomForm, error) {
+func settingsAskCredentials(cfg *config.Options, recallid string, session *happydns.Session) (*forms.CustomForm, map[string]interface{}, error) {
 	client, err := ovh.NewClient("ovh-eu", appKey, appSecret, "")
 	if err != nil {
-		return nil, fmt.Errorf("Unable to generate Consumer key, as OVH client can't be created: %w", err)
+		return nil, nil, fmt.Errorf("Unable to generate Consumer key, as OVH client can't be created: %w", err)
 	}
 
 	// Generate customer key
-	ckReq := client.NewCkRequestWithRedirection(cfg.BuildURL_noescape("/providers/new/OVHAPI/2?recall=%d", recallid))
+	ckReq := client.NewCkRequestWithRedirection(cfg.BuildURL_noescape("/providers/new/OVHAPI/2?nsprvid=%s", recallid))
 	ckReq.AddRecursiveRules(ovh.ReadWrite, "/domain")
 	ckReq.AddRules(ovh.ReadOnly, "/me")
 
 	response, err := ckReq.Do()
 	if err != nil {
-		return nil, fmt.Errorf("Unable to generate Consumer key; OVH returns: %w", err)
+		return nil, nil, fmt.Errorf("Unable to generate Consumer key; OVH returns: %w", err)
 	}
-
-	// Store the key in user's session
-	session.SetValue(SESSION_CKEY, response.ConsumerKey)
 
 	// Return some explanation to the user
 	return &forms.CustomForm{
-		BeforeText:          "In order allows happyDomain to get and update yours domains, you have to let us access them. To avoid storing your credentials, we will store a unique token that will be associated with your account. For this purpose, you will be redirected to an OVH login screen. The registration will automatically continue",
-		NextButtonText:      "Go to OVH",
-		PreviousButtonText:  "< Previous",
-		NextButtonLink:      response.ValidationURL,
-		PreviousButtonState: 0,
-	}, nil
+			BeforeText:          "In order allows happyDomain to get and update yours domains, you have to let us access them. To avoid storing your credentials, we will store a unique token that will be associated with your account. For this purpose, you will be redirected to an OVH login screen. The registration will automatically continue",
+			NextButtonText:      "Go to OVH",
+			PreviousButtonText:  "< Previous",
+			NextButtonLink:      response.ValidationURL,
+			PreviousButtonState: 0,
+		}, map[string]interface{}{
+			"consumerkey": response.ConsumerKey,
+		}, nil
 }
 
-func (s *OVHAPI) DisplaySettingsForm(state int32, cfg *config.Options, session *happydns.Session, genRecallId forms.GenRecallID) (*forms.CustomForm, error) {
+func (s *OVHAPI) DisplaySettingsForm(state int32, cfg *config.Options, session *happydns.Session, genRecallId forms.GenRecallID) (*forms.CustomForm, map[string]interface{}, error) {
 	switch state {
 	case 0:
-		return settingsForm(s.ConsumerKey != ""), nil
+		return settingsForm(s.ConsumerKey != ""), nil, nil
 	case 1:
 		if s.ConsumerKey == "" {
 			recallid := genRecallId()
 			return settingsAskCredentials(cfg, recallid, session)
 		} else {
-			return nil, forms.DoneForm
+			return nil, nil, forms.DoneForm
 		}
 	case 2:
-		var consumerKey string
-		if ok := session.GetValue(SESSION_CKEY, &consumerKey); !ok {
-			return nil, errors.New("Something wierd has happend, as you were not in a consumer key registration process. Please retry.")
+		if s.ConsumerKey == "" {
+			return nil, nil, errors.New("Something wierd has happend, as you were not in a consumer key registration process. Please retry.")
 		} else {
-			s.ConsumerKey = consumerKey
-			session.DropKey(SESSION_CKEY)
-			return nil, forms.DoneForm
+			return nil, nil, forms.DoneForm
 		}
 	default:
-		return nil, forms.CancelForm
+		return nil, nil, forms.CancelForm
 	}
 }

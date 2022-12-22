@@ -33,7 +33,7 @@ package forms // import "happydns.org/forms"
 
 import ()
 
-// CustomForm is used to create a form with several steps when creating or updating source's settings.
+// CustomForm is used to create a form with several steps when creating or updating provider's settings.
 type CustomForm struct {
 	// BeforeText is the text presented before the fields.
 	BeforeText string `json:"beforeText,omitempty"`

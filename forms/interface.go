@@ -39,12 +39,12 @@ import (
 )
 
 // GenRecallID
-type GenRecallID func() int64
+type GenRecallID func() string
 
 // CustomSettingsForm are functions to declare when we want to display a custom user experience when asking for Source's settings.
 type CustomSettingsForm interface {
 	// DisplaySettingsForm generates the CustomForm corresponding to the asked target state.
-	DisplaySettingsForm(int32, *config.Options, *happydns.Session, GenRecallID) (*CustomForm, error)
+	DisplaySettingsForm(int32, *config.Options, *happydns.Session, GenRecallID) (*CustomForm, map[string]interface{}, error)
 }
 
 var (
