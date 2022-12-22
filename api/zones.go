@@ -333,6 +333,7 @@ func applyZone(c *gin.Context) {
 
 				if err != nil {
 					c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to update the zone: %s", err.Error())})
+					return
 				}
 
 				wantedCorrections = append(wantedCorrections[:ic], wantedCorrections[ic+1:]...)
@@ -344,6 +345,7 @@ func applyZone(c *gin.Context) {
 
 	if len(wantedCorrections) > 0 {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to perform the following changes: %s", wantedCorrections)})
+		return
 	}
 
 	// Create a new zone in history for futher updates
