@@ -39,6 +39,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"git.happydns.org/happydomain/forms"
 	"git.happydns.org/happydomain/services"
 )
 
@@ -51,18 +52,6 @@ func declareServiceSpecsRoutes(router *gin.RouterGroup) {
 	apiServiceSpecsRoutes.Use(ServiceSpecsHandler)
 
 	apiServiceSpecsRoutes.GET("", getServiceSpec)
-}
-
-type service_field struct {
-	Id          string   `json:"id"`
-	Type        string   `json:"type"`
-	Label       string   `json:"label,omitempty"`
-	Placeholder string   `json:"placeholder,omitempty"`
-	Default     string   `json:"default,omitempty"`
-	Choices     []string `json:"choices,omitempty"`
-	Required    bool     `json:"required,omitempty"`
-	Secret      bool     `json:"secret,omitempty"`
-	Description string   `json:"description,omitempty"`
 }
 
 func getServiceSpecs(c *gin.Context) {
@@ -101,16 +90,16 @@ func ServiceSpecsHandler(c *gin.Context) {
 }
 
 type viewServiceSpec struct {
-	Fields []service_field `json:"fields,omitempty"`
+	Fields []forms.Field `json:"fields,omitempty"`
 }
 
 func getSpecs(svcType reflect.Type) viewServiceSpec {
-	fields := []service_field{}
+	fields := []forms.Field{}
 	for i := 0; i < svcType.NumField(); i += 1 {
 		jsonTag := svcType.Field(i).Tag.Get("json")
 		jsonTuples := strings.Split(jsonTag, ",")
 
-		f := service_field{
+		f := forms.Field{
 			Type: svcType.Field(i).Type.String(),
 		}
 
