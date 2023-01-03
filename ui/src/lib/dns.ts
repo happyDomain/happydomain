@@ -1,5 +1,30 @@
 export const dns_common_types: Array<string> = ['ANY', 'A', 'AAAA', 'NS', 'SRV', 'MX', 'TXT', 'SOA'];
 
+export function fqdn(input: string, origin: string) {
+    if (input[-1] === '.') {
+        return input
+    } else if (input === '') {
+        return origin
+    } else {
+        return input + '.' + origin
+    }
+}
+
+export function domainCompare (a: string, b: string) {
+    const as = a.split('.').reverse()
+    const bs = b.split('.').reverse()
+
+    const maxDepth = Math.min(as.length, bs.length)
+    for (let i = 0; i < maxDepth; i++) {
+        const cmp = as[i].localeCompare(bs[i])
+        if (cmp !== 0) {
+            return cmp
+        }
+    }
+
+    return as.length - bs.length
+}
+
 export function nsclass(input: number): string {
   switch (input) {
     case 1:
@@ -127,4 +152,30 @@ export function nsrrtype(input: number|string): string {
     case '32769': case 32769: return 'DLV'
     default: return '#'
   }
+}
+
+export function validateDomain(dn: string, subdomain: string = ""): boolean|undefined {
+    let ret: boolean|undefined = undefined;
+    if (dn.length !== 0) {
+        ret = dn.length >= 1 && dn.length <= 254;
+
+        if (ret) {
+            const domains = dn.split('.');
+
+            // Remove the last . if any, it's ok
+            if (!subdomain && domains[domains.length - 1] === '') {
+                domains.pop();
+            }
+
+            let newDomainState: boolean = ret
+            domains.forEach(function (domain) {
+                newDomainState = newDomainState && domain.length >= 1 && domain.length <= 63;
+                newDomainState = newDomainState && domain[0] !== '-' && domain[domain.length - 1] !== '-';
+                newDomainState = newDomainState && /^(\*|_?[a-zA-Z0-9]([a-zA-Z0-9-]?[a-zA-Z0-9])*)$/.test(domain);
+            })
+            ret = newDomainState;
+        }
+    }
+
+    return ret;
 }

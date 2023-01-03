@@ -451,7 +451,7 @@ func deleteZoneService(c *gin.Context) {
 }
 
 type serviceRecord struct {
-	String string  `json:"string"`
+	String string  `json:"str"`
 	Fields *dns.RR `json:"fields,omitempty"`
 }
 

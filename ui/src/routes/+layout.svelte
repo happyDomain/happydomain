@@ -2,6 +2,8 @@
  import '../app.scss'
  import "bootstrap-icons/font/bootstrap-icons.css";
 
+ import { goto } from '$app/navigation';
+
  import {
      Col,
      Container,
@@ -14,12 +16,24 @@
  import Toaster from '$lib/components/Toaster.svelte';
  import VoxPeople from '$lib/components/VoxPeople.svelte';
  import { toasts } from '$lib/stores/toasts';
+ import { t } from '$lib/translations';
+
+ export let data: {route: {id: string | null;};};
 
  window.onunhandledrejection = (e) => {
-     toasts.addErrorToast({
-         message: e.reason,
-         timeout: 7500,
-     })
+     if (e.reason.name == "NotAuthorizedError") {
+         goto('/login');
+         toasts.addErrorToast({
+             title: $t('errors.session.title'),
+             message: $t('errors.session.content'),
+             timeout: 10000,
+         });
+     } else {
+         toasts.addErrorToast({
+             message: e.reason.message,
+             timeout: 7500,
+         });
+     }
  }
 </script>
 
@@ -29,14 +43,14 @@
 
 <!--Styles /-->
 
-<Header />
+<Header routeId={data.route.id} />
 
 <div class="flex-fill d-flex flex-column justify-content-center">
     <slot></slot>
 </div>
 
 <Toaster />
-<VoxPeople />
+<VoxPeople routeId={data.route.id} />
 
 <footer class="pt-2 pb-2 bg-dark text-light">
     <Container>

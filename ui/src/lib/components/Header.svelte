@@ -1,5 +1,6 @@
-<script>
+<script lang="ts">
  import { goto } from '$app/navigation';
+ import { page } from '$app/stores'
 
  import {
      Button,
@@ -16,10 +17,52 @@
  import { logout as APILogout } from '$lib/api/user';
  import Logo from '$lib/components/Logo.svelte';
  import { userSession, refreshUserSession } from '$lib/stores/usersession';
- import { config as tsConfig, t, locales, locale } from '$lib/translations';
+ import { toasts } from '$lib/stores/toasts';
+ import { t, locales, locale } from '$lib/translations';
 
  export { className as class };
  let className = '';
+
+ export let routeId: string | null;
+ let helpLink = "";
+ $: helpLink = 'https://help.happydomain.org/' + encodeURIComponent($locale) + getHelpPathFromRoute(routeId);
+
+ function getHelpPathFromRoute(routeId: string | null) {
+     if (routeId === null) return "/";
+
+     const path = routeId.split("/");
+
+     if (path.length < 2) return "/";
+
+     switch(path[1]) {
+         case "":
+             return "/pages/home/";
+         case "providers":
+             if (path.length > 2) {
+                 if (path[2] == "new") return "/pages/source-new-choice/";
+                 return "/pages/source-update/";
+             }
+             return "/pages/source-list/";
+         case "domains":
+             if (path.length == 2) return "/pages/home/";
+             if (path.length > 3 && path[3] == "new") return "/pages/domain-new/";
+             return "/pages/domain-abstract/";
+         case "me":
+             return "/pages/me/";
+         case "resolver":
+             return "/pages/tools-client/";
+         default:
+             return "/";
+     }
+ }
+
+ let activemenu = "";
+ $: {
+     const path = $page.url.pathname.split("/");
+     if (path.length > 1) {
+         activemenu = path[1];
+     }
+ }
 
  function logout() {
      APILogout().then(
@@ -27,7 +70,7 @@
              refreshUserSession().then(
                  () => { },
                  () => {
-                     goto('/');
+                     goto('/login');
                  }
              )
          },
@@ -55,6 +98,18 @@
         <Logo />
     </NavbarBrand>
     <Nav class="ms-auto" navbar>
+        <Button
+            href={helpLink}
+            target="_blank"
+            color="primary"
+            size={$userSession?"sm":undefined}
+            class={$userSession?"my-2":"me-2"}
+        >
+            <Icon
+                name="question-circle-fill"
+                title={$t('common.help')}
+            />
+        </Button>
         {#if $userSession}
             <Dropdown nav inNavbar>
                 <DropdownToggle nav caret>
@@ -107,7 +162,7 @@
             </Button>
 
             <Button
-                outline
+                outline={activemenu != "join"}
                 color="dark"
                 href="/join"
             >
@@ -118,6 +173,7 @@
                 {$t('menu.signup')}
             </Button>
             <Button
+                outline={activemenu == "join"}
                 color="primary"
                 class="ms-2"
                 href="/login"

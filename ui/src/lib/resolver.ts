@@ -1,4 +1,4 @@
-export const resolvers = {
+export const resolvers: Record<string, Array<{value: string; text: string;}>> = {
     Unfiltered: [
         { value: 'local', text: 'Local resolver' },
         { value: '1.1.1.1', text: 'Cloudflare DNS resolver' },

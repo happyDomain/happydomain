@@ -1,31 +1,56 @@
 <script lang="ts">
+ import { goto } from '$app/navigation';
+
  import {
      Badge,
-     CardHeader,
+     Button,
+     Card,
      Col,
      Container,
+     Icon,
      Row,
+     Spinner,
  } from 'sveltestrap';
 
+ import CardImportableDomains from '$lib/components/providers/CardImportableDomains.svelte';
+ import DomainGroupList from '$lib/components/DomainGroupList.svelte';
+ import DomainGroupModal from '$lib/components/DomainGroupModal.svelte';
  import Logo from '$lib/components/Logo.svelte';
+ import NewDomainInput from '$lib/components/NewDomainInput.svelte';
  import ZoneList from '$lib/components/ZoneList.svelte';
+ import ProviderList from '$lib/components/providers/List.svelte';
+ import type { Domain } from '$lib/model/domain';
+ import type { Provider } from '$lib/model/provider';
+ import { domains, refreshDomains } from '$lib/stores/domains';
+ import { providers, refreshProviders, refreshProvidersSpecs } from '$lib/stores/providers';
  import { t } from '$lib/translations';
 
- export let domains: Array<Domain>|undefined;
+ refreshDomains();
+ refreshProviders();
+ refreshProvidersSpecs();
 
- if (domains === undefined) {
+ let noDomainsList = false;
 
+ let filteredDomains: Array<Domain> = [];
+ let filteredProvider: Provider | null = null;
+ let filteredGroup = '';
+ let isGroupModalOpen = false;
+
+ $: {
+     if ($domains) {
+         filteredDomains = $domains.filter(
+             (d) => (!filteredProvider || d.id_provider === filteredProvider._id) &&
+                  (filteredGroup === '' || d.group === filteredGroup || (filteredGroup === 'undefined' && d.group === undefined))
+         )
+     }
  }
 
- export let filteredDomains = [];
- export let filteredProvider = null;
-
- function showDomain(dn) {
-
+ function showDomain(event: CustomEvent<Domain>) {
+     goto('/domains/' + encodeURIComponent(event.detail.domain));
  }
 </script>
 
-<Container class="pt-4 pb-5">
+<Container class="flex-fill pt-4 pb-5">
     <h1 class="text-center mb-4">
         {$t('common.welcome.start')}
         <Logo height="40" />
@@ -36,7 +61,7 @@
         <Col md="8" class="order-1 order-md-0">
             <ZoneList
                 button
-                display-by-groups
+                display_by_groups
                 domains={filteredDomains}
                 on:click={showDomain}
             >
@@ -45,35 +70,72 @@
                 </Badge>
             </ZoneList>
             {#if filteredProvider}
-                <div class="card" class:mt-4={filteredDomains.length > 0}>
-                    {#if !noDomainsList}
-                        <CardHeader class="d-flex justify-content-between">
-                            {$t("provider.provider")}
-                            <em>{filteredProvider._comment}</em>
-                            <Button
-                                type="button"
-                                color="secondary"
-                                size="sm"
-                            >
-                                {$t('provider.import-domains')}
-                            </Button>
-                        </CardHeader>
-                    {/if}
-                    <h-provider-list-domains
-                        ref="newDomains"
-                        provider={filteredProvider}
-                        show-domains-with-actions
-                        on:no-domains-list-change={noDomainsList = $event}
-                    />
-                </div>
-            {/if}
-            {#if !filteredProvider || noDomainsList}
-                <h-list-group-input-new-domain
-                    autofocus
-                    class="mt-2"
-                    my-provider={filteredProvider}
+                <CardImportableDomains
+                    class={filteredDomains.length > 0 ? "mt-4":""}
+                    provider={filteredProvider}
+                    bind:noDomainsList={noDomainsList}
                 />
             {/if}
+            {#if !filteredProvider || noDomainsList}
+                <!-- svelte-ignore a11y-autofocus -->
+                <NewDomainInput
+                    autofocus
+                    class="mt-3"
+                    provider={filteredProvider}
+                />
+            {/if}
+        </Col>
+
+        <Col md="4" class="order-0 order-md-1">
+            <Card
+                class="mb-3"
+            >
+                <div class="card-header d-flex justify-content-between">
+                    {$t("provider.title")}
+                    <Button
+                        size="sm"
+                        color="light"
+                        on:click={() => goto('/providers/new')}
+                    >
+                        <Icon name="plus" />
+                    </Button>
+                </div>
+                {#if !$providers}
+                    <div class="d-flex justify-content-center">
+                        <Spinner color="primary" />
+                    </div>
+                {:else}
+                    <ProviderList
+                        flush
+                        items={$providers}
+                        noLabel
+                        bind:selectedProvider={filteredProvider}
+                    />
+                {/if}
+            </Card>
+
+            <Card
+                v-if="$refs.zlist && !$refs.zlist.isLoading"
+                no-body
+                class="mb-3"
+            >
+                <div class="card-header d-flex justify-content-between">
+                    {$t("domaingroups.title")}
+                    <Button
+                        size="sm"
+                        color="light"
+                        title={$t('domaingroups.manage')}
+                        on:click={() => isGroupModalOpen = true}
+                    >
+                        <Icon name="grid-fill" />
+                    </Button>
+                </div>
+                <DomainGroupList
+                    flush
+                    bind:selectedGroup={filteredGroup}
+                />
+                <DomainGroupModal bind:isOpen={isGroupModalOpen} />
+            </Card>
         </Col>
     </Row>
 </Container>

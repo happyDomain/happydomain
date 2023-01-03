@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
  import {
      Icon,
  } from 'sveltestrap';
@@ -8,14 +8,14 @@
  import { userSession } from '$lib/stores/usersession';
  import { t, locale } from '$lib/translations';
 
+ export let routeId: string | null;
  const instancename = encodeURIComponent(window.location.hostname);
- const router = {history:{current:{}}};
 </script>
 
 {#if MODE == 'production'}
     <a
         id="voxpeople"
-        href="https://framaforms.org/quel-est-votre-avis-sur-happydns-1610366701?u={userSession?userSession.id:0}&amp;i={instancename}&amp;p={router.history.current.name}&amp;l={$locale}"
+        href="https://framaforms.org/quel-est-votre-avis-sur-happydns-1610366701?u={$userSession?$userSession.id:0}&amp;i={instancename}&amp;p={routeId}&amp;l={$locale}"
         target="_blank"
         rel="noreferrer"
         title={$t('common.survey')}

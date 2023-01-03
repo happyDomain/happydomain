@@ -1,4 +1,4 @@
-import type UserSettings from './usersettings';
+import { UserSettings } from './usersettings';
 
 export interface SignUpForm {
     email: string;
@@ -13,19 +13,11 @@ export interface LoginForm {
 }
 
 export class User {
-    id: string;
-    email: string;
-    CreatedAt: Date;
-    LastSeen: Date;
-    settings: UserSettings;
-
-    constructor({id, email, CreatedAt, LastSeen, settings}: User) {
-        this.id = id;
-        this.email = email;
-        this.CreatedAt = CreatedAt;
-        this.LastSeen = LastSeen;
-        this.settings = settings;
-    }
+    id: string = "";
+    email: string = "";
+    CreatedAt: Date = new Date("0000-00-00T00:00:00");
+    LastSeen: Date = new Date("0000-00-00T00:00:00");
+    settings: UserSettings = new UserSettings();
 }
 
 export default User;

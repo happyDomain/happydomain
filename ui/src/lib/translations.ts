@@ -1,8 +1,20 @@
 import i18n from 'sveltekit-i18n';
-import type Config from 'sveltekit-i18n';
+import type { Config } from 'sveltekit-i18n';
 const { MODE } = import.meta.env;
 
-export const config: Config = {
+interface Params {
+    id?: string;
+    domain?: string;
+    type?: string;
+    thing?: any;
+    identify?: any;
+    'security-operations'?: any;
+    n?: number;
+    count?: number;
+    // add more parameters that are used here
+}
+
+export const config: Config<Params> = {
     fallbackLocale: 'en',
     loaders: [
 	{

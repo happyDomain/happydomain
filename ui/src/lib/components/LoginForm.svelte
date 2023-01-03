@@ -10,7 +10,7 @@
  } from 'sveltestrap';
 
  import { t } from '$lib/translations';
- import { authUser } from '$lib/api/user';
+ import { authUser, cleanUserSession } from '$lib/api/user';
  import type { LoginForm } from '$lib/model/user';
  import { toasts } from '$lib/stores/toasts';
  import { refreshUserSession } from '$lib/stores/usersession';
@@ -36,6 +36,7 @@
          authUser(loginForm)
          .then(
              () => {
+                 cleanUserSession();
                  formSent = false;
                  emailState = true;
                  passwordState = true;

@@ -4,7 +4,6 @@
  import {
      Button,
      Collapse,
-     Container,
      FormGroup,
      Input,
      Spinner
@@ -12,22 +11,19 @@
 
  import SelectType from '$lib/components/resolver/SelectType.svelte';
  import SelectResolver from '$lib/components/resolver/SelectResolver.svelte';
+ import type { Domain } from '$lib/model/domain';
+ import { ResolverForm } from '$lib/model/resolver';
  import { t } from '$lib/translations';
 
  const dispatch = createEventDispatcher();
 
- export let value = {
-     domain: "",
-     type: "ANY",
-     resolver: "local",
-     custom: "",
- };
+ export let value: ResolverForm = new ResolverForm();
  export let showDNSSEC = false;
 
- export let sortedDomains = [];
+ export let sortedDomains: Array<Domain> = [];
  export let request_pending = false;
 
- function submitRequest() {
+ function submitRequest(): void {
      request_pending = true;
      dispatch('submit', {value, showDNSSEC});
  }

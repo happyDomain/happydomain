@@ -1,6 +1,5 @@
 <script lang="ts">
  import {
-     FormGroup,
      Input,
  } from 'sveltestrap';
 

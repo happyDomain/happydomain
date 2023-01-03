@@ -5,23 +5,25 @@
      Container,
      Col,
      Row,
+     Table,
  } from 'sveltestrap';
 
  import { resolve } from '$lib/api/resolver';
  import ResolverForm from '$lib/components/resolver/Form.svelte';
  import { nsttl, nsrrtype } from '$lib/dns';
  import { recordsFields } from '$lib/resolver';
+ import { ResolverForm as ResolverFormT } from '$lib/model/resolver';
  import { t } from '$lib/translations';
  import { toasts } from '$lib/stores/toasts';
 
- export let data = { };
- let question = null;
- let responses = null;
+ export let data: {form?: ResolverFormT; domain: string; showDNSSEC: boolean;};
+ let question: ResolverFormT | null = null;
+ let responses: Array<any> | 'no-answer' | null = null;
  let request_pending = false;
 
  $: {
      if (!data.form) {
-         data.form = { };
+         data.form = new ResolverFormT();
      }
      data.form.domain = data.domain;
 
@@ -30,36 +32,36 @@
          (response) => {
              question = Object.assign({ }, data.form)
              if (response.Answer) {
-                 responses = response.Answer
+                 responses = response.Answer;
              } else {
-                 responses = 'no-answer'
+                 responses = 'no-answer';
              }
-             request_pending = false
+             request_pending = false;
          },
          (error) => {
              toasts.addErrorToast({
                  title: $t('errors.resolve'),
                  message: error,
                  timeout: 5000,
-             })
-             request_pending = false
+             });
+             request_pending = false;
      })
  }
 
- function filteredResponses(responses, showDNSSEC) {
+ function filteredResponses(responses: Array<any>, showDNSSEC: boolean): Array<any> {
      if (!responses) {
          return [];
      }
 
      if (showDNSSEC) {
-         return responses
+         return responses;
      } else {
-         return responses.filter(rr => (rr.Hdr.Rrtype !== 46 && rr.Hdr.Rrtype !== 47 && rr.Hdr.Rrtype !== 50))
+         return responses.filter(rr => (rr.Hdr.Rrtype !== 46 && rr.Hdr.Rrtype !== 47 && rr.Hdr.Rrtype !== 50));
      }
  }
 
- function responseByType(filteredResponses) {
-     const ret = { };
+ function responseByType(filteredResponses: Array<any>): Record<string, Array<any>> {
+     const ret: Record<string, Array<any>> = { };
 
      for (const i in filteredResponses) {
          if (!ret[filteredResponses[i].Hdr.Rrtype]) {
@@ -70,7 +72,7 @@
      return ret;
  }
 
- function resolveDomain(event) {
+ function resolveDomain(event: CustomEvent<{value: ResolverFormT; showDNSSEC: boolean;}>): void {
      const form = event.detail.value;
      const showDNSSEC = event.detail.showDNSSEC;
 
@@ -82,6 +84,7 @@
  }
 </script>
 
+{#if data.domain}
 <Container fluid class="flex-fill d-flex flex-column">
     <Row class="flex-grow-1">
         <Col md={{offset: 0, size: 4}} class="bg-light pt-3 pb-5">
@@ -98,16 +101,19 @@
         </Col>
         {#if responses === 'no-answer'}
             <Col md="8" class="pt-2">
-                <h3>{$t('common.records', { number: 0, type: question.type })}</h3>
+                <h3>{$t('common.records', { n: 0, type: question?question.type:"-" })}</h3>
             </Col>
-        {:else if responses}
+        {:else if responses != null}
             <Col md="8" class="pt-2">
-                {@const resByType = responseByType(filteredResponses(responses, data.showDNSSEC))}
+                {@const resByType = responseByType(filteredResponses(/* @ts-ignore */ responses, data.showDNSSEC))}
                 {#each Object.keys(resByType) as type}
                     {@const rrs = resByType[type]}
                     <div>
-                        <h3>{$t('common.records', { number: rrs.length, type: nsrrtype(type) })}</h3>
-                        <table class="table table-hover table-sm">
+                        <h3>{$t('common.records', { n: rrs.length, type: nsrrtype(type) })}</h3>
+                        <Table
+                            size="sm"
+                            hover
+                        >
                             <thead>
                                 <tr>
                                     {#each recordsFields(Number(type)) as field}
@@ -134,10 +140,25 @@
                                     </tr>
                                 {/each}
                             </tbody>
-                        </table>
+                        </Table>
                     </div>
                 {/each}
             </Col>
         {/if}
     </Row>
 </Container>
+{:else}
+<Container fluid class="d-flex flex-column">
+    <Row class="flex-grow-1">
+        <Col md={{offset: 2, size: 8}} class="pt-4 pb-5">
+            <h1 class="text-center mb-3">
+                {$t('menu.dns-resolver')}
+            </h1>
+            <ResolverForm
+                bind:request_pending={request_pending}
+                on:submit={resolveDomain}
+            />
+        </Col>
+    </Row>
+</Container>
+{/if}

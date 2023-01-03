@@ -6,7 +6,7 @@ export async function listProviders(): Promise<ProviderList> {
         method: 'GET',
         headers: {'Accept': 'application/json'},
     });
-    return await handleApiResponse(res);
+    return await handleApiResponse<ProviderList>(res);
 }
 
 export async function getProviderSpec(psid: string): Promise<Provider> {
@@ -14,5 +14,5 @@ export async function getProviderSpec(psid: string): Promise<Provider> {
         method: 'GET',
         headers: {'Accept': 'application/json'},
     });
-    return new Provider(await handleApiResponse(res));
+    return await handleApiResponse<Provider>(res);
 }

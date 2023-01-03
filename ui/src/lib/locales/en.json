@@ -49,7 +49,7 @@
             "end": "!"
         },
         "help": "Help!",
-        "records": "{{number:eq; 0:no {{type}} record; 1:{{type}} record; default:{{type}} records}}"
+        "records": "{{n:eq; 0:no {{type}} record; 1:{{type}} record; default:{{type}} records}}"
     },
     "domains": {
         "kind": "domain",
@@ -227,6 +227,7 @@
         "form-new": "Add a new service to {{0}}"
     },
     "provider": {
+        "check-config": "Check your provider configuration",
         "delete": "@:common.delete this @:provider.kind",
         "find": "Can't find your @:provider.kind here?",
         "name-your": "Name your @:provider.kind",

@@ -48,7 +48,7 @@
       "end": " !"
     },
     "help": "Besoin d'aide ?",
-    "records": "{{number:eq; 0:aucun enregistrement {{type}}; 1:enregistrement {{type}}; default:enregistrements {{type}}}}",
+    "records": "{{n:eq; 0:aucun enregistrement {{type}}; 1:enregistrement {{type}}; default:enregistrements {{type}}}}",
     "survey": "Une remarque ? un commentaire à partager ? N'hésitez pas à nous écrire !"
   },
   "domains": {
