@@ -77,9 +77,9 @@ func getProviderSpecIcon(c *gin.Context) {
 }
 
 func ProviderSpecsHandler(c *gin.Context) {
-	ssid := string(c.Param("ssid"))
+	psid := string(c.Param("psid"))
 
-	src, err := providers.FindProvider(ssid)
+	src, err := providers.FindProvider(psid)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find provider: %s", err.Error())})
 		return
