@@ -15,6 +15,7 @@
  } from 'sveltestrap';
 
  import { logout as APILogout } from '$lib/api/user';
+ import HelpButton from '$lib/components/Help.svelte';
  import Logo from '$lib/components/Logo.svelte';
  import { userSession, refreshUserSession } from '$lib/stores/usersession';
  import { toasts } from '$lib/stores/toasts';
@@ -98,18 +99,11 @@
         <Logo />
     </NavbarBrand>
     <Nav class="ms-auto" navbar>
-        <Button
+        <HelpButton
             href={helpLink}
-            target="_blank"
-            color="primary"
             size={$userSession?"sm":undefined}
             class={$userSession?"my-2":"me-2"}
-        >
-            <Icon
-                name="question-circle-fill"
-                title={$t('common.help')}
-            />
-        </Button>
+        />
         {#if $userSession}
             <Dropdown nav inNavbar>
                 <DropdownToggle nav caret>
