@@ -127,7 +127,7 @@ func logout(opts *config.Options, c *gin.Context) {
 		opts.DevProxy == "" && !strings.HasPrefix(opts.ExternalURL, "http://"),
 		true,
 	)
-	c.JSON(http.StatusOK, true)
+	c.JSON(http.StatusNoContent, true)
 }
 
 type loginForm struct {

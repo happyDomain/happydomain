@@ -224,5 +224,5 @@ func delDomain(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, true)
+	c.JSON(http.StatusNoContent, true)
 }

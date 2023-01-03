@@ -434,7 +434,7 @@ func validateUserAddress(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, true)
+	c.JSON(http.StatusNoContent, true)
 }
 
 type UploadedAccountRecovery struct {
@@ -475,7 +475,7 @@ func recoverUserAccount(c *gin.Context) {
 	}
 
 	log.Printf("%s: User recovered: %s", c.ClientIP(), user.Email)
-	c.JSON(http.StatusOK, true)
+	c.JSON(http.StatusNoContent, true)
 }
 
 func getSession(c *gin.Context) {
