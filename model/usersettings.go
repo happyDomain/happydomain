@@ -34,6 +34,11 @@ package happydns
 import ()
 
 const (
+	FIELDHINT_HIDE = iota
+	FIELDHINT_TOOLTIP
+	FIELDHINT_FOCUSED
+	FIELDHINT_ALWAYS
+
 	ZONEVIEW_GRID = iota
 	ZONEVIEW_LIST
 	ZONEVIEW_RECORDS
@@ -58,7 +63,7 @@ func DefaultUserSettings() *UserSettings {
 	return &UserSettings{
 		Language:   "en",
 		Newsletter: false,
-		FieldHint:  2,
+		FieldHint:  FIELDHINT_FOCUSED,
 		ZoneView:   ZONEVIEW_GRID,
 	}
 }
