@@ -7,6 +7,7 @@
      Spinner,
  } from 'sveltestrap';
 
+ import { getZone } from '$lib/api/zone';
  import SubdomainList from '$lib/components/domains/SubdomainList.svelte';
  import { domainCompare, fqdn } from '$lib/dns';
  import type { Domain } from '$lib/model/domain';
@@ -25,7 +26,7 @@
      zoneId = null;
  }
 
- let zoneId: string|null = null;
+ let zoneId: string | null = null;
  $: if (domain && domain.zone_history && domain.zone_history.length > 0) {
      let zhidx = 0;
      if (data.history) {
@@ -38,21 +39,19 @@
      }
  }
 
- let zone: Zone|null = null;
+ let zone: Zone | null = null;
+ async function refreshZone(domain: Domain, zoneId: string) {
+     zone = await getZone(domain, zoneId);
+ }
+ $: if (domain && zoneId) refreshZone(domain, zoneId);
+
  let sortedDomains: Array<string> = [];
- $: if (domain && zoneId) {
-     domain.getZone(zoneId).then(
-         (z) => {
-             zone = z;
-             if (z && z.services) {
-                 const domains = Object.keys(z.services);
-                 domains.sort(domainCompare);
-                 sortedDomains = domains;
-             } else {
-                 sortedDomains = [];
-             }
-         }
-     );
+ $: if (zone && zone.services) {
+     const domains = Object.keys(zone.services);
+     domains.sort(domainCompare);
+     sortedDomains = domains;
+ } else {
+     sortedDomains = [];
  }
 
  let showSubdomainsList = false;
@@ -92,6 +91,7 @@
                 {showSubdomainsList}
                 {sortedDomains}
                 {zone}
+                on:update-zone-services={(event) => zone = event.detail}
             />
         </Col>
         {#if showSubdomainsList}

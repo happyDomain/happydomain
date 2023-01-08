@@ -29,7 +29,7 @@
                     <Icon name="chevron-right" />
                 {/if}
                 <span
-                    class="text-monospace text-truncate"
+                    class="font-monospace text-truncate"
                     title={record.str}
                 >
                     {record.str}
@@ -42,19 +42,19 @@
                             <dt class="col-sm-3 text-end">
                                 Class
                             </dt>
-                            <dd class="col-sm-9 text-muted text-monospace">
+                            <dd class="col-sm-9 text-muted font-monospace">
                                 {nsclass(record.fields.Hdr.Class)}
                             </dd>
                             <dt class="col-sm-3 text-end">
                                 TTL
                             </dt>
-                            <dd class="col-sm-9 text-muted text-monospace">
+                            <dd class="col-sm-9 text-muted font-monospace">
                                 {record.fields.Hdr.Ttl}
                             </dd>
                             <dt class="col-sm-3 text-end">
                                 RRType
                             </dt>
-                            <dd class="col-sm-9 text-muted text-monospace">
+                            <dd class="col-sm-9 text-muted font-monospace">
                                 {nsrrtype(record.fields.Hdr.Rrtype)}
                             </dd>
                         </dl>
@@ -67,7 +67,7 @@
                                     <li class="d-flex">
                                         <strong class="float-start me-2">{k}</strong>
                                         <div
-                                            class="text-muted text-monospace text-truncate"
+                                            class="text-muted font-monospace text-truncate"
                                             title={v}
                                         >
                                             {v}
@@ -87,7 +87,7 @@
             >
                 <Input
                     autofocus
-                    class="text-monospace"
+                    class="font-monospace"
                     bsSize="sm"
                     bind:value={record.str}
                 />

@@ -1,10 +1,10 @@
 import { handleEmptyApiResponse, handleApiResponse } from '$lib/errors';
-import { Domain } from '$lib/model/domain';
+import type { Domain } from '$lib/model/domain';
 import type { Provider } from '$lib/model/provider';
 
 export async function listDomains(): Promise<Array<Domain>> {
     const res = await fetch('/api/domains', {headers: {'Accept': 'application/json'}});
-    return (await handleApiResponse<Array<Domain>>(res)).map((p: Domain) => new Domain(p));
+    return (await handleApiResponse<Array<Domain>>(res));
 }
 
 export async function getDomain(id: string): Promise<Domain> {

@@ -1,4 +1,6 @@
 <script lang="ts">
+ import { createEventDispatcher } from 'svelte';
+
  import {
      Badge,
      Card,
@@ -13,7 +15,7 @@
      Spinner,
  } from 'sveltestrap';
 
- import { getServiceRecords } from '$lib/api/zone';
+ import { deleteZoneService, getServiceRecords, updateZoneService } from '$lib/api/zone';
  import Record from '$lib/components/domains/Record.svelte';
  import ResourceInput from '$lib/components/ResourceInput.svelte';
  import type { Domain } from '$lib/model/domain';
@@ -23,8 +25,10 @@
  import { servicesSpecs } from '$lib/stores/services';
  import { userSession } from '$lib/stores/usersession';
 
+ const dispatch = createEventDispatcher();
+
  export let origin: Domain;
- export let service: ServiceCombined;
+ export let service: ServiceCombined | null = null;
  export let zoneId: string;
 
  // FIXME: find which type is Card & ListGroup
@@ -34,17 +38,37 @@
  } else {
      component = Card;
  }
+ $: if ($userSession && $userSession.settings.zoneview === ZoneViewRecords) {
+     getServiceRecords(origin, zoneId, service).then(
+         (sr) => serviceRecords = sr
+     )
+ }
 
  let showDetails = false;
  let serviceRecords: Array<ServiceRecord>|null = null;
  function toggleDetails() {
-     serviceRecords = null;
-     showDetails = !showDetails;
-     if (showDetails && $userSession && $userSession.settings.zoneview === ZoneViewRecords) {
-         getServiceRecords(origin, zoneId, service).then(
-             (sr) => serviceRecords = sr
-         )
+     if (component == Card || serviceRecords) {
+         dispatch("show-service", service);
+     } else if (service) {
+         serviceRecords = null;
+         showDetails = !showDetails;
      }
+ }
+
+ function deleteService() {
+     deleteZoneService(origin, zoneId, service).then(
+         (z) => {
+             dispatch("update-zone-services", z);
+         }
+     );
+ }
+
+ function saveService() {
+     updateZoneService(origin, zoneId, service).then(
+         (z) => {
+             dispatch("update-zone-services", z);
+         }
+     );
  }
 </script>
 
@@ -52,15 +76,14 @@
     this={component}
     class={$userSession && $userSession.settings.zoneview !== ZoneViewList ? 'card-hover' : ''}
     style={'cursor: pointer;' + (!service ? 'border-style: dashed; ' : '') + ($userSession && $userSession.settings.zoneview === ZoneViewGrid ? 'width: 32%; min-width: 225px; margin-bottom: 1em; cursor: pointer;' : $userSession && $userSession.settings.zoneview === ZoneViewRecords ? 'margin-bottom: .5em; cursor: pointer;' : '')}
+    on:click={toggleDetails}
 >
     {#if !$userSession || !$servicesSpecs}
         <div class="d-flex justify-content-center">
             <Spinner color="primary" />
         </div>
     {:else if $userSession.settings.zoneview === ZoneViewGrid}
-        <CardBody
-            click="$emit('show-service-window', service)"
-        >
+        <CardBody>
             {#if service && $servicesSpecs[service._svctype].categories && $servicesSpecs[service._svctype].categories.length}
                 <div class="float-end">
                     {#each $servicesSpecs[service._svctype].categories as category}
@@ -84,13 +107,13 @@
                     Click here to add a new service to this subdomain.
                 {/if}
             </CardSubtitle>
-            <CardText>
+            <CardText style="font-size: 90%">
                 {#if service && service._comment}
                     {service._comment}
                 {/if}
             </CardText>
         </CardBody>
-    {:else if $userSession.settings.zoneview === ZoneViewList || $userSession.settings.zoneview === ZoneViewRecords}
+    {:else if service && ($userSession.settings.zoneview === ZoneViewList || $userSession.settings.zoneview === ZoneViewRecords)}
         <ListGroupItem
             on:click={toggleDetails}
         >
@@ -122,10 +145,12 @@
                     specs={$servicesSpecs[service._svctype]}
                     type={service._svctype}
                     bind:value={service.Service}
-                    update-my-services="$emit('update-my-services', $event)"
+                    on:delete-this-service={deleteService}
+                    on:update-this-service={saveService}
+                    on:update-zone-services={(event) => dispatch("update-zone-services", event.detail)}
                 />
             </ListGroupItem>
-        {:else if $userSession.settings.zoneview === ZoneViewRecords && showDetails}
+        {:else if $userSession.settings.zoneview === ZoneViewRecords}
             {#if serviceRecords}
                 <ListGroupItem class="p-0">
                     <Table

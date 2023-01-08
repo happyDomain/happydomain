@@ -86,7 +86,7 @@
     "create-new-key": "Créer une nouvelle clé {{id}}.",
     "discard": "Supprimer",
     "drop-alias": "Supprimer l'alias",
-    "edit-target": "@:common.edit destination",
+    "edit-target": "Éditer la destination",
     "give-explicit-name": "Donnez un nom explicite afin de trouver facilement ce service.",
     "history": "Historique",
     "list": "Liste des domaines importables",
@@ -223,15 +223,16 @@
   },
   "service": {
     "add": "Ajout d'un service",
+    "all": "Tous",
     "already": "Déjà géré",
-    "delete": "@:common.delete ce service",
+    "delete": "Supprimer ce service",
     "update": "Mettre à jour le service",
     "form-new": "Ajout d'une service sur {{0}}"
   },
   "source": {
-    "delete": "@:common.delete ce @:source.kind",
-    "find": "Vous ne trouvez pas votre @:source.kind ici ?",
-    "name-your": "Indiquez votre @:source.kind",
+    "delete": "Supprimer cet hébergeur de domaines",
+    "find": "Vous ne trouvez pas votre hébergeur de domaines ici ?",
+    "name-your": "Nommer cet hébergeur de domaines",
     "source": "Domaines existant sur {{0}}",
     "kind": "L'hébergeur du domaine",
     "select-provider": "Sélectionnez d'abord l'hébergeur de votre domaine :",
@@ -242,7 +243,7 @@
     "available-types": "Types de ressources disponibles",
     "import-domains": "Importer tous les domaines",
     "new-form": "Nouvel hébergeur de domaines",
-    "update": "Changer @:source.kind"
+    "update": "Mettre à jour l'hébergeur de domaines"
   },
   "upgrade": {
     "title": "Une mise à jour est disponible !",

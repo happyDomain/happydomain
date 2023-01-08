@@ -13,7 +13,7 @@ function createToastsStore() {
         })
     };
 
-    const addErrorToast = (o: Toast) => {
+    const addErrorToast = (o: NewToast) => {
         if (!o.title) o.title = 'Une erreur est survenue !';
         if (!o.type) o.type = 'error';
 

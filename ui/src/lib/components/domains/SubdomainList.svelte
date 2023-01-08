@@ -1,16 +1,16 @@
 <script lang="ts">
- import {
-     Button,
-     Modal,
-     ModalBody,
-     ModalFooter,
-     ModalHeader,
- } from 'sveltestrap';
+ import { createEventDispatcher } from 'svelte';
 
+ import AliasModal from '$lib/components/domains/AliasModal.svelte';
+ import NewSubdomainModal from '$lib/components/domains/NewSubdomainModal.svelte';
+ import ServiceModal from '$lib/components/domains/ServiceModal.svelte';
+ import ServiceSelectorModal from '$lib/components/domains/ServiceSelectorModal.svelte';
  import SubdomainItem from '$lib/components/domains/SubdomainItem.svelte';
  import type { Domain } from '$lib/model/domain';
+ import type { ServiceCombined } from '$lib/model/service';
  import type { Zone } from '$lib/model/zone';
- import { t } from '$lib/translations';
+
+ const dispatch = createEventDispatcher();
 
  export let origin: Domain;
  export let showSubdomainsList: boolean;
@@ -22,6 +22,8 @@
      const tmp: Record<string, Array<string>> = { };
 
      for (const dn of sortedDomains) {
+         if (!zone.services[dn]) continue;
+
          zone.services[dn].forEach(function (svc) {
              if (svc._svctype === 'svcs.CNAME') {
                  if (!tmp[svc.Service.Target]) {
@@ -35,7 +37,23 @@
      aliases = tmp;
  }
 
- let modal = { };
+ let newSubdomainModalOpened = false;
+ let subdomainModal = "";
+ let newAliasModalOpened = false;
+
+ let serviceSelectorModalOpened = false;
+ let serviceSelectedModal: string | null = null;
+ function showServiceSelectorModal(subdomain: string) {
+     subdomainModal = subdomain;
+     serviceSelectorModalOpened = true;
+ }
+
+ let serviceModalOpened = false;
+ let serviceModalService: ServiceCombined | null = null;
+ function showServiceModal(event: CustomEvent<ServiceCombined>) {
+     serviceModalService = event.detail;
+     serviceModalOpened = true;
+ }
 </script>
 
 {#each sortedDomains as dn}
@@ -46,58 +64,41 @@
         {showSubdomainsList}
         zoneId={zone.id}
         services={zone.services[dn]?zone.services[dn]:[]}
+        on:new-alias={() => {subdomainModal = dn; newAliasModalOpened = true;}}
+        on:new-service={() => showServiceSelectorModal(dn)}
+        on:new-subdomain={() => newSubdomainModalOpened = true}
+        on:show-service={showServiceModal}
+        on:update-zone-services={(event) => dispatch("update-zone-services", event.detail)}
     />
 {/each}
 
-{#if zone}
-    <h-modal-service
-        ref="modalService"
-        :domain="domain"
-        :my-services="myServices"
-        :services="services"
-        :zone-id="zoneId"
-        update-my-services="updateMyServices"
+<NewSubdomainModal
+    bind:isOpen={newSubdomainModalOpened}
+    {origin}
+    bind:value={subdomainModal}
+    on:show-next-modal={(event) => showServiceSelectorModal(event.detail)}
+/>
+<ServiceSelectorModal
+    bind:isOpen={serviceSelectorModalOpened}
+    dn={subdomainModal}
+    {origin}
+    bind:value={serviceSelectedModal}
+    zservices={zone.services}
+    on:show-next-modal={showServiceModal}
+/>
+{#if serviceModalService}
+    <ServiceModal
+        bind:isOpen={serviceModalOpened}
+        {origin}
+        service={serviceModalService}
+        {zone}
+        on:update-zone-services={(event) => dispatch("update-zone-services", event.detail)}
     />
 {/if}
-
-<Modal
-    id="modal-addAlias"
->
-    <ModalHeader>
-        {$t('domains.add-an-alias')}
-    </ModalHeader>
-    <ModalBody>
-        {#if modal && modal.dn != null}
-            <form id="addAliasForm" on:submit={handleModalAliasSubmit}>
-                <i18n path="domains.alias-creation">
-                    <span class="text-monospace">{fqdn(modal.dn, origin.domain)}</span>
-                </i18n>
-                <b-input-group :append="'.' + origin.domain">
-                    <b-input v-model="modal.alias" autofocus class="text-monospace" placeholder="new.subdomain" :state="modal.newDomainState" update="validateNewAlias" />
-                </b-input-group>
-                <div v-show="modal.alias" class="mt-3 text-center">
-                    {$t('domains.alias-creation-sample')}<br>
-                    <span class="text-monospace text-no-wrap">{fqdn(modal.alias, origin.domain)}</span>
-                    <b-icon class="mr-1 ml-1" icon="arrow-right" />
-                    <span class="text-monospace text-no-wrap">{fqdn(modal.dn, origin.domain)}</span>
-                </div>
-            </form>
-        {/if}
-    </ModalBody>
-    <ModalFooter>
-        <Button
-            color="secondary"
-            outline
-            click="cancel()"
-        >
-            {$t('common.cancel')}
-        </Button>
-        <Button
-            color="primary"
-            form="addAliasForm"
-            type="submit"
-        >
-            {$t('domains.add-alias')}
-        </Button>
-    </ModalFooter>
-</Modal>
+<AliasModal
+    bind:isOpen={newAliasModalOpened}
+    dn={subdomainModal}
+    {origin}
+    {zone}
+    on:update-zone-services={(event) => dispatch("update-zone-services", event.detail)}
+/>

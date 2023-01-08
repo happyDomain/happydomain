@@ -10,6 +10,7 @@
  } from 'sveltestrap';
 
  import ZoneList from '$lib/components/ZoneList.svelte';
+ import { updateDomain } from '$lib/api/domains';
  import type { Domain } from '$lib/model/domain';
  import { groups, domains, refreshDomains } from '$lib/stores/domains';
  import { t } from '$lib/translations';
@@ -19,21 +20,21 @@
 
  let mygroups: Array<string> = [];
  $: if (!isOpen) mygroups = [];
- $: if (!mygroups.length) mygroups = $groups.map((s) => s);
+ $: if (!mygroups.length) mygroups = $groups.map((s) => s).filter((s) => s != "" && s != 'undefined');
 
  let newgroup = "";
  function addGroup() {
      if (newgroup.length && mygroups.indexOf(newgroup) < 0) {
          mygroups.push(newgroup);
-         newgroup = "";
          mygroups = mygroups;
      }
+     newgroup = "";
  }
 
  async function changeGroup(event: Event, domain: Domain) {
-     if (event.currentTarget && event.currentTarget instanceof HTMLFormElement) {
+     if (event.currentTarget && event.currentTarget instanceof HTMLSelectElement) {
          domain.group = event.currentTarget.value;
-         await domain.save();
+         domain = await updateDomain(domain);
          refreshDomains();
      }
  }
@@ -81,6 +82,7 @@
                         value={domain.group}
                         on:change={(event) => changeGroup(event, domain)}
                     >
+                        <option value="">{$t('domaingroups.no-group')}</option>
                         {#each mygroups as group}
                             <option value={group}>{group}</option>
                         {/each}

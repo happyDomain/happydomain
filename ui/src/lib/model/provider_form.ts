@@ -2,16 +2,15 @@ import { goto } from '$app/navigation';
 import cuid from 'cuid';
 
 import { getProviderSettings } from '$lib/api/provider_settings';
-import { Provider } from '$lib/model/provider';
 import type { CustomForm } from '$lib/model/custom_form';
-import { ProviderSettingsState } from '$lib/model/provider_settings';
+import type { ProviderSettingsState } from '$lib/model/provider_settings';
 
 export class ProviderForm {
     ptype: string = "";
     state: number = 0;
     providerId: string = "";
-    form: CustomForm|null = null;
-    value: ProviderSettingsState = new ProviderSettingsState();
+    form: CustomForm|undefined = undefined;
+    value: ProviderSettingsState = {state: 0};
     nextInProgress: boolean = false;
     previousInProgress: boolean = false;
     on_previous: null | (() => void);
@@ -21,8 +20,8 @@ export class ProviderForm {
         this.ptype = ptype;
         this.state = -1;
         this.providerId = providerId?providerId:cuid();
-        this.form = null;
-        this.value = value?value:new ProviderSettingsState({recall: this.providerId, state: this.state});
+        this.form = undefined;
+        this.value = value?value:{recall: this.providerId, state: this.state};
         this.on_done = on_done;
         this.on_previous = on_previous;
 
@@ -45,25 +44,25 @@ export class ProviderForm {
         this.previousInProgress = false;
     }
 
-    async changeState(toState: number): Promise<CustomForm | null> {
+    async changeState(toState: number): Promise<CustomForm | undefined> {
         if (toState == -1) {
             this.state = toState;
             if (this.on_previous) this.on_previous();
-            return null;
+            return undefined;
         } else {
             try {
                 const res = await getProviderSettings(this.ptype, toState, this.value);
                 this.state = toState;
                 if (res.values) {
                     // @ts-ignore
-                    this.value.Provider = new Provider({ ...this.value.Provider, ...res.values });
+                    this.value.Provider = { ...this.value.Provider, ...res.values };
                 }
                 return res.form;
             } catch (e) {
-                if (e instanceof Provider) {
+                if ("Provider" in (e as any) && "_id" in (e as any) && "_srctype" in (e as any)) {
                     sessionStorage.removeItem("newprovider-" + this.providerId);
                     this.on_done();
-                    return null;
+                    return undefined;
                 } else {
                     this.nextInProgress = false;
                     this.previousInProgress = false;

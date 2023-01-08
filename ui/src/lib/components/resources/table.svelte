@@ -1,7 +1,7 @@
 <script lang="ts">
- import { createEventDispatcher } from 'svelte';
-
  import {
+     Button,
+     Icon,
      Table,
      Spinner,
  } from 'sveltestrap';
@@ -9,8 +9,6 @@
  import { getServiceSpec } from '$lib/api/service_specs';
  import ResourceInput from '$lib/components/ResourceInput.svelte';
  import type { Field } from '$lib/model/custom_form';
-
- const dispatch = createEventDispatcher();
 
  export let edit = false;
  export let index: string;
@@ -27,6 +25,17 @@
      }, () => {
          linespecs = null;
      })
+ }
+
+ function addLine() {
+     if (!value) value = [];
+     value.push(linespecs?{ }:"");
+     value = value;
+ }
+
+ function deleteLine(idx: number) {
+     value.splice(idx, 1);
+     value = value;
  }
 </script>
 
@@ -58,7 +67,7 @@
             </tr>
         </thead>
         <tbody>
-          {#if value}
+          {#if value && value.length}
             {#each value as v, idx}
                 <tr>
                     {#if linespecs}
@@ -87,15 +96,46 @@
                             />
                         </td>
                     {/if}
+                    {#if edit}
+                        <td>
+                            <Button
+                                type="button"
+                                color="danger"
+                                outline
+                                size="sm"
+                                on:click={() => deleteLine(idx)}
+                            >
+                                <Icon name="trash" />
+                            </Button>
+                        </td>
+                    {/if}
                 </tr>
             {/each}
           {:else}
             <tr>
-                <td colspan=2>
+                <td colspan={(linespecs?linespecs.length:1)+(edit?1:0)} class="fst-italic text-center">
                     No content
                 </td>
             </tr>
           {/if}
         </tbody>
+        {#if edit}
+            <tfoot>
+                <tr>
+                    <td colspan={linespecs?linespecs.length:1}>
+                        <Button
+                            type="button"
+                            color="primary"
+                            outline
+                            size="sm"
+                            on:click={addLine}
+                        >
+                            <Icon name="plus" />
+                            New row
+                        </Button>
+                    </td>
+                </tr>
+            </tfoot>
+        {/if}
     </Table>
 {/if}

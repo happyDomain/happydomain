@@ -1,9 +1,13 @@
 <script lang="ts">
+ import { createEventDispatcher } from 'svelte';
+
  import BasicInput from '$lib/components/resources/basic.svelte';
  import MapInput from '$lib/components/resources/map.svelte';
  import ObjectInput from '$lib/components/resources/object.svelte';
  import RawInput from '$lib/components/resources/raw.svelte';
  import TableInput from '$lib/components/resources/table.svelte';
+
+ const dispatch = createEventDispatcher();
 
  export let edit = false;
  export let editToolbar = false;
@@ -24,7 +28,7 @@
 
 {#if type.substring(0, 2) === '[]' && type !== '[]byte' && type !== '[]uint8'}
     <TableInput
-        {edit}
+        edit={edit || editToolbar}
         {index}
         {noDecorate}
         {readonly}
@@ -34,7 +38,7 @@
     />
 {:else if type.substring(0, 3) === 'map'}
     <MapInput
-        {edit}
+        edit={edit || editToolbar}
         {index}
         {readonly}
         {specs}
@@ -50,6 +54,8 @@
         {specs}
         type={sanitizeType(type)}
         bind:value={value}
+        on:delete-this-service={(event) => dispatch("delete-this-service", event.detail)}
+        on:update-this-service={(event) => dispatch("update-this-service", event.detail)}
     />
 {:else if noDecorate}
     <RawInput

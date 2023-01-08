@@ -6,6 +6,7 @@
      Icon,
      Input,
      InputGroup,
+     Spinner,
  } from 'sveltestrap';
 
  import ResourceInput from '$lib/components/ResourceInput.svelte';
@@ -24,40 +25,78 @@
  export let valuetype: string;
  export let value: any;
 
- let editKey = false;
+ let editKey = key == "";
+ let initialKey = key;
+ let renamingInProgress = false;
+ let deletingInProgress = false;
 
  function rename() {
-     editKey = false;
+     if (key == "") {
+         editKey = true;
+         // TODO: throw error as key can't be empty
+     } else if (key == initialKey) {
+         editKey = false;
+     } else {
+         renamingInProgress = true;
+         dispatch("rename-key", key);
+     }
+ }
+
+ function deleteKey() {
+     deletingInProgress = true;
+     dispatch("delete-key", key);
  }
 </script>
 
 <h3>
     {#if editKey}
-        <InputGroup>
-            <Input
-                type="text"
-                placeholder={specs.placeholder}
-                bind:value={key}
-            />
-            <Button
-                type="button"
-                size="sm"
-                color="primary"
-                on:click={rename}
-            >
-                <Icon name="check" />
-                {#if isNew}
-                    {$t('domains.create-new-key', { id: specs.id })}
-                {:else}
-                    {$t('common.rename')}
-                {/if}
-            </Button>
-        </InputGroup>
+        <form on:submit|preventDefault={rename}>
+            <InputGroup>
+                <Input
+                    type="text"
+                    placeholder={specs.placeholder}
+                    bind:value={key}
+                />
+                <Button
+                    disabled={renamingInProgress}
+                    size="sm"
+                    color="primary"
+                >
+                    {#if renamingInProgress}
+                        <Spinner size="sm" />
+                    {:else}
+                        <Icon name="check" />
+                    {/if}
+                    {#if isNew}
+                        {$t('domains.create-new-key', { id: specs.id })}
+                    {:else}
+                        {$t('common.rename')}
+                    {/if}
+                </Button>
+            </InputGroup>
+        </form>
     {:else}
         {key}
-        <Button type="button" size="sm" color="link" on:click={() => editKey = true}>
-            <Icon name="pencil" />
-        </Button>
+        {#if edit}
+            <Button type="button" size="sm" color="link" on:click={() => editKey = true}>
+                <Icon name="pencil" />
+            </Button>
+            <Button
+                type="button"
+                class="float-end"
+                disabled={deletingInProgress}
+                size="sm"
+                color="danger"
+                outline
+                on:click={deleteKey}
+            >
+                {#if deletingInProgress}
+                    <Spinner size="sm" />
+                {:else}
+                    <Icon name="trash" />
+                {/if}
+            </Button>
+        {/if}
     {/if}
 </h3>
 <ResourceInput

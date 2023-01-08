@@ -6,12 +6,12 @@
 
  import ProviderForm from '$lib/components/providers/Form.svelte';
  import type { Provider } from '$lib/model/provider';
- import { ProviderSettingsState } from '$lib/model/provider_settings';
+ import type { ProviderSettingsState } from '$lib/model/provider_settings';
  import { t } from '$lib/translations';
 
  export let data: {provider: Provider; provider_id: string;};
 
- let value = new ProviderSettingsState({state: 0, recall: null, Provider: data.provider});
+ let value: ProviderSettingsState = {...data.provider, state: 0};
 </script>
 
 <h1 class="text-center my-2">

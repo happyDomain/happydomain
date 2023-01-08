@@ -1,6 +1,6 @@
 import { derived, writable, type Writable } from 'svelte/store';
 import { listProviders } from '$lib/api/provider';
-import { Provider, ProviderInfos } from '$lib/model/provider';
+import type { Provider, ProviderInfos } from '$lib/model/provider';
 
 export const providers: Writable<null | Array<Provider>> = writable(null);
 export const providersSpecs: Writable<null | Record<string, ProviderInfos>> = writable(null);
@@ -29,12 +29,7 @@ export const providers_idx = derived(
 export async function refreshProvidersSpecs() {
     const res = await fetch('/api/providers/_specs', {headers: {'Accept': 'application/json'}})
     if (res.status == 200) {
-        const data = await res.json();
-
-        const map: Record<string, ProviderInfos> = { };
-        for (const pi in data) {
-            map[pi] = new ProviderInfos(data[pi])
-        }
+        const map = await res.json();
         providersSpecs.set(map);
         return map;
     } else {

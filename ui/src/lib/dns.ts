@@ -62,7 +62,7 @@ export function nsttl(input: number): string {
     return ret
 }
 
-export function nsrrtype(input: number|string): string {
+export function nsrrtype(input: number | string): string {
   switch (input) {
     case '1': case 1: return 'A'
     case '2': case 2: return 'NS'
@@ -154,8 +154,8 @@ export function nsrrtype(input: number|string): string {
   }
 }
 
-export function validateDomain(dn: string, subdomain: string = ""): boolean|undefined {
-    let ret: boolean|undefined = undefined;
+export function validateDomain(dn: string, subdomain: string = ""): boolean | undefined {
+    let ret: boolean | undefined = undefined;
     if (dn.length !== 0) {
         ret = dn.length >= 1 && dn.length <= 254;
 

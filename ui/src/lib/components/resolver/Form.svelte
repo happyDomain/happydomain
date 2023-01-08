@@ -12,12 +12,12 @@
  import SelectType from '$lib/components/resolver/SelectType.svelte';
  import SelectResolver from '$lib/components/resolver/SelectResolver.svelte';
  import type { Domain } from '$lib/model/domain';
- import { ResolverForm } from '$lib/model/resolver';
+ import type { ResolverForm } from '$lib/model/resolver';
  import { t } from '$lib/translations';
 
  const dispatch = createEventDispatcher();
 
- export let value: ResolverForm = new ResolverForm();
+ export let value: ResolverForm = {domain: "", type: "ANY", resolver: "local"};
  export let showDNSSEC = false;
 
  export let sortedDomains: Array<Domain> = [];
@@ -37,6 +37,7 @@
         <Input
             aria-describedby="domainHelpBlock"
             id="domain"
+            class="font-monospace"
             list="my-domains"
             required
             placeholder="happydomain.org"

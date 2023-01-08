@@ -1,18 +1,20 @@
 <script lang="ts">
- import { page } from '$app/stores'
-
  import {
      Button,
      Icon,
  } from 'sveltestrap';
+ import type {
+     ButtonColor,
+     ButtonSize,
+ } from 'sveltestrap/src/Button.d';
 
- import { t, locale } from '$lib/translations';
+ import { t } from '$lib/translations';
 
  export { className as class };
- let className = '';
- export let color = "primary"
+ let className: string = '';
+ export let color: ButtonColor = "primary";
  export let href: string;
- export let size: string | null;
+ export let size: ButtonSize | undefined = undefined;
 </script>
 
 <Button

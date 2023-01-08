@@ -16,6 +16,15 @@
      Spinner,
  } from 'sveltestrap';
 
+ import {
+     deleteDomain as APIDeleteDomain,
+ } from '$lib/api/domains';
+ import {
+     applyZone as APIApplyZone,
+     diffZone as APIDiffZone,
+     importZone as APIImportZone,
+     viewZone as APIViewZone,
+ } from '$lib/api/zone';
  import ImgProvider from '$lib/components/providers/ImgProvider.svelte';
  import type { Domain } from '$lib/model/domain';
  import type { ZoneMeta } from '$lib/model/zone';
@@ -62,7 +71,7 @@
  function importZone(): void {
      if (domain) {
          importInProgress = true;
-         domain.importZone().then(
+         APIImportZone(domain).then(
              importZoneDone,
              (err: any) => {
                  importInProgress = false;
@@ -78,12 +87,12 @@
      selectedHistory = zm.id;
  }
 
- let domain: null|Domain = null;
+ let domain: null | Domain = null;
  $: if ($domains_idx[selectedDomain]) {
      domain = $domains_idx[selectedDomain];
      if (!domain.zone_history || domain.zone_history.length == 0) {
          importInProgress = true;
-         domain.importZone().then(
+         APIImportZone(domain).then(
              importZoneDone,
              (err: any) => {
                  importInProgress = false;
@@ -94,12 +103,12 @@
  }
 
  let viewZoneModalIsOpen = false;
- let zoneContent: null|string = null;
+ let zoneContent: null | string = null;
  function viewZone(): void {
      if (domain && selectedHistory) {
          zoneContent = null;
          viewZoneModalIsOpen = true;
-         domain.viewZone(selectedHistory).then(
+         APIViewZone(domain, selectedHistory).then(
              (v: string) => zoneContent = v,
              (err: any) => {
                  viewZoneModalIsOpen = false;
@@ -110,7 +119,7 @@
  }
 
  let applyZoneModalIsOpen = false;
- let zoneDiff: Array<{className: string; msg: string;}>|null = null;
+ let zoneDiff: Array<{className: string; msg: string;}> | null = null;
  let zoneDiffCreated = 0;
  let zoneDiffDeleted = 0;
  let zoneDiffModified = 0;
@@ -123,7 +132,7 @@
      selectedDiff = null;
      applyZoneModalIsOpen = true;
      propagationInProgress = false;
-     domain.diffZone('@', selectedHistory).then(
+     APIDiffZone(domain, '@', selectedHistory).then(
          (v: Array<string>) => {
              zoneDiffCreated = 0;
              zoneDiffDeleted = 0;
@@ -163,7 +172,7 @@
      )
  }
 
- let selectedDiff: Array<string>|null = null;
+ let selectedDiff: Array<string> | null = null;
  let selectedDiffCreated = 0;
  let selectedDiffDeleted = 0;
  let selectedDiffModified = 0;
@@ -177,7 +186,7 @@
 
      propagationInProgress = true;
      try {
-         importZoneDone(await domain.applyZoneDiff(selectedHistory, selectedDiff));
+         importZoneDone(await APIApplyZone(domain, selectedHistory, selectedDiff));
      } finally {
          applyZoneModalIsOpen = false;
      }
@@ -187,7 +196,7 @@
  let deleteInProgress = false;
  function detachDomain(): void {
      deleteInProgress = true;
-     $domains_idx[selectedDomain].delete().then(
+     APIDeleteDomain($domains_idx[selectedDomain].id).then(
          () => {
              deleteInProgress = false;
              goto('/domains');
@@ -419,7 +428,7 @@
         {:else}
             {#each zoneDiff as line, n}
                 <div
-                    class={'col text-monospace form-check ' + line.className}
+                    class={'col font-monospace form-check ' + line.className}
                 >
                     <input
                         type="checkbox"

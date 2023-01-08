@@ -12,6 +12,7 @@
      Spinner,
  } from 'sveltestrap';
 
+ import { deleteProvider } from '$lib/api/provider';
  import ImgProvider from '$lib/components/providers/ImgProvider.svelte';
  import HListGroup from '$lib/components/ListGroup.svelte';
  import type { Provider } from '$lib/model/provider';
@@ -61,9 +62,9 @@
      goto('/providers/' + encodeURIComponent(item._id))
  }
 
- async function deleteProvider(event: Event, item: Provider) {
+ async function delProvider(event: Event, item: Provider) {
      event.stopPropagation();
-     await item.delete();
+     await deleteProvider(item._id);
      refreshProviders();
  }
 </script>
@@ -134,7 +135,7 @@
                             <DropdownItem on:click={(e) => updateProvider(e, item)}>
                                 {$t('provider.update')}
                             </DropdownItem>
-                            <DropdownItem on:click={(e) => deleteProvider(e, item)}>
+                            <DropdownItem on:click={(e) => delProvider(e, item)}>
                                 {$t('provider.delete')}
                             </DropdownItem>
                         </DropdownMenu>

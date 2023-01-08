@@ -12,7 +12,7 @@
  import ResolverForm from '$lib/components/resolver/Form.svelte';
  import { nsttl, nsrrtype } from '$lib/dns';
  import { recordsFields } from '$lib/resolver';
- import { ResolverForm as ResolverFormT } from '$lib/model/resolver';
+ import type { ResolverForm as ResolverFormT } from '$lib/model/resolver';
  import { t } from '$lib/translations';
  import { toasts } from '$lib/stores/toasts';
 
@@ -23,7 +23,7 @@
 
  $: {
      if (!data.form) {
-         data.form = new ResolverFormT();
+         data.form = {domain: "", type: "ANY", resolver: "local"};
      }
      data.form.domain = data.domain;
 

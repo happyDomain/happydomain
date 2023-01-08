@@ -29,7 +29,7 @@
         "add": "Add",
         "add-new-thing": "Add new {{thing}}",
         "cancel": "Cancel",
-        "cancel-edit": "@:common.cancel edit",
+        "cancel-edit": "Cancel edit",
         "continue": "Continue",
         "create-thing": "Create {{thing}}",
         "delete": "Delete",
@@ -89,7 +89,7 @@
         "create-new-key": "Create new {{id}} key",
         "discard": "Discard",
         "drop-alias": "Drop alias",
-        "edit-target": "@:common.edit target",
+        "edit-target": "Edit target",
         "give-explicit-name": "Give an explicit name in order to easily find this service.",
         "history": "History",
         "list": "List importable domains",
@@ -221,16 +221,17 @@
     },
     "service": {
         "add": "Add service",
+        "all": "All",
         "already": "Already managed",
-        "delete": "@:common.delete the service",
+        "delete": "Delete the service",
         "update": "Update the service",
         "form-new": "Add a new service to {{0}}"
     },
     "provider": {
         "check-config": "Check your provider configuration",
-        "delete": "@:common.delete this @:provider.kind",
-        "find": "Can't find your @:provider.kind here?",
-        "name-your": "Name your @:provider.kind",
+        "delete": "Delete this domain provider",
+        "find": "Can't find your domain provider here?",
+        "name-your": "Name your domain's provider",
         "provider": "Domains living on {{0}}",
         "kind": "domain's provider",
         "select-provider": "First, you need to select the provider hosting your domain:",
@@ -240,8 +241,8 @@
         "title": "Your domains' providers",
         "available-types": "Resources Types available",
         "import-domains": "Import all domains",
-        "new-form": "New @:provider.kind form",
-        "update": "Update @:provider.kind"
+        "new-form": "New domain's provider form",
+        "update": "Update domain's provider"
     },
     "upgrade": {
         "title": "An update is available!",

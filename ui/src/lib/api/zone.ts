@@ -51,7 +51,8 @@ export async function diffZone(domain: Domain, id1: string, id2: string): Promis
     return await handleApiResponse<Array<string>>(res);
 }
 
-export async function addZoneService(domain: Domain, id: string, subdomain: string, service: any): Promise<Zone> {
+export async function addZoneService(domain: Domain, id: string, service: ServiceMeta): Promise<Zone> {
+    let subdomain = service._domain;
     if (subdomain === '') subdomain = '@';
 
     const dnid = encodeURIComponent(domain.id);
@@ -62,6 +63,18 @@ export async function addZoneService(domain: Domain, id: string, subdomain: stri
         method: 'POST',
         headers: {'Accept': 'application/json'},
         body: JSON.stringify(service)
+    });
+    return await handleApiResponse<Zone>(res);
+}
+
+export async function updateZoneService(domain: Domain, id: string, service: ServiceMeta): Promise<Zone> {
+    const dnid = encodeURIComponent(domain.id);
+    id = encodeURIComponent(id);
+
+    const res = await fetch(`/api/domains/${dnid}/zone/${id}`, {
+        method: 'PATCH',
+        headers: {'Accept': 'application/json'},
+        body: JSON.stringify(service),
     });
     return await handleApiResponse<Zone>(res);
 }
