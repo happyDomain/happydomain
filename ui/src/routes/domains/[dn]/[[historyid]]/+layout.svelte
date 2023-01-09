@@ -358,7 +358,14 @@
             {/if}
         </Col>
         <Col class="d-flex">
-            <slot />
+            {#if data.history == selectedHistory}
+                <slot />
+            {:else}
+                <div class="mt-5 text-center flex-fill">
+                    <Spinner label="Spinning" />
+                    <p>{$t('wait.loading')}</p>
+                </div>
+            {/if}
         </Col>
     </Row>
 </Container>
