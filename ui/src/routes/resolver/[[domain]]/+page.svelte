@@ -8,7 +8,7 @@
      Table,
  } from 'sveltestrap';
 
- import { resolve } from '$lib/api/resolver';
+ import { resolve as APIResolve } from '$lib/api/resolver';
  import ResolverForm from '$lib/components/resolver/Form.svelte';
  import { nsttl, nsrrtype } from '$lib/dns';
  import { recordsFields } from '$lib/resolver';
@@ -19,17 +19,16 @@
  export let data: {form?: ResolverFormT; domain: string; showDNSSEC: boolean;};
  let question: ResolverFormT | null = null;
  let responses: Array<any> | 'no-answer' | null = null;
+ let error_response: string | null = null;
  let request_pending = false;
 
- $: {
-     if (!data.form) {
-         data.form = {domain: "", type: "ANY", resolver: "local"};
-     }
-     data.form.domain = data.domain;
+ function resolve(form: ResolverFormT) {
+     if (!form.domain) return;
 
-     resolve(data.form)
+     APIResolve(form)
      .then(
          (response) => {
+             error_response = null;
              question = Object.assign({ }, data.form)
              if (response.Answer) {
                  responses = response.Answer;
@@ -39,13 +38,24 @@
              request_pending = false;
          },
          (error) => {
+             responses = null;
+             error_response = error;
              toasts.addErrorToast({
                  title: $t('errors.resolve'),
                  message: error,
                  timeout: 5000,
              });
              request_pending = false;
-     })
+     });
+ }
+
+ $: {
+     if (!data.form) {
+         data.form = {domain: "", type: "ANY", resolver: "local"};
+     }
+     data.form.domain = data.domain;
+
+     resolve(data.form);
  }
 
  function filteredResponses(responses: Array<any>, showDNSSEC: boolean): Array<any> {
@@ -99,7 +109,11 @@
             />
         </div>
         </Col>
-        {#if responses === 'no-answer'}
+        {#if error_response !== null}
+            <Col md="8" class="pt-3">
+                <h3 class="text-center text-danger">{error_response}</h3>
+            </Col>
+        {:else if responses === 'no-answer'}
             <Col md="8" class="pt-2">
                 <h3>{$t('common.records', { n: 0, type: question?question.type:"-" })}</h3>
             </Col>
