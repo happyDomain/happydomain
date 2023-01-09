@@ -1,6 +1,7 @@
 <script lang="ts">
  import { goto } from '$app/navigation';
 
+ import { escape } from 'html-escaper';
  import {
      Button,
      ButtonGroup,
@@ -419,7 +420,7 @@
     scrollable
 >
     <ModalHeader toggle={() => applyZoneModalIsOpen = false}>
-        {$t('domains.view.description')}
+        {@html $t('domains.view.description', {"domain": `<span class="font-monospace">${escape(domain.domain)}</span>`})}
     </ModalHeader>
     <ModalBody>
         {#if !zoneDiff}

@@ -1,4 +1,5 @@
 <script lang="ts">
+ import { escape } from 'html-escaper';
  import {
      ModalHeader,
  } from 'sveltestrap';
@@ -14,7 +15,6 @@
     {#if update}
         {$t('service.update')}
     {:else}
-        {$t('service.form-new')}
+        {@html $t('service.form-new', {"domain": `<span class="font-monospace">${escape(dn)}</span>`})}
     {/if}
-    <span class="font-monospace">{dn}</span>
 </ModalHeader>

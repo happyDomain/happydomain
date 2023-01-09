@@ -98,7 +98,7 @@
     "view": {
       "abstract": "Zone abstraite",
       "cancel-title": "Conserver mon domaine dans happyDomain",
-      "description": "Valider les modifications qui seront appliquées à {{0}}",
+      "description": "Valider les modifications qui seront appliquées à {{domain}}",
       "live": "Enregistrements actifs",
       "monitoring": "Suivi",
       "summary": "Résumé",
@@ -121,10 +121,10 @@
       },
       "as": "Voir comme :"
     },
-    "alias-creation": "Ajouter un alias pointant sur {{0}} :",
+    "alias-creation": "Ajouter un alias pointant sur {{domain}} :",
     "alias-creation-sample": "Cela va créer cet alias :",
     "placeholder-new": "mon.nouveau.domaine.",
-    "form-new-subdomain": "Ajout d'un sous-domaine sous {{0}} :"
+    "form-new-subdomain": "Ajout d'un sous-domaine sous {{domain}} :"
   },
   "email": {
     "address": "Adresse électronique",
@@ -172,7 +172,7 @@
     },
     "settings-change": "Impossible de changer vos paramètres",
     "account-no-auth": "Vous utilisez happyDomain sans authentification. Vous ne pouvez pas changer d'autre paramètre de votre compte.",
-    "domain-all-imported": "Ce compte sur {{0}} ne contient plus aucun domaine à importer."
+    "domain-all-imported": "Ce compte sur {{provider}} ne contient plus aucun domaine à importer."
   },
   "menu": {
     "my-domains": "Mes domaines",
@@ -227,16 +227,15 @@
     "already": "Déjà géré",
     "delete": "Supprimer ce service",
     "update": "Mettre à jour le service",
-    "form-new": "Ajout d'une service sur {{0}}"
+    "form-new": "Ajout d'un service sur {{domain}}"
   },
   "source": {
     "delete": "Supprimer cet hébergeur de domaines",
     "find": "Vous ne trouvez pas votre hébergeur de domaines ici ?",
     "name-your": "Nommer cet hébergeur de domaines",
-    "source": "Domaines existant sur {{0}}",
+    "source": "Domaines existant sur {{provider}}",
     "kind": "L'hébergeur du domaine",
     "select-provider": "Sélectionnez d'abord l'hébergeur de votre domaine :",
-    "select-source": "Sélectionnez l'endroit où votre domaine {{0}} est hébergé",
     "source-name": "Nom de l'hébergeur",
     "source-type": "Type d'hébergement",
     "title": "Les hébergeurs de vos domaines",
@@ -305,8 +304,8 @@
     "advanced": "Besoin de paramètres personnalisés ?",
     "custom": "Résolveur spécifique",
     "custom-description": "Indiquez l'adresse (un nom de domaine ou une IP) du résolveur que vous souhaitez utiliser.",
-    "domain-description": "Indiquez le domaine dont vous souhaitez consulter les enregistrements. Par exemple, vous pouvez essayer {{0}}.",
-    "field-description": "Quel type d'enregistrement DNS vous souhaitez voir. Par exemple : A est utilisé pour les IPv4, AAAA pour les IPv6, .... {{0}}",
+    "domain-description": "Indiquez le domaine dont vous souhaitez consulter les enregistrements. Par exemple, vous pouvez essayer {{domain}}.",
+    "field-description": "Quel type d'enregistrement DNS vous souhaitez voir. Par exemple : A est utilisé pour les IPv4, AAAA pour les IPv6, ....",
     "field-description-more-info": "Plus d'information ici",
     "resolver-description": "Il s'agit du serveur à qui nous allons demander les informations.",
     "ttl": "Temps de cache restant",

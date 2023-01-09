@@ -1,6 +1,7 @@
 <script lang="ts">
  import { createEventDispatcher } from 'svelte';
 
+ import { escape } from 'html-escaper';
  import {
      Button,
      Icon,
@@ -105,8 +106,7 @@
             on:submit|preventDefault={submitAliasForm}
         >
             <p>
-                {$t('domains.alias-creation')}
-                <span class="font-monospace">{fqdn(dn, origin.domain)}</span>
+                {@html $t('domains.alias-creation', {"domain": `<span class="font-monospace">${escape(fqdn(dn, origin.domain))}</span>`})}
                 <InputGroup>
                     <Input
                         autofocus

@@ -44,7 +44,7 @@
             bind:value={value.domain}
         />
         <div id="domainHelpBlock" class="form-text">
-            {$t('resolver.domain-description')}
+            {@html $t('resolver.domain-description', {"domain": `<a href="/resolver/wikipedia.org" class="font-monospace">wikipedia.org</a>`})}
         </div>
         <datalist id="my-domains">
             {#each sortedDomains as dn (dn.id)}

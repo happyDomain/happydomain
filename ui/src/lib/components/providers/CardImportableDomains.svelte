@@ -1,4 +1,5 @@
 <script lang="ts">
+ import { escape } from 'html-escaper';
  import {
      Badge,
      Button,
@@ -93,14 +94,7 @@
         <CardHeader>
             <div class="d-flex justify-content-between">
                 <div>
-                    {$t("provider.provider")}
-                    <em>
-                        {#if provider._comment}
-                            {provider._comment}
-                        {:else if $providersSpecs}
-                            {$providersSpecs[provider._srctype].name}
-                        {/if}
-                    </em>
+                    {@html $t("provider.provider", {"provider": '<em>' + escape(provider._comment?provider._comment:$providersSpecs?$providersSpecs[provider._srctype].name:"") + '</em>'})}
                 </div>
                 {#if importableDomainsList != null}
                     <Button
@@ -194,9 +188,7 @@
                 {:else if importableDomainsList.length === 0}
                     <ListGroupItem class="text-center my-3">
                         {#if $providersSpecs}
-                            <i18n path="errors.domain-all-imported">
-                                {$providersSpecs[provider._srctype].name}
-                            </i18n>
+                            {$t("errors.domain-all-imported", {"provider": $providersSpecs[provider._srctype].name})}
                         {/if}
                     </ListGroupItem>
                 {/if}

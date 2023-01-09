@@ -101,7 +101,7 @@
         "view": {
             "abstract": "Abstract zone",
             "cancel-title": "Keep my domain in happyDomain",
-            "description": "Review the modifications that will be applied to {{0}}",
+            "description": "Review the modifications that will be applied to {{domain}}",
             "live": "Live records",
             "monitoring": "Monitoring",
             "summary": "Summary",
@@ -111,11 +111,11 @@
         "views": {
             "provider-parameters": "Hosting parameters"
         },
-        "alias-creation": "Add an alias pointing to {{0}}:",
+        "alias-creation": "Add an alias pointing to {{domain}}:",
         "alias-creation-sample": "This will create the alias:",
         "placeholder-new": "my.new.domain.",
         "placeholder-new-sub": "new.subdomain",
-        "form-new-subdomain": "Add a new subdomain under {{0}}:"
+        "form-new-subdomain": "Add a new subdomain under {{domain}}:"
     },
     "domaingroups": {
         "manage": "Manage your domain's groups",
@@ -170,7 +170,7 @@
         },
         "settings-change": "Unable to change your settings",
         "account-no-auth": "You're using happyDomain without authentication. You cannot manage other account properties.",
-        "domain-all-imported": "This account on {{0}} doesn't have any more domain to import."
+        "domain-all-imported": "This account on {{provider}} doesn't have any more domain to import."
     },
     "menu": {
         "my-domains": "My domains",
@@ -225,17 +225,16 @@
         "already": "Already managed",
         "delete": "Delete the service",
         "update": "Update the service",
-        "form-new": "Add a new service to {{0}}"
+        "form-new": "Add a new service to {{domain}}"
     },
     "provider": {
         "check-config": "Check your provider configuration",
         "delete": "Delete this domain provider",
         "find": "Can't find your domain provider here?",
         "name-your": "Name your domain's provider",
-        "provider": "Domains living on {{0}}",
+        "provider": "Domains living on {{provider}}",
         "kind": "domain's provider",
         "select-provider": "First, you need to select the provider hosting your domain:",
-        "select-source": "Select the place where your domain {{0}} is hosted",
         "provider-name": "Host's name",
         "provider-type": "Hosting provider type",
         "title": "Your domains' providers",
@@ -304,8 +303,8 @@
         "advanced": "With custom settings?",
         "custom": "Custom resolver",
         "custom-description": "Enter the addresse (a domain name or an IP) of the resolver you want to use.",
-        "domain-description": "Indicate the domain you search the records. For example, you can try {{0}}.",
-        "field-description": "What kind of DNS record you want to see. For example: A is for IPv4, AAAA is for IPv6, ... {{0}}",
+        "domain-description": "Indicate the domain you search the records. For example, you can try {{domain}}.",
+        "field-description": "What kind of DNS record you want to see. For example: A is for IPv4, AAAA is for IPv6, ...",
         "field-description-more-info": "More information here",
         "resolver-description": "This is the server we will ask for the information.",
         "ttl": "Remaining time in cache",

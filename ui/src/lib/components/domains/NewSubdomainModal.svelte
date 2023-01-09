@@ -1,6 +1,7 @@
 <script lang="ts">
  import { createEventDispatcher } from 'svelte';
 
+ import { escape } from 'html-escaper';
  import {
      Input,
      InputGroup,
@@ -76,8 +77,8 @@
             on:submit|preventDefault={submitSubdomainForm}
         >
             <p>
-                {$t('domains.form-new-subdomain')}
-                <span class="font-monospace">{origin.domain}</span>
+                {@html $t('domains.form-new-subdomain', {"domain": `<span class="font-monospace">${escape(origin.domain)}</span>`})}
+
                 <InputGroup>
                     <Input
                         autofocus
