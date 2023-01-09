@@ -186,22 +186,22 @@
   },
   "onboarding": {
     "add-one": "ajouter un domaine",
-    "choose-configured": "choisir entre les fournisseurs déjà configurés ou {{0}} :",
+    "choose-configured": "choisir entre les fournisseurs déjà configurés ou {{action}} :",
     "suggest-source": "choisir votre fournisseur",
     "use": "Utilisez {{happyDomain}} comme interface de remplacement de votre fournisseur de noms de domaine habituel. Il continuera à s'appuyer sur l'infrastructure de votre fournisseur, vous n'aurez qu'à profiter de notre interface simple. Dans un premier temps, {{first-step}}",
     "no-sale": {
       "title": "Je ne possède aucun domaine",
-      "description": "{{0}} ne fournit pas encore de domaine. Pour commencer à utiliser notre interface, vous devez vous procurer un domaine auprès de l'un des fournisseurs répertoriés",
+      "description": "{{happyDomain}} ne fournit pas encore de domaine. Pour commencer à utiliser notre interface, vous devez vous procurer un domaine auprès de l'un des fournisseurs répertoriés",
       "buy-advice": "Nous vous donnerons prochainement des conseils sur la manière de se procurer facilement un nom de domaine. Restez donc à l'écoute et contactez-nous si vous souhaitez nous aider à élaborer un guide complet."
     },
     "own": "Je dispose déjà d'un domaine",
     "questions": {
       "hosting": {
         "q": "Je ne veux plus dépendre de mon fournisseur d'hébergement de nom de domaine. Puis-je héberger mon nom de domaine sur votre infrastructure",
-        "a": "Nous fournirons cette information dans un avenir proche, car elle figure sur notre manifeste. Nous avons choisi de faire passer le message que les noms de domaine sont accessibles à tous grâce à cette interface conviviale, avant de nous attaquer à la protection de la vie privée, à la censure, ..."
+        "a": "Nous fournirons cette information dans un avenir proche, car elle figure sur notre manifeste. Nous avons choisi de faire passer le message que les noms de domaine sont accessibles à tous grâce à cette interface conviviale, avant de nous attaquer à la protection de la vie privée, à la censure, ..."
       },
       "secondary": {
-        "q": "J'ai ma propre infrastructure, puis-je utiliser {{0}} comme serveur secondaire faisant autorité ?",
+        "q": "J'ai ma propre infrastructure, puis-je utiliser {{happyDomain}} comme serveur secondaire faisant autorité ?",
         "a": "Nous proposerons cette fonctionnalité dans un proche avenir, dès que notre infrastructure de serveurs de noms sera en service."
       }
     }

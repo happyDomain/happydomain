@@ -184,12 +184,12 @@
     },
     "onboarding": {
         "add-one": "add a new one",
-        "choose-configured": "choose between already configured providers or {{0}}:",
+        "choose-configured": "choose between already configured providers or {{action}}:",
         "suggest-provider": "choose your provider:",
         "use": "Use {{happyDomain}} as a remplacement interface to your usual domain name provider. It'll still rely on your provider's infrastructure, you'll just take benefit from our simple interface. As a first step, {{first-step}}",
         "no-sale": {
             "title": "I don't own any domain",
-            "description": "{{0}} does not sell domain yet. To start using our interface, you need to buy a domain from one of our supported provider",
+            "description": "{{happyDomain}} does not sell domain yet. To start using our interface, you need to buy a domain from one of our supported provider",
             "buy-advice": "We'll provide some guidance in a near future on how to easily buy a domain name. So stay tune and get in touch with us if you'll help us to build a comprehensive guide."
         },
         "own": "I already own a domain",
@@ -199,7 +199,7 @@
                 "a": "We'll provide such feature in a near future, as it's on our manifest. We choose to focus first on spreading the word that domain names are accessibles to everyone through this sweet interface, before targeting privacy, censorship, …"
             },
             "secondary": {
-                "q": "I've my own infrastructure, can I use {{0}} as secondary authoritative server?",
+                "q": "I've my own infrastructure, can I use {{happyDomain}} as secondary authoritative server?",
                 "a": "We'll provide such feature in a near future, as soon as our name server infrastructure is on."
             }
         }

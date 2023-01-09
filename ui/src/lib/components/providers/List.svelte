@@ -17,7 +17,7 @@
  import HListGroup from '$lib/components/ListGroup.svelte';
  import type { Provider } from '$lib/model/provider';
  import { domains } from '$lib/stores/domains';
- import { providers, providersSpecs, refreshProviders } from '$lib/stores/providers';
+ import { providers, providersSpecs, refreshProviders, refreshProvidersSpecs } from '$lib/stores/providers';
  import { t } from '$lib/translations';
 
  const dispatch = createEventDispatcher();
@@ -27,6 +27,8 @@
  export let noDropdown = false;
  export let selectedProvider: Provider|null = null;
  export let items: Array<any>;
+
+ if (!$providersSpecs) refreshProvidersSpecs();
 
  let domain_in_providers: Record<string, number> = {};
  $: {

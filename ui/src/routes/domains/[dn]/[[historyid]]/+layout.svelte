@@ -199,8 +199,13 @@
      deleteInProgress = true;
      APIDeleteDomain($domains_idx[selectedDomain].id).then(
          () => {
-             deleteInProgress = false;
-             goto('/domains');
+             refreshDomains().then(() => {
+                 deleteInProgress = false;
+                 goto('/domains');
+             }, (err: any) => {
+                 deleteInProgress = false;
+                 goto('/domains');
+             });
          },
          (err: any) => {
              deleteInProgress = false;
