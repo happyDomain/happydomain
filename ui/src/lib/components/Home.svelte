@@ -26,7 +26,7 @@
  import { t } from '$lib/translations';
 
  if (!$domains) refreshDomains();
- refreshProviders();
+ if (!$providers) refreshProviders();
  if (!$providersSpecs) refreshProvidersSpecs();
 
  let noDomainsList = false;
@@ -99,7 +99,7 @@
                         <Icon name="plus" />
                     </Button>
                 </div>
-                {#if !$providers}
+                {#if !$providers || !$providersSpecs}
                     <div class="d-flex justify-content-center">
                         <Spinner color="primary" />
                     </div>
