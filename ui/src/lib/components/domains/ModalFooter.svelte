@@ -62,7 +62,7 @@
             on:click={() => dispatch("delete-service")}
         >
             {#if deleteServiceInProgress}
-                <Spinner label="Spinning" size="sm" />
+                <Spinner size="sm" />
             {/if}
             {$t('service.delete')}
         </Button>

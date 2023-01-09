@@ -8,11 +8,11 @@
  const dispatch = createEventDispatcher();
 
  export let flush = false;
- export let selectedGroup: string|null = null;
+ export let selectedGroup: string | null = null;
 
  function selectGroup(event: CustomEvent<string>) {
-     if (selectedGroup && selectedGroup == event.detail) {
-         selectedGroup = "";
+     if (selectedGroup != null && selectedGroup == event.detail) {
+         selectedGroup = null;
      } else {
          selectedGroup = event.detail;
          dispatch("click", selectedGroup);
@@ -28,7 +28,7 @@
     on:click={selectGroup}
     let:item={item}
 >
-    {#if item === 'undefined'}
+    {#if item === '' || item === 'undefined'}
         {$t('domaingroups.no-group')}
     {:else}
         {item}

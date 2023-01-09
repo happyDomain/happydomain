@@ -3,12 +3,16 @@ import type { Config } from 'sveltekit-i18n';
 const { MODE } = import.meta.env;
 
 interface Params {
+    action?: string;
     id?: string;
     domain?: string;
     type?: string;
-    thing?: any;
-    identify?: any;
-    'security-operations'?: any;
+    happyDomain?: string;
+    thing?: string;
+    identify?: string;
+    provider?: string;
+    'security-operations'?: string;
+    'first-step'?: string;
     n?: number;
     count?: number;
     // add more parameters that are used here

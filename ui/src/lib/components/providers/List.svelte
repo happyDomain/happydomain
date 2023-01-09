@@ -73,7 +73,7 @@
 
 {#if !items || $providersSpecs == null}
     <div class="d-flex gap-2 align-items-center justify-content-center my-3">
-        <Spinner color="primary" label="Spinning" class="mr-3" /> Retrieving your providers...
+        <Spinner color="primary" label="Spinning" class="mr-3" /> {$t("wait.retrieving-providers")}
     </div>
 {:else}
     <HListGroup
@@ -85,8 +85,10 @@
         on:click={selectProvider}
         let:item={item}
     >
-        <div slot="empty" class="d-flex justify-content-center align-items-center gap-1">
-            You have no provider defined currently. Try <button class="btn btn-link p-0" on:click|preventDefault={() => dispatch('new-provider')}>adding one</button>!
+        <div slot="empty">
+            <form on:submit|preventDefault={() => dispatch('new-provider')}>
+                {@html $t('provider.empty', {"action": `<button type="submit" class="btn btn-link p-0">${$t('provider.empty-action')}</button>`})}
+            </form>
         </div>
         <div class="d-flex flex-fill justify-content-between" style="max-width: 100%">
         <div class="d-flex" style="min-width: 0">
@@ -98,7 +100,7 @@
                     {item._comment}
                 </div>
             {:else}
-                <em>No name</em>
+                <em>{$t('provider.no-name')}</em>
             {/if}
         </div>
         {#if !(noLabel && noDropdown)}
@@ -109,7 +111,7 @@
                             class="mx-1"
                             color={domain_in_providers[item._id] > 0 ? 'success' : 'danger'}
                         >
-                            {domain_in_providers[item._id]} domain{#if domain_in_providers[item._id] > 1}s{/if} associated
+                            {$t('provider.associations', {"count": domain_in_providers[item._id]})}
                         </Badge>
                         {#if $providersSpecs[item._srctype]}
                             <Badge

@@ -9,6 +9,7 @@
  import { getServiceSpec } from '$lib/api/service_specs';
  import ResourceInput from '$lib/components/ResourceInput.svelte';
  import type { Field } from '$lib/model/custom_form';
+ import { t } from '$lib/translations';
 
  export let edit = false;
  export let index: string;
@@ -114,7 +115,7 @@
           {:else}
             <tr>
                 <td colspan={(linespecs?linespecs.length:1)+(edit?1:0)} class="fst-italic text-center">
-                    No content
+                    {$t('common.no-content')}
                 </td>
             </tr>
           {/if}
@@ -131,7 +132,7 @@
                             on:click={addLine}
                         >
                             <Icon name="plus" />
-                            New row
+                            {$t('common.new-row')}
                         </Button>
                     </td>
                 </tr>

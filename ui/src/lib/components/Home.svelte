@@ -22,25 +22,25 @@
  import type { Domain } from '$lib/model/domain';
  import type { Provider } from '$lib/model/provider';
  import { domains, refreshDomains } from '$lib/stores/domains';
- import { providers, refreshProviders, refreshProvidersSpecs } from '$lib/stores/providers';
+ import { providers, providersSpecs, refreshProviders, refreshProvidersSpecs } from '$lib/stores/providers';
  import { t } from '$lib/translations';
 
- refreshDomains();
+ if (!$domains) refreshDomains();
  refreshProviders();
- refreshProvidersSpecs();
+ if (!$providersSpecs) refreshProvidersSpecs();
 
  let noDomainsList = false;
 
  let filteredDomains: Array<Domain> = [];
- let filteredProvider: Provider | null = null;
- let filteredGroup = '';
+ export let filteredProvider: Provider | null = null;
+ let filteredGroup: string | null = null;
  let isGroupModalOpen = false;
 
  $: {
      if ($domains) {
          filteredDomains = $domains.filter(
              (d) => (!filteredProvider || d.id_provider === filteredProvider._id) &&
-                  (filteredGroup === '' || d.group === filteredGroup || (filteredGroup === 'undefined' && d.group === undefined))
+                  (filteredGroup === null || d.group === filteredGroup || ((filteredGroup === '' || filteredGroup === 'undefined') && (d.group === '' || d.group === undefined)))
          )
      }
  }
@@ -52,9 +52,7 @@
 
 <Container class="flex-fill pt-4 pb-5">
     <h1 class="text-center mb-4">
-        {$t('common.welcome.start')}
-        <Logo height="40" />
-        {$t('common.welcome.end')}
+        {$t('common.welcome.start')}<Logo height="40" />{$t('common.welcome.end')}
     </h1>
 
     <Row>
@@ -93,6 +91,7 @@
                 <div class="card-header d-flex justify-content-between">
                     {$t("provider.title")}
                     <Button
+                        type="button"
                         size="sm"
                         color="light"
                         on:click={() => goto('/providers/new')}
@@ -110,32 +109,34 @@
                         items={$providers}
                         noLabel
                         bind:selectedProvider={filteredProvider}
+                        on:new-provider={() => goto('/providers/new')}
                     />
                 {/if}
             </Card>
 
-            <Card
-                v-if="$refs.zlist && !$refs.zlist.isLoading"
-                no-body
-                class="mb-3"
-            >
-                <div class="card-header d-flex justify-content-between">
-                    {$t("domaingroups.title")}
-                    <Button
-                        size="sm"
-                        color="light"
-                        title={$t('domaingroups.manage')}
-                        on:click={() => isGroupModalOpen = true}
-                    >
-                        <Icon name="grid-fill" />
-                    </Button>
-                </div>
-                <DomainGroupList
-                    flush
-                    bind:selectedGroup={filteredGroup}
-                />
-                <DomainGroupModal bind:isOpen={isGroupModalOpen} />
-            </Card>
+            {#if $domains && $domains.length}
+                <Card
+                    class="mb-3"
+                >
+                    <div class="card-header d-flex justify-content-between">
+                        {$t("domaingroups.title")}
+                        <Button
+                            type="button"
+                            size="sm"
+                            color="light"
+                            title={$t('domaingroups.manage')}
+                            on:click={() => isGroupModalOpen = true}
+                        >
+                            <Icon name="grid-fill" />
+                        </Button>
+                    </div>
+                    <DomainGroupList
+                        flush
+                        bind:selectedGroup={filteredGroup}
+                    />
+                    <DomainGroupModal bind:isOpen={isGroupModalOpen} />
+                </Card>
+            {/if}
         </Col>
     </Row>
 </Container>

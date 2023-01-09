@@ -33,11 +33,15 @@
         "continue": "Continue",
         "create-thing": "Create {{thing}}",
         "delete": "Delete",
+        "delete-thing": "Delete {{thing}}",
         "domain": "Domain or subdomain",
         "edit": "Edit",
         "field": "Field",
         "go": "Go!",
         "name": "Name",
+        "no-content": "No content",
+        "no-thing": "No {{thing}}",
+        "new-row": "New row",
         "password": "Password",
         "rename": "Rename",
         "resolver": "Resolver",
@@ -107,9 +111,6 @@
             "summary": "Summary",
             "provider": "Zone hosted on",
             "title": "View zone"
-        },
-        "views": {
-            "provider-parameters": "Hosting parameters"
         },
         "alias-creation": "Add an alias pointing to {{domain}}:",
         "alias-creation-sample": "This will create the alias:",
@@ -223,15 +224,19 @@
         "add": "Add service",
         "all": "All",
         "already": "Already managed",
-        "delete": "Delete the service",
-        "update": "Update the service",
+        "delete": "Delete this service",
+        "update": "Update this service",
         "form-new": "Add a new service to {{domain}}"
     },
     "provider": {
+        "associations": "{{count:eq; 0:no domain associated; 1:{{count}} domain associated; default:{{count}} domains associated}}",
         "check-config": "Check your provider configuration",
         "delete": "Delete this domain provider",
+        "empty": "You have no provider defined currently. Try {{action}}!",
+        "empty-action": "adding one",
         "find": "Can't find your domain provider here?",
         "name-your": "Name your domain's provider",
+        "no-name": "No name",
         "provider": "Domains living on {{provider}}",
         "kind": "domain's provider",
         "select-provider": "First, you need to select the provider hosting your domain:",
@@ -260,7 +265,8 @@
         "validating": "Validating domain …",
         "wait": "Please wait",
         "retrieving-domains": "Retrieving your domains...",
-        "retrieving-provider": "Retrieving hosting provider information..."
+        "retrieving-provider": "Retrieving hosting provider information...",
+        "retrieving-providers": "Retrieving your providers..."
     },
     "settings": {
         "fieldhint": {

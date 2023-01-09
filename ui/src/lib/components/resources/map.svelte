@@ -6,6 +6,7 @@
 
  import MapEntry from '$lib/components/resources/mapentry.svelte';
  import type { Field } from '$lib/model/custom_form';
+ import { t } from '$lib/translations';
 
  const re = /^map\[(.*)\]\*?(.*)$/;
 
@@ -61,7 +62,7 @@
         {/each}
     {:else}
         <div class="my-2 text-center">
-            No {specs.label}
+            {$t('common.no-thing', {"thing": specs.label})}
         </div>
     {/if}
     {#if !("" in value)}
@@ -71,7 +72,7 @@
             on:click={() => value[""] = { }}
         >
             <Icon name="plus" />
-            Add {specs.label}
+            {$t('common.add-new-thing', {"thing": specs.label})}
         </Button>
     {/if}
 {/if}
