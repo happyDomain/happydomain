@@ -37,6 +37,7 @@ import (
 
 	"git.happydns.org/happydomain/model"
 
+	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
@@ -62,10 +63,14 @@ func (s *LevelDBStorage) GetUsers() (users happydns.Users, err error) {
 	return
 }
 
-func (s *LevelDBStorage) GetUser(id happydns.Identifier) (u *happydns.User, err error) {
+func (s *LevelDBStorage) getUser(key string) (u *happydns.User, err error) {
 	u = &happydns.User{}
-	err = s.get(fmt.Sprintf("user-%s", id.String()), &u)
+	err = s.get(key, &u)
 	return
+}
+
+func (s *LevelDBStorage) GetUser(id happydns.Identifier) (u *happydns.User, err error) {
+	return s.getUser(fmt.Sprintf("user-%s", id.String()))
 }
 
 func (s *LevelDBStorage) GetUserByEmail(email string) (u *happydns.User, err error) {
@@ -134,6 +139,46 @@ func (s *LevelDBStorage) ClearUsers() error {
 
 	for iter.Next() {
 		err = tx.Delete(iter.Key(), nil)
+		if err != nil {
+			tx.Discard()
+			return err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		tx.Discard()
+		return err
+	}
+
+	return nil
+}
+
+func (s *LevelDBStorage) TidyUsers() error {
+	tx, err := s.db.OpenTransaction()
+	if err != nil {
+		return err
+	}
+
+	iter := tx.NewIterator(util.BytesPrefix([]byte("user-")), nil)
+	defer iter.Release()
+
+	for iter.Next() {
+		user, err := s.getUser(string(iter.Key()))
+
+		if err != nil {
+			// Drop unreadable providers
+			log.Printf("Deleting unreadable user (%s): %v\n", err.Error(), user)
+			err = tx.Delete(iter.Key(), nil)
+		} else {
+			_, err = s.GetAuthUser(user.Id)
+			if err == leveldb.ErrNotFound {
+				// Drop providers of unexistant users
+				log.Printf("Deleting orphan user (authuser %s not found): %v\n", user.Id.String(), user)
+				err = tx.Delete(iter.Key(), nil)
+			}
+		}
+
 		if err != nil {
 			tx.Discard()
 			return err
