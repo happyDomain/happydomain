@@ -54,11 +54,58 @@ func declareProvidersRoutes(opts *config.Options, router *gin.RouterGroup) {
 	apiProvidersMetaRoutes.DELETE("", deleteUserProvider)
 
 	apiProvidersRoutes := router.Group("/providers/:pid")
+	apiProvidersRoutes.Use(FindUserProviderHandler)
 	apiProvidersRoutes.Use(api.ProviderHandler)
 
 	apiProvidersRoutes.GET("", api.GetProvider)
 
 	declareDomainsRoutes(opts, apiProvidersRoutes)
+}
+
+func FindUserProviderHandler(c *gin.Context) {
+	if _, ok := c.Get("user"); ok {
+		c.Next()
+		return
+	}
+
+	srcmeta, err := listAllProviders()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to retrieve providers information. Please try again later."})
+		return
+	}
+
+	for _, src := range srcmeta {
+		if src.Id.String() == string(c.Param("pid")) {
+			user, err := storage.MainStore.GetUser(src.OwnerId)
+			if err != nil {
+				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to retrieve required users information. Please try again later."})
+				return
+			}
+
+			c.Set("user", user)
+
+			c.Next()
+		}
+	}
+}
+
+func listAllProviders() ([]happydns.ProviderMeta, error) {
+	var providers []happydns.ProviderMeta
+
+	users, err := storage.MainStore.GetUsers()
+	if err != nil {
+		return nil, err
+	}
+	for _, user := range users {
+		usersProviders, err := storage.MainStore.GetProviderMetas(user)
+		if err != nil {
+			return nil, err
+		}
+
+		providers = append(providers, usersProviders...)
+	}
+
+	return providers, err
 }
 
 func getProviders(c *gin.Context) {
@@ -67,24 +114,12 @@ func getProviders(c *gin.Context) {
 		srcmeta, err := storage.MainStore.GetProviderMetas(user.(*happydns.User))
 		ApiResponse(c, srcmeta, err)
 	} else {
-		var providers []happydns.ProviderMeta
-
-		users, err := storage.MainStore.GetUsers()
+		providers, err := listAllProviders()
 		if err != nil {
-			ApiResponse(c, nil, fmt.Errorf("Unable to retrieve users list: %w", err))
-			return
+			ApiResponse(c, nil, fmt.Errorf("Unable to retrieve providers: %w", err))
+		} else {
+			ApiResponse(c, providers, nil)
 		}
-		for _, user := range users {
-			usersProviders, err := storage.MainStore.GetProviderMetas(user)
-			if err != nil {
-				ApiResponse(c, nil, fmt.Errorf("Unable to retrieve %s's providers: %w", user.Email, err))
-				return
-			}
-
-			providers = append(providers, usersProviders...)
-		}
-
-		ApiResponse(c, providers, nil)
 	}
 }
 
