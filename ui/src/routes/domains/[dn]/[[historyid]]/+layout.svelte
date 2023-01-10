@@ -18,6 +18,7 @@
  } from 'sveltestrap';
 
  import {
+     getDomain as APIGetDomain,
      deleteDomain as APIDeleteDomain,
  } from '$lib/api/domains';
  import {
@@ -61,8 +62,8 @@
  }
 
  let selectedHistory: string | undefined = data.history;
- $: if (!data.history && domain && domain.zone_history && domain.zone_history.length > 0) {
-     selectedHistory = domain.zone_history[0];
+ $: if (!data.history && $domains_idx[selectedDomain] && $domains_idx[selectedDomain].zone_history && $domains_idx[selectedDomain].zone_history.length > 0) {
+     selectedHistory = $domains_idx[selectedDomain].zone_history[0];
  }
  $: if (selectedHistory && data.history != selectedHistory) {
      goto('/domains/' + encodeURIComponent(selectedDomain) + '/' + encodeURIComponent(selectedHistory));
@@ -88,18 +89,27 @@
      selectedHistory = zm.id;
  }
 
+ async function getDomain(id: string): Promise<Domain> {
+     return await APIGetDomain(id);
+ }
+
  let domain: null | Domain = null;
  $: if ($domains_idx[selectedDomain]) {
-     domain = $domains_idx[selectedDomain];
-     if (!domain.zone_history || domain.zone_history.length == 0) {
+     if (!$domains_idx[selectedDomain].zone_history || $domains_idx[selectedDomain].zone_history.length == 0) {
          importInProgress = true;
-         APIImportZone(domain).then(
+         APIImportZone($domains_idx[selectedDomain]).then(
              importZoneDone,
              (err: any) => {
                  importInProgress = false;
                  throw err;
              }
          )
+     } else {
+         getDomain($domains_idx[selectedDomain].id).then(
+             (dn) => {
+                 domain = dn;
+             }
+         );
      }
  }
 
@@ -228,7 +238,7 @@
             class="bg-light py-2 sticky-top d-flex flex-column justify-content-between"
             style="overflow-y: auto; max-height: 100vh; z-index: 0"
         >
-            {#if domain}
+            {#if $domains_idx[selectedDomain]}
                 <div class="d-flex">
                     <Button href="/domains/" class="fw-bolder" color="link">
                         <Icon name="chevron-up" />
@@ -248,7 +258,7 @@
                 </Input>
                 </div>
 
-                {#if domain.zone_history}
+                {#if domain && domain.zone_history}
                     <form class="mt-3">
                         <Button
                             class="float-end"
@@ -273,7 +283,7 @@
                                 bind:value={selectedHistory}
                             >
                                 {#each domain.zone_history as history}
-                                    <option value={history}>{history}</option>
+                                    <option value={history.id}>{history.last_modified}</option>
                                 {/each}
                             </Input>
                         {/key}
@@ -290,7 +300,7 @@
                             <Icon name="list-ul" aria-hidden="true" /><br>
                             {$t('domains.actions.view')}
                         </Button>
-                        {#if domain.zone_history.length && selectedHistory === domain.zone_history[0]}
+                        {#if domain.zone_history.length && selectedHistory === $domains_idx[selectedDomain].zone_history[0]}
                             <Button
                                 size="sm"
                                 color="success"
@@ -332,7 +342,7 @@
                     {$t('domains.stop')}
                 </Button>
 
-                {#if $providers_idx && $providers_idx[domain.id_provider]}
+                {#if $providers_idx && $providers_idx[$domains_idx[selectedDomain].id_provider]}
                     <form class="mt-2">
                         <!-- svelte-ignore a11y-label-has-associated-control -->
                         <label class="font-weight-bolder">
@@ -340,7 +350,7 @@
                         </label>
                         <div class="pr-2 pl-2">
                             <Button
-                                href={"/providers/" + encodeURIComponent(domain.id_provider)}
+                                href={"/providers/" + encodeURIComponent($domains_idx[selectedDomain].id_provider)}
                                 class="p-3 w-100 text-left"
                                 type="button"
                                 color="info"
@@ -350,9 +360,9 @@
                                     class="d-inline-block text-center"
                                     style="width: 50px;"
                                 >
-                                    <ImgProvider id_provider={domain.id_provider} />
+                                    <ImgProvider id_provider={$domains_idx[selectedDomain].id_provider} />
                                 </div>
-                                {$providers_idx[domain.id_provider]._comment}
+                                {$providers_idx[$domains_idx[selectedDomain].id_provider]._comment}
                             </Button>
                         </div>
                     </form>
