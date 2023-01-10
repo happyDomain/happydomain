@@ -2,16 +2,10 @@
  import { goto } from '$app/navigation';
 
  import {
-     Badge,
-     Button,
      Card,
      CardBody,
      CardGroup,
-     Col,
      Container,
-     Icon,
-     Row,
-     Spinner,
  } from 'sveltestrap';
 
  import Logo from '$lib/components/Logo.svelte';

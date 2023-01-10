@@ -49,7 +49,6 @@
             on:submit|preventDefault={submitSelectorForm}
         >
             <ServiceSelector
-                class="mb-2"
                 {dn}
                 {origin}
                 bind:value={value}

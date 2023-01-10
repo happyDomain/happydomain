@@ -1,7 +1,7 @@
 <script lang="ts">
  import { goto } from '$app/navigation';
 
- import { escape } from 'html-escaper';
+ import { escape } from 'html-escaper'; // @ts-ignore
  import {
      Button,
      ButtonGroup,
@@ -202,7 +202,7 @@
              refreshDomains().then(() => {
                  deleteInProgress = false;
                  goto('/domains');
-             }, (err: any) => {
+             }, () => {
                  deleteInProgress = false;
                  goto('/domains');
              });
@@ -424,9 +424,11 @@
     size="lg"
     scrollable
 >
-    <ModalHeader toggle={() => applyZoneModalIsOpen = false}>
-        {@html $t('domains.view.description', {"domain": `<span class="font-monospace">${escape(domain.domain)}</span>`})}
-    </ModalHeader>
+    {#if domain}
+        <ModalHeader toggle={() => applyZoneModalIsOpen = false}>
+            {@html $t('domains.view.description', {"domain": `<span class="font-monospace">${escape(domain.domain)}</span>`})}
+        </ModalHeader>
+    {/if}
     <ModalBody>
         {#if !zoneDiff}
             <div class="my-2 text-center">

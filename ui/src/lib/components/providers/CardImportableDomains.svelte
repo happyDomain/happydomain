@@ -1,5 +1,5 @@
 <script lang="ts">
- import { escape } from 'html-escaper';
+ import { escape } from 'html-escaper'; // @ts-ignore
  import {
      Badge,
      Button,
@@ -44,8 +44,8 @@
      );
  }
 
- function haveDomain(name: string) {
-     let domain = undefined;
+ function haveDomain($domains_idx: Record<string, Domain>, name: string) {
+     let domain: Domain | undefined = undefined;
      if (name[name.length-1] == ".") {
          domain = $domains_idx[name];
      } else {
@@ -54,38 +54,41 @@
      return domain !== undefined && domain.id_provider == provider._id;
  }
 
- async function importDomain(name: string) {
-     addDomain(name, provider)
+ async function importDomain(domain: {domain: string; wait: boolean}) {
+     domain.wait = true;
+     addDomain(domain.domain, provider)
      .then(
-         (domain) => {
+         (mydomain) => {
+             domain.wait = false;
              toasts.addToast({
                  title: $t('domains.attached-new'),
-                 message: $t('domains.added-success', { domain: domain.domain }),
-                 href: '/domains/' + domain.domain,
+                 message: $t('domains.added-success', { domain: mydomain.domain }),
+                 href: '/domains/' + mydomain.domain,
                  color: 'success',
                  timeout: 5000,
              });
 
-             refreshDomains();
+             if (!allImportInProgress) refreshDomains();
          },
          (error) => {
+             domain.wait = false;
              throw error;
          }
      );
  }
 
+ let allImportInProgress = false;
  async function importAllDomains() {
      if (importableDomainsList) {
+         allImportInProgress = true;
          for (const d of importableDomainsList) {
-             if (!haveDomain(d)) {
-                 await importDomain(d);
+             if (!haveDomain($domains_idx, d)) {
+                 await importDomain({domain: d, wait: false});
              }
          }
+         allImportInProgress = false;
+         refreshDomains();
      }
- }
-
- function doDomainAction(dn: Domain) {
-
  }
 </script>
 
@@ -100,9 +103,13 @@
                     <Button
                         type="button"
                         color="secondary"
+                        disabled={allImportInProgress}
                         size="sm"
                         on:click={importAllDomains}
                     >
+                        {#if allImportInProgress}
+                            <Spinner size="sm" />
+                        {/if}
                         {$t('provider.import-domains')}
                     </Button>
                 {/if}
@@ -116,23 +123,10 @@
     {:else}
         <ZoneList
             flush
-            domains={importableDomainsList.map((dn) => ({domain: dn, id_provider: provider._id}))}
+            domains={importableDomainsList.map((dn) => ({domain: dn, id_provider: provider._id, wait: false}))}
         >
             <div slot="badges" let:item={domain}>
-                {#if domain.state}
-                    <Badge class="ml-1" color={domain.state}>
-                        {#if domain.state === 'success'}
-                            <Icon name="check" />
-                        {:else if domain.state === 'info'}
-                            <Icon name="exclamation-circle" />
-                        {:else if domain.state === 'warning'}
-                            <Icon name="exclamation-triangle" />
-                        {:else if domain.state === 'danger'}
-                            <Icon name="exclamation-octagon" />
-                        {/if}
-                        {domain.message}
-                    </Badge>
-                {:else if haveDomain(domain.domain)}
+                {#if haveDomain($domains_idx, domain.domain)}
                     <Badge class="ml-1" color="success">
                         <Icon name="check" />
                         {$t('service.already')}
@@ -143,21 +137,13 @@
                         class="ml-1"
                         color="primary"
                         size="sm"
-                        disabled={domain.wait}
-                        on:click={() => importDomain(domain.domain)}
+                        disabled={domain.wait || allImportInProgress}
+                        on:click={() => importDomain(domain)}
                     >
+                        {#if domain.wait}
+                            <Spinner size="sm" />
+                        {/if}
                         {$t('domains.add-now')}
-                    </Button>
-                {/if}
-                {#if domain.btn}
-                    <Button
-                        type="button"
-                        class="ms-1"
-                        color={domain.state}
-                        size="sm"
-                        on:click={() => doDomainAction(domain)}
-                    >
-                        {$t(domain.btn)}
                     </Button>
                 {/if}
             </div>

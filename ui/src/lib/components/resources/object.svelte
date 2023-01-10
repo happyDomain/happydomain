@@ -10,7 +10,6 @@
  } from 'sveltestrap';
 
  import { getServiceSpec } from '$lib/api/service_specs';
- import { deleteZoneService } from '$lib/api/zone';
  import ResourceInput from '$lib/components/ResourceInput.svelte';
  import type { Field } from '$lib/model/custom_form';
  import type { ServiceInfos } from '$lib/model/service_specs';

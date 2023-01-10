@@ -38,7 +38,7 @@
  } else {
      component = Card;
  }
- $: if ($userSession && $userSession.settings.zoneview === ZoneViewRecords) {
+ $: if ($userSession && $userSession.settings.zoneview === ZoneViewRecords && service) {
      getServiceRecords(origin, zoneId, service).then(
          (sr) => serviceRecords = sr
      )
@@ -56,6 +56,8 @@
  }
 
  function deleteService() {
+     if (service == null) return;
+
      deleteZoneService(origin, zoneId, service).then(
          (z) => {
              dispatch("update-zone-services", z);
@@ -64,6 +66,8 @@
  }
 
  function saveService() {
+     if (service == null) return;
+
      updateZoneService(origin, zoneId, service).then(
          (z) => {
              dispatch("update-zone-services", z);

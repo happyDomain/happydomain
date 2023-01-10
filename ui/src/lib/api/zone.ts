@@ -1,6 +1,6 @@
 import { handleApiResponse } from '$lib/errors';
 import type { Domain } from '$lib/model/domain';
-import type { ServiceMeta } from '$lib/model/service';
+import type { ServiceCombined, ServiceMeta } from '$lib/model/service';
 import type { ServiceRecord, Zone, ZoneMeta } from '$lib/model/zone';
 
 export async function getZone(domain: Domain, id: string): Promise<Zone> {
@@ -51,7 +51,7 @@ export async function diffZone(domain: Domain, id1: string, id2: string): Promis
     return await handleApiResponse<Array<string>>(res);
 }
 
-export async function addZoneService(domain: Domain, id: string, service: ServiceMeta): Promise<Zone> {
+export async function addZoneService(domain: Domain, id: string, service: ServiceCombined): Promise<Zone> {
     let subdomain = service._domain;
     if (subdomain === '') subdomain = '@';
 
@@ -67,7 +67,7 @@ export async function addZoneService(domain: Domain, id: string, service: Servic
     return await handleApiResponse<Zone>(res);
 }
 
-export async function updateZoneService(domain: Domain, id: string, service: ServiceMeta): Promise<Zone> {
+export async function updateZoneService(domain: Domain, id: string, service: ServiceCombined): Promise<Zone> {
     const dnid = encodeURIComponent(domain.id);
     id = encodeURIComponent(id);
 
@@ -86,7 +86,7 @@ export async function deleteZoneService(domain: Domain, id: string, service: Ser
     const dnid = encodeURIComponent(domain.id);
     id = encodeURIComponent(id);
     subdomain = encodeURIComponent(subdomain);
-    const svcid = encodeURIComponent(service._id);
+    const svcid = service._id?encodeURIComponent(service._id):undefined;
 
     const res = await fetch(`/api/domains/${dnid}/zone/${id}/${subdomain}/services/${svcid}`, {
         method: 'DELETE',
@@ -101,7 +101,7 @@ export async function getServiceRecords(domain: Domain, id: string, service: Ser
 
     const dnid = encodeURIComponent(domain.id);
     id = encodeURIComponent(id);
-    const svcid = encodeURIComponent(service._id);
+    const svcid = service._id?encodeURIComponent(service._id):undefined;
 
     const res = await fetch(`/api/domains/${dnid}/zone/${id}/${subdomain}/services/${svcid}/records`, {
         headers: {'Accept': 'application/json'}

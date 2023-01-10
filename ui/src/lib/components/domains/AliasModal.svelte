@@ -1,7 +1,9 @@
 <script lang="ts">
  import { createEventDispatcher } from 'svelte';
 
+ // @ts-ignore
  import { escape } from 'html-escaper';
+
  import {
      Button,
      Icon,
@@ -78,7 +80,7 @@
  function submitAliasForm() {
      if (validateNewSubdomain(value)) {
          addAliasInProgress = true;
-         addZoneService(origin, zoneId, {_domain: value, _svctype: "svcs.CNAME", Service: {Target: dn?dn:"@"}}).then(
+         addZoneService(origin, zone.id, {_domain: value, _svctype: "svcs.CNAME", Service: {Target: dn?dn:"@"}}).then(
              (z) => {
                  dispatch("update-zone-services", z);
                  addAliasInProgress = false;
