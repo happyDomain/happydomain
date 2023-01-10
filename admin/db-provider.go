@@ -47,13 +47,13 @@ func declareProvidersRoutes(opts *config.Options, router *gin.RouterGroup) {
 	router.GET("/providers", getProviders)
 	router.POST("/providers", newUserProvider)
 
-	apiProvidersMetaRoutes := router.Group("/providers/:sid")
+	apiProvidersMetaRoutes := router.Group("/providers/:pid")
 	apiProvidersMetaRoutes.Use(api.ProviderMetaHandler)
 
 	apiProvidersMetaRoutes.PUT("", api.UpdateProvider)
 	apiProvidersMetaRoutes.DELETE("", deleteUserProvider)
 
-	apiProvidersRoutes := router.Group("/providers/:sid")
+	apiProvidersRoutes := router.Group("/providers/:pid")
 	apiProvidersRoutes.Use(api.ProviderHandler)
 
 	apiProvidersRoutes.GET("", api.GetProvider)
