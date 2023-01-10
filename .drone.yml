@@ -415,7 +415,7 @@ steps:
       - tag
 
 - name: deploy armel
-  image: plugins/s3
+  image: plugins/s3:linux-arm
   settings:
     endpoint: https://storage0.nemunai.re
     path_style: true
@@ -434,7 +434,7 @@ steps:
       - renovate/*
 
 - name: deploy armel release
-  image: plugins/s3
+  image: plugins/s3:linux-arm
   settings:
     endpoint: https://storage0.nemunai.re
     path_style: true
@@ -475,7 +475,7 @@ steps:
       - tag
 
 - name: deploy armhf
-  image: plugins/s3
+  image: plugins/s3:linux-arm
   settings:
     endpoint: https://storage0.nemunai.re
     path_style: true
@@ -494,7 +494,7 @@ steps:
       - renovate/*
 
 - name: deploy armhf release
-  image: plugins/s3
+  image: plugins/s3:linux-arm
   settings:
     endpoint: https://storage0.nemunai.re
     path_style: true
@@ -537,7 +537,7 @@ steps:
       - tag
 
 - name: deploy armv7
-  image: plugins/s3
+  image: plugins/s3:linux-arm
   settings:
     endpoint: https://storage0.nemunai.re
     path_style: true
@@ -556,7 +556,7 @@ steps:
       - renovate/*
 
 - name: deploy armv7 release
-  image: plugins/s3
+  image: plugins/s3:linux-arm
   settings:
     endpoint: https://storage0.nemunai.re
     path_style: true
