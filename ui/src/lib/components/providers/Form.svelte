@@ -14,7 +14,7 @@
  import ResourceInput from '$lib/components/resources/basic.svelte';
  import { ProviderForm } from '$lib/model/provider_form';
  import type { ProviderSettingsState } from '$lib/model/provider_settings';
- import { providersSpecs, refreshProvidersSpecs } from '$lib/stores/providers';
+ import { providersSpecs, refreshProviders, refreshProvidersSpecs } from '$lib/stores/providers';
  import { t } from '$lib/translations';
 
  // Load required data
@@ -28,7 +28,7 @@
  export let value: ProviderSettingsState | null = null;
 
  //
- let form = new ProviderForm(ptype, () => goto('/'), providerId, value, () => {
+ let form = new ProviderForm(ptype, () => refreshProviders().then(() => goto('/')), providerId, value, () => {
      if (edit) {
          goto('/providers');
      } else {
