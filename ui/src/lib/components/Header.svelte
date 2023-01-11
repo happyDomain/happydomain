@@ -25,6 +25,7 @@
  let className = '';
 
  export let routeId: string | null;
+ export let sw_state: boolean;
  let helpLink = "";
  $: helpLink = 'https://help.happydomain.org/' + encodeURIComponent($locale) + getHelpPathFromRoute(routeId);
 

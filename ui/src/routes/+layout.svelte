@@ -43,7 +43,10 @@
 
 <!--Styles /-->
 
-<Header routeId={data.route.id} />
+<Header
+    routeId={data.route.id}
+    sw_state={data.sw_state}
+/>
 
 <div class="flex-fill d-flex flex-column justify-content-center">
     <slot></slot>
