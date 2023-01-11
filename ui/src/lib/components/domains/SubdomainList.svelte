@@ -6,13 +6,13 @@
  import ServiceModal from '$lib/components/domains/ServiceModal.svelte';
  import ServiceSelectorModal from '$lib/components/domains/ServiceSelectorModal.svelte';
  import SubdomainItem from '$lib/components/domains/SubdomainItem.svelte';
- import type { Domain } from '$lib/model/domain';
+ import type { Domain, DomainInList } from '$lib/model/domain';
  import type { ServiceCombined } from '$lib/model/service';
  import type { Zone } from '$lib/model/zone';
 
  const dispatch = createEventDispatcher();
 
- export let origin: Domain;
+ export let origin: DomainInList | Domain;
  export let showSubdomainsList: boolean;
  export let sortedDomains: Array<string>;
  export let zone: Zone;

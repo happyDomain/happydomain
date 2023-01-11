@@ -28,7 +28,7 @@
      viewZone as APIViewZone,
  } from '$lib/api/zone';
  import ImgProvider from '$lib/components/providers/ImgProvider.svelte';
- import type { Domain } from '$lib/model/domain';
+ import type { Domain, DomainInList } from '$lib/model/domain';
  import type { ZoneMeta } from '$lib/model/zone';
  import { domains, domains_idx, refreshDomains } from '$lib/stores/domains';
  import { providers, providers_idx, refreshProviders } from '$lib/stores/providers';
@@ -44,10 +44,10 @@
  if (!$domains) refreshDomains();
  if (!$providers) refreshProviders();
 
- let domainsByGroup: Record<string, Array<Domain>> = {};
+ let domainsByGroup: Record<string, Array<DomainInList>> = {};
  $: {
      if ($domains) {
-         const tmp: Record<string, Array<Domain>> = { };
+         const tmp: Record<string, Array<DomainInList>> = { };
 
          for (const domain of $domains) {
              if (tmp[domain.group] === undefined) {
@@ -63,7 +63,7 @@
 
  let selectedHistory: string | undefined = data.history;
  $: if (!data.history && $domains_idx[selectedDomain] && $domains_idx[selectedDomain].zone_history && $domains_idx[selectedDomain].zone_history.length > 0) {
-     selectedHistory = $domains_idx[selectedDomain].zone_history[0];
+     selectedHistory = $domains_idx[selectedDomain].zone_history[0] as string;
  }
  $: if (selectedHistory && data.history != selectedHistory) {
      goto('/domains/' + encodeURIComponent(selectedDomain) + '/' + encodeURIComponent(selectedHistory));

@@ -19,7 +19,7 @@
 
  import { addZoneService } from '$lib/api/zone';
  import { fqdn, validateDomain } from '$lib/dns';
- import type { Domain } from '$lib/model/domain';
+ import type { Domain, DomainInList } from '$lib/model/domain';
  import type { Zone } from '$lib/model/zone';
  import { t } from '$lib/translations';
 
@@ -33,7 +33,7 @@
  }
 
  export let dn: string;
- export let origin: Domain;
+ export let origin: Domain | DomainInList;
  export let value: string = "";
  export let zone: Zone;
 

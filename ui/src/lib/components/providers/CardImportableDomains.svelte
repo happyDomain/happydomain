@@ -13,7 +13,7 @@
  import { addDomain } from '$lib/api/domains';
  import { listImportableDomains } from '$lib/api/provider';
  import ZoneList from '$lib/components/ZoneList.svelte';
- import type { Domain } from '$lib/model/domain';
+ import type { DomainInList } from '$lib/model/domain';
  import type { Provider } from '$lib/model/provider';
  import { providersSpecs } from '$lib/stores/providers';
  import { domains_idx, refreshDomains } from '$lib/stores/domains';
@@ -44,8 +44,8 @@
      );
  }
 
- function haveDomain($domains_idx: Record<string, Domain>, name: string) {
-     let domain: Domain | undefined = undefined;
+ function haveDomain($domains_idx: Record<string, DomainInList>, name: string) {
+     let domain: DomainInList | undefined = undefined;
      if (name[name.length-1] == ".") {
          domain = $domains_idx[name];
      } else {

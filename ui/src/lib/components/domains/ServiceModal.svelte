@@ -12,7 +12,7 @@
  import ModalHeader from '$lib/components/domains/ModalHeader.svelte';
  import ResourceInput from '$lib/components/ResourceInput.svelte';
  import { fqdn } from '$lib/dns';
- import type { Domain } from '$lib/model/domain';
+ import type { Domain, DomainInList } from '$lib/model/domain';
  import type { ServiceCombined } from '$lib/model/service';
  import { servicesSpecs } from '$lib/stores/services';
  import type { Zone } from '$lib/model/zone';
@@ -22,7 +22,7 @@
  export let isOpen = false;
  const toggle = () => (isOpen = !isOpen);
 
- export let origin: Domain;
+ export let origin: Domain | DomainInList;
  export let service: ServiceCombined;
  export let zone: Zone;
 

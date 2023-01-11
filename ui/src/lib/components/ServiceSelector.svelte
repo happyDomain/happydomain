@@ -8,7 +8,7 @@
 
  import { getProviderSpec } from '$lib/api/provider_specs';
  import ServiceSelectorItem from '$lib/components/ServiceSelectorItem.svelte';
- import type { Domain } from '$lib/model/domain';
+ import type { Domain, DomainInList } from '$lib/model/domain';
  import type { ProviderInfos } from '$lib/model/provider';
  import type { ServiceCombined } from '$lib/model/service';
  import { passRestrictions, type ServiceInfos } from '$lib/model/service_specs';
@@ -17,7 +17,7 @@
  import { t } from '$lib/translations';
 
  export let dn: string;
- export let origin: Domain;
+ export let origin: Domain | DomainInList;
  export let value: string | null = null;
  export let zservices: Record<string, Array<ServiceCombined>>;
 

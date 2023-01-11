@@ -18,7 +18,7 @@
  import { deleteZoneService, getServiceRecords, updateZoneService } from '$lib/api/zone';
  import Record from '$lib/components/domains/Record.svelte';
  import ResourceInput from '$lib/components/ResourceInput.svelte';
- import type { Domain } from '$lib/model/domain';
+ import type { Domain, DomainInList } from '$lib/model/domain';
  import type { ServiceCombined } from '$lib/model/service';
  import { ZoneViewGrid, ZoneViewList, ZoneViewRecords } from '$lib/model/usersettings';
  import type { ServiceRecord } from '$lib/model/zone';
@@ -27,7 +27,7 @@
 
  const dispatch = createEventDispatcher();
 
- export let origin: Domain;
+ export let origin: Domain | DomainInList;
  export let service: ServiceCombined | null = null;
  export let zoneId: string;
 

@@ -10,7 +10,7 @@
  import ModalHeader from '$lib/components/domains/ModalHeader.svelte';
  import ServiceSelector from '$lib/components/ServiceSelector.svelte';
  import { fqdn } from '$lib/dns';
- import type { Domain } from '$lib/model/domain';
+ import type { Domain, DomainInList } from '$lib/model/domain';
  import type { ServiceCombined } from '$lib/model/service';
 
  const dispatch = createEventDispatcher();
@@ -25,7 +25,7 @@
  }
 
  export let dn: string;
- export let origin: Domain;
+ export let origin: Domain | DomainInList;
  export let value: string | null = null;
  export let zservices: Record<string, Array<ServiceCombined>>;
 

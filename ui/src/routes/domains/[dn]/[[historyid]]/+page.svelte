@@ -10,7 +10,7 @@
  import { getZone } from '$lib/api/zone';
  import SubdomainList from '$lib/components/domains/SubdomainList.svelte';
  import { domainCompare, fqdn } from '$lib/dns';
- import type { Domain } from '$lib/model/domain';
+ import type { DomainInList } from '$lib/model/domain';
  import type { Zone } from '$lib/model/zone';
  import { domains_idx } from '$lib/stores/domains';
  import { servicesSpecs, refreshServicesSpecs } from '$lib/stores/services';
@@ -20,7 +20,7 @@
 
  export let data: {domain: string; history: string;};
 
- let domain: Domain|null = null;
+ let domain: DomainInList | null = null;
  $: if ($domains_idx[data.domain]) {
      domain = $domains_idx[data.domain];
      zoneId = null;
@@ -40,7 +40,7 @@
  }
 
  let zone: Zone | null = null;
- async function refreshZone(domain: Domain, zoneId: string) {
+ async function refreshZone(domain: DomainInList, zoneId: string) {
      zone = await getZone(domain, zoneId);
  }
  $: if (domain && zoneId) refreshZone(domain, zoneId);

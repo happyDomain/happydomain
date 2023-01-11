@@ -19,7 +19,7 @@
  import NewDomainInput from '$lib/components/NewDomainInput.svelte';
  import ZoneList from '$lib/components/ZoneList.svelte';
  import ProviderList from '$lib/components/providers/List.svelte';
- import type { Domain } from '$lib/model/domain';
+ import type { DomainInList } from '$lib/model/domain';
  import type { Provider } from '$lib/model/provider';
  import { domains, refreshDomains } from '$lib/stores/domains';
  import { providers, providersSpecs, refreshProviders, refreshProvidersSpecs } from '$lib/stores/providers';
@@ -31,7 +31,7 @@
 
  let noDomainsList = false;
 
- let filteredDomains: Array<Domain> = [];
+ let filteredDomains: Array<DomainInList> = [];
  export let filteredProvider: Provider | null = null;
  let filteredGroup: string | null = null;
  let isGroupModalOpen = false;
@@ -45,7 +45,7 @@
      }
  }
 
- function showDomain(event: CustomEvent<Domain>) {
+ function showDomain(event: CustomEvent<DomainInList>) {
      goto('/domains/' + encodeURIComponent(event.detail.domain));
  }
 </script>

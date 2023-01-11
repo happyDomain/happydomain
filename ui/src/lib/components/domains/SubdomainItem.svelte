@@ -12,7 +12,7 @@
  import { deleteZoneService } from '$lib/api/zone';
  import Service from '$lib/components/domains/Service.svelte';
  import { fqdn } from '$lib/dns';
- import type { Domain } from '$lib/model/domain';
+ import type { Domain, DomainInList } from '$lib/model/domain';
  import type { ServiceCombined } from '$lib/model/service';
  import { ZoneViewGrid } from '$lib/model/usersettings';
  import { userSession } from '$lib/stores/usersession';
@@ -22,7 +22,7 @@
 
  export let aliases: Array<string> = [];
  export let dn: string;
- export let origin: Domain;
+ export let origin: Domain | DomainInList;
  export let showSubdomainsList = false;
  export let services: Array<ServiceCombined>;
  export let zoneId: string;
