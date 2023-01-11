@@ -9,9 +9,9 @@ platform:
 
 steps:
 - name: frontend
-  image: node:19-alpine3.15
+  image: node:19-alpine
   commands:
-  - apk --no-cache add python2 build-base tar
+  - apk --no-cache add tar
   - yarn config set network-timeout 100000
   - yarn --cwd ui install
   - tar --transform="s@.@./happydomain-${DRONE_COMMIT}@" --exclude-vcs --exclude=./ui/node_modules/.cache -czf /dev/shm/happydomain-src.tar.gz .
@@ -216,12 +216,11 @@ platform:
 
 steps:
 - name: frontend
-  image: node:19-alpine3.15
+  image: node:19-alpine
   commands:
-  - apk --no-cache add python2 build-base
-  - yarn config set network-timeout 100000
-  - yarn --cwd ui install
-  - yarn --cwd ui --offline build
+  - cd ui
+  - npm install --network-timeout=100000
+  - npm run build
 
 - name: backend-commit
   image: golang:1-alpine
@@ -378,12 +377,11 @@ platform:
 
 steps:
 - name: frontend
-  image: node:19-alpine3.15
+  image: node:19-alpine
   commands:
-  - apk --no-cache add python2 build-base
-  - yarn config set network-timeout 100000
-  - yarn --cwd ui install
-  - yarn --cwd ui --offline build
+  - cd ui
+  - npm install --network-timeout=100000
+  - npm run build
 
 - name: backend-commit armel
   image: golang:1-alpine
