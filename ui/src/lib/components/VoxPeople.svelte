@@ -8,7 +8,7 @@
  import { userSession } from '$lib/stores/usersession';
  import { t, locale } from '$lib/translations';
 
- const instancename = "";
+ const instancename = encodeURIComponent(window.location.hostname);
  const router = {history:{current:{}}};
 </script>
 
