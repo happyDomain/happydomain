@@ -43,10 +43,17 @@
         "resolver": "Résolveur",
         "run": "Lancer l'opération !",
         "spinning": "Chargement",
-        "welcome": "Bienvenue sur {0} !",
         "help": "Besoin d'aide ?",
         "records": "{{n:eq; 0:aucun enregistrement {{type}}; 1:enregistrement {{type}}; default:enregistrements {{type}}}}",
-        "survey": "Une remarque ? un commentaire à partager ? N'hésitez pas à nous écrire !"
+        "survey": "Une remarque ? un commentaire à partager ? N'hésitez pas à nous écrire !",
+        "delete-thing": "Supprimer {{thing}}",
+        "no-content": "Aucun contenu",
+        "no-thing": "Aucun {{thing}}",
+        "new-row": "Nouvelle ligne",
+        "welcome": {
+            "start": "Bienvenue sur ",
+            "end": " !"
+        }
     },
     "domains": {
         "kind": "un domaine",
@@ -105,22 +112,6 @@
             "title": "Voir la zone",
             "provider": "Zone hébergée par"
         },
-        "views": {
-            "grid": {
-                "title": "Vue en grille (la plus lisible)",
-                "label": "Grille"
-            },
-            "list": {
-                "title": "Vue en liste (la plus rapide)",
-                "label": "Liste"
-            },
-            "records": {
-                "title": "Liste avec les enregistrements (avancés)",
-                "label": "Enregistrements"
-            },
-            "as": "Voir comme :",
-            "provider-parameters": "Paramètes d'hébergement"
-        },
         "alias-creation": "Ajouter un alias pointant sur {{domain}} :",
         "alias-creation-sample": "Cela va créer cet alias :",
         "placeholder-new": "mon.nouveau.domaine.",
@@ -133,7 +124,8 @@
             "check-inbox": "Veuillez vérifier votre boîte de réception afin de valider votre adresse électronique.",
             "new-confirmation": "Si vous avez besoin d'un nouveau courriel de confirmation, il vous suffit d'entrer votre adresse dans le formulaire ci-dessous.",
             "validate-address": "Afin de valider votre adresse électronique, veuillez vérifier votre boîte de réception et suivre le lien contenu dans le message.",
-            "validated": "Votre nouvelle adresse e-mail est maintenant validée !"
+            "validated": "Votre nouvelle adresse e-mail est maintenant validée !",
+            "bad-link": "Le lien que vous avez suivi est invalide. Vérifiez que vous avez récopié le lien en entier et réessayez."
         },
         "send-again": "Renvoyer le courriel de confirmation",
         "send-recover": "Envoyez-moi un e-mail pour récupérer mon compte",
@@ -227,7 +219,8 @@
         "already": "Déjà géré",
         "delete": "Supprimer ce service",
         "update": "Mettre à jour ce service",
-        "form-new": "Ajout d'un service sur {{domain}}"
+        "form-new": "Ajout d'un service sur {{domain}}",
+        "all": "Tout"
     },
     "upgrade": {
         "title": "Une mise à jour est disponible !",
@@ -246,7 +239,8 @@
         "validating": "Validation du domaine …",
         "wait": "Veuillez patienter",
         "retrieving-domains": "Récupération de vos domaines...",
-        "retrieving-provider": "Récupération des informations sur l'hébergeur..."
+        "retrieving-provider": "Récupération des informations sur l'hébergeur...",
+        "retrieving-providers": "Récupération de vos hébergeurs de domaines ..."
     },
     "settings": {
         "fieldhint": {
@@ -260,7 +254,13 @@
         "save": "Enregistrer les paramètres",
         "title": "Paramètres",
         "success": "Vous pouvez continuer d'apprécier happyDomain.",
-        "success-change": "Vos paramètres ont été sauvegardés."
+        "success-change": "Vos paramètres ont été sauvegardés.",
+        "zoneview": {
+            "grid": "Vue en grille (la plus lisible)",
+            "list": "Vue en liste (la plus rapide)",
+            "records": "Liste avec les enregistrements (avancés)",
+            "title": "Voir la zone comme"
+        }
     },
     "record": {
         "A": "Adresse IPv4",
@@ -297,13 +297,23 @@
         "provider": "Domaines existant sur {{provider}}",
         "kind": "un hébergeur de domaines",
         "select-provider": "Sélectionnez d'abord l'hébergeur de votre domaine :",
-        "select-source": "Sélectionnez l'endroit où votre domaine {0} est hébergé",
         "provider-name": "Nom de l'hébergeur",
         "provider-type": "Type d'hébergement",
         "title": "Les hébergeurs de vos domaines",
         "available-types": "Types de ressources disponibles",
         "import-domains": "Importer tous les domaines",
         "new-form": "Nouvel hébergeur de domaines",
-        "update": "Mettre à jour l'hébergeur de domaines"
+        "update": "Mettre à jour l'hébergeur de domaines",
+        "associations": "{{count:eq; 0:aucun domaine associé; 1:{{count}} domaine associé; default:{{count}} domaines associés}}",
+        "check-config": "Vérifiez les paramètres de votre hébergeur de domaines",
+        "empty": "Vous n'avez enregistré aucun hébergeur de domaines. Essayez {{action}} !\n",
+        "empty-action": "d'en ajouter un",
+        "no-name": "Sans nom"
+    },
+    "domaingroups": {
+        "manage": "Vos groupes de domaines",
+        "new": "Nouveau groupe",
+        "no-group": "Divers",
+        "title": "Vos groupes"
     }
 }
