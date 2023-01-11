@@ -1,7 +1,6 @@
 <script lang="ts">
  import {
      Toast,
-     ToastBody,
      ToastHeader,
  } from 'sveltestrap';
 
@@ -14,9 +13,13 @@
             <ToastHeader toggle={() => toast.dismiss()} icon={toast.getColor()}>
                 {#if toast.title}{toast.title}{:else}happyDomain{/if}
             </ToastHeader>
-            <ToastBody>
+            <div
+                class="toast-body"
+                style={toast.onclick?"cursor: pointer":""}
+                on:click={() => { if (toast.onclick) toast.onclick(); }}
+            >
                 {toast.message}
-            </ToastBody>
+            </div>
         </Toast>
     {/each}
 </div>
