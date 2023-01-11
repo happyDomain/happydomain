@@ -37,7 +37,7 @@
      aliases = tmp;
  }
 
- let newSubdomainModalOpened = false;
+ export let newSubdomainModalOpened = false;
  let subdomainModal = "";
  let newAliasModalOpened = false;
 

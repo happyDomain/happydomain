@@ -56,8 +56,9 @@
 
  let showSubdomainsList = false;
 
+ let newSubdomainModalOpened = false;
  function addSubdomain() {
-
+     newSubdomainModalOpened = true;
  }
 </script>
 
@@ -91,6 +92,7 @@
                 {showSubdomainsList}
                 {sortedDomains}
                 {zone}
+                bind:newSubdomainModalOpened={newSubdomainModalOpened}
                 on:update-zone-services={(event) => zone = event.detail}
             />
         </Col>
@@ -102,6 +104,7 @@
         >
             <div class="d-flex gap-2 pb-2 sticky-top bg-light" style="padding-top: 10px">
                 <Button
+                    type="button"
                     color="secondary"
                     outline
                     size="sm"
