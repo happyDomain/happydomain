@@ -3,13 +3,33 @@ happyDomain
 
 Finally a simple, modern and open source interface for domain name.
 
-It consists of a HTTP REST API written in Golang (primarily based on https://github.com/miekg/dns) with a nice web interface written in Vue.js.
+It consists of a HTTP REST API written in Golang (primarily based on https://stackexchange.github.io/dnscontrol/ and https://github.com/miekg/dns) with a nice web interface written with [Svelte](https://svelte.dev/).
 It runs as a single stateless Linux binary, backed by a database (currently: LevelDB, more to come soon).
 
-Features
---------
+**Features:**
 
-TODO
+* An ultra fast web interface without compromise
+* Multiple domains management
+* Support for 36+ DNS providers (including dynamic DNS, RFC 2136) thanks to [DNSControl](https://stackexchange.github.io/dnscontrol/)
+* Support for the most recents resource records thanks to [CoreDNS's library](https://github.com/miekg/dns)
+* Zone editor with a diff view to review the changes before propagation
+* Keep an history of published changes
+* Contextual help
+* Multiple user with authentication or one user without authtication
+* Compatible with external authentication (through JWT tokens: Auth0, ...)
+
+Using Docker
+------------
+
+We are a Docker sponsored OSS project! thus you can easily try and/or deploy our app using Docker/podman/kubernetes/...:
+
+```
+docker run -e HAPPYDOMAIN_NO_AUTH=1 -p 8081:8081 happydomain/happydomain
+```
+
+This command will launch happyDomain in a few seconds, for evaluation purpose (no authentication, volatile storage, ...). With your browser, just go to <http://localhost:8081> and enjoy!
+
+In order to deploy happyDomain, check the [Docker image documentation](https://hub.docker.com/r/happydomain/happydomain).
 
 Building
 --------
@@ -18,9 +38,8 @@ Building
 
 In order to build the happyDomain project, you'll need the following dependencies:
 
-* `go` at least version 1.16
-* `nodejs` tested with version 14.4.0
-* `yarn` tested with version 1.22.4
+* `go` at least version 1.18;
+* `nodejs` tested with version 18 and 19.
 
 
 ### Instructions
@@ -28,8 +47,10 @@ In order to build the happyDomain project, you'll need the following dependencie
 1. First, you'll need to prepare the frontend, by installing the node modules dependencies:
 
 ```
-yarn --cwd ui install
+(cd ui; npm install)
 ```
+
+*If you forget the parenthesis, go back to the project root directory.*
 
 2. Then, generates assets files used by Go code:
 
@@ -140,7 +161,7 @@ In one terminal, run `happydomain` with the following arguments:
 In another terminal, run the node part:
 
 ```
-yarn --cwd ui run serve
+cd ui; npm run dev
 ```
 
 With this setup, static assets integrated inside the go binary will not be used, instead it'll forward all requests for static assets to the node server, that do dynamic reload, etc.
