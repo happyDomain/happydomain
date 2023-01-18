@@ -130,11 +130,11 @@ func GenStructFields(data interface{}) (fields []*Field) {
 func GenDefaultSettingsForm(data interface{}) *CustomForm {
 	return &CustomForm{
 		Fields:                 GenStructFields(data),
-		NextButtonText:         "Create",
-		NextEditButtonText:     "Update",
+		NextButtonText:         "common.create-thing",
+		NextEditButtonText:     "common.update",
 		NextButtonState:        1,
-		PreviousButtonText:     "Use another source",
-		PreviousEditButtonText: "Cancel",
+		PreviousButtonText:     "provider.another",
+		PreviousEditButtonText: "common.cancel",
 		PreviousButtonState:    -1,
 	}
 }

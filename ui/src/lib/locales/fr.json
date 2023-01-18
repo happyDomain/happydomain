@@ -38,11 +38,14 @@
         "field": "Champ",
         "go": "C'est parti !",
         "name": "Nom",
+        "next": "Suivant",
         "password": "Mot de passe",
+        "previous": "Précédent",
         "rename": "Renommer",
         "resolver": "Résolveur",
         "run": "Lancer l'opération !",
         "spinning": "Chargement",
+        "update": "Mettre à jour",
         "help": "Besoin d'aide ?",
         "records": "{{n:eq; 0:aucun enregistrement {{type}}; 1:enregistrement {{type}}; default:enregistrements {{type}}}}",
         "survey": "Une remarque ? un commentaire à partager ? N'hésitez pas à nous écrire !",
@@ -291,6 +294,7 @@
         "showDNSSEC": "Afficher les enregistrements DNSSEC dans la réponse (s'il y en a)"
     },
     "provider": {
+        "another": "Choisir un autre fournisseur",
         "delete": "Supprimer cet hébergeur de domaines",
         "find": "Vous ne trouvez pas votre hébergeur de domaines ici ?",
         "name-your": "Nommer cet hébergeur de domaines",

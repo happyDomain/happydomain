@@ -7,6 +7,7 @@
  } from 'sveltestrap';
 
  import type { CustomForm } from '$lib/model/custom_form';
+ import { t } from '$lib/translations';
 
  const dispatch = createEventDispatcher();
 
@@ -34,7 +35,7 @@
                 {#if previousInProgress}
                     <Spinner label="Spinning" size="sm" />
                 {/if}
-                {form.previousButtonText}
+                {$t(form.previousButtonText)}
             </Button>
         {/if}
         {#if (!form.nextEditButtonText || !edit) && form.nextButtonText}
@@ -48,7 +49,7 @@
                 {#if nextInProgress}
                     <Spinner label="Spinning" size="sm" />
                 {/if}
-                {form.nextButtonText}
+                {$t(form.nextButtonText)}
             </Button>
         {/if}
         {#if edit && form.previousEditButtonText}
@@ -63,7 +64,7 @@
                 {#if previousInProgress}
                     <Spinner label="Spinning" size="sm" />
                 {/if}
-                {form.previousEditButtonText}
+                {$t(form.previousEditButtonText)}
             </Button>
         {/if}
         {#if edit && form.nextEditButtonText}
@@ -77,7 +78,7 @@
                 {#if nextInProgress}
                     <Spinner label="Spinning" size="sm" />
                 {/if}
-                {form.nextEditButtonText}
+                {$t(form.nextEditButtonText)}
             </Button>
         {/if}
     {:else}
@@ -92,7 +93,7 @@
             {#if previousInProgress}
                 <Spinner label="Spinning" size="sm" />
             {/if}
-            Cancel
+            {$t('common.cancel')}
         </Button>
         <Button
             type="submit"
@@ -104,7 +105,7 @@
             {#if nextInProgress}
                 <Spinner label="Spinning" size="sm" />
             {/if}
-            Next &gt;
+            {$t('common.next')} &gt;
         </Button>
     {/if}
 </div>

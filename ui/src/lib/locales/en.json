@@ -39,15 +39,18 @@
         "field": "Field",
         "go": "Go!",
         "name": "Name",
+        "next": "Next",
         "no-content": "No content",
         "no-thing": "No {{thing}}",
         "new-row": "New row",
         "password": "Password",
+        "previous": "Previous",
         "rename": "Rename",
         "resolver": "Resolver",
         "run": "Run the request!",
         "survey": "A remark? a comment to share? Don't hesitate to write us!",
         "spinning": "Spinning",
+        "update": "Update",
         "welcome": {
             "start": "Welcome to ",
             "end": "!"
@@ -229,6 +232,7 @@
         "form-new": "Add a new service to {{domain}}"
     },
     "provider": {
+        "another": "Use another provider",
         "associations": "{{count:eq; 0:no domain associated; 1:{{count}} domain associated; default:{{count}} domains associated}}",
         "check-config": "Check your provider configuration",
         "delete": "Delete this domain provider",

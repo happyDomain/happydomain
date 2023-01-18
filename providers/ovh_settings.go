@@ -67,7 +67,7 @@ func settingsForm(edit bool) *forms.CustomForm {
 
 	form := forms.GenDefaultSettingsForm(nil)
 	form.Fields = srcFields
-	form.NextButtonText = "Next >"
+	form.NextButtonText = "common.next"
 	return form
 }
 
@@ -91,7 +91,7 @@ func settingsAskCredentials(cfg *config.Options, recallid string, session *happy
 	return &forms.CustomForm{
 			BeforeText:          "In order allows happyDomain to get and update yours domains, you have to let us access them. To avoid storing your credentials, we will store a unique token that will be associated with your account. For this purpose, you will be redirected to an OVH login screen. The registration will automatically continue",
 			NextButtonText:      "Go to OVH",
-			PreviousButtonText:  "< Previous",
+			PreviousButtonText:  "common.previous",
 			NextButtonLink:      response.ValidationURL,
 			PreviousButtonState: 0,
 		}, map[string]interface{}{
