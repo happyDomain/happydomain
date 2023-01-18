@@ -41,7 +41,7 @@ import (
 type PowerdnsAPI struct {
 	ApiUrl   string `json:"apiurl,omitempty" happydomain:"label=API Server Endpoint,placeholder=http://12.34.56.78"`
 	ApiKey   string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=a0b1c2d3e4f5=="`
-	ServerID string `json:"server_id,omitempty" happydomain:"label=Server ID,placeholder=localhost,default=localhost,description=Unless you are using a specially configured reverse proxy leave blank"`
+	ServerID string `json:"server_id,omitempty" happydomain:"label=Server ID,placeholder=localhost,description=Unless you are using a specially configured reverse proxy leave blank"`
 }
 
 func (s *PowerdnsAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
@@ -49,6 +49,10 @@ func (s *PowerdnsAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, err
 		"apiKey":     s.ApiKey,
 		"apiUrl":     s.ApiUrl,
 		"serverName": s.ServerID,
+	}
+
+	if s.ServerID == "" {
+		config["serverName"] = "localhost"
 	}
 
 	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
