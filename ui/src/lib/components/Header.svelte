@@ -17,6 +17,7 @@
  import { logout as APILogout } from '$lib/api/user';
  import HelpButton from '$lib/components/Help.svelte';
  import Logo from '$lib/components/Logo.svelte';
+ import { providersSpecs } from '$lib/stores/providers';
  import { userSession, refreshUserSession } from '$lib/stores/usersession';
  import { toasts } from '$lib/stores/toasts';
  import { t, locales, locale } from '$lib/translations';
@@ -27,7 +28,19 @@
  export let routeId: string | null;
  export let sw_state: boolean;
  let helpLink = "";
- $: helpLink = 'https://help.happydomain.org/' + encodeURIComponent($locale) + getHelpPathFromRoute(routeId);
+ $: if (routeId.startsWith("/providers/new/[ptype]")) {
+     helpLink = getHelpPathFromProvider($page.url.pathname.split("/")[3]);
+ } else {
+     helpLink = 'https://help.happydomain.org/' + encodeURIComponent($locale) + getHelpPathFromRoute(routeId);
+ }
+
+ function getHelpPathFromProvider(ptype: string): string {
+     if ($providersSpecs && $providersSpecs[ptype]) {
+         return $providersSpecs[ptype].helplink;
+     } else {
+         return 'https://help.happydomain.org/';
+     }
+ }
 
  function getHelpPathFromRoute(routeId: string | null) {
      if (routeId === null) return "/";

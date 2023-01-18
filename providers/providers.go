@@ -35,6 +35,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strings"
 
 	"github.com/StackExchange/dnscontrol/v3/providers"
 	"github.com/miekg/dns"
@@ -52,6 +53,9 @@ type ProviderInfos struct {
 
 	// Capabilites is a list of special ability of the provider (automatically filled).
 	Capabilities []string `json:"capabilities,omitempty"`
+
+	// HelpLink is the link to the documentation of the provider configuration.
+	HelpLink string `json:"helplink,omitempty"`
 }
 
 // ProviderCreator abstract the instanciation of a Provider
@@ -68,11 +72,13 @@ var providersList map[string]Provider = map[string]Provider{}
 
 // RegisterProvider declares the existence of the given Provider.
 func RegisterProvider(creator ProviderCreator, infos ProviderInfos) {
-	baseType := reflect.Indirect(reflect.ValueOf(creator())).Type()
+	prvInstance := creator()
+	baseType := reflect.Indirect(reflect.ValueOf(prvInstance)).Type()
 	name := baseType.Name()
 	log.Println("Registering new provider:", name)
 
-	infos.Capabilities = GetProviderCapabilities(creator())
+	infos.Capabilities = GetProviderCapabilities(prvInstance)
+	infos.HelpLink = "https://stackexchange.github.io/dnscontrol/providers/" + strings.ToLower(prvInstance.DNSControlName())
 
 	providersList[name] = Provider{
 		creator,
