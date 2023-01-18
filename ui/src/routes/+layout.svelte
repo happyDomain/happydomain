@@ -31,7 +31,7 @@
      } else {
          toasts.addErrorToast({
              message: e.reason.message,
-             timeout: 7500,
+             timeout: 30000,
          });
      }
  }
