@@ -570,7 +570,7 @@ steps:
       - tag
 
 - name: publish on Docker Hub
-  image: plugins/docker
+  image: plugins/docker:linux-arm
   settings:
     repo: happydomain/happydomain
     auto_tag: true
