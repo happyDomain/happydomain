@@ -2,8 +2,6 @@ FROM node:19-alpine as nodebuild
 
 WORKDIR /go/src/git.happydns.org/happydomain
 
-RUN apk --no-cache add python2 build-base
-
 COPY ui/ ui/
 
 RUN yarn config set network-timeout 100000 && \
