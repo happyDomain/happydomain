@@ -22,7 +22,7 @@
     target="_blank"
     {color}
     {size}
-    class={className}
+    class="umami--click--help {className}"
 >
     <Icon
         name="question-circle-fill"
