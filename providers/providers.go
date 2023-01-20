@@ -78,7 +78,7 @@ func RegisterProvider(creator ProviderCreator, infos ProviderInfos) {
 	log.Println("Registering new provider:", name)
 
 	infos.Capabilities = GetProviderCapabilities(prvInstance)
-	infos.HelpLink = "https://stackexchange.github.io/dnscontrol/providers/" + strings.ToLower(prvInstance.DNSControlName())
+	infos.HelpLink = "https://docs.dnscontrol.org/service-providers/providers/" + strings.ToLower(prvInstance.DNSControlName())
 
 	providersList[name] = Provider{
 		creator,
