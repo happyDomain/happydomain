@@ -16,9 +16,9 @@
         "signup": {
             "already": "Already a member?",
             "join-call": "Join our nice platform in less than 2 minutes!",
-            "address-why": "We'll use your address to {{identify}} yourself on the platform, and it could be used to contact you for {{security-operations}}.",
+            "address-why": "We'll use your address to {{identify}} you on this platform, and to contact you for {{security-operations}}.",
             "identify": "identify",
-            "security-operations": "security related operations",
+            "security-operations": "security related reasons",
             "receive-update": "Keep me informed of future big improvements",
             "signup": "Sign up!",
             "success": "Registration successfully performed!"
@@ -48,7 +48,7 @@
         "rename": "Rename",
         "resolver": "Resolver",
         "run": "Run the request!",
-        "survey": "A remark? a comment to share? Don't hesitate to write us!",
+        "survey": "A remark? A comment to share? Don't hesitate to write to us!",
         "spinning": "Spinning",
         "update": "Update",
         "welcome": {
@@ -65,10 +65,10 @@
             "reimport": "Re-import",
             "view": "View my zone",
             "propagate": "Publish my changes",
-            "rollback": "Rollback to this version"
+            "rollback": "Roll back to this version"
         },
         "alert": {
-            "remove": "This action will permanently remove the domain {{domain}} from your managed domains. All history and abstracted zones will be discarded. This action will not delete or unregister your domain from your provider, nor alterate what is currently served. It will only affect what you see in happyDomain. Are you sure you want to continue?",
+            "remove": "This action only removes {{domain}} from your happyDomain managed domains. All history and abstracted zones will be discarded. The domain {{domain}} remains fully intact at the provider. Are you sure you want to continue?",
             "unable-retrieve": {
                 "description": "Unfortunately, we were unable to retrieve information for the domain {{domain}}:",
                 "title": "Unable to retrieve domain information"
@@ -161,7 +161,7 @@
         "password": "Password is required",
         "password-change": "Unable to change your password account",
         "password-match": "Password and its confirmation doesn't match.",
-        "password-weak": "Password needs to be stronger: at least 8 characters with numbers, low case and high case characters.",
+        "password-weak": "Password needs to be stronger: at least 8 characters with numbers, lower case and upper case characters.",
         "provider-delete": "Something went wrong during provider deletion",
         "recovery": "Password recovery problem",
         "resolve": "An error occurs when trying to resolve the domain.",
@@ -178,33 +178,33 @@
     },
     "menu": {
         "my-domains": "My domains",
-        "my-providers": "My domains' providers",
+        "my-providers": "My domain providers",
         "dns-resolver": "DNS resolver",
         "my-account": "My account",
-        "logout": "Logout",
+        "logout": "Sign out",
         "signup": "Sign up",
         "signin": "Sign in",
         "quick-menu": "Quick Access"
     },
     "onboarding": {
-        "add-one": "add a new one",
+        "add-one": "add a new provider",
         "choose-configured": "choose between already configured providers or {{action}}:",
         "suggest-provider": "choose your provider:",
-        "use": "Use {{happyDomain}} as a remplacement interface to your usual domain name provider. It'll still rely on your provider's infrastructure, you'll just take benefit from our simple interface. As a first step, {{first-step}}",
+        "use": "Use {{happyDomain}} as a replacement interface to your usual domain name provider. It'll still rely on your provider's infrastructure, via our simple interface. As a first step, {{first-step}}",
         "no-sale": {
             "title": "I don't own any domain",
-            "description": "{{happyDomain}} does not sell domain yet. To start using our interface, you need to buy a domain from one of our supported provider",
-            "buy-advice": "We'll provide some guidance in a near future on how to easily buy a domain name. So stay tune and get in touch with us if you'll help us to build a comprehensive guide."
+            "description": "{{happyDomain}} does not sell domains yet. To start using our interface, you need to buy a domain from one of our supported providers.",
+            "buy-advice": "We'll provide some guidance in the near future on how to easily buy a domain name. So stay tuned and get in touch with us if you can help us build a comprehensive guide."
         },
         "own": "I already own a domain",
         "questions": {
             "hosting": {
-                "q": "I don't want to rely on my domain name hosting provider anymore. Can I host my domain name on your infrastructure",
-                "a": "We'll provide such feature in a near future, as it's on our manifest. We choose to focus first on spreading the word that domain names are accessibles to everyone through this sweet interface, before targeting privacy, censorship, …"
+                "q": "I don't want to rely on my domain name hosting provider anymore. Can I host my domain name on your infrastructure?",
+                "a": "We'll provide such a feature in the near future, as it's on our manifest. We choose to focus first on spreading the word that domain names are accessibles to everyone through this sweet interface, before targeting privacy, censorship, …"
             },
             "secondary": {
-                "q": "I've my own infrastructure, can I use {{happyDomain}} as secondary authoritative server?",
-                "a": "We'll provide such feature in a near future, as soon as our name server infrastructure is on."
+                "q": "I have my own infrastructure. Can I use {{happyDomain}} as a secondary authoritative server?",
+                "a": "We'll provide such feature in a near future, as soon as our name server infrastructure is ready."
             }
         }
     },
@@ -239,11 +239,11 @@
         "empty": "You have no provider defined currently. Try {{action}}!",
         "empty-action": "adding one",
         "find": "Can't find your domain provider here?",
-        "name-your": "Name your domain's provider",
+        "name-your": "Name your domain provider",
         "no-name": "No name",
         "provider": "Domains living on {{provider}}",
         "kind": "domain's provider",
-        "select-provider": "First, you need to select the provider hosting your domain:",
+        "select-provider": "First, select the provider hosting your domain:",
         "provider-name": "Host's name",
         "provider-type": "Hosting provider type",
         "title": "Your domains' providers",

@@ -59,7 +59,7 @@ export function passRestrictions(svcinfo: ServiceInfos, provider_specs: Provider
         if (svcinfo.restrictions.alone) {
             for (const s of zservices[dn]) {
                 if (s._svctype !== svcinfo._svctype && sspecs[s._svctype].restrictions && !sspecs[s._svctype].restrictions.nearAlone) {
-                    return 'has to be the only one in the subdomain.';
+                    return 'only one per subdomain.';
                 }
             }
         }
@@ -69,7 +69,7 @@ export function passRestrictions(svcinfo: ServiceInfos, provider_specs: Provider
             for (const s of zservices[dn]) {
                 for (const exclu of svcinfo.restrictions.exclusive) {
                     if (s._svctype === exclu) {
-                        return 'cannot be present along with ' + sspecs[s._svctype].name + '.';
+                        return 'cannot coexist with ' + sspecs[s._svctype].name + '.';
                     }
                 }
             }
@@ -83,7 +83,7 @@ export function passRestrictions(svcinfo: ServiceInfos, provider_specs: Provider
             }
             for (const i in s.restrictions.exclusive) {
                 if (svcinfo._svctype === s.restrictions.exclusive[i]) {
-                    return 'cannot be present along with ' + sspecs[s._svctype].name + '.';
+                    return 'cannot coexist with ' + sspecs[s._svctype].name + '.';
                 }
             }
         }
@@ -109,10 +109,10 @@ export function passRestrictions(svcinfo: ServiceInfos, provider_specs: Provider
             }
         }
         if (oneAlone && oneAlone !== svcinfo._svctype && !svcinfo.restrictions.nearAlone) {
-            return 'cannot be present along with ' + sspecs[oneAlone].name + ', that requires to be the only one in  subdomain.';
+            return 'cannot coexist with ' + sspecs[oneAlone].name + ', that requires to be the only one in the subdomain.';
         }
         if (oneLeaf && oneLeaf !== svcinfo._svctype && !svcinfo.restrictions.glue) {
-            return 'cannot be present along with ' + sspecs[oneLeaf].name + ', that requires to don\'t have subdomains.';
+            return 'cannot coexist with ' + sspecs[oneLeaf].name + ', that cannot have subdomains.';
         }
     }
 

@@ -78,7 +78,7 @@ func (i Identifier) MarshalJSON() (dst []byte, err error) {
 
 func (i *Identifier) UnmarshalJSON(src []byte) error {
 	if len(src) < 2 || src[0] != '"' || src[len(src)-1] != '"' {
-		return errors.New("Unvalid character found to encapsulate the JSON value")
+		return errors.New("Invalid character encapsulating the JSON value")
 	}
 
 	*i = make([]byte, base64.RawURLEncoding.DecodedLen(len(src)-2))

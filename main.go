@@ -67,11 +67,11 @@ func main() {
 
 	// Initialize storage
 	if s, ok := storage.StorageEngines[opts.StorageEngine]; !ok {
-		log.Fatal(fmt.Sprintf("Unexistant storage engine: %q, please select one between: %v", opts.StorageEngine, storage.GetStorageEngines()))
+		log.Fatal(fmt.Sprintf("Nonexistent storage engine: %q, please select one of: %v", opts.StorageEngine, storage.GetStorageEngines()))
 	} else {
 		log.Println("Opening database...")
 		if store, err := s(); err != nil {
-			log.Fatal("Cannot open the database: ", err)
+			log.Fatal("Could not open the database: ", err)
 		} else {
 			defer store.Close()
 			storage.MainStore = store
@@ -79,12 +79,12 @@ func main() {
 	}
 
 	if opts.NoAuth {
-		log.Println("WARNING: NoAuth option has to be use for testing or personnal purpose behind another restriction/authentication method.")
+		log.Println("WARNING: NoAuth option must be used for testing or private use behind another restriction/authentication method.")
 	}
 
-	log.Println("Do database migrations...")
+	log.Println("Performing database migrations...")
 	if err = storage.MainStore.DoMigration(); err != nil {
-		log.Fatal("Cannot migrate database: ", err)
+		log.Fatal("Could not migrate database: ", err)
 	}
 
 	// Prepare graceful shutdown

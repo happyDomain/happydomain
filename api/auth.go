@@ -81,7 +81,7 @@ func retrieveUserFromClaims(claims *UserClaims) (user *happydns.User, err error)
 
 		err = storage.MainStore.UpdateUser(user)
 		if err != nil {
-			err = fmt.Errorf("has a correct JWT, but an error occurs when creating the user: %w", err)
+			err = fmt.Errorf("has a correct JWT, but an error occured when trying to create the user: %w", err)
 			return
 		}
 	} else if time.Since(user.LastSeen) > time.Hour*12 {
@@ -90,7 +90,7 @@ func retrieveUserFromClaims(claims *UserClaims) (user *happydns.User, err error)
 
 		err = storage.MainStore.UpdateUser(user)
 		if err != nil {
-			err = fmt.Errorf("has a correct JWT, user has been found, but an error occurs when updating user's information: %w", err)
+			err = fmt.Errorf("has a correct JWT, user has been found, but an error occured when trying to update the user's information: %w", err)
 			return
 		}
 	}
@@ -110,7 +110,7 @@ func retrieveSessionFromClaims(claims *UserClaims, user *happydns.User, session_
 
 		err = storage.MainStore.UpdateSession(session)
 		if err != nil {
-			err = fmt.Errorf("has a correct JWT, but an error occurs when creating the session: %w", err)
+			err = fmt.Errorf("has a correct JWT, but an error occured when trying to create the session: %w", err)
 			return
 		}
 
@@ -119,7 +119,7 @@ func retrieveSessionFromClaims(claims *UserClaims, user *happydns.User, session_
 
 		err = storage.MainStore.UpdateUser(user)
 		if err != nil {
-			err = fmt.Errorf("has a correct JWT, session has been created, but an error occurs when updating user's information: %w", err)
+			err = fmt.Errorf("has a correct JWT, session has been created, but an error occured when trying to update the user's information: %w", err)
 			return
 		}
 	}
@@ -169,7 +169,7 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 		if err != nil {
 			log.Printf("%s provide a bad JWT claims: %s", c.ClientIP(), err.Error())
 			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
-			requireLogin(opts, c, "Something goes wrong with your session. Please reconnect.")
+			requireLogin(opts, c, "Something went wrong with your session. Please reconnect.")
 			return
 		}
 
@@ -177,14 +177,14 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 		if len(claims.Profile.UserId) == 0 {
 			log.Printf("%s: no UserId found in JWT claims", c.ClientIP())
 			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
-			requireLogin(opts, c, "Something goes wrong with your session. Please reconnect.")
+			requireLogin(opts, c, "Something went wrong with your session. Please reconnect.")
 			return
 		}
 
 		if claims.Profile.Email == "" {
 			log.Printf("%s: no Email found in JWT claims", c.ClientIP())
 			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
-			requireLogin(opts, c, "Something goes wrong with your session. Please reconnect.")
+			requireLogin(opts, c, "Something went wrong with your session. Please reconnect.")
 			return
 		}
 
@@ -193,7 +193,7 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 		if err != nil {
 			log.Printf("%s %s", c.ClientIP(), err.Error())
 			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
-			requireLogin(opts, c, "Something goes wrong with your session. Please reconnect.")
+			requireLogin(opts, c, "Something went wrong with your session. Please reconnect.")
 			return
 		}
 

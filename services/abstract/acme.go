@@ -86,7 +86,7 @@ func init() {
 		acmechallenge_analyze,
 		svcs.ServiceInfos{
 			Name:        "ACME Challenge",
-			Description: "Temporary record to prove that you are in possession of the sub-domain.",
+			Description: "Temporary record to prove that you control the sub-domain.",
 			Family:      svcs.Abstract,
 			Categories: []string{
 				"temporary",
