@@ -71,6 +71,7 @@ type ServiceInfos struct {
 	Description  string              `json:"description"`
 	Family       string              `json:"family"`
 	Categories   []string            `json:"categories"`
+	RecordTypes  []uint16            `json:"record_types"`
 	Tabs         bool                `json:"tabs,omitempty"`
 	Restrictions ServiceRestrictions `json:"restrictions,omitempty"`
 }

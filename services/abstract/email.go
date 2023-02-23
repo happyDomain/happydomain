@@ -306,10 +306,14 @@ func init() {
 		email_analyze,
 		svcs.ServiceInfos{
 			Name:        "E-Mail",
-			Description: "Send and receive e-mail with this domain.",
+			Description: "Sends and receives e-mail with this domain.",
 			Family:      svcs.Abstract,
 			Categories: []string{
 				"email",
+			},
+			RecordTypes: []uint16{
+				dns.TypeMX,
+				dns.TypeSPF,
 			},
 			Tabs: true,
 			Restrictions: svcs.ServiceRestrictions{

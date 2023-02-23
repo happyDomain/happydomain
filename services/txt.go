@@ -89,8 +89,11 @@ func init() {
 		},
 		txt_analyze,
 		ServiceInfos{
-			Name:        "Text record",
-			Description: "Publish some text in your zone.",
+			Name:        "Text Record",
+			Description: "Publishes a text string in your zone.",
+			RecordTypes: []uint16{
+				dns.TypeTXT,
+			},
 			Restrictions: ServiceRestrictions{
 				NeedTypes: []uint16{
 					dns.TypeTXT,

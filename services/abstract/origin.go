@@ -49,8 +49,8 @@ type Origin struct {
 	Ns          string          `json:"mname" happydomain:"label=Name Server,placeholder=ns0,required,description=The domain name of the name server that was the original or primary source of data for this zone."`
 	Mbox        string          `json:"rname" happydomain:"label=Contact Email,required,description=A <domain-name> which specifies the mailbox of the person responsible for this zone."`
 	Serial      uint32          `json:"serial" happydomain:"label=Zone Serial,required,description=The unsigned 32 bit version number of the original copy of the zone.  Zone transfers preserve this value.  This value wraps and should be compared using sequence space arithmetic."`
-	Refresh     common.Duration `json:"refresh" happydomain:"label=Slave Refresh Time,required,description=The time interval before the zone should be refreshed by others name servers than the primary."`
-	Retry       common.Duration `json:"retry" happydomain:"label=Retry Interval on failed refresh,required,description=The time interval a slave name server should elapse before a failed refresh should be retried."`
+	Refresh     common.Duration `json:"refresh" happydomain:"label=Slave Refresh Time,required,description=The time interval before the zone should be refreshed by name servers other than the primary."`
+	Retry       common.Duration `json:"retry" happydomain:"label=Retry Interval on failed refresh,required,description=The time interval that should elapse before a failed refresh should be retried by a slave name server."`
 	Expire      common.Duration `json:"expire" happydomain:"label=Authoritative Expiry,required,description=Time value that specifies the upper limit on the time interval that can elapse before the zone is no longer authoritative."`
 	Negttl      common.Duration `json:"nxttl" happydomain:"label=Negative Caching Time,required,description=Maximal time a resolver should cache a negative authoritative answer (such as NXDOMAIN ...)."`
 	NameServers []string        `json:"ns" happydomain:"label=Zone's Name Servers"`
@@ -135,6 +135,10 @@ func init() {
 			Family:      svcs.Abstract,
 			Categories: []string{
 				"internal",
+			},
+			RecordTypes: []uint16{
+				dns.TypeSOA,
+				dns.TypeNS,
 			},
 			Restrictions: svcs.ServiceRestrictions{
 				RootOnly: true,

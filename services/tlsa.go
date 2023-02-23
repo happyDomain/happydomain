@@ -173,6 +173,9 @@ func init() {
 			Categories: []string{
 				"tls",
 			},
+			RecordTypes: []uint16{
+				dns.TypeTLSA,
+			},
 			Restrictions: ServiceRestrictions{
 				NearAlone: true,
 				Single:    true,

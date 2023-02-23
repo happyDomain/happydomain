@@ -257,6 +257,9 @@ func init() {
 			Categories: []string{
 				"tls",
 			},
+			RecordTypes: []uint16{
+				dns.TypeCAA,
+			},
 			Restrictions: ServiceRestrictions{
 				Single: true,
 				NeedTypes: []uint16{
