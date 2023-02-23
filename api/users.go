@@ -141,7 +141,7 @@ func registerUser(opts *config.Options, c *gin.Context) {
 
 	if actions.SendValidationLink(opts, user); err != nil {
 		log.Printf("%s: unable to SendValidationLink in registerUser: %s", c.ClientIP(), err.Error())
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to sent email validation link. Please try again later."})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to send email validation link. Please try again later."})
 		return
 	}
 
@@ -170,7 +170,7 @@ func specialUserOperations(opts *config.Options, c *gin.Context) {
 			if user.EmailVerification == nil {
 				if err = actions.SendValidationLink(opts, user); err != nil {
 					log.Printf("%s: unable to SendValidationLink in specialUserOperations: %s", c.ClientIP(), err.Error())
-					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to sent email validation link. Please try again later."})
+					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to send email validation link. Please try again later."})
 					return
 				}
 
@@ -178,7 +178,7 @@ func specialUserOperations(opts *config.Options, c *gin.Context) {
 			} else {
 				if err = actions.SendRecoveryLink(opts, user); err != nil {
 					log.Printf("%s: unable to SendRecoveryLink in specialUserOperations: %s", c.ClientIP(), err.Error())
-					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to sent accont recovery link. Please try again later."})
+					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to send accont recovery link. Please try again later."})
 					return
 				}
 

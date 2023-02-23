@@ -21,13 +21,13 @@ It runs as a single stateless Linux binary, backed by a database (currently: Lev
 Using Docker
 ------------
 
-We are a Docker sponsored OSS project! thus you can easily try and/or deploy our app using Docker/podman/kubernetes/...:
+We are a Docker sponsored OSS project! Thus you can easily try and/or deploy our app using Docker/podman/kubernetes/...:
 
 ```
 docker run -e HAPPYDOMAIN_NO_AUTH=1 -p 8081:8081 happydomain/happydomain
 ```
 
-This command will launch happyDomain in a few seconds, for evaluation purpose (no authentication, volatile storage, ...). With your browser, just go to <http://localhost:8081> and enjoy!
+This command will launch happyDomain in a few seconds, for evaluation purposes (no authentication, volatile storage, ...). With your browser, just go to <http://localhost:8081> and enjoy!
 
 In order to deploy happyDomain, check the [Docker image documentation](https://hub.docker.com/r/happydomain/happydomain).
 
@@ -47,12 +47,10 @@ In order to build the happyDomain project, you'll need the following dependencie
 1. First, you'll need to prepare the frontend, by installing the node modules dependencies:
 
 ```
-(cd ui; npm install)
+pushd ui; npm install; popd
 ```
 
-*If you forget the parenthesis, go back to the project root directory.*
-
-2. Then, generates assets files used by Go code:
+2. Then, generate assets files used by Go code:
 
 ```
 go generate git.happydomain.org/happydomain/ui
@@ -78,7 +76,7 @@ You can simply launch the following command in your terminal:
 ./happydomain
 ```
 
-After some initializations, it should show you:
+After some initialization, it should show you:
 
     Admin listening on ./happydomain.sock
     Ready, listening on :8081
@@ -90,23 +88,27 @@ Go to http://localhost:8081/ to start using happyDomain.
 
 By default, the LevelDB storage engine is used. You can change the storage engine using the option `-storage-engine other-engine`.
 
-The help command `./happydomain -help` can show you the available engines. By example:
+The help command `./happydomain -help` shows you the available engines:
 
+```
     -storage-engine value
     	Select the storage engine between [leveldb mysql] (default leveldb)
+```
 
 #### LevelDB
 
 LevelDB is a small embedded key-value store (as SQLite it doesn't require an additional daemon to work).
 
+```
     -leveldb-path string
     	Path to the LevelDB Database (default "happydomain.db")
+```
 
 By default, a new directory is created near the binary, called `happydomain.db`. This directory contains the database used by the program.
 You can change it to a more meaningful/persistant path.
 
 
-### Persistant configuration
+### Persistent configuration
 
 The binary will automatically look for some existing configuration files:
 
@@ -118,7 +120,7 @@ Only the first file found will be used.
 
 It is also possible to specify a custom path by adding it as argument to the command line:
 
-```
+```sh
 ./happydomain /etc/happydomain/config
 ```
 

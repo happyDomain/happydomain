@@ -85,7 +85,7 @@ func init() {
 		googleverification_analyze,
 		svcs.ServiceInfos{
 			Name:        "Google Verification",
-			Description: "Temporary record to prove that you are in possession of the domain.",
+			Description: "Temporary record to prove that you control the domain.",
 			Family:      svcs.Abstract,
 			Categories: []string{
 				"temporary",

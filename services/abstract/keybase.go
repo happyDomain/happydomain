@@ -86,7 +86,7 @@ func init() {
 		keybaseverification_analyze,
 		svcs.ServiceInfos{
 			Name:        "Keybase Verification",
-			Description: "Temporary record to prove that you are in possession of the domain.",
+			Description: "Temporary record to prove that you control the domain.",
 			Family:      svcs.Abstract,
 			Categories: []string{
 				"temporary",

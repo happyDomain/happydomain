@@ -14,7 +14,7 @@ function createToastsStore() {
     };
 
     const addErrorToast = (o: NewToast) => {
-        if (!o.title) o.title = 'Une erreur est survenue !';
+        if (!o.title) o.title = 'An error occured!';
         if (!o.type) o.type = 'error';
 
         return addToast(o);
