@@ -136,9 +136,12 @@ func init() {
 		alias_analyze,
 		ServiceInfos{
 			Name:        "Alias",
-			Description: "An alias to another domain.",
+			Description: "Maps an alias to another (canonical) domain.",
 			Categories: []string{
 				"internal",
+			},
+			RecordTypes: []uint16{
+				dns.TypeCNAME,
 			},
 			Restrictions: ServiceRestrictions{
 				Alone:  true,

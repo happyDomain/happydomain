@@ -184,6 +184,9 @@ func init() {
 			Categories: []string{
 				"email",
 			},
+			RecordTypes: []uint16{
+				dns.TypeOPENPGPKEY,
+			},
 			Restrictions: svcs.ServiceRestrictions{
 				NearAlone: true,
 				NeedTypes: []uint16{
@@ -204,6 +207,9 @@ func init() {
 			Family:      svcs.Abstract,
 			Categories: []string{
 				"email",
+			},
+			RecordTypes: []uint16{
+				dns.TypeSMIMEA,
 			},
 			Restrictions: svcs.ServiceRestrictions{
 				NearAlone: true,

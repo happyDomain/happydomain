@@ -137,6 +137,10 @@ func init() {
 			Categories: []string{
 				"internal",
 			},
+			RecordTypes: []uint16{
+				dns.TypeNS,
+				dns.TypeDS,
+			},
 			Restrictions: svcs.ServiceRestrictions{
 				Alone:       true,
 				Leaf:        true,

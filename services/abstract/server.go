@@ -153,10 +153,15 @@ func init() {
 		server_analyze,
 		svcs.ServiceInfos{
 			Name:        "Server",
-			Description: "A computer will respond to some requests.",
+			Description: "A system to respond to specific requests.",
 			Family:      svcs.Abstract,
 			Categories: []string{
 				"server",
+			},
+			RecordTypes: []uint16{
+				dns.TypeA,
+				dns.TypeAAAA,
+				dns.TypeSSHFP,
 			},
 			Restrictions: svcs.ServiceRestrictions{
 				GLUE: true,

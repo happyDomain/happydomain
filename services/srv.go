@@ -147,9 +147,12 @@ func init() {
 		srv_analyze,
 		ServiceInfos{
 			Name:        "Service Record",
-			Description: "Indicate to dedicated software existance of the given service in the domain.",
+			Description: "Indicates to dedicated software the existance of the given service in the domain.",
 			Categories: []string{
 				"service",
+			},
+			RecordTypes: []uint16{
+				dns.TypeSRV,
 			},
 			Restrictions: ServiceRestrictions{
 				NearAlone: true,
