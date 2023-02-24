@@ -1,4 +1,4 @@
-// Copyright or © or Copr. happyDNS (2020)
+// Copyright or © or Copr. happyDNS (2023)
 //
 // contact@happydomain.org
 //
@@ -29,62 +29,42 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package database
+package common
 
 import (
+	"encoding/json"
 	"fmt"
-	"log"
+	"time"
 )
 
-type LevelDBMigrationFunc func(s *LevelDBStorage) error
+type Duration time.Duration
 
-var migrations []LevelDBMigrationFunc = []LevelDBMigrationFunc{
-	migrateFrom0,
-	migrateFrom1,
-	migrateFrom2,
-	migrateFrom3,
+func (d Duration) Seconds() float64 {
+	return time.Duration(d).Seconds()
 }
 
-func (s *LevelDBStorage) DoMigration() (err error) {
-	found := false
+func (d Duration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.Seconds())
+}
 
-	found, err = s.db.Has([]byte("version"), nil)
-	if err != nil {
-		return
+func (d *Duration) UnmarshalJSON(b []byte) error {
+	var v interface{}
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
 	}
-
-	var version int
-
-	if !found {
-		version = len(migrations)
-		err = s.put("version", version)
+	switch value := v.(type) {
+	case float64:
+		*d = Duration(time.Duration(value) * time.Second)
+		return nil
+	case string:
+		v, err := time.ParseDuration(value)
 		if err != nil {
-			return
-		}
-	}
-
-	err = s.get("version", &version)
-	if err != nil {
-		return
-	}
-
-	if version > len(migrations) {
-		return fmt.Errorf("Your database has revision %d, which is newer than the revision this happyDomain version can handle (max DB revision %d). Please update happyDomain", version, len(migrations))
-	}
-
-	for v, migration := range migrations[version:] {
-		log.Printf("Doing migration from %d to %d", version+v, version+v+1)
-		// Do the migration
-		if err = migration(s); err != nil {
-			return
+			return err
 		}
 
-		// Save the step
-		if err = s.put("version", version+v+1); err != nil {
-			return
-		}
-		log.Printf("Migration from %d to %d DONE!", version+v, version+v+1)
+		*d = Duration(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid duration")
 	}
-
-	return nil
 }

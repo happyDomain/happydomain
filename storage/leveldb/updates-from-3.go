@@ -1,4 +1,4 @@
-// Copyright or © or Copr. happyDNS (2020)
+// Copyright or © or Copr. happyDNS (2023)
 //
 // contact@happydomain.org
 //
@@ -32,59 +32,51 @@
 package database
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 )
 
-type LevelDBMigrationFunc func(s *LevelDBStorage) error
+func migrateFrom3(s *LevelDBStorage) (err error) {
+	err = migrateFrom3_records(s)
+	if err != nil {
+		return
+	}
 
-var migrations []LevelDBMigrationFunc = []LevelDBMigrationFunc{
-	migrateFrom0,
-	migrateFrom1,
-	migrateFrom2,
-	migrateFrom3,
+	err = s.Tidy()
+	if err != nil {
+		return
+	}
+
+	return
 }
 
-func (s *LevelDBStorage) DoMigration() (err error) {
-	found := false
+func migrateFrom3_records(s *LevelDBStorage) (err error) {
+	TypeStr := []byte("\"_svctype\":\"abstract.Origin\"")
 
-	found, err = s.db.Has([]byte("version"), nil)
-	if err != nil {
-		return
-	}
-
-	var version int
-
-	if !found {
-		version = len(migrations)
-		err = s.put("version", version)
+	iter := s.search("domain.zone-")
+	for iter.Next() {
+		zonestr, err := s.db.Get(iter.Key(), nil)
 		if err != nil {
-			return
+			return fmt.Errorf("unable to find/decode %s: %w", iter.Key(), err)
+		}
+
+		if bytes.Contains(zonestr, TypeStr) {
+			migstr := zonestr
+			migstr = bytes.Replace(migstr, []byte("000000000,\"retry\":"), []byte(",\"retry\":"), 1)
+			migstr = bytes.Replace(migstr, []byte("000000000,\"expire\":"), []byte(",\"expire\":"), 1)
+			migstr = bytes.Replace(migstr, []byte("000000000,\"nxttl\":"), []byte(",\"nxttl\":"), 1)
+			migstr = bytes.Replace(migstr, []byte("000000000,\"ns\":"), []byte(",\"ns\":"), 1)
+
+			if !bytes.Equal(migstr, zonestr) {
+				err = s.db.Put(iter.Key(), migstr, nil)
+				if err != nil {
+					return fmt.Errorf("unable to write %s: %w", iter.Key(), err)
+				}
+				log.Printf("Migrating v2 -> v3: %s (contains Origin)...", iter.Key())
+			}
 		}
 	}
 
-	err = s.get("version", &version)
-	if err != nil {
-		return
-	}
-
-	if version > len(migrations) {
-		return fmt.Errorf("Your database has revision %d, which is newer than the revision this happyDomain version can handle (max DB revision %d). Please update happyDomain", version, len(migrations))
-	}
-
-	for v, migration := range migrations[version:] {
-		log.Printf("Doing migration from %d to %d", version+v, version+v+1)
-		// Do the migration
-		if err = migration(s); err != nil {
-			return
-		}
-
-		// Save the step
-		if err = s.put("version", version+v+1); err != nil {
-			return
-		}
-		log.Printf("Migration from %d to %d DONE!", version+v, version+v+1)
-	}
-
-	return nil
+	return
 }

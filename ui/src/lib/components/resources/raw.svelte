@@ -18,7 +18,7 @@
  export let value: any;
 
  let unit: string|null = null;
- $: unit = specs.type === 'time.Duration' ? 's' : null
+ $: unit = specs.type === 'time.Duration' || specs.type === 'common.Duration' ? 's' : null
 
  let inputtype: InputType = "text";
  $: if (specs.type && (specs.type.startsWith("uint") || specs.type.startsWith("int"))) inputtype = "number";
@@ -29,7 +29,7 @@
      if (specs.type == "int8" || specs.type == "uint8") inputmax = 255;
      else if (specs.type == "int16" || specs.type == "uint16") inputmax = 65536;
      else if (specs.type == "int" || specs.type == "uint" || specs.type == "int32" || specs.type == "uint32") inputmax = 2147483647;
-     else if (specs.type == 'time.Duration' || specs.type == "int64" || specs.type == "uint64") inputmax = 9007199254740991;
+     else if (specs.type == 'time.Duration' || specs.type == 'common.Duration' || specs.type == "int64" || specs.type == "uint64") inputmax = 9007199254740991;
      else inputmax = undefined;
 
      if (inputmax) {
