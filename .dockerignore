@@ -1,6 +1,5 @@
 bindata.go
 vendor/
-happydomain
 happydomain.db/
 happydomain.sock
 ui/node_modules/
