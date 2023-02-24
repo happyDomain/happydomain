@@ -277,15 +277,15 @@
                         </Button>
                         <label class="fw-bolder" for="zhistory">{$t('domains.history')}:</label>
                         {#key domain.zone_history}
-                            <Input
-                                type="select"
+                            <select
+                                class="form-select"
                                 id="zhistory"
                                 bind:value={selectedHistory}
                             >
                                 {#each domain.zone_history as history}
                                     <option value={history.id}>{history.last_modified}</option>
                                 {/each}
-                            </Input>
+                            </select>
                         {/key}
                     </form>
 
