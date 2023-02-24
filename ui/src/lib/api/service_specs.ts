@@ -10,9 +10,13 @@ export async function listServiceSpecs(): Promise<Record<string, ServiceInfos>> 
 }
 
 export async function getServiceSpec(ssid: string): Promise<ServiceSpec> {
-    const res = await fetch(`/api/service_specs/` + ssid, {
-        method: 'GET',
-        headers: {'Accept': 'application/json'},
-    });
-    return await handleApiResponse<ServiceSpec>(res);
+    if (ssid == "string") {
+        return Promise.resolve(new ServiceSpec({}));
+    } else {
+        const res = await fetch(`/api/service_specs/` + ssid, {
+            method: 'GET',
+            headers: {'Accept': 'application/json'},
+        });
+        return await handleApiResponse<ServiceSpec>(res);
+    }
 }
