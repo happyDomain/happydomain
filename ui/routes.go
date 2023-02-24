@@ -32,8 +32,10 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 		router.GET("/.svelte-kit/*_", serveOrReverse("", cfg))
 		router.GET("/node_modules/*_", serveOrReverse("", cfg))
 		router.GET("/@vite/*_", serveOrReverse("", cfg))
+		router.GET("/@id/*_", serveOrReverse("", cfg))
 		router.GET("/@fs/*_", serveOrReverse("", cfg))
 		router.GET("/src/*_", serveOrReverse("", cfg))
+		router.GET("/home/*_", serveOrReverse("", cfg))
 	}
 	router.GET("/_app/*_", serveOrReverse("", cfg))
 
