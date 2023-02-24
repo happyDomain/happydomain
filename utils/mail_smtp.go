@@ -32,27 +32,34 @@
 package utils
 
 import (
+	"crypto/tls"
 	"flag"
 	"strconv"
+	"time"
 
 	gomail "github.com/go-mail/mail"
 )
 
-var smtpSendmail *SMTPSendmail = nil
+var (
+	smtpSendmail             *SMTPSendmail = nil
+	smtpSendmailTLSSNoVerify bool          = false
+)
 
 // SMTPSendmail uses a SMTP server to send message
 type SMTPSendmail struct {
-	Hostname string
-	Port     int
-	Username string
-	Password string
+	Dialer *gomail.Dialer
 }
 
 // Send sends an e-mail to the given recipients using configured SMTP host.
 func (t *SMTPSendmail) PrepareAndSend(m ...*gomail.Message) (err error) {
-	d := gomail.NewDialer(t.Hostname, t.Port, t.Username, t.Password)
+	if smtpSendmailTLSSNoVerify {
+		SendMethod.(*SMTPSendmail).Dialer.TLSConfig = &tls.Config{
+			ServerName:         SendMethod.(*SMTPSendmail).Dialer.Host,
+			InsecureSkipVerify: true,
+		}
+	}
 
-	err = d.DialAndSend(m...)
+	err = t.Dialer.DialAndSend(m...)
 
 	return
 }
@@ -61,7 +68,10 @@ func changeSendMethodToSMTP() {
 	if _, ok := SendMethod.(*SMTPSendmail); !ok {
 		if smtpSendmail == nil {
 			smtpSendmail = &SMTPSendmail{
-				Port: 25,
+				Dialer: &gomail.Dialer{
+					Timeout:      10 * time.Second,
+					RetryFailure: true,
+				},
 			}
 		}
 		SendMethod = smtpSendmail
@@ -72,7 +82,7 @@ type smtpSendmailHostname struct{}
 
 func (s *smtpSendmailHostname) Set(value string) (err error) {
 	changeSendMethodToSMTP()
-	SendMethod.(*SMTPSendmail).Hostname = value
+	SendMethod.(*SMTPSendmail).Dialer.Host = value
 	return
 }
 
@@ -84,7 +94,13 @@ type smtpSendmailPort struct{}
 
 func (s *smtpSendmailPort) Set(value string) (err error) {
 	changeSendMethodToSMTP()
-	SendMethod.(*SMTPSendmail).Port, err = strconv.Atoi(value)
+	SendMethod.(*SMTPSendmail).Dialer.Port, err = strconv.Atoi(value)
+	if err != nil {
+		return
+	}
+
+	SendMethod.(*SMTPSendmail).Dialer.SSL = SendMethod.(*SMTPSendmail).Dialer.Port == 465
+
 	return
 }
 
@@ -96,7 +112,7 @@ type smtpSendmailUsername struct{}
 
 func (s *smtpSendmailUsername) Set(value string) (err error) {
 	changeSendMethodToSMTP()
-	SendMethod.(*SMTPSendmail).Username = value
+	SendMethod.(*SMTPSendmail).Dialer.Username = value
 	return
 }
 
@@ -108,7 +124,7 @@ type smtpSendmailPassword struct{}
 
 func (s *smtpSendmailPassword) Set(value string) (err error) {
 	changeSendMethodToSMTP()
-	SendMethod.(*SMTPSendmail).Password = value
+	SendMethod.(*SMTPSendmail).Dialer.Password = value
 	return
 }
 
@@ -117,6 +133,7 @@ func (s *smtpSendmailPassword) String() string {
 }
 
 func init() {
+	flag.BoolVar(&smtpSendmailTLSSNoVerify, "mail-smtp-tls-no-verify", false, "Do not verify certificate validity on SMTP connection")
 	flag.Var(&smtpSendmailHostname{}, "mail-smtp-host", "Use the given SMTP server as default way to send emails")
 	flag.Var(&smtpSendmailPort{}, "mail-smtp-port", "Define the port to use to send e-mail through SMTP method")
 	flag.Var(&smtpSendmailUsername{}, "mail-smtp-username", "If the SMTP server requires authentication, fill with the username to authenticate with")
