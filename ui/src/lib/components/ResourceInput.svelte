@@ -2,6 +2,7 @@
  import { createEventDispatcher } from 'svelte';
 
  import BasicInput from '$lib/components/resources/basic.svelte';
+ import CAAForm from '$lib/components/resources/CAA.svelte';
  import MapInput from '$lib/components/resources/map.svelte';
  import ObjectInput from '$lib/components/resources/object.svelte';
  import RawInput from '$lib/components/resources/raw.svelte';
@@ -44,6 +45,16 @@
         {specs}
         type={sanitizeType(type)}
         bind:value={value}
+    />
+{:else if type == "svcs.CAA"}
+    <CAAForm
+        edit={edit || editToolbar}
+        {index}
+        {readonly}
+        {specs}
+        bind:value={value}
+        on:delete-this-service={(event) => dispatch("delete-this-service", event.detail)}
+        on:update-this-service={(event) => dispatch("update-this-service", event.detail)}
     />
 {:else if typeof value === 'object' || Array.isArray(specs)}
     <ObjectInput
