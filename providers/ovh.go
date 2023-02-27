@@ -46,6 +46,7 @@ var (
 )
 
 type OVHAPI struct {
+	Endpoint    string `json:"endpoint,omitempty"`
 	ConsumerKey string `json:"consumerkey,omitempty" happydomain:"required"`
 }
 

@@ -85,7 +85,6 @@ func getProviderSettingsState(cfg *config.Options, c *gin.Context) {
 		log.Printf("%s sends invalid ProviderSettingsState JSON: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
-
 	}
 
 	form, p, err := formDoState(cfg, c, &uss.FormState, src, forms.GenDefaultSettingsForm)
