@@ -25,7 +25,7 @@
  import {
      applyZone as APIApplyZone,
      diffZone as APIDiffZone,
-     importZone as APIImportZone,
+     retrieveZone as APIRetrieveZone,
      viewZone as APIViewZone,
  } from '$lib/api/zone';
  import ImgProvider from '$lib/components/providers/ImgProvider.svelte';
@@ -70,22 +70,22 @@
      goto('/domains/' + encodeURIComponent(selectedDomain) + '/' + encodeURIComponent(selectedHistory));
  }
 
- let importInProgress = false;
- function importZone(): void {
+ let retrievalInProgress = false;
+ function retrieveZone(): void {
      if (domain) {
-         importInProgress = true;
-         APIImportZone(domain).then(
-             importZoneDone,
+         retrievalInProgress = true;
+         APIRetrieveZone(domain).then(
+             retrieveZoneDone,
              (err: any) => {
-                 importInProgress = false;
+                 retrievalInProgress = false;
                  throw err;
              }
          );
      }
  }
 
- function importZoneDone(zm: ZoneMeta): void {
-     importInProgress = false;
+ function retrieveZoneDone(zm: ZoneMeta): void {
+     retrievalInProgress = false;
      refreshDomains();
      selectedHistory = zm.id;
  }
@@ -97,11 +97,11 @@
  let domain: null | Domain = null;
  $: if ($domains_idx[selectedDomain]) {
      if (!$domains_idx[selectedDomain].zone_history || $domains_idx[selectedDomain].zone_history.length == 0) {
-         importInProgress = true;
-         APIImportZone($domains_idx[selectedDomain]).then(
-             importZoneDone,
+         retrievalInProgress = true;
+         APIRetrieveZone($domains_idx[selectedDomain]).then(
+             retrieveZoneDone,
              (err: any) => {
-                 importInProgress = false;
+                 retrievalInProgress = false;
                  throw err;
              }
          )
@@ -198,7 +198,7 @@
 
      propagationInProgress = true;
      try {
-         importZoneDone(await APIApplyZone(domain, selectedHistory, selectedDiff));
+         retrieveZoneDone(await APIApplyZone(domain, selectedHistory, selectedDiff));
      } finally {
          applyZoneModalIsOpen = false;
      }
@@ -261,22 +261,25 @@
 
                 {#if domain && domain.zone_history}
                     <form class="mt-3">
-                        <Button
-                            class="float-end"
-                            outline
-                            color="secondary"
-                            size="sm"
-                            title={$t('domains.actions.reimport')}
-                            disabled={importInProgress}
-                            on:click={importZone}
-                        >
-                            {#if importInProgress}
-                                <Spinner size="sm" />
-                            {:else}
-                                <Icon name="cloud-download" />
-                            {/if}
-                        </Button>
-                        <label class="fw-bolder" for="zhistory">{$t('domains.history')}:</label>
+                        <div class="d-flex justify-content-between">
+                            <label class="fw-bolder" for="zhistory">{$t('domains.history')}:</label>
+                            <div class="d-flex gap-1">
+                                <Button
+                                    outline
+                                    color="secondary"
+                                    size="sm"
+                                    title={$t('domains.actions.reimport')}
+                                    disabled={retrievalInProgress}
+                                    on:click={retrieveZone}
+                                >
+                                    {#if retrievalInProgress}
+                                        <Spinner size="sm" />
+                                    {:else}
+                                        <Icon name="cloud-download" />
+                                    {/if}
+                                </Button>
+                            </div>
+                        </div>
                         {#key domain.zone_history}
                             <select
                                 class="form-select"

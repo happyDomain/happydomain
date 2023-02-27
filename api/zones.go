@@ -49,7 +49,7 @@ import (
 )
 
 func declareZonesRoutes(cfg *config.Options, router *gin.RouterGroup) {
-	router.POST("/import_zone", importZone)
+	router.POST("/retrieve_zone", retrieveZone)
 	router.POST("/diff_zones/:zoneid1/:zoneid2", diffZones)
 
 	apiZonesRoutes := router.Group("/zone/:zoneid")
@@ -185,7 +185,7 @@ func getZoneService(c *gin.Context) {
 	c.JSON(http.StatusOK, zone.FindSubdomainService(subdomain, serviceid))
 }
 
-func importZone(c *gin.Context) {
+func retrieveZone(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 	domain := c.MustGet("domain").(*happydns.Domain)
 

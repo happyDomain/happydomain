@@ -20,9 +20,9 @@ export async function viewZone(domain: Domain | DomainInList, id: string): Promi
     return await handleApiResponse<string>(res);
 }
 
-export async function importZone(domain: Domain | DomainInList): Promise<ZoneMeta> {
+export async function retrieveZone(domain: Domain | DomainInList): Promise<ZoneMeta> {
     const dnid = encodeURIComponent(domain.id);
-    const res = await fetch(`/api/domains/${dnid}/import_zone`, {
+    const res = await fetch(`/api/domains/${dnid}/retrieve_zone`, {
         method: 'POST',
         headers: {'Accept': 'application/json'}
     });
