@@ -102,6 +102,7 @@
 
 <Navbar
     class="{className} {$userSession?'p-0':''}"
+    style="z-index: 100"
     container
     expand="xs"
     light
