@@ -54,9 +54,8 @@
 </script>
 
 {#if isCNAME(services)}
-    <div>
+    <div id={dn}>
         <h2
-            id={dn}
             class="sticky-top"
             style="background: white; z-index: 1"
         >
@@ -115,13 +114,12 @@
         </h2>
     </div>
 {:else}
-    <div>
+    <div id={dn?dn:'@'}>
         <div
             class="d-flex align-items-center sticky-top mb-2 gap-2"
             style="background: white; z-index: 1"
         >
             <h2
-                id={dn?dn:'@'}
                 style="white-space: nowrap; cursor: pointer;"
                 class="mb-0"
                 on:click={() => showResources = !showResources}
