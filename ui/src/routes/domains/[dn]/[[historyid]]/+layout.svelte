@@ -16,6 +16,8 @@
      ModalHeader,
      Row,
      Spinner,
+     TabContent,
+     TabPane,
  } from 'sveltestrap';
 
  import {
@@ -25,6 +27,7 @@
  import {
      applyZone as APIApplyZone,
      diffZone as APIDiffZone,
+     importZone as APIImportZone,
      retrieveZone as APIRetrieveZone,
      viewZone as APIViewZone,
  } from '$lib/api/zone';
@@ -85,7 +88,9 @@
  }
 
  function retrieveZoneDone(zm: ZoneMeta): void {
+     uploadModalIsOpen = false;
      retrievalInProgress = false;
+     uploadInProgress = false;
      refreshDomains();
      selectedHistory = zm.id;
  }
@@ -109,6 +114,35 @@
          getDomain($domains_idx[selectedDomain].id).then(
              (dn) => {
                  domain = dn;
+             }
+         );
+     }
+ }
+
+ let uploadModalIsOpen = false;
+ let uploadInProgress = false;
+ let zoneImportContent = "";
+ let zoneImportFiles: FileList;
+ let uploadModalActiveTab: string|number = 0;
+
+ $: if (uploadModalIsOpen) {
+     uploadInProgress = false;
+     zoneImportContent = "";
+     uploadModalActiveTab = 0;
+ }
+
+ function importZone(): void {
+     if (domain && selectedHistory) {
+         uploadInProgress = true;
+         let file = new Blob([zoneImportContent], {"type": "text/plain"});
+         if (uploadModalActiveTab != "uploadText") {
+             file = zoneImportFiles[0];
+         }
+         APIImportZone(domain, selectedHistory, file).then(
+             retrieveZoneDone,
+             (err: any) => {
+                 uploadInProgress = false;
+                 throw err;
              }
          );
      }
@@ -268,6 +302,20 @@
                                     outline
                                     color="secondary"
                                     size="sm"
+                                    title={$t('domains.actions.upload')}
+                                    disabled={uploadInProgress}
+                                    on:click={() => uploadModalIsOpen = true}
+                                >
+                                    {#if uploadInProgress}
+                                        <Spinner size="sm" />
+                                    {:else}
+                                        <Icon name="cloud-upload" />
+                                    {/if}
+                                </Button>
+                                <Button
+                                    outline
+                                    color="secondary"
+                                    size="sm"
                                     title={$t('domains.actions.reimport')}
                                     disabled={retrievalInProgress}
                                     on:click={retrieveZone}
@@ -389,6 +437,54 @@
         </Col>
     </Row>
 </Container>
+
+<Modal
+    isOpen={uploadModalIsOpen}
+    size="lg"
+>
+    <ModalHeader toggle={() => uploadModalIsOpen = false}>{$t('zones.upload')}</ModalHeader>
+    <ModalBody>
+        <TabContent on:tab={(e) => (uploadModalActiveTab = e.detail)}>
+            <TabPane tabId="uploadText" tab={$t('zones.import-text')} active>
+                <Input
+                    class="mt-3"
+                    type="textarea"
+                    style="height: 200px;"
+                    placeholder="@         4269 IN SOA   root ns 2042070136 ..."
+                    bind:value={zoneImportContent}
+                />
+            </TabPane>
+            <TabPane tabId="uploadFile" tab={$t('zones.import-file')}>
+                {#if uploadModalIsOpen}
+                    <Input
+                        class="mt-3"
+                        type="file"
+                        bind:files={zoneImportFiles}
+                    />
+                {/if}
+            </TabPane>
+        </TabContent>
+    </ModalBody>
+    <ModalFooter>
+        <Button
+            outline
+            color="secondary"
+            on:click={() => uploadModalIsOpen = false}
+        >
+            {$t('common.cancel')}
+        </Button>
+        <Button
+            color="primary"
+            disabled={uploadInProgress}
+            on:click={importZone}
+        >
+            {#if uploadInProgress}
+                <Spinner size="sm" />
+            {/if}
+            {$t('domains.actions.upload')}
+        </Button>
+    </ModalFooter>
+</Modal>
 
 <Modal
     isOpen={deleteModalIsOpen}

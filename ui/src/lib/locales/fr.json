@@ -65,7 +65,8 @@
             "view": "Voir ma zone",
             "propagate": "Diffuser mes changements",
             "rollback": "Revenir à cette version",
-            "do-migration": "Migrer maintenant"
+            "do-migration": "Migrer maintenant",
+            "upload": "Importer un fichier de zone"
         },
         "alert": {
             "remove": "Cette action retirera définitivement le domaine {{domain}} de votre liste. L'historique et les zones abstraites seront supprimés. Cela ne supprimera ni n'affectera votre domaine auprès de votre fournisseur, ni ne modifiera ce qui est actuellement diffusé. Cela ne concerne seulement que ce que vous voyez dans happyDomain. Êtes-vous certain de vouloir continuer ?",
@@ -319,5 +320,10 @@
         "new": "Nouveau groupe",
         "no-group": "Divers",
         "title": "Vos groupes"
+    },
+    "zones": {
+        "upload": "Importer une zone",
+        "import-text": "Depuis du texte",
+        "import-file": "Depuis un fichier de zone"
     }
 }

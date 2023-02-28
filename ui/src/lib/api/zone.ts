@@ -40,6 +40,21 @@ export async function applyZone(domain: Domain | DomainInList, id: string, selec
     return await handleApiResponse<ZoneMeta>(res);
 }
 
+export async function importZone(domain: Domain | DomainInList, id: string, file: any): Promise<ZoneMeta> {
+    const dnid = encodeURIComponent(domain.id);
+    id = encodeURIComponent(id);
+
+    const formData = new FormData();
+    formData.append("zone", file);
+
+    const res = await fetch(`/api/domains/${dnid}/zone/${id}/import`, {
+        method: 'POST',
+        headers: {'Accept': 'application/json'},
+        body: formData,
+    });
+    return await handleApiResponse<ZoneMeta>(res);
+}
+
 export async function diffZone(domain: Domain | DomainInList, id1: string, id2: string): Promise<Array<string>> {
     const dnid = encodeURIComponent(domain.id);
     id1 = encodeURIComponent(id1);

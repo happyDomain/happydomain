@@ -55,6 +55,7 @@ func declareZonesRoutes(cfg *config.Options, router *gin.RouterGroup) {
 	apiZonesRoutes := router.Group("/zone/:zoneid")
 	apiZonesRoutes.Use(ZoneHandler)
 
+	apiZonesRoutes.POST("/import", importZone)
 	apiZonesRoutes.POST("/view", viewZone)
 	apiZonesRoutes.POST("/apply_changes", applyZone)
 
@@ -244,6 +245,44 @@ func retrieveZone(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, &myZone.ZoneMeta)
+}
+
+// importZone takes a bind style file
+func importZone(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+	zone := c.MustGet("zone").(*happydns.Zone)
+
+	fd, _, err := c.Request.FormFile("zone")
+	if err != nil {
+		log.Printf("Error when retrieving zone file from %s: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "Unable to read your zone file: something is wrong in your request"})
+		return
+	}
+	defer fd.Close()
+
+	zp := dns.NewZoneParser(fd, domain.DomainName, "")
+
+	var rrs []dns.RR
+	for rr, ok := zp.Next(); ok; rr, ok = zp.Next() {
+		rrs = append(rrs, rr)
+	}
+
+	zone.Services, _, err = svcs.AnalyzeZone(domain.DomainName, rrs)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	zone.LastModified = time.Now()
+
+	err = storage.MainStore.UpdateZone(zone)
+	if err != nil {
+		log.Printf("%s: Unable to UpdateZone in updateZoneService: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your zone. Please retry later."})
+		return
+	}
+
+	c.JSON(http.StatusOK, zone)
 }
 
 func diffZones(c *gin.Context) {

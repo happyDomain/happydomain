@@ -65,7 +65,8 @@
             "reimport": "Re-import",
             "view": "View my zone",
             "propagate": "Publish my changes",
-            "rollback": "Roll back to this version"
+            "rollback": "Roll back to this version",
+            "upload": "Import a zone file"
         },
         "alert": {
             "remove": "This action only removes {{domain}} from your happyDomain managed domains. All history and abstracted zones will be discarded. The domain {{domain}} remains fully intact at the provider. Are you sure you want to continue?",
@@ -319,5 +320,10 @@
         "resolver-description": "This is the server we will ask for the information.",
         "ttl": "Remaining time in cache",
         "showDNSSEC": "Show DNSSEC records in answer (if any)"
+    },
+    "zones": {
+        "upload": "Import a zone",
+        "import-text": "Import from text",
+        "import-file": "Import from file"
     }
 }
