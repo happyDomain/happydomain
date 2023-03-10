@@ -193,7 +193,7 @@ func GetDomain(c *gin.Context) {
 func UpdateDomain(c *gin.Context) {
 	old := c.MustGet("domain").(*happydns.Domain)
 
-	var domain apiDomain
+	var domain happydns.Domain
 	err := c.ShouldBindJSON(&domain)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
