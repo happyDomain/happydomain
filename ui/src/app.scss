@@ -16,7 +16,7 @@ $enable-gradients: true;
 $enable-responsive-font-sizes: true;
 
 $font-family-sans-serif: Montserrat,-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-$font-family-monospace: 'Fantasque Sans Mono', SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+$font-family-monospace: JetBrainsMono, 'Fantasque Sans Mono', SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
 @import "bootstrap/scss/bootstrap";
 
@@ -66,41 +66,32 @@ footer {
 }
 
 @font-face {
-  font-family: 'Fantasque Sans Mono';
-  src: local('Fantasque Sans Mono Bold'),
-       url('/fonts/FantasqueSansMono-Bold.woff2') format('woff2'),
-       url('/fonts/FantasqueSansMono-Bold.woff') format('woff');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+    font-family: JetBrainsMono;
+    src: url("/fonts/JetBrainsMono-Regular.woff2") format("woff2"),
+         url("/fonts/JetBrainsMono-Regular.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 400;
 }
 @font-face {
-  font-family: 'Fantasque Sans Mono';
-  src: local('Fantasque Sans Mono BoldItalic'),
-       url('/fonts/FantasqueSansMono-BoldItalic.woff2') format('woff2'),
-       url('/fonts/FantasqueSansMono-BoldItalic.woff') format('woff');
-  font-weight: 700;
-  font-style: italic;
-  font-display: swap;
+    font-family: JetBrainsMono;
+    src: url("/fonts/JetBrainsMono-Bold.woff2") format("woff2"),
+         url("/fonts/JetBrainsMono-Bold.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 700;
 }
 @font-face {
-  font-family: 'Fantasque Sans Mono';
-  src: local('Fantasque Sans Mono Italic'),
-       url('/fonts/FantasqueSansMono-Italic.woff2') format('woff2'),
-       url('/fonts/FantasqueSansMono-Italic.woff') format('woff');
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
+    font-family: JetBrainsMono;
+    src: url("/fonts/JetBrainsMono-Italic.woff2") format("woff2"),
+         url("/fonts/JetBrainsMono-Italic.ttf") format("truetype");
+    font-style: italic;
+    font-weight: 400;
 }
 @font-face {
-  font-family: 'Fantasque Sans Mono';
-  src: local('Fantasque Sans Mono'),
-       local('Fantasque Sans Mono Regular'),
-       url('/fonts/FantasqueSansMono-Regular.woff2') format('woff2'),
-       url('/fonts/FantasqueSansMono-Regular.woff') format('woff');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+    font-family: JetBrainsMono;
+    src: url("/fonts/JetBrainsMono-BoldItalic.woff2") format("woff2"),
+         url("/fonts/JetBrainsMono-BoldItalic.ttf") format("truetype");
+    font-style: italic;
+    font-weight: 700;
 }
 
 @each $breakpoint in map-keys($grid-breakpoints) {
