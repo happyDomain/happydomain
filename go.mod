@@ -9,7 +9,7 @@ require (
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/miekg/dns v1.1.53
-	github.com/ovh/go-ovh v1.3.0
+	github.com/ovh/go-ovh v1.4.1
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/yuin/goldmark v1.5.4
 	golang.org/x/crypto v0.8.0
@@ -118,7 +118,7 @@ require (
 	google.golang.org/grpc v1.50.1 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
-	gopkg.in/ini.v1 v1.66.6 // indirect
+	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/mail.v2 v2.3.1 // indirect
 	gopkg.in/ns1/ns1-go.v2 v2.6.5 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
