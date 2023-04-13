@@ -32,7 +32,9 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 
@@ -77,10 +79,15 @@ func getProviders(c *gin.Context) {
 }
 
 func DecodeProvider(c *gin.Context) (*happydns.ProviderCombined, int, error) {
-	var ust happydns.ProviderMeta
-	err := c.ShouldBindJSON(&ust)
+	buf, err := io.ReadAll(c.Request.Body)
 	if err != nil {
-		return nil, http.StatusBadRequest, err
+		return nil, http.StatusBadRequest, fmt.Errorf("Unable to read input: %w", err)
+	}
+
+	var ust happydns.ProviderMeta
+	err = json.Unmarshal(buf, &ust)
+	if err != nil {
+		return nil, http.StatusBadRequest, fmt.Errorf("Unable to parse input as ProviderMeta: %w", err)
 	}
 
 	us, err := providers.FindProvider(ust.Type)
@@ -94,14 +101,14 @@ func DecodeProvider(c *gin.Context) (*happydns.ProviderCombined, int, error) {
 		ust,
 	}
 
-	err = c.ShouldBindJSON(&src)
+	err = json.Unmarshal(buf, &src)
 	if err != nil {
-		return nil, http.StatusBadRequest, err
+		return nil, http.StatusBadRequest, fmt.Errorf("Unable to parse input as Provider: %w", err)
 	}
 
 	err = src.Validate()
 	if err != nil {
-		return nil, http.StatusBadRequest, err
+		return nil, http.StatusBadRequest, fmt.Errorf("Unable to validate input: %w", err)
 	}
 
 	return src, http.StatusOK, nil
