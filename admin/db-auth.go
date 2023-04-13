@@ -168,6 +168,9 @@ func resetUserPasswd(c *gin.Context) {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": err.Error()})
 			return
 		}
+	} else if user.CheckAuth(urp.Password) {
+		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"errmsg": "The reset password is identical to the current password"})
+		return
 	}
 
 	err = user.DefinePassword(urp.Password)
