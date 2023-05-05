@@ -14,7 +14,7 @@ function onSWupdate(sw_state: {hasUpdate: boolean}) {
         toasts.addToast({
             title: get_store_value(t)('upgrade.title'),
             message: get_store_value(t)('upgrade.content'),
-            onclick: () => location.reload(true),
+            onclick: () => location.reload(),
         });
     }
     sw_state.hasUpdate = true;
@@ -35,6 +35,9 @@ export const load: Load = async({ fetch, route, url }) => {
 
             registration.onupdatefound = () => {
                 const installingWorker = registration.installing
+
+                if (installingWorker === null) return;
+
                 installingWorker.onstatechange = () => {
                     if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
                         onSWupdate(sw_state);

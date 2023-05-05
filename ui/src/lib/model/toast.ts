@@ -18,7 +18,7 @@ export class Toast implements NewToast {
     timeout: number | undefined = undefined;
     timeoutInterval: ReturnType<typeof setTimeout> | undefined = undefined;
     dismissFunc: (id: string) => void;
-    onclick: () => void;
+    onclick: undefined | (() => void) = undefined;
 
     constructor(obj: NewToast, dismiss: (id: string) => void) {
         if (obj.type !== undefined) this.type = obj.type;

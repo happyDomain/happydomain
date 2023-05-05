@@ -8,7 +8,7 @@
  import RecoverAccountForm from '$lib/components/RecoverAccountForm.svelte';
 
  let error = "";
- export let data = { user: "", key: "" };
+ export let data;
 </script>
 
 <Container class="my-3">
@@ -16,9 +16,9 @@
         <Alert color="danger">
             {error}
         </Alert>
-    {:else if !data.user}
-        <ForgottenPasswordForm />
+    {:else if data.user && data.key}
+        <RecoverAccountForm user={data.user} key={data.key} />
     {:else}
-        <RecoverAccountForm {data} />
+        <ForgottenPasswordForm />
     {/if}
 </Container>

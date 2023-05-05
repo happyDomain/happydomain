@@ -11,7 +11,7 @@ export async function listServiceSpecs(): Promise<Record<string, ServiceInfos>> 
 
 export async function getServiceSpec(ssid: string): Promise<ServiceSpec> {
     if (ssid == "string") {
-        return Promise.resolve(new ServiceSpec({}));
+        return Promise.resolve(<ServiceSpec>{});
     } else {
         const res = await fetch(`/api/service_specs/` + ssid, {
             method: 'GET',

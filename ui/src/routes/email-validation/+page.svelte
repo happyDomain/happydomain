@@ -13,7 +13,7 @@
  import { toasts } from '$lib/stores/toasts';
 
  let error = "";
- export let data = { user: null, key: null };
+ export let data;
 
  if (data.user || data.key) {
      if (!data.user || !data.key) {

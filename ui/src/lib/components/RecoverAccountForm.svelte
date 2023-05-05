@@ -14,7 +14,8 @@
  import { t } from '$lib/translations';
  import { toasts } from '$lib/stores/toasts';
 
- export let data: {user: string; key: string};
+ export let user: string;
+ export let key: string;
  let value = "";
  let passwordConfirmation = "";
  let passwordState: boolean|undefined;
@@ -34,7 +35,7 @@
 
      if (valid && passwordState && passwordConfirmState) {
          formSent = true;
-         recoverAccount(data.user, data.key, value)
+         recoverAccount(user, key, value)
          .then(
              () => {
                  formSent = false;

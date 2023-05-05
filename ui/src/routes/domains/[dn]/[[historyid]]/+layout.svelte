@@ -1,7 +1,8 @@
 <script lang="ts">
  import { goto } from '$app/navigation';
 
- import { escape } from 'html-escaper'; // @ts-ignore
+ // @ts-ignore
+ import { escape } from 'html-escaper';
  import {
      Button,
      ButtonGroup,

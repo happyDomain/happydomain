@@ -1,5 +1,6 @@
 <script lang="ts">
- import { escape } from 'html-escaper'; // @ts-ignore
+ // @ts-ignore
+ import { escape } from 'html-escaper';
  import {
      Badge,
      Button,

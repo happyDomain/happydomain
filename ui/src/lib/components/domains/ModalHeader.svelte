@@ -1,4 +1,5 @@
 <script lang="ts">
+ // @ts-ignore
  import { escape } from 'html-escaper';
  import {
      ModalHeader,

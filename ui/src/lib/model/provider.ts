@@ -2,6 +2,7 @@ export interface ProviderInfos {
     name: string;
     description: string;
     capabilities: Array<string>;
+    helplink: string;
 };
 
 export function getAvailableResourceTypes(pi: ProviderInfos): Array<number> {

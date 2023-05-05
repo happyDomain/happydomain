@@ -26,12 +26,14 @@
  let className = '';
 
  export let routeId: string | null;
- export let sw_state: boolean;
+ export let sw_state: {triedUpdate: boolean; hasUpdate: boolean;};
  let helpLink = "";
- $: if (routeId.startsWith("/providers/new/[ptype]")) {
+ $: if (routeId && routeId.startsWith("/providers/new/[ptype]")) {
      helpLink = getHelpPathFromProvider($page.url.pathname.split("/")[3]);
- } else {
+ } else if (routeId) {
      helpLink = 'https://help.happydomain.org/' + encodeURIComponent($locale) + getHelpPathFromRoute(routeId);
+ } else {
+     helpLink = 'https://help.happydomain.org/' + encodeURIComponent($locale);
  }
 
  function getHelpPathFromProvider(ptype: string): string {

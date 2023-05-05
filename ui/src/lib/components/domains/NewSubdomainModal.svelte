@@ -1,7 +1,8 @@
 <script lang="ts">
  import { createEventDispatcher } from 'svelte';
 
- import { escape } from 'html-escaper'; // @ts-ignore
+ // @ts-ignore
+ import { escape } from 'html-escaper';
  import {
      Input,
      InputGroup,

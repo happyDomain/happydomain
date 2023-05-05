@@ -18,7 +18,7 @@
  import { toasts } from '$lib/stores/toasts';
  import { t } from '$lib/translations';
 
- export let data: {route: {id: string | null;};};
+ export let data: {route: {id: string | null;}; sw_state: {triedUpdate: boolean; hasUpdate: boolean;};};
 
  window.onunhandledrejection = (e) => {
      if (e.reason.name == "NotAuthorizedError") {
