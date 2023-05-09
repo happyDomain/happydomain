@@ -32,7 +32,7 @@
 	"dependencies": {
 		"bootstrap": "^5.2.2",
 		"bootstrap-icons": "^1.9.1",
-		"cuid": "^2.1.8",
+		"cuid": "^3.0.0",
 		"html-escaper": "^3.0.3",
 		"sass": "^1.55.0",
 		"sass-loader": "^13.1.0",
