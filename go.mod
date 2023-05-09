@@ -8,7 +8,7 @@ require (
 	github.com/go-mail/mail v2.3.1+incompatible
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/golang-jwt/jwt/v5 v5.0.0
-	github.com/miekg/dns v1.1.53
+	github.com/miekg/dns v1.1.54
 	github.com/ovh/go-ovh v1.4.1
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/yuin/goldmark v1.5.4
