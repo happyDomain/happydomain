@@ -167,6 +167,8 @@ github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1/go.mod h1:wJfORR
 github.com/gopherjs/gopherjs v1.17.2 h1:fQnZVsXk8uxXIStYb0N4bGk7jeyTalG/wsZjQ25dO0g=
 github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542 h1:2VTzZjLZBgl62/EtslCrtky5vbi9dd7HrQPQIx6wqiw=
 github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542/go.mod h1:Ow0tF8D4Kplbc8s8sSb3V2oUCygFHVp8gC3Dn6U4MNI=
+github.com/happyDomain/dnscontrol/v3 v3.29.11 h1:ovNDtLj2So5ZSbyTZWc6HjueIOHH0Yqqa97+Z5Co+XM=
+github.com/happyDomain/dnscontrol/v3 v3.29.11/go.mod h1:0p0NoNNMfwkhKuRHWLgf+UHPBwlJRZRR+1ypNKiDm4Q=
 github.com/hashicorp/go-cleanhttp v0.5.1/go.mod h1:JpRdi6/HCYpAwUzNwuwqhbovhLtngrth3wmdIIUrZ80=
 github.com/hashicorp/go-cleanhttp v0.5.2 h1:035FKYIWjmULyFRBKPs8TBQoi0x6d9G4xc9neXJWAZQ=
 github.com/hashicorp/go-cleanhttp v0.5.2/go.mod h1:kO/YDlP8L1346E6Sodw+PrpBSV4/SoxCXGY6BqNFT48=
@@ -224,8 +226,6 @@ github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjY
 github.com/namedotcom/go v0.0.0-20180403034216-08470befbe04 h1:o6uBwrhM5C8Ll3MAAxrQxRHEu7FkapwTuI2WmL1rw4g=
 github.com/namedotcom/go v0.0.0-20180403034216-08470befbe04/go.mod h1:5sN+Lt1CaY4wsPvgQH/jsuJi4XO2ssZbdsIizr4CVC8=
 github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32/go.mod h1:9wM+0iRr9ahx58uYLpLIr5fm8diHn0JbqRycJi6w0Ms=
-github.com/nemunaire/dnscontrol/v3 v3.29.11 h1:qRBjeb3WliSChQ+tGsMFAS4l9Zecb1Q1r0GnQaMr8GM=
-github.com/nemunaire/dnscontrol/v3 v3.29.11/go.mod h1:0p0NoNNMfwkhKuRHWLgf+UHPBwlJRZRR+1ypNKiDm4Q=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/nrdcg/goinwx v0.8.2 h1:RmjiHlEA+lzi3toXyPSaE6hWnBQ0+G+1u7w8C6Fpp4g=
 github.com/nrdcg/goinwx v0.8.2/go.mod h1:mnMSTi7CXBu2io4DzdOBoGFA1XclD0sEPWJaDhNgkA4=
