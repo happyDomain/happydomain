@@ -6,7 +6,7 @@ require (
 	github.com/StackExchange/dnscontrol/v3 v3.0.0
 	github.com/gin-gonic/gin v1.9.0
 	github.com/go-mail/mail v2.3.1+incompatible
-	github.com/go-sql-driver/mysql v1.7.0
+	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/miekg/dns v1.1.54
 	github.com/ovh/go-ovh v1.4.1
