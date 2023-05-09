@@ -14,6 +14,10 @@
       "matchPackageNames": ["alpine", "github.com/yuin/goldmark"],
       "automerge": true,
       "automergeType": "branch"
+    },
+    {
+      "matchPackageNames": ["github.com/StackExchange/dnscontrol/v3"],
+      "enabled": false
     }
   ]
 }
