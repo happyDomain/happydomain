@@ -40,6 +40,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/fatih/color"
+
 	"git.happydns.org/happydomain/config"
 	"git.happydns.org/happydomain/internal/app"
 	"git.happydns.org/happydomain/storage"
@@ -58,6 +60,9 @@ func main() {
 
 	log.Println("This is happyDomain", Version)
 	rand.Seed(time.Now().UTC().UnixNano())
+
+	// Disabled colors in dnscontrol corrections
+	color.NoColor = true
 
 	// Load and parse options
 	var opts *config.Options

@@ -72,7 +72,7 @@ func (p *ProviderCombined) Validate() (err error) {
 	return
 }
 
-func (p *ProviderCombined) DomainExists(fqdn string) (err error) {
+func (p *ProviderCombined) getZoneRecords(fqdn string) (rcs models.Records, err error) {
 	var s providers.DNSServiceProvider
 	s, err = p.NewDNSServiceProvider()
 	if err != nil {
@@ -85,7 +85,11 @@ func (p *ProviderCombined) DomainExists(fqdn string) (err error) {
 		}
 	}()
 
-	_, err = s.GetZoneRecords(strings.TrimSuffix(fqdn, "."))
+	return s.GetZoneRecords(strings.TrimSuffix(fqdn, "."), nil)
+}
+
+func (p *ProviderCombined) DomainExists(fqdn string) (err error) {
+	_, err = p.getZoneRecords(fqdn)
 	if err != nil {
 		return
 	}
@@ -94,19 +98,7 @@ func (p *ProviderCombined) DomainExists(fqdn string) (err error) {
 }
 
 func (p *ProviderCombined) ImportZone(dn *Domain) (rrs []dns.RR, err error) {
-	var s providers.DNSServiceProvider
-	s, err = p.NewDNSServiceProvider()
-	if err != nil {
-		return
-	}
-
-	defer func() {
-		if a := recover(); a != nil {
-			err = fmt.Errorf("%s", a)
-		}
-	}()
-
-	rcs, err := s.GetZoneRecords(strings.TrimSuffix(dn.DomainName, "."))
+	rcs, err := p.getZoneRecords(dn.DomainName)
 	if err != nil {
 		return rrs, err
 	}
@@ -118,7 +110,7 @@ func (p *ProviderCombined) ImportZone(dn *Domain) (rrs []dns.RR, err error) {
 	return
 }
 
-func (p *ProviderCombined) GetDomainCorrections(dc *models.DomainConfig) (rrs []*models.Correction, err error) {
+func (p *ProviderCombined) GetDomainCorrections(dn *Domain, dc *models.DomainConfig) (rrs []*models.Correction, err error) {
 	var s providers.DNSServiceProvider
 	s, err = p.NewDNSServiceProvider()
 	if err != nil {
@@ -131,5 +123,7 @@ func (p *ProviderCombined) GetDomainCorrections(dc *models.DomainConfig) (rrs []
 		}
 	}()
 
-	return s.GetDomainCorrections(dc)
+	rcs, err := p.getZoneRecords(dn.DomainName)
+
+	return s.GetZoneRecordsCorrections(dc, rcs)
 }

@@ -187,13 +187,13 @@
                  zoneDiff = v.map(
                      (msg: string) => {
                          let className = '';
-                         if (/^MODIFY/.test(msg)) {
+                         if (/^± MODIFY/.test(msg)) {
                              className = 'text-warning';
                              zoneDiffModified += 1;
-                         } else if (/^CREATE/.test(msg)) {
+                         } else if (/^\+ CREATE/.test(msg)) {
                              className = 'text-success';
                              zoneDiffCreated += 1;
-                         } else if (/^DELETE/.test(msg)) {
+                         } else if (/^- DELETE/.test(msg)) {
                              className = 'text-danger';
                              zoneDiffDeleted += 1;
                          } else if (/^REFRESH/.test(msg)) {
@@ -222,9 +222,9 @@
  let selectedDiffCreated = 0;
  let selectedDiffDeleted = 0;
  let selectedDiffModified = 0;
- $: selectedDiffCreated = !selectedDiff?0:selectedDiff.filter((msg: string) => /^CREATE/.test(msg)).length;
- $: selectedDiffDeleted = !selectedDiff?0:selectedDiff.filter((msg: string) => /^DELETE/.test(msg)).length;
- $: selectedDiffModified = !selectedDiff?0:selectedDiff.filter((msg: string) => /^MODIFY/.test(msg)).length;
+ $: selectedDiffCreated = !selectedDiff?0:selectedDiff.filter((msg: string) => /^\+ CREATE/.test(msg)).length;
+ $: selectedDiffDeleted = !selectedDiff?0:selectedDiff.filter((msg: string) => /^- DELETE/.test(msg)).length;
+ $: selectedDiffModified = !selectedDiff?0:selectedDiff.filter((msg: string) => /^± MODIFY/.test(msg)).length;
 
  let propagationInProgress = false;
  async function applyDiff() {

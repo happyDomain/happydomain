@@ -317,7 +317,7 @@ func diffZones(c *gin.Context) {
 		Records: records,
 	}
 
-	corrections, err := provider.GetDomainCorrections(dc)
+	corrections, err := provider.GetDomainCorrections(domain, dc)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 		return
@@ -361,7 +361,7 @@ func applyZone(c *gin.Context) {
 		return
 	}
 
-	corrections, err := provider.GetDomainCorrections(dc)
+	corrections, err := provider.GetDomainCorrections(domain, dc)
 	for _, cr := range corrections {
 		for ic, wc := range wantedCorrections {
 			if wc == cr.Msg {
