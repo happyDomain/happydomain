@@ -35,8 +35,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v3/models"
-	"github.com/StackExchange/dnscontrol/v3/providers"
+	"github.com/StackExchange/dnscontrol/v4/models"
+	"github.com/StackExchange/dnscontrol/v4/providers"
 	"github.com/miekg/dns"
 )
 

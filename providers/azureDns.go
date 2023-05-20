@@ -32,8 +32,8 @@
 package providers // import "happydns.org/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v3/providers"
-	_ "github.com/StackExchange/dnscontrol/v3/providers/azuredns"
+	"github.com/StackExchange/dnscontrol/v4/providers"
+	_ "github.com/StackExchange/dnscontrol/v4/providers/azuredns"
 
 	"git.happydns.org/happydomain/model"
 )

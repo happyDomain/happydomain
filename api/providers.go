@@ -38,7 +38,7 @@ import (
 	"log"
 	"net/http"
 
-	dnscontrol "github.com/StackExchange/dnscontrol/v3/providers"
+	dnscontrol "github.com/StackExchange/dnscontrol/v4/providers"
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happydomain/config"

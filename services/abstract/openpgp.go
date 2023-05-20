@@ -126,7 +126,7 @@ func openpgpkey_analyze(a *svcs.Analyzer) (err error) {
 			identifier := strings.TrimSuffix(record.Header().Name, "._openpgpkey."+domain)
 
 			var pubkey []byte
-			pubkey, err = base64.StdEncoding.DecodeString(openpgpkey.PublicKey)
+			pubkey, err = base64.StdEncoding.DecodeString(strings.TrimSuffix(strings.TrimPrefix(openpgpkey.PublicKey, "( "), " )"))
 			if err != nil {
 				return
 			}

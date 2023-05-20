@@ -37,7 +37,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v3/providers"
+	"github.com/StackExchange/dnscontrol/v4/providers"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happydomain/model"

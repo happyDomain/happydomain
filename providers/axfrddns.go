@@ -35,8 +35,8 @@ import (
 	"encoding/base64"
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v3/providers"
-	_ "github.com/StackExchange/dnscontrol/v3/providers/axfrddns"
+	"github.com/StackExchange/dnscontrol/v4/providers"
+	_ "github.com/StackExchange/dnscontrol/v4/providers/axfrddns"
 
 	"git.happydns.org/happydomain/model"
 )

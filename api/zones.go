@@ -38,7 +38,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/StackExchange/dnscontrol/v3/models"
+	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/gin-gonic/gin"
 	"github.com/miekg/dns"
 
