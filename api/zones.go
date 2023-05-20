@@ -198,13 +198,13 @@ func retrieveZone(c *gin.Context) {
 
 	zone, err := provider.ImportZone(domain)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to synchronize your zone: %s", err.Error())})
 		return
 	}
 
 	services, defaultTTL, err := svcs.AnalyzeZone(domain.DomainName, zone)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to perform the analysis of your zone: %s", err.Error())})
 		return
 	}
 
