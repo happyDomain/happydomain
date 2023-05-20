@@ -89,7 +89,6 @@ func (s *Session) FindNewKey(prefix string) (key string, id int64) {
 			return
 		}
 	}
-	return
 }
 
 // SetValue defines, erase or delete a content to stores at the given

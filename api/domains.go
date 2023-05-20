@@ -181,7 +181,7 @@ func GetDomain(c *gin.Context) {
 		zoneMeta, err := storage.MainStore.GetZoneMeta(zm)
 
 		if err != nil {
-			log.Println("%s: An error occurs in getDomain, when retrieving a meta history: %s", c.ClientIP(), err.Error())
+			log.Printf("%s: An error occurs in getDomain, when retrieving a meta history: %s", c.ClientIP(), err.Error())
 		} else {
 			ret.ZoneHistory = append(ret.ZoneHistory, *zoneMeta)
 		}

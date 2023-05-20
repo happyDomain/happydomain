@@ -120,8 +120,8 @@ func (s *LevelDBStorage) GetProvider(u *happydns.User, id happydns.Identifier) (
 	tsrc, err = providers.FindProvider(srcMeta.Type)
 
 	src = &happydns.ProviderCombined{
-		tsrc,
-		srcMeta,
+		Provider:     tsrc,
+		ProviderMeta: srcMeta,
 	}
 
 	err = decodeData(v, src)
@@ -138,8 +138,8 @@ func (s *LevelDBStorage) CreateProvider(u *happydns.User, src happydns.Provider,
 	sType := reflect.Indirect(reflect.ValueOf(src)).Type()
 
 	st := &happydns.ProviderCombined{
-		src,
-		happydns.ProviderMeta{
+		Provider: src,
+		ProviderMeta: happydns.ProviderMeta{
 			Type:    sType.Name(),
 			Id:      id,
 			OwnerId: u.Id,

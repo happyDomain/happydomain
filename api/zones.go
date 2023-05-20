@@ -390,7 +390,7 @@ func applyZone(c *gin.Context) {
 	//newZone.IdAuthor = //TODO get current user id
 	err = storage.MainStore.CreateZone(newZone)
 	if err != nil {
-		log.Printf("%s was unable to CreateZone", c.ClientIP(), err)
+		log.Printf("%s was unable to CreateZone: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are unable to create the zone now."})
 		return
 	}
@@ -400,7 +400,7 @@ func applyZone(c *gin.Context) {
 
 	err = storage.MainStore.UpdateDomain(domain)
 	if err != nil {
-		log.Printf("%s was unable to UpdateDomain", c.ClientIP(), err)
+		log.Printf("%s was unable to UpdateDomain: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are unable to create the zone now."})
 		return
 	}
@@ -414,7 +414,7 @@ func applyZone(c *gin.Context) {
 
 	err = storage.MainStore.UpdateZone(zone)
 	if err != nil {
-		log.Printf("%s was unable to UpdateZone", c.ClientIP(), err)
+		log.Printf("%s was unable to UpdateZone: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are unable to create the zone now."})
 		return
 	}

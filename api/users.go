@@ -215,7 +215,7 @@ func SameUserHandler(c *gin.Context) {
 	user := c.MustGet("user").(*happydns.User)
 
 	if !bytes.Equal(user.Id, myuser.Id) {
-		log.Printf("%s: tries to do action as %s (logged %s)", c.ClientIP(), myuser, user)
+		log.Printf("%s: tries to do action as %s (logged %s)", c.ClientIP(), myuser.Id, user.Id)
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errmsg": "Not authorized"})
 		return
 	}
@@ -307,7 +307,7 @@ func changePassword(opts *config.Options, c *gin.Context) {
 	for _, session := range sessions {
 		err = storage.MainStore.DeleteSession(session)
 		if err != nil {
-			log.Println("%s: unable to delete session (password changed): %s", c.ClientIP(), err.Error())
+			log.Printf("%s: unable to delete session (password changed): %s", c.ClientIP(), err.Error())
 		}
 	}
 
@@ -348,7 +348,7 @@ func deleteUser(opts *config.Options, c *gin.Context) {
 	for _, session := range sessions {
 		err = storage.MainStore.DeleteSession(session)
 		if err != nil {
-			log.Println("%s: unable to delete session (drop account): %s", c.ClientIP(), err.Error())
+			log.Printf("%s: unable to delete session (drop account): %s", c.ClientIP(), err.Error())
 		}
 	}
 

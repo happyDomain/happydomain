@@ -50,7 +50,7 @@ type User struct {
 	LastSeen time.Time
 
 	// Settings holds the settings for an account.
-	Settings UserSettings `json:settings,omitempty`
+	Settings UserSettings `json:"settings,omitempty"`
 }
 
 // Users is a group of User.

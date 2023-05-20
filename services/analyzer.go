@@ -121,14 +121,17 @@ func (a *Analyzer) UseRR(rr dns.RR, domain string, svc happydns.Service) error {
 		ttl = rr.Header().Ttl
 	}
 
-	a.services[domain] = append(a.services[domain], &happydns.ServiceCombined{svc, happydns.ServiceMeta{
-		Id:          hash.Sum(nil),
-		Type:        reflect.Indirect(reflect.ValueOf(svc)).Type().String(),
-		Domain:      domain,
-		Ttl:         ttl,
-		Comment:     svc.GenComment(a.origin),
-		NbResources: svc.GetNbResources(),
-	}})
+	a.services[domain] = append(a.services[domain], &happydns.ServiceCombined{
+		Service: svc,
+		ServiceMeta: happydns.ServiceMeta{
+			Id:          hash.Sum(nil),
+			Type:        reflect.Indirect(reflect.ValueOf(svc)).Type().String(),
+			Domain:      domain,
+			Ttl:         ttl,
+			Comment:     svc.GenComment(a.origin),
+			NbResources: svc.GetNbResources(),
+		},
+	})
 
 	return nil
 }
@@ -188,14 +191,17 @@ func AnalyzeZone(origin string, zone []dns.RR) (svcs map[string][]*happydns.Serv
 		io.WriteString(hash, record.String())
 
 		orphan := &Orphan{record.String()[strings.LastIndex(record.Header().String(), "\tIN\t")+4:]}
-		svcs[domain] = append(svcs[domain], &happydns.ServiceCombined{orphan, happydns.ServiceMeta{
-			Id:          hash.Sum(nil),
-			Type:        reflect.Indirect(reflect.ValueOf(orphan)).Type().String(),
-			Domain:      domain,
-			Ttl:         record.Header().Ttl,
-			NbResources: 1,
-			Comment:     orphan.GenComment(a.origin),
-		}})
+		svcs[domain] = append(svcs[domain], &happydns.ServiceCombined{
+			Service: orphan,
+			ServiceMeta: happydns.ServiceMeta{
+				Id:          hash.Sum(nil),
+				Type:        reflect.Indirect(reflect.ValueOf(orphan)).Type().String(),
+				Domain:      domain,
+				Ttl:         record.Header().Ttl,
+				NbResources: 1,
+				Comment:     orphan.GenComment(a.origin),
+			},
+		})
 	}
 
 	return

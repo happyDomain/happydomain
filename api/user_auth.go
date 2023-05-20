@@ -192,11 +192,11 @@ func completeAuth(opts *config.Options, c *gin.Context, userprofile UserProfile)
 		return nil, fmt.Errorf("unable to read enough random bytes: %w", err)
 	}
 
-	iat := jwt.NumericDate{time.Now()}
+	iat := jwt.NewNumericDate(time.Now())
 	claims := &UserClaims{
 		userprofile,
 		jwt.RegisteredClaims{
-			IssuedAt: &iat,
+			IssuedAt: iat,
 			ID:       base64.StdEncoding.EncodeToString(jti),
 		},
 	}

@@ -55,7 +55,7 @@ func NewLevelDBStorage(path string) (s *LevelDBStorage, err error) {
 	db, err = leveldb.OpenFile(path, nil)
 	if err != nil {
 		if _, ok := err.(*errors.ErrCorrupted); ok {
-			log.Println("LevelDB was corrupted; attempting recovery (%s)", err.Error())
+			log.Printf("LevelDB was corrupted; attempting recovery (%s)", err.Error())
 			_, err = leveldb.RecoverFile(path, nil)
 			if err != nil {
 				return
