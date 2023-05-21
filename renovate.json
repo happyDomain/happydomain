@@ -16,7 +16,7 @@
       "automergeType": "branch"
     },
     {
-      "matchPackageNames": ["github.com/StackExchange/dnscontrol/v3"],
+      "matchPackageNames": ["github.com/StackExchange/dnscontrol/v[0-9]+"],
       "enabled": false
     }
   ]
