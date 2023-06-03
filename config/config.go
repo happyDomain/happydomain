@@ -166,6 +166,10 @@ func (o *Options) parseLine(line string) (err error) {
 	orig_key := strings.TrimSpace(fields[0])
 	value := strings.TrimSpace(fields[1])
 
+	if len(value) == 0 {
+		return
+	}
+
 	key := strings.TrimPrefix(strings.TrimPrefix(orig_key, "HAPPYDNS_"), "HAPPYDOMAIN_")
 	key = strings.Replace(key, "_", "-", -1)
 	key = strings.ToLower(key)
