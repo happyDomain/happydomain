@@ -19,7 +19,8 @@
         target="_blank"
         rel="noreferrer"
         title={$t('common.survey')}
-        class="d-flex btn btn-light justify-content-center align-items-center umami--click--vox-people"
+        class="d-flex btn btn-light justify-content-center align-items-center"
+        data-umami-event="vox-people"
     >
         <Icon
             name="chat-right-text"

@@ -22,7 +22,8 @@
     target="_blank"
     {color}
     {size}
-    class="umami--click--help {className}"
+    class="{className}"
+    data-umami-event="help"
 >
     <Icon
         name="question-circle-fill"
