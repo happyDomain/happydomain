@@ -32,10 +32,37 @@
 package api
 
 import (
+	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/gin-gonic/gin"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"git.happydns.org/happydomain/config"
+	docs "git.happydns.org/happydomain/docs"
 )
+
+//	@title			happyDomain API
+//	@version		0.1
+//	@description	Finally a simple interface for domain names.
+
+//	@contact.name	happyDomain team
+//	@contact.email	contact+api@happydomain.org
+
+//	@license.name	CeCILL Free Software License Agreement
+//	@license.url	https://spdx.org/licenses/CECILL-2.1.html
+
+//	@host		localhost:8081
+//	@BasePath	/api
+
+//	@securityDefinitions.basic	BasicAuth
+
+//	@securityDefinitions.apikey	ApiKeyAuth
+//	@in							header
+//	@name						Authorization
+//	@description				Description for what is this security definition being used
 
 func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 	apiRoutes := router.Group("/api")
@@ -54,4 +81,17 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 	declareProvidersRoutes(cfg, apiAuthRoutes)
 	declareProviderSettingsRoutes(cfg, apiAuthRoutes)
 	declareUsersAuthRoutes(cfg, apiAuthRoutes)
+
+	// Expose Swagger
+	if cfg.ExternalURL != "" {
+		docs.SwaggerInfo.Host = cfg.ExternalURL[strings.Index(cfg.ExternalURL, "://")+3:]
+	} else {
+		docs.SwaggerInfo.Host = fmt.Sprintf("localhost%s", cfg.Bind[strings.Index(cfg.Bind, ":"):])
+	}
+	docs.SwaggerInfo.BasePath = "/api"
+	if cfg.BaseURL != "" {
+		docs.SwaggerInfo.BasePath = cfg.BaseURL + docs.SwaggerInfo.BasePath
+	}
+	router.GET("/swagger", func(c *gin.Context) { c.Redirect(http.StatusFound, "./swagger/index.html") })
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 }

@@ -54,6 +54,15 @@ func declareProviderSpecsRoutes(router *gin.RouterGroup) {
 	apiProviderSpecsRoutes.GET("", getProviderSpec)
 }
 
+// listProviders returns the static list of usable providers in this happyDomain release.
+//	@Summary	List all providers with which you can connect.
+//	@Schemes
+//	@Description	This returns the static list of usable providers in this happyDomain release.
+//	@Tags			provider_specs
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	map[string]providers.ProviderInfos{}	"The list"
+//	@Router			/providers/_specs [get]
 func listProviders(c *gin.Context) {
 	srcs := providers.GetProviders()
 
@@ -65,6 +74,17 @@ func listProviders(c *gin.Context) {
 	c.JSON(http.StatusOK, ret)
 }
 
+// getProviderSpecIcon returns the icon as image/png.
+//	@Summary	Get the PNG icon.
+//	@Schemes
+//	@Description	Return the icon as a image/png file for the given provider type.
+//	@Tags			provider_specs
+//	@Accept			json
+//	@Produce		png
+//	@Param			providerType	path		string	true	"The provider's type"
+//	@Success		200				{file}		png
+//	@Failure		404				{object}	happydns.Error	"Provider type does not exist"
+//	@Router			/providers/_specs/{providerType}/icon.png [get]
 func getProviderSpecIcon(c *gin.Context) {
 	psid := string(c.Param("psid"))
 
@@ -91,10 +111,24 @@ func ProviderSpecsHandler(c *gin.Context) {
 }
 
 type viewProviderSpec struct {
-	Fields       []*forms.Field `json:"fields,omitempty"`
-	Capabilities []string       `json:"capabilities,omitempty"`
+	// Fields describes the settings needed to configure the provider.
+	Fields []*forms.Field `json:"fields,omitempty"`
+
+	// Capabilities exposes what the provider can do.
+	Capabilities []string `json:"capabilities,omitempty"`
 }
 
+// getProviderSpec returns a description of the expected settings and the provider capabilities.
+//	@Summary	Get the provider capabilities and expected settings.
+//	@Schemes
+//	@Description	Return a description of the expected settings and the provider capabilities.
+//	@Tags			provider_specs
+//	@Accept			json
+//	@Produce		json
+//	@Param			providerType	path		string	true	"The provider's type"
+//	@Success		200				{object}	viewProviderSpec
+//	@Failure		404				{object}	happydns.Error	"Provider type does not exist"
+//	@Router			/providers/_specs/{providerType} [get]
 func getProviderSpec(c *gin.Context) {
 	src := c.MustGet("providertype").(happydns.Provider)
 

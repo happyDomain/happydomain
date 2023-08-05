@@ -37,10 +37,27 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var (
+	HDVersion Version
+)
+
 func DeclareVersionRoutes(router *gin.RouterGroup) {
 	router.GET("/version", showVersion)
 }
 
+type Version struct {
+	Version string `json:"version"`
+}
+
+// showVersion returns the current happyDomain version.
+//	@Summary	Get happyDomain version
+//	@Schemes
+//	@Description	Retrieve the current happyDomain version.
+//	@Tags			version
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	Version
+//	@Router			/version [get]
 func showVersion(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"version": 0.1})
+	c.JSON(http.StatusOK, HDVersion)
 }

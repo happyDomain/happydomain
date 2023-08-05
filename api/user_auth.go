@@ -71,10 +71,17 @@ func declareAuthenticationRoutes(opts *config.Options, router *gin.RouterGroup) 
 }
 
 type DisplayUser struct {
-	Id        happydns.Identifier   `json:"id"`
-	Email     string                `json:"email"`
-	CreatedAt time.Time             `json:"created_at,omitempty"`
-	Settings  happydns.UserSettings `json:"settings,omitempty"`
+	// Id is the user identifier
+	Id happydns.Identifier `json:"id" swaggertype:"string"`
+
+	// Email is the user email.
+	Email string `json:"email"`
+
+	// CreatedAt stores the date of the account creation.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+
+	// Settings holds the user configuration.
+	Settings happydns.UserSettings `json:"settings,omitempty"`
 }
 
 func currentUser(u *happydns.User) *DisplayUser {
@@ -86,6 +93,18 @@ func currentUser(u *happydns.User) *DisplayUser {
 	}
 }
 
+// displayAuthToken returns the user information.
+//
+//	@Summary	User info.
+//	@Schemes
+//	@Description	Retrieve information about the currently logged user.
+//	@Tags			user_auth
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	DisplayUser
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Router			/auth [get]
 func displayAuthToken(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 
@@ -117,6 +136,17 @@ func displayNotAuthToken(opts *config.Options, c *gin.Context) {
 	}
 }
 
+// logout closes the user session.
+//
+//	@Summary	Close session.
+//	@Schemes
+//	@Description	Erase the HTTP-only cookie. This leads to user logout in its browser.
+//	@Tags			user_auth
+//	@Accept			json
+//	@Produce		json
+//	@Success		204	{null}		null			"Loged out"
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Router			/auth/logout [post]
 func logout(opts *config.Options, c *gin.Context) {
 	c.SetCookie(
 		COOKIE_NAME,
@@ -127,14 +157,30 @@ func logout(opts *config.Options, c *gin.Context) {
 		opts.DevProxy == "" && !strings.HasPrefix(opts.ExternalURL, "http://"),
 		true,
 	)
-	c.JSON(http.StatusNoContent, true)
+	c.Status(http.StatusNoContent)
 }
 
 type loginForm struct {
-	Email    string
+	// Email of the user.
+	Email string
+
+	// Password of the user.
 	Password string
 }
 
+// checkAuth validate user authentication and delivers a session token.
+//
+//	@Summary	Authenticate user.
+//	@Schemes
+//	@Description	Validate user authentication and delivers a session token.
+//	@Tags			user_auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		loginForm		true	"Login information"
+//	@Success		200		{object}	DisplayUser		"Login success"
+//	@Failure		401		{object}	happydns.Error	"Authentication failure"
+//	@Failure		500		{object}	happydns.Error
+//	@Router			/auth [post]
 func checkAuth(opts *config.Options, c *gin.Context) {
 	var lf loginForm
 	if err := c.ShouldBindJSON(&lf); err != nil {

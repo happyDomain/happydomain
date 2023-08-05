@@ -33,3 +33,4 @@ package main
 
 //go:generate go run generators/gen_icon.go providers providers
 //go:generate go run generators/gen_icon.go services svcs
+//go:generate swag init --generalInfo api/routes.go

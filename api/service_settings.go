@@ -53,13 +53,31 @@ func declareServiceSettingsRoutes(cfg *config.Options, router *gin.RouterGroup) 
 
 type ServiceSettingsState struct {
 	FormState
-	happydns.Service
+	happydns.Service `json:"Service" swaggertype:"object"`
 }
 
 type ServiceSettingsResponse struct {
 	Services map[string][]*happydns.ServiceCombined `json:"services,omitempty"`
+	Values   map[string]interface{}                 `json:"values,omitempty"`
+	Form     *forms.CustomForm                      `json:"form,omitempty"`
 }
 
+// getServiceSettingsState creates or updates a Service with human fillable forms.
+//	@Summary	Assistant to Service creation.
+//	@Schemes
+//	@Description	This creates or updates a Service with human fillable forms.
+//	@Tags			service_specs
+//	@Accept			json
+//	@Produce		json
+//	@Param			serviceType	path	string					true	"The service's type"
+//	@Param			body		body	ServiceSettingsState	true	"The current state of the Service's parameters, possibly empty (but not null)"
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	ServiceSettingsResponse		"The settings need more rafinement"
+//	@Success		200	{object}	happydns.ServiceCombined	"The Service has been created with the given settings"
+//	@Failure		400	{object}	happydns.Error				"Invalid input"
+//	@Failure		401	{object}	happydns.Error				"Authentication failure"
+//	@Failure		404	{object}	happydns.Error				"Service not found"
+//	@Router			/service/{serviceType} [post]
 func getServiceSettingsState(cfg *config.Options, c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 	zone := c.MustGet("zone").(*happydns.Zone)
@@ -118,7 +136,7 @@ func getServiceSettingsState(cfg *config.Options, c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, ProviderSettingsResponse{
+	c.JSON(http.StatusOK, ServiceSettingsResponse{
 		Form:   form,
 		Values: p,
 	})

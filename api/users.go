@@ -93,16 +93,27 @@ func myUser(c *gin.Context) (user *happydns.User) {
 	return
 }
 
-type UploadedUser struct {
-	Kind       string
+type UserRegistration struct {
 	Email      string
 	Password   string
 	Language   string `json:"lang,omitempty"`
 	Newsletter bool   `json:"wantReceiveUpdate,omitempty"`
 }
 
+// registerUser checks and appends a user in the database.
+//	@Summary	Register account.
+//	@Schemes
+//	@Description	Register a new happyDomain account (when using internal authentication system).
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		UserRegistration	true	"Account information"
+//	@Success		200		{object}	happydns.User		"The created user"
+//	@Failure		400		{object}	happydns.Error		"Invalid input"
+//	@Failure		500		{object}	happydns.Error
+//	@Router			/users [post]
 func registerUser(opts *config.Options, c *gin.Context) {
-	var uu UploadedUser
+	var uu UserRegistration
 	err := c.ShouldBindJSON(&uu)
 	if err != nil {
 		log.Printf("%s sends invalid User JSON: %s", c.ClientIP(), err.Error())
@@ -150,8 +161,27 @@ func registerUser(opts *config.Options, c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+type UserSpecialAction struct {
+	// Kind of special action to perform: "recovery" or "validation".
+	Kind string
+
+	// Email on which to perform actions.
+	Email string
+}
+
+// specialUserOperations performs account recovery.
+//	@Summary	Account recovery.
+//	@Schemes
+//	@Description	This will send an email to the user either to recover its account or with a new email validation link.
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		UserSpecialAction	true	"Description of the action to perform and email of the user"
+//	@Success		200		{object}	happydns.Error		"Perhaps something happen"
+//	@Failure		500		{object}	happydns.Error
+//	@Router			/users [patch]
 func specialUserOperations(opts *config.Options, c *gin.Context) {
-	var uu UploadedUser
+	var uu UserSpecialAction
 	err := c.ShouldBindJSON(&uu)
 	if err != nil {
 		log.Printf("%s sends invalid User JSON: %s", c.ClientIP(), err.Error())
@@ -229,12 +259,41 @@ func getUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+// getUserSettings gets the settings of the given user.
+//	@Summary	Retrieve user's settings.
+//	@Schemes
+//	@Description	Retrieve the user's settings.
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			userId	path	string	true	"User identifier"
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	happydns.UserSettings	"User settings"
+//	@Failure		401	{object}	happydns.Error			"Authentication failure"
+//	@Failure		403	{object}	happydns.Error			"Not your account"
+//	@Router			/users/{userId}/settings [get]
 func getUserSettings(c *gin.Context) {
 	user := c.MustGet("user").(*happydns.User)
 
 	c.JSON(http.StatusOK, user.Settings)
 }
 
+// changeUserSettings updates the settings of the given user.
+//	@Summary	Update user's settings.
+//	@Schemes
+//	@Description	Update the user's settings.
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			userId	path	string					true	"User identifier"
+//	@Param			body	body	happydns.UserSettings	true	"User settings"
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	happydns.UserSettings	"User settings"
+//	@Failure		400	{object}	happydns.Error			"Invalid input"
+//	@Failure		401	{object}	happydns.Error			"Authentication failure"
+//	@Failure		403	{object}	happydns.Error			"Not your account"
+//	@Failure		500	{object}	happydns.Error
+//	@Router			/users/{userId}/settings [post]
 func changeUserSettings(c *gin.Context) {
 	user := c.MustGet("user").(*happydns.User)
 
@@ -262,6 +321,22 @@ type passwordForm struct {
 	PasswordConfirm string
 }
 
+// changePassword changes the password of the given account.
+//	@Summary	Change password
+//	@Schemes
+//	@Description	Change the password of the given account.
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			userId	path		string			true	"User identifier"
+//	@Param			body	body		passwordForm	true	"Password confirmation"
+//	@Success		204		{null}		null
+//	@Failure		400		{object}	happydns.Error	"Invalid input"
+//	@Failure		401		{object}	happydns.Error	"Authentication failure"
+//	@Failure		403		{object}	happydns.Error	"Bad current password"
+//	@Failure		500		{object}	happydns.Error
+//	@Router			/users/{userId}/new_password [post]
 func changePassword(opts *config.Options, c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
@@ -314,6 +389,22 @@ func changePassword(opts *config.Options, c *gin.Context) {
 	logout(opts, c)
 }
 
+// deleteUser delete the account related to the given user.
+//	@Summary	Drop account
+//	@Schemes
+//	@Description	Delete the account related to the given user.
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			userId	path		string			true	"User identifier"
+//	@Param			body	body		passwordForm	true	"Password confirmation"
+//	@Success		204		{null}		null
+//	@Failure		400		{object}	happydns.Error	"Invalid input"
+//	@Failure		401		{object}	happydns.Error	"Authentication failure"
+//	@Failure		403		{object}	happydns.Error	"Bad current password"
+//	@Failure		500		{object}	happydns.Error
+//	@Router			/users/{userId}/delete [post]
 func deleteUser(opts *config.Options, c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
@@ -408,9 +499,23 @@ func userAuthHandler(c *gin.Context) {
 }
 
 type UploadedAddressValidation struct {
+	// Key able to validate the email address.
 	Key string
 }
 
+// validateUserAddress validates a user address after registration.
+//	@Summary	Validate e-mail address.
+//	@Schemes
+//	@Description	This is the route called by the web interface in order to validate the e-mail address of the user.
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			userId	path		string						true	"User identifier"
+//	@Param			body	body		UploadedAddressValidation	true	"Validation form"
+//	@Success		204		{null}		null						"Email validated, you can now login"
+//	@Failure		400		{object}	happydns.Error				"Invalid input"
+//	@Failure		500		{object}	happydns.Error
+//	@Router			/users/{userId}/email [post]
 func validateUserAddress(c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
@@ -434,14 +539,30 @@ func validateUserAddress(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusNoContent, true)
+	c.Status(http.StatusNoContent)
 }
 
 type UploadedAccountRecovery struct {
-	Key      string
+	// Key is the secret sent by email to the user.
+	Key string
+
+	// Password is the new password to use with this account.
 	Password string
 }
 
+// recoverUserAccount performs account recovery by reseting the password of the account.
+//	@Summary	Reset password with link in email.
+//	@Schemes
+//	@Description	This performs	account	recovery	by reseting the	password of the	account.
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			userId	path		string					true	"User identifier"
+//	@Param			body	body		UploadedAccountRecovery	true	"Recovery form"
+//	@Success		204		{null}		null					"Recovery completed, you can now login with your new credentials"
+//	@Failure		400		{object}	happydns.Error			"Invalid input"
+//	@Failure		500		{object}	happydns.Error
+//	@Router			/users/{userId}/recovery [post]
 func recoverUserAccount(c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
@@ -475,19 +596,41 @@ func recoverUserAccount(c *gin.Context) {
 	}
 
 	log.Printf("%s: User recovered: %s", c.ClientIP(), user.Email)
-	c.JSON(http.StatusNoContent, true)
+	c.Status(http.StatusNoContent)
 }
 
+// getSession gets the content of the current user's session.
+//	@Summary	Retrieve user's session content
+//	@Schemes
+//	@Description	Get the content of the current user's session.
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	happydns.Session
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Router			/sessions [get]
 func getSession(c *gin.Context) {
 	session := c.MustGet("MySession").(*happydns.Session)
 
 	c.JSON(http.StatusOK, session)
 }
 
+// clearSession removes the content of the current user's session.
+//	@Summary	Remove user's session content
+//	@Schemes
+//	@Description	Remove the content of the current user's session.
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Success		204	{null}		null
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Router			/sessions [delete]
 func clearSession(c *gin.Context) {
 	session := c.MustGet("MySession").(*happydns.Session)
 
 	session.ClearSession()
 
-	c.JSON(http.StatusOK, true)
+	c.Status(http.StatusNoContent)
 }

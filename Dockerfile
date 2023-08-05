@@ -30,9 +30,9 @@ COPY storage ./storage
 COPY utils ./utils
 COPY generate.go go.mod go.sum main.go ./
 
-RUN sed -i '/yarn --offline build/d' ui/assets.go && \
-    go get -d -v && \
-    go generate -v && \
+RUN sed -i '/npm run build/d' ui/assets.go && \
+    go install github.com/swaggo/swag/cmd/swag@latest && \
+    go generate -v ./... && \
     go build -v -ldflags '-w'
 
 

@@ -125,13 +125,50 @@ func subdomainHandler(c *gin.Context) {
 	c.Next()
 }
 
+type zoneServices struct {
+	Services []*happydns.ServiceCombined `json:"services"`
+}
+
+// getZoneSubdomain returns the services associated with a given subdomain.
+//	@Summary	List services
+//	@Schemes
+//	@Description	Returns the services associated with the given subdomain.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			domainId	path		string	true	"Domain identifier"
+//	@Param			zoneId		path		string	true	"Zone identifier"
+//	@Param			subdomain	path		string	true	"Part of the subdomain considered for the service (@ for the root of the zone ; subdomain is relative to the root, do not include it)"
+//	@Success		200			{object}	zoneServices
+//	@Failure		401			{object}	happydns.Error	"Authentication failure"
+//	@Failure		404			{object}	happydns.Error	"Domain or Zone not found"
+//	@Router			/domains/{domainId}/zone/{zoneId}/{subdomain} [get]
 func getZoneSubdomain(c *gin.Context) {
 	zone := c.MustGet("zone").(*happydns.Zone)
 	subdomain := c.MustGet("subdomain").(string)
 
-	c.JSON(http.StatusOK, gin.H{"services": zone.Services[subdomain]})
+	c.JSON(http.StatusOK, zoneServices{
+		Services: zone.Services[subdomain],
+	})
 }
 
+// addZoneService adds a Service to the given subdomain of the Zone.
+//	@Summary	Add a Service.
+//	@Schemes
+//	@Description	Add a Service to the given subdomain of the Zone.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			domainId	path		string	true	"Domain identifier"
+//	@Param			zoneId		path		string	true	"Zone identifier"
+//	@Param			subdomain	path		string	true	"Part of the subdomain considered for the service (@ for the root of the zone ; subdomain is relative to the root, do not include it)"
+//	@Success		200			{object}	happydns.Zone
+//	@Failure		400			{object}	happydns.Error	"Invalid input"
+//	@Failure		401			{object}	happydns.Error	"Authentication failure"
+//	@Failure		404			{object}	happydns.Error	"Domain or Zone not found"
+//	@Router			/domains/{domainId}/zone/{zoneId}/{subdomain}/services [post]
 func addZoneService(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 	zone := c.MustGet("zone").(*happydns.Zone)
@@ -178,6 +215,22 @@ func serviceIdHandler(c *gin.Context) {
 	c.Next()
 }
 
+// getServiceService retrieves the designated Service.
+//	@Summary	Get the Service.
+//	@Schemes
+//	@Description	Retrieve the designated Service.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			domainId	path		string	true	"Domain identifier"
+//	@Param			zoneId		path		string	true	"Zone identifier"
+//	@Param			subdomain	path		string	true	"Part of the subdomain considered for the service (@ for the root of the zone ; subdomain is relative to the root, do not include it)"
+//	@Param			serviceId	path		string	true	"Service identifier"
+//	@Success		200			{object}	happydns.ServiceCombined
+//	@Failure		401			{object}	happydns.Error	"Authentication failure"
+//	@Failure		404			{object}	happydns.Error	"Domain or Zone not found"
+//	@Router			/domains/{domainId}/zone/{zoneId}/{subdomain}/services/{serviceId} [get]
 func getZoneService(c *gin.Context) {
 	zone := c.MustGet("zone").(*happydns.Zone)
 	serviceid := c.MustGet("serviceid").([]byte)
@@ -186,6 +239,19 @@ func getZoneService(c *gin.Context) {
 	c.JSON(http.StatusOK, zone.FindSubdomainService(subdomain, serviceid))
 }
 
+// retrieveZone retrieves the current zone deployed on the NS Provider.
+//	@Summary	Retrieve the zone on the Provider.
+//	@Schemes
+//	@Description	Retrieve the current zone deployed on the NS Provider.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			domainId	path		string				true	"Domain identifier"
+//	@Success		200			{object}	happydns.ZoneMeta	"The new zone metadata"
+//	@Failure		401			{object}	happydns.Error		"Authentication failure"
+//	@Failure		404			{object}	happydns.Error		"Domain not found"
+//	@Router			/domains/{domainId}/retrieve_zone [post]
 func retrieveZone(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 	domain := c.MustGet("domain").(*happydns.Domain)
@@ -285,6 +351,24 @@ func importZone(c *gin.Context) {
 	c.JSON(http.StatusOK, zone)
 }
 
+// diffZones computes the difference between the two zone identifiers given.
+//	@Summary	Compute differences between zones.
+//	@Schemes
+//	@Description	Compute the difference between the two zone identifiers given.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			domainId	path		string			true	"Domain identifier"
+//	@Param			zoneId1		path		string			true	"Zone identifier to use as the old one. Currently only @ are expected, to use the currently deployed zone."
+//	@Param			zoneId2		path		string			true	"Zone identifier to use as the new one"
+//	@Success		200			{object}	[]string		"Differences, reported as text, one diff per item"
+//	@Failure		400			{object}	happydns.Error	"Invalid input"
+//	@Failure		401			{object}	happydns.Error	"Authentication failure"
+//	@Failure		404			{object}	happydns.Error	"Domain not found"
+//	@Failure		500			{object}	happydns.Error
+//	@Failure		501			{object}	happydns.Error	"Diff between to zone identifier, currently not supported"
+//	@Router			/domains/{domainId}/diff_zones/{zoneId1}/{zoneId2} [post]
 func diffZones(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 	domain := c.MustGet("domain").(*happydns.Domain)
@@ -331,6 +415,23 @@ func diffZones(c *gin.Context) {
 	c.JSON(http.StatusOK, rrCorected)
 }
 
+// applyZone performs the requested changes with the provider.
+//	@Summary	Performs requested changes to the real zone.
+//	@Schemes
+//	@Description	Perform the requested changes with the provider.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			domainId	path		string				true	"Domain identifier"
+//	@Param			zoneId		path		string				true	"Zone identifier"
+//	@Param			body		body		[]string			true	"Differences (from /diff_zones) to apply"
+//	@Success		200			{object}	happydns.ZoneMeta	"The new Zone metadata containing the current zone"
+//	@Failure		400			{object}	happydns.Error		"Invalid input"
+//	@Failure		401			{object}	happydns.Error		"Authentication failure"
+//	@Failure		404			{object}	happydns.Error		"Domain or Zone not found"
+//	@Failure		500			{object}	happydns.Error
+//	@Router			/domains/{domainId}/zone/{zoneId}/apply_changes [post]
 func applyZone(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 	domain := c.MustGet("domain").(*happydns.Domain)
@@ -422,6 +523,20 @@ func applyZone(c *gin.Context) {
 	c.JSON(http.StatusOK, newZone.ZoneMeta)
 }
 
+// viewZone creates a flatten export of the zone.
+//	@Summary	Get flatten zone file.
+//	@Schemes
+//	@Description	Create a flatten export of the zone that can be read as a BIND-like file.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			domainId	path		string			true	"Domain identifier"
+//	@Param			zoneId		path		string			true	"Zone identifier"
+//	@Success		200			{object}	string			"The exported zone file (with initial and leading JSON quote)"
+//	@Failure		401			{object}	happydns.Error	"Authentication failure"
+//	@Failure		404			{object}	happydns.Error	"Domain or Zone not found"
+//	@Router			/domains/{domainId}/zone/{zoneId}/view [post]
 func viewZone(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 	zone := c.MustGet("zone").(*happydns.Zone)
@@ -435,6 +550,21 @@ func viewZone(c *gin.Context) {
 	c.JSON(http.StatusOK, ret)
 }
 
+// UpdateZoneService adds or updates a service inside the given Zone.
+//	@Summary	Add or update a Service.
+//	@Schemes
+//	@Description	Add or update a Service inside the given Zone.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			domainId	path		string						true	"Domain identifier"
+//	@Param			zoneId		path		string						true	"Zone identifier"
+//	@Param			body		body		happydns.ServiceCombined	true	"Service to update"
+//	@Success		200			{object}	happydns.Zone
+//	@Failure		401			{object}	happydns.Error	"Authentication failure"
+//	@Failure		404			{object}	happydns.Error	"Domain or Zone not found"
+//	@Router			/domains/{domainId}/zone/{zoneId} [patch]
 func UpdateZoneService(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 	zone := c.MustGet("zone").(*happydns.Zone)
@@ -465,6 +595,23 @@ func UpdateZoneService(c *gin.Context) {
 	c.JSON(http.StatusOK, zone)
 }
 
+// deleteZoneService drops the given Service.
+//	@Summary	Drop the given Service.
+//	@Schemes
+//	@Description	Drop the given Service.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			domainId	path		string	true	"Domain identifier"
+//	@Param			zoneId		path		string	true	"Zone identifier"
+//	@Param			subdomain	path		string	true	"Part of the subdomain considered for the service (@ for the root of the zone ; subdomain is relative to the root, do not include it)"
+//	@Param			serviceId	path		string	true	"Service identifier"
+//	@Success		200			{object}	happydns.Zone
+//	@Failure		400			{object}	happydns.Error	"Invalid input"
+//	@Failure		401			{object}	happydns.Error	"Authentication failure"
+//	@Failure		404			{object}	happydns.Error	"Domain or Zone not found"
+//	@Router			/domains/{domainId}/zone/{zoneId}/{subdomain}/services/{serviceId} [delete]
 func deleteZoneService(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 	zone := c.MustGet("zone").(*happydns.Zone)
@@ -494,6 +641,22 @@ type serviceRecord struct {
 	Fields *dns.RR `json:"fields,omitempty"`
 }
 
+// getServiceRecords retrieves the records that will be generated by a Service.
+//	@Summary	Get the records for a Service.
+//	@Schemes
+//	@Description	Retrieve the records that will be generated by a Service.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			domainId	path		string	true	"Domain identifier"
+//	@Param			zoneId		path		string	true	"Zone identifier"
+//	@Param			subdomain	path		string	true	"Part of the subdomain considered for the service (@ for the root of the zone ; subdomain is relative to the root, do not include it)"
+//	@Param			serviceId	path		string	true	"Service identifier"
+//	@Success		200			{object}	happydns.Zone
+//	@Failure		401			{object}	happydns.Error	"Authentication failure"
+//	@Failure		404			{object}	happydns.Error	"Domain or Zone not found"
+//	@Router			/domains/{domainId}/zone/{zoneId}/{subdomain}/services/{serviceId}/records [get]
 func getServiceRecords(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 	zone := c.MustGet("zone").(*happydns.Zone)

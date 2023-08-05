@@ -42,10 +42,10 @@ import (
 // Session holds informatin about a User's currently connected.
 type Session struct {
 	// Id is the Session's identifier.
-	Id Identifier `json:"id"`
+	Id Identifier `json:"id" swaggertype:"string"`
 
 	// IdUser is the User's identifier of the Session.
-	IdUser Identifier `json:"login"`
+	IdUser Identifier `json:"login" swaggertype:"string"`
 
 	// IssuedAt holds the creation date of the Session.
 	IssuedAt time.Time `json:"time"`

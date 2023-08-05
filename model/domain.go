@@ -35,17 +35,27 @@ import (
 	"github.com/miekg/dns"
 )
 
+// DomainMinimal is used for swagger documentation as Domain add.
+type DomainMinimal struct {
+	// IsProvider is the identifier of the Provider used to access and edit the
+	// Domain.
+	IdProvider Identifier `json:"id_provider" swaggertype:"string"`
+
+	// DomainName is the FQDN of the managed Domain.
+	DomainName string `json:"domain"`
+}
+
 // Domain holds information about a domain name own by a User.
 type Domain struct {
 	// Id is the Domain's identifier in the database.
-	Id Identifier `json:"id"`
+	Id Identifier `json:"id" swaggertype:"string"`
 
 	// IdUser is the identifier of the Domain's Owner.
-	IdUser Identifier `json:"id_owner"`
+	IdUser Identifier `json:"id_owner" swaggertype:"string"`
 
 	// IsProvider is the identifier of the Provider used to access and edit the
 	// Domain.
-	IdProvider Identifier `json:"id_provider"`
+	IdProvider Identifier `json:"id_provider" swaggertype:"string"`
 
 	// DomainName is the FQDN of the managed Domain.
 	DomainName string `json:"domain"`
@@ -55,7 +65,7 @@ type Domain struct {
 
 	// ZoneHistory are the identifiers to the Zone attached to the current
 	// Domain.
-	ZoneHistory []Identifier `json:"zone_history"`
+	ZoneHistory []Identifier `json:"zone_history" swaggertype:"array,string"`
 }
 
 // Domains is an array of Domain.

@@ -51,11 +51,19 @@ func declareResolverRoutes(router *gin.RouterGroup) {
 	router.POST("/resolver", runResolver)
 }
 
+// resolverRequest holds the resolution parameters
 type resolverRequest struct {
-	Resolver   string `json:"resolver"`
-	Custom     string `json:"custom,omitempty"`
+	// Resolver is the name of the resolver to use (or local or custom).
+	Resolver string `json:"resolver"`
+
+	// Custom is the address to the recursive server to use.
+	Custom string `json:"custom,omitempty"`
+
+	// DomainName is the FQDN to resolve.
 	DomainName string `json:"domain"`
-	Type       string `json:"type"`
+
+	// Type is the type of record to retrieve.
+	Type string `json:"type"`
 }
 
 func resolverANYQuestion(client dns.Client, resolver string, dn string) (r *dns.Msg, err error) {
@@ -105,6 +113,49 @@ func resolverQuestion(client dns.Client, resolver string, dn string, rrType uint
 	return r, err
 }
 
+// DNSMsg is the documentation structur corresponding to dns.Msg
+type DNSMsg struct {
+	// Question is the Question section of the DNS response.
+	Question []DNSQuestion
+
+	// Answer is the list of Answer records in the DNS response.
+	Answer []interface{} `swaggertype:"object"`
+
+	// Ns is the list of Authoritative records in the DNS response.
+	Ns []interface{} `swaggertype:"object"`
+
+	// Extra is the list of extra records in the DNS response.
+	Extra []interface{} `swaggertype:"object"`
+}
+
+type DNSQuestion struct {
+	// Name is the domain name researched.
+	Name string
+
+	// Qtype is the type of record researched.
+	Qtype uint16
+
+	// Qclass is the class of record researched.
+	Qclass uint16
+}
+
+// runResolver performs a NS resolution for a given domain, with options.
+//	@Summary	Perform a DNS resolution.
+//	@Schemes
+//	@Description	Perform a NS resolution	for a given domain, with options.
+//	@Tags			resolver
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		resolverRequest	true	"Options to the resolution"
+//	@Success		200		{object}	DNSMsg
+//	@Success		204		{object}	happydns.Error	"No content"
+//	@Failure		400		{object}	happydns.Error	"Invalid input"
+//	@Failure		401		{object}	happydns.Error	"Authentication failure"
+//	@Failure		403		{object}	happydns.Error	"The resolver refused to treat our request"
+//	@Failure		404		{object}	happydns.Error	"The domain doesn't exist"
+//	@Failure		406		{object}	happydns.Error	"The resolver returned an error"
+//	@Failure		500		{object}	happydns.Error
+//	@Router			/resolver [post]
 func runResolver(c *gin.Context) {
 	var urr resolverRequest
 	if err := c.ShouldBindJSON(&urr); err != nil {

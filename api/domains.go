@@ -58,6 +58,19 @@ func declareDomainsRoutes(cfg *config.Options, router *gin.RouterGroup) {
 	declareZonesRoutes(cfg, apiDomainsRoutes)
 }
 
+// GetDomains retrieves all domains belonging to the user.
+//
+//	@Summary	Retrieve user's domains
+//	@Schemes
+//	@Description	Retrieve all domains belonging to the user.
+//	@Tags			domains
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Success		200	{array}		happydns.Domain
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Failure		404	{object}	happydns.Error	"Unable to retrieve user's domains"
+//	@Router			/domains [get]
 func GetDomains(c *gin.Context) {
 	user := myUser(c)
 	if user == nil {
@@ -75,6 +88,21 @@ func GetDomains(c *gin.Context) {
 	}
 }
 
+// addDomain appends a new domain to those managed.
+//
+//	@Summary	Manage a new domain
+//	@Schemes
+//	@Description	Append a new domain to those managed.
+//	@Tags			domains
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body	happydns.DomainMinimal	true	"Domain object that you want to manage through happyDomain."
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	happydns.Domain
+//	@Failure		400	{object}	happydns.Error	"Error in received data"
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Failure		500	{object}	happydns.Error	"Unable to retrieve current user's domains"
+//	@Router			/domains [post]
 func addDomain(c *gin.Context) {
 	var uz happydns.Domain
 	err := c.ShouldBindJSON(&uz)
@@ -140,15 +168,15 @@ func DomainHandler(c *gin.Context) {
 		return
 	}
 
-	// If source is provided, check that the domain is a parent of the source
-	var source *happydns.SourceMeta
-	if src, exists := c.Get("source"); exists {
-		source = &src.(*happydns.SourceCombined).SourceMeta
-	} else if src, exists := c.Get("sourcemeta"); exists {
-		source = src.(*happydns.SourceMeta)
+	// If provider is provided, check that the domain is a parent of the provider
+	var provider *happydns.ProviderMeta
+	if src, exists := c.Get("provider"); exists {
+		provider = &src.(*happydns.ProviderCombined).ProviderMeta
+	} else if src, exists := c.Get("providermeta"); exists {
+		provider = src.(*happydns.ProviderMeta)
 	}
-	if source != nil && !source.Id.Equals(domain.IdProvider) {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Domain not found (not child of source)"})
+	if provider != nil && !provider.Id.Equals(domain.IdProvider) {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Domain not found (not child of provider)"})
 		return
 	}
 
@@ -158,14 +186,40 @@ func DomainHandler(c *gin.Context) {
 }
 
 type apiDomain struct {
-	Id          happydns.Identifier `json:"id"`
-	IdUser      happydns.Identifier `json:"id_owner"`
-	IdProvider  happydns.Identifier `json:"id_provider"`
-	DomainName  string              `json:"domain"`
+	// Id is the Domain's identifier in the database.
+	Id happydns.Identifier `json:"id" swaggertype:"string"`
+
+	// IdUser is the identifier of the Domain's Owner.
+	IdUser happydns.Identifier `json:"id_owner" swaggertype:"string"`
+
+	// IsProvider is the identifier of the Provider used to access and edit the
+	// Domain.
+	IdProvider happydns.Identifier `json:"id_provider" swaggertype:"string"`
+
+	// DomainName is the FQDN of the managed Domain.
+	DomainName string `json:"domain"`
+	// Group is a hint string aims to group domains.
+	Group string `json:"group,omitempty"`
+
+	// ZoneHistory are the metadata associated to each Zone saved with the
+	// current Domain.
 	ZoneHistory []happydns.ZoneMeta `json:"zone_history"`
-	Group       string              `json:"group,omitempty"`
 }
 
+// GetDomain retrieves information about a given Domain owned by the user.
+//
+//	@Summary	Retrieve Domain local information.
+//	@Schemes
+//	@Description	Retrieve information in the database about a given Domain owned by the user.
+//	@Tags			domains
+//	@Accept			json
+//	@Produce		json
+//	@Param			domainId	path	string	true	"Domain identifier"
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	apiDomain
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Failure		404	{object}	happydns.Error	"Domain not found"
+//	@Router			/domains/{domainId} [get]
 func GetDomain(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 	ret := &apiDomain{
@@ -190,6 +244,24 @@ func GetDomain(c *gin.Context) {
 	c.JSON(http.StatusOK, ret)
 }
 
+// UpdateDomain updates the information about a given Domain owned by the user.
+//
+//	@Summary	Update Domain local information.
+//	@Schemes
+//	@Description	Updates the information about a given Domain owned by the user.
+//	@Tags			domains
+//	@Accept			json
+//	@Produce		json
+//	@Param			domainId	path	string			true	"Domain identifier"
+//	@Param			body		body	happydns.Domain	true	"The new object overriding the current domain"
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	happydns.Domain
+//	@Failure		400	{object}	happydns.Error	"Invalid input"
+//	@Failure		400	{object}	happydns.Error	"Identifier changed"
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Failure		404	{object}	happydns.Error	"Domain not found"
+//	@Failure		500	{object}	happydns.Error	"Database writing error"
+//	@Router			/domains/{domainId} [put]
 func UpdateDomain(c *gin.Context) {
 	old := c.MustGet("domain").(*happydns.Domain)
 
@@ -217,6 +289,22 @@ func UpdateDomain(c *gin.Context) {
 	c.JSON(http.StatusOK, old)
 }
 
+// delDomain removes a domain from the database.
+//
+//	@Summary	Stop managing a Domain.
+//	@Schemes
+//	@Description	Delete all the information in the database about the given Domain. This only stops happyDomain from managing the Domain, it doesn't do anything on the Provider.
+//	@Tags			domains
+//	@Accept			json
+//	@Produce		json
+//	@Param			domainId	path	string	true	"Domain identifier"
+//	@Security		securitydefinitions.basic
+//	@Success		204	"Domain deleted"
+//	@Failure		400	{object}	happydns.Error	"Invalid input"
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Failure		404	{object}	happydns.Error	"Domain not found"
+//	@Failure		500	{object}	happydns.Error	"Database writing error"
+//	@Router			/domains/{domainId} [delete]
 func delDomain(c *gin.Context) {
 	if err := storage.MainStore.DeleteDomain(c.MustGet("domain").(*happydns.Domain)); err != nil {
 		log.Printf("%s was unable to DeleteDomain: %s", c.ClientIP(), err.Error())
@@ -224,5 +312,5 @@ func delDomain(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusNoContent, true)
+	c.Status(http.StatusNoContent)
 }

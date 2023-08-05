@@ -42,6 +42,7 @@ import (
 
 	"github.com/fatih/color"
 
+	"git.happydns.org/happydomain/api"
 	"git.happydns.org/happydomain/config"
 	"git.happydns.org/happydomain/internal/app"
 	"git.happydns.org/happydomain/storage"
@@ -57,6 +58,10 @@ var (
 
 func main() {
 	var err error
+
+	api.HDVersion = api.Version{
+		Version: Version,
+	}
 
 	log.Println("This is happyDomain", Version)
 	rand.Seed(time.Now().UTC().UnixNano())

@@ -46,16 +46,27 @@ type Provider interface {
 	DNSControlName() string
 }
 
+// ProviderMinimal is used for swagger documentation as Provider add.
+type ProviderMinimal struct {
+	// Type is the string representation of the Provider's type.
+	Type string `json:"_srctype"`
+
+	Provider
+
+	// Comment is a string that helps user to distinguish the Provider.
+	Comment string `json:"_comment,omitempty"`
+}
+
 // ProviderMeta holds the metadata associated to a Provider.
 type ProviderMeta struct {
 	// Type is the string representation of the Provider's type.
 	Type string `json:"_srctype"`
 
 	// Id is the Provider's identifier.
-	Id Identifier `json:"_id"`
+	Id Identifier `json:"_id" swaggertype:"string"`
 
 	// OwnerId is the User's identifier for the current Provider.
-	OwnerId Identifier `json:"_ownerid"`
+	OwnerId Identifier `json:"_ownerid" swaggertype:"string"`
 
 	// Comment is a string that helps user to distinguish the Provider.
 	Comment string `json:"_comment,omitempty"`

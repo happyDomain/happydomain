@@ -65,6 +65,18 @@ func declareProvidersRoutes(cfg *config.Options, router *gin.RouterGroup) {
 	apiProviderRoutes.GET("/domains", getDomainsHostedByProvider)
 }
 
+// getDomains retrieves all providers belonging to the user.
+//	@Summary	Retrieve user's providers
+//	@Schemes
+//	@Description	Retrieve all DNS providers belonging to the user.
+//	@Tags			providers
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Success		200	{array}		happydns.Provider
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Failure		404	{object}	happydns.Error	"Unable to retrieve user's domains"
+//	@Router			/providers [get]
 func getProviders(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 
@@ -171,12 +183,39 @@ func ProviderHandler(c *gin.Context) {
 	c.Next()
 }
 
+// GetProvider retrieves information about a given Provider owned by the user.
+//	@Summary	Retrieve Provider information.
+//	@Schemes
+//	@Description	Retrieve information in the database about a given Provider owned by the user.
+//	@Tags			providers
+//	@Accept			json
+//	@Produce		json
+//	@Param			providerId	path	string	true	"Provider identifier"
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	happydns.ProviderCombined
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Failure		404	{object}	happydns.Error	"Provider not found"
+//	@Router			/providers/{providerId} [get]
 func GetProvider(c *gin.Context) {
 	provider := c.MustGet("provider").(*happydns.ProviderCombined)
 
 	c.JSON(http.StatusOK, provider)
 }
 
+// addProvider appends a new provider.
+//	@Summary	Add a new provider
+//	@Schemes
+//	@Description	Append a new provider for the user.
+//	@Tags			providers
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body	happydns.ProviderMinimal	true	"Provider to add"
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	happydns.Provider
+//	@Failure		400	{object}	happydns.Error	"Error in received data"
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Failure		500	{object}	happydns.Error	"Unable to retrieve current user's providers"
+//	@Router			/providers [post]
 func addProvider(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 
@@ -196,6 +235,23 @@ func addProvider(c *gin.Context) {
 	c.JSON(http.StatusOK, s)
 }
 
+// UpdateProvider updates the information about a given Provider owned by the user.
+//	@Summary	Update Provider information.
+//	@Schemes
+//	@Description	Updates the information about a given Provider owned by the user.
+//	@Tags			providers
+//	@Accept			json
+//	@Produce		json
+//	@Param			providerId	path	string				true	"Provider identifier"
+//	@Param			body		body	happydns.Provider	true	"The new object overriding the current provider"
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	happydns.Provider
+//	@Failure		400	{object}	happydns.Error	"Invalid input"
+//	@Failure		400	{object}	happydns.Error	"Identifier changed"
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Failure		404	{object}	happydns.Error	"Provider not found"
+//	@Failure		500	{object}	happydns.Error	"Database writing error"
+//	@Router			/providers/{providerId} [put]
 func UpdateProvider(c *gin.Context) {
 	provider := c.MustGet("provider").(*happydns.ProviderCombined)
 
@@ -217,6 +273,21 @@ func UpdateProvider(c *gin.Context) {
 	c.JSON(http.StatusOK, src)
 }
 
+// deleteProvider removes a provider from the database.
+//	@Summary	Delete a Provider.
+//	@Schemes
+//	@Description	Delete a Provider from the database. It is required that no Domain are still managed by this Provider before calling this route.
+//	@Tags			providers
+//	@Accept			json
+//	@Produce		json
+//	@Param			providerId	path	string	true	"Provider identifier"
+//	@Security		securitydefinitions.basic
+//	@Success		204	"Provider deleted"
+//	@Failure		400	{object}	happydns.Error	"Invalid input"
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Failure		404	{object}	happydns.Error	"Provider not found"
+//	@Failure		500	{object}	happydns.Error	"Database writing error"
+//	@Router			/providers/{providerId} [delete]
 func deleteProvider(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 	providermeta := c.MustGet("providermeta").(*happydns.ProviderMeta)
@@ -245,6 +316,22 @@ func deleteProvider(c *gin.Context) {
 	c.JSON(http.StatusNoContent, nil)
 }
 
+// getDomainsHostedByProvider lists domains available to management from the given Provider.
+//	@Summary	Lists manageable domains from the Provider.
+//	@Schemes
+//	@Description	List domains available from the given Provider.
+//	@Tags			providers
+//	@Accept			json
+//	@Produce		json
+//	@Param			providerId	path	string	true	"Provider identifier"
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	happydns.ProviderCombined
+//	@Failure		400	{object}	happydns.Error	"Unable to instantiate the provider"
+//	@Failure		400	{object}	happydns.Error	"The provider doesn't support domain listing"
+//	@Failure		400	{object}	happydns.Error	"Provider error"
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Failure		404	{object}	happydns.Error	"Provider not found"
+//	@Router			/providers/{providerId}/domains [get]
 func getDomainsHostedByProvider(c *gin.Context) {
 	provider := c.MustGet("provider").(*happydns.ProviderCombined)
 

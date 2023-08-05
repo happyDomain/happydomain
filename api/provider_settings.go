@@ -54,15 +54,31 @@ func declareProviderSettingsRoutes(cfg *config.Options, router *gin.RouterGroup)
 
 type ProviderSettingsState struct {
 	FormState
-	happydns.Provider
+	happydns.Provider `json:"Provider" swaggertype:"object"`
 }
 
 type ProviderSettingsResponse struct {
-	Provider *happydns.Provider     `json:"Provider,omitempty"`
+	Provider *happydns.Provider     `json:"Provider,omitempty" swaggertype:"object"`
 	Values   map[string]interface{} `json:"values,omitempty"`
 	Form     *forms.CustomForm      `json:"form,omitempty"`
 }
 
+// getProviderSettingsState creates or updates a Provider with human fillable forms.
+//	@Summary	Assistant to Provider creation.
+//	@Schemes
+//	@Description	This creates or updates a Provider with human fillable forms.
+//	@Tags			provider_specs
+//	@Accept			json
+//	@Produce		json
+//	@Param			providerType	path	string					true	"The provider's type"
+//	@Param			body			body	ProviderSettingsState	true	"The current state of the Provider's settings, possibly empty (but not null)"
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	ProviderSettingsResponse	"The settings need more rafinement"
+//	@Success		200	{object}	happydns.ProviderCombined	"The Provider has been created with the given settings"
+//	@Failure		400	{object}	happydns.Error				"Invalid input"
+//	@Failure		401	{object}	happydns.Error				"Authentication failure"
+//	@Failure		404	{object}	happydns.Error				"Provider not found"
+//	@Router			/providers/_specs/{providerType}/settings [post]
 func getProviderSettingsState(cfg *config.Options, c *gin.Context) {
 	user := myUser(c)
 	if user == nil {

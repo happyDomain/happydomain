@@ -40,10 +40,17 @@ import (
 )
 
 type FormState struct {
-	Id     *happydns.Identifier `json:"_id,omitempty"`
-	Name   string               `json:"_comment"`
-	State  int32                `json:"state"`
-	Recall string               `json:"recall,omitempty"`
+	// Id for an already existing element.
+	Id *happydns.Identifier `json:"_id,omitempty" swaggertype:"string"`
+
+	// User defined name of the element.
+	Name string `json:"_comment"`
+
+	// State is the desired form to shows next (starting at 0).
+	State int32 `json:"state"`
+
+	// Recall is the identifier for a saved FormState you want to retrieve.
+	Recall string `json:"recall,omitempty"`
 }
 
 func formDoState(cfg *config.Options, c *gin.Context, fs *FormState, data interface{}, defaultForm func(interface{}) *forms.CustomForm) (form *forms.CustomForm, d map[string]interface{}, err error) {

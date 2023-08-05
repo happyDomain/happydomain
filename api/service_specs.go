@@ -54,6 +54,15 @@ func declareServiceSpecsRoutes(router *gin.RouterGroup) {
 	apiServiceSpecsRoutes.GET("", getServiceSpec)
 }
 
+// getServiceSpecs returns the static list of usable services in this happyDomain release.
+//	@Summary	List all services with which you can connect.
+//	@Schemes
+//	@Description	This returns the static list of usable services in this happyDomain release.
+//	@Tags			service_specs
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	map[string]svcs.ServiceInfos{}	"The list"
+//	@Router			/service_specs [get]
 func getServiceSpecs(c *gin.Context) {
 	services := svcs.GetServices()
 
@@ -65,6 +74,17 @@ func getServiceSpecs(c *gin.Context) {
 	c.JSON(http.StatusOK, ret)
 }
 
+// getServiceSpecIcon returns the icon as image/png.
+//	@Summary	Get the PNG icon.
+//	@Schemes
+//	@Description	Return the icon as a image/png file for the given service type.
+//	@Tags			service_specs
+//	@Accept			json
+//	@Produce		png
+//	@Param			serviceType	path		string	true	"The service's type"
+//	@Success		200			{file}		png
+//	@Failure		404			{object}	happydns.Error	"Service type does not exist"
+//	@Router			/service_specs/{serviceType}/icon.png [get]
 func getServiceSpecIcon(c *gin.Context) {
 	ssid := string(c.Param("ssid"))
 
@@ -144,6 +164,17 @@ func getSpecs(svcType reflect.Type) viewServiceSpec {
 	return viewServiceSpec{fields}
 }
 
+// getServiceSpec returns a description of the expected fields.
+//	@Summary	Get the service expected fields.
+//	@Schemes
+//	@Description	Return a description of the expected fields.
+//	@Tags			service_specs
+//	@Accept			json
+//	@Produce		json
+//	@Param			serviceType	path		string	true	"The service's type"
+//	@Success		200			{object}	viewServiceSpec
+//	@Failure		404			{object}	happydns.Error	"Service type does not exist"
+//	@Router			/services/_specs/{serviceType} [get]
 func getServiceSpec(c *gin.Context) {
 	svctype := c.MustGet("servicetype").(reflect.Type)
 

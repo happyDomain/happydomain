@@ -58,8 +58,9 @@ steps:
   commands:
   - apk add --no-cache git
   - sed -i '/npm run build/d' ui/assets.go
+  - go install github.com/swaggo/swag/cmd/swag@latest
   - go generate -v ./...
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w -X main.Version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
   - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
   environment:
     CGO_ENABLED: 0
@@ -73,8 +74,9 @@ steps:
   commands:
   - apk add --no-cache git
   - sed -i '/npm run build/d' ui/assets.go
+  - go install github.com/swaggo/swag/cmd/swag@latest
   - go generate -v ./...
-  - go build -v -tags netgo -ldflags '-w -X main.version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w -X main.Version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
   - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
   environment:
     CGO_ENABLED: 0
@@ -129,7 +131,7 @@ steps:
   image: golang:1-alpine
   commands:
   - apk add --no-cache git
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w -X main.Version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH}
   environment:
     CGO_ENABLED: 0
     GOOS: darwin
@@ -143,7 +145,7 @@ steps:
   image: golang:1-alpine
   commands:
   - apk add --no-cache git
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w -X main.Version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH}
   environment:
     CGO_ENABLED: 0
     GOOS: darwin
@@ -227,8 +229,9 @@ steps:
   commands:
   - apk add --no-cache git
   - sed -i '/npm run build/d' ui/assets.go
+  - go install github.com/swaggo/swag/cmd/swag@latest
   - go generate -v ./...
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w -X main.Version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
   - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
   environment:
     CGO_ENABLED: 0
@@ -242,8 +245,9 @@ steps:
   commands:
   - apk add --no-cache git
   - sed -i '/npm run build/d' ui/assets.go
+  - go install github.com/swaggo/swag/cmd/swag@latest
   - go generate -v ./...
-  - go build -v -tags netgo -ldflags '-w -X main.version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w -X main.Version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
   - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
   environment:
     CGO_ENABLED: 0
@@ -290,7 +294,7 @@ steps:
   image: golang:1-alpine
   commands:
   - apk add --no-cache git
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w -X main.Version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH}
   environment:
     CGO_ENABLED: 0
     GOOS: darwin
@@ -304,7 +308,7 @@ steps:
   image: golang:1-alpine
   commands:
   - apk add --no-cache git
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH}
+  - go build -v -tags netgo -ldflags '-w -X main.Version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH}
   environment:
     CGO_ENABLED: 0
     GOOS: darwin
@@ -388,8 +392,9 @@ steps:
   commands:
   - apk --no-cache add build-base git
   - sed -i '/npm run build/d' ui/assets.go
+  - go install github.com/swaggo/swag/cmd/swag@latest
   - go generate -v ./...
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
+  - go build -v -tags netgo -ldflags '-w -X main.Version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
   environment:
     CGO_ENABLED: 0
     GOARM: 5
@@ -406,8 +411,9 @@ steps:
   commands:
   - apk --no-cache add build-base git
   - sed -i '/npm run build/d' ui/assets.go
+  - go install github.com/swaggo/swag/cmd/swag@latest
   - go generate -v ./...
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
+  - go build -v -tags netgo -ldflags '-w -X main.Version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el
   environment:
     CGO_ENABLED: 0
     GOARM: 5
@@ -454,7 +460,7 @@ steps:
   image: golang:1-alpine
   commands:
   - apk --no-cache add build-base git
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
+  - go build -v -tags netgo -ldflags '-w -X main.Version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
   environment:
     CGO_ENABLED: 0
     GOARM: 6
@@ -470,7 +476,7 @@ steps:
   image: golang:1-alpine
   commands:
   - apk --no-cache add build-base git
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
+  - go build -v -tags netgo -ldflags '-w -X main.Version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf
   environment:
     CGO_ENABLED: 0
     GOARM: 6
@@ -517,7 +523,7 @@ steps:
   image: golang:1-alpine
   commands:
   - apk --no-cache add build-base git
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
+  - go build -v -tags netgo -ldflags '-w -X main.Version="${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
   - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7 happydomain
   environment:
     CGO_ENABLED: 0
@@ -531,7 +537,7 @@ steps:
   image: golang:1-alpine
   commands:
   - apk --no-cache add build-base git
-  - go build -v -tags netgo -ldflags '-w -X main.version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
+  - go build -v -tags netgo -ldflags '-w -X main.Version="${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7
   - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7 happydomain
   environment:
     CGO_ENABLED: 0
