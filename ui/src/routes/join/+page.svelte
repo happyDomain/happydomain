@@ -14,13 +14,10 @@
 
 <Container class="my-3">
     <Row>
-        <Col sm="4" class="d-none d-sm-flex flex-column align-items-center">
-            <img src="img/screenshot.png" alt="HappyDNS screenshoot" style="max-height: 100%; max-width: 100%;" class="mt-auto">
-            <div class="mt-3 mb-auto text-justify">
-                Join now our open source and free (as freedom) DNS platform, to manage your domains easily!
-            </div>
+        <Col sm="4" class="d-none d-sm-flex flex-column justify-content-center">
+            <img src="img/signup.webp" alt="Welcome aboard!">
         </Col>
-        <Col sm="8">
+        <Col sm="8" class="d-flex flex-column justify-content-center">
             <Card>
                 <CardHeader>
                     <h6 class="card-title my-1 fw-bold">
@@ -31,6 +28,9 @@
                     <SignUpForm />
                 </CardBody>
             </Card>
+            <div class="mt-3 text-justify">
+                Join now our open source and free (as freedom) DNS platform, to manage your domains easily!
+            </div>
         </Col>
     </Row>
 </Container>

@@ -14,15 +14,10 @@
 
 <Container class="my-3">
     <Row>
-        <Col sm="4" class="d-none d-sm-flex flex-column justify-content-center">
-          <div>
-              {$t('account.ask-have')}
-              <a href="/join" class="fw-bold">
-                  {$t('account.join')}
-              </a>
-          </div>
+        <Col sm="4" class="d-none d-sm-flex flex-column">
+          <img src="/img/login.webp" alt="Welcome back!">
         </Col>
-        <Col sm="8">
+        <Col sm="8" class="d-flex flex-column justify-content-center">
             <Card>
                 <CardHeader>
                     <h6 class="card-title my-1 fw-bold">
@@ -33,6 +28,12 @@
                     <LoginForm />
                 </CardBody>
             </Card>
+            <div class="text-center mt-4">
+                {$t('account.ask-have')}
+                <a href="/join" class="fw-bold">
+                    {$t('account.join')}
+                </a>
+            </div>
         </Col>
     </Row>
 </Container>
