@@ -77,6 +77,7 @@ func (app *Admin) Start() {
 		Handler: app.router,
 	}
 
+	log.Printf("Admin interface listening on %s\n", app.cfg.AdminBind)
 	if !strings.Contains(app.cfg.AdminBind, ":") {
 		if _, err := os.Stat(app.cfg.AdminBind); !os.IsNotExist(err) {
 			if err := os.Remove(app.cfg.AdminBind); err != nil {

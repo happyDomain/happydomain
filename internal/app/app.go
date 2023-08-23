@@ -76,6 +76,7 @@ func (app *App) Start() {
 		Handler: app.router,
 	}
 
+	log.Printf("Public interface listening on %s\n", app.cfg.Bind)
 	if err := app.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("listen: %s\n", err)
 	}
