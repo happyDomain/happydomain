@@ -12,7 +12,7 @@ require (
 	github.com/miekg/dns v1.1.55
 	github.com/ovh/go-ovh v1.4.1
 	github.com/syndtr/goleveldb v1.0.0
-	github.com/yuin/goldmark v1.5.5
+	github.com/yuin/goldmark v1.5.6
 	golang.org/x/crypto v0.12.0
 )
 
