@@ -12,7 +12,7 @@ require (
 	github.com/ovh/go-ovh v1.4.1
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
-	github.com/swaggo/swag v1.16.1
+	github.com/swaggo/swag v1.16.2
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/yuin/goldmark v1.5.6
 	golang.org/x/crypto v0.12.0
