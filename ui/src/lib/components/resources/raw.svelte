@@ -63,7 +63,9 @@
             max={inputmax}
             placeholder={specs.placeholder}
             plaintext={!edit}
+            readonly={!edit}
             required={specs.required}
+            style="width: initial"
             bind:value={value}
             on:focus={() => dispatch("focus")}
             on:blur={() => dispatch("blur")}
