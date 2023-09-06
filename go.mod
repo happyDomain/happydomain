@@ -9,7 +9,7 @@ require (
 	github.com/go-mail/mail v2.3.1+incompatible
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/miekg/dns v1.1.55
-	github.com/ovh/go-ovh v1.4.1
+	github.com/ovh/go-ovh v1.4.2
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.2
