@@ -425,7 +425,11 @@
                 </div>
             {/if}
         </Col>
-        <Col class="d-flex">
+        <Col
+            sm={8}
+            md={9}
+            class="d-flex"
+        >
             {#if data.history == selectedHistory}
                 <slot />
             {:else}
