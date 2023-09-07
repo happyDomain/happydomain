@@ -38,7 +38,7 @@ import (
 	"log"
 	"time"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 func migrateFrom1(s *LevelDBStorage) (err error) {

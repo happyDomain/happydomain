@@ -38,7 +38,7 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/axfrddns"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 type DDNSServer struct {

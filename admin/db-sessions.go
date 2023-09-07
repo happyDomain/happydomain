@@ -37,9 +37,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydomain/config"
-	"git.happydns.org/happydomain/model"
-	"git.happydns.org/happydomain/storage"
+	"git.happydns.org/happyDomain/config"
+	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/storage"
 )
 
 func declareSessionsRoutes(opts *config.Options, router *gin.RouterGroup) {

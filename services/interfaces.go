@@ -35,7 +35,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 type ServiceRestrictions struct {

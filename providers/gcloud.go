@@ -35,21 +35,21 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/gcloud"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 type GCloudAPI struct {
-	ProjectId string `json:"project_id,omitempty" happydomain:"label=Project ID,placeholder=xxxxxxxx,required,description=Project ID."`
-	PrivateKey string `json:"private_key,omitempty" happydomain:"label=Private key,placeholder=xxxxxxxx,description=Private key."`
-	ClientEmail string `json:"client_email,omitempty" happydomain:"label=Client Email,placeholder=xxxxxxxx,description=Client Email."`
+	ProjectId     string `json:"project_id,omitempty" happydomain:"label=Project ID,placeholder=xxxxxxxx,required,description=Project ID."`
+	PrivateKey    string `json:"private_key,omitempty" happydomain:"label=Private key,placeholder=xxxxxxxx,description=Private key."`
+	ClientEmail   string `json:"client_email,omitempty" happydomain:"label=Client Email,placeholder=xxxxxxxx,description=Client Email."`
 	NameServerSet string `json:"name_server_set,omitempty" happydomain:"label=Name server sets,placeholder=xxxxxxxx,description=Name server sets special permission from your TAM at Google)."`
 }
 
 func (s *GCloudAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
 	config := map[string]string{
-		"project_id": s.ProjectId,
-		"private_key": s.PrivateKey,
-		"client_email": s.ClientEmail,
+		"project_id":      s.ProjectId,
+		"private_key":     s.PrivateKey,
+		"client_email":    s.ClientEmail,
 		"name_server_set": s.NameServerSet,
 	}
 	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)

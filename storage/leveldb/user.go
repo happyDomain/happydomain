@@ -35,7 +35,7 @@ import (
 	"fmt"
 	"log"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"

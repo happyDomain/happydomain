@@ -37,7 +37,7 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/ovh"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 var (

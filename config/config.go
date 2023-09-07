@@ -41,7 +41,7 @@ import (
 	"path"
 	"strings"
 
-	"git.happydns.org/happydomain/storage"
+	"git.happydns.org/happyDomain/storage"
 )
 
 // Options stores the configuration of the software.

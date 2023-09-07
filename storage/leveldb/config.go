@@ -34,7 +34,7 @@ package database
 import (
 	"flag"
 
-	"git.happydns.org/happydomain/storage"
+	"git.happydns.org/happyDomain/storage"
 )
 
 var path string

@@ -35,24 +35,24 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/azuredns"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 type AzureDnsAPI struct {
 	SubscriptionID string `json:"SubscriptionID,omitempty" happydomain:"label=Subscription ID,placeholder=xxxxxxxx,required,description=Your Azure Client Subscription ID."`
-	ResourceGroup string `json:"ResourceGroup,omitempty" happydomain:"label=Resource Group,placeholder=xxxxxxxx,required,description=Your Azure Resource Group."`
-	TenantID string `json:"TenantID,omitempty" happydomain:"label=Tenant ID,placeholder=xxxxxxxx,description=Your Azure Tenant ID."`
-	ClientID string `json:"ClientID,omitempty" happydomain:"label=Client ID,placeholder=xxxxxxxx,description=Your Azure Client ID."`
-	ClientSecret string `json:"ClientSecret,omitempty" happydomain:"label=Client Secret,placeholder=xxxxxxxx,description=Your Azure Client Secret."`
+	ResourceGroup  string `json:"ResourceGroup,omitempty" happydomain:"label=Resource Group,placeholder=xxxxxxxx,required,description=Your Azure Resource Group."`
+	TenantID       string `json:"TenantID,omitempty" happydomain:"label=Tenant ID,placeholder=xxxxxxxx,description=Your Azure Tenant ID."`
+	ClientID       string `json:"ClientID,omitempty" happydomain:"label=Client ID,placeholder=xxxxxxxx,description=Your Azure Client ID."`
+	ClientSecret   string `json:"ClientSecret,omitempty" happydomain:"label=Client Secret,placeholder=xxxxxxxx,description=Your Azure Client Secret."`
 }
 
 func (s *AzureDnsAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
 	config := map[string]string{
 		"SubscriptionID": s.SubscriptionID,
-		"ResourceGroup": s.ResourceGroup,
-		"TenantID": s.TenantID,
-		"ClientID": s.ClientID,
-		"ClientSecret": s.ClientSecret,
+		"ResourceGroup":  s.ResourceGroup,
+		"TenantID":       s.TenantID,
+		"ClientID":       s.ClientID,
+		"ClientSecret":   s.ClientSecret,
 	}
 	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
 }

@@ -36,9 +36,9 @@ import (
 	"strings"
 	"unicode"
 
-	"git.happydns.org/happydomain/config"
-	"git.happydns.org/happydomain/model"
-	"git.happydns.org/happydomain/utils"
+	"git.happydns.org/happyDomain/config"
+	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/utils"
 )
 
 func genUsername(user *happydns.UserAuth) (toName string) {

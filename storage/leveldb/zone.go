@@ -36,7 +36,7 @@ import (
 	"log"
 	"strings"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 
 	"github.com/syndtr/goleveldb/leveldb/util"
 )

@@ -34,9 +34,9 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydomain/config"
-	"git.happydns.org/happydomain/forms"
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/config"
+	"git.happydns.org/happyDomain/forms"
+	"git.happydns.org/happyDomain/model"
 )
 
 type FormState struct {

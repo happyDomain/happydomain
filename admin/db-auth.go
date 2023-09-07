@@ -38,12 +38,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydomain/actions"
-	"git.happydns.org/happydomain/api"
-	"git.happydns.org/happydomain/config"
-	"git.happydns.org/happydomain/model"
-	"git.happydns.org/happydomain/storage"
-	"git.happydns.org/happydomain/utils"
+	"git.happydns.org/happyDomain/actions"
+	"git.happydns.org/happyDomain/api"
+	"git.happydns.org/happyDomain/config"
+	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/storage"
+	"git.happydns.org/happyDomain/utils"
 )
 
 func declareUserAuthsRoutes(opts *config.Options, router *gin.RouterGroup) {

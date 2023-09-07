@@ -140,6 +140,7 @@ type DNSQuestion struct {
 }
 
 // runResolver performs a NS resolution for a given domain, with options.
+//
 //	@Summary	Perform a DNS resolution.
 //	@Schemes
 //	@Description	Perform a NS resolution	for a given domain, with options.

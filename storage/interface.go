@@ -32,7 +32,7 @@
 package storage // import "happydns.org/storage"
 
 import (
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 type Storage interface {

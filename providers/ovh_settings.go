@@ -37,9 +37,9 @@ import (
 
 	"github.com/ovh/go-ovh/ovh"
 
-	"git.happydns.org/happydomain/config"
-	"git.happydns.org/happydomain/forms"
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/config"
+	"git.happydns.org/happyDomain/forms"
+	"git.happydns.org/happyDomain/model"
 )
 
 func settingsForm(edit bool) *forms.CustomForm {

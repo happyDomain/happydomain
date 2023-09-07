@@ -36,8 +36,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydomain/api"
-	"git.happydns.org/happydomain/config"
+	"git.happydns.org/happyDomain/api"
+	"git.happydns.org/happyDomain/config"
 )
 
 func DeclareRoutes(cfg *config.Options, router *gin.Engine) {

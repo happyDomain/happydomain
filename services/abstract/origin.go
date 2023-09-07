@@ -38,10 +38,10 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happydomain/model"
-	"git.happydns.org/happydomain/services"
-	"git.happydns.org/happydomain/services/common"
-	"git.happydns.org/happydomain/utils"
+	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/services"
+	"git.happydns.org/happyDomain/services/common"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type Origin struct {

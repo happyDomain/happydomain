@@ -39,8 +39,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydomain/forms"
-	"git.happydns.org/happydomain/services"
+	"git.happydns.org/happyDomain/forms"
+	"git.happydns.org/happyDomain/services"
 )
 
 func declareServiceSpecsRoutes(router *gin.RouterGroup) {
@@ -55,6 +55,7 @@ func declareServiceSpecsRoutes(router *gin.RouterGroup) {
 }
 
 // getServiceSpecs returns the static list of usable services in this happyDomain release.
+//
 //	@Summary	List all services with which you can connect.
 //	@Schemes
 //	@Description	This returns the static list of usable services in this happyDomain release.
@@ -75,6 +76,7 @@ func getServiceSpecs(c *gin.Context) {
 }
 
 // getServiceSpecIcon returns the icon as image/png.
+//
 //	@Summary	Get the PNG icon.
 //	@Schemes
 //	@Description	Return the icon as a image/png file for the given service type.
@@ -165,6 +167,7 @@ func getSpecs(svcType reflect.Type) viewServiceSpec {
 }
 
 // getServiceSpec returns a description of the expected fields.
+//
 //	@Summary	Get the service expected fields.
 //	@Schemes
 //	@Description	Return a description of the expected fields.

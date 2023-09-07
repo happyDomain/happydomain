@@ -38,7 +38,7 @@ import (
 	"net/mail"
 	"text/template"
 
-	"git.happydns.org/happydomain/ui"
+	"git.happydns.org/happyDomain/ui"
 
 	gomail "github.com/go-mail/mail"
 	"github.com/yuin/goldmark"

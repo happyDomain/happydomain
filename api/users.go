@@ -41,10 +41,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydomain/actions"
-	"git.happydns.org/happydomain/config"
-	"git.happydns.org/happydomain/model"
-	"git.happydns.org/happydomain/storage"
+	"git.happydns.org/happyDomain/actions"
+	"git.happydns.org/happyDomain/config"
+	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/storage"
 )
 
 func declareUsersRoutes(opts *config.Options, router *gin.RouterGroup) {
@@ -101,6 +101,7 @@ type UserRegistration struct {
 }
 
 // registerUser checks and appends a user in the database.
+//
 //	@Summary	Register account.
 //	@Schemes
 //	@Description	Register a new happyDomain account (when using internal authentication system).
@@ -170,6 +171,7 @@ type UserSpecialAction struct {
 }
 
 // specialUserOperations performs account recovery.
+//
 //	@Summary	Account recovery.
 //	@Schemes
 //	@Description	This will send an email to the user either to recover its account or with a new email validation link.
@@ -260,6 +262,7 @@ func getUser(c *gin.Context) {
 }
 
 // getUserSettings gets the settings of the given user.
+//
 //	@Summary	Retrieve user's settings.
 //	@Schemes
 //	@Description	Retrieve the user's settings.
@@ -279,6 +282,7 @@ func getUserSettings(c *gin.Context) {
 }
 
 // changeUserSettings updates the settings of the given user.
+//
 //	@Summary	Update user's settings.
 //	@Schemes
 //	@Description	Update the user's settings.
@@ -322,6 +326,7 @@ type passwordForm struct {
 }
 
 // changePassword changes the password of the given account.
+//
 //	@Summary	Change password
 //	@Schemes
 //	@Description	Change the password of the given account.
@@ -390,6 +395,7 @@ func changePassword(opts *config.Options, c *gin.Context) {
 }
 
 // deleteUser delete the account related to the given user.
+//
 //	@Summary	Drop account
 //	@Schemes
 //	@Description	Delete the account related to the given user.
@@ -504,6 +510,7 @@ type UploadedAddressValidation struct {
 }
 
 // validateUserAddress validates a user address after registration.
+//
 //	@Summary	Validate e-mail address.
 //	@Schemes
 //	@Description	This is the route called by the web interface in order to validate the e-mail address of the user.
@@ -551,6 +558,7 @@ type UploadedAccountRecovery struct {
 }
 
 // recoverUserAccount performs account recovery by reseting the password of the account.
+//
 //	@Summary	Reset password with link in email.
 //	@Schemes
 //	@Description	This performs	account	recovery	by reseting the	password of the	account.
@@ -600,6 +608,7 @@ func recoverUserAccount(c *gin.Context) {
 }
 
 // getSession gets the content of the current user's session.
+//
 //	@Summary	Retrieve user's session content
 //	@Schemes
 //	@Description	Get the content of the current user's session.
@@ -617,6 +626,7 @@ func getSession(c *gin.Context) {
 }
 
 // clearSession removes the content of the current user's session.
+//
 //	@Summary	Remove user's session content
 //	@Schemes
 //	@Description	Remove the content of the current user's session.

@@ -34,8 +34,8 @@ package forms // import "happydns.org/forms"
 import (
 	"errors"
 
-	"git.happydns.org/happydomain/config"
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/config"
+	"git.happydns.org/happyDomain/model"
 )
 
 // GenRecallID

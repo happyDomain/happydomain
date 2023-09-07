@@ -35,19 +35,19 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/cscglobal"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 type CscGlobalAPI struct {
-	ApiKey string `json:"ApiKey,omitempty" happydomain:"label=API key,placeholder=xxxxxxxx,required,description=Your API key"`
-	UserToken string `json:"UserToken,omitempty" happydomain:"label=User token,placeholder=xxxxxxxx,required,description=Your user token"`
+	ApiKey             string `json:"ApiKey,omitempty" happydomain:"label=API key,placeholder=xxxxxxxx,required,description=Your API key"`
+	UserToken          string `json:"UserToken,omitempty" happydomain:"label=User token,placeholder=xxxxxxxx,required,description=Your user token"`
 	NotificationEmails string `json:"NotificationEmails,omitempty" happydomain:"label=Notification emails,placeholder=xxxxxxxx,description=Optional comma-separated list of email addresses to send notifications to"`
 }
 
 func (s *CscGlobalAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
 	config := map[string]string{
-		"api-key": s.ApiKey,
-		"user-token": s.UserToken,
+		"api-key":             s.ApiKey,
+		"user-token":          s.UserToken,
 		"notification_emails": s.NotificationEmails,
 	}
 	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)

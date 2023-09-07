@@ -38,7 +38,7 @@ import (
 	"sort"
 	"strings"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 const (
@@ -66,7 +66,7 @@ func (a ByWeight) Less(i, j int) bool { return a[i].Weight < a[j].Weight }
 var (
 	services         map[string]*Svc              = map[string]*Svc{}
 	subServices      map[string]SubServiceCreator = map[string]SubServiceCreator{}
-	pathToSvcsModule string                       = "git.happydns.org/happydomain/services"
+	pathToSvcsModule string                       = "git.happydns.org/happyDomain/services"
 	ordered_services []*Svc
 )
 

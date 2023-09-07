@@ -38,9 +38,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydomain/forms"
-	"git.happydns.org/happydomain/model"
-	"git.happydns.org/happydomain/providers"
+	"git.happydns.org/happyDomain/forms"
+	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/providers"
 )
 
 func declareProviderSpecsRoutes(router *gin.RouterGroup) {
@@ -55,6 +55,7 @@ func declareProviderSpecsRoutes(router *gin.RouterGroup) {
 }
 
 // listProviders returns the static list of usable providers in this happyDomain release.
+//
 //	@Summary	List all providers with which you can connect.
 //	@Schemes
 //	@Description	This returns the static list of usable providers in this happyDomain release.
@@ -75,6 +76,7 @@ func listProviders(c *gin.Context) {
 }
 
 // getProviderSpecIcon returns the icon as image/png.
+//
 //	@Summary	Get the PNG icon.
 //	@Schemes
 //	@Description	Return the icon as a image/png file for the given provider type.
@@ -119,6 +121,7 @@ type viewProviderSpec struct {
 }
 
 // getProviderSpec returns a description of the expected settings and the provider capabilities.
+//
 //	@Summary	Get the provider capabilities and expected settings.
 //	@Schemes
 //	@Description	Return a description of the expected settings and the provider capabilities.

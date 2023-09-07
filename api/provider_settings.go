@@ -38,11 +38,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydomain/config"
-	"git.happydns.org/happydomain/forms"
-	"git.happydns.org/happydomain/model"
-	"git.happydns.org/happydomain/providers"
-	"git.happydns.org/happydomain/storage"
+	"git.happydns.org/happyDomain/config"
+	"git.happydns.org/happyDomain/forms"
+	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/providers"
+	"git.happydns.org/happyDomain/storage"
 )
 
 func declareProviderSettingsRoutes(cfg *config.Options, router *gin.RouterGroup) {
@@ -64,6 +64,7 @@ type ProviderSettingsResponse struct {
 }
 
 // getProviderSettingsState creates or updates a Provider with human fillable forms.
+//
 //	@Summary	Assistant to Provider creation.
 //	@Schemes
 //	@Description	This creates or updates a Provider with human fillable forms.

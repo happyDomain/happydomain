@@ -40,8 +40,8 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 
-	"git.happydns.org/happydomain/model"
-	"git.happydns.org/happydomain/providers"
+	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/providers"
 )
 
 func (s *LevelDBStorage) getProviderMeta(id happydns.Identifier) (srcMeta *happydns.ProviderMeta, err error) {

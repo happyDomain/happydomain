@@ -50,6 +50,7 @@ type Version struct {
 }
 
 // showVersion returns the current happyDomain version.
+//
 //	@Summary	Get happyDomain version
 //	@Schemes
 //	@Description	Retrieve the current happyDomain version.

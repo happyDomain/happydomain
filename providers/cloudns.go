@@ -35,19 +35,19 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/cloudns"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 type ClouDNSAPI struct {
-	AuthID string `json:"AuthID,omitempty" happydomain:"label=Auth ID,placeholder=xxxxxxxx,required,description=Your ClouDNS auth ID"`
+	AuthID    string `json:"AuthID,omitempty" happydomain:"label=Auth ID,placeholder=xxxxxxxx,required,description=Your ClouDNS auth ID"`
 	SubAuthID string `json:"SubAuthID,omitempty" happydomain:"label=Sub Auth ID,placeholder=xxxxxxxx,description=Your ClouDNS subauth token"`
-	Password string `json:"Password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,description=Your ClouDNS API password token"`
+	Password  string `json:"Password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,description=Your ClouDNS API password token"`
 }
 
 func (s *ClouDNSAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
 	config := map[string]string{
-		"auth-id": s.AuthID,
-		"sub-auth-id": s.SubAuthID,
+		"auth-id":       s.AuthID,
+		"sub-auth-id":   s.SubAuthID,
 		"auth-password": s.Password,
 	}
 	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)

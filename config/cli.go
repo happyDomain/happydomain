@@ -35,7 +35,7 @@ import (
 	"flag"
 	"fmt"
 
-	"git.happydns.org/happydomain/storage"
+	"git.happydns.org/happyDomain/storage"
 )
 
 // declareFlags registers flags for the structure Options.

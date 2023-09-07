@@ -35,22 +35,22 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/route53"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 type Route53API struct {
 	DelegationSet string `json:"delegation_set,omitempty" happydomain:"label=Delegation Set ID,placeholder=xxxxxxxx,description=Optional delegation set ID."`
-	KeyId string `json:"key_id,omitempty" happydomain:"label=AWS key,placeholder=xxxxxxxx,required,description=Your AWS key."`
-	SecretKey string `json:"secret_key,omitempty" happydomain:"label=AWS secret key,placeholder=xxxxxxxx,required,description=Your AWS secret key."`
-	Token string `json:"token,omitempty" happydomain:"label=Token,placeholder=xxxxxxxx,description=Optional STS token."`
+	KeyId         string `json:"key_id,omitempty" happydomain:"label=AWS key,placeholder=xxxxxxxx,required,description=Your AWS key."`
+	SecretKey     string `json:"secret_key,omitempty" happydomain:"label=AWS secret key,placeholder=xxxxxxxx,required,description=Your AWS secret key."`
+	Token         string `json:"token,omitempty" happydomain:"label=Token,placeholder=xxxxxxxx,description=Optional STS token."`
 }
 
 func (s *Route53API) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
 	config := map[string]string{
 		"DelegationSet": s.DelegationSet,
-		"KeyId": s.KeyId,
-		"SecretKey": s.SecretKey,
-		"Token": s.Token,
+		"KeyId":         s.KeyId,
+		"SecretKey":     s.SecretKey,
+		"Token":         s.Token,
 	}
 	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
 }

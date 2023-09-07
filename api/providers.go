@@ -41,10 +41,10 @@ import (
 	dnscontrol "github.com/StackExchange/dnscontrol/v4/providers"
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydomain/config"
-	"git.happydns.org/happydomain/model"
-	"git.happydns.org/happydomain/providers"
-	"git.happydns.org/happydomain/storage"
+	"git.happydns.org/happyDomain/config"
+	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/providers"
+	"git.happydns.org/happyDomain/storage"
 )
 
 func declareProvidersRoutes(cfg *config.Options, router *gin.RouterGroup) {
@@ -66,6 +66,7 @@ func declareProvidersRoutes(cfg *config.Options, router *gin.RouterGroup) {
 }
 
 // getDomains retrieves all providers belonging to the user.
+//
 //	@Summary	Retrieve user's providers
 //	@Schemes
 //	@Description	Retrieve all DNS providers belonging to the user.
@@ -184,6 +185,7 @@ func ProviderHandler(c *gin.Context) {
 }
 
 // GetProvider retrieves information about a given Provider owned by the user.
+//
 //	@Summary	Retrieve Provider information.
 //	@Schemes
 //	@Description	Retrieve information in the database about a given Provider owned by the user.
@@ -203,6 +205,7 @@ func GetProvider(c *gin.Context) {
 }
 
 // addProvider appends a new provider.
+//
 //	@Summary	Add a new provider
 //	@Schemes
 //	@Description	Append a new provider for the user.
@@ -236,6 +239,7 @@ func addProvider(c *gin.Context) {
 }
 
 // UpdateProvider updates the information about a given Provider owned by the user.
+//
 //	@Summary	Update Provider information.
 //	@Schemes
 //	@Description	Updates the information about a given Provider owned by the user.
@@ -274,6 +278,7 @@ func UpdateProvider(c *gin.Context) {
 }
 
 // deleteProvider removes a provider from the database.
+//
 //	@Summary	Delete a Provider.
 //	@Schemes
 //	@Description	Delete a Provider from the database. It is required that no Domain are still managed by this Provider before calling this route.
@@ -317,6 +322,7 @@ func deleteProvider(c *gin.Context) {
 }
 
 // getDomainsHostedByProvider lists domains available to management from the given Provider.
+//
 //	@Summary	Lists manageable domains from the Provider.
 //	@Schemes
 //	@Description	List domains available from the given Provider.

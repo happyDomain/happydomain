@@ -35,17 +35,17 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/luadns"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 type LuaDnsAPI struct {
-	Email string `json:"email,omitempty" happydomain:"label=E-mail,placeholder=xxxxxxxx,required,description=Your email."`
+	Email  string `json:"email,omitempty" happydomain:"label=E-mail,placeholder=xxxxxxxx,required,description=Your email."`
 	ApiKey string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx,required,description=Your API key."`
 }
 
 func (s *LuaDnsAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
 	config := map[string]string{
-		"email": s.Email,
+		"email":  s.Email,
 		"apikey": s.ApiKey,
 	}
 	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)

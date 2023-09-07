@@ -35,19 +35,19 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/netcup"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 type NetcupAPI struct {
-	ApiKey string `json:"api_key,omitempty" happydomain:"label=API key,placeholder=your-api-key,required,description=Netcup API key."`
-	ApiPassword string `json:"api_password,omitempty" happydomain:"label=Password,placeholder=api-password,required,description=Netcup API password."`
+	ApiKey         string `json:"api_key,omitempty" happydomain:"label=API key,placeholder=your-api-key,required,description=Netcup API key."`
+	ApiPassword    string `json:"api_password,omitempty" happydomain:"label=Password,placeholder=api-password,required,description=Netcup API password."`
 	CustomerNumber string `json:"customer_number,omitempty" happydomain:"label=Customer number,placeholder=123456,required,description=Netcup customer number."`
 }
 
 func (s *NetcupAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
 	config := map[string]string{
-		"api-key": s.ApiKey,
-		"api-password": s.ApiPassword,
+		"api-key":         s.ApiKey,
+		"api-password":    s.ApiPassword,
 		"customer-number": s.CustomerNumber,
 	}
 

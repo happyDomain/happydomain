@@ -34,7 +34,7 @@ package config
 import (
 	"encoding/base64"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 // GetAccountRecoveryURL returns the absolute URL corresponding to the recovery

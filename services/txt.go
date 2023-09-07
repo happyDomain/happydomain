@@ -36,7 +36,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 type TXT struct {

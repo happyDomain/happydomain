@@ -38,9 +38,9 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happydomain/model"
-	"git.happydns.org/happydomain/services"
-	"git.happydns.org/happydomain/utils"
+	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/services"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type EMail struct {

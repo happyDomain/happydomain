@@ -38,7 +38,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 func (s *LevelDBStorage) getSession(id string) (session *happydns.Session, err error) {

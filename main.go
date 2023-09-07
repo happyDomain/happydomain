@@ -42,14 +42,14 @@ import (
 
 	"github.com/fatih/color"
 
-	"git.happydns.org/happydomain/api"
-	"git.happydns.org/happydomain/config"
-	"git.happydns.org/happydomain/internal/app"
-	"git.happydns.org/happydomain/storage"
+	"git.happydns.org/happyDomain/api"
+	"git.happydns.org/happyDomain/config"
+	"git.happydns.org/happyDomain/internal/app"
+	"git.happydns.org/happyDomain/storage"
 
-	_ "git.happydns.org/happydomain/services/providers/google"
+	_ "git.happydns.org/happyDomain/services/providers/google"
 
-	_ "git.happydns.org/happydomain/storage/leveldb"
+	_ "git.happydns.org/happyDomain/storage/leveldb"
 )
 
 var (

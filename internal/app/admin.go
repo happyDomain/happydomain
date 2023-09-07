@@ -42,8 +42,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happydomain/admin"
-	"git.happydns.org/happydomain/config"
+	"git.happydns.org/happyDomain/admin"
+	"git.happydns.org/happyDomain/config"
 )
 
 type Admin struct {

@@ -35,19 +35,19 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/transip"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 type TransIpAPI struct {
 	AccountName string `json:"account_name,omitempty" happydomain:"label=Account name,placeholder=xxxxxxxx,description=Your account name."`
-	PrivateKey string `json:"private_key,omitempty" happydomain:"label=Private key,placeholder=xxxxxxxx,description=Your account private key."`
+	PrivateKey  string `json:"private_key,omitempty" happydomain:"label=Private key,placeholder=xxxxxxxx,description=Your account private key."`
 	AccessToken string `json:"access_token,omitempty" happydomain:"label=Access token,placeholder=xxxxxxxx,description=Your access roken."`
 }
 
 func (s *TransIpAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
 	config := map[string]string{
 		"AccountName": s.AccountName,
-		"PrivateKey": s.PrivateKey,
+		"PrivateKey":  s.PrivateKey,
 		"AccessToken": s.AccessToken,
 	}
 	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)

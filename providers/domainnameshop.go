@@ -35,17 +35,17 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/domainnameshop"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 type DomainnameshopAPI struct {
-	Token string `json:"token,omitempty" happydomain:"label=Token,placeholder=your-domainnameshop-token,required,description=Domainnameshop API Token."`
+	Token  string `json:"token,omitempty" happydomain:"label=Token,placeholder=your-domainnameshop-token,required,description=Domainnameshop API Token."`
 	Secret string `json:"secret,omitempty" happydomain:"label=Secret,placeholder=your-domainnameshop-secret,required,description=Domainnameshop API Secret."`
 }
 
 func (s *DomainnameshopAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
 	config := map[string]string{
-		"token": s.Token,
+		"token":  s.Token,
 		"secret": s.Secret,
 	}
 

@@ -40,7 +40,7 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 // ProviderInfos describes the purpose of a user usable provider.

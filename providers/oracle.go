@@ -35,26 +35,26 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/oracle"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 type OracleAPI struct {
 	Compartment string `json:"compartment,omitempty" happydomain:"label=Compartment,placeholder=ORACLE_COMPARTMENT,description=Compartment."`
 	Fingerprint string `json:"fingerprint,omitempty" happydomain:"label=Fingerprint,placeholder=ORACLE_FINGERPRINT,required,description=Fingerprint."`
-	PrivateKey string `json:"private_key,omitempty" happydomain:"label=Private hey,placeholder=ORACLE_PRIVATE_KEY,required,description=Private key."`
-	Region string `json:"region,omitempty" happydomain:"label=Region,placeholder=ORACLE_REGION,required,description=Region."`
+	PrivateKey  string `json:"private_key,omitempty" happydomain:"label=Private hey,placeholder=ORACLE_PRIVATE_KEY,required,description=Private key."`
+	Region      string `json:"region,omitempty" happydomain:"label=Region,placeholder=ORACLE_REGION,required,description=Region."`
 	TenancyOcid string `json:"tenancy_ocid,omitempty" happydomain:"label=Tenancy OCID,placeholder=ORACLE_TENANCY_OCID,required,description=Tenancy OCID."`
-	UserOcid string `json:"user_ocid,omitempty" happydomain:"label=User OCID,placeholder=ORACLE_USER_OCID,required,description=User OCID."`
+	UserOcid    string `json:"user_ocid,omitempty" happydomain:"label=User OCID,placeholder=ORACLE_USER_OCID,required,description=User OCID."`
 }
 
 func (s *OracleAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
 	config := map[string]string{
-		"compartment": s.Compartment,
-		"fingerprint": s.Fingerprint,
-		"private_key": s.PrivateKey,
-		"region": s.Region,
+		"compartment":  s.Compartment,
+		"fingerprint":  s.Fingerprint,
+		"private_key":  s.PrivateKey,
+		"region":       s.Region,
 		"tenancy_ocid": s.TenancyOcid,
-		"user_ocid": s.UserOcid,
+		"user_ocid":    s.UserOcid,
 	}
 
 	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)

@@ -35,20 +35,20 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/autodns"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 type AutoDNSAPI struct {
 	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=autodns.service-account@example.com,required,description=Your AutoDNS user name."`
 	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,description=Your AutoDNS password."`
-	Context string `json:"context,omitempty" happydomain:"label=Context,placeholder=33004,description=Your AutoDNS context."`
+	Context  string `json:"context,omitempty" happydomain:"label=Context,placeholder=33004,description=Your AutoDNS context."`
 }
 
 func (s *AutoDNSAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
 	config := map[string]string{
 		"username": s.Username,
 		"password": s.Password,
-		"context": s.Context,
+		"context":  s.Context,
 	}
 	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
 }

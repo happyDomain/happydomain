@@ -40,8 +40,8 @@ import (
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
-	"git.happydns.org/happydomain/config"
-	docs "git.happydns.org/happydomain/docs"
+	"git.happydns.org/happyDomain/config"
+	docs "git.happydns.org/happyDomain/docs"
 )
 
 //	@title			happyDomain API

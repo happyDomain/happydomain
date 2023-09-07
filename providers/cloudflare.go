@@ -35,18 +35,18 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/cloudflare"
 
-	"git.happydns.org/happydomain/model"
+	"git.happydns.org/happyDomain/model"
 )
 
 type CloudflareAPI struct {
 	AccountID string `json:"AccountID,omitempty" happydomain:"label=Account ID,placeholder=xxxxxxxx,required,description=Your Cloudflare account ID"`
-	ApiToken string `json:"ApiToken,omitempty" happydomain:"label=Api Token,placeholder=xxxxxxxx,required,description=Your Cloudflare API token"`
+	ApiToken  string `json:"ApiToken,omitempty" happydomain:"label=Api Token,placeholder=xxxxxxxx,required,description=Your Cloudflare API token"`
 }
 
 func (s *CloudflareAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
 	config := map[string]string{
 		"accountid": s.AccountID,
-		"apitoken": s.ApiToken,
+		"apitoken":  s.ApiToken,
 	}
 	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
 }
