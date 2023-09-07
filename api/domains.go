@@ -185,7 +185,7 @@ func DomainHandler(c *gin.Context) {
 	c.Next()
 }
 
-type apiDomain struct {
+type APIDomain struct {
 	// Id is the Domain's identifier in the database.
 	Id happydns.Identifier `json:"id" swaggertype:"string"`
 
@@ -222,7 +222,7 @@ type apiDomain struct {
 //	@Router			/domains/{domainId} [get]
 func GetDomain(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
-	ret := &apiDomain{
+	ret := &APIDomain{
 		Id:          domain.Id,
 		IdUser:      domain.IdUser,
 		IdProvider:  domain.IdProvider,

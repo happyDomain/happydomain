@@ -161,7 +161,7 @@ func logout(opts *config.Options, c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-type loginForm struct {
+type LoginForm struct {
 	// Email of the user.
 	Email string
 
@@ -183,7 +183,7 @@ type loginForm struct {
 //	@Failure		500		{object}	happydns.Error
 //	@Router			/auth [post]
 func checkAuth(opts *config.Options, c *gin.Context) {
-	var lf loginForm
+	var lf LoginForm
 	if err := c.ShouldBindJSON(&lf); err != nil {
 		log.Printf("%s sends invalid LoginForm JSON: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
