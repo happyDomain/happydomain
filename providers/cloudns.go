@@ -29,7 +29,7 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package providers // import "happydns.org/providers"
+package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
 	"github.com/StackExchange/dnscontrol/v4/providers"

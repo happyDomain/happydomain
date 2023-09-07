@@ -29,7 +29,7 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package forms // import "happydns.org/forms"
+package forms // import "git.happydns.org/happyDomain/forms"
 
 import ()
 

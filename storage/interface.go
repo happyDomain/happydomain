@@ -29,7 +29,7 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package storage // import "happydns.org/storage"
+package storage // import "git.happydns.org/happyDomain/storage"
 
 import (
 	"git.happydns.org/happyDomain/model"

@@ -29,7 +29,7 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package google // import "happydns.org/services/providers/google"
+package google // import "git.happydns.org/happyDomain/services/providers/google"
 
 import (
 	"strings"

@@ -29,7 +29,7 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package config // import "happydns.org/config"
+package config // import "git.happydns.org/happyDomain/config"
 
 import (
 	"crypto/rand"
