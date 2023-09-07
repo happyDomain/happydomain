@@ -29,51 +29,35 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
+//go:build swagger
+
 package api
 
 import (
+	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/gin-gonic/gin"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"git.happydns.org/happyDomain/config"
+	docs "git.happydns.org/happyDomain/docs"
 )
 
-//	@title			happyDomain API
-//	@version		0.1
-//	@description	Finally a simple interface for domain names.
-
-//	@contact.name	happyDomain team
-//	@contact.email	contact+api@happydomain.org
-
-//	@license.name	CeCILL Free Software License Agreement
-//	@license.url	https://spdx.org/licenses/CECILL-2.1.html
-
-//	@host		localhost:8081
-//	@BasePath	/api
-
-//	@securityDefinitions.basic	BasicAuth
-
-//	@securityDefinitions.apikey	ApiKeyAuth
-//	@in							header
-//	@name						Authorization
-//	@description				Description for what is this security definition being used
-
-func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
-	apiRoutes := router.Group("/api")
-
-	declareAuthenticationRoutes(cfg, apiRoutes)
-	declareProviderSpecsRoutes(apiRoutes)
-	declareResolverRoutes(apiRoutes)
-	declareServiceSpecsRoutes(apiRoutes)
-	declareUsersRoutes(cfg, apiRoutes)
-	DeclareVersionRoutes(apiRoutes)
-
-	apiAuthRoutes := router.Group("/api")
-	apiAuthRoutes.Use(authMiddleware(cfg, false))
-
-	declareDomainsRoutes(cfg, apiAuthRoutes)
-	declareProvidersRoutes(cfg, apiAuthRoutes)
-	declareProviderSettingsRoutes(cfg, apiAuthRoutes)
-	declareUsersAuthRoutes(cfg, apiAuthRoutes)
-
-	declareRouteSwagger(cfg, router)
+func declareRouteSwagger(cfg *config.Options, router *gin.Engine) {
+	// Expose Swagger
+	if cfg.ExternalURL.URL.Host != "" {
+		tmp := cfg.ExternalURL.URL.String()
+		docs.SwaggerInfo.Host = tmp[strings.Index(tmp, "://")+3:]
+	} else {
+		docs.SwaggerInfo.Host = fmt.Sprintf("localhost%s", cfg.Bind[strings.Index(cfg.Bind, ":"):])
+	}
+	docs.SwaggerInfo.BasePath = "/api"
+	if cfg.BaseURL != "" {
+		docs.SwaggerInfo.BasePath = cfg.BaseURL + docs.SwaggerInfo.BasePath
+	}
+	router.GET("/swagger", func(c *gin.Context) { c.Redirect(http.StatusFound, "./swagger/index.html") })
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 }

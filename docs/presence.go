@@ -29,51 +29,6 @@
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL license and that you accept its terms.
 
-package api
+package docs
 
-import (
-	"github.com/gin-gonic/gin"
-
-	"git.happydns.org/happyDomain/config"
-)
-
-//	@title			happyDomain API
-//	@version		0.1
-//	@description	Finally a simple interface for domain names.
-
-//	@contact.name	happyDomain team
-//	@contact.email	contact+api@happydomain.org
-
-//	@license.name	CeCILL Free Software License Agreement
-//	@license.url	https://spdx.org/licenses/CECILL-2.1.html
-
-//	@host		localhost:8081
-//	@BasePath	/api
-
-//	@securityDefinitions.basic	BasicAuth
-
-//	@securityDefinitions.apikey	ApiKeyAuth
-//	@in							header
-//	@name						Authorization
-//	@description				Description for what is this security definition being used
-
-func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
-	apiRoutes := router.Group("/api")
-
-	declareAuthenticationRoutes(cfg, apiRoutes)
-	declareProviderSpecsRoutes(apiRoutes)
-	declareResolverRoutes(apiRoutes)
-	declareServiceSpecsRoutes(apiRoutes)
-	declareUsersRoutes(cfg, apiRoutes)
-	DeclareVersionRoutes(apiRoutes)
-
-	apiAuthRoutes := router.Group("/api")
-	apiAuthRoutes.Use(authMiddleware(cfg, false))
-
-	declareDomainsRoutes(cfg, apiAuthRoutes)
-	declareProvidersRoutes(cfg, apiAuthRoutes)
-	declareProviderSettingsRoutes(cfg, apiAuthRoutes)
-	declareUsersAuthRoutes(cfg, apiAuthRoutes)
-
-	declareRouteSwagger(cfg, router)
-}
+// This is an empty file to ensure docs module exists
