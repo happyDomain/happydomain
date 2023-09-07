@@ -3,7 +3,7 @@ module git.happydns.org/happyDomain
 go 1.18
 
 require (
-	github.com/StackExchange/dnscontrol/v4 v4.0.0
+	github.com/StackExchange/dnscontrol/v4 v4.3.0
 	github.com/fatih/color v1.15.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-mail/mail v2.3.1+incompatible
