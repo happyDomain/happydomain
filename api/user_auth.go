@@ -110,10 +110,10 @@ func displayAuthToken(c *gin.Context) {
 	c.JSON(http.StatusOK, currentUser(user))
 }
 
-func displayNotAuthToken(opts *config.Options, c *gin.Context) {
+func displayNotAuthToken(opts *config.Options, c *gin.Context) *UserClaims {
 	if !opts.NoAuth {
 		requireLogin(opts, c, "Authorization required")
-		return
+		return nil
 	}
 
 	claims, err := completeAuth(opts, c, UserProfile{
@@ -124,7 +124,7 @@ func displayNotAuthToken(opts *config.Options, c *gin.Context) {
 	if err != nil {
 		log.Printf("%s %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Something went wrong during your authentication. Please retry in a few minutes"})
-		return
+		return nil
 	}
 
 	realUser, err := retrieveUserFromClaims(claims)
@@ -133,6 +133,8 @@ func displayNotAuthToken(opts *config.Options, c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, currentUser(realUser))
 	}
+
+	return claims
 }
 
 // logout closes the user session.

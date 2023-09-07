@@ -167,6 +167,10 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 				return []byte(opts.JWTSecretKey), nil
 			}, jwt.WithValidMethods([]string{signingMethod.Name}))
 		if err != nil {
+			if opts.NoAuth {
+				claims = displayNotAuthToken(opts, c)
+			}
+
 			log.Printf("%s provide a bad JWT claims: %s", c.ClientIP(), err.Error())
 			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
 			requireLogin(opts, c, "Something went wrong with your session. Please reconnect.")
@@ -174,7 +178,7 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 		}
 
 		// Check that required fields are filled
-		if len(claims.Profile.UserId) == 0 {
+		if claims == nil || len(claims.Profile.UserId) == 0 {
 			log.Printf("%s: no UserId found in JWT claims", c.ClientIP())
 			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
 			requireLogin(opts, c, "Something went wrong with your session. Please reconnect.")
