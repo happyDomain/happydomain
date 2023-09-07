@@ -177,7 +177,7 @@ type LoginForm struct {
 //	@Tags			user_auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			body	body		loginForm		true	"Login information"
+//	@Param			body	body		LoginForm		true	"Login information"
 //	@Success		200		{object}	DisplayUser		"Login success"
 //	@Failure		401		{object}	happydns.Error	"Authentication failure"
 //	@Failure		500		{object}	happydns.Error

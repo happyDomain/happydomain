@@ -216,7 +216,7 @@ type APIDomain struct {
 //	@Produce		json
 //	@Param			domainId	path	string	true	"Domain identifier"
 //	@Security		securitydefinitions.basic
-//	@Success		200	{object}	apiDomain
+//	@Success		200	{object}	APIDomain
 //	@Failure		401	{object}	happydns.Error	"Authentication failure"
 //	@Failure		404	{object}	happydns.Error	"Domain not found"
 //	@Router			/domains/{domainId} [get]
