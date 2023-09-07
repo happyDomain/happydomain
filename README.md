@@ -53,14 +53,13 @@ pushd ui; npm install; popd
 2. Then, generate assets files used by Go code:
 
 ```
-go generate git.happydomain.org/happydomain/ui
-go generate git.happydomain.org/happydomain
+go generate ./...
 ```
 
 3. Finaly, build the Go code:
 
 ```
-go build -v
+go build -tags swagger,ui
 ```
 
 This last command will create a binary `happydomain` you can use standalone.
