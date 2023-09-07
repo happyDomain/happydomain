@@ -37,7 +37,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -154,7 +153,7 @@ func logout(opts *config.Options, c *gin.Context) {
 		-1,
 		opts.BaseURL+"/",
 		"",
-		opts.DevProxy == "" && !strings.HasPrefix(opts.ExternalURL, "http://"),
+		opts.DevProxy == "" && opts.ExternalURL.URL.Scheme != "http",
 		true,
 	)
 	c.Status(http.StatusNoContent)
@@ -260,7 +259,7 @@ func completeAuth(opts *config.Options, c *gin.Context, userprofile UserProfile)
 		30*24*3600,       // maxAge
 		opts.BaseURL+"/", // path
 		"",               // domain
-		opts.DevProxy == "" && !strings.HasPrefix(opts.ExternalURL, "http://"), // secure
+		opts.DevProxy == "" && opts.ExternalURL.URL.Scheme != "http", // secure
 		true, // httpOnly
 	)
 

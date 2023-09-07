@@ -43,7 +43,7 @@ func (o *Options) declareFlags() {
 	flag.StringVar(&o.DevProxy, "dev", o.DevProxy, "Proxify traffic to this host for static assets")
 	flag.StringVar(&o.AdminBind, "admin-bind", o.AdminBind, "Bind port/socket for administration interface")
 	flag.StringVar(&o.Bind, "bind", ":8081", "Bind port/socket")
-	flag.StringVar(&o.ExternalURL, "externalurl", o.ExternalURL, "Begining of the URL, before the base, that should be used eg. in mails")
+	flag.Var(&o.ExternalURL, "externalurl", "Begining of the URL, before the base, that should be used eg. in mails")
 	flag.StringVar(&o.BaseURL, "baseurl", o.BaseURL, "URL prepended to each URL")
 	flag.StringVar(&o.DefaultNameServer, "default-ns", o.DefaultNameServer, "Adress to the default name server")
 	flag.Var(&o.StorageEngine, "storage-engine", fmt.Sprintf("Select the storage engine between %v", storage.GetStorageEngines()))

@@ -36,6 +36,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -54,7 +55,7 @@ type Options struct {
 
 	// ExternalURL keeps the URL used in communications (such as email,
 	// ...), when it needs to use complete URL, not only relative parts.
-	ExternalURL string
+	ExternalURL URL
 
 	// BaseURL is the relative path where begins the root of the app.
 	BaseURL string
@@ -94,11 +95,13 @@ func (o *Options) BuildURL_noescape(url string, args ...interface{}) string {
 //
 // Should be called only one time.
 func ConsolidateConfig() (opts *Options, err error) {
+	u, _ := url.Parse("http://localhost:8081")
+
 	// Define defaults options
 	opts = &Options{
 		Bind:              ":8081",
 		AdminBind:         "./happydomain.sock",
-		ExternalURL:       "http://localhost:8081",
+		ExternalURL:       URL{URL: u},
 		BaseURL:           "/",
 		DefaultNameServer: "127.0.0.1:53",
 		StorageEngine:     storage.StorageEngine("leveldb"),
@@ -147,6 +150,27 @@ func ConsolidateConfig() (opts *Options, err error) {
 	} else {
 		opts.BaseURL = ""
 	}
+
+	if opts.ExternalURL.URL.Host == "" || opts.ExternalURL.URL.Scheme == "" {
+		u, err2 := url.Parse("http://" + opts.ExternalURL.URL.String())
+		if err2 == nil {
+			opts.ExternalURL.URL = u
+		} else {
+			err = fmt.Errorf("You defined an external URL without a scheme. The expected value is eg. http://localhost:8081")
+			return
+		}
+	}
+	if len(opts.ExternalURL.URL.Path) > 1 {
+		if opts.BaseURL != "" && opts.BaseURL != opts.ExternalURL.URL.Path {
+			err = fmt.Errorf("You defined both baseurl and a path to externalurl that are different. Define only one of those.")
+			return
+		}
+
+		opts.BaseURL = path.Clean(opts.ExternalURL.URL.Path)
+	}
+	opts.ExternalURL.URL.Path = ""
+	opts.ExternalURL.URL.Fragment = ""
+	opts.ExternalURL.URL.RawQuery = ""
 
 	if len(opts.JWTSecretKey) == 0 {
 		opts.JWTSecretKey = make([]byte, 32)

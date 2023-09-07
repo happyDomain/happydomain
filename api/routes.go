@@ -83,8 +83,9 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 	declareUsersAuthRoutes(cfg, apiAuthRoutes)
 
 	// Expose Swagger
-	if cfg.ExternalURL != "" {
-		docs.SwaggerInfo.Host = cfg.ExternalURL[strings.Index(cfg.ExternalURL, "://")+3:]
+	if cfg.ExternalURL.URL.Host != "" {
+		tmp := cfg.ExternalURL.URL.String()
+		docs.SwaggerInfo.Host = tmp[strings.Index(tmp, "://")+3:]
 	} else {
 		docs.SwaggerInfo.Host = fmt.Sprintf("localhost%s", cfg.Bind[strings.Index(cfg.Bind, ":"):])
 	}
