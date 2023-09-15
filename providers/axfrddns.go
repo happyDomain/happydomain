@@ -53,6 +53,10 @@ func (s *DDNSServer) NewDNSServiceProvider() (providers.DNSServiceProvider, erro
 		"master": s.Server,
 	}
 
+	if s.Server == "" {
+		config["master"] = "127.0.0.1"
+	}
+
 	if s.KeyName != "" {
 		config["transfer-key"] = strings.Join([]string{s.KeyAlgo, s.KeyName, base64.StdEncoding.EncodeToString(s.KeyBlob)}, ":")
 		config["update-key"] = config["transfer-key"]
