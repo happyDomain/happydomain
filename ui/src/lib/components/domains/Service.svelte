@@ -111,7 +111,7 @@
                     Click here to add a new service to this subdomain.
                 {/if}
             </CardSubtitle>
-            <CardText style="font-size: 90%">
+            <CardText style="font-size: 90%" class="text-truncate">
                 {#if service && service._comment}
                     {service._comment}
                 {/if}
