@@ -4,6 +4,8 @@
 
  import {
      Badge,
+     Button,
+     ButtonGroup,
      Dropdown,
      DropdownItem,
      DropdownMenu,
@@ -27,6 +29,7 @@
  export let noDropdown = false;
  export let selectedProvider: Provider|null = null;
  export let items: Array<any>;
+ export let toolbar = false;
 
  if (!$providersSpecs) refreshProvidersSpecs();
 
@@ -103,7 +106,7 @@
                 <em>{$t('provider.no-name')}</em>
             {/if}
         </div>
-        {#if !(noLabel && noDropdown)}
+        {#if !(noLabel && noDropdown && !toolbar)}
             <div class="d-flex">
                 {#if !noLabel}
                     <div>
@@ -123,6 +126,24 @@
                             </Badge>
                         {/if}
                     </div>
+                {/if}
+                {#if toolbar}
+                    <ButtonGroup>
+                        <Button
+                            color="light"
+                            size="sm"
+                            on:click={(e) => updateProvider(e, item)}
+                        >
+                            <Icon name="pencil" />
+                        </Button>
+                        <Button
+                            color="light"
+                            size="sm"
+                            on:click={(e) => delProvider(e, item)}
+                        >
+                            <Icon name="trash" />
+                        </Button>
+                    </ButtonGroup>
                 {/if}
                 {#if !noDropdown}
                     <Dropdown

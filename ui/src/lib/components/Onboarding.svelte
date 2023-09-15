@@ -49,7 +49,9 @@
                 {#if $providers && $providers.length}
                     <ProviderList
                         items={$providers}
+                        noDropdown
                         noLabel
+                        toolbar
                         style="max-height: 20rem; overflow-y: auto"
                         on:click={(event) => goto(`/providers/${event.detail._id}/domains`)}
                         on:new-provider={() => goto(`/providers/new`)}
