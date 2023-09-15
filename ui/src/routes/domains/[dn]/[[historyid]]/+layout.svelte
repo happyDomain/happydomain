@@ -352,7 +352,7 @@
                             <Icon name="list-ul" aria-hidden="true" /><br>
                             {$t('domains.actions.view')}
                         </Button>
-                        {#if domain.zone_history.length && selectedHistory === $domains_idx[selectedDomain].zone_history[0]}
+                        {#if $domains_idx[selectedDomain].zone_history && selectedHistory === $domains_idx[selectedDomain].zone_history[0]}
                             <Button
                                 size="sm"
                                 color="success"
