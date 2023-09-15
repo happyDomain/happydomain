@@ -40,7 +40,7 @@ FROM alpine:3.18
 
 EXPOSE 8081
 
-ENTRYPOINT ["/usr/sbin/happydomain"]
+ENTRYPOINT ["/usr/sbin/happyDomain"]
 
 ENV HAPPYDOMAIN_LEVELDB_PATH=/data/happydomain.db
 
@@ -55,5 +55,5 @@ WORKDIR /data
 
 VOLUME /data
 
-COPY --from=gobuild /go/src/git.happydns.org/happydomain/happydomain /usr/sbin/happydomain
+COPY --from=gobuild /go/src/git.happydns.org/happydomain/happyDomain /usr/sbin/happyDomain
 COPY hadmin.sh /usr/bin/hadmin

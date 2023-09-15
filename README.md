@@ -62,7 +62,7 @@ go generate ./...
 go build -tags swagger,ui
 ```
 
-This last command will create a binary `happydomain` you can use standalone.
+This last command will create a binary `happyDomain` you can use standalone.
 
 
 Install at home
@@ -72,7 +72,7 @@ The binary comes with sane default options to start with.
 You can simply launch the following command in your terminal:
 
 ```
-./happydomain
+./happyDomain
 ```
 
 After some initialization, it should show you:
@@ -87,7 +87,7 @@ Go to http://localhost:8081/ to start using happyDomain.
 
 By default, the LevelDB storage engine is used. You can change the storage engine using the option `-storage-engine other-engine`.
 
-The help command `./happydomain -help` shows you the available engines:
+The help command `./happyDomain -help` shows you the available engines:
 
 ```
     -storage-engine value
@@ -120,7 +120,7 @@ Only the first file found will be used.
 It is also possible to specify a custom path by adding it as argument to the command line:
 
 ```sh
-./happydomain /etc/happydomain/config
+./happyDomain /etc/happydomain/config
 ```
 
 #### Config file format
@@ -156,7 +156,7 @@ If you want to contribute to the frontend, instead of regenerating the frontend 
 In one terminal, run `happydomain` with the following arguments:
 
 ```
-./happydomain -dev http://127.0.0.1:8080
+./happyDomain -dev http://127.0.0.1:8080
 ```
 
 In another terminal, run the node part:
