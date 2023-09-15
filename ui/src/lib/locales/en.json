@@ -123,7 +123,7 @@
         "form-new-subdomain": "Add a new subdomain under {{domain}}:"
     },
     "domaingroups": {
-        "manage": "Manage your domain's groups",
+        "manage": "Manage your domain groups",
         "new": "New group",
         "no-group": "Miscellaneous",
         "title": "Your groups"
@@ -243,15 +243,15 @@
         "name-your": "Name your domain provider",
         "no-name": "No name",
         "provider": "Domains living on {{provider}}",
-        "kind": "domain's provider",
+        "kind": "domain provider",
         "select-provider": "First, select the provider hosting your domain:",
         "provider-name": "Host's name",
         "provider-type": "Hosting provider type",
-        "title": "Your domains' providers",
+        "title": "Your domain providers",
         "available-types": "Resources Types available",
         "import-domains": "Import all domains",
-        "new-form": "New domain's provider form",
-        "update": "Update domain's provider"
+        "new-form": "New domain provider form",
+        "update": "Update domain provider"
     },
     "upgrade": {
         "title": "An update is available!",
