@@ -34,6 +34,7 @@ package google // import "git.happydns.org/happyDomain/services/providers/google
 import (
 	"strings"
 
+	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -81,7 +82,7 @@ func (s *GSuite) GenComment(origin string) string {
 	return strings.Join(comments, ", ")
 }
 
-func (s *GSuite) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
+func (s *GSuite) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
 	for _, svc := range s.GenKnownSvcs() {
 		rrs = append(rrs, svc.GenRRs(domain, ttl, origin)...)
 	}
@@ -92,9 +93,9 @@ func gsuite_analyze(a *svcs.Analyzer) (err error) {
 	var googlemx []string
 
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeMX}) {
-		if mx, ok := record.(*dns.MX); ok {
-			if strings.ToLower(mx.Mx) == "aspmx.l.google.com." {
-				googlemx = append(googlemx, mx.Header().Name)
+		if record.Type == "MX" {
+			if strings.ToLower(record.GetTargetField()) == "aspmx.l.google.com." {
+				googlemx = append(googlemx, record.NameFQDN)
 				break
 			}
 		}
@@ -105,9 +106,9 @@ func gsuite_analyze(a *svcs.Analyzer) (err error) {
 			googlerr := &GSuite{}
 
 			for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeMX, Domain: dn}) {
-				if mx, ok := record.(*dns.MX); ok {
-					if strings.HasSuffix(mx.Mx, "mx-verification.google.com.") {
-						googlerr.ValidationCode = mx.Mx
+				if record.Type == "MX" {
+					if strings.HasSuffix(record.GetTargetField(), "mx-verification.google.com.") {
+						googlerr.ValidationCode = record.GetTargetField()
 						if err = a.UseRR(
 							record,
 							dn,
@@ -115,7 +116,7 @@ func gsuite_analyze(a *svcs.Analyzer) (err error) {
 						); err != nil {
 							return
 						}
-					} else if strings.HasSuffix(mx.Mx, "google.com.") {
+					} else if strings.HasSuffix(record.GetTargetField(), "google.com.") {
 						if err = a.UseRR(
 							record,
 							dn,
@@ -128,8 +129,8 @@ func gsuite_analyze(a *svcs.Analyzer) (err error) {
 			}
 
 			for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: dn}) {
-				if txt, ok := record.(*dns.TXT); ok {
-					content := strings.Join(txt.Txt, "")
+				if record.Type == "TXT" {
+					content := record.GetTargetTXTJoined()
 					if strings.HasPrefix(content, "v=spf1") && strings.Contains(content, "_spf.google.com") {
 						if err = a.UseRR(
 							record,

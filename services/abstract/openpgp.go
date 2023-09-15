@@ -38,6 +38,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -59,21 +60,16 @@ func (s *OpenPGP) GenComment(origin string) string {
 	return fmt.Sprintf("%s", s.Username)
 }
 
-func (s *OpenPGP) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
+func (s *OpenPGP) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
 	if len(s.PublicKey) > 0 {
 		if s.Username != "" {
 			s.Identifier = fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
 		}
 
-		rrs = append(rrs, &dns.OPENPGPKEY{
-			Hdr: dns.RR_Header{
-				Name:   utils.DomainJoin(fmt.Sprintf("%s._openpgpkey", s.Identifier), domain),
-				Rrtype: dns.TypeOPENPGPKEY,
-				Class:  dns.ClassINET,
-				Ttl:    ttl,
-			},
-			PublicKey: base64.StdEncoding.EncodeToString(s.PublicKey),
-		})
+		rc := utils.NewRecordConfig(utils.DomainJoin(fmt.Sprintf("%s._openpgpkey", s.Identifier), domain), "OPENPGPKEY", ttl, origin)
+		rc.SetTargetOpenPGPKey(base64.StdEncoding.EncodeToString(s.PublicKey))
+
+		rrs = append(rrs, rc)
 	}
 	return
 }
@@ -95,38 +91,30 @@ func (s *SMimeCert) GenComment(origin string) string {
 	return fmt.Sprintf("%s", s.Username)
 }
 
-func (s *SMimeCert) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
+func (s *SMimeCert) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
 	if len(s.Certificate) > 0 {
 		if s.Username != "" {
 			s.Identifier = fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
 		}
 
-		rrs = append(rrs, &dns.SMIMEA{
-			Hdr: dns.RR_Header{
-				Name:   utils.DomainJoin(fmt.Sprintf("%s._smimecert", s.Identifier), domain),
-				Rrtype: dns.TypeSMIMEA,
-				Class:  dns.ClassINET,
-				Ttl:    ttl,
-			},
-			Usage:        s.CertUsage,
-			Selector:     s.Selector,
-			MatchingType: s.MatchingType,
-			Certificate:  hex.EncodeToString(s.Certificate),
-		})
+		rc := utils.NewRecordConfig(utils.DomainJoin(fmt.Sprintf("%s._smimecert", s.Identifier), domain), "SMIMEA", ttl, origin)
+		rc.SetTarget(fmt.Sprintf("%d %d %d %s", s.CertUsage, s.Selector, s.MatchingType, hex.EncodeToString(s.Certificate)))
+
+		rrs = append(rrs, rc)
 	}
 	return
 }
 
 func openpgpkey_analyze(a *svcs.Analyzer) (err error) {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeOPENPGPKEY, Contains: "._openpgpkey."}) {
-		if openpgpkey, ok := record.(*dns.OPENPGPKEY); ok {
-			domain := record.Header().Name
+		if record.Type == "OPENPGPKEY" {
+			domain := record.NameFQDN
 			domain = domain[strings.Index(domain, "._openpgpkey")+13:]
 
-			identifier := strings.TrimSuffix(record.Header().Name, "._openpgpkey."+domain)
+			identifier := strings.TrimSuffix(record.NameFQDN, "._openpgpkey."+domain)
 
 			var pubkey []byte
-			pubkey, err = base64.StdEncoding.DecodeString(strings.TrimSuffix(strings.TrimPrefix(openpgpkey.PublicKey, "( "), " )"))
+			pubkey, err = base64.StdEncoding.DecodeString(strings.Join(strings.Fields(strings.TrimSuffix(strings.TrimPrefix(record.GetOpenPGPKeyField(), "("), ")")), ""))
 			if err != nil {
 				return
 			}
@@ -149,11 +137,13 @@ func openpgpkey_analyze(a *svcs.Analyzer) (err error) {
 
 func smimea_analyze(a *svcs.Analyzer) (err error) {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeSMIMEA, Contains: "._smimecert."}) {
-		if smimecert, ok := record.(*dns.SMIMEA); ok {
-			domain := record.Header().Name
+		if record.Type == "SMIMEA" {
+			domain := record.NameFQDN
 			domain = domain[strings.Index(domain, "._smimecert")+12:]
 
-			identifier := strings.TrimSuffix(record.Header().Name, "._smimecert."+domain)
+			smimecert := record.ToRR().(*dns.SMIMEA)
+
+			identifier := strings.TrimSuffix(record.NameFQDN, "._smimecert."+domain)
 
 			var cert []byte
 			cert, err = hex.DecodeString(smimecert.Certificate)

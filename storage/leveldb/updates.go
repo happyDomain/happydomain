@@ -43,6 +43,7 @@ var migrations []LevelDBMigrationFunc = []LevelDBMigrationFunc{
 	migrateFrom1,
 	migrateFrom2,
 	migrateFrom3,
+	migrateFrom4,
 }
 
 func (s *LevelDBStorage) DoMigration() (err error) {

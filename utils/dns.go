@@ -32,6 +32,9 @@
 package utils
 
 import (
+	"strings"
+
+	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 )
 
@@ -99,4 +102,14 @@ func DomainJoin(domains ...string) (ret string) {
 	}
 
 	return
+}
+
+// DomainJoin appends each relative domains passed as argument.
+func NewRecordConfig(domain string, rtype string, ttl uint32, origin string) *models.RecordConfig {
+	return &models.RecordConfig{
+		Name:     strings.TrimSuffix(strings.TrimSuffix(DomainJoin(domain), origin), "."),
+		NameFQDN: strings.TrimSuffix(DomainJoin(domain), "."),
+		Type:     rtype,
+		TTL:      ttl,
+	}
 }

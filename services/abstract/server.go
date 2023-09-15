@@ -36,6 +36,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -74,51 +75,36 @@ func (s *Server) GenComment(origin string) string {
 	return buffer.String()
 }
 
-func (s *Server) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
+func (s *Server) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
 	if s.A != nil && len(*s.A) != 0 {
-		rrs = append(rrs, &dns.A{
-			Hdr: dns.RR_Header{
-				Name:   utils.DomainJoin(domain),
-				Rrtype: dns.TypeA,
-				Class:  dns.ClassINET,
-				Ttl:    ttl,
-			},
-			A: *s.A,
-		})
+		rc := utils.NewRecordConfig(domain, "A", ttl, origin)
+		rc.SetTargetIP(*s.A)
+
+		rrs = append(rrs, rc)
 	}
 	if s.AAAA != nil && len(*s.AAAA) != 0 {
-		rrs = append(rrs, &dns.AAAA{
-			Hdr: dns.RR_Header{
-				Name:   utils.DomainJoin(domain),
-				Rrtype: dns.TypeAAAA,
-				Class:  dns.ClassINET,
-				Ttl:    ttl,
-			},
-			AAAA: *s.AAAA,
-		})
+		rc := utils.NewRecordConfig(domain, "AAAA", ttl, origin)
+		rc.SetTargetIP(*s.AAAA)
+
+		rrs = append(rrs, rc)
 	}
 	for _, sshfp := range s.SSHFP {
-		rrs = append(rrs, &dns.SSHFP{
-			Hdr: dns.RR_Header{
-				Name:   utils.DomainJoin(domain),
-				Rrtype: dns.TypeSSHFP,
-				Class:  dns.ClassINET,
-				Ttl:    ttl,
-			},
-			Algorithm:   sshfp.Algorithm,
-			Type:        sshfp.Type,
-			FingerPrint: sshfp.FingerPrint,
-		})
+		rc := utils.NewRecordConfig(domain, "SSHFP", ttl, origin)
+		rc.SshfpAlgorithm = sshfp.Algorithm
+		rc.SshfpFingerprint = sshfp.Type
+		rc.SetTarget(sshfp.FingerPrint)
+
+		rrs = append(rrs, rc)
 	}
 
 	return
 }
 
 func server_analyze(a *svcs.Analyzer) error {
-	pool := map[string][]dns.RR{}
+	pool := map[string]models.Records{}
 
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeA}, svcs.AnalyzerRecordFilter{Type: dns.TypeAAAA}, svcs.AnalyzerRecordFilter{Type: dns.TypeSSHFP}) {
-		domain := record.Header().Name
+		domain := record.NameFQDN
 
 		pool[domain] = append(pool[domain], record)
 	}
@@ -128,24 +114,25 @@ next_pool:
 		s := &Server{}
 
 		for _, rr := range rrs {
-			if rr.Header().Rrtype == dns.TypeA {
+			if rr.Type == "A" {
 				if s.A != nil {
 					continue next_pool
 				}
 
-				s.A = &rr.(*dns.A).A
-			} else if rr.Header().Rrtype == dns.TypeAAAA {
+				addr := rr.GetTargetIP()
+				s.A = &addr
+			} else if rr.Type == "AAAA" {
 				if s.AAAA != nil {
 					continue next_pool
 				}
 
-				s.AAAA = &rr.(*dns.AAAA).AAAA
-			} else if rr.Header().Rrtype == dns.TypeSSHFP {
-				sshfp := rr.(*dns.SSHFP)
+				addr := rr.GetTargetIP()
+				s.AAAA = &addr
+			} else if rr.Type == "SSHFP" {
 				s.SSHFP = append(s.SSHFP, &svcs.SSHFP{
-					Algorithm:   sshfp.Algorithm,
-					Type:        sshfp.Type,
-					FingerPrint: sshfp.FingerPrint,
+					Algorithm:   rr.SshfpAlgorithm,
+					Type:        rr.SshfpFingerprint,
+					FingerPrint: rr.GetTargetField(),
 				})
 			}
 		}

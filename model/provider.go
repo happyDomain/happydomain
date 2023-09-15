@@ -37,7 +37,6 @@ import (
 
 	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/StackExchange/dnscontrol/v4/providers"
-	"github.com/miekg/dns"
 )
 
 // Provider is where Domains and Zones can be managed.
@@ -108,17 +107,8 @@ func (p *ProviderCombined) DomainExists(fqdn string) (err error) {
 	return nil
 }
 
-func (p *ProviderCombined) ImportZone(dn *Domain) (rrs []dns.RR, err error) {
-	rcs, err := p.getZoneRecords(dn.DomainName)
-	if err != nil {
-		return rrs, err
-	}
-
-	for _, rc := range rcs {
-		rrs = append(rrs, rc.ToRR())
-	}
-
-	return
+func (p *ProviderCombined) ImportZone(dn *Domain) (rcs models.Records, err error) {
+	return p.getZoneRecords(dn.DomainName)
 }
 
 func (p *ProviderCombined) GetDomainCorrections(dn *Domain, dc *models.DomainConfig) (rrs []*models.Correction, err error) {

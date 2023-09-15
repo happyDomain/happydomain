@@ -34,9 +34,11 @@ package svcs
 import (
 	"strings"
 
+	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type TXT struct {
@@ -51,31 +53,25 @@ func (ss *TXT) GenComment(origin string) string {
 	return ss.Content
 }
 
-func (ss *TXT) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
-	rrs = append(rrs, &dns.TXT{
-		Hdr: dns.RR_Header{
-			Name:   domain,
-			Rrtype: dns.TypeTXT,
-			Class:  dns.ClassINET,
-			Ttl:    ttl,
-		},
-		Txt: []string{ss.Content},
-	})
+func (ss *TXT) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+	rr := utils.NewRecordConfig(domain, "TXT", ttl, origin)
+	rr.SetTargetTXT(ss.Content)
+	rrs = append(rrs, rr)
 	return
 }
 
 func txt_analyze(a *Analyzer) (err error) {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT}) {
 		// Skip DNSSEC record added by dnscontrol
-		if strings.HasPrefix(record.Header().Name, "__dnssec.") {
+		if strings.HasPrefix(record.Name, "__dnssec") {
 			continue
 		}
 
-		if txt, ok := record.(*dns.TXT); ok {
+		if record.Type == "TXT" {
 			err = a.UseRR(
 				record,
-				txt.Header().Name,
-				&TXT{Content: strings.Join(txt.Txt, "")},
+				record.NameFQDN,
+				&TXT{Content: record.GetTargetTXTJoined()},
 			)
 			if err != nil {
 				return

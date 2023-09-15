@@ -36,7 +36,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/miekg/dns"
+	"github.com/StackExchange/dnscontrol/v4/models"
 )
 
 // Service represents a service provided by one or more DNS record.
@@ -48,7 +48,7 @@ type Service interface {
 	GenComment(origin string) string
 
 	// genRRs generates corresponding RRs.
-	GenRRs(domain string, ttl uint32, origin string) []dns.RR
+	GenRRs(domain string, ttl uint32, origin string) models.Records
 }
 
 // ServiceMeta holds the metadata associated to a Service.

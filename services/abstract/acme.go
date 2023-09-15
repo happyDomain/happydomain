@@ -34,6 +34,7 @@ package abstract
 import (
 	"strings"
 
+	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -53,25 +54,19 @@ func (s *ACMEChallenge) GenComment(origin string) string {
 	return s.Challenge
 }
 
-func (s *ACMEChallenge) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
-	rrs = append(rrs, &dns.TXT{
-		Hdr: dns.RR_Header{
-			Name:   utils.DomainJoin("_acme-challenge", domain),
-			Rrtype: dns.TypeTXT,
-			Class:  dns.ClassINET,
-			Ttl:    ttl,
-		},
-		Txt: []string{s.Challenge},
-	})
+func (s *ACMEChallenge) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+	rr := utils.NewRecordConfig(utils.DomainJoin("_acme-challenge", domain), "TXT", ttl, origin)
+	rr.SetTargetTXT(s.Challenge)
+	rrs = append(rrs, rr)
 	return
 }
 
 func acmechallenge_analyze(a *svcs.Analyzer) error {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_acme-challenge"}) {
-		domain := strings.TrimPrefix(record.Header().Name, "_acme-challenge.")
-		if txt, ok := record.(*dns.TXT); ok {
+		domain := strings.TrimPrefix(record.NameFQDN, "_acme-challenge.")
+		if record.Type == "TXT" {
 			a.UseRR(record, domain, &ACMEChallenge{
-				Challenge: strings.Join(txt.Txt, ""),
+				Challenge: record.GetTargetTXTJoined(),
 			})
 		}
 	}

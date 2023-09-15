@@ -35,6 +35,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -53,16 +54,10 @@ func (s *CNAME) GenComment(origin string) string {
 	return strings.TrimSuffix(s.Target, "."+origin)
 }
 
-func (s *CNAME) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
-	rrs = append(rrs, &dns.CNAME{
-		Hdr: dns.RR_Header{
-			Name:   utils.DomainJoin(domain),
-			Rrtype: dns.TypeCNAME,
-			Class:  dns.ClassINET,
-			Ttl:    ttl,
-		},
-		Target: utils.DomainFQDN(s.Target, origin),
-	})
+func (s *CNAME) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+	rr := utils.NewRecordConfig(domain, "CNAME", ttl, origin)
+	rr.SetTarget(utils.DomainFQDN(s.Target, origin))
+	rrs = append(rrs, rr)
 	return
 }
 
@@ -79,27 +74,21 @@ func (s *SpecialCNAME) GenComment(origin string) string {
 	return "(" + s.SubDomain + ") -> " + strings.TrimSuffix(s.Target, "."+origin)
 }
 
-func (s *SpecialCNAME) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
-	rrs = append(rrs, &dns.CNAME{
-		Hdr: dns.RR_Header{
-			Name:   utils.DomainJoin(s.SubDomain, domain),
-			Rrtype: dns.TypeCNAME,
-			Class:  dns.ClassINET,
-			Ttl:    ttl,
-		},
-		Target: utils.DomainFQDN(s.Target, origin),
-	})
+func (s *SpecialCNAME) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+	rr := utils.NewRecordConfig(utils.DomainJoin(s.SubDomain, domain), "CNAME", ttl, origin)
+	rr.SetTarget(utils.DomainFQDN(s.Target, origin))
+	rrs = append(rrs, rr)
 	return
 }
 
 func specialalias_analyze(a *Analyzer) error {
 	// Try handle specials domains using CNAME
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME, Prefix: "_"}) {
-		subdomains := SRV_DOMAIN.FindStringSubmatch(record.Header().Name)
-		if cname, ok := record.(*dns.CNAME); len(subdomains) == 4 && ok {
+		subdomains := SRV_DOMAIN.FindStringSubmatch(record.NameFQDN)
+		if record.Type == "CNAME" && len(subdomains) == 4 {
 			a.UseRR(record, subdomains[3], &SpecialCNAME{
 				SubDomain: fmt.Sprintf("_%s._%s", subdomains[1], subdomains[2]),
-				Target:    cname.Target,
+				Target:    record.String(),
 			})
 		}
 	}
@@ -108,12 +97,12 @@ func specialalias_analyze(a *Analyzer) error {
 
 func alias_analyze(a *Analyzer) error {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME}) {
-		if cname, ok := record.(*dns.CNAME); ok {
+		if record.Type == "CNAME" {
 			newrr := &CNAME{
-				Target: strings.TrimSuffix(cname.Target, "."+a.origin),
+				Target: strings.TrimSuffix(record.String(), "."+a.origin),
 			}
 
-			a.UseRR(record, cname.Header().Name, newrr)
+			a.UseRR(record, record.NameFQDN, newrr)
 		}
 	}
 	return nil

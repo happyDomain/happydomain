@@ -33,14 +33,18 @@ package svcs
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type Orphan struct {
-	RR string
+	Type string
+	RR   string
 }
 
 func (s *Orphan) GetNbResources() int {
@@ -48,14 +52,24 @@ func (s *Orphan) GetNbResources() int {
 }
 
 func (s *Orphan) GenComment(origin string) string {
-	return s.RR
+	return fmt.Sprintf("%s %s", s.Type, s.RR)
 }
 
-func (s *Orphan) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
-	rr, _ := dns.NewRR(fmt.Sprintf("$ORIGIN %s\n%s %d IN %s", origin, domain, ttl, s.RR))
-	if rr != nil {
-		rrs = append(rrs, rr)
+func (s *Orphan) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+	if _, ok := dns.StringToType[s.Type]; ok {
+		rr, err := dns.NewRR(fmt.Sprintf("%s %d IN %s %s", utils.DomainJoin(domain), ttl, s.Type, s.RR))
+		if err == nil {
+			rc, err := models.RRtoRC(rr, strings.TrimSuffix(origin, "."))
+			if err == nil {
+				rrs = append(rrs, &rc)
+				return
+			}
+		}
 	}
+
+	rr := utils.NewRecordConfig(domain, s.Type, ttl, origin)
+	rr.SetTarget(s.RR)
+	rrs = append(rrs, rr)
 
 	return
 }

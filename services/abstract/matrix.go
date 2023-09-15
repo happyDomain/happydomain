@@ -36,6 +36,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -90,7 +91,7 @@ destloop:
 	return buffer.String()
 }
 
-func (s *MatrixIM) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
+func (s *MatrixIM) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
 	for _, matrix := range s.Matrix {
 		rrs = append(rrs, matrix.GenRRs(utils.DomainJoin("_matrix._tcp", domain), ttl, origin)...)
 	}
@@ -102,7 +103,7 @@ func matrix_analyze(a *svcs.Analyzer) error {
 
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Prefix: "_matrix._tcp.", Type: dns.TypeSRV}) {
 		if srv := svcs.ParseSRV(record); srv != nil {
-			domain := strings.TrimPrefix(record.Header().Name, "_matrix._tcp.")
+			domain := strings.TrimPrefix(record.NameFQDN, "_matrix._tcp.")
 
 			if _, ok := matrixDomains[domain]; !ok {
 				matrixDomains[domain] = &MatrixIM{}

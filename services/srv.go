@@ -36,6 +36,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -57,29 +58,24 @@ func (s *SRV) GenComment(origin string) string {
 	return fmt.Sprintf("%s:%d", strings.TrimSuffix(s.Target, "."+origin), s.Port)
 }
 
-func (s *SRV) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
-	rrs = append(rrs, &dns.SRV{
-		Hdr: dns.RR_Header{
-			Name:   domain,
-			Rrtype: dns.TypeSRV,
-			Class:  dns.ClassINET,
-			Ttl:    ttl,
-		},
-		Priority: s.Priority,
-		Weight:   s.Weight,
-		Port:     s.Port,
-		Target:   utils.DomainFQDN(s.Target, origin),
-	})
+func (s *SRV) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+	rr := utils.NewRecordConfig(domain, "SRV", ttl, origin)
+	rr.SrvPriority = s.Priority
+	rr.SrvWeight = s.Weight
+	rr.SrvPort = s.Port
+	rr.SetTarget(utils.DomainFQDN(s.Target, origin))
+
+	rrs = append(rrs, rr)
 	return
 }
 
-func ParseSRV(record dns.RR) (ret *SRV) {
-	if srv, ok := record.(*dns.SRV); ok {
+func ParseSRV(record *models.RecordConfig) (ret *SRV) {
+	if record.Type == "SRV" {
 		ret = &SRV{
-			Priority: srv.Priority,
-			Weight:   srv.Weight,
-			Port:     srv.Port,
-			Target:   srv.Target,
+			Priority: record.SrvPriority,
+			Weight:   record.SrvWeight,
+			Port:     record.SrvPort,
+			Target:   record.GetTargetField(),
 		}
 	}
 
@@ -104,7 +100,7 @@ func (s *UnknownSRV) GenComment(origin string) string {
 	return fmt.Sprintf("%s (%s)", s.Name, s.Proto)
 }
 
-func (s *UnknownSRV) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
+func (s *UnknownSRV) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
 	for _, service := range s.SRV {
 		rrs = append(rrs, service.GenRRs(utils.DomainJoin(fmt.Sprintf("_%s._%s", s.Name, s.Proto), domain), ttl, origin)...)
 	}
@@ -115,7 +111,7 @@ func srv_analyze(a *Analyzer) error {
 	srvDomains := map[string]map[string]*UnknownSRV{}
 
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeSRV}) {
-		subdomains := SRV_DOMAIN.FindStringSubmatch(record.Header().Name)
+		subdomains := SRV_DOMAIN.FindStringSubmatch(record.NameFQDN)
 		if srv := ParseSRV(record); len(subdomains) == 4 && srv != nil {
 			svc := subdomains[1] + "." + subdomains[2]
 			domain := subdomains[3]

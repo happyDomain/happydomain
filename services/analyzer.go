@@ -34,10 +34,12 @@ package svcs
 import (
 	"crypto/sha1"
 	"errors"
+	"fmt"
 	"io"
 	"reflect"
 	"strings"
 
+	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -46,7 +48,7 @@ import (
 
 type Analyzer struct {
 	origin     string
-	zone       []dns.RR
+	zone       models.Records
 	services   map[string][]*happydns.ServiceCombined
 	defaultTTL uint32
 }
@@ -61,20 +63,18 @@ type AnalyzerRecordFilter struct {
 	SubdomainsOf string
 	Contains     string
 	Type         uint16
-	Class        uint16
 	Ttl          uint32
 }
 
-func (a *Analyzer) SearchRR(arrs ...AnalyzerRecordFilter) (rrs []dns.RR) {
+func (a *Analyzer) SearchRR(arrs ...AnalyzerRecordFilter) (rrs models.Records) {
 	for _, record := range a.zone {
 		for _, arr := range arrs {
-			if strings.HasPrefix(record.Header().Name, arr.Prefix) &&
-				strings.HasSuffix(record.Header().Name, arr.SubdomainsOf) &&
-				(arr.Domain == "" || record.Header().Name == arr.Domain) &&
-				(arr.Type == 0 || record.Header().Rrtype == arr.Type) &&
-				(arr.Class == 0 || record.Header().Class == arr.Class) &&
-				(arr.Ttl == 0 || record.Header().Ttl == arr.Ttl) &&
-				(arr.Contains == "" || strings.Contains(record.String(), arr.Contains)) {
+			if rdtype, ok := dns.StringToType[record.Type]; strings.HasPrefix(record.NameFQDN, arr.Prefix) &&
+				strings.HasSuffix(record.NameFQDN, arr.SubdomainsOf) &&
+				(arr.Domain == "" || record.NameFQDN == arr.Domain) &&
+				(arr.Type == 0 || (ok && rdtype == arr.Type)) &&
+				(arr.Ttl == 0 || record.TTL == arr.Ttl) &&
+				(arr.Contains == "" || strings.Contains(fmt.Sprintf("%s. %d IN %s %s", record.NameFQDN, record.TTL, record.Type, record.String()), arr.Contains)) {
 				rrs = append(rrs, record)
 			}
 		}
@@ -83,7 +83,7 @@ func (a *Analyzer) SearchRR(arrs ...AnalyzerRecordFilter) (rrs []dns.RR) {
 	return
 }
 
-func (a *Analyzer) UseRR(rr dns.RR, domain string, svc happydns.Service) error {
+func (a *Analyzer) UseRR(rr *models.RecordConfig, domain string, svc happydns.Service) error {
 	found := false
 	for k, record := range a.zone {
 		if record == rr {
@@ -103,7 +103,7 @@ func (a *Analyzer) UseRR(rr dns.RR, domain string, svc happydns.Service) error {
 	}
 
 	// Remove origin to get an relative domain here
-	domain = strings.TrimSuffix(strings.TrimSuffix(domain, "."+a.origin), a.origin)
+	domain = strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(domain, "."), strings.TrimSuffix(a.origin, ".")), ".")
 
 	for _, service := range a.services[domain] {
 		if service.Service == svc {
@@ -117,8 +117,8 @@ func (a *Analyzer) UseRR(rr dns.RR, domain string, svc happydns.Service) error {
 	io.WriteString(hash, rr.String())
 
 	var ttl uint32 = 0
-	if rr.Header().Ttl != a.defaultTTL {
-		ttl = rr.Header().Ttl
+	if rr.TTL != a.defaultTTL {
+		ttl = rr.TTL
 	}
 
 	a.services[domain] = append(a.services[domain], &happydns.ServiceCombined{
@@ -136,10 +136,10 @@ func (a *Analyzer) UseRR(rr dns.RR, domain string, svc happydns.Service) error {
 	return nil
 }
 
-func getMostUsedTTL(zone []dns.RR) uint32 {
+func getMostUsedTTL(zone models.Records) uint32 {
 	ttls := map[uint32]int{}
 	for _, rr := range zone {
-		ttls[rr.Header().Ttl] += 1
+		ttls[rr.TTL] += 1
 	}
 
 	var max uint32 = 0
@@ -152,7 +152,7 @@ func getMostUsedTTL(zone []dns.RR) uint32 {
 	return max
 }
 
-func AnalyzeZone(origin string, zone []dns.RR) (svcs map[string][]*happydns.ServiceCombined, defaultTTL uint32, err error) {
+func AnalyzeZone(origin string, zone models.Records) (svcs map[string][]*happydns.ServiceCombined, defaultTTL uint32, err error) {
 	defaultTTL = getMostUsedTTL(zone)
 
 	a := Analyzer{
@@ -178,26 +178,26 @@ func AnalyzeZone(origin string, zone []dns.RR) (svcs map[string][]*happydns.Serv
 	// Consider records not used by services as Orphan
 	for _, record := range a.zone {
 		// Skip DNSSEC records
-		if utils.IsDNSSECType(record.Header().Rrtype) {
+		if rdtype, ok := dns.StringToType[record.Type]; ok && utils.IsDNSSECType(rdtype) {
 			continue
 		}
-		if record.Header().Name == "__dnssec."+origin && record.Header().Rrtype == dns.TypeTXT {
+		if record.NameFQDN == "__dnssec."+origin && record.Type == "TXT" {
 			continue
 		}
 
-		domain := strings.TrimSuffix(strings.TrimSuffix(record.Header().Name, "."+a.origin), a.origin)
+		domain := strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(record.NameFQDN, "."), strings.TrimSuffix(a.origin, ".")), ".")
 
 		hash := sha1.New()
 		io.WriteString(hash, record.String())
 
-		orphan := &Orphan{record.String()[strings.LastIndex(record.Header().String(), "\tIN\t")+4:]}
+		orphan := &Orphan{record.Type, record.String()}
 		svcs[domain] = append(svcs[domain], &happydns.ServiceCombined{
 			Service: orphan,
 			ServiceMeta: happydns.ServiceMeta{
 				Id:          hash.Sum(nil),
 				Type:        reflect.Indirect(reflect.ValueOf(orphan)).Type().String(),
 				Domain:      domain,
-				Ttl:         record.Header().Ttl,
+				Ttl:         record.TTL,
 				NbResources: 1,
 				Comment:     orphan.GenComment(a.origin),
 			},

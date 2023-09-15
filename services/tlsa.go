@@ -38,6 +38,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -98,21 +99,15 @@ protoloop:
 	return buffer.String()
 }
 
-func (ss *TLSAs) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
+func (ss *TLSAs) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
 	for _, s := range ss.TLSA {
 		if len(s.Certificate) > 0 {
-			rrs = append(rrs, &dns.TLSA{
-				Hdr: dns.RR_Header{
-					Name:   utils.DomainJoin(fmt.Sprintf("_%d._%s", s.Port, s.Proto), domain),
-					Rrtype: dns.TypeTLSA,
-					Class:  dns.ClassINET,
-					Ttl:    ttl,
-				},
-				Usage:        s.CertUsage,
-				Selector:     s.Selector,
-				MatchingType: s.MatchingType,
-				Certificate:  hex.EncodeToString(s.Certificate),
-			})
+			rr := utils.NewRecordConfig(utils.DomainJoin(fmt.Sprintf("_%d._%s", s.Port, s.Proto), domain), "TLSA", ttl, origin)
+			rr.TlsaUsage = s.CertUsage
+			rr.TlsaSelector = s.Selector
+			rr.TlsaMatchingType = s.MatchingType
+			rr.SetTarget(hex.EncodeToString(s.Certificate))
+			rrs = append(rrs, rr)
 		}
 	}
 	return
@@ -125,13 +120,13 @@ var (
 func tlsa_analyze(a *Analyzer) (err error) {
 	pool := map[string]*TLSAs{}
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTLSA}) {
-		subdomains := TLSA_DOMAIN.FindStringSubmatch(record.Header().Name)
-		if tlsa, ok := record.(*dns.TLSA); len(subdomains) == 4 && ok {
+		subdomains := TLSA_DOMAIN.FindStringSubmatch(record.NameFQDN)
+		if record.Type == "TLSA" && len(subdomains) == 4 {
 			var port uint64
 			port, err = strconv.ParseUint(subdomains[1], 10, 16)
 
 			var cert []byte
-			cert, err = hex.DecodeString(tlsa.Certificate)
+			cert, err = hex.DecodeString(record.GetTargetField())
 			if err != nil {
 				return
 			}
@@ -145,9 +140,9 @@ func tlsa_analyze(a *Analyzer) (err error) {
 				&TLSA{
 					Port:         uint16(port),
 					Proto:        subdomains[2],
-					CertUsage:    tlsa.Usage,
-					Selector:     tlsa.Selector,
-					MatchingType: tlsa.MatchingType,
+					CertUsage:    record.TlsaUsage,
+					Selector:     record.TlsaSelector,
+					MatchingType: record.TlsaMatchingType,
 					Certificate:  cert,
 				},
 			)

@@ -36,6 +36,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -68,61 +69,51 @@ func (s *Origin) GenComment(origin string) string {
 	return fmt.Sprintf("%s %s %d"+ns, strings.TrimSuffix(s.Ns, "."+origin), strings.TrimSuffix(s.Mbox, "."+origin), s.Serial)
 }
 
-func (s *Origin) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
-	rrs = append(rrs, &dns.SOA{
-		Hdr: dns.RR_Header{
-			Name:   utils.DomainJoin(domain),
-			Rrtype: dns.TypeSOA,
-			Class:  dns.ClassINET,
-			Ttl:    ttl,
-		},
-		Ns:      utils.DomainFQDN(s.Ns, origin),
-		Mbox:    utils.DomainFQDN(s.Mbox, origin),
-		Serial:  s.Serial,
-		Refresh: uint32(s.Refresh.Seconds()),
-		Retry:   uint32(s.Retry.Seconds()),
-		Expire:  uint32(s.Expire.Seconds()),
-		Minttl:  uint32(s.Negttl.Seconds()),
-	})
+func (s *Origin) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+	rc := utils.NewRecordConfig(domain, "SOA", ttl, origin)
+	rc.SoaMbox = utils.DomainFQDN(s.Mbox, origin)
+	rc.SoaSerial = s.Serial
+	rc.SoaRefresh = uint32(s.Refresh.Seconds())
+	rc.SoaRetry = uint32(s.Retry.Seconds())
+	rc.SoaExpire = uint32(s.Expire.Seconds())
+	rc.SoaMinttl = uint32(s.Negttl.Seconds())
+	rc.SetTarget(utils.DomainFQDN(s.Ns, origin))
+
+	rrs = append(rrs, rc)
 	for _, ns := range s.NameServers {
-		rrs = append(rrs, &dns.NS{
-			Hdr: dns.RR_Header{
-				Name:   utils.DomainJoin(domain),
-				Rrtype: dns.TypeNS,
-				Class:  dns.ClassINET,
-				Ttl:    ttl,
-			},
-			Ns: utils.DomainFQDN(ns, origin),
-		})
+		rc = utils.NewRecordConfig(domain, "NS", ttl, origin)
+		rc.SetTarget(utils.DomainFQDN(ns, origin))
+
+		rrs = append(rrs, rc)
 	}
 	return
 }
 
 func origin_analyze(a *svcs.Analyzer) error {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeSOA}) {
-		if soa, ok := record.(*dns.SOA); ok {
+		if record.Type == "SOA" {
 			origin := &Origin{
-				Ns:      soa.Ns,
-				Mbox:    soa.Mbox,
-				Serial:  soa.Serial,
-				Refresh: common.Duration(time.Duration(soa.Refresh) * time.Second),
-				Retry:   common.Duration(time.Duration(soa.Retry) * time.Second),
-				Expire:  common.Duration(time.Duration(soa.Expire) * time.Second),
-				Negttl:  common.Duration(time.Duration(soa.Minttl) * time.Second),
+				Ns:      record.GetTargetField(),
+				Mbox:    record.SoaMbox,
+				Serial:  record.SoaSerial,
+				Refresh: common.Duration(time.Duration(record.SoaRefresh) * time.Second),
+				Retry:   common.Duration(time.Duration(record.SoaRetry) * time.Second),
+				Expire:  common.Duration(time.Duration(record.SoaExpire) * time.Second),
+				Negttl:  common.Duration(time.Duration(record.SoaMinttl) * time.Second),
 			}
 
 			a.UseRR(
 				record,
-				soa.Header().Name,
+				record.NameFQDN,
 				origin,
 			)
 
-			for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS, Domain: soa.Header().Name}) {
-				if ns, ok := record.(*dns.NS); ok {
-					origin.NameServers = append(origin.NameServers, ns.Ns)
+			for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS, Domain: record.NameFQDN}) {
+				if record.Type == "NS" {
+					origin.NameServers = append(origin.NameServers, record.GetTargetField())
 					a.UseRR(
 						record,
-						ns.Header().Name,
+						record.NameFQDN,
 						origin,
 					)
 				}

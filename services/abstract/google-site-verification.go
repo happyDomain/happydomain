@@ -34,10 +34,12 @@ package abstract
 import (
 	"strings"
 
+	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type GoogleVerif struct {
@@ -52,25 +54,20 @@ func (s *GoogleVerif) GenComment(origin string) string {
 	return s.SiteVerification
 }
 
-func (s *GoogleVerif) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
-	rrs = append(rrs, &dns.TXT{
-		Hdr: dns.RR_Header{
-			Name:   domain,
-			Rrtype: dns.TypeTXT,
-			Class:  dns.ClassINET,
-			Ttl:    ttl,
-		},
-		Txt: []string{"google-site-verification=" + strings.TrimPrefix(s.SiteVerification, "google-site-verification=")},
-	})
+func (s *GoogleVerif) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+	rc := utils.NewRecordConfig(domain, "TXT", ttl, origin)
+	rc.SetTargetTXT("google-site-verification=" + strings.TrimPrefix(s.SiteVerification, "google-site-verification="))
+
+	rrs = append(rrs, rc)
 	return
 }
 
 func googleverification_analyze(a *svcs.Analyzer) error {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT}) {
-		domain := record.Header().Name
-		if txt, ok := record.(*dns.TXT); ok && strings.HasPrefix(strings.Join(txt.Txt, ""), "google-site-verification=") {
+		domain := record.NameFQDN
+		if record.Type == "TXT" && strings.HasPrefix(record.GetTargetTXTJoined(), "google-site-verification=") {
 			a.UseRR(record, domain, &GoogleVerif{
-				SiteVerification: strings.TrimPrefix(strings.Join(txt.Txt, ""), "google-site-verification="),
+				SiteVerification: strings.TrimPrefix(record.GetTargetTXTJoined(), "google-site-verification="),
 			})
 		}
 	}

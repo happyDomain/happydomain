@@ -36,7 +36,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/miekg/dns"
+	"github.com/StackExchange/dnscontrol/v4/models"
 )
 
 // ZoneMeta holds the metadata associated to a Zone.
@@ -174,7 +174,7 @@ func (z *Zone) EraseServiceWithoutMeta(subdomain string, origin string, id []byt
 }
 
 // GenerateRRs returns all the reals records of the Zone.
-func (z *Zone) GenerateRRs(origin string) (rrs []dns.RR) {
+func (z *Zone) GenerateRRs(origin string) (rrs models.Records) {
 	for subdomain, svcs := range z.Services {
 		if subdomain == "" {
 			subdomain = origin

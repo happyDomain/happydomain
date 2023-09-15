@@ -37,6 +37,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -97,7 +98,7 @@ destloop:
 	return buffer.String()
 }
 
-func (s *XMPP) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
+func (s *XMPP) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
 	for _, jabber := range s.Client {
 		rrs = append(rrs, jabber.GenRRs(utils.DomainJoin("_jabber._tcp", domain), ttl, origin)...)
 	}
@@ -116,7 +117,7 @@ func (s *XMPP) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
 func xmpp_subanalyze(a *svcs.Analyzer, prefix string, xmppDomains map[string]*XMPP, field string) error {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Prefix: prefix, Type: dns.TypeSRV}) {
 		if srv := svcs.ParseSRV(record); srv != nil {
-			domain := strings.TrimPrefix(record.Header().Name, prefix)
+			domain := strings.TrimPrefix(record.NameFQDN, prefix)
 
 			if _, ok := xmppDomains[domain]; !ok {
 				xmppDomains[domain] = &XMPP{}

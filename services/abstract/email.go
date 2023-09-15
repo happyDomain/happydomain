@@ -36,6 +36,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/StackExchange/dnscontrol/v4/models"
+	"github.com/StackExchange/dnscontrol/v4/pkg/spflib"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -113,80 +115,50 @@ func (s *EMail) GenComment(origin string) string {
 	return buffer.String()
 }
 
-func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
+func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
 	if len(s.MX) > 0 {
 		for _, mx := range s.MX {
-			rrs = append(rrs, &dns.MX{
-				Hdr: dns.RR_Header{
-					Name:   utils.DomainJoin(domain),
-					Rrtype: dns.TypeMX,
-					Class:  dns.ClassINET,
-					Ttl:    ttl,
-				},
-				Mx:         utils.DomainFQDN(mx.Target, origin),
-				Preference: mx.Preference,
-			})
+			rc := utils.NewRecordConfig(domain, "MX", ttl, origin)
+			rc.MxPreference = mx.Preference
+			rc.SetTarget(utils.DomainFQDN(mx.Target, origin))
+
+			rrs = append(rrs, rc)
 		}
 	}
 
 	if s.SPF != nil {
-		rrs = append(rrs, &dns.TXT{
-			Hdr: dns.RR_Header{
-				Name:   utils.DomainJoin(domain),
-				Rrtype: dns.TypeTXT,
-				Class:  dns.ClassINET,
-				Ttl:    ttl,
-			},
-			Txt: utils.SplitN(s.SPF.String(), 255),
-		})
+		rc := utils.NewRecordConfig(domain, "TXT", ttl, origin)
+		rc.SetTargetTXT(s.SPF.String())
+
+		rrs = append(rrs, rc)
 	}
 
 	for selector, d := range s.DKIM {
-		rrs = append(rrs, &dns.TXT{
-			Hdr: dns.RR_Header{
-				Name:   utils.DomainJoin(selector+"._domainkey", domain),
-				Rrtype: dns.TypeTXT,
-				Class:  dns.ClassINET,
-				Ttl:    ttl,
-			},
-			Txt: utils.SplitN(d.String(), 255),
-		})
+		rc := utils.NewRecordConfig(utils.DomainJoin(selector+"._domainkey", domain), "TXT", ttl, origin)
+		rc.SetTargetTXT(d.String())
+
+		rrs = append(rrs, rc)
 	}
 
 	if s.DMARC != nil {
-		rrs = append(rrs, &dns.TXT{
-			Hdr: dns.RR_Header{
-				Name:   utils.DomainJoin("_dmarc", domain),
-				Rrtype: dns.TypeTXT,
-				Class:  dns.ClassINET,
-				Ttl:    ttl,
-			},
-			Txt: utils.SplitN(s.DMARC.String(), 255),
-		})
+		rc := utils.NewRecordConfig(utils.DomainJoin("_dmarc", domain), "TXT", ttl, origin)
+		rc.SetTargetTXT(s.DMARC.String())
+
+		rrs = append(rrs, rc)
 	}
 
 	if s.MTA_STS != nil {
-		rrs = append(rrs, &dns.TXT{
-			Hdr: dns.RR_Header{
-				Name:   utils.DomainJoin("_mta-sts", domain),
-				Rrtype: dns.TypeTXT,
-				Class:  dns.ClassINET,
-				Ttl:    ttl,
-			},
-			Txt: utils.SplitN(s.MTA_STS.String(), 255),
-		})
+		rc := utils.NewRecordConfig(utils.DomainJoin("_mta-sts", domain), "TXT", ttl, origin)
+		rc.SetTargetTXT(s.MTA_STS.String())
+
+		rrs = append(rrs, rc)
 	}
 
 	if s.TLS_RPT != nil {
-		rrs = append(rrs, &dns.TXT{
-			Hdr: dns.RR_Header{
-				Name:   utils.DomainJoin("_smtp._tls", domain),
-				Rrtype: dns.TypeTXT,
-				Class:  dns.ClassINET,
-				Ttl:    ttl,
-			},
-			Txt: utils.SplitN(s.TLS_RPT.String(), 255),
-		})
+		rc := utils.NewRecordConfig(utils.DomainJoin("_smtp._tls", domain), "TXT", ttl, origin)
+		rc.SetTargetTXT(s.TLS_RPT.String())
+
+		rrs = append(rrs, rc)
 	}
 	return
 }
@@ -196,8 +168,8 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 
 	// Handle only MX records
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeMX}) {
-		if mx, ok := record.(*dns.MX); ok {
-			dn := mx.Header().Name
+		if record.Type == "MX" {
+			dn := record.NameFQDN
 
 			if _, ok := services[dn]; !ok {
 				services[dn] = &EMail{}
@@ -206,8 +178,8 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 			services[dn].MX = append(
 				services[dn].MX,
 				svcs.MX{
-					Target:     mx.Mx,
-					Preference: mx.Preference,
+					Target:     record.GetTargetField(),
+					Preference: record.MxPreference,
 				},
 			)
 
@@ -225,12 +197,17 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 	for domain, service := range services {
 		// Is there SPF record?
 		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: domain, Contains: "v=spf1"}) {
-			if service.SPF == nil {
-				service.SPF = &svcs.SPF{}
-			}
+			if record.Type == "TXT" || record.Type == "SPF" {
+				_, err := spflib.Parse(record.GetTargetTXTJoined(), nil)
+				if err != nil {
+					continue
+				}
 
-			if txt, ok := record.(*dns.TXT); ok {
-				fields := strings.Fields(service.SPF.Content + " " + strings.TrimPrefix(strings.TrimSpace(strings.Join(txt.Txt, "")), "v=spf1"))
+				if service.SPF == nil {
+					service.SPF = &svcs.SPF{}
+				}
+
+				fields := strings.Fields(service.SPF.Content + " " + strings.TrimPrefix(strings.TrimSpace(record.GetTargetTXTJoined()), "v=spf1"))
 
 				for i := 0; i < len(fields); i += 1 {
 					for j := i + 1; j < len(fields); j += 1 {
@@ -253,14 +230,14 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 		service.DKIM = map[string]*svcs.DKIM{}
 		// Is there DKIM record?
 		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, SubdomainsOf: "_domainkey." + domain}) {
-			selector := strings.TrimSuffix(record.Header().Name, "._domainkey."+domain)
+			selector := strings.TrimSuffix(record.NameFQDN, "._domainkey."+domain)
 
 			if _, ok := service.DKIM[selector]; !ok {
 				service.DKIM[selector] = &svcs.DKIM{}
 			}
 
-			if txt, ok := record.(*dns.TXT); ok {
-				service.DKIM[selector].Fields = append(service.DKIM[selector].Fields, strings.Split(strings.Join(txt.Txt, ""), ";")...)
+			if record.Type == "TXT" {
+				service.DKIM[selector].Fields = append(service.DKIM[selector].Fields, strings.Split(record.GetTargetTXTJoined(), ";")...)
 			}
 
 			err = a.UseRR(record, domain, service)
@@ -275,8 +252,8 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 				service.DMARC = &svcs.DMARC{}
 			}
 
-			if txt, ok := record.(*dns.TXT); ok {
-				service.DMARC.Fields = append(service.DMARC.Fields, strings.Split(strings.TrimPrefix(strings.Join(txt.Txt, ""), "v=DMARC1;"), ";")...)
+			if record.Type == "TXT" {
+				service.DMARC.Fields = append(service.DMARC.Fields, strings.Split(strings.TrimPrefix(record.GetTargetTXTJoined(), "v=DMARC1;"), ";")...)
 			}
 
 			err = a.UseRR(record, domain, service)
@@ -291,8 +268,8 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 				service.MTA_STS = &svcs.MTA_STS{}
 			}
 
-			if txt, ok := record.(*dns.TXT); ok {
-				service.MTA_STS.Fields = append(service.MTA_STS.Fields, strings.Split(strings.Join(txt.Txt, ""), ";")...)
+			if record.Type == "TXT" {
+				service.MTA_STS.Fields = append(service.MTA_STS.Fields, strings.Split(record.GetTargetTXTJoined(), ";")...)
 			}
 
 			err = a.UseRR(record, domain, service)
@@ -307,8 +284,8 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 				service.TLS_RPT = &svcs.TLS_RPT{}
 			}
 
-			if txt, ok := record.(*dns.TXT); ok {
-				service.TLS_RPT.Fields = append(service.TLS_RPT.Fields, strings.Split(strings.Join(txt.Txt, ""), ";")...)
+			if record.Type == "TXT" {
+				service.TLS_RPT.Fields = append(service.TLS_RPT.Fields, strings.Split(record.GetTargetTXTJoined(), ";")...)
 			}
 
 			err = a.UseRR(record, domain, service)

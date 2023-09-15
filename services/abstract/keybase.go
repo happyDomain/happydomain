@@ -34,6 +34,7 @@ package abstract
 import (
 	"strings"
 
+	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -53,25 +54,19 @@ func (s *KeybaseVerif) GenComment(origin string) string {
 	return s.SiteVerification
 }
 
-func (s *KeybaseVerif) GenRRs(domain string, ttl uint32, origin string) (rrs []dns.RR) {
-	rrs = append(rrs, &dns.TXT{
-		Hdr: dns.RR_Header{
-			Name:   utils.DomainJoin("_keybase", domain),
-			Rrtype: dns.TypeTXT,
-			Class:  dns.ClassINET,
-			Ttl:    ttl,
-		},
-		Txt: []string{"keybase-site-verification=" + strings.TrimPrefix(s.SiteVerification, "keybase-site-verification=")},
-	})
+func (s *KeybaseVerif) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+	rc := utils.NewRecordConfig(utils.DomainJoin("_keybase", domain), "TXT", ttl, origin)
+	rc.SetTargetTXT("keybase-site-verification=" + strings.TrimPrefix(s.SiteVerification, "keybase-site-verification="))
+	rrs = append(rrs, rc)
 	return
 }
 
 func keybaseverification_analyze(a *svcs.Analyzer) error {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_keybase"}) {
-		domain := strings.TrimPrefix(record.Header().Name, "_keybase.")
-		if txt, ok := record.(*dns.TXT); ok {
+		domain := strings.TrimPrefix(record.NameFQDN, "_keybase.")
+		if record.Type == "TXT" {
 			a.UseRR(record, domain, &KeybaseVerif{
-				SiteVerification: strings.TrimPrefix(strings.Join(txt.Txt, ""), "keybase-site-verification="),
+				SiteVerification: strings.TrimPrefix(record.GetTargetTXTJoined(), "keybase-site-verification="),
 			})
 		}
 	}
