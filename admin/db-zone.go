@@ -160,6 +160,7 @@ func patchZoneService(c *gin.Context) {
 	err = zone.EraseService(usc.Domain, domain.DomainName, usc.Id, usc)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
 	}
 
 	ApiResponse(c, zone.Services, storage.MainStore.UpdateZone(zone))

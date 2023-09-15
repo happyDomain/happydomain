@@ -93,6 +93,7 @@ func getProviderSpecIcon(c *gin.Context) {
 	cnt, ok := providers.Icons[strings.TrimSuffix(psid, ".png")]
 	if !ok {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Icon not found."})
+		return
 	}
 
 	c.Data(http.StatusOK, "image/png", cnt)
