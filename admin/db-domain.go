@@ -34,6 +34,7 @@ package admin
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -122,11 +123,40 @@ func updateUserDomain(c *gin.Context) {
 	ApiResponse(c, ud, storage.MainStore.UpdateDomain(ud))
 }
 
-func deleteUserDomain(c *gin.Context) {
-	user := c.MustGet("user").(*happydns.User)
+func searchUserDomain(dn string) *happydns.User {
+	users, err := storage.MainStore.GetUsers()
+	if err != nil {
+		log.Println("Unable to retrieve users list:", err.Error())
+		return nil
+	}
+	for _, user := range users {
+		usersDomains, err := storage.MainStore.GetDomains(user)
+		if err != nil {
+			log.Printf("Unable to retrieve %s's domains: %s", user.Email, err.Error())
+			continue
+		}
 
+		for _, domain := range usersDomains {
+			if domain.DomainName == dn {
+				return user
+			}
+		}
+	}
+
+	return nil
+}
+
+func deleteUserDomain(c *gin.Context) {
 	domainid, err := happydns.NewIdentifierFromString(c.Param("domain"))
 	if err != nil {
+		var user *happydns.User
+
+		if u, ok := c.Get("user"); ok {
+			user = u.(*happydns.User)
+		} else {
+			user = searchUserDomain(c.Param("domain"))
+		}
+
 		domain, err := storage.MainStore.GetDomainByDN(user, c.Param("domain"))
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": err.Error()})
@@ -135,6 +165,7 @@ func deleteUserDomain(c *gin.Context) {
 			domainid = domain.Id
 		}
 	}
+
 	ApiResponse(c, true, storage.MainStore.DeleteDomain(&happydns.Domain{Id: domainid}))
 }
 
