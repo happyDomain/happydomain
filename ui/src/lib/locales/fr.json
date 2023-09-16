@@ -148,6 +148,7 @@
         "domain-access": "Une erreur s'est produite en essayant d'accéder à la liste des domaines.",
         "domain-attach": "Une erreur s'est produite lors de l'attachement du domaine à happyDomain",
         "domain-have": "Il semble que vous n'ayez pas de nom de domaine enregistré chez ce fournisseur.",
+        "domain-import": "Une erreur s'est produite lors de la synchronisation de ce domaine :",
         "domain-list": "Ce fournisseur ne permet pas de répertorier les domaines existants. Utilisez le formulaire ci-dessous pour en ajouter un.",
         "error": "Erreur",
         "login": "Erreur de connexion",

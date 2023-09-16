@@ -1,9 +1,11 @@
 <script lang="ts">
+ import { tick } from 'svelte';
  import { goto } from '$app/navigation';
 
  // @ts-ignore
  import { escape } from 'html-escaper';
  import {
+     Alert,
      Button,
      ButtonGroup,
      Col,
@@ -42,6 +44,7 @@
 
  let selectedDomain = data.domain;
  $: if (selectedDomain != data.domain) {
+     main_error = null;
      goto('/domains/' + encodeURIComponent(selectedDomain));
  }
 
@@ -65,11 +68,14 @@
      }
  }
 
+ let main_error: string | null = null;
+
  let selectedHistory: string | undefined = data.history;
  $: if (!data.history && $domains_idx[selectedDomain] && $domains_idx[selectedDomain].zone_history && $domains_idx[selectedDomain].zone_history.length > 0) {
      selectedHistory = $domains_idx[selectedDomain].zone_history[0] as string;
  }
  $: if (selectedHistory && data.history != selectedHistory) {
+     main_error = null;
      goto('/domains/' + encodeURIComponent(selectedDomain) + '/' + encodeURIComponent(selectedHistory));
  }
 
@@ -93,6 +99,7 @@
      uploadInProgress = false;
      refreshDomains();
      selectedHistory = zm.id;
+     main_error = null;
  }
 
  async function getDomain(id: string): Promise<Domain> {
@@ -107,10 +114,14 @@
              retrieveZoneDone,
              (err: any) => {
                  retrievalInProgress = false;
-                 throw err;
+
+                 tick().then(() => {
+                     main_error = err.toString();
+                 });
              }
          )
      } else {
+         domain = null;
          getDomain($domains_idx[selectedDomain].id).then(
              (dn) => {
                  domain = dn;
@@ -430,7 +441,17 @@
             md={9}
             class="d-flex"
         >
-            {#if data.history == selectedHistory}
+            {#if main_error}
+                <div class="d-flex flex-column mt-3">
+                    <Alert
+                        color="danger"
+                        fade={false}
+                    >
+                        <strong>{$t('errors.domain-import')}</strong>
+                        {main_error}
+                    </Alert>
+                </div>
+            {:else if data.history == selectedHistory}
                 <slot />
             {:else}
                 <div class="mt-5 text-center flex-fill">
