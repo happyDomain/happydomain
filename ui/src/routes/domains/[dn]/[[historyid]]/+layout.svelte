@@ -293,7 +293,7 @@
                 </Input>
                 </div>
 
-                {#if domain && domain.zone_history}
+                {#if domain && domain.zone_history && $domains_idx[selectedDomain] && domain.id === $domains_idx[selectedDomain].id}
                     <form class="mt-3">
                         <div class="d-flex justify-content-between">
                             <label class="fw-bolder" for="zhistory">{$t('domains.history')}:</label>
