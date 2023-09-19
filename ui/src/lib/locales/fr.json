@@ -177,6 +177,7 @@
         "dns-resolver": "Résolveur DNS",
         "my-account": "Mon compte",
         "logout": "Se déconnecter",
+        "provider-features": "Fournisseurs supportés",
         "signup": "S'inscrire",
         "signin": "S'identifier",
         "quick-menu": "Accès rapide",
@@ -270,6 +271,7 @@
     "record": {
         "A": "Adresse IPv4",
         "AAAA": "Adresse IPv6",
+        "common-records": "Enregistrements courants",
         "Expire": "Expiration",
         "Mbox": "E-mail de l'administrateur",
         "Minttl": "Cache TTL négatif",

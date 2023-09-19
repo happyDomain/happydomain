@@ -144,6 +144,9 @@
                         {$t('menu.my-providers')}
                     </DropdownItem>
                     <DropdownItem divider />
+                    <DropdownItem href="/providers/features">
+                        {$t('menu.provider-features')}
+                    </DropdownItem>
                     <DropdownItem href="/resolver">
                         {$t('menu.dns-resolver')}
                     </DropdownItem>

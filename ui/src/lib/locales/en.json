@@ -184,6 +184,7 @@
         "dns-resolver": "DNS resolver",
         "my-account": "My account",
         "logout": "Sign out",
+        "provider-features": "Supported providers",
         "signup": "Sign up",
         "signin": "Sign in",
         "quick-menu": "Quick Access"
@@ -297,6 +298,7 @@
     "record": {
         "A": "IPv4 address",
         "AAAA": "IPv6 address",
+        "common-records": "Common records",
         "Expire": "Expire",
         "Mbox": "Administration e-mail",
         "Minttl": "Negative cache TTL",
