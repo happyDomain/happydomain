@@ -9,7 +9,7 @@ platform:
 
 steps:
 - name: frontend
-  image: node:20-alpine
+  image: node:21-alpine
   commands:
   - apk --no-cache add tar
   - yarn config set network-timeout 100000
@@ -218,7 +218,7 @@ platform:
 
 steps:
 - name: frontend
-  image: node:20-alpine
+  image: node:21-alpine
   commands:
   - cd ui
   - npm install --network-timeout=100000
@@ -381,7 +381,7 @@ platform:
 
 steps:
 - name: frontend
-  image: node:20-alpine
+  image: node:21-alpine
   commands:
   - cd ui
   - npm install --network-timeout=100000
