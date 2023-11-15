@@ -81,12 +81,12 @@ type Options struct {
 
 // BuildURL appends the given url to the absolute ExternalURL.
 func (o *Options) BuildURL(url string) string {
-	return fmt.Sprintf("%s%s%s", o.ExternalURL, o.BaseURL, url)
+	return fmt.Sprintf("%s%s%s", o.ExternalURL.URL.String(), o.BaseURL, url)
 }
 
 // BuildURL_noescape build an URL containing formater.
 func (o *Options) BuildURL_noescape(url string, args ...interface{}) string {
-	args = append([]interface{}{o.ExternalURL, o.BaseURL}, args...)
+	args = append([]interface{}{o.ExternalURL.URL.String(), o.BaseURL}, args...)
 	return fmt.Sprintf("%s%s"+url, args...)
 }
 

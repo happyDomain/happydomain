@@ -84,11 +84,12 @@ steps:
     event:
       - tag
 
-- name: vet
+- name: vet and tests
   image: golang:1-alpine
   commands:
   - apk --no-cache add build-base git
   - go vet -v ./...
+  - go test -v ./...
   environment:
     CGO_ENABLED: 0
 
