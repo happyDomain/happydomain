@@ -130,7 +130,7 @@
             id="signup-newsletter"
             type="checkbox"
             label={$t('account.signup.receive-update')}
-            bind:value={signupForm.wantReceiveUpdate}
+            bind:checked={signupForm.wantReceiveUpdate}
         />
     </FormGroup>
     <div class="d-flex justify-content-around gap-2">
