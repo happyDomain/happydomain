@@ -214,6 +214,7 @@ func checkAuth(opts *config.Options, c *gin.Context) {
 		Email:         user.Email,
 		EmailVerified: user.EmailVerification != nil,
 		CreatedAt:     user.CreatedAt,
+		Newsletter:    user.AllowCommercials,
 	})
 	if err != nil {
 		log.Printf("%s %s", c.ClientIP(), err.Error())

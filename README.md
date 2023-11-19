@@ -59,7 +59,7 @@ go generate ./...
 3. Finaly, build the Go code:
 
 ```
-go build -tags swagger,ui
+go build -tags listmonk,swagger,ui
 ```
 
 This last command will create a binary `happyDomain` you can use standalone.

@@ -41,11 +41,11 @@ import (
 	"git.happydns.org/happyDomain/utils"
 )
 
-func genUsername(user *happydns.UserAuth) (toName string) {
-	if n := strings.Index(user.Email, "+"); n > 0 {
-		toName = user.Email[0:n]
+func genUsername(email string) (toName string) {
+	if n := strings.Index(email, "+"); n > 0 {
+		toName = email[0:n]
 	} else {
-		toName = user.Email[0:strings.Index(user.Email, "@")]
+		toName = email[0:strings.Index(email, "@")]
 	}
 	if len(toName) > 1 {
 		toNameCopy := strings.Replace(toName, ".", " ", -1)
@@ -68,7 +68,7 @@ func genUsername(user *happydns.UserAuth) (toName string) {
 }
 
 func SendValidationLink(opts *config.Options, user *happydns.UserAuth) error {
-	toName := genUsername(user)
+	toName := genUsername(user.Email)
 	return utils.SendMail(
 		&mail.Address{Name: toName, Address: user.Email},
 		"Your new account on happyDomain",
@@ -87,7 +87,7 @@ In order to validate your account, please follow this link now:
 }
 
 func SendRecoveryLink(opts *config.Options, user *happydns.UserAuth) error {
-	toName := genUsername(user)
+	toName := genUsername(user.Email)
 	return utils.SendMail(
 		&mail.Address{Name: toName, Address: user.Email},
 		"Recover your happyDomain account",

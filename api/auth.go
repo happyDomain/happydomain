@@ -41,6 +41,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 
+	"git.happydns.org/happyDomain/actions"
 	"git.happydns.org/happyDomain/config"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/storage"
@@ -51,6 +52,7 @@ type UserProfile struct {
 	Email         string    `json:"email"`
 	EmailVerified bool      `json:"email_verified"`
 	CreatedAt     time.Time `json:"created_at"`
+	Newsletter    bool      `json:"wantReceiveUpdate,omitempty"`
 }
 
 type UserClaims struct {
@@ -83,6 +85,14 @@ func retrieveUserFromClaims(claims *UserClaims) (user *happydns.User, err error)
 		if err != nil {
 			err = fmt.Errorf("has a correct JWT, but an error occured when trying to create the user: %w", err)
 			return
+		}
+
+		if claims.Profile.Newsletter {
+			err = actions.SubscribeToNewsletter(user)
+			if err != nil {
+				err = fmt.Errorf("something goes wrong during newsletter subscription: %w", err)
+				return
+			}
 		}
 	} else if time.Since(user.LastSeen) > time.Hour*12 {
 		// Update user's data when connected more than 12 hours
