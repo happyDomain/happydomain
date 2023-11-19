@@ -133,7 +133,7 @@
             bind:value={signupForm.wantReceiveUpdate}
         />
     </FormGroup>
-    <div class="d-flex justify-content-around">
+    <div class="d-flex justify-content-around gap-2">
         <Button type="submit" color="primary" disabled={formSent}>
             {#if formSent}
                 <Spinner

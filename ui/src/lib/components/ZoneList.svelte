@@ -68,11 +68,13 @@
                     on:click={(event) => dispatch("click", event.detail)}
                     let:item={item}
                 >
-                    <div class="font-monospace">
+                    <div class="d-flex my-1" style="min-width: 0">
                         <div class="d-inline-block text-center" style="width: 50px;">
                             <ImgProvider id_provider={item.id_provider} />
                         </div>
-                        {item.domain}
+                        <div class="font-monospace text-truncate flex-shrink-1">
+                            {item.domain}
+                        </div>
                     </div>
                     <slot name="badges" {item} />
                 </HListGroup>

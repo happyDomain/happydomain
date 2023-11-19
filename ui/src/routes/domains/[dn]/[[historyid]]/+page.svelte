@@ -73,7 +73,7 @@
         <p>{$t('wait.importing')}</p>
     </div>
 {:else}
-    <Row class="pt-3 flex-fill">
+    <Row class="pt-3 flex-fill" style="max-width: 100%">
         <Col class="mb-5">
             {#if !showSubdomainsList}
                 <Button

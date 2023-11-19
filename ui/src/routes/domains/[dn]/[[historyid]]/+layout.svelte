@@ -441,7 +441,7 @@
         <Col
             sm={8}
             md={9}
-            class="d-flex"
+            class="d-flex pe-0"
         >
             {#if main_error}
                 <div class="d-flex flex-column mt-3">

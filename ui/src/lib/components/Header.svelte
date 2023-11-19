@@ -115,11 +115,11 @@
     >
         <Logo />
     </NavbarBrand>
-    <Nav class="ms-auto" navbar>
+    <Nav class="ms-auto align-items-center" navbar>
         <HelpButton
             href={helpLink}
             size={$userSession?"sm":undefined}
-            class={$userSession?"my-2":"me-2"}
+            class={$userSession?"my-2":"mx-1"}
         />
         {#if $userSession}
             <Dropdown nav inNavbar>
@@ -164,7 +164,7 @@
             </Dropdown>
         {:else}
             <Button
-                class="me-2"
+                class="mx-1"
                 color="info"
                 href="/resolver"
             >
@@ -176,6 +176,7 @@
             </Button>
 
             <Button
+                class="d-none d-md-inline-block mx-1"
                 outline={activemenu != "join"}
                 color="dark"
                 href="/join"
@@ -187,9 +188,9 @@
                 {$t('menu.signup')}
             </Button>
             <Button
+                class="d-none d-md-inline-block mx-1"
                 outline={activemenu == "join"}
                 color="primary"
-                class="ms-2"
                 href="/login"
             >
                 <Icon
