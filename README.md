@@ -38,8 +38,8 @@ Building
 
 In order to build the happyDomain project, you'll need the following dependencies:
 
-* `go` at least version 1.18;
-* `nodejs` tested with version 18 and 19.
+* `go` at least version 1.21;
+* `nodejs` tested with version 20 and 21.
 
 
 ### Instructions
