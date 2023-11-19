@@ -94,6 +94,7 @@
             "others": "{{count:eq; 0:no other change; 1:{{count}} other change; default:{{count}} others changes}}"
         },
         "attached-new": "New domain attached to happyDomain!",
+        "commit-msg": "What's changed:",
         "create-new-key": "Create new {{id}} key",
         "discard": "Discard",
         "drop-alias": "Drop alias",

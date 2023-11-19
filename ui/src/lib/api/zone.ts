@@ -29,13 +29,13 @@ export async function retrieveZone(domain: Domain | DomainInList): Promise<ZoneM
     return await handleApiResponse<ZoneMeta>(res);
 }
 
-export async function applyZone(domain: Domain | DomainInList, id: string, selectedDiffs: Array<string>): Promise<ZoneMeta> {
+export async function applyZone(domain: Domain | DomainInList, id: string, wantedCorrections: Array<string>, commitMessage: string): Promise<ZoneMeta> {
     const dnid = encodeURIComponent(domain.id);
     id = encodeURIComponent(id);
     const res = await fetch(`/api/domains/${dnid}/zone/${id}/apply_changes`, {
         method: 'POST',
         headers: {'Accept': 'application/json'},
-        body: JSON.stringify(selectedDiffs),
+        body: JSON.stringify({wantedCorrections, commitMessage}),
     });
     return await handleApiResponse<ZoneMeta>(res);
 }

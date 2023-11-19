@@ -12,6 +12,7 @@
      Container,
      Icon,
      Input,
+     Label,
      Modal,
      ModalBody,
      ModalFooter,
@@ -230,6 +231,7 @@
  }
 
  let selectedDiff: Array<string> | null = null;
+ let diffCommitMsg = "";
  let selectedDiffCreated = 0;
  let selectedDiffDeleted = 0;
  let selectedDiffModified = 0;
@@ -243,7 +245,7 @@
 
      propagationInProgress = true;
      try {
-         retrieveZoneDone(await APIApplyZone(domain, selectedHistory, selectedDiff));
+         retrieveZoneDone(await APIApplyZone(domain, selectedHistory, selectedDiff, diffCommitMsg));
      } finally {
          applyZoneModalIsOpen = false;
      }
@@ -599,6 +601,17 @@
         {/if}
     </ModalBody>
     <ModalFooter>
+        <div class="w-100 row">
+            <div class="col-auto d-flex flex-column justify-content-center">
+                <label for="commitmsg">{$t('domains.commit-msg')}</label>
+            </div>
+            <div class="col">
+                <Input
+                    id="commitmsg"
+                    bind:value={diffCommitMsg}
+                />
+            </div>
+        </div>
         {#if zoneDiff}
             {#if zoneDiffCreated}
                 <span class="text-success">

@@ -423,6 +423,11 @@ func diffZones(c *gin.Context) {
 	c.JSON(http.StatusOK, rrCorected)
 }
 
+type applyZoneForm struct {
+	WantedCorrections []string `json:"wantedCorrections"`
+	CommitMsg         string   `json:"commitMessage"`
+}
+
 // applyZone performs the requested changes with the provider.
 //
 //	@Summary	Performs requested changes to the real zone.
@@ -459,8 +464,8 @@ func applyZone(c *gin.Context) {
 		Records: records,
 	}
 
-	var wantedCorrections []string
-	err = c.ShouldBindJSON(&wantedCorrections)
+	var form applyZoneForm
+	err = c.ShouldBindJSON(&form)
 	if err != nil {
 		log.Printf("%s sends invalid string array JSON: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
@@ -469,7 +474,7 @@ func applyZone(c *gin.Context) {
 
 	corrections, err := provider.GetDomainCorrections(domain, dc)
 	for _, cr := range corrections {
-		for ic, wc := range wantedCorrections {
+		for ic, wc := range form.WantedCorrections {
 			if wc == cr.Msg {
 				log.Printf("%s: apply correction: %s", domain.DomainName, cr.Msg)
 				err := cr.F()
@@ -479,21 +484,20 @@ func applyZone(c *gin.Context) {
 					return
 				}
 
-				wantedCorrections = append(wantedCorrections[:ic], wantedCorrections[ic+1:]...)
+				form.WantedCorrections = append(form.WantedCorrections[:ic], form.WantedCorrections[ic+1:]...)
 
 				break
 			}
 		}
 	}
 
-	if len(wantedCorrections) > 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to perform the following changes: %s", wantedCorrections)})
+	if len(form.WantedCorrections) > 0 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to perform the following changes: %s", form.WantedCorrections)})
 		return
 	}
 
 	// Create a new zone in history for futher updates
 	newZone := zone.DerivateNew()
-	//newZone.IdAuthor = //TODO get current user id
 	err = storage.MainStore.CreateZone(newZone)
 	if err != nil {
 		log.Printf("%s was unable to CreateZone: %s", c.ClientIP(), err.Error())
@@ -513,7 +517,9 @@ func applyZone(c *gin.Context) {
 
 	// Commit changes in previous zone
 	now := time.Now()
-	// zone.ZoneMeta.IdAuthor = // TODO get current user id
+	zone.ZoneMeta.IdAuthor = user.Id
+	zone.CommitMsg = &form.CommitMsg
+	zone.ZoneMeta.CommitDate = &now
 	zone.ZoneMeta.Published = &now
 
 	zone.LastModified = time.Now()
