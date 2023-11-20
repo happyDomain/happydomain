@@ -9,12 +9,12 @@ export const ssr = false;
 
 const sw_state = { triedUpdate: false, hasUpdate: false };
 
-function onSWupdate(sw_state: {hasUpdate: boolean}) {
+function onSWupdate(sw_state: {hasUpdate: boolean}, installingWorker: ServiceWorker) {
     if (!sw_state.hasUpdate) {
         toasts.addToast({
             title: get_store_value(t)('upgrade.title'),
             message: get_store_value(t)('upgrade.content'),
-            onclick: () => location.reload(),
+            onclick: () => installingWorker.postMessage('SKIP_WAITING'),
         });
     }
     sw_state.hasUpdate = true;
@@ -29,27 +29,32 @@ export const load: Load = async({ fetch, route, url }) => {
 
     if (MODE == 'production' && 'serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then((registration) => {
-            if (registration.waiting) {
-                onSWupdate(sw_state);
-            }
-
             registration.onupdatefound = () => {
-                const installingWorker = registration.installing
+                const installingWorker = registration.installing;
 
                 if (installingWorker === null) return;
 
                 installingWorker.onstatechange = () => {
-                    if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        onSWupdate(sw_state);
+                    if (installingWorker.state === 'installed') {
+                        if (navigator.serviceWorker.controller) {
+                            onSWupdate(sw_state, installingWorker);
+                        }
                     }
                 }
             }
 
             if (!sw_state.triedUpdate) {
                 sw_state.triedUpdate = true;
-                console.log("try sw update");
                 registration.update();
                 setInterval(function (reg) { reg.update() }, 36000000, registration);
+            }
+        });
+
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                window.location.reload();
+                refreshing = true;
             }
         });
     }

@@ -18,6 +18,13 @@ self.addEventListener('install', (event) => {
     event.waitUntil(addFilesToCache());
 });
 
+self.addEventListener('message', (event) => {
+    if (event.data === 'SKIP_WAITING') {
+        console.log("SKIP_WAITING");
+        self.skipWaiting();
+    }
+});
+
 self.addEventListener('activate', (event) => {
     console.log(`%c SW ${version} `, 'background: #ddd; color: #0000ff')
 
