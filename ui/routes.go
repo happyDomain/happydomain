@@ -20,14 +20,20 @@ var (
 	indexTpl       *template.Template
 	CustomHeadHTML = ""
 	CustomBodyHTML = ""
+	HideVoxPeople  = false
 )
 
 func init() {
 	flag.StringVar(&CustomHeadHTML, "custom-head-html", CustomHeadHTML, "Add custom HTML right before </head>")
 	flag.StringVar(&CustomBodyHTML, "custom-body-html", CustomBodyHTML, "Add custom HTML right before </body>")
+	flag.BoolVar(&HideVoxPeople, "hide-feedback-button", HideVoxPeople, "Hide the icon on page that permit to give feedback")
 }
 
 func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
+	if HideVoxPeople {
+		CustomHeadHTML += "<style>#voxpeople { display: none !important; }</style>"
+	}
+
 	if cfg.DevProxy != "" {
 		router.GET("/.svelte-kit/*_", serveOrReverse("", cfg))
 		router.GET("/node_modules/*_", serveOrReverse("", cfg))
