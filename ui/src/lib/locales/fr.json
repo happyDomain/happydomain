@@ -171,7 +171,13 @@
         "settings-change": "Impossible de changer vos paramètres",
         "account-no-auth": "Vous utilisez happyDomain sans authentification. Vous ne pouvez pas changer d'autre paramètre de votre compte.",
         "domain-all-imported": "Ce compte sur {{provider}} ne contient plus aucun domaine à importer.",
-        "provider-delete": "Une erreur s'est produite lors de la suppression de la référence au fournisseur d'hébergement"
+        "provider-delete": "Une erreur s'est produite lors de la suppression de la référence au fournisseur d'hébergement",
+        "too-high": "Nombre trop grand, max: {{max}}",
+        "too-low": "Nombre trop petit, min: {{min}}",
+        "base64": "Chaîne base64 invalide.",
+        "base64-illegal-char": "Charactère incorrect utilisé.",
+        "base64-unfinished": "La chaîne est incomplète.",
+        "suggestion": "Voulez-vous dire: {{suggestion}}"
     },
     "menu": {
         "my-domains": "Mes domaines",

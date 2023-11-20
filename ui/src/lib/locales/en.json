@@ -177,7 +177,13 @@
         },
         "settings-change": "Unable to change your settings",
         "account-no-auth": "You're using happyDomain without authentication. You cannot manage other account properties.",
-        "domain-all-imported": "This account on {{provider}} doesn't have any more domain to import."
+        "domain-all-imported": "This account on {{provider}} doesn't have any more domain to import.",
+        "too-high": "Number too high, max: {{max}}",
+        "too-low": "Number too low, min: {{min}}",
+        "base64": "Invalid base64 string.",
+        "base64-illegal-char": "Illegal character used.",
+        "base64-unfinished": "Unfinised string.",
+        "suggestion": "Did you mean: {{suggestion}}"
     },
     "menu": {
         "my-domains": "My domains",

@@ -10,6 +10,8 @@
      InputType,
  } from 'sveltestrap/src/Input.d';
 
+ import { t } from '$lib/translations';
+
  const dispatch = createEventDispatcher();
 
  export let edit = false;
@@ -38,6 +40,36 @@
          inputmin = undefined;
      }
  }
+
+ function checkBase64(val: string): bool {
+     try {
+         atob(val);
+         return true;
+     } catch {
+         return false;
+     }
+ }
+
+ let feedback: string|null = null;
+ $: {
+     if (inputmax && value > inputmax) {
+         feedback = t.get('errors.too-high', {max: inputmax});
+     } else if (inputmin && value < inputmin) {
+         feedback = t.get('errors.too-low', {min: inputmin});
+     } else if (specs.type && (specs.type === "[]uint8" || specs.type === "[]byte") && !checkBase64(value)) {
+         if (checkBase64(value+"==")) {
+             feedback = t.get("errors.base64") + " " + t.get("errors.suggestion", {suggestion: `${value}==`});
+         } else if (checkBase64(value+"=")) {
+             feedback = t.get("errors.base64") + " " + t.get("errors.suggestion", {suggestion: `${value}=`});
+         } else if (checkBase64(value+"a")) {
+             feedback = t.get("errors.base64") + " " + t.get("errors.base64-unfinished");
+         } else {
+             feedback = t.get("errors.base64") + " " + t.get("errors.base64-illegal-char");
+         }
+     } else {
+         feedback = null;
+     }
+ }
 </script>
 
 <InputGroup size="sm" {...$$restProps}>
@@ -59,6 +91,8 @@
             id={'spec-' + index + '-' + specs.id}
             type={inputtype}
             class="fw-bold"
+            {feedback}
+            invalid={feedback !== null}
             min={inputmin}
             max={inputmax}
             placeholder={specs.placeholder}
