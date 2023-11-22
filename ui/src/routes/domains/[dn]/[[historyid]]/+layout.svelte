@@ -12,15 +12,8 @@
      Container,
      Icon,
      Input,
-     Label,
-     Modal,
-     ModalBody,
-     ModalFooter,
-     ModalHeader,
      Row,
      Spinner,
-     TabContent,
-     TabPane,
  } from 'sveltestrap';
 
  import {
@@ -28,13 +21,13 @@
      deleteDomain as APIDeleteDomain,
  } from '$lib/api/domains';
  import {
-     applyZone as APIApplyZone,
-     diffZone as APIDiffZone,
-     importZone as APIImportZone,
      retrieveZone as APIRetrieveZone,
-     viewZone as APIViewZone,
  } from '$lib/api/zone';
  import ImgProvider from '$lib/components/providers/ImgProvider.svelte';
+ import ModalDiffZone, { controls as ctrlDiffZone } from '$lib/components/ModalDiffZone.svelte';
+ import ModalDomainDelete, { controls as ctrlDomainDelete } from '$lib/components/ModalDomainDelete.svelte';
+ import ModalUploadZone, { controls as ctrlUploadZone } from '$lib/components/ModalUploadZone.svelte';
+ import ModalViewZone, { controls as ctrlViewZone } from '$lib/components/ModalViewZone.svelte';
  import type { Domain, DomainInList } from '$lib/model/domain';
  import type { ZoneMeta } from '$lib/model/zone';
  import { domains, domains_idx, refreshDomains } from '$lib/stores/domains';
@@ -95,9 +88,7 @@
  }
 
  function retrieveZoneDone(zm: ZoneMeta): void {
-     uploadModalIsOpen = false;
      retrievalInProgress = false;
-     uploadInProgress = false;
      refreshDomains();
      selectedHistory = zm.id;
      main_error = null;
@@ -131,127 +122,22 @@
      }
  }
 
- let uploadModalIsOpen = false;
- let uploadInProgress = false;
- let zoneImportContent = "";
- let zoneImportFiles: FileList;
- let uploadModalActiveTab: string|number = 0;
-
- $: if (uploadModalIsOpen) {
-     uploadInProgress = false;
-     zoneImportContent = "";
-     uploadModalActiveTab = 0;
- }
-
- function importZone(): void {
-     if (domain && selectedHistory) {
-         uploadInProgress = true;
-         let file = new Blob([zoneImportContent], {"type": "text/plain"});
-         if (uploadModalActiveTab != "uploadText") {
-             file = zoneImportFiles[0];
-         }
-         APIImportZone(domain, selectedHistory, file).then(
-             retrieveZoneDone,
-             (err: any) => {
-                 uploadInProgress = false;
-                 throw err;
-             }
-         );
-     }
- }
-
- let viewZoneModalIsOpen = false;
- let zoneContent: null | string = null;
  function viewZone(): void {
-     if (domain && selectedHistory) {
-         zoneContent = null;
-         viewZoneModalIsOpen = true;
-         APIViewZone(domain, selectedHistory).then(
-             (v: string) => zoneContent = v,
-             (err: any) => {
-                 viewZoneModalIsOpen = false;
-                 throw err;
-             }
-         );
+     if (!domain || !selectedHistory) {
+         return;
      }
+
+     ctrlViewZone.Open(domain, selectedHistory);
  }
 
- let applyZoneModalIsOpen = false;
- let zoneDiff: Array<{className: string; msg: string;}> | null = null;
- let zoneDiffCreated = 0;
- let zoneDiffDeleted = 0;
- let zoneDiffModified = 0;
  function showDiff(): void {
      if (!domain || !selectedHistory) {
          return;
      }
 
-     zoneDiff = null;
-     selectedDiff = null;
-     applyZoneModalIsOpen = true;
-     propagationInProgress = false;
-     APIDiffZone(domain, '@', selectedHistory).then(
-         (v: Array<string>) => {
-             zoneDiffCreated = 0;
-             zoneDiffDeleted = 0;
-             zoneDiffModified = 0;
-             if (v) {
-                 zoneDiff = v.map(
-                     (msg: string) => {
-                         let className = '';
-                         if (/^± MODIFY/.test(msg)) {
-                             className = 'text-warning';
-                             zoneDiffModified += 1;
-                         } else if (/^\+ CREATE/.test(msg)) {
-                             className = 'text-success';
-                             zoneDiffCreated += 1;
-                         } else if (/^- DELETE/.test(msg)) {
-                             className = 'text-danger';
-                             zoneDiffDeleted += 1;
-                         } else if (/^REFRESH/.test(msg)) {
-                             className = 'text-info';
-                         }
-
-                         return {
-                             className,
-                             msg,
-                         };
-                     }
-                 );
-             } else {
-                 zoneDiff = [];
-             }
-             selectedDiff = v;
-         },
-         (err: any) => {
-             applyZoneModalIsOpen = false;
-             throw err;
-         }
-     )
+     ctrlDiffZone.Open(domain, selectedHistory);
  }
 
- let selectedDiff: Array<string> | null = null;
- let diffCommitMsg = "";
- let selectedDiffCreated = 0;
- let selectedDiffDeleted = 0;
- let selectedDiffModified = 0;
- $: selectedDiffCreated = !selectedDiff?0:selectedDiff.filter((msg: string) => /^\+ CREATE/.test(msg)).length;
- $: selectedDiffDeleted = !selectedDiff?0:selectedDiff.filter((msg: string) => /^- DELETE/.test(msg)).length;
- $: selectedDiffModified = !selectedDiff?0:selectedDiff.filter((msg: string) => /^± MODIFY/.test(msg)).length;
-
- let propagationInProgress = false;
- async function applyDiff() {
-     if (!domain || !selectedHistory || !selectedDiff) return;
-
-     propagationInProgress = true;
-     try {
-         retrieveZoneDone(await APIApplyZone(domain, selectedHistory, selectedDiff, diffCommitMsg));
-     } finally {
-         applyZoneModalIsOpen = false;
-     }
- }
-
- let deleteModalIsOpen = false;
  let deleteInProgress = false;
  function detachDomain(): void {
      deleteInProgress = true;
@@ -295,15 +181,15 @@
                         type="select"
                         bind:value={selectedDomain}
                     >
-                    {#each Object.keys(domainsByGroup) as gname}
-                        {@const group = domainsByGroup[gname]}
-                        <optgroup label={gname=="undefined"?$t("domaingroups.no-group"):gname}>
-                            {#each group as domain}
-                                <option value={domain.domain}>{domain.domain}</option>
-                            {/each}
-                        </optgroup>
-                    {/each}
-                </Input>
+                        {#each Object.keys(domainsByGroup) as gname}
+                            {@const group = domainsByGroup[gname]}
+                            <optgroup label={gname=="undefined"?$t("domaingroups.no-group"):gname}>
+                                {#each group as domain}
+                                    <option value={domain.domain}>{domain.domain}</option>
+                                {/each}
+                            </optgroup>
+                        {/each}
+                    </Input>
                 </div>
 
                 {#if domain && domain.zone_history && $domains_idx[selectedDomain] && domain.id === $domains_idx[selectedDomain].id}
@@ -316,14 +202,9 @@
                                     color="secondary"
                                     size="sm"
                                     title={$t('domains.actions.upload')}
-                                    disabled={uploadInProgress}
-                                    on:click={() => uploadModalIsOpen = true}
+                                    on:click={ctrlUploadZone.Open}
                                 >
-                                    {#if uploadInProgress}
-                                        <Spinner size="sm" />
-                                    {:else}
-                                        <Icon name="cloud-upload" />
-                                    {/if}
+                                    <Icon name="cloud-upload" />
                                 </Button>
                                 <Button
                                     outline
@@ -397,7 +278,7 @@
                     outline
                     color="danger"
                     disabled={deleteInProgress}
-                    on:click={() => deleteModalIsOpen = true}
+                    on:click={() => ctrlDomainDelete.Open()}
                 >
                     {#if deleteInProgress}
                         <Spinner size="sm" />
@@ -465,194 +346,20 @@
     </Row>
 </Container>
 
-<Modal
-    isOpen={uploadModalIsOpen}
-    size="lg"
->
-    <ModalHeader toggle={() => uploadModalIsOpen = false}>{$t('zones.upload')}</ModalHeader>
-    <ModalBody>
-        <TabContent on:tab={(e) => (uploadModalActiveTab = e.detail)}>
-            <TabPane tabId="uploadText" tab={$t('zones.import-text')} active>
-                <Input
-                    class="mt-3"
-                    type="textarea"
-                    style="height: 200px;"
-                    placeholder="@         4269 IN SOA   root ns 2042070136 ..."
-                    bind:value={zoneImportContent}
-                />
-            </TabPane>
-            <TabPane tabId="uploadFile" tab={$t('zones.import-file')}>
-                {#if uploadModalIsOpen}
-                    <Input
-                        class="mt-3"
-                        type="file"
-                        bind:files={zoneImportFiles}
-                    />
-                {/if}
-            </TabPane>
-        </TabContent>
-    </ModalBody>
-    <ModalFooter>
-        <Button
-            outline
-            color="secondary"
-            on:click={() => uploadModalIsOpen = false}
-        >
-            {$t('common.cancel')}
-        </Button>
-        <Button
-            color="primary"
-            disabled={uploadInProgress}
-            on:click={importZone}
-        >
-            {#if uploadInProgress}
-                <Spinner size="sm" />
-            {/if}
-            {$t('domains.actions.upload')}
-        </Button>
-    </ModalFooter>
-</Modal>
+<ModalUploadZone
+    {domain}
+    {selectedHistory}
+    on:retrieveZoneDone={retrieveZoneDone}
+/>
 
-<Modal
-    isOpen={deleteModalIsOpen}
-    size="lg"
->
-    <ModalHeader toggle={() => deleteModalIsOpen = false}>{$t('domains.removal')}</ModalHeader>
-    <ModalBody>
-        {$t('domains.alert.remove')}
-    </ModalBody>
-    <ModalFooter>
-        <Button
-            outline
-            color="secondary"
-            on:click={() => deleteModalIsOpen = false}
-        >
-            {$t('domains.view.cancel-title')}
-        </Button>
-        <Button
-            color="danger"
-            on:click={detachDomain}
-        >
-            {$t('domains.discard')}
-        </Button>
-    </ModalFooter>
-</Modal>
+<ModalDomainDelete
+    on:detachDomain={detachDomain}
+/>
 
-<Modal
-    isOpen={viewZoneModalIsOpen}
-    size="lg"
-    scrollable
->
-    <ModalHeader toggle={() => viewZoneModalIsOpen = false}>{$t('domains.view.title')}</ModalHeader>
-    <ModalBody>
-        {#if zoneContent}
-            <pre style="overflow: initial">{zoneContent}</pre>
-        {:else}
-            <div class="my-2 text-center">
-                <Spinner label="Spinning" />
-                <p>{$t('wait.formating')}</p>
-            </div>
-        {/if}
-    </ModalBody>
-</Modal>
+<ModalViewZone />
 
-<Modal
-    isOpen={applyZoneModalIsOpen}
-    size="lg"
-    scrollable
->
-    {#if domain}
-        <ModalHeader toggle={() => applyZoneModalIsOpen = false}>
-            {@html $t('domains.view.description', {"domain": `<span class="font-monospace">${escape(domain.domain)}</span>`})}
-        </ModalHeader>
-    {/if}
-    <ModalBody>
-        {#if !zoneDiff}
-            <div class="my-2 text-center">
-                <Spinner color="warning" label="Spinning" />
-                <p>{$t('wait.exporting')}</p>
-            </div>
-        {:else if zoneDiff.length == 0}
-            <div class="d-flex gap-3 align-items-center justify-content-center">
-                <Icon name="check2-all" class="display-5 text-success" />
-                {$t('domains.apply.nochange')}
-            </div>
-        {:else}
-            {#each zoneDiff as line, n}
-                <div
-                    class={'col font-monospace form-check ' + line.className}
-                >
-                    <input
-                        type="checkbox"
-                        class="form-check-input"
-                        id="zdiff{n}"
-                        bind:group={selectedDiff}
-                        value={line.msg}
-                    />
-                    <label
-                        class="form-check-label"
-                        for="zdiff{n}"
-                        style="padding-left: 1em; text-indent: -1em;"
-                    >
-                        {line.msg}
-                    </label>
-                </div>
-            {/each}
-        {/if}
-    </ModalBody>
-    <ModalFooter>
-        <div class="w-100 row">
-            <div class="col-auto d-flex flex-column justify-content-center">
-                <label for="commitmsg">{$t('domains.commit-msg')}</label>
-            </div>
-            <div class="col">
-                <Input
-                    id="commitmsg"
-                    bind:value={diffCommitMsg}
-                />
-            </div>
-        </div>
-        {#if zoneDiff}
-            {#if zoneDiffCreated}
-                <span class="text-success">
-                    {$t('domains.apply.additions', {count: selectedDiffCreated})}
-                </span>
-            {/if}
-            {#if zoneDiffCreated && zoneDiffDeleted}
-                &ndash;
-            {/if}
-            {#if zoneDiffDeleted}
-                <span class="text-danger">
-                    {$t('domains.apply.deletions', {count: selectedDiffDeleted})}
-                </span>
-            {/if}
-            {#if (zoneDiffCreated || zoneDiffDeleted) && zoneDiffModified}
-                &ndash;
-            {/if}
-            {#if zoneDiffModified}
-                <span class="text-warning">
-                    {$t('domains.apply.modifications', {count: selectedDiffModified})}
-                </span>
-            {/if}
-            {#if (zoneDiffCreated || zoneDiffDeleted || zoneDiffModified) && (zoneDiff.length - zoneDiffCreated - zoneDiffDeleted - zoneDiffModified !== 0)}
-                &ndash;
-            {/if}
-            {#if selectedDiff && zoneDiff.length - zoneDiffCreated - zoneDiffDeleted - zoneDiffModified !== 0}
-                <span class="text-info">
-                    {$t('domains.apply.others', {count: selectedDiff.length - selectedDiffCreated - selectedDiffDeleted - selectedDiffModified})}
-                </span>
-            {/if}
-        {/if}
-        <div class="d-flex gap-1">
-            <Button outline color="secondary" on:click={() => applyZoneModalIsOpen = false}>
-                {$t('common.cancel')}
-            </Button>
-            <Button color="success" disabled={propagationInProgress || !zoneDiff || !selectedDiff || selectedDiff.length === 0} on:click={applyDiff}>
-                {#if propagationInProgress}
-                    <Spinner label="Spinning" size="sm" />
-                {/if}
-                {$t('domains.apply.button')}
-            </Button>
-        </div>
-    </ModalFooter>
-</Modal>
+<ModalDiffZone
+    {domain}
+    {selectedHistory}
+    on:retrieveZoneDone={retrieveZoneDone}
+/>

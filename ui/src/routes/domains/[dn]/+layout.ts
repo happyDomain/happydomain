@@ -4,7 +4,7 @@ export const load: Load = async({ parent, params }) => {
     const data = await parent();
 
     return {
-        history: params.historyid,
+        domain: params.dn,
         ...data,
     }
 }
