@@ -38,6 +38,8 @@ import (
 	"log"
 	"time"
 
+	"go.uber.org/multierr"
+
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -136,9 +138,11 @@ func migrateFrom1_users_tree(s *LevelDBStorage) (err error) {
 		}
 
 		// Migrate object of the user
-		migrateFrom1_domains(s, user.Id, newId)
-		migrateFrom1_provider(s, user.Id, newId)
-		migrateFrom1_zone(s, user.Id, newId)
+		err = multierr.Combine(
+			migrateFrom1_domains(s, user.Id, newId),
+			migrateFrom1_provider(s, user.Id, newId),
+			migrateFrom1_zone(s, user.Id, newId),
+		)
 	}
 
 	return
