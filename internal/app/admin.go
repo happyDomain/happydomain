@@ -73,8 +73,9 @@ func NewAdmin(cfg *config.Options) Admin {
 
 func (app *Admin) Start() {
 	app.srv = &http.Server{
-		Addr:    app.cfg.AdminBind,
-		Handler: app.router,
+		Addr:              app.cfg.AdminBind,
+		Handler:           app.router,
+		ReadHeaderTimeout: 15 * time.Second,
 	}
 
 	log.Printf("Admin interface listening on %s\n", app.cfg.AdminBind)

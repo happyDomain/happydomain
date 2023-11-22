@@ -72,8 +72,9 @@ func NewApp(cfg *config.Options) App {
 
 func (app *App) Start() {
 	app.srv = &http.Server{
-		Addr:    app.cfg.Bind,
-		Handler: app.router,
+		Addr:              app.cfg.Bind,
+		Handler:           app.router,
+		ReadHeaderTimeout: 15 * time.Second,
 	}
 
 	log.Printf("Public interface listening on %s\n", app.cfg.Bind)
