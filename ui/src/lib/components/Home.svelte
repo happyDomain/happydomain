@@ -44,10 +44,6 @@
          )
      }
  }
-
- function showDomain(event: CustomEvent<DomainInList>) {
-     goto('/domains/' + encodeURIComponent(event.detail.domain));
- }
 </script>
 
 <Container class="flex-fill pt-4 pb-5">
@@ -61,7 +57,7 @@
                 button
                 display_by_groups
                 domains={filteredDomains}
-                on:click={showDomain}
+                links
             >
                 <Badge slot="badges" color="success">
                     OK
@@ -91,10 +87,9 @@
                 <div class="card-header d-flex justify-content-between">
                     {$t("provider.title")}
                     <Button
-                        type="button"
                         size="sm"
                         color="light"
-                        on:click={() => goto('/providers/new')}
+                        href="/providers/new"
                     >
                         <Icon name="plus" />
                     </Button>

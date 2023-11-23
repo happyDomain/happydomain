@@ -15,6 +15,7 @@
 
  export let button = false;
  export let flush = false;
+ export let links = false;
  export let display_by_groups = false;
  export let domains: Array<ZoneListDomain> = [];
 
@@ -28,6 +29,7 @@
 
      for (const domain of domains) {
          if (!domain.group) domain.group = "";
+         if (links && !domain.href) domain.href = '/domains/' + encodeURIComponent(domain.domain);
 
          if (tmp[domain.group] === undefined) {
              tmp[domain.group] = [];
@@ -65,6 +67,7 @@
                     {button}
                     {flush}
                     items={gdomains}
+                    {links}
                     on:click={(event) => dispatch("click", event.detail)}
                     let:item={item}
                 >

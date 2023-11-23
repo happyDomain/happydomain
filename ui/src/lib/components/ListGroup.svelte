@@ -12,6 +12,7 @@
  export let isLoading = false;
  export let button = false;
  export let isActive: (item: any) => boolean = () => false;
+ export let links = false;
 </script>
 
 <ListGroup {...$$restProps}>
@@ -29,6 +30,7 @@
                 active={isActive(item)}
                 tag={button?"button":undefined}
                 class="d-flex justify-content-between align-items-center"
+                href={links ? item.href : undefined}
                 on:click={() => dispatch("click", item)}
             >
                 <slot {item} />
