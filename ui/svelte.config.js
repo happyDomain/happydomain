@@ -11,7 +11,10 @@ const config = {
 	  adapter: adapter({
             fallback: 'index.html'
           }),
-          prerender: { entries: [] }
+          prerender: { entries: [] },
+          serviceWorker: {
+            register: process.env.MODE === "production"
+          },
 	}
 };
 
