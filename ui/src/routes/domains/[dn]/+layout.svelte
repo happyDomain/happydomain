@@ -24,6 +24,10 @@
      getDomain as APIGetDomain,
      deleteDomain as APIDeleteDomain,
  } from '$lib/api/domains';
+ import {
+     diffZone as APIDiffZone,
+ } from '$lib/api/zone';
+ import DiffSummary from '$lib/components/DiffSummary.svelte';
  import ModalDiffZone, { controls as ctrlDiffZone } from '$lib/components/ModalDiffZone.svelte';
  import ModalDomainDelete, { controls as ctrlDomainDelete } from '$lib/components/ModalDomainDelete.svelte';
  import ModalUploadZone, { controls as ctrlUploadZone } from '$lib/components/ModalUploadZone.svelte';
@@ -238,32 +242,60 @@
                 <div class="flex-fill" />
 
                 {#if $page.data.isZonePage && data.domain.zone_history && $domains_idx[selectedDomain] && data.domain.id === $domains_idx[selectedDomain].id}
-                    <ButtonGroup class="mt-2 w-100">
-                        {#if $domains_idx[selectedDomain].zone_history && selectedHistory === $domains_idx[selectedDomain].zone_history[0]}
-                            <Button
-                                size="lg"
-                                color="success"
-                                title={$t('domains.actions.propagate')}
-                                on:click={showDiff}
-                            >
-                                <Icon name="cloud-upload" aria-hidden="true" />
-                                {$t('domains.actions.propagate')}
-                            </Button>
-                        {:else}
-                            <Button
-                                size="lg"
-                                color="warning"
-                                title={$t('domains.actions.rollback')}
-                                on:click={showDiff}
-                            >
-                                <Icon name="cloud-upload" aria-hidden="true" />
-                                {$t('domains.actions.rollback')}
-                            </Button>
-                        {/if}
-                    </ButtonGroup>
-                    <p class="mt-2 mb-1 text-center">
-                        X changes
-                    </p>
+                    {#if $domains_idx[selectedDomain].zone_history && selectedHistory === $domains_idx[selectedDomain].zone_history[0]}
+                        <Button
+                            size="lg"
+                            color="success"
+                            title={$t('domains.actions.propagate')}
+                            on:click={showDiff}
+                        >
+                            <Icon name="cloud-upload" aria-hidden="true" />
+                            {$t('domains.actions.propagate')}
+                        </Button>
+                        <p class="mt-2 mb-1 text-center">
+                            {#key $thisZone}
+                                {#await APIDiffZone(data.domain, '@', selectedHistory)}
+                                    {$t('wait.wait')}
+                                {:then zoneDiff}
+                                    <DiffSummary
+                                        {zoneDiff}
+                                    />
+                                {/await}
+                            {/key}
+                        </p>
+                    {:else}
+                        <Button
+                            size="lg"
+                            color="warning"
+                            title={$t('domains.actions.rollback')}
+                                  on:click={showDiff}
+                        >
+                            <Icon name="cloud-upload" aria-hidden="true" />
+                            {$t('domains.actions.rollback')}
+                        </Button>
+                        <p class="mt-2 mb-1 text-center">
+                            {#await getDomain(data.domain.id)}
+                                Chargement des informations de l'historique
+                            {:then domain}
+                                {#each domain.zone_history.filter((e) => e.id === selectedHistory) as history}
+                                    {#if history.published}
+                                        Publiée le
+                                        {new Intl.DateTimeFormat(undefined, {dateStyle: "long", timeStyle: "long"}).format(new Date(history.published))}
+                                    {:else if history.commit_date}
+                                        Enregistrée le
+                                        {new Intl.DateTimeFormat(undefined, {dateStyle: "long", timeStyle: "long"}).format(new Date(history.commit_date))}
+                                    {:else}
+                                        Dernière modification le
+                                        {new Intl.DateTimeFormat(undefined, {dateStyle: "long", timeStyle: "long"}).format(new Date(history.last_modified))}
+                                    {/if}
+                                    {#if history.commit_message}
+                                        <br>
+                                        {history.commit_message}
+                                    {/if}
+                                {/each}
+                            {/await}
+                        </p>
+                    {/if}
                 {/if}
             {:else}
                 <div class="mt-4 text-center">
