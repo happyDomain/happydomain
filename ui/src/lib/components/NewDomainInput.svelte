@@ -29,7 +29,7 @@
      addingNewDomain = true;
 
      if (!provider) {
-         goto('/domains/' + encodeURIComponent(value) + '/new');
+         goto('/domains/new/' + encodeURIComponent(value));
      } else {
          addDomain(value, provider)
          .then(
