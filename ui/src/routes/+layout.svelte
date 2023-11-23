@@ -38,8 +38,8 @@
  }
 
  let title = 'happyDomain';
- $: if ($page.data.selectedDomain) {
-     title = $page.data.selectedDomain.domain.substring(0, $page.data.selectedDomain.domain.length - 1) + ' - happyDomain';
+ $: if ($page.data.domain) {
+     title = $page.data.domain.domain.substring(0, $page.data.domain.domain.length - 1) + ' - happyDomain';
  } else {
      title = 'happyDomain';
  }

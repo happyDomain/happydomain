@@ -31,11 +31,11 @@ export const load: Load = async({ parent, params }) => {
     const zone = getZone(domain, zoneId);
 
     return {
+        ...data,
         history: params.historyid,
         zoneId,
         streamed: {
             zone,
         },
-        ...data,
     }
 }

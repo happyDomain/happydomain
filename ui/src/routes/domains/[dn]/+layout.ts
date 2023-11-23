@@ -17,8 +17,14 @@ export const load: Load = async({ parent, params }) => {
 	});
     }
 
+    let historyid = undefined;
+    if (domain.zone_history && domain.zone_history.length > 0) {
+        historyid = domain.zone_history[0];
+    }
+
     return {
         domain,
+        history: historyid,
         ...data,
     }
 }
