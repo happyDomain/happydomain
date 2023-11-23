@@ -61,12 +61,15 @@
     "domains": {
         "kind": "un domaine",
         "actions": {
-            "reimport": "Importer à nouveau",
-            "view": "Voir ma zone",
-            "propagate": "Diffuser mes changements",
-            "rollback": "Revenir à cette version",
+            "audit": "Voir le journal d'actions du domaine",
             "do-migration": "Migrer maintenant",
-            "upload": "Importer un fichier de zone"
+            "history": "Voir l'historique des changements",
+            "propagate": "Diffuser mes changements",
+            "reimport": "Récupérer la zone actuelle",
+            "rollback": "Revenir à cette version",
+            "share": "Partager la zone…",
+            "upload": "Importer un fichier de zone",
+            "view": "Voir ma zone"
         },
         "alert": {
             "remove": "Cette action retirera définitivement le domaine {{domain}} de votre liste. L'historique et les zones abstraites seront supprimés. Cela ne supprimera ni n'affectera votre domaine auprès de votre fournisseur, ni ne modifiera ce qui est actuellement diffusé. Cela ne concerne seulement que ce que vous voyez dans happyDomain. Êtes-vous certain de vouloir continuer ?",
@@ -94,7 +97,7 @@
             "others": "{{count:eq; 0:pas d'autres changements; 1:{{count}} autre changement; default:{{count}} autres changements}}"
         },
         "attached-new": "Nouveau domaine lié à happyDomain!",
-        "commit-msg": "Description du changement :",
+        "commit-msg": "Qu'est-ce qui a changé ?",
         "create-new-key": "Créer une nouvelle clé {{id}}",
         "discard": "Supprimer",
         "drop-alias": "Supprimer l'alias",

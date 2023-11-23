@@ -61,12 +61,15 @@
     "domains": {
         "kind": "domain",
         "actions": {
+            "audit": "View changes logs",
             "do-migration": "Migrate now",
-            "reimport": "Re-import",
-            "view": "View my zone",
+            "history": "View changes history",
             "propagate": "Publish my changes",
+            "reimport": "Fetch current deployed zone",
             "rollback": "Roll back to this version",
-            "upload": "Import a zone file"
+            "share": "Share the zone…",
+            "upload": "Import a zone file",
+            "view": "View my zone"
         },
         "alert": {
             "remove": "This action only removes {{domain}} from your happyDomain managed domains. All history and abstracted zones will be discarded. The domain {{domain}} remains fully intact at the provider. Are you sure you want to continue?",
@@ -94,7 +97,7 @@
             "others": "{{count:eq; 0:no other change; 1:{{count}} other change; default:{{count}} others changes}}"
         },
         "attached-new": "New domain attached to happyDomain!",
-        "commit-msg": "What's changed:",
+        "commit-msg": "What's changed?",
         "create-new-key": "Create new {{id}} key",
         "discard": "Discard",
         "drop-alias": "Drop alias",

@@ -151,17 +151,12 @@
     <ModalFooter>
         {#if zoneDiff}
             {#if zoneDiff.length > 0}
-                <div class="w-100 row">
-                    <div class="col-auto d-flex flex-column justify-content-center">
-                        <label for="commitmsg">{$t('domains.commit-msg')}</label>
-                    </div>
-                    <div class="col">
-                        <Input
-                            id="commitmsg"
-                            bind:value={diffCommitMsg}
-                        />
-                    </div>
-                </div>
+                <Input
+                    id="commitmsg"
+                    placeholder={$t('domains.commit-msg')}
+                    size="sm"
+                    bind:value={diffCommitMsg}
+                />
             {/if}
             {#if zoneDiffCreated}
                 <span class="text-success">

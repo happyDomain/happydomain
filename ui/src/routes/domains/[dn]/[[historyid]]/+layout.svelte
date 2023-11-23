@@ -7,9 +7,13 @@
  import {
      Alert,
      Button,
+     ButtonDropdown,
      ButtonGroup,
      Col,
      Container,
+     DropdownItem,
+     DropdownMenu,
+     DropdownToggle,
      Icon,
      Input,
      Row,
@@ -28,6 +32,7 @@
  import ModalDomainDelete, { controls as ctrlDomainDelete } from '$lib/components/ModalDomainDelete.svelte';
  import ModalUploadZone, { controls as ctrlUploadZone } from '$lib/components/ModalUploadZone.svelte';
  import ModalViewZone, { controls as ctrlViewZone } from '$lib/components/ModalViewZone.svelte';
+ import { fqdn } from '$lib/dns';
  import type { Domain, DomainInList } from '$lib/model/domain';
  import type { ZoneMeta } from '$lib/model/zone';
  import { domains, domains_idx, refreshDomains } from '$lib/stores/domains';
@@ -64,13 +69,14 @@
 
  let main_error: string | null = null;
 
- let selectedHistory: string | undefined = data.history;
+ let selectedHistory: string | undefined;
+ $: selectedHistory = data.history;
  $: if (!data.history && $domains_idx[selectedDomain] && $domains_idx[selectedDomain].zone_history && $domains_idx[selectedDomain].zone_history.length > 0) {
      selectedHistory = $domains_idx[selectedDomain].zone_history[0] as string;
  }
  $: if (selectedHistory && data.history != selectedHistory) {
      main_error = null;
-     goto('/domains/' + encodeURIComponent(selectedDomain) + '/' + encodeURIComponent(selectedHistory));
+     //goto('/domains/' + encodeURIComponent(selectedDomain) + '/' + encodeURIComponent(selectedHistory));
  }
 
  let retrievalInProgress = false;
@@ -192,127 +198,120 @@
                     </Input>
                 </div>
 
-                {#if domain && domain.zone_history && $domains_idx[selectedDomain] && domain.id === $domains_idx[selectedDomain].id}
-                    <form class="mt-3">
-                        <div class="d-flex justify-content-between">
-                            <label class="fw-bolder" for="zhistory">{$t('domains.history')}:</label>
-                            <div class="d-flex gap-1">
-                                <Button
-                                    outline
-                                    color="secondary"
-                                    size="sm"
-                                    title={$t('domains.actions.upload')}
-                                    on:click={ctrlUploadZone.Open}
+                {#if data && data.streamed && data.streamed.sortedDomains}
+                    <div class="d-flex gap-2 pb-2 sticky-top bg-light" style="padding-top: 10px">
+                        <Button
+                            type="button"
+                            color="secondary"
+                            outline
+                            size="sm"
+                            class="flex-fill"
+                        >
+                            <Icon name="server" />
+                            {$t('domains.add-a-subdomain')}
+                        </Button>
+                        <ButtonDropdown>
+                            <DropdownToggle
+                                color="secondary"
+                                outline
+                                size="sm"
+                            >
+                                <Icon name="wrench-adjustable-circle" aria-hidden="true" />
+                            </DropdownToggle>
+                            <DropdownMenu>
+                                <DropdownItem header class="font-monospace">
+                                    {data.selectedDomain.domain}
+                                </DropdownItem>
+                                <DropdownItem
+                                    href={`/domains/${data.selectedDomain.domain}/history`}
                                 >
-                                    <Icon name="cloud-upload" />
-                                </Button>
-                                <Button
-                                    outline
-                                    color="secondary"
-                                    size="sm"
-                                    title={$t('domains.actions.reimport')}
-                                    disabled={retrievalInProgress}
+                                    {$t('domains.actions.history')}
+                                </DropdownItem>
+                                <DropdownItem
+                                    href={`/domains/${data.selectedDomain.domain}/logs`}
+                                >
+                                    {$t('domains.actions.audit')}
+                                </DropdownItem>
+                                <DropdownItem divider />
+                                <DropdownItem
+                                    on:click={viewZone}
+                                >
+                                    {$t('domains.actions.view')}
+                                </DropdownItem>
+                                <DropdownItem
                                     on:click={retrieveZone}
                                 >
-                                    {#if retrievalInProgress}
-                                        <Spinner size="sm" />
-                                    {:else}
-                                        <Icon name="cloud-download" />
-                                    {/if}
-                                </Button>
-                            </div>
-                        </div>
-                        {#key domain.zone_history}
-                            <select
-                                class="form-select"
-                                id="zhistory"
-                                bind:value={selectedHistory}
+                                    {$t('domains.actions.reimport')}
+                                </DropdownItem>
+                                <DropdownItem
+                                    on:click={ctrlUploadZone.Open}
+                                >
+                                    {$t('domains.actions.upload')}
+                                </DropdownItem>
+                                <DropdownItem divider />
+                                <DropdownItem disabled title="Coming soon...">
+                                    {$t('domains.actions.share')}
+                                </DropdownItem>
+                                <DropdownItem
+                                    on:click={() => ctrlDomainDelete.Open()}
+                                >
+                                    {$t('domains.stop')}
+                                </DropdownItem>
+                                <DropdownItem divider />
+                                <DropdownItem
+                                    href={"/providers/" + encodeURIComponent($domains_idx[selectedDomain].id_provider)}
+                                >
+                                    {$t('provider.update')}
+                                </DropdownItem>
+                            </DropdownMenu>
+                        </ButtonDropdown>
+                    </div>
+                    {#await data.streamed.sortedDomains then sortedDomains}
+                        <div style="min-height:0; overflow-y: auto;">
+                        {#each sortedDomains as dn}
+                            <a
+                                href={'#' + (dn?dn:'@')}
+                                title={fqdn(dn, data.selectedDomain.domain)}
+                                class="d-block text-truncate font-monospace text-muted text-decoration-none"
+                                style={'max-width: none; padding-left: ' + (dn === '' ? 0 : (dn.split('.').length * 10)) + 'px'}
                             >
-                                {#each domain.zone_history as history}
-                                    <option value={history.id}>{history.last_modified}</option>
-                                {/each}
-                            </select>
-                        {/key}
-                    </form>
+                                {fqdn(dn, data.selectedDomain.domain)}
+                            </a>
+                        {/each}
+                        </div>
+                    {/await}
+                {/if}
 
-                    <ButtonGroup class="mt-3 w-100">
-                        <Button
-                            size="sm"
-                            outline
-                            color="info"
-                            title={$t('domains.actions.view')}
-                            on:click={viewZone}
-                        >
-                            <Icon name="list-ul" aria-hidden="true" /><br>
-                            {$t('domains.actions.view')}
-                        </Button>
+                <div class="flex-fill" />
+
+                {#if domain && domain.zone_history && $domains_idx[selectedDomain] && domain.id === $domains_idx[selectedDomain].id}
+                    <ButtonGroup class="mt-2 w-100">
                         {#if $domains_idx[selectedDomain].zone_history && selectedHistory === $domains_idx[selectedDomain].zone_history[0]}
                             <Button
-                                size="sm"
+                                size="lg"
                                 color="success"
                                 title={$t('domains.actions.propagate')}
                                 on:click={showDiff}
                             >
-                                <Icon name="cloud-upload" aria-hidden="true" /><br>
+                                <Icon name="cloud-upload" aria-hidden="true" />
                                 {$t('domains.actions.propagate')}
                             </Button>
                         {:else}
                             <Button
-                                size="sm"
+                                size="lg"
                                 color="warning"
                                 title={$t('domains.actions.rollback')}
                                 on:click={showDiff}
                             >
-                                <Icon name="cloud-upload" aria-hidden="true" /><br>
+                                <Icon name="cloud-upload" aria-hidden="true" />
                                 {$t('domains.actions.rollback')}
                             </Button>
                         {/if}
                     </ButtonGroup>
                 {/if}
-
-                <div class="flex-fill my-3" />
-
-                <Button
-                    class="w-100"
-                    type="button"
-                    outline
-                    color="danger"
-                    disabled={deleteInProgress}
-                    on:click={() => ctrlDomainDelete.Open()}
-                >
-                    {#if deleteInProgress}
-                        <Spinner size="sm" />
-                    {:else}
-                        <Icon name="trash-fill" />
-                    {/if}
-                    {$t('domains.stop')}
-                </Button>
-
-                {#if $providers_idx && $providers_idx[$domains_idx[selectedDomain].id_provider]}
-                    <form class="mt-2">
-                        <!-- svelte-ignore a11y-label-has-associated-control -->
-                        <label class="font-weight-bolder">
-                            {$t('domains.view.provider')}:
-                        </label>
-                        <div class="pr-2 pl-2">
-                            <Button
-                                href={"/providers/" + encodeURIComponent($domains_idx[selectedDomain].id_provider)}
-                                class="p-3 w-100 text-left"
-                                type="button"
-                                color="info"
-                                outline
-                            >
-                                <div
-                                    class="d-inline-block text-center"
-                                    style="width: 50px;"
-                                >
-                                    <ImgProvider id_provider={$domains_idx[selectedDomain].id_provider} />
-                                </div>
-                                {$providers_idx[$domains_idx[selectedDomain].id_provider]._comment}
-                            </Button>
-                        </div>
-                    </form>
-                {/if}
+                <p class="mt-2 mb-1 text-center">
+                    X changes
+                </p>
             {:else}
                 <div class="mt-4 text-center">
                     <Spinner color="primary" />
@@ -322,10 +321,10 @@
         <Col
             sm={8}
             md={9}
-            class="d-flex pe-0"
+            class="d-flex"
         >
             {#if main_error}
-                <div class="d-flex flex-column mt-3">
+                <div class="d-flex flex-column mt-4">
                     <Alert
                         color="danger"
                         fade={false}
