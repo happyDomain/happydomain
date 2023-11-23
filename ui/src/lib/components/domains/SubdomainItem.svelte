@@ -23,7 +23,6 @@
  export let aliases: Array<string> = [];
  export let dn: string;
  export let origin: Domain | DomainInList;
- export let showSubdomainsList = false;
  export let services: Array<ServiceCombined>;
  export let zoneId: string;
 
@@ -179,18 +178,6 @@
                 <Icon name="link" />
                 {$t('domains.add-an-alias')}
             </Button>
-            {#if !showSubdomainsList && !dn}
-                <Button
-                    type="button"
-                    color="secondary"
-                    outline
-                    size="sm"
-                    on:click={() => dispatch("new-subdomain")}
-                >
-                    <Icon name="server" />
-                    {$t('domains.add-a-subdomain')}
-                </Button>
-            {/if}
         </div>
         {#if showResources}
             <div

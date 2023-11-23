@@ -41,3 +41,20 @@ export const domains_idx = derived(
         return idx;
     },
 );
+
+export const domains_by_groups = derived(
+    domains,
+    ($domains: null|Array<DomainInList>) => {
+        const groups: Record<string, Array<DomainInList>> = { };
+
+        for (const domain of $domains) {
+            if (groups[domain.group] === undefined) {
+                groups[domain.group] = [];
+            }
+
+            groups[domain.group].push(domain);
+        }
+
+        return groups;
+    },
+);

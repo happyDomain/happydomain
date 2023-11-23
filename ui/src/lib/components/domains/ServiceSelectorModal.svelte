@@ -1,3 +1,7 @@
+<script context="module" lang="ts">
+ export const controls = { };
+</script>
+
 <script lang="ts">
  import { createEventDispatcher } from 'svelte';
 
@@ -18,12 +22,6 @@
  export let isOpen = false;
  const toggle = () => (isOpen = !isOpen);
 
- $: {
-     if (isOpen) {
-         value = "";
-     }
- }
-
  export let dn: string;
  export let origin: Domain | DomainInList;
  export let value: string | null = null;
@@ -35,6 +33,14 @@
          dispatch("show-next-modal", {_svctype: value, _domain: dn, Service: { }});
      }
  }
+
+ function Open(domain: string): void {
+     dn = domain;
+     isOpen = true;
+     value = '';
+ }
+
+ controls.Open = Open;
 </script>
 
 <Modal

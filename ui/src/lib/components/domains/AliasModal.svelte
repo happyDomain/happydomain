@@ -1,3 +1,7 @@
+<script context="module" lang="ts">
+ export const controls = { };
+</script>
+
 <script lang="ts">
  import { createEventDispatcher } from 'svelte';
 
@@ -93,6 +97,13 @@
          );
      }
  }
+
+ function Open(domain: string): void {
+     dn = domain;
+     isOpen = true;
+ }
+
+ controls.Open = Open;
 </script>
 
 <Modal

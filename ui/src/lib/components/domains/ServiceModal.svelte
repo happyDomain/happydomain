@@ -1,3 +1,7 @@
+<script context="module" lang="ts">
+ export const controls = { };
+</script>
+
 <script lang="ts">
  import { createEventDispatcher } from 'svelte';
 
@@ -23,8 +27,9 @@
  const toggle = () => (isOpen = !isOpen);
 
  export let origin: Domain | DomainInList;
- export let service: ServiceCombined;
  export let zone: Zone;
+
+ let service: ServiceCombined | undefined = undefined;
 
  let addServiceInProgress = false;
  let deleteServiceInProgress = false;
@@ -64,8 +69,16 @@
          }
      );
  }
+
+ function Open(svc: ServiceCombined): void {
+     service = svc;
+     isOpen = true;
+ }
+
+ controls.Open = Open;
 </script>
 
+{#if service && service._domain !== undefined}
 <Modal
     {isOpen}
     {toggle}
@@ -108,3 +121,4 @@
         on:delete-service={deleteService}
     />
 </Modal>
+{/if}

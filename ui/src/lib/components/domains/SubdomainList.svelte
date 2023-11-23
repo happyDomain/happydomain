@@ -1,10 +1,9 @@
 <script lang="ts">
  import { createEventDispatcher } from 'svelte';
 
- import AliasModal from '$lib/components/domains/AliasModal.svelte';
- import NewSubdomainModal from '$lib/components/domains/NewSubdomainModal.svelte';
- import ServiceModal from '$lib/components/domains/ServiceModal.svelte';
- import ServiceSelectorModal from '$lib/components/domains/ServiceSelectorModal.svelte';
+ import AliasModal, { controls as ctrlAlias } from '$lib/components/domains/AliasModal.svelte';
+ import { controls as ctrlNewService } from '$lib/components/NewServicePath.svelte';
+ import { controls as ctrlService } from '$lib/components/domains/ServiceModal.svelte';
  import SubdomainItem from '$lib/components/domains/SubdomainItem.svelte';
  import type { Domain, DomainInList } from '$lib/model/domain';
  import type { ServiceCombined } from '$lib/model/service';
@@ -13,7 +12,6 @@
  const dispatch = createEventDispatcher();
 
  export let origin: DomainInList | Domain;
- export let showSubdomainsList: boolean;
  export let sortedDomains: Array<string>;
  export let zone: Zone;
 
@@ -33,26 +31,18 @@
              }
          })
      }
+     if (tmp['@']) tmp[""] = tmp["@"];
 
      aliases = tmp;
  }
 
  export let newSubdomainModalOpened = false;
- let subdomainModal = "";
- let newAliasModalOpened = false;
-
- let serviceSelectorModalOpened = false;
- let serviceSelectedModal: string | null = null;
- function showServiceSelectorModal(subdomain: string) {
-     subdomainModal = subdomain;
-     serviceSelectorModalOpened = true;
+ $: if (newSubdomainModalOpened) {
+     ctrlNewSubdomain.Open();
  }
 
- let serviceModalOpened = false;
- let serviceModalService: ServiceCombined | null = null;
  function showServiceModal(event: CustomEvent<ServiceCombined>) {
-     serviceModalService = event.detail;
-     serviceModalOpened = true;
+     ctrlService.Open(event.detail);
  }
 </script>
 
@@ -61,43 +51,16 @@
         aliases={aliases[dn]?aliases[dn]:[]}
         {dn}
         {origin}
-        {showSubdomainsList}
         zoneId={zone.id}
         services={zone.services[dn]?zone.services[dn]:[]}
-        on:new-alias={() => {subdomainModal = dn; newAliasModalOpened = true;}}
-        on:new-service={() => showServiceSelectorModal(dn)}
-        on:new-subdomain={() => newSubdomainModalOpened = true}
+        on:new-alias={() => ctrlAlias.Open(dn)}
+        on:new-service={() => ctrlNewService.Open(dn)}
         on:show-service={showServiceModal}
         on:update-zone-services={(event) => dispatch("update-zone-services", event.detail)}
     />
 {/each}
 
-<NewSubdomainModal
-    bind:isOpen={newSubdomainModalOpened}
-    {origin}
-    bind:value={subdomainModal}
-    on:show-next-modal={(event) => showServiceSelectorModal(event.detail)}
-/>
-<ServiceSelectorModal
-    bind:isOpen={serviceSelectorModalOpened}
-    dn={subdomainModal}
-    {origin}
-    bind:value={serviceSelectedModal}
-    zservices={zone.services}
-    on:show-next-modal={showServiceModal}
-/>
-{#if serviceModalService}
-    <ServiceModal
-        bind:isOpen={serviceModalOpened}
-        {origin}
-        service={serviceModalService}
-        {zone}
-        on:update-zone-services={(event) => dispatch("update-zone-services", event.detail)}
-    />
-{/if}
 <AliasModal
-    bind:isOpen={newAliasModalOpened}
-    dn={subdomainModal}
     {origin}
     {zone}
     on:update-zone-services={(event) => dispatch("update-zone-services", event.detail)}

@@ -1,6 +1,6 @@
 <script lang="ts">
  import { tick } from 'svelte';
- import { goto } from '$app/navigation';
+ import { goto, invalidateAll } from '$app/navigation';
 
  // @ts-ignore
  import { escape } from 'html-escaper';
@@ -24,50 +24,27 @@
      getDomain as APIGetDomain,
      deleteDomain as APIDeleteDomain,
  } from '$lib/api/domains';
- import {
-     retrieveZone as APIRetrieveZone,
- } from '$lib/api/zone';
- import ImgProvider from '$lib/components/providers/ImgProvider.svelte';
  import ModalDiffZone, { controls as ctrlDiffZone } from '$lib/components/ModalDiffZone.svelte';
  import ModalDomainDelete, { controls as ctrlDomainDelete } from '$lib/components/ModalDomainDelete.svelte';
  import ModalUploadZone, { controls as ctrlUploadZone } from '$lib/components/ModalUploadZone.svelte';
  import ModalViewZone, { controls as ctrlViewZone } from '$lib/components/ModalViewZone.svelte';
+ import NewSubdomainPath, { controls as ctrlNewSubdomain } from '$lib/components/NewSubdomainPath.svelte';
+ import NewServicePath from '$lib/components/NewServicePath.svelte';
+ import NewSubdomainModal from '$lib/components/domains/NewSubdomainModal.svelte';
+ import ServiceModal from '$lib/components/domains/ServiceModal.svelte';
  import { fqdn } from '$lib/dns';
  import type { Domain, DomainInList } from '$lib/model/domain';
  import type { ZoneMeta } from '$lib/model/zone';
- import { domains, domains_idx, refreshDomains } from '$lib/stores/domains';
- import { providers, providers_idx, refreshProviders } from '$lib/stores/providers';
+ import { domains, domains_by_groups, domains_idx, refreshDomains } from '$lib/stores/domains';
+ import { retrieveZone as StoreRetrieveZone, sortedDomains, thisZone } from '$lib/stores/thiszone';
  import { t } from '$lib/translations';
 
- export let data: {domain: string; history: string;};
+ export let data: {domain: DomainInList; history: string;};
 
- let selectedDomain = data.domain;
- $: if (selectedDomain != data.domain) {
-     main_error = null;
+ let selectedDomain = data.domain.domain;
+ $: if (selectedDomain != data.domain.domain) {
      goto('/domains/' + encodeURIComponent(selectedDomain));
  }
-
- if (!$domains) refreshDomains();
- if (!$providers) refreshProviders();
-
- let domainsByGroup: Record<string, Array<DomainInList>> = {};
- $: {
-     if ($domains) {
-         const tmp: Record<string, Array<DomainInList>> = { };
-
-         for (const domain of $domains) {
-             if (tmp[domain.group] === undefined) {
-                 tmp[domain.group] = [];
-             }
-
-             tmp[domain.group].push(domain);
-         }
-
-         domainsByGroup = tmp;
-     }
- }
-
- let main_error: string | null = null;
 
  let selectedHistory: string | undefined;
  $: selectedHistory = data.history;
@@ -75,73 +52,42 @@
      selectedHistory = $domains_idx[selectedDomain].zone_history[0] as string;
  }
  $: if (selectedHistory && data.history != selectedHistory) {
-     main_error = null;
-     //goto('/domains/' + encodeURIComponent(selectedDomain) + '/' + encodeURIComponent(selectedHistory));
+     goto('/domains/' + encodeURIComponent(selectedDomain) + '/' + encodeURIComponent(selectedHistory));
  }
 
  let retrievalInProgress = false;
- function retrieveZone(): void {
-     if (domain) {
-         retrievalInProgress = true;
-         APIRetrieveZone(domain).then(
-             retrieveZoneDone,
-             (err: any) => {
-                 retrievalInProgress = false;
-                 throw err;
-             }
-         );
-     }
+ async function retrieveZone(): void {
+     retrievalInProgress = true;
+     retrieveZoneDone(await StoreRetrieveZone(data.domain));
  }
 
  function retrieveZoneDone(zm: ZoneMeta): void {
      retrievalInProgress = false;
-     refreshDomains();
-     selectedHistory = zm.id;
-     main_error = null;
+     if (data.history) {
+         selectedHistory = zm.id;
+     } else {
+         invalidateAll();
+     }
  }
 
  async function getDomain(id: string): Promise<Domain> {
      return await APIGetDomain(id);
  }
 
- let domain: null | Domain = null;
- $: if ($domains_idx[selectedDomain]) {
-     if (!$domains_idx[selectedDomain].zone_history || $domains_idx[selectedDomain].zone_history.length == 0) {
-         retrievalInProgress = true;
-         APIRetrieveZone($domains_idx[selectedDomain]).then(
-             retrieveZoneDone,
-             (err: any) => {
-                 retrievalInProgress = false;
-
-                 tick().then(() => {
-                     main_error = err.toString();
-                 });
-             }
-         )
-     } else {
-         domain = null;
-         getDomain($domains_idx[selectedDomain].id).then(
-             (dn) => {
-                 domain = dn;
-             }
-         );
-     }
- }
-
  function viewZone(): void {
-     if (!domain || !selectedHistory) {
+     if (!selectedHistory) {
          return;
      }
 
-     ctrlViewZone.Open(domain, selectedHistory);
+     ctrlViewZone.Open(data.domain, selectedHistory);
  }
 
  function showDiff(): void {
-     if (!domain || !selectedHistory) {
+     if (!selectedHistory) {
          return;
      }
 
-     ctrlDiffZone.Open(domain, selectedHistory);
+     ctrlDiffZone.Open(data.domain, selectedHistory);
  }
 
  let deleteInProgress = false;
@@ -187,8 +133,8 @@
                         type="select"
                         bind:value={selectedDomain}
                     >
-                        {#each Object.keys(domainsByGroup) as gname}
-                            {@const group = domainsByGroup[gname]}
+                        {#each Object.keys($domains_by_groups) as gname}
+                            {@const group = $domains_by_groups[gname]}
                             <optgroup label={gname=="undefined"?$t("domaingroups.no-group"):gname}>
                                 {#each group as domain}
                                     <option value={domain.domain}>{domain.domain}</option>
@@ -198,7 +144,7 @@
                     </Input>
                 </div>
 
-                {#if data && data.streamed && data.streamed.sortedDomains}
+                {#if data && data.streamed && $sortedDomains}
                     <div class="d-flex gap-2 pb-2 sticky-top bg-light" style="padding-top: 10px">
                         <Button
                             type="button"
@@ -206,6 +152,7 @@
                             outline
                             size="sm"
                             class="flex-fill"
+                            on:click={() => ctrlNewSubdomain.Open()}
                         >
                             <Icon name="server" />
                             {$t('domains.add-a-subdomain')}
@@ -216,19 +163,23 @@
                                 outline
                                 size="sm"
                             >
-                                <Icon name="wrench-adjustable-circle" aria-hidden="true" />
+                                {#if retrievalInProgress}
+                                    <Spinner size="sm" />
+                                {:else}
+                                    <Icon name="wrench-adjustable-circle" aria-hidden="true" />
+                                {/if}
                             </DropdownToggle>
                             <DropdownMenu>
                                 <DropdownItem header class="font-monospace">
-                                    {data.selectedDomain.domain}
+                                    {data.domain.domain}
                                 </DropdownItem>
                                 <DropdownItem
-                                    href={`/domains/${data.selectedDomain.domain}/history`}
+                                    href={`/domains/${data.domain.domain}/history`}
                                 >
                                     {$t('domains.actions.history')}
                                 </DropdownItem>
                                 <DropdownItem
-                                    href={`/domains/${data.selectedDomain.domain}/logs`}
+                                    href={`/domains/${data.domain.domain}/logs`}
                                 >
                                     {$t('domains.actions.audit')}
                                 </DropdownItem>
@@ -266,16 +217,16 @@
                             </DropdownMenu>
                         </ButtonDropdown>
                     </div>
-                    {#await data.streamed.sortedDomains then sortedDomains}
+                    {#await data.streamed.zone then z}
                         <div style="min-height:0; overflow-y: auto;">
-                        {#each sortedDomains as dn}
+                        {#each $sortedDomains as dn}
                             <a
                                 href={'#' + (dn?dn:'@')}
-                                title={fqdn(dn, data.selectedDomain.domain)}
+                                title={fqdn(dn, data.domain.domain)}
                                 class="d-block text-truncate font-monospace text-muted text-decoration-none"
                                 style={'max-width: none; padding-left: ' + (dn === '' ? 0 : (dn.split('.').length * 10)) + 'px'}
                             >
-                                {fqdn(dn, data.selectedDomain.domain)}
+                                {fqdn(dn, data.domain.domain)}
                             </a>
                         {/each}
                         </div>
@@ -284,7 +235,7 @@
 
                 <div class="flex-fill" />
 
-                {#if domain && domain.zone_history && $domains_idx[selectedDomain] && domain.id === $domains_idx[selectedDomain].id}
+                {#if data.domain.zone_history && $domains_idx[selectedDomain] && data.domain.id === $domains_idx[selectedDomain].id}
                     <ButtonGroup class="mt-2 w-100">
                         {#if $domains_idx[selectedDomain].zone_history && selectedHistory === $domains_idx[selectedDomain].zone_history[0]}
                             <Button
@@ -323,17 +274,7 @@
             md={9}
             class="d-flex"
         >
-            {#if main_error}
-                <div class="d-flex flex-column mt-4">
-                    <Alert
-                        color="danger"
-                        fade={false}
-                    >
-                        <strong>{$t('errors.domain-import')}</strong>
-                        {main_error}
-                    </Alert>
-                </div>
-            {:else if data.history == selectedHistory}
+            {#if data.history == selectedHistory}
                 <slot />
             {:else}
                 <div class="mt-5 text-center flex-fill">
@@ -345,8 +286,23 @@
     </Row>
 </Container>
 
+<NewSubdomainPath
+    origin={data.domain}
+/>
+{#await data.streamed.zone then zone}
+    <NewServicePath
+        origin={data.domain}
+        {zone}
+    />
+    <ServiceModal
+        origin={data.domain}
+        {zone}
+        on:update-zone-services={(event) => thisZone.set(event.detail)}
+    />
+{/await}
+
 <ModalUploadZone
-    {domain}
+    domain={data.domain}
     {selectedHistory}
     on:retrieveZoneDone={retrieveZoneDone}
 />
@@ -358,7 +314,7 @@
 <ModalViewZone />
 
 <ModalDiffZone
-    {domain}
+    domain={data.domain}
     {selectedHistory}
     on:retrieveZoneDone={retrieveZoneDone}
 />
