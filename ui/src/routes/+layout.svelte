@@ -3,6 +3,7 @@
  import "bootstrap-icons/font/bootstrap-icons.css";
 
  import { goto } from '$app/navigation';
+ import { page } from '$app/stores';
 
  import {
      Col,
@@ -35,10 +36,17 @@
          });
      }
  }
+
+ let title = 'happyDomain';
+ $: if ($page.data.selectedDomain) {
+     title = $page.data.selectedDomain.domain.substring(0, $page.data.selectedDomain.domain.length - 1) + ' - happyDomain';
+ } else {
+     title = 'happyDomain';
+ }
 </script>
 
 <svelte:head>
-    <title>happyDomain</title>
+    <title>{title}</title>
 </svelte:head>
 
 <!--Styles /-->
