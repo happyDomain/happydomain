@@ -44,10 +44,10 @@ type User struct {
 	Email string
 
 	// CreatedAt is the time when the User logs in for the first time.
-	CreatedAt time.Time
+	CreatedAt time.Time `json:",omitempty"`
 
 	// LastSeen is the time when the User used happyDNS for the last time (in a 12h frame).
-	LastSeen time.Time
+	LastSeen time.Time `json:",omitempty"`
 
 	// Settings holds the settings for an account.
 	Settings UserSettings `json:"settings,omitempty"`

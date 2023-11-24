@@ -7,6 +7,7 @@
  } from 'sveltestrap';
 
  import { getDomainLogs } from '$lib/api/domains';
+ import { getUser } from '$lib/stores/users';
  import { t } from '$lib/translations';
 
  export let data: {domain: DomainInList; history: string; streamed: Object;};
@@ -33,10 +34,18 @@
                 {#if logs}
                     {#each logs as log}
                         <tr>
-                            <td>{log.id_user}</td>
+                            <td>
+                                {#await getUser(log.id_user)}
+                                    {log.id_user}
+                                {:then user}
+                                    <span title={user.Email}>
+                                        {user.Email}
+                                    </span>
+                                {/await}
+                            </td>
                             <td>{log.content}</td>
                             <td>
-                                {new Intl.DateTimeFormat(undefined, {dateStyle: "short", timeStyle: "short"}).format(log.date)}
+                                {new Intl.DateTimeFormat(undefined, {dateStyle: "short", timeStyle: "medium"}).format(new Date(log.date))}
                             </td>
                             <td>{log.level}</td>
                         </tr>

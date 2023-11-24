@@ -112,3 +112,9 @@ export function cleanUserSession(): void {
         }
     }
 }
+
+export async function getUser(id: string): Promise<User> {
+    id = encodeURIComponent(id);
+    const res = await fetch(`/api/users/${id}`, {headers: {'Accept': 'application/json'}});
+    return await handleApiResponse<User>(res);
+}

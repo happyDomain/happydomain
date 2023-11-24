@@ -6,6 +6,7 @@
  } from 'sveltestrap';
 
  import { getDomain } from '$lib/api/domains';
+ import { getUser } from '$lib/stores/users';
  import { t } from '$lib/translations';
 
  export let data: {domain: DomainInList; history: string; streamed: Object;};
@@ -21,9 +22,14 @@
     {:then domain}
         {#each domain.zone_history as history}
             <h3 class="mt-3">
-                {new Intl.DateTimeFormat(undefined, {dateStyle: "long", timeStyle: "long"}).format(new Date(history.last_modified))}
+                {new Intl.DateTimeFormat(undefined, {dateStyle: "long", timeStyle: "medium"}).format(new Date(history.last_modified))}
                 <small class="text-muted">
-                    par {history.id_author}
+                    par
+                    {#await getUser(history.id_author)}
+                        {history.id_author}
+                    {:then user}
+                        {user.Email}
+                    {/await}
                 </small>
                 <Button
                     color="primary"
@@ -37,20 +43,20 @@
             {#if history.published}
                 <p class="mb-1">
                     <strong>Publiée le
-                        {new Intl.DateTimeFormat(undefined, {dateStyle: "long", timeStyle: "long"}).format(new Date(history.published))}
+                        {new Intl.DateTimeFormat(undefined, {dateStyle: "long", timeStyle: "medium"}).format(new Date(history.published))}
                     </strong>
                 </p>
             {/if}
             {#if history.commit_date}
                 <p class="mb-1">
                     Enregistrée le
-                    {new Intl.DateTimeFormat(undefined, {dateStyle: "long", timeStyle: "long"}).format(new Date(history.commit_date))}
+                    {new Intl.DateTimeFormat(undefined, {dateStyle: "long", timeStyle: "medium"}).format(new Date(history.commit_date))}
                 </p>
             {/if}
             {#if history.last_modified}
                 <p class="mb-1">
                     Dernière modification le
-                    {new Intl.DateTimeFormat(undefined, {dateStyle: "long", timeStyle: "long"}).format(new Date(history.last_modified))}
+                    {new Intl.DateTimeFormat(undefined, {dateStyle: "long", timeStyle: "medium"}).format(new Date(history.last_modified))}
                 </p>
             {/if}
             {#if history.commit_message}

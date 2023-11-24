@@ -68,11 +68,15 @@ func declareUsersAuthRoutes(opts *config.Options, router *gin.RouterGroup) {
 
 	apiUserRoutes := router.Group("/users/:uid")
 	apiUserRoutes.Use(userHandler)
-	apiUserRoutes.Use(SameUserHandler)
 
 	apiUserRoutes.GET("", getUser)
-	apiUserRoutes.GET("/settings", getUserSettings)
-	apiUserRoutes.POST("/settings", changeUserSettings)
+
+	apiSameUserRoutes := router.Group("/users/:uid")
+	apiSameUserRoutes.Use(userHandler)
+	apiSameUserRoutes.Use(SameUserHandler)
+
+	apiSameUserRoutes.GET("/settings", getUserSettings)
+	apiSameUserRoutes.POST("/settings", changeUserSettings)
 
 	apiUserAuthRoutes := router.Group("/users/:uid")
 	apiUserAuthRoutes.Use(userAuthHandler)
@@ -256,9 +260,17 @@ func SameUserHandler(c *gin.Context) {
 }
 
 func getUser(c *gin.Context) {
+	myuser := c.MustGet("LoggedUser").(*happydns.User)
 	user := c.MustGet("user").(*happydns.User)
 
-	c.JSON(http.StatusOK, user)
+	if bytes.Equal(user.Id, myuser.Id) {
+		c.JSON(http.StatusOK, user)
+	} else {
+		c.JSON(http.StatusOK, &happydns.User{
+			Id:    user.Id,
+			Email: user.Email,
+		})
+	}
 }
 
 // getUserSettings gets the settings of the given user.
