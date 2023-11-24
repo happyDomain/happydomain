@@ -29,3 +29,11 @@ export interface Domain {
     // interface property
     wait: boolean;
 };
+
+export interface DomainLog {
+    id: string;
+    id_user: string;
+    date: Date;
+    content: string;
+    level: number;
+};

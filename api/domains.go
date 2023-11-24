@@ -35,6 +35,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 
 	"github.com/gin-gonic/gin"
 	"github.com/miekg/dns"
@@ -54,6 +55,8 @@ func declareDomainsRoutes(cfg *config.Options, router *gin.RouterGroup) {
 	apiDomainsRoutes.GET("", GetDomain)
 	apiDomainsRoutes.PUT("", UpdateDomain)
 	apiDomainsRoutes.DELETE("", delDomain)
+
+	apiDomainsRoutes.GET("/logs", GetDomainLogs)
 
 	declareZonesRoutes(cfg, apiDomainsRoutes)
 }
@@ -144,6 +147,8 @@ func addDomain(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are unable to create your domain now."})
 		return
 	} else {
+		storage.MainStore.CreateDomainLog(&uz, happydns.NewDomainLog(c.MustGet("LoggedUser").(*happydns.User), happydns.LOG_INFO, fmt.Sprintf("Domain name %s added.", uz.DomainName)))
+
 		c.JSON(http.StatusOK, uz)
 	}
 }
@@ -313,4 +318,37 @@ func delDomain(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+// GetDomainLogs retrieves actions recorded for the domain.
+//
+//	@Summary	Retrieve Domain actions history.
+//	@Schemes
+//	@Description	Retrieve information about the actions performed on the domain by users of happyDomain.
+//	@Tags			domains
+//	@Accept			json
+//	@Produce		json
+//	@Param			domainId	path	string	true	"Domain identifier"
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	[]happydns.DomainLog
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Failure		404	{object}	happydns.Error	"Domain not found"
+//	@Router			/domains/{domainId}/logs [get]
+func GetDomainLogs(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+
+	logs, err := storage.MainStore.GetDomainLogs(domain)
+
+	if err != nil {
+		log.Printf("%s: An error occurs in GetDomainLogs, when retrieving logs: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Unable to access the domain logs. Please try again later."})
+		return
+	}
+
+	// Sort by date
+	sort.Slice(logs, func(i, j int) bool {
+		return logs[i].Date.After(logs[j].Date)
+	})
+
+	c.JSON(http.StatusOK, logs)
 }

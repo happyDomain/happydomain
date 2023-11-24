@@ -100,6 +100,16 @@ type Storage interface {
 	// ClearDomains deletes all Domains present in the database.
 	ClearDomains() error
 
+	// DOMAIN LOGS --------------------------------------------------
+
+	GetDomainLogs(*happydns.Domain) ([]*happydns.DomainLog, error)
+
+	CreateDomainLog(*happydns.Domain, *happydns.DomainLog) error
+
+	UpdateDomainLog(*happydns.Domain, *happydns.DomainLog) error
+
+	DeleteDomainLog(*happydns.Domain, *happydns.DomainLog) error
+
 	// PROVIDERS ----------------------------------------------------
 
 	// GetProviderMetas retrieves provider's metadatas of all providers own by the given User.

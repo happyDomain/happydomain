@@ -1,5 +1,5 @@
 import { handleEmptyApiResponse, handleApiResponse } from '$lib/errors';
-import type { Domain, DomainInList } from '$lib/model/domain';
+import type { Domain, DomainInList, DomainLog } from '$lib/model/domain';
 import type { Provider } from '$lib/model/provider';
 
 export async function listDomains(): Promise<Array<DomainInList>> {
@@ -42,4 +42,10 @@ export async function deleteDomain(id: string): Promise<boolean> {
         headers: {'Accept': 'application/json'},
     });
     return await handleEmptyApiResponse(res);
+}
+
+export async function getDomainLogs(id: string): Promise<Array<DomainLog>> {
+    id = encodeURIComponent(id);
+    const res = await fetch(`/api/domains/${id}/logs`, {headers: {'Accept': 'application/json'}});
+    return await handleApiResponse<Array<DomainLog>>(res);
 }

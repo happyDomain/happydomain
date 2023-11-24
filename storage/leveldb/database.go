@@ -71,7 +71,7 @@ func NewLevelDBStorage(path string) (s *LevelDBStorage, err error) {
 }
 
 func (s *LevelDBStorage) Tidy() error {
-	for _, tidy := range []func() error{s.TidySessions, s.TidyAuthUsers, s.TidyUsers, s.TidyProviders, s.TidyDomains, s.TidyZones} {
+	for _, tidy := range []func() error{s.TidySessions, s.TidyAuthUsers, s.TidyUsers, s.TidyProviders, s.TidyDomains, s.TidyZones, s.TidyDomainLogs} {
 		if err := tidy(); err != nil {
 			return err
 		}

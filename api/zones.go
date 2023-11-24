@@ -314,6 +314,8 @@ func retrieveZone(c *gin.Context) {
 		return
 	}
 
+	storage.MainStore.CreateDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_INFO, fmt.Sprintf("Zone imported from provider API: %s", myZone.Id.String())))
+
 	c.JSON(http.StatusOK, &myZone.ZoneMeta)
 }
 
@@ -358,6 +360,8 @@ func importZone(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your zone. Please retry later."})
 		return
 	}
+
+	storage.MainStore.CreateDomainLog(domain, happydns.NewDomainLog(c.MustGet("LoggedUser").(*happydns.User), happydns.LOG_INFO, fmt.Sprintf("Zone imported from Bind-style file: %s", zone.Id.String())))
 
 	c.JSON(http.StatusOK, zone)
 }
@@ -472,6 +476,7 @@ func applyZone(c *gin.Context) {
 		return
 	}
 
+	nbcorrections := len(form.WantedCorrections)
 	corrections, err := provider.GetDomainCorrections(domain, dc)
 	for _, cr := range corrections {
 		for ic, wc := range form.WantedCorrections {
@@ -480,6 +485,7 @@ func applyZone(c *gin.Context) {
 				err := cr.F()
 
 				if err != nil {
+					storage.MainStore.CreateDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %s", zone.Id.String(), err.Error())))
 					c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to update the zone: %s", err.Error())})
 					return
 				}
@@ -492,9 +498,12 @@ func applyZone(c *gin.Context) {
 	}
 
 	if len(form.WantedCorrections) > 0 {
+		storage.MainStore.CreateDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d corrections were not applied.", zone.Id.String(), nbcorrections)))
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to perform the following changes: %s", form.WantedCorrections)})
 		return
 	}
+
+	storage.MainStore.CreateDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ACK, fmt.Sprintf("Zone published (%s), %d corrections applied with success", zone.Id.String(), nbcorrections)))
 
 	// Create a new zone in history for futher updates
 	newZone := zone.DerivateNew()
