@@ -16,6 +16,7 @@
  } from 'sveltestrap';
 
  import { deleteZoneService, getServiceRecords, updateZoneService } from '$lib/api/zone';
+ import { nsrrtype } from '$lib/dns';
  import Record from '$lib/components/domains/Record.svelte';
  import ResourceInput from '$lib/components/ResourceInput.svelte';
  import type { Domain, DomainInList } from '$lib/model/domain';
@@ -88,11 +89,19 @@
         </div>
     {:else if $userSession.settings.zoneview === ZoneViewGrid}
         <CardBody>
-            {#if service && $servicesSpecs[service._svctype].categories && $servicesSpecs[service._svctype].categories.length}
+            {#if service && $servicesSpecs[service._svctype].categories && $servicesSpecs[service._svctype].categories.length && !$userSession.settings.showrrtypes}
                 <div class="float-end">
                     {#each $servicesSpecs[service._svctype].categories as category}
-                        <Badge color="info" class="me-1">
+                        <Badge color="secondary" class="me-1">
                             {category}
+                        </Badge>
+                    {/each}
+                </div>
+            {:else if $userSession.settings.showrrtypes && service && $servicesSpecs[service._svctype].record_types && $servicesSpecs[service._svctype].record_types.length}
+                <div class="float-end">
+                    {#each $servicesSpecs[service._svctype].record_types as rrtype}
+                        <Badge color="info" class="me-1">
+                            {nsrrtype(rrtype)}
                         </Badge>
                     {/each}
                 </div>

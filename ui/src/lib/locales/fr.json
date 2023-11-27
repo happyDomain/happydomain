@@ -265,9 +265,10 @@
         },
         "language": "Langue",
         "save": "Enregistrer les paramètres",
-        "title": "Paramètres",
+        "showrrtypes": "Afficher les types d'enregistrement associés aux services (pour les utilisateurs familiers de la terminologie DNS)",
         "success": "Vous pouvez continuer d'apprécier happyDomain.",
         "success-change": "Vos paramètres ont été sauvegardés.",
+        "title": "Paramètres",
         "zoneview": {
             "grid": "Vue en grille (la plus lisible)",
             "list": "Vue en liste (la plus rapide)",

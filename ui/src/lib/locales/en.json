@@ -292,9 +292,10 @@
         },
         "language": "Language",
         "save": "Save settings",
-        "title": "Settings",
+        "showrrtypes": "Show resource type associated with services (for users familiar with DNS)",
         "success": "Continue to enjoy happyDomain.",
         "success-change": "Your settings has been saved.",
+        "title": "Settings",
         "zoneview": {
             "grid": "Grid view (easiest)",
             "list": "List view (fastest)",
