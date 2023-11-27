@@ -59,13 +59,17 @@ type UserSettings struct {
 
 	// ZoneView keeps the view of the zone wanted by the user.
 	ZoneView int `json:"zoneview"`
+
+	// ShowRRTypes tells if we show equivalent RRTypes in interface (for advanced users).
+	ShowRRTypes bool `json:"showrrtypes,omitempty"`
 }
 
 func DefaultUserSettings() *UserSettings {
 	return &UserSettings{
-		Language:   "en",
-		Newsletter: false,
-		FieldHint:  FIELDHINT_FOCUSED,
-		ZoneView:   ZONEVIEW_GRID,
+		Language:    "en",
+		Newsletter:  false,
+		FieldHint:   FIELDHINT_FOCUSED,
+		ZoneView:    ZONEVIEW_GRID,
+		ShowRRTypes: false,
 	}
 }

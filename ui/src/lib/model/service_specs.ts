@@ -39,7 +39,7 @@ export function passRestrictions(svcinfo: ServiceInfos, provider_specs: Provider
 
             for (const needType of svcinfo.restrictions.needTypes) {
                 if (availableResourceTypes.indexOf(needType) < 0) {
-                    return 'is not available on svcinfo domain name hosting provider.';
+                    return 'is not available on this domain name hosting provider.';
                 }
             }
         }

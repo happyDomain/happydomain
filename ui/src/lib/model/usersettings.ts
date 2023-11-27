@@ -12,4 +12,5 @@ export interface UserSettings {
     newsletter: boolean;
     fieldhint: number;
     zoneview: number;
+    showrrtypes: boolean;
 }

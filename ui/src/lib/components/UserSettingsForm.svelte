@@ -119,6 +119,12 @@
             </Button>
         </ButtonGroup>
     </div>
+    <div class="mb-3">
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="showrrtypes" bind:checked={settings.showrrtypes}>
+            <label class="form-check-label" for="showrrtypes">{$t('settings.showrrtypes')}</label>
+        </div>
+    </div>
     <div class="d-flex justify-content-around">
         <Button
             type="submit"
