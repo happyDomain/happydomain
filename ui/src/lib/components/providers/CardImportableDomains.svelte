@@ -37,6 +37,7 @@
              if (l === null) {
                  importableDomainsList = [];
              } else {
+                 l.sort(domainCompare);
                  importableDomainsList = l;
              }
          },
