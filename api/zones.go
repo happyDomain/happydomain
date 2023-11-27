@@ -39,6 +39,7 @@ import (
 	"time"
 
 	"github.com/StackExchange/dnscontrol/v4/models"
+	"github.com/StackExchange/dnscontrol/v4/pkg/diff2"
 	"github.com/gin-gonic/gin"
 	"github.com/miekg/dns"
 
@@ -389,42 +390,65 @@ func diffZones(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 	domain := c.MustGet("domain").(*happydns.Domain)
 
-	if c.Param("zoneid1") != "@" {
-		c.AbortWithStatusJSON(http.StatusNotImplemented, gin.H{"errmsg": "Diff between two zone is not implemented."})
-		return
-	}
-
-	provider, err := storage.MainStore.GetProvider(user, domain.IdProvider)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, fmt.Errorf("Unable to find the given provider: %q for %q", domain.IdProvider, domain.DomainName))
-		return
-	}
-
-	zone, statuscode, err := loadZoneFromId(domain, c.Param("zoneid2"))
+	zone2, statuscode, err := loadZoneFromId(domain, c.Param("zoneid2"))
 	if err != nil {
 		c.AbortWithStatusJSON(statuscode, gin.H{"errmsg": err.Error()})
 		return
 	}
 
-	records := zone.GenerateRRs(domain.DomainName)
+	records2 := zone2.GenerateRRs(domain.DomainName)
 
-	dc := &models.DomainConfig{
+	dc2 := &models.DomainConfig{
 		Name:    strings.TrimSuffix(domain.DomainName, "."),
-		Records: records,
+		Records: records2,
 	}
 
-	corrections, err := provider.GetDomainCorrections(domain, dc)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
-		return
-	}
+	if c.Param("zoneid1") == "@" {
+		provider, err := storage.MainStore.GetProvider(user, domain.IdProvider)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusNotFound, fmt.Errorf("Unable to find the given provider: %q for %q", domain.IdProvider, domain.DomainName))
+			return
+		}
 
-	var rrCorected []string
-	for _, c := range corrections {
-		rrCorected = append(rrCorected, c.Msg)
-	}
+		corrections, err := provider.GetDomainCorrections(domain, dc2)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+			return
+		}
 
-	c.JSON(http.StatusOK, rrCorected)
+		var rrCorected []string
+		for _, c := range corrections {
+			rrCorected = append(rrCorected, c.Msg)
+		}
+
+		c.JSON(http.StatusOK, rrCorected)
+	} else {
+		zone1, statuscode, err := loadZoneFromId(domain, c.Param("zoneid1"))
+		if err != nil {
+			c.AbortWithStatusJSON(statuscode, gin.H{"errmsg": err.Error()})
+			return
+		}
+
+		records1 := zone1.GenerateRRs(domain.DomainName)
+
+		dc1 := &models.DomainConfig{
+			Name:    strings.TrimSuffix(domain.DomainName, "."),
+			Records: records1,
+		}
+
+		corrections, err := diff2.ByRecord(records2, dc1, nil)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": err.Error()})
+			return
+		}
+
+		var rrCorected []string
+		for _, c := range corrections {
+			rrCorected = append(rrCorected, c.Msgs...)
+		}
+
+		c.JSON(http.StatusOK, rrCorected)
+	}
 }
 
 type applyZoneForm struct {
