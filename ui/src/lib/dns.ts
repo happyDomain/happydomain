@@ -10,15 +10,28 @@ export function fqdn(input: string, origin: string) {
     }
 }
 
-export function domainCompare (a: string, b: string) {
-    const as = a.split('.').reverse()
-    const bs = b.split('.').reverse()
+export function domainCompare (a: string | Domain, b: string | Domain) {
+    // Convert to string if Domain
+    if (typeof a === "object" && a.domain) a = a.domain;
+    if (typeof b === "object" && b.domain) b = b.domain;
+
+    const as = a.split('.').reverse();
+    const bs = b.split('.').reverse();
+
+    // Remove first item if empty
+    if (!as[0].length) as.shift();
+    if (!bs[0].length) bs.shift();
 
     const maxDepth = Math.min(as.length, bs.length)
-    for (let i = 0; i < maxDepth; i++) {
+    for (let i = Math.min(maxDepth, 1); i < maxDepth; i++) {
         const cmp = as[i].localeCompare(bs[i])
         if (cmp !== 0) {
-            return cmp
+            return cmp;
+        } else if (i == 1) {
+            const cmp = as[0].localeCompare(bs[0]);
+            if (cmp !== 0) {
+                return cmp;
+            }
         }
     }
 
