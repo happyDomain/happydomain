@@ -41,7 +41,11 @@
 
  let title = 'happyDomain';
  $: if ($page.data.domain) {
-     title = $page.data.domain.domain.substring(0, $page.data.domain.domain.length - 1) + ' - happyDomain';
+     if (typeof $page.data.domain === "object") {
+         title = $page.data.domain.domain.substring(0, $page.data.domain.domain.length - 1) + ' - happyDomain';
+     } else {
+         title = $page.data.domain + ' - happyDomain';
+     }
  } else {
      title = 'happyDomain';
  }
