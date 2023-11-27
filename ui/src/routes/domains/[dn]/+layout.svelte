@@ -131,7 +131,7 @@
                     >
                         {#each Object.keys($domains_by_groups) as gname}
                             {@const group = $domains_by_groups[gname]}
-                            <optgroup label={gname=="undefined"?$t("domaingroups.no-group"):gname}>
+                            <optgroup label={gname=="undefined"||!gname?$t("domaingroups.no-group"):gname}>
                                 {#each group as domain}
                                     <option value={domain.domain}>{domain.domain}</option>
                                 {/each}
