@@ -14,6 +14,7 @@
  import { addDomain } from '$lib/api/domains';
  import { listImportableDomains } from '$lib/api/provider';
  import ZoneList from '$lib/components/ZoneList.svelte';
+ import { domainCompare } from '$lib/dns';
  import type { DomainInList } from '$lib/model/domain';
  import type { Provider } from '$lib/model/provider';
  import { providersSpecs } from '$lib/stores/providers';
@@ -32,7 +33,13 @@
      discoveryError = null;
      noDomainsList = false;
      listImportableDomains(provider).then(
-         (l) => importableDomainsList = l,
+         (l) => {
+             if (l === null) {
+                 importableDomainsList = [];
+             } else {
+                 importableDomainsList = l;
+             }
+         },
          (err) => {
              importableDomainsList = [];
              if (err.name == "ProviderNoDomainListingSupport") {
