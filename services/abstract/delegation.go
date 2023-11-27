@@ -33,6 +33,7 @@ package abstract
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
@@ -83,7 +84,7 @@ func delegation_analyze(a *svcs.Analyzer) error {
 	delegations := map[string]*Delegation{}
 
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS}) {
-		if record.NameFQDN == a.GetOrigin() {
+		if record.NameFQDN == strings.TrimSuffix(a.GetOrigin(), ".") {
 			continue
 		}
 
