@@ -16,6 +16,7 @@
  import Logo from '$lib/components/Logo.svelte';
  import Toaster from '$lib/components/Toaster.svelte';
  import VoxPeople from '$lib/components/VoxPeople.svelte';
+ import { providers } from '$lib/stores/providers';
  import { toasts } from '$lib/stores/toasts';
  import { t } from '$lib/translations';
 
@@ -24,6 +25,7 @@
  window.onunhandledrejection = (e) => {
      if (e.reason.name == "NotAuthorizedError") {
          goto('/login');
+         providers.set(null);
          toasts.addErrorToast({
              title: $t('errors.session.title'),
              message: $t('errors.session.content'),

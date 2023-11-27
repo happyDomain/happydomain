@@ -12,6 +12,7 @@
  import { t } from '$lib/translations';
  import { authUser, cleanUserSession } from '$lib/api/user';
  import type { LoginForm } from '$lib/model/user';
+ import { providers } from '$lib/stores/providers';
  import { toasts } from '$lib/stores/toasts';
  import { refreshUserSession } from '$lib/stores/usersession';
 
@@ -37,6 +38,7 @@
          .then(
              () => {
                  cleanUserSession();
+                 providers.set(null);
                  formSent = false;
                  emailState = true;
                  passwordState = true;
