@@ -38,16 +38,16 @@ import (
 // User represents an account.
 type User struct {
 	// Id is the User's identifier.
-	Id Identifier
+	Id Identifier `json:"id"`
 
 	// Email is the User's login and mean of contact.
-	Email string
+	Email string `json:"email"`
 
 	// CreatedAt is the time when the User logs in for the first time.
-	CreatedAt time.Time `json:",omitempty"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
 
 	// LastSeen is the time when the User used happyDNS for the last time (in a 12h frame).
-	LastSeen time.Time `json:",omitempty"`
+	LastSeen time.Time `json:"last_seen,omitempty"`
 
 	// Settings holds the settings for an account.
 	Settings UserSettings `json:"settings,omitempty"`

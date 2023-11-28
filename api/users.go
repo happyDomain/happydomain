@@ -262,6 +262,17 @@ func SameUserHandler(c *gin.Context) {
 	c.Next()
 }
 
+// getUser shows a user in the database.
+//
+//	@Summary	Show user.
+//	@Schemes
+//	@Description	Show a user from the database, information is limited to id and email if this is not the current user.
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Success		200		{object}	happydns.User		"The created user"
+//	@Failure		500		{object}	happydns.Error
+//	@Router			/users/{userId} [get]
 func getUser(c *gin.Context) {
 	myuser := c.MustGet("LoggedUser").(*happydns.User)
 	user := c.MustGet("user").(*happydns.User)
