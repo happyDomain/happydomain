@@ -15,6 +15,9 @@ interface Params {
     'first-step'?: string;
     n?: number;
     count?: number;
+    min?: number;
+    max?: number;
+    suggestion?: string;
     // add more parameters that are used here
 }
 

@@ -1,5 +1,7 @@
 <script context="module" lang="ts">
- export const controls = { };
+ import type { ModalController } from '$lib/model/modal_controller';
+
+ export const controls: ModalController = { };
 </script>
 
 <script lang="ts">
@@ -20,11 +22,12 @@
      applyZone as APIApplyZone,
      diffZone as APIDiffZone,
  } from '$lib/api/zone';
+ import type { Domain, DomainInList } from '$lib/model/domain';
  import { t } from '$lib/translations';
 
  const dispatch = createEventDispatcher();
 
- export let domain: string = '';
+ export let domain: DomainInList | Domain;
  export let selectedHistory: string = '';
  export let isOpen = false;
 

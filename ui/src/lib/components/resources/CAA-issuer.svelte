@@ -86,6 +86,7 @@
                         <span
                             role="button"
                             on:click={() => {value.Parameters.splice(k, 1); value = value;}}
+                            on:keypress={() => {value.Parameters.splice(k, 1); value = value;}}
                         >
                             <Icon
                                 name="x-circle-fill"
@@ -99,6 +100,7 @@
             class="badge bg-primary"
             role="button"
             on:click={() => {if (value.Parameters == null) value.Parameters = []; value.Parameters.push({Tag:"", Value: "", edit: true}); value = value;}}
+            on:keypress={() => {if (value.Parameters == null) value.Parameters = []; value.Parameters.push({Tag:"", Value: "", edit: true}); value = value;}}
         >
             <Icon name="plus" /> Add parameter
         </span>

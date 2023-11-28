@@ -41,7 +41,7 @@
      }
  }
 
- function checkBase64(val: string): bool {
+ function checkBase64(val: string): boolean {
      try {
          atob(val);
          return true;
@@ -50,7 +50,7 @@
      }
  }
 
- let feedback: string|null = null;
+ let feedback: string|undefined = undefined;
  $: {
      if (inputmax && value > inputmax) {
          feedback = t.get('errors.too-high', {max: inputmax});
@@ -67,7 +67,7 @@
              feedback = t.get("errors.base64") + " " + t.get("errors.base64-illegal-char");
          }
      } else {
-         feedback = null;
+         feedback = undefined;
      }
  }
 </script>
@@ -92,7 +92,7 @@
             type={inputtype}
             class="fw-bold"
             {feedback}
-            invalid={feedback !== null}
+            invalid={feedback !== undefined}
             min={inputmin}
             max={inputmax}
             placeholder={specs.placeholder}

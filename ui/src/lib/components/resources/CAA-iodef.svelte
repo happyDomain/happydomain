@@ -26,7 +26,7 @@
          url = value;
  }
 
- function updateValue(url) {
+ function updateValue(url: string) {
      if (kind == "mail") {
          value = "mailto:" + url;
      } else {

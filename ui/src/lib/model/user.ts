@@ -15,8 +15,8 @@ export interface LoginForm {
 export interface User {
     id: string;
     email: string;
-    CreatedAt: Date;
-    LastSeen: Date;
+    created_at: Date;
+    last_seen: Date;
     settings: UserSettings;
 }
 

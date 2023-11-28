@@ -1,5 +1,7 @@
 <script context="module" lang="ts">
- export const controls = { };
+ import type { ModalController } from '$lib/model/modal_controller';
+
+ export const controls: ModalController = { };
 </script>
 
 <script lang="ts">
@@ -14,12 +16,13 @@
  import {
      viewZone as APIViewZone,
  } from '$lib/api/zone';
+ import type { Domain, DomainInList } from '$lib/model/domain';
  import { t } from '$lib/translations';
 
  export let isOpen = false;
 
  let zoneContent: null | string = null;
- function Open(domain: string, selectedHistory: string): void {
+ function Open(domain: Domain | DomainInList, selectedHistory: string): void {
      zoneContent = null;
      isOpen = true;
      APIViewZone(domain, selectedHistory).then(

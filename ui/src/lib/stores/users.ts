@@ -22,7 +22,7 @@ const mutex = new Mutex();
 
 const requests: Record<string, Promise<User>> = { };
 
-export async function getUser(id: string, force: bool) {
+export async function getUser(id: string, force: boolean) {
     let unlock = await mutex.lock();
     if (requests[id]) {
         unlock();

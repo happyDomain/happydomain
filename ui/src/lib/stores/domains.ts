@@ -47,6 +47,10 @@ export const domains_by_groups = derived(
     ($domains: null|Array<DomainInList>) => {
         const groups: Record<string, Array<DomainInList>> = { };
 
+        if ($domains === null) {
+            return groups;
+        }
+
         for (const domain of $domains) {
             if (groups[domain.group] === undefined) {
                 groups[domain.group] = [];

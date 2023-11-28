@@ -7,7 +7,6 @@
      Spinner,
  } from 'sveltestrap';
 
- import { getZone } from '$lib/api/zone';
  import SubdomainList from '$lib/components/domains/SubdomainList.svelte';
  import type { DomainInList } from '$lib/model/domain';
  import type { Zone } from '$lib/model/zone';

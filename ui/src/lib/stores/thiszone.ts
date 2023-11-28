@@ -4,6 +4,7 @@ import {
     retrieveZone as APIRetrieveZone,
     getZone as APIGetZone,
 } from '$lib/api/zone';
+import type { Domain, DomainInList } from '$lib/model/domain';
 import type { Zone } from '$lib/model/zone';
 import { refreshDomains } from '$lib/stores/domains';
 
@@ -24,7 +25,7 @@ export const sortedDomains = derived(
     },
 );
 
-export async function getZone(domain: string, zoneId: string) {
+export async function getZone(domain: DomainInList | Domain, zoneId: string) {
     thisZone.set(null);
 
     const zone = await APIGetZone(domain, zoneId);

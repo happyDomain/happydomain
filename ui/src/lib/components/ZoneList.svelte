@@ -11,6 +11,7 @@
      domain: string;
      id_provider: string;
      group?: string;
+     href?: string;
  }
 
  export let button = false;

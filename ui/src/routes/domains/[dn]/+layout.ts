@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 import { get_store_value } from 'svelte/internal';
 import type { Load } from '@sveltejs/kit';
 
+import type { DomainInList } from '$lib/model/domain';
 import { domains, domains_idx, refreshDomains } from '$lib/stores/domains';
 
 export const load: Load = async({ parent, params }) => {
@@ -9,11 +10,17 @@ export const load: Load = async({ parent, params }) => {
 
     if (!get_store_value(domains)) await refreshDomains();
 
+    if (!params.dn) {
+        throw error(404, {
+            message: 'Domain not found',
+        });
+    }
+
     const domain: DomainInList | null = get_store_value(domains_idx)[params.dn];
 
     if (!domain) {
         throw error(404, {
-	    message: 'Domain not found'
+	    message: 'Domain not found',
 	});
     }
 
