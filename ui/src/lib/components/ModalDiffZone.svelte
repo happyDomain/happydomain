@@ -23,6 +23,7 @@
      diffZone as APIDiffZone,
  } from '$lib/api/zone';
  import type { Domain, DomainInList } from '$lib/model/domain';
+ import DiffZone from '$lib/components/DiffZone.svelte';
  import { t } from '$lib/translations';
 
  const dispatch = createEventDispatcher();
@@ -31,7 +32,7 @@
  export let selectedHistory: string = '';
  export let isOpen = false;
 
- let zoneDiff: Array<{className: string; msg: string;}> | null = null;
+ let zoneDiffLength = 0;
  let zoneDiffCreated = 0;
  let zoneDiffDeleted = 0;
  let zoneDiffModified = 0;
@@ -46,50 +47,23 @@
  $: selectedDiffModified = !selectedDiff?0:selectedDiff.filter((msg: string) => /^± MODIFY/.test(msg)).length;
 
  function Open(): void {
-     zoneDiff = null;
+     zoneDiffLength = 0;
      selectedDiff = null;
      isOpen = true;
      propagationInProgress = false;
      diffCommitMsg = '';
+ }
 
-     APIDiffZone(domain, '@', selectedHistory).then(
-         (v: Array<string>) => {
-             zoneDiffCreated = 0;
-             zoneDiffDeleted = 0;
-             zoneDiffModified = 0;
-             if (v) {
-                 zoneDiff = v.map(
-                     (msg: string) => {
-                         let className = '';
-                         if (/^± MODIFY/.test(msg)) {
-                             className = 'text-warning';
-                             zoneDiffModified += 1;
-                         } else if (/^\+ CREATE/.test(msg)) {
-                             className = 'text-success';
-                             zoneDiffCreated += 1;
-                         } else if (/^- DELETE/.test(msg)) {
-                             className = 'text-danger';
-                             zoneDiffDeleted += 1;
-                         } else if (/^REFRESH/.test(msg)) {
-                             className = 'text-info';
-                         }
+ function receiveError(evt: CustomEvent): void {
+     isOpen = false;
+     throw evt.detail;
+ }
 
-                         return {
-                             className,
-                             msg,
-                         };
-                     }
-                 );
-             } else {
-                 zoneDiff = [];
-             }
-             selectedDiff = v;
-         },
-         (err: any) => {
-             isOpen = false;
-             throw err;
-         }
-     )
+ function computedDiff(evt: CustomEvent): void {
+     zoneDiffLength = evt.detail.zoneDiffLength;
+     zoneDiffCreated = evt.detail.zoneDiffCreated;
+     zoneDiffDeleted = evt.detail.zoneDiffDeleted;
+     zoneDiffModified = evt.detail.zoneDiffModified;
  }
 
  let propagationInProgress = false;
@@ -118,49 +92,32 @@
         </ModalHeader>
     {/if}
     <ModalBody>
-        {#if !zoneDiff}
-            <div class="my-2 text-center">
-                <Spinner color="warning" label="Spinning" />
-                <p>{$t('wait.exporting')}</p>
-            </div>
-        {:else if zoneDiff.length == 0}
-            <div class="d-flex gap-3 align-items-center justify-content-center">
+        <DiffZone
+            {domain}
+            selectable
+            bind:selectedDiff={selectedDiff}
+            zoneFrom={selectedHistory}
+            zoneTo="@"
+            on:computed-diff={computedDiff}
+            on:error={receiveError}
+        >
+            <div
+                slot="nodiff"
+                class="d-flex gap-3 align-items-center justify-content-center"
+            >
                 <Icon name="check2-all" class="display-5 text-success" />
                 {$t('domains.apply.nochange')}
             </div>
-        {:else}
-            {#each zoneDiff as line, n}
-                <div
-                    class={'col font-monospace form-check ' + line.className}
-                >
-                    <input
-                        type="checkbox"
-                        class="form-check-input"
-                        id="zdiff{n}"
-                        bind:group={selectedDiff}
-                        value={line.msg}
-                    />
-                    <label
-                        class="form-check-label"
-                        for="zdiff{n}"
-                        style="padding-left: 1em; text-indent: -1em;"
-                    >
-                        {line.msg}
-                    </label>
-                </div>
-            {/each}
-        {/if}
+        </DiffZone>
     </ModalBody>
     <ModalFooter>
-        {#if zoneDiff}
-            {#if zoneDiff.length > 0}
-                <Input
-                    id="commitmsg"
-                    placeholder={$t('domains.commit-msg')}
-                    size="sm"
-                    bind:value={diffCommitMsg}
-                />
-            {/if}
+        {#if zoneDiffLength > 0}
+            <Input
+                id="commitmsg"
+                placeholder={$t('domains.commit-msg')}
+                size="sm"
+                bind:value={diffCommitMsg}
+            />
             {#if zoneDiffCreated}
                 <span class="text-success">
                     {$t('domains.apply.additions', {count: selectedDiffCreated})}
@@ -182,10 +139,10 @@
                     {$t('domains.apply.modifications', {count: selectedDiffModified})}
                 </span>
             {/if}
-            {#if (zoneDiffCreated || zoneDiffDeleted || zoneDiffModified) && (zoneDiff.length - zoneDiffCreated - zoneDiffDeleted - zoneDiffModified !== 0)}
+            {#if (zoneDiffCreated || zoneDiffDeleted || zoneDiffModified) && (zoneDiffLength - zoneDiffCreated - zoneDiffDeleted - zoneDiffModified !== 0)}
                 &ndash;
             {/if}
-            {#if selectedDiff && zoneDiff.length - zoneDiffCreated - zoneDiffDeleted - zoneDiffModified !== 0}
+            {#if selectedDiff && zoneDiffLength - zoneDiffCreated - zoneDiffDeleted - zoneDiffModified !== 0}
                 <span class="text-info">
                     {$t('domains.apply.others', {count: selectedDiff.length - selectedDiffCreated - selectedDiffDeleted - selectedDiffModified})}
                 </span>
@@ -195,7 +152,7 @@
             <Button outline color="secondary" on:click={() => isOpen = false}>
                 {$t('common.cancel')}
             </Button>
-            <Button color="success" disabled={propagationInProgress || !zoneDiff || !selectedDiff || selectedDiff.length === 0} on:click={applyDiff}>
+            <Button color="success" disabled={propagationInProgress || !zoneDiffLength || !selectedDiff || selectedDiff.length === 0} on:click={applyDiff}>
                 {#if propagationInProgress}
                     <Spinner label="Spinning" size="sm" />
                 {/if}
