@@ -37,9 +37,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/nullrocks/identicon"
 
 	"git.happydns.org/happyDomain/actions"
 	"git.happydns.org/happyDomain/config"
@@ -70,6 +72,7 @@ func declareUsersAuthRoutes(opts *config.Options, router *gin.RouterGroup) {
 	apiUserRoutes.Use(userHandler)
 
 	apiUserRoutes.GET("", getUser)
+	apiUserRoutes.GET("/avatar.png", getUserAvatar)
 
 	apiSameUserRoutes := router.Group("/users/:uid")
 	apiSameUserRoutes.Use(userHandler)
@@ -271,6 +274,54 @@ func getUser(c *gin.Context) {
 			Email: user.Email,
 		})
 	}
+}
+
+// getUserAvatar returns a unique avatar for the user.
+//
+//	@Summary	Show user's avatar.
+//	@Schemes
+//	@Description	Returns a unique avatar for the user.
+//	@Tags			users
+//	@Accept			json
+//	@Produce		png
+//	@Param			size	query	int	false	"Image output desired size"
+//	@Success		200		{file}		png
+//	@Failure		500		{object}	happydns.Error
+//	@Router			/users/{userId}/avatar.png [get]
+func getUserAvatar(c *gin.Context) {
+	user := c.MustGet("user").(*happydns.User)
+
+	sizequery := c.DefaultQuery("size", "300")
+	size, err := strconv.ParseInt(sizequery, 10, 32)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Invalid size asked: %s", err.Error())})
+		return
+	} else if size > 2048 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "Size too large."})
+		return
+	}
+
+	ig, err := identicon.New(
+		"happydomain", // namespace
+		6,             // number of blocks (size)
+		3,             // density of points
+	)
+	if err != nil {
+		log.Printf("Unable to generate user avatar (uid=%s,user=%s): %s", user.Id.String(), user.Email, err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Unable to generate avatar."})
+		return
+	}
+
+	ii, err := ig.Draw(user.Email)
+	if err != nil {
+		log.Printf("Unable to generate user avatar (uid=%s,user=%s): %s", user.Id.String(), user.Email, err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Unable to generate avatar."})
+		return
+	}
+
+	c.Writer.Header().Set("Content-Type", "image/png")
+	c.Writer.WriteHeader(http.StatusOK)
+	ii.Png(int(size), c.Writer)
 }
 
 // getUserSettings gets the settings of the given user.
