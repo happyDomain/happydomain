@@ -59,8 +59,10 @@
 
  function retrieveZoneDone(zm: ZoneMeta): void {
      retrievalInProgress = false;
-     if ($page.data.history) {
-         selectedHistory = zm.id;
+     if ($page.data.definedhistory) {
+         refreshDomains().then(() => {
+             goto('/domains/' + encodeURIComponent(selectedDomain) + '/' + encodeURIComponent(zm.id));
+         });
      } else {
          invalidateAll();
      }
@@ -320,7 +322,7 @@
 <ModalUploadZone
     domain={data.domain}
     {selectedHistory}
-    on:retrieveZoneDone={retrieveZoneDone}
+    on:retrieveZoneDone={(ev) => retrieveZoneDone(ev.detail)}
 />
 
 <ModalDomainDelete
@@ -332,5 +334,5 @@
 <ModalDiffZone
     domain={data.domain}
     {selectedHistory}
-    on:retrieveZoneDone={retrieveZoneDone}
+    on:retrieveZoneDone={(ev) => retrieveZoneDone(ev.detail)}
 />

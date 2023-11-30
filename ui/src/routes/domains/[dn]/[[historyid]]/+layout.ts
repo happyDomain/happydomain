@@ -14,8 +14,10 @@ export const load: Load = async({ parent, params }) => {
         throw redirect(307, `/domains/${data.domain.domain}/import_zone`);
     }
 
+    let definedhistory = true;
     if (!params.historyid) {
         params.historyid = domain.zone_history[0];
+        definedhistory = false;
         //throw redirect(307, `/domains/${data.domain.domain}/${domain.zone_history[0]}`);
     }
 
@@ -33,6 +35,7 @@ export const load: Load = async({ parent, params }) => {
     return {
         ...data,
         history: params.historyid,
+        definedhistory,
         zoneId,
         streamed: {
             zone,
