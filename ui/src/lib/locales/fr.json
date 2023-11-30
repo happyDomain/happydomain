@@ -190,6 +190,14 @@
         "see": "Voir la zone à ce moment",
         "title": "Historique des changements la zone "
     },
+    "logs": {
+      "date": "Date",
+      "description": "Action/description",
+      "level": "Niveau",
+      "no-entry": "Aucune entrée dans le journal du domaine.",
+      "title": "Journal du domaine ",
+      "user": "Utilisateur"
+    },
     "menu": {
         "my-domains": "Mes domaines",
         "dns-resolver": "Résolveur DNS",

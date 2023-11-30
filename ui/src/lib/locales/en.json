@@ -196,6 +196,14 @@
         "see": "Display the zone at this time",
         "title": "History of changes to the zone "
     },
+    "logs": {
+      "date": "Date",
+      "description": "Action/description",
+      "level": "Level",
+      "no-entry": "No entry in the domain log.",
+      "title": "Domain's logs ",
+      "user": "User"
+    },
     "menu": {
         "my-domains": "My domains",
         "my-providers": "My domain providers",
