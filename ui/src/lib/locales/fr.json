@@ -182,6 +182,14 @@
         "base64-unfinished": "La chaîne est incomplète.",
         "suggestion": "Voulez-vous dire: {{suggestion}}"
     },
+    "history": {
+        "committed-on": "Enregistrée le",
+        "diff": "Voir les changements",
+        "modified-on": "Dernière modification le",
+        "published-on": "Publiée le",
+        "see": "Voir la zone à ce moment",
+        "title": "Historique des changements la zone "
+    },
     "menu": {
         "my-domains": "Mes domaines",
         "dns-resolver": "Résolveur DNS",

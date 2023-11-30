@@ -188,6 +188,14 @@
         "base64-unfinished": "Unfinised string.",
         "suggestion": "Did you mean: {{suggestion}}"
     },
+    "history": {
+        "committed-on": "Committed on",
+        "diff": "View differences",
+        "modified-on": "Modified on",
+        "published-on": "Published on",
+        "see": "Display the zone at this time",
+        "title": "History of changes to the zone "
+    },
     "menu": {
         "my-domains": "My domains",
         "my-providers": "My domain providers",

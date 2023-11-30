@@ -1,68 +1,113 @@
 <script lang="ts">
  import {
+     Accordion,
+     AccordionItem,
      Button,
      Icon,
      Spinner,
  } from 'sveltestrap';
 
  import { getDomain } from '$lib/api/domains';
+ import DiffZone from '$lib/components/DiffZone.svelte';
+ import type { Domain, DomainInList } from '$lib/model/domain';
  import { getUser } from '$lib/stores/users';
  import { t } from '$lib/translations';
 
  export let data: {domain: DomainInList; history: string; streamed: Object;};
+
+ let isOpen: Record<number, boolean> = { };
+ if (data.domain.zone_history.length > 0) {
+     console.log(data.domain.zone_history[0]);
+     isOpen[data.domain.zone_history[0]] = true;
+ }
+
+ function isSameMonth(a: Date, b: Date): boolean {
+     return a.getMonth() === b.getMonth();
+ }
 </script>
 
 <div class="flex-fill pb-4 pt-2">
-    <h2>Historique des changements la zone <span class="font-monospace">{data.domain.domain}</span></h2>
+    <h2>{$t('history.title')} <span class="font-monospace">{data.domain.domain}</span></h2>
     {#await getDomain(data.domain.id)}
         <div class="mt-5 text-center flex-fill">
             <Spinner label="Spinning" />
             <p>{$t('wait.loading')}</p>
         </div>
     {:then domain}
-        {#each domain.zone_history as history}
-            <h3 class="mt-3">
+        {#each domain.zone_history as history, idx}
+            {#if idx === 0 || !isSameMonth(new Date(domain.zone_history[idx-1].last_modified), new Date(history.last_modified))}
+                <h3 class="mt-4 fw-bolder">
+                    <Icon name="calendar2-month" />
+                    {new Intl.DateTimeFormat(undefined, {month: "long", year: "numeric"}).format(new Date(history.last_modified))}
+                </h3>
+            {/if}
+            <h4 class="mt-4 d-flex gap-2 align-items-center">
+                {#await getUser(history.id_author)}
+                    <img src={"/api/users/" + encodeURIComponent(history.id_author) + "/avatar.png"} alt={history.id_author} style="height: 1.1em; border-radius: .1em">
+                {:then user}
+                    <img src={"/api/users/" + encodeURIComponent(history.id_author) + "/avatar.png"} alt={user.email} style="height: 1.1em; border-radius: .1em">
+                {/await}
                 {new Intl.DateTimeFormat(undefined, {dateStyle: "long", timeStyle: "medium"}).format(new Date(history.last_modified))}
-                <small class="text-muted">
-                    par
-                    {#await getUser(history.id_author)}
-                        {history.id_author}
-                    {:then user}
-                        {user.Email}
-                    {/await}
-                </small>
                 <Button
                     color="primary"
+                    outline
                     href={"/domains/" + encodeURIComponent(data.domain.domain) + "/" + history.id}
                     size="sm"
-                    title="Voir la zone"
+                    title={$t("history.see")}
                 >
-                    <Icon name="arrow-right" />
+                    <Icon name="eye-fill" />
                 </Button>
-            </h3>
+            </h4>
+            <div class="row row-cols-3 text-center">
             {#if history.published}
-                <p class="mb-1">
-                    <strong>Publiée le
-                        {new Intl.DateTimeFormat(undefined, {dateStyle: "long", timeStyle: "medium"}).format(new Date(history.published))}
+                <div class="col">
+                    {$t("history.published-on")}<br>
+                    <strong>
+                        {new Intl.DateTimeFormat(undefined, {dateStyle: "long"}).format(new Date(history.published))}<br>
+                        {new Intl.DateTimeFormat(undefined, {timeStyle: "medium"}).format(new Date(history.published))}
                     </strong>
-                </p>
+                </div>
             {/if}
             {#if history.commit_date}
-                <p class="mb-1">
-                    Enregistrée le
-                    {new Intl.DateTimeFormat(undefined, {dateStyle: "long", timeStyle: "medium"}).format(new Date(history.commit_date))}
-                </p>
+                <div class="col">
+                    {$t("history.committed-on")}<br>
+                    {new Intl.DateTimeFormat(undefined, {dateStyle: "long"}).format(new Date(history.commit_date))}<br>
+                    {new Intl.DateTimeFormat(undefined, {timeStyle: "medium"}).format(new Date(history.commit_date))}
+                </div>
             {/if}
             {#if history.last_modified}
-                <p class="mb-1">
-                    Dernière modification le
-                    {new Intl.DateTimeFormat(undefined, {dateStyle: "long", timeStyle: "medium"}).format(new Date(history.last_modified))}
-                </p>
+                <div class="col">
+                    {$t("history.modified-on")}<br>
+                    {new Intl.DateTimeFormat(undefined, {dateStyle: "long"}).format(new Date(history.last_modified))}<br>
+                    {new Intl.DateTimeFormat(undefined, {timeStyle: "medium"}).format(new Date(history.last_modified))}
+                </div>
             {/if}
+            </div>
             {#if history.commit_message}
                 <p class="mb-1">
                     {history.commit_message}
                 </p>
+            {/if}
+
+            {#if idx < domain.zone_history.length - 1}
+            <Accordion class="mt-3">
+                <AccordionItem
+                    active={isOpen[history.id]}
+                    on:toggle={(evt) => { isOpen[history.id] = evt.detail; }}
+                >
+                    <h5 class="m-0" slot="header">
+                        <Icon name="file-earmark-diff" />
+                        {$t("history.diff")}
+                    </h5>
+                    {#if isOpen[history.id]}
+                        <DiffZone
+                            {domain}
+                            zoneFrom={domain.zone_history[idx+1].id}
+                            zoneTo={history.id}
+                        />
+                    {/if}
+                </AccordionItem>
+            </Accordion>
             {/if}
         {/each}
     {/await}
