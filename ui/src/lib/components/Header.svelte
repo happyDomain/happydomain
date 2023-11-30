@@ -112,6 +112,7 @@
     <NavbarBrand
         href="/"
         style="padding: 0; margin: -.5rem 0;"
+        target={$userSession?undefined:"_self"}
     >
         <Logo />
     </NavbarBrand>
