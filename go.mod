@@ -9,7 +9,7 @@ require (
 	github.com/fatih/color v1.16.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-mail/mail v2.3.1+incompatible
-	github.com/golang-jwt/jwt/v5 v5.1.0
+	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/miekg/dns v1.1.57
 	github.com/ovh/go-ovh v1.4.3
 	github.com/swaggo/files v1.0.1
