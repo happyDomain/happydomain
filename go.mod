@@ -39,20 +39,20 @@ require (
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/akamai/AkamaiOPEN-edgegrid-golang v1.2.2 // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.23.4 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.25.10 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.16.8 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.8 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.7 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.7 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.23.5 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.25.11 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.16.9 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.9 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.8 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.8 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.7.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.7 // indirect
-	github.com/aws/aws-sdk-go-v2/service/route53 v1.35.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/route53domains v1.20.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.18.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.21.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.26.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.8 // indirect
+	github.com/aws/aws-sdk-go-v2/service/route53 v1.35.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/route53domains v1.20.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.18.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.21.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.26.2 // indirect
 	github.com/aws/smithy-go v1.18.1 // indirect
 	github.com/billputer/go-namecheap v0.0.0-20210108011502-994a912fb7f9 // indirect
 	github.com/boombuler/barcode v1.0.1 // indirect
@@ -146,4 +146,4 @@ require (
 	moul.io/http2curl v1.0.0 // indirect
 )
 
-replace github.com/StackExchange/dnscontrol/v4 => github.com/happyDomain/dnscontrol/v4 v4.6.21
+replace github.com/StackExchange/dnscontrol/v4 => github.com/happyDomain/dnscontrol/v4 v4.7.22
