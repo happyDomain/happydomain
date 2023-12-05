@@ -237,7 +237,12 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 			}
 
 			if record.Type == "TXT" {
-				service.DKIM[selector].Fields = append(service.DKIM[selector].Fields, strings.Split(record.GetTargetTXTJoined(), ";")...)
+				newfields := strings.Split(record.GetTargetTXTJoined(), ";")
+				for i, field := range newfields {
+					newfields[i] = strings.TrimSpace(field)
+				}
+
+				service.DKIM[selector].Fields = append(service.DKIM[selector].Fields, newfields...)
 			}
 
 			err = a.UseRR(record, domain, service)
