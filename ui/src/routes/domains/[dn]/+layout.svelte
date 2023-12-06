@@ -244,7 +244,17 @@
                 <div class="flex-fill" />
 
                 {#if $page.data.isZonePage && data.domain.zone_history && $domains_idx[selectedDomain] && data.domain.id === $domains_idx[selectedDomain].id}
-                    {#if $domains_idx[selectedDomain].zone_history && selectedHistory === $domains_idx[selectedDomain].zone_history[0]}
+                    {#if !($page.data.streamed && $sortedDomains)}
+                        <Button
+                            color="danger"
+                            class="mt-3"
+                            outline
+                            on:click={() => ctrlDomainDelete.Open()}
+                        >
+                            <Icon name="trash" />
+                            {$t('domains.stop')}
+                        </Button>
+                    {:else if $domains_idx[selectedDomain].zone_history && selectedHistory === $domains_idx[selectedDomain].zone_history[0]}
                         <Button
                             size="lg"
                             color="success"
