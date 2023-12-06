@@ -63,6 +63,9 @@ type Field struct {
 	// the field when not needed. When typing, it doesn't hide characters like in password input.
 	Secret bool `json:"secret,omitempty"`
 
+	// Hide indicates if the field should be hidden to the user.
+	Hide bool `json:"hide,omitempty"`
+
 	// Description stores an helpfull sentence describing the field.
 	Description string `json:"description,omitempty"`
 }
@@ -102,6 +105,8 @@ func GenField(field reflect.StructField) (f *Field) {
 			}
 		} else {
 			switch strings.ToLower(kv[0]) {
+			case "hidden":
+				f.Hide = true
 			case "required":
 				f.Required = true
 			case "secret":

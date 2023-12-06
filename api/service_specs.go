@@ -155,6 +155,8 @@ func getSpecs(svcType reflect.Type) viewServiceSpec {
 					f.Required = true
 				case "secret":
 					f.Secret = true
+				case "hidden":
+					f.Hide = true
 				default:
 					f.Label = kv[0]
 				}

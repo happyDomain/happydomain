@@ -27,7 +27,9 @@
  }
 </script>
 
-{#if type.substring(0, 2) === '[]' && type !== '[]byte' && type !== '[]uint8'}
+{#if specs && specs.hide}
+    <!-- hidden input -->
+{:else if type.substring(0, 2) === '[]' && type !== '[]byte' && type !== '[]uint8'}
     <TableInput
         edit={edit || editToolbar}
         {index}
