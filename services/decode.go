@@ -43,6 +43,7 @@ import (
 
 const (
 	Abstract = "abstract"
+	Hidden   = "hidden"
 	Provider = "provider"
 )
 

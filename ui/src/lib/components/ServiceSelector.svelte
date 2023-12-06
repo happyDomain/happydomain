@@ -56,6 +56,10 @@
          for (const idx in $servicesSpecs) {
              const svc = $servicesSpecs[idx];
 
+             if (svc.family === "hidden") {
+                 continue;
+             }
+
              const reason = passRestrictions(svc, provider_specs, zservices, dn);
              if (reason == null) {
                  ans.push(svc);
