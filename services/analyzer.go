@@ -71,7 +71,7 @@ func (a *Analyzer) SearchRR(arrs ...AnalyzerRecordFilter) (rrs models.Records) {
 		for _, arr := range arrs {
 			if rdtype, ok := dns.StringToType[record.Type]; strings.HasPrefix(record.NameFQDN, arr.Prefix) &&
 				strings.HasSuffix(record.NameFQDN, arr.SubdomainsOf) &&
-				(arr.Domain == "" || record.NameFQDN == arr.Domain) &&
+				(arr.Domain == "" || record.NameFQDN == strings.TrimSuffix(arr.Domain, ".")) &&
 				(arr.Type == 0 || (ok && rdtype == arr.Type)) &&
 				(arr.Ttl == 0 || record.TTL == arr.Ttl) &&
 				(arr.Contains == "" || strings.Contains(fmt.Sprintf("%s. %d IN %s %s", record.NameFQDN, record.TTL, record.Type, record.String()), arr.Contains)) {
