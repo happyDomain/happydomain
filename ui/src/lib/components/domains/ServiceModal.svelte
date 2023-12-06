@@ -115,7 +115,7 @@
     <ModalFooter
         step={2}
         {addServiceInProgress}
-        canDelete={service._svctype !== 'abstract.Origin'}
+        canDelete={service._svctype !== 'abstract.Origin' && service._svctype !== 'abstract.NSOnlyOrigin'}
         {deleteServiceInProgress}
         {service}
         {toggle}
