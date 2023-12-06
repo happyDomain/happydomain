@@ -14,6 +14,7 @@
  import ResourceRawInput from '$lib/components/resources/raw.svelte';
  import CAAIssuer from '$lib/components/resources/CAA-issuer.svelte';
  import CAAIodef from '$lib/components/resources/CAA-iodef.svelte';
+ import { t } from '$lib/translations';
 
  import issuers from './CAA-issuers';
 
@@ -26,14 +27,14 @@
  export let value: any;
 </script>
 
-<h4>Certificates issuance</h4>
+<h4>{$t("resources.CAA.title")}</h4>
 
 <FormGroup>
-    <Input id="issuedisabled" type="checkbox" label="Disallow any certificate issuance" bind:checked={value.DisallowIssue} />
+    <Input id="issuedisabled" type="checkbox" label={$t("resources.CAA.no-issuers-hint")} bind:checked={value.DisallowIssue} />
 </FormGroup>
 
 <h5>
-    Authorized Issuers
+    {$t("resources.CAA.auth-issuers")}
 </h5>
 
 {#if !value.DisallowIssue}
@@ -50,7 +51,7 @@
             {/each}
         {:else}
             <Alert color="warning" fade={false}>
-                <strong>All issuer authorized.</strong> With those parameters, all issuer can create certificate for this domain and subdomain.
+                <strong>{$t("resources.CAA.all-issuers-title")}</strong> {$t("resources.CAA.all-issuers-body")}
             </Alert>
         {/if}
         {#if !readonly}
@@ -64,18 +65,18 @@
     </ul>
 {:else}
     <Alert color="danger" fade={false}>
-        <strong>No issuer authorized.</strong> With those parameters, no issuer is allowed to create certificate for this subdomain.
+        <strong>{$t("resources.CAA.no-issuers-title")}</strong> {$t("resources.CAA.no-issuers-body")}
     </Alert>
 {/if}
 
-<h4>Wildcard certificates issuance</h4>
+<h4>{$t("resources.CAA.wild-issuers")}</h4>
 
 <FormGroup>
-    <Input id="wildcardissuedisabled" type="checkbox" label="Disallow wildcard certificate issuance" bind:checked={value.DisallowWildcardIssue} />
+    <Input id="wildcardissuedisabled" type="checkbox" label={$t("resources.CAA.no-wild-hint")} bind:checked={value.DisallowWildcardIssue} />
 </FormGroup>
 
 <h5>
-    Authorized Issuers
+    {$t("resources.CAA.auth-issuers")}
 </h5>
 
 {#if !value.DisallowWildcardIssue}
@@ -92,15 +93,15 @@
             {/each}
         {:else if value.DisallowIssue}
             <Alert color="danger" fade={false}>
-                <strong>No issuer authorized.</strong> With those parameters, no issuer is authorized to create wildcard certificate for this domain and subdomain. But this can be override with the following settings:
+                <strong>{$t("resources.CAA.no-issuers-title")}</strong> {$t("resources.CAA.no-wild-body")}
             </Alert>
         {:else if value.Issue}
             <Alert color="warning" fade={false}>
-                <strong>Same as regular certificate issuance.</strong> With those parameters, all issuer authorized for certificate issuance can also create wildcard certificate for this domain and subdomain.
+                <strong>{$t("resources.CAA.wild-same-title")}</strong> {$t("resources.CAA.wild-same-body")}
             </Alert>
         {:else}
             <Alert color="warning" fade={false}>
-                <strong>All issuer authorized.</strong> With those parameters, all issuer can create wildcard certificate for this domain and subdomain.
+                <strong>{$t("resources.CAA.all-issuers-title")}</strong> {$t("resources.CAA.all-wild-issuers-body")}
             </Alert>
         {/if}
         {#if !readonly}
@@ -114,14 +115,14 @@
     </ul>
 {:else}
     <Alert color="danger" fade={false}>
-        <strong>No wildcard issuer authorized.</strong> With those parameters, no issuer is allowed to create wildcard certificate for this subdomain.
+        <strong>{$t("resources.CAA.no-wild-title")}</strong> {$t("resources.CAA.no-wild-body")}
     </Alert>
 {/if}
 
-<h4>Incident Response</h4>
+<h4>{$t("resources.CAA.incident-response")}</h4>
 
 <p>
-    How would you want to be contacted in case of violation of the current security policy?
+    {$t("resources.CAA.incident-response-text")}
 </p>
 
 {#if value.Iodef}

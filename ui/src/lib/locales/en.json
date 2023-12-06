@@ -252,6 +252,26 @@
         "success": "You can now login with your new password.",
         "success-change": "Your account's password has been changed with success."
     },
+    "resources": {
+        "CAA": {
+          "all-issuers-title": "All issuers authorized.",
+          "all-issuers-body": "With those parameters, all issuer can create certificate for this domain and subdomain.",
+          "all-wild-issuers-body": "With those parameters, all issuer can create wildcard certificate for this domain and subdomain.",
+          "auth-issuers": "Authorized Issuers",
+          "incident-response": "Incident Response",
+          "incident-response-text": "How would you want to be contacted in case of violation of the current security policy?",
+          "no-issuers-hint": "Disallow any certificate issuance",
+          "no-issuers-title": "No issuer authorized.",
+          "no-issuers-body": "With those parameters, no issuer is allowed to create certificate for this subdomain.",
+          "no-wild-hint": "Disallow wildcard certificate issuance",
+          "no-wild-title": "No wildcard issuer authorized.",
+          "no-wild-body": "With those parameters, no issuer is authorized to create wildcard certificate for this domain and subdomain. But this can be override with the following settings:",
+          "title": "Certificates issuance",
+          "wild-issuers": "Wildcard certificates issuance",
+          "wild-same-title": "Same as regular certificate issuance.",
+          "wild-same-body": "With those parameters, all issuer authorized for certificate issuance can also create wildcard certificate for this domain and subdomain."
+        }
+    },
     "service": {
         "add": "Add service",
         "all": "All",

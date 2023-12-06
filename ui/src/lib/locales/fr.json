@@ -246,6 +246,26 @@
         "success": "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.",
         "success-change": "Le mot de passe de votre compte a été modifié avec succès."
     },
+    "resources": {
+        "CAA": {
+          "all-issuers-title": "Tous les émetteurs sont autorisés.",
+          "all-issuers-body": "Avec ces paramètres, tous les émetteurs peuvent créer des certificats pour ce domaine et ce sous-domaine.",
+          "all-wild-issuers-body": "Avec ces paramètres, tous les émetteurs peuvent créer des certificats de type \"wildcard\" pour ce domaine et ce sous-domaine.",
+          "auth-issuers": "Émetteurs autorisés",
+          "incident-response": "Réponse aux incidents",
+          "incident-response-text": "Comment souhaitez-vous être contacté en cas de violation de la politique de sécurité actuelle ?",
+          "no-issuers-hint": "Interdire toute délivrance de certificat",
+          "no-issuers-title": "Aucun émetteur autorisé.",
+          "no-issuers-body": "Avec ces paramètres, aucun émetteur n'est autorisé à créer un certificat pour ce sous-domaine.",
+          "no-wild-hint": "Interdire l'émission de certificats \"wildcard\"",
+          "no-wild-title": "Aucun émetteur de certificats \"wildcard\" n'est autorisé.",
+          "no-wild-body": "Avec ces paramètres, aucun émetteur n'est autorisé à créer un certificat \"wildcard\" pour ce domaine et ce sous-domaine. Mais cela peut être remplacé par les paramètres suivants :",
+          "title": "Émission de certificats",
+          "wild-issuers": "Délivrance de certificats \"wildcard\"",
+          "wild-same-title": "Identique à la délivrance d'un certificat ordinaire.",
+          "wild-same-body": "Avec ces paramètres, tous les émetteurs autorisés à délivrer des certificats peuvent également créer des certificats \"wildcard\" pour ce domaine et ce sous-domaine."
+        }
+    },
     "service": {
         "add": "Ajout d'un service",
         "already": "Déjà géré",
