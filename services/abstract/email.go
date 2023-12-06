@@ -237,12 +237,10 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 			}
 
 			if record.Type == "TXT" {
-				newfields := strings.Split(record.GetTargetTXTJoined(), ";")
-				for i, field := range newfields {
-					newfields[i] = strings.TrimSpace(field)
+				err = service.DKIM[selector].Analyze(record.GetTargetTXTJoined())
+				if err != nil {
+					return
 				}
-
-				service.DKIM[selector].Fields = append(service.DKIM[selector].Fields, newfields...)
 			}
 
 			err = a.UseRR(record, domain, service)
@@ -258,7 +256,10 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 			}
 
 			if record.Type == "TXT" {
-				service.DMARC.Fields = append(service.DMARC.Fields, strings.Split(strings.TrimPrefix(record.GetTargetTXTJoined(), "v=DMARC1;"), ";")...)
+				err = service.DMARC.Analyze(record.GetTargetTXTJoined())
+				if err != nil {
+					return
+				}
 			}
 
 			err = a.UseRR(record, domain, service)
@@ -274,7 +275,10 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 			}
 
 			if record.Type == "TXT" {
-				service.MTA_STS.Fields = append(service.MTA_STS.Fields, strings.Split(record.GetTargetTXTJoined(), ";")...)
+				err = service.MTA_STS.Analyze(record.GetTargetTXTJoined())
+				if err != nil {
+					return
+				}
 			}
 
 			err = a.UseRR(record, domain, service)
@@ -283,14 +287,25 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 			}
 		}
 
-		// Is there MTA-STS record?
+		// Is there TLS-RPT record?
 		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_smtp._tls." + domain}) {
+			// rfc8460: 3. records that do not begin with "v=TLSRPTv1;" are discarded
+			if !strings.HasPrefix(record.GetTargetTXTJoined(), "v=TLSRPT") {
+				continue
+			}
+
 			if service.TLS_RPT == nil {
 				service.TLS_RPT = &svcs.TLS_RPT{}
+			} else {
+				// rfc8460: 3. If the number of resulting records is not one, senders MUST assume the recipient domain does not implement TLSRPT.
+				continue
 			}
 
 			if record.Type == "TXT" {
-				service.TLS_RPT.Fields = append(service.TLS_RPT.Fields, strings.Split(record.GetTargetTXTJoined(), ";")...)
+				err = service.TLS_RPT.Analyze(record.GetTargetTXTJoined())
+				if err != nil {
+					return
+				}
 			}
 
 			err = a.UseRR(record, domain, service)
