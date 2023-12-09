@@ -38,44 +38,44 @@
             {#if expand}
                 <Row class="mt-2 flex-nowrap">
                     <Col>
-                        <dl class="row">
-                            <dt class="col-sm-3 text-end">
+                        <dl class="row ms-2">
+                            <dt class="col-sm-5 text-end">
                                 Class
                             </dt>
-                            <dd class="col-sm-9 text-muted font-monospace">
-                                {nsclass(record.fields.Hdr.Class)}
+                            <dd class="col-sm-7 text-muted font-monospace mb-1">
+                                {nsclass(record.rr.Hdr.Class)}
                             </dd>
-                            <dt class="col-sm-3 text-end">
+                            <dt class="col-sm-5 text-end">
                                 TTL
                             </dt>
-                            <dd class="col-sm-9 text-muted font-monospace">
-                                {record.fields.Hdr.Ttl}
+                            <dd class="col-sm-7 text-muted font-monospace mb-1">
+                                {record.rr.Hdr.Ttl}
                             </dd>
-                            <dt class="col-sm-3 text-end">
+                            <dt class="col-sm-5 text-end">
                                 RRType
                             </dt>
-                            <dd class="col-sm-9 text-muted font-monospace">
-                                {nsrrtype(record.fields.Hdr.Rrtype)}
+                            <dd class="col-sm-7 text-muted font-monospace mb-1">
+                                {nsrrtype(record.rr.Hdr.Rrtype)}
                             </dd>
                         </dl>
                     </Col>
-                    <Col style="max-width:60%">
-                        <ul style="list-style: none">
-                            {#each Object.keys(record.fields) as k}
+                    <Col sm="9">
+                        <dl class="row">
+                            {#each Object.keys(record.rr) as k}
                                 {#if k != "Hdr"}
-                                    {@const v = record.fields[k]}
-                                    <li class="d-flex">
-                                        <strong class="float-start me-2">{k}</strong>
-                                        <div
-                                            class="text-muted font-monospace text-truncate"
-                                            title={v}
-                                        >
-                                            {v}
-                                        </div>
-                                    </li>
+                                    {@const v = record.rr[k]}
+                                    <dt class="col-sm-3 text-end">
+                                        {k}
+                                    </dt>
+                                    <dd
+                                        class="col-sm-9 text-muted font-monospace text-truncate mb-1"
+                                        title={v}
+                                    >
+                                        {v}
+                                    </dd>
                                 {/if}
                             {/each}
-                        </ul>
+                        </dl>
                     </Col>
                 </Row>
             {/if}
@@ -104,7 +104,7 @@
                 >
                     <Icon name="check" aria-hidden="true" />
                 </Button>
-            {:else if record.fields.Hdr.Rrtype != 6}
+            {:else if record.rr.Hdr.Rrtype != 6}
                 <Button
                     size="sm"
                     color="danger"
