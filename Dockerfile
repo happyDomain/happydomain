@@ -36,7 +36,7 @@ RUN sed -i '/npm run build/d' ui/assets.go && \
     go build -v -ldflags '-w'
 
 
-FROM alpine:3.18
+FROM alpine:3.19
 
 EXPOSE 8081
 
