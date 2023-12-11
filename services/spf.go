@@ -32,35 +32,46 @@
 package svcs
 
 import (
+	"fmt"
 	"strings"
+
+	"github.com/StackExchange/dnscontrol/v4/pkg/spflib"
 )
 
-type SPFDirective struct {
-	Qualifier byte
-	Mechanism string
-}
-
-type SPFModifier struct {
-	Name      string
-	Mechanism string
-}
-
-type SPFExplanation struct {
-	DomainSpec string
-}
-
-type SPFRedirect struct {
-	DomainSpec string
-}
-
 type SPF struct {
-	Content string
+	Version    uint     `json:"version" happydomain:"label=Version,placeholder=1,required,description=The version of SPF to use.,default=1,hidden"`
+	Directives []string `json:"directives" happydomain:"label=Directives,placeholder=ip4:203.0.113.12"`
+}
+
+func (t *SPF) Analyze(txt string) error {
+	_, err := spflib.Parse(txt, nil)
+	if err != nil {
+		return err
+	}
+
+	t.Version = 1
+
+	fields := strings.Fields(txt)
+
+	// Avoid doublon
+	for _, directive := range fields[1:] {
+		exists := false
+		for _, known := range t.Directives {
+			if known == directive {
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
+			t.Directives = append(t.Directives, directive)
+		}
+	}
+
+	return nil
 }
 
 func (t *SPF) String() string {
-	var ret = t.Content
-	if !strings.HasPrefix(ret, "v=spf1") {
-		ret = "v=spf1 " + ret
-	}
-	return ret
+	directives := append([]string{fmt.Sprintf("v=spf%d", t.Version)}, t.Directives...)
+	return strings.Join(directives, " ")
 }

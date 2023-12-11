@@ -56,7 +56,7 @@ func (s *GSuite) GenKnownSvcs() []happydns.Service {
 			svcs.MX{Target: "alt4.aspmx.l.google.com.", Preference: 10},
 		},
 		SPF: &svcs.SPF{
-			Content: "include:_spf.google.com ~all",
+			Directives: []string{"include:_spf.google.com", "~all"},
 		},
 	}
 

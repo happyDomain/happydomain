@@ -76,6 +76,18 @@ func migrateFrom5_analyseEMailSvc(s *LevelDBStorage) (err error) {
 		for dn, zServices := range zone.Services {
 			for ksvc, svc := range zServices {
 				if svc.Type == "abstract.EMail" {
+					// SPF
+					if oldspf, ok := svc.Service["spf"].(map[string]interface{}); ok {
+						if content, ok := oldspf["Content"]; ok {
+							if cnt, ok := content.(string); ok {
+								newspf := &svcs.SPF{}
+								newspf.Analyze("v=spf1 " + cnt)
+								zone.Services[dn][ksvc].Service["spf"] = newspf
+								changed = true
+							}
+						}
+					}
+
 					// DKIM
 					newdkim := map[string]*svcs.DKIM{}
 

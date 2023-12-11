@@ -37,7 +37,6 @@ import (
 	"strings"
 
 	"github.com/StackExchange/dnscontrol/v4/models"
-	"github.com/StackExchange/dnscontrol/v4/pkg/spflib"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -198,27 +197,14 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 		// Is there SPF record?
 		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: domain, Contains: "v=spf1"}) {
 			if record.Type == "TXT" || record.Type == "SPF" {
-				_, err := spflib.Parse(record.GetTargetTXTJoined(), nil)
-				if err != nil {
-					continue
-				}
-
 				if service.SPF == nil {
 					service.SPF = &svcs.SPF{}
 				}
 
-				fields := strings.Fields(service.SPF.Content + " " + strings.TrimPrefix(strings.TrimSpace(record.GetTargetTXTJoined()), "v=spf1"))
-
-				for i := 0; i < len(fields); i += 1 {
-					for j := i + 1; j < len(fields); j += 1 {
-						if fields[i] == fields[j] {
-							fields = append(fields[:j], fields[j+1:]...)
-							j -= 1
-						}
-					}
+				err = service.SPF.Analyze(record.GetTargetTXTJoined())
+				if err != nil {
+					return
 				}
-
-				service.SPF.Content = strings.Join(fields, " ")
 			}
 
 			err = a.UseRR(record, domain, service)
