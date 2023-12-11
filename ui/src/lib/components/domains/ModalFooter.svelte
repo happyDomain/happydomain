@@ -3,11 +3,14 @@
 
  import {
      Button,
+     Icon,
      ModalFooter,
      Spinner,
  } from 'sveltestrap';
 
+ import { getServiceRecords } from '$lib/api/zone';
  import HelpButton from '$lib/components/Help.svelte';
+ import TableRecords from '$lib/components/domains/TableRecords.svelte';
  import type { ServiceCombined } from '$lib/model/service';
  import { locale, t } from '$lib/translations';
 
@@ -17,7 +20,9 @@
  export let step: number;
  export let service: ServiceCombined | null = null;
  export let form = "addSvcForm";
+ export let origin: Domain | DomainInList | undefined;
  export let update = false;
+ export let zoneId: number | undefined;
  export let canDelete = false;
  export let canContinue = false;
 
@@ -46,9 +51,31 @@
      }
      helpHref = "https://help.happydomain.org/" + $locale + "/" + helpHref;
  }
+
+ let showRecords = false;
 </script>
 
+{#if showRecords}
+    <ModalFooter class="p-0 border-top border-dark border-2 d-flex justify-content-center">
+        {#await getServiceRecords(origin, zoneId, service)}
+            <Spinner class="my-1" />
+        {:then serviceRecords}
+            <TableRecords {serviceRecords} />
+        {/await}
+    </ModalFooter>
+{/if}
 <ModalFooter>
+    {#if origin && zoneId}
+        <Button
+            color="dark"
+            outline={!showRecords}
+            title={$t('domains.see-records')}
+            on:click={() => showRecords = !showRecords}
+        >
+            <Icon name="code-square" />
+        </Button>
+    {/if}
+    <div class="ms-auto"></div>
     {#if step === 2}
         <HelpButton
             href={helpHref}

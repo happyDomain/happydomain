@@ -120,6 +120,7 @@
             "title": "Voir la zone",
             "provider": "Zone hébergée par"
         },
+        "see-records": "Voir les enregistrements correspondants",
         "alias-creation": "Ajouter un alias pointant sur {{domain}} :",
         "alias-creation-sample": "Cela va créer cet alias :",
         "placeholder-new": "mon.nouveau.domaine.",

@@ -17,8 +17,8 @@
 
  import { deleteZoneService, getServiceRecords, updateZoneService } from '$lib/api/zone';
  import { nsrrtype } from '$lib/dns';
- import Record from '$lib/components/domains/Record.svelte';
  import ResourceInput from '$lib/components/ResourceInput.svelte';
+ import TableRecords from '$lib/components/domains/TableRecords.svelte';
  import type { Domain, DomainInList } from '$lib/model/domain';
  import type { ServiceCombined } from '$lib/model/service';
  import { ZoneViewGrid, ZoneViewList, ZoneViewRecords } from '$lib/model/usersettings';
@@ -166,18 +166,7 @@
         {:else if $userSession.settings.zoneview === ZoneViewRecords}
             {#if serviceRecords}
                 <ListGroupItem class="p-0">
-                    <Table
-                        class="m-0"
-                        hover
-                        size="sm"
-                        striped
-                    >
-                        <tbody>
-                            {#each serviceRecords as record}
-                                <Record {record} />
-                            {/each}
-                        </tbody>
-                    </Table>
+                    <TableRecords {serviceRecords} />
                 </ListGroupItem>
             {:else}
                 <ListGroupItem class="py-3 d-flex justify-content-center">

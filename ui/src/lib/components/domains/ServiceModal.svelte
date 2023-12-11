@@ -112,15 +112,19 @@
             {/if}
         </form>
     </ModalBody>
+    {#if zone}
     <ModalFooter
         step={2}
         {addServiceInProgress}
         canDelete={service._svctype !== 'abstract.Origin' && service._svctype !== 'abstract.NSOnlyOrigin'}
         {deleteServiceInProgress}
+        {origin}
         {service}
         {toggle}
         update={service._id != undefined}
+        zoneId={zone.id}
         on:delete-service={deleteService}
     />
+    {/if}
 </Modal>
 {/if}

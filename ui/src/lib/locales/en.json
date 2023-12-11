@@ -120,6 +120,7 @@
             "provider": "Zone hosted on",
             "title": "View zone"
         },
+        "see-records": "See corresponding records",
         "alias-creation": "Add an alias pointing to {{domain}}:",
         "alias-creation-sample": "This will create the alias:",
         "placeholder-new": "my.new.domain.",
