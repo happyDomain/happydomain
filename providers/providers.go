@@ -121,6 +121,9 @@ func GetProviderCapabilities(prvd happydns.Provider) (caps []string) {
 	if providers.ProviderHasCapability(prvd.DNSControlName(), providers.CanUseDS) {
 		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeDS, dns.TypeToString[dns.TypeDS]))
 	}
+	if providers.ProviderHasCapability(prvd.DNSControlName(), providers.CanUseNAPTR) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeNAPTR, dns.TypeToString[dns.TypeNAPTR]))
+	}
 	if providers.ProviderHasCapability(prvd.DNSControlName(), providers.CanUseOPENPGPKEY) {
 		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeOPENPGPKEY, dns.TypeToString[dns.TypeOPENPGPKEY]))
 	}
