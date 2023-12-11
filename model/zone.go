@@ -190,6 +190,14 @@ func (z *Zone) GenerateRRs(origin string) (rrs models.Records) {
 			}
 			rrs = append(rrs, svc.GenRRs(subdomain, ttl, origin)...)
 		}
+
+		// Ensure SOA is the first record
+		for i, rr := range rrs {
+			if rr.Type == "SOA" {
+				rrs[0], rrs[i] = rrs[i], rrs[0]
+				break
+			}
+		}
 	}
 
 	return
