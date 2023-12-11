@@ -25,6 +25,29 @@ export function domainCompare (a: string | Domain, b: string | Domain) {
     if (!bs[0].length) bs.shift();
 
     const maxDepth = Math.min(as.length, bs.length)
+    for (let i = 0; i < maxDepth; i++) {
+        const cmp = as[i].localeCompare(bs[i])
+        if (cmp !== 0) {
+            return cmp;
+        }
+    }
+
+    return as.length - bs.length
+}
+
+export function fqdnCompare (a: string | Domain, b: string | Domain) {
+    // Convert to string if Domain
+    if (typeof a === "object" && a.domain) a = a.domain;
+    if (typeof b === "object" && b.domain) b = b.domain;
+
+    const as = a.split('.').reverse();
+    const bs = b.split('.').reverse();
+
+    // Remove first item if empty
+    if (!as[0].length) as.shift();
+    if (!bs[0].length) bs.shift();
+
+    const maxDepth = Math.min(as.length, bs.length)
     for (let i = Math.min(maxDepth, 1); i < maxDepth; i++) {
         const cmp = as[i].localeCompare(bs[i])
         if (cmp !== 0) {

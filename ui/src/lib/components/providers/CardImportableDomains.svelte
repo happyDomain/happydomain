@@ -14,7 +14,7 @@
  import { addDomain } from '$lib/api/domains';
  import { listImportableDomains } from '$lib/api/provider';
  import ZoneList from '$lib/components/ZoneList.svelte';
- import { domainCompare } from '$lib/dns';
+ import { fqdnCompare } from '$lib/dns';
  import type { DomainInList } from '$lib/model/domain';
  import type { Provider } from '$lib/model/provider';
  import { providersSpecs } from '$lib/stores/providers';
@@ -37,7 +37,7 @@
              if (l === null) {
                  importableDomainsList = [];
              } else {
-                 l.sort(domainCompare);
+                 l.sort(fqdnCompare);
                  importableDomainsList = l;
              }
          },

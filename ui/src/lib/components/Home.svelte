@@ -19,7 +19,7 @@
  import NewDomainInput from '$lib/components/NewDomainInput.svelte';
  import ZoneList from '$lib/components/ZoneList.svelte';
  import ProviderList from '$lib/components/providers/List.svelte';
- import { domainCompare } from '$lib/dns';
+ import { fqdnCompare } from '$lib/dns';
  import type { DomainInList } from '$lib/model/domain';
  import type { Provider } from '$lib/model/provider';
  import { domains, refreshDomains } from '$lib/stores/domains';
@@ -43,7 +43,7 @@
              (d) => (!filteredProvider || d.id_provider === filteredProvider._id) &&
                   (filteredGroup === null || d.group === filteredGroup || ((filteredGroup === '' || filteredGroup === 'undefined') && (d.group === '' || d.group === undefined)))
          );
-         filteredDomains.sort(domainCompare);
+         filteredDomains.sort(fqdnCompare);
      }
  }
 </script>
