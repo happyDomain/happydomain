@@ -29,16 +29,16 @@ import (
 )
 
 type OpensrsAPI struct {
-	ApiKey string `json:"apiKey,omitempty" happydomain:"label=API key,placeholder=xxxxxxxx,required,description=Your API key."`
+	ApiKey   string `json:"apiKey,omitempty" happydomain:"label=API key,placeholder=xxxxxxxx,required,description=Your API key."`
 	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=xxxxxxxx,required,description=Your username."`
-	BaseUrl string `json:"base_url,omitempty" happydomain:"label=Base URL,placeholder=xxxxxxxx,description=Alternate base URL."`
+	BaseUrl  string `json:"base_url,omitempty" happydomain:"label=Base URL,placeholder=xxxxxxxx,description=Alternate base URL."`
 }
 
 func (s *OpensrsAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
 	config := map[string]string{
-		"apikey": s.ApiKey,
+		"apikey":   s.ApiKey,
 		"username": s.Username,
-		"baseurl": s.BaseUrl,
+		"baseurl":  s.BaseUrl,
 	}
 	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
 }

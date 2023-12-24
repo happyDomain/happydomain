@@ -29,14 +29,14 @@ import (
 )
 
 type InternetbsAPI struct {
-	ApiKey string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx,required,description=Your API key."`
-	Password  string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,description=Your account password."`
+	ApiKey   string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx,required,description=Your API key."`
+	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,description=Your account password."`
 }
 
 func (s *InternetbsAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
 	config := map[string]string{
-		"api-key": s.ApiKey,
-		"password":  s.Password,
+		"api-key":  s.ApiKey,
+		"password": s.Password,
 	}
 	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
 }
