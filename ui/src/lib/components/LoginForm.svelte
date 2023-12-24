@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
- import { goto } from '$app/navigation';
+ import { createEventDispatcher } from 'svelte';
 
  import {
      Button,
@@ -33,11 +33,11 @@
  } from 'sveltestrap';
 
  import { t } from '$lib/translations';
- import { authUser, cleanUserSession } from '$lib/api/user';
+ import { authUser } from '$lib/api/user';
  import type { LoginForm } from '$lib/model/user';
- import { providers } from '$lib/stores/providers';
  import { toasts } from '$lib/stores/toasts';
- import { refreshUserSession } from '$lib/stores/usersession';
+
+ const dispatch = createEventDispatcher();
 
  let loginForm: LoginForm = {
      email: "",
@@ -60,13 +60,10 @@
          authUser(loginForm)
          .then(
              () => {
-                 cleanUserSession();
-                 providers.set(null);
                  formSent = false;
                  emailState = true;
                  passwordState = true;
-                 refreshUserSession();
-                 goto('/');
+                 dispatch('success');
              },
              (error) => {
                  formSent = false;

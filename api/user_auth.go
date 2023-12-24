@@ -31,6 +31,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	ory "github.com/ory/client-go"
 
 	"git.happydns.org/happyDomain/config"
 	"git.happydns.org/happyDomain/model"
@@ -39,7 +40,7 @@ import (
 
 const NO_AUTH_ACCOUNT = "_no_auth"
 
-func declareAuthenticationRoutes(opts *config.Options, router *gin.RouterGroup) {
+func declareAuthenticationRoutes(opts *config.Options, o *ory.APIClient, router *gin.RouterGroup) {
 	router.POST("/auth", func(c *gin.Context) {
 		checkAuth(opts, c)
 	})
@@ -48,7 +49,7 @@ func declareAuthenticationRoutes(opts *config.Options, router *gin.RouterGroup) 
 	})
 
 	apiAuthRoutes := router.Group("/auth")
-	apiAuthRoutes.Use(authMiddleware(opts, true))
+	apiAuthRoutes.Use(authMiddleware(opts, o, true))
 
 	apiAuthRoutes.GET("", func(c *gin.Context) {
 		if _, exists := c.Get("MySession"); exists {
@@ -106,7 +107,7 @@ func displayNotAuthToken(opts *config.Options, c *gin.Context) *UserClaims {
 		return nil
 	}
 
-	claims, err := completeAuth(opts, c, UserProfile{
+	claims, _, err := completeAuth(opts, c, UserProfile{
 		UserId:        []byte{0},
 		Email:         NO_AUTH_ACCOUNT,
 		EmailVerified: true,
@@ -199,7 +200,7 @@ func checkAuth(opts *config.Options, c *gin.Context) {
 		return
 	}
 
-	claims, err := completeAuth(opts, c, UserProfile{
+	claims, _, err := completeAuth(opts, c, UserProfile{
 		UserId:        user.Id,
 		Email:         user.Email,
 		EmailVerified: user.EmailVerification != nil,
@@ -222,12 +223,12 @@ func checkAuth(opts *config.Options, c *gin.Context) {
 	}
 }
 
-func completeAuth(opts *config.Options, c *gin.Context, userprofile UserProfile) (*UserClaims, error) {
+func completeAuth(opts *config.Options, c *gin.Context, userprofile UserProfile) (*UserClaims, string, error) {
 	// Issue a new JWT token
 	jti := make([]byte, 16)
 	_, err := rand.Read(jti)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read enough random bytes: %w", err)
+		return nil, "", fmt.Errorf("unable to read enough random bytes: %w", err)
 	}
 
 	iat := jwt.NewNumericDate(time.Now())
@@ -243,9 +244,15 @@ func completeAuth(opts *config.Options, c *gin.Context, userprofile UserProfile)
 
 	token, err := jwtToken.SignedString([]byte(opts.JWTSecretKey))
 	if err != nil {
-		return nil, fmt.Errorf("unable to sign user claims: %w", err)
+		return nil, "", fmt.Errorf("unable to sign user claims: %w", err)
 	}
 
+	setCookie(opts, c, token)
+
+	return claims, token, nil
+}
+
+func setCookie(opts *config.Options, c *gin.Context, token string) {
 	c.SetCookie(
 		COOKIE_NAME,      // name
 		token,            // value
@@ -255,6 +262,4 @@ func completeAuth(opts *config.Options, c *gin.Context, userprofile UserProfile)
 		opts.DevProxy == "" && opts.ExternalURL.URL.Scheme != "http", // secure
 		true, // httpOnly
 	)
-
-	return claims, nil
 }

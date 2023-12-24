@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+ import { goto } from '$app/navigation';
+
  import {
      Card,
      CardBody,
@@ -31,8 +33,20 @@
      Row,
  } from 'sveltestrap';
 
- import { t } from '$lib/translations';
  import SignUpForm from '$lib/components/SignUpForm.svelte';
+ import KratosForm from '$lib/components/KratosForm.svelte';
+ import { toasts } from '$lib/stores/toasts';
+ import { t } from '$lib/translations';
+
+ function next() {
+     toasts.addToast({
+         title: $t('account.signup.success'),
+         message: $t('email.instruction.check-inbox'),
+         type: 'success',
+         timeout: 5000,
+     });
+     goto('/login');
+ }
 </script>
 
 <Container class="my-3">
@@ -48,7 +62,16 @@
                     </h6>
                 </CardHeader>
                 <CardBody>
-                    <SignUpForm />
+                    {#if window.happydomain_ory_kratos_url}
+                        <KratosForm
+                            flow="registration"
+                            on:success={next}
+                        />
+                    {:else}
+                        <SignUpForm
+                            on:success={next}
+                        />
+                    {/if}
                 </CardBody>
             </Card>
             <div class="mt-3 text-justify">

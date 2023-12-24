@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	ory "github.com/ory/client-go"
 
 	"git.happydns.org/happyDomain/api"
 	"git.happydns.org/happyDomain/config"
@@ -37,6 +38,7 @@ import (
 type App struct {
 	router *gin.Engine
 	cfg    *config.Options
+	ory    *ory.APIClient
 	srv    *http.Server
 }
 
@@ -49,13 +51,19 @@ func NewApp(cfg *config.Options) App {
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
 
-	api.DeclareRoutes(cfg, router)
-	ui.DeclareRoutes(cfg, router)
-
 	app := App{
 		router: router,
 		cfg:    cfg,
 	}
+
+	if cfg.OryKratosServer.URL != nil {
+		c := ory.NewConfiguration()
+		c.Servers = ory.ServerConfigurations{{URL: cfg.OryKratosServer.URL.String()}}
+		app.ory = ory.NewAPIClient(c)
+	}
+
+	api.DeclareRoutes(cfg, app.ory, router)
+	ui.DeclareRoutes(cfg, router)
 
 	return app
 }

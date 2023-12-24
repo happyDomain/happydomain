@@ -10,8 +10,10 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-mail/mail v2.3.1+incompatible
 	github.com/golang-jwt/jwt/v5 v5.2.0
+	github.com/google/uuid v1.5.0
 	github.com/miekg/dns v1.1.57
 	github.com/nullrocks/identicon v0.0.0-20180626043057-7875f45b0022
+	github.com/ory/client-go v1.4.7
 	github.com/ovh/go-ovh v1.4.3
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
@@ -85,7 +87,6 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
-	github.com/google/uuid v1.4.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect

@@ -67,6 +67,9 @@ type Options struct {
 
 	// JWTSecretKey stores the private key to sign and verify JWT tokens.
 	JWTSecretKey JWTSecretKey
+
+	// OryKratosServer is the URL to the authentication server.
+	OryKratosServer URL
 }
 
 // BuildURL appends the given url to the absolute ExternalURL.

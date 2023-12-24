@@ -23,6 +23,7 @@ package ui
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -61,6 +62,10 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 
 	if len(MsgHeaderText) != 0 {
 		CustomHeadHTML += fmt.Sprintf(`<script type="text/javascript">window.msg_header = { text: %q, color: %q };</script>`, MsgHeaderText, MsgHeaderColor)
+	}
+
+	if cfg.OryKratosServer.URL != nil {
+		CustomHeadHTML += fmt.Sprintf(`<script type="text/javascript">window.happydomain_ory_kratos_url = %q;</script>`, cfg.OryKratosServer.URL.String())
 	}
 
 	if cfg.DevProxy != "" {

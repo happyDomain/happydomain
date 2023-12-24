@@ -332,6 +332,7 @@
         },
         "language": "Language",
         "save": "Save settings",
+        "security": "Account Security",
         "showrrtypes": "Show resource type associated with services (for users familiar with DNS)",
         "success": "Continue to enjoy happyDomain.",
         "success-change": "Your settings has been saved.",

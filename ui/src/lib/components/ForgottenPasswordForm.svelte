@@ -77,9 +77,6 @@
     bind:this={formElm}
     on:submit|preventDefault={goSendLink}
 >
-    <p class="text-center">
-        {$t('email.recover')}.
-    </p>
     <Row>
         <label for="email-input" class="col-md-4 col-form-label text-truncate text-md-right fw-bold">
             {$t('email.address')}

@@ -30,6 +30,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
+	ory "github.com/ory/client-go"
 
 	"git.happydns.org/happyDomain/actions"
 	"git.happydns.org/happyDomain/config"
@@ -139,7 +141,7 @@ func requireLogin(opts *config.Options, c *gin.Context, msg string) {
 	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": msg})
 }
 
-func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
+func authMiddleware(opts *config.Options, o *ory.APIClient, optional bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var token string
 
@@ -148,6 +150,30 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 			token = cookie
 		} else if flds := strings.Fields(c.GetHeader("Authorization")); len(flds) == 2 && flds[0] == "Bearer" {
 			token = flds[1]
+		}
+
+		if o != nil {
+			cookies := c.Request.Header.Get("Cookie")
+
+			session, _, err := o.FrontendAPI.ToSession(c.Request.Context()).Cookie(cookies).TokenizeAs("jwt_happydomain").Execute()
+			if !((err != nil && session == nil) || (err == nil && !*session.Active)) {
+				if session.Tokenized != nil {
+					token = *session.Tokenized
+					setCookie(opts, c, token)
+				} else if session.Identity != nil && len(session.Identity.VerifiableAddresses) >= 0 {
+					uid, err := uuid.Parse(session.Identity.Id)
+					if err != nil {
+						c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Unable to parse user UUID"})
+						return
+					}
+					tmp := [16]byte(uid)
+					_, token, _ = completeAuth(opts, c, UserProfile{
+						UserId:        tmp[:],
+						Email:         session.Identity.VerifiableAddresses[0].Value,
+						EmailVerified: session.Identity.VerifiableAddresses[0].Verified,
+					})
+				}
+			}
 		}
 
 		// Stop here if there is no cookie

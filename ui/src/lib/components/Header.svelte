@@ -106,7 +106,34 @@
 
  function logout() {
      APILogout().then(
-         () => {
+         async () => {
+             if (window.happydomain_ory_kratos_url) {
+                 await fetch(window.happydomain_ory_kratos_url + `self-service/logout/browser`,
+                       {
+                           method: "GET",
+                           headers: [
+                               ["Accept", "application/json"],
+                               ["Content-Type", "application/json"]
+                           ],
+                           credentials: 'include',
+                       }
+                 ).then(
+                     async (data) => data.json()
+                 ).then(
+                     async (state) => {
+                         await fetch(state.logout_url,
+                       {
+                           method: "GET",
+                           headers: [
+                               ["Accept", "application/json"],
+                               ["Content-Type", "application/json"]
+                           ],
+                           credentials: 'include',
+                       })
+                     }
+                 )
+             }
+
              refreshUserSession().then(
                  () => { },
                  () => {

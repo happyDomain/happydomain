@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+ import { goto } from '$app/navigation';
+
  import {
      Card,
      CardBody,
@@ -32,7 +34,18 @@
  } from 'sveltestrap';
 
  import { t } from '$lib/translations';
+ import { cleanUserSession } from '$lib/api/user';
  import LoginForm from '$lib/components/LoginForm.svelte';
+ import KratosForm from '$lib/components/KratosForm.svelte';
+ import { providers } from '$lib/stores/providers';
+ import { refreshUserSession } from '$lib/stores/usersession';
+
+ function next() {
+     cleanUserSession();
+     providers.set(null);
+     refreshUserSession();
+     goto('/');
+ }
 </script>
 
 <Container class="my-3">
@@ -48,7 +61,16 @@
                     </h6>
                 </CardHeader>
                 <CardBody>
-                    <LoginForm />
+                    {#if window.happydomain_ory_kratos_url}
+                        <KratosForm
+                            flow="login"
+                            on:success={next}
+                        />
+                    {:else}
+                        <LoginForm
+                            on:success={next}
+                        />
+                    {/if}
                 </CardBody>
             </Card>
             <div class="text-center mt-4">

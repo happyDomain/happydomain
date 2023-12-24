@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
- import { goto } from '$app/navigation';
+ import { createEventDispatcher } from 'svelte';
 
  import {
      Button,
@@ -39,6 +39,7 @@
  import { checkWeakPassword, checkPasswordConfirmation } from '$lib/password';
  import { toasts } from '$lib/stores/toasts';
 
+ const dispatch = createEventDispatcher();
 
  let signupForm: SignUpForm = {
      email: "",
@@ -70,13 +71,7 @@
          .then(
              () => {
                  formSent = false;
-                 toasts.addToast({
-                     title: $t('account.signup.success'),
-                     message: $t('email.instruction.check-inbox'),
-                     type: 'success',
-                     timeout: 5000,
-                 });
-                 goto('/login');
+                 dispatch('success');
              },
              (error) => {
                  formSent = false;

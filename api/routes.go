@@ -23,6 +23,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	ory "github.com/ory/client-go"
 
 	"git.happydns.org/happyDomain/config"
 )
@@ -47,10 +48,10 @@ import (
 //	@name						Authorization
 //	@description				Description for what is this security definition being used
 
-func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
+func DeclareRoutes(cfg *config.Options, o *ory.APIClient, router *gin.Engine) {
 	apiRoutes := router.Group("/api")
 
-	declareAuthenticationRoutes(cfg, apiRoutes)
+	declareAuthenticationRoutes(cfg, o, apiRoutes)
 	declareProviderSpecsRoutes(apiRoutes)
 	declareResolverRoutes(apiRoutes)
 	declareServiceSpecsRoutes(apiRoutes)
@@ -58,7 +59,7 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 	DeclareVersionRoutes(apiRoutes)
 
 	apiAuthRoutes := router.Group("/api")
-	apiAuthRoutes.Use(authMiddleware(cfg, false))
+	apiAuthRoutes.Use(authMiddleware(cfg, o, false))
 
 	declareDomainsRoutes(cfg, apiAuthRoutes)
 	declareProvidersRoutes(cfg, apiAuthRoutes)

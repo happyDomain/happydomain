@@ -28,7 +28,9 @@
  } from 'sveltestrap';
 
  import ForgottenPasswordForm from '$lib/components/ForgottenPasswordForm.svelte';
+ import KratosForm from '$lib/components/KratosForm.svelte';
  import RecoverAccountForm from '$lib/components/RecoverAccountForm.svelte';
+ import { t } from '$lib/translations';
 
  let error = "";
  export let data;
@@ -42,6 +44,13 @@
     {:else if data.user && data.key}
         <RecoverAccountForm user={data.user} key={data.key} />
     {:else}
-        <ForgottenPasswordForm />
+        <p class="text-center">
+            {$t('email.recover')}.
+        </p>
+        {#if window.happydomain_ory_kratos_url}
+            <KratosForm flow="recovery" />
+        {:else}
+            <ForgottenPasswordForm />
+        {/if}
     {/if}
 </Container>

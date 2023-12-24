@@ -33,6 +33,7 @@
 
  import ChangePasswordForm from '$lib/components/ChangePasswordForm.svelte';
  import DeleteAccountCard from '$lib/components/DeleteAccountCard.svelte';
+ import KratosForm from '$lib/components/KratosForm.svelte';
  import UserSettingsForm from '$lib/components/UserSettingsForm.svelte';
  import { t } from '$lib/translations';
  import { userSession } from '$lib/stores/usersession';
@@ -57,14 +58,21 @@
             {/if}
         </Row>
         {#if $userSession.email !== '_no_auth'}
-            <h2 id="password-change">
-                {$t('password.change')}
+            <h2 id="security-settings">
+                {$t('settings.security')}
             </h2>
             <Row>
                 <Col md={{size: 8, offset: 2}}>
                 <Card>
                     <CardBody>
-                        <ChangePasswordForm />
+                        {#if window.happydomain_ory_kratos_url}
+                            <KratosForm
+                                flow="settings"
+                                tabs
+                            />
+                        {:else}
+                            <ChangePasswordForm />
+                        {/if}
                     </CardBody>
                 </Card>
             </Col>
