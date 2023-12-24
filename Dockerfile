@@ -33,7 +33,7 @@ COPY generate.go go.mod go.sum main.go ./
 RUN sed -i '/npm run build/d' ui/assets.go && \
     go install github.com/swaggo/swag/cmd/swag@latest && \
     go generate -v ./... && \
-    go build -v -ldflags '-w'
+    go build -v -tags listmonk,netgo,swagger,ui -ldflags '-w'
 
 
 FROM alpine:3.19
