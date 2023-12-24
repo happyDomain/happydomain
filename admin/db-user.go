@@ -78,9 +78,12 @@ func newUser(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
-	uu.Id = []byte{}
 
-	ApiResponse(c, uu, storage.MainStore.CreateUser(uu))
+	if uu.Id.IsEmpty() {
+		ApiResponse(c, uu, storage.MainStore.CreateUser(uu))
+	} else {
+		ApiResponse(c, uu, storage.MainStore.UpdateUser(uu))
+	}
 }
 
 func deleteUsers(c *gin.Context) {
