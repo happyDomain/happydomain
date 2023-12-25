@@ -80,6 +80,17 @@
 
 <!--Styles /-->
 
+{#if window.msg_header}
+    <div
+        class={(window.msg_header.color?"bg-" + window.msg_header.color:"bg-danger") + " text-light text-center fw-bolder pb-1"}
+        id="msg_header"
+        style="z-index: 101; margin-bottom: -.2em"
+    >
+        <small>
+            {window.msg_header.text}
+        </small>
+    </div>
+{/if}
 <Header
     routeId={data.route.id}
     sw_state={data.sw_state}

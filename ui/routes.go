@@ -42,17 +42,25 @@ var (
 	CustomHeadHTML = ""
 	CustomBodyHTML = ""
 	HideVoxPeople  = false
+	MsgHeaderColor = "danger"
+	MsgHeaderText  = ""
 )
 
 func init() {
 	flag.StringVar(&CustomHeadHTML, "custom-head-html", CustomHeadHTML, "Add custom HTML right before </head>")
 	flag.StringVar(&CustomBodyHTML, "custom-body-html", CustomBodyHTML, "Add custom HTML right before </body>")
 	flag.BoolVar(&HideVoxPeople, "hide-feedback-button", HideVoxPeople, "Hide the icon on page that permit to give feedback")
+	flag.StringVar(&MsgHeaderText, "msg-header-text", MsgHeaderText, "Custom message banner to add at the top of the app")
+	flag.StringVar(&MsgHeaderColor, "msg-header-color", MsgHeaderColor, "Background color of the banner added at the top of the app")
 }
 
 func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 	if HideVoxPeople {
 		CustomHeadHTML += "<style>#voxpeople { display: none !important; }</style>"
+	}
+
+	if len(MsgHeaderText) != 0 {
+		CustomHeadHTML += fmt.Sprintf(`<script type="text/javascript">window.msg_header = { text: %q, color: %q };</script>`, MsgHeaderText, MsgHeaderColor)
 	}
 
 	if cfg.DevProxy != "" {
