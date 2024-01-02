@@ -136,6 +136,10 @@ func serveOrReverse(forced_url string, cfg *config.Options) gin.HandlerFunc {
 				}
 			}
 		}
+	} else if Assets == nil {
+		return func(c *gin.Context) {
+			c.String(http.StatusNotFound, "404 Page not found - interface not embedded in binary, please compile with -tags ui")
+		}
 	} else if forced_url == "/" {
 		// Serve altered index.html
 		return func(c *gin.Context) {
