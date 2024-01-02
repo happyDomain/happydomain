@@ -97,7 +97,7 @@
                     <Spinner color="primary" label={$t('common.spinning')} class="mr-3" /> {$t('wait.retrieving-setting')}
                 </div>
             {:else}
-                <form on:submit|preventDefault={() => form.nextState()}>
+                <form on:submit|preventDefault={() => form.nextState().then(() => form = form)}>
                     <CustomForm
                         form={form.form}
                         bind:value={form.value.Provider}
@@ -120,7 +120,7 @@
                         form={form.form}
                         nextInProgress={form.nextInProgress}
                         previousInProgress={form.previousInProgress}
-                        on:previous-state={() => form.previousState()}
+                        on:previous-state={() => form.previousState().then(() => form = form)}
                     />
                 </form>
             {/if}
