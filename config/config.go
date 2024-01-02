@@ -36,16 +36,12 @@ import (
 
 // Options stores the configuration of the software.
 type Options struct {
-	// Bind is the address:port used to bind the main interface with API.
-	Bind string
-
 	// AdminBind is the address:port or unix socket used to serve the admin
 	// API.
 	AdminBind string
 
-	// ExternalURL keeps the URL used in communications (such as email,
-	// ...), when it needs to use complete URL, not only relative parts.
-	ExternalURL URL
+	// Bind is the address:port used to bind the main interface with API.
+	Bind string
 
 	// BaseURL is the relative path where begins the root of the app.
 	BaseURL string
@@ -56,17 +52,21 @@ type Options struct {
 	// DefaultNameServer is the NS server suggested by default.
 	DefaultNameServer string
 
-	// StorageEngine points to the storage engine used.
-	StorageEngine storage.StorageEngine
+	// ExternalAuth is the URL of the login form to use instead of the embedded one.
+	ExternalAuth URL
+
+	// ExternalURL keeps the URL used in communications (such as email,
+	// ...), when it needs to use complete URL, not only relative parts.
+	ExternalURL URL
+
+	// JWTSecretKey stores the private key to sign and verify JWT tokens.
+	JWTSecretKey JWTSecretKey
 
 	// NoAuth controls if there is user access control or not.
 	NoAuth bool
 
-	// ExternalAuth is the URL of the login form to use instead of the embedded one.
-	ExternalAuth URL
-
-	// JWTSecretKey stores the private key to sign and verify JWT tokens.
-	JWTSecretKey JWTSecretKey
+	// StorageEngine points to the storage engine used.
+	StorageEngine storage.StorageEngine
 }
 
 // BuildURL appends the given url to the absolute ExternalURL.
