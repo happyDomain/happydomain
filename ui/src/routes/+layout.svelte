@@ -109,7 +109,7 @@
             <Col md="12" lg="6">
                 &copy;
                 <Logo color="#fff" height="17" />
-                2019-2023 All rights reserved
+                2019-2024 All rights reserved
             </Col>
             <Col md="6" lg="3" />
             <Col md="6" lg="3" />
