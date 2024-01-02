@@ -41,15 +41,17 @@
 </script>
 
 <Container class="flex-fill pt-4 pb-5">
-    <Button
-        type="button"
-        color="primary"
-        class="float-end"
-        on:click={() => goto('providers/new')}
-    >
-        <Icon name="plus" />
-        {$t('common.add-new-thing', { thing: $t('provider.kind') })}
-    </Button>
+    {#if !window.disable_providers}
+        <Button
+            type="button"
+            color="primary"
+            class="float-end"
+            on:click={() => goto('providers/new')}
+        >
+            <Icon name="plus" />
+            {$t('common.add-new-thing', { thing: $t('provider.kind') })}
+        </Button>
+    {/if}
     <h1 class="text-center mb-4">
         {$t('provider.title')}
     </h1>

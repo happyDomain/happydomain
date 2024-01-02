@@ -56,6 +56,10 @@ func init() {
 }
 
 func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
+	if cfg.DisableProviders {
+		CustomHeadHTML += `<script type="text/javascript">window.disable_providers = true;</script>`
+	}
+
 	if HideVoxPeople {
 		CustomHeadHTML += "<style>#voxpeople { display: none !important; }</style>"
 	}

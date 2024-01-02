@@ -100,6 +100,9 @@ func getProviderSettingsState(cfg *config.Options, c *gin.Context) {
 		if err != forms.DoneForm {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 			return
+		} else if cfg.DisableProviders {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errmsg": "Cannot change provider settings as DisableProviders parameter is set."})
+			return
 		} else if _, err = src.NewDNSServiceProvider(); err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 			return

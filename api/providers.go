@@ -39,18 +39,39 @@ import (
 
 func declareProvidersRoutes(cfg *config.Options, router *gin.RouterGroup) {
 	router.GET("/providers", getProviders)
-	router.POST("/providers", addProvider)
+	router.POST("/providers", func(c *gin.Context) {
+		if cfg.DisableProviders {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errmsg": "Cannot add provider as DisableProviders parameter is set."})
+			return
+		}
+
+		addProvider(c)
+	})
 
 	apiProvidersMetaRoutes := router.Group("/providers/:pid")
 	apiProvidersMetaRoutes.Use(ProviderMetaHandler)
 
-	apiProvidersMetaRoutes.DELETE("", deleteProvider)
+	apiProvidersMetaRoutes.DELETE("", func(c *gin.Context) {
+		if cfg.DisableProviders {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errmsg": "Cannot delete provider as DisableProviders parameter is set."})
+			return
+		}
+
+		deleteProvider(c)
+	})
 
 	apiProviderRoutes := router.Group("/providers/:pid")
 	apiProviderRoutes.Use(ProviderHandler)
 
 	apiProviderRoutes.GET("", GetProvider)
-	apiProviderRoutes.PUT("", UpdateProvider)
+	apiProviderRoutes.PUT("", func(c *gin.Context) {
+		if cfg.DisableProviders {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errmsg": "Cannot update provider as DisableProviders parameter is set."})
+			return
+		}
+
+		UpdateProvider(c)
+	})
 
 	apiProviderRoutes.GET("/domains", getDomainsHostedByProvider)
 }

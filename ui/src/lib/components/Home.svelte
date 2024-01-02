@@ -111,13 +111,15 @@
             >
                 <div class="card-header d-flex justify-content-between">
                     {$t("provider.title")}
-                    <Button
-                        size="sm"
-                        color="light"
-                        href="/providers/new"
-                    >
-                        <Icon name="plus" />
-                    </Button>
+                    {#if !window.disable_providers}
+                        <Button
+                            size="sm"
+                            color="light"
+                            href="/providers/new"
+                        >
+                            <Icon name="plus" />
+                        </Button>
+                    {/if}
                 </div>
                 {#if !$providers || !$providersSpecs}
                     <div class="d-flex justify-content-center">
