@@ -382,7 +382,7 @@ platform:
 
 steps:
 - name: frontend
-  image: node:21-alpine
+  image: node:21
   commands:
   - cd ui
   - npm install --network-timeout=100000
