@@ -33,7 +33,7 @@
      Icon,
      Row,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import CardImportableDomains from '$lib/components/providers/CardImportableDomains.svelte';
  import DomainGroupList from '$lib/components/DomainGroupList.svelte';

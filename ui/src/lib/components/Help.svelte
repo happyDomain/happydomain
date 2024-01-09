@@ -25,7 +25,7 @@
  import {
      Button,
      Icon,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
  import type {
      ButtonColor,
      ButtonSize,

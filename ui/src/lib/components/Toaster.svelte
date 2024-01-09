@@ -25,7 +25,7 @@
  import {
      Toast,
      ToastHeader,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { toasts } from '$lib/stores/toasts';
 </script>

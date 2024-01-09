@@ -30,7 +30,7 @@
      Icon,
      Popover,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { deleteZoneService } from '$lib/api/zone';
  import Service from '$lib/components/domains/Service.svelte';

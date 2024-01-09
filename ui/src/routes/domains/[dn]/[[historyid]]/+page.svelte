@@ -28,7 +28,7 @@
      Icon,
      Row,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import SubdomainList from '$lib/components/domains/SubdomainList.svelte';
  import type { DomainInList } from '$lib/model/domain';

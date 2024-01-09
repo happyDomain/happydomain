@@ -30,7 +30,7 @@
      Icon,
      Input,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { saveAccountSettings } from '$lib/api/user';
  import type { UserSettings } from '$lib/model/usersettings';

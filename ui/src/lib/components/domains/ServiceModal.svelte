@@ -34,7 +34,7 @@
      Modal,
      ModalBody,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { addZoneService, deleteZoneService, updateZoneService } from '$lib/api/zone';
  import ModalFooter from '$lib/components/domains/ModalFooter.svelte';

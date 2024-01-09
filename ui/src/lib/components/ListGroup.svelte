@@ -27,7 +27,7 @@
  import {
      ListGroup,
      ListGroupItem,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  const dispatch = createEventDispatcher();
 

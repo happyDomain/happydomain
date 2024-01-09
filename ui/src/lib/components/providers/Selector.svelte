@@ -28,7 +28,7 @@
      ListGroup,
      ListGroupItem,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { listProviders } from '$lib/api/provider_specs';
  import ImgProvider from '$lib/components/providers/ImgProvider.svelte';

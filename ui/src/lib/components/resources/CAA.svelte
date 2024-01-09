@@ -31,7 +31,7 @@
      FormGroup,
      Icon,
      Input,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import TableInput from '$lib/components/resources/table.svelte';
  import ResourceRawInput from '$lib/components/resources/raw.svelte';

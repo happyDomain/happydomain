@@ -35,7 +35,7 @@
      DropdownToggle,
      Icon,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { deleteProvider } from '$lib/api/provider';
  import ImgProvider from '$lib/components/providers/ImgProvider.svelte';

@@ -31,7 +31,7 @@
      Icon,
      Row,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { addDomain } from '$lib/api/domains';
  import ProviderList from '$lib/components/providers/List.svelte';

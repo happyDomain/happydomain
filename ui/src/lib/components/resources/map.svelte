@@ -25,7 +25,7 @@
  import {
      Button,
      Icon,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import MapEntry from '$lib/components/resources/mapentry.svelte';
  import type { Field } from '$lib/model/custom_form';

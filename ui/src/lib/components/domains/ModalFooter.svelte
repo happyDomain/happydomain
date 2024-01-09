@@ -29,7 +29,7 @@
      Icon,
      ModalFooter,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { getServiceRecords } from '$lib/api/zone';
  import HelpButton from '$lib/components/Help.svelte';

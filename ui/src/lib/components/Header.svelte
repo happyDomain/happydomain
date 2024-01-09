@@ -35,7 +35,7 @@
      Navbar,
      NavbarBrand,
      Nav,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { logout as APILogout } from '$lib/api/user';
  import HelpButton from '$lib/components/Help.svelte';

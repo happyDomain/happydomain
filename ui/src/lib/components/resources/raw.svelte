@@ -28,7 +28,7 @@
      Input,
      InputGroup,
      InputGroupText,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
  import type {
      InputType,
  } from 'sveltestrap/src/Input.d';

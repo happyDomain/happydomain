@@ -32,7 +32,7 @@
      Icon,
      ListGroupItem,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { addDomain } from '$lib/api/domains';
  import { listImportableDomains } from '$lib/api/provider';

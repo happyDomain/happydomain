@@ -30,7 +30,7 @@
      Input,
      Label,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { t } from '$lib/translations';
  import { authUser, cleanUserSession } from '$lib/api/user';

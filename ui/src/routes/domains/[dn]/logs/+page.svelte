@@ -28,7 +28,7 @@
      Icon,
      Table,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { getDomainLogs } from '$lib/api/domains';
  import { getUser } from '$lib/stores/users';

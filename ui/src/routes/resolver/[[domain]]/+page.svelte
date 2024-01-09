@@ -29,7 +29,7 @@
      Col,
      Row,
      Table,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { resolve as APIResolve } from '$lib/api/resolver';
  import ResolverForm from '$lib/components/resolver/Form.svelte';

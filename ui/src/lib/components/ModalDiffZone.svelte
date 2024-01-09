@@ -39,7 +39,7 @@
      ModalFooter,
      ModalHeader,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import {
      applyZone as APIApplyZone,

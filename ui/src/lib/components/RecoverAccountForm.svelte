@@ -30,7 +30,7 @@
      Input,
      Row,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { recoverAccount } from '$lib/api/user';
  import { checkWeakPassword, checkPasswordConfirmation } from '$lib/password';

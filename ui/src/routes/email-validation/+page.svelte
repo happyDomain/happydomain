@@ -28,7 +28,7 @@
      Alert,
      Container,
      Spinner
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { validateEmail } from '$lib/api/user';
  import EmailConfirmationForm from '$lib/components/EmailConfirmationForm.svelte';

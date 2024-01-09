@@ -44,7 +44,7 @@
      ModalFooter,
      ModalHeader,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { addZoneService } from '$lib/api/zone';
  import { fqdn, validateDomain } from '$lib/dns';

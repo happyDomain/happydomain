@@ -29,7 +29,7 @@
      Container,
      Col,
      Row,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { t } from '$lib/translations';
  import LoginForm from '$lib/components/LoginForm.svelte';

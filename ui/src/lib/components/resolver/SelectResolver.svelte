@@ -24,7 +24,7 @@
 <script lang="ts">
  import {
      Input,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { resolvers } from '$lib/resolver';
  import { t } from '$lib/translations';

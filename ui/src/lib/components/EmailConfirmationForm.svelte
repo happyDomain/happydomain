@@ -30,7 +30,7 @@
      Input,
      Row,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { resendValidationEmail } from '$lib/api/user';
  import { t } from '$lib/translations';

@@ -29,7 +29,7 @@
      Container,
      Row,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import ImgProvider from '$lib/components/providers/ImgProvider.svelte';
  import SettingsStateButtons from '$lib/components/providers/SettingsStateButtons.svelte';

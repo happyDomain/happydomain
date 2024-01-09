@@ -24,7 +24,7 @@
 <script lang="ts">
  import {
      Icon,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  const { MODE } = import.meta.env;
 

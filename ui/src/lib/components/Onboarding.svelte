@@ -29,7 +29,7 @@
      CardBody,
      CardGroup,
      Container,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import Logo from '$lib/components/Logo.svelte';
  import ProviderList from '$lib/components/providers/List.svelte';

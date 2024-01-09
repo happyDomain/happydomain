@@ -30,7 +30,7 @@
      TabContent,
      TabPane,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { getServiceSpec } from '$lib/api/service_specs';
  import ResourceInput from '$lib/components/ResourceInput.svelte';

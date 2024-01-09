@@ -32,7 +32,7 @@
      ListGroup,
      ListGroupItem,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { addDomain } from '$lib/api/domains';
  import { validateDomain } from '$lib/dns';

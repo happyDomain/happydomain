@@ -28,7 +28,7 @@
      Col,
      Container,
      Row,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 </script>
 
 <Container class="my-3">

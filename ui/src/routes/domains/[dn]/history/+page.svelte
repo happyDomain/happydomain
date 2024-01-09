@@ -28,7 +28,7 @@
      Button,
      Icon,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { getDomain } from '$lib/api/domains';
  import DiffZone from '$lib/components/DiffZone.svelte';

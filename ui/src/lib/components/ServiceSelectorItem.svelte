@@ -27,7 +27,7 @@
  import {
      Badge,
      ListGroupItem,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { nsrrtype } from '$lib/dns';
  import type { ServiceInfos } from '$lib/model/service_specs';

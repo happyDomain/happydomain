@@ -25,7 +25,7 @@
  import {
      Button,
      Icon,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import ProviderForm from '$lib/components/providers/Form.svelte';
  import type { Provider } from '$lib/model/provider';

@@ -28,7 +28,7 @@
      Button,
      Icon,
      Input,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  const dispatch = createEventDispatcher();
 

@@ -31,7 +31,7 @@
  import {
      Modal,
      ModalBody,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import ModalFooter from '$lib/components/domains/ModalFooter.svelte';
  import ModalHeader from '$lib/components/domains/ModalHeader.svelte';

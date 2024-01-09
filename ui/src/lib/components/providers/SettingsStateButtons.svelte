@@ -27,7 +27,7 @@
  import {
      Button,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import type { CustomForm } from '$lib/model/custom_form';
  import { t } from '$lib/translations';

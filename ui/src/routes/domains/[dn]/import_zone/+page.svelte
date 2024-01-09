@@ -28,7 +28,7 @@
      Alert,
      Icon,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import type { DomainInList } from '$lib/model/domain';
  import { retrieveZone } from '$lib/stores/thiszone';

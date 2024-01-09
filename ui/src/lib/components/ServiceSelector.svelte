@@ -27,7 +27,7 @@
      NavItem,
      NavLink,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { getProviderSpec } from '$lib/api/provider_specs';
  import ServiceSelectorItem from '$lib/components/ServiceSelectorItem.svelte';

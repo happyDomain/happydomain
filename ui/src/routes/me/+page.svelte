@@ -29,7 +29,7 @@
      Col,
      Row,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import ChangePasswordForm from '$lib/components/ChangePasswordForm.svelte';
  import DeleteAccountCard from '$lib/components/DeleteAccountCard.svelte';

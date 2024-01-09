@@ -30,7 +30,7 @@
      FormGroup,
      Input,
      Spinner
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import SelectType from '$lib/components/resolver/SelectType.svelte';
  import SelectResolver from '$lib/components/resolver/SelectResolver.svelte';

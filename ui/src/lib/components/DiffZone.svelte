@@ -27,7 +27,7 @@
  import {
      Icon,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import {
      diffZone as APIDiffZone,

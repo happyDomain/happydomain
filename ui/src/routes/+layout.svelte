@@ -33,7 +33,7 @@
      Container,
      Row,
      //Styles,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import Header from '$lib/components/Header.svelte';
  import Logo from '$lib/components/Logo.svelte';

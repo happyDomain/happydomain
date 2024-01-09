@@ -28,7 +28,7 @@
      Button,
      Input,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { t } from '$lib/translations';
  import { checkWeakPassword, checkPasswordConfirmation } from '$lib/password';

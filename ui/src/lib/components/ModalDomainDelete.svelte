@@ -36,7 +36,7 @@
      ModalBody,
      ModalFooter,
      ModalHeader,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import {
      viewZone as APIViewZone,

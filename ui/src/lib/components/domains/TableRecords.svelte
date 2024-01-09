@@ -34,7 +34,7 @@
      ListGroupItem,
      Table,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import Record from '$lib/components/domains/Record.svelte';
 

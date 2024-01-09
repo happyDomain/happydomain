@@ -41,7 +41,7 @@
      Input,
      Row,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import {
      getDomain as APIGetDomain,

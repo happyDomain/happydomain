@@ -24,7 +24,7 @@
 <script lang="ts">
  import {
      Input,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { dns_common_types } from '$lib/dns';
 

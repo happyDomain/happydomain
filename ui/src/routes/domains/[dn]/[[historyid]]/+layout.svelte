@@ -26,7 +26,7 @@
 
  import {
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import NewServicePath from '$lib/components/NewServicePath.svelte';
  import ServiceModal from '$lib/components/domains/ServiceModal.svelte';

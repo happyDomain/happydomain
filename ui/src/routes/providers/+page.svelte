@@ -31,7 +31,7 @@
      Icon,
      Row,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import ProviderList from '$lib/components/providers/List.svelte';
  import { providers, refreshProviders } from '$lib/stores/providers';

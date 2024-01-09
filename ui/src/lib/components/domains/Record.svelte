@@ -28,7 +28,7 @@
      Icon,
      Input,
      Row,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { nsclass, nsrrtype } from '$lib/dns';
  import type { ServiceRecord } from '$lib/model/zone';

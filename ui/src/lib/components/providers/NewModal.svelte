@@ -27,7 +27,7 @@
      ModalBody,
      ModalFooter,
      ModalHeader,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import SettingsStateButtons from '$lib/components/providers/SettingsStateButtons.svelte';
  import CustomForm from '$lib/components/CustomForm.svelte';

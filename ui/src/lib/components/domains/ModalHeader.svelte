@@ -26,7 +26,7 @@
  import { escape } from 'html-escaper';
  import {
      ModalHeader,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { t } from '$lib/translations';
 

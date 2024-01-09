@@ -30,7 +30,7 @@
      ModalBody,
      ModalHeader,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import ZoneList from '$lib/components/ZoneList.svelte';
  import { updateDomain } from '$lib/api/domains';

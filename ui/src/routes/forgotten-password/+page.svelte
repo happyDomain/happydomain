@@ -25,7 +25,7 @@
  import {
      Alert,
      Container,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import ForgottenPasswordForm from '$lib/components/ForgottenPasswordForm.svelte';
  import RecoverAccountForm from '$lib/components/RecoverAccountForm.svelte';

@@ -30,7 +30,7 @@
      Container,
      Icon,
      Row,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import ProviderSelector from '$lib/components/providers/Selector.svelte';
  import { t } from '$lib/translations';

@@ -34,7 +34,7 @@
      ModalFooter,
      ModalHeader,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { deleteUserAccount } from '$lib/api/user';
  import { t } from '$lib/translations';

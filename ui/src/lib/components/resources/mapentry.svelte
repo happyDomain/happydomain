@@ -30,7 +30,7 @@
      Input,
      InputGroup,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import ResourceInput from '$lib/components/ResourceInput.svelte';
  import type { Field } from '$lib/model/custom_form';

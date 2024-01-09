@@ -27,7 +27,7 @@
  import {
      Col,
      Row,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import ResourceRawInput from '$lib/components/resources/raw.svelte';
 

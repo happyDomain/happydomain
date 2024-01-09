@@ -30,7 +30,7 @@
      Input,
      Row,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { t } from '$lib/translations';
  import { forgotAccountPassword } from '$lib/api/user';

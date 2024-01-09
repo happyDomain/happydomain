@@ -40,7 +40,7 @@
      Spinner,
      TabContent,
      TabPane,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import {
      importZone as APIImportZone,

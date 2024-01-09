@@ -30,7 +30,7 @@
      FormGroup,
      Icon,
      Input,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { issuers, rev_issuers } from './CAA-issuers';
 

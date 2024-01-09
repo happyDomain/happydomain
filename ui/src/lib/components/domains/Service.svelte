@@ -36,7 +36,7 @@
      ListGroupItem,
      Table,
      Spinner,
- } from 'sveltestrap';
+ } from '@sveltestrap/sveltestrap';
 
  import { deleteZoneService, getServiceRecords, updateZoneService } from '$lib/api/zone';
  import { nsrrtype } from '$lib/dns';
