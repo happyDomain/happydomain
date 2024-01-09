@@ -11,7 +11,7 @@ export const load: Load = async({ parent, params }) => {
     const domain = data.domain;
 
     if (!domain.zone_history || domain.zone_history.length === 0) {
-        throw redirect(307, `/domains/${data.domain.domain}/import_zone`);
+        redirect(307, `/domains/${data.domain.domain}/import_zone`);
     }
 
     let definedhistory = true;
@@ -23,9 +23,9 @@ export const load: Load = async({ parent, params }) => {
 
     const zhidx = domain.zone_history.indexOf(params.historyid);
     if (zhidx < 0) {
-        throw error(404, {
-	    message: 'Zone not found in history'
-	});
+        error(404, {
+        	    message: 'Zone not found in history'
+        	});
     }
 
     const zoneId: string = domain.zone_history[zhidx];

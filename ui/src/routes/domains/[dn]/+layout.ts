@@ -11,17 +11,17 @@ export const load: Load = async({ parent, params }) => {
     if (!get_store_value(domains)) await refreshDomains();
 
     if (!params.dn) {
-        throw error(404, {
-            message: 'Domain not found',
-        });
+        error(404, {
+                    message: 'Domain not found',
+                });
     }
 
     const domain: DomainInList | null = get_store_value(domains_idx)[params.dn];
 
     if (!domain) {
-        throw error(404, {
-	    message: 'Domain not found',
-	});
+        error(404, {
+        	    message: 'Domain not found',
+        	});
     }
 
     let historyid = undefined;

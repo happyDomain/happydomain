@@ -28,7 +28,7 @@ export const load: Load = async({ parent }) => {
     const data = await parent();
 
     if (get_store_value(userSession) != null) {
-        throw redirect(302, '/');
+        redirect(302, '/');
     }
 
     return data;

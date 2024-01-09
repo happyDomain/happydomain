@@ -33,7 +33,7 @@ export const load: Load = async({ parent }) => {
     // If not connected, redirect to main website in the right language
     if (!get_store_value(userSession)) {
         const initLocale = locale.get() || window.navigator.language || window.navigator.languages[0] || tsConfig.fallbackLocale;
-        throw redirect(302, '/' + initLocale);
+        redirect(302, '/' + initLocale);
     }
 
     await refreshDomains();

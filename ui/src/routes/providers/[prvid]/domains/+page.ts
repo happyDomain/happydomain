@@ -25,7 +25,7 @@ import { getProvider } from '$lib/api/provider';
 
 export const load: Load = async({ params }) => {
     if (params.prvid == undefined) {
-        throw redirect(302, '/providers/');
+        redirect(302, '/providers/');
     }
 
     return {
