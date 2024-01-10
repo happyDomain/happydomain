@@ -100,6 +100,7 @@
                 <NewDomainInput
                     autofocus
                     class="mt-3"
+                    id="new-domain"
                     provider={filteredProvider}
                 />
             {/if}

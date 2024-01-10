@@ -94,9 +94,9 @@
  }
 </script>
 
-<ListGroup {...$$restProps}>
-    <form on:submit|preventDefault={addDomainToProvider}>
-        <ListGroupItem class="d-flex justify-content-between align-items-center">
+<form on:submit|preventDefault={addDomainToProvider}>
+    <ListGroup {...$$restProps}>
+        <ListGroupItem class="d-flex justify-content-between align-items-center p-0">
             <InputGroup>
                 <label for="newdomaininput" class="text-center" style="width: 50px; font-size: 2.3rem">
                     <Icon name="plus" />
@@ -127,5 +127,5 @@
                 {/if}
             </InputGroup>
         </ListGroupItem>
-    </form>
-</ListGroup>
+    </ListGroup>
+</form>
