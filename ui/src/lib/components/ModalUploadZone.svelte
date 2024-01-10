@@ -83,14 +83,19 @@
      uploadModalActiveTab = 0;
  }
 
+ function toggle(): void {
+     isOpen = !isOpen;
+ }
+
  controls.Open = Open;
 </script>
 
 <Modal
     isOpen={isOpen}
     size="lg"
+    {toggle}
 >
-    <ModalHeader toggle={() => isOpen = false}>{$t('zones.upload')}</ModalHeader>
+    <ModalHeader {toggle}>{$t('zones.upload')}</ModalHeader>
     <ModalBody>
         <TabContent on:tab={(e) => (uploadModalActiveTab = e.detail)}>
             <TabPane tabId="uploadText" tab={$t('zones.import-text')} active>

@@ -135,7 +135,7 @@
     {isOpen}
     {toggle}
 >
-    <ModalHeader>
+    <ModalHeader {toggle}>
         {$t('domains.add-an-alias')} {origin.domain}
     </ModalHeader>
     <ModalBody>

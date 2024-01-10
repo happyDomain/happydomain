@@ -51,14 +51,19 @@
      isOpen = true;
  }
 
+ function toggle(): void {
+     isOpen = !isOpen;
+ }
+
  controls.Open = Open;
 </script>
 
 <Modal
     isOpen={isOpen}
     size="lg"
+    {toggle}
 >
-    <ModalHeader toggle={() => isOpen = false}>{$t('domains.removal')}</ModalHeader>
+    <ModalHeader {toggle}>{$t('domains.removal')}</ModalHeader>
     <ModalBody>
         {$t('domains.alert.remove')}
     </ModalBody>

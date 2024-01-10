@@ -57,14 +57,19 @@
      form.ptype = event.detail.ptype;
      form.changeState(0).then((res) => form.form = res);
  }
+
+ function toggle(): void {
+     isOpen = !isOpen;
+ }
 </script>
 
 <Modal
     {isOpen}
     scrollable
     size="lg"
+    {toggle}
 >
-    <ModalHeader>
+    <ModalHeader {toggle}>
         {$t('provider.new-form')}
     </ModalHeader>
     <ModalBody>

@@ -57,6 +57,10 @@
      );
  }
 
+ function toggle(): void {
+     isOpen = !isOpen;
+ }
+
  controls.Open = Open;
 </script>
 
@@ -64,8 +68,9 @@
     isOpen={isOpen}
     size="lg"
     scrollable
+    {toggle}
 >
-    <ModalHeader toggle={() => isOpen = false}>{$t('domains.view.title')}</ModalHeader>
+    <ModalHeader {toggle}>{$t('domains.view.title')}</ModalHeader>
     <ModalBody>
         {#if zoneContent}
             <pre style="overflow: initial">{zoneContent}</pre>

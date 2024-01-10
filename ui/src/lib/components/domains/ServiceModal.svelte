@@ -106,9 +106,9 @@
 {#if service && service._domain !== undefined}
 <Modal
     {isOpen}
-    {toggle}
     scrollable
     size="lg"
+    {toggle}
 >
     <ModalHeader
         {toggle}

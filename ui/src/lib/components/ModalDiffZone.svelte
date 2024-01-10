@@ -101,6 +101,10 @@
      }
  }
 
+ function toggle(): void {
+     isOpen = !isOpen;
+ }
+
  controls.Open = Open;
 </script>
 
@@ -108,9 +112,10 @@
     isOpen={isOpen}
     size="lg"
     scrollable
+    {toggle}
 >
     {#if domain}
-        <ModalHeader toggle={() => isOpen = false}>
+        <ModalHeader {toggle}>
             {@html $t('domains.view.description', {"domain": `<span class="font-monospace">${escape(domain.domain)}</span>`})}
         </ModalHeader>
     {/if}

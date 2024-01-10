@@ -65,9 +65,9 @@
 
 <Modal
     {isOpen}
-    {toggle}
     scrollable
     size="lg"
+    {toggle}
 >
     <ModalHeader {toggle}>
         {$t('domaingroups.manage')}

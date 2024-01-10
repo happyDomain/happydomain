@@ -74,6 +74,10 @@
          }
      );
  }
+
+ function toggleModal(): void {
+     deleteAccountModalOpen = !deleteAccountModalOpen;
+ }
 </script>
 
 <Card {...$$restProps}>
@@ -102,10 +106,10 @@
 
 <Modal
     isOpen={deleteAccountModalOpen}
-    toggle={() => deleteAccountModalOpen = !deleteAccountModalOpen}
+    toggle={toggleModal}
 >
     <ModalHeader
-        toggle={() => deleteAccountModalOpen = !deleteAccountModalOpen}
+        toggle={toggleModal}
     >
         {$t('account.delete.delete')}
     </ModalHeader>
