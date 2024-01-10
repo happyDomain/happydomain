@@ -34,6 +34,7 @@
 
  const dispatch = createEventDispatcher();
 
+ export let canDoNext = true;
  export let edit = false;
  export let form: CustomForm|null = null;
  export let nextInProgress = false;
@@ -66,7 +67,7 @@
                 type="submit"
                 class="mx-1"
                 color="primary"
-                {disabled}
+                disabled={disabled || !canDoNext}
                 form={submitForm}
             >
                 {#if nextInProgress}
@@ -95,7 +96,7 @@
                 type="submit"
                 class="mx-1"
                 color="primary"
-                {disabled}
+                disabled={disabled || !canDoNext}
                 form={submitForm}
             >
                 {#if nextInProgress}
@@ -122,7 +123,7 @@
             type="submit"
             class="mx-1"
             color="primary"
-            {disabled}
+            disabled={disabled || !canDoNext}
             form={submitForm}
         >
             {#if nextInProgress}

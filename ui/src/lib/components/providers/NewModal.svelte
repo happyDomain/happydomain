@@ -106,6 +106,7 @@
     </ModalBody>
     <ModalFooter>
         <SettingsStateButtons
+            canDoNext={form.state >= 0}
             class="d-flex justify-content-end"
             submitForm="providermodal"
             form={form.form}
