@@ -110,10 +110,15 @@
      const showDNSSEC = event.detail.showDNSSEC;
 
      request_pending = true;
-     goto('/resolver/' + encodeURIComponent(form.domain), {
-         state: {form, showDNSSEC},
-         noScroll: true,
-     });
+
+     if (form.domain === data.domain) {
+         resolve(form);
+     } else {
+         goto('/resolver/' + encodeURIComponent(form.domain), {
+             state: {form, showDNSSEC},
+             noScroll: true,
+         });
+     }
  }
 </script>
 
