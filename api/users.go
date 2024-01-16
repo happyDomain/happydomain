@@ -31,7 +31,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nullrocks/identicon"
+	"github.com/rrivera/identicon"
 
 	"git.happydns.org/happyDomain/actions"
 	"git.happydns.org/happyDomain/config"
