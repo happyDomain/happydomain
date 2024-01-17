@@ -50,14 +50,12 @@
  export let value: any;
 
  let innerSpecs: Array<Field> | undefined = undefined;
- $: {
-     getServiceSpec(type).then((ss) => {
-         innerSpecs = ss.fields;
-     });
- }
+ $: getServiceSpec(type).then((ss) => {
+     innerSpecs = ss.fields;
+ });
 
  // Initialize unexistant objects and arrays, except standard types.
- $: if (innerSpecs) {
+ $: if (innerSpecs && !(specs && specs.tabs)) {
      for (const spec of innerSpecs) {
          fillUndefinedValues(value, spec);
      }
@@ -97,18 +95,31 @@
                 tab={spec.label}
                 active={i == 0}
             >
-                <ResourceInput
-                    {edit}
-                    {editToolbar}
-                    index={index + '_' + spec.id}
-                    noDecorate
-                    {readonly}
-                    specs={spec}
-                    type={spec.type}
-                    bind:value={value[spec.id]}
-                    on:delete-this-service={() => deleteSubObject(spec.id)}
-                    on:update-this-service={(event) => dispatch("update-this-service", event.detail)}
-                />
+                {#if innerSpecs && value[spec.id] === undefined}
+                    <div class="my-3 d-flex justify-content-center">
+                        <Button
+                            color="primary"
+                            type="button"
+                            on:click={() => { fillUndefinedValues(value, spec); value = value; }}
+                        >
+                            <Icon name="plus" />
+                            {$t('common.add-object', {thing: spec.label})}
+                        </Button>
+                    </div>
+                {:else}
+                    <ResourceInput
+                        {edit}
+                        {editToolbar}
+                        index={index + '_' + spec.id}
+                        noDecorate
+                        {readonly}
+                        specs={spec}
+                        type={spec.type}
+                        bind:value={value[spec.id]}
+                        on:delete-this-service={() => deleteSubObject(spec.id)}
+                        on:update-this-service={(event) => dispatch("update-this-service", event.detail)}
+                    />
+                {/if}
             </TabPane>
         {/each}
     </TabContent>

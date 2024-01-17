@@ -28,6 +28,7 @@
     "common": {
         "add": "Add",
         "add-new-thing": "Add new {{thing}}",
+        "add-object": "Add a {{thing}} object to this service",
         "cancel": "Cancel",
         "cancel-edit": "Cancel edit",
         "continue": "Continue",
