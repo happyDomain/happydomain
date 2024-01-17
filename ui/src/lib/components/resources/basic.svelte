@@ -50,15 +50,17 @@
                 {specs.id}
             {/if}
         </label>
-        <Col md="8">
-            <ResourceRawInput
-                {edit}
-                {index}
-                {specs}
-                bind:value={value}
-                on:focus={() => dispatch("focus")}
-                on:blur={() => dispatch("blur")}
-            />
+        <Col md="8" class="d-flex flex-column">
+            <div class="flex-fill d-flex align-items-center">
+                <ResourceRawInput
+                    {edit}
+                    {index}
+                    {specs}
+                    bind:value={value}
+                    on:focus={() => dispatch("focus")}
+                    on:blur={() => dispatch("blur")}
+                />
+            </div>
             {#if specs.description && (showDescription || (specs.choices && specs.choices.length > 0))}
                 <p class="text-justify" style="line-height: 1.1">
                     <small class="text-muted">{specs.description}</small>

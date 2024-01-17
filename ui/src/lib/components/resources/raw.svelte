@@ -47,6 +47,7 @@
 
  let inputtype: InputType = "text";
  $: if (specs.type && (specs.type.startsWith("uint") || specs.type.startsWith("int"))) inputtype = "number";
+    else if (specs.type && specs.type === "bool") inputtype = "checkbox";
 
  let inputmin: number | undefined = undefined;
  let inputmax: number | undefined = undefined;
@@ -122,7 +123,6 @@
             plaintext={!edit}
             readonly={!edit}
             required={specs.required}
-            style="width: initial"
             bind:value={value}
             on:focus={() => dispatch("focus")}
             on:blur={() => dispatch("blur")}

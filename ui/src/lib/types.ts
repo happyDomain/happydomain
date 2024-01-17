@@ -27,6 +27,7 @@ export function fillUndefinedValues(value: any, spec: Field) {
         if (vartype[0] == "*") vartype = vartype.substring(1);
 
         if (spec.default !== undefined) value[spec.id] = spec.default;
+        else if (vartype == "bool") value[spec.id] = false;
         else if (vartype == "[]uint8") value[spec.id] = "";
         else if (vartype.startsWith("[]")) value[spec.id] = [];
         else if (vartype != "string" && !vartype.startsWith("uint") && !vartype.startsWith("int") && vartype != "net.IP" && vartype != "common.URL" && vartype != "time.Duration" && vartype != "common.Duration") value[spec.id] = { };
