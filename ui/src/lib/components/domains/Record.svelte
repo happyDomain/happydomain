@@ -55,7 +55,7 @@
                     class="font-monospace text-truncate"
                     title={record.str}
                 >
-                    {record.str}
+                    {record.fields.name?record.fields.name:'@'} {record.type} {record.str}
                 </span>
             </div>
             {#if expand}
@@ -78,7 +78,7 @@
                                 RRType
                             </dt>
                             <dd class="col-sm-7 text-muted font-monospace mb-1">
-                                {nsrrtype(record.rr.Hdr.Rrtype)}
+                                {nsrrtype(record.rr.Hdr.Rrtype)} (<span title={record.rr.Hdr.Rrtype}>0x{record.rr.Hdr.Rrtype.toString(16)}</span>)
                             </dd>
                         </dl>
                     </Col>
