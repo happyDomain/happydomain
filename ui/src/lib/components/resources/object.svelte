@@ -55,9 +55,11 @@
  });
 
  // Initialize unexistant objects and arrays, except standard types.
- $: if (innerSpecs && !(specs && specs.tabs)) {
+ $: if (innerSpecs) {
      for (const spec of innerSpecs) {
-         fillUndefinedValues(value, spec);
+         if (!(specs && specs.tabs) || spec.required) {
+             fillUndefinedValues(value, spec);
+         }
      }
  }
 

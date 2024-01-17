@@ -35,9 +35,9 @@ import (
 )
 
 type EMail struct {
-	MX      []svcs.MX             `json:"mx,omitempty" happydomain:"label=EMail Servers"`
+	MX      []svcs.MX             `json:"mx,omitempty" happydomain:"label=EMail Servers,required"`
 	SPF     *svcs.SPF             `json:"spf,omitempty" happydomain:"label=Sender Policy Framework"`
-	DKIM    map[string]*svcs.DKIM `json:"dkim,omitempty" happydomain:"label=Domain Keys"`
+	DKIM    map[string]*svcs.DKIM `json:"dkim,omitempty" happydomain:"label=Domain Keys,required"`
 	DMARC   *svcs.DMARC           `json:"dmarc,omitempty" happydomain:"label=DMARC"`
 	MTA_STS *svcs.MTA_STS         `json:"mta_sts,omitempty" happydomain:"label=Strict Transport Security"`
 	TLS_RPT *svcs.TLS_RPT         `json:"tls_rpt,omitempty" happydomain:"label=TLS Reporting"`
