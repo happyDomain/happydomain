@@ -23,8 +23,10 @@ package api
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -133,7 +135,22 @@ func getSpecs(svcType reflect.Type) viewServiceSpec {
 				case "placeholder":
 					f.Placeholder = kv[1]
 				case "default":
-					f.Default = kv[1]
+					var err error
+					if strings.HasPrefix(f.Type, "uint") {
+						f.Default, err = strconv.ParseUint(kv[1], 10, 64)
+					} else if strings.HasPrefix(f.Type, "int") {
+						f.Default, err = strconv.ParseInt(kv[1], 10, 64)
+					} else if strings.HasPrefix(f.Type, "float") {
+						f.Default, err = strconv.ParseFloat(kv[1], 64)
+					} else if strings.HasPrefix(f.Type, "bool") {
+						f.Default, err = strconv.ParseBool(kv[1])
+					} else {
+						f.Default = kv[1]
+					}
+
+					if err != nil {
+						log.Printf("Format error for default field %s of type %s definition: %s", svcType.Field(i).Name, svcType.Name(), err.Error())
+					}
 				case "description":
 					f.Description = kv[1]
 				case "choices":

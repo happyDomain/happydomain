@@ -41,7 +41,7 @@ type Field struct {
 	Placeholder string `json:"placeholder,omitempty"`
 
 	// Default is the preselected value or the default value in case the field is not filled by the user.
-	Default string `json:"default,omitempty"`
+	Default interface{} `json:"default,omitempty"`
 
 	// Choices holds the differents choices shown to the user in <select> tag.
 	Choices []string `json:"choices,omitempty"`
