@@ -94,9 +94,20 @@
         {#each innerSpecs as spec, i}
             <TabPane
                 tabId={spec.id}
-                tab={spec.label}
                 active={i == 0}
             >
+                <span slot="tab">
+                    {spec.label}
+                    {#if innerSpecs && value[spec.id] !== undefined && !spec.required}
+                        <button
+                            class="btn btn-link btn-sm pe-0 text-muted"
+                            type="button"
+                            on:click={() => { value[spec.id] = undefined; value = value; } }
+                        >
+                            <Icon name="trash" />
+                        </button>
+                    {/if}
+                </span>
                 {#if innerSpecs && value[spec.id] === undefined}
                     <div class="my-3 d-flex justify-content-center">
                         <Button
