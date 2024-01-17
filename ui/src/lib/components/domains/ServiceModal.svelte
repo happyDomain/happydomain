@@ -130,7 +130,7 @@
                     specs={$servicesSpecs[service._svctype]}
                     type={service._svctype}
                     bind:value={service.Service}
-                    update-my-services="$emit('update-my-services', $event)"
+                    update-this-services="$emit('update-this-services', $event)"
                 />
             {/if}
         </form>
