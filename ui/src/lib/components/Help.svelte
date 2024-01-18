@@ -47,6 +47,7 @@
     {size}
     class="{className}"
     data-umami-event="help"
+    data-umami-event-href={href.substring(href.lastIndexOf('/')-2)}
 >
     <Icon
         name="question-circle-fill"
