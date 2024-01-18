@@ -27,6 +27,8 @@
  import {
      Button,
      Icon,
+     Input,
+     Label,
      ModalFooter,
      Spinner,
  } from '@sveltestrap/sveltestrap';
@@ -76,10 +78,18 @@
  }
 
  let showRecords = false;
+ let recordsHeight = 120;
 </script>
 
 {#if showRecords}
-    <ModalFooter class="p-0 border-top border-dark border-2 d-flex justify-content-center">
+    <ModalFooter
+        class="p-0 d-flex justify-content-center"
+        style={"overflow-y: auto; max-height: " + recordsHeight + "px"}
+    >
+        <div
+            class="m-0 border-top border-dark border-2 w-100"
+        >
+        </div>
         {#await getServiceRecords(origin, zoneId, service)}
             <Spinner class="my-1" />
         {:then serviceRecords}
@@ -99,22 +109,35 @@
         </Button>
     {/if}
     <div class="ms-auto"></div>
-    {#if step === 2}
+    {#if origin && zoneId && showRecords}
+        <Label for="svc_ttl" title={$t('service.ttl-long')}>{$t('service.ttl')}</Label>
+        <Input
+            id="svc_ttl"
+            min="0"
+            type="number"
+            style="width: 12%"
+            title={$t('service.ttl-tip')}
+            bind:value={service._ttl}
+        />
+    {:else if step === 2}
         <HelpButton
-            href={helpHref}
             color="info"
+            href={helpHref}
+            title={$t('common.help')}
         />
     {/if}
     {#if update}
         <Button
-            disabled={addServiceInProgress || deleteServiceInProgress || !canDelete}
             color="danger"
+            disabled={addServiceInProgress || deleteServiceInProgress || !canDelete}
+            title={$t('service.delete')}
             on:click={() => dispatch("delete-service")}
         >
             {#if deleteServiceInProgress}
                 <Spinner size="sm" />
+            {:else}
+                <Icon name="trash" />
             {/if}
-            {$t('service.delete')}
         </Button>
     {/if}
     <Button
