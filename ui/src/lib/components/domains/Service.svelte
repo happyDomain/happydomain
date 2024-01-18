@@ -48,6 +48,7 @@
  import type { ServiceRecord } from '$lib/model/zone';
  import { servicesSpecs } from '$lib/stores/services';
  import { userSession } from '$lib/stores/usersession';
+ import { t } from '$lib/translations';
 
  const dispatch = createEventDispatcher();
 
@@ -111,36 +112,38 @@
             <Spinner color="primary" />
         </div>
     {:else if $userSession.settings.zoneview === ZoneViewGrid}
-        <CardBody>
-            {#if service && $servicesSpecs[service._svctype].categories && $servicesSpecs[service._svctype].categories.length && !$userSession.settings.showrrtypes}
-                <div class="float-end">
-                    {#each $servicesSpecs[service._svctype].categories as category}
-                        <Badge color="secondary" class="me-1">
-                            {category}
-                        </Badge>
-                    {/each}
-                </div>
-            {:else if $userSession.settings.showrrtypes && service && $servicesSpecs[service._svctype].record_types && $servicesSpecs[service._svctype].record_types.length}
-                <div class="float-end">
-                    {#each $servicesSpecs[service._svctype].record_types as rrtype}
-                        <Badge color="info" class="me-1">
-                            {nsrrtype(rrtype)}
-                        </Badge>
-                    {/each}
-                </div>
-            {/if}
-            <CardTitle>
-                {#if service}
-                    {$servicesSpecs[service._svctype].name}
-                {:else}
-                    <Icon name="plus" /> New service
+        <CardBody title={service?$servicesSpecs[service._svctype].name:undefined}>
+            <div class="d-flex justify-content-between gap-1 mb-2">
+                <CardTitle class="text-truncate mb-0">
+                    {#if service}
+                        {$servicesSpecs[service._svctype].name}
+                    {:else}
+                        <Icon name="plus" /> {$t('service.new')}
+                    {/if}
+                </CardTitle>
+                {#if service && $servicesSpecs[service._svctype].categories && $servicesSpecs[service._svctype].categories.length && !$userSession.settings.showrrtypes}
+                    <div class="d-flex align-items-center gap-1">
+                        {#each $servicesSpecs[service._svctype].categories as category}
+                            <Badge color="secondary">
+                                {category}
+                            </Badge>
+                        {/each}
+                    </div>
+                {:else if $userSession.settings.showrrtypes && service && $servicesSpecs[service._svctype].record_types && $servicesSpecs[service._svctype].record_types.length}
+                    <div class="d-flex align-items-center gap-1">
+                        {#each $servicesSpecs[service._svctype].record_types as rrtype}
+                            <Badge color="info">
+                                {nsrrtype(rrtype)}
+                            </Badge>
+                        {/each}
+                    </div>
                 {/if}
-            </CardTitle>
+            </div>
             <CardSubtitle class="mb-2 text-muted fst-italic">
                 {#if service}
                     {$servicesSpecs[service._svctype].description}
                 {:else}
-                    Click here to add a new service to this subdomain.
+                    {$t('service.new-description')}
                 {/if}
             </CardSubtitle>
             <CardText style="font-size: 90%" class="text-truncate">

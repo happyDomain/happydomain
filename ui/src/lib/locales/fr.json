@@ -270,11 +270,13 @@
     },
     "service": {
         "add": "Ajout d'un service",
+        "all": "Tout",
         "already": "Déjà géré",
         "delete": "Supprimer ce service",
         "update": "Mettre à jour ce service",
         "form-new": "Ajout d'un service sur {{domain}}",
-        "all": "Tout"
+        "new": "Nouveau service",
+        "new-description": "Cliquez ici pour ajouter un nouveau service à ce sous-domaine."
     },
     "upgrade": {
         "title": "Une mise à jour est disponible !",

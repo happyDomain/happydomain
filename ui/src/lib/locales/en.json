@@ -280,7 +280,9 @@
         "already": "Already managed",
         "delete": "Delete this service",
         "update": "Update this service",
-        "form-new": "Add a new service to {{domain}}"
+        "form-new": "Add a new service to {{domain}}",
+        "new": "New service",
+        "new-description": "Click here to add a new service to this subdomain."
     },
     "provider": {
         "another": "Use another provider",
