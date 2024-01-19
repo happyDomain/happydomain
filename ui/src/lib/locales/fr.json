@@ -102,6 +102,7 @@
         "create-new-key": "Créer une nouvelle clé {{id}}",
         "discard": "Supprimer",
         "drop-alias": "Supprimer l'alias",
+        "drop-pointer": "Supprimer le pointeur",
         "edit-target": "Éditer la destination",
         "give-explicit-name": "Donnez un nom explicite afin de trouver facilement ce service.",
         "history": "Historique",

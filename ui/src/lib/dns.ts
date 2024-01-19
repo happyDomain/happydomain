@@ -242,3 +242,55 @@ export function validateDomain(dn: string, origin: string = "", hostname: boolea
 
     return ret;
 }
+
+export function isReverseZone(fqdn: string) {
+    return fqdn.endsWith('in-addr.arpa.') || fqdn.endsWith('ip6.arpa.')
+}
+
+export function reverseDomain(ip: string) {
+    let suffix = 'in-addr.arpa.';
+
+    let fields: Array<String>;
+    if (ip.indexOf(":") > 0) {
+        suffix = 'ip6.arpa.';
+
+        fields = ip.split(':');
+
+        fields = fields.map((e) => {
+            let exp_len = 4;
+            if (e.length == 0) {
+                exp_len = 4 * (7 - fields.length);
+            }
+            while (e.length < exp_len) {
+                e = '0' + e;
+            }
+            return e;
+        });
+    } else {
+        fields = ip.split('.');
+        while (fields.length < 4) {
+            const last = fields.pop();
+            fields.push('0', last);
+        }
+    }
+
+    return fields.reduce((a, v) => v.replace(/^0*(0|[^0].*)$/, '$1') + '.' + a, suffix);
+}
+
+export function unreverseDomain(dn: string) {
+    let split_char = '.';
+    let group = 1;
+
+    if (dn.endsWith('ip6.arpa.')) {
+        split_char = ':';
+        group = 4;
+        dn = dn.substring(0, dn.indexOf('.ip6.arpa.'))
+    } else {
+        dn = dn.substring(0, dn.indexOf('.in-addr.arpa.'))
+    }
+
+    const fields = dn.split('.');
+    let ip = fields.reduce((a, v, i) => v + (i % group == 0 ? split_char : '') + a, '');
+    ip = ip.substring(0, ip.length - 1);
+    return ip.replace(/:(0000:)+/, '::').replace(/:0+/g, ':');
+}

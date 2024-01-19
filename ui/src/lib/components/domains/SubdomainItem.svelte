@@ -34,7 +34,7 @@
 
  import { deleteZoneService } from '$lib/api/zone';
  import Service from '$lib/components/domains/Service.svelte';
- import { fqdn } from '$lib/dns';
+ import { fqdn, isReverseZone, unreverseDomain } from '$lib/dns';
  import type { Domain, DomainInList } from '$lib/model/domain';
  import type { ServiceCombined } from '$lib/model/service';
  import { ZoneViewGrid } from '$lib/model/usersettings';
@@ -49,10 +49,17 @@
  export let services: Array<ServiceCombined>;
  export let zoneId: string;
 
+ let reverseZone = false;
+ $: reverseZone = isReverseZone(origin.domain);
+
  let showResources = true;
 
  function isCNAME(services: Array<ServiceCombined>) {
      return services.length === 1 && services[0]._svctype === 'svcs.CNAME';
+ }
+
+ function isPTR(services: Array<ServiceCombined>) {
+     return services.length === 1 && services[0]._svctype === 'svcs.PTR';
  }
 
  let deleteServiceInProgress = false;
@@ -75,19 +82,33 @@
  }
 </script>
 
-{#if isCNAME(services)}
+{#if isCNAME(services) || isPTR(services)}
     <div id={dn}>
         <h2
             class="sticky-top"
             style="background: white; z-index: 1"
         >
             <span style="white-space: nowrap">
-                <Icon name="link" />
+                {#if isPTR(services)}
+                    <Icon
+                        name="signpost"
+                        title="PTR"
+                    />
+                {:else}
+                    <Icon
+                        name="sign-turn-right"
+                        title="CNAME"
+                    />
+                {/if}
                 <span
                     class="font-monospace"
                     title={fqdn(dn, origin.domain)}
                 >
-                    {fqdn(dn, origin.domain)}
+                    {#if reverseZone}
+                        {unreverseDomain(fqdn(dn, origin.domain))}
+                    {:else}
+                        {fqdn(dn, origin.domain)}
+                    {/if}
                 </span>
             </span>
             <span style="white-space: nowrap">
@@ -131,7 +152,11 @@
                 {:else}
                     <Icon name="x-circle" />
                 {/if}
-                {$t('domains.drop-alias')}
+                {#if isPTR(services)}
+                    {$t('domains.drop-pointer')}
+                {:else}
+                    {$t('domains.drop-alias')}
+                {/if}
             </Button>
         </h2>
     </div>
@@ -143,7 +168,7 @@
         >
             <h2
                 style="white-space: nowrap; cursor: pointer;"
-                class="mb-0"
+                class="mb-0 text-truncate"
                 on:click={() => showResources = !showResources}
                 on:keypress={() => showResources = !showResources}
             >
@@ -156,7 +181,11 @@
                     class="font-monospace"
                     title={fqdn(dn, origin.domain)}
                 >
-                    {fqdn(dn, origin.domain)}
+                    {#if reverseZone}
+                        {unreverseDomain(fqdn(dn, origin.domain))}
+                    {:else}
+                        {fqdn(dn, origin.domain)}
+                    {/if}
                 </span>
             </h2>
             {#if aliases.length != 0}

@@ -102,6 +102,7 @@
         "create-new-key": "Create new {{id}} key",
         "discard": "Discard",
         "drop-alias": "Drop alias",
+        "drop-pointer": "Drop pointer",
         "edit-target": "Edit target",
         "give-explicit-name": "Give an explicit name in order to easily find this service.",
         "history": "History",
