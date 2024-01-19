@@ -213,24 +213,28 @@ export function nsrrtype(input: number | string): string {
   }
 }
 
-export function validateDomain(dn: string, subdomain: string = ""): boolean | undefined {
+export function validateDomain(dn: string, origin: string = "", hostname: boolean = false): boolean | undefined {
     let ret: boolean | undefined = undefined;
     if (dn.length !== 0) {
+        dn = fqdn(dn, origin);
+        if (!dn.endsWith(origin)) {
+            return false;
+        }
+
         ret = dn.length >= 1 && dn.length <= 254;
 
         if (ret) {
             const domains = dn.split('.');
 
             // Remove the last . if any, it's ok
-            if (!subdomain && domains[domains.length - 1] === '') {
+            if (domains[domains.length - 1] === '') {
                 domains.pop();
             }
 
             let newDomainState: boolean = ret
             domains.forEach(function (domain) {
                 newDomainState = newDomainState && domain.length >= 1 && domain.length <= 63;
-                newDomainState = newDomainState && domain[0] !== '-' && domain[domain.length - 1] !== '-';
-                newDomainState = newDomainState && /^(\*|_?[a-zA-Z0-9]([a-zA-Z0-9-]?[a-zA-Z0-9])*)$/.test(domain);
+                newDomainState = newDomainState && (!hostname || /^(\*|_?[a-zA-Z0-9]([a-zA-Z0-9-]?[a-zA-Z0-9])*)$/.test(domain));
             })
             ret = newDomainState;
         }

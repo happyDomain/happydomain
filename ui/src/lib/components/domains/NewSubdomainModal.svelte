@@ -58,10 +58,7 @@
  $: newDomainState = value?validateNewSubdomain(value):undefined;
 
  let endsWithOrigin = false;
- $: endsWithOrigin = value.length > origin.domain.length && (
-     value.substring(value.length - origin.domain.length) === origin.domain ||
-     value.substring(value.length - origin.domain.length + 1) === origin.domain.substring(0, origin.domain.length - 1)
- )
+ $: endsWithOrigin = value.endsWith(origin.domain) || value.endsWith(origin.domain.substring(0, origin.domain.length - 1));
 
  let newDomainAppend: string | null = null;
  $: {
@@ -77,7 +74,7 @@
  function validateNewSubdomain(value: string): boolean | undefined {
      newDomainState = validateDomain(
          value,
-         (value.length > origin.domain.length && value.substring(value.length - origin.domain.length) === origin.domain)?origin.domain:""
+         origin.domain
      );
      return newDomainState;
  }

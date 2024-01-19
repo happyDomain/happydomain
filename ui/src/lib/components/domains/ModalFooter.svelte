@@ -45,9 +45,9 @@
  export let step: number;
  export let service: ServiceCombined | null = null;
  export let form = "addSvcForm";
- export let origin: Domain | DomainInList | undefined;
+ export let origin: Domain | DomainInList | undefined = undefined;
  export let update = false;
- export let zoneId: number | undefined;
+ export let zoneId: number | undefined = undefined;
  export let canDelete = false;
  export let canContinue = false;
 

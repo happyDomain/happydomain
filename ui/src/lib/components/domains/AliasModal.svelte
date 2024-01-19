@@ -61,7 +61,7 @@
      value = "";
  }
 
- export let dn: string;
+ export let dn: string = "";
  export let origin: Domain | DomainInList;
  export let value: string = "";
  export let zone: Zone;
@@ -70,10 +70,7 @@
  $: newDomainState = value?validateNewSubdomain(value):undefined;
 
  let endsWithOrigin = false;
- $: endsWithOrigin = value.length > origin.domain.length && (
-     value.substring(value.length - origin.domain.length) === origin.domain ||
-     value.substring(value.length - origin.domain.length + 1) === origin.domain.substring(0, origin.domain.length - 1)
- )
+ $: endsWithOrigin = value.endsWith(origin.domain) || value.endsWith(origin.domain.substring(0, origin.domain.length - 1));
 
  let newDomainAppend: string | null = null;
  $: {
@@ -90,7 +87,7 @@
      // Check domain is valid
      newDomainState = validateDomain(
          value,
-         (value.length > origin.domain.length && value.substring(value.length - origin.domain.length) === origin.domain)?origin.domain:""
+         origin.domain
      );
 
      // Check domain doesn't already exists
