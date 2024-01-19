@@ -227,7 +227,7 @@ func serviceIdHandler(c *gin.Context) {
 //	@Router			/domains/{domainId}/zone/{zoneId}/{subdomain}/services/{serviceId} [get]
 func getZoneService(c *gin.Context) {
 	zone := c.MustGet("zone").(*happydns.Zone)
-	serviceid := c.MustGet("serviceid").([]byte)
+	serviceid := c.MustGet("serviceid").(happydns.Identifier)
 	subdomain := c.MustGet("subdomain").(string)
 
 	c.JSON(http.StatusOK, zone.FindSubdomainService(subdomain, serviceid))
