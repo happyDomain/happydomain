@@ -24,7 +24,9 @@ import type { Domain } from '$lib/model/domain';
 export const dns_common_types: Array<string> = ['ANY', 'A', 'AAAA', 'NS', 'SRV', 'MX', 'TXT', 'SOA'];
 
 export function fqdn(input: string, origin: string) {
-    if (input[-1] === '.') {
+    if (input === '@') {
+        return origin
+    } else if (input[-1] === '.') {
         return input
     } else if (input === '') {
         return origin
