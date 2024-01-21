@@ -48,6 +48,10 @@ import (
 //	@description				Description for what is this security definition being used
 
 func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
+	authRoutes := router.Group("")
+	authRoutes.Use(authMiddleware(cfg, false))
+	declareApiCompatRoutes(cfg, authRoutes)
+
 	apiRoutes := router.Group("/api")
 
 	declareAuthenticationRoutes(cfg, apiRoutes)
