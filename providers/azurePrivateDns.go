@@ -23,7 +23,7 @@ package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
-	_ "github.com/StackExchange/dnscontrol/v4/providers/azure_private_dns"
+	_ "github.com/StackExchange/dnscontrol/v4/providers/azureprivatedns"
 
 	"git.happydns.org/happyDomain/model"
 )
