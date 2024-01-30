@@ -3,6 +3,8 @@ happyDomain
 
 Finally a simple, modern and open source interface for domain name.
 
+![Screenshots of happyDomain](./docs/header.webp)
+
 It consists of a HTTP REST API written in Golang (primarily based on https://stackexchange.github.io/dnscontrol/ and https://github.com/miekg/dns) with a nice web interface written with [Svelte](https://svelte.dev/).
 It runs as a single stateless Linux binary, backed by a database (currently: LevelDB, more to come soon).
 
