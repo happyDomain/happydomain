@@ -32,6 +32,7 @@
      Input,
  } from '@sveltestrap/sveltestrap';
 
+ import { t } from '$lib/translations';
  import { issuers, rev_issuers } from './CAA-issuers';
 
  const dispatch = createEventDispatcher();
@@ -46,12 +47,12 @@
 </script>
 
 <div class="d-flex gap-2 mb-2">
-    {#if (newone && value.IssuerDomainName == "") || rev_issuers[value.IssuerDomainName]}
+    {#if (newone && value.IssuerDomainName == undefined) || rev_issuers[value.IssuerDomainName]}
         <Input type="select" name="select" id="exampleSelect" readonly={readonly} bind:value={value.IssuerDomainName}>
             {#each Object.keys(issuers) as issuer}
                 <option value={issuers[issuer][0]}>{issuer}</option>
             {/each}
-            <option value={" "}>Autre</option>
+            <option value={""}>{$t('common.other')}</option>
         </Input>
     {:else}
         <Input type="text" bind:value={value.IssuerDomainName} />
