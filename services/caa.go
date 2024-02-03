@@ -81,6 +81,8 @@ type CAA struct {
 	Issue                 []CAAIssueValue
 	DisallowWildcardIssue bool
 	IssueWild             []CAAIssueValue
+	DisallowMailIssue     bool
+	IssueMail             []CAAIssueValue
 	Iodef                 []*common.URL
 }
 
@@ -98,19 +100,25 @@ func (s *CAA) GetNbResources() int {
 		}
 	}
 
+	if s.DisallowMailIssue {
+		nb += 1
+	} else {
+		nb += len(s.IssueMail)
+	}
+
 	return nb + len(s.Iodef)
 }
 
-func (s *CAA) GenComment(origin string) string {
+func (s *CAA) GenComment(origin string) (ret string) {
 	if s.DisallowIssue {
-		return "Certificate issuance disallowed"
+		ret = "Certificate issuance disallowed"
 	} else {
 		var issuance []string
 		for _, iss := range s.Issue {
 			issuance = append(issuance, iss.IssuerDomainName)
 		}
 
-		ret := strings.Join(issuance, ", ")
+		ret = strings.Join(issuance, ", ")
 
 		if s.DisallowWildcardIssue {
 			if ret != "" {
@@ -129,9 +137,27 @@ func (s *CAA) GenComment(origin string) string {
 
 			ret += strings.Join(issuancew, ", ")
 		}
-
-		return ret
 	}
+
+	if s.DisallowMailIssue {
+		if ret != "" {
+			ret += "; "
+		}
+		ret += "S/MIME issuance disallowed"
+	} else if len(s.IssueMail) > 0 {
+		if ret != "" {
+			ret += "; S/MIME: "
+		}
+
+		var issuancem []string
+		for _, iss := range s.IssueMail {
+			issuancem = append(issuancem, iss.IssuerDomainName)
+		}
+
+		ret += strings.Join(issuancem, ", ")
+	}
+
+	return
 }
 
 func (s *CAA) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
@@ -168,6 +194,24 @@ func (s *CAA) GenRRs(domain string, ttl uint32, origin string) (rrs models.Recor
 
 				rrs = append(rrs, rc)
 			}
+		}
+	}
+
+	if s.DisallowMailIssue {
+		rc := utils.NewRecordConfig(domain, "CAA", ttl, origin)
+		rc.CaaFlag = 0
+		rc.CaaTag = "issuemail"
+		rc.SetTarget(";")
+
+		rrs = append(rrs, rc)
+	} else {
+		for _, issue := range s.IssueMail {
+			rc := utils.NewRecordConfig(domain, "CAA", ttl, origin)
+			rc.CaaFlag = 0
+			rc.CaaTag = "issuemail"
+			rc.SetTarget(issue.String())
+
+			rrs = append(rrs, rc)
 		}
 	}
 

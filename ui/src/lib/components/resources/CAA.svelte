@@ -92,7 +92,7 @@
     </Alert>
 {/if}
 
-<h4>{$t("resources.CAA.wild-issuers")}</h4>
+<h4 class="mt-4">{$t("resources.CAA.wild-issuers")}</h4>
 
 <FormGroup>
     <Input id="wildcardissuedisabled" type="checkbox" label={$t("resources.CAA.no-wild-hint")} bind:checked={value.DisallowWildcardIssue} />
@@ -142,7 +142,51 @@
     </Alert>
 {/if}
 
-<h4>{$t("resources.CAA.incident-response")}</h4>
+<h4 class="mt-4">{$t("resources.CAA.mail-issuers")}</h4>
+
+<FormGroup>
+    <Input id="mailissuedisabled" type="checkbox" label={$t("resources.CAA.no-mail-hint")} bind:checked={value.DisallowMailIssue} />
+</FormGroup>
+
+{#if !value.DisallowMailIssue && !value.IssueMail}
+    <Alert color="warning" fade={false}>
+        <strong>{$t("resources.CAA.mail-all-allowed-title")}</strong> {$t("resources.CAA.mail-all-allowed-body")}
+    </Alert>
+{/if}
+
+<h5>
+    {$t("resources.CAA.auth-issuers")}
+</h5>
+
+{#if !value.DisallowMailIssue}
+    <ul>
+        {#if value.IssueMail}
+            {#each value.IssueMail as issue, k}
+                <li class="mb-3">
+                    <CAAIssuer
+                        {readonly}
+                        bind:value={value.IssueMail[k]}
+                        on:delete-issuer={() => {value.IssueMail.splice(k, 1); value = value;}}
+                    />
+                </li>
+            {/each}
+        {/if}
+        {#if !readonly}
+            <li style:list-style="'+ '">
+                <CAAIssuer
+                    newone
+                    on:add-issuer={(e) => {if (!value.IssueMail) value.IssueMail = []; value.IssueMail.push(e.detail); value = value;}}
+                />
+            </li>
+        {/if}
+    </ul>
+{:else}
+    <Alert color="danger" fade={false}>
+        <strong>{$t("resources.CAA.no-mail-title")}</strong> {$t("resources.CAA.no-mail-body")}
+    </Alert>
+{/if}
+
+<h4 class="mt-4">{$t("resources.CAA.incident-response")}</h4>
 
 <p>
     {$t("resources.CAA.incident-response-text")}
