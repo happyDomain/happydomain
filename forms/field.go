@@ -56,6 +56,9 @@ type Field struct {
 	// Hide indicates if the field should be hidden to the user.
 	Hide bool `json:"hide,omitempty"`
 
+	// Textarea indicates that a large field is expected.
+	Textarea bool `json:"textarea,omitempty"`
+
 	// Description stores an helpfull sentence describing the field.
 	Description string `json:"description,omitempty"`
 }
@@ -101,6 +104,8 @@ func GenField(field reflect.StructField) (f *Field) {
 				f.Required = true
 			case "secret":
 				f.Secret = true
+			case "textarea":
+				f.Textarea = true
 			default:
 				f.Label = kv[0]
 			}

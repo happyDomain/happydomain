@@ -48,6 +48,7 @@
  let inputtype: InputType = "text";
  $: if (specs.type && (specs.type.startsWith("uint") || specs.type.startsWith("int"))) inputtype = "number";
     else if (specs.type && specs.type === "bool") inputtype = "checkbox";
+    else if (specs.textarea) inputtype = "textarea";
 
  let inputmin: number | undefined = undefined;
  let inputmax: number | undefined = undefined;
