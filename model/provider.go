@@ -67,9 +67,19 @@ type ProviderCombined struct {
 	ProviderMeta
 }
 
-func (p *ProviderCombined) Validate() (err error) {
-	_, err = p.NewDNSServiceProvider()
-	return
+// Validate ensure the given parameters are corrects.
+func (p *ProviderCombined) Validate() error {
+	prv, err := p.NewDNSServiceProvider()
+	if err != nil {
+		return err
+	}
+
+	sr, ok := prv.(providers.ZoneLister)
+	if ok {
+		_, err = sr.ListZones()
+	}
+
+	return err
 }
 
 func (p *ProviderCombined) getZoneRecords(fqdn string) (rcs models.Records, err error) {

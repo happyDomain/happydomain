@@ -26,6 +26,7 @@ import (
 	"log"
 	"net/http"
 
+	dnscontrol "github.com/StackExchange/dnscontrol/v4/providers"
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/config"
@@ -103,10 +104,22 @@ func getProviderSettingsState(cfg *config.Options, c *gin.Context) {
 		} else if cfg.DisableProviders {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errmsg": "Cannot change provider settings as DisableProviders parameter is set."})
 			return
-		} else if _, err = src.NewDNSServiceProvider(); err != nil {
+		}
+
+		p, err := src.NewDNSServiceProvider()
+		if err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 			return
-		} else if uss.Id == nil {
+		}
+
+		if sr, ok := p.(dnscontrol.ZoneLister); ok {
+			if _, err = sr.ListZones(); err != nil {
+				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+				return
+			}
+		}
+
+		if uss.Id == nil {
 			// Create a new Provider
 			s, err := storage.MainStore.CreateProvider(user, src, uss.Name)
 			if err != nil {
