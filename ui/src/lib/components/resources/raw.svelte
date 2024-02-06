@@ -111,6 +111,21 @@
                 <option value={opt}>{opt}</option>
             {/each}
         </Input>
+    {:else if inputtype === "checkbox"}
+        <Input
+            id={'spec-' + index + '-' + specs.id}
+            type={inputtype}
+            class="fw-bold"
+            {feedback}
+            invalid={feedback !== undefined}
+            placeholder={specs.placeholder}
+            plaintext={!edit}
+            readonly={!edit}
+            required={specs.required}
+            bind:checked={value}
+            on:focus={() => dispatch("focus")}
+            on:blur={() => dispatch("blur")}
+        />
     {:else}
         <Input
             id={'spec-' + index + '-' + specs.id}
