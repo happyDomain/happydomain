@@ -29,9 +29,11 @@ import (
 )
 
 type PowerdnsAPI struct {
-	ApiUrl   string `json:"apiurl,omitempty" happydomain:"label=API Server Endpoint,placeholder=http://12.34.56.78"`
-	ApiKey   string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=a0b1c2d3e4f5=="`
-	ServerID string `json:"server_id,omitempty" happydomain:"label=Server ID,placeholder=localhost,description=Unless you are using a specially configured reverse proxy leave blank"`
+	ApiUrl        string `json:"apiurl,omitempty" happydomain:"label=API Server Endpoint,placeholder=http://12.34.56.78"`
+	ApiKey        string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=a0b1c2d3e4f5=="`
+	ServerID      string `json:"server_id,omitempty" happydomain:"label=Server ID,placeholder=localhost,description=Unless you are using a specially configured reverse proxy leave blank"`
+	Certificate   string `json:"certificate,omitempty" happydomain:"label=Certificate,placeholder=-----BEGIN CERTIFICATE-----,description=If you use a self-signed certificate paste it here,textarea"`
+	SkipTLSVerify bool   `json:"skip_tls_verify,omitempty" happydomain:"label=Skip TLS Verify,description=Don't check the validity of the presented certificate (THIS IS INSECURE)"`
 }
 
 func (s *PowerdnsAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
@@ -39,6 +41,14 @@ func (s *PowerdnsAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, err
 		"apiKey":     s.ApiKey,
 		"apiUrl":     s.ApiUrl,
 		"serverName": s.ServerID,
+	}
+
+	if s.SkipTLSVerify {
+		config["skipTLSVerify"] = "true"
+	}
+
+	if s.Certificate != "" {
+		config["cert"] = s.Certificate
 	}
 
 	if s.ServerID == "" {

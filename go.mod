@@ -162,4 +162,4 @@ require (
 	moul.io/http2curl v1.0.0 // indirect
 )
 
-replace github.com/StackExchange/dnscontrol/v4 => github.com/happyDomain/dnscontrol/v4 v4.8.20
+replace github.com/StackExchange/dnscontrol/v4 => github.com/happyDomain/dnscontrol/v4 v4.8.21
