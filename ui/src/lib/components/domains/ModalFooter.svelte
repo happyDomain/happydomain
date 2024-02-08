@@ -98,7 +98,7 @@
     </ModalFooter>
 {/if}
 <ModalFooter>
-    {#if origin && zoneId}
+    {#if update && origin && zoneId}
         <Button
             color="dark"
             outline={!showRecords}
