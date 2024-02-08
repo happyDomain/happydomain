@@ -101,7 +101,7 @@ export class ProviderForm {
         this.nextInProgress = true;
         this.saveState();
         if (this.form && this.form.nextButtonLink) {
-            goto(this.form.nextButtonLink);
+            window.location.href = this.form.nextButtonLink;
         } else {
             this.form = await this.changeState(this.form && this.form.nextButtonState ? this.form.nextButtonState : 0);
         }
@@ -112,7 +112,7 @@ export class ProviderForm {
         this.previousInProgress = true;
         this.saveState();
         if (this.form && this.form.previousButtonLink) {
-            goto(this.form.previousButtonLink);
+            window.location.href = this.form.previousButtonLink;
         } else {
             this.form = await this.changeState(this.form && this.form.previousButtonState ? this.form.previousButtonState : 0);
         }
