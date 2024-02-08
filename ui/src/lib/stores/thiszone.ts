@@ -31,6 +31,7 @@ import { refreshDomains } from '$lib/stores/domains';
 
 export const thisZone: Writable<null | Zone> = writable(null);
 
+// sortedDomains returns all subdomains, sorted
 export const sortedDomains = derived(
     thisZone,
     ($thisZone: null|Zone) => {
@@ -42,6 +43,36 @@ export const sortedDomains = derived(
         }
         const domains = Object.keys($thisZone.services);
         domains.sort(domainCompare);
+        return domains;
+    },
+);
+
+// sortedDomainsWithIntermediate returns all subdomains, sorted, with intermediate subdomains
+export const sortedDomainsWithIntermediate = derived(
+    sortedDomains,
+    ($sortedDomains: null|Array<string>) => {
+        if (!$sortedDomains || $sortedDomains.length <= 1) {
+            return $sortedDomains;
+        }
+        const domains: Array<string> = [$sortedDomains[0]];
+
+        let previous = domains[0].split('.');
+        for (let i = 1; i < $sortedDomains.length; i++) {
+            const cur = $sortedDomains[i].split('.');
+
+            if (previous.length < cur.length && previous[0] !== cur[cur.length - previous.length]) {
+                domains.push(cur.slice(cur.length - previous.length).join('.'));
+            }
+
+            while (previous.length + 1 < cur.length) {
+                previous = cur.slice(cur.length - previous.length - 1);
+                domains.push(previous.join('.'));
+            }
+
+            domains.push(cur.join('.'));
+            previous = cur;
+        }
+
         return domains;
     },
 );

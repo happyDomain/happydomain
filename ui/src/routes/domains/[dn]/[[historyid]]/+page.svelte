@@ -35,7 +35,7 @@
  import type { Zone } from '$lib/model/zone';
  import { domains_idx } from '$lib/stores/domains';
  import { servicesSpecs, refreshServicesSpecs } from '$lib/stores/services';
- import { retrieveZone, sortedDomains, thisZone } from '$lib/stores/thiszone';
+ import { retrieveZone, sortedDomains, sortedDomainsWithIntermediate, thisZone } from '$lib/stores/thiszone';
  import { t } from '$lib/translations';
 
  if (!$servicesSpecs) refreshServicesSpecs();
@@ -65,6 +65,7 @@
                 <SubdomainList
                     origin={data.domain}
                     sortedDomains={$sortedDomains}
+                    sortedDomainsWithIntermediate={$sortedDomainsWithIntermediate}
                     zone={$thisZone}
                     on:update-zone-services={(event) => thisZone.set(event.detail)}
                 />

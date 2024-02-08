@@ -82,7 +82,43 @@
  }
 </script>
 
-{#if isCNAME(services) || isPTR(services)}
+{#if services.length === 0}
+    <div id={dn}>
+        {#if !reverseZone}
+            <h2
+                class="sticky-top"
+                style="background: white; z-index: 1"
+            >
+                <span style="white-space: nowrap">
+                    <Icon
+                        name="plus-square-dotted"
+                        title="Intermediate domain with no service"
+                    />
+                    <span
+                        class="font-monospace"
+                        title={fqdn(dn, origin.domain)}
+                    >
+                        {#if reverseZone}
+                            {unreverseDomain(fqdn(dn, origin.domain))}
+                        {:else}
+                            {fqdn(dn, origin.domain)}
+                        {/if}
+                    </span>
+                </span>
+                <Button
+                    type="button"
+                    color="primary"
+                    size="sm"
+                    class="ml-2"
+                    on:click={() => dispatch("new-service")}
+                >
+                    <Icon name="plus" />
+                    {$t('service.add')}
+                </Button>
+            </h2>
+        {/if}
+    </div>
+{:else if isCNAME(services) || isPTR(services)}
     <div id={dn}>
         <h2
             class="sticky-top"

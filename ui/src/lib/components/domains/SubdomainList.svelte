@@ -36,6 +36,7 @@
 
  export let origin: DomainInList | Domain;
  export let sortedDomains: Array<string>;
+ export let sortedDomainsWithIntermediate: Array<string>;
  export let zone: Zone;
 
  let aliases: Record<string, Array<string>>;
@@ -69,7 +70,7 @@
  }
 </script>
 
-{#each sortedDomains as dn}
+{#each sortedDomainsWithIntermediate as dn}
     <SubdomainItem
         aliases={aliases[dn]?aliases[dn]:[]}
         {dn}

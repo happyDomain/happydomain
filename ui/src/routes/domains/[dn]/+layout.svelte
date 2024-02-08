@@ -57,11 +57,12 @@
  import ModalViewZone, { controls as ctrlViewZone } from '$lib/components/ModalViewZone.svelte';
  import NewSubdomainPath, { controls as ctrlNewSubdomain } from '$lib/components/NewSubdomainPath.svelte';
  import NewSubdomainModal from '$lib/components/domains/NewSubdomainModal.svelte';
- import { fqdn } from '$lib/dns';
+ import SubdomainListTiny from '$lib/components/domains/SubdomainListTiny.svelte';
+ import { fqdn, isReverseZone } from '$lib/dns';
  import type { Domain, DomainInList } from '$lib/model/domain';
  import type { ZoneMeta } from '$lib/model/zone';
  import { domains, domains_by_groups, domains_idx, refreshDomains } from '$lib/stores/domains';
- import { retrieveZone as StoreRetrieveZone, sortedDomains, thisZone } from '$lib/stores/thiszone';
+ import { retrieveZone as StoreRetrieveZone, sortedDomains, sortedDomainsWithIntermediate, thisZone } from '$lib/stores/thiszone';
  import { t } from '$lib/translations';
 
  export let data: {domain: DomainInList;};
@@ -175,7 +176,7 @@
                         <Icon name="chevron-left" />
                         Retour à la zone
                     </Button>
-                {:else if $page.data.streamed && $sortedDomains}
+                {:else if $page.data.streamed && $sortedDomainsWithIntermediate}
                     <div class="d-flex gap-2 pb-2 sticky-top bg-light" style="padding-top: 10px">
                         <Button
                             type="button"
@@ -250,16 +251,17 @@
                     </div>
                     {#await $page.data.streamed.zone then z}
                         <div style="min-height:0; overflow-y: auto;">
-                        {#each $sortedDomains as dn}
-                            <a
-                                href={'#' + (dn?dn:'@')}
-                                title={fqdn(dn, data.domain.domain)}
-                                class="d-block text-truncate font-monospace text-muted text-decoration-none"
-                                style={'max-width: none; padding-left: ' + (dn === '' ? 0 : (dn.split('.').length * 10)) + 'px'}
-                            >
-                                {fqdn(dn, data.domain.domain)}
-                            </a>
-                        {/each}
+                            {#if isReverseZone(data.domain.domain)}
+                                <SubdomainListTiny
+                                    domains={$sortedDomains}
+                                    origin={data.domain}
+                                />
+                            {:else}
+                                <SubdomainListTiny
+                                    domains={$sortedDomainsWithIntermediate}
+                                    origin={data.domain}
+                                />
+                            {/if}
                         </div>
                     {/await}
                 {/if}
@@ -267,7 +269,7 @@
                 <div class="flex-fill" />
 
                 {#if $page.data.isZonePage && data.domain.zone_history && $domains_idx[selectedDomain] && data.domain.id === $domains_idx[selectedDomain].id}
-                    {#if !($page.data.streamed && $sortedDomains)}
+                    {#if !($page.data.streamed && $sortedDomainsWithIntermediate)}
                         <Button
                             color="danger"
                             class="mt-3"
