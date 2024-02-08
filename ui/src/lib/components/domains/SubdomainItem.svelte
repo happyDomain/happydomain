@@ -38,6 +38,7 @@
  import type { Domain, DomainInList } from '$lib/model/domain';
  import type { ServiceCombined } from '$lib/model/service';
  import { ZoneViewGrid } from '$lib/model/usersettings';
+ import { servicesSpecs } from '$lib/stores/services';
  import { userSession } from '$lib/stores/usersession';
  import { t } from '$lib/translations';
 
@@ -224,12 +225,31 @@
                     {/if}
                 </span>
             </h2>
+            {#if !showResources}
+                <Badge
+                    id={"popoversvc-" + dn.replace('.', '__')}
+                    style="cursor: pointer;"
+                >
+                    {$t('domains.n-services', {count: services.length})}
+                </Badge>
+                <Popover
+                    dismissible
+                    placement="bottom"
+                    target={"popoversvc-" + dn.replace('.', '__')}
+                >
+                    {#each services as service}
+                        <strong>{$servicesSpecs[service._svctype].name}:</strong>
+                        <span class="text-muted">{service._comment}</span>
+                        <br>
+                    {/each}
+                </Popover>
+            {/if}
             {#if aliases.length != 0}
                 <Badge
                     id={"popoverbadge-" + dn.replace('.', '__')}
                     style="cursor: pointer;"
                 >
-                    + {$t('domains.n-aliases', {n: aliases.length})}
+                    + {$t('domains.n-aliases', {count: aliases.length})}
                 </Badge>
                 <Popover
                     dismissible
@@ -245,7 +265,7 @@
                     {/each}
                 </Popover>
             {/if}
-            {#if $userSession && $userSession.settings.zoneview !== ZoneViewGrid}
+            {#if !showResources || ($userSession && $userSession.settings.zoneview !== ZoneViewGrid)}
                 <Button
                     type="button"
                     color="primary"
@@ -256,6 +276,7 @@
                     {$t('domains.add-a-service')}
                 </Button>
             {/if}
+            {#if showResources}
             <Button
                 type="button"
                 color="primary"
@@ -266,6 +287,7 @@
                 <Icon name="link" />
                 {$t('domains.add-an-alias')}
             </Button>
+            {/if}
         </div>
         {#if showResources}
             <div
