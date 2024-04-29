@@ -11,7 +11,7 @@ require (
 	github.com/go-mail/mail v2.3.1+incompatible
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/miekg/dns v1.1.58
-	github.com/ovh/go-ovh v1.4.3
+	github.com/ovh/go-ovh v1.5.1
 	github.com/rrivera/identicon v0.0.0-20240116195454-d5ba35832c0d
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
@@ -141,8 +141,8 @@ require (
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a // indirect
 	golang.org/x/mod v0.14.0 // indirect
-	golang.org/x/net v0.21.0 // indirect
-	golang.org/x/oauth2 v0.16.0 // indirect
+	golang.org/x/net v0.22.0 // indirect
+	golang.org/x/oauth2 v0.18.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.19.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
