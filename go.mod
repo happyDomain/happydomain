@@ -6,7 +6,7 @@ toolchain go1.21.1
 
 require (
 	github.com/StackExchange/dnscontrol/v4 v4.3.0
-	github.com/fatih/color v1.16.0
+	github.com/fatih/color v1.17.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-mail/mail v2.3.1+incompatible
 	github.com/golang-jwt/jwt/v5 v5.2.1
