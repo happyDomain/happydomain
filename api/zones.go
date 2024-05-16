@@ -37,6 +37,7 @@ import (
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 	"git.happydns.org/happyDomain/storage"
+	"git.happydns.org/happyDomain/utils"
 )
 
 func declareZonesRoutes(cfg *config.Options, router *gin.RouterGroup) {
@@ -330,7 +331,7 @@ func importZone(c *gin.Context) {
 		rrs = append(rrs, rr)
 	}
 
-	rcs, err := models.RRstoRCs(rrs, strings.TrimSuffix(domain.DomainName, "."))
+	rcs, err := utils.RRstoRCs(rrs, strings.TrimSuffix(domain.DomainName, "."))
 	if err != nil {
 		log.Printf("Error when converting RRs to RCs of %s: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to read your zone file: %s", err.Error())})
