@@ -38,104 +38,92 @@
  export let record: ServiceRecord;
 </script>
 
-<tr>
-    {#if !record.edit}
-        <td style="max-width: 0;">
-            <div
-                class="d-flex"
-                on:click={() => {expand = !expand}}
-                on:keypress={() => {expand = !expand}}
-            >
-                {#if expand}
-                    <Icon name="chevron-down" />
-                {:else}
-                    <Icon name="chevron-right" />
-                {/if}
-                <span
-                    class="font-monospace text-truncate"
-                    title={record.str}
-                >
-                    {record.fields.name?record.fields.name:'@'} {record.type} {record.str}
-                </span>
-            </div>
-            {#if expand}
-                <Row class="mt-2 flex-nowrap">
-                    <Col>
-                        <dl class="row ms-2">
-                            <dt class="col-sm-5 text-end">
-                                Class
-                            </dt>
-                            <dd class="col-sm-7 text-muted font-monospace mb-1">
-                                {nsclass(record.rr.Hdr.Class)}
-                            </dd>
-                            <dt class="col-sm-5 text-end">
-                                TTL
-                            </dt>
-                            <dd class="col-sm-7 text-muted font-monospace mb-1">
-                                {record.rr.Hdr.Ttl}
-                            </dd>
-                            <dt class="col-sm-5 text-end">
-                                RRType
-                            </dt>
-                            <dd class="col-sm-7 text-muted font-monospace mb-1">
-                                {nsrrtype(record.rr.Hdr.Rrtype)} (<span title={record.rr.Hdr.Rrtype}>0x{record.rr.Hdr.Rrtype.toString(16)}</span>)
-                            </dd>
-                        </dl>
-                    </Col>
-                    <Col sm="9">
-                        <dl class="row">
-                            {#each Object.keys(record.rr) as k}
-                                {#if k != "Hdr"}
-                                    {@const v = record.rr[k]}
-                                    <dt class="col-sm-3 text-end">
-                                        {k}
-                                    </dt>
-                                    <dd
-                                        class="col-sm-9 text-muted font-monospace text-truncate mb-1"
-                                        title={v}
-                                    >
-                                        {v}
-                                    </dd>
-                                {/if}
-                            {/each}
-                        </dl>
-                    </Col>
-                </Row>
-            {/if}
-        </td>
-    {:else}
-        <td>
-            <form
-                submit="$emit('save-rr')"
-            >
-                <Input
-                    autofocus
-                    class="font-monospace"
-                    bsSize="sm"
-                    bind:value={record.str}
-                />
-            </form>
-        </td>
+{#if !record.edit}
+    <div
+        class="d-flex gap-1"
+        on:click={() => {expand = !expand}}
+        on:keypress={() => {expand = !expand}}
+    >
+        {#if expand}
+            <Icon name="chevron-down" />
+        {:else}
+            <Icon name="chevron-right" />
+        {/if}
+        <span
+            class="font-monospace text-truncate"
+            title={record.str}
+        >
+            {record.fields.name?record.fields.name:'@'} {record.type} {record.str}
+        </span>
+    </div>
+    {#if expand}
+        <div class="grid mr-2">
+            <dl class="g-col-md-4 grid ms-2" style="--bs-columns: 2; --bs-gap: 0 .5rem;">
+                <dt class="text-end">
+                    Class
+                </dt>
+                <dd class="text-muted font-monospace mb-1">
+                    {nsclass(record.rr.Hdr.Class)}
+                </dd>
+                <dt class="text-end">
+                    TTL
+                </dt>
+                <dd class="text-muted font-monospace mb-1">
+                    {record.rr.Hdr.Ttl}
+                </dd>
+                <dt class="text-end">
+                    RRType
+                </dt>
+                <dd class="text-muted font-monospace mb-1">
+                    {nsrrtype(record.rr.Hdr.Rrtype)} (<span title={record.rr.Hdr.Rrtype}>0x{record.rr.Hdr.Rrtype.toString(16)}</span>)
+                </dd>
+            </dl>
+            <dl class="g-col-md-8 grid me-2" style="--bs-gap: 0 .5rem;">
+                {#each Object.keys(record.rr) as k}
+                    {#if k != "Hdr"}
+                        {@const v = record.rr[k]}
+                        <dt class="g-col-4 text-end">
+                            {k}
+                        </dt>
+                        <dd
+                            class="g-col-8 text-muted font-monospace text-truncate mb-1"
+                            title={v}
+                        >
+                            {v}
+                        </dd>
+                    {/if}
+                {/each}
+            </dl>
+        </div>
     {/if}
-    {#if record.edit || actBtn}
-        <td>
-            {#if record.edit}
-                <Button
-                    size="sm"
-                    color="success"
-                    click="$emit('save-rr')"
-                >
-                    <Icon name="check" aria-hidden="true" />
-                </Button>
-            {:else if record.rr.Hdr.Rrtype != 6}
-                <Button
-                    size="sm"
-                    color="danger"
-                    click="$emit('delete-rr')"
-                >
-                    <Icon name="trash-fill" aria-hidden="true" />
-                </Button>
-            {/if}
-        </td>
+{:else}
+    <form
+        submit="$emit('save-rr')"
+    >
+        <Input
+            autofocus
+            class="font-monospace"
+            bsSize="sm"
+            bind:value={record.str}
+        />
+    </form>
+{/if}
+{#if record.edit || actBtn}
+    {#if record.edit}
+        <Button
+            size="sm"
+            color="success"
+            click="$emit('save-rr')"
+        >
+            <Icon name="check" aria-hidden="true" />
+        </Button>
+    {:else if record.rr.Hdr.Rrtype != 6}
+        <Button
+            size="sm"
+            color="danger"
+            click="$emit('delete-rr')"
+        >
+            <Icon name="trash-fill" aria-hidden="true" />
+        </Button>
     {/if}
-</tr>
+{/if}

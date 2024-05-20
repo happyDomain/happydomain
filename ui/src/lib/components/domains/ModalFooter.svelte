@@ -83,15 +83,13 @@
 
 {#if showRecords}
     <ModalFooter
-        class="p-0 d-flex justify-content-center"
+        class="p-0 border-top border-dark border-2 d-flex justify-content-center"
         style={"overflow-y: auto; max-height: " + recordsHeight + "px"}
     >
-        <div
-            class="m-0 border-top border-dark border-2 w-100"
-        >
-        </div>
         {#await getServiceRecords(origin, zoneId, service)}
-            <Spinner class="my-1" />
+            <div class="flex-fill d-flex justify-content-center">
+                <Spinner class="my-1" />
+            </div>
         {:then serviceRecords}
             <TableRecords {serviceRecords} />
         {/await}

@@ -42,16 +42,17 @@
 </script>
 
 {#if serviceRecords}
-    <Table
-        class="m-0"
-        hover
-        size="sm"
-        striped
+    <div
+        class="flex-fill m-0 d-flex flex-column"
+        style:max-width="100%"
     >
-        <tbody>
-            {#each serviceRecords as record}
+        {#each serviceRecords as record, i}
+            <div
+                class="bg-light p-1 border-1 border-bottom"
+                style="border-color: darkgray"
+            >
                 <Record {record} />
-            {/each}
-        </tbody>
-    </Table>
+            </div>
+        {/each}
+    </div>
 {/if}
