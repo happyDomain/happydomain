@@ -22,107 +22,34 @@
 package happydns
 
 import (
-	"crypto/rand"
-	"encoding/json"
-	"fmt"
-	mrand "math/rand"
 	"time"
 )
 
 // Session holds informatin about a User's currently connected.
 type Session struct {
 	// Id is the Session's identifier.
-	Id Identifier `json:"id" swaggertype:"string"`
+	Id string `json:"id"`
 
 	// IdUser is the User's identifier of the Session.
 	IdUser Identifier `json:"login" swaggertype:"string"`
 
+	// Description is a user defined string aims to identify each session.
+	Description string `json:"description"`
+
 	// IssuedAt holds the creation date of the Session.
 	IssuedAt time.Time `json:"time"`
 
+	// ExpiresOn holds the expirate date of the Session.
+	ExpiresOn time.Time `json:"exp"`
+
+	// ModifiedOn is the last time the session has been updated.
+	ModifiedOn time.Time `json:"upd"`
+
 	// Content stores data filled by other modules.
-	Content map[string][]byte `json:"content,omitempty"`
-
-	// changed indicates if Content has changed since its loading.
-	changed bool
-}
-
-// NewSession fills a new Session structure.
-func NewSession(user *User) (s *Session, err error) {
-	session_id := make([]byte, 16)
-	_, err = rand.Read(session_id)
-	if err == nil {
-		s = &Session{
-			Id:       session_id,
-			IdUser:   user.Id,
-			IssuedAt: time.Now(),
-		}
-	}
-
-	return
-}
-
-// HasChanged tells if the Session has changed since its last loading.
-func (s *Session) HasChanged() bool {
-	return s.changed
-}
-
-// FindNewKey returns a key and an identifier appended to the given
-// prefix, that is available in the User's Session.
-func (s *Session) FindNewKey(prefix string) (key string, id int64) {
-	for {
-		// max random id is 2^53 to fit on float64 without loosing precision (JSON limitation)
-		id = mrand.Int63n(1 << 53)
-		key = fmt.Sprintf("%s%d", prefix, id)
-
-		if _, ok := s.Content[key]; !ok {
-			return
-		}
-	}
-}
-
-// SetValue defines, erase or delete a content to stores at the given
-// key. If the key is already defined, it erases its content. If the
-// given value is nil, it deletes the key.
-func (s *Session) SetValue(key string, value interface{}) {
-	if s.Content == nil && value != nil {
-		s.Content = map[string][]byte{}
-	}
-
-	if value == nil {
-		if s.Content == nil {
-			return
-		} else if _, ok := s.Content[key]; !ok {
-			return
-		} else {
-			delete(s.Content, key)
-			s.changed = true
-		}
-	} else {
-		s.Content[key], _ = json.Marshal(value)
-		s.changed = true
-	}
-}
-
-// GetValue retrieves data stored at the given key. Returns true if
-// the key exists and if the value has been filled correctly.
-func (s *Session) GetValue(key string, value interface{}) bool {
-	if v, ok := s.Content[key]; !ok {
-		return false
-	} else if json.Unmarshal(v, value) != nil {
-		return false
-	} else {
-		return true
-	}
-}
-
-// DropKey removes the given key from the Session's Content.
-func (s *Session) DropKey(key string) {
-	s.SetValue(key, nil)
+	Content string `json:"content,omitempty"`
 }
 
 // ClearSession removes all content from the Session.
 func (s *Session) ClearSession() {
-	s.Content = nil
-	s.changed = true
+	s.Content = ""
 }

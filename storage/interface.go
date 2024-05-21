@@ -129,7 +129,7 @@ type Storage interface {
 	// SESSIONS ---------------------------------------------------
 
 	// GetSession retrieves the Session with the given identifier.
-	GetSession(id happydns.Identifier) (*happydns.Session, error)
+	GetSession(id string) (*happydns.Session, error)
 
 	// GetAuthUserSessions retrieves all Session for the given AuthUser.
 	GetAuthUserSessions(user *happydns.UserAuth) ([]*happydns.Session, error)
@@ -137,14 +137,11 @@ type Storage interface {
 	// GetUserSessions retrieves all Session for the given User.
 	GetUserSessions(user *happydns.User) ([]*happydns.Session, error)
 
-	// CreateSession creates a record in the database for the given Session.
-	CreateSession(session *happydns.Session) error
-
 	// UpdateSession updates the fields of the given Session.
 	UpdateSession(session *happydns.Session) error
 
 	// DeleteSession removes the given Session from the database.
-	DeleteSession(session *happydns.Session) error
+	DeleteSession(id string) error
 
 	// ClearSessions deletes all Sessions present in the database.
 	ClearSessions() error

@@ -25,9 +25,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 
@@ -49,8 +49,6 @@ type UserClaims struct {
 	Profile UserProfile `json:"profile"`
 	jwt.RegisteredClaims
 }
-
-const COOKIE_NAME = "happydomain_session"
 
 var signingMethod = jwt.SigningMethodHS512
 
@@ -98,35 +96,6 @@ func retrieveUserFromClaims(claims *UserClaims) (user *happydns.User, err error)
 	return
 }
 
-func retrieveSessionFromClaims(claims *UserClaims, user *happydns.User, session_id []byte) (session *happydns.Session, err error) {
-	session, err = storage.MainStore.GetSession(session_id)
-	if err != nil {
-		// The session doesn't exists yet: create it!
-		session = &happydns.Session{
-			Id:       session_id,
-			IdUser:   claims.Profile.UserId,
-			IssuedAt: time.Now(),
-		}
-
-		err = storage.MainStore.UpdateSession(session)
-		if err != nil {
-			err = fmt.Errorf("has a correct JWT, but an error occured when trying to create the session: %w", err)
-			return
-		}
-
-		// Update user's data
-		updateUserFromClaims(user, claims)
-
-		err = storage.MainStore.UpdateUser(user)
-		if err != nil {
-			err = fmt.Errorf("has a correct JWT, session has been created, but an error occured when trying to update the user's information: %w", err)
-			return
-		}
-	}
-
-	return
-}
-
 func requireLogin(opts *config.Options, c *gin.Context, msg string) {
 	if opts.ExternalAuth.URL != nil {
 		customurl := *opts.ExternalAuth.URL
@@ -141,17 +110,73 @@ func requireLogin(opts *config.Options, c *gin.Context, msg string) {
 
 func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var token string
+		// Load user from session
+		session := sessions.Default(c)
 
-		// Retrieve the token from cookie or header
-		if cookie, err := c.Cookie(COOKIE_NAME); err == nil {
+		var userid happydns.Identifier
+		if iu, ok := session.Get("iduser").([]uint8); ok {
+			userid = happydns.Identifier(iu)
+		}
+
+		// Authentication through JWT
+		var token string
+		if c.GetHeader("X-User-Token") != "" {
+			token = c.GetHeader("X-User-Token")
+		} else if cookie, err := c.Cookie("happydomain-account"); err == nil {
 			token = cookie
-		} else if flds := strings.Fields(c.GetHeader("Authorization")); len(flds) == 2 && flds[0] == "Bearer" {
-			token = flds[1]
+		}
+		if len(opts.JWTSecretKey) > 0 && len(token) > 0 {
+			// Validate the token and retrieve claims
+			claims := &UserClaims{}
+			_, err := jwt.ParseWithClaims(token, claims,
+				func(token *jwt.Token) (interface{}, error) {
+					return []byte(opts.JWTSecretKey), nil
+				}, jwt.WithValidMethods([]string{signingMethod.Name}))
+			if err != nil {
+				if opts.NoAuth {
+					claims = displayNotAuthToken(opts, c)
+				}
+
+				log.Printf("%s provide a bad JWT claims: %s", c.ClientIP(), err.Error())
+				requireLogin(opts, c, "Something went wrong with your session. Please reconnect.")
+				return
+			}
+
+			// Check that required fields are filled
+			if claims == nil || len(claims.Profile.UserId) == 0 {
+				log.Printf("%s: no UserId found in JWT claims", c.ClientIP())
+				requireLogin(opts, c, "Something went wrong with your session. Please reconnect.")
+				return
+			}
+
+			if claims.Profile.Email == "" {
+				log.Printf("%s: no Email found in JWT claims", c.ClientIP())
+				requireLogin(opts, c, "Something went wrong with your session. Please reconnect.")
+				return
+			}
+
+			// Retrieve corresponding user
+			user, err := retrieveUserFromClaims(claims)
+			userid = user.Id
+
+			if userid != nil {
+				if userid == nil || userid.IsEmpty() || !userid.Equals(user.Id) {
+					completeAuth(opts, c, claims.Profile)
+					session.Clear()
+					session.Set("iduser", user.Id)
+					err = session.Save()
+					if err != nil {
+						log.Printf("%s: unable to recreate session: %s", c.ClientIP(), err.Error())
+						requireLogin(opts, c, "Something went wrong with your session. Please contact your administrator.")
+						return
+					}
+					userid = user.Id
+				}
+			}
 		}
 
 		// Stop here if there is no cookie
-		if len(token) == 0 {
+		if userid == nil {
 			if optional {
 				c.Next()
 			} else {
@@ -160,67 +185,16 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 			return
 		}
 
-		// Validate the token and retrieve claims
-		claims := &UserClaims{}
-		_, err := jwt.ParseWithClaims(token, claims,
-			func(token *jwt.Token) (interface{}, error) {
-				return []byte(opts.JWTSecretKey), nil
-			}, jwt.WithValidMethods([]string{signingMethod.Name}))
-		if err != nil {
-			if opts.NoAuth {
-				claims = displayNotAuthToken(opts, c)
-			}
-
-			log.Printf("%s provide a bad JWT claims: %s", c.ClientIP(), err.Error())
-			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
-			requireLogin(opts, c, "Something went wrong with your session. Please reconnect.")
-			return
-		}
-
-		// Check that required fields are filled
-		if claims == nil || len(claims.Profile.UserId) == 0 {
-			log.Printf("%s: no UserId found in JWT claims", c.ClientIP())
-			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
-			requireLogin(opts, c, "Something went wrong with your session. Please reconnect.")
-			return
-		}
-
-		if claims.Profile.Email == "" {
-			log.Printf("%s: no Email found in JWT claims", c.ClientIP())
-			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
-			requireLogin(opts, c, "Something went wrong with your session. Please reconnect.")
-			return
-		}
-
 		// Retrieve corresponding user
-		user, err := retrieveUserFromClaims(claims)
+		user, err := storage.MainStore.GetUser(userid)
 		if err != nil {
-			log.Printf("%s %s", c.ClientIP(), err.Error())
-			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
-			requireLogin(opts, c, "Something went wrong with your session. Please reconnect.")
+			requireLogin(opts, c, "Unable to retrieve your user. Please reauthenticate.")
 			return
 		}
 
 		c.Set("LoggedUser", user)
 
-		// Retrieve the session
-		session_id := append([]byte(claims.Profile.UserId), []byte(claims.ID)...)
-		session, err := retrieveSessionFromClaims(claims, user, session_id)
-		if err != nil {
-			log.Printf("%s %s", c.ClientIP(), err.Error())
-			c.SetCookie(COOKIE_NAME, "", -1, opts.BaseURL+"/", "", opts.DevProxy == "", true)
-			requireLogin(opts, c, "Your session has expired. Please reconnect.")
-			return
-		}
-
-		c.Set("MySession", session)
-
 		// We are now ready to continue
 		c.Next()
-
-		// On return, check if the session has changed
-		if session.HasChanged() {
-			storage.MainStore.UpdateSession(session)
-		}
 	}
 }

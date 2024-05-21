@@ -19,29 +19,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package forms // import "git.happydns.org/happyDomain/forms"
+package database
 
 import (
-	"errors"
-
-	"github.com/gin-contrib/sessions"
-
-	"git.happydns.org/happyDomain/config"
+	"log"
 )
 
-// GenRecallID
-type GenRecallID func() string
-
-// CustomSettingsForm are functions to declare when we want to display a custom user experience when asking for Source's settings.
-type CustomSettingsForm interface {
-	// DisplaySettingsForm generates the CustomForm corresponding to the asked target state.
-	DisplaySettingsForm(int32, *config.Options, *sessions.Session, GenRecallID) (*CustomForm, map[string]interface{}, error)
+func migrateFrom6(s *LevelDBStorage) error {
+	log.Println("Drop all sessions to use new format")
+	return s.ClearSessions()
 }
-
-var (
-	// DoneForm is the error raised when there is no more step to display, and edition is OK.
-	DoneForm = errors.New("Done")
-
-	// CancelForm is the error raised when there is no more step to display and should redirect to the previous page.
-	CancelForm = errors.New("Cancel")
-)

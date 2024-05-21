@@ -27,10 +27,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/api"
 	"git.happydns.org/happyDomain/config"
+	"git.happydns.org/happyDomain/internal/session"
+	"git.happydns.org/happyDomain/storage"
 	"git.happydns.org/happyDomain/ui"
 )
 
@@ -48,6 +51,7 @@ func NewApp(cfg *config.Options) App {
 	gin.ForceConsoleColor()
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
+	router.Use(sessions.Sessions(session.COOKIE_NAME, session.NewSessionStore(cfg, storage.MainStore, []byte(cfg.JWTSecretKey))))
 
 	api.DeclareRoutes(cfg, router)
 	ui.DeclareRoutes(cfg, router)

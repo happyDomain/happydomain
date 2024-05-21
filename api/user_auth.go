@@ -22,17 +22,17 @@
 package api
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 
 	"git.happydns.org/happyDomain/config"
+	"git.happydns.org/happyDomain/internal/session"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/storage"
 )
@@ -51,7 +51,7 @@ func declareAuthenticationRoutes(opts *config.Options, router *gin.RouterGroup) 
 	apiAuthRoutes.Use(authMiddleware(opts, true))
 
 	apiAuthRoutes.GET("", func(c *gin.Context) {
-		if _, exists := c.Get("MySession"); exists {
+		if _, exists := c.Get("LoggedUser"); exists {
 			displayAuthToken(c)
 		} else {
 			displayNotAuthToken(opts, c)
@@ -140,7 +140,7 @@ func displayNotAuthToken(opts *config.Options, c *gin.Context) *UserClaims {
 //	@Router			/auth/logout [post]
 func logout(opts *config.Options, c *gin.Context) {
 	c.SetCookie(
-		COOKIE_NAME,
+		session.COOKIE_NAME,
 		"",
 		-1,
 		opts.BaseURL+"/",
@@ -194,7 +194,7 @@ func checkAuth(opts *config.Options, c *gin.Context) {
 	}
 
 	if user.EmailVerification == nil {
-		log.Printf("%s tries to login as %q, but sent an invalid password", c.ClientIP(), lf.Email)
+		log.Printf("%s tries to login as %q, but has not verified email", c.ClientIP(), lf.Email)
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "Please validate your e-mail address before your first login.", "href": "/email-validation"})
 		return
 	}
@@ -223,38 +223,17 @@ func checkAuth(opts *config.Options, c *gin.Context) {
 }
 
 func completeAuth(opts *config.Options, c *gin.Context, userprofile UserProfile) (*UserClaims, error) {
-	// Issue a new JWT token
-	jti := make([]byte, 16)
-	_, err := rand.Read(jti)
+	session := sessions.Default(c)
+
+	session.Clear()
+	session.Set("iduser", userprofile.UserId)
+	err := session.Save()
 	if err != nil {
-		return nil, fmt.Errorf("unable to read enough random bytes: %w", err)
+		return nil, err
 	}
 
-	iat := jwt.NewNumericDate(time.Now())
-	claims := &UserClaims{
+	return &UserClaims{
 		userprofile,
-		jwt.RegisteredClaims{
-			IssuedAt: iat,
-			ID:       base64.StdEncoding.EncodeToString(jti),
-		},
-	}
-	jwtToken := jwt.NewWithClaims(signingMethod, claims)
-	jwtToken.Header["kid"] = "1"
-
-	token, err := jwtToken.SignedString([]byte(opts.JWTSecretKey))
-	if err != nil {
-		return nil, fmt.Errorf("unable to sign user claims: %w", err)
-	}
-
-	c.SetCookie(
-		COOKIE_NAME,      // name
-		token,            // value
-		30*24*3600,       // maxAge
-		opts.BaseURL+"/", // path
-		"",               // domain
-		opts.DevProxy == "" && opts.ExternalURL.URL.Scheme != "http", // secure
-		true, // httpOnly
-	)
-
-	return claims, nil
+		jwt.RegisteredClaims{},
+	}, nil
 }

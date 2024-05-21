@@ -22,6 +22,7 @@
 package api
 
 import (
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/config"
@@ -44,7 +45,7 @@ type FormState struct {
 }
 
 func formDoState(cfg *config.Options, c *gin.Context, fs *FormState, data interface{}, defaultForm func(interface{}) *forms.CustomForm) (form *forms.CustomForm, d map[string]interface{}, err error) {
-	session := c.MustGet("MySession").(*happydns.Session)
+	session := sessions.Default(c)
 
 	csf, ok := data.(forms.CustomSettingsForm)
 	if !ok {
@@ -55,7 +56,7 @@ func formDoState(cfg *config.Options, c *gin.Context, fs *FormState, data interf
 		}
 		return
 	} else {
-		return csf.DisplaySettingsForm(fs.State, cfg, session, func() string {
+		return csf.DisplaySettingsForm(fs.State, cfg, &session, func() string {
 			return fs.Recall
 		})
 	}

@@ -25,11 +25,11 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/ovh/go-ovh/ovh"
 
 	"git.happydns.org/happyDomain/config"
 	"git.happydns.org/happyDomain/forms"
-	"git.happydns.org/happyDomain/model"
 )
 
 func settingsForm(edit bool) *forms.CustomForm {
@@ -61,7 +61,7 @@ func settingsForm(edit bool) *forms.CustomForm {
 	return form
 }
 
-func settingsAskCredentials(cfg *config.Options, recallid string, session *happydns.Session) (*forms.CustomForm, map[string]interface{}, error) {
+func settingsAskCredentials(cfg *config.Options, recallid string, session *sessions.Session) (*forms.CustomForm, map[string]interface{}, error) {
 	client, err := ovh.NewClient("ovh-eu", appKey, appSecret, "")
 	if err != nil {
 		return nil, nil, fmt.Errorf("Unable to generate Consumer key, as OVH client can't be created: %w", err)
@@ -89,7 +89,7 @@ func settingsAskCredentials(cfg *config.Options, recallid string, session *happy
 		}, nil
 }
 
-func (s *OVHAPI) DisplaySettingsForm(state int32, cfg *config.Options, session *happydns.Session, genRecallId forms.GenRecallID) (*forms.CustomForm, map[string]interface{}, error) {
+func (s *OVHAPI) DisplaySettingsForm(state int32, cfg *config.Options, session *sessions.Session, genRecallId forms.GenRecallID) (*forms.CustomForm, map[string]interface{}, error) {
 	switch state {
 	case 0:
 		return settingsForm(s.ConsumerKey != ""), nil, nil

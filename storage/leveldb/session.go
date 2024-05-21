@@ -37,8 +37,8 @@ func (s *LevelDBStorage) getSession(id string) (session *happydns.Session, err e
 	return
 }
 
-func (s *LevelDBStorage) GetSession(id happydns.Identifier) (session *happydns.Session, err error) {
-	return s.getSession(fmt.Sprintf("user.session-%s", id.String()))
+func (s *LevelDBStorage) GetSession(id string) (session *happydns.Session, err error) {
+	return s.getSession(fmt.Sprintf("user.session-%s", id))
 }
 
 func (s *LevelDBStorage) GetAuthUserSessions(user *happydns.UserAuth) (sessions []*happydns.Session, err error) {
@@ -52,7 +52,9 @@ func (s *LevelDBStorage) GetAuthUserSessions(user *happydns.UserAuth) (sessions 
 		if err != nil {
 			return
 		}
-		sessions = append(sessions, &s)
+		if s.IdUser.Equals(user.Id) {
+			sessions = append(sessions, &s)
+		}
 	}
 
 	return
@@ -69,29 +71,20 @@ func (s *LevelDBStorage) GetUserSessions(user *happydns.User) (sessions []*happy
 		if err != nil {
 			return
 		}
-		sessions = append(sessions, &s)
+		if s.IdUser.Equals(user.Id) {
+			sessions = append(sessions, &s)
+		}
 	}
 
 	return
 }
 
-func (s *LevelDBStorage) CreateSession(session *happydns.Session) error {
-	key, id, err := s.findIdentifierKey("user.session-")
-	if err != nil {
-		return err
-	}
-
-	session.Id = id
-
-	return s.put(key, session)
-}
-
 func (s *LevelDBStorage) UpdateSession(session *happydns.Session) error {
-	return s.put(fmt.Sprintf("user.session-%s", session.Id.String()), session)
+	return s.put(fmt.Sprintf("user.session-%s", session.Id), session)
 }
 
-func (s *LevelDBStorage) DeleteSession(session *happydns.Session) error {
-	return s.delete(fmt.Sprintf("user.session-%s", session.Id.String()))
+func (s *LevelDBStorage) DeleteSession(id string) error {
+	return s.delete(fmt.Sprintf("user.session-%s", id))
 }
 
 func (s *LevelDBStorage) ClearSessions() error {

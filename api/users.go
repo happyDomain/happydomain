@@ -30,6 +30,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/rrivera/identicon"
 
@@ -57,6 +58,10 @@ func declareUsersRoutes(opts *config.Options, router *gin.RouterGroup) {
 func declareUsersAuthRoutes(opts *config.Options, router *gin.RouterGroup) {
 	router.GET("/session", getSession)
 	router.DELETE("/session", clearSession)
+
+	router.GET("/sessions", getSessions)
+	apiSessionsRoutes := router.Group("/session/:sid")
+	apiSessionsRoutes.DELETE("", deleteSession)
 
 	apiUserRoutes := router.Group("/users/:uid")
 	apiUserRoutes.Use(userHandler)
@@ -449,7 +454,7 @@ func changePassword(opts *config.Options, c *gin.Context) {
 	log.Printf("%s changes password for user %s", c.ClientIP(), user.Email)
 
 	for _, session := range sessions {
-		err = storage.MainStore.DeleteSession(session)
+		err = storage.MainStore.DeleteSession(session.Id)
 		if err != nil {
 			log.Printf("%s: unable to delete session (password changed): %s", c.ClientIP(), err.Error())
 		}
@@ -507,7 +512,7 @@ func deleteUser(opts *config.Options, c *gin.Context) {
 	log.Printf("%s: deletes user: %s", c.ClientIP(), user.Email)
 
 	for _, session := range sessions {
-		err = storage.MainStore.DeleteSession(session)
+		err = storage.MainStore.DeleteSession(session.Id)
 		if err != nil {
 			log.Printf("%s: unable to delete session (drop account): %s", c.ClientIP(), err.Error())
 		}
@@ -682,11 +687,17 @@ func recoverUserAccount(c *gin.Context) {
 //	@Security		securitydefinitions.basic
 //	@Success		200	{object}	happydns.Session
 //	@Failure		401	{object}	happydns.Error	"Authentication failure"
-//	@Router			/sessions [get]
+//	@Router			/session [get]
 func getSession(c *gin.Context) {
-	session := c.MustGet("MySession").(*happydns.Session)
+	session := sessions.Default(c)
 
-	c.JSON(http.StatusOK, session)
+	s, err := storage.MainStore.GetSession(session.ID())
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, s)
 }
 
 // clearSession removes the content of the current user's session.
@@ -700,11 +711,71 @@ func getSession(c *gin.Context) {
 //	@Security		securitydefinitions.basic
 //	@Success		204	{null}		null
 //	@Failure		401	{object}	happydns.Error	"Authentication failure"
-//	@Router			/sessions [delete]
+//	@Router			/session [delete]
 func clearSession(c *gin.Context) {
-	session := c.MustGet("MySession").(*happydns.Session)
+	session := sessions.Default(c)
 
-	session.ClearSession()
+	session.Clear()
 
 	c.Status(http.StatusNoContent)
+}
+
+// getSessions lists the sessions open for the current user.
+//
+//	@Summary	List user's sessions
+//	@Schemes
+//	@Description	List the sessions open for the current user
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	happydns.Session
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Router			/sessions [get]
+func getSessions(c *gin.Context) {
+	myuser := c.MustGet("LoggedUser").(*happydns.User)
+
+	s, err := storage.MainStore.GetUserSessions(myuser)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, s)
+}
+
+// deleteSession delete a session owned by the current user
+//
+//	@Summary	Delete a session owned by the current user.
+//	@Schemes
+//	@Description	Delete	a session owned	by the current user.
+//	@Tags			users
+//	@Accept			json
+//	@Param			sessionId	path		string					true	"Session identifier"
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	happydns.Session
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Router			/sessions/{sessionId} [delete]
+func deleteSession(c *gin.Context) {
+	myuser := c.MustGet("LoggedUser").(*happydns.User)
+
+	s, err := storage.MainStore.GetSession(c.Param("sid"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	if !myuser.Id.Equals(s.IdUser) {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errmsg": "You are not allowed to drop this session."})
+		return
+	}
+
+	err = storage.MainStore.DeleteSession(c.Param("sid"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, nil)
 }

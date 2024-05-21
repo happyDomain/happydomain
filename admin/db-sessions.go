@@ -22,13 +22,11 @@
 package admin
 
 import (
-	"encoding/base64"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/config"
-	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/storage"
 )
 
@@ -47,13 +45,7 @@ func deleteSessions(c *gin.Context) {
 }
 
 func sessionHandler(c *gin.Context) {
-	sessionid, err := base64.StdEncoding.DecodeString(c.Param("sessionid"))
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": err.Error()})
-		return
-	}
-
-	session, err := storage.MainStore.GetSession(sessionid)
+	session, err := storage.MainStore.GetSession(c.Param("sessionid"))
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": err.Error()})
 		return
@@ -65,13 +57,9 @@ func sessionHandler(c *gin.Context) {
 }
 
 func getSession(c *gin.Context) {
-	session := c.MustGet("session").(*happydns.Session)
-
-	c.JSON(http.StatusOK, session)
+	c.JSON(http.StatusOK, c.MustGet("session"))
 }
 
 func deleteSession(c *gin.Context) {
-	session := c.MustGet("session").(*happydns.Session)
-
-	ApiResponse(c, true, storage.MainStore.DeleteSession(session))
+	ApiResponse(c, true, storage.MainStore.DeleteSession(c.Param("sessionid")))
 }
