@@ -714,8 +714,13 @@ func getServiceRecords(c *gin.Context) {
 		return
 	}
 
+	ttl := svc.Ttl
+	if ttl == 0 {
+		ttl = zone.DefaultTTL
+	}
+
 	var ret []serviceRecord
-	for _, rc := range svc.GenRRs(subdomain, 3600, domain.DomainName) {
+	for _, rc := range svc.GenRRs(subdomain, ttl, domain.DomainName) {
 		var rr dns.RR
 		if _, ok := dns.StringToType[rc.Type]; ok {
 			rr = rc.ToRR()
