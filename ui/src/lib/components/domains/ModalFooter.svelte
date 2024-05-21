@@ -78,21 +78,49 @@
  }
 
  let showRecords = false;
+
  let recordsHeight = 120;
+ let recordsHeightResize = false;
+ function resizeRecordsHeight(e) {
+     if (!recordsHeightResize) {
+         return;
+     }
+
+     e.preventDefault();
+     e.stopPropagation();
+     recordsHeight -= e.movementY;
+ }
 </script>
+
+<svelte:document
+    on:mousemove={resizeRecordsHeight}
+    on:mouseleave={() => recordsHeightResize = false}
+    on:mouseup={() => recordsHeightResize = false}
+/>
 
 {#if showRecords}
     <ModalFooter
-        class="p-0 border-top border-dark border-2 d-flex justify-content-center"
-        style={"overflow-y: auto; max-height: " + recordsHeight + "px"}
+        class="p-0 d-block"
+        style={"max-height:" + recordsHeight + "px"}
     >
-        {#await getServiceRecords(origin, zoneId, service)}
-            <div class="flex-fill d-flex justify-content-center">
-                <Spinner class="my-1" />
-            </div>
-        {:then serviceRecords}
-            <TableRecords {serviceRecords} />
-        {/await}
+        <div
+            class="border-top border-dark border-2 d-flex m-0"
+            style:cursor="ns-resize"
+            on:mousedown|preventDefault={() => recordsHeightResize = true}
+        ></div>
+        <div
+            class="m-0 d-flex justify-content-center"
+            style:max-height="inherit"
+            style:overflow-y="auto"
+        >
+            {#await getServiceRecords(origin, zoneId, service)}
+                <div class="flex-fill d-flex justify-content-center">
+                    <Spinner class="my-1" />
+                </div>
+            {:then serviceRecords}
+                <TableRecords {serviceRecords} />
+            {/await}
+        </div>
     </ModalFooter>
 {/if}
 <ModalFooter>
