@@ -56,6 +56,11 @@ func NewApp(cfg *config.Options) App {
 	api.DeclareRoutes(cfg, router)
 	ui.DeclareRoutes(cfg, router)
 
+	if config.OIDCProviderURL != "" {
+		authRoutes := router.Group("/auth")
+		InitializeOIDC(cfg, authRoutes)
+	}
+
 	app := App{
 		router: router,
 		cfg:    cfg,

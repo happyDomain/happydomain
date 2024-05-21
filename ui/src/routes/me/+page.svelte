@@ -36,6 +36,8 @@
  import UserSettingsForm from '$lib/components/UserSettingsForm.svelte';
  import { t } from '$lib/translations';
  import { userSession } from '$lib/stores/usersession';
+
+ let is_auth_user_req = fetch(`/api/users/${$userSession.id}/is_auth_user`);
 </script>
 
 <Container class="my-4">
@@ -57,27 +59,52 @@
             {/if}
         </Row>
         {#if $userSession.email !== '_no_auth'}
+            <hr>
             <h2 id="password-change">
                 {$t('password.change')}
             </h2>
-            <Row>
-                <Col md={{size: 8, offset: 2}}>
-                <Card>
-                    <CardBody>
-                        <ChangePasswordForm />
-                    </CardBody>
-                </Card>
-            </Col>
-            </Row>
+            {#await is_auth_user_req}
+                <div class="d-flex justify-content-center my-2">
+                    <Spinner />
+                </div>
+            {:then res}
+                {#if res.status === 204}
+                    <Row>
+                        <Col md={{size: 8, offset: 2}}>
+                        <Card>
+                            <CardBody>
+                                <ChangePasswordForm />
+                            </CardBody>
+                        </Card>
+                        </Col>
+                    </Row>
+                {:else}
+                    {#await fetch('/auth/has_oidc') then res}
+                        {#await res.json() then oidc}
+                            <div class="m-5 alert alert-secondary">
+                                {$t('account.no-password-change', {provider: oidc.provider})}
+                            </div>
+                        {/await}
+                    {/await}
+                {/if}
+            {/await}
             <hr>
             <h2 id="delete-account">
                 {$t('account.delete.delete')}
             </h2>
-            <Row>
-                <Col md={{size: 8, offset: 2}}>
-                <DeleteAccountCard />
-                </Col>
-            </Row>
+            {#await is_auth_user_req}
+                <div class="d-flex justify-content-center my-2">
+                    <Spinner />
+                </div>
+            {:then res}
+                <Row>
+                    <Col md={{size: 8, offset: 2}}>
+                    <DeleteAccountCard
+                        externalAuth={res.status !== 204}
+                    />
+                    </Col>
+                </Row>
+            {/await}
         {:else}
             <div class="m-5 alert alert-secondary">
                 {$t('errors.account-no-auth')}

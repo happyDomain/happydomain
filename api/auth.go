@@ -31,7 +31,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 
-	"git.happydns.org/happyDomain/actions"
 	"git.happydns.org/happyDomain/config"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/storage"
@@ -61,26 +60,10 @@ func retrieveUserFromClaims(claims *UserClaims) (user *happydns.User, err error)
 	user, err = storage.MainStore.GetUser(claims.Profile.UserId)
 	if err != nil {
 		// The user doesn't exists yet: create it!
-		user = &happydns.User{
-			Id:        claims.Profile.UserId,
-			Email:     claims.Profile.Email,
-			CreatedAt: time.Now(),
-			LastSeen:  time.Now(),
-			Settings:  *happydns.DefaultUserSettings(),
-		}
-
-		err = storage.MainStore.UpdateUser(user)
+		user, err = createUserFromProfile(claims.Profile)
 		if err != nil {
 			err = fmt.Errorf("has a correct JWT, but an error occured when trying to create the user: %w", err)
 			return
-		}
-
-		if claims.Profile.Newsletter {
-			err = actions.SubscribeToNewsletter(user)
-			if err != nil {
-				err = fmt.Errorf("something goes wrong during newsletter subscription: %w", err)
-				return
-			}
 		}
 	} else if time.Since(user.LastSeen) > time.Hour*12 {
 		// Update user's data when connected more than 12 hours
@@ -114,7 +97,7 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 		session := sessions.Default(c)
 
 		var userid happydns.Identifier
-		if iu, ok := session.Get("iduser").([]uint8); ok {
+		if iu, ok := session.Get("iduser").([]byte); ok {
 			userid = happydns.Identifier(iu)
 		}
 
@@ -161,7 +144,7 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 
 			if userid != nil {
 				if userid == nil || userid.IsEmpty() || !userid.Equals(user.Id) {
-					completeAuth(opts, c, claims.Profile)
+					CompleteAuth(opts, c, claims.Profile)
 					session.Clear()
 					session.Set("iduser", user.Id)
 					err = session.Save()

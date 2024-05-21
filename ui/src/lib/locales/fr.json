@@ -12,6 +12,8 @@
             "success": "Votre compte a été supprimé avec succès. Nous espérons vous revoir bientôt."
         },
         "join": "Inscrivez-vous maintenant !",
+        "oidc-login": "Se connecter par {{provider}}",
+        "no-password-change": "Vous vous êtes identifié par un service externe, si vous devez changer de mot de passe, rendez-vous sur l'interface dédiée de {{provider}}.",
         "ready-login": "Prêt à entrer !",
         "signup": {
             "already": "Déjà inscrit ?",

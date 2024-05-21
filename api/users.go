@@ -73,11 +73,17 @@ func declareUsersAuthRoutes(opts *config.Options, router *gin.RouterGroup) {
 	apiSameUserRoutes.Use(userHandler)
 	apiSameUserRoutes.Use(SameUserHandler)
 
+	apiSameUserRoutes.DELETE("", func(c *gin.Context) {
+		deleteMyUser(opts, c)
+	})
 	apiSameUserRoutes.GET("/settings", getUserSettings)
 	apiSameUserRoutes.POST("/settings", changeUserSettings)
 
 	apiUserAuthRoutes := router.Group("/users/:uid")
 	apiUserAuthRoutes.Use(userAuthHandler)
+	apiUserAuthRoutes.GET("/is_auth_user", func(c *gin.Context) {
+		c.Status(http.StatusNoContent)
+	})
 	apiUserAuthRoutes.POST("/delete", func(c *gin.Context) {
 		deleteUser(opts, c)
 	})
@@ -463,6 +469,42 @@ func changePassword(opts *config.Options, c *gin.Context) {
 	logout(opts, c)
 }
 
+func deleteMyUser(opts *config.Options, c *gin.Context) {
+	user := c.MustGet("user").(*happydns.User)
+
+	// Disallow route if user is authenticated through local service
+	if _, err := storage.MainStore.GetAuthUser(user.Id); err == nil {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errmsg": "This route is for external account only. Please use the route ./delete instead."})
+		return
+	}
+
+	// Retrieve all user's sessions to disconnect them
+	sessions, err := storage.MainStore.GetUserSessions(user)
+	if err != nil {
+		log.Printf("%s: unable to GetUserSessions in deleteUser: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to delete your profile. Please try again later."})
+		return
+	}
+
+	err = storage.MainStore.DeleteUser(user)
+	if err != nil {
+		log.Printf("%s: unable to DeleteUser in deletemyuser: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
+		return
+	}
+
+	log.Printf("%s: deletes user: %s", c.ClientIP(), user.Email)
+
+	for _, session := range sessions {
+		err = storage.MainStore.DeleteSession(session.Id)
+		if err != nil {
+			log.Printf("%s: unable to delete session (drop account): %s", c.ClientIP(), err.Error())
+		}
+	}
+
+	logout(opts, c)
+}
+
 // deleteUser delete the account related to the given user.
 //
 //	@Summary	Drop account
@@ -499,13 +541,13 @@ func deleteUser(opts *config.Options, c *gin.Context) {
 	sessions, err := storage.MainStore.GetAuthUserSessions(user)
 	if err != nil {
 		log.Printf("%s: unable to GetUserSessions in deleteUser: %s", c.ClientIP(), err.Error())
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to delete your profile. Please try again later."})
 		return
 	}
 
 	if err = storage.MainStore.DeleteAuthUser(user); err != nil {
-		log.Printf("%s: unable to DefinePassword in deleteuser: %s", c.ClientIP(), err.Error())
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
+		log.Printf("%s: unable to DeleteAuthUser in deleteuser: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to delete your profile. Please try again later."})
 		return
 	}
 

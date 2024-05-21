@@ -36,10 +36,12 @@
      Spinner,
  } from '@sveltestrap/sveltestrap';
 
- import { deleteUserAccount } from '$lib/api/user';
+ import { deleteMyUser, deleteUserAccount } from '$lib/api/user';
  import { t } from '$lib/translations';
  import { userSession } from '$lib/stores/usersession';
  import { toasts } from '$lib/stores/toasts';
+
+ export let externalAuth = false;
 
  let deleteAccountModalOpen = false;
  let password = "";
@@ -47,32 +49,37 @@
 
  $: if (deleteAccountModalOpen) password = "";
 
+ function accountDeleted(): void {
+     formSent = false;
+     deleteAccountModalOpen = false;
+     toasts.addToast({
+         title: $t('account.delete.deleted'),
+         message: $t('account.delete.success'),
+         type: 'primary',
+     });
+     goto('/login');
+ }
+
+ function deletionError(err): void {
+     formSent = false;
+     toasts.addErrorToast({
+         title: $t('errors.account-delete'),
+         message: err,
+         timeout: 5000,
+     });
+ }
+
  function deleteMyAccount() {
      if ($userSession == null) {
          return
      }
 
      formSent = true;
-     deleteUserAccount($userSession, password).then(
-         () => {
-             formSent = false;
-             deleteAccountModalOpen = false;
-             toasts.addToast({
-                 title: $t('account.delete.deleted'),
-                 message: $t('account.delete.success'),
-                 type: 'primary',
-             });
-             goto('/login');
-         },
-         (err) => {
-             formSent = false;
-             toasts.addErrorToast({
-                 title: $t('errors.account-delete'),
-                 message: err,
-                 timeout: 5000,
-             });
-         }
-     );
+     if (externalAuth) {
+         deleteMyUser($userSession).then(accountDeleted, deletionError);
+     } else {
+         deleteUserAccount($userSession, password).then(accountDeleted, deletionError);
+     }
  }
 
  function toggleModal(): void {
@@ -104,6 +111,42 @@
     </CardBody>
 </Card>
 
+{#if externalAuth}
+<Modal
+    isOpen={deleteAccountModalOpen}
+    toggle={toggleModal}
+>
+    <ModalHeader
+        toggle={toggleModal}
+    >
+        {$t('account.delete.delete')}
+    </ModalHeader>
+    <ModalBody>
+        <p>
+            {$t('account.delete.confirm-twice')}
+        </p>
+        <p class="text-muted" style="line-height: 1.1">
+            <small>
+                {$t('account.delete.remain-data')}
+            </small>
+        </p>
+    </ModalBody>
+    <ModalFooter>
+        <Button
+            color="danger"
+            on:click={deleteMyAccount}
+        >
+            {$t('account.delete.delete')}
+        </Button>
+        <Button
+            color="secondary"
+            on:click={() => deleteAccountModalOpen = !deleteAccountModalOpen}
+        >
+            {$t('common.cancel')}
+        </Button>
+    </ModalFooter>
+</Modal>
+{:else}
 <Modal
     isOpen={deleteAccountModalOpen}
     toggle={toggleModal}
@@ -153,3 +196,4 @@
         </Button>
     </ModalFooter>
 </Modal>
+{/if}

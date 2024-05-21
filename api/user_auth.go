@@ -31,6 +31,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 
+	"git.happydns.org/happyDomain/actions"
 	"git.happydns.org/happyDomain/config"
 	"git.happydns.org/happyDomain/internal/session"
 	"git.happydns.org/happyDomain/model"
@@ -106,7 +107,7 @@ func displayNotAuthToken(opts *config.Options, c *gin.Context) *UserClaims {
 		return nil
 	}
 
-	claims, err := completeAuth(opts, c, UserProfile{
+	claims, err := CompleteAuth(opts, c, UserProfile{
 		UserId:        []byte{0},
 		Email:         NO_AUTH_ACCOUNT,
 		EmailVerified: true,
@@ -199,7 +200,7 @@ func checkAuth(opts *config.Options, c *gin.Context) {
 		return
 	}
 
-	claims, err := completeAuth(opts, c, UserProfile{
+	claims, err := CompleteAuth(opts, c, UserProfile{
 		UserId:        user.Id,
 		Email:         user.Email,
 		EmailVerified: user.EmailVerification != nil,
@@ -222,12 +223,47 @@ func checkAuth(opts *config.Options, c *gin.Context) {
 	}
 }
 
-func completeAuth(opts *config.Options, c *gin.Context, userprofile UserProfile) (*UserClaims, error) {
+func createUserFromProfile(userprofile UserProfile) (*happydns.User, error) {
+	user := &happydns.User{
+		Id:        userprofile.UserId,
+		Email:     userprofile.Email,
+		CreatedAt: time.Now(),
+		LastSeen:  time.Now(),
+		Settings:  *happydns.DefaultUserSettings(),
+	}
+
+	err := storage.MainStore.UpdateUser(user)
+	if err != nil {
+		return user, err
+	}
+
+	if userprofile.Newsletter {
+		err = actions.SubscribeToNewsletter(user)
+		if err != nil {
+			err = fmt.Errorf("something goes wrong during newsletter subscription: %w", err)
+			return user, err
+		}
+	}
+
+	return user, nil
+}
+
+func CompleteAuth(opts *config.Options, c *gin.Context, userprofile UserProfile) (*UserClaims, error) {
 	session := sessions.Default(c)
+
+	// Check if the user already exists
+	_, err := storage.MainStore.GetUser(userprofile.UserId)
+	if err != nil {
+		// Create the user
+		_, err = createUserFromProfile(userprofile)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create user account: %w", err)
+		}
+	}
 
 	session.Clear()
 	session.Set("iduser", userprofile.UserId)
-	err := session.Save()
+	err = session.Save()
 	if err != nil {
 		return nil, err
 	}

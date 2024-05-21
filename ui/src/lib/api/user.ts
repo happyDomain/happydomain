@@ -104,6 +104,15 @@ export async function changeUserPassword(user: User, form: {current: string; pas
     return await handleEmptyApiResponse(res);
 }
 
+export async function deleteMyUser(user: User): Promise<boolean> {
+    const userid = encodeURIComponent(user.id);
+    const res = await fetch(`/api/users/${userid}`, {
+        method: 'DELETE',
+        headers: {'Accept': 'application/json'},
+    });
+    return await handleEmptyApiResponse(res);
+}
+
 export async function deleteUserAccount(user: User, password: string): Promise<boolean> {
     const userid = encodeURIComponent(user.id);
     const res = await fetch(`/api/users/${userid}/delete`, {

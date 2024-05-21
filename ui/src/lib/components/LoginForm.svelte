@@ -117,7 +117,7 @@
             bind:value={loginForm.password}
         />
     </FormGroup>
-    <div class="d-flex justify-content-around">
+    <div class="d-flex flex-column flex-lg-row gap-2 justify-content-around">
         <Button
             type="submit"
             color="primary"
@@ -131,6 +131,29 @@
             {/if}
             {$t('common.go')}
         </Button>
+        {#if window.oidc_configured}
+            {#await fetch('/auth/has_oidc') then res}
+                {#await res.json() then oidc}
+                    <Button
+                        href="/auth/oidc"
+                        color="secondary"
+                    >
+                        {#if oidc.provider == "google.com"}
+                            <i class="bi bi-google" />
+                        {:else if oidc.provider == "gitlab.com" || oidc.provider == "framagit.org"}
+                            <i class="bi bi-gitlab" />
+                        {:else if oidc.provider == "github.com"}
+                            <i class="bi bi-github" />
+                        {:else if oidc.provider == "microsoft.com"}
+                            <i class="bi bi-microsoft" />
+                        {:else if oidc.provider == "apple.com"}
+                            <i class="bi bi-apple" />
+                        {/if}
+                        {$t('account.oidc-login', {provider: oidc.provider})}
+                    </Button>
+                {/await}
+            {/await}
+        {/if}
         <Button
             href="/forgotten-password"
             outline

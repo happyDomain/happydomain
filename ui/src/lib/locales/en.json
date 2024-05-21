@@ -12,6 +12,8 @@
             "success": "Your account have been successfully deleted. We hope to see you back soon."
         },
         "join": "Join now!",
+        "no-password-change": "You are identified through an external service, if you need to change your password, change it on the dedicated interface of {{provider}}.",
+        "oidc-login": "Sign in with {{provider}}",
         "ready-login": "Ready to login!",
         "signup": {
             "already": "Already a member?",

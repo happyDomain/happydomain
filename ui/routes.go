@@ -60,6 +60,10 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 		CustomHeadHTML += `<script type="text/javascript">window.disable_providers = true;</script>`
 	}
 
+	if config.OIDCProviderURL != "" {
+		CustomHeadHTML += `<script type="text/javascript">window.oidc_configured = true;</script>`
+	}
+
 	if HideVoxPeople {
 		CustomHeadHTML += "<style>#voxpeople { display: none !important; }</style>"
 	}
