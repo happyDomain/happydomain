@@ -107,7 +107,7 @@ func (s *SessionStore) Save(r *http.Request, w http.ResponseWriter, session *ses
 		s.storage.DeleteSession(session.ID)
 	} else {
 		if session.ID == "" {
-			session.ID = strings.TrimRight(base32.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(32)), "=")
+			session.ID = NewSessionId()
 		}
 		encrypted, err := securecookie.EncodeMulti(session.Name(), session.ID, s.Codecs...)
 		if err != nil {
@@ -145,7 +145,25 @@ func (s *SessionStore) load(session *sessions.Session) error {
 		return err
 	}
 
-	return securecookie.DecodeMulti(session.Name(), mysession.Content, &session.Values, s.Codecs...)
+	err = securecookie.DecodeMulti(session.Name(), mysession.Content, &session.Values, s.Codecs...)
+	if err != nil {
+		return err
+	}
+
+	if len(mysession.IdUser) > 0 {
+		session.Values["iduser"] = []byte(mysession.IdUser)
+	}
+	if len(mysession.Description) > 0 {
+		session.Values["description"] = mysession.Description
+	}
+	if _, ok := session.Values["created_on"].(time.Time); !ok && !mysession.IssuedAt.IsZero() {
+		session.Values["created_on"] = mysession.IssuedAt
+	}
+	if !mysession.ExpiresOn.IsZero() {
+		session.Values["expires_on"] = mysession.ExpiresOn
+	}
+
+	return nil
 }
 
 // save writes encoded session.Values to a database record.
@@ -199,4 +217,8 @@ func (s *SessionStore) save(session *sessions.Session, ua string) error {
 	}
 
 	return s.storage.UpdateSession(mysession)
+}
+
+func NewSessionId() string {
+	return strings.TrimRight(base32.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(64)), "=")
 }

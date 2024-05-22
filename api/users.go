@@ -29,6 +29,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -36,6 +37,7 @@ import (
 
 	"git.happydns.org/happyDomain/actions"
 	"git.happydns.org/happyDomain/config"
+	"git.happydns.org/happyDomain/internal/session"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/storage"
 )
@@ -60,7 +62,9 @@ func declareUsersAuthRoutes(opts *config.Options, router *gin.RouterGroup) {
 	router.DELETE("/session", clearSession)
 
 	router.GET("/sessions", getSessions)
+	router.POST("/sessions", createSession)
 	apiSessionsRoutes := router.Group("/session/:sid")
+	apiSessionsRoutes.PUT("", updateSession)
 	apiSessionsRoutes.DELETE("", deleteSession)
 
 	apiUserRoutes := router.Group("/users/:uid")
@@ -778,6 +782,94 @@ func getSessions(c *gin.Context) {
 	myuser := c.MustGet("LoggedUser").(*happydns.User)
 
 	s, err := storage.MainStore.GetUserSessions(myuser)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, s)
+}
+
+// createSession create a new session for the current user
+//
+//	@Summary	Create a new session for the current user.
+//	@Schemes
+//	@Description	Create a new session for the current user.
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	happydns.Session
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Router			/sessions [post]
+func createSession(c *gin.Context) {
+	var us happydns.Session
+	err := c.ShouldBindJSON(&us)
+	if err != nil {
+		log.Printf("%s sends invalid Session JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
+		return
+	}
+
+	myuser := c.MustGet("LoggedUser").(*happydns.User)
+
+	sessid := session.NewSessionId()
+	mysession := &happydns.Session{
+		Id:          sessid,
+		IdUser:      myuser.Id,
+		Description: us.Description,
+		IssuedAt:    time.Now(),
+		ExpiresOn:   time.Now().Add(24 * 365 * time.Hour),
+	}
+
+	err = storage.MainStore.UpdateSession(mysession)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"id": sessid})
+}
+
+// updateSession update a session owned by the current user
+//
+//	@Summary	Update a session owned by the current user.
+//	@Schemes
+//	@Description	Update	a session owned	by the current user.
+//	@Tags			users
+//	@Accept			json
+//	@Param			sessionId	path	string	true	"Session identifier"
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	happydns.Session
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Router			/sessions/{sessionId} [put]
+func updateSession(c *gin.Context) {
+	var us happydns.Session
+	err := c.ShouldBindJSON(&us)
+	if err != nil {
+		log.Printf("%s sends invalid Session JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
+		return
+	}
+
+	myuser := c.MustGet("LoggedUser").(*happydns.User)
+
+	s, err := storage.MainStore.GetSession(c.Param("sid"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	if !myuser.Id.Equals(s.IdUser) {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errmsg": "You are not allowed to update this session."})
+		return
+	}
+
+	s.Description = us.Description
+	s.ExpiresOn = us.ExpiresOn
+
+	err = storage.MainStore.UpdateSession(s)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": err.Error()})
 		return
