@@ -36,7 +36,7 @@ RUN sed -i '/npm run build/d' ui/assets.go && \
     go build -v -tags listmonk,netgo,swagger,ui -ldflags '-w'
 
 
-FROM alpine:3.19
+FROM alpine:3.20
 
 EXPOSE 8081
 
