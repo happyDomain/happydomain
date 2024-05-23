@@ -27,7 +27,9 @@ import { userSession } from '$lib/stores/usersession';
 export const load: Load = async({ parent }) => {
     const data = await parent();
 
-    if (get_store_value(userSession) != null) {
+    if (window.disable_embedded_login && window.oidc_configured) {
+        redirect(302, '/auth/oidc');
+    } else if (get_store_value(userSession) != null) {
         redirect(302, '/');
     }
 

@@ -64,6 +64,10 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 		CustomHeadHTML += `<script type="text/javascript">window.disable_registration = true;</script>`
 	}
 
+	if cfg.DisableEmbeddedLogin {
+		CustomHeadHTML += `<script type="text/javascript">window.disable_embedded_login = true;</script>`
+	}
+
 	if config.OIDCProviderURL != "" {
 		CustomHeadHTML += `<script type="text/javascript">window.oidc_configured = true;</script>`
 	}
