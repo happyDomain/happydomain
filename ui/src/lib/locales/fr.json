@@ -31,6 +31,7 @@
         "add": "Ajouter",
         "add-new-thing": "Ajouter {{thing}}",
         "add-object": "Add un objet {{thing}} à ce service",
+        "by": "par",
         "cancel": "Annuler",
         "cancel-edit": "Abandonner",
         "continue": "Continuer",

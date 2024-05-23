@@ -58,6 +58,7 @@
         </div>
     {:then domain}
         {#each domain.zone_history as history, idx}
+            {@const moddate = new Intl.DateTimeFormat(undefined, {dateStyle: "long", timeStyle: "medium"}).format(new Date(history.last_modified))}
             {#if idx === 0 || !isSameMonth(new Date(domain.zone_history[idx-1].last_modified), new Date(history.last_modified))}
                 <h3 class="mt-4 fw-bolder">
                     <Icon name="calendar2-month" />
@@ -66,11 +67,12 @@
             {/if}
             <h4 class="mt-4 d-flex gap-2 align-items-center">
                 {#await getUser(history.id_author)}
-                    <img src={"/api/users/" + encodeURIComponent(history.id_author) + "/avatar.png"} alt={history.id_author} style="height: 1.1em; border-radius: .1em">
+                    <img src={"/api/users/" + encodeURIComponent(history.id_author) + "/avatar.png"} alt={history.id_author} style="height: 1.1em; border-radius: .1em">{moddate}
                 {:then user}
-                    <img src={"/api/users/" + encodeURIComponent(history.id_author) + "/avatar.png"} alt={user.email} style="height: 1.1em; border-radius: .1em">
+                    <img src={"/api/users/" + encodeURIComponent(history.id_author) + "/avatar.png"} alt={user.email} title={user.email} style="height: 1.1em; border-radius: .1em">{moddate} <span class="text-muted">{$t('by')} {user.email}</span>
+                {:catch}
+                    {moddate}
                 {/await}
-                {new Intl.DateTimeFormat(undefined, {dateStyle: "long", timeStyle: "medium"}).format(new Date(history.last_modified))}
                 <Button
                     color="primary"
                     outline
