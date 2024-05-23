@@ -199,18 +199,20 @@
                 {$t('menu.dns-resolver')}
             </Button>
 
-            <Button
-                class="d-none d-md-inline-block mx-1"
-                outline={activemenu != "join"}
-                color="dark"
-                href="/join"
-            >
-                <Icon
-                    name="person-plus-fill"
-                    aria-hidden="true"
-                />
-                {$t('menu.signup')}
-            </Button>
+            {#if !window.disable_registration}
+                <Button
+                    class="d-none d-md-inline-block mx-1"
+                    outline={activemenu != "join"}
+                           color="dark"
+                    href="/join"
+                >
+                    <Icon
+                        name="person-plus-fill"
+                        aria-hidden="true"
+                    />
+                    {$t('menu.signup')}
+                </Button>
+            {/if}
             <Button
                 class="d-none d-md-inline-block mx-1"
                 outline={activemenu == "join"}

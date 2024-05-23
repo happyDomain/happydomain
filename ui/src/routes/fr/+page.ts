@@ -23,5 +23,8 @@ import { redirect } from '@sveltejs/kit';
 import type { Load } from '@sveltejs/kit';
 
 export const load: Load = async() => {
-    redirect(302, '/join');
+    if (window.disable_registration)
+        redirect(302, '/login');
+    else
+        redirect(302, '/join');
 }

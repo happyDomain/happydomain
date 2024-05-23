@@ -51,12 +51,14 @@
                     <LoginForm />
                 </CardBody>
             </Card>
-            <div class="text-center mt-4">
-                {$t('account.ask-have')}
-                <a href="/join" class="fw-bold">
-                    {$t('account.join')}
-                </a>
-            </div>
+            {#if !window.disable_registration}
+                <div class="text-center mt-4">
+                    {$t('account.ask-have')}
+                    <a href="/join" class="fw-bold">
+                        {$t('account.join')}
+                    </a>
+                </div>
+            {/if}
         </Col>
     </Row>
 </Container>

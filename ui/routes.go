@@ -60,6 +60,10 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 		CustomHeadHTML += `<script type="text/javascript">window.disable_providers = true;</script>`
 	}
 
+	if cfg.DisableRegistration {
+		CustomHeadHTML += `<script type="text/javascript">window.disable_registration = true;</script>`
+	}
+
 	if config.OIDCProviderURL != "" {
 		CustomHeadHTML += `<script type="text/javascript">window.oidc_configured = true;</script>`
 	}
@@ -135,12 +139,33 @@ func serveOrReverse(forced_url string, cfg *config.Options) gin.HandlerFunc {
 				} else {
 					defer resp.Body.Close()
 
-					for key := range resp.Header {
-						c.Writer.Header().Add(key, resp.Header.Get(key))
-					}
-					c.Writer.WriteHeader(resp.StatusCode)
+					if u.Path != "/" || resp.StatusCode != 200 {
+						for key := range resp.Header {
+							c.Writer.Header().Add(key, resp.Header.Get(key))
+						}
+						c.Writer.WriteHeader(resp.StatusCode)
 
-					io.Copy(c.Writer, resp.Body)
+						io.Copy(c.Writer, resp.Body)
+					} else {
+						for key := range resp.Header {
+							if strings.ToLower(key) != "content-length" {
+								c.Writer.Header().Add(key, resp.Header.Get(key))
+							}
+						}
+
+						v, _ := ioutil.ReadAll(resp.Body)
+
+						v2 := strings.Replace(strings.Replace(string(v), "</head>", "{{ .Head }}</head>", 1), "</body>", "{{ .Body }}</body>", 1)
+
+						indexTpl = template.Must(template.New("index.html").Parse(v2))
+
+						if err := indexTpl.ExecuteTemplate(c.Writer, "index.html", map[string]string{
+							"Body": CustomBodyHTML,
+							"Head": CustomHeadHTML,
+						}); err != nil {
+							log.Println("Unable to return index.html:", err.Error())
+						}
+					}
 				}
 			}
 		}

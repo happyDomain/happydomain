@@ -55,6 +55,9 @@ type Options struct {
 	// DisableProviders should disallow all actions on provider (add/edit/delete) through public API.
 	DisableProviders bool
 
+	// DisableRegistration forbids all new registration using the public form/API.
+	DisableRegistration bool
+
 	// ExternalAuth is the URL of the login form to use instead of the embedded one.
 	ExternalAuth URL
 

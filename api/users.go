@@ -126,6 +126,11 @@ type UserRegistration struct {
 //	@Failure		500		{object}	happydns.Error
 //	@Router			/users [post]
 func registerUser(opts *config.Options, c *gin.Context) {
+	if opts.DisableRegistration {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errmsg": "Registration are closed on this instance."})
+		return
+	}
+
 	var uu UserRegistration
 	err := c.ShouldBindJSON(&uu)
 	if err != nil {
