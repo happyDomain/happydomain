@@ -63,7 +63,9 @@ func declareUsersAuthRoutes(opts *config.Options, router *gin.RouterGroup) {
 
 	router.GET("/sessions", getSessions)
 	router.POST("/sessions", createSession)
-	apiSessionsRoutes := router.Group("/session/:sid")
+	router.DELETE("/sessions", clearUserSessions)
+	apiSessionsRoutes := router.Group("/sessions/:sid")
+	apiSessionsRoutes.Use(sessionHandler)
 	apiSessionsRoutes.PUT("", updateSession)
 	apiSessionsRoutes.DELETE("", deleteSession)
 
@@ -727,6 +729,24 @@ func recoverUserAccount(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+func sessionHandler(c *gin.Context) {
+	session, err := storage.MainStore.GetSession(c.Param("sid"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	myuser := c.MustGet("LoggedUser").(*happydns.User)
+	if !myuser.Id.Equals(session.IdUser) {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "The session is not affiliated witht this user"})
+		return
+	}
+
+	c.Set("session", session)
+
+	c.Next()
+}
+
 // getSession gets the content of the current user's session.
 //
 //	@Summary	Retrieve user's session content
@@ -767,6 +787,39 @@ func clearSession(c *gin.Context) {
 	session := sessions.Default(c)
 
 	session.Clear()
+
+	c.Status(http.StatusNoContent)
+}
+
+// clearUserSessions closes all existing sessions for a given user, and disconnect it.
+//
+//	@Summary	Remove user's sessions
+//	@Schemes
+//	@Description	Closes all sessions for a given user.
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Success		204	{null}		null
+//	@Failure		401	{object}	happydns.Error	"Authentication failure"
+//	@Router			/sessions [delete]
+func clearUserSessions(c *gin.Context) {
+	myuser := c.MustGet("LoggedUser").(*happydns.User)
+
+	sessions, err := storage.MainStore.GetUserSessions(myuser)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	for _, session := range sessions {
+		err = storage.MainStore.DeleteSession(session.Id)
+		if err != nil {
+			log.Printf("Unable to DeleteSession(sid=%s) in clearUsersSessions(uid=%s): %s", session.Id, myuser.Id.String(), err.Error())
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Unable to delete all sessions. Please try again."})
+			return
+		}
+	}
 
 	c.Status(http.StatusNoContent)
 }

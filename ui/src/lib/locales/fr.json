@@ -192,11 +192,14 @@
     },
     "history": {
         "committed-on": "Enregistrée le",
+        "created-on": "Créé le",
         "diff": "Voir les changements",
+        "expires-on": "Expire le",
         "modified-on": "Dernière modification le",
         "published-on": "Publiée le",
         "see": "Voir la zone à ce moment",
-        "title": "Historique des changements la zone "
+        "title": "Historique des changements la zone ",
+        "used-on": "Dernière utilisation le"
     },
     "logs": {
       "date": "Date",
@@ -323,6 +326,7 @@
         },
         "language": "Langue",
         "save": "Enregistrer les paramètres",
+        "sessions": "Sessions",
         "showrrtypes": "Afficher les types d'enregistrement associés aux services (pour les utilisateurs familiers de la terminologie DNS)",
         "success": "Vous pouvez continuer d'apprécier happyDomain.",
         "success-change": "Vos paramètres ont été sauvegardés.",

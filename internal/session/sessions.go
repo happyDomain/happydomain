@@ -75,27 +75,24 @@ func (s *SessionStore) New(r *http.Request, name string) (*sessions.Session, err
 	session.Options = &options
 	session.IsNew = true
 
-	var token string
-	if cookie, err := r.Cookie(name); err == nil {
-		token = cookie.Value
-	} else if _, ok := r.Header["Authorization"]; ok && len(r.Header["Authorization"]) > 0 {
+	if _, ok := r.Header["Authorization"]; ok && len(r.Header["Authorization"]) > 0 {
 		if flds := strings.Fields(r.Header["Authorization"][0]); len(flds) == 2 && flds[0] == "Bearer" {
-			token = flds[1]
+			session.ID = flds[1]
+		}
+	} else if cookie, err := r.Cookie(name); err == nil {
+		err := securecookie.DecodeMulti(name, cookie.Value, &session.ID, s.Codecs...)
+		if err != nil {
+			// Value could not be decrypted, consider this is a new session
+			return session, err
 		}
 	}
 
-	if len(token) == 0 {
+	if len(session.ID) == 0 {
 		// Cookie not found, this is a new session
 		return session, nil
 	}
 
-	err := securecookie.DecodeMulti(name, token, &session.ID, s.Codecs...)
-	if err != nil {
-		// Value could not be decrypted, consider this is a new session
-		return session, err
-	}
-
-	err = s.load(session)
+	err := s.load(session)
 	session.IsNew = false
 	return session, err
 }
@@ -145,9 +142,11 @@ func (s *SessionStore) load(session *sessions.Session) error {
 		return err
 	}
 
-	err = securecookie.DecodeMulti(session.Name(), mysession.Content, &session.Values, s.Codecs...)
-	if err != nil {
-		return err
+	if len(mysession.Content) > 0 {
+		err = securecookie.DecodeMulti(session.Name(), mysession.Content, &session.Values, s.Codecs...)
+		if err != nil {
+			return err
+		}
 	}
 
 	if len(mysession.IdUser) > 0 {

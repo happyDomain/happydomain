@@ -42,6 +42,7 @@
         "edit": "Edit",
         "field": "Field",
         "go": "Go!",
+        "got-it": "Got it!",
         "name": "Name",
         "next": "Next",
         "no-content": "No content",
@@ -198,11 +199,14 @@
     },
     "history": {
         "committed-on": "Committed on",
+        "created-on": "Created on",
         "diff": "View differences",
+        "expires-on": "Expires on",
         "modified-on": "Modified on",
         "published-on": "Published on",
         "see": "Display the zone at this time",
-        "title": "History of changes to the zone "
+        "title": "History of changes to the zone ",
+        "used-on": "Last used on"
     },
     "logs": {
       "date": "Date",
@@ -299,6 +303,14 @@
         "ttl-long": "Time-To-Live",
         "ttl-tip": "0 means default TTL, others values are exprimed in seconds"
     },
+    "sessions": {
+      "close-all": "Terminate all sessions",
+      "create": "Create API key",
+      "current": "current session",
+      "description": "Name your session",
+      "secret": "Session secret",
+      "usage": "Here is an example on how to use the generated secret:"
+    },
     "provider": {
         "another": "Use another provider",
         "associations": "{{count:eq; 0:no domain associated; 1:{{count}} domain associated; default:{{count}} domains associated}}",
@@ -350,6 +362,7 @@
         },
         "language": "Language",
         "save": "Save settings",
+        "sessions": "Sessions",
         "showrrtypes": "Show resource type associated with services (for users familiar with DNS)",
         "success": "Continue to enjoy happyDomain.",
         "success-change": "Your settings has been saved.",
