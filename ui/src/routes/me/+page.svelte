@@ -108,15 +108,14 @@
     {:else}
         <Row>
             {#if $userSession.settings}
-                <Card class="offset-md-2 col-8">
-                    <CardBody>
-                        <UserSettingsForm settings={$userSession.settings} />
-                    </CardBody>
-                </Card>
+                <Col class="offset-md-1 offset-lg-2 col col-md-10 col-lg-8">
+                    <UserSettingsForm settings={$userSession.settings} />
+                </Col>
             {/if}
         </Row>
 
-        <hr>
+        <hr class="my-4">
+
         <div class="d-flex justify-content-between">
             <h2 id="sessions">
                 {$t('settings.sessions')}
@@ -157,8 +156,8 @@
             {:then sessions}
                 <ListGroup>
                     {#each sessions as session (session.id)}
-                        <ListGroupItem class="d-flex align-items-center">
-                            <div class="flex-fill">
+                        <ListGroupItem class="d-flex align-items-center justify-content-between">
+                            <div class="flex-fill" style="max-width:90%">
                                 <div class="text-truncate">
                                     {session.description}
                                     <small class="text-muted">
@@ -200,8 +199,10 @@
                 </ListGroup>
             {/await}
         {/await}
+
+        <hr class="my-4">
+
         {#if $userSession.email !== '_no_auth'}
-            <hr>
             <h2 id="password-change">
                 {$t('password.change')}
             </h2>
@@ -230,7 +231,9 @@
                     {/await}
                 {/if}
             {/await}
-            <hr>
+
+            <hr class="my-4">
+
             <h2 id="delete-account">
                 {$t('account.delete.delete')}
             </h2>
@@ -281,6 +284,9 @@
                 />
             </form>
         {:else}
+            <p>
+                API token created: {newSessionDescription}
+            </p>
             <div>
                 <label for="session-secret">
                     {$t('sessions.secret')}
