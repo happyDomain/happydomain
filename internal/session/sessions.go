@@ -78,6 +78,8 @@ func (s *SessionStore) New(r *http.Request, name string) (*sessions.Session, err
 	if _, ok := r.Header["Authorization"]; ok && len(r.Header["Authorization"]) > 0 {
 		if flds := strings.Fields(r.Header["Authorization"][0]); len(flds) == 2 && flds[0] == "Bearer" {
 			session.ID = flds[1]
+		} else if user, _, ok := r.BasicAuth(); ok {
+			session.ID = user
 		}
 	} else if cookie, err := r.Cookie(name); err == nil {
 		err := securecookie.DecodeMulti(name, cookie.Value, &session.ID, s.Codecs...)

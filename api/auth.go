@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/sessions"
@@ -101,6 +102,15 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 			userid = happydns.Identifier(iu)
 		}
 
+		var method string
+		if _, ok := c.Request.Header["Authorization"]; ok && len(c.Request.Header["Authorization"]) > 0 {
+			if flds := strings.Fields(c.Request.Header["Authorization"][0]); len(flds) == 2 {
+				method = strings.ToLower(flds[0])
+			}
+		} else {
+			method = "cookie"
+		}
+
 		// Authentication through JWT
 		var token string
 		if c.GetHeader("X-User-Token") != "" {
@@ -143,6 +153,7 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 			userid = user.Id
 
 			if userid != nil {
+				method = "jwt"
 				if userid == nil || userid.IsEmpty() || !userid.Equals(user.Id) {
 					CompleteAuth(opts, c, claims.Profile)
 					session.Clear()
@@ -159,7 +170,7 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 		}
 
 		// Stop here if there is no cookie
-		if userid == nil {
+		if userid == nil || method == "" {
 			if optional {
 				c.Next()
 			} else {
@@ -175,6 +186,7 @@ func authMiddleware(opts *config.Options, optional bool) gin.HandlerFunc {
 			return
 		}
 
+		c.Set("AuthMethod", method)
 		c.Set("LoggedUser", user)
 
 		// We are now ready to continue
