@@ -38,6 +38,11 @@ func declareApiCompatRoutes(cfg *config.Options, router *gin.RouterGroup) {
 }
 
 func noipUpdateRoute(c *gin.Context) {
+	if auth_method, ok := c.Get("AuthMethod"); !ok || (auth_method != "basic" && auth_method != "bearer") {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "To avoid security issues (CSRF), you can only use /nic/update with the HTTP Bearer Authorization header. Generate a key in your account settings."})
+		return
+	}
+
 	user := myUser(c)
 	if user == nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errmsg": "User not defined"})
