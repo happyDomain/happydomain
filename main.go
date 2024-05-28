@@ -30,6 +30,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/carlmjohnson/versioninfo"
 	"github.com/fatih/color"
 
 	"git.happydns.org/happyDomain/api"
@@ -50,10 +51,17 @@ func main() {
 	var err error
 
 	api.HDVersion = api.Version{
-		Version: Version,
+		Version:    Version,
+		LastCommit: versioninfo.Revision,
+		DirtyBuild: versioninfo.DirtyBuild,
+	}
+	if Version == "custom-build" {
+		api.HDVersion.Version = versioninfo.Short()
+	} else {
+		versioninfo.Version = Version
 	}
 
-	log.Println("This is happyDomain", Version)
+	log.Println("This is happyDomain", versioninfo.Short())
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	// Disabled colors in dnscontrol corrections

@@ -36,7 +36,9 @@ func DeclareVersionRoutes(router *gin.RouterGroup) {
 }
 
 type Version struct {
-	Version string `json:"version"`
+	Version    string `json:"version"`
+	LastCommit string `json:"last-commit"`
+	DirtyBuild bool   `json:"dirty-build"`
 }
 
 // showVersion returns the current happyDomain version.
