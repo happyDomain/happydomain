@@ -32,6 +32,7 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/pkg/diff2"
 	"github.com/gin-gonic/gin"
 	"github.com/miekg/dns"
+	"go.uber.org/multierr"
 
 	"git.happydns.org/happyDomain/config"
 	"git.happydns.org/happyDomain/model"
@@ -493,26 +494,41 @@ func applyZone(c *gin.Context) {
 
 	nbcorrections := len(form.WantedCorrections)
 	corrections, err := provider.GetDomainCorrections(domain, dc)
-	for _, cr := range corrections {
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Unable to compute domain corrections: %s", err.Error())})
+		return
+	}
+
+	var errs error
+corrections:
+	for i, cr := range corrections {
 		for ic, wc := range form.WantedCorrections {
 			if wc == cr.Msg {
 				log.Printf("%s: apply correction: %s", domain.DomainName, cr.Msg)
 				err := cr.F()
 
 				if err != nil {
-					storage.MainStore.CreateDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %s", zone.Id.String(), err.Error())))
-					c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to update the zone: %s", err.Error())})
-					return
+					log.Printf("%s: unable to apply correction: %s", domain.DomainName, err.Error())
+					storage.MainStore.CreateDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed record update (%s): %s", cr.Msg, err.Error())))
+					errs = multierr.Append(errs, fmt.Errorf("%s: %w", cr.Msg, err))
+
+					// Stop the zone update if we didn't change it yet
+					if i == 0 {
+						break corrections
+					}
+				} else {
+					form.WantedCorrections = append(form.WantedCorrections[:ic], form.WantedCorrections[ic+1:]...)
 				}
-
-				form.WantedCorrections = append(form.WantedCorrections[:ic], form.WantedCorrections[ic+1:]...)
-
 				break
 			}
 		}
 	}
 
-	if len(form.WantedCorrections) > 0 {
+	if len(multierr.Errors(errs)) > 0 {
+		storage.MainStore.CreateDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d corrections were not applied due to errors.", zone.Id.String(), nbcorrections)))
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to update the zone: %s", err.Error())})
+		return
+	} else if len(form.WantedCorrections) > 0 {
 		storage.MainStore.CreateDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d corrections were not applied.", zone.Id.String(), nbcorrections)))
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to perform the following changes: %s", form.WantedCorrections)})
 		return
