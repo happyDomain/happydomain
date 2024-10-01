@@ -12,7 +12,7 @@ require (
 	github.com/go-mail/mail v2.3.1+incompatible
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/gorilla/securecookie v1.1.2
-	github.com/gorilla/sessions v1.2.2
+	github.com/gorilla/sessions v1.4.0
 	github.com/miekg/dns v1.1.62
 	github.com/mileusna/useragent v1.3.4
 	github.com/ovh/go-ovh v1.6.0
