@@ -260,6 +260,15 @@ func caa_analyze(a *Analyzer) (err error) {
 				}
 			}
 
+			if record.CaaTag == "issuemail" {
+				value := record.GetTargetField()
+				if value == ";" {
+					analyzed.DisallowMailIssue = true
+				} else {
+					analyzed.IssueMail = append(analyzed.Issue, parseIssueValue(value))
+				}
+			}
+
 			if record.CaaTag == "iodef" {
 				if u, err := url.Parse(record.GetTargetField()); err != nil {
 					continue
