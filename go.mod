@@ -20,6 +20,7 @@ require (
 	github.com/ovh/go-ovh v1.6.0
 	github.com/rrivera/identicon v0.0.0-20240116195454-d5ba35832c0d
 	github.com/swaggo/files v1.0.1
+	github.com/swaggo/files/v2 v2.0.1
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.3
 	github.com/syndtr/goleveldb v1.0.0
