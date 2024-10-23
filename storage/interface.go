@@ -157,11 +157,8 @@ type Storage interface {
 	// GetUserByEmail retrives the User with the given email address.
 	GetUserByEmail(email string) (*happydns.User, error)
 
-	// CreateUser creates a record in the database for the given User.
-	CreateUser(user *happydns.User) error
-
-	// UpdateUser updates the fields of the given User.
-	UpdateUser(user *happydns.User) error
+	// CreateOrUpdateUser updates the fields of the given User.
+	CreateOrUpdateUser(user *happydns.User) error
 
 	// DeleteUser removes the given User from the database.
 	DeleteUser(user *happydns.User) error

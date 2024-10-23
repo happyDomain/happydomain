@@ -396,7 +396,7 @@ func changeUserSettings(c *gin.Context) {
 
 	user.Settings = us
 
-	if err := storage.MainStore.UpdateUser(user); err != nil {
+	if err := storage.MainStore.CreateOrUpdateUser(user); err != nil {
 		log.Printf("%s: unable to UpdateUser in changeUserSettings: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Sorry, we are currently unable to update your profile. Please try again later."})
 		return

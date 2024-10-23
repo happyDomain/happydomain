@@ -79,11 +79,7 @@ func newUser(c *gin.Context) {
 		return
 	}
 
-	if uu.Id.IsEmpty() {
-		ApiResponse(c, uu, storage.MainStore.CreateUser(uu))
-	} else {
-		ApiResponse(c, uu, storage.MainStore.UpdateUser(uu))
-	}
+	ApiResponse(c, uu, storage.MainStore.CreateOrUpdateUser(uu))
 }
 
 func deleteUsers(c *gin.Context) {
@@ -107,7 +103,7 @@ func updateUser(c *gin.Context) {
 	}
 	uu.Id = user.Id
 
-	ApiResponse(c, uu, storage.MainStore.UpdateUser(uu))
+	ApiResponse(c, uu, storage.MainStore.CreateOrUpdateUser(uu))
 }
 
 func deleteUser(c *gin.Context) {

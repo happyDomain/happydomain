@@ -70,7 +70,7 @@ func retrieveUserFromClaims(claims *UserClaims) (user *happydns.User, err error)
 		// Update user's data when connected more than 12 hours
 		updateUserFromClaims(user, claims)
 
-		err = storage.MainStore.UpdateUser(user)
+		err = storage.MainStore.CreateOrUpdateUser(user)
 		if err != nil {
 			err = fmt.Errorf("has a correct JWT, user has been found, but an error occured when trying to update the user's information: %w", err)
 			return

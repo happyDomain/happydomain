@@ -96,17 +96,16 @@ func (s *LevelDBStorage) UserExists(email string) bool {
 	return false
 }
 
-func (s *LevelDBStorage) CreateUser(u *happydns.User) error {
-	key, id, err := s.findIdentifierKey("user-")
-	if err != nil {
-		return err
+func (s *LevelDBStorage) CreateOrUpdateUser(u *happydns.User) error {
+	if u.Id.IsEmpty() {
+		_, id, err := s.findIdentifierKey("user-")
+		if err != nil {
+			return err
+		}
+
+		u.Id = id
 	}
 
-	u.Id = id
-	return s.put(key, u)
-}
-
-func (s *LevelDBStorage) UpdateUser(u *happydns.User) error {
 	return s.put(fmt.Sprintf("user-%s", u.Id.String()), u)
 }
 

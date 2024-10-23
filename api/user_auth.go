@@ -232,7 +232,7 @@ func createUserFromProfile(userprofile UserProfile) (*happydns.User, error) {
 		Settings:  *happydns.DefaultUserSettings(),
 	}
 
-	err := storage.MainStore.UpdateUser(user)
+	err := storage.MainStore.CreateOrUpdateUser(user)
 	if err != nil {
 		return user, err
 	}
