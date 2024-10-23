@@ -4,6 +4,8 @@ EXPOSE 8081
 
 ENTRYPOINT ["/usr/sbin/happyDomain"]
 
+HEALTHCHECK CMD curl --fail http://localhost:8081/api/version
+
 ENV HAPPYDOMAIN_LEVELDB_PATH=/data/happydomain.db
 
 RUN apk add --no-cache \
