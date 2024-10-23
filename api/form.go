@@ -56,7 +56,7 @@ func formDoState(cfg *config.Options, c *gin.Context, fs *FormState, data interf
 		}
 		return
 	} else {
-		return csf.DisplaySettingsForm(fs.State, cfg, &session, func() string {
+		return csf.DisplaySettingsForm(fs.State, cfg.GetBaseURL(), &session, func() string {
 			return fs.Recall
 		})
 	}

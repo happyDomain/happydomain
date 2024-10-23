@@ -24,8 +24,6 @@ package providers // import "git.happydns.org/happyDomain/providers"
 import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/powerdns"
-
-	"git.happydns.org/happyDomain/model"
 )
 
 type PowerdnsAPI struct {
@@ -63,7 +61,7 @@ func (s *PowerdnsAPI) DNSControlName() string {
 }
 
 func init() {
-	RegisterProvider(func() happydns.Provider {
+	RegisterProvider(func() Provider {
 		return &PowerdnsAPI{}
 	}, ProviderInfos{
 		Name:        "PowerDNS",

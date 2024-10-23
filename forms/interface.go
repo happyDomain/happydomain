@@ -25,8 +25,6 @@ import (
 	"errors"
 
 	"github.com/gin-contrib/sessions"
-
-	"git.happydns.org/happyDomain/config"
 )
 
 // GenRecallID
@@ -35,7 +33,7 @@ type GenRecallID func() string
 // CustomSettingsForm are functions to declare when we want to display a custom user experience when asking for Source's settings.
 type CustomSettingsForm interface {
 	// DisplaySettingsForm generates the CustomForm corresponding to the asked target state.
-	DisplaySettingsForm(int32, *config.Options, *sessions.Session, GenRecallID) (*CustomForm, map[string]interface{}, error)
+	DisplaySettingsForm(int32, string, *sessions.Session, GenRecallID) (*CustomForm, map[string]interface{}, error)
 }
 
 var (

@@ -24,8 +24,6 @@ package providers // import "git.happydns.org/happyDomain/providers"
 import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/gandiv5"
-
-	"git.happydns.org/happyDomain/model"
 )
 
 type GandiAPI struct {
@@ -46,7 +44,7 @@ func (s *GandiAPI) DNSControlName() string {
 }
 
 func init() {
-	RegisterProvider(func() happydns.Provider {
+	RegisterProvider(func() Provider {
 		return &GandiAPI{}
 	}, ProviderInfos{
 		Name:        "Gandi",

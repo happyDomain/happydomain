@@ -99,9 +99,14 @@ func DynamicUpdate(user *happydns.User, subdomains []string, ipv4, ipv6 string) 
 		}
 
 		// Retrieve corresponding provider
-		provider, err := storage.MainStore.GetProvider(user, domainToUpdate.IdProvider)
+		p, err := storage.MainStore.GetProvider(user, domainToUpdate.IdProvider)
 		if err != nil {
 			return fmt.Errorf("Unable to retrieve domain's provider: %w", err)
+		}
+
+		provider, err := p.ParseProvider()
+		if err != nil {
+			return fmt.Errorf("Unable to parse provider: %w", err)
 		}
 
 		// Fetch the current zone

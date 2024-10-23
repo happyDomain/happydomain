@@ -24,8 +24,6 @@ package providers // import "git.happydns.org/happyDomain/providers"
 import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/gcloud"
-
-	"git.happydns.org/happyDomain/model"
 )
 
 type GCloudAPI struct {
@@ -50,7 +48,7 @@ func (s *GCloudAPI) DNSControlName() string {
 }
 
 func init() {
-	RegisterProvider(func() happydns.Provider {
+	RegisterProvider(func() Provider {
 		return &GCloudAPI{}
 	}, ProviderInfos{
 		Name:        "Google Cloud Platform (GCP)",

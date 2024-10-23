@@ -24,8 +24,6 @@ package providers // import "git.happydns.org/happyDomain/providers"
 import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/cloudns"
-
-	"git.happydns.org/happyDomain/model"
 )
 
 type ClouDNSAPI struct {
@@ -48,7 +46,7 @@ func (s *ClouDNSAPI) DNSControlName() string {
 }
 
 func init() {
-	RegisterProvider(func() happydns.Provider {
+	RegisterProvider(func() Provider {
 		return &ClouDNSAPI{}
 	}, ProviderInfos{
 		Name:        "ClouDNS",

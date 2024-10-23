@@ -22,25 +22,22 @@
 package happydns
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/StackExchange/dnscontrol/v4/models"
-	"github.com/StackExchange/dnscontrol/v4/providers"
-)
+	dnscontrol "github.com/StackExchange/dnscontrol/v4/providers"
 
-// Provider is where Domains and Zones can be managed.
-type Provider interface {
-	NewDNSServiceProvider() (providers.DNSServiceProvider, error)
-	DNSControlName() string
-}
+	"git.happydns.org/happyDomain/providers"
+)
 
 // ProviderMinimal is used for swagger documentation as Provider add.
 type ProviderMinimal struct {
 	// Type is the string representation of the Provider's type.
 	Type string `json:"_srctype"`
 
-	Provider
+	Provider providers.Provider
 
 	// Comment is a string that helps user to distinguish the Provider.
 	Comment string `json:"_comment,omitempty"`
@@ -61,10 +58,48 @@ type ProviderMeta struct {
 	Comment string `json:"_comment,omitempty"`
 }
 
+// ProviderMessage combined ProviderMeta + Provider in a parsable way
+type ProviderMessage struct {
+	ProviderMeta
+	Provider json.RawMessage
+}
+
+func (msg *ProviderMessage) Meta() *ProviderMeta {
+	return &msg.ProviderMeta
+}
+
+func (msg *ProviderMessage) ParseProvider() (p *ProviderCombined, err error) {
+	p = &ProviderCombined{}
+
+	p.ProviderMeta = msg.ProviderMeta
+	p.Provider, err = providers.FindProvider(msg.Type)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(msg.Provider, &p.Provider)
+	return
+}
+
+type ProviderMessages []*ProviderMessage
+
+func (pms *ProviderMessages) Metas() (ret []*ProviderMeta) {
+	for _, pm := range *pms {
+		ret = append(ret, &pm.ProviderMeta)
+	}
+	return
+}
+
 // ProviderCombined combined ProviderMeta + Provider
 type ProviderCombined struct {
-	Provider
 	ProviderMeta
+	providers.Provider
+}
+
+func (p *ProviderCombined) ToMessage() (msg ProviderMessage, err error) {
+	msg.ProviderMeta = p.ProviderMeta
+	msg.Provider, err = json.Marshal(p.Provider)
+	return
 }
 
 // Validate ensure the given parameters are corrects.
@@ -74,7 +109,7 @@ func (p *ProviderCombined) Validate() error {
 		return err
 	}
 
-	sr, ok := prv.(providers.ZoneLister)
+	sr, ok := prv.(dnscontrol.ZoneLister)
 	if ok {
 		_, err = sr.ListZones()
 	}
@@ -83,7 +118,7 @@ func (p *ProviderCombined) Validate() error {
 }
 
 func (p *ProviderCombined) getZoneRecords(fqdn string) (rcs models.Records, err error) {
-	var s providers.DNSServiceProvider
+	var s dnscontrol.DNSServiceProvider
 	s, err = p.NewDNSServiceProvider()
 	if err != nil {
 		return
@@ -112,7 +147,7 @@ func (p *ProviderCombined) ImportZone(dn *Domain) (rcs models.Records, err error
 }
 
 func (p *ProviderCombined) GetDomainCorrections(dn *Domain, dc *models.DomainConfig) (rrs []*models.Correction, err error) {
-	var s providers.DNSServiceProvider
+	var s dnscontrol.DNSServiceProvider
 	s, err = p.NewDNSServiceProvider()
 	if err != nil {
 		return

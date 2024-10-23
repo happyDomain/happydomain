@@ -24,8 +24,6 @@ package providers // import "git.happydns.org/happyDomain/providers"
 import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/loopia"
-
-	"git.happydns.org/happyDomain/model"
 )
 
 type LoopiaAPI struct {
@@ -46,7 +44,7 @@ func (s *LoopiaAPI) DNSControlName() string {
 }
 
 func init() {
-	RegisterProvider(func() happydns.Provider {
+	RegisterProvider(func() Provider {
 		return &LoopiaAPI{}
 	}, ProviderInfos{
 		Name:        "Loopia",

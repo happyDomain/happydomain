@@ -79,20 +79,20 @@ func FindUserProviderHandler(c *gin.Context) {
 	}
 }
 
-func listAllProviders() ([]happydns.ProviderMeta, error) {
-	var providers []happydns.ProviderMeta
+func listAllProviders() ([]*happydns.ProviderMeta, error) {
+	var providers []*happydns.ProviderMeta
 
 	users, err := storage.MainStore.GetUsers()
 	if err != nil {
 		return nil, err
 	}
 	for _, user := range users {
-		usersProviders, err := storage.MainStore.GetProviderMetas(user)
+		usersProviders, err := storage.MainStore.GetProviders(user)
 		if err != nil {
 			return nil, err
 		}
 
-		providers = append(providers, usersProviders...)
+		providers = append(providers, usersProviders.Metas()...)
 	}
 
 	return providers, err
@@ -101,8 +101,8 @@ func listAllProviders() ([]happydns.ProviderMeta, error) {
 func getProviders(c *gin.Context) {
 	user, exists := c.Get("user")
 	if exists {
-		srcmeta, err := storage.MainStore.GetProviderMetas(user.(*happydns.User))
-		ApiResponse(c, srcmeta, err)
+		srcmeta, err := storage.MainStore.GetProviders(user.(*happydns.User))
+		ApiResponse(c, srcmeta.Metas(), err)
 	} else {
 		providers, err := listAllProviders()
 		if err != nil {
@@ -121,9 +121,18 @@ func newUserProvider(c *gin.Context) {
 		return
 	}
 
-	us, _, err := api.DecodeProvider(c)
+	var usrc happydns.ProviderMessage
+	err := c.ShouldBindJSON(&usrc)
+
+	us, err := usrc.ParseProvider()
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	err = us.Validate()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to validate provider: %s", err.Error())})
 		return
 	}
 

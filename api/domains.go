@@ -119,9 +119,15 @@ func addDomain(c *gin.Context) {
 
 	user := c.MustGet("LoggedUser").(*happydns.User)
 
-	provider, err := storage.MainStore.GetProvider(user, uz.IdProvider)
+	p, err := storage.MainStore.GetProvider(user, uz.IdProvider)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to find the provider.")})
+		return
+	}
+
+	provider, err := p.ParseProvider()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Errorf("Unable to retrieve provider's data: %s", err.Error())})
 		return
 	}
 

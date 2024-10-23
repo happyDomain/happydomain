@@ -27,8 +27,6 @@ import (
 
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/axfrddns"
-
-	"git.happydns.org/happyDomain/model"
 )
 
 type DDNSServer struct {
@@ -60,7 +58,7 @@ func (s *DDNSServer) DNSControlName() string {
 }
 
 func init() {
-	RegisterProvider(func() happydns.Provider {
+	RegisterProvider(func() Provider {
 		return &DDNSServer{}
 	}, ProviderInfos{
 		Name:        "Dynamic DNS",

@@ -22,9 +22,7 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 
@@ -33,7 +31,6 @@ import (
 
 	"git.happydns.org/happyDomain/config"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/providers"
 	"git.happydns.org/happyDomain/storage"
 )
 
@@ -85,57 +82,21 @@ func declareProvidersRoutes(cfg *config.Options, router *gin.RouterGroup) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		securitydefinitions.basic
-//	@Success		200	{array}		happydns.Provider
+//	@Success		200	{array}		providers.Provider
 //	@Failure		401	{object}	happydns.Error	"Authentication failure"
 //	@Failure		404	{object}	happydns.Error	"Unable to retrieve user's domains"
 //	@Router			/providers [get]
 func getProviders(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 
-	if providers, err := storage.MainStore.GetProviderMetas(user); err != nil {
+	if providers, err := storage.MainStore.GetProviders(user); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 		return
 	} else if len(providers) > 0 {
-		c.JSON(http.StatusOK, providers)
+		c.JSON(http.StatusOK, providers.Metas())
 	} else {
-		c.JSON(http.StatusOK, []happydns.Provider{})
+		c.JSON(http.StatusOK, []interface{}{})
 	}
-}
-
-func DecodeProvider(c *gin.Context) (*happydns.ProviderCombined, int, error) {
-	buf, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		return nil, http.StatusBadRequest, fmt.Errorf("Unable to read input: %w", err)
-	}
-
-	var ust happydns.ProviderMeta
-	err = json.Unmarshal(buf, &ust)
-	if err != nil {
-		return nil, http.StatusBadRequest, fmt.Errorf("Unable to parse input as ProviderMeta: %w", err)
-	}
-
-	us, err := providers.FindProvider(ust.Type)
-	if err != nil {
-		log.Printf("%s: unable to find provider %s: %s", c.ClientIP(), ust.Type, err.Error())
-		return nil, http.StatusInternalServerError, fmt.Errorf("Sorry, we were unable to find the kind of provider in our database. Please report this issue.")
-	}
-
-	src := &happydns.ProviderCombined{
-		Provider:     us,
-		ProviderMeta: ust,
-	}
-
-	err = json.Unmarshal(buf, &src)
-	if err != nil {
-		return nil, http.StatusBadRequest, fmt.Errorf("Unable to parse input as Provider: %w", err)
-	}
-
-	err = src.Validate()
-	if err != nil {
-		return nil, http.StatusBadRequest, fmt.Errorf("Unable to validate input: %w", err)
-	}
-
-	return src, http.StatusOK, nil
 }
 
 func ProviderMetaHandler(c *gin.Context) {
@@ -154,14 +115,14 @@ func ProviderMetaHandler(c *gin.Context) {
 	}
 
 	// Retrieve provider meta
-	providermeta, err := storage.MainStore.GetProviderMeta(user, pid)
+	provider, err := storage.MainStore.GetProvider(user, pid)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Provider not found."})
 		return
 	}
 
 	// Continue
-	c.Set("providermeta", providermeta)
+	c.Set("providermeta", provider.Meta())
 
 	c.Next()
 }
@@ -182,15 +143,21 @@ func ProviderHandler(c *gin.Context) {
 	}
 
 	// Retrieve provider
-	provider, err := storage.MainStore.GetProvider(user, pid)
+	p, err := storage.MainStore.GetProvider(user, pid)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Provider not found."})
 		return
 	}
 
+	provider, err := p.ParseProvider()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Unable to retrieve provider data: %s", err.Error())})
+		return
+	}
+
 	// Continue
 	c.Set("provider", provider)
-	c.Set("providermeta", provider.ProviderMeta)
+	c.Set("providermeta", p.ProviderMeta)
 
 	c.Next()
 }
@@ -225,7 +192,7 @@ func GetProvider(c *gin.Context) {
 //	@Produce		json
 //	@Param			body	body	happydns.ProviderMinimal	true	"Provider to add"
 //	@Security		securitydefinitions.basic
-//	@Success		200	{object}	happydns.Provider
+//	@Success		200	{object}	providers.Provider
 //	@Failure		400	{object}	happydns.Error	"Error in received data"
 //	@Failure		401	{object}	happydns.Error	"Authentication failure"
 //	@Failure		500	{object}	happydns.Error	"Unable to retrieve current user's providers"
@@ -233,9 +200,18 @@ func GetProvider(c *gin.Context) {
 func addProvider(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 
-	src, statuscode, err := DecodeProvider(c)
+	var usrc happydns.ProviderMessage
+	err := c.ShouldBindJSON(&usrc)
+
+	src, err := usrc.ParseProvider()
 	if err != nil {
-		c.AbortWithStatusJSON(statuscode, gin.H{"errmsg": err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	err = src.Validate()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to validate provider: %s", err.Error())})
 		return
 	}
 
@@ -258,9 +234,9 @@ func addProvider(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			providerId	path	string				true	"Provider identifier"
-//	@Param			body		body	happydns.Provider	true	"The new object overriding the current provider"
+//	@Param			body		body	providers.Provider	true	"The new object overriding the current provider"
 //	@Security		securitydefinitions.basic
-//	@Success		200	{object}	happydns.Provider
+//	@Success		200	{object}	providers.Provider
 //	@Failure		400	{object}	happydns.Error	"Invalid input"
 //	@Failure		400	{object}	happydns.Error	"Identifier changed"
 //	@Failure		401	{object}	happydns.Error	"Authentication failure"
@@ -270,9 +246,18 @@ func addProvider(c *gin.Context) {
 func UpdateProvider(c *gin.Context) {
 	provider := c.MustGet("provider").(*happydns.ProviderCombined)
 
-	src, statuscode, err := DecodeProvider(c)
+	var usrc happydns.ProviderMessage
+	err := c.ShouldBindJSON(&usrc)
+
+	src, err := usrc.ParseProvider()
 	if err != nil {
-		c.AbortWithStatusJSON(statuscode, gin.H{"errmsg": err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	err = src.Validate()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to validate provider: %s", err.Error())})
 		return
 	}
 

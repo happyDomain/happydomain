@@ -26,8 +26,6 @@ import (
 
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/bind"
-
-	"git.happydns.org/happyDomain/model"
 )
 
 type BindServer struct {
@@ -53,7 +51,7 @@ func (s *BindServer) DNSControlName() string {
 
 func init() {
 	flag.BoolFunc("with-bind-provider", "Enable the BIND provider (not suitable for cloud/shared instance as it'll access the local file system)", func(s string) error {
-		RegisterProvider(func() happydns.Provider {
+		RegisterProvider(func() Provider {
 			return &BindServer{}
 		}, ProviderInfos{
 			Name:        "Bind files/RFC 1035",

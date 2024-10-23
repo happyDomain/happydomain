@@ -34,92 +34,62 @@ import (
 	"git.happydns.org/happyDomain/providers"
 )
 
-func (s *LevelDBStorage) getProviderMeta(id happydns.Identifier) (srcMeta *happydns.ProviderMeta, err error) {
+func (s *LevelDBStorage) getProviderMeta(id happydns.Identifier) (srcMsg *happydns.ProviderMessage, err error) {
 	var v []byte
 	v, err = s.db.Get(id, nil)
 	if err != nil {
 		return
 	}
 
-	srcMeta = &happydns.ProviderMeta{}
-	err = decodeData(v, srcMeta)
+	srcMsg = &happydns.ProviderMessage{}
+	err = decodeData(v, srcMsg)
 	return
 }
 
-func (s *LevelDBStorage) GetProviderMetas(u *happydns.User) (srcs []happydns.ProviderMeta, err error) {
+func (s *LevelDBStorage) GetProviders(u *happydns.User) (srcs happydns.ProviderMessages, err error) {
 	iter := s.search("provider-")
 	defer iter.Release()
 
 	for iter.Next() {
-		var srcMeta happydns.ProviderMeta
-		err = decodeData(iter.Value(), &srcMeta)
+		var srcMsg happydns.ProviderMessage
+		err = decodeData(iter.Value(), &srcMsg)
 		if err != nil {
 			return
 		}
 
-		if !bytes.Equal(srcMeta.OwnerId, u.Id) {
+		if !bytes.Equal(srcMsg.OwnerId, u.Id) {
 			continue
 		}
 
-		srcs = append(srcs, srcMeta)
+		srcs = append(srcs, &srcMsg)
 	}
 
 	return
 }
 
-func (s *LevelDBStorage) GetProviderMeta(u *happydns.User, id happydns.Identifier) (srcMeta *happydns.ProviderMeta, err error) {
+func (s *LevelDBStorage) GetProvider(u *happydns.User, id happydns.Identifier) (src *happydns.ProviderMessage, err error) {
 	var v []byte
 	v, err = s.db.Get([]byte(fmt.Sprintf("provider-%s", id.String())), nil)
 	if err != nil {
 		return
 	}
 
-	srcMeta = new(happydns.ProviderMeta)
-	err = decodeData(v, &srcMeta)
+	var srcMsg happydns.ProviderMessage
+	err = decodeData(v, &srcMsg)
 	if err != nil {
 		return
 	}
 
-	if !bytes.Equal(srcMeta.OwnerId, u.Id) {
-		srcMeta = nil
-		err = leveldb.ErrNotFound
-	}
-
-	return
-}
-
-func (s *LevelDBStorage) GetProvider(u *happydns.User, id happydns.Identifier) (src *happydns.ProviderCombined, err error) {
-	var v []byte
-	v, err = s.db.Get([]byte(fmt.Sprintf("provider-%s", id.String())), nil)
-	if err != nil {
-		return
-	}
-
-	var srcMeta happydns.ProviderMeta
-	err = decodeData(v, &srcMeta)
-	if err != nil {
-		return
-	}
-
-	if !bytes.Equal(srcMeta.OwnerId, u.Id) {
+	if !bytes.Equal(srcMsg.OwnerId, u.Id) {
 		src = nil
 		err = leveldb.ErrNotFound
+		return
 	}
 
-	var tsrc happydns.Provider
-	tsrc, err = providers.FindProvider(srcMeta.Type)
-
-	src = &happydns.ProviderCombined{
-		Provider:     tsrc,
-		ProviderMeta: srcMeta,
-	}
-
-	err = decodeData(v, src)
-
-	return
+	return &srcMsg, err
 }
 
-func (s *LevelDBStorage) CreateProvider(u *happydns.User, src happydns.Provider, comment string) (*happydns.ProviderCombined, error) {
+func (s *LevelDBStorage) CreateProvider(u *happydns.User, src providers.Provider, comment string) (*happydns.ProviderCombined, error) {
 	key, id, err := s.findIdentifierKey("provider-")
 	if err != nil {
 		return nil, err

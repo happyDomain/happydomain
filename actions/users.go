@@ -72,7 +72,7 @@ management platform!
 
 In order to validate your account, please follow this link now:
 
-[Validate my account](`+opts.GetRegistrationURL(user)+`)`,
+[Validate my account](`+user.GetRegistrationURL(opts.GetBaseURL())+`)`,
 	)
 }
 
@@ -87,6 +87,6 @@ You've just ask on our platform to recover your account.
 
 In order to define a new password, please follow this link now:
 
-[Recover my account](`+opts.GetAccountRecoveryURL(user)+`)`,
+[Recover my account](`+user.GetAccountRecoveryURL(opts.GetBaseURL())+`)`,
 	)
 }

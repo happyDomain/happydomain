@@ -26,8 +26,6 @@ import (
 
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/ovh"
-
-	"git.happydns.org/happyDomain/model"
 )
 
 var (
@@ -57,7 +55,7 @@ func init() {
 	flag.StringVar(&appKey, "ovh-application-key", "", "Application Key for using the OVH API")
 	flag.StringVar(&appSecret, "ovh-application-secret", "", "Application Secret for using the OVH API")
 
-	RegisterProvider(func() happydns.Provider {
+	RegisterProvider(func() Provider {
 		return &OVHAPI{}
 	}, ProviderInfos{
 		Name:        "OVH",

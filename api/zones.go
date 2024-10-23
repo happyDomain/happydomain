@@ -253,9 +253,15 @@ func retrieveZone(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 	domain := c.MustGet("domain").(*happydns.Domain)
 
-	provider, err := storage.MainStore.GetProvider(user, domain.IdProvider)
+	p, err := storage.MainStore.GetProvider(user, domain.IdProvider)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find your provider: %s", err.Error())})
+		return
+	}
+
+	provider, err := p.ParseProvider()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to retrieve provider's data: %s", err.Error())})
 		return
 	}
 
@@ -396,9 +402,15 @@ func diffZones(c *gin.Context) {
 	}
 
 	if c.Param("zoneid1") == "@" {
-		provider, err := storage.MainStore.GetProvider(user, domain.IdProvider)
+		p, err := storage.MainStore.GetProvider(user, domain.IdProvider)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusNotFound, fmt.Errorf("Unable to find the given provider: %q for %q", domain.IdProvider, domain.DomainName))
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Errorf("Unable to find the given provider: %q for %q", domain.IdProvider, domain.DomainName)})
+			return
+		}
+
+		provider, err := p.ParseProvider()
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Errorf("Unable to retrieve provider's data: %s", err.Error())})
 			return
 		}
 
@@ -471,9 +483,15 @@ func applyZone(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 	zone := c.MustGet("zone").(*happydns.Zone)
 
-	provider, err := storage.MainStore.GetProvider(user, domain.IdProvider)
+	p, err := storage.MainStore.GetProvider(user, domain.IdProvider)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, fmt.Errorf("Unable to find the given provider: %q for %q", domain.IdProvider, domain.DomainName))
+		return
+	}
+
+	provider, err := p.ParseProvider()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, fmt.Errorf("Unable to retrieve the provider data: %s", err.Error()))
 		return
 	}
 

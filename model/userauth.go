@@ -187,3 +187,15 @@ func (u *UserAuth) CanRecoverAccount(key string) error {
 
 	return fmt.Errorf("The account recovery link you follow is invalid or has expired (it is valid during %d hours)", AccountRecoveryHashValidity/time.Hour)
 }
+
+// GetAccountRecoveryURL returns the absolute URL corresponding to the recovery
+// URL of the given account.
+func (u *UserAuth) GetAccountRecoveryURL(baseurl string) string {
+	return baseurl + fmt.Sprintf("/forgotten-password?u=%s&k=%s", base64.RawURLEncoding.EncodeToString(u.Id), u.GenAccountRecoveryHash(false))
+}
+
+// GetAccountRecoveryURL returns the absolute URL corresponding to the recovery
+// URL of the given account.
+func (u *UserAuth) GetRegistrationURL(baseurl string) string {
+	return baseurl + fmt.Sprintf("/email-validation?u=%s&k=%s", base64.RawURLEncoding.EncodeToString(u.Id), u.GenRegistrationHash(false))
+}

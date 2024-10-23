@@ -28,7 +28,6 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/ovh/go-ovh/ovh"
 
-	"git.happydns.org/happyDomain/config"
 	"git.happydns.org/happyDomain/forms"
 )
 
@@ -61,14 +60,14 @@ func settingsForm(edit bool) *forms.CustomForm {
 	return form
 }
 
-func settingsAskCredentials(cfg *config.Options, recallid string, session *sessions.Session) (*forms.CustomForm, map[string]interface{}, error) {
+func settingsAskCredentials(baseurl string, recallid string, session *sessions.Session) (*forms.CustomForm, map[string]interface{}, error) {
 	client, err := ovh.NewClient("ovh-eu", appKey, appSecret, "")
 	if err != nil {
 		return nil, nil, fmt.Errorf("Unable to generate Consumer key, as OVH client can't be created: %w", err)
 	}
 
 	// Generate customer key
-	ckReq := client.NewCkRequestWithRedirection(cfg.BuildURL_noescape("/providers/new/OVHAPI/2?nsprvid=%s", recallid))
+	ckReq := client.NewCkRequestWithRedirection(baseurl + "/providers/new/OVHAPI/2?nsprvid=" + recallid)
 	ckReq.AddRecursiveRules(ovh.ReadWrite, "/domain")
 	ckReq.AddRules(ovh.ReadOnly, "/me")
 
@@ -89,14 +88,14 @@ func settingsAskCredentials(cfg *config.Options, recallid string, session *sessi
 		}, nil
 }
 
-func (s *OVHAPI) DisplaySettingsForm(state int32, cfg *config.Options, session *sessions.Session, genRecallId forms.GenRecallID) (*forms.CustomForm, map[string]interface{}, error) {
+func (s *OVHAPI) DisplaySettingsForm(state int32, baseurl string, session *sessions.Session, genRecallId forms.GenRecallID) (*forms.CustomForm, map[string]interface{}, error) {
 	switch state {
 	case 0:
 		return settingsForm(s.ConsumerKey != ""), nil, nil
 	case 1:
 		if s.ConsumerKey == "" {
 			recallid := genRecallId()
-			return settingsAskCredentials(cfg, recallid, session)
+			return settingsAskCredentials(baseurl, recallid, session)
 		} else {
 			return nil, nil, forms.DoneForm
 		}

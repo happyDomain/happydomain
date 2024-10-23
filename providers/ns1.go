@@ -24,8 +24,6 @@ package providers // import "git.happydns.org/happyDomain/providers"
 import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/ns1"
-
-	"git.happydns.org/happyDomain/model"
 )
 
 type NS1API struct {
@@ -44,7 +42,7 @@ func (s *NS1API) DNSControlName() string {
 }
 
 func init() {
-	RegisterProvider(func() happydns.Provider {
+	RegisterProvider(func() Provider {
 		return &NS1API{}
 	}, ProviderInfos{
 		Name:        "NS1",

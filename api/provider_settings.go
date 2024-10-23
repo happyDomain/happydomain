@@ -45,11 +45,11 @@ func declareProviderSettingsRoutes(cfg *config.Options, router *gin.RouterGroup)
 
 type ProviderSettingsState struct {
 	FormState
-	happydns.Provider `json:"Provider" swaggertype:"object"`
+	providers.Provider `json:"Provider" swaggertype:"object"`
 }
 
 type ProviderSettingsResponse struct {
-	Provider *happydns.Provider     `json:"Provider,omitempty" swaggertype:"object"`
+	Provider *providers.Provider    `json:"Provider,omitempty" swaggertype:"object"`
 	Values   map[string]interface{} `json:"values,omitempty"`
 	Form     *forms.CustomForm      `json:"form,omitempty"`
 }
@@ -136,10 +136,11 @@ func getProviderSettingsState(cfg *config.Options, c *gin.Context) {
 				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 				return
 			}
-			s.Comment = uss.Name
-			s.Provider = uss.Provider
 
-			err = storage.MainStore.UpdateProvider(s)
+			err = storage.MainStore.UpdateProvider(&happydns.ProviderCombined{
+				ProviderMeta: s.ProviderMeta,
+				Provider:     uss.Provider,
+			})
 			if err != nil {
 				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 				return

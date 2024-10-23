@@ -24,8 +24,6 @@ package providers // import "git.happydns.org/happyDomain/providers"
 import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/gcore"
-
-	"git.happydns.org/happyDomain/model"
 )
 
 type GcoreAPI struct {
@@ -44,7 +42,7 @@ func (s *GcoreAPI) DNSControlName() string {
 }
 
 func init() {
-	RegisterProvider(func() happydns.Provider {
+	RegisterProvider(func() Provider {
 		return &GcoreAPI{}
 	}, ProviderInfos{
 		Name:        "Gcore",

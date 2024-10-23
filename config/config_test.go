@@ -70,52 +70,22 @@ func TestParseLine(t *testing.T) {
 	}
 }
 
-func TestBuildURL(t *testing.T) {
+func TestGetBaseURL(t *testing.T) {
 	u, _ := url.Parse("http://localhost:8081")
 
 	cfg := Options{
 		ExternalURL: URL{URL: u},
 	}
 
-	builded_url := cfg.BuildURL("/test")
-	if builded_url != "http://localhost:8081/test" {
-		t.Fatalf(`BuildURL("/test") = %q, want "http://localhost:8081/test"`, builded_url)
-	}
-
-	builded_url = cfg.BuildURL("/test%s")
-	if builded_url != "http://localhost:8081/test%s" {
-		t.Fatalf(`BuildURL("/test") = %q, want "http://localhost:8081/test%%s"`, builded_url)
+	builded_url := cfg.GetBaseURL()
+	if builded_url != "http://localhost:8081" {
+		t.Fatalf(`GetBaseURL() = %q, want "http://localhost:8081"`, builded_url)
 	}
 
 	cfg.BaseURL = "/base"
 
-	builded_url = cfg.BuildURL("/test")
-	if builded_url != "http://localhost:8081/base/test" {
-		t.Fatalf(`BuildURL("/test") = %q, want "http://localhost:8081/base/test"`, builded_url)
-	}
-}
-
-func TestBuildURL_noescape(t *testing.T) {
-	u, _ := url.Parse("http://localhost:8081")
-
-	cfg := Options{
-		ExternalURL: URL{URL: u},
-	}
-
-	builded_url := cfg.BuildURL_noescape("/test")
-	if builded_url != "http://localhost:8081/test" {
-		t.Fatalf(`BuildURL_noescape("/test") = %q, want "http://localhost:8081/test"`, builded_url)
-	}
-
-	builded_url = cfg.BuildURL_noescape("/test%s", "/api")
-	if builded_url != "http://localhost:8081/test/api" {
-		t.Fatalf(`BuildURL_noescape("/test") = %q, want "http://localhost:8081/test/api"`, builded_url)
-	}
-
-	cfg.BaseURL = "/base"
-
-	builded_url = cfg.BuildURL_noescape("/test%s", "?test=foo")
-	if builded_url != "http://localhost:8081/base/test?test=foo" {
-		t.Fatalf(`BuildURL_noescape("/test") = %q, want "http://localhost:8081/base/test?test=foo"`, builded_url) //
+	builded_url = cfg.GetBaseURL()
+	if builded_url != "http://localhost:8081/base" {
+		t.Fatalf(`GetBaseURL() = %q, want "http://localhost:8081/base"`, builded_url)
 	}
 }

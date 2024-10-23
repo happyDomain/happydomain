@@ -29,7 +29,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/forms"
-	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/providers"
 )
 
@@ -124,7 +123,7 @@ type viewProviderSpec struct {
 //	@Failure		404				{object}	happydns.Error	"Provider type does not exist"
 //	@Router			/providers/_specs/{providerType} [get]
 func getProviderSpec(c *gin.Context) {
-	src := c.MustGet("providertype").(happydns.Provider)
+	src := c.MustGet("providertype").(providers.Provider)
 
 	c.JSON(http.StatusOK, viewProviderSpec{
 		Fields:       forms.GenStructFields(src),

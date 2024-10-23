@@ -23,6 +23,7 @@ package storage // import "git.happydns.org/happyDomain/storage"
 
 import (
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/providers"
 )
 
 type Storage interface {
@@ -102,17 +103,14 @@ type Storage interface {
 
 	// PROVIDERS ----------------------------------------------------
 
-	// GetProviderMetas retrieves provider's metadatas of all providers own by the given User.
-	GetProviderMetas(u *happydns.User) ([]happydns.ProviderMeta, error)
-
-	// GetProviderMeta retrieves the metadatas for the Provider with the given identifier and owner.
-	GetProviderMeta(u *happydns.User, id happydns.Identifier) (*happydns.ProviderMeta, error)
+	// GetProviders retrieves all providers own by the given User.
+	GetProviders(u *happydns.User) (happydns.ProviderMessages, error)
 
 	// GetProvider retrieves the full Provider with the given identifier and owner.
-	GetProvider(u *happydns.User, id happydns.Identifier) (*happydns.ProviderCombined, error)
+	GetProvider(u *happydns.User, id happydns.Identifier) (*happydns.ProviderMessage, error)
 
 	// CreateProvider creates a record in the database for the given Provider.
-	CreateProvider(u *happydns.User, s happydns.Provider, comment string) (*happydns.ProviderCombined, error)
+	CreateProvider(u *happydns.User, s providers.Provider, comment string) (*happydns.ProviderCombined, error)
 
 	// UpdateProvider updates the fields of the given Provider.
 	UpdateProvider(s *happydns.ProviderCombined) error

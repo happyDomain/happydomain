@@ -129,13 +129,13 @@ func deleteAuthUser(c *gin.Context) {
 func emailValidationLink(opts *config.Options, c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
-	ApiResponse(c, opts.GetRegistrationURL(user), nil)
+	ApiResponse(c, user.GetRegistrationURL(opts.GetBaseURL()), nil)
 }
 
 func recoverUserAcct(opts *config.Options, c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
-	ApiResponse(c, opts.GetAccountRecoveryURL(user), nil)
+	ApiResponse(c, user.GetAccountRecoveryURL(opts.GetBaseURL()), nil)
 }
 
 type resetPassword struct {

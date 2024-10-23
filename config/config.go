@@ -78,15 +78,9 @@ type Options struct {
 	StorageEngine storage.StorageEngine
 }
 
-// BuildURL appends the given url to the absolute ExternalURL.
-func (o *Options) BuildURL(url string) string {
-	return fmt.Sprintf("%s%s%s", o.ExternalURL.URL.String(), o.BaseURL, url)
-}
-
-// BuildURL_noescape build an URL containing formater.
-func (o *Options) BuildURL_noescape(url string, args ...interface{}) string {
-	args = append([]interface{}{o.ExternalURL.URL.String(), o.BaseURL}, args...)
-	return fmt.Sprintf("%s%s"+url, args...)
+// BaseURL returns the full url to the absolute ExternalURL, including BaseURL.
+func (o *Options) GetBaseURL() string {
+	return fmt.Sprintf("%s%s", o.ExternalURL.URL.String(), o.BaseURL)
 }
 
 // ConsolidateConfig fills an Options struct by reading configuration from

@@ -24,8 +24,6 @@ package providers // import "git.happydns.org/happyDomain/providers"
 import (
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/porkbun"
-
-	"git.happydns.org/happyDomain/model"
 )
 
 type PorkbunAPI struct {
@@ -47,7 +45,7 @@ func (s *PorkbunAPI) DNSControlName() string {
 }
 
 func init() {
-	RegisterProvider(func() happydns.Provider {
+	RegisterProvider(func() Provider {
 		return &PorkbunAPI{}
 	}, ProviderInfos{
 		Name:        "Porkbun",

@@ -29,9 +29,13 @@ import (
 
 	"github.com/StackExchange/dnscontrol/v4/providers"
 	"github.com/miekg/dns"
-
-	"git.happydns.org/happyDomain/model"
 )
+
+// Provider is where Domains and Zones can be managed.
+type Provider interface {
+	NewDNSServiceProvider() (providers.DNSServiceProvider, error)
+	DNSControlName() string
+}
 
 // ProviderInfos describes the purpose of a user usable provider.
 type ProviderInfos struct {
@@ -49,19 +53,19 @@ type ProviderInfos struct {
 }
 
 // ProviderCreator abstract the instanciation of a Provider
-type ProviderCreator func() happydns.Provider
+type ProviderCreatorFunc func() Provider
 
 // Provider aggregates way of create a Provider and information about it.
-type Provider struct {
-	Creator ProviderCreator
+type ProviderCreator struct {
+	Creator ProviderCreatorFunc
 	Infos   ProviderInfos
 }
 
 // providers stores all existing Provider in happyDNS.
-var providersList map[string]Provider = map[string]Provider{}
+var providersList map[string]ProviderCreator = map[string]ProviderCreator{}
 
 // RegisterProvider declares the existence of the given Provider.
-func RegisterProvider(creator ProviderCreator, infos ProviderInfos) {
+func RegisterProvider(creator ProviderCreatorFunc, infos ProviderInfos) {
 	prvInstance := creator()
 	baseType := reflect.Indirect(reflect.ValueOf(prvInstance)).Type()
 	name := baseType.Name()
@@ -70,19 +74,19 @@ func RegisterProvider(creator ProviderCreator, infos ProviderInfos) {
 	infos.Capabilities = GetProviderCapabilities(prvInstance)
 	infos.HelpLink = "https://docs.dnscontrol.org/service-providers/providers/" + strings.ToLower(prvInstance.DNSControlName())
 
-	providersList[name] = Provider{
+	providersList[name] = ProviderCreator{
 		creator,
 		infos,
 	}
 }
 
 // GetProviders retrieves the list of all existing Providers.
-func GetProviders() *map[string]Provider {
+func GetProviders() *map[string]ProviderCreator {
 	return &providersList
 }
 
 // FindProvider returns the Provider corresponding to the given name, or an error if it doesn't exist.
-func FindProvider(name string) (happydns.Provider, error) {
+func FindProvider(name string) (Provider, error) {
 	src, ok := providersList[name]
 	if !ok {
 		return nil, fmt.Errorf("Unable to find corresponding provider for `%s`.", name)
@@ -92,7 +96,7 @@ func FindProvider(name string) (happydns.Provider, error) {
 }
 
 // GetProviderCapabilities lists available capabilities for the given Provider.
-func GetProviderCapabilities(prvd happydns.Provider) (caps []string) {
+func GetProviderCapabilities(prvd Provider) (caps []string) {
 	// Features
 	if providers.ProviderHasCapability(prvd.DNSControlName(), providers.CanGetZones) {
 		caps = append(caps, "ListDomains")
