@@ -48,6 +48,7 @@ func (s *GitlabPageVerif) GenRRs(domain string, ttl uint32, origin string) (rrs 
 	if strings.Contains(s.Code, " TXT ") {
 		s.Code = s.Code[strings.Index(s.Code, "gitlab-pages-verification-code="):]
 	}
+	domain = strings.TrimPrefix(domain, "_gitlab-pages-verification-code.")
 
 	rc := utils.NewRecordConfig("_gitlab-pages-verification-code."+domain, "TXT", ttl, origin)
 	rc.SetTargetTXT("gitlab-pages-verification-code=" + strings.TrimPrefix(s.Code, "gitlab-pages-verification-code="))
@@ -60,8 +61,8 @@ func gitlabverification_analyze(a *svcs.Analyzer) error {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_gitlab-pages-verification-code"}) {
 		domain := record.NameFQDN
 		if record.Type == "TXT" && strings.HasPrefix(record.GetTargetTXTJoined(), "gitlab-pages-verification-code=") {
-			a.UseRR(record, domain, &GoogleVerif{
-				SiteVerification: strings.TrimPrefix(record.GetTargetTXTJoined(), "gitlab-pages-verification-code="),
+			a.UseRR(record, strings.TrimPrefix(domain, "_gitlab-pages-verification-code"), &GitlabPageVerif{
+				Code: strings.TrimPrefix(record.GetTargetTXTJoined(), "gitlab-pages-verification-code="),
 			})
 		}
 	}
