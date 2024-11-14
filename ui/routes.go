@@ -89,7 +89,7 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 		router.GET("/src/*_", serveOrReverse("", cfg))
 		router.GET("/home/*_", serveOrReverse("", cfg))
 	}
-	router.GET("/_app/*_", serveOrReverse("", cfg))
+	router.GET("/_app/*_", func(c *gin.Context) { c.Writer.Header().Set("Cache-Control", "public, max-age=604800, immutable") }, serveOrReverse("", cfg))
 
 	router.GET("/", serveOrReverse("/", cfg))
 	router.GET("/index.html", serveOrReverse("/", cfg))
@@ -99,11 +99,9 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 	router.GET("/fr/*_", serveOrReverse("/", cfg))
 
 	// Routes for real existings files
-	router.GET("/css/*path", serveOrReverse("", cfg))
-	router.GET("/fonts/*path", serveOrReverse("", cfg))
-	router.GET("/img/*path", serveOrReverse("", cfg))
-	router.GET("/js/*path", serveOrReverse("", cfg))
-	router.GET("/favicon.ico", serveOrReverse("", cfg))
+	router.GET("/fonts/*path", func(c *gin.Context) { c.Writer.Header().Set("Cache-Control", "public, max-age=604800, immutable") }, serveOrReverse("", cfg))
+	router.GET("/img/*path", func(c *gin.Context) { c.Writer.Header().Set("Cache-Control", "public, max-age=604800, immutable") }, serveOrReverse("", cfg))
+	router.GET("/favicon.ico", func(c *gin.Context) { c.Writer.Header().Set("Cache-Control", "public, max-age=604800, immutable") }, serveOrReverse("", cfg))
 	router.GET("/manifest.json", serveOrReverse("", cfg))
 	router.GET("/robots.txt", serveOrReverse("", cfg))
 	router.GET("/service-worker.js", serveOrReverse("", cfg))
@@ -121,6 +119,14 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 	router.GET("/tools/*_", serveOrReverse("/", cfg))
 	router.GET("/resolver/*_", serveOrReverse("/", cfg))
 	router.GET("/zones/*_", serveOrReverse("/", cfg))
+
+	router.NoRoute(func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.URL.Path, "/api") || strings.Contains(c.Request.Header.Get("Accept"), "application/json") {
+			c.JSON(404, gin.H{"code": "PAGE_NOT_FOUND", "errmsg": "Page not found"})
+		} else {
+			serveOrReverse("/", cfg)(c)
+		}
+	})
 }
 
 func serveOrReverse(forced_url string, cfg *config.Options) gin.HandlerFunc {
