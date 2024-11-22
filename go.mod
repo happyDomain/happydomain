@@ -21,7 +21,7 @@ require (
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.3
 	github.com/syndtr/goleveldb v1.0.0
-	github.com/yuin/goldmark v1.7.4
+	github.com/yuin/goldmark v1.7.8
 	go.uber.org/multierr v1.11.0
 	golang.org/x/crypto v0.27.0
 	golang.org/x/oauth2 v0.24.0
