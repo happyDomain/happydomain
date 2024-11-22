@@ -6,7 +6,7 @@ require (
 	github.com/StackExchange/dnscontrol/v4 v4.3.0
 	github.com/carlmjohnson/versioninfo v0.22.5
 	github.com/coreos/go-oidc/v3 v3.11.0
-	github.com/fatih/color v1.17.0
+	github.com/fatih/color v1.18.0
 	github.com/gin-contrib/sessions v1.0.1
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-mail/mail v2.3.1+incompatible
