@@ -135,10 +135,7 @@ func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs models.Rec
 	}
 
 	if s.TLS_RPT != nil {
-		rc := utils.NewRecordConfig(utils.DomainJoin("_smtp._tls", domain), "TXT", ttl, origin)
-		rc.SetTargetTXT(s.TLS_RPT.String())
-
-		rrs = append(rrs, rc)
+		rrs = append(rrs, s.TLS_RPT.GenRRs(domain, ttl, origin)...)
 	}
 	return
 }
@@ -168,35 +165,6 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 				dn,
 				services[dn],
 			)
-			if err != nil {
-				return
-			}
-		}
-	}
-
-	for domain, service := range services {
-		// Is there TLS-RPT record?
-		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_smtp._tls." + domain}) {
-			// rfc8460: 3. records that do not begin with "v=TLSRPTv1;" are discarded
-			if !strings.HasPrefix(record.GetTargetTXTJoined(), "v=TLSRPT") {
-				continue
-			}
-
-			if service.TLS_RPT == nil {
-				service.TLS_RPT = &svcs.TLS_RPT{}
-			} else {
-				// rfc8460: 3. If the number of resulting records is not one, senders MUST assume the recipient domain does not implement TLSRPT.
-				continue
-			}
-
-			if record.Type == "TXT" {
-				err = service.TLS_RPT.Analyze(record.GetTargetTXTJoined())
-				if err != nil {
-					return
-				}
-			}
-
-			err = a.UseRR(record, domain, service)
 			if err != nil {
 				return
 			}
