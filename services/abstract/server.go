@@ -41,7 +41,17 @@ type Server struct {
 }
 
 func (s *Server) GetNbResources() int {
-	return 1
+	i := 0
+
+	if s.A != nil {
+		i += 1
+	}
+
+	if s.AAAA != nil {
+		i += 1
+	}
+
+	return i + len(s.SSHFP)
 }
 
 func (s *Server) GenComment(origin string) string {
