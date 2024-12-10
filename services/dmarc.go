@@ -26,7 +26,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/StackExchange/dnscontrol/v4/models"
+	"github.com/miekg/dns"
+
+	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services/common"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type DMARC struct {
@@ -41,6 +46,45 @@ type DMARC struct {
 	FailureOptions    []string        `json:"fo" happydomain:"label=Failure reporting options,choices=0;1;d;s"`
 	RegisteredFormats []string        `json:"rf" happydomain:"label=Format of the failure reports,choices=;afrf"`
 	Percent           uint8           `json:"pct" happydomain:"label=Policy applies on,description=Percentage of messages to which the DMARC policy is to be applied.,unit=%"`
+}
+
+func (t *DMARC) GetNbResources() int {
+	return 1
+}
+
+func (t *DMARC) GenComment(origin string) string {
+	var b strings.Builder
+
+	if t.ADKIM && t.ASPF {
+		b.WriteString("strict ")
+	} else if t.ADKIM {
+		b.WriteString("SPF relaxed ")
+	} else if t.ASPF {
+		b.WriteString("DKIM relaxed ")
+	} else {
+		b.WriteString("relaxed ")
+	}
+
+	if t.Request != "" {
+		b.WriteString(t.Request)
+		b.WriteString(" ")
+	}
+
+	if t.Percent < 100 {
+		b.WriteString(strconv.Itoa(int(t.Percent)))
+		b.WriteString(" %")
+	}
+
+	return b.String()
+}
+
+func (t *DMARC) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+	rc := utils.NewRecordConfig(utils.DomainJoin("_dmarc", domain), "TXT", ttl, origin)
+	rc.SetTargetTXT(t.String())
+
+	rrs = append(rrs, rc)
+
+	return
 }
 
 func analyseFields(txt string) map[string]string {
@@ -166,4 +210,48 @@ func (t *DMARC) String() string {
 	}
 
 	return strings.Join(fields, ";")
+}
+
+func dmarc_analyze(a *Analyzer) (err error) {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_dmarc"}) {
+		service := &DMARC{}
+
+		err = service.Analyze(record.GetTargetTXTJoined())
+		if err != nil {
+			return
+		}
+
+		err = a.UseRR(record, strings.TrimPrefix(record.NameFQDN, "_dmarc."), service)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func init() {
+	RegisterService(
+		func() happydns.Service {
+			return &DMARC{}
+		},
+		dmarc_analyze,
+		ServiceInfos{
+			Name:        "DMARC",
+			Description: "Domain-based Message Authentication, Reporting and Conformance.",
+			Categories: []string{
+				"email",
+			},
+			RecordTypes: []uint16{
+				dns.TypeTXT,
+			},
+			Restrictions: ServiceRestrictions{
+				NearAlone: true,
+				NeedTypes: []uint16{
+					dns.TypeTXT,
+				},
+			},
+		},
+		1,
+	)
 }

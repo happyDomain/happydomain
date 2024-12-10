@@ -127,10 +127,7 @@ func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs models.Rec
 	}
 
 	if s.DMARC != nil {
-		rc := utils.NewRecordConfig(utils.DomainJoin("_dmarc", domain), "TXT", ttl, origin)
-		rc.SetTargetTXT(s.DMARC.String())
-
-		rrs = append(rrs, rc)
+		rrs = append(rrs, s.DMARC.GenRRs(domain, ttl, origin)...)
 	}
 
 	if s.MTA_STS != nil {
@@ -181,25 +178,6 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 	}
 
 	for domain, service := range services {
-		// Is there DMARC record?
-		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_dmarc." + domain}) {
-			if service.DMARC == nil {
-				service.DMARC = &svcs.DMARC{}
-			}
-
-			if record.Type == "TXT" {
-				err = service.DMARC.Analyze(record.GetTargetTXTJoined())
-				if err != nil {
-					return
-				}
-			}
-
-			err = a.UseRR(record, domain, service)
-			if err != nil {
-				return
-			}
-		}
-
 		// Is there MTA-STS record?
 		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_mta-sts." + domain}) {
 			if service.MTA_STS == nil {
