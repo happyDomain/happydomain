@@ -21,9 +21,130 @@
 
 package svcs
 
-import ()
+import (
+	"bytes"
+	"fmt"
+	"strings"
+
+	"github.com/StackExchange/dnscontrol/v4/models"
+	"github.com/miekg/dns"
+
+	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/utils"
+)
 
 type MX struct {
 	Target     string `json:"target"`
 	Preference uint16 `json:"preference,omitempty"`
+}
+
+type MXs struct {
+	MX []MX `json:"mx" happydomain:"label=EMail Servers,required"`
+}
+
+func (s *MXs) GetNbResources() int {
+	return len(s.MX)
+}
+
+func (s *MXs) GenComment(origin string) string {
+	poolMX := map[string]int{}
+
+	for _, mx := range s.MX {
+		labels := dns.SplitDomainName(mx.Target)
+		nbLabel := len(labels)
+
+		var dn string
+		if nbLabel <= 2 {
+			dn = mx.Target
+		} else if len(labels[nbLabel-2]) < 4 {
+			dn = strings.Join(labels[nbLabel-3:], ".") + "."
+		} else {
+			dn = strings.Join(labels[nbLabel-2:], ".") + "."
+		}
+
+		poolMX[dn] += 1
+	}
+
+	var buffer bytes.Buffer
+	first := true
+
+	for dn, nb := range poolMX {
+		if !first {
+			buffer.WriteString("; ")
+		} else {
+			first = !first
+		}
+		buffer.WriteString(strings.TrimSuffix(dn, "."+origin))
+		if nb > 1 {
+			buffer.WriteString(fmt.Sprintf(" ×%d", nb))
+		}
+	}
+
+	return buffer.String()
+}
+
+func (s *MXs) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+	for _, mx := range s.MX {
+		rc := utils.NewRecordConfig(domain, "MX", ttl, origin)
+		rc.MxPreference = mx.Preference
+		rc.SetTarget(utils.DomainFQDN(mx.Target, origin))
+
+		rrs = append(rrs, rc)
+	}
+
+	return
+}
+
+func mx_analyze(a *Analyzer) (err error) {
+	service := &MXs{}
+
+	// Handle only MX records
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeMX}) {
+		dn := record.NameFQDN
+
+		service.MX = append(
+			service.MX,
+			MX{
+				Target:     record.GetTargetField(),
+				Preference: record.MxPreference,
+			},
+		)
+
+		err = a.UseRR(
+			record,
+			dn,
+			service,
+		)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func init() {
+	RegisterService(
+		func() happydns.Service {
+			return &MXs{}
+		},
+		mx_analyze,
+		ServiceInfos{
+			Name:        "E-Mail servers",
+			Description: "Receives e-mail with this domain.",
+			Categories: []string{
+				"email",
+			},
+			RecordTypes: []uint16{
+				dns.TypeMX,
+			},
+			Restrictions: ServiceRestrictions{
+				Single: true,
+				NeedTypes: []uint16{
+					dns.TypeMX,
+				},
+			},
+		},
+		1,
+	)
 }

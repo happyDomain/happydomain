@@ -23,15 +23,12 @@ package abstract
 
 import (
 	"bytes"
-	"fmt"
-	"strings"
 
 	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type EMail struct {
@@ -48,38 +45,9 @@ func (s *EMail) GetNbResources() int {
 }
 
 func (s *EMail) GenComment(origin string) string {
-	poolMX := map[string]int{}
-
-	for _, mx := range s.MX {
-		labels := dns.SplitDomainName(mx.Target)
-		nbLabel := len(labels)
-
-		var dn string
-		if nbLabel <= 2 {
-			dn = mx.Target
-		} else if len(labels[nbLabel-2]) < 4 {
-			dn = strings.Join(labels[nbLabel-3:], ".") + "."
-		} else {
-			dn = strings.Join(labels[nbLabel-2:], ".") + "."
-		}
-
-		poolMX[dn] += 1
-	}
-
 	var buffer bytes.Buffer
-	first := true
 
-	for dn, nb := range poolMX {
-		if !first {
-			buffer.WriteString("; ")
-		} else {
-			first = !first
-		}
-		buffer.WriteString(strings.TrimSuffix(dn, "."+origin))
-		if nb > 1 {
-			buffer.WriteString(fmt.Sprintf(" ×%d", nb))
-		}
-	}
+	buffer.WriteString((&svcs.MXs{MX: s.MX}).GenComment(origin))
 
 	if s.SPF != nil {
 		buffer.WriteString(" + SPF")
@@ -106,13 +74,7 @@ func (s *EMail) GenComment(origin string) string {
 
 func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
 	if len(s.MX) > 0 {
-		for _, mx := range s.MX {
-			rc := utils.NewRecordConfig(domain, "MX", ttl, origin)
-			rc.MxPreference = mx.Preference
-			rc.SetTarget(utils.DomainFQDN(mx.Target, origin))
-
-			rrs = append(rrs, rc)
-		}
+		rrs = append(rrs, (&svcs.MXs{MX: s.MX}).GenRRs(domain, ttl, origin)...)
 	}
 
 	if s.SPF != nil {
@@ -140,46 +102,12 @@ func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs models.Rec
 	return
 }
 
-func email_analyze(a *svcs.Analyzer) (err error) {
-	services := map[string]*EMail{}
-
-	// Handle only MX records
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeMX}) {
-		if record.Type == "MX" {
-			dn := record.NameFQDN
-
-			if _, ok := services[dn]; !ok {
-				services[dn] = &EMail{}
-			}
-
-			services[dn].MX = append(
-				services[dn].MX,
-				svcs.MX{
-					Target:     record.GetTargetField(),
-					Preference: record.MxPreference,
-				},
-			)
-
-			err = a.UseRR(
-				record,
-				dn,
-				services[dn],
-			)
-			if err != nil {
-				return
-			}
-		}
-	}
-
-	return nil
-}
-
 func init() {
 	svcs.RegisterService(
 		func() happydns.Service {
 			return &EMail{}
 		},
-		email_analyze,
+		nil,
 		svcs.ServiceInfos{
 			Name:        "E-Mail",
 			Description: "Sends and receives e-mail with this domain.",

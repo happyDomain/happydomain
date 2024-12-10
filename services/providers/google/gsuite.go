@@ -29,7 +29,6 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/services/abstract"
 )
 
 type GSuite struct {
@@ -37,16 +36,13 @@ type GSuite struct {
 }
 
 func (s *GSuite) GenKnownSvcs() []happydns.Service {
-	knownSvc := &abstract.EMail{
+	knownSvc := &svcs.MXs{
 		MX: []svcs.MX{
 			svcs.MX{Target: "aspmx.l.google.com.", Preference: 1},
 			svcs.MX{Target: "alt1.aspmx.l.google.com.", Preference: 5},
 			svcs.MX{Target: "alt2.aspmx.l.google.com.", Preference: 5},
 			svcs.MX{Target: "alt3.aspmx.l.google.com.", Preference: 10},
 			svcs.MX{Target: "alt4.aspmx.l.google.com.", Preference: 10},
-		},
-		SPF: &svcs.SPF{
-			Directives: []string{"include:_spf.google.com", "~all"},
 		},
 	}
 
@@ -57,7 +53,9 @@ func (s *GSuite) GenKnownSvcs() []happydns.Service {
 		})
 	}
 
-	return []happydns.Service{knownSvc}
+	return []happydns.Service{knownSvc, &svcs.SPF{
+		Directives: []string{"include:_spf.google.com", "~all"},
+	}}
 }
 
 func (s *GSuite) GetNbResources() int {

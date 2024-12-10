@@ -38,6 +38,7 @@ import (
 	"git.happydns.org/happyDomain/internal/app"
 	"git.happydns.org/happyDomain/storage"
 
+	_ "git.happydns.org/happyDomain/services/abstract"
 	_ "git.happydns.org/happyDomain/services/providers/google"
 
 	_ "git.happydns.org/happyDomain/storage/leveldb"
