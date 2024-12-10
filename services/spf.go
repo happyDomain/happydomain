@@ -25,12 +25,35 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/StackExchange/dnscontrol/v4/models"
+	"github.com/miekg/dns"
+
 	"github.com/StackExchange/dnscontrol/v4/pkg/spflib"
+
+	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type SPF struct {
 	Version    uint     `json:"version" happydomain:"label=Version,placeholder=1,required,description=The version of SPF to use.,default=1,hidden"`
 	Directives []string `json:"directives" happydomain:"label=Directives,placeholder=ip4:203.0.113.12"`
+}
+
+func (s *SPF) GetNbResources() int {
+	return 1
+}
+
+func (s *SPF) GenComment(origin string) string {
+	return fmt.Sprintf("%d directives", len(s.Directives))
+}
+
+func (s *SPF) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+	rc := utils.NewRecordConfig(domain, "TXT", ttl, origin)
+	rc.SetTargetTXT(s.String())
+
+	rrs = append(rrs, rc)
+
+	return
 }
 
 func (t *SPF) Analyze(txt string) error {
@@ -61,7 +84,65 @@ func (t *SPF) Analyze(txt string) error {
 	return nil
 }
 
-func (t *SPF) String() string {
-	directives := append([]string{fmt.Sprintf("v=spf%d", t.Version)}, t.Directives...)
+func spf_analyze(a *Analyzer) (err error) {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Contains: "v=spf1"}) {
+		service := &SPF{}
+
+		err = service.Analyze(record.GetTargetTXTJoined())
+		if err != nil {
+			return
+		}
+
+		err = a.UseRR(record, record.NameFQDN, service)
+		if err != nil {
+			return
+		}
+	}
+
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeSPF, Contains: "v=spf1"}) {
+		service := &SPF{}
+
+		err = service.Analyze(record.GetTargetTXTJoined())
+		if err != nil {
+			return
+		}
+
+		err = a.UseRR(record, record.NameFQDN, service)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func (s *SPF) String() string {
+	directives := append([]string{fmt.Sprintf("v=spf%d", s.Version)}, s.Directives...)
 	return strings.Join(directives, " ")
+}
+
+func init() {
+	RegisterService(
+		func() happydns.Service {
+			return &SPF{}
+		},
+		spf_analyze,
+		ServiceInfos{
+			Name:        "SPF",
+			Description: "Sender Policy Framework, to authenticate domain name on email sending.",
+			Categories: []string{
+				"email",
+			},
+			RecordTypes: []uint16{
+				dns.TypeTXT,
+				dns.TypeSPF,
+			},
+			Restrictions: ServiceRestrictions{
+				NeedTypes: []uint16{
+					dns.TypeTXT,
+				},
+			},
+		},
+		1,
+	)
 }

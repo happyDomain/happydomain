@@ -116,10 +116,7 @@ func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs models.Rec
 	}
 
 	if s.SPF != nil {
-		rc := utils.NewRecordConfig(domain, "TXT", ttl, origin)
-		rc.SetTargetTXT(s.SPF.String())
-
-		rrs = append(rrs, rc)
+		rrs = append(rrs, s.SPF.GenRRs(domain, ttl, origin)...)
 	}
 
 	for selector, d := range s.DKIM {
@@ -184,25 +181,6 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 	}
 
 	for domain, service := range services {
-		// Is there SPF record?
-		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: domain, Contains: "v=spf1"}) {
-			if record.Type == "TXT" || record.Type == "SPF" {
-				if service.SPF == nil {
-					service.SPF = &svcs.SPF{}
-				}
-
-				err = service.SPF.Analyze(record.GetTargetTXTJoined())
-				if err != nil {
-					return
-				}
-			}
-
-			err = a.UseRR(record, domain, service)
-			if err != nil {
-				return
-			}
-		}
-
 		service.DKIM = map[string]*svcs.DKIM{}
 		// Is there DKIM record?
 		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, SubdomainsOf: "_domainkey." + domain}) {
@@ -309,7 +287,6 @@ func init() {
 			},
 			RecordTypes: []uint16{
 				dns.TypeMX,
-				dns.TypeSPF,
 			},
 			Tabs: true,
 			Restrictions: svcs.ServiceRestrictions{
