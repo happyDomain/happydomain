@@ -148,7 +148,7 @@ func init() {
 			Description: "Communicate over XMPP with your domain.",
 			Family:      svcs.Abstract,
 			Categories: []string{
-				"im",
+				"service",
 			},
 			Restrictions: svcs.ServiceRestrictions{
 				NearAlone: true,

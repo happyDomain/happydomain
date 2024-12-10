@@ -126,7 +126,7 @@ func init() {
 			Description: "Delegate this subdomain to another name server",
 			Family:      svcs.Abstract,
 			Categories: []string{
-				"internal",
+				"domain name",
 			},
 			RecordTypes: []uint16{
 				dns.TypeNS,

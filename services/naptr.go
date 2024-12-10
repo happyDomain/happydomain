@@ -85,6 +85,9 @@ func init() {
 		naptr_analyze,
 		ServiceInfos{
 			Name: "Naming Authority Pointer",
+			Categories: []string{
+				"telephony",
+			},
 			RecordTypes: []uint16{
 				dns.TypeNAPTR,
 			},

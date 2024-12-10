@@ -298,7 +298,7 @@ func init() {
 			Name:        "Certification Authority Authorization",
 			Description: "Indicate to certificate authorities whether they are authorized to issue digital certificates for a particular domain name.",
 			Categories: []string{
-				"tls",
+				"security",
 			},
 			RecordTypes: []uint16{
 				dns.TypeCAA,

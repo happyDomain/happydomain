@@ -122,7 +122,7 @@ func init() {
 			Description: "Communicate on Matrix using your domain.",
 			Family:      svcs.Abstract,
 			Categories: []string{
-				"im",
+				"service",
 			},
 			Restrictions: svcs.ServiceRestrictions{
 				NearAlone: true,

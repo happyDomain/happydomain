@@ -147,7 +147,6 @@ func init() {
 			Description: "The suite of cloud computing, productivity and collaboration tools by Google.",
 			Family:      svcs.Provider,
 			Categories: []string{
-				"cloud",
 				"email",
 			},
 			Restrictions: svcs.ServiceRestrictions{

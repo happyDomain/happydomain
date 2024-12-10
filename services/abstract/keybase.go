@@ -74,7 +74,7 @@ func init() {
 			Description: "Temporary record to prove that you control the domain.",
 			Family:      svcs.Abstract,
 			Categories: []string{
-				"temporary",
+				"verification",
 			},
 			Restrictions: svcs.ServiceRestrictions{
 				NearAlone: true,

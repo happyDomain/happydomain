@@ -73,7 +73,7 @@ func init() {
 			Name:        "Pointer",
 			Description: "A pointer to another domain.",
 			Categories: []string{
-				"internal",
+				"domain name",
 			},
 			RecordTypes: []uint16{
 				dns.TypePTR,

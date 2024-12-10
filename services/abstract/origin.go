@@ -176,7 +176,7 @@ func init() {
 			Description: "This is the root of your domain.",
 			Family:      svcs.Abstract,
 			Categories: []string{
-				"internal",
+				"domain name",
 			},
 			RecordTypes: []uint16{
 				dns.TypeSOA,
@@ -202,7 +202,7 @@ func init() {
 			Description: "This is the root of your domain.",
 			Family:      svcs.Hidden,
 			Categories: []string{
-				"internal",
+				"domain name",
 			},
 			RecordTypes: []uint16{
 				dns.TypeNS,

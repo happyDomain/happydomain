@@ -108,7 +108,7 @@ func init() {
 			Name:        "SubAlias",
 			Description: "A service alias to another domain/service.",
 			Categories: []string{
-				"internal",
+				"alias",
 			},
 			Restrictions: ServiceRestrictions{
 				NearAlone: true,
@@ -128,7 +128,7 @@ func init() {
 			Name:        "Alias",
 			Description: "Maps an alias to another (canonical) domain.",
 			Categories: []string{
-				"internal",
+				"alias",
 			},
 			RecordTypes: []uint16{
 				dns.TypeCNAME,

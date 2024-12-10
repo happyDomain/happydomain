@@ -161,7 +161,7 @@ func init() {
 			Name:        "TLSA records",
 			Description: "Publish TLS certificates exposed by your services.",
 			Categories: []string{
-				"tls",
+				"security",
 			},
 			RecordTypes: []uint16{
 				dns.TypeTLSA,

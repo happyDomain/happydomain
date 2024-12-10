@@ -75,7 +75,7 @@ func init() {
 			Family:      svcs.Abstract,
 			Categories: []string{
 				"temporary",
-				"tls",
+				"verification",
 			},
 			Restrictions: svcs.ServiceRestrictions{
 				NearAlone: true,
