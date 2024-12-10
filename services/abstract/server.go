@@ -88,13 +88,8 @@ func (s *Server) GenRRs(domain string, ttl uint32, origin string) (rrs models.Re
 
 		rrs = append(rrs, rc)
 	}
-	for _, sshfp := range s.SSHFP {
-		rc := utils.NewRecordConfig(domain, "SSHFP", ttl, origin)
-		rc.SshfpAlgorithm = sshfp.Algorithm
-		rc.SshfpFingerprint = sshfp.Type
-		rc.SetTarget(sshfp.FingerPrint)
-
-		rrs = append(rrs, rc)
+	if len(s.SSHFP) > 0 {
+		rrs = append(rrs, (&svcs.SSHFPs{SSHFP: s.SSHFP}).GenRRs(domain, ttl, origin)...)
 	}
 
 	return
