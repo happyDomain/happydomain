@@ -54,6 +54,7 @@ func (s *GSuite) GenKnownSvcs() []happydns.Service {
 	}
 
 	return []happydns.Service{knownSvc, &svcs.SPF{
+		Version:    1,
 		Directives: []string{"include:_spf.google.com", "~all"},
 	}}
 }
