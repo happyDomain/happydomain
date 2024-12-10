@@ -25,11 +25,33 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/StackExchange/dnscontrol/v4/models"
+	"github.com/miekg/dns"
+
+	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type MTA_STS struct {
 	Version uint   `json:"version" happydomain:"label=Version,placeholder=1,required,description=The version of MTA-STS to use.,default=1,hidden"`
 	Id      string `json:"id" happydomain:"label=Policy Identifier,placeholder=,description=A short string used to track policy updates."`
+}
+
+func (t *MTA_STS) GetNbResources() int {
+	return 1
+}
+
+func (t *MTA_STS) GenComment(origin string) string {
+	return t.Id
+}
+
+func (t *MTA_STS) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+	rc := utils.NewRecordConfig(utils.DomainJoin("_mta-sts", domain), "TXT", ttl, origin)
+	rc.SetTargetTXT(t.String())
+
+	rrs = append(rrs, rc)
+	return
 }
 
 func (t *MTA_STS) Analyze(txt string) error {
@@ -67,4 +89,53 @@ func (t *MTA_STS) Analyze(txt string) error {
 
 func (t *MTA_STS) String() string {
 	return fmt.Sprintf("v=STSv%d; id=%s", t.Version, t.Id)
+}
+
+func mtasts_analyze(a *Analyzer) (err error) {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_mta-sts."}) {
+		// rfc8461: 3.1 records that do not begin with "v=STSv1;" are discarded
+		if !strings.HasPrefix(record.GetTargetTXTJoined(), "v=STS") {
+			continue
+		}
+
+		service := &MTA_STS{}
+
+		err = service.Analyze(record.GetTargetTXTJoined())
+		if err != nil {
+			return
+		}
+
+		err = a.UseRR(record, strings.TrimPrefix(record.NameFQDN, "_mta-sts."), service)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func init() {
+	RegisterService(
+		func() happydns.Service {
+			return &MTA_STS{}
+		},
+		mtasts_analyze,
+		ServiceInfos{
+			Name:        "MTA-STS",
+			Description: "SMTP MTA Strict Transport Security.",
+			Categories: []string{
+				"email",
+			},
+			RecordTypes: []uint16{
+				dns.TypeTXT,
+			},
+			Restrictions: ServiceRestrictions{
+				NearAlone: true,
+				NeedTypes: []uint16{
+					dns.TypeTXT,
+				},
+			},
+		},
+		1,
+	)
 }

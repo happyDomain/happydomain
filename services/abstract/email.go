@@ -131,10 +131,7 @@ func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs models.Rec
 	}
 
 	if s.MTA_STS != nil {
-		rc := utils.NewRecordConfig(utils.DomainJoin("_mta-sts", domain), "TXT", ttl, origin)
-		rc.SetTargetTXT(s.MTA_STS.String())
-
-		rrs = append(rrs, rc)
+		rrs = append(rrs, s.MTA_STS.GenRRs(domain, ttl, origin)...)
 	}
 
 	if s.TLS_RPT != nil {
@@ -178,25 +175,6 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 	}
 
 	for domain, service := range services {
-		// Is there MTA-STS record?
-		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_mta-sts." + domain}) {
-			if service.MTA_STS == nil {
-				service.MTA_STS = &svcs.MTA_STS{}
-			}
-
-			if record.Type == "TXT" {
-				err = service.MTA_STS.Analyze(record.GetTargetTXTJoined())
-				if err != nil {
-					return
-				}
-			}
-
-			err = a.UseRR(record, domain, service)
-			if err != nil {
-				return
-			}
-		}
-
 		// Is there TLS-RPT record?
 		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_smtp._tls." + domain}) {
 			// rfc8460: 3. records that do not begin with "v=TLSRPTv1;" are discarded
