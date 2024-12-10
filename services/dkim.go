@@ -26,6 +26,12 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/StackExchange/dnscontrol/v4/models"
+	"github.com/miekg/dns"
+
+	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type DKIM struct {
@@ -110,4 +116,77 @@ func (t *DKIM) String() string {
 	}
 
 	return strings.Join(fields, ";")
+}
+
+type DKIMRecord struct {
+	Selector string `json:"selector" happydomain:"label=Selector,placeholder=reykjavik,required,description=Name of the key"`
+	DKIM
+}
+
+func (s *DKIMRecord) GetNbResources() int {
+	return 1
+}
+
+func (s *DKIMRecord) GenComment(origin string) string {
+	return s.Selector
+}
+
+func (s *DKIMRecord) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+	rc := utils.NewRecordConfig(utils.DomainJoin(s.Selector+"._domainkey", domain), "TXT", ttl, origin)
+	rc.SetTargetTXT(s.String())
+
+	rrs = append(rrs, rc)
+
+	return
+}
+
+func dkim_analyze(a *Analyzer) (err error) {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT}) {
+		dkidx := strings.Index(record.NameFQDN, "._domainkey.")
+		if dkidx <= 0 {
+			continue
+		}
+
+		service := &DKIMRecord{
+			Selector: record.NameFQDN[:dkidx],
+		}
+
+		err = service.Analyze(record.GetTargetTXTJoined())
+		if err != nil {
+			return
+		}
+
+		err = a.UseRR(record, record.NameFQDN[dkidx+12:], service)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func init() {
+	RegisterService(
+		func() happydns.Service {
+			return &DKIMRecord{}
+		},
+		dkim_analyze,
+		ServiceInfos{
+			Name:        "DKIM",
+			Description: "DomainKeys Identified Mail, authenticate outgoing emails.",
+			Categories: []string{
+				"email",
+			},
+			RecordTypes: []uint16{
+				dns.TypeTXT,
+			},
+			Restrictions: ServiceRestrictions{
+				NearAlone: true,
+				NeedTypes: []uint16{
+					dns.TypeTXT,
+				},
+			},
+		},
+		1,
+	)
 }

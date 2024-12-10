@@ -120,10 +120,10 @@ func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs models.Rec
 	}
 
 	for selector, d := range s.DKIM {
-		rc := utils.NewRecordConfig(utils.DomainJoin(selector+"._domainkey", domain), "TXT", ttl, origin)
-		rc.SetTargetTXT(d.String())
-
-		rrs = append(rrs, rc)
+		rrs = append(rrs, (&svcs.DKIMRecord{
+			DKIM:     *d,
+			Selector: selector,
+		}).GenRRs(domain, ttl, origin)...)
 	}
 
 	if s.DMARC != nil {
@@ -181,28 +181,6 @@ func email_analyze(a *svcs.Analyzer) (err error) {
 	}
 
 	for domain, service := range services {
-		service.DKIM = map[string]*svcs.DKIM{}
-		// Is there DKIM record?
-		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, SubdomainsOf: "_domainkey." + domain}) {
-			selector := strings.TrimSuffix(record.NameFQDN, "._domainkey."+domain)
-
-			if _, ok := service.DKIM[selector]; !ok {
-				service.DKIM[selector] = &svcs.DKIM{}
-			}
-
-			if record.Type == "TXT" {
-				err = service.DKIM[selector].Analyze(record.GetTargetTXTJoined())
-				if err != nil {
-					return
-				}
-			}
-
-			err = a.UseRR(record, domain, service)
-			if err != nil {
-				return
-			}
-		}
-
 		// Is there DMARC record?
 		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: "_dmarc." + domain}) {
 			if service.DMARC == nil {
