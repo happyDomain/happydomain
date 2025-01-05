@@ -96,14 +96,18 @@ func (s *MXs) GenRRs(domain string, ttl uint32, origin string) (rrs models.Recor
 }
 
 func mx_analyze(a *Analyzer) (err error) {
-	service := &MXs{}
+	services := map[string]*MXs{}
 
 	// Handle only MX records
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeMX}) {
 		dn := record.NameFQDN
 
-		service.MX = append(
-			service.MX,
+		if _, ok := services[dn]; !ok {
+			services[dn] = &MXs{}
+		}
+
+		services[dn].MX = append(
+			services[dn].MX,
 			MX{
 				Target:     record.GetTargetField(),
 				Preference: record.MxPreference,
@@ -113,7 +117,7 @@ func mx_analyze(a *Analyzer) (err error) {
 		err = a.UseRR(
 			record,
 			dn,
-			service,
+			services[dn],
 		)
 		if err != nil {
 			return
