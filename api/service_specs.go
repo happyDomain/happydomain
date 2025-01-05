@@ -110,6 +110,11 @@ type viewServiceSpec struct {
 func getSpecs(svcType reflect.Type) viewServiceSpec {
 	fields := []forms.Field{}
 	for i := 0; i < svcType.NumField(); i += 1 {
+		if svcType.Field(i).Anonymous {
+			fields = append(fields, getSpecs(svcType.Field(i).Type).Fields...)
+			continue
+		}
+
 		jsonTag := svcType.Field(i).Tag.Get("json")
 		jsonTuples := strings.Split(jsonTag, ",")
 

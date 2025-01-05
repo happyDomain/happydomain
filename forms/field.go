@@ -120,7 +120,11 @@ func GenStructFields(data interface{}) (fields []*Field) {
 		dataMeta := reflect.Indirect(reflect.ValueOf(data)).Type()
 
 		for i := 0; i < dataMeta.NumField(); i += 1 {
-			fields = append(fields, GenField(dataMeta.Field(i)))
+			if dataMeta.Field(i).Anonymous {
+				fields = append(fields, GenStructFields(reflect.Indirect(reflect.ValueOf(data)).Field(i))...)
+			} else {
+				fields = append(fields, GenField(dataMeta.Field(i)))
+			}
 		}
 	}
 	return
