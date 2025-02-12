@@ -124,8 +124,12 @@
             </span>
             <span class="text-truncate">
                 <Icon name="arrow-right" />
-                <span class="font-monospace" title={services[0].Service.Target}>
-                    {services[0].Service.Target}
+                <span class="font-monospace">
+                    {#if isPTR(services)}
+                        {services[0].Service.ptr.Target}
+                    {:else}
+                        {services[0].Service.cname.Target}
+                    {/if}
                 </span>
             </span>
             <div class="flex-fill"></div>
