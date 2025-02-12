@@ -24,12 +24,10 @@ package abstract
 import (
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type ScalewayChallenge struct {
@@ -44,16 +42,8 @@ func (s *ScalewayChallenge) GenComment(origin string) string {
 	return strings.Join(s.Record.Txt, "")
 }
 
-func (s *ScalewayChallenge) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	if !strings.HasPrefix(domain, "_scaleway-challenge") {
-		domain = utils.DomainJoin("_scaleway-challenge", domain)
-	}
-	rc, err := models.RRtoRC(s.Record, origin)
-	if err != nil {
-		return nil, err
-	}
-	rrs = append(rrs, &rc)
-	return
+func (s *ScalewayChallenge) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
+	return []dns.RR{s.Record}, nil
 }
 
 func scalewaychallenge_analyze(a *svcs.Analyzer) error {

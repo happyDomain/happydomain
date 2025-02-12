@@ -22,16 +22,87 @@
 package svcs
 
 import (
+	"fmt"
 	"net/url"
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services/common"
-	"git.happydns.org/happyDomain/utils"
 )
+
+type CAAPolicy struct {
+	Records []*dns.CAA `json:"caa"`
+}
+
+func (s *CAAPolicy) GetNbResources() int {
+	return len(s.Records)
+}
+
+func (s *CAAPolicy) GenComment(origin string) (ret string) {
+	t := CAAFields{}
+	for _, caa := range s.Records {
+		t.Analyze(caa.Flag, caa.Tag, caa.Value)
+	}
+
+	if t.DisallowIssue {
+		ret = "Certificate issuance disallowed"
+	} else {
+		var issuance []string
+		for _, iss := range t.Issue {
+			issuance = append(issuance, iss.IssuerDomainName)
+		}
+
+		ret = strings.Join(issuance, ", ")
+
+		if t.DisallowWildcardIssue {
+			if ret != "" {
+				ret += "; "
+			}
+			ret += "Wildcard issuance disallowed"
+		} else if len(t.IssueWild) > 0 {
+			if ret != "" {
+				ret += "; wildcard: "
+			}
+
+			var issuancew []string
+			for _, iss := range t.IssueWild {
+				issuancew = append(issuancew, iss.IssuerDomainName)
+			}
+
+			ret += strings.Join(issuancew, ", ")
+		}
+	}
+
+	if t.DisallowMailIssue {
+		if ret != "" {
+			ret += "; "
+		}
+		ret += "S/MIME issuance disallowed"
+	} else if len(t.IssueMail) > 0 {
+		if ret != "" {
+			ret += "; S/MIME: "
+		}
+
+		var issuancem []string
+		for _, iss := range t.IssueMail {
+			issuancem = append(issuancem, iss.IssuerDomainName)
+		}
+
+		ret += strings.Join(issuancem, ", ")
+	}
+
+	return
+}
+
+func (s *CAAPolicy) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
+	rrs := make([]dns.RR, len(s.Records))
+	for i, r := range s.Records {
+		rrs[i] = r
+	}
+	return rrs, nil
+}
 
 type CAAParameter struct {
 	Tag   string
@@ -76,7 +147,7 @@ func (v *CAAIssueValue) String() string {
 	return b.String()
 }
 
-type CAA struct {
+type CAAFields struct {
 	DisallowIssue         bool
 	Issue                 []CAAIssueValue
 	DisallowWildcardIssue bool
@@ -86,197 +157,56 @@ type CAA struct {
 	Iodef                 []*common.URL
 }
 
-func (s *CAA) GetNbResources() int {
-	nb := 0
-
-	if s.DisallowIssue {
-		nb += 1
-	} else {
-		nb += len(s.Issue)
-		if s.DisallowWildcardIssue {
-			nb += 1
+func (analyzed *CAAFields) Analyze(flag uint8, tag, value string) error {
+	if tag == "issue" {
+		if value == ";" {
+			analyzed.DisallowIssue = true
 		} else {
-			nb += len(s.IssueWild)
+			analyzed.Issue = append(analyzed.Issue, parseIssueValue(value))
 		}
 	}
 
-	if s.DisallowMailIssue {
-		nb += 1
-	} else {
-		nb += len(s.IssueMail)
-	}
-
-	return nb + len(s.Iodef)
-}
-
-func (s *CAA) GenComment(origin string) (ret string) {
-	if s.DisallowIssue {
-		ret = "Certificate issuance disallowed"
-	} else {
-		var issuance []string
-		for _, iss := range s.Issue {
-			issuance = append(issuance, iss.IssuerDomainName)
-		}
-
-		ret = strings.Join(issuance, ", ")
-
-		if s.DisallowWildcardIssue {
-			if ret != "" {
-				ret += "; "
-			}
-			ret += "Wildcard issuance disallowed"
-		} else if len(s.IssueWild) > 0 {
-			if ret != "" {
-				ret += "; wildcard: "
-			}
-
-			var issuancew []string
-			for _, iss := range s.IssueWild {
-				issuancew = append(issuancew, iss.IssuerDomainName)
-			}
-
-			ret += strings.Join(issuancew, ", ")
-		}
-	}
-
-	if s.DisallowMailIssue {
-		if ret != "" {
-			ret += "; "
-		}
-		ret += "S/MIME issuance disallowed"
-	} else if len(s.IssueMail) > 0 {
-		if ret != "" {
-			ret += "; S/MIME: "
-		}
-
-		var issuancem []string
-		for _, iss := range s.IssueMail {
-			issuancem = append(issuancem, iss.IssuerDomainName)
-		}
-
-		ret += strings.Join(issuancem, ", ")
-	}
-
-	return
-}
-
-func (s *CAA) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	if s.DisallowIssue {
-		rc := utils.NewRecordConfig(domain, "CAA", ttl, origin)
-		rc.CaaFlag = 0
-		rc.CaaTag = "issue"
-		rc.SetTarget(";")
-
-		rrs = append(rrs, rc)
-	} else {
-		for _, issue := range s.Issue {
-			rc := utils.NewRecordConfig(domain, "CAA", ttl, origin)
-			rc.CaaFlag = 0
-			rc.CaaTag = "issue"
-			rc.SetTarget(issue.String())
-
-			rrs = append(rrs, rc)
-		}
-
-		if s.DisallowWildcardIssue {
-			rc := utils.NewRecordConfig(domain, "CAA", ttl, origin)
-			rc.CaaFlag = 0
-			rc.CaaTag = "issuewild"
-			rc.SetTarget(";")
-
-			rrs = append(rrs, rc)
+	if tag == "issuewild" {
+		if value == ";" {
+			analyzed.DisallowWildcardIssue = true
 		} else {
-			for _, issue := range s.IssueWild {
-				rc := utils.NewRecordConfig(domain, "CAA", ttl, origin)
-				rc.CaaFlag = 0
-				rc.CaaTag = "issuewild"
-				rc.SetTarget(issue.String())
-
-				rrs = append(rrs, rc)
-			}
+			analyzed.IssueWild = append(analyzed.IssueWild, parseIssueValue(value))
 		}
 	}
 
-	if s.DisallowMailIssue {
-		rc := utils.NewRecordConfig(domain, "CAA", ttl, origin)
-		rc.CaaFlag = 0
-		rc.CaaTag = "issuemail"
-		rc.SetTarget(";")
-
-		rrs = append(rrs, rc)
-	} else {
-		for _, issue := range s.IssueMail {
-			rc := utils.NewRecordConfig(domain, "CAA", ttl, origin)
-			rc.CaaFlag = 0
-			rc.CaaTag = "issuemail"
-			rc.SetTarget(issue.String())
-
-			rrs = append(rrs, rc)
+	if tag == "issuemail" {
+		if value == ";" {
+			analyzed.DisallowMailIssue = true
+		} else {
+			analyzed.IssueMail = append(analyzed.Issue, parseIssueValue(value))
 		}
 	}
 
-	if len(s.Iodef) > 0 {
-		for _, iodef := range s.Iodef {
-			rc := utils.NewRecordConfig(domain, "CAA", ttl, origin)
-			rc.CaaFlag = 0
-			rc.CaaTag = "iodef"
-			rc.SetTarget(iodef.String())
-
-			rrs = append(rrs, rc)
+	if tag == "iodef" {
+		if u, err := url.Parse(value); err != nil {
+			return fmt.Errorf("unable to parse CAA field: %q: %w", value, err)
+		} else {
+			tmp := common.URL(*u)
+			analyzed.Iodef = append(analyzed.Iodef, &tmp)
 		}
 	}
 
-	return
+	return nil
 }
 
 func caa_analyze(a *Analyzer) (err error) {
-	pool := map[string]*CAA{}
+	pool := map[string]*CAAPolicy{}
 
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeCAA}) {
 		domain := record.NameFQDN
 
 		if record.Type == "CAA" {
 			if _, ok := pool[domain]; !ok {
-				pool[domain] = &CAA{}
+				pool[domain] = &CAAPolicy{}
 			}
 
 			analyzed := pool[domain]
-
-			if record.CaaTag == "issue" {
-				value := record.GetTargetField()
-				if value == ";" {
-					analyzed.DisallowIssue = true
-				} else {
-					analyzed.Issue = append(analyzed.Issue, parseIssueValue(value))
-				}
-			}
-
-			if record.CaaTag == "issuewild" {
-				value := record.GetTargetField()
-				if value == ";" {
-					analyzed.DisallowWildcardIssue = true
-				} else {
-					analyzed.IssueWild = append(analyzed.IssueWild, parseIssueValue(value))
-				}
-			}
-
-			if record.CaaTag == "issuemail" {
-				value := record.GetTargetField()
-				if value == ";" {
-					analyzed.DisallowMailIssue = true
-				} else {
-					analyzed.IssueMail = append(analyzed.Issue, parseIssueValue(value))
-				}
-			}
-
-			if record.CaaTag == "iodef" {
-				if u, err := url.Parse(record.GetTargetField()); err != nil {
-					continue
-				} else {
-					tmp := common.URL(*u)
-					analyzed.Iodef = append(analyzed.Iodef, &tmp)
-				}
-			}
+			analyzed.Records = append(analyzed.Records, record.ToRR().(*dns.CAA))
 
 			err = a.UseRR(record, domain, pool[domain])
 			if err != nil {
@@ -291,7 +221,7 @@ func caa_analyze(a *Analyzer) (err error) {
 func init() {
 	RegisterService(
 		func() happydns.Service {
-			return &CAA{}
+			return &CAAPolicy{}
 		},
 		caa_analyze,
 		ServiceInfos{

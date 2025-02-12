@@ -26,36 +26,36 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type TLS_RPT struct {
+	Record *dns.TXT `json:"txt"`
+}
+
+func (s *TLS_RPT) GetNbResources() int {
+	return 1
+}
+
+func (s *TLS_RPT) GenComment(origin string) string {
+	t := TLS_RPTField{}
+	t.Analyze(strings.Join(s.Record.Txt, ""))
+
+	return strings.Join(t.Rua, ", ")
+}
+
+func (s *TLS_RPT) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
+	return []dns.RR{s.Record}, nil
+}
+
+type TLS_RPTField struct {
 	Version uint     `json:"version" happydomain:"label=Version,placeholder=1,required,description=The version of TLSRPT to use.,default=1,hidden"`
 	Rua     []string `json:"rua" happydomain:"label=Aggregate Report URI,placeholder=https://example.com/path|mailto:name@example.com"`
 }
 
-func (t *TLS_RPT) GetNbResources() int {
-	return 1
-}
-
-func (t *TLS_RPT) GenComment(origin string) string {
-	return strings.Join(t.Rua, ", ")
-}
-
-func (t *TLS_RPT) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	rc := utils.NewRecordConfig(utils.DomainJoin("_smtp._tls", domain), "TXT", ttl, origin)
-	rc.SetTargetTXT(t.String())
-
-	rrs = append(rrs, rc)
-
-	return
-}
-
-func (t *TLS_RPT) Analyze(txt string) error {
+func (t *TLS_RPTField) Analyze(txt string) error {
 	fields := strings.Split(txt, ";")
 
 	if len(fields) < 2 {
@@ -92,7 +92,7 @@ func (t *TLS_RPT) Analyze(txt string) error {
 	return nil
 }
 
-func (t *TLS_RPT) String() string {
+func (t *TLS_RPTField) String() string {
 	return fmt.Sprintf("v=TLSRPTv%d; rua=%s", t.Version, strings.Join(t.Rua, ","))
 }
 
@@ -103,14 +103,9 @@ func tlsrpt_analyze(a *Analyzer) (err error) {
 			continue
 		}
 
-		service := &TLS_RPT{}
-
-		err = service.Analyze(record.GetTargetTXTJoined())
-		if err != nil {
-			return
-		}
-
-		err = a.UseRR(record, strings.TrimPrefix(record.NameFQDN, "_smtp._tls."), service)
+		err = a.UseRR(record, strings.TrimPrefix(record.NameFQDN, "_smtp._tls."), &TLS_RPT{
+			Record: record.ToRR().(*dns.TXT),
+		})
 		if err != nil {
 			return
 		}

@@ -25,7 +25,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -50,22 +49,12 @@ func (s *Delegation) GenComment(origin string) string {
 	return fmt.Sprintf("%d name servers"+ds, len(s.NameServers))
 }
 
-func (s *Delegation) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
+func (s *Delegation) GetRecords(domain string, ttl uint32, origin string) (rrs []dns.RR, e error) {
 	for _, ns := range s.NameServers {
-		rc, err := models.RRtoRC(ns, origin)
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate NS record: %w", err)
-		}
-
-		rrs = append(rrs, &rc)
+		rrs = append(rrs, ns)
 	}
 	for _, ds := range s.DS {
-		rc, err := models.RRtoRC(ds, origin)
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate DS record: %w", err)
-		}
-
-		rrs = append(rrs, &rc)
+		rrs = append(rrs, ds)
 	}
 	return
 }

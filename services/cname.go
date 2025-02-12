@@ -22,18 +22,15 @@
 package svcs
 
 import (
-	"fmt"
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type CNAME struct {
-	Target string
+	Record *dns.CNAME `json:"cname"`
 }
 
 func (s *CNAME) GetNbResources() int {
@@ -41,19 +38,15 @@ func (s *CNAME) GetNbResources() int {
 }
 
 func (s *CNAME) GenComment(origin string) string {
-	return strings.TrimSuffix(s.Target, "."+origin)
+	return strings.TrimSuffix(s.Record.Target, "."+origin)
 }
 
-func (s *CNAME) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	rr := utils.NewRecordConfig(domain, "CNAME", ttl, origin)
-	rr.SetTarget(utils.DomainFQDN(s.Target, origin))
-	rrs = append(rrs, rr)
-	return
+func (s *CNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []dns.RR, e error) {
+	return []dns.RR{s.Record}, nil
 }
 
 type SpecialCNAME struct {
-	SubDomain string
-	Target    string
+	Record *dns.CNAME `json:"cname"`
 }
 
 func (s *SpecialCNAME) GetNbResources() int {
@@ -61,14 +54,11 @@ func (s *SpecialCNAME) GetNbResources() int {
 }
 
 func (s *SpecialCNAME) GenComment(origin string) string {
-	return "(" + s.SubDomain + ") -> " + strings.TrimSuffix(s.Target, "."+origin)
+	return "(" + strings.TrimSuffix(s.Record.Hdr.Name, "."+origin) + ") -> " + strings.TrimSuffix(s.Record.Target, "."+origin)
 }
 
-func (s *SpecialCNAME) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	rr := utils.NewRecordConfig(utils.DomainJoin(s.SubDomain, domain), "CNAME", ttl, origin)
-	rr.SetTarget(utils.DomainFQDN(s.Target, origin))
-	rrs = append(rrs, rr)
-	return
+func (s *SpecialCNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []dns.RR, e error) {
+	return []dns.RR{s.Record}, nil
 }
 
 func specialalias_analyze(a *Analyzer) error {
@@ -77,8 +67,7 @@ func specialalias_analyze(a *Analyzer) error {
 		subdomains := SRV_DOMAIN.FindStringSubmatch(record.NameFQDN)
 		if record.Type == "CNAME" && len(subdomains) == 4 {
 			a.UseRR(record, subdomains[3], &SpecialCNAME{
-				SubDomain: fmt.Sprintf("_%s._%s", subdomains[1], subdomains[2]),
-				Target:    record.String(),
+				Record: record.ToRR().(*dns.CNAME),
 			})
 		}
 	}
@@ -88,11 +77,9 @@ func specialalias_analyze(a *Analyzer) error {
 func alias_analyze(a *Analyzer) error {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME}) {
 		if record.Type == "CNAME" {
-			newrr := &CNAME{
-				Target: strings.TrimSuffix(record.String(), "."+a.origin),
-			}
-
-			a.UseRR(record, record.NameFQDN, newrr)
+			a.UseRR(record, record.NameFQDN, &CNAME{
+				Record: record.ToRR().(*dns.CNAME),
+			})
 		}
 	}
 	return nil

@@ -26,12 +26,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type XMPP struct {
@@ -80,8 +78,12 @@ destloop:
 	return buffer.String()
 }
 
-func (s *XMPP) GenRRs(domain string, ttl uint32, origin string) (models.Records, error) {
-	return utils.RRstoRCs(s.Records, origin)
+func (s *XMPP) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
+	rrs := make([]dns.RR, len(s.Records))
+	for i, r := range s.Records {
+		rrs[i] = r
+	}
+	return rrs, nil
 }
 
 func xmpp_subanalyze(a *svcs.Analyzer, prefix string, xmppDomains map[string]*XMPP) error {

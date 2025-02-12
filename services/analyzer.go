@@ -180,7 +180,7 @@ func AnalyzeZone(origin string, zone models.Records) (svcs map[string][]*happydn
 		hash := sha1.New()
 		io.WriteString(hash, record.String())
 
-		orphan := &Orphan{record.Type, record.String()}
+		orphan := &Orphan{record.ToRR()}
 		svcs[domain] = append(svcs[domain], &happydns.ServiceCombined{
 			Service: orphan,
 			ServiceMeta: happydns.ServiceMeta{

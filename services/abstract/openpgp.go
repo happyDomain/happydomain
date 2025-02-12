@@ -26,12 +26,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type OpenPGP struct {
@@ -47,24 +45,15 @@ func (s *OpenPGP) GenComment(origin string) string {
 	return fmt.Sprintf("%s", s.Username)
 }
 
-func (s *OpenPGP) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
+func (s *OpenPGP) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
 	if s.Username != "" {
-		if !strings.Contains(domain, "_openpgpkey") {
-			domain = utils.DomainJoin("_openpgpkey", domain)
-		}
-
 		identifier := fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
 		if !strings.HasPrefix(domain, identifier) {
-			domain = utils.DomainJoin(identifier, domain)
+			return nil, fmt.Errorf("Invalid prefix")
 		}
 	}
 
-	rc, err := models.RRtoRC(s.Record, domain)
-	if err != nil {
-		return nil, err
-	}
-	rrs = append(rrs, &rc)
-	return
+	return []dns.RR{s.Record}, nil
 }
 
 type SMimeCert struct {
@@ -80,24 +69,15 @@ func (s *SMimeCert) GenComment(origin string) string {
 	return fmt.Sprintf("%s", s.Username)
 }
 
-func (s *SMimeCert) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
+func (s *SMimeCert) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
 	if s.Username != "" {
-		if !strings.Contains(domain, "_smimecert") {
-			domain = utils.DomainJoin("_smimecert", domain)
-		}
-
 		identifier := fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
 		if !strings.HasPrefix(domain, identifier) {
-			domain = utils.DomainJoin(identifier, domain)
+			return nil, fmt.Errorf("Invalid prefix")
 		}
 	}
 
-	rc, err := models.RRtoRC(s.Record, domain)
-	if err != nil {
-		return nil, err
-	}
-	rrs = append(rrs, &rc)
-	return
+	return []dns.RR{s.Record}, nil
 }
 
 func openpgpkey_analyze(a *svcs.Analyzer) (err error) {

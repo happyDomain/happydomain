@@ -166,7 +166,7 @@ func (z *Zone) EraseServiceWithoutMeta(subdomain string, origin string, id []byt
 }
 
 // GenerateRRs returns all the reals records of the Zone.
-func (z *Zone) GenerateRRs(origin string) (rrs models.Records, e error) {
+func (z *Zone) GenerateRecords(origin string) (records models.Records, e error) {
 	for subdomain, svcs := range z.Services {
 		if subdomain == "" {
 			subdomain = origin
@@ -181,17 +181,25 @@ func (z *Zone) GenerateRRs(origin string) (rrs models.Records, e error) {
 				ttl = svc.Ttl
 			}
 
-			zrrs, err := svc.GenRRs(strings.TrimSuffix(subdomain, "."), ttl, strings.TrimSuffix(origin, "."))
+			rrs, err := svc.GetRecords(strings.TrimSuffix(subdomain, "."), ttl, strings.TrimSuffix(origin, "."))
 			if err != nil {
 				return nil, fmt.Errorf("unable to generate records for service %s: %w", svc, err)
 			}
-			rrs = append(rrs, zrrs...)
+
+			for _, record := range rrs {
+				rc, err := models.RRtoRC(record, strings.TrimSuffix(origin, "."))
+				if err != nil {
+					return nil, err
+				}
+
+				records = append(records, &rc)
+			}
 		}
 
 		// Ensure SOA is the first record
-		for i, rr := range rrs {
+		for i, rr := range records {
 			if rr.Type == "SOA" {
-				rrs[0], rrs[i] = rrs[i], rrs[0]
+				records[0], records[i] = records[i], records[0]
 				break
 			}
 		}

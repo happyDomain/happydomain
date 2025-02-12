@@ -24,7 +24,6 @@ package abstract
 import (
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -47,13 +46,8 @@ func (s *GithubOrgVerif) GenComment(origin string) string {
 	return ""
 }
 
-func (s *GithubOrgVerif) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	rc, err := models.RRtoRC(s.Record, origin)
-	if err != nil {
-		return nil, err
-	}
-	rrs = append(rrs, &rc)
-	return
+func (s *GithubOrgVerif) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
+	return []dns.RR{s.Record}, nil
 }
 
 func githubverification_analyze(a *svcs.Analyzer) error {

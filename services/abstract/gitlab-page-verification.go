@@ -24,12 +24,10 @@ package abstract
 import (
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type GitlabPageVerif struct {
@@ -44,17 +42,8 @@ func (s *GitlabPageVerif) GenComment(origin string) string {
 	return strings.TrimPrefix(strings.Join(s.Record.Txt, ""), "gitlab-pages-verification-code=")
 }
 
-func (s *GitlabPageVerif) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	if !strings.HasPrefix(domain, "_gitlab-pages-verification-code") {
-		domain = utils.DomainJoin("_gitlab-pages-verification-code", domain)
-	}
-
-	rc, err := models.RRtoRC(s.Record, origin)
-	if err != nil {
-		return nil, err
-	}
-	rrs = append(rrs, &rc)
-	return
+func (s *GitlabPageVerif) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
+	return []dns.RR{s.Record}, nil
 }
 
 func gitlabverification_analyze(a *svcs.Analyzer) error {

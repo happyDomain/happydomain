@@ -26,36 +26,29 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/utils"
 )
 
-type MX struct {
-	Target     string `json:"target"`
-	Preference uint16 `json:"preference,omitempty"`
-}
-
 type MXs struct {
-	MX []MX `json:"mx" happydomain:"label=EMail Servers,required"`
+	Records []*dns.MX `json:"mx"`
 }
 
 func (s *MXs) GetNbResources() int {
-	return len(s.MX)
+	return len(s.Records)
 }
 
 func (s *MXs) GenComment(origin string) string {
 	poolMX := map[string]int{}
 
-	for _, mx := range s.MX {
-		labels := dns.SplitDomainName(mx.Target)
+	for _, mx := range s.Records {
+		labels := dns.SplitDomainName(mx.Mx)
 		nbLabel := len(labels)
 
 		var dn string
 		if nbLabel <= 2 {
-			dn = mx.Target
+			dn = mx.Mx
 		} else if len(labels[nbLabel-2]) < 4 {
 			dn = strings.Join(labels[nbLabel-3:], ".") + "."
 		} else {
@@ -83,16 +76,12 @@ func (s *MXs) GenComment(origin string) string {
 	return buffer.String()
 }
 
-func (s *MXs) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	for _, mx := range s.MX {
-		rc := utils.NewRecordConfig(domain, "MX", ttl, origin)
-		rc.MxPreference = mx.Preference
-		rc.SetTarget(utils.DomainFQDN(mx.Target, origin))
-
-		rrs = append(rrs, rc)
+func (s *MXs) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
+	rrs := make([]dns.RR, len(s.Records))
+	for i, r := range s.Records {
+		rrs[i] = r
 	}
-
-	return
+	return rrs, nil
 }
 
 func mx_analyze(a *Analyzer) (err error) {
@@ -106,12 +95,9 @@ func mx_analyze(a *Analyzer) (err error) {
 			services[dn] = &MXs{}
 		}
 
-		services[dn].MX = append(
-			services[dn].MX,
-			MX{
-				Target:     record.GetTargetField(),
-				Preference: record.MxPreference,
-			},
+		services[dn].Records = append(
+			services[dn].Records,
+			record.ToRR().(*dns.MX),
 		)
 
 		err = a.UseRR(

@@ -27,6 +27,7 @@ import (
 	"io"
 
 	"github.com/StackExchange/dnscontrol/v4/models"
+	"github.com/miekg/dns"
 )
 
 // Service represents a service provided by one or more DNS record.
@@ -37,8 +38,8 @@ type Service interface {
 	// GenComment sum up the content of the Service, in a small usefull string.
 	GenComment(origin string) string
 
-	// genRRs generates corresponding RRs.
-	GenRRs(domain string, ttl uint32, origin string) (models.Records, error)
+	// getRecords retrieves underlying RRs.
+	GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error)
 }
 
 // ServiceMeta holds the metadata associated to a Service.
@@ -89,10 +90,22 @@ func (svc *ServiceCombined) UnmarshalJSON(b []byte) error {
 }
 
 func ValidateService(svc Service, subdomain, origin string) ([]byte, error) {
-	records, err := svc.GenRRs(subdomain, 0, origin)
+	rrs, err := svc.GetRecords(subdomain, 0, origin)
 	if err != nil {
-		return nil, fmt.Errorf("unable to generate records: %w", err)
-	} else if len(records) == 0 {
+		return nil, fmt.Errorf("unable to retrieve records: %w", err)
+	}
+
+	records := make(models.Records, 0, len(rrs))
+	for _, record := range rrs {
+		rc, err := models.RRtoRC(record, origin)
+		if err != nil {
+			return nil, err
+		}
+
+		records = append(records, &rc)
+	}
+
+	if len(records) == 0 {
 		return nil, fmt.Errorf("no record can be generated from your service.")
 	} else {
 		hash := sha1.New()

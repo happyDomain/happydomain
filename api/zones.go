@@ -395,7 +395,7 @@ func diffZones(c *gin.Context) {
 		return
 	}
 
-	records2, err := zone2.GenerateRRs(domain.DomainName)
+	records2, err := zone2.GenerateRecords(domain.DomainName)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": err.Error()})
 		return
@@ -438,7 +438,7 @@ func diffZones(c *gin.Context) {
 			return
 		}
 
-		records1, err := zone1.GenerateRRs(domain.DomainName)
+		records1, err := zone1.GenerateRecords(domain.DomainName)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 			return
@@ -504,7 +504,7 @@ func applyZone(c *gin.Context) {
 		return
 	}
 
-	records, err := zone.GenerateRRs(domain.DomainName)
+	records, err := zone.GenerateRecords(domain.DomainName)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, err.Error())
 		return
@@ -626,7 +626,7 @@ func viewZone(c *gin.Context) {
 
 	var ret string
 
-	rrs, err := zone.GenerateRRs(domain.DomainName)
+	rrs, err := zone.GenerateRecords(domain.DomainName)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("An error occurs during zone records generation: %s.", err.Error())})
 		return
@@ -772,23 +772,17 @@ func getServiceRecords(c *gin.Context) {
 		ttl = zone.DefaultTTL
 	}
 
-	rrs, err := svc.GenRRs(subdomain, ttl, domain.DomainName)
+	rrs, err := svc.GetRecords(subdomain, ttl, domain.DomainName)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": err.Error()})
 		return
 	}
 
 	var ret []serviceRecord
-	for _, rc := range rrs {
-		var rr dns.RR
-		if _, ok := dns.StringToType[rc.Type]; ok {
-			rr = rc.ToRR()
-		}
-
+	for _, rr := range rrs {
 		ret = append(ret, serviceRecord{
-			Type:   rc.Type,
-			String: rc.String(),
-			Fields: rc,
+			Type:   dns.Type(rr.Header().Rrtype).String(),
+			String: rr.String(),
 			RR:     rr,
 		})
 	}

@@ -30,7 +30,6 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type Server struct {
@@ -74,27 +73,16 @@ func (s *Server) GenComment(origin string) string {
 	return buffer.String()
 }
 
-func (s *Server) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
+func (s *Server) GetRecords(domain string, ttl uint32, origin string) (rrs []dns.RR, e error) {
 	if s.A != nil && len(s.A.A) != 0 {
-		rc, err := models.RRtoRC(s.A, origin)
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate A record: %w", err)
-		}
-		rrs = append(rrs, &rc)
+		rrs = append(rrs, s.A)
 	}
 	if s.AAAA != nil && len(s.AAAA.AAAA) != 0 {
-		rc, err := models.RRtoRC(s.AAAA, origin)
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate AAAA record: %w", err)
-		}
-		rrs = append(rrs, &rc)
+		rrs = append(rrs, s.AAAA)
 	}
-	if len(s.SSHFP) > 0 {
-		sshfp_rrs, err := utils.RRstoRCs(s.SSHFP, origin)
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate SSHFP records: %w", err)
-		}
-		rrs = append(rrs, sshfp_rrs...)
+
+	for _, sshfp := range s.SSHFP {
+		rrs = append(rrs, sshfp)
 	}
 
 	return

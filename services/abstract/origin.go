@@ -25,12 +25,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type NSOnlyOrigin struct {
@@ -45,8 +43,12 @@ func (s *NSOnlyOrigin) GenComment(origin string) string {
 	return fmt.Sprintf("%d NS", len(s.NameServers))
 }
 
-func (s *NSOnlyOrigin) GenRRs(domain string, ttl uint32, origin string) (models.Records, error) {
-	return utils.RRstoRCs(s.NameServers, origin)
+func (s *NSOnlyOrigin) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
+	rrs := make([]dns.RR, len(s.NameServers))
+	for i, r := range s.NameServers {
+		rrs[i] = r
+	}
+	return rrs, nil
 }
 
 type Origin struct {
@@ -75,22 +77,17 @@ func (s *Origin) GenComment(origin string) string {
 	return fmt.Sprintf("%s %s %d"+ns, strings.TrimSuffix(s.SOA.Ns, "."+origin), strings.TrimSuffix(s.SOA.Mbox, "."+origin), s.SOA.Serial)
 }
 
-func (s *Origin) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
+func (s *Origin) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
+	rrs := make([]dns.RR, len(s.NameServers))
+	for i, r := range s.NameServers {
+		rrs[i] = r
+	}
+
 	if s.SOA != nil {
-		rc, err := models.RRtoRC(s.SOA, origin)
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate SOA record: %w", err)
-		}
-		rrs = append(rrs, &rc)
+		rrs = append(rrs, s.SOA)
 	}
 
-	rcs, err := utils.RRstoRCs(s.NameServers, origin)
-	if err != nil {
-		return nil, fmt.Errorf("unable to generate NS records: %w", err)
-	}
-	rrs = append(rrs, rcs...)
-
-	return
+	return rrs, nil
 }
 
 func origin_analyze(a *svcs.Analyzer) error {

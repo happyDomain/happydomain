@@ -25,11 +25,9 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/utils"
 )
 
 var (
@@ -53,8 +51,12 @@ func (s *UnknownSRV) GenComment(origin string) string {
 	return fmt.Sprintf("%s (%s)", subdomains[1], subdomains[2])
 }
 
-func (s *UnknownSRV) GenRRs(domain string, ttl uint32, origin string) (models.Records, error) {
-	return utils.RRstoRCs(s.Records, origin)
+func (s *UnknownSRV) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
+	rrs := make([]dns.RR, len(s.Records))
+	for i, r := range s.Records {
+		rrs[i] = r
+	}
+	return rrs, nil
 }
 
 func srv_analyze(a *Analyzer) error {

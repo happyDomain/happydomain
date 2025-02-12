@@ -24,7 +24,6 @@ package abstract
 import (
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -43,13 +42,8 @@ func (s *GoogleVerif) GenComment(origin string) string {
 	return strings.TrimPrefix(strings.Join(s.Record.Txt, ""), "google-site-verification=")
 }
 
-func (s *GoogleVerif) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	rc, err := models.RRtoRC(s.Record, origin)
-	if err != nil {
-		return nil, err
-	}
-	rrs = append(rrs, &rc)
-	return
+func (s *GoogleVerif) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
+	return []dns.RR{s.Record}, nil
 }
 
 func googleverification_analyze(a *svcs.Analyzer) error {

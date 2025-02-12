@@ -25,18 +25,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"github.com/StackExchange/dnscontrol/v4/pkg/spflib"
 
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type SPF struct {
-	Version    uint     `json:"version" happydomain:"label=Version,placeholder=1,required,description=The version of SPF to use.,default=1,hidden"`
-	Directives []string `json:"directives" happydomain:"label=Directives,placeholder=ip4:203.0.113.12"`
+	Record *dns.TXT `json:"txt"`
 }
 
 func (s *SPF) GetNbResources() int {
@@ -44,19 +41,22 @@ func (s *SPF) GetNbResources() int {
 }
 
 func (s *SPF) GenComment(origin string) string {
-	return fmt.Sprintf("%d directives", len(s.Directives))
+	t := SPFFields{}
+	t.Analyze(strings.Join(s.Record.Txt, ""))
+
+	return fmt.Sprintf("%d directives", len(t.Directives))
 }
 
-func (s *SPF) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	rc := utils.NewRecordConfig(domain, "TXT", ttl, origin)
-	rc.SetTargetTXT(s.String())
-
-	rrs = append(rrs, rc)
-
-	return
+func (s *SPF) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
+	return []dns.RR{s.Record}, nil
 }
 
-func (t *SPF) Analyze(txt string) error {
+type SPFFields struct {
+	Version    uint     `json:"version" happydomain:"label=Version,placeholder=1,required,description=The version of SPF to use.,default=1,hidden"`
+	Directives []string `json:"directives" happydomain:"label=Directives,placeholder=ip4:203.0.113.12"`
+}
+
+func (t *SPFFields) Analyze(txt string) error {
 	_, err := spflib.Parse(txt, nil)
 	if err != nil {
 		return err
@@ -84,41 +84,36 @@ func (t *SPF) Analyze(txt string) error {
 	return nil
 }
 
+func (s *SPFFields) String() string {
+	directives := append([]string{fmt.Sprintf("v=spf%d", s.Version)}, s.Directives...)
+	return strings.Join(directives, " ")
+}
+
 func spf_analyze(a *Analyzer) (err error) {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Contains: "v=spf1"}) {
-		service := &SPF{}
-
-		err = service.Analyze(record.GetTargetTXTJoined())
-		if err != nil {
-			return
-		}
-
-		err = a.UseRR(record, record.NameFQDN, service)
+		err = a.UseRR(record, record.NameFQDN, &SPF{
+			Record: record.ToRR().(*dns.TXT),
+		})
 		if err != nil {
 			return
 		}
 	}
 
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeSPF, Contains: "v=spf1"}) {
-		service := &SPF{}
+		spf := record.ToRR().(*dns.SPF)
 
-		err = service.Analyze(record.GetTargetTXTJoined())
-		if err != nil {
-			return
-		}
-
-		err = a.UseRR(record, record.NameFQDN, service)
+		err = a.UseRR(record, record.NameFQDN, &SPF{
+			Record: &dns.TXT{
+				Hdr: spf.Hdr,
+				Txt: spf.Txt,
+			},
+		})
 		if err != nil {
 			return
 		}
 	}
 
 	return
-}
-
-func (s *SPF) String() string {
-	directives := append([]string{fmt.Sprintf("v=spf%d", s.Version)}, s.Directives...)
-	return strings.Join(directives, " ")
 }
 
 func init() {

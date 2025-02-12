@@ -24,7 +24,6 @@ package abstract
 import (
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -43,13 +42,8 @@ func (s *KeybaseVerif) GenComment(origin string) string {
 	return strings.TrimPrefix(strings.Join(s.Record.Txt, ""), "keybase-site-verification=")
 }
 
-func (s *KeybaseVerif) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	rc, err := models.RRtoRC(s.Record, origin)
-	if err != nil {
-		return nil, err
-	}
-	rrs = append(rrs, &rc)
-	return
+func (s *KeybaseVerif) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
+	return []dns.RR{s.Record}, nil
 }
 
 func keybaseverification_analyze(a *svcs.Analyzer) error {
