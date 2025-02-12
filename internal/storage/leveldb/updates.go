@@ -28,15 +28,7 @@ import (
 
 type LevelDBMigrationFunc func(s *LevelDBStorage) error
 
-var migrations []LevelDBMigrationFunc = []LevelDBMigrationFunc{
-	migrateFrom0,
-	migrateFrom1,
-	migrateFrom2,
-	migrateFrom3,
-	migrateFrom4,
-	migrateFrom5,
-	migrateFrom6,
-}
+var migrations []LevelDBMigrationFunc = []LevelDBMigrationFunc{}
 
 func (s *LevelDBStorage) SchemaVersion() int {
 	return len(migrations)
