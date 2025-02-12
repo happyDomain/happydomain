@@ -397,6 +397,108 @@ export function nsrrtype(input: number | string): string {
     }
 }
 
+export function rdatatostr(rr): string {
+  switch (rr.Hdr.Rrtype) {
+    case '1': case 1: return rr.A
+    case '2': case 2: return rr.Ns
+    case '3': case 3: return rr.Md
+    case '4': case 4: return rr.Mf
+    case '5': case 5: return rr.Target
+    case '6': case 6: return [rr.Ns, rr.Mbox, rr.Serial, rr.Refresh, rr.Retry, rr.Expire, rr.Minttl].join(' ')
+    case '7': case 7: return rr.Mb
+    case '8': case 8: return rr.Mg
+    case '9': case 9: return rr.Mr
+    case '10': case 10: return rr.Data
+    case '11': case 11: return 'unknwon WKS'
+    case '12': case 12: return rr.Ptr
+    case '13': case 13: return (rr.Cpu + ' ' + rr.Os)
+    case '14': case 14: return (rr.Rmail + ' ' + rr.Email)
+    case '15': case 15: return (rr.Preference + ' ' + rr.Mx)
+    case '16': case 16: return rr.Txt.join('')
+    case '17': case 17: return (rr.Mbox + ' ' + rr.Txt)
+    case '18': case 18: return (rr.Subtype + ' ' + rr.Hostname)
+    case '19': case 19: return rr.PSDNAddress
+    case '20': case 20: return (rr.Address + ' ' + rr.SubAddress)
+    case '21': case 21: return (rr.Preference + ' ' + rr.Host)
+    case '22': case 22: return 'unknown NSAP'
+    case '23': case 23: return rr.Ptr
+    case '26': case 26: return (rr.Preference + ' ' + rr.Map822 + ' ' + rr.Mapx400)
+    case '27': case 27: return (rr.Longitude + ' ' + rr.Latitude + ' ' + rr.Altitude)
+    case '28': case 28: return rr.AAAA
+    case '29': case 29: return [rr.Version, rr.Size, rr.HorizPre, rr.VertPre, rr.Latitude, rr.Longitude, rr.Altitude].join(' ')
+    case '31': case 31: return rr.Endpoint
+    case '32': case 32: return rr.Locator
+    case '33': case 33: return [rr.Priority, rr.Weight, rr.Port, rr.Target].join(' ')
+    case '34': case 34: return 'unknown ATMA'
+    case '35': case 35: return [rr.Order, rr.Preference, '"'+rr.Flags+'"', '"'+rr.Service+'"', '"'+rr.Regexp+'"', rr.Replacement].join(' ')
+    case '36': case 36: return (rr.Preference + ' ' + rr.Exchanger)
+    case '37': case 37: return [rr.Type, rr.KeyTag, rr.Algorithm, rr.Certificate].join(' ')
+    case '38': case 38: return 'unknown A6'
+    case '39': case 39: return rr.Target
+    case '40': case 40: return 'unknwon SINK'
+    case '41': case 41: return 'unknown OPT'
+    case '42': case 42: return rr.Prefixes.map((a) => {
+        let ret = "";
+
+        if (a.Negation)
+            ret += "!";
+
+        if (a.Network.IP.indexOf(':'))
+            ret += "2";
+        else
+            ret += "1";
+
+        ret += ":";
+        ret += a.Network.IP;
+        ret += "/";
+        ret += a.Network.Mask;
+        return ret.length + ret;
+    }).join(' ')
+    case '59': case 59: // CDS = DS
+    case '32769': case 32769: // DLV = DS
+    case '43': case 43: return [rr.KeyTag, rr.Algorithm, rr.DigestType, rr.Digest].join(' ')
+    case '44': case 44: return [rr.Algorithm, rr.Type, rr.FingerPrint].join(' ')
+    case '45': case 45: return [rr.Precedence, rr.GatewayType, rr.Algorithm, rr.GatewayAddr, rr.GatewayHost, rr.PublicKey].join(' ')
+    case '24': case 24: // SIG = RRSIG
+    case '46': case 46: return [rr.TypeCovered, rr.Algorithm, rr.Labels, rr.OrigTtl, rr.Expiration, rr.Inception, rr.KeyTag, rr.SignerName, rr.Signature].join(' ')
+    case '30': case 30: // NXT = NSEC
+    case '47': case 47: return [rr.Hash, rr.Flags, rr.Iterations, rr.SaltLength, rr.Salt, rr.HashLength, rr.NextDomain, rr.TypeBitMap.join(' ')].join(' ')
+    case '25': case 25: // KEY = DNSKEY
+    case '60': case 60: // CDNSKEY = DNSKEY
+    case '48': case 48: return [rr.Flags, rr.Protocol, rr.Algorithm, rr.PublicKey].join(' ')
+    case '49': case 49: return rr.Digest
+    case '50': case 50: return [rr.Hash, rr.Flags, rr.Iterations, rr.SaltLength, rr.Salt, rr.HashLength, rr.NextDomain, rr.TypeBitMap.join(' ')].join(' ')
+    case '51': case 51: return [rr.Hash, rr.Flags, rr.Iterations, rr.SaltLength, rr.Salt].join(' ')
+    case '52': case 52: return [rr.Usage, rr.Selector, rr.MatchingType, rr.Certificate].join(' ')
+    case '53': case 53: return [rr.Usage, rr.Selector, rr.MatchingType, rr.Certificate].join(' ')
+    case '55': case 55: return [rr.PublicKeyAlgorithm, rr.Hit, rr.PublicKey, rr.RendezvousServers.join(' ')].join(' ')
+    case '56': case 56: return rr.ZSData.join('')
+    case '57': case 57: return [rr.Flags, rr.Protocol, rr.Algorithm, rr.PublicKey].join(' ')
+    case '58': case 58: return (rr.PreviousName + ' ' + rr.NextName)
+    case '61': case 61: return rr.PublicKey
+    case '62': case 62: return [rr.Serial, rr.Flags, rr.TypeBitMap.join(' ')].join(' ')
+    case '63': case 63: return [rr.Serial, rr.Scheme, rr.Hash, rr.Digest].join(' ')
+    case '99': case 99: return rr.Txt.join('')
+    case '100': case 100: return rr.Uinfo
+    case '101': case 101: return rr.Uid
+    case '102': case 102: return rr.Gid
+    case '103': case 103: return 'unknown UNSPEC'
+    case '104': case 104: return (rr.Preference + ' ' + rr.NodeID)
+    case '105': case 105: return (rr.Preference + ' ' + rr.Locator32)
+    case '106': case 106: return (rr.Preference + ' ' + rr.Locator64)
+    case '107': case 107: return (rr.Preference + ' ' + rr.Fqdn)
+    case '108': case 108: return rr.Address
+    case '109': case 109: return rr.Address
+    case '249': case 249: return [rr.Algorithm, rr.Inception, rr.Expiration, rr.Mode, rr.Error, rr.KeySize, rr.Key, rr.OtherLen, rr.OtherData].join(' ')
+    case '256': case 256: return (rr.Priority + ' ' + rr.Weight + ' ' + rr.Target)
+    case '257': case 257: return (rr.Flag + ' ' + rr.Tag + ' ' + rr.Value)
+    case '258': case 258: return rr.Txt.join('')
+    case '260': case 260: return (rr.Precedence + ' ' + rr.GatewayType + ' ' + rr.GatewayAddr + ' ' + rr.GatewayHost)
+    case '32768': case 32768: return [rr.KeyTag, rr.Algorithm, rr.DigestType, rr.Digest].join(' ')
+    default: return 'unknown #' + rr.Hdr.Rrtype
+  }
+}
+
 export function validateDomain(
     dn: string,
     origin: string = "",

@@ -40,6 +40,4 @@ func DeclareZoneServiceRoutes(apiZonesRoutes, apiZonesSubdomainRoutes *gin.Route
 	apiZonesSubdomainServiceIdRoutes.Use(middleware.ServiceIdHandler(dependancies.ServiceUsecase()))
 	apiZonesSubdomainServiceIdRoutes.GET("", sc.GetZoneService)
 	apiZonesSubdomainServiceIdRoutes.DELETE("", sc.DeleteZoneService)
-
-	apiZonesSubdomainServiceIdRoutes.GET("/records", sc.GetServiceRecords)
 }
