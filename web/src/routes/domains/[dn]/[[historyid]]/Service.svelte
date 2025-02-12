@@ -38,17 +38,17 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { deleteZoneService, getServiceRecords, updateZoneService } from "$lib/api/zone";
-    import { nsrrtype } from "$lib/dns";
-    import ResourceInput from "$lib/components/forms/ResourceInput.svelte";
-    import TableRecords from "$lib/components/domains/TableRecords.svelte";
-    import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service";
-    import { ZoneViewGrid, ZoneViewList, ZoneViewRecords } from "$lib/model/usersettings";
-    import type { ServiceRecord } from "$lib/model/zone";
-    import { servicesSpecs } from "$lib/stores/services";
-    import { userSession } from "$lib/stores/usersession";
-    import { t } from "$lib/translations";
+    import { deleteZoneService, updateZoneService } from '$lib/api/zone';
+    import { nsrrtype } from '$lib/dns';
+    import ResourceInput from '$lib/components/forms/ResourceInput.svelte';
+    import TableRecords from '$lib/components/domains/TableRecords.svelte';
+    import type { Domain } from '$lib/model/domain';
+    import type { ServiceCombined } from '$lib/model/service';
+    import { ZoneViewGrid, ZoneViewList, ZoneViewRecords } from '$lib/model/usersettings';
+    import type { ServiceRecord } from '$lib/model/zone';
+    import { servicesSpecs } from '$lib/stores/services';
+    import { userSession } from '$lib/stores/usersession';
+    import { t } from '$lib/translations';
 
     const dispatch = createEventDispatcher();
 
@@ -63,17 +63,12 @@
     } else {
         component = Card;
     }
-    $: if ($userSession && $userSession.settings.zoneview === ZoneViewRecords && service) {
-        getServiceRecords(origin, zoneId, service).then((sr) => (serviceRecords = sr));
-    }
 
     let showDetails = false;
-    let serviceRecords: Array<ServiceRecord> | null = null;
     function toggleDetails() {
-        if (component == Card || serviceRecords) {
+        if (component == Card) {
             dispatch("show-service", service);
         } else if (service) {
-            serviceRecords = null;
             showDetails = !showDetails;
         }
     }
@@ -157,11 +152,6 @@
             <strong title={$servicesSpecs[service._svctype].description}>
                 {$servicesSpecs[service._svctype].name}
             </strong>
-            {#if service._comment}
-                <span class="text-muted">
-                    {service._comment}
-                </span>
-            {/if}
             {#if $servicesSpecs[service._svctype].description}
                 <span class="text-muted">
                     {$servicesSpecs[service._svctype].description}
@@ -169,10 +159,15 @@
             {/if}
             {#if $servicesSpecs[service._svctype].categories}
                 {#each $servicesSpecs[service._svctype].categories as category}
-                    <Badge color="info" class="float-end mx-1">
+                    <Badge color="info" class="mx-1">
                         {category}
                     </Badge>
                 {/each}
+            {/if}
+            {#if service._comment}
+                <span class="float-end text-muted">
+                    {service._comment}
+                </span>
             {/if}
         </ListGroupItem>
         {#if $userSession.settings.zoneview === ZoneViewList && showDetails}
@@ -189,15 +184,9 @@
                 />
             </ListGroupItem>
         {:else if $userSession.settings.zoneview === ZoneViewRecords}
-            {#if serviceRecords}
-                <ListGroupItem class="p-0">
-                    <TableRecords {serviceRecords} />
-                </ListGroupItem>
-            {:else}
-                <ListGroupItem class="py-3 d-flex justify-content-center">
-                    <Spinner color="primary" />
-                </ListGroupItem>
-            {/if}
+            <ListGroupItem class="p-0">
+                <TableRecords service={service.Service} />
+            </ListGroupItem>
         {/if}
     {/if}
 </svelte:component>
