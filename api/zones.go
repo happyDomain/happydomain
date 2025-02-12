@@ -82,6 +82,7 @@ func loadZoneFromId(domain *happydns.Domain, id string) (*happydns.Zone, int, er
 
 	zone, err := storage.MainStore.GetZone(zoneid)
 	if err != nil {
+		log.Printf("An error occurs when trying to retrieve user zone (id=%s): %s", id, err.Error())
 		return nil, http.StatusNotFound, fmt.Errorf("Zone not found: %q", id)
 	}
 
