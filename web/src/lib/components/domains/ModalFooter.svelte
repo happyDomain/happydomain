@@ -26,7 +26,6 @@
 
     import { Button, Icon, Input, Label, ModalFooter, Spinner } from "@sveltestrap/sveltestrap";
 
-    import { getServiceRecords } from "$lib/api/zone";
     import HelpButton from "$lib/components/Help.svelte";
     import TableRecords from "$lib/components/domains/TableRecords.svelte";
     import type { Domain } from "$lib/model/domain";
@@ -71,8 +70,6 @@
         helpHref = "https://help.happydomain.org/" + $locale + "/" + helpHref;
     }
 
-    let showRecords = false;
-
     let recordsHeight = 120;
     let recordsHeightResize = false;
     function resizeRecordsHeight(e: MouseEvent) {
@@ -92,43 +89,9 @@
     on:mouseup={() => (recordsHeightResize = false)}
 />
 
-{#if showRecords && origin && zoneId && service}
-    <ModalFooter class="p-0 d-block" style={"max-height:" + recordsHeight + "px"}>
-        <div
-            class="border-top border-dark border-2 d-flex m-0"
-            role="separator"
-            aria-orientation="horizontal"
-            style:cursor="ns-resize"
-            on:mousedown|preventDefault={() => (recordsHeightResize = true)}
-        ></div>
-        <div
-            class="m-0 d-flex justify-content-center"
-            style:max-height="inherit"
-            style:overflow-y="auto"
-        >
-            {#await getServiceRecords(origin, zoneId, service)}
-                <div class="flex-fill d-flex justify-content-center">
-                    <Spinner class="my-1" />
-                </div>
-            {:then serviceRecords}
-                <TableRecords {serviceRecords} />
-            {/await}
-        </div>
-    </ModalFooter>
-{/if}
 <ModalFooter>
-    {#if update && origin && zoneId}
-        <Button
-            color="dark"
-            outline={!showRecords}
-            title={$t("domains.see-records")}
-            on:click={() => (showRecords = !showRecords)}
-        >
-            <Icon name="code-square" />
-        </Button>
-    {/if}
     <div class="ms-auto"></div>
-    {#if origin && zoneId && service && showRecords}
+    {#if origin && zoneId && service}
         <Label for="svc_ttl" title={$t("service.ttl-long")}>{$t("service.ttl")}</Label>
         <Input
             id="svc_ttl"
