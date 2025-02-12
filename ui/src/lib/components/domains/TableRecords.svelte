@@ -38,21 +38,33 @@
 
  import Record from '$lib/components/domains/Record.svelte';
 
- export let serviceRecords: Array<ServiceRecord>|null = null;
+ export let service = null;
 </script>
 
-{#if serviceRecords}
+{#if service}
     <div
         class="flex-fill m-0 d-flex flex-column"
         style:max-width="100%"
     >
-        {#each serviceRecords as record, i}
-            <div
-                class="bg-light p-1 border-1 border-bottom"
-                style="border-color: darkgray"
-            >
-                <Record {record} />
-            </div>
+        {#each Object.keys(service) as i}
+            {@const record = service[i]}
+            {#if record && record.Hdr}
+                <div
+                    class="bg-light p-1 border-1 border-bottom"
+                    style="border-color: darkgray"
+                >
+                    <Record {record} />
+                </div>
+            {:else if record && record.length}
+                {#each record as r}
+                    <div
+                        class="bg-light p-1 border-1 border-bottom"
+                        style="border-color: darkgray"
+                    >
+                        <Record record={r} />
+                    </div>
+                {/each}
+            {/if}
         {/each}
     </div>
 {/if}

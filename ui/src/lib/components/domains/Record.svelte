@@ -30,12 +30,12 @@
      Row,
  } from '@sveltestrap/sveltestrap';
 
- import { nsclass, nsrrtype } from '$lib/dns';
+ import { nsclass, nsrrtype, rdatatostr } from '$lib/dns';
  import type { ServiceRecord } from '$lib/model/zone';
 
  export let actBtn = false;
  export let expand: boolean = false;
- export let record: ServiceRecord;
+ export let record;
 </script>
 
 {#if !record.edit}
@@ -44,44 +44,42 @@
         on:click={() => {expand = !expand}}
         on:keypress={() => {expand = !expand}}
     >
-        {#if expand}
-            <Icon name="chevron-down" />
-        {:else}
-            <Icon name="chevron-right" />
-        {/if}
+        <Icon
+            name={expand ? "chevron-down" : "chevron-right"}
+        />
         <span
             class="font-monospace text-truncate"
-            title={record.str}
+            title={rdatatostr(record)}
         >
-            {record.rr.Hdr.Name?'':'@'} {record.str}
+            {record.Hdr.Name?record.Hdr.Name:'@'} {nsrrtype(record.Hdr.Rrtype)} {rdatatostr(record)}
         </span>
     </div>
     {#if expand}
         <div class="grid mr-2">
-            <dl class="g-col-md-4 grid ms-2" style="--bs-columns: 2; --bs-gap: 0 .5rem;">
+            <dl class="g-col-md-4 grid ms-2 mb-0 mt-1" style="--bs-columns: 2; --bs-gap: 0 .5rem;">
                 <dt class="text-end">
                     Class
                 </dt>
                 <dd class="text-muted font-monospace mb-1">
-                    {nsclass(record.rr.Hdr.Class)}
+                    {nsclass(record.Hdr.Class)}
                 </dd>
                 <dt class="text-end">
                     TTL
                 </dt>
                 <dd class="text-muted font-monospace mb-1">
-                    {record.rr.Hdr.Ttl}
+                    {record.Hdr.Ttl}
                 </dd>
                 <dt class="text-end">
                     RRType
                 </dt>
                 <dd class="text-muted font-monospace mb-1">
-                    {nsrrtype(record.rr.Hdr.Rrtype)} (<span title={record.rr.Hdr.Rrtype}>0x{record.rr.Hdr.Rrtype.toString(16)}</span>)
+                    {nsrrtype(record.Hdr.Rrtype)} (<span title={record.Hdr.Rrtype}>0x{record.Hdr.Rrtype.toString(16)}</span>)
                 </dd>
             </dl>
             <dl class="g-col-md-8 grid me-2" style="--bs-gap: 0 .5rem;">
-                {#each Object.keys(record.rr) as k}
+                {#each Object.keys(record) as k}
                     {#if k != "Hdr"}
-                        {@const v = record.rr[k]}
+                        {@const v = record[k]}
                         <dt class="g-col-4 text-end">
                             {k}
                         </dt>

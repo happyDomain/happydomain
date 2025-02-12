@@ -151,7 +151,11 @@
             <span style="white-space: nowrap">
                 <Icon name="arrow-right" />
                 <span class="font-monospace">
-                    {services[0].Service.Target}
+                    {#if isPTR(services)}
+                        {services[0].Service.ptr.Target}
+                    {:else}
+                        {services[0].Service.cname.Target}
+                    {/if}
                 </span>
             </span>
             <Button
