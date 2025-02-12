@@ -75,7 +75,7 @@ func (s *Server) GenComment(origin string) string {
 	return buffer.String()
 }
 
-func (s *Server) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *Server) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	if s.A != nil && len(*s.A) != 0 {
 		rc := utils.NewRecordConfig(domain, "A", ttl, origin)
 		rc.SetTargetIP(*s.A)
@@ -89,7 +89,11 @@ func (s *Server) GenRRs(domain string, ttl uint32, origin string) (rrs models.Re
 		rrs = append(rrs, rc)
 	}
 	if len(s.SSHFP) > 0 {
-		rrs = append(rrs, (&svcs.SSHFPs{SSHFP: s.SSHFP}).GenRRs(domain, ttl, origin)...)
+		sshfp_rrs, err := (&svcs.SSHFPs{SSHFP: s.SSHFP}).GenRRs(domain, ttl, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate SSHFP records: %w", err)
+		}
+		rrs = append(rrs, sshfp_rrs...)
 	}
 
 	return

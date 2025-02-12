@@ -38,7 +38,7 @@ type Service interface {
 	GenComment(origin string) string
 
 	// genRRs generates corresponding RRs.
-	GenRRs(domain string, ttl uint32, origin string) models.Records
+	GenRRs(domain string, ttl uint32, origin string) (models.Records, error)
 }
 
 // ServiceMeta holds the metadata associated to a Service.
@@ -89,9 +89,11 @@ func (svc *ServiceCombined) UnmarshalJSON(b []byte) error {
 }
 
 func ValidateService(svc Service, subdomain, origin string) ([]byte, error) {
-	records := svc.GenRRs(subdomain, 0, origin)
-	if len(records) == 0 {
-		return nil, fmt.Errorf("No record can be generated from your service.")
+	records, err := svc.GenRRs(subdomain, 0, origin)
+	if err != nil {
+		return nil, fmt.Errorf("unable to generate records: %w", err)
+	} else if len(records) == 0 {
+		return nil, fmt.Errorf("no record can be generated from your service.")
 	} else {
 		hash := sha1.New()
 		io.WriteString(hash, records[0].String())

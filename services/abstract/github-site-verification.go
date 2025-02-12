@@ -46,7 +46,7 @@ func (s *GithubOrgVerif) GenComment(origin string) string {
 	return s.OrganizationName
 }
 
-func (s *GithubOrgVerif) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *GithubOrgVerif) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	rc := utils.NewRecordConfig(fmt.Sprintf("_github-challenge-%s-org.", strings.TrimSuffix(strings.TrimPrefix(s.OrganizationName, "_github-challenge-"), "-org"))+domain, "TXT", ttl, origin)
 	rc.SetTargetTXT(s.Code)
 

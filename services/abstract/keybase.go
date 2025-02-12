@@ -44,7 +44,7 @@ func (s *KeybaseVerif) GenComment(origin string) string {
 	return s.SiteVerification
 }
 
-func (s *KeybaseVerif) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *KeybaseVerif) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	rc := utils.NewRecordConfig(utils.DomainJoin("_keybase", domain), "TXT", ttl, origin)
 	rc.SetTargetTXT("keybase-site-verification=" + strings.TrimPrefix(s.SiteVerification, "keybase-site-verification="))
 	rrs = append(rrs, rc)

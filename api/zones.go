@@ -395,7 +395,11 @@ func diffZones(c *gin.Context) {
 		return
 	}
 
-	records2 := zone2.GenerateRRs(domain.DomainName)
+	records2, err := zone2.GenerateRRs(domain.DomainName)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": err.Error()})
+		return
+	}
 
 	dc2 := &models.DomainConfig{
 		Name:    strings.TrimSuffix(domain.DomainName, "."),
@@ -434,7 +438,11 @@ func diffZones(c *gin.Context) {
 			return
 		}
 
-		records1 := zone1.GenerateRRs(domain.DomainName)
+		records1, err := zone1.GenerateRRs(domain.DomainName)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+			return
+		}
 
 		dc1 := &models.DomainConfig{
 			Name:    strings.TrimSuffix(domain.DomainName, "."),
@@ -496,7 +504,11 @@ func applyZone(c *gin.Context) {
 		return
 	}
 
-	records := zone.GenerateRRs(domain.DomainName)
+	records, err := zone.GenerateRRs(domain.DomainName)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, err.Error())
+		return
+	}
 
 	dc := &models.DomainConfig{
 		Name:    strings.TrimSuffix(domain.DomainName, "."),
@@ -614,7 +626,13 @@ func viewZone(c *gin.Context) {
 
 	var ret string
 
-	for _, rc := range zone.GenerateRRs(domain.DomainName) {
+	rrs, err := zone.GenerateRRs(domain.DomainName)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("An error occurs during zone records generation: %s.", err.Error())})
+		return
+	}
+
+	for _, rc := range rrs {
 		if _, ok := dns.StringToType[rc.Type]; ok {
 			ret += rc.ToRR().String() + "\n"
 		} else {
@@ -754,8 +772,14 @@ func getServiceRecords(c *gin.Context) {
 		ttl = zone.DefaultTTL
 	}
 
+	rrs, err := svc.GenRRs(subdomain, ttl, domain.DomainName)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": err.Error()})
+		return
+	}
+
 	var ret []serviceRecord
-	for _, rc := range svc.GenRRs(subdomain, ttl, domain.DomainName) {
+	for _, rc := range rrs {
 		var rr dns.RR
 		if _, ok := dns.StringToType[rc.Type]; ok {
 			rr = rc.ToRR()

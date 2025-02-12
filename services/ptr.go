@@ -43,7 +43,7 @@ func (s *PTR) GenComment(origin string) string {
 	return strings.TrimSuffix(s.Target, "."+origin)
 }
 
-func (s *PTR) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *PTR) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	rr := utils.NewRecordConfig(domain, "PTR", ttl, origin)
 	rr.SetTarget(utils.DomainFQDN(s.Target, origin))
 	rrs = append(rrs, rr)

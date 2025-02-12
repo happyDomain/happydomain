@@ -23,6 +23,7 @@ package abstract
 
 import (
 	"bytes"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -88,17 +89,29 @@ destloop:
 	return buffer.String()
 }
 
-func (s *XMPP) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *XMPP) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	for _, jabber := range s.Client {
-		rrs = append(rrs, jabber.GenRRs(utils.DomainJoin("_jabber._tcp", domain), ttl, origin)...)
+		jabber_rrs, err := jabber.GenRRs(utils.DomainJoin("_jabber._tcp", domain), ttl, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate jabber records: %w", err)
+		}
+		rrs = append(rrs, jabber_rrs...)
 	}
 
 	for _, client := range s.Client {
-		rrs = append(rrs, client.GenRRs(utils.DomainJoin("_xmpp-client._tcp", domain), ttl, origin)...)
+		client_rrs, err := client.GenRRs(utils.DomainJoin("_xmpp-client._tcp", domain), ttl, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate XMPP client records: %w", err)
+		}
+		rrs = append(rrs, client_rrs...)
 	}
 
 	for _, server := range s.Server {
-		rrs = append(rrs, server.GenRRs(utils.DomainJoin("_xmpp-server._tcp", domain), ttl, origin)...)
+		server_rrs, err := server.GenRRs(utils.DomainJoin("_xmpp-server._tcp", domain), ttl, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate XMPP server records: %w", err)
+		}
+		rrs = append(rrs, server_rrs...)
 	}
 
 	return

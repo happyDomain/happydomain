@@ -45,7 +45,7 @@ func (s *Orphan) GenComment(origin string) string {
 	return fmt.Sprintf("%s %s", s.Type, s.RR)
 }
 
-func (s *Orphan) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *Orphan) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	if _, ok := dns.StringToType[s.Type]; ok {
 		rr, err := dns.NewRR(fmt.Sprintf("%s %d IN %s %s", utils.DomainJoin(domain), ttl, s.Type, s.RR))
 		if err == nil {

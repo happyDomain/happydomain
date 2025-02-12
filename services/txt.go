@@ -43,7 +43,7 @@ func (ss *TXT) GenComment(origin string) string {
 	return ss.Content
 }
 
-func (ss *TXT) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (ss *TXT) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	rr := utils.NewRecordConfig(domain, "TXT", ttl, origin)
 	rr.SetTargetTXT(ss.Content)
 	rrs = append(rrs, rr)

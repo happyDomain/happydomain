@@ -44,7 +44,7 @@ func (s *ACMEChallenge) GenComment(origin string) string {
 	return s.Challenge
 }
 
-func (s *ACMEChallenge) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *ACMEChallenge) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	rr := utils.NewRecordConfig(utils.DomainJoin("_acme-challenge", domain), "TXT", ttl, origin)
 	rr.SetTargetTXT(s.Challenge)
 	rrs = append(rrs, rr)

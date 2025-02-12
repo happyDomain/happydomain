@@ -160,7 +160,7 @@ func (s *CAA) GenComment(origin string) (ret string) {
 	return
 }
 
-func (s *CAA) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *CAA) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	if s.DisallowIssue {
 		rc := utils.NewRecordConfig(domain, "CAA", ttl, origin)
 		rc.CaaFlag = 0

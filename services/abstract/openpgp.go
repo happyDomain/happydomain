@@ -50,7 +50,7 @@ func (s *OpenPGP) GenComment(origin string) string {
 	return fmt.Sprintf("%s", s.Username)
 }
 
-func (s *OpenPGP) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *OpenPGP) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	if len(s.PublicKey) > 0 {
 		if s.Username != "" {
 			s.Identifier = fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
@@ -81,7 +81,7 @@ func (s *SMimeCert) GenComment(origin string) string {
 	return fmt.Sprintf("%s", s.Username)
 }
 
-func (s *SMimeCert) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *SMimeCert) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	if len(s.Certificate) > 0 {
 		if s.Username != "" {
 			s.Identifier = fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))

@@ -49,7 +49,7 @@ func (s *SSHFPs) GenComment(origin string) string {
 	return fmt.Sprintf("%d fingerprints", len(s.SSHFP))
 }
 
-func (s *SSHFPs) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *SSHFPs) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	for _, sshfp := range s.SSHFP {
 		rc := utils.NewRecordConfig(domain, "SSHFP", ttl, origin)
 		rc.SshfpAlgorithm = sshfp.Algorithm

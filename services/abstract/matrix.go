@@ -81,9 +81,13 @@ destloop:
 	return buffer.String()
 }
 
-func (s *MatrixIM) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *MatrixIM) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	for _, matrix := range s.Matrix {
-		rrs = append(rrs, matrix.GenRRs(utils.DomainJoin("_matrix._tcp", domain), ttl, origin)...)
+		matrix_rrs, err := matrix.GenRRs(utils.DomainJoin("_matrix._tcp", domain), ttl, origin)
+		if err != nil {
+			return nil, err
+		}
+		rrs = append(rrs, matrix_rrs...)
 	}
 	return
 }

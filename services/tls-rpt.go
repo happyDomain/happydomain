@@ -46,7 +46,7 @@ func (t *TLS_RPT) GenComment(origin string) string {
 	return strings.Join(t.Rua, ", ")
 }
 
-func (t *TLS_RPT) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (t *TLS_RPT) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	rc := utils.NewRecordConfig(utils.DomainJoin("_smtp._tls", domain), "TXT", ttl, origin)
 	rc.SetTargetTXT(t.String())
 

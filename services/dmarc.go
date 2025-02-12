@@ -78,7 +78,7 @@ func (t *DMARC) GenComment(origin string) string {
 	return b.String()
 }
 
-func (t *DMARC) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (t *DMARC) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	rc := utils.NewRecordConfig(utils.DomainJoin("_dmarc", domain), "TXT", ttl, origin)
 	rc.SetTargetTXT(t.String())
 

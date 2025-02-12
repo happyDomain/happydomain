@@ -51,7 +51,7 @@ func (s *Delegation) GenComment(origin string) string {
 	return fmt.Sprintf("%d name servers"+ds, len(s.NameServers))
 }
 
-func (s *Delegation) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *Delegation) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	for _, ns := range s.NameServers {
 		rc := utils.NewRecordConfig(utils.DomainJoin(domain), "NS", ttl, origin)
 		rc.SetTarget(utils.DomainFQDN(ns, origin))

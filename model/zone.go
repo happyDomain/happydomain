@@ -24,6 +24,7 @@ package happydns
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/StackExchange/dnscontrol/v4/models"
@@ -164,7 +165,7 @@ func (z *Zone) EraseServiceWithoutMeta(subdomain string, origin string, id []byt
 }
 
 // GenerateRRs returns all the reals records of the Zone.
-func (z *Zone) GenerateRRs(origin string) (rrs models.Records) {
+func (z *Zone) GenerateRRs(origin string) (rrs models.Records, e error) {
 	for subdomain, svcs := range z.Services {
 		if subdomain == "" {
 			subdomain = origin
@@ -178,7 +179,12 @@ func (z *Zone) GenerateRRs(origin string) (rrs models.Records) {
 			} else {
 				ttl = svc.Ttl
 			}
-			rrs = append(rrs, svc.GenRRs(subdomain, ttl, origin)...)
+
+			zrrs, err := svc.GenRRs(subdomain, ttl, origin)
+			if err != nil {
+				return nil, fmt.Errorf("unable to generate records for service %s: %w", svc, err)
+			}
+			rrs = append(rrs, zrrs...)
 		}
 
 		// Ensure SOA is the first record

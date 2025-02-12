@@ -71,9 +71,13 @@ func (s *GSuite) GenComment(origin string) string {
 	return strings.Join(comments, ", ")
 }
 
-func (s *GSuite) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *GSuite) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	for _, svc := range s.GenKnownSvcs() {
-		rrs = append(rrs, svc.GenRRs(domain, ttl, origin)...)
+		srrs, err := svc.GenRRs(domain, ttl, origin)
+		if err != nil {
+			return nil, err
+		}
+		rrs = append(rrs, srrs...)
 	}
 	return
 }

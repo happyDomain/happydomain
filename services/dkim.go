@@ -131,7 +131,7 @@ func (s *DKIMRecord) GenComment(origin string) string {
 	return s.Selector
 }
 
-func (s *DKIMRecord) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *DKIMRecord) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	rc := utils.NewRecordConfig(utils.DomainJoin(s.Selector+"._domainkey", domain), "TXT", ttl, origin)
 	rc.SetTargetTXT(s.String())
 

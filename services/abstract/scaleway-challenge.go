@@ -44,7 +44,7 @@ func (s *ScalewayChallenge) GenComment(origin string) string {
 	return s.Challenge
 }
 
-func (s *ScalewayChallenge) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *ScalewayChallenge) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	rc := utils.NewRecordConfig(utils.DomainJoin("_scaleway-challenge", domain), "TXT", ttl, origin)
 	rc.SetTargetTXT(s.Challenge)
 	rrs = append(rrs, rc)

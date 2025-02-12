@@ -47,7 +47,7 @@ func (s *SPF) GenComment(origin string) string {
 	return fmt.Sprintf("%d directives", len(s.Directives))
 }
 
-func (s *SPF) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *SPF) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	rc := utils.NewRecordConfig(domain, "TXT", ttl, origin)
 	rc.SetTargetTXT(s.String())
 

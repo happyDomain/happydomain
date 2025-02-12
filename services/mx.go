@@ -83,7 +83,7 @@ func (s *MXs) GenComment(origin string) string {
 	return buffer.String()
 }
 
-func (s *MXs) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *MXs) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	for _, mx := range s.MX {
 		rc := utils.NewRecordConfig(domain, "MX", ttl, origin)
 		rc.MxPreference = mx.Preference

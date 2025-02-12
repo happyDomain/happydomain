@@ -48,7 +48,7 @@ func (s *SRV) GenComment(origin string) string {
 	return fmt.Sprintf("%s:%d", strings.TrimSuffix(s.Target, "."+origin), s.Port)
 }
 
-func (s *SRV) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *SRV) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	rr := utils.NewRecordConfig(domain, "SRV", ttl, origin)
 	rr.SrvPriority = s.Priority
 	rr.SrvWeight = s.Weight
@@ -90,9 +90,13 @@ func (s *UnknownSRV) GenComment(origin string) string {
 	return fmt.Sprintf("%s (%s)", s.Name, s.Proto)
 }
 
-func (s *UnknownSRV) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *UnknownSRV) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	for _, service := range s.SRV {
-		rrs = append(rrs, service.GenRRs(utils.DomainJoin(fmt.Sprintf("_%s._%s", s.Name, s.Proto), domain), ttl, origin)...)
+		srrs, err := service.GenRRs(utils.DomainJoin(fmt.Sprintf("_%s._%s", s.Name, s.Proto), domain), ttl, origin)
+		if err != nil {
+			return nil, err
+		}
+		rrs = append(rrs, srrs...)
 	}
 	return
 }

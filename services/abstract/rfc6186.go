@@ -128,42 +128,66 @@ func (s *RFC6186) GenComment(origin string) string {
 	return b.String()
 }
 
-func (s *RFC6186) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *RFC6186) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	for _, service := range s.Submission {
 		if service.Port == 0 {
 			service.Port = 587
 		}
-		rrs = append(rrs, service.GenRRs(utils.DomainJoin("_submission._tcp", domain), ttl, origin)...)
+		srrs, err := service.GenRRs(utils.DomainJoin("_submission._tcp", domain), ttl, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate submission records: %w", err)
+		}
+		rrs = append(rrs, srrs...)
 	}
 	for _, service := range s.SubmissionS {
 		if service.Port == 0 {
 			service.Port = 587
 		}
-		rrs = append(rrs, service.GenRRs(utils.DomainJoin("_submissions._tcp", domain), ttl, origin)...)
+		srrs, err := service.GenRRs(utils.DomainJoin("_submissions._tcp", domain), ttl, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate submissionS records: %w", err)
+		}
+		rrs = append(rrs, srrs...)
 	}
 	for _, service := range s.IMAP {
 		if service.Port == 0 {
 			service.Port = 143
 		}
-		rrs = append(rrs, service.GenRRs(utils.DomainJoin("_imap._tcp", domain), ttl, origin)...)
+		srrs, err := service.GenRRs(utils.DomainJoin("_imap._tcp", domain), ttl, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate imap records: %w", err)
+		}
+		rrs = append(rrs, srrs...)
 	}
 	for _, service := range s.IMAPS {
 		if service.Port == 0 {
 			service.Port = 993
 		}
-		rrs = append(rrs, service.GenRRs(utils.DomainJoin("_imaps._tcp", domain), ttl, origin)...)
+		srrs, err := service.GenRRs(utils.DomainJoin("_imaps._tcp", domain), ttl, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate imaps records: %w", err)
+		}
+		rrs = append(rrs, srrs...)
 	}
 	for _, service := range s.POP3 {
 		if service.Port == 0 {
 			service.Port = 110
 		}
-		rrs = append(rrs, service.GenRRs(utils.DomainJoin("_pop3._tcp", domain), ttl, origin)...)
+		srrs, err := service.GenRRs(utils.DomainJoin("_pop3._tcp", domain), ttl, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate pop3 records: %w", err)
+		}
+		rrs = append(rrs, srrs...)
 	}
 	for _, service := range s.POP3S {
 		if service.Port == 0 {
 			service.Port = 995
 		}
-		rrs = append(rrs, service.GenRRs(utils.DomainJoin("_pop3s._tcp", domain), ttl, origin)...)
+		srrs, err := service.GenRRs(utils.DomainJoin("_pop3s._tcp", domain), ttl, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate pop3s records: %w", err)
+		}
+		rrs = append(rrs, srrs...)
 	}
 	return
 }

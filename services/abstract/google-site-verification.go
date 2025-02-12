@@ -44,7 +44,7 @@ func (s *GoogleVerif) GenComment(origin string) string {
 	return s.SiteVerification
 }
 
-func (s *GoogleVerif) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *GoogleVerif) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	rc := utils.NewRecordConfig(domain, "TXT", ttl, origin)
 	rc.SetTargetTXT("google-site-verification=" + strings.TrimPrefix(s.SiteVerification, "google-site-verification="))
 

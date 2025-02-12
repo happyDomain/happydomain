@@ -47,7 +47,7 @@ func (s *NSOnlyOrigin) GenComment(origin string) string {
 	return fmt.Sprintf("%d NS", len(s.NameServers))
 }
 
-func (s *NSOnlyOrigin) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *NSOnlyOrigin) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	for _, ns := range s.NameServers {
 		rc := utils.NewRecordConfig(domain, "NS", ttl, origin)
 		rc.SetTarget(utils.DomainFQDN(ns, origin))
@@ -89,7 +89,7 @@ func (s *Origin) GenComment(origin string) string {
 	return fmt.Sprintf("%s %s %d"+ns, strings.TrimSuffix(s.Ns, "."+origin), strings.TrimSuffix(s.Mbox, "."+origin), s.Serial)
 }
 
-func (s *Origin) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *Origin) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	if s.Ns != "" {
 		rc := utils.NewRecordConfig(domain, "SOA", ttl, origin)
 		rc.SoaMbox = utils.DomainFQDN(s.Mbox, origin)

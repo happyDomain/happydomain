@@ -44,7 +44,7 @@ func (s *CNAME) GenComment(origin string) string {
 	return strings.TrimSuffix(s.Target, "."+origin)
 }
 
-func (s *CNAME) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *CNAME) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	rr := utils.NewRecordConfig(domain, "CNAME", ttl, origin)
 	rr.SetTarget(utils.DomainFQDN(s.Target, origin))
 	rrs = append(rrs, rr)
@@ -64,7 +64,7 @@ func (s *SpecialCNAME) GenComment(origin string) string {
 	return "(" + s.SubDomain + ") -> " + strings.TrimSuffix(s.Target, "."+origin)
 }
 
-func (s *SpecialCNAME) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *SpecialCNAME) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	rr := utils.NewRecordConfig(utils.DomainJoin(s.SubDomain, domain), "CNAME", ttl, origin)
 	rr.SetTarget(utils.DomainFQDN(s.Target, origin))
 	rrs = append(rrs, rr)

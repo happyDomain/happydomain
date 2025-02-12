@@ -23,6 +23,7 @@ package abstract
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
@@ -72,32 +73,56 @@ func (s *EMail) GenComment(origin string) string {
 	return buffer.String()
 }
 
-func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *EMail) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	if len(s.MX) > 0 {
-		rrs = append(rrs, (&svcs.MXs{MX: s.MX}).GenRRs(domain, ttl, origin)...)
+		mx_rrs, err := (&svcs.MXs{MX: s.MX}).GenRRs(domain, ttl, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate MX records: %w", err)
+		}
+		rrs = append(rrs, mx_rrs...)
 	}
 
 	if s.SPF != nil {
-		rrs = append(rrs, s.SPF.GenRRs(domain, ttl, origin)...)
+		spf_rrs, err := s.SPF.GenRRs(domain, ttl, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate SPF records: %w", err)
+		}
+		rrs = append(rrs, spf_rrs...)
 	}
 
 	for selector, d := range s.DKIM {
-		rrs = append(rrs, (&svcs.DKIMRecord{
+		dkim_rrs, err := (&svcs.DKIMRecord{
 			DKIM:     *d,
 			Selector: selector,
-		}).GenRRs(domain, ttl, origin)...)
+		}).GenRRs(domain, ttl, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate DKIM records for selector %q: %w", selector, err)
+		}
+		rrs = append(rrs, dkim_rrs...)
 	}
 
 	if s.DMARC != nil {
-		rrs = append(rrs, s.DMARC.GenRRs(domain, ttl, origin)...)
+		dmarc_rrs, err := s.DMARC.GenRRs(domain, ttl, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate DMARC records: %w", err)
+		}
+		rrs = append(rrs, dmarc_rrs...)
 	}
 
 	if s.MTA_STS != nil {
-		rrs = append(rrs, s.MTA_STS.GenRRs(domain, ttl, origin)...)
+		mta_sts_rrs, err := s.MTA_STS.GenRRs(domain, ttl, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate MTA-STS records: %w", err)
+		}
+		rrs = append(rrs, mta_sts_rrs...)
 	}
 
 	if s.TLS_RPT != nil {
-		rrs = append(rrs, s.TLS_RPT.GenRRs(domain, ttl, origin)...)
+		tls_rpt_rrs, err := s.TLS_RPT.GenRRs(domain, ttl, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate TLS-RPT records: %w", err)
+		}
+		rrs = append(rrs, tls_rpt_rrs...)
 	}
 	return
 }

@@ -44,7 +44,7 @@ func (s *GitlabPageVerif) GenComment(origin string) string {
 	return s.Code
 }
 
-func (s *GitlabPageVerif) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (s *GitlabPageVerif) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	if strings.Contains(s.Code, " TXT ") {
 		s.Code = s.Code[strings.Index(s.Code, "gitlab-pages-verification-code="):]
 	}

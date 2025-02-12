@@ -46,7 +46,7 @@ func (ss *NAPTR) GenComment(origin string) string {
 	return ss.Service
 }
 
-func (ss *NAPTR) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (ss *NAPTR) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	rr := utils.NewRecordConfig(domain, "NAPTR", ttl, origin)
 	rr.SetTargetNAPTR(ss.Order, ss.Preference, ss.Flags, ss.Service, ss.Regexp, ss.Replacement)
 	rrs = append(rrs, rr)

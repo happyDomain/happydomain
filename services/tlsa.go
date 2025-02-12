@@ -89,7 +89,7 @@ protoloop:
 	return buffer.String()
 }
 
-func (ss *TLSAs) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (ss *TLSAs) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	for _, s := range ss.TLSA {
 		if len(s.Certificate) > 0 {
 			rr := utils.NewRecordConfig(utils.DomainJoin(fmt.Sprintf("_%d._%s", s.Port, s.Proto), domain), "TLSA", ttl, origin)

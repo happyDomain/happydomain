@@ -46,7 +46,7 @@ func (t *MTA_STS) GenComment(origin string) string {
 	return t.Id
 }
 
-func (t *MTA_STS) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records) {
+func (t *MTA_STS) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	rc := utils.NewRecordConfig(utils.DomainJoin("_mta-sts", domain), "TXT", ttl, origin)
 	rc.SetTargetTXT(t.String())
 
