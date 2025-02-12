@@ -30,16 +30,15 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type Delegation struct {
-	NameServers []string  `json:"ns" happydomain:"label=Name Servers"`
-	DS          []svcs.DS `json:"ds" happydomain:"label=Delegation Signer"`
+	NameServers []*dns.NS `json:"ns"`
+	DS          []*dns.DS `json:"ds"`
 }
 
 func (s *Delegation) GetNbResources() int {
-	return len(s.NameServers)
+	return len(s.NameServers) + len(s.DS)
 }
 
 func (s *Delegation) GenComment(origin string) string {
@@ -53,19 +52,20 @@ func (s *Delegation) GenComment(origin string) string {
 
 func (s *Delegation) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
 	for _, ns := range s.NameServers {
-		rc := utils.NewRecordConfig(utils.DomainJoin(domain), "NS", ttl, origin)
-		rc.SetTarget(utils.DomainFQDN(ns, origin))
+		rc, err := models.RRtoRC(ns, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate NS record: %w", err)
+		}
 
-		rrs = append(rrs, rc)
+		rrs = append(rrs, &rc)
 	}
 	for _, ds := range s.DS {
-		rc := utils.NewRecordConfig(utils.DomainJoin(domain), "DS", ttl, origin)
-		rc.DsKeyTag = ds.KeyTag
-		rc.DsAlgorithm = ds.Algorithm
-		rc.DsDigestType = ds.DigestType
-		rc.DsDigest = ds.Digest
+		rc, err := models.RRtoRC(ds, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate DS record: %w", err)
+		}
 
-		rrs = append(rrs, rc)
+		rrs = append(rrs, &rc)
 	}
 	return
 }
@@ -83,7 +83,7 @@ func delegation_analyze(a *svcs.Analyzer) error {
 				delegations[record.NameFQDN] = &Delegation{}
 			}
 
-			delegations[record.NameFQDN].NameServers = append(delegations[record.NameFQDN].NameServers, record.GetTargetField())
+			delegations[record.NameFQDN].NameServers = append(delegations[record.NameFQDN].NameServers, record.ToRR().(*dns.NS))
 
 			a.UseRR(
 				record,
@@ -96,12 +96,7 @@ func delegation_analyze(a *svcs.Analyzer) error {
 	for subdomain := range delegations {
 		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeDS, Domain: subdomain}) {
 			if record.Type == "DS" {
-				delegations[subdomain].DS = append(delegations[subdomain].DS, svcs.DS{
-					KeyTag:     record.DsKeyTag,
-					Algorithm:  record.DsAlgorithm,
-					DigestType: record.DsDigestType,
-					Digest:     record.DsDigest,
-				})
+				delegations[subdomain].DS = append(delegations[subdomain].DS, record.ToRR().(*dns.DS))
 
 				a.UseRR(
 					record,

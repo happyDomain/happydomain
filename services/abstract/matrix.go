@@ -35,18 +35,18 @@ import (
 )
 
 type MatrixIM struct {
-	Matrix []*svcs.SRV `json:"matrix"`
+	Records []*dns.SRV `json:"records"`
 }
 
 func (s *MatrixIM) GetNbResources() int {
-	return len(s.Matrix)
+	return len(s.Records)
 }
 
 func (s *MatrixIM) GenComment(origin string) string {
 	dest := map[string][]uint16{}
 
 destloop:
-	for _, srv := range s.Matrix {
+	for _, srv := range s.Records {
 		for _, port := range dest[srv.Target] {
 			if port == srv.Port {
 				continue destloop
@@ -81,36 +81,27 @@ destloop:
 	return buffer.String()
 }
 
-func (s *MatrixIM) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	for _, matrix := range s.Matrix {
-		matrix_rrs, err := matrix.GenRRs(utils.DomainJoin("_matrix._tcp", domain), ttl, origin)
-		if err != nil {
-			return nil, err
-		}
-		rrs = append(rrs, matrix_rrs...)
-	}
-	return
+func (s *MatrixIM) GenRRs(domain string, ttl uint32, origin string) (models.Records, error) {
+	return utils.RRstoRCs(s.Records, origin)
 }
 
 func matrix_analyze(a *svcs.Analyzer) error {
 	matrixDomains := map[string]*MatrixIM{}
 
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Prefix: "_matrix._tcp.", Type: dns.TypeSRV}) {
-		if srv := svcs.ParseSRV(record); srv != nil {
-			domain := strings.TrimPrefix(record.NameFQDN, "_matrix._tcp.")
+		domain := strings.TrimPrefix(record.NameFQDN, "_matrix._tcp.")
 
-			if _, ok := matrixDomains[domain]; !ok {
-				matrixDomains[domain] = &MatrixIM{}
-			}
-
-			matrixDomains[domain].Matrix = append(matrixDomains[domain].Matrix, srv)
-
-			a.UseRR(
-				record,
-				domain,
-				matrixDomains[domain],
-			)
+		if _, ok := matrixDomains[domain]; !ok {
+			matrixDomains[domain] = &MatrixIM{}
 		}
+
+		matrixDomains[domain].Records = append(matrixDomains[domain].Records, record.ToRR().(*dns.SRV))
+
+		a.UseRR(
+			record,
+			domain,
+			matrixDomains[domain],
+		)
 	}
 	return nil
 }

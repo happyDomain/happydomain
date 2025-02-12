@@ -25,6 +25,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/StackExchange/dnscontrol/v4/models"
@@ -180,7 +181,7 @@ func (z *Zone) GenerateRRs(origin string) (rrs models.Records, e error) {
 				ttl = svc.Ttl
 			}
 
-			zrrs, err := svc.GenRRs(subdomain, ttl, origin)
+			zrrs, err := svc.GenRRs(strings.TrimSuffix(subdomain, "."), ttl, strings.TrimSuffix(origin, "."))
 			if err != nil {
 				return nil, fmt.Errorf("unable to generate records for service %s: %w", svc, err)
 			}

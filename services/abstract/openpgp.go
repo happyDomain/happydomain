@@ -23,8 +23,6 @@ package abstract
 
 import (
 	"crypto/sha256"
-	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -37,9 +35,8 @@ import (
 )
 
 type OpenPGP struct {
-	Username   string              `json:"username,omitempty"`
-	Identifier string              `json:"identifier,omitempty"`
-	PublicKey  happydns.HexaString `json:"pubkey"`
+	Username string          `json:"username,omitempty"`
+	Record   *dns.OPENPGPKEY `json:"openpgpkey"`
 }
 
 func (s *OpenPGP) GetNbResources() int {
@@ -51,26 +48,28 @@ func (s *OpenPGP) GenComment(origin string) string {
 }
 
 func (s *OpenPGP) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	if len(s.PublicKey) > 0 {
-		if s.Username != "" {
-			s.Identifier = fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
+	if s.Username != "" {
+		if !strings.Contains(domain, "_openpgpkey") {
+			domain = utils.DomainJoin("_openpgpkey", domain)
 		}
 
-		rc := utils.NewRecordConfig(utils.DomainJoin(fmt.Sprintf("%s._openpgpkey", s.Identifier), domain), "OPENPGPKEY", ttl, origin)
-		rc.SetTargetOpenPGPKey(base64.StdEncoding.EncodeToString(s.PublicKey))
-
-		rrs = append(rrs, rc)
+		identifier := fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
+		if !strings.HasPrefix(domain, identifier) {
+			domain = utils.DomainJoin(identifier, domain)
+		}
 	}
+
+	rc, err := models.RRtoRC(s.Record, domain)
+	if err != nil {
+		return nil, err
+	}
+	rrs = append(rrs, &rc)
 	return
 }
 
 type SMimeCert struct {
-	Username     string              `json:"username,omitempty"`
-	Identifier   string              `json:"identifier,omitempty"`
-	CertUsage    uint8               `json:"certusage"`
-	Selector     uint8               `json:"selector"`
-	MatchingType uint8               `json:"matchingtype"`
-	Certificate  happydns.HexaString `json:"certificate"`
+	Username string      `json:"username,omitempty"`
+	Record   *dns.SMIMEA `json:"smimea"`
 }
 
 func (s *SMimeCert) GetNbResources() int {
@@ -82,16 +81,22 @@ func (s *SMimeCert) GenComment(origin string) string {
 }
 
 func (s *SMimeCert) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	if len(s.Certificate) > 0 {
-		if s.Username != "" {
-			s.Identifier = fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
+	if s.Username != "" {
+		if !strings.Contains(domain, "_smimecert") {
+			domain = utils.DomainJoin("_smimecert", domain)
 		}
 
-		rc := utils.NewRecordConfig(utils.DomainJoin(fmt.Sprintf("%s._smimecert", s.Identifier), domain), "SMIMEA", ttl, origin)
-		rc.SetTarget(fmt.Sprintf("%d %d %d %s", s.CertUsage, s.Selector, s.MatchingType, hex.EncodeToString(s.Certificate)))
-
-		rrs = append(rrs, rc)
+		identifier := fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
+		if !strings.HasPrefix(domain, identifier) {
+			domain = utils.DomainJoin(identifier, domain)
+		}
 	}
+
+	rc, err := models.RRtoRC(s.Record, domain)
+	if err != nil {
+		return nil, err
+	}
+	rrs = append(rrs, &rc)
 	return
 }
 
@@ -101,20 +106,11 @@ func openpgpkey_analyze(a *svcs.Analyzer) (err error) {
 			domain := record.NameFQDN
 			domain = domain[strings.Index(domain, "._openpgpkey")+13:]
 
-			identifier := strings.TrimSuffix(record.NameFQDN, "._openpgpkey."+domain)
-
-			var pubkey []byte
-			pubkey, err = base64.StdEncoding.DecodeString(strings.Join(strings.Fields(strings.TrimSuffix(strings.TrimPrefix(record.GetOpenPGPKeyField(), "("), ")")), ""))
-			if err != nil {
-				return
-			}
-
 			err = a.UseRR(
 				record,
 				domain,
 				&OpenPGP{
-					Identifier: identifier,
-					PublicKey:  pubkey,
+					Record: record.ToRR().(*dns.OPENPGPKEY),
 				},
 			)
 			if err != nil {
@@ -131,25 +127,11 @@ func smimea_analyze(a *svcs.Analyzer) (err error) {
 			domain := record.NameFQDN
 			domain = domain[strings.Index(domain, "._smimecert")+12:]
 
-			smimecert := record.ToRR().(*dns.SMIMEA)
-
-			identifier := strings.TrimSuffix(record.NameFQDN, "._smimecert."+domain)
-
-			var cert []byte
-			cert, err = hex.DecodeString(smimecert.Certificate)
-			if err != nil {
-				return
-			}
-
 			err = a.UseRR(
 				record,
 				domain,
 				&SMimeCert{
-					Identifier:   identifier,
-					CertUsage:    smimecert.Usage,
-					Selector:     smimecert.Selector,
-					MatchingType: smimecert.MatchingType,
-					Certificate:  cert,
+					Record: record.ToRR().(*dns.SMIMEA),
 				},
 			)
 			if err != nil {

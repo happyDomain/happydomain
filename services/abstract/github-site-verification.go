@@ -22,7 +22,6 @@
 package abstract
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/StackExchange/dnscontrol/v4/models"
@@ -30,12 +29,10 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type GithubOrgVerif struct {
-	OrganizationName string `happydomain:"label=Organization Name"`
-	Code             string `happydomain:"label=Code given by GitHub"`
+	Record *dns.TXT `json:"txt"`
 }
 
 func (s *GithubOrgVerif) GetNbResources() int {
@@ -43,14 +40,19 @@ func (s *GithubOrgVerif) GetNbResources() int {
 }
 
 func (s *GithubOrgVerif) GenComment(origin string) string {
-	return s.OrganizationName
+	dnparts := strings.Split(s.Record.Hdr.Name, ".")
+	if len(dnparts) > 0 {
+		return strings.TrimSuffix(strings.TrimPrefix(dnparts[0], "_github-challenge-"), "-org")
+	}
+	return ""
 }
 
 func (s *GithubOrgVerif) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	rc := utils.NewRecordConfig(fmt.Sprintf("_github-challenge-%s-org.", strings.TrimSuffix(strings.TrimPrefix(s.OrganizationName, "_github-challenge-"), "-org"))+domain, "TXT", ttl, origin)
-	rc.SetTargetTXT(s.Code)
-
-	rrs = append(rrs, rc)
+	rc, err := models.RRtoRC(s.Record, origin)
+	if err != nil {
+		return nil, err
+	}
+	rrs = append(rrs, &rc)
 	return
 }
 
@@ -59,12 +61,10 @@ func githubverification_analyze(a *svcs.Analyzer) error {
 		dnparts := strings.Split(record.NameFQDN, ".")
 		if len(dnparts) > 1 {
 			domain := strings.Join(dnparts[1:], ".")
-			org := strings.TrimSuffix(strings.TrimPrefix(dnparts[0], "_github-challenge-"), "-org")
 
 			if record.Type == "TXT" {
 				a.UseRR(record, domain, &GithubOrgVerif{
-					OrganizationName: org,
-					Code:             record.GetTargetTXTJoined(),
+					Record: record.ToRR().(*dns.TXT),
 				})
 			}
 		}

@@ -24,7 +24,6 @@ package svcs
 import (
 	"fmt"
 	"regexp"
-	"strings"
 
 	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
@@ -33,72 +32,29 @@ import (
 	"git.happydns.org/happyDomain/utils"
 )
 
-type SRV struct {
-	Target   string `json:"target"`
-	Port     uint16 `json:"port"`
-	Weight   uint16 `json:"weight"`
-	Priority uint16 `json:"priority"`
-}
-
-func (s *SRV) GetNbResources() int {
-	return 1
-}
-
-func (s *SRV) GenComment(origin string) string {
-	return fmt.Sprintf("%s:%d", strings.TrimSuffix(s.Target, "."+origin), s.Port)
-}
-
-func (s *SRV) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	rr := utils.NewRecordConfig(domain, "SRV", ttl, origin)
-	rr.SrvPriority = s.Priority
-	rr.SrvWeight = s.Weight
-	rr.SrvPort = s.Port
-	rr.SetTarget(utils.DomainFQDN(s.Target, origin))
-
-	rrs = append(rrs, rr)
-	return
-}
-
-func ParseSRV(record *models.RecordConfig) (ret *SRV) {
-	if record.Type == "SRV" {
-		ret = &SRV{
-			Priority: record.SrvPriority,
-			Weight:   record.SrvWeight,
-			Port:     record.SrvPort,
-			Target:   record.GetTargetField(),
-		}
-	}
-
-	return
-}
-
 var (
-	SRV_DOMAIN = regexp.MustCompile(`^_([^.]+)\._(tcp|udp)\.(.+)$`)
+	SRV_DOMAIN = regexp.MustCompile(`^_([^.]+)\._(tcp|udp)\.(.*)$`)
 )
 
 type UnknownSRV struct {
-	Name  string `json:"name"`
-	Proto string `json:"proto"`
-	SRV   []*SRV `json:"srv"`
+	Records []*dns.SRV `json:"srv"`
 }
 
 func (s *UnknownSRV) GetNbResources() int {
-	return len(s.SRV)
+	return len(s.Records)
 }
 
 func (s *UnknownSRV) GenComment(origin string) string {
-	return fmt.Sprintf("%s (%s)", s.Name, s.Proto)
+	if len(s.Records) == 0 {
+		return ""
+	}
+
+	subdomains := SRV_DOMAIN.FindStringSubmatch(s.Records[0].Hdr.Name)
+	return fmt.Sprintf("%s (%s)", subdomains[1], subdomains[2])
 }
 
-func (s *UnknownSRV) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	for _, service := range s.SRV {
-		srrs, err := service.GenRRs(utils.DomainJoin(fmt.Sprintf("_%s._%s", s.Name, s.Proto), domain), ttl, origin)
-		if err != nil {
-			return nil, err
-		}
-		rrs = append(rrs, srrs...)
-	}
-	return
+func (s *UnknownSRV) GenRRs(domain string, ttl uint32, origin string) (models.Records, error) {
+	return utils.RRstoRCs(s.Records, origin)
 }
 
 func srv_analyze(a *Analyzer) error {
@@ -106,29 +62,24 @@ func srv_analyze(a *Analyzer) error {
 
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeSRV}) {
 		subdomains := SRV_DOMAIN.FindStringSubmatch(record.NameFQDN)
-		if srv := ParseSRV(record); len(subdomains) == 4 && srv != nil {
-			svc := subdomains[1] + "." + subdomains[2]
-			domain := subdomains[3]
+		svc := subdomains[1] + "." + subdomains[2]
+		domain := subdomains[3]
 
-			if _, ok := srvDomains[domain]; !ok {
-				srvDomains[domain] = map[string]*UnknownSRV{}
-			}
-
-			if _, ok := srvDomains[domain][svc]; !ok {
-				srvDomains[domain][svc] = &UnknownSRV{
-					Name:  subdomains[1],
-					Proto: subdomains[2],
-				}
-			}
-
-			srvDomains[domain][svc].SRV = append(srvDomains[domain][svc].SRV, srv)
-
-			a.UseRR(
-				record,
-				subdomains[3],
-				srvDomains[domain][svc],
-			)
+		if _, ok := srvDomains[domain]; !ok {
+			srvDomains[domain] = map[string]*UnknownSRV{}
 		}
+
+		if _, ok := srvDomains[domain][svc]; !ok {
+			srvDomains[domain][svc] = &UnknownSRV{}
+		}
+
+		srvDomains[domain][svc].Records = append(srvDomains[domain][svc].Records, record.ToRR().(*dns.SRV))
+
+		a.UseRR(
+			record,
+			subdomains[3],
+			srvDomains[domain][svc],
+		)
 	}
 	return nil
 }

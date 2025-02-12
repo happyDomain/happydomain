@@ -24,7 +24,6 @@ package abstract
 import (
 	"bytes"
 	"fmt"
-	"net"
 
 	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
@@ -35,9 +34,9 @@ import (
 )
 
 type Server struct {
-	A     *net.IP       `json:"A,omitempty" happydomain:"label=ipv4,description=Server's IPv4"`
-	AAAA  *net.IP       `json:"AAAA,omitempty" happydomain:"label=ipv6,description=Server's IPv6"`
-	SSHFP []*svcs.SSHFP `json:"SSHFP,omitempty" happydomain:"label=SSH Fingerprint,description=Server's SSH fingerprint"`
+	A     *dns.A       `json:"A,omitempty"`
+	AAAA  *dns.AAAA    `json:"AAAA,omitempty"`
+	SSHFP []*dns.SSHFP `json:"SSHFP,omitempty"`
 }
 
 func (s *Server) GetNbResources() int {
@@ -57,15 +56,15 @@ func (s *Server) GetNbResources() int {
 func (s *Server) GenComment(origin string) string {
 	var buffer bytes.Buffer
 
-	if s.A != nil && len(*s.A) != 0 {
-		buffer.WriteString(s.A.String())
-		if s.AAAA != nil && len(*s.AAAA) != 0 {
+	if s.A != nil && len(s.A.A) != 0 {
+		buffer.WriteString(s.A.A.String())
+		if s.AAAA != nil && len(s.AAAA.AAAA) != 0 {
 			buffer.WriteString("; ")
 		}
 	}
 
-	if s.AAAA != nil && len(*s.AAAA) != 0 {
-		buffer.WriteString(s.AAAA.String())
+	if s.AAAA != nil && len(s.AAAA.AAAA) != 0 {
+		buffer.WriteString(s.AAAA.AAAA.String())
 	}
 
 	if s.SSHFP != nil {
@@ -76,20 +75,22 @@ func (s *Server) GenComment(origin string) string {
 }
 
 func (s *Server) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	if s.A != nil && len(*s.A) != 0 {
-		rc := utils.NewRecordConfig(domain, "A", ttl, origin)
-		rc.SetTargetIP(*s.A)
-
-		rrs = append(rrs, rc)
+	if s.A != nil && len(s.A.A) != 0 {
+		rc, err := models.RRtoRC(s.A, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate A record: %w", err)
+		}
+		rrs = append(rrs, &rc)
 	}
-	if s.AAAA != nil && len(*s.AAAA) != 0 {
-		rc := utils.NewRecordConfig(domain, "AAAA", ttl, origin)
-		rc.SetTargetIP(*s.AAAA)
-
-		rrs = append(rrs, rc)
+	if s.AAAA != nil && len(s.AAAA.AAAA) != 0 {
+		rc, err := models.RRtoRC(s.AAAA, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate AAAA record: %w", err)
+		}
+		rrs = append(rrs, &rc)
 	}
 	if len(s.SSHFP) > 0 {
-		sshfp_rrs, err := (&svcs.SSHFPs{SSHFP: s.SSHFP}).GenRRs(domain, ttl, origin)
+		sshfp_rrs, err := utils.RRstoRCs(s.SSHFP, origin)
 		if err != nil {
 			return nil, fmt.Errorf("unable to generate SSHFP records: %w", err)
 		}
@@ -118,21 +119,15 @@ next_pool:
 					continue next_pool
 				}
 
-				addr := rr.GetTargetIP()
-				s.A = &addr
+				s.A = rr.ToRR().(*dns.A)
 			} else if rr.Type == "AAAA" {
 				if s.AAAA != nil {
 					continue next_pool
 				}
 
-				addr := rr.GetTargetIP()
-				s.AAAA = &addr
+				s.AAAA = rr.ToRR().(*dns.AAAA)
 			} else if rr.Type == "SSHFP" {
-				s.SSHFP = append(s.SSHFP, &svcs.SSHFP{
-					Algorithm:   rr.SshfpAlgorithm,
-					Type:        rr.SshfpFingerprint,
-					FingerPrint: rr.GetTargetField(),
-				})
+				s.SSHFP = append(s.SSHFP, rr.ToRR().(*dns.SSHFP))
 			}
 		}
 

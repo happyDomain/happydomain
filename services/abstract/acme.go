@@ -33,7 +33,7 @@ import (
 )
 
 type ACMEChallenge struct {
-	Challenge string
+	Record *dns.TXT `json:"txt"`
 }
 
 func (s *ACMEChallenge) GetNbResources() int {
@@ -41,13 +41,18 @@ func (s *ACMEChallenge) GetNbResources() int {
 }
 
 func (s *ACMEChallenge) GenComment(origin string) string {
-	return s.Challenge
+	return strings.Join(s.Record.Txt, "")
 }
 
 func (s *ACMEChallenge) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	rr := utils.NewRecordConfig(utils.DomainJoin("_acme-challenge", domain), "TXT", ttl, origin)
-	rr.SetTargetTXT(s.Challenge)
-	rrs = append(rrs, rr)
+	if !strings.HasPrefix(domain, "_acme-challenge") {
+		domain = utils.DomainJoin("_acme-challenge", domain)
+	}
+	rc, err := models.RRtoRC(s.Record, origin)
+	if err != nil {
+		return nil, err
+	}
+	rrs = append(rrs, &rc)
 	return
 }
 
@@ -56,7 +61,7 @@ func acmechallenge_analyze(a *svcs.Analyzer) error {
 		domain := strings.TrimPrefix(record.NameFQDN, "_acme-challenge.")
 		if record.Type == "TXT" {
 			a.UseRR(record, domain, &ACMEChallenge{
-				Challenge: record.GetTargetTXTJoined(),
+				Record: record.ToRR().(*dns.TXT),
 			})
 		}
 	}

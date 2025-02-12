@@ -34,34 +34,49 @@ import (
 )
 
 type RFC6186 struct {
-	Submission  []*svcs.SRV `json:"submission" happydomain:"label=Email Submission,description=Identifies domain's Message Submission Agent"`
-	IMAPS       []*svcs.SRV `json:"imaps" happydomain:"label=IMAP over TLS,description=Identifies domain's IMAP server running over TLS"`
-	POP3S       []*svcs.SRV `json:"pop3s" happydomain:"label=POP3 over TLS,description=Identifies domain's POP3 server running over TLS"`
-	SubmissionS []*svcs.SRV `json:"submissions" happydomain:"label=Email Submission over TLS,description=Identifies domain's Message Submission Agent running over TLS"` // RFC 8314
-	IMAP        []*svcs.SRV `json:"imap" happydomain:"label=IMAP,description=Identifies domain's IMAP server running unencrypted"`
-	POP3        []*svcs.SRV `json:"pop3" happydomain:"label=POP3,description=Identifies domain's POP3 server running unencrypted"`
+	Records []*dns.SRV `json:"srv"`
 }
 
 func (s *RFC6186) GetNbResources() int {
-	return len(s.Submission) + len(s.SubmissionS) + len(s.IMAP) + len(s.IMAPS) + len(s.POP3) + len(s.POP3S)
+	return len(s.Records)
 }
 
 func (s *RFC6186) GenComment(origin string) string {
 	var b strings.Builder
 
-	if len(s.Submission) > 1 {
-		fmt.Fprintf(&b, "%d submissions", len(s.Submission))
-	} else if len(s.Submission) > 0 {
+	var submission, submissionS, pop3, pop3s, imap, imaps uint
+
+	for _, record := range s.Records {
+		domain := record.Hdr.Name
+
+		if strings.HasPrefix(domain, "_submission._tcp.") {
+			submission += 1
+		} else if strings.HasPrefix(domain, "_submissions._tcp.") {
+			submissionS += 1
+		} else if strings.HasPrefix(domain, "_imap._tcp.") {
+			imap += 1
+		} else if strings.HasPrefix(domain, "_imaps._tcp.") {
+			imaps += 1
+		} else if strings.HasPrefix(domain, "_pop3._tcp.") {
+			pop3 += 1
+		} else if strings.HasPrefix(domain, "_pop3s._tcp.") {
+			pop3s += 1
+		}
+	}
+
+	if submission > 1 {
+		fmt.Fprintf(&b, "%d submissions", submission)
+	} else if submission > 0 {
 		b.WriteString("Submission")
 	}
 
-	if len(s.SubmissionS) > 0 {
+	if submissionS > 0 {
 		if b.Len() > 0 {
 			b.WriteString(" + ")
 		}
-		if len(s.SubmissionS) > 1 {
-			fmt.Fprintf(&b, "%d secured submissions", len(s.IMAP))
-		} else if len(s.IMAP) > 0 {
+		if submissionS > 1 {
+			fmt.Fprintf(&b, "%d secured submissions", submissionS)
+		} else if submissionS > 0 {
 			if b.Len() > 0 {
 				b.WriteString("secured submission")
 			} else {
@@ -70,57 +85,46 @@ func (s *RFC6186) GenComment(origin string) string {
 		}
 	}
 
-	if len(s.IMAP) > 0 {
+	if imap > 0 {
 		if b.Len() > 0 {
 			b.WriteString(" + ")
 		}
-		if len(s.IMAP) > 1 {
-			fmt.Fprintf(&b, "%d IMAP", len(s.IMAP))
-		} else if len(s.IMAP) > 0 {
+		if imap > 1 {
+			fmt.Fprintf(&b, "%d IMAP", imap)
+		} else if imap > 0 {
 			b.WriteString("IMAP")
 		}
 	}
 
-	if len(s.IMAP) > 0 {
+	if imaps > 0 {
 		if b.Len() > 0 {
 			b.WriteString(" + ")
 		}
-		if len(s.IMAP) > 1 {
-			fmt.Fprintf(&b, "%d IMAP", len(s.IMAP))
-		} else if len(s.IMAP) > 0 {
-			b.WriteString("IMAP")
-		}
-	}
-
-	if len(s.IMAPS) > 0 {
-		if b.Len() > 0 {
-			b.WriteString(" + ")
-		}
-		if len(s.IMAPS) > 1 {
-			fmt.Fprintf(&b, "%d secured IMAP", len(s.IMAPS))
-		} else if len(s.IMAPS) > 0 {
+		if imaps > 1 {
+			fmt.Fprintf(&b, "%d secured IMAP", imaps)
+		} else if imaps > 0 {
 			b.WriteString("secured IMAP")
 		}
 	}
 
-	if len(s.POP3) > 0 {
+	if pop3 > 0 {
 		if b.Len() > 0 {
 			b.WriteString(" + ")
 		}
-		if len(s.POP3) > 1 {
-			fmt.Fprintf(&b, "%d POP3", len(s.POP3))
-		} else if len(s.POP3) > 0 {
+		if pop3 > 1 {
+			fmt.Fprintf(&b, "%d POP3", pop3)
+		} else if pop3 > 0 {
 			b.WriteString("POP3")
 		}
 	}
 
-	if len(s.POP3S) > 0 {
+	if pop3s > 0 {
 		if b.Len() > 0 {
 			b.WriteString(" + ")
 		}
-		if len(s.POP3S) > 1 {
-			fmt.Fprintf(&b, "%d secured POP3", len(s.POP3S))
-		} else if len(s.POP3S) > 0 {
+		if pop3s > 1 {
+			fmt.Fprintf(&b, "%d secured POP3", pop3s)
+		} else if pop3s > 0 {
 			b.WriteString("secured POP3")
 		}
 	}
@@ -128,83 +132,29 @@ func (s *RFC6186) GenComment(origin string) string {
 	return b.String()
 }
 
-func (s *RFC6186) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	for _, service := range s.Submission {
-		if service.Port == 0 {
-			service.Port = 587
-		}
-		srrs, err := service.GenRRs(utils.DomainJoin("_submission._tcp", domain), ttl, origin)
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate submission records: %w", err)
-		}
-		rrs = append(rrs, srrs...)
-	}
-	for _, service := range s.SubmissionS {
-		if service.Port == 0 {
-			service.Port = 587
-		}
-		srrs, err := service.GenRRs(utils.DomainJoin("_submissions._tcp", domain), ttl, origin)
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate submissionS records: %w", err)
-		}
-		rrs = append(rrs, srrs...)
-	}
-	for _, service := range s.IMAP {
-		if service.Port == 0 {
-			service.Port = 143
-		}
-		srrs, err := service.GenRRs(utils.DomainJoin("_imap._tcp", domain), ttl, origin)
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate imap records: %w", err)
-		}
-		rrs = append(rrs, srrs...)
-	}
-	for _, service := range s.IMAPS {
-		if service.Port == 0 {
-			service.Port = 993
-		}
-		srrs, err := service.GenRRs(utils.DomainJoin("_imaps._tcp", domain), ttl, origin)
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate imaps records: %w", err)
-		}
-		rrs = append(rrs, srrs...)
-	}
-	for _, service := range s.POP3 {
-		if service.Port == 0 {
-			service.Port = 110
-		}
-		srrs, err := service.GenRRs(utils.DomainJoin("_pop3._tcp", domain), ttl, origin)
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate pop3 records: %w", err)
-		}
-		rrs = append(rrs, srrs...)
-	}
-	for _, service := range s.POP3S {
-		if service.Port == 0 {
-			service.Port = 995
-		}
-		srrs, err := service.GenRRs(utils.DomainJoin("_pop3s._tcp", domain), ttl, origin)
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate pop3s records: %w", err)
-		}
-		rrs = append(rrs, srrs...)
-	}
-	return
+func (s *RFC6186) GenRRs(domain string, ttl uint32, origin string) (models.Records, error) {
+	return utils.RRstoRCs(s.Records, origin)
 }
 
 func rfc6186_analyze(a *svcs.Analyzer) error {
 	emailDomains := map[string]*RFC6186{}
 
-	// Looking for submission
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Prefix: "_submission._tcp.", Type: dns.TypeSRV}) {
-		if srv := svcs.ParseSRV(record); srv != nil {
-			domain := strings.TrimPrefix(record.NameFQDN, "_submission._tcp.")
+	for _, prefix := range []string{
+		"_submission._tcp.",
+		"_submissions._tcp.", // RFC 8314
+		"_imap._tcp.",
+		"_imaps._tcp.",
+		"_pop3._tcp.",
+		"_pop3s._tcp.",
+	} {
+		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Prefix: prefix, Type: dns.TypeSRV}) {
+			domain := strings.TrimPrefix(record.NameFQDN, prefix)
 
 			if _, ok := emailDomains[domain]; !ok {
 				emailDomains[domain] = &RFC6186{}
 			}
 
-			emailDomains[domain].Submission = append(emailDomains[domain].Submission, srv)
+			emailDomains[domain].Records = append(emailDomains[domain].Records, record.ToRR().(*dns.SRV))
 
 			a.UseRR(
 				record,
@@ -214,100 +164,6 @@ func rfc6186_analyze(a *svcs.Analyzer) error {
 		}
 	}
 
-	// Looking for submissionS
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Prefix: "_submissions._tcp.", Type: dns.TypeSRV}) {
-		if srv := svcs.ParseSRV(record); srv != nil {
-			domain := strings.TrimPrefix(record.NameFQDN, "_submissions._tcp.")
-
-			if _, ok := emailDomains[domain]; !ok {
-				emailDomains[domain] = &RFC6186{}
-			}
-
-			emailDomains[domain].SubmissionS = append(emailDomains[domain].SubmissionS, srv)
-
-			a.UseRR(
-				record,
-				domain,
-				emailDomains[domain],
-			)
-		}
-	}
-
-	// Looking for IMAP
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Prefix: "_imap._tcp.", Type: dns.TypeSRV}) {
-		if srv := svcs.ParseSRV(record); srv != nil {
-			domain := strings.TrimPrefix(record.NameFQDN, "_imap._tcp.")
-
-			if _, ok := emailDomains[domain]; !ok {
-				emailDomains[domain] = &RFC6186{}
-			}
-
-			emailDomains[domain].IMAP = append(emailDomains[domain].IMAP, srv)
-
-			a.UseRR(
-				record,
-				domain,
-				emailDomains[domain],
-			)
-		}
-	}
-
-	// Looking for IMAPS
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Prefix: "_imaps._tcp.", Type: dns.TypeSRV}) {
-		if srv := svcs.ParseSRV(record); srv != nil {
-			domain := strings.TrimPrefix(record.NameFQDN, "_imaps._tcp.")
-
-			if _, ok := emailDomains[domain]; !ok {
-				emailDomains[domain] = &RFC6186{}
-			}
-
-			emailDomains[domain].IMAPS = append(emailDomains[domain].IMAPS, srv)
-
-			a.UseRR(
-				record,
-				domain,
-				emailDomains[domain],
-			)
-		}
-	}
-
-	// Looking for POP3
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Prefix: "_pop3._tcp.", Type: dns.TypeSRV}) {
-		if srv := svcs.ParseSRV(record); srv != nil {
-			domain := strings.TrimPrefix(record.NameFQDN, "_pop3._tcp.")
-
-			if _, ok := emailDomains[domain]; !ok {
-				emailDomains[domain] = &RFC6186{}
-			}
-
-			emailDomains[domain].POP3 = append(emailDomains[domain].POP3, srv)
-
-			a.UseRR(
-				record,
-				domain,
-				emailDomains[domain],
-			)
-		}
-	}
-
-	// Looking for POP3S
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Prefix: "_pop3s._tcp.", Type: dns.TypeSRV}) {
-		if srv := svcs.ParseSRV(record); srv != nil {
-			domain := strings.TrimPrefix(record.NameFQDN, "_pop3s._tcp.")
-
-			if _, ok := emailDomains[domain]; !ok {
-				emailDomains[domain] = &RFC6186{}
-			}
-
-			emailDomains[domain].POP3S = append(emailDomains[domain].POP3S, srv)
-
-			a.UseRR(
-				record,
-				domain,
-				emailDomains[domain],
-			)
-		}
-	}
 	return nil
 }
 

@@ -29,11 +29,10 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type KeybaseVerif struct {
-	SiteVerification string `happydomain:"label=Site Verification"`
+	Record *dns.TXT `json:"txt"`
 }
 
 func (s *KeybaseVerif) GetNbResources() int {
@@ -41,13 +40,15 @@ func (s *KeybaseVerif) GetNbResources() int {
 }
 
 func (s *KeybaseVerif) GenComment(origin string) string {
-	return s.SiteVerification
+	return strings.TrimPrefix(strings.Join(s.Record.Txt, ""), "keybase-site-verification=")
 }
 
 func (s *KeybaseVerif) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	rc := utils.NewRecordConfig(utils.DomainJoin("_keybase", domain), "TXT", ttl, origin)
-	rc.SetTargetTXT("keybase-site-verification=" + strings.TrimPrefix(s.SiteVerification, "keybase-site-verification="))
-	rrs = append(rrs, rc)
+	rc, err := models.RRtoRC(s.Record, origin)
+	if err != nil {
+		return nil, err
+	}
+	rrs = append(rrs, &rc)
 	return
 }
 
@@ -56,7 +57,7 @@ func keybaseverification_analyze(a *svcs.Analyzer) error {
 		domain := strings.TrimPrefix(record.NameFQDN, "_keybase.")
 		if record.Type == "TXT" {
 			a.UseRR(record, domain, &KeybaseVerif{
-				SiteVerification: strings.TrimPrefix(record.GetTargetTXTJoined(), "keybase-site-verification="),
+				Record: record.ToRR().(*dns.TXT),
 			})
 		}
 	}

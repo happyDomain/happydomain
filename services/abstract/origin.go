@@ -24,19 +24,17 @@ package abstract
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/services/common"
 	"git.happydns.org/happyDomain/utils"
 )
 
 type NSOnlyOrigin struct {
-	NameServers []string `json:"ns" happydomain:"label=Zone's Name Servers"`
+	NameServers []*dns.NS `json:"ns"`
 }
 
 func (s *NSOnlyOrigin) GetNbResources() int {
@@ -47,29 +45,17 @@ func (s *NSOnlyOrigin) GenComment(origin string) string {
 	return fmt.Sprintf("%d NS", len(s.NameServers))
 }
 
-func (s *NSOnlyOrigin) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	for _, ns := range s.NameServers {
-		rc := utils.NewRecordConfig(domain, "NS", ttl, origin)
-		rc.SetTarget(utils.DomainFQDN(ns, origin))
-
-		rrs = append(rrs, rc)
-	}
-	return
+func (s *NSOnlyOrigin) GenRRs(domain string, ttl uint32, origin string) (models.Records, error) {
+	return utils.RRstoRCs(s.NameServers, origin)
 }
 
 type Origin struct {
-	Ns          string          `json:"mname" happydomain:"label=Name Server,placeholder=ns0,required,description=The domain name of the name server that was the original or primary source of data for this zone."`
-	Mbox        string          `json:"rname" happydomain:"label=Contact Email,placeholder=dnsmaster,required,description=A <domain-name> which specifies the mailbox of the person responsible for this zone."`
-	Serial      uint32          `json:"serial" happydomain:"label=Zone Serial,required,description=The unsigned 32 bit version number of the original copy of the zone.  Zone transfers preserve this value.  This value wraps and should be compared using sequence space arithmetic."`
-	Refresh     common.Duration `json:"refresh" happydomain:"label=Slave Refresh Time,required,description=The time interval before the zone should be refreshed by name servers other than the primary."`
-	Retry       common.Duration `json:"retry" happydomain:"label=Retry Interval on failed refresh,required,description=The time interval that should elapse before a failed refresh should be retried by a slave name server."`
-	Expire      common.Duration `json:"expire" happydomain:"label=Authoritative Expiry,required,description=Time value that specifies the upper limit on the time interval that can elapse before the zone is no longer authoritative."`
-	Negttl      common.Duration `json:"nxttl" happydomain:"label=Negative Caching Time,required,description=Maximal time a resolver should cache a negative authoritative answer (such as NXDOMAIN ...)."`
-	NameServers []string        `json:"ns" happydomain:"label=Zone's Name Servers"`
+	SOA         *dns.SOA  `json:"soa"`
+	NameServers []*dns.NS `json:"ns"`
 }
 
 func (s *Origin) GetNbResources() int {
-	if s.Ns == "" {
+	if s.SOA == nil {
 		return len(s.NameServers)
 	} else {
 		return len(s.NameServers) + 1
@@ -77,7 +63,7 @@ func (s *Origin) GetNbResources() int {
 }
 
 func (s *Origin) GenComment(origin string) string {
-	if s.Ns == "" {
+	if s.SOA == nil {
 		return fmt.Sprintf("%d NS", len(s.NameServers))
 	}
 
@@ -86,29 +72,24 @@ func (s *Origin) GenComment(origin string) string {
 		ns = fmt.Sprintf(" + %d NS", len(s.NameServers))
 	}
 
-	return fmt.Sprintf("%s %s %d"+ns, strings.TrimSuffix(s.Ns, "."+origin), strings.TrimSuffix(s.Mbox, "."+origin), s.Serial)
+	return fmt.Sprintf("%s %s %d"+ns, strings.TrimSuffix(s.SOA.Ns, "."+origin), strings.TrimSuffix(s.SOA.Mbox, "."+origin), s.SOA.Serial)
 }
 
 func (s *Origin) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	if s.Ns != "" {
-		rc := utils.NewRecordConfig(domain, "SOA", ttl, origin)
-		rc.SoaMbox = utils.DomainFQDN(s.Mbox, origin)
-		rc.SoaSerial = s.Serial
-		rc.SoaRefresh = uint32(s.Refresh.Seconds())
-		rc.SoaRetry = uint32(s.Retry.Seconds())
-		rc.SoaExpire = uint32(s.Expire.Seconds())
-		rc.SoaMinttl = uint32(s.Negttl.Seconds())
-		rc.SetTarget(utils.DomainFQDN(s.Ns, origin))
-
-		rrs = append(rrs, rc)
+	if s.SOA != nil {
+		rc, err := models.RRtoRC(s.SOA, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate SOA record: %w", err)
+		}
+		rrs = append(rrs, &rc)
 	}
 
-	for _, ns := range s.NameServers {
-		rc := utils.NewRecordConfig(domain, "NS", ttl, origin)
-		rc.SetTarget(utils.DomainFQDN(ns, origin))
-
-		rrs = append(rrs, rc)
+	rcs, err := utils.RRstoRCs(s.NameServers, origin)
+	if err != nil {
+		return nil, fmt.Errorf("unable to generate NS records: %w", err)
 	}
+	rrs = append(rrs, rcs...)
+
 	return
 }
 
@@ -119,13 +100,7 @@ func origin_analyze(a *svcs.Analyzer) error {
 		if record.Type == "SOA" {
 			hasSOA = true
 			origin := &Origin{
-				Ns:      record.GetTargetField(),
-				Mbox:    record.SoaMbox,
-				Serial:  record.SoaSerial,
-				Refresh: common.Duration(time.Duration(record.SoaRefresh) * time.Second),
-				Retry:   common.Duration(time.Duration(record.SoaRetry) * time.Second),
-				Expire:  common.Duration(time.Duration(record.SoaExpire) * time.Second),
-				Negttl:  common.Duration(time.Duration(record.SoaMinttl) * time.Second),
+				SOA: record.ToRR().(*dns.SOA),
 			}
 
 			a.UseRR(
@@ -136,7 +111,7 @@ func origin_analyze(a *svcs.Analyzer) error {
 
 			for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS, Domain: record.NameFQDN}) {
 				if record.Type == "NS" {
-					origin.NameServers = append(origin.NameServers, record.GetTargetField())
+					origin.NameServers = append(origin.NameServers, record.ToRR().(*dns.NS))
 					a.UseRR(
 						record,
 						record.NameFQDN,
@@ -152,7 +127,7 @@ func origin_analyze(a *svcs.Analyzer) error {
 
 		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS, Domain: a.GetOrigin()}) {
 			if record.Type == "NS" {
-				origin.NameServers = append(origin.NameServers, record.GetTargetField())
+				origin.NameServers = append(origin.NameServers, record.ToRR().(*dns.NS))
 				a.UseRR(
 					record,
 					record.NameFQDN,

@@ -33,7 +33,7 @@ import (
 )
 
 type GitlabPageVerif struct {
-	Code string `happydomain:"label=Verification code given by Gitlab"`
+	Record *dns.TXT `json:"txt"`
 }
 
 func (s *GitlabPageVerif) GetNbResources() int {
@@ -41,19 +41,19 @@ func (s *GitlabPageVerif) GetNbResources() int {
 }
 
 func (s *GitlabPageVerif) GenComment(origin string) string {
-	return s.Code
+	return strings.TrimPrefix(strings.Join(s.Record.Txt, ""), "gitlab-pages-verification-code=")
 }
 
 func (s *GitlabPageVerif) GenRRs(domain string, ttl uint32, origin string) (rrs models.Records, e error) {
-	if strings.Contains(s.Code, " TXT ") {
-		s.Code = s.Code[strings.Index(s.Code, "gitlab-pages-verification-code="):]
+	if !strings.HasPrefix(domain, "_gitlab-pages-verification-code") {
+		domain = utils.DomainJoin("_gitlab-pages-verification-code", domain)
 	}
-	domain = strings.TrimPrefix(domain, "_gitlab-pages-verification-code.")
 
-	rc := utils.NewRecordConfig("_gitlab-pages-verification-code."+domain, "TXT", ttl, origin)
-	rc.SetTargetTXT("gitlab-pages-verification-code=" + strings.TrimPrefix(s.Code, "gitlab-pages-verification-code="))
-
-	rrs = append(rrs, rc)
+	rc, err := models.RRtoRC(s.Record, origin)
+	if err != nil {
+		return nil, err
+	}
+	rrs = append(rrs, &rc)
 	return
 }
 
@@ -62,7 +62,7 @@ func gitlabverification_analyze(a *svcs.Analyzer) error {
 		domain := record.NameFQDN
 		if record.Type == "TXT" && strings.HasPrefix(record.GetTargetTXTJoined(), "gitlab-pages-verification-code=") {
 			a.UseRR(record, strings.TrimPrefix(domain, "_gitlab-pages-verification-code"), &GitlabPageVerif{
-				Code: strings.TrimPrefix(record.GetTargetTXTJoined(), "gitlab-pages-verification-code="),
+				Record: record.ToRR().(*dns.TXT),
 			})
 		}
 	}

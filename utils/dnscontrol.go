@@ -27,7 +27,7 @@ import (
 )
 
 // RRstoRCs converts []dns.RR to []dnscontrol.RecordConfigs.
-func RRstoRCs(rrs []dns.RR, origin string) (models.Records, error) {
+func RRstoRCs[RRType dns.RR](rrs []RRType, origin string) (models.Records, error) {
 	rcs := make(models.Records, 0, len(rrs))
 	for _, r := range rrs {
 		rc, err := models.RRtoRC(r, origin)
