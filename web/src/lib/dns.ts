@@ -19,10 +19,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { nsrrtype } from "$lib/dns_rr";
+import { nsrrtype, rdatatostr } from "$lib/dns_rr";
 import type { Domain } from "$lib/model/domain";
 
-export { nsrrtype };
+export { nsrrtype, rdatatostr };
 
 export const dns_common_types: Array<string> = [
     "ANY",

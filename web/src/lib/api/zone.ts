@@ -154,24 +154,3 @@ export async function deleteZoneService(
     });
     return await handleApiResponse<Zone>(res);
 }
-
-export async function getServiceRecords(
-    domain: Domain,
-    id: string,
-    service: ServiceMeta,
-): Promise<Array<ServiceRecord>> {
-    let subdomain = service._domain;
-    if (subdomain === "") subdomain = "@";
-
-    const dnid = encodeURIComponent(domain.id);
-    id = encodeURIComponent(id);
-    const svcid = service._id ? encodeURIComponent(service._id) : undefined;
-
-    const res = await fetch(
-        `/api/domains/${dnid}/zone/${id}/${subdomain}/services/${svcid}/records`,
-        {
-            headers: { Accept: "application/json" },
-        },
-    );
-    return await handleApiResponse<Array<ServiceRecord>>(res);
-}
