@@ -77,9 +77,6 @@ func init() {
 			Categories: []string{
 				"verification",
 			},
-			Restrictions: svcs.ServiceRestrictions{
-				NearAlone: true,
-			},
 		},
 		2,
 	)
