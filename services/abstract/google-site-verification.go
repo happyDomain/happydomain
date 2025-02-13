@@ -28,6 +28,7 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type GoogleVerif struct {
@@ -51,7 +52,7 @@ func googleverification_analyze(a *svcs.Analyzer) error {
 		domain := record.NameFQDN
 		if record.Type == "TXT" && strings.HasPrefix(record.GetTargetTXTJoined(), "google-site-verification=") {
 			a.UseRR(record, domain, &GoogleVerif{
-				Record: record.ToRR().(*dns.TXT),
+				Record: utils.RRRelative(record.ToRR(), domain).(*dns.TXT),
 			})
 		}
 	}

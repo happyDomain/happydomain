@@ -29,6 +29,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type MXs struct {
@@ -79,7 +80,9 @@ func (s *MXs) GenComment(origin string) string {
 func (s *MXs) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
 	rrs := make([]dns.RR, len(s.Records))
 	for i, r := range s.Records {
-		rrs[i] = r
+		mx := *r
+		mx.Mx = utils.DomainFQDN(mx.Mx, origin)
+		rrs[i] = &mx
 	}
 	return rrs, nil
 }
@@ -95,9 +98,12 @@ func mx_analyze(a *Analyzer) (err error) {
 			services[dn] = &MXs{}
 		}
 
+		// Make record relative
+		record.SetTarget(utils.DomainRelative(record.GetTargetField(), a.GetOrigin()))
+
 		services[dn].Records = append(
 			services[dn].Records,
-			record.ToRR().(*dns.MX),
+			utils.RRRelative(record.ToRR(), dn).(*dns.MX),
 		)
 
 		err = a.UseRR(

@@ -30,6 +30,7 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type Server struct {
@@ -120,6 +121,16 @@ next_pool:
 		}
 
 		for _, rr := range rrs {
+			if s.A != nil {
+				s.A = utils.RRRelative(s.A, dn).(*dns.A)
+			}
+			if s.AAAA != nil {
+				s.AAAA = utils.RRRelative(s.AAAA, dn).(*dns.AAAA)
+			}
+			for i := range s.SSHFP {
+				s.SSHFP[i] = utils.RRRelative(s.SSHFP[i], dn).(*dns.SSHFP)
+			}
+
 			a.UseRR(rr, dn, s)
 		}
 	}

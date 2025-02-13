@@ -30,6 +30,7 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type MatrixIM struct {
@@ -82,7 +83,9 @@ destloop:
 func (s *MatrixIM) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
 	rrs := make([]dns.RR, len(s.Records))
 	for i, r := range s.Records {
-		rrs[i] = r
+		srv := *r
+		srv.Target = utils.DomainFQDN(srv.Target, origin)
+		rrs[i] = &srv
 	}
 	return rrs, nil
 }
@@ -97,7 +100,10 @@ func matrix_analyze(a *svcs.Analyzer) error {
 			matrixDomains[domain] = &MatrixIM{}
 		}
 
-		matrixDomains[domain].Records = append(matrixDomains[domain].Records, record.ToRR().(*dns.SRV))
+		// Make record relative
+		record.SetTarget(utils.DomainRelative(record.GetTargetField(), a.GetOrigin()))
+
+		matrixDomains[domain].Records = append(matrixDomains[domain].Records, utils.RRRelative(record.ToRR(), domain).(*dns.SRV))
 
 		a.UseRR(
 			record,

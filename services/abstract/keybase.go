@@ -28,6 +28,7 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type KeybaseVerif struct {
@@ -51,7 +52,7 @@ func keybaseverification_analyze(a *svcs.Analyzer) error {
 		domain := strings.TrimPrefix(record.NameFQDN, "_keybase.")
 		if record.Type == "TXT" {
 			a.UseRR(record, domain, &KeybaseVerif{
-				Record: record.ToRR().(*dns.TXT),
+				Record: utils.RRRelative(record.ToRR(), domain).(*dns.TXT),
 			})
 		}
 	}

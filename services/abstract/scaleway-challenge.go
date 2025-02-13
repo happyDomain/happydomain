@@ -28,6 +28,7 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type ScalewayChallenge struct {
@@ -51,7 +52,7 @@ func scalewaychallenge_analyze(a *svcs.Analyzer) error {
 		domain := strings.TrimPrefix(record.NameFQDN, "_scaleway-challenge.")
 		if record.Type == "TXT" {
 			a.UseRR(record, domain, &ScalewayChallenge{
-				Record: record.ToRR().(*dns.TXT),
+				Record: utils.RRRelative(record.ToRR(), domain).(*dns.TXT),
 			})
 		}
 	}

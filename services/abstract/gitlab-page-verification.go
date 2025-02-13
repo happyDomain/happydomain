@@ -28,6 +28,7 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type GitlabPageVerif struct {
@@ -48,10 +49,10 @@ func (s *GitlabPageVerif) GetRecords(domain string, ttl uint32, origin string) (
 
 func gitlabverification_analyze(a *svcs.Analyzer) error {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_gitlab-pages-verification-code"}) {
-		domain := record.NameFQDN
+		domain := strings.TrimPrefix(record.NameFQDN, "_gitlab-pages-verification-code.")
 		if record.Type == "TXT" && strings.HasPrefix(record.GetTargetTXTJoined(), "gitlab-pages-verification-code=") {
-			a.UseRR(record, strings.TrimPrefix(domain, "_gitlab-pages-verification-code"), &GitlabPageVerif{
-				Record: record.ToRR().(*dns.TXT),
+			a.UseRR(record, domain, &GitlabPageVerif{
+				Record: utils.RRRelative(record.ToRR(), domain).(*dns.TXT),
 			})
 		}
 	}

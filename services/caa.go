@@ -30,6 +30,7 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services/common"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type CAAPolicy struct {
@@ -206,7 +207,7 @@ func caa_analyze(a *Analyzer) (err error) {
 			}
 
 			analyzed := pool[domain]
-			analyzed.Records = append(analyzed.Records, record.ToRR().(*dns.CAA))
+			analyzed.Records = append(analyzed.Records, utils.RRRelative(record.ToRR(), domain).(*dns.CAA))
 
 			err = a.UseRR(record, domain, pool[domain])
 			if err != nil {

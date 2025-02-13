@@ -29,6 +29,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type MTA_STS struct {
@@ -99,8 +100,10 @@ func mtasts_analyze(a *Analyzer) (err error) {
 			continue
 		}
 
-		err = a.UseRR(record, strings.TrimPrefix(record.NameFQDN, "_mta-sts."), &MTA_STS{
-			Record: record.ToRR().(*dns.TXT),
+		domain := strings.TrimPrefix(record.NameFQDN, "_mta-sts.")
+
+		err = a.UseRR(record, domain, &MTA_STS{
+			Record: utils.RRRelative(record.ToRR(), domain).(*dns.TXT),
 		})
 		if err != nil {
 			return

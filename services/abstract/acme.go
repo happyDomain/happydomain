@@ -28,6 +28,7 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type ACMEChallenge struct {
@@ -51,7 +52,7 @@ func acmechallenge_analyze(a *svcs.Analyzer) error {
 		domain := strings.TrimPrefix(record.NameFQDN, "_acme-challenge.")
 		if record.Type == "TXT" {
 			a.UseRR(record, domain, &ACMEChallenge{
-				Record: record.ToRR().(*dns.TXT),
+				Record: utils.RRRelative(record.ToRR(), domain).(*dns.TXT),
 			})
 		}
 	}

@@ -94,6 +94,32 @@ func DomainJoin(domains ...string) (ret string) {
 	return
 }
 
+// DomainRelative strips the end of the given FQDN if it is relative to origin.
+func DomainRelative(subdomain string, origin string) string {
+	if !strings.HasSuffix(origin, ".") {
+		origin += "."
+	}
+
+	if strings.HasSuffix(subdomain, origin) {
+		return strings.TrimSuffix(strings.TrimSuffix(subdomain, origin), ".")
+	}
+
+	return subdomain
+}
+
+// RRRelative strips the end of the given RR if it is relative to origin.
+func RRRelative(rr dns.RR, origin string) dns.RR {
+	if !strings.HasSuffix(origin, ".") {
+		origin += "."
+	}
+
+	if strings.HasSuffix(rr.Header().Name, origin) {
+		rr.Header().Name = strings.TrimSuffix(strings.TrimSuffix(rr.Header().Name, origin), ".")
+	}
+
+	return rr
+}
+
 // DomainJoin appends each relative domains passed as argument.
 func NewRecordConfig(domain string, rtype string, ttl uint32, origin string) *models.RecordConfig {
 	return &models.RecordConfig{

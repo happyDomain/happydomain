@@ -28,6 +28,7 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type GithubOrgVerif struct {
@@ -58,7 +59,7 @@ func githubverification_analyze(a *svcs.Analyzer) error {
 
 			if record.Type == "TXT" {
 				a.UseRR(record, domain, &GithubOrgVerif{
-					Record: record.ToRR().(*dns.TXT),
+					Record: utils.RRRelative(record.ToRR(), domain).(*dns.TXT),
 				})
 			}
 		}

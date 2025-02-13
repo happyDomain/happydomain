@@ -27,6 +27,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type CNAME struct {
@@ -42,7 +43,9 @@ func (s *CNAME) GenComment(origin string) string {
 }
 
 func (s *CNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []dns.RR, e error) {
-	return []dns.RR{s.Record}, nil
+	cname := *s.Record
+	cname.Target = utils.DomainFQDN(cname.Target, origin)
+	return []dns.RR{&cname}, nil
 }
 
 type SpecialCNAME struct {
@@ -58,7 +61,9 @@ func (s *SpecialCNAME) GenComment(origin string) string {
 }
 
 func (s *SpecialCNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []dns.RR, e error) {
-	return []dns.RR{s.Record}, nil
+	cname := *s.Record
+	cname.Target = utils.DomainFQDN(cname.Target, origin)
+	return []dns.RR{&cname}, nil
 }
 
 func specialalias_analyze(a *Analyzer) error {
@@ -66,8 +71,11 @@ func specialalias_analyze(a *Analyzer) error {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME, Prefix: "_"}) {
 		subdomains := SRV_DOMAIN.FindStringSubmatch(record.NameFQDN)
 		if record.Type == "CNAME" && len(subdomains) == 4 {
+			// Make record relative
+			record.SetTarget(utils.DomainRelative(record.GetTargetField(), a.GetOrigin()))
+
 			a.UseRR(record, subdomains[3], &SpecialCNAME{
-				Record: record.ToRR().(*dns.CNAME),
+				Record: utils.RRRelative(record.ToRR(), subdomains[3]).(*dns.CNAME),
 			})
 		}
 	}
@@ -77,8 +85,11 @@ func specialalias_analyze(a *Analyzer) error {
 func alias_analyze(a *Analyzer) error {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME}) {
 		if record.Type == "CNAME" {
+			// Make record relative
+			record.SetTarget(utils.DomainRelative(record.GetTargetField(), a.GetOrigin()))
+
 			a.UseRR(record, record.NameFQDN, &CNAME{
-				Record: record.ToRR().(*dns.CNAME),
+				Record: utils.RRRelative(record.ToRR(), record.NameFQDN).(*dns.CNAME),
 			})
 		}
 	}

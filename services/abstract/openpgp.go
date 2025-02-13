@@ -30,6 +30,7 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type OpenPGP struct {
@@ -90,7 +91,7 @@ func openpgpkey_analyze(a *svcs.Analyzer) (err error) {
 				record,
 				domain,
 				&OpenPGP{
-					Record: record.ToRR().(*dns.OPENPGPKEY),
+					Record: utils.RRRelative(record.ToRR(), domain).(*dns.OPENPGPKEY),
 				},
 			)
 			if err != nil {
@@ -111,7 +112,7 @@ func smimea_analyze(a *svcs.Analyzer) (err error) {
 				record,
 				domain,
 				&SMimeCert{
-					Record: record.ToRR().(*dns.SMIMEA),
+					Record: utils.RRRelative(record.ToRR(), domain).(*dns.SMIMEA),
 				},
 			)
 			if err != nil {

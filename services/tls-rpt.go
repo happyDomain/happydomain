@@ -29,6 +29,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type TLS_RPT struct {
@@ -103,8 +104,10 @@ func tlsrpt_analyze(a *Analyzer) (err error) {
 			continue
 		}
 
-		err = a.UseRR(record, strings.TrimPrefix(record.NameFQDN, "_smtp._tls."), &TLS_RPT{
-			Record: record.ToRR().(*dns.TXT),
+		domain := strings.TrimPrefix(record.NameFQDN, "_smtp._tls.")
+
+		err = a.UseRR(record, domain, &TLS_RPT{
+			Record: utils.RRRelative(record.ToRR(), domain).(*dns.TXT),
 		})
 		if err != nil {
 			return

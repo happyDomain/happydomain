@@ -29,6 +29,7 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type RFC6186 struct {
@@ -133,7 +134,9 @@ func (s *RFC6186) GenComment(origin string) string {
 func (s *RFC6186) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
 	rrs := make([]dns.RR, len(s.Records))
 	for i, r := range s.Records {
-		rrs[i] = r
+		srv := *r
+		srv.Target = utils.DomainFQDN(srv.Target, origin)
+		rrs[i] = &srv
 	}
 	return rrs, nil
 }
@@ -156,7 +159,10 @@ func rfc6186_analyze(a *svcs.Analyzer) error {
 				emailDomains[domain] = &RFC6186{}
 			}
 
-			emailDomains[domain].Records = append(emailDomains[domain].Records, record.ToRR().(*dns.SRV))
+			// Make record relative
+			record.SetTarget(utils.DomainRelative(record.GetTargetField(), a.GetOrigin()))
+
+			emailDomains[domain].Records = append(emailDomains[domain].Records, utils.RRRelative(record.ToRR(), domain).(*dns.SRV))
 
 			a.UseRR(
 				record,

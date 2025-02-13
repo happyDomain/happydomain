@@ -29,6 +29,7 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type Delegation struct {
@@ -50,8 +51,10 @@ func (s *Delegation) GenComment(origin string) string {
 }
 
 func (s *Delegation) GetRecords(domain string, ttl uint32, origin string) (rrs []dns.RR, e error) {
-	for _, ns := range s.NameServers {
-		rrs = append(rrs, ns)
+	for _, r := range s.NameServers {
+		ns := *r
+		ns.Ns = utils.DomainFQDN(ns.Ns, origin)
+		rrs = append(rrs, &ns)
 	}
 	for _, ds := range s.DS {
 		rrs = append(rrs, ds)
@@ -72,7 +75,10 @@ func delegation_analyze(a *svcs.Analyzer) error {
 				delegations[record.NameFQDN] = &Delegation{}
 			}
 
-			delegations[record.NameFQDN].NameServers = append(delegations[record.NameFQDN].NameServers, record.ToRR().(*dns.NS))
+			// Make record relative
+			record.SetTarget(utils.DomainRelative(record.GetTargetField(), a.GetOrigin()))
+
+			delegations[record.NameFQDN].NameServers = append(delegations[record.NameFQDN].NameServers, utils.RRRelative(record.ToRR(), record.NameFQDN).(*dns.NS))
 
 			a.UseRR(
 				record,
@@ -85,7 +91,7 @@ func delegation_analyze(a *svcs.Analyzer) error {
 	for subdomain := range delegations {
 		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeDS, Domain: subdomain}) {
 			if record.Type == "DS" {
-				delegations[subdomain].DS = append(delegations[subdomain].DS, record.ToRR().(*dns.DS))
+				delegations[subdomain].DS = append(delegations[subdomain].DS, utils.RRRelative(record.ToRR(), subdomain).(*dns.DS))
 
 				a.UseRR(
 					record,

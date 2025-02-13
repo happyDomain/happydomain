@@ -27,6 +27,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type DKIM struct {
@@ -58,8 +59,10 @@ func dkim_analyze(a *Analyzer) (err error) {
 			continue
 		}
 
-		err = a.UseRR(record, record.NameFQDN[dkidx+12:], &DKIM{
-			Record: record.ToRR().(*dns.TXT),
+		domain := record.NameFQDN[dkidx+12:]
+
+		err = a.UseRR(record, domain, &DKIM{
+			Record: utils.RRRelative(record.ToRR(), domain).(*dns.TXT),
 		})
 		if err != nil {
 			return

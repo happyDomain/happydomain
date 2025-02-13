@@ -30,6 +30,7 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/pkg/spflib"
 
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type SPF struct {
@@ -92,7 +93,7 @@ func (s *SPFFields) String() string {
 func spf_analyze(a *Analyzer) (err error) {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Contains: "v=spf1"}) {
 		err = a.UseRR(record, record.NameFQDN, &SPF{
-			Record: record.ToRR().(*dns.TXT),
+			Record: utils.RRRelative(record.ToRR(), record.NameFQDN).(*dns.TXT),
 		})
 		if err != nil {
 			return
@@ -103,10 +104,10 @@ func spf_analyze(a *Analyzer) (err error) {
 		spf := record.ToRR().(*dns.SPF)
 
 		err = a.UseRR(record, record.NameFQDN, &SPF{
-			Record: &dns.TXT{
+			Record: utils.RRRelative(&dns.TXT{
 				Hdr: spf.Hdr,
 				Txt: spf.Txt,
-			},
+			}, record.NameFQDN).(*dns.TXT),
 		})
 		if err != nil {
 			return

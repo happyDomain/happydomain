@@ -29,6 +29,7 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type NSOnlyOrigin struct {
@@ -46,7 +47,9 @@ func (s *NSOnlyOrigin) GenComment(origin string) string {
 func (s *NSOnlyOrigin) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
 	rrs := make([]dns.RR, len(s.NameServers))
 	for i, r := range s.NameServers {
-		rrs[i] = r
+		ns := *r
+		ns.Ns = utils.DomainFQDN(ns.Ns, origin)
+		rrs[i] = &ns
 	}
 	return rrs, nil
 }
@@ -80,11 +83,16 @@ func (s *Origin) GenComment(origin string) string {
 func (s *Origin) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
 	rrs := make([]dns.RR, len(s.NameServers))
 	for i, r := range s.NameServers {
-		rrs[i] = r
+		ns := *r
+		ns.Ns = utils.DomainFQDN(ns.Ns, origin)
+		rrs[i] = &ns
 	}
 
 	if s.SOA != nil {
-		rrs = append(rrs, s.SOA)
+		soa := *s.SOA
+		soa.Ns = utils.DomainFQDN(soa.Ns, origin)
+		soa.Mbox = utils.DomainFQDN(soa.Mbox, origin)
+		rrs = append(rrs, &soa)
 	}
 
 	return rrs, nil
@@ -96,8 +104,13 @@ func origin_analyze(a *svcs.Analyzer) error {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeSOA}) {
 		if record.Type == "SOA" {
 			hasSOA = true
+
+			// Make record relative
+			record.SetTarget(utils.DomainRelative(record.GetTargetField(), a.GetOrigin()))
+			record.SoaMbox = utils.DomainRelative(record.SoaMbox, a.GetOrigin())
+
 			origin := &Origin{
-				SOA: record.ToRR().(*dns.SOA),
+				SOA: utils.RRRelative(record.ToRR(), record.NameFQDN).(*dns.SOA),
 			}
 
 			a.UseRR(
@@ -108,7 +121,10 @@ func origin_analyze(a *svcs.Analyzer) error {
 
 			for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS, Domain: record.NameFQDN}) {
 				if record.Type == "NS" {
-					origin.NameServers = append(origin.NameServers, record.ToRR().(*dns.NS))
+					// Make record relative
+					record.SetTarget(utils.DomainRelative(record.GetTargetField(), a.GetOrigin()))
+
+					origin.NameServers = append(origin.NameServers, utils.RRRelative(record.ToRR(), record.NameFQDN).(*dns.NS))
 					a.UseRR(
 						record,
 						record.NameFQDN,
@@ -124,7 +140,7 @@ func origin_analyze(a *svcs.Analyzer) error {
 
 		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS, Domain: a.GetOrigin()}) {
 			if record.Type == "NS" {
-				origin.NameServers = append(origin.NameServers, record.ToRR().(*dns.NS))
+				origin.NameServers = append(origin.NameServers, utils.RRRelative(record.ToRR(), record.NameFQDN).(*dns.NS))
 				a.UseRR(
 					record,
 					record.NameFQDN,

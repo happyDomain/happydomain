@@ -181,12 +181,20 @@ func (z *Zone) GenerateRecords(origin string) (records models.Records, e error) 
 				ttl = svc.Ttl
 			}
 
-			rrs, err := svc.GetRecords(strings.TrimSuffix(subdomain, "."), ttl, strings.TrimSuffix(origin, "."))
+			rrs, err := svc.GetRecords(subdomain, ttl, origin)
 			if err != nil {
 				return nil, fmt.Errorf("unable to generate records for service %s: %w", svc, err)
 			}
 
 			for _, record := range rrs {
+				if !strings.HasSuffix(record.Header().Name, ".") {
+					if record.Header().Name == "" {
+						record.Header().Name = subdomain
+					} else {
+						record.Header().Name += "." + subdomain
+					}
+				}
+
 				rc, err := models.RRtoRC(record, strings.TrimSuffix(origin, "."))
 				if err != nil {
 					return nil, err

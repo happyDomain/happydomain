@@ -28,6 +28,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/utils"
 )
 
 var (
@@ -54,7 +55,9 @@ func (s *UnknownSRV) GenComment(origin string) string {
 func (s *UnknownSRV) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
 	rrs := make([]dns.RR, len(s.Records))
 	for i, r := range s.Records {
-		rrs[i] = r
+		srv := *r
+		srv.Target = utils.DomainFQDN(srv.Target, origin)
+		rrs[i] = &srv
 	}
 	return rrs, nil
 }
@@ -75,7 +78,10 @@ func srv_analyze(a *Analyzer) error {
 			srvDomains[domain][svc] = &UnknownSRV{}
 		}
 
-		srvDomains[domain][svc].Records = append(srvDomains[domain][svc].Records, record.ToRR().(*dns.SRV))
+		// Make record relative
+		record.SetTarget(utils.DomainRelative(record.GetTargetField(), a.GetOrigin()))
+
+		srvDomains[domain][svc].Records = append(srvDomains[domain][svc].Records, utils.RRRelative(record.ToRR(), subdomains[3]).(*dns.SRV))
 
 		a.UseRR(
 			record,

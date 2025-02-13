@@ -28,6 +28,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/utils"
 )
 
 var (
@@ -110,7 +111,7 @@ func tlsa_analyze(a *Analyzer) (err error) {
 
 			pool[subdomains[3]].Records = append(
 				pool[subdomains[3]].Records,
-				record.ToRR().(*dns.TLSA),
+				utils.RRRelative(record.ToRR(), subdomains[3]).(*dns.TLSA),
 			)
 
 			err = a.UseRR(

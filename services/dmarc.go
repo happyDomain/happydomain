@@ -30,6 +30,7 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services/common"
+	"git.happydns.org/happyDomain/utils"
 )
 
 type DMARC struct {
@@ -214,8 +215,10 @@ func (t *DMARCFields) String() string {
 
 func dmarc_analyze(a *Analyzer) (err error) {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_dmarc"}) {
-		err = a.UseRR(record, strings.TrimPrefix(record.NameFQDN, "_dmarc."), &DMARC{
-			Record: record.ToRR().(*dns.TXT),
+		domain := strings.TrimPrefix(record.NameFQDN, "_dmarc.")
+
+		err = a.UseRR(record, domain, &DMARC{
+			Record: utils.RRRelative(record.ToRR(), domain).(*dns.TXT),
 		})
 		if err != nil {
 			return
