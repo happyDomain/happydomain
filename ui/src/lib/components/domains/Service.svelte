@@ -66,7 +66,7 @@
 
  let showDetails = false;
  function toggleDetails() {
-     if (component == Card) {
+     if ($userSession.settings.zoneview === ZoneViewGrid || $userSession.settings.zoneview === ZoneViewRecords) {
          dispatch("show-service", service);
      } else if (service) {
          showDetails = !showDetails;
@@ -147,15 +147,16 @@
         </CardBody>
     {:else if service && ($userSession.settings.zoneview === ZoneViewList || $userSession.settings.zoneview === ZoneViewRecords)}
         <ListGroupItem
+            class="px-2"
             on:click={toggleDetails}
         >
             <strong title={$servicesSpecs[service._svctype].description}>
                 {$servicesSpecs[service._svctype].name}
             </strong>
             {#if $servicesSpecs[service._svctype].description}
-                <span class="text-muted">
+                <small class="text-muted">
                     {$servicesSpecs[service._svctype].description}
-                </span>
+                </small>
             {/if}
             {#if $servicesSpecs[service._svctype].categories}
                 {#each $servicesSpecs[service._svctype].categories as category}
@@ -165,7 +166,7 @@
                 {/each}
             {/if}
             {#if service._comment}
-                <span class="float-end text-muted">
+                <span class="fst-italic float-end text-muted">
                     {service._comment}
                 </span>
             {/if}
@@ -184,7 +185,10 @@
             </ListGroupItem>
         {:else if $userSession.settings.zoneview === ZoneViewRecords}
             <ListGroupItem class="p-0">
-                <TableRecords service={service.Service} />
+                <TableRecords
+                    service={service.Service}
+                    on:show-record={(e) => dispatch("show-record", {record: e.detail, service})}
+                />
             </ListGroupItem>
         {/if}
     {/if}

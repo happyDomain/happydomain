@@ -29,6 +29,7 @@
  } from '@sveltestrap/sveltestrap';
 
  import NewServicePath from '$lib/components/NewServicePath.svelte';
+ import RecordModal from '$lib/components/domains/RecordModal.svelte';
  import ServiceModal from '$lib/components/domains/ServiceModal.svelte';
  import type { Domain } from '$lib/model/domain';
  import { domains_idx } from '$lib/stores/domains';
@@ -62,6 +63,11 @@
     <NewServicePath
         origin={data.domain}
         zone={zone}
+    />
+    <RecordModal
+        origin={data.domain}
+        zone={zone}
+        on:update-zone-services={(event) => thisZone.set(event.detail)}
     />
     <ServiceModal
         origin={data.domain}

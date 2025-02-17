@@ -66,6 +66,7 @@
     },
     "domains": {
         "kind": "domain",
+        "subdomain": "subdomain",
         "actions": {
             "audit": "View changes logs",
             "do-migration": "Migrate now",
@@ -302,6 +303,16 @@
         "ttl": "TTL",
         "ttl-long": "Time-To-Live",
         "ttl-tip": "0 means default TTL, others values are exprimed in seconds"
+    },
+    "records": {
+        "add": "Add record",
+        "class": "Class",
+        "delete": "Delete this record",
+        "update": "Update this record",
+        "form-new": "Add a new record to {{domain}}",
+        "new": "New record",
+        "rrtype": "type",
+        "ttl": "Time-to-live"
     },
     "sessions": {
       "close-all": "Terminate all sessions",

@@ -22,21 +22,11 @@
 -->
 
 <script lang="ts">
- import {
-     Badge,
-     Card,
-     CardBody,
-     CardText,
-     CardTitle,
-     CardSubtitle,
-     Icon,
-     ListGroup,
-     ListGroupItem,
-     Table,
-     Spinner,
- } from '@sveltestrap/sveltestrap';
+ import { createEventDispatcher } from 'svelte';
 
  import Record from '$lib/components/domains/Record.svelte';
+
+ const dispatch = createEventDispatcher();
 
  export let service = null;
 </script>
@@ -53,7 +43,11 @@
                     class="bg-light p-1 border-1 border-bottom"
                     style="border-color: darkgray"
                 >
-                    <Record {record} />
+                    <Record
+                        class="mx-1"
+                        {record}
+                        on:show-record={(e) => dispatch("show-record", e.detail)}
+                    />
                 </div>
             {:else if record && record.length}
                 {#each record as r}
@@ -61,7 +55,11 @@
                         class="bg-light p-1 border-1 border-bottom"
                         style="border-color: darkgray"
                     >
-                        <Record record={r} />
+                        <Record
+                            class="mx-1"
+                            record={r}
+                            on:show-record={(e) => dispatch("show-record", e.detail)}
+                        />
                     </div>
                 {/each}
             {/if}
