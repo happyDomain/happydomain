@@ -19,9 +19,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import type { dnsRR } from "$lib/dns_rr";
 import { handleEmptyApiResponse, handleApiResponse } from "$lib/errors";
 import type { Domain } from "$lib/model/domain";
-import type { ServiceCombined } from "$lib/model/service";
+import type { ServiceCombined, ServiceMeta } from "$lib/model/service";
+import type { Zone } from "$lib/model/zone";
 
 export async function getService(
     domain: Domain,
@@ -36,4 +38,49 @@ export async function getService(
         },
     );
     return await handleApiResponse<ServiceCombined>(res);
+}
+
+// TODO -- behind this line, not worked on
+export async function addServiceRecord(domain: Domain, id: string, service: ServiceCombined, record: dnsRR): Promise<Zone> {
+    let subdomain = service._domain;
+    if (subdomain === '') subdomain = '@';
+
+    const dnid = encodeURIComponent(domain.id);
+    id = encodeURIComponent(id);
+    subdomain = encodeURIComponent(subdomain);
+
+    const res = await fetch(`/api/domains/${dnid}/zone/${id}/${subdomain}/services`, {
+        method: 'POST',
+        headers: {'Accept': 'application/json'},
+        body: JSON.stringify(service)
+    });
+    return await handleApiResponse<Zone>(res);
+}
+
+export async function updateServiceRecord(domain: Domain, id: string, service: ServiceCombined, record: dnsRR): Promise<Zone> {
+    const dnid = encodeURIComponent(domain.id);
+    id = encodeURIComponent(id);
+
+    const res = await fetch(`/api/domains/${dnid}/zone/${id}`, {
+        method: 'PATCH',
+        headers: {'Accept': 'application/json'},
+        body: JSON.stringify(service),
+    });
+    return await handleApiResponse<Zone>(res);
+}
+
+export async function deleteServiceRecord(domain: Domain, id: string, service: ServiceMeta, record: dnsRR): Promise<Zone> {
+    let subdomain = service._domain;
+    if (subdomain === '') subdomain = '@';
+
+    const dnid = encodeURIComponent(domain.id);
+    id = encodeURIComponent(id);
+    subdomain = encodeURIComponent(subdomain);
+    const svcid = service._id?encodeURIComponent(service._id):undefined;
+
+    const res = await fetch(`/api/domains/${dnid}/zone/${id}/${subdomain}/services/${svcid}`, {
+        method: 'DELETE',
+        headers: {'Accept': 'application/json'}
+    });
+    return await handleApiResponse<Zone>(res);
 }
