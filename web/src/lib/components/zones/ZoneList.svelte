@@ -51,20 +51,17 @@
             groups = { "": domains };
         }
 
-        const tmp: Record<string, Array<ZoneListDomain>> = {};
+        const tmp: Record<string, Array<ZoneListDomain>> = { };
 
         for (const domain of domains) {
             if (links && !domain.href) {
                 if ($domains_idx[domain.domain])
-                    domain.href = "/domains/" + encodeURIComponent(domain.domain);
+                domain.href = "/domains/" + encodeURIComponent(domain.domain);
                 else domain.href = "/domains/" + encodeURIComponent(domain.id);
             }
 
-            if (tmp[domain.group] === undefined) {
-                tmp[domain.group] = [];
-            }
-
-            tmp[domain.group].push(domain);
+            const group = domain.group ?? '';
+            (tmp[group] ??= []).push(domain);
         }
 
         groups = tmp;

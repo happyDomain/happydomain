@@ -63,7 +63,7 @@
         <Row>
             {#if $userSession.settings}
                 <Col class="offset-md-1 offset-lg-2 col col-md-10 col-lg-8">
-                    <UserSettingsForm settings={$userSession.settings} />
+                    <UserSettingsForm bind:settings={$userSession.settings} />
                 </Col>
             {/if}
         </Row>
