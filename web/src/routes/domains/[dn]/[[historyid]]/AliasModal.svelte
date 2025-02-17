@@ -90,6 +90,8 @@
         // Check domain is valid
         newDomainState = validateDomain(value, origin.domain);
 
+        if (!zone) return false;
+
         // Check domain doesn't already exists
         if (zone.services[value]) {
             return false;
@@ -113,7 +115,7 @@
 
     let addAliasInProgress = false;
     function submitAliasForm() {
-        if (validateNewSubdomain(value)) {
+        if (zone && validateNewSubdomain(value)) {
             addAliasInProgress = true;
             addZoneService(origin, zone.id, {
                 _domain: value,

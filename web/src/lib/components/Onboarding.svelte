@@ -48,7 +48,6 @@
     import Logo from "$lib/components/Logo.svelte";
     import NewDomainInput from "$lib/components/domains/NewDomainInput.svelte";
     import PForm from "$lib/components/providers/Form.svelte";
-    import ProviderList from "$lib/components/providers/List.svelte";
     import ProviderSelector from "$lib/components/providers/Selector.svelte";
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
     import ZoneList from "$lib/components/zones/ZoneList.svelte";

@@ -42,7 +42,6 @@
     import DomainGroupModal from "$lib/components/domain-groups/DomainGroupModal.svelte";
     import Logo from "$lib/components/Logo.svelte";
     import ZoneList from "$lib/components/zones/ZoneList.svelte";
-    import ProviderList from "$lib/components/providers/List.svelte";
     import { fqdnCompare } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import { domains } from "$lib/stores/domains";
