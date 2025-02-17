@@ -26,6 +26,7 @@
 
     import AliasModal, { controls as ctrlAlias } from "./AliasModal.svelte";
     import { controls as ctrlNewService } from "$lib/components/services/NewServicePath.svelte";
+    import { controls as ctrlRecord } from '$lib/components/domains/RecordModal.svelte';
     import { controls as ctrlService } from "$lib/components/services/ServiceModal.svelte";
     import SubdomainItem from "./SubdomainItem.svelte";
     import type { Domain } from "$lib/model/domain";
@@ -65,6 +66,10 @@
         ctrlNewSubdomain.Open();
     }
 
+    function showRecordModal(event) {
+        ctrlRecord.Open(event.detail);
+    }
+
     function showServiceModal(event: CustomEvent<ServiceCombined>) {
         ctrlService.Open(event.detail);
     }
@@ -79,6 +84,7 @@
         services={zone.services[dn] ? zone.services[dn] : []}
         on:new-alias={() => ctrlAlias.Open(dn)}
         on:new-service={() => ctrlNewService.Open(dn)}
+        on:show-record={showRecordModal}
         on:show-service={showServiceModal}
         on:update-zone-services={(event) => dispatch("update-zone-services", event.detail)}
     />
