@@ -26,9 +26,11 @@
 
     import { deleteZoneService } from "$lib/api/zone";
     import { controls as ctrlNewAlias } from "./AliasModal.svelte";
+    import { controls as ctrlRecord } from '$lib/components/domains/RecordModal.svelte';
     import { controls as ctrlNewService } from "$lib/components/services/NewServicePath.svelte";
     import { controls as ctrlService } from "$lib/components/services/ServiceModal.svelte";
     import { fqdn, unreverseDomain } from "$lib/dns";
+    import type { dnsRR } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service";
     import { ZoneViewGrid } from "$lib/model/usersettings";
@@ -65,10 +67,6 @@
                 throw err;
             },
         );
-    }
-
-    function showServiceModal(service: ServiceCombined) {
-        ctrlService.Open(service);
     }
 </script>
 
@@ -108,7 +106,11 @@
         <span class="text-truncate text-muted lead">
             <Icon name="arrow-right" />
             <span class="font-monospace">
-                {services[0].Service.Target}
+                {#if isPTR(services)}
+                    {services[0].Service.ptr.Target}
+                {:else}
+                    {services[0].Service.cname.Target}
+                {/if}
             </span>
         </span>
     {:else if !showResources && services.length}
@@ -155,7 +157,7 @@
             outline
             size="sm"
             title={$t("domains.edit-target")}
-            on:click={() => showServiceModal(services[0])}
+            on:click={() => ctrlService.Open(services[0])}
         >
             <Icon name="pencil" />
         </Button>

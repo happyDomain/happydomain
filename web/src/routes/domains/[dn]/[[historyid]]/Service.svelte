@@ -22,8 +22,6 @@
 -->
 
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
-
     import {
         Badge,
         Card,
@@ -39,18 +37,19 @@
     } from "@sveltestrap/sveltestrap";
 
     import { deleteZoneService, updateZoneService } from '$lib/api/zone';
-    import { nsrrtype } from '$lib/dns';
     import ResourceInput from '$lib/components/forms/ResourceInput.svelte';
     import TableRecords from '$lib/components/domains/TableRecords.svelte';
+    import { controls as ctrlRecord } from '$lib/components/domains/RecordModal.svelte';
+    import { controls as ctrlService } from "$lib/components/services/ServiceModal.svelte";
+    import { nsrrtype } from '$lib/dns';
     import type { Domain } from '$lib/model/domain';
     import type { ServiceCombined } from '$lib/model/service';
     import { ZoneViewGrid, ZoneViewList, ZoneViewRecords } from '$lib/model/usersettings';
     import type { ServiceRecord } from '$lib/model/zone';
     import { servicesSpecs } from '$lib/stores/services';
+    import { thisZone } from "$lib/stores/thiszone";
     import { userSession } from '$lib/stores/usersession';
     import { t } from '$lib/translations';
-
-    const dispatch = createEventDispatcher();
 
     export let origin: Domain;
     export let service: ServiceCombined | null = null;
@@ -66,10 +65,12 @@
 
     let showDetails = false;
     function toggleDetails() {
-        if (component == Card) {
-            dispatch("show-service", service);
-        } else if (service) {
-            showDetails = !showDetails;
+        if (service) {
+            if ($userSession && ($userSession.settings.zoneview === ZoneViewGrid || $userSession.settings.zoneview === ZoneViewRecords)) {
+                ctrlService.Open(service);
+            } else {
+                showDetails = !showDetails;
+            }
         }
     }
 
@@ -77,7 +78,7 @@
         if (service == null) return;
 
         deleteZoneService(origin, zoneId, service).then((z) => {
-            dispatch("update-zone-services", z);
+            thisZone.set(z);
         });
     }
 
@@ -85,7 +86,7 @@
         if (service == null) return;
 
         updateZoneService(origin, zoneId, service).then((z) => {
-            dispatch("update-zone-services", z);
+            thisZone.set(z);
         });
     }
 </script>
@@ -148,14 +149,17 @@
             </CardText>
         </CardBody>
     {:else if service && ($userSession.settings.zoneview === ZoneViewList || $userSession.settings.zoneview === ZoneViewRecords)}
-        <ListGroupItem on:click={toggleDetails}>
+        <ListGroupItem
+            class="px-2"
+            on:click={toggleDetails}
+        >
             <strong title={$servicesSpecs[service._svctype].description}>
                 {$servicesSpecs[service._svctype].name}
             </strong>
             {#if $servicesSpecs[service._svctype].description}
-                <span class="text-muted">
+                <small class="text-muted">
                     {$servicesSpecs[service._svctype].description}
-                </span>
+                </small>
             {/if}
             {#if $servicesSpecs[service._svctype].categories}
                 {#each $servicesSpecs[service._svctype].categories as category}
@@ -165,7 +169,7 @@
                 {/each}
             {/if}
             {#if service._comment}
-                <span class="float-end text-muted">
+                <span class="fst-italic float-end text-muted">
                     {service._comment}
                 </span>
             {/if}
@@ -179,13 +183,15 @@
                     bind:value={service.Service}
                     on:delete-this-service={deleteService}
                     on:update-this-service={saveService}
-                    on:update-zone-services={(event) =>
-                        dispatch("update-zone-services", event.detail)}
+                    on:update-zone-services={(event) => thisZone.set(event.detail)}
                 />
             </ListGroupItem>
         {:else if $userSession.settings.zoneview === ZoneViewRecords}
             <ListGroupItem class="p-0">
-                <TableRecords service={service.Service} />
+                <TableRecords
+                    service={service.Service}
+                    on:show-record={(e) => ctrlRecord.Open({record: e.detail, service})}
+                />
             </ListGroupItem>
         {/if}
     {/if}
