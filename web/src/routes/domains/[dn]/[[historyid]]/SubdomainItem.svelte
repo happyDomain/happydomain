@@ -72,6 +72,10 @@
         );
     }
 
+    function showRecordModal({record, service}) {
+        dispatch("show-record", {record, service});
+    }
+
     function showServiceModal(service: ServiceCombined) {
         dispatch("show-service", service);
     }
@@ -271,6 +275,7 @@
                             {origin}
                             {service}
                             {zoneId}
+                            on:show-record={(event) => showRecordModal(event.detail)}
                             on:show-service={(event) => showServiceModal(event.detail)}
                             on:update-zone-services={(event) =>
                                 dispatch("update-zone-services", event.detail)}

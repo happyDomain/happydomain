@@ -28,6 +28,7 @@
     import { Spinner } from "@sveltestrap/sveltestrap";
 
     import NewServicePath from "$lib/components/services/NewServicePath.svelte";
+    import RecordModal from "$lib/components/domains/RecordModal.svelte";
     import ServiceModal from "$lib/components/services/ServiceModal.svelte";
     import type { Domain } from "$lib/model/domain";
     import { domains_idx, refreshDomains } from "$lib/stores/domains";
@@ -63,6 +64,11 @@
     <slot />
 
     <NewServicePath origin={data.domain} zone={$thisZone} />
+    <RecordModal
+        origin={data.domain}
+        zone={$thisZone}
+        on:update-zone-services={(event) => thisZone.set(event.detail)}
+    />
     <ServiceModal
         origin={data.domain}
         zone={$thisZone}
