@@ -28,6 +28,7 @@ import (
 	"flag"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
@@ -52,7 +53,7 @@ func (o *Options) GetAuthURL() *url.URL {
 }
 
 func (o *Options) GetOIDCProvider(ctx context.Context) (*oidc.Provider, error) {
-	return oidc.NewProvider(ctx, OIDCProviderURL)
+	return oidc.NewProvider(ctx, strings.TrimSuffix(OIDCProviderURL, "/.well-known/openid-configuration"))
 }
 
 func (o *Options) GetOAuth2Config(provider *oidc.Provider) *oauth2.Config {
