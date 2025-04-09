@@ -26,13 +26,13 @@ import (
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/utils"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type GitlabPageVerif struct {
-	Record *dns.TXT `json:"txt"`
+	Code string `happydomain:"label=Verification code given by Gitlab"`
 }
 
 func (s *GitlabPageVerif) GetNbResources() int {
@@ -40,20 +40,27 @@ func (s *GitlabPageVerif) GetNbResources() int {
 }
 
 func (s *GitlabPageVerif) GenComment(origin string) string {
-	return strings.TrimPrefix(strings.Join(s.Record.Txt, ""), "gitlab-pages-verification-code=")
+	return s.Code
 }
 
-func (s *GitlabPageVerif) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
-	return []dns.RR{s.Record}, nil
+func (s *GitlabPageVerif) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	if strings.Contains(s.Code, " TXT ") {
+		s.Code = s.Code[strings.Index(s.Code, "gitlab-pages-verification-code="):]
+	}
+	domain = strings.TrimPrefix(domain, "_gitlab-pages-verification-code.")
+
+	rr := utils.NewRecord("_gitlab-pages-verification-code."+domain, "TXT", ttl, origin)
+	rr.(*dns.TXT).Txt = []string{"gitlab-pages-verification-code=" + strings.TrimPrefix(s.Code, "gitlab-pages-verification-code=")}
+
+	return []happydns.Record{rr}, nil
 }
 
 func gitlabverification_analyze(a *svcs.Analyzer) error {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_gitlab-pages-verification-code"}) {
-		domain := strings.TrimPrefix(record.NameFQDN, "_gitlab-pages-verification-code.")
-		if record.Type == "TXT" && strings.HasPrefix(record.GetTargetTXTJoined(), "gitlab-pages-verification-code=") {
+		domain := strings.TrimPrefix(record.Header().Name, "_gitlab-pages-verification-code.")
+		if txt, ok := record.(*dns.TXT); ok && strings.HasPrefix(strings.Join(txt.Txt, ""), "gitlab-pages-verification-code=") {
 			a.UseRR(record, domain, &GitlabPageVerif{
-				Record: utils.RRRelative(record.ToRR(), domain).(*dns.TXT),
-			})
+				Code: strings.TrimPrefix(strings.Join(txt.Txt, ""), "gitlab-pages-verification-code=")})
 		}
 	}
 	return nil
@@ -61,18 +68,18 @@ func gitlabverification_analyze(a *svcs.Analyzer) error {
 
 func init() {
 	svcs.RegisterService(
-		func() happydns.Service {
+		func() happydns.ServiceBody {
 			return &GitlabPageVerif{}
 		},
 		gitlabverification_analyze,
-		svcs.ServiceInfos{
+		happydns.ServiceInfos{
 			Name:        "Gitlab Pages Verification",
 			Description: "Temporary record to prove that you control the domain.",
-			Family:      svcs.Abstract,
+			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"verification",
 			},
-			Restrictions: svcs.ServiceRestrictions{
+			Restrictions: happydns.ServiceRestrictions{
 				NearAlone: true,
 			},
 		},

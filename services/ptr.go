@@ -19,7 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package abstract
+package svcs
 
 import (
 	"strings"
@@ -28,57 +28,63 @@ import (
 
 	"git.happydns.org/happyDomain/internal/utils"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
 )
 
-type ACMEChallenge struct {
-	Challenge string
+type PTR struct {
+	Target string
 }
 
-func (s *ACMEChallenge) GetNbResources() int {
+func (s *PTR) GetNbResources() int {
 	return 1
 }
 
-func (s *ACMEChallenge) GenComment(origin string) string {
-	return s.Challenge
+func (s *PTR) GenComment(origin string) string {
+	return strings.TrimSuffix(s.Target, "."+origin)
 }
 
-func (s *ACMEChallenge) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
-	rr := utils.NewRecord(utils.DomainJoin("_acme-challenge", domain), "TXT", ttl, origin)
-	rr.(*dns.TXT).Txt = []string{s.Challenge}
-	return []happydns.Record{rr}, nil
+func (s *PTR) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
+	rr := utils.NewRecord(domain, "PTR", ttl, origin)
+	rr.(*dns.PTR).Ptr = utils.DomainFQDN(s.Target, origin)
+	rrs = append(rrs, rr)
+	return
 }
 
-func acmechallenge_analyze(a *svcs.Analyzer) error {
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_acme-challenge"}) {
-		domain := strings.TrimPrefix(record.Header().Name, "_acme-challenge.")
-		if record.Header().Rrtype == dns.TypeTXT {
-			a.UseRR(record, domain, &ACMEChallenge{
-				Challenge: strings.Join(record.(*dns.TXT).Txt, ""),
-			})
+func pointer_analyze(a *Analyzer) error {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypePTR}) {
+		if ptr, ok := record.(*dns.PTR); ok {
+			newrr := &PTR{
+				Target: strings.TrimSuffix(ptr.Ptr, "."+a.origin),
+			}
+
+			a.UseRR(record, record.Header().Name, newrr)
 		}
 	}
 	return nil
 }
 
 func init() {
-	svcs.RegisterService(
+	RegisterService(
 		func() happydns.ServiceBody {
-			return &ACMEChallenge{}
+			return &PTR{}
 		},
-		acmechallenge_analyze,
+		pointer_analyze,
 		happydns.ServiceInfos{
-			Name:        "ACME Challenge",
-			Description: "Temporary record to prove that you control the sub-domain.",
-			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
+			Name:        "Pointer",
+			Description: "A pointer to another domain.",
 			Categories: []string{
-				"temporary",
-				"verification",
+				"domain name",
+			},
+			RecordTypes: []uint16{
+				dns.TypePTR,
 			},
 			Restrictions: happydns.ServiceRestrictions{
-				NearAlone: true,
+				Alone:  true,
+				Single: true,
+				NeedTypes: []uint16{
+					dns.TypePTR,
+				},
 			},
 		},
-		2,
+		99999998,
 	)
 }

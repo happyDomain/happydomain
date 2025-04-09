@@ -28,24 +28,24 @@ import (
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/utils"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type MatrixIM struct {
-	Records []*dns.SRV `json:"records"`
+	Matrix []*svcs.SRV `json:"matrix"`
 }
 
 func (s *MatrixIM) GetNbResources() int {
-	return len(s.Records)
+	return len(s.Matrix)
 }
 
 func (s *MatrixIM) GenComment(origin string) string {
 	dest := map[string][]uint16{}
 
 destloop:
-	for _, srv := range s.Records {
+	for _, srv := range s.Matrix {
 		for _, port := range dest[srv.Target] {
 			if port == srv.Port {
 				continue destloop
@@ -80,54 +80,54 @@ destloop:
 	return buffer.String()
 }
 
-func (s *MatrixIM) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
-	rrs := make([]dns.RR, len(s.Records))
-	for i, r := range s.Records {
-		srv := *r
-		srv.Target = utils.DomainFQDN(srv.Target, origin)
-		rrs[i] = &srv
+func (s *MatrixIM) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, err error) {
+	for _, matrix := range s.Matrix {
+		matrix_rrs, err := matrix.GetRecords(utils.DomainJoin("_matrix._tcp", domain), ttl, origin)
+		if err != nil {
+			return nil, err
+		}
+		rrs = append(rrs, matrix_rrs...)
 	}
-	return rrs, nil
+	return
 }
 
 func matrix_analyze(a *svcs.Analyzer) error {
 	matrixDomains := map[string]*MatrixIM{}
 
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Prefix: "_matrix._tcp.", Type: dns.TypeSRV}) {
-		domain := strings.TrimPrefix(record.NameFQDN, "_matrix._tcp.")
+		domain := strings.TrimPrefix(record.Header().Name, "_matrix._tcp.")
 
 		if _, ok := matrixDomains[domain]; !ok {
 			matrixDomains[domain] = &MatrixIM{}
 		}
 
-		// Make record relative
-		record.SetTarget(utils.DomainRelative(record.GetTargetField(), a.GetOrigin()))
+		if srv, ok := record.(*dns.SRV); ok {
+			matrixDomains[domain].Matrix = append(matrixDomains[domain].Matrix, svcs.ParseSRV(srv))
 
-		matrixDomains[domain].Records = append(matrixDomains[domain].Records, utils.RRRelative(record.ToRR(), domain).(*dns.SRV))
-
-		a.UseRR(
-			record,
-			domain,
-			matrixDomains[domain],
-		)
+			a.UseRR(
+				srv,
+				domain,
+				matrixDomains[domain],
+			)
+		}
 	}
 	return nil
 }
 
 func init() {
 	svcs.RegisterService(
-		func() happydns.Service {
+		func() happydns.ServiceBody {
 			return &MatrixIM{}
 		},
 		matrix_analyze,
-		svcs.ServiceInfos{
+		happydns.ServiceInfos{
 			Name:        "Matrix IM",
 			Description: "Communicate on Matrix using your domain.",
-			Family:      svcs.Abstract,
+			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"service",
 			},
-			Restrictions: svcs.ServiceRestrictions{
+			Restrictions: happydns.ServiceRestrictions{
 				NearAlone: true,
 				Single:    true,
 				NeedTypes: []uint16{

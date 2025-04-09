@@ -21,52 +21,11 @@
 
 package svcs
 
-import (
-	"fmt"
+import ()
 
-	"github.com/miekg/dns"
-
-	"git.happydns.org/happyDomain/internal/utils"
-	"git.happydns.org/happyDomain/model"
-)
-
-type Orphan struct {
-	Type string
-	RR   string
-}
-
-func (s *Orphan) GetNbResources() int {
-	return 1
-}
-
-func (s *Orphan) GenComment(origin string) string {
-	return fmt.Sprintf("%s %s", s.Type, s.RR)
-}
-
-func (s *Orphan) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
-	if _, ok := dns.StringToType[s.Type]; ok {
-		rr, err := dns.NewRR(fmt.Sprintf("%s %d IN %s %s", utils.DomainJoin(domain), ttl, s.Type, s.RR))
-		if err != nil {
-			return nil, err
-		}
-
-		return []happydns.Record{rr}, nil
-	}
-
-	return nil, fmt.Errorf("unknown record type")
-}
-
-func init() {
-	RegisterService(
-		func() happydns.ServiceBody {
-			return &Orphan{}
-		},
-		nil,
-		happydns.ServiceInfos{
-			Name:        "Orphan Record",
-			Description: "A record not yet handled by happyDomain. Ask us to support it.",
-			Categories:  []string{},
-		},
-		99999999,
-	)
+type DS struct {
+	KeyTag     uint16 `json:"keytag" happydomain:"label=Key Tag"`
+	Algorithm  uint8  `json:"algorithm" happydomain:"label=Algorithm"`
+	DigestType uint8  `json:"digestType" happydomain:"label=Digest Type"`
+	Digest     string `json:"digest" happydomain:"label=Digest"`
 }

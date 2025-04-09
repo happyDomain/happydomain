@@ -28,35 +28,32 @@ import (
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/utils"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type MTA_STS struct {
-	Record *dns.TXT `json:"txt"`
-}
-
-func (s *MTA_STS) GetNbResources() int {
-	return 1
-}
-
-func (s *MTA_STS) GenComment(origin string) string {
-	t := MTASTSFields{}
-	t.Analyze(strings.Join(s.Record.Txt, ""))
-
-	return t.Id
-}
-
-func (s *MTA_STS) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
-	return []dns.RR{s.Record}, nil
-}
-
-type MTASTSFields struct {
 	Version uint   `json:"version" happydomain:"label=Version,placeholder=1,required,description=The version of MTA-STS to use.,default=1,hidden"`
 	Id      string `json:"id" happydomain:"label=Policy Identifier,placeholder=,description=A short string used to track policy updates."`
 }
 
-func (t *MTASTSFields) Analyze(txt string) error {
+func (t *MTA_STS) GetNbResources() int {
+	return 1
+}
+
+func (t *MTA_STS) GenComment(origin string) string {
+	return t.Id
+}
+
+func (t *MTA_STS) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
+	rr := utils.NewRecord(utils.DomainJoin("_mta-sts", domain), "TXT", ttl, origin)
+	rr.(*dns.TXT).Txt = []string{t.String()}
+
+	rrs = append(rrs, rr)
+	return
+}
+
+func (t *MTA_STS) Analyze(txt string) error {
 	fields := strings.Split(txt, ";")
 
 	if len(fields) < 2 {
@@ -89,22 +86,25 @@ func (t *MTASTSFields) Analyze(txt string) error {
 	return nil
 }
 
-func (t *MTASTSFields) String() string {
+func (t *MTA_STS) String() string {
 	return fmt.Sprintf("v=STSv%d; id=%s", t.Version, t.Id)
 }
 
 func mtasts_analyze(a *Analyzer) (err error) {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_mta-sts."}) {
 		// rfc8461: 3.1 records that do not begin with "v=STSv1;" are discarded
-		if !strings.HasPrefix(record.GetTargetTXTJoined(), "v=STS") {
+		if !strings.HasPrefix(strings.Join(record.(*dns.TXT).Txt, ""), "v=STS") {
 			continue
 		}
 
-		domain := strings.TrimPrefix(record.NameFQDN, "_mta-sts.")
+		service := &MTA_STS{}
 
-		err = a.UseRR(record, domain, &MTA_STS{
-			Record: utils.RRRelative(record.ToRR(), domain).(*dns.TXT),
-		})
+		err = service.Analyze(strings.Join(record.(*dns.TXT).Txt, ""))
+		if err != nil {
+			return
+		}
+
+		err = a.UseRR(record, strings.TrimPrefix(record.Header().Name, "_mta-sts."), service)
 		if err != nil {
 			return
 		}
@@ -115,11 +115,11 @@ func mtasts_analyze(a *Analyzer) (err error) {
 
 func init() {
 	RegisterService(
-		func() happydns.Service {
+		func() happydns.ServiceBody {
 			return &MTA_STS{}
 		},
 		mtasts_analyze,
-		ServiceInfos{
+		happydns.ServiceInfos{
 			Name:        "MTA-STS",
 			Description: "SMTP MTA Strict Transport Security.",
 			Categories: []string{
@@ -128,7 +128,7 @@ func init() {
 			RecordTypes: []uint16{
 				dns.TypeTXT,
 			},
-			Restrictions: ServiceRestrictions{
+			Restrictions: happydns.ServiceRestrictions{
 				NearAlone: true,
 				NeedTypes: []uint16{
 					dns.TypeTXT,

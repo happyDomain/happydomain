@@ -23,19 +23,22 @@ package abstract
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"strings"
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/utils"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type OpenPGP struct {
-	Username string          `json:"username,omitempty"`
-	Record   *dns.OPENPGPKEY `json:"openpgpkey"`
+	Username   string              `json:"username,omitempty"`
+	Identifier string              `json:"identifier,omitempty"`
+	PublicKey  happydns.HexaString `json:"pubkey"`
 }
 
 func (s *OpenPGP) GetNbResources() int {
@@ -46,20 +49,28 @@ func (s *OpenPGP) GenComment(origin string) string {
 	return fmt.Sprintf("%s", s.Username)
 }
 
-func (s *OpenPGP) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
-	if s.Username != "" {
-		identifier := fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
-		if !strings.HasPrefix(domain, identifier) {
-			return nil, fmt.Errorf("Invalid prefix")
+func (s *OpenPGP) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, err error) {
+	if len(s.PublicKey) > 0 {
+		if s.Username != "" {
+			s.Identifier = fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
 		}
+
+		rr := utils.NewRecord(utils.DomainJoin(fmt.Sprintf("%s._openpgpkey", s.Identifier), domain), "OPENPGPKEY", ttl, origin)
+		rr.(*dns.OPENPGPKEY).PublicKey = base64.StdEncoding.EncodeToString(s.PublicKey)
+
+		rrs = append(rrs, rr)
 	}
 
-	return []dns.RR{s.Record}, nil
+	return
 }
 
 type SMimeCert struct {
-	Username string      `json:"username,omitempty"`
-	Record   *dns.SMIMEA `json:"smimea"`
+	Username     string              `json:"username,omitempty"`
+	Identifier   string              `json:"identifier,omitempty"`
+	CertUsage    uint8               `json:"certusage"`
+	Selector     uint8               `json:"selector"`
+	MatchingType uint8               `json:"matchingtype"`
+	Certificate  happydns.HexaString `json:"certificate"`
 }
 
 func (s *SMimeCert) GetNbResources() int {
@@ -70,28 +81,44 @@ func (s *SMimeCert) GenComment(origin string) string {
 	return fmt.Sprintf("%s", s.Username)
 }
 
-func (s *SMimeCert) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
-	if s.Username != "" {
-		identifier := fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
-		if !strings.HasPrefix(domain, identifier) {
-			return nil, fmt.Errorf("Invalid prefix")
+func (s *SMimeCert) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, err error) {
+	if len(s.Certificate) > 0 {
+		if s.Username != "" {
+			s.Identifier = fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
 		}
+
+		rr := utils.NewRecord(utils.DomainJoin(fmt.Sprintf("%s._smimecert", s.Identifier), domain), "SMIMEA", ttl, origin)
+		rr.(*dns.SMIMEA).Usage = s.CertUsage
+		rr.(*dns.SMIMEA).Selector = s.Selector
+		rr.(*dns.SMIMEA).MatchingType = s.MatchingType
+		rr.(*dns.SMIMEA).Certificate = hex.EncodeToString(s.Certificate)
+
+		rrs = append(rrs, rr)
 	}
 
-	return []dns.RR{s.Record}, nil
+	return
 }
 
 func openpgpkey_analyze(a *svcs.Analyzer) (err error) {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeOPENPGPKEY, Contains: "._openpgpkey."}) {
-		if record.Type == "OPENPGPKEY" {
-			domain := record.NameFQDN
+		if openpgpkey, ok := record.(*dns.OPENPGPKEY); ok {
+			domain := record.Header().Name
 			domain = domain[strings.Index(domain, "._openpgpkey")+13:]
+
+			identifier := strings.TrimSuffix(record.Header().Name, "._openpgpkey."+domain)
+
+			var pubkey []byte
+			pubkey, err = base64.StdEncoding.DecodeString(strings.Join(strings.Fields(strings.TrimSuffix(strings.TrimPrefix(openpgpkey.PublicKey, "("), ")")), ""))
+			if err != nil {
+				return
+			}
 
 			err = a.UseRR(
 				record,
 				domain,
 				&OpenPGP{
-					Record: utils.RRRelative(record.ToRR(), domain).(*dns.OPENPGPKEY),
+					Identifier: identifier,
+					PublicKey:  pubkey,
 				},
 			)
 			if err != nil {
@@ -104,15 +131,27 @@ func openpgpkey_analyze(a *svcs.Analyzer) (err error) {
 
 func smimea_analyze(a *svcs.Analyzer) (err error) {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeSMIMEA, Contains: "._smimecert."}) {
-		if record.Type == "SMIMEA" {
-			domain := record.NameFQDN
+		if smimecert, ok := record.(*dns.SMIMEA); ok {
+			domain := record.Header().Name
 			domain = domain[strings.Index(domain, "._smimecert")+12:]
+
+			identifier := strings.TrimSuffix(record.Header().Name, "._smimecert."+domain)
+
+			var cert []byte
+			cert, err = hex.DecodeString(smimecert.Certificate)
+			if err != nil {
+				return
+			}
 
 			err = a.UseRR(
 				record,
 				domain,
 				&SMimeCert{
-					Record: utils.RRRelative(record.ToRR(), domain).(*dns.SMIMEA),
+					Identifier:   identifier,
+					CertUsage:    smimecert.Usage,
+					Selector:     smimecert.Selector,
+					MatchingType: smimecert.MatchingType,
+					Certificate:  cert,
 				},
 			)
 			if err != nil {
@@ -126,21 +165,21 @@ func smimea_analyze(a *svcs.Analyzer) (err error) {
 
 func init() {
 	svcs.RegisterService(
-		func() happydns.Service {
+		func() happydns.ServiceBody {
 			return &OpenPGP{}
 		},
 		openpgpkey_analyze,
-		svcs.ServiceInfos{
+		happydns.ServiceInfos{
 			Name:        "PGP Key",
 			Description: "Let users retrieve PGP key automatically.",
-			Family:      svcs.Abstract,
+			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"email",
 			},
 			RecordTypes: []uint16{
 				dns.TypeOPENPGPKEY,
 			},
-			Restrictions: svcs.ServiceRestrictions{
+			Restrictions: happydns.ServiceRestrictions{
 				NearAlone: true,
 				NeedTypes: []uint16{
 					dns.TypeOPENPGPKEY,
@@ -150,21 +189,21 @@ func init() {
 		1,
 	)
 	svcs.RegisterService(
-		func() happydns.Service {
+		func() happydns.ServiceBody {
 			return &SMimeCert{}
 		},
 		smimea_analyze,
-		svcs.ServiceInfos{
+		happydns.ServiceInfos{
 			Name:        "SMimeCert",
 			Description: "Publish S/MIME certificate.",
-			Family:      svcs.Abstract,
+			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"email",
 			},
 			RecordTypes: []uint16{
 				dns.TypeSMIMEA,
 			},
-			Restrictions: svcs.ServiceRestrictions{
+			Restrictions: happydns.ServiceRestrictions{
 				NearAlone: true,
 				NeedTypes: []uint16{
 					dns.TypeSMIMEA,

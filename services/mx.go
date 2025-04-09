@@ -28,28 +28,33 @@ import (
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/utils"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/utils"
 )
 
+type MX struct {
+	Target     string `json:"target"`
+	Preference uint16 `json:"preference,omitempty"`
+}
+
 type MXs struct {
-	Records []*dns.MX `json:"mx"`
+	MX []MX `json:"mx" happydomain:"label=EMail Servers,required"`
 }
 
 func (s *MXs) GetNbResources() int {
-	return len(s.Records)
+	return len(s.MX)
 }
 
 func (s *MXs) GenComment(origin string) string {
 	poolMX := map[string]int{}
 
-	for _, mx := range s.Records {
-		labels := dns.SplitDomainName(mx.Mx)
+	for _, mx := range s.MX {
+		labels := dns.SplitDomainName(mx.Target)
 		nbLabel := len(labels)
 
 		var dn string
 		if nbLabel <= 2 {
-			dn = mx.Mx
+			dn = mx.Target
 		} else if len(labels[nbLabel-2]) < 4 {
 			dn = strings.Join(labels[nbLabel-3:], ".") + "."
 		} else {
@@ -77,14 +82,16 @@ func (s *MXs) GenComment(origin string) string {
 	return buffer.String()
 }
 
-func (s *MXs) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
-	rrs := make([]dns.RR, len(s.Records))
-	for i, r := range s.Records {
-		mx := *r
-		mx.Mx = utils.DomainFQDN(mx.Mx, origin)
-		rrs[i] = &mx
+func (s *MXs) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
+	for _, mx := range s.MX {
+		rr := utils.NewRecord(domain, "MX", ttl, origin)
+		rr.(*dns.MX).Preference = mx.Preference
+		rr.(*dns.MX).Mx = utils.DomainFQDN(mx.Target, origin)
+
+		rrs = append(rrs, rr)
 	}
-	return rrs, nil
+
+	return
 }
 
 func mx_analyze(a *Analyzer) (err error) {
@@ -92,18 +99,18 @@ func mx_analyze(a *Analyzer) (err error) {
 
 	// Handle only MX records
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeMX}) {
-		dn := record.NameFQDN
+		dn := record.Header().Name
 
 		if _, ok := services[dn]; !ok {
 			services[dn] = &MXs{}
 		}
 
-		// Make record relative
-		record.SetTarget(utils.DomainRelative(record.GetTargetField(), a.GetOrigin()))
-
-		services[dn].Records = append(
-			services[dn].Records,
-			utils.RRRelative(record.ToRR(), dn).(*dns.MX),
+		services[dn].MX = append(
+			services[dn].MX,
+			MX{
+				Target:     record.(*dns.MX).Mx,
+				Preference: record.(*dns.MX).Preference,
+			},
 		)
 
 		err = a.UseRR(
@@ -121,11 +128,11 @@ func mx_analyze(a *Analyzer) (err error) {
 
 func init() {
 	RegisterService(
-		func() happydns.Service {
+		func() happydns.ServiceBody {
 			return &MXs{}
 		},
 		mx_analyze,
-		ServiceInfos{
+		happydns.ServiceInfos{
 			Name:        "E-Mail servers",
 			Description: "Receives e-mail with this domain.",
 			Categories: []string{
@@ -134,7 +141,7 @@ func init() {
 			RecordTypes: []uint16{
 				dns.TypeMX,
 			},
-			Restrictions: ServiceRestrictions{
+			Restrictions: happydns.ServiceRestrictions{
 				Single: true,
 				NeedTypes: []uint16{
 					dns.TypeMX,
