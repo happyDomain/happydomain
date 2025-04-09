@@ -53,7 +53,7 @@
             class="font-monospace text-truncate"
             title={record.str}
         >
-            {record.fields.name?record.fields.name:'@'} {record.type} {record.str}
+            {record.rr.Hdr.Name?'':'@'} {record.str}
         </span>
     </div>
     {#if expand}

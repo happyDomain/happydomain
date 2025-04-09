@@ -22,31 +22,35 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/desec"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type DeSECAPI struct {
 	Token string `json:"token,omitempty" happydomain:"label=Token,placeholder=your-api-key,required,description=Provide your deSEC access token."`
 }
 
-func (s *DeSECAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"auth-token": s.Token,
-	}
-
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *DeSECAPI) DNSControlName() string {
 	return "DESEC"
 }
 
+func (s *DeSECAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *DeSECAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"auth-token": s.Token,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &DeSECAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "deSEC",
 		Description: "Free Secure DNS, modern DNS hosting for everyone.",
-	})
+	}, RegisterProvider)
 }

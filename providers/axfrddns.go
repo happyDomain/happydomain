@@ -25,8 +25,10 @@ import (
 	"encoding/base64"
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/axfrddns"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type DDNSServer struct {
@@ -36,7 +38,15 @@ type DDNSServer struct {
 	KeyBlob []byte `json:"keyblob,omitempty" happydomain:"label=Secret Key,placeholder=a0b1c2d3e4f5==,required,secret"`
 }
 
-func (s *DDNSServer) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
+func (s *DDNSServer) DNSControlName() string {
+	return "AXFRDDNS"
+}
+
+func (s *DDNSServer) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *DDNSServer) ToDNSControlConfig() (map[string]string, error) {
 	config := map[string]string{
 		"master": s.Server,
 	}
@@ -50,18 +60,14 @@ func (s *DDNSServer) NewDNSServiceProvider() (providers.DNSServiceProvider, erro
 		config["update-key"] = config["transfer-key"]
 	}
 
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
-func (s *DDNSServer) DNSControlName() string {
-	return "AXFRDDNS"
+	return config, nil
 }
 
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &DDNSServer{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Dynamic DNS",
 		Description: "If your zone is hosted on an authoritative name server that support Dynamic DNS (RFC 2136), such as Bind, Knot, ...",
-	})
+	}, RegisterProvider)
 }

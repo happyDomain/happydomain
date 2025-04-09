@@ -24,8 +24,10 @@ package providers // import "git.happydns.org/happyDomain/providers"
 import (
 	"flag"
 
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/bind"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type BindServer struct {
@@ -33,7 +35,15 @@ type BindServer struct {
 	Fileformat string `json:"fileformat,omitempty" happydomain:"label=File format,placeholder=%U.zone,description=See format at https://docs.dnscontrol.org/service-providers/providers/bind#filenameformat"`
 }
 
-func (s *BindServer) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
+func (s *BindServer) DNSControlName() string {
+	return "BIND"
+}
+
+func (s *BindServer) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *BindServer) ToDNSControlConfig() (map[string]string, error) {
 	config := map[string]string{
 		"directory": s.Directory,
 	}
@@ -42,21 +52,17 @@ func (s *BindServer) NewDNSServiceProvider() (providers.DNSServiceProvider, erro
 		config["filenameformat"] = s.Fileformat
 	}
 
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
-func (s *BindServer) DNSControlName() string {
-	return "BIND"
+	return config, nil
 }
 
 func init() {
 	flag.BoolFunc("with-bind-provider", "Enable the BIND provider (not suitable for cloud/shared instance as it'll access the local file system)", func(s string) error {
-		RegisterProvider(func() Provider {
+		adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 			return &BindServer{}
-		}, ProviderInfos{
+		}, happydns.ProviderInfos{
 			Name:        "Bind files/RFC 1035",
 			Description: "Use zone files saved in the RFC 1035 format.",
-		})
+		}, RegisterProvider)
 		return nil
 	})
 }

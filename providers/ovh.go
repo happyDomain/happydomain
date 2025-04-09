@@ -24,8 +24,10 @@ package providers // import "git.happydns.org/happyDomain/providers"
 import (
 	"flag"
 
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/ovh"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 var (
@@ -38,27 +40,32 @@ type OVHAPI struct {
 	ConsumerKey string `json:"consumerkey,omitempty" happydomain:"required"`
 }
 
-func (s *OVHAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"app-key":        appKey,
-		"app-secret-key": appSecret,
-		"consumer-key":   s.ConsumerKey,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
+func (s *OVHAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
 }
 
 func (s *OVHAPI) DNSControlName() string {
 	return "OVH"
 }
 
+func (s *OVHAPI) ToDNSControlConfig() (map[string]string, error) {
+	config := map[string]string{
+		"app-key":        appKey,
+		"app-secret-key": appSecret,
+		"consumer-key":   s.ConsumerKey,
+	}
+
+	return config, nil
+}
+
 func init() {
 	flag.StringVar(&appKey, "ovh-application-key", "", "Application Key for using the OVH API")
 	flag.StringVar(&appSecret, "ovh-application-secret", "", "Application Secret for using the OVH API")
 
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &OVHAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "OVH",
 		Description: "European hosting provider.",
-	})
+	}, RegisterProvider)
 }

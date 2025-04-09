@@ -23,21 +23,46 @@ package happydns
 
 import (
 	"encoding/json"
-	"fmt"
-	"strings"
-
-	"github.com/StackExchange/dnscontrol/v4/models"
-	dnscontrol "github.com/StackExchange/dnscontrol/v4/providers"
-
-	"git.happydns.org/happyDomain/providers"
 )
+
+// ProviderBody is where Domains and Zones can be managed.
+type ProviderBody interface {
+	InstantiateProvider() (ProviderActuator, error)
+}
+
+// ProviderInfos describes the purpose of a user usable provider.
+type ProviderInfos struct {
+	// Name is the name displayed.
+	Name string `json:"name"`
+
+	// Description is a brief description of what the provider is.
+	Description string `json:"description"`
+
+	// Capabilites is a list of special ability of the provider (automatically filled).
+	Capabilities []string `json:"capabilities,omitempty"`
+
+	// HelpLink is the link to the documentation of the provider configuration.
+	HelpLink string `json:"helplink,omitempty"`
+}
+
+// RegisterProviderFunc abstract the registration of a Provider
+type RegisterProviderFunc func(ProviderCreatorFunc, ProviderInfos)
+
+// ProviderCreatorFunc abstract the instanciation of a Provider
+type ProviderCreatorFunc func() ProviderBody
+
+// Provider aggregates way of create a Provider and information about it.
+type ProviderCreator struct {
+	Creator ProviderCreatorFunc
+	Infos   ProviderInfos
+}
 
 // ProviderMinimal is used for swagger documentation as Provider add.
 type ProviderMinimal struct {
 	// Type is the string representation of the Provider's type.
 	Type string `json:"_srctype"`
 
-	Provider providers.Provider
+	Provider Provider
 
 	// Comment is a string that helps user to distinguish the Provider.
 	Comment string `json:"_comment,omitempty"`
@@ -68,19 +93,6 @@ func (msg *ProviderMessage) Meta() *ProviderMeta {
 	return &msg.ProviderMeta
 }
 
-func (msg *ProviderMessage) ParseProvider() (p *ProviderCombined, err error) {
-	p = &ProviderCombined{}
-
-	p.ProviderMeta = msg.ProviderMeta
-	p.Provider, err = providers.FindProvider(msg.Type)
-	if err != nil {
-		return
-	}
-
-	err = json.Unmarshal(msg.Provider, &p.Provider)
-	return
-}
-
 type ProviderMessages []*ProviderMessage
 
 func (pms *ProviderMessages) Metas() (ret []*ProviderMeta) {
@@ -91,75 +103,44 @@ func (pms *ProviderMessages) Metas() (ret []*ProviderMeta) {
 }
 
 // ProviderCombined combined ProviderMeta + Provider
-type ProviderCombined struct {
+type Provider struct {
 	ProviderMeta
-	providers.Provider
+	Provider ProviderBody
 }
 
-func (p *ProviderCombined) ToMessage() (msg ProviderMessage, err error) {
+func (p *Provider) InstantiateProvider() (ProviderActuator, error) {
+	return p.Provider.InstantiateProvider()
+}
+
+func (p *Provider) ToMessage() (msg ProviderMessage, err error) {
 	msg.ProviderMeta = p.ProviderMeta
 	msg.Provider, err = json.Marshal(p.Provider)
 	return
 }
 
-// Validate ensure the given parameters are corrects.
-func (p *ProviderCombined) Validate() error {
-	prv, err := p.NewDNSServiceProvider()
-	if err != nil {
-		return err
-	}
-
-	sr, ok := prv.(dnscontrol.ZoneLister)
-	if ok {
-		_, err = sr.ListZones()
-	}
-
-	return err
+func (p *Provider) Meta() *ProviderMeta {
+	return &p.ProviderMeta
 }
 
-func (p *ProviderCombined) getZoneRecords(fqdn string) (rcs models.Records, err error) {
-	var s dnscontrol.DNSServiceProvider
-	s, err = p.NewDNSServiceProvider()
-	if err != nil {
-		return
-	}
-
-	defer func() {
-		if a := recover(); a != nil {
-			err = fmt.Errorf("%s", a)
-		}
-	}()
-
-	return s.GetZoneRecords(strings.TrimSuffix(fqdn, "."), nil)
+type ProviderUsecase interface {
+	CreateProvider(*User, *ProviderMessage) (*Provider, error)
+	DeleteProvider(*User, Identifier) error
+	GetUserProvider(*User, Identifier) (*Provider, error)
+	GetUserProviderMeta(*User, Identifier) (*ProviderMeta, error)
+	GetZoneCorrections(provider *Provider, domain *Domain, records []Record) ([]*Correction, error)
+	ListUserProviders(*User) ([]*ProviderMeta, error)
+	RetrieveZone(*Provider, string) ([]Record, error)
+	TestDomainExistence(*Provider, string) error
+	UpdateProvider(Identifier, *User, func(*Provider)) error
+	UpdateProviderFromMessage(Identifier, *User, *ProviderMessage) error
+	ValidateProvider(*Provider) error
 }
 
-func (p *ProviderCombined) DomainExists(fqdn string) (err error) {
-	_, err = p.getZoneRecords(fqdn)
-	if err != nil {
-		return
-	}
-
-	return nil
+type ProviderActuator interface {
+	GetZoneRecords(domain string) ([]Record, error)
+	GetZoneCorrections(domain string, wantedRecords []Record) ([]*Correction, error)
 }
 
-func (p *ProviderCombined) ImportZone(dn *Domain) (rcs models.Records, err error) {
-	return p.getZoneRecords(dn.DomainName)
-}
-
-func (p *ProviderCombined) GetDomainCorrections(dn *Domain, dc *models.DomainConfig) (rrs []*models.Correction, err error) {
-	var s dnscontrol.DNSServiceProvider
-	s, err = p.NewDNSServiceProvider()
-	if err != nil {
-		return
-	}
-
-	defer func() {
-		if a := recover(); a != nil {
-			err = fmt.Errorf("%s", a)
-		}
-	}()
-
-	rcs, err := p.getZoneRecords(dn.DomainName)
-
-	return s.GetZoneRecordsCorrections(dc, rcs)
+type ZoneListerActuator interface {
+	ListZones() ([]string, error)
 }

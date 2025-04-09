@@ -59,13 +59,13 @@
  import NewSubdomainModal from '$lib/components/domains/NewSubdomainModal.svelte';
  import SubdomainListTiny from '$lib/components/domains/SubdomainListTiny.svelte';
  import { fqdn, isReverseZone } from '$lib/dns';
- import type { Domain, DomainInList } from '$lib/model/domain';
+ import type { Domain } from '$lib/model/domain';
  import type { ZoneMeta } from '$lib/model/zone';
  import { domains, domains_by_groups, domains_idx, refreshDomains } from '$lib/stores/domains';
  import { retrieveZone as StoreRetrieveZone, sortedDomains, sortedDomainsWithIntermediate, thisZone } from '$lib/stores/thiszone';
  import { t } from '$lib/translations';
 
- export let data: {domain: DomainInList;};
+ export let data: {domain: Domain;};
 
  let selectedDomain = data.domain.domain;
  $: if (selectedDomain != data.domain.domain) {

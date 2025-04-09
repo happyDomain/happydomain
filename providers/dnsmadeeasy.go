@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/dnsmadeeasy"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type DNSMadeEasyAPI struct {
@@ -31,23 +33,26 @@ type DNSMadeEasyAPI struct {
 	SecretKey string `json:"secret_key,omitempty" happydomain:"label=Secret Key,placeholder=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx,required,description=Secret key that comes with your API Key."`
 }
 
-func (s *DNSMadeEasyAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"api_key":    s.ApiKey,
-		"secret_key": s.SecretKey,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *DNSMadeEasyAPI) DNSControlName() string {
 	return "DNSMADEEASY"
 }
 
+func (s *DNSMadeEasyAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *DNSMadeEasyAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"api_key":    s.ApiKey,
+		"secret_key": s.SecretKey,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &DNSMadeEasyAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "DNSMadeEasy",
 		Description: "Fast and reliable DNS service provider.",
-	})
+	}, RegisterProvider)
 }

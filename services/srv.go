@@ -51,7 +51,7 @@ func (s *SRV) GetRecords(domain string, ttl uint32, origin string) ([]happydns.R
 	rr.(*dns.SRV).Priority = s.Priority
 	rr.(*dns.SRV).Weight = s.Weight
 	rr.(*dns.SRV).Port = s.Port
-	rr.(*dns.SRV).Target = s.Target
+	rr.(*dns.SRV).Target = utils.DomainFQDN(s.Target, origin)
 	return []happydns.Record{rr}, nil
 }
 
@@ -73,28 +73,27 @@ var (
 )
 
 type UnknownSRV struct {
-	Records []*dns.SRV `json:"srv"`
+	Name  string `json:"name"`
+	Proto string `json:"proto"`
+	SRV   []*SRV `json:"srv"`
 }
 
 func (s *UnknownSRV) GetNbResources() int {
-	return len(s.Records)
+	return len(s.SRV)
 }
 
 func (s *UnknownSRV) GenComment() string {
-	if len(s.Records) == 0 {
-		return ""
-	}
-
-	subdomains := SRV_DOMAIN.FindStringSubmatch(s.Records[0].Hdr.Name)
-	return fmt.Sprintf("%s (%s)", subdomains[1], subdomains[2])
+	return fmt.Sprintf("%s (%s)", s.Name, s.Proto)
 }
 
 func (s *UnknownSRV) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
-	rrs := make([]happydns.Record, len(s.Records))
-	for i, r := range s.Records {
-		srv := *r
-		srv.Target = utils.DomainFQDN(srv.Target, origin)
-		rrs[i] = &srv
+	var rrs []happydns.Record
+	for _, service := range s.SRV {
+		srv, err := service.GetRecords(utils.DomainJoin(fmt.Sprintf("_%s._%s", s.Name, s.Proto), domain), ttl, origin)
+		if err != nil {
+			return nil, err
+		}
+		rrs = append(rrs, srv...)
 	}
 	return rrs, nil
 }
@@ -112,7 +111,10 @@ func srv_analyze(a *Analyzer) error {
 		}
 
 		if _, ok := srvDomains[domain][svc]; !ok {
-			srvDomains[domain][svc] = &UnknownSRV{}
+			srvDomains[domain][svc] = &UnknownSRV{
+				Name:  subdomains[1],
+				Proto: subdomains[2],
+			}
 		}
 
 		srv, ok := record.(*dns.SRV)
@@ -123,7 +125,7 @@ func srv_analyze(a *Analyzer) error {
 		// Make record relative
 		srv.Target = utils.DomainRelative(srv.Target, a.GetOrigin())
 
-		srvDomains[domain][svc].Records = append(srvDomains[domain][svc].Records, utils.RRRelative(record, a.GetOrigin()).(*dns.SRV))
+		srvDomains[domain][svc].SRV = append(srvDomains[domain][svc].SRV, ParseSRV(utils.RRRelative(record, a.GetOrigin()).(*dns.SRV)))
 
 		a.UseRR(
 			record,

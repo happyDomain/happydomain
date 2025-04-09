@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/oracle"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type OracleAPI struct {
@@ -35,28 +37,30 @@ type OracleAPI struct {
 	UserOcid    string `json:"user_ocid,omitempty" happydomain:"label=User OCID,placeholder=ORACLE_USER_OCID,required,description=User OCID."`
 }
 
-func (s *OracleAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
+func (s *OracleAPI) DNSControlName() string {
+	return "ORACLE"
+}
+
+func (s *OracleAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *OracleAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
 		"compartment":  s.Compartment,
 		"fingerprint":  s.Fingerprint,
 		"private_key":  s.PrivateKey,
 		"region":       s.Region,
 		"tenancy_ocid": s.TenancyOcid,
 		"user_ocid":    s.UserOcid,
-	}
-
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
-func (s *OracleAPI) DNSControlName() string {
-	return "ORACLE"
+	}, nil
 }
 
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &OracleAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Oracle Cloud",
 		Description: "American multinational computer technology corporation headquartered in Austin, Texas",
-	})
+	}, RegisterProvider)
 }

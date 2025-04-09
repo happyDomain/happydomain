@@ -20,12 +20,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { handleEmptyApiResponse, handleApiResponse } from '$lib/errors';
-import type { Domain, DomainInList, DomainLog } from '$lib/model/domain';
+import type { Domain, DomainLog } from '$lib/model/domain';
 import type { Provider } from '$lib/model/provider';
 
-export async function listDomains(): Promise<Array<DomainInList>> {
+export async function listDomains(): Promise<Array<Domain>> {
     const res = await fetch('/api/domains', {headers: {'Accept': 'application/json'}});
-    return (await handleApiResponse<Array<DomainInList>>(res));
+    return (await handleApiResponse<Array<Domain>>(res));
 }
 
 export async function getDomain(id: string): Promise<Domain> {

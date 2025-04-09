@@ -22,30 +22,35 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/linode"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type LinodeAPI struct {
 	Token string `json:"token,omitempty" happydomain:"label=Token,placeholder=xxxxxxxx,required,description=Your Linode Personal Access Token."`
 }
 
-func (s *LinodeAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"token": s.Token,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *LinodeAPI) DNSControlName() string {
 	return "LINODE"
 }
 
+func (s *LinodeAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *LinodeAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"token": s.Token,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &LinodeAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Linode, LLC",
 		Description: "American cloud hosting company, based in Philadelphia.",
-	})
+	}, RegisterProvider)
 }

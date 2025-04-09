@@ -35,7 +35,7 @@
  import { deleteZoneService } from '$lib/api/zone';
  import Service from '$lib/components/domains/Service.svelte';
  import { fqdn, isReverseZone, unreverseDomain } from '$lib/dns';
- import type { Domain, DomainInList } from '$lib/model/domain';
+ import type { Domain } from '$lib/model/domain';
  import type { ServiceCombined } from '$lib/model/service';
  import { ZoneViewGrid } from '$lib/model/usersettings';
  import { servicesSpecs } from '$lib/stores/services';
@@ -46,7 +46,7 @@
 
  export let aliases: Array<string> = [];
  export let dn: string;
- export let origin: Domain | DomainInList;
+ export let origin: Domain;
  export let services: Array<ServiceCombined>;
  export let zoneId: string;
 

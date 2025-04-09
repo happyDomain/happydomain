@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/hostingde"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type HostingdeAPI struct {
@@ -31,7 +33,15 @@ type HostingdeAPI struct {
 	OwnerAccountId string `json:"ownerAccountId,omitempty" happydomain:"label=Owner Account,placeholder=xxxxxxxxx,description=Identifier of the account owner."`
 }
 
-func (s *HostingdeAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
+func (s *HostingdeAPI) DNSControlName() string {
+	return "HOSTINGDE"
+}
+
+func (s *HostingdeAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *HostingdeAPI) ToDNSControlConfig() (map[string]string, error) {
 	config := map[string]string{
 		"authToken": s.Token,
 	}
@@ -40,18 +50,14 @@ func (s *HostingdeAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, er
 		config["ownerAccountId"] = s.OwnerAccountId
 	}
 
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
-func (s *HostingdeAPI) DNSControlName() string {
-	return "HOSTINGDE"
+	return config, nil
 }
 
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &HostingdeAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Hosting.de",
 		Description: "German hosting provider.",
-	})
+	}, RegisterProvider)
 }

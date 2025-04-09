@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/gandiv5"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type GandiAPI struct {
@@ -31,23 +33,26 @@ type GandiAPI struct {
 	SharingID string `json:"sharing_id,omitempty" happydomain:"label=Sharing ID,placeholder=xxxxxxxxxx,description=If you are member of multiple organizations this identifier selects the one to manage."`
 }
 
-func (s *GandiAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"apikey":     s.APIKey,
-		"sharing_id": s.SharingID,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *GandiAPI) DNSControlName() string {
 	return "GANDI_V5"
 }
 
+func (s *GandiAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *GandiAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"apikey":     s.APIKey,
+		"sharing_id": s.SharingID,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &GandiAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Gandi",
 		Description: "French hosting provider.",
-	})
+	}, RegisterProvider)
 }

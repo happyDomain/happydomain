@@ -31,7 +31,7 @@
  } from '@sveltestrap/sveltestrap';
 
  import SubdomainList from '$lib/components/domains/SubdomainList.svelte';
- import type { DomainInList } from '$lib/model/domain';
+ import type { Domain } from '$lib/model/domain';
  import type { Zone } from '$lib/model/zone';
  import { domains_idx } from '$lib/stores/domains';
  import { servicesSpecs, refreshServicesSpecs } from '$lib/stores/services';
@@ -40,7 +40,7 @@
 
  if (!$servicesSpecs) refreshServicesSpecs();
 
- export let data: {domain: DomainInList; history: string; zoneId: string; streamed: Object};
+ export let data: {domain: Domain; history: string; zoneId: string; streamed: Object};
 </script>
 
 {#if !data.domain}

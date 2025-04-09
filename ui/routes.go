@@ -35,7 +35,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happyDomain/config"
+	"git.happydns.org/happyDomain/internal/config"
 )
 
 var (

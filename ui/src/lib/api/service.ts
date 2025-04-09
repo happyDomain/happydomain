@@ -22,7 +22,7 @@
 import { handleEmptyApiResponse, handleApiResponse } from '$lib/errors';
 import type { ServiceCombined } from '$lib/model/service';
 
-export async function getService(domain: Domain | DomainInList, zoneid: string, subdomain: string, svcid: string): Promise<ServiceCombined> {
+export async function getService(domain: Domain, zoneid: string, subdomain: string, svcid: string): Promise<ServiceCombined> {
     const res = await fetch(`/api/domains/${encodeURIComponent(domain.id)}/zone/${encodeURIComponent(zoneid)}/${encodeURIComponent(subdomain)}/services/${encodeURIComponent(svcid)}`, {
         headers: {'Accept': 'application/json'}
     });

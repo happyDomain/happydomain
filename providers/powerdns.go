@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/powerdns"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type PowerdnsAPI struct {
@@ -34,7 +36,15 @@ type PowerdnsAPI struct {
 	SkipTLSVerify bool   `json:"skip_tls_verify,omitempty" happydomain:"label=Skip TLS Verify,description=Don't check the validity of the presented certificate (THIS IS INSECURE)"`
 }
 
-func (s *PowerdnsAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
+func (s *PowerdnsAPI) DNSControlName() string {
+	return "POWERDNS"
+}
+
+func (s *PowerdnsAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *PowerdnsAPI) ToDNSControlConfig() (map[string]string, error) {
 	config := map[string]string{
 		"apiKey":     s.ApiKey,
 		"apiUrl":     s.ApiUrl,
@@ -53,18 +63,14 @@ func (s *PowerdnsAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, err
 		config["serverName"] = "localhost"
 	}
 
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
-func (s *PowerdnsAPI) DNSControlName() string {
-	return "POWERDNS"
+	return config, nil
 }
 
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &PowerdnsAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "PowerDNS",
 		Description: "If your zone is hosted on an authoritative name server that runs PowerDNS, with available HTTP API",
-	})
+	}, RegisterProvider)
 }

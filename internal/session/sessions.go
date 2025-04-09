@@ -33,18 +33,17 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/mileusna/useragent"
 
-	"git.happydns.org/happyDomain/config"
+	"git.happydns.org/happyDomain/internal/config"
+	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/storage"
 )
 
 const COOKIE_NAME = "happydomain_session"
 
-// SessionStore is an implementation of Gorilla Sessions, using happyDomain storages
+// SessionStore is an implementation of Gorilla Sessions, using happyDomain storage.
 type SessionStore struct {
 	Codecs  []securecookie.Codec
 	options *sessions.Options
-	Path    string
 	storage storage.Storage
 }
 
@@ -52,10 +51,11 @@ func NewSessionStore(opts *config.Options, storage storage.Storage, keyPairs ...
 	store := &SessionStore{
 		Codecs: securecookie.CodecsFromPairs(keyPairs...),
 		options: &sessions.Options{
-			Path:     opts.BaseURL + "/",
+			Path:     opts.GetBasePath() + "/",
 			MaxAge:   86400 * 30,
 			Secure:   opts.DevProxy == "" && opts.ExternalURL.URL.Scheme != "http",
 			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
 		},
 		storage: storage,
 	}
@@ -102,7 +102,8 @@ func (s *SessionStore) New(r *http.Request, name string) (*sessions.Session, err
 // Save saves the given session into the database and deletes cookies if needed.
 func (s *SessionStore) Save(r *http.Request, w http.ResponseWriter, session *sessions.Session) error {
 	var cookieValue string
-	if s.options.MaxAge < 0 {
+
+	if s.options.MaxAge < 0 || session.Options.MaxAge < 0 {
 		s.storage.DeleteSession(session.ID)
 	} else {
 		if session.ID == "" {
@@ -115,6 +116,9 @@ func (s *SessionStore) Save(r *http.Request, w http.ResponseWriter, session *ses
 		cookieValue = encrypted
 
 		err = s.save(session, r.UserAgent())
+		if err != nil {
+			return err
+		}
 	}
 	http.SetCookie(w, sessions.NewCookie(session.Name(), cookieValue, session.Options))
 	return nil
@@ -152,7 +156,7 @@ func (s *SessionStore) load(session *sessions.Session) error {
 	}
 
 	if len(mysession.IdUser) > 0 {
-		session.Values["iduser"] = []byte(mysession.IdUser)
+		session.Values["iduser"] = happydns.Identifier(mysession.IdUser)
 	}
 	if len(mysession.Description) > 0 {
 		session.Values["description"] = mysession.Description
@@ -194,8 +198,10 @@ func (s *SessionStore) save(session *sessions.Session, ua string) error {
 	}
 
 	var iduser happydns.Identifier
-	if iu, ok := session.Values["iduser"].([]byte); ok {
+	if iu, ok := session.Values["iduser"].(happydns.Identifier); ok {
 		iduser = iu
+	} else if iu, ok := session.Values["iduser"].([]byte); ok {
+		iduser = happydns.Identifier(iu)
 	}
 
 	var description string

@@ -22,30 +22,35 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/rwth"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type RwthAPI struct {
 	ApiKey string `json:"api_key,omitempty" happydomain:"label=API key,placeholder=xxxxxxxx,required,description=Your RWTH API Token."`
 }
 
-func (s *RwthAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"api_token": s.ApiKey,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *RwthAPI) DNSControlName() string {
 	return "RWTH"
 }
 
+func (s *RwthAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *RwthAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"api_token": s.ApiKey,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &RwthAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "RWTH Aachen University",
 		Description: "German University",
-	})
+	}, RegisterProvider)
 }

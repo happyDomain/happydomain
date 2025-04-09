@@ -64,3 +64,8 @@ func NewDomainLog(u *User, level int8, content string) *DomainLog {
 		Level:   level,
 	}
 }
+
+type DomainLogUsecase interface {
+	AppendDomainLog(*Domain, *DomainLog) error
+	GetDomainLogs(*Domain) ([]*DomainLog, error)
+}

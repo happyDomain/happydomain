@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/cscglobal"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type CscGlobalAPI struct {
@@ -32,24 +34,27 @@ type CscGlobalAPI struct {
 	NotificationEmails string `json:"NotificationEmails,omitempty" happydomain:"label=Notification emails,placeholder=xxxxxxxx,description=Optional comma-separated list of email addresses to send notifications to"`
 }
 
-func (s *CscGlobalAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"api-key":             s.ApiKey,
-		"user-token":          s.UserToken,
-		"notification_emails": s.NotificationEmails,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *CscGlobalAPI) DNSControlName() string {
 	return "CSCGLOBAL"
 }
 
+func (s *CscGlobalAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *CscGlobalAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"api-key":             s.ApiKey,
+		"user-token":          s.UserToken,
+		"notification_emails": s.NotificationEmails,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &CscGlobalAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "CSC Global",
 		Description: "Corporation Service Company (CSC) provides various business, legal, and financial services.",
-	})
+	}, RegisterProvider)
 }

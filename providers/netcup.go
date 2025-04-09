@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/netcup"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type NetcupAPI struct {
@@ -32,25 +34,27 @@ type NetcupAPI struct {
 	CustomerNumber string `json:"customer_number,omitempty" happydomain:"label=Customer number,placeholder=123456,required,description=Netcup customer number."`
 }
 
-func (s *NetcupAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"api-key":         s.ApiKey,
-		"api-password":    s.ApiPassword,
-		"customer-number": s.CustomerNumber,
-	}
-
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *NetcupAPI) DNSControlName() string {
 	return "NETCUP"
 }
 
+func (s *NetcupAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *NetcupAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"api-key":         s.ApiKey,
+		"api-password":    s.ApiPassword,
+		"customer-number": s.CustomerNumber,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &NetcupAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Netcup",
 		Description: "German registrar and hosting company",
-	})
+	}, RegisterProvider)
 }

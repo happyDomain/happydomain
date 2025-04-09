@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/softlayer"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type SoftLayerAPI struct {
@@ -31,23 +33,26 @@ type SoftLayerAPI struct {
 	APIKey   string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=yourApiKeyFromSoftLayer,required"`
 }
 
-func (s *SoftLayerAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"api_key":  s.APIKey,
-		"username": s.Username,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *SoftLayerAPI) DNSControlName() string {
 	return "SOFTLAYER"
 }
 
+func (s *SoftLayerAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *SoftLayerAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"api_key":  s.APIKey,
+		"username": s.Username,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &SoftLayerAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "SoftLayer",
 		Description: "Hosting provider, now IBM Cloud.",
-	})
+	}, RegisterProvider)
 }

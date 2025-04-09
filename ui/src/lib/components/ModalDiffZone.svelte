@@ -43,15 +43,14 @@
 
  import {
      applyZone as APIApplyZone,
-     diffZone as APIDiffZone,
  } from '$lib/api/zone';
- import type { Domain, DomainInList } from '$lib/model/domain';
+ import type { Domain } from '$lib/model/domain';
  import DiffZone from '$lib/components/DiffZone.svelte';
  import { t } from '$lib/translations';
 
  const dispatch = createEventDispatcher();
 
- export let domain: DomainInList | Domain;
+ export let domain: Domain;
  export let selectedHistory: string = '';
  export let isOpen = false;
 

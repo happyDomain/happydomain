@@ -22,30 +22,35 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/ns1"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type NS1API struct {
 	Token string `json:"api_token,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,description=Provide a NS1 account access token."`
 }
 
-func (s *NS1API) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"api_token": s.Token,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *NS1API) DNSControlName() string {
 	return "NS1"
 }
 
+func (s *NS1API) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *NS1API) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"api_token": s.Token,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &NS1API{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "NS1",
 		Description: "Global domain name provider.",
-	})
+	}, RegisterProvider)
 }

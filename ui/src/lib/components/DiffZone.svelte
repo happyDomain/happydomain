@@ -32,12 +32,13 @@
  import {
      diffZone as APIDiffZone,
  } from '$lib/api/zone';
- import type { Domain, DomainInList } from '$lib/model/domain';
+ import type { Correction } from '$lib/model/correction';
+ import type { Domain } from '$lib/model/domain';
  import { t } from '$lib/translations';
 
  const dispatch = createEventDispatcher();
 
- export let domain: DomainInList | Domain;
+ export let domain: Domain;
  export let zoneFrom: string;
  export let zoneTo: string;
  export let selectable = false;
@@ -46,7 +47,7 @@
  let zoneDiff: Array<{className: string; msg: string;}>;
  $: computeDiff(domain, zoneTo, zoneFrom);
 
- function computeDiff(domain: DomainInList | Domain, zoneTo: string, zoneFrom: string) {
+ function computeDiff(domain: Domain, zoneTo: string, zoneFrom: string) {
      APIDiffZone(domain, zoneTo, zoneFrom).then(
          (v: Array<string>) => {
              let zoneDiffCreated = 0;

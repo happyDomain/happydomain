@@ -21,9 +21,7 @@
 
 package happydns
 
-import (
-	"github.com/miekg/dns"
-)
+import ()
 
 // DomainMinimal is used for swagger documentation as Domain add.
 type DomainMinimal struct {
@@ -58,6 +56,11 @@ type Domain struct {
 	ZoneHistory []Identifier `json:"zone_history" swaggertype:"array,string"`
 }
 
+type DomainWithZoneMetadata struct {
+	*Domain
+	ZoneMeta map[string]*ZoneMeta `json:"zone_meta"`
+}
+
 // Domains is an array of Domain.
 type Domains []*Domain
 
@@ -72,13 +75,17 @@ func (d *Domain) HasZone(zoneId Identifier) (found bool) {
 	return
 }
 
-// NewDomain fills a new Domain structure.
-func NewDomain(u *User, st *ProviderMeta, dn string) (d *Domain) {
-	d = &Domain{
-		IdUser:     u.Id,
-		IdProvider: st.Id,
-		DomainName: dns.Fqdn(dn),
-	}
-
-	return
+type DomainUsecase interface {
+	ApplyZoneCorrection(*User, *Domain, *Zone, *ApplyZoneForm) (*Zone, error)
+	CreateDomain(*User, *Domain) error
+	DeleteDomain(Identifier) error
+	ExtendsDomainWithZoneMeta(*Domain) (*DomainWithZoneMetadata, error)
+	DomainExists(string) bool
+	GetUserDomain(*User, Identifier) (*Domain, error)
+	GetUserDomainByFQDN(*User, string) (*Domain, error)
+	ImportZone(*User, *Domain, []Record) (*Zone, error)
+	ListUserDomains(*User) ([]*Domain, error)
+	PublishZone(*User, *Domain, *Zone) ([]*Correction, error)
+	RetrieveRemoteZone(*User, *Domain) (*Zone, error)
+	UpdateDomain(Identifier, *User, func(*Domain)) error
 }

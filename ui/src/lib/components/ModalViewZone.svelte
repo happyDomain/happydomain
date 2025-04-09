@@ -39,13 +39,13 @@
  import {
      viewZone as APIViewZone,
  } from '$lib/api/zone';
- import type { Domain, DomainInList } from '$lib/model/domain';
+ import type { Domain } from '$lib/model/domain';
  import { t } from '$lib/translations';
 
  export let isOpen = false;
 
  let zoneContent: null | string = null;
- function Open(domain: Domain | DomainInList, selectedHistory: string): void {
+ function Open(domain: Domain, selectedHistory: string): void {
      zoneContent = null;
      isOpen = true;
      APIViewZone(domain, selectedHistory).then(

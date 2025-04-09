@@ -30,11 +30,11 @@
      Spinner,
  } from '@sveltestrap/sveltestrap';
 
- import type { DomainInList } from '$lib/model/domain';
+ import type { Domain } from '$lib/model/domain';
  import { retrieveZone } from '$lib/stores/thiszone';
  import { t } from '$lib/translations';
 
- export let data: {domain: DomainInList;};
+ export let data: {domain: Domain;};
 
  let rz = retrieveZone(data.domain);
  rz.then(() => {

@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/cloudns"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type ClouDNSAPI struct {
@@ -32,24 +34,27 @@ type ClouDNSAPI struct {
 	Password  string `json:"Password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,description=Your ClouDNS API password token"`
 }
 
-func (s *ClouDNSAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"auth-id":       s.AuthID,
-		"sub-auth-id":   s.SubAuthID,
-		"auth-password": s.Password,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *ClouDNSAPI) DNSControlName() string {
 	return "CLOUDNS"
 }
 
+func (s *ClouDNSAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *ClouDNSAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"auth-id":       s.AuthID,
+		"sub-auth-id":   s.SubAuthID,
+		"auth-password": s.Password,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &ClouDNSAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "ClouDNS",
 		Description: "ClouDNS LTD is provider of global Managed DNS services, including GeoDNS, Anycast DNS and DDoS protected DNS",
-	})
+	}, RegisterProvider)
 }

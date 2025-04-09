@@ -53,3 +53,12 @@ type Session struct {
 func (s *Session) ClearSession() {
 	s.Content = ""
 }
+
+type SessionUsecase interface {
+	ClearUserSessions(user *User) error
+	CreateUserSession(*User, string) (*Session, error)
+	DeleteUserSession(*User, string) error
+	GetUserSession(*User, string) (*Session, error)
+	GetUserSessions(*User) ([]*Session, error)
+	UpdateUserSession(*User, string, func(*Session)) error
+}

@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/netlify"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type NetlifyAPI struct {
@@ -31,7 +33,15 @@ type NetlifyAPI struct {
 	Slug  string `json:"slug,omitempty" happydomain:"label=Account Slug,description=Optional account slug (help us to understand how it is used)."`
 }
 
-func (s *NetlifyAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
+func (s *NetlifyAPI) DNSControlName() string {
+	return "NETLIFY"
+}
+
+func (s *NetlifyAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *NetlifyAPI) ToDNSControlConfig() (map[string]string, error) {
 	config := map[string]string{
 		"token": s.Token,
 	}
@@ -40,18 +50,14 @@ func (s *NetlifyAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, erro
 		config["slug"] = s.Slug
 	}
 
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
-func (s *NetlifyAPI) DNSControlName() string {
-	return "NETLIFY"
+	return config, nil
 }
 
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &NetlifyAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Netlify",
 		Description: "US remote-first cloud computing company.",
-	})
+	}, RegisterProvider)
 }
