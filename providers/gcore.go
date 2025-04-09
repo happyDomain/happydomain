@@ -22,30 +22,35 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/gcore"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type GcoreAPI struct {
 	ApiKey string `json:"api_key,omitempty" happydomain:"label=API key,placeholder=xxxxxxxx,required,description=Your GCORE API Token."`
 }
 
-func (s *GcoreAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"api-key": s.ApiKey,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *GcoreAPI) DNSControlName() string {
 	return "GCORE"
 }
 
+func (s *GcoreAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *GcoreAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"api-key": s.ApiKey,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &GcoreAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Gcore",
 		Description: "Luxembourg cloud provider",
-	})
+	}, RegisterProvider)
 }

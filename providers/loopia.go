@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/loopia"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type LoopiaAPI struct {
@@ -31,23 +33,26 @@ type LoopiaAPI struct {
 	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,description=Your Loopia API password."`
 }
 
-func (s *LoopiaAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"username": s.Username,
-		"password": s.Password,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *LoopiaAPI) DNSControlName() string {
 	return "LOOPIA"
 }
 
+func (s *LoopiaAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *LoopiaAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"username": s.Username,
+		"password": s.Password,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &LoopiaAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Loopia",
 		Description: "Swedish hosting and DNS provider.",
-	})
+	}, RegisterProvider)
 }

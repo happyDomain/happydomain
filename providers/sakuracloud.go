@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/sakuracloud"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type SakuraCloudAPI struct {
@@ -32,24 +34,27 @@ type SakuraCloudAPI struct {
 	Endpoint          string `json:"endpoint,omitempty" happydomain:"label=Endpoint,placeholder=https://secure.sakura.ad.jp/cloud/zone/is1a/api/cloud/1.1,description=Any zone endpoint (as DNS service is independent of zone)"`
 }
 
-func (s *SakuraCloudAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"access_token":        s.AccessToken,
-		"access_token_secret": s.AccessTokenSecret,
-		"endpoint":            s.Endpoint,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *SakuraCloudAPI) DNSControlName() string {
 	return "SAKURACLOUD"
 }
 
+func (s *SakuraCloudAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *SakuraCloudAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"access_token":        s.AccessToken,
+		"access_token_secret": s.AccessTokenSecret,
+		"endpoint":            s.Endpoint,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &SakuraCloudAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Sakura Cloud",
 		Description: "Japanees Cloud Provider",
-	})
+	}, RegisterProvider)
 }

@@ -36,6 +36,7 @@
  import { getServiceRecords } from '$lib/api/zone';
  import HelpButton from '$lib/components/Help.svelte';
  import TableRecords from '$lib/components/domains/TableRecords.svelte';
+ import type { Domain } from '$lib/model/domain';
  import type { ServiceCombined } from '$lib/model/service';
  import { locale, t } from '$lib/translations';
 
@@ -45,7 +46,7 @@
  export let step: number;
  export let service: ServiceCombined | null = null;
  export let form = "addSvcForm";
- export let origin: Domain | DomainInList | undefined = undefined;
+ export let origin: Domain | undefined = undefined;
  export let update = false;
  export let zoneId: number | undefined = undefined;
  export let canDelete = false;

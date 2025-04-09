@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/domainnameshop"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type DomainnameshopAPI struct {
@@ -31,24 +33,26 @@ type DomainnameshopAPI struct {
 	Secret string `json:"secret,omitempty" happydomain:"label=Secret,placeholder=your-domainnameshop-secret,required,description=Domainnameshop API Secret."`
 }
 
-func (s *DomainnameshopAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"token":  s.Token,
-		"secret": s.Secret,
-	}
-
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *DomainnameshopAPI) DNSControlName() string {
 	return "DOMAINNAMESHOP"
 }
 
+func (s *DomainnameshopAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *DomainnameshopAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"token":  s.Token,
+		"secret": s.Secret,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &DomainnameshopAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Domeneshop AS",
 		Description: "Norwegian registrar and hosting company",
-	})
+	}, RegisterProvider)
 }

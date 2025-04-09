@@ -42,7 +42,7 @@
  import { nsrrtype } from '$lib/dns';
  import ResourceInput from '$lib/components/ResourceInput.svelte';
  import TableRecords from '$lib/components/domains/TableRecords.svelte';
- import type { Domain, DomainInList } from '$lib/model/domain';
+ import type { Domain } from '$lib/model/domain';
  import type { ServiceCombined } from '$lib/model/service';
  import { ZoneViewGrid, ZoneViewList, ZoneViewRecords } from '$lib/model/usersettings';
  import type { ServiceRecord } from '$lib/model/zone';
@@ -52,7 +52,7 @@
 
  const dispatch = createEventDispatcher();
 
- export let origin: Domain | DomainInList;
+ export let origin: Domain;
  export let service: ServiceCombined | null = null;
  export let zoneId: string;
 

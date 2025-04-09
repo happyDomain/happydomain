@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/transip"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type TransIpAPI struct {
@@ -32,24 +34,27 @@ type TransIpAPI struct {
 	AccessToken string `json:"access_token,omitempty" happydomain:"label=Access token,placeholder=xxxxxxxx,description=Your access roken."`
 }
 
-func (s *TransIpAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"AccountName": s.AccountName,
-		"PrivateKey":  s.PrivateKey,
-		"AccessToken": s.AccessToken,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *TransIpAPI) DNSControlName() string {
 	return "TRANSIP"
 }
 
+func (s *TransIpAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *TransIpAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"AccountName": s.AccountName,
+		"PrivateKey":  s.PrivateKey,
+		"AccessToken": s.AccessToken,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &TransIpAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "TransIP B.V.",
 		Description: "Dutch hosting company",
-	})
+	}, RegisterProvider)
 }

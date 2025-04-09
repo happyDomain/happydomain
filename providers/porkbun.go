@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/porkbun"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type PorkbunAPI struct {
@@ -31,24 +33,26 @@ type PorkbunAPI struct {
 	SecretKey string `json:"secret_key,omitempty" happydomain:"label=Secret Key,placeholder=xxxxxxxxxx,required,description=Write the secret key corresponding to your API key."`
 }
 
-func (s *PorkbunAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"api_key":    s.APIKey,
-		"secret_key": s.SecretKey,
-	}
-
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *PorkbunAPI) DNSControlName() string {
 	return "PORKBUN"
 }
 
+func (s *PorkbunAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *PorkbunAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"api_key":    s.APIKey,
+		"secret_key": s.SecretKey,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &PorkbunAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Porkbun",
 		Description: "US Name Registrar.",
-	})
+	}, RegisterProvider)
 }

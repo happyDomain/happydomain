@@ -22,30 +22,35 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/hetzner"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type HetznerAPI struct {
 	APIKey string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,description=Get your API Key on https://dns.hetzner.com/settings/api-token."`
 }
 
-func (s *HetznerAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"api_key": s.APIKey,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *HetznerAPI) DNSControlName() string {
 	return "HETZNER"
 }
 
+func (s *HetznerAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *HetznerAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"api_key": s.APIKey,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &HetznerAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Hetzner",
 		Description: "German Internet hosting provider.",
-	})
+	}, RegisterProvider)
 }

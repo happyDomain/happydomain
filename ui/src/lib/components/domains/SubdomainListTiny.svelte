@@ -22,11 +22,11 @@
 -->
 
 <script lang="ts">
- import type { DomainInList } from '$lib/model/domain';
+ import type { Domain } from '$lib/model/domain';
  import { fqdn } from '$lib/dns';
 
  export let domains: Array<string>;
- export let origin: DomainInList;
+ export let origin: Domain;
 </script>
 
 {#each domains as dn}

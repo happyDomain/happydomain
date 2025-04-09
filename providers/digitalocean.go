@@ -22,31 +22,35 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/digitalocean"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type DigitalOceanAPI struct {
 	Token string `json:"token,omitempty" happydomain:"label=Token,placeholder=your-token,required,description=DigitalOcean OAuth Token."`
 }
 
-func (s *DigitalOceanAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"token": s.Token,
-	}
-
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *DigitalOceanAPI) DNSControlName() string {
 	return "DIGITALOCEAN"
 }
 
+func (s *DigitalOceanAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *DigitalOceanAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"token": s.Token,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &DigitalOceanAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "DigitalOcean",
 		Description: "American cloud infrastructure provider",
-	})
+	}, RegisterProvider)
 }

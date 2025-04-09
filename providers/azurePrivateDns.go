@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/azureprivatedns"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type AzurePrivateDnsAPI struct {
@@ -34,26 +36,29 @@ type AzurePrivateDnsAPI struct {
 	ClientSecret   string `json:"ClientSecret,omitempty" happydomain:"label=Client Secret,placeholder=xxxxxxxx,description=Your Azure Client Secret."`
 }
 
-func (s *AzurePrivateDnsAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
+func (s *AzurePrivateDnsAPI) DNSControlName() string {
+	return "AZURE_PRIVATE_DNS"
+}
+
+func (s *AzurePrivateDnsAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *AzurePrivateDnsAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
 		"SubscriptionID": s.SubscriptionID,
 		"ResourceGroup":  s.ResourceGroup,
 		"TenantID":       s.TenantID,
 		"ClientID":       s.ClientID,
 		"ClientSecret":   s.ClientSecret,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
-func (s *AzurePrivateDnsAPI) DNSControlName() string {
-	return "AZURE_PRIVATE_DNS"
+	}, nil
 }
 
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &AzurePrivateDnsAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Azure Private DNS",
 		Description: "Exclusively to manage Private DNS zones. Use Azure DNS for public zones.",
-	})
+	}, RegisterProvider)
 }

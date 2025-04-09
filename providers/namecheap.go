@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/namecheap"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type NamecheapAPI struct {
@@ -31,23 +33,26 @@ type NamecheapAPI struct {
 	APIUser string `json:"apiuser,omitempty" happydomain:"label=API User,placeholder=yourUsername,required"`
 }
 
-func (s *NamecheapAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"apikey":  s.APIKey,
-		"apiuser": s.APIUser,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *NamecheapAPI) DNSControlName() string {
 	return "NAMECHEAP"
 }
 
+func (s *NamecheapAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *NamecheapAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"apikey":  s.APIKey,
+		"apiuser": s.APIUser,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &NamecheapAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Namecheap",
 		Description: "American domain name registrar.",
-	})
+	}, RegisterProvider)
 }

@@ -30,13 +30,13 @@
 
  import NewSubdomainModal, { controls as ctrlNewSubdomainModal } from '$lib/components/domains/NewSubdomainModal.svelte';
  import { controls as ctrlServicePath } from '$lib/components/NewServicePath.svelte';
- import type { Domain, DomainInList } from '$lib/model/domain';
+ import type { Domain } from '$lib/model/domain';
  import type { ServiceCombined } from '$lib/model/service';
  import type { Zone } from '$lib/model/zone';
 
  const dispatch = createEventDispatcher();
 
- export let origin: DomainInList | Domain;
+ export let origin: Domain;
 
  controls.Open = () => {
      ctrlNewSubdomainModal.Open();

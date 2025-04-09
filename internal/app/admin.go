@@ -32,8 +32,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happyDomain/admin"
-	"git.happydns.org/happyDomain/config"
+	admin "git.happydns.org/happyDomain/api-admin/route"
+	"git.happydns.org/happyDomain/internal/config"
+	"git.happydns.org/happyDomain/usecase"
 )
 
 type Admin struct {
@@ -42,8 +43,8 @@ type Admin struct {
 	srv    *http.Server
 }
 
-func NewAdmin(cfg *config.Options) Admin {
-	if cfg.DevProxy == "" {
+func NewAdmin(app *App) *Admin {
+	if app.cfg.DevProxy == "" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
@@ -51,14 +52,15 @@ func NewAdmin(cfg *config.Options) Admin {
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
 
-	admin.DeclareRoutes(cfg, router)
+	// Prepare usecases
+	app.ProviderServiceAdmin = usecase.NewAdminProviderUsecase(app.store)
 
-	app := Admin{
+	admin.DeclareRoutes(app.cfg, router, app.store, app)
+
+	return &Admin{
 		router: router,
-		cfg:    cfg,
+		cfg:    app.cfg,
 	}
-
-	return app
 }
 
 func (app *Admin) Start() {

@@ -22,6 +22,8 @@
 package svcs
 
 import (
+	"fmt"
+
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/utils"
@@ -47,7 +49,8 @@ func (s *CNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []happ
 }
 
 type SpecialCNAME struct {
-	Record *dns.CNAME `json:"cname"`
+	SubDomain string
+	Target    string
 }
 
 func (s *SpecialCNAME) GetNbResources() int {
@@ -55,13 +58,13 @@ func (s *SpecialCNAME) GetNbResources() int {
 }
 
 func (s *SpecialCNAME) GenComment() string {
-	return "(" + s.Record.Hdr.Name + ") -> " + s.Record.Target
+	return "(" + s.SubDomain + ") -> " + s.Target
 }
 
 func (s *SpecialCNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	cname := *s.Record
-	cname.Target = utils.DomainFQDN(cname.Target, origin)
-	return []happydns.Record{&cname}, nil
+	cname := utils.NewRecord(utils.DomainJoin(s.SubDomain, domain), "CNAME", ttl, origin)
+	cname.(*dns.CNAME).Target = utils.DomainFQDN(s.Target, origin)
+	return []happydns.Record{cname}, nil
 }
 
 func specialalias_analyze(a *Analyzer) error {
@@ -73,7 +76,8 @@ func specialalias_analyze(a *Analyzer) error {
 			cname.Target = utils.DomainRelative(cname.Target, a.GetOrigin())
 
 			a.UseRR(record, subdomains[3], &SpecialCNAME{
-				Record: utils.RRRelative(cname, a.GetOrigin()).(*dns.CNAME),
+				SubDomain: fmt.Sprintf("_%s._%s", subdomains[1], subdomains[2]),
+				Target:    cname.Target,
 			})
 		}
 	}

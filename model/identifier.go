@@ -25,6 +25,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/gob"
 	"errors"
 )
 
@@ -75,4 +76,8 @@ func (i *Identifier) UnmarshalJSON(src []byte) error {
 	_, err := base64.RawURLEncoding.Decode(*i, src[1:len(src)-1])
 
 	return err
+}
+
+func init() {
+	gob.Register(Identifier{})
 }

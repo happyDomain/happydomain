@@ -23,12 +23,8 @@ package happydns
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
-	"strings"
 	"time"
-
-	"github.com/StackExchange/dnscontrol/v4/models"
 )
 
 // ZoneMeta holds the metadata associated to a Zone.
@@ -55,10 +51,16 @@ type ZoneMeta struct {
 	Published *time.Time `json:"published,omitempty"`
 }
 
+// ZoneMessage is the intermediate struct for parsing zones.
+type ZoneMessage struct {
+	ZoneMeta
+	Services map[string][]*ServiceMessage `json:"services"`
+}
+
 // Zone contains ZoneMeta + map of services by subdomains.
 type Zone struct {
 	ZoneMeta
-	Services map[string][]*ServiceCombined `json:"services"`
+	Services map[string][]*Service `json:"services"`
 }
 
 // DerivateNew creates a new Zone from the current one, by copying all fields.
@@ -68,7 +70,7 @@ func (z *Zone) DerivateNew() *Zone {
 	newZone.ZoneMeta.IdAuthor = z.ZoneMeta.IdAuthor
 	newZone.ZoneMeta.DefaultTTL = z.ZoneMeta.DefaultTTL
 	newZone.ZoneMeta.LastModified = time.Now()
-	newZone.Services = map[string][]*ServiceCombined{}
+	newZone.Services = map[string][]*Service{}
 
 	for subdomain, svcs := range z.Services {
 		newZone.Services[subdomain] = svcs
@@ -77,26 +79,51 @@ func (z *Zone) DerivateNew() *Zone {
 	return newZone
 }
 
-func (z *Zone) AppendService(subdomain string, origin string, svc *ServiceCombined) error {
-	hash, err := ValidateService(svc.Service, subdomain, origin)
-	if err != nil {
-		return err
+func (zone *Zone) eraseService(subdomain string, old *Service, idx int, new *Service) error {
+	if new == nil {
+		// Disallow removing SOA
+		if subdomain == "" && old.Type == "abstract.Origin" {
+			return fmt.Errorf("You cannot delete this service. It is mandatory.")
+		}
+
+		if len(zone.Services[subdomain]) <= 1 {
+			delete(zone.Services, subdomain)
+		} else {
+			zone.Services[subdomain] = append(zone.Services[subdomain][:idx], zone.Services[subdomain][idx+1:]...)
+		}
+	} else {
+		new.Comment = new.Service.GenComment()
+		new.NbResources = new.Service.GetNbResources()
+		zone.Services[subdomain][idx] = new
 	}
-
-	svc.Id = hash
-	svc.Domain = subdomain
-	svc.NbResources = svc.Service.GetNbResources()
-	svc.Comment = svc.Service.GenComment(origin)
-
-	z.Services[subdomain] = append(z.Services[subdomain], svc)
 
 	return nil
 }
 
+// EraseService overwrites the Service identified by the given id, under the given subdomain.
+// The the new service is nil, it removes the existing Service instead of overwrite it.
+func (zone *Zone) EraseService(subdomain string, id []byte, s *Service) error {
+	idx, svc := zone.FindSubdomainService(subdomain, id)
+	if svc == nil {
+		return fmt.Errorf("service not found")
+	}
+
+	return zone.eraseService(subdomain, svc, idx, s)
+}
+
+func (zone *Zone) EraseServiceWithoutMeta(subdomain string, id []byte, s ServiceBody) error {
+	idx, svc := zone.FindSubdomainService(subdomain, id)
+	if svc == nil {
+		return fmt.Errorf("service not found")
+	}
+
+	return zone.eraseService(subdomain, svc, idx, &Service{Service: s, ServiceMeta: svc.ServiceMeta})
+}
+
 // FindService finds the Service identified by the given id.
-func (z *Zone) FindService(id []byte) (string, *ServiceCombined) {
+func (z *Zone) FindService(id []byte) (string, *Service) {
 	for subdomain := range z.Services {
-		if svc := z.FindSubdomainService(subdomain, id); svc != nil {
+		if _, svc := z.FindSubdomainService(subdomain, id); svc != nil {
 			return subdomain, svc
 		}
 	}
@@ -104,7 +131,8 @@ func (z *Zone) FindService(id []byte) (string, *ServiceCombined) {
 	return "", nil
 }
 
-func (z *Zone) findSubdomainService(subdomain string, id []byte) (int, *ServiceCombined) {
+// FindSubdomainService finds the Service identified by the given id, only under the given subdomain.
+func (z *Zone) FindSubdomainService(subdomain string, id []byte) (int, *Service) {
 	if subdomain == "@" {
 		subdomain = ""
 	}
@@ -120,98 +148,27 @@ func (z *Zone) findSubdomainService(subdomain string, id []byte) (int, *ServiceC
 	return -1, nil
 }
 
-// FindSubdomainService finds the Service identified by the given id, only under the given subdomain.
-func (z *Zone) FindSubdomainService(domain string, id []byte) *ServiceCombined {
-	_, svc := z.findSubdomainService(domain, id)
-	return svc
+type ZoneServices struct {
+	Services []*Service `json:"services"`
 }
 
-func (z *Zone) eraseService(subdomain, origin string, old *ServiceCombined, idx int, new *ServiceCombined) error {
-	if new == nil {
-		// Disallow removing SOA
-		if subdomain == "" && old.Type == "abstract.Origin" {
-			return errors.New("You cannot delete this service. It is mandatory.")
-		}
-
-		if len(z.Services[subdomain]) <= 1 {
-			delete(z.Services, subdomain)
-		} else {
-			z.Services[subdomain] = append(z.Services[subdomain][:idx], z.Services[subdomain][idx+1:]...)
-		}
-	} else {
-		new.Comment = new.GenComment(origin)
-		new.NbResources = new.GetNbResources()
-		z.Services[subdomain][idx] = new
-	}
-
-	return nil
+type ZoneUsecase interface {
+	AppendService(*Zone, string, string, *Service) error
+	CreateZone(*Zone) error
+	DeleteZone(Identifier) error
+	DeleteService(zone *Zone, subdomain string, serviceid Identifier) error
+	DiffZones(*Domain, *Zone, Identifier) ([]*Correction, error)
+	FlattenZoneFile(*Domain, *Zone) (string, error)
+	GenerateRecords(*Domain, *Zone) ([]Record, error)
+	GetZone(Identifier) (*Zone, error)
+	GetZoneCorrections(*User, *Domain, *Zone) ([]*Correction, error)
+	GetZoneMeta(Identifier) (*ZoneMeta, error)
+	LoadZoneFromId(domain *Domain, id Identifier) (*Zone, error)
+	UpdateService(zone *Zone, subdomain string, serviceid Identifier, newservice *Service) error
+	UpdateZone(Identifier, func(*Zone)) error
 }
 
-// EraseService overwrites the Service identified by the given id, under the given subdomain.
-// The the new service is nil, it removes the existing Service instead of overwrite it.
-func (z *Zone) EraseService(subdomain string, origin string, id []byte, s *ServiceCombined) error {
-	if idx, svc := z.findSubdomainService(subdomain, id); svc != nil {
-		return z.eraseService(subdomain, origin, svc, idx, s)
-	}
-
-	return errors.New("Service not found")
-}
-
-func (z *Zone) EraseServiceWithoutMeta(subdomain string, origin string, id []byte, s Service) error {
-	if idx, svc := z.findSubdomainService(subdomain, id); svc != nil {
-		return z.eraseService(subdomain, origin, svc, idx, &ServiceCombined{Service: s, ServiceMeta: svc.ServiceMeta})
-	}
-
-	return errors.New("Service not found")
-}
-
-// GenerateRRs returns all the reals records of the Zone.
-func (z *Zone) GenerateRecords(origin string) (records models.Records, e error) {
-	for subdomain, svcs := range z.Services {
-		if subdomain == "" {
-			subdomain = origin
-		} else {
-			subdomain += "." + origin
-		}
-		for _, svc := range svcs {
-			var ttl uint32
-			if svc.Ttl == 0 {
-				ttl = z.DefaultTTL
-			} else {
-				ttl = svc.Ttl
-			}
-
-			rrs, err := svc.GetRecords(subdomain, ttl, origin)
-			if err != nil {
-				return nil, fmt.Errorf("unable to generate records for service %s: %w", svc, err)
-			}
-
-			for _, record := range rrs {
-				if !strings.HasSuffix(record.Header().Name, ".") {
-					if record.Header().Name == "" {
-						record.Header().Name = subdomain
-					} else {
-						record.Header().Name += "." + subdomain
-					}
-				}
-
-				rc, err := models.RRtoRC(record, strings.TrimSuffix(origin, "."))
-				if err != nil {
-					return nil, err
-				}
-
-				records = append(records, &rc)
-			}
-		}
-
-		// Ensure SOA is the first record
-		for i, rr := range records {
-			if rr.Type == "SOA" {
-				records[0], records[i] = records[i], records[0]
-				break
-			}
-		}
-	}
-
-	return
+type ApplyZoneForm struct {
+	WantedCorrections []string `json:"wantedCorrections"`
+	CommitMsg         string   `json:"commitMessage"`
 }

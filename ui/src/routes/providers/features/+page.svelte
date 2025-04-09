@@ -47,7 +47,9 @@
 
 <Container class="d-flex flex-column flex-fill" fluid>
     {#await listProviders()}
-        <Spinner size="lg" />
+        <div class="flex-fill d-flex justify-content-center align-items-center">
+            <Spinner size="lg" />
+        </div>
     {:then providers}
         <div
             style="overflow-x: scroll"

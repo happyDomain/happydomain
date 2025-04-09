@@ -22,30 +22,35 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/dnsimple"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type DNSimpleAPI struct {
 	Token string `json:"token,omitempty" happydomain:"label=Token,placeholder=xxxxxxxxxx,required,description=Provide a DNSimple account access token."`
 }
 
-func (s *DNSimpleAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"token": s.Token,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *DNSimpleAPI) DNSControlName() string {
 	return "DNSIMPLE"
 }
 
+func (s *DNSimpleAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *DNSimpleAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"token": s.Token,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &DNSimpleAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "DNSimple",
 		Description: "Easy DNS hosting provider.",
-	})
+	}, RegisterProvider)
 }

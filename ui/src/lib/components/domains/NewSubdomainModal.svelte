@@ -43,7 +43,7 @@
  import ModalFooter from '$lib/components/domains/ModalFooter.svelte';
  import ModalHeader from '$lib/components/domains/ModalHeader.svelte';
  import { validateDomain } from '$lib/dns';
- import type { Domain, DomainInList } from '$lib/model/domain';
+ import type { Domain } from '$lib/model/domain';
  import { t } from '$lib/translations';
 
  const dispatch = createEventDispatcher();
@@ -51,7 +51,7 @@
  export let isOpen = false;
  const toggle = () => (isOpen = !isOpen);
 
- export let origin: Domain | DomainInList;
+ export let origin: Domain;
  export let value: string = "";
 
  let newDomainState: boolean | undefined = undefined;

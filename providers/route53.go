@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/route53"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type Route53API struct {
@@ -33,25 +35,28 @@ type Route53API struct {
 	Token         string `json:"token,omitempty" happydomain:"label=Token,placeholder=xxxxxxxx,description=Optional STS token."`
 }
 
-func (s *Route53API) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"DelegationSet": s.DelegationSet,
-		"KeyId":         s.KeyId,
-		"SecretKey":     s.SecretKey,
-		"Token":         s.Token,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *Route53API) DNSControlName() string {
 	return "ROUTE53"
 }
 
+func (s *Route53API) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *Route53API) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"DelegationSet": s.DelegationSet,
+		"KeyId":         s.KeyId,
+		"SecretKey":     s.SecretKey,
+		"Token":         s.Token,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &Route53API{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "AWS Route 53",
 		Description: "Amazon Web Services (AWS) is a subsidiary of Amazon that provides on-demand cloud computing platforms and APIs. Route 53 is their DNS service.",
-	})
+	}, RegisterProvider)
 }

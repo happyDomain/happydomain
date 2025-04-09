@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/akamaiedgedns"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type AkamaiEdgeDnsAPI struct {
@@ -35,27 +37,30 @@ type AkamaiEdgeDnsAPI struct {
 	GroupId      string `json:"groupId,omitempty" happydomain:"label=Group ID,placeholder=NNNNNN,description=Your Akamai Group ID."`
 }
 
-func (s *AkamaiEdgeDnsAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
+func (s *AkamaiEdgeDnsAPI) DNSControlName() string {
+	return "AKAMAIEDGEDNS"
+}
+
+func (s *AkamaiEdgeDnsAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *AkamaiEdgeDnsAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
 		"client_secret": s.ClientSecret,
 		"host":          s.Host,
 		"access_token":  s.AccessToken,
 		"client_token":  s.ClientToken,
 		"contract_id":   s.ContractId,
 		"group_id":      s.GroupId,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
-func (s *AkamaiEdgeDnsAPI) DNSControlName() string {
-	return "AKAMAIEDGEDNS"
+	}, nil
 }
 
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &AkamaiEdgeDnsAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Akamai Edge DNS",
 		Description: "American content delivery network and cloud service company - https://www.akamai.com",
-	})
+	}, RegisterProvider)
 }

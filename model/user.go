@@ -22,6 +22,7 @@
 package happydns
 
 import (
+	"io"
 	"time"
 )
 
@@ -46,20 +47,12 @@ type User struct {
 // Users is a group of User.
 type Users []*User
 
-// NewUser fills a new User structure.
-func NewUser(email string) (u *User, err error) {
-	u = &User{
-		Email:     email,
-		CreatedAt: time.Now(),
-	}
-
-	return
-}
-
-// Update updates updatables user fields.
-func (u *User) Update(email string) (err error) {
-	u.Email = email
-	u.LastSeen = time.Now()
-
-	return
+type UserUsecase interface {
+	ChangeUserSettings(*User, UserSettings) error
+	CreateUser(UserInfo) (*User, error)
+	DeleteUser(Identifier) error
+	GenerateUserAvatar(*User, int, io.Writer) error
+	GetUser(Identifier) (*User, error)
+	GetUserByEmail(string) (*User, error)
+	UpdateUser(Identifier, func(*User)) error
 }

@@ -32,15 +32,14 @@
 
  import { getDomain } from '$lib/api/domains';
  import DiffZone from '$lib/components/DiffZone.svelte';
- import type { Domain, DomainInList } from '$lib/model/domain';
+ import type { Domain } from '$lib/model/domain';
  import { getUser } from '$lib/stores/users';
  import { t } from '$lib/translations';
 
- export let data: {domain: DomainInList; history: string; streamed: Object;};
+ export let data: {domain: Domain; history: string; streamed: Object;};
 
  let isOpen: Record<number, boolean> = { };
  if (data.domain.zone_history.length > 0) {
-     console.log(data.domain.zone_history[0]);
      isOpen[data.domain.zone_history[0]] = true;
  }
 
@@ -57,7 +56,8 @@
             <p>{$t('wait.loading')}</p>
         </div>
     {:then domain}
-        {#each domain.zone_history as history, idx}
+        {#each domain.zone_history as zid, idx}
+            {@const history = domain.zone_meta[zid]}
             {@const moddate = new Intl.DateTimeFormat(undefined, {dateStyle: "long", timeStyle: "medium"}).format(new Date(history.last_modified))}
             {#if idx === 0 || !isSameMonth(new Date(domain.zone_history[idx-1].last_modified), new Date(history.last_modified))}
                 <h3 class="mt-4 fw-bolder">
@@ -127,8 +127,8 @@
                     {#if isOpen[history.id]}
                         <DiffZone
                             {domain}
-                            zoneFrom={domain.zone_history[idx+1].id}
-                            zoneTo={history.id}
+                            zoneFrom={history.id}
+                            zoneTo={domain.zone_history[idx+1]}
                         />
                     {/if}
                 </AccordionItem>

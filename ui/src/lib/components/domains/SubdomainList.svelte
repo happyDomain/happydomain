@@ -28,13 +28,13 @@
  import { controls as ctrlNewService } from '$lib/components/NewServicePath.svelte';
  import { controls as ctrlService } from '$lib/components/domains/ServiceModal.svelte';
  import SubdomainItem from '$lib/components/domains/SubdomainItem.svelte';
- import type { Domain, DomainInList } from '$lib/model/domain';
+ import type { Domain } from '$lib/model/domain';
  import type { ServiceCombined } from '$lib/model/service';
  import type { Zone } from '$lib/model/zone';
 
  const dispatch = createEventDispatcher();
 
- export let origin: DomainInList | Domain;
+ export let origin: Domain;
  export let sortedDomains: Array<string>;
  export let sortedDomainsWithIntermediate: Array<string>;
  export let zone: Zone;

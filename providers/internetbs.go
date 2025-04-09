@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/internetbs"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type InternetbsAPI struct {
@@ -31,23 +33,26 @@ type InternetbsAPI struct {
 	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,description=Your account password."`
 }
 
-func (s *InternetbsAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"api-key":  s.ApiKey,
-		"password": s.Password,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *InternetbsAPI) DNSControlName() string {
 	return "INTERNETBS"
 }
 
+func (s *InternetbsAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *InternetbsAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"api-key":  s.ApiKey,
+		"password": s.Password,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &InternetbsAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Internet.bs",
 		Description: "Domain registration and web hosting company based in the Bahamas",
-	})
+	}, RegisterProvider)
 }

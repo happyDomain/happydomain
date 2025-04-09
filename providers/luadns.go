@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/luadns"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type LuaDnsAPI struct {
@@ -31,23 +33,26 @@ type LuaDnsAPI struct {
 	ApiKey string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx,required,description=Your API key."`
 }
 
-func (s *LuaDnsAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"email":  s.Email,
-		"apikey": s.ApiKey,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *LuaDnsAPI) DNSControlName() string {
 	return "LUADNS"
 }
 
+func (s *LuaDnsAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *LuaDnsAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"email":  s.Email,
+		"apikey": s.ApiKey,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &LuaDnsAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "LuaDNS",
 		Description: "Bulk DNS hosting company with Git integration",
-	})
+	}, RegisterProvider)
 }

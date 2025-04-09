@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/autodns"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type AutoDNSAPI struct {
@@ -32,24 +34,27 @@ type AutoDNSAPI struct {
 	Context  string `json:"context,omitempty" happydomain:"label=Context,placeholder=33004,description=Your AutoDNS context."`
 }
 
-func (s *AutoDNSAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"username": s.Username,
-		"password": s.Password,
-		"context":  s.Context,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *AutoDNSAPI) DNSControlName() string {
 	return "AUTODNS"
 }
 
+func (s *AutoDNSAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *AutoDNSAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"username": s.Username,
+		"password": s.Password,
+		"context":  s.Context,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &AutoDNSAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "AutoDNS / InterNetX",
 		Description: "German hosting provider.",
-	})
+	}, RegisterProvider)
 }

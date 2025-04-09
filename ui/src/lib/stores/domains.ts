@@ -21,9 +21,9 @@
 
 import { derived, writable, type Writable } from 'svelte/store';
 import { listDomains } from '$lib/api/domains';
-import type { DomainInList } from '$lib/model/domain';
+import type { Domain } from '$lib/model/domain';
 
-export const domains: Writable<null | Array<DomainInList>> = writable(null);
+export const domains: Writable<null | Array<Domain>> = writable(null);
 
 export async function refreshDomains() {
     const data = await listDomains();
@@ -33,7 +33,7 @@ export async function refreshDomains() {
 
 export const groups = derived(
     domains,
-    ($domains: null|Array<DomainInList>) => {
+    ($domains: null|Array<Domain>) => {
         const groups: Record<string, null> = { };
 
         if ($domains) {
@@ -50,8 +50,8 @@ export const groups = derived(
 
 export const domains_idx = derived(
     domains,
-    ($domains: null|Array<DomainInList>) => {
-        const idx: Record<string, DomainInList> = { };
+    ($domains: null|Array<Domain>) => {
+        const idx: Record<string, Domain> = { };
 
         if ($domains) {
             for (const d of $domains) {
@@ -65,8 +65,8 @@ export const domains_idx = derived(
 
 export const domains_by_groups = derived(
     domains,
-    ($domains: null|Array<DomainInList>) => {
-        const groups: Record<string, Array<DomainInList>> = { };
+    ($domains: null|Array<Domain>) => {
+        const groups: Record<string, Array<Domain>> = { };
 
         if ($domains === null) {
             return groups;

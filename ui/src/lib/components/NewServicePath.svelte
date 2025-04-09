@@ -30,13 +30,13 @@
 
  import ServiceSelectorModal, { controls as ctrlServiceSelector } from '$lib/components/domains/ServiceSelectorModal.svelte';
  import { controls as ctrlService } from '$lib/components/domains/ServiceModal.svelte';
- import type { Domain, DomainInList } from '$lib/model/domain';
+ import type { Domain } from '$lib/model/domain';
  import type { ServiceCombined } from '$lib/model/service';
  import type { Zone } from '$lib/model/zone';
 
  const dispatch = createEventDispatcher();
 
- export let origin: DomainInList | Domain;
+ export let origin: Domain;
  export let zone: Zone;
 
  function Open(domain: string): void {

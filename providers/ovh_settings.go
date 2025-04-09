@@ -25,15 +25,15 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gin-contrib/sessions"
 	"github.com/ovh/go-ovh/ovh"
 
-	"git.happydns.org/happyDomain/forms"
+	"git.happydns.org/happyDomain/internal/forms"
+	"git.happydns.org/happyDomain/model"
 )
 
-func settingsForm(edit bool) *forms.CustomForm {
-	srcFields := []*forms.Field{
-		&forms.Field{
+func ovh_settingsForm(edit bool) *happydns.CustomForm {
+	srcFields := []*happydns.Field{
+		&happydns.Field{
 			Id:          "endpoint",
 			Type:        "string",
 			Label:       "Endpoint",
@@ -45,7 +45,7 @@ func settingsForm(edit bool) *forms.CustomForm {
 	}
 
 	if edit {
-		srcFields = append(srcFields, &forms.Field{
+		srcFields = append(srcFields, &happydns.Field{
 			Id:          "consumerkey",
 			Type:        "string",
 			Label:       "Consumer Key",
@@ -60,14 +60,14 @@ func settingsForm(edit bool) *forms.CustomForm {
 	return form
 }
 
-func settingsAskCredentials(baseurl string, recallid string, session *sessions.Session) (*forms.CustomForm, map[string]interface{}, error) {
+func ovh_settingsAskCredentials(fu happydns.FormUsecase, recallid string) (*happydns.CustomForm, map[string]interface{}, error) {
 	client, err := ovh.NewClient("ovh-eu", appKey, appSecret, "")
 	if err != nil {
 		return nil, nil, fmt.Errorf("Unable to generate Consumer key, as OVH client can't be created: %w", err)
 	}
 
 	// Generate customer key
-	ckReq := client.NewCkRequestWithRedirection(baseurl + "/providers/new/OVHAPI/2?nsprvid=" + recallid)
+	ckReq := client.NewCkRequestWithRedirection(fu.GetBaseURL() + "/providers/new/OVHAPI/2?nsprvid=" + recallid)
 	ckReq.AddRecursiveRules(ovh.ReadWrite, "/domain")
 	ckReq.AddRules(ovh.ReadOnly, "/me")
 
@@ -77,7 +77,7 @@ func settingsAskCredentials(baseurl string, recallid string, session *sessions.S
 	}
 
 	// Return some explanation to the user
-	return &forms.CustomForm{
+	return &happydns.CustomForm{
 			BeforeText:          "In order allows happyDomain to get and update yours domains, you have to let us access them. To avoid storing your credentials, we will store a unique token that will be associated with your account. For this purpose, you will be redirected to an OVH login screen. The registration will automatically continue",
 			NextButtonText:      "Go to OVH",
 			PreviousButtonText:  "common.previous",
@@ -88,24 +88,24 @@ func settingsAskCredentials(baseurl string, recallid string, session *sessions.S
 		}, nil
 }
 
-func (s *OVHAPI) DisplaySettingsForm(state int32, baseurl string, session *sessions.Session, genRecallId forms.GenRecallID) (*forms.CustomForm, map[string]interface{}, error) {
+func (s *OVHAPI) DisplaySettingsForm(state int32, genRecallId happydns.GenRecallID, fu happydns.FormUsecase) (*happydns.CustomForm, map[string]interface{}, error) {
 	switch state {
 	case 0:
-		return settingsForm(s.ConsumerKey != ""), nil, nil
+		return ovh_settingsForm(s.ConsumerKey != ""), nil, nil
 	case 1:
 		if s.ConsumerKey == "" {
 			recallid := genRecallId()
-			return settingsAskCredentials(baseurl, recallid, session)
+			return ovh_settingsAskCredentials(fu, recallid)
 		} else {
-			return nil, nil, forms.DoneForm
+			return nil, nil, happydns.DoneForm
 		}
 	case 2:
 		if s.ConsumerKey == "" {
 			return nil, nil, errors.New("Something wierd has happend, as you were not in a consumer key registration process. Please retry.")
 		} else {
-			return nil, nil, forms.DoneForm
+			return nil, nil, happydns.DoneForm
 		}
 	default:
-		return nil, nil, forms.CancelForm
+		return nil, nil, happydns.CancelForm
 	}
 }

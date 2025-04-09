@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/gcloud"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type GCloudAPI struct {
@@ -33,25 +35,28 @@ type GCloudAPI struct {
 	NameServerSet string `json:"name_server_set,omitempty" happydomain:"label=Name server sets,placeholder=xxxxxxxx,description=Name server sets special permission from your TAM at Google)."`
 }
 
-func (s *GCloudAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"project_id":      s.ProjectId,
-		"private_key":     s.PrivateKey,
-		"client_email":    s.ClientEmail,
-		"name_server_set": s.NameServerSet,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *GCloudAPI) DNSControlName() string {
 	return "GCLOUD"
 }
 
+func (s *GCloudAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *GCloudAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"project_id":      s.ProjectId,
+		"private_key":     s.PrivateKey,
+		"client_email":    s.ClientEmail,
+		"name_server_set": s.NameServerSet,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &GCloudAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Google Cloud Platform (GCP)",
 		Description: "A suite of cloud computing services that runs on the same infrastructure that Google uses internally for its end-user products",
-	})
+	}, RegisterProvider)
 }

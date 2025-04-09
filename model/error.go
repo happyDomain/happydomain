@@ -21,7 +21,37 @@
 
 package happydns
 
-type Error struct {
-	// Err describe the error to display to the user.
-	Err string `json:"errmsg"`
+const TryAgainErr = "Sorry, we are currently unable to sent email validation link. Please try again later."
+
+type ErrorResponse struct {
+	// Message describe the error to display to the user.
+	Message string `json:"errmsg"`
+
+	// Link is a link that can help the user to fix the error.
+	Link string `json:"href,omitempty"`
+}
+
+type InternalError struct {
+	Err         error
+	UserMessage string
+	UserLink    string
+	HTTPStatus  int
+}
+
+func (err InternalError) Error() string {
+	return err.Err.Error()
+}
+
+func (err InternalError) ToErrorResponse() ErrorResponse {
+	if err.UserMessage == "" {
+		return ErrorResponse{
+			Message: err.Err.Error(),
+			Link:    err.UserLink,
+		}
+	}
+
+	return ErrorResponse{
+		Message: err.UserMessage,
+		Link:    err.UserLink,
+	}
 }

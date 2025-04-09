@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/azuredns"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type AzureDnsAPI struct {
@@ -34,26 +36,29 @@ type AzureDnsAPI struct {
 	ClientSecret   string `json:"ClientSecret,omitempty" happydomain:"label=Client Secret,placeholder=xxxxxxxx,description=Your Azure Client Secret."`
 }
 
-func (s *AzureDnsAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
+func (s *AzureDnsAPI) DNSControlName() string {
+	return "AZURE_DNS"
+}
+
+func (s *AzureDnsAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *AzureDnsAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
 		"SubscriptionID": s.SubscriptionID,
 		"ResourceGroup":  s.ResourceGroup,
 		"TenantID":       s.TenantID,
 		"ClientID":       s.ClientID,
 		"ClientSecret":   s.ClientSecret,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
-func (s *AzureDnsAPI) DNSControlName() string {
-	return "AZURE_DNS"
+	}, nil
 }
 
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &AzureDnsAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Azure DNS",
 		Description: "Cloud computing service operated by Microsoft",
-	})
+	}, RegisterProvider)
 }

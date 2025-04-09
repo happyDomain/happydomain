@@ -133,6 +133,10 @@ next_pool:
 					FingerPrint: sshfp.FingerPrint,
 				})
 			}
+		}
+
+		// Register the use only now, to avoid registering multi-A/AAAA
+		for _, rr := range rrs {
 			a.UseRR(rr, dn, s)
 		}
 	}

@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/hedns"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type HEDNSAPI struct {
@@ -32,7 +34,15 @@ type HEDNSAPI struct {
 	TOTP     string `json:"totp,omitempty" happydomain:"label=TOTP Key,placeholder=xxxxxxxx,description=If you enabled two factor authentication, you need to paste here your TOTP key."`
 }
 
-func (s *HEDNSAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
+func (s *HEDNSAPI) DNSControlName() string {
+	return "HEDNS"
+}
+
+func (s *HEDNSAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *HEDNSAPI) ToDNSControlConfig() (map[string]string, error) {
 	config := map[string]string{
 		"username": s.Username,
 		"password": s.Password,
@@ -42,18 +52,14 @@ func (s *HEDNSAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error)
 		config["totp-key"] = s.TOTP
 	}
 
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
-func (s *HEDNSAPI) DNSControlName() string {
-	return "HEDNS"
+	return config, nil
 }
 
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &HEDNSAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "Hurricane Electric",
 		Description: "American Internet service provider.",
-	})
+	}, RegisterProvider)
 }

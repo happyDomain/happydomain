@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/opensrs"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type OpensrsAPI struct {
@@ -32,24 +34,27 @@ type OpensrsAPI struct {
 	BaseUrl  string `json:"base_url,omitempty" happydomain:"label=Base URL,placeholder=xxxxxxxx,description=Alternate base URL."`
 }
 
-func (s *OpensrsAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"apikey":   s.ApiKey,
-		"username": s.Username,
-		"baseurl":  s.BaseUrl,
-	}
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *OpensrsAPI) DNSControlName() string {
 	return "OPENSRS"
 }
 
+func (s *OpensrsAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *OpensrsAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"apikey":   s.ApiKey,
+		"username": s.Username,
+		"baseurl":  s.BaseUrl,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &OpensrsAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "OpenSRS",
 		Description: "Domain registrar platform and wholesale domain services provider based in Toronto, Canada, and part of Tucows.",
-	})
+	}, RegisterProvider)
 }

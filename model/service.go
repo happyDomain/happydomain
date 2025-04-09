@@ -22,24 +22,28 @@
 package happydns
 
 import (
-	"crypto/sha1"
-	"fmt"
-	"io"
-
-	"github.com/StackExchange/dnscontrol/v4/models"
-	"github.com/miekg/dns"
+	"encoding/json"
 )
 
-// Service represents a service provided by one or more DNS record.
-type Service interface {
+type Service struct {
+	ServiceMeta
+	Service ServiceBody
+}
+
+func (msg *Service) Meta() *ServiceMeta {
+	return &msg.ServiceMeta
+}
+
+// ServiceBody represents a service provided by one or more DNS record.
+type ServiceBody interface {
 	// GetNbResources get the number of main Resources contains in the Service.
 	GetNbResources() int
 
 	// GenComment sum up the content of the Service, in a small usefull string.
 	GenComment() string
 
-	// getRecords retrieves underlying RRs.
-	GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error)
+	// GetRecords retrieves underlying RRs.
+	GetRecords(domain string, ttl uint32, origin string) ([]Record, error)
 }
 
 // ServiceMeta holds the metadata associated to a Service.
@@ -74,43 +78,22 @@ type ServiceMeta struct {
 }
 
 // ServiceCombined combined ServiceMeta + Service
-type ServiceCombined struct {
-	Service
+type ServiceMessage struct {
 	ServiceMeta
+	Service json.RawMessage
 }
 
-// UnmarshalServiceJSON stores a functor defined in services/interfaces.go that
-// can't be defined here due to cyclic imports.
-var UnmarshalServiceJSON func(*ServiceCombined, []byte) error
-
-// UnmarshalJSON points to the implementation of the UnmarshalJSON function for
-// the encoding/json module.
-func (svc *ServiceCombined) UnmarshalJSON(b []byte) error {
-	return UnmarshalServiceJSON(svc, b)
+func (msg *ServiceMessage) Meta() *ServiceMeta {
+	return &msg.ServiceMeta
 }
 
-func ValidateService(svc Service, subdomain, origin string) ([]byte, error) {
-	rrs, err := svc.GetRecords(subdomain, 0, origin)
-	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve records: %w", err)
-	}
+type ServiceRecord struct {
+	Type   string `json:"type"`
+	String string `json:"str"`
+	RR     Record `json:"rr,omitempty"`
+}
 
-	records := make(models.Records, 0, len(rrs))
-	for _, record := range rrs {
-		rc, err := models.RRtoRC(record, origin)
-		if err != nil {
-			return nil, err
-		}
-
-		records = append(records, &rc)
-	}
-
-	if len(records) == 0 {
-		return nil, fmt.Errorf("no record can be generated from your service.")
-	} else {
-		hash := sha1.New()
-		io.WriteString(hash, records[0].String())
-
-		return hash.Sum(nil), nil
-	}
+type ServiceUsecase interface {
+	GetRecords(*Domain, *Zone, *Service) ([]Record, error)
+	ValidateService(ServiceBody, string, string) ([]byte, error)
 }

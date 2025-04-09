@@ -22,8 +22,10 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/StackExchange/dnscontrol/v4/providers"
 	_ "github.com/StackExchange/dnscontrol/v4/providers/inwx"
+
+	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/model"
 )
 
 type INWXAPI struct {
@@ -31,24 +33,26 @@ type INWXAPI struct {
 	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,description=The password associated with you INWX account."`
 }
 
-func (s *INWXAPI) NewDNSServiceProvider() (providers.DNSServiceProvider, error) {
-	config := map[string]string{
-		"username": s.Username,
-		"password": s.Password,
-	}
-
-	return providers.CreateDNSProvider(s.DNSControlName(), config, nil)
-}
-
 func (s *INWXAPI) DNSControlName() string {
 	return "INWX"
 }
 
+func (s *INWXAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *INWXAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"username": s.Username,
+		"password": s.Password,
+	}, nil
+}
+
 func init() {
-	RegisterProvider(func() Provider {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &INWXAPI{}
-	}, ProviderInfos{
+	}, happydns.ProviderInfos{
 		Name:        "INWX.de",
 		Description: "Berlin-based domain registrar.",
-	})
+	}, RegisterProvider)
 }
