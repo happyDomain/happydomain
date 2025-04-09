@@ -26,13 +26,13 @@ import (
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/utils"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type GoogleVerif struct {
-	Record *dns.TXT `json:"txt"`
+	SiteVerification string `happydomain:"label=Site Verification"`
 }
 
 func (s *GoogleVerif) GetNbResources() int {
@@ -40,19 +40,21 @@ func (s *GoogleVerif) GetNbResources() int {
 }
 
 func (s *GoogleVerif) GenComment(origin string) string {
-	return strings.TrimPrefix(strings.Join(s.Record.Txt, ""), "google-site-verification=")
+	return s.SiteVerification
 }
 
-func (s *GoogleVerif) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
-	return []dns.RR{s.Record}, nil
+func (s *GoogleVerif) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	rr := utils.NewRecord(domain, "TXT", ttl, origin)
+	rr.(*dns.TXT).Txt = []string{"google-site-verification=" + strings.TrimPrefix(s.SiteVerification, "google-site-verification=")}
+	return []happydns.Record{rr}, nil
 }
 
 func googleverification_analyze(a *svcs.Analyzer) error {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT}) {
-		domain := record.NameFQDN
-		if record.Type == "TXT" && strings.HasPrefix(record.GetTargetTXTJoined(), "google-site-verification=") {
+		domain := record.Header().Name
+		if txt, ok := record.(*dns.TXT); ok && strings.HasPrefix(strings.Join(txt.Txt, ""), "google-site-verification=") {
 			a.UseRR(record, domain, &GoogleVerif{
-				Record: utils.RRRelative(record.ToRR(), domain).(*dns.TXT),
+				SiteVerification: strings.TrimPrefix(strings.Join(txt.Txt, ""), "google-site-verification="),
 			})
 		}
 	}
@@ -61,14 +63,14 @@ func googleverification_analyze(a *svcs.Analyzer) error {
 
 func init() {
 	svcs.RegisterService(
-		func() happydns.Service {
+		func() happydns.ServiceBody {
 			return &GoogleVerif{}
 		},
 		googleverification_analyze,
-		svcs.ServiceInfos{
+		happydns.ServiceInfos{
 			Name:        "Google Verification",
 			Description: "Temporary record to prove that you control the domain.",
-			Family:      svcs.Abstract,
+			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"verification",
 			},

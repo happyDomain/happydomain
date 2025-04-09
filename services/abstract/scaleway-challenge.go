@@ -26,13 +26,13 @@ import (
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/utils"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type ScalewayChallenge struct {
-	Record *dns.TXT `json:"txt"`
+	Challenge string
 }
 
 func (s *ScalewayChallenge) GetNbResources() int {
@@ -40,19 +40,21 @@ func (s *ScalewayChallenge) GetNbResources() int {
 }
 
 func (s *ScalewayChallenge) GenComment(origin string) string {
-	return strings.Join(s.Record.Txt, "")
+	return s.Challenge
 }
 
-func (s *ScalewayChallenge) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
-	return []dns.RR{s.Record}, nil
+func (s *ScalewayChallenge) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	rr := utils.NewRecord(utils.DomainJoin("_scaleway-challenge", domain), "TXT", ttl, origin)
+	rr.(*dns.TXT).Txt = []string{s.Challenge}
+	return []happydns.Record{rr}, nil
 }
 
 func scalewaychallenge_analyze(a *svcs.Analyzer) error {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_scaleway-challenge"}) {
-		domain := strings.TrimPrefix(record.NameFQDN, "_scaleway-challenge.")
-		if record.Type == "TXT" {
+		domain := strings.TrimPrefix(record.Header().Name, "_scaleway-challenge.")
+		if txt, ok := record.(*dns.TXT); ok {
 			a.UseRR(record, domain, &ScalewayChallenge{
-				Record: utils.RRRelative(record.ToRR(), domain).(*dns.TXT),
+				Challenge: strings.Join(txt.Txt, ""),
 			})
 		}
 	}
@@ -61,18 +63,18 @@ func scalewaychallenge_analyze(a *svcs.Analyzer) error {
 
 func init() {
 	svcs.RegisterService(
-		func() happydns.Service {
+		func() happydns.ServiceBody {
 			return &ScalewayChallenge{}
 		},
 		scalewaychallenge_analyze,
-		svcs.ServiceInfos{
+		happydns.ServiceInfos{
 			Name:        "Scaleway Challenge",
 			Description: "Temporary record to prove that you control the domain.",
-			Family:      svcs.Abstract,
+			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"verification",
 			},
-			Restrictions: svcs.ServiceRestrictions{
+			Restrictions: happydns.ServiceRestrictions{
 				NearAlone: true,
 			},
 		},

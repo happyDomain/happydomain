@@ -27,18 +27,18 @@ import (
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/utils"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type Delegation struct {
-	NameServers []*dns.NS `json:"ns"`
-	DS          []*dns.DS `json:"ds"`
+	NameServers []string  `json:"ns" happydomain:"label=Name Servers"`
+	DS          []svcs.DS `json:"ds" happydomain:"label=Delegation Signer"`
 }
 
 func (s *Delegation) GetNbResources() int {
-	return len(s.NameServers) + len(s.DS)
+	return len(s.NameServers)
 }
 
 func (s *Delegation) GenComment(origin string) string {
@@ -50,14 +50,20 @@ func (s *Delegation) GenComment(origin string) string {
 	return fmt.Sprintf("%d name servers"+ds, len(s.NameServers))
 }
 
-func (s *Delegation) GetRecords(domain string, ttl uint32, origin string) (rrs []dns.RR, e error) {
+func (s *Delegation) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
 	for _, r := range s.NameServers {
-		ns := *r
-		ns.Ns = utils.DomainFQDN(ns.Ns, origin)
-		rrs = append(rrs, &ns)
+		ns := utils.NewRecord(utils.DomainJoin(domain), "NS", ttl, origin)
+		ns.(*dns.NS).Ns = utils.DomainFQDN(r, origin)
+		rrs = append(rrs, ns)
 	}
 	for _, ds := range s.DS {
-		rrs = append(rrs, ds)
+		rr := utils.NewRecord(utils.DomainJoin(domain), "DS", ttl, origin)
+		rr.(*dns.DS).KeyTag = ds.KeyTag
+		rr.(*dns.DS).Algorithm = ds.Algorithm
+		rr.(*dns.DS).DigestType = ds.DigestType
+		rr.(*dns.DS).Digest = ds.Digest
+
+		rrs = append(rrs, rr)
 	}
 	return
 }
@@ -66,32 +72,38 @@ func delegation_analyze(a *svcs.Analyzer) error {
 	delegations := map[string]*Delegation{}
 
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS}) {
-		if record.NameFQDN == strings.TrimSuffix(a.GetOrigin(), ".") {
+		if record.Header().Name == strings.TrimSuffix(a.GetOrigin(), ".") {
 			continue
 		}
 
-		if record.Type == "NS" {
-			if _, ok := delegations[record.NameFQDN]; !ok {
-				delegations[record.NameFQDN] = &Delegation{}
+		if ns, ok := record.(*dns.NS); ok {
+			dn := record.Header().Name
+			if _, ok := delegations[record.Header().Name]; !ok {
+				delegations[dn] = &Delegation{}
 			}
 
 			// Make record relative
-			record.SetTarget(utils.DomainRelative(record.GetTargetField(), a.GetOrigin()))
+			ns.Ns = utils.DomainRelative(ns.Ns, a.GetOrigin())
 
-			delegations[record.NameFQDN].NameServers = append(delegations[record.NameFQDN].NameServers, utils.RRRelative(record.ToRR(), record.NameFQDN).(*dns.NS))
+			delegations[dn].NameServers = append(delegations[dn].NameServers, ns.Ns)
 
 			a.UseRR(
 				record,
-				record.NameFQDN,
-				delegations[record.NameFQDN],
+				record.Header().Name,
+				delegations[dn],
 			)
 		}
 	}
 
 	for subdomain := range delegations {
 		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeDS, Domain: subdomain}) {
-			if record.Type == "DS" {
-				delegations[subdomain].DS = append(delegations[subdomain].DS, utils.RRRelative(record.ToRR(), subdomain).(*dns.DS))
+			if ds, ok := record.(*dns.DS); ok {
+				delegations[subdomain].DS = append(delegations[subdomain].DS, svcs.DS{
+					KeyTag:     ds.KeyTag,
+					Algorithm:  ds.Algorithm,
+					DigestType: ds.DigestType,
+					Digest:     ds.Digest,
+				})
 
 				a.UseRR(
 					record,
@@ -107,14 +119,14 @@ func delegation_analyze(a *svcs.Analyzer) error {
 
 func init() {
 	svcs.RegisterService(
-		func() happydns.Service {
+		func() happydns.ServiceBody {
 			return &Delegation{}
 		},
 		delegation_analyze,
-		svcs.ServiceInfos{
+		happydns.ServiceInfos{
 			Name:        "Delegation",
 			Description: "Delegate this subdomain to another name server",
-			Family:      svcs.Abstract,
+			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"domain name",
 			},
@@ -122,7 +134,7 @@ func init() {
 				dns.TypeNS,
 				dns.TypeDS,
 			},
-			Restrictions: svcs.ServiceRestrictions{
+			Restrictions: happydns.ServiceRestrictions{
 				Alone:       true,
 				Leaf:        true,
 				ExclusiveRR: []string{"abstract.Origin"},

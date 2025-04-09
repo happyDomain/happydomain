@@ -22,92 +22,127 @@
 package svcs
 
 import (
-	"encoding/json"
 	"fmt"
+	"log"
+	"reflect"
+	"sort"
+	"strings"
 
 	"git.happydns.org/happyDomain/model"
 )
 
-type ServiceRestrictions struct {
-	// Alone restricts the service to be the only one for a given subdomain.
-	Alone bool `json:"alone,omitempty"`
-
-	// ExclusiveRR restricts the service to be present along with others given types.
-	ExclusiveRR []string `json:"exclusive,omitempty"`
-
-	// GLUE allows a service to be present under Leaf, as GLUE record.
-	GLUE bool `json:"glue,omitempty"`
-
-	// Leaf restricts the creation of subdomains under this kind of service (blocks NearAlone).
-	Leaf bool `json:"leaf,omitempty"`
-
-	// NearAlone allows a service to be present along with Alone restricted services (eg. services that will create sub-subdomain from their given subdomain).
-	NearAlone bool `json:"nearAlone,omitempty"`
-
-	// NeedTypes restricts the service to sources that are compatibles with ALL the given types.
-	NeedTypes []uint16 `json:"needTypes,omitempty"`
-
-	// RootOnly restricts the service to be present at the root of the domain only.
-	RootOnly bool `json:"rootOnly,omitempty"`
-
-	// Single restricts the service to be present only once per subdomain.
-	Single bool `json:"single,omitempty"`
+type Svc struct {
+	Creator  happydns.ServiceCreator
+	Analyzer ServiceAnalyzer
+	Infos    happydns.ServiceInfos
+	Weight   uint32
 }
 
-type ServiceInfos struct {
-	Name         string              `json:"name"`
-	Type         string              `json:"_svctype"`
-	Icon         string              `json:"_svcicon,omitempty"`
-	Description  string              `json:"description"`
-	Family       string              `json:"family"`
-	Categories   []string            `json:"categories"`
-	RecordTypes  []uint16            `json:"record_types"`
-	Tabs         bool                `json:"tabs,omitempty"`
-	Restrictions ServiceRestrictions `json:"restrictions,omitempty"`
-}
+type ByWeight []*Svc
 
-type serviceCombined struct {
-	Service happydns.Service
-}
+func (a ByWeight) Len() int           { return len(a) }
+func (a ByWeight) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByWeight) Less(i, j int) bool { return a[i].Weight < a[j].Weight }
 
-type ServiceNotFoundError struct {
-	name string
-}
+var (
+	services         map[string]*Svc                       = map[string]*Svc{}
+	subServices      map[string]happydns.SubServiceCreator = map[string]happydns.SubServiceCreator{}
+	pathToSvcsModule string                                = "git.happydns.org/happyDomain/services"
+	ordered_services []*Svc
+)
 
-func (err ServiceNotFoundError) Error() string {
-	return fmt.Sprintf("Unable to find corresponding service for `%s`.", err.name)
-}
+func RegisterService(creator happydns.ServiceCreator, analyzer ServiceAnalyzer, infos happydns.ServiceInfos, weight uint32, aliases ...string) {
+	// Invalidate ordered_services, which serve as cache
+	ordered_services = nil
 
-// UnmarshalServiceJSON implements the UnmarshalJSON function for the
-// encoding/json module.
-func UnmarshalServiceJSON(svc *happydns.ServiceCombined, b []byte) (err error) {
-	var svcType happydns.ServiceMeta
-	err = json.Unmarshal(b, &svcType)
-	if err != nil {
-		return
+	baseType := reflect.Indirect(reflect.ValueOf(creator())).Type()
+	name := baseType.String()
+	log.Println("Registering new service:", name)
+
+	// Override given parameters by true one
+	infos.Type = name
+	if _, ok := Icons[name]; ok {
+		infos.Icon = "/api/service_specs/" + name + "/icon.png"
 	}
 
-	var tsvc happydns.Service
-	tsvc, err = FindService(svcType.Type)
-	if err != nil {
-		return
+	svc := &Svc{
+		creator,
+		analyzer,
+		infos,
+		weight,
+	}
+	services[name] = svc
+
+	// Register aliases
+	for _, alias := range aliases {
+		services[alias] = svc
 	}
 
-	mySvc := &serviceCombined{
-		tsvc,
-	}
-
-	err = json.Unmarshal(b, mySvc)
-
-	svc.Service = tsvc
-	svc.ServiceMeta = svcType
-
-	return
+	// Register sub types
+	RegisterSubServices(baseType)
 }
 
-func init() {
-	// Register the UnmarshalServiceJSON variable thats points to the
-	// Service's UnmarshalJSON implementation that can't be made in model
-	// module due to cyclic dependancy.
-	happydns.UnmarshalServiceJSON = UnmarshalServiceJSON
+func RegisterSubServices(t reflect.Type) {
+	if t.Kind() == reflect.Struct && strings.HasPrefix(t.PkgPath(), pathToSvcsModule) {
+		if _, ok := subServices[t.String()]; !ok {
+			log.Println("Registering new subservice:", t.String())
+
+			subServices[t.String()] = func() interface{} {
+				return reflect.New(t).Interface()
+			}
+		}
+
+		for i := 0; i < t.NumField(); i += 1 {
+			RegisterSubServices(t.Field(i).Type)
+		}
+	} else if t.Kind() == reflect.Array || t.Kind() == reflect.Map || t.Kind() == reflect.Ptr || t.Kind() == reflect.Slice {
+		RegisterSubServices(t.Elem())
+	} else if t.PkgPath() == pathToSvcsModule {
+		if _, ok := subServices[t.String()]; ok {
+			return
+		}
+
+		log.Println("Registering new subservice:", t.String())
+
+		subServices[t.String()] = func() interface{} {
+			return reflect.New(t).Interface()
+		}
+	}
+}
+
+func OrderedServices() []*Svc {
+	if ordered_services == nil {
+		// Create the list
+		for _, svc := range services {
+			ordered_services = append(ordered_services, svc)
+		}
+
+		// Sort the list
+		sort.Sort(ByWeight(ordered_services))
+	}
+
+	return ordered_services
+}
+
+func ListServices() *map[string]*Svc {
+	return &services
+}
+
+func FindService(name string) (happydns.ServiceBody, error) {
+	svc, ok := services[name]
+	if !ok {
+		return nil, happydns.NewServiceNotFoundError(name)
+	}
+
+	return svc.Creator(), nil
+}
+
+func FindSubService(name string) (interface{}, error) {
+	if svc, ok := services[name]; ok {
+		return svc.Creator(), nil
+	} else if ssvc, ok := subServices[name]; ok {
+		return ssvc(), nil
+	} else {
+		return nil, fmt.Errorf("Unable to find corresponding service `%s`.", name)
+	}
 }

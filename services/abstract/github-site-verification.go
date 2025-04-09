@@ -22,17 +22,19 @@
 package abstract
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/utils"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type GithubOrgVerif struct {
-	Record *dns.TXT `json:"txt"`
+	OrganizationName string `happydomain:"label=Organization Name"`
+	Code             string `happydomain:"label=Code given by GitHub"`
 }
 
 func (s *GithubOrgVerif) GetNbResources() int {
@@ -40,26 +42,27 @@ func (s *GithubOrgVerif) GetNbResources() int {
 }
 
 func (s *GithubOrgVerif) GenComment(origin string) string {
-	dnparts := strings.Split(s.Record.Hdr.Name, ".")
-	if len(dnparts) > 0 {
-		return strings.TrimSuffix(strings.TrimPrefix(dnparts[0], "_github-challenge-"), "-org")
-	}
-	return ""
+	return s.OrganizationName
 }
 
-func (s *GithubOrgVerif) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
-	return []dns.RR{s.Record}, nil
+func (s *GithubOrgVerif) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	rr := utils.NewRecord(fmt.Sprintf("_github-challenge-%s-org.", strings.TrimSuffix(strings.TrimPrefix(s.OrganizationName, "_github-challenge-"), "-org"))+domain, "TXT", ttl, origin)
+	rr.(*dns.TXT).Txt = []string{s.Code}
+
+	return []happydns.Record{rr}, nil
 }
 
 func githubverification_analyze(a *svcs.Analyzer) error {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_github-challenge-"}) {
-		dnparts := strings.Split(record.NameFQDN, ".")
+		dnparts := strings.Split(record.Header().Name, ".")
 		if len(dnparts) > 1 {
 			domain := strings.Join(dnparts[1:], ".")
+			org := strings.TrimSuffix(strings.TrimPrefix(dnparts[0], "_github-challenge-"), "-org")
 
-			if record.Type == "TXT" {
+			if txt, ok := record.(*dns.TXT); ok {
 				a.UseRR(record, domain, &GithubOrgVerif{
-					Record: utils.RRRelative(record.ToRR(), domain).(*dns.TXT),
+					OrganizationName: org,
+					Code:             strings.Join(txt.Txt, ""),
 				})
 			}
 		}
@@ -69,18 +72,18 @@ func githubverification_analyze(a *svcs.Analyzer) error {
 
 func init() {
 	svcs.RegisterService(
-		func() happydns.Service {
+		func() happydns.ServiceBody {
 			return &GithubOrgVerif{}
 		},
 		githubverification_analyze,
-		svcs.ServiceInfos{
+		happydns.ServiceInfos{
 			Name:        "GitHub Verification",
 			Description: "Temporary record to prove that you control the domain.",
-			Family:      svcs.Abstract,
+			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"verification",
 			},
-			Restrictions: svcs.ServiceRestrictions{
+			Restrictions: happydns.ServiceRestrictions{
 				NearAlone: true,
 			},
 		},

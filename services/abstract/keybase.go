@@ -26,13 +26,13 @@ import (
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/utils"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type KeybaseVerif struct {
-	Record *dns.TXT `json:"txt"`
+	SiteVerification string `happydomain:"label=Site Verification"`
 }
 
 func (s *KeybaseVerif) GetNbResources() int {
@@ -40,19 +40,21 @@ func (s *KeybaseVerif) GetNbResources() int {
 }
 
 func (s *KeybaseVerif) GenComment(origin string) string {
-	return strings.TrimPrefix(strings.Join(s.Record.Txt, ""), "keybase-site-verification=")
+	return s.SiteVerification
 }
 
-func (s *KeybaseVerif) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
-	return []dns.RR{s.Record}, nil
+func (s *KeybaseVerif) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	rr := utils.NewRecord(utils.DomainJoin("_keybase", domain), "TXT", ttl, origin)
+	rr.(*dns.TXT).Txt = []string{"keybase-site-verification=" + strings.TrimPrefix(s.SiteVerification, "keybase-site-verification=")}
+	return []happydns.Record{rr}, nil
 }
 
 func keybaseverification_analyze(a *svcs.Analyzer) error {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_keybase"}) {
-		domain := strings.TrimPrefix(record.NameFQDN, "_keybase.")
-		if record.Type == "TXT" {
+		domain := strings.TrimPrefix(record.Header().Name, "_keybase.")
+		if txt, ok := record.(*dns.TXT); ok {
 			a.UseRR(record, domain, &KeybaseVerif{
-				Record: utils.RRRelative(record.ToRR(), domain).(*dns.TXT),
+				SiteVerification: strings.TrimPrefix(strings.Join(txt.Txt, ""), "keybase-site-verification="),
 			})
 		}
 	}
@@ -61,18 +63,18 @@ func keybaseverification_analyze(a *svcs.Analyzer) error {
 
 func init() {
 	svcs.RegisterService(
-		func() happydns.Service {
+		func() happydns.ServiceBody {
 			return &KeybaseVerif{}
 		},
 		keybaseverification_analyze,
-		svcs.ServiceInfos{
+		happydns.ServiceInfos{
 			Name:        "Keybase Verification",
 			Description: "Temporary record to prove that you control the domain.",
-			Family:      svcs.Abstract,
+			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"verification",
 			},
-			Restrictions: svcs.ServiceRestrictions{
+			Restrictions: happydns.ServiceRestrictions{
 				NearAlone: true,
 			},
 		},

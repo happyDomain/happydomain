@@ -26,12 +26,12 @@ import (
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/utils"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type CNAME struct {
-	Record *dns.CNAME `json:"cname"`
+	Target string
 }
 
 func (s *CNAME) GetNbResources() int {
@@ -39,13 +39,13 @@ func (s *CNAME) GetNbResources() int {
 }
 
 func (s *CNAME) GenComment(origin string) string {
-	return strings.TrimSuffix(s.Record.Target, "."+origin)
+	return strings.TrimSuffix(s.Target, "."+origin)
 }
 
-func (s *CNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []dns.RR, e error) {
-	cname := *s.Record
-	cname.Target = utils.DomainFQDN(cname.Target, origin)
-	return []dns.RR{&cname}, nil
+func (s *CNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
+	cname := utils.NewRecord(domain, "CNAME", ttl, origin)
+	cname.(*dns.CNAME).Target = utils.DomainFQDN(s.Target, origin)
+	return []happydns.Record{cname}, nil
 }
 
 type SpecialCNAME struct {
@@ -60,22 +60,22 @@ func (s *SpecialCNAME) GenComment(origin string) string {
 	return "(" + strings.TrimSuffix(s.Record.Hdr.Name, "."+origin) + ") -> " + strings.TrimSuffix(s.Record.Target, "."+origin)
 }
 
-func (s *SpecialCNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []dns.RR, e error) {
+func (s *SpecialCNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
 	cname := *s.Record
 	cname.Target = utils.DomainFQDN(cname.Target, origin)
-	return []dns.RR{&cname}, nil
+	return []happydns.Record{&cname}, nil
 }
 
 func specialalias_analyze(a *Analyzer) error {
 	// Try handle specials domains using CNAME
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME, Prefix: "_"}) {
-		subdomains := SRV_DOMAIN.FindStringSubmatch(record.NameFQDN)
-		if record.Type == "CNAME" && len(subdomains) == 4 {
+		subdomains := SRV_DOMAIN.FindStringSubmatch(record.Header().Name)
+		if cname, ok := record.(*dns.CNAME); ok && len(subdomains) == 4 {
 			// Make record relative
-			record.SetTarget(utils.DomainRelative(record.GetTargetField(), a.GetOrigin()))
+			cname.Target = utils.DomainRelative(cname.Target, a.GetOrigin())
 
 			a.UseRR(record, subdomains[3], &SpecialCNAME{
-				Record: utils.RRRelative(record.ToRR(), subdomains[3]).(*dns.CNAME),
+				Record: utils.RRRelative(cname, a.GetOrigin()).(*dns.CNAME),
 			})
 		}
 	}
@@ -84,12 +84,12 @@ func specialalias_analyze(a *Analyzer) error {
 
 func alias_analyze(a *Analyzer) error {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME}) {
-		if record.Type == "CNAME" {
+		if cname, ok := record.(*dns.CNAME); ok {
 			// Make record relative
-			record.SetTarget(utils.DomainRelative(record.GetTargetField(), a.GetOrigin()))
+			cname.Target = utils.DomainRelative(cname.Target, a.GetOrigin())
 
-			a.UseRR(record, record.NameFQDN, &CNAME{
-				Record: utils.RRRelative(record.ToRR(), record.NameFQDN).(*dns.CNAME),
+			a.UseRR(record, record.Header().Name, &CNAME{
+				Target: cname.Target,
 			})
 		}
 	}
@@ -98,17 +98,17 @@ func alias_analyze(a *Analyzer) error {
 
 func init() {
 	RegisterService(
-		func() happydns.Service {
+		func() happydns.ServiceBody {
 			return &SpecialCNAME{}
 		},
 		specialalias_analyze,
-		ServiceInfos{
+		happydns.ServiceInfos{
 			Name:        "SubAlias",
 			Description: "A service alias to another domain/service.",
 			Categories: []string{
 				"alias",
 			},
-			Restrictions: ServiceRestrictions{
+			Restrictions: happydns.ServiceRestrictions{
 				NearAlone: true,
 				NeedTypes: []uint16{
 					dns.TypeCNAME,
@@ -118,11 +118,11 @@ func init() {
 		99999997,
 	)
 	RegisterService(
-		func() happydns.Service {
+		func() happydns.ServiceBody {
 			return &CNAME{}
 		},
 		alias_analyze,
-		ServiceInfos{
+		happydns.ServiceInfos{
 			Name:        "Alias",
 			Description: "Maps an alias to another (canonical) domain.",
 			Categories: []string{
@@ -131,7 +131,7 @@ func init() {
 			RecordTypes: []uint16{
 				dns.TypeCNAME,
 			},
-			Restrictions: ServiceRestrictions{
+			Restrictions: happydns.ServiceRestrictions{
 				Alone:  true,
 				Single: true,
 				NeedTypes: []uint16{

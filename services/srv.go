@@ -24,15 +24,53 @@ package svcs
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/utils"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/utils"
 )
 
+type SRV struct {
+	Target   string `json:"target"`
+	Port     uint16 `json:"port"`
+	Weight   uint16 `json:"weight"`
+	Priority uint16 `json:"priority"`
+}
+
+func (s *SRV) GetNbResources() int {
+	return 1
+}
+
+func (s *SRV) GenComment(origin string) string {
+	return fmt.Sprintf("%s:%d", strings.TrimSuffix(s.Target, "."+origin), s.Port)
+}
+
+func (s *SRV) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	rr := utils.NewRecord(domain, "SRV", ttl, origin)
+	rr.(*dns.SRV).Priority = s.Priority
+	rr.(*dns.SRV).Weight = s.Weight
+	rr.(*dns.SRV).Port = s.Port
+	rr.(*dns.SRV).Target = s.Target
+	return []happydns.Record{rr}, nil
+}
+
+func ParseSRV(record *dns.SRV) (ret *SRV) {
+	if record.Header().Rrtype == dns.TypeSRV {
+		ret = &SRV{
+			Priority: record.Priority,
+			Weight:   record.Weight,
+			Port:     record.Port,
+			Target:   record.Target,
+		}
+	}
+
+	return
+}
+
 var (
-	SRV_DOMAIN = regexp.MustCompile(`^_([^.]+)\._(tcp|udp)\.(.*)$`)
+	SRV_DOMAIN = regexp.MustCompile(`^_([^.]+)\._(tcp|udp)(?:\.(.*))?$`)
 )
 
 type UnknownSRV struct {
@@ -52,8 +90,8 @@ func (s *UnknownSRV) GenComment(origin string) string {
 	return fmt.Sprintf("%s (%s)", subdomains[1], subdomains[2])
 }
 
-func (s *UnknownSRV) GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error) {
-	rrs := make([]dns.RR, len(s.Records))
+func (s *UnknownSRV) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	rrs := make([]happydns.Record, len(s.Records))
 	for i, r := range s.Records {
 		srv := *r
 		srv.Target = utils.DomainFQDN(srv.Target, origin)
@@ -66,7 +104,7 @@ func srv_analyze(a *Analyzer) error {
 	srvDomains := map[string]map[string]*UnknownSRV{}
 
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeSRV}) {
-		subdomains := SRV_DOMAIN.FindStringSubmatch(record.NameFQDN)
+		subdomains := SRV_DOMAIN.FindStringSubmatch(record.Header().Name)
 		svc := subdomains[1] + "." + subdomains[2]
 		domain := subdomains[3]
 
@@ -78,10 +116,15 @@ func srv_analyze(a *Analyzer) error {
 			srvDomains[domain][svc] = &UnknownSRV{}
 		}
 
-		// Make record relative
-		record.SetTarget(utils.DomainRelative(record.GetTargetField(), a.GetOrigin()))
+		srv, ok := record.(*dns.SRV)
+		if !ok {
+			continue
+		}
 
-		srvDomains[domain][svc].Records = append(srvDomains[domain][svc].Records, utils.RRRelative(record.ToRR(), subdomains[3]).(*dns.SRV))
+		// Make record relative
+		srv.Target = utils.DomainRelative(srv.Target, a.GetOrigin())
+
+		srvDomains[domain][svc].Records = append(srvDomains[domain][svc].Records, utils.RRRelative(record, a.GetOrigin()).(*dns.SRV))
 
 		a.UseRR(
 			record,
@@ -94,11 +137,11 @@ func srv_analyze(a *Analyzer) error {
 
 func init() {
 	RegisterService(
-		func() happydns.Service {
+		func() happydns.ServiceBody {
 			return &UnknownSRV{}
 		},
 		srv_analyze,
-		ServiceInfos{
+		happydns.ServiceInfos{
 			Name:        "Service Record",
 			Description: "Indicates to dedicated software the existance of the given service in the domain.",
 			Categories: []string{
@@ -107,7 +150,7 @@ func init() {
 			RecordTypes: []uint16{
 				dns.TypeSRV,
 			},
-			Restrictions: ServiceRestrictions{
+			Restrictions: happydns.ServiceRestrictions{
 				NearAlone: true,
 				NeedTypes: []uint16{
 					dns.TypeSRV,

@@ -24,19 +24,19 @@ package abstract
 import (
 	"bytes"
 	"fmt"
+	"net"
 
-	"github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/utils"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/utils"
 )
 
 type Server struct {
-	A     *dns.A       `json:"A,omitempty"`
-	AAAA  *dns.AAAA    `json:"AAAA,omitempty"`
-	SSHFP []*dns.SSHFP `json:"SSHFP,omitempty"`
+	A     *net.IP       `json:"A,omitempty" happydomain:"label=ipv4,description=Server's IPv4"`
+	AAAA  *net.IP       `json:"AAAA,omitempty" happydomain:"label=ipv6,description=Server's IPv6"`
+	SSHFP []*svcs.SSHFP `json:"SSHFP,omitempty" happydomain:"label=SSH Fingerprint,description=Server's SSH fingerprint"`
 }
 
 func (s *Server) GetNbResources() int {
@@ -56,15 +56,15 @@ func (s *Server) GetNbResources() int {
 func (s *Server) GenComment(origin string) string {
 	var buffer bytes.Buffer
 
-	if s.A != nil && len(s.A.A) != 0 {
-		buffer.WriteString(s.A.A.String())
-		if s.AAAA != nil && len(s.AAAA.AAAA) != 0 {
+	if s.A != nil && len(*s.A) != 0 {
+		buffer.WriteString(s.A.String())
+		if s.AAAA != nil && len(*s.AAAA) != 0 {
 			buffer.WriteString("; ")
 		}
 	}
 
-	if s.AAAA != nil && len(s.AAAA.AAAA) != 0 {
-		buffer.WriteString(s.AAAA.AAAA.String())
+	if s.AAAA != nil && len(*s.AAAA) != 0 {
+		buffer.WriteString(s.AAAA.String())
 	}
 
 	if s.SSHFP != nil {
@@ -74,26 +74,35 @@ func (s *Server) GenComment(origin string) string {
 	return buffer.String()
 }
 
-func (s *Server) GetRecords(domain string, ttl uint32, origin string) (rrs []dns.RR, e error) {
-	if s.A != nil && len(s.A.A) != 0 {
-		rrs = append(rrs, s.A)
-	}
-	if s.AAAA != nil && len(s.AAAA.AAAA) != 0 {
-		rrs = append(rrs, s.AAAA)
-	}
+func (s *Server) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
+	if s.A != nil && len(*s.A) != 0 {
+		rr := utils.NewRecord(domain, "A", ttl, origin)
+		rr.(*dns.A).A = *s.A
 
-	for _, sshfp := range s.SSHFP {
-		rrs = append(rrs, sshfp)
+		rrs = append(rrs, rr)
+	}
+	if s.AAAA != nil && len(*s.AAAA) != 0 {
+		rr := utils.NewRecord(domain, "AAAA", ttl, origin)
+		rr.(*dns.AAAA).AAAA = *s.AAAA
+
+		rrs = append(rrs, rr)
+	}
+	if len(s.SSHFP) > 0 {
+		sshfp_rrs, err := (&svcs.SSHFPs{SSHFP: s.SSHFP}).GetRecords(domain, ttl, origin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate SSHFP records: %w", err)
+		}
+		rrs = append(rrs, sshfp_rrs...)
 	}
 
 	return
 }
 
 func server_analyze(a *svcs.Analyzer) error {
-	pool := map[string]models.Records{}
+	pool := map[string][]happydns.Record{}
 
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeA}, svcs.AnalyzerRecordFilter{Type: dns.TypeAAAA}, svcs.AnalyzerRecordFilter{Type: dns.TypeSSHFP}) {
-		domain := record.NameFQDN
+		domain := record.Header().Name
 
 		pool[domain] = append(pool[domain], record)
 	}
@@ -103,34 +112,27 @@ next_pool:
 		s := &Server{}
 
 		for _, rr := range rrs {
-			if rr.Type == "A" {
+			if a, ok := rr.(*dns.A); ok {
 				if s.A != nil {
 					continue next_pool
 				}
 
-				s.A = rr.ToRR().(*dns.A)
-			} else if rr.Type == "AAAA" {
+				addr := a.A
+				s.A = &addr
+			} else if aaaa, ok := rr.(*dns.AAAA); ok {
 				if s.AAAA != nil {
 					continue next_pool
 				}
 
-				s.AAAA = rr.ToRR().(*dns.AAAA)
-			} else if rr.Type == "SSHFP" {
-				s.SSHFP = append(s.SSHFP, rr.ToRR().(*dns.SSHFP))
+				addr := aaaa.AAAA
+				s.AAAA = &addr
+			} else if sshfp, ok := rr.(*dns.SSHFP); ok {
+				s.SSHFP = append(s.SSHFP, &svcs.SSHFP{
+					Algorithm:   sshfp.Algorithm,
+					Type:        sshfp.Type,
+					FingerPrint: sshfp.FingerPrint,
+				})
 			}
-		}
-
-		for _, rr := range rrs {
-			if s.A != nil {
-				s.A = utils.RRRelative(s.A, dn).(*dns.A)
-			}
-			if s.AAAA != nil {
-				s.AAAA = utils.RRRelative(s.AAAA, dn).(*dns.AAAA)
-			}
-			for i := range s.SSHFP {
-				s.SSHFP[i] = utils.RRRelative(s.SSHFP[i], dn).(*dns.SSHFP)
-			}
-
 			a.UseRR(rr, dn, s)
 		}
 	}
@@ -140,14 +142,14 @@ next_pool:
 
 func init() {
 	svcs.RegisterService(
-		func() happydns.Service {
+		func() happydns.ServiceBody {
 			return &Server{}
 		},
 		server_analyze,
-		svcs.ServiceInfos{
+		happydns.ServiceInfos{
 			Name:        "Server",
 			Description: "A system to respond to specific requests.",
-			Family:      svcs.Abstract,
+			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"server",
 			},
@@ -156,7 +158,7 @@ func init() {
 				dns.TypeAAAA,
 				dns.TypeSSHFP,
 			},
-			Restrictions: svcs.ServiceRestrictions{
+			Restrictions: happydns.ServiceRestrictions{
 				GLUE: true,
 			},
 		},
