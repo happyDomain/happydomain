@@ -85,7 +85,7 @@ corrections:
 				if err != nil {
 					log.Printf("%s: unable to apply correction: %s", domain.DomainName, err.Error())
 					du.store.CreateDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed record update (%s): %s", cr.Msg, err.Error())))
-					errs = multierr.Append(errs, fmt.Errorf("%s: %w", cr.Msg, err))
+					errs = errors.Join(errs, fmt.Errorf("%s: %w", cr.Msg, err))
 					// Stop the zone update if we didn't change it yet
 					if i == 0 {
 						break corrections

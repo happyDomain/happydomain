@@ -22,12 +22,12 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/multierr"
 
 	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/internal/storage"
@@ -119,14 +119,14 @@ func (bc *BackupController) DoBackup() (ret happydns.Backup) {
 func (bc *BackupController) DoRestore(backup *happydns.Backup) (errs error) {
 	// UserAuth
 	for _, ua := range backup.UsersAuth {
-		errs = multierr.Combine(errs, bc.store.UpdateAuthUser(ua))
+		errs = errors.Join(errs, bc.store.UpdateAuthUser(ua))
 	}
 
 	// Users
 	for _, user := range backup.Users {
 		err := bc.store.CreateOrUpdateUser(user)
 		if err != nil {
-			errs = multierr.Combine(errs, err)
+			errs = errors.Join(errs, err)
 		}
 	}
 
@@ -134,21 +134,21 @@ func (bc *BackupController) DoRestore(backup *happydns.Backup) (errs error) {
 	for _, provider := range backup.Providers {
 		p, err := usecase.ParseProvider(provider)
 		if err != nil {
-			errs = multierr.Combine(errs, err)
+			errs = errors.Join(errs, err)
 		}
 
-		errs = multierr.Combine(errs, bc.store.UpdateProvider(p))
+		errs = errors.Join(errs, bc.store.UpdateProvider(p))
 	}
 
 	// Domains
 	for _, domain := range backup.Domains {
 		err := bc.store.UpdateDomain(domain)
 		if err != nil {
-			errs = multierr.Combine(errs, err)
+			errs = errors.Join(errs, err)
 		} else {
 			// Domain logs
 			for _, log := range backup.DomainsLogs[domain.Id.String()] {
-				errs = multierr.Combine(errs, bc.store.UpdateDomainLog(domain, log))
+				errs = errors.Join(errs, bc.store.UpdateDomainLog(domain, log))
 			}
 		}
 	}
@@ -157,15 +157,15 @@ func (bc *BackupController) DoRestore(backup *happydns.Backup) (errs error) {
 	for _, zmsg := range backup.Zones {
 		zone, err := usecase.ParseZone(zmsg)
 		if err != nil {
-			errs = multierr.Combine(errs, err)
+			errs = errors.Join(errs, err)
 		} else {
-			errs = multierr.Combine(errs, bc.store.UpdateZone(zone))
+			errs = errors.Join(errs, bc.store.UpdateZone(zone))
 		}
 	}
 
 	// Sessions
 	for _, session := range backup.Sessions {
-		errs = multierr.Combine(errs, bc.store.UpdateSession(session))
+		errs = errors.Join(errs, bc.store.UpdateSession(session))
 	}
 
 	return

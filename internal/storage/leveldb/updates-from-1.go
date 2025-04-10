@@ -24,11 +24,10 @@ package database
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log"
 	"time"
-
-	"go.uber.org/multierr"
 
 	"git.happydns.org/happyDomain/model"
 )
@@ -128,7 +127,7 @@ func migrateFrom1_users_tree(s *LevelDBStorage) (err error) {
 		}
 
 		// Migrate object of the user
-		err = multierr.Combine(
+		err = errors.Join(
 			migrateFrom1_domains(s, user.Id, newId),
 			migrateFrom1_provider(s, user.Id, newId),
 			migrateFrom1_zone(s, user.Id, newId),
