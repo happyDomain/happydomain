@@ -39,7 +39,7 @@ func (s *ACMEChallenge) GetNbResources() int {
 	return 1
 }
 
-func (s *ACMEChallenge) GenComment(origin string) string {
+func (s *ACMEChallenge) GenComment() string {
 	return s.Challenge
 }
 

@@ -50,7 +50,7 @@ func (s *XMPP) GetNbResources() (max int) {
 	return
 }
 
-func (s *XMPP) GenComment(origin string) string {
+func (s *XMPP) GenComment() string {
 	dest := map[string][]uint16{}
 
 destloop:
@@ -71,7 +71,7 @@ destloop:
 		} else {
 			first = !first
 		}
-		buffer.WriteString(strings.TrimSuffix(dn, "."+origin))
+		buffer.WriteString(dn)
 		buffer.WriteString(" (")
 		firstport := true
 		for _, port := range ports {

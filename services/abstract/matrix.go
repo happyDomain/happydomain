@@ -41,7 +41,7 @@ func (s *MatrixIM) GetNbResources() int {
 	return len(s.Matrix)
 }
 
-func (s *MatrixIM) GenComment(origin string) string {
+func (s *MatrixIM) GenComment() string {
 	dest := map[string][]uint16{}
 
 destloop:
@@ -57,7 +57,6 @@ destloop:
 	var buffer bytes.Buffer
 	first := true
 	for dn, ports := range dest {
-		dn = strings.TrimSuffix(dn, "."+origin)
 		if !first {
 			buffer.WriteString("; ")
 		} else {

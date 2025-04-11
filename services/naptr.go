@@ -41,7 +41,7 @@ func (ss *NAPTR) GetNbResources() int {
 	return 1
 }
 
-func (ss *NAPTR) GenComment(origin string) string {
+func (ss *NAPTR) GenComment() string {
 	return ss.Service
 }
 

@@ -45,7 +45,7 @@ func (s *OpenPGP) GetNbResources() int {
 	return 1
 }
 
-func (s *OpenPGP) GenComment(origin string) string {
+func (s *OpenPGP) GenComment() string {
 	return fmt.Sprintf("%s", s.Username)
 }
 
@@ -77,7 +77,7 @@ func (s *SMimeCert) GetNbResources() int {
 	return 1
 }
 
-func (s *SMimeCert) GenComment(origin string) string {
+func (s *SMimeCert) GenComment() string {
 	return fmt.Sprintf("%s", s.Username)
 }
 

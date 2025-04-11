@@ -41,7 +41,7 @@ func (t *TLS_RPT) GetNbResources() int {
 	return 1
 }
 
-func (t *TLS_RPT) GenComment(origin string) string {
+func (t *TLS_RPT) GenComment() string {
 	return strings.Join(t.Rua, ", ")
 }
 

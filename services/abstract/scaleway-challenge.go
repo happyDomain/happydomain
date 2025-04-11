@@ -39,7 +39,7 @@ func (s *ScalewayChallenge) GetNbResources() int {
 	return 1
 }
 
-func (s *ScalewayChallenge) GenComment(origin string) string {
+func (s *ScalewayChallenge) GenComment() string {
 	return s.Challenge
 }
 

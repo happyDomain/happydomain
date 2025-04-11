@@ -99,7 +99,7 @@ func (a *Analyzer) UseRR(rr happydns.Record, domain string, svc happydns.Service
 
 	for _, service := range a.services[domain] {
 		if service.Service == svc {
-			service.Comment = svc.GenComment(a.origin)
+			service.Comment = svc.GenComment()
 			service.NbResources = svc.GetNbResources()
 			return nil
 		}
@@ -120,7 +120,7 @@ func (a *Analyzer) UseRR(rr happydns.Record, domain string, svc happydns.Service
 			Type:        reflect.Indirect(reflect.ValueOf(svc)).Type().String(),
 			Domain:      domain,
 			Ttl:         ttl,
-			Comment:     svc.GenComment(a.origin),
+			Comment:     svc.GenComment(),
 			NbResources: svc.GetNbResources(),
 		},
 	})
@@ -199,7 +199,7 @@ func AnalyzeZone(origin string, zone []happydns.Record) (svcs map[string][]*happ
 				Domain:      domain,
 				Ttl:         record.Header().Ttl,
 				NbResources: 1,
-				Comment:     orphan.GenComment(a.origin),
+				Comment:     orphan.GenComment(),
 			},
 		})
 	}

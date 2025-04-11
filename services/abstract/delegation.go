@@ -41,7 +41,7 @@ func (s *Delegation) GetNbResources() int {
 	return len(s.NameServers)
 }
 
-func (s *Delegation) GenComment(origin string) string {
+func (s *Delegation) GenComment() string {
 	ds := ""
 	if s.DS != nil {
 		ds = fmt.Sprintf(" + %d DS", len(s.DS))

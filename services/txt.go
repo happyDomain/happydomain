@@ -38,7 +38,7 @@ func (ss *TXT) GetNbResources() int {
 	return 1
 }
 
-func (ss *TXT) GenComment(origin string) string {
+func (ss *TXT) GenComment() string {
 	return ss.Content
 }
 

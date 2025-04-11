@@ -44,10 +44,10 @@ func (s *EMail) GetNbResources() int {
 	return len(s.MX)
 }
 
-func (s *EMail) GenComment(origin string) string {
+func (s *EMail) GenComment() string {
 	var buffer bytes.Buffer
 
-	buffer.WriteString((&svcs.MXs{MX: s.MX}).GenComment(origin))
+	buffer.WriteString((&svcs.MXs{MX: s.MX}).GenComment())
 
 	if s.SPF != nil {
 		buffer.WriteString(" + SPF")

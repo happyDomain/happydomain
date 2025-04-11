@@ -41,7 +41,7 @@ func (t *MTA_STS) GetNbResources() int {
 	return 1
 }
 
-func (t *MTA_STS) GenComment(origin string) string {
+func (t *MTA_STS) GenComment() string {
 	return t.Id
 }
 

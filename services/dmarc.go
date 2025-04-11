@@ -51,7 +51,7 @@ func (t *DMARC) GetNbResources() int {
 	return 1
 }
 
-func (t *DMARC) GenComment(origin string) string {
+func (t *DMARC) GenComment() string {
 	var b strings.Builder
 
 	if t.ADKIM && t.ASPF {

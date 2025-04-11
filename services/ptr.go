@@ -38,8 +38,8 @@ func (s *PTR) GetNbResources() int {
 	return 1
 }
 
-func (s *PTR) GenComment(origin string) string {
-	return strings.TrimSuffix(s.Target, "."+origin)
+func (s *PTR) GenComment() string {
+	return s.Target
 }
 
 func (s *PTR) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {

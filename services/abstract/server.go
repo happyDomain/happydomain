@@ -53,7 +53,7 @@ func (s *Server) GetNbResources() int {
 	return i + len(s.SSHFP)
 }
 
-func (s *Server) GenComment(origin string) string {
+func (s *Server) GenComment() string {
 	var buffer bytes.Buffer
 
 	if s.A != nil && len(*s.A) != 0 {

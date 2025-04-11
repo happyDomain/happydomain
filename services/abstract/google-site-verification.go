@@ -39,7 +39,7 @@ func (s *GoogleVerif) GetNbResources() int {
 	return 1
 }
 
-func (s *GoogleVerif) GenComment(origin string) string {
+func (s *GoogleVerif) GenComment() string {
 	return s.SiteVerification
 }
 
