@@ -42,7 +42,7 @@ func (s *SPF) GetNbResources() int {
 	return 1
 }
 
-func (s *SPF) GenComment(origin string) string {
+func (s *SPF) GenComment() string {
 	return fmt.Sprintf("%d directives", len(s.Directives))
 }
 

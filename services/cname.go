@@ -22,8 +22,6 @@
 package svcs
 
 import (
-	"strings"
-
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/utils"
@@ -38,8 +36,8 @@ func (s *CNAME) GetNbResources() int {
 	return 1
 }
 
-func (s *CNAME) GenComment(origin string) string {
-	return strings.TrimSuffix(s.Target, "."+origin)
+func (s *CNAME) GenComment() string {
+	return s.Target
 }
 
 func (s *CNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
@@ -56,8 +54,8 @@ func (s *SpecialCNAME) GetNbResources() int {
 	return 1
 }
 
-func (s *SpecialCNAME) GenComment(origin string) string {
-	return "(" + strings.TrimSuffix(s.Record.Hdr.Name, "."+origin) + ") -> " + strings.TrimSuffix(s.Record.Target, "."+origin)
+func (s *SpecialCNAME) GenComment() string {
+	return "(" + s.Record.Hdr.Name + ") -> " + s.Record.Target
 }
 
 func (s *SpecialCNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {

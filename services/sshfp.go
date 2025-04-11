@@ -44,7 +44,7 @@ func (s *SSHFPs) GetNbResources() int {
 	return len(s.SSHFP)
 }
 
-func (s *SSHFPs) GenComment(origin string) string {
+func (s *SSHFPs) GenComment() string {
 	return fmt.Sprintf("%d fingerprints", len(s.SSHFP))
 }
 

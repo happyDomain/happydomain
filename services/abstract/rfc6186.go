@@ -45,7 +45,7 @@ func (s *RFC6186) GetNbResources() int {
 	return len(s.Submission) + len(s.SubmissionS) + len(s.IMAP) + len(s.IMAPS) + len(s.POP3) + len(s.POP3S)
 }
 
-func (s *RFC6186) GenComment(origin string) string {
+func (s *RFC6186) GenComment() string {
 	var b strings.Builder
 
 	if len(s.Submission) > 1 {

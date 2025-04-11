@@ -36,7 +36,7 @@ type Service interface {
 	GetNbResources() int
 
 	// GenComment sum up the content of the Service, in a small usefull string.
-	GenComment(origin string) string
+	GenComment() string
 
 	// getRecords retrieves underlying RRs.
 	GetRecords(domain string, ttl uint32, origin string) ([]dns.RR, error)

@@ -39,7 +39,7 @@ func (s *KeybaseVerif) GetNbResources() int {
 	return 1
 }
 
-func (s *KeybaseVerif) GenComment(origin string) string {
+func (s *KeybaseVerif) GenComment() string {
 	return s.SiteVerification
 }
 

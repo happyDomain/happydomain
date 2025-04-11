@@ -126,7 +126,7 @@ func (s *DKIMRecord) GetNbResources() int {
 	return 1
 }
 
-func (s *DKIMRecord) GenComment(origin string) string {
+func (s *DKIMRecord) GenComment() string {
 	return s.Selector
 }
 

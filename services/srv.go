@@ -24,7 +24,6 @@ package svcs
 import (
 	"fmt"
 	"regexp"
-	"strings"
 
 	"github.com/miekg/dns"
 
@@ -43,8 +42,8 @@ func (s *SRV) GetNbResources() int {
 	return 1
 }
 
-func (s *SRV) GenComment(origin string) string {
-	return fmt.Sprintf("%s:%d", strings.TrimSuffix(s.Target, "."+origin), s.Port)
+func (s *SRV) GenComment() string {
+	return fmt.Sprintf("%s:%d", s.Target, s.Port)
 }
 
 func (s *SRV) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
@@ -81,7 +80,7 @@ func (s *UnknownSRV) GetNbResources() int {
 	return len(s.Records)
 }
 
-func (s *UnknownSRV) GenComment(origin string) string {
+func (s *UnknownSRV) GenComment() string {
 	if len(s.Records) == 0 {
 		return ""
 	}

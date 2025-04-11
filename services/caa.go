@@ -108,7 +108,7 @@ func (s *CAA) GetNbResources() int {
 	return nb + len(s.Iodef)
 }
 
-func (s *CAA) GenComment(origin string) (ret string) {
+func (s *CAA) GenComment() (ret string) {
 	if s.DisallowIssue {
 		ret = "Certificate issuance disallowed"
 	} else {

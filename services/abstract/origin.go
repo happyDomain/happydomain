@@ -23,7 +23,6 @@ package abstract
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/miekg/dns"
@@ -42,7 +41,7 @@ func (s *NSOnlyOrigin) GetNbResources() int {
 	return len(s.NameServers)
 }
 
-func (s *NSOnlyOrigin) GenComment(origin string) string {
+func (s *NSOnlyOrigin) GenComment() string {
 	return fmt.Sprintf("%d NS", len(s.NameServers))
 }
 
@@ -75,7 +74,7 @@ func (s *Origin) GetNbResources() int {
 	}
 }
 
-func (s *Origin) GenComment(origin string) string {
+func (s *Origin) GenComment() string {
 	if s.Ns == "" {
 		return fmt.Sprintf("%d NS", len(s.NameServers))
 	}
@@ -85,7 +84,7 @@ func (s *Origin) GenComment(origin string) string {
 		ns = fmt.Sprintf(" + %d NS", len(s.NameServers))
 	}
 
-	return fmt.Sprintf("%s %s %d"+ns, strings.TrimSuffix(s.Ns, "."+origin), strings.TrimSuffix(s.Mbox, "."+origin), s.Serial)
+	return fmt.Sprintf("%s %s %d"+ns, s.Ns, s.Mbox, s.Serial)
 }
 
 func (s *Origin) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {

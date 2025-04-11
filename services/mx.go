@@ -45,7 +45,7 @@ func (s *MXs) GetNbResources() int {
 	return len(s.MX)
 }
 
-func (s *MXs) GenComment(origin string) string {
+func (s *MXs) GenComment() string {
 	poolMX := map[string]int{}
 
 	for _, mx := range s.MX {
@@ -73,7 +73,7 @@ func (s *MXs) GenComment(origin string) string {
 		} else {
 			first = !first
 		}
-		buffer.WriteString(strings.TrimSuffix(dn, "."+origin))
+		buffer.WriteString(dn)
 		if nb > 1 {
 			buffer.WriteString(fmt.Sprintf(" ×%d", nb))
 		}

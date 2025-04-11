@@ -41,7 +41,7 @@ func (s *GithubOrgVerif) GetNbResources() int {
 	return 1
 }
 
-func (s *GithubOrgVerif) GenComment(origin string) string {
+func (s *GithubOrgVerif) GenComment() string {
 	return s.OrganizationName
 }
 

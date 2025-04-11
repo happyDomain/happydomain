@@ -51,7 +51,7 @@ func (ss *TLSAs) GetNbResources() int {
 	return len(ss.TLSA)
 }
 
-func (ss *TLSAs) GenComment(origin string) string {
+func (ss *TLSAs) GenComment() string {
 	mapProto := map[string][]uint16{}
 protoloop:
 	for _, tlsa := range ss.TLSA {

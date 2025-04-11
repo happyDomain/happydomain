@@ -39,7 +39,7 @@ func (s *GitlabPageVerif) GetNbResources() int {
 	return 1
 }
 
-func (s *GitlabPageVerif) GenComment(origin string) string {
+func (s *GitlabPageVerif) GenComment() string {
 	return s.Code
 }
 

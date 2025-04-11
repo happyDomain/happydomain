@@ -39,7 +39,7 @@ func (s *Orphan) GetNbResources() int {
 	return 1
 }
 
-func (s *Orphan) GenComment(origin string) string {
+func (s *Orphan) GenComment() string {
 	return fmt.Sprintf("%s %s", s.Type, s.RR)
 }
 
