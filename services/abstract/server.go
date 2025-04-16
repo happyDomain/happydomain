@@ -24,7 +24,6 @@ package abstract
 import (
 	"bytes"
 	"fmt"
-	"net"
 
 	"github.com/miekg/dns"
 
@@ -34,9 +33,9 @@ import (
 )
 
 type Server struct {
-	A     *net.IP       `json:"A,omitempty" happydomain:"label=ipv4,description=Server's IPv4"`
-	AAAA  *net.IP       `json:"AAAA,omitempty" happydomain:"label=ipv6,description=Server's IPv6"`
-	SSHFP []*svcs.SSHFP `json:"SSHFP,omitempty" happydomain:"label=SSH Fingerprint,description=Server's SSH fingerprint"`
+	A     *dns.A       `json:"A,omitempty"`
+	AAAA  *dns.AAAA    `json:"AAAA,omitempty"`
+	SSHFP []*dns.SSHFP `json:"SSHFP,omitempty"`
 }
 
 func (s *Server) GetNbResources() int {
@@ -56,15 +55,15 @@ func (s *Server) GetNbResources() int {
 func (s *Server) GenComment() string {
 	var buffer bytes.Buffer
 
-	if s.A != nil && len(*s.A) != 0 {
-		buffer.WriteString(s.A.String())
-		if s.AAAA != nil && len(*s.AAAA) != 0 {
+	if s.A != nil && len(s.A.A) != 0 {
+		buffer.WriteString(s.A.A.String())
+		if s.AAAA != nil && len(s.AAAA.AAAA) != 0 {
 			buffer.WriteString("; ")
 		}
 	}
 
-	if s.AAAA != nil && len(*s.AAAA) != 0 {
-		buffer.WriteString(s.AAAA.String())
+	if s.AAAA != nil && len(s.AAAA.AAAA) != 0 {
+		buffer.WriteString(s.AAAA.AAAA.String())
 	}
 
 	if s.SSHFP != nil {
@@ -75,24 +74,15 @@ func (s *Server) GenComment() string {
 }
 
 func (s *Server) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	if s.A != nil && len(*s.A) != 0 {
-		rr := helpers.NewRecord(domain, "A", ttl, origin)
-		rr.(*dns.A).A = *s.A
-
-		rrs = append(rrs, rr)
+	if s.A != nil && len(s.A.A) != 0 {
+		rrs = append(rrs, s.A)
 	}
-	if s.AAAA != nil && len(*s.AAAA) != 0 {
-		rr := helpers.NewRecord(domain, "AAAA", ttl, origin)
-		rr.(*dns.AAAA).AAAA = *s.AAAA
-
-		rrs = append(rrs, rr)
+	if s.AAAA != nil && len(s.AAAA.AAAA) != 0 {
+		rrs = append(rrs, s.AAAA)
 	}
-	if len(s.SSHFP) > 0 {
-		sshfp_rrs, err := (&svcs.SSHFPs{SSHFP: s.SSHFP}).GetRecords(domain, ttl, origin)
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate SSHFP records: %w", err)
-		}
-		rrs = append(rrs, sshfp_rrs...)
+
+	for _, sshfp := range s.SSHFP {
+		rrs = append(rrs, sshfp)
 	}
 
 	return
@@ -117,26 +107,30 @@ next_pool:
 					continue next_pool
 				}
 
-				addr := a.A
-				s.A = &addr
+				s.A = a
 			} else if aaaa, ok := rr.(*dns.AAAA); ok {
 				if s.AAAA != nil {
 					continue next_pool
 				}
 
-				addr := aaaa.AAAA
-				s.AAAA = &addr
+				s.AAAA = aaaa
 			} else if sshfp, ok := rr.(*dns.SSHFP); ok {
-				s.SSHFP = append(s.SSHFP, &svcs.SSHFP{
-					Algorithm:   sshfp.Algorithm,
-					Type:        sshfp.Type,
-					FingerPrint: sshfp.FingerPrint,
-				})
+				s.SSHFP = append(s.SSHFP, sshfp)
 			}
 		}
 
 		// Register the use only now, to avoid registering multi-A/AAAA
 		for _, rr := range rrs {
+			if s.A != nil {
+				s.A = helpers.RRRelative(s.A, dn).(*dns.A)
+			}
+			if s.AAAA != nil {
+				s.AAAA = helpers.RRRelative(s.AAAA, dn).(*dns.AAAA)
+			}
+			for i := range s.SSHFP {
+				s.SSHFP[i] = helpers.RRRelative(s.SSHFP[i], dn).(*dns.SSHFP)
+			}
+
 			a.UseRR(rr, dn, s)
 		}
 	}

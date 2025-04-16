@@ -150,7 +150,7 @@ func dkim_analyze(a *Analyzer) (err error) {
 			Selector: record.Header().Name[:dkidx],
 		}
 
-		err = service.Analyze(strings.Join(record.(*dns.TXT).Txt, ""))
+		err = service.Analyze(record.(*happydns.TXT).Txt)
 		if err != nil {
 			return
 		}
