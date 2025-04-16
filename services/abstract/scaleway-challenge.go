@@ -32,7 +32,7 @@ import (
 )
 
 type ScalewayChallenge struct {
-	Challenge string
+	Record *dns.TXT `json:"txt"`
 }
 
 func (s *ScalewayChallenge) GetNbResources() int {
@@ -40,21 +40,19 @@ func (s *ScalewayChallenge) GetNbResources() int {
 }
 
 func (s *ScalewayChallenge) GenComment() string {
-	return s.Challenge
+	return strings.Join(s.Record.Txt, "")
 }
 
 func (s *ScalewayChallenge) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
-	rr := utils.NewRecord(utils.DomainJoin("_scaleway-challenge", domain), "TXT", ttl, origin)
-	rr.(*dns.TXT).Txt = []string{s.Challenge}
-	return []happydns.Record{rr}, nil
+	return []happydns.Record{s.Record}, nil
 }
 
 func scalewaychallenge_analyze(a *svcs.Analyzer) error {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_scaleway-challenge"}) {
 		domain := strings.TrimPrefix(record.Header().Name, "_scaleway-challenge.")
-		if txt, ok := record.(*dns.TXT); ok {
+		if record.Header().Rrtype == dns.TypeTXT {
 			a.UseRR(record, domain, &ScalewayChallenge{
-				Challenge: strings.Join(txt.Txt, ""),
+				Record: utils.RRRelative(record, a.GetOrigin()).(*dns.TXT),
 			})
 		}
 	}

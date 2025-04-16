@@ -32,7 +32,7 @@ import (
 )
 
 type ACMEChallenge struct {
-	Challenge string
+	Record *dns.TXT `json:"txt"`
 }
 
 func (s *ACMEChallenge) GetNbResources() int {
@@ -40,13 +40,11 @@ func (s *ACMEChallenge) GetNbResources() int {
 }
 
 func (s *ACMEChallenge) GenComment() string {
-	return s.Challenge
+	return strings.Join(s.Record.Txt, "")
 }
 
 func (s *ACMEChallenge) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
-	rr := utils.NewRecord(utils.DomainJoin("_acme-challenge", domain), "TXT", ttl, origin)
-	rr.(*dns.TXT).Txt = []string{s.Challenge}
-	return []happydns.Record{rr}, nil
+	return []happydns.Record{s.Record}, nil
 }
 
 func acmechallenge_analyze(a *svcs.Analyzer) error {
@@ -54,7 +52,7 @@ func acmechallenge_analyze(a *svcs.Analyzer) error {
 		domain := strings.TrimPrefix(record.Header().Name, "_acme-challenge.")
 		if record.Header().Rrtype == dns.TypeTXT {
 			a.UseRR(record, domain, &ACMEChallenge{
-				Challenge: strings.Join(record.(*dns.TXT).Txt, ""),
+				Record: utils.RRRelative(record, a.GetOrigin()).(*dns.TXT),
 			})
 		}
 	}

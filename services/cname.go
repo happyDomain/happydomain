@@ -22,8 +22,6 @@
 package svcs
 
 import (
-	"fmt"
-
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/utils"
@@ -31,7 +29,7 @@ import (
 )
 
 type CNAME struct {
-	Target string
+	Record *dns.CNAME `json:"cname"`
 }
 
 func (s *CNAME) GetNbResources() int {
@@ -39,18 +37,17 @@ func (s *CNAME) GetNbResources() int {
 }
 
 func (s *CNAME) GenComment() string {
-	return s.Target
+	return s.Record.Target
 }
 
 func (s *CNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	cname := utils.NewRecord(domain, "CNAME", ttl, origin)
-	cname.(*dns.CNAME).Target = utils.DomainFQDN(s.Target, origin)
-	return []happydns.Record{cname}, nil
+	cname := *s.Record
+	cname.Target = utils.DomainFQDN(cname.Target, origin)
+	return []happydns.Record{&cname}, nil
 }
 
 type SpecialCNAME struct {
-	SubDomain string
-	Target    string
+	Record *dns.CNAME `json:"cname"`
 }
 
 func (s *SpecialCNAME) GetNbResources() int {
@@ -58,13 +55,13 @@ func (s *SpecialCNAME) GetNbResources() int {
 }
 
 func (s *SpecialCNAME) GenComment() string {
-	return "(" + s.SubDomain + ") -> " + s.Target
+	return "(" + s.Record.Hdr.Name + ") -> " + s.Record.Target
 }
 
 func (s *SpecialCNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	cname := utils.NewRecord(utils.DomainJoin(s.SubDomain, domain), "CNAME", ttl, origin)
-	cname.(*dns.CNAME).Target = utils.DomainFQDN(s.Target, origin)
-	return []happydns.Record{cname}, nil
+	cname := *s.Record
+	cname.Target = utils.DomainFQDN(cname.Target, origin)
+	return []happydns.Record{&cname}, nil
 }
 
 func specialalias_analyze(a *Analyzer) error {
@@ -76,8 +73,7 @@ func specialalias_analyze(a *Analyzer) error {
 			cname.Target = utils.DomainRelative(cname.Target, a.GetOrigin())
 
 			a.UseRR(record, subdomains[3], &SpecialCNAME{
-				SubDomain: fmt.Sprintf("_%s._%s", subdomains[1], subdomains[2]),
-				Target:    cname.Target,
+				Record: utils.RRRelative(cname, a.GetOrigin()).(*dns.CNAME),
 			})
 		}
 	}
@@ -91,7 +87,7 @@ func alias_analyze(a *Analyzer) error {
 			cname.Target = utils.DomainRelative(cname.Target, a.GetOrigin())
 
 			a.UseRR(record, record.Header().Name, &CNAME{
-				Target: cname.Target,
+				Record: utils.RRRelative(cname, a.GetOrigin()).(*dns.CNAME),
 			})
 		}
 	}
