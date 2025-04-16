@@ -32,7 +32,7 @@ import (
 )
 
 type GitlabPageVerif struct {
-	Code string `happydomain:"label=Verification code given by Gitlab"`
+	Record *happydns.TXT `json:"txt"`
 }
 
 func (s *GitlabPageVerif) GetNbResources() int {
@@ -40,19 +40,11 @@ func (s *GitlabPageVerif) GetNbResources() int {
 }
 
 func (s *GitlabPageVerif) GenComment() string {
-	return s.Code
+	return strings.TrimPrefix(s.Record.Txt, "gitlab-pages-verification-code=")
 }
 
 func (s *GitlabPageVerif) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
-	if strings.Contains(s.Code, " TXT ") {
-		s.Code = s.Code[strings.Index(s.Code, "gitlab-pages-verification-code="):]
-	}
-	domain = strings.TrimPrefix(domain, "_gitlab-pages-verification-code.")
-
-	rr := helpers.NewRecord("_gitlab-pages-verification-code."+domain, "TXT", ttl, origin)
-	rr.(*dns.TXT).Txt = []string{"gitlab-pages-verification-code=" + strings.TrimPrefix(s.Code, "gitlab-pages-verification-code=")}
-
-	return []happydns.Record{rr}, nil
+	return []happydns.Record{s.Record}, nil
 }
 
 func gitlabverification_analyze(a *svcs.Analyzer) error {
@@ -60,7 +52,8 @@ func gitlabverification_analyze(a *svcs.Analyzer) error {
 		domain := strings.TrimPrefix(record.Header().Name, "_gitlab-pages-verification-code.")
 		if txt, ok := record.(*dns.TXT); ok && strings.HasPrefix(strings.Join(txt.Txt, ""), "gitlab-pages-verification-code=") {
 			a.UseRR(record, domain, &GitlabPageVerif{
-				Code: strings.TrimPrefix(strings.Join(txt.Txt, ""), "gitlab-pages-verification-code=")})
+				Record: helpers.RRRelative(record, domain).(*happydns.TXT),
+			})
 		}
 	}
 	return nil

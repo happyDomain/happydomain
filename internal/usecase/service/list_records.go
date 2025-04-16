@@ -22,6 +22,7 @@
 package service
 
 import (
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -37,5 +38,17 @@ func (uc *ListRecordsUsecase) List(domain *happydns.Domain, zone *happydns.Zone,
 		ttl = svc.Ttl
 	}
 
-	return svc.Service.GetRecords(svc.Domain, ttl, domain.DomainName)
+	records, err := svc.Service.GetRecords(svc.Domain, ttl, domain.DomainName)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, record := range records {
+		records[i].Header().Name = helpers.DomainJoin(record.Header().Name, svc.Domain, domain.DomainName)
+		if record.Header().Ttl == 0 {
+			record.Header().Ttl = ttl
+		}
+	}
+
+	return records, nil
 }

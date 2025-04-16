@@ -22,7 +22,6 @@
 package abstract
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -33,8 +32,7 @@ import (
 )
 
 type GithubOrgVerif struct {
-	OrganizationName string `happydomain:"label=Organization Name"`
-	Code             string `happydomain:"label=Code given by GitHub"`
+	Record *happydns.TXT `json:"txt"`
 }
 
 func (s *GithubOrgVerif) GetNbResources() int {
@@ -42,14 +40,15 @@ func (s *GithubOrgVerif) GetNbResources() int {
 }
 
 func (s *GithubOrgVerif) GenComment() string {
-	return s.OrganizationName
+	dnparts := strings.Split(s.Record.Hdr.Name, ".")
+	if len(dnparts) > 0 {
+		return strings.TrimSuffix(strings.TrimPrefix(dnparts[0], "_github-challenge-"), "-org")
+	}
+	return ""
 }
 
 func (s *GithubOrgVerif) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
-	rr := helpers.NewRecord(fmt.Sprintf("_github-challenge-%s-org.", strings.TrimSuffix(strings.TrimPrefix(s.OrganizationName, "_github-challenge-"), "-org"))+domain, "TXT", ttl, origin)
-	rr.(*dns.TXT).Txt = []string{s.Code}
-
-	return []happydns.Record{rr}, nil
+	return []happydns.Record{s.Record}, nil
 }
 
 func githubverification_analyze(a *svcs.Analyzer) error {
@@ -57,12 +56,10 @@ func githubverification_analyze(a *svcs.Analyzer) error {
 		dnparts := strings.Split(record.Header().Name, ".")
 		if len(dnparts) > 1 {
 			domain := strings.Join(dnparts[1:], ".")
-			org := strings.TrimSuffix(strings.TrimPrefix(dnparts[0], "_github-challenge-"), "-org")
 
-			if txt, ok := record.(*dns.TXT); ok {
+			if record.Header().Rrtype == dns.TypeTXT {
 				a.UseRR(record, domain, &GithubOrgVerif{
-					OrganizationName: org,
-					Code:             strings.Join(txt.Txt, ""),
+					Record: helpers.RRRelative(record, domain).(*happydns.TXT),
 				})
 			}
 		}
