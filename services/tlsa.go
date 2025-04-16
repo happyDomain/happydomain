@@ -23,10 +23,7 @@ package svcs
 
 import (
 	"bytes"
-	"encoding/hex"
-	"fmt"
 	"regexp"
-	"strconv"
 
 	"github.com/miekg/dns"
 
@@ -34,33 +31,31 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-type TLSA struct {
-	Proto        string              `json:"proto" happydomain:"label=Protocol,description=Protocol used to establish the connection.,choices=tcp;udp"`
-	Port         uint16              `json:"port" happydomain:"label=Service Port,description=Port number where people will establish the connection."`
-	CertUsage    uint8               `json:"certusage"`
-	Selector     uint8               `json:"selector"`
-	MatchingType uint8               `json:"matchingtype"`
-	Certificate  happydns.HexaString `json:"certificate"`
-}
+var (
+	TLSA_DOMAIN = regexp.MustCompile(`^_([0-9]+)\._(tcp|udp)\.(.*)$`)
+)
 
 type TLSAs struct {
-	TLSA []*TLSA `json:"tlsa,omitempty"`
+	Records []*dns.TLSA `json:"tlsa"`
 }
 
 func (ss *TLSAs) GetNbResources() int {
-	return len(ss.TLSA)
+	return len(ss.Records)
 }
 
 func (ss *TLSAs) GenComment() string {
-	mapProto := map[string][]uint16{}
+	mapProto := map[string][]string{}
 protoloop:
-	for _, tlsa := range ss.TLSA {
-		for _, port := range mapProto[tlsa.Proto] {
-			if port == tlsa.Port {
-				continue protoloop
+	for _, tlsa := range ss.Records {
+		subdomains := TLSA_DOMAIN.FindStringSubmatch(tlsa.Header().Name)
+		if len(subdomains) > 2 {
+			for _, port := range mapProto[subdomains[2]] {
+				if port == subdomains[1] {
+					continue protoloop
+				}
 			}
+			mapProto[subdomains[2]] = append(mapProto[subdomains[2]], subdomains[1])
 		}
-		mapProto[tlsa.Proto] = append(mapProto[tlsa.Proto], tlsa.Port)
 	}
 
 	var buffer bytes.Buffer
@@ -80,7 +75,7 @@ protoloop:
 			} else {
 				firstport = !firstport
 			}
-			buffer.WriteString(strconv.Itoa(int(port)))
+			buffer.WriteString(port)
 		}
 		buffer.WriteString(")")
 	}
@@ -88,52 +83,35 @@ protoloop:
 	return buffer.String()
 }
 
-func (ss *TLSAs) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	for _, s := range ss.TLSA {
-		if len(s.Certificate) > 0 {
-			rr := helpers.NewRecord(helpers.DomainJoin(fmt.Sprintf("_%d._%s", s.Port, s.Proto), domain), "TLSA", ttl, origin)
-			rr.(*dns.TLSA).Usage = s.CertUsage
-			rr.(*dns.TLSA).Selector = s.Selector
-			rr.(*dns.TLSA).MatchingType = s.MatchingType
-			rr.(*dns.TLSA).Certificate = hex.EncodeToString(s.Certificate)
-			rrs = append(rrs, rr)
-		}
+func (ss *TLSAs) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	rrs := make([]happydns.Record, len(ss.Records))
+	for i, r := range ss.Records {
+		rrs[i] = r
 	}
-	return
+	return rrs, nil
 }
 
-var (
-	TLSA_DOMAIN = regexp.MustCompile(`^_([0-9]+)\._(tcp|udp)\.(.*)$`)
-)
+type TLSAFields struct {
+	Proto        string              `json:"proto" happydomain:"label=Protocol,description=Protocol used to establish the connection.,choices=tcp;udp"`
+	Port         uint16              `json:"port" happydomain:"label=Service Port,description=Port number where people will establish the connection."`
+	CertUsage    uint8               `json:"certusage"`
+	Selector     uint8               `json:"selector"`
+	MatchingType uint8               `json:"matchingtype"`
+	Certificate  happydns.HexaString `json:"certificate"`
+}
 
 func tlsa_analyze(a *Analyzer) (err error) {
 	pool := map[string]*TLSAs{}
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTLSA}) {
 		subdomains := TLSA_DOMAIN.FindStringSubmatch(record.Header().Name)
-		if tlsa, ok := record.(*dns.TLSA); ok && len(subdomains) == 4 {
-			var port uint64
-			port, err = strconv.ParseUint(subdomains[1], 10, 16)
-
-			var cert []byte
-			cert, err = hex.DecodeString(tlsa.Certificate)
-			if err != nil {
-				return
-			}
-
+		if _, ok := record.(*dns.TLSA); ok && len(subdomains) == 4 {
 			if _, ok := pool[subdomains[3]]; !ok {
 				pool[subdomains[3]] = &TLSAs{}
 			}
 
-			pool[subdomains[3]].TLSA = append(
-				pool[subdomains[3]].TLSA,
-				&TLSA{
-					Port:         uint16(port),
-					Proto:        subdomains[2],
-					CertUsage:    tlsa.Usage,
-					Selector:     tlsa.Selector,
-					MatchingType: tlsa.MatchingType,
-					Certificate:  cert,
-				},
+			pool[subdomains[3]].Records = append(
+				pool[subdomains[3]].Records,
+				helpers.RRRelative(record, subdomains[3]).(*dns.TLSA),
 			)
 
 			err = a.UseRR(

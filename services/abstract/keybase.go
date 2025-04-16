@@ -32,7 +32,7 @@ import (
 )
 
 type KeybaseVerif struct {
-	SiteVerification string `happydomain:"label=Site Verification"`
+	Record *happydns.TXT `json:"txt"`
 }
 
 func (s *KeybaseVerif) GetNbResources() int {
@@ -40,21 +40,19 @@ func (s *KeybaseVerif) GetNbResources() int {
 }
 
 func (s *KeybaseVerif) GenComment() string {
-	return s.SiteVerification
+	return strings.TrimPrefix(s.Record.Txt, "keybase-site-verification=")
 }
 
 func (s *KeybaseVerif) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
-	rr := helpers.NewRecord(helpers.DomainJoin("_keybase", domain), "TXT", ttl, origin)
-	rr.(*dns.TXT).Txt = []string{"keybase-site-verification=" + strings.TrimPrefix(s.SiteVerification, "keybase-site-verification=")}
-	return []happydns.Record{rr}, nil
+	return []happydns.Record{s.Record}, nil
 }
 
 func keybaseverification_analyze(a *svcs.Analyzer) error {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_keybase"}) {
 		domain := strings.TrimPrefix(record.Header().Name, "_keybase.")
-		if txt, ok := record.(*dns.TXT); ok {
+		if record.Header().Rrtype == dns.TypeTXT {
 			a.UseRR(record, domain, &KeybaseVerif{
-				SiteVerification: strings.TrimPrefix(strings.Join(txt.Txt, ""), "keybase-site-verification="),
+				Record: helpers.RRRelative(record, domain).(*happydns.TXT),
 			})
 		}
 	}

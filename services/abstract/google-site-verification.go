@@ -32,7 +32,7 @@ import (
 )
 
 type GoogleVerif struct {
-	SiteVerification string `happydomain:"label=Site Verification"`
+	Record *happydns.TXT `json:"txt"`
 }
 
 func (s *GoogleVerif) GetNbResources() int {
@@ -40,21 +40,19 @@ func (s *GoogleVerif) GetNbResources() int {
 }
 
 func (s *GoogleVerif) GenComment() string {
-	return s.SiteVerification
+	return strings.TrimPrefix(s.Record.Txt, "google-site-verification=")
 }
 
 func (s *GoogleVerif) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
-	rr := helpers.NewRecord(domain, "TXT", ttl, origin)
-	rr.(*dns.TXT).Txt = []string{"google-site-verification=" + strings.TrimPrefix(s.SiteVerification, "google-site-verification=")}
-	return []happydns.Record{rr}, nil
+	return []happydns.Record{s.Record}, nil
 }
 
 func googleverification_analyze(a *svcs.Analyzer) error {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT}) {
 		domain := record.Header().Name
-		if txt, ok := record.(*dns.TXT); ok && strings.HasPrefix(strings.Join(txt.Txt, ""), "google-site-verification=") {
+		if txt, ok := record.(*happydns.TXT); ok && strings.HasPrefix(txt.Txt, "google-site-verification=") {
 			a.UseRR(record, domain, &GoogleVerif{
-				SiteVerification: strings.TrimPrefix(strings.Join(txt.Txt, ""), "google-site-verification="),
+				Record: helpers.RRRelative(record, domain).(*happydns.TXT),
 			})
 		}
 	}

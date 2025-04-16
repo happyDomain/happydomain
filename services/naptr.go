@@ -29,12 +29,7 @@ import (
 )
 
 type NAPTR struct {
-	Order       uint16 `json:"order" happydomain:"label=Order,description=The order in which the records must be processed"`
-	Preference  uint16 `json:"preference" happydomain:"label=Preference,description=The order in which the records with same order should be processed"`
-	Flags       string `json:"flags" happydomain:"label=Flags,choices=S;A;U;P"`
-	Service     string `json:"service" happydomain:"label=Service"`
-	Regexp      string `json:"regexp" happydomain:"label=Regexp"`
-	Replacement string `json:"replacement" happydomain:"label=Replacement"`
+	Record *dns.NAPTR `json:"naptr"`
 }
 
 func (ss *NAPTR) GetNbResources() int {
@@ -42,34 +37,28 @@ func (ss *NAPTR) GetNbResources() int {
 }
 
 func (ss *NAPTR) GenComment() string {
-	return ss.Service
+	return ss.Record.Service
 }
 
-func (ss *NAPTR) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	rr := helpers.NewRecord(domain, "NAPTR", ttl, origin)
-	rr.(*dns.NAPTR).Order = ss.Order
-	rr.(*dns.NAPTR).Preference = ss.Preference
-	rr.(*dns.NAPTR).Flags = ss.Flags
-	rr.(*dns.NAPTR).Service = ss.Service
-	rr.(*dns.NAPTR).Regexp = ss.Regexp
-	rr.(*dns.NAPTR).Replacement = ss.Replacement
-	rrs = append(rrs, rr)
-	return
+func (ss *NAPTR) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	rr := *ss.Record
+	rr.Replacement = helpers.DomainFQDN(rr.Replacement, origin)
+
+	return []happydns.Record{happydns.Record(&rr)}, nil
 }
 
 func naptr_analyze(a *Analyzer) (err error) {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeNAPTR}) {
 		if naptr, ok := record.(*dns.NAPTR); ok {
+			// Make record relative
+			naptr.Replacement = helpers.DomainRelative(naptr.Replacement, a.GetOrigin())
+
+			domain := record.Header().Name
 			err = a.UseRR(
 				record,
-				record.Header().Name,
+				domain,
 				&NAPTR{
-					Order:       naptr.Order,
-					Preference:  naptr.Preference,
-					Flags:       naptr.Flags,
-					Service:     naptr.Service,
-					Regexp:      naptr.Regexp,
-					Replacement: naptr.Replacement,
+					Record: helpers.RRRelative(naptr, domain).(*dns.NAPTR),
 				},
 			)
 			if err != nil {

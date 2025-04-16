@@ -22,8 +22,6 @@
 package svcs
 
 import (
-	"strings"
-
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/helpers"
@@ -31,7 +29,7 @@ import (
 )
 
 type PTR struct {
-	Target string
+	Record *dns.PTR
 }
 
 func (s *PTR) GetNbResources() int {
@@ -39,24 +37,28 @@ func (s *PTR) GetNbResources() int {
 }
 
 func (s *PTR) GenComment() string {
-	return s.Target
+	return s.Record.Ptr
 }
 
 func (s *PTR) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	rr := helpers.NewRecord(domain, "PTR", ttl, origin)
-	rr.(*dns.PTR).Ptr = helpers.DomainFQDN(s.Target, origin)
-	rrs = append(rrs, rr)
-	return
+	rr := *s.Record
+	rr.Ptr = helpers.DomainFQDN(rr.Ptr, origin)
+
+	return []happydns.Record{happydns.Record(&rr)}, nil
 }
 
 func pointer_analyze(a *Analyzer) error {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypePTR}) {
 		if ptr, ok := record.(*dns.PTR); ok {
+			// Make record relative
+			ptr.Ptr = helpers.DomainRelative(ptr.Ptr, a.GetOrigin())
+
+			domain := record.Header().Name
 			newrr := &PTR{
-				Target: strings.TrimSuffix(ptr.Ptr, "."+a.origin),
+				Record: helpers.RRRelative(ptr, domain).(*dns.PTR),
 			}
 
-			a.UseRR(record, record.Header().Name, newrr)
+			a.UseRR(record, domain, newrr)
 		}
 	}
 	return nil

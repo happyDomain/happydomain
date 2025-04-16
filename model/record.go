@@ -32,6 +32,10 @@ type Record interface {
 	String() string
 }
 
+type ConvertibleRecord interface {
+	ToRR() dns.RR
+}
+
 func RecordToServiceRecord(rr Record) *ServiceRecord {
 	return &ServiceRecord{
 		Type:   dns.TypeToString[rr.Header().Rrtype],
@@ -62,16 +66,17 @@ func (rr *SPF) String() string {
 }
 
 func (rr *SPF) ToRR() dns.RR {
-	var txts []string
+	txtLen := len(rr.Txt)
+	numSegments := (txtLen + TXT_SEGMENT_LEN - 1) / TXT_SEGMENT_LEN
+	txts := make([]string, numSegments)
 
-	txts = make([]string, len(rr.Txt)/TXT_SEGMENT_LEN)
-
-	for i := len(rr.Txt)/TXT_SEGMENT_LEN - 1; i >= 0; i-- {
-		if i == len(rr.Txt)-1 {
-			txts[i] = rr.Txt[i*TXT_SEGMENT_LEN:]
-		} else {
-			txts[i] = rr.Txt[i*TXT_SEGMENT_LEN : (i+1)*TXT_SEGMENT_LEN]
+	for i := 0; i < numSegments; i++ {
+		start := i * TXT_SEGMENT_LEN
+		end := start + TXT_SEGMENT_LEN
+		if end > txtLen {
+			end = txtLen
 		}
+		txts[i] = rr.Txt[start:end]
 	}
 
 	return &dns.SPF{
@@ -104,16 +109,17 @@ func (rr *TXT) String() string {
 }
 
 func (rr *TXT) ToRR() dns.RR {
-	var txts []string
+	txtLen := len(rr.Txt)
+	numSegments := (txtLen + TXT_SEGMENT_LEN - 1) / TXT_SEGMENT_LEN
+	txts := make([]string, numSegments)
 
-	txts = make([]string, len(rr.Txt)/TXT_SEGMENT_LEN)
-
-	for i := len(rr.Txt)/TXT_SEGMENT_LEN - 1; i >= 0; i-- {
-		if i == len(rr.Txt)-1 {
-			txts[i] = rr.Txt[i*TXT_SEGMENT_LEN:]
-		} else {
-			txts[i] = rr.Txt[i*TXT_SEGMENT_LEN : (i+1)*TXT_SEGMENT_LEN]
+	for i := 0; i < numSegments; i++ {
+		start := i * TXT_SEGMENT_LEN
+		end := start + TXT_SEGMENT_LEN
+		if end > txtLen {
+			end = txtLen
 		}
+		txts[i] = rr.Txt[start:end]
 	}
 
 	return &dns.TXT{

@@ -22,17 +22,16 @@
 package svcs
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 )
 
 type Orphan struct {
-	Type string
-	RR   string
+	Record happydns.Record `json:"record"`
 }
 
 func (s *Orphan) GetNbResources() int {
@@ -40,20 +39,40 @@ func (s *Orphan) GetNbResources() int {
 }
 
 func (s *Orphan) GenComment() string {
-	return fmt.Sprintf("%s %s", s.Type, s.RR)
+	return fmt.Sprintf("%s %s", dns.Type(s.Record.Header().Rrtype).String(), s.Record.String()[len(s.Record.Header().String()):])
 }
 
 func (s *Orphan) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
-	if _, ok := dns.StringToType[s.Type]; ok {
-		rr, err := dns.NewRR(fmt.Sprintf("%s %d IN %s %s", helpers.DomainJoin(domain, origin), ttl, s.Type, s.RR))
-		if err != nil {
-			return nil, err
-		}
+	return []happydns.Record{s.Record}, nil
+}
 
-		return []happydns.Record{rr}, nil
+func (s *Orphan) UnmarshalJSON(b []byte) error {
+	var rrtype struct {
+		Record struct{ Hdr dns.RR_Header } `json:"record"`
 	}
 
-	return nil, fmt.Errorf("unknown record type")
+	err := json.Unmarshal(b, &rrtype)
+	if err != nil {
+		return err
+	}
+
+	var myOrphan struct {
+		Record dns.RR `json:"record"`
+	}
+	if newrr, ok := dns.TypeToRR[rrtype.Record.Hdr.Rrtype]; ok {
+		myOrphan.Record = newrr()
+	} else {
+		return fmt.Errorf("unknwon rr type %d", rrtype.Record.Hdr.Rrtype)
+	}
+
+	err = json.Unmarshal(b, &myOrphan)
+	if err != nil {
+		return err
+	}
+
+	s.Record = myOrphan.Record
+
+	return nil
 }
 
 func init() {

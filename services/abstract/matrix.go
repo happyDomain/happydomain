@@ -34,18 +34,18 @@ import (
 )
 
 type MatrixIM struct {
-	Matrix []*svcs.SRV `json:"matrix"`
+	Records []*dns.SRV `json:"records"`
 }
 
 func (s *MatrixIM) GetNbResources() int {
-	return len(s.Matrix)
+	return len(s.Records)
 }
 
 func (s *MatrixIM) GenComment() string {
 	dest := map[string][]uint16{}
 
 destloop:
-	for _, srv := range s.Matrix {
+	for _, srv := range s.Records {
 		for _, port := range dest[srv.Target] {
 			if port == srv.Port {
 				continue destloop
@@ -79,15 +79,14 @@ destloop:
 	return buffer.String()
 }
 
-func (s *MatrixIM) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, err error) {
-	for _, matrix := range s.Matrix {
-		matrix_rrs, err := matrix.GetRecords(helpers.DomainJoin("_matrix._tcp", domain), ttl, origin)
-		if err != nil {
-			return nil, err
-		}
-		rrs = append(rrs, matrix_rrs...)
+func (s *MatrixIM) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	rrs := make([]happydns.Record, len(s.Records))
+	for i, r := range s.Records {
+		srv := *r
+		srv.Target = helpers.DomainFQDN(srv.Target, origin)
+		rrs[i] = &srv
 	}
-	return
+	return rrs, nil
 }
 
 func matrix_analyze(a *svcs.Analyzer) error {
@@ -101,7 +100,10 @@ func matrix_analyze(a *svcs.Analyzer) error {
 		}
 
 		if srv, ok := record.(*dns.SRV); ok {
-			matrixDomains[domain].Matrix = append(matrixDomains[domain].Matrix, svcs.ParseSRV(srv))
+			// Make record relative
+			srv.Target = helpers.DomainRelative(srv.Target, a.GetOrigin())
+
+			matrixDomains[domain].Records = append(matrixDomains[domain].Records, helpers.RRRelative(srv, domain).(*dns.SRV))
 
 			a.UseRR(
 				srv,
