@@ -33,28 +33,30 @@ import (
 )
 
 type TLS_RPT struct {
+	Record *happydns.TXT `json:"txt"`
+}
+
+func (s *TLS_RPT) GetNbResources() int {
+	return 1
+}
+
+func (s *TLS_RPT) GenComment() string {
+	t := TLS_RPTField{}
+	t.Analyze(s.Record.Txt)
+
+	return strings.Join(t.Rua, ", ")
+}
+
+func (s *TLS_RPT) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	return []happydns.Record{s.Record}, nil
+}
+
+type TLS_RPTField struct {
 	Version uint     `json:"version" happydomain:"label=Version,placeholder=1,required,description=The version of TLSRPT to use.,default=1,hidden"`
 	Rua     []string `json:"rua" happydomain:"label=Aggregate Report URI,placeholder=https://example.com/path|mailto:name@example.com"`
 }
 
-func (t *TLS_RPT) GetNbResources() int {
-	return 1
-}
-
-func (t *TLS_RPT) GenComment() string {
-	return strings.Join(t.Rua, ", ")
-}
-
-func (t *TLS_RPT) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	rr := helpers.NewRecord(helpers.DomainJoin("_smtp._tls", domain), "TXT", ttl, origin)
-	rr.(*dns.TXT).Txt = []string{t.String()}
-
-	rrs = append(rrs, rr)
-
-	return
-}
-
-func (t *TLS_RPT) Analyze(txt string) error {
+func (t *TLS_RPTField) Analyze(txt string) error {
 	fields := strings.Split(txt, ";")
 
 	if len(fields) < 2 {
@@ -91,25 +93,24 @@ func (t *TLS_RPT) Analyze(txt string) error {
 	return nil
 }
 
-func (t *TLS_RPT) String() string {
+func (t *TLS_RPTField) String() string {
 	return fmt.Sprintf("v=TLSRPTv%d; rua=%s", t.Version, strings.Join(t.Rua, ","))
 }
 
 func tlsrpt_analyze(a *Analyzer) (err error) {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_smtp._tls."}) {
+		txt, ok := record.(*happydns.TXT)
+
 		// rfc8460: 3. records that do not begin with "v=TLSRPTv1;" are discarded
-		if !strings.HasPrefix(strings.Join(record.(*dns.TXT).Txt, ""), "v=TLSRPT") {
+		if !ok || !strings.HasPrefix(txt.Txt, "v=TLSRPT") {
 			continue
 		}
 
-		service := &TLS_RPT{}
+		domain := strings.TrimPrefix(record.Header().Name, "_smtp._tls.")
 
-		err = service.Analyze(strings.Join(record.(*dns.TXT).Txt, ""))
-		if err != nil {
-			return
-		}
-
-		err = a.UseRR(record, strings.TrimPrefix(record.Header().Name, "_smtp._tls."), service)
+		err = a.UseRR(record, domain, &TLS_RPT{
+			Record: helpers.RRRelative(record, domain).(*happydns.TXT),
+		})
 		if err != nil {
 			return
 		}

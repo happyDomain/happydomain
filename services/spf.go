@@ -34,8 +34,7 @@ import (
 )
 
 type SPF struct {
-	Version    uint     `json:"version" happydomain:"label=Version,placeholder=1,required,description=The version of SPF to use.,default=1,hidden"`
-	Directives []string `json:"directives" happydomain:"label=Directives,placeholder=ip4:203.0.113.12"`
+	Record *happydns.TXT `json:"txt"`
 }
 
 func (s *SPF) GetNbResources() int {
@@ -43,19 +42,22 @@ func (s *SPF) GetNbResources() int {
 }
 
 func (s *SPF) GenComment() string {
-	return fmt.Sprintf("%d directives", len(s.Directives))
+	t := SPFFields{}
+	t.Analyze(s.Record.Txt)
+
+	return fmt.Sprintf("%d directives", len(t.Directives))
 }
 
-func (s *SPF) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	rr := helpers.NewRecord(domain, "TXT", ttl, origin)
-	rr.(*dns.TXT).Txt = []string{s.String()}
-
-	rrs = append(rrs, rr)
-
-	return
+func (s *SPF) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	return []happydns.Record{s.Record}, nil
 }
 
-func (t *SPF) Analyze(txt string) error {
+type SPFFields struct {
+	Version    uint     `json:"version" happydomain:"label=Version,placeholder=1,required,description=The version of SPF to use.,default=1,hidden"`
+	Directives []string `json:"directives" happydomain:"label=Directives,placeholder=ip4:203.0.113.12"`
+}
+
+func (t *SPFFields) Analyze(txt string) error {
 	_, err := spflib.Parse(txt, nil)
 	if err != nil {
 		return err
@@ -83,41 +85,41 @@ func (t *SPF) Analyze(txt string) error {
 	return nil
 }
 
+func (s *SPFFields) String() string {
+	directives := append([]string{fmt.Sprintf("v=spf%d", s.Version)}, s.Directives...)
+	return strings.Join(directives, " ")
+}
+
 func spf_analyze(a *Analyzer) (err error) {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Contains: "v=spf1"}) {
-		service := &SPF{}
-
-		err = service.Analyze(strings.Join(record.(*dns.TXT).Txt, ""))
-		if err != nil {
-			return
-		}
-
-		err = a.UseRR(record, record.Header().Name, service)
+		domain := record.Header().Name
+		err = a.UseRR(record, domain, &SPF{
+			Record: helpers.RRRelative(record, domain).(*happydns.TXT),
+		})
 		if err != nil {
 			return
 		}
 	}
 
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeSPF, Contains: "v=spf1"}) {
-		service := &SPF{}
-
-		err = service.Analyze(strings.Join(record.(*dns.SPF).Txt, ""))
-		if err != nil {
-			return
+		spf, ok := record.(*happydns.SPF)
+		if !ok {
+			continue
 		}
 
-		err = a.UseRR(record, record.Header().Name, service)
+		domain := record.Header().Name
+		err = a.UseRR(record, domain, &SPF{
+			Record: helpers.RRRelative(&happydns.TXT{
+				Hdr: spf.Hdr,
+				Txt: spf.Txt,
+			}, domain).(*happydns.TXT),
+		})
 		if err != nil {
 			return
 		}
 	}
 
 	return
-}
-
-func (s *SPF) String() string {
-	directives := append([]string{fmt.Sprintf("v=spf%d", s.Version)}, s.Directives...)
-	return strings.Join(directives, " ")
 }
 
 func init() {
