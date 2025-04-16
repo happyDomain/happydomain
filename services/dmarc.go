@@ -34,24 +34,17 @@ import (
 )
 
 type DMARC struct {
-	Version           uint            `json:"version" happydomain:"label=Version,placeholder=1,required,description=The version of DMARC to use.,default=1,hidden"`
-	Request           string          `json:"p" happydomain:"label=Requested Mail Receiver policy,choices=none;quarantine;reject,description=Indicates the policy to be enacted by the Receiver,required"`
-	SRequest          string          `json:"sp" happydomain:"label=Requested Mail Receiver policy for all subdomains,choices=;none;quarantaine;reject,description=Indicates the policy to be enacted by the Receiver when it receives mail for a subdomain"`
-	AURI              []string        `json:"rua" happydomain:"label=RUA,description=Addresses for aggregate feedback,placeholder=mailto:name@example.com"`
-	FURI              []string        `json:"ruf" happydomain:"label=RUF,description=Addresses for message-specific failure information,placeholder=mailto:name@example.com"`
-	ADKIM             bool            `json:"adkim" happydomain:"label=Strict DKIM Alignment"`
-	ASPF              bool            `json:"aspf" happydomain:"label=Strict SPF Alignment"`
-	AInterval         common.Duration `json:"ri" happydomain:"label=Interval between aggregate reports"`
-	FailureOptions    []string        `json:"fo" happydomain:"label=Failure reporting options,choices=0;1;d;s"`
-	RegisteredFormats []string        `json:"rf" happydomain:"label=Format of the failure reports,choices=;afrf"`
-	Percent           uint8           `json:"pct" happydomain:"label=Policy applies on,description=Percentage of messages to which the DMARC policy is to be applied.,unit=%"`
+	Record *happydns.TXT `json:"txt"`
 }
 
-func (t *DMARC) GetNbResources() int {
+func (s *DMARC) GetNbResources() int {
 	return 1
 }
 
-func (t *DMARC) GenComment() string {
+func (s *DMARC) GenComment() string {
+	t := DMARCFields{}
+	t.Analyze(s.Record.Txt)
+
 	var b strings.Builder
 
 	if t.ADKIM && t.ASPF {
@@ -78,12 +71,21 @@ func (t *DMARC) GenComment() string {
 }
 
 func (t *DMARC) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	rr := helpers.NewRecord(helpers.DomainJoin("_dmarc", domain), "TXT", ttl, origin)
-	rr.(*dns.TXT).Txt = []string{t.String()}
+	return []happydns.Record{t.Record}, nil
+}
 
-	rrs = append(rrs, rr)
-
-	return
+type DMARCFields struct {
+	Version           uint            `json:"version" happydomain:"label=Version,placeholder=1,required,description=The version of DMARC to use.,default=1,hidden"`
+	Request           string          `json:"p" happydomain:"label=Requested Mail Receiver policy,choices=none;quarantine;reject,description=Indicates the policy to be enacted by the Receiver,required"`
+	SRequest          string          `json:"sp" happydomain:"label=Requested Mail Receiver policy for all subdomains,choices=;none;quarantaine;reject,description=Indicates the policy to be enacted by the Receiver when it receives mail for a subdomain"`
+	AURI              []string        `json:"rua" happydomain:"label=RUA,description=Addresses for aggregate feedback,placeholder=mailto:name@example.com"`
+	FURI              []string        `json:"ruf" happydomain:"label=RUF,description=Addresses for message-specific failure information,placeholder=mailto:name@example.com"`
+	ADKIM             bool            `json:"adkim" happydomain:"label=Strict DKIM Alignment"`
+	ASPF              bool            `json:"aspf" happydomain:"label=Strict SPF Alignment"`
+	AInterval         common.Duration `json:"ri" happydomain:"label=Interval between aggregate reports"`
+	FailureOptions    []string        `json:"fo" happydomain:"label=Failure reporting options,choices=0;1;d;s"`
+	RegisteredFormats []string        `json:"rf" happydomain:"label=Format of the failure reports,choices=;afrf"`
+	Percent           uint8           `json:"pct" happydomain:"label=Policy applies on,description=Percentage of messages to which the DMARC policy is to be applied.,unit=%"`
 }
 
 func analyseFields(txt string) map[string]string {
@@ -103,7 +105,7 @@ func analyseFields(txt string) map[string]string {
 	return ret
 }
 
-func (t *DMARC) Analyze(txt string) error {
+func (t *DMARCFields) Analyze(txt string) error {
 	fields := analyseFields(txt)
 
 	if v, ok := fields["v"]; ok {
@@ -168,7 +170,7 @@ func (t *DMARC) Analyze(txt string) error {
 	return nil
 }
 
-func (t *DMARC) String() string {
+func (t *DMARCFields) String() string {
 	fields := []string{
 		fmt.Sprintf("v=DMARC%d", t.Version),
 	}
@@ -213,14 +215,11 @@ func (t *DMARC) String() string {
 
 func dmarc_analyze(a *Analyzer) (err error) {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_dmarc"}) {
-		service := &DMARC{}
+		domain := strings.TrimPrefix(record.Header().Name, "_dmarc.")
 
-		err = service.Analyze(strings.Join(record.(*dns.TXT).Txt, ""))
-		if err != nil {
-			return
-		}
-
-		err = a.UseRR(record, strings.TrimPrefix(record.Header().Name, "_dmarc."), service)
+		err = a.UseRR(record, domain, &DMARC{
+			Record: helpers.RRRelative(record, domain).(*happydns.TXT),
+		})
 		if err != nil {
 			return
 		}

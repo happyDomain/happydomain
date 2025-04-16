@@ -32,8 +32,8 @@ import (
 )
 
 type Delegation struct {
-	NameServers []string  `json:"ns" happydomain:"label=Name Servers"`
-	DS          []svcs.DS `json:"ds" happydomain:"label=Delegation Signer"`
+	NameServers []*dns.NS `json:"ns"`
+	DS          []*dns.DS `json:"ds"`
 }
 
 func (s *Delegation) GetNbResources() int {
@@ -51,18 +51,12 @@ func (s *Delegation) GenComment() string {
 
 func (s *Delegation) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
 	for _, r := range s.NameServers {
-		ns := helpers.NewRecord(helpers.DomainJoin(domain), "NS", ttl, origin)
-		ns.(*dns.NS).Ns = helpers.DomainFQDN(r, origin)
-		rrs = append(rrs, ns)
+		ns := *r
+		ns.Ns = helpers.DomainFQDN(ns.Ns, origin)
+		rrs = append(rrs, &ns)
 	}
 	for _, ds := range s.DS {
-		rr := helpers.NewRecord(helpers.DomainJoin(domain), "DS", ttl, origin)
-		rr.(*dns.DS).KeyTag = ds.KeyTag
-		rr.(*dns.DS).Algorithm = ds.Algorithm
-		rr.(*dns.DS).DigestType = ds.DigestType
-		rr.(*dns.DS).Digest = ds.Digest
-
-		rrs = append(rrs, rr)
+		rrs = append(rrs, ds)
 	}
 	return
 }
@@ -85,11 +79,11 @@ func delegation_analyze(a *svcs.Analyzer) error {
 			// Make record relative
 			ns.Ns = helpers.DomainRelative(ns.Ns, a.GetOrigin())
 
-			delegations[dn].NameServers = append(delegations[dn].NameServers, ns.Ns)
+			delegations[dn].NameServers = append(delegations[dn].NameServers, helpers.RRRelative(ns, dn).(*dns.NS))
 
 			a.UseRR(
 				record,
-				record.Header().Name,
+				dn,
 				delegations[dn],
 			)
 		}
@@ -97,13 +91,8 @@ func delegation_analyze(a *svcs.Analyzer) error {
 
 	for subdomain := range delegations {
 		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeDS, Domain: subdomain}) {
-			if ds, ok := record.(*dns.DS); ok {
-				delegations[subdomain].DS = append(delegations[subdomain].DS, svcs.DS{
-					KeyTag:     ds.KeyTag,
-					Algorithm:  ds.Algorithm,
-					DigestType: ds.DigestType,
-					Digest:     ds.Digest,
-				})
+			if _, ok := record.(*dns.DS); ok {
+				delegations[subdomain].DS = append(delegations[subdomain].DS, helpers.RRRelative(record, subdomain).(*dns.DS))
 
 				a.UseRR(
 					record,

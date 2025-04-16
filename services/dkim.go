@@ -118,8 +118,18 @@ func (t *DKIM) String() string {
 }
 
 type DKIMRecord struct {
-	Selector string `json:"selector" happydomain:"label=Selector,placeholder=reykjavik,required,description=Name of the key"`
-	DKIM
+	Record *happydns.TXT `json:"txt"`
+}
+
+func (s *DKIMRecord) Analyze() (*DKIM, error) {
+	dkim := &DKIM{}
+
+	err := dkim.Analyze(s.Record.Txt)
+	if err != nil {
+		return nil, err
+	}
+
+	return dkim, nil
 }
 
 func (s *DKIMRecord) GetNbResources() int {
@@ -127,16 +137,29 @@ func (s *DKIMRecord) GetNbResources() int {
 }
 
 func (s *DKIMRecord) GenComment() string {
-	return s.Selector
+	return strings.SplitN(s.Record.Header().Name, ".", 2)[0]
 }
 
-func (s *DKIMRecord) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	rr := helpers.NewRecord(helpers.DomainJoin(s.Selector+"._domainkey", domain), "TXT", ttl, origin)
-	rr.(*dns.TXT).Txt = []string{s.String()}
+func (s *DKIMRecord) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	return []happydns.Record{s.Record}, nil
+}
 
-	rrs = append(rrs, rr)
+type DKIMRedirection struct {
+	Record *dns.CNAME `json:"cname"`
+}
 
-	return
+func (s *DKIMRedirection) GetNbResources() int {
+	return 1
+}
+
+func (s *DKIMRedirection) GenComment() string {
+	return strings.SplitN(s.Record.Header().Name, ".", 2)[0]
+}
+
+func (s *DKIMRedirection) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	cname := *s.Record
+	cname.Target = helpers.DomainFQDN(cname.Target, origin)
+	return []happydns.Record{&cname}, nil
 }
 
 func dkim_analyze(a *Analyzer) (err error) {
@@ -145,19 +168,43 @@ func dkim_analyze(a *Analyzer) (err error) {
 		if dkidx <= 0 {
 			continue
 		}
+		domain := record.Header().Name[dkidx+12:]
 
 		service := &DKIMRecord{
-			Selector: record.Header().Name[:dkidx],
+			Record: helpers.RRRelative(record, domain).(*happydns.TXT),
 		}
 
-		err = service.Analyze(strings.Join(record.(*dns.TXT).Txt, ""))
+		_, err = service.Analyze()
 		if err != nil {
 			return
 		}
 
-		err = a.UseRR(record, record.Header().Name[dkidx+12:], service)
+		err = a.UseRR(record, domain, service)
 		if err != nil {
 			return
+		}
+	}
+
+	return
+}
+
+func dkimcname_analyze(a *Analyzer) (err error) {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME}) {
+		dkidx := strings.Index(record.Header().Name, "._domainkey.")
+		if dkidx <= 0 {
+			continue
+		}
+		if cname, ok := record.(*dns.CNAME); ok {
+			// Make record relative
+			cname.Target = helpers.DomainRelative(cname.Target, a.GetOrigin())
+
+			domain := record.Header().Name[dkidx+12:]
+			err = a.UseRR(record, domain, &DKIMRedirection{
+				Record: helpers.RRRelative(cname, domain).(*dns.CNAME),
+			})
+			if err != nil {
+				return
+			}
 		}
 	}
 
@@ -183,6 +230,29 @@ func init() {
 				NearAlone: true,
 				NeedTypes: []uint16{
 					dns.TypeTXT,
+				},
+			},
+		},
+		1,
+	)
+	RegisterService(
+		func() happydns.ServiceBody {
+			return &DKIMRedirection{}
+		},
+		dkimcname_analyze,
+		happydns.ServiceInfos{
+			Name:        "DKIM external",
+			Description: "DKIM record redirected to another resource.",
+			Categories: []string{
+				"email",
+			},
+			RecordTypes: []uint16{
+				dns.TypeCNAME,
+			},
+			Restrictions: happydns.ServiceRestrictions{
+				NearAlone: true,
+				NeedTypes: []uint16{
+					dns.TypeCNAME,
 				},
 			},
 		},
