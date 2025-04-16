@@ -33,27 +33,30 @@ import (
 )
 
 type MTA_STS struct {
+	Record *happydns.TXT `json:"txt"`
+}
+
+func (s *MTA_STS) GetNbResources() int {
+	return 1
+}
+
+func (s *MTA_STS) GenComment() string {
+	t := MTASTSFields{}
+	t.Analyze(s.Record.Txt)
+
+	return t.Id
+}
+
+func (s *MTA_STS) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	return []happydns.Record{s.Record}, nil
+}
+
+type MTASTSFields struct {
 	Version uint   `json:"version" happydomain:"label=Version,placeholder=1,required,description=The version of MTA-STS to use.,default=1,hidden"`
 	Id      string `json:"id" happydomain:"label=Policy Identifier,placeholder=,description=A short string used to track policy updates."`
 }
 
-func (t *MTA_STS) GetNbResources() int {
-	return 1
-}
-
-func (t *MTA_STS) GenComment() string {
-	return t.Id
-}
-
-func (t *MTA_STS) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	rr := helpers.NewRecord(helpers.DomainJoin("_mta-sts", domain), "TXT", ttl, origin)
-	rr.(*dns.TXT).Txt = []string{t.String()}
-
-	rrs = append(rrs, rr)
-	return
-}
-
-func (t *MTA_STS) Analyze(txt string) error {
+func (t *MTASTSFields) Analyze(txt string) error {
 	fields := strings.Split(txt, ";")
 
 	if len(fields) < 2 {
@@ -86,25 +89,23 @@ func (t *MTA_STS) Analyze(txt string) error {
 	return nil
 }
 
-func (t *MTA_STS) String() string {
+func (t *MTASTSFields) String() string {
 	return fmt.Sprintf("v=STSv%d; id=%s", t.Version, t.Id)
 }
 
 func mtasts_analyze(a *Analyzer) (err error) {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_mta-sts."}) {
+		txt, ok := record.(*happydns.TXT)
 		// rfc8461: 3.1 records that do not begin with "v=STSv1;" are discarded
-		if !strings.HasPrefix(strings.Join(record.(*dns.TXT).Txt, ""), "v=STS") {
+		if !ok || !strings.HasPrefix(txt.Txt, "v=STS") {
 			continue
 		}
 
-		service := &MTA_STS{}
+		domain := strings.TrimPrefix(record.Header().Name, "_mta-sts.")
 
-		err = service.Analyze(strings.Join(record.(*dns.TXT).Txt, ""))
-		if err != nil {
-			return
-		}
-
-		err = a.UseRR(record, strings.TrimPrefix(record.Header().Name, "_mta-sts."), service)
+		err = a.UseRR(record, domain, &MTA_STS{
+			Record: helpers.RRRelative(record, domain).(*happydns.TXT),
+		})
 		if err != nil {
 			return
 		}
