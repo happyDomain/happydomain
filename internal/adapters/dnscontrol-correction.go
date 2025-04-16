@@ -92,6 +92,11 @@ func DNSControlRRtoRC(rrs []happydns.Record, origin string) (dnscontrol.Records,
 	records := make([]*dnscontrol.RecordConfig, len(rrs))
 
 	for i, rr := range rrs {
+		// Convert happydns.TXT, happydns.SPF, ... to corresponding dns.RR
+		if record, ok := rr.(happydns.ConvertibleRecord); ok {
+			rr = record.ToRR()
+		}
+
 		rc, err := dnscontrol.RRtoRC(rr.(dns.RR), strings.TrimSuffix(origin, "."))
 		if err != nil {
 			return nil, err

@@ -26,6 +26,7 @@ import (
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 )
@@ -34,50 +35,46 @@ type GSuite struct {
 	ValidationCode string `json:"validationCode,omitempty" happydomain:"label=Validation Code,placeholder=abcdef0123.mx-verification.google.com.,description=The verification code will be displayed during the initial domain setup and will not be usefull after Google validation."`
 }
 
-func (s *GSuite) GenKnownSvcs() []happydns.ServiceBody {
-	knownSvc := &svcs.MXs{
-		MX: []svcs.MX{
-			svcs.MX{Target: "aspmx.l.google.com.", Preference: 1},
-			svcs.MX{Target: "alt1.aspmx.l.google.com.", Preference: 5},
-			svcs.MX{Target: "alt2.aspmx.l.google.com.", Preference: 5},
-			svcs.MX{Target: "alt3.aspmx.l.google.com.", Preference: 10},
-			svcs.MX{Target: "alt4.aspmx.l.google.com.", Preference: 10},
-		},
-	}
-
-	if len(s.ValidationCode) > 0 {
-		knownSvc.MX = append(knownSvc.MX, svcs.MX{
-			Target:     s.ValidationCode,
-			Preference: 15,
-		})
-	}
-
-	return []happydns.ServiceBody{knownSvc, &svcs.SPF{
-		Version:    1,
-		Directives: []string{"include:_spf.google.com", "~all"},
-	}}
-}
-
 func (s *GSuite) GetNbResources() int {
 	return 1
 }
 
 func (s *GSuite) GenComment() string {
-	var comments []string
-	for _, svc := range s.GenKnownSvcs() {
-		comments = append(comments, svc.GenComment())
-	}
-	return strings.Join(comments, ", ")
+	return "5 MX + SPF directives"
 }
 
 func (s *GSuite) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	for _, svc := range s.GenKnownSvcs() {
-		srrs, err := svc.GetRecords(domain, ttl, origin)
-		if err != nil {
-			return nil, err
+	for i, mx := range []string{
+		"aspmx.l.google.com.",
+		"alt1.aspmx.l.google.com.",
+		"alt2.aspmx.l.google.com.",
+		"alt3.aspmx.l.google.com.",
+		"alt4.aspmx.l.google.com.",
+	} {
+		rr := helpers.NewRecord(domain, "MX", ttl, origin)
+		rr.(*dns.MX).Mx = mx
+		if i == 0 {
+			rr.(*dns.MX).Preference = 1
+		} else if i < 3 {
+			rr.(*dns.MX).Preference = 5
+		} else {
+			rr.(*dns.MX).Preference = 10
 		}
-		rrs = append(rrs, srrs...)
+
+		rrs = append(rrs, rr)
 	}
+
+	if len(s.ValidationCode) > 0 {
+		rr := helpers.NewRecord(domain, "MX", ttl, origin)
+		rr.(*dns.MX).Mx = s.ValidationCode
+		rr.(*dns.MX).Preference = 15
+		rrs = append(rrs, rr)
+	}
+
+	rr := helpers.NewRecord(domain, "TXT", ttl, origin)
+	rr.(*happydns.TXT).Txt = "v=spf1 include:_spf.google.com ~all"
+	rrs = append(rrs, rr)
+
 	return
 }
 
@@ -121,8 +118,8 @@ func gsuite_analyze(a *svcs.Analyzer) (err error) {
 			}
 
 			for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: dn}) {
-				if txt, ok := record.(*dns.TXT); ok {
-					content := strings.Join(txt.Txt, "")
+				if txt, ok := record.(*happydns.TXT); ok {
+					content := txt.Txt
 					if strings.HasPrefix(content, "v=spf1") && strings.Contains(content, "_spf.google.com") {
 						if err = a.UseRR(
 							record,
