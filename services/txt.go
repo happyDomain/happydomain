@@ -31,7 +31,7 @@ import (
 )
 
 type TXT struct {
-	Content string `json:"content" happydomain:"label=Content,description=Your text to publish in the zone"`
+	Record *happydns.TXT `json:"txt"`
 }
 
 func (ss *TXT) GetNbResources() int {
@@ -39,14 +39,11 @@ func (ss *TXT) GetNbResources() int {
 }
 
 func (ss *TXT) GenComment() string {
-	return ss.Content
+	return ss.Record.Txt
 }
 
-func (ss *TXT) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	rr := helpers.NewRecord(domain, "TXT", ttl, origin)
-	rr.(*dns.TXT).Txt = []string{ss.Content}
-	rrs = append(rrs, rr)
-	return
+func (ss *TXT) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	return []happydns.Record{ss.Record}, nil
 }
 
 func txt_analyze(a *Analyzer) (err error) {
@@ -56,12 +53,11 @@ func txt_analyze(a *Analyzer) (err error) {
 			continue
 		}
 
-		if txt, ok := record.(*dns.TXT); ok {
-			err = a.UseRR(
-				record,
-				record.Header().Name,
-				&TXT{Content: strings.Join(txt.Txt, "")},
-			)
+		if txt, ok := record.(*happydns.TXT); ok {
+			domain := record.Header().Name
+			err = a.UseRR(record, domain, &TXT{
+				Record: helpers.RRRelative(txt, domain).(*happydns.TXT),
+			})
 			if err != nil {
 				return
 			}

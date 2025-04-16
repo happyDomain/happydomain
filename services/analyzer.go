@@ -154,6 +154,16 @@ func AnalyzeZone(origin string, zone []happydns.Record) (svcs map[happydns.Subdo
 		defaultTTL: defaultTTL,
 	}
 
+	for i, record := range a.zone {
+		// Convert TXT-like records: merge into one string
+		switch record.(type) {
+		case *dns.TXT:
+			a.zone[i] = happydns.NewTXT((record.(*dns.TXT)))
+		case *dns.SPF:
+			a.zone[i] = happydns.NewSPF((record.(*dns.SPF)))
+		}
+	}
+
 	// Find services between all registered ones
 	for _, service := range OrderedServices() {
 		if service.Analyzer == nil {
@@ -177,20 +187,12 @@ func AnalyzeZone(origin string, zone []happydns.Record) (svcs map[happydns.Subdo
 			continue
 		}
 
-		// Special treatment for TXT-like records
-		switch record.(type) {
-		case *dns.TXT:
-			record = happydns.NewTXT((record.(*dns.TXT)))
-		case *dns.SPF:
-			record = happydns.NewSPF((record.(*dns.SPF)))
-		}
-
 		domain := strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(record.Header().Name, "."), strings.TrimSuffix(a.origin, ".")), ".")
 
 		hash := sha1.New()
 		io.WriteString(hash, record.String())
 
-		orphan := &Orphan{dns.TypeToString[record.Header().Rrtype], strings.TrimSpace(strings.TrimPrefix(record.String(), record.Header().String()))}
+		orphan := &Orphan{helpers.RRRelative(record, a.origin)}
 		svcs[happydns.Subdomain(domain)] = append(svcs[happydns.Subdomain(domain)], &happydns.Service{
 			Service: orphan,
 			ServiceMeta: happydns.ServiceMeta{

@@ -31,69 +31,33 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-type SRV struct {
-	Target   string `json:"target"`
-	Port     uint16 `json:"port"`
-	Weight   uint16 `json:"weight"`
-	Priority uint16 `json:"priority"`
-}
-
-func (s *SRV) GetNbResources() int {
-	return 1
-}
-
-func (s *SRV) GenComment() string {
-	return fmt.Sprintf("%s:%d", s.Target, s.Port)
-}
-
-func (s *SRV) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
-	rr := helpers.NewRecord(domain, "SRV", ttl, origin)
-	rr.(*dns.SRV).Priority = s.Priority
-	rr.(*dns.SRV).Weight = s.Weight
-	rr.(*dns.SRV).Port = s.Port
-	rr.(*dns.SRV).Target = helpers.DomainFQDN(s.Target, origin)
-	return []happydns.Record{rr}, nil
-}
-
-func ParseSRV(record *dns.SRV) (ret *SRV) {
-	if record.Header().Rrtype == dns.TypeSRV {
-		ret = &SRV{
-			Priority: record.Priority,
-			Weight:   record.Weight,
-			Port:     record.Port,
-			Target:   record.Target,
-		}
-	}
-
-	return
-}
-
 var (
 	SRV_DOMAIN = regexp.MustCompile(`^_([^.]+)\._(tcp|udp)(?:\.(.*))?$`)
 )
 
 type UnknownSRV struct {
-	Name  string `json:"name"`
-	Proto string `json:"proto"`
-	SRV   []*SRV `json:"srv"`
+	Records []*dns.SRV `json:"srv"`
 }
 
 func (s *UnknownSRV) GetNbResources() int {
-	return len(s.SRV)
+	return len(s.Records)
 }
 
 func (s *UnknownSRV) GenComment() string {
-	return fmt.Sprintf("%s (%s)", s.Name, s.Proto)
+	if len(s.Records) == 0 {
+		return ""
+	}
+
+	subdomains := SRV_DOMAIN.FindStringSubmatch(s.Records[0].Hdr.Name)
+	return fmt.Sprintf("%s (%s)", subdomains[1], subdomains[2])
 }
 
 func (s *UnknownSRV) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
-	var rrs []happydns.Record
-	for _, service := range s.SRV {
-		srv, err := service.GetRecords(helpers.DomainJoin(fmt.Sprintf("_%s._%s", s.Name, s.Proto), domain), ttl, origin)
-		if err != nil {
-			return nil, err
-		}
-		rrs = append(rrs, srv...)
+	rrs := make([]happydns.Record, len(s.Records))
+	for i, r := range s.Records {
+		srv := *r
+		srv.Target = helpers.DomainFQDN(srv.Target, origin)
+		rrs[i] = &srv
 	}
 	return rrs, nil
 }
@@ -115,10 +79,7 @@ func srv_analyze(a *Analyzer) error {
 		}
 
 		if _, ok := srvDomains[domain][svc]; !ok {
-			srvDomains[domain][svc] = &UnknownSRV{
-				Name:  subdomains[1],
-				Proto: subdomains[2],
-			}
+			srvDomains[domain][svc] = &UnknownSRV{}
 		}
 
 		srv, ok := record.(*dns.SRV)
@@ -129,7 +90,7 @@ func srv_analyze(a *Analyzer) error {
 		// Make record relative
 		srv.Target = helpers.DomainRelative(srv.Target, a.GetOrigin())
 
-		srvDomains[domain][svc].SRV = append(srvDomains[domain][svc].SRV, ParseSRV(helpers.RRRelative(record, a.GetOrigin()).(*dns.SRV)))
+		srvDomains[domain][svc].Records = append(srvDomains[domain][svc].Records, helpers.RRRelative(record, domain).(*dns.SRV))
 
 		a.UseRR(
 			record,

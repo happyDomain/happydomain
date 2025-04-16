@@ -23,8 +23,6 @@ package abstract
 
 import (
 	"bytes"
-	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -36,25 +34,18 @@ import (
 )
 
 type XMPP struct {
-	Client []*svcs.SRV `json:"client,omitempty" happydomain:"label=Client Connection"`
-	Server []*svcs.SRV `json:"server,omitempty" happydomain:"label=Server Connection"`
-	Jabber []*svcs.SRV `json:"jabber,omitempty" happydomain:"label=Jabber Connection (legacy)"`
+	Records []*dns.SRV `json:"records"`
 }
 
 func (s *XMPP) GetNbResources() (max int) {
-	for _, i := range []int{len(s.Client), len(s.Server), len(s.Jabber)} {
-		if i > max {
-			max = i
-		}
-	}
-	return
+	return len(s.Records)
 }
 
 func (s *XMPP) GenComment() string {
 	dest := map[string][]uint16{}
 
 destloop:
-	for _, srv := range append(append(s.Client, s.Server...), s.Jabber...) {
+	for _, srv := range s.Records {
 		for _, port := range dest[srv.Target] {
 			if port == srv.Port {
 				continue destloop
@@ -88,45 +79,29 @@ destloop:
 	return buffer.String()
 }
 
-func (s *XMPP) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, err error) {
-	for _, jabber := range s.Client {
-		jabber_rrs, err := jabber.GetRecords(helpers.DomainJoin("_jabber._tcp", domain), ttl, origin)
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate jabber records: %w", err)
-		}
-		rrs = append(rrs, jabber_rrs...)
+func (s *XMPP) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	rrs := make([]happydns.Record, len(s.Records))
+	for i, r := range s.Records {
+		srv := *r
+		srv.Target = helpers.DomainFQDN(srv.Target, origin)
+		rrs[i] = &srv
 	}
-
-	for _, client := range s.Client {
-		client_rrs, err := client.GetRecords(helpers.DomainJoin("_xmpp-client._tcp", domain), ttl, origin)
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate XMPP client records: %w", err)
-		}
-		rrs = append(rrs, client_rrs...)
-	}
-
-	for _, server := range s.Server {
-		server_rrs, err := server.GetRecords(helpers.DomainJoin("_xmpp-server._tcp", domain), ttl, origin)
-		if err != nil {
-			return nil, fmt.Errorf("unable to generate XMPP server records: %w", err)
-		}
-		rrs = append(rrs, server_rrs...)
-	}
-
-	return
+	return rrs, nil
 }
 
-func xmpp_subanalyze(a *svcs.Analyzer, prefix string, xmppDomains map[string]*XMPP, field string) error {
+func xmpp_subanalyze(a *svcs.Analyzer, prefix string, xmppDomains map[string]*XMPP) error {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Prefix: prefix, Type: dns.TypeSRV}) {
-		if srv := svcs.ParseSRV(record.(*dns.SRV)); srv != nil {
-			domain := strings.TrimPrefix(record.Header().Name, prefix)
+		domain := strings.TrimPrefix(record.Header().Name, prefix)
 
-			if _, ok := xmppDomains[domain]; !ok {
-				xmppDomains[domain] = &XMPP{}
-			}
+		if _, ok := xmppDomains[domain]; !ok {
+			xmppDomains[domain] = &XMPP{}
+		}
 
-			v := reflect.Indirect(reflect.ValueOf(xmppDomains[domain]))
-			v.FieldByName(field).Set(reflect.Append(v.FieldByName(field), reflect.ValueOf(srv)))
+		if srv, ok := record.(*dns.SRV); ok {
+			// Make record relative
+			srv.Target = helpers.DomainRelative(srv.Target, a.GetOrigin())
+
+			xmppDomains[domain].Records = append(xmppDomains[domain].Records, helpers.RRRelative(srv, domain).(*dns.SRV))
 
 			a.UseRR(
 				record,
@@ -142,9 +117,9 @@ func xmpp_subanalyze(a *svcs.Analyzer, prefix string, xmppDomains map[string]*XM
 func xmpp_analyze(a *svcs.Analyzer) error {
 	xmppDomains := map[string]*XMPP{}
 
-	xmpp_subanalyze(a, "_jabber._tcp.", xmppDomains, "Jabber")
-	xmpp_subanalyze(a, "_xmpp-client._tcp.", xmppDomains, "Client")
-	xmpp_subanalyze(a, "_xmpp-server._tcp.", xmppDomains, "Server")
+	xmpp_subanalyze(a, "_jabber._tcp.", xmppDomains)
+	xmpp_subanalyze(a, "_xmpp-client._tcp.", xmppDomains)
+	xmpp_subanalyze(a, "_xmpp-server._tcp.", xmppDomains)
 
 	return nil
 }

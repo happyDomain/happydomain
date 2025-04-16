@@ -23,8 +23,6 @@ package abstract
 
 import (
 	"crypto/sha256"
-	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -36,9 +34,8 @@ import (
 )
 
 type OpenPGP struct {
-	Username   string              `json:"username,omitempty"`
-	Identifier string              `json:"identifier,omitempty"`
-	PublicKey  happydns.HexaString `json:"pubkey"`
+	Username string          `json:"username,omitempty"`
+	Record   *dns.OPENPGPKEY `json:"openpgpkey"`
 }
 
 func (s *OpenPGP) GetNbResources() int {
@@ -49,28 +46,20 @@ func (s *OpenPGP) GenComment() string {
 	return fmt.Sprintf("%s", s.Username)
 }
 
-func (s *OpenPGP) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, err error) {
-	if len(s.PublicKey) > 0 {
-		if s.Username != "" {
-			s.Identifier = fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
+func (s *OpenPGP) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	if s.Username != "" {
+		identifier := fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
+		if !strings.HasPrefix(domain, identifier) {
+			return nil, fmt.Errorf("Invalid prefix")
 		}
-
-		rr := helpers.NewRecord(helpers.DomainJoin(fmt.Sprintf("%s._openpgpkey", s.Identifier), domain), "OPENPGPKEY", ttl, origin)
-		rr.(*dns.OPENPGPKEY).PublicKey = base64.StdEncoding.EncodeToString(s.PublicKey)
-
-		rrs = append(rrs, rr)
 	}
 
-	return
+	return []happydns.Record{s.Record}, nil
 }
 
 type SMimeCert struct {
-	Username     string              `json:"username,omitempty"`
-	Identifier   string              `json:"identifier,omitempty"`
-	CertUsage    uint8               `json:"certusage"`
-	Selector     uint8               `json:"selector"`
-	MatchingType uint8               `json:"matchingtype"`
-	Certificate  happydns.HexaString `json:"certificate"`
+	Username string      `json:"username,omitempty"`
+	Record   *dns.SMIMEA `json:"smimea"`
 }
 
 func (s *SMimeCert) GetNbResources() int {
@@ -81,44 +70,28 @@ func (s *SMimeCert) GenComment() string {
 	return fmt.Sprintf("%s", s.Username)
 }
 
-func (s *SMimeCert) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, err error) {
-	if len(s.Certificate) > 0 {
-		if s.Username != "" {
-			s.Identifier = fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
+func (s *SMimeCert) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	if s.Username != "" {
+		identifier := fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
+		if !strings.HasPrefix(domain, identifier) {
+			return nil, fmt.Errorf("Invalid prefix")
 		}
-
-		rr := helpers.NewRecord(helpers.DomainJoin(fmt.Sprintf("%s._smimecert", s.Identifier), domain), "SMIMEA", ttl, origin)
-		rr.(*dns.SMIMEA).Usage = s.CertUsage
-		rr.(*dns.SMIMEA).Selector = s.Selector
-		rr.(*dns.SMIMEA).MatchingType = s.MatchingType
-		rr.(*dns.SMIMEA).Certificate = hex.EncodeToString(s.Certificate)
-
-		rrs = append(rrs, rr)
 	}
 
-	return
+	return []happydns.Record{s.Record}, nil
 }
 
 func openpgpkey_analyze(a *svcs.Analyzer) (err error) {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeOPENPGPKEY, Contains: "._openpgpkey."}) {
-		if openpgpkey, ok := record.(*dns.OPENPGPKEY); ok {
+		if record.Header().Rrtype == dns.TypeOPENPGPKEY {
 			domain := record.Header().Name
 			domain = domain[strings.Index(domain, "._openpgpkey")+13:]
-
-			identifier := strings.TrimSuffix(record.Header().Name, "._openpgpkey."+domain)
-
-			var pubkey []byte
-			pubkey, err = base64.StdEncoding.DecodeString(strings.Join(strings.Fields(strings.TrimSuffix(strings.TrimPrefix(openpgpkey.PublicKey, "("), ")")), ""))
-			if err != nil {
-				return
-			}
 
 			err = a.UseRR(
 				record,
 				domain,
 				&OpenPGP{
-					Identifier: identifier,
-					PublicKey:  pubkey,
+					Record: helpers.RRRelative(record, domain).(*dns.OPENPGPKEY),
 				},
 			)
 			if err != nil {
@@ -131,27 +104,15 @@ func openpgpkey_analyze(a *svcs.Analyzer) (err error) {
 
 func smimea_analyze(a *svcs.Analyzer) (err error) {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeSMIMEA, Contains: "._smimecert."}) {
-		if smimecert, ok := record.(*dns.SMIMEA); ok {
+		if record.Header().Rrtype == dns.TypeSMIMEA {
 			domain := record.Header().Name
 			domain = domain[strings.Index(domain, "._smimecert")+12:]
-
-			identifier := strings.TrimSuffix(record.Header().Name, "._smimecert."+domain)
-
-			var cert []byte
-			cert, err = hex.DecodeString(smimecert.Certificate)
-			if err != nil {
-				return
-			}
 
 			err = a.UseRR(
 				record,
 				domain,
 				&SMimeCert{
-					Identifier:   identifier,
-					CertUsage:    smimecert.Usage,
-					Selector:     smimecert.Selector,
-					MatchingType: smimecert.MatchingType,
-					Certificate:  cert,
+					Record: helpers.RRRelative(record, domain).(*dns.SMIMEA),
 				},
 			)
 			if err != nil {
