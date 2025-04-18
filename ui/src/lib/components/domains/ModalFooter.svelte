@@ -144,6 +144,7 @@
             style="width: 12%"
             title={$t('service.ttl-tip')}
             bind:value={service._ttl}
+            on:input={(e) => parseInt(e.target.value, 10) ? service._ttl = parseInt(e.target.value, 10) : service._ttl = 0}
         />
     {:else if step === 2}
         <HelpButton
