@@ -41,6 +41,7 @@
  export let index: string;
  export let specs: any = { };
  export let value: any;
+ let val: any = value;
 
  let unit: string|null = null;
  $: unit = specs.type === 'time.Duration' || specs.type === 'common.Duration' ? 's' : null
@@ -95,6 +96,19 @@
          feedback = undefined;
      }
  }
+
+ function parseValue(e) {
+     if (specs.type.startsWith("int") || specs.type.startsWith("uint") || specs.type == "time.Duration" || specs.type == 'common.Duration') {
+         if (e.target.value.length != 0 && e.target.value == parseInt(e.target.value, 10)) {
+             value = parseInt(e.target.value, 10);
+         } else if (specs.type == "time.Duration" || specs.type == 'common.Duration') {
+             // Allow 1m, 1s, ...
+             value = val;
+         }
+     } else {
+         value = val;
+     }
+ }
 </script>
 
 <InputGroup size="sm" {...$$restProps}>
@@ -139,9 +153,10 @@
             plaintext={!edit}
             readonly={!edit}
             required={specs.required}
-            bind:value={value}
+            bind:value={val}
             on:focus={() => dispatch("focus")}
             on:blur={() => dispatch("blur")}
+            on:input={parseValue}
         />
     {/if}
 
