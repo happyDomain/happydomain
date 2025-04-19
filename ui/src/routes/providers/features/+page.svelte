@@ -77,12 +77,12 @@
                 {#each Object.keys(providers) as ptype (ptype)}
                     {@const provider = providers[ptype]}
                     <tr>
-                        <td class="text-center">
+                        <td class="text-truncate">
                             <ImgProvider
                                 {ptype}
-                                style="max-width: 100%; max-height: 2.5em"
-                            /><br>
-                            <strong>
+                                style="max-width: 100%; max-height: 1.2em"
+                            />
+                            <strong title={provider.name}>
                                 {provider.name}
                             </strong>
                         </td>

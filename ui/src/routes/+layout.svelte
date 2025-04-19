@@ -96,23 +96,9 @@
     sw_state={data.sw_state}
 />
 
-<div class="flex-fill d-flex flex-column justify-content-center">
+<div class="flex-fill d-flex flex-column justify-content-center bg-light">
     <slot></slot>
 </div>
 
 <Toaster />
 <VoxPeople routeId={data.route.id} />
-
-<footer class="pt-2 pb-2 bg-dark text-light">
-    <Container>
-        <Row>
-            <Col md="12" lg="6">
-                &copy;
-                <Logo color="#fff" height="17" />
-                2019-2025 All rights reserved
-            </Col>
-            <Col md="6" lg="3" />
-            <Col md="6" lg="3" />
-        </Row>
-    </Container>
-</footer>

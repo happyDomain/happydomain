@@ -87,8 +87,8 @@
     <div id={dn}>
         {#if !reverseZone}
             <h2
-                class="sticky-top"
-                style="background: white; z-index: 1"
+                class="sticky-top bg-light"
+                style="z-index: 1"
             >
                 <span style="white-space: nowrap">
                     <Icon
@@ -122,8 +122,8 @@
 {:else if isCNAME(services) || isPTR(services)}
     <div id={dn}>
         <h2
-            class="sticky-top"
-            style="background: white; z-index: 1"
+            class="sticky-top bg-light"
+            style="z-index: 1"
         >
             <span style="white-space: nowrap">
                 {#if isPTR(services)}
@@ -200,8 +200,8 @@
 {:else}
     <div id={dn?dn:'@'}>
         <div
-            class="d-flex align-items-center sticky-top mb-2 gap-2"
-            style="background: white; z-index: 1"
+            class="d-flex align-items-center sticky-top mb-2 gap-2 bg-light"
+            style="z-index: 1"
         >
             <h2
                 style="white-space: nowrap; cursor: pointer;"

@@ -78,7 +78,7 @@
             >
                 {#if Object.keys(groups).length != 1}
                     <div class="text-center" style="height: 1em">
-                        <h3 class="d-inline-block px-1" style="background: white; position: relative; top: -.65em">
+                        <h3 class="d-inline-block px-2 bg-light" style="position: relative; top: -.65em">
                             {#if gname === ""}
                                 {$t("domaingroups.no-group")}
                             {:else}

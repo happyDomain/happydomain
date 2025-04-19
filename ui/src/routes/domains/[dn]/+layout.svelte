@@ -143,8 +143,8 @@
         <Col
             sm={4}
             md={3}
-            class="bg-light py-2 sticky-top d-flex flex-column justify-content-between"
-            style="overflow-y: auto; max-height: 100vh; z-index: 0"
+            class="py-2 sticky-top d-flex flex-column justify-content-between"
+            style="background-color: #edf5f2; overflow-y: auto; max-height: 100vh; z-index: 0"
         >
             {#if $domains_idx[selectedDomain]}
                 <div class="d-flex">
@@ -177,7 +177,7 @@
                         Retour à la zone
                     </Button>
                 {:else if $page.data.streamed && $sortedDomainsWithIntermediate}
-                    <div class="d-flex gap-2 pb-2 sticky-top bg-light" style="padding-top: 10px">
+                    <div class="d-flex gap-2 pb-2 sticky-top" style="padding-top: 10px">
                         <Button
                             type="button"
                             color="secondary"
