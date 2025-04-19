@@ -169,6 +169,6 @@ type ZoneUsecase interface {
 }
 
 type ApplyZoneForm struct {
-	WantedCorrections []string `json:"wantedCorrections"`
-	CommitMsg         string   `json:"commitMessage"`
+	WantedCorrections []Identifier `json:"wantedCorrections"`
+	CommitMsg         string       `json:"commitMessage"`
 }

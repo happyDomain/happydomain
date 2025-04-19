@@ -22,6 +22,7 @@
 package adapter
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"strings"
 
@@ -169,9 +170,13 @@ func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []ha
 
 	ret = make([]*happydns.Correction, len(corrections))
 	for i, correction := range corrections {
+		id := sha256.Sum224([]byte(correction.Msg))
+
 		ret[i] = &happydns.Correction{
-			F:   correction.F,
-			Msg: correction.Msg,
+			F:    correction.F,
+			Id:   id[:],
+			Msg:  correction.Msg,
+			Kind: DNSControlCorrectionKindFromMessage(correction.Msg),
 		}
 	}
 

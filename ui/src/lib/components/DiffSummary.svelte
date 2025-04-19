@@ -22,9 +22,10 @@
 -->
 
 <script lang="ts">
+ import type { Correction } from '$lib/model/correction';
  import { t } from '$lib/translations';
 
- export let zoneDiff: Array<string>;
+ export let zoneDiff: Array<Correction>;
 
  let zoneDiffCreated = 0;
  let zoneDiffDeleted = 0;
@@ -39,14 +40,14 @@
 
      if (zoneDiff && zoneDiff.length) {
          zoneDiff.forEach(
-             (msg: string) => {
-                 if (/^± MODIFY/.test(msg)) {
-                     zoneDiffModified += 1;
-                 } else if (/^\+ CREATE/.test(msg)) {
+             (c: Correction) => {
+                 if (c.kind == 1) {
                      zoneDiffCreated += 1;
-                 } else if (/^- DELETE/.test(msg)) {
+                 } else if (c.kind == 2) {
+                     zoneDiffModified += 1;
+                 } else if (c.kind == 3) {
                      zoneDiffDeleted += 1;
-                 } else if (/^REFRESH/.test(msg)) {
+                 } else if (c.kind == 99) {
                      zoneDiffOther += 1;
                  }
              }

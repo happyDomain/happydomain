@@ -31,6 +31,36 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// Convert Change Type to Correction Kind
+func DNSControlFromCorrectionType(in diff2.Verb) (kind happydns.CorrectionKind) {
+	switch in {
+	case diff2.CREATE:
+		kind = happydns.CorrectionKindAddition
+	case diff2.CHANGE:
+		kind = happydns.CorrectionKindUpdate
+	case diff2.DELETE:
+		kind = happydns.CorrectionKindDeletion
+	case diff2.REPORT:
+		kind = happydns.CorrectionKindOther
+	}
+
+	return
+}
+
+func DNSControlCorrectionKindFromMessage(msg string) (kind happydns.CorrectionKind) {
+	if strings.HasPrefix(msg, "+ CREATE") {
+		kind = happydns.CorrectionKindAddition
+	} else if strings.HasPrefix(msg, "± MODIFY") {
+		kind = happydns.CorrectionKindUpdate
+	} else if strings.HasPrefix(msg, "- DELETE") {
+		kind = happydns.CorrectionKindDeletion
+	} else {
+		kind = happydns.CorrectionKindOther
+	}
+
+	return
+}
+
 func DNSControlDiffByRecord(oldrrs []happydns.Record, newrrs []happydns.Record, origin string) ([]*happydns.Correction, error) {
 	oldrecords, err := DNSControlRRtoRC(oldrrs, origin)
 	if err != nil {
@@ -49,23 +79,9 @@ func DNSControlDiffByRecord(oldrrs []happydns.Record, newrrs []happydns.Record, 
 
 	ret := make([]*happydns.Correction, len(corrections))
 	for i, correction := range corrections {
-		var kind happydns.CorrectionKind
-
-		// Convert Change Type to Correction Kind
-		switch correction.Type {
-		case diff2.CREATE:
-			kind = happydns.CorrectionKindAddition
-		case diff2.CHANGE:
-			kind = happydns.CorrectionKindUpdate
-		case diff2.DELETE:
-			kind = happydns.CorrectionKindDeletion
-		case diff2.REPORT:
-			kind = happydns.CorrectionKindOther
-		}
-
 		ret[i] = &happydns.Correction{
 			Msg:  correction.MsgsJoined,
-			Kind: kind,
+			Kind: DNSControlFromCorrectionType(correction.Type),
 		}
 	}
 
