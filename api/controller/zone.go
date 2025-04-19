@@ -121,12 +121,7 @@ func (zc *ZoneController) DiffZones(c *gin.Context) {
 		}
 	}
 
-	var rrCorected []string
-	for _, c := range corrections {
-		rrCorected = append(rrCorected, c.Msg)
-	}
-
-	c.JSON(http.StatusOK, rrCorected)
+	c.JSON(http.StatusOK, corrections)
 }
 
 // applyZone performs the requested changes with the provider.

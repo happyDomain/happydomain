@@ -78,7 +78,7 @@ func (du *domainUsecase) ApplyZoneCorrection(user *happydns.User, domain *happyd
 corrections:
 	for i, cr := range corrections {
 		for ic, wc := range form.WantedCorrections {
-			if wc == cr.Msg {
+			if wc.Equals(cr.Id) {
 				log.Printf("%s: apply correction: %s", domain.DomainName, cr.Msg)
 				err := cr.F()
 

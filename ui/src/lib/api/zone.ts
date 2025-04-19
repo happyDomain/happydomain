@@ -20,6 +20,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { handleApiResponse } from '$lib/errors';
+import type { Correction } from '$lib/model/correction';
 import type { Domain } from '$lib/model/domain';
 import type { ServiceCombined, ServiceMeta } from '$lib/model/service';
 import type { ServiceRecord, Zone, ZoneMeta } from '$lib/model/zone';
@@ -76,7 +77,7 @@ export async function importZone(domain: Domain, id: string, file: any): Promise
     return await handleApiResponse<ZoneMeta>(res);
 }
 
-export async function diffZone(domain: Domain, id1: string, id2: string): Promise<Array<string>> {
+export async function diffZone(domain: Domain, id1: string, id2: string): Promise<Array<Correction>> {
     const dnid = encodeURIComponent(domain.id);
     id1 = encodeURIComponent(id1);
     id2 = encodeURIComponent(id2);

@@ -34,7 +34,8 @@ const (
 )
 
 type Correction struct {
-	F    func() error `json:"-"`
-	Msg  string
-	Kind CorrectionKind
+	F    func() error   `json:"-"`
+	Id   Identifier     `json:"id,omitempty"`
+	Msg  string         `json:"msg"`
+	Kind CorrectionKind `json:"kind,omitempty"`
 }

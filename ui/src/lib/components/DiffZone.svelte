@@ -44,43 +44,49 @@
  export let selectable = false;
  export let selectedDiff: Array<string> | null = null;
 
- let zoneDiff: Array<{className: string; msg: string;}>;
+ let zoneDiff: Array<{className: string; msg: string; id: string;}>;
  $: computeDiff(domain, zoneTo, zoneFrom);
+
+ const correctionsIdx: Record<string, Correction> = { };
 
  function computeDiff(domain: Domain, zoneTo: string, zoneFrom: string) {
      APIDiffZone(domain, zoneTo, zoneFrom).then(
-         (v: Array<string>) => {
+         (v: Array<Correction>) => {
              let zoneDiffCreated = 0;
              let zoneDiffDeleted = 0;
              let zoneDiffModified = 0;
              if (v) {
                  zoneDiff = v.map(
-                     (msg: string) => {
+                     (c: Correction) => {
+                         correctionsIdx[c.id] = c;
+
                          let className = '';
-                         if (/^± MODIFY/.test(msg)) {
-                             className = 'text-warning';
-                             zoneDiffModified += 1;
-                         } else if (/^\+ CREATE/.test(msg)) {
+                         if (c.kind == 1) {
                              className = 'text-success';
                              zoneDiffCreated += 1;
-                         } else if (/^- DELETE/.test(msg)) {
+                         } else if (c.kind == 2) {
+                             className = 'text-warning';
+                             zoneDiffModified += 1;
+                         } else if (c.kind == 3) {
                              className = 'text-danger';
                              zoneDiffDeleted += 1;
-                         } else if (/^REFRESH/.test(msg)) {
+                         } else if (c.kind == 99) {
                              className = 'text-info';
                          }
 
                          return {
                              className,
-                             msg,
+                             msg: c.msg,
+                             id: c.id,
                          };
                      }
                  );
              } else {
                  zoneDiff = [];
              }
-             selectedDiff = v;
+             selectedDiff = v.map((c: Correction) => c.id);
              dispatch('computed-diff', {zoneDiffLength: zoneDiff.length, zoneDiffCreated, zoneDiffDeleted, zoneDiffModified});
+             dispatchSelectionSummary();
          },
          (err: any) => {
              dispatch('error', err);
@@ -88,6 +94,13 @@
      )
  }
 
+ function dispatchSelectionSummary() {
+     dispatch('computed-selection', {
+         selectedDiffCreated: !selectedDiff?0:selectedDiff.filter((id: string) => correctionsIdx[id].kind == 1).length,
+         selectedDiffDeleted: !selectedDiff?0:selectedDiff.filter((id: string) => correctionsIdx[id].kind == 3).length,
+         selectedDiffModified: !selectedDiff?0:selectedDiff.filter((id: string) => correctionsIdx[id].kind == 2).length,
+     });
+ }
 </script>
 
 {#if !zoneDiff}
@@ -110,13 +123,14 @@
                 <input
                     type="checkbox"
                     class="form-check-input"
-                    id="zdiff{n}"
+                    id="correction-{line.id}"
                     bind:group={selectedDiff}
-                    value={line.msg}
+                    value={line.id}
+                    on:change={dispatchSelectionSummary}
                 />
                 <label
                     class="form-check-label"
-                    for="zdiff{n}"
+                    for="correction-{line.id}"
                     style="padding-left: 1em; text-indent: -1em;"
                 >
                     {line.msg}

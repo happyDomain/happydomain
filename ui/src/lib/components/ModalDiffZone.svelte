@@ -64,9 +64,6 @@
  let selectedDiffCreated = 0;
  let selectedDiffDeleted = 0;
  let selectedDiffModified = 0;
- $: selectedDiffCreated = !selectedDiff?0:selectedDiff.filter((msg: string) => /^\+ CREATE/.test(msg)).length;
- $: selectedDiffDeleted = !selectedDiff?0:selectedDiff.filter((msg: string) => /^- DELETE/.test(msg)).length;
- $: selectedDiffModified = !selectedDiff?0:selectedDiff.filter((msg: string) => /^± MODIFY/.test(msg)).length;
 
  function Open(): void {
      zoneDiffLength = 0;
@@ -86,6 +83,12 @@
      zoneDiffCreated = evt.detail.zoneDiffCreated;
      zoneDiffDeleted = evt.detail.zoneDiffDeleted;
      zoneDiffModified = evt.detail.zoneDiffModified;
+ }
+
+ function computedSelection(evt: CustomEvent): void {
+     selectedDiffCreated = evt.detail.selectedDiffCreated;
+     selectedDiffDeleted = evt.detail.selectedDiffDeleted;
+     selectedDiffModified = evt.detail.selectedDiffModified;
  }
 
  let propagationInProgress = false;
@@ -126,6 +129,7 @@
             zoneFrom={selectedHistory}
             zoneTo="@"
             on:computed-diff={computedDiff}
+            on:computed-selection={computedSelection}
             on:error={receiveError}
         >
             <div
