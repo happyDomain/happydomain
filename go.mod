@@ -15,7 +15,7 @@ require (
 	github.com/gorilla/sessions v1.4.0
 	github.com/miekg/dns v1.1.63
 	github.com/mileusna/useragent v1.3.5
-	github.com/ovh/go-ovh v1.6.0
+	github.com/ovh/go-ovh v1.7.0
 	github.com/rrivera/identicon v0.0.0-20240116195454-d5ba35832c0d
 	github.com/swaggo/swag v1.16.4
 	github.com/syndtr/goleveldb v1.0.0
