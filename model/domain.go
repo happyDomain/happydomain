@@ -77,8 +77,11 @@ func (d *Domain) HasZone(zoneId Identifier) (found bool) {
 
 type DomainUsecase interface {
 	ApplyZoneCorrection(*User, *Domain, *Zone, *ApplyZoneForm) (*Zone, error)
+	ActionOnEditableZone(*User, *Domain, *Zone, func(*Zone) error) (*Zone, error)
+	AppendZoneService(*User, *Domain, *Zone, string, string, *Service) (*Zone, error)
 	CreateDomain(*User, *Domain) error
 	DeleteDomain(Identifier) error
+	DeleteZoneService(user *User, domain *Domain, zone *Zone, subdomain string, serviceid Identifier) (*Zone, error)
 	ExtendsDomainWithZoneMeta(*Domain) (*DomainWithZoneMetadata, error)
 	DomainExists(string) bool
 	GetUserDomain(*User, Identifier) (*Domain, error)
@@ -88,4 +91,5 @@ type DomainUsecase interface {
 	PublishZone(*User, *Domain, *Zone) ([]*Correction, error)
 	RetrieveRemoteZone(*User, *Domain) (*Zone, error)
 	UpdateDomain(Identifier, *User, func(*Domain)) error
+	UpdateZoneService(user *User, domain *Domain, zone *Zone, subdomain string, serviceid Identifier, newservice *Service) (*Zone, error)
 }

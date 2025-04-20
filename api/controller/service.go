@@ -34,12 +34,14 @@ import (
 )
 
 type ServiceController struct {
+	duService happydns.DomainUsecase
 	suService happydns.ServiceUsecase
 	zuService happydns.ZoneUsecase
 }
 
-func NewServiceController(suService happydns.ServiceUsecase, zuService happydns.ZoneUsecase) *ServiceController {
+func NewServiceController(duService happydns.DomainUsecase, suService happydns.ServiceUsecase, zuService happydns.ZoneUsecase) *ServiceController {
 	return &ServiceController{
+		duService: duService,
 		suService: suService,
 		zuService: zuService,
 	}
@@ -63,6 +65,7 @@ func NewServiceController(suService happydns.ServiceUsecase, zuService happydns.
 //	@Failure		404			{object}	happydns.ErrorResponse	"Domain or Zone not found"
 //	@Router			/domains/{domainId}/zone/{zoneId}/{subdomain}/services [post]
 func (sc *ServiceController) AddZoneService(c *gin.Context) {
+	user := middleware.MyUser(c)
 	domain := c.MustGet("domain").(*happydns.Domain)
 	zone := c.MustGet("zone").(*happydns.Zone)
 	subdomain := c.MustGet("subdomain").(string)
@@ -81,7 +84,7 @@ func (sc *ServiceController) AddZoneService(c *gin.Context) {
 		return
 	}
 
-	err = sc.zuService.AppendService(zone, subdomain, domain.DomainName, newservice)
+	zone, err = sc.duService.AppendZoneService(user, domain, zone, subdomain, domain.DomainName, newservice)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -177,6 +180,8 @@ func (sc *ServiceController) GetServiceRecords(c *gin.Context) {
 //	@Failure		404			{object}	happydns.ErrorResponse	"Domain or Zone not found"
 //	@Router			/domains/{domainId}/zone/{zoneId} [patch]
 func (sc *ServiceController) UpdateZoneService(c *gin.Context) {
+	user := middleware.MyUser(c)
+	domain := c.MustGet("domain").(*happydns.Domain)
 	zone := c.MustGet("zone").(*happydns.Zone)
 
 	var usc happydns.ServiceMessage
@@ -193,7 +198,7 @@ func (sc *ServiceController) UpdateZoneService(c *gin.Context) {
 		return
 	}
 
-	err = sc.zuService.UpdateService(zone, usc.Domain, usc.Id, newservice)
+	zone, err = sc.duService.UpdateZoneService(user, domain, zone, usc.Domain, usc.Id, newservice)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -221,11 +226,13 @@ func (sc *ServiceController) UpdateZoneService(c *gin.Context) {
 //	@Failure		404			{object}	happydns.ErrorResponse	"Domain or Zone not found"
 //	@Router			/domains/{domainId}/zone/{zoneId}/{subdomain}/services/{serviceId} [delete]
 func (sc *ServiceController) DeleteZoneService(c *gin.Context) {
+	user := middleware.MyUser(c)
+	domain := c.MustGet("domain").(*happydns.Domain)
 	zone := c.MustGet("zone").(*happydns.Zone)
 	serviceid := c.MustGet("serviceid").(happydns.Identifier)
 	subdomain := c.MustGet("subdomain").(string)
 
-	err := sc.zuService.DeleteService(zone, subdomain, serviceid)
+	zone, err := sc.duService.DeleteZoneService(user, domain, zone, subdomain, serviceid)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

@@ -158,6 +158,50 @@ corrections:
 	return newZone, nil
 }
 
+func (du *domainUsecase) ActionOnEditableZone(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, act func(zone *happydns.Zone) error) (*happydns.Zone, error) {
+	var err error
+	newZone := zone
+
+	if zone.CommitDate != nil || zone.Published != nil {
+		// Create a new zone if the current one is in archived state
+		newZone = zone.DerivateNew()
+
+		err = du.zoneService.CreateZone(newZone)
+		if err != nil {
+			return nil, happydns.InternalError{
+				Err:         fmt.Errorf("unable to CreateZone in importZone: %s\n", err),
+				UserMessage: "Sorry, we are unable to create your zone.",
+			}
+		}
+
+		domain.ZoneHistory = append(
+			[]happydns.Identifier{newZone.Id}, domain.ZoneHistory...)
+
+		err = du.UpdateDomain(domain.Id, user, func(dn *happydns.Domain) {
+			dn.ZoneHistory = domain.ZoneHistory
+		})
+		if err != nil {
+			return nil, happydns.InternalError{
+				Err:         fmt.Errorf("unable to UpdateDomain in importZone: %s\n", err),
+				UserMessage: "Sorry, we are unable to create your zone.",
+			}
+		}
+	}
+
+	err = act(newZone)
+	if err != nil {
+		return nil, err
+	}
+
+	return newZone, nil
+}
+
+func (du *domainUsecase) AppendZoneService(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain string, origin string, service *happydns.Service) (*happydns.Zone, error) {
+	return du.ActionOnEditableZone(user, domain, zone, func(zone *happydns.Zone) error {
+		return du.zoneService.AppendService(zone, subdomain, origin, service)
+	})
+}
+
 func (du *domainUsecase) CreateDomain(user *happydns.User, uz *happydns.Domain) error {
 	if len(uz.DomainName) <= 2 {
 		return happydns.InternalError{
@@ -228,6 +272,12 @@ func (du *domainUsecase) DomainExists(fqdn string) bool {
 	return du.store.DomainExists(fqdn)
 }
 
+func (du *domainUsecase) DeleteZoneService(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain string, serviceid happydns.Identifier) (*happydns.Zone, error) {
+	return du.ActionOnEditableZone(user, domain, zone, func(zone *happydns.Zone) error {
+		return du.zoneService.DeleteService(zone, subdomain, serviceid)
+	})
+}
+
 func (du *domainUsecase) ExtendsDomainWithZoneMeta(domain *happydns.Domain) (*happydns.DomainWithZoneMetadata, error) {
 	var errs error
 	ret := map[string]*happydns.ZoneMeta{}
@@ -276,11 +326,20 @@ func (du *domainUsecase) ImportZone(user *happydns.User, domain *happydns.Domain
 		}
 	}
 
+	now := time.Now()
+	commit := fmt.Sprintf("Initial zone fetch from %s", domain.DomainName)
+	if len(domain.ZoneHistory) > 0 {
+		commit = fmt.Sprintf("Zone fetched from %s", domain.DomainName)
+	}
+
 	myZone := &happydns.Zone{
 		ZoneMeta: happydns.ZoneMeta{
 			IdAuthor:     domain.IdUser,
 			DefaultTTL:   defaultTTL,
-			LastModified: time.Now(),
+			LastModified: now,
+			CommitMsg:    &commit,
+			CommitDate:   &now,
+			Published:    &now,
 		},
 		Services: services,
 	}
@@ -296,17 +355,7 @@ func (du *domainUsecase) ImportZone(user *happydns.User, domain *happydns.Domain
 	domain.ZoneHistory = append(
 		[]happydns.Identifier{myZone.Id}, domain.ZoneHistory...)
 
-	// Create wip zone
-	err = du.zoneService.CreateZone(myZone)
-	if err != nil {
-		return nil, happydns.InternalError{
-			Err:         fmt.Errorf("unable to CreateZone2 in importZone: %s\n", err),
-			UserMessage: "Sorry, we are unable to create your zone.",
-		}
-	}
-	domain.ZoneHistory = append(
-		[]happydns.Identifier{myZone.Id}, domain.ZoneHistory...)
-
+	// Save domain modifications
 	err = du.UpdateDomain(domain.Id, user, func(dn *happydns.Domain) {
 		dn.ZoneHistory = domain.ZoneHistory
 	})
@@ -391,4 +440,10 @@ func (du *domainUsecase) UpdateDomain(domainid happydns.Identifier, user *happyd
 	}
 
 	return nil
+}
+
+func (du *domainUsecase) UpdateZoneService(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain string, serviceid happydns.Identifier, service *happydns.Service) (*happydns.Zone, error) {
+	return du.ActionOnEditableZone(user, domain, zone, func(zone *happydns.Zone) error {
+		return du.zoneService.UpdateService(zone, subdomain, serviceid, service)
+	})
 }
