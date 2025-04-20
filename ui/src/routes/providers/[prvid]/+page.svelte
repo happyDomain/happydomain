@@ -22,19 +22,19 @@
 -->
 
 <script lang="ts">
- import {
-     Button,
-     Icon,
- } from '@sveltestrap/sveltestrap';
+    import {
+        Button,
+        Icon,
+    } from '@sveltestrap/sveltestrap';
 
- import ProviderForm from '$lib/components/providers/Form.svelte';
- import type { Provider } from '$lib/model/provider';
- import type { ProviderSettingsState } from '$lib/model/provider_settings';
- import { t } from '$lib/translations';
+    import ProviderFormPage from '$lib/components/providers/FormPage.svelte';
+    import type { Provider } from '$lib/model/provider';
+    import type { ProviderSettingsState } from '$lib/model/provider_settings';
+    import { t } from '$lib/translations';
 
- export let data: {provider: Provider; provider_id: string;};
+    export let data: {provider: Provider; provider_id: string;};
 
- let value: ProviderSettingsState = {...data.provider, state: 0};
+    let value: ProviderSettingsState = {...data.provider, state: 0};
 </script>
 
 <h1 class="text-center my-2">
@@ -52,7 +52,7 @@
     {/if}
 </h1>
 <hr class="mt-0 mb-0">
-<ProviderForm
+<ProviderFormPage
     edit
     ptype={data.provider._srctype}
     state={0}

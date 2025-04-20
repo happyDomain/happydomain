@@ -22,22 +22,22 @@
 -->
 
 <script lang="ts">
- import { goto } from '$app/navigation';
+    import { goto } from '$app/navigation';
 
- import {
-     Button,
-     Col,
-     Container,
-     Icon,
-     Row,
- } from '@sveltestrap/sveltestrap';
+    import {
+        Button,
+        Col,
+        Container,
+        Icon,
+        Row,
+    } from '@sveltestrap/sveltestrap';
 
- import ProviderSelector from '$lib/components/providers/Selector.svelte';
- import { t } from '$lib/translations';
+    import ProviderSelector from '$lib/components/providers/Selector.svelte';
+    import { t } from '$lib/translations';
 
- function selectNewProvider(event: CustomEvent<{ptype: string}>) {
-     goto('new/' + encodeURIComponent(event.detail.ptype));
- }
+    function selectNewProvider(event: CustomEvent<{ptype: string}>) {
+        goto('new/' + encodeURIComponent(event.detail.ptype));
+    }
 </script>
 
 <Container class="d-flex flex-column flex-fill" fluid>

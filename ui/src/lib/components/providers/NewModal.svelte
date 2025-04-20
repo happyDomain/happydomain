@@ -22,45 +22,52 @@
 -->
 
 <script lang="ts">
- import {
-     Modal,
-     ModalBody,
-     ModalFooter,
-     ModalHeader,
- } from '@sveltestrap/sveltestrap';
+    import {
+        Modal,
+        ModalBody,
+        ModalFooter,
+        ModalHeader,
+    } from '@sveltestrap/sveltestrap';
 
- import SettingsStateButtons from '$lib/components/providers/SettingsStateButtons.svelte';
- import CustomForm from '$lib/components/CustomForm.svelte';
- import ProviderSelector from '$lib/components/providers/Selector.svelte';
- import ResourceInput from '$lib/components/resources/basic.svelte';
- import { ProviderForm } from '$lib/model/provider_form';
- import { providersSpecs, refreshProviders } from '$lib/stores/providers';
- import { t } from '$lib/translations';
+    import SettingsStateButtons from '$lib/components/providers/SettingsStateButtons.svelte';
+    import ProviderForm from '$lib/components/providers/Form.svelte';
+    import ProviderSelector from '$lib/components/providers/Selector.svelte';
+    import { refreshProviders } from '$lib/stores/providers';
+    import { t } from '$lib/translations';
 
- export let isOpen = false;
+    export let isOpen = false;
+    $: if (isOpen) ptype = "";
 
- let form = new ProviderForm("", () => {
-     isOpen = false;
-     refreshProviders();
- });
+    let form: ProviderForm;
+    let ptype: string;
 
- function previous() {
-     if (form.state < 0) {
-         isOpen = false;
-     } else {
-         form.previousState();
-         form = form;
-     }
- }
+    function previous() {
+        if (!form || form.state < 0) {
+            isOpen = false;
+        } else {
+            form.previousState().then(() => {
+                if (form.state < 0) {
+                    form = null;
+                    ptype = "";
+                } else {
+                    form = form;
+                }
+            });
+        }
+    }
 
- function selectProvider(event: CustomEvent<{ptype: string}>) {
-     form.ptype = event.detail.ptype;
-     form.changeState(0).then((res) => form.form = res);
- }
+    function selectProvider(event: CustomEvent<{ptype: string}>) {
+        ptype = event.detail.ptype;
+    }
 
- function toggle(): void {
-     isOpen = !isOpen;
- }
+    function finished() {
+        isOpen = false;
+        refreshProviders();
+    }
+
+    function toggle(): void {
+        isOpen = !isOpen;
+    }
 </script>
 
 <Modal
@@ -73,46 +80,38 @@
         {$t('provider.new-form')}
     </ModalHeader>
     <ModalBody>
-        {#if form.state < 0}
+        {#if !ptype}
             <p>
                 {$t('provider.select-provider')}
             </p>
             <ProviderSelector on:provider-selected={selectProvider} />
         {:else}
-            <form
-                id="providermodal"
-                on:submit|preventDefault={() => form.nextState()}
-            >
-                {#if form.form}
-                    <CustomForm
-                        form={form.form}
-                        bind:value={form.value.Provider}
-                        on:input={(event) => form.value.Provider = event.detail}
-                    >
-                        {#if form.state === 0}
-                            <ResourceInput
-                                id="src-name"
-                                edit
-                                index="0"
-                                specs={{label: $t('provider.name-your'), description: $t('domains.give-explicit-name'), placeholder: $providersSpecs?($providersSpecs[form.ptype].name + ' account 1'):undefined, required: true}}
-                                bind:value={form.value._comment}
-                                on:input={(event) => form.value._comment = event.detail}
-                            />
-                        {/if}
-                    </CustomForm>
-                {/if}
-            </form>
+            <ProviderForm
+                bind:form={form}
+                formId="providermodal"
+                {ptype}
+                on:done={finished}
+            />
         {/if}
     </ModalBody>
     <ModalFooter>
-        <SettingsStateButtons
-            canDoNext={form.state >= 0}
-            class="d-flex justify-content-end"
-            submitForm="providermodal"
-            form={form.form}
-            nextInProgress={form.nextInProgress}
-            previousInProgress={form.previousInProgress}
-            on:previous-state={previous}
-        />
+        {#if ptype && form}
+            <SettingsStateButtons
+                canDoNext={form && form.state >= 0}
+                class="d-flex justify-content-end"
+                submitForm="providermodal"
+                form={form.form}
+                nextInProgress={form.nextInProgress}
+                previousInProgress={form.previousInProgress}
+                on:previous-state={previous}
+            />
+        {:else}
+            <SettingsStateButtons
+                canDoNext={false}
+                class="d-flex justify-content-end"
+                submitForm="providermodal"
+                on:previous-state={previous}
+            />
+        {/if}
     </ModalFooter>
 </Modal>

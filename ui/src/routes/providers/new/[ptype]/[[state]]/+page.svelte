@@ -22,12 +22,12 @@
 -->
 
 <script lang="ts">
- import ProviderForm from '$lib/components/providers/Form.svelte';
+    import ProviderFormPage from '$lib/components/providers/FormPage.svelte';
 
- export let data: {ptype: string; state: number; providerId?: string;};
+    export let data: {ptype: string; state: number; providerId?: string;};
 </script>
 
-<ProviderForm
+<ProviderFormPage
     ptype={data.ptype}
     state={data.state}
     providerId={data.providerId}
