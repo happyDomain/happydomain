@@ -98,7 +98,7 @@
  }
 
  function parseValue(e) {
-     if (specs.type.startsWith("int") || specs.type.startsWith("uint") || specs.type == "time.Duration" || specs.type == 'common.Duration') {
+     if (specs.type && (specs.type.startsWith("int") || specs.type.startsWith("uint") || specs.type == "time.Duration" || specs.type == 'common.Duration')) {
          if (e.target.value.length != 0 && e.target.value == parseInt(e.target.value, 10)) {
              value = parseInt(e.target.value, 10);
          } else if (specs.type == "time.Duration" || specs.type == 'common.Duration') {
