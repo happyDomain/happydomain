@@ -1,10 +1,10 @@
-import type { Load } from '@sveltejs/kit';
+import type { Load } from "@sveltejs/kit";
 
-export const load: Load = async({ parent }) => {
+export const load: Load = async ({ parent }) => {
     const data = await parent();
 
     return {
         ...data,
         isZonePage: true,
-    }
-}
+    };
+};

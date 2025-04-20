@@ -19,13 +19,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import type { Load } from '@sveltejs/kit';
+import type { Load } from "@sveltejs/kit";
 
-export const load: Load = async({ params, url }) => {
+export const load: Load = async ({ params, url }) => {
     const nsPrvId = url.searchParams.get("nsprvid");
     return {
         ptype: params.ptype,
-        state: params.state?parseInt(params.state):0,
-        providerId: nsPrvId?nsPrvId:undefined,
-    }
-}
+        state: params.state ? parseInt(params.state) : 0,
+        providerId: nsPrvId ? nsPrvId : undefined,
+    };
+};

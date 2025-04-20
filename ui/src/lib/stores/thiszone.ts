@@ -19,57 +19,51 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { derived, writable, type Writable } from 'svelte/store';
-import { domainCompare } from '$lib/dns';
-import {
-    retrieveZone as APIRetrieveZone,
-    getZone as APIGetZone,
-} from '$lib/api/zone';
-import type { Domain } from '$lib/model/domain';
-import type { Zone } from '$lib/model/zone';
-import { refreshDomains } from '$lib/stores/domains';
+import { derived, writable, type Writable } from "svelte/store";
+import { domainCompare } from "$lib/dns";
+import { retrieveZone as APIRetrieveZone, getZone as APIGetZone } from "$lib/api/zone";
+import type { Domain } from "$lib/model/domain";
+import type { Zone } from "$lib/model/zone";
+import { refreshDomains } from "$lib/stores/domains";
 
 export const thisZone: Writable<null | Zone> = writable(null);
 
 // sortedDomains returns all subdomains, sorted
-export const sortedDomains = derived(
-    thisZone,
-    ($thisZone: null|Zone) => {
-        if (!$thisZone) {
-            return null;
-        }
-        if (!$thisZone.services) {
-            return [];
-        }
-        const domains = Object.keys($thisZone.services);
-        domains.sort(domainCompare);
-        return domains;
-    },
-);
+export const sortedDomains = derived(thisZone, ($thisZone: null | Zone) => {
+    if (!$thisZone) {
+        return null;
+    }
+    if (!$thisZone.services) {
+        return [];
+    }
+    const domains = Object.keys($thisZone.services);
+    domains.sort(domainCompare);
+    return domains;
+});
 
 // sortedDomainsWithIntermediate returns all subdomains, sorted, with intermediate subdomains
 export const sortedDomainsWithIntermediate = derived(
     sortedDomains,
-    ($sortedDomains: null|Array<string>) => {
+    ($sortedDomains: null | Array<string>) => {
         if (!$sortedDomains || $sortedDomains.length <= 1) {
             return $sortedDomains;
         }
         const domains: Array<string> = [$sortedDomains[0]];
 
-        let previous = domains[0].split('.');
+        let previous = domains[0].split(".");
         for (let i = 1; i < $sortedDomains.length; i++) {
-            const cur = $sortedDomains[i].split('.');
+            const cur = $sortedDomains[i].split(".");
 
             if (previous.length < cur.length && previous[0] !== cur[cur.length - previous.length]) {
-                domains.push(cur.slice(cur.length - previous.length).join('.'));
+                domains.push(cur.slice(cur.length - previous.length).join("."));
             }
 
             while (previous.length + 1 < cur.length) {
                 previous = cur.slice(cur.length - previous.length - 1);
-                domains.push(previous.join('.'));
+                domains.push(previous.join("."));
             }
 
-            domains.push(cur.join('.'));
+            domains.push(cur.join("."));
             previous = cur;
         }
 

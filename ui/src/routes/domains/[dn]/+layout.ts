@@ -1,27 +1,27 @@
-import { error } from '@sveltejs/kit';
-import { get_store_value } from 'svelte/internal';
-import type { Load } from '@sveltejs/kit';
+import { error } from "@sveltejs/kit";
+import { get_store_value } from "svelte/internal";
+import type { Load } from "@sveltejs/kit";
 
-import type { Domain } from '$lib/model/domain';
-import { domains, domains_idx, refreshDomains } from '$lib/stores/domains';
+import type { Domain } from "$lib/model/domain";
+import { domains, domains_idx, refreshDomains } from "$lib/stores/domains";
 
-export const load: Load = async({ parent, params }) => {
+export const load: Load = async ({ parent, params }) => {
     const data = await parent();
 
     if (!get_store_value(domains)) await refreshDomains();
 
     if (!params.dn) {
         error(404, {
-                    message: 'Domain not found',
-                });
+            message: "Domain not found",
+        });
     }
 
     const domain: Domain | null = get_store_value(domains_idx)[params.dn];
 
     if (!domain) {
         error(404, {
-        	    message: 'Domain not found',
-        	});
+            message: "Domain not found",
+        });
     }
 
     let historyid = undefined;
@@ -33,5 +33,5 @@ export const load: Load = async({ parent, params }) => {
         domain,
         history: historyid,
         ...data,
-    }
-}
+    };
+};

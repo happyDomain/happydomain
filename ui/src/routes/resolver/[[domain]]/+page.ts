@@ -19,11 +19,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import type { Load } from '@sveltejs/kit';
+import type { Load } from "@sveltejs/kit";
 
-export const load: Load = async({ params }) => {
+export const load: Load = async ({ params }) => {
     return {
         ...history.state,
         domain: params.domain,
     };
-}
+};

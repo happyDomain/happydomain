@@ -22,99 +22,88 @@
 -->
 
 <script context="module" lang="ts">
- import type { ModalController } from '$lib/model/modal_controller';
+    import type { ModalController } from "$lib/model/modal_controller";
 
- export const controls: ModalController = { };
+    export const controls: ModalController = {};
 </script>
 
 <script lang="ts">
- import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher } from "svelte";
 
- // @ts-ignore
- import { escape } from 'html-escaper';
- import {
-     Input,
-     InputGroup,
-     InputGroupText,
-     Modal,
-     ModalBody,
- } from '@sveltestrap/sveltestrap';
+    // @ts-ignore
+    import { escape } from "html-escaper";
+    import { Input, InputGroup, InputGroupText, Modal, ModalBody } from "@sveltestrap/sveltestrap";
 
- import ModalFooter from '$lib/components/domains/ModalFooter.svelte';
- import ModalHeader from '$lib/components/domains/ModalHeader.svelte';
- import { validateDomain } from '$lib/dns';
- import type { Domain } from '$lib/model/domain';
- import { t } from '$lib/translations';
+    import ModalFooter from "$lib/components/domains/ModalFooter.svelte";
+    import ModalHeader from "$lib/components/domains/ModalHeader.svelte";
+    import { validateDomain } from "$lib/dns";
+    import type { Domain } from "$lib/model/domain";
+    import { t } from "$lib/translations";
 
- const dispatch = createEventDispatcher();
+    const dispatch = createEventDispatcher();
 
- export let isOpen = false;
- const toggle = () => (isOpen = !isOpen);
+    export let isOpen = false;
+    const toggle = () => (isOpen = !isOpen);
 
- export let origin: Domain;
- export let value: string = "";
+    export let origin: Domain;
+    export let value: string = "";
 
- let newDomainState: boolean | undefined = undefined;
- $: newDomainState = value?validateNewSubdomain(value):undefined;
+    let newDomainState: boolean | undefined = undefined;
+    $: newDomainState = value ? validateNewSubdomain(value) : undefined;
 
- let endsWithOrigin = false;
- $: endsWithOrigin = value.endsWith(origin.domain) || value.endsWith(origin.domain.substring(0, origin.domain.length - 1));
+    let endsWithOrigin = false;
+    $: endsWithOrigin =
+        value.endsWith(origin.domain) ||
+        value.endsWith(origin.domain.substring(0, origin.domain.length - 1));
 
- let newDomainAppend: string | null = null;
- $: {
-     if (endsWithOrigin) {
-         newDomainAppend = null;
-     } else if (value.length > 0) {
-         newDomainAppend = '.' + origin.domain;
-     } else {
-         newDomainAppend = origin.domain;
-     }
- }
+    let newDomainAppend: string | null = null;
+    $: {
+        if (endsWithOrigin) {
+            newDomainAppend = null;
+        } else if (value.length > 0) {
+            newDomainAppend = "." + origin.domain;
+        } else {
+            newDomainAppend = origin.domain;
+        }
+    }
 
- function validateNewSubdomain(value: string): boolean | undefined {
-     newDomainState = validateDomain(
-         value,
-         origin.domain
-     );
-     return newDomainState;
- }
+    function validateNewSubdomain(value: string): boolean | undefined {
+        newDomainState = validateDomain(value, origin.domain);
+        return newDomainState;
+    }
 
- function submitSubdomainForm() {
-     if (validateNewSubdomain(value)) {
-         toggle();
-         dispatch("show-next-modal", value);
-     }
- }
+    function submitSubdomainForm() {
+        if (validateNewSubdomain(value)) {
+            toggle();
+            dispatch("show-next-modal", value);
+        }
+    }
 
- function Open(domain): void {
-     isOpen = true;
-     value = '';
- }
+    function Open(domain): void {
+        isOpen = true;
+        value = "";
+    }
 
- controls.Open = Open;
+    controls.Open = Open;
 </script>
 
-<Modal
-    {isOpen}
-    {toggle}
->
+<Modal {isOpen} {toggle}>
     <ModalHeader {toggle} dn={origin.domain} />
     <ModalBody>
-        <form
-            id="addSubdomainForm"
-            on:submit|preventDefault={submitSubdomainForm}
-        >
+        <form id="addSubdomainForm" on:submit|preventDefault={submitSubdomainForm}>
             <p>
-                {@html $t('domains.form-new-subdomain', {"domain": `<span class="font-monospace">${escape(origin.domain)}</span>`})}
+                {@html $t("domains.form-new-subdomain", {
+                    domain: `<span class="font-monospace">${escape(origin.domain)}</span>`,
+                })}
 
                 <InputGroup>
                     <Input
                         autofocus
                         class="font-monospace"
-                        placeholder={$t('domains.placeholder-new-sub')}
+                        placeholder={$t("domains.placeholder-new-sub")}
                         invalid={newDomainState === false}
                         valid={newDomainState === true}
-                        bind:value={value}
+                        bind:value
                     />
                     {#if newDomainAppend}
                         <InputGroupText class="font-monospace">
@@ -125,10 +114,5 @@
             </p>
         </form>
     </ModalBody>
-    <ModalFooter
-        canContinue={newDomainState === true}
-        form="addSubdomainForm"
-        step={0}
-        {toggle}
-    />
+    <ModalFooter canContinue={newDomainState === true} form="addSubdomainForm" step={0} {toggle} />
 </Modal>

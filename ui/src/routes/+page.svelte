@@ -22,9 +22,9 @@
 -->
 
 <script>
-    import Home from '$lib/components/Home.svelte';
-    import Onboarding from '$lib/components/Onboarding.svelte';
-    import { domains } from '$lib/stores/domains';
+    import Home from "$lib/components/Home.svelte";
+    import Onboarding from "$lib/components/Onboarding.svelte";
+    import { domains } from "$lib/stores/domains";
 
     // Decide to show onboarding only on page load
     const showOnboarding = !$domains || !$domains.length;

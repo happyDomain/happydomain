@@ -19,7 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import type { ServiceCombined } from '$lib/model/service';
+import type { ServiceCombined } from "$lib/model/service";
 
 export interface ServiceRecord {
     str: string;
@@ -37,7 +37,7 @@ export interface ZoneMeta {
     commit_message?: string;
     commit_date?: Date;
     published?: Date;
-};
+}
 
 export interface Zone extends ZoneMeta {
     services: Record<string, Array<ServiceCombined>>;

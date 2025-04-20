@@ -19,12 +19,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { redirect } from '@sveltejs/kit';
-import type { Load } from '@sveltejs/kit';
+import { redirect } from "@sveltejs/kit";
+import type { Load } from "@sveltejs/kit";
 
-export const load: Load = async() => {
-    if (window.disable_registration)
-        redirect(302, '/login');
-    else
-        redirect(302, '/join');
-}
+export const load: Load = async () => {
+    if (window.disable_registration) redirect(302, "/login");
+    else redirect(302, "/join");
+};

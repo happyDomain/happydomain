@@ -22,52 +22,47 @@
 -->
 
 <script lang="ts">
- import {
-     Container,
-     Icon,
-     Table,
-     Spinner,
- } from '@sveltestrap/sveltestrap';
+    import { Container, Icon, Table, Spinner } from "@sveltestrap/sveltestrap";
 
- import { listProviders } from '$lib/api/provider_specs';
- import ImgProvider from '$lib/components/providers/ImgProvider.svelte';
- import { t } from '$lib/translations';
+    import { listProviders } from "$lib/api/provider_specs";
+    import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
+    import { t } from "$lib/translations";
 
- const capabilities = [
-     "ListDomains",
-     "rr-1-A",
-     "rr-257-CAA",
-     "rr-61-OPENPGPKEY",
-     "rr-12-PTR",
-     "rr-33-SRV",
-     "rr-44-SSHFP",
-     "rr-52-TLSA",
- ];
+    const capabilities = [
+        "ListDomains",
+        "rr-1-A",
+        "rr-257-CAA",
+        "rr-61-OPENPGPKEY",
+        "rr-12-PTR",
+        "rr-33-SRV",
+        "rr-44-SSHFP",
+        "rr-52-TLSA",
+    ];
 </script>
 
-<Container class="d-flex flex-column flex-fill" fluid>
+<Container class="d-flex flex-column flex-fill mt-1" fluid>
     {#await listProviders()}
         <div class="flex-fill d-flex justify-content-center align-items-center">
             <Spinner size="lg" />
         </div>
     {:then providers}
-        <div
-            style="overflow-x: scroll"
-        >
-        <Table
-            hover
-        >
+        <Table hover style="overflow-x: auto">
             <thead>
-                <tr>
-                    <th>Fournisseurs</th>
+                <tr class="sticky-top bg-light">
+                    <th style="background: none">Fournisseurs</th>
                     {#each capabilities as cap}
-                        <th class="text-center" style="white-space: nowrap;">
-                            {#if cap == 'rr-1-A'}
-                                {$t('record.common-records')}
-                            {:else if cap.startsWith('rr-')}
-                                {$t('common.records', { n: 2, type: cap.slice(cap.lastIndexOf('-')+1) })}
+                        <th
+                            style="background: none; transform: rotate(-45deg) translateX(-2.5rem) translateY(-2rem); writing-mode: vertical-rl; white-space: nowrap;"
+                        >
+                            {#if cap == "rr-1-A"}
+                                {$t("record.common-records")}
+                            {:else if cap.startsWith("rr-")}
+                                {$t("common.records", {
+                                    n: 2,
+                                    type: cap.slice(cap.lastIndexOf("-") + 1),
+                                })}
                             {:else}
-                                {$t('provider.capability.' + cap, { default: cap })}
+                                {$t("provider.capability." + cap, { default: cap })}
                             {/if}
                         </th>
                     {/each}
@@ -78,10 +73,7 @@
                     {@const provider = providers[ptype]}
                     <tr>
                         <td class="text-truncate">
-                            <ImgProvider
-                                {ptype}
-                                style="max-width: 100%; max-height: 1.2em"
-                            />
+                            <ImgProvider {ptype} style="max-width: 100%; max-height: 1.2em" />
                             <strong title={provider.name}>
                                 {provider.name}
                             </strong>
@@ -103,6 +95,5 @@
                 {/each}
             </tbody>
         </Table>
-        </div>
     {/await}
 </Container>

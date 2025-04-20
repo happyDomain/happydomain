@@ -19,12 +19,20 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { handleEmptyApiResponse, handleApiResponse } from '$lib/errors';
-import type { ServiceCombined } from '$lib/model/service';
+import { handleEmptyApiResponse, handleApiResponse } from "$lib/errors";
+import type { ServiceCombined } from "$lib/model/service";
 
-export async function getService(domain: Domain, zoneid: string, subdomain: string, svcid: string): Promise<ServiceCombined> {
-    const res = await fetch(`/api/domains/${encodeURIComponent(domain.id)}/zone/${encodeURIComponent(zoneid)}/${encodeURIComponent(subdomain)}/services/${encodeURIComponent(svcid)}`, {
-        headers: {'Accept': 'application/json'}
-    });
+export async function getService(
+    domain: Domain,
+    zoneid: string,
+    subdomain: string,
+    svcid: string,
+): Promise<ServiceCombined> {
+    const res = await fetch(
+        `/api/domains/${encodeURIComponent(domain.id)}/zone/${encodeURIComponent(zoneid)}/${encodeURIComponent(subdomain)}/services/${encodeURIComponent(svcid)}`,
+        {
+            headers: { Accept: "application/json" },
+        },
+    );
     return await handleApiResponse<ServiceCombined>(res);
 }

@@ -22,22 +22,15 @@
 -->
 
 <script lang="ts">
- import { goto } from '$app/navigation';
+    import { goto } from "$app/navigation";
 
- import {
-     Button,
-     Container,
-     Col,
-     Icon,
-     Row,
-     Spinner,
- } from '@sveltestrap/sveltestrap';
+    import { Button, Container, Col, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
- import ProviderList from '$lib/components/providers/List.svelte';
- import { providers, refreshProviders } from '$lib/stores/providers';
- import { t } from '$lib/translations';
+    import ProviderList from "$lib/components/providers/List.svelte";
+    import { providers, refreshProviders } from "$lib/stores/providers";
+    import { t } from "$lib/translations";
 
- refreshProviders();
+    refreshProviders();
 </script>
 
 <Container class="flex-fill pt-4 pb-5">
@@ -46,14 +39,14 @@
             type="button"
             color="primary"
             class="float-end"
-            on:click={() => goto('providers/new')}
+            on:click={() => goto("providers/new")}
         >
             <Icon name="plus" />
-            {$t('common.add-new-thing', { thing: $t('provider.kind') })}
+            {$t("common.add-new-thing", { thing: $t("provider.kind") })}
         </Button>
     {/if}
     <h1 class="text-center mb-4">
-        {$t('provider.title')}
+        {$t("provider.title")}
     </h1>
     {#if !$providers}
         <div class="d-flex justify-content-center">
@@ -61,11 +54,11 @@
         </div>
     {:else}
         <Row>
-            <Col md={{size: 8, offset: 2}}>
+            <Col md={{ size: 8, offset: 2 }}>
                 <ProviderList
                     items={$providers}
-                    on:new-provider={() => goto('providers/new')}
-                    on:click={(event) => goto('providers/' + encodeURIComponent(event.detail._id))}
+                    on:new-provider={() => goto("providers/new")}
+                    on:click={(event) => goto("providers/" + encodeURIComponent(event.detail._id))}
                 />
             </Col>
         </Row>

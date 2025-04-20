@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { goto } from '$app/navigation';
+    import { goto } from "$app/navigation";
 
     import {
         Badge,
@@ -38,21 +38,21 @@
         ModalHeader,
         Row,
         Spinner,
-    } from '@sveltestrap/sveltestrap';
+    } from "@sveltestrap/sveltestrap";
 
-    import CardImportableDomains from '$lib/components/providers/CardImportableDomains.svelte';
-    import Logo from '$lib/components/Logo.svelte';
-    import NewDomainInput from '$lib/components/NewDomainInput.svelte';
-    import PForm from '$lib/components/providers/Form.svelte';
-    import ProviderList from '$lib/components/providers/List.svelte';
-    import ProviderSelector from '$lib/components/providers/Selector.svelte';
-    import SettingsStateButtons from '$lib/components/providers/SettingsStateButtons.svelte';
-    import ZoneList from '$lib/components/ZoneList.svelte';
-    import type { Provider } from '$lib/model/provider';
-    import { ProviderForm } from '$lib/model/provider_form';
-    import { domains } from '$lib/stores/domains';
-    import { providers, refreshProviders } from '$lib/stores/providers';
-    import { t } from '$lib/translations';
+    import CardImportableDomains from "$lib/components/providers/CardImportableDomains.svelte";
+    import Logo from "$lib/components/Logo.svelte";
+    import NewDomainInput from "$lib/components/domains/NewDomainInput.svelte";
+    import PForm from "$lib/components/providers/Form.svelte";
+    import ProviderList from "$lib/components/providers/List.svelte";
+    import ProviderSelector from "$lib/components/providers/Selector.svelte";
+    import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
+    import ZoneList from "$lib/components/zones/ZoneList.svelte";
+    import type { Provider } from "$lib/model/provider";
+    import { ProviderForm } from "$lib/model/provider_form";
+    import { domains } from "$lib/stores/domains";
+    import { providers, refreshProviders } from "$lib/stores/providers";
+    import { t } from "$lib/translations";
 
     if (!$providers) refreshProviders();
 
@@ -96,16 +96,15 @@
     }
 </script>
 
-<Modal
-    isOpen={isOpen}
-    size="xl"
-    scrollable
-    {toggle}
->
+<Modal {isOpen} size="xl" scrollable {toggle}>
     <ModalHeader {toggle} class="bg-primary-subtle ps-4 pt-4 align-items-start">
-        <h3 class="fw-bolder text-primary mb-1">{$t('common.welcome.start')}<Logo height="30" color="#1cb487" />{$t('common.welcome.end')}</h3>
+        <h3 class="fw-bolder text-primary mb-1">
+            {$t("common.welcome.start")}<Logo height="30" color="#1cb487" />{$t(
+                "common.welcome.end",
+            )}
+        </h3>
         <p class="text-muted mb-2" style="font-size: 0.85em">
-            {$t('onboarding.intro')}
+            {$t("onboarding.intro")}
         </p>
     </ModalHeader>
     <ModalBody class="p-0">
@@ -120,9 +119,13 @@
                                 1
                             {/if}
                         </div>
-                        <div class="step-label">{$t('onboarding.steps.welcome')}</div>
+                        <div class="step-label">{$t("onboarding.steps.welcome")}</div>
                     </div>
-                    <div class="step-item" class:active={step == 1} class:completed={step > 1 && step != 4}>
+                    <div
+                        class="step-item"
+                        class:active={step == 1}
+                        class:completed={step > 1 && step != 4}
+                    >
                         <div class="step-number">
                             {#if step > 1 && step != 4}
                                 <Icon name="check" />
@@ -130,9 +133,13 @@
                                 2
                             {/if}
                         </div>
-                        <div class="step-label">{$t('onboarding.steps.connect')}</div>
+                        <div class="step-label">{$t("onboarding.steps.connect")}</div>
                     </div>
-                    <div class="step-item" class:active={step == 2} class:completed={step > 2 && step != 4}>
+                    <div
+                        class="step-item"
+                        class:active={step == 2}
+                        class:completed={step > 2 && step != 4}
+                    >
                         <div class="step-number">
                             {#if step > 2 && step != 4}
                                 <Icon name="check" />
@@ -140,31 +147,41 @@
                                 3
                             {/if}
                         </div>
-                        <div class="step-label">{$t('onboarding.steps.import')}</div>
+                        <div class="step-label">{$t("onboarding.steps.import")}</div>
                     </div>
                     <div class="step-item" class:active={step == 3}>
                         <div class="step-number">4</div>
-                        <div class="step-label">{$t('onboarding.steps.explore')}</div>
+                        <div class="step-label">{$t("onboarding.steps.explore")}</div>
                     </div>
                 </div>
             </Col>
             <Col class="p-3">
                 {#if step == 0}
-                    <h3 class="fw-bolder">{$t('common.welcome.start')}<Logo height="30" />{$t('common.welcome.end')}</h3>
+                    <h3 class="fw-bolder">
+                        {$t("common.welcome.start")}<Logo height="30" />{$t("common.welcome.end")}
+                    </h3>
                     <p>
-                        {@html $t('onboarding.welcome.purpose', {"happyDomain": `happy<span class="fw-bold">Domain</span>`})}
+                        {@html $t("onboarding.welcome.purpose", {
+                            happyDomain: `happy<span class="fw-bold">Domain</span>`,
+                        })}
                     </p>
                     <p>
-                        {@html $t('onboarding.welcome.use', {"happyDomain": `happy<span class="fw-bold">Domain</span>`})}
+                        {@html $t("onboarding.welcome.use", {
+                            happyDomain: `happy<span class="fw-bold">Domain</span>`,
+                        })}
                     </p>
-                    <Row cols={{sm: 1, md: 2, xl: 4}}>
+                    <Row cols={{ sm: 1, md: 2, xl: 4 }}>
                         <Col class="mb-3">
                             <Card body class="h-100">
                                 <div class="feature-icon">
                                     <Icon name="globe" />
                                 </div>
-                                <h4 class="feature-title">{$t('onboarding.welcome.unified.title')}</h4>
-                                <p class="feature-description">{$t('onboarding.welcome.unified.description')}</p>
+                                <h4 class="feature-title">
+                                    {$t("onboarding.welcome.unified.title")}
+                                </h4>
+                                <p class="feature-description">
+                                    {$t("onboarding.welcome.unified.description")}
+                                </p>
                             </Card>
                         </Col>
 
@@ -173,8 +190,12 @@
                                 <div class="feature-icon">
                                     <Icon name="balloon-heart" />
                                 </div>
-                                <h4 class="feature-title">{$t('onboarding.welcome.unified.title')}</h4>
-                                <p class="feature-description">{$t('onboarding.welcome.unified.title')}</p>
+                                <h4 class="feature-title">
+                                    {$t("onboarding.welcome.unified.title")}
+                                </h4>
+                                <p class="feature-description">
+                                    {$t("onboarding.welcome.unified.title")}
+                                </p>
                             </Card>
                         </Col>
 
@@ -183,8 +204,12 @@
                                 <div class="feature-icon">
                                     <Icon name="terminal" />
                                 </div>
-                                <h4 class="feature-title">{$t('onboarding.welcome.unified.title')}</h4>
-                                <p class="feature-description">{$t('onboarding.welcome.unified.title')}</p>
+                                <h4 class="feature-title">
+                                    {$t("onboarding.welcome.unified.title")}
+                                </h4>
+                                <p class="feature-description">
+                                    {$t("onboarding.welcome.unified.title")}
+                                </p>
                             </Card>
                         </Col>
 
@@ -193,39 +218,33 @@
                                 <div class="feature-icon">
                                     <Icon name="hand-thumbs-up" />
                                 </div>
-                                <h4 class="feature-title">{$t('onboarding.welcome.unified.title')}</h4>
-                                <p class="feature-description">{$t('onboarding.welcome.unified.title')}</p>
+                                <h4 class="feature-title">
+                                    {$t("onboarding.welcome.unified.title")}
+                                </h4>
+                                <p class="feature-description">
+                                    {$t("onboarding.welcome.unified.title")}
+                                </p>
                             </Card>
                         </Col>
                     </Row>
                 {:else if step == 1}
-                    <h3 class="fw-bolder">{$t('onboarding.connect.title')}</h3>
+                    <h3 class="fw-bolder">{$t("onboarding.connect.title")}</h3>
                     {#if providerType}
-                        <PForm
-                            bind:form={form}
-                            ptype={providerType}
-                            on:done={providerAdded}
-                        />
+                        <PForm bind:form ptype={providerType} on:done={providerAdded} />
                     {:else}
                         <p>
-                            {$t('onboarding.connect.intro')}
+                            {$t("onboarding.connect.intro")}
                         </p>
                         <ProviderSelector
-                            on:provider-selected={(event) => providerType = event.detail.ptype}
+                            on:provider-selected={(event) => (providerType = event.detail.ptype)}
                         />
-                        <p class="mt-3 fw-bold">
-                            {$t('onboarding.connect.noprovider')} <a href="https://github.com/happyDomain/happydomain/issues/new" target="_blank" data-umami-event="need-another-provider">{$t('onboarding.connect.noproviderTellUs')}</a>.
-                        </p>
                     {/if}
                 {:else if step == 2}
-                    <h3 class="fw-bolder">{$t('onboarding.import.title')}</h3>
+                    <h3 class="fw-bolder">{$t("onboarding.import.title")}</h3>
                     <p>
-                        {$t('onboarding.import.intro')}
+                        {$t("onboarding.import.intro")}
                     </p>
-                    <CardImportableDomains
-                        provider={myProvider}
-                        bind:noDomainsList={noDomainsList}
-                    />
+                    <CardImportableDomains provider={myProvider} bind:noDomainsList />
                     {#if !myProvider || noDomainsList}
                         <!-- svelte-ignore a11y-autofocus -->
                         <NewDomainInput
@@ -238,13 +257,10 @@
                             bind:value={myDomain}
                         />
                         {#if $domains}
-                            <ZoneList
-                                class="mt-3"
-                                domains={$domains}
-                            >
+                            <ZoneList class="mt-3" domains={$domains}>
                                 <Badge slot="badges" color="success">
                                     <Icon name="check" />
-                                    {$t('onboarding.import.imported')}
+                                    {$t("onboarding.import.imported")}
                                 </Badge>
                             </ZoneList>
                         {/if}
@@ -252,24 +268,31 @@
                 {:else if step == 3}
                     {#if $domains.length}
                         <h3 class="text-center display-4">🎉</h3>
-                        <h5 class="text-center fw-bolder">{$t('onboarding.explore.done')}</h5>
+                        <h5 class="text-center fw-bolder">{$t("onboarding.explore.done")}</h5>
                         <p class="text-center">
-                            {$t('onboarding.explore.bravo', {"count": $domains.length})}
+                            {$t("onboarding.explore.bravo", { count: $domains.length })}
                         </p>
-                        <hr class="text-primary">
+                        <hr class="text-primary" />
                     {/if}
-                    <h3 class="fw-bolder">{$t('onboarding.explore.title')}</h3>
-                    <p>{$t('onboarding.explore.intro')}</p>
-                    <Row cols={{sm: 1, md: 2, xl: 4}}>
+                    <h3 class="fw-bolder">{$t("onboarding.explore.title")}</h3>
+                    <p>{$t("onboarding.explore.intro")}</p>
+                    <Row cols={{ sm: 1, md: 2, xl: 4 }}>
                         <Col class="mb-3">
                             <Card body class="h-100">
                                 <div class="feature-icon">
                                     <Icon name="file-earmark-text" />
                                 </div>
-                                <h4 class="feature-title">{$t('onboarding.explore.history.title')}</h4>
-                                <p class="feature-description">{$t('onboarding.explore.history.description')}</p>
+                                <h4 class="feature-title">
+                                    {$t("onboarding.explore.history.title")}
+                                </h4>
+                                <p class="feature-description">
+                                    {$t("onboarding.explore.history.description")}
+                                </p>
                                 {#if $domains.length}
-                                    <a href="/domains/{$domains[0].id}/history" class="feature-link">{$t('onboarding.explore.history.link')} <Icon name="arrow-right-short" /></a>
+                                    <a href="/domains/{$domains[0].id}/history" class="feature-link"
+                                        >{$t("onboarding.explore.history.link")}
+                                        <Icon name="arrow-right-short" /></a
+                                    >
                                 {/if}
                             </Card>
                         </Col>
@@ -279,9 +302,14 @@
                                 <div class="feature-icon">
                                     <Icon name="key" />
                                 </div>
-                                <h4 class="feature-title">{$t('onboarding.explore.api.title')}</h4>
-                                <p class="feature-description">{$t('onboarding.explore.api.description')}</p>
-                                <a href="/swagger/index.html" class="feature-link">{$t('onboarding.explore.api.link')} <Icon name="arrow-right-short" /></a>
+                                <h4 class="feature-title">{$t("onboarding.explore.api.title")}</h4>
+                                <p class="feature-description">
+                                    {$t("onboarding.explore.api.description")}
+                                </p>
+                                <a href="/swagger/index.html" class="feature-link"
+                                    >{$t("onboarding.explore.api.link")}
+                                    <Icon name="arrow-right-short" /></a
+                                >
                             </Card>
                         </Col>
 
@@ -290,8 +318,15 @@
                                 <div class="feature-icon">
                                     <Icon name="clock" />
                                 </div>
-                                <h4 class="feature-title">{$t('onboarding.explore.monitoring.title')} <small class="text-muted">({$t('onboarding.explore.soon')})</small></h4>
-                                <p class="feature-description">{$t('onboarding.explore.monitoring.description')}</p>
+                                <h4 class="feature-title">
+                                    {$t("onboarding.explore.monitoring.title")}
+                                    <small class="text-muted"
+                                        >({$t("onboarding.explore.soon")})</small
+                                    >
+                                </h4>
+                                <p class="feature-description">
+                                    {$t("onboarding.explore.monitoring.description")}
+                                </p>
                             </Card>
                         </Col>
 
@@ -300,8 +335,15 @@
                                 <div class="feature-icon">
                                     <Icon name="shield-check" />
                                 </div>
-                                <h4 class="feature-title">{$t('onboarding.explore.security.title')} <small class="text-muted">({$t('onboarding.explore.soon')})</small></h4>
-                                <p class="feature-description">{$t('onboarding.explore.security.description')}</p>
+                                <h4 class="feature-title">
+                                    {$t("onboarding.explore.security.title")}
+                                    <small class="text-muted"
+                                        >({$t("onboarding.explore.soon")})</small
+                                    >
+                                </h4>
+                                <p class="feature-description">
+                                    {$t("onboarding.explore.security.description")}
+                                </p>
                             </Card>
                         </Col>
                     </Row>
@@ -310,13 +352,15 @@
                     <li>Ensure proper configuration/deployment</li-->
                 {:else}
                     <h3 class="fw-bolder">
-                        {$t('onboarding.no-sale.title')}
+                        {$t("onboarding.no-sale.title")}
                     </h3>
                     <p class="text-justify text-indent mt-4 mb-3">
-                        {@html $t('onboarding.no-sale.description', {"happyDomain": `happy<span class="fw-bold">Domain</span>`})}
+                        {@html $t("onboarding.no-sale.description", {
+                            happyDomain: `happy<span class="fw-bold">Domain</span>`,
+                        })}
                     </p>
                     <p class="text-justify text-indent mt-3 mb-4">
-                        {$t('onboarding.no-sale.buy-advice')}
+                        {$t("onboarding.no-sale.buy-advice")}
                     </p>
                 {/if}
             </Col>
@@ -335,22 +379,25 @@
             />
         {:else}
             {#if step > 0}
-                <Button color="outline-secondary" on:click={() => step == 4 ? (step = 1) : (step -= 1)}>
+                <Button
+                    color="outline-secondary"
+                    on:click={() => (step == 4 ? (step = 1) : (step -= 1))}
+                >
                     <Icon name="chevron-left" class="d-inline d-md-none" />
-                    <span class="d-none d-md-inline">{$t('common.previous')}</span>
+                    <span class="d-none d-md-inline">{$t("common.previous")}</span>
                 </Button>
             {/if}
             {#if step >= 3}
-                <Button color="primary" on:click={() => isOpen = false}>
-                    {$t('onboarding.explore.understood')}
+                <Button color="primary" on:click={() => (isOpen = false)}>
+                    {$t("onboarding.explore.understood")}
                 </Button>
             {:else if step == 1}
-                <Button color="secondary" on:click={() => step = 4}>
-                    {$t('onboarding.connect.nodomain')}
+                <Button color="secondary" on:click={() => (step = 4)}>
+                    {$t("onboarding.connect.nodomain")}
                 </Button>
             {:else}
                 <Button color="primary" on:click={nextPage}>
-                    {$t('common.next')}
+                    {$t("common.next")}
                 </Button>
             {/if}
         {/if}
@@ -433,7 +480,6 @@
         font-weight: 600;
         margin-bottom: 0.5rem;
     }
-
 
     .feature-description {
         font-size: 0.875rem;

@@ -19,8 +19,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { writable } from 'svelte/store';
-import { Toast, type NewToast } from '$lib/model/toast';
+import { writable } from "svelte/store";
+import { Toast, type NewToast } from "$lib/model/toast";
 
 function createToastsStore() {
     const { subscribe, update } = writable([]);
@@ -31,19 +31,19 @@ function createToastsStore() {
         update((all: any) => {
             all.unshift(toast);
             return all;
-        })
+        });
     };
 
     const addErrorToast = (o: NewToast) => {
-        if (!o.title) o.title = 'An error occured!';
-        if (!o.type) o.type = 'error';
+        if (!o.title) o.title = "An error occured!";
+        if (!o.type) o.type = "error";
 
         return addToast(o);
     };
 
     const dismiss = (id: string) => {
-        update((all: any) => all.filter((t: any) => t.id !== id))
-    }
+        update((all: any) => all.filter((t: any) => t.id !== id));
+    };
 
     return {
         subscribe,
@@ -52,8 +52,7 @@ function createToastsStore() {
         addErrorToast,
 
         dismiss,
-  };
-
+    };
 }
 
-export const toasts: any = createToastsStore()
+export const toasts: any = createToastsStore();

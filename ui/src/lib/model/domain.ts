@@ -27,7 +27,7 @@ export interface ZoneHistory {
     commit_message: string;
     commit_date: Date;
     published?: Date;
-};
+}
 
 export interface Domain {
     id: string;
@@ -40,7 +40,7 @@ export interface Domain {
 
     // interface property
     wait: boolean;
-};
+}
 
 export interface DomainLog {
     id: string;
@@ -48,4 +48,4 @@ export interface DomainLog {
     date: Date;
     content: string;
     level: number;
-};
+}

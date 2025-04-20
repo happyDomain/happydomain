@@ -23,4 +23,4 @@ export interface Correction {
     id?: string;
     msg: string;
     kind?: number;
-};
+}

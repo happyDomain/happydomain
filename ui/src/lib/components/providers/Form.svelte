@@ -22,17 +22,17 @@
 -->
 
 <script lang="ts">
-    import { createEventDispatcher, onMount } from 'svelte';
+    import { createEventDispatcher, onMount } from "svelte";
 
-    import CustomForm from '$lib/components/CustomForm.svelte';
-    import ResourceInput from '$lib/components/resources/basic.svelte';
-    import { ProviderForm } from '$lib/model/provider_form';
-    import { providersSpecs } from '$lib/stores/providers';
-    import { t } from '$lib/translations';
+    import CustomForm from "$lib/components/forms/CustomForm.svelte";
+    import ResourceInput from "$lib/components/forms/resources/basic.svelte";
+    import { ProviderForm } from "$lib/model/provider_form";
+    import { providersSpecs } from "$lib/stores/providers";
+    import { t } from "$lib/translations";
 
     const dispatch = createEventDispatcher();
 
-    export let formId = "providerform"
+    export let formId = "providerform";
     export let form: ProviderForm;
     export let ptype: string;
 
@@ -48,24 +48,28 @@
     $: if (!form || form.ptype != ptype) newForm(ptype);
 </script>
 
-<form
-    id={formId}
-    on:submit|preventDefault={() => form.nextState().then(() => form = form)}
->
+<form id={formId} on:submit|preventDefault={() => form.nextState().then(() => (form = form))}>
     {#if form && form.form}
         <CustomForm
             form={form.form}
             bind:value={form.value.Provider}
-            on:input={(event) => form.value.Provider = event.detail}
+            on:input={(event) => (form.value.Provider = event.detail)}
         >
             {#if form.state === 0}
                 <ResourceInput
                     id="src-name"
                     edit
                     index="0"
-                    specs={{label: $t('provider.name-your'), description: $t('domains.give-explicit-name'), placeholder: $providersSpecs?($providersSpecs[form.ptype].name + ' account 1'):undefined, required: true}}
+                    specs={{
+                        label: $t("provider.name-your"),
+                        description: $t("domains.give-explicit-name"),
+                        placeholder: $providersSpecs
+                            ? $providersSpecs[form.ptype].name + " account 1"
+                            : undefined,
+                        required: true,
+                    }}
                     bind:value={form.value._comment}
-                    on:input={(event) => form.value._comment = event.detail}
+                    on:input={(event) => (form.value._comment = event.detail)}
                 />
             {/if}
         </CustomForm>

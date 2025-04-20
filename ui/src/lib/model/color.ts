@@ -19,6 +19,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-export type Color = "primary" | "secondary" | "info" | "success" | "warning" | "danger" | "light" | "dark";
+export type Color =
+    | "primary"
+    | "secondary"
+    | "info"
+    | "success"
+    | "warning"
+    | "danger"
+    | "light"
+    | "dark";
 
 export default Color;

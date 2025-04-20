@@ -22,56 +22,61 @@
 -->
 
 <script lang="ts">
- import '../app.scss'
- import "bootstrap-icons/font/bootstrap-icons.css";
+    import "../app.scss";
+    import "bootstrap-icons/font/bootstrap-icons.css";
 
- import { goto } from '$app/navigation';
- import { page } from '$app/stores';
+    import { goto } from "$app/navigation";
+    import { page } from "$app/stores";
 
- import {
-     Col,
-     Container,
-     Row,
-     //Styles,
- } from '@sveltestrap/sveltestrap';
+    import {
+        Col,
+        Container,
+        Row,
+        //Styles,
+    } from "@sveltestrap/sveltestrap";
 
- import Header from '$lib/components/Header.svelte';
- import Logo from '$lib/components/Logo.svelte';
- import Toaster from '$lib/components/Toaster.svelte';
- import VoxPeople from '$lib/components/VoxPeople.svelte';
- import { providers } from '$lib/stores/providers';
- import { toasts } from '$lib/stores/toasts';
- import { t } from '$lib/translations';
+    import Header from "$lib/components/Header.svelte";
+    import Logo from "$lib/components/Logo.svelte";
+    import Toaster from "$lib/components/Toaster.svelte";
+    import VoxPeople from "$lib/components/VoxPeople.svelte";
+    import { providers } from "$lib/stores/providers";
+    import { toasts } from "$lib/stores/toasts";
+    import { t } from "$lib/translations";
 
- export let data: {route: {id: string | null;}; sw_state: {triedUpdate: boolean; hasUpdate: boolean;};};
+    export let data: {
+        route: { id: string | null };
+        sw_state: { triedUpdate: boolean; hasUpdate: boolean };
+    };
 
- window.onunhandledrejection = (e) => {
-     if (e.reason.name == "NotAuthorizedError") {
-         goto('/login');
-         providers.set(null);
-         toasts.addErrorToast({
-             title: $t('errors.session.title'),
-             message: $t('errors.session.content'),
-             timeout: 10000,
-         });
-     } else {
-         toasts.addErrorToast({
-             message: e.reason.message,
-             timeout: 30000,
-         });
-     }
- }
+    window.onunhandledrejection = (e) => {
+        if (e.reason.name == "NotAuthorizedError") {
+            goto("/login");
+            providers.set(null);
+            toasts.addErrorToast({
+                title: $t("errors.session.title"),
+                message: $t("errors.session.content"),
+                timeout: 10000,
+            });
+        } else {
+            toasts.addErrorToast({
+                message: e.reason.message,
+                timeout: 30000,
+            });
+        }
+    };
 
- let title = 'happyDomain';
- $: if ($page.data.domain) {
-     if (typeof $page.data.domain === "object") {
-         title = $page.data.domain.domain.substring(0, $page.data.domain.domain.length - 1) + ' - happyDomain';
-     } else {
-         title = $page.data.domain + ' - happyDomain';
-     }
- } else {
-     title = 'happyDomain';
- }
+    let title = "happyDomain";
+    $: if ($page.data.domain) {
+        if (typeof $page.data.domain === "object") {
+            title =
+                $page.data.domain.domain.substring(0, $page.data.domain.domain.length - 1) +
+                " - happyDomain";
+        } else {
+            title = $page.data.domain + " - happyDomain";
+        }
+    } else {
+        title = "happyDomain";
+    }
 </script>
 
 <svelte:head>
@@ -82,7 +87,8 @@
 
 {#if window.msg_header}
     <div
-        class={(window.msg_header.color?"bg-" + window.msg_header.color:"bg-danger") + " text-light text-center fw-bolder pb-1"}
+        class={(window.msg_header.color ? "bg-" + window.msg_header.color : "bg-danger") +
+            " text-light text-center fw-bolder pb-1"}
         id="msg_header"
         style="z-index: 101; margin-bottom: -.2em"
     >
@@ -91,10 +97,7 @@
         </small>
     </div>
 {/if}
-<Header
-    routeId={data.route.id}
-    sw_state={data.sw_state}
-/>
+<Header routeId={data.route.id} sw_state={data.sw_state} />
 
 <div class="flex-fill d-flex flex-column justify-content-center bg-light">
     <slot></slot>

@@ -22,60 +22,52 @@
 -->
 
 <script lang="ts">
- import {
-     Button,
-     Col,
-     Icon,
-     Input,
-     Row,
- } from '@sveltestrap/sveltestrap';
+    import { Button, Col, Icon, Input, Row } from "@sveltestrap/sveltestrap";
 
- import { nsclass, nsrrtype } from '$lib/dns';
- import type { ServiceRecord } from '$lib/model/zone';
+    import { nsclass, nsrrtype } from "$lib/dns";
+    import type { ServiceRecord } from "$lib/model/zone";
 
- export let actBtn = false;
- export let expand: boolean = false;
- export let record: ServiceRecord;
+    export let actBtn = false;
+    export let expand: boolean = false;
+    export let record: ServiceRecord;
 </script>
 
 {#if !record.edit}
     <div
         class="d-flex gap-1"
-        on:click={() => {expand = !expand}}
-        on:keypress={() => {expand = !expand}}
+        on:click={() => {
+            expand = !expand;
+        }}
+        on:keypress={() => {
+            expand = !expand;
+        }}
     >
         {#if expand}
             <Icon name="chevron-down" />
         {:else}
             <Icon name="chevron-right" />
         {/if}
-        <span
-            class="font-monospace text-truncate"
-            title={record.str}
-        >
-            {record.rr.Hdr.Name?'':'@'} {record.str}
+        <span class="font-monospace text-truncate" title={record.str}>
+            {record.rr.Hdr.Name ? "" : "@"}
+            {record.str}
         </span>
     </div>
     {#if expand}
         <div class="grid mr-2">
             <dl class="g-col-md-4 grid ms-2" style="--bs-columns: 2; --bs-gap: 0 .5rem;">
-                <dt class="text-end">
-                    Class
-                </dt>
+                <dt class="text-end">Class</dt>
                 <dd class="text-muted font-monospace mb-1">
                     {nsclass(record.rr.Hdr.Class)}
                 </dd>
-                <dt class="text-end">
-                    TTL
-                </dt>
+                <dt class="text-end">TTL</dt>
                 <dd class="text-muted font-monospace mb-1">
                     {record.rr.Hdr.Ttl}
                 </dd>
-                <dt class="text-end">
-                    RRType
-                </dt>
+                <dt class="text-end">RRType</dt>
                 <dd class="text-muted font-monospace mb-1">
-                    {nsrrtype(record.rr.Hdr.Rrtype)} (<span title={record.rr.Hdr.Rrtype}>0x{record.rr.Hdr.Rrtype.toString(16)}</span>)
+                    {nsrrtype(record.rr.Hdr.Rrtype)} (<span title={record.rr.Hdr.Rrtype}
+                        >0x{record.rr.Hdr.Rrtype.toString(16)}</span
+                    >)
                 </dd>
             </dl>
             <dl class="g-col-md-8 grid me-2" style="--bs-gap: 0 .5rem;">
@@ -85,10 +77,7 @@
                         <dt class="g-col-4 text-end">
                             {k}
                         </dt>
-                        <dd
-                            class="g-col-8 text-muted font-monospace text-truncate mb-1"
-                            title={v}
-                        >
+                        <dd class="g-col-8 text-muted font-monospace text-truncate mb-1" title={v}>
                             {v}
                         </dd>
                     {/if}
@@ -97,32 +86,17 @@
         </div>
     {/if}
 {:else}
-    <form
-        submit="$emit('save-rr')"
-    >
-        <Input
-            autofocus
-            class="font-monospace"
-            bsSize="sm"
-            bind:value={record.str}
-        />
+    <form submit="$emit('save-rr')">
+        <Input autofocus class="font-monospace" bsSize="sm" bind:value={record.str} />
     </form>
 {/if}
 {#if record.edit || actBtn}
     {#if record.edit}
-        <Button
-            size="sm"
-            color="success"
-            click="$emit('save-rr')"
-        >
+        <Button size="sm" color="success" click="$emit('save-rr')">
             <Icon name="check" aria-hidden="true" />
         </Button>
     {:else if record.rr.Hdr.Rrtype != 6}
-        <Button
-            size="sm"
-            color="danger"
-            click="$emit('delete-rr')"
-        >
+        <Button size="sm" color="danger" click="$emit('delete-rr')">
             <Icon name="trash-fill" aria-hidden="true" />
         </Button>
     {/if}

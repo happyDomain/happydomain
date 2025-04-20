@@ -202,12 +202,12 @@
         "used-on": "Dernière utilisation le"
     },
     "logs": {
-      "date": "Date",
-      "description": "Action/description",
-      "level": "Niveau",
-      "no-entry": "Aucune entrée dans le journal du domaine.",
-      "title": "Journal du domaine ",
-      "user": "Utilisateur"
+        "date": "Date",
+        "description": "Action/description",
+        "level": "Niveau",
+        "no-entry": "Aucune entrée dans le journal du domaine.",
+        "title": "Journal du domaine ",
+        "user": "Utilisateur"
     },
     "menu": {
         "my-domains": "Mes domaines",
@@ -232,21 +232,21 @@
             "purpose": "{{happyDomain}} rend la gestion des domaines simple et intuitive. Que vous ayez un seul domaine ou des centaines, notre plateforme vous offre un moyen centralisé de les gérer tous.",
             "use": "Utilisez {{happyDomain}} comme interface de remplacement de votre fournisseur de noms de domaine habituel. Il continuera à s'appuyer sur l'infrastructure de votre fournisseur, vous n'aurez qu'à profiter de notre interface simple.",
             "unified": {
-              "title": "Une gestion unifiée",
-              "description": "Gérez tous vos domaines en un seul endroit, quel que soit leur lieu d'enregistrement."
-          },
-          "comprehensive": {
-              "title": "Des fonctionnalités complètes",
-              "description": "Découvrez le futur de la gestion des DNS avec un historique, des différences, des tests, ..."
-          },
-          "intuitive": {
-              "title": "Une interface intuitive",
-              "description": "Découvrez notre interface simple qui conviendra aux débutants et aux experts du DNS."
-          },
-          "templates": {
-              "title": "Des modèles en un clic",
-              "description": "Configurez en quelques secondes les services courants avec des modèles prédéfinis."
-          }
+                "title": "Une gestion unifiée",
+                "description": "Gérez tous vos domaines en un seul endroit, quel que soit leur lieu d'enregistrement."
+            },
+            "comprehensive": {
+                "title": "Des fonctionnalités complètes",
+                "description": "Découvrez le futur de la gestion des DNS avec un historique, des différences, des tests, ..."
+            },
+            "intuitive": {
+                "title": "Une interface intuitive",
+                "description": "Découvrez notre interface simple qui conviendra aux débutants et aux experts du DNS."
+            },
+            "templates": {
+                "title": "Des modèles en un clic",
+                "description": "Configurez en quelques secondes les services courants avec des modèles prédéfinis."
+            }
         },
         "connect": {
             "title": "Connectez votre premier hébergeur de domaine",
@@ -309,28 +309,28 @@
     },
     "resources": {
         "CAA": {
-          "all-issuers-title": "Tous les émetteurs sont autorisés.",
-          "all-issuers-body": "Avec ces paramètres, tous les émetteurs peuvent créer des certificats pour ce domaine et ce sous-domaine.",
-          "all-wild-issuers-body": "Avec ces paramètres, tous les émetteurs peuvent créer des certificats de type \"wildcard\" pour ce domaine et ce sous-domaine.",
-          "auth-issuers": "Émetteurs autorisés",
-          "incident-response": "Réponse aux incidents",
-          "incident-response-text": "Comment souhaitez-vous être contacté en cas de violation de la politique de sécurité actuelle ?",
-          "mail-issuers": "Délivrance de certificats S/MIME",
-          "mail-all-allowed-title": "Toutes les autorités de certification peuvent émettre des certiticats S/MIME sans restriction.",
-          "mail-all-allowed-body": "Toutes les autorités de certification peuvent émettre des certiticats S/MIME pour votre domaine. Vous devriez interdire ou restreindre à certaines autorités. Les certificats S/MIME sont utilisés par exemple pour signer et chiffrer les courriers électroniques. Si vous n'utilisez pas ce genre de certiticats, vous devriez interdire leur émission.",
-          "no-issuers-hint": "Interdire toute délivrance de certificat",
-          "no-issuers-title": "Aucun émetteur autorisé.",
-          "no-issuers-body": "Avec ces paramètres, aucun émetteur n'est autorisé à créer un certificat pour ce sous-domaine.",
-          "no-mail-hint": "Interdire l'émission de certiticat S/MIME",
-          "no-mail-title": "Aucune émetteur de certiticat S/MIME n'est autorisé.",
-          "no-mail-body": "Avec ces paramètres, aucun émetteur n'est autorisé à créer un certificat S/MIME pour ce sous-domaine.",
-          "no-wild-hint": "Interdire l'émission de certificats \"wildcard\"",
-          "no-wild-title": "Aucun émetteur de certificats \"wildcard\" n'est autorisé.",
-          "no-wild-body": "Avec ces paramètres, aucun émetteur n'est autorisé à créer un certificat \"wildcard\" pour ce domaine et ce sous-domaine. Mais cela peut être remplacé par les paramètres suivants :",
-          "title": "Émission de certificats",
-          "wild-issuers": "Délivrance de certificats \"wildcard\"",
-          "wild-same-title": "Identique à la délivrance d'un certificat ordinaire.",
-          "wild-same-body": "Avec ces paramètres, tous les émetteurs autorisés à délivrer des certificats peuvent également créer des certificats \"wildcard\" pour ce domaine et ce sous-domaine."
+            "all-issuers-title": "Tous les émetteurs sont autorisés.",
+            "all-issuers-body": "Avec ces paramètres, tous les émetteurs peuvent créer des certificats pour ce domaine et ce sous-domaine.",
+            "all-wild-issuers-body": "Avec ces paramètres, tous les émetteurs peuvent créer des certificats de type \"wildcard\" pour ce domaine et ce sous-domaine.",
+            "auth-issuers": "Émetteurs autorisés",
+            "incident-response": "Réponse aux incidents",
+            "incident-response-text": "Comment souhaitez-vous être contacté en cas de violation de la politique de sécurité actuelle ?",
+            "mail-issuers": "Délivrance de certificats S/MIME",
+            "mail-all-allowed-title": "Toutes les autorités de certification peuvent émettre des certiticats S/MIME sans restriction.",
+            "mail-all-allowed-body": "Toutes les autorités de certification peuvent émettre des certiticats S/MIME pour votre domaine. Vous devriez interdire ou restreindre à certaines autorités. Les certificats S/MIME sont utilisés par exemple pour signer et chiffrer les courriers électroniques. Si vous n'utilisez pas ce genre de certiticats, vous devriez interdire leur émission.",
+            "no-issuers-hint": "Interdire toute délivrance de certificat",
+            "no-issuers-title": "Aucun émetteur autorisé.",
+            "no-issuers-body": "Avec ces paramètres, aucun émetteur n'est autorisé à créer un certificat pour ce sous-domaine.",
+            "no-mail-hint": "Interdire l'émission de certiticat S/MIME",
+            "no-mail-title": "Aucune émetteur de certiticat S/MIME n'est autorisé.",
+            "no-mail-body": "Avec ces paramètres, aucun émetteur n'est autorisé à créer un certificat S/MIME pour ce sous-domaine.",
+            "no-wild-hint": "Interdire l'émission de certificats \"wildcard\"",
+            "no-wild-title": "Aucun émetteur de certificats \"wildcard\" n'est autorisé.",
+            "no-wild-body": "Avec ces paramètres, aucun émetteur n'est autorisé à créer un certificat \"wildcard\" pour ce domaine et ce sous-domaine. Mais cela peut être remplacé par les paramètres suivants :",
+            "title": "Émission de certificats",
+            "wild-issuers": "Délivrance de certificats \"wildcard\"",
+            "wild-same-title": "Identique à la délivrance d'un certificat ordinaire.",
+            "wild-same-body": "Avec ces paramètres, tous les émetteurs autorisés à délivrer des certificats peuvent également créer des certificats \"wildcard\" pour ce domaine et ce sous-domaine."
         }
     },
     "service": {

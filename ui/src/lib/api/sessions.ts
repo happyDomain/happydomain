@@ -19,29 +19,29 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { handleEmptyApiResponse, handleApiResponse } from '$lib/errors';
-import type { Session } from '$lib/model/session';
+import { handleEmptyApiResponse, handleApiResponse } from "$lib/errors";
+import type { Session } from "$lib/model/session";
 
 export async function listSessions(): Promise<Array<Session>> {
-    const res = await fetch('/api/sessions', {headers: {'Accept': 'application/json'}});
-    return (await handleApiResponse<Array<Session>>(res));
+    const res = await fetch("/api/sessions", { headers: { Accept: "application/json" } });
+    return await handleApiResponse<Array<Session>>(res);
 }
 
 export async function getSession(id: string): Promise<Session> {
     id = encodeURIComponent(id);
-    const res = await fetch(`/api/sessions/${id}`, {headers: {'Accept': 'application/json'}});
+    const res = await fetch(`/api/sessions/${id}`, { headers: { Accept: "application/json" } });
     return await handleApiResponse<Session>(res);
 }
 
 export async function getCurrentSession(): Promise<Session> {
-    const res = await fetch('/api/session', {headers: {'Accept': 'application/json'}});
+    const res = await fetch("/api/session", { headers: { Accept: "application/json" } });
     return await handleApiResponse<Session>(res);
 }
 
 export async function addSession(description: string): Promise<Session> {
-    const res = await fetch('/api/sessions', {
-        method: 'POST',
-        headers: {'Accept': 'application/json'},
+    const res = await fetch("/api/sessions", {
+        method: "POST",
+        headers: { Accept: "application/json" },
         body: JSON.stringify({
             description,
         }),
@@ -50,9 +50,9 @@ export async function addSession(description: string): Promise<Session> {
 }
 
 export async function updateSession(session: Session): Promise<Session> {
-    const res = await fetch('/api/sessions' + (session.id ? `/${session.id}` : ''), {
-        method: session.id?'PUT':'POST',
-        headers: {'Accept': 'application/json'},
+    const res = await fetch("/api/sessions" + (session.id ? `/${session.id}` : ""), {
+        method: session.id ? "PUT" : "POST",
+        headers: { Accept: "application/json" },
         body: JSON.stringify(session),
     });
     return await handleApiResponse<Session>(res);
@@ -60,16 +60,16 @@ export async function updateSession(session: Session): Promise<Session> {
 
 export async function deleteSession(id: string): Promise<boolean> {
     const res = await fetch(`/api/sessions/${id}`, {
-        method: 'DELETE',
-        headers: {'Accept': 'application/json'},
+        method: "DELETE",
+        headers: { Accept: "application/json" },
     });
     return await handleEmptyApiResponse(res);
 }
 
 export async function deleteSessions(): Promise<boolean> {
-    const res = await fetch('/api/sessions', {
-        method: 'DELETE',
-        headers: {'Accept': 'application/json'},
+    const res = await fetch("/api/sessions", {
+        method: "DELETE",
+        headers: { Accept: "application/json" },
     });
     return await handleEmptyApiResponse(res);
 }

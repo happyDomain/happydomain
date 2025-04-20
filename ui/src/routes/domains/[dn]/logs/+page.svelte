@@ -22,20 +22,14 @@
 -->
 
 <script lang="ts">
- import {
-     Badge,
-     Button,
-     Icon,
-     Table,
-     Spinner,
- } from '@sveltestrap/sveltestrap';
+    import { Badge, Button, Icon, Table, Spinner } from "@sveltestrap/sveltestrap";
 
- import { getDomainLogs } from '$lib/api/domains';
- import type { Domain } from '$lib/model/domain';
- import { getUser } from '$lib/stores/users';
- import { t } from '$lib/translations';
+    import { getDomainLogs } from "$lib/api/domains";
+    import type { Domain } from "$lib/model/domain";
+    import { getUser } from "$lib/stores/users";
+    import { t } from "$lib/translations";
 
- export let data: {domain: Domain; history: string; streamed: Object;};
+    export let data: { domain: Domain; history: string; streamed: Object };
 </script>
 
 <div class="flex-fill pb-4 pt-2">
@@ -43,7 +37,7 @@
     {#await getDomainLogs(data.domain.id)}
         <div class="mt-5 text-center flex-fill">
             <Spinner label="Spinning" />
-            <p>{$t('wait.loading')}</p>
+            <p>{$t("wait.loading")}</p>
         </div>
     {:then logs}
         <Table hover striped>
@@ -62,10 +56,22 @@
                             <td class="align-middle" style="max-width: 150px">
                                 <div class="d-flex align-items-center gap-1">
                                     {#await getUser(log.id_user)}
-                                        <img src={"/api/users/" + encodeURIComponent(log.id_user) + "/avatar.png"} alt={log.id_user} style="height: 1.1em; border-radius: .1em">
+                                        <img
+                                            src={"/api/users/" +
+                                                encodeURIComponent(log.id_user) +
+                                                "/avatar.png"}
+                                            alt={log.id_user}
+                                            style="height: 1.1em; border-radius: .1em"
+                                        />
                                         {log.id_user}
                                     {:then user}
-                                        <img src={"/api/users/" + encodeURIComponent(log.id_user) + "/avatar.png"} alt={user.email} style="height: 1.1em; border-radius: .1em">
+                                        <img
+                                            src={"/api/users/" +
+                                                encodeURIComponent(log.id_user) +
+                                                "/avatar.png"}
+                                            alt={user.email}
+                                            style="height: 1.1em; border-radius: .1em"
+                                        />
                                         <span title={user.email} class="text-truncate">
                                             {user.email}
                                         </span>
@@ -85,7 +91,10 @@
                                 {log.content}
                             </td>
                             <td>
-                                {new Intl.DateTimeFormat(undefined, {dateStyle: "short", timeStyle: "medium"}).format(new Date(log.date))}
+                                {new Intl.DateTimeFormat(undefined, {
+                                    dateStyle: "short",
+                                    timeStyle: "medium",
+                                }).format(new Date(log.date))}
                             </td>
                         </tr>
                     {/each}

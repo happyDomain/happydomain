@@ -19,18 +19,18 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { get_store_value } from 'svelte/internal';
-import { writable, type Writable } from 'svelte/store';
-import { getUser as APIGetUser } from '$lib/api/user';
-import type { User } from '$lib/model/user';
+import { get_store_value } from "svelte/internal";
+import { writable, type Writable } from "svelte/store";
+import { getUser as APIGetUser } from "$lib/api/user";
+import type { User } from "$lib/model/user";
 
-export const users: Writable<Record<string, User>> = writable({ });
+export const users: Writable<Record<string, User>> = writable({});
 
 function Mutex() {
     let current = Promise.resolve();
     this.lock = () => {
         let _resolve;
-        const p = new Promise(resolve => {
+        const p = new Promise((resolve) => {
             _resolve = () => resolve();
         });
         const rv = current.then(() => _resolve);
@@ -41,7 +41,7 @@ function Mutex() {
 
 const mutex = new Mutex();
 
-const requests: Record<string, Promise<User>> = { };
+const requests: Record<string, Promise<User>> = {};
 
 export async function getUser(id: string, force: boolean) {
     let unlock = await mutex.lock();
@@ -61,7 +61,7 @@ export async function getUser(id: string, force: boolean) {
     unlock();
 
     const data = await requests[id];
-    const obj = { };
+    const obj = {};
     obj[id] = data;
     users.update((u) => Object.assign(u, obj));
     delete requests[id];

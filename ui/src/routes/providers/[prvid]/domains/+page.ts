@@ -19,17 +19,17 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { redirect, type Load } from '@sveltejs/kit';
+import { redirect, type Load } from "@sveltejs/kit";
 
-import { getProvider } from '$lib/api/provider';
+import { getProvider } from "$lib/api/provider";
 
-export const load: Load = async({ params }) => {
+export const load: Load = async ({ params }) => {
     if (params.prvid == undefined) {
-        redirect(302, '/providers/');
+        redirect(302, "/providers/");
     }
 
     return {
         provider: await getProvider(params.prvid),
         provider_id: params.prvid,
-    }
-}
+    };
+};

@@ -22,12 +22,9 @@
 -->
 
 <script lang="ts">
- import {
-     Toast,
-     ToastHeader,
- } from '@sveltestrap/sveltestrap';
+    import { Toast, ToastHeader } from "@sveltestrap/sveltestrap";
 
- import { toasts } from '$lib/stores/toasts';
+    import { toasts } from "$lib/stores/toasts";
 </script>
 
 <div class="toast-container position-fixed top-0 end-0 p-3">
@@ -38,8 +35,10 @@
             </ToastHeader>
             <div
                 class="toast-body"
-                style={toast.onclick?"cursor: pointer":""}
-                on:click={() => { if (toast.onclick) toast.onclick(); }}
+                style={toast.onclick ? "cursor: pointer" : ""}
+                on:click={() => {
+                    if (toast.onclick) toast.onclick();
+                }}
             >
                 {toast.message}
             </div>

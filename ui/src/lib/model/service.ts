@@ -29,7 +29,7 @@ export interface ServiceMeta {
     _mycomment?: string;
     _aliases?: Array<string>;
     _tmp_hint_nb?: number;
-};
+}
 
 export interface ServiceCombined extends ServiceMeta {
     Service: any;

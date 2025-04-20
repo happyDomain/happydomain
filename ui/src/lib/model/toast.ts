@@ -19,16 +19,16 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import cuid from 'cuid';
+import cuid from "cuid";
 
-import type Color from './color';
+import type Color from "./color";
 
 export interface NewToast {
-    type?: "info" | "success" | "warning" | "error",
-    title?: string,
-    message?: string,
-    timeout?: number | undefined
-    onclick?: () => void
+    type?: "info" | "success" | "warning" | "error";
+    title?: string;
+    message?: string;
+    timeout?: number | undefined;
+    onclick?: () => void;
 }
 
 export class Toast implements NewToast {
@@ -50,8 +50,7 @@ export class Toast implements NewToast {
 
         this.dismissFunc = dismiss;
 
-        if (this.timeout)
-            this.resume();
+        if (this.timeout) this.resume();
     }
 
     dismiss() {
@@ -63,11 +62,11 @@ export class Toast implements NewToast {
     }
 
     resume() {
-        this.timeoutInterval = setTimeout(() => this.dismissFunc(this.id), this.timeout)
+        this.timeoutInterval = setTimeout(() => this.dismissFunc(this.id), this.timeout);
     }
 
     getColor(): Color {
-        switch(this.type) {
+        switch (this.type) {
             case "info":
                 return "info";
             case "success":

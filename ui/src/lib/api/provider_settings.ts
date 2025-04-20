@@ -19,19 +19,24 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { handleApiResponse } from '$lib/errors';
-import type { Provider } from '$lib/model/provider';
-import type { ProviderSettingsResponse } from '$lib/model/provider_settings';
+import { handleApiResponse } from "$lib/errors";
+import type { Provider } from "$lib/model/provider";
+import type { ProviderSettingsResponse } from "$lib/model/provider_settings";
 
-export async function getProviderSettings(psid: string, state: number, settings: any, recallid: number|undefined = undefined): Promise<ProviderSettingsResponse> {
+export async function getProviderSettings(
+    psid: string,
+    state: number,
+    settings: any,
+    recallid: number | undefined = undefined,
+): Promise<ProviderSettingsResponse> {
     if (!state) state = 0;
     if (!settings) settings = {};
     settings.state = state;
     if (recallid) settings.recall = recallid;
 
-    const res = await fetch('/api/providers/_specs/' + encodeURIComponent(psid) + '/settings', {
-        method: 'POST',
-        headers: {'Accept': 'application/json'},
+    const res = await fetch("/api/providers/_specs/" + encodeURIComponent(psid) + "/settings", {
+        method: "POST",
+        headers: { Accept: "application/json" },
         body: JSON.stringify(settings),
     });
     const data = await handleApiResponse<any>(res);

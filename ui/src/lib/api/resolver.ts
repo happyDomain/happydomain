@@ -19,13 +19,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { handleApiResponse } from '$lib/errors';
-import type { ResolverForm } from '$lib/model/resolver';
+import { handleApiResponse } from "$lib/errors";
+import type { ResolverForm } from "$lib/model/resolver";
 
 export async function resolve(form: ResolverForm): Promise<any> {
     const res = await fetch(`/api/resolver`, {
-        method: 'POST',
-        headers: {'Accept': 'application/json'},
+        method: "POST",
+        headers: { Accept: "application/json" },
         body: JSON.stringify(form),
     });
     return await handleApiResponse(res);

@@ -1,11 +1,11 @@
-import { get_store_value } from 'svelte/internal';
-import { error, redirect } from '@sveltejs/kit';
-import type { Load } from '@sveltejs/kit';
+import { get_store_value } from "svelte/internal";
+import { error, redirect } from "@sveltejs/kit";
+import type { Load } from "@sveltejs/kit";
 
-import { domains_idx } from '$lib/stores/domains';
-import { getZone } from '$lib/stores/thiszone';
+import { domains_idx } from "$lib/stores/domains";
+import { getZone } from "$lib/stores/thiszone";
 
-export const load: Load = async({ parent, params }) => {
+export const load: Load = async ({ parent, params }) => {
     const data = await parent();
 
     const domain = data.domain;
@@ -24,8 +24,8 @@ export const load: Load = async({ parent, params }) => {
     const zhidx = domain.zone_history.indexOf(params.historyid);
     if (zhidx < 0) {
         error(404, {
-        	    message: 'Zone not found in history'
-        	});
+            message: "Zone not found in history",
+        });
     }
 
     const zoneId: string = domain.zone_history[zhidx];
@@ -40,5 +40,5 @@ export const load: Load = async({ parent, params }) => {
         streamed: {
             zone,
         },
-    }
-}
+    };
+};

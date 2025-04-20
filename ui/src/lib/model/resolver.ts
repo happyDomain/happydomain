@@ -24,4 +24,4 @@ export interface ResolverForm {
     type: string;
     resolver: string;
     custom?: string;
-};
+}

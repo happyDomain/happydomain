@@ -19,15 +19,24 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-export function checkWeakPassword (password: string): boolean|undefined {
+export function checkWeakPassword(password: string): boolean | undefined {
     if (password.length === 0) {
         return undefined;
     }
 
-    return password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password) && (/\W/.test(password) || password.length >= 11);
+    return (
+        password.length >= 8 &&
+        /[A-Z]/.test(password) &&
+        /[a-z]/.test(password) &&
+        /[0-9]/.test(password) &&
+        (/\W/.test(password) || password.length >= 11)
+    );
 }
 
-export function checkPasswordConfirmation (password: string, passwordConfirm: string): boolean|undefined {
+export function checkPasswordConfirmation(
+    password: string,
+    passwordConfirm: string,
+): boolean | undefined {
     if (passwordConfirm.length === 0) {
         return undefined;
     }

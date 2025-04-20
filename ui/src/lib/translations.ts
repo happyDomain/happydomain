@@ -19,8 +19,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import i18n from 'sveltekit-i18n';
-import type { Config } from 'sveltekit-i18n';
+import i18n from "sveltekit-i18n";
+import type { Config } from "sveltekit-i18n";
 const { MODE } = import.meta.env;
 
 interface Params {
@@ -32,8 +32,8 @@ interface Params {
     thing?: string;
     identify?: string;
     provider?: string;
-    'security-operations'?: string;
-    'first-step'?: string;
+    "security-operations"?: string;
+    "first-step"?: string;
     n?: number;
     count?: number;
     min?: number;
@@ -43,26 +43,25 @@ interface Params {
 }
 
 export const config: Config<Params> = {
-    fallbackLocale: 'en',
+    fallbackLocale: "en",
     loaders: [
-	{
-	    locale: 'en',
-	    key: '',
-	    loader: async () => {
-                if (MODE == 'development'){
-                    return await (await fetch('/src/lib/locales/en.json')).json()
+        {
+            locale: "en",
+            key: "",
+            loader: async () => {
+                if (MODE == "development") {
+                    return await (await fetch("/src/lib/locales/en.json")).json();
                 } else {
-                    return (await import('./locales/en.json')).default
+                    return (await import("./locales/en.json")).default;
                 }
-            }
-
-	},
-	{
-	    locale: 'fr',
-	    key: '',
-	    loader: async () => (await import('./locales/fr.json')).default
-	}
-    ]
+            },
+        },
+        {
+            locale: "fr",
+            key: "",
+            loader: async () => (await import("./locales/fr.json")).default,
+        },
+    ],
 };
 
 export const { t, locales, locale, loadTranslations } = new i18n(config);

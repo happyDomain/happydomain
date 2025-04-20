@@ -19,9 +19,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import type { Load } from '@sveltejs/kit';
+import type { Load } from "@sveltejs/kit";
 
-export const load: Load = async({ url }: {url: URL}) => {
+export const load: Load = async ({ url }: { url: URL }) => {
     const user = url.searchParams.get("u");
     const key = url.searchParams.get("k");
 
@@ -29,4 +29,4 @@ export const load: Load = async({ url }: {url: URL}) => {
         user,
         key,
     };
-}
+};

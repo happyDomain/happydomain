@@ -22,18 +22,13 @@
 -->
 
 <script lang="ts">
-    import {
-        Modal,
-        ModalBody,
-        ModalFooter,
-        ModalHeader,
-    } from '@sveltestrap/sveltestrap';
+    import { Modal, ModalBody, ModalFooter, ModalHeader } from "@sveltestrap/sveltestrap";
 
-    import SettingsStateButtons from '$lib/components/providers/SettingsStateButtons.svelte';
-    import ProviderForm from '$lib/components/providers/Form.svelte';
-    import ProviderSelector from '$lib/components/providers/Selector.svelte';
-    import { refreshProviders } from '$lib/stores/providers';
-    import { t } from '$lib/translations';
+    import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
+    import ProviderForm from "$lib/components/providers/Form.svelte";
+    import ProviderSelector from "$lib/components/providers/Selector.svelte";
+    import { refreshProviders } from "$lib/stores/providers";
+    import { t } from "$lib/translations";
 
     export let isOpen = false;
     $: if (isOpen) ptype = "";
@@ -56,7 +51,7 @@
         }
     }
 
-    function selectProvider(event: CustomEvent<{ptype: string}>) {
+    function selectProvider(event: CustomEvent<{ ptype: string }>) {
         ptype = event.detail.ptype;
     }
 
@@ -70,28 +65,18 @@
     }
 </script>
 
-<Modal
-    {isOpen}
-    scrollable
-    size="lg"
-    {toggle}
->
-    <ModalHeader {toggle}>
-        {$t('provider.new-form')}
+<Modal {isOpen} scrollable size="lg" {toggle}>
+    <ModalHeader {toggle} class="bg-primary-subtle ps-4 pt-4 align-items-start">
+        {$t("provider.new-form")}
     </ModalHeader>
     <ModalBody>
         {#if !ptype}
             <p>
-                {$t('provider.select-provider')}
+                {$t("provider.select-provider")}
             </p>
             <ProviderSelector on:provider-selected={selectProvider} />
         {:else}
-            <ProviderForm
-                bind:form={form}
-                formId="providermodal"
-                {ptype}
-                on:done={finished}
-            />
+            <ProviderForm bind:form formId="providermodal" {ptype} on:done={finished} />
         {/if}
     </ModalBody>
     <ModalFooter>

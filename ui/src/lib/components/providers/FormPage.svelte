@@ -22,22 +22,17 @@
 -->
 
 <script lang="ts">
-    import { goto } from '$app/navigation';
+    import { goto } from "$app/navigation";
 
-    import {
-        Col,
-        Container,
-        Row,
-        Spinner,
-    } from '@sveltestrap/sveltestrap';
+    import { Col, Container, Row, Spinner } from "@sveltestrap/sveltestrap";
 
-    import ImgProvider from '$lib/components/providers/ImgProvider.svelte';
-    import PForm from '$lib/components/providers/Form.svelte';
-    import SettingsStateButtons from '$lib/components/providers/SettingsStateButtons.svelte';
-    import { ProviderForm } from '$lib/model/provider_form';
-    import type { ProviderSettingsState } from '$lib/model/provider_settings';
-    import { providersSpecs, refreshProviders, refreshProvidersSpecs } from '$lib/stores/providers';
-    import { t } from '$lib/translations';
+    import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
+    import PForm from "$lib/components/providers/Form.svelte";
+    import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
+    import { ProviderForm } from "$lib/model/provider_form";
+    import type { ProviderSettingsState } from "$lib/model/provider_settings";
+    import { providersSpecs, refreshProviders, refreshProvidersSpecs } from "$lib/stores/providers";
+    import { t } from "$lib/translations";
 
     // Load required data
     if ($providersSpecs == null) refreshProvidersSpecs();
@@ -50,29 +45,33 @@
     export let value: ProviderSettingsState | null = null;
 
     //
-    let form = new ProviderForm(ptype, () => refreshProviders().then(() => goto('/')), providerId, value, () => {
-        if (edit) {
-            goto('/providers');
-        } else {
-            goto('/providers/new');
-        }
-    })
-    form.changeState(state).then((res) => form.form = res);
+    let form = new ProviderForm(
+        ptype,
+        () => refreshProviders().then(() => goto("/")),
+        providerId,
+        value,
+        () => {
+            if (edit) {
+                goto("/providers");
+            } else {
+                goto("/providers/new");
+            }
+        },
+    );
+    form.changeState(state).then((res) => (form.form = res));
 </script>
 
 {#if $providersSpecs == null}
     <div class="mt-5 d-flex justify-content-center align-items-center gap-2">
-        <Spinner color="primary" label={$t('common.spinning')} class="mr-3" /> {$t('wait.retrieving-setting')}
+        <Spinner color="primary" label={$t("common.spinning")} class="mr-3" />
+        {$t("wait.retrieving-setting")}
     </div>
 {:else}
     <Container fluid class="flex-fill d-flex">
         <Row class="flex-fill">
             <Col lg="4" md="5" style="background-color: #edf5f2;">
                 <div class="text-center mb-3">
-                    <ImgProvider
-                        {ptype}
-                        style="max-width: 100%; max-height: 10em"
-                    />
+                    <ImgProvider {ptype} style="max-width: 100%; max-height: 10em" />
                 </div>
                 <h3>
                     {$providersSpecs[ptype].name}
@@ -83,7 +82,7 @@
                 </p>
 
                 {#if form.form && form.form.sideText}
-                    <hr>
+                    <hr />
                     <p class="text-justify">
                         {form.form.sideText}
                     </p>
@@ -93,13 +92,11 @@
             <Col lg="8" md="7" class="d-flex flex-column pt-2 pb-3">
                 {#if form.form == null}
                     <div class="d-flex flex-fill justify-content-center align-items-center gap-2">
-                        <Spinner color="primary" label={$t('common.spinning')} class="mr-3" /> {$t('wait.retrieving-setting')}
+                        <Spinner color="primary" label={$t("common.spinning")} class="mr-3" />
+                        {$t("wait.retrieving-setting")}
                     </div>
                 {:else}
-                    <PForm
-                        bind:form={form}
-                        {ptype}
-                    />
+                    <PForm bind:form {ptype} />
                     <SettingsStateButtons
                         class="d-flex justify-content-end mt-3"
                         {edit}
@@ -107,7 +104,7 @@
                         nextInProgress={form.nextInProgress}
                         previousInProgress={form.previousInProgress}
                         submitForm="providerform"
-                        on:previous-state={() => form.previousState().then(() => form = form)}
+                        on:previous-state={() => form.previousState().then(() => (form = form))}
                     />
                 {/if}
             </Col>

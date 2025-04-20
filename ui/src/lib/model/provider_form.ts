@@ -19,35 +19,41 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { goto } from '$app/navigation';
-import cuid from 'cuid';
+import { goto } from "$app/navigation";
+import cuid from "cuid";
 
-import type { Provider } from '$lib/api/provider';
-import { getProviderSettings } from '$lib/api/provider_settings';
-import type { CustomForm } from '$lib/model/custom_form';
-import type { ProviderSettingsState } from '$lib/model/provider_settings';
+import type { Provider } from "$lib/api/provider";
+import { getProviderSettings } from "$lib/api/provider_settings";
+import type { CustomForm } from "$lib/model/custom_form";
+import type { ProviderSettingsState } from "$lib/model/provider_settings";
 
 export class ProviderForm {
     ptype: string = "";
     state: number = 0;
     providerId: string = "";
-    form: CustomForm|undefined = undefined;
-    value: ProviderSettingsState = {state: 0};
+    form: CustomForm | undefined = undefined;
+    value: ProviderSettingsState = { state: 0 };
     nextInProgress: boolean = false;
     previousInProgress: boolean = false;
     on_previous: null | (() => void);
     on_done: () => void;
 
-    constructor(ptype: string, on_done: (Provider) => void, providerId: string | null = null, value: ProviderSettingsState | null = null, on_previous: null | (() => void) = null) {
+    constructor(
+        ptype: string,
+        on_done: (Provider) => void,
+        providerId: string | null = null,
+        value: ProviderSettingsState | null = null,
+        on_previous: null | (() => void) = null,
+    ) {
         this.ptype = ptype;
         this.state = -1;
-        this.providerId = providerId?providerId:cuid();
+        this.providerId = providerId ? providerId : cuid();
         this.form = undefined;
-        this.value = value?value:{recall: this.providerId, state: this.state};
+        this.value = value ? value : { recall: this.providerId, state: this.state };
         this.on_done = on_done;
         this.on_previous = on_previous;
 
-        if ((!this.value.Provider || !Object.keys(this.value.Provider).length)) {
+        if (!this.value.Provider || !Object.keys(this.value.Provider).length) {
             const sstore = sessionStorage.getItem("newprovider-" + this.providerId);
             if (sstore) {
                 const data = JSON.parse(sstore);
@@ -95,7 +101,7 @@ export class ProviderForm {
     }
 
     saveState() {
-        sessionStorage.setItem("newprovider-" + this.providerId, JSON.stringify(this.value))
+        sessionStorage.setItem("newprovider-" + this.providerId, JSON.stringify(this.value));
     }
 
     async nextState() {
@@ -104,7 +110,9 @@ export class ProviderForm {
         if (this.form && this.form.nextButtonLink) {
             window.location.href = this.form.nextButtonLink;
         } else {
-            this.form = await this.changeState(this.form && this.form.nextButtonState ? this.form.nextButtonState : 0);
+            this.form = await this.changeState(
+                this.form && this.form.nextButtonState ? this.form.nextButtonState : 0,
+            );
         }
         this.nextInProgress = false;
     }
@@ -115,9 +123,10 @@ export class ProviderForm {
         if (this.form && this.form.previousButtonLink) {
             window.location.href = this.form.previousButtonLink;
         } else {
-            this.form = await this.changeState(this.form && this.form.previousButtonState ? this.form.previousButtonState : 0);
+            this.form = await this.changeState(
+                this.form && this.form.previousButtonState ? this.form.previousButtonState : 0,
+            );
         }
         this.previousInProgress = false;
     }
-
 }

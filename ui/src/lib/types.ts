@@ -19,7 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import type { Field } from '$lib/model/custom_form';
+import type { Field } from "$lib/model/custom_form";
 
 export function fillUndefinedValues(value: any, spec: Field) {
     if (value[spec.id] === undefined && spec.type.length) {
@@ -30,6 +30,15 @@ export function fillUndefinedValues(value: any, spec: Field) {
         else if (vartype == "bool") value[spec.id] = false;
         else if (vartype == "[]uint8") value[spec.id] = "";
         else if (vartype.startsWith("[]")) value[spec.id] = [];
-        else if (vartype != "string" && !vartype.startsWith("uint") && !vartype.startsWith("int") && vartype != "net.IP" && vartype != "common.URL" && vartype != "time.Duration" && vartype != "common.Duration") value[spec.id] = { };
+        else if (
+            vartype != "string" &&
+            !vartype.startsWith("uint") &&
+            !vartype.startsWith("int") &&
+            vartype != "net.IP" &&
+            vartype != "common.URL" &&
+            vartype != "time.Duration" &&
+            vartype != "common.Duration"
+        )
+            value[spec.id] = {};
     }
 }

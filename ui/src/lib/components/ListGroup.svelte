@@ -22,20 +22,17 @@
 -->
 
 <script lang="ts">
- import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher } from "svelte";
 
- import {
-     ListGroup,
-     ListGroupItem,
- } from '@sveltestrap/sveltestrap';
+    import { ListGroup, ListGroupItem } from "@sveltestrap/sveltestrap";
 
- const dispatch = createEventDispatcher();
+    const dispatch = createEventDispatcher();
 
- export let items: Array<any> = [];
- export let isLoading = false;
- export let button = false;
- export let isActive: (item: any) => boolean = () => false;
- export let links = false;
+    export let items: Array<any> = [];
+    export let isLoading = false;
+    export let button = false;
+    export let isActive: (item: any) => boolean = () => false;
+    export let links = false;
 </script>
 
 <ListGroup {...$$restProps}>
@@ -51,7 +48,7 @@
         {#each items as item}
             <ListGroupItem
                 active={isActive(item)}
-                tag={button?"button":undefined}
+                tag={button ? "button" : undefined}
                 class="d-flex justify-content-between align-items-center"
                 href={links ? item.href : undefined}
                 on:click={() => dispatch("click", item)}

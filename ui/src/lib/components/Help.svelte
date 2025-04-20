@@ -22,22 +22,16 @@
 -->
 
 <script lang="ts">
- import {
-     Button,
-     Icon,
- } from '@sveltestrap/sveltestrap';
- import type {
-     ButtonColor,
-     ButtonSize,
- } from 'sveltestrap/src/Button.d';
+    import { Button, Icon } from "@sveltestrap/sveltestrap";
+    import type { ButtonColor, ButtonSize } from "sveltestrap/src/Button.d";
 
- import { t } from '$lib/translations';
+    import { t } from "$lib/translations";
 
- export { className as class };
- let className: string = '';
- export let color: ButtonColor = "primary";
- export let href: string;
- export let size: ButtonSize | undefined = undefined;
+    export { className as class };
+    let className: string = "";
+    export let color: ButtonColor = "primary";
+    export let href: string;
+    export let size: ButtonSize | undefined = undefined;
 </script>
 
 <Button
@@ -45,12 +39,9 @@
     target="_blank"
     {color}
     {size}
-    class="{className}"
+    class={className}
     data-umami-event="help"
-    data-umami-event-href={href.substring(href.lastIndexOf('/')-2)}
+    data-umami-event-href={href.substring(href.lastIndexOf("/") - 2)}
 >
-    <Icon
-        name="question-circle-fill"
-        title={$t('common.help')}
-    />
+    <Icon name="question-circle-fill" title={$t("common.help")} />
 </Button>

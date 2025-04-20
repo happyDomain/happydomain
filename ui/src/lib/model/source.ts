@@ -24,4 +24,4 @@ export interface SourceMeta {
     _id: string;
     _ownerid: string;
     _comment: string;
-};
+}

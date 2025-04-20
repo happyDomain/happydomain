@@ -19,17 +19,17 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { redirect, type Load } from '@sveltejs/kit';
-import { get_store_value } from 'svelte/internal';
+import { redirect, type Load } from "@sveltejs/kit";
+import { get_store_value } from "svelte/internal";
 
-import { userSession } from '$lib/stores/usersession';
+import { userSession } from "$lib/stores/usersession";
 
-export const load: Load = async({ parent }) => {
+export const load: Load = async ({ parent }) => {
     const data = await parent();
 
     if (get_store_value(userSession) != null) {
-        redirect(302, '/');
+        redirect(302, "/");
     }
 
     return data;
-}
+};

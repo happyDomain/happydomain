@@ -22,29 +22,22 @@
 -->
 
 <script lang="ts">
- import {
-     Card,
-     CardBody,
-     CardHeader,
-     Container,
-     Col,
-     Row,
- } from '@sveltestrap/sveltestrap';
+    import { Card, CardBody, CardHeader, Container, Col, Row } from "@sveltestrap/sveltestrap";
 
- import { t } from '$lib/translations';
- import LoginForm from '$lib/components/LoginForm.svelte';
+    import { t } from "$lib/translations";
+    import LoginForm from "./LoginForm.svelte";
 </script>
 
 <Container class="my-3">
     <Row>
         <Col sm="4" class="d-none d-sm-flex flex-column">
-          <img src="/img/login.webp" alt="Welcome back!">
+            <img src="/img/login.webp" alt="Welcome back!" />
         </Col>
         <Col sm="8" class="d-flex flex-column justify-content-center">
             <Card>
                 <CardHeader>
                     <h6 class="card-title my-1 fw-bold">
-                        {$t('account.signup.join-call')}
+                        {$t("account.signup.join-call")}
                     </h6>
                 </CardHeader>
                 <CardBody>
@@ -53,9 +46,9 @@
             </Card>
             {#if !window.disable_registration}
                 <div class="text-center mt-4">
-                    {$t('account.ask-have')}
+                    {$t("account.ask-have")}
                     <a href="/join" class="fw-bold">
-                        {$t('account.join')}
+                        {$t("account.join")}
                     </a>
                 </div>
             {/if}

@@ -209,12 +209,12 @@
         "used-on": "Last used on"
     },
     "logs": {
-      "date": "Date",
-      "description": "Action/description",
-      "level": "Level",
-      "no-entry": "No entry in the domain log.",
-      "title": "Domain's logs ",
-      "user": "User"
+        "date": "Date",
+        "description": "Action/description",
+        "level": "Level",
+        "no-entry": "No entry in the domain log.",
+        "title": "Domain's logs ",
+        "user": "User"
     },
     "menu": {
         "my-domains": "My domains",
@@ -239,21 +239,21 @@
             "purpose": "{{happyDomain}} makes domain management simple and intuitive. Whether you have one domain or hundreds, our platform gives you a centralized way to manage them all.",
             "use": "Use {{happyDomain}} as a replacement interface to your usual domain name provider. It'll still rely on your provider's infrastructure, via our simple interface.",
             "unified": {
-              "title": "Unified Management",
-              "description": "Manage all your domains in one place, regardless of where they're registered."
-          },
-          "comprehensive": {
-              "title": "Comprehensive Features",
-              "description": "Experience the future of DNS management with history, diff, tests, ..."
-          },
-          "intuitive": {
-              "title": "Intuitive Interface",
-              "description": "Simple and user-friendly interface for both beginners and DNS experts."
-          },
-          "templates": {
-              "title": "One-Click Templates",
-              "description": "Configure common services with pre-built templates in seconds."
-          }
+                "title": "Unified Management",
+                "description": "Manage all your domains in one place, regardless of where they're registered."
+            },
+            "comprehensive": {
+                "title": "Comprehensive Features",
+                "description": "Experience the future of DNS management with history, diff, tests, ..."
+            },
+            "intuitive": {
+                "title": "Intuitive Interface",
+                "description": "Simple and user-friendly interface for both beginners and DNS experts."
+            },
+            "templates": {
+                "title": "One-Click Templates",
+                "description": "Configure common services with pre-built templates in seconds."
+            }
         },
         "connect": {
             "title": "Connect Your First Domain Provider",
@@ -273,25 +273,25 @@
             "bravo": "{{count:eq; 1:Your domain is; default:Your domains are}} now properly configured and ready to use.",
             "title": "Explore happyDomain Features",
             "intro": "Now that your domain is set up, discover all the powerful features happyDomain has to offer:",
-          "history": {
-              "title": "Record History",
-              "description": "Track all changes made to your DNS records with version history and rollback options.",
-              "link": "View history"
-          },
-          "api": {
-              "title": "API Access",
-              "description": "Automate domain management with our comprehensive API for developers and teams.",
-              "link": "API Documentation"
-          },
-          "monitoring": {
-              "title": "Monitoring",
-              "description": "Real-time monitoring of your domains with alerts for any issues or expirations."
-          },
-          "security": {
-              "title": "Security Check",
-              "description": "Automated security audits to ensure your domain configurations follow best practices."
-          },
-          "soon": "soon"
+            "history": {
+                "title": "Record History",
+                "description": "Track all changes made to your DNS records with version history and rollback options.",
+                "link": "View history"
+            },
+            "api": {
+                "title": "API Access",
+                "description": "Automate domain management with our comprehensive API for developers and teams.",
+                "link": "API Documentation"
+            },
+            "monitoring": {
+                "title": "Monitoring",
+                "description": "Real-time monitoring of your domains with alerts for any issues or expirations."
+            },
+            "security": {
+                "title": "Security Check",
+                "description": "Automated security audits to ensure your domain configurations follow best practices."
+            },
+            "soon": "soon"
         },
         "no-sale": {
             "title": "You need to own a domain to use happyDomain.",
@@ -316,28 +316,28 @@
     },
     "resources": {
         "CAA": {
-          "all-issuers-title": "All issuers authorized.",
-          "all-issuers-body": "With those parameters, all issuer can create certificate for this domain and subdomain.",
-          "all-wild-issuers-body": "With those parameters, all issuer can create wildcard certificate for this domain and subdomain.",
-          "auth-issuers": "Authorized Issuers",
-          "incident-response": "Incident Response",
-          "incident-response-text": "How would you want to be contacted in case of violation of the current security policy?",
-          "mail-issuers": "S/MIME certificates issuance",
-          "mail-all-allowed-title": "No CA constraint for S/MIME certificates issuance.",
-          "mail-all-allowed-body": "All CA can emit S/MIME certificates for your domain. You should disallow or restrict to certain CA. S/MIME certificates are used for example to sign and encrypt e-mail communications. If you do not use such certificate, you should disallow their issuance.",
-          "no-issuers-hint": "Disallow any certificate issuance",
-          "no-issuers-title": "No issuer authorized.",
-          "no-issuers-body": "With those parameters, no issuer is allowed to create certificate for this subdomain.",
-          "no-mail-hint": "Disallow S/MIME certificate issuance",
-          "no-mail-title": "No issuer authorized for S/MIME certificate.",
-          "no-mail-body": "With those parameters, no issuer is authorized to create S/MIME certificate for this domain and subdomain.",
-          "no-wild-hint": "Disallow wildcard certificate issuance",
-          "no-wild-title": "No wildcard issuer authorized.",
-          "no-wild-body": "With those parameters, no issuer is authorized to create wildcard certificate for this domain and subdomain. But this can be override with the following settings:",
-          "title": "Certificates issuance",
-          "wild-issuers": "Wildcard certificates issuance",
-          "wild-same-title": "Same as regular certificate issuance.",
-          "wild-same-body": "With those parameters, all issuer authorized for certificate issuance can also create wildcard certificate for this domain and subdomain."
+            "all-issuers-title": "All issuers authorized.",
+            "all-issuers-body": "With those parameters, all issuer can create certificate for this domain and subdomain.",
+            "all-wild-issuers-body": "With those parameters, all issuer can create wildcard certificate for this domain and subdomain.",
+            "auth-issuers": "Authorized Issuers",
+            "incident-response": "Incident Response",
+            "incident-response-text": "How would you want to be contacted in case of violation of the current security policy?",
+            "mail-issuers": "S/MIME certificates issuance",
+            "mail-all-allowed-title": "No CA constraint for S/MIME certificates issuance.",
+            "mail-all-allowed-body": "All CA can emit S/MIME certificates for your domain. You should disallow or restrict to certain CA. S/MIME certificates are used for example to sign and encrypt e-mail communications. If you do not use such certificate, you should disallow their issuance.",
+            "no-issuers-hint": "Disallow any certificate issuance",
+            "no-issuers-title": "No issuer authorized.",
+            "no-issuers-body": "With those parameters, no issuer is allowed to create certificate for this subdomain.",
+            "no-mail-hint": "Disallow S/MIME certificate issuance",
+            "no-mail-title": "No issuer authorized for S/MIME certificate.",
+            "no-mail-body": "With those parameters, no issuer is authorized to create S/MIME certificate for this domain and subdomain.",
+            "no-wild-hint": "Disallow wildcard certificate issuance",
+            "no-wild-title": "No wildcard issuer authorized.",
+            "no-wild-body": "With those parameters, no issuer is authorized to create wildcard certificate for this domain and subdomain. But this can be override with the following settings:",
+            "title": "Certificates issuance",
+            "wild-issuers": "Wildcard certificates issuance",
+            "wild-same-title": "Same as regular certificate issuance.",
+            "wild-same-body": "With those parameters, all issuer authorized for certificate issuance can also create wildcard certificate for this domain and subdomain."
         }
     },
     "service": {
@@ -354,12 +354,12 @@
         "ttl-tip": "0 means default TTL, others values are exprimed in seconds"
     },
     "sessions": {
-      "close-all": "Terminate all sessions",
-      "create": "Create API key",
-      "current": "current session",
-      "description": "Name your session",
-      "secret": "Session secret",
-      "usage": "Here is an example on how to use the generated secret:"
+        "close-all": "Terminate all sessions",
+        "create": "Create API key",
+        "current": "current session",
+        "description": "Name your session",
+        "secret": "Session secret",
+        "usage": "Here is an example on how to use the generated secret:"
     },
     "provider": {
         "another": "Use another provider",

@@ -24,14 +24,14 @@ export interface ProviderInfos {
     description: string;
     capabilities: Array<string>;
     helplink: string;
-};
+}
 
 export function getAvailableResourceTypes(pi: ProviderInfos): Array<number> {
     const availableResourceTypes = [];
 
     for (const cap of pi.capabilities) {
-        if (cap.startsWith('rr-')) {
-            availableResourceTypes.push(parseInt(cap.substring(3, cap.indexOf('-', 4))))
+        if (cap.startsWith("rr-")) {
+            availableResourceTypes.push(parseInt(cap.substring(3, cap.indexOf("-", 4))));
         }
     }
 
@@ -45,7 +45,7 @@ export interface ProviderMeta {
     _id: string;
     _ownerid: string;
     _comment: string;
-};
+}
 
 export interface ProviderData extends ProviderMeta {
     Provider: any;
@@ -53,4 +53,4 @@ export interface ProviderData extends ProviderMeta {
 
 export interface Provider extends ProviderMeta {
     Provider: any;
-};
+}

@@ -22,24 +22,16 @@
 -->
 
 <script lang="ts">
- import {
-     Alert,
-     Container,
- } from '@sveltestrap/sveltestrap';
+    import { Container } from "@sveltestrap/sveltestrap";
 
- import ForgottenPasswordForm from '$lib/components/ForgottenPasswordForm.svelte';
- import RecoverAccountForm from '$lib/components/RecoverAccountForm.svelte';
+    import ForgottenPasswordForm from "./ForgottenPasswordForm.svelte";
+    import RecoverAccountForm from "./RecoverAccountForm.svelte";
 
- let error = "";
- export let data;
+    export let data;
 </script>
 
 <Container class="my-3">
-    {#if error}
-        <Alert color="danger">
-            {error}
-        </Alert>
-    {:else if data.user && data.key}
+    {#if data.user && data.key}
         <RecoverAccountForm user={data.user} key={data.key} />
     {:else}
         <ForgottenPasswordForm />

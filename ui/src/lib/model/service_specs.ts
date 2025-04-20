@@ -19,12 +19,12 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { get_store_value } from 'svelte/internal';
+import { get_store_value } from "svelte/internal";
 
-import type { Field } from '$lib/model/custom_form';
-import { getAvailableResourceTypes, type ProviderInfos } from '$lib/model/provider';
-import type { ServiceCombined } from '$lib/model/service';
-import { servicesSpecs } from '$lib/stores/services';
+import type { Field } from "$lib/model/custom_form";
+import { getAvailableResourceTypes, type ProviderInfos } from "$lib/model/provider";
+import type { ServiceCombined } from "$lib/model/service";
+import { servicesSpecs } from "$lib/stores/services";
 
 export interface ServiceRestrictions {
     alone: boolean;
@@ -52,7 +52,12 @@ export interface ServiceSpec {
     fields: Array<Field>;
 }
 
-export function passRestrictions(svcinfo: ServiceInfos, provider_specs: ProviderInfos, zservices: Record<string, Array<ServiceCombined>>, dn: string): null | string {
+export function passRestrictions(
+    svcinfo: ServiceInfos,
+    provider_specs: ProviderInfos,
+    zservices: Record<string, Array<ServiceCombined>>,
+    dn: string,
+): null | string {
     if (svcinfo.restrictions) {
         // Handle NeedTypes restriction: hosting provider need to support given types.
         if (svcinfo.restrictions.needTypes) {
@@ -60,14 +65,14 @@ export function passRestrictions(svcinfo: ServiceInfos, provider_specs: Provider
 
             for (const needType of svcinfo.restrictions.needTypes) {
                 if (availableResourceTypes.indexOf(needType) < 0) {
-                    return 'is not available on this domain name hosting provider.';
+                    return "is not available on this domain name hosting provider.";
                 }
             }
         }
 
         // Handle rootOnly restriction.
-        if (svcinfo.restrictions.rootOnly && dn !== '') {
-            return 'can only be present at the root of your domain.';
+        if (svcinfo.restrictions.rootOnly && dn !== "") {
+            return "can only be present at the root of your domain.";
         }
 
         if (zservices[dn] == null) return null;
@@ -79,8 +84,12 @@ export function passRestrictions(svcinfo: ServiceInfos, provider_specs: Provider
         // Handle Alone restriction: only nearAlone are allowed.
         if (svcinfo.restrictions.alone) {
             for (const s of zservices[dn]) {
-                if (s._svctype !== svcinfo._svctype && sspecs[s._svctype].restrictions && !sspecs[s._svctype].restrictions.nearAlone) {
-                    return 'only one per subdomain.';
+                if (
+                    s._svctype !== svcinfo._svctype &&
+                    sspecs[s._svctype].restrictions &&
+                    !sspecs[s._svctype].restrictions.nearAlone
+                ) {
+                    return "only one per subdomain.";
                 }
             }
         }
@@ -90,7 +99,7 @@ export function passRestrictions(svcinfo: ServiceInfos, provider_specs: Provider
             for (const s of zservices[dn]) {
                 for (const exclu of svcinfo.restrictions.exclusive) {
                     if (s._svctype === exclu) {
-                        return 'cannot coexist with ' + sspecs[s._svctype].name + '.';
+                        return "cannot coexist with " + sspecs[s._svctype].name + ".";
                     }
                 }
             }
@@ -98,13 +107,13 @@ export function passRestrictions(svcinfo: ServiceInfos, provider_specs: Provider
 
         // Check reverse Exclusivity
         for (const k in zservices[dn]) {
-            const s = sspecs[zservices[dn][k]._svctype]
+            const s = sspecs[zservices[dn][k]._svctype];
             if (!s.restrictions || !s.restrictions.exclusive) {
-                continue
+                continue;
             }
             for (const i in s.restrictions.exclusive) {
                 if (svcinfo._svctype === s.restrictions.exclusive[i]) {
-                    return 'cannot coexist with ' + sspecs[s._svctype].name + '.';
+                    return "cannot coexist with " + sspecs[s._svctype].name + ".";
                 }
             }
         }
@@ -113,27 +122,39 @@ export function passRestrictions(svcinfo: ServiceInfos, provider_specs: Provider
         if (svcinfo.restrictions.single) {
             for (const s of zservices[dn]) {
                 if (s._svctype === svcinfo._svctype) {
-                    return 'can only be present once per subdomain.';
+                    return "can only be present once per subdomain.";
                 }
             }
         }
 
         // Handle presence of Alone and Leaf service in subdomain already.
-        let oneAlone: string | null = null
-        let oneLeaf: string | null = null
+        let oneAlone: string | null = null;
+        let oneLeaf: string | null = null;
         for (const s of zservices[dn]) {
-            if (sspecs[s._svctype] && sspecs[s._svctype].restrictions && sspecs[s._svctype].restrictions.alone) {
-                oneAlone = s._svctype
+            if (
+                sspecs[s._svctype] &&
+                sspecs[s._svctype].restrictions &&
+                sspecs[s._svctype].restrictions.alone
+            ) {
+                oneAlone = s._svctype;
             }
-            if (sspecs[s._svctype] && sspecs[s._svctype].restrictions && sspecs[s._svctype].restrictions.leaf) {
-                oneLeaf = s._svctype
+            if (
+                sspecs[s._svctype] &&
+                sspecs[s._svctype].restrictions &&
+                sspecs[s._svctype].restrictions.leaf
+            ) {
+                oneLeaf = s._svctype;
             }
         }
         if (oneAlone && oneAlone !== svcinfo._svctype && !svcinfo.restrictions.nearAlone) {
-            return 'cannot coexist with ' + sspecs[oneAlone].name + ', that requires to be the only one in the subdomain.';
+            return (
+                "cannot coexist with " +
+                sspecs[oneAlone].name +
+                ", that requires to be the only one in the subdomain."
+            );
         }
         if (oneLeaf && oneLeaf !== svcinfo._svctype && !svcinfo.restrictions.glue) {
-            return 'cannot coexist with ' + sspecs[oneLeaf].name + ', that cannot have subdomains.';
+            return "cannot coexist with " + sspecs[oneLeaf].name + ", that cannot have subdomains.";
         }
     }
 

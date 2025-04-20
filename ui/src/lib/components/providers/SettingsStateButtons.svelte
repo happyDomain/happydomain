@@ -22,27 +22,24 @@
 -->
 
 <script lang="ts">
- import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher } from "svelte";
 
- import {
-     Button,
-     Spinner,
- } from '@sveltestrap/sveltestrap';
+    import { Button, Spinner } from "@sveltestrap/sveltestrap";
 
- import type { CustomForm } from '$lib/model/custom_form';
- import { t } from '$lib/translations';
+    import type { CustomForm } from "$lib/model/custom_form";
+    import { t } from "$lib/translations";
 
- const dispatch = createEventDispatcher();
+    const dispatch = createEventDispatcher();
 
- export let canDoNext = true;
- export let edit = false;
- export let form: CustomForm|null = null;
- export let nextInProgress = false;
- export let previousInProgress = false;
- export let submitForm: string|null = null;
+    export let canDoNext = true;
+    export let edit = false;
+    export let form: CustomForm | null = null;
+    export let nextInProgress = false;
+    export let previousInProgress = false;
+    export let submitForm: string | null = null;
 
- let disabled = false;
- $: disabled = nextInProgress || previousInProgress;
+    let disabled = false;
+    $: disabled = nextInProgress || previousInProgress;
 </script>
 
 <div {...$$restProps}>
@@ -54,7 +51,7 @@
                 color="secondary"
                 outline
                 {disabled}
-                on:click={() => dispatch('previous-state')}
+                on:click={() => dispatch("previous-state")}
             >
                 {#if previousInProgress}
                     <Spinner label="Spinning" size="sm" />
@@ -83,7 +80,7 @@
                 color="secondary"
                 outline
                 {disabled}
-                on:click={() => dispatch('previous-state')}
+                on:click={() => dispatch("previous-state")}
             >
                 {#if previousInProgress}
                     <Spinner label="Spinning" size="sm" />
@@ -112,12 +109,12 @@
             color="secondary"
             outline
             {disabled}
-            on:click={() => dispatch('previous-state')}
+            on:click={() => dispatch("previous-state")}
         >
             {#if previousInProgress}
                 <Spinner label="Spinning" size="sm" />
             {/if}
-            {$t('common.cancel')}
+            {$t("common.cancel")}
         </Button>
         <Button
             type="submit"
@@ -129,7 +126,7 @@
             {#if nextInProgress}
                 <Spinner label="Spinning" size="sm" />
             {/if}
-            {$t('common.next')} &gt;
+            {$t("common.next")} &gt;
         </Button>
     {/if}
 </div>

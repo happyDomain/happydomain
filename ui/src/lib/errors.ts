@@ -19,7 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { refreshUserSession } from '$lib/stores/usersession';
+import { refreshUserSession } from "$lib/stores/usersession";
 
 export class NotAuthorizedError extends Error {
     constructor(message: string) {
@@ -69,5 +69,5 @@ export async function handleApiResponse<T>(res: Response): Promise<T> {
         }
     }
 
-    return await res.json() as T;
+    return (await res.json()) as T;
 }
