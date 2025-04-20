@@ -35,6 +35,9 @@ type ZoneMeta struct {
 	// IdAuthor is the User's identifier for the current Zone.
 	IdAuthor Identifier `json:"id_author" swaggertype:"string"`
 
+	// ParentZone identifies the parental zone of this one.
+	ParentZone *Identifier `json:"parent,omitempty" swaggertype:"string"`
+
 	// DefaultTTL is the TTL to use when no TTL has been defined for a record in this Zone.
 	DefaultTTL uint32 `json:"default_ttl"`
 
@@ -67,6 +70,7 @@ type Zone struct {
 func (z *Zone) DerivateNew() *Zone {
 	newZone := new(Zone)
 
+	newZone.ZoneMeta.ParentZone = &z.ZoneMeta.Id
 	newZone.ZoneMeta.IdAuthor = z.ZoneMeta.IdAuthor
 	newZone.ZoneMeta.DefaultTTL = z.ZoneMeta.DefaultTTL
 	newZone.ZoneMeta.LastModified = time.Now()
