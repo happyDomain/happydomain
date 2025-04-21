@@ -47,6 +47,7 @@
  import type { Provider } from '$lib/model/provider';
  import { domains, refreshDomains } from '$lib/stores/domains';
  import { providers, providersSpecs, refreshProviders, refreshProvidersSpecs } from '$lib/stores/providers';
+ import { toasts } from '$lib/stores/toasts';
  import { t } from '$lib/translations';
 
  if (!$domains) refreshDomains();
@@ -68,6 +69,16 @@
          );
          filteredDomains.sort(fqdnCompare);
      }
+ }
+
+ function newDomainAdded(event: CustomEvent<Domain>) {
+     toasts.addToast({
+         title: $t('domains.attached-new'),
+         message: $t('domains.added-success', { domain: event.detail.domain }),
+         href: '/domains/' + event.detail.domain,
+         color: 'success',
+         timeout: 5000,
+     });
  }
 </script>
 
@@ -102,6 +113,7 @@
                     class="mt-3"
                     id="new-domain"
                     provider={filteredProvider}
+                    on:newDomainAdded={newDomainAdded}
                 />
             {/if}
         </Col>

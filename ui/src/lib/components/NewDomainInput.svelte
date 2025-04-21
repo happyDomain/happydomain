@@ -23,6 +23,7 @@
 
 <script lang="ts">
  import { goto } from '$app/navigation';
+ import { createEventDispatcher } from 'svelte';
 
  import {
      Button,
@@ -38,14 +39,17 @@
  import { validateDomain } from '$lib/dns';
  import type { Provider } from '$lib/model/provider';
  import { refreshDomains } from '$lib/stores/domains';
- import { toasts } from '$lib/stores/toasts';
  import { t } from '$lib/translations';
 
+ const dispatch = createEventDispatcher();
+
+ export let addingNewDomain = false;
  export let autofocus = false;
+ export let noButton = false;
  export let provider: Provider|null = null;
  export let value = "";
 
- let addingNewDomain = false;
+ let formId = "new-domain-form";
  let newDomainState: boolean|undefined = undefined;
 
  function addDomainToProvider() {
@@ -58,16 +62,9 @@
          .then(
              (domain) => {
                  addingNewDomain = false;
-                 toasts.addToast({
-                     title: $t('domains.attached-new'),
-                     message: $t('domains.added-success', { domain: domain.domain }),
-                     href: '/domains/' + domain.domain,
-                     color: 'success',
-                     timeout: 5000,
-                 });
-
                  value = "";
                  refreshDomains();
+                 dispatch('newDomainAdded', domain);
              },
              (error) => {
                  addingNewDomain = false;
@@ -94,7 +91,10 @@
  }
 </script>
 
-<form on:submit|preventDefault={addDomainToProvider}>
+<form
+    id={formId}
+    on:submit|preventDefault={addDomainToProvider}
+>
     <ListGroup {...$$restProps}>
         <ListGroupItem class="d-flex justify-content-between align-items-center p-0">
             <InputGroup>
@@ -112,7 +112,7 @@
                     bind:value={value}
                     on:input={inputChange}
                 />
-                {#if value.length}
+                {#if !noButton && value.length}
                     <Button
                         type="submit"
                         outline
