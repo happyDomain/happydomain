@@ -261,7 +261,7 @@
             "imported": "Importé"
         },
         "explore": {
-            "understood": "Compris!",
+            "understood": "Compris !",
             "done": "Tout est prêt !",
             "bravo": "{{count:eq; 1:Votre domaine est bien configuré et prêt à être utilisé; default:Vos domaines sont bien configurés et prêts à être utilisés}}.",
             "title": "Explorons les fonctionnalités d'happyDomain",
@@ -336,7 +336,6 @@
     "service": {
         "add": "Ajout d'un service",
         "all": "Tout",
-        "already": "Déjà géré",
         "delete": "Supprimer ce service",
         "update": "Mettre à jour ce service",
         "form-new": "Ajout d'un service sur {{domain}}",

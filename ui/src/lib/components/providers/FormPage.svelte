@@ -47,7 +47,7 @@
     //
     let form = new ProviderForm(
         ptype,
-        () => refreshProviders().then(() => goto("/")),
+        () => refreshProviders().then(() => goto("/?newProvider")),
         providerId,
         value,
         () => {

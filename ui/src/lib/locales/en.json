@@ -343,7 +343,6 @@
     "service": {
         "add": "Add service",
         "all": "All",
-        "already": "Already managed",
         "delete": "Delete this service",
         "update": "Update this service",
         "form-new": "Add a new service to {{domain}}",

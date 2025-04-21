@@ -23,6 +23,8 @@
 
 <script lang="ts">
     import { goto } from "$app/navigation";
+    import { page } from "$app/stores";
+    import { onMount } from "svelte";
 
     import {
         Badge,
@@ -54,8 +56,6 @@
     import { providers, refreshProviders } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 
-    if (!$providers) refreshProviders();
-
     export let isOpen = false;
     let form: ProviderForm;
     let myDomain: string;
@@ -64,6 +64,15 @@
     let noDomainsList = false;
     let step = 0;
     let providerType: string;
+
+    onMount(async () => {
+        if (!$providers) await refreshProviders();
+
+        if ($page.url.searchParams.has("newProvider")) {
+            myProvider = $providers[0];
+            step = 2;
+        }
+    });
 
     function nextPage() {
         if (step == 0 && $providers.length > 0) {

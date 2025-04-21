@@ -86,18 +86,20 @@
         return domain !== undefined && domain.id_provider == provider._id;
     }
 
-    async function importDomain(domain: { domain: string; wait: boolean }) {
+    async function importDomain(domain: { domain: string; wait: boolean }, noToast: bool) {
         domain.wait = true;
         addDomain(domain.domain, provider).then(
             (mydomain) => {
                 domain.wait = false;
-                toasts.addToast({
-                    title: $t("domains.attached-new"),
-                    message: $t("domains.added-success", { domain: mydomain.domain }),
-                    href: "/domains/" + mydomain.domain,
-                    color: "success",
-                    timeout: 5000,
-                });
+                if (!noToast) {
+                    toasts.addToast({
+                        title: $t("domains.attached-new"),
+                        message: $t("domains.added-success", { domain: mydomain.domain }),
+                        href: "/domains/" + mydomain.domain,
+                        color: "success",
+                        timeout: 5000,
+                    });
+                }
 
                 if (!allImportInProgress) refreshDomains();
             },
@@ -114,7 +116,7 @@
             allImportInProgress = true;
             for (const d of importableDomainsList) {
                 if (!haveDomain($domains_idx, d)) {
-                    await importDomain({ domain: d, wait: false });
+                    await importDomain({ domain: d, wait: false }, true);
                 }
             }
             allImportInProgress = false;
@@ -176,7 +178,7 @@
                 {#if haveDomain($domains_idx, domain.domain)}
                     <Badge class="ml-1" color="success">
                         <Icon name="check" />
-                        {$t("service.already")}
+                        {$t("onboarding.import.imported")}
                     </Badge>
                 {:else}
                     <Button
@@ -185,7 +187,7 @@
                         color="primary"
                         size="sm"
                         disabled={domain.wait || allImportInProgress}
-                        on:click={() => importDomain(domain)}
+                        on:click={() => importDomain(domain, false)}
                     >
                         {#if domain.wait}
                             <Spinner size="sm" />
