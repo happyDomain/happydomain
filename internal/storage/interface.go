@@ -22,6 +22,8 @@
 package storage // import "git.happydns.org/happyDomain/storage"
 
 import (
+	"time"
+
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -102,6 +104,14 @@ type Storage interface {
 	UpdateDomainLog(*happydns.Domain, *happydns.DomainLog) error
 
 	DeleteDomainLog(*happydns.Domain, *happydns.DomainLog) error
+
+	// INSIGHTS ----------------------------------------------------
+
+	// InsightsRun registers a insights process run just now.
+	InsightsRun() error
+
+	// LastInsightsRun gets the last time insights process run.
+	LastInsightsRun() (*time.Time, happydns.Identifier, error)
 
 	// PROVIDERS ----------------------------------------------------
 

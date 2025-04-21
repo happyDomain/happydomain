@@ -42,11 +42,12 @@ import (
 )
 
 type App struct {
-	cfg    *config.Options
-	mailer *mailer.Mailer
-	router *gin.Engine
-	srv    *http.Server
-	store  storage.Storage
+	cfg      *config.Options
+	mailer   *mailer.Mailer
+	router   *gin.Engine
+	srv      *http.Server
+	insights *insightsCollector
+	store    storage.Storage
 
 	AuthenticationService   happydns.AuthenticationUsecase
 	AuthUserService         happydns.AuthUserUsecase
@@ -171,6 +172,14 @@ func NewApp(cfg *config.Options) *App {
 		ns = &newsletter.DummyNewsletterSubscription{}
 	}
 
+	if !cfg.OptOutInsights {
+		app.insights = &insightsCollector{
+			cfg:   app.cfg,
+			store: app.store,
+			stop:  make(chan bool),
+		}
+	}
+
 	// Prepare usecases
 	app.ProviderSpecsService = usecase.NewProviderSpecsUsecase()
 	app.ProviderSettingsService = usecase.NewProviderSettingsUsecase(cfg, app.store)
@@ -212,6 +221,10 @@ func (app *App) Start() {
 		ReadHeaderTimeout: 15 * time.Second,
 	}
 
+	if app.insights != nil {
+		go app.insights.Run()
+	}
+
 	log.Printf("Public interface listening on %s\n", app.cfg.Bind)
 	if err := app.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("listen: %s\n", err)
@@ -228,5 +241,9 @@ func (app *App) Stop() {
 	// Close storage
 	if app.store != nil {
 		app.store.Close()
+	}
+
+	if app.insights != nil {
+		app.insights.Close()
 	}
 }

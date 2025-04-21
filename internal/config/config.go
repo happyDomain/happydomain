@@ -78,6 +78,9 @@ type Options struct {
 	// NoAuth controls if there is user access control or not.
 	NoAuth bool
 
+	// OptOutInsights disable the anonymous usage statistics report.
+	OptOutInsights bool
+
 	// StorageEngine points to the storage engine used.
 	StorageEngine storage.StorageEngine
 

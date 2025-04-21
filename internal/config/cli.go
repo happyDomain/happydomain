@@ -43,6 +43,7 @@ func (o *Options) declareFlags() {
 	flag.BoolVar(&o.NoAuth, "no-auth", false, "Disable user access control, use default account")
 	flag.Var(&o.JWTSecretKey, "jwt-secret-key", "Secret key used to verify JWT authentication tokens (a random secret is used if undefined)")
 	flag.Var(&o.ExternalAuth, "external-auth", "Base URL to use for login and registration (use embedded forms if left empty)")
+	flag.BoolVar(&o.OptOutInsights, "opt-out-insights", false, "Disable the anonymous usage statistics report. If you care about this project and don't participate in discussions, don't opt-out.")
 
 	flag.Var(&o.ListmonkURL, "newsletter-server-url", "Base URL of the listmonk newsletter server")
 	flag.IntVar(&o.ListmonkId, "newsletter-id", 1, "Listmonk identifier of the list receiving the new user")
