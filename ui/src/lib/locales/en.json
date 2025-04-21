@@ -228,25 +228,75 @@
         "quick-menu": "Quick Access"
     },
     "onboarding": {
-        "add-one": "add a new provider",
-        "choose-configured": "choose between already configured providers or {{action}}:",
-        "suggest-provider": "choose your provider:",
-        "use": "Use {{happyDomain}} as a replacement interface to your usual domain name provider. It'll still rely on your provider's infrastructure, via our simple interface. As a first step, {{first-step}}",
+        "steps": {
+            "welcome": "Welcome",
+            "connect": "Connect Domain Provider",
+            "import": "Import Domains",
+            "explore": "Explore Features"
+        },
+        "intro": "Let's set up your account and start managing your domains. Follow these simple steps to get started.",
+        "welcome": {
+            "purpose": "{{happyDomain}} makes domain management simple and intuitive. Whether you have one domain or hundreds, our platform gives you a centralized way to manage them all.",
+            "use": "Use {{happyDomain}} as a replacement interface to your usual domain name provider. It'll still rely on your provider's infrastructure, via our simple interface.",
+            "unified": {
+              "title": "Unified Management",
+              "description": "Manage all your domains in one place, regardless of where they're registered."
+          },
+          "comprehensive": {
+              "title": "Comprehensive Features",
+              "description": "Experience the future of DNS management with history, diff, tests, ..."
+          },
+          "intuitive": {
+              "title": "Intuitive Interface",
+              "description": "Simple and user-friendly interface for both beginners and DNS experts."
+          },
+          "templates": {
+              "title": "One-Click Templates",
+              "description": "Configure common services with pre-built templates in seconds."
+          }
+        },
+        "connect": {
+            "title": "Connect Your First Domain Provider",
+            "intro": "Connect your domain registrar or DNS provider to import your domains automatically. We support most major providers.",
+            "noprovider": "Can't find your provider in this list?",
+            "noproviderTellUs": "Tell us what's yours",
+            "nodomain": "I don't own any domain yet"
+        },
+        "import": {
+            "title": "Import Your Domains",
+            "intro": "Select the domains you want to manage with happyDomain.",
+            "imported": "Imported"
+        },
+        "explore": {
+            "understood": "Understood!",
+            "done": "You're all set!",
+            "bravo": "{{count:eq; 1:Your domain is; default:Your domains are}} now properly configured and ready to use.",
+            "title": "Explore happyDomain Features",
+            "intro": "Now that your domain is set up, discover all the powerful features happyDomain has to offer:",
+          "history": {
+              "title": "Record History",
+              "description": "Track all changes made to your DNS records with version history and rollback options.",
+              "link": "View history"
+          },
+          "api": {
+              "title": "API Access",
+              "description": "Automate domain management with our comprehensive API for developers and teams.",
+              "link": "API Documentation"
+          },
+          "monitoring": {
+              "title": "Monitoring",
+              "description": "Real-time monitoring of your domains with alerts for any issues or expirations."
+          },
+          "security": {
+              "title": "Security Check",
+              "description": "Automated security audits to ensure your domain configurations follow best practices."
+          },
+          "soon": "soon"
+        },
         "no-sale": {
-            "title": "I don't own any domain",
+            "title": "You need to own a domain to use happyDomain.",
             "description": "{{happyDomain}} does not sell domains yet. To start using our interface, you need to buy a domain from one of our supported providers.",
             "buy-advice": "We'll provide some guidance in the near future on how to easily buy a domain name. So stay tuned and get in touch with us if you can help us build a comprehensive guide."
-        },
-        "own": "I already own a domain",
-        "questions": {
-            "hosting": {
-                "q": "I don't want to rely on my domain name hosting provider anymore. Can I host my domain name on your infrastructure?",
-                "a": "We'll provide such a feature in the near future, as it's on our manifest. We choose to focus first on spreading the word that domain names are accessibles to everyone through this sweet interface, before targeting privacy, censorship, …"
-            },
-            "secondary": {
-                "q": "I have my own infrastructure. Can I use {{happyDomain}} as a secondary authoritative server?",
-                "a": "We'll provide such feature in a near future, as soon as our name server infrastructure is ready."
-            }
         }
     },
     "password": {

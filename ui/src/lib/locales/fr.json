@@ -221,26 +221,76 @@
         "my-providers": "Les hébergeurs de mes domaines"
     },
     "onboarding": {
-        "add-one": "ajouter un domaine",
-        "choose-configured": "choisir entre les fournisseurs déjà configurés ou {{action}} :",
-        "use": "Utilisez {{happyDomain}} comme interface de remplacement de votre fournisseur de noms de domaine habituel. Il continuera à s'appuyer sur l'infrastructure de votre fournisseur, vous n'aurez qu'à profiter de notre interface simple. Dans un premier temps, {{first-step}}",
+        "steps": {
+            "welcome": "Bienvenue",
+            "connect": "Connexion à l'hébergeur",
+            "import": "Import de domaines",
+            "explore": "Exploration fonctionnalités"
+        },
+        "intro": "Configurons votre compte pour commencer à gérer vos domaines. Suivez ces quelques étapes pour commencer rapidement.",
+        "welcome": {
+            "purpose": "{{happyDomain}} rend la gestion des domaines simple et intuitive. Que vous ayez un seul domaine ou des centaines, notre plateforme vous offre un moyen centralisé de les gérer tous.",
+            "use": "Utilisez {{happyDomain}} comme interface de remplacement de votre fournisseur de noms de domaine habituel. Il continuera à s'appuyer sur l'infrastructure de votre fournisseur, vous n'aurez qu'à profiter de notre interface simple.",
+            "unified": {
+              "title": "Une gestion unifiée",
+              "description": "Gérez tous vos domaines en un seul endroit, quel que soit leur lieu d'enregistrement."
+          },
+          "comprehensive": {
+              "title": "Des fonctionnalités complètes",
+              "description": "Découvrez le futur de la gestion des DNS avec un historique, des différences, des tests, ..."
+          },
+          "intuitive": {
+              "title": "Une interface intuitive",
+              "description": "Découvrez notre interface simple qui conviendra aux débutants et aux experts du DNS."
+          },
+          "templates": {
+              "title": "Des modèles en un clic",
+              "description": "Configurez en quelques secondes les services courants avec des modèles prédéfinis."
+          }
+        },
+        "connect": {
+            "title": "Connectez votre premier hébergeur de domaine",
+            "intro": "Connectez votre bureau d'enregistrement ou votre hébergeur DNS pour importer vos domaines automatiquement. Nous prenons en charge la plupart des principaux prestataires.",
+            "noprovider": "Vous ne trouvez pas votre prestataire dans cette liste ?",
+            "noproviderTellUs": "Demandez-nous de l'ajouter",
+            "nodomain": "Je ne possède pas encore de domaine"
+        },
+        "import": {
+            "title": "Importer vos domaines",
+            "intro": "Sélectionnez les domaines que vous voulez gérer dans happyDomain.",
+            "imported": "Importé"
+        },
+        "explore": {
+            "understood": "Compris!",
+            "done": "Tout est prêt !",
+            "bravo": "{{count:eq; 1:Votre domaine est bien configuré et prêt à être utilisé; default:Vos domaines sont bien configurés et prêts à être utilisés}}.",
+            "title": "Explorons les fonctionnalités d'happyDomain",
+            "intro": "Maintenant que votre domaine est configuré, découvrez les puissantes fonctionnalités qu'offre happyDomain :",
+            "history": {
+                "title": "Historique des enregistrements",
+                "description": "Suivez toutes les modifications apportées à vos enregistrements grâce à l'historique des versions. Revenez en arrière en un clic.",
+                "link": "Voir l'historique"
+            },
+            "api": {
+                "title": "Accès API",
+                "description": "Automatisez la gestion des domaines avec notre API complète pour les développeurs et les équipes.",
+                "link": "Voir la documentation"
+            },
+            "monitoring": {
+                "title": "Monitoring",
+                "description": "Surveillance en temps réel de vos domaines avec des alertes en cas de problème ou d'expiration."
+            },
+            "security": {
+                "title": "Vérifications de sécurité",
+                "description": "Audits de sécurité automatisés pour s'assurer que les configurations de votre domaine respectent les bonnes pratiques."
+            },
+            "soon": "bientôt"
+        },
         "no-sale": {
-            "title": "Je ne possède aucun domaine",
+            "title": "Vous devez déjà posséder un nom de domaine pour utiliser happyDomain.",
             "description": "{{happyDomain}} ne fournit pas encore de domaine. Pour commencer à utiliser notre interface, vous devez vous procurer un domaine auprès de l'un des fournisseurs répertoriés",
             "buy-advice": "Nous vous donnerons prochainement des conseils sur la manière de se procurer facilement un nom de domaine. Restez donc à l'écoute et contactez-nous si vous souhaitez nous aider à élaborer un guide complet."
-        },
-        "own": "Je dispose déjà d'un domaine",
-        "questions": {
-            "hosting": {
-                "q": "Je ne veux plus dépendre de mon fournisseur d'hébergement de nom de domaine. Puis-je héberger mon nom de domaine sur votre infrastructure",
-                "a": "Nous fournirons cette information dans un avenir proche, car elle figure sur notre manifeste. Nous avons choisi de faire passer le message que les noms de domaine sont accessibles à tous grâce à cette interface conviviale, avant de nous attaquer à la protection de la vie privée, à la censure, ..."
-            },
-            "secondary": {
-                "q": "J'ai ma propre infrastructure, puis-je utiliser {{happyDomain}} comme serveur secondaire faisant autorité ?",
-                "a": "Nous proposerons cette fonctionnalité dans un proche avenir, dès que notre infrastructure de serveurs de noms sera en service."
-            }
-        },
-        "suggest-provider": "choisissez votre fournisseur d'hébergement de domaine:"
+        }
     },
     "password": {
         "change": "Changer mon mot de passe",

@@ -37,7 +37,7 @@
     export let ptype: string;
 
     function newForm(ptype) {
-        form = new ProviderForm(ptype, () => dispatch("done"));
+        form = new ProviderForm(ptype, (provider) => dispatch("done", provider));
         if (ptype) {
             form.changeState(0).then((res) => {
                 form.form = res;
@@ -65,7 +65,7 @@
                     index="0"
                     specs={{label: $t('provider.name-your'), description: $t('domains.give-explicit-name'), placeholder: $providersSpecs?($providersSpecs[form.ptype].name + ' account 1'):undefined, required: true}}
                     bind:value={form.value._comment}
-                        on:input={(event) => form.value._comment = event.detail}
+                    on:input={(event) => form.value._comment = event.detail}
                 />
             {/if}
         </CustomForm>
