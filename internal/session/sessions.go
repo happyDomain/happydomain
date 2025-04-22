@@ -55,7 +55,7 @@ func NewSessionStore(opts *config.Options, storage storage.Storage, keyPairs ...
 			MaxAge:   86400 * 30,
 			Secure:   opts.DevProxy == "" && opts.ExternalURL.URL.Scheme != "http",
 			HttpOnly: true,
-			SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteLaxMode,
 		},
 		storage: storage,
 	}

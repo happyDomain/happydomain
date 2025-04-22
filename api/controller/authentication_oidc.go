@@ -38,6 +38,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/oauth2"
 
+	"git.happydns.org/happyDomain/api/middleware"
 	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/model"
 )
@@ -87,7 +88,6 @@ func (p *OIDCProvider) RedirectOIDC(c *gin.Context) {
 
 	session.Set(SESSION_KEY_OIDC_STATE, hex.EncodeToString(state))
 	err = session.Save()
-
 	if err != nil {
 		log.Println("Unable to redirect_OIDC, session.Save fails:", err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: "Sorry, we are currently unable to respond to your request. Please retry later."})
@@ -105,6 +105,14 @@ func (p *OIDCProvider) CompleteOIDC(c *gin.Context) {
 	if state != session.Get(SESSION_KEY_OIDC_STATE) {
 		log.Printf("Invalid CSRF token on /auth/callback: got %q, expected %q", state, session.Get(SESSION_KEY_OIDC_STATE))
 		c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{Message: "Invalid CSRF token"})
+		return
+	}
+
+	session.Delete(SESSION_KEY_OIDC_STATE)
+	err := session.Save()
+	if err != nil {
+		log.Println("Unable to CompleteOIDC, session.Save fails:", err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: "Sorry, we are currently unable to respond to your request. Please retry later."})
 		return
 	}
 
@@ -156,6 +164,8 @@ func (p *OIDCProvider) CompleteOIDC(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: fmt.Sprintf("Unable to complete authentication: %s", err.Error())})
 		return
 	}
+
+	middleware.SessionLoginOK(c, &profile)
 
 	c.Redirect(http.StatusFound, p.config.GetBaseURL()+"/")
 }
