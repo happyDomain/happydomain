@@ -77,9 +77,6 @@ type Storage interface {
 	// GetDomainByDN is like GetDomain but look for the domain name instead of identifier.
 	GetDomainByDN(u *happydns.User, dn string) (*happydns.Domain, error)
 
-	// DomainExists looks if the given domain name alread exists in the database.
-	DomainExists(dn string) bool
-
 	// CreateDomain creates a record in the database for the given Domain.
 	CreateDomain(u *happydns.User, z *happydns.Domain) error
 

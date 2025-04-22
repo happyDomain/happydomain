@@ -88,26 +88,6 @@ func (s *LevelDBStorage) GetDomainByDN(u *happydns.User, dn string) (*happydns.D
 	return nil, leveldb.ErrNotFound
 }
 
-func (s *LevelDBStorage) DomainExists(dn string) bool {
-	iter := s.search("domain-")
-	defer iter.Release()
-
-	for iter.Next() {
-		var z happydns.Domain
-
-		err := decodeData(iter.Value(), &z)
-		if err != nil {
-			continue
-		}
-
-		if z.DomainName == dn {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (s *LevelDBStorage) CreateDomain(u *happydns.User, z *happydns.Domain) error {
 	key, id, err := s.findIdentifierKey("domain-")
 	if err != nil {

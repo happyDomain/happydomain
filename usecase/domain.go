@@ -219,13 +219,6 @@ func (du *domainUsecase) CreateDomain(user *happydns.User, uz *happydns.Domain) 
 		}
 	}
 
-	if du.store.DomainExists(uz.DomainName) {
-		return happydns.InternalError{
-			Err:        fmt.Errorf("this domain has already been imported."),
-			HTTPStatus: http.StatusBadRequest,
-		}
-	}
-
 	provider, err := du.providerService.GetUserProvider(user, uz.IdProvider)
 	if err != nil {
 		return happydns.InternalError{
@@ -266,10 +259,6 @@ func (du *domainUsecase) DeleteDomain(did happydns.Identifier) error {
 	}
 
 	return nil
-}
-
-func (du *domainUsecase) DomainExists(fqdn string) bool {
-	return du.store.DomainExists(fqdn)
 }
 
 func (du *domainUsecase) DeleteZoneService(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain string, serviceid happydns.Identifier) (*happydns.Zone, error) {

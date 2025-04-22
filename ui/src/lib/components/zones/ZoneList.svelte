@@ -26,6 +26,7 @@
 
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
     import HListGroup from "$lib/components/ListGroup.svelte";
+    import { domains_idx } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
     const dispatch = createEventDispatcher();
@@ -53,8 +54,11 @@
 
         for (const domain of domains) {
             if (!domain.group) domain.group = "";
-            if (links && !domain.href)
-                domain.href = "/domains/" + encodeURIComponent(domain.domain);
+            if (links && !domain.href) {
+                if ($domains_idx[domain.domain])
+                    domain.href = "/domains/" + encodeURIComponent(domain.domain);
+                else domain.href = "/domains/" + encodeURIComponent(domain.id);
+            }
 
             if (tmp[domain.group] === undefined) {
                 tmp[domain.group] = [];

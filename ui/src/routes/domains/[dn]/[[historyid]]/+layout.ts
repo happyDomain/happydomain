@@ -11,7 +11,7 @@ export const load: Load = async ({ parent, params }) => {
     const domain = data.domain;
 
     if (!domain.zone_history || domain.zone_history.length === 0) {
-        redirect(307, `/domains/${data.domain.domain}/import_zone`);
+        redirect(307, `/domains/${encodeURIComponent(params.dn)}/import_zone`);
     }
 
     let definedhistory = true;

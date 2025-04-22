@@ -66,11 +66,15 @@
 
     export let data: { domain: Domain };
 
-    let selectedDomain = data.domain.domain;
-    $: if (selectedDomain != data.domain.domain) {
+    let selectedDomain = data.domain.id;
+    $: if (selectedDomain != data.domain.id) {
         goto(
             "/domains/" +
-                encodeURIComponent(selectedDomain) +
+                encodeURIComponent(
+                    $domains_idx[$domains_idx[selectedDomain].domain]
+                        ? $domains_idx[selectedDomain].domain
+                        : selectedDomain,
+                ) +
                 ($page.data.isAuditPage ? "/logs" : $page.data.isHistoryPage ? "/history" : ""),
         );
     }
@@ -90,7 +94,11 @@
             refreshDomains().then(() => {
                 goto(
                     "/domains/" +
-                        encodeURIComponent(selectedDomain) +
+                        encodeURIComponent(
+                            $domains_idx[$domains_idx[selectedDomain].domain]
+                                ? $domains_idx[selectedDomain].domain
+                                : selectedDomain,
+                        ) +
                         "/" +
                         encodeURIComponent(zm.id),
                 );
@@ -166,7 +174,7 @@
                                     : gname}
                             >
                                 {#each group as domain}
-                                    <option value={domain.domain}>{domain.domain}</option>
+                                    <option value={domain.id}>{domain.domain}</option>
                                 {/each}
                             </optgroup>
                         {/each}

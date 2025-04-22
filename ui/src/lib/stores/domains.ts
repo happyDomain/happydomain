@@ -49,8 +49,20 @@ export const domains_idx = derived(domains, ($domains: null | Array<Domain>) => 
     const idx: Record<string, Domain> = {};
 
     if ($domains) {
+        const multiview = [];
+
         for (const d of $domains) {
-            idx[d.domain] = d;
+            idx[d.id] = d;
+
+            if (idx[d.domain]) {
+                if (multiview.indexOf(d.domain) == -1) multiview.push(d.domain);
+            } else {
+                idx[d.domain] = d;
+            }
+        }
+
+        for (const dn of multiview) {
+            idx[dn] = undefined;
         }
     }
 
