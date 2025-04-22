@@ -22,8 +22,11 @@
 package middleware
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/model"
@@ -38,4 +41,22 @@ func AuthRequired() gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+func SessionLoginOK(c *gin.Context, user happydns.UserInfo) error {
+	session := sessions.Default(c)
+
+	session.Clear()
+	session.Set("iduser", user.GetUserId())
+	err := session.Save()
+	if err != nil {
+		return happydns.InternalError{
+			Err:         fmt.Errorf("%s: unable to save user session: %s", c.ClientIP(), err),
+			UserMessage: "Invalid username or password.",
+			HTTPStatus:  http.StatusUnauthorized,
+		}
+	}
+
+	log.Printf("%s: now logged as %q\n", c.ClientIP(), user.GetEmail())
+	return nil
 }

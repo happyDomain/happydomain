@@ -29,6 +29,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 
+	"git.happydns.org/happyDomain/api/middleware"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -63,18 +64,7 @@ func (lc *LoginController) Login(c *gin.Context) {
 		return
 	}
 
-	session := sessions.Default(c)
-
-	session.Clear()
-	session.Set("iduser", user.Id)
-	err = session.Save()
-	if err != nil {
-		log.Printf("%s: unable to save user session: %s", c.ClientIP(), err.Error())
-		c.JSON(http.StatusUnauthorized, happydns.ErrorResponse{Message: "Invalid username or password."})
-		return
-	}
-
-	log.Printf("%s: now logged as %q\n", c.ClientIP(), user.Email)
+	middleware.SessionLoginOK(c, user)
 
 	c.JSON(http.StatusOK, user)
 }

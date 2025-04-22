@@ -44,6 +44,18 @@ type User struct {
 	Settings UserSettings `json:"settings,omitempty"`
 }
 
+func (u *User) GetUserId() Identifier {
+	return u.Id
+}
+
+func (u *User) GetEmail() string {
+	return u.Email
+}
+
+func (u *User) JoinNewsletter() bool {
+	return false
+}
+
 // Users is a group of User.
 type Users []*User
 
