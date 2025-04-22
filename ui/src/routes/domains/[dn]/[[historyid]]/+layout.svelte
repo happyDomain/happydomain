@@ -24,7 +24,7 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { page } from "$app/stores";
-    import { onDestroy } from 'svelte';
+    import { onDestroy } from "svelte";
 
     import { Spinner } from "@sveltestrap/sveltestrap";
 
@@ -59,7 +59,10 @@
 
     const unsubscribe = thisZone.subscribe(async (zone) => {
         if (zone != null && zone.id != selectedHistory) {
-            if ($domains_idx[selectedDomain].zone_history.indexOf(zone.id) == -1) {
+            if (
+                !$domains_idx[selectedDomain] ||
+                $domains_idx[selectedDomain].zone_history.indexOf(zone.id) == -1
+            ) {
                 await refreshDomains();
             }
             selectedHistory = zone.id;
@@ -73,18 +76,25 @@
 
 {#if $thisZone && $thisZone.id == selectedHistory}
     <slot />
-{:else}
-    <div class="mt-5 text-center flex-fill">
-        <Spinner label="Spinning" />
-        <p>{$t("wait.loading")}</p>
-    </div>
-{/if}
 
-{#if $thisZone}
     <NewServicePath origin={data.domain} zone={$thisZone} />
     <ServiceModal
         origin={data.domain}
         zone={$thisZone}
         on:update-zone-services={(event) => thisZone.set(event.detail)}
     />
+{:else}
+    <div class="flex-fill d-flex flex-column">
+        <h2 class="d-flex align-items-center">
+            <Spinner label="Spinning" type="grow" />
+            <span class="ms-2 mt-1 font-monospace">
+                {data.domain.domain}
+            </span>
+        </h2>
+
+        <div class="mt-4 text-center flex-fill">
+            <Spinner label="Spinning" />
+            <p>{$t("wait.loading")}</p>
+        </div>
+    </div>
 {/if}

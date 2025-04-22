@@ -51,7 +51,7 @@
 </script>
 
 <Modal {isOpen} size="lg" {toggle}>
-    <ModalHeader {toggle}>{$t("domains.removal")}</ModalHeader>
+    <ModalHeader class="bg-danger-subtle" {toggle}>{$t("domains.removal")}</ModalHeader>
     <ModalBody>
         {$t("domains.alert.remove")}
     </ModalBody>

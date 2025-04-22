@@ -29,11 +29,7 @@
     import type { Zone } from "$lib/model/zone";
     import { domains_idx } from "$lib/stores/domains";
     import { servicesSpecs, refreshServicesSpecs } from "$lib/stores/services";
-    import {
-        sortedDomains,
-        sortedDomainsWithIntermediate,
-        thisZone,
-    } from "$lib/stores/thiszone";
+    import { sortedDomains, sortedDomainsWithIntermediate, thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
 
     if (!$servicesSpecs) refreshServicesSpecs();

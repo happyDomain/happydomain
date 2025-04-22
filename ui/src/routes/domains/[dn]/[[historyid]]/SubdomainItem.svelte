@@ -80,8 +80,8 @@
 {#if services.length === 0}
     <div id={dn}>
         {#if !reverseZone}
-            <h2 class="sticky-top bg-light" style="z-index: 1">
-                <span style="white-space: nowrap">
+            <h2 class="sticky-top bg-light d-flex align-items-center" style="z-index: 1">
+                <span class="text-truncate text-muted">
                     <Icon name="plus-square-dotted" title="Intermediate domain with no service" />
                     <span class="font-monospace" title={fqdn(dn, origin.domain)}>
                         {#if reverseZone}
@@ -91,23 +91,24 @@
                         {/if}
                     </span>
                 </span>
+                <div class="flex-fill"></div>
                 <Button
                     type="button"
                     color="primary"
                     size="sm"
-                    class="ml-2"
+                    class="ms-2"
+                    title={$t("service.add")}
                     on:click={() => dispatch("new-service")}
                 >
                     <Icon name="plus" />
-                    {$t("service.add")}
                 </Button>
             </h2>
         {/if}
     </div>
 {:else if isCNAME(services) || isPTR(services)}
     <div id={dn}>
-        <h2 class="sticky-top bg-light" style="z-index: 1">
-            <span style="white-space: nowrap">
+        <h2 class="sticky-top bg-light d-flex align-items-center" style="z-index: 1">
+            <span class="text-truncate">
                 {#if isPTR(services)}
                     <Icon name="signpost" title="PTR" />
                 {:else}
@@ -121,32 +122,23 @@
                     {/if}
                 </span>
             </span>
-            <span style="white-space: nowrap">
+            <span class="text-truncate">
                 <Icon name="arrow-right" />
-                <span class="font-monospace">
+                <span class="font-monospace" title={services[0].Service.Target}>
                     {services[0].Service.Target}
                 </span>
             </span>
-            <Button
-                type="button"
-                color="primary"
-                size="sm"
-                class="ml-2"
-                on:click={() => dispatch("new-service")}
-            >
-                <Icon name="plus" />
-                {$t("service.add")}
-            </Button>
+            <div class="flex-fill"></div>
             <Button
                 type="button"
                 color="info"
                 outline
                 size="sm"
-                class="ml-2"
+                class="ms-2"
+                title={$t("domains.edit-target")}
                 on:click={() => showServiceModal(services[0])}
             >
                 <Icon name="pencil" />
-                {$t("domains.edit-target")}
             </Button>
             <Button
                 type="button"
@@ -154,7 +146,8 @@
                 disabled={deleteServiceInProgress}
                 outline
                 size="sm"
-                class="ml-2"
+                class="ms-2"
+                title={isPTR(services) ? $t("domains.drop-pointer") : $t("domains.drop-alias")}
                 on:click={deleteCNAME}
             >
                 {#if deleteServiceInProgress}
@@ -162,11 +155,16 @@
                 {:else}
                     <Icon name="x-circle" />
                 {/if}
-                {#if isPTR(services)}
-                    {$t("domains.drop-pointer")}
-                {:else}
-                    {$t("domains.drop-alias")}
-                {/if}
+            </Button>
+            <Button
+                type="button"
+                color="primary"
+                size="sm"
+                class="ms-2"
+                title={$t("service.add")}
+                on:click={() => dispatch("new-service")}
+            >
+                <Icon name="plus" />
             </Button>
         </h2>
     </div>
@@ -226,15 +224,16 @@
                     {/each}
                 </Popover>
             {/if}
+            <div class="flex-fill"></div>
             {#if !showResources || ($userSession && $userSession.settings.zoneview !== ZoneViewGrid)}
                 <Button
                     type="button"
                     color="primary"
                     size="sm"
+                    title={$t("domains.add-a-service")}
                     on:click={() => dispatch("new-service")}
                 >
                     <Icon name="plus" />
-                    {$t("domains.add-a-service")}
                 </Button>
             {/if}
             {#if showResources}
@@ -243,10 +242,10 @@
                     color="primary"
                     outline
                     size="sm"
+                    title={$t("domains.add-an-alias")}
                     on:click={() => dispatch("new-alias")}
                 >
                     <Icon name="link" />
-                    {$t("domains.add-an-alias")}
                 </Button>
             {/if}
         </div>

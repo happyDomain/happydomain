@@ -41,16 +41,39 @@
     );
 </script>
 
-<div class="mt-4 text-center flex-fill">
-    {#await rz}
-        <Spinner label={$t("common.spinning")} />
-        <p>{$t("wait.importing")}</p>
-    {:then}
-        <p>{$t("wait.wait")}</p>
-    {:catch main_error}
+{#await rz}
+    <div class="flex-fill d-flex flex-column">
+        <h2 class="d-flex align-items-center">
+            <Spinner label="Spinning" type="grow" />
+            <span class="ms-2 mt-1 font-monospace">
+                {data.domain.domain}
+            </span>
+        </h2>
+
+        <div class="mt-4 text-center flex-fill">
+            <Spinner label={$t("common.spinning")} />
+            <p>{$t("wait.importing")}</p>
+        </div>
+    </div>
+{:then}
+    <div class="flex-fill d-flex flex-column">
+        <h2 class="d-flex align-items-center">
+            <Spinner label="Spinning" type="grow" />
+            <span class="ms-2 mt-1 font-monospace">
+                {data.domain.domain}
+            </span>
+        </h2>
+
+        <div class="mt-4 text-center flex-fill">
+            <Spinner label={$t("common.spinning")} />
+            <p>{$t("wait.wait")}</p>
+        </div>
+    </div>
+{:catch main_error}
+    <div class="mt-4 text-center flex-fill">
         <Alert color="danger" fade={false}>
             <strong>{$t("errors.domain-import")}</strong>
             {main_error}
         </Alert>
-    {/await}
-</div>
+    </div>
+{/await}

@@ -183,7 +183,7 @@
                         <Icon name="chevron-left" />
                         Retour à la zone
                     </Button>
-                {:else if $sortedDomains && $sortedDomainsWithIntermediate}
+                {:else}
                     <div class="d-flex gap-2 pb-2 sticky-top" style="padding-top: 10px">
                         <Button
                             type="button"
@@ -191,6 +191,7 @@
                             outline
                             size="sm"
                             class="flex-fill"
+                            disabled={!$sortedDomains}
                             on:click={() => ctrlNewSubdomain.Open()}
                         >
                             <Icon name="server" />
@@ -215,7 +216,7 @@
                                     {$t("domains.actions.audit")}
                                 </DropdownItem>
                                 <DropdownItem divider />
-                                <DropdownItem on:click={viewZone}>
+                                <DropdownItem on:click={viewZone} disabled={!$sortedDomains}>
                                     {$t("domains.actions.view")}
                                 </DropdownItem>
                                 <DropdownItem on:click={retrieveZone}>
@@ -243,96 +244,115 @@
                             </DropdownMenu>
                         </ButtonDropdown>
                     </div>
-                    <div style="min-height:0; overflow-y: auto;">
-                        {#if isReverseZone(data.domain.domain)}
-                            <SubdomainListTiny domains={$sortedDomains} origin={data.domain} />
+                    <div style="min-height:0; overflow-y: auto;" class="placeholder-glow">
+                        {#if $sortedDomains && $thisZone.id == selectedHistory}
+                            {#if isReverseZone(data.domain.domain)}
+                                <SubdomainListTiny domains={$sortedDomains} origin={data.domain} />
+                            {:else}
+                                <SubdomainListTiny
+                                    domains={$sortedDomainsWithIntermediate}
+                                    origin={data.domain}
+                                />
+                            {/if}
                         {:else}
-                            <SubdomainListTiny
-                                domains={$sortedDomainsWithIntermediate}
-                                origin={data.domain}
-                            />
+                            <span class="d-block text-truncate font-monospace text-muted">
+                                {data.domain.domain}
+                            </span>
+                            <span class="d-block placeholder ms-3 mb-1">
+                                {data.domain.domain}
+                            </span>
+                            <span class="d-block placeholder ms-3 mb-1">
+                                {data.domain.domain}
+                            </span>
+                            <span class="d-block placeholder ms-4 mb-1">
+                                {data.domain.domain}
+                            </span>
+                            <span class="d-block placeholder ms-4 mb-1">
+                                {data.domain.domain}
+                            </span>
+                            <span class="d-block placeholder ms-3">
+                                {data.domain.domain}
+                            </span>
                         {/if}
                     </div>
                 {/if}
 
                 <div class="flex-fill" />
 
-                {#if $page.data.isZonePage && data.domain.zone_history && $domains_idx[selectedDomain] && data.domain.id === $domains_idx[selectedDomain].id}
-                    {#if !$sortedDomainsWithIntermediate}
-                        <Button
-                            color="danger"
-                            class="mt-3"
-                            outline
-                            on:click={() => ctrlDomainDelete.Open()}
-                        >
-                            <Icon name="trash" />
-                            {$t("domains.stop")}
-                        </Button>
-                    {:else if $domains_idx[selectedDomain].zone_history && selectedHistory === $domains_idx[selectedDomain].zone_history[0]}
-                        <Button
-                            size="lg"
-                            color="success"
-                            title={$t("domains.actions.propagate")}
-                            on:click={showDiff}
-                        >
-                            <Icon name="cloud-upload" aria-hidden="true" />
-                            {$t("domains.actions.propagate")}
-                        </Button>
-                        <p class="mt-2 mb-1 text-center">
-                            {#key $thisZone}
-                                {#await APIDiffZone(data.domain, "@", selectedHistory)}
-                                    {$t("wait.wait")}
-                                {:then zoneDiff}
-                                    <DiffSummary {zoneDiff} />
-                                {/await}
-                            {/key}
-                        </p>
-                    {:else}
-                        <Button
-                            size="lg"
-                            color="warning"
-                            title={$t("domains.actions.rollback")}
-                            on:click={showDiff}
-                        >
-                            <Icon name="cloud-upload" aria-hidden="true" />
-                            {$t("domains.actions.rollback")}
-                        </Button>
-                        <p class="mt-2 mb-1 text-center">
-                            {#await getDomain(data.domain.id)}
-                                Chargement des informations de l'historique
-                            {:then domain}
-                                {#if domain.zone_meta && domain.zone_meta[selectedHistory]}
-                                    {@const history = domain.zone_meta[selectedHistory]}
-                                    <div class="text-truncate">
-                                        {#if history.published}
-                                            Publiée le
-                                            {new Intl.DateTimeFormat(undefined, {
-                                                dateStyle: "long",
-                                                timeStyle: "long",
-                                            }).format(new Date(history.published))}
-                                        {:else if history.commit_date}
-                                            Enregistrée le
-                                            {new Intl.DateTimeFormat(undefined, {
-                                                dateStyle: "long",
-                                                timeStyle: "long",
-                                            }).format(new Date(history.commit_date))}
-                                        {:else}
-                                            Dernière modification le
-                                            {new Intl.DateTimeFormat(undefined, {
-                                                dateStyle: "long",
-                                                timeStyle: "long",
-                                            }).format(new Date(history.last_modified))}
-                                        {/if}
-                                    </div>
-                                    {#if history.commit_message}
-                                        <div class="text-truncate" title={history.commit_message}>
-                                            {history.commit_message}
-                                        </div>
-                                    {/if}
-                                {/if}
+                {#if !($page.data.isZonePage && data.domain.zone_history && $domains_idx[selectedDomain] && data.domain.id === $domains_idx[selectedDomain].id && $sortedDomainsWithIntermediate)}
+                    <Button
+                        color="danger"
+                        class="mt-3"
+                        outline
+                        on:click={() => ctrlDomainDelete.Open()}
+                    >
+                        <Icon name="trash" />
+                        {$t("domains.stop")}
+                    </Button>
+                {:else if $domains_idx[selectedDomain].zone_history && selectedHistory === $domains_idx[selectedDomain].zone_history[0]}
+                    <Button
+                        size="lg"
+                        color="success"
+                        title={$t("domains.actions.propagate")}
+                        on:click={showDiff}
+                    >
+                        <Icon name="cloud-upload" aria-hidden="true" />
+                        {$t("domains.actions.propagate")}
+                    </Button>
+                    <p class="mt-2 mb-1 text-center">
+                        {#key $thisZone}
+                            {#await APIDiffZone(data.domain, "@", selectedHistory)}
+                                {$t("wait.wait")}
+                            {:then zoneDiff}
+                                <DiffSummary {zoneDiff} />
                             {/await}
-                        </p>
-                    {/if}
+                        {/key}
+                    </p>
+                {:else}
+                    <Button
+                        size="lg"
+                        color="warning"
+                        title={$t("domains.actions.rollback")}
+                        on:click={showDiff}
+                    >
+                        <Icon name="cloud-upload" aria-hidden="true" />
+                        {$t("domains.actions.rollback")}
+                    </Button>
+                    <p class="mt-2 mb-1 text-center">
+                        {#await getDomain(data.domain.id)}
+                            Chargement des informations de l'historique
+                        {:then domain}
+                            {#if domain.zone_meta && domain.zone_meta[selectedHistory]}
+                                {@const history = domain.zone_meta[selectedHistory]}
+                                <div class="text-truncate">
+                                    {#if history.published}
+                                        Publiée le
+                                        {new Intl.DateTimeFormat(undefined, {
+                                            dateStyle: "long",
+                                            timeStyle: "long",
+                                        }).format(new Date(history.published))}
+                                    {:else if history.commit_date}
+                                        Enregistrée le
+                                        {new Intl.DateTimeFormat(undefined, {
+                                            dateStyle: "long",
+                                            timeStyle: "long",
+                                        }).format(new Date(history.commit_date))}
+                                    {:else}
+                                        Dernière modification le
+                                        {new Intl.DateTimeFormat(undefined, {
+                                            dateStyle: "long",
+                                            timeStyle: "long",
+                                        }).format(new Date(history.last_modified))}
+                                    {/if}
+                                </div>
+                                {#if history.commit_message}
+                                    <div class="text-truncate" title={history.commit_message}>
+                                        {history.commit_message}
+                                    </div>
+                                {/if}
+                            {/if}
+                        {/await}
+                    </p>
                 {/if}
             {:else}
                 <div class="mt-4 text-center">
