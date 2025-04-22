@@ -30,15 +30,12 @@ export const load: Load = async ({ parent, params }) => {
 
     const zoneId: string = domain.zone_history[zhidx];
 
-    const zone = getZone(domain, zoneId);
+    getZone(domain, zoneId);
 
     return {
         ...data,
         history: params.historyid,
         definedhistory,
         zoneId,
-        streamed: {
-            zone,
-        },
     };
 };

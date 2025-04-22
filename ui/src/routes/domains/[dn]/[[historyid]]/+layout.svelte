@@ -23,17 +23,19 @@
 
 <script lang="ts">
     import { goto } from "$app/navigation";
+    import { page } from "$app/stores";
+    import { onDestroy } from 'svelte';
 
     import { Spinner } from "@sveltestrap/sveltestrap";
 
     import NewServicePath from "$lib/components/services/NewServicePath.svelte";
     import ServiceModal from "$lib/components/services/ServiceModal.svelte";
     import type { Domain } from "$lib/model/domain";
-    import { domains_idx } from "$lib/stores/domains";
+    import { domains_idx, refreshDomains } from "$lib/stores/domains";
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
 
-    export let data: { domain: Domain; history: string; streamed: Object };
+    export let data: { domain: Domain; history: string; definedhistory: bool };
 
     let selectedDomain = data.domain.domain;
     let selectedHistory: string | undefined;
@@ -54,9 +56,22 @@
                 encodeURIComponent(selectedHistory),
         );
     }
+
+    const unsubscribe = thisZone.subscribe(async (zone) => {
+        if (zone != null && zone.id != selectedHistory) {
+            if ($domains_idx[selectedDomain].zone_history.indexOf(zone.id) == -1) {
+                await refreshDomains();
+            }
+            selectedHistory = zone.id;
+        }
+    });
+
+    onDestroy(() => {
+        unsubscribe();
+    });
 </script>
 
-{#if data.history == selectedHistory}
+{#if $thisZone && $thisZone.id == selectedHistory}
     <slot />
 {:else}
     <div class="mt-5 text-center flex-fill">
@@ -65,11 +80,11 @@
     </div>
 {/if}
 
-{#await data.streamed.zone then zone}
-    <NewServicePath origin={data.domain} {zone} />
+{#if $thisZone}
+    <NewServicePath origin={data.domain} zone={$thisZone} />
     <ServiceModal
         origin={data.domain}
-        {zone}
+        zone={$thisZone}
         on:update-zone-services={(event) => thisZone.set(event.detail)}
     />
-{/await}
+{/if}

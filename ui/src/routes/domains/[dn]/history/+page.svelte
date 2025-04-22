@@ -30,7 +30,7 @@
     import { getUser } from "$lib/stores/users";
     import { t } from "$lib/translations";
 
-    export let data: { domain: Domain; history: string; streamed: Object };
+    export let data: { domain: Domain; history: string };
 
     let isOpen: Record<number, boolean> = {};
     if (data.domain.zone_history.length > 0) {

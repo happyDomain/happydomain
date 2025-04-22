@@ -29,7 +29,7 @@
     import { getUser } from "$lib/stores/users";
     import { t } from "$lib/translations";
 
-    export let data: { domain: Domain; history: string; streamed: Object };
+    export let data: { domain: Domain; history: string };
 </script>
 
 <div class="flex-fill pb-4 pt-2">

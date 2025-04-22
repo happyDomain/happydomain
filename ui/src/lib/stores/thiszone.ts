@@ -19,6 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import { get_store_value } from "svelte/internal";
 import { derived, writable, type Writable } from "svelte/store";
 import { domainCompare } from "$lib/dns";
 import { retrieveZone as APIRetrieveZone, getZone as APIGetZone } from "$lib/api/zone";
@@ -72,6 +73,12 @@ export const sortedDomainsWithIntermediate = derived(
 );
 
 export async function getZone(domain: Domain, zoneId: string) {
+    const $thisZone = get_store_value(thisZone);
+
+    if ($thisZone && $thisZone.id == zoneId) {
+        return $thisZone;
+    }
+
     thisZone.set(null);
 
     const zone = await APIGetZone(domain, zoneId);

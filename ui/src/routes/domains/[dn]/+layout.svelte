@@ -183,7 +183,7 @@
                         <Icon name="chevron-left" />
                         Retour à la zone
                     </Button>
-                {:else if $page.data.streamed && $sortedDomainsWithIntermediate}
+                {:else if $sortedDomains && $sortedDomainsWithIntermediate}
                     <div class="d-flex gap-2 pb-2 sticky-top" style="padding-top: 10px">
                         <Button
                             type="button"
@@ -243,24 +243,22 @@
                             </DropdownMenu>
                         </ButtonDropdown>
                     </div>
-                    {#await $page.data.streamed.zone then z}
-                        <div style="min-height:0; overflow-y: auto;">
-                            {#if isReverseZone(data.domain.domain)}
-                                <SubdomainListTiny domains={$sortedDomains} origin={data.domain} />
-                            {:else}
-                                <SubdomainListTiny
-                                    domains={$sortedDomainsWithIntermediate}
-                                    origin={data.domain}
-                                />
-                            {/if}
-                        </div>
-                    {/await}
+                    <div style="min-height:0; overflow-y: auto;">
+                        {#if isReverseZone(data.domain.domain)}
+                            <SubdomainListTiny domains={$sortedDomains} origin={data.domain} />
+                        {:else}
+                            <SubdomainListTiny
+                                domains={$sortedDomainsWithIntermediate}
+                                origin={data.domain}
+                            />
+                        {/if}
+                    </div>
                 {/if}
 
                 <div class="flex-fill" />
 
                 {#if $page.data.isZonePage && data.domain.zone_history && $domains_idx[selectedDomain] && data.domain.id === $domains_idx[selectedDomain].id}
-                    {#if !($page.data.streamed && $sortedDomainsWithIntermediate)}
+                    {#if !$sortedDomainsWithIntermediate}
                         <Button
                             color="danger"
                             class="mt-3"

@@ -30,7 +30,6 @@
     import { domains_idx } from "$lib/stores/domains";
     import { servicesSpecs, refreshServicesSpecs } from "$lib/stores/services";
     import {
-        retrieveZone,
         sortedDomains,
         sortedDomainsWithIntermediate,
         thisZone,
@@ -39,7 +38,7 @@
 
     if (!$servicesSpecs) refreshServicesSpecs();
 
-    export let data: { domain: Domain; history: string; zoneId: string; streamed: Object };
+    export let data: { domain: Domain; history: string; zoneId: string };
 </script>
 
 {#if !data.domain}
@@ -52,23 +51,19 @@
         <Spinner label={$t("common.spinning")} />
         <p>{$t("wait.importing")}</p>
     </div>
+{:else if !$thisZone || !$sortedDomains}
+    <div class="mt-4 text-center flex-fill">
+        <Spinner label={$t("common.spinning")} />
+        <p>{$t("wait.loading")}</p>
+    </div>
 {:else}
-    {#await data.streamed.zone}
-        <div class="mt-4 text-center flex-fill">
-            <Spinner label={$t("common.spinning")} />
-            <p>{$t("wait.loading")}</p>
-        </div>
-    {:then zone}
-        {#if zone && $sortedDomains}
-            <div style="max-width: 100%;" class="pt-1">
-                <SubdomainList
-                    origin={data.domain}
-                    sortedDomains={$sortedDomains}
-                    sortedDomainsWithIntermediate={$sortedDomainsWithIntermediate}
-                    zone={$thisZone}
-                    on:update-zone-services={(event) => thisZone.set(event.detail)}
-                />
-            </div>
-        {/if}
-    {/await}
+    <div style="max-width: 100%;" class="pt-1">
+        <SubdomainList
+            origin={data.domain}
+            sortedDomains={$sortedDomains}
+            sortedDomainsWithIntermediate={$sortedDomainsWithIntermediate}
+            zone={$thisZone}
+            on:update-zone-services={(event) => thisZone.set(event.detail)}
+        />
+    </div>
 {/if}
