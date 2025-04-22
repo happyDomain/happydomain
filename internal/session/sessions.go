@@ -173,13 +173,28 @@ func (s *SessionStore) load(session *sessions.Session) error {
 
 // save writes encoded session.Values to a database record.
 func (s *SessionStore) save(session *sessions.Session, ua string) error {
-	encoded, err := securecookie.EncodeMulti(session.Name(), session.Values, s.Codecs...)
-	if err != nil {
-		return err
+	var iduser happydns.Identifier
+	if iu, ok := session.Values["iduser"].(happydns.Identifier); ok {
+		iduser = iu
+	} else if iu, ok := session.Values["iduser"].([]byte); ok {
+		iduser = happydns.Identifier(iu)
 	}
+	delete(session.Values, "iduser")
+
+	var description string
+	if descr, ok := session.Values["description"].(string); ok {
+		description = descr
+	} else {
+		browser := useragent.Parse(ua)
+		description = fmt.Sprintf("%s on %s", browser.Name, browser.OS)
+		session.Values["description"] = description
+	}
+	delete(session.Values, "description")
 
 	crOn := session.Values["created_on"]
+	delete(session.Values, "created_on")
 	exOn := session.Values["expires_on"]
+	delete(session.Values, "expires_on")
 
 	var expiresOn time.Time
 
@@ -197,20 +212,9 @@ func (s *SessionStore) save(session *sessions.Session, ua string) error {
 		}
 	}
 
-	var iduser happydns.Identifier
-	if iu, ok := session.Values["iduser"].(happydns.Identifier); ok {
-		iduser = iu
-	} else if iu, ok := session.Values["iduser"].([]byte); ok {
-		iduser = happydns.Identifier(iu)
-	}
-
-	var description string
-	if descr, ok := session.Values["description"].(string); ok {
-		description = descr
-	} else {
-		browser := useragent.Parse(ua)
-		description = fmt.Sprintf("%s on %s", browser.Name, browser.OS)
-		session.Values["description"] = description
+	encoded, err := securecookie.EncodeMulti(session.Name(), session.Values, s.Codecs...)
+	if err != nil {
+		return err
 	}
 
 	mysession := &happydns.Session{
