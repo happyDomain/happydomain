@@ -1,7 +1,7 @@
 happyDomain
 ===========
 
-Finally a simple, modern and open source interface for domain name.
+happyDomain is a free web application that centralizes the management of your domain names from different registrars and hosts.
 
 ![Screenshots of happyDomain](./docs/header.webp)
 
@@ -12,13 +12,13 @@ It runs as a single stateless Linux binary, backed by a database (currently: Lev
 
 * An ultra fast web interface without compromise
 * Multiple domains management
-* Support for 36+ DNS providers (including dynamic DNS, RFC 2136) thanks to [DNSControl](https://stackexchange.github.io/dnscontrol/)
+* Support for 44+ DNS providers (including dynamic DNS, RFC 2136) thanks to [DNSControl](https://stackexchange.github.io/dnscontrol/)
 * Support for the most recents resource records thanks to [CoreDNS's library](https://github.com/miekg/dns)
 * Zone editor with a diff view to review the changes before propagation
 * Keep an history of published changes
 * Contextual help
-* Multiple user with authentication or one user without authtication
-* Compatible with external authentication (through JWT tokens: Auth0, ...)
+* Multiple users with authentication or one user without authtication
+* Compatible with external authentication (OpenId Connect or through JWT tokens: Auth0, ...)
 
 Using Docker
 ------------
@@ -40,8 +40,8 @@ Building
 
 In order to build the happyDomain project, you'll need the following dependencies:
 
-* `go` at least version 1.21;
-* `nodejs` tested with version 20 and 21.
+* `go` at least version 1.23;
+* `nodejs` tested with version 22.
 
 
 ### Instructions
@@ -61,7 +61,7 @@ go generate ./...
 3. Finaly, build the Go code:
 
 ```
-go build -tags listmonk,swagger,ui
+go build -tags swagger,ui ./cmd/happyDomain
 ```
 
 This last command will create a binary `happyDomain` you can use standalone.
@@ -158,7 +158,7 @@ If you want to contribute to the frontend, instead of regenerating the frontend 
 In one terminal, run `happydomain` with the following arguments:
 
 ```
-./happyDomain -dev http://127.0.0.1:8080
+./happyDomain -dev http://127.0.0.1:5173
 ```
 
 In another terminal, run the node part:
