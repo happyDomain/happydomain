@@ -1,0 +1,460 @@
+{
+    "account": {
+        "ask-have": "还没有账户？",
+        "delete": {
+            "delete": "删除我的账户",
+            "deleted": "账户已删除",
+            "confirm": "如果您想删除您的账户和与之关联的所有数据，请点击下方按钮：",
+            "confirm-twice": "确认删除后，您将永久且不可撤销地从我们的数据库中删除您的账户，并失去对我们易用的域名管理界面的访问权限。",
+            "confirm-password": "为确保这是您本人的操作，请输入您的密码：",
+            "consequence": "您在其他平台上拥有的域名不会受到删除的影响，它们将继续使用当前的数据集响应请求。",
+            "remain-data": "出于技术原因，您的账户将在您确认后立即被删除，但账户中的某些数据将保留到下次数据库清理。",
+            "success": "您的账户已成功删除。希望不久后能再次见到您。"
+        },
+        "join": "立即加入！",
+        "no-password-change": "您是通过外部服务进行身份验证的，如果需要更改密码，请在{{provider}}的专用界面上更改。",
+        "oidc-login": "使用{{provider}}登录",
+        "ready-login": "准备登录！",
+        "signup": {
+            "already": "已经是会员？",
+            "join-call": "不到2分钟即可加入我们的平台！",
+            "address-why": "我们将使用您的地址在平台上{{identify}}您，并在{{security-operations}}时与您联系。",
+            "identify": "识别",
+            "security-operations": "安全相关原因",
+            "receive-update": "向我通报未来的重大改进",
+            "signup": "注册！",
+            "success": "注册成功完成！"
+        },
+        "see-again": "很高兴再次见到您！"
+    },
+    "common": {
+        "add": "添加",
+        "add-new-thing": "添加新{{thing}}",
+        "add-object": "向此服务添加{{thing}}对象",
+        "by": "由",
+        "cancel": "取消",
+        "cancel-edit": "取消编辑",
+        "continue": "继续",
+        "create-thing": "创建{{thing}}",
+        "delete": "删除",
+        "delete-thing": "删除{{thing}}",
+        "domain": "域名或子域名",
+        "edit": "编辑",
+        "field": "字段",
+        "go": "开始！",
+        "got-it": "明白了！",
+        "name": "名称",
+        "next": "下一步",
+        "no-content": "无内容",
+        "no-thing": "没有{{thing}}",
+        "new-row": "新行",
+        "other": "其他",
+        "password": "密码",
+        "previous": "上一步",
+        "rename": "重命名",
+        "resolver": "解析器",
+        "run": "执行请求！",
+        "survey": "有意见？想分享评论？请随时给我们写信！",
+        "spinning": "处理中",
+        "update": "更新",
+        "welcome": {
+            "start": "欢迎来到 ",
+            "end": "！"
+        },
+        "help": "帮助！",
+        "records": "{{n:eq; 0:没有{{type}}记录; 1:{{type}}记录; default:{{type}}记录}}"
+    },
+    "domains": {
+        "kind": "域名",
+        "actions": {
+            "audit": "查看更改日志",
+            "do-migration": "立即迁移",
+            "history": "查看更改历史",
+            "propagate": "发布我的更改",
+            "reimport": "获取当前已部署的区域",
+            "rollback": "回滚到此版本",
+            "share": "共享区域…",
+            "upload": "导入区域文件",
+            "view": "查看我的区域"
+        },
+        "alert": {
+            "remove": "此操作仅从您的happyDomain管理的域名中移除{{domain}}。所有历史记录和抽象区域将被丢弃。域名{{domain}}在提供商处保持完整无损。您确定要继续吗？",
+            "unable-retrieve": {
+                "description": "很遗憾，我们无法检索域名{{domain}}的信息：",
+                "title": "无法检索域名信息"
+            }
+        },
+        "add-a-subdomain": "添加子域名",
+        "add-a-service": "添加服务",
+        "add-alias": "添加别名",
+        "add-an-alias": "添加别名",
+        "add-now": "立即添加！",
+        "added-success": "太好了！{{domain}}已添加。您现在可以管理它。",
+        "apply": {
+            "additions": "{{count:eq; 0:无新增; 1:{{count}}个新增; default:{{count}}个新增}}",
+            "button": "应用修改",
+            "deletions": "{{count:eq; 0:无删除; 1:{{count}}个删除; default:{{count}}个删除}}",
+            "done": {
+                "title": "区域应用成功！",
+                "description": "您的区域{{zone}}已成功传播！"
+            },
+            "modifications": "{{count:eq; 0:无修改; 1:{{count}}个修改; default:{{count}}个修改}}",
+            "nochange": "没有需要应用的更改！当前区域与服务器保持同步。",
+            "others": "{{count:eq; 0:无其他更改; 1:{{count}}个其他更改; default:{{count}}个其他更改}}"
+        },
+        "attached-new": "新域名已附加到happyDomain！",
+        "commit-msg": "更改了什么？",
+        "create-new-key": "创建新的{{id}}密钥",
+        "discard": "放弃",
+        "drop-alias": "删除别名",
+        "drop-pointer": "删除指针",
+        "edit-target": "编辑目标",
+        "give-explicit-name": "给出明确的名称，以便轻松找到此服务。",
+        "history": "历史",
+        "list": "列出可导入的域名",
+        "n-aliases": "{{count:lt; 2:{{count}}个别名; default:{{count}}个别名}}",
+        "n-services": "{{count:lt; 2:{{count}}个服务; default:{{count}}个服务}}",
+        "please-fill-fields": "请填写以下字段：",
+        "removal": "确认域名移除",
+        "save-modifications": "保存这些修改",
+        "stop": "停止管理此域名",
+        "view": {
+            "abstract": "抽象区域",
+            "cancel-title": "保留我的域名在happyDomain",
+            "description": "查看将应用于{{domain}}的修改",
+            "live": "实时记录",
+            "monitoring": "监控",
+            "summary": "摘要",
+            "provider": "区域托管在",
+            "title": "查看区域"
+        },
+        "see-records": "查看相应记录",
+        "alias-creation": "添加指向{{domain}}的别名：",
+        "alias-creation-sample": "这将创建别名：",
+        "placeholder-new": "my.new.domain.",
+        "placeholder-new-sub": "new.subdomain",
+        "form-new-subdomain": "在{{domain}}下添加新子域名："
+    },
+    "domaingroups": {
+        "manage": "管理您的域名组",
+        "new": "新建组",
+        "no-group": "杂项",
+        "title": "您的组"
+    },
+    "email": {
+        "address": "电子邮件地址",
+        "instruction": {
+            "bad-link": "您访问的链接无效。请检查您是否复制了完整链接并重试。",
+            "check-inbox": "请检查您的收件箱，验证您的电子邮件地址。",
+            "new-confirmation": "如果您需要新的确认电子邮件，请在下面的表单中输入您的地址。",
+            "validate-address": "为了验证您的电子邮件地址，请检查您的收件箱，并点击邮件中包含的链接。",
+            "validated": "您的新电子邮件地址现已验证！"
+        },
+        "send-again": "重新发送确认电子邮件",
+        "send-recover": "发送邮件恢复我的账户",
+        "sent": "确认电子邮件已发送！",
+        "sent-recovery": "密码恢复电子邮件已发送！",
+        "recover": "为了恢复您的账户，我们将向您发送一封包含链接的电子邮件，该链接将允许您重新定义密码"
+    },
+    "errors": {
+        "404": {
+            "title": "页面未找到",
+            "content": "您查找的页面未找到。"
+        },
+        "account-delete": "尝试删除您的账户时出错",
+        "address": "需要电子邮件地址",
+        "address-valid": "需要有效的电子邮件地址",
+        "domain-access": "尝试访问域名列表时出错。",
+        "domain-attach": "尝试将域名附加到happyDomain时出错",
+        "domain-have": "您似乎在此提供商处未注册任何域名。",
+        "domain-import": "尝试同步此域名时出错：",
+        "domain-list": "此提供商不允许列出现有域名。请使用下面的表单添加一个。",
+        "error": "错误",
+        "login": "登录错误",
+        "logout": "登出错误",
+        "occurs": "在{{when}}时发生错误！",
+        "password": "需要密码",
+        "password-change": "无法更改您的账户密码",
+        "password-match": "密码及其确认不匹配。",
+        "password-weak": "密码需要更强：至少8个字符，包含数字、小写和大写字符。",
+        "provider-delete": "删除提供商过程中出现错误",
+        "recovery": "密码恢复问题",
+        "resolve": "尝试解析域名时出错。",
+        "registration": "注册问题",
+        "rr-add": "尝试向区域添加RR时出错：",
+        "rr-delete": "尝试从区域删除RR时出错：",
+        "session": {
+            "title": "认证超时",
+            "content": "会话无效，您已被登出：{{err}}。请重新登录。"
+        },
+        "settings-change": "无法更改您的设置",
+        "account-no-auth": "您正在不进行身份验证的情况下使用happyDomain。您无法管理其他账户属性。",
+        "domain-all-imported": "此{{provider}}账户没有更多可导入的域名。",
+        "too-high": "数字太高，最大值：{{max}}",
+        "too-low": "数字太低，最小值：{{min}}",
+        "base64": "无效的base64字符串。",
+        "base64-illegal-char": "使用了非法字符。",
+        "base64-unfinished": "未完成的字符串。",
+        "suggestion": "您是否想输入：{{suggestion}}"
+    },
+    "history": {
+        "committed-on": "提交于",
+        "created-on": "创建于",
+        "diff": "查看差异",
+        "expires-on": "过期于",
+        "modified-on": "修改于",
+        "published-on": "发布于",
+        "see": "显示此时间的区域",
+        "title": "区域更改历史 ",
+        "used-on": "上次使用于"
+    },
+    "logs": {
+        "date": "日期",
+        "description": "操作/描述",
+        "level": "级别",
+        "no-entry": "域名日志中没有条目。",
+        "title": "域名日志 ",
+        "user": "用户"
+    },
+    "menu": {
+        "my-domains": "我的域名",
+        "my-providers": "我的域名提供商",
+        "dns-resolver": "DNS解析器",
+        "my-account": "我的账户",
+        "logout": "退出",
+        "provider-features": "支持的提供商",
+        "signup": "注册",
+        "signin": "登录",
+        "quick-menu": "快速访问"
+    },
+    "onboarding": {
+        "steps": {
+            "welcome": "欢迎",
+            "connect": "连接域名提供商",
+            "import": "导入域名",
+            "explore": "探索功能"
+        },
+        "intro": "让我们设置您的账户并开始管理您的域名。请按照以下简单步骤开始。",
+        "welcome": {
+            "purpose": "{{happyDomain}}使域名管理变得简单直观。无论您有一个还是数百个域名，我们的平台都为您提供集中管理它们的方式。",
+            "use": "使用{{happyDomain}}作为您常用域名提供商的替代界面。它仍将依靠您提供商的基础设施，通过我们简单的界面。",
+            "unified": {
+                "title": "统一管理",
+                "description": "在一个地方管理所有域名，无论它们在哪里注册。"
+            },
+            "comprehensive": {
+                "title": "全面功能",
+                "description": "体验DNS管理的未来，包括历史记录、差异比较、测试等..."
+            },
+            "intuitive": {
+                "title": "直观界面",
+                "description": "对初学者和DNS专家都友好的简单用户界面。"
+            },
+            "templates": {
+                "title": "一键模板",
+                "description": "使用预构建模板在几秒钟内配置常见服务。"
+            }
+        },
+        "connect": {
+            "title": "连接您的第一个域名提供商",
+            "intro": "连接您的域名注册商或DNS提供商以自动导入您的域名。我们支持大多数主流提供商。",
+            "noprovider": "在此列表中找不到您的提供商？",
+            "noproviderTellUs": "告诉我们您使用的是哪家",
+            "nodomain": "我还没有拥有任何域名"
+        },
+        "import": {
+            "title": "导入您的域名",
+            "intro": "选择您想要使用happyDomain管理的域名。",
+            "imported": "已导入"
+        },
+        "explore": {
+            "understood": "明白了！",
+            "done": "一切就绪！",
+            "bravo": "{{count:eq; 1:您的域名现已; default:您的域名现已}}正确配置并准备使用。",
+            "title": "探索happyDomain功能",
+            "intro": "现在您的域名已设置完成，探索happyDomain提供的所有强大功能：",
+            "history": {
+                "title": "记录历史",
+                "description": "通过版本历史和回滚选项跟踪对DNS记录所做的所有更改。",
+                "link": "查看历史"
+            },
+            "api": {
+                "title": "API访问",
+                "description": "使用我们全面的API为开发者和团队自动化域名管理。",
+                "link": "API文档"
+            },
+            "monitoring": {
+                "title": "监控",
+                "description": "实时监控您的域名，对任何问题或过期情况发出警报。"
+            },
+            "security": {
+                "title": "安全检查",
+                "description": "自动安全审计，确保您的域名配置遵循最佳实践。"
+            },
+            "soon": "即将推出"
+        },
+        "no-sale": {
+            "title": "您需要拥有域名才能使用happyDomain。",
+            "description": "{{happyDomain}}尚未销售域名。要开始使用我们的界面，您需要从我们支持的提供商之一购买域名。",
+            "buy-advice": "我们将在不久的将来提供有关如何轻松购买域名的指导。因此，请保持关注，如果您能帮助我们构建全面的指南，请与我们联系。"
+        }
+    },
+    "password": {
+        "change": "更改我的密码",
+        "changed": "密码更改成功",
+        "confirm-new": "确认您的新密码",
+        "confirmation": "密码确认",
+        "enter": "输入您当前的密码",
+        "enter-new": "输入您的新密码",
+        "fill": "为了恢复您的账户，请填写以下表单，设置一个新密码。",
+        "forgotten": "忘记密码？",
+        "new": "新密码",
+        "redefine": "重新定义我的密码",
+        "redefined": "密码重新定义成功！",
+        "success": "您现在可以使用新密码登录。",
+        "success-change": "您的账户密码已成功更改。"
+    },
+    "resources": {
+        "CAA": {
+            "all-issuers-title": "所有发行者都已授权。",
+            "all-issuers-body": "通过这些参数，所有发行者都可以为此域名和子域名创建证书。",
+            "all-wild-issuers-body": "通过这些参数，所有发行者都可以为此域名和子域名创建通配符证书。",
+            "auth-issuers": "授权发行者",
+            "incident-response": "事件响应",
+            "incident-response-text": "如果发生当前安全策略违规，您希望如何被联系？",
+            "mail-issuers": "S/MIME证书发行",
+            "mail-all-allowed-title": "S/MIME证书发行没有CA限制。",
+            "mail-all-allowed-body": "所有CA都可以为您的域名发行S/MIME证书。您应该禁止或限制特定CA。S/MIME证书用于签名和加密电子邮件通信。如果您不使用此类证书，应禁止其发行。",
+            "no-issuers-hint": "禁止任何证书发行",
+            "no-issuers-title": "无授权发行者。",
+            "no-issuers-body": "通过这些参数，没有发行者被允许为此子域名创建证书。",
+            "no-mail-hint": "禁止S/MIME证书发行",
+            "no-mail-title": "S/MIME证书无授权发行者。",
+            "no-mail-body": "通过这些参数，没有发行者被授权为此域名和子域名创建S/MIME证书。",
+            "no-wild-hint": "禁止通配符证书发行",
+            "no-wild-title": "无通配符授权发行者。",
+            "no-wild-body": "通过这些参数，没有发行者被授权为此域名和子域名创建通配符证书。但这可能会被以下设置覆盖：",
+            "title": "证书发行",
+            "wild-issuers": "通配符证书发行",
+            "wild-same-title": "与常规证书发行相同。",
+            "wild-same-body": "通过这些参数，所有授权发行证书的发行者也可以为此域名和子域名创建通配符证书。"
+        }
+    },
+    "service": {
+        "add": "添加服务",
+        "all": "全部",
+        "delete": "删除此服务",
+        "update": "更新此服务",
+        "form-new": "向{{domain}}添加新服务",
+        "new": "新服务",
+        "new-description": "点击此处向此子域名添加新服务。",
+        "ttl": "TTL",
+        "ttl-long": "生存时间",
+        "ttl-tip": "0表示默认TTL，其他值以秒为单位"
+    },
+    "sessions": {
+        "close-all": "终止所有会话",
+        "create": "创建API密钥",
+        "current": "当前会话",
+        "description": "命名您的会话",
+        "secret": "会话密钥",
+        "usage": "以下是如何使用生成的密钥的示例："
+    },
+    "provider": {
+        "another": "使用另一个提供商",
+        "associations": "{{count:eq; 0:没有关联域名; 1:{{count}}个关联域名; default:{{count}}个关联域名}}",
+        "check-config": "检查您的提供商配置",
+        "delete": "删除此域名提供商",
+        "empty": "您当前没有定义任何提供商。尝试{{action}}！",
+        "empty-action": "添加一个",
+        "find": "在这里找不到您的域名提供商？",
+        "name-your": "命名您的域名提供商",
+        "no-name": "无名称",
+        "provider": "位于{{provider}}的域名",
+        "kind": "域名提供商",
+        "select-provider": "首先，选择托管您域名的提供商：",
+        "provider-name": "主机名称",
+        "provider-type": "托管提供商类型",
+        "title": "您的域名提供商",
+        "available-types": "可用资源类型",
+        "import-domains": "导入所有域名",
+        "new-form": "新域名提供商表单",
+        "update": "更新域名提供商"
+    },
+    "upgrade": {
+        "title": "有可用更新！",
+        "content": "happyDomain的新版本已经可用。要启用它，请点击此处刷新页面。"
+    },
+    "wait": {
+        "asking-domains": "向提供商询问现有域名...",
+        "exporting": "导出区域时请稍候…",
+        "formating": "格式化区域时请稍候…",
+        "importing": "导入域名时请稍候…",
+        "loading": "加载域名服务…",
+        "loading-account": "加载您的账户…",
+        "loading-record": "加载记录…",
+        "retrieving-setting": "检索主机设置表单...",
+        "updating": "更新您的域名主机",
+        "validating": "验证域名…",
+        "wait": "请稍候",
+        "retrieving-domains": "检索您的域名...",
+        "retrieving-provider": "检索托管提供商信息...",
+        "retrieving-providers": "检索您的提供商..."
+    },
+    "settings": {
+        "fieldhint": {
+            "title": "显示表单字段提示",
+            "hide": "隐藏",
+            "tooltip": "字段旁边的工具提示",
+            "focused": "聚焦时在字段下方",
+            "always": "始终在字段下方"
+        },
+        "language": "语言",
+        "save": "保存设置",
+        "sessions": "会话",
+        "showrrtypes": "显示与服务关联的资源类型（适用于熟悉DNS的用户）",
+        "success": "继续享用happyDomain。",
+        "success-change": "您的设置已保存。",
+        "title": "设置",
+        "zoneview": {
+            "grid": "网格视图（最简单）",
+            "list": "列表视图（最快）",
+            "records": "带记录的列表（高级）",
+            "title": "查看区域为"
+        }
+    },
+    "record": {
+        "A": "IPv4地址",
+        "AAAA": "IPv6地址",
+        "common-records": "常见记录",
+        "Expire": "过期",
+        "Mbox": "管理员电子邮件",
+        "Minttl": "负缓存TTL",
+        "Mx": "邮件服务器",
+        "Ns": "名称服务器",
+        "Preference": "偏好",
+        "Priority": "优先级",
+        "Refresh": "刷新",
+        "Retry": "重试",
+        "Serial": "序列号",
+        "Target": "目标",
+        "Txt": "数据",
+        "Weight": "权重"
+    },
+    "resolver": {
+        "advanced": "使用自定义设置？",
+        "custom": "自定义解析器",
+        "custom-description": "输入您想要使用的解析器地址（域名或IP）。",
+        "domain-description": "指示您搜索记录的域名。例如，您可以尝试{{domain}}。",
+        "field-description": "您想查看的DNS记录类型。例如：A用于IPv4，AAAA用于IPv6，...",
+        "field-description-more-info": "更多信息请见此处",
+        "resolver-description": "这是我们将询问信息的服务器。",
+        "ttl": "缓存中的剩余时间",
+        "showDNSSEC": "在答案中显示DNSSEC记录（如果有）"
+    },
+    "zones": {
+        "upload": "导入区域",
+        "import-text": "从文本导入",
+        "import-file": "从文件导入"
+    }
+}

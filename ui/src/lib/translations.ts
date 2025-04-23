@@ -46,6 +46,11 @@ export const config: Config<Params> = {
     fallbackLocale: "en",
     loaders: [
         {
+            locale: "de",
+            key: "",
+            loader: async () => (await import("./locales/de.json")).default,
+        },
+        {
             locale: "en",
             key: "",
             loader: async () => {
@@ -57,9 +62,24 @@ export const config: Config<Params> = {
             },
         },
         {
+            locale: "es",
+            key: "",
+            loader: async () => (await import("./locales/es.json")).default,
+        },
+        {
             locale: "fr",
             key: "",
             loader: async () => (await import("./locales/fr.json")).default,
+        },
+        {
+            locale: "hi",
+            key: "",
+            loader: async () => (await import("./locales/hi.json")).default,
+        },
+        {
+            locale: "zh",
+            key: "",
+            loader: async () => (await import("./locales/zh.json")).default,
         },
     ],
 };

@@ -1,0 +1,460 @@
+{
+    "account": {
+        "ask-have": "Haben Sie noch kein Konto auf unserer schönen Plattform?",
+        "delete": {
+            "delete": "Mein Konto löschen",
+            "deleted": "Konto gelöscht",
+            "confirm": "Wenn Sie Ihr Konto und alle damit verbundenen Daten löschen möchten, drücken Sie die Schaltfläche unten:",
+            "confirm-twice": "Mit der Bestätigung der Löschung werden Sie Ihr Konto dauerhaft und unwiderruflich aus unserer Datenbank löschen und verlieren den Zugriff auf unsere einfache Verwaltungsoberfläche für Ihre Domains.",
+            "confirm-password": "Um sicherzustellen, dass Sie es wirklich sind, geben Sie bitte Ihr Passwort ein:",
+            "consequence": "Ihre auf anderen Plattformen gehosteten Domains bleiben von der Löschung unberührt und werden weiterhin mit dem aktuellen Datensatz antworten.",
+            "remain-data": "Aus technischen Gründen wird Ihr Konto direkt nach Ihrer Bestätigung gelöscht, aber einige Daten Ihres Kontos bleiben bis zur nächsten Datenbankreinigung erhalten.",
+            "success": "Ihr Konto wurde erfolgreich gelöscht. Wir hoffen, Sie bald wiederzusehen."
+        },
+        "join": "Jetzt beitreten!",
+        "no-password-change": "Sie sind über einen externen Dienst identifiziert. Wenn Sie Ihr Passwort ändern müssen, ändern Sie es über die entsprechende Oberfläche von {{provider}}.",
+        "oidc-login": "Mit {{provider}} anmelden",
+        "ready-login": "Bereit zum Anmelden!",
+        "signup": {
+            "already": "Bereits Mitglied?",
+            "join-call": "Treten Sie unserer tollen Plattform in weniger als 2 Minuten bei!",
+            "address-why": "Wir verwenden Ihre Adresse, um Sie auf dieser Plattform zu {{identify}} und Sie aus {{security-operations}} zu kontaktieren.",
+            "identify": "identifizieren",
+            "security-operations": "sicherheitsrelevanten Gründen",
+            "receive-update": "Halten Sie mich über zukünftige große Verbesserungen auf dem Laufenden",
+            "signup": "Registrieren!",
+            "success": "Registrierung erfolgreich durchgeführt!"
+        },
+        "see-again": "Schön, Sie wiederzusehen!"
+    },
+    "common": {
+        "add": "Hinzufügen",
+        "add-new-thing": "Neues {{thing}} hinzufügen",
+        "add-object": "Ein {{thing}}-Objekt zu diesem Dienst hinzufügen",
+        "by": "von",
+        "cancel": "Abbrechen",
+        "cancel-edit": "Bearbeitung abbrechen",
+        "continue": "Fortfahren",
+        "create-thing": "{{thing}} erstellen",
+        "delete": "Löschen",
+        "delete-thing": "{{thing}} löschen",
+        "domain": "Domain oder Subdomain",
+        "edit": "Bearbeiten",
+        "field": "Feld",
+        "go": "Los!",
+        "got-it": "Verstanden!",
+        "name": "Name",
+        "next": "Weiter",
+        "no-content": "Kein Inhalt",
+        "no-thing": "Kein {{thing}}",
+        "new-row": "Neue Zeile",
+        "other": "Andere",
+        "password": "Passwort",
+        "previous": "Zurück",
+        "rename": "Umbenennen",
+        "resolver": "Resolver",
+        "run": "Anfrage ausführen!",
+        "survey": "Eine Bemerkung? Ein Kommentar? Zögern Sie nicht, uns zu schreiben!",
+        "spinning": "Wird geladen",
+        "update": "Aktualisieren",
+        "welcome": {
+            "start": "Willkommen bei ",
+            "end": "!"
+        },
+        "help": "Hilfe!",
+        "records": "{{n:eq; 0:kein {{type}} Eintrag; 1:{{type}} Eintrag; default:{{type}} Einträge}}"
+    },
+    "domains": {
+        "kind": "Domain",
+        "actions": {
+            "audit": "Änderungslogs anzeigen",
+            "do-migration": "Jetzt migrieren",
+            "history": "Änderungsverlauf anzeigen",
+            "propagate": "Meine Änderungen veröffentlichen",
+            "reimport": "Aktuelle bereitgestellte Zone abrufen",
+            "rollback": "Zu dieser Version zurückkehren",
+            "share": "Zone teilen…",
+            "upload": "Zonendatei importieren",
+            "view": "Meine Zone anzeigen"
+        },
+        "alert": {
+            "remove": "Diese Aktion entfernt {{domain}} nur aus Ihren von happyDomain verwalteten Domains. Der gesamte Verlauf und die abstrahierten Zonen werden verworfen. Die Domain {{domain}} bleibt beim Anbieter vollständig intakt. Sind Sie sicher, dass Sie fortfahren möchten?",
+            "unable-retrieve": {
+                "description": "Leider konnten wir keine Informationen für die Domain {{domain}} abrufen:",
+                "title": "Domain-Informationen konnten nicht abgerufen werden"
+            }
+        },
+        "add-a-subdomain": "Eine Subdomain hinzufügen",
+        "add-a-service": "Einen Dienst hinzufügen",
+        "add-alias": "Alias hinzufügen",
+        "add-an-alias": "Einen Alias hinzufügen",
+        "add-now": "Jetzt hinzufügen!",
+        "added-success": "Super! {{domain}} wurde hinzugefügt. Sie können sie sofort verwalten.",
+        "apply": {
+            "additions": "{{count:eq; 0:keine Hinzufügungen; 1:{{count}} Hinzufügung; default:{{count}} Hinzufügungen}}",
+            "button": "Änderungen anwenden",
+            "deletions": "{{count:eq; 0:keine Löschungen; 1:{{count}} Löschung; default:{{count}} Löschungen}}",
+            "done": {
+                "title": "Zone erfolgreich angewendet!",
+                "description": "Ihre Zone {{zone}} wurde erfolgreich verbreitet!"
+            },
+            "modifications": "{{count:eq; 0:keine Änderung; 1:{{count}} Änderung; default:{{count}} Änderungen}}",
+            "nochange": "Es gibt keine Änderungen anzuwenden! Die aktuelle Zone ist mit dem Server synchronisiert.",
+            "others": "{{count:eq; 0:keine andere Änderung; 1:{{count}} andere Änderung; default:{{count}} andere Änderungen}}"
+        },
+        "attached-new": "Neue Domain an happyDomain angehängt!",
+        "commit-msg": "Was hat sich geändert?",
+        "create-new-key": "Neuen {{id}}-Schlüssel erstellen",
+        "discard": "Verwerfen",
+        "drop-alias": "Alias entfernen",
+        "drop-pointer": "Zeiger entfernen",
+        "edit-target": "Ziel bearbeiten",
+        "give-explicit-name": "Geben Sie einen aussagekräftigen Namen an, um diesen Dienst leicht zu finden.",
+        "history": "Verlauf",
+        "list": "Importierbare Domains auflisten",
+        "n-aliases": "{{count:lt; 2:{{count}} Alias; default:{{count}} Aliasse}}",
+        "n-services": "{{count:lt; 2:{{count}} Dienst; default:{{count}} Dienste}}",
+        "please-fill-fields": "Bitte füllen Sie die folgenden Felder aus:",
+        "removal": "Domain-Entfernung bestätigen",
+        "save-modifications": "Diese Änderungen speichern",
+        "stop": "Verwaltung dieser Domain beenden",
+        "view": {
+            "abstract": "Abstrakte Zone",
+            "cancel-title": "Meine Domain in happyDomain behalten",
+            "description": "Überprüfen Sie die Änderungen, die auf {{domain}} angewendet werden",
+            "live": "Live-Einträge",
+            "monitoring": "Überwachung",
+            "summary": "Zusammenfassung",
+            "provider": "Zone gehostet auf",
+            "title": "Zone anzeigen"
+        },
+        "see-records": "Entsprechende Einträge anzeigen",
+        "alias-creation": "Einen Alias hinzufügen, der auf {{domain}} zeigt:",
+        "alias-creation-sample": "Dies erstellt den Alias:",
+        "placeholder-new": "meine.neue.domain.",
+        "placeholder-new-sub": "neue.subdomain",
+        "form-new-subdomain": "Eine neue Subdomain unter {{domain}} hinzufügen:"
+    },
+    "domaingroups": {
+        "manage": "Verwalten Sie Ihre Domain-Gruppen",
+        "new": "Neue Gruppe",
+        "no-group": "Verschiedenes",
+        "title": "Ihre Gruppen"
+    },
+    "email": {
+        "address": "E-Mail-Adresse",
+        "instruction": {
+            "bad-link": "Der Link, dem Sie folgen, ist ungültig. Überprüfen Sie, ob Sie den gesamten Link kopiert haben, und versuchen Sie es erneut.",
+            "check-inbox": "Bitte überprüfen Sie Ihren Posteingang, um Ihre E-Mail-Adresse zu bestätigen.",
+            "new-confirmation": "Wenn Sie eine neue Bestätigungs-E-Mail benötigen, geben Sie einfach Ihre Adresse in das Formular unten ein.",
+            "validate-address": "Um Ihre E-Mail-Adresse zu bestätigen, überprüfen Sie bitte Ihren Posteingang und folgen Sie dem Link in der Nachricht.",
+            "validated": "Ihre neue E-Mail-Adresse ist jetzt bestätigt!"
+        },
+        "send-again": "Bestätigungs-E-Mail erneut senden",
+        "send-recover": "E-Mail zum Wiederherstellen meines Kontos senden",
+        "sent": "Bestätigungs-E-Mail gesendet!",
+        "sent-recovery": "Passwort-Wiederherstellungs-E-Mail gesendet!",
+        "recover": "Um Ihr Konto wiederherzustellen, senden wir Ihnen eine E-Mail mit einem Link, mit dem Sie Ihr Passwort neu definieren können"
+    },
+    "errors": {
+        "404": {
+            "title": "Seite nicht gefunden",
+            "content": "Die gesuchte Seite wurde nicht gefunden."
+        },
+        "account-delete": "Beim Versuch, Ihr Konto zu löschen, ist ein Fehler aufgetreten",
+        "address": "E-Mail-Adresse ist erforderlich",
+        "address-valid": "Eine gültige E-Mail-Adresse ist erforderlich",
+        "domain-access": "Beim Versuch, auf die Domainliste zuzugreifen, ist ein Fehler aufgetreten.",
+        "domain-attach": "Beim Anhängen der Domain an happyDomain ist ein Fehler aufgetreten",
+        "domain-have": "Es scheint, dass Sie keine Domainnamen bei diesem Anbieter registriert haben.",
+        "domain-import": "Beim Versuch, diese Domain zu synchronisieren, ist ein Fehler aufgetreten:",
+        "domain-list": "Dieser Anbieter erlaubt keine Auflistung vorhandener Domains. Verwenden Sie das Formular unten, um eine hinzuzufügen.",
+        "error": "Fehler",
+        "login": "Anmeldefehler",
+        "logout": "Abmeldefehler",
+        "occurs": "Beim {{when}} ist ein Fehler aufgetreten!",
+        "password": "Passwort ist erforderlich",
+        "password-change": "Ihr Kontopasswort konnte nicht geändert werden",
+        "password-match": "Passwort und Bestätigung stimmen nicht überein.",
+        "password-weak": "Das Passwort muss stärker sein: mindestens 8 Zeichen mit Zahlen, Klein- und Großbuchstaben.",
+        "provider-delete": "Während der Anbieterlöschung ist etwas schief gelaufen",
+        "recovery": "Problem bei der Passwortwiederherstellung",
+        "resolve": "Beim Versuch, die Domain aufzulösen, ist ein Fehler aufgetreten.",
+        "registration": "Registrierungsproblem",
+        "rr-add": "Beim Versuch, RR zur Zone hinzuzufügen, ist ein Fehler aufgetreten:",
+        "rr-delete": "Beim Versuch, RR in der Zone zu löschen, ist ein Fehler aufgetreten:",
+        "session": {
+            "title": "Authentifizierungs-Timeout",
+            "content": "Ungültige Sitzung, Sie wurden abgemeldet: {{err}}. Bitte melden Sie sich erneut an."
+        },
+        "settings-change": "Ihre Einstellungen konnten nicht geändert werden",
+        "account-no-auth": "Sie verwenden happyDomain ohne Authentifizierung. Sie können keine anderen Kontoeigenschaften verwalten.",
+        "domain-all-imported": "Dieses Konto auf {{provider}} hat keine weiteren Domains zum Importieren.",
+        "too-high": "Zahl zu hoch, Maximum: {{max}}",
+        "too-low": "Zahl zu niedrig, Minimum: {{min}}",
+        "base64": "Ungültige Base64-Zeichenfolge.",
+        "base64-illegal-char": "Unzulässiges Zeichen verwendet.",
+        "base64-unfinished": "Unvollständige Zeichenfolge.",
+        "suggestion": "Meinten Sie: {{suggestion}}"
+    },
+    "history": {
+        "committed-on": "Übernommen am",
+        "created-on": "Erstellt am",
+        "diff": "Unterschiede anzeigen",
+        "expires-on": "Läuft ab am",
+        "modified-on": "Geändert am",
+        "published-on": "Veröffentlicht am",
+        "see": "Zone zu diesem Zeitpunkt anzeigen",
+        "title": "Änderungsverlauf der Zone ",
+        "used-on": "Zuletzt verwendet am"
+    },
+    "logs": {
+        "date": "Datum",
+        "description": "Aktion/Beschreibung",
+        "level": "Stufe",
+        "no-entry": "Kein Eintrag im Domain-Log.",
+        "title": "Domain-Logs ",
+        "user": "Benutzer"
+    },
+    "menu": {
+        "my-domains": "Meine Domains",
+        "my-providers": "Meine Domain-Anbieter",
+        "dns-resolver": "DNS-Resolver",
+        "my-account": "Mein Konto",
+        "logout": "Abmelden",
+        "provider-features": "Unterstützte Anbieter",
+        "signup": "Registrieren",
+        "signin": "Anmelden",
+        "quick-menu": "Schnellzugriff"
+    },
+    "onboarding": {
+        "steps": {
+            "welcome": "Willkommen",
+            "connect": "Domain-Anbieter verbinden",
+            "import": "Domains importieren",
+            "explore": "Funktionen erkunden"
+        },
+        "intro": "Lassen Sie uns Ihr Konto einrichten und mit der Verwaltung Ihrer Domains beginnen. Folgen Sie diesen einfachen Schritten, um zu starten.",
+        "welcome": {
+            "purpose": "{{happyDomain}} macht die Domainverwaltung einfach und intuitiv. Ob Sie eine Domain oder Hunderte haben, unsere Plattform bietet Ihnen eine zentralisierte Möglichkeit, sie alle zu verwalten.",
+            "use": "Verwenden Sie {{happyDomain}} als Ersatz-Interface für Ihren üblichen Domain-Name-Anbieter. Es wird weiterhin auf der Infrastruktur Ihres Anbieters basieren, über unsere einfache Schnittstelle.",
+            "unified": {
+                "title": "Einheitliche Verwaltung",
+                "description": "Verwalten Sie alle Ihre Domains an einem Ort, unabhängig davon, wo sie registriert sind."
+            },
+            "comprehensive": {
+                "title": "Umfassende Funktionen",
+                "description": "Erleben Sie die Zukunft der DNS-Verwaltung mit Verlauf, Diff, Tests, ..."
+            },
+            "intuitive": {
+                "title": "Intuitive Benutzeroberfläche",
+                "description": "Einfache und benutzerfreundliche Oberfläche für Anfänger und DNS-Experten."
+            },
+            "templates": {
+                "title": "Ein-Klick-Vorlagen",
+                "description": "Konfigurieren Sie gängige Dienste in Sekundenschnelle mit vorgefertigten Vorlagen."
+            }
+        },
+        "connect": {
+            "title": "Verbinden Sie Ihren ersten Domain-Anbieter",
+            "intro": "Verbinden Sie Ihren Domain-Registrar oder DNS-Anbieter, um Ihre Domains automatisch zu importieren. Wir unterstützen die meisten großen Anbieter.",
+            "noprovider": "Können Sie Ihren Anbieter nicht in dieser Liste finden?",
+            "noproviderTellUs": "Teilen Sie uns mit, welchen Sie nutzen",
+            "nodomain": "Ich besitze noch keine Domain"
+        },
+        "import": {
+            "title": "Importieren Sie Ihre Domains",
+            "intro": "Wählen Sie die Domains aus, die Sie mit happyDomain verwalten möchten.",
+            "imported": "Importiert"
+        },
+        "explore": {
+            "understood": "Verstanden!",
+            "done": "Alles ist eingerichtet!",
+            "bravo": "{{count:eq; 1:Ihre Domain ist; default:Ihre Domains sind}} jetzt richtig konfiguriert und einsatzbereit.",
+            "title": "Erkunden Sie die Funktionen von happyDomain",
+            "intro": "Jetzt, da Ihre Domain eingerichtet ist, entdecken Sie alle leistungsstarken Funktionen, die happyDomain zu bieten hat:",
+            "history": {
+                "title": "Eintragsverlauf",
+                "description": "Verfolgen Sie alle Änderungen an Ihren DNS-Einträgen mit Versionsverlauf und Rollback-Optionen.",
+                "link": "Verlauf anzeigen"
+            },
+            "api": {
+                "title": "API-Zugriff",
+                "description": "Automatisieren Sie die Domainverwaltung mit unserer umfassenden API für Entwickler und Teams.",
+                "link": "API-Dokumentation"
+            },
+            "monitoring": {
+                "title": "Überwachung",
+                "description": "Echtzeit-Überwachung Ihrer Domains mit Warnungen bei Problemen oder Ablauf."
+            },
+            "security": {
+                "title": "Sicherheitscheck",
+                "description": "Automatisierte Sicherheitsaudits, um sicherzustellen, dass Ihre Domain-Konfigurationen den Best Practices entsprechen."
+            },
+            "soon": "bald"
+        },
+        "no-sale": {
+            "title": "Sie müssen eine Domain besitzen, um happyDomain zu nutzen.",
+            "description": "{{happyDomain}} verkauft noch keine Domains. Um unsere Oberfläche zu nutzen, müssen Sie eine Domain bei einem unserer unterstützten Anbieter kaufen.",
+            "buy-advice": "Wir werden in naher Zukunft eine Anleitung bereitstellen, wie Sie einfach einen Domainnamen kaufen können. Bleiben Sie also dran und kontaktieren Sie uns, wenn Sie uns beim Aufbau eines umfassenden Leitfadens helfen können."
+        }
+    },
+    "password": {
+        "change": "Mein Passwort ändern",
+        "changed": "Passwort erfolgreich geändert",
+        "confirm-new": "Bestätigen Sie Ihr neues Passwort",
+        "confirmation": "Passwortbestätigung",
+        "enter": "Geben Sie Ihr aktuelles Passwort ein",
+        "enter-new": "Geben Sie Ihr neues Passwort ein",
+        "fill": "Um Ihr Konto wiederherzustellen, füllen Sie bitte das folgende Formular mit einem neuen Passwort aus.",
+        "forgotten": "Passwort vergessen?",
+        "new": "Neues Passwort",
+        "redefine": "Mein Passwort neu definieren",
+        "redefined": "Passwort erfolgreich neu definiert!",
+        "success": "Sie können sich jetzt mit Ihrem neuen Passwort anmelden.",
+        "success-change": "Das Passwort Ihres Kontos wurde erfolgreich geändert."
+    },
+    "resources": {
+        "CAA": {
+            "all-issuers-title": "Alle Aussteller autorisiert.",
+            "all-issuers-body": "Mit diesen Parametern können alle Aussteller Zertifikate für diese Domain und Subdomain erstellen.",
+            "all-wild-issuers-body": "Mit diesen Parametern können alle Aussteller Wildcard-Zertifikate für diese Domain und Subdomain erstellen.",
+            "auth-issuers": "Autorisierte Aussteller",
+            "incident-response": "Vorfallsreaktion",
+            "incident-response-text": "Wie möchten Sie im Fall einer Verletzung der aktuellen Sicherheitsrichtlinie kontaktiert werden?",
+            "mail-issuers": "S/MIME-Zertifikatsausstellung",
+            "mail-all-allowed-title": "Keine CA-Einschränkung für S/MIME-Zertifikatsausstellung.",
+            "mail-all-allowed-body": "Alle CAs können S/MIME-Zertifikate für Ihre Domain ausstellen. Sie sollten dies verbieten oder auf bestimmte CAs beschränken. S/MIME-Zertifikate werden zum Beispiel verwendet, um E-Mail-Kommunikation zu signieren und zu verschlüsseln. Wenn Sie solche Zertifikate nicht verwenden, sollten Sie deren Ausstellung verbieten.",
+            "no-issuers-hint": "Jede Zertifikatsausstellung verbieten",
+            "no-issuers-title": "Kein Aussteller autorisiert.",
+            "no-issuers-body": "Mit diesen Parametern ist kein Aussteller berechtigt, Zertifikate für diese Subdomain zu erstellen.",
+            "no-mail-hint": "S/MIME-Zertifikatsausstellung verbieten",
+            "no-mail-title": "Kein Aussteller für S/MIME-Zertifikat autorisiert.",
+            "no-mail-body": "Mit diesen Parametern ist kein Aussteller berechtigt, S/MIME-Zertifikate für diese Domain und Subdomain zu erstellen.",
+            "no-wild-hint": "Wildcard-Zertifikatsausstellung verbieten",
+            "no-wild-title": "Kein Wildcard-Aussteller autorisiert.",
+            "no-wild-body": "Mit diesen Parametern ist kein Aussteller berechtigt, Wildcard-Zertifikate für diese Domain und Subdomain zu erstellen. Dies kann jedoch mit den folgenden Einstellungen überschrieben werden:",
+            "title": "Zertifikatsausstellung",
+            "wild-issuers": "Wildcard-Zertifikatsausstellung",
+            "wild-same-title": "Gleich wie bei regulärer Zertifikatsausstellung.",
+            "wild-same-body": "Mit diesen Parametern können alle für die Zertifikatsausstellung autorisierten Aussteller auch Wildcard-Zertifikate für diese Domain und Subdomain erstellen."
+        }
+    },
+    "service": {
+        "add": "Dienst hinzufügen",
+        "all": "Alle",
+        "delete": "Diesen Dienst löschen",
+        "update": "Diesen Dienst aktualisieren",
+        "form-new": "Einen neuen Dienst zu {{domain}} hinzufügen",
+        "new": "Neuer Dienst",
+        "new-description": "Klicken Sie hier, um dieser Subdomain einen neuen Dienst hinzuzufügen.",
+        "ttl": "TTL",
+        "ttl-long": "Time-To-Live",
+        "ttl-tip": "0 bedeutet Standard-TTL, andere Werte werden in Sekunden angegeben"
+    },
+    "sessions": {
+        "close-all": "Alle Sitzungen beenden",
+        "create": "API-Schlüssel erstellen",
+        "current": "aktuelle Sitzung",
+        "description": "Benennen Sie Ihre Sitzung",
+        "secret": "Sitzungsgeheimnis",
+        "usage": "Hier ist ein Beispiel, wie Sie das generierte Geheimnis verwenden können:"
+    },
+    "provider": {
+        "another": "Einen anderen Anbieter verwenden",
+        "associations": "{{count:eq; 0:keine Domain verknüpft; 1:{{count}} Domain verknüpft; default:{{count}} Domains verknüpft}}",
+        "check-config": "Überprüfen Sie Ihre Anbieterkonfiguration",
+        "delete": "Diesen Domain-Anbieter löschen",
+        "empty": "Sie haben derzeit keinen Anbieter definiert. Versuchen Sie {{action}}!",
+        "empty-action": "einen hinzuzufügen",
+        "find": "Können Sie Ihren Domain-Anbieter hier nicht finden?",
+        "name-your": "Benennen Sie Ihren Domain-Anbieter",
+        "no-name": "Kein Name",
+        "provider": "Domains bei {{provider}}",
+        "kind": "Domain-Anbieter",
+        "select-provider": "Wählen Sie zuerst den Anbieter aus, der Ihre Domain hostet:",
+        "provider-name": "Name des Hosts",
+        "provider-type": "Hosting-Anbietertyp",
+        "title": "Ihre Domain-Anbieter",
+        "available-types": "Verfügbare Ressourcentypen",
+        "import-domains": "Alle Domains importieren",
+        "new-form": "Formular für neuen Domain-Anbieter",
+        "update": "Domain-Anbieter aktualisieren"
+    },
+    "upgrade": {
+        "title": "Ein Update ist verfügbar!",
+        "content": "Eine neue Version von happyDomain ist bereits verfügbar. Um sie zu aktivieren, klicken Sie hier, um die Seite zu aktualisieren."
+    },
+    "wait": {
+        "asking-domains": "Anfrage an den Anbieter nach vorhandenen Domains...",
+        "exporting": "Bitte warten Sie, während wir Ihre Zone exportieren …",
+        "formating": "Bitte warten Sie, während wir Ihre Zone formatieren …",
+        "importing": "Bitte warten Sie, während wir Ihre Domain importieren …",
+        "loading": "Laden der Domain-Dienste …",
+        "loading-account": "Laden Ihres Kontos …",
+        "loading-record": "Laden der Einträge …",
+        "retrieving-setting": "Abrufen des Host-Einstellungsformulars...",
+        "updating": "Aktualisierung Ihres Domainnamen-Hosts",
+        "validating": "Validierung der Domain …",
+        "wait": "Bitte warten",
+        "retrieving-domains": "Abrufen Ihrer Domains...",
+        "retrieving-provider": "Abrufen von Informationen zum Hosting-Anbieter...",
+        "retrieving-providers": "Abrufen Ihrer Anbieter..."
+    },
+    "settings": {
+        "fieldhint": {
+            "title": "Hinweise für Formularfelder anzeigen",
+            "hide": "Ausblenden",
+            "tooltip": "Tooltip neben dem Feld",
+            "focused": "Unter dem Feld, wenn fokussiert",
+            "always": "Unter dem Feld, immer"
+        },
+        "language": "Sprache",
+        "save": "Einstellungen speichern",
+        "sessions": "Sitzungen",
+        "showrrtypes": "Ressourcentyp anzeigen, der mit Diensten verbunden ist (für Benutzer, die mit DNS vertraut sind)",
+        "success": "Genießen Sie happyDomain weiterhin.",
+        "success-change": "Ihre Einstellungen wurden gespeichert.",
+        "title": "Einstellungen",
+        "zoneview": {
+            "grid": "Rasteransicht (am einfachsten)",
+            "list": "Listenansicht (am schnellsten)",
+            "records": "Liste mit Einträgen (fortgeschritten)",
+            "title": "Zone anzeigen als"
+        }
+    },
+    "record": {
+        "A": "IPv4-Adresse",
+        "AAAA": "IPv6-Adresse",
+        "common-records": "Häufige Einträge",
+        "Expire": "Ablauf",
+        "Mbox": "Administrations-E-Mail",
+        "Minttl": "Negative Cache TTL",
+        "Mx": "Mail-Server",
+        "Ns": "Nameserver",
+        "Preference": "Präferenz",
+        "Priority": "Priorität",
+        "Refresh": "Aktualisierung",
+        "Retry": "Wiederholung",
+        "Serial": "Seriennummer",
+        "Target": "Ziel",
+        "Txt": "Daten",
+        "Weight": "Gewichtung"
+    },
+    "resolver": {
+        "advanced": "Mit benutzerdefinierten Einstellungen?",
+        "custom": "Benutzerdefinierter Resolver",
+        "custom-description": "Geben Sie die Adresse (einen Domainnamen oder eine IP) des Resolvers ein, den Sie verwenden möchten.",
+        "domain-description": "Geben Sie die Domain an, für die Sie die Einträge suchen. Zum Beispiel können Sie {{domain}} versuchen.",
+        "field-description": "Welche Art von DNS-Eintrag möchten Sie sehen. Zum Beispiel: A ist für IPv4, AAAA ist für IPv6, ...",
+        "field-description-more-info": "Weitere Informationen hier",
+        "resolver-description": "Dies ist der Server, den wir nach den Informationen fragen werden.",
+        "ttl": "Verbleibende Zeit im Cache",
+        "showDNSSEC": "DNSSEC-Einträge in der Antwort anzeigen (falls vorhanden)"
+    },
+    "zones": {
+        "upload": "Zone importieren",
+        "import-text": "Aus Text importieren",
+        "import-file": "Aus Datei importieren"
+    }
+}
