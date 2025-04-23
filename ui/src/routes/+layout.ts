@@ -45,6 +45,7 @@ export const load: Load = async ({ fetch, route, url }) => {
     const { MODE } = import.meta.env;
 
     const initLocale =
+        url.searchParams.get("lang") ||
         locale.get() ||
         window.navigator.language ||
         window.navigator.languages[0] ||
@@ -94,7 +95,7 @@ export const load: Load = async ({ fetch, route, url }) => {
     // Load user session if any
     try {
         const user = await refreshUserSession(fetch);
-        if (get_store_value(locale) != user.settings.language) {
+        if (!url.searchParams.has("lang") && get_store_value(locale) != user.settings.language) {
             locale.set(user.settings.language);
         }
     } catch {}
