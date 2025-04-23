@@ -397,6 +397,7 @@ steps:
   - apk --no-cache add build-base git
   - sed -i '/npm run build/d' ui/assets.go
   - go install github.com/swaggo/swag/cmd/swag@latest
+  - go mod vendor
   - go generate ./...
   - go build -tags netgo,swagger,ui -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el ./cmd/happyDomain/
   environment:
@@ -416,6 +417,7 @@ steps:
   - apk --no-cache add build-base git
   - sed -i '/npm run build/d' ui/assets.go
   - go install github.com/swaggo/swag/cmd/swag@latest
+  - go mod vendor
   - go generate ./...
   - go build -tags netgo,swagger,ui -ldflags '-w -X "main.Version=${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el ./cmd/happyDomain/
   environment:
