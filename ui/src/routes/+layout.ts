@@ -47,7 +47,7 @@ export const load: Load = async ({ fetch, route, url }) => {
     const initLocale =
         url.searchParams.get("lang") ||
         locale.get() ||
-        window.navigator.language ||
+        (window.navigator.language ? window.navigator.language.substring(0,2) : null) ||
         window.navigator.languages[0] ||
         tsConfig.fallbackLocale ||
         "en";
