@@ -309,7 +309,7 @@
                     </Button>
                     <p class="mt-2 mb-1 text-center">
                         {#key $thisZone}
-                            {#await APIDiffZone(data.domain, "@", selectedHistory)}
+                            {#await APIDiffZone(data.domain, "@", $thisZone.id)}
                                 {$t("wait.wait")}
                             {:then zoneDiff}
                                 <DiffSummary {zoneDiff} />
