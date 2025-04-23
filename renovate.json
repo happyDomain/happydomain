@@ -2,25 +2,27 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
+    ":approveMajorUpdates",
+    ":automergeBranch",
+    ":automergeStableNonMajor",
+    ":configMigration",
     ":enableVulnerabilityAlerts",
+    ":maintainLockFilesWeekly",
     "mergeConfidence:all-badges"
   ],
   "lockFileMaintenance": {
-    "enabled": true,
-    "automerge": true
+    "automerge": true,
+    "automergeType": "pr"
   },
   "packageRules": [
     {
-      "matchPackageNames": [
-        "alpine",
-        "github.com/yuin/goldmark"
-      ],
-      "automerge": true,
-      "automergeType": "branch"
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "enabled": false
     },
     {
       "matchPackageNames": [
-        "github.com/StackExchange/dnscontrol/v[0-9]+"
+        "github.com/StackExchange/dnscontrol/v[[:digit:]]"
       ],
       "enabled": false
     }
