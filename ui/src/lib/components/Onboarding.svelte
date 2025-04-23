@@ -43,6 +43,7 @@
     } from "@sveltestrap/sveltestrap";
 
     import CardImportableDomains from "$lib/components/providers/CardImportableDomains.svelte";
+    import LocaleSelect from "$lib/components/LocaleSelect.svelte";
     import Logo from "$lib/components/Logo.svelte";
     import NewDomainInput from "$lib/components/domains/NewDomainInput.svelte";
     import PForm from "$lib/components/providers/Form.svelte";
@@ -169,6 +170,14 @@
                     <h3 class="fw-bolder">
                         {$t("common.welcome.start")}<Logo height="30" />{$t("common.welcome.end")}
                     </h3>
+                    <Row class="align-items-center mb-2">
+                        <label class="col-auto" for="locale-select">
+                            Choose happy<span class="fw-bold">Domain</span> language:
+                        </label>
+                        <Col>
+                            <LocaleSelect size="sm" />
+                        </Col>
+                    </Row>
                     <p>
                         {@html $t("onboarding.welcome.purpose", {
                             happyDomain: `happy<span class="fw-bold">Domain</span>`,
