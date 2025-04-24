@@ -23,7 +23,6 @@ package abstract
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/miekg/dns"
 
@@ -72,7 +71,8 @@ func delegation_analyze(a *svcs.Analyzer) error {
 	delegations := map[string]*Delegation{}
 
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS}) {
-		if record.Header().Name == strings.TrimSuffix(a.GetOrigin(), ".") {
+		// Origin cannot be a delegation
+		if record.Header().Name == a.GetOrigin() {
 			continue
 		}
 
@@ -137,7 +137,7 @@ func init() {
 			Restrictions: happydns.ServiceRestrictions{
 				Alone:       true,
 				Leaf:        true,
-				ExclusiveRR: []string{"abstract.Origin"},
+				ExclusiveRR: []string{"abstract.Origin", "abstract.NSOnlyOrigin"},
 				Single:      true,
 				NeedTypes: []uint16{
 					dns.TypeNS,

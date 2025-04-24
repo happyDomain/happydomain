@@ -63,7 +63,7 @@ func (a *Analyzer) SearchRR(arrs ...AnalyzerRecordFilter) (rrs []happydns.Record
 			rdtype := rhdr.Rrtype
 			if strings.HasPrefix(rhdr.Name, arr.Prefix) &&
 				strings.HasSuffix(rhdr.Name, arr.SubdomainsOf) &&
-				(arr.Domain == "" || rhdr.Name == strings.TrimSuffix(arr.Domain, ".")) &&
+				(arr.Domain == "" || rhdr.Name == arr.Domain || rhdr.Name == strings.TrimSuffix(arr.Domain, ".")) &&
 				(arr.Type == 0 || rdtype == arr.Type) &&
 				(arr.Ttl == 0 || rhdr.Ttl == arr.Ttl) &&
 				(arr.Contains == "" || strings.Contains(record.String(), arr.Contains)) {
