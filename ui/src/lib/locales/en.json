@@ -455,6 +455,7 @@
     "zones": {
         "upload": "Import a zone",
         "import-text": "Import from text",
-        "import-file": "Import from file"
+        "import-file": "Import from file",
+        "return-to": "Go to the zone"
     }
 }

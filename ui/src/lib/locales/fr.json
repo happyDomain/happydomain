@@ -446,6 +446,7 @@
     "zones": {
         "upload": "Importer une zone",
         "import-text": "Depuis du texte",
-        "import-file": "Depuis un fichier de zone"
+        "import-file": "Depuis un fichier de zone",
+        "return-to": "Retour à la zone"
     }
 }

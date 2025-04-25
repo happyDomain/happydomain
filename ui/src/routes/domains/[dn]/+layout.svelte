@@ -189,7 +189,7 @@
                         href={"/domains/" + encodeURIComponent(data.domain.domain)}
                     >
                         <Icon name="chevron-left" />
-                        Retour à la zone
+                        {$t('zones.return-to')}
                     </Button>
                 {:else}
                     <div class="d-flex gap-2 pb-2 sticky-top" style="padding-top: 10px">
