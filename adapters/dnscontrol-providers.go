@@ -23,6 +23,7 @@ package adapter
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -99,15 +100,21 @@ func NewDNSControlProviderAdapter(configAdapter DNSControlConfigAdapter) (happyd
 		return nil, err
 	}
 
+	var auditor dnscontrol.RecordAuditor
+	if p, ok := dnscontrol.DNSProviderTypes[configAdapter.DNSControlName()]; ok && p.RecordAuditor != nil {
+		auditor = p.RecordAuditor
+	}
+
 	if _, ok := provider.(dnscontrol.ZoneLister); ok {
-		return &DNSControlAdapterNSProviderWithListZone{DNSControlAdapterNSProvider{provider}}, nil
+		return &DNSControlAdapterNSProviderWithListZone{DNSControlAdapterNSProvider{provider, auditor}}, nil
 	} else {
-		return &DNSControlAdapterNSProvider{provider}, nil
+		return &DNSControlAdapterNSProvider{provider, auditor}, nil
 	}
 }
 
 type DNSControlAdapterNSProvider struct {
-	dnscontrol.DNSServiceProvider
+	DNSServiceProvider dnscontrol.DNSServiceProvider
+	RecordAuditor      dnscontrol.RecordAuditor
 }
 
 func (p *DNSControlAdapterNSProvider) CanListZones() bool {
@@ -145,6 +152,12 @@ func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []ha
 	var dc *models.DomainConfig
 	dc, err = NewDNSControlDomainConfig(strings.TrimSuffix(domain, "."), rrs)
 	if err != nil {
+		return
+	}
+
+	errs := p.RecordAuditor(dc.Records)
+	if errs != nil {
+		err = fmt.Errorf("some records are incompatibles with this NS provider: %w. Please fix those errors and retry.", errors.Join(errs...))
 		return
 	}
 
