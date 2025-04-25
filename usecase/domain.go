@@ -391,6 +391,9 @@ func (du *domainUsecase) RetrieveRemoteZone(user *happydns.User, domain *happydn
 
 	// import
 	myZone, err := du.ImportZone(user, domain, zone)
+	if err != nil {
+		return nil, err
+	}
 
 	if du.domainLogService != nil {
 		du.domainLogService.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_INFO, fmt.Sprintf("Zone imported from provider API: %s", myZone.Id.String())))
