@@ -7,7 +7,7 @@ require (
 	github.com/coreos/go-oidc/v3 v3.14.1
 	github.com/earthboundkid/versioninfo/v2 v2.24.1
 	github.com/fatih/color v1.18.0
-	github.com/gin-contrib/sessions v1.0.3
+	github.com/gin-contrib/sessions v1.0.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-mail/mail v2.3.1+incompatible
 	github.com/golang-jwt/jwt/v5 v5.2.2
@@ -65,7 +65,6 @@ require (
 	github.com/centralnicgroup-opensource/rtldev-middleware-go-sdk/v4 v4.0.7 // indirect
 	github.com/cloudflare/cloudflare-go v0.103.0 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
-	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deepmap/oapi-codegen v1.9.1 // indirect
 	github.com/digitalocean/godo v1.121.0 // indirect
