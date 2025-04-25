@@ -101,7 +101,7 @@ corrections:
 	if errs != nil {
 		du.store.CreateDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d corrections were not applied due to errors.", zone.Id.String(), nbcorrections)))
 		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("unable to update the zone: %w", err),
+			Err:        fmt.Errorf("unable to update the zone: %w", errs),
 			HTTPStatus: http.StatusBadRequest,
 		}
 	} else if len(form.WantedCorrections) > 0 {
