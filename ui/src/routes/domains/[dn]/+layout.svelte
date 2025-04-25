@@ -287,7 +287,7 @@
 
                 <div class="flex-fill" />
 
-                {#if !($page.data.isZonePage && data.domain.zone_history && $domains_idx[selectedDomain] && data.domain.id === $domains_idx[selectedDomain].id && $sortedDomainsWithIntermediate)}
+                {#if !($page.data.isZonePage && data.domain.zone_history && $domains_idx[selectedDomain] && data.domain.id === $domains_idx[selectedDomain].id && $sortedDomainsWithIntermediate && selectedHistory)}
                     <Button
                         color="danger"
                         class="mt-3"
