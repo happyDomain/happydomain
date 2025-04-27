@@ -19,7 +19,7 @@ require (
 	github.com/rrivera/identicon v0.0.0-20240116195454-d5ba35832c0d
 	github.com/swaggo/swag v1.16.4
 	github.com/syndtr/goleveldb v1.0.0
-	github.com/yuin/goldmark v1.7.8
+	github.com/yuin/goldmark v1.7.11
 	golang.org/x/crypto v0.37.0
 	golang.org/x/oauth2 v0.29.0
 )
