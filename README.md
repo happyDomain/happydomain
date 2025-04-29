@@ -20,6 +20,12 @@ It runs as a single stateless Linux binary, backed by a database (currently: Lev
 * Multiple users with authentication or one user without authtication
 * Compatible with external authentication (OpenId Connect or through JWT tokens: Auth0, ...)
 
+**happyDomain is functional but still very much a work in progress: it's a carefully crafted proof of concept that evolves thanks to you!**
+
+Given the diversity of DNS configurations and user needs, we haven't yet identified all the bugs. **If something doesn't work, please don't leave: [tell us what's wrong](https://github.com/happyDomain/happydomain/issues).** We're highly responsive and each reported bug helps us improve the tool for everyone.
+
+[Whether it works for you or not, we need your feedback!](https://feedback.happydomain.org/) What do you think of our approach to simplifying domain name management? Your impressions at this stage help us guide the project according to **your actual expectations**.
+
 Using Docker
 ------------
 
