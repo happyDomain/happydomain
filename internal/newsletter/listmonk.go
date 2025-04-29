@@ -49,8 +49,8 @@ type ListmonkSubscriber struct {
 }
 
 func (ns *ListmonkNewsletterSubscription) SubscribeToNewsletter(u happydns.UserInfo) error {
-	if ns.ListmonkId != 0 {
-		log.Println("SubscribeToNewsletter: not subscribing user as newsletter server is not defined.")
+	if ns.ListmonkId == 0 {
+		log.Println("SubscribeToNewsletter: not subscribing user as newsletter list id is not defined.")
 		return nil
 	}
 
