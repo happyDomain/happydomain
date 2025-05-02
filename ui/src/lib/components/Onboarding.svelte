@@ -27,6 +27,7 @@
     import { onMount } from "svelte";
 
     import {
+        Alert,
         Badge,
         Button,
         Card,
@@ -188,6 +189,9 @@
                             happyDomain: `happy<span class="fw-bold">Domain</span>`,
                         })}
                     </p>
+                    <Alert color="warning">
+                        <strong>{$t("onboarding.welcome.beta.intro")}</strong> {$t("onboarding.welcome.beta.part1")} <a href="https://git.happyDomain.org/happydomain/-/issues" target="_blank">{$t("onboarding.welcome.beta.report")}</a> <a href="https://github.com/happyDomain/happydomain/issues" target="_blank"><Icon name="github" /></a> <a href="https://gitlab.com/happyDomain/happydomain/-/issues" target="_blank"><Icon name="gitlab" /></a>{$t("onboarding.welcome.beta.part2")}
+                    </Alert>
                     <Row cols={{ sm: 1, md: 2, xl: 4 }}>
                         <Col class="mb-3">
                             <Card body class="h-100">

@@ -236,6 +236,12 @@
         },
         "intro": "Let's set up your account and start managing your domains. Follow these simple steps to get started.",
         "welcome": {
+            "beta": {
+                "intro": "It's beta software! 🏗️",
+                "part1": "happyDomain is functional but still very much a work in progress.  If something doesn't work, please",
+                "report": "tell us what's wrong",
+                "part2": ". We're highly responsive and each reported bug helps us improve the tool for everyone. Thanks in advance 🙏"
+            },
             "purpose": "{{happyDomain}} makes domain management simple and intuitive. Whether you have one domain or hundreds, our platform gives you a centralized way to manage them all.",
             "use": "Use {{happyDomain}} as a replacement interface to your usual domain name provider. It'll still rely on your provider's infrastructure, via our simple interface.",
             "unified": {

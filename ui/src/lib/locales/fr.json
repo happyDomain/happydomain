@@ -229,6 +229,12 @@
         },
         "intro": "Configurons votre compte pour commencer à gérer vos domaines. Suivez ces quelques étapes pour commencer rapidement.",
         "welcome": {
+            "beta": {
+                "intro": "C'est une version βéta! 🏗️",
+                "part1": "happyDomain est fonctionnel mais comporte encore de nombreux bugs. Si quelque chose ne fonctionne pas comme vous l'attendez, s'il vous plaît",
+                "report": "dites-le nous",
+                "part2": ". Nous sommes super réactifs et chaque bug signalé permet d'améliorer l'outil pour tous. Un grand merci par avance 🙏"
+            },
             "purpose": "{{happyDomain}} rend la gestion des domaines simple et intuitive. Que vous ayez un seul domaine ou des centaines, notre plateforme vous offre un moyen centralisé de les gérer tous.",
             "use": "Utilisez {{happyDomain}} comme interface de remplacement de votre fournisseur de noms de domaine habituel. Il continuera à s'appuyer sur l'infrastructure de votre fournisseur, vous n'aurez qu'à profiter de notre interface simple.",
             "unified": {
