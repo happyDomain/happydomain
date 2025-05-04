@@ -56,7 +56,7 @@ func (s *LevelDBStorage) ListProviders(u *happydns.User) (srcs happydns.Provider
 			return
 		}
 
-		if !bytes.Equal(srcMsg.OwnerId, u.Id) {
+		if !bytes.Equal(srcMsg.Owner, u.Id) {
 			continue
 		}
 
@@ -79,7 +79,7 @@ func (s *LevelDBStorage) GetProvider(u *happydns.User, id happydns.Identifier) (
 		return
 	}
 
-	if !bytes.Equal(srcMsg.OwnerId, u.Id) {
+	if !bytes.Equal(srcMsg.Owner, u.Id) {
 		src = nil
 		err = leveldb.ErrNotFound
 		return
@@ -101,7 +101,7 @@ func (s *LevelDBStorage) CreateProvider(u *happydns.User, src happydns.ProviderB
 		ProviderMeta: happydns.ProviderMeta{
 			Type:    sType.Name(),
 			Id:      id,
-			OwnerId: u.Id,
+			Owner:   u.Id,
 			Comment: comment,
 		},
 	}
@@ -113,7 +113,7 @@ func (s *LevelDBStorage) UpdateProvider(src *happydns.Provider) error {
 }
 
 func (s *LevelDBStorage) UpdateProviderOwner(src *happydns.Provider, newOwner *happydns.User) error {
-	src.OwnerId = newOwner.Id
+	src.Owner = newOwner.Id
 	return s.UpdateProvider(src)
 }
 
@@ -164,10 +164,10 @@ func (s *LevelDBStorage) TidyProviders() error {
 			log.Printf("Deleting unreadable provider (%s): %v\n", err.Error(), srcMeta)
 			err = tx.Delete(iter.Key(), nil)
 		} else {
-			_, err = s.GetUser(srcMeta.OwnerId)
+			_, err = s.GetUser(srcMeta.Owner)
 			if err == leveldb.ErrNotFound {
 				// Drop providers of unexistant users
-				log.Printf("Deleting orphan provider (user %s not found): %v\n", srcMeta.OwnerId.String(), srcMeta)
+				log.Printf("Deleting orphan provider (user %s not found): %v\n", srcMeta.Owner.String(), srcMeta)
 				err = tx.Delete(iter.Key(), nil)
 			}
 		}

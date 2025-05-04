@@ -78,16 +78,16 @@ type Storage interface {
 	GetDomainByDN(u *happydns.User, dn string) (*happydns.Domain, error)
 
 	// CreateDomain creates a record in the database for the given Domain.
-	CreateDomain(u *happydns.User, z *happydns.Domain) error
+	CreateDomain(u *happydns.User, domain *happydns.Domain) error
 
 	// UpdateDomain updates the fields of the given Domain.
-	UpdateDomain(z *happydns.Domain) error
+	UpdateDomain(domain *happydns.Domain) error
 
 	// UpdateDomainOwner updates the owner of the given Domain.
-	UpdateDomainOwner(z *happydns.Domain, newOwner *happydns.User) error
+	UpdateDomainOwner(domain *happydns.Domain, newOwner *happydns.User) error
 
 	// DeleteDomain removes the given Domain from the database.
-	DeleteDomain(z happydns.Identifier) error
+	DeleteDomain(domainid happydns.Identifier) error
 
 	// ClearDomains deletes all Domains present in the database.
 	ClearDomains() error

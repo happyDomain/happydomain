@@ -85,7 +85,7 @@ func (dc *DomainController) NewDomain(c *gin.Context) {
 		return
 	}
 	ud.Id = nil
-	ud.IdUser = user.Id
+	ud.Owner = user.Id
 
 	happydns.ApiResponse(c, ud, dc.store.CreateDomain(user, ud))
 }
@@ -180,8 +180,8 @@ func (dc *DomainController) UpdateDomain(c *gin.Context) {
 	}
 	ud.Id = domain.Id
 
-	if !ud.IdUser.Equals(domain.IdUser) {
-		if err := dc.store.UpdateDomainOwner(domain, &happydns.User{Id: ud.IdUser}); err != nil {
+	if !ud.Owner.Equals(domain.Owner) {
+		if err := dc.store.UpdateDomainOwner(domain, &happydns.User{Id: ud.Owner}); err != nil {
 			middleware.ErrorResponse(c, http.StatusBadRequest, err)
 			return
 		}
