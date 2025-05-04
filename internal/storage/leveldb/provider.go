@@ -26,27 +26,16 @@ import (
 	"fmt"
 	"log"
 
+	"git.happydns.org/happyDomain/internal/storage"
+	"git.happydns.org/happyDomain/model"
+
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
-
-	"git.happydns.org/happyDomain/model"
 )
 
-func (s *LevelDBStorage) ListAllProviders() (srcs happydns.ProviderMessages, err error) {
+func (s *LevelDBStorage) ListAllProviders() (storage.Iterator[happydns.ProviderMessage], error) {
 	iter := s.search("provider-")
-	defer iter.Release()
-
-	for iter.Next() {
-		var srcMsg happydns.ProviderMessage
-		err = decodeData(iter.Value(), &srcMsg)
-		if err != nil {
-			return
-		}
-
-		srcs = append(srcs, &srcMsg)
-	}
-
-	return
+	return NewLevelDBIterator[happydns.ProviderMessage](s.db, iter), nil
 }
 
 func (s *LevelDBStorage) getProviderMeta(id happydns.Identifier) (srcMsg *happydns.ProviderMessage, err error) {

@@ -26,27 +26,15 @@ import (
 	"log"
 	"strings"
 
-	"git.happydns.org/happyDomain/model"
-
 	"github.com/syndtr/goleveldb/leveldb/util"
+
+	"git.happydns.org/happyDomain/internal/storage"
+	"git.happydns.org/happyDomain/model"
 )
 
-func (s *LevelDBStorage) ListAllZones() (zones []*happydns.ZoneMessage, err error) {
+func (s *LevelDBStorage) ListAllZones() (storage.Iterator[happydns.ZoneMessage], error) {
 	iter := s.search("domain.zone-")
-	defer iter.Release()
-
-	for iter.Next() {
-		var zone happydns.ZoneMessage
-
-		err = decodeData(iter.Value(), &zone)
-		if err != nil {
-			return
-		}
-
-		zones = append(zones, &zone)
-	}
-
-	return
+	return NewLevelDBIterator[happydns.ZoneMessage](s.db, iter), nil
 }
 
 func (s *LevelDBStorage) GetZone(id happydns.Identifier) (z *happydns.ZoneMessage, err error) {

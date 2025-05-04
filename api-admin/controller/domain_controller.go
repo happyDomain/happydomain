@@ -55,10 +55,16 @@ func (dc *DomainController) ListDomains(c *gin.Context) {
 		return
 	}
 
-	domains, err := dc.store.ListAllDomains()
+	iter, err := dc.store.ListAllDomains()
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, fmt.Errorf("unable to retrieve domains list: %w", err))
 		return
+	}
+	defer iter.Close()
+
+	var domains []*happydns.Domain
+	for iter.Next() {
+		domains = append(domains, iter.Item())
 	}
 
 	happydns.ApiResponse(c, domains, nil)
@@ -110,12 +116,15 @@ func (dc *DomainController) DeleteDomain(c *gin.Context) {
 }
 
 func (dc *DomainController) searchUserDomain(filter func(*happydns.Domain) bool) *happydns.User {
-	domains, err := dc.store.ListAllDomains()
+	iter, err := dc.store.ListAllDomains()
 	if err != nil {
 		log.Println("Unable to retrieve domains list:", err.Error())
 		return nil
 	}
-	for _, domain := range domains {
+	defer iter.Close()
+
+	for iter.Next() {
+		domain := iter.Item()
 		if filter(domain) {
 			// Create a fake minimal user, as only the Id is required to perform further actions on database
 			return &happydns.User{Id: domain.Owner}

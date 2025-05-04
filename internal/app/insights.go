@@ -133,18 +133,22 @@ func (c *insightsCollector) collect() (*happydns.Insights, error) {
 	if authusers, err := c.store.ListAllAuthUsers(); err != nil {
 		return nil, err
 	} else {
-		data.Database.NbAuthUsers = len(authusers)
+		for authusers.Next() {
+			data.Database.NbAuthUsers++
+		}
 	}
 
 	users, err := c.store.ListAllUsers()
 	if err != nil {
 		return nil, err
-	} else {
-		data.Database.NbUsers = len(users)
 	}
 
 	data.Database.Providers = map[string]int{}
-	for _, user := range users {
+	for users.Next() {
+		data.Database.NbUsers++
+
+		user := users.Item()
+
 		if providers, err := c.store.ListProviders(user); err == nil {
 			for _, provider := range providers {
 				data.Database.Providers[provider.Type] += 1

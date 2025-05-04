@@ -26,10 +26,29 @@ import (
 	"log"
 	"strings"
 
+	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
+
+func (s *LevelDBStorage) ListAllDomainLogs() (storage.Iterator[happydns.DomainLogWithDomainId], error) {
+	iter := s.search("domain.log|")
+	return NewLevelDBIteratorCustomDecode[happydns.DomainLogWithDomainId](s.db, iter, func(data []byte, v interface{}) error {
+		err := decodeData(data, v)
+		if err != nil {
+			return err
+		}
+
+		st := strings.Split(string(iter.Key()), "|")
+		if len(st) < 3 {
+			return fmt.Errorf("invalid domain log key: %s", string(iter.Key()))
+		}
+
+		v.(*happydns.DomainLogWithDomainId).DomainId, err = happydns.NewIdentifierFromString(st[1])
+		return err
+	}), nil
+}
 
 func (s *LevelDBStorage) GetDomainLogs(domain *happydns.Domain) (logs []*happydns.DomainLog, err error) {
 	iter := s.search(fmt.Sprintf("domain.log|%s|", domain.Id.String()))

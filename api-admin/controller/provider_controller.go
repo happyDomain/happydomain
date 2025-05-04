@@ -54,15 +54,16 @@ func (pc *ProviderController) ListProviders(c *gin.Context) {
 		return
 	}
 
-	var res []*happydns.ProviderMeta
-
-	providers, err := pc.store.ListAllProviders()
+	iter, err := pc.store.ListAllProviders()
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, fmt.Errorf("unable to list providers: %w", err))
 		return
 	}
+	defer iter.Close()
 
-	for _, provider := range providers {
+	var res []*happydns.ProviderMeta
+	for iter.Next() {
+		provider := iter.Item()
 		res = append(res, &provider.ProviderMeta)
 	}
 

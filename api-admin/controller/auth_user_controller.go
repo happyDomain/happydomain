@@ -62,7 +62,18 @@ func (ac *AuthUserController) AuthUserHandler(c *gin.Context) {
 }
 
 func (ac *AuthUserController) GetAuthUsers(c *gin.Context) {
-	users, err := ac.store.ListAllAuthUsers()
+	iter, err := ac.store.ListAllAuthUsers()
+	if err != nil {
+		happydns.ApiResponse(c, nil, err)
+		return
+	}
+	defer iter.Close()
+
+	var users []*happydns.UserAuth
+	for iter.Next() {
+		users = append(users, iter.Item())
+	}
+
 	happydns.ApiResponse(c, users, err)
 }
 
