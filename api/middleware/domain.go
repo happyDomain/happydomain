@@ -48,11 +48,19 @@ func DomainHandler(domainService happydns.DomainUsecase, allowFQDN bool) gin.Han
 				return
 			}
 
-			domain, err = domainService.GetUserDomainByFQDN(user, c.Param("domain"))
-			if err != nil {
+			var domains []*happydns.Domain
+			domains, err = domainService.GetUserDomainByFQDN(user, c.Param("domain"))
+			if err != nil || len(domains) == 0 {
 				c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Domain not found"})
 				return
 			}
+
+			if len(domains) != 1 {
+				c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "There are many domain names with this FQDN in your account, please use their ID to access it instead"})
+				return
+			}
+
+			domain = domains[0]
 		} else {
 			domain, err = domainService.GetUserDomain(user, dnid)
 			if err != nil {

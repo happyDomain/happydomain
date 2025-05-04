@@ -84,7 +84,7 @@ type DomainUsecase interface {
 	DeleteZoneService(user *User, domain *Domain, zone *Zone, subdomain string, serviceid Identifier) (*Zone, error)
 	ExtendsDomainWithZoneMeta(*Domain) (*DomainWithZoneMetadata, error)
 	GetUserDomain(*User, Identifier) (*Domain, error)
-	GetUserDomainByFQDN(*User, string) (*Domain, error)
+	GetUserDomainByFQDN(*User, string) ([]*Domain, error)
 	ImportZone(*User, *Domain, []Record) (*Zone, error)
 	ListUserDomains(*User) ([]*Domain, error)
 	PublishZone(*User, *Domain, *Zone) ([]*Correction, error)
