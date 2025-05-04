@@ -35,5 +35,5 @@ type ProviderSettingsResponse struct {
 }
 
 type ProviderSettingsUsecase interface {
-	NextProviderSettingsState(ProviderBody, *User, *ProviderSettingsState) (*Provider, *ProviderSettingsResponse, error)
+	NextProviderSettingsState(*ProviderSettingsState, string, *User) (*Provider, *ProviderSettingsResponse, error)
 }

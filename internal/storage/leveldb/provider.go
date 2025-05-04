@@ -25,7 +25,6 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"reflect"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
@@ -66,59 +65,38 @@ func (s *LevelDBStorage) ListProviders(u *happydns.User) (srcs happydns.Provider
 	return
 }
 
-func (s *LevelDBStorage) GetProvider(u *happydns.User, id happydns.Identifier) (src *happydns.ProviderMessage, err error) {
-	var v []byte
-	v, err = s.db.Get([]byte(fmt.Sprintf("provider-%s", id.String())), nil)
-	if err != nil {
-		return
-	}
-
-	var srcMsg happydns.ProviderMessage
-	err = decodeData(v, &srcMsg)
-	if err != nil {
-		return
-	}
-
-	if !bytes.Equal(srcMsg.Owner, u.Id) {
-		src = nil
-		err = leveldb.ErrNotFound
-		return
-	}
-
-	return &srcMsg, err
-}
-
-func (s *LevelDBStorage) CreateProvider(u *happydns.User, src happydns.ProviderBody, comment string) (*happydns.Provider, error) {
-	key, id, err := s.findIdentifierKey("provider-")
+func (s *LevelDBStorage) GetProvider(id happydns.Identifier) (*happydns.ProviderMessage, error) {
+	v, err := s.db.Get([]byte(fmt.Sprintf("provider-%s", id.String())), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	sType := reflect.Indirect(reflect.ValueOf(src)).Type()
-
-	st := &happydns.Provider{
-		Provider: src,
-		ProviderMeta: happydns.ProviderMeta{
-			Type:    sType.Name(),
-			Id:      id,
-			Owner:   u.Id,
-			Comment: comment,
-		},
+	var prvdMsg happydns.ProviderMessage
+	err = decodeData(v, &prvdMsg)
+	if err != nil {
+		return nil, err
 	}
-	return st, s.put(key, st)
+
+	return &prvdMsg, err
 }
 
-func (s *LevelDBStorage) UpdateProvider(src *happydns.Provider) error {
-	return s.put(fmt.Sprintf("provider-%s", src.Id.String()), src)
+func (s *LevelDBStorage) CreateProvider(prvd *happydns.Provider) error {
+	key, id, err := s.findIdentifierKey("provider-")
+	if err != nil {
+		return err
+	}
+
+	prvd.Id = id
+
+	return s.put(key, prvd)
 }
 
-func (s *LevelDBStorage) UpdateProviderOwner(src *happydns.Provider, newOwner *happydns.User) error {
-	src.Owner = newOwner.Id
-	return s.UpdateProvider(src)
+func (s *LevelDBStorage) UpdateProvider(prvd *happydns.Provider) error {
+	return s.put(fmt.Sprintf("provider-%s", prvd.Id.String()), prvd)
 }
 
-func (s *LevelDBStorage) DeleteProvider(srcId happydns.Identifier) error {
-	return s.delete(fmt.Sprintf("provider-%s", srcId.String()))
+func (s *LevelDBStorage) DeleteProvider(prvdId happydns.Identifier) error {
+	return s.delete(fmt.Sprintf("provider-%s", prvdId.String()))
 }
 
 func (s *LevelDBStorage) ClearProviders() error {
