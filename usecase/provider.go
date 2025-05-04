@@ -124,7 +124,7 @@ func (pu *adminProviderUsecase) CreateProvider(user *happydns.User, msg *happydn
 
 func (pu *adminProviderUsecase) DeleteProvider(user *happydns.User, providerid happydns.Identifier) error {
 	// Check if the provider has no more domain associated
-	domains, err := pu.store.GetDomains(user)
+	domains, err := pu.store.ListDomains(user)
 	if err != nil {
 		return happydns.InternalError{
 			Err:         fmt.Errorf("unable to GetDomains for user id=%x email=%s: %w", user.Id, user.Email, err),

@@ -42,8 +42,8 @@ type Storage interface {
 
 	// AUTH -------------------------------------------------------
 
-	// GetAuthUsers retrieves the list of known Users.
-	GetAuthUsers() (happydns.UserAuths, error)
+	// ListAllAuthUsers retrieves the list of known Users.
+	ListAllAuthUsers() (happydns.UserAuths, error)
 
 	// GetAuthUser retrieves the User with the given identifier.
 	GetAuthUser(id happydns.Identifier) (*happydns.UserAuth, error)
@@ -68,8 +68,11 @@ type Storage interface {
 
 	// DOMAINS ----------------------------------------------------
 
-	// GetDomains retrieves all Domains associated to the given User.
-	GetDomains(u *happydns.User) (happydns.Domains, error)
+	// ListAllDomains retrieves the list of known Domains.
+	ListAllDomains() (happydns.Domains, error)
+
+	// ListDomains retrieves all Domains associated to the given User.
+	ListDomains(u *happydns.User) (happydns.Domains, error)
 
 	// GetDomain retrieves the Domain with the given id and owned by the given User.
 	GetDomain(id happydns.Identifier) (*happydns.Domain, error)
@@ -109,7 +112,10 @@ type Storage interface {
 
 	// PROVIDERS ----------------------------------------------------
 
-	// GetProviders retrieves all providers own by the given User.
+	// ListAllProviders retrieves the list of known Providers.
+	ListAllProviders() (happydns.ProviderMessages, error)
+
+	// ListProviders retrieves all providers own by the given User.
 	ListProviders(u *happydns.User) (happydns.ProviderMessages, error)
 
 	// GetProvider retrieves the full Provider with the given identifier and owner.
@@ -129,14 +135,17 @@ type Storage interface {
 
 	// SESSIONS ---------------------------------------------------
 
+	// ListAllSessions retrieves the list of known Sessions.
+	ListAllSessions() ([]*happydns.Session, error)
+
 	// GetSession retrieves the Session with the given identifier.
 	GetSession(id string) (*happydns.Session, error)
 
-	// GetAuthUserSessions retrieves all Session for the given AuthUser.
-	GetAuthUserSessions(user *happydns.UserAuth) ([]*happydns.Session, error)
+	// ListAuthUserSessions retrieves all Session for the given AuthUser.
+	ListAuthUserSessions(user *happydns.UserAuth) ([]*happydns.Session, error)
 
-	// GetUserSessions retrieves all Session for the given User.
-	GetUserSessions(userid happydns.Identifier) ([]*happydns.Session, error)
+	// ListUserSessions retrieves all Session for the given User.
+	ListUserSessions(userid happydns.Identifier) ([]*happydns.Session, error)
 
 	// UpdateSession updates the fields of the given Session.
 	UpdateSession(session *happydns.Session) error
@@ -149,8 +158,8 @@ type Storage interface {
 
 	// USERS ------------------------------------------------------
 
-	// GetUsers retrieves the list of known Users.
-	GetUsers() (happydns.Users, error)
+	// ListAllUsers retrieves the list of known Users.
+	ListAllUsers() (happydns.Users, error)
 
 	// GetUser retrieves the User with the given identifier.
 	GetUser(id happydns.Identifier) (*happydns.User, error)
@@ -168,6 +177,9 @@ type Storage interface {
 	ClearUsers() error
 
 	// ZONES ------------------------------------------------------
+
+	// ListAllZones retrieves the list of known Zones.
+	ListAllZones() ([]*happydns.ZoneMessage, error)
 
 	// GetZoneMeta retrives metadatas of the Zone with the given identifier.
 	GetZoneMeta(id happydns.Identifier) (*happydns.ZoneMeta, error)

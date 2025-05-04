@@ -62,7 +62,7 @@ func (ac *AuthUserController) AuthUserHandler(c *gin.Context) {
 }
 
 func (ac *AuthUserController) GetAuthUsers(c *gin.Context) {
-	users, err := ac.store.GetAuthUsers()
+	users, err := ac.store.ListAllAuthUsers()
 	happydns.ApiResponse(c, users, err)
 }
 

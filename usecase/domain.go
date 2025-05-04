@@ -372,7 +372,7 @@ func (du *domainUsecase) ImportZone(user *happydns.User, domain *happydns.Domain
 }
 
 func (du *domainUsecase) ListUserDomains(user *happydns.User) ([]*happydns.Domain, error) {
-	domains, err := du.store.GetDomains(user)
+	domains, err := du.store.ListDomains(user)
 	if err != nil {
 		return nil, fmt.Errorf("an error occurs when trying to GetUserDomains: %s", err.Error())
 	}

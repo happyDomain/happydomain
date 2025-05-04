@@ -57,13 +57,13 @@ func (dc *DomainController) ListDomains(c *gin.Context) {
 
 	var domains happydns.Domains
 
-	users, err := dc.store.GetUsers()
+	users, err := dc.store.ListAllUsers()
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, fmt.Errorf("unable to retrieve users list: %w", err))
 		return
 	}
 	for _, user := range users {
-		usersDomains, err := dc.store.GetDomains(user)
+		usersDomains, err := dc.store.ListDomains(user)
 		if err != nil {
 			middleware.ErrorResponse(c, http.StatusInternalServerError, fmt.Errorf("unable to retrieve %s's domains: %w", user.Email, err))
 			return
@@ -121,13 +121,13 @@ func (dc *DomainController) DeleteDomain(c *gin.Context) {
 }
 
 func (dc *DomainController) searchUserDomain(filter func(*happydns.Domain) bool) *happydns.User {
-	users, err := dc.store.GetUsers()
+	users, err := dc.store.ListAllUsers()
 	if err != nil {
 		log.Println("Unable to retrieve users list:", err.Error())
 		return nil
 	}
 	for _, user := range users {
-		usersDomains, err := dc.store.GetDomains(user)
+		usersDomains, err := dc.store.ListDomains(user)
 		if err != nil {
 			log.Printf("Unable to retrieve %s's domains: %s", user.Email, err.Error())
 			continue

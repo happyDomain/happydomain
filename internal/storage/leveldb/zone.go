@@ -31,6 +31,24 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
+func (s *LevelDBStorage) ListAllZones() (zones []*happydns.ZoneMessage, err error) {
+	iter := s.search("domain.zone-")
+	defer iter.Release()
+
+	for iter.Next() {
+		var zone happydns.ZoneMessage
+
+		err = decodeData(iter.Value(), &zone)
+		if err != nil {
+			return
+		}
+
+		zones = append(zones, &zone)
+	}
+
+	return
+}
+
 func (s *LevelDBStorage) GetZone(id happydns.Identifier) (z *happydns.ZoneMessage, err error) {
 	z = &happydns.ZoneMessage{}
 	err = s.get(fmt.Sprintf("domain.zone-%s", id.String()), &z)

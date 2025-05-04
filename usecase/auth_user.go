@@ -87,7 +87,7 @@ func (auu *authUserUsecase) ChangePassword(user *happydns.UserAuth, newPassword 
 
 func (auu *authUserUsecase) CloseAuthUserSessions(user *happydns.UserAuth) error {
 	// Retrieve all user's sessions to disconnect them
-	sessions, err := auu.store.GetAuthUserSessions(user)
+	sessions, err := auu.store.ListAuthUserSessions(user)
 	if err != nil {
 		return happydns.InternalError{
 			Err:         fmt.Errorf("unable to GetUserSessions in deleteAuthUser: %s", err.Error()),
@@ -168,8 +168,8 @@ func (auu *authUserUsecase) GetAuthUserByEmail(email string) (*happydns.UserAuth
 	return auu.store.GetAuthUserByEmail(email)
 }
 
-func (auu *authUserUsecase) GetAuthUserSessions(user *happydns.UserAuth) ([]*happydns.Session, error) {
-	return auu.store.GetAuthUserSessions(user)
+func (auu *authUserUsecase) ListAuthUserSessions(user *happydns.UserAuth) ([]*happydns.Session, error) {
+	return auu.store.ListAuthUserSessions(user)
 }
 
 func (auu *authUserUsecase) GetRecoveryLink(user *happydns.UserAuth) string {
