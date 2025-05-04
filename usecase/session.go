@@ -113,7 +113,7 @@ func (su *sessionUsecase) GetUserSession(user *happydns.User, sessionid string) 
 }
 
 func (su *sessionUsecase) GetUserSessions(user *happydns.User) ([]*happydns.Session, error) {
-	return su.store.GetUserSessions(user.Id)
+	return su.store.ListUserSessions(user.Id)
 }
 
 func (su *sessionUsecase) UpdateUserSession(user *happydns.User, sessionid string, upd func(*happydns.Session)) error {

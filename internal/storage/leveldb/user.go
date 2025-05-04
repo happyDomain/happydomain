@@ -31,7 +31,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
-func (s *LevelDBStorage) GetUsers() (users happydns.Users, err error) {
+func (s *LevelDBStorage) ListAllUsers() (users happydns.Users, err error) {
 	iter := s.search("user-")
 	defer iter.Release()
 
@@ -66,7 +66,7 @@ func (s *LevelDBStorage) GetUser(id happydns.Identifier) (u *happydns.User, err 
 func (s *LevelDBStorage) GetUserByEmail(email string) (u *happydns.User, err error) {
 	var users happydns.Users
 
-	users, err = s.GetUsers()
+	users, err = s.ListAllUsers()
 	if err != nil {
 		return
 	}
@@ -82,7 +82,7 @@ func (s *LevelDBStorage) GetUserByEmail(email string) (u *happydns.User, err err
 }
 
 func (s *LevelDBStorage) UserExists(email string) bool {
-	users, err := s.GetUsers()
+	users, err := s.ListAllUsers()
 	if err != nil {
 		return false
 	}

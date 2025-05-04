@@ -31,6 +31,24 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+func (s *LevelDBStorage) ListAllSessions() (sessions []*happydns.Session, err error) {
+	iter := s.search("user.session-")
+	defer iter.Release()
+
+	for iter.Next() {
+		var s happydns.Session
+
+		err = decodeData(iter.Value(), &s)
+		if err != nil {
+			return
+		}
+
+		sessions = append(sessions, &s)
+	}
+
+	return
+}
+
 func (s *LevelDBStorage) getSession(id string) (session *happydns.Session, err error) {
 	session = &happydns.Session{}
 	err = s.get(id, &session)
@@ -41,7 +59,7 @@ func (s *LevelDBStorage) GetSession(id string) (session *happydns.Session, err e
 	return s.getSession(fmt.Sprintf("user.session-%s", id))
 }
 
-func (s *LevelDBStorage) GetAuthUserSessions(user *happydns.UserAuth) (sessions []*happydns.Session, err error) {
+func (s *LevelDBStorage) ListAuthUserSessions(user *happydns.UserAuth) (sessions []*happydns.Session, err error) {
 	iter := s.search("user.session-")
 	defer iter.Release()
 
@@ -60,7 +78,7 @@ func (s *LevelDBStorage) GetAuthUserSessions(user *happydns.UserAuth) (sessions 
 	return
 }
 
-func (s *LevelDBStorage) GetUserSessions(userid happydns.Identifier) (sessions []*happydns.Session, err error) {
+func (s *LevelDBStorage) ListUserSessions(userid happydns.Identifier) (sessions []*happydns.Session, err error) {
 	iter := s.search("user.session-")
 	defer iter.Release()
 

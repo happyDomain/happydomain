@@ -32,6 +32,23 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+func (s *LevelDBStorage) ListAllProviders() (srcs happydns.ProviderMessages, err error) {
+	iter := s.search("provider-")
+	defer iter.Release()
+
+	for iter.Next() {
+		var srcMsg happydns.ProviderMessage
+		err = decodeData(iter.Value(), &srcMsg)
+		if err != nil {
+			return
+		}
+
+		srcs = append(srcs, &srcMsg)
+	}
+
+	return
+}
+
 func (s *LevelDBStorage) getProviderMeta(id happydns.Identifier) (srcMsg *happydns.ProviderMessage, err error) {
 	var v []byte
 	v, err = s.db.Get(id, nil)

@@ -52,7 +52,7 @@ func (bc *BackupController) DoBackup() (ret happydns.Backup) {
 	ret.DomainsLogs = map[string][]*happydns.DomainLog{}
 
 	// UserAuth
-	uas, err := bc.store.GetAuthUsers()
+	uas, err := bc.store.ListAllAuthUsers()
 	if err != nil {
 		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve AuthUsers: %s", err.Error()))
 	} else {
@@ -60,7 +60,7 @@ func (bc *BackupController) DoBackup() (ret happydns.Backup) {
 	}
 
 	// Users
-	us, err := bc.store.GetUsers()
+	us, err := bc.store.ListAllUsers()
 	if err != nil {
 		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Users: %s", err.Error()))
 	} else {
@@ -68,7 +68,7 @@ func (bc *BackupController) DoBackup() (ret happydns.Backup) {
 
 		for _, u := range us {
 			// Domains
-			ds, err := bc.store.GetDomains(u)
+			ds, err := bc.store.ListDomains(u)
 			if err != nil {
 				ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Domain names of %s (%s): %s", u.Id.String(), u.Email, err.Error()))
 			} else {
@@ -104,7 +104,7 @@ func (bc *BackupController) DoBackup() (ret happydns.Backup) {
 			}
 
 			// Sessions
-			ss, err := bc.store.GetUserSessions(u.Id)
+			ss, err := bc.store.ListUserSessions(u.Id)
 			if err != nil {
 				ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Sessions: %s", err.Error()))
 			} else {

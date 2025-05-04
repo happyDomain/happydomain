@@ -32,7 +32,25 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
-func (s *LevelDBStorage) GetDomains(u *happydns.User) (domains happydns.Domains, err error) {
+func (s *LevelDBStorage) ListAllDomains() (domains happydns.Domains, err error) {
+	iter := s.search("domain-")
+	defer iter.Release()
+
+	for iter.Next() {
+		var domain happydns.Domain
+
+		err = decodeData(iter.Value(), &domain)
+		if err != nil {
+			return
+		}
+
+		domains = append(domains, &domain)
+	}
+
+	return
+}
+
+func (s *LevelDBStorage) ListDomains(u *happydns.User) (domains happydns.Domains, err error) {
 	iter := s.search("domain-")
 	defer iter.Release()
 
@@ -63,7 +81,7 @@ func (s *LevelDBStorage) GetDomain(id happydns.Identifier) (*happydns.Domain, er
 }
 
 func (s *LevelDBStorage) GetDomainByDN(u *happydns.User, dn string) ([]*happydns.Domain, error) {
-	domains, err := s.GetDomains(u)
+	domains, err := s.ListDomains(u)
 	if err != nil {
 		return nil, err
 	}

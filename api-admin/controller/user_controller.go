@@ -60,7 +60,7 @@ func (uc *UserController) UserHandler(c *gin.Context) {
 }
 
 func (uc *UserController) GetUsers(c *gin.Context) {
-	users, err := uc.store.GetUsers()
+	users, err := uc.store.ListAllUsers()
 	happydns.ApiResponse(c, users, err)
 }
 

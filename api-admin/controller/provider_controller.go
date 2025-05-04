@@ -56,7 +56,7 @@ func (pc *ProviderController) ListProviders(c *gin.Context) {
 
 	var providers []*happydns.ProviderMeta
 
-	users, err := pc.store.GetUsers()
+	users, err := pc.store.ListAllUsers()
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, fmt.Errorf("unable to list users: %w", err))
 		return

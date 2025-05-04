@@ -57,7 +57,7 @@ func (uu *userUsecase) ChangeUserSettings(user *happydns.User, settings happydns
 
 func (uu *userUsecase) CloseUserSessions(userid happydns.Identifier) error {
 	// Retrieve all user's sessions to disconnect them
-	sessions, err := uu.store.GetUserSessions(userid)
+	sessions, err := uu.store.ListUserSessions(userid)
 	if err != nil {
 		return happydns.InternalError{
 			Err:         fmt.Errorf("unable to GetUserSessions in deleteUser: %s", err.Error()),

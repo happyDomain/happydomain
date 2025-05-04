@@ -130,13 +130,13 @@ func (c *insightsCollector) collect() (*happydns.Insights, error) {
 	// Database info
 	data.Database.Version = c.store.SchemaVersion()
 
-	if authusers, err := c.store.GetAuthUsers(); err != nil {
+	if authusers, err := c.store.ListAllAuthUsers(); err != nil {
 		return nil, err
 	} else {
 		data.Database.NbAuthUsers = len(authusers)
 	}
 
-	users, err := c.store.GetUsers()
+	users, err := c.store.ListAllUsers()
 	if err != nil {
 		return nil, err
 	} else {
@@ -151,7 +151,7 @@ func (c *insightsCollector) collect() (*happydns.Insights, error) {
 			}
 		}
 
-		if domains, err := c.store.GetDomains(user); err == nil {
+		if domains, err := c.store.ListDomains(user); err == nil {
 			data.Database.NbDomains += len(domains)
 
 			for _, domain := range domains {
