@@ -36,10 +36,10 @@ import (
 type ZoneController struct {
 	domainService happydns.DomainUsecase
 	zoneService   happydns.ZoneUsecase
-	store         storage.Storage
+	store         storage.ZoneStorage
 }
 
-func NewZoneController(domainService happydns.DomainUsecase, zoneService happydns.ZoneUsecase, store storage.Storage) *ZoneController {
+func NewZoneController(domainService happydns.DomainUsecase, zoneService happydns.ZoneUsecase, store storage.ZoneStorage) *ZoneController {
 	return &ZoneController{
 		domainService,
 		zoneService,
@@ -92,16 +92,4 @@ func (zc *ZoneController) UpdateZone(c *gin.Context) {
 	uz.Id = zone.Id
 
 	happydns.ApiResponse(c, uz, zc.store.UpdateZone(uz))
-}
-
-func (zc *ZoneController) UpdateZones(c *gin.Context) {
-	domain := c.MustGet("domain").(*happydns.Domain)
-
-	err := c.ShouldBindJSON(&domain.ZoneHistory)
-	if err != nil {
-		middleware.ErrorResponse(c, http.StatusNotFound, fmt.Errorf("something is wrong in received data: %w", err))
-		return
-	}
-
-	happydns.ApiResponse(c, domain, zc.store.UpdateDomain(domain))
 }

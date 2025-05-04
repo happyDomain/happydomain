@@ -27,21 +27,8 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-type Storage interface {
-	// SchemaVersion returns the version of the migration currently in use.
-	SchemaVersion() int
-
-	// DoMigration is the first function called.
-	DoMigration() error
-
-	// Tidy should optimize the database, looking for orphan records, ...
-	Tidy() error
-
-	// Close shutdown the connection with the database and releases all structure.
-	Close() error
-
-	// AUTH -------------------------------------------------------
-
+// AUTH ---------------------------------------------------------------
+type AuthUserStorage interface {
 	// ListAllAuthUsers retrieves the list of known Users.
 	ListAllAuthUsers() (happydns.UserAuths, error)
 
@@ -65,9 +52,10 @@ type Storage interface {
 
 	// ClearAuthUsers deletes all AuthUsers present in the database.
 	ClearAuthUsers() error
+}
 
-	// DOMAINS ----------------------------------------------------
-
+// DOMAINS ------------------------------------------------------------
+type DomainStorage interface {
 	// ListAllDomains retrieves the list of known Domains.
 	ListAllDomains() (happydns.Domains, error)
 
@@ -101,17 +89,19 @@ type Storage interface {
 	UpdateDomainLog(*happydns.Domain, *happydns.DomainLog) error
 
 	DeleteDomainLog(*happydns.Domain, *happydns.DomainLog) error
+}
 
-	// INSIGHTS ----------------------------------------------------
-
+// INSIGHTS -----------------------------------------------------------
+type InsightStorage interface {
 	// InsightsRun registers a insights process run just now.
 	InsightsRun() error
 
 	// LastInsightsRun gets the last time insights process run.
 	LastInsightsRun() (*time.Time, happydns.Identifier, error)
+}
 
-	// PROVIDERS ----------------------------------------------------
-
+// PROVIDERS ----------------------------------------------------------
+type ProviderStorage interface {
 	// ListAllProviders retrieves the list of known Providers.
 	ListAllProviders() (happydns.ProviderMessages, error)
 
@@ -132,9 +122,10 @@ type Storage interface {
 
 	// ClearProviders deletes all Providers present in the database.
 	ClearProviders() error
+}
 
-	// SESSIONS ---------------------------------------------------
-
+// SESSIONS -----------------------------------------------------------
+type SessionStorage interface {
 	// ListAllSessions retrieves the list of known Sessions.
 	ListAllSessions() ([]*happydns.Session, error)
 
@@ -155,9 +146,10 @@ type Storage interface {
 
 	// ClearSessions deletes all Sessions present in the database.
 	ClearSessions() error
+}
 
-	// USERS ------------------------------------------------------
-
+// USERS --------------------------------------------------------------
+type UserStorage interface {
 	// ListAllUsers retrieves the list of known Users.
 	ListAllUsers() (happydns.Users, error)
 
@@ -175,9 +167,10 @@ type Storage interface {
 
 	// ClearUsers deletes all Users present in the database.
 	ClearUsers() error
+}
 
-	// ZONES ------------------------------------------------------
-
+// ZONES --------------------------------------------------------------
+type ZoneStorage interface {
 	// ListAllZones retrieves the list of known Zones.
 	ListAllZones() ([]*happydns.ZoneMessage, error)
 
@@ -198,4 +191,47 @@ type Storage interface {
 
 	// ClearZones deletes all Zones present in the database.
 	ClearZones() error
+}
+
+type AuthenticationStorage interface {
+	AuthUserStorage
+	UserStorage
+}
+
+type AuthUserAndSessionStorage interface {
+	AuthUserStorage
+	SessionStorage
+}
+
+type ProviderAndDomainStorage interface {
+	ProviderStorage
+	DomainStorage
+}
+
+type UserAndSessionStorage interface {
+	AuthUserStorage
+	SessionStorage
+	UserStorage
+}
+
+type Storage interface {
+	AuthUserStorage
+	DomainStorage
+	InsightStorage
+	ProviderStorage
+	SessionStorage
+	UserStorage
+	ZoneStorage
+
+	// SchemaVersion returns the version of the migration currently in use.
+	SchemaVersion() int
+
+	// DoMigration is the first function called.
+	DoMigration() error
+
+	// Tidy should optimize the database, looking for orphan records, ...
+	Tidy() error
+
+	// Close shutdown the connection with the database and releases all structure.
+	Close() error
 }

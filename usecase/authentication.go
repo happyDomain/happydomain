@@ -32,11 +32,11 @@ import (
 
 type loginUsecase struct {
 	config      *config.Options
-	store       storage.Storage
+	store       storage.AuthenticationStorage
 	userService happydns.UserUsecase
 }
 
-func NewAuthenticationUsecase(cfg *config.Options, store storage.Storage, userService happydns.UserUsecase) happydns.AuthenticationUsecase {
+func NewAuthenticationUsecase(cfg *config.Options, store storage.AuthenticationStorage, userService happydns.UserUsecase) happydns.AuthenticationUsecase {
 	return &loginUsecase{
 		config:      cfg,
 		store:       store,

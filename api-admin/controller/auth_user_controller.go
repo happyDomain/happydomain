@@ -36,10 +36,10 @@ import (
 
 type AuthUserController struct {
 	auService happydns.AuthUserUsecase
-	store     storage.Storage
+	store     storage.AuthUserStorage
 }
 
-func NewAuthUserController(auService happydns.AuthUserUsecase, store storage.Storage) *AuthUserController {
+func NewAuthUserController(auService happydns.AuthUserUsecase, store storage.AuthUserStorage) *AuthUserController {
 	return &AuthUserController{
 		auService,
 		store,

@@ -33,10 +33,10 @@ import (
 )
 
 type sessionUsecase struct {
-	store storage.Storage
+	store storage.SessionStorage
 }
 
-func NewSessionUsecase(store storage.Storage) happydns.SessionUsecase {
+func NewSessionUsecase(store storage.SessionStorage) happydns.SessionUsecase {
 	return &sessionUsecase{
 		store: store,
 	}

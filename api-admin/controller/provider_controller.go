@@ -36,10 +36,10 @@ import (
 
 type ProviderController struct {
 	providerService happydns.ProviderUsecase
-	store           storage.Storage
+	store           storage.ProviderStorage
 }
 
-func NewProviderController(providerService happydns.ProviderUsecase, store storage.Storage) *ProviderController {
+func NewProviderController(providerService happydns.ProviderUsecase, store storage.ProviderStorage) *ProviderController {
 	return &ProviderController{
 		providerService,
 		store,
@@ -54,25 +54,19 @@ func (pc *ProviderController) ListProviders(c *gin.Context) {
 		return
 	}
 
-	var providers []*happydns.ProviderMeta
+	var res []*happydns.ProviderMeta
 
-	users, err := pc.store.ListAllUsers()
+	providers, err := pc.store.ListAllProviders()
 	if err != nil {
-		middleware.ErrorResponse(c, http.StatusInternalServerError, fmt.Errorf("unable to list users: %w", err))
+		middleware.ErrorResponse(c, http.StatusInternalServerError, fmt.Errorf("unable to list providers: %w", err))
 		return
 	}
 
-	for _, user := range users {
-		usersProviders, err := pc.store.ListProviders(user)
-		if err != nil {
-			middleware.ErrorResponse(c, http.StatusInternalServerError, fmt.Errorf("unable to list users: %w", err))
-			return
-		}
-
-		providers = append(providers, usersProviders.Metas()...)
+	for _, provider := range providers {
+		res = append(res, &provider.ProviderMeta)
 	}
 
-	happydns.ApiResponse(c, providers, nil)
+	happydns.ApiResponse(c, res, nil)
 }
 
 func (pc *ProviderController) AddProvider(c *gin.Context) {

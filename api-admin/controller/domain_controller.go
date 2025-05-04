@@ -37,10 +37,10 @@ import (
 
 type DomainController struct {
 	domainService happydns.DomainUsecase
-	store         storage.Storage
+	store         storage.DomainStorage
 }
 
-func NewDomainController(duService happydns.DomainUsecase, store storage.Storage) *DomainController {
+func NewDomainController(duService happydns.DomainUsecase, store storage.DomainStorage) *DomainController {
 	return &DomainController{
 		duService,
 		store,
@@ -55,21 +55,10 @@ func (dc *DomainController) ListDomains(c *gin.Context) {
 		return
 	}
 
-	var domains happydns.Domains
-
-	users, err := dc.store.ListAllUsers()
+	domains, err := dc.store.ListAllDomains()
 	if err != nil {
-		middleware.ErrorResponse(c, http.StatusInternalServerError, fmt.Errorf("unable to retrieve users list: %w", err))
+		middleware.ErrorResponse(c, http.StatusInternalServerError, fmt.Errorf("unable to retrieve domains list: %w", err))
 		return
-	}
-	for _, user := range users {
-		usersDomains, err := dc.store.ListDomains(user)
-		if err != nil {
-			middleware.ErrorResponse(c, http.StatusInternalServerError, fmt.Errorf("unable to retrieve %s's domains: %w", user.Email, err))
-			return
-		}
-
-		domains = append(domains, usersDomains...)
 	}
 
 	happydns.ApiResponse(c, domains, nil)
@@ -121,22 +110,15 @@ func (dc *DomainController) DeleteDomain(c *gin.Context) {
 }
 
 func (dc *DomainController) searchUserDomain(filter func(*happydns.Domain) bool) *happydns.User {
-	users, err := dc.store.ListAllUsers()
+	domains, err := dc.store.ListAllDomains()
 	if err != nil {
-		log.Println("Unable to retrieve users list:", err.Error())
+		log.Println("Unable to retrieve domains list:", err.Error())
 		return nil
 	}
-	for _, user := range users {
-		usersDomains, err := dc.store.ListDomains(user)
-		if err != nil {
-			log.Printf("Unable to retrieve %s's domains: %s", user.Email, err.Error())
-			continue
-		}
-
-		for _, domain := range usersDomains {
-			if filter(domain) {
-				return user
-			}
+	for _, domain := range domains {
+		if filter(domain) {
+			// Create a fake minimal user, as only the Id is required to perform further actions on database
+			return &happydns.User{Id: domain.Owner}
 		}
 	}
 
@@ -224,4 +206,16 @@ func (dc *DomainController) ClearDomains(c *gin.Context) {
 	}
 
 	happydns.ApiResponse(c, true, dc.store.ClearDomains())
+}
+
+func (dc *DomainController) UpdateZones(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+
+	err := c.ShouldBindJSON(&domain.ZoneHistory)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusNotFound, fmt.Errorf("something is wrong in received data: %w", err))
+		return
+	}
+
+	happydns.ApiResponse(c, domain, dc.store.UpdateDomain(domain))
 }

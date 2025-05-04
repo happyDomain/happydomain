@@ -38,11 +38,11 @@ import (
 type domainUsecase struct {
 	domainLogService happydns.DomainLogUsecase
 	providerService  happydns.ProviderUsecase
-	store            storage.Storage
+	store            storage.DomainStorage
 	zoneService      happydns.ZoneUsecase
 }
 
-func NewDomainUsecase(store storage.Storage, domainLogService happydns.DomainLogUsecase, providerService happydns.ProviderUsecase, zoneService happydns.ZoneUsecase) happydns.DomainUsecase {
+func NewDomainUsecase(store storage.DomainStorage, domainLogService happydns.DomainLogUsecase, providerService happydns.ProviderUsecase, zoneService happydns.ZoneUsecase) happydns.DomainUsecase {
 	return &domainUsecase{
 		domainLogService: domainLogService,
 		providerService:  providerService,
@@ -116,7 +116,7 @@ corrections:
 
 	// Create a new zone in history for futher updates
 	newZone := zone.DerivateNew()
-	err = du.store.CreateZone(newZone)
+	err = du.zoneService.CreateZone(newZone)
 	if err != nil {
 		return nil, happydns.InternalError{
 			Err:         fmt.Errorf("unable to CreateZone: %w", err),
@@ -138,15 +138,15 @@ corrections:
 	}
 
 	// Commit changes in previous zone
-	now := time.Now()
-	zone.ZoneMeta.IdAuthor = user.Id
-	zone.CommitMsg = &form.CommitMsg
-	zone.ZoneMeta.CommitDate = &now
-	zone.ZoneMeta.Published = &now
+	err = du.zoneService.UpdateZone(zone.ZoneMeta.Id, func(zone *happydns.Zone) {
+		now := time.Now()
+		zone.ZoneMeta.IdAuthor = user.Id
+		zone.CommitMsg = &form.CommitMsg
+		zone.ZoneMeta.CommitDate = &now
+		zone.ZoneMeta.Published = &now
 
-	zone.LastModified = time.Now()
-
-	err = du.store.UpdateZone(zone)
+		zone.LastModified = time.Now()
+	})
 	if err != nil {
 		return nil, happydns.InternalError{
 			Err:         fmt.Errorf("unable to UpdateZone: %w", err),

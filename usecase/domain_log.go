@@ -31,10 +31,10 @@ import (
 )
 
 type domainLogUsecase struct {
-	store storage.Storage
+	store storage.DomainStorage
 }
 
-func NewDomainLogUsecase(store storage.Storage) happydns.DomainLogUsecase {
+func NewDomainLogUsecase(store storage.DomainStorage) happydns.DomainLogUsecase {
 	return &domainLogUsecase{
 		store: store,
 	}

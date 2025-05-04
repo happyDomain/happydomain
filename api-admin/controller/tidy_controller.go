@@ -19,32 +19,25 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package route
+package controller
 
 import (
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happyDomain/api-admin/controller"
-	"git.happydns.org/happyDomain/api/middleware"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
-func declareDomainRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies, store storage.Storage) {
-	dc := controller.NewDomainController(dependancies.GetDomainService(), store)
+type TidyController struct {
+	store storage.Storage
+}
 
-	router.GET("/domains", dc.ListDomains)
-	router.POST("/domains", dc.NewDomain)
-	router.DELETE("/domains", dc.ClearDomains)
+func NewTidyController(store storage.Storage) *TidyController {
+	return &TidyController{
+		store: store,
+	}
+}
 
-	router.DELETE("/domains/:domain", dc.DeleteDomain)
-
-	apiDomainsRoutes := router.Group("/domains/:domain")
-	apiDomainsRoutes.Use(middleware.DomainHandler(dependancies.GetDomainService(), true))
-
-	apiDomainsRoutes.GET("", dc.GetDomain)
-	apiDomainsRoutes.PUT("", dc.UpdateDomain)
-
-	apiDomainsRoutes.PUT("/zones", dc.UpdateZones)
-	declareZoneRoutes(apiDomainsRoutes, dependancies, store)
+func (tc *TidyController) TidyDB(c *gin.Context) {
+	happydns.ApiResponse(c, true, tc.store.Tidy())
 }

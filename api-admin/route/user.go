@@ -45,6 +45,4 @@ func declareUsersRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDe
 
 	declareDomainRoutes(apiUsersRoutes, dependancies, store)
 	declareProviderRoutes(apiUsersRoutes, dependancies, store)
-
-	router.POST("/tidy", sc.TidyDB)
 }

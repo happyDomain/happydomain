@@ -34,10 +34,10 @@ import (
 type providerSettingsUsecase struct {
 	config          *config.Options
 	providerService happydns.ProviderUsecase
-	store           storage.Storage
+	store           storage.ProviderStorage
 }
 
-func NewProviderSettingsUsecase(cfg *config.Options, ps happydns.ProviderUsecase, store storage.Storage) happydns.ProviderSettingsUsecase {
+func NewProviderSettingsUsecase(cfg *config.Options, ps happydns.ProviderUsecase, store storage.ProviderStorage) happydns.ProviderSettingsUsecase {
 	return &providerSettingsUsecase{
 		config:          cfg,
 		providerService: ps,
