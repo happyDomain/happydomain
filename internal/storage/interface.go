@@ -231,9 +231,6 @@ type Storage interface {
 	// DoMigration is the first function called.
 	DoMigration() error
 
-	// Tidy should optimize the database, looking for orphan records, ...
-	Tidy() error
-
 	// Close shutdown the connection with the database and releases all structure.
 	Close() error
 }

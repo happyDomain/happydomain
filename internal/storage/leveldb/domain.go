@@ -24,7 +24,6 @@ package database
 import (
 	"bytes"
 	"fmt"
-	"log"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
@@ -122,53 +121,6 @@ func (s *LevelDBStorage) ClearDomains() error {
 
 	for iter.Next() {
 		err = tx.Delete(iter.Key(), nil)
-		if err != nil {
-			tx.Discard()
-			return err
-		}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		tx.Discard()
-		return err
-	}
-
-	return nil
-}
-
-func (s *LevelDBStorage) TidyDomains() error {
-	tx, err := s.db.OpenTransaction()
-	if err != nil {
-		return err
-	}
-
-	iter := tx.NewIterator(util.BytesPrefix([]byte("domain-")), nil)
-	defer iter.Release()
-
-	for iter.Next() {
-		domain, err := s.getDomain(string(iter.Key()))
-
-		if err == nil {
-			_, err = s.GetUser(domain.Owner)
-			if err == leveldb.ErrNotFound {
-				// Drop domain of unexistant users
-				err = tx.Delete(iter.Key(), nil)
-				log.Printf("Deleting orphan domain (user %s not found): %v\n", domain.Owner.String(), domain)
-			}
-
-			_, err = s.GetProvider(domain.IdProvider)
-			if err == leveldb.ErrNotFound {
-				// Drop domain of unexistant provider
-				err = tx.Delete(iter.Key(), nil)
-				log.Printf("Deleting orphan domain (provider %s not found): %v\n", domain.IdProvider.String(), domain)
-			}
-		} else {
-			// Drop unreadable domains
-			log.Printf("Deleting unreadable domain (%s): %v\n", err.Error(), domain)
-			err = tx.Delete(iter.Key(), nil)
-		}
-
 		if err != nil {
 			tx.Discard()
 			return err

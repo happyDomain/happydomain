@@ -23,8 +23,6 @@ package database
 
 import (
 	"fmt"
-	"log"
-	"strings"
 
 	"github.com/syndtr/goleveldb/leveldb/util"
 
@@ -83,66 +81,6 @@ func (s *LevelDBStorage) ClearZones() error {
 
 	for iter.Next() {
 		err = tx.Delete(iter.Key(), nil)
-		if err != nil {
-			tx.Discard()
-			return err
-		}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		tx.Discard()
-		return err
-	}
-
-	return nil
-}
-
-func (s *LevelDBStorage) TidyZones() error {
-	tx, err := s.db.OpenTransaction()
-	if err != nil {
-		return err
-	}
-
-	iter := tx.NewIterator(util.BytesPrefix([]byte("domain-")), nil)
-	defer iter.Release()
-
-	var referencedZones []happydns.Identifier
-
-	for iter.Next() {
-		domain, _ := s.getDomain(string(iter.Key()))
-
-		if domain != nil {
-			for _, zh := range domain.ZoneHistory {
-				referencedZones = append(referencedZones, zh)
-			}
-		}
-	}
-
-	iter = tx.NewIterator(util.BytesPrefix([]byte("domain.zone-")), nil)
-	defer iter.Release()
-
-	for iter.Next() {
-		if zoneId, err := happydns.NewIdentifierFromString(strings.TrimPrefix(string(iter.Key()), "domain.zone-")); err != nil {
-			// Drop zones with invalid ID
-			log.Printf("Deleting unindentified zone: key=%s\n", iter.Key())
-			err = tx.Delete(iter.Key(), nil)
-		} else {
-			foundZone := false
-			for _, zid := range referencedZones {
-				if zid.Equals(zoneId) {
-					foundZone = true
-					break
-				}
-			}
-
-			if !foundZone {
-				// Drop orphan zones
-				log.Printf("Deleting orphan zone: %s\n", zoneId.String())
-				err = tx.Delete(iter.Key(), nil)
-			}
-		}
-
 		if err != nil {
 			tx.Discard()
 			return err

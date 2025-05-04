@@ -23,12 +23,10 @@ package database
 
 import (
 	"fmt"
-	"log"
 
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 
-	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
@@ -110,46 +108,6 @@ func (s *LevelDBStorage) ClearUsers() error {
 
 	for iter.Next() {
 		err = tx.Delete(iter.Key(), nil)
-		if err != nil {
-			tx.Discard()
-			return err
-		}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		tx.Discard()
-		return err
-	}
-
-	return nil
-}
-
-func (s *LevelDBStorage) TidyUsers() error {
-	tx, err := s.db.OpenTransaction()
-	if err != nil {
-		return err
-	}
-
-	iter := tx.NewIterator(util.BytesPrefix([]byte("user-")), nil)
-	defer iter.Release()
-
-	for iter.Next() {
-		user, err := s.getUser(string(iter.Key()))
-
-		if err != nil {
-			// Drop unreadable providers
-			log.Printf("Deleting unreadable user (%s): %v\n", err.Error(), user)
-			err = tx.Delete(iter.Key(), nil)
-		} else {
-			_, err = s.GetAuthUser(user.Id)
-			if err == leveldb.ErrNotFound {
-				// Drop providers of unexistant users
-				log.Printf("Deleting orphan user (authuser %s not found): %v\n", user.Id.String(), user)
-				err = tx.Delete(iter.Key(), nil)
-			}
-		}
-
 		if err != nil {
 			tx.Discard()
 			return err

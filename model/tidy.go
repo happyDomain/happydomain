@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,24 +19,17 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package controller
+package happydns
 
-import (
-	"github.com/gin-gonic/gin"
+import ()
 
-	"git.happydns.org/happyDomain/model"
-)
-
-type TidyController struct {
-	tidyUpService happydns.TidyUpUseCase
-}
-
-func NewTidyController(tidyUpService happydns.TidyUpUseCase) *TidyController {
-	return &TidyController{
-		tidyUpService: tidyUpService,
-	}
-}
-
-func (tc *TidyController) TidyDB(c *gin.Context) {
-	happydns.ApiResponse(c, true, tc.tidyUpService.TidyAll())
+type TidyUpUseCase interface {
+	TidyAll() error
+	TidyAuthUsers() error
+	TidyDomains() error
+	TidyDomainLogs() error
+	TidyProviders() error
+	TidySessions() error
+	TidyUsers() error
+	TidyZones() error
 }
