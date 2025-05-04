@@ -58,53 +58,41 @@ func (s *LevelDBStorage) getDomain(id string) (z *happydns.Domain, err error) {
 	return
 }
 
-func (s *LevelDBStorage) GetDomain(u *happydns.User, id happydns.Identifier) (z *happydns.Domain, err error) {
-	z, err = s.getDomain(fmt.Sprintf("domain-%s", id.String()))
-
-	if err != nil {
-		return
-	}
-
-	if !bytes.Equal(z.Owner, u.Id) {
-		z = nil
-		err = leveldb.ErrNotFound
-	}
-
-	return
+func (s *LevelDBStorage) GetDomain(id happydns.Identifier) (*happydns.Domain, error) {
+	return s.getDomain(fmt.Sprintf("domain-%s", id.String()))
 }
 
-func (s *LevelDBStorage) GetDomainByDN(u *happydns.User, dn string) (*happydns.Domain, error) {
+func (s *LevelDBStorage) GetDomainByDN(u *happydns.User, dn string) ([]*happydns.Domain, error) {
 	domains, err := s.GetDomains(u)
 	if err != nil {
 		return nil, err
 	}
 
+	var ret []*happydns.Domain
 	for _, domain := range domains {
 		if domain.DomainName == dn {
-			return domain, nil
+			ret = append(ret, domain)
 		}
 	}
 
-	return nil, leveldb.ErrNotFound
+	if len(ret) == 0 {
+		return nil, leveldb.ErrNotFound
+	}
+
+	return ret, nil
 }
 
-func (s *LevelDBStorage) CreateDomain(u *happydns.User, z *happydns.Domain) error {
+func (s *LevelDBStorage) CreateDomain(z *happydns.Domain) error {
 	key, id, err := s.findIdentifierKey("domain-")
 	if err != nil {
 		return err
 	}
 
 	z.Id = id
-	z.Owner = u.Id
 	return s.put(key, z)
 }
 
 func (s *LevelDBStorage) UpdateDomain(z *happydns.Domain) error {
-	return s.put(fmt.Sprintf("domain-%s", z.Id.String()), z)
-}
-
-func (s *LevelDBStorage) UpdateDomainOwner(z *happydns.Domain, newOwner *happydns.User) error {
-	z.Owner = newOwner.Id
 	return s.put(fmt.Sprintf("domain-%s", z.Id.String()), z)
 }
 

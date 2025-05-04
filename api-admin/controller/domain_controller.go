@@ -87,7 +87,7 @@ func (dc *DomainController) NewDomain(c *gin.Context) {
 	ud.Id = nil
 	ud.Owner = user.Id
 
-	happydns.ApiResponse(c, ud, dc.store.CreateDomain(user, ud))
+	happydns.ApiResponse(c, ud, dc.store.CreateDomain(ud))
 }
 
 func (dc *DomainController) DeleteDomain(c *gin.Context) {
@@ -103,13 +103,18 @@ func (dc *DomainController) DeleteDomain(c *gin.Context) {
 			})
 		}
 
-		domain, err := dc.store.GetDomainByDN(user, c.Param("domain"))
+		domains, err := dc.store.GetDomainByDN(user, c.Param("domain"))
 		if err != nil {
 			middleware.ErrorResponse(c, http.StatusNotFound, err)
 			return
-		} else {
-			domainid = domain.Id
 		}
+
+		if len(domains) != 1 {
+			middleware.ErrorResponse(c, http.StatusNotFound, fmt.Errorf("too many domains with this FQDN, use domain identifier instead"))
+			return
+		}
+
+		domainid = domains[0].Id
 	}
 
 	happydns.ApiResponse(c, true, dc.store.DeleteDomain(domainid))
@@ -164,7 +169,17 @@ func (dc *DomainController) GetDomain(c *gin.Context) {
 			})
 		}
 
-		domain, err := dc.store.GetDomain(user, domainid)
+		domain, err := dc.store.GetDomain(domainid)
+		if err != nil {
+			happydns.ApiResponse(c, nil, err)
+			return
+		}
+
+		if !user.Id.Equals(domain.Owner) {
+			happydns.ApiResponse(c, nil, fmt.Errorf("domain not found"))
+			return
+		}
+
 		happydns.ApiResponse(c, domain, err)
 	}
 }
@@ -179,13 +194,6 @@ func (dc *DomainController) UpdateDomain(c *gin.Context) {
 		return
 	}
 	ud.Id = domain.Id
-
-	if !ud.Owner.Equals(domain.Owner) {
-		if err := dc.store.UpdateDomainOwner(domain, &happydns.User{Id: ud.Owner}); err != nil {
-			middleware.ErrorResponse(c, http.StatusBadRequest, err)
-			return
-		}
-	}
 
 	happydns.ApiResponse(c, ud, dc.store.UpdateDomain(ud))
 }

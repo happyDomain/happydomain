@@ -210,6 +210,7 @@ func (du *domainUsecase) CreateDomain(user *happydns.User, uz *happydns.Domain) 
 		}
 	}
 
+	uz.Owner = user.Id
 	uz.DomainName = dns.Fqdn(uz.DomainName)
 
 	if _, ok := dns.IsDomainName(uz.DomainName); !ok {
@@ -234,7 +235,7 @@ func (du *domainUsecase) CreateDomain(user *happydns.User, uz *happydns.Domain) 
 		}
 	}
 
-	if err := du.store.CreateDomain(user, uz); err != nil {
+	if err := du.store.CreateDomain(uz); err != nil {
 		return happydns.InternalError{
 			Err:         fmt.Errorf("unable to CreateDomain: %s", err),
 			UserMessage: "Sorry, we are unable to create your domain now.",
@@ -287,10 +288,22 @@ func (du *domainUsecase) ExtendsDomainWithZoneMeta(domain *happydns.Domain) (*ha
 }
 
 func (du *domainUsecase) GetUserDomain(user *happydns.User, did happydns.Identifier) (*happydns.Domain, error) {
-	return du.store.GetDomain(user, did)
+	domain, err := du.store.GetDomain(did)
+	if err != nil {
+		return nil, err
+	}
+
+	if !user.Id.Equals(domain.Owner) {
+		return nil, happydns.InternalError{
+			Err:        fmt.Errorf("domain not found"),
+			HTTPStatus: http.StatusNotFound,
+		}
+	}
+
+	return domain, nil
 }
 
-func (du *domainUsecase) GetUserDomainByFQDN(user *happydns.User, fqdn string) (*happydns.Domain, error) {
+func (du *domainUsecase) GetUserDomainByFQDN(user *happydns.User, fqdn string) ([]*happydns.Domain, error) {
 	return du.store.GetDomainByDN(user, fqdn)
 }
 
