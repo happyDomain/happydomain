@@ -48,11 +48,11 @@ type Storage interface {
 	// GetAuthUser retrieves the User with the given identifier.
 	GetAuthUser(id happydns.Identifier) (*happydns.UserAuth, error)
 
-	// GetAuthUserByEmail retrives the User with the given email address.
+	// GetAuthUserByEmail retrieves the User with the given email address.
 	GetAuthUserByEmail(email string) (*happydns.UserAuth, error)
 
 	// AuthUserExists checks if the given email address is already associated to an User.
-	AuthUserExists(email string) bool
+	AuthUserExists(email string) (bool, error)
 
 	// CreateAuthUser creates a record in the database for the given User.
 	CreateAuthUser(user *happydns.UserAuth) error
@@ -164,7 +164,7 @@ type Storage interface {
 	// GetUser retrieves the User with the given identifier.
 	GetUser(id happydns.Identifier) (*happydns.User, error)
 
-	// GetUserByEmail retrives the User with the given email address.
+	// GetUserByEmail retrieves the User with the given email address.
 	GetUserByEmail(email string) (*happydns.User, error)
 
 	// CreateOrUpdateUser updates the fields of the given User.
@@ -181,7 +181,7 @@ type Storage interface {
 	// ListAllZones retrieves the list of known Zones.
 	ListAllZones() ([]*happydns.ZoneMessage, error)
 
-	// GetZoneMeta retrives metadatas of the Zone with the given identifier.
+	// GetZoneMeta retrieves metadatas of the Zone with the given identifier.
 	GetZoneMeta(id happydns.Identifier) (*happydns.ZoneMeta, error)
 
 	// GetZone retrieves the full Zone (including Services and metadatas) which have the given identifier.

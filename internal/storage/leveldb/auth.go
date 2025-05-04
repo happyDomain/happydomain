@@ -81,19 +81,19 @@ func (s *LevelDBStorage) GetAuthUserByEmail(email string) (u *happydns.UserAuth,
 	return nil, fmt.Errorf("Unable to find user with email address '%s'.", email)
 }
 
-func (s *LevelDBStorage) AuthUserExists(email string) bool {
+func (s *LevelDBStorage) AuthUserExists(email string) (bool, error) {
 	users, err := s.ListAllAuthUsers()
 	if err != nil {
-		return false
+		return false, err
 	}
 
 	for _, user := range users {
 		if user.Email == email {
-			return true
+			return true, nil
 		}
 	}
 
-	return false
+	return false, nil
 }
 
 func (s *LevelDBStorage) CreateAuthUser(u *happydns.UserAuth) error {

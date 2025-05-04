@@ -115,7 +115,14 @@ func (auu *authUserUsecase) CreateAuthUser(uu happydns.UserRegistration) (*happy
 		return nil, fmt.Errorf("The given password is invalid.")
 	}
 
-	if auu.store.AuthUserExists(uu.Email) {
+	exists, err := auu.store.AuthUserExists(uu.Email)
+	if err != nil {
+		return nil, happydns.InternalError{
+			Err:         fmt.Errorf("unable to AuthUserExists in CreateAuthUser: %w", err),
+			UserMessage: "Sorry, we are currently unable to create your account. Please try again later.",
+		}
+	}
+	if exists {
 		return nil, fmt.Errorf("An account already exists with the given address. Try login now.")
 	}
 
@@ -128,7 +135,7 @@ func (auu *authUserUsecase) CreateAuthUser(uu happydns.UserRegistration) (*happy
 
 	if err := auu.store.CreateAuthUser(user); err != nil {
 		return nil, happydns.InternalError{
-			Err:         fmt.Errorf("unable to CreateUser in registerUser: %w", err),
+			Err:         fmt.Errorf("unable to CreateUser in CreateAuthUser: %w", err),
 			UserMessage: "Sorry, we are currently unable to create your account. Please try again later.",
 		}
 	}
