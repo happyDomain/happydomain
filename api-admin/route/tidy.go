@@ -26,10 +26,11 @@ import (
 
 	"git.happydns.org/happyDomain/api-admin/controller"
 	"git.happydns.org/happyDomain/internal/storage"
+	"git.happydns.org/happyDomain/usecase"
 )
 
 func declareTidyRoutes(router *gin.RouterGroup, store storage.Storage) {
-	tc := controller.NewTidyController(store)
+	tc := controller.NewTidyController(usecase.NewTidyUpUsecase(store))
 
 	router.POST("/tidy", tc.TidyDB)
 }

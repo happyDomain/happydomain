@@ -23,13 +23,10 @@ package database
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
-
-	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
 func (s *LevelDBStorage) ListAllDomainLogs() (storage.Iterator[happydns.DomainLogWithDomainId], error) {
@@ -99,40 +96,4 @@ func (s *LevelDBStorage) UpdateDomainLog(d *happydns.Domain, l *happydns.DomainL
 
 func (s *LevelDBStorage) DeleteDomainLog(d *happydns.Domain, l *happydns.DomainLog) error {
 	return s.delete(fmt.Sprintf("domain.log|%s|%s", d.Id.String(), l.Id.String()))
-}
-
-func (s *LevelDBStorage) TidyDomainLogs() error {
-	tx, err := s.db.OpenTransaction()
-	if err != nil {
-		return err
-	}
-
-	iter := tx.NewIterator(util.BytesPrefix([]byte("domain.log|")), nil)
-	defer iter.Release()
-
-	for iter.Next() {
-		l, _, err := s.getDomainLog(string(iter.Key()))
-
-		if err != nil {
-			if l != nil {
-				log.Printf("Deleting log without valid domain: %s (%s)\n", l.Id.String(), err.Error())
-			} else {
-				log.Printf("Deleting unreadable log (%s): %v\n", err.Error(), l)
-			}
-			err = tx.Delete(iter.Key(), nil)
-		}
-
-		if err != nil {
-			tx.Discard()
-			return err
-		}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		tx.Discard()
-		return err
-	}
-
-	return nil
 }

@@ -36,11 +36,6 @@ func migrateFrom5(s *LevelDBStorage) (err error) {
 		return
 	}
 
-	err = s.Tidy()
-	if err != nil {
-		return
-	}
-
 	return
 }
 
