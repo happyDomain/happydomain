@@ -76,8 +76,8 @@ type ProviderMeta struct {
 	// Id is the Provider's identifier.
 	Id Identifier `json:"_id" swaggertype:"string"`
 
-	// OwnerId is the User's identifier for the current Provider.
-	OwnerId Identifier `json:"_ownerid" swaggertype:"string"`
+	// Owner is the User's identifier for the current Provider.
+	Owner Identifier `json:"_ownerid" swaggertype:"string"`
 
 	// Comment is a string that helps user to distinguish the Provider.
 	Comment string `json:"_comment,omitempty"`

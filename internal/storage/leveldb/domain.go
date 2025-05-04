@@ -44,7 +44,7 @@ func (s *LevelDBStorage) GetDomains(u *happydns.User) (domains happydns.Domains,
 			return
 		}
 
-		if bytes.Equal(z.IdUser, u.Id) {
+		if bytes.Equal(z.Owner, u.Id) {
 			domains = append(domains, &z)
 		}
 	}
@@ -65,7 +65,7 @@ func (s *LevelDBStorage) GetDomain(u *happydns.User, id happydns.Identifier) (z 
 		return
 	}
 
-	if !bytes.Equal(z.IdUser, u.Id) {
+	if !bytes.Equal(z.Owner, u.Id) {
 		z = nil
 		err = leveldb.ErrNotFound
 	}
@@ -95,7 +95,7 @@ func (s *LevelDBStorage) CreateDomain(u *happydns.User, z *happydns.Domain) erro
 	}
 
 	z.Id = id
-	z.IdUser = u.Id
+	z.Owner = u.Id
 	return s.put(key, z)
 }
 
@@ -104,7 +104,7 @@ func (s *LevelDBStorage) UpdateDomain(z *happydns.Domain) error {
 }
 
 func (s *LevelDBStorage) UpdateDomainOwner(z *happydns.Domain, newOwner *happydns.User) error {
-	z.IdUser = newOwner.Id
+	z.Owner = newOwner.Id
 	return s.put(fmt.Sprintf("domain-%s", z.Id.String()), z)
 }
 
@@ -157,11 +157,11 @@ func (s *LevelDBStorage) TidyDomains() error {
 
 		if err == nil {
 			var u *happydns.User
-			u, err = s.GetUser(domain.IdUser)
+			u, err = s.GetUser(domain.Owner)
 			if err == leveldb.ErrNotFound {
 				// Drop domain of unexistant users
 				err = tx.Delete(iter.Key(), nil)
-				log.Printf("Deleting orphan domain (user %s not found): %v\n", domain.IdUser.String(), domain)
+				log.Printf("Deleting orphan domain (user %s not found): %v\n", domain.Owner.String(), domain)
 			}
 
 			_, err = s.GetProvider(u, domain.IdProvider)

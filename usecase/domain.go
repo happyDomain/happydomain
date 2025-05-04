@@ -323,7 +323,7 @@ func (du *domainUsecase) ImportZone(user *happydns.User, domain *happydns.Domain
 
 	myZone := &happydns.Zone{
 		ZoneMeta: happydns.ZoneMeta{
-			IdAuthor:     domain.IdUser,
+			IdAuthor:     domain.Owner,
 			DefaultTTL:   defaultTTL,
 			LastModified: now,
 			CommitMsg:    &commit,

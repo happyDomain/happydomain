@@ -38,8 +38,8 @@ type Domain struct {
 	// Id is the Domain's identifier in the database.
 	Id Identifier `json:"id" swaggertype:"string"`
 
-	// IdUser is the identifier of the Domain's Owner.
-	IdUser Identifier `json:"id_owner" swaggertype:"string"`
+	// Owner is the identifier of the Domain's Owner.
+	Owner Identifier `json:"id_owner" swaggertype:"string"`
 
 	// IsProvider is the identifier of the Provider used to access and edit the
 	// Domain.
