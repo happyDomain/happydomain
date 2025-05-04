@@ -31,7 +31,7 @@ import (
 )
 
 func declareZoneServiceRoutes(apiZonesRoutes *gin.RouterGroup, zc *controller.ZoneController, dependancies happydns.UsecaseDependancies, store storage.Storage) {
-	sc := controller.NewServiceController(dependancies.GetServiceService(), dependancies.GetZoneService(), store)
+	sc := controller.NewServiceController(dependancies.GetServiceService(), dependancies.GetZoneService())
 
 	apiZonesServiceIdRoutes := apiZonesRoutes.Group("/services/:serviceid")
 	apiZonesServiceIdRoutes.Use(middleware.ServiceIdHandler(dependancies.GetServiceService()))

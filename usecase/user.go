@@ -35,10 +35,10 @@ import (
 
 type userUsecase struct {
 	newsletter happydns.NewsletterSubscriptor
-	store      storage.Storage
+	store      storage.UserAndSessionStorage
 }
 
-func NewUserUsecase(store storage.Storage, ns happydns.NewsletterSubscriptor) happydns.UserUsecase {
+func NewUserUsecase(store storage.UserAndSessionStorage, ns happydns.NewsletterSubscriptor) happydns.UserUsecase {
 	return &userUsecase{
 		newsletter: ns,
 		store:      store,

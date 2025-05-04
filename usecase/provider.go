@@ -37,7 +37,7 @@ type providerUsecase struct {
 	config *config.Options
 }
 
-func NewProviderUsecase(cfg *config.Options, store storage.Storage) happydns.ProviderUsecase {
+func NewProviderUsecase(cfg *config.Options, store storage.ProviderAndDomainStorage) happydns.ProviderUsecase {
 	return &providerUsecase{
 		ProviderUsecase: NewAdminProviderUsecase(store),
 		config:          cfg,
@@ -89,10 +89,10 @@ func (pu *providerUsecase) UpdateProviderFromMessage(providerid happydns.Identif
 }
 
 type adminProviderUsecase struct {
-	store storage.Storage
+	store storage.ProviderAndDomainStorage
 }
 
-func NewAdminProviderUsecase(store storage.Storage) happydns.ProviderUsecase {
+func NewAdminProviderUsecase(store storage.ProviderAndDomainStorage) happydns.ProviderUsecase {
 	return &adminProviderUsecase{
 		store: store,
 	}

@@ -38,10 +38,10 @@ import (
 type authUserUsecase struct {
 	config *config.Options
 	mailer *mailer.Mailer
-	store  storage.Storage
+	store  storage.AuthUserAndSessionStorage
 }
 
-func NewAuthUserUsecase(cfg *config.Options, m *mailer.Mailer, store storage.Storage) happydns.AuthUserUsecase {
+func NewAuthUserUsecase(cfg *config.Options, m *mailer.Mailer, store storage.AuthUserAndSessionStorage) happydns.AuthUserUsecase {
 	return &authUserUsecase{
 		config: cfg,
 		mailer: m,

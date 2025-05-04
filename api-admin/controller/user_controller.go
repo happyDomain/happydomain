@@ -34,7 +34,7 @@ import (
 
 type UserController struct {
 	userService happydns.UserUsecase
-	store       storage.Storage
+	store       storage.UserStorage
 }
 
 func NewUserController(store storage.Storage, userService happydns.UserUsecase) *UserController {
@@ -103,8 +103,4 @@ func (uc *UserController) DeleteUser(c *gin.Context) {
 	user := c.MustGet("user").(*happydns.User)
 
 	happydns.ApiResponse(c, true, uc.store.DeleteUser(user.Id))
-}
-
-func (uc *UserController) TidyDB(c *gin.Context) {
-	happydns.ApiResponse(c, true, uc.store.Tidy())
 }

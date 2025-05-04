@@ -39,5 +39,6 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine, s storage.Storage, d
 	declareSessionsRoutes(cfg, apiRoutes, s)
 	declareUserAuthsRoutes(apiRoutes, dependancies, s)
 	declareUsersRoutes(apiRoutes, dependancies, s)
+	declareTidyRoutes(apiRoutes, s)
 	api.DeclareVersionRoutes(apiRoutes)
 }

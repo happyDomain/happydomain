@@ -36,10 +36,10 @@ import (
 type zoneUsecase struct {
 	providerService happydns.ProviderUsecase
 	serviceService  happydns.ServiceUsecase
-	store           storage.Storage
+	store           storage.ZoneStorage
 }
 
-func NewZoneUsecase(pu happydns.ProviderUsecase, su happydns.ServiceUsecase, store storage.Storage) happydns.ZoneUsecase {
+func NewZoneUsecase(pu happydns.ProviderUsecase, su happydns.ServiceUsecase, store storage.ZoneStorage) happydns.ZoneUsecase {
 	return &zoneUsecase{
 		providerService: pu,
 		serviceService:  su,

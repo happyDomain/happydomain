@@ -25,26 +25,11 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/api-admin/controller"
-	"git.happydns.org/happyDomain/api/middleware"
 	"git.happydns.org/happyDomain/internal/storage"
-	"git.happydns.org/happyDomain/model"
 )
 
-func declareDomainRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies, store storage.Storage) {
-	dc := controller.NewDomainController(dependancies.GetDomainService(), store)
+func declareTidyRoutes(router *gin.RouterGroup, store storage.Storage) {
+	tc := controller.NewTidyController(store)
 
-	router.GET("/domains", dc.ListDomains)
-	router.POST("/domains", dc.NewDomain)
-	router.DELETE("/domains", dc.ClearDomains)
-
-	router.DELETE("/domains/:domain", dc.DeleteDomain)
-
-	apiDomainsRoutes := router.Group("/domains/:domain")
-	apiDomainsRoutes.Use(middleware.DomainHandler(dependancies.GetDomainService(), true))
-
-	apiDomainsRoutes.GET("", dc.GetDomain)
-	apiDomainsRoutes.PUT("", dc.UpdateDomain)
-
-	apiDomainsRoutes.PUT("/zones", dc.UpdateZones)
-	declareZoneRoutes(apiDomainsRoutes, dependancies, store)
+	router.POST("/tidy", tc.TidyDB)
 }

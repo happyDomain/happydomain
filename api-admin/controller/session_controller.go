@@ -33,10 +33,10 @@ import (
 
 type SessionController struct {
 	config *config.Options
-	store  storage.Storage
+	store  storage.SessionStorage
 }
 
-func NewSessionController(cfg *config.Options, store storage.Storage) *SessionController {
+func NewSessionController(cfg *config.Options, store storage.SessionStorage) *SessionController {
 	return &SessionController{
 		config: cfg,
 		store:  store,

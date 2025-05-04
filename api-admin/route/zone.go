@@ -34,8 +34,8 @@ func declareZoneRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDep
 	zc := controller.NewZoneController(dependancies.GetDomainService(), dependancies.GetZoneService(), store)
 
 	router.GET("/zones", zc.ListZones)
-	router.PUT("/zones", zc.UpdateZones)
 	router.POST("/zones", zc.AddZone)
+	// PUT /zones is handled by DomainController
 
 	router.DELETE("/zones/:zoneid", zc.DeleteZone)
 

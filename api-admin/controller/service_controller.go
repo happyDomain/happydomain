@@ -28,7 +28,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/api/middleware"
-	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/usecase"
 )
@@ -36,14 +35,12 @@ import (
 type ServiceController struct {
 	serviceService happydns.ServiceUsecase
 	zoneService    happydns.ZoneUsecase
-	store          storage.Storage
 }
 
-func NewServiceController(serviceService happydns.ServiceUsecase, zoneService happydns.ZoneUsecase, store storage.Storage) *ServiceController {
+func NewServiceController(serviceService happydns.ServiceUsecase, zoneService happydns.ZoneUsecase) *ServiceController {
 	return &ServiceController{
 		serviceService,
 		zoneService,
-		store,
 	}
 }
 
