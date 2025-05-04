@@ -67,6 +67,7 @@ func (psc *ProviderSettingsController) NextProviderSettingsState(c *gin.Context)
 	}
 
 	specs := c.MustGet("providerspecs").(happydns.ProviderBody)
+	pType := c.MustGet("providertype").(string)
 
 	var uss happydns.ProviderSettingsState
 	uss.ProviderBody = specs
@@ -77,7 +78,7 @@ func (psc *ProviderSettingsController) NextProviderSettingsState(c *gin.Context)
 		return
 	}
 
-	provider, form, err := psc.pSettingsServices.NextProviderSettingsState(specs, user, &uss)
+	provider, form, err := psc.pSettingsServices.NextProviderSettingsState(&uss, pType, user)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

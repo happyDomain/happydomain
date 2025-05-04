@@ -109,7 +109,9 @@ func (pu *adminProviderUsecase) CreateProvider(user *happydns.User, msg *happydn
 		return nil, fmt.Errorf("unable to validate provider attributes: %w", err)
 	}
 
-	p, err := pu.store.CreateProvider(user, provider.Provider, provider.Comment)
+	provider.Owner = user.Id
+
+	err = pu.store.CreateProvider(provider)
 	if err != nil {
 		return nil, happydns.InternalError{
 			Err:         fmt.Errorf("unable to CreateProvider: %w", err),
@@ -117,7 +119,7 @@ func (pu *adminProviderUsecase) CreateProvider(user *happydns.User, msg *happydn
 		}
 	}
 
-	return p, nil
+	return provider, nil
 }
 
 func (pu *adminProviderUsecase) DeleteProvider(user *happydns.User, providerid happydns.Identifier) error {
@@ -146,8 +148,21 @@ func (pu *adminProviderUsecase) DeleteProvider(user *happydns.User, providerid h
 	return nil
 }
 
+func (pu *adminProviderUsecase) getUserProvider(user *happydns.User, pid happydns.Identifier) (*happydns.ProviderMessage, error) {
+	p, err := pu.store.GetProvider(pid)
+	if err != nil {
+		return nil, err
+	}
+
+	if !user.Id.Equals(p.ProviderMeta.Owner) {
+		return nil, fmt.Errorf("Provider not found")
+	}
+
+	return p, err
+}
+
 func (pu *adminProviderUsecase) GetUserProvider(user *happydns.User, pid happydns.Identifier) (*happydns.Provider, error) {
-	p, err := pu.store.GetProvider(user, pid)
+	p, err := pu.getUserProvider(user, pid)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +171,7 @@ func (pu *adminProviderUsecase) GetUserProvider(user *happydns.User, pid happydn
 }
 
 func (pu *adminProviderUsecase) GetUserProviderMeta(user *happydns.User, pid happydns.Identifier) (*happydns.ProviderMeta, error) {
-	p, err := pu.store.GetProvider(user, pid)
+	p, err := pu.getUserProvider(user, pid)
 	if err != nil {
 		return nil, err
 	}

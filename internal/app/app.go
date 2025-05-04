@@ -182,8 +182,8 @@ func NewApp(cfg *config.Options) *App {
 
 	// Prepare usecases
 	app.ProviderSpecsService = usecase.NewProviderSpecsUsecase()
-	app.ProviderSettingsService = usecase.NewProviderSettingsUsecase(cfg, app.store)
 	app.ProviderService = usecase.NewProviderUsecase(cfg, app.store)
+	app.ProviderSettingsService = usecase.NewProviderSettingsUsecase(cfg, app.ProviderService, app.store)
 	app.ServiceService = usecase.NewServiceUsecase()
 	app.ServiceSpecsService = usecase.NewServiceSpecsUsecase()
 	app.ZoneService = usecase.NewZoneUsecase(app.ProviderService, app.ServiceService, app.store)

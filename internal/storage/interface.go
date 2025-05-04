@@ -113,16 +113,13 @@ type Storage interface {
 	ListProviders(u *happydns.User) (happydns.ProviderMessages, error)
 
 	// GetProvider retrieves the full Provider with the given identifier and owner.
-	GetProvider(u *happydns.User, id happydns.Identifier) (*happydns.ProviderMessage, error)
+	GetProvider(id happydns.Identifier) (*happydns.ProviderMessage, error)
 
 	// CreateProvider creates a record in the database for the given Provider.
-	CreateProvider(u *happydns.User, s happydns.ProviderBody, comment string) (*happydns.Provider, error)
+	CreateProvider(prvd *happydns.Provider) error
 
 	// UpdateProvider updates the fields of the given Provider.
-	UpdateProvider(s *happydns.Provider) error
-
-	// UpdateProviderOwner updates the owner of the given Provider.
-	UpdateProviderOwner(s *happydns.Provider, newOwner *happydns.User) error
+	UpdateProvider(prvd *happydns.Provider) error
 
 	// DeleteProvider removes the given Provider from the database.
 	DeleteProvider(happydns.Identifier) error

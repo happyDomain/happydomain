@@ -32,21 +32,23 @@ import (
 )
 
 type providerSettingsUsecase struct {
-	config *config.Options
-	store  storage.Storage
+	config          *config.Options
+	providerService happydns.ProviderUsecase
+	store           storage.Storage
 }
 
-func NewProviderSettingsUsecase(cfg *config.Options, store storage.Storage) happydns.ProviderSettingsUsecase {
+func NewProviderSettingsUsecase(cfg *config.Options, ps happydns.ProviderUsecase, store storage.Storage) happydns.ProviderSettingsUsecase {
 	return &providerSettingsUsecase{
-		config: cfg,
-		store:  store,
+		config:          cfg,
+		providerService: ps,
+		store:           store,
 	}
 }
 
-func (psu *providerSettingsUsecase) NextProviderSettingsState(pbody happydns.ProviderBody, user *happydns.User, state *happydns.ProviderSettingsState) (*happydns.Provider, *happydns.ProviderSettingsResponse, error) {
+func (psu *providerSettingsUsecase) NextProviderSettingsState(state *happydns.ProviderSettingsState, pType string, user *happydns.User) (*happydns.Provider, *happydns.ProviderSettingsResponse, error) {
 	fu := NewFormUsecase(psu.config)
 
-	form, p, err := forms.DoSettingState(fu, &state.FormState, pbody, forms.GenDefaultSettingsForm)
+	form, p, err := forms.DoSettingState(fu, &state.FormState, state.ProviderBody, forms.GenDefaultSettingsForm)
 
 	if err != nil {
 		if err != happydns.DoneForm {
@@ -61,7 +63,7 @@ func (psu *providerSettingsUsecase) NextProviderSettingsState(pbody happydns.Pro
 			}
 		}
 
-		p, err := pbody.InstantiateProvider()
+		p, err := state.ProviderBody.InstantiateProvider()
 		if err != nil {
 			return nil, nil, happydns.InternalError{
 				Err:        fmt.Errorf("unable to instantiate provider: %w", err),
@@ -79,8 +81,16 @@ func (psu *providerSettingsUsecase) NextProviderSettingsState(pbody happydns.Pro
 		}
 
 		if state.Id == nil {
+			provider := &happydns.Provider{
+				Provider: state.ProviderBody,
+				ProviderMeta: happydns.ProviderMeta{
+					Type:    pType,
+					Owner:   user.Id,
+					Comment: state.Name,
+				},
+			}
 			// Create a new Provider
-			p, err := psu.store.CreateProvider(user, pbody, state.Name)
+			err = psu.store.CreateProvider(provider)
 			if err != nil {
 				return nil, nil, happydns.InternalError{
 					Err:         fmt.Errorf("unable to CreateProvider: %w", err),
@@ -88,10 +98,10 @@ func (psu *providerSettingsUsecase) NextProviderSettingsState(pbody happydns.Pro
 				}
 			}
 
-			return p, nil, nil
+			return provider, nil, nil
 		} else {
 			// Update an existing Provider
-			p, err := psu.store.GetProvider(user, *state.Id)
+			p, err := psu.providerService.GetUserProvider(user, *state.Id)
 			if err != nil {
 				return nil, nil, happydns.InternalError{
 					Err:        fmt.Errorf("unable to retrieve the original provider: %w", err),

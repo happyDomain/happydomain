@@ -39,6 +39,7 @@ func ProviderSpecsHandler(c *gin.Context) {
 		return
 	}
 
+	c.Set("providertype", psid)
 	c.Set("providerspecs", pbody)
 
 	c.Next()
