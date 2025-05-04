@@ -52,21 +52,28 @@ func (bc *BackupController) DoBackup() (ret happydns.Backup) {
 	ret.DomainsLogs = map[string][]*happydns.DomainLog{}
 
 	// UserAuth
-	uas, err := bc.store.ListAllAuthUsers()
+	uai, err := bc.store.ListAllAuthUsers()
 	if err != nil {
 		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve AuthUsers: %s", err.Error()))
 	} else {
-		ret.UsersAuth = uas
+		defer uai.Close()
+		for uai.Next() {
+			ret.UsersAuth = append(ret.UsersAuth, uai.Item())
+		}
 	}
 
 	// Users
-	us, err := bc.store.ListAllUsers()
+	iter, err := bc.store.ListAllUsers()
 	if err != nil {
 		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Users: %s", err.Error()))
 	} else {
-		ret.Users = us
+		defer iter.Close()
 
-		for _, u := range us {
+		for iter.Next() {
+			u := iter.Item()
+
+			ret.Users = append(ret.Users, u)
+
 			// Domains
 			ds, err := bc.store.ListDomains(u)
 			if err != nil {

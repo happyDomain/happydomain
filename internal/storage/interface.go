@@ -30,7 +30,7 @@ import (
 // AUTH ---------------------------------------------------------------
 type AuthUserStorage interface {
 	// ListAllAuthUsers retrieves the list of known Users.
-	ListAllAuthUsers() (happydns.UserAuths, error)
+	ListAllAuthUsers() (Iterator[happydns.UserAuth], error)
 
 	// GetAuthUser retrieves the User with the given identifier.
 	GetAuthUser(id happydns.Identifier) (*happydns.UserAuth, error)
@@ -57,7 +57,7 @@ type AuthUserStorage interface {
 // DOMAINS ------------------------------------------------------------
 type DomainStorage interface {
 	// ListAllDomains retrieves the list of known Domains.
-	ListAllDomains() (happydns.Domains, error)
+	ListAllDomains() (Iterator[happydns.Domain], error)
 
 	// ListDomains retrieves all Domains associated to the given User.
 	ListDomains(u *happydns.User) (happydns.Domains, error)
@@ -82,6 +82,8 @@ type DomainStorage interface {
 
 	// DOMAIN LOGS --------------------------------------------------
 
+	ListAllDomainLogs() (Iterator[happydns.DomainLogWithDomainId], error)
+
 	GetDomainLogs(*happydns.Domain) ([]*happydns.DomainLog, error)
 
 	CreateDomainLog(*happydns.Domain, *happydns.DomainLog) error
@@ -103,7 +105,7 @@ type InsightStorage interface {
 // PROVIDERS ----------------------------------------------------------
 type ProviderStorage interface {
 	// ListAllProviders retrieves the list of known Providers.
-	ListAllProviders() (happydns.ProviderMessages, error)
+	ListAllProviders() (Iterator[happydns.ProviderMessage], error)
 
 	// ListProviders retrieves all providers own by the given User.
 	ListProviders(u *happydns.User) (happydns.ProviderMessages, error)
@@ -127,7 +129,7 @@ type ProviderStorage interface {
 // SESSIONS -----------------------------------------------------------
 type SessionStorage interface {
 	// ListAllSessions retrieves the list of known Sessions.
-	ListAllSessions() ([]*happydns.Session, error)
+	ListAllSessions() (Iterator[happydns.Session], error)
 
 	// GetSession retrieves the Session with the given identifier.
 	GetSession(id string) (*happydns.Session, error)
@@ -151,7 +153,7 @@ type SessionStorage interface {
 // USERS --------------------------------------------------------------
 type UserStorage interface {
 	// ListAllUsers retrieves the list of known Users.
-	ListAllUsers() (happydns.Users, error)
+	ListAllUsers() (Iterator[happydns.User], error)
 
 	// GetUser retrieves the User with the given identifier.
 	GetUser(id happydns.Identifier) (*happydns.User, error)
@@ -172,7 +174,7 @@ type UserStorage interface {
 // ZONES --------------------------------------------------------------
 type ZoneStorage interface {
 	// ListAllZones retrieves the list of known Zones.
-	ListAllZones() ([]*happydns.ZoneMessage, error)
+	ListAllZones() (Iterator[happydns.ZoneMessage], error)
 
 	// GetZoneMeta retrieves metadatas of the Zone with the given identifier.
 	GetZoneMeta(id happydns.Identifier) (*happydns.ZoneMeta, error)

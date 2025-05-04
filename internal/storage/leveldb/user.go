@@ -25,32 +25,16 @@ import (
 	"fmt"
 	"log"
 
+	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
-func (s *LevelDBStorage) ListAllUsers() (users happydns.Users, err error) {
+func (s *LevelDBStorage) ListAllUsers() (storage.Iterator[happydns.User], error) {
 	iter := s.search("user-")
-	defer iter.Release()
-
-	for iter.Next() {
-		var u happydns.User
-
-		err = decodeData(iter.Value(), &u)
-		if err != nil {
-			log.Printf("GetUsers: Unable to decode user %q: %s", iter.Key(), err.Error())
-		} else {
-			users = append(users, &u)
-		}
-	}
-
-	if len(users) > 0 {
-		err = nil
-	}
-
-	return
+	return NewLevelDBIterator[happydns.User](s.db, iter), nil
 }
 
 func (s *LevelDBStorage) getUser(key string) (u *happydns.User, err error) {
@@ -63,18 +47,16 @@ func (s *LevelDBStorage) GetUser(id happydns.Identifier) (u *happydns.User, err 
 	return s.getUser(fmt.Sprintf("user-%s", id.String()))
 }
 
-func (s *LevelDBStorage) GetUserByEmail(email string) (u *happydns.User, err error) {
-	var users happydns.Users
-
-	users, err = s.ListAllUsers()
+func (s *LevelDBStorage) GetUserByEmail(email string) (*happydns.User, error) {
+	users, err := s.ListAllUsers()
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	for _, user := range users {
+	for users.Next() {
+		user := users.Item()
 		if user.Email == email {
-			u = user
-			return
+			return user, nil
 		}
 	}
 
@@ -87,8 +69,8 @@ func (s *LevelDBStorage) UserExists(email string) bool {
 		return false
 	}
 
-	for _, user := range users {
-		if user.Email == email {
+	for users.Next() {
+		if users.Item().Email == email {
 			return true
 		}
 	}

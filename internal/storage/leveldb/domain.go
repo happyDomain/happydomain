@@ -26,28 +26,16 @@ import (
 	"fmt"
 	"log"
 
-	"git.happydns.org/happyDomain/model"
-
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
+
+	"git.happydns.org/happyDomain/internal/storage"
+	"git.happydns.org/happyDomain/model"
 )
 
-func (s *LevelDBStorage) ListAllDomains() (domains happydns.Domains, err error) {
+func (s *LevelDBStorage) ListAllDomains() (storage.Iterator[happydns.Domain], error) {
 	iter := s.search("domain-")
-	defer iter.Release()
-
-	for iter.Next() {
-		var domain happydns.Domain
-
-		err = decodeData(iter.Value(), &domain)
-		if err != nil {
-			return
-		}
-
-		domains = append(domains, &domain)
-	}
-
-	return
+	return NewLevelDBIterator[happydns.Domain](s.db, iter), nil
 }
 
 func (s *LevelDBStorage) ListDomains(u *happydns.User) (domains happydns.Domains, err error) {

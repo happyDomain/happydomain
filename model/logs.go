@@ -56,6 +56,11 @@ type DomainLog struct {
 	Level int8 `json:"level"`
 }
 
+type DomainLogWithDomainId struct {
+	DomainLog
+	DomainId Identifier
+}
+
 func NewDomainLog(u *User, level int8, content string) *DomainLog {
 	return &DomainLog{
 		IdUser:  u.Id,

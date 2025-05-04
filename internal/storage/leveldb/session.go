@@ -25,28 +25,16 @@ import (
 	"fmt"
 	"log"
 
+	"git.happydns.org/happyDomain/internal/storage"
+	"git.happydns.org/happyDomain/model"
+
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
-
-	"git.happydns.org/happyDomain/model"
 )
 
-func (s *LevelDBStorage) ListAllSessions() (sessions []*happydns.Session, err error) {
+func (s *LevelDBStorage) ListAllSessions() (storage.Iterator[happydns.Session], error) {
 	iter := s.search("user.session-")
-	defer iter.Release()
-
-	for iter.Next() {
-		var s happydns.Session
-
-		err = decodeData(iter.Value(), &s)
-		if err != nil {
-			return
-		}
-
-		sessions = append(sessions, &s)
-	}
-
-	return
+	return NewLevelDBIterator[happydns.Session](s.db, iter), nil
 }
 
 func (s *LevelDBStorage) getSession(id string) (session *happydns.Session, err error) {
