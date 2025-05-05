@@ -21,7 +21,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/yuin/goldmark v1.7.11
 	golang.org/x/crypto v0.37.0
-	golang.org/x/oauth2 v0.29.0
+	golang.org/x/oauth2 v0.30.0
 )
 
 require (
