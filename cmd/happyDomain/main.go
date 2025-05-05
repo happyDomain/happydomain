@@ -35,6 +35,7 @@ import (
 	"git.happydns.org/happyDomain/api/controller"
 	"git.happydns.org/happyDomain/internal/app"
 	"git.happydns.org/happyDomain/internal/config"
+	_ "git.happydns.org/happyDomain/internal/storage/inmemory"
 	_ "git.happydns.org/happyDomain/internal/storage/leveldb"
 	"git.happydns.org/happyDomain/model"
 	_ "git.happydns.org/happyDomain/services/abstract"
