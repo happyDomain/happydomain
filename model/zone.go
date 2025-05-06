@@ -157,7 +157,7 @@ type ZoneServices struct {
 }
 
 type ZoneUsecase interface {
-	AppendService(*Zone, string, string, *Service) error
+	AddService(*Zone, string, string, *Service) error
 	CreateZone(*Zone) error
 	DeleteZone(Identifier) error
 	DeleteService(zone *Zone, subdomain string, serviceid Identifier) error

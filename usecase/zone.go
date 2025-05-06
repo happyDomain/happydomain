@@ -47,7 +47,7 @@ func NewZoneUsecase(pu happydns.ProviderUsecase, su happydns.ServiceUsecase, sto
 	}
 }
 
-func (zu *zoneUsecase) AppendService(zone *happydns.Zone, subdomain, origin string, service *happydns.Service) error {
+func (zu *zoneUsecase) AddService(zone *happydns.Zone, subdomain, origin string, service *happydns.Service) error {
 	if service.Service == nil {
 		return happydns.InternalError{
 			Err:        fmt.Errorf("Unable to parse the given service."),

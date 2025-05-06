@@ -29,7 +29,7 @@ import (
 )
 
 func DeclareProviderSpecsRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
-	pc := controller.NewProviderSpecsController(dependancies.GetProviderSpecsService())
+	pc := controller.NewProviderSpecsController(dependancies.GetProviderSpecsUsecase())
 
 	router.GET("/providers/_specs", pc.ListProviders)
 

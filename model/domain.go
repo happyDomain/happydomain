@@ -23,8 +23,8 @@ package happydns
 
 import ()
 
-// DomainMinimal is used for swagger documentation as Domain add.
-type DomainMinimal struct {
+// DomainCreationInput is used for swagger documentation as Domain add.
+type DomainCreationInput struct {
 	// ProviderId is the identifier of the Provider used to access and edit the
 	// Domain.
 	ProviderId Identifier `json:"id_provider" swaggertype:"string"`
@@ -75,16 +75,15 @@ type DomainWithZoneMetadata struct {
 type DomainUsecase interface {
 	ApplyZoneCorrection(*User, *Domain, *Zone, *ApplyZoneForm) (*Zone, error)
 	ActionOnEditableZone(*User, *Domain, *Zone, func(*Zone) error) (*Zone, error)
-	AppendZoneService(*User, *Domain, *Zone, string, string, *Service) (*Zone, error)
+	AddServiceToZone(*User, *Domain, *Zone, string, string, *Service) (*Zone, error)
 	CreateDomain(*User, *Domain) error
 	DeleteDomain(Identifier) error
-	DeleteZoneService(user *User, domain *Domain, zone *Zone, subdomain string, serviceid Identifier) (*Zone, error)
 	ExtendsDomainWithZoneMeta(*Domain) (*DomainWithZoneMetadata, error)
 	GetUserDomain(*User, Identifier) (*Domain, error)
 	GetUserDomainByFQDN(*User, string) ([]*Domain, error)
 	ImportZone(*User, *Domain, []Record) (*Zone, error)
 	ListUserDomains(*User) ([]*Domain, error)
-	PublishZone(*User, *Domain, *Zone) ([]*Correction, error)
+	RemoveServiceFromZone(user *User, domain *Domain, zone *Zone, subdomain string, serviceid Identifier) (*Zone, error)
 	RetrieveRemoteZone(*User, *Domain) (*Zone, error)
 	UpdateDomain(Identifier, *User, func(*Domain)) error
 	UpdateZoneService(user *User, domain *Domain, zone *Zone, subdomain string, serviceid Identifier, newservice *Service) (*Zone, error)

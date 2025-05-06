@@ -30,7 +30,7 @@ import (
 )
 
 func declareUserAuthsRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies, store storage.Storage) {
-	ac := controller.NewAuthUserController(dependancies.GetAuthUserService(), store)
+	ac := controller.NewAuthUserController(dependancies.GetAuthUserUsecase(), store)
 
 	router.GET("/auth", ac.GetAuthUsers)
 	router.POST("/auth", ac.NewAuthUser)

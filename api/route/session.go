@@ -29,7 +29,7 @@ import (
 )
 
 func DeclareSessionRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
-	sc := controller.NewSessionController(dependancies.GetSessionService())
+	sc := controller.NewSessionController(dependancies.GetSessionUsecase())
 
 	router.GET("/session", sc.GetSession)
 	router.DELETE("/session", sc.ClearSession)

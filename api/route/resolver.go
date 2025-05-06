@@ -29,7 +29,7 @@ import (
 )
 
 func DeclareResolverRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
-	rc := controller.NewResolverController(dependancies.GetResolverService())
+	rc := controller.NewResolverController(dependancies.GetResolverUsecase())
 
 	router.POST("/resolver", rc.RunResolver)
 }
