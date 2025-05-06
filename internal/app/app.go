@@ -41,84 +41,88 @@ import (
 	"git.happydns.org/happyDomain/usecase"
 )
 
+type Usecases struct {
+	authentication   happydns.AuthenticationUsecase
+	authUser         happydns.AuthUserUsecase
+	domain           happydns.DomainUsecase
+	domainLog        happydns.DomainLogUsecase
+	provider         happydns.ProviderUsecase
+	providerAdmin    happydns.ProviderUsecase
+	providerSpecs    happydns.ProviderSpecsUsecase
+	providerSettings happydns.ProviderSettingsUsecase
+	resolver         happydns.ResolverUsecase
+	session          happydns.SessionUsecase
+	service          happydns.ServiceUsecase
+	serviceSpecs     happydns.ServiceSpecsUsecase
+	user             happydns.UserUsecase
+	zone             happydns.ZoneUsecase
+}
+
 type App struct {
-	cfg      *config.Options
-	mailer   *mailer.Mailer
-	router   *gin.Engine
-	srv      *http.Server
-	insights *insightsCollector
-	store    storage.Storage
-
-	AuthenticationUsecase   happydns.AuthenticationUsecase
-	AuthUserUsecase         happydns.AuthUserUsecase
-	DomainUsecase           happydns.DomainUsecase
-	DomainLogUsecase        happydns.DomainLogUsecase
-	ProviderUsecase         happydns.ProviderUsecase
-	ProviderUsecaseAdmin    happydns.ProviderUsecase
-	ProviderSpecsUsecase    happydns.ProviderSpecsUsecase
-	ProviderSettingsUsecase happydns.ProviderSettingsUsecase
-	ResolverUsecase         happydns.ResolverUsecase
-	SessionUsecase          happydns.SessionUsecase
-	ServiceUsecase          happydns.ServiceUsecase
-	ServiceSpecsUsecase     happydns.ServiceSpecsUsecase
-	UserUsecase             happydns.UserUsecase
-	ZoneUsecase             happydns.ZoneUsecase
+	cfg        *config.Options
+	mailer     *mailer.Mailer
+	newsletter happydns.NewsletterSubscriptor
+	router     *gin.Engine
+	srv        *http.Server
+	insights   *insightsCollector
+	store      storage.Storage
+	usecases   Usecases
 }
 
-func (a *App) GetAuthenticationUsecase() happydns.AuthenticationUsecase {
-	return a.AuthenticationUsecase
+func (a *App) AuthenticationUsecase() happydns.AuthenticationUsecase {
+	return a.usecases.authentication
 }
 
-func (a *App) GetAuthUserUsecase() happydns.AuthUserUsecase {
-	return a.AuthUserUsecase
+func (a *App) AuthUserUsecase() happydns.AuthUserUsecase {
+	return a.usecases.authUser
 }
 
-func (a *App) GetDomainUsecase() happydns.DomainUsecase {
-	return a.DomainUsecase
+func (a *App) DomainUsecase() happydns.DomainUsecase {
+	return a.usecases.domain
 }
 
-func (a *App) GetDomainLogUsecase() happydns.DomainLogUsecase {
-	return a.DomainLogUsecase
+func (a *App) DomainLogUsecase() happydns.DomainLogUsecase {
+	return a.usecases.domainLog
 }
 
-func (a *App) GetProviderUsecase(secure bool) happydns.ProviderUsecase {
+func (a *App) ProviderUsecase(secure bool) happydns.ProviderUsecase {
 	if secure {
-		return a.ProviderUsecase
+		return a.usecases.provider
 	} else {
-		return a.ProviderUsecaseAdmin
+		return a.usecases.providerAdmin
 	}
 }
 
-func (a *App) GetProviderSettingsUsecase() happydns.ProviderSettingsUsecase {
-	return a.ProviderSettingsUsecase
+func (a *App) ProviderSettingsUsecase() happydns.ProviderSettingsUsecase {
+	return a.usecases.providerSettings
 }
 
-func (a *App) GetProviderSpecsUsecase() happydns.ProviderSpecsUsecase {
-	return a.ProviderSpecsUsecase
+func (a *App) ProviderSpecsUsecase() happydns.ProviderSpecsUsecase {
+	return a.usecases.providerSpecs
 }
 
-func (a *App) GetResolverUsecase() happydns.ResolverUsecase {
-	return a.ResolverUsecase
+func (a *App) ResolverUsecase() happydns.ResolverUsecase {
+	return a.usecases.resolver
 }
 
-func (a *App) GetServiceUsecase() happydns.ServiceUsecase {
-	return a.ServiceUsecase
+func (a *App) ServiceUsecase() happydns.ServiceUsecase {
+	return a.usecases.service
 }
 
-func (a *App) GetServiceSpecsUsecase() happydns.ServiceSpecsUsecase {
-	return a.ServiceSpecsUsecase
+func (a *App) ServiceSpecsUsecase() happydns.ServiceSpecsUsecase {
+	return a.usecases.serviceSpecs
 }
 
-func (a *App) GetSessionUsecase() happydns.SessionUsecase {
-	return a.SessionUsecase
+func (a *App) SessionUsecase() happydns.SessionUsecase {
+	return a.usecases.session
 }
 
-func (a *App) GetUserUsecase() happydns.UserUsecase {
-	return a.UserUsecase
+func (a *App) UserUsecase() happydns.UserUsecase {
+	return a.usecases.user
 }
 
-func (a *App) GetZoneUsecase() happydns.ZoneUsecase {
-	return a.ZoneUsecase
+func (a *App) ZoneUsecase() happydns.ZoneUsecase {
+	return a.usecases.zone
 }
 
 func NewApp(cfg *config.Options) *App {
@@ -126,27 +130,51 @@ func NewApp(cfg *config.Options) *App {
 		cfg: cfg,
 	}
 
-	// Initialize mailer
-	if cfg.MailSMTPHost != "" {
+	app.initMailer()
+	app.initStorageEngine()
+	app.initNewsletter()
+	app.initInsights()
+	app.initUsecases()
+	app.setupRouter()
+
+	return app
+}
+
+func NewAppWithStorage(cfg *config.Options, store storage.Storage) *App {
+	app := &App{
+		cfg:   cfg,
+		store: store,
+	}
+
+	app.initMailer()
+	app.initNewsletter()
+	app.initUsecases()
+	app.setupRouter()
+
+	return app
+}
+
+func (app *App) initMailer() {
+	if app.cfg.MailSMTPHost != "" {
 		app.mailer = &mailer.Mailer{
-			MailFrom:   &cfg.MailFrom,
-			SendMethod: mailer.NewSMTPMailer(cfg.MailSMTPHost, cfg.MailSMTPPort, cfg.MailSMTPUsername, cfg.MailSMTPPassword),
+			MailFrom:   &app.cfg.MailFrom,
+			SendMethod: mailer.NewSMTPMailer(app.cfg.MailSMTPHost, app.cfg.MailSMTPPort, app.cfg.MailSMTPUsername, app.cfg.MailSMTPPassword),
 		}
 
-		if cfg.MailSMTPTLSSNoVerify {
+		if app.cfg.MailSMTPTLSSNoVerify {
 			app.mailer.SendMethod.(*mailer.SMTPMailer).WithTLSNoVerify()
 		}
-
-	} else if !cfg.NoMail {
+	} else if !app.cfg.NoMail {
 		app.mailer = &mailer.Mailer{
-			MailFrom:   &cfg.MailFrom,
+			MailFrom:   &app.cfg.MailFrom,
 			SendMethod: &mailer.SystemSendmail{},
 		}
 	}
+}
 
-	// Initialize storage
-	if s, ok := storage.StorageEngines[cfg.StorageEngine]; !ok {
-		log.Fatalf("Nonexistent storage engine: %q, please select one of: %v", cfg.StorageEngine, storage.GetStorageEngines())
+func (app *App) initStorageEngine() {
+	if s, ok := storage.StorageEngines[app.cfg.StorageEngine]; !ok {
+		log.Fatalf("Nonexistent storage engine: %q, please select one of: %v", app.cfg.StorageEngine, storage.GetStorageEngines())
 	} else {
 		var err error
 		log.Println("Opening database...")
@@ -160,44 +188,48 @@ func NewApp(cfg *config.Options) *App {
 			log.Fatal("Could not migrate database: ", err)
 		}
 	}
+}
 
-	// Initialize newsletter registration
-	var ns happydns.NewsletterSubscriptor
-	if cfg.ListmonkURL.URL != nil {
-		ns = &newsletter.ListmonkNewsletterSubscription{
-			ListmonkURL: cfg.ListmonkURL.URL,
-			ListmonkId:  cfg.ListmonkId,
+func (app *App) initNewsletter() {
+	if app.cfg.ListmonkURL.URL != nil {
+		app.newsletter = &newsletter.ListmonkNewsletterSubscription{
+			ListmonkURL: app.cfg.ListmonkURL.URL,
+			ListmonkId:  app.cfg.ListmonkId,
 		}
 	} else {
-		ns = &newsletter.DummyNewsletterSubscription{}
+		app.newsletter = &newsletter.DummyNewsletterSubscription{}
 	}
+}
 
-	if !cfg.OptOutInsights {
+func (app *App) initInsights() {
+	if !app.cfg.OptOutInsights {
 		app.insights = &insightsCollector{
 			cfg:   app.cfg,
 			store: app.store,
 			stop:  make(chan bool),
 		}
 	}
+}
 
-	// Prepare usecases
-	app.ProviderSpecsUsecase = usecase.NewProviderSpecsUsecase()
-	app.ProviderUsecase = usecase.NewProviderUsecase(cfg, app.store)
-	app.ProviderSettingsUsecase = usecase.NewProviderSettingsUsecase(cfg, app.ProviderUsecase, app.store)
-	app.ServiceUsecase = usecase.NewServiceUsecase()
-	app.ServiceSpecsUsecase = usecase.NewServiceSpecsUsecase()
-	app.ZoneUsecase = usecase.NewZoneUsecase(app.ProviderUsecase, app.ServiceUsecase, app.store)
-	app.DomainLogUsecase = usecase.NewDomainLogUsecase(app.store)
-	app.DomainUsecase = usecase.NewDomainUsecase(app.store, app.DomainLogUsecase, app.ProviderUsecase, app.ZoneUsecase)
+func (app *App) initUsecases() {
+	app.usecases.providerSpecs = usecase.NewProviderSpecsUsecase()
+	app.usecases.provider = usecase.NewProviderUsecase(app.cfg, app.store)
+	app.usecases.providerSettings = usecase.NewProviderSettingsUsecase(app.cfg, app.usecases.provider, app.store)
+	app.usecases.service = usecase.NewServiceUsecase()
+	app.usecases.serviceSpecs = usecase.NewServiceSpecsUsecase()
+	app.usecases.zone = usecase.NewZoneUsecase(app.usecases.provider, app.usecases.service, app.store)
+	app.usecases.domainLog = usecase.NewDomainLogUsecase(app.store)
+	app.usecases.domain = usecase.NewDomainUsecase(app.store, app.usecases.domainLog, app.usecases.provider, app.usecases.zone)
 
-	app.UserUsecase = usecase.NewUserUsecase(app.store, ns)
-	app.AuthenticationUsecase = usecase.NewAuthenticationUsecase(cfg, app.store, app.UserUsecase)
-	app.AuthUserUsecase = usecase.NewAuthUserUsecase(cfg, app.mailer, app.store)
-	app.ResolverUsecase = usecase.NewResolverUsecase(cfg)
-	app.SessionUsecase = usecase.NewSessionUsecase(app.store)
+	app.usecases.user = usecase.NewUserUsecase(app.store, app.newsletter)
+	app.usecases.authentication = usecase.NewAuthenticationUsecase(app.cfg, app.store, app.usecases.user)
+	app.usecases.authUser = usecase.NewAuthUserUsecase(app.cfg, app.mailer, app.store)
+	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg)
+	app.usecases.session = usecase.NewSessionUsecase(app.store)
+}
 
-	// Initialize router
-	if cfg.DevProxy == "" {
+func (app *App) setupRouter() {
+	if app.cfg.DevProxy == "" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
@@ -205,13 +237,11 @@ func NewApp(cfg *config.Options) *App {
 	app.router = gin.New()
 	app.router.Use(gin.Logger(), gin.Recovery(), sessions.Sessions(
 		session.COOKIE_NAME,
-		session.NewSessionStore(cfg, app.store, []byte(cfg.JWTSecretKey)),
+		session.NewSessionStore(app.cfg, app.store, []byte(app.cfg.JWTSecretKey)),
 	))
 
-	api.DeclareRoutes(cfg, app.router, app)
-	ui.DeclareRoutes(cfg, app.router)
-
-	return app
+	api.DeclareRoutes(app.cfg, app.router, app)
+	ui.DeclareRoutes(app.cfg, app.router)
 }
 
 func (app *App) Start() {

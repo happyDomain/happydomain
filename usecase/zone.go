@@ -47,7 +47,7 @@ func NewZoneUsecase(pu happydns.ProviderUsecase, su happydns.ServiceUsecase, sto
 	}
 }
 
-func (zu *zoneUsecase) AddService(zone *happydns.Zone, subdomain, origin string, service *happydns.Service) error {
+func (zu *zoneUsecase) AddService(zone *happydns.Zone, subdomain happydns.Subdomain, origin happydns.Origin, service *happydns.Service) error {
 	if service.Service == nil {
 		return happydns.InternalError{
 			Err:        fmt.Errorf("Unable to parse the given service."),
@@ -61,7 +61,7 @@ func (zu *zoneUsecase) AddService(zone *happydns.Zone, subdomain, origin string,
 	}
 
 	service.Id = hash
-	service.Domain = subdomain
+	service.Domain = string(subdomain)
 	service.NbResources = service.Service.GetNbResources()
 	service.Comment = service.Service.GenComment()
 
@@ -83,7 +83,7 @@ func (zu *zoneUsecase) CreateZone(zone *happydns.Zone) error {
 	return zu.store.CreateZone(zone)
 }
 
-func (zu *zoneUsecase) DeleteService(zone *happydns.Zone, subdomain string, serviceid happydns.Identifier) error {
+func (zu *zoneUsecase) DeleteService(zone *happydns.Zone, subdomain happydns.Subdomain, serviceid happydns.Identifier) error {
 	err := zone.EraseService(subdomain, serviceid, nil)
 	if err != nil {
 		return happydns.InternalError{
@@ -160,9 +160,9 @@ func (zu *zoneUsecase) GenerateRecords(domain *happydns.Domain, zone *happydns.Z
 
 	for subdomain, svcs := range zone.Services {
 		if subdomain == "" || subdomain == "@" {
-			subdomain = domain.DomainName
+			subdomain = happydns.Subdomain(domain.DomainName)
 		} else {
-			subdomain += "." + domain.DomainName
+			subdomain += happydns.Subdomain("." + domain.DomainName)
 		}
 
 		for _, svc := range svcs {
@@ -173,7 +173,7 @@ func (zu *zoneUsecase) GenerateRecords(domain *happydns.Domain, zone *happydns.Z
 				ttl = svc.Ttl
 			}
 
-			svc_rrs, err = svc.Service.GetRecords(subdomain, ttl, domain.DomainName)
+			svc_rrs, err = svc.Service.GetRecords(string(subdomain), ttl, domain.DomainName)
 			if err != nil {
 				return
 			}
@@ -249,7 +249,7 @@ func ParseZone(msg *happydns.ZoneMessage) (*happydns.Zone, error) {
 	var z happydns.Zone
 
 	z.ZoneMeta = msg.ZoneMeta
-	z.Services = map[string][]*happydns.Service{}
+	z.Services = map[happydns.Subdomain][]*happydns.Service{}
 
 	for subdn, svcs := range msg.Services {
 		for _, svc := range svcs {
@@ -266,7 +266,7 @@ func ParseZone(msg *happydns.ZoneMessage) (*happydns.Zone, error) {
 	return &z, nil
 }
 
-func (zu *zoneUsecase) UpdateService(zone *happydns.Zone, subdomain string, serviceid happydns.Identifier, newservice *happydns.Service) error {
+func (zu *zoneUsecase) UpdateService(zone *happydns.Zone, subdomain happydns.Subdomain, serviceid happydns.Identifier, newservice *happydns.Service) error {
 	err := zone.EraseService(subdomain, serviceid, newservice)
 	if err != nil {
 		return happydns.InternalError{

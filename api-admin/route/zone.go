@@ -31,7 +31,7 @@ import (
 )
 
 func declareZoneRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies, store storage.Storage) {
-	zc := controller.NewZoneController(dependancies.GetDomainUsecase(), dependancies.GetZoneUsecase(), store)
+	zc := controller.NewZoneController(dependancies.DomainUsecase(), dependancies.ZoneUsecase(), store)
 
 	router.GET("/zones", zc.ListZones)
 	router.POST("/zones", zc.AddZone)
@@ -40,7 +40,7 @@ func declareZoneRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDep
 	router.DELETE("/zones/:zoneid", zc.DeleteZone)
 
 	apiZonesRoutes := router.Group("/zones/:zoneid")
-	apiZonesRoutes.Use(middleware.ZoneHandler(dependancies.GetZoneUsecase()))
+	apiZonesRoutes.Use(middleware.ZoneHandler(dependancies.ZoneUsecase()))
 
 	apiZonesRoutes.GET("", zc.GetZone)
 	apiZonesRoutes.PUT("", zc.UpdateZone)

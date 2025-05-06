@@ -30,12 +30,12 @@ import (
 )
 
 func DeclareUserRecoveryRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies, auc *controller.AuthUserController) *controller.UserRecoveryController {
-	urc := controller.NewUserRecoveryController(dependancies.GetAuthUserUsecase())
+	urc := controller.NewUserRecoveryController(dependancies.AuthUserUsecase())
 
 	router.PATCH("/users", urc.UserRecoveryOperations)
 
 	apiUserRoutes := router.Group("/users/:uid")
-	apiUserRoutes.Use(middleware.AuthUserHandler(dependancies.GetAuthUserUsecase()))
+	apiUserRoutes.Use(middleware.AuthUserHandler(dependancies.AuthUserUsecase()))
 
 	apiUserRoutes.POST("/email", urc.ValidateUserAddress)
 	apiUserRoutes.POST("/recovery", urc.RecoverUserAccount)

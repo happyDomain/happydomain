@@ -220,10 +220,10 @@ type AuthUserUsecase interface {
 	CloseAuthUserSessions(*UserAuth) error
 	CreateAuthUser(UserRegistration) (*UserAuth, error)
 	DeleteAuthUser(*UserAuth, string) error
+	GenerateRecoveryLink(*UserAuth) string
+	GenerateValidationLink(*UserAuth) string
 	GetAuthUser(Identifier) (*UserAuth, error)
 	GetAuthUserByEmail(string) (*UserAuth, error)
-	GetRecoveryLink(*UserAuth) string
-	GetValidationLink(*UserAuth) string
 	SendRecoveryLink(*UserAuth) error
 	SendValidationLink(*UserAuth) error
 	ValidateEmail(*UserAuth, AddressValidationForm) error

@@ -22,17 +22,17 @@
 package happydns
 
 type UsecaseDependancies interface {
-	GetAuthenticationUsecase() AuthenticationUsecase
-	GetAuthUserUsecase() AuthUserUsecase
-	GetDomainUsecase() DomainUsecase
-	GetDomainLogUsecase() DomainLogUsecase
-	GetProviderUsecase(secure bool) ProviderUsecase
-	GetProviderSettingsUsecase() ProviderSettingsUsecase
-	GetProviderSpecsUsecase() ProviderSpecsUsecase
-	GetResolverUsecase() ResolverUsecase
-	GetServiceUsecase() ServiceUsecase
-	GetServiceSpecsUsecase() ServiceSpecsUsecase
-	GetSessionUsecase() SessionUsecase
-	GetUserUsecase() UserUsecase
-	GetZoneUsecase() ZoneUsecase
+	AuthenticationUsecase() AuthenticationUsecase
+	AuthUserUsecase() AuthUserUsecase
+	DomainUsecase() DomainUsecase
+	DomainLogUsecase() DomainLogUsecase
+	ProviderUsecase(secure bool) ProviderUsecase
+	ProviderSettingsUsecase() ProviderSettingsUsecase
+	ProviderSpecsUsecase() ProviderSpecsUsecase
+	ResolverUsecase() ResolverUsecase
+	ServiceUsecase() ServiceUsecase
+	ServiceSpecsUsecase() ServiceSpecsUsecase
+	SessionUsecase() SessionUsecase
+	UserUsecase() UserUsecase
+	ZoneUsecase() ZoneUsecase
 }

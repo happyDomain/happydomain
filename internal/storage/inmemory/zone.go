@@ -76,7 +76,7 @@ func (s *InMemoryStorage) UpdateZone(zone *happydns.Zone) error {
 
 	zmsg := &happydns.ZoneMessage{
 		ZoneMeta: zone.ZoneMeta,
-		Services: map[string][]*happydns.ServiceMessage{},
+		Services: map[happydns.Subdomain][]*happydns.ServiceMessage{},
 	}
 
 	for subdn, services := range zone.Services {

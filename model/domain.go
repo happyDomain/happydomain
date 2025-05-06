@@ -72,10 +72,13 @@ type DomainWithZoneMetadata struct {
 	ZoneMeta map[string]*ZoneMeta `json:"zone_meta"`
 }
 
+type Subdomain string
+type Origin string
+
 type DomainUsecase interface {
 	ApplyZoneCorrection(*User, *Domain, *Zone, *ApplyZoneForm) (*Zone, error)
 	ActionOnEditableZone(*User, *Domain, *Zone, func(*Zone) error) (*Zone, error)
-	AddServiceToZone(*User, *Domain, *Zone, string, string, *Service) (*Zone, error)
+	AddServiceToZone(*User, *Domain, *Zone, Subdomain, Origin, *Service) (*Zone, error)
 	CreateDomain(*User, *Domain) error
 	DeleteDomain(Identifier) error
 	ExtendsDomainWithZoneMeta(*Domain) (*DomainWithZoneMetadata, error)
@@ -83,8 +86,8 @@ type DomainUsecase interface {
 	GetUserDomainByFQDN(*User, string) ([]*Domain, error)
 	ImportZone(*User, *Domain, []Record) (*Zone, error)
 	ListUserDomains(*User) ([]*Domain, error)
-	RemoveServiceFromZone(user *User, domain *Domain, zone *Zone, subdomain string, serviceid Identifier) (*Zone, error)
+	RemoveServiceFromZone(user *User, domain *Domain, zone *Zone, subdomain Subdomain, serviceid Identifier) (*Zone, error)
 	RetrieveRemoteZone(*User, *Domain) (*Zone, error)
 	UpdateDomain(Identifier, *User, func(*Domain)) error
-	UpdateZoneService(user *User, domain *Domain, zone *Zone, subdomain string, serviceid Identifier, newservice *Service) (*Zone, error)
+	UpdateZoneService(user *User, domain *Domain, zone *Zone, subdomain Subdomain, serviceid Identifier, newservice *Service) (*Zone, error)
 }

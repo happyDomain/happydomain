@@ -94,7 +94,7 @@ func (sc *ServiceController) UpdateZoneService(c *gin.Context) {
 		return
 	}
 
-	err = sc.zoneService.UpdateService(zone, usc.Domain, usc.Id, newservice)
+	err = sc.zoneService.UpdateService(zone, happydns.Subdomain(usc.Domain), usc.Id, newservice)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

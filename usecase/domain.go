@@ -196,7 +196,7 @@ func (du *domainUsecase) ActionOnEditableZone(user *happydns.User, domain *happy
 	return newZone, nil
 }
 
-func (du *domainUsecase) AddServiceToZone(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain string, origin string, service *happydns.Service) (*happydns.Zone, error) {
+func (du *domainUsecase) AddServiceToZone(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain happydns.Subdomain, origin happydns.Origin, service *happydns.Service) (*happydns.Zone, error) {
 	return du.ActionOnEditableZone(user, domain, zone, func(zone *happydns.Zone) error {
 		return du.zoneService.AddService(zone, subdomain, origin, service)
 	})
@@ -378,7 +378,7 @@ func (du *domainUsecase) ListUserDomains(user *happydns.User) ([]*happydns.Domai
 	return domains, nil
 }
 
-func (du *domainUsecase) RemoveServiceFromZone(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain string, serviceid happydns.Identifier) (*happydns.Zone, error) {
+func (du *domainUsecase) RemoveServiceFromZone(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain happydns.Subdomain, serviceid happydns.Identifier) (*happydns.Zone, error) {
 	return du.ActionOnEditableZone(user, domain, zone, func(zone *happydns.Zone) error {
 		return du.zoneService.DeleteService(zone, subdomain, serviceid)
 	})
@@ -443,7 +443,7 @@ func (du *domainUsecase) UpdateDomain(domainid happydns.Identifier, user *happyd
 	return nil
 }
 
-func (du *domainUsecase) UpdateZoneService(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain string, serviceid happydns.Identifier, service *happydns.Service) (*happydns.Zone, error) {
+func (du *domainUsecase) UpdateZoneService(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain happydns.Subdomain, serviceid happydns.Identifier, service *happydns.Service) (*happydns.Zone, error) {
 	return du.ActionOnEditableZone(user, domain, zone, func(zone *happydns.Zone) error {
 		return du.zoneService.UpdateService(zone, subdomain, serviceid, service)
 	})

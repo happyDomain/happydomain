@@ -59,8 +59,8 @@ func ParseService(msg *happydns.ServiceMessage) (svc *happydns.Service, err erro
 	return
 }
 
-func (su *serviceUsecase) ValidateService(svc happydns.ServiceBody, subdomain, origin string) ([]byte, error) {
-	rrs, err := svc.GetRecords(subdomain, 0, origin)
+func (su *serviceUsecase) ValidateService(svc happydns.ServiceBody, subdomain happydns.Subdomain, origin happydns.Origin) ([]byte, error) {
+	rrs, err := svc.GetRecords(string(subdomain), 0, string(origin))
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve records: %w", err)
 	}

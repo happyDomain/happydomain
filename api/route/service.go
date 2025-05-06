@@ -30,14 +30,14 @@ import (
 )
 
 func DeclareZoneServiceRoutes(apiZonesRoutes, apiZonesSubdomainRoutes *gin.RouterGroup, zc *controller.ZoneController, dependancies happydns.UsecaseDependancies) {
-	sc := controller.NewServiceController(dependancies.GetDomainUsecase(), dependancies.GetServiceUsecase(), dependancies.GetZoneUsecase())
+	sc := controller.NewServiceController(dependancies.DomainUsecase(), dependancies.ServiceUsecase(), dependancies.ZoneUsecase())
 
 	apiZonesRoutes.PATCH("", sc.UpdateZoneService)
 
 	apiZonesSubdomainRoutes.POST("/services", sc.AddZoneService)
 
 	apiZonesSubdomainServiceIdRoutes := apiZonesSubdomainRoutes.Group("/services/:serviceid")
-	apiZonesSubdomainServiceIdRoutes.Use(middleware.ServiceIdHandler(dependancies.GetServiceUsecase()))
+	apiZonesSubdomainServiceIdRoutes.Use(middleware.ServiceIdHandler(dependancies.ServiceUsecase()))
 	apiZonesSubdomainServiceIdRoutes.GET("", sc.GetZoneService)
 	apiZonesSubdomainServiceIdRoutes.DELETE("", sc.DeleteZoneService)
 

@@ -68,7 +68,7 @@ func (zc *ZoneController) GetZone(c *gin.Context) {
 //	@Router			/domains/{domainId}/zone/{zoneId}/{subdomain} [get]
 func (zc *ZoneController) GetZoneSubdomain(c *gin.Context) {
 	zone := c.MustGet("zone").(*happydns.Zone)
-	subdomain := c.MustGet("subdomain").(string)
+	subdomain := c.MustGet("subdomain").(happydns.Subdomain)
 
 	c.JSON(http.StatusOK, happydns.ZoneServices{
 		Services: zone.Services[subdomain],
