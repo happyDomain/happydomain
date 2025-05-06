@@ -76,7 +76,7 @@ func DomainHandler(domainService happydns.DomainUsecase, allowFQDN bool) gin.Han
 		} else if src, exists := c.Get("providermeta"); exists {
 			provider = src.(*happydns.ProviderMeta)
 		}
-		if provider != nil && !provider.Id.Equals(domain.IdProvider) {
+		if provider != nil && !provider.Id.Equals(domain.ProviderId) {
 			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Domain not found (not child of provider)"})
 			return
 		}

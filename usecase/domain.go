@@ -220,7 +220,7 @@ func (du *domainUsecase) CreateDomain(user *happydns.User, uz *happydns.Domain) 
 		}
 	}
 
-	provider, err := du.providerService.GetUserProvider(user, uz.IdProvider)
+	provider, err := du.providerService.GetUserProvider(user, uz.ProviderId)
 	if err != nil {
 		return happydns.InternalError{
 			Err:        fmt.Errorf("unable to find the provider."),
@@ -308,7 +308,7 @@ func (du *domainUsecase) GetUserDomainByFQDN(user *happydns.User, fqdn string) (
 }
 
 func (du *domainUsecase) getUserProvider(user *happydns.User, domain *happydns.Domain) (*happydns.Provider, error) {
-	provider, err := du.providerService.GetUserProvider(user, domain.IdProvider)
+	provider, err := du.providerService.GetUserProvider(user, domain.ProviderId)
 	if err != nil {
 		return nil, happydns.InternalError{
 			Err:        fmt.Errorf("unable to find your provider: %w", err),
