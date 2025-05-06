@@ -56,14 +56,6 @@ type Domain struct {
 	ZoneHistory []Identifier `json:"zone_history" swaggertype:"array,string"`
 }
 
-type DomainWithZoneMetadata struct {
-	*Domain
-	ZoneMeta map[string]*ZoneMeta `json:"zone_meta"`
-}
-
-// Domains is an array of Domain.
-type Domains []*Domain
-
 // HasZone checks if the given Zone's identifier is part of this Domain
 // history.
 func (d *Domain) HasZone(zoneId Identifier) (found bool) {
@@ -73,6 +65,11 @@ func (d *Domain) HasZone(zoneId Identifier) (found bool) {
 		}
 	}
 	return
+}
+
+type DomainWithZoneMetadata struct {
+	*Domain
+	ZoneMeta map[string]*ZoneMeta `json:"zone_meta"`
 }
 
 type DomainUsecase interface {

@@ -60,7 +60,7 @@ type DomainStorage interface {
 	ListAllDomains() (Iterator[happydns.Domain], error)
 
 	// ListDomains retrieves all Domains associated to the given User.
-	ListDomains(user *happydns.User) (happydns.Domains, error)
+	ListDomains(user *happydns.User) ([]*happydns.Domain, error)
 
 	// GetDomain retrieves the Domain with the given id and owned by the given User.
 	GetDomain(domainid happydns.Identifier) (*happydns.Domain, error)
