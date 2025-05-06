@@ -42,7 +42,7 @@ func (s *LevelDBStorage) SchemaVersion() int {
 	return len(migrations)
 }
 
-func (s *LevelDBStorage) DoMigration() (err error) {
+func (s *LevelDBStorage) MigrateSchema() (err error) {
 	found := false
 
 	found, err = s.db.Has([]byte("version"), nil)

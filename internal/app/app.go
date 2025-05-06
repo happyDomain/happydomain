@@ -156,7 +156,7 @@ func NewApp(cfg *config.Options) *App {
 		}
 
 		log.Println("Performing database migrations...")
-		if err = app.store.DoMigration(); err != nil {
+		if err = app.store.MigrateSchema(); err != nil {
 			log.Fatal("Could not migrate database: ", err)
 		}
 	}
