@@ -60,13 +60,13 @@ type DomainStorage interface {
 	ListAllDomains() (Iterator[happydns.Domain], error)
 
 	// ListDomains retrieves all Domains associated to the given User.
-	ListDomains(u *happydns.User) (happydns.Domains, error)
+	ListDomains(user *happydns.User) (happydns.Domains, error)
 
 	// GetDomain retrieves the Domain with the given id and owned by the given User.
-	GetDomain(id happydns.Identifier) (*happydns.Domain, error)
+	GetDomain(domainid happydns.Identifier) (*happydns.Domain, error)
 
 	// GetDomainByDN is like GetDomain but look for the domain name instead of identifier.
-	GetDomainByDN(u *happydns.User, dn string) ([]*happydns.Domain, error)
+	GetDomainByDN(user *happydns.User, fqdn string) ([]*happydns.Domain, error)
 
 	// CreateDomain creates a record in the database for the given Domain.
 	CreateDomain(domain *happydns.Domain) error
@@ -84,13 +84,13 @@ type DomainStorage interface {
 
 	ListAllDomainLogs() (Iterator[happydns.DomainLogWithDomainId], error)
 
-	GetDomainLogs(*happydns.Domain) ([]*happydns.DomainLog, error)
+	GetDomainLogs(domain *happydns.Domain) ([]*happydns.DomainLog, error)
 
-	CreateDomainLog(*happydns.Domain, *happydns.DomainLog) error
+	CreateDomainLog(domain *happydns.Domain, log *happydns.DomainLog) error
 
-	UpdateDomainLog(*happydns.Domain, *happydns.DomainLog) error
+	UpdateDomainLog(domain *happydns.Domain, log *happydns.DomainLog) error
 
-	DeleteDomainLog(*happydns.Domain, *happydns.DomainLog) error
+	DeleteDomainLog(domain *happydns.Domain, log *happydns.DomainLog) error
 }
 
 // INSIGHTS -----------------------------------------------------------
@@ -108,10 +108,10 @@ type ProviderStorage interface {
 	ListAllProviders() (Iterator[happydns.ProviderMessage], error)
 
 	// ListProviders retrieves all providers own by the given User.
-	ListProviders(u *happydns.User) (happydns.ProviderMessages, error)
+	ListProviders(user *happydns.User) (happydns.ProviderMessages, error)
 
 	// GetProvider retrieves the full Provider with the given identifier and owner.
-	GetProvider(id happydns.Identifier) (*happydns.ProviderMessage, error)
+	GetProvider(prvdid happydns.Identifier) (*happydns.ProviderMessage, error)
 
 	// CreateProvider creates a record in the database for the given Provider.
 	CreateProvider(prvd *happydns.Provider) error
@@ -120,7 +120,7 @@ type ProviderStorage interface {
 	UpdateProvider(prvd *happydns.Provider) error
 
 	// DeleteProvider removes the given Provider from the database.
-	DeleteProvider(happydns.Identifier) error
+	DeleteProvider(prvdid happydns.Identifier) error
 
 	// ClearProviders deletes all Providers present in the database.
 	ClearProviders() error
@@ -132,7 +132,7 @@ type SessionStorage interface {
 	ListAllSessions() (Iterator[happydns.Session], error)
 
 	// GetSession retrieves the Session with the given identifier.
-	GetSession(id string) (*happydns.Session, error)
+	GetSession(sessionid string) (*happydns.Session, error)
 
 	// ListAuthUserSessions retrieves all Session for the given AuthUser.
 	ListAuthUserSessions(user *happydns.UserAuth) ([]*happydns.Session, error)
@@ -144,7 +144,7 @@ type SessionStorage interface {
 	UpdateSession(session *happydns.Session) error
 
 	// DeleteSession removes the given Session from the database.
-	DeleteSession(id string) error
+	DeleteSession(sessionid string) error
 
 	// ClearSessions deletes all Sessions present in the database.
 	ClearSessions() error
@@ -156,7 +156,7 @@ type UserStorage interface {
 	ListAllUsers() (Iterator[happydns.User], error)
 
 	// GetUser retrieves the User with the given identifier.
-	GetUser(id happydns.Identifier) (*happydns.User, error)
+	GetUser(userid happydns.Identifier) (*happydns.User, error)
 
 	// GetUserByEmail retrieves the User with the given email address.
 	GetUserByEmail(email string) (*happydns.User, error)
@@ -177,10 +177,10 @@ type ZoneStorage interface {
 	ListAllZones() (Iterator[happydns.ZoneMessage], error)
 
 	// GetZoneMeta retrieves metadatas of the Zone with the given identifier.
-	GetZoneMeta(id happydns.Identifier) (*happydns.ZoneMeta, error)
+	GetZoneMeta(zoneid happydns.Identifier) (*happydns.ZoneMeta, error)
 
 	// GetZone retrieves the full Zone (including Services and metadatas) which have the given identifier.
-	GetZone(id happydns.Identifier) (*happydns.ZoneMessage, error)
+	GetZone(zoneid happydns.Identifier) (*happydns.ZoneMessage, error)
 
 	// CreateZone creates a record in the database for the given Zone.
 	CreateZone(zone *happydns.Zone) error
@@ -189,7 +189,7 @@ type ZoneStorage interface {
 	UpdateZone(zone *happydns.Zone) error
 
 	// DeleteZone removes the given Zone from the database.
-	DeleteZone(happydns.Identifier) error
+	DeleteZone(zoneid happydns.Identifier) error
 
 	// ClearZones deletes all Zones present in the database.
 	ClearZones() error
@@ -229,7 +229,7 @@ type Storage interface {
 	SchemaVersion() int
 
 	// DoMigration is the first function called.
-	DoMigration() error
+	MigrateSchema() error
 
 	// Close shutdown the connection with the database and releases all structure.
 	Close() error

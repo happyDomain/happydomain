@@ -68,7 +68,7 @@ func (s *InMemoryStorage) SchemaVersion() int {
 }
 
 // DoMigration is the first function called.
-func (s *InMemoryStorage) DoMigration() error {
+func (s *InMemoryStorage) MigrateSchema() error {
 	log.Println("YOU ARE USING THE inmemory STORAGE: DATA WILL BE LOST ON HAPPYDOMAIN STOP.")
 	// No migration needed for in-memory storage.
 	return nil
