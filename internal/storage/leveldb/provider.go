@@ -23,11 +23,13 @@ package database
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 
+	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
@@ -36,16 +38,19 @@ func (s *LevelDBStorage) ListAllProviders() (storage.Iterator[happydns.ProviderM
 	return NewLevelDBIterator[happydns.ProviderMessage](s.db, iter), nil
 }
 
-func (s *LevelDBStorage) getProviderMeta(id happydns.Identifier) (srcMsg *happydns.ProviderMessage, err error) {
-	var v []byte
-	v, err = s.db.Get(id, nil)
+func (s *LevelDBStorage) getProviderMeta(id happydns.Identifier) (*happydns.ProviderMessage, error) {
+	v, err := s.db.Get(id, nil)
 	if err != nil {
-		return
+		if errors.Is(err, leveldb.ErrNotFound) {
+			return nil, happydns.ErrProviderNotFound
+		} else {
+			return nil, err
+		}
 	}
 
-	srcMsg = &happydns.ProviderMessage{}
+	srcMsg := &happydns.ProviderMessage{}
 	err = decodeData(v, srcMsg)
-	return
+	return srcMsg, err
 }
 
 func (s *LevelDBStorage) ListProviders(u *happydns.User) (srcs happydns.ProviderMessages, err error) {
@@ -72,7 +77,11 @@ func (s *LevelDBStorage) ListProviders(u *happydns.User) (srcs happydns.Provider
 func (s *LevelDBStorage) GetProvider(id happydns.Identifier) (*happydns.ProviderMessage, error) {
 	v, err := s.db.Get([]byte(fmt.Sprintf("provider-%s", id.String())), nil)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, leveldb.ErrNotFound) {
+			return nil, happydns.ErrProviderNotFound
+		} else {
+			return nil, err
+		}
 	}
 
 	var prvdMsg happydns.ProviderMessage

@@ -22,8 +22,10 @@
 package database
 
 import (
+	"errors"
 	"fmt"
 
+	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 
 	"git.happydns.org/happyDomain/internal/storage"
@@ -35,10 +37,13 @@ func (s *LevelDBStorage) ListAllAuthUsers() (storage.Iterator[happydns.UserAuth]
 	return NewLevelDBIterator[happydns.UserAuth](s.db, iter), nil
 }
 
-func (s *LevelDBStorage) getAuthUser(key string) (u *happydns.UserAuth, err error) {
-	u = &happydns.UserAuth{}
-	err = s.get(key, &u)
-	return
+func (s *LevelDBStorage) getAuthUser(key string) (*happydns.UserAuth, error) {
+	u := &happydns.UserAuth{}
+	err := s.get(key, &u)
+	if errors.Is(err, leveldb.ErrNotFound) {
+		return nil, happydns.ErrAuthUserNotFound
+	}
+	return u, err
 }
 
 func (s *LevelDBStorage) GetAuthUser(id happydns.Identifier) (u *happydns.UserAuth, err error) {

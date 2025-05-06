@@ -22,12 +22,14 @@
 package database
 
 import (
+	"errors"
 	"fmt"
+
+	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/util"
 
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
-
-	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
 func (s *LevelDBStorage) ListAllUsers() (storage.Iterator[happydns.User], error) {
@@ -35,10 +37,13 @@ func (s *LevelDBStorage) ListAllUsers() (storage.Iterator[happydns.User], error)
 	return NewLevelDBIterator[happydns.User](s.db, iter), nil
 }
 
-func (s *LevelDBStorage) getUser(key string) (u *happydns.User, err error) {
-	u = &happydns.User{}
-	err = s.get(key, &u)
-	return
+func (s *LevelDBStorage) getUser(key string) (*happydns.User, error) {
+	u := &happydns.User{}
+	err := s.get(key, &u)
+	if errors.Is(err, leveldb.ErrNotFound) {
+		return nil, happydns.ErrUserNotFound
+	}
+	return u, err
 }
 
 func (s *LevelDBStorage) GetUser(id happydns.Identifier) (u *happydns.User, err error) {
@@ -58,7 +63,7 @@ func (s *LevelDBStorage) GetUserByEmail(email string) (*happydns.User, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("Unable to find user with email address '%s'.", email)
+	return nil, happydns.ErrUserNotFound
 }
 
 func (s *LevelDBStorage) UserExists(email string) bool {

@@ -22,11 +22,13 @@
 package database
 
 import (
+	"errors"
 	"fmt"
 
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 
+	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
@@ -35,10 +37,13 @@ func (s *LevelDBStorage) ListAllSessions() (storage.Iterator[happydns.Session], 
 	return NewLevelDBIterator[happydns.Session](s.db, iter), nil
 }
 
-func (s *LevelDBStorage) getSession(id string) (session *happydns.Session, err error) {
-	session = &happydns.Session{}
-	err = s.get(id, &session)
-	return
+func (s *LevelDBStorage) getSession(id string) (*happydns.Session, error) {
+	session := &happydns.Session{}
+	err := s.get(id, &session)
+	if errors.Is(err, leveldb.ErrNotFound) {
+		return nil, happydns.ErrSessionNotFound
+	}
+	return session, err
 }
 
 func (s *LevelDBStorage) GetSession(id string) (session *happydns.Session, err error) {

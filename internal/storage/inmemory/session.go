@@ -40,7 +40,7 @@ func (s *InMemoryStorage) GetSession(id string) (*happydns.Session, error) {
 
 	session, exists := s.sessions[id]
 	if !exists {
-		return nil, storage.ErrNotFound
+		return nil, happydns.ErrSessionNotFound
 	}
 
 	return session, nil

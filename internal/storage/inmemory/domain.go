@@ -57,7 +57,7 @@ func (s *InMemoryStorage) GetDomain(id happydns.Identifier) (*happydns.Domain, e
 
 	domain, exists := s.domains[id.String()]
 	if !exists {
-		return nil, storage.ErrNotFound
+		return nil, happydns.ErrDomainNotFound
 	}
 
 	return domain, nil
@@ -75,7 +75,7 @@ func (s *InMemoryStorage) GetDomainByDN(u *happydns.User, dn string) (ret []*hap
 	}
 
 	if len(ret) == 0 {
-		return nil, storage.ErrNotFound
+		return nil, happydns.ErrDomainNotFound
 	}
 
 	return
@@ -177,5 +177,5 @@ func (s *InMemoryStorage) DeleteDomainLog(domain *happydns.Domain, log *happydns
 	})
 	s.domainLogsByDomains[domain.Id.String()] = append(s.domainLogsByDomains[domain.Id.String()][:i], s.domainLogsByDomains[domain.Id.String()][i+1:]...)
 
-	return storage.ErrNotFound
+	return happydns.ErrDomainLogNotFound
 }

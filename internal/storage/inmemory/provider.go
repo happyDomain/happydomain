@@ -57,7 +57,7 @@ func (s *InMemoryStorage) GetProvider(id happydns.Identifier) (*happydns.Provide
 
 	provider, exists := s.providers[id.String()]
 	if !exists {
-		return nil, storage.ErrNotFound
+		return nil, happydns.ErrProviderNotFound
 	}
 
 	return provider, nil

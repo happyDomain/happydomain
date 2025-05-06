@@ -22,8 +22,10 @@
 package database
 
 import (
+	"errors"
 	"fmt"
 
+	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 
 	"git.happydns.org/happyDomain/internal/storage"
@@ -35,15 +37,21 @@ func (s *LevelDBStorage) ListAllZones() (storage.Iterator[happydns.ZoneMessage],
 	return NewLevelDBIterator[happydns.ZoneMessage](s.db, iter), nil
 }
 
-func (s *LevelDBStorage) GetZone(id happydns.Identifier) (z *happydns.ZoneMessage, err error) {
-	z = &happydns.ZoneMessage{}
-	err = s.get(fmt.Sprintf("domain.zone-%s", id.String()), &z)
-	return
+func (s *LevelDBStorage) GetZone(id happydns.Identifier) (*happydns.ZoneMessage, error) {
+	z := &happydns.ZoneMessage{}
+	err := s.get(fmt.Sprintf("domain.zone-%s", id.String()), &z)
+	if errors.Is(err, leveldb.ErrNotFound) {
+		return nil, happydns.ErrZoneNotFound
+	}
+	return z, err
 }
 
 func (s *LevelDBStorage) getZoneMeta(id string) (z *happydns.ZoneMeta, err error) {
 	z = &happydns.ZoneMeta{}
 	err = s.get(id, z)
+	if errors.Is(err, leveldb.ErrNotFound) {
+		return nil, happydns.ErrZoneNotFound
+	}
 	return
 }
 
