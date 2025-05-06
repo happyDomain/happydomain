@@ -30,16 +30,16 @@ import (
 )
 
 func DeclareUsersRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies, lc *controller.LoginController) *controller.UserController {
-	uc := controller.NewUserController(dependancies.GetUserUsecase(), lc)
+	uc := controller.NewUserController(dependancies.UserUsecase(), lc)
 
 	apiUserRoutes := router.Group("/users/:uid")
-	apiUserRoutes.Use(middleware.UserHandler(dependancies.GetUserUsecase()))
+	apiUserRoutes.Use(middleware.UserHandler(dependancies.UserUsecase()))
 
 	apiUserRoutes.GET("", uc.GetUser)
 	apiUserRoutes.GET("/avatar.png", uc.GetUserAvatar)
 
 	apiSameUserRoutes := router.Group("/users/:uid")
-	apiSameUserRoutes.Use(middleware.UserHandler(dependancies.GetUserUsecase()))
+	apiSameUserRoutes.Use(middleware.UserHandler(dependancies.UserUsecase()))
 	apiSameUserRoutes.Use(middleware.SameUserHandler)
 
 	apiSameUserRoutes.DELETE("", uc.DeleteMyUser)

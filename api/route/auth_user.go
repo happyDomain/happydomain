@@ -32,10 +32,10 @@ import (
 )
 
 func DeclareAuthUserRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies, lc *controller.LoginController) *controller.AuthUserController {
-	ac := controller.NewAuthUserController(dependancies.GetAuthUserUsecase(), lc)
+	ac := controller.NewAuthUserController(dependancies.AuthUserUsecase(), lc)
 
 	apiUserAuthRoutes := router.Group("/users/:uid")
-	apiUserAuthRoutes.Use(middleware.AuthUserHandler(dependancies.GetAuthUserUsecase()))
+	apiUserAuthRoutes.Use(middleware.AuthUserHandler(dependancies.AuthUserUsecase()))
 	apiUserAuthRoutes.GET("/is_auth_user", func(c *gin.Context) {
 		c.Status(http.StatusNoContent)
 	})

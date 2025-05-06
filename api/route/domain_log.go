@@ -29,7 +29,7 @@ import (
 )
 
 func DeclareDomainLogRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
-	dlc := controller.NewDomainLogController(dependancies.GetDomainLogUsecase())
+	dlc := controller.NewDomainLogController(dependancies.DomainLogUsecase())
 
 	router.GET("/logs", dlc.GetDomainLogs)
 }

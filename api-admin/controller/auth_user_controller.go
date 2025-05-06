@@ -122,13 +122,13 @@ func (ac *AuthUserController) DeleteAuthUser(c *gin.Context) {
 func (ac *AuthUserController) EmailValidationLink(c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
-	happydns.ApiResponse(c, ac.auService.GetValidationLink(user), nil)
+	happydns.ApiResponse(c, ac.auService.GenerateValidationLink(user), nil)
 }
 
 func (ac *AuthUserController) RecoverUserAcct(c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
-	happydns.ApiResponse(c, ac.auService.GetRecoveryLink(user), nil)
+	happydns.ApiResponse(c, ac.auService.GenerateRecoveryLink(user), nil)
 }
 
 type resetPassword struct {

@@ -179,14 +179,14 @@ func (auu *authUserUsecase) ListAuthUserSessions(user *happydns.UserAuth) ([]*ha
 	return auu.store.ListAuthUserSessions(user)
 }
 
-func (auu *authUserUsecase) GetRecoveryLink(user *happydns.UserAuth) string {
+func (auu *authUserUsecase) GenerateRecoveryLink(user *happydns.UserAuth) string {
 	return user.GetAccountRecoveryURL(auu.config.GetBaseURL())
 }
 
 func (auu *authUserUsecase) SendRecoveryLink(user *happydns.UserAuth) error {
 	toName := utils.GenUsername(user.Email)
 
-	link := auu.GetRecoveryLink(user)
+	link := auu.GenerateRecoveryLink(user)
 
 	err := auu.store.UpdateAuthUser(user)
 	if err != nil {
@@ -206,7 +206,7 @@ In order to define a new password, please follow this link now:
 	)
 }
 
-func (auu *authUserUsecase) GetValidationLink(user *happydns.UserAuth) string {
+func (auu *authUserUsecase) GenerateValidationLink(user *happydns.UserAuth) string {
 	return user.GetRegistrationURL(auu.config.GetBaseURL())
 }
 
@@ -229,7 +229,7 @@ management platform!
 
 In order to validate your account, please follow this link now:
 
-[Validate my account](`+auu.GetValidationLink(user)+`)`,
+[Validate my account](`+auu.GenerateValidationLink(user)+`)`,
 	)
 }
 

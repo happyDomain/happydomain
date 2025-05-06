@@ -31,10 +31,10 @@ import (
 )
 
 func declareZoneServiceRoutes(apiZonesRoutes *gin.RouterGroup, zc *controller.ZoneController, dependancies happydns.UsecaseDependancies, store storage.Storage) {
-	sc := controller.NewServiceController(dependancies.GetServiceUsecase(), dependancies.GetZoneUsecase())
+	sc := controller.NewServiceController(dependancies.ServiceUsecase(), dependancies.ZoneUsecase())
 
 	apiZonesServiceIdRoutes := apiZonesRoutes.Group("/services/:serviceid")
-	apiZonesServiceIdRoutes.Use(middleware.ServiceIdHandler(dependancies.GetServiceUsecase()))
+	apiZonesServiceIdRoutes.Use(middleware.ServiceIdHandler(dependancies.ServiceUsecase()))
 	apiZonesServiceIdRoutes.GET("", sc.GetZoneService)
 	apiZonesServiceIdRoutes.PUT("", sc.UpdateZoneService)
 	apiZonesServiceIdRoutes.DELETE("", sc.DeleteZoneService)

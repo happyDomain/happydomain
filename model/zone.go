@@ -57,13 +57,13 @@ type ZoneMeta struct {
 // ZoneMessage is the intermediate struct for parsing zones.
 type ZoneMessage struct {
 	ZoneMeta
-	Services map[string][]*ServiceMessage `json:"services"`
+	Services map[Subdomain][]*ServiceMessage `json:"services"`
 }
 
 // Zone contains ZoneMeta + map of services by subdomains.
 type Zone struct {
 	ZoneMeta
-	Services map[string][]*Service `json:"services"`
+	Services map[Subdomain][]*Service `json:"services"`
 }
 
 // DerivateNew creates a new Zone from the current one, by copying all fields.
@@ -74,7 +74,7 @@ func (z *Zone) DerivateNew() *Zone {
 	newZone.ZoneMeta.IdAuthor = z.ZoneMeta.IdAuthor
 	newZone.ZoneMeta.DefaultTTL = z.ZoneMeta.DefaultTTL
 	newZone.ZoneMeta.LastModified = time.Now()
-	newZone.Services = map[string][]*Service{}
+	newZone.Services = map[Subdomain][]*Service{}
 
 	for subdomain, svcs := range z.Services {
 		newZone.Services[subdomain] = svcs
@@ -83,7 +83,7 @@ func (z *Zone) DerivateNew() *Zone {
 	return newZone
 }
 
-func (zone *Zone) eraseService(subdomain string, old *Service, idx int, new *Service) error {
+func (zone *Zone) eraseService(subdomain Subdomain, old *Service, idx int, new *Service) error {
 	if new == nil {
 		// Disallow removing SOA
 		if subdomain == "" && old.Type == "abstract.Origin" {
@@ -106,7 +106,7 @@ func (zone *Zone) eraseService(subdomain string, old *Service, idx int, new *Ser
 
 // EraseService overwrites the Service identified by the given id, under the given subdomain.
 // The the new service is nil, it removes the existing Service instead of overwrite it.
-func (zone *Zone) EraseService(subdomain string, id []byte, s *Service) error {
+func (zone *Zone) EraseService(subdomain Subdomain, id []byte, s *Service) error {
 	idx, svc := zone.FindSubdomainService(subdomain, id)
 	if svc == nil {
 		return fmt.Errorf("service not found")
@@ -115,7 +115,7 @@ func (zone *Zone) EraseService(subdomain string, id []byte, s *Service) error {
 	return zone.eraseService(subdomain, svc, idx, s)
 }
 
-func (zone *Zone) EraseServiceWithoutMeta(subdomain string, id []byte, s ServiceBody) error {
+func (zone *Zone) EraseServiceWithoutMeta(subdomain Subdomain, id []byte, s ServiceBody) error {
 	idx, svc := zone.FindSubdomainService(subdomain, id)
 	if svc == nil {
 		return fmt.Errorf("service not found")
@@ -125,7 +125,7 @@ func (zone *Zone) EraseServiceWithoutMeta(subdomain string, id []byte, s Service
 }
 
 // FindService finds the Service identified by the given id.
-func (z *Zone) FindService(id []byte) (string, *Service) {
+func (z *Zone) FindService(id []byte) (Subdomain, *Service) {
 	for subdomain := range z.Services {
 		if _, svc := z.FindSubdomainService(subdomain, id); svc != nil {
 			return subdomain, svc
@@ -136,7 +136,7 @@ func (z *Zone) FindService(id []byte) (string, *Service) {
 }
 
 // FindSubdomainService finds the Service identified by the given id, only under the given subdomain.
-func (z *Zone) FindSubdomainService(subdomain string, id []byte) (int, *Service) {
+func (z *Zone) FindSubdomainService(subdomain Subdomain, id []byte) (int, *Service) {
 	if subdomain == "@" {
 		subdomain = ""
 	}
@@ -157,10 +157,10 @@ type ZoneServices struct {
 }
 
 type ZoneUsecase interface {
-	AddService(*Zone, string, string, *Service) error
+	AddService(*Zone, Subdomain, Origin, *Service) error
 	CreateZone(*Zone) error
 	DeleteZone(Identifier) error
-	DeleteService(zone *Zone, subdomain string, serviceid Identifier) error
+	DeleteService(zone *Zone, subdomain Subdomain, serviceid Identifier) error
 	DiffZones(*Domain, *Zone, Identifier) ([]*Correction, error)
 	FlattenZoneFile(*Domain, *Zone) (string, error)
 	GenerateRecords(*Domain, *Zone) ([]Record, error)
@@ -168,7 +168,7 @@ type ZoneUsecase interface {
 	GetZoneCorrections(*User, *Domain, *Zone) ([]*Correction, error)
 	GetZoneMeta(Identifier) (*ZoneMeta, error)
 	LoadZoneFromId(domain *Domain, id Identifier) (*Zone, error)
-	UpdateService(zone *Zone, subdomain string, serviceid Identifier, newservice *Service) error
+	UpdateService(zone *Zone, subdomain Subdomain, serviceid Identifier, newservice *Service) error
 	UpdateZone(Identifier, func(*Zone)) error
 }
 

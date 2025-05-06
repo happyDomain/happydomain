@@ -30,7 +30,7 @@ import (
 )
 
 func DeclareProviderSettingsRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
-	psc := controller.NewProviderSettingsController(dependancies.GetProviderSettingsUsecase())
+	psc := controller.NewProviderSettingsController(dependancies.ProviderSettingsUsecase())
 
 	apiProviderSpecsRoutes := router.Group("/providers/_specs/:psid")
 	apiProviderSpecsRoutes.Use(middleware.ProviderSpecsHandler)

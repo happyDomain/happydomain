@@ -70,10 +70,10 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine, dependancies happydn
 	apiAuthRoutes := router.Group("/api")
 
 	if cfg.NoAuth {
-		apiAuthRoutes.Use(middleware.NoAuthMiddleware(dependancies.GetAuthenticationUsecase()))
+		apiAuthRoutes.Use(middleware.NoAuthMiddleware(dependancies.AuthenticationUsecase()))
 	} else {
-		apiAuthRoutes.Use(middleware.JwtAuthMiddleware(dependancies.GetAuthenticationUsecase(), cfg.JWTSigningMethod, cfg.JWTSecretKey))
-		apiAuthRoutes.Use(middleware.SessionMiddleware(dependancies.GetAuthenticationUsecase()))
+		apiAuthRoutes.Use(middleware.JwtAuthMiddleware(dependancies.AuthenticationUsecase(), cfg.JWTSigningMethod, cfg.JWTSecretKey))
+		apiAuthRoutes.Use(middleware.SessionMiddleware(dependancies.AuthenticationUsecase()))
 	}
 	apiAuthRoutes.Use(middleware.AuthRequired())
 

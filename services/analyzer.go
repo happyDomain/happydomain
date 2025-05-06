@@ -39,7 +39,7 @@ type ServiceAnalyzer func(*Analyzer) error
 type Analyzer struct {
 	origin     string
 	zone       []happydns.Record
-	services   map[string][]*happydns.Service
+	services   map[happydns.Subdomain][]*happydns.Service
 	defaultTTL uint32
 }
 
@@ -97,7 +97,7 @@ func (a *Analyzer) UseRR(rr happydns.Record, domain string, svc happydns.Service
 	// Remove origin to get an relative domain here
 	domain = strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(domain, "."), strings.TrimSuffix(a.origin, ".")), ".")
 
-	for _, service := range a.services[domain] {
+	for _, service := range a.services[happydns.Subdomain(domain)] {
 		if service.Service == svc {
 			service.Comment = svc.GenComment()
 			service.NbResources = svc.GetNbResources()
@@ -113,7 +113,7 @@ func (a *Analyzer) UseRR(rr happydns.Record, domain string, svc happydns.Service
 		ttl = rr.Header().Ttl
 	}
 
-	a.services[domain] = append(a.services[domain], &happydns.Service{
+	a.services[happydns.Subdomain(domain)] = append(a.services[happydns.Subdomain(domain)], &happydns.Service{
 		Service: svc,
 		ServiceMeta: happydns.ServiceMeta{
 			Id:          hash.Sum(nil),
@@ -144,13 +144,13 @@ func getMostUsedTTL(zone []happydns.Record) uint32 {
 	return max
 }
 
-func AnalyzeZone(origin string, zone []happydns.Record) (svcs map[string][]*happydns.Service, defaultTTL uint32, err error) {
+func AnalyzeZone(origin string, zone []happydns.Record) (svcs map[happydns.Subdomain][]*happydns.Service, defaultTTL uint32, err error) {
 	defaultTTL = getMostUsedTTL(zone)
 
 	a := Analyzer{
 		origin:     origin,
 		zone:       zone,
-		services:   map[string][]*happydns.Service{},
+		services:   map[happydns.Subdomain][]*happydns.Service{},
 		defaultTTL: defaultTTL,
 	}
 
@@ -191,7 +191,7 @@ func AnalyzeZone(origin string, zone []happydns.Record) (svcs map[string][]*happ
 		io.WriteString(hash, record.String())
 
 		orphan := &Orphan{dns.TypeToString[record.Header().Rrtype], strings.TrimSpace(strings.TrimPrefix(record.String(), record.Header().String()))}
-		svcs[domain] = append(svcs[domain], &happydns.Service{
+		svcs[happydns.Subdomain(domain)] = append(svcs[happydns.Subdomain(domain)], &happydns.Service{
 			Service: orphan,
 			ServiceMeta: happydns.ServiceMeta{
 				Id:          hash.Sum(nil),
