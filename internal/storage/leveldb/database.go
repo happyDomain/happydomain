@@ -31,7 +31,6 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/iterator"
 	"github.com/syndtr/goleveldb/leveldb/util"
 
-	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -72,9 +71,6 @@ func decodeData(data []byte, v interface{}) error {
 func (s *LevelDBStorage) get(key string, v interface{}) error {
 	data, err := s.db.Get([]byte(key), nil)
 	if err != nil {
-		if err == leveldb.ErrNotFound {
-			return storage.ErrNotFound
-		}
 		return err
 	}
 

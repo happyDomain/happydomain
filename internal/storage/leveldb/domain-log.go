@@ -22,8 +22,11 @@
 package database
 
 import (
+	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/syndtr/goleveldb/leveldb"
 
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
@@ -68,6 +71,9 @@ func (s *LevelDBStorage) GetDomainLogs(domain *happydns.Domain) (logs []*happydn
 func (s *LevelDBStorage) getDomainLog(id string) (l *happydns.DomainLog, d *happydns.Domain, err error) {
 	l = &happydns.DomainLog{}
 	err = s.get(id, l)
+	if errors.Is(err, leveldb.ErrNotFound) {
+		return nil, nil, happydns.ErrDomainLogNotFound
+	}
 
 	st := strings.Split(id, "|")
 	if len(st) < 3 {
@@ -76,6 +82,9 @@ func (s *LevelDBStorage) getDomainLog(id string) (l *happydns.DomainLog, d *happ
 
 	d = &happydns.Domain{}
 	err = s.get(id, fmt.Sprintf("domain-%s", st[1]))
+	if errors.Is(err, leveldb.ErrNotFound) {
+		return nil, nil, happydns.ErrDomainNotFound
+	}
 
 	return
 }

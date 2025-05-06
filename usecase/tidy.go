@@ -60,7 +60,7 @@ func (tu *tidyUpUsecase) TidyAuthUsers() error {
 		userAuth := iter.Item()
 
 		_, err = tu.store.GetUser(userAuth.Id)
-		if errors.Is(err, storage.ErrNotFound) && time.Since(userAuth.CreatedAt) > 24*time.Hour {
+		if errors.Is(err, happydns.ErrUserNotFound) && time.Since(userAuth.CreatedAt) > 24*time.Hour {
 			// Drop providers of unexistant users
 			log.Printf("Deleting orphan authuser (user %s not found): %v\n", userAuth.Id.String(), userAuth)
 			if err = iter.DropItem(); err != nil {
@@ -82,7 +82,7 @@ func (tu *tidyUpUsecase) TidyDomains() error {
 	for iter.Next() {
 		domain := iter.Item()
 
-		if _, err = tu.store.GetUser(domain.Owner); err == storage.ErrNotFound {
+		if _, err = tu.store.GetUser(domain.Owner); errors.Is(err, happydns.ErrUserNotFound) {
 			// Drop domain of unexistant users
 			log.Printf("Deleting orphan domain (user %s not found): %v\n", domain.Owner.String(), domain)
 			if err = iter.DropItem(); err != nil {
@@ -90,7 +90,7 @@ func (tu *tidyUpUsecase) TidyDomains() error {
 			}
 		}
 
-		if _, err = tu.store.GetProvider(domain.IdProvider); err == storage.ErrNotFound {
+		if _, err = tu.store.GetProvider(domain.IdProvider); errors.Is(err, happydns.ErrProviderNotFound) {
 			// Drop domain of unexistant provider
 			log.Printf("Deleting orphan domain (provider %s not found): %v\n", domain.IdProvider.String(), domain)
 			if err = iter.DropItem(); err != nil {
@@ -112,7 +112,7 @@ func (tu *tidyUpUsecase) TidyDomainLogs() error {
 	for iter.Next() {
 		l := iter.Item()
 
-		if _, err = tu.store.GetDomain(l.DomainId); err == storage.ErrNotFound {
+		if _, err = tu.store.GetDomain(l.DomainId); errors.Is(err, happydns.ErrDomainNotFound) {
 			// Drop domain of unexistant provider
 			log.Printf("Deleting orphan domain log (domain %s not found): %v\n", l.DomainId.String(), l)
 			if err = iter.DropItem(); err != nil {
@@ -135,7 +135,7 @@ func (tu *tidyUpUsecase) TidyProviders() error {
 		prvd := iter.Item()
 
 		_, err = tu.store.GetUser(prvd.Owner)
-		if errors.Is(err, storage.ErrNotFound) {
+		if errors.Is(err, happydns.ErrUserNotFound) {
 			// Drop providers of unexistant users
 			log.Printf("Deleting orphan provider (user %s not found): %v\n", prvd.Owner.String(), prvd)
 			if err = iter.DropItem(); err != nil {
@@ -158,7 +158,7 @@ func (tu *tidyUpUsecase) TidySessions() error {
 		session := iter.Item()
 
 		_, err = tu.store.GetUser(session.IdUser)
-		if err == storage.ErrNotFound {
+		if errors.Is(err, happydns.ErrUserNotFound) {
 			// Drop session from unexistant users
 			log.Printf("Deleting orphan session (user %s not found): %v\n", session.IdUser.String(), session)
 			if err = iter.DropItem(); err != nil {

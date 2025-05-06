@@ -41,7 +41,7 @@ func (s *InMemoryStorage) GetZoneMeta(id happydns.Identifier) (*happydns.ZoneMet
 	defer s.mu.Unlock()
 	zone, exists := s.zones[id.String()]
 	if !exists {
-		return nil, storage.ErrNotFound
+		return nil, happydns.ErrZoneNotFound
 	}
 	return &zone.ZoneMeta, nil
 }
@@ -53,7 +53,7 @@ func (s *InMemoryStorage) GetZone(id happydns.Identifier) (*happydns.ZoneMessage
 
 	zone, exists := s.zones[id.String()]
 	if !exists {
-		return nil, storage.ErrNotFound
+		return nil, happydns.ErrZoneNotFound
 	}
 
 	return zone, nil

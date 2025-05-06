@@ -52,7 +52,7 @@ func (s *InMemoryStorage) GetUser(id happydns.Identifier) (*happydns.User, error
 
 	user, exists := s.users[id.String()]
 	if !exists {
-		return nil, storage.ErrNotFound
+		return nil, happydns.ErrUserNotFound
 	}
 
 	return user, nil
@@ -65,7 +65,7 @@ func (s *InMemoryStorage) GetUserByEmail(email string) (*happydns.User, error) {
 
 	user, exists := s.usersByEmail[email]
 	if !exists {
-		return nil, storage.ErrNotFound
+		return nil, happydns.ErrUserNotFound
 	}
 
 	return user, nil

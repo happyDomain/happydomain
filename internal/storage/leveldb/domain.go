@@ -23,6 +23,7 @@ package database
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 
 	"github.com/syndtr/goleveldb/leveldb"
@@ -57,10 +58,13 @@ func (s *LevelDBStorage) ListDomains(u *happydns.User) (domains []*happydns.Doma
 	return
 }
 
-func (s *LevelDBStorage) getDomain(id string) (z *happydns.Domain, err error) {
-	z = &happydns.Domain{}
-	err = s.get(id, z)
-	return
+func (s *LevelDBStorage) getDomain(id string) (*happydns.Domain, error) {
+	domain := &happydns.Domain{}
+	err := s.get(id, domain)
+	if errors.Is(err, leveldb.ErrNotFound) {
+		return nil, happydns.ErrDomainNotFound
+	}
+	return domain, err
 }
 
 func (s *LevelDBStorage) GetDomain(id happydns.Identifier) (*happydns.Domain, error) {
