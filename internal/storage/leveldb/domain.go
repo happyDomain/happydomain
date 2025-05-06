@@ -37,7 +37,7 @@ func (s *LevelDBStorage) ListAllDomains() (storage.Iterator[happydns.Domain], er
 	return NewLevelDBIterator[happydns.Domain](s.db, iter), nil
 }
 
-func (s *LevelDBStorage) ListDomains(u *happydns.User) (domains happydns.Domains, err error) {
+func (s *LevelDBStorage) ListDomains(u *happydns.User) (domains []*happydns.Domain, err error) {
 	iter := s.search("domain-")
 	defer iter.Release()
 

@@ -23,7 +23,7 @@ package happydns
 
 type Backup struct {
 	Version     int
-	Domains     Domains
+	Domains     []*Domain
 	DomainsLogs map[string][]*DomainLog
 	Errors      []string
 	Providers   []*ProviderMessage

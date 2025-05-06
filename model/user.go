@@ -31,7 +31,7 @@ type User struct {
 	// Id is the User's identifier.
 	Id Identifier `json:"id"`
 
-	// Email is the User's login and mean of contact.
+	// Email is the User's login and means of contact.
 	Email string `json:"email"`
 
 	// CreatedAt is the time when the User logs in for the first time.
@@ -55,9 +55,6 @@ func (u *User) GetEmail() string {
 func (u *User) JoinNewsletter() bool {
 	return false
 }
-
-// Users is a group of User.
-type Users []*User
 
 type UserUsecase interface {
 	ChangeUserSettings(*User, UserSettings) error

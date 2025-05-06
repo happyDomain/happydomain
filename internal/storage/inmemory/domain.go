@@ -36,11 +36,11 @@ func (s *InMemoryStorage) ListAllDomains() (storage.Iterator[happydns.Domain], e
 }
 
 // ListDomains retrieves all Domains associated to the given User.
-func (s *InMemoryStorage) ListDomains(u *happydns.User) (happydns.Domains, error) {
+func (s *InMemoryStorage) ListDomains(u *happydns.User) ([]*happydns.Domain, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	var domains happydns.Domains
+	var domains []*happydns.Domain
 	for _, domain := range s.domains {
 		if domain.Owner.Equals(u.Id) {
 			domains = append(domains, domain)

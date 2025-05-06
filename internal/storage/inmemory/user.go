@@ -34,7 +34,7 @@ func (s *InMemoryStorage) ListAllUsers() (storage.Iterator[happydns.User], error
 }
 
 // ListUsers retrieves the list of known Users.
-func (s *InMemoryStorage) ListUsers() (users happydns.Users, err error) {
+func (s *InMemoryStorage) ListUsers() (users []*happydns.User, err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
