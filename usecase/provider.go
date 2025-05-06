@@ -133,7 +133,7 @@ func (pu *adminProviderUsecase) DeleteProvider(user *happydns.User, providerid h
 	}
 
 	for _, domain := range domains {
-		if domain.IdProvider.Equals(providerid) {
+		if domain.ProviderId.Equals(providerid) {
 			return fmt.Errorf("You cannot delete this provider because there is still some domains associated with it. For example: %s", domain.DomainName)
 		}
 	}

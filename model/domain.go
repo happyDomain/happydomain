@@ -25,9 +25,9 @@ import ()
 
 // DomainMinimal is used for swagger documentation as Domain add.
 type DomainMinimal struct {
-	// IsProvider is the identifier of the Provider used to access and edit the
+	// ProviderId is the identifier of the Provider used to access and edit the
 	// Domain.
-	IdProvider Identifier `json:"id_provider" swaggertype:"string"`
+	ProviderId Identifier `json:"id_provider" swaggertype:"string"`
 
 	// DomainName is the FQDN of the managed Domain.
 	DomainName string `json:"domain"`
@@ -41,9 +41,9 @@ type Domain struct {
 	// Owner is the identifier of the Domain's Owner.
 	Owner Identifier `json:"id_owner" swaggertype:"string"`
 
-	// IsProvider is the identifier of the Provider used to access and edit the
+	// ProviderId is the identifier of the Provider used to access and edit the
 	// Domain.
-	IdProvider Identifier `json:"id_provider" swaggertype:"string"`
+	ProviderId Identifier `json:"id_provider" swaggertype:"string"`
 
 	// DomainName is the FQDN of the managed Domain.
 	DomainName string `json:"domain"`

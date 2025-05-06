@@ -90,9 +90,9 @@ func (tu *tidyUpUsecase) TidyDomains() error {
 			}
 		}
 
-		if _, err = tu.store.GetProvider(domain.IdProvider); errors.Is(err, happydns.ErrProviderNotFound) {
+		if _, err = tu.store.GetProvider(domain.ProviderId); errors.Is(err, happydns.ErrProviderNotFound) {
 			// Drop domain of unexistant provider
-			log.Printf("Deleting orphan domain (provider %s not found): %v\n", domain.IdProvider.String(), domain)
+			log.Printf("Deleting orphan domain (provider %s not found): %v\n", domain.ProviderId.String(), domain)
 			if err = iter.DropItem(); err != nil {
 				return err
 			}

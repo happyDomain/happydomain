@@ -202,7 +202,7 @@ func (zu *zoneUsecase) GetZone(id happydns.Identifier) (*happydns.Zone, error) {
 }
 
 func (zu *zoneUsecase) GetZoneCorrections(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone) ([]*happydns.Correction, error) {
-	provider, err := zu.providerService.GetUserProvider(user, domain.IdProvider)
+	provider, err := zu.providerService.GetUserProvider(user, domain.ProviderId)
 	if err != nil {
 		return nil, err
 	}
