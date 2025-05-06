@@ -29,7 +29,7 @@ import (
 )
 
 func DeclareRegistrationRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) *controller.RegistrationController {
-	rc := controller.NewRegistrationController(dependancies.GetAuthUserService())
+	rc := controller.NewRegistrationController(dependancies.GetAuthUserUsecase())
 
 	router.POST("/users", rc.RegisterNewUser)
 

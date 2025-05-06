@@ -34,13 +34,13 @@ import (
 )
 
 func DeclareAuthenticationRoutes(cfg *config.Options, baserouter, apirouter *gin.RouterGroup, dependancies happydns.UsecaseDependancies) *controller.LoginController {
-	lc := controller.NewLoginController(dependancies.GetAuthenticationService())
+	lc := controller.NewLoginController(dependancies.GetAuthenticationUsecase())
 
 	apirouter.POST("/auth", lc.Login)
 	apirouter.POST("/auth/logout", lc.Logout)
 
 	if cfg.GetOIDCProviderURL() != "" {
-		oidcp := controller.NewOIDCProvider(cfg, dependancies.GetAuthenticationService())
+		oidcp := controller.NewOIDCProvider(cfg, dependancies.GetAuthenticationUsecase())
 
 		authRoutes := baserouter.Group("/auth")
 

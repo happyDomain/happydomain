@@ -49,76 +49,76 @@ type App struct {
 	insights *insightsCollector
 	store    storage.Storage
 
-	AuthenticationService   happydns.AuthenticationUsecase
-	AuthUserService         happydns.AuthUserUsecase
-	DomainService           happydns.DomainUsecase
-	DomainLogService        happydns.DomainLogUsecase
-	ProviderService         happydns.ProviderUsecase
-	ProviderServiceAdmin    happydns.ProviderUsecase
-	ProviderSpecsService    happydns.ProviderSpecsUsecase
-	ProviderSettingsService happydns.ProviderSettingsUsecase
-	ResolverService         happydns.ResolverUsecase
-	SessionService          happydns.SessionUsecase
-	ServiceService          happydns.ServiceUsecase
-	ServiceSpecsService     happydns.ServiceSpecsUsecase
-	UserService             happydns.UserUsecase
-	ZoneService             happydns.ZoneUsecase
+	AuthenticationUsecase   happydns.AuthenticationUsecase
+	AuthUserUsecase         happydns.AuthUserUsecase
+	DomainUsecase           happydns.DomainUsecase
+	DomainLogUsecase        happydns.DomainLogUsecase
+	ProviderUsecase         happydns.ProviderUsecase
+	ProviderUsecaseAdmin    happydns.ProviderUsecase
+	ProviderSpecsUsecase    happydns.ProviderSpecsUsecase
+	ProviderSettingsUsecase happydns.ProviderSettingsUsecase
+	ResolverUsecase         happydns.ResolverUsecase
+	SessionUsecase          happydns.SessionUsecase
+	ServiceUsecase          happydns.ServiceUsecase
+	ServiceSpecsUsecase     happydns.ServiceSpecsUsecase
+	UserUsecase             happydns.UserUsecase
+	ZoneUsecase             happydns.ZoneUsecase
 }
 
-func (a *App) GetAuthenticationService() happydns.AuthenticationUsecase {
-	return a.AuthenticationService
+func (a *App) GetAuthenticationUsecase() happydns.AuthenticationUsecase {
+	return a.AuthenticationUsecase
 }
 
-func (a *App) GetAuthUserService() happydns.AuthUserUsecase {
-	return a.AuthUserService
+func (a *App) GetAuthUserUsecase() happydns.AuthUserUsecase {
+	return a.AuthUserUsecase
 }
 
-func (a *App) GetDomainService() happydns.DomainUsecase {
-	return a.DomainService
+func (a *App) GetDomainUsecase() happydns.DomainUsecase {
+	return a.DomainUsecase
 }
 
-func (a *App) GetDomainLogService() happydns.DomainLogUsecase {
-	return a.DomainLogService
+func (a *App) GetDomainLogUsecase() happydns.DomainLogUsecase {
+	return a.DomainLogUsecase
 }
 
-func (a *App) GetProviderService(secure bool) happydns.ProviderUsecase {
+func (a *App) GetProviderUsecase(secure bool) happydns.ProviderUsecase {
 	if secure {
-		return a.ProviderService
+		return a.ProviderUsecase
 	} else {
-		return a.ProviderServiceAdmin
+		return a.ProviderUsecaseAdmin
 	}
 }
 
-func (a *App) GetProviderSettingsService() happydns.ProviderSettingsUsecase {
-	return a.ProviderSettingsService
+func (a *App) GetProviderSettingsUsecase() happydns.ProviderSettingsUsecase {
+	return a.ProviderSettingsUsecase
 }
 
-func (a *App) GetProviderSpecsService() happydns.ProviderSpecsUsecase {
-	return a.ProviderSpecsService
+func (a *App) GetProviderSpecsUsecase() happydns.ProviderSpecsUsecase {
+	return a.ProviderSpecsUsecase
 }
 
-func (a *App) GetResolverService() happydns.ResolverUsecase {
-	return a.ResolverService
+func (a *App) GetResolverUsecase() happydns.ResolverUsecase {
+	return a.ResolverUsecase
 }
 
-func (a *App) GetServiceService() happydns.ServiceUsecase {
-	return a.ServiceService
+func (a *App) GetServiceUsecase() happydns.ServiceUsecase {
+	return a.ServiceUsecase
 }
 
-func (a *App) GetServiceSpecsService() happydns.ServiceSpecsUsecase {
-	return a.ServiceSpecsService
+func (a *App) GetServiceSpecsUsecase() happydns.ServiceSpecsUsecase {
+	return a.ServiceSpecsUsecase
 }
 
-func (a *App) GetSessionService() happydns.SessionUsecase {
-	return a.SessionService
+func (a *App) GetSessionUsecase() happydns.SessionUsecase {
+	return a.SessionUsecase
 }
 
-func (a *App) GetUserService() happydns.UserUsecase {
-	return a.UserService
+func (a *App) GetUserUsecase() happydns.UserUsecase {
+	return a.UserUsecase
 }
 
-func (a *App) GetZoneService() happydns.ZoneUsecase {
-	return a.ZoneService
+func (a *App) GetZoneUsecase() happydns.ZoneUsecase {
+	return a.ZoneUsecase
 }
 
 func NewApp(cfg *config.Options) *App {
@@ -181,20 +181,20 @@ func NewApp(cfg *config.Options) *App {
 	}
 
 	// Prepare usecases
-	app.ProviderSpecsService = usecase.NewProviderSpecsUsecase()
-	app.ProviderService = usecase.NewProviderUsecase(cfg, app.store)
-	app.ProviderSettingsService = usecase.NewProviderSettingsUsecase(cfg, app.ProviderService, app.store)
-	app.ServiceService = usecase.NewServiceUsecase()
-	app.ServiceSpecsService = usecase.NewServiceSpecsUsecase()
-	app.ZoneService = usecase.NewZoneUsecase(app.ProviderService, app.ServiceService, app.store)
-	app.DomainLogService = usecase.NewDomainLogUsecase(app.store)
-	app.DomainService = usecase.NewDomainUsecase(app.store, app.DomainLogService, app.ProviderService, app.ZoneService)
+	app.ProviderSpecsUsecase = usecase.NewProviderSpecsUsecase()
+	app.ProviderUsecase = usecase.NewProviderUsecase(cfg, app.store)
+	app.ProviderSettingsUsecase = usecase.NewProviderSettingsUsecase(cfg, app.ProviderUsecase, app.store)
+	app.ServiceUsecase = usecase.NewServiceUsecase()
+	app.ServiceSpecsUsecase = usecase.NewServiceSpecsUsecase()
+	app.ZoneUsecase = usecase.NewZoneUsecase(app.ProviderUsecase, app.ServiceUsecase, app.store)
+	app.DomainLogUsecase = usecase.NewDomainLogUsecase(app.store)
+	app.DomainUsecase = usecase.NewDomainUsecase(app.store, app.DomainLogUsecase, app.ProviderUsecase, app.ZoneUsecase)
 
-	app.UserService = usecase.NewUserUsecase(app.store, ns)
-	app.AuthenticationService = usecase.NewAuthenticationUsecase(cfg, app.store, app.UserService)
-	app.AuthUserService = usecase.NewAuthUserUsecase(cfg, app.mailer, app.store)
-	app.ResolverService = usecase.NewResolverUsecase(cfg)
-	app.SessionService = usecase.NewSessionUsecase(app.store)
+	app.UserUsecase = usecase.NewUserUsecase(app.store, ns)
+	app.AuthenticationUsecase = usecase.NewAuthenticationUsecase(cfg, app.store, app.UserUsecase)
+	app.AuthUserUsecase = usecase.NewAuthUserUsecase(cfg, app.mailer, app.store)
+	app.ResolverUsecase = usecase.NewResolverUsecase(cfg)
+	app.SessionUsecase = usecase.NewSessionUsecase(app.store)
 
 	// Initialize router
 	if cfg.DevProxy == "" {

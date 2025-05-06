@@ -196,9 +196,9 @@ func (du *domainUsecase) ActionOnEditableZone(user *happydns.User, domain *happy
 	return newZone, nil
 }
 
-func (du *domainUsecase) AppendZoneService(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain string, origin string, service *happydns.Service) (*happydns.Zone, error) {
+func (du *domainUsecase) AddServiceToZone(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain string, origin string, service *happydns.Service) (*happydns.Zone, error) {
 	return du.ActionOnEditableZone(user, domain, zone, func(zone *happydns.Zone) error {
-		return du.zoneService.AppendService(zone, subdomain, origin, service)
+		return du.zoneService.AddService(zone, subdomain, origin, service)
 	})
 }
 
@@ -260,12 +260,6 @@ func (du *domainUsecase) DeleteDomain(did happydns.Identifier) error {
 	}
 
 	return nil
-}
-
-func (du *domainUsecase) DeleteZoneService(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain string, serviceid happydns.Identifier) (*happydns.Zone, error) {
-	return du.ActionOnEditableZone(user, domain, zone, func(zone *happydns.Zone) error {
-		return du.zoneService.DeleteService(zone, subdomain, serviceid)
-	})
 }
 
 func (du *domainUsecase) ExtendsDomainWithZoneMeta(domain *happydns.Domain) (*happydns.DomainWithZoneMetadata, error) {
@@ -384,8 +378,10 @@ func (du *domainUsecase) ListUserDomains(user *happydns.User) ([]*happydns.Domai
 	return domains, nil
 }
 
-func (du *domainUsecase) PublishZone(*happydns.User, *happydns.Domain, *happydns.Zone) ([]*happydns.Correction, error) {
-	return nil, nil
+func (du *domainUsecase) RemoveServiceFromZone(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain string, serviceid happydns.Identifier) (*happydns.Zone, error) {
+	return du.ActionOnEditableZone(user, domain, zone, func(zone *happydns.Zone) error {
+		return du.zoneService.DeleteService(zone, subdomain, serviceid)
+	})
 }
 
 func (du *domainUsecase) RetrieveRemoteZone(user *happydns.User, domain *happydns.Domain) (*happydns.Zone, error) {

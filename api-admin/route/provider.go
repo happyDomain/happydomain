@@ -31,20 +31,20 @@ import (
 )
 
 func declareProviderRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies, store storage.Storage) {
-	pc := controller.NewProviderController(dependancies.GetProviderService(false), store)
+	pc := controller.NewProviderController(dependancies.GetProviderUsecase(false), store)
 
 	router.GET("/providers", pc.ListProviders)
 	router.POST("/providers", pc.AddProvider)
 	router.DELETE("/providers", pc.ClearProviders)
 
 	apiProvidersMetaRoutes := router.Group("/providers/:pid")
-	apiProvidersMetaRoutes.Use(middleware.ProviderMetaHandler(dependancies.GetProviderService(false)))
+	apiProvidersMetaRoutes.Use(middleware.ProviderMetaHandler(dependancies.GetProviderUsecase(false)))
 
 	apiProvidersMetaRoutes.PUT("", pc.UpdateProvider)
 	apiProvidersMetaRoutes.DELETE("", pc.DeleteProvider)
 
 	apiProvidersRoutes := router.Group("/providers/:pid")
-	apiProvidersRoutes.Use(middleware.ProviderHandler(dependancies.GetProviderService(false)))
+	apiProvidersRoutes.Use(middleware.ProviderHandler(dependancies.GetProviderUsecase(false)))
 
 	apiProvidersRoutes.GET("", pc.GetProvider)
 

@@ -84,7 +84,7 @@ func (sc *ServiceController) AddZoneService(c *gin.Context) {
 		return
 	}
 
-	zone, err = sc.duService.AppendZoneService(user, domain, zone, subdomain, domain.DomainName, newservice)
+	zone, err = sc.duService.AddServiceToZone(user, domain, zone, subdomain, domain.DomainName, newservice)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -232,7 +232,7 @@ func (sc *ServiceController) DeleteZoneService(c *gin.Context) {
 	serviceid := c.MustGet("serviceid").(happydns.Identifier)
 	subdomain := c.MustGet("subdomain").(string)
 
-	zone, err := sc.duService.DeleteZoneService(user, domain, zone, subdomain, serviceid)
+	zone, err := sc.duService.RemoveServiceFromZone(user, domain, zone, subdomain, serviceid)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

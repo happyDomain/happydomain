@@ -30,7 +30,7 @@ import (
 )
 
 func DeclareServiceSpecsRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
-	ssc := controller.NewServiceSpecsController(dependancies.GetServiceSpecsService())
+	ssc := controller.NewServiceSpecsController(dependancies.GetServiceSpecsUsecase())
 
 	router.GET("/service_specs", ssc.ListServiceSpecs)
 

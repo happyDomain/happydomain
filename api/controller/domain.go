@@ -80,7 +80,7 @@ func (dc *DomainController) GetDomains(c *gin.Context) {
 //	@Tags			domains
 //	@Accept			json
 //	@Produce		json
-//	@Param			body	body	happydns.DomainMinimal	true	"Domain object that you want to manage through happyDomain."
+//	@Param			body	body	happydns.DomainCreationInput	true	"Domain object that you want to manage through happyDomain."
 //	@Security		securitydefinitions.basic
 //	@Success		200	{object}	happydns.Domain
 //	@Failure		400	{object}	happydns.ErrorResponse	"Error in received data"
