@@ -27,7 +27,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 	"git.happydns.org/happyDomain/services/common"
@@ -48,8 +48,8 @@ func (s *NSOnlyOrigin) GenComment() string {
 func (s *NSOnlyOrigin) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
 	rrs := make([]happydns.Record, len(s.NameServers))
 	for i, r := range s.NameServers {
-		ns := utils.NewRecord(utils.DomainJoin(domain), "NS", ttl, origin)
-		ns.(*dns.NS).Ns = utils.DomainFQDN(r, origin)
+		ns := helpers.NewRecord(helpers.DomainJoin(domain), "NS", ttl, origin)
+		ns.(*dns.NS).Ns = helpers.DomainFQDN(r, origin)
 		rrs[i] = ns
 	}
 	return rrs, nil
@@ -90,15 +90,15 @@ func (s *Origin) GenComment() string {
 func (s *Origin) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
 	rrs := make([]happydns.Record, len(s.NameServers))
 	for i, r := range s.NameServers {
-		ns := utils.NewRecord(utils.DomainJoin(domain), "NS", ttl, origin)
-		ns.(*dns.NS).Ns = utils.DomainFQDN(r, origin)
+		ns := helpers.NewRecord(helpers.DomainJoin(domain), "NS", ttl, origin)
+		ns.(*dns.NS).Ns = helpers.DomainFQDN(r, origin)
 		rrs[i] = ns
 	}
 
 	if s.Ns != "" {
-		rr := utils.NewRecord(domain, "SOA", ttl, origin)
-		rr.(*dns.SOA).Ns = utils.DomainFQDN(s.Ns, origin)
-		rr.(*dns.SOA).Mbox = utils.DomainFQDN(s.Mbox, origin)
+		rr := helpers.NewRecord(domain, "SOA", ttl, origin)
+		rr.(*dns.SOA).Ns = helpers.DomainFQDN(s.Ns, origin)
+		rr.(*dns.SOA).Mbox = helpers.DomainFQDN(s.Mbox, origin)
 		rr.(*dns.SOA).Serial = s.Serial
 		rr.(*dns.SOA).Refresh = uint32(s.Refresh.Seconds())
 		rr.(*dns.SOA).Retry = uint32(s.Retry.Seconds())
@@ -119,8 +119,8 @@ func origin_analyze(a *svcs.Analyzer) error {
 			hasSOA = true
 
 			// Make record relative
-			soa.Ns = utils.DomainRelative(soa.Ns, a.GetOrigin())
-			soa.Mbox = utils.DomainRelative(soa.Mbox, a.GetOrigin())
+			soa.Ns = helpers.DomainRelative(soa.Ns, a.GetOrigin())
+			soa.Mbox = helpers.DomainRelative(soa.Mbox, a.GetOrigin())
 
 			origin := &Origin{
 				Ns:      soa.Ns,
@@ -141,7 +141,7 @@ func origin_analyze(a *svcs.Analyzer) error {
 			for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS, Domain: record.Header().Name}) {
 				if ns, ok := record.(*dns.NS); ok {
 					// Make record relative
-					ns.Ns = utils.DomainRelative(ns.Ns, a.GetOrigin())
+					ns.Ns = helpers.DomainRelative(ns.Ns, a.GetOrigin())
 
 					origin.NameServers = append(origin.NameServers, ns.Ns)
 					a.UseRR(
@@ -160,7 +160,7 @@ func origin_analyze(a *svcs.Analyzer) error {
 		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS, Domain: a.GetOrigin()}) {
 			if ns, ok := record.(*dns.NS); ok {
 				// Make record relative
-				ns.Ns = utils.DomainRelative(ns.Ns, a.GetOrigin())
+				ns.Ns = helpers.DomainRelative(ns.Ns, a.GetOrigin())
 
 				origin.NameServers = append(origin.NameServers, ns.Ns)
 				a.UseRR(

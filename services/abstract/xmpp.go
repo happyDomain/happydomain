@@ -30,7 +30,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 )
@@ -90,7 +90,7 @@ destloop:
 
 func (s *XMPP) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, err error) {
 	for _, jabber := range s.Client {
-		jabber_rrs, err := jabber.GetRecords(utils.DomainJoin("_jabber._tcp", domain), ttl, origin)
+		jabber_rrs, err := jabber.GetRecords(helpers.DomainJoin("_jabber._tcp", domain), ttl, origin)
 		if err != nil {
 			return nil, fmt.Errorf("unable to generate jabber records: %w", err)
 		}
@@ -98,7 +98,7 @@ func (s *XMPP) GetRecords(domain string, ttl uint32, origin string) (rrs []happy
 	}
 
 	for _, client := range s.Client {
-		client_rrs, err := client.GetRecords(utils.DomainJoin("_xmpp-client._tcp", domain), ttl, origin)
+		client_rrs, err := client.GetRecords(helpers.DomainJoin("_xmpp-client._tcp", domain), ttl, origin)
 		if err != nil {
 			return nil, fmt.Errorf("unable to generate XMPP client records: %w", err)
 		}
@@ -106,7 +106,7 @@ func (s *XMPP) GetRecords(domain string, ttl uint32, origin string) (rrs []happy
 	}
 
 	for _, server := range s.Server {
-		server_rrs, err := server.GetRecords(utils.DomainJoin("_xmpp-server._tcp", domain), ttl, origin)
+		server_rrs, err := server.GetRecords(helpers.DomainJoin("_xmpp-server._tcp", domain), ttl, origin)
 		if err != nil {
 			return nil, fmt.Errorf("unable to generate XMPP server records: %w", err)
 		}

@@ -26,7 +26,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 )
@@ -49,7 +49,7 @@ func (s *GitlabPageVerif) GetRecords(domain string, ttl uint32, origin string) (
 	}
 	domain = strings.TrimPrefix(domain, "_gitlab-pages-verification-code.")
 
-	rr := utils.NewRecord("_gitlab-pages-verification-code."+domain, "TXT", ttl, origin)
+	rr := helpers.NewRecord("_gitlab-pages-verification-code."+domain, "TXT", ttl, origin)
 	rr.(*dns.TXT).Txt = []string{"gitlab-pages-verification-code=" + strings.TrimPrefix(s.Code, "gitlab-pages-verification-code=")}
 
 	return []happydns.Record{rr}, nil

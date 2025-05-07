@@ -24,7 +24,7 @@ package svcs
 import (
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -46,7 +46,7 @@ func (ss *NAPTR) GenComment() string {
 }
 
 func (ss *NAPTR) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	rr := utils.NewRecord(domain, "NAPTR", ttl, origin)
+	rr := helpers.NewRecord(domain, "NAPTR", ttl, origin)
 	rr.(*dns.NAPTR).Order = ss.Order
 	rr.(*dns.NAPTR).Preference = ss.Preference
 	rr.(*dns.NAPTR).Flags = ss.Flags

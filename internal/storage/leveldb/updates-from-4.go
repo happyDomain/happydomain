@@ -26,9 +26,9 @@ import (
 	"log"
 	"strings"
 
+	"git.happydns.org/happyDomain/internal/usecase"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
-	"git.happydns.org/happyDomain/usecase"
 )
 
 func migrateFrom4(s *LevelDBStorage) (err error) {

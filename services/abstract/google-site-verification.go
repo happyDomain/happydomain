@@ -26,7 +26,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 )
@@ -44,7 +44,7 @@ func (s *GoogleVerif) GenComment() string {
 }
 
 func (s *GoogleVerif) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
-	rr := utils.NewRecord(domain, "TXT", ttl, origin)
+	rr := helpers.NewRecord(domain, "TXT", ttl, origin)
 	rr.(*dns.TXT).Txt = []string{"google-site-verification=" + strings.TrimPrefix(s.SiteVerification, "google-site-verification=")}
 	return []happydns.Record{rr}, nil
 }

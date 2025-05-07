@@ -30,7 +30,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -91,7 +91,7 @@ protoloop:
 func (ss *TLSAs) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
 	for _, s := range ss.TLSA {
 		if len(s.Certificate) > 0 {
-			rr := utils.NewRecord(utils.DomainJoin(fmt.Sprintf("_%d._%s", s.Port, s.Proto), domain), "TLSA", ttl, origin)
+			rr := helpers.NewRecord(helpers.DomainJoin(fmt.Sprintf("_%d._%s", s.Port, s.Proto), domain), "TLSA", ttl, origin)
 			rr.(*dns.TLSA).Usage = s.CertUsage
 			rr.(*dns.TLSA).Selector = s.Selector
 			rr.(*dns.TLSA).MatchingType = s.MatchingType

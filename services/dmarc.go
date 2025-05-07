@@ -28,7 +28,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services/common"
 )
@@ -78,7 +78,7 @@ func (t *DMARC) GenComment() string {
 }
 
 func (t *DMARC) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	rr := utils.NewRecord(utils.DomainJoin("_dmarc", domain), "TXT", ttl, origin)
+	rr := helpers.NewRecord(helpers.DomainJoin("_dmarc", domain), "TXT", ttl, origin)
 	rr.(*dns.TXT).Txt = []string{t.String()}
 
 	rrs = append(rrs, rr)

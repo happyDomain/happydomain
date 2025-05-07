@@ -13,10 +13,10 @@ steps:
   commands:
   - apk --no-cache add tar
   - yarn config set network-timeout 100000
-  - yarn --cwd ui install
-  - tar --transform="s@.@./happydomain-${DRONE_COMMIT}@" --exclude-vcs --exclude=./ui/node_modules/.cache -czf /dev/shm/happydomain-src.tar.gz .
+  - yarn --cwd web install
+  - tar --transform="s@.@./happydomain-${DRONE_COMMIT}@" --exclude-vcs --exclude=./web/node_modules/.cache -czf /dev/shm/happydomain-src.tar.gz .
   - mv /dev/shm/happydomain-src.tar.gz .
-  - yarn --cwd ui --offline build
+  - yarn --cwd web --offline build
 
 - name: deploy sources
   image: plugins/s3
@@ -57,10 +57,10 @@ steps:
   image: golang:1-alpine
   commands:
   - apk add --no-cache git
-  - sed -i '/npm run build/d' ui/assets.go
+  - sed -i '/npm run build/d' web/assets.go
   - go install github.com/swaggo/swag/cmd/swag@latest
   - go generate ./...
-  - go build -tags netgo,swagger,ui -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+  - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
   - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
   environment:
     CGO_ENABLED: 0
@@ -73,10 +73,10 @@ steps:
   image: golang:1-alpine
   commands:
   - apk add --no-cache git
-  - sed -i '/npm run build/d' ui/assets.go
+  - sed -i '/npm run build/d' web/assets.go
   - go install github.com/swaggo/swag/cmd/swag@latest
   - go generate ./...
-  - go build -tags netgo,swagger,ui -ldflags '-w -X main.Version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+  - go build -tags netgo,swagger,web -ldflags '-w -X main.Version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
   - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
   environment:
     CGO_ENABLED: 0
@@ -123,7 +123,7 @@ steps:
   image: golang:1-alpine
   commands:
   - apk add --no-cache git
-  - go build -tags netgo,swagger,ui -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+  - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
   environment:
     CGO_ENABLED: 0
     GOOS: darwin
@@ -137,7 +137,7 @@ steps:
   image: golang:1-alpine
   commands:
   - apk add --no-cache git
-  - go build -tags netgo,swagger,ui -ldflags '-w -X "main.Version=${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+  - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
   environment:
     CGO_ENABLED: 0
     GOOS: darwin
@@ -215,7 +215,7 @@ steps:
 - name: frontend
   image: node:22-alpine
   commands:
-  - cd ui
+  - cd web
   - npm install --network-timeout=100000
   - npm run build
 
@@ -223,10 +223,10 @@ steps:
   image: golang:1-alpine
   commands:
   - apk add --no-cache git
-  - sed -i '/npm run build/d' ui/assets.go
+  - sed -i '/npm run build/d' web/assets.go
   - go install github.com/swaggo/swag/cmd/swag@latest
   - go generate ./...
-  - go build -tags netgo,swagger,ui -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+  - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
   - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
   environment:
     CGO_ENABLED: 0
@@ -239,10 +239,10 @@ steps:
   image: golang:1-alpine
   commands:
   - apk add --no-cache git
-  - sed -i '/npm run build/d' ui/assets.go
+  - sed -i '/npm run build/d' web/assets.go
   - go install github.com/swaggo/swag/cmd/swag@latest
   - go generate ./...
-  - go build -tags netgo,swagger,ui -ldflags '-w -X main.Version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+  - go build -tags netgo,swagger,web -ldflags '-w -X main.Version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
   - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
   environment:
     CGO_ENABLED: 0
@@ -298,7 +298,7 @@ steps:
   image: golang:1-alpine
   commands:
   - apk add --no-cache git
-  - go build -tags netgo,swagger,ui -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+  - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
   environment:
     CGO_ENABLED: 0
     GOOS: darwin
@@ -312,7 +312,7 @@ steps:
   image: golang:1-alpine
   commands:
   - apk add --no-cache git
-  - go build -tags netgo,swagger,ui -ldflags '-w -X "main.Version=${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+  - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
   environment:
     CGO_ENABLED: 0
     GOOS: darwin
@@ -387,7 +387,7 @@ steps:
 - name: frontend
   image: node:22
   commands:
-  - cd ui
+  - cd web
   - npm install --network-timeout=100000
   - npm run build
 
@@ -395,11 +395,11 @@ steps:
   image: golang:1-alpine
   commands:
   - apk --no-cache add build-base git
-  - sed -i '/npm run build/d' ui/assets.go
+  - sed -i '/npm run build/d' web/assets.go
   - go install github.com/swaggo/swag/cmd/swag@latest
   - go mod vendor
   - go generate ./...
-  - go build -tags netgo,swagger,ui -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el ./cmd/happyDomain/
+  - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el ./cmd/happyDomain/
   environment:
     CGO_ENABLED: 0
     GOARM: 5
@@ -415,11 +415,11 @@ steps:
   image: golang:1-alpine
   commands:
   - apk --no-cache add build-base git
-  - sed -i '/npm run build/d' ui/assets.go
+  - sed -i '/npm run build/d' web/assets.go
   - go install github.com/swaggo/swag/cmd/swag@latest
   - go mod vendor
   - go generate ./...
-  - go build -tags netgo,swagger,ui -ldflags '-w -X "main.Version=${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el ./cmd/happyDomain/
+  - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}el ./cmd/happyDomain/
   environment:
     CGO_ENABLED: 0
     GOARM: 5
@@ -466,7 +466,7 @@ steps:
   image: golang:1-alpine
   commands:
   - apk --no-cache add build-base git
-  - go build -tags netgo,swagger,ui -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf ./cmd/happyDomain/
+  - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf ./cmd/happyDomain/
   environment:
     CGO_ENABLED: 0
     GOARM: 6
@@ -482,7 +482,7 @@ steps:
   image: golang:1-alpine
   commands:
   - apk --no-cache add build-base git
-  - go build -tags netgo,swagger,ui -ldflags '-w -X "main.Version=${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf ./cmd/happyDomain/
+  - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}hf ./cmd/happyDomain/
   environment:
     CGO_ENABLED: 0
     GOARM: 6
@@ -529,10 +529,10 @@ steps:
   image: golang:1-alpine
   commands:
   - apk --no-cache add build-base git
-  - "[ -f docs/docs.go ] || sed -i '/npm run build/d' ui/assets.go"
+  - "[ -f docs/docs.go ] || sed -i '/npm run build/d' web/assets.go"
   - "[ -f docs/docs.go ] || go install github.com/swaggo/swag/cmd/swag@latest"
   - "[ -f docs/docs.go ] || go generate ./..."
-  - go build -tags netgo,swagger,ui -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7 ./cmd/happyDomain/
+  - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7 ./cmd/happyDomain/
   - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7 happydomain
   environment:
     CGO_ENABLED: 0
@@ -546,7 +546,7 @@ steps:
   image: golang:1-alpine
   commands:
   - apk --no-cache add build-base git
-  - go build -tags netgo,swagger,ui -ldflags '-w -X "main.Version=${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7 ./cmd/happyDomain/
+  - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7 ./cmd/happyDomain/
   - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}v7 happydomain
   environment:
     CGO_ENABLED: 0

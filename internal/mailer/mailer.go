@@ -27,7 +27,7 @@ import (
 	"net/mail"
 	"text/template"
 
-	"git.happydns.org/happyDomain/ui"
+	"git.happydns.org/happyDomain/web"
 
 	gomail "github.com/go-mail/mail"
 	"github.com/yuin/goldmark"
@@ -95,7 +95,7 @@ func (r *Mailer) SendMail(to *mail.Address, subject, content string) (err error)
 		return
 	}
 
-	if data, err := ui.GetEmbedFS().Open("dist/img/happydomain.png"); err == nil {
+	if data, err := web.GetEmbedFS().Open("dist/img/happydomain.png"); err == nil {
 		m.EmbedReader("happydomain.png", data)
 	}
 

@@ -29,7 +29,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -131,7 +131,7 @@ func (s *DKIMRecord) GenComment() string {
 }
 
 func (s *DKIMRecord) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	rr := utils.NewRecord(utils.DomainJoin(s.Selector+"._domainkey", domain), "TXT", ttl, origin)
+	rr := helpers.NewRecord(helpers.DomainJoin(s.Selector+"._domainkey", domain), "TXT", ttl, origin)
 	rr.(*dns.TXT).Txt = []string{s.String()}
 
 	rrs = append(rrs, rr)

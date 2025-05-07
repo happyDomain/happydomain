@@ -28,7 +28,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -46,7 +46,7 @@ func (t *TLS_RPT) GenComment() string {
 }
 
 func (t *TLS_RPT) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	rr := utils.NewRecord(utils.DomainJoin("_smtp._tls", domain), "TXT", ttl, origin)
+	rr := helpers.NewRecord(helpers.DomainJoin("_smtp._tls", domain), "TXT", ttl, origin)
 	rr.(*dns.TXT).Txt = []string{t.String()}
 
 	rrs = append(rrs, rr)
