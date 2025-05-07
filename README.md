@@ -55,7 +55,7 @@ In order to build the happyDomain project, you'll need the following dependencie
 1. First, you'll need to prepare the frontend, by installing the node modules dependencies:
 
 ```
-pushd ui; npm install; popd
+pushd web; npm install; popd
 ```
 
 2. Then, generate assets files used by Go code:
@@ -67,7 +67,7 @@ go generate ./...
 3. Finaly, build the Go code:
 
 ```
-go build -tags swagger,ui ./cmd/happyDomain
+go build -tags swagger,web ./cmd/happyDomain
 ```
 
 This last command will create a binary `happyDomain` you can use standalone.
@@ -170,7 +170,7 @@ In one terminal, run `happydomain` with the following arguments:
 In another terminal, run the node part:
 
 ```
-cd ui; npm run dev
+cd web; npm run dev
 ```
 
 With this setup, static assets integrated inside the go binary will not be used, instead it'll forward all requests for static assets to the node server, that do dynamic reload, etc.

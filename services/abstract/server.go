@@ -28,7 +28,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 )
@@ -76,13 +76,13 @@ func (s *Server) GenComment() string {
 
 func (s *Server) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
 	if s.A != nil && len(*s.A) != 0 {
-		rr := utils.NewRecord(domain, "A", ttl, origin)
+		rr := helpers.NewRecord(domain, "A", ttl, origin)
 		rr.(*dns.A).A = *s.A
 
 		rrs = append(rrs, rr)
 	}
 	if s.AAAA != nil && len(*s.AAAA) != 0 {
-		rr := utils.NewRecord(domain, "AAAA", ttl, origin)
+		rr := helpers.NewRecord(domain, "AAAA", ttl, origin)
 		rr.(*dns.AAAA).AAAA = *s.AAAA
 
 		rrs = append(rrs, rr)

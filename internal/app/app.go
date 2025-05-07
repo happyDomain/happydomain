@@ -30,15 +30,15 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 
-	api "git.happydns.org/happyDomain/api/route"
+	api "git.happydns.org/happyDomain/internal/api/route"
 	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/internal/mailer"
 	"git.happydns.org/happyDomain/internal/newsletter"
 	"git.happydns.org/happyDomain/internal/session"
 	"git.happydns.org/happyDomain/internal/storage"
+	"git.happydns.org/happyDomain/internal/usecase"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/ui"
-	"git.happydns.org/happyDomain/usecase"
+	"git.happydns.org/happyDomain/web"
 )
 
 type Usecases struct {
@@ -241,7 +241,7 @@ func (app *App) setupRouter() {
 	))
 
 	api.DeclareRoutes(app.cfg, app.router, app)
-	ui.DeclareRoutes(app.cfg, app.router)
+	web.DeclareRoutes(app.cfg, app.router)
 }
 
 func (app *App) Start() {

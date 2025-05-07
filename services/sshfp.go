@@ -26,7 +26,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -50,7 +50,7 @@ func (s *SSHFPs) GenComment() string {
 
 func (s *SSHFPs) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, err error) {
 	for _, sshfp := range s.SSHFP {
-		rr := utils.NewRecord(domain, "SSHFP", ttl, origin)
+		rr := helpers.NewRecord(domain, "SSHFP", ttl, origin)
 		rr.(*dns.SSHFP).Algorithm = sshfp.Algorithm
 		rr.(*dns.SSHFP).Type = sshfp.Type
 		rr.(*dns.SSHFP).FingerPrint = sshfp.FingerPrint

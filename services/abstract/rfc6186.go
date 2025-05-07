@@ -27,7 +27,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 )
@@ -132,7 +132,7 @@ func (s *RFC6186) GetRecords(domain string, ttl uint32, origin string) (rrs []ha
 		if service.Port == 0 {
 			service.Port = 587
 		}
-		srrs, err := service.GetRecords(utils.DomainJoin("_submission._tcp", domain), ttl, origin)
+		srrs, err := service.GetRecords(helpers.DomainJoin("_submission._tcp", domain), ttl, origin)
 		if err != nil {
 			return nil, fmt.Errorf("unable to generate submission records: %w", err)
 		}
@@ -142,7 +142,7 @@ func (s *RFC6186) GetRecords(domain string, ttl uint32, origin string) (rrs []ha
 		if service.Port == 0 {
 			service.Port = 587
 		}
-		srrs, err := service.GetRecords(utils.DomainJoin("_submissions._tcp", domain), ttl, origin)
+		srrs, err := service.GetRecords(helpers.DomainJoin("_submissions._tcp", domain), ttl, origin)
 		if err != nil {
 			return nil, fmt.Errorf("unable to generate submissionS records: %w", err)
 		}
@@ -152,7 +152,7 @@ func (s *RFC6186) GetRecords(domain string, ttl uint32, origin string) (rrs []ha
 		if service.Port == 0 {
 			service.Port = 143
 		}
-		srrs, err := service.GetRecords(utils.DomainJoin("_imap._tcp", domain), ttl, origin)
+		srrs, err := service.GetRecords(helpers.DomainJoin("_imap._tcp", domain), ttl, origin)
 		if err != nil {
 			return nil, fmt.Errorf("unable to generate imap records: %w", err)
 		}
@@ -162,7 +162,7 @@ func (s *RFC6186) GetRecords(domain string, ttl uint32, origin string) (rrs []ha
 		if service.Port == 0 {
 			service.Port = 993
 		}
-		srrs, err := service.GetRecords(utils.DomainJoin("_imaps._tcp", domain), ttl, origin)
+		srrs, err := service.GetRecords(helpers.DomainJoin("_imaps._tcp", domain), ttl, origin)
 		if err != nil {
 			return nil, fmt.Errorf("unable to generate imaps records: %w", err)
 		}
@@ -172,7 +172,7 @@ func (s *RFC6186) GetRecords(domain string, ttl uint32, origin string) (rrs []ha
 		if service.Port == 0 {
 			service.Port = 110
 		}
-		srrs, err := service.GetRecords(utils.DomainJoin("_pop3._tcp", domain), ttl, origin)
+		srrs, err := service.GetRecords(helpers.DomainJoin("_pop3._tcp", domain), ttl, origin)
 		if err != nil {
 			return nil, fmt.Errorf("unable to generate pop3 records: %w", err)
 		}
@@ -182,7 +182,7 @@ func (s *RFC6186) GetRecords(domain string, ttl uint32, origin string) (rrs []ha
 		if service.Port == 0 {
 			service.Port = 995
 		}
-		srrs, err := service.GetRecords(utils.DomainJoin("_pop3s._tcp", domain), ttl, origin)
+		srrs, err := service.GetRecords(helpers.DomainJoin("_pop3s._tcp", domain), ttl, origin)
 		if err != nil {
 			return nil, fmt.Errorf("unable to generate pop3s records: %w", err)
 		}

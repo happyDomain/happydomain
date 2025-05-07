@@ -30,7 +30,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -170,7 +170,7 @@ func AnalyzeZone(origin string, zone []happydns.Record) (svcs map[happydns.Subdo
 	// Consider records not used by services as Orphan
 	for _, record := range a.zone {
 		// Skip DNSSEC records
-		if utils.IsDNSSECType(record.Header().Rrtype) {
+		if helpers.IsDNSSECType(record.Header().Rrtype) {
 			continue
 		}
 		if record.Header().Name == "__dnssec."+origin && record.Header().Rrtype == dns.TypeTXT {

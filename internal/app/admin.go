@@ -32,9 +32,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	admin "git.happydns.org/happyDomain/api-admin/route"
+	admin "git.happydns.org/happyDomain/internal/api-admin/route"
 	"git.happydns.org/happyDomain/internal/config"
-	"git.happydns.org/happyDomain/usecase"
+	"git.happydns.org/happyDomain/internal/usecase"
 )
 
 type Admin struct {

@@ -29,7 +29,7 @@ import (
 
 	"github.com/StackExchange/dnscontrol/v4/pkg/spflib"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -47,7 +47,7 @@ func (s *SPF) GenComment() string {
 }
 
 func (s *SPF) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	rr := utils.NewRecord(domain, "TXT", ttl, origin)
+	rr := helpers.NewRecord(domain, "TXT", ttl, origin)
 	rr.(*dns.TXT).Txt = []string{s.String()}
 
 	rrs = append(rrs, rr)

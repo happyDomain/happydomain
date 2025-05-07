@@ -26,7 +26,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 )
@@ -44,7 +44,7 @@ func (s *ScalewayChallenge) GenComment() string {
 }
 
 func (s *ScalewayChallenge) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
-	rr := utils.NewRecord(utils.DomainJoin("_scaleway-challenge", domain), "TXT", ttl, origin)
+	rr := helpers.NewRecord(helpers.DomainJoin("_scaleway-challenge", domain), "TXT", ttl, origin)
 	rr.(*dns.TXT).Txt = []string{s.Challenge}
 	return []happydns.Record{rr}, nil
 }

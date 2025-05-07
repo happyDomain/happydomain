@@ -26,7 +26,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -43,8 +43,8 @@ func (s *CNAME) GenComment() string {
 }
 
 func (s *CNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	cname := utils.NewRecord(domain, "CNAME", ttl, origin)
-	cname.(*dns.CNAME).Target = utils.DomainFQDN(s.Target, origin)
+	cname := helpers.NewRecord(domain, "CNAME", ttl, origin)
+	cname.(*dns.CNAME).Target = helpers.DomainFQDN(s.Target, origin)
 	return []happydns.Record{cname}, nil
 }
 
@@ -62,8 +62,8 @@ func (s *SpecialCNAME) GenComment() string {
 }
 
 func (s *SpecialCNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	cname := utils.NewRecord(utils.DomainJoin(s.SubDomain, domain), "CNAME", ttl, origin)
-	cname.(*dns.CNAME).Target = utils.DomainFQDN(s.Target, origin)
+	cname := helpers.NewRecord(helpers.DomainJoin(s.SubDomain, domain), "CNAME", ttl, origin)
+	cname.(*dns.CNAME).Target = helpers.DomainFQDN(s.Target, origin)
 	return []happydns.Record{cname}, nil
 }
 
@@ -73,7 +73,7 @@ func specialalias_analyze(a *Analyzer) error {
 		subdomains := SRV_DOMAIN.FindStringSubmatch(record.Header().Name)
 		if cname, ok := record.(*dns.CNAME); ok && len(subdomains) == 4 {
 			// Make record relative
-			cname.Target = utils.DomainRelative(cname.Target, a.GetOrigin())
+			cname.Target = helpers.DomainRelative(cname.Target, a.GetOrigin())
 
 			a.UseRR(record, subdomains[3], &SpecialCNAME{
 				SubDomain: fmt.Sprintf("_%s._%s", subdomains[1], subdomains[2]),
@@ -88,7 +88,7 @@ func alias_analyze(a *Analyzer) error {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME}) {
 		if cname, ok := record.(*dns.CNAME); ok {
 			// Make record relative
-			cname.Target = utils.DomainRelative(cname.Target, a.GetOrigin())
+			cname.Target = helpers.DomainRelative(cname.Target, a.GetOrigin())
 
 			a.UseRR(record, record.Header().Name, &CNAME{
 				Target: cname.Target,

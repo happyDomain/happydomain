@@ -27,7 +27,7 @@ import (
 
 	_ "github.com/StackExchange/dnscontrol/v4/providers/axfrddns"
 
-	"git.happydns.org/happyDomain/adapters"
+	"git.happydns.org/happyDomain/internal/adapters"
 	"git.happydns.org/happyDomain/model"
 )
 

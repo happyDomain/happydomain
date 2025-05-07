@@ -33,7 +33,7 @@ import (
 	"strings"
 	"time"
 
-	"git.happydns.org/happyDomain/api/controller"
+	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"

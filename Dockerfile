@@ -2,11 +2,11 @@ FROM node:22-alpine AS nodebuild
 
 WORKDIR /go/src/git.happydns.org/happydomain
 
-COPY ui/ ui/
+COPY web/ web/
 
 RUN yarn config set network-timeout 100000 && \
-    yarn --cwd ui install && \
-    yarn --cwd ui --offline build
+    yarn --cwd web install && \
+    yarn --cwd web --offline build
 
 
 FROM golang:1-alpine AS gobuild
@@ -16,22 +16,18 @@ RUN apk add --no-cache git
 WORKDIR /go/src/git.happydns.org/happydomain
 
 COPY --from=nodebuild /go/src/git.happydns.org/happydomain/ ./
-COPY adapters ./adapters
-COPY api ./api
-COPY api-admin ./api-admin
 COPY cmd ./cmd
-COPY generators ./generators
+COPY tools ./tools
 COPY internal ./internal
 COPY model ./model
 COPY providers ./providers
 COPY services ./services
-COPY usecase ./usecase
 COPY generate.go go.mod go.sum ./
 
-RUN sed -i '/npm run build/d' ui/assets.go && \
+RUN sed -i '/npm run build/d' web/assets.go && \
     go install github.com/swaggo/swag/cmd/swag@latest && \
     go generate -v ./... && \
-    go build -v -tags netgo,swagger,ui -ldflags '-w' ./cmd/happyDomain/
+    go build -v -tags netgo,swagger,web -ldflags '-w' ./cmd/happyDomain/
 
 
 FROM alpine:3.21

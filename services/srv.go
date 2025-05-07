@@ -27,7 +27,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -47,11 +47,11 @@ func (s *SRV) GenComment() string {
 }
 
 func (s *SRV) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
-	rr := utils.NewRecord(domain, "SRV", ttl, origin)
+	rr := helpers.NewRecord(domain, "SRV", ttl, origin)
 	rr.(*dns.SRV).Priority = s.Priority
 	rr.(*dns.SRV).Weight = s.Weight
 	rr.(*dns.SRV).Port = s.Port
-	rr.(*dns.SRV).Target = utils.DomainFQDN(s.Target, origin)
+	rr.(*dns.SRV).Target = helpers.DomainFQDN(s.Target, origin)
 	return []happydns.Record{rr}, nil
 }
 
@@ -89,7 +89,7 @@ func (s *UnknownSRV) GenComment() string {
 func (s *UnknownSRV) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
 	var rrs []happydns.Record
 	for _, service := range s.SRV {
-		srv, err := service.GetRecords(utils.DomainJoin(fmt.Sprintf("_%s._%s", s.Name, s.Proto), domain), ttl, origin)
+		srv, err := service.GetRecords(helpers.DomainJoin(fmt.Sprintf("_%s._%s", s.Name, s.Proto), domain), ttl, origin)
 		if err != nil {
 			return nil, err
 		}
@@ -127,9 +127,9 @@ func srv_analyze(a *Analyzer) error {
 		}
 
 		// Make record relative
-		srv.Target = utils.DomainRelative(srv.Target, a.GetOrigin())
+		srv.Target = helpers.DomainRelative(srv.Target, a.GetOrigin())
 
-		srvDomains[domain][svc].SRV = append(srvDomains[domain][svc].SRV, ParseSRV(utils.RRRelative(record, a.GetOrigin()).(*dns.SRV)))
+		srvDomains[domain][svc].SRV = append(srvDomains[domain][svc].SRV, ParseSRV(helpers.RRRelative(record, a.GetOrigin()).(*dns.SRV)))
 
 		a.UseRR(
 			record,

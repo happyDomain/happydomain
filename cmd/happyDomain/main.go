@@ -32,7 +32,7 @@ import (
 	"github.com/earthboundkid/versioninfo/v2"
 	"github.com/fatih/color"
 
-	"git.happydns.org/happyDomain/api/controller"
+	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/app"
 	"git.happydns.org/happyDomain/internal/config"
 	_ "git.happydns.org/happyDomain/internal/storage/inmemory"

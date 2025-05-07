@@ -28,7 +28,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 )
@@ -81,7 +81,7 @@ destloop:
 
 func (s *MatrixIM) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, err error) {
 	for _, matrix := range s.Matrix {
-		matrix_rrs, err := matrix.GetRecords(utils.DomainJoin("_matrix._tcp", domain), ttl, origin)
+		matrix_rrs, err := matrix.GetRecords(helpers.DomainJoin("_matrix._tcp", domain), ttl, origin)
 		if err != nil {
 			return nil, err
 		}

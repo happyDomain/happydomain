@@ -27,7 +27,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services/common"
 )
@@ -161,7 +161,7 @@ func (s *CAA) GenComment() (ret string) {
 
 func (s *CAA) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
 	if s.DisallowIssue {
-		rr := utils.NewRecord(domain, "CAA", ttl, origin)
+		rr := helpers.NewRecord(domain, "CAA", ttl, origin)
 		rr.(*dns.CAA).Flag = 0
 		rr.(*dns.CAA).Tag = "issue"
 		rr.(*dns.CAA).Tag = "issue"
@@ -170,7 +170,7 @@ func (s *CAA) GetRecords(domain string, ttl uint32, origin string) (rrs []happyd
 		rrs = append(rrs, rr)
 	} else {
 		for _, issue := range s.Issue {
-			rr := utils.NewRecord(domain, "CAA", ttl, origin)
+			rr := helpers.NewRecord(domain, "CAA", ttl, origin)
 			rr.(*dns.CAA).Flag = 0
 			rr.(*dns.CAA).Tag = "issue"
 			rr.(*dns.CAA).Value = issue.String()
@@ -179,7 +179,7 @@ func (s *CAA) GetRecords(domain string, ttl uint32, origin string) (rrs []happyd
 		}
 
 		if s.DisallowWildcardIssue {
-			rr := utils.NewRecord(domain, "CAA", ttl, origin)
+			rr := helpers.NewRecord(domain, "CAA", ttl, origin)
 			rr.(*dns.CAA).Flag = 0
 			rr.(*dns.CAA).Tag = "issuewild"
 			rr.(*dns.CAA).Value = ";"
@@ -187,7 +187,7 @@ func (s *CAA) GetRecords(domain string, ttl uint32, origin string) (rrs []happyd
 			rrs = append(rrs, rr)
 		} else {
 			for _, issue := range s.IssueWild {
-				rr := utils.NewRecord(domain, "CAA", ttl, origin)
+				rr := helpers.NewRecord(domain, "CAA", ttl, origin)
 				rr.(*dns.CAA).Flag = 0
 				rr.(*dns.CAA).Tag = "issuewild"
 				rr.(*dns.CAA).Value = issue.String()
@@ -198,7 +198,7 @@ func (s *CAA) GetRecords(domain string, ttl uint32, origin string) (rrs []happyd
 	}
 
 	if s.DisallowMailIssue {
-		rr := utils.NewRecord(domain, "CAA", ttl, origin)
+		rr := helpers.NewRecord(domain, "CAA", ttl, origin)
 		rr.(*dns.CAA).Flag = 0
 		rr.(*dns.CAA).Tag = "issuemail"
 		rr.(*dns.CAA).Value = ";"
@@ -206,7 +206,7 @@ func (s *CAA) GetRecords(domain string, ttl uint32, origin string) (rrs []happyd
 		rrs = append(rrs, rr)
 	} else {
 		for _, issue := range s.IssueMail {
-			rr := utils.NewRecord(domain, "CAA", ttl, origin)
+			rr := helpers.NewRecord(domain, "CAA", ttl, origin)
 			rr.(*dns.CAA).Flag = 0
 			rr.(*dns.CAA).Tag = "issuemail"
 			rr.(*dns.CAA).Value = issue.String()
@@ -217,7 +217,7 @@ func (s *CAA) GetRecords(domain string, ttl uint32, origin string) (rrs []happyd
 
 	if len(s.Iodef) > 0 {
 		for _, iodef := range s.Iodef {
-			rr := utils.NewRecord(domain, "CAA", ttl, origin)
+			rr := helpers.NewRecord(domain, "CAA", ttl, origin)
 			rr.(*dns.CAA).Flag = 0
 			rr.(*dns.CAA).Tag = "iodef"
 			rr.(*dns.CAA).Value = iodef.String()

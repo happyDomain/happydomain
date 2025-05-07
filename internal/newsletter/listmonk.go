@@ -30,7 +30,7 @@ import (
 	"net/url"
 	"path/filepath"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -59,7 +59,7 @@ func (ns *ListmonkNewsletterSubscription) SubscribeToNewsletter(u happydns.UserI
 
 	jsonForm := &ListmonkSubscriber{
 		Email:                   u.GetEmail(),
-		Name:                    utils.GenUsername(u.GetEmail()),
+		Name:                    helpers.GenUsername(u.GetEmail()),
 		Status:                  "enabled",
 		Lists:                   []int{ns.ListmonkId},
 		PreconfirmSubscriptions: true,
