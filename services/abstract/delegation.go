@@ -26,7 +26,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 )
@@ -51,12 +51,12 @@ func (s *Delegation) GenComment() string {
 
 func (s *Delegation) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
 	for _, r := range s.NameServers {
-		ns := utils.NewRecord(utils.DomainJoin(domain), "NS", ttl, origin)
-		ns.(*dns.NS).Ns = utils.DomainFQDN(r, origin)
+		ns := helpers.NewRecord(helpers.DomainJoin(domain), "NS", ttl, origin)
+		ns.(*dns.NS).Ns = helpers.DomainFQDN(r, origin)
 		rrs = append(rrs, ns)
 	}
 	for _, ds := range s.DS {
-		rr := utils.NewRecord(utils.DomainJoin(domain), "DS", ttl, origin)
+		rr := helpers.NewRecord(helpers.DomainJoin(domain), "DS", ttl, origin)
 		rr.(*dns.DS).KeyTag = ds.KeyTag
 		rr.(*dns.DS).Algorithm = ds.Algorithm
 		rr.(*dns.DS).DigestType = ds.DigestType
@@ -83,7 +83,7 @@ func delegation_analyze(a *svcs.Analyzer) error {
 			}
 
 			// Make record relative
-			ns.Ns = utils.DomainRelative(ns.Ns, a.GetOrigin())
+			ns.Ns = helpers.DomainRelative(ns.Ns, a.GetOrigin())
 
 			delegations[dn].NameServers = append(delegations[dn].NameServers, ns.Ns)
 

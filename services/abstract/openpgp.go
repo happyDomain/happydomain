@@ -30,7 +30,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/utils"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 )
@@ -55,7 +55,7 @@ func (s *OpenPGP) GetRecords(domain string, ttl uint32, origin string) (rrs []ha
 			s.Identifier = fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
 		}
 
-		rr := utils.NewRecord(utils.DomainJoin(fmt.Sprintf("%s._openpgpkey", s.Identifier), domain), "OPENPGPKEY", ttl, origin)
+		rr := helpers.NewRecord(helpers.DomainJoin(fmt.Sprintf("%s._openpgpkey", s.Identifier), domain), "OPENPGPKEY", ttl, origin)
 		rr.(*dns.OPENPGPKEY).PublicKey = base64.StdEncoding.EncodeToString(s.PublicKey)
 
 		rrs = append(rrs, rr)
@@ -87,7 +87,7 @@ func (s *SMimeCert) GetRecords(domain string, ttl uint32, origin string) (rrs []
 			s.Identifier = fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
 		}
 
-		rr := utils.NewRecord(utils.DomainJoin(fmt.Sprintf("%s._smimecert", s.Identifier), domain), "SMIMEA", ttl, origin)
+		rr := helpers.NewRecord(helpers.DomainJoin(fmt.Sprintf("%s._smimecert", s.Identifier), domain), "SMIMEA", ttl, origin)
 		rr.(*dns.SMIMEA).Usage = s.CertUsage
 		rr.(*dns.SMIMEA).Selector = s.Selector
 		rr.(*dns.SMIMEA).MatchingType = s.MatchingType
