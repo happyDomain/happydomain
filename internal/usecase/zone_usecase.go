@@ -29,17 +29,17 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/adapters"
-	"git.happydns.org/happyDomain/internal/storage"
+	"git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
 )
 
 type zoneUsecase struct {
 	providerService happydns.ProviderUsecase
 	serviceService  happydns.ServiceUsecase
-	store           storage.ZoneStorage
+	store           zone.ZoneStorage
 }
 
-func NewZoneUsecase(pu happydns.ProviderUsecase, su happydns.ServiceUsecase, store storage.ZoneStorage) happydns.ZoneUsecase {
+func NewZoneUsecase(pu happydns.ProviderUsecase, su happydns.ServiceUsecase, store zone.ZoneStorage) happydns.ZoneUsecase {
 	return &zoneUsecase{
 		providerService: pu,
 		serviceService:  su,

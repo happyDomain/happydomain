@@ -30,7 +30,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/storage"
+	"git.happydns.org/happyDomain/internal/usecase/domain"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 )
@@ -38,11 +38,11 @@ import (
 type domainUsecase struct {
 	domainLogService happydns.DomainLogUsecase
 	providerService  happydns.ProviderUsecase
-	store            storage.DomainStorage
+	store            domain.DomainStorage
 	zoneService      happydns.ZoneUsecase
 }
 
-func NewDomainUsecase(store storage.DomainStorage, domainLogService happydns.DomainLogUsecase, providerService happydns.ProviderUsecase, zoneService happydns.ZoneUsecase) happydns.DomainUsecase {
+func NewDomainUsecase(store domain.DomainStorage, domainLogService happydns.DomainLogUsecase, providerService happydns.ProviderUsecase, zoneService happydns.ZoneUsecase) happydns.DomainUsecase {
 	return &domainUsecase{
 		domainLogService: domainLogService,
 		providerService:  providerService,

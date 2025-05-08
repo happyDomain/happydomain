@@ -31,16 +31,16 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/storage"
+	"git.happydns.org/happyDomain/internal/usecase/domain"
 	"git.happydns.org/happyDomain/model"
 )
 
 type DomainController struct {
 	domainService happydns.DomainUsecase
-	store         storage.DomainStorage
+	store         domain.DomainStorage
 }
 
-func NewDomainController(duService happydns.DomainUsecase, store storage.DomainStorage) *DomainController {
+func NewDomainController(duService happydns.DomainUsecase, store domain.DomainStorage) *DomainController {
 	return &DomainController{
 		duService,
 		store,

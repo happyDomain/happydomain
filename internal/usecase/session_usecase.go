@@ -28,15 +28,15 @@ import (
 	"time"
 
 	hdSession "git.happydns.org/happyDomain/internal/session"
-	"git.happydns.org/happyDomain/internal/storage"
+	"git.happydns.org/happyDomain/internal/usecase/session"
 	"git.happydns.org/happyDomain/model"
 )
 
 type sessionUsecase struct {
-	store storage.SessionStorage
+	store session.SessionStorage
 }
 
-func NewSessionUsecase(store storage.SessionStorage) happydns.SessionUsecase {
+func NewSessionUsecase(store session.SessionStorage) happydns.SessionUsecase {
 	return &sessionUsecase{
 		store: store,
 	}

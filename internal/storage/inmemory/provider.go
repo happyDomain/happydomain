@@ -24,11 +24,10 @@ package inmemory
 import (
 	"encoding/json"
 
-	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
-func (s *InMemoryStorage) ListAllProviders() (storage.Iterator[happydns.ProviderMessage], error) {
+func (s *InMemoryStorage) ListAllProviders() (happydns.Iterator[happydns.ProviderMessage], error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

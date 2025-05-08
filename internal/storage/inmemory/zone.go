@@ -24,11 +24,10 @@ package inmemory
 import (
 	"encoding/json"
 
-	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
-func (s *InMemoryStorage) ListAllZones() (storage.Iterator[happydns.ZoneMessage], error) {
+func (s *InMemoryStorage) ListAllZones() (happydns.Iterator[happydns.ZoneMessage], error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

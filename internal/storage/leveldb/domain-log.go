@@ -28,11 +28,10 @@ import (
 
 	"github.com/syndtr/goleveldb/leveldb"
 
-	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
-func (s *LevelDBStorage) ListAllDomainLogs() (storage.Iterator[happydns.DomainLogWithDomainId], error) {
+func (s *LevelDBStorage) ListAllDomainLogs() (happydns.Iterator[happydns.DomainLogWithDomainId], error) {
 	iter := s.search("domain.log|")
 	return NewLevelDBIteratorCustomDecode[happydns.DomainLogWithDomainId](s.db, iter, func(data []byte, v interface{}) error {
 		err := decodeData(data, v)

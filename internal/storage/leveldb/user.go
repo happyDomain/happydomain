@@ -28,11 +28,10 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 
-	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
-func (s *LevelDBStorage) ListAllUsers() (storage.Iterator[happydns.User], error) {
+func (s *LevelDBStorage) ListAllUsers() (happydns.Iterator[happydns.User], error) {
 	iter := s.search("user-")
 	return NewLevelDBIterator[happydns.User](s.db, iter), nil
 }
