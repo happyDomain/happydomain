@@ -19,45 +19,31 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package usecase
+package zone
 
 import (
-	"fmt"
-	"net/http"
-	"sort"
-
-	"git.happydns.org/happyDomain/internal/usecase/domain"
 	"git.happydns.org/happyDomain/model"
 )
 
-type domainLogUsecase struct {
-	store domain.DomainStorage
-}
+type ZoneStorage interface {
+	// ListAllZones retrieves the list of known Zones.
+	ListAllZones() (happydns.Iterator[happydns.ZoneMessage], error)
 
-func NewDomainLogUsecase(store domain.DomainStorage) happydns.DomainLogUsecase {
-	return &domainLogUsecase{
-		store: store,
-	}
-}
+	// GetZoneMeta retrieves metadatas of the Zone with the given identifier.
+	GetZoneMeta(zoneid happydns.Identifier) (*happydns.ZoneMeta, error)
 
-func (du *domainLogUsecase) AppendDomainLog(domain *happydns.Domain, log *happydns.DomainLog) error {
-	return du.store.CreateDomainLog(domain, log)
-}
+	// GetZone retrieves the full Zone (including Services and metadatas) which have the given identifier.
+	GetZone(zoneid happydns.Identifier) (*happydns.ZoneMessage, error)
 
-func (du *domainLogUsecase) GetDomainLogs(domain *happydns.Domain) ([]*happydns.DomainLog, error) {
-	logs, err := du.store.GetDomainLogs(domain)
-	if err != nil {
-		return nil, happydns.InternalError{
-			Err:         fmt.Errorf("unable to retrieve logs for domain %q (did=%s): %w", domain.DomainName, domain.Id.String(), err),
-			HTTPStatus:  http.StatusInternalServerError,
-			UserMessage: "Unable to access the domain logs. Please try again later.",
-		}
-	}
+	// CreateZone creates a record in the database for the given Zone.
+	CreateZone(zone *happydns.Zone) error
 
-	// Sort by date
-	sort.Slice(logs, func(i, j int) bool {
-		return logs[i].Date.After(logs[j].Date)
-	})
+	// UpdateZone updates the fields of the given Zone.
+	UpdateZone(zone *happydns.Zone) error
 
-	return logs, nil
+	// DeleteZone removes the given Zone from the database.
+	DeleteZone(zoneid happydns.Identifier) error
+
+	// ClearZones deletes all Zones present in the database.
+	ClearZones() error
 }

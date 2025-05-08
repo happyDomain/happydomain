@@ -19,7 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package storage
+package happydns
 
 // Iterator defines a generic interface for iterating over a sequence of items of type T.
 type Iterator[T any] interface {

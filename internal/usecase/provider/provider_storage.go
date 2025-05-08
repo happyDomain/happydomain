@@ -19,45 +19,31 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package usecase
+package provider
 
 import (
-	"fmt"
-	"net/http"
-	"sort"
-
-	"git.happydns.org/happyDomain/internal/usecase/domain"
 	"git.happydns.org/happyDomain/model"
 )
 
-type domainLogUsecase struct {
-	store domain.DomainStorage
-}
+type ProviderStorage interface {
+	// ListAllProviders retrieves the list of known Providers.
+	ListAllProviders() (happydns.Iterator[happydns.ProviderMessage], error)
 
-func NewDomainLogUsecase(store domain.DomainStorage) happydns.DomainLogUsecase {
-	return &domainLogUsecase{
-		store: store,
-	}
-}
+	// ListProviders retrieves all providers own by the given User.
+	ListProviders(user *happydns.User) (happydns.ProviderMessages, error)
 
-func (du *domainLogUsecase) AppendDomainLog(domain *happydns.Domain, log *happydns.DomainLog) error {
-	return du.store.CreateDomainLog(domain, log)
-}
+	// GetProvider retrieves the full Provider with the given identifier and owner.
+	GetProvider(prvdid happydns.Identifier) (*happydns.ProviderMessage, error)
 
-func (du *domainLogUsecase) GetDomainLogs(domain *happydns.Domain) ([]*happydns.DomainLog, error) {
-	logs, err := du.store.GetDomainLogs(domain)
-	if err != nil {
-		return nil, happydns.InternalError{
-			Err:         fmt.Errorf("unable to retrieve logs for domain %q (did=%s): %w", domain.DomainName, domain.Id.String(), err),
-			HTTPStatus:  http.StatusInternalServerError,
-			UserMessage: "Unable to access the domain logs. Please try again later.",
-		}
-	}
+	// CreateProvider creates a record in the database for the given Provider.
+	CreateProvider(prvd *happydns.Provider) error
 
-	// Sort by date
-	sort.Slice(logs, func(i, j int) bool {
-		return logs[i].Date.After(logs[j].Date)
-	})
+	// UpdateProvider updates the fields of the given Provider.
+	UpdateProvider(prvd *happydns.Provider) error
 
-	return logs, nil
+	// DeleteProvider removes the given Provider from the database.
+	DeleteProvider(prvdid happydns.Identifier) error
+
+	// ClearProviders deletes all Providers present in the database.
+	ClearProviders() error
 }

@@ -24,11 +24,10 @@ package inmemory
 import (
 	"slices"
 
-	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
-func (s *InMemoryStorage) ListAllDomains() (storage.Iterator[happydns.Domain], error) {
+func (s *InMemoryStorage) ListAllDomains() (happydns.Iterator[happydns.Domain], error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -122,7 +121,7 @@ func (s *InMemoryStorage) ClearDomains() error {
 
 // DOMAIN LOGS --------------------------------------------------
 
-func (s *InMemoryStorage) ListAllDomainLogs() (storage.Iterator[happydns.DomainLogWithDomainId], error) {
+func (s *InMemoryStorage) ListAllDomainLogs() (happydns.Iterator[happydns.DomainLogWithDomainId], error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

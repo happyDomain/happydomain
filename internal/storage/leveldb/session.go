@@ -25,14 +25,13 @@ import (
 	"errors"
 	"fmt"
 
-	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
-func (s *LevelDBStorage) ListAllSessions() (storage.Iterator[happydns.Session], error) {
+func (s *LevelDBStorage) ListAllSessions() (happydns.Iterator[happydns.Session], error) {
 	iter := s.search("user.session-")
 	return NewLevelDBIterator[happydns.Session](s.db, iter), nil
 }

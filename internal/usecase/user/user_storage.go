@@ -19,45 +19,28 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package usecase
+package user
 
 import (
-	"fmt"
-	"net/http"
-	"sort"
-
-	"git.happydns.org/happyDomain/internal/usecase/domain"
 	"git.happydns.org/happyDomain/model"
 )
 
-type domainLogUsecase struct {
-	store domain.DomainStorage
-}
+type UserStorage interface {
+	// ListAllUsers retrieves the list of known Users.
+	ListAllUsers() (happydns.Iterator[happydns.User], error)
 
-func NewDomainLogUsecase(store domain.DomainStorage) happydns.DomainLogUsecase {
-	return &domainLogUsecase{
-		store: store,
-	}
-}
+	// GetUser retrieves the User with the given identifier.
+	GetUser(userid happydns.Identifier) (*happydns.User, error)
 
-func (du *domainLogUsecase) AppendDomainLog(domain *happydns.Domain, log *happydns.DomainLog) error {
-	return du.store.CreateDomainLog(domain, log)
-}
+	// GetUserByEmail retrieves the User with the given email address.
+	GetUserByEmail(email string) (*happydns.User, error)
 
-func (du *domainLogUsecase) GetDomainLogs(domain *happydns.Domain) ([]*happydns.DomainLog, error) {
-	logs, err := du.store.GetDomainLogs(domain)
-	if err != nil {
-		return nil, happydns.InternalError{
-			Err:         fmt.Errorf("unable to retrieve logs for domain %q (did=%s): %w", domain.DomainName, domain.Id.String(), err),
-			HTTPStatus:  http.StatusInternalServerError,
-			UserMessage: "Unable to access the domain logs. Please try again later.",
-		}
-	}
+	// CreateOrUpdateUser updates the fields of the given User.
+	CreateOrUpdateUser(user *happydns.User) error
 
-	// Sort by date
-	sort.Slice(logs, func(i, j int) bool {
-		return logs[i].Date.After(logs[j].Date)
-	})
+	// DeleteUser removes the given User from the database.
+	DeleteUser(userid happydns.Identifier) error
 
-	return logs, nil
+	// ClearUsers deletes all Users present in the database.
+	ClearUsers() error
 }

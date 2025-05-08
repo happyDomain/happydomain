@@ -19,45 +19,34 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package usecase
+package authuser
 
 import (
-	"fmt"
-	"net/http"
-	"sort"
-
-	"git.happydns.org/happyDomain/internal/usecase/domain"
 	"git.happydns.org/happyDomain/model"
 )
 
-type domainLogUsecase struct {
-	store domain.DomainStorage
-}
+type AuthUserStorage interface {
+	// ListAllAuthUsers retrieves the list of known Users.
+	ListAllAuthUsers() (happydns.Iterator[happydns.UserAuth], error)
 
-func NewDomainLogUsecase(store domain.DomainStorage) happydns.DomainLogUsecase {
-	return &domainLogUsecase{
-		store: store,
-	}
-}
+	// GetAuthUser retrieves the User with the given identifier.
+	GetAuthUser(id happydns.Identifier) (*happydns.UserAuth, error)
 
-func (du *domainLogUsecase) AppendDomainLog(domain *happydns.Domain, log *happydns.DomainLog) error {
-	return du.store.CreateDomainLog(domain, log)
-}
+	// GetAuthUserByEmail retrieves the User with the given email address.
+	GetAuthUserByEmail(email string) (*happydns.UserAuth, error)
 
-func (du *domainLogUsecase) GetDomainLogs(domain *happydns.Domain) ([]*happydns.DomainLog, error) {
-	logs, err := du.store.GetDomainLogs(domain)
-	if err != nil {
-		return nil, happydns.InternalError{
-			Err:         fmt.Errorf("unable to retrieve logs for domain %q (did=%s): %w", domain.DomainName, domain.Id.String(), err),
-			HTTPStatus:  http.StatusInternalServerError,
-			UserMessage: "Unable to access the domain logs. Please try again later.",
-		}
-	}
+	// AuthUserExists checks if the given email address is already associated to an User.
+	AuthUserExists(email string) (bool, error)
 
-	// Sort by date
-	sort.Slice(logs, func(i, j int) bool {
-		return logs[i].Date.After(logs[j].Date)
-	})
+	// CreateAuthUser creates a record in the database for the given User.
+	CreateAuthUser(user *happydns.UserAuth) error
 
-	return logs, nil
+	// UpdateAuthUser updates the fields of the given User.
+	UpdateAuthUser(user *happydns.UserAuth) error
+
+	// DeleteAuthUser removes the given User from the database.
+	DeleteAuthUser(user *happydns.UserAuth) error
+
+	// ClearAuthUsers deletes all AuthUsers present in the database.
+	ClearAuthUsers() error
 }

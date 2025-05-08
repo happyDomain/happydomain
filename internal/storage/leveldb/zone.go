@@ -28,11 +28,10 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 
-	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
-func (s *LevelDBStorage) ListAllZones() (storage.Iterator[happydns.ZoneMessage], error) {
+func (s *LevelDBStorage) ListAllZones() (happydns.Iterator[happydns.ZoneMessage], error) {
 	iter := s.search("domain.zone-")
 	return NewLevelDBIterator[happydns.ZoneMessage](s.db, iter), nil
 }

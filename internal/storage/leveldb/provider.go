@@ -26,14 +26,13 @@ import (
 	"errors"
 	"fmt"
 
-	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
-func (s *LevelDBStorage) ListAllProviders() (storage.Iterator[happydns.ProviderMessage], error) {
+func (s *LevelDBStorage) ListAllProviders() (happydns.Iterator[happydns.ProviderMessage], error) {
 	iter := s.search("provider-")
 	return NewLevelDBIterator[happydns.ProviderMessage](s.db, iter), nil
 }
