@@ -30,16 +30,16 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/storage"
+	"git.happydns.org/happyDomain/internal/usecase/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
 type ProviderController struct {
 	providerService happydns.ProviderUsecase
-	store           storage.ProviderStorage
+	store           provider.ProviderStorage
 }
 
-func NewProviderController(providerService happydns.ProviderUsecase, store storage.ProviderStorage) *ProviderController {
+func NewProviderController(providerService happydns.ProviderUsecase, store provider.ProviderStorage) *ProviderController {
 	return &ProviderController{
 		providerService,
 		store,

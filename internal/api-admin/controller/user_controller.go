@@ -28,16 +28,16 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/storage"
+	"git.happydns.org/happyDomain/internal/usecase/user"
 	"git.happydns.org/happyDomain/model"
 )
 
 type UserController struct {
 	userService happydns.UserUsecase
-	store       storage.UserStorage
+	store       user.UserStorage
 }
 
-func NewUserController(store storage.Storage, userService happydns.UserUsecase) *UserController {
+func NewUserController(store user.UserStorage, userService happydns.UserUsecase) *UserController {
 	return &UserController{
 		userService,
 		store,

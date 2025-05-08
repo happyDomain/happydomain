@@ -19,45 +19,31 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package usecase
+package session
 
 import (
-	"fmt"
-	"net/http"
-	"sort"
-
-	"git.happydns.org/happyDomain/internal/usecase/domain"
 	"git.happydns.org/happyDomain/model"
 )
 
-type domainLogUsecase struct {
-	store domain.DomainStorage
-}
+type SessionStorage interface {
+	// ListAllSessions retrieves the list of known Sessions.
+	ListAllSessions() (happydns.Iterator[happydns.Session], error)
 
-func NewDomainLogUsecase(store domain.DomainStorage) happydns.DomainLogUsecase {
-	return &domainLogUsecase{
-		store: store,
-	}
-}
+	// GetSession retrieves the Session with the given identifier.
+	GetSession(sessionid string) (*happydns.Session, error)
 
-func (du *domainLogUsecase) AppendDomainLog(domain *happydns.Domain, log *happydns.DomainLog) error {
-	return du.store.CreateDomainLog(domain, log)
-}
+	// ListAuthUserSessions retrieves all Session for the given AuthUser.
+	ListAuthUserSessions(user *happydns.UserAuth) ([]*happydns.Session, error)
 
-func (du *domainLogUsecase) GetDomainLogs(domain *happydns.Domain) ([]*happydns.DomainLog, error) {
-	logs, err := du.store.GetDomainLogs(domain)
-	if err != nil {
-		return nil, happydns.InternalError{
-			Err:         fmt.Errorf("unable to retrieve logs for domain %q (did=%s): %w", domain.DomainName, domain.Id.String(), err),
-			HTTPStatus:  http.StatusInternalServerError,
-			UserMessage: "Unable to access the domain logs. Please try again later.",
-		}
-	}
+	// ListUserSessions retrieves all Session for the given User.
+	ListUserSessions(userid happydns.Identifier) ([]*happydns.Session, error)
 
-	// Sort by date
-	sort.Slice(logs, func(i, j int) bool {
-		return logs[i].Date.After(logs[j].Date)
-	})
+	// UpdateSession updates the fields of the given Session.
+	UpdateSession(session *happydns.Session) error
 
-	return logs, nil
+	// DeleteSession removes the given Session from the database.
+	DeleteSession(sessionid string) error
+
+	// ClearSessions deletes all Sessions present in the database.
+	ClearSessions() error
 }

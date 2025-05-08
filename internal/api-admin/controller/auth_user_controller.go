@@ -30,16 +30,16 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
 	"git.happydns.org/happyDomain/internal/helpers"
-	"git.happydns.org/happyDomain/internal/storage"
+	"git.happydns.org/happyDomain/internal/usecase/authuser"
 	"git.happydns.org/happyDomain/model"
 )
 
 type AuthUserController struct {
 	auService happydns.AuthUserUsecase
-	store     storage.AuthUserStorage
+	store     authuser.AuthUserStorage
 }
 
-func NewAuthUserController(auService happydns.AuthUserUsecase, store storage.AuthUserStorage) *AuthUserController {
+func NewAuthUserController(auService happydns.AuthUserUsecase, store authuser.AuthUserStorage) *AuthUserController {
 	return &AuthUserController{
 		auService,
 		store,

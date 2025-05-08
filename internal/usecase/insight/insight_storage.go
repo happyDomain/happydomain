@@ -19,45 +19,18 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package usecase
+package insight
 
 import (
-	"fmt"
-	"net/http"
-	"sort"
+	"time"
 
-	"git.happydns.org/happyDomain/internal/usecase/domain"
 	"git.happydns.org/happyDomain/model"
 )
 
-type domainLogUsecase struct {
-	store domain.DomainStorage
-}
+type InsightStorage interface {
+	// InsightsRun registers a insights process run just now.
+	InsightsRun() error
 
-func NewDomainLogUsecase(store domain.DomainStorage) happydns.DomainLogUsecase {
-	return &domainLogUsecase{
-		store: store,
-	}
-}
-
-func (du *domainLogUsecase) AppendDomainLog(domain *happydns.Domain, log *happydns.DomainLog) error {
-	return du.store.CreateDomainLog(domain, log)
-}
-
-func (du *domainLogUsecase) GetDomainLogs(domain *happydns.Domain) ([]*happydns.DomainLog, error) {
-	logs, err := du.store.GetDomainLogs(domain)
-	if err != nil {
-		return nil, happydns.InternalError{
-			Err:         fmt.Errorf("unable to retrieve logs for domain %q (did=%s): %w", domain.DomainName, domain.Id.String(), err),
-			HTTPStatus:  http.StatusInternalServerError,
-			UserMessage: "Unable to access the domain logs. Please try again later.",
-		}
-	}
-
-	// Sort by date
-	sort.Slice(logs, func(i, j int) bool {
-		return logs[i].Date.After(logs[j].Date)
-	})
-
-	return logs, nil
+	// LastInsightsRun gets the last time insights process run.
+	LastInsightsRun() (*time.Time, happydns.Identifier, error)
 }

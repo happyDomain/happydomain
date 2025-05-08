@@ -29,17 +29,17 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/storage"
+	"git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
 )
 
 type ZoneController struct {
 	domainService happydns.DomainUsecase
 	zoneService   happydns.ZoneUsecase
-	store         storage.ZoneStorage
+	store         zone.ZoneStorage
 }
 
-func NewZoneController(domainService happydns.DomainUsecase, zoneService happydns.ZoneUsecase, store storage.ZoneStorage) *ZoneController {
+func NewZoneController(domainService happydns.DomainUsecase, zoneService happydns.ZoneUsecase, store zone.ZoneStorage) *ZoneController {
 	return &ZoneController{
 		domainService,
 		zoneService,

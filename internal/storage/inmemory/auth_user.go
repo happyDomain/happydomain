@@ -22,11 +22,10 @@
 package inmemory
 
 import (
-	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
-func (s *InMemoryStorage) ListAllAuthUsers() (storage.Iterator[happydns.UserAuth], error) {
+func (s *InMemoryStorage) ListAllAuthUsers() (happydns.Iterator[happydns.UserAuth], error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
