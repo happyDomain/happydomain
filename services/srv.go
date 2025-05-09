@@ -103,6 +103,10 @@ func srv_analyze(a *Analyzer) error {
 
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeSRV}) {
 		subdomains := SRV_DOMAIN.FindStringSubmatch(record.Header().Name)
+		if len(subdomains) < 4 {
+			continue
+		}
+
 		svc := subdomains[1] + "." + subdomains[2]
 		domain := subdomains[3]
 
