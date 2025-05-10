@@ -24,7 +24,6 @@ package usecase
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 
 	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/internal/storage"
@@ -46,10 +45,7 @@ func NewProviderUsecase(cfg *config.Options, store storage.ProviderAndDomainStor
 
 func (pu *providerUsecase) CreateProvider(user *happydns.User, msg *happydns.ProviderMessage) (*happydns.Provider, error) {
 	if pu.config.DisableProviders {
-		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("Cannot add provider as DisableProviders parameter is set."),
-			HTTPStatus: http.StatusForbidden,
-		}
+		return nil, happydns.ForbiddenError{"Cannot add provider as DisableProviders parameter is set."}
 	}
 
 	return pu.ProviderUsecase.CreateProvider(user, msg)
@@ -57,10 +53,7 @@ func (pu *providerUsecase) CreateProvider(user *happydns.User, msg *happydns.Pro
 
 func (pu *providerUsecase) DeleteProvider(user *happydns.User, providerid happydns.Identifier) error {
 	if pu.config.DisableProviders {
-		return happydns.InternalError{
-			Err:        fmt.Errorf("Cannot delete provider as DisableProviders parameter is set."),
-			HTTPStatus: http.StatusForbidden,
-		}
+		return happydns.ForbiddenError{"Cannot delete provider as DisableProviders parameter is set."}
 	}
 
 	return pu.ProviderUsecase.DeleteProvider(user, providerid)
@@ -68,10 +61,7 @@ func (pu *providerUsecase) DeleteProvider(user *happydns.User, providerid happyd
 
 func (pu *providerUsecase) UpdateProvider(providerid happydns.Identifier, user *happydns.User, upd func(*happydns.Provider)) error {
 	if pu.config.DisableProviders {
-		return happydns.InternalError{
-			Err:        fmt.Errorf("Cannot update provider as DisableProviders parameter is set."),
-			HTTPStatus: http.StatusForbidden,
-		}
+		return happydns.ForbiddenError{"Cannot update provider as DisableProviders parameter is set."}
 	}
 
 	return pu.ProviderUsecase.UpdateProvider(providerid, user, upd)
@@ -79,10 +69,7 @@ func (pu *providerUsecase) UpdateProvider(providerid happydns.Identifier, user *
 
 func (pu *providerUsecase) UpdateProviderFromMessage(providerid happydns.Identifier, user *happydns.User, p *happydns.ProviderMessage) error {
 	if pu.config.DisableProviders {
-		return happydns.InternalError{
-			Err:        fmt.Errorf("Cannot update provider as DisableProviders parameter is set."),
-			HTTPStatus: http.StatusForbidden,
-		}
+		return happydns.ForbiddenError{"Cannot update provider as DisableProviders parameter is set."}
 	}
 
 	return pu.ProviderUsecase.UpdateProviderFromMessage(providerid, user, p)
@@ -248,18 +235,12 @@ func (pu *adminProviderUsecase) UpdateProvider(providerid happydns.Identifier, u
 	upd(provider)
 
 	if !provider.Id.Equals(providerid) {
-		return happydns.InternalError{
-			Err:        fmt.Errorf("you cannot change the provider identifier"),
-			HTTPStatus: http.StatusBadRequest,
-		}
+		return happydns.ValidationError{"you cannot change the provider identifier"}
 	}
 
 	err = pu.ValidateProvider(provider)
 	if err != nil {
-		return happydns.InternalError{
-			Err:        fmt.Errorf("unable to validate provider attributes: %w", err),
-			HTTPStatus: http.StatusBadRequest,
-		}
+		return happydns.ValidationError{fmt.Sprintf("unable to validate provider attributes: %s", err.Error())}
 	}
 
 	err = pu.store.UpdateProvider(provider)

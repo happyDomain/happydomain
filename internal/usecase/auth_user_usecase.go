@@ -24,7 +24,6 @@ package usecase
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"net/mail"
 	"strings"
 
@@ -235,11 +234,7 @@ In order to validate your account, please follow this link now:
 
 func (auu *authUserUsecase) ValidateEmail(user *happydns.UserAuth, form happydns.AddressValidationForm) error {
 	if err := user.ValidateEmail(form.Key); err != nil {
-		return happydns.InternalError{
-			Err:         fmt.Errorf("bad email validation key: %w", err),
-			HTTPStatus:  http.StatusBadRequest,
-			UserMessage: fmt.Sprintf("bad email validation key: %s", err.Error()),
-		}
+		return happydns.ValidationError{fmt.Sprintf("bad email validation key: %s", err.Error())}
 	}
 
 	if err := auu.store.UpdateAuthUser(user); err != nil {

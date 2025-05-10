@@ -23,7 +23,6 @@ package usecase
 
 import (
 	"fmt"
-	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
@@ -53,10 +52,7 @@ func (ssu *serviceSpecsUsecase) ListServices() map[string]happydns.ServiceInfos 
 func (ssu *serviceSpecsUsecase) GetServiceIcon(ssid string) ([]byte, error) {
 	cnt, ok := svcs.Icons[strings.TrimSuffix(ssid, ".png")]
 	if !ok {
-		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("service icon not found"),
-			HTTPStatus: http.StatusNotFound,
-		}
+		return nil, happydns.NotFoundError{Msg: "service icon not found"}
 	}
 
 	return cnt, nil

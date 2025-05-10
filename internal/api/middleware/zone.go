@@ -34,10 +34,7 @@ import (
 func ParseZoneId(c *gin.Context, paramName string) (happydns.Identifier, error) {
 	zoneid, err := happydns.NewIdentifierFromString(c.Param(paramName))
 	if err != nil {
-		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("bad zone identifier (%s) format: %s", paramName, err.Error()),
-			HTTPStatus: http.StatusBadRequest,
-		}
+		return nil, happydns.ValidationError{Msg: fmt.Sprintf("bad zone identifier format (%s): %s", paramName, err.Error())}
 	}
 
 	return zoneid, nil

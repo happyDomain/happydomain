@@ -51,9 +51,8 @@ func SessionLoginOK(c *gin.Context, user happydns.UserInfo) error {
 	err := session.Save()
 	if err != nil {
 		return happydns.InternalError{
-			Err:         fmt.Errorf("%s: unable to save user session: %s", c.ClientIP(), err),
+			Err:         fmt.Errorf("failed to save save user session: %s", err),
 			UserMessage: "Invalid username or password.",
-			HTTPStatus:  http.StatusUnauthorized,
 		}
 	}
 
