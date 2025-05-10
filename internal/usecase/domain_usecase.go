@@ -25,7 +25,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/miekg/dns"
@@ -60,8 +59,7 @@ func (du *domainUsecase) ApplyZoneCorrection(user *happydns.User, domain *happyd
 	records, err := du.zoneService.GenerateRecords(domain, zone)
 	if err != nil {
 		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("unable to retrieve records for zone: %w", err),
-			HTTPStatus: http.StatusInternalServerError,
+			Err: fmt.Errorf("unable to retrieve records for zone: %w", err),
 		}
 	}
 
@@ -69,8 +67,7 @@ func (du *domainUsecase) ApplyZoneCorrection(user *happydns.User, domain *happyd
 	corrections, err := du.providerService.GetZoneCorrections(provider, domain, records)
 	if err != nil {
 		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("unable to compute domain corrections: %w", err),
-			HTTPStatus: http.StatusInternalServerError,
+			Err: fmt.Errorf("unable to compute domain corrections: %w", err),
 		}
 	}
 
@@ -100,16 +97,10 @@ corrections:
 
 	if errs != nil {
 		du.store.CreateDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d corrections were not applied due to errors.", zone.Id.String(), nbcorrections)))
-		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("unable to update the zone: %w", errs),
-			HTTPStatus: http.StatusBadRequest,
-		}
+		return nil, happydns.ValidationError{fmt.Sprintf("unable to update the zone: %s", errs.Error())}
 	} else if len(form.WantedCorrections) > 0 {
 		du.store.CreateDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d corrections were not applied.", zone.Id.String(), nbcorrections)))
-		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("unable to perform the following changes: %s", form.WantedCorrections),
-			HTTPStatus: http.StatusBadRequest,
-		}
+		return nil, happydns.ValidationError{fmt.Sprintf("unable to perform the following changes: %s", form.WantedCorrections)}
 	}
 
 	du.store.CreateDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ACK, fmt.Sprintf("Zone published (%s), %d corrections applied with success", zone.Id.String(), nbcorrections)))
@@ -120,7 +111,6 @@ corrections:
 	if err != nil {
 		return nil, happydns.InternalError{
 			Err:         fmt.Errorf("unable to CreateZone: %w", err),
-			HTTPStatus:  http.StatusInternalServerError,
 			UserMessage: "Sorry, we are unable to create the zone now.",
 		}
 	}
@@ -132,7 +122,6 @@ corrections:
 	if err != nil {
 		return nil, happydns.InternalError{
 			Err:         fmt.Errorf("unable to UpdateDomain: %w", err),
-			HTTPStatus:  http.StatusInternalServerError,
 			UserMessage: "Sorry, we are unable to create the zone now.",
 		}
 	}
@@ -150,7 +139,6 @@ corrections:
 	if err != nil {
 		return nil, happydns.InternalError{
 			Err:         fmt.Errorf("unable to UpdateZone: %w", err),
-			HTTPStatus:  http.StatusInternalServerError,
 			UserMessage: "Sorry, we are unable to create the zone now.",
 		}
 	}
@@ -204,35 +192,23 @@ func (du *domainUsecase) AddServiceToZone(user *happydns.User, domain *happydns.
 
 func (du *domainUsecase) CreateDomain(user *happydns.User, uz *happydns.Domain) error {
 	if len(uz.DomainName) <= 2 {
-		return happydns.InternalError{
-			Err:        fmt.Errorf("the given domain is invalid"),
-			HTTPStatus: http.StatusBadRequest,
-		}
+		return happydns.ValidationError{fmt.Sprintf("the given domain is invalid")}
 	}
 
 	uz.Owner = user.Id
 	uz.DomainName = dns.Fqdn(uz.DomainName)
 
 	if _, ok := dns.IsDomainName(uz.DomainName); !ok {
-		return happydns.InternalError{
-			Err:        fmt.Errorf("%q is not a valid domain name", uz.DomainName),
-			HTTPStatus: http.StatusBadRequest,
-		}
+		return happydns.ValidationError{fmt.Sprintf("%q is not a valid domain name", uz.DomainName)}
 	}
 
 	provider, err := du.providerService.GetUserProvider(user, uz.ProviderId)
 	if err != nil {
-		return happydns.InternalError{
-			Err:        fmt.Errorf("unable to find the provider."),
-			HTTPStatus: http.StatusBadRequest,
-		}
+		return happydns.ValidationError{fmt.Sprintf("unable to find the provider.")}
 	}
 
 	if err = du.providerService.TestDomainExistence(provider, uz.DomainName); err != nil {
-		return happydns.InternalError{
-			Err:        err,
-			HTTPStatus: http.StatusNotFound,
-		}
+		return happydns.NotFoundError{err.Error()}
 	}
 
 	if err := du.store.CreateDomain(uz); err != nil {
@@ -288,10 +264,7 @@ func (du *domainUsecase) GetUserDomain(user *happydns.User, did happydns.Identif
 	}
 
 	if !user.Id.Equals(domain.Owner) {
-		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("domain not found"),
-			HTTPStatus: http.StatusNotFound,
-		}
+		return nil, happydns.ErrDomainNotFound
 	}
 
 	return domain, nil
@@ -304,10 +277,7 @@ func (du *domainUsecase) GetUserDomainByFQDN(user *happydns.User, fqdn string) (
 func (du *domainUsecase) getUserProvider(user *happydns.User, domain *happydns.Domain) (*happydns.Provider, error) {
 	provider, err := du.providerService.GetUserProvider(user, domain.ProviderId)
 	if err != nil {
-		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("unable to find your provider: %w", err),
-			HTTPStatus: http.StatusNotFound,
-		}
+		return nil, happydns.NotFoundError{fmt.Sprintf("provider not found: %s", err.Error())}
 	}
 
 	return provider, nil
@@ -316,10 +286,7 @@ func (du *domainUsecase) getUserProvider(user *happydns.User, domain *happydns.D
 func (du *domainUsecase) ImportZone(user *happydns.User, domain *happydns.Domain, rrs []happydns.Record) (*happydns.Zone, error) {
 	services, defaultTTL, err := svcs.AnalyzeZone(domain.DomainName, rrs)
 	if err != nil {
-		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("unable to perform the analysis of your zone: %w", err),
-			HTTPStatus: http.StatusBadRequest,
-		}
+		return nil, happydns.ValidationError{fmt.Sprintf("unable to perform the analysis of your zone: %s", err.Error())}
 	}
 
 	now := time.Now()
@@ -392,10 +359,7 @@ func (du *domainUsecase) RetrieveRemoteZone(user *happydns.User, domain *happydn
 
 	zone, err := du.providerService.RetrieveZone(provider, domain.DomainName)
 	if err != nil {
-		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("unable to retrieve the zone from server: %w", err),
-			HTTPStatus: http.StatusBadRequest,
-		}
+		return nil, happydns.ValidationError{fmt.Sprintf("unable to retrieve the zone from server: %w", err.Error())}
 	}
 
 	// import
@@ -421,10 +385,7 @@ func (du *domainUsecase) UpdateDomain(domainid happydns.Identifier, user *happyd
 	//domain.ModifiedOn = time.Now()
 
 	if !domain.Id.Equals(domainid) {
-		return happydns.InternalError{
-			Err:        fmt.Errorf("you cannot change the domain identifier"),
-			HTTPStatus: http.StatusBadRequest,
-		}
+		return happydns.ValidationError{"you cannot change the domain identifier"}
 	}
 
 	err = du.store.UpdateDomain(domain)

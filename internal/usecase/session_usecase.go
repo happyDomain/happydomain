@@ -24,7 +24,6 @@ package usecase
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"time"
 
 	hdSession "git.happydns.org/happyDomain/internal/session"
@@ -102,11 +101,7 @@ func (su *sessionUsecase) GetUserSession(user *happydns.User, sessionid string) 
 	}
 
 	if !user.Id.Equals(session.IdUser) {
-		return nil, happydns.InternalError{
-			Err:         fmt.Errorf("The session is not affiliated witht this user"),
-			UserMessage: "The session is not affiliated witht this user",
-			HTTPStatus:  http.StatusNotFound,
-		}
+		return nil, happydns.ErrSessionNotFound
 	}
 
 	return session, err

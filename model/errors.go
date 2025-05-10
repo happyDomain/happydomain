@@ -23,6 +23,7 @@ package happydns
 
 import (
 	"errors"
+	"net/http"
 )
 
 var (
@@ -46,11 +47,54 @@ type ErrorResponse struct {
 	Link string `json:"href,omitempty"`
 }
 
+type HTTPError interface {
+	ToErrorResponse() ErrorResponse
+	HTTPStatus() int
+}
+
+type CustomError struct {
+	Err      error
+	UserLink string
+	Status   int
+}
+
+func (err CustomError) Error() string {
+	return err.Err.Error()
+}
+
+func (err CustomError) ToErrorResponse() ErrorResponse {
+	return ErrorResponse{
+		Message: err.Err.Error(),
+		Link:    err.UserLink,
+	}
+}
+
+func (err CustomError) HTTPStatus() int {
+	return err.Status
+}
+
+type ForbiddenError struct {
+	Msg string
+}
+
+func (err ForbiddenError) Error() string {
+	return err.Msg
+}
+
+func (err ForbiddenError) ToErrorResponse() ErrorResponse {
+	return ErrorResponse{
+		Message: err.Msg,
+	}
+}
+
+func (err ForbiddenError) HTTPStatus() int {
+	return http.StatusForbidden
+}
+
 type InternalError struct {
 	Err         error
 	UserMessage string
 	UserLink    string
-	HTTPStatus  int
 }
 
 func (err InternalError) Error() string {
@@ -69,4 +113,44 @@ func (err InternalError) ToErrorResponse() ErrorResponse {
 		Message: err.UserMessage,
 		Link:    err.UserLink,
 	}
+}
+
+func (err InternalError) HTTPStatus() int {
+	return http.StatusInternalServerError
+}
+
+type NotFoundError struct {
+	Msg string
+}
+
+func (err NotFoundError) Error() string {
+	return err.Msg
+}
+
+func (err NotFoundError) ToErrorResponse() ErrorResponse {
+	return ErrorResponse{
+		Message: err.Msg,
+	}
+}
+
+func (err NotFoundError) HTTPStatus() int {
+	return http.StatusNotFound
+}
+
+type ValidationError struct {
+	Msg string
+}
+
+func (err ValidationError) Error() string {
+	return err.Msg
+}
+
+func (err ValidationError) ToErrorResponse() ErrorResponse {
+	return ErrorResponse{
+		Message: err.Msg,
+	}
+}
+
+func (err ValidationError) HTTPStatus() int {
+	return http.StatusBadRequest
 }

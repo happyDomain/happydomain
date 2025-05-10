@@ -106,7 +106,6 @@ func (ru *resolverUsecase) ResolveQuestion(request happydns.ResolverRequest) (*d
 			return nil, happydns.InternalError{
 				Err:         fmt.Errorf("unable to load ClientConfigFromFile: %s", err.Error()),
 				UserMessage: "Sorry, we are currently unable to perform the request. Please try again later.",
-				HTTPStatus:  http.StatusInternalServerError,
 			}
 		}
 
@@ -128,46 +127,32 @@ func (ru *resolverUsecase) ResolveQuestion(request happydns.ResolverRequest) (*d
 		r, err = resolverQuestion(client, request.Resolver+":53", request.DomainName, rrType)
 	}
 	if err != nil {
-		return nil, happydns.InternalError{
-			Err:        err,
-			HTTPStatus: http.StatusBadRequest,
-		}
+		return nil, happydns.ValidationError{Msg: err.Error()}
 	}
 
 	if r == nil {
-		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("No response to display."),
-			HTTPStatus: http.StatusNoContent,
+		return nil, happydns.CustomError{
+			Err:    fmt.Errorf("No response to display."),
+			Status: http.StatusNoContent,
 		}
 	} else if r.Rcode == dns.RcodeFormatError {
-		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("DNS request mal formated."),
-			HTTPStatus: http.StatusBadRequest,
-		}
+		return nil, happydns.ValidationError{Msg: "DNS request mal formated."}
 	} else if r.Rcode == dns.RcodeServerFailure {
 		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("Resolver returns an error (most likely something is wrong in %q).", request.DomainName),
-			HTTPStatus: http.StatusInternalServerError,
+			Err: fmt.Errorf("Resolver returns an error (most likely something is wrong in %q).", request.DomainName),
 		}
 	} else if r.Rcode == dns.RcodeNameError {
-		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("The domain %q was not found.", request.DomainName),
-			HTTPStatus: http.StatusNotFound,
-		}
+		return nil, happydns.NotFoundError{Msg: fmt.Sprintf("The domain %q was not found.", request.DomainName)}
 	} else if r.Rcode == dns.RcodeNotImplemented {
 		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("Resolver returns the request hits non implemented code."),
-			HTTPStatus: http.StatusInternalServerError,
+			Err: fmt.Errorf("Resolver returns the request hits non implemented code."),
 		}
 	} else if r.Rcode == dns.RcodeRefused {
-		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("Resolver refused to treat our request."),
-			HTTPStatus: http.StatusForbidden,
-		}
+		return nil, happydns.ForbiddenError{Msg: "Resolver refused to treat our request."}
 	} else if r.Rcode != dns.RcodeSuccess {
-		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("Resolver returns %s.", dns.RcodeToString[r.Rcode]),
-			HTTPStatus: http.StatusNotAcceptable,
+		return nil, happydns.CustomError{
+			Err:    fmt.Errorf("Resolver returns %s.", dns.RcodeToString[r.Rcode]),
+			Status: http.StatusNotAcceptable,
 		}
 	}
 
