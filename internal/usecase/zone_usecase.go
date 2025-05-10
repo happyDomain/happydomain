@@ -23,7 +23,6 @@ package usecase
 
 import (
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/miekg/dns"
@@ -49,10 +48,7 @@ func NewZoneUsecase(pu happydns.ProviderUsecase, su happydns.ServiceUsecase, sto
 
 func (zu *zoneUsecase) AddService(zone *happydns.Zone, subdomain happydns.Subdomain, origin happydns.Origin, service *happydns.Service) error {
 	if service.Service == nil {
-		return happydns.InternalError{
-			Err:        fmt.Errorf("Unable to parse the given service."),
-			HTTPStatus: http.StatusBadRequest,
-		}
+		return happydns.ValidationError{"Unable to parse the given service."}
 	}
 
 	hash, err := zu.serviceService.ValidateService(service.Service, subdomain, origin)
@@ -72,7 +68,6 @@ func (zu *zoneUsecase) AddService(zone *happydns.Zone, subdomain happydns.Subdom
 		return happydns.InternalError{
 			Err:         fmt.Errorf("Unable to UpdateZone in AppendService: %w", err),
 			UserMessage: "Sorry, we are currently unable to update your zone. Please retry later.",
-			HTTPStatus:  http.StatusInternalServerError,
 		}
 	}
 
@@ -86,10 +81,7 @@ func (zu *zoneUsecase) CreateZone(zone *happydns.Zone) error {
 func (zu *zoneUsecase) DeleteService(zone *happydns.Zone, subdomain happydns.Subdomain, serviceid happydns.Identifier) error {
 	err := zone.EraseService(subdomain, serviceid, nil)
 	if err != nil {
-		return happydns.InternalError{
-			Err:        fmt.Errorf("unable to delete service: %w", err),
-			HTTPStatus: http.StatusBadRequest,
-		}
+		return happydns.ValidationError{fmt.Sprintf("unable to delete service: %s", err.Error())}
 	}
 
 	zone.LastModified = time.Now()
@@ -99,7 +91,6 @@ func (zu *zoneUsecase) DeleteService(zone *happydns.Zone, subdomain happydns.Sub
 		return happydns.InternalError{
 			Err:         fmt.Errorf("unable to UpdateZone in DeleteService: %w", err),
 			UserMessage: "Sorry, we are currently unable to update your zone. Please retry later.",
-			HTTPStatus:  http.StatusBadRequest,
 		}
 	}
 
@@ -119,8 +110,7 @@ func (zu *zoneUsecase) DiffZones(domain *happydns.Domain, newzone *happydns.Zone
 	oldrecords, err := zu.GenerateRecords(domain, oldzone)
 	if err != nil {
 		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("unable to retrieve records for old zone: %w", err),
-			HTTPStatus: http.StatusInternalServerError,
+			Err: fmt.Errorf("unable to retrieve records for old zone: %w", err),
 		}
 	}
 
@@ -141,8 +131,7 @@ func (zu *zoneUsecase) FlattenZoneFile(domain *happydns.Domain, zone *happydns.Z
 	records, err := zu.GenerateRecords(domain, zone)
 	if err != nil {
 		return "", happydns.InternalError{
-			Err:        fmt.Errorf("unable to retrieve records for old zone: %w", err),
-			HTTPStatus: http.StatusInternalServerError,
+			Err: fmt.Errorf("unable to retrieve records for old zone: %w", err),
 		}
 	}
 
@@ -227,19 +216,12 @@ func (zu *zoneUsecase) GetZoneMeta(id happydns.Identifier) (*happydns.ZoneMeta, 
 func (zu *zoneUsecase) LoadZoneFromId(domain *happydns.Domain, zoneid happydns.Identifier) (*happydns.Zone, error) {
 	// Check that the zoneid exists in the domain history
 	if !domain.HasZone(zoneid) {
-		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("zone not found: %q", zoneid.String()),
-			HTTPStatus: http.StatusNotFound,
-		}
+		return nil, happydns.NotFoundError{fmt.Sprintf("zone not found: %q", zoneid.String())}
 	}
 
 	zmsg, err := zu.store.GetZone(zoneid)
 	if err != nil {
-		return nil, happydns.InternalError{
-			Err:         fmt.Errorf("unable to retrieve user zone (id=%s): %w", zoneid.String(), err),
-			UserMessage: fmt.Sprintf("zone not found: %q", zoneid.String()),
-			HTTPStatus:  http.StatusNotFound,
-		}
+		return nil, happydns.NotFoundError{fmt.Sprintf("zone not found: %q", zoneid.String())}
 	}
 
 	return ParseZone(zmsg)
@@ -269,10 +251,7 @@ func ParseZone(msg *happydns.ZoneMessage) (*happydns.Zone, error) {
 func (zu *zoneUsecase) UpdateService(zone *happydns.Zone, subdomain happydns.Subdomain, serviceid happydns.Identifier, newservice *happydns.Service) error {
 	err := zone.EraseService(subdomain, serviceid, newservice)
 	if err != nil {
-		return happydns.InternalError{
-			Err:        fmt.Errorf("unable to delete service: %w", err),
-			HTTPStatus: http.StatusBadRequest,
-		}
+		return happydns.ValidationError{fmt.Sprintf("unable to delete service: %s", err.Error())}
 	}
 
 	zone.LastModified = time.Now()
@@ -282,7 +261,6 @@ func (zu *zoneUsecase) UpdateService(zone *happydns.Zone, subdomain happydns.Sub
 		return happydns.InternalError{
 			Err:         fmt.Errorf("unable to UpdateZone in UpdateService: %w", err),
 			UserMessage: "Sorry, we are currently unable to update your zone. Please retry later.",
-			HTTPStatus:  http.StatusBadRequest,
 		}
 	}
 
@@ -298,10 +276,7 @@ func (zu *zoneUsecase) UpdateZone(id happydns.Identifier, upd func(*happydns.Zon
 	upd(zone)
 
 	if !zone.Id.Equals(id) {
-		return happydns.InternalError{
-			Err:        fmt.Errorf("you cannot change the zone identifier"),
-			HTTPStatus: http.StatusBadRequest,
-		}
+		return happydns.ValidationError{"you cannot change the zone identifier"}
 	}
 
 	err = zu.store.UpdateZone(zone)

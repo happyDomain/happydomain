@@ -22,8 +22,6 @@
 package usecase
 
 import (
-	"fmt"
-	"net/http"
 	"strings"
 
 	"git.happydns.org/happyDomain/internal/forms"
@@ -52,10 +50,7 @@ func (psu *providerSpecsUsecase) ListProviders() map[string]happydns.ProviderInf
 func (psu *providerSpecsUsecase) GetProviderIcon(psid string) ([]byte, error) {
 	cnt, ok := providers.Icons[strings.TrimSuffix(psid, ".png")]
 	if !ok {
-		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("provider icon not found"),
-			HTTPStatus: http.StatusNotFound,
-		}
+		return nil, happydns.NotFoundError{"provider icon not found"}
 	}
 
 	return cnt, nil
@@ -64,10 +59,7 @@ func (psu *providerSpecsUsecase) GetProviderIcon(psid string) ([]byte, error) {
 func (psu *providerSpecsUsecase) GetProviderSpecs(psid string) (*happydns.ProviderSpecs, error) {
 	pcreator, ok := (*providers.GetProviders())[psid]
 	if !ok {
-		return nil, happydns.InternalError{
-			Err:        fmt.Errorf("provider not found"),
-			HTTPStatus: http.StatusNotFound,
-		}
+		return nil, happydns.NotFoundError{happydns.ErrProviderNotFound.Error()}
 	}
 
 	return &happydns.ProviderSpecs{

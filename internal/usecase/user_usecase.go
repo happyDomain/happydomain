@@ -25,7 +25,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"time"
 
 	"git.happydns.org/happyDomain/internal/avatar"
@@ -141,10 +140,7 @@ func (uu *userUsecase) UpdateUser(id happydns.Identifier, upd func(*happydns.Use
 	upd(user)
 
 	if !user.Id.Equals(id) {
-		return happydns.InternalError{
-			Err:        fmt.Errorf("you cannot change the user identifier"),
-			HTTPStatus: http.StatusBadRequest,
-		}
+		return happydns.ValidationError{"you cannot change the user identifier"}
 	}
 
 	err = uu.store.CreateOrUpdateUser(user)

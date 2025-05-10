@@ -46,6 +46,12 @@ type ProviderAndDomainStorage interface {
 	domain.DomainStorage
 }
 
+type UserAndSessionStorage interface {
+	authuser.AuthUserStorage
+	session.SessionStorage
+	user.UserStorage
+}
+
 type Storage interface {
 	authuser.AuthUserStorage
 	domain.DomainStorage

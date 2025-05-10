@@ -23,7 +23,6 @@ package usecase
 
 import (
 	"fmt"
-	"net/http"
 	"sort"
 
 	"git.happydns.org/happyDomain/internal/usecase/domain"
@@ -49,7 +48,6 @@ func (du *domainLogUsecase) GetDomainLogs(domain *happydns.Domain) ([]*happydns.
 	if err != nil {
 		return nil, happydns.InternalError{
 			Err:         fmt.Errorf("unable to retrieve logs for domain %q (did=%s): %w", domain.DomainName, domain.Id.String(), err),
-			HTTPStatus:  http.StatusInternalServerError,
 			UserMessage: "Unable to access the domain logs. Please try again later.",
 		}
 	}
