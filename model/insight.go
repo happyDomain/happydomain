@@ -43,6 +43,7 @@ type Insights struct {
 		HasExternalAuth      bool   `json:"hasExternalAuth,omitempty"`
 		HasListmonkURL       bool   `json:"hasListmonkURL,omitempty"`
 		LocalBind            bool   `json:"localBind,omitempty"`
+		NbOidcProviders      int    `json:"nbOidcProviders,omitempty"`
 		NoAuthActive         bool   `json:"noAuthActive,omitempty"`
 		NoMail               bool   `json:"noMail,omitempty"`
 		NonUnixAdminBind     bool   `json:"nonUnixAdminBind,omitempty"`

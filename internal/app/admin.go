@@ -33,13 +33,13 @@ import (
 	"github.com/gin-gonic/gin"
 
 	admin "git.happydns.org/happyDomain/internal/api-admin/route"
-	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/internal/usecase"
+	"git.happydns.org/happyDomain/model"
 )
 
 type Admin struct {
 	router *gin.Engine
-	cfg    *config.Options
+	cfg    *happydns.Options
 	srv    *http.Server
 }
 

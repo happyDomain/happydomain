@@ -26,17 +26,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/internal/usecase/session"
 	"git.happydns.org/happyDomain/model"
 )
 
 type SessionController struct {
-	config *config.Options
+	config *happydns.Options
 	store  session.SessionStorage
 }
 
-func NewSessionController(cfg *config.Options, store session.SessionStorage) *SessionController {
+func NewSessionController(cfg *happydns.Options, store session.SessionStorage) *SessionController {
 	return &SessionController{
 		config: cfg,
 		store:  store,

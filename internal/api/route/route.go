@@ -25,7 +25,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -49,7 +48,7 @@ import (
 //	@name						Authorization
 //	@description				Description for what is this security definition being used
 
-func DeclareRoutes(cfg *config.Options, router *gin.Engine, dependancies happydns.UsecaseDependancies) {
+func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, dependancies happydns.UsecaseDependancies) {
 	// Declare routes
 	baseRoutes := router.Group("")
 

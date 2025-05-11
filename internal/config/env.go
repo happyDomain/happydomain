@@ -25,14 +25,16 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"git.happydns.org/happyDomain/model"
 )
 
 // parseEnvironmentVariables analyzes all the environment variables to find
 // each one starting by HAPPYDOMAIN_
-func (o *Options) parseEnvironmentVariables() (err error) {
+func parseEnvironmentVariables(o *happydns.Options) (err error) {
 	for _, line := range os.Environ() {
 		if strings.HasPrefix(line, "HAPPYDOMAIN_") || strings.HasPrefix(line, "HAPPYDNS_") {
-			err := o.parseLine(line)
+			err := parseLine(o, line)
 			if err != nil {
 				return fmt.Errorf("error in environment (%q): %w", line, err)
 			}

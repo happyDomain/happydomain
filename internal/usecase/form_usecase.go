@@ -22,15 +22,14 @@
 package usecase
 
 import (
-	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/model"
 )
 
 type formUsecase struct {
-	config *config.Options
+	config *happydns.Options
 }
 
-func NewFormUsecase(cfg *config.Options) happydns.FormUsecase {
+func NewFormUsecase(cfg *happydns.Options) happydns.FormUsecase {
 	return &formUsecase{
 		config: cfg,
 	}

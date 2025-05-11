@@ -33,7 +33,6 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/mileusna/useragent"
 
-	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
@@ -47,13 +46,13 @@ type SessionStore struct {
 	storage storage.Storage
 }
 
-func NewSessionStore(opts *config.Options, storage storage.Storage, keyPairs ...[]byte) *SessionStore {
+func NewSessionStore(opts *happydns.Options, storage storage.Storage, keyPairs ...[]byte) *SessionStore {
 	store := &SessionStore{
 		Codecs: securecookie.CodecsFromPairs(keyPairs...),
 		options: &sessions.Options{
-			Path:     opts.GetBasePath() + "/",
+			Path:     opts.BasePath + "/",
 			MaxAge:   86400 * 30,
-			Secure:   opts.DevProxy == "" && opts.ExternalURL.URL.Scheme != "http",
+			Secure:   opts.DevProxy == "" && opts.ExternalURL.Scheme != "http",
 			HttpOnly: true,
 			SameSite: http.SameSiteLaxMode,
 		},

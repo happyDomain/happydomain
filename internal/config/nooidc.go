@@ -23,6 +23,10 @@
 
 package config
 
-func (o *Options) GetOIDCProviderURL() string {
-	return ""
+import (
+	"git.happydns.org/happyDomain/model"
+)
+
+func ExtendsConfigWithOIDC(o *happydns.Options) error {
+	return nil
 }

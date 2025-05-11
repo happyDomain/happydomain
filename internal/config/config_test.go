@@ -19,18 +19,20 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package config // import "git.happydns.org/happyDomain/config"
+package config // import "git.happydns.org/happyDomain/internal/config"
 
 import (
 	"net/url"
 	"testing"
+
+	"git.happydns.org/happyDomain/model"
 )
 
 func TestParseLine(t *testing.T) {
-	cfg := Options{}
-	cfg.declareFlags()
+	cfg := &happydns.Options{}
+	declareFlags(cfg)
 
-	err := cfg.parseLine("HAPPYDOMAIN_BIND=:8080")
+	err := parseLine(cfg, "HAPPYDOMAIN_BIND=:8080")
 	if err != nil {
 		t.Fatalf(`parseLine("BIND=:8080") => %v`, err.Error())
 	}
@@ -38,30 +40,30 @@ func TestParseLine(t *testing.T) {
 		t.Fatalf(`parseLine("BIND=:8080") = %q, want ":8080"`, cfg.Bind)
 	}
 
-	err = cfg.parseLine("BASEURL=/base")
+	err = parseLine(cfg, "BASEURL=/base")
 	if err != nil {
 		t.Fatalf(`parseLine("BASEURL=/base") => %v`, err.Error())
 	}
-	if cfg.baseURL != "/base" {
-		t.Fatalf(`parseLine("BASEURL=/base") = %q, want "/base"`, cfg.baseURL)
+	if cfg.BasePath != "/base" {
+		t.Fatalf(`parseLine("BASEURL=/base") = %q, want "/base"`, cfg.BasePath)
 	}
 
-	cfg.parseLine("EXTERNALURL=https://happydomain.org")
+	parseLine(cfg, "EXTERNALURL=https://happydomain.org")
 	if cfg.ExternalURL.String() != "https://happydomain.org" {
-		t.Fatalf(`parseLine("EXTERNAL_URL=https://happydomain.org") = %q, want "https://happydomain.org"`, cfg.ExternalURL)
+		t.Fatalf(`parseLine("EXTERNAL_URL=https://happydomain.org") = %q, want "https://happydomain.org"`, cfg.ExternalURL.String())
 	}
 
-	cfg.parseLine("DEFAULT-NS=42.42.42.42:5353")
+	parseLine(cfg, "DEFAULT-NS=42.42.42.42:5353")
 	if cfg.DefaultNameServer != "42.42.42.42:5353" {
 		t.Fatalf(`parseLine("DEFAULT-NS=42.42.42.42:5353") = %q, want "42.42.42.42:5353"`, cfg.DefaultNameServer)
 	}
 
-	cfg.parseLine("DEFAULT_NS=42.42.42.42:3535")
+	parseLine(cfg, "DEFAULT_NS=42.42.42.42:3535")
 	if cfg.DefaultNameServer != "42.42.42.42:3535" {
 		t.Fatalf(`parseLine("DEFAULT_NS=42.42.42.42:3535") = %q, want "42.42.42.42:3535"`, cfg.DefaultNameServer)
 	}
 
-	err = cfg.parseLine("NO_AUTH=true")
+	err = parseLine(cfg, "NO_AUTH=true")
 	if err != nil {
 		t.Fatalf(`parseLine("NO_AUTH=true") => %v`, err.Error())
 	}
@@ -73,8 +75,8 @@ func TestParseLine(t *testing.T) {
 func TestGetBaseURL(t *testing.T) {
 	u, _ := url.Parse("http://localhost:8081")
 
-	cfg := Options{
-		ExternalURL: URL{URL: u},
+	cfg := &happydns.Options{
+		ExternalURL: *u,
 	}
 
 	builded_url := cfg.GetBaseURL()
@@ -82,7 +84,7 @@ func TestGetBaseURL(t *testing.T) {
 		t.Fatalf(`GetBaseURL() = %q, want "http://localhost:8081"`, builded_url)
 	}
 
-	cfg.baseURL = "/base"
+	cfg.BasePath = "/base"
 
 	builded_url = cfg.GetBaseURL()
 	if builded_url != "http://localhost:8081/base" {

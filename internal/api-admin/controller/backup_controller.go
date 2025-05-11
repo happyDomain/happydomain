@@ -29,18 +29,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/usecase"
 	"git.happydns.org/happyDomain/model"
 )
 
 type BackupController struct {
-	config *config.Options
+	config *happydns.Options
 	store  storage.Storage
 }
 
-func NewBackupController(cfg *config.Options, store storage.Storage) *BackupController {
+func NewBackupController(cfg *happydns.Options, store storage.Storage) *BackupController {
 	return &BackupController{
 		config: cfg,
 		store:  store,
