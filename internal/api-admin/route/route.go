@@ -25,12 +25,11 @@ import (
 	"github.com/gin-gonic/gin"
 
 	api "git.happydns.org/happyDomain/internal/api/route"
-	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareRoutes(cfg *config.Options, router *gin.Engine, s storage.Storage, dependancies happydns.UsecaseDependancies) {
+func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, s storage.Storage, dependancies happydns.UsecaseDependancies) {
 	apiRoutes := router.Group("/api")
 
 	declareBackupRoutes(cfg, apiRoutes, s)

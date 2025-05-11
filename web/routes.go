@@ -35,7 +35,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happyDomain/internal/config"
+	"git.happydns.org/happyDomain/model"
 )
 
 var (
@@ -55,7 +55,7 @@ func init() {
 	flag.StringVar(&MsgHeaderColor, "msg-header-color", MsgHeaderColor, "Background color of the banner added at the top of the app")
 }
 
-func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
+func DeclareRoutes(cfg *happydns.Options, router *gin.Engine) {
 	if cfg.DisableProviders {
 		CustomHeadHTML += `<script type="text/javascript">window.disable_providers = true;</script>`
 	}
@@ -68,7 +68,7 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 		CustomHeadHTML += `<script type="text/javascript">window.disable_embedded_login = true;</script>`
 	}
 
-	if config.OIDCProviderURL != "" {
+	if len(cfg.OIDCClients) > 0 {
 		CustomHeadHTML += `<script type="text/javascript">window.oidc_configured = true;</script>`
 	}
 
@@ -129,7 +129,7 @@ func DeclareRoutes(cfg *config.Options, router *gin.Engine) {
 	})
 }
 
-func serveOrReverse(forced_url string, cfg *config.Options) gin.HandlerFunc {
+func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 	if cfg.DevProxy != "" {
 		// Forward to the Vue dev proxy
 		return func(c *gin.Context) {

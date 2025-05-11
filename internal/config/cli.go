@@ -26,26 +26,27 @@ import (
 	"fmt"
 
 	"git.happydns.org/happyDomain/internal/storage"
+	"git.happydns.org/happyDomain/model"
 )
 
 // declareFlags registers flags for the structure Options.
-func (o *Options) declareFlags() {
+func declareFlags(o *happydns.Options) {
 	flag.StringVar(&o.DevProxy, "dev", o.DevProxy, "Proxify traffic to this host for static assets")
 	flag.StringVar(&o.AdminBind, "admin-bind", o.AdminBind, "Bind port/socket for administration interface")
 	flag.StringVar(&o.Bind, "bind", ":8081", "Bind port/socket")
 	flag.BoolVar(&o.DisableProviders, "disable-providers-edit", o.DisableProviders, "Disallow all actions on provider (add/edit/delete)")
 	flag.BoolVar(&o.DisableRegistration, "disable-registration", o.DisableRegistration, "Forbids new account creation through public form/API (still allow registration from external services)")
 	flag.BoolVar(&o.DisableEmbeddedLogin, "disable-embedded-login", o.DisableEmbeddedLogin, "Disables the internal user/password login in favor of external-auth or OIDC")
-	flag.Var(&o.ExternalURL, "externalurl", "Begining of the URL, before the base, that should be used eg. in mails")
-	flag.StringVar(&o.baseURL, "baseurl", o.baseURL, "URL prepended to each URL")
+	flag.Var(&URL{&o.ExternalURL}, "externalurl", "Begining of the URL, before the base, that should be used eg. in mails")
+	flag.StringVar(&o.BasePath, "baseurl", o.BasePath, "URL prepended to each URL")
 	flag.StringVar(&o.DefaultNameServer, "default-ns", o.DefaultNameServer, "Adress to the default name server")
-	flag.Var(&o.StorageEngine, "storage-engine", fmt.Sprintf("Select the storage engine between %v", storage.GetStorageEngines()))
+	flag.StringVar(&o.StorageEngine, "storage-engine", o.StorageEngine, fmt.Sprintf("Select the storage engine between %v", storage.GetStorageEngines()))
 	flag.BoolVar(&o.NoAuth, "no-auth", false, "Disable user access control, use default account")
-	flag.Var(&o.JWTSecretKey, "jwt-secret-key", "Secret key used to verify JWT authentication tokens (a random secret is used if undefined)")
-	flag.Var(&o.ExternalAuth, "external-auth", "Base URL to use for login and registration (use embedded forms if left empty)")
+	flag.Var(&JWTSecretKey{&o.JWTSecretKey}, "jwt-secret-key", "Secret key used to verify JWT authentication tokens (a random secret is used if undefined)")
+	flag.Var(&URL{&o.ExternalAuth}, "external-auth", "Base URL to use for login and registration (use embedded forms if left empty)")
 	flag.BoolVar(&o.OptOutInsights, "opt-out-insights", false, "Disable the anonymous usage statistics report. If you care about this project and don't participate in discussions, don't opt-out.")
 
-	flag.Var(&o.ListmonkURL, "newsletter-server-url", "Base URL of the listmonk newsletter server")
+	flag.Var(&URL{&o.ListmonkURL}, "newsletter-server-url", "Base URL of the listmonk newsletter server")
 	flag.IntVar(&o.ListmonkId, "newsletter-id", 1, "Listmonk identifier of the list receiving the new user")
 
 	flag.BoolVar(&o.NoMail, "no-mail", o.NoMail, "Disable all automatic mails, skip email verification at registration")
@@ -60,11 +61,11 @@ func (o *Options) declareFlags() {
 }
 
 // parseCLI parse the flags and treats extra args as configuration filename.
-func (o *Options) parseCLI() error {
+func parseCLI(o *happydns.Options) error {
 	flag.Parse()
 
 	for _, conf := range flag.Args() {
-		err := o.parseFile(conf)
+		err := parseFile(o, conf)
 		if err != nil {
 			return err
 		}

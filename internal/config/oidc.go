@@ -24,50 +24,32 @@
 package config
 
 import (
-	"context"
 	"flag"
 	"net/url"
-	"path"
-	"strings"
 
-	"github.com/coreos/go-oidc/v3/oidc"
-	"golang.org/x/oauth2"
+	"git.happydns.org/happyDomain/model"
 )
 
 var (
-	OIDCClientID     string
+	oidcClientID     string
 	oidcClientSecret string
-	OIDCProviderURL  string
+	oidcProviderURL  url.URL
 )
 
 func init() {
-	flag.StringVar(&OIDCClientID, "oidc-client-id", OIDCClientID, "ClientID for OIDC")
+	flag.StringVar(&oidcClientID, "oidc-client-id", oidcClientID, "ClientID for OIDC")
 	flag.StringVar(&oidcClientSecret, "oidc-client-secret", oidcClientSecret, "Secret for OIDC")
-	flag.StringVar(&OIDCProviderURL, "oidc-provider-url", OIDCProviderURL, "Base URL of the OpenId Connect service")
+	flag.Var(&URL{&oidcProviderURL}, "oidc-provider-url", "Base URL of the OpenId Connect service")
 }
 
-func (o *Options) GetAuthURL() *url.URL {
-	redirecturl := *o.ExternalURL.URL
-	redirecturl.Path = path.Join(redirecturl.Path, o.baseURL, "auth", "callback")
-	return &redirecturl
-}
-
-func (o *Options) GetOIDCProvider(ctx context.Context) (*oidc.Provider, error) {
-	return oidc.NewProvider(ctx, strings.TrimSuffix(OIDCProviderURL, "/.well-known/openid-configuration"))
-}
-
-func (o *Options) GetOIDCProviderURL() string {
-	return OIDCProviderURL
-}
-
-func (o *Options) GetOAuth2Config(provider *oidc.Provider) *oauth2.Config {
-	oauth2Config := oauth2.Config{
-		ClientID:     OIDCClientID,
-		ClientSecret: oidcClientSecret,
-		RedirectURL:  o.GetAuthURL().String(),
-		Endpoint:     provider.Endpoint(),
-		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
+func ExtendsConfigWithOIDC(o *happydns.Options) error {
+	if oidcProviderURL.String() != "" {
+		o.OIDCClients = append(o.OIDCClients, happydns.OIDCSettings{
+			ClientID:     oidcClientID,
+			ClientSecret: oidcClientSecret,
+			ProviderURL:  oidcProviderURL,
+		})
 	}
 
-	return &oauth2Config
+	return nil
 }

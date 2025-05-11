@@ -25,11 +25,11 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api-admin/controller"
-	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/internal/storage"
+	"git.happydns.org/happyDomain/model"
 )
 
-func declareBackupRoutes(cfg *config.Options, router *gin.RouterGroup, store storage.Storage) {
+func declareBackupRoutes(cfg *happydns.Options, router *gin.RouterGroup, store storage.Storage) {
 	bc := controller.NewBackupController(cfg, store)
 
 	router.POST("/backup.json", bc.BackupJSON)

@@ -32,104 +32,30 @@ import (
 	"path"
 	"strings"
 
-	"git.happydns.org/happyDomain/internal/storage"
+	"git.happydns.org/happyDomain/model"
 )
-
-// Options stores the configuration of the software.
-type Options struct {
-	// AdminBind is the address:port or unix socket used to serve the admin
-	// API.
-	AdminBind string
-
-	// Bind is the address:port used to bind the main interface with API.
-	Bind string
-
-	// BaseURL is the relative path where begins the root of the app.
-	baseURL string
-
-	// DevProxy is the URL that override static assets.
-	DevProxy string
-
-	// DefaultNameServer is the NS server suggested by default.
-	DefaultNameServer string
-
-	// DisableProviders should disallow all actions on provider (add/edit/delete) through public API.
-	DisableProviders bool
-
-	// DisableRegistration forbids all new registration using the public form/API.
-	DisableRegistration bool
-
-	// DisableEmbeddedLogin disables the internal user/password login in favor of ExternalAuth or OIDC.
-	DisableEmbeddedLogin bool
-
-	// ExternalAuth is the URL of the login form to use instead of the embedded one.
-	ExternalAuth URL
-
-	// ExternalURL keeps the URL used in communications (such as email,
-	// ...), when it needs to use complete URL, not only relative parts.
-	ExternalURL URL
-
-	// JWTSecretKey stores the private key to sign and verify JWT tokens.
-	JWTSecretKey JWTSecretKey
-
-	// JWTSigningMethod is the signing method to check token signature.
-	JWTSigningMethod string
-
-	// NoAuth controls if there is user access control or not.
-	NoAuth bool
-
-	// OptOutInsights disable the anonymous usage statistics report.
-	OptOutInsights bool
-
-	// StorageEngine points to the storage engine used.
-	StorageEngine storage.StorageEngine
-
-	ListmonkURL URL
-	ListmonkId  int
-
-	// MailFrom holds the content of the From field for all e-mails that
-	// will be send.
-	MailFrom mail.Address
-
-	NoMail               bool
-	MailSMTPHost         string
-	MailSMTPPort         uint
-	MailSMTPUsername     string
-	MailSMTPPassword     string
-	MailSMTPTLSSNoVerify bool
-}
-
-// GetBaseURL returns the full url to the absolute ExternalURL, including BaseURL.
-func (o *Options) GetBaseURL() string {
-	return fmt.Sprintf("%s%s", o.ExternalURL.URL.String(), o.baseURL)
-}
-
-// GetBasePath returns the baseURL.
-func (o *Options) GetBasePath() string {
-	return o.baseURL
-}
 
 // ConsolidateConfig fills an Options struct by reading configuration from
 // config files, environment, then command line.
 //
 // Should be called only one time.
-func ConsolidateConfig() (opts *Options, err error) {
+func ConsolidateConfig() (opts *happydns.Options, err error) {
 	u, _ := url.Parse("http://localhost:8081")
 
 	// Define defaults options
-	opts = &Options{
+	opts = &happydns.Options{
 		AdminBind:         "./happydomain.sock",
-		baseURL:           "/",
+		BasePath:          "/",
 		Bind:              ":8081",
 		DefaultNameServer: "127.0.0.1:53",
-		ExternalURL:       URL{URL: u},
+		ExternalURL:       *u,
 		JWTSigningMethod:  "HS512",
 		MailFrom:          mail.Address{Name: "happyDomain", Address: "happydomain@localhost"},
 		MailSMTPPort:      587,
-		StorageEngine:     storage.StorageEngine("leveldb"),
+		StorageEngine:     "leveldb",
 	}
 
-	opts.declareFlags()
+	declareFlags(opts)
 
 	// Establish a list of possible configuration file locations
 	configLocations := []string{
@@ -146,7 +72,7 @@ func ConsolidateConfig() (opts *Options, err error) {
 	for _, filename := range configLocations {
 		if _, e := os.Stat(filename); !os.IsNotExist(e) {
 			log.Printf("Loading configuration from %s\n", filename)
-			err = opts.parseFile(filename)
+			err = parseFile(opts, filename)
 			if err != nil {
 				return
 			}
@@ -155,22 +81,22 @@ func ConsolidateConfig() (opts *Options, err error) {
 	}
 
 	// Then, overwrite that by what is present in the environment
-	err = opts.parseEnvironmentVariables()
+	err = parseEnvironmentVariables(opts)
 	if err != nil {
 		return
 	}
 
 	// Finaly, command line takes precedence
-	err = opts.parseCLI()
+	err = parseCLI(opts)
 	if err != nil {
 		return
 	}
 
 	// Sanitize options
-	if opts.baseURL != "/" {
-		opts.baseURL = path.Clean(opts.baseURL)
+	if opts.BasePath != "/" {
+		opts.BasePath = path.Clean(opts.BasePath)
 	} else {
-		opts.baseURL = ""
+		opts.BasePath = ""
 	}
 
 	if opts.NoMail && opts.MailSMTPHost != "" {
@@ -178,26 +104,26 @@ func ConsolidateConfig() (opts *Options, err error) {
 		return
 	}
 
-	if opts.ExternalURL.URL.Host == "" || opts.ExternalURL.URL.Scheme == "" {
-		u, err2 := url.Parse("http://" + opts.ExternalURL.URL.String())
+	if opts.ExternalURL.Host == "" || opts.ExternalURL.Scheme == "" {
+		u, err2 := url.Parse("http://" + opts.ExternalURL.String())
 		if err2 == nil {
-			opts.ExternalURL.URL = u
+			opts.ExternalURL = *u
 		} else {
 			err = fmt.Errorf("You defined an external URL without a scheme. The expected value is eg. http://localhost:8081")
 			return
 		}
 	}
-	if len(opts.ExternalURL.URL.Path) > 1 {
-		if opts.baseURL != "" && opts.baseURL != opts.ExternalURL.URL.Path {
+	if len(opts.ExternalURL.Path) > 1 {
+		if opts.BasePath != "" && opts.BasePath != opts.ExternalURL.Path {
 			err = fmt.Errorf("You defined both baseurl and a path to externalurl that are different. Define only one of those.")
 			return
 		}
 
-		opts.baseURL = path.Clean(opts.ExternalURL.URL.Path)
+		opts.BasePath = path.Clean(opts.ExternalURL.Path)
 	}
-	opts.ExternalURL.URL.Path = ""
-	opts.ExternalURL.URL.Fragment = ""
-	opts.ExternalURL.URL.RawQuery = ""
+	opts.ExternalURL.Path = ""
+	opts.ExternalURL.Fragment = ""
+	opts.ExternalURL.RawQuery = ""
 
 	if len(opts.JWTSecretKey) == 0 {
 		opts.JWTSecretKey = make([]byte, 32)
@@ -207,12 +133,17 @@ func ConsolidateConfig() (opts *Options, err error) {
 		}
 	}
 
+	err = ExtendsConfigWithOIDC(opts)
+	if err != nil {
+		return
+	}
+
 	return
 }
 
 // parseLine treats a config line and place the read value in the variable
 // declared to the corresponding flag.
-func (o *Options) parseLine(line string) (err error) {
+func parseLine(o *happydns.Options, line string) (err error) {
 	fields := strings.SplitN(line, "=", 2)
 	orig_key := strings.TrimSpace(fields[0])
 	value := strings.TrimSpace(fields[1])

@@ -27,7 +27,6 @@ import (
 	"net/mail"
 	"strings"
 
-	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/internal/mailer"
 	"git.happydns.org/happyDomain/internal/storage"
@@ -35,12 +34,12 @@ import (
 )
 
 type authUserUsecase struct {
-	config *config.Options
+	config *happydns.Options
 	mailer *mailer.Mailer
 	store  storage.AuthUserAndSessionStorage
 }
 
-func NewAuthUserUsecase(cfg *config.Options, m *mailer.Mailer, store storage.AuthUserAndSessionStorage) happydns.AuthUserUsecase {
+func NewAuthUserUsecase(cfg *happydns.Options, m *mailer.Mailer, store storage.AuthUserAndSessionStorage) happydns.AuthUserUsecase {
 	return &authUserUsecase{
 		config: cfg,
 		mailer: m,

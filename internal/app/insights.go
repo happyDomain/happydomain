@@ -34,7 +34,6 @@ import (
 	"time"
 
 	"git.happydns.org/happyDomain/internal/api/controller"
-	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
@@ -45,7 +44,7 @@ const (
 )
 
 type insightsCollector struct {
-	cfg   *config.Options
+	cfg   *happydns.Options
 	store storage.Storage
 	stop  chan bool
 }
@@ -117,11 +116,12 @@ func (c *insightsCollector) collect() (*happydns.Insights, error) {
 	data.Config.DisableEmbeddedLogin = c.cfg.DisableEmbeddedLogin
 	data.Config.DisableProviders = c.cfg.DisableProviders
 	data.Config.DisableRegistration = c.cfg.DisableRegistration
-	data.Config.HasBaseURL = c.cfg.GetBasePath() != ""
+	data.Config.HasBaseURL = c.cfg.BasePath != ""
 	data.Config.HasDevProxy = c.cfg.DevProxy != ""
 	data.Config.HasExternalAuth = c.cfg.ExternalAuth.String() != ""
 	data.Config.HasListmonkURL = c.cfg.ListmonkURL.String() != ""
 	data.Config.LocalBind = strings.HasPrefix(c.cfg.Bind, "127.0.0.1:") || strings.HasPrefix(c.cfg.Bind, "[::1]:")
+	data.Config.NbOidcProviders = len(c.cfg.OIDCClients)
 	data.Config.NoAuthActive = c.cfg.NoAuth
 	data.Config.NoMail = c.cfg.NoMail
 	data.Config.NonUnixAdminBind = strings.Contains(c.cfg.AdminBind, ":")

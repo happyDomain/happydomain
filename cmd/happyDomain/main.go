@@ -67,7 +67,7 @@ func main() {
 	color.NoColor = true
 
 	// Load and parse options
-	var opts *config.Options
+	var opts *happydns.Options
 	if opts, err = config.ConsolidateConfig(); err != nil {
 		log.Fatal(err)
 	}
