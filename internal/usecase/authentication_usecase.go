@@ -25,18 +25,17 @@ import (
 	"fmt"
 	"time"
 
-	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
 type loginUsecase struct {
-	config      *config.Options
+	config      *happydns.Options
 	store       storage.AuthenticationStorage
 	userService happydns.UserUsecase
 }
 
-func NewAuthenticationUsecase(cfg *config.Options, store storage.AuthenticationStorage, userService happydns.UserUsecase) happydns.AuthenticationUsecase {
+func NewAuthenticationUsecase(cfg *happydns.Options, store storage.AuthenticationStorage, userService happydns.UserUsecase) happydns.AuthenticationUsecase {
 	return &loginUsecase{
 		config:      cfg,
 		store:       store,

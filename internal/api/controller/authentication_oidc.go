@@ -31,6 +31,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -39,7 +40,6 @@ import (
 	"golang.org/x/oauth2"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -48,23 +48,39 @@ const (
 )
 
 type OIDCProvider struct {
-	config       *config.Options
+	config       *happydns.Options
 	authService  happydns.AuthenticationUsecase
 	oauth2config *oauth2.Config
 	oidcVerifier *oidc.IDTokenVerifier
 }
 
-func NewOIDCProvider(cfg *config.Options, authService happydns.AuthenticationUsecase) *OIDCProvider {
+func GetOIDCProvider(o *happydns.Options, ctx context.Context) (*oidc.Provider, error) {
+	return oidc.NewProvider(ctx, strings.TrimSuffix(o.OIDCClients[0].ProviderURL.String(), "/.well-known/openid-configuration"))
+}
+
+func GetOAuth2Config(o *happydns.Options, provider *oidc.Provider) *oauth2.Config {
+	oauth2Config := oauth2.Config{
+		ClientID:     o.OIDCClients[0].ClientID,
+		ClientSecret: o.OIDCClients[0].ClientSecret,
+		RedirectURL:  o.GetAuthURL().String(),
+		Endpoint:     provider.Endpoint(),
+		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
+	}
+
+	return &oauth2Config
+}
+
+func NewOIDCProvider(cfg *happydns.Options, authService happydns.AuthenticationUsecase) *OIDCProvider {
 	// Initialize OIDC
-	provider, err := cfg.GetOIDCProvider(context.Background())
+	provider, err := GetOIDCProvider(cfg, context.Background())
 	if err != nil {
 		log.Fatal("Unable to instantiate OIDC Provider:", err)
 	}
 
-	oauth2Config := cfg.GetOAuth2Config(provider)
+	oauth2Config := GetOAuth2Config(cfg, provider)
 
 	oidcVerifier := provider.Verifier(&oidc.Config{
-		ClientID: config.OIDCClientID,
+		ClientID: cfg.OIDCClients[0].ClientID,
 	})
 
 	return &OIDCProvider{

@@ -27,10 +27,12 @@ import (
 	"net/url"
 )
 
-type JWTSecretKey []byte
+type JWTSecretKey struct {
+	Secret *[]byte
+}
 
 func (i *JWTSecretKey) String() string {
-	return base64.StdEncoding.EncodeToString(*i)
+	return base64.StdEncoding.EncodeToString(*i.Secret)
 }
 
 func (i *JWTSecretKey) Set(value string) error {
@@ -39,7 +41,7 @@ func (i *JWTSecretKey) Set(value string) error {
 		return err
 	}
 
-	*i = z
+	*i.Secret = z
 	return nil
 }
 
@@ -83,6 +85,6 @@ func (i *URL) Set(value string) error {
 		return err
 	}
 
-	i.URL = u
+	*i.URL = *u
 	return nil
 }

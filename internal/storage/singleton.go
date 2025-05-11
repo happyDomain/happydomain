@@ -34,11 +34,10 @@ func (i *StorageEngine) String() string {
 }
 
 func (i *StorageEngine) Set(value string) (err error) {
-	se := StorageEngine(value)
-	if _, ok := StorageEngines[se]; !ok {
+	if _, ok := StorageEngines[value]; !ok {
 		return fmt.Errorf("Unexistant storage engine: please select one between: %v", GetStorageEngines())
 	}
-	*i = se
+	*i = StorageEngine(value)
 	return nil
 }
 
@@ -48,7 +47,7 @@ type StorageInstanciation func() (Storage, error)
 
 // StorageEngines lists all Storage implementations declared, with a
 // way to instanciate automatically each.
-var StorageEngines = map[StorageEngine]StorageInstanciation{}
+var StorageEngines = map[string]StorageInstanciation{}
 
 // GetStorageEngines returns all declared Storage implementation.
 func GetStorageEngines() (se []string) {

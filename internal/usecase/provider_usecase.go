@@ -25,7 +25,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/providers"
@@ -33,10 +32,10 @@ import (
 
 type providerUsecase struct {
 	happydns.ProviderUsecase
-	config *config.Options
+	config *happydns.Options
 }
 
-func NewProviderUsecase(cfg *config.Options, store storage.ProviderAndDomainStorage) happydns.ProviderUsecase {
+func NewProviderUsecase(cfg *happydns.Options, store storage.ProviderAndDomainStorage) happydns.ProviderUsecase {
 	return &providerUsecase{
 		ProviderUsecase: NewAdminProviderUsecase(store),
 		config:          cfg,

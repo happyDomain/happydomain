@@ -31,7 +31,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	api "git.happydns.org/happyDomain/internal/api/route"
-	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/internal/mailer"
 	"git.happydns.org/happyDomain/internal/newsletter"
 	"git.happydns.org/happyDomain/internal/session"
@@ -59,7 +58,7 @@ type Usecases struct {
 }
 
 type App struct {
-	cfg        *config.Options
+	cfg        *happydns.Options
 	mailer     *mailer.Mailer
 	newsletter happydns.NewsletterSubscriptor
 	router     *gin.Engine
@@ -125,7 +124,7 @@ func (a *App) ZoneUsecase() happydns.ZoneUsecase {
 	return a.usecases.zone
 }
 
-func NewApp(cfg *config.Options) *App {
+func NewApp(cfg *happydns.Options) *App {
 	app := &App{
 		cfg: cfg,
 	}
@@ -140,7 +139,7 @@ func NewApp(cfg *config.Options) *App {
 	return app
 }
 
-func NewAppWithStorage(cfg *config.Options, store storage.Storage) *App {
+func NewAppWithStorage(cfg *happydns.Options, store storage.Storage) *App {
 	app := &App{
 		cfg:   cfg,
 		store: store,
@@ -191,9 +190,9 @@ func (app *App) initStorageEngine() {
 }
 
 func (app *App) initNewsletter() {
-	if app.cfg.ListmonkURL.URL != nil {
+	if app.cfg.ListmonkURL.String() != "" {
 		app.newsletter = &newsletter.ListmonkNewsletterSubscription{
-			ListmonkURL: app.cfg.ListmonkURL.URL,
+			ListmonkURL: &app.cfg.ListmonkURL,
 			ListmonkId:  app.cfg.ListmonkId,
 		}
 	} else {

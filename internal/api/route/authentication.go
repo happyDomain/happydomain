@@ -29,22 +29,21 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/controller"
-	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareAuthenticationRoutes(cfg *config.Options, baserouter, apirouter *gin.RouterGroup, dependancies happydns.UsecaseDependancies) *controller.LoginController {
+func DeclareAuthenticationRoutes(cfg *happydns.Options, baserouter, apirouter *gin.RouterGroup, dependancies happydns.UsecaseDependancies) *controller.LoginController {
 	lc := controller.NewLoginController(dependancies.AuthenticationUsecase())
 
 	apirouter.POST("/auth", lc.Login)
 	apirouter.POST("/auth/logout", lc.Logout)
 
-	if cfg.GetOIDCProviderURL() != "" {
+	if len(cfg.OIDCClients) > 0 {
 		oidcp := controller.NewOIDCProvider(cfg, dependancies.AuthenticationUsecase())
 
 		authRoutes := baserouter.Group("/auth")
 
-		providerurl, _ := url.Parse(cfg.GetOIDCProviderURL())
+		providerurl, _ := url.Parse(cfg.OIDCClients[0].ProviderURL.String())
 		authRoutes.GET("has_oidc", func(c *gin.Context) {
 			parts := strings.Split(strings.TrimSuffix(providerurl.Host, "."), ".")
 			if len(parts) > 2 {

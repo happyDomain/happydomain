@@ -30,7 +30,6 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -39,10 +38,10 @@ var (
 )
 
 type resolverUsecase struct {
-	config *config.Options
+	config *happydns.Options
 }
 
-func NewResolverUsecase(cfg *config.Options) happydns.ResolverUsecase {
+func NewResolverUsecase(cfg *happydns.Options) happydns.ResolverUsecase {
 	return &resolverUsecase{
 		config: cfg,
 	}

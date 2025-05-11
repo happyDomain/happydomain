@@ -19,38 +19,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package config // import "git.happydns.org/happyDomain/config"
+package happydns
 
 import (
-	"bufio"
-	"fmt"
-	"os"
-	"strings"
-
-	"git.happydns.org/happyDomain/model"
+	"net/url"
 )
 
-// parseFile opens the file at the given filename path, then treat each line
-// not starting with '#' as a configuration statement.
-func parseFile(o *happydns.Options, filename string) error {
-	fp, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	defer fp.Close()
-
-	scanner := bufio.NewScanner(fp)
-	n := 0
-	for scanner.Scan() {
-		n += 1
-		line := strings.TrimSpace(scanner.Text())
-		if len(line) > 0 && !strings.HasPrefix(line, "#") && strings.Index(line, "=") > 0 {
-			err := parseLine(o, line)
-			if err != nil {
-				return fmt.Errorf("%v:%d: error in configuration: %w", filename, n, err)
-			}
-		}
-	}
-
-	return nil
+type OIDCSettings struct {
+	ClientID     string
+	ClientSecret string
+	ProviderURL  url.URL
 }

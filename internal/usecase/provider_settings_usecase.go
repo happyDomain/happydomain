@@ -24,19 +24,18 @@ package usecase
 import (
 	"fmt"
 
-	"git.happydns.org/happyDomain/internal/config"
 	"git.happydns.org/happyDomain/internal/forms"
 	"git.happydns.org/happyDomain/internal/usecase/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
 type providerSettingsUsecase struct {
-	config          *config.Options
+	config          *happydns.Options
 	providerService happydns.ProviderUsecase
 	store           provider.ProviderStorage
 }
 
-func NewProviderSettingsUsecase(cfg *config.Options, ps happydns.ProviderUsecase, store provider.ProviderStorage) happydns.ProviderSettingsUsecase {
+func NewProviderSettingsUsecase(cfg *happydns.Options, ps happydns.ProviderUsecase, store provider.ProviderStorage) happydns.ProviderSettingsUsecase {
 	return &providerSettingsUsecase{
 		config:          cfg,
 		providerService: ps,
