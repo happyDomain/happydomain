@@ -128,8 +128,8 @@ func (s *InMemoryStorage) ListAllDomainLogs() (happydns.Iterator[happydns.Domain
 	return NewInMemoryIterator[happydns.DomainLogWithDomainId](&s.domainLogs), nil
 }
 
-// GetDomainLogs retrieves the logs for the given Domain.
-func (s *InMemoryStorage) GetDomainLogs(domain *happydns.Domain) (dlogs []*happydns.DomainLog, err error) {
+// ListDomainLogs retrieves the logs for the given Domain.
+func (s *InMemoryStorage) ListDomainLogs(domain *happydns.Domain) (dlogs []*happydns.DomainLog, err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

@@ -81,7 +81,7 @@ corrections:
 
 				if err != nil {
 					log.Printf("%s: unable to apply correction: %s", domain.DomainName, err.Error())
-					du.store.CreateDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed record update (%s): %s", cr.Msg, err.Error())))
+					du.domainLogService.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed record update (%s): %s", cr.Msg, err.Error())))
 					errs = errors.Join(errs, fmt.Errorf("%s: %w", cr.Msg, err))
 					// Stop the zone update if we didn't change it yet
 					if i == 0 {
@@ -96,14 +96,14 @@ corrections:
 	}
 
 	if errs != nil {
-		du.store.CreateDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d corrections were not applied due to errors.", zone.Id.String(), nbcorrections)))
+		du.domainLogService.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d corrections were not applied due to errors.", zone.Id.String(), nbcorrections)))
 		return nil, happydns.ValidationError{fmt.Sprintf("unable to update the zone: %s", errs.Error())}
 	} else if len(form.WantedCorrections) > 0 {
-		du.store.CreateDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d corrections were not applied.", zone.Id.String(), nbcorrections)))
+		du.domainLogService.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d corrections were not applied.", zone.Id.String(), nbcorrections)))
 		return nil, happydns.ValidationError{fmt.Sprintf("unable to perform the following changes: %s", form.WantedCorrections)}
 	}
 
-	du.store.CreateDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ACK, fmt.Sprintf("Zone published (%s), %d corrections applied with success", zone.Id.String(), nbcorrections)))
+	du.domainLogService.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ACK, fmt.Sprintf("Zone published (%s), %d corrections applied with success", zone.Id.String(), nbcorrections)))
 
 	// Create a new zone in history for futher updates
 	newZone := zone.DerivateNew()

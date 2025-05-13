@@ -82,7 +82,7 @@ func (bc *BackupController) DoBackup() (ret happydns.Backup) {
 
 				for _, dn := range ds {
 					// Domain logs
-					ls, err := bc.store.GetDomainLogs(dn)
+					ls, err := bc.store.ListDomainLogs(dn)
 					if err != nil {
 						ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve domain's logs %s/%s (%s): %s", u.Id.String(), dn.Id.String(), dn.DomainName, err.Error()))
 					} else {

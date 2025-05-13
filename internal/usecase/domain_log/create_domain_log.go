@@ -19,34 +19,22 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package domain
+package domainlog
 
 import (
 	"git.happydns.org/happyDomain/model"
 )
 
-type DomainStorage interface {
-	// ListAllDomains retrieves the list of known Domains.
-	ListAllDomains() (happydns.Iterator[happydns.Domain], error)
+type CreateDomainLogUsecase struct {
+	store DomainLogStorage
+}
 
-	// ListDomains retrieves all Domains associated to the given User.
-	ListDomains(user *happydns.User) ([]*happydns.Domain, error)
+func NewCreateDomainLogUsecase(store DomainLogStorage) *CreateDomainLogUsecase {
+	return &CreateDomainLogUsecase{
+		store: store,
+	}
+}
 
-	// GetDomain retrieves the Domain with the given id and owned by the given User.
-	GetDomain(domainid happydns.Identifier) (*happydns.Domain, error)
-
-	// GetDomainByDN is like GetDomain but look for the domain name instead of identifier.
-	GetDomainByDN(user *happydns.User, fqdn string) ([]*happydns.Domain, error)
-
-	// CreateDomain creates a record in the database for the given Domain.
-	CreateDomain(domain *happydns.Domain) error
-
-	// UpdateDomain updates the fields of the given Domain.
-	UpdateDomain(domain *happydns.Domain) error
-
-	// DeleteDomain removes the given Domain from the database.
-	DeleteDomain(domainid happydns.Identifier) error
-
-	// ClearDomains deletes all Domains present in the database.
-	ClearDomains() error
+func (uc *CreateDomainLogUsecase) Create(domain *happydns.Domain, log *happydns.DomainLog) error {
+	return uc.store.CreateDomainLog(domain, log)
 }
