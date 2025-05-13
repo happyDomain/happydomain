@@ -19,49 +19,45 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package session
+package user
 
 import (
-	"errors"
 	"fmt"
 
 	"git.happydns.org/happyDomain/model"
 )
 
-type CloseUserSessionsUsecase struct {
-	store             SessionStorage
-	listUserSessions  *ListUserSessionsUsecase
-	deleteUserSession *DeleteUserSessionUsecase
+type UpdateUser struct {
+	store UserStorage
 }
 
-func NewCloseUserSessionsUsecase(
-	store SessionStorage,
-	listUserSessions *ListUserSessionsUsecase,
-	deleteUserSession *DeleteUserSessionUsecase,
-) *CloseUserSessionsUsecase {
-	return &CloseUserSessionsUsecase{
-		store:             store,
-		listUserSessions:  listUserSessions,
-		deleteUserSession: deleteUserSession,
-	}
+func NewUpdateUser(store UserStorage) *UpdateUser {
+	return &UpdateUser{store: store}
 }
 
-func (uc *CloseUserSessionsUsecase) CloseAll(user happydns.UserInfo) error {
-	sessions, err := uc.listUserSessions.List(user)
+func (uc *UpdateUser) Update(id happydns.Identifier, updateFn func(*happydns.User)) error {
+	user, err := uc.store.GetUser(id)
 	if err != nil {
-		return fmt.Errorf("unable to retrieve user sessions: %w", err)
+		return err
 	}
 
-	var errs error
-	for _, sess := range sessions {
-		if err := uc.store.DeleteSession(sess.Id); err != nil {
-			errs = errors.Join(errs, fmt.Errorf("unable to delete session %q: %w", sess.Id, err))
+	updateFn(user)
+
+	if !user.Id.Equals(id) {
+		return happydns.ValidationError{Msg: "you cannot change the user identifier"}
+	}
+
+	if err := uc.store.CreateOrUpdateUser(user); err != nil {
+		return happydns.InternalError{
+			Err:         fmt.Errorf("failed to update user: %w", err),
+			UserMessage: "Sorry, we are currently unable to update your user. Please retry later.",
 		}
 	}
 
-	return errs
+	return nil
 }
 
-func (uc *CloseUserSessionsUsecase) ByID(userID happydns.Identifier) error {
-	return uc.CloseAll(&happydns.User{Id: userID})
+func (uc *UpdateUser) UpdateSettings(user *happydns.User, newSettings happydns.UserSettings) error {
+	user.Settings = newSettings
+	return uc.store.CreateOrUpdateUser(user)
 }

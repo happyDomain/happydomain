@@ -38,6 +38,7 @@ import (
 	"git.happydns.org/happyDomain/internal/usecase"
 	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
 	sessionUC "git.happydns.org/happyDomain/internal/usecase/session"
+	userUC "git.happydns.org/happyDomain/internal/usecase/user"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/web"
 )
@@ -214,6 +215,8 @@ func (app *App) initInsights() {
 
 func (app *App) initUsecases() {
 	sessionService := sessionUC.NewSessionUsecases(app.store)
+	authUserService := authuserUC.NewAuthUserUsecases(app.cfg, app.mailer, app.store, sessionService.CloseUserSessionsUC)
+
 	app.usecases.providerSpecs = usecase.NewProviderSpecsUsecase()
 	app.usecases.provider = usecase.NewProviderUsecase(app.cfg, app.store)
 	app.usecases.providerSettings = usecase.NewProviderSettingsUsecase(app.cfg, app.usecases.provider, app.store)
@@ -223,9 +226,9 @@ func (app *App) initUsecases() {
 	app.usecases.domainLog = usecase.NewDomainLogUsecase(app.store)
 	app.usecases.domain = usecase.NewDomainUsecase(app.store, app.usecases.domainLog, app.usecases.provider, app.usecases.zone)
 
-	app.usecases.user = usecase.NewUserUsecase(app.store, app.newsletter)
+	app.usecases.user = userUC.NewUserUsecases(app.store, app.newsletter, authUserService.GetAuthUserUC, sessionService.CloseUserSessionsUC)
 	app.usecases.authentication = usecase.NewAuthenticationUsecase(app.cfg, app.store, app.usecases.user)
-	app.usecases.authUser = authuserUC.NewAuthUserUsecases(app.cfg, app.mailer, app.store, sessionService.CloseUserSessionsUC)
+	app.usecases.authUser = authUserService
 	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg)
 	app.usecases.session = sessionService
 }
