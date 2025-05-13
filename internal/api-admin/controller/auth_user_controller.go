@@ -128,7 +128,8 @@ func (ac *AuthUserController) EmailValidationLink(c *gin.Context) {
 func (ac *AuthUserController) RecoverUserAcct(c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
-	happydns.ApiResponse(c, ac.auService.GenerateRecoveryLink(user), nil)
+	link, err := ac.auService.GenerateRecoveryLink(user)
+	happydns.ApiResponse(c, link, err)
 }
 
 type resetPassword struct {

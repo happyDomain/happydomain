@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,25 +19,25 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package happydns
+package authuser
 
-type AccountRecoveryForm struct {
-	// Key is the secret sent by email to the user.
-	Key string
+import (
+	"git.happydns.org/happyDomain/model"
+)
 
-	// Password is the new password to use with this account.
-	Password string
+// CanRegisterUsecase struct holds the configuration to check if registration is allowed.
+type CanRegisterUsecase struct {
+	config *happydns.Options
 }
 
-type AddressValidationForm struct {
-	// Key able to validate the email address.
-	Key string
+// NewCanRegisterUsecase creates a new instance of CanRegisterUsecase.
+func NewCanRegisterUsecase(cfg *happydns.Options) *CanRegisterUsecase {
+	return &CanRegisterUsecase{
+		config: cfg,
+	}
 }
 
-type UserSpecialAction struct {
-	// Kind of special action to perform: "recovery" or "validation".
-	Kind string
-
-	// Email on which to perform actions.
-	Email string
+// IsOpened returns true if user registrations are enabled on this instance.
+func (uc *CanRegisterUsecase) IsOpened() bool {
+	return !uc.config.DisableRegistration
 }
