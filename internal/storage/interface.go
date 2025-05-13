@@ -36,11 +36,6 @@ type AuthenticationStorage interface {
 	user.UserStorage
 }
 
-type AuthUserAndSessionStorage interface {
-	authuser.AuthUserStorage
-	session.SessionStorage
-}
-
 type ProviderAndDomainStorage interface {
 	provider.ProviderStorage
 	domain.DomainStorage

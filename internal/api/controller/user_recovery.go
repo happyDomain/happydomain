@@ -138,14 +138,6 @@ func (rc *UserRecoveryController) ValidateUserAddress(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-type UploadedAccountRecovery struct {
-	// Key is the secret sent by email to the user.
-	Key string
-
-	// Password is the new password to use with this account.
-	Password string
-}
-
 // recoverUserAccount performs account recovery by reseting the password of the account.
 //
 //	@Summary	Reset password with link in email.
@@ -155,7 +147,7 @@ type UploadedAccountRecovery struct {
 //	@Accept			json
 //	@Produce		json
 //	@Param			userId	path		string					true	"User identifier"
-//	@Param			body	body		UploadedAccountRecovery	true	"Recovery form"
+//	@Param			body	body		happydns.AccountRecoveryForm	true	"Recovery form"
 //	@Success		204		{null}		null					"Recovery completed, you can now login with your new credentials"
 //	@Failure		400		{object}	happydns.ErrorResponse			"Invalid input"
 //	@Failure		500		{object}	happydns.ErrorResponse
@@ -163,7 +155,7 @@ type UploadedAccountRecovery struct {
 func (rc *UserRecoveryController) RecoverUserAccount(c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
-	var uar UploadedAccountRecovery
+	var uar happydns.AccountRecoveryForm
 	err := c.ShouldBindJSON(&uar)
 	if err != nil {
 		log.Printf("%s sends invalid AccountRecovey JSON: %s", c.ClientIP(), err.Error())
@@ -171,17 +163,7 @@ func (rc *UserRecoveryController) RecoverUserAccount(c *gin.Context) {
 		return
 	}
 
-	if err := user.CanRecoverAccount(uar.Key); err != nil {
-		c.AbortWithStatusJSON(http.StatusForbidden, happydns.ErrorResponse{Message: err.Error()})
-		return
-	}
-
-	if len(uar.Password) == 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{Message: "Password can't be empty!"})
-		return
-	}
-
-	if err := rc.auService.ChangePassword(user, uar.Password); err != nil {
+	if err := rc.auService.ResetPassword(user, uar); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{Message: err.Error()})
 		return
 	}
