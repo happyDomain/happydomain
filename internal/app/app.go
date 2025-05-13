@@ -37,6 +37,7 @@ import (
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/usecase"
 	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
+	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	sessionUC "git.happydns.org/happyDomain/internal/usecase/session"
 	userUC "git.happydns.org/happyDomain/internal/usecase/user"
 	"git.happydns.org/happyDomain/model"
@@ -223,7 +224,7 @@ func (app *App) initUsecases() {
 	app.usecases.service = usecase.NewServiceUsecase()
 	app.usecases.serviceSpecs = usecase.NewServiceSpecsUsecase()
 	app.usecases.zone = usecase.NewZoneUsecase(app.usecases.provider, app.usecases.service, app.store)
-	app.usecases.domainLog = usecase.NewDomainLogUsecase(app.store)
+	app.usecases.domainLog = domainlogUC.NewDomainLogUsecases(app.store)
 	app.usecases.domain = usecase.NewDomainUsecase(app.store, app.usecases.domainLog, app.usecases.provider, app.usecases.zone)
 
 	app.usecases.user = userUC.NewUserUsecases(app.store, app.newsletter, authUserService.GetAuthUserUC, sessionService.CloseUserSessionsUC)

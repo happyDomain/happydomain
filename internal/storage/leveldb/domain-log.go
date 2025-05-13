@@ -49,7 +49,7 @@ func (s *LevelDBStorage) ListAllDomainLogs() (happydns.Iterator[happydns.DomainL
 	}), nil
 }
 
-func (s *LevelDBStorage) GetDomainLogs(domain *happydns.Domain) (logs []*happydns.DomainLog, err error) {
+func (s *LevelDBStorage) ListDomainLogs(domain *happydns.Domain) (logs []*happydns.DomainLog, err error) {
 	iter := s.search(fmt.Sprintf("domain.log|%s|", domain.Id.String()))
 	defer iter.Release()
 

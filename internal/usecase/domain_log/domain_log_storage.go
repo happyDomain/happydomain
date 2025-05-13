@@ -19,43 +19,20 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package usecase
+package domainlog
 
 import (
-	"fmt"
-	"sort"
-
-	"git.happydns.org/happyDomain/internal/usecase/domain"
 	"git.happydns.org/happyDomain/model"
 )
 
-type domainLogUsecase struct {
-	store domain.DomainStorage
-}
+type DomainLogStorage interface {
+	ListAllDomainLogs() (happydns.Iterator[happydns.DomainLogWithDomainId], error)
 
-func NewDomainLogUsecase(store domain.DomainStorage) happydns.DomainLogUsecase {
-	return &domainLogUsecase{
-		store: store,
-	}
-}
+	ListDomainLogs(domain *happydns.Domain) ([]*happydns.DomainLog, error)
 
-func (du *domainLogUsecase) AppendDomainLog(domain *happydns.Domain, log *happydns.DomainLog) error {
-	return du.store.CreateDomainLog(domain, log)
-}
+	CreateDomainLog(domain *happydns.Domain, log *happydns.DomainLog) error
 
-func (du *domainLogUsecase) GetDomainLogs(domain *happydns.Domain) ([]*happydns.DomainLog, error) {
-	logs, err := du.store.GetDomainLogs(domain)
-	if err != nil {
-		return nil, happydns.InternalError{
-			Err:         fmt.Errorf("unable to retrieve logs for domain %q (did=%s): %w", domain.DomainName, domain.Id.String(), err),
-			UserMessage: "Unable to access the domain logs. Please try again later.",
-		}
-	}
+	UpdateDomainLog(domain *happydns.Domain, log *happydns.DomainLog) error
 
-	// Sort by date
-	sort.Slice(logs, func(i, j int) bool {
-		return logs[i].Date.After(logs[j].Date)
-	})
-
-	return logs, nil
+	DeleteDomainLog(domain *happydns.Domain, log *happydns.DomainLog) error
 }

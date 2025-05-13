@@ -58,7 +58,7 @@ func NewDomainLogController(domainLogService happydns.DomainLogUsecase) *DomainL
 func (dlc *DomainLogController) GetDomainLogs(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 
-	logs, err := dlc.domainLogService.GetDomainLogs(domain)
+	logs, err := dlc.domainLogService.ListDomainLogs(domain)
 
 	if err != nil {
 		log.Printf("%s: An error occurs in GetDomainLogs, when retrieving logs: %s", c.ClientIP(), err.Error())
