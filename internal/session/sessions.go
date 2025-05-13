@@ -22,7 +22,6 @@
 package session // import "git.happydns.org/happyDomain/internal/session"
 
 import (
-	"encoding/base32"
 	"fmt"
 	"net/http"
 	"strings"
@@ -33,7 +32,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/mileusna/useragent"
 
-	"git.happydns.org/happyDomain/internal/storage"
+	sessionUC "git.happydns.org/happyDomain/internal/usecase/session"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -43,10 +42,10 @@ const COOKIE_NAME = "happydomain_session"
 type SessionStore struct {
 	Codecs  []securecookie.Codec
 	options *sessions.Options
-	storage storage.Storage
+	storage sessionUC.SessionStorage
 }
 
-func NewSessionStore(opts *happydns.Options, storage storage.Storage, keyPairs ...[]byte) *SessionStore {
+func NewSessionStore(opts *happydns.Options, storage sessionUC.SessionStorage, keyPairs ...[]byte) *SessionStore {
 	store := &SessionStore{
 		Codecs: securecookie.CodecsFromPairs(keyPairs...),
 		options: &sessions.Options{
@@ -106,7 +105,7 @@ func (s *SessionStore) Save(r *http.Request, w http.ResponseWriter, session *ses
 		s.storage.DeleteSession(session.ID)
 	} else {
 		if session.ID == "" {
-			session.ID = NewSessionId()
+			session.ID = sessionUC.NewSessionId()
 		}
 		encrypted, err := securecookie.EncodeMulti(session.Name(), session.ID, s.Codecs...)
 		if err != nil {
@@ -227,8 +226,4 @@ func (s *SessionStore) save(session *sessions.Session, ua string) error {
 	}
 
 	return s.storage.UpdateSession(mysession)
-}
-
-func NewSessionId() string {
-	return strings.TrimRight(base32.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(64)), "=")
 }

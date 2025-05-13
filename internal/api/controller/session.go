@@ -129,7 +129,7 @@ func (sc *SessionController) ClearUserSessions(c *gin.Context) {
 		return
 	}
 
-	err := sc.sessionService.ClearUserSessions(myuser)
+	err := sc.sessionService.CloseUserSessions(myuser)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -157,7 +157,7 @@ func (sc *SessionController) GetSessions(c *gin.Context) {
 		return
 	}
 
-	s, err := sc.sessionService.GetUserSessions(myuser)
+	s, err := sc.sessionService.ListUserSessions(myuser)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

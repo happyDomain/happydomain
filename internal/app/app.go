@@ -36,6 +36,7 @@ import (
 	"git.happydns.org/happyDomain/internal/session"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/usecase"
+	sessionUC "git.happydns.org/happyDomain/internal/usecase/session"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/web"
 )
@@ -224,7 +225,7 @@ func (app *App) initUsecases() {
 	app.usecases.authentication = usecase.NewAuthenticationUsecase(app.cfg, app.store, app.usecases.user)
 	app.usecases.authUser = usecase.NewAuthUserUsecase(app.cfg, app.mailer, app.store)
 	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg)
-	app.usecases.session = usecase.NewSessionUsecase(app.store)
+	app.usecases.session = sessionUC.NewSessionUsecases(app.store)
 }
 
 func (app *App) setupRouter() {

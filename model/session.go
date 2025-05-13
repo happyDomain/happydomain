@@ -55,10 +55,10 @@ func (s *Session) ClearSession() {
 }
 
 type SessionUsecase interface {
-	ClearUserSessions(user *User) error
+	CloseUserSessions(user *User) error
 	CreateUserSession(*User, string) (*Session, error)
 	DeleteUserSession(*User, string) error
 	GetUserSession(*User, string) (*Session, error)
-	GetUserSessions(*User) ([]*Session, error)
+	ListUserSessions(*User) ([]*Session, error)
 	UpdateUserSession(*User, string, func(*Session)) error
 }
