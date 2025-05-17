@@ -157,18 +157,14 @@ type ZoneServices struct {
 }
 
 type ZoneUsecase interface {
-	AddService(*Zone, Subdomain, Origin, *Service) error
 	CreateZone(*Zone) error
 	DeleteZone(Identifier) error
-	DeleteService(zone *Zone, subdomain Subdomain, serviceid Identifier) error
 	DiffZones(*Domain, *Zone, Identifier) ([]*Correction, error)
 	FlattenZoneFile(*Domain, *Zone) (string, error)
 	GenerateRecords(*Domain, *Zone) ([]Record, error)
 	GetZone(Identifier) (*Zone, error)
-	GetZoneCorrections(*User, *Domain, *Zone) ([]*Correction, error)
 	GetZoneMeta(Identifier) (*ZoneMeta, error)
 	LoadZoneFromId(domain *Domain, id Identifier) (*Zone, error)
-	UpdateService(zone *Zone, subdomain Subdomain, serviceid Identifier, newservice *Service) error
 	UpdateZone(Identifier, func(*Zone)) error
 }
 

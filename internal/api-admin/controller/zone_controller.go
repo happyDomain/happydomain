@@ -34,15 +34,17 @@ import (
 )
 
 type ZoneController struct {
-	domainService happydns.DomainUsecase
-	zoneService   happydns.ZoneUsecase
-	store         zone.ZoneStorage
+	domainService         happydns.DomainUsecase
+	zoneService           happydns.ZoneUsecase
+	zoneCorrectionService happydns.ZoneCorrectionApplierUsecase
+	store                 zone.ZoneStorage
 }
 
-func NewZoneController(domainService happydns.DomainUsecase, zoneService happydns.ZoneUsecase, store zone.ZoneStorage) *ZoneController {
+func NewZoneController(domainService happydns.DomainUsecase, zoneService happydns.ZoneUsecase, zoneCorrectionService happydns.ZoneCorrectionApplierUsecase, store zone.ZoneStorage) *ZoneController {
 	return &ZoneController{
 		domainService,
 		zoneService,
+		zoneCorrectionService,
 		store,
 	}
 }
@@ -70,7 +72,7 @@ func (zc *ZoneController) DeleteZone(c *gin.Context) {
 }
 
 func (zc *ZoneController) GetZone(c *gin.Context) {
-	apizc := controller.NewZoneController(zc.zoneService, zc.domainService)
+	apizc := controller.NewZoneController(zc.zoneService, zc.domainService, zc.zoneCorrectionService)
 	apizc.GetZone(c)
 }
 

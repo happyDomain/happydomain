@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,26 +19,24 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package route
+package service
 
 import (
-	"github.com/gin-gonic/gin"
+	"encoding/json"
 
-	"git.happydns.org/happyDomain/internal/api-admin/controller"
-	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/services"
 )
 
-func declareZoneServiceRoutes(apiZonesRoutes *gin.RouterGroup, zc *controller.ZoneController, dependancies happydns.UsecaseDependancies, store storage.Storage) {
-	sc := controller.NewServiceController(
-		dependancies.ServiceUsecase(),
-		dependancies.ZoneServiceUsecase(),
-	)
+func ParseService(msg *happydns.ServiceMessage) (svc *happydns.Service, err error) {
+	svc = &happydns.Service{}
 
-	apiZonesServiceIdRoutes := apiZonesRoutes.Group("/services/:serviceid")
-	apiZonesServiceIdRoutes.Use(middleware.ServiceIdHandler(dependancies.ServiceUsecase()))
-	apiZonesServiceIdRoutes.GET("", sc.GetZoneService)
-	apiZonesServiceIdRoutes.PUT("", sc.UpdateZoneService)
-	apiZonesServiceIdRoutes.DELETE("", sc.DeleteZoneService)
+	svc.ServiceMeta = msg.ServiceMeta
+	svc.Service, err = svcs.FindService(msg.Type)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(msg.Service, &svc.Service)
+	return
 }

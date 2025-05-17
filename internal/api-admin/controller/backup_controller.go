@@ -30,7 +30,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/storage"
-	"git.happydns.org/happyDomain/internal/usecase"
+	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
+	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -138,7 +139,7 @@ func (bc *BackupController) DoRestore(backup *happydns.Backup) (errs error) {
 
 	// Providers
 	for _, provider := range backup.Providers {
-		p, err := usecase.ParseProvider(provider)
+		p, err := providerUC.ParseProvider(provider)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
@@ -161,7 +162,7 @@ func (bc *BackupController) DoRestore(backup *happydns.Backup) (errs error) {
 
 	// Zones
 	for _, zmsg := range backup.Zones {
-		zone, err := usecase.ParseZone(zmsg)
+		zone, err := zoneUC.ParseZone(zmsg)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		} else {

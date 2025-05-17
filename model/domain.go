@@ -21,7 +21,12 @@
 
 package happydns
 
-import ()
+import (
+	"errors"
+	"strings"
+
+	"github.com/miekg/dns"
+)
 
 // DomainCreationInput is used for swagger documentation as Domain add.
 type DomainCreationInput struct {
@@ -56,6 +61,26 @@ type Domain struct {
 	ZoneHistory []Identifier `json:"zone_history" swaggertype:"array,string"`
 }
 
+func NewDomain(user *User, name string, providerID Identifier) (*Domain, error) {
+	name = dns.Fqdn(strings.TrimSpace(name))
+
+	if name == "" {
+		return nil, errors.New("empty domain name")
+	}
+
+	if _, ok := dns.IsDomainName(name); !ok {
+		return nil, errors.New("invalid domain name")
+	}
+
+	d := &Domain{
+		Owner:      user.Id,
+		ProviderId: providerID,
+		DomainName: name,
+	}
+
+	return d, nil
+}
+
 // HasZone checks if the given Zone's identifier is part of this Domain
 // history.
 func (d *Domain) HasZone(zoneId Identifier) (found bool) {
@@ -76,18 +101,11 @@ type Subdomain string
 type Origin string
 
 type DomainUsecase interface {
-	ApplyZoneCorrection(*User, *Domain, *Zone, *ApplyZoneForm) (*Zone, error)
-	ActionOnEditableZone(*User, *Domain, *Zone, func(*Zone) error) (*Zone, error)
-	AddServiceToZone(*User, *Domain, *Zone, Subdomain, Origin, *Service) (*Zone, error)
 	CreateDomain(*User, *Domain) error
 	DeleteDomain(Identifier) error
 	ExtendsDomainWithZoneMeta(*Domain) (*DomainWithZoneMetadata, error)
 	GetUserDomain(*User, Identifier) (*Domain, error)
 	GetUserDomainByFQDN(*User, string) ([]*Domain, error)
-	ImportZone(*User, *Domain, []Record) (*Zone, error)
 	ListUserDomains(*User) ([]*Domain, error)
-	RemoveServiceFromZone(user *User, domain *Domain, zone *Zone, subdomain Subdomain, serviceid Identifier) (*Zone, error)
-	RetrieveRemoteZone(*User, *Domain) (*Zone, error)
 	UpdateDomain(Identifier, *User, func(*Domain)) error
-	UpdateZoneService(user *User, domain *Domain, zone *Zone, subdomain Subdomain, serviceid Identifier, newservice *Service) (*Zone, error)
 }

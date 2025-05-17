@@ -31,7 +31,12 @@ import (
 )
 
 func declareZoneRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies, store storage.Storage) {
-	zc := controller.NewZoneController(dependancies.DomainUsecase(), dependancies.ZoneUsecase(), store)
+	zc := controller.NewZoneController(
+		dependancies.DomainUsecase(),
+		dependancies.ZoneUsecase(),
+		dependancies.ZoneCorrectionApplierUsecase(),
+		store,
+	)
 
 	router.GET("/zones", zc.ListZones)
 	router.POST("/zones", zc.AddZone)

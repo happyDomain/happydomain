@@ -26,7 +26,7 @@ import (
 	"log"
 	"strings"
 
-	"git.happydns.org/happyDomain/internal/usecase"
+	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 )
@@ -53,7 +53,7 @@ func migrateFrom4_orphanrecords(s *LevelDBStorage) (err error) {
 		}
 
 		var zone *happydns.Zone
-		zone, err = usecase.NewZoneUsecase(usecase.NewProviderUsecase(nil, s), usecase.NewServiceUsecase(), s).GetZone(id)
+		zone, err = zoneUC.NewZoneUsecases(s).GetZone(id)
 		if err != nil {
 			return fmt.Errorf("%s: %w", iter.Key(), err)
 		}

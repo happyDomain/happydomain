@@ -28,23 +28,25 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/usecase"
+	serviceUC "git.happydns.org/happyDomain/internal/usecase/service"
 	"git.happydns.org/happyDomain/model"
 )
 
 type ServiceController struct {
 	serviceService happydns.ServiceUsecase
-	zoneService    happydns.ZoneUsecase
+	zoneServiceUC  happydns.ZoneServiceUsecase
 }
 
-func NewServiceController(serviceService happydns.ServiceUsecase, zoneService happydns.ZoneUsecase) *ServiceController {
+func NewServiceController(serviceService happydns.ServiceUsecase, zoneServiceUC happydns.ZoneServiceUsecase) *ServiceController {
 	return &ServiceController{
 		serviceService,
-		zoneService,
+		zoneServiceUC,
 	}
 }
 
 func (sc *ServiceController) DeleteZoneService(c *gin.Context) {
+	user := middleware.MyUser(c)
+	domain := c.MustGet("domain").(*happydns.Domain)
 	zone := c.MustGet("zone").(*happydns.Zone)
 	serviceid := c.MustGet("serviceid").(happydns.Identifier)
 
@@ -54,7 +56,7 @@ func (sc *ServiceController) DeleteZoneService(c *gin.Context) {
 		return
 	}
 
-	err := sc.zoneService.DeleteService(zone, subdomain, serviceid)
+	zone, err := sc.zoneServiceUC.RemoveServiceFromZone(user, domain, zone, subdomain, serviceid)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -73,6 +75,8 @@ func (sc *ServiceController) GetZoneService(c *gin.Context) {
 }
 
 func (sc *ServiceController) UpdateZoneService(c *gin.Context) {
+	user := middleware.MyUser(c)
+	domain := c.MustGet("domain").(*happydns.Domain)
 	zone := c.MustGet("zone").(*happydns.Zone)
 	serviceid := c.MustGet("serviceid").(happydns.Identifier)
 
@@ -83,7 +87,7 @@ func (sc *ServiceController) UpdateZoneService(c *gin.Context) {
 		return
 	}
 
-	newservice, err := usecase.ParseService(&usc)
+	newservice, err := serviceUC.ParseService(&usc)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
@@ -94,7 +98,7 @@ func (sc *ServiceController) UpdateZoneService(c *gin.Context) {
 		return
 	}
 
-	err = sc.zoneService.UpdateService(zone, happydns.Subdomain(usc.Domain), usc.Id, newservice)
+	zone, err = sc.zoneServiceUC.UpdateZoneService(user, domain, zone, happydns.Subdomain(usc.Domain), usc.Id, newservice)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

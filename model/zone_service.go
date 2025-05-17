@@ -19,26 +19,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package route
+package happydns
 
-import (
-	"github.com/gin-gonic/gin"
+import ()
 
-	"git.happydns.org/happyDomain/internal/api-admin/controller"
-	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/storage"
-	"git.happydns.org/happyDomain/model"
-)
-
-func declareZoneServiceRoutes(apiZonesRoutes *gin.RouterGroup, zc *controller.ZoneController, dependancies happydns.UsecaseDependancies, store storage.Storage) {
-	sc := controller.NewServiceController(
-		dependancies.ServiceUsecase(),
-		dependancies.ZoneServiceUsecase(),
-	)
-
-	apiZonesServiceIdRoutes := apiZonesRoutes.Group("/services/:serviceid")
-	apiZonesServiceIdRoutes.Use(middleware.ServiceIdHandler(dependancies.ServiceUsecase()))
-	apiZonesServiceIdRoutes.GET("", sc.GetZoneService)
-	apiZonesServiceIdRoutes.PUT("", sc.UpdateZoneService)
-	apiZonesServiceIdRoutes.DELETE("", sc.DeleteZoneService)
+type ZoneServiceUsecase interface {
+	ActionOnEditableZone(*User, *Domain, *Zone, func(*Zone) error) (*Zone, error)
+	AddServiceToZone(*User, *Domain, *Zone, Subdomain, Origin, *Service) (*Zone, error)
+	RemoveServiceFromZone(user *User, domain *Domain, zone *Zone, subdomain Subdomain, serviceid Identifier) (*Zone, error)
+	UpdateZoneService(user *User, domain *Domain, zone *Zone, subdomain Subdomain, serviceid Identifier, newservice *Service) (*Zone, error)
 }

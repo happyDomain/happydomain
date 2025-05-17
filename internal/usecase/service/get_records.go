@@ -19,60 +19,23 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package usecase
+package service
 
 import (
-	"crypto/sha1"
-	"encoding/json"
-	"fmt"
-	"io"
-
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
 )
 
-type serviceUsecase struct{}
+type GetRecordsUsecase struct{}
 
-func NewServiceUsecase() happydns.ServiceUsecase {
-	return &serviceUsecase{}
+func NewGetRecordsUsecase() *GetRecordsUsecase {
+	return &GetRecordsUsecase{}
 }
 
-func (su *serviceUsecase) GetRecords(domain *happydns.Domain, zone *happydns.Zone, svc *happydns.Service) ([]happydns.Record, error) {
+func (uc *GetRecordsUsecase) List(domain *happydns.Domain, zone *happydns.Zone, svc *happydns.Service) ([]happydns.Record, error) {
 	ttl := zone.DefaultTTL
 	if svc.Ttl != 0 {
 		ttl = svc.Ttl
 	}
 
 	return svc.Service.GetRecords(svc.Domain, ttl, domain.DomainName)
-}
-
-func ParseService(msg *happydns.ServiceMessage) (svc *happydns.Service, err error) {
-	svc = &happydns.Service{}
-
-	svc.ServiceMeta = msg.ServiceMeta
-	svc.Service, err = svcs.FindService(msg.Type)
-	if err != nil {
-		return
-	}
-
-	err = json.Unmarshal(msg.Service, &svc.Service)
-	return
-}
-
-func (su *serviceUsecase) ValidateService(svc happydns.ServiceBody, subdomain happydns.Subdomain, origin happydns.Origin) ([]byte, error) {
-	rrs, err := svc.GetRecords(string(subdomain), 0, string(origin))
-	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve records: %w", err)
-	}
-
-	if len(rrs) == 0 {
-		return nil, fmt.Errorf("no record can be generated from your service.")
-	} else {
-		hash := sha1.New()
-		for _, rr := range rrs {
-			io.WriteString(hash, rr.String())
-		}
-
-		return hash.Sum(nil), nil
-	}
 }

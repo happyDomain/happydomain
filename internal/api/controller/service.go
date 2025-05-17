@@ -29,17 +29,17 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/usecase"
+	serviceUC "git.happydns.org/happyDomain/internal/usecase/service"
 	"git.happydns.org/happyDomain/model"
 )
 
 type ServiceController struct {
-	duService happydns.DomainUsecase
 	suService happydns.ServiceUsecase
+	duService happydns.ZoneServiceUsecase
 	zuService happydns.ZoneUsecase
 }
 
-func NewServiceController(duService happydns.DomainUsecase, suService happydns.ServiceUsecase, zuService happydns.ZoneUsecase) *ServiceController {
+func NewServiceController(duService happydns.ZoneServiceUsecase, suService happydns.ServiceUsecase, zuService happydns.ZoneUsecase) *ServiceController {
 	return &ServiceController{
 		duService: duService,
 		suService: suService,
@@ -78,7 +78,7 @@ func (sc *ServiceController) AddZoneService(c *gin.Context) {
 		return
 	}
 
-	newservice, err := usecase.ParseService(&usc)
+	newservice, err := serviceUC.ParseService(&usc)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
@@ -192,7 +192,7 @@ func (sc *ServiceController) UpdateZoneService(c *gin.Context) {
 		return
 	}
 
-	newservice, err := usecase.ParseService(&usc)
+	newservice, err := serviceUC.ParseService(&usc)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return

@@ -50,19 +50,19 @@ func (psu *providerSettingsUsecase) NextProviderSettingsState(state *happydns.Pr
 
 	if err != nil {
 		if err != happydns.DoneForm {
-			return nil, nil, happydns.ValidationError{err.Error()}
+			return nil, nil, happydns.ValidationError{Msg: err.Error()}
 		} else if psu.config.DisableProviders {
-			return nil, nil, happydns.ForbiddenError{"cannot change provider settings as DisableProviders parameter is set."}
+			return nil, nil, happydns.ForbiddenError{Msg: "cannot change provider settings as DisableProviders parameter is set."}
 		}
 
 		p, err := state.ProviderBody.InstantiateProvider()
 		if err != nil {
-			return nil, nil, happydns.ValidationError{fmt.Sprintf("unable to instantiate provider: %s", err.Error())}
+			return nil, nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to instantiate provider: %s", err.Error())}
 		}
 
 		if sr, ok := p.(happydns.ZoneLister); ok {
 			if _, err = sr.ListZones(); err != nil {
-				return nil, nil, happydns.ValidationError{fmt.Sprintf("unable to list provider's zones: %s", err.Error())}
+				return nil, nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to list provider's zones: %s", err.Error())}
 			}
 		}
 
@@ -89,7 +89,7 @@ func (psu *providerSettingsUsecase) NextProviderSettingsState(state *happydns.Pr
 			// Update an existing Provider
 			p, err := psu.providerService.GetUserProvider(user, *state.Id)
 			if err != nil {
-				return nil, nil, happydns.NotFoundError{fmt.Sprintf("unable to retrieve the original provider: %s", err.Error())}
+				return nil, nil, happydns.NotFoundError{Msg: fmt.Sprintf("unable to retrieve the original provider: %s", err.Error())}
 			}
 
 			newp := &happydns.Provider{
