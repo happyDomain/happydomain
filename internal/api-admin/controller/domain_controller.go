@@ -36,13 +36,17 @@ import (
 )
 
 type DomainController struct {
-	domainService happydns.DomainUsecase
-	store         domain.DomainStorage
+	domainService      happydns.DomainUsecase
+	remoteZoneImporter happydns.RemoteZoneImporterUsecase
+	zoneImporter       happydns.ZoneImporterUsecase
+	store              domain.DomainStorage
 }
 
-func NewDomainController(duService happydns.DomainUsecase, store domain.DomainStorage) *DomainController {
+func NewDomainController(duService happydns.DomainUsecase, remoteZoneImporter happydns.RemoteZoneImporterUsecase, zoneImporter happydns.ZoneImporterUsecase, store domain.DomainStorage) *DomainController {
 	return &DomainController{
 		duService,
+		remoteZoneImporter,
+		zoneImporter,
 		store,
 	}
 }
@@ -50,7 +54,7 @@ func NewDomainController(duService happydns.DomainUsecase, store domain.DomainSt
 func (dc *DomainController) ListDomains(c *gin.Context) {
 	user := middleware.MyUser(c)
 	if user != nil {
-		apidc := controller.NewDomainController(dc.domainService)
+		apidc := controller.NewDomainController(dc.domainService, dc.remoteZoneImporter, dc.zoneImporter)
 		apidc.GetDomains(c)
 		return
 	}

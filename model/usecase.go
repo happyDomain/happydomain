@@ -29,10 +29,14 @@ type UsecaseDependancies interface {
 	ProviderUsecase(secure bool) ProviderUsecase
 	ProviderSettingsUsecase() ProviderSettingsUsecase
 	ProviderSpecsUsecase() ProviderSpecsUsecase
+	RemoteZoneImporterUsecase() RemoteZoneImporterUsecase
 	ResolverUsecase() ResolverUsecase
 	ServiceUsecase() ServiceUsecase
 	ServiceSpecsUsecase() ServiceSpecsUsecase
 	SessionUsecase() SessionUsecase
 	UserUsecase() UserUsecase
+	ZoneCorrectionApplierUsecase() ZoneCorrectionApplierUsecase
+	ZoneImporterUsecase() ZoneImporterUsecase
+	ZoneServiceUsecase() ZoneServiceUsecase
 	ZoneUsecase() ZoneUsecase
 }

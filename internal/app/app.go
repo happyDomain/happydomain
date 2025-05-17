@@ -37,9 +37,15 @@ import (
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/usecase"
 	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
+	domainUC "git.happydns.org/happyDomain/internal/usecase/domain"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
+	"git.happydns.org/happyDomain/internal/usecase/orchestrator"
+	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
+	serviceUC "git.happydns.org/happyDomain/internal/usecase/service"
 	sessionUC "git.happydns.org/happyDomain/internal/usecase/session"
 	userUC "git.happydns.org/happyDomain/internal/usecase/user"
+	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
+	zoneServiceUC "git.happydns.org/happyDomain/internal/usecase/zone_service"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/web"
 )
@@ -59,6 +65,9 @@ type Usecases struct {
 	serviceSpecs     happydns.ServiceSpecsUsecase
 	user             happydns.UserUsecase
 	zone             happydns.ZoneUsecase
+	zoneService      happydns.ZoneServiceUsecase
+
+	orchestrator *orchestrator.Orchestrator
 }
 
 type App struct {
@@ -88,6 +97,10 @@ func (a *App) DomainLogUsecase() happydns.DomainLogUsecase {
 	return a.usecases.domainLog
 }
 
+func (a *App) Orchestrator() *orchestrator.Orchestrator {
+	return a.usecases.orchestrator
+}
+
 func (a *App) ProviderUsecase(secure bool) happydns.ProviderUsecase {
 	if secure {
 		return a.usecases.provider
@@ -108,6 +121,10 @@ func (a *App) ResolverUsecase() happydns.ResolverUsecase {
 	return a.usecases.resolver
 }
 
+func (a *App) RemoteZoneImporterUsecase() happydns.RemoteZoneImporterUsecase {
+	return a.usecases.orchestrator.RemoteZoneImporter
+}
+
 func (a *App) ServiceUsecase() happydns.ServiceUsecase {
 	return a.usecases.service
 }
@@ -124,8 +141,20 @@ func (a *App) UserUsecase() happydns.UserUsecase {
 	return a.usecases.user
 }
 
+func (a *App) ZoneCorrectionApplierUsecase() happydns.ZoneCorrectionApplierUsecase {
+	return a.usecases.orchestrator.ZoneCorrectionApplier
+}
+
+func (a *App) ZoneImporterUsecase() happydns.ZoneImporterUsecase {
+	return a.usecases.orchestrator.ZoneImporter
+}
+
 func (a *App) ZoneUsecase() happydns.ZoneUsecase {
 	return a.usecases.zone
+}
+
+func (a *App) ZoneServiceUsecase() happydns.ZoneServiceUsecase {
+	return a.usecases.zoneService
 }
 
 func NewApp(cfg *happydns.Options) *App {
@@ -217,21 +246,39 @@ func (app *App) initInsights() {
 func (app *App) initUsecases() {
 	sessionService := sessionUC.NewSessionUsecases(app.store)
 	authUserService := authuserUC.NewAuthUserUsecases(app.cfg, app.mailer, app.store, sessionService.CloseUserSessionsUC)
+	domainLogService := domainlogUC.NewDomainLogUsecases(app.store)
+	providerService := providerUC.NewRestrictedProviderUsecases(app.cfg, app.store)
+	serviceService := serviceUC.NewServiceUsecases()
+	zoneService := zoneUC.NewZoneUsecases(app.store)
 
 	app.usecases.providerSpecs = usecase.NewProviderSpecsUsecase()
-	app.usecases.provider = usecase.NewProviderUsecase(app.cfg, app.store)
+	app.usecases.provider = providerService
 	app.usecases.providerSettings = usecase.NewProviderSettingsUsecase(app.cfg, app.usecases.provider, app.store)
-	app.usecases.service = usecase.NewServiceUsecase()
+	app.usecases.service = serviceService
 	app.usecases.serviceSpecs = usecase.NewServiceSpecsUsecase()
-	app.usecases.zone = usecase.NewZoneUsecase(app.usecases.provider, app.usecases.service, app.store)
-	app.usecases.domainLog = domainlogUC.NewDomainLogUsecases(app.store)
-	app.usecases.domain = usecase.NewDomainUsecase(app.store, app.usecases.domainLog, app.usecases.provider, app.usecases.zone)
+	app.usecases.zone = zoneService
+	app.usecases.domainLog = domainLogService
+
+	domainService := domainUC.NewDomainUsecases(app.store, providerService.GetProviderUC, zoneService.GetZoneUC, providerService.DomainExistenceUC, domainLogService.CreateDomainLogUC)
+	app.usecases.domain = domainService
+	app.usecases.zoneService = zoneServiceUC.NewZoneServiceUsecases(domainService.UpdateDomainUC, zoneService.CreateZoneUC, serviceService.ValidateServiceUC, app.store)
 
 	app.usecases.user = userUC.NewUserUsecases(app.store, app.newsletter, authUserService.GetAuthUserUC, sessionService.CloseUserSessionsUC)
 	app.usecases.authentication = usecase.NewAuthenticationUsecase(app.cfg, app.store, app.usecases.user)
 	app.usecases.authUser = authUserService
 	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg)
 	app.usecases.session = sessionService
+
+	app.usecases.orchestrator = orchestrator.NewOrchestrator(
+		domainLogService.CreateDomainLogUC,
+		domainService.UpdateDomainUC,
+		providerService.GetProviderUC,
+		zoneService.ListRecordsUC,
+		providerService.ZoneCorrectionsUC,
+		zoneService.CreateZoneUC,
+		providerService.RetrieveZoneUC,
+		zoneService.UpdateZoneUC,
+	)
 }
 
 func (app *App) setupRouter() {

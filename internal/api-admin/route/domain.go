@@ -31,7 +31,12 @@ import (
 )
 
 func declareDomainRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies, store storage.Storage) {
-	dc := controller.NewDomainController(dependancies.DomainUsecase(), store)
+	dc := controller.NewDomainController(
+		dependancies.DomainUsecase(),
+		dependancies.RemoteZoneImporterUsecase(),
+		dependancies.ZoneImporterUsecase(),
+		store,
+	)
 
 	router.GET("/domains", dc.ListDomains)
 	router.POST("/domains", dc.NewDomain)

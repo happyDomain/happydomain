@@ -33,14 +33,16 @@ import (
 )
 
 type ZoneController struct {
-	domainService happydns.DomainUsecase
-	zoneService   happydns.ZoneUsecase
+	domainService         happydns.DomainUsecase
+	zoneCorrectionService happydns.ZoneCorrectionApplierUsecase
+	zoneService           happydns.ZoneUsecase
 }
 
-func NewZoneController(zoneService happydns.ZoneUsecase, domainService happydns.DomainUsecase) *ZoneController {
+func NewZoneController(zoneService happydns.ZoneUsecase, domainService happydns.DomainUsecase, zoneCorrectionService happydns.ZoneCorrectionApplierUsecase) *ZoneController {
 	return &ZoneController{
-		domainService: domainService,
-		zoneService:   zoneService,
+		domainService:         domainService,
+		zoneCorrectionService: zoneCorrectionService,
+		zoneService:           zoneService,
 	}
 }
 
@@ -102,7 +104,7 @@ func (zc *ZoneController) DiffZones(c *gin.Context) {
 	var corrections []*happydns.Correction
 	if c.Param("oldzoneid") == "@" {
 		var err error
-		corrections, err = zc.zoneService.GetZoneCorrections(user, domain, newzone)
+		corrections, err = zc.zoneCorrectionService.List(user, domain, newzone)
 		if err != nil {
 			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 			return
@@ -155,7 +157,7 @@ func (zc *ZoneController) ApplyZoneCorrections(c *gin.Context) {
 		return
 	}
 
-	newZone, err := zc.domainService.ApplyZoneCorrection(user, domain, zone, &form)
+	newZone, err := zc.zoneCorrectionService.Apply(user, domain, zone, &form)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

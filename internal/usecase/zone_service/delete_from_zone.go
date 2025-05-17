@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,26 +19,41 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package route
+package zoneService
 
 import (
-	"github.com/gin-gonic/gin"
+	"fmt"
+	"time"
 
-	"git.happydns.org/happyDomain/internal/api-admin/controller"
-	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/storage"
+	serviceUC "git.happydns.org/happyDomain/internal/usecase/service"
 	"git.happydns.org/happyDomain/model"
 )
 
-func declareZoneServiceRoutes(apiZonesRoutes *gin.RouterGroup, zc *controller.ZoneController, dependancies happydns.UsecaseDependancies, store storage.Storage) {
-	sc := controller.NewServiceController(
-		dependancies.ServiceUsecase(),
-		dependancies.ZoneServiceUsecase(),
-	)
+type DeleteFromZoneUsecase struct {
+	store serviceUC.ZoneUpdaterStorage
+}
 
-	apiZonesServiceIdRoutes := apiZonesRoutes.Group("/services/:serviceid")
-	apiZonesServiceIdRoutes.Use(middleware.ServiceIdHandler(dependancies.ServiceUsecase()))
-	apiZonesServiceIdRoutes.GET("", sc.GetZoneService)
-	apiZonesServiceIdRoutes.PUT("", sc.UpdateZoneService)
-	apiZonesServiceIdRoutes.DELETE("", sc.DeleteZoneService)
+func NewDeleteFromZoneUsecase(store serviceUC.ZoneUpdaterStorage) *DeleteFromZoneUsecase {
+	return &DeleteFromZoneUsecase{
+		store: store,
+	}
+}
+
+func (uc *DeleteFromZoneUsecase) DeleteService(zone *happydns.Zone, subdomain happydns.Subdomain, serviceid happydns.Identifier) error {
+	err := zone.EraseService(subdomain, serviceid, nil)
+	if err != nil {
+		return happydns.ValidationError{Msg: fmt.Sprintf("unable to delete service: %s", err.Error())}
+	}
+
+	zone.LastModified = time.Now()
+
+	err = uc.store.UpdateZone(zone)
+	if err != nil {
+		return happydns.InternalError{
+			Err:         fmt.Errorf("unable to UpdateZone in DeleteService: %w", err),
+			UserMessage: "Sorry, we are currently unable to update your zone. Please retry later.",
+		}
+	}
+
+	return nil
 }

@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,26 +19,28 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package route
+package service
 
 import (
-	"github.com/gin-gonic/gin"
-
-	"git.happydns.org/happyDomain/internal/api-admin/controller"
-	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
-func declareZoneServiceRoutes(apiZonesRoutes *gin.RouterGroup, zc *controller.ZoneController, dependancies happydns.UsecaseDependancies, store storage.Storage) {
-	sc := controller.NewServiceController(
-		dependancies.ServiceUsecase(),
-		dependancies.ZoneServiceUsecase(),
-	)
+type Service struct {
+	GetRecordsUC      *GetRecordsUsecase
+	ValidateServiceUC *ValidateServiceUsecase
+}
 
-	apiZonesServiceIdRoutes := apiZonesRoutes.Group("/services/:serviceid")
-	apiZonesServiceIdRoutes.Use(middleware.ServiceIdHandler(dependancies.ServiceUsecase()))
-	apiZonesServiceIdRoutes.GET("", sc.GetZoneService)
-	apiZonesServiceIdRoutes.PUT("", sc.UpdateZoneService)
-	apiZonesServiceIdRoutes.DELETE("", sc.DeleteZoneService)
+func NewServiceUsecases() *Service {
+	return &Service{
+		GetRecordsUC:      NewGetRecordsUsecase(),
+		ValidateServiceUC: NewValidateServiceUsecase(),
+	}
+}
+
+func (s *Service) GetRecords(domain *happydns.Domain, zone *happydns.Zone, service *happydns.Service) ([]happydns.Record, error) {
+	return s.GetRecordsUC.List(domain, zone, service)
+}
+
+func (s *Service) ValidateService(body happydns.ServiceBody, subdomain happydns.Subdomain, origin happydns.Origin) ([]byte, error) {
+	return s.ValidateServiceUC.Validate(body, subdomain, origin)
 }

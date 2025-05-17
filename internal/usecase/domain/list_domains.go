@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,26 +19,33 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package route
+package domain
 
 import (
-	"github.com/gin-gonic/gin"
+	"fmt"
 
-	"git.happydns.org/happyDomain/internal/api-admin/controller"
-	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
-func declareZoneServiceRoutes(apiZonesRoutes *gin.RouterGroup, zc *controller.ZoneController, dependancies happydns.UsecaseDependancies, store storage.Storage) {
-	sc := controller.NewServiceController(
-		dependancies.ServiceUsecase(),
-		dependancies.ZoneServiceUsecase(),
-	)
+type ListDomainsUsecase struct {
+	store DomainStorage
+}
 
-	apiZonesServiceIdRoutes := apiZonesRoutes.Group("/services/:serviceid")
-	apiZonesServiceIdRoutes.Use(middleware.ServiceIdHandler(dependancies.ServiceUsecase()))
-	apiZonesServiceIdRoutes.GET("", sc.GetZoneService)
-	apiZonesServiceIdRoutes.PUT("", sc.UpdateZoneService)
-	apiZonesServiceIdRoutes.DELETE("", sc.DeleteZoneService)
+func NewListDomainsUsecase(store DomainStorage) *ListDomainsUsecase {
+	return &ListDomainsUsecase{
+		store: store,
+	}
+}
+
+func (uc *ListDomainsUsecase) List(user *happydns.User) ([]*happydns.Domain, error) {
+	domains, err := uc.store.ListDomains(user)
+	if err != nil {
+		return nil, fmt.Errorf("an error occurs when trying to GetUserDomains: %s", err.Error())
+	}
+
+	if len(domains) == 0 {
+		return []*happydns.Domain{}, nil
+	}
+
+	return domains, nil
 }

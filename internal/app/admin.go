@@ -33,7 +33,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	admin "git.happydns.org/happyDomain/internal/api-admin/route"
-	"git.happydns.org/happyDomain/internal/usecase"
+	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -53,7 +53,7 @@ func NewAdmin(app *App) *Admin {
 	router.Use(gin.Logger(), gin.Recovery())
 
 	// Prepare usecases
-	app.usecases.providerAdmin = usecase.NewAdminProviderUsecase(app.store)
+	app.usecases.providerAdmin = providerUC.NewProviderUsecases(app.store)
 
 	admin.DeclareRoutes(app.cfg, router, app.store, app)
 

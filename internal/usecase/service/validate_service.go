@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,26 +19,36 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package route
+package service
 
 import (
-	"github.com/gin-gonic/gin"
+	"crypto/sha1"
+	"fmt"
+	"io"
 
-	"git.happydns.org/happyDomain/internal/api-admin/controller"
-	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
-func declareZoneServiceRoutes(apiZonesRoutes *gin.RouterGroup, zc *controller.ZoneController, dependancies happydns.UsecaseDependancies, store storage.Storage) {
-	sc := controller.NewServiceController(
-		dependancies.ServiceUsecase(),
-		dependancies.ZoneServiceUsecase(),
-	)
+type ValidateServiceUsecase struct{}
 
-	apiZonesServiceIdRoutes := apiZonesRoutes.Group("/services/:serviceid")
-	apiZonesServiceIdRoutes.Use(middleware.ServiceIdHandler(dependancies.ServiceUsecase()))
-	apiZonesServiceIdRoutes.GET("", sc.GetZoneService)
-	apiZonesServiceIdRoutes.PUT("", sc.UpdateZoneService)
-	apiZonesServiceIdRoutes.DELETE("", sc.DeleteZoneService)
+func NewValidateServiceUsecase() *ValidateServiceUsecase {
+	return &ValidateServiceUsecase{}
+}
+
+func (uc *ValidateServiceUsecase) Validate(svc happydns.ServiceBody, subdomain happydns.Subdomain, origin happydns.Origin) ([]byte, error) {
+	rrs, err := svc.GetRecords(string(subdomain), 0, string(origin))
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve records: %w", err)
+	}
+
+	if len(rrs) == 0 {
+		return nil, fmt.Errorf("no record can be generated from your service.")
+	} else {
+		hash := sha1.New()
+		for _, rr := range rrs {
+			io.WriteString(hash, rr.String())
+		}
+
+		return hash.Sum(nil), nil
+	}
 }

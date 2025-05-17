@@ -66,7 +66,7 @@ func SubdomainHandler(c *gin.Context) {
 
 	subdomain := strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(c.Param("subdomain"), "."+domain.DomainName), "@"), domain.DomainName)
 
-	c.Set("subdomain", subdomain)
+	c.Set("subdomain", happydns.Subdomain(subdomain))
 
 	c.Next()
 }

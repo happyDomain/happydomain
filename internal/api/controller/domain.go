@@ -34,12 +34,16 @@ import (
 )
 
 type DomainController struct {
-	domainService happydns.DomainUsecase
+	domainService      happydns.DomainUsecase
+	remoteZoneImporter happydns.RemoteZoneImporterUsecase
+	zoneImporter       happydns.ZoneImporterUsecase
 }
 
-func NewDomainController(domainService happydns.DomainUsecase) *DomainController {
+func NewDomainController(domainService happydns.DomainUsecase, remoteZoneImporter happydns.RemoteZoneImporterUsecase, zoneImporter happydns.ZoneImporterUsecase) *DomainController {
 	return &DomainController{
-		domainService: domainService,
+		domainService:      domainService,
+		remoteZoneImporter: remoteZoneImporter,
+		zoneImporter:       zoneImporter,
 	}
 }
 
@@ -230,7 +234,7 @@ func (dc *DomainController) RetrieveZone(c *gin.Context) {
 	}
 	domain := c.MustGet("domain").(*happydns.Domain)
 
-	zone, err := dc.domainService.RetrieveRemoteZone(user, domain)
+	zone, err := dc.remoteZoneImporter.Import(user, domain)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -263,7 +267,7 @@ func (dc *DomainController) ImportZone(c *gin.Context) {
 		rrs = append(rrs, rr)
 	}
 
-	zone, err := dc.domainService.ImportZone(user, domain, rrs)
+	zone, err := dc.zoneImporter.Import(user, domain, rrs)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
