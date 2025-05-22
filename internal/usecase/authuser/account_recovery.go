@@ -31,7 +31,6 @@ import (
 	"time"
 
 	"git.happydns.org/happyDomain/internal/helpers"
-	"git.happydns.org/happyDomain/internal/mailer"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -68,12 +67,12 @@ func CanRecoverAccount(u *happydns.UserAuth, key string) error {
 
 type RecoverAccountUsecase struct {
 	store          AuthUserStorage
-	mailer         *mailer.Mailer
+	mailer         happydns.Mailer
 	config         *happydns.Options
 	changePassword *ChangePasswordUsecase
 }
 
-func NewRecoverAccountUsecase(store AuthUserStorage, mailer *mailer.Mailer, config *happydns.Options, changePassword *ChangePasswordUsecase) *RecoverAccountUsecase {
+func NewRecoverAccountUsecase(store AuthUserStorage, mailer happydns.Mailer, config *happydns.Options, changePassword *ChangePasswordUsecase) *RecoverAccountUsecase {
 	return &RecoverAccountUsecase{
 		store:          store,
 		mailer:         mailer,

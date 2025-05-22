@@ -24,18 +24,17 @@ package authuser
 import (
 	"fmt"
 
-	sessionUC "git.happydns.org/happyDomain/internal/usecase/session"
 	"git.happydns.org/happyDomain/model"
 )
 
 // DeleteAuthUserUsecase represents the use case for deleting an authenticated user and their sessions.
 type DeleteAuthUserUsecase struct {
 	store             AuthUserStorage
-	closeUserSessions *sessionUC.CloseUserSessionsUsecase
+	closeUserSessions happydns.SessionCloserUsecase
 }
 
 // NewDeleteAuthUserUsecase creates a new instance of DeleteAuthUserUsecase.
-func NewDeleteAuthUserUsecase(store AuthUserStorage, closeUserSessions *sessionUC.CloseUserSessionsUsecase) *DeleteAuthUserUsecase {
+func NewDeleteAuthUserUsecase(store AuthUserStorage, closeUserSessions happydns.SessionCloserUsecase) *DeleteAuthUserUsecase {
 	return &DeleteAuthUserUsecase{
 		store:             store,
 		closeUserSessions: closeUserSessions,

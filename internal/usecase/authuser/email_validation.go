@@ -30,7 +30,6 @@ import (
 	"time"
 
 	"git.happydns.org/happyDomain/internal/helpers"
-	"git.happydns.org/happyDomain/internal/mailer"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -56,11 +55,11 @@ func GenRegistrationHash(u *happydns.UserAuth, previous bool) string {
 
 type EmailValidationUsecase struct {
 	store  AuthUserStorage
-	mailer *mailer.Mailer
+	mailer happydns.Mailer
 	config *happydns.Options
 }
 
-func NewEmailValidationUsecase(store AuthUserStorage, mailer *mailer.Mailer, config *happydns.Options) *EmailValidationUsecase {
+func NewEmailValidationUsecase(store AuthUserStorage, mailer happydns.Mailer, config *happydns.Options) *EmailValidationUsecase {
 	return &EmailValidationUsecase{
 		store:  store,
 		mailer: mailer,

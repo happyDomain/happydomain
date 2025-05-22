@@ -54,6 +54,11 @@ func (s *Session) ClearSession() {
 	s.Content = ""
 }
 
+type SessionCloserUsecase interface {
+	CloseAll(user UserInfo) error
+	ByID(userID Identifier) error
+}
+
 type SessionUsecase interface {
 	CloseUserSessions(user *User) error
 	CreateUserSession(*User, string) (*Session, error)

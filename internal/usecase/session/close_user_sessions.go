@@ -38,7 +38,7 @@ func NewCloseUserSessionsUsecase(
 	store SessionStorage,
 	listUserSessions *ListUserSessionsUsecase,
 	deleteUserSession *DeleteUserSessionUsecase,
-) *CloseUserSessionsUsecase {
+) happydns.SessionCloserUsecase {
 	return &CloseUserSessionsUsecase{
 		store:             store,
 		listUserSessions:  listUserSessions,

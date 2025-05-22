@@ -31,7 +31,7 @@ type Service struct {
 	GetUserSessionUC    *GetUserSessionUsecase
 	ListUserSessionsUC  *ListUserSessionsUsecase
 	UpdateUserSessionUC *UpdateUserSessionUsecase
-	CloseUserSessionsUC *CloseUserSessionsUsecase
+	CloseUserSessionsUC happydns.SessionCloserUsecase
 }
 
 func NewSessionUsecases(store SessionStorage) *Service {
