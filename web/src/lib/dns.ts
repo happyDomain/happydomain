@@ -47,7 +47,7 @@ export function fqdn(input: string, origin: string) {
     }
 }
 
-export function domainCompare(a: string | Domain, b: string | Domain) {
+export function domainCompare(a: string | Domain | { domain: string }, b: string | Domain | { domain: string }) {
     // Convert to string if Domain
     let domainA = typeof a === "object" ? a.domain : a;
     let domainB = typeof b === "object" ? b.domain : b;
@@ -70,7 +70,7 @@ export function domainCompare(a: string | Domain, b: string | Domain) {
     return as.length - bs.length;
 }
 
-export function fqdnCompare(a: string | Domain, b: string | Domain) {
+export function fqdnCompare(a: string | Domain | { domain: string }, b: string | Domain | { domain: string }) {
     // Convert to string if Domain
     let domainA = typeof a === "object" ? a.domain : a;
     let domainB = typeof b === "object" ? b.domain : b;
@@ -166,7 +166,7 @@ export function validateDomain(
                 acc &&
                     domain.length >= 1 && domain.length <= 63 &&
                     ((only_ldh && /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(domain)) || (!only_ldh && /^_?[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(domain)))
-            ), ret);
+            ), ret as boolean);
         }
     }
 
@@ -208,7 +208,9 @@ export function reverseDomain(ip: string) {
     if (ip.indexOf(":") > 0) {
         suffix = ".ip6.arpa.";
 
-        fields = normalizeIPv6(ip).replace(/:/g, '').split("");
+        const normalized = normalizeIPv6(ip);
+        if (!normalized) throw new Error("Invalid IPv6 address");
+        fields = normalized.replace(/:/g, '').split("");
     } else {
         fields = ip.split(".");
         while (fields.length < 4) {

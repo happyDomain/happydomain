@@ -29,7 +29,7 @@
     import ForgottenPasswordForm from "./ForgottenPasswordForm.svelte";
     import RecoverAccountForm from "./RecoverAccountForm.svelte";
 
-    export let data;
+    let { data } = $props();
 </script>
 
 <Container class="my-3">

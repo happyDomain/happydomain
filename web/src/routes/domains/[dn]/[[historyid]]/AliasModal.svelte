@@ -21,13 +21,15 @@
      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
-<script context="module" lang="ts">
+<script module lang="ts">
     export const controls = {
         Open(domain: string): void { },
     };
 </script>
 
 <script lang="ts">
+    import { run, preventDefault } from 'svelte/legacy';
+
     import { createEventDispatcher } from "svelte";
 
     // @ts-ignore
@@ -55,36 +57,29 @@
 
     const dispatch = createEventDispatcher();
 
-    export let isOpen = false;
     const toggle = () => (isOpen = !isOpen);
 
-    $: if (isOpen) {
-        value = "";
+
+    interface Props {
+        isOpen?: boolean;
+        dn?: string;
+        origin: Domain;
+        value?: string;
     }
 
-    export let dn: string = "";
-    export let origin: Domain;
-    export let value: string = "";
+    let {
+        isOpen = $bindable(false),
+        dn = $bindable(""),
+        origin,
+        value = $bindable("")
+    }: Props = $props();
     let zone = $thisZone;
 
-    let newDomainState: boolean | undefined = undefined;
-    $: newDomainState = value ? validateNewSubdomain(value) : undefined;
+    let newDomainState: boolean | undefined = $state(undefined);
 
-    let endsWithOrigin = false;
-    $: endsWithOrigin =
-        value.endsWith(origin.domain) ||
-        value.endsWith(origin.domain.substring(0, origin.domain.length - 1));
+    let endsWithOrigin = $state(false);
 
-    let newDomainAppend: string | null = null;
-    $: {
-        if (endsWithOrigin) {
-            newDomainAppend = null;
-        } else if (value.length > 0) {
-            newDomainAppend = "." + origin.domain;
-        } else {
-            newDomainAppend = origin.domain;
-        }
-    }
+    let newDomainAppend: string | null = $state(null);
 
     function validateNewSubdomain(value: string): boolean | undefined {
         // Check domain is valid
@@ -113,8 +108,10 @@
         return newDomainState;
     }
 
-    let addAliasInProgress = false;
-    function submitAliasForm() {
+    let addAliasInProgress = $state(false);
+    function submitAliasForm(e: FormDataEvent) {
+        e.preventDefault();
+
         if (zone && validateNewSubdomain(value)) {
             addAliasInProgress = true;
             addZoneService(origin, zone.id, {
@@ -141,6 +138,28 @@
     }
 
     controls.Open = Open;
+    run(() => {
+        if (isOpen) {
+            value = "";
+        }
+    });
+    run(() => {
+        newDomainState = value ? validateNewSubdomain(value) : undefined;
+    });
+    run(() => {
+        endsWithOrigin =
+            value.endsWith(origin.domain) ||
+            value.endsWith(origin.domain.substring(0, origin.domain.length - 1));
+    });
+    run(() => {
+        if (endsWithOrigin) {
+            newDomainAppend = null;
+        } else if (value.length > 0) {
+            newDomainAppend = "." + origin.domain;
+        } else {
+            newDomainAppend = origin.domain;
+        }
+    });
 </script>
 
 <Modal {isOpen} {toggle}>
@@ -148,7 +167,7 @@
         {$t("domains.add-an-alias", {domain: origin.domain})}
     </ModalHeader>
     <ModalBody>
-        <form id="addAliasForm" on:submit|preventDefault={submitAliasForm}>
+        <form id="addAliasForm" onsubmit={submitAliasForm}>
             <p>
                 {@html $t("domains.alias-creation", {
                     domain: `<span class="font-monospace">${escape(fqdn(dn, origin.domain))}</span>`,

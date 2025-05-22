@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run, preventDefault } from 'svelte/legacy';
+
     import { createEventDispatcher, onMount } from "svelte";
 
     import CustomForm from "$lib/components/forms/CustomForm.svelte";
@@ -32,9 +34,13 @@
 
     const dispatch = createEventDispatcher();
 
-    export let formId = "providerform";
-    export let form: ProviderForm;
-    export let ptype: string;
+    interface Props {
+        formId?: string;
+        form: ProviderForm;
+        ptype: string;
+    }
+
+    let { formId = "providerform", form = $bindable(), ptype }: Props = $props();
 
     function newForm(ptype: string) {
         form = new ProviderForm(ptype, (provider) => dispatch("done", provider));
@@ -45,10 +51,12 @@
         }
     }
 
-    $: if (!form || form.ptype != ptype) newForm(ptype);
+    run(() => {
+        if (!form || form.ptype != ptype) newForm(ptype);
+    });
 </script>
 
-<form id={formId} on:submit|preventDefault={() => form.nextState().then(() => (form = form))}>
+<form id={formId} onsubmit={preventDefault(() => form.nextState().then(() => (form = form)))}>
     {#if form && form.form}
         <CustomForm
             form={form.form}

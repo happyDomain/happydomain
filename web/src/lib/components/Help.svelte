@@ -26,12 +26,21 @@
 
     import { t } from "$lib/translations";
 
-    export { className as class };
-    let className: string = "";
-    export let color: Color | 'link' | string = "primary";
-    export let href: string;
-    export let size: 'sm' | 'lg' | string = "";
-    export let title: string | null = null;
+    interface Props {
+        class?: string;
+        color?: Color | 'link' | string;
+        href: string;
+        size?: 'sm' | 'lg' | string;
+        title?: string | null;
+    }
+
+    let {
+        class: className = "",
+        color = "primary",
+        href,
+        size = "",
+        title = null
+    }: Props = $props();
 </script>
 
 <Button

@@ -30,12 +30,16 @@
     import { forgotAccountPassword } from "$lib/api/user";
     import { toasts } from "$lib/stores/toasts";
 
-    let value = "";
-    let emailState: boolean | undefined = undefined;
-    let formSent = false;
+    let value = $state("");
+    let emailState: boolean | undefined = $state(undefined);
+    let formSent = $state(false);
 
-    let formElm: HTMLFormElement;
-    function goSendLink() {
+    let formElm: HTMLFormElement | undefined = $state();
+    function goSendLink(e: SubmitEvent) {
+        e.preventDefault();
+
+        if (!formElm) return;
+
         const valid = formElm.checkValidity();
         emailState = valid;
 
@@ -66,7 +70,7 @@
     }
 </script>
 
-<form bind:this={formElm} on:submit|preventDefault={goSendLink}>
+<form bind:this={formElm} onsubmit={goSendLink}>
     <p class="text-center">
         {$t("email.recover")}.
     </p>

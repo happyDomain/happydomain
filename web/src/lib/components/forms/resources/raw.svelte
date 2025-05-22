@@ -30,48 +30,57 @@
 
     const dispatch = createEventDispatcher();
 
-    export let edit = false;
-    export let index: string;
-    export let specs: any = {};
-    export let value: any;
-    let val: any = value;
+    interface Props {
+        edit?: boolean;
+        index: string;
+        specs?: any;
+        value: any;
+        [key: string]: any
+    }
 
-    let unit: string | null = null;
-    $: unit = specs.type === "time.Duration" || specs.type === "common.Duration" ? "s" : null;
+    let {
+        edit = false,
+        index,
+        specs = { },
+        value = $bindable(),
+        ...rest
+    }: Props = $props();
+    let val: any = $state(value);
 
-    let inputtype: InputType = "text";
-    $: if (specs.type && (specs.type.startsWith("uint") || specs.type.startsWith("int")))
-        inputtype = "number";
-    else if (specs.type && specs.type === "bool") inputtype = "checkbox";
-    else if (specs.textarea) inputtype = "textarea";
+    let unit: string | null = $derived(specs.type === "time.Duration" || specs.type === "common.Duration" ? "s" : null);
 
-    let inputmin: number | undefined = undefined;
-    let inputmax: number | undefined = undefined;
-    $: if (specs.type) {
-        if (specs.type == "int8" || specs.type == "uint8") inputmax = 255;
-        else if (specs.type == "int16" || specs.type == "uint16") inputmax = 65536;
-        else if (
-            specs.type == "int" ||
-            specs.type == "uint" ||
-            specs.type == "int32" ||
-            specs.type == "uint32"
-        )
-            inputmax = 2147483647;
-        else if (
-            specs.type == "time.Duration" ||
-            specs.type == "common.Duration" ||
-            specs.type == "int64" ||
-            specs.type == "uint64"
-        )
-            inputmax = 9007199254740991;
-        else inputmax = undefined;
+    let inputtype: InputType = $derived((specs.type && (specs.type.startsWith("uint") || specs.type.startsWith("int"))) ? "number" : (specs.type && specs.type === "bool" ? "checkbox" : (specs.textarea ? "textarea" : "text")));
 
-        if (inputmax) {
-            if (specs.type && specs.type.startsWith("uint")) inputmin = 0;
-            else inputmin = -inputmax - 1;
-        } else {
-            inputmin = undefined;
+    let inputmax: number | undefined = $derived(computeInputmax(specs));
+    let inputmin: number | undefined = $state(computeInputmin(specs));
+
+    function computeInputmax(specs) {
+        if (specs.type) {
+            if (specs.type == "int8" || specs.type == "uint8") return 255;
+            else if (specs.type == "int16" || specs.type == "uint16") return 65536;
+            else if (
+                specs.type == "int" ||
+                specs.type == "uint" ||
+                specs.type == "int32" ||
+                specs.type == "uint32"
+            )
+                return 2147483647;
+            else if (
+                specs.type == "time.Duration" ||
+                specs.type == "common.Duration" ||
+                specs.type == "int64" ||
+                specs.type == "uint64"
+            )
+                return 9007199254740991;
         }
+        return undefined;
+    }
+    function computeInputmin(specs) {
+        if (inputmax) {
+            if (specs.type && specs.type.startsWith("uint")) return 0;
+            else return -inputmax - 1;
+        }
+        return undefined;
     }
 
     function checkBase64(val: string): boolean {
@@ -83,35 +92,34 @@
         }
     }
 
-    let feedback: string | undefined = undefined;
-    $: {
+    let feedback: string | undefined = $derived(computeFeedback(value));
+    function computeFeedback() {
         if (inputmax && value > inputmax) {
-            feedback = t.get("errors.too-high", { max: inputmax });
+            return t.get("errors.too-high", { max: inputmax });
         } else if (inputmin && value < inputmin) {
-            feedback = t.get("errors.too-low", { min: inputmin });
+            return t.get("errors.too-low", { min: inputmin });
         } else if (
             specs.type &&
             (specs.type === "[]uint8" || specs.type === "[]byte") &&
             !checkBase64(value)
         ) {
             if (checkBase64(value + "==")) {
-                feedback =
+                return
                     t.get("errors.base64") +
                     " " +
                     t.get("errors.suggestion", { suggestion: `${value}==` });
             } else if (checkBase64(value + "=")) {
-                feedback =
+                return
                     t.get("errors.base64") +
                     " " +
                     t.get("errors.suggestion", { suggestion: `${value}=` });
             } else if (checkBase64(value + "a")) {
-                feedback = t.get("errors.base64") + " " + t.get("errors.base64-unfinished");
+                return t.get("errors.base64") + " " + t.get("errors.base64-unfinished");
             } else {
-                feedback = t.get("errors.base64") + " " + t.get("errors.base64-illegal-char");
+                return t.get("errors.base64") + " " + t.get("errors.base64-illegal-char");
             }
-        } else {
-            feedback = undefined;
         }
+        return undefined;
     }
 
     function parseValue(e: InputEvent) {
@@ -139,7 +147,7 @@
     }
 </script>
 
-<InputGroup size="sm" {...$$restProps}>
+<InputGroup size="sm" {...rest}>
     {#if edit && specs.choices && specs.choices.length > 0}
         <Input
             id={"spec-" + index + "-" + specs.id}

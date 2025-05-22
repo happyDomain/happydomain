@@ -32,21 +32,36 @@
 
     const dispatch = createEventDispatcher();
 
-    export let edit = false;
-    export let index: string;
-    export let isNew = false;
-    export let key: string;
-    export let readonly = false;
-    export let specs: Field;
-    export let valuetype: string;
-    export let value: any;
+    interface Props {
+        edit?: boolean;
+        index: string;
+        isNew?: boolean;
+        key: string;
+        readonly?: boolean;
+        specs: Field;
+        valuetype: string;
+        value: any;
+    }
 
-    let editKey = key == "";
+    let {
+        edit = false,
+        index,
+        isNew = false,
+        key = $bindable(),
+        readonly = false,
+        specs,
+        valuetype,
+        value = $bindable()
+    }: Props = $props();
+
+    let editKey = $state(key == "");
     let initialKey = key;
-    let renamingInProgress = false;
-    let deletingInProgress = false;
+    let renamingInProgress = $state(false);
+    let deletingInProgress = $state(false);
 
-    function rename() {
+    function rename(e: SubmitEvent) {
+        e.preventDefault();
+
         if (key == "") {
             editKey = true;
             // TODO: throw error as key can't be empty
@@ -66,7 +81,7 @@
 
 <h3>
     {#if editKey}
-        <form on:submit|preventDefault={rename}>
+        <form onsubmit={rename}>
             <InputGroup>
                 <Input type="text" placeholder={specs.placeholder} bind:value={key} />
                 <Button disabled={renamingInProgress} size="sm" color="primary">

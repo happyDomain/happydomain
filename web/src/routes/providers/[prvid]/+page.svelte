@@ -29,9 +29,13 @@
     import type { ProviderSettingsState } from "$lib/model/provider_settings";
     import { t } from "$lib/translations";
 
-    export let data: { provider: Provider; provider_id: string };
+    interface Props {
+        data: { provider: Provider; provider_id: string };
+    }
 
-    let value: ProviderSettingsState = { ...data.provider, state: 0 };
+    let { data }: Props = $props();
+
+    let value: ProviderSettingsState = $derived({ ...data.provider, state: 0 });
 </script>
 
 <h1 class="text-center my-2">

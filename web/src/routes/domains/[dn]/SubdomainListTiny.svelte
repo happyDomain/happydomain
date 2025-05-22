@@ -25,8 +25,12 @@
     import type { Domain } from "$lib/model/domain";
     import { fqdn } from "$lib/dns";
 
-    export let domains: Array<string>;
-    export let origin: Domain;
+    interface Props {
+        domains: Array<string>;
+        origin: Domain;
+    }
+
+    let { domains, origin }: Props = $props();
 </script>
 
 {#each domains as dn}

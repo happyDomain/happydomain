@@ -29,16 +29,28 @@
     import type { Field } from "$lib/model/custom_form";
     import { t } from "$lib/translations";
 
-    export let edit = false;
-    export let index: string;
-    export let noDecorate = false;
-    export let readonly = false;
-    export let specs: any;
-    export let type: string;
-    export let value: any;
+    interface Props {
+        edit?: boolean;
+        index: string;
+        noDecorate?: boolean;
+        readonly?: boolean;
+        specs: any;
+        type: string;
+        value: any;
+    }
 
-    let linespecs: Array<Field> | null | undefined = undefined;
-    $: {
+    let {
+        edit = false,
+        index,
+        noDecorate = false,
+        readonly = false,
+        specs,
+        type,
+        value = $bindable()
+    }: Props = $props();
+
+    let linespecs: Array<Field> | null | undefined = $state(undefined);
+    $effect(() => {
         getServiceSpec(type).then(
             (ss) => {
                 linespecs = ss.fields;
@@ -47,7 +59,7 @@
                 linespecs = null;
             },
         );
-    }
+    });
 
     function addLine() {
         if (!value) value = [];

@@ -36,8 +36,12 @@
 
     const dispatch = createEventDispatcher();
 
-    export let readonly = false;
-    export let value: any;
+    interface Props {
+        readonly?: boolean;
+        value: any;
+    }
+
+    let { readonly = false, value = $bindable() }: Props = $props();
 </script>
 
 <h4>{$t("resources.CAA.title")}</h4>

@@ -40,37 +40,64 @@
         href?: string;
     }
 
-    export let flush = false;
-    export let links = false;
-    export let display_by_groups = false;
-    export let domains: Array<ZoneListDomain> = [];
+    interface Props {
+        flush?: boolean;
+        links?: boolean;
+        display_by_groups?: boolean;
+        domains?: Array<ZoneListDomain>;
+        no_domain?: import('svelte').Snippet;
+        badges?: import('svelte').Snippet<[any]>;
+        [key: string]: any
+    }
 
-    let groups: Record<string, Array<ZoneListDomain>> = {};
-    $: {
+    let {
+        flush = false,
+        links = false,
+        display_by_groups = false,
+        domains = [],
+        no_domain,
+        badges,
+        ...rest
+    }: Props = $props();
+
+    function genGroups(domains: Array<ZoneListDomain>, display_by_groups: boolean) {
         if (!display_by_groups) {
-            groups = { "": domains };
+            return { "": domains };
         }
 
-        const tmp: Record<string, Array<ZoneListDomain>> = { };
+        const groups: Record<string, Array<ZoneListDomain>> = { };
 
         for (const domain of domains) {
-            if (links && !domain.href) {
-                if ($domains_idx[domain.domain])
-                domain.href = "/domains/" + encodeURIComponent(domain.domain);
-                else domain.href = "/domains/" + encodeURIComponent(domain.id);
-            }
-
             const group = domain.group ?? '';
-            (tmp[group] ??= []).push(domain);
+            (groups[group] ??= []).push(domain);
         }
 
-        groups = tmp;
+        return groups;
+    }
+
+    let groups: Record<string, Array<ZoneListDomain>> = $derived(genGroups(domains, display_by_groups));
+
+    function getDomainHref(domain: ZoneListDomain): string | undefined {
+        if (links && !domain.href) {
+            if ($domains_idx[domain.domain]) {
+                return "/domains/" + encodeURIComponent(domain.domain);
+            } else {
+                return "/domains/" + encodeURIComponent(domain.id);
+            }
+        }
+        return domain.href;
     }
 </script>
 
-<div {...$$restProps}>
+{#snippet domainRow(domain: ZoneListDomain)}
+    <DomainWithProvider {domain} />
+    {#if badges}{@render badges({ domain })}{:else}
+        <Badge color="success">OK</Badge>
+    {/if}
+{/snippet}
+<div {...rest}>
     {#if domains.length === 0}
-        <slot name="no-domain" />
+        {@render no_domain?.()}
     {:else}
         {#each Object.keys(groups).sort((a,b) => !a || !b ? (!a ? 1 : -1) : a.toLowerCase().localeCompare(b.toLowerCase())) as gname}
             {@const gdomains = groups[gname]}
@@ -96,17 +123,24 @@
                     {flush}
                 >
                     {#each gdomains as item}
-                        <svelte:element
-                            this={item.href ? "a" : "button"}
-                            class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-dark"
-                            href={item.href}
-                            on:click={() => dispatch("click", item)}
-                        >
-                            <DomainWithProvider domain={item} />
-                            <slot name="badges" {item}>
-                                <Badge color="success">OK</Badge>
-                            </slot>
-                        </svelte:element>
+                        {@const href = getDomainHref(item)}
+                        {#if href}
+                            <a
+                                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-dark"
+                                {href}
+                                onclick={() => dispatch("click", item)}
+                            >
+                                {@render domainRow(item)}
+                            </a>
+                        {:else}
+                            <button
+                                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-dark"
+                                type="button"
+                                onclick={() => dispatch("click", item)}
+                            >
+                                {@render domainRow(item)}
+                            </button>
+                        {/if}
                     {/each}
                 </ListGroup>
             </div>

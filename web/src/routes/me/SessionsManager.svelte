@@ -50,7 +50,7 @@
     import { t } from "$lib/translations";
 
     let current_session_req = getCurrentSession();
-    let sessions_req = listSessions();
+    let sessions_req = $state(listSessions());
 
     async function del(session: Session) {
         session.delete_in_progress = true;
@@ -58,7 +58,7 @@
         sessions_req = listSessions();
     }
 
-    let is_closing_sessions = false;
+    let is_closing_sessions = $state(false);
     async function closeSessions() {
         is_closing_sessions = true;
         await deleteSessions();
@@ -66,16 +66,11 @@
         goto("/login");
     }
 
-    let newSessionModalOpen = false;
-    let newSessionDescription = "";
-    $: if (newSessionModalOpen) {
-        newSessionSecret = "";
-        newSessionDescription = "";
-        newSessionSecretShown = false;
-    }
-    let creating_session_in_progress = false;
-    let newSessionSecret = "";
-    let newSessionSecretShown = false;
+    let newSessionModalOpen = $state(false);
+    let newSessionDescription = $state("");
+    let creating_session_in_progress = $state(false);
+    let newSessionSecret = $state("");
+    let newSessionSecretShown = $state(false);
     async function createSession() {
         creating_session_in_progress = true;
 
@@ -87,11 +82,18 @@
         sessions_req = listSessions();
     }
 
-    let secretCopiedToClipboard: boolean | null = false;
+    let secretCopiedToClipboard: boolean | null = $state(false);
     async function copySecretToClipboard() {
         secretCopiedToClipboard = null;
         await navigator.clipboard.writeText(newSessionSecret);
         secretCopiedToClipboard = true;
+    }
+
+    function Open(): void {
+        newSessionSecret = "";
+        newSessionDescription = "";
+        newSessionSecretShown = false;
+        newSessionModalOpen = true;
     }
 </script>
 
@@ -189,7 +191,7 @@
     </ModalHeader>
     <ModalBody>
         {#if newSessionSecret === ""}
-            <form on:submit={createSession}>
+            <form onsubmit={createSession}>
                 <label for="session-description">
                     {$t("sessions.description")}
                 </label>

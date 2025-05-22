@@ -31,21 +31,27 @@
     import { domains_idx, refreshDomains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
-    export let data: { domain: Domain };
+    interface Props {
+        data: { domain: Domain };
+    }
 
-    let rz = retrieveZone(data.domain);
-    rz.then(
-        () => {
-            refreshDomains().then(
-                () => {
-                    goto(
-                        `/domains/${encodeURIComponent($domains_idx[data.domain.domain] ? data.domain.domain : data.domain.id)}`,
-                    );
-                },
-            );
-        },
-        (e) => {},
-    );
+    let { data }: Props = $props();
+
+    let rz = $derived(retrieveZone(data.domain));
+    $effect(() => {
+        rz.then(
+            () => {
+                refreshDomains().then(
+                    () => {
+                        goto(
+                            `/domains/${encodeURIComponent($domains_idx[data.domain.domain] ? data.domain.domain : data.domain.id)}`,
+                        );
+                    },
+                );
+            },
+            (e) => {},
+        );
+    });
 </script>
 
 {#await rz}
