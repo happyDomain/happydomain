@@ -115,3 +115,9 @@ type AuthUserUsecase interface {
 	SendValidationLink(*UserAuth) error
 	ValidateEmail(*UserAuth, AddressValidationForm) error
 }
+
+type EmailValidationUsecase interface {
+	GenerateLink(user *UserAuth) string
+	SendLink(user *UserAuth) error
+	Validate(user *UserAuth, form AddressValidationForm) error
+}

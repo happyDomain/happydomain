@@ -25,17 +25,16 @@ import (
 	"fmt"
 
 	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
-	sessionUC "git.happydns.org/happyDomain/internal/usecase/session"
 	"git.happydns.org/happyDomain/model"
 )
 
 type DeleteUser struct {
 	store             UserStorage
 	getAuthUser       *authuserUC.GetAuthUserUsecase
-	closeUserSessions *sessionUC.CloseUserSessionsUsecase
+	closeUserSessions happydns.SessionCloserUsecase
 }
 
-func NewDeleteUser(store UserStorage, getAuthUser *authuserUC.GetAuthUserUsecase, closeSessions *sessionUC.CloseUserSessionsUsecase) *DeleteUser {
+func NewDeleteUser(store UserStorage, getAuthUser *authuserUC.GetAuthUserUsecase, closeSessions happydns.SessionCloserUsecase) *DeleteUser {
 	return &DeleteUser{
 		store:             store,
 		getAuthUser:       getAuthUser,

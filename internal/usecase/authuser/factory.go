@@ -24,8 +24,6 @@ package authuser
 import (
 	"fmt"
 
-	"git.happydns.org/happyDomain/internal/mailer"
-	sessionUC "git.happydns.org/happyDomain/internal/usecase/session"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -37,7 +35,7 @@ type Service struct {
 	CheckPasswordConstraintsUC *CheckPasswordConstraintsUsecase
 	CreateAuthUserUC           *CreateAuthUserUsecase
 	DeleteAuthUserUC           *DeleteAuthUserUsecase
-	EmailValidationUC          *EmailValidationUsecase
+	EmailValidationUC          happydns.EmailValidationUsecase
 	GetAuthUserUC              *GetAuthUserUsecase
 	RecoverAccountUC           *RecoverAccountUsecase
 }
@@ -45,9 +43,9 @@ type Service struct {
 // NewAuthUserService initializes and returns a new AuthUserService, containing all use cases.
 func NewAuthUserUsecases(
 	cfg *happydns.Options,
-	mailer *mailer.Mailer,
+	mailer happydns.Mailer,
 	store AuthUserStorage,
-	closeUserSessionsUseCase *sessionUC.CloseUserSessionsUsecase,
+	closeUserSessionsUseCase happydns.SessionCloserUsecase,
 ) *Service {
 	checkPasswordConstraintsUC := NewCheckPasswordConstraintsUsecase()
 	changePasswordUC := NewChangePasswordUsecase(store, checkPasswordConstraintsUC)

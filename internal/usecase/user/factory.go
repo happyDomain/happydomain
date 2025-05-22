@@ -25,7 +25,6 @@ import (
 	"io"
 
 	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
-	sessionUC "git.happydns.org/happyDomain/internal/usecase/session"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -41,7 +40,7 @@ func NewUserUsecases(
 	store UserStorage,
 	newsletter happydns.NewsletterSubscriptor,
 	getAuthUser *authuserUC.GetAuthUserUsecase,
-	closeUserSessions *sessionUC.CloseUserSessionsUsecase,
+	closeUserSessions happydns.SessionCloserUsecase,
 ) *Service {
 	return &Service{
 		AvatarUC:     NewAvatar(),

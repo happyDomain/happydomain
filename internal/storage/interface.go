@@ -32,11 +32,6 @@ import (
 	"git.happydns.org/happyDomain/internal/usecase/zone"
 )
 
-type AuthenticationStorage interface {
-	authuser.AuthUserStorage
-	user.UserStorage
-}
-
 type ProviderAndDomainStorage interface {
 	provider.ProviderStorage
 	domain.DomainStorage

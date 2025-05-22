@@ -25,17 +25,23 @@ import (
 	"fmt"
 	"time"
 
-	"git.happydns.org/happyDomain/internal/storage"
+	"git.happydns.org/happyDomain/internal/usecase/authuser"
+	"git.happydns.org/happyDomain/internal/usecase/user"
 	"git.happydns.org/happyDomain/model"
 )
 
+type AuthenticationStorage interface {
+	authuser.AuthUserStorage
+	user.UserStorage
+}
+
 type loginUsecase struct {
 	config      *happydns.Options
-	store       storage.AuthenticationStorage
+	store       AuthenticationStorage
 	userService happydns.UserUsecase
 }
 
-func NewAuthenticationUsecase(cfg *happydns.Options, store storage.AuthenticationStorage, userService happydns.UserUsecase) happydns.AuthenticationUsecase {
+func NewAuthenticationUsecase(cfg *happydns.Options, store AuthenticationStorage, userService happydns.UserUsecase) happydns.AuthenticationUsecase {
 	return &loginUsecase{
 		config:      cfg,
 		store:       store,

@@ -25,20 +25,19 @@ import (
 	"fmt"
 	"strings"
 
-	"git.happydns.org/happyDomain/internal/mailer"
 	"git.happydns.org/happyDomain/model"
 )
 
 // CreateAuthUserUsecase handles the creation of a new authenticated user account.
 type CreateAuthUserUsecase struct {
 	store                    AuthUserStorage
-	mailer                   *mailer.Mailer
+	mailer                   happydns.Mailer
 	checkPasswordConstraints *CheckPasswordConstraintsUsecase
-	emailValidation          *EmailValidationUsecase
+	emailValidation          happydns.EmailValidationUsecase
 }
 
 // NewCreateAuthUserUsecase initializes a new instance of CreateAuthUserUsecase.
-func NewCreateAuthUserUsecase(store AuthUserStorage, mailer *mailer.Mailer, checkPasswordConstraints *CheckPasswordConstraintsUsecase, emailValidation *EmailValidationUsecase) *CreateAuthUserUsecase {
+func NewCreateAuthUserUsecase(store AuthUserStorage, mailer happydns.Mailer, checkPasswordConstraints *CheckPasswordConstraintsUsecase, emailValidation happydns.EmailValidationUsecase) *CreateAuthUserUsecase {
 	return &CreateAuthUserUsecase{
 		store:                    store,
 		mailer:                   mailer,
