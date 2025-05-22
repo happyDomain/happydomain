@@ -40,6 +40,6 @@
 		"sass": "^1.55.0",
 		"sass-loader": "^16.0.0",
 		"sveltekit-i18n": "^2.2.2",
-		"@sveltestrap/sveltestrap": "^6.2.1"
+		"@sveltestrap/sveltestrap": "^7.0.0"
 	}
 }
