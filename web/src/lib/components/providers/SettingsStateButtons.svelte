@@ -31,18 +31,30 @@
 
     const dispatch = createEventDispatcher();
 
-    export let canDoNext = true;
-    export let edit = false;
-    export let form: CustomForm | null = null;
-    export let nextInProgress = false;
-    export let previousInProgress = false;
-    export let submitForm: string | null = null;
+    interface Props {
+        canDoNext?: boolean;
+        edit?: boolean;
+        form?: CustomForm | null;
+        nextInProgress?: boolean;
+        previousInProgress?: boolean;
+        submitForm?: string | null;
+        [key: string]: any
+    }
 
-    let disabled = false;
-    $: disabled = nextInProgress || previousInProgress;
+    let {
+        canDoNext = true,
+        edit = false,
+        form = null,
+        nextInProgress = false,
+        previousInProgress = false,
+        submitForm = null,
+        ...rest
+    }: Props = $props();
+
+    let disabled = $derived(nextInProgress || previousInProgress);
 </script>
 
-<div {...$$restProps}>
+<div {...rest}>
     {#if form}
         {#if (!form.previousEditButtonText || !edit) && form.previousButtonText}
             <Button

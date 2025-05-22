@@ -30,16 +30,29 @@
 
     const dispatch = createEventDispatcher();
 
-    export let alwaysShow = false;
-    export let edit = false;
-    export let index: string;
-    export let showDescription = true;
-    export let specs: any;
-    export let value: any;
+    interface Props {
+        alwaysShow?: boolean;
+        edit?: boolean;
+        index: string;
+        showDescription?: boolean;
+        specs: any;
+        value: any;
+        [key: string]: any
+    }
+
+    let {
+        alwaysShow = false,
+        edit = false,
+        index,
+        showDescription = true,
+        specs,
+        value = $bindable(),
+        ...rest
+    }: Props = $props();
 </script>
 
 {#if alwaysShow || edit || value != null}
-    <Row {...$$restProps}>
+    <Row {...rest}>
         <label
             for={"spec-" + index + "-" + specs.id}
             title={specs.label}

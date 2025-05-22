@@ -32,31 +32,33 @@
     import { appConfig } from "$lib/stores/config";
     import { toasts } from "$lib/stores/toasts";
 
-    let error = "";
-    export let data;
+    let error = $state("");
+    let { data } = $props();
 
-    if (data.user || data.key) {
-        if (!data.user || !data.key) {
-            error = $t("email.instruction.bad-link");
-        } else {
-            error = "";
+    $effect(() => {
+        if (data.user || data.key) {
+            if (!data.user || !data.key) {
+                error = $t("email.instruction.bad-link");
+            } else {
+                error = "";
 
-            validateEmail(data.user, data.key).then(
-                () => {
-                    toasts.addToast({
-                        title: $t("account.ready-login"),
-                        message: $t("email.instruction.validated"),
-                        timeout: 5000,
-                        type: "success",
-                    });
-                    goto("/login");
-                },
-                (err) => {
-                    error = err;
-                },
-            );
+                validateEmail(data.user, data.key).then(
+                    () => {
+                        toasts.addToast({
+                            title: $t("account.ready-login"),
+                            message: $t("email.instruction.validated"),
+                            timeout: 5000,
+                            type: "success",
+                        });
+                        goto("/login");
+                    },
+                    (err) => {
+                        error = err;
+                    },
+                );
+            }
         }
-    }
+    });
 </script>
 
 <Container class="my-3">

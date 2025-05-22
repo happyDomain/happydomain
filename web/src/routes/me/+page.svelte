@@ -48,24 +48,22 @@
     import SessionsManager from "./SessionsManager.svelte";
     import UserSettingsForm from "./UserSettingsForm.svelte";
 
-    let is_auth_user_req = $userSession?.id ? fetch(`/api/users/${$userSession.id}/is_auth_user`) : false;
+    let is_auth_user_req = $userSession.id ? fetch(`/api/users/${$userSession.id}/is_auth_user`) : false;
 </script>
 
 <Container class="my-4">
     <h2 id="settings">
         {$t("settings.title")}
     </h2>
-    {#if !$userSession}
+    {#if !$userSession.settings}
         <div class="d-flex justify-content-center">
             <Spinner color="primary" />
         </div>
     {:else}
         <Row>
-            {#if $userSession.settings}
-                <Col class="offset-md-1 offset-lg-2 col col-md-10 col-lg-8">
-                    <UserSettingsForm bind:settings={$userSession.settings} />
-                </Col>
-            {/if}
+            <Col class="offset-md-1 offset-lg-2 col col-md-10 col-lg-8">
+                <UserSettingsForm bind:settings={$userSession.settings} />
+            </Col>
         </Row>
 
         <hr class="my-4" />

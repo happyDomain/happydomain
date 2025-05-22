@@ -33,27 +33,24 @@
     import { appConfig } from "$lib/stores/config";
     import { toasts } from "$lib/stores/toasts";
 
-    let signupForm: SignUpForm = {
+    let signupForm: SignUpForm = $state({
         email: "",
         password: "",
         wantReceiveUpdate: false,
         lang: "",
-    };
-    let passwordConfirmation: string = "";
-    let emailState: boolean | undefined;
-    let passwordState: boolean | undefined;
-    let passwordConfirmState: boolean | undefined;
-    let formSent = false;
+    });
+    let passwordConfirmation: string = $state("");
+    let emailState: boolean | undefined = $state();
+    let passwordState: boolean | undefined = $derived(checkWeakPassword(signupForm.password));
+    let passwordConfirmState: boolean | undefined = $state();
+    let formSent = $state(false);
 
-    $: {
-        if (passwordState == false) {
-            passwordState = checkWeakPassword(signupForm.password);
-        }
-    }
+    let formElm: HTMLFormElement | undefined = $state();
 
-    let formElm: HTMLFormElement;
+    function goSignUp(e: SubmitEvent) {
+        e.preventDefault();
+        if (!formElm) return;
 
-    function goSignUp() {
         const valid = formElm.checkValidity();
 
         if (valid && emailState && passwordState && passwordConfirmState) {
@@ -85,7 +82,7 @@
     }
 </script>
 
-<form class="container my-1" bind:this={formElm} on:submit|preventDefault={goSignUp}>
+<form class="container my-1" bind:this={formElm} onsubmit={goSignUp}>
     <FormGroup>
         <Label for="email-input">{$t("email.address")}</Label>
         <Input

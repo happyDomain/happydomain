@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { page } from "$app/stores";
+    import { page } from "$app/state";
 
     import { Col, Container, Row } from "@sveltestrap/sveltestrap";
 </script>
@@ -36,13 +36,13 @@
             <div class="d-none d-sm-block my-4"></div>
             <div class="d-flex align-items-end">
                 <h1>
-                    Error {$page.status}
+                    Error {page.status}
                 </h1>
                 <hr class="ms-2 border-top border-primary border-3 flex-fill" />
             </div>
-            {#if $page.error}
+            {#if page.error}
                 <p class="lead">
-                    {$page.error.message}
+                    {page.error.message}
                 </p>
             {/if}
             <hr class="mt-0 border-top border-secondary border-3" />

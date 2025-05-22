@@ -22,7 +22,7 @@
 import { writable, type Writable } from "svelte/store";
 import type { User } from "$lib/model/user";
 
-export const userSession: Writable<null | User> = writable(null);
+export const userSession: Writable<User> = writable({} as User);
 
 export async function refreshUserSession(
     fetch: (
@@ -36,7 +36,7 @@ export async function refreshUserSession(
         userSession.set(user);
         return user;
     } else {
-        userSession.set(null);
+        userSession.set({} as User);
         throw new Error((await res.json()).errmsg);
     }
 }

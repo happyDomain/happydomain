@@ -27,7 +27,7 @@ import { userSession } from "$lib/stores/usersession";
 export const load: Load = async ({ parent }) => {
     const data = await parent();
 
-    if (get(userSession) != null) {
+    if (get(userSession).email) {
         redirect(302, "/");
     }
 

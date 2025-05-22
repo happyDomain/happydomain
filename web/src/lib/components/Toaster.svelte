@@ -38,8 +38,14 @@
                 role="button"
                 tabindex="0"
                 style={toast.onclick ? "cursor: pointer" : ""}
-                on:click={() => {
+                onclick={() => {
                     if (toast.onclick) toast.onclick();
+                }}
+                onkeypress={(e) => {
+                    if ((e.key === 'Enter' || e.key === ' ') && toast.onclick) {
+                        e.preventDefault();
+                        toast.onclick();
+                    }
                 }}
             >
                 {toast.message}

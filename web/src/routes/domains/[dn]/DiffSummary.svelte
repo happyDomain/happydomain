@@ -25,33 +25,16 @@
     import type { Correction } from "$lib/model/correction";
     import { t } from "$lib/translations";
 
-    export let zoneDiff: Array<Correction>;
-
-    let zoneDiffCreated = 0;
-    let zoneDiffDeleted = 0;
-    let zoneDiffModified = 0;
-    let zoneDiffOther = 0;
-
-    $: {
-        zoneDiffCreated = 0;
-        zoneDiffDeleted = 0;
-        zoneDiffModified = 0;
-        zoneDiffOther = 0;
-
-        if (zoneDiff && zoneDiff.length) {
-            zoneDiff.forEach((c: Correction) => {
-                if (c.kind == 1) {
-                    zoneDiffCreated += 1;
-                } else if (c.kind == 2) {
-                    zoneDiffModified += 1;
-                } else if (c.kind == 3) {
-                    zoneDiffDeleted += 1;
-                } else if (c.kind == 99) {
-                    zoneDiffOther += 1;
-                }
-            });
-        }
+    interface Props {
+        zoneDiff: Array<Correction>;
     }
+
+    let { zoneDiff }: Props = $props();
+
+    let zoneDiffCreated = $derived(zoneDiff.filter((c) => c.kind == 1).length);
+    let zoneDiffModified = $derived(zoneDiff.filter((c) => c.kind == 2).length);
+    let zoneDiffDeleted = $derived(zoneDiff.filter((c) => c.kind == 3).length);
+    let zoneDiffOther = $derived(zoneDiff.filter((c) => c.kind == 99).length);
 </script>
 
 {#if zoneDiff && zoneDiff.length}

@@ -30,13 +30,21 @@
     import { t } from "$lib/translations";
     import { toasts } from "$lib/stores/toasts";
 
-    export let email = "";
+    interface Props {
+        email?: string;
+    }
 
-    let emailState: boolean | undefined;
-    let formSent = false;
-    let formElm: HTMLFormElement;
+    let { email = $bindable("") }: Props = $props();
 
-    function goResend() {
+    let emailState: boolean | undefined = $state();
+    let formSent = $state(false);
+    let formElm: HTMLFormElement | undefined = $state();
+
+    function goResend(e: SubmitEvent) {
+        e.preventDefault();
+
+        if (!formElm) return;
+
         const valid = formElm.checkValidity();
         emailState = valid;
 
@@ -66,7 +74,7 @@
     }
 </script>
 
-<form class="container my-1" bind:this={formElm} on:submit|preventDefault={goResend}>
+<form class="container my-1" bind:this={formElm} onsubmit={goResend}>
     <p>
         {$t("email.instruction.validate-address")}
     </p>

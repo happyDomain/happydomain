@@ -23,7 +23,7 @@
 
 <script lang="ts">
     import { goto } from "$app/navigation";
-    import { page } from "$app/stores";
+    import { page } from "$app/state";
     import { onMount } from "svelte";
 
     import {
@@ -52,25 +52,29 @@
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
     import ZoneList from "$lib/components/zones/ZoneList.svelte";
     import type { Provider } from "$lib/model/provider";
-    import { ProviderForm } from "$lib/model/provider_form";
+    import type { ProviderForm } from "$lib/model/provider_form";
     import { domains } from "$lib/stores/domains";
     import { providers, refreshProviders } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 
-    export let isOpen = false;
-    let form: ProviderForm;
-    let myDomain: string;
-    let myDomainInProgress = false;
-    let myProvider: Provider;
-    let noDomainsList = false;
-    let step = 0;
-    let providerType: string;
+    interface Props {
+        isOpen?: boolean;
+    }
+
+    let { isOpen = $bindable(false) }: Props = $props();
+    let form: ProviderForm = $state({} as ProviderForm);
+    let myDomain: string = $state("");
+    let myDomainInProgress = $state(false);
+    let myProvider: Provider = $state({} as Provider);
+    let noDomainsList = $state(false);
+    let step = $state(0);
+    let providerType: string = $state("");
 
     onMount(async () => {
         if (!$providers) await refreshProviders();
         if (!$providers) return;
 
-        if ($page.url.searchParams.has("newProvider")) {
+        if (page.url.searchParams.has("newProvider")) {
             myProvider = $providers[0];
             step = 2;
         }
@@ -267,7 +271,7 @@
                     </p>
                     <CardImportableDomains provider={myProvider} bind:noDomainsList />
                     {#if !myProvider || noDomainsList}
-                        <!-- svelte-ignore a11y-autofocus -->
+                        <!-- svelte-ignore a11y_autofocus -->
                         <NewDomainInput
                             bind:addingNewDomain={myDomainInProgress}
                             autofocus
@@ -279,10 +283,12 @@
                         />
                         {#if $domains}
                             <ZoneList class="mt-3" domains={$domains}>
-                                <Badge slot="badges" color="success">
-                                    <Icon name="check" />
-                                    {$t("onboarding.import.imported")}
-                                </Badge>
+                                {#snippet badges()}
+                                                                                <Badge  color="success">
+                                        <Icon name="check" />
+                                        {$t("onboarding.import.imported")}
+                                    </Badge>
+                                                                            {/snippet}
                             </ZoneList>
                         {/if}
                     {/if}

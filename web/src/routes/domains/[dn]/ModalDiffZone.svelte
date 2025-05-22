@@ -21,7 +21,7 @@
      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
-<script context="module" lang="ts">
+<script module lang="ts">
     import type { ModalController } from "$lib/model/modal_controller";
 
     export const controls: ModalController = {
@@ -50,20 +50,24 @@
 
     const dispatch = createEventDispatcher();
 
-    export let domain: Domain;
-    export let selectedHistory: string = "";
-    export let isOpen = false;
+    interface Props {
+        domain: Domain;
+        selectedHistory?: string;
+        isOpen?: boolean;
+    }
 
-    let zoneDiffLength = 0;
-    let zoneDiffCreated = 0;
-    let zoneDiffDeleted = 0;
-    let zoneDiffModified = 0;
+    let { domain, selectedHistory = "", isOpen = $bindable(false) }: Props = $props();
 
-    let selectedDiff: Array<string> | null = null;
-    let diffCommitMsg = "";
-    let selectedDiffCreated = 0;
-    let selectedDiffDeleted = 0;
-    let selectedDiffModified = 0;
+    let zoneDiffLength = $state(0);
+    let zoneDiffCreated = $state(0);
+    let zoneDiffDeleted = $state(0);
+    let zoneDiffModified = $state(0);
+
+    let selectedDiff: Array<string> | null = $state(null);
+    let diffCommitMsg = $state("");
+    let selectedDiffCreated = $state(0);
+    let selectedDiffDeleted = $state(0);
+    let selectedDiffModified = $state(0);
 
     function Open(): void {
         zoneDiffLength = 0;
@@ -91,7 +95,7 @@
         selectedDiffModified = evt.detail.selectedDiffModified;
     }
 
-    let propagationInProgress = false;
+    let propagationInProgress = $state(false);
     async function applyDiff() {
         if (!domain || !selectedHistory || !selectedDiff) return;
 
@@ -132,10 +136,12 @@
             on:computed-selection={computedSelection}
             on:error={receiveError}
         >
-            <div slot="nodiff" class="d-flex gap-3 align-items-center justify-content-center">
-                <Icon name="check2-all" class="display-5 text-success" />
-                {$t("domains.apply.nochange")}
-            </div>
+            {#snippet nodiff()}
+                <div  class="d-flex gap-3 align-items-center justify-content-center">
+                    <Icon name="check2-all" class="display-5 text-success" />
+                    {$t("domains.apply.nochange")}
+                </div>
+            {/snippet}
         </DiffZone>
     </ModalBody>
     <ModalFooter>

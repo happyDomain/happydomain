@@ -26,10 +26,15 @@
 
     import { dns_common_types } from "$lib/dns";
 
-    export let value = "ANY";
+    interface Props {
+        value?: string;
+        [key: string]: any
+    }
+
+    let { value = $bindable("ANY"), ...rest }: Props = $props();
 </script>
 
-<Input type="select" bind:value {...$$restProps}>
+<Input type="select" bind:value {...rest}>
     {#each dns_common_types as option}
         <option>{option}</option>
     {/each}

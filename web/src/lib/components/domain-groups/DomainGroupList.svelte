@@ -30,8 +30,12 @@
 
     const dispatch = createEventDispatcher();
 
-    export let flush = false;
-    export let selectedGroup: string | null = null;
+    interface Props {
+        flush?: boolean;
+        selectedGroup?: string | null;
+    }
+
+    let { flush = false, selectedGroup = $bindable(null) }: Props = $props();
 
     function selectGroup(event: CustomEvent<string>) {
         if (selectedGroup != null && selectedGroup == event.detail) {
@@ -49,11 +53,13 @@
     {flush}
     isActive={(item) => selectedGroup != null && item === selectedGroup}
     on:click={selectGroup}
-    let:item
+    
 >
-    {#if item === "" || item === "undefined"}
-        {$t("domaingroups.no-group")}
-    {:else}
-        {item}
-    {/if}
+    {#snippet children({ item })}
+        {#if item === "" || item === "undefined"}
+            {$t("domaingroups.no-group")}
+        {:else}
+            {item}
+        {/if}
+    {/snippet}
 </HListGroup>

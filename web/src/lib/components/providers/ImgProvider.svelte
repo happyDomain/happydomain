@@ -24,10 +24,15 @@
 <script lang="ts">
     import { providers_idx } from "$lib/stores/providers";
 
-    export let id_provider: string | undefined = undefined;
-    export let ptype: string | undefined = undefined;
 
-    export let style = "max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em";
+    interface Props {
+        id_provider?: string | undefined;
+        ptype?: string | undefined;
+        style?: string;
+        [key: string]: any
+    }
+
+    let { id_provider = undefined, ptype = undefined, style = "max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em", ...rest }: Props = $props();
 </script>
 
 {#if ptype}
@@ -36,7 +41,7 @@
         alt={ptype}
         title={ptype}
         {style}
-        {...$$restProps}
+        {...rest}
     />
 {:else if id_provider && $providers_idx && $providers_idx[id_provider]}
     <img
@@ -44,8 +49,8 @@
         alt={$providers_idx[id_provider]._srctype}
         title={$providers_idx[id_provider]._srctype}
         {style}
-        {...$$restProps}
+        {...rest}
     />
 {:else}
-    <span {style} {...$$restProps}></span>
+    <span {style} {...rest}></span>
 {/if}

@@ -21,7 +21,7 @@
      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
-<script context="module" lang="ts">
+<script module lang="ts">
     export const controls = {
         Open(domain: string): void { },
     };
@@ -42,15 +42,26 @@
 
     const dispatch = createEventDispatcher();
 
-    export let isOpen = false;
     const toggle = () => (isOpen = !isOpen);
 
-    let dn: string;
-    export let origin: Domain;
-    export let value: string | null = null;
-    export let zservices: Record<string, Array<ServiceCombined>>;
+    let dn: string = $state("");
 
-    function submitSelectorForm() {
+    interface Props {
+        isOpen?: boolean;
+        origin: Domain;
+        value?: string | null;
+        zservices: Record<string, Array<ServiceCombined>>;
+    }
+    let {
+        isOpen = $bindable(false),
+        origin,
+        value = $bindable(null),
+        zservices
+    }: Props = $props();
+
+    function submitSelectorForm(e: FormDataEvent) {
+        e.preventDefault();
+
         if (value !== null) {
             toggle();
             dispatch("show-next-modal", { _svctype: value, _domain: dn, Service: {} });
@@ -70,7 +81,7 @@
     <ModalHeader {toggle} dn={fqdn(dn, origin.domain)} />
     <ModalBody class="pt-0">
         <FilterServiceSelectorInput class="my-2" />
-        <form id="selectServiceForm" on:submit|preventDefault={submitSelectorForm}>
+        <form id="selectServiceForm" onsubmit={submitSelectorForm}>
             <ServiceSelector {dn} {origin} bind:value {zservices} />
         </form>
     </ModalBody>

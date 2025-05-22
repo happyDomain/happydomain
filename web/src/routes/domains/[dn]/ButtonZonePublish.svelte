@@ -38,8 +38,12 @@
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
 
-    export let domain: Domain;
-    export let history: string;
+    interface Props {
+        domain: Domain;
+        history: string;
+    }
+
+    let { domain, history }: Props = $props();
 
     async function getDomain(id: string): Promise<Domain> {
         return await APIGetDomain(id);
@@ -117,7 +121,7 @@
             {:then domain}
                 {#if domain.zone_meta && domain.zone_meta[history]}
                     {@const history_meta = domain.zone_meta[history]}
-                    <div class="text-truncate">
+                    <span class="d-block text-truncate">
                         {#if history_meta.published}
                             Publiée le
                             {new Intl.DateTimeFormat(undefined, {
@@ -137,11 +141,11 @@
                                 timeStyle: "long",
                             }).format(new Date(history_meta.last_modified))}
                         {/if}
-                    </div>
+                    </span>
                     {#if history_meta.commit_message}
-                        <div class="text-truncate" title={history_meta.commit_message}>
+                        <span class="d-block text-truncate" title={history_meta.commit_message}>
                             {history_meta.commit_message}
-                        </div>
+                        </span>
                     {/if}
                 {/if}
             {/await}

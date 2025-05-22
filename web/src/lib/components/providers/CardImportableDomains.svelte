@@ -48,11 +48,16 @@
     import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
 
-    export let provider: Provider;
 
-    let importableDomainsList: Array<string> | null = null;
-    let discoveryError: string | null = null;
-    export let noDomainsList = false;
+    let importableDomainsList: Array<string> | null = $state(null);
+    let discoveryError: string | null = $state(null);
+    interface Props {
+        provider: Provider;
+        noDomainsList?: boolean;
+        [key: string]: any
+    }
+
+    let { provider, noDomainsList = $bindable(false), ...rest }: Props = $props();
 
     function refreshDomainList(provider: Provider) {
         importableDomainsList = null;
@@ -79,7 +84,9 @@
             },
         );
     }
-    $: refreshDomainList(provider);
+    $effect(() => {
+        refreshDomainList(provider);
+    });
 
     function haveDomain($domains_idx: Record<string, Domain>, name: string) {
         let domains: Array<Domain> | undefined = undefined;
@@ -115,7 +122,7 @@
         );
     }
 
-    let allImportInProgress = false;
+    let allImportInProgress = $state(false);
     async function importAllDomains() {
         if (importableDomainsList) {
             allImportInProgress = true;
@@ -129,7 +136,7 @@
         }
     }
 
-    let createDomainInProgress = false;
+    let createDomainInProgress = $state(false);
     async function createDomainOnProvider() {
         createDomainInProgress = true;
         try {
@@ -144,7 +151,7 @@
     }
 </script>
 
-<Card {...$$restProps}>
+<Card {...rest}>
     {#if !noDomainsList && !discoveryError}
         <CardHeader>
             <div class="d-flex justify-content-between align-items-center">

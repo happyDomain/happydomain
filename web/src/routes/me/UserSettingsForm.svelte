@@ -32,14 +32,15 @@
     import { refreshUserSession, userSession } from "$lib/stores/usersession";
     import { toasts } from "$lib/stores/toasts";
 
-    export let settings: UserSettings;
-    let formSent = false;
+    interface Props {
+        settings: UserSettings;
+    }
 
-    function saveSettings() {
-        if ($userSession == null) {
-            return;
-        }
+    let { settings = $bindable() }: Props = $props();
+    let formSent = $state(false);
 
+    function saveSettings(e: SubmitEvent) {
+        e.preventDefault();
         formSent = true;
         saveAccountSettings($userSession, settings).then(
             (settings) => {
@@ -71,7 +72,7 @@
     }
 </script>
 
-<form on:submit|preventDefault={saveSettings}>
+<form onsubmit={saveSettings}>
     <div class="mb-3">
         <label for="language-select">
             {$t("settings.language")}

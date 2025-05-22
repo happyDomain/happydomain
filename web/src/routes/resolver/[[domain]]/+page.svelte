@@ -23,6 +23,8 @@
 
 <script lang="ts">
     import { goto } from "$app/navigation";
+    import { page } from "$app/state";
+    import { untrack } from "svelte";
 
     import { Container, Col, Row, Table } from "@sveltestrap/sveltestrap";
 
@@ -34,11 +36,24 @@
     import { t } from "$lib/translations";
     import { toasts } from "$lib/stores/toasts";
 
-    export let data: { form?: ResolverFormT; domain: string; showDNSSEC: boolean };
-    let question: ResolverFormT | null = null;
-    let responses: Array<any> | "no-answer" | null = null;
-    let error_response: string | null = null;
-    let request_pending = false;
+    interface Props {
+        data: { domain: string; };
+    }
+
+    interface ResolverPageState {
+        form?: ResolverFormT;
+        showDNSSEC?: boolean;
+    }
+
+    let { data }: Props = $props();
+
+    let domain = $derived(data.domain);
+    let form: ResolverFormT = $state({ domain: "", type: "ANY", resolver: "local" });
+
+    let error_response: string | null = $state(null);
+    let request_pending = $state(false);
+    let question: ResolverFormT | null = $state(null);
+    let responses: Array<any> | "no-answer" | null = $state(null);
 
     function resolve(form: ResolverFormT) {
         if (!form.domain) return;
@@ -46,7 +61,7 @@
         APIResolve(form).then(
             (response) => {
                 error_response = null;
-                question = Object.assign({}, data.form);
+                question = Object.assign({ }, form);
                 if (response.Answer) {
                     responses = response.Answer;
                 } else {
@@ -67,14 +82,23 @@
         );
     }
 
-    $: {
-        if (!data.form) {
-            data.form = { domain: "", type: "ANY", resolver: "local" };
-        }
-        data.form.domain = data.domain;
+    $effect(() => {
+        // Only track domain changes, not the entire data object
+        if (domain) {
+            untrack(() => {
+                const state = page.state as ResolverPageState;
+                if (state.form) {
+                    form = Object.assign({ }, state.form);
+                } else {
+                    form = { domain: "", type: "ANY", resolver: "local" };
+                }
 
-        resolve(data.form);
-    }
+                form.domain = domain;
+
+                resolve(form);
+            });
+        }
+    });
 
     function filteredResponses(responses: Array<any>, showDNSSEC: boolean): Array<any> {
         if (!responses) {
@@ -91,7 +115,7 @@
     }
 
     function responseByType(filteredResponses: Array<any>): Record<string, Array<any>> {
-        const ret: Record<string, Array<any>> = {};
+        const ret: Record<string, Array<any>> = { };
 
         for (const i in filteredResponses) {
             if (!ret[filteredResponses[i].Hdr.Rrtype]) {
@@ -110,7 +134,7 @@
 
         request_pending = true;
 
-        if (form.domain === data.domain) {
+        if (form.domain === domain) {
             resolve(form);
         } else {
             goto("/resolver/" + encodeURIComponent(form.domain), {
@@ -121,7 +145,7 @@
     }
 </script>
 
-{#if data.domain}
+{#if domain}
     <Container fluid class="flex-fill d-flex flex-column">
         <Row class="flex-grow-1">
             <Col md={{ offset: 0, size: 4 }} class="bg-light pt-3 pb-5">
@@ -131,7 +155,7 @@
                     </h1>
                     <ResolverForm
                         bind:request_pending
-                        value={data.form}
+                        value={form}
                         on:submit={resolveDomain}
                     />
                 </div>
@@ -147,7 +171,7 @@
             {:else if responses != null}
                 <Col md="8" class="pt-2">
                     {@const resByType = responseByType(
-                        filteredResponses(/* @ts-ignore */ responses, data.showDNSSEC),
+                        filteredResponses(/* @ts-ignore */ responses, (page.state as ResolverPageState).showDNSSEC ?? false),
                     )}
                     {#each Object.keys(resByType) as type}
                         {@const rrs = resByType[type]}

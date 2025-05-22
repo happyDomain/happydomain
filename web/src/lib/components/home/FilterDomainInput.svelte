@@ -40,11 +40,18 @@
     import { providers } from '$lib/stores/providers';
     import { t } from "$lib/translations";
 
-    export let autofocus = false;
-    export let noButton = false;
+    interface Props {
+        autofocus?: boolean;
+        noButton?: boolean;
+        [key: string]: any
+    }
+
+    let { autofocus = false, noButton = false, ...rest }: Props = $props();
 
     let addingNewDomain = false;
-    async function addDomainToProvider() {
+    async function addDomainToProvider(e: FormDataEvent) {
+        e.preventDefault();
+
         addingNewDomain = true;
 
         if ($filteredProvider) {
@@ -74,28 +81,14 @@
         }
     }
 
-    let newDomainState: boolean | undefined = undefined;
-    function validateNewDomain(val: string | undefined): boolean | undefined {
-        if (val) {
-            newDomainState = validateDomain(val);
-        } else {
-            newDomainState = validateDomain($filteredName);
-        }
-
-        return newDomainState;
-    }
-
-    function inputChange(event: Event) {
-        if (event instanceof InputEvent) {
-            validateNewDomain(
-                event.data ? $filteredName + event.data : $filteredName.substring(0, $filteredName.length - 1),
-            );
-        }
+    let newDomainState: boolean | undefined = $derived(validateNewDomain($filteredName));
+    function validateNewDomain(val: string): boolean | undefined {
+        return validateDomain(val, "", false);
     }
 </script>
 
-<form on:submit|preventDefault={addDomainToProvider}>
-    <ListGroup {...$$restProps}>
+<form onsubmit={addDomainToProvider}>
+    <ListGroup {...rest}>
         <ListGroupItem class="d-flex justify-content-between align-items-center p-0">
             <InputGroup>
                 <label
@@ -121,7 +114,6 @@
                     valid={$filteredName.length ? newDomainState : undefined}
                     style="border:none;box-shadow:none;z-index:0"
                     bind:value={$filteredName}
-                    on:input={inputChange}
                 />
                 {#if !noButton && $filteredName.length && (!$domains_by_name[fqdn($filteredName, "")] || !$filteredProvider || !$domains_by_name[fqdn($filteredName, "")].reduce((acc, d) => acc || d.id_provider == $filteredProvider._id, false))}
                     <Button type="submit" outline color="primary">

@@ -31,23 +31,25 @@
     import { t } from "$lib/translations";
     import { toasts } from "$lib/stores/toasts";
 
-    export let user: string;
-    export let key: string;
-    let value = "";
-    let passwordConfirmation = "";
-    let passwordState: boolean | undefined;
-    let passwordConfirmState: boolean | undefined;
-    let formSent = false;
-
-    $: {
-        if (passwordState == false) {
-            passwordState = checkWeakPassword(value);
-        }
+    interface Props {
+        user: string;
+        key: string;
     }
 
-    let formElm: HTMLFormElement;
+    let { user, key }: Props = $props();
+    let value = $state("");
+    let passwordConfirmation = $state("");
+    let passwordState: boolean | undefined = $derived(checkWeakPassword(value));
+    let passwordConfirmState: boolean | undefined = $state();
+    let formSent = $state(false);
 
-    function goRecover() {
+    let formElm: HTMLFormElement | undefined = $state();
+
+    function goRecover(e: SubmitEvent) {
+        e.preventDefault();
+
+        if (!formElm) return;
+
         const valid = formElm.checkValidity();
 
         if (valid && passwordState && passwordConfirmState) {
@@ -76,7 +78,7 @@
     }
 </script>
 
-<form class="container my-1" on:submit|preventDefault={goRecover} bind:this={formElm}>
+<form class="container my-1" onsubmit={goRecover} bind:this={formElm}>
     <p>
         {$t("password.fill")}
     </p>

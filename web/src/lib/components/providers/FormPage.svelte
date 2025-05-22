@@ -37,15 +37,25 @@
     // Load required data
     if ($providersSpecs == null) refreshProvidersSpecs();
 
-    // Inputs
-    export let edit = false;
-    export let ptype: string;
-    export let state: number;
-    export let providerId: string | null = null;
-    export let value: ProviderSettingsState | null = null;
+    interface Props {
+        // Inputs
+        edit?: boolean;
+        ptype: string;
+        state: number;
+        providerId?: string | null;
+        value?: ProviderSettingsState | null;
+    }
+
+    let {
+        edit = false,
+        ptype,
+        state,
+        providerId = null,
+        value = $bindable(null)
+    }: Props = $props();
 
     //
-    let form = new ProviderForm(
+    let form: ProviderForm = $derived(new ProviderForm(
         ptype,
         () => refreshProviders().then(() => goto("/?newProvider")),
         providerId,
@@ -57,7 +67,7 @@
                 goto("/providers/new");
             }
         },
-    );
+    ));
     form.changeState(state).then((res) => (form.form = res));
 </script>
 
@@ -96,7 +106,7 @@
                         {$t("wait.retrieving-setting")}
                     </div>
                 {:else}
-                    <PForm bind:form {ptype} />
+                    <PForm bind:form={form} {ptype} />
                     <SettingsStateButtons
                         class="d-flex justify-content-end mt-3"
                         {edit}

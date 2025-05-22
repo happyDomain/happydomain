@@ -33,11 +33,14 @@
     import { domains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
-    export { className as class };
-    let className = "";
 
-    let isGroupModalOpen = false;
-    export let filteredGroup: string | null = null
+    let isGroupModalOpen = $state(false);
+    interface Props {
+        class?: string;
+        filteredGroup?: string | null;
+    }
+
+    let { class: className = "", filteredGroup = $bindable(null) }: Props = $props();
 </script>
 
 {#if $domains && $domains.length}
