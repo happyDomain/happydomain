@@ -45,6 +45,9 @@ func RegisterDNSControlProviderAdapter(creator happydns.ProviderCreatorFunc, inf
 // GetProviderCapabilities lists available capabilities for the given Provider.
 func GetDNSControlProviderCapabilities(prvd DNSControlConfigAdapter) (caps []string) {
 	// Features
+	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.DocCreateDomains) {
+		caps = append(caps, "CreateDomain")
+	}
 	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanGetZones) {
 		caps = append(caps, "ListDomains")
 	}
@@ -105,11 +108,7 @@ func NewDNSControlProviderAdapter(configAdapter DNSControlConfigAdapter) (happyd
 		auditor = p.RecordAuditor
 	}
 
-	if _, ok := provider.(dnscontrol.ZoneLister); ok {
-		return &DNSControlAdapterNSProviderWithListZone{DNSControlAdapterNSProvider{provider, auditor}}, nil
-	} else {
-		return &DNSControlAdapterNSProvider{provider, auditor}, nil
-	}
+	return &DNSControlAdapterNSProvider{provider, auditor}, nil
 }
 
 type DNSControlAdapterNSProvider struct {
@@ -122,7 +121,7 @@ func (p *DNSControlAdapterNSProvider) CanListZones() bool {
 	return ok
 }
 
-func (p *DNSControlAdapterNSProvider) CanCreateZone() bool {
+func (p *DNSControlAdapterNSProvider) CanCreateDomain() bool {
 	_, ok := p.DNSServiceProvider.(dnscontrol.ZoneCreator)
 	return ok
 }
@@ -196,11 +195,16 @@ func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []ha
 	return ret, nil
 }
 
-type DNSControlAdapterNSProviderWithListZone struct {
-	DNSControlAdapterNSProvider
+func (p *DNSControlAdapterNSProvider) CreateDomain(fqdn string) error {
+	zc, ok := p.DNSServiceProvider.(dnscontrol.ZoneCreator)
+	if !ok {
+		return fmt.Errorf("Provider doesn't support domain creation.")
+	}
+
+	return zc.EnsureZoneExists(strings.TrimSuffix(fqdn, "."))
 }
 
-func (p *DNSControlAdapterNSProviderWithListZone) ListZones() ([]string, error) {
+func (p *DNSControlAdapterNSProvider) ListZones() ([]string, error) {
 	zl, ok := p.DNSServiceProvider.(dnscontrol.ZoneLister)
 	if !ok {
 		return nil, fmt.Errorf("Provider doesn't support domain listing.")

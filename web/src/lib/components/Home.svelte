@@ -24,10 +24,13 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
 
+    // @ts-ignore
+    import { escape } from "html-escaper";
     import {
         Badge,
         Button,
         Card,
+        CardHeader,
         Col,
         Container,
         Icon,
@@ -35,6 +38,7 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
+    import { createDomain } from "$lib/api/provider";
     import CardImportableDomains from "$lib/components/providers/CardImportableDomains.svelte";
     import DomainGroupList from "$lib/components/domain-groups/DomainGroupList.svelte";
     import DomainGroupModal from "$lib/components/domain-groups/DomainGroupModal.svelte";
@@ -89,6 +93,10 @@
             timeout: 5000,
         });
     }
+
+    async function createDomainOnProvider(fqdn: string) {
+        return await createDomain(filteredProvider, fqdn)
+    }
 </script>
 
 <Container class="flex-fill pt-4 pb-5">
@@ -108,7 +116,35 @@
                     bind:noDomainsList
                 />
             {/if}
-            {#if !filteredProvider || noDomainsList}
+            {#if $providersSpecs && filteredProvider && $providersSpecs[filteredProvider._srctype] && $providersSpecs[filteredProvider._srctype].capabilities.indexOf('CreateDomain') >= 0}
+                <Card
+                    class="mt-3"
+                >
+                    <CardHeader>
+                        {@html $t("provider.create-domain", {
+                            provider:
+                                "<em>" +
+                                escape(
+                                    filteredProvider._comment
+                                        ? filteredProvider._comment
+                                        : $providersSpecs
+                                          ? $providersSpecs[filteredProvider._srctype].name
+                                          : "",
+                                ) +
+                                "</em>",
+                        })}
+                    </CardHeader>
+                    <!-- svelte-ignore a11y-autofocus -->
+                    <NewDomainInput
+                        autofocus
+                        class="flush"
+                        id="create-domain"
+                        preAddFunc={createDomainOnProvider}
+                        provider={filteredProvider}
+                        on:newDomainAdded={newDomainAdded}
+                    />
+                </Card>
+            {:else if !filteredProvider || noDomainsList}
                 <!-- svelte-ignore a11y-autofocus -->
                 <NewDomainInput
                     autofocus

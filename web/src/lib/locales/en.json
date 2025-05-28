@@ -370,6 +370,7 @@
         "another": "Use another provider",
         "associations": "{{count:eq; 0:no domain associated; 1:{{count}} domain associated; default:{{count}} domains associated}}",
         "check-config": "Check your provider configuration",
+        "create-domain": "Create a new domain on {{provider}}",
         "delete": "Delete this domain provider",
         "empty": "You have no provider defined currently. Try {{action}}!",
         "empty-action": "adding one",

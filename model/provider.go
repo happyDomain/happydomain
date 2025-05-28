@@ -136,10 +136,10 @@ type ProviderUsecase interface {
 }
 
 type ProviderActuator interface {
+	CanCreateDomain() bool
+	CanListZones() bool
+	CreateDomain(fqdn string) error
 	GetZoneRecords(domain string) ([]Record, error)
 	GetZoneCorrections(domain string, wantedRecords []Record) ([]*Correction, error)
-}
-
-type ZoneListerActuator interface {
 	ListZones() ([]string, error)
 }

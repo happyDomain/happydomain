@@ -41,6 +41,14 @@ export async function listImportableDomains(provider: Provider): Promise<Array<s
     return await handleApiResponse<Array<string>>(res);
 }
 
+export async function createDomain(provider: Provider, fqdn: string): Promise<boolean> {
+    const res = await fetch(`/api/providers/${provider._id}/domains/${fqdn}`, {
+        method: "POST",
+        headers: { Accept: "application/json" },
+    });
+    return await handleApiResponse<boolean>(res);
+}
+
 export async function updateProvider(provider: Provider): Promise<Provider> {
     const res = await fetch("/api/providers" + (provider._id ? `/${provider._id}` : ""), {
         method: provider._id ? "PUT" : "POST",

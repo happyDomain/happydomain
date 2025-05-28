@@ -60,8 +60,8 @@ func (psu *providerSettingsUsecase) NextProviderSettingsState(state *happydns.Pr
 			return nil, nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to instantiate provider: %s", err.Error())}
 		}
 
-		if sr, ok := p.(happydns.ZoneLister); ok {
-			if _, err = sr.ListZones(); err != nil {
+		if p.CanListZones() {
+			if _, err = p.ListZones(); err != nil {
 				return nil, nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to list provider's zones: %s", err.Error())}
 			}
 		}

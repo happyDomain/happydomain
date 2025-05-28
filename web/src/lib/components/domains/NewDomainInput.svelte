@@ -46,14 +46,20 @@
     export let addingNewDomain = false;
     export let autofocus = false;
     export let noButton = false;
+    export let preAddFunc: null | ((string) => Promise<boolean>) = null;
     export let provider: Provider | null = null;
     export let value = "";
 
     let formId = "new-domain-form";
     let newDomainState: boolean | undefined = undefined;
 
-    function addDomainToProvider() {
+    async function addDomainToProvider() {
         addingNewDomain = true;
+
+        if (preAddFunc && !(await preAddFunc(value))) {
+            addingNewDomain = false;
+            return;
+        }
 
         if (!provider) {
             goto("/domains/new/" + encodeURIComponent(value));

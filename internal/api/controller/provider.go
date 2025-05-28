@@ -226,17 +226,56 @@ func (pc *ProviderController) GetDomainsHostedByProvider(c *gin.Context) {
 		return
 	}
 
-	zl, ok := p.(happydns.ZoneListerActuator)
-	if !ok {
+	if !p.CanListZones() {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "Provider doesn't support domain listing."})
 		return
 	}
 
-	domains, err := zl.ListZones()
+	domains, err := p.ListZones()
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, domains)
+}
+
+// CreateDomainsOnProvider ensure the given domain exists on the provider or creates it if possible.
+//
+//	@Summary	Create a domain on the Provider.
+//	@Schemes
+//	@Description	Create a domain on the given Provider.
+//	@Tags			providers
+//	@Accept			json
+//	@Produce		json
+//	@Param			providerId	path	string	true	"Provider identifier"
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	happydns.Provider
+//	@Failure		400	{object}	happydns.ErrorResponse	"Unable to instantiate the provider"
+//	@Failure		400	{object}	happydns.ErrorResponse	"The provider doesn't support domain listing"
+//	@Failure		400	{object}	happydns.ErrorResponse	"Provider error"
+//	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
+//	@Failure		404	{object}	happydns.ErrorResponse	"Provider not found"
+//	@Router			/providers/{providerId}/domains/{fqdn} [get]
+func (pc *ProviderController) CreateDomainsOnProvider(c *gin.Context) {
+	provider := c.MustGet("provider").(*happydns.Provider)
+
+	p, err := provider.InstantiateProvider()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to instantiate the provider: %s", err.Error())})
+		return
+	}
+
+	if !p.CanCreateDomain() {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "Provider doesn't support domain creation."})
+		return
+	}
+
+	err = p.CreateDomain(c.Param("fqdn"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, true)
 }

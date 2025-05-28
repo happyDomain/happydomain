@@ -47,4 +47,5 @@ func DeclareProviderRoutes(router *gin.RouterGroup, dependancies happydns.Usecas
 	apiProviderRoutes.PUT("", pc.UpdateProvider)
 
 	apiProviderRoutes.GET("/domains", pc.GetDomainsHostedByProvider)
+	apiProviderRoutes.POST("/domains/:fqdn", pc.CreateDomainsOnProvider)
 }

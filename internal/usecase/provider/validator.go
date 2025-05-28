@@ -39,8 +39,8 @@ func (v *DefaultProviderValidator) Validate(p *happydns.Provider) error {
 		return fmt.Errorf("instantiation failed: %w", err)
 	}
 
-	if lister, ok := instance.(happydns.ZoneLister); ok {
-		_, err = lister.ListZones()
+	if instance.CanListZones() {
+		_, err = instance.ListZones()
 	}
 
 	return err
