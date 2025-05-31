@@ -19,7 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import type { Load } from "@sveltejs/kit";
+import { redirect, type Load } from "@sveltejs/kit";
 import { get_store_value } from "svelte/internal";
 
 import { toasts } from "$lib/stores/toasts";
@@ -98,7 +98,16 @@ export const load: Load = async ({ fetch, route, url }) => {
         if (!url.searchParams.has("lang") && get_store_value(locale) != user.settings.language) {
             locale.set(user.settings.language);
         }
-    } catch {}
+    } catch (err) {
+        if (route.id != "/login" && route.id != "/join" && route.id != "/resolver" && route.id != "/providers/features") {
+            toasts.addToast({
+                type: 'error',
+                title: get_store_value(t)("errors.session.title"),
+                message: get_store_value(t)("errors.session.content"),
+            });
+            throw redirect(302, '/login?next=' + encodeURIComponent(url.pathname));
+        }
+    }
 
     return {
         route,

@@ -23,6 +23,7 @@
 
 <script lang="ts">
     import { goto } from "$app/navigation";
+    import { page } from "$app/stores";
 
     import { Button, FormGroup, Input, Label, Spinner } from "@sveltestrap/sveltestrap";
 
@@ -59,7 +60,11 @@
                     emailState = true;
                     passwordState = true;
                     refreshUserSession();
-                    goto("/");
+                    if ($page.url.searchParams.has("next")) {
+                        goto(decodeURIComponent($page.url.searchParams.get("next")));
+                    } else {
+                        goto("/");
+                    }
                 },
                 (error) => {
                     formSent = false;
