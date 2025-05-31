@@ -34,9 +34,10 @@
     } from "@sveltestrap/sveltestrap";
 
     import { addDomain } from "$lib/api/domains";
-    import { validateDomain } from "$lib/dns";
+    import { fqdn, validateDomain } from "$lib/dns";
     import { domains, refreshDomains } from '$lib/stores/domains';
     import { filteredName, filteredProvider } from '$lib/stores/home';
+    import { providers } from '$lib/stores/providers';
     import { t } from "$lib/translations";
 
     export let autofocus = false;
@@ -46,9 +47,7 @@
     async function addDomainToProvider() {
         addingNewDomain = true;
 
-        if (!$filteredProvider) {
-            goto("/domains/new/" + encodeURIComponent($filteredName));
-        } else {
+        if ($filteredProvider) {
             addDomain($filteredName, $filteredProvider).then(
                 (domain) => {
                     addingNewDomain = false;
@@ -59,6 +58,19 @@
                     throw error;
                 },
             );
+        } else if ($providers.length == 1) {
+            addDomain($filteredName, $providers[0]).then(
+                (domain) => {
+                    addingNewDomain = false;
+                    refreshDomains();
+                },
+                (error) => {
+                    addingNewDomain = false;
+                    throw error;
+                },
+            );
+        } else {
+            goto("/domains/new/" + encodeURIComponent($filteredName));
         }
     }
 
@@ -91,7 +103,7 @@
                     class="ms-2 my-1 text-center text-muted"
                     style="font-size: 1.6rem"
                 >
-                    {#if $filteredName || ($domains && $domains.length == 0)}
+                    {#if ($filteredName && $domains.filter((dn) => dn.domain == fqdn($filteredName, "")).length == 0) || ($domains && $domains.length == 0)}
                         <Icon name="plus-lg" />
                     {:else}
                         <Icon name="search" />
@@ -111,7 +123,7 @@
                     bind:value={$filteredName}
                     on:input={inputChange}
                 />
-                {#if !noButton && $filteredName.length}
+                {#if !noButton && $filteredName.length && $domains.filter((dn) => dn.domain == fqdn($filteredName, "")).length == 0}
                     <Button type="submit" outline color="primary">
                         {$t("common.add-new-thing", { thing: $t("domains.kind") })}
                     </Button>
