@@ -47,7 +47,7 @@
         addingNewDomain = true;
 
         if (!$filteredProvider) {
-            goto("/domains/new/" + encodeURIComponent(value));
+            goto("/domains/new/" + encodeURIComponent($filteredName));
         } else {
             addDomain($filteredName, $filteredProvider).then(
                 (domain) => {
