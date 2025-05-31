@@ -89,7 +89,7 @@
 </script>
 
 <Modal {isOpen} size="lg" {toggle}>
-    <ModalHeader {toggle}>{$t("zones.upload")}</ModalHeader>
+    <ModalHeader class="bg-info-subtle" {toggle}>{$t("zones.upload")}</ModalHeader>
     <ModalBody>
         <TabContent on:tab={(e) => (uploadModalActiveTab = e.detail)}>
             <TabPane tabId="uploadText" tab={$t("zones.import-text")} active>

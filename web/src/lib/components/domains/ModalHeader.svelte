@@ -33,7 +33,7 @@
     export let update = false;
 </script>
 
-<ModalHeader {toggle}>
+<ModalHeader class="bg-light" {toggle}>
     {#if update}
         {$t("service.update")}
     {:else}
