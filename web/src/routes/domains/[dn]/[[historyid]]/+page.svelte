@@ -53,13 +53,23 @@
         <p>{$t("wait.loading")}</p>
     </div>
 {:else}
-    <div style="max-width: 100%;" class="pt-1">
-        <SubdomainList
-            origin={data.domain}
-            sortedDomains={$sortedDomains}
-            sortedDomainsWithIntermediate={$sortedDomainsWithIntermediate}
-            zone={$thisZone}
-            on:update-zone-services={(event) => thisZone.set(event.detail)}
-        />
+    <div style="max-width: 100%;" class="w-100 pt-1">
+        {#if $sortedDomains.length == 0}
+            <SubdomainList
+                origin={data.domain}
+                sortedDomains={['']}
+                sortedDomainsWithIntermediate={['']}
+                zone={$thisZone}
+                on:update-zone-services={(event) => thisZone.set(event.detail)}
+            />
+        {:else}
+            <SubdomainList
+                origin={data.domain}
+                sortedDomains={$sortedDomains}
+                sortedDomainsWithIntermediate={$sortedDomainsWithIntermediate}
+                zone={$thisZone}
+                on:update-zone-services={(event) => thisZone.set(event.detail)}
+            />
+        {/if}
     </div>
 {/if}
