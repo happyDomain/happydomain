@@ -51,11 +51,12 @@
     import ModalUploadZone, { controls as ctrlUploadZone } from "./ModalUploadZone.svelte";
     import ModalViewZone, { controls as ctrlViewZone } from "./ModalViewZone.svelte";
     import NewSubdomainPath, { controls as ctrlNewSubdomain } from "./NewSubdomainPath.svelte";
+    import SelectDomain from "$lib/components/domains/SelectDomain.svelte";
     import SubdomainListTiny from "./SubdomainListTiny.svelte";
     import { fqdn, isReverseZone } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { ZoneMeta } from "$lib/model/zone";
-    import { domains, domains_by_groups, domains_idx, refreshDomains } from "$lib/stores/domains";
+    import { domains, domains_idx, refreshDomains } from "$lib/stores/domains";
     import {
         retrieveZone as StoreRetrieveZone,
         sortedDomains,
@@ -165,20 +166,7 @@
                     <Button href="/domains/" class="fw-bolder" color="link">
                         <Icon name="chevron-up" />
                     </Button>
-                    <Input type="select" bind:value={selectedDomain}>
-                        {#each Object.keys($domains_by_groups) as gname}
-                            {@const group = $domains_by_groups[gname]}
-                            <optgroup
-                                label={gname == "undefined" || !gname
-                                    ? $t("domaingroups.no-group")
-                                    : gname}
-                            >
-                                {#each group as domain}
-                                    <option value={domain.id}>{domain.domain}</option>
-                                {/each}
-                            </optgroup>
-                        {/each}
-                    </Input>
+                    <SelectDomain bind:selectedDomain={selectedDomain} />
                 </div>
 
                 {#if $page.data.isHistoryPage || $page.data.isAuditPage}
@@ -254,7 +242,11 @@
                     </div>
                     <div style="min-height:0; overflow-y: auto;" class="placeholder-glow">
                         {#if $sortedDomains && $thisZone.id == selectedHistory}
-                            {#if isReverseZone(data.domain.domain)}
+                            {#if $sortedDomains.length == 0}
+                                <div class="text-truncate font-monospace text-muted">
+                                    {data.domain.domain}
+                                </div>
+                            {:else if isReverseZone(data.domain.domain)}
                                 <SubdomainListTiny domains={$sortedDomains} origin={data.domain} />
                             {:else}
                                 <SubdomainListTiny

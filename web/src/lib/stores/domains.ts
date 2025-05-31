@@ -42,7 +42,7 @@ export const groups = derived(domains, ($domains: null | Array<Domain>) => {
         }
     }
 
-    return Object.keys(groups).sort();
+    return Object.keys(groups).sort((a,b) => !a || !b ? (!a ? 1 : -1) : a.toLowerCase().localeCompare(b.toLowerCase()));
 });
 
 export const domains_idx = derived(domains, ($domains: null | Array<Domain>) => {

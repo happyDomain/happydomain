@@ -77,7 +77,7 @@
     }
 </script>
 
-{#if services.length === 0}
+{#if services.length === 0 && dn != ""}
     <div id={dn}>
         {#if !reverseZone}
             <h2 class="sticky-top bg-light d-flex align-items-center" style="z-index: 1">
