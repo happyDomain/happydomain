@@ -1,6 +1,6 @@
 <!--
      This file is part of the happyDomain (R) project.
-     Copyright (c) 2022-2024 happyDomain
+     Copyright (c) 2022-2025 happyDomain
      Authors: Pierre-Olivier Mercier, et al.
 
      This program is offered under a commercial and under the AGPL license.
@@ -22,42 +22,46 @@
 -->
 
 <script lang="ts">
+    import { goto } from "$app/navigation";
+
     import {
-        Col,
-        Container,
-        Row,
+        Button,
+        Card,
+        Icon,
+        Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { createDomain } from "$lib/api/provider";
-    import DomainListSection from "$lib/components/home/DomainListSection.svelte";
-    import Logo from "$lib/components/Logo.svelte";
-    import Sidebar from "$lib/components/home/Sidebar.svelte";
-    import { domains, refreshDomains } from "$lib/stores/domains";
+    import ProviderList from "$lib/components/providers/List.svelte";
+    import type { Provider } from "$lib/model/provider";
     import {
         providers,
         providersSpecs,
-        refreshProviders,
-        refreshProvidersSpecs,
     } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 
-    if (!$domains) refreshDomains();
-    if (!$providers) refreshProviders();
-    if (!$providersSpecs) refreshProvidersSpecs();
+    export let filteredProvider: Provider | null = null
 </script>
 
-<Container class="flex-fill pt-4 pb-5">
-    <h1 class="text-center mb-4">
-        {$t("common.welcome.start")}<Logo height="40" />{$t("common.welcome.end")}
-    </h1>
-
-    <Row>
-        <Col md="8" class="order-1 order-md-0">
-            <DomainListSection />
-        </Col>
-
-        <Col md="4" class="order-0 order-md-1">
-            <Sidebar />
-        </Col>
-    </Row>
-</Container>
+<Card {...$$restProps}>
+    <div class="card-header d-flex justify-content-between">
+        {$t("provider.title")}
+        {#if !window.disable_providers}
+            <Button size="sm" color="light" href="/providers/new">
+                <Icon name="plus" />
+            </Button>
+        {/if}
+    </div>
+    {#if !$providers || !$providersSpecs}
+        <div class="d-flex justify-content-center">
+            <Spinner color="primary" />
+        </div>
+    {:else}
+        <ProviderList
+            flush
+            items={$providers}
+            noLabel
+            bind:selectedProvider={filteredProvider}
+            on:new-provider={() => goto("/providers/new")}
+        />
+    {/if}
+</Card>

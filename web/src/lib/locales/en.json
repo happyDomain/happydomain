@@ -66,6 +66,7 @@
     },
     "domains": {
         "kind": "domain",
+        "subdomain": "subdomain",
         "actions": {
             "audit": "View changes logs",
             "do-migration": "Migrate now",
@@ -84,11 +85,13 @@
                 "title": "Unable to retrieve domain information"
             }
         },
+        "and-more-filtered": "{{count:eq; 0:no more filtered domain; 1:1 more filtered domain; default:{{count}} more filtered domains}}",
         "add-a-subdomain": "Add a subdomain",
         "add-a-service": "Add a service",
         "add-alias": "Add alias",
         "add-an-alias": "Add an alias",
         "add-now": "Add it now!",
+        "create-on-provider": "Create on {{provider}}",
         "added-success": "Great! {{domain}} has been added. You can manage it right now.",
         "apply": {
             "additions": "{{count:eq; 0:no additions; 1:{{count}} addition; default:{{count}} additions}}",
@@ -114,6 +117,7 @@
         "list": "List importable domains",
         "n-aliases": "{{count:lt; 2:{{count}} alias; default:{{count}} aliases}}",
         "n-services": "{{count:lt; 2:{{count}} service; default:{{count}} services}}",
+        "filtered-no-result": "There is no domain with those filters.",
         "please-fill-fields": "Please fill the following fields:",
         "removal": "Confirm Domain Removal",
         "save-modifications": "Save those modifications",
@@ -131,6 +135,7 @@
         "see-records": "See corresponding records",
         "alias-creation": "Add an alias pointing to {{domain}}:",
         "alias-creation-sample": "This will create the alias:",
+        "placeholder-search": "my.domain.",
         "placeholder-new": "my.new.domain.",
         "placeholder-new-sub": "new.subdomain",
         "form-new-subdomain": "Add a new subdomain under {{domain}}:"
@@ -168,7 +173,7 @@
         "domain-attach": "An error occurs when attaching the domain to happyDomain",
         "domain-have": "It appears you don't have any domain name registered on this provider.",
         "domain-import": "An error occurs when trying to synchronize this domain:",
-        "domain-list": "This provider doesn't permit to list existing domains. Use the form below to add one.",
+        "domain-list": "This provider doesn't permit to list existing domains. Use the above form to add one.",
         "error": "Error",
         "login": "Login error",
         "logout": "Logout error",
@@ -357,6 +362,16 @@
         "ttl": "TTL",
         "ttl-long": "Time-To-Live",
         "ttl-tip": "0 means default TTL, others values are exprimed in seconds"
+    },
+    "records": {
+        "add": "Add record",
+        "class": "Class",
+        "delete": "Delete this record",
+        "update": "Update this record",
+        "form-new": "Add a new record to {{domain}}",
+        "new": "New record",
+        "rrtype": "type",
+        "ttl": "Time-to-live"
     },
     "sessions": {
         "close-all": "Terminate all sessions",
