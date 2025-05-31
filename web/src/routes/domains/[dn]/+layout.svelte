@@ -43,10 +43,9 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { getDomain as APIGetDomain, deleteDomain as APIDeleteDomain } from "$lib/api/domains";
-    import { diffZone as APIDiffZone } from "$lib/api/zone";
-    import DiffSummary from "./DiffSummary.svelte";
-    import ModalDiffZone, { controls as ctrlDiffZone } from "./ModalDiffZone.svelte";
+    import { deleteDomain as APIDeleteDomain } from "$lib/api/domains";
+    import ButtonZonePublish from "./ButtonZonePublish.svelte";
+    import ModalDiffZone from "./ModalDiffZone.svelte";
     import ModalDomainDelete, { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
     import ModalUploadZone, { controls as ctrlUploadZone } from "./ModalUploadZone.svelte";
     import ModalViewZone, { controls as ctrlViewZone } from "./ModalViewZone.svelte";
@@ -109,24 +108,12 @@
         }
     }
 
-    async function getDomain(id: string): Promise<Domain> {
-        return await APIGetDomain(id);
-    }
-
     function viewZone(): void {
         if (!selectedHistory) {
             return;
         }
 
         ctrlViewZone.Open(data.domain, selectedHistory);
-    }
-
-    function showDiff(): void {
-        if (!selectedHistory) {
-            return;
-        }
-
-        ctrlDiffZone.Open(data.domain, selectedHistory);
     }
 
     let deleteInProgress = false;
@@ -289,70 +276,11 @@
                         <Icon name="trash" />
                         {$t("domains.stop")}
                     </Button>
-                {:else if $domains_idx[selectedDomain].zone_history && selectedHistory === $domains_idx[selectedDomain].zone_history[0]}
-                    <Button
-                        size="lg"
-                        color="success"
-                        title={$t("domains.actions.propagate")}
-                        on:click={showDiff}
-                    >
-                        <Icon name="cloud-upload" aria-hidden="true" />
-                        {$t("domains.actions.propagate")}
-                    </Button>
-                    <p class="mt-2 mb-1 text-center">
-                        {#key $thisZone}
-                            {#await APIDiffZone(data.domain, "@", $thisZone.id)}
-                                {$t("wait.wait")}
-                            {:then zoneDiff}
-                                <DiffSummary {zoneDiff} />
-                            {/await}
-                        {/key}
-                    </p>
                 {:else}
-                    <Button
-                        size="lg"
-                        color="warning"
-                        title={$t("domains.actions.rollback")}
-                        on:click={showDiff}
-                    >
-                        <Icon name="cloud-upload" aria-hidden="true" />
-                        {$t("domains.actions.rollback")}
-                    </Button>
-                    <p class="mt-2 mb-1 text-center">
-                        {#await getDomain(data.domain.id)}
-                            Chargement des informations de l'historique
-                        {:then domain}
-                            {#if domain.zone_meta && domain.zone_meta[selectedHistory]}
-                                {@const history = domain.zone_meta[selectedHistory]}
-                                <div class="text-truncate">
-                                    {#if history.published}
-                                        Publiée le
-                                        {new Intl.DateTimeFormat(undefined, {
-                                            dateStyle: "long",
-                                            timeStyle: "long",
-                                        }).format(new Date(history.published))}
-                                    {:else if history.commit_date}
-                                        Enregistrée le
-                                        {new Intl.DateTimeFormat(undefined, {
-                                            dateStyle: "long",
-                                            timeStyle: "long",
-                                        }).format(new Date(history.commit_date))}
-                                    {:else}
-                                        Dernière modification le
-                                        {new Intl.DateTimeFormat(undefined, {
-                                            dateStyle: "long",
-                                            timeStyle: "long",
-                                        }).format(new Date(history.last_modified))}
-                                    {/if}
-                                </div>
-                                {#if history.commit_message}
-                                    <div class="text-truncate" title={history.commit_message}>
-                                        {history.commit_message}
-                                    </div>
-                                {/if}
-                            {/if}
-                        {/await}
-                    </p>
+                    <ButtonZonePublish
+                        domain={data.domain}
+                        history={selectedHistory}
+                    />
                 {/if}
             {:else}
                 <div class="mt-4 text-center">

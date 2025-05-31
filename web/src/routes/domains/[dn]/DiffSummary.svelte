@@ -54,7 +54,7 @@
     }
 </script>
 
-{#if zoneDiff}
+{#if zoneDiff && zoneDiff.length}
     {#if zoneDiffCreated}
         <span class="text-success">
             {$t("domains.apply.additions", { count: zoneDiffCreated })}
