@@ -28,10 +28,11 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
 
-    import { Modal, ModalBody } from "@sveltestrap/sveltestrap";
+    import { Input, Modal, ModalBody } from "@sveltestrap/sveltestrap";
 
     import ModalFooter from "$lib/components/domains/ModalFooter.svelte";
     import ModalHeader from "$lib/components/domains/ModalHeader.svelte";
+    import FilterServiceSelectorInput from "$lib/components/services/FilterServiceSelectorInput.svelte";
     import ServiceSelector from "./ServiceSelector.svelte";
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
@@ -66,6 +67,7 @@
 <Modal {isOpen} scrollable {toggle}>
     <ModalHeader {toggle} dn={fqdn(dn, origin.domain)} />
     <ModalBody class="pt-0">
+        <FilterServiceSelectorInput class="my-2" />
         <form id="selectServiceForm" on:submit|preventDefault={submitSelectorForm}>
             <ServiceSelector {dn} {origin} bind:value {zservices} />
         </form>

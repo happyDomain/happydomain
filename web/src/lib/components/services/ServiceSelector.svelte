@@ -26,12 +26,14 @@
 
     import { getProviderSpec } from "$lib/api/provider_specs";
     import ServiceSelectorItem from "./ServiceSelectorItem.svelte";
+    import { nsrrtype } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { ProviderInfos } from "$lib/model/provider";
     import type { ServiceCombined } from "$lib/model/service";
     import { passRestrictions, type ServiceInfos } from "$lib/model/service_specs";
     import { providers_idx } from "$lib/stores/providers";
     import { servicesSpecs } from "$lib/stores/services";
+    import { filteredName } from "$lib/stores/serviceSelector";
     import { t } from "$lib/translations";
 
     export let dn: string;
@@ -88,6 +90,18 @@
             disabledNewServices = dns;
         }
     }
+
+    function svc_match(svc: ServiceInfos) {
+        return (
+            filtered_family == null || svc.family == filtered_family
+        ) && (
+            !$filteredName ||
+            svc.name.toLowerCase().indexOf($filteredName.toLowerCase()) >= 0 ||
+            svc.description.toLowerCase().indexOf($filteredName.toLowerCase()) >= 0 ||
+            (svc.record_types && svc.record_types.filter((rtype) => nsrrtype(rtype).toLowerCase().indexOf($filteredName.toLowerCase()) >= 0).length) ||
+            (svc.categories && svc.categories.filter((category) => category.toLowerCase().indexOf($filteredName.toLowerCase()) >= 0).length)
+        )
+    }
 </script>
 
 {#if !provider_specs || !$servicesSpecs}
@@ -95,26 +109,30 @@
         <Spinner color="primary" />
     </div>
 {:else}
-    <ul class="nav nav-tabs sticky-top pt-3 mb-2" style="background: white">
-        <NavItem>
-            <NavLink active={filtered_family == null} on:click={() => (filtered_family = null)}>
-                {$t("service.all")}
-            </NavLink>
-        </NavItem>
-        {#each families as family}
+    {#if !$filteredName || filtered_family}
+        <ul class="nav nav-tabs sticky-top" style="background: white">
             <NavItem>
-                <NavLink
-                    active={filtered_family == family.family}
-                    on:click={() => (filtered_family = family.family)}
-                >
-                    {family.label}
+                <NavLink active={filtered_family == null} on:click={() => (filtered_family = null)}>
+                    {$t("service.all")}
                 </NavLink>
             </NavItem>
-        {/each}
-    </ul>
+            {#each families as family}
+                <NavItem>
+                    <NavLink
+                        active={filtered_family == family.family}
+                        on:click={() => (filtered_family = family.family)}
+                    >
+                        {family.label}
+                    </NavLink>
+                </NavItem>
+            {/each}
+        </ul>
+    {:else}
+        <div class="mb-3"></div>
+    {/if}
     <ListGroup>
         {#each availableNewServices as svc}
-            {#if filtered_family == null || svc.family == filtered_family}
+            {#if svc_match(svc, filtered_family, $filteredName)}
                 <ServiceSelectorItem
                     active={value === svc._svctype}
                     {svc}
@@ -123,7 +141,7 @@
             {/if}
         {/each}
         {#each disabledNewServices as { svc, reason }}
-            {#if filtered_family == null || svc.family == filtered_family}
+            {#if svc_match(svc, filtered_family, $filteredName)}
                 <ServiceSelectorItem
                     active={value === svc._svctype}
                     disabled

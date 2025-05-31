@@ -50,7 +50,7 @@
         </div>
     {/if}
     <div class="flex-fill">
-        {svc.name}
+        <strong class="text-dark">{svc.name}</strong>
         {#if reason}
             <small class="font-italic text-danger">{reason}</small>
         {:else}
