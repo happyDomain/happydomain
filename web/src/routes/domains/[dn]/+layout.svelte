@@ -205,7 +205,7 @@
                                 <DropdownItem on:click={retrieveZone}>
                                     {$t("domains.actions.reimport")}
                                 </DropdownItem>
-                                <DropdownItem on:click={ctrlUploadZone.Open}>
+                                <DropdownItem on:click={() => ctrlUploadZone.Open()}>
                                     {$t("domains.actions.upload")}
                                 </DropdownItem>
                                 <DropdownItem divider />
