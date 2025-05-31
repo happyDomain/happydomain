@@ -37,11 +37,12 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
+    import { deleteDomain } from "$lib/api/domains";
     import { deleteProvider } from "$lib/api/provider";
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
     import HListGroup from "$lib/components/ListGroup.svelte";
     import type { Provider } from "$lib/model/provider";
-    import { domains } from "$lib/stores/domains";
+    import { domains, refreshDomains } from "$lib/stores/domains";
     import {
         providers,
         providersSpecs,
@@ -97,6 +98,19 @@
 
     async function delProvider(event: Event, item: Provider) {
         event.stopPropagation();
+
+        // Check that there is no domain attached
+        const related_domains = $domains.filter((dn) => dn.id_provider == item._id);
+        if (related_domains.length > 0) {
+            if (!confirm(`There are ${related_domains.length} domains related to this provider, are you sure you want to delete all those domains too?`)) return;
+
+            for (const domain of related_domains) {
+                await deleteDomain(domain.id);
+            }
+
+            refreshDomains();
+        }
+
         await deleteProvider(item._id);
         refreshProviders();
     }
