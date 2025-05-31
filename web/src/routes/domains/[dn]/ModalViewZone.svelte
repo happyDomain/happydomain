@@ -57,7 +57,7 @@
 </script>
 
 <Modal {isOpen} size="lg" scrollable {toggle}>
-    <ModalHeader {toggle}>{$t("domains.view.title")}</ModalHeader>
+    <ModalHeader {toggle} class="bg-primary-subtle">{$t("domains.view.title")}</ModalHeader>
     <ModalBody>
         {#if zoneContent}
             <pre style="overflow: initial">{zoneContent}</pre>

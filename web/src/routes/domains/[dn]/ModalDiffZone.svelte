@@ -113,7 +113,7 @@
 
 <Modal {isOpen} size="lg" scrollable {toggle}>
     {#if domain}
-        <ModalHeader {toggle}>
+        <ModalHeader {toggle} class="bg-warning-subtle">
             {@html $t("domains.view.description", {
                 domain: `<span class="font-monospace">${escape(domain.domain)}</span>`,
             })}
