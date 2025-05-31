@@ -1,6 +1,6 @@
 <!--
      This file is part of the happyDomain (R) project.
-     Copyright (c) 2022-2024 happyDomain
+     Copyright (c) 2022-2025 happyDomain
      Authors: Pierre-Olivier Mercier, et al.
 
      This program is offered under a commercial and under the AGPL license.
@@ -23,41 +23,36 @@
 
 <script lang="ts">
     import {
-        Col,
-        Container,
-        Row,
+        Button,
+        Card,
+        Icon,
     } from "@sveltestrap/sveltestrap";
 
-    import { createDomain } from "$lib/api/provider";
-    import DomainListSection from "$lib/components/home/DomainListSection.svelte";
-    import Logo from "$lib/components/Logo.svelte";
-    import Sidebar from "$lib/components/home/Sidebar.svelte";
-    import { domains, refreshDomains } from "$lib/stores/domains";
-    import {
-        providers,
-        providersSpecs,
-        refreshProviders,
-        refreshProvidersSpecs,
-    } from "$lib/stores/providers";
+    import DomainGroupList from "$lib/components/domain-groups/DomainGroupList.svelte";
+    import DomainGroupModal from "$lib/components/domain-groups/DomainGroupModal.svelte";
+    import { domains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
-    if (!$domains) refreshDomains();
-    if (!$providers) refreshProviders();
-    if (!$providersSpecs) refreshProvidersSpecs();
+    let isGroupModalOpen = false;
+    export let filteredGroup: string | null = null
 </script>
 
-<Container class="flex-fill pt-4 pb-5">
-    <h1 class="text-center mb-4">
-        {$t("common.welcome.start")}<Logo height="40" />{$t("common.welcome.end")}
-    </h1>
+{#if $domains && $domains.length}
+    <Card class="mb-3">
+        <div class="card-header d-flex justify-content-between">
+            {$t("domaingroups.title")}
+            <Button
+                type="button"
+                size="sm"
+                color="light"
+                title={$t("domaingroups.manage")}
+                on:click={() => (isGroupModalOpen = true)}
+            >
+                <Icon name="grid-fill" />
+            </Button>
+        </div>
+        <DomainGroupList flush bind:selectedGroup={filteredGroup} />
+    </Card>
+{/if}
 
-    <Row>
-        <Col md="8" class="order-1 order-md-0">
-            <DomainListSection />
-        </Col>
-
-        <Col md="4" class="order-0 order-md-1">
-            <Sidebar />
-        </Col>
-    </Row>
-</Container>
+<DomainGroupModal bind:isOpen={isGroupModalOpen} />

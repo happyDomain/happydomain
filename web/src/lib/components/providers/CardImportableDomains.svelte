@@ -30,16 +30,18 @@
         Card,
         CardHeader,
         Icon,
+        ListGroup,
         ListGroupItem,
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
     import { addDomain } from "$lib/api/domains";
-    import { listImportableDomains } from "$lib/api/provider";
-    import ZoneList from "$lib/components/zones/ZoneList.svelte";
-    import { fqdnCompare } from "$lib/dns";
+    import { createDomain, listImportableDomains } from "$lib/api/provider";
+    import DomainWithProvider from "$lib/components/domains/DomainWithProvider.svelte";
+    import { fqdn, fqdnCompare } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { Provider } from "$lib/model/provider";
+    import { filteredName } from '$lib/stores/home';
     import { providersSpecs } from "$lib/stores/providers";
     import { domains_idx, refreshDomains } from "$lib/stores/domains";
     import { toasts } from "$lib/stores/toasts";
@@ -114,7 +116,7 @@
     async function importAllDomains() {
         if (importableDomainsList) {
             allImportInProgress = true;
-            for (const d of importableDomainsList) {
+            for (const d of importableDomainsList.filter((dn) => dn.indexOf($filteredName) >= 0)) {
                 if (!haveDomain($domains_idx, d)) {
                     await importDomain({ domain: d, wait: false }, true);
                 }
@@ -123,12 +125,25 @@
             refreshDomains();
         }
     }
+
+    let createDomainInProgress = false;
+    async function createDomainOnProvider() {
+        createDomainInProgress = true;
+        try {
+            await createDomain(provider, fqdn($filteredName, ""))
+            await importDomain({ domain: fqdn($filteredName, ""), wait: false })
+            createDomainInProgress = false;
+        } catch (err) {
+            createDomainInProgress = false;
+            throw err;
+        }
+    }
 </script>
 
 <Card {...$$restProps}>
     {#if !noDomainsList && !discoveryError}
         <CardHeader>
-            <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between align-items-center">
                 <div>
                     {@html $t("provider.provider", {
                         provider:
@@ -165,71 +180,101 @@
             <Spinner color="primary" />
             {$t("wait.asking-domains")}
         </div>
+    {:else if importableDomainsList.length == 0}
+        {#if discoveryError}
+            <ListGroupItem class="mx-2 my-3">
+                <p class="text-danger">
+                    <Icon
+                        name="exclamation-octagon-fill"
+                        class="float-start display-5 me-2"
+                    />
+                    {discoveryError}
+                </p>
+                <div class="text-center">
+                    <Button href={"/providers/" + encodeURIComponent(provider._id)} outline>
+                        {$t("provider.check-config")}
+                    </Button>
+                </div>
+            </ListGroupItem>
+        {:else if noDomainsList}
+            <ListGroupItem class="text-center my-3">
+                {$t("errors.domain-list")}
+            </ListGroupItem>
+        {:else if !importableDomainsList || importableDomainsList.length === 0}
+            <ListGroupItem class="text-center my-3">
+                {$t("errors.domain-have")}
+            </ListGroupItem>
+        {:else if importableDomainsList.length === 0}
+            <ListGroupItem class="text-center my-3">
+                {#if $providersSpecs}
+                    {$t("errors.domain-all-imported", {
+                        provider: $providersSpecs[provider._srctype].name,
+                    })}
+                {/if}
+            </ListGroupItem>
+        {/if}
     {:else}
-        <ZoneList
-            flush
-            domains={importableDomainsList.map((dn) => ({
+        <ListGroup flush>
+            {#each importableDomainsList.map((dn) => ({
                 domain: dn,
                 id_provider: provider._id,
                 wait: false,
-            }))}
-        >
-            <div slot="badges" let:item={domain}>
-                {#if haveDomain($domains_idx, domain.domain)}
-                    <Badge class="ml-1" color="success">
-                        <Icon name="check" />
-                        {$t("onboarding.import.imported")}
-                    </Badge>
-                {:else}
-                    <Button
-                        type="button"
-                        class="ml-1"
-                        color="primary"
-                        size="sm"
-                        disabled={domain.wait || allImportInProgress}
-                        on:click={() => importDomain(domain, false)}
-                    >
-                        {#if domain.wait}
-                            <Spinner size="sm" />
-                        {/if}
-                        {$t("domains.add-now")}
-                    </Button>
-                {/if}
-            </div>
-            <svelte:fragment slot="no-domain">
-                {#if discoveryError}
-                    <ListGroupItem class="mx-2 my-3">
-                        <p class="text-danger">
-                            <Icon
-                                name="exclamation-octagon-fill"
-                                class="float-start display-5 me-2"
-                            />
-                            {discoveryError}
-                        </p>
-                        <div class="text-center">
-                            <Button href={"/providers/" + encodeURIComponent(provider._id)} outline>
-                                {$t("provider.check-config")}
+            })).filter((dn) => dn.domain.indexOf($filteredName) >= 0) as domain}
+                <ListGroupItem class="d-flex justify-content-between align-items-center text-muted">
+                    <DomainWithProvider {domain} />
+                    <div>
+                        {#if haveDomain($domains_idx, domain.domain)}
+                            <Badge class="ml-1" color="success">
+                                <Icon name="check" />
+                                {$t("onboarding.import.imported")}
+                            </Badge>
+                        {:else}
+                            <Button
+                                type="button"
+                                class="ml-1"
+                                color="primary"
+                                size="sm"
+                                disabled={domain.wait || allImportInProgress}
+                                      on:click={() => importDomain(domain, false)}
+                            >
+                                {#if domain.wait}
+                                    <Spinner size="sm" />
+                                {/if}
+                                {$t("domains.add-now")}
                             </Button>
-                        </div>
-                    </ListGroupItem>
-                {:else if noDomainsList}
-                    <ListGroupItem class="text-center my-3">
-                        {$t("errors.domain-list")}
-                    </ListGroupItem>
-                {:else if !importableDomainsList || importableDomainsList.length === 0}
-                    <ListGroupItem class="text-center my-3">
-                        {$t("errors.domain-have")}
-                    </ListGroupItem>
-                {:else if importableDomainsList.length === 0}
-                    <ListGroupItem class="text-center my-3">
-                        {#if $providersSpecs}
-                            {$t("errors.domain-all-imported", {
-                                provider: $providersSpecs[provider._srctype].name,
-                            })}
                         {/if}
-                    </ListGroupItem>
-                {/if}
-            </svelte:fragment>
-        </ZoneList>
+                    </div>
+                </ListGroupItem>
+            {/each}
+            {#if importableDomainsList.filter((dn) => dn.indexOf($filteredName) >= 0).length != importableDomainsList.length}
+                <ListGroupItem
+                    tag="button"
+                    class="text-center text-muted"
+                    on:click={() => $filteredName = ""}
+                >
+                    {$t('domains.and-more-filtered', { count: importableDomainsList.length - importableDomainsList.filter((dn) => dn.indexOf($filteredName) >= 0).length })}
+                </ListGroupItem>
+            {/if}
+            {#if $filteredName && $providersSpecs && $providersSpecs[provider._srctype] && $providersSpecs[provider._srctype].capabilities.indexOf('CreateDomain') >= 0 && !importableDomainsList.filter((dn) => dn == $filteredName).length}
+                <ListGroupItem class="d-flex justify-content-between align-items-center">
+                    <DomainWithProvider class="text-muted fst-italic" domain={{domain: fqdn($filteredName, ""), id_provider: provider._id, wait: false}} />
+                    <div>
+                        <Button
+                            type="button"
+                            class="ml-1"
+                            color="warning"
+                            size="sm"
+                            disabled={createDomainInProgress}
+                            on:click={createDomainOnProvider}
+                        >
+                            {#if createDomainInProgress}
+                                <Spinner size="sm" />
+                            {/if}
+                            {$t("domains.create-on-provider", {provider: provider._comment ? provider._comment : $providersSpecs ? $providersSpecs[provider._srctype].name : ""})}
+                        </Button>
+                    </div>
+                </ListGroupItem>
+            {/if}
+        </ListGroup>
     {/if}
 </Card>

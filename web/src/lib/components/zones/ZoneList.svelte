@@ -24,8 +24,9 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
 
-    import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
-    import HListGroup from "$lib/components/ListGroup.svelte";
+    import { Badge } from "@sveltestrap/sveltestrap";
+    import { ListGroup } from "@sveltestrap/sveltestrap";
+    import DomainWithProvider from "$lib/components/domains/DomainWithProvider.svelte";
     import { domains_idx } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
@@ -75,17 +76,16 @@
     {#if domains.length === 0}
         <slot name="no-domain" />
     {:else}
-        {#each Object.keys(groups) as gname}
+        {#each Object.keys(groups).sort((a,b) => !a || !b ? (!a ? 1 : -1) : a.toLowerCase().localeCompare(b.toLowerCase())) as gname}
             {@const gdomains = groups[gname]}
             <div
-                class:border-top={Object.keys(groups).length != 1}
-                class:mb-4={Object.keys(groups).length != 1}
+                class:mb-2={Object.keys(groups).length != 1}
             >
                 {#if Object.keys(groups).length != 1}
-                    <div class="text-center" style="height: 1em">
+                    <div class="d-flex align-items-center">
+                        <hr class="flex-fill">
                         <h3
-                            class="d-inline-block px-2 bg-light"
-                            style="position: relative; top: -.65em"
+                            class="px-2"
                         >
                             {#if gname === ""}
                                 {$t("domaingroups.no-group")}
@@ -93,26 +93,24 @@
                                 {gname}
                             {/if}
                         </h3>
+                        <hr class="flex-fill">
                     </div>
                 {/if}
-                <HListGroup
-                    {button}
+                <ListGroup
                     {flush}
-                    items={gdomains}
-                    {links}
-                    on:click={(event) => dispatch("click", event.detail)}
-                    let:item
                 >
-                    <div class="d-flex my-1" style="min-width: 0">
-                        <div class="d-inline-block text-center" style="width: 50px;">
-                            <ImgProvider id_provider={item.id_provider} />
-                        </div>
-                        <div class="font-monospace text-truncate flex-shrink-1">
-                            {item.domain}
-                        </div>
-                    </div>
-                    <slot name="badges" {item} />
-                </HListGroup>
+                    {#each gdomains as item}
+                        <svelte:element
+                            this={item.href ? "a" : "button"}
+                            class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-dark"
+                            href={item.href}
+                            on:click={() => dispatch("click", item)}
+                        >
+                            <DomainWithProvider domain={item} />
+                            <Badge color="success">OK</Badge>
+                        </svelte:element>
+                    {/each}
+                </ListGroup>
             </div>
         {/each}
     {/if}
