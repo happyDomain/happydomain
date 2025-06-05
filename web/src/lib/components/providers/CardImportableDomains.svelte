@@ -180,80 +180,82 @@
             <Spinner color="primary" />
             {$t("wait.asking-domains")}
         </div>
-    {:else if importableDomainsList.length == 0}
-        {#if discoveryError}
-            <ListGroupItem class="mx-2 my-3">
-                <p class="text-danger">
-                    <Icon
-                        name="exclamation-octagon-fill"
-                        class="float-start display-5 me-2"
-                    />
-                    {discoveryError}
-                </p>
-                <div class="text-center">
-                    <Button href={"/providers/" + encodeURIComponent(provider._id)} outline>
-                        {$t("provider.check-config")}
-                    </Button>
-                </div>
-            </ListGroupItem>
-        {:else if noDomainsList}
-            <ListGroupItem class="text-center my-3">
-                {$t("errors.domain-list")}
-            </ListGroupItem>
-        {:else if !importableDomainsList || importableDomainsList.length === 0}
-            <ListGroupItem class="text-center my-3">
-                {$t("errors.domain-have")}
-            </ListGroupItem>
-        {:else if importableDomainsList.length === 0}
-            <ListGroupItem class="text-center my-3">
-                {#if $providersSpecs}
-                    {$t("errors.domain-all-imported", {
-                        provider: $providersSpecs[provider._srctype].name,
-                    })}
-                {/if}
-            </ListGroupItem>
-        {/if}
     {:else}
         <ListGroup flush>
-            {#each importableDomainsList.map((dn) => ({
-                domain: dn,
-                id_provider: provider._id,
-                wait: false,
-            })).filter((dn) => dn.domain.indexOf($filteredName) >= 0) as domain}
-                <ListGroupItem class="d-flex justify-content-between align-items-center text-muted">
-                    <DomainWithProvider {domain} />
-                    <div>
-                        {#if haveDomain($domains_idx, domain.domain)}
-                            <Badge class="ml-1" color="success">
-                                <Icon name="check" />
-                                {$t("onboarding.import.imported")}
-                            </Badge>
-                        {:else}
-                            <Button
-                                type="button"
-                                class="ml-1"
-                                color="primary"
-                                size="sm"
-                                disabled={domain.wait || allImportInProgress}
-                                      on:click={() => importDomain(domain, false)}
-                            >
-                                {#if domain.wait}
-                                    <Spinner size="sm" />
-                                {/if}
-                                {$t("domains.add-now")}
+            {#if importableDomainsList.length == 0}
+                {#if discoveryError}
+                    <ListGroupItem class="mx-2 my-3">
+                        <p class="text-danger">
+                            <Icon
+                                name="exclamation-octagon-fill"
+                                class="float-start display-5 me-2"
+                            />
+                            {discoveryError}
+                        </p>
+                        <div class="text-center">
+                            <Button href={"/providers/" + encodeURIComponent(provider._id)} outline>
+                                {$t("provider.check-config")}
                             </Button>
+                        </div>
+                    </ListGroupItem>
+                {:else if noDomainsList}
+                    <ListGroupItem class="text-center my-3">
+                        {$t("errors.domain-list")}
+                    </ListGroupItem>
+                {:else if !importableDomainsList || importableDomainsList.length === 0}
+                    <ListGroupItem class="text-center my-3">
+                        {$t("errors.domain-have")}
+                    </ListGroupItem>
+                {:else if importableDomainsList.length === 0}
+                    <ListGroupItem class="text-center my-3">
+                        {#if $providersSpecs}
+                            {$t("errors.domain-all-imported", {
+                                provider: $providersSpecs[provider._srctype].name,
+                            })}
                         {/if}
-                    </div>
-                </ListGroupItem>
-            {/each}
-            {#if importableDomainsList.filter((dn) => dn.indexOf($filteredName) >= 0).length != importableDomainsList.length}
-                <ListGroupItem
-                    tag="button"
-                    class="text-center text-muted"
-                    on:click={() => $filteredName = ""}
-                >
-                    {$t('domains.and-more-filtered', { count: importableDomainsList.length - importableDomainsList.filter((dn) => dn.indexOf($filteredName) >= 0).length })}
-                </ListGroupItem>
+                    </ListGroupItem>
+                {/if}
+            {:else}
+                {#each importableDomainsList.map((dn) => ({
+                    domain: dn,
+                    id_provider: provider._id,
+                    wait: false,
+                })).filter((dn) => dn.domain.indexOf($filteredName) >= 0) as domain}
+                    <ListGroupItem class="d-flex justify-content-between align-items-center text-muted">
+                        <DomainWithProvider {domain} />
+                        <div>
+                            {#if haveDomain($domains_idx, domain.domain)}
+                                <Badge class="ml-1" color="success">
+                                    <Icon name="check" />
+                                    {$t("onboarding.import.imported")}
+                                </Badge>
+                            {:else}
+                                <Button
+                                    type="button"
+                                    class="ml-1"
+                                    color="primary"
+                                    size="sm"
+                                    disabled={domain.wait || allImportInProgress}
+                                          on:click={() => importDomain(domain, false)}
+                                >
+                                    {#if domain.wait}
+                                        <Spinner size="sm" />
+                                    {/if}
+                                    {$t("domains.add-now")}
+                                </Button>
+                            {/if}
+                        </div>
+                    </ListGroupItem>
+                {/each}
+                {#if importableDomainsList.filter((dn) => dn.indexOf($filteredName) >= 0).length != importableDomainsList.length}
+                    <ListGroupItem
+                        tag="button"
+                        class="text-center text-muted"
+                        on:click={() => $filteredName = ""}
+                    >
+                        {$t('domains.and-more-filtered', { count: importableDomainsList.length - importableDomainsList.filter((dn) => dn.indexOf($filteredName) >= 0).length })}
+                    </ListGroupItem>
+                {/if}
             {/if}
             {#if $filteredName && $providersSpecs && $providersSpecs[provider._srctype] && $providersSpecs[provider._srctype].capabilities.indexOf('CreateDomain') >= 0 && !importableDomainsList.filter((dn) => dn == $filteredName).length}
                 <ListGroupItem class="d-flex justify-content-between align-items-center">
