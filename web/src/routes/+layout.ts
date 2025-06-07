@@ -99,7 +99,7 @@ export const load: Load = async ({ fetch, route, url }) => {
             locale.set(user.settings.language);
         }
     } catch (err) {
-        if (route.id != "/login" && route.id != "/join" && route.id != "/resolver" && route.id != "/providers/features") {
+        if (route.id != "/login" && route.id != "/forgotten-password" && route.id != "/join" && route.id != "/resolver" && route.id != "/providers/features" && !route.id.startsWith("/email-validation")) {
             toasts.addToast({
                 type: 'error',
                 title: get_store_value(t)("errors.session.title"),
