@@ -54,6 +54,7 @@ type Usecases struct {
 	authentication   happydns.AuthenticationUsecase
 	authUser         happydns.AuthUserUsecase
 	domain           happydns.DomainUsecase
+	domainInfo       happydns.DomainInfoUsecase
 	domainLog        happydns.DomainLogUsecase
 	provider         happydns.ProviderUsecase
 	providerAdmin    happydns.ProviderUsecase
@@ -91,6 +92,10 @@ func (a *App) AuthUserUsecase() happydns.AuthUserUsecase {
 
 func (a *App) DomainUsecase() happydns.DomainUsecase {
 	return a.usecases.domain
+}
+
+func (a *App) DomainInfoUsecase() happydns.DomainInfoUsecase {
+	return a.usecases.domainInfo
 }
 
 func (a *App) DomainLogUsecase() happydns.DomainLogUsecase {
@@ -257,6 +262,7 @@ func (app *App) initUsecases() {
 	app.usecases.service = serviceService
 	app.usecases.serviceSpecs = usecase.NewServiceSpecsUsecase()
 	app.usecases.zone = zoneService
+	app.usecases.domainInfo = usecase.NewDomainInfoUsecase()
 	app.usecases.domainLog = domainLogService
 
 	domainService := domainUC.NewDomainUsecases(app.store, providerService.GetProviderUC, zoneService.GetZoneUC, providerService.DomainExistenceUC, domainLogService.CreateDomainLogUC)

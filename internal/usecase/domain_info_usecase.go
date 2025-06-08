@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,25 +19,34 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package happydns
+package usecase
 
-type UsecaseDependancies interface {
-	AuthenticationUsecase() AuthenticationUsecase
-	AuthUserUsecase() AuthUserUsecase
-	DomainUsecase() DomainUsecase
-	DomainInfoUsecase() DomainInfoUsecase
-	DomainLogUsecase() DomainLogUsecase
-	ProviderUsecase(secure bool) ProviderUsecase
-	ProviderSettingsUsecase() ProviderSettingsUsecase
-	ProviderSpecsUsecase() ProviderSpecsUsecase
-	RemoteZoneImporterUsecase() RemoteZoneImporterUsecase
-	ResolverUsecase() ResolverUsecase
-	ServiceUsecase() ServiceUsecase
-	ServiceSpecsUsecase() ServiceSpecsUsecase
-	SessionUsecase() SessionUsecase
-	UserUsecase() UserUsecase
-	ZoneCorrectionApplierUsecase() ZoneCorrectionApplierUsecase
-	ZoneImporterUsecase() ZoneImporterUsecase
-	ZoneServiceUsecase() ZoneServiceUsecase
-	ZoneUsecase() ZoneUsecase
+import (
+	"fmt"
+	"log"
+	"strings"
+
+	"git.happydns.org/happyDomain/internal/adapters"
+	"git.happydns.org/happyDomain/model"
+)
+
+type domainInfoUsecase struct{}
+
+func NewDomainInfoUsecase() happydns.DomainInfoUsecase {
+	return &domainInfoUsecase{}
+}
+
+func (diu *domainInfoUsecase) GetDomainInfo(fqdn happydns.Origin) (*happydns.DomainInfo, error) {
+	domain := happydns.Origin(strings.TrimSuffix(string(fqdn), "."))
+
+	infos, err := adapter.GetDomainRDAPInfo(domain)
+	if err != nil {
+		log.Println("RDAP error:", err)
+		infos, err = adapter.GetDomainWhoisInfo(domain)
+		if err != nil {
+			return nil, fmt.Errorf("unable to retrieve RDAP/WHOIS info about the domain name: %w", err)
+		}
+	}
+
+	return infos, nil
 }
