@@ -32,6 +32,7 @@ import (
 
 	api "git.happydns.org/happyDomain/internal/api/route"
 	"git.happydns.org/happyDomain/internal/captcha"
+	"git.happydns.org/happyDomain/pkg/domaininfo"
 	"git.happydns.org/happyDomain/internal/mailer"
 	"git.happydns.org/happyDomain/internal/newsletter"
 	"git.happydns.org/happyDomain/internal/session"
@@ -60,6 +61,7 @@ type Usecases struct {
 	checkResult      happydns.CheckResultUsecase
 	checkerSchedule  happydns.CheckerScheduleUsecase
 	domain           happydns.DomainUsecase
+	domainInfo       happydns.DomainInfoUsecase
 	domainLog        happydns.DomainLogUsecase
 	provider         happydns.ProviderUsecase
 	providerAdmin    happydns.ProviderUsecase
@@ -227,6 +229,10 @@ func (app *App) initUsecases() {
 	app.usecases.service = serviceService
 	app.usecases.serviceSpecs = usecase.NewServiceSpecsUsecase()
 	app.usecases.zone = zoneService
+	app.usecases.domainInfo = usecase.NewDomainInfoUsecase(
+		domaininfo.GetDomainRDAPInfo,
+		domaininfo.GetDomainWhoisInfo,
+	)
 	app.usecases.domainLog = domainLogService
 
 	domainService := domainUC.NewService(app.store, providerAdminService, zoneService.GetZoneUC, providerAdminService, domainLogService)
@@ -283,6 +289,7 @@ func (app *App) setupRouter() {
 		CheckerSchedule:       app.usecases.checkerSchedule,
 		CheckScheduler:        app.checkScheduler,
 		Domain:                app.usecases.domain,
+		DomainInfo:            app.usecases.domainInfo,
 		DomainLog:             app.usecases.domainLog,
 		FailureTracker:        app.failureTracker,
 		Provider:              app.usecases.provider,
