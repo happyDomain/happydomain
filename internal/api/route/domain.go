@@ -29,7 +29,21 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareDomainRoutes(router *gin.RouterGroup, domainUC happydns.DomainUsecase, domainLogUC happydns.DomainLogUsecase, remoteZoneImporter happydns.RemoteZoneImporterUsecase, zoneImporter happydns.ZoneImporterUsecase, zoneUC happydns.ZoneUsecase, zoneCorrApplier happydns.ZoneCorrectionApplierUsecase, zoneServiceUC happydns.ZoneServiceUsecase, serviceUC happydns.ServiceUsecase, checkerUC happydns.CheckerUsecase, checkResultUC happydns.CheckResultUsecase, checkScheduler happydns.SchedulerUsecase) {
+func DeclareDomainRoutes(
+	router *gin.RouterGroup,
+	domainUC happydns.DomainUsecase,
+	domainLogUC happydns.DomainLogUsecase,
+	remoteZoneImporter happydns.RemoteZoneImporterUsecase,
+	zoneImporter happydns.ZoneImporterUsecase,
+	zoneUC happydns.ZoneUsecase,
+	zoneCorrApplier happydns.ZoneCorrectionApplierUsecase,
+	zoneServiceUC happydns.ZoneServiceUsecase,
+	serviceUC happydns.ServiceUsecase,
+	checkerUC happydns.CheckerUsecase,
+	checkResultUC happydns.CheckResultUsecase,
+	checkScheduler happydns.SchedulerUsecase,
+	domainInfoUC happydns.DomainInfoUsecase,
+) {
 	dc := controller.NewDomainController(
 		domainUC,
 		remoteZoneImporter,
@@ -47,6 +61,7 @@ func DeclareDomainRoutes(router *gin.RouterGroup, domainUC happydns.DomainUsecas
 	apiDomainsRoutes.PUT("", dc.UpdateDomain)
 	apiDomainsRoutes.DELETE("", dc.DelDomain)
 
+	DeclareDomainInfoRoutes(apiDomainsRoutes.Group("/info"), domainInfoUC)
 	DeclareDomainLogRoutes(apiDomainsRoutes, domainLogUC)
 
 	// Declare test result routes for domain scope
