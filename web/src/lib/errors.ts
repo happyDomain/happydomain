@@ -43,18 +43,8 @@ export async function handleEmptyApiResponse(res: Response): Promise<boolean> {
     return handleApiResponse<boolean>(res);
 }
 
-export async function handleApiResponse<T>(res: Response): Promise<T> {
-    if (res.status == 401) {
-        try {
-            await refreshUserSession();
-        } catch (err) {
-            if (err instanceof Error) {
-                throw new NotAuthorizedError(err.message);
-            } else {
-                throw err;
-            }
-        }
-    } else if (!res.ok) {
+export async function handleAuthApiResponse<T>(res: Response): Promise<T> {
+    if (!res.ok) {
         const data = await res.json();
 
         if (data.errmsg) {
@@ -67,6 +57,24 @@ export async function handleApiResponse<T>(res: Response): Promise<T> {
         } else {
             throw new Error("A " + res.status + " error occurs.");
         }
+    }
+
+    return (await res.json()) as T;
+}
+
+export async function handleApiResponse<T>(res: Response): Promise<T> {
+    if (res.status == 401) {
+        try {
+            await refreshUserSession();
+        } catch (err) {
+            if (err instanceof Error) {
+                throw new NotAuthorizedError(err.message);
+            } else {
+                throw err;
+            }
+        }
+    } else {
+        return handleAuthApiResponse<T>(res);
     }
 
     return (await res.json()) as T;

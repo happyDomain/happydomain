@@ -19,7 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { handleEmptyApiResponse, handleApiResponse } from "$lib/errors";
+import { handleEmptyApiResponse, handleApiResponse, handleAuthApiResponse } from "$lib/errors";
 import type { UserSettings } from "$lib/model/usersettings";
 import type { User, SignUpForm, LoginForm } from "$lib/model/user";
 
@@ -38,7 +38,7 @@ export async function authUser(form: LoginForm): Promise<User> {
         headers: { Accept: "application/json" },
         body: JSON.stringify(form),
     });
-    return await handleApiResponse<User>(res);
+    return await handleAuthApiResponse<User>(res);
 }
 
 export async function logout(): Promise<boolean> {
