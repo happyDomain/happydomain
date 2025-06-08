@@ -59,6 +59,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, dependancies happy
 
 	lc := DeclareAuthenticationRoutes(cfg, baseRoutes, apiRoutes, dependancies)
 	auc := DeclareAuthUserRoutes(apiRoutes, dependancies, lc)
+	DeclareDomainInfoRoutes(apiRoutes.Group("/domaininfo/:domain"), dependancies)
 	DeclareProviderSpecsRoutes(apiRoutes, dependancies)
 	DeclareRegistrationRoutes(apiRoutes, dependancies)
 	DeclareResolverRoutes(apiRoutes, dependancies)

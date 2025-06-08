@@ -13,8 +13,11 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/gorilla/securecookie v1.1.2
 	github.com/gorilla/sessions v1.4.0
+	github.com/likexian/whois v1.15.6
+	github.com/likexian/whois-parser v1.24.20
 	github.com/miekg/dns v1.1.66
 	github.com/mileusna/useragent v1.3.5
+	github.com/openrdap/rdap v0.9.1
 	github.com/ovh/go-ovh v1.8.0
 	github.com/rrivera/identicon v0.0.0-20240116195454-d5ba35832c0d
 	github.com/swaggo/swag v1.16.4
@@ -42,6 +45,8 @@ require (
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/akamai/AkamaiOPEN-edgegrid-golang v1.2.2 // indirect
+	github.com/alecthomas/kingpin/v2 v2.3.2 // indirect
+	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
 	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.30.4 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.27.31 // indirect
@@ -107,6 +112,7 @@ require (
 	github.com/kolo/xmlrpc v0.0.0-20220921171641-a4b6fa1dd06b // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
+	github.com/likexian/gokit v0.25.15 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -139,6 +145,7 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/vultr/govultr/v2 v2.17.2 // indirect
+	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0 // indirect
 	go.opentelemetry.io/otel v1.24.0 // indirect

@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -21,23 +21,27 @@
 
 package happydns
 
-type UsecaseDependancies interface {
-	AuthenticationUsecase() AuthenticationUsecase
-	AuthUserUsecase() AuthUserUsecase
-	DomainUsecase() DomainUsecase
-	DomainInfoUsecase() DomainInfoUsecase
-	DomainLogUsecase() DomainLogUsecase
-	ProviderUsecase(secure bool) ProviderUsecase
-	ProviderSettingsUsecase() ProviderSettingsUsecase
-	ProviderSpecsUsecase() ProviderSpecsUsecase
-	RemoteZoneImporterUsecase() RemoteZoneImporterUsecase
-	ResolverUsecase() ResolverUsecase
-	ServiceUsecase() ServiceUsecase
-	ServiceSpecsUsecase() ServiceSpecsUsecase
-	SessionUsecase() SessionUsecase
-	UserUsecase() UserUsecase
-	ZoneCorrectionApplierUsecase() ZoneCorrectionApplierUsecase
-	ZoneImporterUsecase() ZoneImporterUsecase
-	ZoneServiceUsecase() ZoneServiceUsecase
-	ZoneUsecase() ZoneUsecase
+import (
+	"errors"
+	"time"
+)
+
+var (
+	DomainDoesNotExist = errors.New("domain name doesn't exist")
+)
+
+type DomainInfo struct {
+	Name           string     `json:"name"`
+	Nameservers    []string   `json:"nameservers"`
+	CreationDate   *time.Time `json:"creation"`
+	ExpirationDate *time.Time `json:"expiration"`
+	Registrar      string     `json:"registrar"`
+	RegistrarURL   *string    `json:"registrar_url"`
+	Status         []string   `json:"status"`
+}
+
+type DomainInfoGetter func(Origin) (*DomainInfo, error)
+
+type DomainInfoUsecase interface {
+	GetDomainInfo(Origin) (*DomainInfo, error)
 }
