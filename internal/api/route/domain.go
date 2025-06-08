@@ -46,6 +46,7 @@ func DeclareDomainRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseD
 	apiDomainsRoutes.PUT("", dc.UpdateDomain)
 	apiDomainsRoutes.DELETE("", dc.DelDomain)
 
+	DeclareDomainInfoRoutes(apiDomainsRoutes.Group("/info"), dependancies)
 	DeclareDomainLogRoutes(apiDomainsRoutes, dependancies)
 
 	apiDomainsRoutes.POST("/zone", dc.ImportZone)
