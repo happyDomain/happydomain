@@ -42,6 +42,7 @@ func DeclareDomainRoutes(
 	checkerUC happydns.CheckerUsecase,
 	checkResultUC happydns.CheckResultUsecase,
 	checkScheduler happydns.SchedulerUsecase,
+	domainInfoUC happydns.DomainInfoUsecase,
 	tpc *controller.CheckerController,
 ) {
 	dc := controller.NewDomainController(
@@ -61,6 +62,7 @@ func DeclareDomainRoutes(
 	apiDomainsRoutes.PUT("", dc.UpdateDomain)
 	apiDomainsRoutes.DELETE("", dc.DelDomain)
 
+	DeclareDomainInfoRoutes(apiDomainsRoutes.Group("/info"), domainInfoUC)
 	DeclareDomainLogRoutes(apiDomainsRoutes, domainLogUC)
 
 	// Declare test result routes for domain scope
