@@ -39,6 +39,7 @@ type Dependencies struct {
 	CheckerSchedule       happydns.CheckerScheduleUsecase
 	CheckScheduler        happydns.SchedulerUsecase
 	Domain                happydns.DomainUsecase
+	DomainInfo            happydns.DomainInfoUsecase
 	DomainLog             happydns.DomainLogUsecase
 	FailureTracker        happydns.FailureTracker
 	Provider              happydns.ProviderUsecase
@@ -85,6 +86,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 
 	lc := DeclareAuthenticationRoutes(cfg, baseRoutes, apiRoutes, dep.Authentication, dep.CaptchaVerifier, dep.FailureTracker)
 	auc := DeclareAuthUserRoutes(apiRoutes, dep.AuthUser, lc)
+	DeclareDomainInfoRoutes(apiRoutes.Group("/domaininfo/:domain"), dep.DomainInfo)
 	DeclareProviderSpecsRoutes(apiRoutes, dep.ProviderSpecs)
 	DeclareRegistrationRoutes(apiRoutes, dep.AuthUser, dep.CaptchaVerifier)
 	DeclareResolverRoutes(apiRoutes, dep.Resolver)
@@ -104,7 +106,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 
 	DeclareAuthenticationCheckRoutes(apiAuthRoutes, lc)
 	DeclareChecksRoutes(apiAuthRoutes, dep.Checker)
-	DeclareDomainRoutes(apiAuthRoutes, dep.Domain, dep.DomainLog, dep.RemoteZoneImporter, dep.ZoneImporter, dep.Zone, dep.ZoneCorrectionApplier, dep.ZoneService, dep.Service, dep.Checker, dep.CheckResult, dep.CheckerSchedule, dep.CheckScheduler)
+	DeclareDomainRoutes(apiAuthRoutes, dep.Domain, dep.DomainLog, dep.RemoteZoneImporter, dep.ZoneImporter, dep.Zone, dep.ZoneCorrectionApplier, dep.ZoneService, dep.Service, dep.Checker, dep.CheckResult, dep.CheckerSchedule, dep.CheckScheduler, dep.DomainInfo)
 	DeclareProviderRoutes(apiAuthRoutes, dep.Provider)
 	DeclareProviderSettingsRoutes(apiAuthRoutes, dep.ProviderSettings)
 	DeclareRecordRoutes(apiAuthRoutes)
