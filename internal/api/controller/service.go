@@ -149,7 +149,7 @@ func (sc *ServiceController) GetServiceRecords(c *gin.Context) {
 		return
 	}
 
-	rrs, err := sc.suService.GetRecords(domain, zone, svc)
+	rrs, err := sc.suService.ListRecords(domain, zone, svc)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

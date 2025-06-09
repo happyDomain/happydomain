@@ -94,6 +94,6 @@ type ServiceRecord struct {
 }
 
 type ServiceUsecase interface {
-	GetRecords(*Domain, *Zone, *Service) ([]Record, error)
+	ListRecords(*Domain, *Zone, *Service) ([]Record, error)
 	ValidateService(ServiceBody, Subdomain, Origin) ([]byte, error)
 }

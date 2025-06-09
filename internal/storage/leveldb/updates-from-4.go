@@ -53,7 +53,7 @@ func migrateFrom4_orphanrecords(s *LevelDBStorage) (err error) {
 		}
 
 		var zone *happydns.Zone
-		zone, err = zoneUC.NewZoneUsecases(s).GetZone(id)
+		zone, err = zoneUC.NewZoneUsecases(s, nil).GetZone(id)
 		if err != nil {
 			return fmt.Errorf("%s: %w", iter.Key(), err)
 		}
