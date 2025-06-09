@@ -22,6 +22,7 @@
 package zone
 
 import (
+	"git.happydns.org/happyDomain/internal/usecase/service"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -34,9 +35,9 @@ type Service struct {
 	UpdateZoneUC  *UpdateZoneUsecase
 }
 
-func NewZoneUsecases(store ZoneStorage) *Service {
+func NewZoneUsecases(store ZoneStorage, serviceUC *service.Service) *Service {
 	getZone := NewGetZoneUsecase(store)
-	listRecords := NewListRecordsUsecase()
+	listRecords := NewListRecordsUsecase(serviceUC.ListRecordsUC)
 
 	return &Service{
 		CreateZoneUC:  NewCreateZoneUsecase(store),

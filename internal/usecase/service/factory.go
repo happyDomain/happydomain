@@ -26,19 +26,19 @@ import (
 )
 
 type Service struct {
-	GetRecordsUC      *GetRecordsUsecase
+	ListRecordsUC     *ListRecordsUsecase
 	ValidateServiceUC *ValidateServiceUsecase
 }
 
 func NewServiceUsecases() *Service {
 	return &Service{
-		GetRecordsUC:      NewGetRecordsUsecase(),
+		ListRecordsUC:     NewListRecordsUsecase(),
 		ValidateServiceUC: NewValidateServiceUsecase(),
 	}
 }
 
-func (s *Service) GetRecords(domain *happydns.Domain, zone *happydns.Zone, service *happydns.Service) ([]happydns.Record, error) {
-	return s.GetRecordsUC.List(domain, zone, service)
+func (s *Service) ListRecords(domain *happydns.Domain, zone *happydns.Zone, service *happydns.Service) ([]happydns.Record, error) {
+	return s.ListRecordsUC.List(domain, zone, service)
 }
 
 func (s *Service) ValidateService(body happydns.ServiceBody, subdomain happydns.Subdomain, origin happydns.Origin) ([]byte, error) {
