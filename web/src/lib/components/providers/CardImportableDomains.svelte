@@ -38,7 +38,7 @@
     import { addDomain } from "$lib/api/domains";
     import { createDomain, listImportableDomains } from "$lib/api/provider";
     import DomainWithProvider from "$lib/components/domains/DomainWithProvider.svelte";
-    import { fqdn, fqdnCompare } from "$lib/dns";
+    import { fqdn, fqdnCompare, validateDomain } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { Provider } from "$lib/model/provider";
     import { filteredName } from '$lib/stores/home';
@@ -266,7 +266,7 @@
                             class="ml-1"
                             color="warning"
                             size="sm"
-                            disabled={createDomainInProgress}
+                            disabled={createDomainInProgress || !validateDomain($filteredName)}
                             on:click={createDomainOnProvider}
                         >
                             {#if createDomainInProgress}
