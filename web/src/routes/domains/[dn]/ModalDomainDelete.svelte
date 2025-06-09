@@ -30,7 +30,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
 
-    import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from "@sveltestrap/sveltestrap";
+    import { Button, Modal, ModalBody, ModalFooter, ModalHeader, Spinner } from "@sveltestrap/sveltestrap";
 
     import { viewZone as APIViewZone } from "$lib/api/zone";
     import { t } from "$lib/translations";
@@ -38,13 +38,21 @@
     const dispatch = createEventDispatcher();
 
     export let isOpen = false;
+    let inProgress = false;
 
     function Open(): void {
         isOpen = true;
+        inProgress = false;
     }
 
     function toggle(): void {
         isOpen = !isOpen;
+        inProgress = false;
+    }
+
+    function submit(): void {
+        inProgress = true;
+        dispatch("detachDomain");
     }
 
     controls.Open = Open;
@@ -56,10 +64,22 @@
         {$t("domains.alert.remove")}
     </ModalBody>
     <ModalFooter>
-        <Button outline color="secondary" on:click={() => (isOpen = false)}>
+        <Button
+            outline
+            color="secondary"
+            disabled={inProgress}
+            on:click={() => (isOpen = false)}
+        >
             {$t("domains.view.cancel-title")}
         </Button>
-        <Button color="danger" on:click={() => dispatch("detachDomain")}>
+        <Button
+            color="danger"
+            disabled={inProgress}
+            on:click={submit}
+        >
+            {#if inProgress}
+                <Spinner size="sm" />
+            {/if}
             {$t("domains.discard")}
         </Button>
     </ModalFooter>
