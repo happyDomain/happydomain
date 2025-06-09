@@ -28,7 +28,7 @@
 
     import type { Domain } from "$lib/model/domain";
     import { retrieveZone } from "$lib/stores/thiszone";
-    import { domains_idx } from "$lib/stores/domains";
+    import { domains_idx, refreshDomains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
     export let data: { domain: Domain };
@@ -36,8 +36,12 @@
     let rz = retrieveZone(data.domain);
     rz.then(
         () => {
-            goto(
-                `/domains/${encodeURIComponent($domains_idx[data.domain.domain] ? data.domain.domain : data.domain.id)}`,
+            refreshDomains().then(
+                () => {
+                    goto(
+                        `/domains/${encodeURIComponent($domains_idx[data.domain.domain] ? data.domain.domain : data.domain.id)}`,
+                    );
+                },
             );
         },
         (e) => {},

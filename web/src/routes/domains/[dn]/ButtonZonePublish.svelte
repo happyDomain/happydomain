@@ -54,8 +54,8 @@
     }
 </script>
 
-{#if $domains_idx[domain.domain]}
-    {#if $domains_idx[domain.domain].zone_history && history === $domains_idx[domain.domain].zone_history[0]}
+{#if $domains_idx[domain.id] && $thisZone}
+    {#if $domains_idx[domain.id].zone_history && history === $domains_idx[domain.id].zone_history[0]}
         {#key $thisZone}
             {#await APIDiffZone(domain, "@", $thisZone.id)}
                 <Button

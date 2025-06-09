@@ -24,7 +24,6 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { page } from "$app/stores";
-    import { onDestroy } from "svelte";
 
     import { Spinner } from "@sveltestrap/sveltestrap";
 
@@ -37,41 +36,27 @@
 
     export let data: { domain: Domain; history: string; definedhistory: bool };
 
-    let selectedDomain = data.domain.domain;
-    let selectedHistory: string | undefined;
-    $: selectedHistory = data.history;
-    $: if (
-        !data.history &&
-        $domains_idx[selectedDomain] &&
-        $domains_idx[selectedDomain].zone_history &&
-        $domains_idx[selectedDomain].zone_history.length > 0
-    ) {
-        selectedHistory = $domains_idx[selectedDomain].zone_history[0] as string;
-    }
-    $: if (selectedHistory && data.history != selectedHistory) {
-        goto(
-            "/domains/" +
-                encodeURIComponent(selectedDomain) +
-                "/" +
-                encodeURIComponent(selectedHistory),
-        );
-    }
-
-    const unsubscribe = thisZone.subscribe(async (zone) => {
-        if (zone != null && zone.id != selectedHistory) {
-            if (
-                !$domains_idx[selectedDomain] ||
-                $domains_idx[selectedDomain].zone_history.indexOf(zone.id) == -1
-            ) {
-                await refreshDomains();
-            }
-            selectedHistory = zone.id;
+    let selectedDomain = data.domain.id;
+    let selectedHistory: string = data.history;
+    $: historyChange(selectedHistory);
+    $: historyChange(data.history);
+    function historyChange(history) {
+        if (data.history != history) {
+            goto(
+                "/domains/" +
+                    encodeURIComponent(
+                        $domains_idx[data.domain.domain]
+                            ? $domains_idx[data.domain.domain].domain
+                            : selectedDomain,
+                    ) +
+                    "/" +
+                    encodeURIComponent(selectedHistory),
+            );
         }
-    });
-
-    onDestroy(() => {
-        unsubscribe();
-    });
+        if (history != selectedHistory) {
+            selectedHistory = history;
+        }
+    }
 </script>
 
 {#if $thisZone && $thisZone.id == selectedHistory}

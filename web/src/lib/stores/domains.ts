@@ -69,6 +69,24 @@ export const domains_idx = derived(domains, ($domains: null | Array<Domain>) => 
     return idx;
 });
 
+export const domains_by_name = derived(domains, ($domains: null | Array<Domain>) => {
+    const idx: Record<string, Array<Domain>> = {};
+
+    if ($domains) {
+        for (const d of $domains) {
+            idx[d.id] = d;
+
+            if (idx[d.domain]) {
+                idx[d.domain].push(d);
+            } else {
+                idx[d.domain] = [d];
+            }
+        }
+    }
+
+    return idx;
+});
+
 export const domains_by_groups = derived(domains, ($domains: null | Array<Domain>) => {
     const groups: Record<string, Array<Domain>> = {};
 
