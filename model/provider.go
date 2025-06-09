@@ -124,6 +124,7 @@ func (p *Provider) Meta() *ProviderMeta {
 
 type ProviderUsecase interface {
 	CreateProvider(*User, *ProviderMessage) (*Provider, error)
+	CreateDomainOnProvider(*Provider, string) error
 	DeleteProvider(*User, Identifier) error
 	GetUserProvider(*User, Identifier) (*Provider, error)
 	GetUserProviderMeta(*User, Identifier) (*ProviderMeta, error)
