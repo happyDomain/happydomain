@@ -53,12 +53,12 @@
     let discoveryError: string | null = null;
     export let noDomainsList = false;
 
-    $: {
+    function refreshDomainList(provider) {
         importableDomainsList = null;
         discoveryError = null;
-        noDomainsList = false;
         listImportableDomains(provider).then(
             (l) => {
+                noDomainsList = false;
                 if (l === null) {
                     importableDomainsList = [];
                 } else {
@@ -71,12 +71,14 @@
                 if (err.name == "ProviderNoDomainListingSupport") {
                     noDomainsList = true;
                 } else {
+                    noDomainsList = false;
                     discoveryError = err.message;
                     throw err;
                 }
             },
         );
     }
+    $: refreshDomainList(provider);
 
     function haveDomain($domains_idx: Record<string, Domain>, name: string) {
         let domain: Domain | undefined = undefined;
@@ -132,6 +134,7 @@
         try {
             await createDomain(provider, fqdn($filteredName, ""))
             await importDomain({ domain: fqdn($filteredName, ""), wait: false })
+            refreshDomainList(provider);
             createDomainInProgress = false;
         } catch (err) {
             createDomainInProgress = false;
