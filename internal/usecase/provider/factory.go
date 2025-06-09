@@ -26,15 +26,16 @@ import (
 )
 
 type Service struct {
-	CreateProviderUC    *CreateProviderUsecase
-	DeleteProviderUC    *DeleteProviderUsecase
-	UpdateProviderUC    *UpdateProviderUsecase
-	ListHostedDomainsUC *ListHostedDomainsUsecase
-	GetProviderUC       *GetProviderUsecase
-	ListProvidersUC     *ListProvidersUsecase
-	RetrieveZoneUC      *ZoneRetrieverUsecase
-	ZoneCorrectionsUC   *ZoneCorrectorUsecase
-	DomainExistenceUC   *DomainExistenceUsecase
+	CreateProviderUC         *CreateProviderUsecase
+	CreateDomainOnProviderUC *CreateDomainOnProviderUsecase
+	DeleteProviderUC         *DeleteProviderUsecase
+	UpdateProviderUC         *UpdateProviderUsecase
+	ListHostedDomainsUC      *ListHostedDomainsUsecase
+	GetProviderUC            *GetProviderUsecase
+	ListProvidersUC          *ListProvidersUsecase
+	RetrieveZoneUC           *ZoneRetrieverUsecase
+	ZoneCorrectionsUC        *ZoneCorrectorUsecase
+	DomainExistenceUC        *DomainExistenceUsecase
 }
 
 func NewProviderUsecases(store ProviderStorage) *Service {
@@ -42,20 +43,25 @@ func NewProviderUsecases(store ProviderStorage) *Service {
 	validator := &DefaultProviderValidator{}
 
 	return &Service{
-		CreateProviderUC:    NewCreateProviderUsecase(store, validator),
-		DeleteProviderUC:    NewDeleteProviderUsecase(store),
-		UpdateProviderUC:    NewUpdateProviderUsecase(store, getProvider, validator),
-		ListHostedDomainsUC: NewListHostedDomainsUsecase(),
-		GetProviderUC:       getProvider,
-		ListProvidersUC:     NewListProvidersUsecase(store),
-		RetrieveZoneUC:      NewZoneRetrieverUsecase(),
-		ZoneCorrectionsUC:   NewZoneCorrectorUsecase(),
-		DomainExistenceUC:   NewDomainExistenceUsecase(),
+		CreateProviderUC:         NewCreateProviderUsecase(store, validator),
+		CreateDomainOnProviderUC: NewCreateDomainOnProviderUsecase(),
+		DeleteProviderUC:         NewDeleteProviderUsecase(store),
+		UpdateProviderUC:         NewUpdateProviderUsecase(store, getProvider, validator),
+		ListHostedDomainsUC:      NewListHostedDomainsUsecase(),
+		GetProviderUC:            getProvider,
+		ListProvidersUC:          NewListProvidersUsecase(store),
+		RetrieveZoneUC:           NewZoneRetrieverUsecase(),
+		ZoneCorrectionsUC:        NewZoneCorrectorUsecase(),
+		DomainExistenceUC:        NewDomainExistenceUsecase(),
 	}
 }
 
 func (s *Service) CreateProvider(user *happydns.User, msg *happydns.ProviderMessage) (*happydns.Provider, error) {
 	return s.CreateProviderUC.Create(user, msg)
+}
+
+func (s *Service) CreateDomainOnProvider(provider *happydns.Provider, fqdn string) error {
+	return s.CreateDomainOnProviderUC.Create(provider, fqdn)
 }
 
 func (s *Service) DeleteProvider(user *happydns.User, providerID happydns.Identifier) error {
@@ -117,6 +123,14 @@ func (s *RestrictedService) CreateProvider(user *happydns.User, msg *happydns.Pr
 	}
 
 	return s.Service.CreateProvider(user, msg)
+}
+
+func (s *RestrictedService) CreateDomainOnProvider(provider *happydns.Provider, fqdn string) error {
+	if s.config.DisableProviders {
+		return happydns.ForbiddenError{Msg: "cannot create domain on provider as DisableProviders parameter is set."}
+	}
+
+	return s.Service.CreateDomainOnProvider(provider, fqdn)
 }
 
 func (s *RestrictedService) DeleteProvider(user *happydns.User, providerID happydns.Identifier) error {
