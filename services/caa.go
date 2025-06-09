@@ -179,7 +179,7 @@ func (analyzed *CAAFields) Analyze(flag uint8, tag, value string) error {
 		if value == ";" {
 			analyzed.DisallowMailIssue = true
 		} else {
-			analyzed.IssueMail = append(analyzed.Issue, parseIssueValue(value))
+			analyzed.IssueMail = append(analyzed.IssueMail, parseIssueValue(value))
 		}
 	}
 
