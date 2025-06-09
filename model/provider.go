@@ -127,6 +127,7 @@ type ProviderUsecase interface {
 	DeleteProvider(*User, Identifier) error
 	GetUserProvider(*User, Identifier) (*Provider, error)
 	GetUserProviderMeta(*User, Identifier) (*ProviderMeta, error)
+	ListHostedDomains(*Provider) ([]string, error)
 	ListUserProviders(*User) ([]*ProviderMeta, error)
 	ListZoneCorrections(provider *Provider, domain *Domain, records []Record) ([]*Correction, error)
 	RetrieveZone(*Provider, string) ([]Record, error)

@@ -220,20 +220,9 @@ func (pc *ProviderController) DeleteProvider(c *gin.Context) {
 func (pc *ProviderController) GetDomainsHostedByProvider(c *gin.Context) {
 	provider := c.MustGet("provider").(*happydns.Provider)
 
-	p, err := provider.InstantiateProvider()
+	domains, err := pc.providerService.ListHostedDomains(provider)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to instantiate the provider: %s", err.Error())})
-		return
-	}
-
-	if !p.CanListZones() {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": "Provider doesn't support domain listing."})
-		return
-	}
-
-	domains, err := p.ListZones()
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}
 
