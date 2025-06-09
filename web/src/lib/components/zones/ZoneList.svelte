@@ -46,12 +46,14 @@
     export let domains: Array<ZoneListDomain> = [];
 
     let groups: Record<string, Array<ZoneListDomain>> = {};
+    let draggedItem: ZoneListDomain | null = null;
+
     $: {
         if (!display_by_groups) {
             groups = { "": domains };
         }
 
-        const tmp: Record<string, Array<ZoneListDomain>> = {};
+        const tmp: Record<string, Array<ZoneListDomain>> = { };
 
         for (const domain of domains) {
             if (!domain.group) domain.group = "";
@@ -70,6 +72,26 @@
 
         groups = tmp;
     }
+
+    function handleDragStart(event: DragEvent, item: ZoneListDomain) {
+        console.log("test drag start")
+        draggedItem = item;
+        event.dataTransfer?.setData('text/plain', item.domain);
+    }
+
+    function handleDrop(event: DragEvent, groupName: string) {
+        console.log("drop")
+        event.preventDefault();
+        if (draggedItem) {
+            draggedItem.group = groupName;
+            // Update the groups
+            groups = { ...groups };
+        }
+    }
+
+    function handleDragOver(event: DragEvent) {
+        event.preventDefault();
+    }
 </script>
 
 <div {...$$restProps}>
@@ -80,6 +102,8 @@
             {@const gdomains = groups[gname]}
             <div
                 class:mb-2={Object.keys(groups).length != 1}
+                on:drop|preventDefault={(event) => handleDrop(event, gname)}
+                on:dragover|preventDefault={handleDragOver}
             >
                 {#if Object.keys(groups).length != 1}
                     <div class="d-flex align-items-center">
@@ -105,6 +129,8 @@
                             class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-dark"
                             href={item.href}
                             on:click={() => dispatch("click", item)}
+                            draggable={true}
+                            on:dragstart={(event) => handleDragStart(event, item)}
                         >
                             <DomainWithProvider domain={item} />
                             <Badge color="success">OK</Badge>
