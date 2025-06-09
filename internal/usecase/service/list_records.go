@@ -25,13 +25,13 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-type GetRecordsUsecase struct{}
+type ListRecordsUsecase struct{}
 
-func NewGetRecordsUsecase() *GetRecordsUsecase {
-	return &GetRecordsUsecase{}
+func NewListRecordsUsecase() *ListRecordsUsecase {
+	return &ListRecordsUsecase{}
 }
 
-func (uc *GetRecordsUsecase) List(domain *happydns.Domain, zone *happydns.Zone, svc *happydns.Service) ([]happydns.Record, error) {
+func (uc *ListRecordsUsecase) List(domain *happydns.Domain, zone *happydns.Zone, svc *happydns.Service) ([]happydns.Record, error) {
 	ttl := zone.DefaultTTL
 	if svc.Ttl != 0 {
 		ttl = svc.Ttl

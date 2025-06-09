@@ -26,13 +26,18 @@ import (
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/usecase/service"
 	"git.happydns.org/happyDomain/model"
 )
 
-type ListRecordsUsecase struct{}
+type ListRecordsUsecase struct {
+	serviceListRecordsUC *service.ListRecordsUsecase
+}
 
-func NewListRecordsUsecase() *ListRecordsUsecase {
-	return &ListRecordsUsecase{}
+func NewListRecordsUsecase(serviceListRecordsUC *service.ListRecordsUsecase) *ListRecordsUsecase {
+	return &ListRecordsUsecase{
+		serviceListRecordsUC: serviceListRecordsUC,
+	}
 }
 
 func (uc *ListRecordsUsecase) ToZoneFile(domain *happydns.Domain, zone *happydns.Zone) (string, error) {
@@ -55,22 +60,9 @@ func (uc *ListRecordsUsecase) ToZoneFile(domain *happydns.Domain, zone *happydns
 func (uc *ListRecordsUsecase) List(domain *happydns.Domain, zone *happydns.Zone) (rrs []happydns.Record, err error) {
 	var svc_rrs []happydns.Record
 
-	for subdomain, svcs := range zone.Services {
-		if subdomain == "" || subdomain == "@" {
-			subdomain = happydns.Subdomain(domain.DomainName)
-		} else {
-			subdomain += happydns.Subdomain("." + domain.DomainName)
-		}
-
+	for _, svcs := range zone.Services {
 		for _, svc := range svcs {
-			var ttl uint32
-			if svc.Ttl == 0 {
-				ttl = zone.DefaultTTL
-			} else {
-				ttl = svc.Ttl
-			}
-
-			svc_rrs, err = svc.Service.GetRecords(string(subdomain), ttl, domain.DomainName)
+			svc_rrs, err = uc.serviceListRecordsUC.List(domain, zone, svc)
 			if err != nil {
 				return
 			}
