@@ -49,7 +49,7 @@ export async function handleAuthApiResponse<T>(res: Response): Promise<T> {
 
         if (data.errmsg) {
             switch (data.errmsg) {
-                case "Provider doesn't support domain listing.":
+                case "the provider doesn't support domain listing":
                     throw new ProviderNoDomainListingSupport(data.errmsg);
                 default:
                     throw new Error(data.errmsg);

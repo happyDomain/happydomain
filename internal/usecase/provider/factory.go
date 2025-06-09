@@ -26,14 +26,15 @@ import (
 )
 
 type Service struct {
-	CreateProviderUC  *CreateProviderUsecase
-	DeleteProviderUC  *DeleteProviderUsecase
-	UpdateProviderUC  *UpdateProviderUsecase
-	GetProviderUC     *GetProviderUsecase
-	ListProvidersUC   *ListProvidersUsecase
-	RetrieveZoneUC    *ZoneRetrieverUsecase
-	ZoneCorrectionsUC *ZoneCorrectorUsecase
-	DomainExistenceUC *DomainExistenceUsecase
+	CreateProviderUC    *CreateProviderUsecase
+	DeleteProviderUC    *DeleteProviderUsecase
+	UpdateProviderUC    *UpdateProviderUsecase
+	ListHostedDomainsUC *ListHostedDomainsUsecase
+	GetProviderUC       *GetProviderUsecase
+	ListProvidersUC     *ListProvidersUsecase
+	RetrieveZoneUC      *ZoneRetrieverUsecase
+	ZoneCorrectionsUC   *ZoneCorrectorUsecase
+	DomainExistenceUC   *DomainExistenceUsecase
 }
 
 func NewProviderUsecases(store ProviderStorage) *Service {
@@ -41,14 +42,15 @@ func NewProviderUsecases(store ProviderStorage) *Service {
 	validator := &DefaultProviderValidator{}
 
 	return &Service{
-		CreateProviderUC:  NewCreateProviderUsecase(store, validator),
-		DeleteProviderUC:  NewDeleteProviderUsecase(store),
-		UpdateProviderUC:  NewUpdateProviderUsecase(store, getProvider, validator),
-		GetProviderUC:     getProvider,
-		ListProvidersUC:   NewListProvidersUsecase(store),
-		RetrieveZoneUC:    NewZoneRetrieverUsecase(),
-		ZoneCorrectionsUC: NewZoneCorrectorUsecase(),
-		DomainExistenceUC: NewDomainExistenceUsecase(),
+		CreateProviderUC:    NewCreateProviderUsecase(store, validator),
+		DeleteProviderUC:    NewDeleteProviderUsecase(store),
+		UpdateProviderUC:    NewUpdateProviderUsecase(store, getProvider, validator),
+		ListHostedDomainsUC: NewListHostedDomainsUsecase(),
+		GetProviderUC:       getProvider,
+		ListProvidersUC:     NewListProvidersUsecase(store),
+		RetrieveZoneUC:      NewZoneRetrieverUsecase(),
+		ZoneCorrectionsUC:   NewZoneCorrectorUsecase(),
+		DomainExistenceUC:   NewDomainExistenceUsecase(),
 	}
 }
 
@@ -66,6 +68,10 @@ func (s *Service) GetUserProvider(user *happydns.User, providerID happydns.Ident
 
 func (s *Service) GetUserProviderMeta(user *happydns.User, providerID happydns.Identifier) (*happydns.ProviderMeta, error) {
 	return s.GetProviderUC.GetMeta(user, providerID)
+}
+
+func (s *Service) ListHostedDomains(provider *happydns.Provider) ([]string, error) {
+	return s.ListHostedDomainsUC.List(provider)
 }
 
 func (s *Service) ListZoneCorrections(provider *happydns.Provider, domain *happydns.Domain, records []happydns.Record) ([]*happydns.Correction, error) {
