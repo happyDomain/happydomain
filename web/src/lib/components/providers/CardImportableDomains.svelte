@@ -43,7 +43,7 @@
     import type { Provider } from "$lib/model/provider";
     import { filteredName } from '$lib/stores/home';
     import { providersSpecs } from "$lib/stores/providers";
-    import { domains_idx, refreshDomains } from "$lib/stores/domains";
+    import { domains_by_name, domains_idx, refreshDomains } from "$lib/stores/domains";
     import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
 
@@ -81,13 +81,13 @@
     $: refreshDomainList(provider);
 
     function haveDomain($domains_idx: Record<string, Domain>, name: string) {
-        let domain: Domain | undefined = undefined;
+        let domains: Array<Domain> | undefined = undefined;
         if (name[name.length - 1] == ".") {
-            domain = $domains_idx[name];
+            domains = $domains_by_name[name];
         } else {
-            domain = $domains_idx[name + "."];
+            domains = $domains_by_name[name + "."];
         }
-        return domain !== undefined && domain.id_provider == provider._id;
+        return domains !== undefined && domains.reduce((acc, d) => acc || d.id_provider == provider._id, false);
     }
 
     async function importDomain(domain: { domain: string; wait: boolean }, noToast: bool) {

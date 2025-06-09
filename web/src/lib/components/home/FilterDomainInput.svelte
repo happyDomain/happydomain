@@ -35,7 +35,7 @@
 
     import { addDomain } from "$lib/api/domains";
     import { fqdn, validateDomain } from "$lib/dns";
-    import { domains, refreshDomains } from '$lib/stores/domains';
+    import { domains, domains_by_name, refreshDomains } from '$lib/stores/domains';
     import { filteredName, filteredProvider } from '$lib/stores/home';
     import { providers } from '$lib/stores/providers';
     import { t } from "$lib/translations";
@@ -123,7 +123,7 @@
                     bind:value={$filteredName}
                     on:input={inputChange}
                 />
-                {#if !noButton && $filteredName.length && $domains.filter((dn) => dn.domain == fqdn($filteredName, "")).length == 0}
+                {#if !noButton && $filteredName.length && (!$domains_by_name[fqdn($filteredName, "")] || !$filteredProvider || !$domains_by_name[fqdn($filteredName, "")].reduce((acc, d) => acc || d.id_provider == $filteredProvider._id, false))}
                     <Button type="submit" outline color="primary">
                         {$t("common.add-new-thing", { thing: $t("domains.kind") })}
                     </Button>

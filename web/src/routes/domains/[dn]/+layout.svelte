@@ -66,17 +66,26 @@
 
     export let data: { domain: Domain };
 
+    function domainLink(dn: string) : string {
+        return $domains_idx[$domains_idx[dn].domain]
+             ? $domains_idx[dn].domain
+             : dn;
+    }
+
     let selectedDomain = data.domain.id;
-    $: if (selectedDomain != data.domain.id) {
-        goto(
-            "/domains/" +
-                encodeURIComponent(
-                    $domains_idx[$domains_idx[selectedDomain].domain]
-                        ? $domains_idx[selectedDomain].domain
-                        : selectedDomain,
-                ) +
-                ($page.data.isAuditPage ? "/logs" : $page.data.isHistoryPage ? "/history" : ""),
-        );
+    $: domainChange(selectedDomain);
+    $: domainChange(data.domain.id);
+    function domainChange(dn) {
+        if (dn != data.domain.id) {
+            goto(
+                "/domains/" +
+                    encodeURIComponent(domainLink(dn)) +
+                    ($page.data.isAuditPage ? "/logs" : $page.data.isHistoryPage ? "/history" : ""),
+            );
+        }
+        if (selectedDomain != dn) {
+            selectedDomain = dn;
+        }
     }
 
     let selectedHistory: string | undefined;
@@ -94,11 +103,7 @@
             refreshDomains().then(() => {
                 goto(
                     "/domains/" +
-                        encodeURIComponent(
-                            $domains_idx[$domains_idx[selectedDomain].domain]
-                                ? $domains_idx[selectedDomain].domain
-                                : selectedDomain,
-                        ) +
+                        encodeURIComponent(domainLink(selectedDomain)) +
                         "/" +
                         encodeURIComponent(zm.id),
                 );
@@ -161,7 +166,7 @@
                         class="mt-2"
                         outline
                         color="primary"
-                        href={"/domains/" + encodeURIComponent(data.domain.domain)}
+                        href={"/domains/" + encodeURIComponent(domainLink(selectedDomain))}
                     >
                         <Icon name="chevron-left" />
                         {$t('zones.return-to')}
@@ -192,10 +197,10 @@
                                 <DropdownItem header class="font-monospace">
                                     {data.domain.domain}
                                 </DropdownItem>
-                                <DropdownItem href={`/domains/${data.domain.domain}/history`}>
+                                <DropdownItem href={`/domains/${domainLink(selectedDomain)}/history`}>
                                     {$t("domains.actions.history")}
                                 </DropdownItem>
-                                <DropdownItem href={`/domains/${data.domain.domain}/logs`}>
+                                <DropdownItem href={`/domains/${domainLink(selectedDomain)}/logs`}>
                                     {$t("domains.actions.audit")}
                                 </DropdownItem>
                                 <DropdownItem divider />

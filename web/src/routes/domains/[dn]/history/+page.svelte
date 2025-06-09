@@ -33,7 +33,7 @@
     export let data: { domain: Domain; history: string };
 
     let isOpen: Record<number, boolean> = {};
-    if (data.domain.zone_history.length > 0) {
+    if (data.domain.zone_history && data.domain.zone_history.length > 0) {
         isOpen[data.domain.zone_history[0]] = true;
     }
 
@@ -50,6 +50,7 @@
             <p>{$t("wait.loading")}</p>
         </div>
     {:then domain}
+      {#if domain.zone_history}
         {#each domain.zone_history as zid, idx}
             {@const history = domain.zone_meta[zid]}
             {@const moddate = new Intl.DateTimeFormat(undefined, {
@@ -84,7 +85,7 @@
                 <Button
                     color="primary"
                     outline
-                    href={"/domains/" + encodeURIComponent(data.domain.domain) + "/" + history.id}
+                    href={"/domains/" + encodeURIComponent(data.domain.id) + "/" + history.id}
                     size="sm"
                     title={$t("history.see")}
                 >
@@ -157,5 +158,8 @@
                 </Accordion>
             {/if}
         {/each}
+      {:else}
+        No history yet.
+      {/if}
     {/await}
 </div>
