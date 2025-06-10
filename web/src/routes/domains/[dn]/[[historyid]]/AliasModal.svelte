@@ -50,6 +50,7 @@
     import { fqdn, validateDomain } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { Zone } from "$lib/model/zone";
+    import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
 
     const dispatch = createEventDispatcher();
@@ -64,7 +65,7 @@
     export let dn: string = "";
     export let origin: Domain;
     export let value: string = "";
-    export let zone: Zone;
+    let zone = $thisZone;
 
     let newDomainState: boolean | undefined = undefined;
     $: newDomainState = value ? validateNewSubdomain(value) : undefined;
@@ -120,7 +121,7 @@
                 Service: { Target: dn ? dn : "@" },
             }).then(
                 (z) => {
-                    dispatch("update-zone-services", z);
+                    thisZone.set(z);
                     addAliasInProgress = false;
                     toggle();
                 },
@@ -142,8 +143,7 @@
 
 <Modal {isOpen} {toggle}>
     <ModalHeader {toggle}>
-        {$t("domains.add-an-alias")}
-        {origin.domain}
+        {$t("domains.add-an-alias", {domain: origin.domain})}
     </ModalHeader>
     <ModalBody>
         <form id="addAliasForm" on:submit|preventDefault={submitAliasForm}>

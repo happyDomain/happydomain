@@ -29,6 +29,33 @@ import { refreshDomains } from "$lib/stores/domains";
 
 export const thisZone: Writable<null | Zone> = writable(null);
 
+// thisAliases returns all aliases in the domain
+export const thisAliases = derived(thisZone, (zone: null | Zone) => {
+    const aliases: Record<string, Array<string>> = {};
+
+    if (!zone || !zone.services) {
+        return aliases;
+    }
+
+    for (const dn in zone.services) {
+        if (!zone.services[dn]) continue;
+
+        zone.services[dn].forEach(function (svc) {
+            if (svc._svctype === "svcs.CNAME") {
+                if (!aliases[svc.Service.Target]) {
+                    aliases[svc.Service.Target] = [];
+                }
+                aliases[svc.Service.Target].push(dn);
+            }
+        });
+    }
+
+    if (aliases["@"])
+        aliases[""] = aliases["@"];
+
+    return aliases;
+});
+
 // sortedDomains returns all subdomains, sorted
 export const sortedDomains = derived(thisZone, ($thisZone: null | Zone) => {
     if (!$thisZone) {

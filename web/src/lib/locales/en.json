@@ -56,6 +56,7 @@
         "resolver": "Resolver",
         "run": "Run the request!",
         "survey": "A remark? A comment to share? Don't hesitate to write to us!",
+        "spinning": "Spinning",
         "update": "Update",
         "welcome": {
             "start": "Welcome to ",
@@ -89,7 +90,7 @@
         "add-a-subdomain": "Add a subdomain",
         "add-a-service": "Add a service",
         "add-alias": "Add alias",
-        "add-an-alias": "Add an alias",
+        "add-an-alias": "Add an alias to {{domain}}",
         "add-now": "Add it now!",
         "create-on-provider": "Create on {{provider}}",
         "added-success": "Great! {{domain}} has been added. You can manage it right now.",
