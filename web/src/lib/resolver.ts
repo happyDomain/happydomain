@@ -60,6 +60,9 @@ export const resolvers: Record<string, Array<{ value: string; text: string }>> =
         { value: "109.69.8.51", text: "puntCAT DNS resolver" },
         { value: "156.154.70.1", text: "Neustar DNS resolver" },
         { value: "101.226.4.6", text: "DNSpai resolver" },
+        { value: "185.222.222.222", text: "DNS.SB resolver" },
+        { value: "86.54.11.100", text: "DNS4EU resolver" },
+        { value: "194.0.5.3", text: "DNS4ALL resolver" },
         // Your open resolver here? Don't hesitate to contribute to the project!
     ],
     Filtered: [
@@ -78,6 +81,9 @@ export const resolvers: Record<string, Array<{ value: string; text: string }>> =
         { value: "156.154.70.4", text: "DNS Advantage Business Secure resolver" },
         { value: "185.228.168.168", text: "CleanBrowsing Family Filter DNS resolver" },
         { value: "185.228.168.10", text: "CleanBrowsing Adult Filter DNS resolver" },
+        { value: "86.54.11.1", text: "DNS4EU Protective Resolution resolver" },
+        { value: "86.54.11.12", text: "DNS4EU Child Protection resolver" },
+        { value: "86.54.11.13", text: "DNS4EU Ad blocking resolver" },
         // Your open resolver here? Don't hesitate to contribute to the project!
     ],
 };
