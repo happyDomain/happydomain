@@ -49,6 +49,7 @@
         "rename": "Renommer",
         "resolver": "Résolveur",
         "run": "Lancer l'opération !",
+        "spinning": "Chargement",
         "update": "Mettre à jour",
         "help": "Besoin d'aide ?",
         "records": "{{n:eq; 0:aucun enregistrement {{type}}; 1:enregistrement {{type}}; default:enregistrements {{type}}}}",
@@ -85,7 +86,7 @@
         "add-a-subdomain": "Ajouter un sous-domaine",
         "add-a-service": "Ajouter un service",
         "add-alias": "Ajout d'alias",
-        "add-an-alias": "Ajouter un alias",
+        "add-an-alias": "Ajouter un alias vers {{domain}}",
         "add-now": "Ajouter maintenant !",
         "added-success": "Bravo ! {{domain}} a été ajouté. Vous pouvez désormais le gérer.",
         "apply": {

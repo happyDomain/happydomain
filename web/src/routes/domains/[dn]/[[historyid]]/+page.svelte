@@ -24,6 +24,7 @@
 <script lang="ts">
     import { Button, Col, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
+    import AliasModal from "./AliasModal.svelte";
     import SubdomainList from "./SubdomainList.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { Zone } from "$lib/model/zone";
@@ -57,19 +58,17 @@
         {#if !$sortedDomainsWithIntermediate || $sortedDomains.length == 0}
             <SubdomainList
                 origin={data.domain}
-                sortedDomains={['']}
                 sortedDomainsWithIntermediate={['']}
-                zone={$thisZone}
-                on:update-zone-services={(event) => thisZone.set(event.detail)}
             />
         {:else}
             <SubdomainList
                 origin={data.domain}
-                sortedDomains={$sortedDomains}
                 sortedDomainsWithIntermediate={$sortedDomainsWithIntermediate}
-                zone={$thisZone}
-                on:update-zone-services={(event) => thisZone.set(event.detail)}
             />
         {/if}
     </div>
 {/if}
+
+<AliasModal
+    origin={data.domain}
+/>
