@@ -40,27 +40,6 @@
     export let sortedDomainsWithIntermediate: Array<string>;
     export let zone: Zone;
 
-    let aliases: Record<string, Array<string>>;
-    $: {
-        const tmp: Record<string, Array<string>> = {};
-
-        for (const dn of sortedDomains) {
-            if (!zone.services[dn]) continue;
-
-            zone.services[dn].forEach(function (svc) {
-                if (svc._svctype === "svcs.CNAME") {
-                    if (!tmp[svc.Service.Target]) {
-                        tmp[svc.Service.Target] = [];
-                    }
-                    tmp[svc.Service.Target].push(dn);
-                }
-            });
-        }
-        if (tmp["@"]) tmp[""] = tmp["@"];
-
-        aliases = tmp;
-    }
-
     export let newSubdomainModalOpened = false;
     $: if (newSubdomainModalOpened) {
         ctrlNewSubdomain.Open();
@@ -77,7 +56,6 @@
 
 {#each sortedDomainsWithIntermediate as dn}
     <SubdomainItem
-        aliases={aliases[dn] ? aliases[dn] : []}
         {dn}
         {origin}
         zoneId={zone.id}
