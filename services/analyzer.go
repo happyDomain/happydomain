@@ -56,6 +56,7 @@ func (p *recordPool) SearchRR(arrs ...AnalyzerRecordFilter) (rrs []happydns.Reco
 			rdtype := rhdr.Rrtype
 			if strings.HasPrefix(rhdr.Name, arr.Prefix) &&
 				strings.HasSuffix(rhdr.Name, arr.SubdomainsOf) &&
+				strings.Contains(rhdr.Name, arr.DomainContains) &&
 				(arr.Domain == "" || rhdr.Name == arr.Domain || rhdr.Name == strings.TrimSuffix(arr.Domain, ".")) &&
 				(arr.Type == 0 || rdtype == arr.Type) &&
 				(arr.Ttl == 0 || rhdr.Ttl == arr.Ttl) &&
@@ -133,12 +134,13 @@ func (sa *serviceAccumulator) addService(rr happydns.Record, domain string, svc 
 // AnalyzerRecordFilter specifies criteria for matching DNS records.
 // Zero-value fields are treated as wildcards (match anything).
 type AnalyzerRecordFilter struct {
-	Prefix       string
-	Domain       string
-	SubdomainsOf string
-	Contains     string
-	Type         uint16
-	Ttl          uint32
+	Prefix         string
+	Domain         string
+	SubdomainsOf   string
+	DomainContains string
+	Contains       string
+	Type           uint16
+	Ttl            uint32
 }
 
 // Analyzer holds the state for zone analysis. It is composed of a recordPool

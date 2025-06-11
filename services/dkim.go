@@ -163,7 +163,7 @@ func (s *DKIMRedirection) GetRecords(domain string, ttl uint32, origin string) (
 }
 
 func dkim_analyze(a *Analyzer) (err error) {
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT}) {
+	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, DomainContains: "._domainkey."}) {
 		dkidx := strings.Index(record.Header().Name, "._domainkey.")
 		if dkidx <= 0 {
 			continue
