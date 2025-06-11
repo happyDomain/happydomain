@@ -48,12 +48,13 @@ func (a *Analyzer) GetOrigin() string {
 }
 
 type AnalyzerRecordFilter struct {
-	Prefix       string
-	Domain       string
-	SubdomainsOf string
-	Contains     string
-	Type         uint16
-	Ttl          uint32
+	Prefix         string
+	Domain         string
+	SubdomainsOf   string
+	DomainContains string
+	Contains       string
+	Type           uint16
+	Ttl            uint32
 }
 
 func (a *Analyzer) SearchRR(arrs ...AnalyzerRecordFilter) (rrs []happydns.Record) {
@@ -63,6 +64,7 @@ func (a *Analyzer) SearchRR(arrs ...AnalyzerRecordFilter) (rrs []happydns.Record
 			rdtype := rhdr.Rrtype
 			if strings.HasPrefix(rhdr.Name, arr.Prefix) &&
 				strings.HasSuffix(rhdr.Name, arr.SubdomainsOf) &&
+				strings.Contains(rhdr.Name, arr.DomainContains) &&
 				(arr.Domain == "" || rhdr.Name == arr.Domain || rhdr.Name == strings.TrimSuffix(arr.Domain, ".")) &&
 				(arr.Type == 0 || rdtype == arr.Type) &&
 				(arr.Ttl == 0 || rhdr.Ttl == arr.Ttl) &&
