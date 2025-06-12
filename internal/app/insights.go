@@ -71,14 +71,18 @@ func (c *insightsCollector) Run() {
 	}
 
 	var err error
+	var nextInterval time.Duration
 	for {
 		err = c.send()
 		if err != nil {
 			log.Println("Unable to send insights:", err.Error())
+			nextInterval = time.Duration(90-rand.Int31n(45)) * time.Minute
+		} else {
+			nextInterval = InsightsUpdateInterval + time.Duration(rand.Int31n(600000)-300000)*time.Microsecond
 		}
 
 		select {
-		case <-time.After(InsightsUpdateInterval + time.Duration(rand.Int31n(600000)-300000)*time.Microsecond):
+		case <-time.After(nextInterval):
 			continue
 		case <-c.stop:
 			return
@@ -184,7 +188,9 @@ func (c *insightsCollector) send() error {
 	}
 	resp.Body.Close()
 
-	log.Println("Sent insights data, status:", resp.Status)
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("unexpected response status code: %s", resp.Status)
+	}
 	return c.store.InsightsRun()
 }
 
