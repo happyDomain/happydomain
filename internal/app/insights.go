@@ -148,10 +148,22 @@ func (c *insightsCollector) collect() (*happydns.Insights, error) {
 	}
 
 	data.Database.Providers = map[string]int{}
+	data.UserSettings.Languages = map[string]int{}
+	data.UserSettings.FieldHints = map[int]int{}
+	data.UserSettings.ZoneView = map[int]int{}
 	for users.Next() {
 		data.Database.NbUsers++
 
 		user := users.Item()
+
+		if user.Settings.Language != "" {
+			data.UserSettings.Languages[user.Settings.Language]++
+		}
+		if user.Settings.Newsletter {
+			data.UserSettings.Newsletter++
+		}
+		data.UserSettings.FieldHints[user.Settings.FieldHint]++
+		data.UserSettings.ZoneView[user.Settings.ZoneView]++
 
 		if providers, err := c.store.ListProviders(user); err == nil {
 			for _, provider := range providers {
