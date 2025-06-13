@@ -26,6 +26,7 @@ Given the diversity of DNS configurations and user needs, we haven't yet identif
 
 [Whether it works for you or not, we need your feedback!](https://feedback.happydomain.org/) What do you think of our approach to simplifying domain name management? Your impressions at this stage help us guide the project according to **your actual expectations**.
 
+
 Using Docker
 ------------
 
@@ -39,42 +40,16 @@ This command will launch happyDomain in a few seconds, for evaluation purposes (
 
 In order to deploy happyDomain, check the [Docker image documentation](https://hub.docker.com/r/happydomain/happydomain).
 
-Building
---------
 
-### Dependencies
+Install from binary
+-------------------
 
-In order to build the happyDomain project, you'll need the following dependencies:
+Prebuilt binaries are availables at: <https://get.happydomain.org/>
 
-* `go` at least version 1.23;
-* `nodejs` tested with version 22;
-* `swag` tested with version 1.16 (can be installed through `go install github.com/swaggo/swag/cmd/swag@latest`).
+Choose a directory (the latest version available, or `master`) and choose the binary that corresponds to your operating system and CPU architecture.
 
 
-### Instructions
-
-1. First, you'll need to prepare the frontend, by installing the node modules dependencies:
-
-```
-pushd web; npm install; popd
-```
-
-2. Then, generate assets files used by Go code:
-
-```
-go generate -tags swagger,web ./...
-```
-
-3. Finaly, build the Go code:
-
-```
-go build -tags swagger,web ./cmd/happyDomain
-```
-
-This last command will create a binary `happyDomain` you can use standalone.
-
-
-Install at home
+Use happyDomain
 ---------------
 
 The binary comes with sane default options to start with.
@@ -155,6 +130,41 @@ HAPPYDOMAIN_LEVELDB_PATH=/var/lib/happydomain/db/
 ```
 
 You just have to replace dash by underscore.
+
+
+Building
+--------
+
+### Dependencies
+
+In order to build the happyDomain project, you'll need the following dependencies:
+
+* `go` at least version 1.23;
+* `nodejs` tested with version 22;
+* `swag` tested with version 1.16 (can be installed through `go install github.com/swaggo/swag/cmd/swag@latest`).
+
+
+### Instructions
+
+1. First, you'll need to prepare the frontend, by installing the node modules dependencies:
+
+```
+pushd web; npm install; popd
+```
+
+2. Then, generate assets files used by Go code:
+
+```
+go generate -tags swagger,web ./...
+```
+
+3. Finaly, build the Go code:
+
+```
+go build -tags swagger,web ./cmd/happyDomain
+```
+
+This last command will create a binary `happyDomain` you can use standalone.
 
 
 Development environment
