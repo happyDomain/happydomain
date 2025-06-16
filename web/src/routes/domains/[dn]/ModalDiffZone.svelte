@@ -193,7 +193,7 @@
                 on:click={applyDiff}
             >
                 {#if propagationInProgress}
-                    <Spinner label="Spinning" size="sm" />
+                    <Spinner size="sm" />
                 {/if}
                 {$t("domains.apply.button")}
             </Button>

@@ -118,7 +118,7 @@
 
 {#if !items || $providersSpecs == null}
     <div class="d-flex gap-2 align-items-center justify-content-center my-3">
-        <Spinner color="primary" label="Spinning" class="mr-3" />
+        <Spinner color="primary" />
         {$t("wait.retrieving-providers")}
     </div>
 {:else}

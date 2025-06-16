@@ -51,7 +51,7 @@
 <ListGroup {...$$restProps}>
     {#if isLoading}
         <ListGroupItem class="d-flex justify-content-center align-items-center gap-2">
-            <Spinner color="primary" label="Spinning" class="mr-3" />
+            <Spinner color="primary" />
             {$t("wait.retrieving-provider")}
         </ListGroupItem>
     {/if}

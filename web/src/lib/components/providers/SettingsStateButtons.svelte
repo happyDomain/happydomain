@@ -54,7 +54,7 @@
                 on:click={() => dispatch("previous-state")}
             >
                 {#if previousInProgress}
-                    <Spinner label="Spinning" size="sm" />
+                    <Spinner size="sm" />
                 {/if}
                 {$t(form.previousButtonText)}
             </Button>
@@ -68,7 +68,7 @@
                 form={submitForm}
             >
                 {#if nextInProgress}
-                    <Spinner label="Spinning" size="sm" />
+                    <Spinner size="sm" />
                 {/if}
                 {$t(form.nextButtonText)}
             </Button>
@@ -83,7 +83,7 @@
                 on:click={() => dispatch("previous-state")}
             >
                 {#if previousInProgress}
-                    <Spinner label="Spinning" size="sm" />
+                    <Spinner size="sm" />
                 {/if}
                 {$t(form.previousEditButtonText)}
             </Button>
@@ -97,7 +97,7 @@
                 form={submitForm}
             >
                 {#if nextInProgress}
-                    <Spinner label="Spinning" size="sm" />
+                    <Spinner size="sm" />
                 {/if}
                 {$t(form.nextEditButtonText)}
             </Button>
@@ -112,7 +112,7 @@
             on:click={() => dispatch("previous-state")}
         >
             {#if previousInProgress}
-                <Spinner label="Spinning" size="sm" />
+                <Spinner size="sm" />
             {/if}
             {$t("common.cancel")}
         </Button>
@@ -124,7 +124,7 @@
             form={submitForm}
         >
             {#if nextInProgress}
-                <Spinner label="Spinning" size="sm" />
+                <Spinner size="sm" />
             {/if}
             {$t("common.next")} &gt;
         </Button>

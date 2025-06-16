@@ -63,7 +63,7 @@
 
 {#if $providersSpecs == null}
     <div class="mt-5 d-flex justify-content-center align-items-center gap-2">
-        <Spinner color="primary" label={$t("common.spinning")} class="mr-3" />
+        <Spinner color="primary" />
         {$t("wait.retrieving-setting")}
     </div>
 {:else}
@@ -92,7 +92,7 @@
             <Col lg="8" md="7" class="d-flex flex-column pt-2 pb-3">
                 {#if form.form == null}
                     <div class="d-flex flex-fill justify-content-center align-items-center gap-2">
-                        <Spinner color="primary" label={$t("common.spinning")} class="mr-3" />
+                        <Spinner color="primary" />
                         {$t("wait.retrieving-setting")}
                     </div>
                 {:else}

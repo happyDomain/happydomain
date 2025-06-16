@@ -49,7 +49,6 @@
         "rename": "Renommer",
         "resolver": "Résolveur",
         "run": "Lancer l'opération !",
-        "spinning": "Chargement",
         "update": "Mettre à jour",
         "help": "Besoin d'aide ?",
         "records": "{{n:eq; 0:aucun enregistrement {{type}}; 1:enregistrement {{type}}; default:enregistrements {{type}}}}",

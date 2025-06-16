@@ -96,7 +96,7 @@
     <Row class="mt-3">
         <Button class="offset-sm-4 col-sm-4" color="primary" disabled={formSent} type="submit">
             {#if formSent}
-                <Spinner label={$t("common.spinning")} size="sm" />
+                <Spinner size="sm" />
             {/if}
             {$t("email.send-again")}
         </Button>

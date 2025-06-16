@@ -36,7 +36,7 @@
     <h2>{$t("logs.title")} <span class="font-monospace">{data.domain.domain}</span></h2>
     {#await getDomainLogs(data.domain.id)}
         <div class="mt-5 text-center flex-fill">
-            <Spinner label="Spinning" />
+            <Spinner />
             <p>{$t("wait.loading")}</p>
         </div>
     {:then logs}

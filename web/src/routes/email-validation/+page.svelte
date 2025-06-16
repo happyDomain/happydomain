@@ -65,7 +65,7 @@
         </Alert>
     {:else if data.user}
         <div class="d-flex justify-content-center align-items-center">
-            <Spinner color="primary" label={$t("common.spinning")} class="me-3" />
+            <Spinner color="primary" class="me-3" />
             {$t("wait.wait")}
         </div>
     {:else}

@@ -114,7 +114,7 @@
     <div class="d-flex flex-column flex-lg-row gap-2 justify-content-around">
         <Button type="submit" color="primary" disabled={formSent}>
             {#if formSent}
-                <Spinner label="Spinning" size="sm" />
+                <Spinner size="sm" />
             {/if}
             {$t("common.go")}
         </Button>
