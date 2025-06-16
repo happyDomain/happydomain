@@ -53,7 +53,7 @@
     let discoveryError: string | null = null;
     export let noDomainsList = false;
 
-    function refreshDomainList(provider) {
+    function refreshDomainList(provider: Provider) {
         importableDomainsList = null;
         discoveryError = null;
         listImportableDomains(provider).then(
@@ -90,7 +90,7 @@
         return domains !== undefined && domains.reduce((acc, d) => acc || d.id_provider == provider._id, false);
     }
 
-    async function importDomain(domain: { domain: string; wait: boolean }, noToast: bool) {
+    async function importDomain(domain: { domain: string; wait: boolean }, noToast: boolean) {
         domain.wait = true;
         addDomain(domain.domain, provider).then(
             (mydomain) => {
@@ -132,8 +132,8 @@
     async function createDomainOnProvider() {
         createDomainInProgress = true;
         try {
-            await createDomain(provider, fqdn($filteredName, ""))
-            await importDomain({ domain: fqdn($filteredName, ""), wait: false })
+            await createDomain(provider, fqdn($filteredName, ""));
+            await importDomain({ domain: fqdn($filteredName, ""), wait: false }, false);
             refreshDomainList(provider);
             createDomainInProgress = false;
         } catch (err) {
@@ -228,18 +228,18 @@
                         <DomainWithProvider {domain} />
                         <div>
                             {#if haveDomain($domains_idx, domain.domain)}
-                                <Badge class="ml-1" color="success">
+                                <Badge class="ms-1" color="success">
                                     <Icon name="check" />
                                     {$t("onboarding.import.imported")}
                                 </Badge>
                             {:else}
                                 <Button
                                     type="button"
-                                    class="ml-1"
+                                    class="ms-1"
                                     color="primary"
                                     size="sm"
                                     disabled={domain.wait || allImportInProgress}
-                                          on:click={() => importDomain(domain, false)}
+                                    on:click={() => importDomain(domain, false)}
                                 >
                                     {#if domain.wait}
                                         <Spinner size="sm" />
@@ -266,7 +266,7 @@
                     <div>
                         <Button
                             type="button"
-                            class="ml-1"
+                            class="ms-1"
                             color="warning"
                             size="sm"
                             disabled={createDomainInProgress || !validateDomain($filteredName)}

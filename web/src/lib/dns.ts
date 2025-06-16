@@ -49,11 +49,11 @@ export function fqdn(input: string, origin: string) {
 
 export function domainCompare(a: string | Domain, b: string | Domain) {
     // Convert to string if Domain
-    if (typeof a === "object" && a.domain) a = a.domain;
-    if (typeof b === "object" && b.domain) b = b.domain;
+    let domainA = typeof a === "object" ? a.domain : a;
+    let domainB = typeof b === "object" ? b.domain : b;
 
-    const as = a.split(".").reverse();
-    const bs = b.split(".").reverse();
+    const as = domainA.split(".").reverse();
+    const bs = domainB.split(".").reverse();
 
     // Remove first item if empty
     if (!as[0].length) as.shift();
@@ -72,11 +72,11 @@ export function domainCompare(a: string | Domain, b: string | Domain) {
 
 export function fqdnCompare(a: string | Domain, b: string | Domain) {
     // Convert to string if Domain
-    if (typeof a === "object" && a.domain) a = a.domain;
-    if (typeof b === "object" && b.domain) b = b.domain;
+    let domainA = typeof a === "object" ? a.domain : a;
+    let domainB = typeof b === "object" ? b.domain : b;
 
-    const as = a.split(".").reverse();
-    const bs = b.split(".").reverse();
+    const as = domainA.split(".").reverse();
+    const bs = domainB.split(".").reverse();
 
     // Remove first item if empty
     if (!as[0].length) as.shift();
@@ -178,7 +178,7 @@ export function isReverseZone(fqdn: string) {
 export function reverseDomain(ip: string) {
     let suffix = "in-addr.arpa.";
 
-    let fields: Array<String>;
+    let fields: Array<string>;
     if (ip.indexOf(":") > 0) {
         suffix = "ip6.arpa.";
 
@@ -197,12 +197,15 @@ export function reverseDomain(ip: string) {
     } else {
         fields = ip.split(".");
         while (fields.length < 4) {
-            const last = fields.pop();
+            const last = fields.pop()!;
             fields.push("0", last);
         }
     }
 
-    return fields.reduce((a, v) => v.replace(/^0*(0|[^0].*)$/, "$1") + "." + a, suffix);
+    return fields.reduce(
+        (a, v) => v.replace(/^0*(0|[^0].*)$/, "$1") + "." + a,
+        suffix,
+    );
 }
 
 export function unreverseDomain(dn: string) {

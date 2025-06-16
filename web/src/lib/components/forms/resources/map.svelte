@@ -69,7 +69,6 @@
                 <MapEntry
                     {edit}
                     {key}
-                    {keytype}
                     index={index + "_" + key}
                     {readonly}
                     {specs}

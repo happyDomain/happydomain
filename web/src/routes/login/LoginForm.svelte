@@ -60,8 +60,10 @@
                     emailState = true;
                     passwordState = true;
                     refreshUserSession();
-                    if ($page.url.searchParams.has("next")) {
-                        goto(decodeURIComponent($page.url.searchParams.get("next")));
+
+                    const nextParam = $page.url.searchParams.get("next");
+                    if (nextParam) {
+                        goto(decodeURIComponent(nextParam));
                     } else {
                         goto("/");
                     }

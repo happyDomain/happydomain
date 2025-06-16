@@ -22,8 +22,12 @@
 -->
 
 <script lang="ts">
+    import { goto } from "$app/navigation";
+
     import {
         Button,
+        Input,
+        InputGroup,
         ListGroup,
         ListGroupItem,
         Modal,
@@ -83,7 +87,7 @@
         sessions_req = listSessions();
     }
 
-    let secretCopiedToClipboard = false;
+    let secretCopiedToClipboard: boolean | null = false;
     async function copySecretToClipboard() {
         secretCopiedToClipboard = null;
         await navigator.clipboard.writeText(newSessionSecret);
@@ -97,14 +101,14 @@
     </h2>
     <div>
         <Button color="info" outline on:click={() => (newSessionModalOpen = true)}>
-            <i class="bi bi-plus-lg" />
+            <i class="bi bi-plus-lg"></i>
             {$t("sessions.create")}
         </Button>
         <Button color="danger" disabled={is_closing_sessions} outline on:click={closeSessions}>
             {#if is_closing_sessions}
                 <Spinner size="sm" />
             {:else}
-                <i class="bi bi-door-open" />
+                <i class="bi bi-door-open"></i>
             {/if}
             {$t("sessions.close-all")}
         </Button>
@@ -169,7 +173,7 @@
                             {#if session.delete_in_progress}
                                 <Spinner size="sm" />
                             {:else}
-                                <i class="bi bi-trash" />
+                                <i class="bi bi-trash"></i>
                             {/if}
                         </Button>
                     </div>
@@ -217,15 +221,15 @@
                         outline
                         on:click={() => (newSessionSecretShown = !newSessionSecretShown)}
                     >
-                        <i class="bi bi-eye" />
+                        <i class="bi bi-eye"></i>
                     </Button>
                     <Button color="info" on:click={copySecretToClipboard}>
                         {#if secretCopiedToClipboard === null}
                             <Spinner size="sm" />
                         {:else if secretCopiedToClipboard}
-                            <i class="bi bi-clipboard-check" />
+                            <i class="bi bi-clipboard-check"></i>
                         {:else}
-                            <i class="bi bi-clipboard" />
+                            <i class="bi bi-clipboard"></i>
                         {/if}
                     </Button>
                 </InputGroup>
@@ -251,7 +255,7 @@
                 {#if creating_session_in_progress}
                     <Spinner size="sm" />
                 {:else}
-                    <i class="bi bi-plus-lg" />
+                    <i class="bi bi-plus-lg"></i>
                 {/if}
                 {$t("sessions.create")}
             </Button>

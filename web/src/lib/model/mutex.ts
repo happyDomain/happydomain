@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2022-2024 happyDomain
+// Copyright (c) 2022-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,21 +19,27 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { redirect, type Load } from "@sveltejs/kit";
+export class Mutex {
+    private _locked = false;
+    private _waiting: Array<() => void> = [];
 
-import { getProvider } from "$lib/api/provider";
-import { filteredProvider } from "$lib/stores/home";
+    async lock(): Promise<() => void> {
+        const unlock = () => {
+            const next = this._waiting.shift();
+            if (next) {
+                next();
+            } else {
+                this._locked = false;
+            }
+        };
 
-export const load: Load = async ({ params }) => {
-    if (!params.prvid) {
-        redirect(302, "/providers/");
+        if (this._locked) {
+            await new Promise<void>((resolve) => {
+                this._waiting.push(() => resolve());
+            });
+        }
+
+        this._locked = true;
+        return unlock;
     }
-
-    const provider = await getProvider(params.prvid);
-
-    filteredProvider.set(provider);
-
-    return {
-        provider,
-    };
-};
+}

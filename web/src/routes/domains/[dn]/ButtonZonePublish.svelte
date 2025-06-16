@@ -50,7 +50,7 @@
             return;
         }
 
-        ctrlDiffZone.Open(domain, history);
+        ctrlDiffZone.Open();
     }
 </script>
 
@@ -116,31 +116,31 @@
                 Chargement des informations de l'historique
             {:then domain}
                 {#if domain.zone_meta && domain.zone_meta[history]}
-                    {@const history = domain.zone_meta[history]}
+                    {@const history_meta = domain.zone_meta[history]}
                     <div class="text-truncate">
-                        {#if history.published}
+                        {#if history_meta.published}
                             Publiée le
                             {new Intl.DateTimeFormat(undefined, {
                                 dateStyle: "long",
                                 timeStyle: "long",
-                            }).format(new Date(history.published))}
-                        {:else if history.commit_date}
+                            }).format(new Date(history_meta.published))}
+                        {:else if history_meta.commit_date}
                             Enregistrée le
                             {new Intl.DateTimeFormat(undefined, {
                                 dateStyle: "long",
                                 timeStyle: "long",
-                            }).format(new Date(history.commit_date))}
+                            }).format(new Date(history_meta.commit_date))}
                         {:else}
                             Dernière modification le
                             {new Intl.DateTimeFormat(undefined, {
                                 dateStyle: "long",
                                 timeStyle: "long",
-                            }).format(new Date(history.last_modified))}
+                            }).format(new Date(history_meta.last_modified))}
                         {/if}
                     </div>
-                    {#if history.commit_message}
-                        <div class="text-truncate" title={history.commit_message}>
-                            {history.commit_message}
+                    {#if history_meta.commit_message}
+                        <div class="text-truncate" title={history_meta.commit_message}>
+                            {history_meta.commit_message}
                         </div>
                     {/if}
                 {/if}

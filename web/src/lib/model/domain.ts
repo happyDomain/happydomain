@@ -29,17 +29,20 @@ export interface ZoneHistory {
     published?: Date;
 }
 
-export interface Domain {
-    id: string;
-    id_owner: string;
+export interface MiniDomain {
     id_provider: string;
     domain: string;
-    group: string;
-    zone_history: Array<string>;
-    zone_meta?: Array<ZoneHistory>;
 
     // interface property
-    wait: boolean;
+    wait?: boolean;
+}
+
+export interface Domain extends MiniDomain {
+    id: string;
+    id_owner: string;
+    group: string;
+    zone_history: Array<string>;
+    zone_meta?: Record<string, ZoneHistory>;
 }
 
 export interface DomainLog {

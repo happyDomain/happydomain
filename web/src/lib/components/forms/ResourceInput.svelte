@@ -73,10 +73,7 @@
     />
 {:else if type == "svcs.CAA"}
     <CAAForm
-        edit={edit || editToolbar}
-        {index}
         {readonly}
-        {specs}
         bind:value
         on:delete-this-service={(event) => dispatch("delete-this-service", event.detail)}
         on:update-this-service={(event) => dispatch("update-this-service", event.detail)}

@@ -54,3 +54,8 @@ export interface ProviderData extends ProviderMeta {
 export interface Provider extends ProviderMeta {
     Provider: any;
 }
+
+export function isProvider(e: unknown): e is Provider {
+    return typeof e === "object" && e !== null &&
+        "Provider" in e && "_id" in e && "_srctype" in e;
+}

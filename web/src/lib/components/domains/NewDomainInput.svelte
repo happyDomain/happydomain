@@ -46,7 +46,7 @@
     export let addingNewDomain = false;
     export let autofocus = false;
     export let noButton = false;
-    export let preAddFunc: null | ((string) => Promise<boolean>) = null;
+    export let preAddFunc: null | ((arg0: string) => Promise<boolean>) = null;
     export let provider: Provider | null = null;
     export let value = "";
 

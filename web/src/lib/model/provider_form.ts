@@ -22,9 +22,9 @@
 import { goto } from "$app/navigation";
 import cuid from "cuid";
 
-import type { Provider } from "$lib/api/provider";
 import { getProviderSettings } from "$lib/api/provider_settings";
 import type { CustomForm } from "$lib/model/custom_form";
+import { isProvider, type Provider } from "$lib/model/provider";
 import type { ProviderSettingsState } from "$lib/model/provider_settings";
 
 export class ProviderForm {
@@ -36,11 +36,11 @@ export class ProviderForm {
     nextInProgress: boolean = false;
     previousInProgress: boolean = false;
     on_previous: null | (() => void);
-    on_done: () => void;
+    on_done: (prv: Provider) => void;
 
     constructor(
         ptype: string,
-        on_done: (Provider) => void,
+        on_done: (prv: Provider) => void,
         providerId: string | null = null,
         value: ProviderSettingsState | null = null,
         on_previous: null | (() => void) = null,
@@ -87,7 +87,7 @@ export class ProviderForm {
                 }
                 return res.form;
             } catch (e) {
-                if ("Provider" in (e as any) && "_id" in (e as any) && "_srctype" in (e as any)) {
+                if (isProvider(e)) {
                     sessionStorage.removeItem("newprovider-" + this.providerId);
                     this.on_done(e);
                     return undefined;

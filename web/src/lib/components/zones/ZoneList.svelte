@@ -33,13 +33,13 @@
     const dispatch = createEventDispatcher();
 
     interface ZoneListDomain {
+        id: string;
         domain: string;
         id_provider: string;
         group?: string;
         href?: string;
     }
 
-    export let button = false;
     export let flush = false;
     export let links = false;
     export let display_by_groups = false;

@@ -60,11 +60,6 @@
         aliases = tmp;
     }
 
-    export let newSubdomainModalOpened = false;
-    $: if (newSubdomainModalOpened) {
-        ctrlNewSubdomain.Open();
-    }
-
     function showServiceModal(event: CustomEvent<ServiceCombined>) {
         ctrlService.Open(event.detail);
     }

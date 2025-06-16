@@ -22,9 +22,9 @@
 -->
 
 <script context="module" lang="ts">
-    import type { ModalController } from "$lib/model/modal_controller";
-
-    export const controls: ModalController = {};
+    export const controls = {
+        Open(svc: ServiceCombined): void { },
+    };
 </script>
 
 <script lang="ts">
@@ -56,6 +56,8 @@
     let deleteServiceInProgress = false;
 
     function deleteService() {
+        if (!service) return;
+
         deleteServiceInProgress = true;
         deleteZoneService(origin, zone.id, service).then(
             (z) => {
@@ -71,6 +73,8 @@
     }
 
     function submitServiceForm() {
+        if (!service) return;
+
         addServiceInProgress = true;
 
         let action = addZoneService;
@@ -118,7 +122,8 @@
                         specs={$servicesSpecs[service._svctype]}
                         type={service._svctype}
                         bind:value={service.Service}
-                        update-this-services="$emit('update-this-services', $event)"
+                        on:delete-this-service={(event) => dispatch("delete-this-service", event.detail)}
+                        on:update-this-service={(event) => dispatch("update-this-service", event.detail)}
                     />
                 {/if}
             </form>

@@ -36,10 +36,7 @@
 
     const dispatch = createEventDispatcher();
 
-    export let edit = false;
-    export let index: string;
     export let readonly = false;
-    export let specs: any;
     export let value: any;
 </script>
 

@@ -20,6 +20,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { handleEmptyApiResponse, handleApiResponse } from "$lib/errors";
+import type { Domain } from "$lib/model/domain";
 import type { ServiceCombined } from "$lib/model/service";
 
 export async function getService(

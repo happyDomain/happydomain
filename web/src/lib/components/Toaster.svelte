@@ -35,6 +35,8 @@
             </ToastHeader>
             <div
                 class="toast-body"
+                role="button"
+                tabindex="0"
                 style={toast.onclick ? "cursor: pointer" : ""}
                 on:click={() => {
                     if (toast.onclick) toast.onclick();

@@ -23,12 +23,12 @@
 
 <script lang="ts">
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
-    import type { Domain } from "$lib/model/domain";
+    import type { MiniDomain } from "$lib/model/domain";
 
     let className = '';
     export { className as class };
 
-    export let domain: Domain;
+    export let domain: MiniDomain;
 </script>
 
 <div

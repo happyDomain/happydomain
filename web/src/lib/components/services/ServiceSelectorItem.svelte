@@ -63,7 +63,7 @@
                 </Badge>
             {/each}
         {/if}
-        {#if svc.record_types && $userSession.settings && $userSession.settings.showrrtypes}
+        {#if svc.record_types && $userSession && $userSession.settings && $userSession.settings.showrrtypes}
             {#each svc.record_types as rtype}
                 <Badge color="info" class="float-end ms-1">
                     {nsrrtype(rtype)}

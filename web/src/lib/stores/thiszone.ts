@@ -88,7 +88,7 @@ export async function getZone(domain: Domain, zoneId: string) {
     return zone;
 }
 
-export async function retrieveZone(domain: string) {
+export async function retrieveZone(domain: Domain) {
     const meta = await APIRetrieveZone(domain);
     await refreshDomains();
     return meta;

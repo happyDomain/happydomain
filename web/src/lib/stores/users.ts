@@ -23,29 +23,17 @@ import { get_store_value } from "svelte/internal";
 import { writable, type Writable } from "svelte/store";
 import { getUser as APIGetUser } from "$lib/api/user";
 import type { User } from "$lib/model/user";
+import { Mutex } from "$lib/model/mutex";
 
 export const users: Writable<Record<string, User>> = writable({});
-
-function Mutex() {
-    let current = Promise.resolve();
-    this.lock = () => {
-        let _resolve;
-        const p = new Promise((resolve) => {
-            _resolve = () => resolve();
-        });
-        const rv = current.then(() => _resolve);
-        current = p;
-        return rv;
-    };
-}
 
 const mutex = new Mutex();
 
 const requests: Record<string, Promise<User>> = {};
 
-export async function getUser(id: string, force: boolean) {
+export async function getUser(id: string, force?: boolean) {
     let unlock = await mutex.lock();
-    if (requests[id]) {
+    if (id in requests) {
         unlock();
         await requests[id];
         return get_store_value(users)[id];
@@ -61,7 +49,7 @@ export async function getUser(id: string, force: boolean) {
     unlock();
 
     const data = await requests[id];
-    const obj = {};
+    const obj: Record<string, User> = {};
     obj[id] = data;
     users.update((u) => Object.assign(u, obj));
     delete requests[id];

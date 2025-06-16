@@ -48,7 +48,7 @@
     import SessionsManager from "./SessionsManager.svelte";
     import UserSettingsForm from "./UserSettingsForm.svelte";
 
-    let is_auth_user_req = fetch(`/api/users/${$userSession.id}/is_auth_user`);
+    let is_auth_user_req = $userSession?.id ? fetch(`/api/users/${$userSession.id}/is_auth_user`) : false;
 </script>
 
 <Container class="my-4">
@@ -83,7 +83,7 @@
                     <Spinner />
                 </div>
             {:then res}
-                {#if res.status === 204}
+                {#if res && res.status === 204}
                     <Row>
                         <Col md={{ size: 8, offset: 2 }}>
                             <Card>
@@ -116,7 +116,7 @@
             {:then res}
                 <Row>
                     <Col md={{ size: 8, offset: 2 }}>
-                        <DeleteAccountCard externalAuth={res.status !== 204} />
+                        <DeleteAccountCard externalAuth={res && res.status !== 204} />
                     </Col>
                 </Row>
             {/await}

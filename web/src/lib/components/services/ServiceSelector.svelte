@@ -91,7 +91,7 @@
         }
     }
 
-    function svc_match(svc: ServiceInfos) {
+    function svc_match(svc: ServiceInfos, arg1: string | null, arg2: string) {
         return (
             filtered_family == null || svc.family == filtered_family
         ) && (

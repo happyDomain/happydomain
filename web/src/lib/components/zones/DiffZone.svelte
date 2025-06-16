@@ -50,8 +50,12 @@
                 let zoneDiffCreated = 0;
                 let zoneDiffDeleted = 0;
                 let zoneDiffModified = 0;
+                zoneDiff = [];
+                selectedDiff = [];
                 if (v) {
-                    zoneDiff = v.map((c: Correction) => {
+                    for (const c of v) {
+                        if (!c.id) return;
+
                         correctionsIdx[c.id] = c;
 
                         let className = "";
@@ -68,16 +72,14 @@
                             className = "text-info";
                         }
 
-                        return {
+                        zoneDiff.push({
                             className,
                             msg: c.msg,
                             id: c.id,
-                        };
-                    });
-                } else {
-                    zoneDiff = [];
+                        });
+                        selectedDiff.push(c.id)
+                    }
                 }
-                selectedDiff = v.map((c: Correction) => c.id);
                 dispatch("computed-diff", {
                     zoneDiffLength: zoneDiff.length,
                     zoneDiffCreated,

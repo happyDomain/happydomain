@@ -24,8 +24,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
 
-    import { Input, InputGroup, InputGroupText } from "@sveltestrap/sveltestrap";
-    import type { InputType } from "sveltestrap/src/Input.d";
+    import { Input, InputGroup, InputGroupText, type InputType } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
 
@@ -115,22 +114,27 @@
         }
     }
 
-    function parseValue(e) {
-        if (
-            specs.type &&
-            (specs.type.startsWith("int") ||
-                specs.type.startsWith("uint") ||
-                specs.type == "time.Duration" ||
-                specs.type == "common.Duration")
-        ) {
-            if (e.target.value.length != 0 && e.target.value == parseInt(e.target.value, 10)) {
-                value = parseInt(e.target.value, 10);
-            } else if (specs.type == "time.Duration" || specs.type == "common.Duration") {
-                // Allow 1m, 1s, ...
+    function parseValue(e: InputEvent) {
+        if (e.target && 'value' in e.target) {
+            const target = e.target as HTMLInputElement;
+            val = target.value;
+
+            if (
+                specs.type &&
+                (specs.type.startsWith("int") ||
+                 specs.type.startsWith("uint") ||
+                 specs.type == "time.Duration" ||
+                 specs.type == "common.Duration")
+            ) {
+                if (target.value.length != 0 && target.value == parseInt(target.value, 10).toString()) {
+                    value = parseInt(target.value, 10);
+                } else if (specs.type == "time.Duration" || specs.type == "common.Duration") {
+                    // Allow 1m, 1s, ...
+                    value = val;
+                }
+            } else {
                 value = val;
             }
-        } else {
-            value = val;
         }
     }
 </script>

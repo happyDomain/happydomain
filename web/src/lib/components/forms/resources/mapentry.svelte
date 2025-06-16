@@ -36,7 +36,6 @@
     export let index: string;
     export let isNew = false;
     export let key: string;
-    export let keytype: string;
     export let readonly = false;
     export let specs: Field;
     export let valuetype: string;

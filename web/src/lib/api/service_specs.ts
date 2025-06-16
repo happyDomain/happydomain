@@ -32,7 +32,7 @@ export async function listServiceSpecs(): Promise<Record<string, ServiceInfos>> 
 
 export async function getServiceSpec(ssid: string): Promise<ServiceSpec> {
     if (ssid == "string" || ssid == "common.URL") {
-        return Promise.resolve(<ServiceSpec>{ fields: null });
+        return Promise.resolve(<ServiceSpec>{ fields: [] });
     } else {
         const res = await fetch(`/api/service_specs/` + ssid, {
             method: "GET",

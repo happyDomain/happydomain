@@ -69,6 +69,7 @@
 
     onMount(async () => {
         if (!$providers) await refreshProviders();
+        if (!$providers) return;
 
         if ($page.url.searchParams.has("newProvider")) {
             myProvider = $providers[0];
@@ -77,7 +78,7 @@
     });
 
     function nextPage() {
-        if (step == 0 && $providers.length > 0) {
+        if (step == 0 && $providers && $providers.length > 0) {
             // A provider already exists, skip adding a new provider
             step += 1;
             myProvider = $providers[0];
@@ -95,7 +96,6 @@
         form.previousState().then(() => {
             if (form.state < 0) {
                 providerType = "";
-                form = null;
             } else {
                 form = form;
             }
@@ -288,7 +288,7 @@
                         {/if}
                     {/if}
                 {:else if step == 3}
-                    {#if $domains.length}
+                    {#if $domains && $domains.length}
                         <h3 class="text-center display-4">🎉</h3>
                         <h5 class="text-center fw-bolder">{$t("onboarding.explore.done")}</h5>
                         <p class="text-center">
@@ -310,7 +310,7 @@
                                 <p class="feature-description">
                                     {$t("onboarding.explore.history.description")}
                                 </p>
-                                {#if $domains.length}
+                                {#if $domains && $domains.length}
                                     <a href="/domains/{$domains[0].id}/history" class="feature-link"
                                         >{$t("onboarding.explore.history.link")}
                                         <Icon name="arrow-right-short" /></a
@@ -477,12 +477,6 @@
 
     .step-label {
         font-weight: 500;
-    }
-
-    .step-content {
-        flex: 1;
-        padding: 2rem;
-        overflow-y: auto;
     }
 
     .feature-icon {

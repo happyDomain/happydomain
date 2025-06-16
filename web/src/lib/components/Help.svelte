@@ -32,6 +32,7 @@
     export let color: ButtonColor = "primary";
     export let href: string;
     export let size: ButtonSize | undefined = undefined;
+    export let title: string | null = null;
 </script>
 
 <Button
@@ -40,6 +41,7 @@
     {color}
     {size}
     class={className}
+    {title}
     data-umami-event="help"
     data-umami-event-href={href.substring(href.lastIndexOf("/") - 2)}
 >

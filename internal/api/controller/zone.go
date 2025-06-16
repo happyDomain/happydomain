@@ -89,7 +89,7 @@ func (zc *ZoneController) GetZoneSubdomain(c *gin.Context) {
 //	@Param			domainId	path		string			true	"Domain identifier"
 //	@Param			zoneId		path		string			true	"Zone identifier to use as the new one."
 //	@Param			oldZoneId		path		string			true	"Zone identifier to use as the old one. Currently only @ are expected, to use the currently deployed zone."
-//	@Success		200			{object}	[]string		"Differences, reported as text, one diff per item"
+//	@Success		200			{object}	[]happydns.Correction	"Differences, reported as text, one diff per item"
 //	@Failure		400			{object}	happydns.ErrorResponse	"Invalid input"
 //	@Failure		401			{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Failure		404			{object}	happydns.ErrorResponse	"Domain not found"

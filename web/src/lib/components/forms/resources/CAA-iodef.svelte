@@ -30,7 +30,7 @@
 
     export let newone = false;
     export let readonly = false;
-    export let value: any;
+    export let value: string = "";
 
     let kind: string = "web";
     let url: string;
@@ -63,24 +63,26 @@
         <option value="web">Webhook</option>
     </Input>
 
-    <Input type={kind == "mail" ? "email" : "text"} bind:value={url} />
+    <Input type={kind == "mail" ? "email" : "text"} {readonly} bind:value={url} />
 
-    {#if !newone}
-        <Button type="button" color="danger" outline on:click={() => dispatch("delete-iodef")}>
-            <Icon name="trash" />
-        </Button>
-    {:else}
-        <Button
-            color="success"
-            outline
-            type="button"
-            disabled={!value}
-            on:click={() => {
-                dispatch("add-iodef", value);
-                value = {};
-            }}
-        >
-            <Icon name="plus" />
-        </Button>
+    {#if !readonly}
+        {#if !newone}
+            <Button type="button" color="danger" outline on:click={() => dispatch("delete-iodef")}>
+                <Icon name="trash" />
+            </Button>
+        {:else}
+            <Button
+                color="success"
+                outline
+                type="button"
+                disabled={!value}
+                on:click={() => {
+                    dispatch("add-iodef", value);
+                    value = "";
+                }}
+            >
+                <Icon name="plus" />
+            </Button>
+        {/if}
     {/if}
 </div>

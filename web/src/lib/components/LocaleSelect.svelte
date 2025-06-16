@@ -30,12 +30,19 @@
     import type { UserSettings } from "$lib/model/usersettings";
     import { locales, locale } from "$lib/translations";
     import { refreshUserSession, userSession } from "$lib/stores/usersession";
+    import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
 
-    export let settings: UserSettings = $userSession.settings;
     let formSent = false;
 
+    let settings: UserSettings;
+    $: if ($userSession) {
+        settings = $userSession.settings;
+    }
+
     function saveLocale() {
+        if (!$userSession) return;
+
         formSent = true;
         saveAccountSettings($userSession, settings).then(
             (settings) => {

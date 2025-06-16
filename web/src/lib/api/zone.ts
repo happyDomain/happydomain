@@ -96,7 +96,7 @@ export async function diffZone(
         method: "POST",
         headers: { Accept: "application/json" },
     });
-    return await handleApiResponse<Array<string>>(res);
+    return await handleApiResponse<Array<Correction>>(res);
 }
 
 export async function addZoneService(

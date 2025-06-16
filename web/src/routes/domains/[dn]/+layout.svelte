@@ -75,7 +75,7 @@
     let selectedDomain = data.domain.id;
     $: domainChange(selectedDomain);
     $: domainChange(data.domain.id);
-    function domainChange(dn) {
+    function domainChange(dn: string) {
         if (dn != data.domain.id) {
             goto(
                 "/domains/" +
@@ -92,7 +92,7 @@
     $: selectedHistory = $page.data.history;
 
     let retrievalInProgress = false;
-    async function retrieveZone(): void {
+    async function retrieveZone() {
         retrievalInProgress = true;
         retrieveZoneDone(await StoreRetrieveZone(data.domain));
     }
@@ -233,7 +233,7 @@
                         </ButtonDropdown>
                     </div>
                     <div style="min-height:0; overflow-y: auto;" class="placeholder-glow">
-                        {#if $sortedDomains && $thisZone.id == selectedHistory}
+                        {#if $sortedDomains && $sortedDomainsWithIntermediate && $thisZone && $thisZone.id == selectedHistory}
                             {#if $sortedDomains.length == 0}
                                 <div class="text-truncate font-monospace text-muted">
                                     {data.domain.domain}

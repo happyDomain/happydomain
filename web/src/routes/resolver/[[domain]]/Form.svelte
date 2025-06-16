@@ -139,7 +139,7 @@
         />
     </Collapse>
 
-    <div class="ml-3 mr-3">
+    <div class="mx-3">
         <Button type="submit" class="float-end" color="primary" disabled={request_pending}>
             {#if request_pending}
                 <Spinner size="sm" />

@@ -99,16 +99,18 @@
     async function delProvider(event: Event, item: Provider) {
         event.stopPropagation();
 
-        // Check that there is no domain attached
-        const related_domains = $domains.filter((dn) => dn.id_provider == item._id);
-        if (related_domains.length > 0) {
-            if (!confirm(`There are ${related_domains.length} domains related to this provider, are you sure you want to delete all those domains too?`)) return;
+        if ($domains) {
+            // Check that there is no domain attached
+            const related_domains = $domains.filter((dn) => dn.id_provider == item._id);
+            if (related_domains.length > 0) {
+                if (!confirm(`There are ${related_domains.length} domains related to this provider, are you sure you want to delete all those domains too?`)) return;
 
-            for (const domain of related_domains) {
-                await deleteDomain(domain.id);
+                for (const domain of related_domains) {
+                    await deleteDomain(domain.id);
+                }
+
+                refreshDomains();
             }
-
-            refreshDomains();
         }
 
         await deleteProvider(item._id);

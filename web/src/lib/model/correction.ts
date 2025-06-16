@@ -24,3 +24,9 @@ export interface Correction {
     msg: string;
     kind?: number;
 }
+
+export interface FullCorrection {
+    id: string;
+    msg: string;
+    kind: number;
+}

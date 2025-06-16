@@ -60,7 +60,7 @@
         goto("/login");
     }
 
-    function deletionError(err): void {
+    function deletionError(err: Error): void {
         formSent = false;
         toasts.addErrorToast({
             title: $t("errors.account-delete"),

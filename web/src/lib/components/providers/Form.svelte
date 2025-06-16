@@ -36,7 +36,7 @@
     export let form: ProviderForm;
     export let ptype: string;
 
-    function newForm(ptype) {
+    function newForm(ptype: string) {
         form = new ProviderForm(ptype, (provider) => dispatch("done", provider));
         if (ptype) {
             form.changeState(0).then((res) => {

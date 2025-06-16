@@ -34,13 +34,13 @@
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
 
-    export let data: { domain: Domain; history: string; definedhistory: bool };
+    export let data: { domain: Domain; history: string; definedhistory: boolean };
 
     let selectedDomain = data.domain.id;
     let selectedHistory: string = data.history;
     $: historyChange(selectedHistory);
     $: historyChange(data.history);
-    function historyChange(history) {
+    function historyChange(history: string) {
         if (data.history != history) {
             goto(
                 "/domains/" +
