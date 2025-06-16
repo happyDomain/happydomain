@@ -150,7 +150,7 @@
     <div class="d-flex justify-content-around gap-2">
         <Button type="submit" color="primary" disabled={formSent}>
             {#if formSent}
-                <Spinner label="Spinning" size="sm" />
+                <Spinner size="sm" />
             {:else}
                 <Icon name="person-plus" />
             {/if}

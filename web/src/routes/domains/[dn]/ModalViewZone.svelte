@@ -63,7 +63,7 @@
             <pre style="overflow: initial">{zoneContent}</pre>
         {:else}
             <div class="my-2 text-center">
-                <Spinner label="Spinning" />
+                <Spinner />
                 <p>{$t("wait.formating")}</p>
             </div>
         {/if}

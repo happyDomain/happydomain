@@ -168,7 +168,7 @@
             color="success"
         >
             {#if addServiceInProgress}
-                <Spinner label="Spinning" size="sm" />
+                <Spinner size="sm" />
             {/if}
             {$t("service.update")}
         </Button>

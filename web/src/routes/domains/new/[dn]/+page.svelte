@@ -89,7 +89,7 @@
 
     {#if addingNewDomain || !$providers}
         <div class="flex-fill d-flex justify-content-center align-items-center">
-            <Spinner color="primary" label="Spinning" class="me-3" />
+            <Spinner color="primary" class="me-3" />
             {$t("wait.validating")}
         </div>
     {:else}

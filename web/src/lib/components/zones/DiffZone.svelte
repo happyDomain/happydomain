@@ -109,7 +109,7 @@
 
 {#if !zoneDiff}
     <div class="my-2 text-center">
-        <Spinner color="warning" label="Spinning" />
+        <Spinner color="warning" />
         <p>{$t("wait.exporting")}</p>
     </div>
 {:else if zoneDiff.length == 0}

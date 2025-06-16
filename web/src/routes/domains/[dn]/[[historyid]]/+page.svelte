@@ -39,17 +39,17 @@
 
 {#if !data.domain}
     <div class="mt-5 text-center flex-fill">
-        <Spinner label="Spinning" />
+        <Spinner />
         <p>{$t("wait.loading")}</p>
     </div>
 {:else if !data.domain.zone_history || data.domain.zone_history.length == 0}
     <div class="mt-4 text-center flex-fill">
-        <Spinner label={$t("common.spinning")} />
+        <Spinner />
         <p>{$t("wait.importing")}</p>
     </div>
 {:else if !$thisZone || !$sortedDomains}
     <div class="mt-4 text-center flex-fill">
-        <Spinner label={$t("common.spinning")} />
+        <Spinner />
         <p>{$t("wait.loading")}</p>
     </div>
 {:else}

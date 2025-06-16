@@ -98,7 +98,7 @@
             disabled={formSent}
         >
             {#if formSent}
-                <Spinner label="Spinning" size="sm" />
+                <Spinner size="sm" />
             {/if}
             {$t("email.send-recover")}
         </Button>

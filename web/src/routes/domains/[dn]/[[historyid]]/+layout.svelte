@@ -71,14 +71,14 @@
 {:else}
     <div class="flex-fill d-flex flex-column">
         <h2 class="d-flex align-items-center">
-            <Spinner label="Spinning" type="grow" />
+            <Spinner type="grow" />
             <span class="ms-2 mt-1 font-monospace">
                 {data.domain.domain}
             </span>
         </h2>
 
         <div class="mt-4 text-center flex-fill">
-            <Spinner label="Spinning" />
+            <Spinner />
             <p>{$t("wait.loading")}</p>
         </div>
     </div>

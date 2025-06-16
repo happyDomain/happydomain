@@ -142,7 +142,7 @@
     <div class="ml-3 mr-3">
         <Button type="submit" class="float-end" color="primary" disabled={request_pending}>
             {#if request_pending}
-                <Spinner label={$t("common.spinning")} size="sm" />
+                <Spinner size="sm" />
             {/if}
             {$t("common.run")}
         </Button>

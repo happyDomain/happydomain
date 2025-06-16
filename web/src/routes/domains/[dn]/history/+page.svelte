@@ -46,7 +46,7 @@
     <h2>{$t("history.title")} <span class="font-monospace">{data.domain.domain}</span></h2>
     {#await getDomain(data.domain.id)}
         <div class="mt-5 text-center flex-fill">
-            <Spinner label="Spinning" />
+            <Spinner />
             <p>{$t("wait.loading")}</p>
         </div>
     {:then domain}
