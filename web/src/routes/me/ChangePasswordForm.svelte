@@ -41,8 +41,10 @@
     let passwordConfirmState: boolean | undefined = undefined;
     let formSent = false;
 
-    let formElm: HTMLFormElement;
+    let formElm: HTMLFormElement | undefined = undefined;
     function sendChPassword() {
+        if (!formElm) return;
+
         passwordConfirmState = checkPasswordConfirmation(form.password, form.passwordconfirm);
         const valid = formElm.checkValidity() && passwordConfirmState === true;
 

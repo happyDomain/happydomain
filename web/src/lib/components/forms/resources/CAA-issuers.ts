@@ -19,7 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-export const issuers = {
+export const issuers: Record<string, Array<string>> = {
     "Actalis S.p.A.": ["actalis.it"],
     "Amazon Trust Services LLC": [
         "amazon.com",

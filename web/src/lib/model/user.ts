@@ -40,5 +40,3 @@ export interface User {
     last_seen: Date;
     settings: UserSettings;
 }
-
-export default User;

@@ -54,7 +54,7 @@
     </div>
 {:else}
     <div style="max-width: 100%;" class="w-100 pt-1">
-        {#if $sortedDomains.length == 0}
+        {#if !$sortedDomainsWithIntermediate || $sortedDomains.length == 0}
             <SubdomainList
                 origin={data.domain}
                 sortedDomains={['']}

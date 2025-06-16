@@ -26,13 +26,13 @@
 
     import { getDomain } from "$lib/api/domains";
     import DiffZone from "$lib/components/zones/DiffZone.svelte";
-    import type { Domain } from "$lib/model/domain";
+    import type { Domain, ZoneHistory } from "$lib/model/domain";
     import { getUser } from "$lib/stores/users";
     import { t } from "$lib/translations";
 
     export let data: { domain: Domain; history: string };
 
-    let isOpen: Record<number, boolean> = {};
+    let isOpen: Record<string, boolean> = {};
     if (data.domain.zone_history && data.domain.zone_history.length > 0) {
         isOpen[data.domain.zone_history[0]] = true;
     }
@@ -50,14 +50,14 @@
             <p>{$t("wait.loading")}</p>
         </div>
     {:then domain}
-      {#if domain.zone_history}
+      {#if domain.zone_history && domain.zone_meta}
         {#each domain.zone_history as zid, idx}
             {@const history = domain.zone_meta[zid]}
             {@const moddate = new Intl.DateTimeFormat(undefined, {
                 dateStyle: "long",
                 timeStyle: "medium",
             }).format(new Date(history.last_modified))}
-            {#if idx === 0 || !isSameMonth(new Date(domain.zone_history[idx - 1].last_modified), new Date(history.last_modified))}
+            {#if idx === 0 || !isSameMonth(new Date(domain.zone_meta[domain.zone_history[idx - 1]].last_modified), new Date(history.last_modified))}
                 <h3 class="mt-4 fw-bolder">
                     <Icon name="calendar2-month" />
                     {new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(

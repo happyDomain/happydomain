@@ -44,6 +44,7 @@ export interface ServiceInfos {
     description: string;
     family: string;
     categories: Array<string>;
+    record_types: Array<number>;
     tabs: boolean;
     restrictions: ServiceRestrictions;
 }

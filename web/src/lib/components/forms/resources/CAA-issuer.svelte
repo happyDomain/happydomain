@@ -31,13 +31,9 @@
 
     const dispatch = createEventDispatcher();
 
-    export let edit = false;
-    export let index: string;
     export let newone = false;
     export let readonly = false;
-    export let value: any;
-
-    $: if (!value) value = {};
+    export let value: any = {};
 </script>
 
 <div class="d-flex gap-2 mb-2">
@@ -58,12 +54,13 @@
         <Input type="text" bind:value={value.IssuerDomainName} />
     {/if}
     {#if !newone}
-        <Button type="button" color="danger" outline on:click={() => dispatch("delete-issuer")}>
+        <Button tabindex={0} type="button" color="danger" outline on:click={() => dispatch("delete-issuer")}>
             <Icon name="trash" />
         </Button>
     {:else}
         <Button
             color="success"
+            tabindex={0}
             outline
             type="button"
             disabled={!value}
@@ -86,19 +83,20 @@
                             class="d-flex align-items-center gap-1"
                             on:submit|preventDefault={() => (parameter.edit = false)}
                         >
-                            <Input size="sm" placeholder="key" bind:value={parameter.Tag} />
+                            <Input bsSize="sm" placeholder="key" bind:value={parameter.Tag} />
                             =
-                            <Input size="sm" placeholder="value" bind:value={parameter.Value} />
-                            <Button type="submit" color="success" size="sm">
+                            <Input bsSize="sm" placeholder="value" bind:value={parameter.Value} />
+                            <Button tabindex={0} type="submit" color="success" size="sm">
                                 <Icon name="check" />
                             </Button>
                         </form>
                     {:else}
-                        <span on:dblclick={() => (parameter.edit = true)}>
+                        <span role="button" tabindex="0" on:dblclick={() => (parameter.edit = true)} aria-label="Double-click to edit">
                             {parameter.Tag}={parameter.Value}
                         </span>
                         <span
                             role="button"
+                            tabindex="0"
                             on:click={() => {
                                 value.Parameters.splice(k, 1);
                                 value = value;
@@ -117,6 +115,7 @@
         <span
             class="badge bg-primary"
             role="button"
+            tabindex="0"
             on:click={() => {
                 if (value.Parameters == null) value.Parameters = [];
                 value.Parameters.push({ Tag: "", Value: "", edit: true });

@@ -31,7 +31,11 @@
 
     onMount(async () => {
         await tick();
-        document.getElementById("filterserviceinput").focus();
+
+        const input = document.getElementById("filterserviceinput");
+        if (input) {
+            input.focus();
+        }
     })
 </script>
 

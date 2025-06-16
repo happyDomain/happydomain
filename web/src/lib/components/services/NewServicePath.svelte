@@ -22,7 +22,9 @@
 -->
 
 <script context="module" lang="ts">
-    export const controls = {};
+    export const controls = {
+        Open (domain: string): void { },
+    };
 </script>
 
 <script lang="ts">

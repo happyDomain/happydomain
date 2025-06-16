@@ -33,12 +33,15 @@
     import { domains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
+    export { className as class };
+    let className = "";
+
     let isGroupModalOpen = false;
     export let filteredGroup: string | null = null
 </script>
 
 {#if $domains && $domains.length}
-    <Card class="mb-3">
+    <Card class="mb-3 ${className}">
         <div class="card-header d-flex justify-content-between">
             {$t("domaingroups.title")}
             <Button

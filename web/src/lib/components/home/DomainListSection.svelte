@@ -44,6 +44,7 @@
     import ZoneList from "$lib/components/zones/ZoneList.svelte";
     import ProviderList from "$lib/components/providers/List.svelte";
     import { fqdnCompare } from "$lib/dns";
+    import type { Domain } from "$lib/model/domain";
     import { domains } from "$lib/stores/domains";
     import { filteredGroup, filteredName, filteredProvider } from '$lib/stores/home';
     import { providersSpecs } from "$lib/stores/providers";
@@ -80,7 +81,9 @@
     }
 
     async function createDomainOnProvider(fqdn: string) {
-        return await createDomain(filteredProvider, fqdn)
+        if (!$filteredProvider) return;
+
+        return await createDomain($filteredProvider, fqdn)
     }
 </script>
 

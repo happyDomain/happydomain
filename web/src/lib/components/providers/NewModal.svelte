@@ -42,7 +42,6 @@
         } else {
             form.previousState().then(() => {
                 if (form.state < 0) {
-                    form = null;
                     ptype = "";
                 } else {
                     form = form;
@@ -76,7 +75,7 @@
             </p>
             <ProviderSelector on:provider-selected={selectProvider} />
         {:else}
-            <ProviderForm bind:form formId="providermodal" {ptype} on:done={finished} />
+            <ProviderForm bind:form={form} formId="providermodal" {ptype} on:done={finished} />
         {/if}
     </ModalBody>
     <ModalFooter>

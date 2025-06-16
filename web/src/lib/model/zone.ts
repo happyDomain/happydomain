@@ -23,7 +23,7 @@ import type { ServiceCombined } from "$lib/model/service";
 
 export interface ServiceRecord {
     str: string;
-    fields: any; // dns.RR
+    rr: any; // dns.RR
 
     // ui
     edit?: boolean;

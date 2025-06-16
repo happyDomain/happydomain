@@ -58,7 +58,7 @@
                     throw error;
                 },
             );
-        } else if ($providers.length == 1) {
+        } else if ($providers && $providers.length == 1) {
             addDomain($filteredName, $providers[0]).then(
                 (domain) => {
                     addingNewDomain = false;
@@ -103,7 +103,7 @@
                     class="ms-2 my-1 text-center text-muted"
                     style="font-size: 1.6rem"
                 >
-                    {#if ($filteredName && $domains.filter((dn) => dn.domain == fqdn($filteredName, "")).length == 0) || ($domains && $domains.length == 0)}
+                    {#if ($domains && $filteredName && $domains.filter((dn) => dn.domain == fqdn($filteredName, "")).length == 0) || ($domains && $domains.length == 0)}
                         <Icon name="plus-lg" />
                     {:else}
                         <Icon name="search" />

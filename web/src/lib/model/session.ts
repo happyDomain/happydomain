@@ -27,4 +27,7 @@ export interface Session {
     exp: Date;
     upd: Date;
     content: string;
+
+    // Used by the interface
+    delete_in_progress: boolean;
 }

@@ -24,8 +24,6 @@
 <script lang="ts">
     import { Icon } from "@sveltestrap/sveltestrap";
 
-    const { MODE } = import.meta.env;
-
     import { userSession } from "$lib/stores/usersession";
     import { t, locale } from "$lib/translations";
 
@@ -37,6 +35,7 @@
 {#if MODE == "production"}
     {#if showCard}
         <div
+            role="presentation"
             style="background-color: #0007; position: fixed; width: 100vw; height: 100vh; top:0; left: 0; z-index: 1050"
             on:click={() => (showCard = false)}
         />

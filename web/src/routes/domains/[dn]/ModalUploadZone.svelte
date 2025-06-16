@@ -24,7 +24,9 @@
 <script context="module" lang="ts">
     import type { ModalController } from "$lib/model/modal_controller";
 
-    export const controls: ModalController = {};
+    export const controls: ModalController = {
+        Open() { },
+    };
 </script>
 
 <script lang="ts">

@@ -172,6 +172,8 @@
     <div id={dn ? dn : "@"}>
         <div class="d-flex align-items-center sticky-top mb-2 gap-2 bg-light" style="z-index: 1">
             <h2
+                role="button"
+                tabindex="0"
                 style="white-space: nowrap; cursor: pointer;"
                 class="mb-0 text-truncate"
                 on:click={() => (showResources = !showResources)}
@@ -190,7 +192,7 @@
                     {/if}
                 </span>
             </h2>
-            {#if !showResources}
+            {#if !showResources && $servicesSpecs}
                 <Badge id={"popoversvc-" + dn.replace(".", "__")} style="cursor: pointer;">
                     {$t("domains.n-services", { count: services.length })}
                 </Badge>

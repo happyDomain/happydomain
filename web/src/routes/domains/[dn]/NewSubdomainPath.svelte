@@ -22,7 +22,11 @@
 -->
 
 <script context="module" lang="ts">
-    export const controls = {};
+    import type { ModalController } from "$lib/model/modal_controller";
+
+    export const controls: ModalController = {
+        Open() { },
+    };
 </script>
 
 <script lang="ts">

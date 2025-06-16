@@ -41,7 +41,7 @@
     export let form = "addSvcForm";
     export let origin: Domain | undefined = undefined;
     export let update = false;
-    export let zoneId: number | undefined = undefined;
+    export let zoneId: string | undefined = undefined;
     export let canDelete = false;
     export let canContinue = false;
 
@@ -75,7 +75,7 @@
 
     let recordsHeight = 120;
     let recordsHeightResize = false;
-    function resizeRecordsHeight(e) {
+    function resizeRecordsHeight(e: MouseEvent) {
         if (!recordsHeightResize) {
             return;
         }
@@ -92,10 +92,12 @@
     on:mouseup={() => (recordsHeightResize = false)}
 />
 
-{#if showRecords}
+{#if showRecords && origin && zoneId && service}
     <ModalFooter class="p-0 d-block" style={"max-height:" + recordsHeight + "px"}>
         <div
             class="border-top border-dark border-2 d-flex m-0"
+            role="separator"
+            aria-orientation="horizontal"
             style:cursor="ns-resize"
             on:mousedown|preventDefault={() => (recordsHeightResize = true)}
         ></div>
@@ -126,7 +128,7 @@
         </Button>
     {/if}
     <div class="ms-auto"></div>
-    {#if origin && zoneId && showRecords}
+    {#if origin && zoneId && service && showRecords}
         <Label for="svc_ttl" title={$t("service.ttl-long")}>{$t("service.ttl")}</Label>
         <Input
             id="svc_ttl"

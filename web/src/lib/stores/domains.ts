@@ -23,7 +23,7 @@ import { derived, writable, type Writable } from "svelte/store";
 import { listDomains } from "$lib/api/domains";
 import type { Domain } from "$lib/model/domain";
 
-export const domains: Writable<null | Array<Domain>> = writable(null);
+export const domains: Writable<Array<Domain> | undefined> = writable(undefined);
 
 export async function refreshDomains() {
     const data = await listDomains();
@@ -31,66 +31,68 @@ export async function refreshDomains() {
     return data;
 }
 
-export const groups = derived(domains, ($domains: null | Array<Domain>) => {
-    const groups: Record<string, null> = {};
+export const groups = derived(domains, ($domains: Array<Domain> | undefined) => {
+    if (!$domains) return [];
 
-    if ($domains) {
-        for (const domain of $domains) {
-            if (groups[domain.group] === undefined) {
-                groups[domain.group] = null;
-            }
-        }
+    const groups = new Set<string>();
+
+    for (const domain of $domains) {
+        groups.add(domain.group);
     }
 
-    return Object.keys(groups).sort((a,b) => !a || !b ? (!a ? 1 : -1) : a.toLowerCase().localeCompare(b.toLowerCase()));
+    return Array.from(groups).sort((a,b) => {
+        if (!a) return 1;
+        if (!b) return -1;
+        return a.toLowerCase().localeCompare(b.toLowerCase());
+    });
 });
 
-export const domains_idx = derived(domains, ($domains: null | Array<Domain>) => {
+export const domains_idx = derived(domains, ($domains: Array<Domain> | undefined) => {
     const idx: Record<string, Domain> = {};
 
-    if ($domains) {
-        const multiview = [];
+    if (!$domains) return idx;
 
-        for (const d of $domains) {
-            idx[d.id] = d;
+    const multiview = [];
 
-            if (idx[d.domain]) {
-                if (multiview.indexOf(d.domain) == -1) multiview.push(d.domain);
-            } else {
-                idx[d.domain] = d;
-            }
+    for (const d of $domains) {
+        idx[d.id] = d;
+
+        if (idx[d.domain]) {
+            if (multiview.indexOf(d.domain) == -1) multiview.push(d.domain);
+        } else {
+            idx[d.domain] = d;
         }
+    }
 
-        for (const dn of multiview) {
-            idx[dn] = undefined;
+    for (const dn of multiview) {
+            delete idx[dn];
+    }
+
+    return idx;
+});
+
+export const domains_by_name = derived(domains, ($domains: Array<Domain> | undefined) => {
+    const idx: Record<string, Domain | Array<Domain>> = {};
+
+    if (!$domains) return idx;
+
+    for (const d of $domains) {
+        idx[d.id] = d;
+
+        if (idx[d.domain]) {
+            idx[d.domain].push(d);
+        } else {
+            idx[d.domain] = [d];
         }
     }
 
     return idx;
 });
 
-export const domains_by_name = derived(domains, ($domains: null | Array<Domain>) => {
-    const idx: Record<string, Array<Domain>> = {};
-
-    if ($domains) {
-        for (const d of $domains) {
-            idx[d.id] = d;
-
-            if (idx[d.domain]) {
-                idx[d.domain].push(d);
-            } else {
-                idx[d.domain] = [d];
-            }
-        }
-    }
-
-    return idx;
-});
-
-export const domains_by_groups = derived(domains, ($domains: null | Array<Domain>) => {
+export const domains_by_groups = derived(domains, ($domains: Array<Domain> | undefined) => {
     const groups: Record<string, Array<Domain>> = {};
 
-    if ($domains === null) {
+    if ($domains === undefined) {
         return groups;
     }
 

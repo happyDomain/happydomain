@@ -37,16 +37,15 @@
     } from "@sveltestrap/sveltestrap";
 
     import Record from "$lib/components/domains/Record.svelte";
+    import type { ServiceRecord } from "$lib/model/zone";
 
-    export let serviceRecords: Array<ServiceRecord> | null = null;
+    export let serviceRecords: Array<ServiceRecord>;
 </script>
 
-{#if serviceRecords}
-    <div class="flex-fill m-0 d-flex flex-column" style:max-width="100%">
-        {#each serviceRecords as record, i}
-            <div class="bg-light p-1 border-1 border-bottom" style="border-color: darkgray">
-                <Record {record} />
-            </div>
-        {/each}
-    </div>
-{/if}
+<div class="flex-fill m-0 d-flex flex-column" style:max-width="100%">
+    {#each serviceRecords as record, i}
+        <div class="bg-light p-1 border-1 border-bottom" style="border-color: darkgray">
+            <Record {record} />
+        </div>
+    {/each}
+</div>

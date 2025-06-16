@@ -22,7 +22,9 @@
 -->
 
 <script context="module" lang="ts">
-    export const controls = {};
+    export const controls = {
+        Open(domain: string): void { },
+    };
 </script>
 
 <script lang="ts">
@@ -43,7 +45,7 @@
     export let isOpen = false;
     const toggle = () => (isOpen = !isOpen);
 
-    export let dn: string;
+    let dn: string;
     export let origin: Domain;
     export let value: string | null = null;
     export let zservices: Record<string, Array<ServiceCombined>>;

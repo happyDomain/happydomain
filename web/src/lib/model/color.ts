@@ -28,5 +28,3 @@ export type Color =
     | "danger"
     | "light"
     | "dark";
-
-export default Color;
