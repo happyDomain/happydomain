@@ -27,6 +27,7 @@
     import { Button, Container, Col, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import ProviderList from "$lib/components/providers/List.svelte";
+    import { appConfig } from "$lib/stores/config";
     import { providers, refreshProviders } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 
@@ -34,7 +35,7 @@
 </script>
 
 <Container class="flex-fill pt-4 pb-5">
-    {#if !window.disable_providers}
+    {#if !$appConfig.disable_providers}
         <Button
             type="button"
             color="primary"

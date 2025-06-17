@@ -41,6 +41,7 @@
     import { fqdn, fqdnCompare, validateDomain } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { Provider } from "$lib/model/provider";
+    import { appConfig } from "$lib/stores/config";
     import { filteredName } from '$lib/stores/home';
     import { providersSpecs } from "$lib/stores/providers";
     import { domains_by_name, domains_idx, refreshDomains } from "$lib/stores/domains";
@@ -260,7 +261,7 @@
                     </ListGroupItem>
                 {/if}
             {/if}
-            {#if !window.disable_providers && $filteredName && $providersSpecs && $providersSpecs[provider._srctype] && $providersSpecs[provider._srctype].capabilities.indexOf('CreateDomain') >= 0 && !importableDomainsList.filter((dn) => dn == $filteredName).length}
+            {#if !$appConfig.disable_providers && $filteredName && $providersSpecs && $providersSpecs[provider._srctype] && $providersSpecs[provider._srctype].capabilities.indexOf('CreateDomain') >= 0 && !importableDomainsList.filter((dn) => dn == $filteredName).length}
                 <ListGroupItem class="d-flex justify-content-between align-items-center">
                     <DomainWithProvider class="text-muted fst-italic" domain={{domain: fqdn($filteredName, ""), id_provider: provider._id, wait: false}} />
                     <div>

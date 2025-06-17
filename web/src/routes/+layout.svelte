@@ -39,9 +39,12 @@
     import Logo from "$lib/components/Logo.svelte";
     import Toaster from "$lib/components/Toaster.svelte";
     import VoxPeople from "$lib/components/VoxPeople.svelte";
+    import { appConfig } from "$lib/stores/config";
     import { providers } from "$lib/stores/providers";
     import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
+
+    const { MODE } = import.meta.env;
 
     export let data: {
         route: { id: string | null };
@@ -85,15 +88,15 @@
 
 <!--Styles /-->
 
-{#if window.msg_header}
+{#if $appConfig.msg_header}
     <div
-        class={(window.msg_header.color ? "bg-" + window.msg_header.color : "bg-danger") +
+        class={($appConfig.msg_header.color ? "bg-" + $appConfig.msg_header.color : "bg-danger") +
             " text-light text-center fw-bolder pb-1"}
         id="msg_header"
         style="z-index: 101; margin-bottom: -.2em"
     >
         <small>
-            {window.msg_header.text}
+            {$appConfig.msg_header.text}
         </small>
     </div>
 {/if}
@@ -104,4 +107,6 @@
 </div>
 
 <Toaster />
-<VoxPeople routeId={data.route.id} />
+{#if !$appConfig.hide_feedback && MODE == "production"}
+    <VoxPeople routeId={data.route.id} />
+{/if}

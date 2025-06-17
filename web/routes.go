@@ -22,8 +22,8 @@
 package web
 
 import (
+	"encoding/json"
 	"flag"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -56,28 +56,39 @@ func init() {
 }
 
 func DeclareRoutes(cfg *happydns.Options, router *gin.Engine) {
+	appConfig := map[string]interface{}{}
+
 	if cfg.DisableProviders {
-		CustomHeadHTML += `<script type="text/javascript">window.disable_providers = true;</script>`
+		appConfig["disable_providers"] = true
 	}
 
 	if cfg.DisableRegistration {
-		CustomHeadHTML += `<script type="text/javascript">window.disable_registration = true;</script>`
+		appConfig["disable_registration"] = true
 	}
 
 	if cfg.DisableEmbeddedLogin {
-		CustomHeadHTML += `<script type="text/javascript">window.disable_embedded_login = true;</script>`
+		appConfig["disable_embedded_login"] = true
 	}
 
 	if len(cfg.OIDCClients) > 0 {
-		CustomHeadHTML += `<script type="text/javascript">window.oidc_configured = true;</script>`
-	}
-
-	if HideVoxPeople {
-		CustomHeadHTML += "<style>#voxpeople { display: none !important; }</style>"
+		appConfig["oidc_configured"] = true
 	}
 
 	if len(MsgHeaderText) != 0 {
-		CustomHeadHTML += fmt.Sprintf(`<script type="text/javascript">window.msg_header = { text: %q, color: %q };</script>`, MsgHeaderText, MsgHeaderColor)
+		appConfig["msg_header"] = map[string]string{
+			"text":  MsgHeaderText,
+			"color": MsgHeaderColor,
+		}
+	}
+
+	if HideVoxPeople {
+		appConfig["hide_feedback"] = true
+	}
+
+	if appcfg, err := json.MarshalIndent(appConfig, "", "  "); err != nil {
+		log.Println("Unable to generate JSON config to inject in web application")
+	} else {
+		CustomHeadHTML += `<script id="app-config" type="application/json">` + string(appcfg) + `</script>`
 	}
 
 	if cfg.DevProxy != "" {

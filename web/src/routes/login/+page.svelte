@@ -26,6 +26,7 @@
 
     import { t } from "$lib/translations";
     import LoginForm from "./LoginForm.svelte";
+    import { appConfig } from "$lib/stores/config";
 </script>
 
 <Container class="my-3">
@@ -44,7 +45,7 @@
                     <LoginForm />
                 </CardBody>
             </Card>
-            {#if !window.disable_registration}
+            {#if !$appConfig.disable_registration}
                 <div class="text-center mt-4">
                     {$t("account.ask-have")}
                     <a href="/join" class="fw-bold">
