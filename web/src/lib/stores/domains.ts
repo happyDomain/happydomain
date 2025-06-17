@@ -52,33 +52,31 @@ export const domains_idx = derived(domains, ($domains: Array<Domain> | undefined
 
     if (!$domains) return idx;
 
-    const multiview = [];
+    const multiview = new Set<string>();;
 
     for (const d of $domains) {
         idx[d.id] = d;
 
         if (idx[d.domain]) {
-            if (multiview.indexOf(d.domain) == -1) multiview.push(d.domain);
+            multiview.add(d.domain);
         } else {
             idx[d.domain] = d;
         }
     }
 
     for (const dn of multiview) {
-            delete idx[dn];
+        delete idx[dn];
     }
 
     return idx;
 });
 
 export const domains_by_name = derived(domains, ($domains: Array<Domain> | undefined) => {
-    const idx: Record<string, Domain | Array<Domain>> = {};
+    const idx: Record<string, Array<Domain>> = {};
 
     if (!$domains) return idx;
 
     for (const d of $domains) {
-        idx[d.id] = d;
-
         if (idx[d.domain]) {
             idx[d.domain].push(d);
         } else {
