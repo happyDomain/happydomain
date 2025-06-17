@@ -20,7 +20,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { redirect, type Load } from "@sveltejs/kit";
-import { get_store_value } from "svelte/internal";
+import { get } from "svelte/store";
 
 import { toasts } from "$lib/stores/toasts";
 import { refreshUserSession } from "$lib/stores/usersession";
@@ -33,8 +33,8 @@ const sw_state = { triedUpdate: false, hasUpdate: false };
 function onSWupdate(sw_state: { hasUpdate: boolean }, installingWorker: ServiceWorker) {
     if (!sw_state.hasUpdate) {
         toasts.addToast({
-            title: get_store_value(t)("upgrade.title"),
-            message: get_store_value(t)("upgrade.content"),
+            title: get(t)("upgrade.title"),
+            message: get(t)("upgrade.content"),
             onclick: () => installingWorker.postMessage("SKIP_WAITING"),
         });
     }
@@ -95,15 +95,15 @@ export const load: Load = async ({ fetch, route, url }) => {
     // Load user session if any
     try {
         const user = await refreshUserSession(fetch);
-        if (!url.searchParams.has("lang") && get_store_value(locale) != user.settings.language) {
+        if (!url.searchParams.has("lang") && get(locale) != user.settings.language) {
             locale.set(user.settings.language);
         }
     } catch (err) {
         if (route.id != null && route.id != "/login" && route.id != "/forgotten-password" && route.id != "/join" && route.id != "/resolver" && route.id != "/providers/features" && !route.id.startsWith("/email-validation")) {
             toasts.addToast({
                 type: 'error',
-                title: get_store_value(t)("errors.session.title"),
-                message: get_store_value(t)("errors.session.content"),
+                title: get(t)("errors.session.title"),
+                message: get(t)("errors.session.content"),
             });
             throw redirect(302, '/login?next=' + encodeURIComponent(url.pathname));
         }

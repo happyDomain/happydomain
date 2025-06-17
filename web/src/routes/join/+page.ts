@@ -20,14 +20,14 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { redirect, type Load } from "@sveltejs/kit";
-import { get_store_value } from "svelte/internal";
+import { get } from "svelte/store";
 
 import { userSession } from "$lib/stores/usersession";
 
 export const load: Load = async ({ parent }) => {
     const data = await parent();
 
-    if (get_store_value(userSession) != null) {
+    if (get(userSession) != null) {
         redirect(302, "/");
     }
 

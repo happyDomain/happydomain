@@ -19,7 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { get_store_value } from "svelte/internal";
+import { get } from "svelte/store";
 import { writable, type Writable } from "svelte/store";
 import { getUser as APIGetUser } from "$lib/api/user";
 import type { User } from "$lib/model/user";
@@ -36,10 +36,10 @@ export async function getUser(id: string, force?: boolean) {
     if (id in requests) {
         unlock();
         await requests[id];
-        return get_store_value(users)[id];
+        return get(users)[id];
     }
 
-    const user = get_store_value(users)[id];
+    const user = get(users)[id];
     if (user && !force) {
         unlock();
         return user;
