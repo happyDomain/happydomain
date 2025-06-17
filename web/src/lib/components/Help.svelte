@@ -22,16 +22,15 @@
 -->
 
 <script lang="ts">
-    import { Button, Icon } from "@sveltestrap/sveltestrap";
-    import type { ButtonColor, ButtonSize } from "sveltestrap/src/Button.d";
+    import { Button, Icon, type Color } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
 
     export { className as class };
     let className: string = "";
-    export let color: ButtonColor = "primary";
+    export let color: Color | 'link' | string = "primary";
     export let href: string;
-    export let size: ButtonSize | undefined = undefined;
+    export let size: 'sm' | 'lg' | string = "";
     export let title: string | null = null;
 </script>
 
