@@ -74,7 +74,7 @@
         {...$$restProps}
     >
         {#each $locales as lang}
-            <option value={lang}>{lang}</option>
+            <option value={lang}>{$t(`locales.${lang}`)}</option>
         {/each}
     </Input>
     {#if formSent}

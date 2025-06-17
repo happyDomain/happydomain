@@ -81,6 +81,17 @@ export const config: Config<Params> = {
             key: "",
             loader: async () => (await import("./locales/zh.json")).default,
         },
+        {
+            locale: "en",
+            key: "locales",
+            loader: async () => {
+                if (MODE == "development") {
+                    return await (await fetch("/src/lib/locales/lang.json")).json();
+                } else {
+                    return (await import("./locales/lang.json")).default;
+                }
+            },
+        },
     ],
 };
 

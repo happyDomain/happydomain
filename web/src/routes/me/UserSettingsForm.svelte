@@ -78,7 +78,7 @@
         </label>
         <Input id="language-select" type="select" bind:value={settings.language}>
             {#each $locales as lang}
-                <option value={lang}>{lang}</option>
+                <option value={lang}>{$t(`locales.${lang}`)}</option>
             {/each}
         </Input>
     </div>
