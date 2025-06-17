@@ -30,6 +30,7 @@
     import { t } from "$lib/translations";
     import { authUser, cleanUserSession } from "$lib/api/user";
     import type { LoginForm } from "$lib/model/user";
+    import { appConfig } from "$lib/stores/config";
     import { providers } from "$lib/stores/providers";
     import { toasts } from "$lib/stores/toasts";
     import { refreshUserSession } from "$lib/stores/usersession";
@@ -120,7 +121,7 @@
             {/if}
             {$t("common.go")}
         </Button>
-        {#if window.oidc_configured}
+        {#if $appConfig.oidc_configured}
             {#await fetch("/auth/has_oidc") then res}
                 {#await res.json() then oidc}
                     <Button href="/auth/oidc" color="secondary">

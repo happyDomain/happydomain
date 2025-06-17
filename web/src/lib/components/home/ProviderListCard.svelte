@@ -33,6 +33,7 @@
 
     import ProviderList from "$lib/components/providers/List.svelte";
     import type { Provider } from "$lib/model/provider";
+    import { appConfig } from "$lib/stores/config";
     import {
         providers,
         providersSpecs,
@@ -45,7 +46,7 @@
 <Card {...$$restProps}>
     <div class="card-header d-flex justify-content-between">
         {$t("provider.title")}
-        {#if !window.disable_providers}
+        {#if !$appConfig.disable_providers}
             <Button size="sm" color="light" href="/providers/new">
                 <Icon name="plus" />
             </Button>

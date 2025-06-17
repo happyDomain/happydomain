@@ -40,6 +40,7 @@
     import { logout as APILogout } from "$lib/api/user";
     import HelpButton from "$lib/components/Help.svelte";
     import Logo from "$lib/components/Logo.svelte";
+    import { appConfig } from "$lib/stores/config";
     import { providersSpecs } from "$lib/stores/providers";
     import { userSession, refreshUserSession } from "$lib/stores/usersession";
     import { toasts } from "$lib/stores/toasts";
@@ -192,7 +193,7 @@
                 {$t("menu.dns-resolver")}
             </Button>
 
-            {#if !window.disable_registration}
+            {#if !$appConfig.disable_registration}
                 <Button
                     class="d-none d-md-inline-block mx-1"
                     outline={activemenu != "join"}
