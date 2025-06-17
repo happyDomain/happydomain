@@ -19,7 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { get_store_value } from "svelte/internal";
+import { get } from "svelte/store";
 
 import type { Field } from "$lib/model/custom_form";
 import { getAvailableResourceTypes, type ProviderInfos } from "$lib/model/provider";
@@ -78,7 +78,7 @@ export function passRestrictions(
 
         if (zservices[dn] == null) return null;
 
-        const sspecs = get_store_value(servicesSpecs);
+        const sspecs = get(servicesSpecs);
 
         if (sspecs == null) return null;
 

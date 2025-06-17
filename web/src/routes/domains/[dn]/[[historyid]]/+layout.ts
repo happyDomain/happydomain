@@ -1,6 +1,4 @@
-import { get_store_value } from "svelte/internal";
-import { error, redirect } from "@sveltejs/kit";
-import type { Load } from "@sveltejs/kit";
+import { error, redirect, type Load } from "@sveltejs/kit";
 
 import { domains_idx } from "$lib/stores/domains";
 import { getZone } from "$lib/stores/thiszone";

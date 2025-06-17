@@ -19,9 +19,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { redirect } from "@sveltejs/kit";
-import type { Load } from "@sveltejs/kit";
-import { get_store_value } from "svelte/internal";
+import { redirect, type Load } from "@sveltejs/kit";
+import { get } from "svelte/store";
 
 import { refreshDomains } from "$lib/stores/domains";
 import { userSession } from "$lib/stores/usersession";
@@ -31,7 +30,7 @@ export const load: Load = async ({ parent }) => {
     await parent();
 
     // If not connected, redirect to main website in the right language
-    if (!get_store_value(userSession)) {
+    if (!get(userSession)) {
         const initLocale =
             locale.get() ||
             window.navigator.language ||
