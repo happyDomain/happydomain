@@ -21,7 +21,7 @@
 
 import cuid from "cuid";
 
-import type { Color } from "./color";
+import type { Color } from "@sveltestrap/sveltestrap";
 
 export interface NewToast {
     type?: "info" | "success" | "warning" | "error";

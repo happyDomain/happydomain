@@ -21,7 +21,7 @@
 
 import { writable } from 'svelte/store';
 
-import type { Color } from '$lib/model/color';
+import type { Color } from "@sveltestrap/sveltestrap";
 
 interface AppConfig {
     disable_embedded_login?: boolean;
