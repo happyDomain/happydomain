@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { preventDefault } from 'svelte/legacy';
+
     import { goto } from "$app/navigation";
 
     import {
@@ -40,8 +42,13 @@
     import { providers } from '$lib/stores/providers';
     import { t } from "$lib/translations";
 
-    export let autofocus = false;
-    export let noButton = false;
+    interface Props {
+        autofocus?: boolean;
+        noButton?: boolean;
+        [key: string]: any
+    }
+
+    let { autofocus = false, noButton = false, ...rest }: Props = $props();
 
     let addingNewDomain = false;
     async function addDomainToProvider() {
@@ -74,7 +81,7 @@
         }
     }
 
-    let newDomainState: boolean | undefined = undefined;
+    let newDomainState: boolean | undefined = $state(undefined);
     function validateNewDomain(val: string | undefined): boolean | undefined {
         if (val) {
             newDomainState = validateDomain(val);
@@ -94,8 +101,8 @@
     }
 </script>
 
-<form on:submit|preventDefault={addDomainToProvider}>
-    <ListGroup {...$$restProps}>
+<form onsubmit={preventDefault(addDomainToProvider)}>
+    <ListGroup {...rest}>
         <ListGroupItem class="d-flex justify-content-between align-items-center p-0">
             <InputGroup>
                 <label

@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import type { ClassValue } from 'svelte/elements';
+
     import {
         Button,
         Card,
@@ -33,15 +35,22 @@
     import { domains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
-    export { className as class };
-    let className = "";
+    interface Props {
+        class?: ClassValue;
+        filteredGroup?: string | null;
+    }
 
-    let isGroupModalOpen = false;
-    export let filteredGroup: string | null = null
+    interface Props {
+        class?: ClassValue;
+        filteredGroup?: string | null;
+    }
+
+    let isGroupModalOpen = $state(false);
+    let { class: className, filteredGroup = $bindable(null) } = $props();
 </script>
 
 {#if $domains && $domains.length}
-    <Card class="mb-3 ${className}">
+    <Card class="mb-3 {className}">
         <div class="card-header d-flex justify-content-between">
             {$t("domaingroups.title")}
             <Button

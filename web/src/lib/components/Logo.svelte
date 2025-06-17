@@ -21,9 +21,13 @@
      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
-<script>
-    export let color = "#000";
-    export let height = "25";
+<script lang="ts">
+    interface Props {
+        color?: string;
+        height?: string;
+    }
+
+    let { color = "#000", height = "25" }: Props = $props();
 </script>
 
 <svg version="1.1" viewBox="7 5 100 15" {height} aria-labelledby="title">

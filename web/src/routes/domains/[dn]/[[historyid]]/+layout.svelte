@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { goto } from "$app/navigation";
     import { page } from "$app/stores";
 
@@ -34,12 +36,15 @@
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
 
-    export let data: { domain: Domain; history: string; definedhistory: boolean };
+    interface Props {
+        data: { domain: Domain; history: string; definedhistory: boolean };
+        children?: import('svelte').Snippet;
+    }
+
+    let { data, children }: Props = $props();
 
     let selectedDomain = data.domain.id;
-    let selectedHistory: string = data.history;
-    $: historyChange(selectedHistory);
-    $: historyChange(data.history);
+    let selectedHistory: string = $state(data.history);
     function historyChange(history: string) {
         if (data.history != history) {
             goto(
@@ -57,10 +62,16 @@
             selectedHistory = history;
         }
     }
+    run(() => {
+        historyChange(selectedHistory);
+    });
+    run(() => {
+        historyChange(data.history);
+    });
 </script>
 
 {#if $thisZone && $thisZone.id == selectedHistory}
-    <slot />
+    {@render children?.()}
 
     <NewServicePath origin={data.domain} zone={$thisZone} />
     <ServiceModal

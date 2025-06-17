@@ -58,14 +58,18 @@
     import { providers, refreshProviders } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 
-    export let isOpen = false;
-    let form: ProviderForm;
-    let myDomain: string;
-    let myDomainInProgress = false;
-    let myProvider: Provider;
-    let noDomainsList = false;
-    let step = 0;
-    let providerType: string;
+    interface Props {
+        isOpen?: boolean;
+    }
+
+    let { isOpen = $bindable(false) }: Props = $props();
+    let form: ProviderForm = $state();
+    let myDomain: string = $state();
+    let myDomainInProgress = $state(false);
+    let myProvider: Provider = $state();
+    let noDomainsList = $state(false);
+    let step = $state(0);
+    let providerType: string = $state();
 
     onMount(async () => {
         if (!$providers) await refreshProviders();
@@ -268,7 +272,7 @@
                     </p>
                     <CardImportableDomains provider={myProvider} bind:noDomainsList />
                     {#if !myProvider || noDomainsList}
-                        <!-- svelte-ignore a11y-autofocus -->
+                        <!-- svelte-ignore a11y_autofocus -->
                         <NewDomainInput
                             bind:addingNewDomain={myDomainInProgress}
                             autofocus
@@ -280,10 +284,12 @@
                         />
                         {#if $domains}
                             <ZoneList class="mt-3" domains={$domains}>
-                                <Badge slot="badges" color="success">
-                                    <Icon name="check" />
-                                    {$t("onboarding.import.imported")}
-                                </Badge>
+                                {#snippet badges()}
+                                                                                <Badge  color="success">
+                                        <Icon name="check" />
+                                        {$t("onboarding.import.imported")}
+                                    </Badge>
+                                                                            {/snippet}
                             </ZoneList>
                         {/if}
                     {/if}

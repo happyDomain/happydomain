@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { createEventDispatcher } from "svelte";
 
     import { Input, InputGroup, InputGroupText, type InputType } from "@sveltestrap/sveltestrap";
@@ -30,49 +32,66 @@
 
     const dispatch = createEventDispatcher();
 
-    export let edit = false;
-    export let index: string;
-    export let specs: any = {};
-    export let value: any;
-    let val: any = value;
-
-    let unit: string | null = null;
-    $: unit = specs.type === "time.Duration" || specs.type === "common.Duration" ? "s" : null;
-
-    let inputtype: InputType = "text";
-    $: if (specs.type && (specs.type.startsWith("uint") || specs.type.startsWith("int")))
-        inputtype = "number";
-    else if (specs.type && specs.type === "bool") inputtype = "checkbox";
-    else if (specs.textarea) inputtype = "textarea";
-
-    let inputmin: number | undefined = undefined;
-    let inputmax: number | undefined = undefined;
-    $: if (specs.type) {
-        if (specs.type == "int8" || specs.type == "uint8") inputmax = 255;
-        else if (specs.type == "int16" || specs.type == "uint16") inputmax = 65536;
-        else if (
-            specs.type == "int" ||
-            specs.type == "uint" ||
-            specs.type == "int32" ||
-            specs.type == "uint32"
-        )
-            inputmax = 2147483647;
-        else if (
-            specs.type == "time.Duration" ||
-            specs.type == "common.Duration" ||
-            specs.type == "int64" ||
-            specs.type == "uint64"
-        )
-            inputmax = 9007199254740991;
-        else inputmax = undefined;
-
-        if (inputmax) {
-            if (specs.type && specs.type.startsWith("uint")) inputmin = 0;
-            else inputmin = -inputmax - 1;
-        } else {
-            inputmin = undefined;
-        }
+    interface Props {
+        edit?: boolean;
+        index: string;
+        specs?: any;
+        value: any;
+        [key: string]: any
     }
+
+    let {
+        edit = false,
+        index,
+        specs = {},
+        value = $bindable(),
+        ...rest
+    }: Props = $props();
+    let val: any = $state(value);
+
+    let unit: string | null = $state(null);
+    run(() => {
+        unit = specs.type === "time.Duration" || specs.type === "common.Duration" ? "s" : null;
+    });
+
+    let inputtype: InputType = $state("text");
+    run(() => {
+        if (specs.type && (specs.type.startsWith("uint") || specs.type.startsWith("int")))
+            inputtype = "number";
+        else if (specs.type && specs.type === "bool") inputtype = "checkbox";
+        else if (specs.textarea) inputtype = "textarea";
+    });
+
+    let inputmin: number | undefined = $state(undefined);
+    let inputmax: number | undefined = $state(undefined);
+    run(() => {
+        if (specs.type) {
+            if (specs.type == "int8" || specs.type == "uint8") inputmax = 255;
+            else if (specs.type == "int16" || specs.type == "uint16") inputmax = 65536;
+            else if (
+                specs.type == "int" ||
+                specs.type == "uint" ||
+                specs.type == "int32" ||
+                specs.type == "uint32"
+            )
+                inputmax = 2147483647;
+            else if (
+                specs.type == "time.Duration" ||
+                specs.type == "common.Duration" ||
+                specs.type == "int64" ||
+                specs.type == "uint64"
+            )
+                inputmax = 9007199254740991;
+            else inputmax = undefined;
+
+            if (inputmax) {
+                if (specs.type && specs.type.startsWith("uint")) inputmin = 0;
+                else inputmin = -inputmax - 1;
+            } else {
+                inputmin = undefined;
+            }
+        }
+    });
 
     function checkBase64(val: string): boolean {
         try {
@@ -83,8 +102,8 @@
         }
     }
 
-    let feedback: string | undefined = undefined;
-    $: {
+    let feedback: string | undefined = $state(undefined);
+    run(() => {
         if (inputmax && value > inputmax) {
             feedback = t.get("errors.too-high", { max: inputmax });
         } else if (inputmin && value < inputmin) {
@@ -112,7 +131,7 @@
         } else {
             feedback = undefined;
         }
-    }
+    });
 
     function parseValue(e: InputEvent) {
         if (e.target && 'value' in e.target) {
@@ -139,7 +158,7 @@
     }
 </script>
 
-<InputGroup size="sm" {...$$restProps}>
+<InputGroup size="sm" {...rest}>
     {#if edit && specs.choices && specs.choices.length > 0}
         <Input
             id={"spec-" + index + "-" + specs.id}

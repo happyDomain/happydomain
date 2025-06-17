@@ -29,7 +29,11 @@
     import { getUser } from "$lib/stores/users";
     import { t } from "$lib/translations";
 
-    export let data: { domain: Domain; history: string };
+    interface Props {
+        data: { domain: Domain; history: string };
+    }
+
+    let { data }: Props = $props();
 </script>
 
 <div class="flex-fill pb-4 pt-2">

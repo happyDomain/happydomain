@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { goto } from "$app/navigation";
 
     import { Input, Spinner } from "@sveltestrap/sveltestrap";
@@ -32,13 +34,20 @@
     import { refreshUserSession, userSession } from "$lib/stores/usersession";
     import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
-
-    let formSent = false;
-
-    let settings: UserSettings;
-    $: if ($userSession) {
-        settings = $userSession.settings;
+    interface Props {
+        [key: string]: any
     }
+
+    let { ...rest }: Props = $props();
+
+    let formSent = $state(false);
+
+    let settings: UserSettings = $state();
+    run(() => {
+        if ($userSession) {
+            settings = $userSession.settings;
+        }
+    });
 
     function saveLocale() {
         if (!$userSession) return;
@@ -71,7 +80,7 @@
         type="select"
         bind:value={settings.language}
         on:change={saveLocale}
-        {...$$restProps}
+        {...rest}
     >
         {#each $locales as lang}
             <option value={lang}>{$t(`locales.${lang}`)}</option>

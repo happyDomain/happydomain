@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     // @ts-ignore
     import { escape } from "html-escaper";
     import {
@@ -51,11 +53,11 @@
     import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
 
-    let noDomainsList = false;
+    let noDomainsList = $state(false);
 
-    let filteredDomains: Array<Domain> = [];
+    let filteredDomains: Array<Domain> = $state([]);
 
-    $: {
+    run(() => {
         if ($domains) {
             filteredDomains = $domains.filter(
                 (d) =>
@@ -68,7 +70,7 @@
             );
             filteredDomains.sort(fqdnCompare);
         }
-    }
+    });
 
     function newDomainAdded(event: CustomEvent<Domain>) {
         toasts.addToast({

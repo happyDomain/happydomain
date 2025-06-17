@@ -22,19 +22,24 @@
 -->
 
 <script lang="ts">
+    import type { ClassValue } from 'svelte/elements';
+
     import { Input } from "@sveltestrap/sveltestrap";
 
     import { domains_by_groups } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
-    let className = '';
-    export { className as class };
 
-    export let selectedDomain: string;
+    interface Props {
+        class?: ClassValue;
+        selectedDomain: string;
+    }
+
+    let { class: ClassValue, selectedDomain = $bindable() }: Props = $props();
 </script>
 
 {#key $domains_by_groups}
-    <Input type="select" class={className} bind:value={selectedDomain}>
+    <Input type="select" {class} bind:value={selectedDomain}>
         {#each Object.keys($domains_by_groups) as gname}
             {@const group = $domains_by_groups[gname]}
             <optgroup

@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run, preventDefault } from 'svelte/legacy';
+
     import { createEventDispatcher } from "svelte";
 
     import { Button, Icon, Input, Label, ModalFooter, Spinner } from "@sveltestrap/sveltestrap";
@@ -35,21 +37,37 @@
 
     const dispatch = createEventDispatcher();
 
-    export let toggle: () => void;
-    export let step: number;
-    export let service: ServiceCombined | null = null;
-    export let form = "addSvcForm";
-    export let origin: Domain | undefined = undefined;
-    export let update = false;
-    export let zoneId: string | undefined = undefined;
-    export let canDelete = false;
-    export let canContinue = false;
 
-    export let addServiceInProgress = false;
-    export let deleteServiceInProgress = false;
+    interface Props {
+        toggle: () => void;
+        step: number;
+        service?: ServiceCombined | null;
+        form?: string;
+        origin?: Domain | undefined;
+        update?: boolean;
+        zoneId?: string | undefined;
+        canDelete?: boolean;
+        canContinue?: boolean;
+        addServiceInProgress?: boolean;
+        deleteServiceInProgress?: boolean;
+    }
 
-    let helpHref = "";
-    $: {
+    let {
+        toggle,
+        step,
+        service = $bindable(null),
+        form = "addSvcForm",
+        origin = undefined,
+        update = false,
+        zoneId = undefined,
+        canDelete = false,
+        canContinue = false,
+        addServiceInProgress = false,
+        deleteServiceInProgress = false
+    }: Props = $props();
+
+    let helpHref = $state("");
+    run(() => {
         if (service && service._svctype) {
             const svcPart = service._svctype.toLowerCase().split(".");
             if (svcPart.length === 2) {
@@ -69,12 +87,12 @@
             helpHref = "";
         }
         helpHref = "https://help.happydomain.org/" + $locale + "/" + helpHref;
-    }
+    });
 
-    let showRecords = false;
+    let showRecords = $state(false);
 
-    let recordsHeight = 120;
-    let recordsHeightResize = false;
+    let recordsHeight = $state(120);
+    let recordsHeightResize = $state(false);
     function resizeRecordsHeight(e: MouseEvent) {
         if (!recordsHeightResize) {
             return;
@@ -87,9 +105,9 @@
 </script>
 
 <svelte:document
-    on:mousemove={resizeRecordsHeight}
-    on:mouseleave={() => (recordsHeightResize = false)}
-    on:mouseup={() => (recordsHeightResize = false)}
+    onmousemove={resizeRecordsHeight}
+    onmouseleave={() => (recordsHeightResize = false)}
+    onmouseup={() => (recordsHeightResize = false)}
 />
 
 {#if showRecords && origin && zoneId && service}
@@ -99,7 +117,7 @@
             role="separator"
             aria-orientation="horizontal"
             style:cursor="ns-resize"
-            on:mousedown|preventDefault={() => (recordsHeightResize = true)}
+            onmousedown={preventDefault(() => (recordsHeightResize = true))}
         ></div>
         <div
             class="m-0 d-flex justify-content-center"

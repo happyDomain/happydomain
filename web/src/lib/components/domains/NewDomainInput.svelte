@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { preventDefault } from 'svelte/legacy';
+
     import { goto } from "$app/navigation";
     import { createEventDispatcher } from "svelte";
 
@@ -43,15 +45,28 @@
 
     const dispatch = createEventDispatcher();
 
-    export let addingNewDomain = false;
-    export let autofocus = false;
-    export let noButton = false;
-    export let preAddFunc: null | ((arg0: string) => Promise<boolean>) = null;
-    export let provider: Provider | null = null;
-    export let value = "";
+    interface Props {
+        addingNewDomain?: boolean;
+        autofocus?: boolean;
+        noButton?: boolean;
+        preAddFunc?: null | ((arg0: string) => Promise<boolean>);
+        provider?: Provider | null;
+        value?: string;
+        [key: string]: any
+    }
+
+    let {
+        addingNewDomain = $bindable(false),
+        autofocus = false,
+        noButton = false,
+        preAddFunc = null,
+        provider = null,
+        value = $bindable(""),
+        ...rest
+    }: Props = $props();
 
     let formId = "new-domain-form";
-    let newDomainState: boolean | undefined = undefined;
+    let newDomainState: boolean | undefined = $state(undefined);
 
     async function addDomainToProvider() {
         addingNewDomain = true;
@@ -98,8 +113,8 @@
     }
 </script>
 
-<form id={formId} on:submit|preventDefault={addDomainToProvider}>
-    <ListGroup {...$$restProps}>
+<form id={formId} onsubmit={preventDefault(addDomainToProvider)}>
+    <ListGroup {...rest}>
         <ListGroupItem class="d-flex justify-content-between align-items-center p-0">
             <InputGroup>
                 <label

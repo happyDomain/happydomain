@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { tick } from "svelte";
     import { goto, invalidateAll } from "$app/navigation";
     import { page } from "$app/stores";
@@ -64,7 +66,12 @@
     } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
 
-    export let data: { domain: Domain };
+    interface Props {
+        data: { domain: Domain };
+        children?: import('svelte').Snippet;
+    }
+
+    let { data, children }: Props = $props();
 
     function domainLink(dn: string) : string {
         return $domains_idx[$domains_idx[dn].domain]
@@ -72,9 +79,7 @@
              : dn;
     }
 
-    let selectedDomain = data.domain.id;
-    $: domainChange(selectedDomain);
-    $: domainChange(data.domain.id);
+    let selectedDomain = $state(data.domain.id);
     function domainChange(dn: string) {
         if (dn != data.domain.id) {
             goto(
@@ -88,10 +93,9 @@
         }
     }
 
-    let selectedHistory: string | undefined;
-    $: selectedHistory = $page.data.history;
+    let selectedHistory: string | undefined = $derived($page.data.history);
 
-    let retrievalInProgress = false;
+    let retrievalInProgress = $state(false);
     async function retrieveZone() {
         retrievalInProgress = true;
         retrieveZoneDone(await StoreRetrieveZone(data.domain));
@@ -143,6 +147,13 @@
             },
         );
     }
+    run(() => {
+        domainChange(selectedDomain);
+    });
+    run(() => {
+        domainChange(data.domain.id);
+    });
+    
 </script>
 
 <Container fluid class="d-flex flex-column flex-fill">
@@ -269,7 +280,7 @@
                     </div>
                 {/if}
 
-                <div class="flex-fill" />
+                <div class="flex-fill"></div>
 
                 {#if !($page.data.isZonePage && data.domain.zone_history && $domains_idx[selectedDomain] && data.domain.id === $domains_idx[selectedDomain].id && $sortedDomainsWithIntermediate && selectedHistory)}
                     <Button
@@ -294,7 +305,7 @@
             {/if}
         </Col>
         <Col sm={8} md={9} class="d-flex">
-            <slot />
+            {@render children?.()}
         </Col>
     </Row>
 </Container>

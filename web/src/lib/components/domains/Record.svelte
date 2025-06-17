@@ -27,15 +27,19 @@
     import { nsclass, nsrrtype } from "$lib/dns";
     import type { ServiceRecord } from "$lib/model/zone";
 
-    export let expand: boolean = false;
-    export let record: ServiceRecord;
+    interface Props {
+        expand?: boolean;
+        record: ServiceRecord;
+    }
+
+    let { expand = $bindable(false), record }: Props = $props();
 </script>
 
 <div
     class="d-flex gap-1"
     role="button"
-    on:click={() => expand = !expand}
-    on:keypress={() => expand = !expand}
+    onclick={() => expand = !expand}
+    onkeypress={() => expand = !expand}
 >
     {#if expand}
         <Icon name="chevron-down" />

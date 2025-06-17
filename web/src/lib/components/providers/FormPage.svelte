@@ -1,3 +1,17 @@
+<!-- @migration-task Error while migrating Svelte code: can't migrate `let form = new ProviderForm(
+        ptype,
+        () => refreshProviders().then(() => goto("/?newProvider")),
+        providerId,
+        value,
+        () => {
+            if (edit) {
+                goto("/providers");
+            } else {
+                goto("/providers/new");
+            }
+        },
+    );` to `$state` because there's a variable named state.
+     Rename the variable and try again or migrate by hand. -->
 <!--
      This file is part of the happyDomain (R) project.
      Copyright (c) 2022-2024 happyDomain

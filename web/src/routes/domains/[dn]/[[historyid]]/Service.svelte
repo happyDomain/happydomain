@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { createEventDispatcher } from "svelte";
 
     import {
@@ -52,23 +54,31 @@
 
     const dispatch = createEventDispatcher();
 
-    export let origin: Domain;
-    export let service: ServiceCombined | null = null;
-    export let zoneId: string;
+    interface Props {
+        origin: Domain;
+        service?: ServiceCombined | null;
+        zoneId: string;
+    }
+
+    let { origin, service = $bindable(null), zoneId }: Props = $props();
 
     // FIXME: find which type is Card & ListGroup
-    let component: any = Card;
-    $: if ($userSession && $userSession.settings.zoneview !== ZoneViewGrid) {
-        component = ListGroup;
-    } else {
-        component = Card;
-    }
-    $: if ($userSession && $userSession.settings.zoneview === ZoneViewRecords && service) {
-        getServiceRecords(origin, zoneId, service).then((sr) => (serviceRecords = sr));
-    }
+    let component: any = $state(Card);
+    run(() => {
+        if ($userSession && $userSession.settings.zoneview !== ZoneViewGrid) {
+            component = ListGroup;
+        } else {
+            component = Card;
+        }
+    });
+    run(() => {
+        if ($userSession && $userSession.settings.zoneview === ZoneViewRecords && service) {
+            getServiceRecords(origin, zoneId, service).then((sr) => (serviceRecords = sr));
+        }
+    });
 
-    let showDetails = false;
-    let serviceRecords: Array<ServiceRecord> | null = null;
+    let showDetails = $state(false);
+    let serviceRecords: Array<ServiceRecord> | null = $state(null);
     function toggleDetails() {
         if (component == Card || serviceRecords) {
             dispatch("show-service", service);
@@ -93,10 +103,11 @@
             dispatch("update-zone-services", z);
         });
     }
+
+    const SvelteComponent = $derived(component);
 </script>
 
-<svelte:component
-    this={component}
+<SvelteComponent
     class={$userSession && $userSession.settings.zoneview !== ZoneViewList ? "card-hover" : ""}
     style={"cursor: pointer;" +
         (!service ? "border-style: dashed; " : "") +
@@ -200,4 +211,4 @@
             {/if}
         {/if}
     {/if}
-</svelte:component>
+</SvelteComponent>

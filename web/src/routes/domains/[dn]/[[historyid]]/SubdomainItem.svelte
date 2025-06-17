@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { createEventDispatcher } from "svelte";
 
     import { Badge, Button, Icon, Popover, Spinner } from "@sveltestrap/sveltestrap";
@@ -38,16 +40,28 @@
 
     const dispatch = createEventDispatcher();
 
-    export let aliases: Array<string> = [];
-    export let dn: string;
-    export let origin: Domain;
-    export let services: Array<ServiceCombined>;
-    export let zoneId: string;
+    interface Props {
+        aliases?: Array<string>;
+        dn: string;
+        origin: Domain;
+        services: Array<ServiceCombined>;
+        zoneId: string;
+    }
 
-    let reverseZone = false;
-    $: reverseZone = isReverseZone(origin.domain);
+    let {
+        aliases = [],
+        dn,
+        origin,
+        services,
+        zoneId
+    }: Props = $props();
 
-    let showResources = true;
+    let reverseZone = $state(false);
+    run(() => {
+        reverseZone = isReverseZone(origin.domain);
+    });
+
+    let showResources = $state(true);
 
     function isCNAME(services: Array<ServiceCombined>) {
         return services.length === 1 && services[0]._svctype === "svcs.CNAME";
@@ -57,7 +71,7 @@
         return services.length === 1 && services[0]._svctype === "svcs.PTR";
     }
 
-    let deleteServiceInProgress = false;
+    let deleteServiceInProgress = $state(false);
     function deleteCNAME() {
         deleteServiceInProgress = true;
         deleteZoneService(origin, zoneId, services[0]).then(
@@ -176,8 +190,8 @@
                 tabindex="0"
                 style="white-space: nowrap; cursor: pointer;"
                 class="mb-0 text-truncate"
-                on:click={() => (showResources = !showResources)}
-                on:keypress={() => (showResources = !showResources)}
+                onclick={() => (showResources = !showResources)}
+                onkeypress={() => (showResources = !showResources)}
             >
                 {#if showResources}
                     <Icon name="chevron-down" />

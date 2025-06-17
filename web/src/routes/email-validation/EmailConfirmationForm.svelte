@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { preventDefault } from 'svelte/legacy';
+
     import { goto } from "$app/navigation";
 
     import { Button, Col, Input, Row, Spinner } from "@sveltestrap/sveltestrap";
@@ -30,11 +32,15 @@
     import { t } from "$lib/translations";
     import { toasts } from "$lib/stores/toasts";
 
-    export let email = "";
+    interface Props {
+        email?: string;
+    }
 
-    let emailState: boolean | undefined;
-    let formSent = false;
-    let formElm: HTMLFormElement;
+    let { email = $bindable("") }: Props = $props();
+
+    let emailState: boolean | undefined = $state();
+    let formSent = $state(false);
+    let formElm: HTMLFormElement = $state();
 
     function goResend() {
         const valid = formElm.checkValidity();
@@ -66,7 +72,7 @@
     }
 </script>
 
-<form class="container my-1" bind:this={formElm} on:submit|preventDefault={goResend}>
+<form class="container my-1" bind:this={formElm} onsubmit={preventDefault(goResend)}>
     <p>
         {$t("email.instruction.validate-address")}
     </p>

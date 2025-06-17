@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run, preventDefault } from 'svelte/legacy';
+
     import { goto } from "$app/navigation";
     import { createEventDispatcher } from "svelte";
 
@@ -53,17 +55,30 @@
 
     const dispatch = createEventDispatcher();
 
-    export let flush = false;
-    export let noLabel = false;
-    export let noDropdown = false;
-    export let selectedProvider: Provider | null = null;
-    export let items: Array<any>;
-    export let toolbar = false;
+    interface Props {
+        flush?: boolean;
+        noLabel?: boolean;
+        noDropdown?: boolean;
+        selectedProvider?: Provider | null;
+        items: Array<any>;
+        toolbar?: boolean;
+        [key: string]: any
+    }
+
+    let {
+        flush = false,
+        noLabel = false,
+        noDropdown = false,
+        selectedProvider = $bindable(null),
+        items,
+        toolbar = false,
+        ...rest
+    }: Props = $props();
 
     if (!$providersSpecs) refreshProvidersSpecs();
 
-    let domain_in_providers: Record<string, number> = {};
-    $: {
+    let domain_in_providers: Record<string, number> = $state({});
+    run(() => {
         if ($domains && $providers) {
             const tmp: Record<string, number> = {};
 
@@ -80,7 +95,7 @@
 
             domain_in_providers = tmp;
         }
-    }
+    });
 
     function selectProvider(event: CustomEvent<Provider>) {
         if (selectedProvider && selectedProvider._id == event.detail._id) {
@@ -128,87 +143,91 @@
         button
         {items}
         {flush}
-        {...$$restProps}
+        {...rest}
         isActive={(item) => selectedProvider != null && item._id == selectedProvider._id}
         on:click={selectProvider}
-        let:item
+
     >
-        <div slot="empty">
-            <form on:submit|preventDefault={() => dispatch("new-provider")}>
-                {@html $t("provider.empty", {
-                    action: `<button type="submit" class="btn btn-link p-0">${$t("provider.empty-action")}</button>`,
-                })}
-            </form>
-        </div>
-        <div class="d-flex flex-fill justify-content-between" style="max-width: 100%">
-            <div class="d-flex" style="min-width: 0">
-                <div class="text-center" style="width: 50px;">
-                    <ImgProvider
-                        ptype={item._srctype}
-                        style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em"
-                    />
-                </div>
-                {#if item._comment}
-                    <div class="text-truncate" title={item._comment}>
-                        {item._comment}
+        {#snippet empty()}
+                <div >
+                <form onsubmit={preventDefault(() => dispatch("new-provider"))}>
+                    {@html $t("provider.empty", {
+                        action: `<button type="submit" class="btn btn-link p-0">${$t("provider.empty-action")}</button>`,
+                    })}
+                </form>
+            </div>
+        {/snippet}
+        {#snippet children({ item })}
+                <div class="d-flex flex-fill justify-content-between" style="max-width: 100%">
+                <div class="d-flex" style="min-width: 0">
+                    <div class="text-center" style="width: 50px;">
+                        <ImgProvider
+                            ptype={item._srctype}
+                            style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em"
+                        />
                     </div>
-                {:else}
-                    <em>{$t("provider.no-name")}</em>
+                    {#if item._comment}
+                        <div class="text-truncate" title={item._comment}>
+                            {item._comment}
+                        </div>
+                    {:else}
+                        <em>{$t("provider.no-name")}</em>
+                    {/if}
+                </div>
+                {#if !(noLabel && noDropdown && !toolbar)}
+                    <div class="d-flex">
+                        {#if !noLabel}
+                            <div>
+                                <Badge
+                                    class="mx-1"
+                                    color={domain_in_providers[item._id] > 0 ? "success" : "danger"}
+                                >
+                                    {$t("provider.associations", {
+                                        count: domain_in_providers[item._id],
+                                    })}
+                                </Badge>
+                                {#if $providersSpecs[item._srctype]}
+                                    <Badge class="mx-1" color="secondary" title={item._srctype}>
+                                        {$providersSpecs[item._srctype].name}
+                                    </Badge>
+                                {/if}
+                            </div>
+                        {/if}
+                        {#if toolbar}
+                            <ButtonGroup>
+                                <Button
+                                    color="light"
+                                    size="sm"
+                                    on:click={(e) => updateProvider(e, item)}
+                                >
+                                    <Icon name="pencil" />
+                                </Button>
+                                <Button color="light" size="sm" on:click={(e) => delProvider(e, item)}>
+                                    <Icon name="trash" />
+                                </Button>
+                            </ButtonGroup>
+                        {/if}
+                        {#if !noDropdown}
+                            <Dropdown size="sm" style="margin-right: -10px">
+                                <DropdownToggle
+                                    color="link"
+                                    on:click={(event) => event.stopPropagation()}
+                                >
+                                    <Icon name="three-dots" />
+                                </DropdownToggle>
+                                <DropdownMenu>
+                                    <DropdownItem on:click={(e) => updateProvider(e, item)}>
+                                        {$t("provider.update")}
+                                    </DropdownItem>
+                                    <DropdownItem on:click={(e) => delProvider(e, item)}>
+                                        {$t("provider.delete")}
+                                    </DropdownItem>
+                                </DropdownMenu>
+                            </Dropdown>
+                        {/if}
+                    </div>
                 {/if}
             </div>
-            {#if !(noLabel && noDropdown && !toolbar)}
-                <div class="d-flex">
-                    {#if !noLabel}
-                        <div>
-                            <Badge
-                                class="mx-1"
-                                color={domain_in_providers[item._id] > 0 ? "success" : "danger"}
-                            >
-                                {$t("provider.associations", {
-                                    count: domain_in_providers[item._id],
-                                })}
-                            </Badge>
-                            {#if $providersSpecs[item._srctype]}
-                                <Badge class="mx-1" color="secondary" title={item._srctype}>
-                                    {$providersSpecs[item._srctype].name}
-                                </Badge>
-                            {/if}
-                        </div>
-                    {/if}
-                    {#if toolbar}
-                        <ButtonGroup>
-                            <Button
-                                color="light"
-                                size="sm"
-                                on:click={(e) => updateProvider(e, item)}
-                            >
-                                <Icon name="pencil" />
-                            </Button>
-                            <Button color="light" size="sm" on:click={(e) => delProvider(e, item)}>
-                                <Icon name="trash" />
-                            </Button>
-                        </ButtonGroup>
-                    {/if}
-                    {#if !noDropdown}
-                        <Dropdown size="sm" style="margin-right: -10px">
-                            <DropdownToggle
-                                color="link"
-                                on:click={(event) => event.stopPropagation()}
-                            >
-                                <Icon name="three-dots" />
-                            </DropdownToggle>
-                            <DropdownMenu>
-                                <DropdownItem on:click={(e) => updateProvider(e, item)}>
-                                    {$t("provider.update")}
-                                </DropdownItem>
-                                <DropdownItem on:click={(e) => delProvider(e, item)}>
-                                    {$t("provider.delete")}
-                                </DropdownItem>
-                            </DropdownMenu>
-                        </Dropdown>
-                    {/if}
-                </div>
-            {/if}
-        </div>
+        {/snippet}
     </HListGroup>
 {/if}

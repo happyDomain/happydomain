@@ -1,3 +1,4 @@
+<!-- @migration-task Error while migrating Svelte code: This migration would change the name of a slot (no-domain to no_domain) making the component unusable -->
 <!--
      This file is part of the happyDomain (R) project.
      Copyright (c) 2022-2024 happyDomain

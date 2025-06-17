@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { createEventDispatcher } from "svelte";
 
     import AliasModal, { controls as ctrlAlias } from "./AliasModal.svelte";
@@ -34,13 +36,22 @@
 
     const dispatch = createEventDispatcher();
 
-    export let origin: Domain;
-    export let sortedDomains: Array<string>;
-    export let sortedDomainsWithIntermediate: Array<string>;
-    export let zone: Zone;
+    interface Props {
+        origin: Domain;
+        sortedDomains: Array<string>;
+        sortedDomainsWithIntermediate: Array<string>;
+        zone: Zone;
+    }
 
-    let aliases: Record<string, Array<string>>;
-    $: {
+    let {
+        origin,
+        sortedDomains,
+        sortedDomainsWithIntermediate,
+        zone
+    }: Props = $props();
+
+    let aliases: Record<string, Array<string>> = $state();
+    run(() => {
         const tmp: Record<string, Array<string>> = {};
 
         for (const dn of sortedDomains) {
@@ -58,7 +69,7 @@
         if (tmp["@"]) tmp[""] = tmp["@"];
 
         aliases = tmp;
-    }
+    });
 
     function showServiceModal(event: CustomEvent<ServiceCombined>) {
         ctrlService.Open(event.detail);

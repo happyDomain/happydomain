@@ -24,6 +24,7 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { page } from "$app/stores";
+    import type { ClassValue } from 'svelte/elements';
 
     import {
         Button,
@@ -46,22 +47,13 @@
     import { toasts } from "$lib/stores/toasts";
     import { t, locales, locale } from "$lib/translations";
 
-    export { className as class };
-    let className = "";
 
-    export let routeId: string | null;
-    export let sw_state: { triedUpdate: boolean; hasUpdate: boolean };
-    let helpLink = "";
-    $: if (routeId && routeId.startsWith("/providers/new/[ptype]")) {
-        helpLink = getHelpPathFromProvider($page.url.pathname.split("/")[3]);
-    } else if (routeId) {
-        helpLink =
-            "https://help.happydomain.org/" +
-            encodeURIComponent($locale) +
-            getHelpPathFromRoute(routeId);
-    } else {
-        helpLink = "https://help.happydomain.org/" + encodeURIComponent($locale);
+    interface Props {
+        class?: ClassValue;
+        sw_state: { triedUpdate: boolean; hasUpdate: boolean };
     }
+
+    let { class: className, sw_state }: Props = $props();
 
     function getHelpPathFromProvider(ptype: string): string {
         if ($providersSpecs && $providersSpecs[ptype]) {
@@ -99,14 +91,17 @@
                 return "/";
         }
     }
-
-    let activemenu = "";
-    $: {
-        const path = $page.url.pathname.split("/");
-        if (path.length > 1) {
-            activemenu = path[1];
-        }
-    }
+    let helpLink = $derived(
+        $page.route && $page.route.id ? (
+            $page.route.id.startsWith("/providers/new/[ptype]") ? (
+                getHelpPathFromProvider($page.url.pathname.split("/")[3])
+            ) : (
+                "https://help.happydomain.org/" + encodeURIComponent($locale) + getHelpPathFromRoute($page.route.id)
+            )
+        ) : (
+            "https://help.happydomain.org/" + encodeURIComponent($locale)
+        )
+    );
 
     function logout() {
         APILogout().then(
@@ -196,7 +191,7 @@
             {#if !$appConfig.disable_registration}
                 <Button
                     class="d-none d-md-inline-block mx-1"
-                    outline={activemenu != "join"}
+                    outline={$page.route && $page.route.id == "/join"}
                     color="dark"
                     href="/join"
                 >
@@ -206,7 +201,7 @@
             {/if}
             <Button
                 class="d-none d-md-inline-block mx-1"
-                outline={activemenu == "join"}
+                outline={$page.route && $page.route.id == "/login"}
                 color="primary"
                 href="/login"
             >

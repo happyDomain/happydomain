@@ -21,7 +21,7 @@
      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
-<script context="module" lang="ts">
+<script module lang="ts">
     import type { ModalController } from "$lib/model/modal_controller";
 
     export const controls: ModalController = {
@@ -39,8 +39,12 @@
 
     const dispatch = createEventDispatcher();
 
-    export let isOpen = false;
-    let inProgress = false;
+    interface Props {
+        isOpen?: boolean;
+    }
+
+    let { isOpen = $bindable(false) }: Props = $props();
+    let inProgress = $state(false);
 
     function Open(): void {
         isOpen = true;

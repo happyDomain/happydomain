@@ -22,17 +22,21 @@
 -->
 
 <script lang="ts">
+    import type { ClassValue } from 'svelte/elements';
+
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
     import type { MiniDomain } from "$lib/model/domain";
 
-    let className = '';
-    export { className as class };
+    interface Props {
+        class?: ClassValue;
+        domain: MiniDomain;
+    }
 
-    export let domain: MiniDomain;
+    let { class: className, domain }: Props = $props();
 </script>
 
 <div
-    class="d-flex my-1 {className}"
+    class={["d-flex", "my-1", className]}
     style="min-width: 0"
 >
     <div class="d-inline-block text-center" style="width: 50px;">

@@ -22,22 +22,23 @@
 -->
 
 <script lang="ts">
+    import { page } from "$app/stores";
+
     import { Icon } from "@sveltestrap/sveltestrap";
 
     import { userSession } from "$lib/stores/usersession";
     import { t, locale } from "$lib/translations";
 
-    export let routeId: string | null;
     const instancename = encodeURIComponent(window.location.hostname);
-    let showCard = false;
+    let showCard = $state(false);
 </script>
 
 {#if showCard}
     <div
         role="presentation"
         style="background-color: #0007; position: fixed; width: 100vw; height: 100vh; top:0; left: 0; z-index: 1050"
-        on:click={() => (showCard = false)}
-    />
+        onclick={() => (showCard = false)}
+></div>
     <div
         class="card"
         style="position: fixed; bottom: calc(7vh + max(1.7vw, 1.7vh)); right: calc(4vw + max(1.7vw, 1.7vh)); z-index: 1052; max-width: 400px;"
@@ -49,7 +50,7 @@
                     target="_blank"
                     rel="noreferrer"
                     class="btn btn-lg btn-light flex-fill"
-                    on:click={() => (showCard = false)}
+                    onclick={() => (showCard = false)}
                     data-umami-event="vox-people-chat"
                 >
                     <Icon name="chat-text" /><br />
@@ -62,7 +63,7 @@
                     target="_blank"
                     rel="noreferrer"
                     class="btn btn-lg btn-light flex-fill"
-                    on:click={() => (showCard = false)}
+                    onclick={() => (showCard = false)}
                     data-umami-event="vox-people-help"
                 >
                     <Icon name="life-preserver" /><br />
@@ -73,11 +74,11 @@
                 <a
                     href="https://framaforms.org/quel-est-votre-avis-sur-happydns-1610366701?u={$userSession
                         ? $userSession.id
-                        : 0}&amp;i={instancename}&amp;p={routeId}&amp;l={$locale}"
+                        : 0}&amp;i={instancename}{$page.route ? ('&amp;p=' + $page.route.id) : ''}&amp;l={$locale}"
                     target="_blank"
                     rel="noreferrer"
                     class="btn btn-lg btn-light flex-fill fw-bolder"
-                    on:click={() => (showCard = false)}
+                    onclick={() => (showCard = false)}
                     data-umami-event="vox-people-feedback"
                 >
                     <Icon name="pen" /><br />
@@ -90,7 +91,7 @@
                     target="_blank"
                     rel="noreferrer"
                     class="btn btn-lg btn-light flex-fill fw-bolder"
-                    on:click={() => (showCard = false)}
+                    onclick={() => (showCard = false)}
                     data-umami-event="vox-people-feedback"
                 >
                     <Icon name="feather" /><br />
@@ -105,7 +106,7 @@
     title={$t("common.survey")}
     class="d-flex btn btn-light justify-content-center align-items-center"
     data-umami-event="vox-people"
-    on:click={() => (showCard = !showCard)}
+    onclick={() => (showCard = !showCard)}
 >
     <Icon name="chat-right-text" />
 </button>

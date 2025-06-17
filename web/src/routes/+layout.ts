@@ -110,7 +110,6 @@ export const load: Load = async ({ fetch, route, url }) => {
     }
 
     return {
-        route,
         sw_state,
     };
 };

@@ -26,23 +26,22 @@
 
     import { t } from "$lib/translations";
 
-    export { className as class };
-    let className: string = "";
-    export let color: Color | 'link' | string = "primary";
-    export let href: string;
-    export let size: 'sm' | 'lg' | string = "";
-    export let title: string | null = null;
+    interface Props {
+        class?: string;
+        color?: Color | 'link' | string;
+        href: string;
+        size?: 'sm' | 'lg' | string;
+        title?: string | null;
+    }
+
+    let props: Props = $props();
 </script>
 
 <Button
-    {href}
+    {...props}
     target="_blank"
-    {color}
-    {size}
-    class={className}
-    {title}
     data-umami-event="help"
-    data-umami-event-href={href.substring(href.lastIndexOf("/") - 2)}
+    data-umami-event-href={props.href.substring(props.href.lastIndexOf("/") - 2)}
 >
     <Icon name="question-circle-fill" title={$t("common.help")} />
 </Button>

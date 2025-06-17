@@ -39,7 +39,11 @@
     import Record from "$lib/components/domains/Record.svelte";
     import type { ServiceRecord } from "$lib/model/zone";
 
-    export let serviceRecords: Array<ServiceRecord>;
+    interface Props {
+        serviceRecords: Array<ServiceRecord>;
+    }
+
+    let { serviceRecords }: Props = $props();
 </script>
 
 <div class="flex-fill m-0 d-flex flex-column" style:max-width="100%">
