@@ -54,7 +54,6 @@
         const tmp: Record<string, Array<ZoneListDomain>> = {};
 
         for (const domain of domains) {
-            if (!domain.group) domain.group = "";
             if (links && !domain.href) {
                 if ($domains_idx[domain.domain])
                     domain.href = "/domains/" + encodeURIComponent(domain.domain);
