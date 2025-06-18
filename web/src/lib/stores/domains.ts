@@ -27,6 +27,7 @@ export const domains: Writable<Array<Domain> | undefined> = writable(undefined);
 
 export async function refreshDomains() {
     const data = await listDomains();
+    data.forEach((e) => { if (!e.group) e.group = "" });
     domains.set(data);
     return data;
 }
