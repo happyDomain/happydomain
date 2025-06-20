@@ -55,9 +55,9 @@ func SplitN(s string, n int) []string {
 // DomainFQDN normalizes the domain by adding the origin if it is relative (not
 // ended by .).
 func DomainFQDN(subdomain string, origin string) string {
-	if subdomain == "" || subdomain[len(subdomain)-1] == '.' {
+	if len(subdomain) > 0 && subdomain[len(subdomain)-1] == '.' {
 		return subdomain
-	} else if subdomain == "@" {
+	} else if subdomain == "" || subdomain == "@" {
 		return origin
 	} else {
 		return subdomain + "." + origin
@@ -108,7 +108,7 @@ func NewRecord(domain string, rrtype string, ttl uint32, origin string) happydns
 	rr := dns.TypeToRR[rdtype]()
 
 	// Fill in the header.
-	rr.Header().Name = domain
+	rr.Header().Name = DomainFQDN(domain, origin)
 	rr.Header().Rrtype = rdtype
 	rr.Header().Class = dns.ClassINET
 	rr.Header().Ttl = ttl
