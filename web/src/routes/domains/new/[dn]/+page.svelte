@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { preventDefault } from 'svelte/legacy';
+
     import { goto } from "$app/navigation";
 
     import { Button, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
@@ -44,9 +46,13 @@
     if (!$providers) refreshProviders();
     if (!$providersSpecs) refreshProvidersSpecs();
 
-    export let data: { dn: string };
+    interface Props {
+        data: { dn: string };
+    }
 
-    let addingNewDomain = false;
+    let { data }: Props = $props();
+
+    let addingNewDomain = $state(false);
 
     function addDomainToProvider(event: CustomEvent<Provider>) {
         addingNewDomain = true;
@@ -72,7 +78,7 @@
         );
     }
 
-    let newModalOpened = false;
+    let newModalOpened = $state(false);
     function newProvider() {
         newModalOpened = true;
     }
@@ -108,7 +114,7 @@
                     <button
                         type="button"
                         class="btn btn-link p-0"
-                        on:click|preventDefault={newProvider}>{$t("domains.add-now")}</button
+                        onclick={preventDefault(newProvider)}>{$t("domains.add-now")}</button
                     >
                 </p>
             </Col>

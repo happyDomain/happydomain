@@ -21,13 +21,15 @@
      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
-<script context="module" lang="ts">
+<script module lang="ts">
     export const controls = {
         Open(details: {record: any; service: ServiceCombined;}) { },
     };
 </script>
 
 <script lang="ts">
+    import { preventDefault } from 'svelte/legacy';
+
     import { createEventDispatcher } from "svelte";
 
     import {
@@ -55,17 +57,21 @@
 
     const dispatch = createEventDispatcher();
 
-    export let isOpen = false;
     const toggle = () => (isOpen = !isOpen);
 
-    export let origin: Domain;
-    export let zone: Zone;
+    interface Props {
+        isOpen?: boolean;
+        origin: Domain;
+        zone: Zone;
+    }
 
-    let service: ServiceCombined | undefined = undefined;
-    let record: dnsRR | undefined = undefined;
+    let { isOpen = $bindable(false), origin, zone }: Props = $props();
 
-    let addRecordInProgress = false;
-    let deleteRecordInProgress = false;
+    let service: ServiceCombined | undefined = $state(undefined);
+    let record: dnsRR | undefined = $state(undefined);
+
+    let addRecordInProgress = $state(false);
+    let deleteRecordInProgress = $state(false);
 
     function deleteRecord() {
         deleteRecordInProgress = true;
@@ -124,7 +130,7 @@
             {/if}
         </ModalHeader>
         <ModalBody>
-            <form id="addRRForm" on:submit|preventDefault={submitRecordForm}>
+            <form id="addRRForm" onsubmit={preventDefault(submitRecordForm)}>
                 <Row>
                     <label
                         for="rr-hdr-name"

@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { Button, Icon } from "@sveltestrap/sveltestrap";
 
     import MapEntry from "./mapentry.svelte";
@@ -30,25 +32,38 @@
 
     const re = /^map\[(.*)\]\*?(.*)$/;
 
-    export let edit = false;
-    export let index: string;
-    export let readonly = false;
-    export let specs: Field;
-    export let type: string;
-    export let value: any;
+    interface Props {
+        edit?: boolean;
+        index: string;
+        readonly?: boolean;
+        specs: Field;
+        type: string;
+        value: any;
+    }
 
-    let keytype: string | undefined;
-    let valuetype: string | undefined;
-    $: {
+    let {
+        edit = false,
+        index,
+        readonly = false,
+        specs,
+        type,
+        value = $bindable()
+    }: Props = $props();
+
+    let keytype: string | undefined = $state();
+    let valuetype: string | undefined = $state();
+    run(() => {
         const res = re.exec(type);
         if (res) {
             keytype = res[1];
             valuetype = res[2];
         }
-    }
-    $: if (valuetype && !value) {
-        value = {};
-    }
+    });
+    run(() => {
+        if (valuetype && !value) {
+            value = {};
+        }
+    });
 
     function renameKey(oldkey: string, newkey: string) {
         value[newkey] = value[oldkey];

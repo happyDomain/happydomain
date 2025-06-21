@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { preventDefault } from 'svelte/legacy';
+
     import { createEventDispatcher } from "svelte";
 
     import { Badge, Button, FormGroup, Icon, Input } from "@sveltestrap/sveltestrap";
@@ -31,9 +33,13 @@
 
     const dispatch = createEventDispatcher();
 
-    export let newone = false;
-    export let readonly = false;
-    export let value: any = {};
+    interface Props {
+        newone?: boolean;
+        readonly?: boolean;
+        value?: any;
+    }
+
+    let { newone = false, readonly = false, value = $bindable({}) }: Props = $props();
 </script>
 
 <div class="d-flex gap-2 mb-2">
@@ -81,7 +87,7 @@
                     {#if parameter.edit}
                         <form
                             class="d-flex align-items-center gap-1"
-                            on:submit|preventDefault={() => (parameter.edit = false)}
+                            onsubmit={preventDefault(() => (parameter.edit = false))}
                         >
                             <Input bsSize="sm" placeholder="key" bind:value={parameter.Tag} />
                             =
@@ -91,17 +97,17 @@
                             </Button>
                         </form>
                     {:else}
-                        <span role="button" tabindex="0" on:dblclick={() => (parameter.edit = true)} aria-label="Double-click to edit">
+                        <span role="button" tabindex="0" ondblclick={() => (parameter.edit = true)} aria-label="Double-click to edit">
                             {parameter.Tag}={parameter.Value}
                         </span>
                         <span
                             role="button"
                             tabindex="0"
-                            on:click={() => {
+                            onclick={() => {
                                 value.Parameters.splice(k, 1);
                                 value = value;
                             }}
-                            on:keypress={() => {
+                            onkeypress={() => {
                                 value.Parameters.splice(k, 1);
                                 value = value;
                             }}
@@ -116,12 +122,12 @@
             class="badge bg-primary"
             role="button"
             tabindex="0"
-            on:click={() => {
+            onclick={() => {
                 if (value.Parameters == null) value.Parameters = [];
                 value.Parameters.push({ Tag: "", Value: "", edit: true });
                 value = value;
             }}
-            on:keypress={() => {
+            onkeypress={() => {
                 if (value.Parameters == null) value.Parameters = [];
                 value.Parameters.push({ Tag: "", Value: "", edit: true });
                 value = value;

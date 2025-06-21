@@ -30,7 +30,7 @@ export const load: Load = async ({ parent }) => {
     await parent();
 
     // If not connected, redirect to main website in the right language
-    if (!get(userSession)) {
+    if (!get(userSession).email) {
         const initLocale =
             locale.get() ||
             window.navigator.language ||

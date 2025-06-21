@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run, preventDefault } from 'svelte/legacy';
+
     import { goto } from "$app/navigation";
 
     import { Button, FormGroup, Icon, Input, Label, Spinner } from "@sveltestrap/sveltestrap";
@@ -32,27 +34,29 @@
     import { checkWeakPassword, checkPasswordConfirmation } from "$lib/password";
     import { toasts } from "$lib/stores/toasts";
 
-    let signupForm: SignUpForm = {
+    let signupForm: SignUpForm = $state({
         email: "",
         password: "",
         wantReceiveUpdate: false,
         lang: "",
-    };
-    let passwordConfirmation: string = "";
-    let emailState: boolean | undefined;
-    let passwordState: boolean | undefined;
-    let passwordConfirmState: boolean | undefined;
-    let formSent = false;
+    });
+    let passwordConfirmation: string = $state("");
+    let emailState: boolean | undefined = $state();
+    let passwordState: boolean | undefined = $state();
+    let passwordConfirmState: boolean | undefined = $state();
+    let formSent = $state(false);
 
-    $: {
+    run(() => {
         if (passwordState == false) {
             passwordState = checkWeakPassword(signupForm.password);
         }
-    }
+    });
 
-    let formElm: HTMLFormElement;
+    let formElm: HTMLFormElement | undefined = $state();
 
     function goSignUp() {
+        if (!formElm) return;
+
         const valid = formElm.checkValidity();
 
         if (valid && emailState && passwordState && passwordConfirmState) {
@@ -82,7 +86,7 @@
     }
 </script>
 
-<form class="container my-1" bind:this={formElm} on:submit|preventDefault={goSignUp}>
+<form class="container my-1" bind:this={formElm} onsubmit={preventDefault(goSignUp)}>
     <FormGroup>
         <Label for="email-input">{$t("email.address")}</Label>
         <Input
