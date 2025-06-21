@@ -30,7 +30,7 @@ export const load: Load = async ({ parent }) => {
 
     if (get(appConfig).disable_embedded_login && get(appConfig).oidc_configured) {
         redirect(302, "/auth/oidc");
-    } else if (get(userSession) != null) {
+    } else if (get(userSession).email) {
         redirect(302, "/");
     }
 

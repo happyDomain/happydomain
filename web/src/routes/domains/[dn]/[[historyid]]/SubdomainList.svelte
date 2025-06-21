@@ -31,8 +31,12 @@
 
     const dispatch = createEventDispatcher();
 
-    export let origin: Domain;
-    export let sortedDomainsWithIntermediate: Array<string>;
+    interface Props {
+        origin: Domain;
+        sortedDomainsWithIntermediate: Array<string>;
+    }
+
+    let { origin, sortedDomainsWithIntermediate }: Props = $props();
 </script>
 
 {#if $thisZone}

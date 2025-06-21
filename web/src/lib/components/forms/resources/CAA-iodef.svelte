@@ -22,29 +22,37 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { createEventDispatcher } from "svelte";
 
     import { Button, Icon, Input } from "@sveltestrap/sveltestrap";
 
     const dispatch = createEventDispatcher();
 
-    export let newone = false;
-    export let readonly = false;
-    export let value: string = "";
+    interface Props {
+        newone?: boolean;
+        readonly?: boolean;
+        value?: string;
+    }
 
-    let kind: string = "web";
-    let url: string;
+    let { newone = false, readonly = false, value = $bindable("") }: Props = $props();
 
-    $: if (value)
-        switch (value.split(":")[0]) {
-            case "mailto":
-                kind = "mail";
-                url = value.split(":")[1];
-                break;
-            default:
-                kind = "web";
-                url = value;
-        }
+    let kind: string = $state("web");
+    let url: string = $state("");
+
+    run(() => {
+        if (value)
+            switch (value.split(":")[0]) {
+                case "mailto":
+                    kind = "mail";
+                    url = value.split(":")[1];
+                    break;
+                default:
+                    kind = "web";
+                    url = value;
+            }
+    });
 
     function updateValue(url: string) {
         if (kind == "mail") {
@@ -54,7 +62,9 @@
         }
     }
 
-    $: updateValue(url);
+    run(() => {
+        updateValue(url);
+    });
 </script>
 
 <div class="d-flex gap-2 mb-2">

@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { preventDefault } from 'svelte/legacy';
+
     import { goto } from "$app/navigation";
 
     import { Button, Col, Input, Row, Spinner } from "@sveltestrap/sveltestrap";
@@ -30,12 +32,14 @@
     import { forgotAccountPassword } from "$lib/api/user";
     import { toasts } from "$lib/stores/toasts";
 
-    let value = "";
-    let emailState: boolean | undefined = undefined;
-    let formSent = false;
+    let value = $state("");
+    let emailState: boolean | undefined = $state(undefined);
+    let formSent = $state(false);
 
-    let formElm: HTMLFormElement;
+    let formElm: HTMLFormElement | undefined = $state();
     function goSendLink() {
+        if (!formElm) return;
+
         const valid = formElm.checkValidity();
         emailState = valid;
 
@@ -66,7 +70,7 @@
     }
 </script>
 
-<form bind:this={formElm} on:submit|preventDefault={goSendLink}>
+<form bind:this={formElm} onsubmit={preventDefault(goSendLink)}>
     <p class="text-center">
         {$t("email.recover")}.
     </p>

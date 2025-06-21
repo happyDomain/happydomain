@@ -28,9 +28,13 @@
 
     import { t } from "$lib/translations";
 
-    export let toggle: () => void;
-    export let dn: string;
-    export let update = false;
+    interface Props {
+        toggle: () => void;
+        dn: string;
+        update?: boolean;
+    }
+
+    let { toggle, dn, update = false }: Props = $props();
 </script>
 
 <ModalHeader class="bg-light" {toggle}>

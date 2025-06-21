@@ -25,10 +25,12 @@
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
     import type { MiniDomain } from "$lib/model/domain";
 
-    let className = '';
-    export { className as class };
+    interface Props {
+        class?: string;
+        domain: MiniDomain;
+    }
 
-    export let domain: MiniDomain;
+    let { class: className = '', domain }: Props = $props();
 </script>
 
 <div
