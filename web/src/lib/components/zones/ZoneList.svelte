@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { createEventDispatcher } from "svelte";
 
     import { Badge } from "@sveltestrap/sveltestrap";
@@ -40,13 +42,28 @@
         href?: string;
     }
 
-    export let flush = false;
-    export let links = false;
-    export let display_by_groups = false;
-    export let domains: Array<ZoneListDomain> = [];
+    interface Props {
+        flush?: boolean;
+        links?: boolean;
+        display_by_groups?: boolean;
+        domains?: Array<ZoneListDomain>;
+        no_domain?: import('svelte').Snippet;
+        badges?: import('svelte').Snippet<[any]>;
+        [key: string]: any
+    }
 
-    let groups: Record<string, Array<ZoneListDomain>> = {};
-    $: {
+    let {
+        flush = false,
+        links = false,
+        display_by_groups = false,
+        domains = [],
+        no_domain,
+        badges,
+        ...rest
+    }: Props = $props();
+
+    let groups: Record<string, Array<ZoneListDomain>> = $state({});
+    run(() => {
         if (!display_by_groups) {
             groups = { "": domains };
         }
@@ -65,12 +82,12 @@
         }
 
         groups = tmp;
-    }
+    });
 </script>
 
-<div {...$$restProps}>
+<div {...rest}>
     {#if domains.length === 0}
-        <slot name="no-domain" />
+        {@render no_domain?.()}
     {:else}
         {#each Object.keys(groups).sort((a,b) => !a || !b ? (!a ? 1 : -1) : a.toLowerCase().localeCompare(b.toLowerCase())) as gname}
             {@const gdomains = groups[gname]}
@@ -100,12 +117,12 @@
                             this={item.href ? "a" : "button"}
                             class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-dark"
                             href={item.href}
-                            on:click={() => dispatch("click", item)}
+                            onclick={() => dispatch("click", item)}
                         >
                             <DomainWithProvider domain={item} />
-                            <slot name="badges" {item}>
+                            {#if badges}{@render badges({ item, })}{:else}
                                 <Badge color="success">OK</Badge>
-                            </slot>
+                            {/if}
                         </svelte:element>
                     {/each}
                 </ListGroup>

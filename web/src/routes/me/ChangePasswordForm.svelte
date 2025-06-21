@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { preventDefault } from 'svelte/legacy';
+
     import { goto } from "$app/navigation";
 
     import { Button, Input, Spinner } from "@sveltestrap/sveltestrap";
@@ -32,16 +34,16 @@
     import { userSession } from "$lib/stores/usersession";
     import { toasts } from "$lib/stores/toasts";
 
-    let form = {
+    let form = $state({
         current: "",
         password: "",
         passwordconfirm: "",
-    };
-    let passwordState: boolean | undefined = undefined;
-    let passwordConfirmState: boolean | undefined = undefined;
-    let formSent = false;
+    });
+    let passwordState: boolean | undefined = $state(undefined);
+    let passwordConfirmState: boolean | undefined = $state(undefined);
+    let formSent = $state(false);
 
-    let formElm: HTMLFormElement | undefined = undefined;
+    let formElm: HTMLFormElement | undefined = $state(undefined);
     function sendChPassword() {
         if (!formElm) return;
 
@@ -75,7 +77,7 @@
     }
 </script>
 
-<form bind:this={formElm} on:submit|preventDefault={sendChPassword}>
+<form bind:this={formElm} onsubmit={preventDefault(sendChPassword)}>
     <div class="mb-3">
         <label for="currentPassword-input">
             {$t("password.enter")}

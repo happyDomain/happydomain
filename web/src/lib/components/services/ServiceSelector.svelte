@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { ListGroup, NavItem, NavLink, Spinner } from "@sveltestrap/sveltestrap";
 
     import { getProviderSpec } from "$lib/api/provider_specs";
@@ -36,10 +38,19 @@
     import { filteredName } from "$lib/stores/serviceSelector";
     import { t } from "$lib/translations";
 
-    export let dn: string;
-    export let origin: Domain;
-    export let value: string | null = null;
-    export let zservices: Record<string, Array<ServiceCombined>>;
+    interface Props {
+        dn: string;
+        origin: Domain;
+        value?: string | null;
+        zservices: Record<string, Array<ServiceCombined>>;
+    }
+
+    let {
+        dn,
+        origin,
+        value = $bindable(null),
+        zservices
+    }: Props = $props();
 
     let families = [
         {
@@ -56,17 +67,19 @@
         },
     ];
 
-    let provider_specs: ProviderInfos | null = null;
-    $: getProviderSpec($providers_idx[origin.id_provider]._srctype).then((prvdspecs) => {
-        provider_specs = prvdspecs;
+    let provider_specs: ProviderInfos | null = $state(null);
+    run(() => {
+        getProviderSpec($providers_idx[origin.id_provider]._srctype).then((prvdspecs) => {
+            provider_specs = prvdspecs;
+        });
     });
 
-    let filtered_family: string | null = null;
+    let filtered_family: string | null = $state(null);
 
-    let availableNewServices: Array<ServiceInfos> = [];
-    let disabledNewServices: Array<{ svc: ServiceInfos; reason: string }> = [];
+    let availableNewServices: Array<ServiceInfos> = $state([]);
+    let disabledNewServices: Array<{ svc: ServiceInfos; reason: string }> = $state([]);
 
-    $: {
+    run(() => {
         if (provider_specs && $servicesSpecs) {
             const ans: Array<ServiceInfos> = [];
             const dns: Array<{ svc: ServiceInfos; reason: string }> = [];
@@ -89,7 +102,7 @@
             availableNewServices = ans;
             disabledNewServices = dns;
         }
-    }
+    });
 
     function svc_match(svc: ServiceInfos, arg1: string | null, arg2: string) {
         return (

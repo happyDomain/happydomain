@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run, preventDefault } from 'svelte/legacy';
+
     import { goto } from "$app/navigation";
 
     import { Button, Col, Input, Row, Spinner } from "@sveltestrap/sveltestrap";
@@ -31,23 +33,29 @@
     import { t } from "$lib/translations";
     import { toasts } from "$lib/stores/toasts";
 
-    export let user: string;
-    export let key: string;
-    let value = "";
-    let passwordConfirmation = "";
-    let passwordState: boolean | undefined;
-    let passwordConfirmState: boolean | undefined;
-    let formSent = false;
+    interface Props {
+        user: string;
+        key: string;
+    }
 
-    $: {
+    let { user, key }: Props = $props();
+    let value = $state("");
+    let passwordConfirmation = $state("");
+    let passwordState: boolean | undefined = $state();
+    let passwordConfirmState: boolean | undefined = $state();
+    let formSent = $state(false);
+
+    run(() => {
         if (passwordState == false) {
             passwordState = checkWeakPassword(value);
         }
-    }
+    });
 
-    let formElm: HTMLFormElement;
+    let formElm: HTMLFormElement | undefined = $state();
 
     function goRecover() {
+        if (!formElm) return;
+
         const valid = formElm.checkValidity();
 
         if (valid && passwordState && passwordConfirmState) {
@@ -76,7 +84,7 @@
     }
 </script>
 
-<form class="container my-1" on:submit|preventDefault={goRecover} bind:this={formElm}>
+<form class="container my-1" onsubmit={preventDefault(goRecover)} bind:this={formElm}>
     <p>
         {$t("password.fill")}
     </p>

@@ -33,9 +33,14 @@
 
     const dispatch = createEventDispatcher();
 
-    export let value: string | null = null;
-    let isLoading = true;
-    let providers: ProviderList = {};
+    interface Props {
+        value?: string | null;
+        [key: string]: any
+    }
+
+    let { value = $bindable(null), ...rest }: Props = $props();
+    let isLoading = $state(true);
+    let providers: ProviderList = $state({});
 
     listProviders().then((res) => {
         providers = res;
@@ -48,7 +53,7 @@
     }
 </script>
 
-<ListGroup {...$$restProps}>
+<ListGroup {...rest}>
     {#if isLoading}
         <ListGroupItem class="d-flex justify-content-center align-items-center gap-2">
             <Spinner color="primary" />

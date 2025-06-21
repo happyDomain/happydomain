@@ -21,7 +21,7 @@
      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
-<script context="module" lang="ts">
+<script module lang="ts">
     export const controls = {
         Open (domain: string): void { },
     };
@@ -40,8 +40,12 @@
 
     const dispatch = createEventDispatcher();
 
-    export let origin: Domain;
-    export let zone: Zone;
+    interface Props {
+        origin: Domain;
+        zone: Zone;
+    }
+
+    let { origin, zone }: Props = $props();
 
     function Open(domain: string): void {
         ctrlServiceSelector.Open(domain);

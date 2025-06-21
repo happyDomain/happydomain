@@ -21,13 +21,15 @@
      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
-<script context="module" lang="ts">
+<script module lang="ts">
     export const controls = {
         Open(domain: string): void { },
     };
 </script>
 
 <script lang="ts">
+    import { preventDefault } from 'svelte/legacy';
+
     import { createEventDispatcher } from "svelte";
 
     import { Input, Modal, ModalBody } from "@sveltestrap/sveltestrap";
@@ -42,13 +44,22 @@
 
     const dispatch = createEventDispatcher();
 
-    export let isOpen = false;
     const toggle = () => (isOpen = !isOpen);
 
-    let dn: string;
-    export let origin: Domain;
-    export let value: string | null = null;
-    export let zservices: Record<string, Array<ServiceCombined>>;
+    let dn: string = $state("");
+
+    interface Props {
+        isOpen?: boolean;
+        origin: Domain;
+        value?: string | null;
+        zservices: Record<string, Array<ServiceCombined>>;
+    }
+    let {
+        isOpen = $bindable(false),
+        origin,
+        value = $bindable(null),
+        zservices
+    }: Props = $props();
 
     function submitSelectorForm() {
         if (value !== null) {
@@ -70,7 +81,7 @@
     <ModalHeader {toggle} dn={fqdn(dn, origin.domain)} />
     <ModalBody class="pt-0">
         <FilterServiceSelectorInput class="my-2" />
-        <form id="selectServiceForm" on:submit|preventDefault={submitSelectorForm}>
+        <form id="selectServiceForm" onsubmit={preventDefault(submitSelectorForm)}>
             <ServiceSelector {dn} {origin} bind:value {zservices} />
         </form>
     </ModalBody>

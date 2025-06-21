@@ -29,10 +29,12 @@
 
     const dispatch = createEventDispatcher();
 
-    export { className as class };
-    let className: string;
+    interface Props {
+        class: string;
+        record: dnsRR;
+    }
 
-    export let record: dnsRR;
+    let { class: className, record }: Props = $props();
 
     function openRecord() {
         dispatch('show-record', record);
@@ -41,8 +43,8 @@
 
 <div
     class="record d-flex gap-1 {className}"
-    on:click={openRecord}
-    on:keypress={openRecord}
+    onclick={openRecord}
+    onkeypress={openRecord}
 >
     <span
         class="font-monospace text-truncate"

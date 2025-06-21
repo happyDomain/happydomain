@@ -27,10 +27,15 @@
     import { resolvers } from "$lib/resolver";
     import { t } from "$lib/translations";
 
-    export let value = "local";
+    interface Props {
+        value?: string;
+        [key: string]: any
+    }
+
+    let { value = $bindable("local"), ...rest }: Props = $props();
 </script>
 
-<Input type="select" bind:value {...$$restProps}>
+<Input type="select" bind:value {...rest}>
     {#each Object.keys(resolvers) as resolver_kind}
         <optgroup label={resolver_kind}>
             {#each resolvers[resolver_kind] as resolver}

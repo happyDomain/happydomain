@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import {
         Badge,
         Card,
@@ -51,19 +53,25 @@
     import { userSession } from '$lib/stores/usersession';
     import { t } from '$lib/translations';
 
-    export let origin: Domain;
-    export let service: ServiceCombined | null = null;
-    export let zoneId: string;
-
-    // FIXME: find which type is Card & ListGroup
-    let component: any = Card;
-    $: if ($userSession && $userSession.settings.zoneview !== ZoneViewGrid) {
-        component = ListGroup;
-    } else {
-        component = Card;
+    interface Props {
+        origin: Domain;
+        service?: ServiceCombined | null;
+        zoneId: string;
     }
 
-    let showDetails = false;
+    let { origin, service = $bindable(null), zoneId }: Props = $props();
+
+    // FIXME: find which type is Card & ListGroup
+    let component: any = $state(Card);
+    run(() => {
+        if ($userSession && $userSession.settings.zoneview !== ZoneViewGrid) {
+            component = ListGroup;
+        } else {
+            component = Card;
+        }
+    });
+
+    let showDetails = $state(false);
     function toggleDetails() {
         if (service) {
             if ($userSession && ($userSession.settings.zoneview === ZoneViewGrid || $userSession.settings.zoneview === ZoneViewRecords)) {
@@ -89,10 +97,11 @@
             thisZone.set(z);
         });
     }
+
+    const SvelteComponent = $derived(component);
 </script>
 
-<svelte:component
-    this={component}
+<SvelteComponent
     class={$userSession && $userSession.settings.zoneview !== ZoneViewList ? "card-hover" : ""}
     style={"cursor: pointer;" +
         (!service ? "border-style: dashed; " : "") +
@@ -195,4 +204,4 @@
             </ListGroupItem>
         {/if}
     {/if}
-</svelte:component>
+</SvelteComponent>

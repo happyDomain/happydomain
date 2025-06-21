@@ -22,11 +22,13 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import "../app.scss";
     import "bootstrap-icons/font/bootstrap-icons.css";
 
     import { goto } from "$app/navigation";
-    import { page } from "$app/stores";
+    import { page } from "$app/state";
 
     import {
         Col,
@@ -46,10 +48,12 @@
 
     const { MODE } = import.meta.env;
 
-    export let data: {
-        route: { id: string | null };
-        sw_state: { triedUpdate: boolean; hasUpdate: boolean };
-    };
+    let { data, children }: {
+        data: {
+            sw_state: { triedUpdate: boolean; hasUpdate: boolean };
+        };
+        children?: import('svelte').Snippet;
+    } = $props();
 
     window.onunhandledrejection = (e) => {
         if (e.reason.name == "NotAuthorizedError") {
@@ -68,18 +72,20 @@
         }
     };
 
-    let title = "happyDomain";
-    $: if ($page.data.domain) {
-        if (typeof $page.data.domain === "object") {
-            title =
-                $page.data.domain.domain.substring(0, $page.data.domain.domain.length - 1) +
-                " - happyDomain";
+    let title = $state("happyDomain");
+    run(() => {
+        if (page.data.domain) {
+            if (typeof page.data.domain === "object") {
+                title =
+                    page.data.domain.domain.substring(0, page.data.domain.domain.length - 1) +
+                    " - happyDomain";
+            } else {
+                title = page.data.domain + " - happyDomain";
+            }
         } else {
-            title = $page.data.domain + " - happyDomain";
+            title = "happyDomain";
         }
-    } else {
-        title = "happyDomain";
-    }
+    });
 </script>
 
 <svelte:head>
@@ -100,13 +106,13 @@
         </small>
     </div>
 {/if}
-<Header routeId={data.route.id} sw_state={data.sw_state} />
+<Header sw_state={data.sw_state} />
 
 <div class="flex-fill d-flex flex-column justify-content-center bg-light">
-    <slot></slot>
+    {@render children?.()}
 </div>
 
 <Toaster />
 {#if !$appConfig.hide_feedback && MODE == "production"}
-    <VoxPeople routeId={data.route.id} />
+    <VoxPeople />
 {/if}
