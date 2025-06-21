@@ -21,13 +21,15 @@
      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
-<script context="module" lang="ts">
+<script module lang="ts">
     export const controls = {
         Open(svc: ServiceCombined): void { },
     };
 </script>
 
 <script lang="ts">
+    import { preventDefault } from 'svelte/legacy';
+
     import { createEventDispatcher } from "svelte";
 
     import { Modal, ModalBody, Spinner } from "@sveltestrap/sveltestrap";
@@ -44,16 +46,20 @@
 
     const dispatch = createEventDispatcher();
 
-    export let isOpen = false;
     const toggle = () => (isOpen = !isOpen);
 
-    export let origin: Domain;
-    export let zone: Zone;
+    interface Props {
+        isOpen?: boolean;
+        origin: Domain;
+        zone: Zone;
+    }
 
-    let service: ServiceCombined | undefined = undefined;
+    let { isOpen = $bindable(false), origin, zone }: Props = $props();
 
-    let addServiceInProgress = false;
-    let deleteServiceInProgress = false;
+    let service: ServiceCombined | undefined = $state(undefined);
+
+    let addServiceInProgress = $state(false);
+    let deleteServiceInProgress = $state(false);
 
     function deleteService() {
         if (!service) return;
@@ -111,7 +117,7 @@
             update={service._id != undefined}
         />
         <ModalBody>
-            <form id="addSvcForm" on:submit|preventDefault={submitServiceForm}>
+            <form id="addSvcForm" onsubmit={preventDefault(submitServiceForm)}>
                 {#if $servicesSpecs == null}
                     <div class="d-flex justify-content-center">
                         <Spinner />

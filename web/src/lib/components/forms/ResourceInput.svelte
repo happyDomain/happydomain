@@ -33,15 +33,29 @@
 
     const dispatch = createEventDispatcher();
 
-    export let edit = false;
-    export let editToolbar = false;
-    export let index = "";
-    export let noDecorate = false;
-    export let readonly = false;
-    export let showDescription = true;
-    export let specs: any = undefined;
-    export let type: string;
-    export let value: any;
+    interface Props {
+        edit?: boolean;
+        editToolbar?: boolean;
+        index?: string;
+        noDecorate?: boolean;
+        readonly?: boolean;
+        showDescription?: boolean;
+        specs?: any;
+        type: string;
+        value: any;
+    }
+
+    let {
+        edit = false,
+        editToolbar = false,
+        index = "",
+        noDecorate = false,
+        readonly = false,
+        showDescription = true,
+        specs = undefined,
+        type,
+        value = $bindable()
+    }: Props = $props();
 
     function sanitizeType(t: string) {
         if (t.substring(0, 2) === "[]") t = t.substring(2);

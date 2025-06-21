@@ -22,23 +22,33 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import ResourceInput from "$lib/components/forms/ResourceInput.svelte";
     import type { CustomForm } from "$lib/model/custom_form";
     import { t } from "$lib/translations";
     import { fillUndefinedValues } from "$lib/types";
 
-    export let form: CustomForm;
-    export let value: any;
-
-    $: if (form.fields) {
-        if (value === undefined) value = {};
-        for (const field of form.fields) {
-            fillUndefinedValues(value, field);
-        }
+    interface Props {
+        form: CustomForm;
+        value: any;
+        children?: import('svelte').Snippet;
+        [key: string]: any
     }
+
+    let { form, value = $bindable(), children, ...rest }: Props = $props();
+
+    run(() => {
+        if (form.fields) {
+            if (value === undefined) value = {};
+            for (const field of form.fields) {
+                fillUndefinedValues(value, field);
+            }
+        }
+    });
 </script>
 
-<div {...$$restProps}>
+<div {...rest}>
     {#if form.beforeText}
         <p class="lead text-indent">
             {form.beforeText}
@@ -49,7 +59,7 @@
         </p>
     {/if}
 
-    <slot />
+    {@render children?.()}
 
     {#if form.fields}
         {#each form.fields as field, index}

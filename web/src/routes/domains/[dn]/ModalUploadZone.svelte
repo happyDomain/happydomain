@@ -21,7 +21,7 @@
      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
-<script context="module" lang="ts">
+<script module lang="ts">
     import type { ModalController } from "$lib/model/modal_controller";
 
     export const controls: ModalController = {
@@ -50,14 +50,18 @@
 
     const dispatch = createEventDispatcher();
 
-    export let domain: Domain;
-    export let selectedHistory: string = "";
-    export let isOpen = false;
+    interface Props {
+        domain: Domain;
+        selectedHistory?: string;
+        isOpen?: boolean;
+    }
 
-    let uploadInProgress = false;
-    let zoneImportContent = "";
-    let zoneImportFiles: FileList;
-    let uploadModalActiveTab: string | number = 0;
+    let { domain, selectedHistory = "", isOpen = $bindable(false) }: Props = $props();
+
+    let uploadInProgress = $state(false);
+    let zoneImportContent = $state("");
+    let zoneImportFiles: FileList = $state({} as FileList);
+    let uploadModalActiveTab: string | number = $state(0);
 
     function importZone(): void {
         uploadInProgress = true;

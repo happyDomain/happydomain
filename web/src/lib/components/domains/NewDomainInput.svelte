@@ -43,17 +43,31 @@
 
     const dispatch = createEventDispatcher();
 
-    export let addingNewDomain = false;
-    export let autofocus = false;
-    export let noButton = false;
-    export let preAddFunc: null | ((arg0: string) => Promise<boolean>) = null;
-    export let provider: Provider | null = null;
-    export let value = "";
+    interface Props {
+        addingNewDomain?: boolean;
+        autofocus?: boolean;
+        noButton?: boolean;
+        preAddFunc?: null | ((arg0: string) => Promise<boolean>);
+        provider?: Provider | null;
+        value?: string;
+        [key: string]: any
+    }
+
+    let {
+        addingNewDomain = $bindable(false),
+        autofocus = false,
+        noButton = false,
+        preAddFunc = null,
+        provider = null,
+        value = $bindable(""),
+        ...rest
+    }: Props = $props();
 
     let formId = "new-domain-form";
-    let newDomainState: boolean | undefined = undefined;
 
-    async function addDomainToProvider() {
+    async function addDomainToProvider(e: FormDataEvent) {
+        e.preventDefault();
+
         addingNewDomain = true;
 
         if (preAddFunc && !(await preAddFunc(value))) {
@@ -79,27 +93,14 @@
         }
     }
 
-    function validateNewDomain(val: string | undefined): boolean | undefined {
-        if (val) {
-            newDomainState = validateDomain(val);
-        } else {
-            newDomainState = validateDomain(value);
-        }
-
-        return newDomainState;
-    }
-
-    function inputChange(event: Event) {
-        if (event instanceof InputEvent) {
-            validateNewDomain(
-                event.data ? value + event.data : value.substring(0, value.length - 1),
-            );
-        }
+    let newDomainState: boolean | undefined = $derived(validateNewDomain(value));
+    function validateNewDomain(val: string): boolean | undefined {
+        return validateDomain(val, "", false);
     }
 </script>
 
-<form id={formId} on:submit|preventDefault={addDomainToProvider}>
-    <ListGroup {...$$restProps}>
+<form id={formId} onsubmit={addDomainToProvider}>
+    <ListGroup {...rest}>
         <ListGroupItem class="d-flex justify-content-between align-items-center p-0">
             <InputGroup>
                 <label
@@ -120,7 +121,6 @@
                     valid={value.length ? newDomainState : undefined}
                     style="border:none;box-shadow:none;z-index:0"
                     bind:value
-                    on:input={inputChange}
                 />
                 {#if !noButton && value.length}
                     <Button type="submit" outline color="primary" disabled={addingNewDomain}>

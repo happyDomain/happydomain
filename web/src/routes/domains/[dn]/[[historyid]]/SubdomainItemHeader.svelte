@@ -39,12 +39,23 @@
     import { userSession } from "$lib/stores/usersession";
     import { t } from "$lib/translations";
 
-    export let dn: string;
-    export let origin: Domain;
-    export let services: Array<ServiceCombined>;
-    export let zoneId: string;
-    export let reverseZone = false;
-    export let showResources = true;
+    interface Props {
+        dn: string;
+        origin: Domain;
+        services: Array<ServiceCombined>;
+        zoneId: string;
+        reverseZone?: boolean;
+        showResources?: boolean;
+    }
+
+    let {
+        dn,
+        origin,
+        services,
+        zoneId,
+        reverseZone = false,
+        showResources = $bindable(true)
+    }: Props = $props();
 
     function isCNAME(services: Array<ServiceCombined>) {
         return services.length === 1 && services[0]._svctype === "svcs.CNAME";
@@ -54,7 +65,7 @@
         return services.length === 1 && services[0]._svctype === "svcs.PTR";
     }
 
-    let deleteServiceInProgress = false;
+    let deleteServiceInProgress = $state(false);
     function deleteCNAME() {
         deleteServiceInProgress = true;
         deleteZoneService(origin, zoneId, services[0]).then(
@@ -88,8 +99,8 @@
         class="text-truncate"
         class:text-muted={services.length === 0 && dn != ""}
         style:cursor={(services.length || dn == "") && !isPTR(services) && !isCNAME(services) ? "pointer": "default"}
-        on:click={() => (showResources = !showResources)}
-        on:keypress={() => (showResources = !showResources)}
+        onclick={() => (showResources = !showResources)}
+        onkeypress={() => (showResources = !showResources)}
     >
         {#if services.length === 0 && dn != ""}
             <Icon name="plus-square-dotted" title="Intermediate domain with no service" />
@@ -196,7 +207,7 @@
             <Icon name="link" />
         </Button>
     {/if}
-    {#if !showResources || ($userSession && $userSession.settings.zoneview !== ZoneViewGrid)}
+    {#if !showResources || ($userSession.settings && $userSession.settings.zoneview !== ZoneViewGrid)}
         <Button
             type="button"
             color="primary"

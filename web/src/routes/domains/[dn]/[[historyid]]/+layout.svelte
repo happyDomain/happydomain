@@ -23,7 +23,6 @@
 
 <script lang="ts">
     import { goto } from "$app/navigation";
-    import { page } from "$app/stores";
 
     import { Spinner } from "@sveltestrap/sveltestrap";
 
@@ -31,16 +30,18 @@
     import RecordModal from "$lib/components/domains/RecordModal.svelte";
     import ServiceModal from "$lib/components/services/ServiceModal.svelte";
     import type { Domain } from "$lib/model/domain";
-    import { domains_idx, refreshDomains } from "$lib/stores/domains";
+    import { domains_idx } from "$lib/stores/domains";
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
 
-    export let data: { domain: Domain; history: string; definedhistory: boolean };
+    interface Props {
+        data: { domain: Domain; history: string; definedhistory: boolean };
+        children?: import('svelte').Snippet;
+    }
+    let { data, children }: Props = $props();
 
-    let selectedDomain = data.domain.id;
-    let selectedHistory: string = data.history;
-    $: historyChange(selectedHistory);
-    $: historyChange(data.history);
+    let selectedDomain: string = $derived(data.domain.id);
+    let selectedHistory: string = $derived(data.history);
     function historyChange(history: string) {
         if (data.history != history) {
             goto(
@@ -58,10 +59,16 @@
             selectedHistory = history;
         }
     }
+    $effect(() => {
+        historyChange(selectedHistory);
+    });
+    $effect(() => {
+        historyChange(data.history);
+    });
 </script>
 
 {#if $thisZone && $thisZone.id == selectedHistory}
-    <slot />
+    {@render children?.()}
 
     <NewServicePath origin={data.domain} zone={$thisZone} />
     <RecordModal

@@ -21,7 +21,7 @@
      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
-<script context="module" lang="ts">
+<script module lang="ts">
     import type { ModalController } from "$lib/model/modal_controller";
 
     export const controls: ModalController = {
@@ -42,7 +42,11 @@
 
     const dispatch = createEventDispatcher();
 
-    export let origin: Domain;
+    interface Props {
+        origin: Domain;
+    }
+
+    let { origin }: Props = $props();
 
     controls.Open = () => {
         ctrlNewSubdomainModal.Open();

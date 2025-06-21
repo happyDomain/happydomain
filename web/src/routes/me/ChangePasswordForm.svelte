@@ -32,23 +32,25 @@
     import { userSession } from "$lib/stores/usersession";
     import { toasts } from "$lib/stores/toasts";
 
-    let form = {
+    let form = $state({
         current: "",
         password: "",
         passwordconfirm: "",
-    };
-    let passwordState: boolean | undefined = undefined;
-    let passwordConfirmState: boolean | undefined = undefined;
-    let formSent = false;
+    });
+    let passwordState: boolean | undefined = $state(undefined);
+    let passwordConfirmState: boolean | undefined = $state(undefined);
+    let formSent = $state(false);
 
-    let formElm: HTMLFormElement | undefined = undefined;
-    function sendChPassword() {
+    let formElm: HTMLFormElement | undefined = $state(undefined);
+    function sendChPassword(e: SubmitEvent) {
+        e.preventDefault();
+
         if (!formElm) return;
 
         passwordConfirmState = checkPasswordConfirmation(form.password, form.passwordconfirm);
         const valid = formElm.checkValidity() && passwordConfirmState === true;
 
-        if (valid && $userSession != null) {
+        if (valid) {
             formSent = true;
 
             changeUserPassword($userSession, form).then(
@@ -75,7 +77,7 @@
     }
 </script>
 
-<form bind:this={formElm} on:submit|preventDefault={sendChPassword}>
+<form bind:this={formElm} onsubmit={sendChPassword}>
     <div class="mb-3">
         <label for="currentPassword-input">
             {$t("password.enter")}

@@ -24,7 +24,11 @@
 <script lang="ts">
     import ProviderFormPage from "$lib/components/providers/FormPage.svelte";
 
-    export let data: { ptype: string; state: number; providerId?: string };
+    interface Props {
+        data: { ptype: string; state: number; providerId?: string };
+    }
+
+    let { data }: Props = $props();
 </script>
 
 <ProviderFormPage ptype={data.ptype} state={data.state} providerId={data.providerId} />

@@ -27,10 +27,12 @@
     import { domains_by_groups } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
-    let className = '';
-    export { className as class };
+    interface Props {
+        class?: string;
+        selectedDomain: string;
+    }
 
-    export let selectedDomain: string;
+    let { class: className = "", selectedDomain = $bindable() }: Props = $props();
 </script>
 
 {#key $domains_by_groups}

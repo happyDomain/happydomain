@@ -21,7 +21,7 @@
      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
-<script context="module" lang="ts">
+<script module lang="ts">
     export const controls = {
         Open(domain: Domain, selectedHistory: string) { },
     };
@@ -34,9 +34,13 @@
     import type { Domain } from "$lib/model/domain";
     import { t } from "$lib/translations";
 
-    export let isOpen = false;
+    interface Props {
+        isOpen?: boolean;
+    }
 
-    let zoneContent: null | string = null;
+    let { isOpen = $bindable(false) }: Props = $props();
+
+    let zoneContent: null | string = $state(null);
     function Open(domain: Domain, selectedHistory: string): void {
         zoneContent = null;
         isOpen = true;

@@ -21,6 +21,12 @@
      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
+<script module lang="ts">
+    export const controls = {
+        Open(): void { },
+    };
+</script>
+
 <script lang="ts">
     import { goto } from "$app/navigation";
 
@@ -41,17 +47,20 @@
     import { userSession } from "$lib/stores/usersession";
     import { toasts } from "$lib/stores/toasts";
 
-    export let externalAuth = false;
+    interface Props {
+        externalAuth?: boolean;
+        [key: string]: any
+    }
 
-    let deleteAccountModalOpen = false;
-    let password = "";
-    let formSent = false;
+    let { externalAuth = false, ...rest }: Props = $props();
 
-    $: if (deleteAccountModalOpen) password = "";
+    let isOpen = $state(false);
+    let password = $state("");
+    let formSent = $state(false);
 
     function accountDeleted(): void {
         formSent = false;
-        deleteAccountModalOpen = false;
+        isOpen = false;
         toasts.addToast({
             title: $t("account.delete.deleted"),
             message: $t("account.delete.success"),
@@ -70,10 +79,6 @@
     }
 
     function deleteMyAccount() {
-        if ($userSession == null) {
-            return;
-        }
-
         formSent = true;
         if (externalAuth) {
             deleteMyUser($userSession).then(accountDeleted, deletionError);
@@ -83,11 +88,18 @@
     }
 
     function toggleModal(): void {
-        deleteAccountModalOpen = !deleteAccountModalOpen;
+        isOpen = !isOpen;
     }
+
+    function Open(): void {
+        password = "";
+        isOpen = true;
+    }
+
+    controls.Open = Open;
 </script>
 
-<Card {...$$restProps}>
+<Card {...rest}>
     <CardBody>
         <p>
             {$t("account.delete.confirm")}
@@ -96,7 +108,7 @@
             type="button"
             color="danger"
             disabled={formSent}
-            on:click={() => (deleteAccountModalOpen = true)}
+            on:click={Open}
         >
             {#if formSent}
                 <Spinner size="sm" class="me-2" />
@@ -112,7 +124,7 @@
 </Card>
 
 {#if externalAuth}
-    <Modal isOpen={deleteAccountModalOpen} toggle={toggleModal}>
+    <Modal isOpen={isOpen} toggle={toggleModal}>
         <ModalHeader toggle={toggleModal}>
             {$t("account.delete.delete")}
         </ModalHeader>
@@ -132,14 +144,14 @@
             </Button>
             <Button
                 color="secondary"
-                on:click={() => (deleteAccountModalOpen = !deleteAccountModalOpen)}
+                on:click={() => (isOpen = !isOpen)}
             >
                 {$t("common.cancel")}
             </Button>
         </ModalFooter>
     </Modal>
 {:else}
-    <Modal isOpen={deleteAccountModalOpen} toggle={toggleModal}>
+    <Modal isOpen={isOpen} toggle={toggleModal}>
         <ModalHeader toggle={toggleModal}>
             {$t("account.delete.delete")}
         </ModalHeader>
@@ -174,7 +186,7 @@
             </Button>
             <Button
                 color="secondary"
-                on:click={() => (deleteAccountModalOpen = !deleteAccountModalOpen)}
+                on:click={() => (isOpen = !isOpen)}
             >
                 {$t("common.cancel")}
             </Button>
