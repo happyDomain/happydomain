@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { preventDefault } from 'svelte/legacy';
+
     import { createEventDispatcher } from "svelte";
 
     import { Button, Collapse, FormGroup, Input, Spinner } from "@sveltestrap/sveltestrap";
@@ -34,11 +36,20 @@
 
     const dispatch = createEventDispatcher();
 
-    export let value: ResolverForm = { domain: "", type: "ANY", resolver: "local" };
-    export let showDNSSEC = false;
 
-    export let sortedDomains: Array<Domain> = [];
-    export let request_pending = false;
+    interface Props {
+        value?: ResolverForm;
+        showDNSSEC?: boolean;
+        sortedDomains?: Array<Domain>;
+        request_pending?: boolean;
+    }
+
+    let {
+        value = $bindable({ domain: "", type: "ANY", resolver: "local" }),
+        showDNSSEC = $bindable(false),
+        sortedDomains = [],
+        request_pending = $bindable(false)
+    }: Props = $props();
 
     function submitRequest(): void {
         request_pending = true;
@@ -46,7 +57,7 @@
     }
 </script>
 
-<form class="pt-3 pb-5" on:submit|preventDefault={submitRequest}>
+<form class="pt-3 pb-5" onsubmit={preventDefault(submitRequest)}>
     <FormGroup>
         <label for="domain">
             {$t("common.domain")}

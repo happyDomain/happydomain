@@ -34,44 +34,61 @@
 
     const dispatch = createEventDispatcher();
 
-    export let toggle: () => void;
-    export let step: number;
-    export let service: ServiceCombined | null = null;
-    export let form = "addSvcForm";
-    export let origin: Domain | undefined = undefined;
-    export let update = false;
-    export let zoneId: string | undefined = undefined;
-    export let canDelete = false;
-    export let canContinue = false;
 
-    export let addServiceInProgress = false;
-    export let deleteServiceInProgress = false;
+    interface Props {
+        toggle: () => void;
+        step: number;
+        service?: ServiceCombined | null;
+        form?: string;
+        origin?: Domain | undefined;
+        update?: boolean;
+        zoneId?: string | undefined;
+        canDelete?: boolean;
+        canContinue?: boolean;
+        addServiceInProgress?: boolean;
+        deleteServiceInProgress?: boolean;
+    }
 
-    let helpHref = "";
-    $: {
+    let {
+        toggle,
+        step,
+        service = $bindable(null),
+        form = "addSvcForm",
+        origin = undefined,
+        update = false,
+        zoneId = undefined,
+        canDelete = false,
+        canContinue = false,
+        addServiceInProgress = false,
+        deleteServiceInProgress = false
+    }: Props = $props();
+
+    function helpLink($locale: string, service: ServiceCombined | null) {
+        let href = "";
         if (service && service._svctype) {
             const svcPart = service._svctype.toLowerCase().split(".");
             if (svcPart.length === 2) {
                 if (svcPart[0] === "svcs") {
-                    helpHref = "records/" + svcPart[1].toUpperCase() + "/";
+                    href = "records/" + svcPart[1].toUpperCase() + "/";
                 } else if (svcPart[0] === "abstract") {
-                    helpHref = "services/" + svcPart[1] + "/";
+                    href = "services/" + svcPart[1] + "/";
                 } else if (svcPart[0] === "provider") {
-                    helpHref = "services/providers/" + svcPart[1] + "/";
+                    href = "services/providers/" + svcPart[1] + "/";
                 } else {
-                    helpHref = svcPart[svcPart.length - 1] + "/";
+                    href = svcPart[svcPart.length - 1] + "/";
                 }
             } else {
-                helpHref = svcPart[svcPart.length - 1] + "/";
+                href = svcPart[svcPart.length - 1] + "/";
             }
         } else {
-            helpHref = "";
+            href = "";
         }
-        helpHref = "https://help.happydomain.org/" + $locale + "/" + helpHref;
+        return "https://help.happydomain.org/" + $locale + "/" + href;
     }
+    let helpHref = $derived(helpLink($locale, service));
 
     let recordsHeight = 120;
-    let recordsHeightResize = false;
+    let recordsHeightResize = $state(false);
     function resizeRecordsHeight(e: MouseEvent) {
         if (!recordsHeightResize) {
             return;
@@ -84,9 +101,9 @@
 </script>
 
 <svelte:document
-    on:mousemove={resizeRecordsHeight}
-    on:mouseleave={() => (recordsHeightResize = false)}
-    on:mouseup={() => (recordsHeightResize = false)}
+    onmousemove={resizeRecordsHeight}
+    onmouseleave={() => (recordsHeightResize = false)}
+    onmouseup={() => (recordsHeightResize = false)}
 />
 
 <ModalFooter>

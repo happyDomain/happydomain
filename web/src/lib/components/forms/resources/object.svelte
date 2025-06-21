@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { createEventDispatcher } from "svelte";
 
     import { Button, Icon, TabContent, TabPane, Spinner } from "@sveltestrap/sveltestrap";
@@ -35,38 +37,54 @@
 
     const dispatch = createEventDispatcher();
 
-    export let edit = false;
-    export let editToolbar = false;
-    export let index: string;
-    export let readonly = false;
-    export let specs: ServiceInfos;
-    export let type: string;
-    export let value: any;
+    interface Props {
+        edit?: boolean;
+        editToolbar?: boolean;
+        index: string;
+        readonly?: boolean;
+        specs: ServiceInfos;
+        type: string;
+        value: any;
+    }
 
-    let innerSpecs: Array<Field> | undefined = undefined;
-    $: getServiceSpec(type).then((ss) => {
-        innerSpecs = ss.fields;
+    let {
+        edit = false,
+        editToolbar = false,
+        index,
+        readonly = false,
+        specs,
+        type,
+        value = $bindable()
+    }: Props = $props();
+
+    let innerSpecs: Array<Field> | undefined = $state(undefined);
+    run(() => {
+        getServiceSpec(type).then((ss) => {
+            innerSpecs = ss.fields;
+        });
     });
 
     // Initialize unexistant objects and arrays, except standard types.
-    $: if (innerSpecs) {
-        for (const spec of innerSpecs) {
-            if (!(specs && specs.tabs) || spec.required) {
-                fillUndefinedValues(value, spec);
+    run(() => {
+        if (innerSpecs) {
+            for (const spec of innerSpecs) {
+                if (!(specs && specs.tabs) || spec.required) {
+                    fillUndefinedValues(value, spec);
+                }
             }
         }
-    }
+    });
 
-    let editChildren = false;
+    let editChildren = $state(false);
 
-    let updateServiceInProgress = false;
+    let updateServiceInProgress = $state(false);
     function saveObject() {
         updateServiceInProgress = true;
         dispatch("update-this-service");
         editChildren = false;
     }
 
-    let deleteServiceInProgress = false;
+    let deleteServiceInProgress = $state(false);
     function deleteObject() {
         deleteServiceInProgress = true;
         dispatch("delete-this-service");
@@ -87,21 +105,23 @@
     <TabContent>
         {#each innerSpecs as spec, i}
             <TabPane tabId={spec.id} active={i == 0}>
-                <span slot="tab">
-                    {spec.label}
-                    {#if innerSpecs && value[spec.id] !== undefined && !spec.required}
-                        <button
-                            class="btn btn-link btn-sm pe-0 text-muted"
-                            type="button"
-                            on:click={() => {
-                                value[spec.id] = undefined;
-                                value = value;
-                            }}
-                        >
-                            <Icon name="trash" />
-                        </button>
-                    {/if}
-                </span>
+                {#snippet tab()}
+                    <span>
+                        {spec.label}
+                        {#if innerSpecs && value[spec.id] !== undefined && !spec.required}
+                            <button
+                                class="btn btn-link btn-sm pe-0 text-muted"
+                                type="button"
+                                onclick={() => {
+                                        value[spec.id] = undefined;
+                                        value = value;
+                               }}
+                            >
+                                <Icon name="trash" />
+                            </button>
+                        {/if}
+                    </span>
+                {/snippet}
                 {#if innerSpecs && value[spec.id] === undefined}
                     <div class="my-3 d-flex justify-content-center">
                         <Button

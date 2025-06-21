@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { preventDefault } from 'svelte/legacy';
+
     import { goto } from "$app/navigation";
 
     import { Button, ButtonGroup, Icon, Input, Spinner } from "@sveltestrap/sveltestrap";
@@ -32,14 +34,14 @@
     import { refreshUserSession, userSession } from "$lib/stores/usersession";
     import { toasts } from "$lib/stores/toasts";
 
-    export let settings: UserSettings;
-    let formSent = false;
+    interface Props {
+        settings: UserSettings;
+    }
+
+    let { settings = $bindable() }: Props = $props();
+    let formSent = $state(false);
 
     function saveSettings() {
-        if ($userSession == null) {
-            return;
-        }
-
         formSent = true;
         saveAccountSettings($userSession, settings).then(
             (settings) => {
@@ -71,7 +73,7 @@
     }
 </script>
 
-<form on:submit|preventDefault={saveSettings}>
+<form onsubmit={preventDefault(saveSettings)}>
     <div class="mb-3">
         <label for="language-select">
             {$t("settings.language")}

@@ -31,7 +31,11 @@
     import { domains_idx, refreshDomains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
-    export let data: { domain: Domain };
+    interface Props {
+        data: { domain: Domain };
+    }
+
+    let { data }: Props = $props();
 
     let rz = retrieveZone(data.domain);
     rz.then(

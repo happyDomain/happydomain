@@ -22,17 +22,23 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import type { Correction } from "$lib/model/correction";
     import { t } from "$lib/translations";
 
-    export let zoneDiff: Array<Correction>;
+    interface Props {
+        zoneDiff: Array<Correction>;
+    }
 
-    let zoneDiffCreated = 0;
-    let zoneDiffDeleted = 0;
-    let zoneDiffModified = 0;
-    let zoneDiffOther = 0;
+    let { zoneDiff }: Props = $props();
 
-    $: {
+    let zoneDiffCreated = $state(0);
+    let zoneDiffDeleted = $state(0);
+    let zoneDiffModified = $state(0);
+    let zoneDiffOther = $state(0);
+
+    run(() => {
         zoneDiffCreated = 0;
         zoneDiffDeleted = 0;
         zoneDiffModified = 0;
@@ -51,7 +57,7 @@
                 }
             });
         }
-    }
+    });
 </script>
 
 {#if zoneDiff && zoneDiff.length}

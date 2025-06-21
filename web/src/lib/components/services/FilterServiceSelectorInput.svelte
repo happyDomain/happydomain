@@ -28,6 +28,11 @@
 
     import { filteredName } from "$lib/stores/serviceSelector";
     import { t } from "$lib/translations";
+    interface Props {
+        [key: string]: any
+    }
+
+    let { ...rest }: Props = $props();
 
     onMount(async () => {
         await tick();
@@ -44,5 +49,5 @@
     autocomplete="off"
     placeholder={$t('common.filter')}
     bind:value={$filteredName}
-    {...$$restProps}
+    {...rest}
 />

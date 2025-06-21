@@ -32,17 +32,17 @@
     import { refreshUserSession, userSession } from "$lib/stores/usersession";
     import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
-
-    let formSent = false;
-
-    let settings: UserSettings;
-    $: if ($userSession) {
-        settings = $userSession.settings;
+    interface Props {
+        [key: string]: any
     }
 
-    function saveLocale() {
-        if (!$userSession) return;
+    let { ...rest }: Props = $props();
 
+    let formSent = $state(false);
+
+    let settings: UserSettings = $derived($userSession.settings);
+
+    function saveLocale() {
         formSent = true;
         saveAccountSettings($userSession, settings).then(
             (settings) => {
@@ -71,7 +71,7 @@
         type="select"
         bind:value={settings.language}
         on:change={saveLocale}
-        {...$$restProps}
+        {...rest}
     >
         {#each $locales as lang}
             <option value={lang}>{$t(`locales.${lang}`)}</option>

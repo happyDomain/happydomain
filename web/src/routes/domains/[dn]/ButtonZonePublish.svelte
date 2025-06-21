@@ -38,8 +38,12 @@
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
 
-    export let domain: Domain;
-    export let history: string;
+    interface Props {
+        domain: Domain;
+        history: string;
+    }
+
+    let { domain, history }: Props = $props();
 
     async function getDomain(id: string): Promise<Domain> {
         return await APIGetDomain(id);

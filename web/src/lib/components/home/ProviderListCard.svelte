@@ -40,10 +40,15 @@
     } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 
-    export let filteredProvider: Provider | null = null
+    interface Props {
+        filteredProvider?: Provider | null;
+        [key: string]: any
+    }
+
+    let { filteredProvider = $bindable(null), ...rest }: Props = $props();
 </script>
 
-<Card {...$$restProps}>
+<Card {...rest}>
     <div class="card-header d-flex justify-content-between">
         {$t("provider.title")}
         {#if !$appConfig.disable_providers}

@@ -30,9 +30,13 @@
     import { getUser } from "$lib/stores/users";
     import { t } from "$lib/translations";
 
-    export let data: { domain: Domain; history: string };
+    interface Props {
+        data: { domain: Domain; history: string };
+    }
 
-    let isOpen: Record<string, boolean> = {};
+    let { data }: Props = $props();
+
+    let isOpen: Record<string, boolean> = $state({});
     if (data.domain.zone_history && data.domain.zone_history.length > 0) {
         isOpen[data.domain.zone_history[0]] = true;
     }
@@ -139,14 +143,11 @@
                 <Accordion class="mt-3">
                     <AccordionItem
                         active={isOpen[history.id]}
+                        header={$t("history.diff")}
                         on:toggle={(evt) => {
                             isOpen[history.id] = evt.detail;
                         }}
                     >
-                        <h5 class="m-0" slot="header">
-                            <Icon name="file-earmark-diff" />
-                            {$t("history.diff")}
-                        </h5>
                         {#if isOpen[history.id]}
                             <DiffZone
                                 {domain}

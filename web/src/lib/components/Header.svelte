@@ -23,7 +23,8 @@
 
 <script lang="ts">
     import { goto } from "$app/navigation";
-    import { page } from "$app/stores";
+    import { page } from "$app/state";
+    import type { ClassValue } from 'svelte/elements';
 
     import {
         Button,
@@ -46,22 +47,24 @@
     import { toasts } from "$lib/stores/toasts";
     import { t, locales, locale } from "$lib/translations";
 
-    export { className as class };
-    let className = "";
 
-    export let routeId: string | null;
-    export let sw_state: { triedUpdate: boolean; hasUpdate: boolean };
-    let helpLink = "";
-    $: if (routeId && routeId.startsWith("/providers/new/[ptype]")) {
-        helpLink = getHelpPathFromProvider($page.url.pathname.split("/")[3]);
-    } else if (routeId) {
-        helpLink =
-            "https://help.happydomain.org/" +
-            encodeURIComponent($locale) +
-            getHelpPathFromRoute(routeId);
-    } else {
-        helpLink = "https://help.happydomain.org/" + encodeURIComponent($locale);
+    interface Props {
+        class?: ClassValue;
+        sw_state: { triedUpdate: boolean; hasUpdate: boolean };
     }
+
+    let { class: className, sw_state }: Props = $props();
+    let helpLink = $derived(
+        page.route && page.route.id ? (
+            page.route.id.startsWith("/providers/new/[ptype]") ? (
+                getHelpPathFromProvider(page.url.pathname.split("/")[3])
+            ) : (
+                "https://help.happydomain.org/" + encodeURIComponent($locale) + getHelpPathFromRoute(page.route.id)
+            )
+        ) : (
+            "https://help.happydomain.org/" + encodeURIComponent($locale)
+        )
+    );
 
     function getHelpPathFromProvider(ptype: string): string {
         if ($providersSpecs && $providersSpecs[ptype]) {
@@ -71,9 +74,7 @@
         }
     }
 
-    function getHelpPathFromRoute(routeId: string | null) {
-        if (routeId === null) return "/";
-
+    function getHelpPathFromRoute(routeId: string) {
         const path = routeId.split("/");
 
         if (path.length < 2) return "/";
@@ -100,14 +101,6 @@
         }
     }
 
-    let activemenu = "";
-    $: {
-        const path = $page.url.pathname.split("/");
-        if (path.length > 1) {
-            activemenu = path[1];
-        }
-    }
-
     function logout() {
         APILogout().then(
             () => {
@@ -130,7 +123,7 @@
 </script>
 
 <Navbar
-    class="{className} {$userSession ? 'p-0' : ''}"
+    class="{className} {$userSession.id ? 'p-0' : ''}"
     style="z-index: 100"
     container
     expand="xs"
@@ -139,17 +132,17 @@
     <NavbarBrand
         href="/"
         style="padding: 0; margin: -.5rem 0;"
-        target={$userSession ? undefined : "_self"}
+        target={$userSession.id ? undefined : "_self"}
     >
         <Logo />
     </NavbarBrand>
     <Nav class="ms-auto align-items-center" navbar>
         <HelpButton
             href={helpLink}
-            size={$userSession ? "sm" : undefined}
-            class={$userSession ? "my-2" : "mx-1"}
+            size={$userSession.id ? "sm" : undefined}
+            class={$userSession.id ? "my-2" : "mx-1"}
         />
-        {#if $userSession}
+        {#if $userSession.id}
             <Dropdown nav inNavbar>
                 <DropdownToggle nav caret>
                     <Button color="dark" size="sm">
@@ -196,7 +189,7 @@
             {#if !$appConfig.disable_registration}
                 <Button
                     class="d-none d-md-inline-block mx-1"
-                    outline={activemenu != "join"}
+                    outline={!page.route || page.route.id != "/join"}
                     color="dark"
                     href="/join"
                 >
@@ -206,7 +199,7 @@
             {/if}
             <Button
                 class="d-none d-md-inline-block mx-1"
-                outline={activemenu == "join"}
+                outline={!page.route || page.route.id != "/login"}
                 color="primary"
                 href="/login"
             >

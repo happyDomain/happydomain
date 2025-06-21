@@ -32,11 +32,20 @@
 
     const dispatch = createEventDispatcher();
 
-    export let active = false;
-    export let disabled = false;
-    export let reason: string = "";
 
-    export let svc: ServiceInfos;
+    interface Props {
+        active?: boolean;
+        disabled?: boolean;
+        reason?: string;
+        svc: ServiceInfos;
+    }
+
+    let {
+        active = false,
+        disabled = false,
+        reason = "",
+        svc
+    }: Props = $props();
 </script>
 
 <ListGroupItem {active} class="d-flex" {disabled} tag="button" on:click={() => dispatch("click")}>
@@ -63,7 +72,7 @@
                 </Badge>
             {/each}
         {/if}
-        {#if svc.record_types && $userSession && $userSession.settings && $userSession.settings.showrrtypes}
+        {#if svc.record_types && $userSession.settings && $userSession.settings.showrrtypes}
             {#each svc.record_types as rtype}
                 <Badge color="info" class="float-end ms-1">
                     {nsrrtype(rtype)}

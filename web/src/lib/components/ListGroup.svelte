@@ -28,21 +28,39 @@
 
     const dispatch = createEventDispatcher();
 
-    export let items: Array<any> = [];
-    export let isLoading = false;
-    export let button = false;
-    export let isActive: (item: any) => boolean = () => false;
-    export let links = false;
+    interface Props {
+        items?: Array<any>;
+        isLoading?: boolean;
+        button?: boolean;
+        isActive?: (item: any) => boolean;
+        links?: boolean;
+        loading?: import('svelte').Snippet;
+        empty?: import('svelte').Snippet;
+        children?: import('svelte').Snippet<[any]>;
+        [key: string]: any
+    }
+
+    let {
+        items = [],
+        isLoading = false,
+        button = false,
+        isActive = () => false,
+        links = false,
+        loading,
+        empty,
+        children,
+        ...rest
+    }: Props = $props();
 </script>
 
-<ListGroup {...$$restProps}>
+<ListGroup {...rest}>
     {#if isLoading}
         <ListGroupItem class="d-flex justify-content-center align-items-center">
-            <slot name="loading" />
+            {@render loading?.()}
         </ListGroupItem>
     {:else if items.length == 0}
         <ListGroupItem class="text-center">
-            <slot name="empty" />
+            {@render empty?.()}
         </ListGroupItem>
     {:else}
         {#each items as item}
@@ -53,7 +71,7 @@
                 href={links ? item.href : undefined}
                 on:click={() => dispatch("click", item)}
             >
-                <slot {item} />
+                {@render children?.({ item, })}
             </ListGroupItem>
         {/each}
     {/if}

@@ -22,9 +22,8 @@
 -->
 
 <script lang="ts">
-    import { tick } from "svelte";
     import { goto, invalidateAll } from "$app/navigation";
-    import { page } from "$app/stores";
+    import { page } from "$app/state";
 
     // @ts-ignore
     import { escape } from "html-escaper";
@@ -64,7 +63,12 @@
     } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
 
-    export let data: { domain: Domain };
+    interface Props {
+        data: { domain: Domain };
+        children?: import('svelte').Snippet;
+    }
+
+    let { data, children }: Props = $props();
 
     function domainLink(dn: string) : string {
         return $domains_idx[$domains_idx[dn].domain]
@@ -72,15 +76,13 @@
              : dn;
     }
 
-    let selectedDomain = data.domain.id;
-    $: domainChange(selectedDomain);
-    $: domainChange(data.domain.id);
+    let selectedDomain = $derived(data.domain.id);
     function domainChange(dn: string) {
         if (dn != data.domain.id) {
             goto(
                 "/domains/" +
                     encodeURIComponent(domainLink(dn)) +
-                    ($page.data.isAuditPage ? "/logs" : $page.data.isHistoryPage ? "/history" : ""),
+                    (page.data.isAuditPage ? "/logs" : page.data.isHistoryPage ? "/history" : ""),
             );
         }
         if (selectedDomain != dn) {
@@ -88,10 +90,9 @@
         }
     }
 
-    let selectedHistory: string | undefined;
-    $: selectedHistory = $page.data.history;
+    let selectedHistory: string | undefined = $derived(page.data.history);
 
-    let retrievalInProgress = false;
+    let retrievalInProgress = $state(false);
     async function retrieveZone() {
         retrievalInProgress = true;
         retrieveZoneDone(await StoreRetrieveZone(data.domain));
@@ -99,7 +100,7 @@
 
     function retrieveZoneDone(zm: ZoneMeta): void {
         retrievalInProgress = false;
-        if ($page.data.definedhistory) {
+        if (page.data.definedhistory) {
             refreshDomains().then(() => {
                 goto(
                     "/domains/" +
@@ -143,6 +144,13 @@
             },
         );
     }
+    $effect(() => {
+        domainChange(selectedDomain);
+    });
+    $effect(() => {
+        domainChange(data.domain.id);
+    });
+
 </script>
 
 <Container fluid class="d-flex flex-column flex-fill">
@@ -161,7 +169,7 @@
                     <SelectDomain bind:selectedDomain={selectedDomain} />
                 </div>
 
-                {#if $page.data.isHistoryPage || $page.data.isAuditPage}
+                {#if page.data.isHistoryPage || page.data.isAuditPage}
                     <Button
                         class="mt-2"
                         outline
@@ -269,9 +277,9 @@
                     </div>
                 {/if}
 
-                <div class="flex-fill" />
+                <div class="flex-fill"></div>
 
-                {#if !($page.data.isZonePage && data.domain.zone_history && $domains_idx[selectedDomain] && data.domain.id === $domains_idx[selectedDomain].id && $sortedDomainsWithIntermediate && selectedHistory)}
+                {#if !(page.data.isZonePage && data.domain.zone_history && $domains_idx[selectedDomain] && data.domain.id === $domains_idx[selectedDomain].id && $sortedDomainsWithIntermediate && selectedHistory)}
                     <Button
                         color="danger"
                         class="mt-3"
@@ -294,7 +302,7 @@
             {/if}
         </Col>
         <Col sm={8} md={9} class="d-flex">
-            <slot />
+            {@render children?.()}
         </Col>
     </Row>
 </Container>

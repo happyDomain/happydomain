@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { Modal, ModalBody, ModalFooter, ModalHeader } from "@sveltestrap/sveltestrap";
 
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
@@ -30,11 +32,17 @@
     import { refreshProviders } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 
-    export let isOpen = false;
-    $: if (isOpen) ptype = "";
+    interface Props {
+        isOpen?: boolean;
+    }
 
-    let form: ProviderForm;
-    let ptype: string;
+    let { isOpen = $bindable(false) }: Props = $props();
+    run(() => {
+        if (isOpen) ptype = "";
+    });
+
+    let form: ProviderForm = $state({} as ProviderForm);
+    let ptype: string = $state("");
 
     function previous() {
         if (!form || form.state < 0) {

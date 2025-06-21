@@ -31,8 +31,8 @@
     import { t } from "$lib/translations";
     import { toasts } from "$lib/stores/toasts";
 
-    let error = "";
-    export let data;
+    let error = $state("");
+    let { data } = $props();
 
     if (data.user || data.key) {
         if (!data.user || !data.key) {

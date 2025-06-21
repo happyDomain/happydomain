@@ -22,8 +22,10 @@
 -->
 
 <script lang="ts">
+    import { preventDefault } from 'svelte/legacy';
+
     import { goto } from "$app/navigation";
-    import { page } from "$app/stores";
+    import { page } from "$app/state";
 
     import { Button, FormGroup, Input, Label, Spinner } from "@sveltestrap/sveltestrap";
 
@@ -35,17 +37,19 @@
     import { toasts } from "$lib/stores/toasts";
     import { refreshUserSession } from "$lib/stores/usersession";
 
-    let loginForm: LoginForm = {
+    let loginForm: LoginForm = $state({
         email: "",
         password: "",
-    };
-    let emailState: boolean | undefined;
-    let passwordState: boolean | undefined;
-    let formSent = false;
+    });
+    let emailState: boolean | undefined = $state();
+    let passwordState: boolean | undefined = $state();
+    let formSent = $state(false);
 
-    let formElm: HTMLFormElement;
+    let formElm: HTMLFormElement | undefined = $state();
 
     function testLogin() {
+        if (!formElm) return;
+
         const valid = formElm.checkValidity();
 
         if (valid) {
@@ -62,7 +66,7 @@
                     passwordState = true;
                     refreshUserSession();
 
-                    const nextParam = $page.url.searchParams.get("next");
+                    const nextParam = page.url.searchParams.get("next");
                     if (nextParam) {
                         goto(decodeURIComponent(nextParam));
                     } else {
@@ -84,7 +88,7 @@
     }
 </script>
 
-<form class="container my-1" bind:this={formElm} on:submit|preventDefault={testLogin}>
+<form class="container my-1" bind:this={formElm} onsubmit={preventDefault(testLogin)}>
     <FormGroup>
         <Label for="email-input">{$t("email.address")}</Label>
         <Input
@@ -126,15 +130,15 @@
                 {#await res.json() then oidc}
                     <Button href="/auth/oidc" color="secondary">
                         {#if oidc.provider == "google.com"}
-                            <i class="bi bi-google" />
+                            <i class="bi bi-google"></i>
                         {:else if oidc.provider == "gitlab.com" || oidc.provider == "framagit.org"}
-                            <i class="bi bi-gitlab" />
+                            <i class="bi bi-gitlab"></i>
                         {:else if oidc.provider == "github.com"}
-                            <i class="bi bi-github" />
+                            <i class="bi bi-github"></i>
                         {:else if oidc.provider == "microsoft.com"}
-                            <i class="bi bi-microsoft" />
+                            <i class="bi bi-microsoft"></i>
                         {:else if oidc.provider == "apple.com"}
-                            <i class="bi bi-apple" />
+                            <i class="bi bi-apple"></i>
                         {/if}
                         {$t("account.oidc-login", { provider: oidc.provider })}
                     </Button>

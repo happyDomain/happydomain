@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { goto } from "$app/navigation";
 
     import { Container, Col, Row, Table } from "@sveltestrap/sveltestrap";
@@ -34,11 +36,15 @@
     import { t } from "$lib/translations";
     import { toasts } from "$lib/stores/toasts";
 
-    export let data: { form?: ResolverFormT; domain: string; showDNSSEC: boolean };
-    let question: ResolverFormT | null = null;
-    let responses: Array<any> | "no-answer" | null = null;
-    let error_response: string | null = null;
-    let request_pending = false;
+    interface Props {
+        data: { form?: ResolverFormT; domain: string; showDNSSEC: boolean };
+    }
+
+    let { data = $bindable() }: Props = $props();
+    let question: ResolverFormT | null = $state(null);
+    let responses: Array<any> | "no-answer" | null = $state(null);
+    let error_response: string | null = $state(null);
+    let request_pending = $state(false);
 
     function resolve(form: ResolverFormT) {
         if (!form.domain) return;
@@ -67,14 +73,14 @@
         );
     }
 
-    $: {
+    run(() => {
         if (!data.form) {
             data.form = { domain: "", type: "ANY", resolver: "local" };
         }
         data.form.domain = data.domain;
 
         resolve(data.form);
-    }
+    });
 
     function filteredResponses(responses: Array<any>, showDNSSEC: boolean): Array<any> {
         if (!responses) {

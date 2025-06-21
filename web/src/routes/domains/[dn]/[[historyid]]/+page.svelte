@@ -35,7 +35,11 @@
 
     if (!$servicesSpecs) refreshServicesSpecs();
 
-    export let data: { domain: Domain; history: string; zoneId: string };
+    interface Props {
+        data: { domain: Domain; history: string; zoneId: string };
+    }
+
+    let { data }: Props = $props();
 </script>
 
 {#if !data.domain}

@@ -29,7 +29,11 @@
 
     const dispatch = createEventDispatcher();
 
-    export let service = null;
+    interface Props {
+        service?: any;
+    }
+
+    let { service = null }: Props = $props();
 </script>
 
 {#if service}

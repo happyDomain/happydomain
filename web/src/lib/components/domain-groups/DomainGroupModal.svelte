@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run, preventDefault } from 'svelte/legacy';
+
     import {
         Button,
         Input,
@@ -38,15 +40,23 @@
     import { groups, domains, refreshDomains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
-    export let isOpen = false;
+    interface Props {
+        isOpen?: boolean;
+    }
+
+    let { isOpen = $bindable(false) }: Props = $props();
     const toggle = () => (isOpen = !isOpen);
 
-    let mygroups: Array<string> = [];
-    $: if (!isOpen) mygroups = [];
-    $: if (!mygroups.length)
-        mygroups = $groups.map((s) => s).filter((s) => s != "" && s != "undefined");
+    let mygroups: Array<string> = $state([]);
+    run(() => {
+        if (!isOpen) mygroups = [];
+    });
+    run(() => {
+        if (!mygroups.length)
+            mygroups = $groups.map((s) => s).filter((s) => s != "" && s != "undefined");
+    });
 
-    let newgroup = "";
+    let newgroup = $state("");
     function addGroup() {
         if (newgroup.length && mygroups.indexOf(newgroup) < 0) {
             mygroups.push(newgroup);
@@ -74,7 +84,7 @@
                 <Spinner color="primary" />
             </div>
         {:else}
-            <form on:submit|preventDefault={addGroup} class="mb-4">
+            <form onsubmit={preventDefault(addGroup)} class="mb-4">
                 <InputGroup>
                     <Input
                         id="newgroup"
@@ -92,18 +102,20 @@
                 </InputGroup>
             </form>
             <ZoneList class="mt-3" domains={$domains}>
-                <div slot="badges" let:item={domain}>
-                    <Input
-                        type="select"
-                        value={domain.group}
-                        on:change={(event) => changeGroup(event, domain)}
-                    >
-                        <option value="">{$t("domaingroups.no-group")}</option>
-                        {#each mygroups as group}
-                            <option value={group}>{group}</option>
-                        {/each}
-                    </Input>
-                </div>
+                {#snippet badges({ item: domain })}
+                                <div  >
+                        <Input
+                            type="select"
+                            value={domain.group}
+                            on:change={(event) => changeGroup(event, domain)}
+                        >
+                            <option value="">{$t("domaingroups.no-group")}</option>
+                            {#each mygroups as group}
+                                <option value={group}>{group}</option>
+                            {/each}
+                        </Input>
+                    </div>
+                            {/snippet}
             </ZoneList>
         {/if}
     </ModalBody>

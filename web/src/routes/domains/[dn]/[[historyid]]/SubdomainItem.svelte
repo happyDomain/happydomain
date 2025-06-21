@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+  import { run } from 'svelte/legacy';
+
     import { createEventDispatcher } from "svelte";
 
     import { deleteZoneService } from "$lib/api/zone";
@@ -38,14 +40,20 @@
 
     const dispatch = createEventDispatcher();
 
-    export let dn: string;
-    export let origin: Domain;
-    export let services: Array<ServiceCombined>;
+  interface Props {
+    dn: string;
+    origin: Domain;
+    services: Array<ServiceCombined>;
+  }
 
-    let reverseZone = false;
-    $: reverseZone = isReverseZone(origin.domain);
+  let { dn, origin, services }: Props = $props();
 
-    let showResources = true && (services.length > 1 || (services.length === 1 && services[0]._svctype !== "svcs.CNAME" && services[0]._svctype !== "svcs.PTR"));
+    let reverseZone = $state(false);
+    run(() => {
+    reverseZone = isReverseZone(origin.domain);
+  });
+
+    let showResources = $state(true && (services.length > 1 || (services.length === 1 && services[0]._svctype !== "svcs.CNAME" && services[0]._svctype !== "svcs.PTR")));
 
     function showServiceModal(event: CustomEvent<ServiceCombined>) {
         ctrlService.Open(event.detail);

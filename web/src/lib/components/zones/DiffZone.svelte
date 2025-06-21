@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { createEventDispatcher } from "svelte";
 
     import { Icon, Spinner } from "@sveltestrap/sveltestrap";
@@ -33,14 +35,25 @@
 
     const dispatch = createEventDispatcher();
 
-    export let domain: Domain;
-    export let zoneFrom: string;
-    export let zoneTo: string;
-    export let selectable = false;
-    export let selectedDiff: Array<string> | null = null;
+    interface Props {
+        domain: Domain;
+        zoneFrom: string;
+        zoneTo: string;
+        selectable?: boolean;
+        selectedDiff?: Array<string> | null;
+        nodiff?: import('svelte').Snippet;
+    }
 
-    let zoneDiff: Array<{ className: string; msg: string; id: string }>;
-    $: computeDiff(domain, zoneTo, zoneFrom);
+    let {
+        domain,
+        zoneFrom,
+        zoneTo,
+        selectable = false,
+        selectedDiff = $bindable(null),
+        nodiff
+    }: Props = $props();
+
+    let zoneDiff: Array<{ className: string; msg: string; id: string }> = $state([]);
 
     const correctionsIdx: Record<string, Correction> = {};
 
@@ -107,6 +120,9 @@
                 : selectedDiff.filter((id: string) => correctionsIdx[id].kind == 2).length,
         });
     }
+    run(() => {
+        computeDiff(domain, zoneTo, zoneFrom);
+    });
 </script>
 
 {#if !zoneDiff}
@@ -115,7 +131,7 @@
         <p>{$t("wait.exporting")}</p>
     </div>
 {:else if zoneDiff.length == 0}
-    <slot name="nodiff">Aucune différence.</slot>
+    {#if nodiff}{@render nodiff()}{:else}Aucune différence.{/if}
 {:else}
     {#each zoneDiff as line, n}
         <div
@@ -130,7 +146,7 @@
                     id="correction-{line.id}"
                     bind:group={selectedDiff}
                     value={line.id}
-                    on:change={dispatchSelectionSummary}
+                    onchange={dispatchSelectionSummary}
                 />
                 <label
                     class="form-check-label"

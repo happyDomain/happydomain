@@ -21,7 +21,7 @@
      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
-<script context="module" lang="ts">
+<script module lang="ts">
     import type { ModalController } from "$lib/model/modal_controller";
 
     export const controls: ModalController = {
@@ -30,6 +30,8 @@
 </script>
 
 <script lang="ts">
+    import { run, preventDefault } from 'svelte/legacy';
+
     import { createEventDispatcher } from "svelte";
 
     // @ts-ignore
@@ -44,30 +46,21 @@
 
     const dispatch = createEventDispatcher();
 
-    export let isOpen = false;
     const toggle = () => (isOpen = !isOpen);
 
-    export let origin: Domain;
-    export let value: string = "";
-
-    let newDomainState: boolean | undefined = undefined;
-    $: newDomainState = value ? validateNewSubdomain(value) : undefined;
-
-    let endsWithOrigin = false;
-    $: endsWithOrigin =
-        value.endsWith(origin.domain) ||
-        value.endsWith(origin.domain.substring(0, origin.domain.length - 1));
-
-    let newDomainAppend: string | null = null;
-    $: {
-        if (endsWithOrigin) {
-            newDomainAppend = null;
-        } else if (value.length > 0) {
-            newDomainAppend = "." + origin.domain;
-        } else {
-            newDomainAppend = origin.domain;
-        }
+    interface Props {
+        isOpen?: boolean;
+        origin: Domain;
+        value?: string;
     }
+
+    let { isOpen = $bindable(false), origin, value = $bindable("") }: Props = $props();
+
+    let newDomainState: boolean | undefined = $state(undefined);
+
+    let endsWithOrigin = $state(false);
+
+    let newDomainAppend: string | null = $state(null);
 
     function validateNewSubdomain(value: string): boolean | undefined {
         newDomainState = validateDomain(value, origin.domain);
@@ -87,12 +80,29 @@
     }
 
     controls.Open = Open;
+    run(() => {
+        newDomainState = value ? validateNewSubdomain(value) : undefined;
+    });
+    run(() => {
+        endsWithOrigin =
+            value.endsWith(origin.domain) ||
+            value.endsWith(origin.domain.substring(0, origin.domain.length - 1));
+    });
+    run(() => {
+        if (endsWithOrigin) {
+            newDomainAppend = null;
+        } else if (value.length > 0) {
+            newDomainAppend = "." + origin.domain;
+        } else {
+            newDomainAppend = origin.domain;
+        }
+    });
 </script>
 
 <Modal {isOpen} {toggle}>
     <ModalHeader {toggle} dn={origin.domain} />
     <ModalBody>
-        <form id="addSubdomainForm" on:submit|preventDefault={submitSubdomainForm}>
+        <form id="addSubdomainForm" onsubmit={preventDefault(submitSubdomainForm)}>
             <p>
                 {@html $t("domains.form-new-subdomain", {
                     domain: `<span class="font-monospace">${escape(origin.domain)}</span>`,

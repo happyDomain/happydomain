@@ -38,7 +38,7 @@
                 role="button"
                 tabindex="0"
                 style={toast.onclick ? "cursor: pointer" : ""}
-                on:click={() => {
+                onclick={() => {
                     if (toast.onclick) toast.onclick();
                 }}
             >

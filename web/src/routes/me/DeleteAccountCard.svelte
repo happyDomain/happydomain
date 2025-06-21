@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { goto } from "$app/navigation";
 
     import {
@@ -41,13 +43,20 @@
     import { userSession } from "$lib/stores/usersession";
     import { toasts } from "$lib/stores/toasts";
 
-    export let externalAuth = false;
+    interface Props {
+        externalAuth?: boolean;
+        [key: string]: any
+    }
 
-    let deleteAccountModalOpen = false;
-    let password = "";
-    let formSent = false;
+    let { externalAuth = false, ...rest }: Props = $props();
 
-    $: if (deleteAccountModalOpen) password = "";
+    let deleteAccountModalOpen = $state(false);
+    let password = $state("");
+    let formSent = $state(false);
+
+    run(() => {
+        if (deleteAccountModalOpen) password = "";
+    });
 
     function accountDeleted(): void {
         formSent = false;
@@ -70,10 +79,6 @@
     }
 
     function deleteMyAccount() {
-        if ($userSession == null) {
-            return;
-        }
-
         formSent = true;
         if (externalAuth) {
             deleteMyUser($userSession).then(accountDeleted, deletionError);
@@ -87,7 +92,7 @@
     }
 </script>
 
-<Card {...$$restProps}>
+<Card {...rest}>
     <CardBody>
         <p>
             {$t("account.delete.confirm")}
