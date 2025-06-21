@@ -106,7 +106,9 @@
                             on:click={() => dispatch("click", item)}
                         >
                             <DomainWithProvider domain={item} />
-                            <Badge color="success">OK</Badge>
+                            <slot name="badges" {item}>
+                                <Badge color="success">OK</Badge>
+                            </slot>
                         </svelte:element>
                     {/each}
                 </ListGroup>
