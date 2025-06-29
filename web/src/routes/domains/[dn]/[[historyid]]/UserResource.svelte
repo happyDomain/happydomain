@@ -22,16 +22,16 @@
 -->
 
 <script lang="ts">
-    import type { Snippet } from "svelte";
-
     import { getServiceSpec } from "$lib/api/service_specs";
-    import Service from "./Service.svelte";
-    import SVC from "./SVC.svelte";
+    import ServiceCard from "./ServiceCard.svelte";
+    import ServiceBadges from "./ServiceBadges.svelte";
+    import Service from "$lib/components/services/Service.svelte";
+    import RecordText from "$lib/components/records/RecordText.svelte";
     import { controls as ctrlService } from "$lib/components/services/ServiceModal.svelte";
     import { printRR } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service";
-    import { ZoneViewGrid, ZoneViewRecords } from "$lib/model/usersettings";
+    import { ZoneViewGrid, ZoneViewList, ZoneViewRecords } from "$lib/model/usersettings";
     import { servicesSpecs } from "$lib/stores/services";
     import { userSession } from "$lib/stores/usersession";
     import { t } from "$lib/translations";
@@ -46,67 +46,89 @@
     let { dn, origin, services, zoneId }: Props = $props();
 </script>
 
-{#if $userSession.settings.zoneview === ZoneViewRecords}
+{#if $userSession.settings.zoneview === ZoneViewRecords || $userSession.settings.zoneview === ZoneViewList}
     {#if !services || services.length == 0}
         <div class="d-flex justify-content-center align-items-center">
             {$t("common.no-content")}
         </div>
     {:else}
-        <table class="table table-hover table-striped" style="table-layout: fixed;">
+        <table class="table table-bordered table-hover table-striped" style="table-layout: fixed;">
             <tbody>
                 {#each services as service}
-                    {#await getServiceSpec(service._svctype)}
-                    {:then specs}
-                        <SVC
-                            type={service._svctype}
-                            {specs}
-                            value={service.Service}
-                        >
-                            {#snippet aservice(type, value)}
-                                {#if value}
-                                    <tr>
-                                        <td
-                                            class="d-flex justify-content-between"
-                                            style="cursor: pointer"
-                                            onclick={() => ctrlService.Open(service)}
+                    {#if $userSession.settings.zoneview === ZoneViewRecords}
+                        {#await getServiceSpec(service._svctype)}
+                        {:then specs}
+                            <Service
+                                type={service._svctype}
+                                {specs}
+                                value={service.Service}
+                            >
+                                {#snippet aservice(type, rr)}
+                                    {#if rr}
+                                        <tr>
+                                            <td
+                                                class="d-flex justify-content-between"
+                                                style="cursor: pointer"
+                                                onclick={() => ctrlService.Open(service)}
+                                            >
+                                                <RecordText
+                                                    {dn}
+                                                    {origin}
+                                                    {rr}
+                                                />
+                                                <strong class="text-muted" style="white-space: nowrap">{$servicesSpecs[service._svctype].name}</strong>
+                                            </td>
+                                        </tr>
+                                    {/if}
+                                {/snippet}
+                            </Service>
+                        {/await}
+                    {:else if $servicesSpecs}
+                        <tr>
+                            <td
+                                class="d-flex justify-content-between gap-2"
+                                style="cursor: pointer"
+                                onclick={() => ctrlService.Open(service)}
+                            >
+                                <div style="min-width: 0" class="d-flex align-items-center gap-1">
+                                    <strong
+                                        title={$servicesSpecs[service._svctype].description ? $servicesSpecs[service._svctype].description : null}
+                                        style="white-space: nowrap"
+                                    >
+                                        {$servicesSpecs[service._svctype].name}
+                                    </strong>
+                                    {#if service._comment}
+                                        <span
+                                            class="flex-shrink-1 fst-italic text-muted"
+                                            title={service._comment}
+                                            style="min-width: 0"
                                         >
-                                            <div class="text-truncate font-monospace">
-                                                {printRR(value, dn, origin.domain)}
-                                            </div>
-                                            <strong style="white-space: nowrap">{$servicesSpecs[service._svctype].name}</strong>
-                                        </td>
-                                    </tr>
-                                {/if}
-                            {/snippet}
-                        </SVC>
-                    {/await}
+                                            {service._comment}
+                                        </span>
+                                    {/if}
+                                </div>
+                                <ServiceBadges {service} />
+                            </td>
+                        </tr>
+                    {/if}
                 {/each}
             </tbody>
         </table>
     {/if}
 {:else}
-    <div
-        class:d-flex={$userSession &&
-                     $userSession.settings.zoneview === ZoneViewGrid}
-        class:justify-content-around={$userSession &&
-                                     $userSession.settings.zoneview === ZoneViewGrid}
-        class:flex-wrap={$userSession &&
-                        $userSession.settings.zoneview === ZoneViewGrid}
-    >
+    <div class="d-flex justify-content-around flex-wrap">
         {#each services as service}
             {#key service}
-                <Service
+                <ServiceCard
                     {origin}
                     {service}
                     {zoneId}
                 />
             {/key}
         {/each}
-        {#if $userSession && $userSession.settings.zoneview === ZoneViewGrid}
-            <Service
-                {origin}
-                {zoneId}
-            />
-        {/if}
+        <ServiceCard
+            {origin}
+            {zoneId}
+        />
     </div>
 {/if}
