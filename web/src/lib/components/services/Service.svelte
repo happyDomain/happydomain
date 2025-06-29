@@ -24,15 +24,17 @@
 <script lang="ts">
     import type { Snippet } from 'svelte';
 
-    import SVC from './SVC.svelte'
-    import SVCField from './SVCField.svelte'
-    import { getServiceSpec } from "$lib/api/service_specs";
+    import SVCField from './ServiceField.svelte'
     import type { Service } from '$lib/model/service';
     import type { ServiceInfos } from "$lib/model/service_specs";
 
-    export let specs: ServiceInfos;
-    export let value: any;
-    export let aservice: Snippet;
+    interface Props {
+        specs: ServiceInfos;
+        value: any;
+        aservice: Snipper;
+    }
+
+    let { specs, value, aservice }: Props = $props();
 </script>
 
 {#if specs.fields}

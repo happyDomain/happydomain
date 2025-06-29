@@ -24,8 +24,8 @@
 <script lang="ts">
     import type { Snippet } from 'svelte';
 
-    import SVC from './SVC.svelte'
-    import SVCField from './SVCField.svelte'
+    import SVC from './Service.svelte'
+    import SVCField from './ServiceField.svelte'
     import { getServiceSpec } from "$lib/api/service_specs";
     import type { Service } from '$lib/model/service';
     import type { ServiceInfos } from "$lib/model/service_specs";
