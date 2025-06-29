@@ -46,6 +46,7 @@
         zoneId: string;
         reverseZone?: boolean;
         showResources?: boolean;
+        toggleShowResources?: () => void;
     }
 
     let {
@@ -54,7 +55,8 @@
         services,
         zoneId,
         reverseZone = false,
-        showResources = $bindable(true)
+        showResources = true,
+        toggleShowResources = () => { showResources = !showResources; },
     }: Props = $props();
 
     function isCNAME(services: Array<ServiceCombined>) {
@@ -99,8 +101,8 @@
         class="text-truncate"
         class:text-muted={services.length === 0 && dn != ""}
         style:cursor={(services.length || dn == "") && !isPTR(services) && !isCNAME(services) ? "pointer": "default"}
-        onclick={() => (showResources = !showResources)}
-        onkeypress={() => (showResources = !showResources)}
+        onclick={toggleShowResources}
+        onkeypress={toggleShowResources}
     >
         {#if services.length === 0 && dn != ""}
             <Icon name="plus-square-dotted" title="Intermediate domain with no service" />
@@ -133,7 +135,7 @@
             </span>
         </span>
     {:else if !showResources && services.length}
-        <Badge id={"popoversvc-" + dn.replace(".", "__")} style="cursor: pointer;">
+        <Badge color="primary" id={"popoversvc-" + dn.replace(".", "__")} style="cursor: pointer;">
             {$t("domains.n-services", { count: services.length })}
         </Badge>
         <Popover

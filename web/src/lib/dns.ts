@@ -225,3 +225,7 @@ export function unreverseDomain(dn: string) {
     ip = ip.substring(0, ip.length - 1);
     return ip.replace(/:(0000:)+/, "::").replace(/:0+/g, ":");
 }
+
+export function printRR(rr: dnsRR, dn: string, origin: string): string {
+    return fqdn(rr.Hdr.Name, fqdn(dn, origin)) + "\t" + rr.Hdr.Ttl + "\t" + nsclass(rr.Hdr.Class) + "\t" + nsrrtype(rr.Hdr.Rrtype) + "\t" + rdatatostr(rr);
+}
