@@ -1,6 +1,6 @@
 <!--
      This file is part of the happyDomain (R) project.
-     Copyright (c) 2022-2024 happyDomain
+     Copyright (c) 2022-2025 happyDomain
      Authors: Pierre-Olivier Mercier, et al.
 
      This program is offered under a commercial and under the AGPL license.
@@ -22,22 +22,27 @@
 -->
 
 <script lang="ts">
-    import type { Snippet } from "svelte";
+    import type { Snippet } from 'svelte';
 
-    import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service";
-    import { thisZone } from "$lib/stores/thiszone";
+    import SVC from './SVC.svelte'
+    import SVCField from './SVCField.svelte'
+    import { getServiceSpec } from "$lib/api/service_specs";
+    import type { Service } from '$lib/model/service';
+    import type { ServiceInfos } from "$lib/model/service_specs";
 
-    interface Props {
-        subdomain: Snippet;
-        subdomains: Array<string>;
-    }
-
-    let { subdomain, subdomains }: Props = $props();
+    export let specs: ServiceInfos;
+    export let value: any;
+    export let aservice: Snippet;
 </script>
 
-{#if $thisZone}
-    {#each subdomains as dn}
-        {@render subdomain(dn, $thisZone.services[dn] ? $thisZone.services[dn] : [])}
+{#if specs.fields}
+    {#each specs.fields as field}
+        <SVCField
+            {aservice}
+            type={field.type}
+            bind:value={value[field.id]}
+        />
     {/each}
+{:else}
+    NO FIELD
 {/if}

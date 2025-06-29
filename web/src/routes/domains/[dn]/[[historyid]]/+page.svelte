@@ -25,15 +25,14 @@
     import { Button, Col, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import AliasModal from "./AliasModal.svelte";
+    import SubdomainItem from "./SubdomainItem.svelte";
     import SubdomainList from "./SubdomainList.svelte";
+    import UserResource from "./UserResource.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { Zone } from "$lib/model/zone";
     import { domains_idx } from "$lib/stores/domains";
-    import { servicesSpecs, refreshServicesSpecs } from "$lib/stores/services";
     import { sortedDomains, sortedDomainsWithIntermediate, thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
-
-    if (!$servicesSpecs) refreshServicesSpecs();
 
     interface Props {
         data: { domain: Domain; history: string; zoneId: string };
@@ -59,17 +58,24 @@
     </div>
 {:else}
     <div style="max-width: 100%;" class="w-100 pt-1">
-        {#if !$sortedDomainsWithIntermediate || $sortedDomains.length == 0}
-            <SubdomainList
-                origin={data.domain}
-                sortedDomainsWithIntermediate={['']}
-            />
-        {:else}
-            <SubdomainList
-                origin={data.domain}
-                sortedDomainsWithIntermediate={$sortedDomainsWithIntermediate}
-            />
-        {/if}
+        <SubdomainList
+            subdomains={!$sortedDomainsWithIntermediate || $sortedDomains.length == 0 ? [''] : $sortedDomainsWithIntermediate}
+        >
+            {#snippet subdomain(dn, services)}
+                <SubdomainItem
+                    {dn}
+                    origin={data.domain}
+                    {services}
+                >
+                    <UserResource
+                        dn={dn ? dn : "@"}
+                        origin={data.domain}
+                        {services}
+                        zoneId={$thisZone.id}
+                    />
+                </SubdomainItem>
+            {/snippet}
+        </SubdomainList>
     </div>
 {/if}
 
