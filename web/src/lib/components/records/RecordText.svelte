@@ -1,6 +1,6 @@
 <!--
      This file is part of the happyDomain (R) project.
-     Copyright (c) 2022-2024 happyDomain
+     Copyright (c) 2022-2025 happyDomain
      Authors: Pierre-Olivier Mercier, et al.
 
      This program is offered under a commercial and under the AGPL license.
@@ -22,22 +22,19 @@
 -->
 
 <script lang="ts">
-    import type { Snippet } from "svelte";
-
-    import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service";
-    import { thisZone } from "$lib/stores/thiszone";
+    import { printRR } from "$lib/dns";
+    import type { dnsRR } from "$lib/dns_rr";
 
     interface Props {
-        subdomain: Snippet<[string, Array<ServiceCombined>]>;
-        subdomains: Array<string>;
+        class?: string;
+        dn: string;
+        origin: Domain;
+        rr: dnsRR;
     }
 
-    let { subdomain, subdomains }: Props = $props();
+    let { class: className = "", dn, origin, rr }: Props = $props();
 </script>
 
-{#if $thisZone}
-    {#each subdomains as dn}
-        {@render subdomain(dn, $thisZone.services[dn] ? $thisZone.services[dn] : [])}
-    {/each}
-{/if}
+<div class="text-truncate font-monospace {className}">
+    {printRR(rr, dn, origin.domain)}
+</div>
