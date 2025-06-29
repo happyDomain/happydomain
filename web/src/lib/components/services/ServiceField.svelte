@@ -24,25 +24,49 @@
 <script lang="ts">
     import type { Snippet } from 'svelte';
 
-    import SVC from './SVC.svelte'
-    import SVCField from './SVCField.svelte'
+    import SVC from './Service.svelte'
+    import SVCField from './ServiceField.svelte'
     import { getServiceSpec } from "$lib/api/service_specs";
-    import type { Service } from '$lib/model/service';
     import type { ServiceInfos } from "$lib/model/service_specs";
 
-    export let specs: ServiceInfos;
+    export let type: string;
     export let value: any;
-    export let aservice: Snippet;
+    export let aservice: Snippet<[string, any]>;
 </script>
 
-{#if specs.fields}
-    {#each specs.fields as field}
+{#if type.startsWith("[]")}
+    {#if value}
+        {#each value as row, i}
+            <SVCField
+                {aservice}
+                type={type.substring(2)}
+                bind:value={value[i]}
+            />
+        {/each}
+    {:else}
+        <!--[]{type.substring(2)} => {value}-->
+        {@render aservice(type.substring(2), null)}
+    {/if}
+{:else if type.startsWith("*")}
+    {#if value}
         <SVCField
             {aservice}
-            type={field.type}
-            bind:value={value[field.id]}
+            type={type.substring(1)}
+            bind:value={value}
         />
-    {/each}
+    {:else}
+        <!--*{type.substring(1)} => {value}-->
+        {@render aservice(type.substring(1), null)}
+    {/if}
+{:else if type.startsWith("dns.") || type == "happydns.Record" || type == "happydns.TXT" || type == "happydns.SPF"}
+    <!--{type} => {JSON.stringify(value)}-->
+    {@render aservice(type, value)}
 {:else}
-    NO FIELD
+    {#await getServiceSpec(type) then specs}
+        <SVC
+            {aservice}
+            {specs}
+            bind:value={value}
+        />
+    {/await}
 {/if}
