@@ -217,6 +217,7 @@ steps:
   commands:
   - cd web
   - npm install --network-timeout=100000
+  - npm test
   - npm run build
 
 - name: backend-commit
