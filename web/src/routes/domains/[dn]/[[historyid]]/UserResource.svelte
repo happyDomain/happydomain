@@ -27,6 +27,7 @@
     import ServiceBadges from "./ServiceBadges.svelte";
     import Service from "$lib/components/services/Service.svelte";
     import RecordText from "$lib/components/records/RecordText.svelte";
+    import { controls as ctrlRecord } from "$lib/components/domains/RecordModal.svelte";
     import { controls as ctrlService } from "$lib/components/services/ServiceModal.svelte";
     import { printRR } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
@@ -69,7 +70,7 @@
                                             <td
                                                 class="d-flex justify-content-between"
                                                 style="cursor: pointer"
-                                                onclick={() => ctrlService.Open(service)}
+                                                onclick={() => ctrlRecord.Open(rr, service)}
                                             >
                                                 <RecordText
                                                     {dn}
