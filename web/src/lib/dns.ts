@@ -38,7 +38,7 @@ export const dns_common_types: Array<string> = [
 export function fqdn(input: string, origin: string) {
     if (input === "@") {
         return origin;
-    } else if (input[-1] === ".") {
+    } else if (input.endsWith(".")) {
         return input;
     } else if (input === "") {
         return origin;
@@ -61,7 +61,7 @@ export function domainCompare(a: string | Domain, b: string | Domain) {
 
     const maxDepth = Math.min(as.length, bs.length);
     for (let i = 0; i < maxDepth; i++) {
-        const cmp = as[i].localeCompare(bs[i]);
+        const cmp = as[i].toLowerCase().localeCompare(bs[i].toLowerCase());
         if (cmp !== 0) {
             return cmp;
         }
@@ -84,11 +84,11 @@ export function fqdnCompare(a: string | Domain, b: string | Domain) {
 
     const maxDepth = Math.min(as.length, bs.length);
     for (let i = Math.min(maxDepth, 1); i < maxDepth; i++) {
-        const cmp = as[i].localeCompare(bs[i]);
+        const cmp = as[i].toLowerCase().localeCompare(bs[i].toLowerCase());
         if (cmp !== 0) {
             return cmp;
         } else if (i == 1) {
-            const cmp = as[0].localeCompare(bs[0]);
+            const cmp = as[0].toLowerCase().localeCompare(bs[0].toLowerCase());
             if (cmp !== 0) {
                 return cmp;
             }
@@ -117,28 +117,28 @@ export function nsttl(input: number): string {
     let ret = "";
 
     if (input / 86400 >= 1) {
-        ret = Math.floor(input / 86400) + "d ";
+        ret += Math.floor(input / 86400) + "d ";
         input = input % 86400;
     }
     if (input / 3600 >= 1) {
-        ret = Math.floor(input / 3600) + "h ";
+        ret += Math.floor(input / 3600) + "h ";
         input = input % 3600;
     }
     if (input / 60 >= 1) {
-        ret = Math.floor(input / 60) + "m ";
+        ret += Math.floor(input / 60) + "m ";
         input = input % 60;
     }
     if (input >= 1) {
-        ret = Math.floor(input) + "s";
+        ret += Math.floor(input) + "s";
     }
 
-    return ret;
+    return ret.trim();
 }
 
 export function validateDomain(
     dn: string,
     origin: string = "",
-    hostname: boolean = false,
+    only_ldh: boolean = false,
 ): boolean | undefined {
     let ret: boolean | undefined = undefined;
     if (dn.length !== 0) {
@@ -157,14 +157,16 @@ export function validateDomain(
                 domains.pop();
             }
 
-            let newDomainState: boolean = ret;
-            domains.forEach(function (domain) {
-                newDomainState = newDomainState && domain.length >= 1 && domain.length <= 63;
-                newDomainState =
-                    newDomainState &&
-                    (!hostname || /^(\*|_?[a-zA-Z0-9]([a-zA-Z0-9-]?[a-zA-Z0-9])*)$/.test(domain));
-            });
-            ret = newDomainState;
+            // Remove the first * if any, it's a valid wildcard domain
+            if (domains[0] === "*") {
+                domains.shift();
+            }
+
+            ret = domains.reduce((acc, domain) => (
+                acc &&
+                    domain.length >= 1 && domain.length <= 63 &&
+                    ((only_ldh && /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(domain)) || (!only_ldh && /^_?[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(domain)))
+            ), ret);
         }
     }
 
@@ -175,25 +177,38 @@ export function isReverseZone(fqdn: string) {
     return fqdn.endsWith("in-addr.arpa.") || fqdn.endsWith("ip6.arpa.");
 }
 
+function normalizeIPv6(addr: string): string | null {
+    try {
+        const parts = addr.split('::');
+        let head = parts[0].split(':');
+        let tail = parts[1] ? parts[1].split(':') : [];
+
+        // Fill the "::" gap with zeroes
+        const fullParts = [
+            ...head,
+            ...Array(8 - head.length - tail.length).fill('0'),
+            ...tail,
+        ];
+
+        // Ensure 8 segments
+        if (fullParts.length !== 8) return null;
+
+        return fullParts
+            .map(part => part.padStart(4, '0')) // ensure 4 digits
+            .join(':');
+    } catch {
+        return null;
+    }
+}
+
 export function reverseDomain(ip: string) {
-    let suffix = "in-addr.arpa.";
+    let suffix = ".in-addr.arpa.";
 
     let fields: Array<string>;
     if (ip.indexOf(":") > 0) {
-        suffix = "ip6.arpa.";
+        suffix = ".ip6.arpa.";
 
-        fields = ip.split(":");
-
-        fields = fields.map((e) => {
-            let exp_len = 4;
-            if (e.length == 0) {
-                exp_len = 4 * (7 - fields.length);
-            }
-            while (e.length < exp_len) {
-                e = "0" + e;
-            }
-            return e;
-        });
+        fields = normalizeIPv6(ip).replace(/:/g, '').split("");
     } else {
         fields = ip.split(".");
         while (fields.length < 4) {
@@ -202,10 +217,7 @@ export function reverseDomain(ip: string) {
         }
     }
 
-    return fields.reduce(
-        (a, v) => v.replace(/^0*(0|[^0].*)$/, "$1") + "." + a,
-        suffix,
-    );
+    return fields.reverse().join('.') + suffix;
 }
 
 export function unreverseDomain(dn: string) {
@@ -223,5 +235,5 @@ export function unreverseDomain(dn: string) {
     const fields = dn.split(".");
     let ip = fields.reduce((a, v, i) => v + (i % group == 0 ? split_char : "") + a, "");
     ip = ip.substring(0, ip.length - 1);
-    return ip.replace(/:(0000:)+/, "::").replace(/:0+/g, ":");
+    return ip.replace(/:(0000:)+/, "::").replace(/:0{1,3}/g, ":").replace(/^0+/, "").replace(/0+$/, "");
 }
