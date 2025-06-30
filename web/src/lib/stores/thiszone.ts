@@ -27,83 +27,65 @@ import type { Domain } from "$lib/model/domain";
 import type { Zone } from "$lib/model/zone";
 import { refreshDomains } from "$lib/stores/domains";
 
-export const thisZone: Writable<null | Zone> = writable(null);
+// Main store for the current zone
+export const thisZone: Writable<Zone | null> = writable(null);
 
-// thisAliases returns all aliases in the domain
-export const thisAliases = derived(thisZone, (zone: null | Zone) => {
-    const aliases: Record<string, Array<string>> = {};
+// Derived store to retrieve all domain aliases
+export const thisAliases = derived(thisZone, ($thisZone) => {
+    const aliases: Record<string, string[]> = {};
+    if (!$thisZone?.services) return aliases;
 
-    if (!zone || !zone.services) {
-        return aliases;
-    }
-
-    for (const dn in zone.services) {
-        if (!zone.services[dn]) continue;
-
-        zone.services[dn].forEach(function (svc) {
+    Object.entries($thisZone.services).forEach(([dn, services]) => {
+        services?.forEach((svc) => {
             if (svc._svctype === "svcs.CNAME") {
-                if (!aliases[svc.Service.Target]) {
-                    aliases[svc.Service.Target] = [];
-                }
-                aliases[svc.Service.Target].push(dn);
+                const target = svc.Service.Target;
+                aliases[target] = [...(aliases[target] || []), dn];
             }
         });
-    }
+    });
 
-    if (aliases["@"])
+    if (aliases["@"]) {
         aliases[""] = aliases["@"];
+    }
 
     return aliases;
 });
 
-// sortedDomains returns all subdomains, sorted
-export const sortedDomains = derived(thisZone, ($thisZone: null | Zone) => {
-    if (!$thisZone) {
-        return null;
+// Derived store to retrieve all subdomains, sorted
+export const sortedDomains = derived(thisZone, ($thisZone) => {
+    if (!$thisZone?.services) return null;
+
+    return Object.keys($thisZone.services).sort(domainCompare);
+});
+
+// Derived store to retrieve all subdomains, sorted, and with all intermediates, empty, subdomains
+export const sortedDomainsWithIntermediate = derived(sortedDomains, ($sortedDomains) => {
+    if (!$sortedDomains || $sortedDomains.length <= 1) return $sortedDomains;
+
+    const domains = [$sortedDomains[0]];
+    let previous = domains[0].split(".");
+
+    for (let i = 1; i < $sortedDomains.length; i++) {
+        const current = $sortedDomains[i].split(".");
+        if (previous.length < current.length && previous[0] !== current[current.length - previous.length]) {
+            domains.push(current.slice(current.length - previous.length).join("."));
+        }
+        while (previous.length + 1 < current.length) {
+            previous = current.slice(current.length - previous.length - 1);
+            domains.push(previous.join("."));
+        }
+        domains.push(current.join("."));
+        previous = current;
     }
-    if (!$thisZone.services) {
-        return [];
-    }
-    const domains = Object.keys($thisZone.services);
-    domains.sort(domainCompare);
+
     return domains;
 });
 
-// sortedDomainsWithIntermediate returns all subdomains, sorted, with intermediate subdomains
-export const sortedDomainsWithIntermediate = derived(
-    sortedDomains,
-    ($sortedDomains: null | Array<string>) => {
-        if (!$sortedDomains || $sortedDomains.length <= 1) {
-            return $sortedDomains;
-        }
-        const domains: Array<string> = [$sortedDomains[0]];
-
-        let previous = domains[0].split(".");
-        for (let i = 1; i < $sortedDomains.length; i++) {
-            const cur = $sortedDomains[i].split(".");
-
-            if (previous.length < cur.length && previous[0] !== cur[cur.length - previous.length]) {
-                domains.push(cur.slice(cur.length - previous.length).join("."));
-            }
-
-            while (previous.length + 1 < cur.length) {
-                previous = cur.slice(cur.length - previous.length - 1);
-                domains.push(previous.join("."));
-            }
-
-            domains.push(cur.join("."));
-            previous = cur;
-        }
-
-        return domains;
-    },
-);
-
+// getZone retrieve a given zone
 export async function getZone(domain: Domain, zoneId: string) {
-    const $thisZone = get(thisZone);
-
-    if ($thisZone && $thisZone.id == zoneId) {
-        return $thisZone;
+    const currentZone = get(thisZone);
+    if (currentZone?.id === zoneId) {
+        return currentZone;
     }
 
     thisZone.set(null);
