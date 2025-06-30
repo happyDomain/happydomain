@@ -22,14 +22,14 @@
 -->
 
 <script module lang="ts">
+    import type { dnsRR } from "$lib/dns_rr";
+
     export const controls = {
-        Open(details: {record: any; service: ServiceCombined;}) { },
+        Open(record: dnsRR, service: ServiceCombined) { },
     };
 </script>
 
 <script lang="ts">
-    import { preventDefault } from 'svelte/legacy';
-
     import { createEventDispatcher } from "svelte";
 
     import {
@@ -89,7 +89,9 @@
         );
     }
 
-    function submitRecordForm() {
+    function submitRecordForm(e: SubmitEvent) {
+        e.preventDefault();
+
         if (!record) return;
 
         addRecordInProgress = true;
@@ -114,9 +116,9 @@
         );
     }
 
-    function Open(details: {record: any; service: ServiceCombined;}): void {
-        record = details.record;
-        service = details.service;
+    function Open(r: dnsRR, s: ServiceCombined): void {
+        record = r;
+        service = s;
         isOpen = true;
     }
 
@@ -135,7 +137,7 @@
             {/if}
         </ModalHeader>
         <ModalBody>
-            <form id="addRRForm" onsubmit={preventDefault(submitRecordForm)}>
+            <form id="addRRForm" onsubmit={submitRecordForm}>
                 <Row>
                     <label
                         for="rr-hdr-name"
@@ -152,7 +154,6 @@
                                     id="rr-hdr-name"
                                     type="text"
                                     class="fw-bold"
-                                    required
                                     bind:value={record.Hdr.Name}
                                 />
                                 <InputGroupText
