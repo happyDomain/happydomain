@@ -28,8 +28,6 @@
 </script>
 
 <script lang="ts">
-    import { run, preventDefault } from 'svelte/legacy';
-
     import { createEventDispatcher } from "svelte";
 
     // @ts-ignore
@@ -49,6 +47,7 @@
     } from "@sveltestrap/sveltestrap";
 
     import { addZoneService } from "$lib/api/zone";
+    import DomainInput from "$lib/components/forms/resources/DomainInput.svelte";
     import { fqdn, validateDomain } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { Zone } from "$lib/model/zone";
@@ -75,20 +74,14 @@
     }: Props = $props();
     let zone = $thisZone;
 
-    let newDomainState: boolean | undefined = $state(undefined);
+    let validDomain: boolean | undefined = $state(undefined);
+    let validSubDomain: boolean = $derived(validDomain && validateNewSubdomain(value));
 
-    let endsWithOrigin = $state(false);
-
-    let newDomainAppend: string | null = $state(null);
-
-    function validateNewSubdomain(value: string): boolean | undefined {
-        // Check domain is valid
-        newDomainState = validateDomain(value, origin.domain);
-
+    function validateNewSubdomain(value: string): boolean {
         if (!zone) return false;
 
         // Check domain doesn't already exists
-        if (zone.services[value]) {
+        if (zone.services[value] && zone.services[value].length) {
             return false;
         } else if (
             value.length > origin.domain.length &&
@@ -105,19 +98,19 @@
             return false;
         }
 
-        return newDomainState;
+        return true;
     }
 
     let addAliasInProgress = $state(false);
     function submitAliasForm(e: FormDataEvent) {
         e.preventDefault();
 
-        if (zone && validateNewSubdomain(value)) {
+        if (zone && validSubDomain) {
             addAliasInProgress = true;
             addZoneService(origin, zone.id, {
                 _domain: value,
                 _svctype: "svcs.CNAME",
-                Service: { Target: dn ? dn : "@" },
+                Service: { cname: { Hdr: { Rrtype: 5, Class: 1 }, Target: dn ? dn : "@" } },
             }).then(
                 (z) => {
                     thisZone.set(z);
@@ -134,32 +127,11 @@
 
     function Open(domain: string): void {
         dn = domain;
+        value = "";
         isOpen = true;
     }
 
     controls.Open = Open;
-    run(() => {
-        if (isOpen) {
-            value = "";
-        }
-    });
-    run(() => {
-        newDomainState = value ? validateNewSubdomain(value) : undefined;
-    });
-    run(() => {
-        endsWithOrigin =
-            value.endsWith(origin.domain) ||
-            value.endsWith(origin.domain.substring(0, origin.domain.length - 1));
-    });
-    run(() => {
-        if (endsWithOrigin) {
-            newDomainAppend = null;
-        } else if (value.length > 0) {
-            newDomainAppend = "." + origin.domain;
-        } else {
-            newDomainAppend = origin.domain;
-        }
-    });
 </script>
 
 <Modal {isOpen} {toggle}>
@@ -172,31 +144,17 @@
                 {@html $t("domains.alias-creation", {
                     domain: `<span class="font-monospace">${escape(fqdn(dn, origin.domain))}</span>`,
                 })}
-                <InputGroup>
-                    <Input
-                        autofocus
-                        class="font-monospace"
-                        placeholder={$t("domains.placeholder-new-sub")}
-                        invalid={newDomainState === false}
-                        valid={newDomainState === true}
-                        bind:value
-                    />
-                    {#if newDomainAppend}
-                        <InputGroupText class="font-monospace">
-                            {newDomainAppend}
-                        </InputGroupText>
-                    {/if}
-                </InputGroup>
             </p>
-            {#if newDomainState}
+            <DomainInput
+                autofocus
+                {origin}
+                bind:value
+                on:validity-changed={(e) => validDomain = e.detail}
+            />
+            {#if validSubDomain}
                 <div class="mt-3 text-center">
                     {$t("domains.alias-creation-sample")}<br />
-                    {#if endsWithOrigin}
-                        <span class="font-monospace text-no-wrap">{fqdn(value, "")}</span>
-                    {:else}
-                        <span class="font-monospace text-no-wrap">{fqdn(value, origin.domain)}</span
-                        >
-                    {/if}
+                    <span class="font-monospace text-no-wrap">{fqdn(value, origin.domain)}</span>
                     <Icon class="mx-1" name="arrow-right" />
                     <span class="font-monospace text-no-wrap">{fqdn(dn, origin.domain)}</span>
                 </div>
@@ -209,7 +167,7 @@
         </Button>
         <Button
             type="submit"
-            disabled={newDomainState !== true || addAliasInProgress}
+            disabled={validSubDomain !== true || addAliasInProgress}
             form="addAliasForm"
             color="primary"
         >
