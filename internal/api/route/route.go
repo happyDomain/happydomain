@@ -52,8 +52,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, dependancies happy
 	// Declare routes
 	baseRoutes := router.Group("")
 
-	//authRoutes := router.Group("")
-	//authRoutes.Use(authMiddleware(cfg, false))
+	declareRouteSwagger(cfg, baseRoutes)
 
 	apiRoutes := router.Group("/api")
 
