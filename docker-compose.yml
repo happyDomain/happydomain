@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  happydomain:
+    image: happydomain/happydomain
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8081"
+    environment:
+      HAPPYDOMAIN_NO_AUTH: "1"
+      # Add more settings here
+      # HAPPYDOMAIN_MAIL_SMTP_HOST: "mailer"
+
+    restart: unless-stopped
+
+    volumes:
+      - storage:/var/lib/happydomain:rw
+
+volumes:
+  storage:
