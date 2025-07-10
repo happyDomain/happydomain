@@ -141,6 +141,14 @@ HAPPYDOMAIN_LEVELDB_PATH=/var/lib/happydomain/db/
 
 You just have to replace dash by underscore.
 
+#### Need OVH API?
+
+OVH doesn't have simple API key or credentials. It depends on a web flow to retrieve the key.
+
+To be able to initiate the authentication flow, your happyDomain instance need to have a dedicated Application Key.
+
+[Follow those instructions if you need to connect to OVH](https://help.happydomain.org/en/introduction/deploy/ovh).
+
 
 Building
 --------
