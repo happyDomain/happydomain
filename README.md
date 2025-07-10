@@ -30,7 +30,17 @@ Given the diversity of DNS configurations and user needs, we haven't yet identif
 Using Docker
 ------------
 
-We are a Docker sponsored OSS project! Thus you can easily try and/or deploy our app using Docker/podman/kubernetes/...:
+We are a Docker sponsored OSS project! Thus you can easily try and/or deploy our app using Docker/podman/kubernetes/...
+
+You can use `docker compose` to launch happyDomain:
+
+```
+git clone https://framagit.org/happyDomain/happyDomain.git
+cd happyDomain
+docker compose up
+```
+
+Or directly with the `docker run`:
 
 ```
 docker run -e HAPPYDOMAIN_NO_AUTH=1 -p 8081:8081 happydomain/happydomain
