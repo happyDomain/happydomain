@@ -22,15 +22,13 @@
 -->
 
 <script lang="ts">
-    import { preventDefault } from 'svelte/legacy';
-
     import { goto } from "$app/navigation";
 
     import { Button, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import { addDomain } from "$lib/api/domains";
     import ProviderList from "$lib/components/providers/List.svelte";
-    import ProviderNewModal from "$lib/components/providers/NewModal.svelte";
+    import ProviderNewModal, { controls as ctrlProvider } from "$lib/components/modals/NewProvider.svelte";
     import type { Provider } from "$lib/model/provider";
     import { domains, refreshDomains } from "$lib/stores/domains";
     import {
@@ -78,9 +76,8 @@
         );
     }
 
-    let newModalOpened = $state(false);
     function newProvider() {
-        newModalOpened = true;
+        ctrlProvider.Open();
     }
 </script>
 
@@ -114,11 +111,11 @@
                     <button
                         type="button"
                         class="btn btn-link p-0"
-                        onclick={preventDefault(newProvider)}>{$t("domains.add-now")}</button
+                        onclick={(e) => { e.preventDefault(); newProvider(); }}>{$t("domains.add-now")}</button
                     >
                 </p>
             </Col>
         </Row>
     {/if}
 </Container>
-<ProviderNewModal bind:isOpen={newModalOpened} />
+<ProviderNewModal />

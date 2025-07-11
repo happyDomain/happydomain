@@ -34,7 +34,7 @@
 
     import NewSubdomainModal, {
         controls as ctrlNewSubdomainModal,
-    } from "$lib/components/domains/NewSubdomainModal.svelte";
+    } from "$lib/components/modals/NewSubdomain.svelte";
     import { controls as ctrlServicePath } from "$lib/components/services/NewServicePath.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service";

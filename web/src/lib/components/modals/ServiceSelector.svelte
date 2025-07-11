@@ -32,13 +32,17 @@
 
     import { Input, Modal, ModalBody } from "@sveltestrap/sveltestrap";
 
-    import ModalFooter from "$lib/components/domains/ModalFooter.svelte";
-    import ModalHeader from "$lib/components/domains/ModalHeader.svelte";
+    import { getServiceSpec } from "$lib/api/service_specs";
+    import { getRrtype, newRR } from "$lib/dns_rr";
+    import ModalFooter from "$lib/components/modals/Footer.svelte";
+    import ModalHeader from "$lib/components/modals/Header.svelte";
     import FilterServiceSelectorInput from "$lib/components/services/FilterServiceSelectorInput.svelte";
-    import ServiceSelector from "./ServiceSelector.svelte";
+    import ServiceSelector from "$lib/components/services/ServiceSelector.svelte";
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service";
+    import { newRecord } from "$lib/model/service_specs";
+    import { filteredName } from "$lib/stores/serviceSelector";
 
     const dispatch = createEventDispatcher();
 
@@ -59,16 +63,32 @@
         zservices
     }: Props = $props();
 
-    function submitSelectorForm(e: FormDataEvent) {
+    function submitSelectorForm(e: SubmitEvent) {
         e.preventDefault();
 
         if (value !== null) {
             toggle();
-            dispatch("show-next-modal", { _svctype: value, _domain: dn, Service: {} });
+            getServiceSpec(value).then((specs) => {
+                const svc: Record<string, any> = { };
+
+                if (specs.fields) {
+                    for (const field of specs.fields) {
+                        svc[field.id] = newRecord(field);
+
+                        if (field.type.startsWith("[]")) {
+                            svc[field.id] = [svc[field.id]];
+                        }
+                    }
+                }
+
+                dispatch("show-next-modal", { _svctype: value, _domain: dn, Service: svc });
+            });
+            $filteredName = "";
         }
     }
 
     function Open(domain: string): void {
+        $filteredName = "";
         dn = domain;
         isOpen = true;
         value = "";

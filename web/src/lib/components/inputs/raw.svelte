@@ -26,6 +26,7 @@
 
     import { Input, InputGroup, InputGroupText, type InputType } from "@sveltestrap/sveltestrap";
 
+    import type { Field } from "$lib/model/custom_form";
     import { t } from "$lib/translations";
 
     const dispatch = createEventDispatcher();
@@ -33,7 +34,7 @@
     interface Props {
         edit?: boolean;
         index: string;
-        specs?: any;
+        specs?: Field;
         value: any;
         [key: string]: any
     }
@@ -41,7 +42,7 @@
     let {
         edit = false,
         index,
-        specs = { },
+        specs = { id: "", type: "" },
         value = $bindable(),
         ...rest
     }: Props = $props();
@@ -52,9 +53,9 @@
     let inputtype: InputType = $derived((specs.type && (specs.type.startsWith("uint") || specs.type.startsWith("int"))) ? "number" : (specs.type && specs.type === "bool" ? "checkbox" : (specs.textarea ? "textarea" : "text")));
 
     let inputmax: number | undefined = $derived(computeInputmax(specs));
-    let inputmin: number | undefined = $state(computeInputmin(specs));
+    let inputmin: number | undefined = $derived(computeInputmin(specs));
 
-    function computeInputmax(specs) {
+    function computeInputmax(specs: any) {
         if (specs.type) {
             if (specs.type == "int8" || specs.type == "uint8") return 255;
             else if (specs.type == "int16" || specs.type == "uint16") return 65536;
@@ -75,7 +76,7 @@
         }
         return undefined;
     }
-    function computeInputmin(specs) {
+    function computeInputmin(specs: any) {
         if (inputmax) {
             if (specs.type && specs.type.startsWith("uint")) return 0;
             else return -inputmax - 1;
@@ -93,27 +94,27 @@
     }
 
     let feedback: string | undefined = $derived(computeFeedback(value));
-    function computeFeedback() {
-        if (inputmax && value > inputmax) {
+    function computeFeedback(val: any) {
+        if (inputmax && val > inputmax) {
             return t.get("errors.too-high", { max: inputmax });
-        } else if (inputmin && value < inputmin) {
+        } else if (inputmin && val < inputmin) {
             return t.get("errors.too-low", { min: inputmin });
         } else if (
             specs.type &&
             (specs.type === "[]uint8" || specs.type === "[]byte") &&
-            !checkBase64(value)
+            !checkBase64(val)
         ) {
-            if (checkBase64(value + "==")) {
+            if (checkBase64(val + "==")) {
                 return
                     t.get("errors.base64") +
                     " " +
-                    t.get("errors.suggestion", { suggestion: `${value}==` });
-            } else if (checkBase64(value + "=")) {
+                    t.get("errors.suggestion", { suggestion: `${val}==` });
+            } else if (checkBase64(val + "=")) {
                 return
                     t.get("errors.base64") +
                     " " +
-                    t.get("errors.suggestion", { suggestion: `${value}=` });
-            } else if (checkBase64(value + "a")) {
+                    t.get("errors.suggestion", { suggestion: `${val}=` });
+            } else if (checkBase64(val + "a")) {
                 return t.get("errors.base64") + " " + t.get("errors.base64-unfinished");
             } else {
                 return t.get("errors.base64") + " " + t.get("errors.base64-illegal-char");

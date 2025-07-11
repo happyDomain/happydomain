@@ -26,7 +26,7 @@
 
     import { Button, Icon, Input, InputGroup, Spinner } from "@sveltestrap/sveltestrap";
 
-    import ResourceInput from "$lib/components/forms/ResourceInput.svelte";
+    import ResourceInput from "$lib/components/inputs/Resource.svelte";
     import type { Field } from "$lib/model/custom_form";
     import { t } from "$lib/translations";
 

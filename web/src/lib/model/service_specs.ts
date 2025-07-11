@@ -21,6 +21,7 @@
 
 import { get } from "svelte/store";
 
+import { getRrtype, newRR } from "$lib/dns_rr";
 import type { Field } from "$lib/model/custom_form";
 import { getAvailableResourceTypes, type ProviderInfos } from "$lib/model/provider";
 import type { ServiceCombined } from "$lib/model/service";
@@ -160,4 +161,12 @@ export function passRestrictions(
     }
 
     return null;
+}
+
+export function newRecord(field: Field) {
+    if (field.type.replace(/^(\[\])?\*?/, "").startsWith("dns.") || field.type.replace(/^(\[\])?\*?/, "").startsWith("happydns.")) {
+        return newRR("", getRrtype(field.type.split(".")[1]));
+    } else {
+        return newRR("", 0);
+    }
 }

@@ -56,7 +56,7 @@
     window.onunhandledrejection = (e) => {
         if (e.reason.name == "NotAuthorizedError") {
             goto("/login");
-            providers.set(null);
+            providers.set(undefined);
             toasts.addErrorToast({
                 title: $t("errors.session.title"),
                 message: $t("errors.session.content"),

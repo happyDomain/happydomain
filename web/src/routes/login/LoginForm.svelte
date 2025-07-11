@@ -60,7 +60,7 @@
             authUser(loginForm).then(
                 () => {
                     cleanUserSession();
-                    providers.set(null);
+                    providers.set(undefined);
                     formSent = false;
                     emailState = true;
                     passwordState = true;

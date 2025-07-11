@@ -27,7 +27,6 @@
     import { Button, Icon, Input, Label, ModalFooter, Spinner } from "@sveltestrap/sveltestrap";
 
     import HelpButton from "$lib/components/Help.svelte";
-    import TableRecords from "$lib/components/domains/TableRecords.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service";
     import { locale, t } from "$lib/translations";

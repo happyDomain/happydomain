@@ -76,7 +76,7 @@
 
     if (!$providersSpecs) refreshProvidersSpecs();
 
-    function domainsInProvider(domains: Array<Domain> | null, providers: Array<Provider> | null): Record<string, number> {
+    function domainsInProvider(domains: Array<Domain> | undefined, providers: Array<Provider> | undefined): Record<string, number> {
         const tmp: Record<string, number> = { };
 
         if (domains && providers) {

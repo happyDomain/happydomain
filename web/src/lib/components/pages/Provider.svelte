@@ -24,12 +24,12 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
 
-    import { Col, Container, Row, Spinner } from "@sveltestrap/sveltestrap";
+    import { Button, Col, Container, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
-    import PForm from "$lib/components/providers/Form.svelte";
+    import PForm from "$lib/components/forms/Provider.svelte";
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
-    import { ProviderForm } from "$lib/model/provider_form";
+    import { ProviderForm } from "$lib/model/provider_form.svelte";
     import type { ProviderSettingsState } from "$lib/model/provider_settings";
     import { providersSpecs, refreshProviders, refreshProvidersSpecs } from "$lib/stores/providers";
     import { t } from "$lib/translations";
@@ -49,26 +49,30 @@
     let {
         edit = false,
         ptype,
-        state,
+        state: formstate,
         providerId = null,
         value = $bindable(null)
     }: Props = $props();
 
     //
-    let form: ProviderForm = $derived(new ProviderForm(
-        ptype,
-        () => refreshProviders().then(() => goto("/?newProvider")),
-        providerId,
-        value,
-        () => {
-            if (edit) {
-                goto("/providers");
-            } else {
-                goto("/providers/new");
-            }
-        },
-    ));
-    form.changeState(state).then((res) => (form.form = res));
+    function createProviderForm(ptype: string, providerId: string | null, value: ProviderSettingsState | null, edit: boolean): ProviderForm {
+        const pf = new ProviderForm(
+            ptype,
+            () => refreshProviders().then(() => goto("/?newProvider")),
+            providerId,
+            value,
+            () => {
+                if (edit) {
+                    goto("/providers");
+                } else {
+                    goto("/providers/new");
+                }
+            },
+        );
+        pf.changeState(formstate);
+        return pf;
+    }
+    let form: ProviderForm = $derived(createProviderForm(ptype, providerId, value, edit));
 </script>
 
 {#if $providersSpecs == null}

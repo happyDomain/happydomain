@@ -22,12 +22,13 @@
 -->
 
 <script lang="ts">
+    // @ts-nocheck - sveltestrap doesn't have proper Svelte 5 snippet types yet
     import { createEventDispatcher } from "svelte";
 
     import { Button, Icon, TabContent, TabPane, Spinner } from "@sveltestrap/sveltestrap";
 
     import { getServiceSpec } from "$lib/api/service_specs";
-    import ResourceInput from "$lib/components/forms/ResourceInput.svelte";
+    import ResourceInput from "$lib/components/inputs/Resource.svelte";
     import type { Field } from "$lib/model/custom_form";
     import type { ServiceInfos } from "$lib/model/service_specs";
     import { t } from "$lib/translations";
@@ -58,7 +59,7 @@
     let innerSpecs: Array<Field> | undefined = $state(undefined);
     $effect(() => {
         getServiceSpec(type).then((ss) => {
-            innerSpecs = ss.fields;
+            innerSpecs = ss.fields ?? undefined;
         });
     });
 
@@ -102,7 +103,7 @@
 {:else if specs && specs.tabs}
     <TabContent>
         {#each innerSpecs as spec, i}
-            <TabPane tabId={spec.id} active={i == 0}>
+            <TabPane tabId={String(spec.id)} active={i == 0}>
                 {#snippet tab()}
                     <span>
                         {spec.label}

@@ -46,13 +46,13 @@
     import CardImportableDomains from "$lib/components/providers/CardImportableDomains.svelte";
     import LocaleSelect from "$lib/components/LocaleSelect.svelte";
     import Logo from "$lib/components/Logo.svelte";
-    import NewDomainInput from "$lib/components/domains/NewDomainInput.svelte";
-    import PForm from "$lib/components/providers/Form.svelte";
-    import ProviderSelector from "$lib/components/providers/Selector.svelte";
+    import NewDomainInput from "$lib/components/inputs/NewDomain.svelte";
+    import PForm from "$lib/components/forms/Provider.svelte";
+    import ProviderSelector from "$lib/components/forms/ProviderSelector.svelte";
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
     import ZoneList from "$lib/components/zones/ZoneList.svelte";
     import type { Provider } from "$lib/model/provider";
-    import type { ProviderForm } from "$lib/model/provider_form";
+    import type { ProviderForm } from "$lib/model/provider_form.svelte.ts";
     import { domains } from "$lib/stores/domains";
     import { providers, refreshProviders } from "$lib/stores/providers";
     import { t } from "$lib/translations";

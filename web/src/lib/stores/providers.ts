@@ -24,8 +24,8 @@ import { listProviders } from "$lib/api/provider";
 import type { Provider, ProviderInfos } from "$lib/model/provider";
 import { filteredProvider } from '$lib/stores/home';
 
-export const providers: Writable<null | Array<Provider>> = writable(null);
-export const providersSpecs: Writable<null | Record<string, ProviderInfos>> = writable(null);
+export const providers: Writable<Array<Provider> | undefined> = writable(undefined);
+export const providersSpecs: Writable<Record<string, ProviderInfos> | undefined> = writable(undefined);
 
 export async function refreshProviders() {
     const data = await listProviders();
@@ -39,7 +39,7 @@ export async function refreshProviders() {
     return data;
 }
 
-export const providers_idx = derived(providers, ($providers: null | Array<Provider>) => {
+export const providers_idx = derived(providers, ($providers: Array<Provider> | undefined) => {
     const idx: Record<string, Provider> = {};
 
     if ($providers) {

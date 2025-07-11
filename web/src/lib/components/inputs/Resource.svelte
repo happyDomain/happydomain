@@ -24,12 +24,12 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
 
-    import BasicInput from "./resources/basic.svelte";
-    import CAAForm from "./resources/CAA.svelte";
-    import MapInput from "./resources/map.svelte";
-    import ObjectInput from "./resources/object.svelte";
-    import RawInput from "./resources/raw.svelte";
-    import TableInput from "./resources/table.svelte";
+    import BasicInput from "$lib/components/inputs/basic.svelte";
+    import CAAForm from "$lib/components/inputs/CAA.svelte";
+    import MapInput from "$lib/components/inputs/map.svelte";
+    import ObjectInput from "$lib/components/inputs/object.svelte";
+    import RawInput from "$lib/components/inputs/raw.svelte";
+    import TableInput from "$lib/components/inputs/table.svelte";
 
     const dispatch = createEventDispatcher();
 

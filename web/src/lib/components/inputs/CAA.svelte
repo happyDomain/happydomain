@@ -26,8 +26,8 @@
 
     import { Alert, Badge, Button, FormGroup, Icon, Input } from "@sveltestrap/sveltestrap";
 
-    import TableInput from "$lib/components/forms/resources/table.svelte";
-    import ResourceRawInput from "$lib/components/forms/resources/raw.svelte";
+    import TableInput from "$lib/components/inputs/table.svelte";
+    import ResourceRawInput from "$lib/components/inputs/raw.svelte";
     import CAAIssuer from "./CAA-issuer.svelte";
     import CAAIodef from "./CAA-iodef.svelte";
     import { t } from "$lib/translations";
