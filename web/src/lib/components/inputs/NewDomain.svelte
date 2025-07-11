@@ -23,6 +23,7 @@
 
 <script lang="ts">
     import { goto } from "$app/navigation";
+    import { createEventDispatcher } from "svelte";
 
     import {
         Button,
@@ -31,92 +32,101 @@
         InputGroup,
         ListGroup,
         ListGroupItem,
+        Spinner,
     } from "@sveltestrap/sveltestrap";
 
     import { addDomain } from "$lib/api/domains";
-    import { fqdn, validateDomain } from "$lib/dns";
-    import { domains, domains_by_name, refreshDomains } from '$lib/stores/domains';
-    import { filteredName, filteredProvider } from '$lib/stores/home';
-    import { providers } from '$lib/stores/providers';
+    import { validateDomain } from "$lib/dns";
+    import type { Provider } from "$lib/model/provider";
+    import { refreshDomains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
+    const dispatch = createEventDispatcher();
+
     interface Props {
+        addingNewDomain?: boolean;
         autofocus?: boolean;
         noButton?: boolean;
+        preAddFunc?: null | ((arg0: string) => Promise<boolean>);
+        provider?: Provider | null;
+        value?: string;
         [key: string]: any
     }
 
-    let { autofocus = false, noButton = false, ...rest }: Props = $props();
+    let {
+        addingNewDomain = $bindable(false),
+        autofocus = false,
+        noButton = false,
+        preAddFunc = null,
+        provider = null,
+        value = $bindable(""),
+        ...rest
+    }: Props = $props();
 
-    let addingNewDomain = false;
-    async function addDomainToProvider(e: FormDataEvent) {
+    let formId = "new-domain-form";
+
+    async function addDomainToProvider(e: SubmitEvent) {
         e.preventDefault();
 
         addingNewDomain = true;
 
-        if ($filteredProvider) {
-            addDomain($filteredName, $filteredProvider).then(
-                (domain) => {
-                    addingNewDomain = false;
-                    refreshDomains();
-                },
-                (error) => {
-                    addingNewDomain = false;
-                    throw error;
-                },
-            );
-        } else if ($providers && $providers.length == 1) {
-            addDomain($filteredName, $providers[0]).then(
-                (domain) => {
-                    addingNewDomain = false;
-                    refreshDomains();
-                },
-                (error) => {
-                    addingNewDomain = false;
-                    throw error;
-                },
-            );
+        if (preAddFunc && !(await preAddFunc(value))) {
+            addingNewDomain = false;
+            return;
+        }
+
+        if (!provider) {
+            goto("/domains/new/" + encodeURIComponent(value));
         } else {
-            goto("/domains/new/" + encodeURIComponent($filteredName));
+            addDomain(value, provider).then(
+                (domain) => {
+                    addingNewDomain = false;
+                    value = "";
+                    refreshDomains();
+                    dispatch("newDomainAdded", domain);
+                },
+                (error) => {
+                    addingNewDomain = false;
+                    throw error;
+                },
+            );
         }
     }
 
-    let newDomainState: boolean | undefined = $derived(validateNewDomain($filteredName));
+    let newDomainState: boolean | undefined = $derived(validateNewDomain(value));
     function validateNewDomain(val: string): boolean | undefined {
         return validateDomain(val, "", false);
     }
 </script>
 
-<form onsubmit={addDomainToProvider}>
+<form id={formId} onsubmit={addDomainToProvider}>
     <ListGroup {...rest}>
         <ListGroupItem class="d-flex justify-content-between align-items-center p-0">
             <InputGroup>
                 <label
                     for="newdomaininput"
-                    class="ms-2 my-1 text-center text-muted"
-                    style="font-size: 1.6rem"
+                    class="text-center"
+                    style="width: 50px; font-size: 2.3rem"
                 >
-                    {#if ($domains && $filteredName && $domains.filter((dn) => dn.domain == fqdn($filteredName, "")).length == 0) || ($domains && $domains.length == 0)}
-                        <Icon name="plus-lg" />
-                    {:else}
-                        <Icon name="search" />
-                    {/if}
+                    <Icon name="plus" />
                 </label>
                 <Input
                     id="newdomaininput"
                     {autofocus}
-                    autocomplete="off"
                     class="font-monospace"
-                    placeholder={$t("domains.placeholder-search")}
-                    invalid={$filteredName.length
+                    placeholder={$t("domains.placeholder-new")}
+                    invalid={value.length
                         ? newDomainState !== undefined && !newDomainState
                         : undefined}
-                    valid={$filteredName.length ? newDomainState : undefined}
+                    valid={value.length ? newDomainState : undefined}
                     style="border:none;box-shadow:none;z-index:0"
-                    bind:value={$filteredName}
+                    bind:value
                 />
-                {#if !noButton && $filteredName.length && (!$domains_by_name[fqdn($filteredName, "")] || !$filteredProvider || !$domains_by_name[fqdn($filteredName, "")].reduce((acc, d) => acc || d.id_provider == $filteredProvider._id, false))}
-                    <Button type="submit" outline color="primary">
+                {#if !noButton && value.length}
+                    <Button type="submit" outline color="primary" disabled={addingNewDomain}>
+                        {#if addingNewDomain}
+                            <Spinner size="sm" class="me-1" />
+                        {/if}
                         {$t("common.add-new-thing", { thing: $t("domains.kind") })}
                     </Button>
                 {/if}

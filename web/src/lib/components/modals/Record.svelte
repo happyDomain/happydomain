@@ -49,7 +49,6 @@
 
     import { addServiceRecord, deleteServiceRecord, updateServiceRecord } from "$lib/api/service";
     import { fqdn, nsclass, nsrrtype } from "$lib/dns";
-    import type { dnsRR } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service";
     import type { Zone } from "$lib/model/zone";

@@ -33,26 +33,35 @@
     } from "@sveltestrap/sveltestrap";
 
     import ServiceBadges from "./ServiceBadges.svelte";
-    import { controls as ctrlService } from "$lib/components/services/ServiceModal.svelte";
+    import { controls as ctrlService } from "$lib/components/modals/Service.svelte";
+    import { controls as ctrlServicePath } from "$lib/components/services/NewServicePath.svelte";
     import type { Domain } from '$lib/model/domain';
     import type { ServiceCombined } from '$lib/model/service';
     import { servicesSpecs } from '$lib/stores/services';
     import { t } from '$lib/translations';
 
     interface Props {
-        origin: Domain;
+        dn: string;
         service?: ServiceCombined | null;
         zoneId: string;
     }
 
-    let { origin, service = $bindable(null), zoneId }: Props = $props();
+    let { dn, service = $bindable(null), zoneId }: Props = $props();
+
+    function openServiceModal() {
+        if (service) {
+            ctrlService.Open(service);
+        } else {
+            ctrlServicePath.Open(dn);
+        }
+    }
 </script>
 
 <Card
     class="card-hover mb-3"
     style={"cursor: pointer; width: 32%; min-width: 225px;" +
           (!service ? "border-style: dashed; " : "")}
-    on:click={() => ctrlService.Open(service)}
+    on:click={openServiceModal}
 >
     {#if !$servicesSpecs}
         <div class="d-flex justify-content-center">

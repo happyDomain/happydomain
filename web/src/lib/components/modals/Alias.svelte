@@ -47,7 +47,7 @@
     } from "@sveltestrap/sveltestrap";
 
     import { addZoneService } from "$lib/api/zone";
-    import DomainInput from "$lib/components/forms/resources/DomainInput.svelte";
+    import DomainInput from "$lib/components/inputs/Domain.svelte";
     import { fqdn, validateDomain } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { Zone } from "$lib/model/zone";
@@ -75,7 +75,7 @@
     let zone = $thisZone;
 
     let validDomain: boolean | undefined = $state(undefined);
-    let validSubDomain: boolean = $derived(validDomain && validateNewSubdomain(value));
+    let validSubDomain: boolean = $derived(!!validDomain && validateNewSubdomain(value));
 
     function validateNewSubdomain(value: string): boolean {
         if (!zone) return false;
@@ -102,7 +102,7 @@
     }
 
     let addAliasInProgress = $state(false);
-    function submitAliasForm(e: FormDataEvent) {
+    function submitAliasForm(e: SubmitEvent) {
         e.preventDefault();
 
         if (zone && validSubDomain) {
@@ -167,7 +167,7 @@
         </Button>
         <Button
             type="submit"
-            disabled={validSubDomain !== true || addAliasInProgress}
+            disabled={!validSubDomain || addAliasInProgress}
             form="addAliasForm"
             color="primary"
         >

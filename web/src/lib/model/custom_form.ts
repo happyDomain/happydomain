@@ -23,12 +23,14 @@ export interface Field {
     id: string;
     type: string;
     label?: string;
+    description?: string;
     placeholder?: string;
     default?: string;
     choices?: Array<string>;
+    hide?: boolean;
     required?: boolean;
     secret?: boolean;
-    description?: string;
+    textarea?: boolean;
 }
 
 export interface CustomForm {

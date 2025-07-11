@@ -24,6 +24,7 @@
 <script lang="ts">
     import { printRR } from "$lib/dns";
     import type { dnsRR } from "$lib/dns_rr";
+    import type { Domain } from "$lib/model/domain";
 
     interface Props {
         class?: string;
@@ -32,7 +33,7 @@
         rr: dnsRR;
     }
 
-    let { class: className = "", dn, origin, rr }: Props = $props();
+    let { class: className = "", dn, origin, rr = $bindable() }: Props = $props();
 </script>
 
 <div class="text-truncate font-monospace {className}">

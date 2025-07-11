@@ -26,6 +26,7 @@
 
     import { Col, Row } from "@sveltestrap/sveltestrap";
 
+    import type { Field } from "$lib/model/custom_form";
     import ResourceRawInput from "./raw.svelte";
 
     const dispatch = createEventDispatcher();
@@ -35,7 +36,7 @@
         edit?: boolean;
         index: string;
         showDescription?: boolean;
-        specs: any;
+        specs: Field;
         value: any;
         [key: string]: any
     }

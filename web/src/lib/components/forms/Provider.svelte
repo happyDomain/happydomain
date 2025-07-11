@@ -27,8 +27,8 @@
     import { createEventDispatcher, onMount } from "svelte";
 
     import CustomForm from "$lib/components/forms/CustomForm.svelte";
-    import ResourceInput from "$lib/components/forms/resources/basic.svelte";
-    import { ProviderForm } from "$lib/model/provider_form";
+    import ResourceInput from "$lib/components/inputs/basic.svelte";
+    import { ProviderForm } from "$lib/model/provider_form.svelte";
     import { providersSpecs } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 
@@ -69,6 +69,8 @@
                     edit
                     index="0"
                     specs={{
+                        id: "name",
+                        type: "string",
                         label: $t("provider.name-your"),
                         description: $t("domains.give-explicit-name"),
                         placeholder: $providersSpecs

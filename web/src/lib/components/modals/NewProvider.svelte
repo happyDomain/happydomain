@@ -21,14 +21,21 @@
      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
-<script lang="ts">
-    import { run } from 'svelte/legacy';
+<script module lang="ts">
+    import type { ModalController } from "$lib/model/modal_controller";
 
+    export const controls: ModalController = {
+        Open(): void { },
+    };
+</script>
+
+<script lang="ts">
     import { Modal, ModalBody, ModalFooter, ModalHeader } from "@sveltestrap/sveltestrap";
 
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
-    import ProviderForm from "$lib/components/providers/Form.svelte";
-    import ProviderSelector from "$lib/components/providers/Selector.svelte";
+    import ProviderFormComponent from "$lib/components/forms/Provider.svelte";
+    import ProviderSelector from "$lib/components/forms/ProviderSelector.svelte";
+    import { ProviderForm } from "$lib/model/provider_form.svelte";
     import { refreshProviders } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 
@@ -37,9 +44,6 @@
     }
 
     let { isOpen = $bindable(false) }: Props = $props();
-    run(() => {
-        if (isOpen) ptype = "";
-    });
 
     let form: ProviderForm = $state({} as ProviderForm);
     let ptype: string = $state("");
@@ -70,6 +74,13 @@
     function toggle(): void {
         isOpen = !isOpen;
     }
+
+    function Open(): void {
+        isOpen = true;
+        ptype = "";
+    }
+
+    controls.Open = Open;
 </script>
 
 <Modal {isOpen} scrollable size="lg" {toggle}>
@@ -83,7 +94,7 @@
             </p>
             <ProviderSelector on:provider-selected={selectProvider} />
         {:else}
-            <ProviderForm bind:form={form} formId="providermodal" {ptype} on:done={finished} />
+            <ProviderFormComponent bind:form={form} formId="providermodal" {ptype} on:done={finished} />
         {/if}
     </ModalBody>
     <ModalFooter>

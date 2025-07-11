@@ -22,29 +22,42 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
+    import {
+        Col,
+        Container,
+        Row,
+    } from "@sveltestrap/sveltestrap";
 
-    import { Button, Col, Container, Icon, Row } from "@sveltestrap/sveltestrap";
-
-    import ProviderSelector from "$lib/components/forms/ProviderSelector.svelte";
+    import { createDomain } from "$lib/api/provider";
+    import DomainListSection from "$lib/components/pages/home/DomainListSection.svelte";
+    import Logo from "$lib/components/Logo.svelte";
+    import Sidebar from "$lib/components/pages/home/Sidebar.svelte";
+    import { domains, refreshDomains } from "$lib/stores/domains";
+    import {
+        providers,
+        providersSpecs,
+        refreshProviders,
+        refreshProvidersSpecs,
+    } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 
-    function selectNewProvider(event: CustomEvent<{ ptype: string }>) {
-        goto("new/" + encodeURIComponent(event.detail.ptype));
-    }
+    if (!$domains) refreshDomains();
+    if (!$providers) refreshProviders();
+    if (!$providersSpecs) refreshProvidersSpecs();
 </script>
 
-<Container class="d-flex flex-column flex-fill" fluid>
-    <h1 class="text-center my-2">
-        <Button type="button" class="fw-bolder" color="link" on:click={() => history.go(-1)}>
-            <Icon name="chevron-left" />
-        </Button>
-        {$t("provider.select-provider")}
+<Container class="flex-fill pt-4 pb-5">
+    <h1 class="text-center mb-4">
+        {$t("common.welcome.start")}<Logo height="40" />{$t("common.welcome.end")}
     </h1>
-    <hr class="mt-0 mb-0" />
-    <Row class="my-3 flex-grow-1">
-        <Col md={{ size: 8, offset: 2 }}>
-            <ProviderSelector on:provider-selected={selectNewProvider} />
+
+    <Row>
+        <Col md="8" class="order-1 order-md-0">
+            <DomainListSection />
+        </Col>
+
+        <Col md="4" class="order-0 order-md-1">
+            <Sidebar />
         </Col>
     </Row>
 </Container>

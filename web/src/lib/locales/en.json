@@ -59,6 +59,7 @@
         "survey": "A remark? A comment to share? Don't hesitate to write to us!",
         "spinning": "Spinning",
         "update": "Update",
+        "update-what": "Update {{what}}",
         "welcome": {
             "start": "Welcome to ",
             "end": "!"

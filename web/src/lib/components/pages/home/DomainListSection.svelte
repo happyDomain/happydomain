@@ -22,8 +22,6 @@
 -->
 
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     // @ts-ignore
     import { escape } from "html-escaper";
     import {
@@ -38,10 +36,9 @@
     } from "@sveltestrap/sveltestrap";
 
     import { createDomain } from "$lib/api/provider";
-    import FilterDomainInput from "$lib/components/home/FilterDomainInput.svelte";
+    import FilterDomainInput from "$lib/components/pages/home/FilterDomainInput.svelte";
     import CardImportableDomains from "$lib/components/providers/CardImportableDomains.svelte";
-    import DomainGroupList from "$lib/components/domain-groups/DomainGroupList.svelte";
-    import DomainGroupModal from "$lib/components/domain-groups/DomainGroupModal.svelte";
+    import DomainGroupList from "$lib/components/forms/DomainGroupList.svelte";
     import Logo from "$lib/components/Logo.svelte";
     import ZoneList from "$lib/components/zones/ZoneList.svelte";
     import { fqdnCompare } from "$lib/dns";
@@ -54,37 +51,25 @@
 
     let noDomainsList = $state(false);
 
-    let filteredDomains: Array<Domain> = $state([]);
+    let filteredDomains: Array<Domain> = $derived(refreshFilteredDomains());
 
-    run(() => {
+    function refreshFilteredDomains(): Array<Domain> {
+        let myDomains: Array<Domain> = [];
+
         if ($domains) {
-            filteredDomains = $domains.filter(
+            myDomains = $domains.filter(
                 (d) =>
                     (!$filteredName || d.domain.indexOf($filteredName) >= 0) &&
-                    (!$filteredProvider || d.id_provider === $filteredProvider._id) &&
-                    ($filteredGroup === null ||
-                        d.group === $filteredGroup ||
-                        (($filteredGroup === "" || $filteredGroup === "undefined") &&
-                            (d.group === "" || d.group === undefined))),
+                     (!$filteredProvider || d.id_provider === $filteredProvider._id) &&
+                     ($filteredGroup === null ||
+                      d.group === $filteredGroup ||
+                      (($filteredGroup === "" || $filteredGroup === "undefined") &&
+                       (d.group === "" || d.group === undefined))),
             );
-            filteredDomains.sort(fqdnCompare);
+            myDomains.sort(fqdnCompare);
         }
-    });
 
-    function newDomainAdded(event: CustomEvent<Domain>) {
-        toasts.addToast({
-            title: $t("domains.attached-new"),
-            message: $t("domains.added-success", { domain: event.detail.domain }),
-            href: "/domains/" + event.detail.domain,
-            color: "success",
-            timeout: 5000,
-        });
-    }
-
-    async function createDomainOnProvider(fqdn: string) {
-        if (!$filteredProvider) return;
-
-        return await createDomain($filteredProvider, fqdn)
+        return myDomains;
     }
 </script>
 
