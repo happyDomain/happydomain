@@ -27,8 +27,8 @@
     import { Modal, ModalBody, ModalFooter, ModalHeader } from "@sveltestrap/sveltestrap";
 
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
-    import ProviderForm from "$lib/components/providers/Form.svelte";
-    import ProviderSelector from "$lib/components/providers/Selector.svelte";
+    import ProviderForm from "$lib/components/forms/Provider.svelte";
+    import ProviderSelector from "$lib/components/forms/ProviderSelector.svelte";
     import { refreshProviders } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 

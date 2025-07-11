@@ -49,7 +49,7 @@
     } from "@sveltestrap/sveltestrap";
 
     import { addZoneService } from "$lib/api/zone";
-    import DomainInput from "$lib/components/forms/resources/DomainInput.svelte";
+    import DomainInput from "$lib/components/inputs/Domain.svelte";
     import { fqdn, validateDomain } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { Zone } from "$lib/model/zone";

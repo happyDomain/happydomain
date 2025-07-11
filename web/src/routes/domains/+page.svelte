@@ -22,7 +22,7 @@
 -->
 
 <script>
-    import Home from "$lib/components/Home.svelte";
+    import Home from "$lib/components/pages/Home.svelte";
 </script>
 
 <Home />

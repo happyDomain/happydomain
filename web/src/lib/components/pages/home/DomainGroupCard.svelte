@@ -28,8 +28,8 @@
         Icon,
     } from "@sveltestrap/sveltestrap";
 
-    import DomainGroupList from "$lib/components/domain-groups/DomainGroupList.svelte";
-    import DomainGroupModal from "$lib/components/domain-groups/DomainGroupModal.svelte";
+    import DomainGroupList from "$lib/components/forms/DomainGroupList.svelte";
+    import DomainGroupModal from "$lib/components/modals/DomainGroup.svelte";
     import { domains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 

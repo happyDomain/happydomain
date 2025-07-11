@@ -26,7 +26,7 @@
 
     import { Button, Col, Container, Icon, Row } from "@sveltestrap/sveltestrap";
 
-    import ProviderSelector from "$lib/components/providers/Selector.svelte";
+    import ProviderSelector from "$lib/components/forms/ProviderSelector.svelte";
     import { t } from "$lib/translations";
 
     function selectNewProvider(event: CustomEvent<{ ptype: string }>) {

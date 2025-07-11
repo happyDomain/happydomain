@@ -27,7 +27,7 @@
     import { Col, Container, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
-    import PForm from "$lib/components/providers/Form.svelte";
+    import PForm from "$lib/components/forms/Provider.svelte";
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
     import { ProviderForm } from "$lib/model/provider_form";
     import type { ProviderSettingsState } from "$lib/model/provider_settings";

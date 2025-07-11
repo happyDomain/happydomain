@@ -24,7 +24,7 @@
 <script lang="ts">
     import { Button, Col, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
-    import AliasModal from "./AliasModal.svelte";
+    import AliasModal from "$lib/components/modals/Alias.svelte";
     import SubdomainItem from "./SubdomainItem.svelte";
     import SubdomainList from "./SubdomainList.svelte";
     import UserResource from "./UserResource.svelte";

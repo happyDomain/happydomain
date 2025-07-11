@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import ProviderFormPage from "$lib/components/providers/FormPage.svelte";
+    import ProviderFormPage from "$lib/components/pages/Provider.svelte";
 
     interface Props {
         data: { ptype: string; state: number; providerId?: string };

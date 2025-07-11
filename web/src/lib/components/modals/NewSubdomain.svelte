@@ -36,9 +36,9 @@
     import { escape } from "html-escaper";
     import { Modal, ModalBody } from "@sveltestrap/sveltestrap";
 
-    import DomainInput from "$lib/components/forms/resources/DomainInput.svelte";
-    import ModalFooter from "$lib/components/domains/ModalFooter.svelte";
-    import ModalHeader from "$lib/components/domains/ModalHeader.svelte";
+    import DomainInput from "$lib/components/inputs/Domain.svelte";
+    import ModalFooter from "$lib/components/modals/Footer.svelte";
+    import ModalHeader from "$lib/components/modals/Header.svelte";
     import { validateDomain } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import { t } from "$lib/translations";

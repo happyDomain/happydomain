@@ -22,8 +22,8 @@
 -->
 
 <script lang="ts">
-    import DomainGroupCard from "$lib/components/home/DomainGroupCard.svelte";
-    import ProviderListCard from "$lib/components/home/ProviderListCard.svelte";
+    import DomainGroupCard from "$lib/components/pages/home/DomainGroupCard.svelte";
+    import ProviderListCard from "$lib/components/pages/home/ProviderListCard.svelte";
     import { filteredProvider, filteredGroup } from '$lib/stores/home';
 </script>
 

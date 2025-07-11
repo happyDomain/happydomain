@@ -30,7 +30,7 @@
 
     import { addDomain } from "$lib/api/domains";
     import ProviderList from "$lib/components/providers/List.svelte";
-    import ProviderNewModal from "$lib/components/providers/NewModal.svelte";
+    import ProviderNewModal from "$lib/components/modals/NewProvider.svelte";
     import type { Provider } from "$lib/model/provider";
     import { domains, refreshDomains } from "$lib/stores/domains";
     import {

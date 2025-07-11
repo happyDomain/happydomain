@@ -24,7 +24,7 @@
 <script lang="ts">
     import { run } from 'svelte/legacy';
 
-    import ResourceInput from "$lib/components/forms/ResourceInput.svelte";
+    import ResourceInput from "$lib/components/inputs/Resource.svelte";
     import type { CustomForm } from "$lib/model/custom_form";
     import { t } from "$lib/translations";
     import { fillUndefinedValues } from "$lib/types";

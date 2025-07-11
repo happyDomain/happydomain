@@ -38,10 +38,10 @@
     } from "@sveltestrap/sveltestrap";
 
     import { createDomain } from "$lib/api/provider";
-    import FilterDomainInput from "$lib/components/home/FilterDomainInput.svelte";
+    import FilterDomainInput from "$lib/components/pages/home/FilterDomainInput.svelte";
     import CardImportableDomains from "$lib/components/providers/CardImportableDomains.svelte";
-    import DomainGroupList from "$lib/components/domain-groups/DomainGroupList.svelte";
-    import DomainGroupModal from "$lib/components/domain-groups/DomainGroupModal.svelte";
+    import DomainGroupList from "$lib/components/forms/DomainGroupList.svelte";
+    import DomainGroupModal from "$lib/components/modals/DomainGroup.svelte";
     import Logo from "$lib/components/Logo.svelte";
     import ZoneList from "$lib/components/zones/ZoneList.svelte";
     import { fqdnCompare } from "$lib/dns";
@@ -54,22 +54,26 @@
 
     let noDomainsList = $state(false);
 
-    let filteredDomains: Array<Domain> = $state([]);
+    let filteredDomains: Array<Domain> = $derived(refreshFilteredDomains($domains, $filteredName, $filteredProvider, $filteredGroup));
 
-    run(() => {
+    function refreshFilteredDomains() {
+        let myDomains = [];
+
         if ($domains) {
-            filteredDomains = $domains.filter(
+            myDomains = $domains.filter(
                 (d) =>
                     (!$filteredName || d.domain.indexOf($filteredName) >= 0) &&
-                    (!$filteredProvider || d.id_provider === $filteredProvider._id) &&
-                    ($filteredGroup === null ||
-                        d.group === $filteredGroup ||
-                        (($filteredGroup === "" || $filteredGroup === "undefined") &&
-                            (d.group === "" || d.group === undefined))),
+                     (!$filteredProvider || d.id_provider === $filteredProvider._id) &&
+                     ($filteredGroup === null ||
+                      d.group === $filteredGroup ||
+                      (($filteredGroup === "" || $filteredGroup === "undefined") &&
+                       (d.group === "" || d.group === undefined))),
             );
-            filteredDomains.sort(fqdnCompare);
+            myDomains.sort(fqdnCompare);
         }
-    });
+
+        return myDomains;
+    }
 
     function newDomainAdded(event: CustomEvent<Domain>) {
         toasts.addToast({

@@ -33,7 +33,7 @@
     const dispatch = createEventDispatcher();
 
     interface Props {
-        autofocus: boolean;
+        autofocus?: boolean;
         origin: Domain;
         value: string;
     }
