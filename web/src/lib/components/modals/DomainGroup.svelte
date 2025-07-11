@@ -21,9 +21,15 @@
      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
-<script lang="ts">
-    import { run, preventDefault } from 'svelte/legacy';
+<script module lang="ts">
+    import type { ModalController } from "$lib/model/modal_controller";
 
+    export const controls: ModalController = {
+        Open(): void { },
+    };
+</script>
+
+<script lang="ts">
     import {
         Button,
         Input,
@@ -48,16 +54,15 @@
     const toggle = () => (isOpen = !isOpen);
 
     let mygroups: Array<string> = $state([]);
-    run(() => {
-        if (!isOpen) mygroups = [];
-    });
-    run(() => {
+    $effect(() => {
         if (!mygroups.length)
             mygroups = $groups.map((s) => s).filter((s) => s != "" && s != "undefined");
     });
 
     let newgroup = $state("");
-    function addGroup() {
+    function addGroup(e: SubmitEvent) {
+        e.preventDefault();
+
         if (newgroup.length && mygroups.indexOf(newgroup) < 0) {
             mygroups.push(newgroup);
             mygroups = mygroups;
@@ -72,10 +77,17 @@
             refreshDomains();
         }
     }
+
+    function Open(): void {
+        isOpen = true;
+        mygroups = [];
+    }
+
+    controls.Open = Open;
 </script>
 
 <Modal {isOpen} scrollable size="lg" {toggle}>
-    <ModalHeader {toggle}>
+    <ModalHeader {toggle} class="bg-primary-subtle ps-4 pt-4 align-items-start">
         {$t("domaingroups.manage")}
     </ModalHeader>
     <ModalBody>
@@ -84,7 +96,7 @@
                 <Spinner color="primary" />
             </div>
         {:else}
-            <form onsubmit={preventDefault(addGroup)} class="mb-4">
+            <form onsubmit={addGroup} class="mb-4">
                 <InputGroup>
                     <Input
                         id="newgroup"

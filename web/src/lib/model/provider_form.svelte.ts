@@ -28,13 +28,13 @@ import { isProvider, type Provider } from "$lib/model/provider";
 import type { ProviderSettingsState } from "$lib/model/provider_settings";
 
 export class ProviderForm {
-    ptype: string = "";
-    state: number = 0;
-    providerId: string = "";
-    form: CustomForm | undefined = undefined;
-    value: ProviderSettingsState = { state: 0 };
-    nextInProgress: boolean = false;
-    previousInProgress: boolean = false;
+    ptype: string = $state("");
+    state: number = $state(0);
+    providerId: string = $state("");
+    form: CustomForm | undefined = $state(undefined);
+    value: ProviderSettingsState = $state({ state: 0 });
+    nextInProgress: boolean = $state(false);
+    previousInProgress: boolean = $state(false);
     on_previous: null | (() => void);
     on_done: (prv: Provider) => void;
 
@@ -85,6 +85,7 @@ export class ProviderForm {
                     // @ts-ignore
                     this.value.Provider = { ...this.value.Provider, ...res.values };
                 }
+                this.form = res.form;
                 return res.form;
             } catch (e) {
                 if (isProvider(e)) {

@@ -33,7 +33,7 @@
     const dispatch = createEventDispatcher();
 
     interface Props {
-        autofocus: boolean;
+        autofocus?: boolean;
         origin: Domain;
         value: string;
     }
@@ -48,7 +48,7 @@
         return value.endsWith(origin.domain);
     }
 
-    let newDomainAppend: string = $derived(endsWithOrigin(value) ? null : (value.length > 0 ? "." + origin.domain : origin.domain));
+    let newDomainAppend: string | null = $derived(endsWithOrigin(value) ? null : (value.length > 0 ? "." + origin.domain : origin.domain));
     let validDomain: boolean | undefined = $derived(value ? (endsWithOrigin(value) ? validateDomain(value.replace(/.$/, ""), origin.domain) : validateDomain(value, origin.domain)) : undefined);
 
     $effect(() => {

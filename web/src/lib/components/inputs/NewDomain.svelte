@@ -65,7 +65,7 @@
 
     let formId = "new-domain-form";
 
-    async function addDomainToProvider(e: FormDataEvent) {
+    async function addDomainToProvider(e: SubmitEvent) {
         e.preventDefault();
 
         addingNewDomain = true;

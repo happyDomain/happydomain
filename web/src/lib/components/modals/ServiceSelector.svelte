@@ -32,10 +32,10 @@
 
     import { Input, Modal, ModalBody } from "@sveltestrap/sveltestrap";
 
-    import ModalFooter from "$lib/components/domains/ModalFooter.svelte";
-    import ModalHeader from "$lib/components/domains/ModalHeader.svelte";
+    import ModalFooter from "$lib/components/modals/Footer.svelte";
+    import ModalHeader from "$lib/components/modals/Header.svelte";
     import FilterServiceSelectorInput from "$lib/components/services/FilterServiceSelectorInput.svelte";
-    import ServiceSelector from "./ServiceSelector.svelte";
+    import ServiceSelector from "$lib/components/services/ServiceSelector.svelte";
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service";
