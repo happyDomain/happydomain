@@ -27,7 +27,7 @@
     import { createEventDispatcher, onMount } from "svelte";
 
     import CustomForm from "$lib/components/forms/CustomForm.svelte";
-    import ResourceInput from "$lib/components/forms/resources/basic.svelte";
+    import ResourceInput from "$lib/components/inputs/basic.svelte";
     import { ProviderForm } from "$lib/model/provider_form";
     import { providersSpecs } from "$lib/stores/providers";
     import { t } from "$lib/translations";

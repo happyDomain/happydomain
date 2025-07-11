@@ -29,9 +29,9 @@
     } from "@sveltestrap/sveltestrap";
 
     import { createDomain } from "$lib/api/provider";
-    import DomainListSection from "$lib/components/home/DomainListSection.svelte";
+    import DomainListSection from "$lib/components/pages/home/DomainListSection.svelte";
     import Logo from "$lib/components/Logo.svelte";
-    import Sidebar from "$lib/components/home/Sidebar.svelte";
+    import Sidebar from "$lib/components/pages/home/Sidebar.svelte";
     import { domains, refreshDomains } from "$lib/stores/domains";
     import {
         providers,
