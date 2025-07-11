@@ -33,7 +33,7 @@
     } from "@sveltestrap/sveltestrap";
 
     import ServiceBadges from "./ServiceBadges.svelte";
-    import { controls as ctrlService } from "$lib/components/services/ServiceModal.svelte";
+    import { controls as ctrlService } from "$lib/components/modals/Service.svelte";
     import type { Domain } from '$lib/model/domain';
     import type { ServiceCombined } from '$lib/model/service';
     import { servicesSpecs } from '$lib/stores/services';

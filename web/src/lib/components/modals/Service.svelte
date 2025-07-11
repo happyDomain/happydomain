@@ -28,21 +28,24 @@
 </script>
 
 <script lang="ts">
-    import { preventDefault } from 'svelte/legacy';
+    // @ts-ignore
+    import { escape } from "html-escaper";
 
     import { createEventDispatcher } from "svelte";
 
-    import { Modal, ModalBody, Spinner } from "@sveltestrap/sveltestrap";
+    import { Modal, ModalHeader, ModalBody, Spinner } from "@sveltestrap/sveltestrap";
 
+    import { getServiceSpec } from "$lib/api/service_specs";
     import { addZoneService, deleteZoneService, updateZoneService } from "$lib/api/zone";
-    import ModalFooter from "$lib/components/domains/ModalFooter.svelte";
-    import ModalHeader from "$lib/components/domains/ModalHeader.svelte";
-    import ResourceInput from "$lib/components/forms/ResourceInput.svelte";
+    import ModalFooter from "$lib/components/modals/Footer.svelte";
+    import ResourceInput from "$lib/components/inputs/Resource.svelte";
+    import ServiceEditor from "$lib/components/services/ServiceEditor.svelte";
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service";
     import { servicesSpecs } from "$lib/stores/services";
     import type { Zone } from "$lib/model/zone";
+    import { t } from "$lib/translations";
 
     const dispatch = createEventDispatcher();
 
@@ -78,7 +81,9 @@
         );
     }
 
-    function submitServiceForm() {
+    function submitServiceForm(e: FormDataEvent) {
+        e.preventDefault();
+
         if (!service) return;
 
         addServiceInProgress = true;
@@ -112,25 +117,42 @@
 {#if service && service._domain !== undefined}
     <Modal {isOpen} scrollable size="lg" {toggle}>
         <ModalHeader
+            class={service._id != undefined ? "bg-warning-subtle" : "bg-primary-subtle"}
             {toggle}
-            dn={fqdn(service._domain, origin.domain)}
-            update={service._id != undefined}
-        />
-        <ModalBody>
-            <form id="addSvcForm" onsubmit={preventDefault(submitServiceForm)}>
+        >
+            {#if service._id != undefined}
+                {#if $servicesSpecs}
+                    {$t("common.update-what", { what: $servicesSpecs[service._svctype].name })}
+                {:else}
+                    {$t("service.update")}
+                {/if}
+            {:else}
+                {@html $t("service.form-new", {
+                    domain: `<span class="font-monospace">${escape(fqdn(service._domain, origin.domain))}</span>`,
+                  })}
+            {/if}
+        </ModalHeader>
+        <ModalBody class="pt-0">
+            <form class="mt-2" id="addSvcForm" onsubmit={submitServiceForm}>
                 {#if $servicesSpecs == null}
                     <div class="d-flex justify-content-center">
                         <Spinner />
                     </div>
                 {:else}
-                    <ResourceInput
+                    <ServiceEditor
+                        dn={service._domain}
+                        {origin}
+                        type={service._svctype}
+                        bind:value={service.Service}
+                    />
+                    <!--ResourceInput
                         edit
                         specs={$servicesSpecs[service._svctype]}
                         type={service._svctype}
                         bind:value={service.Service}
                         on:delete-this-service={(event) => dispatch("delete-this-service", event.detail)}
                         on:update-this-service={(event) => dispatch("update-this-service", event.detail)}
-                    />
+                    /-->
                 {/if}
             </form>
         </ModalBody>

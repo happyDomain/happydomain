@@ -22,8 +22,8 @@
 -->
 
 <script>
-    import Home from "$lib/components/Home.svelte";
-    import Onboarding from "$lib/components/Onboarding.svelte";
+    import Home from "$lib/components/pages/Home.svelte";
+    import Onboarding from "$lib/components/modals/Onboarding.svelte";
     import { domains } from "$lib/stores/domains";
 
     // Decide to show onboarding only on page load

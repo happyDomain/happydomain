@@ -32,8 +32,8 @@
 
     import ServiceSelectorModal, {
         controls as ctrlServiceSelector,
-    } from "$lib/components/services/ServiceSelectorModal.svelte";
-    import { controls as ctrlService } from "$lib/components/services/ServiceModal.svelte";
+    } from "$lib/components/modals/ServiceSelector.svelte";
+    import { controls as ctrlService } from "$lib/components/modals/Service.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service";
     import type { Zone } from "$lib/model/zone";

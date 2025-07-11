@@ -24,6 +24,7 @@
 <script lang="ts">
     import { printRR } from "$lib/dns";
     import type { dnsRR } from "$lib/dns_rr";
+    import type { Domain } from "$lib/model/domain";
 
     interface Props {
         class?: string;

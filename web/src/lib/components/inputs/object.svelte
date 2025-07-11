@@ -29,7 +29,7 @@
     import { Button, Icon, TabContent, TabPane, Spinner } from "@sveltestrap/sveltestrap";
 
     import { getServiceSpec } from "$lib/api/service_specs";
-    import ResourceInput from "$lib/components/forms/ResourceInput.svelte";
+    import ResourceInput from "$lib/components/inputs/Resource.svelte";
     import type { Field } from "$lib/model/custom_form";
     import type { ServiceInfos } from "$lib/model/service_specs";
     import { t } from "$lib/translations";

@@ -24,7 +24,7 @@
 <script lang="ts">
     import { Button, Icon } from "@sveltestrap/sveltestrap";
 
-    import ProviderFormPage from "$lib/components/providers/FormPage.svelte";
+    import ProviderFormPage from "$lib/components/pages/Provider.svelte";
     import type { Provider } from "$lib/model/provider";
     import type { ProviderSettingsState } from "$lib/model/provider_settings";
     import { t } from "$lib/translations";

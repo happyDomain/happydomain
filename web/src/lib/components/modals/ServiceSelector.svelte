@@ -22,51 +22,54 @@
 -->
 
 <script module lang="ts">
-    import type { ModalController } from "$lib/model/modal_controller";
-
-    export const controls: ModalController = {
-        Open(): void { },
+    export const controls = {
+        Open(domain: string): void { },
     };
 </script>
 
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
 
-    // @ts-ignore
-    import { escape } from "html-escaper";
-    import { Modal, ModalBody } from "@sveltestrap/sveltestrap";
+    import { Input, Modal, ModalBody } from "@sveltestrap/sveltestrap";
 
-    import DomainInput from "$lib/components/forms/resources/DomainInput.svelte";
-    import ModalFooter from "$lib/components/domains/ModalFooter.svelte";
-    import ModalHeader from "$lib/components/domains/ModalHeader.svelte";
-    import { validateDomain } from "$lib/dns";
+    import ModalFooter from "$lib/components/modals/Footer.svelte";
+    import ModalHeader from "$lib/components/modals/Header.svelte";
+    import FilterServiceSelectorInput from "$lib/components/services/FilterServiceSelectorInput.svelte";
+    import ServiceSelector from "./ServiceSelector.svelte";
+    import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
-    import { t } from "$lib/translations";
+    import type { ServiceCombined } from "$lib/model/service";
 
     const dispatch = createEventDispatcher();
 
     const toggle = () => (isOpen = !isOpen);
 
+    let dn: string = $state("");
+
     interface Props {
         isOpen?: boolean;
         origin: Domain;
-        value?: string;
+        value?: string | null;
+        zservices: Record<string, Array<ServiceCombined>>;
     }
+    let {
+        isOpen = $bindable(false),
+        origin,
+        value = $bindable(null),
+        zservices
+    }: Props = $props();
 
-    let { isOpen = $bindable(false), origin, value = $bindable("") }: Props = $props();
-
-    let validDomain: boolean | undefined = $state(undefined);
-
-    function submitSubdomainForm(e: FormDataEvent) {
+    function submitSelectorForm(e: FormDataEvent) {
         e.preventDefault();
 
-        if (validDomain) {
+        if (value !== null) {
             toggle();
-            dispatch("show-next-modal", value);
+            dispatch("show-next-modal", { _svctype: value, _domain: dn, Service: {} });
         }
     }
 
-    function Open(): void {
+    function Open(domain: string): void {
+        dn = domain;
         isOpen = true;
         value = "";
     }
@@ -74,22 +77,13 @@
     controls.Open = Open;
 </script>
 
-<Modal {isOpen} {toggle}>
-    <ModalHeader {toggle} dn={origin.domain} />
-    <ModalBody>
-        <form id="addSubdomainForm" onsubmit={submitSubdomainForm}>
-            <p>
-                {@html $t("domains.form-new-subdomain", {
-                    domain: `<span class="font-monospace">${escape(origin.domain)}</span>`,
-                })}
-            </p>
-
-            <DomainInput
-                {origin}
-                bind:value
-                on:validity-changed={(e) => validDomain = e.detail}
-            />
+<Modal {isOpen} scrollable {toggle}>
+    <ModalHeader {toggle} dn={fqdn(dn, origin.domain)} />
+    <ModalBody class="pt-0">
+        <FilterServiceSelectorInput class="my-2" />
+        <form id="selectServiceForm" onsubmit={submitSelectorForm}>
+            <ServiceSelector {dn} {origin} bind:value {zservices} />
         </form>
     </ModalBody>
-    <ModalFooter canContinue={validDomain === true} form="addSubdomainForm" step={0} {toggle} />
+    <ModalFooter canContinue={value !== null} form="selectServiceForm" step={1} {toggle} />
 </Modal>

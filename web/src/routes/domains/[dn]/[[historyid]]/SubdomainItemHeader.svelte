@@ -25,10 +25,10 @@
     import { Badge, Button, Icon, Popover, Spinner } from "@sveltestrap/sveltestrap";
 
     import { deleteZoneService } from "$lib/api/zone";
-    import { controls as ctrlNewAlias } from "./AliasModal.svelte";
-    import { controls as ctrlRecord } from '$lib/components/domains/RecordModal.svelte';
+    import { controls as ctrlNewAlias } from "$lib/components/modals/Alias.svelte";
+    import { controls as ctrlRecord } from '$lib/components/modals/Record.svelte';
     import { controls as ctrlNewService } from "$lib/components/services/NewServicePath.svelte";
-    import { controls as ctrlService } from "$lib/components/services/ServiceModal.svelte";
+    import { controls as ctrlService } from "$lib/components/modals/Service.svelte";
     import { fqdn, unreverseDomain } from "$lib/dns";
     import type { dnsRR } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";

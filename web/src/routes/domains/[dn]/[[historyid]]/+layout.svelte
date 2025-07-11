@@ -27,8 +27,8 @@
     import { Spinner } from "@sveltestrap/sveltestrap";
 
     import NewServicePath from "$lib/components/services/NewServicePath.svelte";
-    import RecordModal from "$lib/components/domains/RecordModal.svelte";
-    import ServiceModal from "$lib/components/services/ServiceModal.svelte";
+    import RecordModal from "$lib/components/modals/Record.svelte";
+    import ServiceModal from "$lib/components/modals/Service.svelte";
     import type { Domain } from "$lib/model/domain";
     import { domains_idx } from "$lib/stores/domains";
     import { thisZone } from "$lib/stores/thiszone";
