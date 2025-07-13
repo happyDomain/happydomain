@@ -38,7 +38,7 @@ func NewServiceUsecases() *Service {
 }
 
 func (s *Service) ListRecords(domain *happydns.Domain, zone *happydns.Zone, service *happydns.Service) ([]happydns.Record, error) {
-	return s.ListRecordsUC.List(domain, zone, service)
+	return s.ListRecordsUC.List(service, domain.DomainName, zone.DefaultTTL)
 }
 
 func (s *Service) ValidateService(body happydns.ServiceBody, subdomain happydns.Subdomain, origin happydns.Origin) ([]byte, error) {
