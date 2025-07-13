@@ -20,6 +20,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { handleApiResponse } from "$lib/errors";
+import { printRR } from "$lib/dns";
+import type { dnsRR } from "$lib/dns_rr";
 import type { Correction } from "$lib/model/correction";
 import type { Domain } from "$lib/model/domain";
 import type { ServiceCombined, ServiceMeta } from "$lib/model/service";
@@ -151,6 +153,23 @@ export async function deleteZoneService(
     const res = await fetch(`/api/domains/${dnid}/zone/${id}/${subdomain}/services/${svcid}`, {
         method: "DELETE",
         headers: { Accept: "application/json" },
+    });
+    return await handleApiResponse<Zone>(res);
+}
+
+export async function deleteZoneRecord(
+    domain: Domain,
+    id: string,
+    subdomain: string,
+    record: dnsRR,
+): Promise<Zone> {
+    const dnid = encodeURIComponent(domain.id);
+    id = encodeURIComponent(id);
+
+    const res = await fetch(`/api/domains/${dnid}/zone/${id}/records/delete`, {
+        method: "POST",
+        headers: { Accept: "application/json" },
+        body: JSON.stringify([printRR(record, subdomain)]),
     });
     return await handleApiResponse<Zone>(res);
 }
