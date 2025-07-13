@@ -27,12 +27,13 @@ import (
 )
 
 type Service struct {
-	CreateZoneUC  *CreateZoneUsecase
-	DeleteZoneUC  *DeleteZoneUsecase
-	DiffZoneUC    *ZoneDifferUsecase
-	GetZoneUC     *GetZoneUsecase
-	ListRecordsUC *ListRecordsUsecase
-	UpdateZoneUC  *UpdateZoneUsecase
+	CreateZoneUC   *CreateZoneUsecase
+	DeleteRecordUC *DeleteRecordUsecase
+	DeleteZoneUC   *DeleteZoneUsecase
+	DiffZoneUC     *ZoneDifferUsecase
+	GetZoneUC      *GetZoneUsecase
+	ListRecordsUC  *ListRecordsUsecase
+	UpdateZoneUC   *UpdateZoneUsecase
 }
 
 func NewZoneUsecases(store ZoneStorage, serviceUC *service.Service) *Service {
@@ -40,12 +41,13 @@ func NewZoneUsecases(store ZoneStorage, serviceUC *service.Service) *Service {
 	listRecords := NewListRecordsUsecase(serviceUC.ListRecordsUC)
 
 	return &Service{
-		CreateZoneUC:  NewCreateZoneUsecase(store),
-		DeleteZoneUC:  NewDeleteZoneUsecase(store),
-		DiffZoneUC:    NewZoneDifferUsecase(getZone, listRecords),
-		GetZoneUC:     getZone,
-		ListRecordsUC: listRecords,
-		UpdateZoneUC:  NewUpdateZoneUsease(store, getZone),
+		CreateZoneUC:   NewCreateZoneUsecase(store),
+		DeleteRecordUC: NewDeleteRecordUsecase(serviceUC.ListRecordsUC, serviceUC.SearchRecordUC),
+		DeleteZoneUC:   NewDeleteZoneUsecase(store),
+		DiffZoneUC:     NewZoneDifferUsecase(getZone, listRecords),
+		GetZoneUC:      getZone,
+		ListRecordsUC:  listRecords,
+		UpdateZoneUC:   NewUpdateZoneUsease(store, getZone),
 	}
 }
 
@@ -55,6 +57,10 @@ func (s *Service) CreateZone(zone *happydns.Zone) error {
 
 func (s *Service) DeleteZone(zoneid happydns.Identifier) error {
 	return s.DeleteZoneUC.Delete(zoneid)
+}
+
+func (s *Service) DeleteRecord(zone *happydns.Zone, origin string, record happydns.Record) error {
+	return s.DeleteRecordUC.Delete(zone, origin, record)
 }
 
 func (s *Service) DiffZones(domain *happydns.Domain, newZone *happydns.Zone, oldZoneID happydns.Identifier) ([]*happydns.Correction, error) {
