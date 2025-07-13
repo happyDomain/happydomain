@@ -158,6 +158,7 @@ type ZoneServices struct {
 
 type ZoneUsecase interface {
 	CreateZone(*Zone) error
+	DeleteRecord(*Zone, string, Record) error
 	DeleteZone(Identifier) error
 	DiffZones(*Domain, *Zone, Identifier) ([]*Correction, error)
 	FlattenZoneFile(*Domain, *Zone) (string, error)
