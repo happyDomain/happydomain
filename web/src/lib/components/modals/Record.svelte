@@ -49,6 +49,7 @@
 
     import { addServiceRecord, deleteServiceRecord, updateServiceRecord } from "$lib/api/service";
     import { fqdn, nsclass, nsrrtype } from "$lib/dns";
+    import { rdatafields } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service";
     import type { Zone } from "$lib/model/zone";
@@ -148,7 +149,7 @@
                     </label>
                     <Col md="8" class="d-flex flex-column">
                         <div class="flex-fill d-flex align-items-center">
-                            <InputGroup>
+                            <InputGroup size="sm">
                                 <Input
                                     id="rr-hdr-name"
                                     type="text"
@@ -164,6 +165,29 @@
                 </Row>
                 <Row>
                     <label
+                        for="rr-hdr-class"
+                        class="col-md-4 col-form-label text-truncate text-md-right text-primary"
+                    >
+                        {$t("records.class")[0].toUpperCase()}{$t("records.class").substring(1)}
+                    </label>
+                    <Col md="8" class="d-flex flex-column">
+                        <div class="flex-fill d-flex align-items-center">
+                            <Input
+                                id="rr-hdr-class"
+                                size="sm"
+                                type="select"
+                                required
+                                bind:value={record.Hdr.Class}
+                            >
+                                {#each [1, 3, 4, 254] as i}
+                                    <option value={i}>{nsclass(i)}</option>
+                                {/each}
+                            </Input>
+                        </div>
+                    </Col>
+                </Row>
+                <Row>
+                    <label
                         for="rr-hdr-rrtype"
                         class="col-md-4 col-form-label text-truncate text-md-right text-primary"
                     >
@@ -174,6 +198,7 @@
                             <Input
                                 id="rr-hdr-rrtype"
                                 type="select"
+                                size="sm"
                                 required
                                 bind:value={record.Hdr.Rrtype}
                             >
@@ -190,28 +215,6 @@
                 </Row>
                 <Row>
                     <label
-                        for="rr-hdr-class"
-                        class="col-md-4 col-form-label text-truncate text-md-right text-primary"
-                    >
-                        {$t("records.class")[0].toUpperCase()}{$t("records.class").substring(1)}
-                    </label>
-                    <Col md="8" class="d-flex flex-column">
-                        <div class="flex-fill d-flex align-items-center">
-                            <Input
-                                id="rr-hdr-class"
-                                type="select"
-                                required
-                                bind:value={record.Hdr.Class}
-                            >
-                                {#each [1, 3, 4, 254] as i}
-                                    <option value={i}>{nsclass(i)}</option>
-                                {/each}
-                            </Input>
-                        </div>
-                    </Col>
-                </Row>
-                <Row>
-                    <label
                         for="rr-hdr-ttl"
                         class="col-md-4 col-form-label text-truncate text-md-right text-primary"
                     >
@@ -219,7 +222,7 @@
                     </label>
                     <Col md="8" class="d-flex flex-column">
                         <div class="flex-fill d-flex align-items-center">
-                            <InputGroup>
+                            <InputGroup size="sm">
                                 <Input
                                     id="rr-hdr-ttl"
                                     type="number"
@@ -232,7 +235,8 @@
                     </Col>
                 </Row>
                 <hr />
-                {#each Object.keys(record) as k}
+                {#if record.Hdr.Rrtype && rdatafields(record.Hdr.Rrtype).length > 0}
+                  {#each rdatafields(record.Hdr.Rrtype) as k}
                     {#if k != "Hdr"}
                         {@const v = record[k]}
                         <Row>
@@ -244,12 +248,13 @@
                             </label>
                             <Col md="8" class="d-flex flex-column">
                                 <div class="flex-fill d-flex align-items-center">
-                                    <Input id="rr-{k}" type="text" bind:value={record[k]} />
+                                    <Input id="rr-{k}" size="sm" type="text" bind:value={record[k]} />
                                 </div>
                             </Col>
                         </Row>
                     {/if}
-                {/each}
+                  {/each}
+                {/if}
             </form>
         </ModalBody>
         <ModalFooter>

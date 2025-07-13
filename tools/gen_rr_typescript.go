@@ -135,6 +135,42 @@ func rdatatostr(fd io.Writer) {
 	fmt.Fprint(fd, "        default: return 'unknown #' + rr.Hdr.Rrtype\n    }\n")
 }
 
+func rdataFields(fd io.Writer) {
+	fmt.Fprint(fd, "    switch (input) {\n")
+	for _, ty := range getSortedTypes() {
+		rr, ok := dns.TypeToRR[ty]
+		if !ok {
+			continue
+		}
+
+		if ty == dns.TypeNXNAME || ty == dns.TypeOPT || ty == dns.TypeANY {
+			continue
+		}
+
+		t := reflect.TypeOf(rr()).Elem()
+
+		if t.NumField() == 1 {
+			// This is a redirection to another type
+			t = t.Field(0).Type
+		}
+
+		fmt.Fprintf(fd, `        case %d: case %q: return [`, ty, dns.TypeToString[ty])
+		one := false
+		for i := 0; i < t.NumField(); i++ {
+			if t.Field(i).Name == "Hdr" {
+				continue
+			}
+			if one {
+				fmt.Fprint(fd, ", ")
+			}
+			fmt.Fprintf(fd, "%q", t.Field(i).Name)
+			one = true
+		}
+		fmt.Fprintf(fd, "]; // %s\n", dns.TypeToString[ty])
+	}
+	fmt.Fprint(fd, "        default: return [];\n    }\n")
+}
+
 func dnsrr(fd io.Writer) {
 	var seen []string
 	var alltypes [][]reflect.Type
@@ -297,5 +333,10 @@ func main() {
 	// rdatatostr
 	fmt.Fprint(fd, "export function rdatatostr(rr: dnsRR): string {\n")
 	rdatatostr(fd)
+	fmt.Fprint(fd, "};\n\n")
+
+	// rdataFields
+	fmt.Fprint(fd, "export function rdatafields(input: number | string): Array<string> {\n")
+	rdataFields(fd)
 	fmt.Fprint(fd, "};\n\n")
 }
