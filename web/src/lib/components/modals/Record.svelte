@@ -47,12 +47,14 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { addServiceRecord, deleteServiceRecord, updateServiceRecord } from "$lib/api/service";
+    import { addServiceRecord, updateServiceRecord } from "$lib/api/service";
+    import { deleteZoneRecord } from "$lib/api/zone";
     import { fqdn, nsclass, nsrrtype } from "$lib/dns";
     import { rdatafields } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service";
     import type { Zone } from "$lib/model/zone";
+    import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
 
     const dispatch = createEventDispatcher();
@@ -76,9 +78,9 @@
     function deleteRecord() {
         if (!record) return;
         deleteRecordInProgress = true;
-        deleteServiceRecord(origin, zone.id, record).then(
+        deleteZoneRecord(origin, zone.id, service._domain, record).then(
             (z: Zone) => {
-                dispatch("update-zone-records", z);
+                thisZone.set(z);
                 deleteRecordInProgress = false;
                 toggle();
             },

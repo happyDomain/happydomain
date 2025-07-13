@@ -240,6 +240,11 @@ export function unreverseDomain(dn: string) {
     return ip.replace(/:(0000:)+/, "::").replace(/:0{1,3}/g, ":").replace(/^0+/, "").replace(/0+$/, "");
 }
 
-export function printRR(rr: dnsRR, dn: string, origin: string): string {
-    return fqdn(rr.Hdr.Name, fqdn(dn, origin)) + "\t" + rr.Hdr.Ttl + "\t" + nsclass(rr.Hdr.Class) + "\t" + nsrrtype(rr.Hdr.Rrtype) + "\t" + rdatatostr(rr);
+export function printRR(rr: dnsRR, dn?: string, origin?: string): string {
+    let domain = rr.Hdr.Name || '@';
+    if (dn && origin) domain = fqdn(domain, fqdn(dn, origin));
+    else if (dn) domain = fqdn(domain, dn);
+    else if (origin) domain = fqdn(domain, origin);
+
+    return domain + "\t" + rr.Hdr.Ttl + "\t" + nsclass(rr.Hdr.Class) + "\t" + nsrrtype(rr.Hdr.Rrtype) + "\t" + rdatatostr(rr);
 }

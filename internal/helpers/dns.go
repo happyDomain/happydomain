@@ -117,6 +117,25 @@ func NewRecord(domain string, rrtype string, ttl uint32, origin string) happydns
 	return rr
 }
 
+func ParseRecord(input, origin string) (happydns.Record, error) {
+	zp := dns.NewZoneParser(strings.NewReader(input), origin, "")
+	zp.SetDefaultTTL(0)
+	zp.SetIncludeAllowed(false)
+
+	rr, _ := zp.Next()
+	if err := zp.Err(); err != nil {
+		return nil, err
+	}
+
+	if rr.Header().Rrtype == dns.TypeTXT {
+		return happydns.NewTXT(rr.(*dns.TXT)), nil
+	} else if rr.Header().Rrtype == dns.TypeSPF {
+		return happydns.NewSPF(rr.(*dns.SPF)), nil
+	}
+
+	return rr, nil
+}
+
 // RRRelative strips the end of the given RR if it is relative to origin.
 func RRRelative(rr happydns.Record, origin string) happydns.Record {
 	if !strings.HasSuffix(origin, ".") {
