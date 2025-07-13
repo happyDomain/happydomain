@@ -32,21 +32,24 @@ func NewListRecordsUsecase() *ListRecordsUsecase {
 	return &ListRecordsUsecase{}
 }
 
-func (uc *ListRecordsUsecase) List(domain *happydns.Domain, zone *happydns.Zone, svc *happydns.Service) ([]happydns.Record, error) {
-	ttl := zone.DefaultTTL
+func (uc *ListRecordsUsecase) List(svc *happydns.Service, origin string, defaultTTL uint32) ([]happydns.Record, error) {
 	if svc.Ttl != 0 {
-		ttl = svc.Ttl
+		defaultTTL = svc.Ttl
 	}
 
-	records, err := svc.Service.GetRecords(svc.Domain, ttl, domain.DomainName)
+	records, err := svc.Service.GetRecords(svc.Domain, defaultTTL, origin)
 	if err != nil {
 		return nil, err
 	}
 
 	for i, record := range records {
-		records[i].Header().Name = helpers.DomainJoin(record.Header().Name, svc.Domain, domain.DomainName)
+		records[i].Header().Name = helpers.DomainJoin(record.Header().Name, svc.Domain)
+		if origin != "" {
+			records[i].Header().Name = helpers.DomainJoin(record.Header().Name, origin)
+		}
+
 		if record.Header().Ttl == 0 {
-			record.Header().Ttl = ttl
+			record.Header().Ttl = defaultTTL
 		}
 	}
 
