@@ -332,6 +332,185 @@ func TestNewRecord(t *testing.T) {
 	}
 }
 
+func TestParseRecord(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     string
+		origin    string
+		wantError bool
+		validate  func(t *testing.T, rr dns.RR)
+	}{
+		{
+			name:      "SOA record",
+			input:     "@ 3600	IN	SOA a.misconfigured.dns.server.invalid. hostmaster 2025091001 10800 3600 604800 3600",
+			origin:    "example.com.",
+			wantError: false,
+			validate: func(t *testing.T, rr dns.RR) {
+				soa, ok := rr.(*dns.SOA)
+				if !ok {
+					t.Fatal("Expected *dns.SOA type")
+				}
+				if soa.Ns != "a.misconfigured.dns.server.invalid." {
+					t.Errorf("Expected Ns a.misconfigured.dns.server.invalid., got %s", soa.Ns)
+				}
+				if soa.Mbox != "hostmaster.example.com." {
+					t.Errorf("Expected Mbox hostmaster.example.com., got %s", soa.Mbox)
+				}
+				if soa.Header().Ttl != 3600 {
+					t.Errorf("Expected TTL 3600, got %d", soa.Header().Ttl)
+				}
+			},
+		},
+		{
+			name:      "A record",
+			input:     "www 3600 IN A 192.0.2.1",
+			origin:    "example.com.",
+			wantError: false,
+			validate: func(t *testing.T, rr dns.RR) {
+				a, ok := rr.(*dns.A)
+				if !ok {
+					t.Fatal("Expected *dns.A type")
+				}
+				if a.A.String() != "192.0.2.1" {
+					t.Errorf("Expected IP 192.0.2.1, got %s", a.A.String())
+				}
+				if a.Header().Ttl != 3600 {
+					t.Errorf("Expected TTL 3600, got %d", a.Header().Ttl)
+				}
+			},
+		},
+		{
+			name:      "AAAA record",
+			input:     "www 7200 IN AAAA 2001:db8::1",
+			origin:    "example.com.",
+			wantError: false,
+			validate: func(t *testing.T, rr dns.RR) {
+				aaaa, ok := rr.(*dns.AAAA)
+				if !ok {
+					t.Fatal("Expected *dns.AAAA type")
+				}
+				if aaaa.AAAA.String() != "2001:db8::1" {
+					t.Errorf("Expected IP 2001:db8::1, got %s", aaaa.AAAA.String())
+				}
+			},
+		},
+		{
+			name:      "MX record",
+			input:     "@ 1800 IN MX 10 mail.example.com.",
+			origin:    "example.com.",
+			wantError: false,
+			validate: func(t *testing.T, rr dns.RR) {
+				mx, ok := rr.(*dns.MX)
+				if !ok {
+					t.Fatal("Expected *dns.MX type")
+				}
+				if mx.Preference != 10 {
+					t.Errorf("Expected preference 10, got %d", mx.Preference)
+				}
+				if mx.Mx != "mail.example.com." {
+					t.Errorf("Expected Mx 'mail.example.com.', got %q", mx.Mx)
+				}
+			},
+		},
+		{
+			name:      "CNAME record",
+			input:     "www 600 IN CNAME target.example.com.",
+			origin:    "example.com.",
+			wantError: false,
+			validate: func(t *testing.T, rr dns.RR) {
+				cname, ok := rr.(*dns.CNAME)
+				if !ok {
+					t.Fatal("Expected *dns.CNAME type")
+				}
+				if cname.Target != "target.example.com." {
+					t.Errorf("Expected Target 'target.example.com.', got %q", cname.Target)
+				}
+			},
+		},
+		{
+			name:      "TXT record with single value",
+			input:     "_dmarc 300 IN TXT \"v=DMARC1; p=none\"",
+			origin:    "example.com.",
+			wantError: false,
+			validate: func(t *testing.T, rr dns.RR) {
+				// ParseRecord returns happydns.TXT for TXT records
+				if rr.Header().Rrtype != dns.TypeTXT {
+					t.Errorf("Expected TypeTXT, got %d", rr.Header().Rrtype)
+				}
+			},
+		},
+		{
+			name:      "NS record",
+			input:     "@ 86400 IN NS ns1.example.com.",
+			origin:    "example.com.",
+			wantError: false,
+			validate: func(t *testing.T, rr dns.RR) {
+				ns, ok := rr.(*dns.NS)
+				if !ok {
+					t.Fatal("Expected *dns.NS type")
+				}
+				if ns.Ns != "ns1.example.com." {
+					t.Errorf("Expected Ns 'ns1.example.com.', got %q", ns.Ns)
+				}
+			},
+		},
+		{
+			name:      "SRV record",
+			input:     "_http._tcp 3600 IN SRV 10 60 80 target.example.com.",
+			origin:    "example.com.",
+			wantError: false,
+			validate: func(t *testing.T, rr dns.RR) {
+				srv, ok := rr.(*dns.SRV)
+				if !ok {
+					t.Fatal("Expected *dns.SRV type")
+				}
+				if srv.Priority != 10 {
+					t.Errorf("Expected Priority 10, got %d", srv.Priority)
+				}
+				if srv.Weight != 60 {
+					t.Errorf("Expected Weight 60, got %d", srv.Weight)
+				}
+				if srv.Port != 80 {
+					t.Errorf("Expected Port 80, got %d", srv.Port)
+				}
+				if srv.Target != "target.example.com." {
+					t.Errorf("Expected Target 'target.example.com.', got %q", srv.Target)
+				}
+			},
+		},
+		{
+			name:      "invalid record",
+			input:     "invalid record format",
+			origin:    "example.com.",
+			wantError: true,
+			validate:  nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := ParseRecord(tt.input, tt.origin)
+			if tt.wantError {
+				if err == nil {
+					t.Error("Expected error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+			if result == nil {
+				t.Fatal("ParseRecord returned nil")
+			}
+			if tt.validate != nil {
+				if dnsrr, ok := result.(dns.RR); ok {
+					tt.validate(t, dnsrr)
+				}
+			}
+		})
+	}
+}
+
 func TestRRRelative(t *testing.T) {
 	origin := "example.com."
 

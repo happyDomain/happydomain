@@ -29,6 +29,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -207,4 +208,59 @@ func (zc *ZoneController) ExportZone(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, ret)
+}
+
+//
+//	@Summary	Delete a given record in the zone.
+//	@Schemes
+//	@Description	Delete a given record in the zone.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			domainId	path		string			true	"Domain identifier"
+//	@Param			zoneId		path		string			true	"Zone identifier"
+//	@Param			body		body		[]string		true	"Records to delete as text, one record per line array"
+//	@Success		200			{object}	happydns.Zone		"The updated zone"
+//	@Failure		401			{object}	happydns.ErrorResponse	"Authentication failure"
+//	@Failure		404			{object}	happydns.ErrorResponse	"Domain or Zone not found"
+//	@Router			/domains/{domainId}/zone/{zoneId}/records/delete [post]
+func (zc *ZoneController) DeleteRecords(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+	zone := c.MustGet("zone").(*happydns.Zone)
+
+	var records []string
+	err := c.ShouldBindJSON(&records)
+	if err != nil {
+		log.Printf("%s sends invalid JSON record: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
+		return
+	}
+
+	for _, record := range records {
+		rr, err := helpers.ParseRecord(record, domain.DomainName)
+		if err != nil {
+			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+			return
+		}
+
+		// Make record relative
+		rr = helpers.RRRelative(rr, domain.DomainName)
+
+		err = zc.zoneService.DeleteRecord(zone, domain.DomainName, rr)
+		if err != nil {
+			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+			return
+		}
+	}
+
+	err = zc.zoneService.UpdateZone(zone.Id, func(z *happydns.Zone) {
+		z.Services = zone.Services
+	})
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, zone)
 }
