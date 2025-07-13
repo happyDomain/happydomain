@@ -27,12 +27,16 @@ import (
 
 type Service struct {
 	ListRecordsUC     *ListRecordsUsecase
+	SearchRecordUC    *SearchRecordUsecase
 	ValidateServiceUC *ValidateServiceUsecase
 }
 
 func NewServiceUsecases() *Service {
+	ListRecordsUC := NewListRecordsUsecase()
+
 	return &Service{
-		ListRecordsUC:     NewListRecordsUsecase(),
+		ListRecordsUC:     ListRecordsUC,
+		SearchRecordUC:    NewSearchRecordUsecase(ListRecordsUC),
 		ValidateServiceUC: NewValidateServiceUsecase(),
 	}
 }
