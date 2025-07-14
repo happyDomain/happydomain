@@ -22,6 +22,7 @@
 package helpers
 
 import (
+	"log"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -211,4 +212,17 @@ func RRRelative(rr happydns.Record, origin string) happydns.Record {
 	}
 
 	return rr
+}
+
+func CopyRecord(rr happydns.Record) happydns.Record {
+	if dnsrr, ok := rr.(dns.RR); ok {
+		return dns.Copy(dnsrr)
+	}
+
+	if copiablerr, ok := rr.(happydns.CopiableRecord); ok {
+		return copiablerr.Copy()
+	}
+
+	log.Fatalf("Type %T doesn't implement Copy method", rr)
+	return nil
 }
