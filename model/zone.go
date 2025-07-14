@@ -157,6 +157,7 @@ type ZoneServices struct {
 }
 
 type ZoneUsecase interface {
+	AddRecord(*Zone, string, Record) error
 	CreateZone(*Zone) error
 	DeleteRecord(*Zone, string, Record) error
 	DeleteZone(Identifier) error

@@ -47,8 +47,7 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { addServiceRecord, updateServiceRecord } from "$lib/api/service";
-    import { deleteZoneRecord } from "$lib/api/zone";
+    import { addZoneRecord, deleteZoneRecord, updateZoneRecord } from "$lib/api/zone";
     import { fqdn, nsclass, nsrrtype } from "$lib/dns";
     import { rdatafields } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";
@@ -71,6 +70,7 @@
 
     let service: ServiceCombined | undefined = $state(undefined);
     let record: dnsRR | undefined = $state(undefined);
+    let initialrecord: dnsRR | undefined = $state(undefined);
 
     let addRecordInProgress = $state(false);
     let deleteRecordInProgress = $state(false);
@@ -95,14 +95,16 @@
 
         addRecordInProgress = true;
 
-        let action = addServiceRecord;
-        if (record._id) {
-            action = updateServiceRecord;
+        let action = addZoneRecord;
+        let subdomain = "";
+        if (service) {
+            action = updateZoneRecord;
+            subdomain = service._domain;
         }
 
-        action(origin, zone.id, record).then(
+        action(origin, zone.id, subdomain, record, initialrecord).then(
             (z: Zone) => {
-                dispatch("update-zone-records", z);
+                thisZone.set(z);
                 addRecordInProgress = false;
                 toggle();
             },
@@ -114,6 +116,7 @@
     }
 
     function Open(r: dnsRR, s: ServiceCombined): void {
+        initialrecord = JSON.parse(JSON.stringify(r));
         record = r;
         service = s;
         isOpen = true;
@@ -125,11 +128,11 @@
 {#if record}
     <Modal {isOpen} scrollable size="lg" {toggle}>
         <ModalHeader {toggle}>
-            {#if record.Hdr.Class}
+            {#if service}
                 {$t("records.update")}
-            {:else if service}
+            {:else}
                 {@html $t("records.form-new", {
-                    domain: `<span class="font-monospace">${escape(fqdn(service._domain, origin.domain))}</span>`,
+                    domain: `<span class="font-monospace">${escape(origin.domain)}</span>`,
                 })}
             {/if}
         </ModalHeader>
@@ -154,7 +157,7 @@
                                     bind:value={record.Hdr.Name}
                                 />
                                 <InputGroupText
-                                    >.{fqdn(service._domain, origin.domain)}</InputGroupText
+                                    >.{#if service}{fqdn(service._domain, origin.domain)}{:else}{origin.domain}{/if}</InputGroupText
                                 >
                             </InputGroup>
                         </div>
@@ -256,7 +259,7 @@
         </ModalBody>
         <ModalFooter>
             <div class="ms-auto"></div>
-            {#if record.Hdr.Class}
+            {#if service}
                 <Button
                     color="danger"
                     disabled={addRecordInProgress ||
@@ -275,7 +278,7 @@
             <Button color="secondary" on:click={toggle}>
                 {$t("common.cancel")}
             </Button>
-            {#if record.Hdr.Class}
+            {#if service}
                 <Button
                     disabled={addRecordInProgress || deleteRecordInProgress}
                     form="addRRForm"
