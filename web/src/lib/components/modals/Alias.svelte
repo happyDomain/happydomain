@@ -28,8 +28,6 @@
 </script>
 
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import { createEventDispatcher } from "svelte";
 
     // @ts-ignore
@@ -83,7 +81,7 @@
         if (!zone) return false;
 
         // Check domain doesn't already exists
-        if (zone.services[value]) {
+        if (zone.services[value] && zone.services[value].length) {
             return false;
         } else if (
             value.length > origin.domain.length &&
@@ -112,7 +110,7 @@
             addZoneService(origin, zone.id, {
                 _domain: value,
                 _svctype: "svcs.CNAME",
-                Service: { cname: { Target: dn ? dn : "@" } },
+                Service: { cname: { Hdr: { Rrtype: 5, Class: 1 }, Target: dn ? dn : "@" } },
             }).then(
                 (z) => {
                     thisZone.set(z);
