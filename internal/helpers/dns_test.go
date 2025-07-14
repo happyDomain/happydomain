@@ -22,6 +22,7 @@
 package helpers
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/miekg/dns"
@@ -528,6 +529,138 @@ func TestRRRelative(t *testing.T) {
 				t.Fatal("RRRelative returned nil")
 			}
 			tt.validate(t, result.(dns.RR))
+		})
+	}
+}
+
+func TestCopyRecord(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    dns.RR
+		validate func(t *testing.T, original, copy dns.RR)
+	}{
+		{
+			name: "A record",
+			input: &dns.A{
+				Hdr: dns.RR_Header{
+					Name:   "www.example.com.",
+					Rrtype: dns.TypeA,
+					Class:  dns.ClassINET,
+					Ttl:    3600,
+				},
+				A: []byte{192, 0, 2, 1},
+			},
+			validate: func(t *testing.T, original, copy dns.RR) {
+				origA := original.(*dns.A)
+				copyA := copy.(*dns.A)
+				if origA.A.String() != copyA.A.String() {
+					t.Errorf("Expected IP to match, original: %s, copy: %s", origA.A.String(), copyA.A.String())
+				}
+				if origA.Header().Name != copyA.Header().Name {
+					t.Errorf("Expected Name to match")
+				}
+				// Verify it's a deep copy by modifying the copy
+				copyA.A = []byte{192, 0, 2, 2}
+				if origA.A.String() == copyA.A.String() {
+					t.Error("Copy is not deep - modifying copy affected original")
+				}
+			},
+		},
+		{
+			name: "MX record",
+			input: &dns.MX{
+				Hdr: dns.RR_Header{
+					Name:   "example.com.",
+					Rrtype: dns.TypeMX,
+					Class:  dns.ClassINET,
+					Ttl:    1800,
+				},
+				Preference: 10,
+				Mx:         "mail.example.com.",
+			},
+			validate: func(t *testing.T, original, copy dns.RR) {
+				origMX := original.(*dns.MX)
+				copyMX := copy.(*dns.MX)
+				if origMX.Preference != copyMX.Preference {
+					t.Errorf("Expected Preference to match, original: %d, copy: %d", origMX.Preference, copyMX.Preference)
+				}
+				if origMX.Mx != copyMX.Mx {
+					t.Errorf("Expected Mx to match, original: %s, copy: %s", origMX.Mx, copyMX.Mx)
+				}
+				// Verify it's a deep copy
+				copyMX.Mx = "mail2.example.com."
+				if origMX.Mx == copyMX.Mx {
+					t.Error("Copy is not deep - modifying copy affected original")
+				}
+			},
+		},
+		{
+			name: "TXT record",
+			input: &dns.TXT{
+				Hdr: dns.RR_Header{
+					Name:   "_dmarc.example.com.",
+					Rrtype: dns.TypeTXT,
+					Class:  dns.ClassINET,
+					Ttl:    300,
+				},
+				Txt: []string{"v=DMARC1", "p=none"},
+			},
+			validate: func(t *testing.T, original, copy dns.RR) {
+				origTXT := original.(*dns.TXT)
+				copyTXT := copy.(*dns.TXT)
+				if !reflect.DeepEqual(origTXT.Txt, copyTXT.Txt) {
+					t.Errorf("Expected Txt to match, original: %v, copy: %v", origTXT.Txt, copyTXT.Txt)
+				}
+				// Verify it's a deep copy
+				copyTXT.Txt[0] = "v=DMARC2"
+				if origTXT.Txt[0] == copyTXT.Txt[0] {
+					t.Error("Copy is not deep - modifying copy affected original")
+				}
+			},
+		},
+		{
+			name: "SRV record",
+			input: &dns.SRV{
+				Hdr: dns.RR_Header{
+					Name:   "_http._tcp.example.com.",
+					Rrtype: dns.TypeSRV,
+					Class:  dns.ClassINET,
+					Ttl:    3600,
+				},
+				Priority: 10,
+				Weight:   60,
+				Port:     80,
+				Target:   "server.example.com.",
+			},
+			validate: func(t *testing.T, original, copy dns.RR) {
+				origSRV := original.(*dns.SRV)
+				copySRV := copy.(*dns.SRV)
+				if origSRV.Priority != copySRV.Priority ||
+					origSRV.Weight != copySRV.Weight ||
+					origSRV.Port != copySRV.Port ||
+					origSRV.Target != copySRV.Target {
+					t.Error("SRV record fields do not match")
+				}
+				// Verify it's a deep copy
+				copySRV.Target = "server2.example.com."
+				if origSRV.Target == copySRV.Target {
+					t.Error("Copy is not deep - modifying copy affected original")
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := CopyRecord(tt.input)
+			if result == nil {
+				t.Fatal("CopyRecord returned nil")
+			}
+			if dnsrr, ok := result.(dns.RR); ok {
+				tt.validate(t, tt.input, dnsrr)
+			} else {
+				t.Error("Result is not a dns.RR")
+			}
 		})
 	}
 }

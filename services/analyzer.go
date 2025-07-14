@@ -75,25 +75,7 @@ func (a *Analyzer) SearchRR(arrs ...AnalyzerRecordFilter) (rrs []happydns.Record
 	return
 }
 
-func (a *Analyzer) UseRR(rr happydns.Record, domain string, svc happydns.ServiceBody) error {
-	found := false
-	for k, record := range a.zone {
-		if record == rr {
-			found = true
-			a.zone[k] = a.zone[len(a.zone)-1]
-			a.zone = a.zone[:len(a.zone)-1]
-		}
-	}
-
-	if !found {
-		return errors.New("Record not found.")
-	}
-
-	// svc nil, just drop the record from the zone (probably handle another way)
-	if svc == nil {
-		return nil
-	}
-
+func (a *Analyzer) addService(rr happydns.Record, domain string, svc happydns.ServiceBody) error {
 	// Remove origin to get an relative domain here
 	domain = strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(domain, "."), strings.TrimSuffix(a.origin, ".")), ".")
 
@@ -128,6 +110,28 @@ func (a *Analyzer) UseRR(rr happydns.Record, domain string, svc happydns.Service
 	return nil
 }
 
+func (a *Analyzer) UseRR(rr happydns.Record, domain string, svc happydns.ServiceBody) error {
+	found := false
+	for k, record := range a.zone {
+		if record == rr {
+			found = true
+			a.zone[k] = a.zone[len(a.zone)-1]
+			a.zone = a.zone[:len(a.zone)-1]
+		}
+	}
+
+	if !found {
+		return errors.New("Record not found.")
+	}
+
+	// svc nil, just drop the record from the zone (probably handle another way)
+	if svc == nil {
+		return nil
+	}
+
+	return a.addService(rr, domain, svc)
+}
+
 func getMostUsedTTL(zone []happydns.Record) uint32 {
 	ttls := map[uint32]int{}
 	for _, rr := range zone {
@@ -144,8 +148,14 @@ func getMostUsedTTL(zone []happydns.Record) uint32 {
 	return max
 }
 
-func AnalyzeZone(origin string, zone []happydns.Record) (svcs map[happydns.Subdomain][]*happydns.Service, defaultTTL uint32, err error) {
-	defaultTTL = getMostUsedTTL(zone)
+func AnalyzeZone(origin string, records []happydns.Record) (svcs map[happydns.Subdomain][]*happydns.Service, defaultTTL uint32, err error) {
+	// Create a copy of the records as we'll changed them in the process
+	zone := make([]happydns.Record, len(records))
+	for i, record := range records {
+		zone[i] = helpers.CopyRecord(record)
+	}
+
+	defaultTTL = getMostUsedTTL(records)
 
 	a := Analyzer{
 		origin:     origin,
@@ -175,8 +185,6 @@ func AnalyzeZone(origin string, zone []happydns.Record) (svcs map[happydns.Subdo
 		}
 	}
 
-	svcs = a.services
-
 	// Consider records not used by services as Orphan
 	for _, record := range a.zone {
 		// Skip DNSSEC records
@@ -187,24 +195,12 @@ func AnalyzeZone(origin string, zone []happydns.Record) (svcs map[happydns.Subdo
 			continue
 		}
 
-		domain := strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(record.Header().Name, "."), strings.TrimSuffix(a.origin, ".")), ".")
+		domain := record.Header().Name
 
-		hash := sha1.New()
-		io.WriteString(hash, record.String())
-
-		orphan := &Orphan{helpers.RRRelative(record, a.origin)}
-		svcs[happydns.Subdomain(domain)] = append(svcs[happydns.Subdomain(domain)], &happydns.Service{
-			Service: orphan,
-			ServiceMeta: happydns.ServiceMeta{
-				Id:          hash.Sum(nil),
-				Type:        reflect.Indirect(reflect.ValueOf(orphan)).Type().String(),
-				Domain:      domain,
-				Ttl:         record.Header().Ttl,
-				NbResources: 1,
-				Comment:     orphan.GenComment(),
-			},
-		})
+		a.addService(record, domain, &Orphan{helpers.RRRelative(record, domain)})
 	}
+
+	svcs = a.services
 
 	return
 }
