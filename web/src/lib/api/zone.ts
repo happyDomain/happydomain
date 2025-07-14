@@ -157,6 +157,23 @@ export async function deleteZoneService(
     return await handleApiResponse<Zone>(res);
 }
 
+export async function addZoneRecord(
+    domain: Domain,
+    id: string,
+    subdomain: string,
+    record: dnsRR,
+): Promise<Zone> {
+    const dnid = encodeURIComponent(domain.id);
+    id = encodeURIComponent(id);
+
+    const res = await fetch(`/api/domains/${dnid}/zone/${id}/records`, {
+        method: "POST",
+        headers: { Accept: "application/json" },
+        body: JSON.stringify([printRR(record, subdomain)]),
+    });
+    return await handleApiResponse<Zone>(res);
+}
+
 export async function deleteZoneRecord(
     domain: Domain,
     id: string,
@@ -170,6 +187,24 @@ export async function deleteZoneRecord(
         method: "POST",
         headers: { Accept: "application/json" },
         body: JSON.stringify([printRR(record, subdomain)]),
+    });
+    return await handleApiResponse<Zone>(res);
+}
+
+export async function updateZoneRecord(
+    domain: Domain,
+    id: string,
+    subdomain: string,
+    newrr: dnsRR,
+    oldrr: dnsRR,
+): Promise<Zone> {
+    const dnid = encodeURIComponent(domain.id);
+    id = encodeURIComponent(id);
+
+    const res = await fetch(`/api/domains/${dnid}/zone/${id}/records`, {
+        method: "PATCH",
+        headers: { Accept: "application/json" },
+        body: JSON.stringify({oldrr: printRR(oldrr, subdomain), newrr: printRR(newrr, subdomain)}),
     });
     return await handleApiResponse<Zone>(res);
 }

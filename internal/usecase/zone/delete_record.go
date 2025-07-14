@@ -79,9 +79,7 @@ func (uc *DeleteRecordUsecase) delete(zone *happydns.Zone, origin string, record
 	// Register in zone
 	for i, s := range zone.Services[dn] {
 		if s.Id.Equals(svc.Id) {
-			nextsvcs := zone.Services[dn][i+1:]
-			zone.Services[dn] = append(zone.Services[dn][:i], newsvc[dn]...)
-			zone.Services[dn] = append(zone.Services[dn], nextsvcs...)
+			zone.Services[dn] = append(zone.Services[dn][:i], append(newsvc[dn], zone.Services[dn][i+1:]...)...)
 			break
 		}
 	}
