@@ -63,8 +63,10 @@ func rdatatostr(fd io.Writer) {
 		}
 
 		fmt.Fprintf(fd, `        case %d: { const rec = rr as dnsType%s; return `, ty, strings.Replace(dns.TypeToString[ty], "-", "_", -1))
-		if ty == dns.TypeNAPTR {
-			fmt.Fprint(fd, `[rec.Order, rec.Preference, '"'+rec.Flags+'"', '"'+rec.Service+'"', '"'+rec.Regexp+'"', rec.Replacement].join(' ')`)
+		if ty == dns.TypeTXT || ty == dns.TypeAVC || ty == dns.TypeSPF {
+			fmt.Fprint(fd, `JSON.stringify(String(rec.Txt))`)
+		} else if ty == dns.TypeNAPTR {
+			fmt.Fprint(fd, `[rec.Order, rec.Preference, JSON.stringify(String(rec.Flags)), JSON.stringify(String(rec.Service)), JSON.stringify(String(rec.Regexp)), rec.Replacement].join(' ')`)
 		} else if ty == dns.TypeAPL {
 			fmt.Fprint(fd, `rec.Prefixes.map((a) => {
         let ret = "";
