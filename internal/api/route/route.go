@@ -79,6 +79,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, dependancies happy
 	DeclareDomainRoutes(apiAuthRoutes, dependancies)
 	DeclareProviderRoutes(apiAuthRoutes, dependancies)
 	DeclareProviderSettingsRoutes(apiAuthRoutes, dependancies)
+	DeclareRecordRoutes(apiAuthRoutes, dependancies)
 	DeclareUsersRoutes(apiAuthRoutes, dependancies, lc)
 	DeclareSessionRoutes(apiAuthRoutes, dependancies)
 }
