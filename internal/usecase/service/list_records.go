@@ -43,13 +43,15 @@ func (uc *ListRecordsUsecase) List(svc *happydns.Service, origin string, default
 	}
 
 	for i, record := range records {
-		records[i].Header().Name = helpers.DomainJoin(record.Header().Name, svc.Domain)
+		records[i] = helpers.CopyRecord(record)
+
+		records[i].Header().Name = helpers.DomainJoin(records[i].Header().Name, svc.Domain)
 		if origin != "" {
-			records[i].Header().Name = helpers.DomainJoin(record.Header().Name, origin)
+			records[i].Header().Name = helpers.DomainJoin(records[i].Header().Name, origin)
 		}
 
-		if record.Header().Ttl == 0 {
-			record.Header().Ttl = defaultTTL
+		if records[i].Header().Ttl == 0 {
+			records[i].Header().Ttl = defaultTTL
 		}
 	}
 
