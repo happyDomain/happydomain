@@ -32,6 +32,10 @@ type Record interface {
 	String() string
 }
 
+type CopiableRecord interface {
+	Copy() Record
+}
+
 type ConvertibleRecord interface {
 	ToRR() dns.RR
 }
@@ -54,6 +58,13 @@ func NewSPF(rr *dns.SPF) *SPF {
 	return &SPF{
 		Hdr: rr.Hdr,
 		Txt: strings.Join(rr.Txt, ""),
+	}
+}
+
+func (rr *SPF) Copy() Record {
+	return &SPF{
+		Hdr: rr.Hdr,
+		Txt: rr.Txt,
 	}
 }
 
@@ -95,6 +106,13 @@ func NewTXT(rr *dns.TXT) *TXT {
 	return &TXT{
 		Hdr: rr.Hdr,
 		Txt: strings.Join(rr.Txt, ""),
+	}
+}
+
+func (rr *TXT) Copy() Record {
+	return &TXT{
+		Hdr: rr.Hdr,
+		Txt: rr.Txt,
 	}
 }
 
