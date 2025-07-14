@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -195,6 +196,68 @@ func (zc *ZoneController) ExportZone(c *gin.Context) {
 	c.JSON(http.StatusOK, ret)
 }
 
+// AddRecords adds a given record in the zone.
+//
+//	@Summary	Add a given record in the zone.
+//	@Schemes
+//	@Description	Add a given record in the zone.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			domainId	path		string			true	"Domain identifier"
+//	@Param			zoneId		path		string			true	"Zone identifier"
+//	@Param			body		body		[]string		true	"Records to add as text, one record per line array"
+//	@Success		200			{object}	happydns.Zone		"The updated zone"
+//	@Failure		401			{object}	happydns.ErrorResponse	"Authentication failure"
+//	@Failure		404			{object}	happydns.ErrorResponse	"Domain or Zone not found"
+//	@Router			/domains/{domainId}/zone/{zoneId}/records [post]
+func (zc *ZoneController) AddRecords(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+	zone := c.MustGet("zone").(*happydns.Zone)
+
+	var records []string
+	err := c.ShouldBindJSON(&records)
+	if err != nil {
+		log.Printf("%s sends invalid JSON record: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
+		return
+	}
+
+	for _, record := range records {
+		rr, err := helpers.ParseRecord(record, domain.DomainName)
+		if err != nil {
+			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+			return
+		}
+
+		// Make record relative
+		rr = helpers.RRRelative(rr, domain.DomainName)
+
+		if strings.HasSuffix(rr.Header().Name, ".") {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Record %q is not part of the current domain: %s", rr.Header().String(), domain.DomainName)})
+			return
+		}
+
+		err = zc.zoneService.AddRecord(zone, domain.DomainName, rr)
+		if err != nil {
+			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+			return
+		}
+	}
+
+	err = zc.zoneService.UpdateZone(zone.Id, func(z *happydns.Zone) {
+		z.Services = zone.Services
+	})
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, zone)
+}
+
+// DeleteRecords deletes a given record in the zone.
 //
 //	@Summary	Delete a given record in the zone.
 //	@Schemes
@@ -237,6 +300,73 @@ func (zc *ZoneController) DeleteRecords(c *gin.Context) {
 			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 			return
 		}
+	}
+
+	err = zc.zoneService.UpdateZone(zone.Id, func(z *happydns.Zone) {
+		z.Services = zone.Services
+	})
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, zone)
+}
+
+// UpdateRecords updates a given record in the zone.
+//
+//	@Summary	Update a given record in the zone.
+//	@Schemes
+//	@Description	Update a given record in the zone.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			domainId	path		string			true	"Domain identifier"
+//	@Param			zoneId		path		string			true	"Zone identifier"
+//	@Param			body		body		happydns.UpdateRecordForm	true	"Record to update as text"
+//	@Success		200			{object}	happydns.Zone		"The updated zone"
+//	@Failure		401			{object}	happydns.ErrorResponse	"Authentication failure"
+//	@Failure		404			{object}	happydns.ErrorResponse	"Domain or Zone not found"
+//	@Router			/domains/{domainId}/zone/{zoneId}/records [patch]
+func (zc *ZoneController) UpdateRecord(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+	zone := c.MustGet("zone").(*happydns.Zone)
+
+	var form happydns.UpdateRecordForm
+	err := c.ShouldBindJSON(&form)
+	if err != nil {
+		log.Printf("%s sends invalid JSON record: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
+		return
+	}
+
+	oldRecord, err := helpers.ParseRecord(form.OldRR, domain.DomainName)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	newRecord, err := helpers.ParseRecord(form.NewRR, domain.DomainName)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	// Make record relative
+	oldRecord = helpers.RRRelative(oldRecord, domain.DomainName)
+	newRecord = helpers.RRRelative(newRecord, domain.DomainName)
+
+	err = zc.zoneService.DeleteRecord(zone, domain.DomainName, oldRecord)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	err = zc.zoneService.AddRecord(zone, domain.DomainName, newRecord)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
 	}
 
 	err = zc.zoneService.UpdateZone(zone.Id, func(z *happydns.Zone) {
