@@ -51,5 +51,7 @@ func DeclareZoneRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDep
 
 	DeclareZoneServiceRoutes(apiZonesRoutes, apiZonesSubdomainRoutes, zc, dependancies)
 
+	apiZonesRoutes.POST("/records", zc.AddRecords)
 	apiZonesRoutes.POST("/records/delete", zc.DeleteRecords)
+	apiZonesRoutes.PATCH("/records", zc.UpdateRecord)
 }

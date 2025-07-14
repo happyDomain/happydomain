@@ -27,6 +27,7 @@ import (
 )
 
 type Service struct {
+	AddRecordUC    *AddRecordUsecase
 	CreateZoneUC   *CreateZoneUsecase
 	DeleteRecordUC *DeleteRecordUsecase
 	DeleteZoneUC   *DeleteZoneUsecase
@@ -41,6 +42,7 @@ func NewZoneUsecases(store ZoneStorage, serviceUC *service.Service) *Service {
 	listRecords := NewListRecordsUsecase(serviceUC.ListRecordsUC)
 
 	return &Service{
+		AddRecordUC:    NewAddRecordUsecase(serviceUC.ListRecordsUC),
 		CreateZoneUC:   NewCreateZoneUsecase(store),
 		DeleteRecordUC: NewDeleteRecordUsecase(serviceUC.ListRecordsUC, serviceUC.SearchRecordUC),
 		DeleteZoneUC:   NewDeleteZoneUsecase(store),
@@ -49,6 +51,10 @@ func NewZoneUsecases(store ZoneStorage, serviceUC *service.Service) *Service {
 		ListRecordsUC:  listRecords,
 		UpdateZoneUC:   NewUpdateZoneUsease(store, getZone),
 	}
+}
+
+func (s *Service) AddRecord(zone *happydns.Zone, origin string, record happydns.Record) error {
+	return s.AddRecordUC.Add(zone, origin, record)
 }
 
 func (s *Service) CreateZone(zone *happydns.Zone) error {
