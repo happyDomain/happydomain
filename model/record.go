@@ -27,6 +27,11 @@ import (
 	"github.com/miekg/dns"
 )
 
+type UpdateRecordForm struct {
+	NewRR string `json:"newrr"`
+	OldRR string `json:"oldrr"`
+}
+
 type Record interface {
 	Header() *dns.RR_Header
 	String() string

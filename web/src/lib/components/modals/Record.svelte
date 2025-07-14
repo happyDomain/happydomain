@@ -47,14 +47,14 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { addServiceRecord, updateServiceRecord } from "$lib/api/service";
-    import { deleteZoneRecord } from "$lib/api/zone";
+    import { addZoneRecord, deleteZoneRecord, updateZoneRecord } from "$lib/api/zone";
     import { fqdn, nsclass, nsrrtype } from "$lib/dns";
     import { rdatafields } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service";
     import type { Zone } from "$lib/model/zone";
     import { thisZone } from "$lib/stores/thiszone";
+    import { emptyRR } from "$lib/dns";
     import { t } from "$lib/translations";
 
     const dispatch = createEventDispatcher();
@@ -71,6 +71,7 @@
 
     let service: ServiceCombined | undefined = $state(undefined);
     let record: dnsRR | undefined = $state(undefined);
+    let initialrecord: dnsRR | undefined = $state(undefined);
 
     let addRecordInProgress = $state(false);
     let deleteRecordInProgress = $state(false);
@@ -99,15 +100,15 @@
         addRecordInProgress = true;
 
         let promise: Promise<Zone>;
-        if (record._id) {
-            promise = updateServiceRecord(origin, zone.id, record);
+        if (service) {
+            promise = updateZoneRecord(origin, zone.id, dn, record, initialrecord);
         } else {
-            promise = addServiceRecord(origin, zone.id, record);
+            promise = addZoneRecord(origin, zone.id, dn, record);
         }
 
         promise.then(
             (z: Zone) => {
-                dispatch("update-zone-records", z);
+                thisZone.set(z);
                 addRecordInProgress = false;
                 toggle();
             },
@@ -119,7 +120,14 @@
     }
 
     function Open(r: dnsRR, s: ServiceCombined): void {
-        record = r;
+        if (r) {
+            initialrecord = JSON.parse(JSON.stringify(r));
+            record = r;
+        } else {
+            initialrecord = undefined;
+            record = emptyRR();
+            record.Hdr.Rrtype = 1;
+        }
         service = s;
         isOpen = true;
     }
@@ -130,11 +138,11 @@
 {#if record}
     <Modal {isOpen} scrollable size="lg" {toggle}>
         <ModalHeader {toggle}>
-            {#if record.Hdr.Class}
+            {#if service}
                 {$t("records.update")}
-            {:else if service}
+            {:else}
                 {@html $t("records.form-new", {
-                    domain: `<span class="font-monospace">${escape(fqdn(service._domain, origin.domain))}</span>`,
+                    domain: `<span class="font-monospace">${escape(origin.domain)}</span>`,
                 })}
             {/if}
         </ModalHeader>
@@ -159,7 +167,7 @@
                                     bind:value={record.Hdr.Name}
                                 />
                                 <InputGroupText
-                                    >.{fqdn(service._domain, origin.domain)}</InputGroupText
+                                    >.{#if service}{fqdn(service._domain, origin.domain)}{:else}{origin.domain}{/if}</InputGroupText
                                 >
                             </InputGroup>
                         </div>
@@ -261,7 +269,7 @@
         </ModalBody>
         <ModalFooter>
             <div class="ms-auto"></div>
-            {#if record.Hdr.Class}
+            {#if service}
                 <Button
                     color="danger"
                     disabled={addRecordInProgress ||
@@ -280,7 +288,7 @@
             <Button color="secondary" on:click={toggle}>
                 {$t("common.cancel")}
             </Button>
-            {#if record.Hdr.Class}
+            {#if service}
                 <Button
                     disabled={addRecordInProgress || deleteRecordInProgress}
                     form="addRRForm"

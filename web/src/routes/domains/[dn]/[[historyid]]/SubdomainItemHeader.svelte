@@ -33,7 +33,7 @@
     import type { dnsRR } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service";
-    import { ZoneViewGrid } from "$lib/model/usersettings";
+    import { ZoneViewGrid, ZoneViewRecords } from "$lib/model/usersettings";
     import { servicesSpecs } from "$lib/stores/services";
     import { thisAliases, thisZone } from "$lib/stores/thiszone";
     import { userSession } from "$lib/stores/usersession";
@@ -202,14 +202,26 @@
         </Button>
     {/if}
     {#if !showResources || ($userSession.settings && $userSession.settings.zoneview !== ZoneViewGrid)}
-        <Button
-            type="button"
-            color="primary"
-            size="sm"
-            title={$t("domains.add-a-service")}
-            on:click={() => ctrlNewService.Open(dn)}
-        >
-            <Icon name="plus" />
-        </Button>
+        {#if ($userSession.settings && $userSession.settings.zoneview === ZoneViewRecords)}
+            <Button
+                type="button"
+                color="primary"
+                size="sm"
+                title={$t("domains.add-a-record")}
+                on:click={() => ctrlRecord.Open(null, dn)}
+            >
+                <Icon name="plus" />
+            </Button>
+        {:else}
+            <Button
+                type="button"
+                color="primary"
+                size="sm"
+                title={$t("domains.add-a-service")}
+                on:click={() => ctrlNewService.Open(dn)}
+            >
+                <Icon name="plus" />
+            </Button>
+        {/if}
     {/if}
 </div>
