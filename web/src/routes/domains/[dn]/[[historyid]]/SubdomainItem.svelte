@@ -80,6 +80,8 @@
                         {origin}
                         {service}
                         zoneId={$thisZone.id}
+                        on:show-service={showServiceModal}
+                        on:update-zone-services={(event) => $thisZone.set(event.detail)}
                     />
                 {/key}
             {/each}
@@ -87,6 +89,8 @@
                 <Service
                     {origin}
                     zoneId={$thisZone.id}
+                    on:show-service={() => ctrlNewService.Open(dn)}
+                    on:update-zone-services={(event) => $thisZone.set(event.detail)}
                 />
             {/if}
         </div>
