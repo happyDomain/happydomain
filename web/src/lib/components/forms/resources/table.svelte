@@ -96,7 +96,7 @@
             {#if value && value.length}
                 {#each value as v, idx}
                     <tr>
-                        {#if linespecs}
+                        {#if linespecs && linespecs.length}
                             {#each linespecs as spec}
                                 <td>
                                     <ResourceInput
