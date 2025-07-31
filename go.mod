@@ -19,7 +19,7 @@ require (
 	github.com/rrivera/identicon v0.0.0-20240116195454-d5ba35832c0d
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
-	github.com/swaggo/swag v1.16.4
+	github.com/swaggo/swag v1.16.6
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/yuin/goldmark v1.7.12
 	golang.org/x/crypto v0.38.0
