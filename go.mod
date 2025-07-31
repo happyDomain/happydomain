@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/StackExchange/dnscontrol/v4 v4.3.0
-	github.com/coreos/go-oidc/v3 v3.14.1
+	github.com/coreos/go-oidc/v3 v3.15.0
 	github.com/earthboundkid/versioninfo/v2 v2.24.1
 	github.com/fatih/color v1.18.0
 	github.com/gin-contrib/sessions v1.0.2
