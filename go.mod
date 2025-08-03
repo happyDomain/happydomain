@@ -13,7 +13,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/gorilla/securecookie v1.1.2
 	github.com/gorilla/sessions v1.4.0
-	github.com/miekg/dns v1.1.67
+	github.com/miekg/dns v1.1.68
 	github.com/mileusna/useragent v1.3.5
 	github.com/ovh/go-ovh v1.9.0
 	github.com/rrivera/identicon v0.0.0-20240116195454-d5ba35832c0d
