@@ -153,6 +153,8 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 					u.Path = path.Join(u.Path, c.Request.URL.Path)
 				}
 
+				u.RawQuery = c.Request.URL.RawQuery
+
 				if r, err := http.NewRequest(c.Request.Method, u.String(), c.Request.Body); err != nil {
 					http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
 				} else if resp, err := http.DefaultClient.Do(r); err != nil {
