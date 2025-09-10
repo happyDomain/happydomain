@@ -45,7 +45,7 @@ func (s *Orphan) GenComment() string {
 
 func (s *Orphan) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
 	if _, ok := dns.StringToType[s.Type]; ok {
-		rr, err := dns.NewRR(fmt.Sprintf("%s %d IN %s %s", helpers.DomainJoin(domain), ttl, s.Type, s.RR))
+		rr, err := dns.NewRR(fmt.Sprintf("%s %d IN %s %s", helpers.DomainJoin(domain, origin), ttl, s.Type, s.RR))
 		if err != nil {
 			return nil, err
 		}
