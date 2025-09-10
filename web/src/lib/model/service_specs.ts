@@ -50,7 +50,7 @@ export interface ServiceInfos {
 }
 
 export interface ServiceSpec {
-    fields: Array<Field>;
+    fields: null | Array<Field>;
 }
 
 export function passRestrictions(
