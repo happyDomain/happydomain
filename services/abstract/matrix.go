@@ -81,10 +81,8 @@ destloop:
 
 func (s *MatrixIM) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
 	rrs := make([]happydns.Record, len(s.Records))
-	for i, r := range s.Records {
-		srv := *r
-		srv.Target = helpers.DomainFQDN(srv.Target, origin)
-		rrs[i] = &srv
+	for i, srv := range s.Records {
+		rrs[i] = srv
 	}
 	return rrs, nil
 }
@@ -100,9 +98,6 @@ func matrix_analyze(a *svcs.Analyzer) error {
 		}
 
 		if srv, ok := record.(*dns.SRV); ok {
-			// Make record relative
-			srv.Target = helpers.DomainRelative(srv.Target, a.GetOrigin())
-
 			matrixDomains[domain].Records = append(matrixDomains[domain].Records, helpers.RRRelative(srv, domain).(*dns.SRV))
 
 			a.UseRR(

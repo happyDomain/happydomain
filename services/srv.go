@@ -54,10 +54,8 @@ func (s *UnknownSRV) GenComment() string {
 
 func (s *UnknownSRV) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
 	rrs := make([]happydns.Record, len(s.Records))
-	for i, r := range s.Records {
-		srv := *r
-		srv.Target = helpers.DomainFQDN(srv.Target, origin)
-		rrs[i] = &srv
+	for i, srv := range s.Records {
+		rrs[i] = srv
 	}
 	return rrs, nil
 }
@@ -81,14 +79,6 @@ func srv_analyze(a *Analyzer) error {
 		if _, ok := srvDomains[domain][svc]; !ok {
 			srvDomains[domain][svc] = &UnknownSRV{}
 		}
-
-		srv, ok := record.(*dns.SRV)
-		if !ok {
-			continue
-		}
-
-		// Make record relative
-		srv.Target = helpers.DomainRelative(srv.Target, a.GetOrigin())
 
 		srvDomains[domain][svc].Records = append(srvDomains[domain][svc].Records, helpers.RRRelative(record, domain).(*dns.SRV))
 

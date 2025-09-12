@@ -47,7 +47,6 @@ func (s *NSOnlyOrigin) GetRecords(domain string, ttl uint32, origin string) ([]h
 	rrs := make([]happydns.Record, len(s.NameServers))
 	for i, r := range s.NameServers {
 		ns := *r
-		ns.Ns = helpers.DomainFQDN(ns.Ns, origin)
 		rrs[i] = &ns
 	}
 	return rrs, nil
@@ -81,17 +80,12 @@ func (s *Origin) GenComment() string {
 
 func (s *Origin) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
 	rrs := make([]happydns.Record, len(s.NameServers))
-	for i, r := range s.NameServers {
-		ns := *r
-		ns.Ns = helpers.DomainFQDN(ns.Ns, origin)
-		rrs[i] = &ns
+	for i, ns := range s.NameServers {
+		rrs[i] = ns
 	}
 
 	if s.SOA != nil {
-		soa := *s.SOA
-		soa.Ns = helpers.DomainFQDN(soa.Ns, origin)
-		soa.Mbox = helpers.DomainFQDN(soa.Mbox, origin)
-		rrs = append(rrs, &soa)
+		rrs = append(rrs, s.SOA)
 	}
 
 	return rrs, nil
@@ -103,10 +97,6 @@ func origin_analyze(a *svcs.Analyzer) error {
 	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeSOA}) {
 		if soa, ok := record.(*dns.SOA); ok {
 			hasSOA = true
-
-			// Make record relative
-			soa.Ns = helpers.DomainRelative(soa.Ns, a.GetOrigin())
-			soa.Mbox = helpers.DomainRelative(soa.Mbox, a.GetOrigin())
 
 			domain := record.Header().Name
 			origin := &Origin{
@@ -121,9 +111,6 @@ func origin_analyze(a *svcs.Analyzer) error {
 
 			for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS, Domain: domain}) {
 				if ns, ok := record.(*dns.NS); ok {
-					// Make record relative
-					ns.Ns = helpers.DomainRelative(ns.Ns, a.GetOrigin())
-
 					origin.NameServers = append(origin.NameServers, helpers.RRRelative(ns, domain).(*dns.NS))
 					a.UseRR(
 						record,
@@ -140,9 +127,6 @@ func origin_analyze(a *svcs.Analyzer) error {
 
 		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS, Domain: a.GetOrigin()}) {
 			if ns, ok := record.(*dns.NS); ok {
-				// Make record relative
-				ns.Ns = helpers.DomainRelative(ns.Ns, a.GetOrigin())
-
 				domain := record.Header().Name
 				origin.NameServers = append(origin.NameServers, helpers.RRRelative(ns, domain).(*dns.NS))
 				a.UseRR(
