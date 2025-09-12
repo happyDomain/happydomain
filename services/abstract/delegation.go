@@ -50,10 +50,8 @@ func (s *Delegation) GenComment() string {
 }
 
 func (s *Delegation) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	for _, r := range s.NameServers {
-		ns := *r
-		ns.Ns = helpers.DomainFQDN(ns.Ns, origin)
-		rrs = append(rrs, &ns)
+	for _, ns := range s.NameServers {
+		rrs = append(rrs, ns)
 	}
 	for _, ds := range s.DS {
 		rrs = append(rrs, ds)
@@ -75,9 +73,6 @@ func delegation_analyze(a *svcs.Analyzer) error {
 			if _, ok := delegations[record.Header().Name]; !ok {
 				delegations[dn] = &Delegation{}
 			}
-
-			// Make record relative
-			ns.Ns = helpers.DomainRelative(ns.Ns, a.GetOrigin())
 
 			delegations[dn].NameServers = append(delegations[dn].NameServers, helpers.RRRelative(ns, dn).(*dns.NS))
 

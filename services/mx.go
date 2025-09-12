@@ -79,7 +79,6 @@ func (s *MXs) GenComment() string {
 
 func (s *MXs) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
 	for _, mx := range s.MXs {
-		mx.Mx = helpers.DomainFQDN(mx.Mx, origin)
 		rrs = append(rrs, mx)
 	}
 
@@ -98,9 +97,6 @@ func mx_analyze(a *Analyzer) (err error) {
 		}
 
 		if mx, ok := record.(*dns.MX); ok {
-			// Make record relative
-			mx.Mx = helpers.DomainRelative(mx.Mx, a.GetOrigin())
-
 			services[dn].MXs = append(
 				services[dn].MXs,
 				helpers.RRRelative(mx, dn).(*dns.MX),
