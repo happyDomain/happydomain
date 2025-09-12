@@ -41,9 +41,7 @@ func (s *CNAME) GenComment() string {
 }
 
 func (s *CNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	cname := *s.Record
-	cname.Target = helpers.DomainFQDN(cname.Target, origin)
-	return []happydns.Record{&cname}, nil
+	return []happydns.Record{s.Record}, nil
 }
 
 type SpecialCNAME struct {
@@ -59,9 +57,7 @@ func (s *SpecialCNAME) GenComment() string {
 }
 
 func (s *SpecialCNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	cname := *s.Record
-	cname.Target = helpers.DomainFQDN(cname.Target, origin)
-	return []happydns.Record{&cname}, nil
+	return []happydns.Record{s.Record}, nil
 }
 
 func specialalias_analyze(a *Analyzer) error {
@@ -69,9 +65,6 @@ func specialalias_analyze(a *Analyzer) error {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME, Prefix: "_"}) {
 		subdomains := SRV_DOMAIN.FindStringSubmatch(record.Header().Name)
 		if cname, ok := record.(*dns.CNAME); ok && len(subdomains) == 4 {
-			// Make record relative
-			cname.Target = helpers.DomainRelative(cname.Target, a.GetOrigin())
-
 			a.UseRR(record, subdomains[3], &SpecialCNAME{
 				Record: helpers.RRRelative(cname, subdomains[3]).(*dns.CNAME),
 			})
@@ -83,9 +76,6 @@ func specialalias_analyze(a *Analyzer) error {
 func alias_analyze(a *Analyzer) error {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME}) {
 		if cname, ok := record.(*dns.CNAME); ok {
-			// Make record relative
-			cname.Target = helpers.DomainRelative(cname.Target, a.GetOrigin())
-
 			domain := record.Header().Name
 			a.UseRR(record, domain, &CNAME{
 				Record: helpers.RRRelative(cname, domain).(*dns.CNAME),

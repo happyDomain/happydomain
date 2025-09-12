@@ -81,7 +81,7 @@ func TestNAPTR(t *testing.T) {
 		t.Fatalf("Expected *dns.NAPTR, got %T", records[0])
 	}
 
-	expectedReplacement := helpers.DomainFQDN("_sip._udp.example.com.", "example.com.")
+	expectedReplacement := helpers.DomainRelative("_sip._udp.example.com.", "example.com.")
 	if r.Replacement != expectedReplacement {
 		t.Errorf("Replacement = %q; want %q", r.Replacement, expectedReplacement)
 	}

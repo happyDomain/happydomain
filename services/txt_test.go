@@ -64,7 +64,7 @@ func TestTXTAnalyze(t *testing.T) {
 	}
 
 	// Try to pretty-print
-	records, err := service.NewListRecordsUsecase().List(&happydns.Domain{DomainName: "example.com"}, &happydns.Zone{}, s["test"][0])
+	records, err := service.NewListRecordsUsecase().List(s["test"][0], "example.com.", 3600)
 	if err != nil {
 		t.Fatalf("ListRecords failed: %v", err)
 	}
