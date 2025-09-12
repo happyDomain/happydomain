@@ -41,18 +41,12 @@ func (ss *NAPTR) GenComment() string {
 }
 
 func (ss *NAPTR) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
-	rr := *ss.Record
-	rr.Replacement = helpers.DomainFQDN(rr.Replacement, origin)
-
-	return []happydns.Record{happydns.Record(&rr)}, nil
+	return []happydns.Record{ss.Record}, nil
 }
 
 func naptr_analyze(a *Analyzer) (err error) {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeNAPTR}) {
 		if naptr, ok := record.(*dns.NAPTR); ok {
-			// Make record relative
-			naptr.Replacement = helpers.DomainRelative(naptr.Replacement, a.GetOrigin())
-
 			domain := record.Header().Name
 			err = a.UseRR(
 				record,
