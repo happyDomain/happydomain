@@ -195,6 +195,84 @@ func RRRelative(rr happydns.Record, origin string) happydns.Record {
 	return rr
 }
 
+// RRAbsolute transforms relative RR to absolute RR in place.
+func RRAbsolute(rr happydns.Record, origin string) happydns.Record {
+	if origin != "" {
+		if !strings.HasSuffix(origin, ".") {
+			origin += "."
+		}
+
+		// Make header absolute
+		rr.Header().Name = DomainFQDN(rr.Header().Name, origin)
+	}
+
+	// Make RData absolute
+	if ns, ok := rr.(*dns.NS); ok {
+		ns.Ns = DomainFQDN(ns.Ns, origin)
+	} else if md, ok := rr.(*dns.MD); ok {
+		md.Md = DomainFQDN(md.Md, origin)
+	} else if mf, ok := rr.(*dns.MF); ok {
+		mf.Mf = DomainFQDN(mf.Mf, origin)
+	} else if cname, ok := rr.(*dns.CNAME); ok {
+		cname.Target = DomainFQDN(cname.Target, origin)
+	} else if soa, ok := rr.(*dns.SOA); ok {
+		soa.Ns = DomainFQDN(soa.Ns, origin)
+		soa.Mbox = DomainFQDN(soa.Mbox, origin)
+	} else if mb, ok := rr.(*dns.MB); ok {
+		mb.Mb = DomainFQDN(mb.Mb, origin)
+	} else if mg, ok := rr.(*dns.MG); ok {
+		mg.Mg = DomainFQDN(mg.Mg, origin)
+	} else if mr, ok := rr.(*dns.MR); ok {
+		mr.Mr = DomainFQDN(mr.Mr, origin)
+	} else if ptr, ok := rr.(*dns.PTR); ok {
+		ptr.Ptr = DomainFQDN(ptr.Ptr, origin)
+	} else if minfo, ok := rr.(*dns.MINFO); ok {
+		minfo.Rmail = DomainFQDN(minfo.Rmail, origin)
+		minfo.Email = DomainFQDN(minfo.Email, origin)
+	} else if mx, ok := rr.(*dns.MX); ok {
+		mx.Mx = DomainFQDN(mx.Mx, origin)
+	} else if rp, ok := rr.(*dns.RP); ok {
+		rp.Mbox = DomainFQDN(rp.Mbox, origin)
+		rp.Txt = DomainFQDN(rp.Txt, origin)
+	} else if afsdb, ok := rr.(*dns.AFSDB); ok {
+		afsdb.Hostname = DomainFQDN(afsdb.Hostname, origin)
+	} else if rt, ok := rr.(*dns.RT); ok {
+		rt.Host = DomainFQDN(rt.Host, origin)
+	} else if ptr, ok := rr.(*dns.NSAPPTR); ok {
+		ptr.Ptr = DomainFQDN(ptr.Ptr, origin)
+	} else if sig, ok := rr.(*dns.SIG); ok {
+		sig.SignerName = DomainFQDN(sig.SignerName, origin)
+	} else if px, ok := rr.(*dns.PX); ok {
+		px.Map822 = DomainFQDN(px.Map822, origin)
+		px.Mapx400 = DomainFQDN(px.Mapx400, origin)
+	} else if nxt, ok := rr.(*dns.NXT); ok {
+		nxt.NextDomain = DomainFQDN(nxt.NextDomain, origin)
+	} else if srv, ok := rr.(*dns.SRV); ok {
+		srv.Target = DomainFQDN(srv.Target, origin)
+	} else if ptr, ok := rr.(*dns.NAPTR); ok {
+		ptr.Replacement = DomainFQDN(ptr.Replacement, origin)
+	} else if kx, ok := rr.(*dns.KX); ok {
+		kx.Exchanger = DomainFQDN(kx.Exchanger, origin)
+	} else if dname, ok := rr.(*dns.DNAME); ok {
+		dname.Target = DomainFQDN(dname.Target, origin)
+	} else if sig, ok := rr.(*dns.RRSIG); ok {
+		sig.SignerName = DomainFQDN(sig.SignerName, origin)
+	} else if nxt, ok := rr.(*dns.NSEC); ok {
+		nxt.NextDomain = DomainFQDN(nxt.NextDomain, origin)
+	} else if hip, ok := rr.(*dns.HIP); ok {
+		for i := range hip.RendezvousServers {
+			hip.RendezvousServers[i] = DomainFQDN(hip.RendezvousServers[i], origin)
+		}
+	} else if talink, ok := rr.(*dns.TALINK); ok {
+		talink.PreviousName = DomainFQDN(talink.PreviousName, origin)
+		talink.NextName = DomainFQDN(talink.NextName, origin)
+	} else if lp, ok := rr.(*dns.LP); ok {
+		lp.Fqdn = DomainFQDN(lp.Fqdn, origin)
+	}
+
+	return rr
+}
+
 func CopyRecord(rr happydns.Record) happydns.Record {
 	if dnsrr, ok := rr.(dns.RR); ok {
 		return dns.Copy(dnsrr)

@@ -533,6 +533,197 @@ func TestRRRelative(t *testing.T) {
 	}
 }
 
+func TestRRAbsolute(t *testing.T) {
+	origin := "example.com."
+
+	tests := []struct {
+		name     string
+		input    dns.RR
+		origin   string
+		validate func(t *testing.T, rr dns.RR)
+	}{
+		{
+			name: "A record relative domain",
+			input: &dns.A{
+				Hdr: dns.RR_Header{
+					Name:   "www",
+					Rrtype: dns.TypeA,
+					Class:  dns.ClassINET,
+					Ttl:    3600,
+				},
+				A: []byte{192, 0, 2, 1},
+			},
+			origin: origin,
+			validate: func(t *testing.T, rr dns.RR) {
+				if rr.Header().Name != "www.example.com." {
+					t.Errorf("Expected Name to be 'www.example.com.', got %q", rr.Header().Name)
+				}
+			},
+		},
+		{
+			name: "NS record with relative Ns",
+			input: &dns.NS{
+				Hdr: dns.RR_Header{
+					Name:   "@",
+					Rrtype: dns.TypeNS,
+					Class:  dns.ClassINET,
+					Ttl:    86400,
+				},
+				Ns: "ns1",
+			},
+			origin: origin,
+			validate: func(t *testing.T, rr dns.RR) {
+				ns := rr.(*dns.NS)
+				if ns.Header().Name != "example.com." {
+					t.Errorf("Expected Name to be 'example.com.', got %q", ns.Header().Name)
+				}
+				if ns.Ns != "ns1.example.com." {
+					t.Errorf("Expected Ns to be 'ns1.example.com.', got %q", ns.Ns)
+				}
+			},
+		},
+		{
+			name: "MX record with relative Mx",
+			input: &dns.MX{
+				Hdr: dns.RR_Header{
+					Name:   "@",
+					Rrtype: dns.TypeMX,
+					Class:  dns.ClassINET,
+					Ttl:    1800,
+				},
+				Preference: 10,
+				Mx:         "mail",
+			},
+			origin: origin,
+			validate: func(t *testing.T, rr dns.RR) {
+				mx := rr.(*dns.MX)
+				if mx.Mx != "mail.example.com." {
+					t.Errorf("Expected Mx to be 'mail.example.com.', got %q", mx.Mx)
+				}
+			},
+		},
+		{
+			name: "CNAME record with relative Target",
+			input: &dns.CNAME{
+				Hdr: dns.RR_Header{
+					Name:   "www",
+					Rrtype: dns.TypeCNAME,
+					Class:  dns.ClassINET,
+					Ttl:    600,
+				},
+				Target: "target",
+			},
+			origin: origin,
+			validate: func(t *testing.T, rr dns.RR) {
+				cname := rr.(*dns.CNAME)
+				if cname.Target != "target.example.com." {
+					t.Errorf("Expected Target to be 'target.example.com.', got %q", cname.Target)
+				}
+			},
+		},
+		{
+			name: "SRV record with relative Target",
+			input: &dns.SRV{
+				Hdr: dns.RR_Header{
+					Name:   "_http._tcp",
+					Rrtype: dns.TypeSRV,
+					Class:  dns.ClassINET,
+					Ttl:    3600,
+				},
+				Priority: 10,
+				Weight:   60,
+				Port:     80,
+				Target:   "server",
+			},
+			origin: origin,
+			validate: func(t *testing.T, rr dns.RR) {
+				srv := rr.(*dns.SRV)
+				if srv.Target != "server.example.com." {
+					t.Errorf("Expected Target to be 'server.example.com.', got %q", srv.Target)
+				}
+				if srv.Header().Name != "_http._tcp.example.com." {
+					t.Errorf("Expected Name to be '_http._tcp.example.com.', got %q", srv.Header().Name)
+				}
+			},
+		},
+		{
+			name: "PTR record with relative Ptr",
+			input: &dns.PTR{
+				Hdr: dns.RR_Header{
+					Name:   "1.2.0.192.in-addr.arpa.",
+					Rrtype: dns.TypePTR,
+					Class:  dns.ClassINET,
+					Ttl:    3600,
+				},
+				Ptr: "www",
+			},
+			origin: origin,
+			validate: func(t *testing.T, rr dns.RR) {
+				ptr := rr.(*dns.PTR)
+				if ptr.Ptr != "www.example.com." {
+					t.Errorf("Expected Ptr to be 'www.example.com.', got %q", ptr.Ptr)
+				}
+			},
+		},
+		{
+			name: "SOA record with relative fields",
+			input: &dns.SOA{
+				Hdr: dns.RR_Header{
+					Name:   "@",
+					Rrtype: dns.TypeSOA,
+					Class:  dns.ClassINET,
+					Ttl:    3600,
+				},
+				Ns:      "ns1",
+				Mbox:    "admin",
+				Serial:  2024010101,
+				Refresh: 3600,
+				Retry:   600,
+				Expire:  604800,
+				Minttl:  86400,
+			},
+			origin: origin,
+			validate: func(t *testing.T, rr dns.RR) {
+				soa := rr.(*dns.SOA)
+				if soa.Ns != "ns1.example.com." {
+					t.Errorf("Expected Ns to be 'ns1.example.com.', got %q", soa.Ns)
+				}
+				if soa.Mbox != "admin.example.com." {
+					t.Errorf("Expected Mbox to be 'admin.example.com.', got %q", soa.Mbox)
+				}
+			},
+		},
+		{
+			name: "empty origin",
+			input: &dns.A{
+				Hdr: dns.RR_Header{
+					Name:   "www.example.com.",
+					Rrtype: dns.TypeA,
+					Class:  dns.ClassINET,
+					Ttl:    3600,
+				},
+				A: []byte{192, 0, 2, 1},
+			},
+			origin: "",
+			validate: func(t *testing.T, rr dns.RR) {
+				if rr.Header().Name != "www.example.com." {
+					t.Errorf("Expected Name to remain 'www.example.com.', got %q", rr.Header().Name)
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := RRAbsolute(tt.input, tt.origin)
+			if result == nil {
+				t.Fatal("RRAbsolute returned nil")
+			}
+			tt.validate(t, result.(dns.RR))
+		})
+	}
+}
+
 func TestCopyRecord(t *testing.T) {
 	tests := []struct {
 		name     string

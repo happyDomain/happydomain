@@ -47,7 +47,7 @@ func (uc *ListRecordsUsecase) List(svc *happydns.Service, origin string, default
 
 		records[i].Header().Name = helpers.DomainJoin(records[i].Header().Name, svc.Domain)
 		if origin != "" {
-			records[i].Header().Name = helpers.DomainJoin(records[i].Header().Name, origin)
+			records[i] = helpers.RRAbsolute(records[i], origin)
 		}
 
 		if records[i].Header().Ttl == 0 {
