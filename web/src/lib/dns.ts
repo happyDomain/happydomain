@@ -246,3 +246,29 @@ export function printRR(rr: dnsRR, dn: string | undefined, origin: string | unde
 
     return domain + "\t" + rr.Hdr.Ttl + "\t" + nsclass(rr.Hdr.Class) + "\t" + nsrrtype(rr.Hdr.Rrtype) + "\t" + rdatatostr(rr);
 }
+
+export function parseKeyValueTxt(input: string): Record<string, string> {
+  // Remove surrounding quotes if present
+  const trimmed = input.trim().replace(/^"|"$/g, "");
+
+  // Split the string by semicolons to separate key-value pairs
+  const pairs = trimmed.split(";");
+
+  const result: Record<string, string> = {};
+
+  for (const pair of pairs) {
+    // Trim whitespace around the pair
+    const cleaned = pair.trim();
+    if (!cleaned) continue;
+
+    // Split by the first '=' only, in case values contain '='
+    const [key, ...rest] = cleaned.split("=");
+    const value = rest.join("=");
+
+    if (key && value) {
+      result[key.trim()] = value.trim();
+    }
+  }
+
+  return result;
+}
