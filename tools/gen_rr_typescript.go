@@ -48,6 +48,17 @@ func nsrrtype(fd io.Writer) {
 	fmt.Fprint(fd, "        default:\n            return \"#\";\n    }\n")
 }
 
+func getRrtype(fd io.Writer) {
+	fmt.Fprint(fd, "    switch (input) {\n")
+	for ty, rr := range dns.TypeToString {
+		fmt.Fprintf(fd, `        case "%s":
+        case "%s":
+            return %d;
+`, strings.ToUpper(rr), strings.ToLower(rr), ty)
+	}
+	fmt.Fprint(fd, "        default:\n            throw(\"Unknown rrtype \" + input);\n    }\n")
+}
+
 func rdatatostr(fd io.Writer) {
 	fmt.Fprint(fd, "    switch (rr.Hdr.Rrtype) {\n")
 	for ty, rr := range dns.TypeToRR {
@@ -272,6 +283,11 @@ func main() {
 
 		fmt.Fprintf(fd, "    %s?: dnsType%s;\n", strings.Replace(strings.ToLower(dns.TypeToString[ty]), "-", "_", -1), strings.Replace(dns.TypeToString[ty], "-", "_", -1))
 	}
+	fmt.Fprint(fd, "};\n\n")
+
+	// getRrtype
+	fmt.Fprint(fd, "export function getRrtype(input: string): number {\n")
+	getRrtype(fd)
 	fmt.Fprint(fd, "};\n\n")
 
 	// nsrrtype
