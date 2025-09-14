@@ -25,7 +25,7 @@
     import type { dnsRR } from "$lib/dns_rr";
 
     export const controls = {
-        Open(record: dnsRR, service: ServiceCombined) { },
+        Open(record: dnsRR, dn: string) { },
     };
 </script>
 
@@ -48,10 +48,8 @@
     } from "@sveltestrap/sveltestrap";
 
     import { addZoneRecord, deleteZoneRecord, updateZoneRecord } from "$lib/api/zone";
-    import { fqdn, nsclass, nsrrtype } from "$lib/dns";
-    import { rdatafields } from "$lib/dns_rr";
+    import RecordEditor from "$lib/components/records/Editor.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service";
     import type { Zone } from "$lib/model/zone";
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
@@ -68,7 +66,7 @@
 
     let { isOpen = $bindable(false), origin, zone }: Props = $props();
 
-    let service: ServiceCombined | undefined = $state(undefined);
+    let dn: string = $state("");
     let record: dnsRR | undefined = $state(undefined);
     let initialrecord: dnsRR | undefined = $state(undefined);
 
@@ -77,7 +75,7 @@
 
     function deleteRecord() {
         deleteRecordInProgress = true;
-        deleteZoneRecord(origin, zone.id, service._domain, record).then(
+        deleteZoneRecord(origin, zone.id, dn, record).then(
             (z: Zone) => {
                 thisZone.set(z);
                 deleteRecordInProgress = false;
@@ -97,9 +95,9 @@
 
         let action = addZoneRecord;
         let subdomain = "";
-        if (service) {
+        if (initialrecord) {
             action = updateZoneRecord;
-            subdomain = service._domain;
+            subdomain = dn;
         }
 
         action(origin, zone.id, subdomain, record, initialrecord).then(
@@ -115,10 +113,10 @@
         );
     }
 
-    function Open(r: dnsRR, s: ServiceCombined): void {
+    function Open(r: dnsRR, d: string): void {
         initialrecord = JSON.parse(JSON.stringify(r));
         record = r;
-        service = s;
+        dn = d;
         isOpen = true;
     }
 
@@ -128,7 +126,7 @@
 {#if record}
     <Modal {isOpen} scrollable size="lg" {toggle}>
         <ModalHeader {toggle}>
-            {#if service}
+            {#if initialrecord}
                 {$t("records.update")}
             {:else}
                 {@html $t("records.form-new", {
@@ -138,128 +136,16 @@
         </ModalHeader>
         <ModalBody>
             <form id="addRRForm" onsubmit={submitRecordForm}>
-                <Row>
-                    <label
-                        for="rr-hdr-name"
-                        class="col-md-4 col-form-label text-truncate text-md-right text-primary"
-                    >
-                        {$t("domains.subdomain")[0].toUpperCase()}{$t(
-                            "domains.subdomain",
-                        ).substring(1)}
-                    </label>
-                    <Col md="8" class="d-flex flex-column">
-                        <div class="flex-fill d-flex align-items-center">
-                            <InputGroup size="sm">
-                                <Input
-                                    id="rr-hdr-name"
-                                    type="text"
-                                    class="fw-bold"
-                                    bind:value={record.Hdr.Name}
-                                />
-                                <InputGroupText
-                                    >.{#if service}{fqdn(service._domain, origin.domain)}{:else}{origin.domain}{/if}</InputGroupText
-                                >
-                            </InputGroup>
-                        </div>
-                    </Col>
-                </Row>
-                <Row>
-                    <label
-                        for="rr-hdr-class"
-                        class="col-md-4 col-form-label text-truncate text-md-right text-primary"
-                    >
-                        {$t("records.class")[0].toUpperCase()}{$t("records.class").substring(1)}
-                    </label>
-                    <Col md="8" class="d-flex flex-column">
-                        <div class="flex-fill d-flex align-items-center">
-                            <Input
-                                id="rr-hdr-class"
-                                size="sm"
-                                type="select"
-                                required
-                                bind:value={record.Hdr.Class}
-                            >
-                                {#each [1, 3, 4, 254] as i}
-                                    <option value={i}>{nsclass(i)}</option>
-                                {/each}
-                            </Input>
-                        </div>
-                    </Col>
-                </Row>
-                <Row>
-                    <label
-                        for="rr-hdr-rrtype"
-                        class="col-md-4 col-form-label text-truncate text-md-right text-primary"
-                    >
-                        {$t("records.rrtype")[0].toUpperCase()}{$t("records.rrtype").substring(1)}
-                    </label>
-                    <Col md="8" class="d-flex flex-column">
-                        <div class="flex-fill d-flex align-items-center">
-                            <Input
-                                id="rr-hdr-rrtype"
-                                type="select"
-                                size="sm"
-                                required
-                                bind:value={record.Hdr.Rrtype}
-                            >
-                                {#each Array(260)
-                                    .fill()
-                                    .map((element, index) => index + 1) as i}
-                                    {#if nsrrtype(i) != "#"}
-                                        <option value={i}>{nsrrtype(i)}</option>
-                                    {/if}
-                                {/each}
-                            </Input>
-                        </div>
-                    </Col>
-                </Row>
-                <Row>
-                    <label
-                        for="rr-hdr-ttl"
-                        class="col-md-4 col-form-label text-truncate text-md-right text-primary"
-                    >
-                        {$t("records.ttl")[0].toUpperCase()}{$t("records.ttl").substring(1)}
-                    </label>
-                    <Col md="8" class="d-flex flex-column">
-                        <div class="flex-fill d-flex align-items-center">
-                            <InputGroup size="sm">
-                                <Input
-                                    id="rr-hdr-ttl"
-                                    type="number"
-                                    required
-                                    bind:value={record.Hdr.Ttl}
-                                />
-                                <InputGroupText>s</InputGroupText>
-                            </InputGroup>
-                        </div>
-                    </Col>
-                </Row>
-                <hr />
-                {#if record.Hdr.Rrtype && rdatafields(record.Hdr.Rrtype).length > 0}
-                  {#each rdatafields(record.Hdr.Rrtype) as k}
-                    {#if k != "Hdr"}
-                        {@const v = record[k]}
-                        <Row>
-                            <label
-                                for="rr-{k}"
-                                class="col-md-4 col-form-label text-truncate text-md-right text-primary"
-                            >
-                                {k}
-                            </label>
-                            <Col md="8" class="d-flex flex-column">
-                                <div class="flex-fill d-flex align-items-center">
-                                    <Input id="rr-{k}" size="sm" type="text" bind:value={record[k]} />
-                                </div>
-                            </Col>
-                        </Row>
-                    {/if}
-                  {/each}
-                {/if}
+                <RecordEditor
+                    bind:dn={dn}
+                    {origin}
+                    bind:record={record}
+                />
             </form>
         </ModalBody>
         <ModalFooter>
             <div class="ms-auto"></div>
-            {#if service}
+            {#if initialrecord}
                 <Button
                     color="danger"
                     disabled={addRecordInProgress ||
@@ -278,7 +164,7 @@
             <Button color="secondary" on:click={toggle}>
                 {$t("common.cancel")}
             </Button>
-            {#if service}
+            {#if initialrecord}
                 <Button
                     disabled={addRecordInProgress || deleteRecordInProgress}
                     form="addRRForm"

@@ -22,8 +22,6 @@
 -->
 
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import { createEventDispatcher } from "svelte";
 
     import { Button, Icon, Input } from "@sveltestrap/sveltestrap";
@@ -31,49 +29,44 @@
     const dispatch = createEventDispatcher();
 
     interface Props {
+        flag?: number;
         newone?: boolean;
         readonly?: boolean;
+        tag?: string;
         value?: string;
     }
 
-    let { newone = false, readonly = false, value = $bindable("") }: Props = $props();
+    let { flag = $bindable(0), newone = false, readonly = false, tag = $bindable(""), value = $bindable("") }: Props = $props();
 
-    let kind: string = $state("web");
-    let url: string = $state("");
+    function parseCAAiodef(val) {
+        const fields = val.split(":");
 
-    run(() => {
-        if (value)
-            switch (value.split(":")[0]) {
-                case "mailto":
-                    kind = "mail";
-                    url = value.split(":")[1];
-                    break;
-                default:
-                    kind = "web";
-                    url = value;
-            }
-    });
-
-    function updateValue(url: string) {
-        if (kind == "mail") {
-            value = "mailto:" + url;
-        } else {
-            value = url;
-        }
+        return {
+            kind: fields[0].replace(/s$/, ""),
+            url: fields[0] == "mailto" ? fields.slice(1).join(":") : fields.join(":"),
+        };
     }
+    function stringifyCAAiodef(val) {
+        return val.kind == "mailto" ? (val.kind + ":" + val.url) : val.url;
+    }
+    let val = $state(parseCAAiodef(value));
 
-    run(() => {
-        updateValue(url);
+    $effect(() => {
+        val = parseCAAiodef(value);
+    });
+    $effect(() => {
+        if (val.kind == "mailto" || val.url.indexOf(":") > 0)
+            value = stringifyCAAiodef(val);
     });
 </script>
 
 <div class="d-flex gap-2 mb-2">
-    <Input type="select" bind:value={kind}>
-        <option value="mail">Mail</option>
-        <option value="web">Webhook</option>
+    <Input type="select" bind:value={val.kind}>
+        <option value="mailto">Mail</option>
+        <option value="http">Webhook</option>
     </Input>
 
-    <Input type={kind == "mail" ? "email" : "text"} {readonly} bind:value={url} />
+    <Input type={val.kind == "mailto" ? "email" : "text"} {readonly} bind:value={val.url} />
 
     {#if !readonly}
         {#if !newone}
