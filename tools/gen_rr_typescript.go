@@ -59,6 +59,41 @@ func getRrtype(fd io.Writer) {
 	fmt.Fprint(fd, "        default:\n            throw(\"Unknown rrtype \" + input);\n    }\n")
 }
 
+func newRR(fd io.Writer) {
+	fmt.Fprint(fd, "    const rec = { Hdr: {Name: dn, Rrtype: rrtype, Class: 1, Ttl: 3600} } as dnsRR;\n\n")
+	fmt.Fprint(fd, "    switch (rrtype) {\n")
+	for ty, rr := range dns.TypeToRR {
+		if ty == dns.TypeNXNAME || ty == dns.TypeOPT || ty == dns.TypeANY {
+			continue
+		}
+
+		t := reflect.TypeOf(rr()).Elem()
+
+		if t.NumField() == 1 {
+			// This is a redirection to another type
+			t = t.Field(0).Type
+		}
+
+		fmt.Fprintf(fd, "        case %d: // %s\n", ty, dns.TypeToString[ty])
+		for i := 0; i < t.NumField(); i++ {
+			if t.Field(i).Name == "Hdr" {
+				continue
+			}
+			fmt.Fprintf(fd, "          rec.%s = ", t.Field(i).Name)
+			if t.Field(i).Type.Kind() == reflect.Array || t.Field(i).Type.Kind() == reflect.Slice {
+				fmt.Fprint(fd, "[]")
+			} else if strings.HasPrefix(t.Field(i).Type.Name(), "uint") || strings.HasPrefix(t.Field(i).Type.Name(), "int") || t.Field(i).Type.Name() == "time.Duration" {
+				fmt.Fprint(fd, "0")
+			} else {
+				fmt.Fprint(fd, `""`)
+			}
+			fmt.Fprint(fd, ";\n")
+		}
+		fmt.Fprint(fd, "          return rec;\n")
+	}
+	fmt.Fprint(fd, "        default: return rec;\n    }\n")
+}
+
 func rdatatostr(fd io.Writer) {
 	fmt.Fprint(fd, "    switch (rr.Hdr.Rrtype) {\n")
 	for ty, rr := range dns.TypeToRR {
@@ -288,6 +323,11 @@ func main() {
 	// getRrtype
 	fmt.Fprint(fd, "export function getRrtype(input: string): number {\n")
 	getRrtype(fd)
+	fmt.Fprint(fd, "};\n\n")
+
+	// newRR
+	fmt.Fprint(fd, "export function newRR(dn: string, rrtype: number): dnsRR {\n")
+	newRR(fd)
 	fmt.Fprint(fd, "};\n\n")
 
 	// nsrrtype

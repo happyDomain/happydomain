@@ -70,7 +70,7 @@
                                             <td
                                                 class="d-flex justify-content-between"
                                                 style="cursor: pointer"
-                                                onclick={() => ctrlRecord.Open(rr, service)}
+                                                onclick={() => ctrlRecord.Open(rr, service._domain)}
                                             >
                                                 <RecordText
                                                     {dn}
