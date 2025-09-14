@@ -83,7 +83,7 @@
     }
 
     function showRecordModal({record, service}: {record: dnsRR; service: ServiceCombined;}) {
-        ctrlRecord.Open({record, service});
+        ctrlRecord.Open(record, service._domain);
     }
 
     function showServiceModal(service: ServiceCombined) {
