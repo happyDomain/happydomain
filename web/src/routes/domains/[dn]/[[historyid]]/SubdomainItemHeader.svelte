@@ -32,7 +32,7 @@
     import { fqdn, unreverseDomain } from "$lib/dns";
     import type { dnsRR } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service";
+    import type { ServiceCombined } from "$lib/model/service.svelte";
     import { ZoneViewGrid, ZoneViewRecords } from "$lib/model/usersettings";
     import { servicesSpecs } from "$lib/stores/services";
     import { thisAliases, thisZone } from "$lib/stores/thiszone";

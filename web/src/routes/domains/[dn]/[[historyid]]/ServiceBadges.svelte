@@ -27,7 +27,7 @@
     } from "@sveltestrap/sveltestrap";
 
     import { nsrrtype } from '$lib/dns';
-    import type { ServiceCombined } from '$lib/model/service';
+    import type { ServiceCombined } from '$lib/model/service.svelte';
     import { servicesSpecs } from '$lib/stores/services';
     import { userSession } from '$lib/stores/usersession';
 

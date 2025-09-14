@@ -33,7 +33,7 @@
     } from "$lib/components/modals/ServiceSelector.svelte";
     import { controls as ctrlService } from "$lib/components/modals/Service.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service";
+    import type { ServiceCombined } from "$lib/model/service.svelte";
     import type { Zone } from "$lib/model/zone";
 
     interface Props {

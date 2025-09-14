@@ -31,7 +31,7 @@
     import { controls as ctrlService } from "$lib/components/modals/Service.svelte";
     import { printRR } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service";
+    import type { ServiceCombined } from "$lib/model/service.svelte";
     import { ZoneViewGrid, ZoneViewList, ZoneViewRecords } from "$lib/model/usersettings";
     import { servicesSpecs } from "$lib/stores/services";
     import { userSession } from "$lib/stores/usersession";
@@ -69,7 +69,7 @@
                         {:then specs}
                             <Service
                                 {specs}
-                                value={service.Service}
+                                bind:value={service.Service}
                             >
                                 {#snippet aservice(type: string, rr: any)}
                                     {#if rr}
@@ -77,7 +77,7 @@
                                             <td
                                                 class="d-flex justify-content-between"
                                                 style="cursor: pointer"
-                                                onclick={() => ctrlRecord.Open(rr, service)}
+                                                onclick={() => ctrlRecord.Open(rr, service._domain)}
                                             >
                                                 <RecordText
                                                     {dn}

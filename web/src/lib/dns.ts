@@ -19,7 +19,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { nsrrtype, rdatatostr } from "$lib/dns_rr";
+import { newRR, nsrrtype, rdatatostr } from "$lib/dns_rr";
+import type { dnsRR } from "$lib/dns_rr";
 import type { Domain } from "$lib/model/domain";
 
 export { nsrrtype, rdatatostr };
@@ -273,4 +274,8 @@ export function parseKeyValueTxt(input: string): Record<string, string> {
   }
 
   return result;
+}
+
+export function emptyRR(): dnsRR {
+    return newRR("", 0);
 }

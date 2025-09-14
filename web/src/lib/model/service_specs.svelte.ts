@@ -22,36 +22,69 @@
 import { get } from "svelte/store";
 
 import { getRrtype, newRR } from "$lib/dns_rr";
-import type { Field } from "$lib/model/custom_form";
+import type { Field } from "$lib/model/custom_form.svelte";
 import { getAvailableResourceTypes, type ProviderInfos } from "$lib/model/provider";
-import type { ServiceCombined } from "$lib/model/service";
+import type { ServiceCombined } from "$lib/model/service.svelte";
 import { servicesSpecs } from "$lib/stores/services";
 
-export interface ServiceRestrictions {
-    alone: boolean;
-    exclusive: Array<string>;
-    glue: boolean;
-    leaf: boolean;
-    nearAlone: boolean;
-    needTypes: Array<number>;
-    rootOnly: boolean;
-    single: boolean;
+export class ServiceRestrictions {
+    alone = $state(false);
+    exclusive = $state<Array<string>>([]);
+    glue = $state(false);
+    leaf = $state(false);
+    nearAlone = $state(false);
+    needTypes = $state<Array<number>>([]);
+    rootOnly = $state(false);
+    single = $state(false);
+
+    constructor(data?: Partial<ServiceRestrictions>) {
+        if (data) {
+            this.alone = data.alone ?? false;
+            this.exclusive = data.exclusive ?? [];
+            this.glue = data.glue ?? false;
+            this.leaf = data.leaf ?? false;
+            this.nearAlone = data.nearAlone ?? false;
+            this.needTypes = data.needTypes ?? [];
+            this.rootOnly = data.rootOnly ?? false;
+            this.single = data.single ?? false;
+        }
+    }
 }
 
-export interface ServiceInfos {
-    name: string;
-    _svctype: string;
-    _svcicon: string;
-    description: string;
-    family: string;
-    categories: Array<string>;
-    record_types: Array<number>;
-    tabs: boolean;
-    restrictions: ServiceRestrictions;
+export class ServiceInfos {
+    name = $state("");
+    _svctype = $state("");
+    _svcicon = $state("");
+    description = $state("");
+    family = $state("");
+    categories = $state<Array<string>>([]);
+    record_types = $state<Array<number>>([]);
+    tabs = $state(false);
+    restrictions = $state(new ServiceRestrictions());
+
+    constructor(data?: Partial<ServiceInfos>) {
+        if (data) {
+            this.name = data.name ?? "";
+            this._svctype = data._svctype ?? "";
+            this._svcicon = data._svcicon ?? "";
+            this.description = data.description ?? "";
+            this.family = data.family ?? "";
+            this.categories = data.categories ?? [];
+            this.record_types = data.record_types ?? [];
+            this.tabs = data.tabs ?? false;
+            this.restrictions = data.restrictions ? new ServiceRestrictions(data.restrictions) : new ServiceRestrictions();
+        }
+    }
 }
 
-export interface ServiceSpec {
-    fields: null | Array<Field>;
+export class ServiceSpec {
+    fields = $state<null | Array<Field>>(null);
+
+    constructor(data?: Partial<ServiceSpec>) {
+        if (data) {
+            this.fields = data.fields ?? null;
+        }
+    }
 }
 
 export function passRestrictions(

@@ -27,7 +27,7 @@
     import SubdomainItemHeader from "./SubdomainItemHeader.svelte";
     import { isReverseZone } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service";
+    import type { ServiceCombined } from "$lib/model/service.svelte";
     import { thisZone } from "$lib/stores/thiszone";
 
     interface Props {

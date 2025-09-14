@@ -26,7 +26,7 @@
 
     import { Button, Spinner } from "@sveltestrap/sveltestrap";
 
-    import type { CustomForm } from "$lib/model/custom_form";
+    import type { CustomForm } from "$lib/model/custom_form.svelte";
     import { t } from "$lib/translations";
 
     const dispatch = createEventDispatcher();

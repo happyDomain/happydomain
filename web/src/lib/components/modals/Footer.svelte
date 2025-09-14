@@ -28,7 +28,7 @@
 
     import HelpButton from "$lib/components/Help.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service";
+    import type { ServiceCombined } from "$lib/model/service.svelte";
     import { locale, t } from "$lib/translations";
 
     const dispatch = createEventDispatcher();

@@ -29,8 +29,8 @@
     import { nsrrtype } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { ProviderInfos } from "$lib/model/provider";
-    import type { ServiceCombined } from "$lib/model/service";
-    import { passRestrictions, type ServiceInfos } from "$lib/model/service_specs";
+    import type { ServiceCombined } from "$lib/model/service.svelte";
+    import { passRestrictions, type ServiceInfos } from "$lib/model/service_specs.svelte";
     import { providers_idx } from "$lib/stores/providers";
     import { servicesSpecs } from "$lib/stores/services";
     import { filteredName } from "$lib/stores/serviceSelector";

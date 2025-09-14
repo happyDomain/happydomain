@@ -29,8 +29,8 @@
 
     import { getServiceSpec } from "$lib/api/service_specs";
     import ResourceInput from "$lib/components/inputs/Resource.svelte";
-    import type { Field } from "$lib/model/custom_form";
-    import type { ServiceInfos } from "$lib/model/service_specs";
+    import type { Field } from "$lib/model/custom_form.svelte";
+    import type { ServiceInfos } from "$lib/model/service_specs.svelte";
     import { t } from "$lib/translations";
     import { fillUndefinedValues } from "$lib/types";
 

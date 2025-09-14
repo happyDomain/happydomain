@@ -23,7 +23,7 @@ import { goto } from "$app/navigation";
 import cuid from "cuid";
 
 import { getProviderSettings } from "$lib/api/provider_settings";
-import type { CustomForm } from "$lib/model/custom_form";
+import type { CustomForm } from "$lib/model/custom_form.svelte";
 import { isProvider, type Provider } from "$lib/model/provider";
 import type { ProviderSettingsState } from "$lib/model/provider_settings";
 

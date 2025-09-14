@@ -27,7 +27,7 @@
     import SVC from './Service.svelte'
     import SVCField from './ServiceField.svelte'
     import { getServiceSpec } from "$lib/api/service_specs";
-    import type { ServiceInfos } from "$lib/model/service_specs";
+    import type { ServiceInfos } from "$lib/model/service_specs.svelte";
 
     export let type: string;
     export let value: any;

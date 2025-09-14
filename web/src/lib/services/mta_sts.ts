@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2022-2024 happyDomain
+// Copyright (c) 2022-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,45 +19,24 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-export interface Field {
-    id: string;
-    type: string;
-    label?: string;
-    description?: string;
-    placeholder?: string;
-    default?: string;
-    choices?: Array<string>;
-    hide?: boolean;
-    required?: boolean;
-    secret?: boolean;
-    textarea?: boolean;
+import { parseKeyValueTxt } from "$lib/dns";
+
+export interface MTASTSValue {
+    v?: string;
+    id?: string;
 }
 
-export interface CustomForm {
-    beforeText?: string;
-    sideText?: string;
-    afterText?: string;
-    fields: Array<Field>;
-    nextButtonText?: string;
-    nextEditButtonText?: string;
-    previousButtonText?: string;
-    previousEditButtonText?: string;
-    nextButtonLink?: string;
-    nextButtonState?: number;
-    previousButtonLink?: string;
-    previousButtonState?: number;
+export function parseMTASTS(val: string): MTASTSValue {
+    const parsed = parseKeyValueTxt(val);
+
+    return {
+        v: parsed.v,
+        id: parsed.id,
+    };
 }
 
-export interface FormState {
-    _id?: any;
-    _comment?: string;
-    state: number;
-    recall?: string;
-    redirect?: string;
-}
+export function stringifyMTASTS(val: MTASTSValue, existingTxt: string = ""): string {
+    const sep = (existingTxt.indexOf("; ") >= 0 ? "; " : ";");
 
-export interface FormResponse<T> {
-    form?: CustomForm;
-    values?: T;
-    redirect?: string;
+    return "v=" + (val.v || "STSv1") + (val.id ? sep + "id=" + val.id : "");
 }

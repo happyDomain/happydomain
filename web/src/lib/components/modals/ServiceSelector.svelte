@@ -40,8 +40,8 @@
     import ServiceSelector from "$lib/components/services/ServiceSelector.svelte";
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service";
-    import { newRecord } from "$lib/model/service_specs";
+    import type { ServiceCombined } from "$lib/model/service.svelte";
+    import { newRecord } from "$lib/model/service_specs.svelte";
     import { filteredName } from "$lib/stores/serviceSelector";
 
     const dispatch = createEventDispatcher();
@@ -73,7 +73,13 @@
 
                 if (specs.fields) {
                     for (const field of specs.fields) {
-                        svc[field.id] = newRecord(field);
+                        if (field.type.replace(/^(\[\])?\*(happy)?/, "").startsWith("dns")) {
+                            svc[field.id] = newRecord(field);
+                        } else if (field.type.indexOf("int") >= 0) {
+                            svc[field.id] = 0;
+                        } else {
+                            svc[field.id] = "";
+                        }
 
                         if (field.type.startsWith("[]")) {
                             svc[field.id] = [svc[field.id]];

@@ -25,7 +25,7 @@
     import { Button, Icon } from "@sveltestrap/sveltestrap";
 
     import MapEntry from "./mapentry.svelte";
-    import type { Field } from "$lib/model/custom_form";
+    import type { Field } from "$lib/model/custom_form.svelte";
     import { t } from "$lib/translations";
 
     const re = /^map\[(.*)\]\*?(.*)$/;

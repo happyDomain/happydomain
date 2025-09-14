@@ -25,7 +25,7 @@
     import { run } from 'svelte/legacy';
 
     import ResourceInput from "$lib/components/inputs/Resource.svelte";
-    import type { CustomForm } from "$lib/model/custom_form";
+    import type { CustomForm } from "$lib/model/custom_form.svelte";
     import { t } from "$lib/translations";
     import { fillUndefinedValues } from "$lib/types";
 

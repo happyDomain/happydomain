@@ -24,7 +24,7 @@ import { printRR } from "$lib/dns";
 import type { dnsRR } from "$lib/dns_rr";
 import type { Correction } from "$lib/model/correction";
 import type { Domain } from "$lib/model/domain";
-import type { ServiceCombined, ServiceMeta } from "$lib/model/service";
+import type { ServiceCombined, ServiceMeta } from "$lib/model/service.svelte";
 import type { ServiceRecord, Zone, ZoneMeta } from "$lib/model/zone";
 
 export async function getZone(domain: Domain, id: string): Promise<Zone> {

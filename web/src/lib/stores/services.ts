@@ -20,7 +20,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { writable, type Writable } from "svelte/store";
-import type { ServiceInfos } from "$lib/model/service_specs";
+import type { ServiceInfos } from "$lib/model/service_specs.svelte";
 
 export const servicesSpecs: Writable<null | Record<string, ServiceInfos>> = writable(null);
 

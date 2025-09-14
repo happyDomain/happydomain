@@ -22,7 +22,7 @@
 import type { dnsRR } from "$lib/dns_rr";
 import { handleEmptyApiResponse, handleApiResponse } from "$lib/errors";
 import type { Domain } from "$lib/model/domain";
-import type { ServiceCombined, ServiceMeta } from "$lib/model/service";
+import type { ServiceCombined, ServiceMeta } from "$lib/model/service.svelte";
 import type { Zone } from "$lib/model/zone";
 
 export async function getService(

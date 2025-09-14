@@ -20,7 +20,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { handleApiResponse } from "$lib/errors";
-import type { ServiceInfos, ServiceSpec } from "$lib/model/service_specs";
+import type { ServiceInfos, ServiceSpec } from "$lib/model/service_specs.svelte";
 
 export async function listServiceSpecs(): Promise<Record<string, ServiceInfos>> {
     const res = await fetch("/api/service_specs", {

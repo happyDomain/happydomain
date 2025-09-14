@@ -27,7 +27,7 @@
     import { Badge, ListGroupItem } from "@sveltestrap/sveltestrap";
 
     import { nsrrtype } from "$lib/dns";
-    import type { ServiceInfos } from "$lib/model/service_specs";
+    import type { ServiceInfos } from "$lib/model/service_specs.svelte";
     import { userSession } from "$lib/stores/usersession";
 
     const dispatch = createEventDispatcher();

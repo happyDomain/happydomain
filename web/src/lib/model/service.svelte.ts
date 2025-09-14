@@ -21,14 +21,14 @@
 
 export class ServiceMeta {
     _svctype = $state<string>('');
-    _id = $state<string | undefined>(undefined);
-    _ownerid = $state<string | undefined>(undefined);
+    _id? = $state<string | undefined>(undefined);
+    _ownerid? = $state<string | undefined>(undefined);
     _domain = $state<string>('');
-    _ttl = $state<number | undefined>(undefined);
-    _comment = $state<string | undefined>(undefined);
-    _mycomment = $state<string | undefined>(undefined);
-    _aliases = $state<Array<string> | undefined>(undefined);
-    _tmp_hint_nb = $state<number | undefined>(undefined);
+    _ttl? = $state<number | undefined>(undefined);
+    _comment? = $state<string | undefined>(undefined);
+    _mycomment? = $state<string | undefined>(undefined);
+    _aliases? = $state<Array<string> | undefined>(undefined);
+    _tmp_hint_nb? = $state<number | undefined>(undefined);
 
     constructor(init?: {
         _svctype: string;

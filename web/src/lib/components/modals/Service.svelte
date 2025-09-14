@@ -42,7 +42,7 @@
     import ServiceEditor from "$lib/components/services/ServiceEditor.svelte";
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service";
+    import type { ServiceCombined } from "$lib/model/service.svelte";
     import { servicesSpecs } from "$lib/stores/services";
     import type { Zone } from "$lib/model/zone";
     import { t } from "$lib/translations";

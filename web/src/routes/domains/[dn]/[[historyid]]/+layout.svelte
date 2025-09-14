@@ -74,7 +74,6 @@
     <RecordModal
         origin={data.domain}
         zone={$thisZone}
-        on:update-zone-services={(event) => thisZone.set(event.detail)}
     />
     <ServiceModal
         origin={data.domain}

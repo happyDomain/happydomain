@@ -36,7 +36,7 @@
     import { controls as ctrlService } from "$lib/components/modals/Service.svelte";
     import { controls as ctrlServicePath } from "$lib/components/services/NewServicePath.svelte";
     import type { Domain } from '$lib/model/domain';
-    import type { ServiceCombined } from '$lib/model/service';
+    import type { ServiceCombined } from '$lib/model/service.svelte';
     import { servicesSpecs } from '$lib/stores/services';
     import { t } from '$lib/translations';
 

@@ -37,7 +37,7 @@
     } from "$lib/components/modals/NewSubdomain.svelte";
     import { controls as ctrlServicePath } from "$lib/components/services/NewServicePath.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service";
+    import type { ServiceCombined } from "$lib/model/service.svelte";
     import type { Zone } from "$lib/model/zone";
 
     const dispatch = createEventDispatcher();

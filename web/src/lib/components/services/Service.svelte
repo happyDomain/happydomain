@@ -25,7 +25,7 @@
     import type { Snippet } from 'svelte';
 
     import SVCField from './ServiceField.svelte'
-    import type { ServiceSpec } from "$lib/model/service_specs";
+    import type { ServiceSpec } from "$lib/model/service_specs.svelte";
 
     interface Props {
         specs: ServiceSpec;

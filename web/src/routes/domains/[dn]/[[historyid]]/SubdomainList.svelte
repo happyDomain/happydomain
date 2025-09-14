@@ -25,7 +25,7 @@
     import type { Snippet } from "svelte";
 
     import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service";
+    import type { ServiceCombined } from "$lib/model/service.svelte";
     import { thisZone } from "$lib/stores/thiszone";
 
     interface Props {

@@ -26,7 +26,7 @@
 
     import { Col, Row } from "@sveltestrap/sveltestrap";
 
-    import type { Field } from "$lib/model/custom_form";
+    import type { Field } from "$lib/model/custom_form.svelte";
     import ResourceRawInput from "./raw.svelte";
 
     const dispatch = createEventDispatcher();

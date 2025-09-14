@@ -26,32 +26,64 @@
 
     import { Alert, Badge, Button, FormGroup, Icon, Input } from "@sveltestrap/sveltestrap";
 
+    import type { dnsResource } from "$lib/dns_rr";
     import TableInput from "$lib/components/inputs/table.svelte";
+    import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import ResourceRawInput from "$lib/components/inputs/raw.svelte";
     import CAAIssuer from "./CAA-issuer.svelte";
     import CAAIodef from "./CAA-iodef.svelte";
+    import type { Domain } from "$lib/model/domain";
+    import { servicesSpecs } from "$lib/stores/services";
     import { t } from "$lib/translations";
+    import { CAAPolicy, newCAARecord, type CAATag } from "$lib/services/caa.svelte";
 
-    import issuers from "./CAA-issuers";
+    import issuers from "$lib/services/caa-issuers";
 
     const dispatch = createEventDispatcher();
 
     interface Props {
+        dn: string;
+        origin: Domain;
         readonly?: boolean;
-        value: any;
+        value: dnsResource;
     }
 
-    let { readonly = false, value = $bindable() }: Props = $props();
+    let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
+
+    function addIssuer(tag: CAATag): (e: CustomEvent<string>) => void {
+        return (e: CustomEvent<string>) => {
+            if (!value["caa"]) value["caa"] = []
+            if (!Array.isArray(value["caa"])) value["caa"] = [value["caa"]]
+            value["caa"].push(newCAARecord(dn, tag, e.detail));
+        };
+    }
+
+    let val = $derived(new CAAPolicy(value));
+
+    const type = "svcs.CAAPolicy";
 </script>
 
-<h4>{$t("resources.CAA.title")}</h4>
+{#if $servicesSpecs && $servicesSpecs[type]}
+    <p class="text-muted">
+        {$servicesSpecs[type].description}
+    </p>
+{/if}
+
+{#if value["caa"] && Array.isArray(value["caa"])}
+    {#each value["caa"] as caa, i}
+        <RecordLine {dn} {origin} bind:rr={value["caa"][i]} />
+    {/each}
+{/if}
+
+<h4 class="mt-4">{$t("resources.CAA.title")}</h4>
 
 <FormGroup>
     <Input
         id="issuedisabled"
         type="checkbox"
         label={$t("resources.CAA.no-issuers-hint")}
-        bind:checked={value.DisallowIssue}
+        checked={val.DisallowIssue}
+        on:change={val.changeDisallowIssue(dn, "issue")}
     />
 </FormGroup>
 
@@ -59,20 +91,21 @@
     {$t("resources.CAA.auth-issuers")}
 </h5>
 
-{#if !value.DisallowIssue}
+{#if !val.DisallowIssue}
     <ul>
-        {#if value.Issue}
-            {#each value.Issue as issue, k}
-                <li class="mb-3">
-                    <CAAIssuer
-                        {readonly}
-                        bind:value={value.Issue[k]}
-                        on:delete-issuer={() => {
-                            value.Issue.splice(k, 1);
-                            value = value;
-                        }}
-                    />
-                </li>
+        {#if val.records.filter((r) => r.Tag == "issue").length}
+            {#each val.records as issue, k}
+                {#if issue.Tag == "issue"}
+                    <li class="mb-3">
+                        <CAAIssuer
+                            {readonly}
+                            bind:flag={val.records[k].Flag}
+                            bind:tag={val.records[k].Tag}
+                            bind:value={val.records[k].Value}
+                            on:delete-issuer={() => { val.records.splice(k, 1); }}
+                        />
+                    </li>
+                {/if}
             {/each}
         {:else}
             <Alert color="warning" fade={false}>
@@ -84,11 +117,7 @@
             <li style:list-style="'+ '">
                 <CAAIssuer
                     newone
-                    on:add-issuer={(e) => {
-                        if (!value.Issue) value.Issue = [];
-                        value.Issue.push(e.detail);
-                        value = value;
-                    }}
+                    on:add-issuer={addIssuer("issue")}
                 />
             </li>
         {/if}
@@ -107,7 +136,8 @@
         id="wildcardissuedisabled"
         type="checkbox"
         label={$t("resources.CAA.no-wild-hint")}
-        bind:checked={value.DisallowWildcardIssue}
+        checked={val.DisallowWildcardIssue}
+        on:change={val.changeDisallowIssue(dn, "issuewild")}
     />
 </FormGroup>
 
@@ -115,27 +145,28 @@
     {$t("resources.CAA.auth-issuers")}
 </h5>
 
-{#if !value.DisallowWildcardIssue}
+{#if !val.DisallowWildcardIssue}
     <ul>
-        {#if value.IssueWild}
-            {#each value.IssueWild as issue, k}
-                <li class="mb-3">
-                    <CAAIssuer
-                        {readonly}
-                        bind:value={value.IssueWild[k]}
-                        on:delete-issuer={() => {
-                            value.IssueWild.splice(k, 1);
-                            value = value;
-                        }}
-                    />
-                </li>
+        {#if val.records.filter((r) => r.Tag == "issuewild").length}
+            {#each val.records as issue, k}
+                {#if issue.Tag == "issuewild"}
+                    <li class="mb-3">
+                        <CAAIssuer
+                            {readonly}
+                            bind:flag={val.records[k].Flag}
+                            bind:tag={val.records[k].Tag}
+                            bind:value={val.records[k].Value}
+                            on:delete-issuer={() => { val.records.splice(k, 1); }}
+                        />
+                    </li>
+                {/if}
             {/each}
-        {:else if value.DisallowIssue}
+        {:else if val.DisallowIssue}
             <Alert color="danger" fade={false}>
                 <strong>{$t("resources.CAA.no-issuers-title")}</strong>
                 {$t("resources.CAA.no-wild-body")}
             </Alert>
-        {:else if value.Issue}
+        {:else if val.records.filter((r) => r.Tag == "issue").length}
             <Alert color="warning" fade={false}>
                 <strong>{$t("resources.CAA.wild-same-title")}</strong>
                 {$t("resources.CAA.wild-same-body")}
@@ -150,11 +181,7 @@
             <li style:list-style="'+ '">
                 <CAAIssuer
                     newone
-                    on:add-issuer={(e) => {
-                        if (!value.IssueWild) value.IssueWild = [];
-                        value.IssueWild.push(e.detail);
-                        value = value;
-                    }}
+                    on:add-issuer={addIssuer("issuewild")}
                 />
             </li>
         {/if}
@@ -173,11 +200,12 @@
         id="mailissuedisabled"
         type="checkbox"
         label={$t("resources.CAA.no-mail-hint")}
-        bind:checked={value.DisallowMailIssue}
+        checked={val.DisallowMailIssue}
+        on:change={val.changeDisallowIssue(dn, "issuemail")}
     />
 </FormGroup>
 
-{#if !value.DisallowMailIssue && !value.IssueMail}
+{#if !val.DisallowMailIssue && !val.records.filter((r) => r.Tag == "issuemail").length}
     <Alert color="warning" fade={false}>
         <strong>{$t("resources.CAA.mail-all-allowed-title")}</strong>
         {$t("resources.CAA.mail-all-allowed-body")}
@@ -188,31 +216,28 @@
     {$t("resources.CAA.auth-issuers")}
 </h5>
 
-{#if !value.DisallowMailIssue}
+{#if !val.DisallowMailIssue}
     <ul>
-        {#if value.IssueMail}
-            {#each value.IssueMail as issue, k}
-                <li class="mb-3">
-                    <CAAIssuer
-                        {readonly}
-                        bind:value={value.IssueMail[k]}
-                        on:delete-issuer={() => {
-                            value.IssueMail.splice(k, 1);
-                            value = value;
-                        }}
-                    />
-                </li>
+        {#if val.records.filter((r) => r.Tag == "issuemail").length}
+            {#each val.records as issue, k}
+                {#if issue.Tag == "issuemail"}
+                    <li class="mb-3">
+                        <CAAIssuer
+                            {readonly}
+                            bind:flag={val.records[k].Flag}
+                            bind:tag={val.records[k].Tag}
+                            bind:value={val.records[k].Value}
+                            on:delete-issuer={() => { val.records.splice(k, 1); }}
+                        />
+                    </li>
+                {/if}
             {/each}
         {/if}
         {#if !readonly}
             <li style:list-style="'+ '">
                 <CAAIssuer
                     newone
-                    on:add-issuer={(e) => {
-                        if (!value.IssueMail) value.IssueMail = [];
-                        value.IssueMail.push(e.detail);
-                        value = value;
-                    }}
+                    on:add-issuer={addIssuer("issuemail")}
                 />
             </li>
         {/if}
@@ -230,11 +255,22 @@
     {$t("resources.CAA.incident-response-text")}
 </p>
 
-{#if value.Iodef}
-    {#each value.Iodef as iodef, k}
-        <CAAIodef {readonly} bind:value={value.Iodef[k]} />
+{#if val.records.filter((r) => r.Tag == "iodef").length}
+    {#each val.records as issue, k}
+        {#if issue.Tag == "iodef"}
+            <CAAIodef
+                {readonly}
+                bind:flag={val.records[k].Flag}
+                bind:tag={val.records[k].Tag}
+                bind:value={val.records[k].Value}
+                on:delete-iodef={() => { val.records.splice(k, 1); }}
+            />
+        {/if}
     {/each}
 {/if}
 {#if !readonly}
-    <CAAIodef newone />
+    <CAAIodef
+        newone
+        on:add-iodef={addIssuer("iodef")}
+    />
 {/if}
