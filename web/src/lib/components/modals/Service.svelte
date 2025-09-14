@@ -142,6 +142,7 @@
                     <ServiceEditor
                         dn={service._domain}
                         {origin}
+                        bind:service={service}
                         type={service._svctype}
                         bind:value={service.Service}
                     />
