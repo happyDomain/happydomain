@@ -77,6 +77,8 @@ type App struct {
 	router     *gin.Engine
 	srv        *http.Server
 	insights   *insightsCollector
+	plugins    []happydns.TestPlugin
+	pluginsIdx map[string]happydns.TestPlugin
 	store      storage.Storage
 	usecases   Usecases
 }
@@ -168,6 +170,7 @@ func NewApp(cfg *happydns.Options) *App {
 	app.initInsights()
 	app.initUsecases()
 	app.setupRouter()
+	app.LoadPlugins()
 
 	return app
 }
@@ -182,6 +185,7 @@ func NewAppWithStorage(cfg *happydns.Options, store storage.Storage) *App {
 	app.initNewsletter()
 	app.initUsecases()
 	app.setupRouter()
+	app.LoadPlugins()
 
 	return app
 }

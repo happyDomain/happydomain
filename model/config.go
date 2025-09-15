@@ -92,6 +92,8 @@ type Options struct {
 	MailSMTPTLSSNoVerify bool
 
 	OIDCClients []OIDCSettings
+
+	PluginsDirectories []string
 }
 
 // GetBaseURL returns the full url to the absolute ExternalURL, including BaseURL.
