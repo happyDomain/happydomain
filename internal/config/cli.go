@@ -57,6 +57,8 @@ func declareFlags(o *happydns.Options) {
 	flag.StringVar(&o.MailSMTPPassword, "mail-smtp-password", o.MailSMTPPassword, "Password associated with the given username for SMTP authentication")
 	flag.BoolVar(&o.MailSMTPTLSSNoVerify, "mail-smtp-tls-no-verify", o.MailSMTPTLSSNoVerify, "Do not verify certificate validity on SMTP connection")
 
+	flag.Var(&ArrayArgs{&o.PluginsDirectories}, "plugins-directory", "Path to a directory containing plugins (can be repeated multiple times)")
+
 	// Others flags are declared in some other files likes sources, storages, ... when they need specials configurations
 }
 
