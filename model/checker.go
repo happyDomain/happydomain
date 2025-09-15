@@ -23,6 +23,7 @@ package happydns
 
 import (
 	"context"
+	"time"
 )
 
 const (
@@ -35,6 +36,15 @@ const (
 
 type CheckResultStatus int
 
+const (
+	PluginStateStopped PluginStateEnum = iota
+	PluginStateStarting
+	PluginStateReady
+	PluginStateError
+)
+
+type PluginStateEnum int
+
 type Checker interface {
 	ID() string
 	Name() string
@@ -42,9 +52,20 @@ type Checker interface {
 	RunCheck(ctx context.Context, options map[string]any, meta map[string]string) (*CheckResult, error)
 }
 
+type LaunchableTestPlugin interface {
+	StartPlugin(options map[string]interface{}) error
+	StopPlugin() error
+	PluginStatus() PluginState
+}
+
 type CheckerAvailability struct {
 	ApplyToDomain    bool     `json:"applyToDomain,omitempty"`
 	ApplyToService   bool     `json:"applyToService,omitempty"`
 	LimitToProviders []string `json:"limitToProviders,omitempty"`
 	LimitToServices  []string `json:"limitToServices,omitempty"`
+}
+
+type PluginState struct {
+	State  PluginStateEnum `json:"state"`
+	Uptime time.Time       `json:"uptime,omitempty"`
 }
