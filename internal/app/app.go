@@ -84,7 +84,6 @@ type App struct {
 	usecases        Usecases
 }
 
-
 func NewApp(cfg *happydns.Options) *App {
 	app := &App{
 		cfg: cfg,
@@ -94,6 +93,9 @@ func NewApp(cfg *happydns.Options) *App {
 	app.initStorageEngine()
 	app.initNewsletter()
 	app.initInsights()
+	if err := app.initPlugins(); err != nil {
+		log.Fatalf("Plugin initialization error: %s", err)
+	}
 	app.initUsecases()
 	app.initCaptcha()
 	app.setupRouter()
@@ -109,6 +111,9 @@ func NewAppWithStorage(cfg *happydns.Options, store storage.Storage) *App {
 
 	app.initMailer()
 	app.initNewsletter()
+	if err := app.initPlugins(); err != nil {
+		log.Fatalf("Plugin initialization error: %s", err)
+	}
 	app.initUsecases()
 	app.initCaptcha()
 	app.setupRouter()
