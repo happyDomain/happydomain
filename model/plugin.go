@@ -21,6 +21,10 @@
 
 package happydns
 
+import (
+	"time"
+)
+
 const (
 	PluginResultStatusKO PluginResultStatus = iota
 	PluginResultStatusWarn
@@ -28,13 +32,27 @@ const (
 	PluginResultStatusOK
 )
 
+const (
+	PluginStateStopped PluginStateEnum = iota
+	PluginStateStarting
+	PluginStateReady
+	PluginStateError
+)
+
 type PluginResultStatus int
+type PluginStateEnum int
 
 type TestPlugin interface {
 	PluginEnvName() []string
 	Version() PluginVersionInfo
 
 	RunTest(options map[string]interface{}, meta map[string]string) (*PluginResult, error)
+}
+
+type LaunchableTestPlugin interface {
+	StartPlugin(options map[string]interface{}) error
+	StopPlugin() error
+	PluginStatus() PluginState
 }
 
 type PluginVersionInfo struct {
@@ -54,4 +72,9 @@ type PluginResult struct {
 	Status     PluginResultStatus `json:"status"`
 	StatusLine string             `json:"statusLine,omitempty"`
 	Report     interface{}        `json:"report"`
+}
+
+type PluginState struct {
+	State  PluginStateEnum `json:"state"`
+	Uptime time.Time       `json:"uptime,omitempty"`
 }
