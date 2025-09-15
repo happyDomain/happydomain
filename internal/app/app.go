@@ -78,12 +78,12 @@ type App struct {
 	insights        *insightsCollector
 	mailer          *mailer.Mailer
 	newsletter      happydns.NewsletterSubscriptor
+	plugins         happydns.PluginManager
 	router          *gin.Engine
 	srv             *http.Server
 	store           storage.Storage
 	usecases        Usecases
 }
-
 
 func NewApp(cfg *happydns.Options) *App {
 	app := &App{
@@ -94,6 +94,9 @@ func NewApp(cfg *happydns.Options) *App {
 	app.initStorageEngine()
 	app.initNewsletter()
 	app.initInsights()
+	if err := app.initPlugins(); err != nil {
+		log.Fatalf("Plugin initialization error: %v", err)
+	}
 	app.initUsecases()
 	app.initCaptcha()
 	app.setupRouter()
@@ -109,6 +112,9 @@ func NewAppWithStorage(cfg *happydns.Options, store storage.Storage) *App {
 
 	app.initMailer()
 	app.initNewsletter()
+	if err := app.initPlugins(); err != nil {
+		log.Fatalf("Plugin initialization error: %v", err)
+	}
 	app.initUsecases()
 	app.initCaptcha()
 	app.setupRouter()
