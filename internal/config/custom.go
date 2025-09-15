@@ -25,7 +25,21 @@ import (
 	"encoding/base64"
 	"net/mail"
 	"net/url"
+	"strings"
 )
+
+type ArrayArgs struct {
+	Slice *[]string
+}
+
+func (i *ArrayArgs) String() string {
+	return strings.Join(*i.Slice, ",")
+}
+
+func (i *ArrayArgs) Set(value string) error {
+	*i.Slice = append(*i.Slice, value)
+	return nil
+}
 
 type JWTSecretKey struct {
 	Secret *[]byte
