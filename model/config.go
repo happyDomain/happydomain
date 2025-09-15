@@ -99,6 +99,8 @@ type Options struct {
 	// CaptchaLoginThreshold is the number of consecutive login failures before captcha is required.
 	// 0 means always require captcha at login (when provider is configured).
 	CaptchaLoginThreshold int
+
+	PluginsDirectories []string
 }
 
 // GetBaseURL returns the full url to the absolute ExternalURL, including BaseURL.
