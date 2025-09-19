@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -24,21 +24,29 @@ package route
 import (
 	"github.com/gin-gonic/gin"
 
-	api "git.happydns.org/happyDomain/internal/api/route"
+	"git.happydns.org/happyDomain/internal/api-admin/controller"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, s storage.Storage, dependancies happydns.UsecaseDependancies) {
-	apiRoutes := router.Group("/api")
+func declarePluginsRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies, store storage.Storage) {
+	apiPluginsRoutes := router.Group("/plugins")
+	declareTestPluginsRoutes(apiPluginsRoutes, dependancies)
+}
 
-	declareBackupRoutes(cfg, apiRoutes, s)
-	declareDomainRoutes(apiRoutes, dependancies, s)
-	declarePluginsRoutes(apiRoutes, dependancies, s)
-	declareProviderRoutes(apiRoutes, dependancies, s)
-	declareSessionsRoutes(cfg, apiRoutes, s)
-	declareUserAuthsRoutes(apiRoutes, dependancies, s)
-	declareUsersRoutes(apiRoutes, dependancies, s)
-	declareTidyRoutes(apiRoutes, s)
-	api.DeclareVersionRoutes(apiRoutes)
+func declareTestPluginsRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
+	tpc := controller.NewTestPluginController(dependancies.TestPluginUsecase())
+
+	apiTestPluginsRoutes := router.Group("/tests")
+
+	apiTestPluginsRoutes.GET("", tpc.ListTestPlugins)
+
+	apiTestPluginRoutes := apiTestPluginsRoutes.Group("/:pname")
+	apiTestPluginRoutes.Use(tpc.TestPluginHandler)
+
+	apiTestPluginRoutes.GET("", tpc.GetTestPluginStatus)
+	//apiTestPluginRoutes.POST("", tpc.ChangeTestPluginStatus)
+
+	//apiTestPluginRoutes.GET("/options", tpc.ListTestPluginOptions)
+	//apiTestPluginRoutes.PUT("/options", tpc.ChangeTestPluginOptions)
 }

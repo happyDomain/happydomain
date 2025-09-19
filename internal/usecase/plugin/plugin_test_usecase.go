@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,25 +19,34 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package happydns
+package plugin
 
-type UsecaseDependancies interface {
-	AuthenticationUsecase() AuthenticationUsecase
-	AuthUserUsecase() AuthUserUsecase
-	DomainUsecase() DomainUsecase
-	DomainLogUsecase() DomainLogUsecase
-	ProviderUsecase(secure bool) ProviderUsecase
-	ProviderSettingsUsecase() ProviderSettingsUsecase
-	ProviderSpecsUsecase() ProviderSpecsUsecase
-	RemoteZoneImporterUsecase() RemoteZoneImporterUsecase
-	ResolverUsecase() ResolverUsecase
-	ServiceUsecase() ServiceUsecase
-	ServiceSpecsUsecase() ServiceSpecsUsecase
-	SessionUsecase() SessionUsecase
-	TestPluginUsecase() TestPluginUsecase
-	UserUsecase() UserUsecase
-	ZoneCorrectionApplierUsecase() ZoneCorrectionApplierUsecase
-	ZoneImporterUsecase() ZoneImporterUsecase
-	ZoneServiceUsecase() ZoneServiceUsecase
-	ZoneUsecase() ZoneUsecase
+import (
+	"fmt"
+
+	"git.happydns.org/happyDomain/model"
+)
+
+type testPluginUsecase struct {
+	config  *happydns.Options
+	manager happydns.PluginManager
+}
+
+func NewTestPluginUsecase(cfg *happydns.Options, manager happydns.PluginManager) happydns.TestPluginUsecase {
+	return &testPluginUsecase{
+		config:  cfg,
+		manager: manager,
+	}
+}
+
+func (tu *testPluginUsecase) GetTestPlugin(pname string) (happydns.TestPlugin, error) {
+	if plugin, ok := tu.manager.GetTestPluginsIndex()[pname]; !ok {
+		return nil, fmt.Errorf("unable to find plugin named %q", pname)
+	} else {
+		return plugin, nil
+	}
+}
+
+func (tu *testPluginUsecase) ListTestPlugins() ([]happydns.TestPlugin, error) {
+	return tu.manager.GetTestPlugins(), nil
 }

@@ -33,9 +33,10 @@ import (
 )
 
 func (a *App) initPlugins() error {
-	a.plugins = PluginManger{
+	manager := PluginManger{
 		testsIdx: map[string]happydns.TestPlugin{},
 	}
+	a.plugins = &manager
 
 	var ret error
 
@@ -53,7 +54,7 @@ func (a *App) initPlugins() error {
 
 			fname := path.Join(directory, file.Name())
 
-			err = a.plugins.loadPlugin(fname)
+			err = manager.loadPlugin(fname)
 			if err != nil {
 				ret = errors.Join(ret, fmt.Errorf("unable to load plugin %q: %w", fname, err))
 			}
@@ -84,27 +85,27 @@ func (m *PluginManger) loadPlugin(fname string) error {
 		return err
 	}
 
-	m.plugins = append(m.plugins, myplugin)
+	m.tests = append(m.tests, myplugin)
 
 	// Index the plugin by its names
 	pluginNames := myplugin.PluginEnvName()
 	for _, name := range pluginNames {
-		if p, exists := m.pluginsIdx[name]; exists {
+		if p, exists := m.testsIdx[name]; exists {
 			log.Printf("Plugin name conflict: the plugin at %q tries to register the name %q but it's already registered by %q", fname, name, p.Version().Name)
 			continue
 		}
 
-		m.pluginsIdx[name] = myplugin
+		m.testsIdx[name] = myplugin
 	}
 
 	log.Printf("Plugin %s loaded (version %s)", myplugin.Version().Name, myplugin.Version().Version)
 	return nil
 }
 
-func (m *PluginManger) GetTestPlugins() ([]happydns.TestPlugin, error) {
+func (m *PluginManger) GetTestPlugins() []happydns.TestPlugin {
 	return m.tests
 }
 
-func (m *PluginManger) GetTestPluginsIndex() (map[string]happydns.TestPlugin, error) {
+func (m *PluginManger) GetTestPluginsIndex() map[string]happydns.TestPlugin {
 	return m.testsIdx
 }
