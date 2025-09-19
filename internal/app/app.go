@@ -40,6 +40,7 @@ import (
 	domainUC "git.happydns.org/happyDomain/internal/usecase/domain"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	"git.happydns.org/happyDomain/internal/usecase/orchestrator"
+	pluginUC "git.happydns.org/happyDomain/internal/usecase/plugin"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	serviceUC "git.happydns.org/happyDomain/internal/usecase/service"
 	sessionUC "git.happydns.org/happyDomain/internal/usecase/session"
@@ -63,6 +64,7 @@ type Usecases struct {
 	session          happydns.SessionUsecase
 	service          happydns.ServiceUsecase
 	serviceSpecs     happydns.ServiceSpecsUsecase
+	testPlugin       happydns.TestPluginUsecase
 	user             happydns.UserUsecase
 	zone             happydns.ZoneUsecase
 	zoneService      happydns.ZoneServiceUsecase
@@ -77,7 +79,7 @@ type App struct {
 	router     *gin.Engine
 	srv        *http.Server
 	insights   *insightsCollector
-	plugins    happydns.PluginManger
+	plugins    happydns.PluginManager
 	store      storage.Storage
 	usecases   Usecases
 }
@@ -138,6 +140,10 @@ func (a *App) SessionUsecase() happydns.SessionUsecase {
 	return a.usecases.session
 }
 
+func (a *App) TestPluginUsecase() happydns.TestPluginUsecase {
+	return a.usecases.testPlugin
+}
+
 func (a *App) UserUsecase() happydns.UserUsecase {
 	return a.usecases.user
 }
@@ -167,9 +173,9 @@ func NewApp(cfg *happydns.Options) *App {
 	app.initStorageEngine()
 	app.initNewsletter()
 	app.initInsights()
+	app.initPlugins()
 	app.initUsecases()
 	app.setupRouter()
-	app.initPlugins()
 
 	return app
 }
@@ -182,9 +188,9 @@ func NewAppWithStorage(cfg *happydns.Options, store storage.Storage) *App {
 
 	app.initMailer()
 	app.initNewsletter()
+	app.initPlugins()
 	app.initUsecases()
 	app.setupRouter()
-	app.initPlugins()
 
 	return app
 }
@@ -273,6 +279,7 @@ func (app *App) initUsecases() {
 	app.usecases.authUser = authUserService
 	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg)
 	app.usecases.session = sessionService
+	app.usecases.testPlugin = pluginUC.NewTestPluginUsecase(app.cfg, app.plugins)
 
 	app.usecases.orchestrator = orchestrator.NewOrchestrator(
 		domainLogService,

@@ -54,7 +54,7 @@ type FederationTesterResponse struct {
 	FederationOK bool `json:"FederationOK"`
 }
 
-func (p *MatrixTester) RunTest(options map[string]interface{}, meta map[string]string) (*happydns.PluginResult, error) {
+func (p *MatrixTester) RunTest(options happydns.PluginOptions, meta map[string]string) (*happydns.PluginResult, error) {
 	var domain string
 
 	if dn, ok := options["domain"]; ok {
