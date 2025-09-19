@@ -32,8 +32,10 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func (a *App) LoadPlugins() error {
-	a.pluginsIdx = map[string]happydns.TestPlugin{}
+func (a *App) initPlugins() error {
+	a.plugins = PluginManger{
+		testsIdx: map[string]happydns.TestPlugin{},
+	}
 
 	var ret error
 
@@ -51,7 +53,7 @@ func (a *App) LoadPlugins() error {
 
 			fname := path.Join(directory, file.Name())
 
-			err = a.loadPlugin(fname)
+			err = a.plugins.loadPlugin(fname)
 			if err != nil {
 				ret = errors.Join(ret, fmt.Errorf("unable to load plugin %q: %w", fname, err))
 			}
@@ -61,7 +63,12 @@ func (a *App) LoadPlugins() error {
 	return ret
 }
 
-func (a *App) loadPlugin(fname string) error {
+type PluginManger struct {
+	tests    []happydns.TestPlugin
+	testsIdx map[string]happydns.TestPlugin
+}
+
+func (m *PluginManger) loadPlugin(fname string) error {
 	p, err := plugin.Open(fname)
 	if err != nil {
 		return err
@@ -77,19 +84,27 @@ func (a *App) loadPlugin(fname string) error {
 		return err
 	}
 
-	a.plugins = append(a.plugins, myplugin)
+	m.plugins = append(m.plugins, myplugin)
 
 	// Index the plugin by its names
 	pluginNames := myplugin.PluginEnvName()
 	for _, name := range pluginNames {
-		if p, exists := a.pluginsIdx[name]; exists {
+		if p, exists := m.pluginsIdx[name]; exists {
 			log.Printf("Plugin name conflict: the plugin at %q tries to register the name %q but it's already registered by %q", fname, name, p.Version().Name)
 			continue
 		}
 
-		a.pluginsIdx[name] = myplugin
+		m.pluginsIdx[name] = myplugin
 	}
 
 	log.Printf("Plugin %s loaded (version %s)", myplugin.Version().Name, myplugin.Version().Version)
 	return nil
+}
+
+func (m *PluginManger) GetTestPlugins() ([]happydns.TestPlugin, error) {
+	return m.tests
+}
+
+func (m *PluginManger) GetTestPluginsIndex() (map[string]happydns.TestPlugin, error) {
+	return m.testsIdx
 }
