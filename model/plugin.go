@@ -55,3 +55,8 @@ type PluginResult struct {
 	StatusLine string             `json:"statusLine,omitempty"`
 	Report     interface{}        `json:"report"`
 }
+
+type PluginManager interface {
+	GetTestPlugins() ([]TestPlugin, error)
+	GetTestPluginsIndex() (map[string]TestPlugin, error)
+}
