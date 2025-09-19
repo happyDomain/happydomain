@@ -19,40 +19,27 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package happydns
+package route
 
-const (
-	CheckResultStatusKO CheckResultStatus = iota
-	CheckResultStatusWarn
-	CheckResultStatusInfo
-	CheckResultStatusOK
+import (
+	"github.com/gin-gonic/gin"
+
+	"git.happydns.org/happyDomain/internal/api-admin/controller"
 )
 
-type CheckResultStatus int
+func declareChecksRoutes(router *gin.RouterGroup, dep Dependencies) {
+	cc := controller.NewCheckerController(dep.Checker)
 
-type CheckOptions map[string]any
+	apiChecksRoutes := router.Group("/checks")
 
-type Checker interface {
-	ID() string
-	Name() string
-	Availability() CheckerAvailability
-	RunCheck(options CheckOptions, meta map[string]string) (*CheckResult, error)
-}
+	apiChecksRoutes.GET("", cc.ListCheckers)
 
-type CheckerResponse struct {
-	ID           string              `json:"id"`
-	Name         string              `json:"name"`
-	Availability CheckerAvailability `json:"availability"`
-}
+	apiCheckerRoutes := apiChecksRoutes.Group("/:cname")
+	apiCheckerRoutes.Use(cc.CheckerHandler)
 
-type CheckerAvailability struct {
-	ApplyToDomain    bool     `json:"applyToDomain,omitempty"`
-	ApplyToService   bool     `json:"applyToService,omitempty"`
-	LimitToProviders []string `json:"limitToProviders,omitempty"`
-	LimitToServices  []string `json:"limitToServices,omitempty"`
-}
+	apiCheckerRoutes.GET("", cc.GetCheckerStatus)
+	//apiCheckerRoutes.POST("", tpc.ChangeCheckerStatus)
 
-type CheckerUsecase interface {
-	GetChecker(string) (Checker, error)
-	ListCheckers() (*map[string]Checker, error)
+	//apiCheckerRoutes.GET("/options", tpc.ListCheckerOptions)
+	//apiCheckerRoutes.PUT("/options", tpc.ChangeCheckerOptions)
 }
