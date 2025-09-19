@@ -19,41 +19,34 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package happydns
+package check
 
-const (
-	CheckResultStatusUnknown CheckResultStatus = iota
-	CheckResultStatusCritical
-	CheckResultStatusWarn
-	CheckResultStatusInfo
-	CheckResultStatusOK
+import (
+	"fmt"
+
+	"git.happydns.org/happyDomain/checks"
+	"git.happydns.org/happyDomain/model"
 )
 
-type CheckResultStatus int
-
-type CheckOptions map[string]any
-
-type Checker interface {
-	ID() string
-	Name() string
-	Availability() CheckerAvailability
-	RunCheck(options CheckOptions, meta map[string]string) (*CheckResult, error)
+type checkerUsecase struct {
+	config *happydns.Options
 }
 
-type CheckerResponse struct {
-	ID           string              `json:"id"`
-	Name         string              `json:"name"`
-	Availability CheckerAvailability `json:"availability"`
+func NewCheckerUsecase(cfg *happydns.Options) happydns.CheckerUsecase {
+	return &checkerUsecase{
+		config: cfg,
+	}
 }
 
-type CheckerAvailability struct {
-	ApplyToDomain    bool     `json:"applyToDomain,omitempty"`
-	ApplyToService   bool     `json:"applyToService,omitempty"`
-	LimitToProviders []string `json:"limitToProviders,omitempty"`
-	LimitToServices  []string `json:"limitToServices,omitempty"`
+func (tu *checkerUsecase) GetChecker(cname string) (happydns.Checker, error) {
+	checker, err := checks.FindChecker(cname)
+	if err != nil {
+		return nil, fmt.Errorf("unable to find check named %q: %w", cname, err)
+	}
+
+	return checker, nil
 }
 
-type CheckerUsecase interface {
-	GetChecker(string) (Checker, error)
-	ListCheckers() (*map[string]Checker, error)
+func (tu *checkerUsecase) ListCheckers() (*map[string]happydns.Checker, error) {
+	return checks.GetCheckers(), nil
 }
