@@ -57,10 +57,21 @@ type CheckerIntervalProvider interface {
 	CheckInterval() CheckIntervalSpec
 }
 
+type CheckerResponse struct {
+	ID           string              `json:"id"`
+	Name         string              `json:"name"`
+	Availability CheckerAvailability `json:"availability"`
+}
+
 type CheckerAvailability struct {
 	ApplyToDomain    bool     `json:"applyToDomain,omitempty"`
 	ApplyToZone      bool     `json:"applyToZone,omitempty"`
 	ApplyToService   bool     `json:"applyToService,omitempty"`
 	LimitToProviders []string `json:"limitToProviders,omitempty"`
 	LimitToServices  []string `json:"limitToServices,omitempty"`
+}
+
+type CheckerUsecase interface {
+	GetChecker(string) (Checker, error)
+	ListCheckers() (*map[string]Checker, error)
 }
