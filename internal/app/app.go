@@ -38,6 +38,7 @@ import (
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/usecase"
 	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
+	checkUC "git.happydns.org/happyDomain/internal/usecase/check"
 	domainUC "git.happydns.org/happyDomain/internal/usecase/domain"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	"git.happydns.org/happyDomain/internal/usecase/orchestrator"
@@ -54,6 +55,7 @@ import (
 type Usecases struct {
 	authentication   happydns.AuthenticationUsecase
 	authUser         happydns.AuthUserUsecase
+	checker          happydns.CheckerUsecase
 	domain           happydns.DomainUsecase
 	domainLog        happydns.DomainLogUsecase
 	provider         happydns.ProviderUsecase
@@ -216,6 +218,7 @@ func (app *App) initUsecases() {
 	app.usecases.authUser = authUserService
 	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg)
 	app.usecases.session = sessionService
+	app.usecases.checker = checkUC.NewCheckerUsecase(app.cfg)
 
 	app.usecases.orchestrator = orchestrator.NewOrchestrator(
 		domainLogService,
