@@ -30,11 +30,13 @@ const (
 
 type PluginResultStatus int
 
+type PluginOptions map[string]any
+
 type TestPlugin interface {
 	PluginEnvName() []string
 	Version() PluginVersionInfo
 
-	RunTest(options map[string]interface{}, meta map[string]string) (*PluginResult, error)
+	RunTest(options PluginOptions, meta map[string]string) (*PluginResult, error)
 }
 
 type PluginVersionInfo struct {
@@ -59,4 +61,9 @@ type PluginResult struct {
 type PluginManager interface {
 	GetTestPlugins() []TestPlugin
 	GetTestPlugin(string) (TestPlugin, bool)
+}
+
+type TestPluginUsecase interface {
+	GetTestPlugin(string) (TestPlugin, error)
+	ListTestPlugins() ([]TestPlugin, error)
 }
