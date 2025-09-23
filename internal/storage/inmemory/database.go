@@ -44,6 +44,7 @@ type InMemoryStorage struct {
 	domainLogs          map[string]*happydns.DomainLogWithDomainId
 	domainLogsByDomains map[string][]*happydns.Identifier
 	providers           map[string]*happydns.ProviderMessage
+	pluginsCfg          map[string]*happydns.PluginOptions
 	sessions            map[string]*happydns.Session
 	users               map[string]*happydns.User
 	usersByEmail        map[string]*happydns.User

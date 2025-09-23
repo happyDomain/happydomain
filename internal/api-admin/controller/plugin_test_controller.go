@@ -54,6 +54,21 @@ func (uc *TestPluginController) TestPluginHandler(c *gin.Context) {
 	c.Next()
 }
 
+func (uc *TestPluginController) TestPluginOptionHandler(c *gin.Context) {
+	pname := c.Param("pname")
+	optname := c.Param("optname")
+
+	opts, err := uc.testPluginService.GetTestPluginOptions(pname, nil, nil, nil)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	c.Set("option", (*opts)[optname])
+
+	c.Next()
+}
+
 func (uc *TestPluginController) ListTestPlugins(c *gin.Context) {
 	plugins, err := uc.testPluginService.ListTestPlugins()
 	if err != nil {
@@ -74,5 +89,67 @@ func (uc *TestPluginController) ListTestPlugins(c *gin.Context) {
 func (uc *TestPluginController) GetTestPluginStatus(c *gin.Context) {
 	plugin := c.MustGet("plugin").(happydns.TestPlugin)
 
-	c.JSON(http.StatusOK, plugin.Version())
+	c.JSON(http.StatusOK, happydns.PluginStatus{
+		PluginVersionInfo: plugin.Version(),
+		Opts:              plugin.AvailableOptions(),
+	})
+}
+
+func (uc *TestPluginController) GetTestPluginOptions(c *gin.Context) {
+	pname := c.Param("pname")
+
+	opts, err := uc.testPluginService.GetTestPluginOptions(pname, nil, nil, nil)
+	happydns.ApiResponse(c, opts, err)
+}
+
+func (uc *TestPluginController) AddTestPluginOptions(c *gin.Context) {
+	pname := c.Param("pname")
+
+	var req happydns.SetPluginOptionsRequest
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	err = uc.testPluginService.OverwriteSomeTestPluginOptions(pname, nil, nil, nil, req.Options)
+	happydns.ApiResponse(c, true, err)
+}
+
+func (uc *TestPluginController) ChangeTestPluginOptions(c *gin.Context) {
+	pname := c.Param("pname")
+
+	var req happydns.SetPluginOptionsRequest
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	err = uc.testPluginService.SetTestPluginOptions(pname, nil, nil, nil, req.Options)
+	happydns.ApiResponse(c, true, err)
+}
+
+func (uc *TestPluginController) GetTestPluginOption(c *gin.Context) {
+	opt := c.MustGet("option")
+
+	happydns.ApiResponse(c, opt, nil)
+}
+
+func (uc *TestPluginController) SetTestPluginOption(c *gin.Context) {
+	pname := c.Param("pname")
+	optname := c.Param("optname")
+
+	var req interface{}
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	po := happydns.PluginOptions{}
+	po[optname] = req
+
+	err = uc.testPluginService.OverwriteSomeTestPluginOptions(pname, nil, nil, nil, po)
+	happydns.ApiResponse(c, true, err)
 }
