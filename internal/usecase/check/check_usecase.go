@@ -22,7 +22,10 @@
 package check
 
 import (
+	"cmp"
 	"fmt"
+	"maps"
+	"slices"
 
 	"git.happydns.org/happyDomain/checks"
 	"git.happydns.org/happyDomain/model"
@@ -30,11 +33,13 @@ import (
 
 type checkerUsecase struct {
 	config *happydns.Options
+	store  CheckerStorage
 }
 
-func NewCheckerUsecase(cfg *happydns.Options) happydns.CheckerUsecase {
+func NewCheckerUsecase(cfg *happydns.Options, store CheckerStorage) happydns.CheckerUsecase {
 	return &checkerUsecase{
 		config: cfg,
+		store:  store,
 	}
 }
 
@@ -47,6 +52,84 @@ func (tu *checkerUsecase) GetChecker(cname string) (happydns.Checker, error) {
 	return checker, nil
 }
 
+// copyNonEmpty copies key/value pairs from src into dst, skipping nil or empty-string values.
+func copyNonEmpty(dst, src happydns.CheckerOptions) {
+	for k, v := range src {
+		if v == nil {
+			continue
+		}
+		if s, ok := v.(string); ok && s == "" {
+			continue
+		}
+		dst[k] = v
+	}
+}
+
+func compareIdentifiers(a, b *happydns.Identifier) int {
+	if a == nil && b == nil {
+		return 0
+	}
+	if a == nil {
+		return -1
+	}
+	if b == nil {
+		return 1
+	}
+
+	if a.Equals(*b) {
+		return 0
+	}
+
+	return a.Compare(*b)
+}
+
+// CompareCheckerOptionsPositional defines the merge precedence ordering for
+// checker option configs: admin < user < domain < service.
+func CompareCheckerOptionsPositional(a, b *happydns.CheckerOptionsPositional) int {
+	if a.CheckName != b.CheckName {
+		return cmp.Compare(a.CheckName, b.CheckName)
+	}
+	if res := compareIdentifiers(a.UserId, b.UserId); res != 0 {
+		return res
+	}
+	if res := compareIdentifiers(a.DomainId, b.DomainId); res != 0 {
+		return res
+	}
+	return compareIdentifiers(a.ServiceId, b.ServiceId)
+}
+
+func (tu *checkerUsecase) GetCheckerOptions(cname string, userid *happydns.Identifier, domainid *happydns.Identifier, serviceid *happydns.Identifier) (*happydns.CheckerOptions, error) {
+	configs, err := tu.store.GetCheckerConfiguration(cname, userid, domainid, serviceid)
+	if err != nil {
+		return nil, err
+	}
+
+	slices.SortFunc(configs, CompareCheckerOptionsPositional)
+
+	opts := make(happydns.CheckerOptions)
+
+	for _, c := range configs {
+		maps.Copy(opts, c.Options)
+	}
+
+	return &opts, nil
+}
+
 func (tu *checkerUsecase) ListCheckers() (*map[string]happydns.Checker, error) {
 	return checks.GetCheckers(), nil
+}
+
+func (tu *checkerUsecase) SetCheckerOptions(cname string, userid *happydns.Identifier, domainid *happydns.Identifier, serviceid *happydns.Identifier, opts happydns.CheckerOptions) error {
+	return tu.store.UpdateCheckerConfiguration(cname, userid, domainid, serviceid, opts)
+}
+
+func (tu *checkerUsecase) OverwriteSomeCheckerOptions(cname string, userid *happydns.Identifier, domainid *happydns.Identifier, serviceid *happydns.Identifier, opts happydns.CheckerOptions) error {
+	current, err := tu.GetCheckerOptions(cname, userid, domainid, serviceid)
+	if err != nil {
+		return err
+	}
+
+	maps.Copy(*current, opts)
+
+	return tu.store.UpdateCheckerConfiguration(cname, userid, domainid, serviceid, *current)
 }
