@@ -22,7 +22,9 @@
 package forms // import "git.happydns.org/happyDomain/forms"
 
 import (
+	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"slices"
 	"strings"
@@ -78,6 +80,64 @@ func GenField(field reflect.StructField) (f *happydns.Field) {
 		}
 	}
 	return
+}
+
+// ValidateFieldValue checks that value has the correct Go type for the
+// field's documented type (as deserialized from JSON).
+func ValidateFieldValue(field happydns.Field, value any) error {
+	if field.Required && value == nil {
+		return fmt.Errorf("required field")
+	}
+
+	switch field.Type {
+	case "string":
+		s, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("expected string, got %T", value)
+		}
+
+		if len(field.Choices) > 0 {
+			if !slices.Contains(field.Choices, s) {
+				return fmt.Errorf("value %q is not a valid choice (valid: %v)", s, field.Choices)
+			}
+		}
+	case "uint":
+		switch v := value.(type) {
+		case float64:
+			if v < 0 || v != math.Trunc(v) {
+				return fmt.Errorf("expected unsigned integer, got %v", v)
+			}
+		case json.Number:
+			n, err := v.Int64()
+			if err != nil {
+				return fmt.Errorf("expected unsigned integer, got %v", v)
+			}
+			if n < 0 {
+				return fmt.Errorf("expected unsigned integer, got %v", n)
+			}
+		default:
+			return fmt.Errorf("expected unsigned integer, got %T", value)
+		}
+	case "int":
+		switch v := value.(type) {
+		case float64:
+			if v != math.Trunc(v) {
+				return fmt.Errorf("expected integer, got %v", v)
+			}
+		case json.Number:
+			if _, err := v.Int64(); err != nil {
+				return fmt.Errorf("expected integer, got %v", v)
+			}
+		default:
+			return fmt.Errorf("expected integer, got %T", value)
+		}
+	case "bool":
+		if _, ok := value.(bool); !ok {
+			return fmt.Errorf("expected bool, got %T", value)
+		}
+	}
+
+	return nil
 }
 
 // ValidateStructValues validates the field values of a struct against the

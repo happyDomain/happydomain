@@ -36,11 +36,14 @@ const (
 
 type CheckResultStatus int
 
+type CheckerOptions map[string]any
+
 type Checker interface {
 	ID() string
 	Name() string
 	Availability() CheckerAvailability
-	RunCheck(ctx context.Context, options map[string]any, meta map[string]string) (*CheckResult, error)
+	Options() CheckerOptionsDocumentation
+	RunCheck(ctx context.Context, options CheckerOptions, meta map[string]string) (*CheckResult, error)
 }
 
 // CheckIntervalSpec describes the scheduling bounds for a checker.
@@ -58,9 +61,23 @@ type CheckerIntervalProvider interface {
 }
 
 type CheckerResponse struct {
-	ID           string              `json:"id"`
-	Name         string              `json:"name"`
-	Availability CheckerAvailability `json:"availability"`
+	ID           string                      `json:"id"`
+	Name         string                      `json:"name"`
+	Availability CheckerAvailability         `json:"availability"`
+	Options      CheckerOptionsDocumentation `json:"options"`
+}
+
+type SetCheckerOptionsRequest struct {
+	Options CheckerOptions `json:"options"`
+}
+
+type CheckerOptionsPositional struct {
+	CheckName string
+	UserId    *Identifier
+	DomainId  *Identifier
+	ServiceId *Identifier
+
+	Options CheckerOptions
 }
 
 type CheckerAvailability struct {
@@ -71,7 +88,21 @@ type CheckerAvailability struct {
 	LimitToServices  []string `json:"limitToServices,omitempty"`
 }
 
+type CheckerOptionsDocumentation struct {
+	RunOpts     []CheckerOptionDocumentation `json:"runOpts,omitempty"`
+	ServiceOpts []CheckerOptionDocumentation `json:"serviceOpts,omitempty"`
+	DomainOpts  []CheckerOptionDocumentation `json:"domainOpts,omitempty"`
+	UserOpts    []CheckerOptionDocumentation `json:"userOpts,omitempty"`
+	AdminOpts   []CheckerOptionDocumentation `json:"adminOpts,omitempty"`
+}
+
+type CheckerOptionDocumentation Field
+
 type CheckerUsecase interface {
 	GetChecker(string) (Checker, error)
+	GetCheckerOptions(string, *Identifier, *Identifier, *Identifier) (*CheckerOptions, error)
 	ListCheckers() (*map[string]Checker, error)
+	OverwriteSomeCheckerOptions(string, *Identifier, *Identifier, *Identifier, CheckerOptions) error
+	SetCheckerOptions(string, *Identifier, *Identifier, *Identifier, CheckerOptions) error
+	ValidateCheckerOptions(string, CheckerOptions) error
 }

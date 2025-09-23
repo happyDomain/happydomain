@@ -40,6 +40,7 @@ type InMemoryStorage struct {
 	data                map[string][]byte // Generic key-value store for KVStorage interface
 	authUsers           map[string]*happydns.UserAuth
 	authUsersByEmail    map[string]happydns.Identifier
+	checksCfg           map[string]*happydns.CheckerOptions
 	domains             map[string]*happydns.Domain
 	domainLogs          map[string]*happydns.DomainLogWithDomainId
 	domainLogsByDomains map[string][]*happydns.Identifier
@@ -58,6 +59,7 @@ func NewInMemoryStorage() (*InMemoryStorage, error) {
 		data:                make(map[string][]byte),
 		authUsers:           make(map[string]*happydns.UserAuth),
 		authUsersByEmail:    make(map[string]happydns.Identifier),
+		checksCfg:           make(map[string]*happydns.CheckerOptions),
 		domains:             make(map[string]*happydns.Domain),
 		domainLogs:          make(map[string]*happydns.DomainLogWithDomainId),
 		domainLogsByDomains: make(map[string][]*happydns.Identifier),
