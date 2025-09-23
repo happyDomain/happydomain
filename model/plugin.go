@@ -32,9 +32,23 @@ type PluginResultStatus int
 
 type PluginOptions map[string]interface{}
 
+type SetPluginOptionsRequest struct {
+	Options PluginOptions `json:"options"`
+}
+
+type PluginOptionsPositional struct {
+	PluginName string
+	UserId     *Identifier
+	DomainId   *Identifier
+	ServiceId  *Identifier
+
+	Options PluginOptions
+}
+
 type TestPlugin interface {
 	PluginEnvName() []string
 	Version() PluginVersionInfo
+	AvailableOptions() PluginOptionsDocumentation
 
 	RunTest(options PluginOptions, meta map[string]string) (*PluginResult, error)
 }
@@ -52,6 +66,23 @@ type PluginAvailability struct {
 	LimitToServices  []string `json:"limitToServices,omitempty"`
 }
 
+type PluginOptionsDocumentation struct {
+	RunOpts     []PluginOptionDocumentation   `json:"runOpts,omitempty"`
+	ServiceOpts []PluginOptionDocumentation   `json:"serviceOpts,omitempty"`
+	DomainOpts  []PluginOptionDocumentation   `json:"domainOpts,omitempty"`
+	UserOpts    []PluginOptionDocumentation   `json:"userOpts,omitempty"`
+	AdminOpts   []PluginOptionDocumentation   `json:"adminOpts,omitempty"`
+	Variables   []PluginVariableDocumentation `json:"vars,omitempty"`
+}
+
+type PluginOptionDocumentation Field
+type PluginVariableDocumentation Field
+
+type PluginStatus struct {
+	PluginVersionInfo
+	Opts PluginOptionsDocumentation `json:"options"`
+}
+
 type PluginResult struct {
 	Status     PluginResultStatus `json:"status"`
 	StatusLine string             `json:"statusLine,omitempty"`
@@ -65,5 +96,8 @@ type PluginManager interface {
 
 type TestPluginUsecase interface {
 	GetTestPlugin(string) (TestPlugin, error)
+	GetTestPluginOptions(string, *Identifier, *Identifier, *Identifier) (*PluginOptions, error)
 	ListTestPlugins() ([]TestPlugin, error)
+	OverwriteSomeTestPluginOptions(string, *Identifier, *Identifier, *Identifier, PluginOptions) error
+	SetTestPluginOptions(string, *Identifier, *Identifier, *Identifier, PluginOptions) error
 }

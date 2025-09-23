@@ -31,6 +31,31 @@ func (p *MatrixTester) Version() happydns.PluginVersionInfo {
 	}
 }
 
+func (p *MatrixTester) AvailableOptions() happydns.PluginOptionsDocumentation {
+	return happydns.PluginOptionsDocumentation{
+		RunOpts: []happydns.PluginOptionDocumentation{
+			happydns.PluginOptionDocumentation{
+				Id:          "serviceDomain",
+				Type:        "string",
+				Label:       "Matrix domain",
+				Placeholder: "matrix.org",
+				Default:     "matrix.org",
+				Required:    true,
+			},
+		},
+		AdminOpts: []happydns.PluginOptionDocumentation{
+			happydns.PluginOptionDocumentation{
+				Id:          "federationTesterServer",
+				Type:        "string",
+				Label:       "Federation Tester Server",
+				Placeholder: "https://federationtester.matrix.org/",
+				Default:     "https://federationtester.matrix.org/",
+				Required:    true,
+			},
+		},
+	}
+}
+
 type FederationTesterResponse struct {
 	WellKnownResult struct {
 		Server string `json:"m.server"`
