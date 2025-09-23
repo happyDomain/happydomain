@@ -46,6 +46,12 @@ func declareTestPluginsRoutes(router *gin.RouterGroup, dep Dependencies) {
 	apiTestPluginRoutes.GET("", tpc.GetTestPluginStatus)
 	//apiTestPluginRoutes.POST("", tpc.ChangeTestPluginStatus)
 
-	//apiTestPluginRoutes.GET("/options", tpc.ListTestPluginOptions)
-	//apiTestPluginRoutes.PUT("/options", tpc.ChangeTestPluginOptions)
+	apiTestPluginRoutes.GET("/options", tpc.GetTestPluginOptions)
+	apiTestPluginRoutes.POST("/options", tpc.AddTestPluginOptions)
+	apiTestPluginRoutes.PUT("/options", tpc.ChangeTestPluginOptions)
+
+	apiTestPluginOptionsRoutes := apiTestPluginRoutes.Group("/options/:optname")
+	apiTestPluginOptionsRoutes.Use(tpc.TestPluginOptionHandler)
+	apiTestPluginOptionsRoutes.GET("", tpc.GetTestPluginOption)
+	apiTestPluginOptionsRoutes.PUT("", tpc.SetTestPluginOption)
 }
