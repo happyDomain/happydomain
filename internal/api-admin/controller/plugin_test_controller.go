@@ -55,6 +55,22 @@ func (uc *TestPluginController) TestPluginHandler(c *gin.Context) {
 	c.Next()
 }
 
+// TestPluginOptionHandler is a middleware that retrieves a specific plugin option and sets it in the context.
+func (uc *TestPluginController) TestPluginOptionHandler(c *gin.Context) {
+	pname := c.Param("pname")
+	optname := c.Param("optname")
+
+	opts, err := uc.testPluginService.GetTestPluginOptions(pname, nil, nil, nil)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	c.Set("option", (*opts)[optname])
+
+	c.Next()
+}
+
 // ListTestPlugins retrieves all available test plugins.
 //
 //	@Summary		List all test plugins
@@ -98,5 +114,140 @@ func (uc *TestPluginController) ListTestPlugins(c *gin.Context) {
 func (uc *TestPluginController) GetTestPluginStatus(c *gin.Context) {
 	plugin := c.MustGet("plugin").(happydns.TestPlugin)
 
-	c.JSON(http.StatusOK, plugin.Version())
+	c.JSON(http.StatusOK, happydns.PluginStatus{
+		PluginVersionInfo: plugin.Version(),
+		Opts:              plugin.AvailableOptions(),
+	})
+}
+
+// GetTestPluginOptions retrieves all options for a test plugin.
+//
+//	@Summary		Get test plugin options
+//	@Schemes
+//	@Description	Retrieves all configuration options for a specific test plugin.
+//	@Tags			plugins
+//	@Accept			json
+//	@Produce		json
+//	@Param			pname	path		string	true	"Plugin name"
+//	@Success		200		{object}	happydns.PluginOptions	"Plugin options as key-value pairs"
+//	@Failure		404		{object}	happydns.ErrorResponse	"Plugin not found"
+//	@Failure		500		{object}	happydns.ErrorResponse	"Internal server error"
+//	@Router			/plugins/tests/{pname}/options [get]
+func (uc *TestPluginController) GetTestPluginOptions(c *gin.Context) {
+	pname := c.Param("pname")
+
+	opts, err := uc.testPluginService.GetTestPluginOptions(pname, nil, nil, nil)
+	happydns.ApiResponse(c, opts, err)
+}
+
+// AddTestPluginOptions adds or overwrites specific options for a test plugin.
+//
+//	@Summary		Add test plugin options
+//	@Schemes
+//	@Description	Adds or overwrites specific configuration options for a test plugin without affecting other options.
+//	@Tags			plugins
+//	@Accept			json
+//	@Produce		json
+//	@Param			pname	path		string								true	"Plugin name"
+//	@Param			body	body		happydns.SetPluginOptionsRequest	true	"Options to add or overwrite"
+//	@Success		200		{object}	bool								"Success status"
+//	@Failure		400		{object}	happydns.ErrorResponse				"Invalid request body"
+//	@Failure		404		{object}	happydns.ErrorResponse				"Plugin not found"
+//	@Failure		500		{object}	happydns.ErrorResponse				"Internal server error"
+//	@Router			/plugins/tests/{pname}/options [post]
+func (uc *TestPluginController) AddTestPluginOptions(c *gin.Context) {
+	pname := c.Param("pname")
+
+	var req happydns.SetPluginOptionsRequest
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	err = uc.testPluginService.OverwriteSomeTestPluginOptions(pname, nil, nil, nil, req.Options)
+	happydns.ApiResponse(c, true, err)
+}
+
+// ChangeTestPluginOptions replaces all options for a test plugin.
+//
+//	@Summary		Replace test plugin options
+//	@Schemes
+//	@Description	Replaces all configuration options for a test plugin with the provided options.
+//	@Tags			plugins
+//	@Accept			json
+//	@Produce		json
+//	@Param			pname	path		string								true	"Plugin name"
+//	@Param			body	body		happydns.SetPluginOptionsRequest	true	"New complete set of options"
+//	@Success		200		{object}	bool								"Success status"
+//	@Failure		400		{object}	happydns.ErrorResponse				"Invalid request body"
+//	@Failure		404		{object}	happydns.ErrorResponse				"Plugin not found"
+//	@Failure		500		{object}	happydns.ErrorResponse				"Internal server error"
+//	@Router			/plugins/tests/{pname}/options [put]
+func (uc *TestPluginController) ChangeTestPluginOptions(c *gin.Context) {
+	pname := c.Param("pname")
+
+	var req happydns.SetPluginOptionsRequest
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	err = uc.testPluginService.SetTestPluginOptions(pname, nil, nil, nil, req.Options)
+	happydns.ApiResponse(c, true, err)
+}
+
+// GetTestPluginOption retrieves a specific option value for a test plugin.
+//
+//	@Summary		Get test plugin option
+//	@Schemes
+//	@Description	Retrieves the value of a specific configuration option for a test plugin.
+//	@Tags			plugins
+//	@Accept			json
+//	@Produce		json
+//	@Param			pname		path		string	true	"Plugin name"
+//	@Param			optname		path		string	true	"Option name"
+//	@Success		200			{object}	object	"Option value (type varies)"
+//	@Failure		404			{object}	happydns.ErrorResponse	"Plugin not found"
+//	@Failure		500			{object}	happydns.ErrorResponse	"Internal server error"
+//	@Router			/plugins/tests/{pname}/options/{optname} [get]
+func (uc *TestPluginController) GetTestPluginOption(c *gin.Context) {
+	opt := c.MustGet("option")
+
+	happydns.ApiResponse(c, opt, nil)
+}
+
+// SetTestPluginOption sets or updates a specific option value for a test plugin.
+//
+//	@Summary		Set test plugin option
+//	@Schemes
+//	@Description	Sets or updates the value of a specific configuration option for a test plugin.
+//	@Tags			plugins
+//	@Accept			json
+//	@Produce		json
+//	@Param			pname		path		string	true	"Plugin name"
+//	@Param			optname		path		string	true	"Option name"
+//	@Param			body		body		object	true	"Option value (type varies by option)"
+//	@Success		200			{object}	bool	"Success status"
+//	@Failure		400			{object}	happydns.ErrorResponse	"Invalid request body"
+//	@Failure		404			{object}	happydns.ErrorResponse	"Plugin not found"
+//	@Failure		500			{object}	happydns.ErrorResponse	"Internal server error"
+//	@Router			/plugins/tests/{pname}/options/{optname} [put]
+func (uc *TestPluginController) SetTestPluginOption(c *gin.Context) {
+	pname := c.Param("pname")
+	optname := c.Param("optname")
+
+	var req interface{}
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	po := happydns.PluginOptions{}
+	po[optname] = req
+
+	err = uc.testPluginService.OverwriteSomeTestPluginOptions(pname, nil, nil, nil, po)
+	happydns.ApiResponse(c, true, err)
 }
