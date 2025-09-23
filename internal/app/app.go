@@ -218,7 +218,7 @@ func (app *App) initUsecases() {
 	app.usecases.authUser = authUserService
 	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg)
 	app.usecases.session = sessionService
-	app.usecases.checker = checkUC.NewCheckerUsecase(app.cfg)
+	app.usecases.checker = checkUC.NewCheckerUsecase(app.cfg, app.store)
 
 	app.usecases.orchestrator = orchestrator.NewOrchestrator(
 		domainLogService,

@@ -40,6 +40,12 @@ func declareChecksRoutes(router *gin.RouterGroup, dep Dependencies) {
 	apiCheckerRoutes.GET("", cc.GetCheckerStatus)
 	//apiCheckerRoutes.POST("", tpc.ChangeCheckerStatus)
 
-	//apiCheckerRoutes.GET("/options", tpc.ListCheckerOptions)
-	//apiCheckerRoutes.PUT("/options", tpc.ChangeCheckerOptions)
+	apiCheckerRoutes.GET("/options", cc.GetCheckerOptions)
+	apiCheckerRoutes.POST("/options", cc.AddCheckerOptions)
+	apiCheckerRoutes.PUT("/options", cc.ChangeCheckerOptions)
+
+	apiCheckerOptionsRoutes := apiCheckerRoutes.Group("/options/:optname")
+	apiCheckerOptionsRoutes.Use(cc.CheckerOptionHandler)
+	apiCheckerOptionsRoutes.GET("", cc.GetCheckerOption)
+	apiCheckerOptionsRoutes.PUT("", cc.SetCheckerOption)
 }
