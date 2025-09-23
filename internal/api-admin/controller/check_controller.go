@@ -55,6 +55,22 @@ func (uc *CheckerController) CheckerHandler(c *gin.Context) {
 	c.Next()
 }
 
+// CheckerOptionHandler is a middleware that retrieves a specific option and sets it in the context.
+func (uc *CheckerController) CheckerOptionHandler(c *gin.Context) {
+	cname := c.Param("cname")
+	optname := c.Param("optname")
+
+	opts, err := uc.checkerService.GetCheckerOptions(cname, nil, nil, nil)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	c.Set("option", (*opts)[optname])
+
+	c.Next()
+}
+
 // ListCheckers retrieves all available checks.
 //
 //	@Summary		List checkers (admin)
@@ -73,7 +89,7 @@ func (uc *CheckerController) ListCheckers(c *gin.Context) {
 		return
 	}
 
-	var res map[string]happydns.CheckerResponse
+	res := map[string]happydns.CheckerResponse{}
 
 	for name, checker := range *checkers {
 		res[name] = happydns.CheckerResponse{
@@ -108,4 +124,136 @@ func (uc *CheckerController) GetCheckerStatus(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+// GetCheckerOptions retrieves all options for a check.
+//
+//	@Summary		Get check options (admin)
+//	@Schemes
+//	@Description	Retrieves all configuration options for a specific check.
+//	@Tags			checks
+//	@Accept			json
+//	@Produce		json
+//	@Param			cname	path		string	true	"Checker name"
+//	@Success		200		{object}	happydns.CheckerOptions	"Checker options as key-value pairs"
+//	@Failure		404		{object}	happydns.ErrorResponse	"Checker not found"
+//	@Failure		500		{object}	happydns.ErrorResponse	"Internal server error"
+//	@Router			/checks/{cname}/options [get]
+func (uc *CheckerController) GetCheckerOptions(c *gin.Context) {
+	cname := c.Param("cname")
+
+	opts, err := uc.checkerService.GetCheckerOptions(cname, nil, nil, nil)
+	happydns.ApiResponse(c, opts, err)
+}
+
+// AddCheckerOptions adds or overwrites specific admin-level options for a check.
+//
+//	@Summary		Add checker options
+//	@Schemes
+//	@Description	Adds or overwrites specific configuration options for a checker without affecting other options.
+//	@Tags			checks
+//	@Accept			json
+//	@Produce		json
+//	@Param			cname	path		string								true	"Checker name"
+//	@Param			body	body		happydns.SetCheckerOptionsRequest	true	"Options to add or overwrite"
+//	@Success		200		{object}	bool								"Success status"
+//	@Failure		400		{object}	happydns.ErrorResponse				"Invalid request body"
+//	@Failure		404		{object}	happydns.ErrorResponse				"Checker not found"
+//	@Failure		500		{object}	happydns.ErrorResponse				"Internal server error"
+//	@Router			/checks/{cname}/options [post]
+func (uc *CheckerController) AddCheckerOptions(c *gin.Context) {
+	cname := c.Param("cname")
+
+	var req happydns.SetCheckerOptionsRequest
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	err = uc.checkerService.OverwriteSomeCheckerOptions(cname, nil, nil, nil, req.Options)
+	happydns.ApiResponse(c, true, err)
+}
+
+// ChangeCheckerOptions replaces all options for a checker.
+//
+//	@Summary		Replace checker options (admin)
+//	@Schemes
+//	@Description	Replaces all configuration options for a check with the provided options.
+//	@Tags			checks
+//	@Accept			json
+//	@Produce		json
+//	@Param			cname	path		string								true	"Checker name"
+//	@Param			body	body		happydns.SetCheckerOptionsRequest	true	"New complete set of options"
+//	@Success		200		{object}	bool								"Success status"
+//	@Failure		400		{object}	happydns.ErrorResponse				"Invalid request body"
+//	@Failure		404		{object}	happydns.ErrorResponse				"Checker not found"
+//	@Failure		500		{object}	happydns.ErrorResponse				"Internal server error"
+//	@Router			/checks/{cname}/options [put]
+func (uc *CheckerController) ChangeCheckerOptions(c *gin.Context) {
+	cname := c.Param("cname")
+
+	var req happydns.SetCheckerOptionsRequest
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	err = uc.checkerService.SetCheckerOptions(cname, nil, nil, nil, req.Options)
+	happydns.ApiResponse(c, true, err)
+}
+
+// GetCheckerOption retrieves a specific option value for a checker.
+//
+//	@Summary		Get checker option (admin)
+//	@Schemes
+//	@Description	Retrieves the value of a specific configuration option for a checker.
+//	@Tags			checks
+//	@Accept			json
+//	@Produce		json
+//	@Param			cname		path		string	true	"Checker name"
+//	@Param			optname		path		string	true	"Option name"
+//	@Success		200			{object}	object	"Option value (type varies)"
+//	@Failure		404			{object}	happydns.ErrorResponse	"Checker not found"
+//	@Failure		500			{object}	happydns.ErrorResponse	"Internal server error"
+//	@Router			/checks/{cname}/options/{optname} [get]
+func (uc *CheckerController) GetCheckerOption(c *gin.Context) {
+	opt := c.MustGet("option")
+
+	happydns.ApiResponse(c, opt, nil)
+}
+
+// SetCheckerOption sets or updates a specific option value for a checker.
+//
+//	@Summary		Set checker option (admin)
+//	@Schemes
+//	@Description	Sets or updates the value of a specific configuration option for a checker.
+//	@Tags			checks
+//	@Accept			json
+//	@Produce		json
+//	@Param			cname		path		string	true	"Checker name"
+//	@Param			optname		path		string	true	"Option name"
+//	@Param			body		body		object	true	"Option value (type varies by option)"
+//	@Success		200			{object}	bool	"Success status"
+//	@Failure		400			{object}	happydns.ErrorResponse	"Invalid request body"
+//	@Failure		404			{object}	happydns.ErrorResponse	"Checker not found"
+//	@Failure		500			{object}	happydns.ErrorResponse	"Internal server error"
+//	@Router			/checks/{cname}/options/{optname} [put]
+func (uc *CheckerController) SetCheckerOption(c *gin.Context) {
+	cname := c.Param("cname")
+	optname := c.Param("optname")
+
+	var req any
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	po := happydns.CheckerOptions{}
+	po[optname] = req
+
+	err = uc.checkerService.OverwriteSomeCheckerOptions(cname, nil, nil, nil, po)
+	happydns.ApiResponse(c, true, err)
 }

@@ -27,6 +27,7 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"errors"
+	"slices"
 )
 
 const IDENTIFIER_LEN = 16
@@ -53,6 +54,10 @@ func (i *Identifier) IsEmpty() bool {
 
 func (i Identifier) Equals(other Identifier) bool {
 	return bytes.Equal(i, other)
+}
+
+func (i Identifier) Compare(other Identifier) int {
+	return slices.Compare(i, other)
 }
 
 func (i *Identifier) String() string {
