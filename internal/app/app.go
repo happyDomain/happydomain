@@ -244,8 +244,8 @@ func (app *App) initInsights() {
 }
 
 func (app *App) initUsecases() {
-	sessionService := sessionUC.NewSessionUsecases(app.store)
-	authUserService := authuserUC.NewAuthUserUsecases(app.cfg, app.mailer, app.store, sessionService.CloseUserSessionsUC)
+	sessionService := sessionUC.NewService(app.store)
+	authUserService := authuserUC.NewAuthUserUsecases(app.cfg, app.mailer, app.store, sessionService)
 	domainLogService := domainlogUC.NewDomainLogUsecases(app.store)
 	providerService := providerUC.NewRestrictedProviderUsecases(app.cfg, app.store)
 	serviceService := serviceUC.NewServiceUsecases()
@@ -263,7 +263,7 @@ func (app *App) initUsecases() {
 	app.usecases.domain = domainService
 	app.usecases.zoneService = zoneServiceUC.NewZoneServiceUsecases(domainService.UpdateDomainUC, zoneService.CreateZoneUC, serviceService.ValidateServiceUC, app.store)
 
-	app.usecases.user = userUC.NewUserUsecases(app.store, app.newsletter, authUserService.GetAuthUserUC, sessionService.CloseUserSessionsUC)
+	app.usecases.user = userUC.NewUserUsecases(app.store, app.newsletter, authUserService.GetAuthUserUC, sessionService)
 	app.usecases.authentication = usecase.NewAuthenticationUsecase(app.cfg, app.store, app.usecases.user)
 	app.usecases.authUser = authUserService
 	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg)

@@ -105,7 +105,7 @@ func (s *SessionStore) Save(r *http.Request, w http.ResponseWriter, session *ses
 		s.storage.DeleteSession(session.ID)
 	} else {
 		if session.ID == "" {
-			session.ID = sessionUC.NewSessionId()
+			session.ID = sessionUC.NewSessionID()
 		}
 		encrypted, err := securecookie.EncodeMulti(session.Name(), session.ID, s.Codecs...)
 		if err != nil {
