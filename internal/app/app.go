@@ -246,7 +246,7 @@ func (app *App) initInsights() {
 func (app *App) initUsecases() {
 	sessionService := sessionUC.NewService(app.store)
 	authUserService := authuserUC.NewAuthUserUsecases(app.cfg, app.mailer, app.store, sessionService)
-	domainLogService := domainlogUC.NewDomainLogUsecases(app.store)
+	domainLogService := domainlogUC.NewService(app.store)
 	providerService := providerUC.NewRestrictedProviderUsecases(app.cfg, app.store)
 	serviceService := serviceUC.NewServiceUsecases()
 	zoneService := zoneUC.NewZoneUsecases(app.store, serviceService)
@@ -259,7 +259,7 @@ func (app *App) initUsecases() {
 	app.usecases.zone = zoneService
 	app.usecases.domainLog = domainLogService
 
-	domainService := domainUC.NewDomainUsecases(app.store, providerService.GetProviderUC, zoneService.GetZoneUC, providerService.DomainExistenceUC, domainLogService.CreateDomainLogUC)
+	domainService := domainUC.NewDomainUsecases(app.store, providerService.GetProviderUC, zoneService.GetZoneUC, providerService.DomainExistenceUC, domainLogService)
 	app.usecases.domain = domainService
 	app.usecases.zoneService = zoneServiceUC.NewZoneServiceUsecases(domainService.UpdateDomainUC, zoneService.CreateZoneUC, serviceService.ValidateServiceUC, app.store)
 
@@ -270,7 +270,7 @@ func (app *App) initUsecases() {
 	app.usecases.session = sessionService
 
 	app.usecases.orchestrator = orchestrator.NewOrchestrator(
-		domainLogService.CreateDomainLogUC,
+		domainLogService,
 		domainService.UpdateDomainUC,
 		providerService.GetProviderUC,
 		zoneService.ListRecordsUC,

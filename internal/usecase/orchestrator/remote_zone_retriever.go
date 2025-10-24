@@ -30,14 +30,14 @@ import (
 )
 
 type RemoteZoneImporterUsecase struct {
-	appendDomainLog *domainlogUC.CreateDomainLogUsecase
+	appendDomainLog domainlogUC.DomainLogAppender
 	getProvider     *providerUC.GetProviderUsecase
 	zoneImporter    *ZoneImporterUsecase
 	zoneRetriever   *providerUC.ZoneRetrieverUsecase
 }
 
 func NewRemoteZoneImporterUsecase(
-	appendDomainLog *domainlogUC.CreateDomainLogUsecase,
+	appendDomainLog domainlogUC.DomainLogAppender,
 	getProvider *providerUC.GetProviderUsecase,
 	zoneImporter *ZoneImporterUsecase,
 	zoneRetriever *providerUC.ZoneRetrieverUsecase,
@@ -68,7 +68,7 @@ func (uc *RemoteZoneImporterUsecase) Import(user *happydns.User, domain *happydn
 	}
 
 	if uc.appendDomainLog != nil {
-		uc.appendDomainLog.Create(domain, happydns.NewDomainLog(user, happydns.LOG_INFO, fmt.Sprintf("Zone imported from provider API: %s", myZone.Id.String())))
+		uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_INFO, fmt.Sprintf("Zone imported from provider API: %s", myZone.Id.String())))
 	}
 
 	return myZone, nil

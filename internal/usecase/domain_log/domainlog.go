@@ -28,18 +28,30 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-type ListDomainLogsUsecase struct {
+// DomainLogAppender is a minimal interface for appending domain logs.
+// Used by orchestrator to decouple from the full Service.
+type DomainLogAppender interface {
+	AppendDomainLog(domain *happydns.Domain, entry *happydns.DomainLog) error
+}
+
+type Service struct {
 	store DomainLogStorage
 }
 
-func NewListDomainLogsUsecase(store DomainLogStorage) *ListDomainLogsUsecase {
-	return &ListDomainLogsUsecase{
+func NewService(store DomainLogStorage) *Service {
+	return &Service{
 		store: store,
 	}
 }
 
-func (uc *ListDomainLogsUsecase) List(domain *happydns.Domain) ([]*happydns.DomainLog, error) {
-	logs, err := uc.store.ListDomainLogs(domain)
+// AppendDomainLog creates a new domain log entry.
+func (s *Service) AppendDomainLog(domain *happydns.Domain, entry *happydns.DomainLog) error {
+	return s.store.CreateDomainLog(domain, entry)
+}
+
+// ListDomainLogs retrieves all logs for a domain, sorted by date (newest first).
+func (s *Service) ListDomainLogs(domain *happydns.Domain) ([]*happydns.DomainLog, error) {
+	logs, err := s.store.ListDomainLogs(domain)
 	if err != nil {
 		return nil, happydns.InternalError{
 			Err:         fmt.Errorf("unable to retrieve logs for domain %q (did=%s): %w", domain.DomainName, domain.Id.String(), err),
@@ -53,4 +65,14 @@ func (uc *ListDomainLogsUsecase) List(domain *happydns.Domain) ([]*happydns.Doma
 	})
 
 	return logs, nil
+}
+
+// UpdateDomainLog updates an existing domain log entry.
+func (s *Service) UpdateDomainLog(domain *happydns.Domain, log *happydns.DomainLog) error {
+	return s.store.UpdateDomainLog(domain, log)
+}
+
+// DeleteDomainLog removes a domain log entry.
+func (s *Service) DeleteDomainLog(domain *happydns.Domain, log *happydns.DomainLog) error {
+	return s.store.DeleteDomainLog(domain, log)
 }

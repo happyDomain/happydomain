@@ -41,7 +41,7 @@ func NewDomainUsecases(
 	getProviderUC *providerUC.GetProviderUsecase,
 	getZoneUC *zoneUC.GetZoneUsecase,
 	domainExistenceUC *providerUC.DomainExistenceUsecase,
-	domainLogAppenderUC *domainLogUC.CreateDomainLogUsecase,
+	domainLogAppenderUC domainLogUC.DomainLogAppender,
 ) *Service {
 	getDomainUC := NewGetDomainUsecase(store, getZoneUC)
 

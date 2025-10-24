@@ -35,7 +35,7 @@ type Orchestrator struct {
 }
 
 func NewOrchestrator(
-	appendDomainLog *domainlogUC.CreateDomainLogUsecase,
+	appendDomainLog domainlogUC.DomainLogAppender,
 	domainUpdater *domainUC.UpdateDomainUsecase,
 	getProvider *providerUC.GetProviderUsecase,
 	listRecords *zoneUC.ListRecordsUsecase,

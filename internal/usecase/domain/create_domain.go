@@ -31,12 +31,12 @@ import (
 
 type CreateDomainUsecase struct {
 	domainExistence   *providerUC.DomainExistenceUsecase
-	domainLogAppender *domainLogUC.CreateDomainLogUsecase
+	domainLogAppender domainLogUC.DomainLogAppender
 	getProvider       *providerUC.GetProviderUsecase
 	store             DomainStorage
 }
 
-func NewCreateDomainUsecase(store DomainStorage, getProvider *providerUC.GetProviderUsecase, domainExistence *providerUC.DomainExistenceUsecase, domainLogAppender *domainLogUC.CreateDomainLogUsecase) *CreateDomainUsecase {
+func NewCreateDomainUsecase(store DomainStorage, getProvider *providerUC.GetProviderUsecase, domainExistence *providerUC.DomainExistenceUsecase, domainLogAppender domainLogUC.DomainLogAppender) *CreateDomainUsecase {
 	return &CreateDomainUsecase{
 		domainExistence:   domainExistence,
 		domainLogAppender: domainLogAppender,
@@ -69,7 +69,7 @@ func (uc *CreateDomainUsecase) Create(user *happydns.User, uz *happydns.Domain) 
 
 	// Add a log entry
 	if uc.domainLogAppender != nil {
-		uc.domainLogAppender.Create(uz, happydns.NewDomainLog(user, happydns.LOG_INFO, fmt.Sprintf("Domain name %s added.", uz.DomainName)))
+		uc.domainLogAppender.AppendDomainLog(uz, happydns.NewDomainLog(user, happydns.LOG_INFO, fmt.Sprintf("Domain name %s added.", uz.DomainName)))
 	}
 
 	return nil
