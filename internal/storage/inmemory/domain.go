@@ -172,9 +172,12 @@ func (s *InMemoryStorage) DeleteDomainLog(domain *happydns.Domain, log *happydns
 	delete(s.domainLogs, log.Id.String())
 
 	i := slices.IndexFunc(s.domainLogsByDomains[domain.Id.String()], func(e *happydns.Identifier) bool {
-		return e.Equals(domain.Id)
+		return e.Equals(log.Id)
 	})
+	if i == -1 {
+		return happydns.ErrDomainLogNotFound
+	}
 	s.domainLogsByDomains[domain.Id.String()] = append(s.domainLogsByDomains[domain.Id.String()][:i], s.domainLogsByDomains[domain.Id.String()][i+1:]...)
 
-	return happydns.ErrDomainLogNotFound
+	return nil
 }
