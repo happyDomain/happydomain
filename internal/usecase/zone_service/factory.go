@@ -22,7 +22,6 @@
 package zoneService
 
 import (
-	domainUC "git.happydns.org/happyDomain/internal/usecase/domain"
 	serviceUC "git.happydns.org/happyDomain/internal/usecase/service"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
@@ -36,7 +35,7 @@ type Service struct {
 }
 
 func NewZoneServiceUsecases(
-	domainUpdater *domainUC.UpdateDomainUsecase,
+	domainUpdater DomainUpdater,
 	zoneCreator *zoneUC.CreateZoneUsecase,
 	validateService *serviceUC.ValidateServiceUsecase,
 	store serviceUC.ZoneUpdaterStorage,

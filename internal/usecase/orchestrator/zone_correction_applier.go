@@ -27,7 +27,6 @@ import (
 	"log"
 	"time"
 
-	domainUC "git.happydns.org/happyDomain/internal/usecase/domain"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
@@ -36,7 +35,7 @@ import (
 
 type ZoneCorrectionApplierUsecase struct {
 	appendDomainLog domainlogUC.DomainLogAppender
-	domainUpdater   *domainUC.UpdateDomainUsecase
+	domainUpdater   DomainUpdater
 	getProvider     *providerUC.GetProviderUsecase
 	listRecords     *zoneUC.ListRecordsUsecase
 	zoneCorrector   *providerUC.ZoneCorrectorUsecase
@@ -46,7 +45,7 @@ type ZoneCorrectionApplierUsecase struct {
 
 func NewZoneCorrectionApplierUsecase(
 	appendDomainLog domainlogUC.DomainLogAppender,
-	domainUpdater *domainUC.UpdateDomainUsecase,
+	domainUpdater DomainUpdater,
 	getProvider *providerUC.GetProviderUsecase,
 	listRecords *zoneUC.ListRecordsUsecase,
 	zoneCorrector *providerUC.ZoneCorrectorUsecase,

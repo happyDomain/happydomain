@@ -25,18 +25,17 @@ import (
 	"fmt"
 	"time"
 
-	domainUC "git.happydns.org/happyDomain/internal/usecase/domain"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 )
 
 type ZoneImporterUsecase struct {
-	domainUpdater *domainUC.UpdateDomainUsecase
+	domainUpdater DomainUpdater
 	zoneCreator   *zoneUC.CreateZoneUsecase
 }
 
-func NewZoneImporterUsecase(domainUpdater *domainUC.UpdateDomainUsecase, zoneCreator *zoneUC.CreateZoneUsecase) *ZoneImporterUsecase {
+func NewZoneImporterUsecase(domainUpdater DomainUpdater, zoneCreator *zoneUC.CreateZoneUsecase) *ZoneImporterUsecase {
 	return &ZoneImporterUsecase{
 		domainUpdater: domainUpdater,
 		zoneCreator:   zoneCreator,

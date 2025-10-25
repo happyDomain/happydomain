@@ -259,9 +259,9 @@ func (app *App) initUsecases() {
 	app.usecases.zone = zoneService
 	app.usecases.domainLog = domainLogService
 
-	domainService := domainUC.NewDomainUsecases(app.store, providerService.GetProviderUC, zoneService.GetZoneUC, providerService.DomainExistenceUC, domainLogService)
+	domainService := domainUC.NewService(app.store, providerService.GetProviderUC, zoneService.GetZoneUC, providerService.DomainExistenceUC, domainLogService)
 	app.usecases.domain = domainService
-	app.usecases.zoneService = zoneServiceUC.NewZoneServiceUsecases(domainService.UpdateDomainUC, zoneService.CreateZoneUC, serviceService.ValidateServiceUC, app.store)
+	app.usecases.zoneService = zoneServiceUC.NewZoneServiceUsecases(domainService, zoneService.CreateZoneUC, serviceService.ValidateServiceUC, app.store)
 
 	app.usecases.user = userUC.NewUserUsecases(app.store, app.newsletter, authUserService.GetAuthUserUC, sessionService)
 	app.usecases.authentication = usecase.NewAuthenticationUsecase(app.cfg, app.store, app.usecases.user)
@@ -271,7 +271,7 @@ func (app *App) initUsecases() {
 
 	app.usecases.orchestrator = orchestrator.NewOrchestrator(
 		domainLogService,
-		domainService.UpdateDomainUC,
+		domainService,
 		providerService.GetProviderUC,
 		zoneService.ListRecordsUC,
 		providerService.ZoneCorrectionsUC,

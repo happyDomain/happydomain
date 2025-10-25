@@ -22,11 +22,16 @@
 package orchestrator
 
 import (
-	domainUC "git.happydns.org/happyDomain/internal/usecase/domain"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
+	"git.happydns.org/happyDomain/model"
 )
+
+// DomainUpdater is an interface for updating domains.
+type DomainUpdater interface {
+	Update(domainID happydns.Identifier, user *happydns.User, updateFn func(*happydns.Domain)) error
+}
 
 type Orchestrator struct {
 	RemoteZoneImporter    *RemoteZoneImporterUsecase
@@ -36,7 +41,7 @@ type Orchestrator struct {
 
 func NewOrchestrator(
 	appendDomainLog domainlogUC.DomainLogAppender,
-	domainUpdater *domainUC.UpdateDomainUsecase,
+	domainUpdater DomainUpdater,
 	getProvider *providerUC.GetProviderUsecase,
 	listRecords *zoneUC.ListRecordsUsecase,
 	zoneCorrector *providerUC.ZoneCorrectorUsecase,

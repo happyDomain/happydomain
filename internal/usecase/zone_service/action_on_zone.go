@@ -24,17 +24,21 @@ package zoneService
 import (
 	"fmt"
 
-	domainUC "git.happydns.org/happyDomain/internal/usecase/domain"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
 )
 
+// DomainUpdater is an interface for updating domains.
+type DomainUpdater interface {
+	Update(domainID happydns.Identifier, user *happydns.User, updateFn func(*happydns.Domain)) error
+}
+
 type ActionOnDomainUsecase struct {
-	domainUpdater *domainUC.UpdateDomainUsecase
+	domainUpdater DomainUpdater
 	zoneCreator   *zoneUC.CreateZoneUsecase
 }
 
-func NewActionOnDomainUsecase(domainUpdater *domainUC.UpdateDomainUsecase, zoneCreator *zoneUC.CreateZoneUsecase) *ActionOnDomainUsecase {
+func NewActionOnDomainUsecase(domainUpdater DomainUpdater, zoneCreator *zoneUC.CreateZoneUsecase) *ActionOnDomainUsecase {
 	return &ActionOnDomainUsecase{
 		domainUpdater: domainUpdater,
 		zoneCreator:   zoneCreator,
