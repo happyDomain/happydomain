@@ -27,6 +27,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
+	sessionUC "git.happydns.org/happyDomain/internal/usecase/session"
 	"git.happydns.org/happyDomain/internal/usecase/user"
 	"git.happydns.org/happyDomain/model"
 )
@@ -75,11 +76,16 @@ func createTestService(t *testing.T) (*user.Service, *inmemory.InMemoryStorage, 
 		t.Fatalf("failed to create in-memory storage: %v", err)
 	}
 
+	cfg := &happydns.Options{
+		DisableRegistration: false,
+	}
+	sessionService := sessionUC.NewService(mem)
+	authUserService := authuserUC.NewAuthUserUsecases(cfg, nil, mem, sessionService)
+
 	newsletter := &mockNewsletterSubscriptor{}
 	sessionCloser := &mockSessionCloser{}
-	getAuthUser := authuserUC.NewGetAuthUserUsecase(mem)
 
-	service := user.NewUserUsecases(mem, newsletter, getAuthUser, sessionCloser)
+	service := user.NewUserUsecases(mem, newsletter, authUserService, sessionCloser)
 
 	return service, mem, newsletter, sessionCloser
 }

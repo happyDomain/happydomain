@@ -27,27 +27,26 @@ import (
 	"time"
 
 	"git.happydns.org/happyDomain/internal/avatar"
-	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
 	"git.happydns.org/happyDomain/model"
 )
 
 type Service struct {
 	store             UserStorage
 	newsletter        happydns.NewsletterSubscriptor
-	getAuthUser       *authuserUC.GetAuthUserUsecase
+	authUser          happydns.AuthUserUsecase
 	closeUserSessions happydns.SessionCloserUsecase
 }
 
 func NewUserUsecases(
 	store UserStorage,
 	newsletter happydns.NewsletterSubscriptor,
-	getAuthUser *authuserUC.GetAuthUserUsecase,
+	authUser happydns.AuthUserUsecase,
 	closeUserSessions happydns.SessionCloserUsecase,
 ) *Service {
 	return &Service{
 		store:             store,
 		newsletter:        newsletter,
-		getAuthUser:       getAuthUser,
+		authUser:          authUser,
 		closeUserSessions: closeUserSessions,
 	}
 }
@@ -122,7 +121,7 @@ func (s *Service) ChangeUserSettings(user *happydns.User, newSettings happydns.U
 // This route is for external accounts only.
 func (s *Service) DeleteUser(userid happydns.Identifier) error {
 	// Disallow route if user is authenticated through local service
-	if _, err := s.getAuthUser.ByID(userid); err == nil {
+	if _, err := s.authUser.GetAuthUser(userid); err == nil {
 		return fmt.Errorf("This route is for external account only. Please use the route ./delete instead.")
 	}
 

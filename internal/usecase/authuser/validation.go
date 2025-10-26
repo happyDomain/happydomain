@@ -53,12 +53,14 @@ func GenRegistrationHash(u *happydns.UserAuth, previous bool) string {
 	return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 }
 
+// EmailValidationUsecase handles email validation operations.
 type EmailValidationUsecase struct {
 	store  AuthUserStorage
 	mailer happydns.Mailer
 	config *happydns.Options
 }
 
+// NewEmailValidationUsecase creates a new EmailValidationUsecase instance.
 func NewEmailValidationUsecase(store AuthUserStorage, mailer happydns.Mailer, config *happydns.Options) *EmailValidationUsecase {
 	return &EmailValidationUsecase{
 		store:  store,
@@ -73,6 +75,7 @@ func (uc *EmailValidationUsecase) GenerateLink(user *happydns.UserAuth) string {
 	return uc.config.GetBaseURL() + fmt.Sprintf("/email-validation?u=%s&k=%s", base64.RawURLEncoding.EncodeToString(user.Id), GenRegistrationHash(user, false))
 }
 
+// SendLink sends an email validation link to the user's email.
 func (uc *EmailValidationUsecase) SendLink(user *happydns.UserAuth) error {
 	if uc.mailer == nil {
 		return fmt.Errorf("no mailer configured")

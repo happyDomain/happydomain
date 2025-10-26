@@ -34,7 +34,7 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-// AccountRecoveryHashValidityis the time during which the recovery link is at least valid.
+// AccountRecoveryHashValidity is the time during which the recovery link is at least valid.
 const AccountRecoveryHashValidity = 2 * time.Hour
 
 // GenAccountRecoveryHash generates the recovery hash for the current or previous period.
@@ -65,19 +65,21 @@ func CanRecoverAccount(u *happydns.UserAuth, key string) error {
 	return fmt.Errorf("The account recovery link you follow is invalid or has expired (it is valid during %d hours)", AccountRecoveryHashValidity/time.Hour)
 }
 
+// RecoverAccountUsecase handles account recovery operations.
 type RecoverAccountUsecase struct {
-	store          AuthUserStorage
-	mailer         happydns.Mailer
-	config         *happydns.Options
-	changePassword *ChangePasswordUsecase
+	store   AuthUserStorage
+	mailer  happydns.Mailer
+	config  *happydns.Options
+	service *Service
 }
 
-func NewRecoverAccountUsecase(store AuthUserStorage, mailer happydns.Mailer, config *happydns.Options, changePassword *ChangePasswordUsecase) *RecoverAccountUsecase {
+// NewRecoverAccountUsecase creates a new RecoverAccountUsecase instance.
+func NewRecoverAccountUsecase(store AuthUserStorage, mailer happydns.Mailer, config *happydns.Options, service *Service) *RecoverAccountUsecase {
 	return &RecoverAccountUsecase{
-		store:          store,
-		mailer:         mailer,
-		config:         config,
-		changePassword: changePassword,
+		store:   store,
+		mailer:  mailer,
+		config:  config,
+		service: service,
 	}
 }
 
@@ -98,6 +100,7 @@ func (uc *RecoverAccountUsecase) GenerateLink(user *happydns.UserAuth) (string, 
 	return uc.config.GetBaseURL() + fmt.Sprintf("/forgotten-password?u=%s&k=%s", base64.RawURLEncoding.EncodeToString(user.Id), GenAccountRecoveryHash(user.PasswordRecoveryKey, false)), nil
 }
 
+// SendLink sends an account recovery link to the user's email.
 func (uc *RecoverAccountUsecase) SendLink(user *happydns.UserAuth) error {
 	link, err := uc.GenerateLink(user)
 	if err != nil {
@@ -118,12 +121,13 @@ In order to define a new password, please follow this link now:
 	)
 }
 
+// ResetPassword resets the user's password using a recovery form.
 func (uc *RecoverAccountUsecase) ResetPassword(user *happydns.UserAuth, form happydns.AccountRecoveryForm) error {
 	if err := CanRecoverAccount(user, form.Key); err != nil {
 		return err
 	}
 
-	if err := uc.changePassword.Change(user, form.Password); err != nil {
+	if err := uc.service.ChangePassword(user, form.Password); err != nil {
 		return err
 	}
 

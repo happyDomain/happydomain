@@ -263,7 +263,7 @@ func (app *App) initUsecases() {
 	app.usecases.domain = domainService
 	app.usecases.zoneService = zoneServiceUC.NewZoneServiceUsecases(domainService, zoneService.CreateZoneUC, serviceService.ValidateServiceUC, app.store)
 
-	app.usecases.user = userUC.NewUserUsecases(app.store, app.newsletter, authUserService.GetAuthUserUC, sessionService)
+	app.usecases.user = userUC.NewUserUsecases(app.store, app.newsletter, authUserService, sessionService)
 	app.usecases.authentication = usecase.NewAuthenticationUsecase(app.cfg, app.store, app.usecases.user)
 	app.usecases.authUser = authUserService
 	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg)
