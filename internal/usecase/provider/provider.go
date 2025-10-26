@@ -41,6 +41,11 @@ func NewService(store ProviderStorage) *Service {
 	}
 }
 
+// SetValidator allows replacing the validator (useful for testing).
+func (s *Service) SetValidator(v ProviderValidator) {
+	s.validator = v
+}
+
 // ParseProvider converts a ProviderMessage to a Provider.
 func ParseProvider(msg *happydns.ProviderMessage) (p *happydns.Provider, err error) {
 	p = &happydns.Provider{}
