@@ -247,19 +247,21 @@ func (app *App) initUsecases() {
 	sessionService := sessionUC.NewService(app.store)
 	authUserService := authuserUC.NewAuthUserUsecases(app.cfg, app.mailer, app.store, sessionService)
 	domainLogService := domainlogUC.NewService(app.store)
-	providerService := providerUC.NewRestrictedProviderUsecases(app.cfg, app.store)
+	providerService := providerUC.NewRestrictedService(app.cfg, app.store)
+	providerAdminService := providerUC.NewService(app.store)
 	serviceService := serviceUC.NewServiceUsecases()
 	zoneService := zoneUC.NewZoneUsecases(app.store, serviceService)
 
 	app.usecases.providerSpecs = usecase.NewProviderSpecsUsecase()
 	app.usecases.provider = providerService
+	app.usecases.providerAdmin = providerAdminService
 	app.usecases.providerSettings = usecase.NewProviderSettingsUsecase(app.cfg, app.usecases.provider, app.store)
 	app.usecases.service = serviceService
 	app.usecases.serviceSpecs = usecase.NewServiceSpecsUsecase()
 	app.usecases.zone = zoneService
 	app.usecases.domainLog = domainLogService
 
-	domainService := domainUC.NewService(app.store, providerService.GetProviderUC, zoneService.GetZoneUC, providerService.DomainExistenceUC, domainLogService)
+	domainService := domainUC.NewService(app.store, providerAdminService, zoneService.GetZoneUC, providerAdminService, domainLogService)
 	app.usecases.domain = domainService
 	app.usecases.zoneService = zoneServiceUC.NewZoneServiceUsecases(domainService, zoneService.CreateZoneUC, serviceService.ValidateServiceUC, app.store)
 
@@ -272,11 +274,11 @@ func (app *App) initUsecases() {
 	app.usecases.orchestrator = orchestrator.NewOrchestrator(
 		domainLogService,
 		domainService,
-		providerService.GetProviderUC,
+		providerAdminService,
 		zoneService.ListRecordsUC,
-		providerService.ZoneCorrectionsUC,
+		providerAdminService,
 		zoneService.CreateZoneUC,
-		providerService.RetrieveZoneUC,
+		providerAdminService,
 		zoneService.UpdateZoneUC,
 	)
 }

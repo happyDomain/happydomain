@@ -23,7 +23,6 @@ package orchestrator
 
 import (
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
-	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
 )
@@ -31,6 +30,21 @@ import (
 // DomainUpdater is an interface for updating domains.
 type DomainUpdater interface {
 	Update(domainID happydns.Identifier, user *happydns.User, updateFn func(*happydns.Domain)) error
+}
+
+// ProviderGetter is an interface for getting providers.
+type ProviderGetter interface {
+	GetUserProvider(user *happydns.User, providerID happydns.Identifier) (*happydns.Provider, error)
+}
+
+// ZoneRetriever is an interface for retrieving zones from providers.
+type ZoneRetriever interface {
+	RetrieveZone(provider *happydns.Provider, name string) ([]happydns.Record, error)
+}
+
+// ZoneCorrector is an interface for getting zone corrections.
+type ZoneCorrector interface {
+	ListZoneCorrections(provider *happydns.Provider, domain *happydns.Domain, records []happydns.Record) ([]*happydns.Correction, error)
 }
 
 type Orchestrator struct {
@@ -42,17 +56,17 @@ type Orchestrator struct {
 func NewOrchestrator(
 	appendDomainLog domainlogUC.DomainLogAppender,
 	domainUpdater DomainUpdater,
-	getProvider *providerUC.GetProviderUsecase,
+	providerService ProviderGetter,
 	listRecords *zoneUC.ListRecordsUsecase,
-	zoneCorrector *providerUC.ZoneCorrectorUsecase,
+	zoneCorrectorService ZoneCorrector,
 	zoneCreator *zoneUC.CreateZoneUsecase,
-	zoneRetriever *providerUC.ZoneRetrieverUsecase,
+	zoneRetrieverService ZoneRetriever,
 	zoneUpdater *zoneUC.UpdateZoneUsecase,
 ) *Orchestrator {
 	zoneImporter := NewZoneImporterUsecase(domainUpdater, zoneCreator)
 	return &Orchestrator{
-		RemoteZoneImporter:    NewRemoteZoneImporterUsecase(appendDomainLog, getProvider, zoneImporter, zoneRetriever),
-		ZoneCorrectionApplier: NewZoneCorrectionApplierUsecase(appendDomainLog, domainUpdater, getProvider, listRecords, zoneCorrector, zoneCreator, zoneUpdater),
+		RemoteZoneImporter:    NewRemoteZoneImporterUsecase(appendDomainLog, providerService, zoneImporter, zoneRetrieverService),
+		ZoneCorrectionApplier: NewZoneCorrectionApplierUsecase(appendDomainLog, domainUpdater, providerService, listRecords, zoneCorrectorService, zoneCreator, zoneUpdater),
 		ZoneImporter:          zoneImporter,
 	}
 }

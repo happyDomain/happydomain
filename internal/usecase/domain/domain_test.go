@@ -119,14 +119,11 @@ func createTestProvider(t *testing.T, store *inmemory.InMemoryStorage, user *hap
 }
 
 func setupTestService(store *inmemory.InMemoryStorage) (*domain.Service, *mockDomainLogAppender) {
-	// Create the provider usecase
-	getProvider := providerUC.NewGetProviderUsecase(store)
+	// Create the provider service
+	providerService := providerUC.NewService(store)
 
 	// Create the zone usecase
 	getZone := zoneUC.NewGetZoneUsecase(store)
-
-	// Create a mock domain existence checker (accepts all domains)
-	domainExistence := &providerUC.DomainExistenceUsecase{}
 
 	// Create the mock domain log appender
 	logAppender := &mockDomainLogAppender{
@@ -136,9 +133,9 @@ func setupTestService(store *inmemory.InMemoryStorage) (*domain.Service, *mockDo
 	// Create the domain service
 	service := domain.NewService(
 		store,
-		getProvider,
+		providerService,
 		getZone,
-		domainExistence,
+		providerService,
 		logAppender,
 	)
 

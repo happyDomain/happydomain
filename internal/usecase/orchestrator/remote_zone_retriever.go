@@ -25,38 +25,37 @@ import (
 	"fmt"
 
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
-	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
 type RemoteZoneImporterUsecase struct {
 	appendDomainLog domainlogUC.DomainLogAppender
-	getProvider     *providerUC.GetProviderUsecase
+	providerService ProviderGetter
 	zoneImporter    *ZoneImporterUsecase
-	zoneRetriever   *providerUC.ZoneRetrieverUsecase
+	zoneRetriever   ZoneRetriever
 }
 
 func NewRemoteZoneImporterUsecase(
 	appendDomainLog domainlogUC.DomainLogAppender,
-	getProvider *providerUC.GetProviderUsecase,
+	providerService ProviderGetter,
 	zoneImporter *ZoneImporterUsecase,
-	zoneRetriever *providerUC.ZoneRetrieverUsecase,
+	zoneRetriever ZoneRetriever,
 ) *RemoteZoneImporterUsecase {
 	return &RemoteZoneImporterUsecase{
 		appendDomainLog: appendDomainLog,
-		getProvider:     getProvider,
+		providerService: providerService,
 		zoneImporter:    zoneImporter,
 		zoneRetriever:   zoneRetriever,
 	}
 }
 
 func (uc *RemoteZoneImporterUsecase) Import(user *happydns.User, domain *happydns.Domain) (*happydns.Zone, error) {
-	provider, err := uc.getProvider.Get(user, domain.ProviderId)
+	provider, err := uc.providerService.GetUserProvider(user, domain.ProviderId)
 	if err != nil {
 		return nil, err
 	}
 
-	zone, err := uc.zoneRetriever.RetrieveCurrentZone(provider, domain.DomainName)
+	zone, err := uc.zoneRetriever.RetrieveZone(provider, domain.DomainName)
 	if err != nil {
 		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to retrieve the zone from server: %s", err.Error())}
 	}

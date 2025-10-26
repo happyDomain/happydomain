@@ -26,29 +26,38 @@ import (
 	"fmt"
 
 	domainLogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
-	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
 )
 
+// ProviderGetter is an interface for getting providers.
+type ProviderGetter interface {
+	GetUserProvider(user *happydns.User, providerID happydns.Identifier) (*happydns.Provider, error)
+}
+
+// DomainExistenceTester is an interface for testing domain existence.
+type DomainExistenceTester interface {
+	TestDomainExistence(provider *happydns.Provider, name string) error
+}
+
 type Service struct {
 	store             DomainStorage
-	getProvider       *providerUC.GetProviderUsecase
+	providerService   ProviderGetter
 	getZone           *zoneUC.GetZoneUsecase
-	domainExistence   *providerUC.DomainExistenceUsecase
+	domainExistence   DomainExistenceTester
 	domainLogAppender domainLogUC.DomainLogAppender
 }
 
 func NewService(
 	store DomainStorage,
-	getProvider *providerUC.GetProviderUsecase,
+	providerService ProviderGetter,
 	getZone *zoneUC.GetZoneUsecase,
-	domainExistence *providerUC.DomainExistenceUsecase,
+	domainExistence DomainExistenceTester,
 	domainLogAppender domainLogUC.DomainLogAppender,
 ) *Service {
 	return &Service{
 		store:             store,
-		getProvider:       getProvider,
+		providerService:   providerService,
 		getZone:           getZone,
 		domainExistence:   domainExistence,
 		domainLogAppender: domainLogAppender,
@@ -62,7 +71,7 @@ func (s *Service) CreateDomain(user *happydns.User, uz *happydns.Domain) error {
 		return err
 	}
 
-	provider, err := s.getProvider.Get(user, uz.ProviderId)
+	provider, err := s.providerService.GetUserProvider(user, uz.ProviderId)
 	if err != nil {
 		return happydns.ValidationError{Msg: fmt.Sprintf("unable to find the provider.")}
 	}

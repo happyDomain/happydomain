@@ -28,7 +28,6 @@ import (
 	"time"
 
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
-	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
 )
@@ -36,9 +35,9 @@ import (
 type ZoneCorrectionApplierUsecase struct {
 	appendDomainLog domainlogUC.DomainLogAppender
 	domainUpdater   DomainUpdater
-	getProvider     *providerUC.GetProviderUsecase
+	providerService ProviderGetter
 	listRecords     *zoneUC.ListRecordsUsecase
-	zoneCorrector   *providerUC.ZoneCorrectorUsecase
+	zoneCorrector   ZoneCorrector
 	zoneCreator     *zoneUC.CreateZoneUsecase
 	zoneUpdater     *zoneUC.UpdateZoneUsecase
 }
@@ -46,16 +45,16 @@ type ZoneCorrectionApplierUsecase struct {
 func NewZoneCorrectionApplierUsecase(
 	appendDomainLog domainlogUC.DomainLogAppender,
 	domainUpdater DomainUpdater,
-	getProvider *providerUC.GetProviderUsecase,
+	providerService ProviderGetter,
 	listRecords *zoneUC.ListRecordsUsecase,
-	zoneCorrector *providerUC.ZoneCorrectorUsecase,
+	zoneCorrector ZoneCorrector,
 	zoneCreator *zoneUC.CreateZoneUsecase,
 	zoneUpdater *zoneUC.UpdateZoneUsecase,
 ) *ZoneCorrectionApplierUsecase {
 	return &ZoneCorrectionApplierUsecase{
 		appendDomainLog: appendDomainLog,
 		domainUpdater:   domainUpdater,
-		getProvider:     getProvider,
+		providerService: providerService,
 		listRecords:     listRecords,
 		zoneCorrector:   zoneCorrector,
 		zoneCreator:     zoneCreator,
@@ -64,7 +63,7 @@ func NewZoneCorrectionApplierUsecase(
 }
 
 func (uc *ZoneCorrectionApplierUsecase) Apply(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, form *happydns.ApplyZoneForm) (*happydns.Zone, error) {
-	provider, err := uc.getProvider.Get(user, domain.ProviderId)
+	provider, err := uc.providerService.GetUserProvider(user, domain.ProviderId)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +76,7 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(user *happydns.User, domain *happy
 	}
 
 	nbcorrections := len(form.WantedCorrections)
-	corrections, err := uc.zoneCorrector.List(provider, domain, records)
+	corrections, err := uc.zoneCorrector.ListZoneCorrections(provider, domain, records)
 	if err != nil {
 		return nil, happydns.InternalError{
 			Err: fmt.Errorf("unable to compute domain corrections: %w", err),
@@ -160,7 +159,7 @@ corrections:
 }
 
 func (uc *ZoneCorrectionApplierUsecase) List(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone) ([]*happydns.Correction, error) {
-	provider, err := uc.getProvider.Get(user, domain.ProviderId)
+	provider, err := uc.providerService.GetUserProvider(user, domain.ProviderId)
 	if err != nil {
 		return nil, err
 	}
@@ -170,5 +169,5 @@ func (uc *ZoneCorrectionApplierUsecase) List(user *happydns.User, domain *happyd
 		return nil, err
 	}
 
-	return uc.zoneCorrector.List(provider, domain, records)
+	return uc.zoneCorrector.ListZoneCorrections(provider, domain, records)
 }

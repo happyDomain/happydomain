@@ -22,21 +22,27 @@
 package provider
 
 import (
-	"encoding/json"
+	"fmt"
 
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/providers"
 )
 
-func ParseProvider(msg *happydns.ProviderMessage) (p *happydns.Provider, err error) {
-	p = &happydns.Provider{}
-
-	p.ProviderMeta = msg.ProviderMeta
-	p.Provider, err = providers.FindProvider(msg.Type)
+// RetrieveZone retrieves the current zone records for the given domain from the provider.
+func (s *Service) RetrieveZone(provider *happydns.Provider, name string) ([]happydns.Record, error) {
+	instance, err := provider.InstantiateProvider()
 	if err != nil {
-		return
+		return nil, fmt.Errorf("unable to instantiate provider: %w", err)
 	}
 
-	err = json.Unmarshal(msg.Provider, &p.Provider)
-	return
+	return instance.GetZoneRecords(name)
+}
+
+// ListZoneCorrections lists the corrections needed to synchronize the zone with the given records.
+func (s *Service) ListZoneCorrections(provider *happydns.Provider, domain *happydns.Domain, records []happydns.Record) ([]*happydns.Correction, error) {
+	instance, err := provider.InstantiateProvider()
+	if err != nil {
+		return nil, fmt.Errorf("unable to instantiate provider: %w", err)
+	}
+
+	return instance.GetZoneCorrections(domain.DomainName, records)
 }

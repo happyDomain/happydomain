@@ -53,7 +53,7 @@ func NewAdmin(app *App) *Admin {
 	router.Use(gin.Logger(), gin.Recovery())
 
 	// Prepare usecases
-	app.usecases.providerAdmin = providerUC.NewProviderUsecases(app.store)
+	app.usecases.providerAdmin = providerUC.NewService(app.store)
 
 	admin.DeclareRoutes(app.cfg, router, app.store, app)
 
