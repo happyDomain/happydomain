@@ -2,7 +2,7 @@ module git.happydns.org/happyDomain
 
 go 1.24.0
 
-toolchain go1.25.3
+toolchain go1.25.4
 
 require (
 	github.com/StackExchange/dnscontrol/v4 v4.3.0
