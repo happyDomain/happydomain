@@ -73,6 +73,10 @@ func (s *LevelDBStorage) UpdateZone(z *happydns.Zone) error {
 	return s.put(fmt.Sprintf("domain.zone-%s", z.Id.String()), z)
 }
 
+func (s *LevelDBStorage) UpdateZoneMessage(z *happydns.ZoneMessage) error {
+	return s.put(fmt.Sprintf("domain.zone-%s", z.Id.String()), z)
+}
+
 func (s *LevelDBStorage) DeleteZone(id happydns.Identifier) error {
 	return s.delete(fmt.Sprintf("domain.zone-%s", id.String()))
 }

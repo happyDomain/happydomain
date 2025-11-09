@@ -36,6 +36,7 @@ var migrations []LevelDBMigrationFunc = []LevelDBMigrationFunc{
 	migrateFrom4,
 	migrateFrom5,
 	migrateFrom6,
+	migrateFrom7,
 }
 
 func (s *LevelDBStorage) SchemaVersion() int {
