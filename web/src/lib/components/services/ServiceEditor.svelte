@@ -23,6 +23,7 @@
 
 <script lang="ts">
     import OriginEditor from '$lib/components/services/editors/abstract.Origin.svelte'
+    import NsOnlyOriginEditor from '$lib/components/services/editors/abstract.NSOnlyOrigin.svelte'
     import ServerEditor from '$lib/components/services/editors/abstract.Server.svelte'
     import CAAEditor from '$lib/components/services/editors/svcs.CAAPolicy.svelte'
     import CNAMEEditor from '$lib/components/services/editors/svcs.CNAME.svelte'
@@ -47,6 +48,8 @@
 
 {#if type == "abstract.Origin"}
     <OriginEditor {dn} {origin} bind:value={value} />
+{:else if type == "abstract.NSOnlyOrigin"}
+    <NsOnlyOriginEditor {dn} {origin} bind:value={value} />
 {:else if type == "abstract.Server"}
     <ServerEditor {dn} {origin} bind:value={value} />
 {:else if type == "svcs.CAAPolicy"}
