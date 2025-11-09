@@ -137,11 +137,11 @@
             on:error={receiveError}
         >
             {#snippet nodiff()}
-                        <div  class="d-flex gap-3 align-items-center justify-content-center">
+                <div  class="d-flex gap-3 align-items-center justify-content-center">
                     <Icon name="check2-all" class="display-5 text-success" />
                     {$t("domains.apply.nochange")}
                 </div>
-                    {/snippet}
+            {/snippet}
         </DiffZone>
     </ModalBody>
     <ModalFooter>
