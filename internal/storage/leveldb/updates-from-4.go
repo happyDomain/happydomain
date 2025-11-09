@@ -23,63 +23,8 @@ package database
 
 import (
 	"fmt"
-	"log"
-	"strings"
-
-	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
-	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
 )
 
 func migrateFrom4(s *LevelDBStorage) (err error) {
-	err = migrateFrom4_orphanrecords(s)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func migrateFrom4_orphanrecords(s *LevelDBStorage) (err error) {
-	iter := s.search("domain.zone-")
-	for iter.Next() {
-		var tmpid string
-		fmt.Sscanf(string(iter.Key()), "domain.zone-%s", &tmpid)
-
-		var id happydns.Identifier
-		id, err = happydns.NewIdentifierFromString(tmpid)
-		if err != nil {
-			return fmt.Errorf("unable to determine identifier of %s: %w", iter.Key(), err)
-		}
-
-		var zone *happydns.Zone
-		zone, err = zoneUC.NewZoneUsecases(s, nil).GetZone(id)
-		if err != nil {
-			return fmt.Errorf("%s: %w", iter.Key(), err)
-		}
-
-		changed := false
-		for _, zServices := range zone.Services {
-			for _, svc := range zServices {
-				if orphan, ok := svc.Service.(*svcs.Orphan); ok {
-					tmp := strings.Fields(orphan.RR)
-
-					orphan.Type = tmp[0]
-					orphan.RR = strings.TrimSpace(orphan.RR[len(tmp[0]):])
-
-					changed = true
-				}
-			}
-		}
-
-		if changed {
-			err = s.UpdateZone(zone)
-			if err != nil {
-				return fmt.Errorf("unable to write %s: %w", iter.Key(), err)
-			}
-			log.Printf("Migrating v3 -> v4: %s (contains Orphan)...", iter.Key())
-		}
-	}
-
-	return nil
+	return fmt.Errorf("Unable to migrate from DB version 4. Please use a previous happyDomain release to perform this migration")
 }
