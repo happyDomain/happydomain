@@ -53,7 +53,7 @@
         nodiff
     }: Props = $props();
 
-    let zoneDiff: Array<{ className: string; msg: string; id: string }> = $state([]);
+    let zoneDiff: Array<{ className: string; msg: string; id: string }> | null = $state(null);
 
     const correctionsIdx: Record<string, Correction> = {};
 
