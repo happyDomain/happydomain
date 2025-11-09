@@ -22,8 +22,6 @@
 -->
 
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import type { Correction } from "$lib/model/correction";
     import { t } from "$lib/translations";
 
@@ -33,31 +31,10 @@
 
     let { zoneDiff }: Props = $props();
 
-    let zoneDiffCreated = $state(0);
-    let zoneDiffDeleted = $state(0);
-    let zoneDiffModified = $state(0);
-    let zoneDiffOther = $state(0);
-
-    run(() => {
-        zoneDiffCreated = 0;
-        zoneDiffDeleted = 0;
-        zoneDiffModified = 0;
-        zoneDiffOther = 0;
-
-        if (zoneDiff && zoneDiff.length) {
-            zoneDiff.forEach((c: Correction) => {
-                if (c.kind == 1) {
-                    zoneDiffCreated += 1;
-                } else if (c.kind == 2) {
-                    zoneDiffModified += 1;
-                } else if (c.kind == 3) {
-                    zoneDiffDeleted += 1;
-                } else if (c.kind == 99) {
-                    zoneDiffOther += 1;
-                }
-            });
-        }
-    });
+    let zoneDiffCreated = $derived(zoneDiff.filter((c) => c.kind == 1).length);
+    let zoneDiffModified = $derived(zoneDiff.filter((c) => c.kind == 2).length);
+    let zoneDiffDeleted = $derived(zoneDiff.filter((c) => c.kind == 3).length);
+    let zoneDiffOther = $derived(zoneDiff.filter((c) => c.kind == 99).length);
 </script>
 
 {#if zoneDiff && zoneDiff.length}
