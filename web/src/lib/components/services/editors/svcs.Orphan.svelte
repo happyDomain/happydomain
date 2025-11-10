@@ -25,6 +25,7 @@
     import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import RecordEditor from "$lib/components/records/Editor.svelte";
     import { servicesSpecs } from "$lib/stores/services";
+    import { getRrtype, newRR } from "$lib/dns_rr";
 
     interface Props {
         dn: string;
@@ -49,9 +50,25 @@
     </p>
 {/if}
 {#each Object.keys(value) as key}
-    <RecordEditor
-        bind:dn={dn}
-        {origin}
-        bind:record={value[key]}
-    />
+    {#if value[key] instanceof Array}
+        {#each value[key] as v, i}
+            {#if i > 0}
+                <hr>
+            {/if}
+            <RecordEditor
+                bind:dn={dn}
+                {origin}
+                bind:record={value[key][i]}
+            />
+        {/each}
+        <button type="button" class="btn btn-primary" onclick={() => value[key].push(newRR(dn, getRrtype(key.toLowerCase())))}>
+            <i class="bi bi-plus"></i>
+        </button>
+    {:else}
+        <RecordEditor
+            bind:dn={dn}
+            {origin}
+            bind:record={value[key]}
+        />
+    {/if}
 {/each}
