@@ -49,9 +49,25 @@
     </p>
 {/if}
 {#each Object.keys(value) as key}
-    <RecordEditor
-        bind:dn={dn}
-        {origin}
-        bind:record={value[key]}
-    />
+    {#if value[key] instanceof Array}
+        {#each value[key] as v, i}
+            {#if i > 0}
+                <hr>
+            {/if}
+            <RecordEditor
+                bind:dn={dn}
+                {origin}
+                bind:record={value[key][i]}
+            />
+        {/each}
+        <button type="button" class="btn btn-primary" onclick={() => value[key].push({Hdr:{}})}>
+            <i class="bi bi-plus"></i>
+        </button>
+    {:else}
+        <RecordEditor
+            bind:dn={dn}
+            {origin}
+            bind:record={value[key]}
+        />
+    {/if}
 {/each}
