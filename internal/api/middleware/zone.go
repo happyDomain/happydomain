@@ -64,9 +64,9 @@ func ZoneHandler(zuService happydns.ZoneUsecase) gin.HandlerFunc {
 func SubdomainHandler(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 
-	subdomain := strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(c.Param("subdomain"), "."+domain.DomainName), "@"), domain.DomainName)
+	subdomain := strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(c.Param("subdomain"), "."+domain.Domain), "@"), domain.Domain)
 
-	c.Set("subdomain", happydns.Subdomain(subdomain))
+	c.Set("subdomain", subdomain)
 
 	c.Next()
 }

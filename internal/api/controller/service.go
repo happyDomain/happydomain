@@ -68,7 +68,7 @@ func (sc *ServiceController) AddZoneService(c *gin.Context) {
 	user := middleware.MyUser(c)
 	domain := c.MustGet("domain").(*happydns.Domain)
 	zone := c.MustGet("zone").(*happydns.Zone)
-	subdomain := c.MustGet("subdomain").(happydns.Subdomain)
+	subdomain := c.MustGet("subdomain").(string)
 
 	var usc happydns.ServiceMessage
 	err := c.ShouldBindJSON(&usc)
@@ -84,7 +84,7 @@ func (sc *ServiceController) AddZoneService(c *gin.Context) {
 		return
 	}
 
-	zone, err = sc.duService.AddServiceToZone(user, domain, zone, subdomain, happydns.Origin(domain.DomainName), newservice)
+	zone, err = sc.duService.AddServiceToZone(user, domain, zone, subdomain, happydns.Origin(domain.Domain), newservice)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -113,7 +113,7 @@ func (sc *ServiceController) AddZoneService(c *gin.Context) {
 func (sc *ServiceController) GetZoneService(c *gin.Context) {
 	zone := c.MustGet("zone").(*happydns.Zone)
 	serviceid := c.MustGet("serviceid").(happydns.Identifier)
-	subdomain := c.MustGet("subdomain").(happydns.Subdomain)
+	subdomain := c.MustGet("subdomain").(string)
 
 	_, svc := zone.FindSubdomainService(subdomain, serviceid)
 
@@ -155,7 +155,7 @@ func (sc *ServiceController) UpdateZoneService(c *gin.Context) {
 		return
 	}
 
-	zone, err = sc.duService.UpdateZoneService(user, domain, zone, happydns.Subdomain(usc.Domain), usc.Id, newservice)
+	zone, err = sc.duService.UpdateZoneService(user, domain, zone, usc.Domain, usc.UnderscoreId, newservice)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -187,7 +187,7 @@ func (sc *ServiceController) DeleteZoneService(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 	zone := c.MustGet("zone").(*happydns.Zone)
 	serviceid := c.MustGet("serviceid").(happydns.Identifier)
-	subdomain := c.MustGet("subdomain").(happydns.Subdomain)
+	subdomain := c.MustGet("subdomain").(string)
 
 	zone, err := sc.duService.RemoveServiceFromZone(user, domain, zone, subdomain, serviceid)
 	if err != nil {

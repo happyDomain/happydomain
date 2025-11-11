@@ -82,17 +82,17 @@ func (tu *tidyUpUsecase) TidyDomains() error {
 	for iter.Next() {
 		domain := iter.Item()
 
-		if _, err = tu.store.GetUser(domain.Owner); errors.Is(err, happydns.ErrUserNotFound) {
+		if _, err = tu.store.GetUser(domain.IdOwner); errors.Is(err, happydns.ErrUserNotFound) {
 			// Drop domain of unexistant users
-			log.Printf("Deleting orphan domain (user %s not found): %v\n", domain.Owner.String(), domain)
+			log.Printf("Deleting orphan domain (user %s not found): %v\n", domain.IdOwner.String(), domain)
 			if err = iter.DropItem(); err != nil {
 				return err
 			}
 		}
 
-		if _, err = tu.store.GetProvider(domain.ProviderId); errors.Is(err, happydns.ErrProviderNotFound) {
+		if _, err = tu.store.GetProvider(domain.IdProvider); errors.Is(err, happydns.ErrProviderNotFound) {
 			// Drop domain of unexistant provider
-			log.Printf("Deleting orphan domain (provider %s not found): %v\n", domain.ProviderId.String(), domain)
+			log.Printf("Deleting orphan domain (provider %s not found): %v\n", domain.IdProvider.String(), domain)
 			if err = iter.DropItem(); err != nil {
 				return err
 			}
@@ -134,10 +134,10 @@ func (tu *tidyUpUsecase) TidyProviders() error {
 	for iter.Next() {
 		prvd := iter.Item()
 
-		_, err = tu.store.GetUser(prvd.Owner)
+		_, err = tu.store.GetUser(prvd.UnderscoreOwnerid)
 		if errors.Is(err, happydns.ErrUserNotFound) {
 			// Drop providers of unexistant users
-			log.Printf("Deleting orphan provider (user %s not found): %v\n", prvd.Owner.String(), prvd)
+			log.Printf("Deleting orphan provider (user %s not found): %v\n", prvd.UnderscoreOwnerid.String(), prvd)
 			if err = iter.DropItem(); err != nil {
 				return err
 			}

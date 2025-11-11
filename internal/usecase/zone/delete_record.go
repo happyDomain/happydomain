@@ -43,7 +43,7 @@ func NewDeleteRecordUsecase(serviceListRecordsUC *service.ListRecordsUsecase, se
 	}
 }
 
-func (uc *DeleteRecordUsecase) delete(zone *happydns.Zone, origin string, record happydns.Record, svc *happydns.Service, dn happydns.Subdomain) error {
+func (uc *DeleteRecordUsecase) delete(zone *happydns.Zone, origin string, record happydns.Record, svc *happydns.Service, dn string) error {
 	// Export service related records
 	svc_rrs, err := uc.serviceListRecordsUC.List(svc, origin, 0)
 	if err != nil {
@@ -66,7 +66,7 @@ func (uc *DeleteRecordUsecase) delete(zone *happydns.Zone, origin string, record
 		return fmt.Errorf("unable to find record")
 	}
 
-	var newsvc map[happydns.Subdomain][]*happydns.Service
+	var newsvc map[string][]*happydns.Service
 
 	if len(svc_rrs) > 0 {
 		// Recreate the service
@@ -78,7 +78,7 @@ func (uc *DeleteRecordUsecase) delete(zone *happydns.Zone, origin string, record
 
 	// Register in zone
 	for i, s := range zone.Services[dn] {
-		if s.Id.Equals(svc.Id) {
+		if s.UnderscoreId.Equals(svc.UnderscoreId) {
 			zone.Services[dn] = append(zone.Services[dn][:i], append(newsvc[dn], zone.Services[dn][i+1:]...)...)
 			break
 		}
@@ -111,7 +111,7 @@ func (uc *DeleteRecordUsecase) Delete(zone *happydns.Zone, origin string, record
 	return nil
 }
 
-func (uc *DeleteRecordUsecase) ReanalyzeOrphan(zone *happydns.Zone, origin string, dn happydns.Subdomain) error {
+func (uc *DeleteRecordUsecase) ReanalyzeOrphan(zone *happydns.Zone, origin string, dn string) error {
 	var records []happydns.Record
 
 	// Found all orphan records

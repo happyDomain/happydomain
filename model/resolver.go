@@ -25,47 +25,6 @@ import (
 	"github.com/miekg/dns"
 )
 
-// ResolverRequest holds the resolution parameters
-type ResolverRequest struct {
-	// Resolver is the name of the resolver to use (or local or custom).
-	Resolver string `json:"resolver"`
-
-	// Custom is the address to the recursive server to use.
-	Custom string `json:"custom,omitempty"`
-
-	// DomainName is the FQDN to resolve.
-	DomainName string `json:"domain"`
-
-	// Type is the type of record to retrieve.
-	Type string `json:"type"`
-}
-
-type DNSQuestion struct {
-	// Name is the domain name researched.
-	Name string
-
-	// Qtype is the type of record researched.
-	Qtype uint16
-
-	// Qclass is the class of record researched.
-	Qclass uint16
-}
-
-// DNSMsg is the documentation struct corresponding to dns.Msg
-type DNSMsg struct {
-	// Question is the Question section of the DNS response.
-	Question []DNSQuestion
-
-	// Answer is the list of Answer records in the DNS response.
-	Answer []interface{} `swaggertype:"object"`
-
-	// Ns is the list of Authoritative records in the DNS response.
-	Ns []interface{} `swaggertype:"object"`
-
-	// Extra is the list of extra records in the DNS response.
-	Extra []interface{} `swaggertype:"object"`
-}
-
 type ResolverUsecase interface {
 	ResolveQuestion(ResolverRequest) (*dns.Msg, error)
 }

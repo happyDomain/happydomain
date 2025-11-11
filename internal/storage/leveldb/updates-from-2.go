@@ -30,6 +30,7 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 
+	"github.com/oapi-codegen/runtime/types"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 )
 
@@ -71,10 +72,10 @@ func migrateFrom2_users_tree(s *LevelDBStorage) (err error) {
 
 		newUser := &happydns.User{
 			Id:        newId,
-			Email:     user.Email,
+			Email:     types.Email(user.Email),
 			CreatedAt: user.CreatedAt,
 			LastSeen:  user.LastSeen,
-			Settings:  user.Settings,
+			Settings:  &user.Settings,
 		}
 
 		log.Printf("Migrating v2 -> v3: %s to user-%s...", iter.Key(), newId.String())

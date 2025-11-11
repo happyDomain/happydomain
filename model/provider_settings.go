@@ -23,17 +23,6 @@ package happydns
 
 import ()
 
-type ProviderSettingsState struct {
-	FormState
-	ProviderBody `json:"Provider" swaggertype:"object"`
-}
-
-type ProviderSettingsResponse struct {
-	Provider *Provider              `json:"Provider,omitempty" swaggertype:"object"`
-	Values   map[string]interface{} `json:"values,omitempty"`
-	Form     *CustomForm            `json:"form,omitempty"`
-}
-
 type ProviderSettingsUsecase interface {
 	NextProviderSettingsState(*ProviderSettingsState, string, *User) (*Provider, *ProviderSettingsResponse, error)
 }

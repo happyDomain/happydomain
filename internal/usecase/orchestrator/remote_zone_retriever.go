@@ -50,12 +50,12 @@ func NewRemoteZoneImporterUsecase(
 }
 
 func (uc *RemoteZoneImporterUsecase) Import(user *happydns.User, domain *happydns.Domain) (*happydns.Zone, error) {
-	provider, err := uc.providerService.GetUserProvider(user, domain.ProviderId)
+	provider, err := uc.providerService.GetUserProvider(user, domain.IdProvider)
 	if err != nil {
 		return nil, err
 	}
 
-	zone, err := uc.zoneRetriever.RetrieveZone(provider, domain.DomainName)
+	zone, err := uc.zoneRetriever.RetrieveZone(provider, domain.Domain)
 	if err != nil {
 		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to retrieve the zone from server: %s", err.Error())}
 	}
@@ -67,7 +67,7 @@ func (uc *RemoteZoneImporterUsecase) Import(user *happydns.User, domain *happydn
 	}
 
 	if uc.appendDomainLog != nil {
-		uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_INFO, fmt.Sprintf("Zone imported from provider API: %s", myZone.Id.String())))
+		uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOGINFO, fmt.Sprintf("Zone imported from provider API: %s", myZone.Id.String())))
 	}
 
 	return myZone, nil

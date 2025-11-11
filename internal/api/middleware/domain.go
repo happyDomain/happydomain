@@ -72,11 +72,12 @@ func DomainHandler(domainService happydns.DomainUsecase, allowFQDN bool) gin.Han
 		// If provider is provided, check that the domain is a parent of the provider
 		var provider *happydns.ProviderMeta
 		if src, exists := c.Get("provider"); exists {
-			provider = &src.(*happydns.Provider).ProviderMeta
+			tmp := src.(*happydns.Provider).Meta()
+			provider = &tmp
 		} else if src, exists := c.Get("providermeta"); exists {
 			provider = src.(*happydns.ProviderMeta)
 		}
-		if provider != nil && !provider.Id.Equals(domain.ProviderId) {
+		if provider != nil && !provider.UnderscoreId.Equals(domain.IdProvider) {
 			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Domain not found (not child of provider)"})
 			return
 		}

@@ -84,7 +84,7 @@ func (dc *DomainController) NewDomain(c *gin.Context) {
 		return
 	}
 	ud.Id = nil
-	ud.Owner = user.Id
+	ud.IdOwner = user.Id
 
 	happydns.ApiResponse(c, ud, dc.store.CreateDomain(ud))
 }
@@ -98,7 +98,7 @@ func (dc *DomainController) DeleteDomain(c *gin.Context) {
 			user = u.(*happydns.User)
 		} else {
 			user = dc.searchUserDomain(func(dn *happydns.Domain) bool {
-				return dn.DomainName == c.Param("domain")
+				return dn.Domain == c.Param("domain")
 			})
 		}
 
@@ -131,7 +131,7 @@ func (dc *DomainController) searchUserDomain(filter func(*happydns.Domain) bool)
 		domain := iter.Item()
 		if filter(domain) {
 			// Create a fake minimal user, as only the Id is required to perform further actions on database
-			return &happydns.User{Id: domain.Owner}
+			return &happydns.User{Id: domain.IdOwner}
 		}
 	}
 
@@ -147,7 +147,7 @@ func (dc *DomainController) GetDomain(c *gin.Context) {
 			user = u.(*happydns.User)
 		} else {
 			user = dc.searchUserDomain(func(dn *happydns.Domain) bool {
-				return dn.DomainName == c.Param("domain")
+				return dn.Domain == c.Param("domain")
 			})
 		}
 
@@ -170,7 +170,7 @@ func (dc *DomainController) GetDomain(c *gin.Context) {
 			return
 		}
 
-		if !user.Id.Equals(domain.Owner) {
+		if !user.Id.Equals(domain.IdOwner) {
 			happydns.ApiResponse(c, nil, fmt.Errorf("domain not found"))
 			return
 		}

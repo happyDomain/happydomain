@@ -36,7 +36,7 @@ import (
 )
 
 // abstract.EMail
-func explodeAbstractEMail(dn happydns.Subdomain, in *happydns.ServiceMessage) ([]*happydns.ServiceMessage, error) {
+func explodeAbstractEMail(dn string, in *happydns.ServiceMessage) ([]*happydns.ServiceMessage, error) {
 	var val struct {
 		MX      []map[string]interface{} `json:"mx,omitempty"`
 		SPF     map[string]interface{}   `json:"spf,omitempty"`
@@ -70,7 +70,7 @@ func explodeAbstractEMail(dn happydns.Subdomain, in *happydns.ServiceMessage) ([
 
 		sm := *in
 		sm.Type = "svcs.MXs"
-		sm.Id, err = happydns.NewRandomIdentifier()
+		sm.UnderscoreId, err = happydns.NewRandomIdentifier()
 		if err != nil {
 			return nil, err
 		}
@@ -96,7 +96,7 @@ func explodeAbstractEMail(dn happydns.Subdomain, in *happydns.ServiceMessage) ([
 
 			sm := *in
 			sm.Type = "svcs.SPF"
-			sm.Id, err = happydns.NewRandomIdentifier()
+			sm.UnderscoreId, err = happydns.NewRandomIdentifier()
 			if err != nil {
 				return nil, err
 			}
@@ -117,7 +117,7 @@ func explodeAbstractEMail(dn happydns.Subdomain, in *happydns.ServiceMessage) ([
 
 			sm := *in
 			sm.Type = "svcs.DKIM"
-			sm.Id, err = happydns.NewRandomIdentifier()
+			sm.UnderscoreId, err = happydns.NewRandomIdentifier()
 			if err != nil {
 				return nil, err
 			}
@@ -137,7 +137,7 @@ func explodeAbstractEMail(dn happydns.Subdomain, in *happydns.ServiceMessage) ([
 
 		sm := *in
 		sm.Type = "svcs.DMARC"
-		sm.Id, err = happydns.NewRandomIdentifier()
+		sm.UnderscoreId, err = happydns.NewRandomIdentifier()
 		if err != nil {
 			return nil, err
 		}
@@ -156,7 +156,7 @@ func explodeAbstractEMail(dn happydns.Subdomain, in *happydns.ServiceMessage) ([
 
 		sm := *in
 		sm.Type = "svcs.MTA_STS"
-		sm.Id, err = happydns.NewRandomIdentifier()
+		sm.UnderscoreId, err = happydns.NewRandomIdentifier()
 		if err != nil {
 			return nil, err
 		}
@@ -175,7 +175,7 @@ func explodeAbstractEMail(dn happydns.Subdomain, in *happydns.ServiceMessage) ([
 
 		sm := *in
 		sm.Type = "svcs.TLS_RPT"
-		sm.Id, err = happydns.NewRandomIdentifier()
+		sm.UnderscoreId, err = happydns.NewRandomIdentifier()
 		if err != nil {
 			return nil, err
 		}

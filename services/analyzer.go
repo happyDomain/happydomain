@@ -39,7 +39,7 @@ type ServiceAnalyzer func(*Analyzer) error
 type Analyzer struct {
 	origin     string
 	zone       []happydns.Record
-	services   map[happydns.Subdomain][]*happydns.Service
+	services   map[string][]*happydns.Service
 	defaultTTL uint32
 }
 
@@ -79,7 +79,7 @@ func (a *Analyzer) addService(rr happydns.Record, domain string, svc happydns.Se
 	// Remove origin to get an relative domain here
 	domain = strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(domain, "."), strings.TrimSuffix(a.origin, ".")), ".")
 
-	for _, service := range a.services[happydns.Subdomain(domain)] {
+	for _, service := range a.services[domain] {
 		if service.Service == svc {
 			service.Comment = svc.GenComment()
 			service.NbResources = svc.GetNbResources()
@@ -95,16 +95,14 @@ func (a *Analyzer) addService(rr happydns.Record, domain string, svc happydns.Se
 		ttl = rr.Header().Ttl
 	}
 
-	a.services[happydns.Subdomain(domain)] = append(a.services[happydns.Subdomain(domain)], &happydns.Service{
-		Service: svc,
-		ServiceMeta: happydns.ServiceMeta{
-			Id:          hash.Sum(nil),
-			Type:        reflect.Indirect(reflect.ValueOf(svc)).Type().String(),
-			Domain:      domain,
-			Ttl:         ttl,
-			Comment:     svc.GenComment(),
-			NbResources: svc.GetNbResources(),
-		},
+	a.services[domain] = append(a.services[domain], &happydns.Service{
+		Service:      svc,
+		UnderscoreId: hash.Sum(nil),
+		Type:         reflect.Indirect(reflect.ValueOf(svc)).Type().String(),
+		Domain:       domain,
+		Ttl:          ttl,
+		Comment:      svc.GenComment(),
+		NbResources:  svc.GetNbResources(),
 	})
 
 	return nil
@@ -148,7 +146,7 @@ func getMostUsedTTL(zone []happydns.Record) uint32 {
 	return max
 }
 
-func AnalyzeZone(origin string, records []happydns.Record) (svcs map[happydns.Subdomain][]*happydns.Service, defaultTTL uint32, err error) {
+func AnalyzeZone(origin string, records []happydns.Record) (svcs map[string][]*happydns.Service, defaultTTL uint32, err error) {
 	// Create a copy of the records as we'll changed them in the process
 	zone := make([]happydns.Record, len(records))
 	for i, record := range records {
@@ -160,7 +158,7 @@ func AnalyzeZone(origin string, records []happydns.Record) (svcs map[happydns.Su
 	a := Analyzer{
 		origin:     origin,
 		zone:       zone,
-		services:   map[happydns.Subdomain][]*happydns.Service{},
+		services:   map[string][]*happydns.Service{},
 		defaultTTL: defaultTTL,
 	}
 

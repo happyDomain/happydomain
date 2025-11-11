@@ -39,7 +39,7 @@ func GenerateUserAvatar(u *happydns.User, size int, w io.Writer) error {
 		return err
 	}
 
-	ii, err := ig.Draw(u.Email)
+	ii, err := ig.Draw(string(u.Email))
 	if err != nil {
 		return err
 	}

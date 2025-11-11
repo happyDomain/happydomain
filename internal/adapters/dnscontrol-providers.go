@@ -147,7 +147,7 @@ func (p *DNSControlAdapterNSProvider) GetZoneRecords(domain string) (ret []happy
 	return
 }
 
-func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []happydns.Record) (ret []*happydns.Correction, err error) {
+func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []happydns.Record) (ret []*happydns.FCorrection, err error) {
 	var dc *models.DomainConfig
 	dc, err = NewDNSControlDomainConfig(strings.TrimSuffix(domain, "."), rrs)
 	if err != nil {
@@ -180,15 +180,17 @@ func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []ha
 		return nil, err
 	}
 
-	ret = make([]*happydns.Correction, len(corrections))
+	ret = make([]*happydns.FCorrection, len(corrections))
 	for i, correction := range corrections {
 		id := sha256.Sum224([]byte(correction.Msg))
 
-		ret[i] = &happydns.Correction{
-			F:    correction.F,
-			Id:   id[:],
-			Msg:  correction.Msg,
-			Kind: DNSControlCorrectionKindFromMessage(correction.Msg),
+		ret[i] = &happydns.FCorrection{
+			F: correction.F,
+			Correction: happydns.Correction{
+				Id:   happydns.Identifier(id[:]),
+				Msg:  correction.Msg,
+				Kind: DNSControlCorrectionKindFromMessage(correction.Msg),
+			},
 		}
 	}
 

@@ -66,17 +66,17 @@ func NewService(
 
 // CreateDomain creates a new domain for the given user.
 func (s *Service) CreateDomain(user *happydns.User, uz *happydns.Domain) error {
-	uz, err := happydns.NewDomain(user, uz.DomainName, uz.ProviderId)
+	uz, err := happydns.NewDomain(user, uz.Domain, uz.IdProvider)
 	if err != nil {
 		return err
 	}
 
-	provider, err := s.providerService.GetUserProvider(user, uz.ProviderId)
+	provider, err := s.providerService.GetUserProvider(user, uz.IdProvider)
 	if err != nil {
 		return happydns.ValidationError{Msg: fmt.Sprintf("unable to find the provider.")}
 	}
 
-	if err = s.domainExistence.TestDomainExistence(provider, uz.DomainName); err != nil {
+	if err = s.domainExistence.TestDomainExistence(provider, uz.Domain); err != nil {
 		return happydns.NotFoundError{Msg: err.Error()}
 	}
 
@@ -89,7 +89,7 @@ func (s *Service) CreateDomain(user *happydns.User, uz *happydns.Domain) error {
 
 	// Add a log entry
 	if s.domainLogAppender != nil {
-		s.domainLogAppender.AppendDomainLog(uz, happydns.NewDomainLog(user, happydns.LOG_INFO, fmt.Sprintf("Domain name %s added.", uz.DomainName)))
+		s.domainLogAppender.AppendDomainLog(uz, happydns.NewDomainLog(user, happydns.LOGINFO, fmt.Sprintf("Domain name %s added.", uz.Domain)))
 	}
 
 	return nil
@@ -102,7 +102,7 @@ func (s *Service) GetUserDomain(user *happydns.User, domainID happydns.Identifie
 		return nil, err
 	}
 
-	if !user.Id.Equals(domain.Owner) {
+	if !user.Id.Equals(domain.IdOwner) {
 		return nil, happydns.ErrDomainNotFound
 	}
 
@@ -122,16 +122,13 @@ func (s *Service) ExtendsDomainWithZoneMeta(domain *happydns.Domain) (*happydns.
 	for _, zm := range domain.ZoneHistory {
 		zoneMeta, err := s.getZone.GetMeta(zm)
 		if err != nil {
-			errs = errors.Join(errs, fmt.Errorf("unable to retrieve zone meta history for %q: %w", domain.DomainName, err))
+			errs = errors.Join(errs, fmt.Errorf("unable to retrieve zone meta history for %q: %w", domain.Domain, err))
 		} else {
 			ret[zm.String()] = zoneMeta
 		}
 	}
 
-	return &happydns.DomainWithZoneMetadata{
-		Domain:   domain,
-		ZoneMeta: ret,
-	}, errs
+	return happydns.NewDomainWithZoneMetadata(domain, ret), errs
 }
 
 // ListUserDomains retrieves all domains for the given user.
@@ -172,7 +169,7 @@ func (s *Service) Update(domainID happydns.Identifier, user *happydns.User, upda
 
 	// Add a log entry
 	if s.domainLogAppender != nil {
-		s.domainLogAppender.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_INFO, fmt.Sprintf("Domain name %s properties changed.", domain.DomainName)))
+		s.domainLogAppender.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOGINFO, fmt.Sprintf("Domain name %s properties changed.", domain.Domain)))
 	}
 
 	return nil

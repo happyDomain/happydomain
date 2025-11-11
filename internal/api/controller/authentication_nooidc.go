@@ -29,12 +29,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happyDomain/internal/config"
+	"git.happydns.org/happyDomain/model"
 )
 
 type OIDCProvider struct{}
 
-func NewOIDCProvider(cfg *config.Options, lc *LoginController) *OIDCProvider {
+func NewOIDCProvider(cfg *happydns.Options, lc *LoginController) *OIDCProvider {
 	log.Fatal("OIDCProviderURL is defined whereas happydomain is compiled without OIDC support.")
 	return nil
 }

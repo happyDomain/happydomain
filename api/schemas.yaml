@@ -1,0 +1,935 @@
+components:
+
+  schemas:
+    # Naming Conventions:
+    # - Fields prefixed with _ are metadata fields (e.g., _id, _comment, _srctype, _svctype)
+    # - Regular fields use snake_case (e.g., created_at, id_owner, last_seen)
+    # - This maintains backward compatibility with existing API clients
+
+    DNSMsg:
+      required:
+        - answer
+        - extra
+        - ns
+        - question
+      properties:
+        answer:
+          description: Answer is the list of Answer records in the DNS response.
+          type: object
+        extra:
+          description: Extra is the list of extra records in the DNS response.
+          type: object
+        ns:
+          description: Ns is the list of Authoritative records in the DNS response.
+          type: object
+        question:
+          description: Question is the Question section of the DNS response.
+          items:
+            $ref: '#/components/schemas/DNSQuestion'
+          type: array
+      type: object
+
+    DNSQuestion:
+      required:
+        - name
+        - qclass
+        - qtype
+      properties:
+        name:
+          description: Name is the domain name researched.
+          type: string
+        qclass:
+          description: Qclass is the class of record researched.
+          format: int32
+          type: integer
+        qtype:
+          description: Qtype is the type of record researched.
+          format: int32
+          type: integer
+      type: object
+
+    AccountRecoveryForm:
+      required:
+      - key
+      - password
+      properties:
+        key:
+          description: Key is the secret sent by email to the user.
+          type: string
+        password:
+          description: Password is the new password to use with this account. Must be at least 8 characters long.
+          type: string
+          minLength: 8
+      type: object
+
+    AddressValidationForm:
+      required:
+      - key
+      properties:
+        key:
+          description: Key able to validate the email address.
+          type: string
+      type: object
+
+    ChangePasswordForm:
+      required:
+      - current
+      - password
+      - passwordConfirm
+      properties:
+        current:
+          type: string
+          description: Current password for authentication
+        password:
+          type: string
+          minLength: 8
+          description: New password, must be at least 8 characters long
+        passwordConfirm:
+          type: string
+          minLength: 8
+          description: Password confirmation, must match the new password
+      type: object
+
+    Correction:
+      required:
+        - id
+        - msg
+        - kind
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        kind:
+          $ref: '#/components/schemas/CorrectionKind'
+        msg:
+          type: string
+      type: object
+
+    CorrectionKind:
+      type: integer
+      enum:
+        - 0
+        - 1
+        - 2
+        - 3
+      x-enum-varnames:
+        - correction_kind_other
+        - correction_kind_addition
+        - correction_kind_update
+        - correction_kind_deletion
+      description: Type of correction to be applied to a zone
+
+    CustomForm:
+      required:
+        - fields
+        - afterText
+        - beforeText
+        - nextButtonState
+        - nextButtonLink
+        - nextButtonText
+        - nextEditButtonText
+        - previousButtonState
+        - previousButtonText
+        - previousEditButtonText
+        - sideText
+      properties:
+        afterText:
+          x-omitempty: true
+          description: AfterText is the text presented after the fields and before the
+            buttons
+          type: string
+        beforeText:
+          x-omitempty: true
+          description: BeforeText is the text presented before the fields.
+          type: string
+        fields:
+          description: Fields are the fields presented to the User.
+          items:
+            $ref: '#/components/schemas/Field'
+          type: array
+        nextButtonLink:
+          x-omitempty: true
+          description: NextButtonLink is the target of the next button, exclusive with
+            NextButtonState.
+          type: string
+        nextButtonState:
+          x-omitempty: true
+          description: NextButtonState is the step number asked when submiting the form.
+          type: integer
+        nextButtonText:
+          x-omitempty: true
+          description: NextButtonText is the next button content.
+          type: string
+        nextEditButtonText:
+          x-omitempty: true
+          description: NextEditButtonText is the next button content when updating the
+            settings (if not set, NextButtonText is used instead).
+          type: string
+        previousButtonState:
+          x-omitempty: true
+          description: PreviousButtonState is the step number to go when hitting the
+            previous button.
+          type: integer
+        previousButtonText:
+          x-omitempty: true
+          description: PreviousButtonText is previous/cancel button content.
+          type: string
+        previousEditButtonText:
+          x-omitempty: true
+          description: PreviousEditButtonText is the previous/cancel button content
+            when updating the settings (if not set, NextButtonText is used instead).
+          type: string
+        sideText:
+          x-omitempty: true
+          description: SideText is displayed in the sidebar, after any already existing
+            text. When a sidebar is avaiable.
+          type: string
+      type: object
+
+    Domain:
+      required:
+        - id
+        - id_owner
+        - id_provider
+        - domain
+        - zone_history
+      properties:
+        id:
+          description: Id is the Domain's identifier in the database.
+          $ref: '#/components/schemas/Identifier'
+        id_owner:
+          description: Owner is the identifier of the Domain's Owner.
+          $ref: '#/components/schemas/Identifier'
+        id_provider:
+          description: |-
+            ProviderId is the identifier of the Provider used to access and edit the
+            Domain.
+          $ref: '#/components/schemas/Identifier'
+        domain:
+          description: DomainName is the FQDN of the managed Domain.
+          type: string
+          example: example.com.
+        group:
+          description: Group is a hint string aims to group domains.
+          type: string
+          example: production
+        zone_history:
+          description: |-
+            ZoneHistory are the identifiers to the Zone attached to the current
+            Domain.
+          items:
+            $ref: '#/components/schemas/Identifier'
+          type: array
+      type: object
+
+    DomainCreationInput:
+      required:
+      - domain
+      - id_provider
+      properties:
+        domain:
+          description: DomainName is the FQDN of the managed Domain.
+          type: string
+          example: example.com.
+        id_provider:
+          description: |-
+            ProviderId is the identifier of the Provider used to access and edit the
+            Domain.
+          $ref: '#/components/schemas/Identifier'
+      type: object
+
+    DomainLog:
+      required:
+        - id
+        - id_user
+        - date
+        - level
+        - content
+      properties:
+        id:
+          description: Id is the Log's identifier in the database.
+          $ref: '#/components/schemas/Identifier'
+        id_user:
+          description: IdUser is the identifier of the person responsible for the action.
+          $ref: '#/components/schemas/Identifier'
+        date:
+          description: Date is the date of the action.
+          type: string
+          format: date-time
+        level:
+          description: Level reports the criticity level of the action logged.
+          type: integer
+          enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+          x-enum-varnames: [LOG_CRIT, LOG_FATAL, LOG_ERR2, LOG_ERR, LOG_STRONG_WARN, LOG_WARN, LOG_WEIRD, LOG_NACK, LOG_INFO, LOG_ACK, LOG_DEBUG]
+        content:
+          description: Content is the description of the action logged.
+          type: string
+      type: object
+
+    DomainWithZoneMetadata:
+      allOf:
+        - $ref: '#/components/schemas/Domain'
+        - type: object
+          required:
+            - zone_meta
+          properties:
+            zone_meta:
+              x-go-type: "map[string]*ZoneMeta"
+              additionalProperties:
+                $ref: '#/components/schemas/ZoneMeta'
+
+    ErrorResponse:
+      required:
+        - errmsg
+      properties:
+        errmsg:
+          description: Message describe the error to display to the user.
+          type: string
+          x-go-name: message
+        href:
+          description: Link is a link that can help the user to fix the error.
+          type: string
+          x-go-name: link
+      type: object
+
+    Field:
+      required:
+        - type
+        - id
+        - label
+        - placeholder
+        - description
+        - choices
+        - hide
+        - required
+        - secret
+        - textarea
+      properties:
+        type:
+          description: Type is the string representation of the field's type.
+          type: string
+        id:
+          description: Id is the field identifier.
+          type: string
+        choices:
+          x-omitempty: true
+          description: Choices holds the differents choices shown to the user in <select>
+            tag.
+          items:
+            type: string
+          type: array
+        default:
+          description: Default is the preselected value or the default value in case
+            the field is not filled by the user.
+        description:
+          x-omitempty: true
+          description: Description stores an helpfull sentence describing the field.
+          type: string
+        hide:
+          description: Hide indicates if the field should be hidden to the user.
+          type: boolean
+        label:
+          x-omitempty: true
+          description: Label is the title given to the field, displayed as <label> tag
+            on the interface.
+          type: string
+        placeholder:
+          x-omitempty: true
+          description: Placeholder is the placeholder attribute of the corresponding
+            <input> tag.
+          type: string
+        required:
+          x-omitempty: true
+          description: Required indicates whether the field has to be filled or not.
+          type: boolean
+        secret:
+          x-omitempty: true
+          description: |-
+            Secret indicates if the field contains sensitive information such as API key, in order to hide
+            the field when not needed. When typing, it doesn't hide characters like in password input.
+          type: boolean
+        textarea:
+          x-omitempty: true
+          description: Textarea indicates that a large field is expected.
+          type: boolean
+      type: object
+
+    FormState:
+      type: object
+      required:
+        - _id
+        - _comment
+        - recall
+        - state
+      properties:
+        _id:
+          description: Id for an already existing element.
+          $ref: '#/components/schemas/Identifier'
+        _comment:
+          x-go-name: comment
+          type: string
+          x-omitempty: true
+          description: User defined name of the element.
+        recall:
+          type: string
+          x-omitempty: true
+          description: Recall is the identifier for a saved FormState you want to retrieve.
+        state:
+          type: integer
+          x-go-type: int32
+          x-omitempty: true
+          description: State is the desired form to shows next (starting at 0).
+
+    Identifier:
+      type: string
+      format: byte
+      description: An object identifier.
+      example: "0123456789abcdef"
+
+    Provider:
+      allOf:
+        - $ref: '#/components/schemas/ProviderMeta'
+        - type: object
+          required:
+            - provider
+          properties:
+            provider:
+              description: Provider-specific configuration. Concrete types should be generated from Go code.
+              x-go-type: ProviderBody
+              oneOf:
+                # TODO: Generate concrete provider types from Go code
+                # Example structure:
+                # - $ref: '#/components/schemas/ProviderCloudflare'
+                # - $ref: '#/components/schemas/ProviderRoute53'
+                # - $ref: '#/components/schemas/ProviderGandi'
+                - type: object
+                  additionalProperties: true
+              discriminator:
+                propertyName: _srctype
+
+    ProviderInfos:
+      required:
+        - name
+        - help_link
+        - description
+        - capabilities
+      properties:
+        capabilities:
+          x-omitempty: true
+          description: Capabilites is a list of special ability of the provider (automatically
+            filled).
+          items:
+            type: string
+          type: array
+        description:
+          x-omitempty: true
+          description: Description is a brief description of what the provider is.
+          type: string
+        help_link:
+          x-omitempty: true
+          description: HelpLink is the link to the documentation of the provider configuration.
+          type: string
+        name:
+          description: Name is the name displayed.
+          type: string
+      type: object
+
+    ProviderMeta:
+      required:
+         - _id
+         - _ownerid
+         - _srctype
+         - _comment
+      properties:
+        _id:
+          description: Id is the Provider's identifier.
+          $ref: '#/components/schemas/Identifier'
+        _ownerid:
+          description: Owner is the User's identifier for the current Provider.
+          $ref: '#/components/schemas/Identifier'
+        _srctype:
+          x-go-name: type
+          description: Type is the string representation of the Provider's type.
+          type: string
+        _comment:
+          x-go-name: comment
+          x-omitempty: true
+          description: Comment is a string that helps user to distinguish the Provider.
+          type: string
+      type: object
+
+    ProviderMinimal:
+      properties:
+        _comment:
+          description: Comment is a string that helps user to distinguish the Provider.
+          type: string
+        _srctype:
+          description: Type is the string representation of the Provider's type.
+          type: string
+        provider:
+          $ref: '#/components/schemas/Provider'
+      type: object
+
+    ProviderSettingsResponse:
+      required:
+        - values
+      properties:
+        Provider:
+          type: object
+        form:
+          $ref: '#/components/schemas/CustomForm'
+        values:
+          additionalProperties: true
+          type: object
+      type: object
+
+    ProviderSettingsState:
+      allOf:
+        - $ref: '#/components/schemas/FormState'
+        - type: object
+          required:
+            - Provider
+          properties:
+            Provider:
+              x-go-type: ProviderBody
+              type: object
+              additionalProperties: true
+
+    ProviderSpecs:
+      required:
+        - capabilities
+        - fields
+      properties:
+        capabilities:
+          description: Capabilities exposes what the provider can do.
+          items:
+            type: string
+          type: array
+        fields:
+          description: Fields describes the settings needed to configure the provider.
+          items:
+            $ref: '#/components/schemas/Field'
+          type: array
+      type: object
+
+    ResolverRequest:
+      required:
+        - domain
+        - type
+        - resolver
+        - custom
+      properties:
+        custom:
+          description: Custom is the address to the recursive server to use.
+          type: string
+          example: 8.8.8.8
+        domain:
+          description: DomainName is the FQDN to resolve.
+          type: string
+          example: example.com.
+        resolver:
+          description: Resolver is the name of the resolver to use (or local or custom).
+          type: string
+          example: local
+        type:
+          description: Type is the type of record to retrieve.
+          type: string
+          example: A
+      type: object
+
+    Service:
+      allOf:
+        - $ref: '#/components/schemas/ServiceMeta'
+        - type: object
+          properties:
+            service:
+              description: Service-specific configuration. Concrete types should be generated from Go code.
+              x-go-type: ServiceBody
+              x-go-type-skip-optional-pointer: true
+              oneOf:
+                # TODO: Generate concrete service types from Go code
+                # Example structure:
+                # - $ref: '#/components/schemas/ServiceA'
+                # - $ref: '#/components/schemas/ServiceMX'
+                # - $ref: '#/components/schemas/ServiceCNAME'
+                - type: object
+                  additionalProperties: true
+              discriminator:
+                propertyName: _svctype
+
+    ServiceInfos:
+      required:
+        - _svctype
+        - _svcicon
+        - name
+        - description
+        - categories
+        - record_types
+        - restrictions
+        - family
+      properties:
+        _svcicon:
+          x-go-name: icon
+          type: string
+        _svctype:
+          x-go-name: type
+          type: string
+        categories:
+          x-omitempty: true
+          items:
+            type: string
+          type: array
+        description:
+          x-omitempty: true
+          type: string
+        family:
+          x-omitempty: true
+          type: string
+        name:
+          type: string
+        record_types:
+          x-omitempty: true
+          items:
+            type: integer
+            x-go-type: uint16
+          type: array
+        restrictions:
+          $ref: '#/components/schemas/ServiceRestrictions'
+        tabs:
+          x-omitempty: true
+          type: boolean
+      type: object
+
+    ServiceMeta:
+      required:
+        - _id
+        - _svctype
+        - _comment
+        - _ownerid
+        - _tmp_hint_nb
+        - _mycomment
+        - _domain
+        - _ttl
+        - _aliases
+      properties:
+        _id:
+          description: Id is the Service's identifier.
+          $ref: '#/components/schemas/Identifier'
+        _aliases:
+          x-go-name: aliases
+          x-omitempty: true
+          description: Aliases exposes the aliases defined on this Service.
+          items:
+            type: string
+          type: array
+        _svctype:
+          x-go-name: type
+          description: Type is the string representation of the Service's type.
+          type: string
+        _comment:
+          x-go-name: comment
+          description: Comment is a string that helps user to distinguish the Service.
+          type: string
+        _domain:
+          x-go-name: domain
+          description: Domain contains the abstract domain where this Service relates.
+          type: string
+        _mycomment:
+          x-go-name: user_comment
+          x-omitempty: true
+          description: |-
+            UserComment is a supplementary string defined by the user to
+            distinguish the Service.
+          type: string
+        _ownerid:
+          description: OwnerId is the User's identifier for the current Service.
+          $ref: '#/components/schemas/Identifier'
+        _tmp_hint_nb:
+          x-go-name: nb_resources
+          description: NbResources holds the number of Resources stored inside this
+            Service.
+          type: integer
+        _ttl:
+          x-go-name: Ttl
+          x-go-type: uint32
+          description: Ttl contains the specific TTL for the underlying Resources.
+          type: integer
+      type: object
+
+    ServiceRestrictions:
+      required:
+        - alone
+        - exclusive
+        - glue
+        - leaf
+        - near_alone
+        - need_types
+        - root_only
+        - single
+      properties:
+        alone:
+          x-omitempty: true
+          description: Alone restricts the service to be the only one for a given subdomain.
+          type: boolean
+        exclusive:
+          x-go-name: exclusive_RR
+          x-omitempty: true
+          description: ExclusiveRR restricts the service to be present along with others
+            given types.
+          items:
+            type: string
+          type: array
+        glue:
+          x-omitempty: true
+          description: GLUE allows a service to be present under Leaf, as GLUE record.
+          type: boolean
+        leaf:
+          x-omitempty: true
+          description: Leaf restricts the creation of subdomains under this kind of
+            service (blocks NearAlone).
+          type: boolean
+        near_alone:
+          x-omitempty: true
+          description: NearAlone allows a service to be present along with Alone restricted
+            services (eg. services that will create sub-subdomain from their given subdomain).
+          type: boolean
+        need_types:
+          x-omitempty: true
+          description: NeedTypes restricts the service to sources that are compatibles
+            with ALL the given types.
+          items:
+            type: integer
+            x-go-type: uint16
+          type: array
+        root_only:
+          x-omitempty: true
+          description: RootOnly restricts the service to be present at the root of the
+            domain only.
+          type: boolean
+        single:
+          x-omitempty: true
+          description: Single restricts the service to be present only once per subdomain.
+          type: boolean
+      type: object
+
+    ServiceSpecs:
+      required:
+        - fields
+      properties:
+        fields:
+          items:
+            $ref: '#/components/schemas/Field'
+          type: array
+      type: object
+
+    UpdateRecordForm:
+      required:
+      - oldrr
+      - newrr
+      properties:
+        newrr:
+          x-go-name: newRR
+          type: string
+        oldrr:
+          x-go-name: oldRR
+          type: string
+      type: object
+
+    LoginRequest:
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: user@example.com
+        password:
+          type: string
+          description: User's password
+          example: mySecurePassword123
+      type: object
+
+    User:
+      required:
+        - id
+        - email
+        - created_at
+        - last_seen
+      properties:
+        id:
+          description: Id is the User's identifier.
+          $ref: '#/components/schemas/Identifier'
+        email:
+          description: Email is the User's login and means of contact.
+          type: string
+          format: email
+          example: user@example.com
+        created_at:
+          description: CreatedAt is the time when the User logs in for the first time.
+          type: string
+          format: date-time
+          example: "2023-01-15T10:30:00Z"
+        last_seen:
+          description: LastSeen is the time when the User used happyDNS for the last
+            time (in a 12h frame).
+          type: string
+          format: date-time
+        settings:
+          description: Settings holds the settings for an account.
+          $ref: '#/components/schemas/UserSettings'
+      type: object
+
+    UserRegistration:
+      required:
+      - email
+      - password
+      - want_receive_update
+      properties:
+        email:
+          type: string
+          format: email
+          example: newuser@example.com
+        lang:
+          type: string
+          example: en
+        password:
+          type: string
+          minLength: 8
+          description: Password must be at least 8 characters long
+          example: mySecurePassword123
+        want_receive_update:
+          x-omitempty: true
+          type: boolean
+      type: object
+
+    UserSettings:
+      required:
+        - language
+        - newsletter
+        - field_hint
+        - show_rr_types
+        - zone_view
+      properties:
+        field_hint:
+          description: FieldHint stores the way form hints are displayed.
+          type: integer
+          enum: [0, 1, 2, 3]
+          x-enum-varnames: [FIELDHINT_HIDE, FIELDHINT_TOOLTIP, FIELDHINT_FOCUSED, FIELDHINT_ALWAYS]
+        language:
+          description: Language saves the locale defined by the user.
+          type: string
+        newsletter:
+          description: Newsletter indicates wether the user wants to receive the newsletter
+            or not.
+          type: boolean
+        show_rr_types:
+          x-go-name: ShowRRTypes
+          description: ShowRRTypes tells if we show equivalent RRTypes in interface
+            (for advanced users).
+          type: boolean
+        zone_view:
+          description: ZoneView keeps the view of the zone wanted by the user.
+          type: integer
+          enum: [0, 1, 2]
+          x-enum-varnames: [ZONEVIEW_GRID, ZONEVIEW_LIST, ZONEVIEW_RECORDS]
+      type: object
+
+    UserSpecialAction:
+      required:
+      - email
+      - kind
+      properties:
+        email:
+          description: Email on which to perform actions.
+          type: string
+          format: email
+        kind:
+          description: 'Kind of special action to perform: "recovery" or "validation".'
+          type: string
+          enum:
+          - recovery
+          - validation
+      type: object
+
+    VersionResponse:
+      required:
+        - dirty_build
+        - last_commit
+        - version
+      properties:
+        dirty_build:
+          type: boolean
+        last_commit:
+          type: string
+        version:
+          type: string
+      type: object
+
+    Zone:
+      allOf:
+        - $ref: '#/components/schemas/ZoneMeta'
+        - type: object
+          required:
+            - services
+          properties:
+            services:
+              additionalProperties:
+                x-go-type: "[]*Service"
+                items:
+                  $ref: '#/components/schemas/Service'
+                type: array
+              type: object
+
+    ZoneMeta:
+      required:
+        - id
+        - id_author
+        - default_ttl
+        - last_modified
+      properties:
+        commit_date:
+          description: CommitDate is the time when the commit has been made.
+          type: string
+          format: date-time
+        commit_message:
+          description: CommitMsg is a message defined by the User to give a label to
+            this Zone revision.
+          type: string
+        default_ttl:
+          description: DefaultTTL is the TTL to use when no TTL has been defined for
+            a record in this Zone.
+          type: integer
+          x-go-type: uint32
+          x-omitempty: true
+        id:
+          description: Id is the Zone's identifier.
+          $ref: '#/components/schemas/Identifier'
+        id_author:
+          description: IdAuthor is the User's identifier for the current Zone.
+          $ref: '#/components/schemas/Identifier'
+        last_modified:
+          description: LastModified holds the time when the last modification has been
+            made on this Zone.
+          type: string
+          format: date-time
+        parent:
+          description: ParentZone identifies the parental zone of this one.
+          $ref: '#/components/schemas/Identifier'
+        published:
+          description: Published indicates whether the Zone has already been published
+            or not.
+          type: string
+          format: date-time
+      type: object
+
+    ZoneServices:
+      required:
+        - services
+      properties:
+        services:
+          x-go-type: "[]*Service"
+          items:
+            $ref: '#/components/schemas/Service'
+          type: array
+      type: object

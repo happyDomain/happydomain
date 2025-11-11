@@ -93,12 +93,12 @@ func (sc *ServiceController) UpdateZoneService(c *gin.Context) {
 		return
 	}
 
-	if !serviceid.Equals(usc.Id) {
+	if !serviceid.Equals(usc.UnderscoreId) {
 		middleware.ErrorResponse(c, http.StatusBadRequest, fmt.Errorf("Uploaded service identifier doesn't match selected service identifier in route."))
 		return
 	}
 
-	zone, err = sc.zoneServiceUC.UpdateZoneService(user, domain, zone, happydns.Subdomain(usc.Domain), usc.Id, newservice)
+	zone, err = sc.zoneServiceUC.UpdateZoneService(user, domain, zone, usc.Domain, usc.UnderscoreId, newservice)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

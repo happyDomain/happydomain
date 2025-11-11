@@ -50,7 +50,7 @@ func (s *Service) SetValidator(v ProviderValidator) {
 func ParseProvider(msg *happydns.ProviderMessage) (p *happydns.Provider, err error) {
 	p = &happydns.Provider{}
 
-	p.ProviderMeta = msg.ProviderMeta
+	p.SetMeta(&msg.ProviderMeta)
 	p.Provider, err = providers.FindProvider(msg.Type)
 	if err != nil {
 		return
@@ -71,7 +71,7 @@ func (s *Service) CreateProvider(user *happydns.User, msg *happydns.ProviderMess
 		return nil, fmt.Errorf("invalid provider: %w", err)
 	}
 
-	provider.Owner = user.Id
+	provider.UnderscoreOwnerid = user.Id
 
 	if err := s.store.CreateProvider(provider); err != nil {
 		return nil, happydns.InternalError{
@@ -90,7 +90,7 @@ func (s *Service) getUserProvider(user *happydns.User, providerID happydns.Ident
 		return nil, err
 	}
 
-	if !user.Id.Equals(p.ProviderMeta.Owner) {
+	if !user.Id.Equals(p.ProviderMeta.UnderscoreOwnerid) {
 		return nil, happydns.ErrProviderNotFound
 	}
 
@@ -141,7 +141,7 @@ func (s *Service) UpdateProvider(providerID happydns.Identifier, user *happydns.
 
 	updateFn(provider)
 
-	if !provider.Id.Equals(providerID) {
+	if !provider.UnderscoreId.Equals(providerID) {
 		return happydns.ValidationError{Msg: "you cannot change the provider identifier"}
 	}
 

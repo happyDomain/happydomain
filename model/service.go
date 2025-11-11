@@ -25,15 +25,6 @@ import (
 	"encoding/json"
 )
 
-type Service struct {
-	ServiceMeta
-	Service ServiceBody
-}
-
-func (msg *Service) Meta() *ServiceMeta {
-	return &msg.ServiceMeta
-}
-
 // ServiceBody represents a service provided by one or more DNS record.
 type ServiceBody interface {
 	// GetNbResources get the number of main Resources contains in the Service.
@@ -46,35 +37,30 @@ type ServiceBody interface {
 	GetRecords(domain string, ttl uint32, origin string) ([]Record, error)
 }
 
-// ServiceMeta holds the metadata associated to a Service.
-type ServiceMeta struct {
-	// Type is the string representation of the Service's type.
-	Type string `json:"_svctype"`
+func (svc *Service) Meta() (meta ServiceMeta) {
+	meta.Type = svc.Type
+	meta.UnderscoreId = svc.UnderscoreId
+	meta.UnderscoreOwnerid = svc.UnderscoreOwnerid
+	meta.Domain = svc.Domain
+	meta.Ttl = svc.Ttl
+	meta.Comment = svc.Comment
+	meta.UserComment = svc.UserComment
+	meta.Aliases = svc.Aliases
+	meta.NbResources = svc.NbResources
 
-	// Id is the Service's identifier.
-	Id Identifier `json:"_id,omitempty" swaggertype:"string"`
+	return
+}
 
-	// OwnerId is the User's identifier for the current Service.
-	OwnerId Identifier `json:"_ownerid,omitempty" swaggertype:"string"`
-
-	// Domain contains the abstract domain where this Service relates.
-	Domain string `json:"_domain"`
-
-	// Ttl contains the specific TTL for the underlying Resources.
-	Ttl uint32 `json:"_ttl"`
-
-	// Comment is a string that helps user to distinguish the Service.
-	Comment string `json:"_comment,omitempty"`
-
-	// UserComment is a supplementary string defined by the user to
-	// distinguish the Service.
-	UserComment string `json:"_mycomment,omitempty"`
-
-	// Aliases exposes the aliases defined on this Service.
-	Aliases []string `json:"_aliases,omitempty"`
-
-	// NbResources holds the number of Resources stored inside this Service.
-	NbResources int `json:"_tmp_hint_nb"`
+func (svc *Service) SetMeta(meta *ServiceMeta) {
+	svc.Type = meta.Type
+	svc.UnderscoreId = meta.UnderscoreId
+	svc.UnderscoreOwnerid = meta.UnderscoreOwnerid
+	svc.Domain = meta.Domain
+	svc.Ttl = meta.Ttl
+	svc.Comment = meta.Comment
+	svc.UserComment = meta.UserComment
+	svc.Aliases = meta.Aliases
+	svc.NbResources = meta.NbResources
 }
 
 // ServiceCombined combined ServiceMeta + Service
@@ -95,5 +81,5 @@ type ServiceRecord struct {
 
 type ServiceUsecase interface {
 	ListRecords(*Domain, *Zone, *Service) ([]Record, error)
-	ValidateService(ServiceBody, Subdomain, Origin) ([]byte, error)
+	ValidateService(ServiceBody, string, Origin) ([]byte, error)
 }

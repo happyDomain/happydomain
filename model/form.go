@@ -33,91 +33,13 @@ var (
 	CancelForm = errors.New("Cancel")
 )
 
-// CustomForm is used to create a form with several steps when creating or updating provider's settings.
-type CustomForm struct {
-	// BeforeText is the text presented before the fields.
-	BeforeText string `json:"beforeText,omitempty"`
+func (pss *ProviderSettingsState) FormState() (fs FormState) {
+	fs.UnderscoreId = pss.UnderscoreId
+	fs.Comment = pss.Comment
+	fs.Recall = pss.Recall
+	fs.State = pss.State
 
-	// SideText is displayed in the sidebar, after any already existing text. When a sidebar is avaiable.
-	SideText string `json:"sideText,omitempty"`
-
-	// AfterText is the text presented after the fields and before the buttons
-	AfterText string `json:"afterText,omitempty"`
-
-	// Fields are the fields presented to the User.
-	Fields []*Field `json:"fields"`
-
-	// NextButtonText is the next button content.
-	NextButtonText string `json:"nextButtonText,omitempty"`
-
-	// NextEditButtonText is the next button content when updating the settings (if not set, NextButtonText is used instead).
-	NextEditButtonText string `json:"nextEditButtonText,omitempty"`
-
-	// PreviousButtonText is previous/cancel button content.
-	PreviousButtonText string `json:"previousButtonText,omitempty"`
-
-	// PreviousEditButtonText is the previous/cancel button content when updating the settings (if not set, NextButtonText is used instead).
-	PreviousEditButtonText string `json:"previousEditButtonText,omitempty"`
-
-	// NextButtonLink is the target of the next button, exclusive with NextButtonState.
-	NextButtonLink string `json:"nextButtonLink,omitempty"`
-
-	// NextButtonState is the step number asked when submiting the form.
-	NextButtonState int32 `json:"nextButtonState,omitempty"`
-
-	// PreviousButtonState is the step number to go when hitting the previous button.
-	PreviousButtonState int32 `json:"previousButtonState,omitempty"`
-}
-
-// Field
-type Field struct {
-	// Id is the field identifier.
-	Id string `json:"id"`
-
-	// Type is the string representation of the field's type.
-	Type string `json:"type"`
-
-	// Label is the title given to the field, displayed as <label> tag on the interface.
-	Label string `json:"label,omitempty"`
-
-	// Placeholder is the placeholder attribute of the corresponding <input> tag.
-	Placeholder string `json:"placeholder,omitempty"`
-
-	// Default is the preselected value or the default value in case the field is not filled by the user.
-	Default interface{} `json:"default,omitempty"`
-
-	// Choices holds the differents choices shown to the user in <select> tag.
-	Choices []string `json:"choices,omitempty"`
-
-	// Required indicates whether the field has to be filled or not.
-	Required bool `json:"required,omitempty"`
-
-	// Secret indicates if the field contains sensitive information such as API key, in order to hide
-	// the field when not needed. When typing, it doesn't hide characters like in password input.
-	Secret bool `json:"secret,omitempty"`
-
-	// Hide indicates if the field should be hidden to the user.
-	Hide bool `json:"hide,omitempty"`
-
-	// Textarea indicates that a large field is expected.
-	Textarea bool `json:"textarea,omitempty"`
-
-	// Description stores an helpfull sentence describing the field.
-	Description string `json:"description,omitempty"`
-}
-
-type FormState struct {
-	// Id for an already existing element.
-	Id *Identifier `json:"_id,omitempty" swaggertype:"string"`
-
-	// User defined name of the element.
-	Name string `json:"_comment"`
-
-	// State is the desired form to shows next (starting at 0).
-	State int32 `json:"state"`
-
-	// Recall is the identifier for a saved FormState you want to retrieve.
-	Recall string `json:"recall,omitempty"`
+	return
 }
 
 // GenRecallID

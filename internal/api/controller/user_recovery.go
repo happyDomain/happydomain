@@ -65,7 +65,7 @@ func (rc *UserRecoveryController) UserRecoveryOperations(c *gin.Context) {
 
 	res := happydns.ErrorResponse{Message: "If this address exists in our database, you'll receive a new e-mail."}
 
-	user, err := rc.auService.GetAuthUserByEmail(uu.Email)
+	user, err := rc.auService.GetAuthUserByEmail(string(uu.Email))
 	if err != nil {
 		log.Printf("%s: unable to retrieve user %q: %s", c.ClientIP(), uu.Email, err.Error())
 	} else if uu.Kind == "recovery" {

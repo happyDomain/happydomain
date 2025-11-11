@@ -85,7 +85,7 @@ func (bc *BackupController) DoBackup() (ret happydns.Backup) {
 					// Domain logs
 					ls, err := bc.store.ListDomainLogs(dn)
 					if err != nil {
-						ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve domain's logs %s/%s (%s): %s", u.Id.String(), dn.Id.String(), dn.DomainName, err.Error()))
+						ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve domain's logs %s/%s (%s): %s", u.Id.String(), dn.Id.String(), dn.Domain, err.Error()))
 					} else {
 						ret.DomainsLogs[dn.Id.String()] = ls
 					}
@@ -94,7 +94,7 @@ func (bc *BackupController) DoBackup() (ret happydns.Backup) {
 					for _, zid := range dn.ZoneHistory {
 						z, err := bc.store.GetZone(zid)
 						if err != nil {
-							ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve domain's zone %s/%s (%s): zoneid=%s: %s", u.Id.String(), dn.Id.String(), dn.DomainName, zid.String(), err.Error()))
+							ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve domain's zone %s/%s (%s): zoneid=%s: %s", u.Id.String(), dn.Id.String(), dn.Domain, zid.String(), err.Error()))
 						} else {
 							ret.Zones = append(ret.Zones, z)
 						}

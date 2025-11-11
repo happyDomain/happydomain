@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -21,21 +21,7 @@
 
 package happydns
 
-import ()
-
-type CorrectionKind uint8
-
-const (
-	_ CorrectionKind = iota // Skip 0
-	CorrectionKindAddition
-	CorrectionKindUpdate
-	CorrectionKindDeletion
-	CorrectionKindOther = 99
-)
-
-type Correction struct {
-	F    func() error   `json:"-"`
-	Id   Identifier     `json:"id,omitempty"`
-	Msg  string         `json:"msg"`
-	Kind CorrectionKind `json:"kind,omitempty"`
+type FCorrection struct {
+	Correction
+	F func() error
 }

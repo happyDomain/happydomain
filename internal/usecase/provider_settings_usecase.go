@@ -46,7 +46,8 @@ func NewProviderSettingsUsecase(cfg *happydns.Options, ps happydns.ProviderUseca
 func (psu *providerSettingsUsecase) NextProviderSettingsState(state *happydns.ProviderSettingsState, pType string, user *happydns.User) (*happydns.Provider, *happydns.ProviderSettingsResponse, error) {
 	fu := NewFormUsecase(psu.config)
 
-	form, p, err := forms.DoSettingState(fu, &state.FormState, state.ProviderBody, forms.GenDefaultSettingsForm)
+	fs := state.FormState()
+	form, p, err := forms.DoSettingState(fu, &fs, state.Provider, forms.GenDefaultSettingsForm)
 
 	if err != nil {
 		if err != happydns.DoneForm {
@@ -55,7 +56,7 @@ func (psu *providerSettingsUsecase) NextProviderSettingsState(state *happydns.Pr
 			return nil, nil, happydns.ForbiddenError{Msg: "cannot change provider settings as DisableProviders parameter is set."}
 		}
 
-		p, err := state.ProviderBody.InstantiateProvider()
+		p, err := state.Provider.InstantiateProvider()
 		if err != nil {
 			return nil, nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to instantiate provider: %s", err.Error())}
 		}
@@ -66,14 +67,12 @@ func (psu *providerSettingsUsecase) NextProviderSettingsState(state *happydns.Pr
 			}
 		}
 
-		if state.Id == nil {
+		if state.UnderscoreId == nil {
 			provider := &happydns.Provider{
-				Provider: state.ProviderBody,
-				ProviderMeta: happydns.ProviderMeta{
-					Type:    pType,
-					Owner:   user.Id,
-					Comment: state.Name,
-				},
+				Provider:          state.Provider,
+				Type:              pType,
+				UnderscoreOwnerid: user.Id,
+				Comment:           state.Comment,
 			}
 			// Create a new Provider
 			err = psu.store.CreateProvider(provider)
@@ -87,14 +86,17 @@ func (psu *providerSettingsUsecase) NextProviderSettingsState(state *happydns.Pr
 			return provider, nil, nil
 		} else {
 			// Update an existing Provider
-			p, err := psu.providerService.GetUserProvider(user, *state.Id)
+			p, err := psu.providerService.GetUserProvider(user, state.UnderscoreId)
 			if err != nil {
 				return nil, nil, happydns.NotFoundError{Msg: fmt.Sprintf("unable to retrieve the original provider: %s", err.Error())}
 			}
 
 			newp := &happydns.Provider{
-				ProviderMeta: p.ProviderMeta,
-				Provider:     state.ProviderBody,
+				UnderscoreId:      p.UnderscoreId,
+				UnderscoreOwnerid: p.UnderscoreOwnerid,
+				Type:              p.Type,
+				Comment:           p.Comment,
+				Provider:          state.Provider,
 			}
 			err = psu.store.UpdateProvider(newp)
 			if err != nil {

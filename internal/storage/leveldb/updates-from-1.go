@@ -29,6 +29,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/oapi-codegen/runtime/types"
+
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -90,9 +92,9 @@ func migrateFrom1_users_tree(s *LevelDBStorage) (err error) {
 
 		newUser := &happydns.User{
 			Id:        idRaw,
-			Email:     user.Email,
+			Email:     types.Email(user.Email),
 			CreatedAt: creationTime,
-			Settings:  user.Settings,
+			Settings:  &user.Settings,
 		}
 
 		user4auth := &happydns.UserAuth{

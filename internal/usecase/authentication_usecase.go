@@ -25,6 +25,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/oapi-codegen/runtime/types"
+
 	"git.happydns.org/happyDomain/internal/usecase/authuser"
 	"git.happydns.org/happyDomain/internal/usecase/user"
 	"git.happydns.org/happyDomain/model"
@@ -58,9 +60,9 @@ func (lu *loginUsecase) CompleteAuthentication(uinfo happydns.UserInfo) (*happyd
 		if err != nil {
 			return nil, fmt.Errorf("unable to create user account: %w", err)
 		}
-	} else if (uinfo.GetEmail() != "" && user.Email != uinfo.GetEmail()) || time.Since(user.LastSeen) > time.Hour*12 {
+	} else if (uinfo.GetEmail() != "" && string(user.Email) != uinfo.GetEmail()) || time.Since(user.LastSeen) > time.Hour*12 {
 		if uinfo.GetEmail() != "" {
-			user.Email = uinfo.GetEmail()
+			user.Email = types.Email(uinfo.GetEmail())
 		}
 		user.LastSeen = time.Now()
 
@@ -75,7 +77,7 @@ func (lu *loginUsecase) CompleteAuthentication(uinfo happydns.UserInfo) (*happyd
 
 func (lu *loginUsecase) AuthenticateUserWithPassword(request happydns.LoginRequest) (*happydns.User, error) {
 	// Retrieve the given user
-	user, err := lu.store.GetAuthUserByEmail(request.Email)
+	user, err := lu.store.GetAuthUserByEmail(string(request.Email))
 	if err != nil {
 		return nil, fmt.Errorf("user's email (%s) not found: %s", request.Email, err.Error())
 	}

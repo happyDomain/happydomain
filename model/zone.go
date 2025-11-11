@@ -27,54 +27,45 @@ import (
 	"time"
 )
 
-// ZoneMeta holds the metadata associated to a Zone.
-type ZoneMeta struct {
-	// Id is the Zone's identifier.
-	Id Identifier `json:"id" swaggertype:"string"`
-
-	// IdAuthor is the User's identifier for the current Zone.
-	IdAuthor Identifier `json:"id_author" swaggertype:"string"`
-
-	// ParentZone identifies the parental zone of this one.
-	ParentZone *Identifier `json:"parent,omitempty" swaggertype:"string"`
-
-	// DefaultTTL is the TTL to use when no TTL has been defined for a record in this Zone.
-	DefaultTTL uint32 `json:"default_ttl"`
-
-	// LastModified holds the time when the last modification has been made on this Zone.
-	LastModified time.Time `json:"last_modified,omitempty"`
-
-	// CommitMsg is a message defined by the User to give a label to this Zone revision.
-	CommitMsg *string `json:"commit_message,omitempty"`
-
-	// CommitDate is the time when the commit has been made.
-	CommitDate *time.Time `json:"commit_date,omitempty"`
-
-	// Published indicates whether the Zone has already been published or not.
-	Published *time.Time `json:"published,omitempty"`
-}
-
 // ZoneMessage is the intermediate struct for parsing zones.
 type ZoneMessage struct {
 	ZoneMeta
-	Services map[Subdomain][]*ServiceMessage `json:"services"`
+	Services map[string][]*ServiceMessage `json:"services"`
 }
 
-// Zone contains ZoneMeta + map of services by subdomains.
-type Zone struct {
-	ZoneMeta
-	Services map[Subdomain][]*Service `json:"services"`
+func (z *Zone) Meta() (meta ZoneMeta) {
+	meta.Id = z.Id
+	meta.IdAuthor = z.IdAuthor
+	meta.Parent = z.Parent
+	meta.CommitDate = z.CommitDate
+	meta.CommitMessage = z.CommitMessage
+	meta.DefaultTtl = z.DefaultTtl
+	meta.LastModified = z.LastModified
+	meta.Published = z.Published
+
+	return
+}
+
+func (z *Zone) SetMeta(meta ZoneMeta) {
+	z.Id = meta.Id
+	z.IdAuthor = meta.IdAuthor
+	z.Parent = meta.Parent
+	z.CommitDate = meta.CommitDate
+	z.CommitMessage = meta.CommitMessage
+	z.DefaultTtl = meta.DefaultTtl
+	z.LastModified = meta.LastModified
+	z.Published = meta.Published
 }
 
 // DerivateNew creates a new Zone from the current one, by copying all fields.
 func (z *Zone) DerivateNew() *Zone {
 	newZone := new(Zone)
 
-	newZone.ZoneMeta.ParentZone = &z.ZoneMeta.Id
-	newZone.ZoneMeta.IdAuthor = z.ZoneMeta.IdAuthor
-	newZone.ZoneMeta.DefaultTTL = z.ZoneMeta.DefaultTTL
-	newZone.ZoneMeta.LastModified = time.Now()
-	newZone.Services = map[Subdomain][]*Service{}
+	newZone.Parent = &z.Id
+	newZone.IdAuthor = z.IdAuthor
+	newZone.DefaultTtl = z.DefaultTtl
+	newZone.LastModified = time.Now()
+	newZone.Services = map[string][]*Service{}
 
 	for subdomain, svcs := range z.Services {
 		newZone.Services[subdomain] = svcs
@@ -83,7 +74,7 @@ func (z *Zone) DerivateNew() *Zone {
 	return newZone
 }
 
-func (zone *Zone) eraseService(subdomain Subdomain, old *Service, idx int, new *Service) error {
+func (zone *Zone) eraseService(subdomain string, old *Service, idx int, new *Service) error {
 	if new == nil {
 		// Disallow removing SOA
 		if subdomain == "" && old.Type == "abstract.Origin" {
@@ -106,7 +97,7 @@ func (zone *Zone) eraseService(subdomain Subdomain, old *Service, idx int, new *
 
 // EraseService overwrites the Service identified by the given id, under the given subdomain.
 // The the new service is nil, it removes the existing Service instead of overwrite it.
-func (zone *Zone) EraseService(subdomain Subdomain, id []byte, s *Service) error {
+func (zone *Zone) EraseService(subdomain string, id []byte, s *Service) error {
 	idx, svc := zone.FindSubdomainService(subdomain, id)
 	if svc == nil {
 		return fmt.Errorf("service not found")
@@ -115,17 +106,28 @@ func (zone *Zone) EraseService(subdomain Subdomain, id []byte, s *Service) error
 	return zone.eraseService(subdomain, svc, idx, s)
 }
 
-func (zone *Zone) EraseServiceWithoutMeta(subdomain Subdomain, id []byte, s ServiceBody) error {
+func (zone *Zone) EraseServiceWithoutMeta(subdomain string, id []byte, s ServiceBody) error {
 	idx, svc := zone.FindSubdomainService(subdomain, id)
 	if svc == nil {
 		return fmt.Errorf("service not found")
 	}
 
-	return zone.eraseService(subdomain, svc, idx, &Service{Service: s, ServiceMeta: svc.ServiceMeta})
+	return zone.eraseService(subdomain, svc, idx, &Service{
+		UnderscoreId:      svc.UnderscoreId,
+		Aliases:           svc.Aliases,
+		Type:              svc.Type,
+		Comment:           svc.Comment,
+		Domain:            svc.Domain,
+		UserComment:       svc.UserComment,
+		UnderscoreOwnerid: svc.UnderscoreOwnerid,
+		Ttl:               svc.Ttl,
+		NbResources:       svc.NbResources,
+		Service:           s,
+	})
 }
 
 // FindService finds the Service identified by the given id.
-func (z *Zone) FindService(id []byte) (Subdomain, *Service) {
+func (z *Zone) FindService(id []byte) (string, *Service) {
 	for subdomain := range z.Services {
 		if _, svc := z.FindSubdomainService(subdomain, id); svc != nil {
 			return subdomain, svc
@@ -136,24 +138,20 @@ func (z *Zone) FindService(id []byte) (Subdomain, *Service) {
 }
 
 // FindSubdomainService finds the Service identified by the given id, only under the given subdomain.
-func (z *Zone) FindSubdomainService(subdomain Subdomain, id []byte) (int, *Service) {
+func (z *Zone) FindSubdomainService(subdomain string, id []byte) (int, *Service) {
 	if subdomain == "@" {
 		subdomain = ""
 	}
 
 	if services, ok := z.Services[subdomain]; ok {
 		for k, svc := range services {
-			if bytes.Equal(svc.Id, id) {
+			if bytes.Equal(svc.UnderscoreId, id) {
 				return k, svc
 			}
 		}
 	}
 
 	return -1, nil
-}
-
-type ZoneServices struct {
-	Services []*Service `json:"services"`
 }
 
 type ZoneUsecase interface {

@@ -39,14 +39,6 @@ var (
 
 const TryAgainErr = "Sorry, we are currently unable to sent email validation link. Please try again later."
 
-type ErrorResponse struct {
-	// Message describe the error to display to the user.
-	Message string `json:"errmsg"`
-
-	// Link is a link that can help the user to fix the error.
-	Link string `json:"href,omitempty"`
-}
-
 type HTTPError interface {
 	ToErrorResponse() ErrorResponse
 	HTTPStatus() int
@@ -65,7 +57,7 @@ func (err CustomError) Error() string {
 func (err CustomError) ToErrorResponse() ErrorResponse {
 	return ErrorResponse{
 		Message: err.Err.Error(),
-		Link:    err.UserLink,
+		Link:    &err.UserLink,
 	}
 }
 
@@ -105,13 +97,13 @@ func (err InternalError) ToErrorResponse() ErrorResponse {
 	if err.UserMessage == "" {
 		return ErrorResponse{
 			Message: err.Err.Error(),
-			Link:    err.UserLink,
+			Link:    &err.UserLink,
 		}
 	}
 
 	return ErrorResponse{
 		Message: err.UserMessage,
-		Link:    err.UserLink,
+		Link:    &err.UserLink,
 	}
 }
 

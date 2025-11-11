@@ -240,7 +240,7 @@ func (dc *DomainController) RetrieveZone(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, &zone.ZoneMeta)
+	c.JSON(http.StatusOK, zone.Meta())
 }
 
 // ImportZone takes a bind style file
@@ -260,7 +260,7 @@ func (dc *DomainController) ImportZone(c *gin.Context) {
 	}
 	defer fd.Close()
 
-	zp := dns.NewZoneParser(fd, domain.DomainName, "")
+	zp := dns.NewZoneParser(fd, domain.Domain, "")
 
 	var rrs []happydns.Record
 	for rr, ok := zp.Next(); ok; rr, ok = zp.Next() {

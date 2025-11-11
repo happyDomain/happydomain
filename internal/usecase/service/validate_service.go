@@ -35,7 +35,7 @@ func NewValidateServiceUsecase() *ValidateServiceUsecase {
 	return &ValidateServiceUsecase{}
 }
 
-func (uc *ValidateServiceUsecase) Validate(svc happydns.ServiceBody, subdomain happydns.Subdomain, origin happydns.Origin) ([]byte, error) {
+func (uc *ValidateServiceUsecase) Validate(svc happydns.ServiceBody, subdomain string, origin happydns.Origin) ([]byte, error) {
 	rrs, err := svc.GetRecords(string(subdomain), 0, string(origin))
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve records: %w", err)

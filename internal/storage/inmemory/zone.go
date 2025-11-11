@@ -60,7 +60,7 @@ func (s *InMemoryStorage) GetZone(id happydns.Identifier) (*happydns.ZoneMessage
 
 // CreateZone creates a record in the database for the given Zone.
 func (s *InMemoryStorage) CreateZone(zone *happydns.Zone) (err error) {
-	zone.ZoneMeta.Id, err = happydns.NewRandomIdentifier()
+	zone.Id, err = happydns.NewRandomIdentifier()
 	if err != nil {
 		return
 	}
@@ -74,8 +74,8 @@ func (s *InMemoryStorage) UpdateZone(zone *happydns.Zone) error {
 	defer s.mu.Unlock()
 
 	zmsg := &happydns.ZoneMessage{
-		ZoneMeta: zone.ZoneMeta,
-		Services: map[happydns.Subdomain][]*happydns.ServiceMessage{},
+		ZoneMeta: zone.Meta(),
+		Services: map[string][]*happydns.ServiceMessage{},
 	}
 
 	for subdn, services := range zone.Services {
@@ -86,7 +86,7 @@ func (s *InMemoryStorage) UpdateZone(zone *happydns.Zone) error {
 			}
 
 			zmsg.Services[subdn] = append(zmsg.Services[subdn], &happydns.ServiceMessage{
-				ServiceMeta: service.ServiceMeta,
+				ServiceMeta: service.Meta(),
 				Service:     message,
 			})
 		}

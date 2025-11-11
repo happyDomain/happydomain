@@ -23,14 +23,6 @@ package happydns
 
 import ()
 
-type ProviderSpecs struct {
-	// Fields describes the settings needed to configure the provider.
-	Fields []*Field `json:"fields,omitempty"`
-
-	// Capabilities exposes what the provider can do.
-	Capabilities []string `json:"capabilities,omitempty"`
-}
-
 type ProviderSpecsUsecase interface {
 	ListProviders() map[string]ProviderInfos
 	GetProviderIcon(string) ([]byte, error)

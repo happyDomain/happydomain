@@ -38,11 +38,11 @@ func (s *Service) RetrieveZone(provider *happydns.Provider, name string) ([]happ
 }
 
 // ListZoneCorrections lists the corrections needed to synchronize the zone with the given records.
-func (s *Service) ListZoneCorrections(provider *happydns.Provider, domain *happydns.Domain, records []happydns.Record) ([]*happydns.Correction, error) {
+func (s *Service) ListZoneCorrections(provider *happydns.Provider, domain *happydns.Domain, records []happydns.Record) ([]*happydns.FCorrection, error) {
 	instance, err := provider.InstantiateProvider()
 	if err != nil {
 		return nil, fmt.Errorf("unable to instantiate provider: %w", err)
 	}
 
-	return instance.GetZoneCorrections(domain.DomainName, records)
+	return instance.GetZoneCorrections(domain.Domain, records)
 }

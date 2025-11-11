@@ -41,7 +41,7 @@ func (s *InMemoryStorage) ListDomains(u *happydns.User) ([]*happydns.Domain, err
 
 	var domains []*happydns.Domain
 	for _, domain := range s.domains {
-		if domain.Owner.Equals(u.Id) {
+		if domain.IdOwner.Equals(u.Id) {
 			domains = append(domains, domain)
 		}
 	}
@@ -68,7 +68,7 @@ func (s *InMemoryStorage) GetDomainByDN(u *happydns.User, dn string) (ret []*hap
 	defer s.mu.Unlock()
 
 	for _, domain := range s.domains {
-		if domain.DomainName == dn {
+		if domain.Domain == dn {
 			ret = append(ret, domain)
 		}
 	}

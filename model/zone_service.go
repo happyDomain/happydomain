@@ -25,7 +25,7 @@ import ()
 
 type ZoneServiceUsecase interface {
 	ActionOnEditableZone(*User, *Domain, *Zone, func(*Zone) error) (*Zone, error)
-	AddServiceToZone(*User, *Domain, *Zone, Subdomain, Origin, *Service) (*Zone, error)
-	RemoveServiceFromZone(user *User, domain *Domain, zone *Zone, subdomain Subdomain, serviceid Identifier) (*Zone, error)
-	UpdateZoneService(user *User, domain *Domain, zone *Zone, subdomain Subdomain, serviceid Identifier, newservice *Service) (*Zone, error)
+	AddServiceToZone(*User, *Domain, *Zone, string, Origin, *Service) (*Zone, error)
+	RemoveServiceFromZone(user *User, domain *Domain, zone *Zone, subdomain string, serviceid Identifier) (*Zone, error)
+	UpdateZoneService(user *User, domain *Domain, zone *Zone, subdomain string, serviceid Identifier, newservice *Service) (*Zone, error)
 }

@@ -49,7 +49,7 @@ func (s *LevelDBStorage) ListDomains(u *happydns.User) (domains []*happydns.Doma
 			return
 		}
 
-		if bytes.Equal(z.Owner, u.Id) {
+		if bytes.Equal(z.IdOwner, u.Id) {
 			domains = append(domains, &z)
 		}
 	}
@@ -78,7 +78,7 @@ func (s *LevelDBStorage) GetDomainByDN(u *happydns.User, dn string) ([]*happydns
 
 	var ret []*happydns.Domain
 	for _, domain := range domains {
-		if domain.DomainName == dn {
+		if domain.Domain == dn {
 			ret = append(ret, domain)
 		}
 	}

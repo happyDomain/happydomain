@@ -62,7 +62,7 @@ func (uc *ListRecordsUsecase) List(domain *happydns.Domain, zone *happydns.Zone)
 
 	for _, svcs := range zone.Services {
 		for _, svc := range svcs {
-			svc_rrs, err = uc.serviceListRecordsUC.List(svc, domain.DomainName, zone.DefaultTTL)
+			svc_rrs, err = uc.serviceListRecordsUC.List(svc, domain.Domain, zone.DefaultTtl)
 			if err != nil {
 				return
 			}

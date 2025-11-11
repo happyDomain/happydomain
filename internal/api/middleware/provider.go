@@ -85,7 +85,7 @@ func ProviderHandler(providerService happydns.ProviderUsecase) gin.HandlerFunc {
 
 		// Continue
 		c.Set("provider", provider)
-		c.Set("providermeta", provider.ProviderMeta)
+		c.Set("providermeta", provider.Meta())
 
 		c.Next()
 	}

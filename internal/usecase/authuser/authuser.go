@@ -129,7 +129,7 @@ func (s *Service) ChangePassword(user *happydns.UserAuth, newPassword string) er
 // CreateAuthUser validates the registration request, creates the user, and optionally sends a validation email.
 func (s *Service) CreateAuthUser(uu happydns.UserRegistration) (*happydns.UserAuth, error) {
 	// Validate email format
-	if len(uu.Email) <= 3 || !strings.Contains(uu.Email, "@") {
+	if len(uu.Email) <= 3 || !strings.Contains(string(uu.Email), "@") {
 		return nil, happydns.ValidationError{Msg: "the given email is invalid"}
 	}
 
@@ -140,7 +140,7 @@ func (s *Service) CreateAuthUser(uu happydns.UserRegistration) (*happydns.UserAu
 	}
 
 	// Check if an account already exists with this email
-	exists, err := s.store.AuthUserExists(uu.Email)
+	exists, err := s.store.AuthUserExists(string(uu.Email))
 	if err != nil {
 		return nil, happydns.InternalError{
 			Err:         fmt.Errorf("unable to check if user exists: %w", err),
@@ -152,14 +152,14 @@ func (s *Service) CreateAuthUser(uu happydns.UserRegistration) (*happydns.UserAu
 	}
 
 	// Create the user object
-	user, err := happydns.NewUserAuth(uu.Email, uu.Password)
+	user, err := happydns.NewUserAuth(string(uu.Email), uu.Password)
 	if err != nil {
 		return nil, happydns.InternalError{
 			Err:         fmt.Errorf("unable to create user object: %w", err),
 			UserMessage: "Sorry, we are currently unable to create your account. Please try again later.",
 		}
 	}
-	user.AllowCommercials = uu.Newsletter
+	user.AllowCommercials = uu.WantReceiveUpdate
 
 	// Persist the new user in the storage layer
 	if err := s.store.CreateAuthUser(user); err != nil {

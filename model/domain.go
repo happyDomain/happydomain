@@ -28,39 +28,6 @@ import (
 	"github.com/miekg/dns"
 )
 
-// DomainCreationInput is used for swagger documentation as Domain add.
-type DomainCreationInput struct {
-	// ProviderId is the identifier of the Provider used to access and edit the
-	// Domain.
-	ProviderId Identifier `json:"id_provider" swaggertype:"string"`
-
-	// DomainName is the FQDN of the managed Domain.
-	DomainName string `json:"domain"`
-}
-
-// Domain holds information about a domain name own by a User.
-type Domain struct {
-	// Id is the Domain's identifier in the database.
-	Id Identifier `json:"id" swaggertype:"string"`
-
-	// Owner is the identifier of the Domain's Owner.
-	Owner Identifier `json:"id_owner" swaggertype:"string"`
-
-	// ProviderId is the identifier of the Provider used to access and edit the
-	// Domain.
-	ProviderId Identifier `json:"id_provider" swaggertype:"string"`
-
-	// DomainName is the FQDN of the managed Domain.
-	DomainName string `json:"domain"`
-
-	// Group is a hint string aims to group domains.
-	Group string `json:"group,omitempty"`
-
-	// ZoneHistory are the identifiers to the Zone attached to the current
-	// Domain.
-	ZoneHistory []Identifier `json:"zone_history" swaggertype:"array,string"`
-}
-
 func NewDomain(user *User, name string, providerID Identifier) (*Domain, error) {
 	name = dns.Fqdn(strings.TrimSpace(name))
 
@@ -73,9 +40,9 @@ func NewDomain(user *User, name string, providerID Identifier) (*Domain, error) 
 	}
 
 	d := &Domain{
-		Owner:      user.Id,
-		ProviderId: providerID,
-		DomainName: name,
+		IdOwner:    user.Id,
+		IdProvider: providerID,
+		Domain:     name,
 	}
 
 	return d, nil
@@ -92,13 +59,19 @@ func (d *Domain) HasZone(zoneId Identifier) (found bool) {
 	return
 }
 
-type DomainWithZoneMetadata struct {
-	*Domain
-	ZoneMeta map[string]*ZoneMeta `json:"zone_meta"`
-}
-
-type Subdomain string
 type Origin string
+
+func NewDomainWithZoneMetadata(domain *Domain, meta map[string]*ZoneMeta) *DomainWithZoneMetadata {
+	return &DomainWithZoneMetadata{
+		Id:          domain.Id,
+		IdOwner:     domain.IdOwner,
+		IdProvider:  domain.IdProvider,
+		Domain:      domain.Domain,
+		Group:       domain.Group,
+		ZoneHistory: domain.ZoneHistory,
+		ZoneMeta:    meta,
+	}
+}
 
 type DomainUsecase interface {
 	CreateDomain(*User, *Domain) error

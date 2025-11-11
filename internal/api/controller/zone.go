@@ -72,7 +72,7 @@ func (zc *ZoneController) GetZone(c *gin.Context) {
 //	@Router			/domains/{domainId}/zone/{zoneId}/{subdomain} [get]
 func (zc *ZoneController) GetZoneSubdomain(c *gin.Context) {
 	zone := c.MustGet("zone").(*happydns.Zone)
-	subdomain := c.MustGet("subdomain").(happydns.Subdomain)
+	subdomain := c.MustGet("subdomain").(string)
 
 	c.JSON(http.StatusOK, happydns.ZoneServices{
 		Services: zone.Services[subdomain],
@@ -103,14 +103,15 @@ func (zc *ZoneController) DiffZones(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 	newzone := c.MustGet("zone").(*happydns.Zone)
 
-	var corrections []*happydns.Correction
 	if c.Param("oldzoneid") == "@" {
 		var err error
-		corrections, err = zc.zoneCorrectionService.List(user, domain, newzone)
+		corrections, err := zc.zoneCorrectionService.List(user, domain, newzone)
 		if err != nil {
 			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 			return
 		}
+
+		c.JSON(http.StatusOK, corrections)
 	} else {
 		oldzoneid, err := middleware.ParseZoneId(c, "oldzoneid")
 		if err != nil {
@@ -118,14 +119,14 @@ func (zc *ZoneController) DiffZones(c *gin.Context) {
 			return
 		}
 
-		corrections, err = zc.zoneService.DiffZones(domain, newzone, oldzoneid)
+		corrections, err := zc.zoneService.DiffZones(domain, newzone, oldzoneid)
 		if err != nil {
 			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 			return
 		}
-	}
 
-	c.JSON(http.StatusOK, corrections)
+		c.JSON(http.StatusOK, corrections)
+	}
 }
 
 // applyZone performs the requested changes with the provider.
@@ -165,7 +166,7 @@ func (zc *ZoneController) ApplyZoneCorrections(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, newZone.ZoneMeta)
+	c.JSON(http.StatusOK, newZone.Meta())
 }
 
 // ExportZone creates a flatten export of the zone.
@@ -225,21 +226,21 @@ func (zc *ZoneController) AddRecords(c *gin.Context) {
 	}
 
 	for _, record := range records {
-		rr, err := helpers.ParseRecord(record, domain.DomainName)
+		rr, err := helpers.ParseRecord(record, domain.Domain)
 		if err != nil {
 			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 			return
 		}
 
 		// Make record relative
-		rr = helpers.RRRelative(rr, domain.DomainName)
+		rr = helpers.RRRelative(rr, domain.Domain)
 
 		if strings.HasSuffix(rr.Header().Name, ".") {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Record %q is not part of the current domain: %s", rr.Header().String(), domain.DomainName)})
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Record %q is not part of the current domain: %s", rr.Header().String(), domain.Domain)})
 			return
 		}
 
-		err = zc.zoneService.AddRecord(zone, domain.DomainName, rr)
+		err = zc.zoneService.AddRecord(zone, domain.Domain, rr)
 		if err != nil {
 			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 			return
@@ -286,16 +287,16 @@ func (zc *ZoneController) DeleteRecords(c *gin.Context) {
 	}
 
 	for _, record := range records {
-		rr, err := helpers.ParseRecord(record, domain.DomainName)
+		rr, err := helpers.ParseRecord(record, domain.Domain)
 		if err != nil {
 			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 			return
 		}
 
 		// Make record relative
-		rr = helpers.RRRelative(rr, domain.DomainName)
+		rr = helpers.RRRelative(rr, domain.Domain)
 
-		err = zc.zoneService.DeleteRecord(zone, domain.DomainName, rr)
+		err = zc.zoneService.DeleteRecord(zone, domain.Domain, rr)
 		if err != nil {
 			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 			return
@@ -341,29 +342,29 @@ func (zc *ZoneController) UpdateRecord(c *gin.Context) {
 		return
 	}
 
-	oldRecord, err := helpers.ParseRecord(form.OldRR, domain.DomainName)
+	oldRecord, err := helpers.ParseRecord(form.OldRR, domain.Domain)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}
 
-	newRecord, err := helpers.ParseRecord(form.NewRR, domain.DomainName)
+	newRecord, err := helpers.ParseRecord(form.NewRR, domain.Domain)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}
 
 	// Make record relative
-	oldRecord = helpers.RRRelative(oldRecord, domain.DomainName)
-	newRecord = helpers.RRRelative(newRecord, domain.DomainName)
+	oldRecord = helpers.RRRelative(oldRecord, domain.Domain)
+	newRecord = helpers.RRRelative(newRecord, domain.Domain)
 
-	err = zc.zoneService.DeleteRecord(zone, domain.DomainName, oldRecord)
+	err = zc.zoneService.DeleteRecord(zone, domain.Domain, oldRecord)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
 
-	err = zc.zoneService.AddRecord(zone, domain.DomainName, newRecord)
+	err = zc.zoneService.AddRecord(zone, domain.Domain, newRecord)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

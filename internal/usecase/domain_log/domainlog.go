@@ -54,7 +54,7 @@ func (s *Service) ListDomainLogs(domain *happydns.Domain) ([]*happydns.DomainLog
 	logs, err := s.store.ListDomainLogs(domain)
 	if err != nil {
 		return nil, happydns.InternalError{
-			Err:         fmt.Errorf("unable to retrieve logs for domain %q (did=%s): %w", domain.DomainName, domain.Id.String(), err),
+			Err:         fmt.Errorf("unable to retrieve logs for domain %q (did=%s): %w", domain.Domain, domain.Id.String(), err),
 			UserMessage: "Unable to access the domain logs. Please try again later.",
 		}
 	}

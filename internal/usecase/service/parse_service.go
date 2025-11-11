@@ -31,7 +31,7 @@ import (
 func ParseService(msg *happydns.ServiceMessage) (svc *happydns.Service, err error) {
 	svc = &happydns.Service{}
 
-	svc.ServiceMeta = msg.ServiceMeta
+	svc.SetMeta(&msg.ServiceMeta)
 	svc.Service, err = svcs.FindService(msg.Type)
 	if err != nil {
 		return

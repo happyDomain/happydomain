@@ -76,7 +76,7 @@ func (s *InMemoryStorage) CreateOrUpdateUser(user *happydns.User) error {
 	defer s.mu.Unlock()
 
 	s.users[user.Id.String()] = user
-	s.usersByEmail[user.Email] = user
+	s.usersByEmail[string(user.Email)] = user
 
 	return nil
 }
@@ -88,7 +88,7 @@ func (s *InMemoryStorage) DeleteUser(userid happydns.Identifier) error {
 
 	if user, exists := s.users[userid.String()]; exists {
 		delete(s.users, userid.String())
-		delete(s.usersByEmail, user.Email)
+		delete(s.usersByEmail, string(user.Email))
 	}
 
 	return nil

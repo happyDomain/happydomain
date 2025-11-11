@@ -79,7 +79,7 @@ func (pc *ProviderController) AddProvider(c *gin.Context) {
 func (pc *ProviderController) DeleteProvider(c *gin.Context) {
 	srcMeta := c.MustGet("providermeta").(*happydns.ProviderMeta)
 
-	happydns.ApiResponse(c, true, pc.store.DeleteProvider(srcMeta.Id))
+	happydns.ApiResponse(c, true, pc.store.DeleteProvider(srcMeta.UnderscoreId))
 }
 
 func (pc *ProviderController) GetProvider(c *gin.Context) {
@@ -104,7 +104,7 @@ func (pc *ProviderController) ClearProviders(c *gin.Context) {
 		}
 
 		for _, p := range providers {
-			e := pc.store.DeleteProvider(p.Id)
+			e := pc.store.DeleteProvider(p.UnderscoreId)
 			if e != nil {
 				err = errors.Join(err, e)
 			}

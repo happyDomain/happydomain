@@ -63,7 +63,7 @@ func NewZoneCorrectionApplierUsecase(
 }
 
 func (uc *ZoneCorrectionApplierUsecase) Apply(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, form *happydns.ApplyZoneForm) (*happydns.Zone, error) {
-	provider, err := uc.providerService.GetUserProvider(user, domain.ProviderId)
+	provider, err := uc.providerService.GetUserProvider(user, domain.IdProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -88,12 +88,12 @@ corrections:
 	for i, cr := range corrections {
 		for ic, wc := range form.WantedCorrections {
 			if wc.Equals(cr.Id) {
-				log.Printf("%s: apply correction: %s", domain.DomainName, cr.Msg)
+				log.Printf("%s: apply correction: %s", domain.Domain, cr.Msg)
 				err := cr.F()
 
 				if err != nil {
-					log.Printf("%s: unable to apply correction: %s", domain.DomainName, err.Error())
-					uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed record update (%s): %s", cr.Msg, err.Error())))
+					log.Printf("%s: unable to apply correction: %s", domain.Domain, err.Error())
+					uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOGERR, fmt.Sprintf("Failed record update (%s): %s", cr.Msg, err.Error())))
 					errs = errors.Join(errs, fmt.Errorf("%s: %w", cr.Msg, err))
 					// Stop the zone update if we didn't change it yet
 					if i == 0 {
@@ -108,14 +108,14 @@ corrections:
 	}
 
 	if errs != nil {
-		uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d corrections were not applied due to errors.", zone.Id.String(), nbcorrections)))
+		uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOGERR, fmt.Sprintf("Failed zone publishing (%s): %d corrections were not applied due to errors.", zone.Id.String(), nbcorrections)))
 		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to update the zone: %s", errs.Error())}
 	} else if len(form.WantedCorrections) > 0 {
-		uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d corrections were not applied.", zone.Id.String(), nbcorrections)))
+		uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOGERR, fmt.Sprintf("Failed zone publishing (%s): %d corrections were not applied.", zone.Id.String(), nbcorrections)))
 		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to perform the following changes: %s", form.WantedCorrections)}
 	}
 
-	uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ACK, fmt.Sprintf("Zone published (%s), %d corrections applied with success", zone.Id.String(), nbcorrections)))
+	uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOGACK, fmt.Sprintf("Zone published (%s), %d corrections applied with success", zone.Id.String(), nbcorrections)))
 
 	// Create a new zone in history for futher updates
 	newZone := zone.DerivateNew()
@@ -139,12 +139,12 @@ corrections:
 	}
 
 	// Commit changes in previous zone
-	err = uc.zoneUpdater.Update(zone.ZoneMeta.Id, func(zone *happydns.Zone) {
+	err = uc.zoneUpdater.Update(zone.Id, func(zone *happydns.Zone) {
 		now := time.Now()
-		zone.ZoneMeta.IdAuthor = user.Id
-		zone.CommitMsg = &form.CommitMsg
-		zone.ZoneMeta.CommitDate = &now
-		zone.ZoneMeta.Published = &now
+		zone.IdAuthor = user.Id
+		zone.CommitMessage = &form.CommitMsg
+		zone.CommitDate = &now
+		zone.Published = &now
 
 		zone.LastModified = time.Now()
 	})
@@ -158,8 +158,8 @@ corrections:
 	return newZone, nil
 }
 
-func (uc *ZoneCorrectionApplierUsecase) List(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone) ([]*happydns.Correction, error) {
-	provider, err := uc.providerService.GetUserProvider(user, domain.ProviderId)
+func (uc *ZoneCorrectionApplierUsecase) List(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone) ([]*happydns.FCorrection, error) {
+	provider, err := uc.providerService.GetUserProvider(user, domain.IdProvider)
 	if err != nil {
 		return nil, err
 	}

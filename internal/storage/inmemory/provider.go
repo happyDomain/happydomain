@@ -41,7 +41,7 @@ func (s *InMemoryStorage) ListProviders(u *happydns.User) (happydns.ProviderMess
 
 	var providers happydns.ProviderMessages
 	for _, provider := range s.providers {
-		if provider.Owner.Equals(u.Id) {
+		if provider.UnderscoreOwnerid.Equals(u.Id) {
 			providers = append(providers, provider)
 		}
 	}
@@ -72,9 +72,9 @@ func (s *InMemoryStorage) CreateProvider(p *happydns.Provider) error {
 		return err
 	}
 
-	p.ProviderMeta.Id, err = happydns.NewRandomIdentifier()
-	s.providers[p.ProviderMeta.Id.String()] = &happydns.ProviderMessage{
-		ProviderMeta: p.ProviderMeta,
+	p.UnderscoreId, err = happydns.NewRandomIdentifier()
+	s.providers[p.UnderscoreId.String()] = &happydns.ProviderMessage{
+		ProviderMeta: p.Meta(),
 		Provider:     message,
 	}
 
@@ -91,8 +91,8 @@ func (s *InMemoryStorage) UpdateProvider(p *happydns.Provider) error {
 		return err
 	}
 
-	s.providers[p.ProviderMeta.Id.String()] = &happydns.ProviderMessage{
-		ProviderMeta: p.ProviderMeta,
+	s.providers[p.UnderscoreId.String()] = &happydns.ProviderMessage{
+		ProviderMeta: p.Meta(),
 		Provider:     message,
 	}
 

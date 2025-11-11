@@ -31,8 +31,6 @@ import (
 
 const IDENTIFIER_LEN = 16
 
-type Identifier []byte
-
 func NewIdentifierFromString(src string) (id Identifier, err error) {
 	return base64.RawURLEncoding.DecodeString(src)
 }

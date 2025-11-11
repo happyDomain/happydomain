@@ -1,0 +1,2337 @@
+openapi: 3.0.3
+
+info:
+  title: happyDomain API
+  description: Finally a simple interface for domain names.
+  version: "0.1.0"
+  contact:
+    email: contact+api@happydomain.org
+    name: happyDomain team
+  license:
+    name: GNU Affero General Public License v3.0 or later
+    url: https://spdx.org/licenses/AGPL-3.0-or-later.html
+
+tags:
+  - name: authentication
+    description: User authentication and authorization operations
+  - name: domains
+    description: Domain management operations
+  - name: zones
+    description: DNS zone management and modifications
+  - name: providers
+    description: DNS provider configuration and management
+  - name: provider_specs
+    description: Provider specifications and capabilities
+  - name: service_specs
+    description: Service specifications and capabilities
+  - name: records
+    description: DNS record operations
+  - name: resolver
+    description: DNS resolution operations
+  - name: users
+    description: User account and session management
+  - name: version
+    description: Application version information
+
+servers:
+
+  - url: http://localhost:8081/api
+    description: Development server
+
+  - url: https://app.happydomain.org/api
+    description: Main production server
+
+paths:
+
+  /api/auth:
+
+    get:
+      operationId: get_logged_user
+      description: Retrieve information about the currently authenticated user.
+      responses:
+        "200":
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/User'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Get currently logged user
+      tags:
+        - authentication
+
+    post:
+      operationId: login
+      description: Authenticate a user with email and password credentials.
+      requestBody:
+        description: Login credentials
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/components/schemas/LoginRequest'
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/User'
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      summary: Login user
+      tags:
+        - authentication
+
+  /api/auth/logout:
+
+    post:
+      operationId: logout
+      description: End the current user session.
+      responses:
+        "204":
+          description: Logout successful
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Logout user
+      tags:
+        - authentication
+
+  /auth/has_oidc:
+
+    get:
+      operationId: has_oidc
+      description: Check if OpenID Connect (OIDC) authentication is available and return the provider name.
+      responses:
+        "200":
+          description: OIDC provider information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  provider:
+                    type: string
+                    description: The OIDC provider name
+        "404":
+          description: OIDC is not configured
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      summary: Check OIDC availability
+      tags:
+        - authentication
+
+  /auth/oidc:
+
+    get:
+      operationId: redirect_oidc
+      description: Initiate OpenID Connect authentication flow by redirecting to the OIDC provider.
+      responses:
+        "302":
+          description: Redirect to OIDC provider for authentication
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      summary: Initiate OIDC authentication
+      tags:
+        - authentication
+
+  /api/auth/callback:
+
+    get:
+      operationId: complete_oidc
+      description: Complete OpenID Connect authentication flow. This endpoint receives the callback from the OIDC provider.
+      parameters:
+        - name: code
+          in: query
+          description: Authorization code from OIDC provider
+          schema:
+            type: string
+        - name: state
+          in: query
+          description: State parameter for CSRF protection
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirect to application after successful authentication
+        "400":
+          description: Invalid callback parameters
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      summary: Complete OIDC authentication
+      tags:
+        - authentication
+
+  /api/domains:
+
+    get:
+      operationId: get_domains
+      description: Retrieve all domains belonging to the user.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './schemas.yaml#/components/schemas/Domain'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Unable to retrieve user's domains
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Retrieve user's domains
+      tags:
+        - domains
+
+    post:
+      operationId: create_domain
+      description: Append a new domain to those managed.
+      requestBody:
+        description: Domain object that you want to manage through happyDomain.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/components/schemas/DomainCreationInput'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/Domain'
+        "400":
+          description: Error in received data
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Unable to retrieve current user's domains
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Manage a new domain
+      tags:
+        - domains
+
+  /api/domains/{domainId}:
+
+    delete:
+      operationId: delete_domain
+      description: Delete all the information in the database about the given Domain.
+        This only stops happyDomain from managing the Domain, it doesn't do anything
+        on the Provider.
+      parameters:
+      - description: Domain identifier
+        in: path
+        name: domainId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Domain deleted
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Domain not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Database writing error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Stop managing a Domain.
+      tags:
+        - domains
+
+    get:
+      operationId: get_domain
+      description: Retrieve information in the database about a given Domain owned
+        by the user.
+      parameters:
+      - description: Domain identifier
+        in: path
+        name: domainId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/DomainWithZoneMetadata'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Domain not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Retrieve Domain local information.
+      tags:
+        - domains
+
+    put:
+      operationId: update_domain
+      description: Updates the information about a given Domain owned by the user.
+      parameters:
+      - description: Domain identifier
+        in: path
+        name: domainId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: The new object overriding the current domain
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/components/schemas/Domain'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/Domain'
+        "400":
+          description: Identifier changed
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Domain not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Database writing error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Update Domain local information.
+      tags:
+        - domains
+
+  /api/domains/{domainId}/logs:
+
+    get:
+      operationId: get_domain_logs
+      description: Retrieve information about the actions performed on the domain
+        by users of happyDomain.
+      parameters:
+      - description: Domain identifier
+        in: path
+        name: domainId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './schemas.yaml#/components/schemas/DomainLog'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Domain not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Retrieve Domain actions history.
+      tags:
+        - domains
+
+  /api/domains/{domainId}/retrieve_zone:
+
+    post:
+      operationId: retrieve_zone
+      description: Retrieve the current zone deployed on the NS Provider.
+      parameters:
+      - description: Domain identifier
+        in: path
+        name: domainId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The new zone metadata
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ZoneMeta'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Domain not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Retrieve the zone on the Provider.
+      tags:
+        - zones
+
+  /api/domains/{domainId}/zone/{zoneId}:
+
+    get:
+      operationId: get_zone
+      description: Retrieve the specified zone with its services and records.
+      parameters:
+      - description: Domain identifier
+        in: path
+        name: domainId
+        required: true
+        schema:
+          type: string
+      - description: Zone identifier
+        in: path
+        name: zoneId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/Zone'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Domain or Zone not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Retrieve Zone information.
+      tags:
+        - zones
+
+    patch:
+      operationId: update_service
+      description: Add or update a Service inside the given Zone.
+      parameters:
+      - description: Domain identifier
+        in: path
+        name: domainId
+        required: true
+        schema:
+          type: string
+      - description: Zone identifier
+        in: path
+        name: zoneId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Service to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/components/schemas/Service'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/Zone'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Domain or Zone not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Add or update a Service.
+      tags:
+        - zones
+
+  /api/domains/{domainId}/zone/{zoneId}/{subdomain}:
+
+    get:
+      operationId: list_subdomain_services
+      description: Returns the services associated with the given subdomain.
+      parameters:
+      - description: Domain identifier
+        in: path
+        name: domainId
+        required: true
+        schema:
+          type: string
+      - description: Zone identifier
+        in: path
+        name: zoneId
+        required: true
+        schema:
+          type: string
+      - description: Part of the subdomain considered for the service (@ for the root
+          of the zone ; subdomain is relative to the root, do not include it)
+        in: path
+        name: subdomain
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ZoneServices'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Domain or Zone not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: List services
+      tags:
+        - zones
+
+  /api/domains/{domainId}/zone/{zoneId}/{subdomain}/services:
+
+    post:
+      operationId: add_service
+      description: Add a Service to the given subdomain of the Zone.
+      parameters:
+      - description: Domain identifier
+        in: path
+        name: domainId
+        required: true
+        schema:
+          type: string
+      - description: Zone identifier
+        in: path
+        name: zoneId
+        required: true
+        schema:
+          type: string
+      - description: Part of the subdomain considered for the service (@ for the root
+          of the zone ; subdomain is relative to the root, do not include it)
+        in: path
+        name: subdomain
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/Zone'
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Domain or Zone not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Add a Service.
+      tags:
+        - zones
+
+  /api/domains/{domainId}/zone/{zoneId}/{subdomain}/services/{serviceId}:
+
+    delete:
+      operationId: delete_service
+      description: Drop the given Service.
+      parameters:
+      - description: Domain identifier
+        in: path
+        name: domainId
+        required: true
+        schema:
+          type: string
+      - description: Zone identifier
+        in: path
+        name: zoneId
+        required: true
+        schema:
+          type: string
+      - description: Part of the subdomain considered for the service (@ for the root
+          of the zone ; subdomain is relative to the root, do not include it)
+        in: path
+        name: subdomain
+        required: true
+        schema:
+          type: string
+      - description: Service identifier
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/Zone'
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Domain or Zone not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Drop the given Service.
+      tags:
+        - zones
+
+    get:
+      operationId: get_service
+      description: Retrieve the designated Service.
+      parameters:
+      - description: Domain identifier
+        in: path
+        name: domainId
+        required: true
+        schema:
+          type: string
+      - description: Zone identifier
+        in: path
+        name: zoneId
+        required: true
+        schema:
+          type: string
+      - description: Part of the subdomain considered for the service (@ for the root
+          of the zone ; subdomain is relative to the root, do not include it)
+        in: path
+        name: subdomain
+        required: true
+        schema:
+          type: string
+      - description: Service identifier
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/Service'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Domain or Zone not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Get the Service.
+      tags:
+        - zones
+
+  /api/domains/{domainId}/zone/{zoneId}/apply_changes:
+
+    post:
+      operationId: apply_zone_changes
+      description: Perform the requested changes with the provider.
+      parameters:
+      - description: Domain identifier
+        in: path
+        name: domainId
+        required: true
+        schema:
+          type: string
+      - description: Zone identifier
+        in: path
+        name: zoneId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Differences (from /diff_zones) to apply
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+      responses:
+        "200":
+          description: The new Zone metadata containing the current zone
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ZoneMeta'
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Domain or Zone not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Performs requested changes to the real zone.
+      tags:
+        - zones
+
+  /api/domains/{domainId}/zone/{zoneId}/diff/{oldZoneId}:
+
+    post:
+      operationId: diff_zones
+      description: Compute the difference between the two zone identifiers given.
+      parameters:
+      - description: Domain identifier
+        in: path
+        name: domainId
+        required: true
+        schema:
+          type: string
+      - description: Zone identifier to use as the new one.
+        in: path
+        name: zoneId
+        required: true
+        schema:
+          type: string
+      - description: Zone identifier to use as the old one. Currently only @ are expected,
+          to use the currently deployed zone.
+        in: path
+        name: oldZoneId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Differences, reported as text, one diff per item
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './schemas.yaml#/components/schemas/Correction'
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Domain not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "501":
+          description: Diff between to zone identifier, currently not supported
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Compute differences between zones.
+      tags:
+        - zones
+
+  /api/domains/{domainId}/zone/{zoneId}/records:
+
+    patch:
+      operationId: update_zone_record
+      description: Update a given record in the zone.
+      parameters:
+      - description: Domain identifier
+        in: path
+        name: domainId
+        required: true
+        schema:
+          type: string
+      - description: Zone identifier
+        in: path
+        name: zoneId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Record to update as text
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/components/schemas/UpdateRecordForm'
+      responses:
+        "200":
+          description: The updated zone
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/Zone'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Domain or Zone not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Update a given record in the zone.
+      tags:
+        - zones
+
+    post:
+      operationId: add_zone_records
+      description: Add a given record in the zone.
+      parameters:
+      - description: Domain identifier
+        in: path
+        name: domainId
+        required: true
+        schema:
+          type: string
+      - description: Zone identifier
+        in: path
+        name: zoneId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Records to add as text, one record per line array
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+      responses:
+        "200":
+          description: The updated zone
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/Zone'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Domain or Zone not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Add a given record in the zone.
+      tags:
+        - zones
+
+  /api/domains/{domainId}/zone/{zoneId}/records/delete:
+
+    post:
+      operationId: delete_zone_records
+      description: Delete a given record in the zone.
+      parameters:
+      - description: Domain identifier
+        in: path
+        name: domainId
+        required: true
+        schema:
+          type: string
+      - description: Zone identifier
+        in: path
+        name: zoneId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Records to delete as text, one record per line array
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+      responses:
+        "200":
+          description: The updated zone
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/Zone'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Domain or Zone not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Delete a given record in the zone.
+      tags:
+        - zones
+
+  /api/domains/{domainId}/zone/{zoneId}/view:
+
+    post:
+      operationId: view_zone
+      description: Create a flatten export of the zone that can be read as a BIND-like
+        file.
+      parameters:
+      - description: Domain identifier
+        in: path
+        name: domainId
+        required: true
+        schema:
+          type: string
+      - description: Zone identifier
+        in: path
+        name: zoneId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The exported zone file (with initial and leading JSON quote)
+          content:
+            application/json:
+              schema:
+                type: string
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Domain or Zone not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Get flatten zone file.
+      tags:
+        - zones
+
+  /api/providers:
+
+    get:
+      operationId: get_providers
+      description: Retrieve all DNS providers belonging to the user.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './schemas.yaml#/components/schemas/ProviderMeta'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Unable to retrieve user's domains
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Retrieve user's providers
+      tags:
+        - providers
+
+    post:
+      operationId: create_provider
+      description: Append a new provider for the user.
+      requestBody:
+        description: Provider to add
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/components/schemas/ProviderMinimal'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/Provider'
+        "400":
+          description: Error in received data
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Unable to retrieve current user's providers
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Add a new provider
+      tags:
+        - providers
+
+  /api/providers/_specs:
+
+    get:
+      operationId: get_provider_specs
+      description: This returns the static list of usable providers in this happyDomain
+        release.
+      responses:
+        "200":
+          description: The list
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: './schemas.yaml#/components/schemas/ProviderInfos'
+      summary: List all providers with which you can connect.
+      tags:
+        - provider_specs
+
+  /api/providers/_specs/{providerType}:
+
+    get:
+      operationId: get_provider_spec
+      description: Return a description of the expected settings and the provider
+        capabilities.
+      parameters:
+      - description: The provider's type
+        in: path
+        name: providerType
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ProviderSpecs'
+        "404":
+          description: Provider type does not exist
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      summary: Get the provider capabilities and expected settings.
+      tags:
+        - provider_specs
+
+  /api/providers/_specs/{providerType}/icon.png:
+
+    get:
+      operationId: get_provider_icon
+      description: Return the icon as a image/png file for the given provider type.
+      parameters:
+      - description: The provider's type
+        in: path
+        name: providerType
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Provider type does not exist
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      summary: Get the PNG icon.
+      tags:
+        - provider_specs
+
+  /api/providers/_specs/{providerType}/settings:
+
+    post:
+      operationId: create_provider_from_settings
+      description: This creates or updates a Provider with human fillable forms.
+      parameters:
+      - description: The provider's type
+        in: path
+        name: providerType
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: The current state of the Provider's settings, possibly empty
+          (but not null)
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/components/schemas/ProviderSettingsState'
+      responses:
+        "200":
+          description: The Provider has been created with the given settings
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/Provider'
+        "202":
+          description: The settings need more refinement
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ProviderSettingsResponse'
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Assistant to Provider creation.
+      tags:
+        - provider_specs
+
+  /api/providers/{providerId}:
+
+    delete:
+      operationId: delete_provider
+      description: Delete a Provider from the database. It is required that no Domain
+        are still managed by this Provider before calling this route.
+      parameters:
+      - description: Provider identifier
+        in: path
+        name: providerId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Provider deleted
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Database writing error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Delete a Provider.
+      tags:
+        - providers
+
+    get:
+      operationId: get_provider
+      description: Retrieve information in the database about a given Provider owned
+        by the user.
+      parameters:
+      - description: Provider identifier
+        in: path
+        name: providerId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/Provider'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Retrieve Provider information.
+      tags:
+        - providers
+
+    put:
+      operationId: update_provider
+      description: Updates the information about a given Provider owned by the user.
+      parameters:
+      - description: Provider identifier
+        in: path
+        name: providerId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: The new object overriding the current provider
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/components/schemas/Provider'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/Provider'
+        "400":
+          description: Identifier changed
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Database writing error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Update Provider information.
+      tags:
+        - providers
+
+  /api/providers/{providerId}/domains:
+
+    get:
+      operationId: list_provider_domains
+      description: List domains available from the given Provider.
+      parameters:
+      - description: Provider identifier
+        in: path
+        name: providerId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/Provider'
+        "400":
+          description: Provider error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Lists manageable domains from the Provider.
+      tags:
+        - providers
+
+  /api/providers/{providerId}/domains/{fqdn}:
+
+    get:
+      operationId: get_provider_domain
+      description: Retrieve a domain from the given Provider.
+      parameters:
+      - description: Provider identifier
+        in: path
+        name: providerId
+        required: true
+        schema:
+          type: string
+      - description: Fully qualified domain name
+        in: path
+        name: fqdn
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/Provider'
+        "400":
+          description: Provider error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Create a domain on the Provider.
+      tags:
+        - providers
+
+  /api/records:
+
+    post:
+      operationId: parse_records
+      description: Parse given text to retrieve inner records.
+      parameters:
+      - description: Origin to use if not provided
+        in: query
+        name: origin
+        schema:
+          type: string
+      requestBody:
+        description: Zone file as text
+        required: true
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Parse given text to retrieve inner records.
+      tags:
+        - records
+
+  /api/resolver:
+
+    post:
+      operationId: resolve_dns
+      description: "Perform a NS resolution for a given domain, with options."
+      requestBody:
+        description: Options to the resolution
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/components/schemas/ResolverRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/DNSMsg'
+        "204":
+          description: No content
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "403":
+          description: The resolver refused to treat our request
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "404":
+          description: The domain doesn't exist
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "406":
+          description: The resolver returned an error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      summary: Perform a DNS resolution.
+      tags:
+        - resolver
+
+  /api/service_specs:
+
+    get:
+      operationId: get_service_specs
+      description: This returns the static list of usable services in this happyDomain
+        release.
+      responses:
+        "200":
+          description: The list
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: './schemas.yaml#/components/schemas/ServiceInfos'
+      summary: List all services with which you can connect.
+      tags:
+        - service_specs
+
+  /api/service_specs/{serviceType}/icon.png:
+
+    get:
+      operationId: get_service_icon
+      description: Return the icon as a image/png file for the given service type.
+      parameters:
+      - description: The service's type
+        in: path
+        name: serviceType
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Service type does not exist
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      summary: Get the PNG icon.
+      tags:
+        - service_specs
+
+  /api/services/_specs/{serviceType}:
+
+    get:
+      operationId: get_service_spec
+      description: Return a description of the expected fields.
+      parameters:
+      - description: The service's type
+        in: path
+        name: serviceType
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ServiceSpecs'
+        "404":
+          description: Service type does not exist
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      summary: Get the service expected fields.
+      tags:
+        - service_specs
+
+  /api/session:
+
+    delete:
+      operationId: clear_session
+      description: Remove the content of the current user's session.
+      responses:
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Remove user's session content
+      tags:
+        - users
+
+    get:
+      operationId: get_session
+      description: Get the content of the current user's session.
+      responses:
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Retrieve user's session content
+      tags:
+        - users
+
+  /api/sessions:
+
+    delete:
+      operationId: delete_all_sessions
+      description: Closes all sessions for a given user.
+      responses:
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Remove user's sessions
+      tags:
+        - users
+
+    get:
+      operationId: list_sessions
+      description: List the sessions open for the current user
+      responses:
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: List user's sessions
+      tags:
+        - users
+
+    post:
+      operationId: create_session
+      description: Create a new session for the current user.
+      responses:
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Create a new session for the current user.
+      tags:
+        - users
+
+  /api/sessions/{sessionId}:
+
+    delete:
+      operationId: delete_session
+      description: "Delete a session owned by the current user."
+      parameters:
+      - description: Session identifier
+        in: path
+        name: sessionId
+        required: true
+        schema:
+          type: string
+      responses:
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Delete a session owned by the current user.
+      tags:
+        - users
+
+    put:
+      operationId: update_session
+      description: "Update a session owned by the current user."
+      parameters:
+      - description: Session identifier
+        in: path
+        name: sessionId
+        required: true
+        schema:
+          type: string
+      responses:
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Update a session owned by the current user.
+      tags:
+        - users
+
+  /api/users:
+
+    patch:
+      operationId: user_special_action
+      description: This will send an email to the user either to recover its account
+        or with a new email validation link.
+      requestBody:
+        description: Description of the action to perform and email of the user
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/components/schemas/UserSpecialAction'
+      responses:
+        "200":
+          description: Perhaps something happen
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      summary: Account recovery.
+      tags:
+        - users
+
+    post:
+      operationId: register_user
+      description: Register a new happyDomain account (when using internal authentication
+        system).
+      requestBody:
+        description: Account information
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/components/schemas/UserRegistration'
+      responses:
+        "200":
+          description: The created user
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/User'
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      summary: Register account.
+      tags:
+        - users
+
+  /api/users/{userId}:
+
+    get:
+      operationId: get_user
+      description: Show a user from the database, information is limited to id and
+        email if this is not the current user.
+      parameters:
+      - description: User identifier
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The created user
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/User'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      summary: Show user.
+      tags:
+        - users
+
+  /api/users/{userId}/avatar.png:
+
+    get:
+      operationId: get_user_avatar
+      description: Returns a unique avatar for the user.
+      parameters:
+      - description: User identifier
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - description: Image output desired size
+        in: query
+        name: size
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      summary: Show user's avatar.
+      tags:
+        - users
+
+  /api/users/{userId}/delete:
+
+    post:
+      operationId: delete_user
+      description: Delete the account related to the given user.
+      parameters:
+      - description: User identifier
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Password confirmation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/components/schemas/ChangePasswordForm'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "403":
+          description: Bad current password
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Drop account
+      tags:
+        - users
+
+  /api/users/{userId}/email:
+
+    post:
+      operationId: validate_user_email
+      description: This is the route called by the web interface in order to validate
+        the e-mail address of the user.
+      parameters:
+      - description: User identifier
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Validation form
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/components/schemas/AddressValidationForm'
+      responses:
+        "204":
+          description: Email validated, you can now login
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      summary: Validate e-mail address.
+      tags:
+        - users
+
+  /api/users/{userId}/new_password:
+
+    post:
+      operationId: change_user_password
+      description: Change the password of the given account.
+      parameters:
+      - description: User identifier
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Password confirmation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/components/schemas/ChangePasswordForm'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "403":
+          description: Bad current password
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Change password
+      tags:
+        - users
+
+  /api/users/{userId}/recovery:
+
+    post:
+      operationId: recover_user_account
+      description: "This performs account recovery by reseting the password of
+        the account."
+      parameters:
+      - description: User identifier
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Recovery form
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/components/schemas/AccountRecoveryForm'
+      responses:
+        "204":
+          description: Recovery completed, you can now login with your new credentials
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      summary: Reset password with link in email.
+      tags:
+        - users
+
+  /api/users/{userId}/settings:
+
+    get:
+      operationId: get_user_settings
+      description: Retrieve the user's settings.
+      parameters:
+      - description: User identifier
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: User settings
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/UserSettings'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "403":
+          description: Not your account
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Retrieve user's settings.
+      tags:
+        - users
+
+    post:
+      operationId: update_user_settings
+      description: Update the user's settings.
+      parameters:
+      - description: User identifier
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: User settings
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/components/schemas/UserSettings'
+      responses:
+        "200":
+          description: User settings
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/UserSettings'
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "403":
+          description: Not your account
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+      security:
+        - ApiKeyAuth: []
+      summary: Update user's settings.
+      tags:
+        - users
+
+  /api/version:
+
+    get:
+      operationId: get_version
+      description: Retrieve the current happyDomain version.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/VersionResponse'
+      summary: Get happyDomain version
+      tags:
+        - version
+
+components:
+
+  securitySchemes:
+
+    ApiKeyAuth:
+      description: Description for what is this security definition being used
+      in: header
+      name: Authorization
+      type: apiKey
+
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:

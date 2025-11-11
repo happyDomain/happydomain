@@ -32,8 +32,8 @@ import (
 )
 
 func ovh_settingsForm(edit bool) *happydns.CustomForm {
-	srcFields := []*happydns.Field{
-		&happydns.Field{
+	srcFields := []happydns.Field{
+		happydns.Field{
 			Id:          "endpoint",
 			Type:        "string",
 			Label:       "Endpoint",
@@ -45,7 +45,7 @@ func ovh_settingsForm(edit bool) *happydns.CustomForm {
 	}
 
 	if edit {
-		srcFields = append(srcFields, &happydns.Field{
+		srcFields = append(srcFields, happydns.Field{
 			Id:          "consumerkey",
 			Type:        "string",
 			Label:       "Consumer Key",

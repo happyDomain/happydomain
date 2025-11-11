@@ -35,7 +35,8 @@ import (
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if _, ok := c.Get("LoggedUser"); !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, happydns.ErrorResponse{Message: "Please login to access this resource.", Link: "/login"})
+			l := "/login"
+			c.AbortWithStatusJSON(http.StatusUnauthorized, happydns.ErrorResponse{Message: "Please login to access this resource.", Link: &l})
 			return
 		}
 

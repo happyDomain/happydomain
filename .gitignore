@@ -1,2 +1,3 @@
 ./happydomain
 ./happyDomain
+model/types.gen.go

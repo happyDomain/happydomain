@@ -95,7 +95,7 @@ func resolverQuestion(client dns.Client, resolver string, dn string, rrType uint
 }
 
 func (ru *resolverUsecase) ResolveQuestion(request happydns.ResolverRequest) (*dns.Msg, error) {
-	request.DomainName = dns.Fqdn(request.DomainName)
+	request.Domain = dns.Fqdn(request.Domain)
 
 	if request.Resolver == "custom" {
 		request.Resolver = request.Custom
@@ -121,9 +121,9 @@ func (ru *resolverUsecase) ResolveQuestion(request happydns.ResolverRequest) (*d
 	var err error
 	rrType := dns.StringToType[request.Type]
 	if rrType == dns.TypeANY {
-		r, err = resolverANYQuestion(client, request.Resolver+":53", request.DomainName)
+		r, err = resolverANYQuestion(client, request.Resolver+":53", request.Domain)
 	} else {
-		r, err = resolverQuestion(client, request.Resolver+":53", request.DomainName, rrType)
+		r, err = resolverQuestion(client, request.Resolver+":53", request.Domain, rrType)
 	}
 	if err != nil {
 		return nil, happydns.ValidationError{Msg: err.Error()}
@@ -138,10 +138,10 @@ func (ru *resolverUsecase) ResolveQuestion(request happydns.ResolverRequest) (*d
 		return nil, happydns.ValidationError{Msg: "DNS request mal formated."}
 	} else if r.Rcode == dns.RcodeServerFailure {
 		return nil, happydns.InternalError{
-			Err: fmt.Errorf("Resolver returns an error (most likely something is wrong in %q).", request.DomainName),
+			Err: fmt.Errorf("Resolver returns an error (most likely something is wrong in %q).", request.Domain),
 		}
 	} else if r.Rcode == dns.RcodeNameError {
-		return nil, happydns.NotFoundError{Msg: fmt.Sprintf("The domain %q was not found.", request.DomainName)}
+		return nil, happydns.NotFoundError{Msg: fmt.Sprintf("The domain %q was not found.", request.Domain)}
 	} else if r.Rcode == dns.RcodeNotImplemented {
 		return nil, happydns.InternalError{
 			Err: fmt.Errorf("Resolver returns the request hits non implemented code."),

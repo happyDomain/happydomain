@@ -30,21 +30,6 @@ type ProviderBody interface {
 	InstantiateProvider() (ProviderActuator, error)
 }
 
-// ProviderInfos describes the purpose of a user usable provider.
-type ProviderInfos struct {
-	// Name is the name displayed.
-	Name string `json:"name"`
-
-	// Description is a brief description of what the provider is.
-	Description string `json:"description"`
-
-	// Capabilites is a list of special ability of the provider (automatically filled).
-	Capabilities []string `json:"capabilities,omitempty"`
-
-	// HelpLink is the link to the documentation of the provider configuration.
-	HelpLink string `json:"helplink,omitempty"`
-}
-
 // RegisterProviderFunc abstract the registration of a Provider
 type RegisterProviderFunc func(ProviderCreatorFunc, ProviderInfos)
 
@@ -55,32 +40,6 @@ type ProviderCreatorFunc func() ProviderBody
 type ProviderCreator struct {
 	Creator ProviderCreatorFunc
 	Infos   ProviderInfos
-}
-
-// ProviderMinimal is used for swagger documentation as Provider add.
-type ProviderMinimal struct {
-	// Type is the string representation of the Provider's type.
-	Type string `json:"_srctype"`
-
-	Provider Provider
-
-	// Comment is a string that helps user to distinguish the Provider.
-	Comment string `json:"_comment,omitempty"`
-}
-
-// ProviderMeta holds the metadata associated to a Provider.
-type ProviderMeta struct {
-	// Type is the string representation of the Provider's type.
-	Type string `json:"_srctype"`
-
-	// Id is the Provider's identifier.
-	Id Identifier `json:"_id" swaggertype:"string"`
-
-	// Owner is the User's identifier for the current Provider.
-	Owner Identifier `json:"_ownerid" swaggertype:"string"`
-
-	// Comment is a string that helps user to distinguish the Provider.
-	Comment string `json:"_comment,omitempty"`
 }
 
 // ProviderMessage combined ProviderMeta + Provider in a parsable way
@@ -102,10 +61,20 @@ func (pms *ProviderMessages) Metas() (ret []*ProviderMeta) {
 	return
 }
 
-// ProviderCombined combined ProviderMeta + Provider
-type Provider struct {
-	ProviderMeta
-	Provider ProviderBody
+func (p *Provider) Meta() (meta ProviderMeta) {
+	meta.UnderscoreId = p.UnderscoreId
+	meta.UnderscoreOwnerid = p.UnderscoreOwnerid
+	meta.Type = p.Type
+	meta.Comment = p.Comment
+
+	return
+}
+
+func (p *Provider) SetMeta(meta *ProviderMeta) {
+	p.UnderscoreId = meta.UnderscoreId
+	p.UnderscoreOwnerid = meta.UnderscoreOwnerid
+	p.Type = meta.Type
+	p.Comment = meta.Comment
 }
 
 func (p *Provider) InstantiateProvider() (ProviderActuator, error) {
@@ -113,13 +82,14 @@ func (p *Provider) InstantiateProvider() (ProviderActuator, error) {
 }
 
 func (p *Provider) ToMessage() (msg ProviderMessage, err error) {
-	msg.ProviderMeta = p.ProviderMeta
+	msg.ProviderMeta = ProviderMeta{
+		UnderscoreId:      p.UnderscoreId,
+		UnderscoreOwnerid: p.UnderscoreOwnerid,
+		Type:              p.Type,
+		Comment:           p.Comment,
+	}
 	msg.Provider, err = json.Marshal(p.Provider)
 	return
-}
-
-func (p *Provider) Meta() *ProviderMeta {
-	return &p.ProviderMeta
 }
 
 type ProviderUsecase interface {
@@ -130,7 +100,7 @@ type ProviderUsecase interface {
 	GetUserProviderMeta(*User, Identifier) (*ProviderMeta, error)
 	ListHostedDomains(*Provider) ([]string, error)
 	ListUserProviders(*User) ([]*ProviderMeta, error)
-	ListZoneCorrections(provider *Provider, domain *Domain, records []Record) ([]*Correction, error)
+	ListZoneCorrections(provider *Provider, domain *Domain, records []Record) ([]*FCorrection, error)
 	RetrieveZone(*Provider, string) ([]Record, error)
 	TestDomainExistence(*Provider, string) error
 	UpdateProvider(Identifier, *User, func(*Provider)) error
@@ -142,6 +112,6 @@ type ProviderActuator interface {
 	CanListZones() bool
 	CreateDomain(fqdn string) error
 	GetZoneRecords(domain string) ([]Record, error)
-	GetZoneCorrections(domain string, wantedRecords []Record) ([]*Correction, error)
+	GetZoneCorrections(domain string, wantedRecords []Record) ([]*FCorrection, error)
 	ListZones() ([]string, error)
 }

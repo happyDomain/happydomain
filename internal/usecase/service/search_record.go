@@ -55,7 +55,7 @@ func (uc *SearchRecordUsecase) ExistsInService(svc *happydns.Service, record hap
 	return false, nil
 }
 
-func (uc *SearchRecordUsecase) Search(zone *happydns.Zone, record happydns.Record) (happydns.Subdomain, *happydns.Service, error) {
+func (uc *SearchRecordUsecase) Search(zone *happydns.Zone, record happydns.Record) (string, *happydns.Service, error) {
 	for dn, _ := range zone.Services {
 		svc, err := uc.SearchInSubdomain(zone, dn, record)
 		if err != nil || svc != nil {
@@ -66,7 +66,7 @@ func (uc *SearchRecordUsecase) Search(zone *happydns.Zone, record happydns.Recor
 	return "", nil, nil
 }
 
-func (uc *SearchRecordUsecase) SearchInSubdomain(zone *happydns.Zone, subdomain happydns.Subdomain, record happydns.Record) (*happydns.Service, error) {
+func (uc *SearchRecordUsecase) SearchInSubdomain(zone *happydns.Zone, subdomain string, record happydns.Record) (*happydns.Service, error) {
 	services, ok := zone.Services[subdomain]
 	if !ok {
 		return nil, nil

@@ -57,7 +57,7 @@ func (s *LevelDBStorage) GetUserByEmail(email string) (*happydns.User, error) {
 
 	for users.Next() {
 		user := users.Item()
-		if user.Email == email {
+		if string(user.Email) == email {
 			return user, nil
 		}
 	}
@@ -72,7 +72,7 @@ func (s *LevelDBStorage) UserExists(email string) bool {
 	}
 
 	for users.Next() {
-		if users.Item().Email == email {
+		if string(users.Item().Email) == email {
 			return true
 		}
 	}

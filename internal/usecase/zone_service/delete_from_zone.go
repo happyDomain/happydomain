@@ -39,7 +39,7 @@ func NewDeleteFromZoneUsecase(store serviceUC.ZoneUpdaterStorage) *DeleteFromZon
 	}
 }
 
-func (uc *DeleteFromZoneUsecase) DeleteService(zone *happydns.Zone, subdomain happydns.Subdomain, serviceid happydns.Identifier) error {
+func (uc *DeleteFromZoneUsecase) DeleteService(zone *happydns.Zone, subdomain string, serviceid happydns.Identifier) error {
 	err := zone.EraseService(subdomain, serviceid, nil)
 	if err != nil {
 		return happydns.ValidationError{Msg: fmt.Sprintf("unable to delete service: %s", err.Error())}

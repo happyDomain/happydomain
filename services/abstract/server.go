@@ -157,7 +157,7 @@ func init() {
 				dns.TypeSSHFP,
 			},
 			Restrictions: happydns.ServiceRestrictions{
-				GLUE: true,
+				Glue: true,
 			},
 		},
 		100,

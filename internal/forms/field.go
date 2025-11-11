@@ -80,7 +80,7 @@ func GenField(field reflect.StructField) (f *happydns.Field) {
 }
 
 // GenStructFields generates corresponding SourceFields of the given Source.
-func GenStructFields(data interface{}) (fields []*happydns.Field) {
+func GenStructFields(data interface{}) (fields []happydns.Field) {
 	if data != nil {
 		dataMeta := reflect.Indirect(reflect.ValueOf(data)).Type()
 
@@ -88,7 +88,7 @@ func GenStructFields(data interface{}) (fields []*happydns.Field) {
 			if dataMeta.Field(i).Anonymous {
 				fields = append(fields, GenStructFields(reflect.Indirect(reflect.ValueOf(data)).Field(i))...)
 			} else {
-				fields = append(fields, GenField(dataMeta.Field(i)))
+				fields = append(fields, *GenField(dataMeta.Field(i)))
 			}
 		}
 	}

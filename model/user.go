@@ -23,33 +23,14 @@ package happydns
 
 import (
 	"io"
-	"time"
 )
-
-// User represents an account.
-type User struct {
-	// Id is the User's identifier.
-	Id Identifier `json:"id"`
-
-	// Email is the User's login and means of contact.
-	Email string `json:"email"`
-
-	// CreatedAt is the time when the User logs in for the first time.
-	CreatedAt time.Time `json:"created_at,omitempty"`
-
-	// LastSeen is the time when the User used happyDNS for the last time (in a 12h frame).
-	LastSeen time.Time `json:"last_seen,omitempty"`
-
-	// Settings holds the settings for an account.
-	Settings UserSettings `json:"settings,omitempty"`
-}
 
 func (u *User) GetUserId() Identifier {
 	return u.Id
 }
 
 func (u *User) GetEmail() string {
-	return u.Email
+	return string(u.Email)
 }
 
 func (u *User) JoinNewsletter() bool {

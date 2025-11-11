@@ -149,8 +149,8 @@ func (c *insightsCollector) collect() (*happydns.Insights, error) {
 
 	data.Database.Providers = map[string]int{}
 	data.UserSettings.Languages = map[string]int{}
-	data.UserSettings.FieldHints = map[int]int{}
-	data.UserSettings.ZoneView = map[int]int{}
+	data.UserSettings.FieldHints = map[happydns.UserSettingsFieldHint]int{}
+	data.UserSettings.ZoneView = map[happydns.UserSettingsZoneView]int{}
 	for users.Next() {
 		data.Database.NbUsers++
 

@@ -52,14 +52,14 @@ func (s *Service) ActionOnEditableZone(user *happydns.User, domain *happydns.Dom
 	return s.ActionOnDomainUC.ActionOnEditableZone(user, domain, zone, act)
 }
 
-func (s *Service) AddServiceToZone(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain happydns.Subdomain, origin happydns.Origin, service *happydns.Service) (*happydns.Zone, error) {
+func (s *Service) AddServiceToZone(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain string, origin happydns.Origin, service *happydns.Service) (*happydns.Zone, error) {
 	return zone, s.AddToZoneUC.AddService(zone, subdomain, origin, service)
 }
 
-func (s *Service) RemoveServiceFromZone(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain happydns.Subdomain, serviceID happydns.Identifier) (*happydns.Zone, error) {
+func (s *Service) RemoveServiceFromZone(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain string, serviceID happydns.Identifier) (*happydns.Zone, error) {
 	return zone, s.DeleteFromZoneUC.DeleteService(zone, subdomain, serviceID)
 }
 
-func (s *Service) UpdateZoneService(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain happydns.Subdomain, serviceID happydns.Identifier, service *happydns.Service) (*happydns.Zone, error) {
+func (s *Service) UpdateZoneService(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, subdomain string, serviceID happydns.Identifier, service *happydns.Service) (*happydns.Zone, error) {
 	return zone, s.UpdateServiceUC.Update(zone, subdomain, serviceID, service)
 }

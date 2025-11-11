@@ -40,7 +40,7 @@ func NewAddToZoneUsecase(store serviceUC.ZoneUpdaterStorage, validateService *se
 	}
 }
 
-func (uc *AddToZoneUsecase) AddService(zone *happydns.Zone, subdomain happydns.Subdomain, origin happydns.Origin, service *happydns.Service) error {
+func (uc *AddToZoneUsecase) AddService(zone *happydns.Zone, subdomain string, origin happydns.Origin, service *happydns.Service) error {
 	if service.Service == nil {
 		return happydns.ValidationError{Msg: "Unable to parse the given service."}
 	}
@@ -50,7 +50,7 @@ func (uc *AddToZoneUsecase) AddService(zone *happydns.Zone, subdomain happydns.S
 		return err
 	}
 
-	service.Id = hash
+	service.UnderscoreId = hash
 	service.Domain = string(subdomain)
 	service.NbResources = service.Service.GetNbResources()
 	service.Comment = service.Service.GenComment()

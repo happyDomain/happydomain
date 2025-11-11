@@ -1,0 +1,9 @@
+package: happydns
+generate:
+  models: true
+  embedded-spec: true
+output: model/types.gen.go
+output-options:
+  skip-prune: true
+import-mapping:
+  ./schemas.yaml: "-"

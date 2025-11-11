@@ -21,7 +21,9 @@
 
 package main
 
+//go:generate go tool oapi-codegen -config api/oapi-types.cfg.yaml api/schemas.yaml
+//go:generate sed -i "/type Identifier =/s/ = / /" model/types.gen.go
+
 //go:generate go run tools/gen_icon.go providers providers
 //go:generate go run tools/gen_icon.go services svcs
 //go:generate go run tools/gen_rr_typescript.go web/src/lib/dns_rr.ts
-//go:generate swag init --generalInfo internal/api/route/route.go

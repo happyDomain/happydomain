@@ -31,8 +31,8 @@ import (
 func ParseZone(msg *happydns.ZoneMessage) (*happydns.Zone, error) {
 	var z happydns.Zone
 
-	z.ZoneMeta = msg.ZoneMeta
-	z.Services = map[happydns.Subdomain][]*happydns.Service{}
+	z.SetMeta(msg.ZoneMeta)
+	z.Services = map[string][]*happydns.Service{}
 
 	for subdn, svcs := range msg.Services {
 		for _, svc := range svcs {

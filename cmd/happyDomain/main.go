@@ -32,7 +32,7 @@ import (
 	"github.com/earthboundkid/versioninfo/v2"
 	"github.com/fatih/color"
 
-	"git.happydns.org/happyDomain/internal/api/controller"
+	"git.happydns.org/happyDomain/internal/api"
 	"git.happydns.org/happyDomain/internal/app"
 	"git.happydns.org/happyDomain/internal/config"
 	_ "git.happydns.org/happyDomain/internal/storage/inmemory"
@@ -49,13 +49,13 @@ var (
 func main() {
 	var err error
 
-	controller.HDVersion = happydns.VersionResponse{
+	api.HDVersion = happydns.VersionResponse{
 		Version:    Version,
 		LastCommit: versioninfo.Revision,
 		DirtyBuild: versioninfo.DirtyBuild,
 	}
 	if Version == "custom-build" {
-		controller.HDVersion.Version = versioninfo.Short()
+		api.HDVersion.Version = versioninfo.Short()
 	} else {
 		versioninfo.Version = Version
 	}

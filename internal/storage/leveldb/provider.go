@@ -63,7 +63,7 @@ func (s *LevelDBStorage) ListProviders(u *happydns.User) (srcs happydns.Provider
 			return
 		}
 
-		if !bytes.Equal(srcMsg.Owner, u.Id) {
+		if !bytes.Equal(srcMsg.UnderscoreOwnerid, u.Id) {
 			continue
 		}
 
@@ -98,13 +98,13 @@ func (s *LevelDBStorage) CreateProvider(prvd *happydns.Provider) error {
 		return err
 	}
 
-	prvd.Id = id
+	prvd.UnderscoreId = id
 
 	return s.put(key, prvd)
 }
 
 func (s *LevelDBStorage) UpdateProvider(prvd *happydns.Provider) error {
-	return s.put(fmt.Sprintf("provider-%s", prvd.Id.String()), prvd)
+	return s.put(fmt.Sprintf("provider-%s", prvd.UnderscoreId.String()), prvd)
 }
 
 func (s *LevelDBStorage) DeleteProvider(prvdId happydns.Identifier) error {

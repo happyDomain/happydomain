@@ -128,9 +128,9 @@
             <Icon name="arrow-right" />
             <span class="font-monospace">
                 {#if isPTR(services)}
-                    {services[0].Service.Record.Ptr}
+                    {services[0].service.Record.Ptr}
                 {:else}
-                    {services[0].Service.cname.Target}
+                    {services[0].service.cname.Target}
                 {/if}
             </span>
         </span>

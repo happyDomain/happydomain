@@ -70,7 +70,7 @@ func (psc *ProviderSettingsController) NextProviderSettingsState(c *gin.Context)
 	pType := c.MustGet("providertype").(string)
 
 	var uss happydns.ProviderSettingsState
-	uss.ProviderBody = specs
+	uss.Provider = specs
 	err := c.ShouldBindJSON(&uss)
 	if err != nil {
 		log.Printf("%s sends invalid ProviderSettingsState JSON: %s", c.ClientIP(), err.Error())

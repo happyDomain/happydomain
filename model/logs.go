@@ -25,43 +25,12 @@ import (
 	"time"
 )
 
-const (
-	LOG_CRIT = iota
-	LOG_FATAL
-	LOG_ERR2
-	LOG_ERR
-	LOG_STRONG_WARN
-	LOG_WARN
-	LOG_WEIRD
-	LOG_NACK
-	LOG_INFO
-	LOG_ACK
-	LOG_DEBUG
-)
-
-type DomainLog struct {
-	// Id is the Log's identifier in the database.
-	Id Identifier `json:"id" swaggertype:"string"`
-
-	// IdUser is the identifier of the person responsible for the action.
-	IdUser Identifier `json:"id_user" swaggertype:"string"`
-
-	// Date is the date of the action.
-	Date time.Time `json:"date"`
-
-	// Content is the description of the action logged.
-	Content string `json:"content"`
-
-	// Level reports the criticity level of the action logged.
-	Level int8 `json:"level"`
-}
-
 type DomainLogWithDomainId struct {
 	DomainLog
 	DomainId Identifier
 }
 
-func NewDomainLog(u *User, level int8, content string) *DomainLog {
+func NewDomainLog(u *User, level DomainLogLevel, content string) *DomainLog {
 	return &DomainLog{
 		IdUser:  u.Id,
 		Date:    time.Now(),

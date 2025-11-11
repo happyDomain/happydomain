@@ -157,7 +157,7 @@ func (pc *ProviderController) UpdateProvider(c *gin.Context) {
 		return
 	}
 
-	err = pc.providerService.UpdateProviderFromMessage(old.Id, user, &provider)
+	err = pc.providerService.UpdateProviderFromMessage(old.UnderscoreId, user, &provider)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -191,7 +191,7 @@ func (pc *ProviderController) DeleteProvider(c *gin.Context) {
 
 	providermeta := c.MustGet("providermeta").(*happydns.ProviderMeta)
 
-	err := pc.providerService.DeleteProvider(user, providermeta.Id)
+	err := pc.providerService.DeleteProvider(user, providermeta.UnderscoreId)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

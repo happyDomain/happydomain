@@ -43,27 +43,25 @@ func NewZoneImporterUsecase(domainUpdater DomainUpdater, zoneCreator *zoneUC.Cre
 }
 
 func (uc *ZoneImporterUsecase) Import(user *happydns.User, domain *happydns.Domain, rrs []happydns.Record) (*happydns.Zone, error) {
-	services, defaultTTL, err := svcs.AnalyzeZone(domain.DomainName, rrs)
+	services, defaultTTL, err := svcs.AnalyzeZone(domain.Domain, rrs)
 	if err != nil {
 		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to perform the analysis of your zone: %s", err.Error())}
 	}
 
 	now := time.Now()
-	commit := fmt.Sprintf("Initial zone fetch from %s", domain.DomainName)
+	commit := fmt.Sprintf("Initial zone fetch from %s", domain.Domain)
 	if len(domain.ZoneHistory) > 0 {
-		commit = fmt.Sprintf("Zone fetched from %s", domain.DomainName)
+		commit = fmt.Sprintf("Zone fetched from %s", domain.Domain)
 	}
 
 	myZone := &happydns.Zone{
-		ZoneMeta: happydns.ZoneMeta{
-			IdAuthor:     domain.Owner,
-			DefaultTTL:   defaultTTL,
-			LastModified: now,
-			CommitMsg:    &commit,
-			CommitDate:   &now,
-			Published:    &now,
-		},
-		Services: services,
+		IdAuthor:      domain.IdOwner,
+		DefaultTtl:    defaultTTL,
+		LastModified:  now,
+		CommitMessage: &commit,
+		CommitDate:    &now,
+		Published:     &now,
+		Services:      services,
 	}
 
 	// Create history zone

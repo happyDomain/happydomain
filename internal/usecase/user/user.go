@@ -26,6 +26,8 @@ import (
 	"io"
 	"time"
 
+	"github.com/oapi-codegen/runtime/types"
+
 	"git.happydns.org/happyDomain/internal/avatar"
 	"git.happydns.org/happyDomain/model"
 )
@@ -59,10 +61,10 @@ func (s *Service) CreateUser(uinfo happydns.UserInfo) (*happydns.User, error) {
 
 	user := &happydns.User{
 		Id:        uinfo.GetUserId(),
-		Email:     uinfo.GetEmail(),
+		Email:     types.Email(uinfo.GetEmail()),
 		CreatedAt: time.Now(),
 		LastSeen:  time.Now(),
-		Settings:  *happydns.DefaultUserSettings(),
+		Settings:  happydns.DefaultUserSettings(),
 	}
 
 	if err := s.store.CreateOrUpdateUser(user); err != nil {
@@ -113,7 +115,7 @@ func (s *Service) UpdateUser(id happydns.Identifier, updateFn func(*happydns.Use
 
 // ChangeUserSettings updates the settings for a user.
 func (s *Service) ChangeUserSettings(user *happydns.User, newSettings happydns.UserSettings) error {
-	user.Settings = newSettings
+	user.Settings = &newSettings
 	return s.store.CreateOrUpdateUser(user)
 }
 
