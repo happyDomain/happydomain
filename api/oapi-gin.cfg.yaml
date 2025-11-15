@@ -1,0 +1,9 @@
+package: api
+generate:
+  gin-server: true
+  embedded-spec: true
+  strict-server: true
+  models: true
+output: internal/api/routes.gen.go
+import-mapping:
+  ./schemas.yaml: git.happydns.org/happyDomain/model

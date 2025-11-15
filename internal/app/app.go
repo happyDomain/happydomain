@@ -30,7 +30,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 
-	api "git.happydns.org/happyDomain/internal/api/route"
+	"git.happydns.org/happyDomain/internal/api"
 	"git.happydns.org/happyDomain/internal/mailer"
 	"git.happydns.org/happyDomain/internal/newsletter"
 	"git.happydns.org/happyDomain/internal/session"
@@ -295,7 +295,24 @@ func (app *App) setupRouter() {
 		session.NewSessionStore(app.cfg, app.store, []byte(app.cfg.JWTSecretKey)),
 	))
 
-	api.DeclareRoutes(app.cfg, app.router, app)
+	apiRoutes := app.router.Group("")
+
+	// Create middleware for validating tokens.
+	authmw, err := api.CreateAuthMiddleware(app.AuthenticationUsecase())
+	if err != nil {
+		log.Fatalln("error creating middleware:", err)
+	}
+
+	apiRoutes.Use(authmw)
+
+	api.RegisterHandlers(
+		apiRoutes,
+		api.NewStrictHandler(
+			api.NewServer(app.cfg, app),
+			nil,
+		),
+	)
+
 	web.DeclareRoutes(app.cfg, app.router)
 }
 

@@ -19,13 +19,19 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package main
+package api
 
-//go:generate go tool oapi-codegen -config api/oapi-types.cfg.yaml api/schemas.yaml
-//go:generate sed -i "/type Identifier =/s/ = / /" model/types.gen.go
+import (
+	"context"
 
-//go:generate go tool oapi-codegen -config api/oapi-gin.cfg.yaml api/openapi.yaml
+	"git.happydns.org/happyDomain/model"
+)
 
-//go:generate go run tools/gen_icon.go providers providers
-//go:generate go run tools/gen_icon.go services svcs
-//go:generate go run tools/gen_rr_typescript.go web/src/lib/dns_rr.ts
+var (
+	HDVersion happydns.VersionResponse
+)
+
+// GetVersion retrieves the current happyDomain version.
+func (s *Server) GetVersion(ctx context.Context, request GetVersionRequestObject) (GetVersionResponseObject, error) {
+	return GetVersion200JSONResponse(HDVersion), nil
+}

@@ -1,3 +1,4 @@
 ./happydomain
 ./happyDomain
 model/types.gen.go
+internal/api/routes.gen.go
