@@ -90,7 +90,7 @@ func (ssc *ServiceSpecsController) GetServiceSpecIcon(c *gin.Context) {
 //	@Param			serviceType	path		string	true	"The service's type"
 //	@Success		200			{object}	happydns.ServiceSpecs
 //	@Failure		404			{object}	happydns.ErrorResponse	"Service type does not exist"
-//	@Router			/services/_specs/{serviceType} [get]
+//	@Router			/service_specs/{serviceType} [get]
 func (ssc *ServiceSpecsController) GetServiceSpec(c *gin.Context) {
 	svctype := c.MustGet("servicetype").(reflect.Type)
 

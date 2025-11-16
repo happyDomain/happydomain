@@ -243,7 +243,23 @@ func (dc *DomainController) RetrieveZone(c *gin.Context) {
 	c.JSON(http.StatusOK, &zone.ZoneMeta)
 }
 
-// ImportZone takes a bind style file
+// ImportZone imports a zone from a BIND-style zone file.
+//
+//	@Summary	Import zone from file.
+//	@Schemes
+//	@Description	Import a zone from a BIND-style zone file upload.
+//	@Tags			zones
+//	@Accept			multipart/form-data
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			domainId	path		string	true	"Domain identifier"
+//	@Param			zone		formData	file	true	"Zone file to import"
+//	@Success		200			{object}	happydns.Zone
+//	@Failure		400			{object}	happydns.ErrorResponse	"Invalid input or unable to read zone file"
+//	@Failure		401			{object}	happydns.ErrorResponse	"Authentication failure"
+//	@Failure		404			{object}	happydns.ErrorResponse	"Domain not found"
+//	@Failure		500			{object}	happydns.ErrorResponse
+//	@Router			/domains/{domainId}/zone [post]
 func (dc *DomainController) ImportZone(c *gin.Context) {
 	user := middleware.MyUser(c)
 	if user == nil {
