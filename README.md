@@ -157,7 +157,7 @@ Building
 
 In order to build the happyDomain project, you'll need the following dependencies:
 
-* `go` at least version 1.23;
+* `go`;
 * `nodejs` tested with version 22;
 * `swag` tested with version 1.16 (can be installed through `go install github.com/swaggo/swag/cmd/swag@latest`).
 
