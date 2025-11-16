@@ -43,10 +43,35 @@ func NewLoginController(authService happydns.AuthenticationUsecase) *LoginContro
 	}
 }
 
+// getLoggedUser retrieves the currently logged-in user.
+//
+//	@Summary	Get the current user.
+//	@Schemes
+//	@Description	Retrieve information about the currently logged-in user.
+//	@Tags			authentication
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	happydns.User
+//	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
+//	@Router			/auth/user [get]
 func (lc *LoginController) GetLoggedUser(c *gin.Context) {
 	c.JSON(http.StatusOK, c.MustGet("LoggedUser"))
 }
 
+// login authenticates a user with username and password.
+//
+//	@Summary	Log in a user.
+//	@Schemes
+//	@Description	Authenticate a user with email and password, creating a new session.
+//	@Tags			authentication
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		happydns.LoginRequest	true	"Login credentials"
+//	@Success		200		{object}	happydns.User
+//	@Failure		400		{object}	happydns.ErrorResponse	"Invalid input"
+//	@Failure		401		{object}	happydns.ErrorResponse	"Invalid username or password"
+//	@Router			/auth/login [post]
 func (lc *LoginController) Login(c *gin.Context) {
 	var request happydns.LoginRequest
 
@@ -69,6 +94,18 @@ func (lc *LoginController) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+// logout clears the current user's session.
+//
+//	@Summary	Log out the current user.
+//	@Schemes
+//	@Description	Clear the current user's session and log them out.
+//	@Tags			authentication
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Success		204	"Session cleared"
+//	@Failure		500	{object}	happydns.ErrorResponse
+//	@Router			/auth/logout [post]
 func (lc *LoginController) Logout(c *gin.Context) {
 	session := sessions.Default(c)
 

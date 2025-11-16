@@ -46,6 +46,21 @@ func NewZoneController(zoneService happydns.ZoneUsecase, domainService happydns.
 	}
 }
 
+// getZone retrieves a zone's information.
+//
+//	@Summary	Retrieve a zone.
+//	@Schemes
+//	@Description	Retrieve information about a zone.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			domainId	path		string	true	"Domain identifier"
+//	@Param			zoneId		path		string	true	"Zone identifier"
+//	@Success		200			{object}	happydns.Zone
+//	@Failure		401			{object}	happydns.ErrorResponse	"Authentication failure"
+//	@Failure		404			{object}	happydns.ErrorResponse	"Domain or Zone not found"
+//	@Router			/domains/{domainId}/zone/{zoneId} [get]
 func (zc *ZoneController) GetZone(c *gin.Context) {
 	zone := c.MustGet("zone").(*happydns.Zone)
 

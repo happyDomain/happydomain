@@ -160,6 +160,21 @@ func (uc *UserController) ChangeUserSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, user.Settings)
 }
 
+// deleteMyUser deletes the current user's account.
+//
+//	@Summary	Delete user account.
+//	@Schemes
+//	@Description	Delete the current user's account and all associated data.
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			userId	path	string	true	"User identifier"
+//	@Security		securitydefinitions.basic
+//	@Success		204	"User deleted"
+//	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
+//	@Failure		403	{object}	happydns.ErrorResponse	"Not your account"
+//	@Failure		500	{object}	happydns.ErrorResponse
+//	@Router			/users/{userId} [delete]
 func (uc *UserController) DeleteMyUser(c *gin.Context) {
 	user := c.MustGet("user").(*happydns.User)
 
