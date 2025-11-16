@@ -22,10 +22,11 @@
 -->
 
 <script lang="ts">
+    import { getServiceSpec } from "$lib/api/service_specs";
     import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import RecordEditor from "$lib/components/records/Editor.svelte";
+    import { newRecord } from "$lib/model/service_specs";
     import { servicesSpecs } from "$lib/stores/services";
-    import { getRrtype, newRR } from "$lib/dns_rr";
 
     interface Props {
         dn: string;
@@ -40,8 +41,11 @@
         origin,
         readonly = false,
         type = "svcs.Orphan",
-        value = $bindable({}),
-   }: Props = $props();
+        value = $bindable({ }),
+    }: Props = $props();
+
+    let sspecs = undefined;
+    getServiceSpec(type).then((res) => sspecs = res);
 </script>
 
 {#if $servicesSpecs && $servicesSpecs[type]}
@@ -61,7 +65,7 @@
                 bind:record={value[key][i]}
             />
         {/each}
-        <button type="button" class="btn btn-primary" onclick={() => value[key].push(newRR(dn, getRrtype(key.toLowerCase())))}>
+        <button type="button" class="btn btn-primary" onclick={() => value[key].push(newRecord(sspecs.fields.filter((field) => field.id == key)[0]))}>
             <i class="bi bi-plus"></i>
         </button>
     {:else}

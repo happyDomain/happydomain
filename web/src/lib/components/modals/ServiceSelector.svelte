@@ -32,6 +32,8 @@
 
     import { Input, Modal, ModalBody } from "@sveltestrap/sveltestrap";
 
+    import { getServiceSpec } from "$lib/api/service_specs";
+    import { getRrtype, newRR } from "$lib/dns_rr";
     import ModalFooter from "$lib/components/modals/Footer.svelte";
     import ModalHeader from "$lib/components/modals/Header.svelte";
     import FilterServiceSelectorInput from "$lib/components/services/FilterServiceSelectorInput.svelte";
@@ -39,6 +41,7 @@
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service";
+    import { newRecord } from "$lib/model/service_specs";
 
     const dispatch = createEventDispatcher();
 
@@ -64,7 +67,19 @@
 
         if (value !== null) {
             toggle();
-            dispatch("show-next-modal", { _svctype: value, _domain: dn, Service: {} });
+            getServiceSpec(value).then((specs) => {
+                const svc = { };
+
+                for (const field of specs.fields) {
+                    svc[field.id] = newRecord(field);
+
+                    if (field.type.startsWith("[]")) {
+                        svc[field.id] = [svc[field.id]];
+                    }
+                }
+
+                dispatch("show-next-modal", { _svctype: value, _domain: dn, Service: svc });
+            });
         }
     }
 
