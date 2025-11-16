@@ -99,7 +99,10 @@ func newRR(fd io.Writer) {
 				continue
 			}
 			fmt.Fprintf(fd, "          rec.%s = ", t.Field(i).Name)
-			if t.Field(i).Type.Kind() == reflect.Array || t.Field(i).Type.Kind() == reflect.Slice {
+			// Check if this type maps to string in TypeScript (same logic as toTSType)
+			if t.Field(i).Type.Name() == "[]string" || t.Field(i).Type.Name() == "IP" || t.Field(i).Name == "Txt" {
+				fmt.Fprint(fd, `""`)
+			} else if t.Field(i).Type.Kind() == reflect.Array || t.Field(i).Type.Kind() == reflect.Slice {
 				fmt.Fprint(fd, "[]")
 			} else if strings.HasPrefix(t.Field(i).Type.Name(), "uint") || strings.HasPrefix(t.Field(i).Type.Name(), "int") || t.Field(i).Type.Name() == "time.Duration" {
 				fmt.Fprint(fd, "0")
