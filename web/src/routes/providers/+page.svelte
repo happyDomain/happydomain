@@ -28,9 +28,13 @@
 
     import ProviderList from "$lib/components/providers/List.svelte";
     import { appConfig } from "$lib/stores/config";
+    import { domains, refreshDomains } from "$lib/stores/domains";
     import { providers, refreshProviders } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 
+    if (!$domains) {
+        refreshDomains();
+    }
     refreshProviders();
 </script>
 
