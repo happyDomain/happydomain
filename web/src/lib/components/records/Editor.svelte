@@ -152,7 +152,7 @@
                 </label>
                 <Col md="8" class="d-flex flex-column">
                     <div class="flex-fill d-flex align-items-center">
-                        <Input id="rr-{k}" size="sm" type="text" bind:value={(record as any)[k]} />
+                        <Input id="rr-{k}" bsSize="sm" type="text" bind:value={(record as any)[k]} />
                     </div>
                 </Col>
             </Row>

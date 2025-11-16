@@ -96,7 +96,7 @@
                     <tr>
                         <td>
                             <Input
-                                size="sm"
+                                bsSize="sm"
                                 bind:value={val.rua[idx]}
                             />
                         </td>
