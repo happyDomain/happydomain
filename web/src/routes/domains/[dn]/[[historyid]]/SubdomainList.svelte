@@ -29,7 +29,7 @@
     import { thisZone } from "$lib/stores/thiszone";
 
     interface Props {
-        subdomain: Snippet;
+        subdomain: Snippet<[string, Array<ServiceCombined>]>;
         subdomains: Array<string>;
     }
 

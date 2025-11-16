@@ -74,6 +74,7 @@
     let deleteRecordInProgress = $state(false);
 
     function deleteRecord() {
+        if (!record) return;
         deleteRecordInProgress = true;
         deleteZoneRecord(origin, zone.id, dn, record).then(
             (z: Zone) => {
@@ -88,19 +89,20 @@
         );
     }
 
-    function submitRecordForm(e: FormDataEvent) {
+    function submitRecordForm(e: SubmitEvent) {
         e.preventDefault();
+        if (!record) return;
 
         addRecordInProgress = true;
 
-        let action = addZoneRecord;
-        let subdomain = "";
+        let promise: Promise<Zone>;
         if (initialrecord) {
-            action = updateZoneRecord;
-            subdomain = dn;
+            promise = updateZoneRecord(origin, zone.id, dn, record, initialrecord);
+        } else {
+            promise = addZoneRecord(origin, zone.id, "", record);
         }
 
-        action(origin, zone.id, subdomain, record, initialrecord).then(
+        promise.then(
             (z: Zone) => {
                 thisZone.set(z);
                 addRecordInProgress = false;

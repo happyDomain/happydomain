@@ -23,6 +23,7 @@
 
 <script lang="ts">
     import BasicInput from "$lib/components/inputs/basic.svelte";
+    import type { dnsTypeSOA } from "$lib/dns_rr";
 
     interface Props {
         class: string;
@@ -35,6 +36,7 @@
 <div class={className}>
     <BasicInput
         edit
+        index="soa_mname"
         specs={{
               id: "mname",
               label: "Name Server",
@@ -47,6 +49,7 @@
 
     <BasicInput
         edit
+        index="soa_rname"
         specs={{
               id: "rname",
               label: "Contact Email",
@@ -59,6 +62,7 @@
 
     <BasicInput
         edit
+        index="soa_serial"
         specs={{
               id: "serial",
               label: "Zone Serial",
@@ -71,6 +75,7 @@
 
     <BasicInput
         edit
+        index="soa_refresh"
         specs={{
               id: "refresh",
               label: "Slave Refresh Time",
@@ -83,6 +88,7 @@
 
     <BasicInput
         edit
+        index="soa_retry"
         specs={{
               id: "retry",
               label: "Retry Interval on failed refresh",
@@ -95,6 +101,7 @@
 
     <BasicInput
         edit
+        index="soa_expire"
         specs={{
               id: "expire",
               label: "Authoritative Expiry",
@@ -107,6 +114,7 @@
 
     <BasicInput
         edit
+        index="soa_nxttl"
         specs={{
               id: "nxttl",
               label: "Negative Caching Time",

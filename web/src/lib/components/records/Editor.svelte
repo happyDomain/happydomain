@@ -37,13 +37,13 @@
     interface Props {
         dn: string;
         origin: Domain;
-        record: dnsRR | undefined;
+        record: dnsRR;
     }
 
     let {
         dn = $bindable(""),
         origin,
-        record = $bindable(undefined),
+        record = $bindable(),
     }: Props = $props();
 
 </script>
@@ -108,9 +108,7 @@
                 required
                 bind:value={record.Hdr.Rrtype}
             >
-            {#each Array(260)
-                          .fill()
-                          .map((element, index) => index + 1) as i}
+            {#each Array.from({ length: 260 }, (_, index) => index + 1) as i}
                 {#if nsrrtype(i) != "#"}
                     <option value={i}>{nsrrtype(i)}</option>
                 {/if}
@@ -144,7 +142,7 @@
 {#if record.Hdr.Rrtype && rdatafields(record.Hdr.Rrtype).length > 0}
     {#each rdatafields(record.Hdr.Rrtype) as k}
         {#if k != "Hdr"}
-            {@const v = record[k]}
+            {@const v = (record as any)[k]}
             <Row>
                 <label
                     for="rr-{k}"
@@ -154,7 +152,7 @@
                 </label>
                 <Col md="8" class="d-flex flex-column">
                     <div class="flex-fill d-flex align-items-center">
-                        <Input id="rr-{k}" size="sm" type="text" bind:value={record[k]} />
+                        <Input id="rr-{k}" size="sm" type="text" bind:value={(record as any)[k]} />
                     </div>
                 </Col>
             </Row>

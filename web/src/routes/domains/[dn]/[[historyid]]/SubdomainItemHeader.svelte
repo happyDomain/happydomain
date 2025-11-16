@@ -216,7 +216,7 @@
                 color="primary"
                 size="sm"
                 title={$t("domains.add-a-record")}
-                on:click={() => ctrlRecord.Open({Hdr:{ Name: dn }})}
+                on:click={() => ctrlRecord.Open({Hdr:{ Name: dn }} as dnsRR, dn)}
             >
                 <Icon name="plus" />
             </Button>

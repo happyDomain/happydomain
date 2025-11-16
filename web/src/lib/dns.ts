@@ -20,6 +20,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { nsrrtype, rdatatostr } from "$lib/dns_rr";
+import type { dnsRR } from "$lib/dns_rr";
 import type { Domain } from "$lib/model/domain";
 
 export { nsrrtype, rdatatostr };
@@ -47,7 +48,7 @@ export function fqdn(input: string, origin: string) {
     }
 }
 
-export function domainCompare(a: string | Domain, b: string | Domain) {
+export function domainCompare(a: string | Domain | { domain: string }, b: string | Domain | { domain: string }) {
     // Convert to string if Domain
     let domainA = typeof a === "object" ? a.domain : a;
     let domainB = typeof b === "object" ? b.domain : b;
@@ -70,7 +71,7 @@ export function domainCompare(a: string | Domain, b: string | Domain) {
     return as.length - bs.length;
 }
 
-export function fqdnCompare(a: string | Domain, b: string | Domain) {
+export function fqdnCompare(a: string | Domain | { domain: string }, b: string | Domain | { domain: string }) {
     // Convert to string if Domain
     let domainA = typeof a === "object" ? a.domain : a;
     let domainB = typeof b === "object" ? b.domain : b;
@@ -166,7 +167,7 @@ export function validateDomain(
                 acc &&
                     domain.length >= 1 && domain.length <= 63 &&
                     ((only_ldh && /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(domain)) || (!only_ldh && /^_?[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(domain)))
-            ), ret);
+            ), ret as boolean);
         }
     }
 
@@ -208,7 +209,9 @@ export function reverseDomain(ip: string) {
     if (ip.indexOf(":") > 0) {
         suffix = ".ip6.arpa.";
 
-        fields = normalizeIPv6(ip).replace(/:/g, '').split("");
+        const normalized = normalizeIPv6(ip);
+        if (!normalized) throw new Error("Invalid IPv6 address");
+        fields = normalized.replace(/:/g, '').split("");
     } else {
         fields = ip.split(".");
         while (fields.length < 4) {
@@ -238,7 +241,7 @@ export function unreverseDomain(dn: string) {
     return ip.replace(/:(0000:)+/, "::").replace(/:0{1,3}/g, ":").replace(/^0+/, "").replace(/0+$/, "");
 }
 
-export function printRR(rr: dnsRR, dn: string | undefined, origin: string | undefined): string {
+export function printRR(rr: dnsRR, dn?: string, origin?: string): string {
     let domain = rr.Hdr.Name || '@';
     if (dn && origin) domain = fqdn(domain, fqdn(dn, origin));
     else if (dn) domain = fqdn(domain, dn);

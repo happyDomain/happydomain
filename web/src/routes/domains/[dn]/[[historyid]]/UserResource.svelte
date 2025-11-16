@@ -60,11 +60,10 @@
                         {#await getServiceSpec(service._svctype)}
                         {:then specs}
                             <Service
-                                type={service._svctype}
                                 {specs}
                                 value={service.Service}
                             >
-                                {#snippet aservice(type, rr)}
+                                {#snippet aservice(type: string, rr: any)}
                                     {#if rr}
                                         <tr>
                                             <td
@@ -77,7 +76,9 @@
                                                     {origin}
                                                     {rr}
                                                 />
-                                                <strong class="text-muted" style="white-space: nowrap">{$servicesSpecs[service._svctype].name}</strong>
+                                                {#if $servicesSpecs}
+                                                    <strong class="text-muted" style="white-space: nowrap">{$servicesSpecs[service._svctype].name}</strong>
+                                                {/if}
                                             </td>
                                         </tr>
                                     {/if}
