@@ -42,6 +42,7 @@
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service";
     import { newRecord } from "$lib/model/service_specs";
+    import { filteredName } from "$lib/stores/serviceSelector";
 
     const dispatch = createEventDispatcher();
 
@@ -80,10 +81,12 @@
 
                 dispatch("show-next-modal", { _svctype: value, _domain: dn, Service: svc });
             });
+            $filteredName = "";
         }
     }
 
     function Open(domain: string): void {
+        $filteredName = "";
         dn = domain;
         isOpen = true;
         value = "";
