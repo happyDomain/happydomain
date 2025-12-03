@@ -30,7 +30,7 @@ RUN sed -i '/npm run build/d' web/assets.go && \
     go build -v -tags netgo,swagger,web -ldflags '-w' ./cmd/happyDomain/
 
 
-FROM alpine:3.22
+FROM alpine:3.23
 
 EXPOSE 8081
 
