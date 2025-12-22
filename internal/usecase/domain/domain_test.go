@@ -71,8 +71,8 @@ func (m *mockProviderActuator) GetZoneRecords(domain string) ([]happydns.Record,
 	return []happydns.Record{}, nil
 }
 
-func (m *mockProviderActuator) GetZoneCorrections(domain string, wantedRecords []happydns.Record) ([]*happydns.Correction, error) {
-	return []*happydns.Correction{}, nil
+func (m *mockProviderActuator) GetZoneCorrections(domain string, wantedRecords []happydns.Record) ([]*happydns.Correction, int, error) {
+	return []*happydns.Correction{}, 0, nil
 }
 
 func (m *mockProviderActuator) ListZones() ([]string, error) {

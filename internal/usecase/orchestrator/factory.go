@@ -44,7 +44,7 @@ type ZoneRetriever interface {
 
 // ZoneCorrector is an interface for getting zone corrections.
 type ZoneCorrector interface {
-	ListZoneCorrections(provider *happydns.Provider, domain *happydns.Domain, records []happydns.Record) ([]*happydns.Correction, error)
+	ListZoneCorrections(provider *happydns.Provider, domain *happydns.Domain, records []happydns.Record) ([]*happydns.Correction, int, error)
 }
 
 type Orchestrator struct {

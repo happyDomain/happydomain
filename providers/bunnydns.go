@@ -19,30 +19,38 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package provider
+package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"fmt"
+	_ "github.com/StackExchange/dnscontrol/v4/providers/bunnydns"
 
+	"git.happydns.org/happyDomain/internal/adapters"
 	"git.happydns.org/happyDomain/model"
 )
 
-// RetrieveZone retrieves the current zone records for the given domain from the provider.
-func (s *Service) RetrieveZone(provider *happydns.Provider, name string) ([]happydns.Record, error) {
-	instance, err := provider.InstantiateProvider()
-	if err != nil {
-		return nil, fmt.Errorf("unable to instantiate provider: %w", err)
-	}
-
-	return instance.GetZoneRecords(name)
+type BunnyDNSAPI struct {
+	APIKey string `json:"api_key,omitempty" happydomain:"label=API Key,required,secret"`
 }
 
-// ListZoneCorrections lists the corrections needed to synchronize the zone with the given records.
-func (s *Service) ListZoneCorrections(provider *happydns.Provider, domain *happydns.Domain, records []happydns.Record) ([]*happydns.Correction, int, error) {
-	instance, err := provider.InstantiateProvider()
-	if err != nil {
-		return nil, 0, fmt.Errorf("unable to instantiate provider: %w", err)
-	}
+func (s *BunnyDNSAPI) DNSControlName() string {
+	return "BUNNY_DNS"
+}
 
-	return instance.GetZoneCorrections(domain.DomainName, records)
+func (s *BunnyDNSAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *BunnyDNSAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"api_key": s.APIKey,
+	}, nil
+}
+
+func init() {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
+		return &BunnyDNSAPI{}
+	}, happydns.ProviderInfos{
+		Name:        "Bunny DNS",
+		Description: "High-performance DNS service from Bunny.net CDN.",
+	}, RegisterProvider)
 }

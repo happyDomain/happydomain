@@ -29,7 +29,7 @@ type RemoteZoneImporterUsecase interface {
 
 type ZoneCorrectionApplierUsecase interface {
 	Apply(*User, *Domain, *Zone, *ApplyZoneForm) (*Zone, error)
-	List(*User, *Domain, *Zone) ([]*Correction, error)
+	List(*User, *Domain, *Zone) ([]*Correction, int, error)
 }
 
 type ZoneImporterUsecase interface {

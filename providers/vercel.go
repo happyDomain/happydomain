@@ -19,30 +19,40 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package provider
+package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"fmt"
+	_ "github.com/StackExchange/dnscontrol/v4/providers/vercel"
 
+	"git.happydns.org/happyDomain/internal/adapters"
 	"git.happydns.org/happyDomain/model"
 )
 
-// RetrieveZone retrieves the current zone records for the given domain from the provider.
-func (s *Service) RetrieveZone(provider *happydns.Provider, name string) ([]happydns.Record, error) {
-	instance, err := provider.InstantiateProvider()
-	if err != nil {
-		return nil, fmt.Errorf("unable to instantiate provider: %w", err)
-	}
-
-	return instance.GetZoneRecords(name)
+type VercelAPI struct {
+	APIToken string `json:"api_token,omitempty" happydomain:"label=API Token,required,secret"`
+	TeamID   string `json:"team_id,omitempty" happydomain:"label=Team ID,required"`
 }
 
-// ListZoneCorrections lists the corrections needed to synchronize the zone with the given records.
-func (s *Service) ListZoneCorrections(provider *happydns.Provider, domain *happydns.Domain, records []happydns.Record) ([]*happydns.Correction, int, error) {
-	instance, err := provider.InstantiateProvider()
-	if err != nil {
-		return nil, 0, fmt.Errorf("unable to instantiate provider: %w", err)
-	}
+func (s *VercelAPI) DNSControlName() string {
+	return "VERCEL"
+}
 
-	return instance.GetZoneCorrections(domain.DomainName, records)
+func (s *VercelAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *VercelAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"api_token": s.APIToken,
+		"team_id":   s.TeamID,
+	}, nil
+}
+
+func init() {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
+		return &VercelAPI{}
+	}, happydns.ProviderInfos{
+		Name:        "Vercel",
+		Description: "DNS management for domains associated with Vercel projects.",
+	}, RegisterProvider)
 }

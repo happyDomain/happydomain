@@ -28,7 +28,7 @@ import (
 	"strings"
 
 	"github.com/StackExchange/dnscontrol/v4/models"
-	dnscontrol "github.com/StackExchange/dnscontrol/v4/providers"
+	dnscontrol "github.com/StackExchange/dnscontrol/v4/pkg/providers"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -147,7 +147,7 @@ func (p *DNSControlAdapterNSProvider) GetZoneRecords(domain string) (ret []happy
 	return
 }
 
-func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []happydns.Record) (ret []*happydns.Correction, err error) {
+func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []happydns.Record) (ret []*happydns.Correction, nbCorrections int, err error) {
 	var dc *models.DomainConfig
 	dc, err = NewDNSControlDomainConfig(strings.TrimSuffix(domain, "."), rrs)
 	if err != nil {
@@ -170,14 +170,14 @@ func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []ha
 	var records models.Records
 	records, err = p.DNSServiceProvider.GetZoneRecords(strings.TrimSuffix(domain, "."), nil)
 	if err != nil {
-		return nil, err
+		return nil, nbCorrections, err
 	}
 
 	// Compute needed corrections
 	var corrections []*models.Correction
-	corrections, err = p.DNSServiceProvider.GetZoneRecordsCorrections(dc, records)
+	corrections, nbCorrections, err = p.DNSServiceProvider.GetZoneRecordsCorrections(dc, records)
 	if err != nil {
-		return nil, err
+		return nil, nbCorrections, err
 	}
 
 	ret = make([]*happydns.Correction, len(corrections))
@@ -192,7 +192,7 @@ func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []ha
 		}
 	}
 
-	return ret, nil
+	return ret, nbCorrections, nil
 }
 
 func (p *DNSControlAdapterNSProvider) CreateDomain(fqdn string) error {
@@ -201,7 +201,7 @@ func (p *DNSControlAdapterNSProvider) CreateDomain(fqdn string) error {
 		return fmt.Errorf("Provider doesn't support domain creation.")
 	}
 
-	return zc.EnsureZoneExists(strings.TrimSuffix(fqdn, "."))
+	return zc.EnsureZoneExists(strings.TrimSuffix(fqdn, "."), nil)
 }
 
 func (p *DNSControlAdapterNSProvider) ListZones() ([]string, error) {

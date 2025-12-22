@@ -104,7 +104,7 @@ func (zc *ZoneController) DiffZones(c *gin.Context) {
 	var corrections []*happydns.Correction
 	if c.Param("oldzoneid") == "@" {
 		var err error
-		corrections, err = zc.zoneCorrectionService.List(user, domain, newzone)
+		corrections, _, err = zc.zoneCorrectionService.List(user, domain, newzone)
 		if err != nil {
 			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 			return

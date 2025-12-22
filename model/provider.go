@@ -130,7 +130,7 @@ type ProviderUsecase interface {
 	GetUserProviderMeta(*User, Identifier) (*ProviderMeta, error)
 	ListHostedDomains(*Provider) ([]string, error)
 	ListUserProviders(*User) ([]*ProviderMeta, error)
-	ListZoneCorrections(provider *Provider, domain *Domain, records []Record) ([]*Correction, error)
+	ListZoneCorrections(provider *Provider, domain *Domain, records []Record) ([]*Correction, int, error)
 	RetrieveZone(*Provider, string) ([]Record, error)
 	TestDomainExistence(*Provider, string) error
 	UpdateProvider(Identifier, *User, func(*Provider)) error
@@ -142,6 +142,6 @@ type ProviderActuator interface {
 	CanListZones() bool
 	CreateDomain(fqdn string) error
 	GetZoneRecords(domain string) ([]Record, error)
-	GetZoneCorrections(domain string, wantedRecords []Record) ([]*Correction, error)
+	GetZoneCorrections(domain string, wantedRecords []Record) ([]*Correction, int, error)
 	ListZones() ([]string, error)
 }

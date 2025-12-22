@@ -58,7 +58,7 @@ func (uc *ZoneDifferUsecase) Diff(domain *happydns.Domain, newzone *happydns.Zon
 		return nil, err
 	}
 
-	corrections, err := adapter.DNSControlDiffByRecord(oldrecords, newrecords, domain.DomainName)
+	corrections, _, err := adapter.DNSControlDiffByRecord(oldrecords, newrecords, domain.DomainName)
 	if err != nil {
 		return nil, err
 	}

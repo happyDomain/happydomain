@@ -61,20 +61,20 @@ func DNSControlCorrectionKindFromMessage(msg string) (kind happydns.CorrectionKi
 	return
 }
 
-func DNSControlDiffByRecord(oldrrs []happydns.Record, newrrs []happydns.Record, origin string) ([]*happydns.Correction, error) {
+func DNSControlDiffByRecord(oldrrs []happydns.Record, newrrs []happydns.Record, origin string) ([]*happydns.Correction, int, error) {
 	oldrecords, err := DNSControlRRtoRC(oldrrs, origin)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	newdc, err := NewDNSControlDomainConfig(origin, newrrs)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	corrections, err := diff2.ByRecord(oldrecords, newdc, nil)
+	corrections, nbCorrections, err := diff2.ByRecord(oldrecords, newdc, nil)
 	if err != nil {
-		return nil, err
+		return nil, nbCorrections, err
 	}
 
 	ret := make([]*happydns.Correction, len(corrections))
@@ -85,7 +85,7 @@ func DNSControlDiffByRecord(oldrrs []happydns.Record, newrrs []happydns.Record, 
 		}
 	}
 
-	return ret, nil
+	return ret, nbCorrections, nil
 }
 
 func DNSControlRRtoRC(rrs []happydns.Record, origin string) (dnscontrol.Records, error) {
