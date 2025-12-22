@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -29,8 +29,8 @@ import (
 )
 
 type GandiAPI struct {
-	APIKey    string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,description=Get your API Key in the Security section under https://account.gandi.net/. Copy the corresponding key."`
-	SharingID string `json:"sharing_id,omitempty" happydomain:"label=Sharing ID,placeholder=xxxxxxxxxx,description=If you are member of multiple organizations this identifier selects the one to manage."`
+	APIKey    string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,secret,description=Get your API Key in the Security section at https://account.gandi.net/"`
+	SharingID string `json:"sharing_id,omitempty" happydomain:"label=Sharing ID,placeholder=xxxxxxxxxx,description=Organization sharing ID (required if member of multiple organizations)"`
 }
 
 func (s *GandiAPI) DNSControlName() string {
@@ -53,6 +53,6 @@ func init() {
 		return &GandiAPI{}
 	}, happydns.ProviderInfos{
 		Name:        "Gandi",
-		Description: "French hosting provider.",
+		Description: "Domain registrar and hosting provider with LiveDNS service.",
 	}, RegisterProvider)
 }

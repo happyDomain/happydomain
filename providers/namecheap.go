@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -29,8 +29,8 @@ import (
 )
 
 type NamecheapAPI struct {
-	APIKey  string `json:"apikey,omitempty" happydoamin:"label=API Key,placeholder=yourApiKeyFromNameCheap,required"`
-	APIUser string `json:"apiuser,omitempty" happydomain:"label=API User,placeholder=yourUsername,required"`
+	APIKey  string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=yourApiKeyFromNameCheap,required,secret,description=Namecheap API key"`
+	APIUser string `json:"apiuser,omitempty" happydomain:"label=API User,placeholder=yourUsername,required,description=Namecheap account username"`
 }
 
 func (s *NamecheapAPI) DNSControlName() string {
@@ -53,6 +53,6 @@ func init() {
 		return &NamecheapAPI{}
 	}, happydns.ProviderInfos{
 		Name:        "Namecheap",
-		Description: "American domain name registrar.",
+		Description: "Domain registrar and web hosting company with DNS management.",
 	}, RegisterProvider)
 }

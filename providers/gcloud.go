@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: David Dernoncourt, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -29,10 +29,10 @@ import (
 )
 
 type GCloudAPI struct {
-	ProjectId     string `json:"project_id,omitempty" happydomain:"label=Project ID,placeholder=xxxxxxxx,required,description=Project ID."`
-	PrivateKey    string `json:"private_key,omitempty" happydomain:"label=Private key,placeholder=xxxxxxxx,description=Private key."`
-	ClientEmail   string `json:"client_email,omitempty" happydomain:"label=Client Email,placeholder=xxxxxxxx,description=Client Email."`
-	NameServerSet string `json:"name_server_set,omitempty" happydomain:"label=Name server sets,placeholder=xxxxxxxx,description=Name server sets special permission from your TAM at Google)."`
+	ProjectId     string `json:"project_id,omitempty" happydomain:"label=Project ID,placeholder=my-project-id,required,description=Google Cloud project ID"`
+	PrivateKey    string `json:"private_key,omitempty" happydomain:"label=Private Key,placeholder=-----BEGIN PRIVATE KEY-----...,secret,description=Service account private key in PEM format"`
+	ClientEmail   string `json:"client_email,omitempty" happydomain:"label=Client Email,placeholder=service-account@project-id.iam.gserviceaccount.com,description=Service account email address"`
+	NameServerSet string `json:"name_server_set,omitempty" happydomain:"label=Name Server Set,placeholder=,description=Optional name server set (requires special permission from your TAM at Google)"`
 }
 
 func (s *GCloudAPI) DNSControlName() string {
@@ -56,7 +56,7 @@ func init() {
 	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &GCloudAPI{}
 	}, happydns.ProviderInfos{
-		Name:        "Google Cloud Platform (GCP)",
-		Description: "A suite of cloud computing services that runs on the same infrastructure that Google uses internally for its end-user products",
+		Name:        "Google Cloud DNS",
+		Description: "Google's globally distributed, scalable, and reliable managed DNS service.",
 	}, RegisterProvider)
 }

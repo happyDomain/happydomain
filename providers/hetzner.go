@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -23,17 +23,22 @@ package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/hetzner"
+	_ "github.com/StackExchange/dnscontrol/v4/providers/hetznerv2"
 
 	"git.happydns.org/happyDomain/internal/adapters"
 	"git.happydns.org/happyDomain/model"
 )
 
 type HetznerAPI struct {
-	APIKey string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,description=Get your API Key on https://dns.hetzner.com/settings/api-token."`
+	APIVersion string `json:"api_version,omitempty" happydomain:"label=API Version,choices=v2;v1,default=v2,required,description=API version to use (v2 recommended for Cloud DNS)"`
+	APIToken   string `json:"api_token,omitempty" happydomain:"label=API Token,placeholder=xxxxxxxxxx,required,secret,description=Hetzner API token from https://dns.hetzner.com/settings/api-token (v1) or Cloud Console (v2)"`
 }
 
 func (s *HetznerAPI) DNSControlName() string {
-	return "HETZNER"
+	if s.APIVersion == "v1" {
+		return "HETZNER"
+	}
+	return "HETZNER_V2"
 }
 
 func (s *HetznerAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
@@ -41,8 +46,14 @@ func (s *HetznerAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 }
 
 func (s *HetznerAPI) ToDNSControlConfig() (map[string]string, error) {
+	// v1 uses api_key, v2 uses api_token
+	if s.APIVersion == "v1" {
+		return map[string]string{
+			"api_key": s.APIToken,
+		}, nil
+	}
 	return map[string]string{
-		"api_key": s.APIKey,
+		"api_token": s.APIToken,
 	}, nil
 }
 
@@ -50,7 +61,7 @@ func init() {
 	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &HetznerAPI{}
 	}, happydns.ProviderInfos{
-		Name:        "Hetzner",
-		Description: "German Internet hosting provider.",
+		Name:        "Hetzner DNS",
+		Description: "German hosting provider with DNS services.",
 	}, RegisterProvider)
 }

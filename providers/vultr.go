@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -29,7 +29,7 @@ import (
 )
 
 type VultrAPI struct {
-	Token string `json:"token,omitempty" happydomain:"label=Token,placeholder=xxxxxxxxxx,required,description=Provide a Vultr account access token."`
+	Token string `json:"token,omitempty" happydomain:"label=API Token,placeholder=xxxxxxxxxx,required,secret,description=Vultr account API token"`
 }
 
 func (s *VultrAPI) DNSControlName() string {
@@ -51,6 +51,6 @@ func init() {
 		return &VultrAPI{}
 	}, happydns.ProviderInfos{
 		Name:        "Vultr",
-		Description: "Cloud provider.",
+		Description: "Global cloud infrastructure provider with managed DNS.",
 	}, RegisterProvider)
 }

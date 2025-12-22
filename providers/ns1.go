@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -29,7 +29,7 @@ import (
 )
 
 type NS1API struct {
-	Token string `json:"api_token,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,description=Provide a NS1 account access token."`
+	Token string `json:"api_token,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,secret,description=NS1 API token"`
 }
 
 func (s *NS1API) DNSControlName() string {
@@ -51,6 +51,6 @@ func init() {
 		return &NS1API{}
 	}, happydns.ProviderInfos{
 		Name:        "NS1",
-		Description: "Global domain name provider.",
+		Description: "Intelligent DNS and traffic management platform (now part of IBM).",
 	}, RegisterProvider)
 }

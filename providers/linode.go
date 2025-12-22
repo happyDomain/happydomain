@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: David Dernoncourt, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -29,7 +29,7 @@ import (
 )
 
 type LinodeAPI struct {
-	Token string `json:"token,omitempty" happydomain:"label=Token,placeholder=xxxxxxxx,required,description=Your Linode Personal Access Token."`
+	Token string `json:"token,omitempty" happydomain:"label=Personal Access Token,placeholder=xxxxxxxx,required,secret,description=Linode Personal Access Token with DNS read/write permissions"`
 }
 
 func (s *LinodeAPI) DNSControlName() string {
@@ -50,7 +50,7 @@ func init() {
 	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &LinodeAPI{}
 	}, happydns.ProviderInfos{
-		Name:        "Linode, LLC",
-		Description: "American cloud hosting company, based in Philadelphia.",
+		Name:        "Linode (Akamai)",
+		Description: "Cloud infrastructure provider with managed DNS service.",
 	}, RegisterProvider)
 }

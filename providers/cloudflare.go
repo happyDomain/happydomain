@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: David Dernoncourt, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -30,7 +30,7 @@ import (
 
 type CloudflareAPI struct {
 	AccountID string `json:"AccountID,omitempty" happydomain:"label=Account ID,placeholder=xxxxxxxx,required,description=Your Cloudflare account ID"`
-	ApiToken  string `json:"ApiToken,omitempty" happydomain:"label=Api Token,placeholder=xxxxxxxx,required,description=Your Cloudflare API token"`
+	ApiToken  string `json:"ApiToken,omitempty" happydomain:"label=API Token,placeholder=xxxxxxxx,required,secret,description=Your Cloudflare API token"`
 }
 
 func (s *CloudflareAPI) DNSControlName() string {
@@ -53,6 +53,6 @@ func init() {
 		return &CloudflareAPI{}
 	}, happydns.ProviderInfos{
 		Name:        "Cloudflare",
-		Description: "American content delivery network",
+		Description: "Global CDN and DNS provider with advanced features like proxy and DNSSEC support.",
 	}, RegisterProvider)
 }

@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -29,7 +29,7 @@ import (
 )
 
 type DeSECAPI struct {
-	Token string `json:"token,omitempty" happydomain:"label=Token,placeholder=your-api-key,required,description=Provide your deSEC access token."`
+	Token string `json:"token,omitempty" happydomain:"label=API Token,placeholder=your-api-key,required,secret,description=deSEC API authentication token"`
 }
 
 func (s *DeSECAPI) DNSControlName() string {
@@ -51,6 +51,6 @@ func init() {
 		return &DeSECAPI{}
 	}, happydns.ProviderInfos{
 		Name:        "deSEC",
-		Description: "Free Secure DNS, modern DNS hosting for everyone.",
+		Description: "Free and secure DNS hosting with DNSSEC support.",
 	}, RegisterProvider)
 }

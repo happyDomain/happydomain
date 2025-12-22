@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: David Dernoncourt, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -29,7 +29,7 @@ import (
 )
 
 type DigitalOceanAPI struct {
-	Token string `json:"token,omitempty" happydomain:"label=Token,placeholder=your-token,required,description=DigitalOcean OAuth Token."`
+	Token string `json:"token,omitempty" happydomain:"label=API Token,placeholder=your-token,required,secret,description=DigitalOcean OAuth Token"`
 }
 
 func (s *DigitalOceanAPI) DNSControlName() string {
@@ -51,6 +51,6 @@ func init() {
 		return &DigitalOceanAPI{}
 	}, happydns.ProviderInfos{
 		Name:        "DigitalOcean",
-		Description: "American cloud infrastructure provider",
+		Description: "Cloud infrastructure provider with managed DNS service.",
 	}, RegisterProvider)
 }

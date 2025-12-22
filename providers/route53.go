@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: David Dernoncourt, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -29,10 +29,12 @@ import (
 )
 
 type Route53API struct {
-	DelegationSet string `json:"delegation_set,omitempty" happydomain:"label=Delegation Set ID,placeholder=xxxxxxxx,description=Optional delegation set ID."`
-	KeyId         string `json:"key_id,omitempty" happydomain:"label=AWS key,placeholder=xxxxxxxx,required,description=Your AWS key."`
-	SecretKey     string `json:"secret_key,omitempty" happydomain:"label=AWS secret key,placeholder=xxxxxxxx,required,description=Your AWS secret key."`
-	Token         string `json:"token,omitempty" happydomain:"label=Token,placeholder=xxxxxxxx,description=Optional STS token."`
+	KeyId         string `json:"key_id,omitempty" happydomain:"label=AWS Access Key ID,placeholder=AKIAIOSFODNN7EXAMPLE,description=AWS IAM access key ID (leave empty to use environment/instance credentials)"`
+	SecretKey     string `json:"secret_key,omitempty" happydomain:"label=AWS Secret Access Key,placeholder=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY,secret,description=AWS IAM secret access key"`
+	Token         string `json:"token,omitempty" happydomain:"label=Session Token,placeholder=,secret,description=Optional AWS STS session token"`
+	RoleArn       string `json:"role_arn,omitempty" happydomain:"label=Role ARN,placeholder=arn:aws:iam::123456789012:role/DnsControlRole,description=Optional IAM role ARN to assume"`
+	ExternalId    string `json:"external_id,omitempty" happydomain:"label=External ID,placeholder=,description=Optional external ID for role assumption"`
+	DelegationSet string `json:"delegation_set,omitempty" happydomain:"label=Delegation Set ID,placeholder=N1PA6795SAMPLE,description=Optional reusable delegation set ID"`
 }
 
 func (s *Route53API) DNSControlName() string {
@@ -44,12 +46,28 @@ func (s *Route53API) InstantiateProvider() (happydns.ProviderActuator, error) {
 }
 
 func (s *Route53API) ToDNSControlConfig() (map[string]string, error) {
-	return map[string]string{
-		"DelegationSet": s.DelegationSet,
-		"KeyId":         s.KeyId,
-		"SecretKey":     s.SecretKey,
-		"Token":         s.Token,
-	}, nil
+	config := map[string]string{}
+
+	if s.KeyId != "" {
+		config["KeyId"] = s.KeyId
+	}
+	if s.SecretKey != "" {
+		config["SecretKey"] = s.SecretKey
+	}
+	if s.Token != "" {
+		config["Token"] = s.Token
+	}
+	if s.RoleArn != "" {
+		config["RoleArn"] = s.RoleArn
+	}
+	if s.ExternalId != "" {
+		config["ExternalId"] = s.ExternalId
+	}
+	if s.DelegationSet != "" {
+		config["DelegationSet"] = s.DelegationSet
+	}
+
+	return config, nil
 }
 
 func init() {
@@ -57,6 +75,6 @@ func init() {
 		return &Route53API{}
 	}, happydns.ProviderInfos{
 		Name:        "AWS Route 53",
-		Description: "Amazon Web Services (AWS) is a subsidiary of Amazon that provides on-demand cloud computing platforms and APIs. Route 53 is their DNS service.",
+		Description: "Amazon's highly available and scalable DNS web service with global anycast network.",
 	}, RegisterProvider)
 }

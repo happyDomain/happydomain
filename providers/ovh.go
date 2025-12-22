@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -36,8 +36,8 @@ var (
 )
 
 type OVHAPI struct {
-	Endpoint    string `json:"endpoint,omitempty"`
-	ConsumerKey string `json:"consumerkey,omitempty" happydomain:"required"`
+	Endpoint    string `json:"endpoint,omitempty" happydomain:"label=Endpoint,placeholder=ovh-eu,description=API endpoint (ovh-eu, ovh-ca, ovh-us, etc.)"`
+	ConsumerKey string `json:"consumerkey,omitempty" happydomain:"label=Consumer Key,required,secret,description=OVH Consumer Key obtained from API token generation"`
 }
 
 func (s *OVHAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
@@ -66,6 +66,6 @@ func init() {
 		return &OVHAPI{}
 	}, happydns.ProviderInfos{
 		Name:        "OVH",
-		Description: "European hosting provider.",
+		Description: "European cloud and hosting provider with DNS services.",
 	}, RegisterProvider)
 }
