@@ -21,8 +21,9 @@ steps:
 - name: deploy sources
   image: plugins/s3
   settings:
-    endpoint: https://storage0.nemunai.re
+    endpoint: https://blob.nemunai.re
     path_style: true
+    region: garage
     bucket: happydomain-dl
     access_key:
       from_secret: s3_access_key
@@ -40,8 +41,9 @@ steps:
 - name: deploy sources for release
   image: plugins/s3
   settings:
-    endpoint: https://storage0.nemunai.re
+    endpoint: https://blob.nemunai.re
     path_style: true
+    region: garage
     bucket: happydomain-dl
     access_key:
       from_secret: s3_access_key
@@ -87,8 +89,9 @@ steps:
 - name: deploy
   image: plugins/s3
   settings:
-    endpoint: https://storage0.nemunai.re
+    endpoint: https://blob.nemunai.re
     path_style: true
+    region: garage
     bucket: happydomain-dl
     access_key:
       from_secret: s3_access_key
@@ -106,8 +109,9 @@ steps:
 - name: deploy release
   image: plugins/s3
   settings:
-    endpoint: https://storage0.nemunai.re
+    endpoint: https://blob.nemunai.re
     path_style: true
+    region: garage
     bucket: happydomain-dl
     access_key:
       from_secret: s3_access_key
@@ -149,8 +153,9 @@ steps:
 - name: deploy macOS
   image: plugins/s3
   settings:
-    endpoint: https://storage0.nemunai.re
+    endpoint: https://blob.nemunai.re
     path_style: true
+    region: garage
     bucket: happydomain-dl
     access_key:
       from_secret: s3_access_key
@@ -168,8 +173,9 @@ steps:
 - name: deploy macOS release
   image: plugins/s3
   settings:
-    endpoint: https://storage0.nemunai.re
+    endpoint: https://blob.nemunai.re
     path_style: true
+    region: garage
     bucket: happydomain-dl
     access_key:
       from_secret: s3_access_key
@@ -263,8 +269,9 @@ steps:
 - name: deploy
   image: plugins/s3
   settings:
-    endpoint: https://storage0.nemunai.re
+    endpoint: https://blob.nemunai.re
     path_style: true
+    region: garage
     bucket: happydomain-dl
     access_key:
       from_secret: s3_access_key
@@ -282,8 +289,9 @@ steps:
 - name: deploy release
   image: plugins/s3
   settings:
-    endpoint: https://storage0.nemunai.re
+    endpoint: https://blob.nemunai.re
     path_style: true
+    region: garage
     bucket: happydomain-dl
     access_key:
       from_secret: s3_access_key
@@ -325,8 +333,9 @@ steps:
 - name: deploy macOS
   image: plugins/s3
   settings:
-    endpoint: https://storage0.nemunai.re
+    endpoint: https://blob.nemunai.re
     path_style: true
+    region: garage
     bucket: happydomain-dl
     access_key:
       from_secret: s3_access_key
@@ -344,8 +353,9 @@ steps:
 - name: deploy macOS release
   image: plugins/s3
   settings:
-    endpoint: https://storage0.nemunai.re
+    endpoint: https://blob.nemunai.re
     path_style: true
+    region: garage
     bucket: happydomain-dl
     access_key:
       from_secret: s3_access_key
