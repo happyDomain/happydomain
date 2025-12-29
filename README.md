@@ -85,7 +85,7 @@ The help command `./happyDomain -help` shows you the available engines:
 
 ```
     -storage-engine value
-    	Select the storage engine between [leveldb mysql] (default leveldb)
+    	Select the storage engine between [inmemory leveldb] (default leveldb)
 ```
 
 #### LevelDB
@@ -100,6 +100,13 @@ LevelDB is a small embedded key-value store (as SQLite it doesn't require an add
 By default, a new directory is created near the binary, called `happydomain.db`. This directory contains the database used by the program.
 You can change it to a more meaningful/persistant path.
 
+#### inmemory
+
+Data are stored in memory and lost when service is stopped.
+
+#### DBMS
+
+DBMS as Mysql/Mariadb or Postgres are no more supported or planned.
 
 ### Persistent configuration
 
