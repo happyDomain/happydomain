@@ -32,6 +32,10 @@ type JWTSecretKey struct {
 }
 
 func (i *JWTSecretKey) String() string {
+	if i.Secret == nil {
+		return ""
+	}
+
 	return base64.StdEncoding.EncodeToString(*i.Secret)
 }
 
