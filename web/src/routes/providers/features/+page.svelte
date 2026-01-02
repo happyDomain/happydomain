@@ -48,7 +48,7 @@
     {:then providers}
         <Table hover style="overflow-x: auto">
             <thead>
-                <tr class="sticky-top bg-light">
+                <tr class="sticky-top bg-light" style="z-index:0">
                     <th style="background: none">Fournisseurs</th>
                     {#each capabilities as cap}
                         <th
