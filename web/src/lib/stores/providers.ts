@@ -19,9 +19,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { derived, writable, type Writable } from "svelte/store";
+import { derived, get, writable, type Writable } from "svelte/store";
 import { listProviders } from "$lib/api/provider";
 import type { Provider, ProviderInfos } from "$lib/model/provider";
+import { filteredProvider } from '$lib/stores/home';
 
 export const providers: Writable<null | Array<Provider>> = writable(null);
 export const providersSpecs: Writable<null | Record<string, ProviderInfos>> = writable(null);
@@ -29,6 +30,12 @@ export const providersSpecs: Writable<null | Record<string, ProviderInfos>> = wr
 export async function refreshProviders() {
     const data = await listProviders();
     providers.set(data);
+
+    const $filteredProvider = get(filteredProvider);
+    if ($filteredProvider !== null && !data.includes($filteredProvider)) {
+        filteredProvider.set(null);
+    }
+
     return data;
 }
 
