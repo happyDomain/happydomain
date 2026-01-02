@@ -162,21 +162,36 @@
                     </Button>
                 </DropdownToggle>
                 <DropdownMenu end>
-                    <DropdownItem href="/domains/">
+                    <DropdownItem
+                        active={page.route && (page.route.id == "/" || page.route.id == "/domains")}
+                        href="/domains/"
+                    >
                         {$t("menu.my-domains")}
                     </DropdownItem>
-                    <DropdownItem href="/providers/">
+                    <DropdownItem
+                        active={page.route && page.route.id == "/providers"}
+                        href="/providers/"
+                    >
                         {$t("menu.my-providers")}
                     </DropdownItem>
                     <DropdownItem divider />
-                    <DropdownItem href="/providers/features">
+                    <DropdownItem
+                        active={page.route && page.route.id == "/providers/features"}
+                        href="/providers/features"
+                    >
                         {$t("menu.provider-features")}
                     </DropdownItem>
-                    <DropdownItem href="/resolver">
+                    <DropdownItem
+                        active={page.route && page.route.id == "/resolver/[[domain]]"}
+                        href="/resolver"
+                    >
                         {$t("menu.dns-resolver")}
                     </DropdownItem>
                     <DropdownItem divider />
-                    <DropdownItem href="/me">
+                    <DropdownItem
+                        active={page.route && page.route.id == "/me"}
+                        href="/me"
+                    >
                         {$t("menu.my-account")}
                     </DropdownItem>
                     {#if $userSession.email !== "_no_auth"}
