@@ -23,7 +23,8 @@
             "security-operations": "security related reasons",
             "receive-update": "Keep me informed of future big improvements",
             "signup": "Sign up!",
-            "success": "Registration successfully performed!"
+            "success": "Registration successfully performed!",
+            "login-now": "You can now login with your credentials."
         },
         "see-again": "Happy to see you again!"
     },
@@ -160,7 +161,11 @@
         "send-recover": "Send me an e-mail to recover my account",
         "sent": "Confirmation e-mail sent!",
         "sent-recovery": "Password recovery email send!",
-        "recover": "In order to recover your account, we'll send you an e-mail containing a link that will allow you to redefine your password"
+        "recover": "In order to recover your account, we'll send you an e-mail containing a link that will allow you to redefine your password",
+        "validation-unavailable": {
+            "title": "Email Validation Unavailable",
+            "description": "The email functionality has been disabled on this server. Please contact your administrator for assistance."
+        }
     },
     "errors": {
         "404": {
@@ -323,6 +328,10 @@
         "new": "New password",
         "redefine": "Redefine my password",
         "redefined": "Password redefined successfully!",
+        "recovery-unavailable": {
+            "title": "Password Recovery Unavailable",
+            "description": "The email functionality has been disabled on this server. Please contact your administrator to reset your password."
+        },
         "success": "You can now login with your new password.",
         "success-change": "Your account's password has been changed with success."
     },

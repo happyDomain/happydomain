@@ -24,11 +24,12 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
 
-    import { Alert, Container, Spinner } from "@sveltestrap/sveltestrap";
+    import { Alert, Col, Container, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import { validateEmail } from "$lib/api/user";
     import EmailConfirmationForm from "./EmailConfirmationForm.svelte";
     import { t } from "$lib/translations";
+    import { appConfig } from "$lib/stores/config";
     import { toasts } from "$lib/stores/toasts";
 
     let error = "";
@@ -59,7 +60,18 @@
 </script>
 
 <Container class="my-3">
-    {#if error}
+    {#if $appConfig.no_mail}
+        <Row>
+            <Col md={{ offset: 1, size: 10 }}  lg={{ offset: 2, size: 8 }} xl={{ offset: 3, size: 6 }}>
+                <Alert color="warning">
+                    <h4 class="alert-heading">{$t("email.validation-unavailable.title")}</h4>
+                    <p>
+                        {$t("email.validation-unavailable.description")}
+                    </p>
+                </Alert>
+            </Col>
+        </Row>
+    {:else if error}
         <Alert color="danger">
             {error}
         </Alert>

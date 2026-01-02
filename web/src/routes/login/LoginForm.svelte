@@ -82,6 +82,18 @@
             );
         }
     }
+
+    function handleForgottenPassword() {
+        if ($appConfig.no_mail) {
+            toasts.addErrorToast({
+                title: $t("password.recovery-unavailable.title"),
+                message: $t("password.recovery-unavailable.description"),
+                timeout: 10000,
+            });
+        } else {
+            goto("/forgotten-password");
+        }
+    }
 </script>
 
 <form class="container my-1" bind:this={formElm} on:submit|preventDefault={testLogin}>
@@ -141,7 +153,7 @@
                 {/await}
             {/await}
         {/if}
-        <Button href="/forgotten-password" outline color="dark">
+        <Button type="button" on:click={handleForgottenPassword} outline color="dark">
             {$t("password.forgotten")}
         </Button>
     </div>

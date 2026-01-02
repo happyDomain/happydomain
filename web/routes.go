@@ -70,6 +70,10 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.Engine) {
 		appConfig["disable_embedded_login"] = true
 	}
 
+	if cfg.NoMail {
+		appConfig["no_mail"] = true
+	}
+
 	if len(cfg.OIDCClients) > 0 {
 		appConfig["oidc_configured"] = true
 	}

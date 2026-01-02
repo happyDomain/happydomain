@@ -32,6 +32,7 @@ interface AppConfig {
         text: string;
         color: Color;
     };
+    no_mail?: boolean;
     oidc_configured?: boolean;
 }
 
@@ -41,6 +42,7 @@ const defaultConfig: AppConfig = {
     disable_registration: false,
     hide_feedback: false,
     msg_header: undefined,
+    no_mail: false,
     oidc_configured: false,
 };
 

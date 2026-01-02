@@ -22,8 +22,10 @@
 -->
 
 <script lang="ts">
-    import { Container } from "@sveltestrap/sveltestrap";
+    import { Alert, Col, Container, Row } from "@sveltestrap/sveltestrap";
 
+    import { appConfig } from "$lib/stores/config";
+    import { t } from "$lib/translations";
     import ForgottenPasswordForm from "./ForgottenPasswordForm.svelte";
     import RecoverAccountForm from "./RecoverAccountForm.svelte";
 
@@ -31,9 +33,22 @@
 </script>
 
 <Container class="my-3">
-    {#if data.user && data.key}
-        <RecoverAccountForm user={data.user} key={data.key} />
+    {#if $appConfig.no_mail}
+        <Row>
+            <Col md={{ offset: 1, size: 10 }}  lg={{ offset: 2, size: 8 }} xl={{ offset: 3, size: 6 }}>
+                <Alert color="warning">
+                    <h4 class="alert-heading">{$t("password.recovery-unavailable.title")}</h4>
+                    <p>
+                        {$t("password.recovery-unavailable.description")}
+                    </p>
+                </Alert>
+            </Col>
+        </Row>
     {:else}
-        <ForgottenPasswordForm />
+        {#if data.user && data.key}
+            <RecoverAccountForm user={data.user} key={data.key} />
+        {:else}
+            <ForgottenPasswordForm />
+        {/if}
     {/if}
 </Container>

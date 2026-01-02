@@ -23,6 +23,7 @@ package authuser
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -170,7 +171,7 @@ func (s *Service) CreateAuthUser(uu happydns.UserRegistration) (*happydns.UserAu
 	}
 
 	// Optionally send the validation email if mailer is configured
-	if s.mailer != nil {
+	if s.mailer != nil && !reflect.ValueOf(s.mailer).IsNil() {
 		if err = s.emailValidation.SendLink(user); err != nil {
 			return nil, happydns.InternalError{
 				Err:         fmt.Errorf("unable to send validation email: %w", err),

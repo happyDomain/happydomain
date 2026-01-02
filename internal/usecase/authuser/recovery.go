@@ -27,7 +27,9 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"fmt"
+	"log"
 	"net/mail"
+	"reflect"
 	"time"
 
 	"git.happydns.org/happyDomain/internal/helpers"
@@ -108,6 +110,12 @@ func (uc *RecoverAccountUsecase) SendLink(user *happydns.UserAuth) error {
 	}
 
 	toName := helpers.GenUsername(user.Email)
+
+	if uc.mailer == nil || reflect.ValueOf(uc.mailer).IsNil() {
+		log.Printf("No mailer configured. Recovery link for %s: %s", user.Email, link)
+		return nil
+	}
+
 	return uc.mailer.SendMail(
 		&mail.Address{Name: toName, Address: user.Email},
 		"Recover your happyDomain account",

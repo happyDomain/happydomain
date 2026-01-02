@@ -27,6 +27,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/mail"
+	"reflect"
 	"time"
 
 	"git.happydns.org/happyDomain/internal/helpers"
@@ -77,7 +78,7 @@ func (uc *EmailValidationUsecase) GenerateLink(user *happydns.UserAuth) string {
 
 // SendLink sends an email validation link to the user's email.
 func (uc *EmailValidationUsecase) SendLink(user *happydns.UserAuth) error {
-	if uc.mailer == nil {
+	if uc.mailer == nil || reflect.ValueOf(uc.mailer).IsNil() {
 		return fmt.Errorf("no mailer configured")
 	}
 

@@ -30,6 +30,7 @@
     import { registerUser } from "$lib/api/user";
     import type { SignUpForm } from "$lib/model/user";
     import { checkWeakPassword, checkPasswordConfirmation } from "$lib/password";
+    import { appConfig } from "$lib/stores/config";
     import { toasts } from "$lib/stores/toasts";
 
     let signupForm: SignUpForm = {
@@ -63,7 +64,9 @@
                     formSent = false;
                     toasts.addToast({
                         title: $t("account.signup.success"),
-                        message: $t("email.instruction.check-inbox"),
+                        message: $appConfig.no_mail
+                            ? $t("account.signup.login-now")
+                            : $t("email.instruction.check-inbox"),
                         type: "success",
                         timeout: 5000,
                     });
