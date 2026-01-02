@@ -95,7 +95,7 @@ func (r *Mailer) SendMail(to *mail.Address, subject, content string) (err error)
 		return
 	}
 
-	if data, err := web.GetEmbedFS().Open("dist/img/happydomain.png"); err == nil {
+	if data, err := web.GetEmbedFS().Open("build/img/happydomain.png"); err == nil {
 		m.EmbedReader("happydomain.png", data)
 	}
 

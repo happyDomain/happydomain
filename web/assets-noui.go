@@ -25,10 +25,19 @@ package web
 
 import (
 	"net/http"
+	"os"
 )
 
 var Assets http.FileSystem
 
 func GetEmbedFS() http.FileSystem {
 	return Assets
+}
+
+func init() {
+	if _, err := os.Stat("web/build/"); err == nil {
+		Assets = http.Dir("web/build/")
+	} else {
+		Assets = http.Dir("web/static/")
+	}
 }
