@@ -232,8 +232,11 @@
                 <DropdownToggle nav caret>{$locale}</DropdownToggle>
                 <DropdownMenu end>
                     {#each $locales as lang}
-                        <DropdownItem on:click={() => ($locale = lang)}>
-                            {lang}
+                        <DropdownItem
+                            active={$locale == lang}
+                            on:click={() => ($locale = lang)}
+                        >
+                            {$t(`locales.${lang}`)}
                         </DropdownItem>
                     {/each}
                 </DropdownMenu>
