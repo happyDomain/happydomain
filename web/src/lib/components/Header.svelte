@@ -205,7 +205,7 @@
         {:else}
             <Button class="mx-1" color="info" href="/resolver">
                 <Icon name="list" aria-hidden="true" />
-                {$t("menu.dns-resolver")}
+                <span class="d-none d-sm-inline">{$t("menu.dns-resolver")}</span>
             </Button>
 
             {#if !$appConfig.disable_registration}
