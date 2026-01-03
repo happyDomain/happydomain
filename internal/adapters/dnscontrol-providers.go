@@ -92,7 +92,13 @@ type DNSControlConfigAdapter interface {
 	ToDNSControlConfig() (map[string]string, error)
 }
 
-func NewDNSControlProviderAdapter(configAdapter DNSControlConfigAdapter) (happydns.ProviderActuator, error) {
+func NewDNSControlProviderAdapter(configAdapter DNSControlConfigAdapter) (ret happydns.ProviderActuator, err error) {
+	defer func() {
+		if a := recover(); a != nil {
+			err = fmt.Errorf("%s", a)
+		}
+	}()
+
 	config, err := configAdapter.ToDNSControlConfig()
 	if err != nil {
 		return nil, err
