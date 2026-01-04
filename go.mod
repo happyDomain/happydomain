@@ -23,7 +23,7 @@ require (
 	github.com/swaggo/gin-swagger v1.6.1
 	github.com/swaggo/swag v1.16.6
 	github.com/syndtr/goleveldb v1.0.0
-	github.com/yuin/goldmark v1.7.13
+	github.com/yuin/goldmark v1.7.14
 	golang.org/x/crypto v0.46.0
 	golang.org/x/oauth2 v0.34.0
 )
