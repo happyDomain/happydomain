@@ -64,7 +64,7 @@ type Domain struct {
 func NewDomain(user *User, name string, providerID Identifier) (*Domain, error) {
 	name = dns.Fqdn(strings.TrimSpace(name))
 
-	if name == "" {
+	if name == "." {
 		return nil, errors.New("empty domain name")
 	}
 
