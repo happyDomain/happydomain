@@ -85,7 +85,7 @@ The help command `./happyDomain -help` shows you the available engines:
 
 ```
     -storage-engine value
-    	Select the storage engine between [inmemory leveldb oracle-nosql] (default leveldb)
+    	Select the storage engine between [inmemory leveldb oracle-nosql postgresql] (default leveldb)
 ```
 
 #### LevelDB
@@ -103,6 +103,29 @@ You can change it to a more meaningful/persistant path.
 #### inmemory
 
 Data are stored in memory and lost when service is stopped.
+
+#### PostgreSQL
+
+PostgreSQL support is provided primarily for installations that already have an existing PostgreSQL database infrastructure in place. This allows you to leverage your current database setup, backup procedures, and operational tooling without deploying additional database systems.
+
+happyDomain uses PostgreSQL in a key-value storage mode, storing all data in a single table with `key` and `value` columns. While this works reliably, note that PostgreSQL is not the optimal choice for key-value workloads compared to dedicated key-value stores. If you're deploying from scratch and need scalability beyond LevelDB, consider using a storage backend specifically designed for key-value operations instead.
+
+```
+    -postgres-database string
+      	PostgreSQL database name (default "happydomain")
+    -postgres-host string
+      	PostgreSQL server hostname (default "localhost")
+    -postgres-password string
+      	PostgreSQL password
+    -postgres-port int
+      	PostgreSQL server port (default 5432)
+    -postgres-ssl-mode string
+      	PostgreSQL SSL mode (disable, require, verify-ca, verify-full) (default "disable")
+    -postgres-table string
+      	PostgreSQL table name for key-value storage (default "happydomain_kv")
+    -postgres-user string
+    	PostgreSQL username (default "happydomain")
+```
 
 #### Oracle NoSQL Database
 
@@ -131,7 +154,7 @@ Configure the following options to connect happyDomain to your Oracle NoSQL Data
 
 #### DBMS
 
-DBMS as Mysql/Mariadb or Postgres are no more supported or planned.
+DBMS as Mysql/Mariadb are no more supported or planned.
 
 ### Persistent configuration
 
