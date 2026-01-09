@@ -85,7 +85,7 @@ The help command `./happyDomain -help` shows you the available engines:
 
 ```
     -storage-engine value
-    	Select the storage engine between [inmemory leveldb] (default leveldb)
+    	Select the storage engine between [inmemory leveldb oracle-nosql] (default leveldb)
 ```
 
 #### LevelDB
@@ -103,6 +103,31 @@ You can change it to a more meaningful/persistant path.
 #### inmemory
 
 Data are stored in memory and lost when service is stopped.
+
+#### Oracle NoSQL Database
+
+Oracle NoSQL Database is a fully managed cloud service from Oracle Cloud Infrastructure (OCI) that provides on-demand throughput and storage-based provisioning. happyDomain can use it as a scalable, cloud-based storage backend for production deployments.
+
+To use Oracle NoSQL Database, you'll need to have an OCI account with a NoSQL table created. The table should have a primary key field named `key` (string type) and a `value` field (JSON type) to store the data. Authentication uses OCI's IAM with API signing keys.
+
+Configure the following options to connect happyDomain to your Oracle NoSQL Database:
+
+```
+    -oci-compartment string
+      	OCI compartment ID where the NoSQL database lies
+    -oci-fingerprint string
+      	OCI user API key fingerprint
+    -oci-private-key-file string
+      	Path to the OCI private key for the given user
+    -oci-region string
+      	OCI region where the NoSQL database is located (default "us-phoenix-1")
+    -oci-table string
+      	Table name where values are stored (default "happydomain")
+    -oci-tenancy string
+      	OCI tenancy ID where is located the NoSQL database
+    -oci-user string
+      	OCI user ID accessing the NoSQL database
+```
 
 #### DBMS
 
