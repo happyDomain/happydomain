@@ -1,4 +1,4 @@
-FROM node:22-alpine AS nodebuild
+FROM node:24-alpine AS nodebuild
 
 WORKDIR /go/src/git.happydns.org/happydomain
 
