@@ -111,7 +111,7 @@ The help command `./happyDomain -help` shows you the available engines:
 
 ```
     -storage-engine value
-    	Select the storage engine between [inmemory leveldb oracle-nosql postgresql] (default leveldb)
+    	Select the storage engine between [inmemory leveldb mongodb oracle-nosql postgresql] (default leveldb)
 ```
 
 #### LevelDB
@@ -177,6 +177,25 @@ Configure the following options to connect happyDomain to your Oracle NoSQL Data
     -oci-user string
       	OCI user ID accessing the NoSQL database
 ```
+
+#### MongoDB
+
+happyDomain can use MongoDB as a distributed, production-ready storage backend.
+
+happyDomain uses MongoDB in key-value storage mode, storing data in a collection with `_id` (key) and `value` (binary JSON) fields.
+
+```
+    -mongodb-database string
+      	MongoDB database name (default "happydomain")
+    -mongodb-uri string
+      	MongoDB connection URI (default "mongodb://localhost:27017")
+```
+
+The MongoDB URI supports all standard MongoDB connection string options, including:
+* Authentication: `mongodb://username:password@host:port`
+* Replica sets: `mongodb://host1:27017,host2:27017,host3:27017/?replicaSet=myReplicaSet`
+* TLS/SSL: `mongodb://host:27017/?tls=true`
+* MongoDB Atlas: `mongodb+srv://username:password@cluster.mongodb.net/`
 
 #### DBMS
 

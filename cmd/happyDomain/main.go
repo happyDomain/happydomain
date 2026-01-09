@@ -38,6 +38,7 @@ import (
 	"git.happydns.org/happyDomain/internal/metrics"
 	_ "git.happydns.org/happyDomain/internal/storage/inmemory"
 	_ "git.happydns.org/happyDomain/internal/storage/leveldb"
+	_ "git.happydns.org/happyDomain/internal/storage/mongodb"
 	_ "git.happydns.org/happyDomain/internal/storage/oracle-nosql"
 	_ "git.happydns.org/happyDomain/internal/storage/postgresql"
 	"git.happydns.org/happyDomain/model"
