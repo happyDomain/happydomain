@@ -26,7 +26,9 @@ import (
 	"testing"
 	"time"
 
+	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
+	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
 	"git.happydns.org/happyDomain/internal/usecase/authuser"
 	"git.happydns.org/happyDomain/model"
 )
@@ -47,8 +49,9 @@ func (m *MockCloseUserSessionsUsecase) ByID(userID happydns.Identifier) error {
 	return m.CloseAll(&happydns.UserAuth{Id: userID})
 }
 
-func setupTestService() (*authuser.Service, *inmemory.InMemoryStorage) {
-	store, _ := inmemory.NewInMemoryStorage()
+func setupTestService() (*authuser.Service, storage.Storage) {
+	mem, _ := inmemory.NewInMemoryStorage()
+	store, _ := kv.NewKVDatabase(mem)
 	cfg := &happydns.Options{
 		DisableRegistration: false,
 	}
@@ -75,7 +78,8 @@ func TestCanRegister_Success(t *testing.T) {
 }
 
 func TestCanRegister_Closed(t *testing.T) {
-	store, _ := inmemory.NewInMemoryStorage()
+	mem, _ := inmemory.NewInMemoryStorage()
+	store, _ := kv.NewKVDatabase(mem)
 	cfg := &happydns.Options{
 		DisableRegistration: true, // Registration closed
 	}
@@ -344,7 +348,8 @@ func TestCheckNewPassword(t *testing.T) {
 // ========== DeleteAuthUser Tests ==========
 
 func TestDeleteAuthUser(t *testing.T) {
-	store, _ := inmemory.NewInMemoryStorage()
+	mem, _ := inmemory.NewInMemoryStorage()
+	store, _ := kv.NewKVDatabase(mem)
 	cfg := &happydns.Options{
 		DisableRegistration: false,
 	}

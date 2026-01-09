@@ -25,7 +25,9 @@ import (
 	"fmt"
 	"testing"
 
+	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
+	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
 	"git.happydns.org/happyDomain/internal/usecase/domain"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
@@ -90,7 +92,7 @@ func (m *mockDomainLogAppender) AppendDomainLog(d *happydns.Domain, log *happydn
 
 // Helper functions
 
-func createTestUser(t *testing.T, store *inmemory.InMemoryStorage, email string) *happydns.User {
+func createTestUser(t *testing.T, store storage.Storage, email string) *happydns.User {
 	user := &happydns.User{
 		Id:    happydns.Identifier([]byte("user-" + email)),
 		Email: email,
@@ -101,7 +103,7 @@ func createTestUser(t *testing.T, store *inmemory.InMemoryStorage, email string)
 	return user
 }
 
-func createTestProvider(t *testing.T, store *inmemory.InMemoryStorage, user *happydns.User, name string) happydns.Identifier {
+func createTestProvider(t *testing.T, store storage.Storage, user *happydns.User, name string) happydns.Identifier {
 	provider := &happydns.Provider{
 		ProviderMeta: happydns.ProviderMeta{
 			Type:    "mockProviderBody",
@@ -118,7 +120,7 @@ func createTestProvider(t *testing.T, store *inmemory.InMemoryStorage, user *hap
 	return provider.Id
 }
 
-func setupTestService(store *inmemory.InMemoryStorage) (*domain.Service, *mockDomainLogAppender) {
+func setupTestService(store storage.Storage) (*domain.Service, *mockDomainLogAppender) {
 	// Create the provider service
 	providerService := providerUC.NewService(store)
 
@@ -146,10 +148,11 @@ func setupTestService(store *inmemory.InMemoryStorage) (*domain.Service, *mockDo
 
 func Test_CreateDomain(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	service, logAppender := setupTestService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	service, logAppender := setupTestService(db)
 
-	user := createTestUser(t, mem, "test@example.com")
-	providerId := createTestProvider(t, mem, user, "Test Provider")
+	user := createTestUser(t, db, "test@example.com")
+	providerId := createTestProvider(t, db, user, "Test Provider")
 
 	domainToCreate := &happydns.Domain{
 		DomainName: "example.com",
@@ -191,9 +194,10 @@ func Test_CreateDomain(t *testing.T) {
 
 func Test_CreateDomain_InvalidProvider(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	service, _ := setupTestService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	service, _ := setupTestService(db)
 
-	user := createTestUser(t, mem, "test@example.com")
+	user := createTestUser(t, db, "test@example.com")
 	invalidProviderId := happydns.Identifier([]byte("invalid-provider"))
 
 	domainToCreate := &happydns.Domain{
@@ -209,10 +213,11 @@ func Test_CreateDomain_InvalidProvider(t *testing.T) {
 
 func Test_GetUserDomain(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	service, _ := setupTestService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	service, _ := setupTestService(db)
 
-	user := createTestUser(t, mem, "test@example.com")
-	providerId := createTestProvider(t, mem, user, "Test Provider")
+	user := createTestUser(t, db, "test@example.com")
+	providerId := createTestProvider(t, db, user, "Test Provider")
 
 	// Create a domain
 	domainToCreate := &happydns.Domain{
@@ -248,11 +253,12 @@ func Test_GetUserDomain(t *testing.T) {
 
 func Test_GetUserDomain_WrongUser(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	service, _ := setupTestService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	service, _ := setupTestService(db)
 
-	user1 := createTestUser(t, mem, "user1@example.com")
-	user2 := createTestUser(t, mem, "user2@example.com")
-	providerId := createTestProvider(t, mem, user1, "Test Provider")
+	user1 := createTestUser(t, db, "user1@example.com")
+	user2 := createTestUser(t, db, "user2@example.com")
+	providerId := createTestProvider(t, db, user1, "Test Provider")
 
 	// Create a domain for user1
 	domainToCreate := &happydns.Domain{
@@ -283,9 +289,10 @@ func Test_GetUserDomain_WrongUser(t *testing.T) {
 
 func Test_GetUserDomain_NotFound(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	service, _ := setupTestService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	service, _ := setupTestService(db)
 
-	user := createTestUser(t, mem, "test@example.com")
+	user := createTestUser(t, db, "test@example.com")
 	nonexistentId := happydns.Identifier([]byte("nonexistent-domain"))
 
 	_, err := service.GetUserDomain(user, nonexistentId)
@@ -299,10 +306,11 @@ func Test_GetUserDomain_NotFound(t *testing.T) {
 
 func Test_GetUserDomainByFQDN(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	service, _ := setupTestService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	service, _ := setupTestService(db)
 
-	user := createTestUser(t, mem, "test@example.com")
-	providerId := createTestProvider(t, mem, user, "Test Provider")
+	user := createTestUser(t, db, "test@example.com")
+	providerId := createTestProvider(t, db, user, "Test Provider")
 
 	// Create a domain
 	domainToCreate := &happydns.Domain{
@@ -331,10 +339,11 @@ func Test_GetUserDomainByFQDN(t *testing.T) {
 
 func Test_ListUserDomains(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	service, _ := setupTestService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	service, _ := setupTestService(db)
 
-	user := createTestUser(t, mem, "test@example.com")
-	providerId := createTestProvider(t, mem, user, "Test Provider")
+	user := createTestUser(t, db, "test@example.com")
+	providerId := createTestProvider(t, db, user, "Test Provider")
 
 	// Create multiple domains
 	domainNames := []string{"example1.com", "example2.com", "example3.com"}
@@ -362,12 +371,13 @@ func Test_ListUserDomains(t *testing.T) {
 
 func Test_ListUserDomains_MultipleUsers(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	service, _ := setupTestService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	service, _ := setupTestService(db)
 
-	user1 := createTestUser(t, mem, "user1@example.com")
-	user2 := createTestUser(t, mem, "user2@example.com")
-	providerId1 := createTestProvider(t, mem, user1, "Provider 1")
-	providerId2 := createTestProvider(t, mem, user2, "Provider 2")
+	user1 := createTestUser(t, db, "user1@example.com")
+	user2 := createTestUser(t, db, "user2@example.com")
+	providerId1 := createTestProvider(t, db, user1, "Provider 1")
+	providerId2 := createTestProvider(t, db, user2, "Provider 2")
 
 	// Create domains for user1
 	for i := 1; i <= 2; i++ {
@@ -412,9 +422,10 @@ func Test_ListUserDomains_MultipleUsers(t *testing.T) {
 
 func Test_ListUserDomains_Empty(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	service, _ := setupTestService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	service, _ := setupTestService(db)
 
-	user := createTestUser(t, mem, "test@example.com")
+	user := createTestUser(t, db, "test@example.com")
 
 	// List domains (should be empty)
 	domains, err := service.ListUserDomains(user)
@@ -429,10 +440,11 @@ func Test_ListUserDomains_Empty(t *testing.T) {
 
 func Test_UpdateDomain(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	service, logAppender := setupTestService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	service, logAppender := setupTestService(db)
 
-	user := createTestUser(t, mem, "test@example.com")
-	providerId := createTestProvider(t, mem, user, "Test Provider")
+	user := createTestUser(t, db, "test@example.com")
+	providerId := createTestProvider(t, db, user, "Test Provider")
 
 	// Create a domain
 	domainToCreate := &happydns.Domain{
@@ -480,10 +492,11 @@ func Test_UpdateDomain(t *testing.T) {
 
 func Test_UpdateDomain_PreventIdChange(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	service, _ := setupTestService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	service, _ := setupTestService(db)
 
-	user := createTestUser(t, mem, "test@example.com")
-	providerId := createTestProvider(t, mem, user, "Test Provider")
+	user := createTestUser(t, db, "test@example.com")
+	providerId := createTestProvider(t, db, user, "Test Provider")
 
 	// Create a domain
 	domainToCreate := &happydns.Domain{
@@ -521,11 +534,12 @@ func Test_UpdateDomain_PreventIdChange(t *testing.T) {
 
 func Test_UpdateDomain_WrongUser(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	service, _ := setupTestService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	service, _ := setupTestService(db)
 
-	user1 := createTestUser(t, mem, "user1@example.com")
-	user2 := createTestUser(t, mem, "user2@example.com")
-	providerId := createTestProvider(t, mem, user1, "Test Provider")
+	user1 := createTestUser(t, db, "user1@example.com")
+	user2 := createTestUser(t, db, "user2@example.com")
+	providerId := createTestProvider(t, db, user1, "Test Provider")
 
 	// Create a domain for user1
 	domainToCreate := &happydns.Domain{
@@ -555,10 +569,11 @@ func Test_UpdateDomain_WrongUser(t *testing.T) {
 
 func Test_DeleteDomain(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	service, _ := setupTestService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	service, _ := setupTestService(db)
 
-	user := createTestUser(t, mem, "test@example.com")
-	providerId := createTestProvider(t, mem, user, "Test Provider")
+	user := createTestUser(t, db, "test@example.com")
+	providerId := createTestProvider(t, db, user, "Test Provider")
 
 	// Create a domain
 	domainToCreate := &happydns.Domain{
@@ -595,10 +610,11 @@ func Test_DeleteDomain(t *testing.T) {
 
 func Test_UpdateDomain_Alias(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	service, _ := setupTestService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	service, _ := setupTestService(db)
 
-	user := createTestUser(t, mem, "test@example.com")
-	providerId := createTestProvider(t, mem, user, "Test Provider")
+	user := createTestUser(t, db, "test@example.com")
+	providerId := createTestProvider(t, db, user, "Test Provider")
 
 	// Create a domain
 	domainToCreate := &happydns.Domain{

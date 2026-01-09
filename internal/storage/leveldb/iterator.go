@@ -22,104 +22,35 @@
 package database
 
 import (
-	"fmt"
-	"log"
-
-	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/iterator"
 )
 
-// LevelDBIterator is a generic implementation of Iterator for LevelDB.
-type LevelDBIterator[T any] struct {
-	db     *leveldb.DB
-	iter   iterator.Iterator
-	err    error
-	item   *T
-	decode func([]byte, interface{}) error
+type LevelDBIterator struct {
+	iter iterator.Iterator
 }
 
-// NewLevelDBIterator creates a new LevelDBIterator instance for the given LevelDB iterator and decode function.
-func NewLevelDBIterator[T any](db *leveldb.DB, iter iterator.Iterator) *LevelDBIterator[T] {
-	return &LevelDBIterator[T]{
-		db:     db,
-		iter:   iter,
-		decode: decodeData,
+func NewIterator(iter iterator.Iterator) *LevelDBIterator {
+	return &LevelDBIterator{
+		iter: iter,
 	}
 }
 
-// NewLevelDBIterator creates a new LevelDBIterator instance for the given LevelDB iterator and decode function.
-func NewLevelDBIteratorCustomDecode[T any](db *leveldb.DB, iter iterator.Iterator, decodeFunc func([]byte, interface{}) error) *LevelDBIterator[T] {
-	return &LevelDBIterator[T]{
-		db:     db,
-		iter:   iter,
-		decode: decodeFunc,
-	}
+func (it *LevelDBIterator) Next() bool {
+	return it.iter.Next()
 }
 
-// Next moves the iterator to the next valid item.
-// Skips items that fail to decode and logs the error.
-func (it *LevelDBIterator[T]) Next() bool {
-	for it.iter.Next() {
-		var value T
-		err := it.decode(it.iter.Value(), &value)
-		if err != nil {
-			log.Printf("LevelDBIterator: error decoding item at key %q: %s", it.iter.Key(), err)
-			it.err = err
-			continue
-		}
-		it.item = &value
-		return true
-	}
-	return false
+func (it *LevelDBIterator) Key() string {
+	return string(it.iter.Key())
 }
 
-// NextWithError advances the iterator to the next item, on decode error it doesn't continue to the next item.
-// Returns true if there is a next item, false otherwise.
-func (it *LevelDBIterator[T]) NextWithError() bool {
-	if it.iter.Next() {
-		var value T
-		err := it.decode(it.iter.Value(), &value)
-		if err != nil {
-			it.err = err
-			it.item = nil
-		} else {
-			it.err = nil
-			it.item = &value
-		}
-		return true
-	}
-	return false
-}
-
-// Item returns the current item from the iterator.
-// Only valid after a successful call to Next().
-func (it *LevelDBIterator[T]) Item() *T {
-	return it.item
-}
-
-// DropItem deletes the key currently pointed to by the iterator.
-func (it *LevelDBIterator[T]) DropItem() error {
-	if it.iter == nil || !it.iter.Valid() {
-		return fmt.Errorf("DropItem: iterator is not valid")
-	}
-	return it.db.Delete(it.iter.Key(), nil)
-}
-
-// Raw returns the raw (non-decoded) value at the current iterator position.
-// Should only be called after a successful call to Next().
-func (it *LevelDBIterator[T]) Raw() []byte {
-	if it.iter == nil || !it.iter.Valid() {
-		return []byte{}
-	}
+func (it *LevelDBIterator) Value() interface{} {
 	return it.iter.Value()
 }
 
-// Err returns the first error encountered during iteration, if any.
-func (it *LevelDBIterator[T]) Err() error {
-	return it.err
+func (it *LevelDBIterator) Valid() bool {
+	return it.iter.Valid()
 }
 
-// Close releases resources held by the underlying LevelDB iterator.
-func (it *LevelDBIterator[T]) Close() {
+func (it *LevelDBIterator) Release() {
 	it.iter.Release()
 }

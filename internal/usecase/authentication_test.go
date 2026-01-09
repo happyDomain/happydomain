@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
+	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
 	"git.happydns.org/happyDomain/internal/usecase"
 	userUC "git.happydns.org/happyDomain/internal/usecase/user"
 	"git.happydns.org/happyDomain/model"
@@ -22,8 +23,9 @@ func (u testUserInfo) JoinNewsletter() bool           { return u.newsletter }
 
 func Test_CompleteAuthentication(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	userUsecase := userUC.NewUserUsecases(mem, nil, nil, nil)
-	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, mem, userUsecase)
+	db, _ := kv.NewKVDatabase(mem)
+	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil)
+	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, db, userUsecase)
 
 	uinfo := testUserInfo{
 		id:         happydns.Identifier([]byte("user-123")),
@@ -40,7 +42,7 @@ func Test_CompleteAuthentication(t *testing.T) {
 	}
 
 	// Check the user is correctly stored in db
-	stored, err := mem.GetUser(happydns.Identifier([]byte("user-123")))
+	stored, err := db.GetUser(happydns.Identifier([]byte("user-123")))
 	if err != nil {
 		t.Fatalf("expected stored user, got error: %v", err)
 	}
@@ -61,9 +63,10 @@ func (ds *testNewsletterSubscription) SubscribeToNewsletter(u happydns.UserInfo)
 
 func Test_CompleteAuthentication_WithNewsletter(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
+	db, _ := kv.NewKVDatabase(mem)
 	mockNewsletterSubscription := &testNewsletterSubscription{}
-	userUsecase := userUC.NewUserUsecases(mem, mockNewsletterSubscription, nil, nil)
-	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, mem, userUsecase)
+	userUsecase := userUC.NewUserUsecases(db, mockNewsletterSubscription, nil, nil)
+	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, db, userUsecase)
 
 	uinfo := testUserInfo{
 		id:         happydns.Identifier([]byte("user-123")),
@@ -97,6 +100,7 @@ func Test_CompleteAuthentication_WithNewsletter(t *testing.T) {
 
 func Test_AuthenticateUserWithPassword_WrongPassword(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
+	db, _ := kv.NewKVDatabase(mem)
 
 	authUser := &happydns.UserAuth{
 		Email: "a@b.c",
@@ -106,13 +110,13 @@ func Test_AuthenticateUserWithPassword_WrongPassword(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	err = mem.CreateAuthUser(authUser)
+	err = db.CreateAuthUser(authUser)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	userUsecase := userUC.NewUserUsecases(mem, nil, nil, nil)
-	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, mem, userUsecase)
+	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil)
+	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, db, userUsecase)
 
 	_, err = authenticationUsecase.AuthenticateUserWithPassword(happydns.LoginRequest{
 		Email:    "a@b.c",
@@ -125,6 +129,7 @@ func Test_AuthenticateUserWithPassword_WrongPassword(t *testing.T) {
 
 func Test_AuthenticateUserWithPassword_WeakPassword(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
+	db, _ := kv.NewKVDatabase(mem)
 
 	authUser := &happydns.UserAuth{
 		Email: "a@b.c",
@@ -134,13 +139,13 @@ func Test_AuthenticateUserWithPassword_WeakPassword(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	err = mem.CreateAuthUser(authUser)
+	err = db.CreateAuthUser(authUser)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	userUsecase := userUC.NewUserUsecases(mem, nil, nil, nil)
-	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, mem, userUsecase)
+	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil)
+	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, db, userUsecase)
 
 	_, err = authenticationUsecase.AuthenticateUserWithPassword(happydns.LoginRequest{
 		Email:    "a@b.c",
@@ -153,6 +158,7 @@ func Test_AuthenticateUserWithPassword_WeakPassword(t *testing.T) {
 
 func Test_AuthenticateUserWithPassword_UnverifiedEmail(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
+	db, _ := kv.NewKVDatabase(mem)
 
 	authUser := &happydns.UserAuth{
 		Email: "a@b.c",
@@ -162,13 +168,13 @@ func Test_AuthenticateUserWithPassword_UnverifiedEmail(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	err = mem.CreateAuthUser(authUser)
+	err = db.CreateAuthUser(authUser)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	userUsecase := userUC.NewUserUsecases(mem, nil, nil, nil)
-	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, mem, userUsecase)
+	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil)
+	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, db, userUsecase)
 
 	_, err = authenticationUsecase.AuthenticateUserWithPassword(happydns.LoginRequest{
 		Email:    "a@b.c",
@@ -181,6 +187,7 @@ func Test_AuthenticateUserWithPassword_UnverifiedEmail(t *testing.T) {
 
 func Test_AuthenticateUserWithPassword_NoEmail(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
+	db, _ := kv.NewKVDatabase(mem)
 
 	authUser := &happydns.UserAuth{
 		Email: "a@b.c",
@@ -190,13 +197,13 @@ func Test_AuthenticateUserWithPassword_NoEmail(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	err = mem.CreateAuthUser(authUser)
+	err = db.CreateAuthUser(authUser)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	userUsecase := userUC.NewUserUsecases(mem, nil, nil, nil)
-	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{NoMail: true}, mem, userUsecase)
+	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil)
+	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{NoMail: true}, db, userUsecase)
 
 	_, err = authenticationUsecase.AuthenticateUserWithPassword(happydns.LoginRequest{
 		Email:    "a@b.c",
@@ -209,6 +216,7 @@ func Test_AuthenticateUserWithPassword_NoEmail(t *testing.T) {
 
 func Test_AuthenticateUserWithPassword(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
+	db, _ := kv.NewKVDatabase(mem)
 
 	now := time.Now()
 	authUser := &happydns.UserAuth{
@@ -220,13 +228,13 @@ func Test_AuthenticateUserWithPassword(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	err = mem.CreateAuthUser(authUser)
+	err = db.CreateAuthUser(authUser)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	userUsecase := userUC.NewUserUsecases(mem, nil, nil, nil)
-	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, mem, userUsecase)
+	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil)
+	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, db, userUsecase)
 
 	_, err = authenticationUsecase.AuthenticateUserWithPassword(happydns.LoginRequest{
 		Email:    "a@b.c",

@@ -25,6 +25,6 @@ import (
 	"fmt"
 )
 
-func migrateFrom4(s *LevelDBStorage) (err error) {
+func migrateFrom5(s *KVStorage) (err error) {
 	return fmt.Errorf("Unable to migrate from DB version 4. Please use a previous happyDomain release to perform this migration")
 }

@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2025 happyDomain
+// Copyright (c) 2020-2024 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,37 +19,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package inmemory
+package database
 
 import (
-	"time"
-
-	"git.happydns.org/happyDomain/model"
+	"log"
 )
 
-// InsightsRun registers a insights process run just now.
-func (s *InMemoryStorage) InsightsRun() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	now := time.Now()
-	s.lastInsightsRun = &now
-
-	return nil
-}
-
-// LastInsightsRun gets the last time insights process run.
-func (s *InMemoryStorage) LastInsightsRun() (*time.Time, happydns.Identifier, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if s.lastInsightsID == nil {
-		instance, err := happydns.NewRandomIdentifier()
-		if err != nil {
-			return nil, nil, err
-		}
-		s.lastInsightsID = instance
-	}
-
-	return s.lastInsightsRun, s.lastInsightsID, nil
+func migrateFrom6(s *KVStorage) error {
+	log.Println("Drop all sessions to use new format")
+	return s.ClearSessions()
 }

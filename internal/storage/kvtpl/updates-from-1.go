@@ -32,7 +32,7 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func migrateFrom1(s *LevelDBStorage) (err error) {
+func migrateFrom1(s *KVStorage) (err error) {
 	err = migrateFrom1_users_tree(s)
 	if err != nil {
 		return
@@ -61,19 +61,19 @@ func genUserIdv2(input int64) (string, []byte, error) {
 	return hex.EncodeToString(decoded), decoded, err
 }
 
-func migrateFrom1_users_tree(s *LevelDBStorage) (err error) {
-	iter := s.search("user-")
+func migrateFrom1_users_tree(s *KVStorage) (err error) {
+	iter := s.db.Search("user-")
 	defer iter.Release()
 
 	for iter.Next() {
 		var user userV1
-		err = decodeData(iter.Value(), &user)
+		err = s.db.DecodeData(iter.Value(), &user)
 		if err != nil {
 			return
 		}
 
 		newId, idRaw, errr := genUserIdv2(user.Id)
-		if err != nil {
+		if errr != nil {
 			log.Printf("Migrating v1 -> v2: %s: unable to calculate new ID: %s", iter.Key(), errr.Error())
 			continue
 		} else if len(idRaw) == 0 {
@@ -106,17 +106,17 @@ func migrateFrom1_users_tree(s *LevelDBStorage) (err error) {
 
 		log.Printf("Migrating v1 -> v2: %s to user-%x...", iter.Key(), idRaw)
 
-		err = s.put(fmt.Sprintf("user-%x", idRaw), newUser)
+		err = s.db.Put(fmt.Sprintf("user-%x", idRaw), newUser)
 		if err != nil {
 			return
 		}
 
-		err = s.put(fmt.Sprintf("auth-%x", idRaw), user4auth)
+		err = s.db.Put(fmt.Sprintf("auth-%x", idRaw), user4auth)
 		if err != nil {
 			return
 		}
 
-		err = s.delete(string(iter.Key()))
+		err = s.db.Delete(iter.Key())
 		if err != nil {
 			return
 		}
@@ -127,27 +127,35 @@ func migrateFrom1_users_tree(s *LevelDBStorage) (err error) {
 			migrateFrom1_provider(s, user.Id, newId),
 			migrateFrom1_zone(s, user.Id, newId),
 		)
+		if err != nil {
+			return
+		}
 	}
 
 	return
 }
 
-func migrateFrom1_domains(s *LevelDBStorage, oldUserId int64, newUserId string) (err error) {
+func migrateFrom1_domains(s *KVStorage, oldUserId int64, newUserId string) (err error) {
 	oldIdStr := []byte(fmt.Sprintf("\"id_owner\":%d", oldUserId))
 	newIdStr := []byte(fmt.Sprintf("\"id_owner\":\"%s\"", newUserId))
 
-	iter := s.search("domain-")
+	iter := s.db.Search("domain-")
 	defer iter.Release()
 
 	for iter.Next() {
-		domstr := iter.Value()
+		domRaw := iter.Value()
+		domstr, ok := domRaw.([]byte)
+		if !ok {
+			log.Printf("Migrating v1 -> v2: skip %s (not bytes)...", iter.Key())
+			continue
+		}
 
 		migstr := bytes.Replace(domstr, oldIdStr, newIdStr, 1)
 
 		if !bytes.Equal(migstr, domstr) {
 			log.Printf("Migrating v1 -> v2: %s...", iter.Key())
 
-			err = s.db.Put(iter.Key(), migstr, nil)
+			err = s.db.Put(iter.Key(), migstr)
 			if err != nil {
 				return
 			}
@@ -157,22 +165,27 @@ func migrateFrom1_domains(s *LevelDBStorage, oldUserId int64, newUserId string) 
 	return
 }
 
-func migrateFrom1_provider(s *LevelDBStorage, oldUserId int64, newUserId string) (err error) {
+func migrateFrom1_provider(s *KVStorage, oldUserId int64, newUserId string) (err error) {
 	oldIdStr := []byte(fmt.Sprintf("\"_ownerid\":%d", oldUserId))
 	newIdStr := []byte(fmt.Sprintf("\"_ownerid\":\"%s\"", newUserId))
 
-	iter := s.search("provider-")
+	iter := s.db.Search("provider-")
 	defer iter.Release()
 
 	for iter.Next() {
-		domstr := iter.Value()
+		provRaw := iter.Value()
+		provstr, ok := provRaw.([]byte)
+		if !ok {
+			log.Printf("Migrating v1 -> v2: skip %s (not bytes)...", iter.Key())
+			continue
+		}
 
-		migstr := bytes.Replace(domstr, oldIdStr, newIdStr, 1)
+		migstr := bytes.Replace(provstr, oldIdStr, newIdStr, 1)
 
-		if !bytes.Equal(migstr, domstr) {
+		if !bytes.Equal(migstr, provstr) {
 			log.Printf("Migrating v1 -> v2: %s...", iter.Key())
 
-			err = s.db.Put(iter.Key(), migstr, nil)
+			err = s.db.Put(iter.Key(), migstr)
 			if err != nil {
 				return
 			}
@@ -182,22 +195,27 @@ func migrateFrom1_provider(s *LevelDBStorage, oldUserId int64, newUserId string)
 	return
 }
 
-func migrateFrom1_zone(s *LevelDBStorage, oldUserId int64, newUserId string) (err error) {
+func migrateFrom1_zone(s *KVStorage, oldUserId int64, newUserId string) (err error) {
 	oldIdStr := []byte(fmt.Sprintf("\"id_author\":%d", oldUserId))
 	newIdStr := []byte(fmt.Sprintf("\"id_author\":\"%s\"", newUserId))
 
-	iter := s.search("domain.zone-")
+	iter := s.db.Search("domain.zone-")
 	defer iter.Release()
 
 	for iter.Next() {
-		domstr := iter.Value()
+		zoneRaw := iter.Value()
+		zonestr, ok := zoneRaw.([]byte)
+		if !ok {
+			log.Printf("Migrating v1 -> v2: skip %s (not bytes)...", iter.Key())
+			continue
+		}
 
-		migstr := bytes.Replace(domstr, oldIdStr, newIdStr, 1)
+		migstr := bytes.Replace(zonestr, oldIdStr, newIdStr, 1)
 
-		if !bytes.Equal(migstr, domstr) {
+		if !bytes.Equal(migstr, zonestr) {
 			log.Printf("Migrating v1 -> v2: %s...", iter.Key())
 
-			err = s.db.Put(iter.Key(), migstr, nil)
+			err = s.db.Put(iter.Key(), migstr)
 			if err != nil {
 				return
 			}

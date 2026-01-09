@@ -30,6 +30,7 @@ import (
 	"git.happydns.org/happyDomain/internal/usecase/session"
 	"git.happydns.org/happyDomain/internal/usecase/user"
 	"git.happydns.org/happyDomain/internal/usecase/zone"
+	"git.happydns.org/happyDomain/model"
 )
 
 type ProviderAndDomainStorage interface {
@@ -55,4 +56,23 @@ type Storage interface {
 
 	// Close shutdown the connection with the database and releases all structure.
 	Close() error
+}
+
+type Iterator interface {
+	Release()
+	Next() bool
+	Valid() bool
+	Key() string
+	Value() interface{}
+}
+
+type KVStorage interface {
+	Close() error
+	DecodeData(i interface{}, v interface{}) error
+	Has(key string) (bool, error)
+	Get(key string, v interface{}) error
+	Put(key string, v interface{}) error
+	FindIdentifierKey(prefix string) (key string, id happydns.Identifier, err error)
+	Delete(key string) error
+	Search(prefix string) Iterator
 }

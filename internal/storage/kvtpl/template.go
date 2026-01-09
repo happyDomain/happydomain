@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -22,10 +22,19 @@
 package database
 
 import (
-	"log"
+	"git.happydns.org/happyDomain/internal/storage"
 )
 
-func migrateFrom6(s *LevelDBStorage) error {
-	log.Println("Drop all sessions to use new format")
-	return s.ClearSessions()
+type KVStorage struct {
+	db storage.KVStorage
+}
+
+func NewKVDatabase(impl storage.KVStorage) (storage.Storage, error) {
+	return &KVStorage{
+		impl,
+	}, nil
+}
+
+func (s *KVStorage) Close() error {
+	return s.db.Close()
 }

@@ -25,12 +25,14 @@ import (
 	"testing"
 	"time"
 
+	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
+	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
 	"git.happydns.org/happyDomain/internal/usecase/domain_log"
 	"git.happydns.org/happyDomain/model"
 )
 
-func createTestUser(t *testing.T, store *inmemory.InMemoryStorage, email string) *happydns.User {
+func createTestUser(t *testing.T, store storage.Storage, email string) *happydns.User {
 	user := &happydns.User{
 		Id:    happydns.Identifier([]byte("user-" + email)),
 		Email: email,
@@ -41,7 +43,7 @@ func createTestUser(t *testing.T, store *inmemory.InMemoryStorage, email string)
 	return user
 }
 
-func createTestDomain(t *testing.T, store *inmemory.InMemoryStorage, user *happydns.User, domainName string) *happydns.Domain {
+func createTestDomain(t *testing.T, store storage.Storage, user *happydns.User, domainName string) *happydns.Domain {
 	domain := &happydns.Domain{
 		Owner:      user.Id,
 		DomainName: domainName,
@@ -54,10 +56,11 @@ func createTestDomain(t *testing.T, store *inmemory.InMemoryStorage, user *happy
 
 func Test_AppendDomainLog(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	logService := domainlog.NewService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	logService := domainlog.NewService(db)
 
-	user := createTestUser(t, mem, "test@example.com")
-	domain := createTestDomain(t, mem, user, "example.com")
+	user := createTestUser(t, db, "test@example.com")
+	domain := createTestDomain(t, db, user, "example.com")
 
 	log := happydns.NewDomainLog(user, happydns.LOG_INFO, "Test log entry")
 
@@ -83,7 +86,7 @@ func Test_AppendDomainLog(t *testing.T) {
 	}
 
 	// Verify log is stored in database
-	logs, err := mem.ListDomainLogs(domain)
+	logs, err := db.ListDomainLogs(domain)
 	if err != nil {
 		t.Fatalf("expected stored logs, got error: %v", err)
 	}
@@ -97,10 +100,11 @@ func Test_AppendDomainLog(t *testing.T) {
 
 func Test_ListDomainLogs(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	logService := domainlog.NewService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	logService := domainlog.NewService(db)
 
-	user := createTestUser(t, mem, "test@example.com")
-	domain := createTestDomain(t, mem, user, "example.com")
+	user := createTestUser(t, db, "test@example.com")
+	domain := createTestDomain(t, db, user, "example.com")
 
 	// Create multiple logs with different timestamps
 	log1 := happydns.NewDomainLog(user, happydns.LOG_INFO, "First log")
@@ -150,11 +154,12 @@ func Test_ListDomainLogs(t *testing.T) {
 
 func Test_ListDomainLogs_MultipleDomains(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	logService := domainlog.NewService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	logService := domainlog.NewService(db)
 
-	user := createTestUser(t, mem, "test@example.com")
-	domain1 := createTestDomain(t, mem, user, "example.com")
-	domain2 := createTestDomain(t, mem, user, "test.com")
+	user := createTestUser(t, db, "test@example.com")
+	domain1 := createTestDomain(t, db, user, "example.com")
+	domain2 := createTestDomain(t, db, user, "test.com")
 
 	// Create logs for domain1
 	log1 := happydns.NewDomainLog(user, happydns.LOG_INFO, "Domain1 Log 1")
@@ -197,10 +202,11 @@ func Test_ListDomainLogs_MultipleDomains(t *testing.T) {
 
 func Test_UpdateDomainLog(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	logService := domainlog.NewService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	logService := domainlog.NewService(db)
 
-	user := createTestUser(t, mem, "test@example.com")
-	domain := createTestDomain(t, mem, user, "example.com")
+	user := createTestUser(t, db, "test@example.com")
+	domain := createTestDomain(t, db, user, "example.com")
 
 	// Create a log
 	log := happydns.NewDomainLog(user, happydns.LOG_INFO, "Original content")
@@ -235,10 +241,11 @@ func Test_UpdateDomainLog(t *testing.T) {
 
 func Test_DeleteDomainLog(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	logService := domainlog.NewService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	logService := domainlog.NewService(db)
 
-	user := createTestUser(t, mem, "test@example.com")
-	domain := createTestDomain(t, mem, user, "example.com")
+	user := createTestUser(t, db, "test@example.com")
+	domain := createTestDomain(t, db, user, "example.com")
 
 	// Create multiple logs
 	log1 := happydns.NewDomainLog(user, happydns.LOG_INFO, "Log 1")
@@ -274,10 +281,11 @@ func Test_DeleteDomainLog(t *testing.T) {
 
 func Test_AppendDomainLog_DifferentLogLevels(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	logService := domainlog.NewService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	logService := domainlog.NewService(db)
 
-	user := createTestUser(t, mem, "test@example.com")
-	domain := createTestDomain(t, mem, user, "example.com")
+	user := createTestUser(t, db, "test@example.com")
+	domain := createTestDomain(t, db, user, "example.com")
 
 	levels := []int8{
 		happydns.LOG_CRIT,
@@ -311,10 +319,11 @@ func Test_AppendDomainLog_DifferentLogLevels(t *testing.T) {
 
 func Test_ListDomainLogs_EmptyDomain(t *testing.T) {
 	mem, _ := inmemory.NewInMemoryStorage()
-	logService := domainlog.NewService(mem)
+	db, _ := kv.NewKVDatabase(mem)
+	logService := domainlog.NewService(db)
 
-	user := createTestUser(t, mem, "test@example.com")
-	domain := createTestDomain(t, mem, user, "example.com")
+	user := createTestUser(t, db, "test@example.com")
+	domain := createTestDomain(t, db, user, "example.com")
 
 	// List logs for a domain with no logs
 	logs, err := logService.ListDomainLogs(domain)

@@ -25,6 +25,7 @@ import (
 	"flag"
 
 	"git.happydns.org/happyDomain/internal/storage"
+	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
 )
 
 var path string
@@ -36,5 +37,10 @@ func init() {
 }
 
 func Instantiate() (storage.Storage, error) {
-	return NewLevelDBStorage(path)
+	db, err := NewLevelDBStorage(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return kv.NewKVDatabase(db)
 }

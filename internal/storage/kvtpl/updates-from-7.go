@@ -191,7 +191,7 @@ func explodeAbstractEMail(dn happydns.Subdomain, in *happydns.ServiceMessage) ([
 
 var migrateFrom7SvcType map[string]func(json.RawMessage) (json.RawMessage, error)
 
-func migrateFrom7(s *LevelDBStorage) (err error) {
+func migrateFrom7(s *KVStorage) (err error) {
 	migrateFrom7SvcType = make(map[string]func(json.RawMessage) (json.RawMessage, error))
 
 	// abstract.ACMEChallenge

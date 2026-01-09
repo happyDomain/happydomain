@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -25,35 +25,33 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/syndtr/goleveldb/leveldb/util"
-
 	"git.happydns.org/happyDomain/model"
 )
 
-func (s *LevelDBStorage) ListAllUsers() (happydns.Iterator[happydns.User], error) {
-	iter := s.search("user-")
-	return NewLevelDBIterator[happydns.User](s.db, iter), nil
+func (s *KVStorage) ListAllUsers() (happydns.Iterator[happydns.User], error) {
+	iter := s.db.Search("user-")
+	return NewKVIterator[happydns.User](s.db, iter), nil
 }
 
-func (s *LevelDBStorage) getUser(key string) (*happydns.User, error) {
+func (s *KVStorage) getUser(key string) (*happydns.User, error) {
 	u := &happydns.User{}
-	err := s.get(key, &u)
-	if errors.Is(err, leveldb.ErrNotFound) {
+	err := s.db.Get(key, &u)
+	if errors.Is(err, happydns.ErrNotFound) {
 		return nil, happydns.ErrUserNotFound
 	}
 	return u, err
 }
 
-func (s *LevelDBStorage) GetUser(id happydns.Identifier) (u *happydns.User, err error) {
+func (s *KVStorage) GetUser(id happydns.Identifier) (u *happydns.User, err error) {
 	return s.getUser(fmt.Sprintf("user-%s", id.String()))
 }
 
-func (s *LevelDBStorage) GetUserByEmail(email string) (*happydns.User, error) {
+func (s *KVStorage) GetUserByEmail(email string) (*happydns.User, error) {
 	users, err := s.ListAllUsers()
 	if err != nil {
 		return nil, err
 	}
+	defer users.Close()
 
 	for users.Next() {
 		user := users.Item()
@@ -65,11 +63,12 @@ func (s *LevelDBStorage) GetUserByEmail(email string) (*happydns.User, error) {
 	return nil, happydns.ErrUserNotFound
 }
 
-func (s *LevelDBStorage) UserExists(email string) bool {
+func (s *KVStorage) UserExists(email string) bool {
 	users, err := s.ListAllUsers()
 	if err != nil {
 		return false
 	}
+	defer users.Close()
 
 	for users.Next() {
 		if users.Item().Email == email {
@@ -80,9 +79,9 @@ func (s *LevelDBStorage) UserExists(email string) bool {
 	return false
 }
 
-func (s *LevelDBStorage) CreateOrUpdateUser(u *happydns.User) error {
+func (s *KVStorage) CreateOrUpdateUser(u *happydns.User) error {
 	if u.Id.IsEmpty() {
-		_, id, err := s.findIdentifierKey("user-")
+		_, id, err := s.db.FindIdentifierKey("user-")
 		if err != nil {
 			return err
 		}
@@ -90,38 +89,29 @@ func (s *LevelDBStorage) CreateOrUpdateUser(u *happydns.User) error {
 		u.Id = id
 	}
 
-	return s.put(fmt.Sprintf("user-%s", u.Id.String()), u)
+	return s.db.Put(fmt.Sprintf("user-%s", u.Id.String()), u)
 }
 
-func (s *LevelDBStorage) DeleteUser(uId happydns.Identifier) error {
-	return s.delete(fmt.Sprintf("user-%s", uId.String()))
+func (s *KVStorage) DeleteUser(uId happydns.Identifier) error {
+	return s.db.Delete(fmt.Sprintf("user-%s", uId.String()))
 }
 
-func (s *LevelDBStorage) ClearUsers() error {
+func (s *KVStorage) ClearUsers() error {
 	if err := s.ClearSessions(); err != nil {
 		return err
 	}
 
-	tx, err := s.db.OpenTransaction()
+	iter, err := s.ListAllUsers()
 	if err != nil {
 		return err
 	}
-
-	iter := tx.NewIterator(util.BytesPrefix([]byte("user-")), nil)
-	defer iter.Release()
+	defer iter.Close()
 
 	for iter.Next() {
-		err = tx.Delete(iter.Key(), nil)
+		err = s.db.Delete(iter.Key())
 		if err != nil {
-			tx.Discard()
 			return err
 		}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		tx.Discard()
-		return err
 	}
 
 	return nil

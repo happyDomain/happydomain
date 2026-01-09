@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -22,9 +22,41 @@
 package database
 
 import (
-	"fmt"
+	"errors"
+	"time"
+
+	"git.happydns.org/happyDomain/model"
 )
 
-func migrateFrom5(s *LevelDBStorage) (err error) {
-	return fmt.Errorf("Unable to migrate from DB version 4. Please use a previous happyDomain release to perform this migration")
+func (s *KVStorage) InsightsRun() error {
+	return s.db.Put("insights", time.Now())
+}
+
+func (s *KVStorage) LastInsightsRun() (t *time.Time, instance happydns.Identifier, err error) {
+	err = s.db.Get("insights.instance-id", &instance)
+	if errors.Is(err, happydns.ErrNotFound) {
+		// No instance ID defined, set one
+		instance, err = happydns.NewRandomIdentifier()
+		if err != nil {
+			return
+		}
+
+		err = s.db.Put("insights.instance-id", instance)
+		if err != nil {
+			return
+		}
+	} else if err != nil {
+		return
+	}
+
+	t = new(time.Time)
+	err = s.db.Get("insights", &t)
+	if errors.Is(err, happydns.ErrNotFound) {
+		t = nil
+		err = nil
+	} else if err != nil {
+		return
+	}
+
+	return
 }

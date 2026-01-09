@@ -35,6 +35,7 @@ var (
 	ErrUserNotFound      = errors.New("user not found")
 	ErrUserAlreadyExist  = errors.New("user already exists")
 	ErrZoneNotFound      = errors.New("zone not found")
+	ErrNotFound          = errors.New("not found")
 )
 
 const TryAgainErr = "Sorry, we are currently unable to sent email validation link. Please try again later."

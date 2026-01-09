@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -26,9 +26,9 @@ import (
 	"log"
 )
 
-type LevelDBMigrationFunc func(s *LevelDBStorage) error
+type KVMigrationFunc func(s *KVStorage) error
 
-var migrations []LevelDBMigrationFunc = []LevelDBMigrationFunc{
+var migrations []KVMigrationFunc = []KVMigrationFunc{
 	migrateFrom0,
 	migrateFrom1,
 	migrateFrom2,
@@ -39,49 +39,53 @@ var migrations []LevelDBMigrationFunc = []LevelDBMigrationFunc{
 	migrateFrom7,
 }
 
-func (s *LevelDBStorage) SchemaVersion() int {
+type Version struct {
+	Version int `json:"version"`
+}
+
+func (s *KVStorage) SchemaVersion() int {
 	return len(migrations)
 }
 
-func (s *LevelDBStorage) MigrateSchema() (err error) {
+func (s *KVStorage) MigrateSchema() (err error) {
 	found := false
 
-	found, err = s.db.Has([]byte("version"), nil)
+	found, err = s.db.Has("version")
 	if err != nil {
 		return
 	}
 
-	var version int
+	var version Version
 
 	if !found {
-		version = len(migrations)
-		err = s.put("version", version)
+		version.Version = len(migrations)
+		err = s.db.Put("version", version)
 		if err != nil {
 			return
 		}
 	}
 
-	err = s.get("version", &version)
+	err = s.db.Get("version", &version.Version)
 	if err != nil {
 		return
 	}
 
-	if version > len(migrations) {
-		return fmt.Errorf("Your database has revision %d, which is newer than the revision this happyDomain version can handle (max DB revision %d). Please update happyDomain", version, len(migrations))
+	if version.Version > len(migrations) {
+		return fmt.Errorf("Your database has revision %d, which is newer than the revision this happyDomain version can handle (max DB revision %d). Please update happyDomain", version.Version, len(migrations))
 	}
 
-	for v, migration := range migrations[version:] {
-		log.Printf("Doing migration from %d to %d", version+v, version+v+1)
+	for v, migration := range migrations[version.Version:] {
+		log.Printf("Doing migration from %d to %d", version.Version+v, version.Version+v+1)
 		// Do the migration
 		if err = migration(s); err != nil {
 			return
 		}
 
 		// Save the step
-		if err = s.put("version", version+v+1); err != nil {
+		if err = s.db.Put("version", version.Version+v+1); err != nil {
 			return
 		}
-		log.Printf("Migration from %d to %d DONE!", version+v, version+v+1)
+		log.Printf("Migration from %d to %d DONE!", version.Version+v, version.Version+v+1)
 	}
 
 	return nil

@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2025 happyDomain
+// Copyright (c) 2020-2024 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -22,42 +22,9 @@
 package database
 
 import (
-	"time"
-
-	"github.com/syndtr/goleveldb/leveldb"
-
-	"git.happydns.org/happyDomain/model"
+	"fmt"
 )
 
-func (s *LevelDBStorage) InsightsRun() error {
-	return s.put("insights", time.Now())
-}
-
-func (s *LevelDBStorage) LastInsightsRun() (t *time.Time, instance happydns.Identifier, err error) {
-	err = s.get("insights.instance-id", &instance)
-	if err == leveldb.ErrNotFound {
-		// No instance ID defined, set one
-		instance, err = happydns.NewRandomIdentifier()
-		if err != nil {
-			return
-		}
-
-		err = s.put("insights.instance-id", instance)
-		if err != nil {
-			return
-		}
-	} else if err != nil {
-		return
-	}
-
-	t = new(time.Time)
-	err = s.get("insights", &t)
-	if err == leveldb.ErrNotFound {
-		t = nil
-		err = nil
-	} else if err != nil {
-		return
-	}
-
-	return
+func migrateFrom4(s *KVStorage) (err error) {
+	return fmt.Errorf("Unable to migrate from DB version 4. Please use a previous happyDomain release to perform this migration")
 }

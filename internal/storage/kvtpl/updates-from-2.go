@@ -24,16 +24,16 @@ package database
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"time"
 
 	"git.happydns.org/happyDomain/model"
-
-	"github.com/syndtr/goleveldb/leveldb/errors"
 )
 
-func migrateFrom2(s *LevelDBStorage) (err error) {
+func migrateFrom2(s *KVStorage) (err error) {
 	err = migrateFrom2_users_tree(s)
 	if err != nil {
 		return
@@ -50,16 +50,12 @@ type userV2 struct {
 	Settings  happydns.UserSettings
 }
 
-func migrateFrom2_users_tree(s *LevelDBStorage) (err error) {
-	iter := s.search("user-")
-	defer iter.Release()
+func migrateFrom2_users_tree(s *KVStorage) (err error) {
+	iter := NewKVIterator[userV2](s.db, s.db.Search("user-"))
+	defer iter.Close()
 
 	for iter.Next() {
-		var user userV2
-		err = decodeData(iter.Value(), &user)
-		if err != nil {
-			return
-		}
+		user := iter.Item()
 
 		newId := happydns.Identifier(user.Id)
 		if len(newId) < happydns.IDENTIFIER_LEN {
@@ -79,18 +75,18 @@ func migrateFrom2_users_tree(s *LevelDBStorage) (err error) {
 
 		log.Printf("Migrating v2 -> v3: %s to user-%s...", iter.Key(), newId.String())
 
-		err = s.put(fmt.Sprintf("user-%s", newId.String()), newUser)
+		err = s.db.Put(fmt.Sprintf("user-%s", newId.String()), newUser)
 		if err != nil {
 			return fmt.Errorf("unable to write %s: %w", iter.Key(), err)
 		}
 
-		err = s.delete(string(iter.Key()))
+		err = s.db.Delete(iter.Key())
 		if err != nil {
 			return fmt.Errorf("unable to delete migrated %s: %w", iter.Key(), err)
 		}
 
 		// Migrate object of the user
-		err = migrateFrom2_auth(s, user.Id, newId, user)
+		err = migrateFrom2_auth(s, user.Id, newId, *user)
 		if err != nil {
 			return fmt.Errorf("unable to migrate auth user for user-%s (%s): %w", newId.String(), user.Email, err)
 		}
@@ -109,15 +105,16 @@ func migrateFrom2_users_tree(s *LevelDBStorage) (err error) {
 	return
 }
 
-func migrateFrom2_auth(s *LevelDBStorage, oldUserId happydns.HexaString, newId happydns.Identifier, user userV2) (err error) {
+func migrateFrom2_auth(s *KVStorage, oldUserId happydns.HexaString, newId happydns.Identifier, user userV2) (err error) {
 	oldIdStr := []byte(fmt.Sprintf("\"Id\":\"%s\"", base64.StdEncoding.EncodeToString(oldUserId)))
 	newIdStr := []byte(fmt.Sprintf("\"Id\":\"%s\"", newId.String()))
 
 	oldAuthKey := fmt.Sprintf("auth-%x", oldUserId)
 
-	usrstr, err := s.db.Get([]byte(oldAuthKey), nil)
+	var usrstr json.RawMessage
+	err = s.db.Get(oldAuthKey, &usrstr)
 	if err != nil {
-		if err == errors.ErrNotFound {
+		if errors.Is(err, happydns.ErrNotFound) {
 			user4auth := &happydns.UserAuth{
 				Id:                newId,
 				Email:             user.Email,
@@ -129,28 +126,28 @@ func migrateFrom2_auth(s *LevelDBStorage, oldUserId happydns.HexaString, newId h
 
 			log.Printf("Migrating v2 -> v3: auth-%s: %s not found, creating it", newId.String(), oldAuthKey)
 
-			return s.put(fmt.Sprintf("auth-%s", newId.String()), user4auth)
+			return s.db.Put(fmt.Sprintf("auth-%s", newId.String()), user4auth)
 		}
 		return fmt.Errorf("unable to find/decode %s: %w", oldAuthKey, err)
 	}
 
-	migstr := bytes.Replace(usrstr, oldIdStr, newIdStr, 1)
+	migstr := bytes.Replace([]byte(usrstr), oldIdStr, newIdStr, 1)
 
-	if !bytes.Equal(migstr, usrstr) {
+	if !bytes.Equal(migstr, []byte(usrstr)) {
 		var newauth happydns.UserAuth
-		err = decodeData(migstr, &newauth)
+		err = s.db.DecodeData(migstr, &newauth)
 		if err != nil {
 			log.Printf("From %s to %s", usrstr, migstr)
 			return fmt.Errorf("unable to reconstruct a valid auth user: %w", err)
 		}
 
-		err = s.db.Put([]byte(fmt.Sprintf("auth-%s", newId.String())), migstr, nil)
+		err = s.db.Put(fmt.Sprintf("auth-%s", newId.String()), json.RawMessage(migstr))
 		if err != nil {
 			return fmt.Errorf("unable to write auth-%s (from %s): %w", newId.String(), oldAuthKey, err)
 		}
 		log.Printf("Migrating v2 -> v3: %s to auth-%s...", oldAuthKey, newId.String())
 
-		err = s.delete(oldAuthKey)
+		err = s.db.Delete(oldAuthKey)
 		if err != nil {
 			return fmt.Errorf("unable to delete migrated %s: %w", oldAuthKey, err)
 		}
@@ -163,21 +160,22 @@ type sessionV2 struct {
 	Id []byte `json:"id"`
 }
 
-func migrateFrom2_session(s *LevelDBStorage, oldUserId happydns.HexaString, newUserId string) (err error) {
+func migrateFrom2_session(s *KVStorage, oldUserId happydns.HexaString, newUserId string) (err error) {
 	oldOwnerIdStr := []byte(fmt.Sprintf("\"login\":\"%x\"", oldUserId))
 	newOwnerIdStr := []byte(fmt.Sprintf("\"login\":\"%s\"", newUserId))
 
-	iter := s.search("user.session-")
-	defer iter.Release()
+	iter := s.db.Search("user.session-")
+	kvIter := NewKVIterator[json.RawMessage](s.db, iter)
+	defer kvIter.Close()
 
-	for iter.Next() {
-		usrstr := iter.Value()
+	for kvIter.Next() {
+		usrstr := []byte(*kvIter.Item())
 
 		if bytes.Contains(usrstr, oldOwnerIdStr) {
 			var session sessionV2
-			err = decodeData(usrstr, &session)
+			err = s.db.DecodeData(usrstr, &session)
 			if err != nil {
-				return fmt.Errorf("unable to decode %s: %w", iter.Key(), err)
+				return fmt.Errorf("unable to decode %s: %w", kvIter.Key(), err)
 			}
 
 			newId := happydns.Identifier(session.Id)
@@ -189,15 +187,15 @@ func migrateFrom2_session(s *LevelDBStorage, oldUserId happydns.HexaString, newU
 			migstr = bytes.Replace(migstr, oldOwnerIdStr, newOwnerIdStr, 1)
 
 			if !bytes.Equal(migstr, usrstr) {
-				err = s.db.Put([]byte(fmt.Sprintf("user.session-%s", newUserId)), migstr, nil)
+				err = s.db.Put(fmt.Sprintf("user.session-%s", newUserId), json.RawMessage(migstr))
 				if err != nil {
-					return fmt.Errorf("unable to write user.session-%s (from %s): %w", newId.String(), iter.Key(), err)
+					return fmt.Errorf("unable to write user.session-%s (from %s): %w", newId.String(), kvIter.Key(), err)
 				}
-				log.Printf("Migrating v2 -> v3: %s to user.session-%s...", iter.Key(), newId.String())
+				log.Printf("Migrating v2 -> v3: %s to user.session-%s...", kvIter.Key(), newId.String())
 
-				err = s.delete(string(iter.Key()))
+				err = s.db.Delete(kvIter.Key())
 				if err != nil {
-					return fmt.Errorf("unable to delete migrated %s: %w", iter.Key(), err)
+					return fmt.Errorf("unable to delete migrated %s: %w", kvIter.Key(), err)
 				}
 			}
 		}
@@ -211,27 +209,28 @@ type providerV2 struct {
 	OwnerId happydns.HexaString `json:"_ownerid"`
 }
 
-func migrateFrom2_provider(s *LevelDBStorage, oldUserId happydns.HexaString, newUserId string) (err error) {
+func migrateFrom2_provider(s *KVStorage, oldUserId happydns.HexaString, newUserId string) (err error) {
 	oldOwnerIdStr := []byte(fmt.Sprintf("\"_ownerid\":\"%x\"", oldUserId))
 	newOwnerIdStr := []byte(fmt.Sprintf("\"_ownerid\":\"%s\"", newUserId))
 
-	iter := s.search("provider-")
-	defer iter.Release()
+	iter := s.db.Search("provider-")
+	kvIter := NewKVIterator[json.RawMessage](s.db, iter)
+	defer kvIter.Close()
 
-	for iter.Next() {
-		domstr := iter.Value()
+	for kvIter.Next() {
+		domstr := []byte(*kvIter.Item())
 
 		if bytes.Contains(domstr, oldOwnerIdStr) {
 			var provider providerV2
-			err = decodeData(domstr, &provider)
+			err = s.db.DecodeData(domstr, &provider)
 			if err != nil {
-				return fmt.Errorf("unable to decode %s: %w", iter.Key(), err)
+				return fmt.Errorf("unable to decode %s: %w", kvIter.Key(), err)
 			}
 
 			var newId happydns.Identifier
 			newId, err = happydns.NewRandomIdentifier()
 			if err != nil {
-				return fmt.Errorf("unable to generate a new identifier for %s: %w", iter.Key(), err)
+				return fmt.Errorf("unable to generate a new identifier for %s: %w", kvIter.Key(), err)
 			}
 
 			oldIdStr := []byte(fmt.Sprintf("\"_id\":%d", provider.Id))
@@ -242,20 +241,20 @@ func migrateFrom2_provider(s *LevelDBStorage, oldUserId happydns.HexaString, new
 
 			if !bytes.Equal(migstr, domstr) {
 				var newprv happydns.ProviderMeta
-				err = decodeData(migstr, &newprv)
+				err = s.db.DecodeData(migstr, &newprv)
 				if err != nil {
 					log.Printf("From %s to %s", domstr, migstr)
 					return fmt.Errorf("unable to reconstruct a valid provider: %w", err)
 				}
 
-				log.Printf("Migrating v2 -> v3: %s...", iter.Key())
+				log.Printf("Migrating v2 -> v3: %s...", kvIter.Key())
 
-				err = s.db.Put([]byte(fmt.Sprintf("provider-%s", newId.String())), migstr, nil)
+				err = s.db.Put(fmt.Sprintf("provider-%s", newId.String()), json.RawMessage(migstr))
 				if err != nil {
 					return
 				}
 
-				err = s.delete(string(iter.Key()))
+				err = s.db.Delete(kvIter.Key())
 				if err != nil {
 					return
 				}
@@ -277,29 +276,30 @@ type domainV2 struct {
 	ZoneHistory []int64 `json:"zone_history"`
 }
 
-func migrateFrom2_domains(s *LevelDBStorage, oldUserId happydns.HexaString, newUserId string, oldProviderId int64, newProviderId string) (err error) {
+func migrateFrom2_domains(s *KVStorage, oldUserId happydns.HexaString, newUserId string, oldProviderId int64, newProviderId string) (err error) {
 	oldProviderIdStr := []byte(fmt.Sprintf("\"id_provider\":%d", oldProviderId))
 	newProviderIdStr := []byte(fmt.Sprintf("\"id_provider\":\"%s\"", newProviderId))
 	oldOwnerIdStr := []byte(fmt.Sprintf("\"id_owner\":\"%x\"", oldUserId))
 	newOwnerIdStr := []byte(fmt.Sprintf("\"id_owner\":\"%s\"", newUserId))
 
-	iter := s.search("domain-")
-	defer iter.Release()
+	iter := s.db.Search("domain-")
+	kvIter := NewKVIterator[json.RawMessage](s.db, iter)
+	defer kvIter.Close()
 
-	for iter.Next() {
-		domstr := iter.Value()
+	for kvIter.Next() {
+		domstr := []byte(*kvIter.Item())
 
 		if bytes.Contains(domstr, oldProviderIdStr) && bytes.Contains(domstr, oldOwnerIdStr) {
 			var domain domainV2
-			err = decodeData(domstr, &domain)
+			err = s.db.DecodeData(domstr, &domain)
 			if err != nil {
-				return fmt.Errorf("unable to decode %s: %w", iter.Key(), err)
+				return fmt.Errorf("unable to decode %s: %w", kvIter.Key(), err)
 			}
 
 			var newId happydns.Identifier
 			newId, err = happydns.NewRandomIdentifier()
 			if err != nil {
-				return fmt.Errorf("unable to generate a new identifier for %s: %w", iter.Key(), err)
+				return fmt.Errorf("unable to generate a new identifier for %s: %w", kvIter.Key(), err)
 			}
 
 			oldIdStr := []byte(fmt.Sprintf("\"id\":%d", domain.Id))
@@ -312,7 +312,7 @@ func migrateFrom2_domains(s *LevelDBStorage, oldUserId happydns.HexaString, newU
 				var newZoneId happydns.Identifier
 				newZoneId, err = happydns.NewRandomIdentifier()
 				if err != nil {
-					return fmt.Errorf("unable to generate a new identifier for a zone of %s: %w", iter.Key(), err)
+					return fmt.Errorf("unable to generate a new identifier for a zone of %s: %w", kvIter.Key(), err)
 				}
 
 				err = migrateFrom2_zone(s, oldUserId, newUserId, zoneid, newZoneId.String())
@@ -333,20 +333,20 @@ func migrateFrom2_domains(s *LevelDBStorage, oldUserId happydns.HexaString, newU
 
 			if !bytes.Equal(migstr, domstr) {
 				var newdn happydns.Domain
-				err = decodeData(migstr, &newdn)
+				err = s.db.DecodeData(migstr, &newdn)
 				if err != nil {
 					log.Printf("From %s to %s", domstr, migstr)
 					return fmt.Errorf("unable to reconstruct a valid domain: %w", err)
 				}
 
-				log.Printf("Migrating v2 -> v3: %s...", iter.Key())
+				log.Printf("Migrating v2 -> v3: %s...", kvIter.Key())
 
-				err = s.db.Put([]byte(fmt.Sprintf("domain-%s", newId.String())), migstr, nil)
+				err = s.db.Put(fmt.Sprintf("domain-%s", newId.String()), json.RawMessage(migstr))
 				if err != nil {
 					return
 				}
 
-				err = s.delete(string(iter.Key()))
+				err = s.db.Delete(kvIter.Key())
 				if err != nil {
 					return
 				}
@@ -357,7 +357,7 @@ func migrateFrom2_domains(s *LevelDBStorage, oldUserId happydns.HexaString, newU
 	return
 }
 
-func migrateFrom2_zone(s *LevelDBStorage, oldUserId happydns.HexaString, newUserId string, oldZoneId int64, newZoneId string) (err error) {
+func migrateFrom2_zone(s *KVStorage, oldUserId happydns.HexaString, newUserId string, oldZoneId int64, newZoneId string) (err error) {
 	oldIdStr := []byte(fmt.Sprintf("\"id\":%d", oldZoneId))
 	newIdStr := []byte(fmt.Sprintf("\"id\":\"%s\"", newZoneId))
 	oldIdOwnerStr := []byte(fmt.Sprintf("\"id_author\":%d", oldUserId))
@@ -365,22 +365,23 @@ func migrateFrom2_zone(s *LevelDBStorage, oldUserId happydns.HexaString, newUser
 
 	oldZoneKey := fmt.Sprintf("domain.zone-%d", oldZoneId)
 
-	zonestr, err := s.db.Get([]byte(oldZoneKey), nil)
+	var zonestr json.RawMessage
+	err = s.db.Get(oldZoneKey, &zonestr)
 	if err != nil {
 		return fmt.Errorf("unable to find/decode %s: %w", oldZoneKey, err)
 	}
 
-	migstr := bytes.Replace(zonestr, oldIdStr, newIdStr, 1)
+	migstr := bytes.Replace([]byte(zonestr), oldIdStr, newIdStr, 1)
 	migstr = bytes.Replace(migstr, oldIdOwnerStr, newIdOwnerStr, 1)
 
-	if !bytes.Equal(migstr, zonestr) {
-		err = s.db.Put([]byte(fmt.Sprintf("domain.zone-%s", newZoneId)), migstr, nil)
+	if !bytes.Equal(migstr, []byte(zonestr)) {
+		err = s.db.Put(fmt.Sprintf("domain.zone-%s", newZoneId), json.RawMessage(migstr))
 		if err != nil {
 			return fmt.Errorf("unable to write domain.zone-%s (from %s): %w", newZoneId, oldZoneKey, err)
 		}
 		log.Printf("Migrating v2 -> v3: %s to domain.zone-%s...", oldZoneKey, newZoneId)
 
-		err = s.delete(oldZoneKey)
+		err = s.db.Delete(oldZoneKey)
 		if err != nil {
 			return fmt.Errorf("unable to delete migrated %s: %w", oldZoneKey, err)
 		}

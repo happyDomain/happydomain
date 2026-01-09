@@ -22,16 +22,22 @@
 package inmemory
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
+	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
 // InMemoryStorage implements the Storage interface using in-memory data structures.
 type InMemoryStorage struct {
 	mu                  sync.Mutex
+	data                map[string][]byte // Generic key-value store for KVStorage interface
 	authUsers           map[string]*happydns.UserAuth
 	authUsersByEmail    map[string]happydns.Identifier
 	domains             map[string]*happydns.Domain
@@ -49,6 +55,7 @@ type InMemoryStorage struct {
 // NewInMemoryStorage creates a new instance of InMemoryStorage.
 func NewInMemoryStorage() (*InMemoryStorage, error) {
 	return &InMemoryStorage{
+		data:                make(map[string][]byte),
 		authUsers:           make(map[string]*happydns.UserAuth),
 		authUsersByEmail:    make(map[string]happydns.Identifier),
 		domains:             make(map[string]*happydns.Domain),
@@ -84,4 +91,97 @@ func (s *InMemoryStorage) Tidy() error {
 func (s *InMemoryStorage) Close() error {
 	// No connection to close for in-memory storage.
 	return nil
+}
+
+// DecodeData decodes data from the interface (expected to be []byte) into v.
+func (s *InMemoryStorage) DecodeData(data interface{}, v interface{}) error {
+	b, ok := data.([]byte)
+	if !ok {
+		return fmt.Errorf("data to decode are not in []byte format (%T)", data)
+	}
+	return json.Unmarshal(b, v)
+}
+
+// Has checks if a key exists in the storage.
+func (s *InMemoryStorage) Has(key string) (bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, exists := s.data[key]
+	return exists, nil
+}
+
+// Get retrieves a value by key and decodes it into v.
+func (s *InMemoryStorage) Get(key string, v interface{}) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	data, exists := s.data[key]
+	if !exists {
+		return happydns.ErrNotFound
+	}
+	return json.Unmarshal(data, v)
+}
+
+// Put stores a value with the given key.
+func (s *InMemoryStorage) Put(key string, v interface{}) error {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.data[key] = data
+	return nil
+}
+
+// FindIdentifierKey finds a unique key with the given prefix.
+func (s *InMemoryStorage) FindIdentifierKey(prefix string) (key string, id happydns.Identifier, err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for {
+		id, err = happydns.NewRandomIdentifier()
+		if err != nil {
+			return
+		}
+		key = fmt.Sprintf("%s%s", prefix, id.String())
+
+		if _, exists := s.data[key]; !exists {
+			return
+		}
+	}
+}
+
+// Delete removes a key from the storage.
+func (s *InMemoryStorage) Delete(key string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.data, key)
+	return nil
+}
+
+// Search returns an iterator for all keys with the given prefix.
+func (s *InMemoryStorage) Search(prefix string) storage.Iterator {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Collect all matching keys
+	var keys []string
+	for k := range s.data {
+		if strings.HasPrefix(k, prefix) {
+			keys = append(keys, k)
+		}
+	}
+
+	// Sort keys for consistent iteration order
+	sort.Strings(keys)
+
+	// Copy data for the iterator to avoid concurrent access issues
+	data := make(map[string][]byte, len(keys))
+	for _, k := range keys {
+		dataCopy := make([]byte, len(s.data[k]))
+		copy(dataCopy, s.data[k])
+		data[k] = dataCopy
+	}
+
+	return NewKVIterator(keys, data)
 }

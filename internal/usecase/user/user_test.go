@@ -25,7 +25,9 @@ import (
 	"bytes"
 	"testing"
 
+	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
+	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
 	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
 	sessionUC "git.happydns.org/happyDomain/internal/usecase/session"
 	"git.happydns.org/happyDomain/internal/usecase/user"
@@ -70,8 +72,9 @@ func (u testUserInfo) GetUserId() happydns.Identifier { return u.id }
 func (u testUserInfo) GetEmail() string               { return u.email }
 func (u testUserInfo) JoinNewsletter() bool           { return u.joinNewsletter }
 
-func createTestService(t *testing.T) (*user.Service, *inmemory.InMemoryStorage, *mockNewsletterSubscriptor, *mockSessionCloser) {
-	mem, err := inmemory.NewInMemoryStorage()
+func createTestService(t *testing.T) (*user.Service, storage.Storage, *mockNewsletterSubscriptor, *mockSessionCloser) {
+	mem, _ := inmemory.NewInMemoryStorage()
+	db, err := kv.NewKVDatabase(mem)
 	if err != nil {
 		t.Fatalf("failed to create in-memory storage: %v", err)
 	}
@@ -79,15 +82,15 @@ func createTestService(t *testing.T) (*user.Service, *inmemory.InMemoryStorage, 
 	cfg := &happydns.Options{
 		DisableRegistration: false,
 	}
-	sessionService := sessionUC.NewService(mem)
-	authUserService := authuserUC.NewAuthUserUsecases(cfg, nil, mem, sessionService)
+	sessionService := sessionUC.NewService(db)
+	authUserService := authuserUC.NewAuthUserUsecases(cfg, nil, db, sessionService)
 
 	newsletter := &mockNewsletterSubscriptor{}
 	sessionCloser := &mockSessionCloser{}
 
-	service := user.NewUserUsecases(mem, newsletter, authUserService, sessionCloser)
+	service := user.NewUserUsecases(db, newsletter, authUserService, sessionCloser)
 
-	return service, mem, newsletter, sessionCloser
+	return service, db, newsletter, sessionCloser
 }
 
 func Test_CreateUser(t *testing.T) {

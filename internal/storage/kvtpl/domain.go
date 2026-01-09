@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -26,25 +26,22 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/syndtr/goleveldb/leveldb/util"
-
 	"git.happydns.org/happyDomain/model"
 )
 
-func (s *LevelDBStorage) ListAllDomains() (happydns.Iterator[happydns.Domain], error) {
-	iter := s.search("domain-")
-	return NewLevelDBIterator[happydns.Domain](s.db, iter), nil
+func (s *KVStorage) ListAllDomains() (happydns.Iterator[happydns.Domain], error) {
+	iter := s.db.Search("domain-")
+	return NewKVIterator[happydns.Domain](s.db, iter), nil
 }
 
-func (s *LevelDBStorage) ListDomains(u *happydns.User) (domains []*happydns.Domain, err error) {
-	iter := s.search("domain-")
+func (s *KVStorage) ListDomains(u *happydns.User) (domains []*happydns.Domain, err error) {
+	iter := s.db.Search("domain-")
 	defer iter.Release()
 
 	for iter.Next() {
 		var z happydns.Domain
 
-		err = decodeData(iter.Value(), &z)
+		err = s.db.DecodeData(iter.Value(), &z)
 		if err != nil {
 			return
 		}
@@ -57,20 +54,20 @@ func (s *LevelDBStorage) ListDomains(u *happydns.User) (domains []*happydns.Doma
 	return
 }
 
-func (s *LevelDBStorage) getDomain(id string) (*happydns.Domain, error) {
+func (s *KVStorage) getDomain(id string) (*happydns.Domain, error) {
 	domain := &happydns.Domain{}
-	err := s.get(id, domain)
-	if errors.Is(err, leveldb.ErrNotFound) {
+	err := s.db.Get(id, domain)
+	if errors.Is(err, happydns.ErrNotFound) {
 		return nil, happydns.ErrDomainNotFound
 	}
 	return domain, err
 }
 
-func (s *LevelDBStorage) GetDomain(id happydns.Identifier) (*happydns.Domain, error) {
+func (s *KVStorage) GetDomain(id happydns.Identifier) (*happydns.Domain, error) {
 	return s.getDomain(fmt.Sprintf("domain-%s", id.String()))
 }
 
-func (s *LevelDBStorage) GetDomainByDN(u *happydns.User, dn string) ([]*happydns.Domain, error) {
+func (s *KVStorage) GetDomainByDN(u *happydns.User, dn string) ([]*happydns.Domain, error) {
 	domains, err := s.ListDomains(u)
 	if err != nil {
 		return nil, err
@@ -84,56 +81,47 @@ func (s *LevelDBStorage) GetDomainByDN(u *happydns.User, dn string) ([]*happydns
 	}
 
 	if len(ret) == 0 {
-		return nil, leveldb.ErrNotFound
+		return nil, happydns.ErrNotFound
 	}
 
 	return ret, nil
 }
 
-func (s *LevelDBStorage) CreateDomain(z *happydns.Domain) error {
-	key, id, err := s.findIdentifierKey("domain-")
+func (s *KVStorage) CreateDomain(z *happydns.Domain) error {
+	key, id, err := s.db.FindIdentifierKey("domain-")
 	if err != nil {
 		return err
 	}
 
 	z.Id = id
-	return s.put(key, z)
+	return s.db.Put(key, z)
 }
 
-func (s *LevelDBStorage) UpdateDomain(z *happydns.Domain) error {
-	return s.put(fmt.Sprintf("domain-%s", z.Id.String()), z)
+func (s *KVStorage) UpdateDomain(z *happydns.Domain) error {
+	return s.db.Put(fmt.Sprintf("domain-%s", z.Id.String()), z)
 }
 
-func (s *LevelDBStorage) DeleteDomain(zId happydns.Identifier) error {
-	return s.delete(fmt.Sprintf("domain-%s", zId.String()))
+func (s *KVStorage) DeleteDomain(zId happydns.Identifier) error {
+	return s.db.Delete(fmt.Sprintf("domain-%s", zId.String()))
 }
 
-func (s *LevelDBStorage) ClearDomains() error {
+func (s *KVStorage) ClearDomains() error {
 	err := s.ClearZones()
 	if err != nil {
 		return err
 	}
 
-	tx, err := s.db.OpenTransaction()
+	iter, err := s.ListAllDomains()
 	if err != nil {
 		return err
 	}
-
-	iter := tx.NewIterator(util.BytesPrefix([]byte("domain-")), nil)
-	defer iter.Release()
+	defer iter.Close()
 
 	for iter.Next() {
-		err = tx.Delete(iter.Key(), nil)
+		err = s.db.Delete(iter.Key())
 		if err != nil {
-			tx.Discard()
 			return err
 		}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		tx.Discard()
-		return err
 	}
 
 	return nil

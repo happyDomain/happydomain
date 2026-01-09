@@ -23,14 +23,15 @@ package database // import "git.happydns.org/happyDomain/internal/storage/leveld
 
 import (
 	"encoding/json"
+	goerrors "errors"
 	"fmt"
 	"log"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/errors"
-	"github.com/syndtr/goleveldb/leveldb/iterator"
 	"github.com/syndtr/goleveldb/leveldb/util"
 
+	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -68,16 +69,31 @@ func decodeData(data []byte, v interface{}) error {
 	return json.Unmarshal(data, v)
 }
 
-func (s *LevelDBStorage) get(key string, v interface{}) error {
+func (s *LevelDBStorage) DecodeData(data interface{}, v interface{}) error {
+	b, ok := data.([]byte)
+	if !ok {
+		return fmt.Errorf("data to decode are not in []byte format (%T)", data)
+	}
+	return decodeData(b, v)
+}
+
+func (s *LevelDBStorage) Has(key string) (bool, error) {
+	return s.db.Has([]byte(key), nil)
+}
+
+func (s *LevelDBStorage) Get(key string, v interface{}) error {
 	data, err := s.db.Get([]byte(key), nil)
 	if err != nil {
+		if goerrors.Is(err, leveldb.ErrNotFound) {
+			return happydns.ErrNotFound
+		}
 		return err
 	}
 
 	return decodeData(data, v)
 }
 
-func (s *LevelDBStorage) put(key string, v interface{}) error {
+func (s *LevelDBStorage) Put(key string, v interface{}) error {
 	data, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -86,7 +102,7 @@ func (s *LevelDBStorage) put(key string, v interface{}) error {
 	return s.db.Put([]byte(key), data, nil)
 }
 
-func (s *LevelDBStorage) findIdentifierKey(prefix string) (key string, id happydns.Identifier, err error) {
+func (s *LevelDBStorage) FindIdentifierKey(prefix string) (key string, id happydns.Identifier, err error) {
 	found := true
 	for found {
 		id, err = happydns.NewRandomIdentifier()
@@ -103,10 +119,10 @@ func (s *LevelDBStorage) findIdentifierKey(prefix string) (key string, id happyd
 	return
 }
 
-func (s *LevelDBStorage) delete(key string) error {
+func (s *LevelDBStorage) Delete(key string) error {
 	return s.db.Delete([]byte(key), nil)
 }
 
-func (s *LevelDBStorage) search(prefix string) iterator.Iterator {
-	return s.db.NewIterator(util.BytesPrefix([]byte(prefix)), nil)
+func (s *LevelDBStorage) Search(prefix string) storage.Iterator {
+	return NewIterator(s.db.NewIterator(util.BytesPrefix([]byte(prefix)), nil))
 }

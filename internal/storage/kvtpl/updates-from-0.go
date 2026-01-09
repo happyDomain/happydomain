@@ -26,7 +26,7 @@ import (
 	"log"
 )
 
-func migrateFrom0(s *LevelDBStorage) (err error) {
+func migrateFrom0(s *KVStorage) (err error) {
 	err = migrateFrom0_sourcesProvider(s)
 	if err != nil {
 		return
@@ -47,14 +47,20 @@ type sourceMeta struct {
 	Comment string `json:"_comment,omitempty"`
 }
 
-func migrateFrom0_sourcesProvider(s *LevelDBStorage) (err error) {
-	iter := s.search("source-")
+func migrateFrom0_sourcesProvider(s *KVStorage) (err error) {
+	iter := s.db.Search("source-")
 	defer iter.Release()
 
 	for iter.Next() {
-		src := iter.Value()
-		for src[0] == '"' {
-			err = decodeData(src, &src)
+		srcRaw := iter.Value()
+		src, ok := srcRaw.([]byte)
+		if !ok {
+			log.Printf("Migrating v0 -> v1: skip %s (not bytes)...", iter.Key())
+			continue
+		}
+
+		for len(src) > 0 && src[0] == '"' {
+			err = s.db.DecodeData(src, &src)
 			if err != nil {
 				return
 			}
@@ -63,7 +69,7 @@ func migrateFrom0_sourcesProvider(s *LevelDBStorage) (err error) {
 		src = bytes.Replace(src, []byte("\"Source\":"), []byte("\"Provider\":"), 1)
 
 		var srcMeta sourceMeta
-		err = decodeData(src, &srcMeta)
+		err = s.db.DecodeData(src, &srcMeta)
 		if err != nil {
 			return
 		}
@@ -101,16 +107,16 @@ func migrateFrom0_sourcesProvider(s *LevelDBStorage) (err error) {
 			}
 		}
 
-		newKey := bytes.Replace(iter.Key(), []byte("source-"), []byte("provider-"), 1)
+		newKey := string(bytes.Replace([]byte(iter.Key()), []byte("source-"), []byte("provider-"), 1))
 
 		log.Printf("Migrating v0 -> v1: %s to %s (%s)...", iter.Key(), newKey, newType)
 
-		err = s.db.Put(newKey, src, nil)
+		err = s.db.Put(newKey, src)
 		if err != nil {
 			return
 		}
 
-		err = s.delete(string(iter.Key()))
+		err = s.db.Delete(iter.Key())
 		if err != nil {
 			return
 		}
@@ -119,18 +125,23 @@ func migrateFrom0_sourcesProvider(s *LevelDBStorage) (err error) {
 	return
 }
 
-func migrateFrom0_reparentDomains(s *LevelDBStorage) (err error) {
-	iter := s.search("domain-")
+func migrateFrom0_reparentDomains(s *KVStorage) (err error) {
+	iter := s.db.Search("domain-")
 	defer iter.Release()
 
 	for iter.Next() {
-		domstr := iter.Value()
+		domRaw := iter.Value()
+		domstr, ok := domRaw.([]byte)
+		if !ok {
+			log.Printf("Migrating v0 -> v1: skip %s (not bytes)...", iter.Key())
+			continue
+		}
 
 		domstr = bytes.Replace(domstr, []byte("\"id_source\":"), []byte("\"id_provider\":"), 1)
 
 		log.Printf("Migrating v0 -> v1: %s...", iter.Key())
 
-		err = s.db.Put(iter.Key(), domstr, nil)
+		err = s.db.Put(iter.Key(), domstr)
 		if err != nil {
 			return
 		}

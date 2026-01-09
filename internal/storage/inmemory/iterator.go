@@ -21,81 +21,55 @@
 
 package inmemory
 
-import (
-	"encoding/json"
-	"iter"
-	"maps"
-)
-
-// InMemoryIterator provides an iterator over a map[string]*T.
-type InMemoryIterator[T any] struct {
-	origin *map[string]*T
-	next   func() (string, *T, bool)
-	stop   func()
-	key    string
-	item   *T
-	err    error
-	decode func([]byte, interface{}) error
+// KVIterator implements the storage.Iterator interface for in-memory KVStorage.
+type KVIterator struct {
+	keys    []string
+	data    map[string][]byte
+	index   int
+	current string
 }
 
-// NewInMemoryIterator constructs an iterator over a map[string]*T.
-// You can pass any map like map[string]*UserAuth, map[string]*Domain, etc.
-func NewInMemoryIterator[T any](m *map[string]*T) *InMemoryIterator[T] {
-	next, stop := iter.Pull2(maps.All[map[string]*T](*m))
-	return &InMemoryIterator[T]{
-		origin: m,
-		next:   next,
-		stop:   stop,
+// NewKVIterator creates a new iterator for the given keys and data.
+func NewKVIterator(keys []string, data map[string][]byte) *KVIterator {
+	return &KVIterator{
+		keys:  keys,
+		data:  data,
+		index: -1,
 	}
 }
 
-// NewInMemoryIteratorCustomDecode creates a new LevelDBIterator instance for the given LevelDB iterator and decode function.
-func NewInMemoryIteratorCustomDecode[T any](m *map[string]*T, decodeFunc func([]byte, interface{}) error) *InMemoryIterator[T] {
-	next, stop := iter.Pull2(maps.All[map[string]*T](*m))
-	return &InMemoryIterator[T]{
-		origin: m,
-		next:   next,
-		stop:   stop,
-		decode: decodeFunc,
+// Next moves the iterator to the next item.
+func (it *KVIterator) Next() bool {
+	it.index++
+	if it.index >= len(it.keys) {
+		return false
 	}
+	it.current = it.keys[it.index]
+	return true
 }
 
-// Next advances the iterator to the next item.
-func (it *InMemoryIterator[T]) Next() (valid bool) {
-	it.key, it.item, valid = it.next()
-	return
+// Key returns the current key.
+func (it *KVIterator) Key() string {
+	if it.index < 0 || it.index >= len(it.keys) {
+		return ""
+	}
+	return it.current
 }
 
-// NextWithError advances the iterator to the next item.
-func (it *InMemoryIterator[T]) NextWithError() (valid bool) {
-	it.key, it.item, valid = it.next()
-	return
+// Value returns the current value.
+func (it *KVIterator) Value() interface{} {
+	if it.index < 0 || it.index >= len(it.keys) {
+		return []byte{}
+	}
+	return it.data[it.current]
 }
 
-// Item returns the current item pointed to by the iterator.
-func (it *InMemoryIterator[T]) Item() *T {
-	return it.item
+// Valid returns whether the iterator is at a valid position.
+func (it *KVIterator) Valid() bool {
+	return it.index >= 0 && it.index < len(it.keys)
 }
 
-// DropItem deletes the key currently pointed to by the iterator.
-func (it *InMemoryIterator[T]) DropItem() error {
-	delete(*it.origin, it.key)
-	return nil
-}
-
-// Raw returns the raw (non-decoded) value at the current iterator position.
-// Should only be called after a successful call to Next().
-func (it *InMemoryIterator[T]) Raw() []byte {
-	j, _ := json.Marshal(it.item)
-	return j
-}
-
-// Err returns any error encountered during iteration (always nil here).
-func (it *InMemoryIterator[T]) Err() error {
-	return it.err
-}
-
-// Close is a no-op for in-memory iterators, present to satisfy common interfaces.
-func (it *InMemoryIterator[T]) Close() {
-	return
+// Release releases the iterator resources.
+func (it *KVIterator) Release() {
+	// No resources to release for in-memory iterator
 }

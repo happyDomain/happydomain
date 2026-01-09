@@ -39,9 +39,13 @@ type Iterator[T any] interface {
 	// Must be called only after a successful call to Next().
 	DropItem() error
 
+	// Key returns the storage key of the current item.
+	// Should be called only after a successful call to Next().
+	Key() string
+
 	// Raw returns the raw (non-decoded) value at the current iterator position.
 	// Should only be called after a successful call to Next().
-	Raw() []byte
+	Raw() interface{}
 
 	// Err returns the first error encountered during iteration, if any.
 	Err() error

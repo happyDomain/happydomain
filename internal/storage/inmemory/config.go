@@ -23,6 +23,7 @@ package inmemory
 
 import (
 	"git.happydns.org/happyDomain/internal/storage"
+	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
 )
 
 func init() {
@@ -30,5 +31,10 @@ func init() {
 }
 
 func Instantiate() (storage.Storage, error) {
-	return NewInMemoryStorage()
+	db, err := NewInMemoryStorage()
+	if err != nil {
+		return nil, err
+	}
+
+	return kv.NewKVDatabase(db)
 }
