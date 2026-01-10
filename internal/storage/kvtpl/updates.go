@@ -59,7 +59,7 @@ func (s *KVStorage) MigrateSchema() (err error) {
 
 	if !found {
 		version.Version = len(migrations)
-		err = s.db.Put("version", version)
+		err = s.db.Put("version", version.Version)
 		if err != nil {
 			return
 		}
