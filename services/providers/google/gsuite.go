@@ -32,18 +32,27 @@ import (
 )
 
 type GSuite struct {
-	ValidationCode string `json:"validationCode,omitempty" happydomain:"label=Validation Code,placeholder=abcdef0123.mx-verification.google.com.,description=The verification code will be displayed during the initial domain setup and will not be usefull after Google validation."`
+	MX           []*dns.MX     `json:"mx,omitempty"`
+	SPF          *happydns.TXT `json:"txt"`
+	ValidationMX *dns.MX       `json:"validationMX,omitempty"`
 }
 
 func (s *GSuite) GetNbResources() int {
-	return 1
+	nb := len(s.MX)
+	if s.SPF != nil {
+		nb += 1
+	}
+	if s.ValidationMX != nil {
+		nb += 1
+	}
+	return nb
 }
 
 func (s *GSuite) GenComment() string {
 	return "5 MX + SPF directives"
 }
 
-func (s *GSuite) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
+func (s *GSuite) Initialize() (interface{}, error) {
 	for i, mx := range []string{
 		"aspmx.l.google.com.",
 		"alt1.aspmx.l.google.com.",
@@ -51,7 +60,7 @@ func (s *GSuite) GetRecords(domain string, ttl uint32, origin string) (rrs []hap
 		"alt3.aspmx.l.google.com.",
 		"alt4.aspmx.l.google.com.",
 	} {
-		rr := helpers.NewRecord(domain, "MX", ttl, origin)
+		rr := helpers.NewRecord("", "MX", 0, "")
 		rr.(*dns.MX).Mx = mx
 		if i == 0 {
 			rr.(*dns.MX).Preference = 1
@@ -61,19 +70,27 @@ func (s *GSuite) GetRecords(domain string, ttl uint32, origin string) (rrs []hap
 			rr.(*dns.MX).Preference = 10
 		}
 
-		rrs = append(rrs, rr)
+		s.MX = append(s.MX, rr.(*dns.MX))
 	}
 
-	if len(s.ValidationCode) > 0 {
-		rr := helpers.NewRecord(domain, "MX", ttl, origin)
-		rr.(*dns.MX).Mx = s.ValidationCode
-		rr.(*dns.MX).Preference = 15
-		rrs = append(rrs, rr)
+	s.SPF = happydns.NewTXT(helpers.NewRecord("", "TXT", 0, "").(*dns.TXT))
+	s.SPF.Txt = "v=spf1 include:_spf.google.com ~all"
+
+	return s, nil
+}
+
+func (s *GSuite) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
+	for _, mx := range s.MX {
+		rrs = append(rrs, mx)
 	}
 
-	rr := happydns.NewTXT(helpers.NewRecord(domain, "TXT", ttl, origin).(*dns.TXT))
-	rr.Txt = "v=spf1 include:_spf.google.com ~all"
-	rrs = append(rrs, rr)
+	if s.SPF != nil {
+		rrs = append(rrs, s.SPF)
+	}
+
+	if s.ValidationMX != nil {
+		rrs = append(rrs, s.ValidationMX)
+	}
 
 	return
 }
@@ -97,7 +114,7 @@ func gsuite_analyze(a *svcs.Analyzer) (err error) {
 			for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeMX, Domain: dn}) {
 				if mx, ok := record.(*dns.MX); ok {
 					if strings.HasSuffix(mx.Mx, "mx-verification.google.com.") {
-						googlerr.ValidationCode = mx.Mx
+						googlerr.ValidationMX = mx
 						if err = a.UseRR(
 							record,
 							dn,
@@ -106,6 +123,7 @@ func gsuite_analyze(a *svcs.Analyzer) (err error) {
 							return
 						}
 					} else if strings.HasSuffix(mx.Mx, "google.com.") {
+						googlerr.MX = append(googlerr.MX, mx)
 						if err = a.UseRR(
 							record,
 							dn,
@@ -121,6 +139,7 @@ func gsuite_analyze(a *svcs.Analyzer) (err error) {
 				if txt, ok := record.(*happydns.TXT); ok {
 					content := txt.Txt
 					if strings.HasPrefix(content, "v=spf1") && strings.Contains(content, "_spf.google.com") {
+						googlerr.SPF = txt
 						if err = a.UseRR(
 							record,
 							dn,
