@@ -91,8 +91,15 @@ type ServiceSpecs struct {
 	Fields []Field `json:"fields,omitempty"`
 }
 
+// ServiceInitializer is an optional interface that services can implement
+// to provide custom initialization logic for creating new service instances.
+type ServiceInitializer interface {
+	Initialize() (interface{}, error)
+}
+
 type ServiceSpecsUsecase interface {
 	ListServices() map[string]ServiceInfos
 	GetServiceIcon(string) ([]byte, error)
 	GetServiceSpecs(reflect.Type) (*ServiceSpecs, error)
+	InitializeService(reflect.Type) (interface{}, error)
 }

@@ -27,6 +27,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/miekg/dns"
+
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 )
@@ -60,6 +62,119 @@ func (ssu *serviceSpecsUsecase) GetServiceIcon(ssid string) ([]byte, error) {
 
 func (ssu *serviceSpecsUsecase) GetServiceSpecs(svctype reflect.Type) (*happydns.ServiceSpecs, error) {
 	return ssu.getSpecs(svctype)
+}
+
+func (ssu *serviceSpecsUsecase) InitializeService(svctype reflect.Type) (interface{}, error) {
+	// Create a new instance of the service
+	svcPtr := reflect.New(svctype)
+	svc := svcPtr.Interface()
+
+	// Check if the service implements ServiceInitializer interface
+	if initializer, ok := svc.(happydns.ServiceInitializer); ok {
+		return initializer.Initialize()
+	}
+
+	// Otherwise, initialize with default empty values
+	svcValue := svcPtr.Elem()
+	ssu.initializeStructFields(svcValue)
+
+	return svc, nil
+}
+
+func (ssu *serviceSpecsUsecase) initializeStructFields(v reflect.Value) {
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		fieldType := v.Type().Field(i)
+
+		// Skip unexported fields
+		if !field.CanSet() {
+			continue
+		}
+
+		// Handle anonymous embedded structs
+		if fieldType.Anonymous {
+			if field.Kind() == reflect.Struct {
+				ssu.initializeStructFields(field)
+			}
+			continue
+		}
+
+		// Initialize based on field type
+		switch field.Kind() {
+		case reflect.Slice:
+			// Initialize slices as empty (non-nil)
+			field.Set(reflect.MakeSlice(field.Type(), 0, 0))
+		case reflect.Map:
+			// Initialize maps as empty (non-nil)
+			field.Set(reflect.MakeMap(field.Type()))
+		case reflect.Ptr:
+			// For pointer types, check if it's a DNS type first
+			elemType := field.Type().Elem()
+			if ssu.isDNSType(elemType) {
+				newVal := reflect.New(elemType)
+				ssu.initializeDNSRecord(newVal.Elem())
+				field.Set(newVal)
+			} else if elemType.Kind() == reflect.Struct {
+				newVal := reflect.New(elemType)
+				ssu.initializeStructFields(newVal.Elem())
+				field.Set(newVal)
+			}
+		case reflect.Struct:
+			// Check if it's a DNS type
+			if ssu.isDNSType(field.Type()) {
+				ssu.initializeDNSRecord(field)
+			} else {
+				// Recursively initialize nested structs
+				ssu.initializeStructFields(field)
+			}
+			// Numeric types, strings, bools, etc. already have their zero values
+		}
+	}
+}
+
+// isDNSType checks if a type is from the miekg/dns package or a happyDomain DNS abstraction
+func (ssu *serviceSpecsUsecase) isDNSType(t reflect.Type) bool {
+	pkgPath := t.PkgPath()
+
+	// Check if it's from miekg/dns package
+	if pkgPath == "github.com/miekg/dns" {
+		return true
+	}
+
+	// Check if it's a happyDomain DNS abstraction (e.g., happydns.TXT, happydns.SPF)
+	// These have a dns.RR_Header field named "Hdr"
+	if pkgPath == "git.happydns.org/happyDomain/model" && t.Kind() == reflect.Struct {
+		if field, ok := t.FieldByName("Hdr"); ok {
+			return field.Type == reflect.TypeOf(dns.RR_Header{})
+		}
+	}
+
+	return false
+}
+
+// initializeDNSRecord initializes a DNS record with sensible defaults
+func (ssu *serviceSpecsUsecase) initializeDNSRecord(v reflect.Value) {
+	if v.Kind() != reflect.Struct {
+		return
+	}
+
+	// Determine the Rrtype based on the DNS record type name
+	rrtype := ssu.getRRType(v.Type())
+
+	// Initialize the Hdr field if it exists
+	hdrField := v.FieldByName("Hdr")
+	if hdrField.IsValid() && hdrField.CanSet() {
+		hdrField.Set(reflect.ValueOf(dns.RR_Header{
+			Name:     "",
+			Rrtype:   rrtype,
+			Class:    dns.ClassINET,
+			Ttl:      3600,
+			Rdlength: 0,
+		}))
+	}
+
+	// Initialize other fields to their zero values (empty strings, 0 for numbers, etc.)
+	// This is already done by Go's zero value initialization
 }
 
 func (ssu *serviceSpecsUsecase) getSpecs(svcType reflect.Type) (*happydns.ServiceSpecs, error) {

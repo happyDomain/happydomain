@@ -24,4 +24,5 @@ package main
 //go:generate go run tools/gen_icon.go providers providers
 //go:generate go run tools/gen_icon.go services svcs
 //go:generate go run tools/gen_rr_typescript.go web/src/lib/dns_rr.ts
+//go:generate go run tools/gen_dns_type_mapping.go -o internal/usecase/service_specs_dns_types.go
 //go:generate swag init --generalInfo internal/api/route/route.go

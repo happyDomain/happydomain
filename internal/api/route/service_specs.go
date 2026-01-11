@@ -40,4 +40,5 @@ func DeclareServiceSpecsRoutes(router *gin.RouterGroup, dependancies happydns.Us
 	apiServiceSpecsRoutes.Use(middleware.ServiceSpecsHandler)
 
 	apiServiceSpecsRoutes.GET("", ssc.GetServiceSpec)
+	apiServiceSpecsRoutes.POST("/init", ssc.InitializeServiceSpec)
 }

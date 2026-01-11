@@ -41,3 +41,11 @@ export async function getServiceSpec(ssid: string): Promise<ServiceSpec> {
         return await handleApiResponse<ServiceSpec>(res);
     }
 }
+
+export async function initializeService(ssid: string): Promise<any> {
+    const res = await fetch(`/api/service_specs/${ssid}/init`, {
+        method: "POST",
+        headers: { Accept: "application/json" },
+    });
+    return await handleApiResponse(res);
+}

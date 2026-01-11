@@ -102,3 +102,28 @@ func (ssc *ServiceSpecsController) GetServiceSpec(c *gin.Context) {
 
 	c.JSON(http.StatusOK, specs)
 }
+
+// InitializeServiceSpec returns an initialized service instance with default values.
+//
+//	@Summary	Initialize a new service instance.
+//	@Schemes
+//	@Description	Return an initialized service instance with default or custom values.
+//	@Tags			service_specs
+//	@Accept			json
+//	@Produce		json
+//	@Param			serviceType	path		string	true	"The service's type"
+//	@Success		200			{object}	interface{}
+//	@Failure		404			{object}	happydns.ErrorResponse	"Service type does not exist"
+//	@Failure		500			{object}	happydns.ErrorResponse	"Internal error"
+//	@Router			/service_specs/{serviceType}/init [post]
+func (ssc *ServiceSpecsController) InitializeServiceSpec(c *gin.Context) {
+	svctype := c.MustGet("servicetype").(reflect.Type)
+
+	initialized, err := ssc.sSpecsServices.InitializeService(svctype)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, initialized)
+}

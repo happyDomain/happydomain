@@ -51,6 +51,7 @@
     import TLSAsEditor from '$lib/components/services/editors/svcs.TLSAs.svelte'
     import TLS_RPTEditor from '$lib/components/services/editors/svcs.TLS_RPT.svelte'
     import UnknownSRVEditor from '$lib/components/services/editors/svcs.UnknownSRV.svelte'
+    import GSuiteEditor from '$lib/components/services/editors/providers.google.GSuite.svelte'
     import type { Domain } from "$lib/model/domain";
 
     interface Props {
@@ -119,6 +120,8 @@
     <TLS_RPTEditor {dn} {origin} bind:value={value} />
 {:else if type == "svcs.UnknownSRV"}
     <UnknownSRVEditor {dn} {origin} bind:value={value} />
+{:else if type == "google.GSuite"}
+    <GSuiteEditor {dn} {origin} bind:value={value} />
 {:else}
     <OrphanEditor
         {dn}
