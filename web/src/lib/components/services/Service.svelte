@@ -27,6 +27,8 @@
     import SVCField from './ServiceField.svelte'
     import type { ServiceSpec } from "$lib/model/service_specs.svelte";
 
+    const { MODE } = import.meta.env;
+
     interface Props {
         specs: ServiceSpec;
         value: any;
@@ -44,6 +46,6 @@
             bind:value={value[field.id]}
         />
     {/each}
-{:else}
+{:else if MODE != "production"}
     NO FIELD
 {/if}
