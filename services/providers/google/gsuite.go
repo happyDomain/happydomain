@@ -71,8 +71,8 @@ func (s *GSuite) GetRecords(domain string, ttl uint32, origin string) (rrs []hap
 		rrs = append(rrs, rr)
 	}
 
-	rr := helpers.NewRecord(domain, "TXT", ttl, origin)
-	rr.(*happydns.TXT).Txt = "v=spf1 include:_spf.google.com ~all"
+	rr := happydns.NewTXT(helpers.NewRecord(domain, "TXT", ttl, origin).(*dns.TXT))
+	rr.Txt = "v=spf1 include:_spf.google.com ~all"
 	rrs = append(rrs, rr)
 
 	return
