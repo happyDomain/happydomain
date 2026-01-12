@@ -359,7 +359,19 @@
             "title": "Certificates issuance",
             "wild-issuers": "Wildcard certificates issuance",
             "wild-same-title": "Same as regular certificate issuance.",
-            "wild-same-body": "With those parameters, all issuer authorized for certificate issuance can also create wildcard certificate for this domain and subdomain."
+            "wild-same-body": "With those parameters, all issuer authorized for certificate issuance can also create wildcard certificate for this domain and subdomain.",
+            "vmc-issuers": "Verified Mark Certificates (VMC) issuance",
+            "no-vmc-hint": "Disallow VMC certificate issuance",
+            "vmc-all-allowed-title": "No CA constraint for VMC certificates issuance.",
+            "vmc-all-allowed-body": "All CA can emit VMC certificates for your domain. VMC certificates are used to display verified logos in email clients. If you do not use such certificate, you should disallow their issuance.",
+            "no-vmc-title": "No issuer authorized for VMC certificate.",
+            "no-vmc-body": "With those parameters, no issuer is authorized to create VMC certificate for this domain and subdomain.",
+            "contact-info": "Contact Information",
+            "contact-info-text": "Provide contact details for certificate-related communications.",
+            "contact-email": "Contact Email",
+            "contact-phone": "Contact Phone",
+            "add-contact-email": "Add contact email",
+            "add-contact-phone": "Add contact phone"
         }
     },
     "service": {

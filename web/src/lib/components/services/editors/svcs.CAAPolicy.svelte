@@ -249,6 +249,62 @@
     </Alert>
 {/if}
 
+<h4 class="mt-4">{$t("resources.CAA.vmc-issuers")}</h4>
+
+<FormGroup>
+    <Input
+        id="vmcissuedisabled"
+        type="checkbox"
+        label={$t("resources.CAA.no-vmc-hint")}
+        checked={val.DisallowVMCIssue}
+        on:change={val.changeDisallowIssue(dn, "issuevmc")}
+    />
+</FormGroup>
+
+{#if !val.DisallowVMCIssue && !val.records.filter((r) => r.Tag == "issuevmc").length}
+    <Alert color="warning" fade={false}>
+        <strong>{$t("resources.CAA.vmc-all-allowed-title")}</strong>
+        {$t("resources.CAA.vmc-all-allowed-body")}
+    </Alert>
+{/if}
+
+<h5>
+    {$t("resources.CAA.auth-issuers")}
+</h5>
+
+{#if !val.DisallowVMCIssue}
+    <ul>
+        {#if val.records.filter((r) => r.Tag == "issuevmc").length}
+            {#each val.records as issue, k}
+                {#if issue.Tag == "issuevmc"}
+                    <li class="mb-3">
+                        <CAAIssuer
+                            {readonly}
+                            bind:flag={val.records[k].Flag}
+                            bind:tag={val.records[k].Tag}
+                            bind:value={val.records[k].Value}
+                            on:delete-issuer={() => { val.records.splice(k, 1); }}
+                        />
+                    </li>
+                {/if}
+            {/each}
+        {/if}
+        {#if !readonly}
+            <li style:list-style="'+ '">
+                <CAAIssuer
+                    newone
+                    on:add-issuer={addIssuer("issuevmc")}
+                />
+            </li>
+        {/if}
+    </ul>
+{:else}
+    <Alert color="danger" fade={false}>
+        <strong>{$t("resources.CAA.no-vmc-title")}</strong>
+        {$t("resources.CAA.no-vmc-body")}
+    </Alert>
+{/if}
+
 <h4 class="mt-4">{$t("resources.CAA.incident-response")}</h4>
 
 <p>
@@ -273,4 +329,102 @@
         newone
         on:add-iodef={addIssuer("iodef")}
     />
+{/if}
+
+<h4 class="mt-4">{$t("resources.CAA.contact-info")}</h4>
+
+<p>
+    {$t("resources.CAA.contact-info-text")}
+</p>
+
+<h5>{$t("resources.CAA.contact-email")}</h5>
+
+{#if val.records.filter((r) => r.Tag == "contactemail").length}
+    <ul>
+        {#each val.records as contact, k}
+            {#if contact.Tag == "contactemail"}
+                <li class="mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <Input
+                            type="email"
+                            bind:value={val.records[k].Value}
+                            {readonly}
+                            placeholder="contact@example.com"
+                        />
+                        {#if !readonly}
+                            <Button
+                                type="button"
+                                size="sm"
+                                color="danger"
+                                on:click={() => { val.records.splice(k, 1); }}
+                            >
+                                <Icon name="trash" />
+                            </Button>
+                        {/if}
+                    </div>
+                </li>
+            {/if}
+        {/each}
+    </ul>
+{/if}
+{#if !readonly}
+    <Button
+        type="button"
+        size="sm"
+        color="primary"
+        outline
+        on:click={() => {
+            if (!value["caa"]) value["caa"] = []
+            if (!Array.isArray(value["caa"])) value["caa"] = [value["caa"]]
+            value["caa"].push(newCAARecord(dn, "contactemail", ""));
+        }}
+    >
+        <Icon name="plus" /> {$t("resources.CAA.add-contact-email")}
+    </Button>
+{/if}
+
+<h5 class="mt-3">{$t("resources.CAA.contact-phone")}</h5>
+
+{#if val.records.filter((r) => r.Tag == "contactphone").length}
+    <ul>
+        {#each val.records as contact, k}
+            {#if contact.Tag == "contactphone"}
+                <li class="mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <Input
+                            type="tel"
+                            bind:value={val.records[k].Value}
+                            {readonly}
+                            placeholder="+1-555-0123"
+                        />
+                        {#if !readonly}
+                            <Button
+                                type="button"
+                                size="sm"
+                                color="danger"
+                                on:click={() => { val.records.splice(k, 1); }}
+                            >
+                                <Icon name="trash" />
+                            </Button>
+                        {/if}
+                    </div>
+                </li>
+            {/if}
+        {/each}
+    </ul>
+{/if}
+{#if !readonly}
+    <Button
+        type="button"
+        size="sm"
+        color="primary"
+        outline
+        on:click={() => {
+            if (!value["caa"]) value["caa"] = []
+            if (!Array.isArray(value["caa"])) value["caa"] = [value["caa"]]
+            value["caa"].push(newCAARecord(dn, "contactphone", ""));
+        }}
+    >
+        <Icon name="plus" /> {$t("resources.CAA.add-contact-phone")}
+    </Button>
 {/if}

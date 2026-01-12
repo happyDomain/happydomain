@@ -21,7 +21,7 @@
 
 import { getRrtype, newRR, type dnsResource, type dnsTypeCAA } from "$lib/dns_rr";
 
-export type CAATag = "issue" | "issuewild" | "issuemail" | "iodef";
+export type CAATag = "issue" | "issuewild" | "issuemail" | "issuevmc" | "iodef" | "contactemail" | "contactphone";
 
 // CAA Issuer types
 export class CAAIssuer {
@@ -66,6 +66,7 @@ export class CAAPolicy {
     DisallowIssue = $state<boolean>(false);
     DisallowWildcardIssue = $state<boolean>(false);
     DisallowMailIssue = $state<boolean>(false);
+    DisallowVMCIssue = $state<boolean>(false);
 
     constructor(records: dnsResource) {
         if (records["caa"]) {
@@ -76,6 +77,7 @@ export class CAAPolicy {
         this.DisallowIssue = false;
         this.DisallowWildcardIssue = false;
         this.DisallowMailIssue = false;
+        this.DisallowVMCIssue = false;
         this.refreshDisallowIssue();
     }
 
@@ -92,6 +94,7 @@ export class CAAPolicy {
         this.DisallowIssue = this.hasDisallowIssue("issue");
         this.DisallowWildcardIssue = this.hasDisallowIssue("issuewild");
         this.DisallowMailIssue = this.hasDisallowIssue("issuemail");
+        this.DisallowVMCIssue = this.hasDisallowIssue("issuevmc");
     }
 
     changeDisallowIssue(dn: string, tag: CAATag): (e: Event) => void {

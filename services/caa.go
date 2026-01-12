@@ -94,6 +94,24 @@ func (s *CAAPolicy) GenComment() (ret string) {
 		ret += strings.Join(issuancem, ", ")
 	}
 
+	if t.DisallowVmcIssue {
+		if ret != "" {
+			ret += "; "
+		}
+		ret += "VMC disallowed"
+	} else if len(t.IssueVmc) > 0 {
+		if ret != "" {
+			ret += "; VMC: "
+		}
+
+		var issuancev []string
+		for _, iss := range t.IssueVmc {
+			issuancev = append(issuancev, iss.IssuerDomainName)
+		}
+
+		ret += strings.Join(issuancev, ", ")
+	}
+
 	return
 }
 
@@ -155,7 +173,11 @@ type CAAFields struct {
 	IssueWild             []CAAIssueValue
 	DisallowMailIssue     bool
 	IssueMail             []CAAIssueValue
+	DisallowVmcIssue      bool
+	IssueVmc              []CAAIssueValue
 	Iodef                 []*common.URL
+	ContactEmail          []string
+	ContactPhone          []string
 }
 
 func (analyzed *CAAFields) Analyze(flag uint8, tag, value string) error {
@@ -183,6 +205,14 @@ func (analyzed *CAAFields) Analyze(flag uint8, tag, value string) error {
 		}
 	}
 
+	if tag == "issuevmc" {
+		if value == ";" {
+			analyzed.DisallowVmcIssue = true
+		} else {
+			analyzed.IssueVmc = append(analyzed.IssueVmc, parseIssueValue(value))
+		}
+	}
+
 	if tag == "iodef" {
 		if u, err := url.Parse(value); err != nil {
 			return fmt.Errorf("unable to parse CAA field: %q: %w", value, err)
@@ -190,6 +220,14 @@ func (analyzed *CAAFields) Analyze(flag uint8, tag, value string) error {
 			tmp := common.URL(*u)
 			analyzed.Iodef = append(analyzed.Iodef, &tmp)
 		}
+	}
+
+	if tag == "contactemail" {
+		analyzed.ContactEmail = append(analyzed.ContactEmail, value)
+	}
+
+	if tag == "contactphone" {
+		analyzed.ContactPhone = append(analyzed.ContactPhone, value)
 	}
 
 	return nil
