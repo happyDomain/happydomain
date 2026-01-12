@@ -117,6 +117,25 @@ func newRR(fd io.Writer) {
 	fmt.Fprint(fd, "        default: return rec;\n    }\n")
 }
 
+// isStringType determines if a type should be quoted in DNS output
+func isStringType(t reflect.Type) bool {
+	// Check if this is a basic string type
+	if t.Name() == "string" {
+		return true
+	}
+	// Don't quote IP addresses - they have a specific format
+	if t.Name() == "IP" {
+		return false
+	}
+	// For arrays/slices of strings, we need to check the element type
+	if t.Kind() == reflect.Array || t.Kind() == reflect.Slice {
+		if t.Elem().Name() == "string" {
+			return true
+		}
+	}
+	return false
+}
+
 func rdatatostr(fd io.Writer) {
 	fmt.Fprint(fd, "    switch (rr.Hdr.Rrtype) {\n")
 	for _, ty := range getSortedTypes() {
@@ -137,10 +156,8 @@ func rdatatostr(fd io.Writer) {
 		}
 
 		fmt.Fprintf(fd, `        case %d: { const rec = rr as dnsType%s; return `, ty, strings.Replace(dns.TypeToString[ty], "-", "_", -1))
-		if ty == dns.TypeTXT || ty == dns.TypeAVC || ty == dns.TypeSPF {
-			fmt.Fprint(fd, `JSON.stringify(String(rec.Txt))`)
-		} else if ty == dns.TypeNAPTR {
-			fmt.Fprint(fd, `[rec.Order, rec.Preference, JSON.stringify(String(rec.Flags)), JSON.stringify(String(rec.Service)), JSON.stringify(String(rec.Regexp)), rec.Replacement].join(' ')`)
+		if ty == dns.TypeNAPTR {
+			fmt.Fprint(fd, `[rec.Order, rec.Preference, JSON.stringify(String(rec.Flags)), JSON.stringify(String(rec.Service)), JSON.stringify(String(rec.Regexp)), quoteStringIfNeeded(rec.Replacement)].join(' ')`)
 		} else if ty == dns.TypeAPL {
 			fmt.Fprint(fd, `rec.Prefixes.map((a) => {
         let ret = "";
@@ -160,10 +177,16 @@ func rdatatostr(fd io.Writer) {
         return ret.length + ret;
     }).join(' ')`)
 		} else if t.NumField() == 2 {
+			var field reflect.StructField
 			if t.Field(0).Name == "Hdr" {
-				fmt.Fprintf(fd, `rec.%s.toString()`, t.Field(1).Name)
+				field = t.Field(1)
 			} else {
-				fmt.Fprintf(fd, `rec.%s.toString()`, t.Field(0).Name)
+				field = t.Field(0)
+			}
+			if isStringType(field.Type) {
+				fmt.Fprintf(fd, `quoteStringIfNeeded(rec.%s.toString())`, field.Name)
+			} else {
+				fmt.Fprintf(fd, `rec.%s.toString()`, field.Name)
 			}
 		} else {
 			fmt.Fprint(fd, "[")
@@ -175,11 +198,24 @@ func rdatatostr(fd io.Writer) {
 				if one {
 					fmt.Fprint(fd, ", ")
 				}
-				fmt.Fprintf(fd, "rec.%s", t.Field(i).Name)
-				if t.Field(i).Type.Name() != "IP" && (t.Field(i).Type.Kind() == reflect.Array || t.Field(i).Type.Kind() == reflect.Slice) {
-					fmt.Fprint(fd, ".join(' ')")
+
+				// Check if this is a string type that needs quoting
+				if isStringType(t.Field(i).Type) {
+					if t.Field(i).Type.Kind() == reflect.Array || t.Field(i).Type.Kind() == reflect.Slice {
+						// Array of strings - quote each element
+						fmt.Fprintf(fd, "rec.%s.map(s => quoteStringIfNeeded(s)).join(' ')", t.Field(i).Name)
+					} else {
+						// Single string
+						fmt.Fprintf(fd, "quoteStringIfNeeded(rec.%s.toString())", t.Field(i).Name)
+					}
 				} else {
-					fmt.Fprint(fd, ".toString()")
+					// Non-string type (number, IP, etc.)
+					fmt.Fprintf(fd, "rec.%s", t.Field(i).Name)
+					if t.Field(i).Type.Name() != "IP" && (t.Field(i).Type.Kind() == reflect.Array || t.Field(i).Type.Kind() == reflect.Slice) {
+						fmt.Fprint(fd, ".join(' ')")
+					} else {
+						fmt.Fprint(fd, ".toString()")
+					}
 				}
 				one = true
 			}
@@ -330,6 +366,15 @@ func main() {
 
 	fmt.Fprintln(fd, "export interface SVCBKeyValue {};\n")
 	fmt.Fprintln(fd, "export interface EDNS0 {};\n")
+
+	// Helper function to quote strings containing special DNS characters
+	fmt.Fprintln(fd, "// Helper function to quote strings containing special DNS characters (spaces, quotes, semicolons, parentheses)")
+	fmt.Fprintln(fd, "function quoteStringIfNeeded(s: string): string {")
+	fmt.Fprintln(fd, "    if (s.match(/[\\s;()\\\"]/)) {")
+	fmt.Fprintln(fd, "        return JSON.stringify(s);")
+	fmt.Fprintln(fd, "    }")
+	fmt.Fprintln(fd, "    return s;")
+	fmt.Fprintln(fd, "}\n")
 
 	// dnsRR
 	fmt.Fprint(fd, "export interface dnsRR {\n")
