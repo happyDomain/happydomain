@@ -358,13 +358,13 @@ func (zc *ZoneController) UpdateRecord(c *gin.Context) {
 
 	oldRecord, err := helpers.ParseRecord(form.OldRR, domain.DomainName)
 	if err != nil {
-		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		middleware.ErrorResponse(c, http.StatusBadRequest, fmt.Errorf("Unable to parse the record to update: %w", err))
 		return
 	}
 
 	newRecord, err := helpers.ParseRecord(form.NewRR, domain.DomainName)
 	if err != nil {
-		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		middleware.ErrorResponse(c, http.StatusBadRequest, fmt.Errorf("Unable to parse the new record: %w", err))
 		return
 	}
 
