@@ -38,6 +38,7 @@ var migrations []KVMigrationFunc = []KVMigrationFunc{
 	migrateFrom6,
 	migrateFrom7,
 	migrateFrom8,
+	migrateFrom9,
 }
 
 type Version struct {

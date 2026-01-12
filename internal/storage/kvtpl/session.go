@@ -22,11 +22,20 @@
 package database
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"errors"
 	"fmt"
 
 	"git.happydns.org/happyDomain/model"
 )
+
+// sessionKey generates a hashed database key for a session ID
+func sessionKey(id string) string {
+	hash := sha256.Sum256([]byte(id))
+	encoded := base64.RawURLEncoding.EncodeToString(hash[:])
+	return fmt.Sprintf("user.session-%s", encoded)
+}
 
 func (s *KVStorage) ListAllSessions() (happydns.Iterator[happydns.Session], error) {
 	iter := s.db.Search("user.session-")
@@ -43,7 +52,7 @@ func (s *KVStorage) getSession(id string) (*happydns.Session, error) {
 }
 
 func (s *KVStorage) GetSession(id string) (session *happydns.Session, err error) {
-	return s.getSession(fmt.Sprintf("user.session-%s", id))
+	return s.getSession(sessionKey(id))
 }
 
 func (s *KVStorage) ListAuthUserSessions(user *happydns.UserAuth) (sessions []*happydns.Session, err error) {
@@ -85,11 +94,11 @@ func (s *KVStorage) ListUserSessions(userid happydns.Identifier) (sessions []*ha
 }
 
 func (s *KVStorage) UpdateSession(session *happydns.Session) error {
-	return s.db.Put(fmt.Sprintf("user.session-%s", session.Id), session)
+	return s.db.Put(sessionKey(session.Id), session)
 }
 
 func (s *KVStorage) DeleteSession(id string) error {
-	return s.db.Delete(fmt.Sprintf("user.session-%s", id))
+	return s.db.Delete(sessionKey(id))
 }
 
 func (s *KVStorage) ClearSessions() error {
