@@ -72,6 +72,7 @@
         APIImportZone(domain, selectedHistory, file).then(
             (v) => {
                 isOpen = false;
+                uploadInProgress = false;
                 dispatch("retrieveZoneDone", v);
             },
             (err: any) => {
@@ -83,7 +84,9 @@
 
     function Open(): void {
         isOpen = true;
+        uploadInProgress = false;
         zoneImportContent = "";
+        zoneImportFiles = undefined;
         uploadModalActiveTab = 0;
     }
 

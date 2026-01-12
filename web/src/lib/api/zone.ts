@@ -78,7 +78,7 @@ export async function importZone(domain: Domain, id: string, file: any): Promise
     const formData = new FormData();
     formData.append("zone", file);
 
-    const res = await fetch(`/api/domains/${dnid}/zone/${id}/import`, {
+    const res = await fetch(`/api/domains/${dnid}/zone`, {
         method: "POST",
         headers: { Accept: "application/json" },
         body: formData,
