@@ -79,7 +79,8 @@
             "rollback": "Roll back to this version",
             "share": "Share the zone…",
             "upload": "Import a zone file",
-            "view": "View my zone"
+            "view": "View my zone",
+            "others": "More actions on {{domain}}"
         },
         "alert": {
             "remove": "This action only removes {{domain}} from your happyDomain managed domains. All history and abstracted zones will be discarded. The domain {{domain}} remains fully intact at the provider. Are you sure you want to continue?",

@@ -29,10 +29,10 @@
     import { escape } from "html-escaper";
     import {
         Button,
-        ButtonDropdown,
         ButtonGroup,
         Col,
         Container,
+        Dropdown,
         DropdownItem,
         DropdownMenu,
         DropdownToggle,
@@ -193,12 +193,12 @@
                             <Icon name="server" />
                             {$t("domains.add-a-subdomain")}
                         </Button>
-                        <ButtonDropdown>
-                            <DropdownToggle color="secondary" outline size="sm">
+                        <Dropdown>
+                            <DropdownToggle color="secondary" outline size="sm" aria-label={$t("domains.actions.others", {domain: $domains_idx[selectedDomain].domain})} title={$t("domains.actions.others", {domain: $domains_idx[selectedDomain].domain})}>
                                 {#if retrievalInProgress}
                                     <Spinner size="sm" />
                                 {:else}
-                                    <Icon name="wrench-adjustable-circle" aria-hidden="true" />
+                                    <Icon name="gear-fill" aria-hidden="true" />
                                 {/if}
                             </DropdownToggle>
                             <DropdownMenu>
@@ -238,7 +238,7 @@
                                     {$t("provider.update")}
                                 </DropdownItem>
                             </DropdownMenu>
-                        </ButtonDropdown>
+                        </Dropdown>
                     </div>
                     <div style="min-height:0; overflow-y: auto;" class="placeholder-glow">
                         {#if $sortedDomains && $sortedDomainsWithIntermediate && $thisZone && $thisZone.id == selectedHistory}
