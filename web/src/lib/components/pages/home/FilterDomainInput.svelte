@@ -50,9 +50,17 @@
     let { autofocus = false, noButton = false, ...rest }: Props = $props();
 
     let addingNewDomain = $state(false);
-    async function addDomainToProvider(e: SubmitEvent) {
+    async function submitFilterDomainInput(e: SubmitEvent) {
         e.preventDefault();
 
+        if (actionAddDomain) {
+            addDomainToProvider();
+        } else if (filteredDomains.length > 0) {
+            goto("/domains/" + encodeURIComponent(filteredDomains[0].id));
+        }
+    }
+
+    function addDomainToProvider() {
         addingNewDomain = true;
 
         if ($filteredProvider) {
@@ -88,9 +96,12 @@
     function validateNewDomain(val: string): boolean | undefined {
         return validateDomain(val, "", false);
     }
+
+    let filteredDomains = $derived(!$domains ? [] : $domains.filter((dn) => dn.domain == fqdn($filteredName, "") && (!$filteredProvider || !$domains_by_name[fqdn($filteredName, "")].reduce((acc, d) => acc || d.id_provider == $filteredProvider._id, false))));
+    let actionAddDomain = $derived(($domains && $filteredName && filteredDomains.length == 0) || ($domains && $domains.length == 0));
 </script>
 
-<form onsubmit={addDomainToProvider}>
+<form onsubmit={submitFilterDomainInput}>
     <ListGroup {...rest}>
         <ListGroupItem class="d-flex justify-content-between align-items-center p-0">
             <InputGroup>
@@ -99,7 +110,7 @@
                     class="ms-2 my-1 text-center text-muted"
                     style="font-size: 1.6rem"
                 >
-                    {#if ($domains && $filteredName && $domains.filter((dn) => dn.domain == fqdn($filteredName, "")).length == 0) || ($domains && $domains.length == 0)}
+                    {#if actionAddDomain}
                         <Icon name="plus-lg" />
                     {:else}
                         <Icon name="search" />
@@ -119,12 +130,16 @@
                     style="border:none;box-shadow:none;z-index:0"
                     bind:value={$filteredName}
                 />
-                {#if !noButton && $filteredName.length && (!$domains_by_name[fqdn($filteredName, "")] || !$filteredProvider || !$domains_by_name[fqdn($filteredName, "")].reduce((acc, d) => acc || d.id_provider == $filteredProvider._id, false))}
-                    <Button type="submit" outline color="primary" disabled={addingNewDomain}>
+                {#if !noButton && $filteredName.length}
+                    <Button type="submit" outline color={actionAddDomain ? "primary" : "secondary"} disabled={addingNewDomain}>
                         {#if addingNewDomain}
                             <Spinner size="sm" class="me-1" />
                         {/if}
-                        {$t("common.add-new-thing", { thing: $t("domains.kind") })}
+                        {#if actionAddDomain}
+                            {$t("common.add-new-thing", { thing: $t("domains.kind") })}
+                        {:else}
+                            {$t("domains.view.title")}
+                        {/if}
                     </Button>
                 {/if}
             </InputGroup>
