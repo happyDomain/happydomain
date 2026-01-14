@@ -49,7 +49,7 @@
 </script>
 
 <Card {...rest}>
-    <div class="card-header d-flex justify-content-between">
+    <div class="card-header d-flex justify-content-between align-items-center">
         {$t("provider.title")}
         {#if !$appConfig.disable_providers}
             <Button size="sm" color="light" href="/providers/new">

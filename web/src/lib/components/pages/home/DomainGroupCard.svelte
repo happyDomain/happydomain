@@ -44,7 +44,7 @@
 
 {#if $domains && $domains.length}
     <Card class="mb-3 ${className}">
-        <div class="card-header d-flex justify-content-between">
+        <div class="card-header d-flex justify-content-between align-items-center">
             {$t("domaingroups.title")}
             <Button
                 type="button"
