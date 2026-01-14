@@ -38,34 +38,44 @@
     refreshProviders();
 </script>
 
-<Container class="flex-fill pt-4 pb-5">
-    {#if !$appConfig.disable_providers}
-        <Button
-            type="button"
-            color="primary"
-            class="float-end"
-            on:click={() => goto("providers/new")}
-        >
-            <Icon name="plus" />
-            {$t("common.add-new-thing", { thing: $t("provider.kind") })}
-        </Button>
-    {/if}
-    <h1 class="text-center mb-4">
-        {$t("provider.title")}
-    </h1>
+<Container class="flex-fill my-5">
+    <div class="text-center">
+        <h1 class="display-6 fw-bold">
+            {$t("provider.title")}
+        </h1>
+        <p class="lead mt-1">
+            {$t("provider.description")}
+        </p>
+    </div>
+
     {#if !$providers}
-        <div class="d-flex justify-content-center">
+        <div class="d-flex justify-content-center mt-5">
             <Spinner color="primary" />
         </div>
     {:else}
-        <Row>
-            <Col md={{ size: 8, offset: 2 }}>
-                <ProviderList
-                    items={$providers}
-                    on:new-provider={() => goto("providers/new")}
-                    on:click={(event) => goto("providers/" + encodeURIComponent(event.detail._id))}
-                />
-            </Col>
-        </Row>
+        <div class="mt-5">
+            <Row>
+                <Col md={{ size: 8, offset: 2 }}>
+                    {#if !$appConfig.disable_providers}
+                        <div class="d-flex justify-content-end mb-2">
+                            <Button
+                                type="button"
+                                color="dark"
+                                on:click={() => goto("providers/new")}
+                            >
+                                <Icon name="plus" />
+                                {$t("common.add-new-thing", { thing: $t("provider.kind") })}
+                            </Button>
+                        </div>
+                    {/if}
+
+                    <ProviderList
+                        items={$providers}
+                        on:new-provider={() => goto("providers/new")}
+                        on:click={(event) => goto("providers/" + encodeURIComponent(event.detail._id))}
+                    />
+                </Col>
+            </Row>
+        </div>
     {/if}
 </Container>
