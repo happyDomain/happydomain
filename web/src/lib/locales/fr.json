@@ -2,8 +2,9 @@
     "account": {
         "ask-have": "Vous n'avez pas encore de compte sur notre sympathique plateforme ?",
         "delete": {
-            "delete": "Supprimer mon compte",
+            "delete": "Zone dangereuse",
             "deleted": "Compte supprimé",
+            "description": "Supprimez définitivement votre compte",
             "confirm": "Si vous souhaitez supprimer votre compte et toutes les données qui y sont associées, appuyez sur le bouton ci-dessous :",
             "confirm-twice": "En confirmant la suppression, vous supprimerez définitivement et irrévocablement votre compte de notre base de données et perdrez votre accès à notre interface de gestion facile de vos domaines.",
             "confirm-password": "Pour vous assurer qu'il s'agit bien de vous, veuillez entrer votre mot de passe :",
@@ -302,9 +303,15 @@
         "change": "Changer mon mot de passe",
         "changed": "Changement de mot de passe réussi",
         "confirm-new": "Confirmez votre nouveau mot de passe",
+        "confirm-title": "Confirmer le nouveau mot de passe",
+        "confirm-description": "Saisissez à nouveau votre nouveau mot de passe pour le confirmer",
         "confirmation": "Confirmation du mot de passe",
+        "current-title": "Mot de passe actuel",
+        "current-description": "Entrez votre mot de passe actuel pour vérifier votre identité",
         "enter": "Entrez votre mot de passe actuel",
         "enter-new": "Entrez votre nouveau mot de passe",
+        "new-title": "Nouveau mot de passe",
+        "new-description": "Choisissez un mot de passe fort d'au moins 8 caractères, comprenant des chiffres, des lettres minuscules et majuscules",
         "fill": "Afin de récupérer votre compte, veuillez remplir le formulaire suivant, avec un nouveau mot de passe.",
         "forgotten": "Mot de passe oublié ?",
         "new": "Nouveau mot de passe",
@@ -372,15 +379,31 @@
         "retrieving-providers": "Récupération de vos hébergeurs de domaines ..."
     },
     "settings": {
+        "description": "Personnalisez vos préférences",
+        "subtitle": "Adaptez votre expérience happyDomain à vos besoins",
         "fieldhint": {
-            "title": "Affichage des descriptions des champs",
+            "title": "Indices des champs",
+            "description": "Choisissez comment afficher le texte d'aide pour les champs de formulaire",
             "hide": "Cacher",
             "tooltip": "Infobulle près du champ",
             "focused": "Sous le champ, lorsqu'il a la main",
             "always": "Sous le champ, tout le temps"
         },
         "language": "Langue",
+        "language-description": "Choisissez votre langue préférée pour l'interface",
         "save": "Enregistrer les paramètres",
+        "showrrtypes-title": "Afficher les types d'enregistrements DNS",
+        "security": {
+            "title": "Sécurité & Accès",
+            "description": "Gérez vos paramètres d'authentification et de sécurité",
+            "sessions": {
+                "title": "Sessions actives",
+                "description": "Gérez vos sessions de connexion actives et clés d'API"
+            },
+            "password": {
+                "description": "Définissez un nouveau mot de passe pour votre compte"
+            }
+        },
         "sessions": "Sessions",
         "showrrtypes": "Afficher les types d'enregistrement associés aux services (pour les utilisateurs familiers de la terminologie DNS)",
         "success": "Vous pouvez continuer d'apprécier happyDomain.",
@@ -390,7 +413,8 @@
             "grid": "Vue en grille (la plus lisible)",
             "list": "Vue en liste (la plus rapide)",
             "records": "Liste avec les enregistrements (avancés)",
-            "title": "Voir la zone comme"
+            "title": "Disposition de la vue des zones",
+            "description": "Choisissez comment vous voulez afficher vos zones de domaine"
         }
     },
     "record": {

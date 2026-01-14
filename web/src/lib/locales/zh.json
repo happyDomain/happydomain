@@ -2,9 +2,11 @@
     "account": {
         "ask-have": "还没有账户？",
         "delete": {
-            "delete": "删除我的账户",
+            "delete": "危险区域",
+            "delete-button": "删除我的账户",
             "deleted": "账户已删除",
-            "confirm": "如果您想删除您的账户和与之关联的所有数据，请点击下方按钮：",
+            "description": "永久删除您的账户",
+            "confirm": "如果您想删除您的账户和与之关联的所有数据，请点击删除按钮：",
             "confirm-twice": "确认删除后，您将永久且不可撤销地从我们的数据库中删除您的账户，并失去对我们易用的域名管理界面的访问权限。",
             "confirm-password": "为确保这是您本人的操作，请输入您的密码：",
             "consequence": "您在其他平台上拥有的域名不会受到删除的影响，它们将继续使用当前的数据集响应请求。",
@@ -302,9 +304,15 @@
         "change": "更改我的密码",
         "changed": "密码更改成功",
         "confirm-new": "确认您的新密码",
+        "confirm-title": "确认新密码",
+        "confirm-description": "重新输入您的新密码以确认",
         "confirmation": "密码确认",
+        "current-title": "当前密码",
+        "current-description": "输入您的当前密码以验证您的身份",
         "enter": "输入您当前的密码",
         "enter-new": "输入您的新密码",
+        "new-title": "新密码",
+        "new-description": "选择一个强密码，至少8个字符，包括数字、小写和大写字母",
         "fill": "为了恢复您的账户，请填写以下表单，设置一个新密码。",
         "forgotten": "忘记密码？",
         "new": "新密码",
@@ -401,15 +409,34 @@
         "retrieving-providers": "检索您的提供商..."
     },
     "settings": {
+        "subtitle": "根据您的需求定制您的happyDomain体验",
         "fieldhint": {
-            "title": "显示表单字段提示",
+            "title": "字段提示",
+            "description": "选择如何显示表单字段的帮助文本",
             "hide": "隐藏",
             "tooltip": "字段旁边的工具提示",
             "focused": "聚焦时在字段下方",
             "always": "始终在字段下方"
         },
         "language": "语言",
+        "language-description": "选择您喜欢的界面语言",
         "save": "保存设置",
+        "showrrtypes-title": "显示DNS记录类型",
+        "preferences": {
+            "title": "偏好设置",
+            "description": "自定义您的偏好设置"
+        },
+        "security": {
+            "title": "安全与访问",
+            "description": "管理您的身份验证和安全设置",
+            "sessions": {
+                "title": "活动会话",
+                "description": "管理您的活动登录会话和API密钥"
+            },
+            "password": {
+                "description": "为您的账户设置新密码"
+            }
+        },
         "sessions": "会话",
         "showrrtypes": "显示与服务关联的资源类型（适用于熟悉DNS的用户）",
         "success": "继续享用happyDomain。",
@@ -419,7 +446,8 @@
             "grid": "网格视图（最简单）",
             "list": "列表视图（最快）",
             "records": "带记录的列表（高级）",
-            "title": "查看区域为"
+            "title": "区域视图布局",
+            "description": "选择您想如何显示您的域名区域"
         }
     },
     "record": {

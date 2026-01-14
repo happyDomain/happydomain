@@ -32,9 +32,8 @@
 
     import {
         Button,
-        Card,
-        CardBody,
         Input,
+        ListGroupItem,
         Modal,
         ModalBody,
         ModalFooter,
@@ -99,29 +98,31 @@
     controls.Open = Open;
 </script>
 
-<Card {...rest}>
-    <CardBody>
-        <p>
-            {$t("account.delete.confirm")}
-        </p>
-        <Button
+<ListGroupItem {...rest}>
+    <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-stretch align-items-md-center gap-3">
+        <div>
+            <p class="mb-0">
+                {$t("account.delete.confirm")}
+            </p>
+            <p class="mb-0 text-muted" style="line-height: 1.1">
+                <small>
+                    {$t("account.delete.consequence")}
+                </small>
+            </p>
+        </div>
+        <button
             type="button"
-            color="danger"
+            class="btn btn-danger delete-button"
             disabled={formSent}
-            on:click={Open}
+            onclick={Open}
         >
             {#if formSent}
                 <Spinner size="sm" class="me-2" />
             {/if}
-            {$t("account.delete.delete")}
-        </Button>
-        <p class="mt-2 text-muted" style="line-height: 1.1">
-            <small>
-                {$t("account.delete.consequence")}
-            </small>
-        </p>
-    </CardBody>
-</Card>
+            {$t("account.delete.delete-button")}
+        </button>
+    </div>
+</ListGroupItem>
 
 {#if externalAuth}
     <Modal isOpen={isOpen} toggle={toggleModal}>
@@ -193,3 +194,15 @@
         </ModalFooter>
     </Modal>
 {/if}
+
+<style>
+    .delete-button {
+        width: 100%;
+    }
+
+    @media (min-width: 768px) {
+        .delete-button {
+            width: auto;
+        }
+    }
+</style>

@@ -97,11 +97,11 @@
     }
 </script>
 
-<div class="d-flex justify-content-between">
-    <h2 id="sessions">
-        {$t("settings.sessions")}
-    </h2>
-    <div>
+<div class="d-flex flex-column flex-md-row justify-content-between mt-5 mb-3 mb-md-2 gap-1">
+    <h3 id="sessions" class="fw-bold">
+        {$t("settings.security.sessions.title")}
+    </h3>
+    <div class="d-flex flex-column flex-md-row gap-1 align-self-start">
         <Button color="info" outline on:click={() => (newSessionModalOpen = true)}>
             <i class="bi bi-plus-lg"></i>
             {$t("sessions.create")}

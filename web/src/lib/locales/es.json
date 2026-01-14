@@ -2,9 +2,11 @@
     "account": {
         "ask-have": "¿Aún no tienes una cuenta en nuestra hermosa plataforma?",
         "delete": {
-            "delete": "Eliminar mi cuenta",
+            "delete": "Zona peligrosa",
+            "delete-button": "Eliminar mi cuenta",
             "deleted": "Cuenta Eliminada",
-            "confirm": "Si deseas eliminar tu cuenta y todos los datos asociados, presiona el botón de abajo:",
+            "description": "Eliminar permanentemente tu cuenta",
+            "confirm": "Si deseas eliminar tu cuenta y todos los datos asociados, presiona el botón de eliminar:",
             "confirm-twice": "Al confirmar la eliminación, borrarás permanente e irrevocablemente tu cuenta de nuestra base de datos y perderás tu acceso a nuestra interfaz de gestión fácil para tus dominios.",
             "confirm-password": "Para asegurarnos de que realmente eres tú, por favor ingresa tu contraseña:",
             "consequence": "Tus dominios alojados en otras plataformas no se verán afectados por la eliminación, seguirán respondiendo con el conjunto de datos actual.",
@@ -302,9 +304,15 @@
         "change": "Cambiar mi contraseña",
         "changed": "Contraseña Cambiada con Éxito",
         "confirm-new": "Confirma tu nueva contraseña",
+        "confirm-title": "Confirmar Nueva Contraseña",
+        "confirm-description": "Vuelve a ingresar tu nueva contraseña para confirmar",
         "confirmation": "Confirmación de contraseña",
+        "current-title": "Contraseña Actual",
+        "current-description": "Ingresa tu contraseña actual para verificar tu identidad",
         "enter": "Ingresa tu contraseña actual",
         "enter-new": "Ingresa tu nueva contraseña",
+        "new-title": "Nueva Contraseña",
+        "new-description": "Elige una contraseña segura con al menos 8 caracteres, incluyendo números, minúsculas y mayúsculas",
         "fill": "Para recuperar tu cuenta, por favor completa el siguiente formulario con una contraseña nueva.",
         "forgotten": "¿Olvidaste tu contraseña?",
         "new": "Nueva contraseña",
@@ -401,15 +409,34 @@
         "retrieving-providers": "Recuperando tus proveedores..."
     },
     "settings": {
+        "subtitle": "Personaliza tu experiencia de happyDomain según tus necesidades",
         "fieldhint": {
-            "title": "Mostrar pistas para campos de formulario",
+            "title": "Sugerencias de campos",
+            "description": "Elige cómo mostrar el texto de ayuda para los campos del formulario",
             "hide": "Ocultar",
             "tooltip": "Información emergente cerca del campo",
             "focused": "Debajo del campo cuando está enfocado",
             "always": "Debajo del campo, siempre"
         },
         "language": "Idioma",
+        "language-description": "Elige tu idioma preferido para la interfaz",
         "save": "Guardar configuración",
+        "showrrtypes-title": "Mostrar tipos de registros DNS",
+        "preferences": {
+            "title": "Preferencias",
+            "description": "Personaliza tus preferencias"
+        },
+        "security": {
+            "title": "Seguridad y Acceso",
+            "description": "Gestiona tu autenticación y configuración de seguridad",
+            "sessions": {
+                "title": "Sesiones Activas",
+                "description": "Gestiona tus sesiones de inicio de sesión activas y claves API"
+            },
+            "password": {
+                "description": "Establece una nueva contraseña para tu cuenta"
+            }
+        },
         "sessions": "Sesiones",
         "showrrtypes": "Mostrar tipo de recurso asociado con servicios (para usuarios familiarizados con DNS)",
         "success": "Continúa disfrutando de happyDomain.",
@@ -419,7 +446,8 @@
             "grid": "Vista de cuadrícula (más fácil)",
             "list": "Vista de lista (más rápida)",
             "records": "Lista con registros (avanzado)",
-            "title": "Ver zona como"
+            "title": "Diseño de vista de zona",
+            "description": "Elige cómo quieres mostrar tus zonas de dominio"
         }
     },
     "record": {

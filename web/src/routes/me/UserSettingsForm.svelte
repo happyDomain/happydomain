@@ -72,81 +72,119 @@
     }
 </script>
 
-<form onsubmit={saveSettings}>
-    <div class="mb-3">
-        <label for="language-select">
-            {$t("settings.language")}
-        </label>
-        <Input id="language-select" type="select" bind:value={settings.language}>
-            {#each $locales as lang}
-                <option value={lang}>{$t(`locales.${lang}`)}</option>
-            {/each}
-        </Input>
-    </div>
-    <div class="mb-3">
-        <label for="fieldhint-select">
-            {$t("settings.fieldhint.title")}
-        </label>
-        <Input id="fieldhint-select" type="select" bind:value={settings.fieldhint}>
-            <option value={0}>{$t("settings.fieldhint.hide")}</option>
-            <option value={1}>{$t("settings.fieldhint.tooltip")}</option>
-            <option value={2}>{$t("settings.fieldhint.focused")}</option>
-            <option value={3}>{$t("settings.fieldhint.always")}</option>
-        </Input>
-    </div>
-    <div class="mb-3">
-        <label for="zoneview">
-            {$t("settings.zoneview.title")}
-        </label>
-
-        <ButtonGroup class="w-100" id="zoneview">
-            <Button
-                type="button"
-                color="secondary"
-                outline={settings.zoneview !== 0}
-                on:click={() => (settings.zoneview = 0)}
-            >
-                <Icon name="grid-fill" aria-hidden="true" /><br />
-                {$t("settings.zoneview.grid")}
-            </Button>
-            <Button
-                type="button"
-                color="secondary"
-                outline={settings.zoneview !== 1}
-                on:click={() => (settings.zoneview = 1)}
-            >
-                <Icon name="list-ul" aria-hidden="true" /><br />
-                {$t("settings.zoneview.list")}
-            </Button>
-            <Button
-                type="button"
-                color="secondary"
-                outline={settings.zoneview !== 2}
-                on:click={() => (settings.zoneview = 2)}
-            >
-                <Icon name="menu-button-wide-fill" aria-hidden="true" /><br />
-                {$t("settings.zoneview.records")}
-            </Button>
-        </ButtonGroup>
-    </div>
-    <div class="mb-3">
-        <div class="form-check form-switch">
-            <input
-                class="form-check-input"
-                type="checkbox"
-                role="switch"
-                id="showrrtypes"
-                bind:checked={settings.showrrtypes}
-            />
-            <label class="form-check-label" for="showrrtypes">{$t("settings.showrrtypes")}</label>
+<form class="list-group" onsubmit={saveSettings}>
+    <div class="list-group-item">
+        <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center gap-3">
+            <label for="language-select" class="flex-grow-1 cursor-pointer mb-0">
+                <div class="h5 mb-1">{$t("settings.language")}</div>
+                <p class="mb-0 text-muted small">{$t("settings.language-description")}</p>
+            </label>
+            <div class="settings-input">
+                <Input id="language-select" type="select" bind:value={settings.language}>
+                    {#each $locales as lang}
+                        <option value={lang}>{$t(`locales.${lang}`)}</option>
+                    {/each}
+                </Input>
+            </div>
         </div>
     </div>
-    <div class="d-flex justify-content-around">
-        <Button type="submit" color="primary" disabled={formSent}>
-            {#if formSent}
-                <Spinner size="sm" class="me-2" />
-            {/if}
-            {$t("settings.save")}
-        </Button>
+
+    <div class="list-group-item">
+        <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center gap-3">
+            <label for="fieldhint-select" class="flex-grow-1 cursor-pointer mb-0">
+                <div class="h5 mb-1">{$t("settings.fieldhint.title")}</div>
+                <p class="mb-0 text-muted small">{$t("settings.fieldhint.description")}</p>
+            </label>
+            <div class="settings-input">
+                <Input id="fieldhint-select" type="select" bind:value={settings.fieldhint}>
+                    <option value={0}>{$t("settings.fieldhint.hide")}</option>
+                    <option value={1}>{$t("settings.fieldhint.tooltip")}</option>
+                    <option value={2}>{$t("settings.fieldhint.focused")}</option>
+                    <option value={3}>{$t("settings.fieldhint.always")}</option>
+                </Input>
+            </div>
+        </div>
+    </div>
+
+    <div class="list-group-item">
+        <div class="d-flex flex-column">
+            <div class="mb-3">
+                <h5 class="mb-1">{$t("settings.zoneview.title")}</h5>
+                <p class="mb-0 text-muted small">{$t("settings.zoneview.description")}</p>
+            </div>
+            <ButtonGroup class="pt-2 pb-4" id="zoneview">
+                <Button
+                    type="button"
+                    color="secondary"
+                    outline={settings.zoneview !== 0}
+                    on:click={() => (settings.zoneview = 0)}
+                >
+                    <Icon name="grid-fill" aria-hidden="true" /><br />
+                    {$t("settings.zoneview.grid")}
+                </Button>
+                <Button
+                    type="button"
+                    color="secondary"
+                    outline={settings.zoneview !== 1}
+                    on:click={() => (settings.zoneview = 1)}
+                >
+                    <Icon name="list-ul" aria-hidden="true" /><br />
+                    {$t("settings.zoneview.list")}
+                </Button>
+                <Button
+                    type="button"
+                    color="secondary"
+                    outline={settings.zoneview !== 2}
+                    on:click={() => (settings.zoneview = 2)}
+                >
+                    <Icon name="menu-button-wide-fill" aria-hidden="true" /><br />
+                    {$t("settings.zoneview.records")}
+                </Button>
+            </ButtonGroup>
+        </div>
+    </div>
+
+    <div class="list-group-item">
+        <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-start align-items-md-center gap-3">
+            <label for="showrrtypes" class="flex-grow-1 cursor-pointer mb-0">
+                <div class="h5 mb-1">{$t("settings.showrrtypes-title")}</div>
+                <p class="mb-0 text-muted small">{$t("settings.showrrtypes")}</p>
+            </label>
+            <div>
+                <div class="form-check form-switch">
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        role="switch"
+                        id="showrrtypes"
+                        bind:checked={settings.showrrtypes}
+                    />
+                    <label class="form-check-label visually-hidden" for="showrrtypes">{$t("settings.showrrtypes-title")}</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="list-group-item">
+        <div class="d-flex justify-content-center justify-content-md-end align-items-center">
+            <Button type="submit" color="primary" disabled={formSent} class="settings-input">
+                {#if formSent}
+                    <Spinner size="sm" class="me-2" />
+                {/if}
+                {$t("settings.save")}
+            </Button>
+        </div>
     </div>
 </form>
+
+<style>
+    .settings-input {
+        width: 100%;
+    }
+
+    @media (min-width: 768px) {
+        .settings-input {
+            width: 200px;
+        }
+    }
+</style>

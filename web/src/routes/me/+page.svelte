@@ -26,12 +26,11 @@
 
     import {
         Button,
-        Card,
-        CardBody,
         Container,
         Col,
         Input,
         InputGroup,
+        ListGroup,
         Modal,
         ModalBody,
         ModalFooter,
@@ -51,50 +50,56 @@
     let is_auth_user_req = $userSession.id ? fetch(`/api/users/${$userSession.id}/is_auth_user`) : false;
 </script>
 
-<Container class="my-4">
-    <h2 id="settings">
-        {$t("settings.title")}
-    </h2>
+<Container class="my-4 pb-5">
+    <div class="text-center">
+        <h1 class="display-6 fw-bold">
+            {$t("settings.title")}
+        </h1>
+        <p class="lead mt-1" style="text-wrap: balance;">
+            {$t("settings.subtitle")}
+        </p>
+    </div>
     {#if !$userSession.settings}
         <div class="d-flex justify-content-center">
             <Spinner color="primary" />
         </div>
     {:else}
-        <Row>
-            <Col class="offset-md-1 offset-lg-2 col col-md-10 col-lg-8">
-                <UserSettingsForm bind:settings={$userSession.settings} />
-            </Col>
-        </Row>
+        <h2 id="preferences" class="display-7 fw-bold mt-5">
+            <i class="bi bi-sliders"></i> {$t("settings.preferences.title")}
+        </h2>
+        <p class="lead">
+            {$t("settings.preferences.description")}
+        </p>
 
-        <hr class="my-4" />
+        <UserSettingsForm bind:settings={$userSession.settings} />
 
         {#if $userSession.email !== "_no_auth"}
+            <h2 id="security" class="display-7 fw-bold mt-5">
+                <i class="bi bi-shield"></i> {$t("settings.security.title")}
+            </h2>
+            <p class="lead">
+                {$t("settings.security.description")}
+            </p>
+
             <SessionsManager />
 
-            <hr class="my-4" />
-
-            <h2 id="password-change">
+            <h3 class="fw-bold mt-5" id="password-change">
                 {$t("password.change")}
-            </h2>
+            </h3>
+            <p>
+                {$t("settings.security.password.description")}
+            </p>
             {#await is_auth_user_req}
                 <div class="d-flex justify-content-center my-2">
                     <Spinner />
                 </div>
             {:then res}
                 {#if res && res.status === 204}
-                    <Row>
-                        <Col md={{ size: 8, offset: 2 }}>
-                            <Card>
-                                <CardBody>
-                                    <ChangePasswordForm />
-                                </CardBody>
-                            </Card>
-                        </Col>
-                    </Row>
+                    <ChangePasswordForm />
                 {:else}
                     {#await fetch("/auth/has_oidc") then res}
                         {#await res.json() then oidc}
-                            <div class="m-5 alert alert-secondary">
+                            <div class="alert alert-secondary">
                                 {$t("account.no-password-change", { provider: oidc.provider })}
                             </div>
                         {/await}
@@ -102,24 +107,23 @@
                 {/if}
             {/await}
 
-            <hr class="my-4" />
-
-            <h2 id="delete-account">
-                {$t("account.delete.delete")}
+            <h2 class="display-7 fw-bold mt-5" id="delete-account">
+                <i class="bi bi-x-circle"></i> {$t("account.delete.delete")}
             </h2>
+            <p class="lead">
+                {$t("account.delete.description")}
+            </p>
             {#await is_auth_user_req}
                 <div class="d-flex justify-content-center my-2">
                     <Spinner />
                 </div>
             {:then res}
-                <Row>
-                    <Col md={{ size: 8, offset: 2 }}>
-                        <DeleteAccountCard externalAuth={res && res.status !== 204} />
-                    </Col>
-                </Row>
+                <ListGroup>
+                    <DeleteAccountCard externalAuth={res && res.status !== 204} />
+                </ListGroup>
             {/await}
         {:else}
-            <div class="m-5 alert alert-secondary">
+            <div class="alert alert-secondary mt-4">
                 {$t("errors.account-no-auth")}
             </div>
         {/if}

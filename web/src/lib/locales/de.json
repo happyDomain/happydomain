@@ -2,9 +2,11 @@
     "account": {
         "ask-have": "Haben Sie noch kein Konto auf unserer schönen Plattform?",
         "delete": {
-            "delete": "Mein Konto löschen",
+            "delete": "Gefahrenzone",
+            "delete-button": "Mein Konto löschen",
             "deleted": "Konto gelöscht",
-            "confirm": "Wenn Sie Ihr Konto und alle damit verbundenen Daten löschen möchten, drücken Sie die Schaltfläche unten:",
+            "description": "Ihr Konto dauerhaft löschen",
+            "confirm": "Wenn Sie Ihr Konto und alle damit verbundenen Daten löschen möchten, drücken Sie die Schaltfläche \"Löschen\":",
             "confirm-twice": "Mit der Bestätigung der Löschung werden Sie Ihr Konto dauerhaft und unwiderruflich aus unserer Datenbank löschen und verlieren den Zugriff auf unsere einfache Verwaltungsoberfläche für Ihre Domains.",
             "confirm-password": "Um sicherzustellen, dass Sie es wirklich sind, geben Sie bitte Ihr Passwort ein:",
             "consequence": "Ihre auf anderen Plattformen gehosteten Domains bleiben von der Löschung unberührt und werden weiterhin mit dem aktuellen Datensatz antworten.",
@@ -302,9 +304,15 @@
         "change": "Mein Passwort ändern",
         "changed": "Passwort erfolgreich geändert",
         "confirm-new": "Bestätigen Sie Ihr neues Passwort",
+        "confirm-title": "Neues Passwort bestätigen",
+        "confirm-description": "Geben Sie Ihr neues Passwort erneut ein, um es zu bestätigen",
         "confirmation": "Passwortbestätigung",
+        "current-title": "Aktuelles Passwort",
+        "current-description": "Geben Sie Ihr aktuelles Passwort ein, um Ihre Identität zu bestätigen",
         "enter": "Geben Sie Ihr aktuelles Passwort ein",
         "enter-new": "Geben Sie Ihr neues Passwort ein",
+        "new-title": "Neues Passwort",
+        "new-description": "Wählen Sie ein starkes Passwort mit mindestens 8 Zeichen, einschließlich Zahlen, Klein- und Großbuchstaben",
         "fill": "Um Ihr Konto wiederherzustellen, füllen Sie bitte das folgende Formular mit einem neuen Passwort aus.",
         "forgotten": "Passwort vergessen?",
         "new": "Neues Passwort",
@@ -401,15 +409,34 @@
         "retrieving-providers": "Abrufen Ihrer Anbieter..."
     },
     "settings": {
+        "subtitle": "Passen Sie Ihr happyDomain-Erlebnis an Ihre Bedürfnisse an",
         "fieldhint": {
-            "title": "Hinweise für Formularfelder anzeigen",
+            "title": "Feldhinweise",
+            "description": "Wählen Sie aus, wie Hilfetext für Formularfelder angezeigt werden soll",
             "hide": "Ausblenden",
             "tooltip": "Tooltip neben dem Feld",
             "focused": "Unter dem Feld, wenn fokussiert",
             "always": "Unter dem Feld, immer"
         },
         "language": "Sprache",
+        "language-description": "Wählen Sie Ihre bevorzugte Sprache für die Benutzeroberfläche",
         "save": "Einstellungen speichern",
+        "showrrtypes-title": "DNS-Eintragstypen anzeigen",
+        "preferences": {
+            "title": "Einstellungen",
+            "description": "Passen Sie Ihre Einstellungen an"
+        },
+        "security": {
+            "title": "Sicherheit & Zugriff",
+            "description": "Verwalten Sie Ihre Authentifizierungs- und Sicherheitseinstellungen",
+            "sessions": {
+                "title": "Aktive Sitzungen",
+                "description": "Verwalten Sie Ihre aktiven Anmeldesitzungen und API-Schlüssel"
+            },
+            "password": {
+                "description": "Legen Sie ein neues Passwort für Ihr Konto fest"
+            }
+        },
         "sessions": "Sitzungen",
         "showrrtypes": "Ressourcentyp anzeigen, der mit Diensten verbunden ist (für Benutzer, die mit DNS vertraut sind)",
         "success": "Genießen Sie happyDomain weiterhin.",
@@ -419,7 +446,8 @@
             "grid": "Rasteransicht (am einfachsten)",
             "list": "Listenansicht (am schnellsten)",
             "records": "Liste mit Einträgen (fortgeschritten)",
-            "title": "Zone anzeigen als"
+            "title": "Zonenlayout",
+            "description": "Wählen Sie aus, wie Sie Ihre Domainzonen anzeigen möchten"
         }
     },
     "record": {

@@ -2,9 +2,11 @@
     "account": {
         "ask-have": "Don't already have an account on our beautiful platform?",
         "delete": {
-            "delete": "Delete my account",
+            "delete": "Dangerous zone",
+            "delete-button": "Delete my account",
             "deleted": "Account Deleted",
-            "confirm": "If you want to delete your account and all data associated with it, press the button below:",
+            "description": "Permanently delete your account",
+            "confirm": "If you want to delete your account and all data associated with it, press the delete button:",
             "confirm-twice": "By confirming the deletion, you will permanently and irrevocably delete your account from our database and will loose your access to our easy management interface for your domains.",
             "confirm-password": "To ensure this is really you, please enter your password:",
             "consequence": "Your domains owned on others platforms will not be affected by the deletion, they'll continue to respond with the current dataset.",
@@ -322,9 +324,15 @@
         "change": "Change my password",
         "changed": "Password Successfully Changed",
         "confirm-new": "Confirm your new password",
+        "confirm-title": "Confirm New Password",
+        "confirm-description": "Re-enter your new password to confirm",
         "confirmation": "Password confirmation",
+        "current-title": "Current Password",
+        "current-description": "Enter your current password to verify your identity",
         "enter": "Enter your current password",
         "enter-new": "Enter your new password",
+        "new-title": "New Password",
+        "new-description": "Choose a strong password with at least 8 characters, including numbers, lowercase and uppercase letters",
         "fill": "In order to recover your account, please fill the following form, with a fresh password.",
         "forgotten": "Forgotten password?",
         "new": "New password",
@@ -448,15 +456,34 @@
         "retrieving-providers": "Retrieving your providers..."
     },
     "settings": {
+        "subtitle": "Tailor your happyDomain experience to your needs",
         "fieldhint": {
-            "title": "Display hint for form fields",
+            "title": "Field hints",
+            "description": "Choose how to display help text for form fields",
             "hide": "Hide",
             "tooltip": "Tooltip near field",
             "focused": "Under field when focused",
             "always": "Under field, always"
         },
         "language": "Language",
+        "language-description": "Choose your preferred language for the interface",
         "save": "Save settings",
+        "showrrtypes-title": "Show DNS record types",
+        "preferences": {
+            "title": "Preferences",
+          "description": "Customize your preferences"
+        },
+        "security": {
+            "title": "Security & Access",
+            "description": "Manage your authentication and security settings",
+            "sessions": {
+                "title": "Active Sessions",
+                "description": "Manage your active login sessions and API keys"
+            },
+            "password": {
+                "description": "Set a new password for your account"
+            }
+        },
         "sessions": "Sessions",
         "showrrtypes": "Show resource type associated with services (for users familiar with DNS)",
         "success": "Continue to enjoy happyDomain.",
@@ -466,7 +493,8 @@
             "grid": "Grid view (easiest)",
             "list": "List view (fastest)",
             "records": "List with records (advanced)",
-            "title": "View zone as"
+            "title": "Zone view layout",
+            "description": "Choose how you want to display your domain zones"
         }
     },
     "record": {
