@@ -149,10 +149,12 @@
     <Container fluid class="flex-fill d-flex flex-column">
         <Row class="flex-grow-1">
             <Col md={{ offset: 0, size: 4 }} class="bg-light pt-3 pb-5">
-                <div class="pt-2 sticky-top">
-                    <h1 class="text-center mb-3">
-                        {$t("menu.dns-resolver")}
-                    </h1>
+                <div class="sticky-top">
+                    <div class="mb-4">
+                        <h1 class="display-6 fw-bold">
+                            {$t("menu.dns-resolver")}
+                        </h1>
+                    </div>
                     <ResolverForm
                         bind:request_pending
                         value={form}
@@ -161,50 +163,97 @@
                 </div>
             </Col>
             {#if error_response !== null}
-                <Col md="8" class="pt-3">
-                    <h3 class="text-center text-danger">{error_response}</h3>
+                <Col md="8" class="pt-3 pb-5">
+                    <h2 class="display-7 fw-bold mt-3">
+                        <i class="bi bi-exclamation-triangle"></i> {$t("errors.resolve")}
+                    </h2>
+                    <p class="lead">
+                        {$t("resolver.error-description")}
+                    </p>
+                    <div class="card border-danger">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-x-circle text-danger fs-3 me-3"></i>
+                                <div>
+                                    <h5 class="card-title text-danger mb-1">
+                                        {$t("resolver.query-failed")}
+                                    </h5>
+                                    <p class="card-text mb-0">{error_response}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </Col>
             {:else if responses === "no-answer"}
-                <Col md="8" class="pt-2">
-                    <h3>{$t("common.records", { n: 0, type: question ? question.type : "-" })}</h3>
+                <Col md="8" class="pt-3 pb-5">
+                    <h2 class="display-7 fw-bold mt-3">
+                        {$t("common.records", { n: 0, type: question ? question.type : "-" })}
+                    </h2>
+                    <p class="lead">
+                        {$t("resolver.no-records-description")}
+                    </p>
+                    <div class="card">
+                        <div class="card-body text-center py-5">
+                            <i class="bi bi-inbox fs-1 text-muted"></i>
+                            <p class="mt-3 mb-0 text-muted">
+                                {$t("resolver.no-answer")}
+                            </p>
+                        </div>
+                    </div>
                 </Col>
             {:else if responses != null}
-                <Col md="8" class="pt-2">
+                <Col md="8" class="pt-3 pb-5">
                     {@const resByType = responseByType(
                         filteredResponses(/* @ts-ignore */ responses, (page.state as ResolverPageState).showDNSSEC ?? false),
                     )}
+                    <h2 class="display-7 fw-bold">
+                        {$t("resolver.query-results")}
+                    </h2>
+                    <p class="lead mb-4">
+                        {#if question}
+                            {$t("resolver.results-description", { domain: question.domain, type: question.type })}
+                        {:else}
+                            {$t("resolver.results-description-default")}
+                        {/if}
+                    </p>
                     {#each Object.keys(resByType) as type}
                         {@const rrs = resByType[type]}
-                        <div>
-                            <h3>{$t("common.records", { n: rrs.length, type: nsrrtype(type) })}</h3>
-                            <Table size="sm" hover>
-                                <thead>
-                                    <tr>
-                                        {#each recordsFields(Number(type)) as field}
-                                            <th>
-                                                {$t("record." + field)}
-                                            </th>
-                                        {/each}
-                                        <th>
-                                            {$t("resolver.ttl")}
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {#each rrs as record}
-                                        <tr>
-                                            {#each recordsFields(Number(type)) as field}
-                                                <td>
-                                                    {record[field]}
-                                                </td>
+                        <div class="card mb-4">
+                            <h3 class="card-header h5 fw-bold mb-0">
+                                {$t("common.records", { n: rrs.length, type: nsrrtype(type) })}
+                            </h3>
+                            <div class="card-body p-0">
+                                <div>
+                                    <Table class="table-responsive mb-0 flush" size="sm" hover striped>
+                                        <thead>
+                                            <tr>
+                                                {#each recordsFields(Number(type)) as field}
+                                                    <th>
+                                                        {$t("record." + field)}
+                                                    </th>
+                                                {/each}
+                                                <th>
+                                                    <i class="bi bi-clock"></i> {$t("resolver.ttl")}
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {#each rrs as record}
+                                                <tr>
+                                                    {#each recordsFields(Number(type)) as field}
+                                                        <td class="font-monospace">
+                                                            {record[field]}
+                                                        </td>
+                                                    {/each}
+                                                    <td>
+                                                        {nsttl(Number(record.Hdr.Ttl))}
+                                                    </td>
+                                                </tr>
                                             {/each}
-                                            <td>
-                                                {nsttl(Number(record.Hdr.Ttl))}
-                                            </td>
-                                        </tr>
-                                    {/each}
-                                </tbody>
-                            </Table>
+                                        </tbody>
+                                    </Table>
+                                </div>
+                            </div>
                         </div>
                     {/each}
                 </Col>
@@ -212,14 +261,23 @@
         </Row>
     </Container>
 {:else}
-    <Container fluid class="d-flex flex-column">
-        <Row class="flex-grow-1">
-            <Col md={{ offset: 2, size: 8 }} class="pt-4 pb-5">
-                <h1 class="text-center mb-3">
-                    {$t("menu.dns-resolver")}
-                </h1>
-                <ResolverForm bind:request_pending on:submit={resolveDomain} />
+    <div class="my-5 container flex-fill">
+        <div class="text-center">
+            <h1 class="display-6 fw-bold">
+                <i class="bi bi-search"></i> {$t("menu.dns-resolver")}
+            </h1>
+            <p class="lead mt-1">
+                {$t("resolver.page-description")}
+            </p>
+        </div>
+        <Row class="justify-content-center mt-4">
+            <Col md="10" lg="8">
+                <div class="card rounded-4 p-2">
+                    <div class="card-body">
+                        <ResolverForm bind:request_pending on:submit={resolveDomain} />
+                    </div>
+                </div>
             </Col>
         </Row>
-    </Container>
+    </div>
 {/if}

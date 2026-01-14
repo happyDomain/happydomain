@@ -37,6 +37,7 @@
     const dispatch = createEventDispatcher();
 
     interface Props {
+        class?: string;
         value?: ResolverForm;
         showDNSSEC?: boolean;
         sortedDomains?: Array<Domain>;
@@ -44,6 +45,7 @@
     }
 
     let {
+        class: className = "",
         value = $bindable({ domain: "", type: "ANY", resolver: "local" }),
         showDNSSEC = $bindable(false),
         sortedDomains = [],
@@ -56,7 +58,7 @@
     }
 </script>
 
-<form class="pt-3 pb-5" onsubmit={preventDefault(submitRequest)}>
+<form class={className} onsubmit={preventDefault(submitRequest)}>
     <FormGroup>
         <label for="domain">
             {$t("common.domain")}
