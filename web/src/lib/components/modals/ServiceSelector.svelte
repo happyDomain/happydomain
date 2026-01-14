@@ -32,15 +32,19 @@
 
     import { Input, Modal, ModalBody } from "@sveltestrap/sveltestrap";
 
+    import { getProviderSpec } from "$lib/api/provider_specs";
     import { initializeService } from "$lib/api/service_specs";
     import { getRrtype, newRR } from "$lib/dns_rr";
     import ModalFooter from "$lib/components/modals/Footer.svelte";
     import ModalHeader from "$lib/components/modals/Header.svelte";
     import FilterServiceSelectorInput from "$lib/components/services/FilterServiceSelectorInput.svelte";
     import ServiceSelector from "$lib/components/services/ServiceSelector.svelte";
+    import { filterServices } from "$lib/components/services/service-filter";
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service.svelte";
+    import { providers_idx } from "$lib/stores/providers";
+    import { servicesSpecsList, servicesSpecsLoaded } from "$lib/stores/services";
     import { filteredName } from "$lib/stores/serviceSelector";
 
     const dispatch = createEventDispatcher();
@@ -74,11 +78,34 @@
         }
     }
 
+    function submitFilter(e: SubmitEvent) {
+        e.preventDefault();
+
+        // Get provider specs and find the first available matching service
+        getProviderSpec($providers_idx[origin.id_provider]._srctype).then((prvdspecs) => {
+            if (!prvdspecs || !$servicesSpecsLoaded) return;
+
+            // Use the shared filter function to get available services
+            const { available } = filterServices($servicesSpecsList, prvdspecs, zservices, dn, $filteredName);
+
+            // Select the first available service and submit
+            if (available.length > 0) {
+                value = available[0]._svctype;
+
+                // Submit the selector form
+                const form = document.getElementById('selectServiceForm') as HTMLFormElement;
+                if (form) {
+                    form.requestSubmit();
+                }
+            }
+        });
+    }
+
     function Open(domain: string): void {
         $filteredName = "";
         dn = domain;
         isOpen = true;
-        value = "";
+        value = null;
     }
 
     controls.Open = Open;
@@ -87,7 +114,9 @@
 <Modal {isOpen} scrollable {toggle}>
     <ModalHeader {toggle} dn={fqdn(dn, origin.domain)} />
     <ModalBody class="pt-0">
-        <FilterServiceSelectorInput class="my-2" />
+        <form onsubmit={submitFilter}>
+            <FilterServiceSelectorInput class="my-2" />
+        </form>
         <form id="selectServiceForm" onsubmit={submitSelectorForm}>
             <ServiceSelector {dn} {origin} bind:value {zservices} />
         </form>

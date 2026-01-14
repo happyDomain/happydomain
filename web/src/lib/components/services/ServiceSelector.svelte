@@ -26,11 +26,11 @@
 
     import { getProviderSpec } from "$lib/api/provider_specs";
     import ServiceSelectorItem from "./ServiceSelectorItem.svelte";
-    import { nsrrtype } from "$lib/dns";
+    import { filterServices } from "./service-filter";
     import type { Domain } from "$lib/model/domain";
     import type { ProviderInfos } from "$lib/model/provider";
     import type { ServiceCombined } from "$lib/model/service.svelte";
-    import { passRestrictions, type ServiceInfos } from "$lib/model/service_specs.svelte";
+    import type { ServiceInfos } from "$lib/model/service_specs.svelte";
     import { providers_idx } from "$lib/stores/providers";
     import { servicesSpecsList, servicesSpecsLoaded } from "$lib/stores/services";
     import { filteredName } from "$lib/stores/serviceSelector";
@@ -74,22 +74,47 @@
 
     let filtered_family: string | null = $state(null);
 
-    let allServicesWithRestrictions: Array<{ svc: ServiceInfos; reason: string | null }> = $derived(provider_specs !== null ? $servicesSpecsList.filter(svc => svc.family !== "hidden").map(svc => { const reason = passRestrictions(svc, provider_specs!, zservices, dn); return { svc, reason }; }) : []);
-    let availableNewServices: Array<ServiceInfos> = $derived(allServicesWithRestrictions.filter(({ svc, reason }) => reason == null).map(({ svc, reason }) => svc));
-    let disabledNewServices: Array<{ svc: ServiceInfos; reason: string }> = $derived(allServicesWithRestrictions.filter(({ svc, reason }) => reason != null) as Array<{ svc: ServiceInfos; reason: string }>);
+    let filteredServicesResult = $derived(
+        provider_specs !== null
+            ? filterServices($servicesSpecsList, provider_specs, zservices, dn, $filteredName, filtered_family)
+            : { available: [], disabled: [] }
+    );
 
-    function svc_match(svc: ServiceInfos, arg1: string | null, arg2: string) {
-        return (
-            filtered_family == null || svc.family == filtered_family
-        ) && (
-            !$filteredName ||
-            svc.name.toLowerCase().indexOf($filteredName.toLowerCase()) >= 0 ||
-            svc.description.toLowerCase().indexOf($filteredName.toLowerCase()) >= 0 ||
-            (svc.record_types && svc.record_types.filter((rtype) => nsrrtype(rtype).toLowerCase().indexOf($filteredName.toLowerCase()) >= 0).length) ||
-            (svc.categories && svc.categories.filter((category) => category.toLowerCase().indexOf($filteredName.toLowerCase()) >= 0).length)
-        )
+    function handleKeyDown(event: KeyboardEvent) {
+        if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') {
+            return;
+        }
+
+        // Only handle if we have a filtered result
+        if (!provider_specs || !$servicesSpecsLoaded) return;
+
+        event.preventDefault();
+
+        // Combine available and disabled services into a single navigable list
+        const allServices = [
+            ...filteredServicesResult.available,
+            ...filteredServicesResult.disabled.map(d => d.svc)
+        ];
+
+        if (allServices.length === 0) return;
+
+        // Find current index based on selected value
+        const currentIndex = allServices.findIndex(svc => svc._svctype === value);
+
+        let newIndex: number;
+        if (event.key === 'ArrowDown') {
+            // Move down, wrap to top if at end
+            newIndex = currentIndex < allServices.length - 1 ? currentIndex + 1 : 0;
+        } else {
+            // Move up, wrap to bottom if at top
+            newIndex = currentIndex > 0 ? currentIndex - 1 : allServices.length - 1;
+        }
+
+        value = allServices[newIndex]._svctype;
     }
 </script>
+
+<svelte:document on:keydown={handleKeyDown} />
 
 {#if !provider_specs || !$servicesSpecsLoaded}
     <div class="d-flex justify-content-center">
@@ -118,25 +143,21 @@
         <div class="mb-3"></div>
     {/if}
     <ListGroup>
-        {#each availableNewServices as svc}
-            {#if svc_match(svc, filtered_family, $filteredName)}
-                <ServiceSelectorItem
-                    active={value === svc._svctype}
-                    {svc}
-                    on:click={() => (value = svc._svctype)}
-                />
-            {/if}
+        {#each filteredServicesResult.available as svc}
+            <ServiceSelectorItem
+                active={value === svc._svctype}
+                {svc}
+                on:click={() => (value = svc._svctype)}
+            />
         {/each}
-        {#each disabledNewServices as { svc, reason }}
-            {#if svc_match(svc, filtered_family, $filteredName)}
-                <ServiceSelectorItem
-                    active={value === svc._svctype}
-                    disabled
-                    {reason}
-                    {svc}
-                    on:click={() => (value = svc._svctype)}
-                />
-            {/if}
+        {#each filteredServicesResult.disabled as { svc, reason }}
+            <ServiceSelectorItem
+                active={value === svc._svctype}
+                disabled
+                {reason}
+                {svc}
+                on:click={() => (value = svc._svctype)}
+            />
         {/each}
     </ListGroup>
 {/if}
