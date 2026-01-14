@@ -49,7 +49,11 @@
         <Table hover style="overflow-x: auto">
             <thead>
                 <tr class="sticky-top bg-light" style="z-index:0">
-                    <th style="background: none">Fournisseurs</th>
+                    <th style="background: none">
+                        <h1 class="position-absolute display-6 fw-bold" style="bottom: 0">
+                            {$t('menu.provider-features')}
+                        </h1>
+                    </th>
                     {#each capabilities as cap}
                         <th
                             style="background: none; transform: rotate(-45deg) translateX(-2.5rem) translateY(-2rem); writing-mode: vertical-rl; white-space: nowrap;"
