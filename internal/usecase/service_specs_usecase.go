@@ -76,9 +76,56 @@ func (ssu *serviceSpecsUsecase) InitializeService(svctype reflect.Type) (interfa
 
 	// Otherwise, initialize with default empty values
 	svcValue := svcPtr.Elem()
+
+	// Special case: if there's only one field and it's a slice, initialize with one empty element
+	settableFields := ssu.countSettableFields(svcValue)
+	if settableFields == 1 {
+		for i := 0; i < svcValue.NumField(); i++ {
+			field := svcValue.Field(i)
+			fieldType := svcValue.Type().Field(i)
+
+			if !field.CanSet() || fieldType.Anonymous {
+				continue
+			}
+
+			// If it's a slice, initialize with one empty element
+			if field.Kind() == reflect.Slice {
+				elemType := field.Type().Elem()
+				slice := reflect.MakeSlice(field.Type(), 1, 1)
+
+				// If element is a pointer to struct, initialize with an empty object
+				if elemType.Kind() == reflect.Ptr && elemType.Elem().Kind() == reflect.Struct {
+					newElem := reflect.New(elemType.Elem())
+					ssu.initializeStructFields(newElem.Elem())
+					slice.Index(0).Set(newElem)
+				} else {
+					// Set the first element to zero value (e.g., "" for string)
+					slice.Index(0).Set(reflect.Zero(elemType))
+				}
+
+				field.Set(slice)
+				return svc, nil
+			}
+			break
+		}
+	}
+
 	ssu.initializeStructFields(svcValue)
 
 	return svc, nil
+}
+
+func (ssu *serviceSpecsUsecase) countSettableFields(v reflect.Value) int {
+	count := 0
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		fieldType := v.Type().Field(i)
+
+		if field.CanSet() && !fieldType.Anonymous {
+			count++
+		}
+	}
+	return count
 }
 
 func (ssu *serviceSpecsUsecase) initializeStructFields(v reflect.Value) {
