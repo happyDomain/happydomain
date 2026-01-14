@@ -28,7 +28,7 @@
 
     import { nsrrtype } from '$lib/dns';
     import type { ServiceCombined } from '$lib/model/service.svelte';
-    import { servicesSpecs } from '$lib/stores/services';
+    import { servicesSpecs, servicesSpecsLoaded } from '$lib/stores/services';
     import { userSession } from '$lib/stores/usersession';
 
     interface Props {
@@ -39,7 +39,7 @@
 
 </script>
 
-{#if service && $userSession.settings && $servicesSpecs}
+{#if service && $userSession.settings && $servicesSpecsLoaded}
     {#if $servicesSpecs[service._svctype].categories && $servicesSpecs[service._svctype].categories.length && !$userSession.settings.showrrtypes}
         <div class="d-flex align-items-center gap-1">
             {#each $servicesSpecs[service._svctype].categories as category}

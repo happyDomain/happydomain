@@ -33,7 +33,7 @@
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service.svelte";
     import { ZoneViewGrid, ZoneViewList, ZoneViewRecords } from "$lib/model/usersettings";
-    import { servicesSpecs } from "$lib/stores/services";
+    import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { userSession } from "$lib/stores/usersession";
     import { t } from "$lib/translations";
 
@@ -84,7 +84,7 @@
                                                     {origin}
                                                     {rr}
                                                 />
-                                                {#if $servicesSpecs}
+                                                {#if $servicesSpecsLoaded}
                                                     <strong class="text-muted" style="white-space: nowrap">{$servicesSpecs[service._svctype].name}</strong>
                                                 {/if}
                                             </td>
@@ -93,7 +93,7 @@
                                 {/snippet}
                             </Service>
                         {/await}
-                    {:else if $servicesSpecs}
+                    {:else if $servicesSpecsLoaded}
                         <tr>
                             <td
                                 class="d-flex justify-content-between gap-2"

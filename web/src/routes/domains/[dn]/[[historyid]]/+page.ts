@@ -22,12 +22,12 @@
 import type { Load } from "@sveltejs/kit";
 import { get } from "svelte/store";
 
-import { servicesSpecs, refreshServicesSpecs } from "$lib/stores/services";
+import { servicesSpecsLoaded, refreshServicesSpecs } from "$lib/stores/services";
 
 export const load: Load = async ({ parent }) => {
     const data = await parent();
 
-    if (!get(servicesSpecs))
+    if (!get(servicesSpecsLoaded))
         refreshServicesSpecs();
 
     return {

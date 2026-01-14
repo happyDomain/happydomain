@@ -93,7 +93,7 @@
     }
 </script>
 
-{#if $servicesSpecs && $servicesSpecs[type]}
+{#if $servicesSpecs[type]}
     <p class="text-muted">
         {$servicesSpecs[type].description}
     </p>

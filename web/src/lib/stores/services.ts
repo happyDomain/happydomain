@@ -19,18 +19,30 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { writable, type Writable } from "svelte/store";
+import { derived, writable, type Writable } from "svelte/store";
 import type { ServiceInfos } from "$lib/model/service_specs.svelte";
 
-export const servicesSpecs: Writable<null | Record<string, ServiceInfos>> = writable(null);
+export const servicesSpecs: Writable<Record<string, ServiceInfos>> = writable({});
+export const servicesSpecsLoaded: Writable<boolean> = writable(false);
+export const servicesSpecsError: Writable<string | null> = writable(null);
 
 export async function refreshServicesSpecs() {
+    servicesSpecsLoaded.set(false);
+    servicesSpecsError.set(null);
+
     const res = await fetch("/api/service_specs", { headers: { Accept: "application/json" } });
     if (res.status == 200) {
         const map = await res.json();
         servicesSpecs.set(map);
+        servicesSpecsLoaded.set(true);
         return map;
     } else {
-        throw new Error((await res.json()).errmsg);
+        const errmsg = (await res.json()).errmsg;
+        servicesSpecsError.set(errmsg);
+        throw new Error(errmsg);
     }
 }
+
+export const servicesSpecsList = derived(servicesSpecs, ($servicesSpecs: Record<string, ServiceInfos>) => {
+    return Object.keys($servicesSpecs).map((idx) => $servicesSpecs[idx]);
+});

@@ -32,7 +32,7 @@
     import type { ServiceCombined } from "$lib/model/service.svelte";
     import { passRestrictions, type ServiceInfos } from "$lib/model/service_specs.svelte";
     import { providers_idx } from "$lib/stores/providers";
-    import { servicesSpecs } from "$lib/stores/services";
+    import { servicesSpecsList, servicesSpecsLoaded } from "$lib/stores/services";
     import { filteredName } from "$lib/stores/serviceSelector";
     import { t } from "$lib/translations";
 
@@ -74,33 +74,9 @@
 
     let filtered_family: string | null = $state(null);
 
-    let availableNewServices: Array<ServiceInfos> = $state([]);
-    let disabledNewServices: Array<{ svc: ServiceInfos; reason: string }> = $state([]);
-
-    $effect(() => {
-        if (provider_specs && $servicesSpecs) {
-            const ans: Array<ServiceInfos> = [];
-            const dns: Array<{ svc: ServiceInfos; reason: string }> = [];
-
-            for (const idx in $servicesSpecs) {
-                const svc = $servicesSpecs[idx];
-
-                if (svc.family === "hidden") {
-                    continue;
-                }
-
-                const reason = passRestrictions(svc, provider_specs, zservices, dn);
-                if (reason == null) {
-                    ans.push(svc);
-                } else {
-                    dns.push({ svc, reason });
-                }
-            }
-
-            availableNewServices = ans;
-            disabledNewServices = dns;
-        }
-    });
+    let allServicesWithRestrictions: Array<{ svc: ServiceInfos; reason: string | null }> = $derived(provider_specs !== null ? $servicesSpecsList.filter(svc => svc.family !== "hidden").map(svc => { const reason = passRestrictions(svc, provider_specs!, zservices, dn); return { svc, reason }; }) : []);
+    let availableNewServices: Array<ServiceInfos> = $derived(allServicesWithRestrictions.filter(({ svc, reason }) => reason == null).map(({ svc, reason }) => svc));
+    let disabledNewServices: Array<{ svc: ServiceInfos; reason: string }> = $derived(allServicesWithRestrictions.filter(({ svc, reason }) => reason != null) as Array<{ svc: ServiceInfos; reason: string }>);
 
     function svc_match(svc: ServiceInfos, arg1: string | null, arg2: string) {
         return (
@@ -115,7 +91,7 @@
     }
 </script>
 
-{#if !provider_specs || !$servicesSpecs}
+{#if !provider_specs || !$servicesSpecsLoaded}
     <div class="d-flex justify-content-center">
         <Spinner color="primary" />
     </div>

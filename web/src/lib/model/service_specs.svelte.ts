@@ -25,7 +25,7 @@ import { getRrtype, newRR } from "$lib/dns_rr";
 import type { Field } from "$lib/model/custom_form.svelte";
 import { getAvailableResourceTypes, type ProviderInfos } from "$lib/model/provider";
 import type { ServiceCombined } from "$lib/model/service.svelte";
-import { servicesSpecs } from "$lib/stores/services";
+import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
 
 export class ServiceRestrictions {
     alone = $state(false);
@@ -112,9 +112,9 @@ export function passRestrictions(
 
         if (zservices[dn] == null) return null;
 
-        const sspecs = get(servicesSpecs);
+        if (!get(servicesSpecsLoaded)) return null;
 
-        if (sspecs == null) return null;
+        const sspecs = get(servicesSpecs);
 
         // Handle Alone restriction: only nearAlone are allowed.
         if (svcinfo.restrictions.alone) {

@@ -37,7 +37,7 @@
     import { controls as ctrlServicePath } from "$lib/components/services/NewServicePath.svelte";
     import type { Domain } from '$lib/model/domain';
     import type { ServiceCombined } from '$lib/model/service.svelte';
-    import { servicesSpecs } from '$lib/stores/services';
+    import { servicesSpecs, servicesSpecsLoaded } from '$lib/stores/services';
     import { t } from '$lib/translations';
 
     interface Props {
@@ -63,7 +63,7 @@
           (!service ? "border-style: dashed; " : "")}
     on:click={openServiceModal}
 >
-    {#if !$servicesSpecs}
+    {#if !$servicesSpecsLoaded}
         <div class="d-flex justify-content-center">
             <Spinner color="primary" />
         </div>

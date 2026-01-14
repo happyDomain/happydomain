@@ -43,7 +43,7 @@
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service.svelte";
-    import { servicesSpecs } from "$lib/stores/services";
+    import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import type { Zone } from "$lib/model/zone";
     import { t } from "$lib/translations";
 
@@ -121,7 +121,7 @@
             {toggle}
         >
             {#if service._id != undefined}
-                {#if $servicesSpecs}
+                {#if $servicesSpecsLoaded}
                     {$t("common.update-what", { what: $servicesSpecs[service._svctype].name } as any)}
                 {:else}
                     {$t("service.update")}
@@ -134,7 +134,7 @@
         </ModalHeader>
         <ModalBody class="pt-0">
             <form class="mt-2" id="addSvcForm" onsubmit={submitServiceForm}>
-                {#if $servicesSpecs == null}
+                {#if !$servicesSpecsLoaded}
                     <div class="d-flex justify-content-center">
                         <Spinner />
                     </div>

@@ -136,7 +136,7 @@
             target={"popoversvc-" + dn.replace(".", "__")}
         >
             {#each services as service}
-                {#if $servicesSpecs && $servicesSpecs[service._svctype]}
+                {#if $servicesSpecs[service._svctype]}
                     <strong>{$servicesSpecs[service._svctype].name}:</strong>
                 {/if}
                 <span class="text-muted">{service._comment}</span>
