@@ -131,7 +131,7 @@
 >
     <NavbarBrand
         href="/"
-        style="padding: 0; margin: -.5rem 0;"
+        style="padding: 0; margin: -.5rem 1rem -.5rem 0;"
         target={$userSession.id ? undefined : "_self"}
     >
         <Logo />
@@ -148,10 +148,17 @@
                     <Button color="dark" size="sm">
                         <Icon name="person" />
                         {#if $userSession.email !== "_no_auth"}
-                            {$userSession.email}
-                        {:else}
-                            {$t("menu.quick-menu")}
+                            <span class="d-inline d-sm-none">
+                                {$userSession.email.split("@")[0]}
+                            </span>
                         {/if}
+                        <span class="d-none d-sm-inline">
+                            {#if $userSession.email !== "_no_auth"}
+                                {$userSession.email}
+                            {:else}
+                                {$t("menu.quick-menu")}
+                            {/if}
+                        </span>
                     </Button>
                 </DropdownToggle>
                 <DropdownMenu end>
