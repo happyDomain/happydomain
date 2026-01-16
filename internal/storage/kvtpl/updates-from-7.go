@@ -288,7 +288,7 @@ func migrateFrom7(s *KVStorage) (err error) {
 
 		var challenge abstract.GitlabPageVerif
 
-		rr, err := dns.NewRR(fmt.Sprintf("_gitlab-pages-verification-code.zZzZ. 0 IN TXT %q", val["Code"].(string)))
+		rr, err := dns.NewRR(fmt.Sprintf("_gitlab-pages-verification-code.zZzZ. 0 IN TXT gitlab-pages-verification-code=%q", val["Code"].(string)))
 		if err != nil {
 			return nil, err
 		}
