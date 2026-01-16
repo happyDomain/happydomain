@@ -62,23 +62,38 @@ func GetDNSControlProviderCapabilities(prvd DNSControlConfigAdapter) (caps []str
 	for _, v := range []uint16{dns.TypeA, dns.TypeAAAA, dns.TypeCNAME, dns.TypeMX, dns.TypeNS, dns.TypeTXT} {
 		caps = append(caps, fmt.Sprintf("rr-%d-%s", v, dns.TypeToString[v]))
 	}
-	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanUseSOA) {
-		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeSOA, dns.TypeToString[dns.TypeSOA]))
-	}
 	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanUseCAA) {
 		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeCAA, dns.TypeToString[dns.TypeCAA]))
+	}
+	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanUseDHCID) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeDHCID, dns.TypeToString[dns.TypeDHCID]))
+	}
+	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanUseDNAME) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeDNAME, dns.TypeToString[dns.TypeDNAME]))
 	}
 	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanUseDS) {
 		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeDS, dns.TypeToString[dns.TypeDS]))
 	}
+	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanUseHTTPS) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeHTTPS, dns.TypeToString[dns.TypeHTTPS]))
+	}
+	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanUseLOC) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeLOC, dns.TypeToString[dns.TypeLOC]))
+	}
 	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanUseNAPTR) {
 		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeNAPTR, dns.TypeToString[dns.TypeNAPTR]))
 	}
-	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanUseOPENPGPKEY) {
-		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeOPENPGPKEY, dns.TypeToString[dns.TypeOPENPGPKEY]))
-	}
 	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanUsePTR) {
 		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypePTR, dns.TypeToString[dns.TypePTR]))
+	}
+	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanUseRP) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeRP, dns.TypeToString[dns.TypeRP]))
+	}
+	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanUseSMIMEA) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeSMIMEA, dns.TypeToString[dns.TypeSMIMEA]))
+	}
+	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanUseSOA) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeSOA, dns.TypeToString[dns.TypeSOA]))
 	}
 	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanUseSRV) {
 		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeSRV, dns.TypeToString[dns.TypeSRV]))
@@ -86,8 +101,14 @@ func GetDNSControlProviderCapabilities(prvd DNSControlConfigAdapter) (caps []str
 	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanUseSSHFP) {
 		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeSSHFP, dns.TypeToString[dns.TypeSSHFP]))
 	}
+	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanUseSVCB) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeSVCB, dns.TypeToString[dns.TypeSVCB]))
+	}
 	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanUseTLSA) {
 		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeTLSA, dns.TypeToString[dns.TypeTLSA]))
+	}
+	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.CanUseOPENPGPKEY) {
+		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeOPENPGPKEY, dns.TypeToString[dns.TypeOPENPGPKEY]))
 	}
 
 	return
