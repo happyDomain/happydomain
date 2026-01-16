@@ -34,6 +34,9 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// RegisterDNSControlProviderAdapter registers a DNS provider that uses DNSControl as its backend.
+// It automatically populates the provider's capabilities by querying DNSControl's capability system
+// and sets the help link to the DNSControl documentation for that provider.
 func RegisterDNSControlProviderAdapter(creator happydns.ProviderCreatorFunc, infos happydns.ProviderInfos, registerFunc happydns.RegisterProviderFunc) {
 	prvInstance := creator().(DNSControlConfigAdapter)
 	infos.Capabilities = GetDNSControlProviderCapabilities(prvInstance)
@@ -42,7 +45,10 @@ func RegisterDNSControlProviderAdapter(creator happydns.ProviderCreatorFunc, inf
 	registerFunc(creator, infos)
 }
 
-// GetProviderCapabilities lists available capabilities for the given Provider.
+// GetDNSControlProviderCapabilities queries DNSControl to determine which capabilities
+// a provider supports, including domain creation, zone listing, and supported record types.
+// Returns a slice of capability strings in the format "rr-{type}-{name}" for record types
+// and feature names like "CreateDomain" and "ListDomains" for provider features.
 func GetDNSControlProviderCapabilities(prvd DNSControlConfigAdapter) (caps []string) {
 	// Features
 	if dnscontrol.ProviderHasCapability(prvd.DNSControlName(), dnscontrol.DocCreateDomains) {
@@ -87,11 +93,20 @@ func GetDNSControlProviderCapabilities(prvd DNSControlConfigAdapter) (caps []str
 	return
 }
 
+// DNSControlConfigAdapter is an interface that provider configurations must implement
+// to work with DNSControl. It allows converting provider-specific configuration
+// into the format expected by DNSControl's provider initialization.
 type DNSControlConfigAdapter interface {
+	// DNSControlName returns the DNSControl provider name (e.g., "CLOUDFLARE", "GANDI_V5")
 	DNSControlName() string
+	// ToDNSControlConfig converts the provider configuration into a map of string key-value pairs
+	// that DNSControl uses to initialize the provider
 	ToDNSControlConfig() (map[string]string, error)
 }
 
+// NewDNSControlProviderAdapter creates a new provider actuator instance from a DNSControl configuration.
+// It initializes the DNSControl provider with the configuration and wraps it in a happyDomain-compatible interface.
+// Returns an error if the provider configuration is invalid or DNSControl fails to create the provider.
 func NewDNSControlProviderAdapter(configAdapter DNSControlConfigAdapter) (ret happydns.ProviderActuator, err error) {
 	defer func() {
 		if a := recover(); a != nil {
@@ -117,21 +132,32 @@ func NewDNSControlProviderAdapter(configAdapter DNSControlConfigAdapter) (ret ha
 	return &DNSControlAdapterNSProvider{provider, auditor}, nil
 }
 
+// DNSControlAdapterNSProvider wraps a DNSControl provider to implement the happyDomain ProviderActuator interface.
+// It provides a bridge between happyDomain's provider interface and DNSControl's provider system.
 type DNSControlAdapterNSProvider struct {
+	// DNSServiceProvider is the underlying DNSControl provider instance
 	DNSServiceProvider dnscontrol.DNSServiceProvider
-	RecordAuditor      dnscontrol.RecordAuditor
+	// RecordAuditor validates records for provider-specific requirements
+	RecordAuditor dnscontrol.RecordAuditor
 }
 
+// CanListZones checks if the provider supports listing zones (domains).
+// Returns true if the provider implements the ZoneLister interface.
 func (p *DNSControlAdapterNSProvider) CanListZones() bool {
 	_, ok := p.DNSServiceProvider.(dnscontrol.ZoneLister)
 	return ok
 }
 
+// CanCreateDomain checks if the provider supports creating new domains.
+// Returns true if the provider implements the ZoneCreator interface.
 func (p *DNSControlAdapterNSProvider) CanCreateDomain() bool {
 	_, ok := p.DNSServiceProvider.(dnscontrol.ZoneCreator)
 	return ok
 }
 
+// GetZoneRecords retrieves all DNS records for the specified domain from the provider.
+// The domain parameter should be a fully qualified domain name (with or without trailing dot).
+// Returns a slice of records converted from DNSControl's record format to happyDomain's Record type.
 func (p *DNSControlAdapterNSProvider) GetZoneRecords(domain string) (ret []happydns.Record, err error) {
 	var records models.Records
 
@@ -153,6 +179,10 @@ func (p *DNSControlAdapterNSProvider) GetZoneRecords(domain string) (ret []happy
 	return
 }
 
+// GetZoneCorrections compares desired records against the current zone state and returns
+// the changes needed to synchronize them. It validates records using the provider's auditor
+// before computing corrections.
+// Returns a slice of corrections, the total number of corrections needed, and any error.
 func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []happydns.Record) (ret []*happydns.Correction, nbCorrections int, err error) {
 	var dc *models.DomainConfig
 	dc, err = NewDNSControlDomainConfig(strings.TrimSuffix(domain, "."), rrs)
@@ -201,6 +231,9 @@ func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []ha
 	return ret, nbCorrections, nil
 }
 
+// CreateDomain creates a new zone (domain) on the provider.
+// The fqdn parameter should be a fully qualified domain name (with or without trailing dot).
+// Returns an error if the provider doesn't support domain creation or if creation fails.
 func (p *DNSControlAdapterNSProvider) CreateDomain(fqdn string) error {
 	zc, ok := p.DNSServiceProvider.(dnscontrol.ZoneCreator)
 	if !ok {
@@ -210,6 +243,9 @@ func (p *DNSControlAdapterNSProvider) CreateDomain(fqdn string) error {
 	return zc.EnsureZoneExists(strings.TrimSuffix(fqdn, "."), nil)
 }
 
+// ListZones retrieves a list of all zones (domains) managed by this provider.
+// Returns a slice of domain names or an error if the provider doesn't support listing
+// or if the operation fails.
 func (p *DNSControlAdapterNSProvider) ListZones() ([]string, error) {
 	zl, ok := p.DNSServiceProvider.(dnscontrol.ZoneLister)
 	if !ok {

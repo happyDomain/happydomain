@@ -31,7 +31,8 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-// Convert Change Type to Correction Kind
+// DNSControlFromCorrectionType converts a DNSControl diff verb (CREATE, CHANGE, DELETE, REPORT)
+// to a happyDomain correction kind (Addition, Update, Deletion, Other).
 func DNSControlFromCorrectionType(in diff2.Verb) (kind happydns.CorrectionKind) {
 	switch in {
 	case diff2.CREATE:
@@ -47,6 +48,9 @@ func DNSControlFromCorrectionType(in diff2.Verb) (kind happydns.CorrectionKind) 
 	return
 }
 
+// DNSControlCorrectionKindFromMessage parses a DNSControl correction message to determine
+// the type of change. It looks for prefixes like "+ CREATE", "± MODIFY", "- DELETE" in the message.
+// Returns the corresponding correction kind (Addition, Update, Deletion, Other).
 func DNSControlCorrectionKindFromMessage(msg string) (kind happydns.CorrectionKind) {
 	if strings.HasPrefix(msg, "+ CREATE") {
 		kind = happydns.CorrectionKindAddition
@@ -61,6 +65,10 @@ func DNSControlCorrectionKindFromMessage(msg string) (kind happydns.CorrectionKi
 	return
 }
 
+// DNSControlDiffByRecord computes the differences between two sets of DNS records using DNSControl's
+// diff engine. It converts happyDomain records to DNSControl format, computes the diff, and returns
+// the corrections needed to transform oldrrs into newrrs.
+// Returns a slice of corrections, the total number of corrections, and any error.
 func DNSControlDiffByRecord(oldrrs []happydns.Record, newrrs []happydns.Record, origin string) ([]*happydns.Correction, int, error) {
 	oldrecords, err := DNSControlRRtoRC(oldrrs, origin)
 	if err != nil {
@@ -88,6 +96,10 @@ func DNSControlDiffByRecord(oldrrs []happydns.Record, newrrs []happydns.Record, 
 	return ret, nbCorrections, nil
 }
 
+// DNSControlRRtoRC converts a slice of happyDomain records to DNSControl's RecordConfig format.
+// It handles conversion of custom record types (like happydns.TXT, happydns.SPF) to standard dns.RR
+// before converting to DNSControl format.
+// The origin parameter specifies the zone name (with or without trailing dot).
 func DNSControlRRtoRC(rrs []happydns.Record, origin string) (dnscontrol.Records, error) {
 	records := make([]*dnscontrol.RecordConfig, len(rrs))
 
@@ -107,6 +119,9 @@ func DNSControlRRtoRC(rrs []happydns.Record, origin string) (dnscontrol.Records,
 	return records, nil
 }
 
+// NewDNSControlDomainConfig creates a DNSControl DomainConfig from happyDomain records.
+// This is used to represent a desired zone state when computing corrections or validating records.
+// The origin parameter specifies the zone name (with or without trailing dot).
 func NewDNSControlDomainConfig(origin string, rrs []happydns.Record) (*dnscontrol.DomainConfig, error) {
 	records, err := DNSControlRRtoRC(rrs, origin)
 
