@@ -77,7 +77,7 @@ func (ssu *serviceSpecsUsecase) InitializeService(svctype reflect.Type) (interfa
 	// Otherwise, initialize with default empty values
 	svcValue := svcPtr.Elem()
 
-	// Special case: if there's only one field and it's a slice, initialize with one empty element
+	// Special case: if there's only one field and it's a slice of non-complex types, initialize with one empty element
 	settableFields := ssu.countSettableFields(svcValue)
 	if settableFields == 1 {
 		for i := 0; i < svcValue.NumField(); i++ {
@@ -88,23 +88,18 @@ func (ssu *serviceSpecsUsecase) InitializeService(svctype reflect.Type) (interfa
 				continue
 			}
 
-			// If it's a slice, initialize with one empty element
+			// If it's a slice, initialize with one empty element only if it's not a pointer or struct
 			if field.Kind() == reflect.Slice {
 				elemType := field.Type().Elem()
-				slice := reflect.MakeSlice(field.Type(), 1, 1)
 
-				// If element is a pointer to struct, initialize with an empty object
-				if elemType.Kind() == reflect.Ptr && elemType.Elem().Kind() == reflect.Struct {
-					newElem := reflect.New(elemType.Elem())
-					ssu.initializeStructFields(newElem.Elem())
-					slice.Index(0).Set(newElem)
-				} else {
+				// Only initialize with one element if it's not a pointer or struct
+				if elemType.Kind() != reflect.Ptr && elemType.Kind() != reflect.Struct {
+					slice := reflect.MakeSlice(field.Type(), 1, 1)
 					// Set the first element to zero value (e.g., "" for string)
 					slice.Index(0).Set(reflect.Zero(elemType))
+					field.Set(slice)
+					return svc, nil
 				}
-
-				field.Set(slice)
-				return svc, nil
 			}
 			break
 		}
