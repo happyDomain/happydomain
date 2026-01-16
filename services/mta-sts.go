@@ -104,7 +104,7 @@ func mtasts_analyze(a *Analyzer) (err error) {
 		domain := strings.TrimPrefix(record.Header().Name, "_mta-sts.")
 
 		err = a.UseRR(record, domain, &MTA_STS{
-			Record: helpers.RRRelative(record, domain).(*happydns.TXT),
+			Record: helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*happydns.TXT),
 		})
 		if err != nil {
 			return

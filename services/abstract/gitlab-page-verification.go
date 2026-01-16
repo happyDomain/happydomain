@@ -52,7 +52,7 @@ func gitlabverification_analyze(a *svcs.Analyzer) error {
 		domain := strings.TrimPrefix(record.Header().Name, "_gitlab-pages-verification-code.")
 		if txt, ok := record.(*dns.TXT); ok && strings.HasPrefix(strings.Join(txt.Txt, ""), "gitlab-pages-verification-code=") {
 			a.UseRR(record, domain, &GitlabPageVerif{
-				Record: helpers.RRRelative(record, domain).(*happydns.TXT),
+				Record: helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*happydns.TXT),
 			})
 		}
 	}

@@ -56,7 +56,7 @@ func txt_analyze(a *Analyzer) (err error) {
 		if txt, ok := record.(*happydns.TXT); ok {
 			domain := record.Header().Name
 			err = a.UseRR(record, domain, &TXT{
-				Record: helpers.RRRelative(txt, domain).(*happydns.TXT),
+				Record: helpers.RRRelativeSubdomain(txt, a.GetOrigin(), domain).(*happydns.TXT),
 			})
 			if err != nil {
 				return

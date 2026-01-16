@@ -122,13 +122,13 @@ next_pool:
 		// Register the use only now, to avoid registering multi-A/AAAA
 		for _, rr := range rrs {
 			if s.A != nil {
-				s.A = helpers.RRRelative(s.A, dn).(*dns.A)
+				s.A = helpers.RRRelativeSubdomain(s.A, a.GetOrigin(), dn).(*dns.A)
 			}
 			if s.AAAA != nil {
-				s.AAAA = helpers.RRRelative(s.AAAA, dn).(*dns.AAAA)
+				s.AAAA = helpers.RRRelativeSubdomain(s.AAAA, a.GetOrigin(), dn).(*dns.AAAA)
 			}
 			for i := range s.SSHFP {
-				s.SSHFP[i] = helpers.RRRelative(s.SSHFP[i], dn).(*dns.SSHFP)
+				s.SSHFP[i] = helpers.RRRelativeSubdomain(s.SSHFP[i], a.GetOrigin(), dn).(*dns.SSHFP)
 			}
 
 			a.UseRR(rr, dn, s)

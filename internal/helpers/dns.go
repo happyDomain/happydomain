@@ -147,6 +147,27 @@ func RRRelative(rr happydns.Record, origin string) happydns.Record {
 		rr.Header().Name = strings.TrimSuffix(strings.TrimSuffix(rr.Header().Name, origin), ".")
 	}
 
+	return RDataRelative(rr, origin)
+}
+
+// RRRelativeSubdomain strips the end of the given RR if it is relative to origin.
+func RRRelativeSubdomain(rr happydns.Record, origin, subdomain string) happydns.Record {
+	if !strings.HasSuffix(origin, ".") {
+		origin += "."
+	}
+
+	subdomain = DomainFQDN(subdomain, origin)
+
+	// Make header relative
+	if strings.HasSuffix(rr.Header().Name, subdomain) {
+		rr.Header().Name = strings.TrimSuffix(strings.TrimSuffix(rr.Header().Name, subdomain), ".")
+	}
+
+	return RDataRelative(rr, origin)
+}
+
+// RDataRelative strips the end of the given RData if it is relative to origin.
+func RDataRelative(rr happydns.Record, origin string) happydns.Record {
 	// Make RData relative
 	if ns, ok := rr.(*dns.NS); ok {
 		ns.Ns = DomainRelative(ns.Ns, origin)

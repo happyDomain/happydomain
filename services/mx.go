@@ -99,7 +99,7 @@ func mx_analyze(a *Analyzer) (err error) {
 		if mx, ok := record.(*dns.MX); ok {
 			services[dn].MXs = append(
 				services[dn].MXs,
-				helpers.RRRelative(mx, dn).(*dns.MX),
+				helpers.RRRelativeSubdomain(mx, a.GetOrigin(), dn).(*dns.MX),
 			)
 
 			err = a.UseRR(

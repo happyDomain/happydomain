@@ -171,7 +171,7 @@ func dkim_analyze(a *Analyzer) (err error) {
 		domain := record.Header().Name[dkidx+12:]
 
 		service := &DKIMRecord{
-			Record: helpers.RRRelative(record, domain).(*happydns.TXT),
+			Record: helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*happydns.TXT),
 		}
 
 		_, err = service.Analyze()
@@ -195,12 +195,9 @@ func dkimcname_analyze(a *Analyzer) (err error) {
 			continue
 		}
 		if cname, ok := record.(*dns.CNAME); ok {
-			// Make record relative
-			cname.Target = helpers.DomainRelative(cname.Target, a.GetOrigin())
-
 			domain := record.Header().Name[dkidx+12:]
 			err = a.UseRR(record, domain, &DKIMRedirection{
-				Record: helpers.RRRelative(cname, domain).(*dns.CNAME),
+				Record: helpers.RRRelativeSubdomain(cname, a.GetOrigin(), domain).(*dns.CNAME),
 			})
 			if err != nil {
 				return

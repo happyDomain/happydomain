@@ -163,7 +163,7 @@ func rfc6186_analyze(a *svcs.Analyzer) error {
 				// Make record relative
 				srv.Target = helpers.DomainRelative(srv.Target, a.GetOrigin())
 
-				emailDomains[domain].Records = append(emailDomains[domain].Records, helpers.RRRelative(srv, domain).(*dns.SRV))
+				emailDomains[domain].Records = append(emailDomains[domain].Records, helpers.RRRelativeSubdomain(srv, a.GetOrigin(), domain).(*dns.SRV))
 
 				a.UseRR(
 					record,

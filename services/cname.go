@@ -66,7 +66,7 @@ func specialalias_analyze(a *Analyzer) error {
 		subdomains := SRV_DOMAIN.FindStringSubmatch(record.Header().Name)
 		if cname, ok := record.(*dns.CNAME); ok && len(subdomains) == 4 {
 			a.UseRR(record, subdomains[3], &SpecialCNAME{
-				Record: helpers.RRRelative(cname, subdomains[3]).(*dns.CNAME),
+				Record: helpers.RRRelativeSubdomain(cname, a.GetOrigin(), subdomains[3]).(*dns.CNAME),
 			})
 		}
 	}
@@ -78,7 +78,7 @@ func alias_analyze(a *Analyzer) error {
 		if cname, ok := record.(*dns.CNAME); ok {
 			domain := record.Header().Name
 			a.UseRR(record, domain, &CNAME{
-				Record: helpers.RRRelative(cname, domain).(*dns.CNAME),
+				Record: helpers.RRRelativeSubdomain(cname, a.GetOrigin(), domain).(*dns.CNAME),
 			})
 		}
 	}

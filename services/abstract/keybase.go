@@ -52,7 +52,7 @@ func keybaseverification_analyze(a *svcs.Analyzer) error {
 		domain := strings.TrimPrefix(record.Header().Name, "_keybase.")
 		if record.Header().Rrtype == dns.TypeTXT {
 			a.UseRR(record, domain, &KeybaseVerif{
-				Record: helpers.RRRelative(record, domain).(*happydns.TXT),
+				Record: helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*happydns.TXT),
 			})
 		}
 	}

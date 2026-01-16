@@ -96,7 +96,7 @@ func xmpp_subanalyze(a *svcs.Analyzer, prefix string, xmppDomains map[string]*XM
 		}
 
 		if srv, ok := record.(*dns.SRV); ok {
-			xmppDomains[domain].Records = append(xmppDomains[domain].Records, helpers.RRRelative(srv, domain).(*dns.SRV))
+			xmppDomains[domain].Records = append(xmppDomains[domain].Records, helpers.RRRelativeSubdomain(srv, a.GetOrigin(), domain).(*dns.SRV))
 
 			a.UseRR(
 				record,

@@ -74,7 +74,7 @@ func delegation_analyze(a *svcs.Analyzer) error {
 				delegations[dn] = &Delegation{}
 			}
 
-			delegations[dn].NameServers = append(delegations[dn].NameServers, helpers.RRRelative(ns, dn).(*dns.NS))
+			delegations[dn].NameServers = append(delegations[dn].NameServers, helpers.RRRelativeSubdomain(ns, a.GetOrigin(), dn).(*dns.NS))
 
 			a.UseRR(
 				record,
@@ -87,7 +87,7 @@ func delegation_analyze(a *svcs.Analyzer) error {
 	for subdomain := range delegations {
 		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeDS, Domain: subdomain}) {
 			if _, ok := record.(*dns.DS); ok {
-				delegations[subdomain].DS = append(delegations[subdomain].DS, helpers.RRRelative(record, subdomain).(*dns.DS))
+				delegations[subdomain].DS = append(delegations[subdomain].DS, helpers.RRRelativeSubdomain(record, a.GetOrigin(), subdomain).(*dns.DS))
 
 				a.UseRR(
 					record,

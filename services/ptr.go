@@ -49,7 +49,7 @@ func pointer_analyze(a *Analyzer) error {
 		if ptr, ok := record.(*dns.PTR); ok {
 			domain := record.Header().Name
 			newrr := &PTR{
-				Record: helpers.RRRelative(ptr, domain).(*dns.PTR),
+				Record: helpers.RRRelativeSubdomain(ptr, a.GetOrigin(), domain).(*dns.PTR),
 			}
 
 			a.UseRR(record, domain, newrr)

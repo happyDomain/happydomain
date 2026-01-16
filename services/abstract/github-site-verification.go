@@ -59,7 +59,7 @@ func githubverification_analyze(a *svcs.Analyzer) error {
 
 			if record.Header().Rrtype == dns.TypeTXT {
 				a.UseRR(record, domain, &GithubOrgVerif{
-					Record: helpers.RRRelative(record, domain).(*happydns.TXT),
+					Record: helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*happydns.TXT),
 				})
 			}
 		}

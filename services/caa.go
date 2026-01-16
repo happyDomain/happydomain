@@ -245,7 +245,7 @@ func caa_analyze(a *Analyzer) (err error) {
 			}
 
 			analyzed := pool[domain]
-			analyzed.Records = append(analyzed.Records, helpers.RRRelative(record, domain).(*dns.CAA))
+			analyzed.Records = append(analyzed.Records, helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*dns.CAA))
 
 			err = a.UseRR(record, domain, pool[domain])
 			if err != nil {

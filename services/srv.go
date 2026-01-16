@@ -80,7 +80,7 @@ func srv_analyze(a *Analyzer) error {
 			srvDomains[domain][svc] = &UnknownSRV{}
 		}
 
-		srvDomains[domain][svc].Records = append(srvDomains[domain][svc].Records, helpers.RRRelative(record, domain).(*dns.SRV))
+		srvDomains[domain][svc].Records = append(srvDomains[domain][svc].Records, helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*dns.SRV))
 
 		a.UseRR(
 			record,

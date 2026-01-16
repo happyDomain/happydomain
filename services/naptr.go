@@ -52,7 +52,7 @@ func naptr_analyze(a *Analyzer) (err error) {
 				record,
 				domain,
 				&NAPTR{
-					Record: helpers.RRRelative(naptr, domain).(*dns.NAPTR),
+					Record: helpers.RRRelativeSubdomain(naptr, a.GetOrigin(), domain).(*dns.NAPTR),
 				},
 			)
 			if err != nil {

@@ -197,7 +197,7 @@ func AnalyzeZone(origin string, records []happydns.Record) (svcs map[happydns.Su
 
 		domain := record.Header().Name
 
-		a.addService(record, domain, &Orphan{helpers.RRRelative(record, domain)})
+		a.addService(record, domain, &Orphan{helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain)})
 	}
 
 	svcs = a.services

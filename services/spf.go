@@ -94,7 +94,7 @@ func spf_analyze(a *Analyzer) (err error) {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Contains: "v=spf1"}) {
 		domain := record.Header().Name
 		err = a.UseRR(record, domain, &SPF{
-			Record: helpers.RRRelative(record, domain).(*happydns.TXT),
+			Record: helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*happydns.TXT),
 		})
 		if err != nil {
 			return
@@ -109,10 +109,10 @@ func spf_analyze(a *Analyzer) (err error) {
 
 		domain := record.Header().Name
 		err = a.UseRR(record, domain, &SPF{
-			Record: helpers.RRRelative(&happydns.TXT{
+			Record: helpers.RRRelativeSubdomain(&happydns.TXT{
 				Hdr: spf.Hdr,
 				Txt: spf.Txt,
-			}, domain).(*happydns.TXT),
+			}, a.GetOrigin(), domain).(*happydns.TXT),
 		})
 		if err != nil {
 			return

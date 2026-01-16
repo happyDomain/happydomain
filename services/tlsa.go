@@ -111,7 +111,7 @@ func tlsa_analyze(a *Analyzer) (err error) {
 
 			pool[subdomains[3]].Records = append(
 				pool[subdomains[3]].Records,
-				helpers.RRRelative(record, subdomains[3]).(*dns.TLSA),
+				helpers.RRRelativeSubdomain(record, a.GetOrigin(), subdomains[3]).(*dns.TLSA),
 			)
 
 			err = a.UseRR(

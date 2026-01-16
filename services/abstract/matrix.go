@@ -98,7 +98,7 @@ func matrix_analyze(a *svcs.Analyzer) error {
 		}
 
 		if srv, ok := record.(*dns.SRV); ok {
-			matrixDomains[domain].Records = append(matrixDomains[domain].Records, helpers.RRRelative(srv, domain).(*dns.SRV))
+			matrixDomains[domain].Records = append(matrixDomains[domain].Records, helpers.RRRelativeSubdomain(srv, a.GetOrigin(), domain).(*dns.SRV))
 
 			a.UseRR(
 				srv,

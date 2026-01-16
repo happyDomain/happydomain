@@ -91,7 +91,7 @@ func openpgpkey_analyze(a *svcs.Analyzer) (err error) {
 				record,
 				domain,
 				&OpenPGP{
-					Record: helpers.RRRelative(record, domain).(*dns.OPENPGPKEY),
+					Record: helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*dns.OPENPGPKEY),
 				},
 			)
 			if err != nil {
@@ -112,7 +112,7 @@ func smimea_analyze(a *svcs.Analyzer) (err error) {
 				record,
 				domain,
 				&SMimeCert{
-					Record: helpers.RRRelative(record, domain).(*dns.SMIMEA),
+					Record: helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*dns.SMIMEA),
 				},
 			)
 			if err != nil {
