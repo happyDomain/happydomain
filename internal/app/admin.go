@@ -35,6 +35,7 @@ import (
 	admin "git.happydns.org/happyDomain/internal/api-admin/route"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/web-admin"
 )
 
 type Admin struct {
@@ -56,6 +57,7 @@ func NewAdmin(app *App) *Admin {
 	app.usecases.providerAdmin = providerUC.NewService(app.store)
 
 	admin.DeclareRoutes(app.cfg, router, app.store, app)
+	web.DeclareRoutes(app.cfg, router)
 
 	return &Admin{
 		router: router,
