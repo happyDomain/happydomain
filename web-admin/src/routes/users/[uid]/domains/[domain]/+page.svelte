@@ -25,7 +25,6 @@
     import { page } from '$app/stores';
     import {
         Alert,
-        Badge,
         Button,
         Col,
         Container,
@@ -34,13 +33,24 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { getUsersByUid, getUsersByUidDomains } from '$lib/api-admin';
-    import UserInfoCard from './UserInfoCard.svelte';
-    import UserDomainsCard from './domains/UserDomainsCard.svelte';
+    import { getUsersByUidDomainsByDomain } from '$lib/api-admin';
+    import DomainInformationCard from './DomainInformationCard.svelte';
+    import ZoneHistoryCard from './zones/ZoneHistoryCard.svelte';
 
-    const uid = $page.params.uid!;
-    let userQ = $state(getUsersByUid({ path: { uid } }));
-    let domainsQ = $state(getUsersByUidDomains({ path: { uid } }));
+    const uid = $derived($page.params.uid!);
+    const domainId = $derived($page.params.domain!);
+    let domainQ = $derived(getUsersByUidDomainsByDomain({ path: { uid, domain: domainId } }));
+
+    let zoneHistory = $state<string[]>([]);
+
+    // Load domain data when promise resolves
+    $effect(() => {
+        domainQ.then(response => {
+            if (response?.data && response.data.length > 0) {
+                zoneHistory = response.data[0].zone_history || [];
+            }
+        });
+    });
 </script>
 
 <Container class="flex-fill my-5">
@@ -48,47 +58,51 @@
         <Col>
             <h1 class="display-5">
                 <Icon name="pencil"></Icon>
-                Edit User
+                Edit Domain
             </h1>
         </Col>
     </Row>
 
-    {#await userQ}
+    {#await domainQ}
         <div class="text-center my-5">
             <Spinner color="primary" />
-            <p class="mt-3">Loading user...</p>
+            <p class="mt-3">Loading domain...</p>
         </div>
-    {:then userR}
-        {@const user = userR.data}
-        {#if user}
+    {:then domainR}
+        {#if domainR?.data && domainR.data.length > 0}
+            {@const domain = domainR.data[0]}
             <Row>
                 <Col md={8} lg={6}>
-                    <UserInfoCard {user} {uid} />
+                    <DomainInformationCard
+                        domainData={domain}
+                        {uid}
+                        {domainId}
+                    />
                 </Col>
 
                 <Col md={8} lg={6}>
-                    <UserDomainsCard {domainsQ} userId={user.id!} />
+                    <ZoneHistoryCard {domainId} {uid} {zoneHistory} />
                 </Col>
             </Row>
         {:else}
             <Alert color="warning">
-                <h4 class="alert-heading">User not found</h4>
-                <p>The requested user could not be found.</p>
+                <h4 class="alert-heading">No data available</h4>
+                <p>The domain response did not contain any data.</p>
                 <hr />
-                <Button type="button" color="secondary" outline href="/users">
+                <Button type="button" color="secondary" outline href="/domains">
                     <Icon name="arrow-left"></Icon>
-                    Back to Users
+                    Back to Domains
                 </Button>
             </Alert>
         {/if}
     {:catch error}
         <Alert color="danger">
-            <h4 class="alert-heading">Error loading user</h4>
+            <h4 class="alert-heading">Error loading domain</h4>
             <p>{error}</p>
             <hr />
-            <Button type="button" color="secondary" outline href="/users">
+            <Button type="button" color="secondary" outline href="/domains">
                 <Icon name="arrow-left"></Icon>
-                Back to Users
+                Back to Domains
             </Button>
         </Alert>
     {/await}
