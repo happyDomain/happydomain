@@ -42,10 +42,29 @@ func NewSessionController(cfg *happydns.Options, store session.SessionStorage) *
 	}
 }
 
+// deleteSessions removes all sessions from the system.
+//
+//	@Summary		Delete all sessions
+//	@Schemes
+//	@Description	Remove all sessions from the system.
+//	@Tags			sessions
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	bool
+//	@Failure		500	{object}	happydns.ErrorResponse	"Internal server error"
+//	@Router			/sessions [delete]
 func (sc *SessionController) DeleteSessions(c *gin.Context) {
 	happydns.ApiResponse(c, true, sc.store.ClearSessions())
 }
 
+// sessionHandler is a middleware that loads a session by ID and adds it to the context.
+//
+//	@Summary		Load session middleware
+//	@Schemes
+//	@Description	Middleware that retrieves a session by ID and adds it to the request context.
+//	@Tags			sessions
+//	@Param			sessionid	path	string	true	"Session identifier"
+//	@Failure		404			{object}	happydns.ErrorResponse	"Session not found"
 func (sc *SessionController) SessionHandler(c *gin.Context) {
 	session, err := sc.store.GetSession(c.Param("sessionid"))
 	if err != nil {
@@ -58,10 +77,35 @@ func (sc *SessionController) SessionHandler(c *gin.Context) {
 	c.Next()
 }
 
+// getSession retrieves a specific session by ID.
+//
+//	@Summary		Retrieve session
+//	@Schemes
+//	@Description	Get details of a specific session by its identifier.
+//	@Tags			sessions
+//	@Accept			json
+//	@Produce		json
+//	@Param			sessionid	path		string	true	"Session identifier"
+//	@Success		200			{object}	happydns.Session
+//	@Failure		404			{object}	happydns.ErrorResponse	"Session not found"
+//	@Router			/sessions/{sessionid} [get]
 func (sc *SessionController) GetSession(c *gin.Context) {
 	c.JSON(http.StatusOK, c.MustGet("session"))
 }
 
+// deleteSession deletes a specific session by ID.
+//
+//	@Summary		Delete session
+//	@Schemes
+//	@Description	Remove a specific session from the system by its identifier.
+//	@Tags			sessions
+//	@Accept			json
+//	@Produce		json
+//	@Param			sessionid	path		string	true	"Session identifier"
+//	@Success		200			{object}	bool
+//	@Failure		404			{object}	happydns.ErrorResponse	"Session not found"
+//	@Failure		500			{object}	happydns.ErrorResponse	"Internal server error"
+//	@Router			/sessions/{sessionid} [delete]
 func (sc *SessionController) DeleteSession(c *gin.Context) {
 	happydns.ApiResponse(c, true, sc.store.DeleteSession(c.Param("sessionid")))
 }
