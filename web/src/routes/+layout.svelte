@@ -91,9 +91,9 @@
 {/if}
 <Header sw_state={data.sw_state} />
 
-<div class="flex-fill d-flex flex-column justify-content-center bg-light">
+<main class="flex-fill d-flex flex-column justify-content-center bg-light">
     {@render children?.()}
-</div>
+</main>
 
 <Toaster />
 {#if !$appConfig.hide_feedback && MODE == "production"}
