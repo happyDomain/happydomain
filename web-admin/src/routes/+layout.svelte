@@ -87,6 +87,9 @@
                 <NavLink href="/" active={page && page.url.pathname == '/'}>Dashboard</NavLink>
             </NavItem>
             <NavItem>
+                <NavLink href="/auth_users" active={page && page.url.pathname.startsWith('/auth_users')}>Auth</NavLink>
+            </NavItem>
+            <NavItem>
                 <NavLink href="/users" active={page && page.url.pathname.startsWith('/users')}>Users</NavLink>
             </NavItem>
             <NavItem>
