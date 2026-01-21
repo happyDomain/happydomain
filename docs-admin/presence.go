@@ -19,11 +19,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package main
+package docs_admin
 
-//go:generate go run tools/gen_icon.go providers providers
-//go:generate go run tools/gen_icon.go services svcs
-//go:generate go run tools/gen_rr_typescript.go web/src/lib/dns_rr.ts
-//go:generate go run tools/gen_dns_type_mapping.go -o internal/usecase/service_specs_dns_types.go
-//go:generate swag init --exclude internal/api-admin/ --generalInfo internal/api/route/route.go
-//go:generate swag init --output docs-admin --exclude internal/api/ --generalInfo internal/api-admin/route/route.go
+// This is an empty file to ensure docs module exists

@@ -8,207 +8,208 @@ platform:
   arch: amd64
 
 steps:
-- name: generate go and OpenAPI files
-  image: golang:1-alpine
-  commands:
-  - sed -i '/npm run build/d' web/assets.go web-admin/assets.go
-  - go install github.com/swaggo/swag/cmd/swag@latest
-  - go generate ./...
+  - name: generate go and OpenAPI files
+    image: golang:1-alpine
+    commands:
+      - sed -i '/npm run build/d;/npm run generate:api/d' web/assets.go web-admin/assets.go
+      - go install github.com/swaggo/swag/cmd/swag@latest
+      - go generate ./...
 
-- name: frontend
-  image: node:24-alpine
-  commands:
-  - apk --no-cache add tar
-  - yarn config set network-timeout 100000
-  - yarn --cwd web install
-  - tar --transform="s@.@./happydomain-${DRONE_COMMIT}@" --exclude-vcs --exclude=./web/node_modules/.cache -czf /dev/shm/happydomain-src.tar.gz .
-  - mv /dev/shm/happydomain-src.tar.gz .
-  - yarn --cwd web --offline build
-  - yarn --cwd web-admin --offline build
+  - name: frontend
+    image: node:24-alpine
+    commands:
+      - apk --no-cache add tar
+      - yarn config set network-timeout 100000
+      - yarn --cwd web install
+      - tar --transform="s@.@./happydomain-${DRONE_COMMIT}@" --exclude-vcs --exclude=./web/node_modules/.cache -czf /dev/shm/happydomain-src.tar.gz .
+      - mv /dev/shm/happydomain-src.tar.gz .
+      - yarn --cwd web --offline build
+      - yarn --cwd web-admin --offline generate:api && sed -i "s/hey-api\.ts';/hey-api';/" web/src/lib/api-admin/client.gen.ts
+      - yarn --cwd web-admin --offline build
 
-- name: deploy sources
-  image: plugins/s3
-  settings:
-    endpoint: https://blob.nemunai.re
-    path_style: true
-    region: garage
-    bucket: happydomain-dl
-    access_key:
-      from_secret: s3_access_key
-    secret_key:
-      from_secret: s3_secret_key
-    source: happydomain-src.tar.gz
-    target: /${DRONE_BRANCH//\//-}/
-  when:
-    event:
-      - push
-    branch:
-      exclude:
-      - renovate/*
+  - name: deploy sources
+    image: plugins/s3
+    settings:
+      endpoint: https://blob.nemunai.re
+      path_style: true
+      region: garage
+      bucket: happydomain-dl
+      access_key:
+        from_secret: s3_access_key
+      secret_key:
+        from_secret: s3_secret_key
+      source: happydomain-src.tar.gz
+      target: /${DRONE_BRANCH//\//-}/
+    when:
+      event:
+        - push
+      branch:
+        exclude:
+          - renovate/*
 
-- name: deploy sources for release
-  image: plugins/s3
-  settings:
-    endpoint: https://blob.nemunai.re
-    path_style: true
-    region: garage
-    bucket: happydomain-dl
-    access_key:
-      from_secret: s3_access_key
-    secret_key:
-      from_secret: s3_secret_key
-    source: happydomain-src.tar.gz
-    target: /${DRONE_TAG}/
-  when:
-    event:
-      - tag
-
-- name: backend-commit
-  image: golang:1-alpine
-  commands:
-  - apk add --no-cache git
-  - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
-  - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
-  environment:
-    CGO_ENABLED: 0
-  when:
-    event:
-      exclude:
+  - name: deploy sources for release
+    image: plugins/s3
+    settings:
+      endpoint: https://blob.nemunai.re
+      path_style: true
+      region: garage
+      bucket: happydomain-dl
+      access_key:
+        from_secret: s3_access_key
+      secret_key:
+        from_secret: s3_secret_key
+      source: happydomain-src.tar.gz
+      target: /${DRONE_TAG}/
+    when:
+      event:
         - tag
 
-- name: backend-tag
-  image: golang:1-alpine
-  commands:
-  - apk add --no-cache git
-  - go build -tags netgo,swagger,web -ldflags '-w -X main.Version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
-  - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
-  environment:
-    CGO_ENABLED: 0
-  when:
-    event:
-      - tag
+  - name: backend-commit
+    image: golang:1-alpine
+    commands:
+      - apk add --no-cache git
+      - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
+    environment:
+      CGO_ENABLED: 0
+    when:
+      event:
+        exclude:
+          - tag
 
-- name: deploy
-  image: plugins/s3
-  settings:
-    endpoint: https://blob.nemunai.re
-    path_style: true
-    region: garage
-    bucket: happydomain-dl
-    access_key:
-      from_secret: s3_access_key
-    secret_key:
-      from_secret: s3_secret_key
-    source: happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-    target: /${DRONE_BRANCH//\//-}/
-  when:
-    event:
-      - push
-    branch:
-      exclude:
-      - renovate/*
-
-- name: deploy release
-  image: plugins/s3
-  settings:
-    endpoint: https://blob.nemunai.re
-    path_style: true
-    region: garage
-    bucket: happydomain-dl
-    access_key:
-      from_secret: s3_access_key
-    secret_key:
-      from_secret: s3_secret_key
-    source: happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-    target: /${DRONE_TAG}/
-  when:
-    event:
-      - tag
-
-- name: build-commit macOS
-  image: golang:1-alpine
-  commands:
-  - apk add --no-cache git
-  - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
-  environment:
-    CGO_ENABLED: 0
-    GOOS: darwin
-    GOARCH: amd64
-  when:
-    event:
-      exclude:
+  - name: backend-tag
+    image: golang:1-alpine
+    commands:
+      - apk add --no-cache git
+      - go build -tags netgo,swagger,web -ldflags '-w -X main.Version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
+    environment:
+      CGO_ENABLED: 0
+    when:
+      event:
         - tag
 
-- name: build-tag macOS
-  image: golang:1-alpine
-  commands:
-  - apk add --no-cache git
-  - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
-  environment:
-    CGO_ENABLED: 0
-    GOOS: darwin
-    GOARCH: amd64
-  when:
-    event:
-      - tag
+  - name: deploy
+    image: plugins/s3
+    settings:
+      endpoint: https://blob.nemunai.re
+      path_style: true
+      region: garage
+      bucket: happydomain-dl
+      access_key:
+        from_secret: s3_access_key
+      secret_key:
+        from_secret: s3_secret_key
+      source: happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+      target: /${DRONE_BRANCH//\//-}/
+    when:
+      event:
+        - push
+      branch:
+        exclude:
+          - renovate/*
 
-- name: deploy macOS
-  image: plugins/s3
-  settings:
-    endpoint: https://blob.nemunai.re
-    path_style: true
-    region: garage
-    bucket: happydomain-dl
-    access_key:
-      from_secret: s3_access_key
-    secret_key:
-      from_secret: s3_secret_key
-    source: happydomain-darwin-${DRONE_STAGE_ARCH}
-    target: /${DRONE_BRANCH//\//-}/
-  when:
-    event:
-      - push
-    branch:
-      exclude:
-      - renovate/*
+  - name: deploy release
+    image: plugins/s3
+    settings:
+      endpoint: https://blob.nemunai.re
+      path_style: true
+      region: garage
+      bucket: happydomain-dl
+      access_key:
+        from_secret: s3_access_key
+      secret_key:
+        from_secret: s3_secret_key
+      source: happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+      target: /${DRONE_TAG}/
+    when:
+      event:
+        - tag
 
-- name: deploy macOS release
-  image: plugins/s3
-  settings:
-    endpoint: https://blob.nemunai.re
-    path_style: true
-    region: garage
-    bucket: happydomain-dl
-    access_key:
-      from_secret: s3_access_key
-    secret_key:
-      from_secret: s3_secret_key
-    source: happydomain-darwin-${DRONE_STAGE_ARCH}
-    target: /${DRONE_TAG}/
-  when:
-    event:
-      - tag
+  - name: build-commit macOS
+    image: golang:1-alpine
+    commands:
+      - apk add --no-cache git
+      - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+    environment:
+      CGO_ENABLED: 0
+      GOOS: darwin
+      GOARCH: amd64
+    when:
+      event:
+        exclude:
+          - tag
 
-- name: publish on Docker Hub
-  image: plugins/docker
-  settings:
-    repo: happydomain/happydomain
-    auto_tag: true
-    auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-    dockerfile: Dockerfile-builded
-    username:
-      from_secret: docker_username
-    password:
-      from_secret: docker_password
+  - name: build-tag macOS
+    image: golang:1-alpine
+    commands:
+      - apk add --no-cache git
+      - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+    environment:
+      CGO_ENABLED: 0
+      GOOS: darwin
+      GOARCH: amd64
+    when:
+      event:
+        - tag
+
+  - name: deploy macOS
+    image: plugins/s3
+    settings:
+      endpoint: https://blob.nemunai.re
+      path_style: true
+      region: garage
+      bucket: happydomain-dl
+      access_key:
+        from_secret: s3_access_key
+      secret_key:
+        from_secret: s3_secret_key
+      source: happydomain-darwin-${DRONE_STAGE_ARCH}
+      target: /${DRONE_BRANCH//\//-}/
+    when:
+      event:
+        - push
+      branch:
+        exclude:
+          - renovate/*
+
+  - name: deploy macOS release
+    image: plugins/s3
+    settings:
+      endpoint: https://blob.nemunai.re
+      path_style: true
+      region: garage
+      bucket: happydomain-dl
+      access_key:
+        from_secret: s3_access_key
+      secret_key:
+        from_secret: s3_secret_key
+      source: happydomain-darwin-${DRONE_STAGE_ARCH}
+      target: /${DRONE_TAG}/
+    when:
+      event:
+        - tag
+
+  - name: publish on Docker Hub
+    image: plugins/docker
+    settings:
+      repo: happydomain/happydomain
+      auto_tag: true
+      auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+      dockerfile: Dockerfile-builded
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
 
 trigger:
   branch:
     exclude:
-    - renovate/*
+      - renovate/*
   event:
-  - cron
-  - push
-  - tag
+    - cron
+    - push
+    - tag
 
 ---
 kind: pipeline
@@ -220,176 +221,177 @@ platform:
   arch: arm64
 
 steps:
-- name: generate go and OpenAPI files
-  image: golang:1-alpine
-  commands:
-  - sed -i '/npm run build/d;/npm run generate:api/d' web/assets.go web-admin/assets.go
-  - go install github.com/swaggo/swag/cmd/swag@latest
-  - go generate ./...
+  - name: generate go and OpenAPI files
+    image: golang:1-alpine
+    commands:
+      - sed -i '/npm run build/d;/npm run generate:api/d' web/assets.go web-admin/assets.go
+      - go install github.com/swaggo/swag/cmd/swag@latest
+      - go generate ./...
 
-- name: frontend
-  image: node:24-alpine
-  commands:
-  - cd web
-  - npm install --network-timeout=100000
-  - npm test
-  - npm run build
-  - cd ../web-admin
-  - npm test
-  - npm run build
+  - name: frontend
+    image: node:24-alpine
+    commands:
+      - cd web
+      - npm install --network-timeout=100000
+      - npm test
+      - npm run build
+      - cd ../web-admin
+      - npm run generate:api
+      - npm test
+      - npm run build
 
-- name: backend-commit
-  image: golang:1-alpine
-  commands:
-  - apk add --no-cache git
-  - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
-  - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
-  environment:
-    CGO_ENABLED: 0
-  when:
-    event:
-      exclude:
+  - name: backend-commit
+    image: golang:1-alpine
+    commands:
+      - apk add --no-cache git
+      - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
+    environment:
+      CGO_ENABLED: 0
+    when:
+      event:
+        exclude:
+          - tag
+
+  - name: backend-tag
+    image: golang:1-alpine
+    commands:
+      - apk add --no-cache git
+      - go build -tags netgo,swagger,web -ldflags '-w -X main.Version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
+    environment:
+      CGO_ENABLED: 0
+    when:
+      event:
         - tag
 
-- name: backend-tag
-  image: golang:1-alpine
-  commands:
-  - apk add --no-cache git
-  - go build -tags netgo,swagger,web -ldflags '-w -X main.Version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
-  - ln happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
-  environment:
-    CGO_ENABLED: 0
-  when:
-    event:
-      - tag
+  - name: vet and tests
+    image: golang:1-alpine
+    commands:
+      - apk --no-cache add build-base git
+      - go vet ./...
+      - go test ./...
+    environment:
+      CGO_ENABLED: 0
 
-- name: vet and tests
-  image: golang:1-alpine
-  commands:
-  - apk --no-cache add build-base git
-  - go vet ./...
-  - go test ./...
-  environment:
-    CGO_ENABLED: 0
+  - name: deploy
+    image: plugins/s3
+    settings:
+      endpoint: https://blob.nemunai.re
+      path_style: true
+      region: garage
+      bucket: happydomain-dl
+      access_key:
+        from_secret: s3_access_key
+      secret_key:
+        from_secret: s3_secret_key
+      source: happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+      target: /${DRONE_BRANCH//\//-}/
+    when:
+      event:
+        - push
+      branch:
+        exclude:
+          - renovate/*
 
-- name: deploy
-  image: plugins/s3
-  settings:
-    endpoint: https://blob.nemunai.re
-    path_style: true
-    region: garage
-    bucket: happydomain-dl
-    access_key:
-      from_secret: s3_access_key
-    secret_key:
-      from_secret: s3_secret_key
-    source: happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-    target: /${DRONE_BRANCH//\//-}/
-  when:
-    event:
-      - push
-    branch:
-      exclude:
-      - renovate/*
-
-- name: deploy release
-  image: plugins/s3
-  settings:
-    endpoint: https://blob.nemunai.re
-    path_style: true
-    region: garage
-    bucket: happydomain-dl
-    access_key:
-      from_secret: s3_access_key
-    secret_key:
-      from_secret: s3_secret_key
-    source: happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-    target: /${DRONE_TAG}/
-  when:
-    event:
-      - tag
-
-- name: build-commit macOS
-  image: golang:1-alpine
-  commands:
-  - apk add --no-cache git
-  - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
-  environment:
-    CGO_ENABLED: 0
-    GOOS: darwin
-    GOARCH: arm64
-  when:
-    event:
-      exclude:
+  - name: deploy release
+    image: plugins/s3
+    settings:
+      endpoint: https://blob.nemunai.re
+      path_style: true
+      region: garage
+      bucket: happydomain-dl
+      access_key:
+        from_secret: s3_access_key
+      secret_key:
+        from_secret: s3_secret_key
+      source: happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+      target: /${DRONE_TAG}/
+    when:
+      event:
         - tag
 
-- name: build-tag macOS
-  image: golang:1-alpine
-  commands:
-  - apk add --no-cache git
-  - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
-  environment:
-    CGO_ENABLED: 0
-    GOOS: darwin
-    GOARCH: arm64
-  when:
-    event:
-      - tag
+  - name: build-commit macOS
+    image: golang:1-alpine
+    commands:
+      - apk add --no-cache git
+      - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+    environment:
+      CGO_ENABLED: 0
+      GOOS: darwin
+      GOARCH: arm64
+    when:
+      event:
+        exclude:
+          - tag
 
-- name: deploy macOS
-  image: plugins/s3
-  settings:
-    endpoint: https://blob.nemunai.re
-    path_style: true
-    region: garage
-    bucket: happydomain-dl
-    access_key:
-      from_secret: s3_access_key
-    secret_key:
-      from_secret: s3_secret_key
-    source: happydomain-darwin-${DRONE_STAGE_ARCH}
-    target: /${DRONE_BRANCH//\//-}/
-  when:
-    event:
-      - push
-    branch:
-      exclude:
-      - renovate/*
+  - name: build-tag macOS
+    image: golang:1-alpine
+    commands:
+      - apk add --no-cache git
+      - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+    environment:
+      CGO_ENABLED: 0
+      GOOS: darwin
+      GOARCH: arm64
+    when:
+      event:
+        - tag
 
-- name: deploy macOS release
-  image: plugins/s3
-  settings:
-    endpoint: https://blob.nemunai.re
-    path_style: true
-    region: garage
-    bucket: happydomain-dl
-    access_key:
-      from_secret: s3_access_key
-    secret_key:
-      from_secret: s3_secret_key
-    source: happydomain-darwin-${DRONE_STAGE_ARCH}
-    target: /${DRONE_TAG}/
-  when:
-    event:
-      - tag
+  - name: deploy macOS
+    image: plugins/s3
+    settings:
+      endpoint: https://blob.nemunai.re
+      path_style: true
+      region: garage
+      bucket: happydomain-dl
+      access_key:
+        from_secret: s3_access_key
+      secret_key:
+        from_secret: s3_secret_key
+      source: happydomain-darwin-${DRONE_STAGE_ARCH}
+      target: /${DRONE_BRANCH//\//-}/
+    when:
+      event:
+        - push
+      branch:
+        exclude:
+          - renovate/*
 
-- name: publish on Docker Hub
-  image: plugins/docker
-  settings:
-    repo: happydomain/happydomain
-    auto_tag: true
-    auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-    dockerfile: Dockerfile-builded
-    username:
-      from_secret: docker_username
-    password:
-      from_secret: docker_password
+  - name: deploy macOS release
+    image: plugins/s3
+    settings:
+      endpoint: https://blob.nemunai.re
+      path_style: true
+      region: garage
+      bucket: happydomain-dl
+      access_key:
+        from_secret: s3_access_key
+      secret_key:
+        from_secret: s3_secret_key
+      source: happydomain-darwin-${DRONE_STAGE_ARCH}
+      target: /${DRONE_TAG}/
+    when:
+      event:
+        - tag
+
+  - name: publish on Docker Hub
+    image: plugins/docker
+    settings:
+      repo: happydomain/happydomain
+      auto_tag: true
+      auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+      dockerfile: Dockerfile-builded
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
 
 trigger:
   event:
-  - cron
-  - push
-  - tag
+    - cron
+    - push
+    - tag
 
 ---
 kind: pipeline
@@ -400,26 +402,26 @@ platform:
   arch: arm64
 
 steps:
-- name: publish on Docker Hub
-  image: plugins/manifest
-  settings:
-    auto_tag: true
-    ignore_missing: true
-    spec: .drone-manifest.yml
-    username:
-      from_secret: docker_username
-    password:
-      from_secret: docker_password
+  - name: publish on Docker Hub
+    image: plugins/manifest
+    settings:
+      auto_tag: true
+      ignore_missing: true
+      spec: .drone-manifest.yml
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
 
 trigger:
   branch:
     exclude:
-    - renovate/*
+      - renovate/*
   event:
-  - cron
-  - push
-  - tag
+    - cron
+    - push
+    - tag
 
 depends_on:
-- build-amd64
-- build-arm64
+  - build-amd64
+  - build-arm64
