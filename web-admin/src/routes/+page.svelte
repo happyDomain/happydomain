@@ -26,16 +26,15 @@
         Container,
     } from "@sveltestrap/sveltestrap";
 
-    // Example using shared lib
-    // import { api } from '$lib/api';
+    import { getUsers } from '$lib/api-admin';
+
+    let totalUsers: number | undefined = $state();
+    getUsers().then((res) => { totalUsers = res.data?.length || 0; });
 
     let stats = {
-        totalUsers: 0,
         totalDomains: 0,
         activeProviders: 0
     };
-
-    // TODO: Load stats from admin API
 </script>
 
 <Container class="flex-fill my-5">
@@ -56,7 +55,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="text-muted mb-1">Total Users</h6>
-                            <h2 class="mb-0">{stats.totalUsers}</h2>
+                            <h2 class="mb-0">{totalUsers}</h2>
                         </div>
                         <div class="text-primary">
                             <i class="bi bi-people-fill" style="font-size: 2rem;"></i>

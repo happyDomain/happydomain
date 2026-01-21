@@ -35,11 +35,32 @@
         Row,
     } from "@sveltestrap/sveltestrap";
 
-    import { getUsers } from '$lib/api-admin';
+    import { getUsers, deleteUsersByUid } from '$lib/api-admin';
+    import { toasts } from '$lib/stores/toasts';
 
     let usersQ = $state(getUsers());
 
     let searchQuery = $state('');
+
+    async function handleDeleteUser(userId: string, userEmail: string) {
+        if (confirm(`Are you sure you want to delete user "${userEmail}"?`)) {
+            try {
+                await deleteUsersByUid({ path: { uid: userId } });
+                // Refresh the users list
+                usersQ = getUsers();
+                toasts.addToast({
+                    message: `User "${userEmail}" has been deleted successfully`,
+                    type: 'success',
+                    timeout: 5000,
+                });
+            } catch (error) {
+                toasts.addErrorToast({
+                    message: 'Failed to delete user: ' + error,
+                    timeout: 10000,
+                });
+            }
+        }
+    }
 </script>
 
 <Container class="flex-fill my-5">
@@ -59,7 +80,7 @@
             </p>
         </Col>
         <Col md={4} class="text-end">
-            <Button color="primary">
+            <Button color="primary" href="/users/new">
                 <Icon name="plus-circle"></Icon>
                 Create User
             </Button>
@@ -108,10 +129,10 @@
                             <td>{user.created_at?.replace(/\.[0-9]+/, "") || ''}</td>
                             <td>{user.last_seen?.replace(/\.[0-9]+/, "") || ''}</td>
                             <td class="d-flex flex-nowrap gap-1">
-                                <Button color="primary" outline size="sm">
+                                <Button color="primary" outline size="sm" href="/users/{user.id}">
                                     <Icon name="pencil"></Icon>
                                 </Button>
-                                <Button color="primary" outline size="sm">
+                                <Button color="primary" outline size="sm" onclick={() => handleDeleteUser(user.id!, user.email!)}>
                                     <Icon name="trash"></Icon>
                                 </Button>
                             </td>
