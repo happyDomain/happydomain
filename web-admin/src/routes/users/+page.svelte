@@ -23,7 +23,6 @@
 
 <script lang="ts">
     import {
-        Badge,
         Button,
         Card,
         Col,
@@ -36,21 +35,11 @@
         Row,
     } from "@sveltestrap/sveltestrap";
 
-    // This demonstrates using shared $lib components
-    // import { api } from '$lib/api';
+    import { getUsers } from '$lib/api-admin';
 
-    let users = [
-        { id: 1, email: 'admin@example.com', created: '2024-01-15', status: 'active' },
-        { id: 2, email: 'user@example.com', created: '2024-02-20', status: 'active' },
-    ];
+    let usersQ = $state(getUsers());
 
     let searchQuery = $state('');
-
-    // TODO: Load users from admin API
-    // async function loadUsers() {
-    //   const response = await fetch('/admin-api/users');
-    //   users = await response.json();
-    // }
 </script>
 
 <Container class="flex-fill my-5">
@@ -60,7 +49,14 @@
                 <Icon name="people-fill"></Icon>
                 User Management
             </h1>
-            <p class="text-muted">Manage all user accounts</p>
+            <p class="d-flex gap-3 align-items-center text-muted">
+                <span class="lead">
+                    Manage all user accounts
+                </span>
+                {#await usersQ then usersR}
+                    <span>Total: {usersR.data?.length ?? 0} users</span>
+                {/await}
+            </p>
         </Col>
         <Col md={4} class="text-end">
             <Button color="primary">
@@ -85,37 +81,44 @@
         </Col>
     </Row>
 
-    <div class="table-responsive">
-        <Table hover bordered>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Email</th>
-                    <th>Created</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {#each users as user}
+    {#await usersQ}
+        Please wait...
+    {:then usersR}
+        {@const users = usersR.data || []}
+        {@const filteredUsers = users.filter(i => {
+            const query = searchQuery.toLowerCase();
+            return (i.id && i.id.toLowerCase().indexOf(query) > -1) || (i.email && i.email.toLowerCase().indexOf(query) > -1);
+        })}
+        <div class="table-responsive">
+            <Table hover bordered>
+                <thead>
                     <tr>
-                        <td>{user.id}</td>
-                        <td>{user.email}</td>
-                        <td>{user.created}</td>
-                        <td>
-                            <Badge color="success">{user.status}</Badge>
-                        </td>
-                        <td>
-                            <Button color="primary" outline size="sm" class="me-1">
-                                <Icon name="pencil"></Icon>
-                            </Button>
-                            <Button color="primary" outline size="sm" class="me-1">
-                                <Icon name="trash"></Icon>
-                            </Button>
-                        </td>
+                        <th>ID</th>
+                        <th>Email</th>
+                        <th>Created</th>
+                        <th>Last seen</th>
+                        <th>Actions</th>
                     </tr>
-                {/each}
-            </tbody>
-        </Table>
-    </div>
+                </thead>
+                <tbody>
+                    {#each filteredUsers as user}
+                        <tr>
+                            <td>{user.id}</td>
+                            <td>{user.email}</td>
+                            <td>{user.created_at?.replace(/\.[0-9]+/, "") || ''}</td>
+                            <td>{user.last_seen?.replace(/\.[0-9]+/, "") || ''}</td>
+                            <td class="d-flex flex-nowrap gap-1">
+                                <Button color="primary" outline size="sm">
+                                    <Icon name="pencil"></Icon>
+                                </Button>
+                                <Button color="primary" outline size="sm">
+                                    <Icon name="trash"></Icon>
+                                </Button>
+                            </td>
+                        </tr>
+                    {/each}
+                </tbody>
+            </Table>
+        </div>
+    {/await}
 </Container>

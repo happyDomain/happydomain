@@ -36,6 +36,7 @@ COPY web-admin/ web-admin/
 
 RUN yarn config set network-timeout 100000 && \
     yarn --cwd web-admin install && \
+    yarn --cwd web-admin --offline generate:api && \
     yarn --cwd web-admin --offline build
 
 

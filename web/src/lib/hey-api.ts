@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2022-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,11 +19,34 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package main
+import type { CreateClientConfig } from './api-admin/client.gen';
 
-//go:generate go run tools/gen_icon.go providers providers
-//go:generate go run tools/gen_icon.go services svcs
-//go:generate go run tools/gen_rr_typescript.go web/src/lib/dns_rr.ts
-//go:generate go run tools/gen_dns_type_mapping.go -o internal/usecase/service_specs_dns_types.go
-//go:generate swag init --exclude internal/api-admin/ --generalInfo internal/api/route/route.go
-//go:generate swag init --output docs-admin --exclude internal/api/ --generalInfo internal/api-admin/route/route.go
+export class NotAuthorizedError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "NotAuthorizedError";
+    }
+}
+
+async function customFetch(
+    input: RequestInfo | URL,
+    init?: RequestInit
+): Promise<Response> {
+    const response = await fetch(input, init);
+
+    if (response.status === 400) {
+        const json = await response.json();
+        if (json.error === "error in openapi3filter.SecurityRequirementsError: security requirements failed: invalid session") {
+            throw new NotAuthorizedError(json.error.substring(80));
+        }
+    }
+
+    return response;
+}
+
+
+export const createClientConfig: CreateClientConfig = (config) => ({
+    ...config,
+    baseUrl: '/api/',
+    fetch: customFetch,
+});

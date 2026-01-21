@@ -11,7 +11,7 @@ steps:
 - name: generate go and OpenAPI files
   image: golang:1-alpine
   commands:
-  - sed -i '/npm run build/d' web/assets.go web-admin/assets.go
+  - sed -i '/npm run build/d;/npm run generate:api/d' web/assets.go web-admin/assets.go
   - go install github.com/swaggo/swag/cmd/swag@latest
   - go generate ./...
 
@@ -24,6 +24,7 @@ steps:
   - tar --transform="s@.@./happydomain-${DRONE_COMMIT}@" --exclude-vcs --exclude=./web/node_modules/.cache -czf /dev/shm/happydomain-src.tar.gz .
   - mv /dev/shm/happydomain-src.tar.gz .
   - yarn --cwd web --offline build
+  - yarn --cwd web-admin --offline generate:api && sed -i "s/hey-api\.ts';/hey-api';/" web/src/lib/api-admin/client.gen.ts
   - yarn --cwd web-admin --offline build
 
 - name: deploy sources
@@ -236,6 +237,7 @@ steps:
   - npm run build
   - cd ../web-admin
   - npm test
+  - npm run generate:api
   - npm run build
 
 - name: backend-commit
