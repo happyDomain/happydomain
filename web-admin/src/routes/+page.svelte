@@ -26,14 +26,16 @@
         Container,
     } from "@sveltestrap/sveltestrap";
 
-    import { getUsers } from '$lib/api-admin';
+    import { getDomains, getUsers } from '$lib/api-admin';
     import DatabaseBackupCard from "./DatabaseBackupCard.svelte";
 
     let totalUsers: number | undefined = $state();
     getUsers().then((res) => { totalUsers = res.data?.length || 0; });
 
+    let totalDomains: number | undefined = $state();
+    getDomains().then((res) => { totalDomains = res.data?.length || 0; });
+
     let stats = {
-        totalDomains: 0,
         activeProviders: 0
     };
 </script>
@@ -72,7 +74,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="text-muted mb-1">Total Domains</h6>
-                            <h2 class="mb-0">{stats.totalDomains}</h2>
+                            <h2 class="mb-0">{totalDomains}</h2>
                         </div>
                         <div class="text-primary">
                             <i class="bi bi-globe" style="font-size: 2rem;"></i>
