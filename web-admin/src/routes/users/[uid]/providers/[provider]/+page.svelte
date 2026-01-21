@@ -25,7 +25,6 @@
     import { page } from '$app/stores';
     import {
         Alert,
-        Badge,
         Button,
         Col,
         Container,
@@ -34,64 +33,60 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { getUsersByUid, getUsersByUidDomains, getUsersByUidProviders } from '$lib/api-admin';
-    import UserInfoCard from './UserInfoCard.svelte';
-    import UserDomainsCard from './domains/UserDomainsCard.svelte';
-    import UserProvidersCard from './providers/UserProvidersCard.svelte';
+    import { getUsersByUidProvidersByPid, getUsersByUidProvidersByPidDomains } from '$lib/api-admin';
+    import ProviderInfoCard from './ProviderInfoCard.svelte';
+    import UserDomainsCard from '../../domains/UserDomainsCard.svelte';
 
     const uid = $page.params.uid!;
-    let userQ = $state(getUsersByUid({ path: { uid } }));
-    let domainsQ = $state(getUsersByUidDomains({ path: { uid } }));
-    let providersQ = $state(getUsersByUidProviders({ path: { uid } }));
+    const provider = $page.params.provider!;
+    let providerQ = $state(getUsersByUidProvidersByPid({ path: { uid, pid: provider } }));
+    let domainsQ = $state(getUsersByUidProvidersByPidDomains({ path: { uid, pid: provider } }));
 </script>
 
 <Container class="flex-fill my-5">
     <Row class="mb-4">
         <Col>
             <h1 class="display-5">
-                <Icon name="pencil"></Icon>
-                Edit User
+                <Icon name="cloud"></Icon>
+                Edit Provider
             </h1>
         </Col>
     </Row>
 
-    {#await userQ}
+    {#await providerQ}
         <div class="text-center my-5">
             <Spinner color="primary" />
-            <p class="mt-3">Loading user...</p>
+            <p class="mt-3">Loading provider...</p>
         </div>
-    {:then userR}
-        {@const user = userR.data}
-        {#if user}
+    {:then providerR}
+        {@const providerData = providerR.data}
+        {#if providerData}
             <Row>
                 <Col md={8} lg={6}>
-                    <UserInfoCard {user} {uid} />
+                    <ProviderInfoCard provider={providerData} {uid} />
                 </Col>
 
-                <Col md={8} lg={6} class="d-flex flex-column gap-4">
-                    <UserProvidersCard {providersQ} userId={user.id!} />
-                    <UserDomainsCard {domainsQ} userId={user.id!} />
+                <Col md={8} lg={6}>
+                    <UserDomainsCard {domainsQ} userId={providerData._ownerid!} />
                 </Col>
             </Row>
         {:else}
             <Alert color="warning">
-                <h4 class="alert-heading">User not found</h4>
-                <p>The requested user could not be found.</p>
+                <h4 class="alert-heading">Provider not found</h4>
+                <p>The requested provider could not be loaded.</p>
                 <hr />
-                <Button type="button" color="secondary" outline href="/users">
-                    <Icon name="arrow-left"></Icon>
-                    Back to Users
+                <Button type="button" color="secondary" outline href="/users/{uid}">
+                    Back to user
                 </Button>
             </Alert>
         {/if}
     {:catch error}
         <Alert color="danger">
-            <h4 class="alert-heading">Error loading user</h4>
+            <h4 class="alert-heading">Error loading provider</h4>
             <p>{error}</p>
             <hr />
-            <Button type="button" color="secondary" outline href="/users">
-                <Icon name="arrow-left"></Icon>
-                Back to Users
+            <Button type="button" color="secondary" outline href="/users/{uid}">
+                Back to user
             </Button>
         </Alert>
     {/await}
