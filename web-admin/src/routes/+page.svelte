@@ -27,6 +27,7 @@
     } from "@sveltestrap/sveltestrap";
 
     import { getUsers } from '$lib/api-admin';
+    import DatabaseBackupCard from "./DatabaseBackupCard.svelte";
 
     let totalUsers: number | undefined = $state();
     getUsers().then((res) => { totalUsers = res.data?.length || 0; });
@@ -97,4 +98,6 @@
             </div>
         </div>
     </div>
+
+    <DatabaseBackupCard class="my-4" />
 </Container>
