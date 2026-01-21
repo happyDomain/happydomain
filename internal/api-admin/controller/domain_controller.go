@@ -51,6 +51,21 @@ func NewDomainController(duService happydns.DomainUsecase, remoteZoneImporter ha
 	}
 }
 
+// ListDomains retrieves all domains in the system or user-specific domains if authenticated.
+//
+//	@Summary		List all domains
+//	@Schemes
+//	@Description	Retrieve all domains in the system. If a user is authenticated, returns only their domains using the regular API controller.
+//	@Tags			domains
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid		path		string					false	"User ID or email"
+//	@Param			pid		path		string					false	"Provider identifier"
+//	@Success		200	{array}		happydns.Domain
+//	@Failure		500	{object}	happydns.ErrorResponse	"Unable to retrieve domains list"
+//	@Router			/domains [get]
+//	@Router			/users/{uid}/domains [get]
+//	@Router			/users/{uid}/providers/{pid}/domains [get]
 func (dc *DomainController) ListDomains(c *gin.Context) {
 	user := middleware.MyUser(c)
 	if user != nil {
@@ -74,6 +89,23 @@ func (dc *DomainController) ListDomains(c *gin.Context) {
 	happydns.ApiResponse(c, domains, nil)
 }
 
+// NewDomain creates a new domain in the system.
+//
+//	@Summary		Create a new domain
+//	@Schemes
+//	@Description	Create a new domain and assign it to the authenticated user.
+//	@Tags			domains
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid		path		string					false	"User ID or email"
+//	@Param			pid		path		string					false	"Provider identifier"
+//	@Param			body	body		happydns.Domain	true	"Domain object to create"
+//	@Success		200		{object}	happydns.Domain
+//	@Failure		400		{object}	happydns.ErrorResponse	"Invalid input data"
+//	@Failure		500		{object}	happydns.ErrorResponse	"Unable to create domain"
+//	@Router			/domains [post]
+//	@Router			/users/{uid}/domains [post]
+//	@Router			/users/{uid}/providers/{pid}/domains [post]
 func (dc *DomainController) NewDomain(c *gin.Context) {
 	user := c.MustGet("user").(*happydns.User)
 
@@ -89,6 +121,23 @@ func (dc *DomainController) NewDomain(c *gin.Context) {
 	happydns.ApiResponse(c, ud, dc.store.CreateDomain(ud))
 }
 
+// DeleteDomain removes a domain from the system by identifier or domain name.
+//
+//	@Summary		Delete a domain
+//	@Schemes
+//	@Description	Delete a domain by its identifier or fully qualified domain name. Searches for the domain owner if user context is not available.
+//	@Tags			domains
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid		path		string	false	"User ID or email"
+//	@Param			pid		path		string	false	"Provider identifier"
+//	@Param			domain	path		string	true	"Domain identifier or fully qualified domain name"
+//	@Success		200		{boolean}	true
+//	@Failure		404		{object}	happydns.ErrorResponse	"Domain not found"
+//	@Failure		500		{object}	happydns.ErrorResponse	"Unable to delete domain"
+//	@Router			/domains/{domain} [delete]
+//	@Router			/users/{uid}/domains/{domain} [delete]
+//	@Router			/users/{uid}/providers/{pid}/domains/{domain} [delete]
 func (dc *DomainController) DeleteDomain(c *gin.Context) {
 	domainid, err := happydns.NewIdentifierFromString(c.Param("domain"))
 	if err != nil {
@@ -138,6 +187,24 @@ func (dc *DomainController) searchUserDomain(filter func(*happydns.Domain) bool)
 	return nil
 }
 
+// GetDomain retrieves a specific domain by identifier or domain name.
+//
+//	@Summary		Get domain information
+//	@Schemes
+//	@Description	Retrieve a domain by its identifier or fully qualified domain name. Validates user ownership.
+//	@Tags			domains
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid		path		string	false	"User ID or email"
+//	@Param			pid		path		string	false	"Provider identifier"
+//	@Param			domain	path		string	true	"Domain identifier or fully qualified domain name"
+//	@Success		200		{object}	happydns.Domain
+//	@Success		200		{array}		happydns.Domain	"When queried by domain name, may return multiple matches"
+//	@Failure		404		{object}	happydns.ErrorResponse	"Domain not found"
+//	@Failure		500		{object}	happydns.ErrorResponse	"Unable to retrieve domain"
+//	@Router			/domains/{domain} [get]
+//	@Router			/users/{uid}/domains/{domain} [get]
+//	@Router			/users/{uid}/providers/{pid}/domains/{domain} [get]
 func (dc *DomainController) GetDomain(c *gin.Context) {
 	domainid, err := happydns.NewIdentifierFromString(c.Param("domain"))
 	if err != nil {
@@ -179,6 +246,25 @@ func (dc *DomainController) GetDomain(c *gin.Context) {
 	}
 }
 
+// UpdateDomain updates an existing domain's information.
+//
+//	@Summary		Update domain information
+//	@Schemes
+//	@Description	Update the information of an existing domain. The domain ID is preserved from the existing domain.
+//	@Tags			domains
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid		path		string			false	"User ID or email"
+//	@Param			pid		path		string			false	"Provider identifier"
+//	@Param			domain	path		string			true	"Domain identifier"
+//	@Param			body	body		happydns.Domain	true	"Updated domain object"
+//	@Success		200		{object}	happydns.Domain
+//	@Failure		400		{object}	happydns.ErrorResponse	"Invalid input data"
+//	@Failure		404		{object}	happydns.ErrorResponse	"Domain not found"
+//	@Failure		500		{object}	happydns.ErrorResponse	"Unable to update domain"
+//	@Router			/domains/{domain} [put]
+//	@Router			/users/{uid}/domains/{domain} [put]
+//	@Router			/users/{uid}/providers/{pid}/domains/{domain} [put]
 func (dc *DomainController) UpdateDomain(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 
@@ -193,6 +279,21 @@ func (dc *DomainController) UpdateDomain(c *gin.Context) {
 	happydns.ApiResponse(c, ud, dc.store.UpdateDomain(ud))
 }
 
+// ClearDomains removes all domains from the system or all domains belonging to a specific user.
+//
+//	@Summary		Clear all domains
+//	@Schemes
+//	@Description	Delete all domains in the system. If a user is authenticated, only deletes their domains.
+//	@Tags			domains
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid		path		string	false	"User ID or email"
+//	@Param			pid		path		string	false	"Provider identifier"
+//	@Success		200	{boolean}	true
+//	@Failure		500	{object}	happydns.ErrorResponse	"Unable to clear domains"
+//	@Router			/domains [delete]
+//	@Router			/users/{uid}/domains [delete]
+//	@Router			/users/{uid}/providers/{pid}/domains [delete]
 func (dc *DomainController) ClearDomains(c *gin.Context) {
 	user := middleware.MyUser(c)
 	if user != nil {
@@ -221,6 +322,25 @@ func (dc *DomainController) ClearDomains(c *gin.Context) {
 	happydns.ApiResponse(c, true, dc.store.ClearDomains())
 }
 
+// UpdateZones updates the zone history for a specific domain.
+//
+//	@Summary		Update domain zone history
+//	@Schemes
+//	@Description	Replace the zone history of a domain with new data.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid		path		string						false	"User ID or email"
+//	@Param			pid		path		string						false	"Provider identifier"
+//	@Param			domain	path		string						true	"Domain identifier"
+//	@Param			body	body		[]happydns.Identifier		true	"Array of zone identifiers representing the new history"
+//	@Success		200		{object}	happydns.Domain
+//	@Failure		400		{object}	happydns.ErrorResponse		"Invalid input data"
+//	@Failure		404		{object}	happydns.ErrorResponse		"Domain not found"
+//	@Failure		500		{object}	happydns.ErrorResponse		"Unable to update domain"
+//	@Router			/domains/{domain}/zones [put]
+//	@Router			/users/{uid}/domains/{domain}/zones [put]
+//	@Router			/users/{uid}/providers/{pid}/domains/{domain}/zones [put]
 func (dc *DomainController) UpdateZones(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 

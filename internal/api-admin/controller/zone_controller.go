@@ -49,6 +49,23 @@ func NewZoneController(domainService happydns.DomainUsecase, zoneService happydn
 	}
 }
 
+// addZone creates a new zone in the system.
+//
+//	@Summary		Create a new zone.
+//	@Schemes
+//	@Description	Create a new zone with the provided configuration.
+//	@Tags			admin-zones
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid		path		string					false	"User ID or email"
+//	@Param			pid		path		string					false	"Provider identifier"
+//	@Param			domain	path		string					true	"Domain identifier"
+//	@Param			body	body		happydns.Zone			true	"Zone configuration"
+//	@Success		200		{object}	happydns.Zone
+//	@Failure		400		{object}	happydns.ErrorResponse	"Invalid input"
+//	@Router			/domains/{domain}/zones [post]
+//	@Router			/users/{uid}/domains/{domain}/zones [post]
+//	@Router			/users/{uid}/providers/{pid}/domains/{domain}/zones [post]
 func (zc *ZoneController) AddZone(c *gin.Context) {
 	uz := &happydns.Zone{}
 	err := c.ShouldBindJSON(&uz)
@@ -61,6 +78,23 @@ func (zc *ZoneController) AddZone(c *gin.Context) {
 	happydns.ApiResponse(c, uz, zc.store.CreateZone(uz))
 }
 
+// deleteZone deletes a zone from the system.
+//
+//	@Summary		Delete a zone.
+//	@Schemes
+//	@Description	Delete a zone by its identifier.
+//	@Tags			admin-zones
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid		path		string					false	"User ID or email"
+//	@Param			pid		path		string					false	"Provider identifier"
+//	@Param			domain	path		string					true	"Domain identifier"
+//	@Param			zoneid	path		string					true	"Zone identifier"
+//	@Success		200		{object}	bool
+//	@Failure		404		{object}	happydns.ErrorResponse	"Zone not found"
+//	@Router			/domains/{domain}/zones/{zoneid} [delete]
+//	@Router			/users/{uid}/domains/{domain}/zones/{zoneid} [delete]
+//	@Router			/users/{uid}/providers/{pid}/domains/{domain}/zones/{zoneid} [delete]
 func (zc *ZoneController) DeleteZone(c *gin.Context) {
 	zoneid, err := happydns.NewIdentifierFromString(c.Param("zoneid"))
 	if err != nil {
@@ -71,17 +105,68 @@ func (zc *ZoneController) DeleteZone(c *gin.Context) {
 	happydns.ApiResponse(c, true, zc.store.DeleteZone(zoneid))
 }
 
+// getZone retrieves a zone's information.
+//
+//	@Summary		Retrieve a zone.
+//	@Schemes
+//	@Description	Retrieve information about a zone by its identifier.
+//	@Tags			admin-zones
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid		path		string					false	"User ID or email"
+//	@Param			pid		path		string					false	"Provider identifier"
+//	@Param			domain	path		string					true	"Domain identifier"
+//	@Param			zoneid	path		string					true	"Zone identifier"
+//	@Success		200		{object}	happydns.Zone
+//	@Failure		404		{object}	happydns.ErrorResponse	"Zone not found"
+//	@Router			/domains/{domain}/zones/{zoneid} [get]
+//	@Router			/users/{uid}/domains/{domain}/zones/{zoneid} [get]
+//	@Router			/users/{uid}/providers/{pid}/domains/{domain}/zones/{zoneid} [get]
 func (zc *ZoneController) GetZone(c *gin.Context) {
 	apizc := controller.NewZoneController(zc.zoneService, zc.domainService, zc.zoneCorrectionService)
 	apizc.GetZone(c)
 }
 
+// listZones lists all zones for a domain.
+//
+//	@Summary		List all zones.
+//	@Schemes
+//	@Description	Retrieve the list of all zones (zone history) for a domain.
+//	@Tags			admin-zones
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid		path		string					false	"User ID or email"
+//	@Param			pid		path		string					false	"Provider identifier"
+//	@Param			domain	path		string					true	"Domain identifier"
+//	@Success		200	{array}	happydns.Identifier	"List of zone identifiers from zone history"
+//	@Router			/domains/{domain}/zones [get]
+//	@Router			/users/{uid}/domains/{domain}/zones [get]
+//	@Router			/users/{uid}/providers/{pid}/domains/{domain}/zones [get]
 func (zc *ZoneController) ListZones(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 
 	c.JSON(http.StatusOK, domain.ZoneHistory)
 }
 
+// updateZone updates an existing zone.
+//
+//	@Summary		Update a zone.
+//	@Schemes
+//	@Description	Update an existing zone with new configuration.
+//	@Tags			admin-zones
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid		path		string					false	"User ID or email"
+//	@Param			pid		path		string					false	"Provider identifier"
+//	@Param			domain	path		string					true	"Domain identifier"
+//	@Param			zoneid	path		string					true	"Zone identifier"
+//	@Param			body	body		happydns.Zone			true	"Updated zone configuration"
+//	@Success		200		{object}	happydns.Zone
+//	@Failure		400		{object}	happydns.ErrorResponse	"Invalid input"
+//	@Failure		404		{object}	happydns.ErrorResponse	"Zone not found"
+//	@Router			/domains/{domain}/zones/{zoneid} [put]
+//	@Router			/users/{uid}/domains/{domain}/zones/{zoneid} [put]
+//	@Router			/users/{uid}/providers/{pid}/domains/{domain}/zones/{zoneid} [put]
 func (zc *ZoneController) UpdateZone(c *gin.Context) {
 	zone := c.MustGet("zone").(*happydns.Zone)
 

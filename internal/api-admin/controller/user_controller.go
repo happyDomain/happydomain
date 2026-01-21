@@ -59,6 +59,17 @@ func (uc *UserController) UserHandler(c *gin.Context) {
 	c.Next()
 }
 
+// getUsers retrieves all users from the database.
+//
+//	@Summary		List all users.
+//	@Schemes
+//	@Description	Retrieve a list of all users in the system.
+//	@Tags			admin-users
+//	@Accept			json
+//	@Produce		json
+//	@Success		200		{array}		happydns.User			"List of users"
+//	@Failure		500		{object}	happydns.ErrorResponse
+//	@Router			/users [get]
 func (uc *UserController) GetUsers(c *gin.Context) {
 	iter, err := uc.store.ListAllUsers()
 	if err != nil {
@@ -74,6 +85,19 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 	happydns.ApiResponse(c, users, err)
 }
 
+// newUser creates a new user in the database.
+//
+//	@Summary		Create a new user.
+//	@Schemes
+//	@Description	Create a new user account with the provided information.
+//	@Tags			admin-users
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		happydns.User			true	"User information"
+//	@Success		200		{object}	happydns.User			"The created user"
+//	@Failure		400		{object}	happydns.ErrorResponse	"Invalid input"
+//	@Failure		500		{object}	happydns.ErrorResponse
+//	@Router			/users [post]
 func (uc *UserController) NewUser(c *gin.Context) {
 	uu := &happydns.User{}
 	err := c.ShouldBindJSON(&uu)
@@ -85,16 +109,54 @@ func (uc *UserController) NewUser(c *gin.Context) {
 	happydns.ApiResponse(c, uu, uc.store.CreateOrUpdateUser(uu))
 }
 
+// deleteUsers deletes all users from the database.
+//
+//	@Summary		Delete all users.
+//	@Schemes
+//	@Description	Remove all user accounts from the system.
+//	@Tags			admin-users
+//	@Accept			json
+//	@Produce		json
+//	@Success		200		{boolean}	bool					"Success status"
+//	@Failure		500		{object}	happydns.ErrorResponse
+//	@Router			/users [delete]
 func (uc *UserController) DeleteUsers(c *gin.Context) {
 	happydns.ApiResponse(c, true, uc.store.ClearUsers())
 }
 
+// getUser retrieves a specific user from the database.
+//
+//	@Summary		Show user.
+//	@Schemes
+//	@Description	Retrieve a user's complete information by their ID or email.
+//	@Tags			admin-users
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid		path		string					true	"User ID or email"
+//	@Success		200		{object}	happydns.User			"The user"
+//	@Failure		404		{object}	happydns.ErrorResponse	"User not found"
+//	@Router			/users/{uid} [get]
 func (uc *UserController) GetUser(c *gin.Context) {
 	user := c.MustGet("user").(*happydns.User)
 
 	c.JSON(http.StatusOK, user)
 }
 
+// updateUser updates an existing user's information.
+//
+//	@Summary		Update user.
+//	@Schemes
+//	@Description	Update a user's information. The user ID is preserved from the URL parameter.
+//	@Tags			admin-users
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid		path		string					true	"User ID or email"
+//	@Param			body	body		happydns.User			true	"Updated user information"
+//	@Success		200		{object}	happydns.User			"The updated user"
+//	@Failure		400		{object}	happydns.ErrorResponse	"Invalid input"
+//	@Failure		404		{object}	happydns.ErrorResponse	"User not found"
+//	@Failure		500		{object}	happydns.ErrorResponse
+//	@Router			/users/{uid} [put]
 func (uc *UserController) UpdateUser(c *gin.Context) {
 	user := c.MustGet("user").(*happydns.User)
 
@@ -109,6 +171,19 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	happydns.ApiResponse(c, uu, uc.store.CreateOrUpdateUser(uu))
 }
 
+// deleteUser removes a specific user from the database.
+//
+//	@Summary		Delete user.
+//	@Schemes
+//	@Description	Delete a user account and all associated data.
+//	@Tags			admin-users
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid		path		string					true	"User ID or email"
+//	@Success		200		{boolean}	bool					"Success status"
+//	@Failure		404		{object}	happydns.ErrorResponse	"User not found"
+//	@Failure		500		{object}	happydns.ErrorResponse
+//	@Router			/users/{uid} [delete]
 func (uc *UserController) DeleteUser(c *gin.Context) {
 	user := c.MustGet("user").(*happydns.User)
 

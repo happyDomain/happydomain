@@ -44,6 +44,25 @@ func NewServiceController(serviceService happydns.ServiceUsecase, zoneServiceUC 
 	}
 }
 
+// DeleteZoneService removes a service from the given zone.
+//
+//	@Summary		Delete a service from zone
+//	@Schemes
+//	@Description	Remove the specified service from the zone.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid			path		string	false	"User ID or email"
+//	@Param			pid			path		string	false	"Provider identifier"
+//	@Param			domain		path		string	true	"Domain identifier"
+//	@Param			zoneid		path		string	true	"Zone identifier"
+//	@Param			serviceid	path		string	true	"Service identifier"
+//	@Success		200			{object}	happydns.Zone
+//	@Failure		404			{object}	happydns.ErrorResponse	"Service or zone not found"
+//	@Failure		500			{object}	happydns.ErrorResponse	"Unable to remove service"
+//	@Router			/domains/{domain}/zones/{zoneid}/services/{serviceid} [delete]
+//	@Router			/users/{uid}/domains/{domain}/zones/{zoneid}/services/{serviceid} [delete]
+//	@Router			/users/{uid}/providers/{pid}/domains/{domain}/zones/{zoneid}/services/{serviceid} [delete]
 func (sc *ServiceController) DeleteZoneService(c *gin.Context) {
 	user := middleware.MyUser(c)
 	domain := c.MustGet("domain").(*happydns.Domain)
@@ -65,6 +84,24 @@ func (sc *ServiceController) DeleteZoneService(c *gin.Context) {
 	c.JSON(http.StatusOK, zone)
 }
 
+// GetZoneService retrieves a specific service from the zone.
+//
+//	@Summary		Get service information
+//	@Schemes
+//	@Description	Retrieve the specified service from the zone.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid			path		string	false	"User ID or email"
+//	@Param			pid			path		string	false	"Provider identifier"
+//	@Param			domain		path		string	true	"Domain identifier"
+//	@Param			zoneid		path		string	true	"Zone identifier"
+//	@Param			serviceid	path		string	true	"Service identifier"
+//	@Success		200			{object}	happydns.Service
+//	@Failure		404			{object}	happydns.ErrorResponse	"Service or zone not found"
+//	@Router			/domains/{domain}/zones/{zoneid}/services/{serviceid} [get]
+//	@Router			/users/{uid}/domains/{domain}/zones/{zoneid}/services/{serviceid} [get]
+//	@Router			/users/{uid}/providers/{pid}/domains/{domain}/zones/{zoneid}/services/{serviceid} [get]
 func (sc *ServiceController) GetZoneService(c *gin.Context) {
 	zone := c.MustGet("zone").(*happydns.Zone)
 	serviceid := c.MustGet("serviceid").(happydns.Identifier)
@@ -74,6 +111,27 @@ func (sc *ServiceController) GetZoneService(c *gin.Context) {
 	c.JSON(http.StatusOK, svc)
 }
 
+// UpdateZoneService updates an existing service in the zone.
+//
+//	@Summary		Update a service
+//	@Schemes
+//	@Description	Update the configuration of an existing service in the zone.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid			path		string					false	"User ID or email"
+//	@Param			pid			path		string					false	"Provider identifier"
+//	@Param			domain		path		string					true	"Domain identifier"
+//	@Param			zoneid		path		string					true	"Zone identifier"
+//	@Param			serviceid	path		string					true	"Service identifier"
+//	@Param			body		body		happydns.Service	true	"Updated service object"
+//	@Success		200			{object}	happydns.Zone
+//	@Failure		400			{object}	happydns.ErrorResponse	"Invalid input or service ID mismatch"
+//	@Failure		404			{object}	happydns.ErrorResponse	"Service or zone not found"
+//	@Failure		500			{object}	happydns.ErrorResponse	"Unable to update service"
+//	@Router			/domains/{domain}/zones/{zoneid}/services/{serviceid} [put]
+//	@Router			/users/{uid}/domains/{domain}/zones/{zoneid}/services/{serviceid} [put]
+//	@Router			/users/{uid}/providers/{pid}/domains/{domain}/zones/{zoneid}/services/{serviceid} [put]
 func (sc *ServiceController) UpdateZoneService(c *gin.Context) {
 	user := middleware.MyUser(c)
 	domain := c.MustGet("domain").(*happydns.Domain)

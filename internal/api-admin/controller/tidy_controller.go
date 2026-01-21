@@ -37,6 +37,18 @@ func NewTidyController(tidyUpService happydns.TidyUpUseCase) *TidyController {
 	}
 }
 
+// tidyDB performs database cleanup and maintenance operations.
+//
+//	@Summary	Tidy up the database
+//	@Schemes
+//	@Description	Performs cleanup and maintenance operations on the database, removing orphaned records and optimizing storage.
+//	@Tags		admin
+//	@Accept		json
+//	@Produce	json
+//	@Security	securitydefinitions.basic
+//	@Success	200	{boolean}	bool
+//	@Failure	500	{object}	happydns.ErrorResponse	"Internal server error"
+//	@Router		/tidy [post]
 func (tc *TidyController) TidyDB(c *gin.Context) {
 	happydns.ApiResponse(c, true, tc.tidyUpService.TidyAll())
 }

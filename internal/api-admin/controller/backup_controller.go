@@ -178,10 +178,33 @@ func (bc *BackupController) DoRestore(backup *happydns.Backup) (errs error) {
 	return
 }
 
+// BackupJSON creates a complete backup of the system.
+//
+//	@Summary		Create backup
+//	@Schemes
+//	@Description	Create a complete backup of the system including users, authentication, domains, zones, providers, and sessions.
+//	@Tags			backup
+//	@Produce		json
+//	@Success		200	{object}	string
+//	@Failure		500	{object}	happydns.ErrorResponse
+//	@Router			/backup.json [post]
 func (bc *BackupController) BackupJSON(c *gin.Context) {
 	c.JSON(http.StatusOK, bc.DoBackup())
 }
 
+// RestoreJSON restores a complete backup of the system.
+//
+//	@Summary		Restore backup
+//	@Schemes
+//	@Description	Restore a complete backup of the system including users, authentication, domains, zones, providers, and sessions.
+//	@Tags			backup
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		string	true	"Backup data"
+//	@Success		200		{boolean}	true
+//	@Failure		400		{object}	happydns.ErrorResponse	"Invalid input"
+//	@Failure		500		{object}	happydns.ErrorResponse	"Restore errors"
+//	@Router			/backup.json [put]
 func (bc *BackupController) RestoreJSON(c *gin.Context) {
 	var backup happydns.Backup
 	err := c.ShouldBindJSON(&backup)
