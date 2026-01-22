@@ -16,7 +16,7 @@ require (
 	github.com/gorilla/securecookie v1.1.2
 	github.com/gorilla/sessions v1.4.0
 	github.com/lib/pq v1.10.9
-	github.com/miekg/dns v1.1.70
+	github.com/miekg/dns v1.1.72
 	github.com/mileusna/useragent v1.3.5
 	github.com/oracle/nosql-go-sdk v1.4.7
 	github.com/ovh/go-ovh v1.9.0
