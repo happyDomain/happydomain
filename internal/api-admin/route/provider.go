@@ -40,13 +40,13 @@ func declareProviderRoutes(router *gin.RouterGroup, dependancies happydns.Usecas
 	apiProvidersMetaRoutes := router.Group("/providers/:pid")
 	apiProvidersMetaRoutes.Use(middleware.ProviderMetaHandler(dependancies.ProviderUsecase(false)))
 
-	apiProvidersMetaRoutes.PUT("", pc.UpdateProvider)
 	apiProvidersMetaRoutes.DELETE("", pc.DeleteProvider)
 
 	apiProvidersRoutes := router.Group("/providers/:pid")
 	apiProvidersRoutes.Use(middleware.ProviderHandler(dependancies.ProviderUsecase(false)))
 
 	apiProvidersRoutes.GET("", pc.GetProvider)
+	apiProvidersRoutes.PUT("", pc.UpdateProvider)
 
 	declareDomainRoutes(apiProvidersRoutes, dependancies, store)
 }
