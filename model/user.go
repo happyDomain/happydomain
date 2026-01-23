@@ -29,7 +29,7 @@ import (
 // User represents an account.
 type User struct {
 	// Id is the User's identifier.
-	Id Identifier `json:"id"`
+	Id Identifier `json:"id" swaggertype:"string"`
 
 	// Email is the User's login and means of contact.
 	Email string `json:"email"`

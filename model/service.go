@@ -27,7 +27,7 @@ import (
 
 type Service struct {
 	ServiceMeta
-	Service ServiceBody
+	Service ServiceBody `json:"Service"`
 }
 
 func (msg *Service) Meta() *ServiceMeta {
@@ -80,7 +80,7 @@ type ServiceMeta struct {
 // ServiceCombined combined ServiceMeta + Service
 type ServiceMessage struct {
 	ServiceMeta
-	Service json.RawMessage
+	Service json.RawMessage `json:"Service"`
 }
 
 func (msg *ServiceMessage) Meta() *ServiceMeta {

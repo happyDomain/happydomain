@@ -30,28 +30,28 @@ import (
 // UserAuth represents an account used for authentication (not used in case of external auth).
 type UserAuth struct {
 	// Id is the User's identifier.
-	Id Identifier
+	Id Identifier `json:"id" swaggertype:"string"`
 
 	// Email is the User's login and mean of contact.
-	Email string
+	Email string `json:"email"`
 
 	// EmailVerification is the time when the User verify its email address.
-	EmailVerification *time.Time
+	EmailVerification *time.Time `json:"emailVerification,omitempty"`
 
 	// Password is hashed.
-	Password []byte
+	Password []byte `json:"password,omitempty"`
 
 	// PasswordRecoveryKey is a string generated when User asks to recover its account.
-	PasswordRecoveryKey []byte `json:",omitempty"`
+	PasswordRecoveryKey []byte `json:"passwordRecoveryKey,omitempty"`
 
 	// CreatedAt is the time when the User has register is account.
-	CreatedAt time.Time
+	CreatedAt time.Time `json:"createdAt"`
 
 	// LastLoggedIn is the time when the User has logged in for the last time.
-	LastLoggedIn *time.Time
+	LastLoggedIn *time.Time `json:"lastLoggedIn,omitempty"`
 
 	// AllowCommercials stores the user preference regarding email contacts.
-	AllowCommercials bool
+	AllowCommercials bool `json:"allowCommercials"`
 }
 
 // UserAuths is a group of UserAuth.
