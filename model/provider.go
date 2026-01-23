@@ -62,7 +62,7 @@ type ProviderMinimal struct {
 	// Type is the string representation of the Provider's type.
 	Type string `json:"_srctype"`
 
-	Provider Provider
+	Provider Provider `json:"Provider"`
 
 	// Comment is a string that helps user to distinguish the Provider.
 	Comment string `json:"_comment,omitempty"`
@@ -86,7 +86,7 @@ type ProviderMeta struct {
 // ProviderMessage combined ProviderMeta + Provider in a parsable way
 type ProviderMessage struct {
 	ProviderMeta
-	Provider json.RawMessage
+	Provider json.RawMessage `json:"Provider"`
 }
 
 func (msg *ProviderMessage) Meta() *ProviderMeta {
@@ -105,7 +105,7 @@ func (pms *ProviderMessages) Metas() (ret []*ProviderMeta) {
 // ProviderCombined combined ProviderMeta + Provider
 type Provider struct {
 	ProviderMeta
-	Provider ProviderBody
+	Provider ProviderBody `json:"Provider"`
 }
 
 func (p *Provider) InstantiateProvider() (ProviderActuator, error) {
