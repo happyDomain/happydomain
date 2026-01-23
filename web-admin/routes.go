@@ -112,6 +112,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.Engine) {
 	router.GET("/auth_users/*_", serveOrReverse("/", cfg))
 	router.GET("/domains/*_", serveOrReverse("/", cfg))
 	router.GET("/providers/*_", serveOrReverse("/", cfg))
+	router.GET("/sessions/*_", serveOrReverse("/", cfg))
 	router.GET("/users/*_", serveOrReverse("/", cfg))
 
 	router.NoRoute(func(c *gin.Context) {
