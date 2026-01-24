@@ -109,6 +109,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.Engine) {
 
 	// Routes to virtual content
 	router.GET("/auth_users/*_", serveOrReverse("/", cfg))
+	router.GET("/checkers/*_", serveOrReverse("/", cfg))
 	router.GET("/domains/*_", serveOrReverse("/", cfg))
 	router.GET("/providers/*_", serveOrReverse("/", cfg))
 	router.GET("/sessions/*_", serveOrReverse("/", cfg))
