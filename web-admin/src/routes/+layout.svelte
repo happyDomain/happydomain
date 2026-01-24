@@ -101,6 +101,9 @@
             <NavItem>
                 <NavLink href="/sessions" active={page && page.url.pathname.startsWith('/sessions')}>Sessions</NavLink>
             </NavItem>
+            <NavItem>
+                <NavLink href="/checkers" active={page && page.url.pathname.startsWith('/checkers')}>Checkers</NavLink>
+            </NavItem>
         </Nav>
     </Collapse>
 </Navbar>
