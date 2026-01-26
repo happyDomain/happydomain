@@ -22,33 +22,24 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
+    import { Container, ListGroup, Spinner } from "@sveltestrap/sveltestrap";
 
-    import {
-        Button,
-        Container,
-        Col,
-        Input,
-        InputGroup,
-        ListGroup,
-        Modal,
-        ModalBody,
-        ModalFooter,
-        ModalHeader,
-        Row,
-        Spinner,
-    } from "@sveltestrap/sveltestrap";
-
-    import { t } from "$lib/translations";
     import { userSession } from "$lib/stores/usersession";
+    import { t } from "$lib/translations";
 
     import ChangePasswordForm from "./ChangePasswordForm.svelte";
     import DeleteAccountCard from "./DeleteAccountCard.svelte";
     import SessionsManager from "./SessionsManager.svelte";
     import UserSettingsForm from "./UserSettingsForm.svelte";
 
-    let is_auth_user_req = $userSession.id ? fetch(`/api/users/${$userSession.id}/is_auth_user`) : false;
+    let is_auth_user_req = $userSession.id
+        ? fetch(`/api/users/${$userSession.id}/is_auth_user`)
+        : false;
 </script>
+
+<svelte:head>
+    <title>{$t("settings.title")} - happyDomain</title>
+</svelte:head>
 
 <Container class="my-4 pb-5">
     <div class="text-center">
@@ -65,7 +56,8 @@
         </div>
     {:else}
         <h2 id="preferences" class="display-7 fw-bold mt-5">
-            <i class="bi bi-sliders"></i> {$t("settings.preferences.title")}
+            <i class="bi bi-sliders"></i>
+            {$t("settings.preferences.title")}
         </h2>
         <p class="lead">
             {$t("settings.preferences.description")}
@@ -75,7 +67,8 @@
 
         {#if $userSession.email !== "_no_auth"}
             <h2 id="security" class="display-7 fw-bold mt-5">
-                <i class="bi bi-shield"></i> {$t("settings.security.title")}
+                <i class="bi bi-shield"></i>
+                {$t("settings.security.title")}
             </h2>
             <p class="lead">
                 {$t("settings.security.description")}
@@ -108,7 +101,8 @@
             {/await}
 
             <h2 class="display-7 fw-bold mt-5" id="delete-account">
-                <i class="bi bi-x-circle"></i> {$t("account.delete.delete")}
+                <i class="bi bi-x-circle"></i>
+                {$t("account.delete.delete")}
             </h2>
             <p class="lead">
                 {$t("account.delete.description")}

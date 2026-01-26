@@ -22,11 +22,15 @@
 -->
 
 <script lang="ts">
-    import { Card, CardBody, CardHeader, Container, Col, Row } from "@sveltestrap/sveltestrap";
+    import { Card, CardBody, CardHeader, Col, Container, Row } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
     import SignUpForm from "./SignUpForm.svelte";
 </script>
+
+<svelte:head>
+    <title>{$t("account.join")} - happyDomain</title>
+</svelte:head>
 
 <Container class="my-3">
     <Row>

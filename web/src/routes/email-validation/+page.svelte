@@ -27,10 +27,10 @@
     import { Alert, Col, Container, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import { validateEmail } from "$lib/api/user";
-    import EmailConfirmationForm from "./EmailConfirmationForm.svelte";
-    import { t } from "$lib/translations";
     import { appConfig } from "$lib/stores/config";
     import { toasts } from "$lib/stores/toasts";
+    import { t } from "$lib/translations";
+    import EmailConfirmationForm from "./EmailConfirmationForm.svelte";
 
     let error = $state("");
     let { data } = $props();
@@ -61,10 +61,18 @@
     });
 </script>
 
+<svelte:head>
+    <title>happyDomain</title>
+</svelte:head>
+
 <Container class="my-3">
     {#if $appConfig.no_mail}
         <Row>
-            <Col md={{ offset: 1, size: 10 }}  lg={{ offset: 2, size: 8 }} xl={{ offset: 3, size: 6 }}>
+            <Col
+                md={{ offset: 1, size: 10 }}
+                lg={{ offset: 2, size: 8 }}
+                xl={{ offset: 3, size: 6 }}
+            >
                 <Alert color="warning">
                     <h4 class="alert-heading">{$t("email.validation-unavailable.title")}</h4>
                     <p>

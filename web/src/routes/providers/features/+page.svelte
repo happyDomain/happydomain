@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { Container, Icon, Table, Spinner } from "@sveltestrap/sveltestrap";
+    import { Container, Icon, Spinner, Table } from "@sveltestrap/sveltestrap";
 
     import { listProviders } from "$lib/api/provider_specs";
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
@@ -40,6 +40,10 @@
     ];
 </script>
 
+<svelte:head>
+    <title>{$t("menu.provider-features")} - happyDomain</title>
+</svelte:head>
+
 <Container class="d-flex flex-column flex-fill mt-1" fluid>
     {#await listProviders()}
         <div class="flex-fill d-flex justify-content-center align-items-center">
@@ -51,7 +55,7 @@
                 <tr class="sticky-top bg-light" style="z-index:0">
                     <th style="background: none">
                         <h1 class="position-absolute display-6 fw-bold" style="bottom: 0">
-                            {$t('menu.provider-features')}
+                            {$t("menu.provider-features")}
                         </h1>
                     </th>
                     {#each capabilities as cap}

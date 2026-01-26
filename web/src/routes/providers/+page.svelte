@@ -24,7 +24,7 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
 
-    import { Button, Container, Col, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
+    import { Button, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import ProviderList from "$lib/components/providers/List.svelte";
     import { appConfig } from "$lib/stores/config";
@@ -37,6 +37,10 @@
     }
     refreshProviders();
 </script>
+
+<svelte:head>
+    <title>{$t("provider.title")} - happyDomain</title>
+</svelte:head>
 
 <Container class="flex-fill my-5">
     <div class="text-center">
@@ -72,7 +76,8 @@
                     <ProviderList
                         items={$providers}
                         on:new-provider={() => goto("providers/new")}
-                        on:click={(event) => goto("providers/" + encodeURIComponent(event.detail._id))}
+                        on:click={(event) =>
+                            goto("providers/" + encodeURIComponent(event.detail._id))}
                     />
                 </Col>
             </Row>

@@ -22,12 +22,16 @@
 -->
 
 <script lang="ts">
-    import { Card, CardBody, CardHeader, Container, Col, Row } from "@sveltestrap/sveltestrap";
+    import { Card, CardBody, CardHeader, Col, Container, Row } from "@sveltestrap/sveltestrap";
 
+    import { appConfig } from "$lib/stores/config";
     import { t } from "$lib/translations";
     import LoginForm from "./LoginForm.svelte";
-    import { appConfig } from "$lib/stores/config";
 </script>
+
+<svelte:head>
+    <title>{$t("onboarding.steps.welcome")} - happyDomain</title>
+</svelte:head>
 
 <Container class="my-3">
     <Row>

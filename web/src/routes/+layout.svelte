@@ -22,21 +22,12 @@
 -->
 
 <script lang="ts">
-    import "../app.scss";
     import "bootstrap-icons/font/bootstrap-icons.css";
+    import "../app.scss";
 
     import { goto } from "$app/navigation";
-    import { page } from "$app/state";
-
-    import {
-        Col,
-        Container,
-        Row,
-        //Styles,
-    } from "@sveltestrap/sveltestrap";
 
     import Header from "$lib/components/Header.svelte";
-    import Logo from "$lib/components/Logo.svelte";
     import Toaster from "$lib/components/Toaster.svelte";
     import VoxPeople from "$lib/components/VoxPeople.svelte";
     import { appConfig } from "$lib/stores/config";
@@ -46,11 +37,14 @@
 
     const { MODE } = import.meta.env;
 
-    let { data, children }: {
+    let {
+        data,
+        children,
+    }: {
         data: {
             sw_state: { triedUpdate: boolean; hasUpdate: boolean };
         };
-        children?: import('svelte').Snippet;
+        children?: import("svelte").Snippet;
     } = $props();
 
     window.onunhandledrejection = (e) => {
@@ -70,12 +64,6 @@
         }
     };
 </script>
-
-<svelte:head>
-    <title>{page.data.domain ? (typeof page.data.domain === "object" ? (page.data.domain.domain.substring(0, page.data.domain.domain.length - 1) + " - happyDomain") : (page.data.domain + " - happyDomain")) : "happyDomain"}</title>
-</svelte:head>
-
-<!--Styles /-->
 
 {#if $appConfig.msg_header}
     <div

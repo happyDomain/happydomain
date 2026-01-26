@@ -25,11 +25,8 @@
     import { goto, invalidateAll } from "$app/navigation";
     import { page } from "$app/state";
 
-    // @ts-ignore
-    import { escape } from "html-escaper";
     import {
         Button,
-        ButtonGroup,
         Col,
         Container,
         Dropdown,
@@ -37,24 +34,16 @@
         DropdownMenu,
         DropdownToggle,
         Icon,
-        Input,
         Row,
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
     import { deleteDomain as APIDeleteDomain } from "$lib/api/domains";
-    import ButtonZonePublish from "./ButtonZonePublish.svelte";
-    import ModalDiffZone from "./ModalDiffZone.svelte";
-    import ModalDomainDelete, { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
-    import ModalUploadZone, { controls as ctrlUploadZone } from "./ModalUploadZone.svelte";
-    import ModalViewZone, { controls as ctrlViewZone } from "./ModalViewZone.svelte";
-    import NewSubdomainPath, { controls as ctrlNewSubdomain } from "./NewSubdomainPath.svelte";
     import SelectDomain from "$lib/components/domains/SelectDomain.svelte";
-    import SubdomainListTiny from "./SubdomainListTiny.svelte";
-    import { fqdn, isReverseZone } from "$lib/dns";
+    import { isReverseZone } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { ZoneMeta } from "$lib/model/zone";
-    import { domains, domains_idx, refreshDomains } from "$lib/stores/domains";
+    import { domains_idx, refreshDomains } from "$lib/stores/domains";
     import {
         retrieveZone as StoreRetrieveZone,
         sortedDomains,
@@ -62,18 +51,23 @@
         thisZone,
     } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
+    import ButtonZonePublish from "./ButtonZonePublish.svelte";
+    import ModalDiffZone from "./ModalDiffZone.svelte";
+    import ModalDomainDelete, { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
+    import ModalUploadZone, { controls as ctrlUploadZone } from "./ModalUploadZone.svelte";
+    import ModalViewZone, { controls as ctrlViewZone } from "./ModalViewZone.svelte";
+    import NewSubdomainPath, { controls as ctrlNewSubdomain } from "./NewSubdomainPath.svelte";
+    import SubdomainListTiny from "./SubdomainListTiny.svelte";
 
     interface Props {
         data: { domain: Domain };
-        children?: import('svelte').Snippet;
+        children?: import("svelte").Snippet;
     }
 
     let { data, children }: Props = $props();
 
-    function domainLink(dn: string) : string {
-        return $domains_idx[$domains_idx[dn].domain]
-             ? $domains_idx[dn].domain
-             : dn;
+    function domainLink(dn: string): string {
+        return $domains_idx[$domains_idx[dn].domain] ? $domains_idx[dn].domain : dn;
     }
 
     let selectedDomain = $derived(data.domain.id);
@@ -150,8 +144,11 @@
     $effect(() => {
         domainChange(data.domain.id);
     });
-
 </script>
+
+<svelte:head>
+    <title>{data.domain.domain} - happyDomain</title>
+</svelte:head>
 
 <Container fluid class="d-flex flex-column flex-fill">
     <Row class="flex-fill">
@@ -166,7 +163,7 @@
                     <Button href="/domains/" class="fw-bolder" color="link">
                         <Icon name="chevron-up" />
                     </Button>
-                    <SelectDomain bind:selectedDomain={selectedDomain} />
+                    <SelectDomain bind:selectedDomain />
                 </div>
 
                 {#if page.data.isHistoryPage || page.data.isAuditPage}
@@ -177,7 +174,7 @@
                         href={"/domains/" + encodeURIComponent(domainLink(selectedDomain))}
                     >
                         <Icon name="chevron-left" />
-                        {$t('zones.return-to')}
+                        {$t("zones.return-to")}
                     </Button>
                 {:else}
                     <div class="d-flex gap-2 pb-2 sticky-top" style="padding-top: 10px">
@@ -194,7 +191,17 @@
                             {$t("domains.add-a-subdomain")}
                         </Button>
                         <Dropdown>
-                            <DropdownToggle color="secondary" outline size="sm" aria-label={$t("domains.actions.others", {domain: $domains_idx[selectedDomain].domain})} title={$t("domains.actions.others", {domain: $domains_idx[selectedDomain].domain})}>
+                            <DropdownToggle
+                                color="secondary"
+                                outline
+                                size="sm"
+                                aria-label={$t("domains.actions.others", {
+                                    domain: $domains_idx[selectedDomain].domain,
+                                })}
+                                title={$t("domains.actions.others", {
+                                    domain: $domains_idx[selectedDomain].domain,
+                                })}
+                            >
                                 {#if retrievalInProgress}
                                     <Spinner size="sm" />
                                 {:else}
@@ -205,7 +212,9 @@
                                 <DropdownItem header class="font-monospace">
                                     {data.domain.domain}
                                 </DropdownItem>
-                                <DropdownItem href={`/domains/${domainLink(selectedDomain)}/history`}>
+                                <DropdownItem
+                                    href={`/domains/${domainLink(selectedDomain)}/history`}
+                                >
                                     {$t("domains.actions.history")}
                                 </DropdownItem>
                                 <DropdownItem href={`/domains/${domainLink(selectedDomain)}/logs`}>
@@ -290,10 +299,7 @@
                         {$t("domains.stop")}
                     </Button>
                 {:else}
-                    <ButtonZonePublish
-                        domain={data.domain}
-                        history={selectedHistory}
-                    />
+                    <ButtonZonePublish domain={data.domain} history={selectedHistory} />
                 {/if}
             {:else}
                 <div class="mt-4 text-center">

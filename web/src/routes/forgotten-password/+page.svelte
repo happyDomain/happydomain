@@ -32,10 +32,18 @@
     let { data } = $props();
 </script>
 
+<svelte:head>
+    <title>{$t("password.forgotten")} - happyDomain</title>
+</svelte:head>
+
 <Container class="my-3">
     {#if $appConfig.no_mail}
         <Row>
-            <Col md={{ offset: 1, size: 10 }}  lg={{ offset: 2, size: 8 }} xl={{ offset: 3, size: 6 }}>
+            <Col
+                md={{ offset: 1, size: 10 }}
+                lg={{ offset: 2, size: 8 }}
+                xl={{ offset: 3, size: 6 }}
+            >
                 <Alert color="warning">
                     <h4 class="alert-heading">{$t("password.recovery-unavailable.title")}</h4>
                     <p>
@@ -44,11 +52,9 @@
                 </Alert>
             </Col>
         </Row>
+    {:else if data.user && data.key}
+        <RecoverAccountForm user={data.user} key={data.key} />
     {:else}
-        {#if data.user && data.key}
-            <RecoverAccountForm user={data.user} key={data.key} />
-        {:else}
-            <ForgottenPasswordForm />
-        {/if}
+        <ForgottenPasswordForm />
     {/if}
 </Container>

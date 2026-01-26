@@ -1,6 +1,6 @@
 <!--
      This file is part of the happyDomain (R) project.
-     Copyright (c) 2022-2024 happyDomain
+     Copyright (c) 2022-2026 happyDomain
      Authors: Pierre-Olivier Mercier, et al.
 
      This program is offered under a commercial and under the AGPL license.
@@ -21,12 +21,21 @@
      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
-<script>
-    import Home from "$lib/components/pages/Home.svelte";
+<script lang="ts">
+    import type { Provider } from "$lib/model/provider";
+    import { t } from "$lib/translations";
+
+    let {
+        children,
+        data,
+    }: {
+        children?: import("svelte").Snippet;
+        data: { provider: Provider };
+    } = $props();
 </script>
 
 <svelte:head>
-    <title>happyDomain</title>
+    <title>{data.provider._comment} - happyDomain</title>
 </svelte:head>
 
-<Home />
+{@render children?.()}

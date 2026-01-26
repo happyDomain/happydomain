@@ -26,18 +26,18 @@
     import { page } from "$app/state";
     import { untrack } from "svelte";
 
-    import { Container, Col, Row, Table } from "@sveltestrap/sveltestrap";
+    import { Col, Container, Row, Table } from "@sveltestrap/sveltestrap";
 
     import { resolve as APIResolve } from "$lib/api/resolver";
-    import ResolverForm from "./Form.svelte";
-    import { nsttl, nsrrtype } from "$lib/dns";
-    import { recordsFields } from "$lib/resolver";
+    import { nsrrtype, nsttl } from "$lib/dns";
     import type { ResolverForm as ResolverFormT } from "$lib/model/resolver";
-    import { t } from "$lib/translations";
+    import { recordsFields } from "$lib/resolver";
     import { toasts } from "$lib/stores/toasts";
+    import { t } from "$lib/translations";
+    import ResolverForm from "./Form.svelte";
 
     interface Props {
-        data: { domain: string; };
+        data: { domain: string };
     }
 
     interface ResolverPageState {
@@ -61,7 +61,7 @@
         APIResolve(form).then(
             (response) => {
                 error_response = null;
-                question = Object.assign({ }, form);
+                question = Object.assign({}, form);
                 if (response.Answer) {
                     responses = response.Answer;
                 } else {
@@ -88,7 +88,7 @@
             untrack(() => {
                 const state = page.state as ResolverPageState;
                 if (state.form) {
-                    form = Object.assign({ }, state.form);
+                    form = Object.assign({}, state.form);
                 } else {
                     form = { domain: "", type: "ANY", resolver: "local" };
                 }
@@ -115,7 +115,7 @@
     }
 
     function responseByType(filteredResponses: Array<any>): Record<string, Array<any>> {
-        const ret: Record<string, Array<any>> = { };
+        const ret: Record<string, Array<any>> = {};
 
         for (const i in filteredResponses) {
             if (!ret[filteredResponses[i].Hdr.Rrtype]) {
@@ -145,6 +145,14 @@
     }
 </script>
 
+<svelte:head>
+    <title>
+        {$t("menu.dns-resolver")}
+        {domain ? domain : ""}
+        - happyDomain</title
+    >
+</svelte:head>
+
 {#if domain}
     <Container fluid class="flex-fill d-flex flex-column">
         <Row class="flex-grow-1">
@@ -155,17 +163,14 @@
                             {$t("menu.dns-resolver")}
                         </h1>
                     </div>
-                    <ResolverForm
-                        bind:request_pending
-                        value={form}
-                        on:submit={resolveDomain}
-                    />
+                    <ResolverForm bind:request_pending value={form} on:submit={resolveDomain} />
                 </div>
             </Col>
             {#if error_response !== null}
                 <Col md="8" class="pt-3 pb-5">
                     <h2 class="display-7 fw-bold mt-3">
-                        <i class="bi bi-exclamation-triangle"></i> {$t("errors.resolve")}
+                        <i class="bi bi-exclamation-triangle"></i>
+                        {$t("errors.resolve")}
                     </h2>
                     <p class="lead">
                         {$t("resolver.error-description")}
@@ -204,14 +209,20 @@
             {:else if responses != null}
                 <Col md="8" class="pt-3 pb-5">
                     {@const resByType = responseByType(
-                        filteredResponses(/* @ts-ignore */ responses, (page.state as ResolverPageState).showDNSSEC ?? false),
+                        filteredResponses(
+                            /* @ts-ignore */ responses,
+                            (page.state as ResolverPageState).showDNSSEC ?? false,
+                        ),
                     )}
                     <h2 class="display-7 fw-bold">
                         {$t("resolver.query-results")}
                     </h2>
                     <p class="lead mb-4">
                         {#if question}
-                            {$t("resolver.results-description", { domain: question.domain, type: question.type })}
+                            {$t("resolver.results-description", {
+                                domain: question.domain,
+                                type: question.type,
+                            })}
                         {:else}
                             {$t("resolver.results-description-default")}
                         {/if}
@@ -224,7 +235,12 @@
                             </h3>
                             <div class="card-body p-0">
                                 <div>
-                                    <Table class="table-responsive mb-0 flush" size="sm" hover striped>
+                                    <Table
+                                        class="table-responsive mb-0 flush"
+                                        size="sm"
+                                        hover
+                                        striped
+                                    >
                                         <thead>
                                             <tr>
                                                 {#each recordsFields(Number(type)) as field}
@@ -233,7 +249,8 @@
                                                     </th>
                                                 {/each}
                                                 <th>
-                                                    <i class="bi bi-clock"></i> {$t("resolver.ttl")}
+                                                    <i class="bi bi-clock"></i>
+                                                    {$t("resolver.ttl")}
                                                 </th>
                                             </tr>
                                         </thead>
@@ -264,7 +281,8 @@
     <div class="my-5 container flex-fill">
         <div class="text-center">
             <h1 class="display-6 fw-bold">
-                <i class="bi bi-search"></i> {$t("menu.dns-resolver")}
+                <i class="bi bi-search"></i>
+                {$t("menu.dns-resolver")}
             </h1>
             <p class="lead mt-1">
                 {$t("resolver.page-description")}

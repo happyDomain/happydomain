@@ -27,8 +27,10 @@
     import { Button, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import { addDomain } from "$lib/api/domains";
+    import ProviderNewModal, {
+        controls as ctrlProvider,
+    } from "$lib/components/modals/NewProvider.svelte";
     import ProviderList from "$lib/components/providers/List.svelte";
-    import ProviderNewModal, { controls as ctrlProvider } from "$lib/components/modals/NewProvider.svelte";
     import type { Provider } from "$lib/model/provider";
     import { domains, refreshDomains } from "$lib/stores/domains";
     import {
@@ -81,6 +83,10 @@
     }
 </script>
 
+<svelte:head>
+    <title>{$t("common.add-new-thing", { thing: $t("domains.kind") })} - happyDomain</title>
+</svelte:head>
+
 <Container class="d-flex flex-column flex-fill" fluid>
     <h1 class="text-center my-2">
         <Button type="button" class="fw-bolder" color="link" on:click={() => history.go(-1)}>
@@ -111,7 +117,10 @@
                     <button
                         type="button"
                         class="btn btn-link p-0"
-                        onclick={(e) => { e.preventDefault(); newProvider(); }}>{$t("domains.add-now")}</button
+                        onclick={(e) => {
+                            e.preventDefault();
+                            newProvider();
+                        }}>{$t("domains.add-now")}</button
                     >
                 </p>
             </Col>
