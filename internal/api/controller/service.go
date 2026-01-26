@@ -47,7 +47,7 @@ func NewServiceController(duService happydns.ZoneServiceUsecase, suService happy
 	}
 }
 
-// addZoneService adds a Service to the given subdomain of the Zone.
+// AddZoneService adds a Service to the given subdomain of the Zone.
 //
 //	@Summary	Add a Service.
 //	@Schemes
@@ -93,7 +93,7 @@ func (sc *ServiceController) AddZoneService(c *gin.Context) {
 	c.JSON(http.StatusOK, zone)
 }
 
-// getServiceService retrieves the designated Service.
+// GetServiceService retrieves the designated Service.
 //
 //	@Summary	Get the Service.
 //	@Schemes
@@ -164,7 +164,7 @@ func (sc *ServiceController) UpdateZoneService(c *gin.Context) {
 	c.JSON(http.StatusOK, zone)
 }
 
-// deleteZoneService drops the given Service.
+// DeleteZoneService drops the given Service.
 //
 //	@Summary	Drop the given Service.
 //	@Schemes

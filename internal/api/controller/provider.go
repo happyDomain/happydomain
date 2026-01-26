@@ -90,7 +90,7 @@ func (pc *ProviderController) GetProvider(c *gin.Context) {
 	c.JSON(http.StatusOK, provider)
 }
 
-// addProvider appends a new provider.
+// AddProvider appends a new provider.
 //
 //	@Summary	Add a new provider
 //	@Schemes
@@ -200,7 +200,7 @@ func (pc *ProviderController) DeleteProvider(c *gin.Context) {
 	c.JSON(http.StatusNoContent, nil)
 }
 
-// getDomainsHostedByProvider lists domains available to management from the given Provider.
+// GetDomainsHostedByProvider lists domains available to management from the given Provider.
 //
 //	@Summary	Lists manageable domains from the Provider.
 //	@Schemes
@@ -229,7 +229,7 @@ func (pc *ProviderController) GetDomainsHostedByProvider(c *gin.Context) {
 	c.JSON(http.StatusOK, domains)
 }
 
-// CreateDomainsOnProvider ensure the given domain exists on the provider or creates it if possible.
+// CreateDomainOnProvider ensure the given domain exists on the provider or creates it if possible.
 //
 //	@Summary	Create a domain on the Provider.
 //	@Schemes

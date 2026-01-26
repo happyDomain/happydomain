@@ -61,7 +61,7 @@ func (sc *SessionController) SessionHandler(c *gin.Context) {
 	c.Next()
 }
 
-// getSession gets the content of the current user's session.
+// GetSession gets the content of the current user's session.
 //
 //	@Summary	Retrieve user's session content
 //	@Schemes
@@ -90,7 +90,7 @@ func (sc *SessionController) GetSession(c *gin.Context) {
 	c.JSON(http.StatusOK, s)
 }
 
-// clearSession removes the content of the current user's session.
+// ClearSession removes the content of the current user's session.
 //
 //	@Summary	Remove user's session content
 //	@Schemes
@@ -110,7 +110,7 @@ func (sc *SessionController) ClearSession(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// clearUserSessions closes all existing sessions for a given user, and disconnect it.
+// ClearUserSessions closes all existing sessions for a given user, and disconnect it.
 //
 //	@Summary	Remove user's sessions
 //	@Schemes
@@ -138,7 +138,7 @@ func (sc *SessionController) ClearUserSessions(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// getSessions lists the sessions open for the current user.
+// GetSessions lists the sessions open for the current user.
 //
 //	@Summary	List user's sessions
 //	@Schemes
@@ -166,7 +166,7 @@ func (sc *SessionController) GetSessions(c *gin.Context) {
 	c.JSON(http.StatusOK, s)
 }
 
-// createSession create a new session for the current user
+// CreateSession create a new session for the current user
 //
 //	@Summary	Create a new session for the current user.
 //	@Schemes
@@ -202,7 +202,7 @@ func (sc *SessionController) CreateSession(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"id": sess.Id})
 }
 
-// updateSession update a session owned by the current user
+// UpdateSession update a session owned by the current user
 //
 //	@Summary	Update a session owned by the current user.
 //	@Schemes
@@ -248,7 +248,7 @@ func (sc *SessionController) UpdateSession(c *gin.Context) {
 	c.JSON(http.StatusOK, s)
 }
 
-// deleteSession delete a session owned by the current user
+// DeleteSession delete a session owned by the current user
 //
 //	@Summary	Delete a session owned by the current user.
 //	@Schemes

@@ -76,7 +76,7 @@ func (dc *DomainController) GetDomains(c *gin.Context) {
 	c.JSON(http.StatusOK, domains)
 }
 
-// addDomain appends a new domain to those managed.
+// AddDomain appends a new domain to those managed.
 //
 //	@Summary	Manage a new domain
 //	@Schemes
@@ -185,7 +185,7 @@ func (dc *DomainController) UpdateDomain(c *gin.Context) {
 	c.JSON(http.StatusOK, old)
 }
 
-// delDomain removes a domain from the database.
+// DelDomain removes a domain from the database.
 //
 //	@Summary	Stop managing a Domain.
 //	@Schemes

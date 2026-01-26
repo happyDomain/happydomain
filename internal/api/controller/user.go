@@ -45,7 +45,7 @@ func NewUserController(userService happydns.UserUsecase, lc *LoginController) *U
 	}
 }
 
-// getUser shows a user in the database.
+// GetUser shows a user in the database.
 //
 //	@Summary	Show user.
 //	@Schemes
@@ -70,7 +70,7 @@ func (uc *UserController) GetUser(c *gin.Context) {
 	}
 }
 
-// getUserAvatar returns a unique avatar for the user.
+// GetUserAvatar returns a unique avatar for the user.
 //
 //	@Summary	Show user's avatar.
 //	@Schemes
@@ -104,7 +104,7 @@ func (uc *UserController) GetUserAvatar(c *gin.Context) {
 	}
 }
 
-// getUserSettings gets the settings of the given user.
+// GetUserSettings gets the settings of the given user.
 //
 //	@Summary	Retrieve user's settings.
 //	@Schemes
@@ -124,7 +124,7 @@ func (uc *UserController) GetUserSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, user.Settings)
 }
 
-// changeUserSettings updates the settings of the given user.
+// ChangeUserSettings updates the settings of the given user.
 //
 //	@Summary	Update user's settings.
 //	@Schemes
@@ -160,7 +160,7 @@ func (uc *UserController) ChangeUserSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, user.Settings)
 }
 
-// deleteMyUser deletes the current user's account.
+// DeleteMyUser deletes the current user's account.
 //
 //	@Summary	Delete user account.
 //	@Schemes

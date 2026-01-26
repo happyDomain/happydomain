@@ -105,7 +105,7 @@ func (rc *UserRecoveryController) UserRecoveryOperations(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-// validateUserAddress validates a user address after registration.
+// ValidateUserAddress validates a user address after registration.
 //
 //	@Summary	Validate e-mail address.
 //	@Schemes
@@ -138,7 +138,7 @@ func (rc *UserRecoveryController) ValidateUserAddress(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// recoverUserAccount performs account recovery by reseting the password of the account.
+// RecoverUserAccount performs account recovery by reseting the password of the account.
 //
 //	@Summary	Reset password with link in email.
 //	@Schemes

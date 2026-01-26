@@ -42,7 +42,7 @@ func NewProviderSettingsController(pSettingsServices happydns.ProviderSettingsUs
 	}
 }
 
-// getProviderSettingsState creates or updates a Provider with human fillable forms.
+// NextProviderSettingsState creates or updates a Provider with human fillable forms.
 //
 //	@Summary	Assistant to Provider creation.
 //	@Schemes

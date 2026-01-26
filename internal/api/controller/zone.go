@@ -48,7 +48,7 @@ func NewZoneController(zoneService happydns.ZoneUsecase, domainService happydns.
 	}
 }
 
-// getZone retrieves a zone's information.
+// GetZone retrieves a zone's information.
 //
 //	@Summary	Retrieve a zone.
 //	@Schemes
@@ -69,7 +69,7 @@ func (zc *ZoneController) GetZone(c *gin.Context) {
 	c.JSON(http.StatusOK, zone)
 }
 
-// getZoneSubdomain returns the services associated with a given subdomain.
+// GetZoneSubdomain returns the services associated with a given subdomain.
 //
 //	@Summary	List services
 //	@Schemes
@@ -143,7 +143,7 @@ func (zc *ZoneController) DiffZones(c *gin.Context) {
 	c.JSON(http.StatusOK, corrections)
 }
 
-// applyZone performs the requested changes with the provider.
+// ApplyZoneCorrections performs the requested changes with the provider.
 //
 //	@Summary	Performs requested changes to the real zone.
 //	@Schemes
@@ -328,7 +328,7 @@ func (zc *ZoneController) DeleteRecords(c *gin.Context) {
 	c.JSON(http.StatusOK, zone)
 }
 
-// UpdateRecords updates a given record in the zone.
+// UpdateRecord updates a given record in the zone.
 //
 //	@Summary	Update a given record in the zone.
 //	@Schemes

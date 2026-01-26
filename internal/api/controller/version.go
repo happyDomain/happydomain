@@ -19,6 +19,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+// Package controller provides HTTP handlers and controllers for the happyDomain REST API.
+// It implements the presentation layer, handling HTTP requests and responses for domain
+// management, DNS zones, providers, user authentication, and related operations.
 package controller
 
 import (
@@ -33,7 +36,7 @@ var (
 	HDVersion happydns.VersionResponse
 )
 
-// showVersion returns the current happyDomain version.
+// ShowVersion returns the current happyDomain version.
 //
 //	@Summary	Get happyDomain version
 //	@Schemes

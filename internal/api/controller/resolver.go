@@ -68,7 +68,7 @@ type DNSQuestion struct {
 	Qclass uint16
 }
 
-// runResolver performs a NS resolution for a given domain, with options.
+// RunResolver performs a NS resolution for a given domain, with options.
 //
 //	@Summary	Perform a DNS resolution.
 //	@Schemes

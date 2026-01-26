@@ -43,7 +43,7 @@ func NewAuthUserController(auService happydns.AuthUserUsecase, lc *LoginControll
 	}
 }
 
-// changePassword changes the password of the given account.
+// ChangePassword changes the password of the given account.
 //
 //	@Summary	Change password
 //	@Schemes

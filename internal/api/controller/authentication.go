@@ -43,7 +43,7 @@ func NewLoginController(authService happydns.AuthenticationUsecase) *LoginContro
 	}
 }
 
-// getLoggedUser retrieves the currently logged-in user.
+// GetLoggedUser retrieves the currently logged-in user.
 //
 //	@Summary	Get the current user.
 //	@Schemes
@@ -59,7 +59,7 @@ func (lc *LoginController) GetLoggedUser(c *gin.Context) {
 	c.JSON(http.StatusOK, c.MustGet("LoggedUser"))
 }
 
-// login authenticates a user with username and password.
+// Login authenticates a user with username and password.
 //
 //	@Summary	Log in a user.
 //	@Schemes
@@ -94,7 +94,7 @@ func (lc *LoginController) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-// logout clears the current user's session.
+// Logout clears the current user's session.
 //
 //	@Summary	Log out the current user.
 //	@Schemes
