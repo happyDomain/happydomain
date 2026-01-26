@@ -21,15 +21,14 @@
 
 import { redirect, type Load } from "@sveltejs/kit";
 
-import { getProvider } from "$lib/api/provider";
 import { filteredProvider } from "$lib/stores/home";
 
-export const load: Load = async ({ params }) => {
+export const load: Load = async ({ parent, params }) => {
     if (!params.prvid) {
         redirect(302, "/providers/");
     }
 
-    const provider = await getProvider(params.prvid);
+    const { provider } = await parent();
 
     filteredProvider.set(provider);
 
