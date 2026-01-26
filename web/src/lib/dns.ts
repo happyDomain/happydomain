@@ -19,8 +19,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { newRR, nsrrtype, rdatatostr } from "$lib/dns_rr";
 import type { dnsRR } from "$lib/dns_rr";
+import { newRR, nsrrtype, rdatatostr } from "$lib/dns_rr";
 import type { Domain } from "$lib/model/domain";
 
 export { nsrrtype, rdatatostr };
@@ -48,7 +48,10 @@ export function fqdn(input: string, origin: string) {
     }
 }
 
-export function domainCompare(a: string | Domain | { domain: string }, b: string | Domain | { domain: string }) {
+export function domainCompare(
+    a: string | Domain | { domain: string },
+    b: string | Domain | { domain: string },
+) {
     // Convert to string if Domain
     let domainA = typeof a === "object" ? a.domain : a;
     let domainB = typeof b === "object" ? b.domain : b;
@@ -71,7 +74,10 @@ export function domainCompare(a: string | Domain | { domain: string }, b: string
     return as.length - bs.length;
 }
 
-export function fqdnCompare(a: string | Domain | { domain: string }, b: string | Domain | { domain: string }) {
+export function fqdnCompare(
+    a: string | Domain | { domain: string },
+    b: string | Domain | { domain: string },
+) {
     // Convert to string if Domain
     let domainA = typeof a === "object" ? a.domain : a;
     let domainB = typeof b === "object" ? b.domain : b;
@@ -163,11 +169,15 @@ export function validateDomain(
                 domains.shift();
             }
 
-            ret = domains.reduce((acc, domain) => (
-                acc &&
-                    domain.length >= 1 && domain.length <= 63 &&
-                    ((only_ldh && /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(domain)) || (!only_ldh && /^_?[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(domain)))
-            ), ret as boolean);
+            ret = domains.reduce(
+                (acc, domain) =>
+                    acc &&
+                    domain.length >= 1 &&
+                    domain.length <= 63 &&
+                    ((only_ldh && /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(domain)) ||
+                        (!only_ldh && /^_?[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(domain))),
+                ret as boolean,
+            );
         }
     }
 
@@ -180,23 +190,19 @@ export function isReverseZone(fqdn: string) {
 
 function normalizeIPv6(addr: string): string | null {
     try {
-        const parts = addr.split('::');
-        let head = parts[0].split(':');
-        let tail = parts[1] ? parts[1].split(':') : [];
+        const parts = addr.split("::");
+        let head = parts[0].split(":");
+        let tail = parts[1] ? parts[1].split(":") : [];
 
         // Fill the "::" gap with zeroes
-        const fullParts = [
-            ...head,
-            ...Array(8 - head.length - tail.length).fill('0'),
-            ...tail,
-        ];
+        const fullParts = [...head, ...Array(8 - head.length - tail.length).fill("0"), ...tail];
 
         // Ensure 8 segments
         if (fullParts.length !== 8) return null;
 
         return fullParts
-            .map(part => part.padStart(4, '0')) // ensure 4 digits
-            .join(':');
+            .map((part) => part.padStart(4, "0")) // ensure 4 digits
+            .join(":");
     } catch {
         return null;
     }
@@ -211,7 +217,7 @@ export function reverseDomain(ip: string) {
 
         const normalized = normalizeIPv6(ip);
         if (!normalized) throw new Error("Invalid IPv6 address");
-        fields = normalized.replace(/:/g, '').split("");
+        fields = normalized.replace(/:/g, "").split("");
     } else {
         fields = ip.split(".");
         while (fields.length < 4) {
@@ -220,7 +226,7 @@ export function reverseDomain(ip: string) {
         }
     }
 
-    return fields.reverse().join('.') + suffix;
+    return fields.reverse().join(".") + suffix;
 }
 
 export function unreverseDomain(dn: string) {
@@ -238,42 +244,56 @@ export function unreverseDomain(dn: string) {
     const fields = dn.split(".");
     let ip = fields.reduce((a, v, i) => v + (i % group == 0 ? split_char : "") + a, "");
     ip = ip.substring(0, ip.length - 1);
-    return ip.replace(/:(0000:)+/, "::").replace(/:0{1,3}/g, ":").replace(/^0+/, "").replace(/0+$/, "");
+    return ip
+        .replace(/:(0000:)+/, "::")
+        .replace(/:0{1,3}/g, ":")
+        .replace(/^0+/, "")
+        .replace(/0+$/, "");
 }
 
 export function printRR(rr: dnsRR, dn?: string, origin?: string): string {
-    let domain = rr.Hdr.Name || '@';
+    let domain = rr.Hdr.Name || "@";
     if (dn && origin) domain = fqdn(domain, fqdn(dn, origin));
     else if (dn) domain = fqdn(domain, dn);
     else if (origin) domain = fqdn(domain, origin);
 
-    return domain + "\t" + rr.Hdr.Ttl + "\t" + nsclass(rr.Hdr.Class) + "\t" + nsrrtype(rr.Hdr.Rrtype) + "\t" + rdatatostr(rr);
+    return (
+        domain +
+        "\t" +
+        rr.Hdr.Ttl +
+        "\t" +
+        nsclass(rr.Hdr.Class) +
+        "\t" +
+        nsrrtype(rr.Hdr.Rrtype) +
+        "\t" +
+        rdatatostr(rr)
+    );
 }
 
 export function parseKeyValueTxt(input: string): Record<string, string> {
-  // Remove surrounding quotes if present
-  const trimmed = input.trim().replace(/^"|"$/g, "");
+    // Remove surrounding quotes if present
+    const trimmed = input.trim().replace(/^"|"$/g, "");
 
-  // Split the string by semicolons to separate key-value pairs
-  const pairs = trimmed.split(";");
+    // Split the string by semicolons to separate key-value pairs
+    const pairs = trimmed.split(";");
 
-  const result: Record<string, string> = {};
+    const result: Record<string, string> = {};
 
-  for (const pair of pairs) {
-    // Trim whitespace around the pair
-    const cleaned = pair.trim();
-    if (!cleaned) continue;
+    for (const pair of pairs) {
+        // Trim whitespace around the pair
+        const cleaned = pair.trim();
+        if (!cleaned) continue;
 
-    // Split by the first '=' only, in case values contain '='
-    const [key, ...rest] = cleaned.split("=");
-    const value = rest.join("=");
+        // Split by the first '=' only, in case values contain '='
+        const [key, ...rest] = cleaned.split("=");
+        const value = rest.join("=");
 
-    if (key && value) {
-      result[key.trim()] = value.trim();
+        if (key && value) {
+            result[key.trim()] = value.trim();
+        }
     }
-  }
 
-  return result;
+    return result;
 }
 
 export function emptyRR(): dnsRR {
