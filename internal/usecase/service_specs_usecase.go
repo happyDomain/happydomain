@@ -210,7 +210,7 @@ func (ssu *serviceSpecsUsecase) initializeDNSRecord(v reflect.Value) {
 			Name:     "",
 			Rrtype:   rrtype,
 			Class:    dns.ClassINET,
-			Ttl:      3600,
+			Ttl:      0,
 			Rdlength: 0,
 		}))
 	}
