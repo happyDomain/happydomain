@@ -259,10 +259,8 @@ export function printRR(rr: dnsRR, dn?: string, origin?: string): string {
 
     return (
         domain +
-        "\t" +
-        rr.Hdr.Ttl +
-        "\t" +
-        nsclass(rr.Hdr.Class) +
+        (rr.Hdr.Ttl ? "\t" + rr.Hdr.Ttl : "") +
+        (rr.Hdr.Class ? "\t" + nsclass(rr.Hdr.Class) : "") +
         "\t" +
         nsrrtype(rr.Hdr.Rrtype) +
         "\t" +
