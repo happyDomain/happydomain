@@ -94,6 +94,45 @@ func (zc *ZoneController) GetZoneSubdomain(c *gin.Context) {
 	})
 }
 
+// DiffZonesHandler is a middleware that computes the differences between two zones.
+// It retrieves corrections between the zone in context and either the currently deployed
+// zone (when oldzoneid is "@") or another zone identifier. The computed corrections and
+// difference count are stored in the context for use by subsequent handlers.
+func (zc *ZoneController) DiffZonesHandler(c *gin.Context) {
+	user := c.MustGet("LoggedUser").(*happydns.User)
+	domain := c.MustGet("domain").(*happydns.Domain)
+	newzone := c.MustGet("zone").(*happydns.Zone)
+
+	var nbDiffs int
+	var corrections []*happydns.Correction
+	if c.Param("oldzoneid") == "@" {
+		var err error
+		corrections, nbDiffs, err = zc.zoneCorrectionService.List(user, domain, newzone)
+		if err != nil {
+			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+			return
+		}
+	} else {
+		oldzoneid, err := middleware.ParseZoneId(c, "oldzoneid")
+		if err != nil {
+			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+			return
+		}
+
+		corrections, err = zc.zoneService.DiffZones(domain, newzone, oldzoneid)
+		if err != nil {
+			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+			return
+		}
+		nbDiffs = len(corrections)
+	}
+
+	c.Set("corrections", corrections)
+	c.Set("nbDiffs", nbDiffs)
+
+	c.Next()
+}
+
 // DiffZones computes the difference between the two zone identifiers given.
 //
 //	@Summary	Compute differences between zones.
@@ -114,33 +153,34 @@ func (zc *ZoneController) GetZoneSubdomain(c *gin.Context) {
 //	@Failure		501			{object}	happydns.ErrorResponse	"Diff between to zone identifier, currently not supported"
 //	@Router			/domains/{domainId}/zone/{zoneId}/diff/{oldZoneId} [post]
 func (zc *ZoneController) DiffZones(c *gin.Context) {
-	user := c.MustGet("LoggedUser").(*happydns.User)
-	domain := c.MustGet("domain").(*happydns.Domain)
-	newzone := c.MustGet("zone").(*happydns.Zone)
-
-	var corrections []*happydns.Correction
-	if c.Param("oldzoneid") == "@" {
-		var err error
-		corrections, _, err = zc.zoneCorrectionService.List(user, domain, newzone)
-		if err != nil {
-			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
-			return
-		}
-	} else {
-		oldzoneid, err := middleware.ParseZoneId(c, "oldzoneid")
-		if err != nil {
-			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
-			return
-		}
-
-		corrections, err = zc.zoneService.DiffZones(domain, newzone, oldzoneid)
-		if err != nil {
-			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
-			return
-		}
-	}
+	corrections := c.MustGet("corrections").([]*happydns.Correction)
 
 	c.JSON(http.StatusOK, corrections)
+}
+
+// DiffZonesSummary computes the number of differences between two zones.
+//
+//	@Summary	Get summary of differences between zones.
+//	@Schemes
+//	@Description	Compute the number of differences between the two zone identifiers given, without returning the full diff.
+//	@Tags		zones
+//	@Accept		json
+//	@Produce	json
+//	@Security	securitydefinitions.basic
+//	@Param		domainId	path		string	true	"Domain identifier"
+//	@Param		zoneId		path		string	true	"Zone identifier to use as the new one."
+//	@Param		oldZoneId	path		string	true	"Zone identifier to use as the old one. Currently only @ are expected, to use the currently deployed zone."
+//	@Success	200			{object}	object{nbDiffs=int}	"Summary containing the number of differences"
+//	@Failure	400			{object}	happydns.ErrorResponse	"Invalid input"
+//	@Failure	401			{object}	happydns.ErrorResponse	"Authentication failure"
+//	@Failure	404			{object}	happydns.ErrorResponse	"Domain not found"
+//	@Failure	500			{object}	happydns.ErrorResponse
+//	@Failure	501			{object}	happydns.ErrorResponse	"Diff between to zone identifier, currently not supported"
+//	@Router		/domains/{domainId}/zone/{zoneId}/diff/{oldZoneId}/summary [post]
+func (zc *ZoneController) DiffZonesSummary(c *gin.Context) {
+	nbDiffs := c.MustGet("nbDiffs").(int)
+
+	c.JSON(http.StatusOK, gin.H{"nbDiffs": nbDiffs})
 }
 
 // ApplyZoneCorrections performs the requested changes with the provider.

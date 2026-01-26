@@ -26,6 +26,7 @@ import {
     postDomainsByDomainIdZoneByZoneIdApplyChanges,
     postDomainsByDomainIdZone,
     postDomainsByDomainIdZoneByZoneIdDiffByOldZoneId,
+    postDomainsByDomainIdZoneByZoneIdDiffByOldZoneIdSummary,
     postDomainsByDomainIdZoneByZoneIdBySubdomainServices,
     patchDomainsByDomainIdZoneByZoneId,
     deleteDomainsByDomainIdZoneByZoneIdBySubdomainServicesByServiceId,
@@ -101,6 +102,18 @@ export async function diffZone(
             path: { domainId: domain.id, zoneId: id2, oldZoneId: id1 },
         }),
     ) as Array<Correction>;
+}
+
+export async function diffZoneSummary(
+    domain: Domain,
+    id1: string,
+    id2: string,
+): Promise<{ nbDiffs: number }> {
+    return unwrapSdkResponse(
+        await postDomainsByDomainIdZoneByZoneIdDiffByOldZoneIdSummary({
+            path: { domainId: domain.id, zoneId: id2, oldZoneId: id1 },
+        }),
+    ) as { nbDiffs: number };
 }
 
 export async function addZoneService(

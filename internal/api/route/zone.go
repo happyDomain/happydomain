@@ -26,7 +26,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/model"
+	happydns "git.happydns.org/happyDomain/model"
 )
 
 func DeclareZoneRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
@@ -41,7 +41,8 @@ func DeclareZoneRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDep
 
 	apiZonesRoutes.GET("", zc.GetZone)
 
-	apiZonesRoutes.POST("/diff/:oldzoneid", zc.DiffZones)
+	apiZonesRoutes.POST("/diff/:oldzoneid", zc.DiffZonesHandler, zc.DiffZones)
+	apiZonesRoutes.POST("/diff/:oldzoneid/summary", zc.DiffZonesHandler, zc.DiffZonesSummary)
 	apiZonesRoutes.POST("/view", zc.ExportZone)
 	apiZonesRoutes.POST("/apply_changes", zc.ApplyZoneCorrections)
 

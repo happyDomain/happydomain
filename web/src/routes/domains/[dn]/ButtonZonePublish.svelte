@@ -22,21 +22,16 @@
 -->
 
 <script lang="ts">
-    import {
-        Button,
-        Icon,
-        Spinner,
-    } from "@sveltestrap/sveltestrap";
+    import { Button, Icon, Spinner } from "@sveltestrap/sveltestrap";
 
     import { getDomain as APIGetDomain } from "$lib/api/domains";
-    import { controls as ctrlDiffZone } from "./ModalDiffZone.svelte";
-    import { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
-    import { diffZone as APIDiffZone } from "$lib/api/zone";
-    import DiffSummary from "./DiffSummary.svelte";
+    import { diffZoneSummary as APIDiffZoneSummary } from "$lib/api/zone";
     import type { Domain } from "$lib/model/domain";
     import { domains_idx } from "$lib/stores/domains";
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
+    import { controls as ctrlDiffZone } from "./ModalDiffZone.svelte";
+    import { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
 
     interface Props {
         domain: Domain;
@@ -61,8 +56,9 @@
 {#if $domains_idx[domain.id] && $thisZone}
     {#if $domains_idx[domain.id].zone_history && history === $domains_idx[domain.id].zone_history[0]}
         {#key $thisZone}
-            {#await APIDiffZone(domain, "@", $thisZone.id)}
+            {#await APIDiffZoneSummary(domain, "@", $thisZone.id)}
                 <Button
+                    class="mt-2 mb-3"
                     size="lg"
                     color="success"
                     outline
@@ -72,23 +68,21 @@
                     <Spinner size="sm" />
                     {$t("domains.actions.propagate")}
                 </Button>
-                <p class="mt-2 mb-1 text-center">
-                    {$t("wait.wait")}
-                </p>
-            {:then zoneDiff}
+            {:then zoneDiffSummary}
                 <Button
+                    class="mt-2 mb-3"
                     size="lg"
                     color="success"
-                    outline={zoneDiff && !zoneDiff.length}
+                    outline={zoneDiffSummary && !zoneDiffSummary.nbDiffs}
                     title={$t("domains.actions.propagate")}
                     on:click={showDiff}
                 >
                     <Icon name="cloud-upload" aria-hidden="true" />
                     {$t("domains.actions.propagate")}
+                    {#if zoneDiffSummary && zoneDiffSummary.nbDiffs}
+                        <small class="text-muted">({zoneDiffSummary.nbDiffs})</small>
+                    {/if}
                 </Button>
-                <p class="mt-2 mb-1 text-center">
-                    <DiffSummary {zoneDiff} />
-                </p>
             {:catch err}
                 <p class="mb-0 text-center">
                     <Icon name="exclamation-triangle" class="text-danger" />
