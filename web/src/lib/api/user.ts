@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2022-2024 happyDomain
+// Copyright (c) 2022-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,49 +19,47 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { handleEmptyApiResponse, handleApiResponse, handleAuthApiResponse } from "$lib/errors";
+import {
+    postUsers,
+    postAuthLogin,
+    postAuthLogout,
+    patchUsers,
+    postUsersByUserIdRecovery,
+    postUsersByUserIdEmail,
+    postUsersByUserIdNewPassword,
+    deleteUsersByUserId,
+    postUsersByUserIdDelete,
+    postUsersByUserIdSettings,
+    getUsersByUserId,
+} from "$lib/api-base/sdk.gen";
 import type { UserSettings } from "$lib/model/usersettings";
 import type { User, SignUpForm, LoginForm } from "$lib/model/user";
+import { unwrapSdkResponse, unwrapEmptyResponse } from "./errors";
 
 export async function registerUser(form: SignUpForm): Promise<User> {
-    const res = await fetch("/api/users", {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify(form),
-    });
-    return await handleApiResponse<User>(res);
+    return unwrapSdkResponse(await postUsers({ body: form })) as unknown as User;
 }
 
 export async function authUser(form: LoginForm): Promise<User> {
-    const res = await fetch("/api/auth", {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify(form),
-    });
-    return await handleAuthApiResponse<User>(res);
+    return unwrapSdkResponse(await postAuthLogin({ body: form })) as unknown as User;
 }
 
 export async function logout(): Promise<boolean> {
-    const res = await fetch("/api/auth/logout", {
-        method: "POST",
-        headers: { Accept: "application/json" },
-    });
-    return await handleEmptyApiResponse(res);
+    return unwrapEmptyResponse(await postAuthLogout());
 }
 
 export async function specialUserOperations(
     email: string,
     kind: "recovery" | "validation",
 ): Promise<{ errmsg: string }> {
-    const res = await fetch("/api/users", {
-        method: "PATCH",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify({
-            email,
-            kind,
+    return unwrapSdkResponse(
+        await patchUsers({
+            body: {
+                email,
+                kind,
+            },
         }),
-    });
-    return await handleApiResponse<{ errmsg: string }>(res);
+    ) as { errmsg: string };
 }
 
 export function forgotAccountPassword(email: string): Promise<{ errmsg: string }> {
@@ -77,75 +75,69 @@ export async function recoverAccount(
     key: string,
     password: string,
 ): Promise<boolean> {
-    userid = encodeURIComponent(userid);
-    const res = await fetch(`/api/users/${userid}/recovery`, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify({
-            key,
-            password,
+    return unwrapEmptyResponse(
+        await postUsersByUserIdRecovery({
+            path: { userId: userid },
+            body: {
+                key,
+                password,
+            },
         }),
-    });
-    return await handleEmptyApiResponse(res);
+    );
 }
 
 export async function validateEmail(userid: string, key: string): Promise<boolean> {
-    userid = encodeURIComponent(userid);
-    const res = await fetch(`/api/users/${userid}/email`, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify({
-            key,
+    return unwrapEmptyResponse(
+        await postUsersByUserIdEmail({
+            path: { userId: userid },
+            body: {
+                key,
+            },
         }),
-    });
-    return await handleEmptyApiResponse(res);
+    );
 }
 
 export async function changeUserPassword(
     user: User,
     form: { current: string; password: string; passwordconfirm: string },
 ): Promise<boolean> {
-    const userid = encodeURIComponent(user.id);
-    const res = await fetch(`/api/users/${userid}/new_password`, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify(form),
-    });
-    return await handleEmptyApiResponse(res);
+    return unwrapEmptyResponse(
+        await postUsersByUserIdNewPassword({
+            path: { userId: user.id },
+            body: form,
+        }),
+    );
 }
 
 export async function deleteMyUser(user: User): Promise<boolean> {
-    const userid = encodeURIComponent(user.id);
-    const res = await fetch(`/api/users/${userid}`, {
-        method: "DELETE",
-        headers: { Accept: "application/json" },
-    });
-    return await handleEmptyApiResponse(res);
+    return unwrapEmptyResponse(
+        await deleteUsersByUserId({
+            path: { userId: user.id },
+        }),
+    );
 }
 
 export async function deleteUserAccount(user: User, password: string): Promise<boolean> {
-    const userid = encodeURIComponent(user.id);
-    const res = await fetch(`/api/users/${userid}/delete`, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify({
-            current: password,
+    return unwrapEmptyResponse(
+        await postUsersByUserIdDelete({
+            path: { userId: user.id },
+            body: {
+                current: password,
+            },
         }),
-    });
-    return await handleEmptyApiResponse(res);
+    );
 }
 
 export async function saveAccountSettings(
     user: User,
     settings: UserSettings,
 ): Promise<UserSettings> {
-    const userid = encodeURIComponent(user.id);
-    const res = await fetch(`/api/users/${userid}/settings`, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify(settings),
-    });
-    return await handleApiResponse<UserSettings>(res);
+    return unwrapSdkResponse(
+        await postUsersByUserIdSettings({
+            path: { userId: user.id },
+            body: settings,
+        }),
+    ) as UserSettings;
 }
 
 export function cleanUserSession(): void {
@@ -157,7 +149,9 @@ export function cleanUserSession(): void {
 }
 
 export async function getUser(id: string): Promise<User> {
-    id = encodeURIComponent(id);
-    const res = await fetch(`/api/users/${id}`, { headers: { Accept: "application/json" } });
-    return await handleApiResponse<User>(res);
+    return unwrapSdkResponse(
+        await getUsersByUserId({
+            path: { userId: id },
+        } as any),
+    ) as unknown as User;
 }

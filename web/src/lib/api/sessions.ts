@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2022-2024 happyDomain
+// Copyright (c) 2022-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,57 +19,75 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { handleEmptyApiResponse, handleApiResponse } from "$lib/errors";
+import {
+    getSessions,
+    getSession as getSdkSession,
+    postSessions,
+    putSessionsBySessionId,
+    deleteSessionsBySessionId,
+    deleteSessions as deleteSdkSessions,
+} from "$lib/api-base/sdk.gen";
 import type { Session } from "$lib/model/session";
+import { unwrapSdkResponse, unwrapEmptyResponse } from "./errors";
 
 export async function listSessions(): Promise<Array<Session>> {
-    const res = await fetch("/api/sessions", { headers: { Accept: "application/json" } });
-    return await handleApiResponse<Array<Session>>(res);
+    return unwrapSdkResponse(await getSessions()) as Array<Session>;
 }
 
+/**
+ * Get a specific session by ID.
+ * Note: This endpoint does not exist in the current OpenAPI spec.
+ * This function will throw an error for now.
+ */
 export async function getSession(id: string): Promise<Session> {
-    id = encodeURIComponent(id);
-    const res = await fetch(`/api/sessions/${id}`, { headers: { Accept: "application/json" } });
-    return await handleApiResponse<Session>(res);
+    // TODO: This endpoint (GET /sessions/{sessionId}) is not in the OpenAPI spec
+    // For now, we'll have to use a direct fetch or wait for the spec to be updated
+    throw new Error("getSession by ID is not implemented in the current API");
 }
 
+/**
+ * Get the current session.
+ * Uses the /session endpoint (singular).
+ */
 export async function getCurrentSession(): Promise<Session> {
-    const res = await fetch("/api/session", { headers: { Accept: "application/json" } });
-    return await handleApiResponse<Session>(res);
+    return unwrapSdkResponse(await getSdkSession()) as Session;
 }
 
 export async function addSession(description: string): Promise<Session> {
-    const res = await fetch("/api/sessions", {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify({
-            description,
+    return unwrapSdkResponse(
+        await postSessions({
+            body: {
+                description,
+            } as any,
         }),
-    });
-    return await handleApiResponse<Session>(res);
+    ) as Session;
 }
 
 export async function updateSession(session: Session): Promise<Session> {
-    const res = await fetch("/api/sessions" + (session.id ? `/${session.id}` : ""), {
-        method: session.id ? "PUT" : "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify(session),
-    });
-    return await handleApiResponse<Session>(res);
+    if (session.id) {
+        return unwrapSdkResponse(
+            await putSessionsBySessionId({
+                path: { sessionId: session.id },
+                body: session as any,
+            }),
+        ) as Session;
+    } else {
+        return unwrapSdkResponse(
+            await postSessions({
+                body: session as any,
+            }),
+        ) as Session;
+    }
 }
 
 export async function deleteSession(id: string): Promise<boolean> {
-    const res = await fetch(`/api/sessions/${id}`, {
-        method: "DELETE",
-        headers: { Accept: "application/json" },
-    });
-    return await handleEmptyApiResponse(res);
+    return unwrapEmptyResponse(
+        await deleteSessionsBySessionId({
+            path: { sessionId: id },
+        }),
+    );
 }
 
 export async function deleteSessions(): Promise<boolean> {
-    const res = await fetch("/api/sessions", {
-        method: "DELETE",
-        headers: { Accept: "application/json" },
-    });
-    return await handleEmptyApiResponse(res);
+    return unwrapEmptyResponse(await deleteSdkSessions());
 }

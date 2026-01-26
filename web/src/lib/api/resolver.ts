@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2022-2024 happyDomain
+// Copyright (c) 2022-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,14 +19,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { handleApiResponse } from "$lib/errors";
+import { postResolver } from "$lib/api-base/sdk.gen";
 import type { ResolverForm } from "$lib/model/resolver";
+import { unwrapSdkResponse } from "./errors";
 
 export async function resolve(form: ResolverForm): Promise<any> {
-    const res = await fetch(`/api/resolver`, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify(form),
-    });
-    return await handleApiResponse(res);
+    return unwrapSdkResponse(
+        await postResolver({
+            body: form as any,
+        }),
+    );
 }

@@ -23,6 +23,7 @@ steps:
       - yarn --cwd web install
       - tar --transform="s@.@./happydomain-${DRONE_COMMIT}@" --exclude-vcs --exclude=./web/node_modules/.cache -czf /dev/shm/happydomain-src.tar.gz .
       - mv /dev/shm/happydomain-src.tar.gz .
+      - yarn --cwd web --offline generate:api && sed -i "s/hey-api\.ts';/hey-api';/" web/src/lib/api-base/client.gen.ts
       - yarn --cwd web --offline build
       - yarn --cwd web-admin --offline generate:api && sed -i "s/hey-api\.ts';/hey-api';/" web/src/lib/api-admin/client.gen.ts
       - yarn --cwd web-admin --offline build
@@ -233,6 +234,7 @@ steps:
     commands:
       - cd web
       - npm install --network-timeout=100000
+      - npm run generate:api
       - npm test
       - npm run build
       - cd ../web-admin

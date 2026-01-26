@@ -1,25 +1,15 @@
-FROM node:24-alpine AS nodebuild
-
-WORKDIR /go/src/git.happydns.org/happydomain
-
-COPY web/ web/
-
-RUN yarn config set network-timeout 100000 && \
-    yarn --cwd web install && \
-    yarn --cwd web --offline build
-
-
 FROM golang:1-alpine AS gogenerator
 
 WORKDIR /go/src/git.happydns.org/happydomain
 
-COPY --from=nodebuild /go/src/git.happydns.org/happydomain/ ./
 COPY cmd ./cmd
 COPY tools ./tools
 COPY internal ./internal
 COPY model ./model
 COPY providers ./providers
 COPY services ./services
+COPY web/ ./web
+COPY web-admin/ ./web-admin
 COPY generate.go ./
 
 RUN sed -i '/npm run build/d;/npm run generate:api/d' web/assets.go web-admin/assets.go && \
@@ -27,9 +17,18 @@ RUN sed -i '/npm run build/d;/npm run generate:api/d' web/assets.go web-admin/as
     go generate -v ./...
 
 
-FROM node:24-alpine AS nodebuild-admin
+FROM node:24-alpine AS nodebuild
 
 WORKDIR /go/src/git.happydns.org/happydomain
+
+COPY --from=gogenerator docs/ docs/
+COPY web/ web/
+
+RUN yarn config set network-timeout 100000 && \
+    yarn --cwd web install && \
+    yarn --cwd web --offline generate:api && \
+    yarn --cwd web --offline build
+
 
 COPY --from=gogenerator docs-admin/ docs-admin/
 COPY web-admin/ web-admin/

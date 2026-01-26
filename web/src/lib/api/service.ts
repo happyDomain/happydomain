@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2022-2024 happyDomain
+// Copyright (c) 2022-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,11 +19,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import type { dnsRR } from "$lib/dns_rr";
-import { handleEmptyApiResponse, handleApiResponse } from "$lib/errors";
+import { getDomainsByDomainIdZoneByZoneIdBySubdomainServicesByServiceId } from "$lib/api-base/sdk.gen";
 import type { Domain } from "$lib/model/domain";
-import type { ServiceCombined, ServiceMeta } from "$lib/model/service.svelte";
-import type { Zone } from "$lib/model/zone";
+import type { ServiceCombined } from "$lib/model/service.svelte";
+import { unwrapSdkResponse } from "./errors";
 
 export async function getService(
     domain: Domain,
@@ -31,11 +30,14 @@ export async function getService(
     subdomain: string,
     svcid: string,
 ): Promise<ServiceCombined> {
-    const res = await fetch(
-        `/api/domains/${encodeURIComponent(domain.id)}/zone/${encodeURIComponent(zoneid)}/${encodeURIComponent(subdomain)}/services/${encodeURIComponent(svcid)}`,
-        {
-            headers: { Accept: "application/json" },
-        },
-    );
-    return await handleApiResponse<ServiceCombined>(res);
+    return unwrapSdkResponse(
+        await getDomainsByDomainIdZoneByZoneIdBySubdomainServicesByServiceId({
+            path: {
+                domainId: domain.id,
+                zoneId: zoneid,
+                subdomain,
+                serviceId: svcid,
+            },
+        }),
+    ) as ServiceCombined;
 }

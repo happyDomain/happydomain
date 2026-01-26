@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2022-2024 happyDomain
+// Copyright (c) 2022-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,9 +19,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { handleApiResponse } from "$lib/errors";
+import { postProvidersSpecsByProviderTypeSettings } from "$lib/api-base/sdk.gen";
 import type { Provider } from "$lib/model/provider";
 import type { ProviderSettingsResponse } from "$lib/model/provider_settings";
+import { unwrapSdkResponse } from "./errors";
 
 export async function getProviderSettings(
     psid: string,
@@ -34,15 +35,18 @@ export async function getProviderSettings(
     settings.state = state;
     if (recallid) settings.recall = recallid;
 
-    const res = await fetch("/api/providers/_specs/" + encodeURIComponent(psid) + "/settings", {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify(settings),
-    });
-    const data = await handleApiResponse<any>(res);
-    if (data._id) {
+    const data = unwrapSdkResponse(
+        await postProvidersSpecsByProviderTypeSettings({
+            path: { providerType: psid },
+            body: settings as any,
+        }),
+    );
+
+    // If the response has _id, it means the provider setup is complete
+    // Throw the Provider object to match old API behavior
+    if ((data as any)._id) {
         throw data as Provider;
-    } else if (data.form) {
+    } else if ((data as any).form) {
         return data as ProviderSettingsResponse;
     } else {
         throw new Error("Not implemented");

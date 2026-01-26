@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2022-2024 happyDomain
+// Copyright (c) 2022-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,49 +19,72 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { handleEmptyApiResponse, handleApiResponse } from "$lib/errors";
+import {
+    getProviders,
+    getProvidersByProviderId,
+    getProvidersByProviderIdDomains,
+    getProvidersByProviderIdDomainsByFqdn,
+    postProviders,
+    putProvidersByProviderId,
+    deleteProvidersByProviderId,
+} from "$lib/api-base/sdk.gen";
 import type { Provider } from "$lib/model/provider";
+import { unwrapSdkResponse, unwrapEmptyResponse } from "./errors";
 
 export async function listProviders(): Promise<Array<Provider>> {
-    const res = await fetch("/api/providers", { headers: { Accept: "application/json" } });
-    return await handleApiResponse<Array<Provider>>(res);
+    return unwrapSdkResponse(await getProviders()) as Array<Provider>;
 }
 
 export async function getProvider(id: string): Promise<Provider> {
-    id = encodeURIComponent(id);
-    const res = await fetch(`/api/providers/${id}`, { headers: { Accept: "application/json" } });
-    return await handleApiResponse<Provider>(res);
+    return unwrapSdkResponse(
+        await getProvidersByProviderId({
+            path: { providerId: id },
+        }),
+    ) as Provider;
 }
 
 export async function listImportableDomains(provider: Provider): Promise<Array<string>> {
-    const res = await fetch(`/api/providers/${provider._id}/domains`, {
-        method: "GET",
-        headers: { Accept: "application/json" },
-    });
-    return await handleApiResponse<Array<string>>(res);
+    return unwrapSdkResponse(
+        await getProvidersByProviderIdDomains({
+            path: { providerId: provider._id },
+        }),
+    ) as Array<string>;
 }
 
+/**
+ * Create a domain at the provider.
+ * Note: The old API used POST, but the current OpenAPI spec has GET endpoint.
+ * This might need investigation if it doesn't work as expected.
+ */
 export async function createDomain(provider: Provider, fqdn: string): Promise<boolean> {
-    const res = await fetch(`/api/providers/${provider._id}/domains/${fqdn}`, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-    });
-    return await handleApiResponse<boolean>(res);
+    return unwrapSdkResponse(
+        await getProvidersByProviderIdDomainsByFqdn({
+            path: { providerId: provider._id, fqdn } as any,
+        }),
+    ) as unknown as boolean;
 }
 
 export async function updateProvider(provider: Provider): Promise<Provider> {
-    const res = await fetch("/api/providers" + (provider._id ? `/${provider._id}` : ""), {
-        method: provider._id ? "PUT" : "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify(provider),
-    });
-    return await handleApiResponse<Provider>(res);
+    if (provider._id) {
+        return unwrapSdkResponse(
+            await putProvidersByProviderId({
+                path: { providerId: provider._id },
+                body: provider as any,
+            }),
+        ) as Provider;
+    } else {
+        return unwrapSdkResponse(
+            await postProviders({
+                body: provider as any,
+            }),
+        ) as Provider;
+    }
 }
 
 export async function deleteProvider(id: string): Promise<boolean> {
-    const res = await fetch(`/api/providers/${id}`, {
-        method: "DELETE",
-        headers: { Accept: "application/json" },
-    });
-    return await handleEmptyApiResponse(res);
+    return unwrapEmptyResponse(
+        await deleteProvidersByProviderId({
+            path: { providerId: id },
+        }),
+    );
 }

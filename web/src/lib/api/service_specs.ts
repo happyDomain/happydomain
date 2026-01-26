@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2022-2024 happyDomain
+// Copyright (c) 2022-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,33 +19,35 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { handleApiResponse } from "$lib/errors";
+import {
+    getServiceSpecs,
+    getServiceSpecsByServiceType,
+    postServiceSpecsByServiceTypeInit,
+} from "$lib/api-base/sdk.gen";
 import type { ServiceInfos, ServiceSpec } from "$lib/model/service_specs.svelte";
+import { unwrapSdkResponse } from "./errors";
 
 export async function listServiceSpecs(): Promise<Record<string, ServiceInfos>> {
-    const res = await fetch("/api/service_specs", {
-        method: "GET",
-        headers: { Accept: "application/json" },
-    });
-    return await handleApiResponse<Record<string, ServiceInfos>>(res);
+    return unwrapSdkResponse(await getServiceSpecs()) as Record<string, ServiceInfos>;
 }
 
 export async function getServiceSpec(ssid: string): Promise<ServiceSpec> {
+    // Handle built-in types without making an API call
     if (ssid == "string" || ssid == "common.URL") {
         return Promise.resolve(<ServiceSpec>{ fields: null });
     } else {
-        const res = await fetch(`/api/service_specs/` + ssid, {
-            method: "GET",
-            headers: { Accept: "application/json" },
-        });
-        return await handleApiResponse<ServiceSpec>(res);
+        return unwrapSdkResponse(
+            await getServiceSpecsByServiceType({
+                path: { serviceType: ssid },
+            }),
+        ) as ServiceSpec;
     }
 }
 
 export async function initializeService(ssid: string): Promise<any> {
-    const res = await fetch(`/api/service_specs/${ssid}/init`, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-    });
-    return await handleApiResponse(res);
+    return unwrapSdkResponse(
+        await postServiceSpecsByServiceTypeInit({
+            path: { serviceType: ssid },
+        }),
+    );
 }

@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2022-2024 happyDomain
+// Copyright (c) 2022-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,40 +19,50 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { handleApiResponse } from "$lib/errors";
+import {
+    getDomainsByDomainIdZoneByZoneId,
+    postDomainsByDomainIdZoneByZoneIdView,
+    postDomainsByDomainIdRetrieveZone,
+    postDomainsByDomainIdZoneByZoneIdApplyChanges,
+    postDomainsByDomainIdZone,
+    postDomainsByDomainIdZoneByZoneIdDiffByOldZoneId,
+    postDomainsByDomainIdZoneByZoneIdBySubdomainServices,
+    patchDomainsByDomainIdZoneByZoneId,
+    deleteDomainsByDomainIdZoneByZoneIdBySubdomainServicesByServiceId,
+    postDomainsByDomainIdZoneByZoneIdRecords,
+    postDomainsByDomainIdZoneByZoneIdRecordsDelete,
+    patchDomainsByDomainIdZoneByZoneIdRecords,
+} from "$lib/api-base/sdk.gen";
 import { printRR } from "$lib/dns";
 import type { dnsRR } from "$lib/dns_rr";
 import type { Correction } from "$lib/model/correction";
 import type { Domain } from "$lib/model/domain";
 import type { ServiceCombined, ServiceMeta } from "$lib/model/service.svelte";
-import type { ServiceRecord, Zone, ZoneMeta } from "$lib/model/zone";
+import type { Zone, ZoneMeta } from "$lib/model/zone";
+import { unwrapSdkResponse } from "./errors";
 
 export async function getZone(domain: Domain, id: string): Promise<Zone> {
-    const dnid = encodeURIComponent(domain.id);
-    id = encodeURIComponent(id);
-    const res = await fetch(`/api/domains/${dnid}/zone/${id}`, {
-        headers: { Accept: "application/json" },
-    });
-    return await handleApiResponse<Zone>(res);
+    return unwrapSdkResponse(
+        await getDomainsByDomainIdZoneByZoneId({
+            path: { domainId: domain.id, zoneId: id },
+        }),
+    ) as unknown as Zone;
 }
 
 export async function viewZone(domain: Domain, id: string): Promise<string> {
-    const dnid = encodeURIComponent(domain.id);
-    id = encodeURIComponent(id);
-    const res = await fetch(`/api/domains/${dnid}/zone/${id}/view`, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-    });
-    return await handleApiResponse<string>(res);
+    return unwrapSdkResponse(
+        await postDomainsByDomainIdZoneByZoneIdView({
+            path: { domainId: domain.id, zoneId: id },
+        }),
+    ) as string;
 }
 
 export async function retrieveZone(domain: Domain): Promise<ZoneMeta> {
-    const dnid = encodeURIComponent(domain.id);
-    const res = await fetch(`/api/domains/${dnid}/retrieve_zone`, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-    });
-    return await handleApiResponse<ZoneMeta>(res);
+    return unwrapSdkResponse(
+        await postDomainsByDomainIdRetrieveZone({
+            path: { domainId: domain.id },
+        }),
+    ) as unknown as ZoneMeta;
 }
 
 export async function applyZone(
@@ -61,29 +71,24 @@ export async function applyZone(
     wantedCorrections: Array<string>,
     commitMessage: string,
 ): Promise<ZoneMeta> {
-    const dnid = encodeURIComponent(domain.id);
-    id = encodeURIComponent(id);
-    const res = await fetch(`/api/domains/${dnid}/zone/${id}/apply_changes`, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify({ wantedCorrections, commitMessage }),
-    });
-    return await handleApiResponse<ZoneMeta>(res);
+    return unwrapSdkResponse(
+        await postDomainsByDomainIdZoneByZoneIdApplyChanges({
+            path: { domainId: domain.id, zoneId: id },
+            body: { wantedCorrections, commitMessage } as any,
+        }),
+    ) as unknown as ZoneMeta;
 }
 
 export async function importZone(domain: Domain, id: string, file: any): Promise<ZoneMeta> {
-    const dnid = encodeURIComponent(domain.id);
-    id = encodeURIComponent(id);
-
     const formData = new FormData();
     formData.append("zone", file);
 
-    const res = await fetch(`/api/domains/${dnid}/zone`, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: formData,
-    });
-    return await handleApiResponse<ZoneMeta>(res);
+    return unwrapSdkResponse(
+        await postDomainsByDomainIdZone({
+            path: { domainId: domain.id },
+            body: formData as any,
+        }),
+    ) as unknown as ZoneMeta;
 }
 
 export async function diffZone(
@@ -91,14 +96,11 @@ export async function diffZone(
     id1: string,
     id2: string,
 ): Promise<Array<Correction>> {
-    const dnid = encodeURIComponent(domain.id);
-    id1 = encodeURIComponent(id1);
-    id2 = encodeURIComponent(id2);
-    const res = await fetch(`/api/domains/${dnid}/zone/${id2}/diff/${id1}`, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-    });
-    return await handleApiResponse<Array<Correction>>(res);
+    return unwrapSdkResponse(
+        await postDomainsByDomainIdZoneByZoneIdDiffByOldZoneId({
+            path: { domainId: domain.id, zoneId: id2, oldZoneId: id1 },
+        }),
+    ) as Array<Correction>;
 }
 
 export async function addZoneService(
@@ -109,16 +111,12 @@ export async function addZoneService(
     let subdomain = service._domain;
     if (subdomain === "") subdomain = "@";
 
-    const dnid = encodeURIComponent(domain.id);
-    id = encodeURIComponent(id);
-    subdomain = encodeURIComponent(subdomain);
-
-    const res = await fetch(`/api/domains/${dnid}/zone/${id}/${subdomain}/services`, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify(service),
-    });
-    return await handleApiResponse<Zone>(res);
+    return unwrapSdkResponse(
+        await postDomainsByDomainIdZoneByZoneIdBySubdomainServices({
+            path: { domainId: domain.id, zoneId: id, subdomain },
+            body: service as any,
+        }),
+    ) as unknown as Zone;
 }
 
 export async function updateZoneService(
@@ -126,15 +124,12 @@ export async function updateZoneService(
     id: string,
     service: ServiceCombined,
 ): Promise<Zone> {
-    const dnid = encodeURIComponent(domain.id);
-    id = encodeURIComponent(id);
-
-    const res = await fetch(`/api/domains/${dnid}/zone/${id}`, {
-        method: "PATCH",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify(service),
-    });
-    return await handleApiResponse<Zone>(res);
+    return unwrapSdkResponse(
+        await patchDomainsByDomainIdZoneByZoneId({
+            path: { domainId: domain.id, zoneId: id },
+            body: service as any,
+        }),
+    ) as unknown as Zone;
 }
 
 export async function deleteZoneService(
@@ -145,16 +140,13 @@ export async function deleteZoneService(
     let subdomain = service._domain;
     if (subdomain === "") subdomain = "@";
 
-    const dnid = encodeURIComponent(domain.id);
-    id = encodeURIComponent(id);
-    subdomain = encodeURIComponent(subdomain);
-    const svcid = service._id ? encodeURIComponent(service._id) : undefined;
+    const svcid = service._id || "";
 
-    const res = await fetch(`/api/domains/${dnid}/zone/${id}/${subdomain}/services/${svcid}`, {
-        method: "DELETE",
-        headers: { Accept: "application/json" },
-    });
-    return await handleApiResponse<Zone>(res);
+    return unwrapSdkResponse(
+        await deleteDomainsByDomainIdZoneByZoneIdBySubdomainServicesByServiceId({
+            path: { domainId: domain.id, zoneId: id, subdomain, serviceId: svcid },
+        }),
+    ) as unknown as Zone;
 }
 
 export async function addZoneRecord(
@@ -163,15 +155,12 @@ export async function addZoneRecord(
     subdomain: string,
     record: dnsRR,
 ): Promise<Zone> {
-    const dnid = encodeURIComponent(domain.id);
-    id = encodeURIComponent(id);
-
-    const res = await fetch(`/api/domains/${dnid}/zone/${id}/records`, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify([printRR(record, subdomain)]),
-    });
-    return await handleApiResponse<Zone>(res);
+    return unwrapSdkResponse(
+        await postDomainsByDomainIdZoneByZoneIdRecords({
+            path: { domainId: domain.id, zoneId: id },
+            body: [printRR(record, subdomain)] as any,
+        }),
+    ) as unknown as Zone;
 }
 
 export async function deleteZoneRecord(
@@ -180,15 +169,12 @@ export async function deleteZoneRecord(
     subdomain: string,
     record: dnsRR,
 ): Promise<Zone> {
-    const dnid = encodeURIComponent(domain.id);
-    id = encodeURIComponent(id);
-
-    const res = await fetch(`/api/domains/${dnid}/zone/${id}/records/delete`, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify([printRR(record, subdomain)]),
-    });
-    return await handleApiResponse<Zone>(res);
+    return unwrapSdkResponse(
+        await postDomainsByDomainIdZoneByZoneIdRecordsDelete({
+            path: { domainId: domain.id, zoneId: id },
+            body: [printRR(record, subdomain)] as any,
+        }),
+    ) as unknown as Zone;
 }
 
 export async function updateZoneRecord(
@@ -198,13 +184,10 @@ export async function updateZoneRecord(
     newrr: dnsRR,
     oldrr: dnsRR,
 ): Promise<Zone> {
-    const dnid = encodeURIComponent(domain.id);
-    id = encodeURIComponent(id);
-
-    const res = await fetch(`/api/domains/${dnid}/zone/${id}/records`, {
-        method: "PATCH",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify({oldrr: printRR(oldrr, subdomain), newrr: printRR(newrr, subdomain)}),
-    });
-    return await handleApiResponse<Zone>(res);
+    return unwrapSdkResponse(
+        await patchDomainsByDomainIdZoneByZoneIdRecords({
+            path: { domainId: domain.id, zoneId: id },
+            body: { oldrr: printRR(oldrr, subdomain), newrr: printRR(newrr, subdomain) } as any,
+        }),
+    ) as unknown as Zone;
 }

@@ -4,6 +4,7 @@ import { get } from 'svelte/store';
 import { thisZone, thisAliases, sortedDomains, sortedDomainsWithIntermediate, getZone } from './thiszone';
 import type { Zone } from '$lib/model/zone';
 import type { Domain } from '$lib/model/domain';
+import { createMockResponse } from '$lib/test-utils/api-mocks';
 
 describe('Zone Store', () => {
   beforeEach(() => {
@@ -60,12 +61,9 @@ describe('Zone Store', () => {
     const zoneId = '123';
     const mockZone = { id: zoneId, name: 'example.com' };
 
-    // Mock de l'API
+    // Mock de l'API with proper Response object
     globalThis.fetch = vitest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockZone),
-      }) as any
+      Promise.resolve(createMockResponse(mockZone))
     ) as any;
 
     const zone = await getZone(domain, zoneId);

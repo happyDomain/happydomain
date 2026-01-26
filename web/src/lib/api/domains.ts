@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2022-2024 happyDomain
+// Copyright (c) 2022-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,54 +19,72 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { handleEmptyApiResponse, handleApiResponse } from "$lib/errors";
+import {
+    getDomains,
+    getDomainsByDomainId,
+    postDomains,
+    putDomainsByDomainId,
+    deleteDomainsByDomainId,
+    getDomainsByDomainIdLogs,
+} from "$lib/api-base/sdk.gen";
 import type { Domain, DomainLog } from "$lib/model/domain";
 import type { Provider } from "$lib/model/provider";
+import { unwrapSdkResponse, unwrapEmptyResponse } from "./errors";
 
 export async function listDomains(): Promise<Array<Domain>> {
-    const res = await fetch("/api/domains", { headers: { Accept: "application/json" } });
-    return await handleApiResponse<Array<Domain>>(res);
+    return unwrapSdkResponse(await getDomains()) as Array<Domain>;
 }
 
 export async function getDomain(id: string): Promise<Domain> {
-    id = encodeURIComponent(id);
-    const res = await fetch(`/api/domains/${id}`, { headers: { Accept: "application/json" } });
-    return await handleApiResponse<Domain>(res);
+    return unwrapSdkResponse(
+        await getDomainsByDomainId({
+            path: { domainId: id },
+        }),
+    ) as Domain;
 }
 
 export async function addDomain(domain: string, provider: Provider | undefined): Promise<Domain> {
     const id_provider = provider ? provider._id : undefined;
 
-    const res = await fetch("/api/domains", {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify({
-            domain,
-            id_provider,
+    return unwrapSdkResponse(
+        await postDomains({
+            body: {
+                domain,
+                id_provider,
+            } as any,
         }),
-    });
-    return await handleApiResponse<Domain>(res);
+    ) as Domain;
 }
 
 export async function updateDomain(domain: Domain): Promise<Domain> {
-    const res = await fetch("/api/domains" + (domain.id ? `/${domain.id}` : ""), {
-        method: domain.id ? "PUT" : "POST",
-        headers: { Accept: "application/json" },
-        body: JSON.stringify(domain),
-    });
-    return await handleApiResponse<Domain>(res);
+    if (domain.id) {
+        return unwrapSdkResponse(
+            await putDomainsByDomainId({
+                path: { domainId: domain.id },
+                body: domain as any,
+            }),
+        ) as Domain;
+    } else {
+        return unwrapSdkResponse(
+            await postDomains({
+                body: domain as any,
+            }),
+        ) as Domain;
+    }
 }
 
 export async function deleteDomain(id: string): Promise<boolean> {
-    const res = await fetch(`/api/domains/${id}`, {
-        method: "DELETE",
-        headers: { Accept: "application/json" },
-    });
-    return await handleEmptyApiResponse(res);
+    return unwrapEmptyResponse(
+        await deleteDomainsByDomainId({
+            path: { domainId: id },
+        }),
+    );
 }
 
 export async function getDomainLogs(id: string): Promise<Array<DomainLog>> {
-    id = encodeURIComponent(id);
-    const res = await fetch(`/api/domains/${id}/logs`, { headers: { Accept: "application/json" } });
-    return await handleApiResponse<Array<DomainLog>>(res);
+    return unwrapSdkResponse(
+        await getDomainsByDomainIdLogs({
+            path: { domainId: id },
+        }),
+    ) as unknown as Array<DomainLog>;
 }
