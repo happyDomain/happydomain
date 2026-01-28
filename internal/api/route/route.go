@@ -34,6 +34,7 @@ type Dependencies struct {
 	Authentication        happydns.AuthenticationUsecase
 	AuthUser              happydns.AuthUserUsecase
 	CaptchaVerifier       happydns.CaptchaVerifier
+	Checker               happydns.CheckerUsecase
 	Domain                happydns.DomainUsecase
 	DomainLog             happydns.DomainLogUsecase
 	FailureTracker        happydns.FailureTracker
@@ -99,6 +100,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 	apiAuthRoutes.Use(middleware.AuthRequired())
 
 	DeclareAuthenticationCheckRoutes(apiAuthRoutes, lc)
+	DeclareChecksRoutes(apiAuthRoutes, dep.Checker)
 	DeclareDomainRoutes(apiAuthRoutes, dep.Domain, dep.DomainLog, dep.RemoteZoneImporter, dep.ZoneImporter, dep.Zone, dep.ZoneCorrectionApplier, dep.ZoneService, dep.Service)
 	DeclareProviderRoutes(apiAuthRoutes, dep.Provider)
 	DeclareProviderSettingsRoutes(apiAuthRoutes, dep.ProviderSettings)
