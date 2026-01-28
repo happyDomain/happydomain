@@ -31,9 +31,9 @@ import (
 func DeclarePluginsRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
 	tpc := controller.NewTestPluginController(dependancies.TestPluginUsecase())
 
-	router.GET("/plugins", tpc.ListTestPlugins)
+	router.GET("/plugins/tests", tpc.ListTestPlugins)
 
-	apiTestPluginRoutes := router.Group("/plugins/:pid")
+	apiTestPluginRoutes := router.Group("/plugins/tests/:pid")
 	apiTestPluginRoutes.Use(tpc.TestPluginHandler)
 
 	apiTestPluginRoutes.GET("", tpc.GetTestPluginStatus)
