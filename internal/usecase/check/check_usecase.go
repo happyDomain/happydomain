@@ -135,6 +135,32 @@ func (tu *checkerUsecase) OverwriteSomeCheckerOptions(cname string, userid *happ
 	return tu.store.UpdateCheckerConfiguration(cname, userid, domainid, serviceid, *current)
 }
 
+// GetCheckerResponse builds a CheckerResponse from a Checker, including
+// capability detection and interval spec.
+func (tu *checkerUsecase) GetCheckerResponse(checker happydns.Checker) happydns.CheckerResponse {
+	return happydns.CheckerResponse{
+		ID:           checker.ID(),
+		Name:         checker.Name(),
+		Availability: checker.Availability(),
+		Options:      checker.Options(),
+		Interval:     checks.GetCheckInterval(checker),
+	}
+}
+
+// ListCheckerResponses returns all registered checkers as CheckerResponse values.
+func (tu *checkerUsecase) ListCheckerResponses() (map[string]happydns.CheckerResponse, error) {
+	checkers, err := tu.ListCheckers()
+	if err != nil {
+		return nil, err
+	}
+
+	res := make(map[string]happydns.CheckerResponse, len(*checkers))
+	for name, checker := range *checkers {
+		res[name] = tu.GetCheckerResponse(checker)
+	}
+	return res, nil
+}
+
 // ValidateCheckerOptions checks that all option names exist in the checker's
 // documentation and that the values have the correct types.
 func (tu *checkerUsecase) ValidateCheckerOptions(cname string, opts happydns.CheckerOptions) error {
@@ -160,7 +186,7 @@ func (tu *checkerUsecase) ValidateCheckerOptions(cname string, opts happydns.Che
 			return fmt.Errorf("unknown option %q for checker %q", name, cname)
 		}
 
-		if doc.AutoFill != "" || doc.Type == "" {
+		if doc.Type == "" {
 			continue
 		}
 

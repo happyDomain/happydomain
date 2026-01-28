@@ -65,6 +65,7 @@ type CheckerResponse struct {
 	Name         string                      `json:"name"`
 	Availability CheckerAvailability         `json:"availability"`
 	Options      CheckerOptionsDocumentation `json:"options"`
+	Interval     *CheckIntervalSpec          `json:"interval"`
 }
 
 type SetCheckerOptionsRequest struct {
@@ -101,7 +102,9 @@ type CheckerOptionDocumentation Field
 type CheckerUsecase interface {
 	GetChecker(string) (Checker, error)
 	GetCheckerOptions(string, *Identifier, *Identifier, *Identifier) (*CheckerOptions, error)
+	GetCheckerResponse(Checker) CheckerResponse
 	ListCheckers() (*map[string]Checker, error)
+	ListCheckerResponses() (map[string]CheckerResponse, error)
 	OverwriteSomeCheckerOptions(string, *Identifier, *Identifier, *Identifier, CheckerOptions) error
 	SetCheckerOptions(string, *Identifier, *Identifier, *Identifier, CheckerOptions) error
 	ValidateCheckerOptions(string, CheckerOptions) error

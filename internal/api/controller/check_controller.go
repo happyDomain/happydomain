@@ -26,19 +26,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	apicontroller "git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/model"
 )
 
-// CheckerController handles admin-level operations.
-// All methods in this controller work with admin-scoped options (nil user/domain/service IDs).
+// CheckerController handles user-scoped check operations for the main API.
+// All methods work with options scoped to the authenticated user.
 type CheckerController struct {
-	*apicontroller.BaseCheckerController
+	*BaseCheckerController
 }
 
 func NewCheckerController(checkerService happydns.CheckerUsecase) *CheckerController {
 	return &CheckerController{
-		BaseCheckerController: apicontroller.NewBaseCheckerController(checkerService),
+		BaseCheckerController: NewBaseCheckerController(checkerService),
 	}
 }
 
@@ -46,23 +45,24 @@ func NewCheckerController(checkerService happydns.CheckerUsecase) *CheckerContro
 func (uc *CheckerController) CheckerHandler(c *gin.Context) {
 	cname := c.Param("cname")
 
-	checker, err := uc.BaseCheckerController.GetCheckerService().GetChecker(cname)
+	check, err := uc.checkerService.GetChecker(cname)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, happydns.ErrorResponse{Message: "Check not found"})
 		return
 	}
 
-	c.Set("checker", checker)
+	c.Set("checker", check)
 
 	c.Next()
 }
 
-// CheckerOptionHandler is a middleware that retrieves a specific option and sets it in the context.
+// CheckerOptionHandler is a middleware that retrieves a specific check option for the authenticated user and sets it in the context.
 func (uc *CheckerController) CheckerOptionHandler(c *gin.Context) {
+	user := c.MustGet("LoggedUser").(*happydns.User)
 	cname := c.Param("cname")
 	optname := c.Param("optname")
 
-	opts, err := uc.BaseCheckerController.GetCheckerService().GetCheckerOptions(cname, nil, nil, nil)
+	opts, err := uc.checkerService.GetCheckerOptions(cname, &user.Id, nil, nil)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: err.Error()})
 		return
@@ -73,88 +73,57 @@ func (uc *CheckerController) CheckerOptionHandler(c *gin.Context) {
 	c.Next()
 }
 
-// ListCheckers retrieves all available checks.
+// GetCheckerOptions retrieves all options for a check for the authenticated user.
 //
-//	@Summary		List checkers (admin)
+//	@Summary		Get check options
 //	@Schemes
-//	@Description	Returns a list of all available checks with their version information.
+//	@Description	Retrieves all configuration options for a specific check for the authenticated user.
 //	@Tags			checks
 //	@Accept			json
 //	@Produce		json
-//	@Success		200	{object}	map[string]happydns.CheckerResponse	"Map of checker names to info"
-//	@Failure		500	{object}	happydns.ErrorResponse					"Internal server error"
-//	@Router			/checks [get]
-func (uc *CheckerController) ListCheckers(c *gin.Context) {
-	uc.BaseCheckerController.ListCheckers(c)
-}
-
-// GetCheckerStatus retrieves the status and available options for a check.
-//
-//	@Summary		Get check info
-//	@Schemes
-//	@Description	Retrieves the status information and available options for a specific checker.
-//	@Tags			checks
-//	@Accept			json
-//	@Produce		json
-//	@Param			cname	path		string	true	"Checker name"
-//	@Success		200		{object}	happydns.CheckerResponse	"Checker status with version info and available options"
-//	@Failure		404		{object}	happydns.ErrorResponse	"Checker not found"
-//	@Router			/checks/{cname} [get]
-func (uc *CheckerController) GetCheckerStatus(c *gin.Context) {
-	uc.BaseCheckerController.GetCheckerStatus(c)
-}
-
-// GetCheckerOptions retrieves all options for a check.
-//
-//	@Summary		Get check options (admin)
-//	@Schemes
-//	@Description	Retrieves all configuration options for a specific check.
-//	@Tags			checks
-//	@Accept			json
-//	@Produce		json
-//	@Param			cname	path		string	true	"Checker name"
-//	@Success		200		{object}	happydns.CheckerOptions	"Checker options as key-value pairs"
-//	@Failure		404		{object}	happydns.ErrorResponse	"Checker not found"
+//	@Param			cname	path		string	true	"Check name"
+//	@Success		200		{object}	happydns.CheckerOptions		"Check options as key-value pairs"
+//	@Failure		404		{object}	happydns.ErrorResponse	"Check not found"
 //	@Failure		500		{object}	happydns.ErrorResponse	"Internal server error"
 //	@Router			/checks/{cname}/options [get]
 func (uc *CheckerController) GetCheckerOptions(c *gin.Context) {
+	user := c.MustGet("LoggedUser").(*happydns.User)
 	cname := c.Param("cname")
 
-	// Get admin-level options (nil user/domain/service IDs)
-	uc.GetCheckerOptionsWithScope(c, cname, nil, nil, nil)
+	uc.GetCheckerOptionsWithScope(c, cname, &user.Id, nil, nil)
 }
 
-// AddCheckerOptions adds or overwrites specific admin-level options for a check.
+// AddCheckerOptions adds or overwrites specific options for a check for the authenticated user.
 //
-//	@Summary		Add checker options
+//	@Summary		Add check options
 //	@Schemes
-//	@Description	Adds or overwrites specific configuration options for a checker without affecting other options.
+//	@Description	Adds or overwrites specific configuration options for a check for the authenticated user without affecting other options.
 //	@Tags			checks
 //	@Accept			json
 //	@Produce		json
-//	@Param			cname	path		string								true	"Checker name"
+//	@Param			cname	path		string									true	"Check name"
 //	@Param			body	body		happydns.SetCheckerOptionsRequest	true	"Options to add or overwrite"
 //	@Success		200		{object}	bool								"Success status"
 //	@Failure		400		{object}	happydns.ErrorResponse				"Invalid request body"
-//	@Failure		404		{object}	happydns.ErrorResponse				"Checker not found"
+//	@Failure		404		{object}	happydns.ErrorResponse				"Check not found"
 //	@Failure		500		{object}	happydns.ErrorResponse				"Internal server error"
 //	@Router			/checks/{cname}/options [post]
 func (uc *CheckerController) AddCheckerOptions(c *gin.Context) {
+	user := c.MustGet("LoggedUser").(*happydns.User)
 	cname := c.Param("cname")
 
-	// Add admin-level options (nil user/domain/service IDs)
-	uc.AddCheckerOptionsWithScope(c, cname, nil, nil, nil)
+	uc.AddCheckerOptionsWithScope(c, cname, &user.Id, nil, nil)
 }
 
-// ChangeCheckerOptions replaces all options for a checker.
+// ChangeCheckerOptions replaces all options for a check for the authenticated user.
 //
-//	@Summary		Replace checker options (admin)
+//	@Summary		Replace check options
 //	@Schemes
-//	@Description	Replaces all configuration options for a check with the provided options.
+//	@Description	Replaces all configuration options for a check for the authenticated user with the provided options.
 //	@Tags			checks
 //	@Accept			json
 //	@Produce		json
-//	@Param			cname	path		string								true	"Checker name"
+//	@Param			cname	path		string									true	"Checker name"
 //	@Param			body	body		happydns.SetCheckerOptionsRequest	true	"New complete set of options"
 //	@Success		200		{object}	bool								"Success status"
 //	@Failure		400		{object}	happydns.ErrorResponse				"Invalid request body"
@@ -162,50 +131,50 @@ func (uc *CheckerController) AddCheckerOptions(c *gin.Context) {
 //	@Failure		500		{object}	happydns.ErrorResponse				"Internal server error"
 //	@Router			/checks/{cname}/options [put]
 func (uc *CheckerController) ChangeCheckerOptions(c *gin.Context) {
+	user := c.MustGet("LoggedUser").(*happydns.User)
 	cname := c.Param("cname")
 
-	// Replace admin-level options (nil user/domain/service IDs)
-	uc.ChangeCheckerOptionsWithScope(c, cname, nil, nil, nil)
+	uc.ChangeCheckerOptionsWithScope(c, cname, &user.Id, nil, nil)
 }
 
-// GetCheckerOption retrieves a specific option value for a checker.
+// GetCheckerOption retrieves a specific option value for a check for the authenticated user.
 //
-//	@Summary		Get checker option (admin)
+//	@Summary		Get check option
 //	@Schemes
-//	@Description	Retrieves the value of a specific configuration option for a checker.
+//	@Description	Retrieves the value of a specific configuration option for a check for the authenticated user.
 //	@Tags			checks
 //	@Accept			json
 //	@Produce		json
-//	@Param			cname		path		string	true	"Checker name"
+//	@Param			cname		path		string	true	"Check name"
 //	@Param			optname		path		string	true	"Option name"
 //	@Success		200			{object}	object	"Option value (type varies)"
-//	@Failure		404			{object}	happydns.ErrorResponse	"Checker not found"
+//	@Failure		404			{object}	happydns.ErrorResponse	"Check not found"
 //	@Failure		500			{object}	happydns.ErrorResponse	"Internal server error"
 //	@Router			/checks/{cname}/options/{optname} [get]
 func (uc *CheckerController) GetCheckerOption(c *gin.Context) {
 	uc.GetCheckerOptionValue(c)
 }
 
-// SetCheckerOption sets or updates a specific option value for a checker.
+// SetCheckerOption sets or updates a specific option value for a check for the authenticated user.
 //
-//	@Summary		Set checker option (admin)
+//	@Summary		Set check option
 //	@Schemes
-//	@Description	Sets or updates the value of a specific configuration option for a checker.
+//	@Description	Sets or updates the value of a specific configuration option for a check for the authenticated user.
 //	@Tags			checks
 //	@Accept			json
 //	@Produce		json
-//	@Param			cname		path		string	true	"Checker name"
+//	@Param			cname		path		string	true	"Check name"
 //	@Param			optname		path		string	true	"Option name"
 //	@Param			body		body		object	true	"Option value (type varies by option)"
 //	@Success		200			{object}	bool	"Success status"
 //	@Failure		400			{object}	happydns.ErrorResponse	"Invalid request body"
-//	@Failure		404			{object}	happydns.ErrorResponse	"Checker not found"
+//	@Failure		404			{object}	happydns.ErrorResponse	"Check not found"
 //	@Failure		500			{object}	happydns.ErrorResponse	"Internal server error"
 //	@Router			/checks/{cname}/options/{optname} [put]
 func (uc *CheckerController) SetCheckerOption(c *gin.Context) {
+	user := c.MustGet("LoggedUser").(*happydns.User)
 	cname := c.Param("cname")
 	optname := c.Param("optname")
 
-	// Set admin-level option (nil user/domain/service IDs)
-	uc.SetCheckerOptionWithScope(c, cname, optname, nil, nil, nil)
+	uc.SetCheckerOptionWithScope(c, cname, optname, &user.Id, nil, nil)
 }
