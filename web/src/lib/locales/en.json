@@ -238,6 +238,7 @@
         "my-domains": "My domains",
         "my-providers": "My domain providers",
         "dns-resolver": "DNS resolver",
+        "plugins": "Domain Testers",
         "my-account": "My account",
         "logout": "Sign out",
         "provider-features": "Supported providers",
@@ -475,7 +476,7 @@
         "showrrtypes-title": "Show DNS record types",
         "preferences": {
             "title": "Preferences",
-          "description": "Customize your preferences"
+            "description": "Customize your preferences"
         },
         "security": {
             "title": "Security & Access",
@@ -537,6 +538,67 @@
         "results-description-default": "DNS records found for your query",
         "ttl": "Remaining time in cache",
         "showDNSSEC": "Show DNSSEC records in answer (if any)"
+    },
+    "plugins": {
+        "tests": {
+            "title": "Domain Tests",
+            "description": "Configure automated tests for your domains",
+            "available-count": "Available: {{count}} tests",
+            "search-placeholder": "Search tests...",
+            "loading": "Loading tests...",
+            "loading-info": "Loading test information...",
+            "no-tests": "No tests available",
+            "error-loading": "Error loading tests: {{error}}",
+            "error-loading-test": "Error loading test: {{error}}",
+            "test-info-not-found": "Error: Test information not found",
+            "back-to-tests": "Back to Tests",
+            "table": {
+                "name": "Test Name",
+                "version": "Version",
+                "availability": "Availability",
+                "actions": "Actions"
+            },
+            "availability": {
+                "domain": "Domain",
+                "provider-specific": "Provider-specific",
+                "service-specific": "Service-specific",
+                "general": "General",
+                "domain-level": "Domain-level",
+                "providers": "Providers: {{providers}}",
+                "services": "Services: {{services}}"
+            },
+            "actions": {
+                "configure": "Configure"
+            },
+            "detail": {
+                "test-information": "Test Information",
+                "name": "Name:",
+                "version": "Version:",
+                "availability": "Availability:",
+                "loading-options": "Loading options...",
+                "configuration": "Configuration",
+                "save-changes": "Save Changes",
+                "no-configurable-options": "This test has no configurable options.",
+                "error-loading-options": "Error loading options: {{error}}",
+                "orphaned-options": "Orphaned options detected: {{options}}",
+                "clean-up": "Clean Up",
+                "read-only": "(Read-only)"
+            },
+            "option-groups": {
+                "global-settings": "Global Settings",
+                "domain-settings": "Domain-specific Settings",
+                "service-settings": "Service-specific Settings",
+                "test-parameters": "Test Parameters",
+                "type": "Type: {{type}}",
+                "required": "Required"
+            },
+            "messages": {
+                "options-updated": "Plugin options updated successfully",
+                "options-cleaned": "Orphaned options removed successfully",
+                "update-failed": "Failed to update options: {{error}}",
+                "clean-failed": "Failed to clean options: {{error}}"
+            }
+        }
     },
     "zones": {
         "upload": "Import a zone",

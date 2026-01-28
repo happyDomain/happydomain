@@ -41,6 +41,37 @@ func NewTestPluginController(testPluginService happydns.TestPluginUsecase) *Test
 	}
 }
 
+// ListTestPlugins retrieves all available test plugins.
+//
+//	@Summary		List all test plugins
+//	@Schemes
+//	@Description	Returns a list of all available test plugins with their version information.
+//	@Tags			plugins
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	map[string]happydns.PluginVersionInfo	"Map of plugin names to version info"
+//	@Failure		500	{object}	happydns.ErrorResponse					"Internal server error"
+//	@Router			/plugins/tests [get]
+func (uc *TestPluginController) ListTestPlugins(c *gin.Context) {
+	uc.BaseTestPluginController.ListTestPlugins(c)
+}
+
+// GetTestPluginStatus retrieves the status and available options for a test plugin.
+//
+//	@Summary		Get test plugin status
+//	@Schemes
+//	@Description	Retrieves the status information and available options for a specific test plugin.
+//	@Tags			plugins
+//	@Accept			json
+//	@Produce		json
+//	@Param			pid	path		string	true	"Plugin name"
+//	@Success		200		{object}	happydns.PluginStatus	"Plugin status with version info and available options"
+//	@Failure		404		{object}	happydns.ErrorResponse	"Plugin not found"
+//	@Router			/plugins/tests/{pid} [get]
+func (uc *TestPluginController) GetTestPluginStatus(c *gin.Context) {
+	uc.BaseTestPluginController.GetTestPluginStatus(c)
+}
+
 // TestPluginHandler is a middleware that retrieves a test plugin by name and sets it in the context.
 func (uc *TestPluginController) TestPluginHandler(c *gin.Context) {
 	pname := c.Param("pid")
@@ -85,7 +116,7 @@ func (uc *TestPluginController) TestPluginOptionHandler(c *gin.Context) {
 //	@Success		200		{object}	happydns.PluginOptions		"Plugin options as key-value pairs"
 //	@Failure		404		{object}	happydns.ErrorResponse	"Plugin not found"
 //	@Failure		500		{object}	happydns.ErrorResponse	"Internal server error"
-//	@Router			/plugins/{pid}/options [get]
+//	@Router			/plugins/tests/{pid}/options [get]
 func (uc *TestPluginController) GetTestPluginOptions(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 	pname := c.Param("pid")
@@ -107,7 +138,7 @@ func (uc *TestPluginController) GetTestPluginOptions(c *gin.Context) {
 //	@Failure		400		{object}	happydns.ErrorResponse				"Invalid request body"
 //	@Failure		404		{object}	happydns.ErrorResponse				"Plugin not found"
 //	@Failure		500		{object}	happydns.ErrorResponse				"Internal server error"
-//	@Router			/plugins/{pid}/options [post]
+//	@Router			/plugins/tests/{pid}/options [post]
 func (uc *TestPluginController) AddTestPluginOptions(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 	pname := c.Param("pid")
@@ -129,7 +160,7 @@ func (uc *TestPluginController) AddTestPluginOptions(c *gin.Context) {
 //	@Failure		400		{object}	happydns.ErrorResponse				"Invalid request body"
 //	@Failure		404		{object}	happydns.ErrorResponse				"Plugin not found"
 //	@Failure		500		{object}	happydns.ErrorResponse				"Internal server error"
-//	@Router			/plugins/{pid}/options [put]
+//	@Router			/plugins/tests/{pid}/options [put]
 func (uc *TestPluginController) ChangeTestPluginOptions(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 	pname := c.Param("pid")
@@ -150,7 +181,7 @@ func (uc *TestPluginController) ChangeTestPluginOptions(c *gin.Context) {
 //	@Success		200			{object}	object	"Option value (type varies)"
 //	@Failure		404			{object}	happydns.ErrorResponse	"Plugin not found"
 //	@Failure		500			{object}	happydns.ErrorResponse	"Internal server error"
-//	@Router			/plugins/{pid}/options/{optname} [get]
+//	@Router			/plugins/tests/{pid}/options/{optname} [get]
 func (uc *TestPluginController) GetTestPluginOption(c *gin.Context) {
 	uc.GetTestPluginOptionValue(c)
 }
@@ -170,7 +201,7 @@ func (uc *TestPluginController) GetTestPluginOption(c *gin.Context) {
 //	@Failure		400			{object}	happydns.ErrorResponse	"Invalid request body"
 //	@Failure		404			{object}	happydns.ErrorResponse	"Plugin not found"
 //	@Failure		500			{object}	happydns.ErrorResponse	"Internal server error"
-//	@Router			/plugins/{pid}/options/{optname} [put]
+//	@Router			/plugins/tests/{pid}/options/{optname} [put]
 func (uc *TestPluginController) SetTestPluginOption(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 	pname := c.Param("pid")

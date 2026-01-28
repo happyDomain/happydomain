@@ -476,6 +476,67 @@
         "no-group": "Divers",
         "title": "Vos groupes"
     },
+    "plugins": {
+        "tests": {
+            "title": "Tests de domaines",
+            "description": "Configurez les tests automatisés pour vos domaines",
+            "available-count": "Disponibles : {{count}} tests",
+            "search-placeholder": "Rechercher des tests...",
+            "loading": "Chargement des tests...",
+            "loading-info": "Chargement des informations du test...",
+            "no-tests": "Aucun test disponible",
+            "error-loading": "Erreur lors du chargement des tests : {{error}}",
+            "error-loading-test": "Erreur lors du chargement du test : {{error}}",
+            "test-info-not-found": "Erreur : Informations du test introuvables",
+            "back-to-tests": "Retour aux tests",
+            "table": {
+                "name": "Nom du test",
+                "version": "Version",
+                "availability": "Disponibilité",
+                "actions": "Actions"
+            },
+            "availability": {
+                "domain": "Domaine",
+                "provider-specific": "Spécifique au fournisseur",
+                "service-specific": "Spécifique au service",
+                "general": "Général",
+                "domain-level": "Niveau domaine",
+                "providers": "Fournisseurs : {{providers}}",
+                "services": "Services : {{services}}"
+            },
+            "actions": {
+                "configure": "Configurer"
+            },
+            "detail": {
+                "test-information": "Informations du test",
+                "name": "Nom :",
+                "version": "Version :",
+                "availability": "Disponibilité :",
+                "loading-options": "Chargement des options...",
+                "configuration": "Configuration",
+                "save-changes": "Enregistrer les modifications",
+                "no-configurable-options": "Ce test n'a pas d'options configurables.",
+                "error-loading-options": "Erreur lors du chargement des options : {{error}}",
+                "orphaned-options": "Options orphelines détectées : {{options}}",
+                "clean-up": "Nettoyer",
+                "read-only": "(Lecture seule)"
+            },
+            "option-groups": {
+                "global-settings": "Paramètres globaux",
+                "domain-settings": "Paramètres spécifiques au domaine",
+                "service-settings": "Paramètres spécifiques au service",
+                "test-parameters": "Paramètres du test",
+                "type": "Type : {{type}}",
+                "required": "Requis"
+            },
+            "messages": {
+                "options-updated": "Options du plugin mises à jour avec succès",
+                "options-cleaned": "Options orphelines supprimées avec succès",
+                "update-failed": "Échec de la mise à jour des options : {{error}}",
+                "clean-failed": "Échec du nettoyage des options : {{error}}"
+            }
+        }
+    },
     "zones": {
         "upload": "Importer une zone",
         "import-text": "Depuis du texte",

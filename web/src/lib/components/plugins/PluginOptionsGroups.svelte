@@ -24,6 +24,8 @@
 <script lang="ts">
     import { Card, CardBody, CardHeader } from "@sveltestrap/sveltestrap";
 
+    import { t } from "$lib/translations";
+
     interface OptionDef {
         id?: string;
         label?: string;
@@ -51,7 +53,7 @@
         <Card class="mb-3">
             <CardHeader>
                 <strong>{optGroup.label}</strong>
-                <small class="text-muted ms-2">(Read-only)</small>
+                <small class="text-muted ms-2">{$t("plugins.tests.detail.read-only")}</small>
             </CardHeader>
             <CardBody>
                 <dl class="row mb-0">
@@ -69,11 +71,15 @@
                             {#if optDoc.description}
                                 <small class="text-muted d-block">{optDoc.description}</small>
                             {/if}
-                            <small class="text-muted">
-                                Type: {optDoc.type || "string"}
-                            </small>
+                            <small class="text-muted"
+                                >{$t("plugins.tests.option-groups.type", {
+                                    type: optDoc.type || "string",
+                                })}</small
+                            >
                             {#if optDoc.required}
-                                <small class="text-danger ms-2"> Required </small>
+                                <small class="text-danger ms-2"
+                                    >{$t("plugins.tests.option-groups.required")}</small
+                                >
                             {/if}
                         </dd>
                     {/each}
