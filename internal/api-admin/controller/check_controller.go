@@ -26,17 +26,19 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happyDomain/internal/api/middleware"
+	apicontroller "git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/model"
 )
 
+// CheckerController handles admin-level operations.
+// All methods in this controller work with admin-scoped options (nil user/domain/service IDs).
 type CheckerController struct {
-	checkerService happydns.CheckerUsecase
+	*apicontroller.BaseCheckerController
 }
 
 func NewCheckerController(checkerService happydns.CheckerUsecase) *CheckerController {
 	return &CheckerController{
-		checkerService,
+		BaseCheckerController: apicontroller.NewBaseCheckerController(checkerService),
 	}
 }
 
@@ -44,7 +46,7 @@ func NewCheckerController(checkerService happydns.CheckerUsecase) *CheckerContro
 func (uc *CheckerController) CheckerHandler(c *gin.Context) {
 	cname := c.Param("cname")
 
-	checker, err := uc.checkerService.GetChecker(cname)
+	checker, err := uc.BaseCheckerController.GetCheckerService().GetChecker(cname)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, happydns.ErrorResponse{Message: "Check not found"})
 		return
@@ -60,7 +62,7 @@ func (uc *CheckerController) CheckerOptionHandler(c *gin.Context) {
 	cname := c.Param("cname")
 	optname := c.Param("optname")
 
-	opts, err := uc.checkerService.GetCheckerOptions(cname, nil, nil, nil)
+	opts, err := uc.BaseCheckerController.GetCheckerService().GetCheckerOptions(cname, nil, nil, nil)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: err.Error()})
 		return
@@ -83,23 +85,7 @@ func (uc *CheckerController) CheckerOptionHandler(c *gin.Context) {
 //	@Failure		500	{object}	happydns.ErrorResponse					"Internal server error"
 //	@Router			/checks [get]
 func (uc *CheckerController) ListCheckers(c *gin.Context) {
-	checkers, err := uc.checkerService.ListCheckers()
-	if err != nil {
-		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
-		return
-	}
-
-	res := map[string]happydns.CheckerResponse{}
-
-	for name, checker := range *checkers {
-		res[name] = happydns.CheckerResponse{
-			ID:           checker.ID(),
-			Name:         checker.Name(),
-			Availability: checker.Availability(),
-		}
-	}
-
-	happydns.ApiResponse(c, res, nil)
+	uc.BaseCheckerController.ListCheckers(c)
 }
 
 // GetCheckerStatus retrieves the status and available options for a check.
@@ -115,15 +101,7 @@ func (uc *CheckerController) ListCheckers(c *gin.Context) {
 //	@Failure		404		{object}	happydns.ErrorResponse	"Checker not found"
 //	@Router			/checks/{cname} [get]
 func (uc *CheckerController) GetCheckerStatus(c *gin.Context) {
-	checker := c.MustGet("checker").(happydns.Checker)
-
-	res := happydns.CheckerResponse{
-		ID:           checker.ID(),
-		Name:         checker.Name(),
-		Availability: checker.Availability(),
-	}
-
-	c.JSON(http.StatusOK, res)
+	uc.BaseCheckerController.GetCheckerStatus(c)
 }
 
 // GetCheckerOptions retrieves all options for a check.
@@ -142,8 +120,8 @@ func (uc *CheckerController) GetCheckerStatus(c *gin.Context) {
 func (uc *CheckerController) GetCheckerOptions(c *gin.Context) {
 	cname := c.Param("cname")
 
-	opts, err := uc.checkerService.GetCheckerOptions(cname, nil, nil, nil)
-	happydns.ApiResponse(c, opts, err)
+	// Get admin-level options (nil user/domain/service IDs)
+	uc.GetCheckerOptionsWithScope(c, cname, nil, nil, nil)
 }
 
 // AddCheckerOptions adds or overwrites specific admin-level options for a check.
@@ -164,15 +142,8 @@ func (uc *CheckerController) GetCheckerOptions(c *gin.Context) {
 func (uc *CheckerController) AddCheckerOptions(c *gin.Context) {
 	cname := c.Param("cname")
 
-	var req happydns.SetCheckerOptionsRequest
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		middleware.ErrorResponse(c, http.StatusBadRequest, err)
-		return
-	}
-
-	err = uc.checkerService.OverwriteSomeCheckerOptions(cname, nil, nil, nil, req.Options)
-	happydns.ApiResponse(c, true, err)
+	// Add admin-level options (nil user/domain/service IDs)
+	uc.AddCheckerOptionsWithScope(c, cname, nil, nil, nil)
 }
 
 // ChangeCheckerOptions replaces all options for a checker.
@@ -193,15 +164,8 @@ func (uc *CheckerController) AddCheckerOptions(c *gin.Context) {
 func (uc *CheckerController) ChangeCheckerOptions(c *gin.Context) {
 	cname := c.Param("cname")
 
-	var req happydns.SetCheckerOptionsRequest
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		middleware.ErrorResponse(c, http.StatusBadRequest, err)
-		return
-	}
-
-	err = uc.checkerService.SetCheckerOptions(cname, nil, nil, nil, req.Options)
-	happydns.ApiResponse(c, true, err)
+	// Replace admin-level options (nil user/domain/service IDs)
+	uc.ChangeCheckerOptionsWithScope(c, cname, nil, nil, nil)
 }
 
 // GetCheckerOption retrieves a specific option value for a checker.
@@ -219,9 +183,7 @@ func (uc *CheckerController) ChangeCheckerOptions(c *gin.Context) {
 //	@Failure		500			{object}	happydns.ErrorResponse	"Internal server error"
 //	@Router			/checks/{cname}/options/{optname} [get]
 func (uc *CheckerController) GetCheckerOption(c *gin.Context) {
-	opt := c.MustGet("option")
-
-	happydns.ApiResponse(c, opt, nil)
+	uc.GetCheckerOptionValue(c)
 }
 
 // SetCheckerOption sets or updates a specific option value for a checker.
@@ -244,16 +206,6 @@ func (uc *CheckerController) SetCheckerOption(c *gin.Context) {
 	cname := c.Param("cname")
 	optname := c.Param("optname")
 
-	var req any
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		middleware.ErrorResponse(c, http.StatusBadRequest, err)
-		return
-	}
-
-	po := happydns.CheckerOptions{}
-	po[optname] = req
-
-	err = uc.checkerService.OverwriteSomeCheckerOptions(cname, nil, nil, nil, po)
-	happydns.ApiResponse(c, true, err)
+	// Set admin-level option (nil user/domain/service IDs)
+	uc.SetCheckerOptionWithScope(c, cname, optname, nil, nil, nil)
 }

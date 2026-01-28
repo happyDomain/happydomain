@@ -256,6 +256,7 @@ func (app *App) setupRouter() {
 		Authentication:        app.usecases.authentication,
 		AuthUser:              app.usecases.authUser,
 		CaptchaVerifier:       app.captchaVerifier,
+		Checker:               app.usecases.checker,
 		Domain:                app.usecases.domain,
 		DomainLog:             app.usecases.domainLog,
 		FailureTracker:        app.failureTracker,
