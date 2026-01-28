@@ -71,7 +71,7 @@ func (lc *LoginController) GetLoggedUser(c *gin.Context) {
 //	@Success		200		{object}	happydns.User
 //	@Failure		400		{object}	happydns.ErrorResponse	"Invalid input"
 //	@Failure		401		{object}	happydns.ErrorResponse	"Invalid username or password"
-//	@Router			/auth/login [post]
+//	@Router			/auth [post]
 func (lc *LoginController) Login(c *gin.Context) {
 	var request happydns.LoginRequest
 

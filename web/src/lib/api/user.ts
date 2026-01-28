@@ -21,7 +21,7 @@
 
 import {
     postUsers,
-    postAuthLogin,
+    postAuth,
     postAuthLogout,
     patchUsers,
     postUsersByUserIdRecovery,
@@ -41,7 +41,7 @@ export async function registerUser(form: SignUpForm): Promise<User> {
 }
 
 export async function authUser(form: LoginForm): Promise<User> {
-    return unwrapSdkResponse(await postAuthLogin({ body: form })) as unknown as User;
+    return unwrapSdkResponse(await postAuth({ body: form })) as unknown as User;
 }
 
 export async function logout(): Promise<boolean> {
