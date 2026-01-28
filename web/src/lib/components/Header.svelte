@@ -137,6 +137,14 @@
                     >
                         {$t("menu.dns-resolver")}
                     </DropdownItem>
+                    <DropdownItem
+                        active={page.route &&
+                            (page.route.id == "/checkers" ||
+                                page.route.id?.startsWith("/checkers/"))}
+                        href="/checkers"
+                    >
+                        {$t("menu.checkers")}
+                    </DropdownItem>
                     <DropdownItem divider />
                     <DropdownItem active={page.route && page.route.id == "/me"} href="/me">
                         {$t("menu.my-account")}
