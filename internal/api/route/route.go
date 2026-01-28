@@ -45,6 +45,7 @@ type Dependencies struct {
 	Service               happydns.ServiceUsecase
 	ServiceSpecs          happydns.ServiceSpecsUsecase
 	Session               happydns.SessionUsecase
+	TestPlugin            happydns.TestPluginUsecase
 	User                  happydns.UserUsecase
 	Zone                  happydns.ZoneUsecase
 	ZoneCorrectionApplier happydns.ZoneCorrectionApplierUsecase
@@ -100,6 +101,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, dep Dependencies) 
 
 	DeclareAuthenticationCheckRoutes(apiAuthRoutes, lc)
 	DeclareDomainRoutes(apiAuthRoutes, dep.Domain, dep.DomainLog, dep.RemoteZoneImporter, dep.ZoneImporter, dep.Zone, dep.ZoneCorrectionApplier, dep.ZoneService, dep.Service)
+	DeclarePluginsRoutes(apiAuthRoutes, dep.TestPlugin)
 	DeclareProviderRoutes(apiAuthRoutes, dep.Provider)
 	DeclareProviderSettingsRoutes(apiAuthRoutes, dep.ProviderSettings)
 	DeclareRecordRoutes(apiAuthRoutes)

@@ -260,6 +260,7 @@ func (app *App) setupRouter() {
 		Service:               app.usecases.service,
 		ServiceSpecs:          app.usecases.serviceSpecs,
 		Session:               app.usecases.session,
+		TestPlugin:            app.usecases.testPlugin,
 		User:                  app.usecases.user,
 		Zone:                  app.usecases.zone,
 		ZoneCorrectionApplier: app.usecases.orchestrator.ZoneCorrectionApplier,
