@@ -238,6 +238,7 @@
         "my-domains": "My domains",
         "my-providers": "My domain providers",
         "dns-resolver": "DNS resolver",
+        "checkers": "Domain Checkers",
         "my-account": "My account",
         "logout": "Sign out",
         "provider-features": "Supported providers",
@@ -537,6 +538,63 @@
         "results-description-default": "DNS records found for your query",
         "ttl": "Remaining time in cache",
         "showDNSSEC": "Show DNSSEC records in answer (if any)"
+    },
+    "checks": {
+        "title": "Domain Checkers",
+        "description": "Configure automated checks for your domains",
+        "available-count": "Available: {{count}} checks",
+        "search-placeholder": "Search checks...",
+        "loading": "Loading checkers...",
+        "loading-info": "Loading checker information...",
+        "no-checkers": "No checkers available",
+        "error-loading": "Error loading checkers: {{error}}",
+        "error-loading-check": "Error loading checker: {{error}}",
+        "check-info-not-found": "Error: Checker information not found",
+        "back-to-checks": "Back to checks",
+        "table": {
+            "name": "Checker Name",
+            "availability": "Availability",
+            "actions": "Actions"
+        },
+        "availability": {
+            "domain": "Domain",
+            "provider-specific": "Provider-specific",
+            "service-specific": "Service-specific",
+            "general": "General",
+            "domain-level": "Domain-level",
+            "providers": "Providers: {{providers}}",
+            "services": "Services: {{services}}"
+        },
+        "actions": {
+            "configure": "Configure"
+        },
+        "detail": {
+            "check-information": "Check Information",
+            "name": "Name:",
+            "availability": "Availability:",
+            "loading-options": "Loading options...",
+            "configuration": "Configuration",
+            "save-changes": "Save Changes",
+            "no-configurable-options": "This check has no configurable options.",
+            "error-loading-options": "Error loading options: {{error}}",
+            "orphaned-options": "Orphaned options detected: {{options}}",
+            "clean-up": "Clean Up",
+            "read-only": "(Read-only)"
+        },
+        "option-groups": {
+            "global-settings": "Global Settings",
+            "domain-settings": "Domain-specific Settings",
+            "service-settings": "Service-specific Settings",
+            "check-parameters": "Check Parameters",
+            "type": "Type: {{type}}",
+            "required": "Required"
+        },
+        "messages": {
+            "options-updated": "Checker options updated successfully",
+            "options-cleaned": "Orphaned options removed successfully",
+            "update-failed": "Failed to update options: {{error}}",
+            "clean-failed": "Failed to clean options: {{error}}"
+        }
     },
     "zones": {
         "upload": "Import a zone",

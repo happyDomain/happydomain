@@ -41,6 +41,37 @@ func NewCheckerController(checkerService happydns.CheckerUsecase) *CheckerContro
 	}
 }
 
+// ListCheckers retrieves all available checks.
+//
+//	@Summary		List all checks
+//	@Schemes
+//	@Description	Returns a list of all available checks with their version information.
+//	@Tags			checks
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	map[string]happydns.CheckerResponse	"Map of check names to version info"
+//	@Failure		500	{object}	happydns.ErrorResponse					"Internal server error"
+//	@Router			/checks [get]
+func (uc *CheckerController) ListCheckers(c *gin.Context) {
+	uc.BaseCheckerController.ListCheckers(c)
+}
+
+// GetCheckerStatus retrieves the status and available options for a check.
+//
+//	@Summary		Get check status
+//	@Schemes
+//	@Description	Retrieves the status information and available options for a specific check.
+//	@Tags			checks
+//	@Accept			json
+//	@Produce		json
+//	@Param			cid	path		string	true	"Check name"
+//	@Success		200		{object}	happydns.CheckerResponse	"Check status with version info and available options"
+//	@Failure		404		{object}	happydns.ErrorResponse	"Check not found"
+//	@Router			/checks/{cid} [get]
+func (uc *CheckerController) GetCheckerStatus(c *gin.Context) {
+	uc.BaseCheckerController.GetCheckerStatus(c)
+}
+
 // CheckerHandler is a middleware that retrieves a check by name and sets it in the context.
 func (uc *CheckerController) CheckerHandler(c *gin.Context) {
 	cname := c.Param("cid")
