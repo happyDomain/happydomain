@@ -39,6 +39,9 @@ interface Params {
     min?: number;
     max?: number;
     suggestion?: string;
+    key?: string;
+    error?: string;
+    options?: string;
     // add more parameters that are used here
 }
 
