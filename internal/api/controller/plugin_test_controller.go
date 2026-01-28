@@ -26,27 +26,26 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	apicontroller "git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/model"
 )
 
-// TestPluginController handles admin-level plugin operations.
-// All methods in this controller work with admin-scoped options (nil user/domain/service IDs).
+// TestPluginController handles user-scoped plugin operations for the main API.
+// All methods work with options scoped to the authenticated user.
 type TestPluginController struct {
-	*apicontroller.BaseTestPluginController
+	*BaseTestPluginController
 }
 
 func NewTestPluginController(testPluginService happydns.TestPluginUsecase) *TestPluginController {
 	return &TestPluginController{
-		BaseTestPluginController: apicontroller.NewBaseTestPluginController(testPluginService),
+		BaseTestPluginController: NewBaseTestPluginController(testPluginService),
 	}
 }
 
 // TestPluginHandler is a middleware that retrieves a test plugin by name and sets it in the context.
 func (uc *TestPluginController) TestPluginHandler(c *gin.Context) {
-	pname := c.Param("pname")
+	pname := c.Param("pid")
 
-	plugin, err := uc.BaseTestPluginController.GetTestPluginService().GetTestPlugin(pname)
+	plugin, err := uc.testPluginService.GetTestPlugin(pname)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, happydns.ErrorResponse{Message: "Plugin not found"})
 		return
@@ -57,13 +56,13 @@ func (uc *TestPluginController) TestPluginHandler(c *gin.Context) {
 	c.Next()
 }
 
-// TestPluginOptionHandler is a middleware that retrieves a specific admin-level plugin option and sets it in the context.
+// TestPluginOptionHandler is a middleware that retrieves a specific plugin option for the authenticated user and sets it in the context.
 func (uc *TestPluginController) TestPluginOptionHandler(c *gin.Context) {
-	pname := c.Param("pname")
+	user := c.MustGet("LoggedUser").(*happydns.User)
+	pname := c.Param("pid")
 	optname := c.Param("optname")
 
-	// Get admin-level options (nil user/domain/service IDs)
-	opts, err := uc.BaseTestPluginController.GetTestPluginService().GetTestPluginOptions(pname, nil, nil, nil)
+	opts, err := uc.testPluginService.GetTestPluginOptions(pname, &user.Id, nil, nil)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: err.Error()})
 		return
@@ -74,108 +73,108 @@ func (uc *TestPluginController) TestPluginOptionHandler(c *gin.Context) {
 	c.Next()
 }
 
-// GetTestPluginOptions retrieves all admin-level options for a test plugin.
+// GetTestPluginOptions retrieves all options for a test plugin for the authenticated user.
 //
-//	@Summary		Get test plugin options (admin)
+//	@Summary		Get test plugin options
 //	@Schemes
-//	@Description	Retrieves all admin-level configuration options for a specific test plugin.
+//	@Description	Retrieves all configuration options for a specific test plugin for the authenticated user.
 //	@Tags			plugins
 //	@Accept			json
 //	@Produce		json
-//	@Param			pname	path		string	true	"Plugin name"
-//	@Success		200		{object}	happydns.PluginOptions	"Plugin options as key-value pairs"
+//	@Param			pid	path		string	true	"Plugin name"
+//	@Success		200		{object}	happydns.PluginOptions		"Plugin options as key-value pairs"
 //	@Failure		404		{object}	happydns.ErrorResponse	"Plugin not found"
 //	@Failure		500		{object}	happydns.ErrorResponse	"Internal server error"
-//	@Router			/plugins/tests/{pname}/options [get]
+//	@Router			/plugins/{pid}/options [get]
 func (uc *TestPluginController) GetTestPluginOptions(c *gin.Context) {
-	pname := c.Param("pname")
+	user := c.MustGet("LoggedUser").(*happydns.User)
+	pname := c.Param("pid")
 
-	// Get admin-level options (nil user/domain/service IDs)
-	uc.GetTestPluginOptionsWithScope(c, pname, nil, nil, nil)
+	uc.GetTestPluginOptionsWithScope(c, pname, &user.Id, nil, nil)
 }
 
-// AddTestPluginOptions adds or overwrites specific admin-level options for a test plugin.
+// AddTestPluginOptions adds or overwrites specific options for a test plugin for the authenticated user.
 //
-//	@Summary		Add test plugin options (admin)
+//	@Summary		Add test plugin options
 //	@Schemes
-//	@Description	Adds or overwrites specific admin-level configuration options for a test plugin without affecting other options.
+//	@Description	Adds or overwrites specific configuration options for a test plugin for the authenticated user without affecting other options.
 //	@Tags			plugins
 //	@Accept			json
 //	@Produce		json
-//	@Param			pname	path		string								true	"Plugin name"
+//	@Param			pid	path		string									true	"Plugin name"
 //	@Param			body	body		happydns.SetPluginOptionsRequest	true	"Options to add or overwrite"
 //	@Success		200		{object}	bool								"Success status"
 //	@Failure		400		{object}	happydns.ErrorResponse				"Invalid request body"
 //	@Failure		404		{object}	happydns.ErrorResponse				"Plugin not found"
 //	@Failure		500		{object}	happydns.ErrorResponse				"Internal server error"
-//	@Router			/plugins/tests/{pname}/options [post]
+//	@Router			/plugins/{pid}/options [post]
 func (uc *TestPluginController) AddTestPluginOptions(c *gin.Context) {
-	pname := c.Param("pname")
+	user := c.MustGet("LoggedUser").(*happydns.User)
+	pname := c.Param("pid")
 
-	// Add admin-level options (nil user/domain/service IDs)
-	uc.AddTestPluginOptionsWithScope(c, pname, nil, nil, nil)
+	uc.AddTestPluginOptionsWithScope(c, pname, &user.Id, nil, nil)
 }
 
-// ChangeTestPluginOptions replaces all admin-level options for a test plugin.
+// ChangeTestPluginOptions replaces all options for a test plugin for the authenticated user.
 //
-//	@Summary		Replace test plugin options (admin)
+//	@Summary		Replace test plugin options
 //	@Schemes
-//	@Description	Replaces all admin-level configuration options for a test plugin with the provided options.
+//	@Description	Replaces all configuration options for a test plugin for the authenticated user with the provided options.
 //	@Tags			plugins
 //	@Accept			json
 //	@Produce		json
-//	@Param			pname	path		string								true	"Plugin name"
+//	@Param			pid	path		string									true	"Plugin name"
 //	@Param			body	body		happydns.SetPluginOptionsRequest	true	"New complete set of options"
 //	@Success		200		{object}	bool								"Success status"
 //	@Failure		400		{object}	happydns.ErrorResponse				"Invalid request body"
 //	@Failure		404		{object}	happydns.ErrorResponse				"Plugin not found"
 //	@Failure		500		{object}	happydns.ErrorResponse				"Internal server error"
-//	@Router			/plugins/tests/{pname}/options [put]
+//	@Router			/plugins/{pid}/options [put]
 func (uc *TestPluginController) ChangeTestPluginOptions(c *gin.Context) {
-	pname := c.Param("pname")
+	user := c.MustGet("LoggedUser").(*happydns.User)
+	pname := c.Param("pid")
 
-	// Replace admin-level options (nil user/domain/service IDs)
-	uc.ChangeTestPluginOptionsWithScope(c, pname, nil, nil, nil)
+	uc.ChangeTestPluginOptionsWithScope(c, pname, &user.Id, nil, nil)
 }
 
-// GetTestPluginOption retrieves a specific admin-level option value for a test plugin.
+// GetTestPluginOption retrieves a specific option value for a test plugin for the authenticated user.
 //
-//	@Summary		Get test plugin option (admin)
+//	@Summary		Get test plugin option
 //	@Schemes
-//	@Description	Retrieves the value of a specific admin-level configuration option for a test plugin.
+//	@Description	Retrieves the value of a specific configuration option for a test plugin for the authenticated user.
 //	@Tags			plugins
 //	@Accept			json
 //	@Produce		json
-//	@Param			pname		path		string	true	"Plugin name"
+//	@Param			pid		path		string	true	"Plugin name"
 //	@Param			optname		path		string	true	"Option name"
 //	@Success		200			{object}	object	"Option value (type varies)"
 //	@Failure		404			{object}	happydns.ErrorResponse	"Plugin not found"
 //	@Failure		500			{object}	happydns.ErrorResponse	"Internal server error"
-//	@Router			/plugins/tests/{pname}/options/{optname} [get]
+//	@Router			/plugins/{pid}/options/{optname} [get]
 func (uc *TestPluginController) GetTestPluginOption(c *gin.Context) {
 	uc.GetTestPluginOptionValue(c)
 }
 
-// SetTestPluginOption sets or updates a specific admin-level option value for a test plugin.
+// SetTestPluginOption sets or updates a specific option value for a test plugin for the authenticated user.
 //
-//	@Summary		Set test plugin option (admin)
+//	@Summary		Set test plugin option
 //	@Schemes
-//	@Description	Sets or updates the value of a specific admin-level configuration option for a test plugin.
+//	@Description	Sets or updates the value of a specific configuration option for a test plugin for the authenticated user.
 //	@Tags			plugins
 //	@Accept			json
 //	@Produce		json
-//	@Param			pname		path		string	true	"Plugin name"
+//	@Param			pid		path		string	true	"Plugin name"
 //	@Param			optname		path		string	true	"Option name"
 //	@Param			body		body		object	true	"Option value (type varies by option)"
 //	@Success		200			{object}	bool	"Success status"
 //	@Failure		400			{object}	happydns.ErrorResponse	"Invalid request body"
 //	@Failure		404			{object}	happydns.ErrorResponse	"Plugin not found"
 //	@Failure		500			{object}	happydns.ErrorResponse	"Internal server error"
-//	@Router			/plugins/tests/{pname}/options/{optname} [put]
+//	@Router			/plugins/{pid}/options/{optname} [put]
 func (uc *TestPluginController) SetTestPluginOption(c *gin.Context) {
-	pname := c.Param("pname")
+	user := c.MustGet("LoggedUser").(*happydns.User)
+	pname := c.Param("pid")
 	optname := c.Param("optname")
 
-	// Set admin-level option (nil user/domain/service IDs)
-	uc.SetTestPluginOptionWithScope(c, pname, optname, nil, nil, nil)
+	uc.SetTestPluginOptionWithScope(c, pname, optname, &user.Id, nil, nil)
 }
