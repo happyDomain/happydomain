@@ -43,6 +43,9 @@ interface Params {
     name?: string;
     nbDiffs?: number;
     nbSelected?: number;
+    key?: string;
+    error?: string;
+    options?: string;
     // add more parameters that are used here
 }
 
