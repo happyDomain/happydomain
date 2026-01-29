@@ -15,7 +15,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/gorilla/securecookie v1.1.2
 	github.com/gorilla/sessions v1.4.0
-	github.com/lib/pq v1.11.0
+	github.com/lib/pq v1.11.1
 	github.com/miekg/dns v1.1.72
 	github.com/mileusna/useragent v1.3.5
 	github.com/oracle/nosql-go-sdk v1.4.7
