@@ -26,6 +26,7 @@ import (
 
 	dnscontrol "github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/StackExchange/dnscontrol/v4/pkg/diff2"
+	"github.com/StackExchange/dnscontrol/v4/pkg/dnsrr"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -109,7 +110,7 @@ func DNSControlRRtoRC(rrs []happydns.Record, origin string) (dnscontrol.Records,
 			rr = record.ToRR()
 		}
 
-		rc, err := dnscontrol.RRtoRC(rr.(dns.RR), strings.TrimSuffix(origin, "."))
+		rc, err := dnsrr.RRtoRC(rr.(dns.RR), strings.TrimSuffix(origin, "."))
 		if err != nil {
 			return nil, err
 		}
