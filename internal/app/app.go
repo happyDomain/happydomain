@@ -58,6 +58,7 @@ type Usecases struct {
 	authUser         happydns.AuthUserUsecase
 	checker          happydns.CheckerUsecase
 	checkResult      happydns.CheckResultUsecase
+	checkerSchedule  happydns.CheckerScheduleUsecase
 	domain           happydns.DomainUsecase
 	domainLog        happydns.DomainLogUsecase
 	provider         happydns.ProviderUsecase
@@ -85,6 +86,7 @@ type App struct {
 	router          *gin.Engine
 	srv             *http.Server
 	store           storage.Storage
+	checkScheduler  happydns.SchedulerUsecase
 	usecases        Usecases
 }
 
@@ -102,6 +104,7 @@ func NewApp(cfg *happydns.Options) *App {
 	}
 	app.initUsecases()
 	app.initCaptcha()
+	app.initCheckScheduler()
 	app.setupRouter()
 
 	return app
@@ -120,6 +123,7 @@ func NewAppWithStorage(cfg *happydns.Options, store storage.Storage) *App {
 	}
 	app.initUsecases()
 	app.initCaptcha()
+	app.initCheckScheduler()
 	app.setupRouter()
 
 	return app
@@ -193,6 +197,20 @@ func (app *App) initInsights() {
 	}
 }
 
+func (app *App) initCheckScheduler() {
+	if app.cfg.DisableScheduler {
+		// Use a disabled scheduler that returns clear errors
+		app.checkScheduler = &disabledScheduler{}
+		return
+	}
+
+	app.checkScheduler = newCheckScheduler(
+		app.cfg,
+		app.store,
+		app.usecases.checker,
+	)
+}
+
 func (app *App) initUsecases() {
 	sessionService := sessionUC.NewService(app.store)
 	authUserService := authuserUC.NewAuthUserUsecases(app.cfg, app.mailer, app.store, sessionService)
@@ -222,6 +240,7 @@ func (app *App) initUsecases() {
 	app.usecases.session = sessionService
 	app.usecases.checker = checkUC.NewCheckerUsecase(app.cfg, app.store)
 	app.usecases.checkResult = checkresultUC.NewCheckResultUsecase(app.store, app.cfg)
+	app.usecases.checkerSchedule = checkresultUC.NewCheckScheduleUsecase(app.store, app.cfg)
 
 	app.usecases.orchestrator = orchestrator.NewOrchestrator(
 		domainLogService,
@@ -261,6 +280,7 @@ func (app *App) setupRouter() {
 		CaptchaVerifier:       app.captchaVerifier,
 		Checker:               app.usecases.checker,
 		CheckResult:           app.usecases.checkResult,
+		CheckScheduler:        app.checkScheduler,
 		Domain:                app.usecases.domain,
 		DomainLog:             app.usecases.domainLog,
 		FailureTracker:        app.failureTracker,
@@ -293,6 +313,8 @@ func (app *App) Start() {
 		go app.insights.Run()
 	}
 
+	go app.checkScheduler.Run()
+
 	log.Printf("Public interface listening on %s\n", app.cfg.Bind)
 	if err := app.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("listen: %s\n", err)
@@ -318,4 +340,6 @@ func (app *App) Stop() {
 	if app.failureTracker != nil {
 		app.failureTracker.Close()
 	}
+
+	app.checkScheduler.Close()
 }
