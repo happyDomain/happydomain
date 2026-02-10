@@ -27,6 +27,8 @@ import (
 
 // SchedulerUsecase defines the interface for triggering on-demand checks
 type SchedulerUsecase interface {
+	Run()
+	Close()
 	TriggerOnDemandCheck(checkerName string, targetType CheckScopeType, targetID Identifier, userID Identifier, options CheckerOptions) (Identifier, error)
 }
 
@@ -61,6 +63,30 @@ type CheckerSchedule struct {
 
 	// Options contains checker-specific configuration
 	Options CheckerOptions `json:"options,omitempty"`
+}
+
+// SchedulerStatus holds a snapshot of the scheduler state for monitoring
+type SchedulerStatus struct {
+	// ConfigEnabled indicates if the scheduler is enabled in the configuration file
+	ConfigEnabled bool `json:"config_enabled"`
+
+	// RuntimeEnabled indicates if the scheduler is currently enabled at runtime
+	RuntimeEnabled bool `json:"runtime_enabled"`
+
+	// Running indicates if the scheduler goroutine is currently running
+	Running bool `json:"running"`
+
+	// WorkerCount is the number of worker goroutines
+	WorkerCount int `json:"worker_count"`
+
+	// QueueSize is the number of items currently waiting in the execution queue
+	QueueSize int `json:"queue_size"`
+
+	// ActiveCount is the number of checks currently being executed
+	ActiveCount int `json:"active_count"`
+
+	// NextSchedules contains the upcoming scheduled checks sorted by next run time
+	NextSchedules []*CheckerSchedule `json:"next_schedules"`
 }
 
 // CheckerScheduleUsecase defines business logic for check schedules
@@ -100,11 +126,4 @@ type CheckerScheduleUsecase interface {
 
 	// DeleteSchedulesForTarget removes all schedules for a target
 	DeleteSchedulesForTarget(targetType CheckScopeType, targetId Identifier) error
-
-	// ListUpcomingSchedules retrieves the next limit enabled schedules sorted by NextRun ascending.
-	ListUpcomingSchedules(limit int) ([]*CheckerSchedule, error)
-
-	// DiscoverAndEnsureSchedules creates default enabled schedules for all (plugin, domain) pairs
-	// that do not already have a schedule.
-	DiscoverAndEnsureSchedules() error
 }
