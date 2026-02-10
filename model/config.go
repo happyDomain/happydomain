@@ -107,6 +107,12 @@ type Options struct {
 
 	// ResultRetentionDays is how long to keep test results before cleanup
 	ResultRetentionDays int
+
+	// TestWorkers is the number of concurrent test executions allowed
+	TestWorkers int
+
+	// DisableScheduler disables the background test scheduler
+	DisableScheduler bool
 }
 
 // GetBaseURL returns the full url to the absolute ExternalURL, including BaseURL.
