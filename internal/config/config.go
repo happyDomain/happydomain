@@ -44,15 +44,17 @@ func ConsolidateConfig() (opts *happydns.Options, err error) {
 
 	// Define defaults options
 	opts = &happydns.Options{
-		AdminBind:         "./happydomain.sock",
-		BasePath:          "/",
-		Bind:              ":8081",
-		DefaultNameServer: "127.0.0.1:53",
-		ExternalURL:       *u,
-		JWTSigningMethod:  "HS512",
-		MailFrom:          mail.Address{Name: "happyDomain", Address: "happydomain@localhost"},
-		MailSMTPPort:      587,
-		StorageEngine:     "leveldb",
+		AdminBind:           "./happydomain.sock",
+		BasePath:            "/",
+		Bind:                ":8081",
+		DefaultNameServer:   "127.0.0.1:53",
+		ExternalURL:         *u,
+		JWTSigningMethod:    "HS512",
+		MailFrom:            mail.Address{Name: "happyDomain", Address: "happydomain@localhost"},
+		MailSMTPPort:        587,
+		StorageEngine:       "leveldb",
+		MaxResultsPerCheck:  100,
+		ResultRetentionDays: 90,
 	}
 
 	declareFlags(opts)

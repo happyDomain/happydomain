@@ -35,6 +35,9 @@ type Dependencies struct {
 	AuthUser              happydns.AuthUserUsecase
 	CaptchaVerifier       happydns.CaptchaVerifier
 	Checker               happydns.CheckerUsecase
+	CheckResult           happydns.CheckResultUsecase
+	CheckerSchedule       happydns.CheckerScheduleUsecase
+	CheckScheduler        happydns.SchedulerUsecase
 	Domain                happydns.DomainUsecase
 	DomainLog             happydns.DomainLogUsecase
 	FailureTracker        happydns.FailureTracker
@@ -101,7 +104,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 
 	DeclareAuthenticationCheckRoutes(apiAuthRoutes, lc)
 	DeclareChecksRoutes(apiAuthRoutes, dep.Checker)
-	DeclareDomainRoutes(apiAuthRoutes, dep.Domain, dep.DomainLog, dep.RemoteZoneImporter, dep.ZoneImporter, dep.Zone, dep.ZoneCorrectionApplier, dep.ZoneService, dep.Service)
+	DeclareDomainRoutes(apiAuthRoutes, dep.Domain, dep.DomainLog, dep.RemoteZoneImporter, dep.ZoneImporter, dep.Zone, dep.ZoneCorrectionApplier, dep.ZoneService, dep.Service, dep.Checker, dep.CheckResult, dep.CheckerSchedule, dep.CheckScheduler)
 	DeclareProviderRoutes(apiAuthRoutes, dep.Provider)
 	DeclareProviderSettingsRoutes(apiAuthRoutes, dep.ProviderSettings)
 	DeclareRecordRoutes(apiAuthRoutes)

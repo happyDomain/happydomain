@@ -29,7 +29,7 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareDomainRoutes(router *gin.RouterGroup, domainUC happydns.DomainUsecase, domainLogUC happydns.DomainLogUsecase, remoteZoneImporter happydns.RemoteZoneImporterUsecase, zoneImporter happydns.ZoneImporterUsecase, zoneUC happydns.ZoneUsecase, zoneCorrApplier happydns.ZoneCorrectionApplierUsecase, zoneServiceUC happydns.ZoneServiceUsecase, serviceUC happydns.ServiceUsecase) {
+func DeclareDomainRoutes(router *gin.RouterGroup, domainUC happydns.DomainUsecase, domainLogUC happydns.DomainLogUsecase, remoteZoneImporter happydns.RemoteZoneImporterUsecase, zoneImporter happydns.ZoneImporterUsecase, zoneUC happydns.ZoneUsecase, zoneCorrApplier happydns.ZoneCorrectionApplierUsecase, zoneServiceUC happydns.ZoneServiceUsecase, serviceUC happydns.ServiceUsecase, checkerUC happydns.CheckerUsecase, checkResultUC happydns.CheckResultUsecase, checkerScheduleUC happydns.CheckerScheduleUsecase, checkScheduler happydns.SchedulerUsecase) {
 	dc := controller.NewDomainController(
 		domainUC,
 		remoteZoneImporter,
@@ -48,8 +48,12 @@ func DeclareDomainRoutes(router *gin.RouterGroup, domainUC happydns.DomainUsecas
 
 	DeclareDomainLogRoutes(apiDomainsRoutes, domainLogUC)
 
+	// Declare test result routes for domain scope
+
+	DeclareScopedCheckResultRoutes(apiDomainsRoutes, checkerUC, checkResultUC, checkerScheduleUC, checkScheduler, happydns.CheckScopeDomain)
+
 	apiDomainsRoutes.POST("/zone", dc.ImportZone)
 	apiDomainsRoutes.POST("/retrieve_zone", dc.RetrieveZone)
 
-	DeclareZoneRoutes(apiDomainsRoutes, zoneUC, domainUC, zoneCorrApplier, zoneServiceUC, serviceUC)
+	DeclareZoneRoutes(apiDomainsRoutes, zoneUC, domainUC, zoneCorrApplier, zoneServiceUC, serviceUC, checkerUC, checkResultUC, checkerScheduleUC, checkScheduler)
 }
