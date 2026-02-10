@@ -76,7 +76,13 @@
             goto(
                 "/domains/" +
                     encodeURIComponent(domainLink(dn)) +
-                    (page.data.isAuditPage ? "/logs" : page.data.isHistoryPage ? "/history" : ""),
+                    (page.route.id
+                        ? page.route.id.startsWith("/domains/[dn]/logs")
+                            ? "/logs"
+                            : page.route.id.startsWith("/domains/[dn]/history")
+                              ? "/history"
+                              : ""
+                        : ""),
             );
         }
         if (selectedDomain != dn) {
@@ -166,7 +172,7 @@
                     <SelectDomain bind:selectedDomain />
                 </div>
 
-                {#if page.data.isHistoryPage || page.data.isAuditPage}
+                {#if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs"))}
                     <Button
                         class="mt-2"
                         outline
