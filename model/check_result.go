@@ -160,6 +160,10 @@ type CheckExecution struct {
 
 // CheckResultUsecase defines business logic for check results
 type CheckResultUsecase interface {
+	// ListCheckerStatuses returns all checkers applicable to scope with their
+	// schedule and most recent result for the given target.
+	ListCheckerStatuses(scope CheckScopeType, targetID Identifier) ([]CheckerStatus, error)
+
 	// ListCheckResultsByTarget retrieves check results for a specific target
 	ListCheckResultsByTarget(checkerName string, targetType CheckScopeType, targetId Identifier, limit int) ([]*CheckResult, error)
 

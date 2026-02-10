@@ -84,7 +84,13 @@ func (tc *CheckResultController) getTargetFromContext(c *gin.Context) (happydns.
 //	@Failure		500		{object}	happydns.ErrorResponse
 //	@Router			/domains/{domain}/checks [get]
 func (tc *CheckResultController) ListAvailableChecks(c *gin.Context) {
-	checks, err := tc.checkerUC.ListCheckers()
+	targetID, err := tc.getTargetFromContext(c)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	checks, err := tc.checkResultUC.ListCheckerStatuses(tc.scope, targetID)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
