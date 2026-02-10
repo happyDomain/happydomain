@@ -43,6 +43,44 @@ func DeclareCheckersRoutes(router *gin.RouterGroup, checkerUC happydns.CheckerUs
 	return tpc
 }
 
+func DeclareScopedCheckersRoutes(
+	scopedRouter *gin.RouterGroup,
+	checkerUC happydns.CheckerUsecase,
+	checkResultUC happydns.CheckResultUsecase,
+	checkScheduler happydns.SchedulerUsecase,
+	scope happydns.CheckScopeType,
+	tpc *controller.CheckerController,
+) {
+	tc := controller.NewCheckResultController(
+		scope,
+		checkerUC,
+		checkResultUC,
+		checkScheduler,
+	)
+
+	// List all available tests with their status
+	scopedRouter.GET("/checks", tc.ListAvailableChecks)
+
+	apiChecksRoutes := scopedRouter.Group("/checks/:cname")
+	{
+		DeclareCheckerOptionsRoutes(apiChecksRoutes, tpc)
+
+		// Get latest results for a test
+		apiChecksRoutes.GET("", tc.ListLatestCheckResults)
+
+		// Trigger an on-demand test
+		apiChecksRoutes.POST("", tc.TriggerCheck)
+
+		// Check execution routes
+		apiCheckExecutionsRoutes := apiChecksRoutes.Group("/executions/:execution_id")
+		{
+			apiCheckExecutionsRoutes.GET("", tc.GetCheckExecutionStatus)
+		}
+
+		DeclareScopedCheckResultRoutes(apiChecksRoutes, tc)
+	}
+}
+
 func DeclareCheckerOptionsRoutes(apiCheckRoutes *gin.RouterGroup, tpc *controller.CheckerController) {
 	apiCheckRoutes.GET("/options", tpc.GetCheckerOptions)
 	apiCheckRoutes.POST("/options", tpc.AddCheckerOptions)
