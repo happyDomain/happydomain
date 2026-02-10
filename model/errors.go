@@ -27,15 +27,18 @@ import (
 )
 
 var (
-	ErrAuthUserNotFound  = errors.New("user not found")
-	ErrDomainNotFound    = errors.New("domain not found")
-	ErrDomainLogNotFound = errors.New("domain log not found")
-	ErrProviderNotFound  = errors.New("provider not found")
-	ErrSessionNotFound   = errors.New("session not found")
-	ErrUserNotFound      = errors.New("user not found")
-	ErrUserAlreadyExist  = errors.New("user already exists")
-	ErrZoneNotFound      = errors.New("zone not found")
-	ErrNotFound          = errors.New("not found")
+	ErrAuthUserNotFound       = errors.New("user not found")
+	ErrCheckExecutionNotFound = errors.New("check execution not found")
+	ErrCheckResultNotFound    = errors.New("check result not found")
+	ErrCheckScheduleNotFound  = errors.New("check schedule not found")
+	ErrDomainNotFound         = errors.New("domain not found")
+	ErrDomainLogNotFound      = errors.New("domain log not found")
+	ErrProviderNotFound       = errors.New("provider not found")
+	ErrSessionNotFound        = errors.New("session not found")
+	ErrUserNotFound           = errors.New("user not found")
+	ErrUserAlreadyExist       = errors.New("user already exists")
+	ErrZoneNotFound           = errors.New("zone not found")
+	ErrNotFound               = errors.New("not found")
 )
 
 const TryAgainErr = "Sorry, we are currently unable to sent email validation link. Please try again later."
