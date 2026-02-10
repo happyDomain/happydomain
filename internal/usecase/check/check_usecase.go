@@ -120,6 +120,41 @@ func (tu *checkerUsecase) ListCheckers() (*map[string]happydns.Checker, error) {
 }
 
 func (tu *checkerUsecase) SetCheckerOptions(cname string, userid *happydns.Identifier, domainid *happydns.Identifier, serviceid *happydns.Identifier, opts happydns.CheckerOptions) error {
+	// filter opts that correspond to the level set
+	checker, err := tu.GetChecker(cname)
+	if err != nil {
+		return fmt.Errorf("unable to get checker: %w", err)
+	}
+
+	options := checker.Options()
+
+	var optNames []string
+	if serviceid != nil {
+		for _, opt := range options.ServiceOpts {
+			optNames = append(optNames, opt.Id)
+		}
+	} else if domainid != nil {
+		for _, opt := range options.DomainOpts {
+			optNames = append(optNames, opt.Id)
+		}
+	} else if userid != nil {
+		for _, opt := range options.UserOpts {
+			optNames = append(optNames, opt.Id)
+		}
+	} else {
+		for _, opt := range options.AdminOpts {
+			optNames = append(optNames, opt.Id)
+		}
+	}
+
+	// Filter opts to only include keys that are in optNames
+	filteredOpts := make(happydns.CheckerOptions)
+	for _, optName := range optNames {
+		if val, exists := opts[optName]; exists && val != "" {
+			filteredOpts[optName] = val
+		}
+	}
+
 	return tu.store.UpdateCheckerConfiguration(cname, userid, domainid, serviceid, opts)
 }
 

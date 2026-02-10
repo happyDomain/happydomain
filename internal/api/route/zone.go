@@ -36,6 +36,10 @@ func DeclareZoneRoutes(
 	zoneCorrApplier happydns.ZoneCorrectionApplierUsecase,
 	zoneServiceUC happydns.ZoneServiceUsecase,
 	serviceUC happydns.ServiceUsecase,
+	checkerUC happydns.CheckerUsecase,
+	checkResultUC happydns.CheckResultUsecase,
+	checkScheduler happydns.SchedulerUsecase,
+	tpc *controller.CheckerController,
 ) {
 	zc := controller.NewZoneController(
 		zoneUC,
@@ -64,6 +68,10 @@ func DeclareZoneRoutes(
 		zoneServiceUC,
 		serviceUC,
 		zoneUC,
+		checkerUC,
+		checkResultUC,
+		checkScheduler,
+		tpc,
 	)
 
 	apiZonesRoutes.POST("/records", zc.AddRecords)

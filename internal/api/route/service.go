@@ -36,6 +36,10 @@ func DeclareZoneServiceRoutes(
 	zoneServiceUC happydns.ZoneServiceUsecase,
 	serviceUC happydns.ServiceUsecase,
 	zoneUC happydns.ZoneUsecase,
+	checkerUC happydns.CheckerUsecase,
+	checkResultUC happydns.CheckResultUsecase,
+	checkScheduler happydns.SchedulerUsecase,
+	tpc *controller.CheckerController,
 ) {
 	sc := controller.NewServiceController(zoneServiceUC, serviceUC, zoneUC)
 
@@ -47,4 +51,14 @@ func DeclareZoneServiceRoutes(
 	apiZonesSubdomainServiceIDRoutes.Use(middleware.ServiceIdHandler(serviceUC))
 	apiZonesSubdomainServiceIDRoutes.GET("", sc.GetZoneService)
 	apiZonesSubdomainServiceIDRoutes.DELETE("", sc.DeleteZoneService)
+
+	// Declare test result routes for service scope
+	DeclareScopedCheckersRoutes(
+		apiZonesSubdomainServiceIDRoutes,
+		checkerUC,
+		checkResultUC,
+		checkScheduler,
+		happydns.CheckScopeService,
+		tpc,
+	)
 }
