@@ -29,6 +29,7 @@ import (
 	"git.happydns.org/happyDomain/internal/usecase/plugin"
 	"git.happydns.org/happyDomain/internal/usecase/provider"
 	"git.happydns.org/happyDomain/internal/usecase/session"
+	"git.happydns.org/happyDomain/internal/usecase/testresult"
 	"git.happydns.org/happyDomain/internal/usecase/user"
 	"git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
@@ -47,6 +48,7 @@ type Storage interface {
 	plugin.PluginStorage
 	provider.ProviderStorage
 	session.SessionStorage
+	testresult.TestResultStorage
 	user.UserStorage
 	zone.ZoneStorage
 

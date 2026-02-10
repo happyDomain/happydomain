@@ -101,6 +101,12 @@ type Options struct {
 	CaptchaLoginThreshold int
 
 	PluginsDirectories []string
+
+	// MaxResultsPerTest is the maximum number of test results to keep per plugin+target combination
+	MaxResultsPerTest int
+
+	// ResultRetentionDays is how long to keep test results before cleanup
+	ResultRetentionDays int
 }
 
 // GetBaseURL returns the full url to the absolute ExternalURL, including BaseURL.

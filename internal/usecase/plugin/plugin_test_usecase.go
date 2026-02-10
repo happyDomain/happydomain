@@ -23,6 +23,7 @@ package plugin
 
 import (
 	"fmt"
+	"maps"
 	"sort"
 
 	"git.happydns.org/happyDomain/model"
@@ -104,9 +105,7 @@ func (tu *testPluginUsecase) GetTestPluginOptions(pname string, userid *happydns
 	opts := make(happydns.PluginOptions)
 
 	for _, c := range configs {
-		for k, v := range c.Options {
-			opts[k] = v
-		}
+		maps.Copy(opts, c.Options)
 	}
 
 	return &opts, nil
@@ -117,7 +116,40 @@ func (tu *testPluginUsecase) ListTestPlugins() ([]happydns.TestPlugin, error) {
 }
 
 func (tu *testPluginUsecase) SetTestPluginOptions(pname string, userid *happydns.Identifier, domainid *happydns.Identifier, serviceid *happydns.Identifier, opts happydns.PluginOptions) error {
-	return tu.store.UpdatePluginConfiguration(pname, userid, domainid, serviceid, opts)
+	// filter opts that correspond to the level set
+	plugin, err := tu.GetTestPlugin(pname)
+	if err != nil {
+		return fmt.Errorf("unable to get test plugin: %w", err)
+	}
+
+	var optNames []string
+	if serviceid != nil {
+		for _, opt := range plugin.AvailableOptions().ServiceOpts {
+			optNames = append(optNames, opt.Id)
+		}
+	} else if domainid != nil {
+		for _, opt := range plugin.AvailableOptions().DomainOpts {
+			optNames = append(optNames, opt.Id)
+		}
+	} else if userid != nil {
+		for _, opt := range plugin.AvailableOptions().UserOpts {
+			optNames = append(optNames, opt.Id)
+		}
+	} else {
+		for _, opt := range plugin.AvailableOptions().AdminOpts {
+			optNames = append(optNames, opt.Id)
+		}
+	}
+
+	// Filter opts to only include keys that are in optNames
+	filteredOpts := make(happydns.PluginOptions)
+	for _, optName := range optNames {
+		if val, exists := opts[optName]; exists && val != "" {
+			filteredOpts[optName] = val
+		}
+	}
+
+	return tu.store.UpdatePluginConfiguration(pname, userid, domainid, serviceid, filteredOpts)
 }
 
 func (tu *testPluginUsecase) OverwriteSomeTestPluginOptions(pname string, userid *happydns.Identifier, domainid *happydns.Identifier, serviceid *happydns.Identifier, opts happydns.PluginOptions) error {
@@ -126,9 +158,7 @@ func (tu *testPluginUsecase) OverwriteSomeTestPluginOptions(pname string, userid
 		return err
 	}
 
-	for k, v := range opts {
-		(*current)[k] = v
-	}
+	maps.Copy(*current, opts)
 
 	return tu.store.UpdatePluginConfiguration(pname, userid, domainid, serviceid, *current)
 }

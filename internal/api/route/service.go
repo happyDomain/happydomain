@@ -29,7 +29,7 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareZoneServiceRoutes(apiZonesRoutes, apiZonesSubdomainRoutes *gin.RouterGroup, zc *controller.ZoneController, zoneServiceUC happydns.ZoneServiceUsecase, serviceUC happydns.ServiceUsecase, zoneUC happydns.ZoneUsecase) {
+func DeclareZoneServiceRoutes(apiZonesRoutes, apiZonesSubdomainRoutes *gin.RouterGroup, zc *controller.ZoneController, zoneServiceUC happydns.ZoneServiceUsecase, serviceUC happydns.ServiceUsecase, zoneUC happydns.ZoneUsecase, testPluginUC happydns.TestPluginUsecase, testResultUC happydns.TestResultUsecase, testScheduleUC happydns.TestScheduleUsecase, testScheduler happydns.TestSchedulerInterface) {
 	sc := controller.NewServiceController(zoneServiceUC, serviceUC, zoneUC)
 
 	apiZonesRoutes.PATCH("", sc.UpdateZoneService)
@@ -40,4 +40,7 @@ func DeclareZoneServiceRoutes(apiZonesRoutes, apiZonesSubdomainRoutes *gin.Route
 	apiZonesSubdomainServiceIdRoutes.Use(middleware.ServiceIdHandler(serviceUC))
 	apiZonesSubdomainServiceIdRoutes.GET("", sc.GetZoneService)
 	apiZonesSubdomainServiceIdRoutes.DELETE("", sc.DeleteZoneService)
+
+	// Declare test result routes for service scope
+	DeclareScopedTestResultRoutes(apiZonesSubdomainServiceIdRoutes, testPluginUC, testResultUC, testScheduleUC, testScheduler, happydns.TestScopeService)
 }
