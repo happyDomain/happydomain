@@ -68,6 +68,7 @@ type Usecases struct {
 	serviceSpecs     happydns.ServiceSpecsUsecase
 	testPlugin       happydns.TestPluginUsecase
 	testResult       happydns.TestResultUsecase
+	testSchedule     happydns.TestScheduleUsecase
 	user             happydns.UserUsecase
 	zone             happydns.ZoneUsecase
 	zoneService      happydns.ZoneServiceUsecase
@@ -86,6 +87,7 @@ type App struct {
 	router          *gin.Engine
 	srv             *http.Server
 	store           storage.Storage
+	testScheduler   happydns.SchedulerUsecase
 	usecases        Usecases
 }
 
@@ -103,6 +105,7 @@ func NewApp(cfg *happydns.Options) *App {
 	}
 	app.initUsecases()
 	app.initCaptcha()
+	app.initTestScheduler()
 	app.setupRouter()
 
 	return app
@@ -121,6 +124,7 @@ func NewAppWithStorage(cfg *happydns.Options, store storage.Storage) *App {
 	}
 	app.initUsecases()
 	app.initCaptcha()
+	app.initTestScheduler()
 	app.setupRouter()
 
 	return app
@@ -194,6 +198,20 @@ func (app *App) initInsights() {
 	}
 }
 
+func (app *App) initTestScheduler() {
+	if app.cfg.DisableScheduler {
+		// Use a disabled scheduler that returns clear errors
+		app.testScheduler = &disabledScheduler{}
+		return
+	}
+
+	app.testScheduler = newTestScheduler(
+		app.cfg,
+		app.store,
+		app.usecases.testPlugin,
+	)
+}
+
 func (app *App) initUsecases() {
 	sessionService := sessionUC.NewService(app.store)
 	authUserService := authuserUC.NewAuthUserUsecases(app.cfg, app.mailer, app.store, sessionService)
@@ -223,6 +241,7 @@ func (app *App) initUsecases() {
 	app.usecases.session = sessionService
 	app.usecases.testPlugin = pluginUC.NewTestPluginUsecase(app.cfg, app.plugins, app.store)
 	app.usecases.testResult = testresultUC.NewTestResultUsecase(app.store, app.cfg)
+	app.usecases.testSchedule = testresultUC.NewTestScheduleUsecase(app.store, app.cfg)
 
 	app.usecases.orchestrator = orchestrator.NewOrchestrator(
 		domainLogService,
@@ -284,6 +303,8 @@ func (app *App) Start() {
 		go app.insights.Run()
 	}
 
+	go app.testScheduler.Run()
+
 	log.Printf("Public interface listening on %s\n", app.cfg.Bind)
 	if err := app.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("listen: %s\n", err)
@@ -309,4 +330,6 @@ func (app *App) Stop() {
 	if app.failureTracker != nil {
 		app.failureTracker.Close()
 	}
+
+	app.testScheduler.Close()
 }

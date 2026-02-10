@@ -179,6 +179,31 @@ func (s *KVStorage) DeleteOldTestResults(pluginName string, targetType happydns.
 	return nil
 }
 
+// DeleteTestResultsBefore removes all test results with ExecutedAt older than cutoff
+func (s *KVStorage) DeleteTestResultsBefore(cutoff time.Time) error {
+	iter := s.db.Search("testresult|")
+	defer iter.Release()
+
+	var toDelete []string
+	for iter.Next() {
+		var r happydns.TestResult
+		if err := s.db.DecodeData(iter.Value(), &r); err != nil {
+			continue
+		}
+		if r.ExecutedAt.Before(cutoff) {
+			toDelete = append(toDelete, string(iter.Key()))
+		}
+	}
+
+	for _, key := range toDelete {
+		if err := s.db.Delete(key); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // Test Schedule storage keys:
 // testschedule|{schedule-id}
 // testschedule.byuser|{user-id}|{schedule-id}
@@ -408,6 +433,34 @@ func (s *KVStorage) UpdateTestExecution(execution *happydns.TestExecution) error
 func (s *KVStorage) DeleteTestExecution(executionId happydns.Identifier) error {
 	key := makeTestExecutionKey(executionId)
 	return s.db.Delete(key)
+}
+
+// DeleteCompletedExecutionsBefore removes completed or failed execution records older than cutoff
+func (s *KVStorage) DeleteCompletedExecutionsBefore(cutoff time.Time) error {
+	iter := s.db.Search("testexec|")
+	defer iter.Release()
+
+	var toDelete []string
+	for iter.Next() {
+		var exec happydns.TestExecution
+		if err := s.db.DecodeData(iter.Value(), &exec); err != nil {
+			continue
+		}
+		if exec.Status != happydns.TestExecutionCompleted && exec.Status != happydns.TestExecutionFailed {
+			continue
+		}
+		if exec.CompletedAt != nil && exec.CompletedAt.Before(cutoff) {
+			toDelete = append(toDelete, string(iter.Key()))
+		}
+	}
+
+	for _, key := range toDelete {
+		if err := s.db.Delete(key); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Scheduler state storage key:

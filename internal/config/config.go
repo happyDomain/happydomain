@@ -55,6 +55,7 @@ func ConsolidateConfig() (opts *happydns.Options, err error) {
 		StorageEngine:       "leveldb",
 		MaxResultsPerTest:   100,
 		ResultRetentionDays: 90,
+		TestWorkers:         2,
 	}
 
 	declareFlags(opts)

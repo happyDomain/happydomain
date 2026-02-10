@@ -34,7 +34,7 @@ func DeclareScopedTestResultRoutes(
 	testPluginUC happydns.TestPluginUsecase,
 	testResultUC happydns.TestResultUsecase,
 	testScheduleUC happydns.TestScheduleUsecase,
-	testScheduler happydns.TestSchedulerInterface,
+	testScheduler happydns.SchedulerUsecase,
 	scope happydns.TestScopeType,
 ) {
 	tc := controller.NewTestResultController(

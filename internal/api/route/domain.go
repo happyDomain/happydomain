@@ -29,7 +29,7 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareDomainRoutes(router *gin.RouterGroup, domainUC happydns.DomainUsecase, domainLogUC happydns.DomainLogUsecase, remoteZoneImporter happydns.RemoteZoneImporterUsecase, zoneImporter happydns.ZoneImporterUsecase, zoneUC happydns.ZoneUsecase, zoneCorrApplier happydns.ZoneCorrectionApplierUsecase, zoneServiceUC happydns.ZoneServiceUsecase, serviceUC happydns.ServiceUsecase, testPluginUC happydns.TestPluginUsecase, testResultUC happydns.TestResultUsecase, testScheduleUC happydns.TestScheduleUsecase, testScheduler happydns.TestSchedulerInterface) {
+func DeclareDomainRoutes(router *gin.RouterGroup, domainUC happydns.DomainUsecase, domainLogUC happydns.DomainLogUsecase, remoteZoneImporter happydns.RemoteZoneImporterUsecase, zoneImporter happydns.ZoneImporterUsecase, zoneUC happydns.ZoneUsecase, zoneCorrApplier happydns.ZoneCorrectionApplierUsecase, zoneServiceUC happydns.ZoneServiceUsecase, serviceUC happydns.ServiceUsecase, testPluginUC happydns.TestPluginUsecase, testResultUC happydns.TestResultUsecase, testScheduleUC happydns.TestScheduleUsecase, testScheduler happydns.SchedulerUsecase) {
 	dc := controller.NewDomainController(
 		domainUC,
 		remoteZoneImporter,

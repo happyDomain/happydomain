@@ -29,7 +29,7 @@ import (
 	happydns "git.happydns.org/happyDomain/model"
 )
 
-func DeclareZoneRoutes(router *gin.RouterGroup, zoneUC happydns.ZoneUsecase, domainUC happydns.DomainUsecase, zoneCorrApplier happydns.ZoneCorrectionApplierUsecase, zoneServiceUC happydns.ZoneServiceUsecase, serviceUC happydns.ServiceUsecase, testPluginUC happydns.TestPluginUsecase, testResultUC happydns.TestResultUsecase, testScheduleUC happydns.TestScheduleUsecase, testScheduler happydns.TestSchedulerInterface) {
+func DeclareZoneRoutes(router *gin.RouterGroup, zoneUC happydns.ZoneUsecase, domainUC happydns.DomainUsecase, zoneCorrApplier happydns.ZoneCorrectionApplierUsecase, zoneServiceUC happydns.ZoneServiceUsecase, serviceUC happydns.ServiceUsecase, testPluginUC happydns.TestPluginUsecase, testResultUC happydns.TestResultUsecase, testScheduleUC happydns.TestScheduleUsecase, testScheduler happydns.SchedulerUsecase) {
 	zc := controller.NewZoneController(
 		zoneUC,
 		domainUC,

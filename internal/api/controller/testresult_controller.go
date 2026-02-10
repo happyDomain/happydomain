@@ -39,7 +39,7 @@ type TestResultController struct {
 	testPluginUC   happydns.TestPluginUsecase
 	testResultUC   happydns.TestResultUsecase
 	testScheduleUC happydns.TestScheduleUsecase
-	testScheduler  happydns.TestSchedulerInterface
+	testScheduler  happydns.SchedulerUsecase
 }
 
 func NewTestResultController(
@@ -47,7 +47,7 @@ func NewTestResultController(
 	testPluginUC happydns.TestPluginUsecase,
 	testResultUC happydns.TestResultUsecase,
 	testScheduleUC happydns.TestScheduleUsecase,
-	testScheduler happydns.TestSchedulerInterface,
+	testScheduler happydns.SchedulerUsecase,
 ) *TestResultController {
 	return &TestResultController{
 		scope:          scope,

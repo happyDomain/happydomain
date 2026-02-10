@@ -120,7 +120,7 @@ func (u *TestResultUsecase) DeleteAllTestResults(pluginName string, targetType h
 	return nil
 }
 
-// CleanupOldResults removes test results older than retention period
+// CleanupOldResults removes test results older than the configured retention period
 func (u *TestResultUsecase) CleanupOldResults() error {
 	retentionDays := u.options.ResultRetentionDays
 	if retentionDays <= 0 {
@@ -128,16 +128,7 @@ func (u *TestResultUsecase) CleanupOldResults() error {
 	}
 
 	cutoffTime := time.Now().AddDate(0, 0, -retentionDays)
-
-	// Get all results for all users (inefficient but necessary without a time-based index)
-	// In a production system, you might want to add a time-based index for this
-	// For now, we'll iterate through results and delete old ones
-
-	// This is a placeholder - the actual implementation would need to be optimized
-	// based on specific storage patterns
-	_ = cutoffTime
-
-	return nil
+	return u.storage.DeleteTestResultsBefore(cutoffTime)
 }
 
 // GetTestExecution retrieves the status of a test execution
@@ -208,15 +199,8 @@ func (u *TestResultUsecase) FailTestExecution(executionId happydns.Identifier, e
 	return u.storage.UpdateTestExecution(execution)
 }
 
-// DeleteCompletedExecutions removes execution records that are completed
+// DeleteCompletedExecutions removes completed or failed execution records older than olderThan
 func (u *TestResultUsecase) DeleteCompletedExecutions(olderThan time.Duration) error {
 	cutoffTime := time.Now().Add(-olderThan)
-
-	// Get active executions (this won't include completed ones)
-	// We need a different query to get completed executions older than cutoff
-	// For now, this is a placeholder
-
-	_ = cutoffTime
-
-	return nil
+	return u.storage.DeleteCompletedExecutionsBefore(cutoffTime)
 }

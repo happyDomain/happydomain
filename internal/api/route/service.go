@@ -29,7 +29,7 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareZoneServiceRoutes(apiZonesRoutes, apiZonesSubdomainRoutes *gin.RouterGroup, zc *controller.ZoneController, zoneServiceUC happydns.ZoneServiceUsecase, serviceUC happydns.ServiceUsecase, zoneUC happydns.ZoneUsecase, testPluginUC happydns.TestPluginUsecase, testResultUC happydns.TestResultUsecase, testScheduleUC happydns.TestScheduleUsecase, testScheduler happydns.TestSchedulerInterface) {
+func DeclareZoneServiceRoutes(apiZonesRoutes, apiZonesSubdomainRoutes *gin.RouterGroup, zc *controller.ZoneController, zoneServiceUC happydns.ZoneServiceUsecase, serviceUC happydns.ServiceUsecase, zoneUC happydns.ZoneUsecase, testPluginUC happydns.TestPluginUsecase, testResultUC happydns.TestResultUsecase, testScheduleUC happydns.TestScheduleUsecase, testScheduler happydns.SchedulerUsecase) {
 	sc := controller.NewServiceController(zoneServiceUC, serviceUC, zoneUC)
 
 	apiZonesRoutes.PATCH("", sc.UpdateZoneService)

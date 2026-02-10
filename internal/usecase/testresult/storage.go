@@ -51,6 +51,9 @@ type TestResultStorage interface {
 	// DeleteOldTestResults removes old test results keeping only the most recent N results
 	DeleteOldTestResults(pluginName string, targetType happydns.TestScopeType, targetId happydns.Identifier, keepCount int) error
 
+	// DeleteTestResultsBefore removes all test results older than the given time
+	DeleteTestResultsBefore(cutoff time.Time) error
+
 	// Test Schedules
 	// ListEnabledTestSchedules retrieves all enabled schedules (for scheduler)
 	ListEnabledTestSchedules() ([]*happydns.TestSchedule, error)
@@ -88,6 +91,9 @@ type TestResultStorage interface {
 
 	// DeleteTestExecution removes an execution record
 	DeleteTestExecution(executionId happydns.Identifier) error
+
+	// DeleteCompletedExecutionsBefore removes completed or failed execution records older than the given time
+	DeleteCompletedExecutionsBefore(cutoff time.Time) error
 
 	// Scheduler State
 	// TestSchedulerRun marks that the scheduler has run at current time
