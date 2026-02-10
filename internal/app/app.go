@@ -39,6 +39,7 @@ import (
 	"git.happydns.org/happyDomain/internal/usecase"
 	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
 	checkUC "git.happydns.org/happyDomain/internal/usecase/check"
+	checkresultUC "git.happydns.org/happyDomain/internal/usecase/checkresult"
 	domainUC "git.happydns.org/happyDomain/internal/usecase/domain"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	"git.happydns.org/happyDomain/internal/usecase/orchestrator"
@@ -56,6 +57,7 @@ type Usecases struct {
 	authentication   happydns.AuthenticationUsecase
 	authUser         happydns.AuthUserUsecase
 	checker          happydns.CheckerUsecase
+	checkResult      happydns.CheckResultUsecase
 	domain           happydns.DomainUsecase
 	domainLog        happydns.DomainLogUsecase
 	provider         happydns.ProviderUsecase
@@ -219,6 +221,7 @@ func (app *App) initUsecases() {
 	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg)
 	app.usecases.session = sessionService
 	app.usecases.checker = checkUC.NewCheckerUsecase(app.cfg, app.store)
+	app.usecases.checkResult = checkresultUC.NewCheckResultUsecase(app.store, app.cfg)
 
 	app.usecases.orchestrator = orchestrator.NewOrchestrator(
 		domainLogService,
@@ -257,6 +260,7 @@ func (app *App) setupRouter() {
 		AuthUser:              app.usecases.authUser,
 		CaptchaVerifier:       app.captchaVerifier,
 		Checker:               app.usecases.checker,
+		CheckResult:           app.usecases.checkResult,
 		Domain:                app.usecases.domain,
 		DomainLog:             app.usecases.domainLog,
 		FailureTracker:        app.failureTracker,

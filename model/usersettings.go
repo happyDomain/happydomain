@@ -52,6 +52,17 @@ type UserSettings struct {
 
 	// ShowRRTypes tells if we show equivalent RRTypes in interface (for advanced users).
 	ShowRRTypes bool `json:"showrrtypes,omitempty"`
+
+	// TestRetention overrides instance default for how long to keep test results (days)
+	TestRetention int `json:"test_retention,omitempty"`
+
+	// DomainTestInterval is the default interval for domain-level tests (seconds)
+	// Default: 86400 (24 hours)
+	DomainTestInterval int64 `json:"domain_test_interval,omitempty"`
+
+	// ServiceTestInterval is the default interval for service-level tests (seconds)
+	// Default: 3600 (1 hour)
+	ServiceTestInterval int64 `json:"service_test_interval,omitempty"`
 }
 
 func DefaultUserSettings() *UserSettings {

@@ -78,6 +78,15 @@ type CheckerOptionsDocumentation struct {
 
 type CheckerOptionDocumentation Field
 
+// CheckerStatus represents the current status of a checker for a specific target,
+// including whether it is enabled, its schedule, and the most recent result.
+type CheckerStatus struct {
+	CheckerName string           `json:"checker_name"`
+	Enabled     bool             `json:"enabled"`
+	Schedule    *CheckerSchedule `json:"schedule,omitempty"`
+	LastResult  *CheckResult     `json:"last_result,omitempty"`
+}
+
 type CheckerUsecase interface {
 	GetChecker(string) (Checker, error)
 	GetCheckerOptions(string, *Identifier, *Identifier, *Identifier) (*CheckerOptions, error)
