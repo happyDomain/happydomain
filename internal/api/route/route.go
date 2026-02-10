@@ -108,6 +108,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 	DeclareProviderRoutes(apiAuthRoutes, dep.Provider)
 	DeclareProviderSettingsRoutes(apiAuthRoutes, dep.ProviderSettings)
 	DeclareRecordRoutes(apiAuthRoutes)
+	DeclareTestScheduleRoutes(apiAuthRoutes, dep.CheckerSchedule)
 	DeclareUsersRoutes(apiAuthRoutes, dep.User, lc)
 	DeclareSessionRoutes(apiAuthRoutes, dep.Session)
 }
