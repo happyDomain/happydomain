@@ -240,7 +240,7 @@ func (app *App) initUsecases() {
 	app.usecases.session = sessionService
 	app.usecases.checker = checkUC.NewCheckerUsecase(app.cfg, app.store)
 	app.usecases.checkResult = checkresultUC.NewCheckResultUsecase(app.store, app.cfg)
-	app.usecases.checkerSchedule = checkresultUC.NewCheckScheduleUsecase(app.store, app.cfg)
+	app.usecases.checkerSchedule = checkresultUC.NewCheckScheduleUsecase(app.store, app.cfg, app.store, app.usecases.checker)
 
 	app.usecases.orchestrator = orchestrator.NewOrchestrator(
 		domainLogService,
@@ -280,6 +280,7 @@ func (app *App) setupRouter() {
 		CaptchaVerifier:       app.captchaVerifier,
 		Checker:               app.usecases.checker,
 		CheckResult:           app.usecases.checkResult,
+		CheckerSchedule:       app.usecases.checkerSchedule,
 		CheckScheduler:        app.checkScheduler,
 		Domain:                app.usecases.domain,
 		DomainLog:             app.usecases.domainLog,
