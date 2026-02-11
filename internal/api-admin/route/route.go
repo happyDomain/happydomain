@@ -33,6 +33,7 @@ import (
 type Dependencies struct {
 	AuthUser              happydns.AuthUserUsecase
 	Checker               happydns.CheckerUsecase
+	CheckScheduler        happydns.SchedulerUsecase
 	Domain                happydns.DomainUsecase
 	Provider              happydns.ProviderUsecase
 	RemoteZoneImporter    happydns.RemoteZoneImporterUsecase
@@ -51,6 +52,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, s storage.Storage,
 	declareDomainRoutes(apiRoutes, dep, s)
 	declareChecksRoutes(apiRoutes, dep)
 	declareProviderRoutes(apiRoutes, dep, s)
+	declareSchedulerRoutes(apiRoutes, dep)
 	declareSessionsRoutes(cfg, apiRoutes, s)
 	declareUserAuthsRoutes(apiRoutes, dep, s)
 	declareUsersRoutes(apiRoutes, dep, s)
