@@ -59,6 +59,7 @@ func NewAdmin(app *App) *Admin {
 	admin.DeclareRoutes(app.cfg, router, app.store, admin.Dependencies{
 		AuthUser:              app.usecases.authUser,
 		Checker:               app.usecases.checker,
+		CheckScheduler:        app.checkScheduler,
 		Domain:                app.usecases.domain,
 		Provider:              app.usecases.providerAdmin,
 		RemoteZoneImporter:    app.usecases.orchestrator.RemoteZoneImporter,

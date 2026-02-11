@@ -36,10 +36,11 @@ import (
 )
 
 const (
-	SchedulerCheckInterval   = 1 * time.Minute // How often to check for due tests
-	SchedulerCleanupInterval = 24 * time.Hour  // How often to clean up old executions
-	CheckExecutionTimeout    = 5 * time.Minute // Max time for a single test
-	MaxRetries               = 3               // Max retry attempts for failed tests
+	SchedulerCheckInterval     = 1 * time.Minute // How often to check for due tests
+	SchedulerCleanupInterval   = 24 * time.Hour  // How often to clean up old executions
+	SchedulerDiscoveryInterval = 1 * time.Hour   // How often to auto-discover new targets
+	CheckExecutionTimeout      = 5 * time.Minute // Max time for a single check
+	MaxRetries                 = 3               // Max retry attempts for failed checks
 )
 
 // Priority levels for test execution queue
@@ -65,6 +66,8 @@ type checkScheduler struct {
 	workers          []*worker
 	mu               sync.RWMutex
 	wg               sync.WaitGroup
+	runtimeEnabled   bool
+	running          bool
 }
 
 // activeExecution tracks a running test execution
@@ -159,6 +162,25 @@ func (d *disabledScheduler) TriggerOnDemandCheck(checkName string, targetType ha
 	return happydns.Identifier{}, fmt.Errorf("test scheduler is disabled in configuration")
 }
 
+// GetSchedulerStatus returns a status indicating the scheduler is disabled
+func (d *disabledScheduler) GetSchedulerStatus() happydns.SchedulerStatus {
+	return happydns.SchedulerStatus{
+		ConfigEnabled:  false,
+		RuntimeEnabled: false,
+		Running:        false,
+	}
+}
+
+// SetEnabled returns an error since the scheduler is disabled in configuration
+func (d *disabledScheduler) SetEnabled(enabled bool) error {
+	return fmt.Errorf("scheduler is disabled in configuration, cannot enable at runtime")
+}
+
+// RescheduleUpcomingChecks returns an error since the scheduler is disabled
+func (d *disabledScheduler) RescheduleUpcomingChecks() (int, error) {
+	return 0, fmt.Errorf("test scheduler is disabled in configuration")
+}
+
 // newCheckScheduler creates a new test scheduler
 func newCheckScheduler(
 	cfg *happydns.Options,
@@ -175,7 +197,7 @@ func newCheckScheduler(
 		store:            store,
 		checkerUsecase:   checkerUsecase,
 		resultUsecase:    checkresult.NewCheckResultUsecase(store, cfg),
-		scheduleUsecase:  checkresult.NewCheckScheduleUsecase(store, cfg),
+		scheduleUsecase:  checkresult.NewCheckScheduleUsecase(store, cfg, store, checkerUsecase),
 		stop:             make(chan struct{}),
 		stopWorkers:      make(chan struct{}),
 		runNowChan:       make(chan *queueItem, 100),
@@ -183,6 +205,7 @@ func newCheckScheduler(
 		queue:            newPriorityQueue(),
 		activeExecutions: make(map[string]*activeExecution),
 		workers:          make([]*worker, numWorkers),
+		runtimeEnabled:   true,
 	}
 
 	for i := 0; i < numWorkers; i++ {
@@ -231,7 +254,26 @@ func (s *checkScheduler) Close() {
 
 // Run starts the scheduler main loop. It must not be called more than once.
 func (s *checkScheduler) Run() {
+	s.mu.Lock()
+	s.running = true
+	s.mu.Unlock()
+
+	defer func() {
+		s.mu.Lock()
+		s.running = false
+		s.mu.Unlock()
+	}()
+
 	log.Printf("Starting test scheduler with %d workers...\n", len(s.workers))
+
+	// Reschedule overdue tests before starting workers so that tests missed
+	// during a server suspend or shutdown are spread into the near future
+	// instead of all firing at once.
+	if n, err := s.scheduleUsecase.RescheduleOverdueChecks(); err != nil {
+		log.Printf("Warning: failed to reschedule overdue tests: %v\n", err)
+	} else if n > 0 {
+		log.Printf("Rescheduled %d overdue test(s) into the near future\n", n)
+	}
 
 	// Start workers
 	for _, w := range s.workers {
@@ -242,9 +284,15 @@ func (s *checkScheduler) Run() {
 	// Main scheduling loop
 	checkTicker := time.NewTicker(SchedulerCheckInterval)
 	cleanupTicker := time.NewTicker(SchedulerCleanupInterval)
+	discoveryTicker := time.NewTicker(SchedulerDiscoveryInterval)
 	defer checkTicker.Stop()
 	defer cleanupTicker.Stop()
+	defer discoveryTicker.Stop()
 
+	// Initial discovery: create default schedules for all existing targets
+	if err := s.scheduleUsecase.DiscoverAndEnsureSchedules(); err != nil {
+		log.Printf("Warning: schedule discovery encountered errors: %v\n", err)
+	}
 	// Initial check
 	s.checkSchedules()
 
@@ -255,6 +303,11 @@ func (s *checkScheduler) Run() {
 
 		case <-cleanupTicker.C:
 			s.cleanup()
+
+		case <-discoveryTicker.C:
+			if err := s.scheduleUsecase.DiscoverAndEnsureSchedules(); err != nil {
+				log.Printf("Warning: schedule discovery encountered errors: %v\n", err)
+			}
 
 		case item := <-s.runNowChan:
 			s.enqueue(item)
@@ -267,6 +320,13 @@ func (s *checkScheduler) Run() {
 
 // checkSchedules checks for due tests and queues them
 func (s *checkScheduler) checkSchedules() {
+	s.mu.RLock()
+	enabled := s.runtimeEnabled
+	s.mu.RUnlock()
+	if !enabled {
+		return
+	}
+
 	dueSchedules, err := s.scheduleUsecase.ListDueSchedules()
 	if err != nil {
 		log.Printf("Error listing due schedules: %v\n", err)
@@ -362,6 +422,54 @@ func (s *checkScheduler) TriggerOnDemandCheck(checkerName string, targetType hap
 	return execution.Id, nil
 }
 
+// GetSchedulerStatus returns a snapshot of the current scheduler state
+func (s *checkScheduler) GetSchedulerStatus() happydns.SchedulerStatus {
+	s.mu.RLock()
+	activeCount := len(s.activeExecutions)
+	running := s.running
+	runtimeEnabled := s.runtimeEnabled
+	s.mu.RUnlock()
+
+	nextSchedules, _ := s.scheduleUsecase.ListUpcomingSchedules(20)
+
+	return happydns.SchedulerStatus{
+		ConfigEnabled:  !s.cfg.DisableScheduler,
+		RuntimeEnabled: runtimeEnabled,
+		Running:        running,
+		WorkerCount:    len(s.workers),
+		QueueSize:      s.queue.Len(),
+		ActiveCount:    activeCount,
+		NextSchedules:  nextSchedules,
+	}
+}
+
+// SetEnabled enables or disables the scheduler at runtime
+func (s *checkScheduler) SetEnabled(enabled bool) error {
+	s.mu.Lock()
+	wasEnabled := s.runtimeEnabled
+	s.runtimeEnabled = enabled
+	s.mu.Unlock()
+
+	if enabled && !wasEnabled {
+		// Spread out any overdue tests to avoid a thundering herd, then
+		// immediately enqueue whatever is now due.
+		if n, err := s.scheduleUsecase.RescheduleOverdueChecks(); err != nil {
+			log.Printf("Warning: failed to reschedule overdue tests on re-enable: %v\n", err)
+		} else if n > 0 {
+			log.Printf("Rescheduled %d overdue test(s) after scheduler re-enable\n", n)
+		}
+		s.checkSchedules()
+	}
+
+	return nil
+}
+
+// RescheduleUpcomingChecks randomizes the next run time of all enabled schedules
+// within their respective intervals, delegating to the schedule usecase.
+func (s *checkScheduler) RescheduleUpcomingChecks() (int, error) {
+	return s.scheduleUsecase.RescheduleUpcomingChecks()
+}
+
 // cleanup removes old execution records and expired test results
 func (s *checkScheduler) cleanup() {
 	log.Println("Running scheduler cleanup...")
@@ -412,10 +520,21 @@ func (w *worker) executeCheck(item *queueItem) {
 	execution := item.execution
 	schedule := item.schedule
 
+	// Always update schedule NextRun after execution, whether it succeeds or fails.
+	// This prevents the schedule from being re-queued on the next tick if the test fails.
+	if item.execution.ScheduleId != nil {
+		defer func() {
+			if err := w.scheduler.scheduleUsecase.UpdateScheduleAfterRun(*item.execution.ScheduleId); err != nil {
+				log.Printf("Worker %d: Error updating schedule after run: %v\n", w.id, err)
+			}
+		}()
+	}
+
 	// Mark execution as running
 	execution.Status = happydns.CheckExecutionRunning
 	if err := w.scheduler.resultUsecase.UpdateCheckExecution(execution); err != nil {
 		log.Printf("Worker %d: Error updating execution status: %v\n", w.id, err)
+		_ = w.scheduler.resultUsecase.FailCheckExecution(execution.Id, err.Error())
 		return
 	}
 
@@ -443,6 +562,13 @@ func (w *worker) executeCheck(item *queueItem) {
 		return
 	}
 
+	// Merge options: global defaults < user opts < domain/service opts < schedule opts
+	mergedOptions, err := w.scheduler.scheduleUsecase.PrepareCheckOptions(schedule)
+	if err != nil {
+		// Non-fatal: PrepareTestOptions already falls back to schedule-only options
+		log.Printf("Worker %d: warning, could not prepare plugin options for %s: %v\n", w.id, schedule.CheckerName, err)
+	}
+
 	// Prepare metadata
 	meta := make(map[string]string)
 	meta["target_type"] = schedule.TargetType.String()
@@ -459,7 +585,7 @@ func (w *worker) executeCheck(item *queueItem) {
 				errorChan <- fmt.Errorf("checker panicked: %v", r)
 			}
 		}()
-		result, err := checker.RunCheck(schedule.Options, meta)
+		result, err := checker.RunCheck(mergedOptions, meta)
 		if err != nil {
 			errorChan <- err
 		} else {
@@ -522,13 +648,6 @@ func (w *worker) executeCheck(item *queueItem) {
 		return
 	}
 
-	// Update schedule if this was a scheduled test
-	if item.execution.ScheduleId != nil {
-		if err := w.scheduler.scheduleUsecase.UpdateScheduleAfterRun(*item.execution.ScheduleId); err != nil {
-			log.Printf("Worker %d: Error updating schedule: %v\n", w.id, err)
-		}
-	}
-
-	log.Printf("Worker %d: Completed test %s for target %s (status: %s, duration: %v)\n",
+	log.Printf("Worker %d: Completed test %s for target %s (status: %d, duration: %v)\n",
 		w.id, schedule.CheckerName, schedule.TargetId.String(), result.Status, duration)
 }
