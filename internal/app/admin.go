@@ -63,6 +63,7 @@ func NewAdmin(app *App) *Admin {
 		RemoteZoneImporter:    app.usecases.orchestrator.RemoteZoneImporter,
 		Service:               app.usecases.service,
 		TestPlugin:            app.usecases.testPlugin,
+		TestScheduler:         app.testScheduler,
 		User:                  app.usecases.user,
 		Zone:                  app.usecases.zone,
 		ZoneCorrectionApplier: app.usecases.orchestrator.ZoneCorrectionApplier,

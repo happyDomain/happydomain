@@ -102,3 +102,8 @@ type TestResultStorage interface {
 	// LastTestSchedulerRun retrieves the last time the scheduler ran
 	LastTestSchedulerRun() (*time.Time, error)
 }
+
+// DomainLister provides access to domain listings for schedule discovery.
+type DomainLister interface {
+	ListAllDomains() (happydns.Iterator[happydns.Domain], error)
+}

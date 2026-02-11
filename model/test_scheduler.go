@@ -30,6 +30,9 @@ type SchedulerUsecase interface {
 	Run()
 	Close()
 	TriggerOnDemandTest(pluginName string, targetType TestScopeType, targetID Identifier, userID Identifier, options PluginOptions) (Identifier, error)
+	GetSchedulerStatus() SchedulerStatus
+	SetEnabled(enabled bool) error
+	RescheduleUpcomingTests() (int, error)
 }
 
 // TestSchedule defines a recurring test schedule
@@ -126,4 +129,12 @@ type TestScheduleUsecase interface {
 
 	// DeleteSchedulesForTarget removes all schedules for a target
 	DeleteSchedulesForTarget(targetType TestScopeType, targetId Identifier) error
+
+	// RescheduleUpcomingTests randomizes next run times for all enabled schedules
+	// within their respective intervals to spread load evenly.
+	RescheduleUpcomingTests() (int, error)
+
+	// RescheduleOverdueTests reschedules overdue tests to run soon, spread over a
+	// short window to avoid scheduler famine after a suspend or server restart.
+	RescheduleOverdueTests() (int, error)
 }

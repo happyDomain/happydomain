@@ -36,10 +36,11 @@ import (
 )
 
 const (
-	SchedulerCheckInterval   = 1 * time.Minute // How often to check for due tests
-	SchedulerCleanupInterval = 24 * time.Hour  // How often to clean up old executions
-	TestExecutionTimeout     = 5 * time.Minute // Max time for a single test
-	MaxRetries               = 3               // Max retry attempts for failed tests
+	SchedulerCheckInterval     = 1 * time.Minute // How often to check for due tests
+	SchedulerCleanupInterval   = 24 * time.Hour  // How often to clean up old executions
+	SchedulerDiscoveryInterval = 1 * time.Hour   // How often to auto-discover new targets
+	TestExecutionTimeout       = 5 * time.Minute // Max time for a single test
+	MaxRetries                 = 3               // Max retry attempts for failed tests
 )
 
 // Priority levels for test execution queue
@@ -65,6 +66,8 @@ type testScheduler struct {
 	workers          []*worker
 	mu               sync.RWMutex
 	wg               sync.WaitGroup
+	runtimeEnabled   bool
+	running          bool
 }
 
 // activeExecution tracks a running test execution
@@ -159,6 +162,25 @@ func (d *disabledScheduler) TriggerOnDemandTest(pluginName string, targetType ha
 	return happydns.Identifier{}, fmt.Errorf("test scheduler is disabled in configuration")
 }
 
+// GetSchedulerStatus returns a status indicating the scheduler is disabled
+func (d *disabledScheduler) GetSchedulerStatus() happydns.SchedulerStatus {
+	return happydns.SchedulerStatus{
+		ConfigEnabled:  false,
+		RuntimeEnabled: false,
+		Running:        false,
+	}
+}
+
+// SetEnabled returns an error since the scheduler is disabled in configuration
+func (d *disabledScheduler) SetEnabled(enabled bool) error {
+	return fmt.Errorf("scheduler is disabled in configuration, cannot enable at runtime")
+}
+
+// RescheduleUpcomingTests returns an error since the scheduler is disabled
+func (d *disabledScheduler) RescheduleUpcomingTests() (int, error) {
+	return 0, fmt.Errorf("test scheduler is disabled in configuration")
+}
+
 // newTestScheduler creates a new test scheduler
 func newTestScheduler(
 	cfg *happydns.Options,
@@ -175,7 +197,7 @@ func newTestScheduler(
 		store:            store,
 		pluginUsecase:    pluginUsecase,
 		resultUsecase:    testresult.NewTestResultUsecase(store, cfg),
-		scheduleUsecase:  testresult.NewTestScheduleUsecase(store, cfg),
+		scheduleUsecase:  testresult.NewTestScheduleUsecase(store, cfg, store, pluginUsecase),
 		stop:             make(chan struct{}),
 		stopWorkers:      make(chan struct{}),
 		runNowChan:       make(chan *queueItem, 100),
@@ -183,6 +205,7 @@ func newTestScheduler(
 		queue:            newPriorityQueue(),
 		activeExecutions: make(map[string]*activeExecution),
 		workers:          make([]*worker, numWorkers),
+		runtimeEnabled:   true,
 	}
 
 	for i := 0; i < numWorkers; i++ {
@@ -243,6 +266,15 @@ func (s *testScheduler) Run() {
 
 	log.Printf("Starting test scheduler with %d workers...\n", len(s.workers))
 
+	// Reschedule overdue tests before starting workers so that tests missed
+	// during a server suspend or shutdown are spread into the near future
+	// instead of all firing at once.
+	if n, err := s.scheduleUsecase.RescheduleOverdueTests(); err != nil {
+		log.Printf("Warning: failed to reschedule overdue tests: %v\n", err)
+	} else if n > 0 {
+		log.Printf("Rescheduled %d overdue test(s) into the near future\n", n)
+	}
+
 	// Start workers
 	for _, w := range s.workers {
 		s.wg.Add(1)
@@ -252,9 +284,15 @@ func (s *testScheduler) Run() {
 	// Main scheduling loop
 	checkTicker := time.NewTicker(SchedulerCheckInterval)
 	cleanupTicker := time.NewTicker(SchedulerCleanupInterval)
+	discoveryTicker := time.NewTicker(SchedulerDiscoveryInterval)
 	defer checkTicker.Stop()
 	defer cleanupTicker.Stop()
+	defer discoveryTicker.Stop()
 
+	// Initial discovery: create default schedules for all existing targets
+	if err := s.scheduleUsecase.DiscoverAndEnsureSchedules(); err != nil {
+		log.Printf("Warning: schedule discovery encountered errors: %v\n", err)
+	}
 	// Initial check
 	s.checkSchedules()
 
@@ -265,6 +303,11 @@ func (s *testScheduler) Run() {
 
 		case <-cleanupTicker.C:
 			s.cleanup()
+
+		case <-discoveryTicker.C:
+			if err := s.scheduleUsecase.DiscoverAndEnsureSchedules(); err != nil {
+				log.Printf("Warning: schedule discovery encountered errors: %v\n", err)
+			}
 
 		case item := <-s.runNowChan:
 			s.enqueue(item)
@@ -277,6 +320,13 @@ func (s *testScheduler) Run() {
 
 // checkSchedules checks for due tests and queues them
 func (s *testScheduler) checkSchedules() {
+	s.mu.RLock()
+	enabled := s.runtimeEnabled
+	s.mu.RUnlock()
+	if !enabled {
+		return
+	}
+
 	dueSchedules, err := s.scheduleUsecase.ListDueSchedules()
 	if err != nil {
 		log.Printf("Error listing due schedules: %v\n", err)
@@ -372,6 +422,54 @@ func (s *testScheduler) TriggerOnDemandTest(pluginName string, targetType happyd
 	return execution.Id, nil
 }
 
+// GetSchedulerStatus returns a snapshot of the current scheduler state
+func (s *testScheduler) GetSchedulerStatus() happydns.SchedulerStatus {
+	s.mu.RLock()
+	activeCount := len(s.activeExecutions)
+	running := s.running
+	runtimeEnabled := s.runtimeEnabled
+	s.mu.RUnlock()
+
+	nextSchedules, _ := s.scheduleUsecase.ListUpcomingSchedules(20)
+
+	return happydns.SchedulerStatus{
+		ConfigEnabled:  !s.cfg.DisableScheduler,
+		RuntimeEnabled: runtimeEnabled,
+		Running:        running,
+		WorkerCount:    len(s.workers),
+		QueueSize:      s.queue.Len(),
+		ActiveCount:    activeCount,
+		NextSchedules:  nextSchedules,
+	}
+}
+
+// SetEnabled enables or disables the scheduler at runtime
+func (s *testScheduler) SetEnabled(enabled bool) error {
+	s.mu.Lock()
+	wasEnabled := s.runtimeEnabled
+	s.runtimeEnabled = enabled
+	s.mu.Unlock()
+
+	if enabled && !wasEnabled {
+		// Spread out any overdue tests to avoid a thundering herd, then
+		// immediately enqueue whatever is now due.
+		if n, err := s.scheduleUsecase.RescheduleOverdueTests(); err != nil {
+			log.Printf("Warning: failed to reschedule overdue tests on re-enable: %v\n", err)
+		} else if n > 0 {
+			log.Printf("Rescheduled %d overdue test(s) after scheduler re-enable\n", n)
+		}
+		s.checkSchedules()
+	}
+
+	return nil
+}
+
+// RescheduleUpcomingTests randomizes the next run time of all enabled schedules
+// within their respective intervals, delegating to the schedule usecase.
+func (s *testScheduler) RescheduleUpcomingTests() (int, error) {
+	return s.scheduleUsecase.RescheduleUpcomingTests()
+}
+
 // cleanup removes old execution records and expired test results
 func (s *testScheduler) cleanup() {
 	log.Println("Running scheduler cleanup...")
@@ -422,10 +520,21 @@ func (w *worker) executeTest(item *queueItem) {
 	execution := item.execution
 	schedule := item.schedule
 
+	// Always update schedule NextRun after execution, whether it succeeds or fails.
+	// This prevents the schedule from being re-queued on the next tick if the test fails.
+	if item.execution.ScheduleId != nil {
+		defer func() {
+			if err := w.scheduler.scheduleUsecase.UpdateScheduleAfterRun(*item.execution.ScheduleId); err != nil {
+				log.Printf("Worker %d: Error updating schedule after run: %v\n", w.id, err)
+			}
+		}()
+	}
+
 	// Mark execution as running
 	execution.Status = happydns.TestExecutionRunning
 	if err := w.scheduler.resultUsecase.UpdateTestExecution(execution); err != nil {
 		log.Printf("Worker %d: Error updating execution status: %v\n", w.id, err)
+		_ = w.scheduler.resultUsecase.FailTestExecution(execution.Id, err.Error())
 		return
 	}
 
@@ -453,6 +562,13 @@ func (w *worker) executeTest(item *queueItem) {
 		return
 	}
 
+	// Merge options: global defaults < user opts < domain/service opts < schedule opts
+	mergedOptions, err := w.scheduler.scheduleUsecase.PrepareTestOptions(schedule)
+	if err != nil {
+		// Non-fatal: PrepareTestOptions already falls back to schedule-only options
+		log.Printf("Worker %d: warning, could not prepare plugin options for %s: %v\n", w.id, schedule.PluginName, err)
+	}
+
 	// Prepare metadata
 	meta := make(map[string]string)
 	meta["target_type"] = schedule.TargetType.String()
@@ -469,7 +585,7 @@ func (w *worker) executeTest(item *queueItem) {
 				errorChan <- fmt.Errorf("plugin panicked: %v", r)
 			}
 		}()
-		result, err := plugin.RunTest(schedule.Options, meta)
+		result, err := plugin.RunTest(mergedOptions, meta)
 		if err != nil {
 			errorChan <- err
 		} else {
@@ -532,13 +648,6 @@ func (w *worker) executeTest(item *queueItem) {
 		return
 	}
 
-	// Update schedule if this was a scheduled test
-	if item.execution.ScheduleId != nil {
-		if err := w.scheduler.scheduleUsecase.UpdateScheduleAfterRun(*item.execution.ScheduleId); err != nil {
-			log.Printf("Worker %d: Error updating schedule: %v\n", w.id, err)
-		}
-	}
-
-	log.Printf("Worker %d: Completed test %s for target %s (status: %s, duration: %v)\n",
+	log.Printf("Worker %d: Completed test %s for target %s (status: %d, duration: %v)\n",
 		w.id, schedule.PluginName, schedule.TargetId.String(), result.Status, duration)
 }

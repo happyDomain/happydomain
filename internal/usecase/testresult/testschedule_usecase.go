@@ -22,7 +22,10 @@
 package testresult
 
 import (
+	"errors"
 	"fmt"
+	"math/rand"
+	"sort"
 	"time"
 
 	"git.happydns.org/happyDomain/model"
@@ -38,15 +41,19 @@ const (
 
 // TestScheduleUsecase implements business logic for test schedules
 type TestScheduleUsecase struct {
-	storage TestResultStorage
-	options *happydns.Options
+	storage       TestResultStorage
+	options       *happydns.Options
+	domainLister  DomainLister
+	pluginUsecase happydns.TestPluginUsecase
 }
 
 // NewTestScheduleUsecase creates a new test schedule usecase
-func NewTestScheduleUsecase(storage TestResultStorage, options *happydns.Options) *TestScheduleUsecase {
+func NewTestScheduleUsecase(storage TestResultStorage, options *happydns.Options, domainLister DomainLister, pluginUsecase happydns.TestPluginUsecase) *TestScheduleUsecase {
 	return &TestScheduleUsecase{
-		storage: storage,
-		options: options,
+		storage:       storage,
+		options:       options,
+		domainLister:  domainLister,
+		pluginUsecase: pluginUsecase,
 	}
 }
 
@@ -67,24 +74,22 @@ func (u *TestScheduleUsecase) GetSchedule(scheduleId happydns.Identifier) (*happ
 
 // CreateSchedule creates a new test schedule with validation
 func (u *TestScheduleUsecase) CreateSchedule(schedule *happydns.TestSchedule) error {
-	// Validate interval
-	if schedule.Interval < MinimumTestInterval {
-		return fmt.Errorf("test interval must be at least %v", MinimumTestInterval)
-	}
-
 	// Set default interval if not specified
 	if schedule.Interval == 0 {
 		schedule.Interval = u.getDefaultInterval(schedule.TargetType)
 	}
 
-	// Calculate next run time
-	if schedule.NextRun.IsZero() {
-		schedule.NextRun = time.Now().Add(schedule.Interval)
+	// Validate interval
+	if schedule.Interval < MinimumTestInterval {
+		return fmt.Errorf("test interval must be at least %v", MinimumTestInterval)
 	}
 
-	// Enable by default if not specified
-	if !schedule.Enabled {
-		schedule.Enabled = true
+	// Calculate next run time: pick a random offset within the interval
+	// to spread load evenly across all schedules
+	// TODO: Use a smarter load balance function in the future
+	if schedule.NextRun.IsZero() {
+		offset := time.Duration(rand.Int63n(int64(schedule.Interval)))
+		schedule.NextRun = time.Now().Add(offset)
 	}
 
 	return u.storage.CreateTestSchedule(schedule)
@@ -178,12 +183,30 @@ func (u *TestScheduleUsecase) ListDueSchedules() ([]*happydns.TestSchedule, erro
 	var dueSchedules []*happydns.TestSchedule
 
 	for _, schedule := range schedules {
-		if schedule.Enabled && schedule.NextRun.Before(now) {
+		if schedule.NextRun.Before(now) {
 			dueSchedules = append(dueSchedules, schedule)
 		}
 	}
 
 	return dueSchedules, nil
+}
+
+// ListUpcomingSchedules retrieves the next `limit` enabled schedules sorted by NextRun ascending
+func (u *TestScheduleUsecase) ListUpcomingSchedules(limit int) ([]*happydns.TestSchedule, error) {
+	schedules, err := u.storage.ListEnabledTestSchedules()
+	if err != nil {
+		return nil, err
+	}
+
+	sort.Slice(schedules, func(i, j int) bool {
+		return schedules[i].NextRun.Before(schedules[j].NextRun)
+	})
+
+	if limit > 0 && len(schedules) > limit {
+		schedules = schedules[:limit]
+	}
+
+	return schedules, nil
 }
 
 // getDefaultInterval returns the default test interval based on target type
@@ -269,6 +292,77 @@ func (u *TestScheduleUsecase) CreateDefaultSchedulesForTarget(
 	return u.CreateSchedule(schedule)
 }
 
+// rescheduleTests reschedules each given schedule to a random time in [now, now+maxOffsetFn(schedule)].
+func (u *TestScheduleUsecase) rescheduleTests(schedules []*happydns.TestSchedule, maxOffsetFn func(*happydns.TestSchedule) time.Duration) (int, error) {
+	count := 0
+	now := time.Now()
+	for _, schedule := range schedules {
+		maxOffset := maxOffsetFn(schedule)
+		if maxOffset <= 0 {
+			maxOffset = time.Second
+		}
+		schedule.NextRun = now.Add(time.Duration(rand.Int63n(int64(maxOffset))))
+		if err := u.storage.UpdateTestSchedule(schedule); err != nil {
+			return count, err
+		}
+		count++
+	}
+	return count, nil
+}
+
+// RescheduleUpcomingTests randomizes the next run time of all enabled schedules
+// within their respective intervals to spread load evenly. Useful after a restart.
+func (u *TestScheduleUsecase) RescheduleUpcomingTests() (int, error) {
+	schedules, err := u.storage.ListEnabledTestSchedules()
+	if err != nil {
+		return 0, err
+	}
+	return u.rescheduleTests(schedules, func(s *happydns.TestSchedule) time.Duration {
+		return s.Interval
+	})
+}
+
+// RescheduleOverdueTests reschedules tests whose NextRun is in the past,
+// spreading them over a short window to avoid scheduler famine (e.g. after
+// a long machine suspend or server downtime).
+// If there are fewer than 10 overdue tests, they are left as-is so that the
+// caller's immediate checkSchedules pass enqueues them directly.
+func (u *TestScheduleUsecase) RescheduleOverdueTests() (int, error) {
+	schedules, err := u.storage.ListEnabledTestSchedules()
+	if err != nil {
+		return 0, err
+	}
+
+	now := time.Now()
+	var overdue []*happydns.TestSchedule
+	for _, s := range schedules {
+		if s.NextRun.Before(now) {
+			overdue = append(overdue, s)
+		}
+	}
+
+	if len(overdue) == 0 {
+		return 0, nil
+	}
+
+	// Small backlog: let the caller enqueue them directly on the next
+	// checkSchedules pass rather than deferring them into the future.
+	if len(overdue) < 10 {
+		return 0, nil
+	}
+
+	// Spread overdue tests over a small window proportional to their count,
+	// capped at MinimumTestInterval, to prevent all of them from running at once.
+	spreadWindow := time.Duration(len(overdue)) * 5 * time.Second
+	if spreadWindow > MinimumTestInterval {
+		spreadWindow = MinimumTestInterval
+	}
+
+	return u.rescheduleTests(overdue, func(s *happydns.TestSchedule) time.Duration {
+		return spreadWindow
+	})
+}
+
 // DeleteSchedulesForTarget removes all schedules for a target
 func (u *TestScheduleUsecase) DeleteSchedulesForTarget(targetType happydns.TestScopeType, targetId happydns.Identifier) error {
 	schedules, err := u.storage.ListTestSchedulesByTarget(targetType, targetId)
@@ -283,4 +377,103 @@ func (u *TestScheduleUsecase) DeleteSchedulesForTarget(targetType happydns.TestS
 	}
 
 	return nil
+}
+
+// DiscoverAndEnsureSchedules creates default enabled schedules for all (plugin, domain)
+// pairs that don't yet have an explicit schedule record. This implements the opt-out
+// model: tests run automatically unless a schedule with Enabled=false has been saved.
+// Non-fatal per-domain errors are collected and returned together.
+func (u *TestScheduleUsecase) DiscoverAndEnsureSchedules() error {
+	if u.domainLister == nil || u.pluginUsecase == nil {
+		return nil
+	}
+
+	plugins, err := u.pluginUsecase.ListTestPlugins()
+	if err != nil {
+		return fmt.Errorf("listing test plugins for discovery: %w", err)
+	}
+
+	var domainPlugins []happydns.TestPlugin
+	for _, p := range plugins {
+		if p.Version().AvailableOn.ApplyToDomain {
+			domainPlugins = append(domainPlugins, p)
+		}
+	}
+
+	if len(domainPlugins) == 0 {
+		return nil
+	}
+
+	iter, err := u.domainLister.ListAllDomains()
+	if err != nil {
+		return fmt.Errorf("listing domains for schedule discovery: %w", err)
+	}
+	defer iter.Close()
+
+	var errs []error
+	for iter.Next() {
+		domain := iter.Item()
+		if domain == nil {
+			continue
+		}
+		for _, plugin := range domainPlugins {
+			pluginName := plugin.PluginEnvName()[0]
+			schedules, err := u.ListSchedulesByTarget(happydns.TestScopeDomain, domain.Id)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("listing schedules for domain %s: %w", domain.Id, err))
+				continue
+			}
+
+			hasSchedule := false
+			for _, sched := range schedules {
+				if sched.PluginName == pluginName {
+					hasSchedule = true
+					break
+				}
+			}
+
+			if !hasSchedule {
+				if err := u.CreateSchedule(&happydns.TestSchedule{
+					PluginName: pluginName,
+					OwnerId:    domain.Owner,
+					TargetType: happydns.TestScopeDomain,
+					TargetId:   domain.Id,
+					Enabled:    true,
+				}); err != nil {
+					errs = append(errs, fmt.Errorf("auto-creating schedule for domain %s / plugin %s: %w",
+						domain.Id, pluginName, err))
+				}
+			}
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+// PrepareTestOptions fetches and merges plugin options for a scheduled test execution.
+// It combines stored options (global/user/domain/service scopes) with the
+// schedule-specific overrides, returning the final merged options.
+func (u *TestScheduleUsecase) PrepareTestOptions(schedule *happydns.TestSchedule) (happydns.PluginOptions, error) {
+	if u.pluginUsecase == nil {
+		return schedule.Options, nil
+	}
+
+	var domainId, serviceId *happydns.Identifier
+	switch schedule.TargetType {
+	case happydns.TestScopeDomain:
+		domainId = &schedule.TargetId
+	case happydns.TestScopeService:
+		serviceId = &schedule.TargetId
+	}
+
+	baseOptions, err := u.pluginUsecase.GetTestPluginOptions(schedule.PluginName, &schedule.OwnerId, domainId, serviceId)
+	if err != nil {
+		// Non-fatal: fall back to schedule-only options and surface as a warning
+		return schedule.Options, fmt.Errorf("could not fetch plugin options for %s: %w", schedule.PluginName, err)
+	}
+
+	if baseOptions != nil {
+		return u.MergePluginOptions(nil, nil, *baseOptions, schedule.Options), nil
+	}
+	return schedule.Options, nil
 }
