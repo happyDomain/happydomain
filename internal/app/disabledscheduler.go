@@ -37,3 +37,22 @@ func (d *disabledScheduler) Close() {}
 func (d *disabledScheduler) TriggerOnDemandCheck(checkName string, targetType happydns.CheckScopeType, targetId happydns.Identifier, userId happydns.Identifier, options happydns.CheckerOptions) (happydns.Identifier, error) {
 	return happydns.Identifier{}, fmt.Errorf("test scheduler is disabled in configuration")
 }
+
+// GetSchedulerStatus returns a status indicating the scheduler is disabled
+func (d *disabledScheduler) GetSchedulerStatus() happydns.SchedulerStatus {
+	return happydns.SchedulerStatus{
+		ConfigEnabled:  false,
+		RuntimeEnabled: false,
+		Running:        false,
+	}
+}
+
+// SetEnabled returns an error since the scheduler is disabled in configuration
+func (d *disabledScheduler) SetEnabled(enabled bool) error {
+	return fmt.Errorf("scheduler is disabled in configuration, cannot enable at runtime")
+}
+
+// RescheduleUpcomingChecks returns an error since the scheduler is disabled
+func (d *disabledScheduler) RescheduleUpcomingChecks() (int, error) {
+	return 0, fmt.Errorf("test scheduler is disabled in configuration")
+}
