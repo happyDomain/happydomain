@@ -30,6 +30,9 @@ type SchedulerUsecase interface {
 	Run()
 	Close()
 	TriggerOnDemandCheck(checkerName string, targetType CheckScopeType, targetID Identifier, userID Identifier, options CheckerOptions) (Identifier, error)
+	GetSchedulerStatus() SchedulerStatus
+	SetEnabled(enabled bool) error
+	RescheduleUpcomingChecks() (int, error)
 }
 
 // CheckerSchedule defines a recurring check schedule
@@ -126,4 +129,12 @@ type CheckerScheduleUsecase interface {
 
 	// DeleteSchedulesForTarget removes all schedules for a target
 	DeleteSchedulesForTarget(targetType CheckScopeType, targetId Identifier) error
+
+	// RescheduleUpcomingChecks randomizes next run times for all enabled schedules
+	// within their respective intervals to spread load evenly.
+	RescheduleUpcomingChecks() (int, error)
+
+	// RescheduleOverdueTests reschedules overdue tests to run soon, spread over a
+	// short window to avoid scheduler famine after a suspend or server restart.
+	RescheduleOverdueChecks() (int, error)
 }

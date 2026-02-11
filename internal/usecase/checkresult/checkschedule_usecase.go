@@ -22,7 +22,10 @@
 package checkresult
 
 import (
+	"errors"
 	"fmt"
+	"math/rand"
+	"sort"
 	"time"
 
 	"git.happydns.org/happyDomain/model"
@@ -38,15 +41,19 @@ const (
 
 // CheckScheduleUsecase implements business logic for check schedules
 type CheckScheduleUsecase struct {
-	storage CheckResultStorage
-	options *happydns.Options
+	storage        CheckResultStorage
+	options        *happydns.Options
+	domainLister   DomainLister
+	checkerUsecase happydns.CheckerUsecase
 }
 
 // NewCheckScheduleUsecase creates a new check schedule usecase
-func NewCheckScheduleUsecase(storage CheckResultStorage, options *happydns.Options) *CheckScheduleUsecase {
+func NewCheckScheduleUsecase(storage CheckResultStorage, options *happydns.Options, domainLister DomainLister, checkerUsecase happydns.CheckerUsecase) *CheckScheduleUsecase {
 	return &CheckScheduleUsecase{
-		storage: storage,
-		options: options,
+		storage:        storage,
+		options:        options,
+		domainLister:   domainLister,
+		checkerUsecase: checkerUsecase,
 	}
 }
 
@@ -67,24 +74,22 @@ func (u *CheckScheduleUsecase) GetSchedule(scheduleId happydns.Identifier) (*hap
 
 // CreateSchedule creates a new check schedule with validation
 func (u *CheckScheduleUsecase) CreateSchedule(schedule *happydns.CheckerSchedule) error {
-	// Validate interval
-	if schedule.Interval < MinimumCheckInterval {
-		return fmt.Errorf("check interval must be at least %v", MinimumCheckInterval)
-	}
-
 	// Set default interval if not specified
 	if schedule.Interval == 0 {
 		schedule.Interval = u.getDefaultInterval(schedule.TargetType)
 	}
 
-	// Calculate next run time
-	if schedule.NextRun.IsZero() {
-		schedule.NextRun = time.Now().Add(schedule.Interval)
+	// Validate interval
+	if schedule.Interval < MinimumCheckInterval {
+		return fmt.Errorf("check interval must be at least %v", MinimumCheckInterval)
 	}
 
-	// Enable by default if not specified
-	if !schedule.Enabled {
-		schedule.Enabled = true
+	// Calculate next run time: pick a random offset within the interval
+	// to spread load evenly across all schedules
+	// TODO: Use a smarter load balance function in the future
+	if schedule.NextRun.IsZero() {
+		offset := time.Duration(rand.Int63n(int64(schedule.Interval)))
+		schedule.NextRun = time.Now().Add(offset)
 	}
 
 	return u.storage.CreateCheckerSchedule(schedule)
@@ -178,12 +183,30 @@ func (u *CheckScheduleUsecase) ListDueSchedules() ([]*happydns.CheckerSchedule, 
 	var dueSchedules []*happydns.CheckerSchedule
 
 	for _, schedule := range schedules {
-		if schedule.Enabled && schedule.NextRun.Before(now) {
+		if schedule.NextRun.Before(now) {
 			dueSchedules = append(dueSchedules, schedule)
 		}
 	}
 
 	return dueSchedules, nil
+}
+
+// ListUpcomingSchedules retrieves the next `limit` enabled schedules sorted by NextRun ascending
+func (u *CheckScheduleUsecase) ListUpcomingSchedules(limit int) ([]*happydns.CheckerSchedule, error) {
+	schedules, err := u.storage.ListEnabledCheckerSchedules()
+	if err != nil {
+		return nil, err
+	}
+
+	sort.Slice(schedules, func(i, j int) bool {
+		return schedules[i].NextRun.Before(schedules[j].NextRun)
+	})
+
+	if limit > 0 && len(schedules) > limit {
+		schedules = schedules[:limit]
+	}
+
+	return schedules, nil
 }
 
 // getDefaultInterval returns the default check interval based on target type
@@ -269,6 +292,77 @@ func (u *CheckScheduleUsecase) CreateDefaultSchedulesForTarget(
 	return u.CreateSchedule(schedule)
 }
 
+// rescheduleChecks reschedules each given schedule to a random time in [now, now+maxOffsetFn(schedule)].
+func (u *CheckScheduleUsecase) rescheduleChecks(schedules []*happydns.CheckerSchedule, maxOffsetFn func(*happydns.CheckerSchedule) time.Duration) (int, error) {
+	count := 0
+	now := time.Now()
+	for _, schedule := range schedules {
+		maxOffset := maxOffsetFn(schedule)
+		if maxOffset <= 0 {
+			maxOffset = time.Second
+		}
+		schedule.NextRun = now.Add(time.Duration(rand.Int63n(int64(maxOffset))))
+		if err := u.storage.UpdateCheckerSchedule(schedule); err != nil {
+			return count, err
+		}
+		count++
+	}
+	return count, nil
+}
+
+// RescheduleUpcomingChecks randomizes the next run time of all enabled schedules
+// within their respective intervals to spread load evenly. Useful after a restart.
+func (u *CheckScheduleUsecase) RescheduleUpcomingChecks() (int, error) {
+	schedules, err := u.storage.ListEnabledCheckerSchedules()
+	if err != nil {
+		return 0, err
+	}
+	return u.rescheduleChecks(schedules, func(s *happydns.CheckerSchedule) time.Duration {
+		return s.Interval
+	})
+}
+
+// RescheduleOverdueChecks reschedules checks whose NextRun is in the past,
+// spreading them over a short window to avoid scheduler famine (e.g. after
+// a long machine suspend or server downtime).
+// If there are fewer than 10 overdue checks, they are left as-is so that the
+// caller's immediate checkSchedules pass enqueues them directly.
+func (u *CheckScheduleUsecase) RescheduleOverdueChecks() (int, error) {
+	schedules, err := u.storage.ListEnabledCheckerSchedules()
+	if err != nil {
+		return 0, err
+	}
+
+	now := time.Now()
+	var overdue []*happydns.CheckerSchedule
+	for _, s := range schedules {
+		if s.NextRun.Before(now) {
+			overdue = append(overdue, s)
+		}
+	}
+
+	if len(overdue) == 0 {
+		return 0, nil
+	}
+
+	// Small backlog: let the caller enqueue them directly on the next
+	// checkSchedules pass rather than deferring them into the future.
+	if len(overdue) < 10 {
+		return 0, nil
+	}
+
+	// Spread overdue checks over a small window proportional to their count,
+	// capped at MinimumCheckInterval, to prevent all of them from running at once.
+	spreadWindow := time.Duration(len(overdue)) * 5 * time.Second
+	if spreadWindow > MinimumCheckInterval {
+		spreadWindow = MinimumCheckInterval
+	}
+
+	return u.rescheduleChecks(overdue, func(s *happydns.CheckerSchedule) time.Duration {
+		return spreadWindow
+	})
+}
+
 // DeleteSchedulesForTarget removes all schedules for a target
 func (u *CheckScheduleUsecase) DeleteSchedulesForTarget(targetType happydns.CheckScopeType, targetId happydns.Identifier) error {
 	schedules, err := u.storage.ListCheckerSchedulesByTarget(targetType, targetId)
@@ -283,4 +377,95 @@ func (u *CheckScheduleUsecase) DeleteSchedulesForTarget(targetType happydns.Chec
 	}
 
 	return nil
+}
+
+// DiscoverAndEnsureSchedules creates default enabled schedules for all (plugin, domain)
+// pairs that don't yet have an explicit schedule record. This implements the opt-out
+// model: checks run automatically unless a schedule with Enabled=false has been saved.
+// Non-fatal per-domain errors are collected and returned together.
+func (u *CheckScheduleUsecase) DiscoverAndEnsureSchedules() error {
+	if u.domainLister == nil || u.checkerUsecase == nil {
+		return nil
+	}
+
+	plugins, err := u.checkerUsecase.ListCheckers()
+	if err != nil {
+		return fmt.Errorf("listing check plugins for discovery: %w", err)
+	}
+
+	iter, err := u.domainLister.ListAllDomains()
+	if err != nil {
+		return fmt.Errorf("listing domains for schedule discovery: %w", err)
+	}
+	defer iter.Close()
+
+	var errs []error
+	for iter.Next() {
+		domain := iter.Item()
+		if domain == nil {
+			continue
+		}
+		for checkerName, p := range *plugins {
+			if !p.Availability().ApplyToDomain {
+				continue
+			}
+
+			schedules, err := u.ListSchedulesByTarget(happydns.CheckScopeDomain, domain.Id)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("listing schedules for domain %s: %w", domain.Id, err))
+				continue
+			}
+
+			hasSchedule := false
+			for _, sched := range schedules {
+				if sched.CheckerName == checkerName {
+					hasSchedule = true
+					break
+				}
+			}
+
+			if !hasSchedule {
+				if err := u.CreateSchedule(&happydns.CheckerSchedule{
+					CheckerName: checkerName,
+					OwnerId:     domain.Owner,
+					TargetType:  happydns.CheckScopeDomain,
+					TargetId:    domain.Id,
+					Enabled:     true,
+				}); err != nil {
+					errs = append(errs, fmt.Errorf("auto-creating schedule for domain %s / plugin %s: %w",
+						domain.Id, checkerName, err))
+				}
+			}
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+// PrepareCheckOptions fetches and merges plugin options for a scheduled check execution.
+// It combines stored options (global/user/domain/service scopes) with the
+// schedule-specific overrides, returning the final merged options.
+func (u *CheckScheduleUsecase) PrepareCheckOptions(schedule *happydns.CheckerSchedule) (happydns.CheckerOptions, error) {
+	if u.checkerUsecase == nil {
+		return schedule.Options, nil
+	}
+
+	var domainId, serviceId *happydns.Identifier
+	switch schedule.TargetType {
+	case happydns.CheckScopeDomain:
+		domainId = &schedule.TargetId
+	case happydns.CheckScopeService:
+		serviceId = &schedule.TargetId
+	}
+
+	baseOptions, err := u.checkerUsecase.GetCheckerOptions(schedule.CheckerName, &schedule.OwnerId, domainId, serviceId)
+	if err != nil {
+		// Non-fatal: fall back to schedule-only options and surface as a warning
+		return schedule.Options, fmt.Errorf("could not fetch plugin options for %s: %w", schedule.CheckerName, err)
+	}
+
+	if baseOptions != nil {
+		return u.MergeCheckOptions(nil, nil, *baseOptions, schedule.Options), nil
+	}
+	return schedule.Options, nil
 }
