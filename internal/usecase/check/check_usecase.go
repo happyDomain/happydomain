@@ -24,6 +24,7 @@ package check
 import (
 	"cmp"
 	"fmt"
+	"log"
 	"maps"
 	"slices"
 
@@ -32,14 +33,16 @@ import (
 )
 
 type checkerUsecase struct {
-	config *happydns.Options
-	store  CheckerStorage
+	config        *happydns.Options
+	store         CheckerStorage
+	autoFillStore CheckAutoFillStorage
 }
 
-func NewCheckerUsecase(cfg *happydns.Options, store CheckerStorage) happydns.CheckerUsecase {
+func NewCheckerUsecase(cfg *happydns.Options, store CheckerStorage, autoFillStore CheckAutoFillStorage) happydns.CheckerUsecase {
 	return &checkerUsecase{
-		config: cfg,
-		store:  store,
+		config:        cfg,
+		store:         store,
+		autoFillStore: autoFillStore,
 	}
 }
 
@@ -119,6 +122,158 @@ func (tu *checkerUsecase) ListCheckers() (*map[string]happydns.Checker, error) {
 	return checks.GetCheckers(), nil
 }
 
+// GetStoredCheckerOptionsNoDefault returns the stored options (user/domain/service scopes)
+// with auto-fill variables applied, but without checker-defined defaults or run-time overrides.
+func (tu *checkerUsecase) GetStoredCheckerOptionsNoDefault(cname string, userid *happydns.Identifier, domainid *happydns.Identifier, serviceid *happydns.Identifier) (happydns.CheckerOptions, error) {
+	stored, err := tu.GetCheckerOptions(cname, userid, domainid, serviceid)
+	if err != nil {
+		return nil, err
+	}
+
+	var opts happydns.CheckerOptions
+	if stored != nil {
+		opts = *stored
+	} else {
+		opts = make(happydns.CheckerOptions)
+	}
+
+	checker, err := tu.GetChecker(cname)
+	if err != nil {
+		return opts, nil
+	}
+
+	return tu.applyAutoFill(checker, userid, domainid, serviceid, opts), nil
+}
+
+// BuildMergedCheckerOptions merges checker options from all sources in priority order:
+// checker defaults < stored (user/domain/service) options < runOpts < auto-fill variables.
+func (tu *checkerUsecase) BuildMergedCheckerOptions(cname string, userid *happydns.Identifier, domainid *happydns.Identifier, serviceid *happydns.Identifier, runOpts happydns.CheckerOptions) (happydns.CheckerOptions, error) {
+	merged := make(happydns.CheckerOptions)
+
+	// 1. Fill checker defaults.
+	checker, err := tu.GetChecker(cname)
+	if err != nil {
+		log.Printf("Warning: unable to get checker %q for default options: %v", cname, err)
+	} else {
+		opts := checker.Options()
+
+		allOpts := []happydns.CheckerOptionDocumentation{}
+		allOpts = append(allOpts, opts.RunOpts...)
+		allOpts = append(allOpts, opts.ServiceOpts...)
+		allOpts = append(allOpts, opts.DomainOpts...)
+		allOpts = append(allOpts, opts.UserOpts...)
+		allOpts = append(allOpts, opts.AdminOpts...)
+		for _, opt := range allOpts {
+			if opt.Default != nil {
+				merged[opt.Id] = opt.Default
+			} else if opt.Placeholder != "" {
+				merged[opt.Id] = opt.Placeholder
+			}
+		}
+	}
+
+	// 2. Override with stored options (user/domain/service scopes).
+	baseOptions, err := tu.GetCheckerOptions(cname, userid, domainid, serviceid)
+	if err != nil {
+		return merged, fmt.Errorf("could not fetch stored checker options for %s: %w", cname, err)
+	}
+	if baseOptions != nil {
+		copyNonEmpty(merged, *baseOptions)
+	}
+
+	// 3. Override with caller-supplied run options.
+	copyNonEmpty(merged, runOpts)
+
+	// 4. Inject auto-fill variables (always win over any user-supplied value).
+	if checker != nil {
+		merged = tu.applyAutoFill(checker, userid, domainid, serviceid, merged)
+	}
+
+	return merged, nil
+}
+
+// applyAutoFill resolves auto-fill fields declared by the checker and injects
+// the context-resolved values into a copy of opts.
+func (tu *checkerUsecase) applyAutoFill(
+	checker happydns.Checker,
+	userid *happydns.Identifier,
+	domainid *happydns.Identifier,
+	serviceid *happydns.Identifier,
+	opts happydns.CheckerOptions,
+) happydns.CheckerOptions {
+	// Collect which auto-fill keys are needed.
+	needed := make(map[string]string) // autoFill constant → field id
+	options := checker.Options()
+	for _, groups := range [][]happydns.CheckerOptionDocumentation{
+		options.RunOpts, options.DomainOpts, options.ServiceOpts,
+		options.UserOpts, options.AdminOpts,
+	} {
+		for _, opt := range groups {
+			if opt.AutoFill != "" {
+				needed[opt.AutoFill] = opt.Id
+			}
+		}
+	}
+
+	if len(needed) == 0 || tu.autoFillStore == nil {
+		return opts
+	}
+
+	autoFillCtx := tu.buildAutoFillContext(userid, domainid, serviceid)
+
+	result := maps.Clone(opts)
+	for autoFillKey, fieldId := range needed {
+		if val, ok := autoFillCtx[autoFillKey]; ok {
+			result[fieldId] = val
+		}
+	}
+	return result
+}
+
+// buildAutoFillContext resolves the available auto-fill values for the given
+// user/domain/service identifiers.
+func (tu *checkerUsecase) buildAutoFillContext(userid *happydns.Identifier, domainid *happydns.Identifier, serviceid *happydns.Identifier) map[string]string {
+	ctx := make(map[string]string)
+
+	if domainid != nil {
+		if domain, err := tu.autoFillStore.GetDomain(*domainid); err == nil {
+			ctx[happydns.AutoFillDomainName] = domain.DomainName
+		}
+	} else if serviceid != nil && userid != nil {
+		// To resolve service context we need to find which domain/zone owns the service.
+		user, err := tu.autoFillStore.GetUser(*userid)
+		if err != nil {
+			return ctx
+		}
+		domains, err := tu.autoFillStore.ListDomains(user)
+		if err != nil {
+			return ctx
+		}
+		for _, domain := range domains {
+			if len(domain.ZoneHistory) == 0 {
+				continue
+			}
+			// The first element in ZoneHistory is the current (most recent) zone.
+			zoneMsg, err := tu.autoFillStore.GetZone(domain.ZoneHistory[0])
+			if err != nil {
+				continue
+			}
+			for subdomain, svcs := range zoneMsg.Services {
+				for _, svc := range svcs {
+					if svc.Id.Equals(*serviceid) {
+						ctx[happydns.AutoFillDomainName] = domain.DomainName
+						ctx[happydns.AutoFillSubdomain] = string(subdomain)
+						ctx[happydns.AutoFillServiceType] = svc.Type
+						return ctx
+					}
+				}
+			}
+		}
+	}
+
+	return ctx
+}
+
 func (tu *checkerUsecase) SetCheckerOptions(cname string, userid *happydns.Identifier, domainid *happydns.Identifier, serviceid *happydns.Identifier, opts happydns.CheckerOptions) error {
 	// filter opts that correspond to the level set
 	checker, err := tu.GetChecker(cname)
@@ -128,34 +283,30 @@ func (tu *checkerUsecase) SetCheckerOptions(cname string, userid *happydns.Ident
 
 	options := checker.Options()
 
-	var optNames []string
+	var relevantOpts []happydns.CheckerOptionDocumentation
 	if serviceid != nil {
-		for _, opt := range options.ServiceOpts {
-			optNames = append(optNames, opt.Id)
-		}
+		relevantOpts = options.ServiceOpts
 	} else if domainid != nil {
-		for _, opt := range options.DomainOpts {
-			optNames = append(optNames, opt.Id)
-		}
+		relevantOpts = options.DomainOpts
 	} else if userid != nil {
-		for _, opt := range options.UserOpts {
-			optNames = append(optNames, opt.Id)
-		}
+		relevantOpts = options.UserOpts
 	} else {
-		for _, opt := range options.AdminOpts {
-			optNames = append(optNames, opt.Id)
-		}
+		relevantOpts = options.AdminOpts
 	}
 
-	// Filter opts to only include keys that are in optNames
+	allowed := make(map[string]struct{}, len(relevantOpts))
+	for _, opt := range relevantOpts {
+		allowed[opt.Id] = struct{}{}
+	}
+
 	filteredOpts := make(happydns.CheckerOptions)
-	for _, optName := range optNames {
-		if val, exists := opts[optName]; exists && val != "" {
-			filteredOpts[optName] = val
+	for id := range allowed {
+		if val, exists := opts[id]; exists && val != "" {
+			filteredOpts[id] = val
 		}
 	}
 
-	return tu.store.UpdateCheckerConfiguration(cname, userid, domainid, serviceid, opts)
+	return tu.store.UpdateCheckerConfiguration(cname, userid, domainid, serviceid, filteredOpts)
 }
 
 func (tu *checkerUsecase) OverwriteSomeCheckerOptions(cname string, userid *happydns.Identifier, domainid *happydns.Identifier, serviceid *happydns.Identifier, opts happydns.CheckerOptions) error {

@@ -26,6 +26,18 @@
 
     import { t } from "$lib/translations";
 
+    const AUTO_FILL_KEYS: Record<string, string> = {
+        domain_name: "checks.auto-fill.domain_name",
+        subdomain: "checks.auto-fill.subdomain",
+        service_type: "checks.auto-fill.service_type",
+    };
+
+    function getAutoFillLabel(autoFill: string): string {
+        const tKey = AUTO_FILL_KEYS[autoFill];
+        if (tKey) return $t(tKey);
+        return $t("checks.auto-fill.generic", { key: autoFill });
+    }
+
     interface OptionDef {
         id?: string;
         label?: string;
@@ -34,6 +46,7 @@
         placeholder?: string;
         description?: string;
         required?: boolean;
+        autoFill?: string;
     }
 
     interface OptionGroup {
@@ -63,7 +76,11 @@
                             {optDoc.label || optDoc.id}:
                         </dt>
                         <dd class="col-sm-8">
-                            {#if optDoc.default}
+                            {#if optDoc.autoFill}
+                                <span class="badge bg-info me-1">
+                                    {getAutoFillLabel(optDoc.autoFill)}
+                                </span>
+                            {:else if optDoc.default}
                                 <span class="text-muted d-block">{optDoc.default}</span>
                             {:else if optDoc.placeholder}
                                 <em class="text-muted d-block">{optDoc.placeholder}</em>
@@ -76,7 +93,7 @@
                                     type: optDoc.type || "string",
                                 })}
                             </small>
-                            {#if optDoc.required}
+                            {#if optDoc.required && !optDoc.autoFill}
                                 <small class="text-danger ms-2">
                                     {$t("checks.option-groups.required")}
                                 </small>
