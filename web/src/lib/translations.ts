@@ -40,6 +40,11 @@ interface Params {
     max?: number;
     suggestion?: string;
     key?: string;
+    error?: string;
+    providers?: string;
+    services?: string;
+    options?: string;
+    label?: string;
     // add more parameters that are used here
 }
 

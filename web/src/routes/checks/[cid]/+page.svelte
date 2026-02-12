@@ -106,8 +106,15 @@
         }
     }
 
-    function getOrphanedOptions(userOpts: any[]): string[] {
+    function getOrphanedOptions(userOpts: any[], readOnlyOptGroups: any[]): string[] {
         const validOptIds = new Set(userOpts.map((opt) => opt.id));
+
+        for (const group of readOnlyOptGroups) {
+            for (const opt of group.opts) {
+                validOptIds.add(opt.id);
+            }
+        }
+
         return Object.keys(optionValues).filter((key) => !validOptIds.has(key));
     }
 </script>
@@ -232,7 +239,7 @@
                         ]}
                         {@const hasAnyOpts =
                             userOpts.length > 0 || readOnlyOptGroups.some((g) => g.opts.length > 0)}
-                        {@const orphanedOpts = getOrphanedOptions(userOpts)}
+                        {@const orphanedOpts = getOrphanedOptions(userOpts, readOnlyOptGroups)}
 
                         {#if orphanedOpts.length > 0}
                             <Alert color="warning" class="mb-3">
