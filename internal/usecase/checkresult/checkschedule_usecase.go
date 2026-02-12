@@ -223,39 +223,6 @@ func (u *CheckScheduleUsecase) getDefaultInterval(targetType happydns.CheckScope
 	}
 }
 
-// MergePluginOptions merges plugin options from different scopes
-// Priority: schedule options > domain options > user options > global options
-func (u *CheckScheduleUsecase) MergeCheckOptions(
-	globalOpts happydns.CheckerOptions,
-	userOpts happydns.CheckerOptions,
-	domainOpts happydns.CheckerOptions,
-	scheduleOpts happydns.CheckerOptions,
-) happydns.CheckerOptions {
-	merged := make(happydns.CheckerOptions)
-
-	// Start with global options
-	for k, v := range globalOpts {
-		merged[k] = v
-	}
-
-	// Override with user options
-	for k, v := range userOpts {
-		merged[k] = v
-	}
-
-	// Override with domain options
-	for k, v := range domainOpts {
-		merged[k] = v
-	}
-
-	// Override with schedule options (highest priority)
-	for k, v := range scheduleOpts {
-		merged[k] = v
-	}
-
-	return merged
-}
-
 // ValidateScheduleOwnership checks if a user owns a schedule
 func (u *CheckScheduleUsecase) ValidateScheduleOwnership(scheduleId happydns.Identifier, userId happydns.Identifier) error {
 	schedule, err := u.storage.GetCheckerSchedule(scheduleId)
@@ -440,32 +407,4 @@ func (u *CheckScheduleUsecase) DiscoverAndEnsureSchedules() error {
 	}
 
 	return errors.Join(errs...)
-}
-
-// PrepareCheckOptions fetches and merges plugin options for a scheduled check execution.
-// It combines stored options (global/user/domain/service scopes) with the
-// schedule-specific overrides, returning the final merged options.
-func (u *CheckScheduleUsecase) PrepareCheckOptions(schedule *happydns.CheckerSchedule) (happydns.CheckerOptions, error) {
-	if u.checkerUsecase == nil {
-		return schedule.Options, nil
-	}
-
-	var domainId, serviceId *happydns.Identifier
-	switch schedule.TargetType {
-	case happydns.CheckScopeDomain:
-		domainId = &schedule.TargetId
-	case happydns.CheckScopeService:
-		serviceId = &schedule.TargetId
-	}
-
-	baseOptions, err := u.checkerUsecase.GetCheckerOptions(schedule.CheckerName, &schedule.OwnerId, domainId, serviceId)
-	if err != nil {
-		// Non-fatal: fall back to schedule-only options and surface as a warning
-		return schedule.Options, fmt.Errorf("could not fetch plugin options for %s: %w", schedule.CheckerName, err)
-	}
-
-	if baseOptions != nil {
-		return u.MergeCheckOptions(nil, nil, *baseOptions, schedule.Options), nil
-	}
-	return schedule.Options, nil
 }

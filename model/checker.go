@@ -21,6 +21,22 @@
 
 package happydns
 
+// Auto-fill variable identifiers for checker option fields.
+const (
+	// AutoFillDomainName fills the option with the fully qualified domain name
+	// of the domain being tested (e.g. "example.com.").
+	AutoFillDomainName = "domain_name"
+
+	// AutoFillSubdomain fills the option with the subdomain relative to the zone
+	// (e.g. "www" for "www.example.com." in zone "example.com."). Only
+	// applicable for service-scoped tests.
+	AutoFillSubdomain = "subdomain"
+
+	// AutoFillServiceType fills the option with the service type identifier
+	// (e.g. "abstract.MatrixIM"). Only applicable for service-scoped tests.
+	AutoFillServiceType = "service_type"
+)
+
 const (
 	CheckResultStatusUnknown CheckResultStatus = iota
 	CheckResultStatusCritical
@@ -88,6 +104,8 @@ type CheckerStatus struct {
 }
 
 type CheckerUsecase interface {
+	BuildMergedCheckerOptions(string, *Identifier, *Identifier, *Identifier, CheckerOptions) (CheckerOptions, error)
+	GetStoredCheckerOptionsNoDefault(string, *Identifier, *Identifier, *Identifier) (CheckerOptions, error)
 	GetChecker(string) (Checker, error)
 	GetCheckerOptions(string, *Identifier, *Identifier, *Identifier) (*CheckerOptions, error)
 	ListCheckers() (*map[string]Checker, error)

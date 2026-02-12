@@ -562,11 +562,22 @@ func (w *worker) executeCheck(item *queueItem) {
 		return
 	}
 
-	// Merge options: global defaults < user opts < domain/service opts < schedule opts
-	mergedOptions, err := w.scheduler.scheduleUsecase.PrepareCheckOptions(schedule)
-	if err != nil {
-		// Non-fatal: PrepareTestOptions already falls back to schedule-only options
-		log.Printf("Worker %d: warning, could not prepare plugin options for %s: %v\n", w.id, schedule.CheckerName, err)
+	// Merge options: global defaults < user opts < domain/service opts < schedule/on-demand opts < auto-fill
+	var mergedOptions happydns.CheckerOptions
+
+	var domainId, serviceId *happydns.Identifier
+	switch schedule.TargetType {
+	case happydns.CheckScopeDomain:
+		domainId = &schedule.TargetId
+	case happydns.CheckScopeService:
+		serviceId = &schedule.TargetId
+	}
+	var mergeErr error
+	mergedOptions, mergeErr = w.scheduler.checkerUsecase.BuildMergedCheckerOptions(schedule.CheckerName, &schedule.OwnerId, domainId, serviceId, schedule.Options)
+	if mergeErr != nil {
+		// Non-fatal: fall back to schedule-only options
+		log.Printf("Worker %d: warning, could not prepare checker options for %s: %v\n", w.id, schedule.CheckerName, mergeErr)
+		mergedOptions = schedule.Options
 	}
 
 	// Prepare metadata
