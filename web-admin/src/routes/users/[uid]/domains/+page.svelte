@@ -22,19 +22,13 @@
 -->
 
 <script lang="ts">
-    import { page } from '$app/stores';
-    import {
-        Button,
-        Col,
-        Container,
-        Icon,
-        Row,
-    } from "@sveltestrap/sveltestrap";
-    import { getUsersByUidDomains } from '$lib/api-admin';
-    import UserDomainsCard from './UserDomainsCard.svelte';
+    import { page } from "$app/state";
+    import { Button, Col, Container, Icon, Row } from "@sveltestrap/sveltestrap";
+    import { getUsersByUidDomains } from "$lib/api-admin";
+    import UserDomainsCard from "./UserDomainsCard.svelte";
 
-    let userId = $derived($page.params.uid!);
-    let domainsQ = $derived(getUsersByUidDomains({ path: { uid: userId }}));
+    let userId = $derived(page.params.uid!);
+    let domainsQ = $derived(getUsersByUidDomains({ path: { uid: userId } }));
 </script>
 
 <Container class="flex-fill my-5">
@@ -44,9 +38,7 @@
                 <Button color="link" href="/users/{userId}" class="text-black">
                     <Icon name="chevron-left"></Icon>
                 </Button>
-                <h1 class="display-5 mb-0">
-                    User Domains
-                </h1>
+                <h1 class="display-5 mb-0">User Domains</h1>
             </div>
         </Col>
     </Row>

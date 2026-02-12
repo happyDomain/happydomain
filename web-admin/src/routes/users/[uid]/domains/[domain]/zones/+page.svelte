@@ -22,32 +22,24 @@
 -->
 
 <script lang="ts">
-    import { page } from '$app/stores';
-    import {
-        Alert,
-        Button,
-        Col,
-        Container,
-        Icon,
-        Row,
-        Spinner,
-    } from "@sveltestrap/sveltestrap";
+    import { page } from "$app/state";
+    import { Alert, Button, Container, Icon, Spinner } from "@sveltestrap/sveltestrap";
 
-    import { getUsersByUidDomainsByDomainZones } from '$lib/api-admin';
-    import ZoneHistoryCard from './ZoneHistoryCard.svelte';
+    import { getUsersByUidDomainsByDomainZones } from "$lib/api-admin";
+    import ZoneHistoryCard from "./ZoneHistoryCard.svelte";
 
-    const uid = $derived($page.params.uid ?? '');
-    const domainId = $derived($page.params.domain ?? '');
+    const uid = $derived(page.params.uid ?? "");
+    const domainId = $derived(page.params.domain ?? "");
     let zonesQ = $derived(getUsersByUidDomainsByDomainZones({ path: { uid, domain: domainId } }));
 
     let zoneHistory = $state<string[]>([]);
 
     // Load zones data when promise resolves
     $effect(() => {
-        zonesQ.then(response => {
+        zonesQ.then((response) => {
             if (response?.data) {
                 // Flatten the 2D array and convert numbers to strings
-                zoneHistory = response.data.flat().map(id => String(id));
+                zoneHistory = response.data.flat().map((id) => String(id));
             }
         });
     });
@@ -58,9 +50,7 @@
         <Button color="link" href="/users/{uid}/domains/{domainId}" class="text-black">
             <Icon name="chevron-left"></Icon>
         </Button>
-        <h1 class="display-5 mb-0">
-            Zone History
-        </h1>
+        <h1 class="display-5 mb-0">Zone History</h1>
     </div>
 
     {#await zonesQ}
@@ -76,7 +66,12 @@
                 <h4 class="alert-heading">No data available</h4>
                 <p>The zones response did not contain any data.</p>
                 <hr />
-                <Button type="button" color="secondary" outline href="/users/{uid}/domains/{domainId}">
+                <Button
+                    type="button"
+                    color="secondary"
+                    outline
+                    href="/users/{uid}/domains/{domainId}"
+                >
                     <Icon name="arrow-left"></Icon>
                     Back to Domain
                 </Button>

@@ -22,19 +22,13 @@
 -->
 
 <script lang="ts">
-    import { page } from '$app/stores';
-    import {
-        Button,
-        Col,
-        Container,
-        Icon,
-        Row,
-    } from "@sveltestrap/sveltestrap";
-    import { getUsersByUidProviders } from '$lib/api-admin';
-    import UserProvidersCard from './UserProvidersCard.svelte';
+    import { page } from "$app/state";
+    import { Button, Col, Container, Icon, Row } from "@sveltestrap/sveltestrap";
+    import { getUsersByUidProviders } from "$lib/api-admin";
+    import UserProvidersCard from "./UserProvidersCard.svelte";
 
-    let userId = $derived($page.params.uid!);
-    let providersQ = $derived(getUsersByUidProviders({ path: { uid: userId }}));
+    let userId = $derived(page.params.uid!);
+    let providersQ = $derived(getUsersByUidProviders({ path: { uid: userId } }));
 </script>
 
 <Container class="flex-fill my-5">
@@ -44,9 +38,7 @@
                 <Button color="link" href="/users/{userId}" class="text-black">
                     <Icon name="chevron-left"></Icon>
                 </Button>
-                <h1 class="display-5 mb-0">
-                    User Providers
-                </h1>
+                <h1 class="display-5 mb-0">User Providers</h1>
             </div>
         </Col>
     </Row>

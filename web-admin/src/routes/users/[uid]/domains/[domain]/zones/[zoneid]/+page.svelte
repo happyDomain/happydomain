@@ -22,8 +22,8 @@
 -->
 
 <script lang="ts">
-    import { page } from '$app/stores';
-    import { goto } from '$app/navigation';
+    import { page } from "$app/state";
+    import { goto } from "$app/navigation";
     import {
         Accordion,
         AccordionItem,
@@ -38,25 +38,28 @@
         Row,
         Spinner,
         Badge,
-        Table,
     } from "@sveltestrap/sveltestrap";
 
-    import { getUsersByUidDomainsByDomainZonesByZoneid, deleteUsersByUidDomainsByDomainZonesByZoneid } from '$lib/api-admin';
-    import type { HappydnsZone, HappydnsService } from '$lib/api-admin';
-    import { toasts } from '$lib/stores/toasts';
+    import {
+        getUsersByUidDomainsByDomainZonesByZoneid,
+        deleteUsersByUidDomainsByDomainZonesByZoneid,
+    } from "$lib/api-admin";
+    import { toasts } from "$lib/stores/toasts";
 
-    const uid = $derived($page.params.uid);
-    const domainId = $derived($page.params.domain);
-    const zoneid = $derived($page.params.zoneid);
+    const uid = $derived(page.params.uid);
+    const domainId = $derived(page.params.domain);
+    const zoneid = $derived(page.params.zoneid);
 
-    let zoneQ = $derived(getUsersByUidDomainsByDomainZonesByZoneid({
-        path: { uid: uid!, domain: domainId!, zoneid: zoneid! }
-    }));
+    let zoneQ = $derived(
+        getUsersByUidDomainsByDomainZonesByZoneid({
+            path: { uid: uid!, domain: domainId!, zoneid: zoneid! },
+        }),
+    );
 
     let deleting = $state(false);
 
     async function handleDelete() {
-        if (!confirm('Are you sure you want to delete this zone? This action cannot be undone.')) {
+        if (!confirm("Are you sure you want to delete this zone? This action cannot be undone.")) {
             return;
         }
 
@@ -64,19 +67,19 @@
 
         try {
             await deleteUsersByUidDomainsByDomainZonesByZoneid({
-                path: { uid: uid!, domain: domainId!, zoneid: zoneid! }
+                path: { uid: uid!, domain: domainId!, zoneid: zoneid! },
             });
 
             toasts.addToast({
                 message: `Zone has been deleted successfully`,
-                type: 'success',
+                type: "success",
                 timeout: 5000,
             });
 
             goto(`/users/${uid}/domains/${domainId}`);
         } catch (error) {
             toasts.addErrorToast({
-                message: 'Failed to delete zone: ' + error,
+                message: "Failed to delete zone: " + error,
                 timeout: 10000,
             });
         } finally {
@@ -123,7 +126,7 @@
                                     <dl class="row mb-0">
                                         <dt class="col-sm-5">Zone ID:</dt>
                                         <dd class="col-sm-7">
-                                            <code class="text-break">{zone.id || 'N/A'}</code>
+                                            <code class="text-break">{zone.id || "N/A"}</code>
                                         </dd>
 
                                         <dt class="col-sm-5">Author ID:</dt>
@@ -140,7 +143,9 @@
                                         <dt class="col-sm-5">Parent Zone:</dt>
                                         <dd class="col-sm-7">
                                             {#if zone.parent}
-                                                <a href="/users/{uid}/domains/{domainId}/zones/{zone.parent}">
+                                                <a
+                                                    href="/users/{uid}/domains/{domainId}/zones/{zone.parent}"
+                                                >
                                                     <code class="text-break">{zone.parent}</code>
                                                 </a>
                                             {:else}
@@ -212,7 +217,7 @@
                                 {#each Object.entries(zone.services) as [subdomain, services]}
                                     <div class="mb-4">
                                         <h5 class="pb-2">
-                                            {#if subdomain === ''}
+                                            {#if subdomain === ""}
                                                 <span class="font-monospace">@</span>
                                                 <small class="text-muted">root domain</small>
                                             {:else}
@@ -222,23 +227,34 @@
 
                                         <Accordion class="mb-3">
                                             {#each services as service, idx}
-                                                {@const headerText = `${service._svctype || 'Unknown'}${service._comment ? ' - ' + service._comment : ''}${service._tmp_hint_nb ? ` (${service._tmp_hint_nb} record${service._tmp_hint_nb > 1 ? 's' : ''})` : ''}`}
+                                                {@const headerText = `${service._svctype || "Unknown"}${service._comment ? " - " + service._comment : ""}${service._tmp_hint_nb ? ` (${service._tmp_hint_nb} record${service._tmp_hint_nb > 1 ? "s" : ""})` : ""}`}
                                                 <AccordionItem header={headerText}>
                                                     <div class="small">
                                                         <div class="mb-1">
                                                             <strong>Service ID:</strong>
-                                                            <code class="ms-2">{service._id || 'N/A'}</code>
+                                                            <code class="ms-2"
+                                                                >{service._id || "N/A"}</code
+                                                            >
                                                         </div>
                                                         {#if service._ttl}
                                                             <div class="mb-1">
                                                                 <strong>TTL:</strong>
-                                                                <Badge color="info" class="ms-2">{service._ttl}s</Badge>
+                                                                <Badge color="info" class="ms-2"
+                                                                    >{service._ttl}s</Badge
+                                                                >
                                                             </div>
                                                         {/if}
                                                         {#if service.Service}
                                                             <div class="mt-2">
                                                                 <strong>DNS Records:</strong>
-                                                                <pre class="bg-light p-2 mt-1 mb-0 rounded"><code>{JSON.stringify(service.Service, null, 2)}</code></pre>
+                                                                <pre
+                                                                    class="bg-light p-2 mt-1 mb-0 rounded"><code
+                                                                        >{JSON.stringify(
+                                                                            service.Service,
+                                                                            null,
+                                                                            2,
+                                                                        )}</code
+                                                                    ></pre>
                                                             </div>
                                                         {/if}
                                                     </div>
@@ -259,12 +275,21 @@
                             <Icon name="arrow-left"></Icon>
                             Back to Domain
                         </Button>
-                        <Button color="secondary" outline href="/users/{uid}/domains/{domainId}/zones">
+                        <Button
+                            color="secondary"
+                            outline
+                            href="/users/{uid}/domains/{domainId}/zones"
+                        >
                             <Icon name="clock-history"></Icon>
                             Back to History
                         </Button>
                         <div class="ms-auto">
-                            <Button color="danger" outline onclick={handleDelete} disabled={deleting}>
+                            <Button
+                                color="danger"
+                                outline
+                                onclick={handleDelete}
+                                disabled={deleting}
+                            >
                                 {#if deleting}
                                     <Spinner size="sm" class="me-2" />
                                 {:else}
@@ -281,7 +306,12 @@
                 <h4 class="alert-heading">No data available</h4>
                 <p>The zone response did not contain any data.</p>
                 <hr />
-                <Button type="button" color="secondary" outline href="/users/{uid}/domains/{domainId}">
+                <Button
+                    type="button"
+                    color="secondary"
+                    outline
+                    href="/users/{uid}/domains/{domainId}"
+                >
                     <Icon name="arrow-left"></Icon>
                     Back to Domain
                 </Button>

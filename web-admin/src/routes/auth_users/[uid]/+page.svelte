@@ -22,25 +22,17 @@
 -->
 
 <script lang="ts">
-    import { page } from '$app/stores';
-    import {
-        Alert,
-        Button,
-        Col,
-        Container,
-        Icon,
-        Row,
-        Spinner,
-    } from "@sveltestrap/sveltestrap";
+    import { page } from "$app/state";
+    import { Alert, Button, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
-    import { getAuthByUid } from '$lib/api-admin';
+    import { getAuthByUid } from "$lib/api-admin";
 
-    import UserInfoCard from './UserInfoCard.svelte';
-    import EmailVerificationCard from './EmailVerificationCard.svelte';
-    import AccountRecoveryCard from './AccountRecoveryCard.svelte';
-    import PasswordResetCard from './PasswordResetCard.svelte';
+    import UserInfoCard from "./UserInfoCard.svelte";
+    import EmailVerificationCard from "./EmailVerificationCard.svelte";
+    import AccountRecoveryCard from "./AccountRecoveryCard.svelte";
+    import PasswordResetCard from "./PasswordResetCard.svelte";
 
-    const uid = $page.params.uid as string;
+    const uid = page.params.uid as string;
     let authUserQ = $state(getAuthByUid({ path: { uid } }));
 
     function refreshAuthUser() {
@@ -68,25 +60,15 @@
         {#if authUser}
             <Row>
                 <Col lg={6}>
-                    <UserInfoCard
-                        {authUser}
-                    />
+                    <UserInfoCard {authUser} />
                 </Col>
 
                 <Col lg={6}>
-                    <EmailVerificationCard
-                        {authUser}
-                        {uid}
-                        onRefresh={refreshAuthUser}
-                    />
+                    <EmailVerificationCard {authUser} {uid} onRefresh={refreshAuthUser} />
 
-                    <AccountRecoveryCard
-                        {uid}
-                    />
+                    <AccountRecoveryCard {uid} />
 
-                    <PasswordResetCard
-                        {uid}
-                    />
+                    <PasswordResetCard {uid} />
                 </Col>
             </Row>
         {:else}

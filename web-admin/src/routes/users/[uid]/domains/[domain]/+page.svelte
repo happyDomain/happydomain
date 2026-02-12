@@ -22,30 +22,22 @@
 -->
 
 <script lang="ts">
-    import { page } from '$app/stores';
-    import {
-        Alert,
-        Button,
-        Col,
-        Container,
-        Icon,
-        Row,
-        Spinner,
-    } from "@sveltestrap/sveltestrap";
+    import { page } from "$app/state";
+    import { Alert, Button, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
-    import { getUsersByUidDomainsByDomain } from '$lib/api-admin';
-    import DomainInformationCard from './DomainInformationCard.svelte';
-    import ZoneHistoryCard from './zones/ZoneHistoryCard.svelte';
+    import { getUsersByUidDomainsByDomain } from "$lib/api-admin";
+    import DomainInformationCard from "./DomainInformationCard.svelte";
+    import ZoneHistoryCard from "./zones/ZoneHistoryCard.svelte";
 
-    const uid = $derived($page.params.uid!);
-    const domainId = $derived($page.params.domain!);
+    const uid = $derived(page.params.uid!);
+    const domainId = $derived(page.params.domain!);
     let domainQ = $derived(getUsersByUidDomainsByDomain({ path: { uid, domain: domainId } }));
 
     let zoneHistory = $state<string[]>([]);
 
     // Load domain data when promise resolves
     $effect(() => {
-        domainQ.then(response => {
+        domainQ.then((response) => {
             if (response?.data && response.data.length > 0) {
                 zoneHistory = response.data[0].zone_history || [];
             }
@@ -73,11 +65,7 @@
             {@const domain = domainR.data[0]}
             <Row>
                 <Col md={8} lg={6}>
-                    <DomainInformationCard
-                        domainData={domain}
-                        {uid}
-                        {domainId}
-                    />
+                    <DomainInformationCard domainData={domain} {uid} {domainId} />
                 </Col>
 
                 <Col md={8} lg={6}>

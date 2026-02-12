@@ -22,27 +22,18 @@
 -->
 
 <script lang="ts">
-    import { page } from '$app/stores';
-    import {
-        Alert,
-        Badge,
-        Button,
-        Col,
-        Container,
-        Icon,
-        Row,
-        Spinner,
-    } from "@sveltestrap/sveltestrap";
+    import { page } from "$app/state";
+    import { Alert, Button, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
-    import { getUsersByUid, getUsersByUidDomains, getUsersByUidProviders } from '$lib/api-admin';
-    import UserInfoCard from './UserInfoCard.svelte';
-    import UserDomainsCard from './domains/UserDomainsCard.svelte';
-    import UserProvidersCard from './providers/UserProvidersCard.svelte';
+    import { getUsersByUid, getUsersByUidDomains, getUsersByUidProviders } from "$lib/api-admin";
+    import UserInfoCard from "./UserInfoCard.svelte";
+    import UserDomainsCard from "./domains/UserDomainsCard.svelte";
+    import UserProvidersCard from "./providers/UserProvidersCard.svelte";
 
-    const uid = $page.params.uid!;
-    let userQ = $state(getUsersByUid({ path: { uid } }));
-    let domainsQ = $state(getUsersByUidDomains({ path: { uid } }));
-    let providersQ = $state(getUsersByUidProviders({ path: { uid } }));
+    let uid = $derived(page.params.uid!);
+    let userQ = $derived(getUsersByUid({ path: { uid } }));
+    let domainsQ = $derived(getUsersByUidDomains({ path: { uid } }));
+    let providersQ = $derived(getUsersByUidProviders({ path: { uid } }));
 </script>
 
 <Container class="flex-fill my-5">
