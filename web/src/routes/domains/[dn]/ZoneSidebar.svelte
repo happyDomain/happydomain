@@ -117,6 +117,9 @@
             <DropdownItem href={`/domains/${domainLink(selectedDomain)}/logs`}>
                 {$t("domains.actions.audit")}
             </DropdownItem>
+            <DropdownItem href={`/domains/${domainLink(selectedDomain)}/checks`}>
+                {$t("domains.actions.view-checks")}
+            </DropdownItem>
             <DropdownItem divider />
             <DropdownItem on:click={viewZone} disabled={!$sortedDomains}>
                 {$t("domains.actions.view")}

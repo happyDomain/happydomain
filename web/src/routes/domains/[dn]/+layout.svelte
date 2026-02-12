@@ -67,7 +67,11 @@
                               ? "/history"
                               : page.route.id.startsWith("/domains/[dn]/[[historyid]]/export")
                                 ? "/export"
-                                : ""
+                                : page.route.id.startsWith("/domains/[dn]/checks/[cname]")
+                                  ? `/checks/${page.params.cname!}`
+                                  : page.route.id.startsWith("/domains/[dn]/checks")
+                                    ? "/checks"
+                                    : ""
                         : ""),
             );
         }
@@ -143,7 +147,35 @@
                     <SelectDomain bind:selectedDomain />
                 </div>
 
-                {#if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
+                {#if page.route.id && page.route.id.startsWith("/domains/[dn]/checks/[cname]")}
+                    {#if page.route.id.startsWith("/domains/[dn]/checks/[cname]/results/")}
+                        <Button
+                            class="mt-2"
+                            outline
+                            color="primary"
+                            href={"/domains/" +
+                                encodeURIComponent(domainLink(selectedDomain)) +
+                                "/checks/" +
+                                encodeURIComponent(page.params.cname!) +
+                                "/results"}
+                        >
+                            <Icon name="chevron-left" />
+                            {$t("zones.return-to-results")}
+                        </Button>
+                    {:else}
+                        <Button
+                            class="mt-2"
+                            outline
+                            color="primary"
+                            href={"/domains/" +
+                                encodeURIComponent(domainLink(selectedDomain)) +
+                                "/checks"}
+                        >
+                            <Icon name="chevron-left" />
+                            {$t("zones.return-to-checks")}
+                        </Button>
+                    {/if}
+                {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export") || page.route.id.startsWith("/domains/[dn]/checks"))}
                     <Button
                         class="mt-2"
                         outline
