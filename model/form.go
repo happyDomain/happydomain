@@ -104,6 +104,11 @@ type Field struct {
 
 	// Description stores an helpfull sentence describing the field.
 	Description string `json:"description,omitempty"`
+
+	// AutoFill indicates the field value is automatically resolved by the
+	// software based on test context. When set, the value should not be
+	// entered by the user.
+	AutoFill string `json:"autoFill,omitempty"`
 }
 
 type FormState struct {

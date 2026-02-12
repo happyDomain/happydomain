@@ -715,6 +715,12 @@
             "type": "Type: {{type}}",
             "required": "Required"
         },
+        "auto-fill": {
+            "domain_name": "auto-filled: domain name",
+            "subdomain": "auto-filled: subdomain",
+            "service_type": "auto-filled: service type",
+            "generic": "auto-filled: {{key}}"
+        },
         "messages": {
             "options-updated": "Checker options updated successfully",
             "options-cleaned": "Orphaned options removed successfully",

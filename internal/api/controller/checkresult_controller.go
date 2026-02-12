@@ -23,8 +23,6 @@ package controller
 
 import (
 	"fmt"
-	"log"
-	"maps"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -205,55 +203,8 @@ func (tc *CheckResultController) TriggerCheck(c *gin.Context) {
 		return
 	}
 
-	// Merge options with upper levels (user, domain, service)
-	var domainID, serviceID *happydns.Identifier
-	switch tc.scope {
-	case happydns.CheckScopeDomain:
-		domainID = &targetID
-	case happydns.CheckScopeService:
-		serviceID = &targetID
-	}
-
-	mergedOptions := make(happydns.CheckerOptions)
-
-	// Fill opts with default plugin options
-	checker, err := tc.checkerUC.GetChecker(checkName)
-	if err != nil {
-		log.Printf("Warning: unable to get plugin %q for default options: %v", checkName, err)
-	} else {
-		options := checker.Options()
-
-		// Collect all option documentation from different scopes
-		allOpts := []happydns.CheckerOptionDocumentation{}
-		allOpts = append(allOpts, options.RunOpts...)
-		allOpts = append(allOpts, options.ServiceOpts...)
-		allOpts = append(allOpts, options.DomainOpts...)
-		allOpts = append(allOpts, options.UserOpts...)
-		allOpts = append(allOpts, options.AdminOpts...)
-
-		// Fill defaults
-		for _, opt := range allOpts {
-			if opt.Default != nil {
-				mergedOptions[opt.Id] = opt.Default
-			}
-		}
-	}
-
-	// Get merged options from upper levels
-	baseOptions, err := tc.checkerUC.GetCheckerOptions(checkName, &user.Id, domainID, serviceID)
-	if err != nil {
-		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
-		return
-	}
-
-	// Merge request options on top of base options (request options override)
-	if baseOptions != nil {
-		maps.Copy(mergedOptions, *baseOptions)
-	}
-	maps.Copy(mergedOptions, options.Options)
-
-	// Trigger the check via scheduler (returns error if scheduler is disabled)
-	executionID, err := tc.checkScheduler.TriggerOnDemandCheck(checkName, tc.scope, targetID, user.Id, mergedOptions)
+	// Trigger the test via scheduler (returns error if scheduler is disabled)
+	executionID, err := tc.checkScheduler.TriggerOnDemandCheck(checkName, tc.scope, targetID, user.Id, options.Options)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -290,7 +241,7 @@ func (tc *CheckResultController) GetCheckerOptions(c *gin.Context) {
 		serviceID = &targetID
 	}
 
-	opts, err := tc.checkerUC.GetCheckerOptions(checkName, &user.Id, domainID, serviceID)
+	opts, err := tc.checkerUC.GetStoredCheckerOptionsNoDefault(checkName, &user.Id, domainID, serviceID)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
