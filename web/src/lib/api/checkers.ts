@@ -29,6 +29,8 @@ import {
     putChecksByCnameOptionsByOptname,
     postDomainsByDomainChecksByCname,
     getDomainsByDomainChecksByCnameOptions,
+    postDomainsByDomainChecksByCnameOptions,
+    putDomainsByDomainChecksByCnameOptions,
     getDomainsByDomainChecks,
     getDomainsByDomainChecksByCnameResults,
     getDomainsByDomainChecksByCnameResultsByResultId,
@@ -43,14 +45,14 @@ import type {
     CheckerList,
     CheckerInfo,
     CheckerOptions,
-    AvailableCheck,
+    AvailableChecker,
     CheckerSchedule,
     CheckResult,
     CheckExecution,
-} from "$lib/model/check";
-import { CheckScopeType } from "$lib/model/check";
+    CheckScopeType,
+} from "$lib/model/checker";
 
-export async function listChecks(): Promise<CheckerList> {
+export async function listCheckers(): Promise<CheckerList> {
     return unwrapSdkResponse(await getChecks()) as CheckerList;
 }
 
@@ -79,7 +81,10 @@ export async function addCheckOptions(checkId: string, options: CheckerOptions):
     ) as boolean;
 }
 
-export async function updateCheckOptions(checkId: string, options: CheckerOptions): Promise<boolean> {
+export async function updateCheckOptions(
+    checkId: string,
+    options: CheckerOptions,
+): Promise<boolean> {
     return unwrapSdkResponse(
         await putChecksByCnameOptions({
             path: { cname: checkId },
@@ -109,12 +114,41 @@ export async function setcheckOption(
     ) as boolean;
 }
 
-export async function getDomainCheckOptions(domainId: string, checkId: string): Promise<CheckerOptions> {
+export async function getDomainCheckOptions(
+    domainId: string,
+    checkId: string,
+): Promise<CheckerOptions> {
     return unwrapSdkResponse(
         await getDomainsByDomainChecksByCnameOptions({
             path: { domain: domainId, cname: checkId },
         }),
     ) as CheckerOptions;
+}
+
+export async function addDomainCheckOptions(
+    domainId: string,
+    checkId: string,
+    options: CheckerOptions,
+): Promise<boolean> {
+    return unwrapSdkResponse(
+        await postDomainsByDomainChecksByCnameOptions({
+            path: { domain: domainId, cname: checkId },
+            body: options as any,
+        }),
+    ) as boolean;
+}
+
+export async function updateDomainCheckOptions(
+    domainId: string,
+    checkId: string,
+    options: CheckerOptions,
+): Promise<boolean> {
+    return unwrapSdkResponse(
+        await putDomainsByDomainChecksByCnameOptions({
+            path: { domain: domainId, cname: checkId },
+            body: options as any,
+        }),
+    ) as boolean;
 }
 
 export async function triggerCheck(
@@ -123,7 +157,9 @@ export async function triggerCheck(
     options?: CheckerOptions,
 ): Promise<{ execution_id?: string }> {
     const filteredOptions = options
-        ? Object.fromEntries(Object.entries(options).filter(([, v]) => v !== "" && v !== null && v !== undefined))
+        ? Object.fromEntries(
+              Object.entries(options).filter(([, v]) => v !== "" && v !== null && v !== undefined),
+          )
         : undefined;
     return unwrapSdkResponse(
         await postDomainsByDomainChecksByCname({
@@ -133,12 +169,12 @@ export async function triggerCheck(
     ) as { execution_id?: string };
 }
 
-export async function listAvailableChecks(domainId: string): Promise<AvailableCheck[]> {
+export async function listAvailableCheckers(domainId: string): Promise<AvailableChecker[]> {
     return unwrapSdkResponse(
         await getDomainsByDomainChecks({
             path: { domain: domainId },
         }),
-    ) as unknown as AvailableCheck[];
+    ) as unknown as AvailableChecker[];
 }
 
 export async function createCheckSchedule(data: {
@@ -182,9 +218,8 @@ export async function updateCheckSchedule(
                 options: schedule.options,
             },
         }),
-    ) as CheckerSchedule;
+    ) as unknown as AvailableChecker[];
 }
-
 export async function getCheckResult(
     domainId: string,
     checkName: string,
@@ -218,10 +253,7 @@ export async function listCheckResults(
     ) as unknown as CheckResult[];
 }
 
-export async function deleteAllCheckResults(
-    domainId: string,
-    checkName: string,
-): Promise<void> {
+export async function deleteAllCheckResults(domainId: string, checkName: string): Promise<void> {
     await deleteDomainsByDomainChecksByCnameResults({
         path: { domain: domainId, cname: checkName },
     });
