@@ -562,11 +562,26 @@ func (w *worker) executeTest(item *queueItem) {
 		return
 	}
 
-	// Merge options: global defaults < user opts < domain/service opts < schedule opts
-	mergedOptions, err := w.scheduler.scheduleUsecase.PrepareTestOptions(schedule)
-	if err != nil {
-		// Non-fatal: PrepareTestOptions already falls back to schedule-only options
-		log.Printf("Worker %d: warning, could not prepare plugin options for %s: %v\n", w.id, schedule.PluginName, err)
+	// For scheduled tests: merge plugin defaults < stored (user/domain/service) opts < schedule opts < auto-fill.
+	// For on-demand tests the caller has already merged all options, so use them directly.
+	var mergedOptions happydns.PluginOptions
+	if item.execution.ScheduleId != nil {
+		var domainId, serviceId *happydns.Identifier
+		switch schedule.TargetType {
+		case happydns.TestScopeDomain:
+			domainId = &schedule.TargetId
+		case happydns.TestScopeService:
+			serviceId = &schedule.TargetId
+		}
+		var mergeErr error
+		mergedOptions, mergeErr = w.scheduler.pluginUsecase.BuildMergedTestPluginOptions(schedule.PluginName, &schedule.OwnerId, domainId, serviceId, schedule.Options)
+		if mergeErr != nil {
+			// Non-fatal: fall back to schedule-only options
+			log.Printf("Worker %d: warning, could not prepare plugin options for %s: %v\n", w.id, schedule.PluginName, mergeErr)
+			mergedOptions = schedule.Options
+		}
+	} else {
+		mergedOptions = schedule.Options
 	}
 
 	// Prepare metadata
@@ -651,3 +666,4 @@ func (w *worker) executeTest(item *queueItem) {
 	log.Printf("Worker %d: Completed test %s for target %s (status: %d, duration: %v)\n",
 		w.id, schedule.PluginName, schedule.TargetId.String(), result.Status, duration)
 }
+

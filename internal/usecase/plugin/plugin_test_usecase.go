@@ -23,6 +23,7 @@ package plugin
 
 import (
 	"fmt"
+	"log"
 	"maps"
 	"sort"
 
@@ -30,16 +31,18 @@ import (
 )
 
 type testPluginUsecase struct {
-	config  *happydns.Options
-	manager happydns.PluginManager
-	store   PluginStorage
+	config        *happydns.Options
+	manager       happydns.PluginManager
+	store         PluginStorage
+	autoFillStore PluginAutoFillStorage
 }
 
-func NewTestPluginUsecase(cfg *happydns.Options, manager happydns.PluginManager, store PluginStorage) happydns.TestPluginUsecase {
+func NewTestPluginUsecase(cfg *happydns.Options, manager happydns.PluginManager, store PluginStorage, autoFillStore PluginAutoFillStorage) happydns.TestPluginUsecase {
 	return &testPluginUsecase{
-		config:  cfg,
-		manager: manager,
-		store:   store,
+		config:        cfg,
+		manager:       manager,
+		store:         store,
+		autoFillStore: autoFillStore,
 	}
 }
 
@@ -113,6 +116,156 @@ func (tu *testPluginUsecase) GetTestPluginOptions(pname string, userid *happydns
 
 func (tu *testPluginUsecase) ListTestPlugins() ([]happydns.TestPlugin, error) {
 	return tu.manager.GetTestPlugins(), nil
+}
+
+// GetStoredTestPluginOptionsNoDefault returns the stored options (user/domain/service scopes)
+// with auto-fill variables applied, but without plugin-defined defaults or run-time overrides.
+func (tu *testPluginUsecase) GetStoredTestPluginOptionsNoDefault(pname string, userid *happydns.Identifier, domainid *happydns.Identifier, serviceid *happydns.Identifier) (happydns.PluginOptions, error) {
+	stored, err := tu.GetTestPluginOptions(pname, userid, domainid, serviceid)
+	if err != nil {
+		return nil, err
+	}
+
+	var opts happydns.PluginOptions
+	if stored != nil {
+		opts = *stored
+	} else {
+		opts = make(happydns.PluginOptions)
+	}
+
+	plugin, err := tu.GetTestPlugin(pname)
+	if err != nil {
+		return opts, nil
+	}
+
+	return tu.applyAutoFill(plugin, userid, domainid, serviceid, opts), nil
+}
+
+// BuildMergedTestPluginOptions merges plugin options from all sources in priority order:
+// plugin defaults < stored (user/domain/service) options < runOpts < auto-fill variables.
+func (tu *testPluginUsecase) BuildMergedTestPluginOptions(pname string, userid *happydns.Identifier, domainid *happydns.Identifier, serviceid *happydns.Identifier, runOpts happydns.PluginOptions) (happydns.PluginOptions, error) {
+	merged := make(happydns.PluginOptions)
+
+	// 1. Fill plugin defaults.
+	plugin, err := tu.GetTestPlugin(pname)
+	if err != nil {
+		log.Printf("Warning: unable to get plugin %q for default options: %v", pname, err)
+	} else {
+		availableOpts := plugin.AvailableOptions()
+		allOpts := []happydns.PluginOptionDocumentation{}
+		allOpts = append(allOpts, availableOpts.RunOpts...)
+		allOpts = append(allOpts, availableOpts.ServiceOpts...)
+		allOpts = append(allOpts, availableOpts.DomainOpts...)
+		allOpts = append(allOpts, availableOpts.UserOpts...)
+		allOpts = append(allOpts, availableOpts.AdminOpts...)
+		for _, opt := range allOpts {
+			if opt.Default != nil {
+				merged[opt.Id] = opt.Default
+			}
+		}
+	}
+
+	// 2. Override with stored options (user/domain/service scopes).
+	baseOptions, err := tu.GetTestPluginOptions(pname, userid, domainid, serviceid)
+	if err != nil {
+		return merged, fmt.Errorf("could not fetch stored plugin options for %s: %w", pname, err)
+	}
+	if baseOptions != nil {
+		maps.Copy(merged, *baseOptions)
+	}
+
+	// 3. Override with caller-supplied run options.
+	maps.Copy(merged, runOpts)
+
+	// 4. Inject auto-fill variables (always win over any user-supplied value).
+	if plugin != nil {
+		merged = tu.applyAutoFill(plugin, userid, domainid, serviceid, merged)
+	}
+
+	return merged, nil
+}
+
+// applyAutoFill resolves auto-fill fields declared by the plugin and injects
+// the context-resolved values into a copy of opts.
+func (tu *testPluginUsecase) applyAutoFill(
+	plugin happydns.TestPlugin,
+	userid *happydns.Identifier,
+	domainid *happydns.Identifier,
+	serviceid *happydns.Identifier,
+	opts happydns.PluginOptions,
+) happydns.PluginOptions {
+	allOpts := plugin.AvailableOptions()
+
+	// Collect which auto-fill keys are needed.
+	needed := make(map[string]string) // autoFill constant → field id
+	for _, groups := range [][]happydns.PluginOptionDocumentation{
+		allOpts.RunOpts, allOpts.DomainOpts, allOpts.ServiceOpts,
+		allOpts.UserOpts, allOpts.AdminOpts,
+	} {
+		for _, opt := range groups {
+			if opt.AutoFill != "" {
+				needed[opt.AutoFill] = opt.Id
+			}
+		}
+	}
+
+	if len(needed) == 0 || tu.autoFillStore == nil {
+		return opts
+	}
+
+	autoFillCtx := tu.buildAutoFillContext(userid, domainid, serviceid)
+
+	result := maps.Clone(opts)
+	for autoFillKey, fieldId := range needed {
+		if val, ok := autoFillCtx[autoFillKey]; ok {
+			result[fieldId] = val
+		}
+	}
+	return result
+}
+
+// buildAutoFillContext resolves the available auto-fill values for the given
+// user/domain/service identifiers.
+func (tu *testPluginUsecase) buildAutoFillContext(userid *happydns.Identifier, domainid *happydns.Identifier, serviceid *happydns.Identifier) map[string]string {
+	ctx := make(map[string]string)
+
+	if domainid != nil {
+		if domain, err := tu.autoFillStore.GetDomain(*domainid); err == nil {
+			ctx[happydns.AutoFillDomainName] = domain.DomainName
+		}
+	} else if serviceid != nil && userid != nil {
+		// To resolve service context we need to find which domain/zone owns the service.
+		user, err := tu.autoFillStore.GetUser(*userid)
+		if err != nil {
+			return ctx
+		}
+		domains, err := tu.autoFillStore.ListDomains(user)
+		if err != nil {
+			return ctx
+		}
+		for _, domain := range domains {
+			if len(domain.ZoneHistory) == 0 {
+				continue
+			}
+			// The first element in ZoneHistory is the current (most recent) zone.
+			zoneMsg, err := tu.autoFillStore.GetZone(domain.ZoneHistory[0])
+			if err != nil {
+				continue
+			}
+			for subdomain, svcs := range zoneMsg.Services {
+				for _, svc := range svcs {
+					if svc.Id.Equals(*serviceid) {
+						ctx[happydns.AutoFillDomainName] = domain.DomainName
+						ctx[happydns.AutoFillSubdomain] = string(subdomain)
+						ctx[happydns.AutoFillServiceType] = svc.Type
+						return ctx
+					}
+				}
+			}
+		}
+	}
+
+	return ctx
 }
 
 func (tu *testPluginUsecase) SetTestPluginOptions(pname string, userid *happydns.Identifier, domainid *happydns.Identifier, serviceid *happydns.Identifier, opts happydns.PluginOptions) error {

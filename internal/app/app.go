@@ -239,7 +239,7 @@ func (app *App) initUsecases() {
 	app.usecases.authUser = authUserService
 	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg)
 	app.usecases.session = sessionService
-	app.usecases.testPlugin = pluginUC.NewTestPluginUsecase(app.cfg, app.plugins, app.store)
+	app.usecases.testPlugin = pluginUC.NewTestPluginUsecase(app.cfg, app.plugins, app.store, app.store)
 	app.usecases.testResult = testresultUC.NewTestResultUsecase(app.store, app.cfg)
 	app.usecases.testSchedule = testresultUC.NewTestScheduleUsecase(app.store, app.cfg, app.store, app.usecases.testPlugin)
 

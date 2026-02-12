@@ -31,6 +31,7 @@ export class Field {
     required? = $state<boolean>();
     secret? = $state<boolean>();
     textarea? = $state<boolean>();
+    autoFill? = $state<string>();
 }
 
 export class CustomForm {

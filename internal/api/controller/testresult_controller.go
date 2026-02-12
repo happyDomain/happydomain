@@ -23,8 +23,6 @@ package controller
 
 import (
 	"fmt"
-	"log"
-	"maps"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -230,43 +228,11 @@ func (tc *TestResultController) TriggerTest(c *gin.Context) {
 		serviceID = &targetID
 	}
 
-	mergedOptions := make(happydns.PluginOptions)
-
-	// Fill opts with default plugin options
-	plugin, err := tc.testPluginUC.GetTestPlugin(pluginName)
-	if err != nil {
-		log.Printf("Warning: unable to get plugin %q for default options: %v", pluginName, err)
-	} else {
-		availableOpts := plugin.AvailableOptions()
-
-		// Collect all option documentation from different scopes
-		allOpts := []happydns.PluginOptionDocumentation{}
-		allOpts = append(allOpts, availableOpts.RunOpts...)
-		allOpts = append(allOpts, availableOpts.ServiceOpts...)
-		allOpts = append(allOpts, availableOpts.DomainOpts...)
-		allOpts = append(allOpts, availableOpts.UserOpts...)
-		allOpts = append(allOpts, availableOpts.AdminOpts...)
-
-		// Fill defaults
-		for _, opt := range allOpts {
-			if opt.Default != nil {
-				mergedOptions[opt.Id] = opt.Default
-			}
-		}
-	}
-
-	// Get merged options from upper levels
-	baseOptions, err := tc.testPluginUC.GetTestPluginOptions(pluginName, &user.Id, domainID, serviceID)
+	mergedOptions, err := tc.testPluginUC.BuildMergedTestPluginOptions(pluginName, &user.Id, domainID, serviceID, options.Options)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
-
-	// Merge request options on top of base options (request options override)
-	if baseOptions != nil {
-		maps.Copy(mergedOptions, *baseOptions)
-	}
-	maps.Copy(mergedOptions, options.Options)
 
 	// Trigger the test via scheduler (returns error if scheduler is disabled)
 	executionID, err := tc.testScheduler.TriggerOnDemandTest(pluginName, tc.scope, targetID, user.Id, mergedOptions)
@@ -306,7 +272,7 @@ func (tc *TestResultController) GetTestPluginOptions(c *gin.Context) {
 		serviceID = &targetID
 	}
 
-	opts, err := tc.testPluginUC.GetTestPluginOptions(pluginName, &user.Id, domainID, serviceID)
+	opts, err := tc.testPluginUC.GetStoredTestPluginOptionsNoDefault(pluginName, &user.Id, domainID, serviceID)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

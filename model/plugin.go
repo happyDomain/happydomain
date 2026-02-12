@@ -21,6 +21,22 @@
 
 package happydns
 
+// Auto-fill variable identifiers for plugin option fields.
+const (
+	// AutoFillDomainName fills the option with the fully qualified domain name
+	// of the domain being tested (e.g. "example.com.").
+	AutoFillDomainName = "domain_name"
+
+	// AutoFillSubdomain fills the option with the subdomain relative to the zone
+	// (e.g. "www" for "www.example.com." in zone "example.com."). Only
+	// applicable for service-scoped tests.
+	AutoFillSubdomain = "subdomain"
+
+	// AutoFillServiceType fills the option with the service type identifier
+	// (e.g. "abstract.MatrixIM"). Only applicable for service-scoped tests.
+	AutoFillServiceType = "service_type"
+)
+
 const (
 	PluginResultStatusKO PluginResultStatus = iota
 	PluginResultStatusWarn
@@ -93,6 +109,8 @@ type PluginManager interface {
 }
 
 type TestPluginUsecase interface {
+	BuildMergedTestPluginOptions(string, *Identifier, *Identifier, *Identifier, PluginOptions) (PluginOptions, error)
+	GetStoredTestPluginOptionsNoDefault(string, *Identifier, *Identifier, *Identifier) (PluginOptions, error)
 	GetTestPlugin(string) (TestPlugin, error)
 	GetTestPluginOptions(string, *Identifier, *Identifier, *Identifier) (*PluginOptions, error)
 	ListTestPlugins() ([]TestPlugin, error)

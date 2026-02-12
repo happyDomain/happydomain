@@ -44,3 +44,19 @@ type PluginStorage interface {
 	// ClearPluginConfigurations deletes all Providers present in the database.
 	ClearPluginConfigurations() error
 }
+
+// PluginAutoFillStorage provides the domain/zone/user lookups needed to
+// resolve auto-fill variables for test plugin options.
+type PluginAutoFillStorage interface {
+	// GetDomain retrieves the Domain with the given identifier.
+	GetDomain(domainid happydns.Identifier) (*happydns.Domain, error)
+
+	// GetUser retrieves the User with the given identifier.
+	GetUser(userid happydns.Identifier) (*happydns.User, error)
+
+	// ListDomains retrieves all Domains associated to the given User.
+	ListDomains(user *happydns.User) ([]*happydns.Domain, error)
+
+	// GetZone retrieves the full Zone (including Services and metadata) for the given identifier.
+	GetZone(zoneid happydns.Identifier) (*happydns.ZoneMessage, error)
+}

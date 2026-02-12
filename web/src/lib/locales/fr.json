@@ -547,6 +547,12 @@
                 "type": "Type : {{type}}",
                 "required": "Requis"
             },
+            "auto-fill": {
+                "domain_name": "rempli automatiquement : nom de domaine",
+                "subdomain": "rempli automatiquement : sous-domaine",
+                "service_type": "rempli automatiquement : type de service",
+                "generic": "rempli automatiquement : {{key}}"
+            },
             "messages": {
                 "options-updated": "Options du plugin mises à jour avec succès",
                 "options-cleaned": "Options orphelines supprimées avec succès",

@@ -223,39 +223,6 @@ func (u *TestScheduleUsecase) getDefaultInterval(targetType happydns.TestScopeTy
 	}
 }
 
-// MergePluginOptions merges plugin options from different scopes
-// Priority: schedule options > domain options > user options > global options
-func (u *TestScheduleUsecase) MergePluginOptions(
-	globalOpts happydns.PluginOptions,
-	userOpts happydns.PluginOptions,
-	domainOpts happydns.PluginOptions,
-	scheduleOpts happydns.PluginOptions,
-) happydns.PluginOptions {
-	merged := make(happydns.PluginOptions)
-
-	// Start with global options
-	for k, v := range globalOpts {
-		merged[k] = v
-	}
-
-	// Override with user options
-	for k, v := range userOpts {
-		merged[k] = v
-	}
-
-	// Override with domain options
-	for k, v := range domainOpts {
-		merged[k] = v
-	}
-
-	// Override with schedule options (highest priority)
-	for k, v := range scheduleOpts {
-		merged[k] = v
-	}
-
-	return merged
-}
-
 // ValidateScheduleOwnership checks if a user owns a schedule
 func (u *TestScheduleUsecase) ValidateScheduleOwnership(scheduleId happydns.Identifier, userId happydns.Identifier) error {
 	schedule, err := u.storage.GetTestSchedule(scheduleId)
@@ -450,30 +417,3 @@ func (u *TestScheduleUsecase) DiscoverAndEnsureSchedules() error {
 	return errors.Join(errs...)
 }
 
-// PrepareTestOptions fetches and merges plugin options for a scheduled test execution.
-// It combines stored options (global/user/domain/service scopes) with the
-// schedule-specific overrides, returning the final merged options.
-func (u *TestScheduleUsecase) PrepareTestOptions(schedule *happydns.TestSchedule) (happydns.PluginOptions, error) {
-	if u.pluginUsecase == nil {
-		return schedule.Options, nil
-	}
-
-	var domainId, serviceId *happydns.Identifier
-	switch schedule.TargetType {
-	case happydns.TestScopeDomain:
-		domainId = &schedule.TargetId
-	case happydns.TestScopeService:
-		serviceId = &schedule.TargetId
-	}
-
-	baseOptions, err := u.pluginUsecase.GetTestPluginOptions(schedule.PluginName, &schedule.OwnerId, domainId, serviceId)
-	if err != nil {
-		// Non-fatal: fall back to schedule-only options and surface as a warning
-		return schedule.Options, fmt.Errorf("could not fetch plugin options for %s: %w", schedule.PluginName, err)
-	}
-
-	if baseOptions != nil {
-		return u.MergePluginOptions(nil, nil, *baseOptions, schedule.Options), nil
-	}
-	return schedule.Options, nil
-}
