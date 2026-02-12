@@ -2,4 +2,5 @@
  * Centralized utility exports
  */
 
-export { toDatetimeLocal, fromDatetimeLocal } from './datetime';
+export { toDatetimeLocal, fromDatetimeLocal, formatCheckDate, formatRelative } from "./datetime";
+export { getStatusColor, getStatusKey, formatDuration } from "./check";

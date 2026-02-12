@@ -126,7 +126,7 @@ func (tc *CheckResultController) ListAvailableChecks(c *gin.Context) {
 
 		info := happydns.CheckerStatus{
 			CheckerName: checkername,
-			Enabled:     false,
+			Enabled:     true, // enabled by default unless explicitly disabled via a schedule
 		}
 
 		// Check if there's a schedule

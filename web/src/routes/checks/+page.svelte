@@ -36,11 +36,16 @@
     } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
-    import { listChecks } from "$lib/api/checks";
-
-    let checksPromise = $state(listChecks());
+    import { checks, refreshChecks } from "$lib/stores/checks";
 
     let searchQuery = $state("");
+
+    // Load checks if not already loaded
+    $effect(() => {
+        if ($checks === undefined) {
+            refreshChecks();
+        }
+    });
 </script>
 
 <svelte:head>
@@ -58,13 +63,13 @@
                 <span class="lead">
                     {$t("checks.description")}
                 </span>
-                {#await checksPromise then checkers}
-                    <span
-                        >{$t("checks.available-count", {
-                            count: Object.keys(checkers ?? {}).length,
-                        })}</span
-                    >
-                {/await}
+                {#if $checks}
+                    <span>
+                        {$t("checks.available-count", {
+                            count: Object.keys($checks).length,
+                        })}
+                    </span>
+                {/if}
             </p>
         </Col>
     </Row>
@@ -84,14 +89,14 @@
         </Col>
     </Row>
 
-    {#await checksPromise}
+    {#if !$checks}
         <Card body>
             <p class="text-center mb-0">
                 <span class="spinner-border spinner-border-sm me-2"></span>
                 {$t("checks.loading")}
             </p>
         </Card>
-    {:then checks}
+    {:else}
         <div class="table-responsive">
             <Table hover bordered>
                 <thead>
@@ -102,39 +107,39 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {#if !checks || Object.keys(checks).length == 0}
+                    {#if Object.keys($checks).length == 0}
                         <tr>
                             <td colspan="4" class="text-center text-muted py-4">
                                 {$t("checks.no-checkers")}
                             </td>
                         </tr>
                     {:else}
-                        {#each Object.entries(checks ?? {}).filter(([name, _info]) => name
+                        {#each Object.entries($checks).filter(([name, _info]) => name
                                     .toLowerCase()
                                     .indexOf(searchQuery.toLowerCase()) > -1) as [checkerName, checkerInfo]}
                             <tr>
                                 <td><strong>{checkerInfo.name || checkerName}</strong></td>
                                 <td>
-                                    {#if checkerInfo.availableOn}
-                                        {#if checkerInfo.availableOn.applyToDomain}
+                                    {#if checkerInfo.availability}
+                                        {#if checkerInfo.availability.applyToDomain}
                                             <Badge color="success"
                                                 >{$t("checks.availability.domain")}</Badge
                                             >
                                         {/if}
-                                        {#if checkerInfo.availableOn.limitToProviders && checkerInfo.availableOn.limitToProviders.length > 0}
+                                        {#if checkerInfo.availability.limitToProviders && checkerInfo.availability.limitToProviders.length > 0}
                                             <Badge
                                                 color="primary"
-                                                title={checkerInfo.availableOn.limitToProviders.join(
+                                                title={checkerInfo.availability.limitToProviders.join(
                                                     ", ",
                                                 )}
                                             >
                                                 {$t("checks.availability.provider-specific")}
                                             </Badge>
                                         {/if}
-                                        {#if checkerInfo.availableOn.limitToServices && checkerInfo.availableOn.limitToServices.length > 0}
+                                        {#if checkerInfo.availability.limitToServices && checkerInfo.availability.limitToServices.length > 0}
                                             <Badge
                                                 color="info"
-                                                title={checkerInfo.availableOn.limitToServices.join(
+                                                title={checkerInfo.availability.limitToServices.join(
                                                     ", ",
                                                 )}
                                             >
@@ -159,12 +164,5 @@
                 </tbody>
             </Table>
         </div>
-    {:catch error}
-        <Card body color="danger">
-            <p class="mb-0">
-                <Icon name="exclamation-triangle-fill"></Icon>
-                {$t("checks.error-loading", { error: error.message })}
-            </p>
-        </Card>
-    {/await}
+    {/if}
 </Container>
