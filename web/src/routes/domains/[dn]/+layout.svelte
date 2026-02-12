@@ -34,6 +34,7 @@
     import type { ZoneMeta } from "$lib/model/zone";
     import { domains_idx, refreshDomains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
+    import DomainCheckerSidebar from "$lib/components/checkers/DomainCheckerSidebar.svelte";
     import ButtonZonePublish from "./ButtonZonePublish.svelte";
     import ModalDiffZone from "./ModalDiffZone.svelte";
     import ModalDomainDelete, { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
@@ -67,7 +68,11 @@
                               ? "/history"
                               : page.route.id.startsWith("/domains/[dn]/[[historyid]]/export")
                                 ? "/export"
-                                : ""
+                                : page.route.id.startsWith("/domains/[dn]/checks/[cname]")
+                                  ? `/checks/${page.params.cname!}`
+                                  : page.route.id.startsWith("/domains/[dn]/checks")
+                                    ? "/checks"
+                                    : ""
                         : ""),
             );
         }
@@ -149,7 +154,37 @@
                     <SelectDomain bind:selectedDomain />
                 </div>
 
-                {#if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
+                {#if page.route.id && page.route.id.startsWith("/domains/[dn]/checks/[cname]")}
+                    {#if page.route.id.startsWith("/domains/[dn]/checks/[cname]/results/")}
+                        <a
+                            href={"/domains/" +
+                                encodeURIComponent(domainLink(selectedDomain)) +
+                                "/checks/" +
+                                encodeURIComponent(page.params.cname!) +
+                                "/results"}
+                            class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
+                        >
+                            <Icon name="chevron-left" />
+                            {$t("zones.return-to-results")}
+                        </a>
+                    {:else}
+                        <a
+                            href="/domains/{encodeURIComponent(domainLink(selectedDomain))}/checks"
+                            class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
+                        >
+                            <Icon name="chevron-left" />
+                            {$t("checkers.title")}
+                        </a>
+                        {#if page.params.cname}
+                            <DomainCheckerSidebar
+                                class="mt-3"
+                                domainName={data.domain.domain}
+                                currentCheckerName={page.params.cname}
+                            />
+                        {/if}
+                        <div class="flex-fill"></div>
+                    {/if}
+                {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export") || page.route.id == "/domains/[dn]/checks")}
                     <a
                         href="/domains/{encodeURIComponent(domainLink(selectedDomain))}"
                         class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"

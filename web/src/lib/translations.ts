@@ -46,6 +46,9 @@ interface Params {
     key?: string;
     error?: string;
     options?: string;
+    providers?: string;
+    services?: string;
+    label?: string;
     // add more parameters that are used here
 }
 

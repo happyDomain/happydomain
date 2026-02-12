@@ -40,7 +40,7 @@
     import { t } from "$lib/translations";
     import { toasts } from "$lib/stores/toasts";
     import PageTitle from "$lib/components/PageTitle.svelte";
-    import { getCheckStatus, getCheckOptions, updateCheckOptions } from "$lib/api/checks";
+    import { getCheckStatus, getCheckOptions, updateCheckOptions } from "$lib/api/checkers";
     import Resource from "$lib/components/inputs/Resource.svelte";
     import CheckerOptionsGroups from "$lib/components/checkers/CheckerOptionsGroups.svelte";
 
@@ -162,6 +162,11 @@
                                                     {$t("checkers.availability.domain-level")}
                                                 </Badge>
                                             {/if}
+                                            {#if status.availability.applyToZone}
+                                                <Badge color="success">
+                                                    {$t("checkers.availability.zone-level")}
+                                                </Badge>
+                                            {/if}
                                             {#if status.availability.limitToProviders && status.availability.limitToProviders.length > 0}
                                                 <Badge color="primary">
                                                     {$t("checkers.availability.providers", {
@@ -182,7 +187,7 @@
                                                     })}
                                                 </Badge>
                                             {/if}
-                                            {#if !status.availability.applyToDomain && (!status.availability.limitToProviders || status.availability.limitToProviders.length === 0) && (!status.availability.limitToServices || status.availability.limitToServices.length === 0)}
+                                            {#if !status.availability.applyToDomain && !status.availability.applyToZone && (!status.availability.limitToProviders || status.availability.limitToProviders.length === 0) && (!status.availability.limitToServices || status.availability.limitToServices.length === 0)}
                                                 <Badge color="secondary">
                                                     {$t("checkers.availability.general")}
                                                 </Badge>
