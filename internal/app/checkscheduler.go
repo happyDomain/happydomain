@@ -495,9 +495,9 @@ func (w *worker) executeCheck(item *queueItem) {
 
 	// Always update schedule NextRun after execution, whether it succeeds or fails.
 	// This prevents the schedule from being re-queued on the next tick if the test fails.
-	if item.execution.ScheduleId != nil {
+	if execution.ScheduleId != nil {
 		defer func() {
-			if err := w.scheduler.scheduleUsecase.UpdateScheduleAfterRun(*item.execution.ScheduleId); err != nil {
+			if err := w.scheduler.scheduleUsecase.UpdateScheduleAfterRun(*execution.ScheduleId); err != nil {
 				log.Printf("Worker %d: Error updating schedule after run: %v\n", w.id, err)
 			}
 		}()
@@ -536,11 +536,20 @@ func (w *worker) executeCheck(item *queueItem) {
 		return
 	}
 
-	// Merge options: global defaults < user opts < domain/service opts < schedule opts
-	mergedOptions, err := w.scheduler.scheduleUsecase.PrepareCheckOptions(schedule)
-	if err != nil {
-		// Non-fatal: PrepareTestOptions already falls back to schedule-only options
-		log.Printf("Worker %d: warning, could not prepare plugin options for %s: %v\n", w.id, schedule.CheckerName, err)
+	var domainId, serviceId *happydns.Identifier
+	switch schedule.TargetType {
+	case happydns.CheckScopeDomain:
+		domainId = &schedule.TargetId
+	case happydns.CheckScopeService:
+		serviceId = &schedule.TargetId
+	}
+
+	// Merge options: global defaults < user opts < domain/service opts < schedule/on-demand opts < auto-fill
+	mergedOptions, mergeErr := w.scheduler.checkerUsecase.BuildMergedCheckerOptions(schedule.CheckerName, &schedule.OwnerId, domainId, serviceId, schedule.Options)
+	if mergeErr != nil {
+		// Non-fatal: fall back to schedule-only options
+		log.Printf("Worker %d: warning, could not prepare checker options for %s: %v\n", w.id, schedule.CheckerName, mergeErr)
+		mergedOptions = schedule.Options
 	}
 
 	// Prepare metadata
