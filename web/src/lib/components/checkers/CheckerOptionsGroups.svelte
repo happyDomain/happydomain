@@ -53,7 +53,7 @@
         <Card class="mb-3">
             <CardHeader>
                 <strong>{optGroup.label}</strong>
-                <small class="text-muted ms-2">{$t("checks.detail.read-only")}</small>
+                <small class="text-muted ms-2">{$t("checkers.detail.read-only")}</small>
             </CardHeader>
             <CardBody>
                 <dl class="row mb-0">
@@ -72,13 +72,13 @@
                                 <small class="text-muted d-block">{optDoc.description}</small>
                             {/if}
                             <small class="text-muted">
-                                {$t("checks.option-groups.type", {
+                                {$t("checkers.option-groups.type", {
                                     type: optDoc.type || "string",
                                 })}
                             </small>
                             {#if optDoc.required}
                                 <small class="text-danger ms-2">
-                                    {$t("checks.option-groups.required")}
+                                    {$t("checkers.option-groups.required")}
                                 </small>
                             {/if}
                         </dd>
