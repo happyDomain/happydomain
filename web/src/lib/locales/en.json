@@ -82,6 +82,7 @@
             "share": "Share the zone…",
             "upload": "Import a zone file",
             "view": "View my zone",
+            "view-tests": "View tests",
             "others": "More actions on {{domain}}"
         },
         "alert": {
@@ -539,6 +540,132 @@
         "ttl": "Remaining time in cache",
         "showDNSSEC": "Show DNSSEC records in answer (if any)"
     },
+    "tests": {
+        "run-test": {
+            "title": "Run Test",
+            "loading-options": "Loading test options...",
+            "configure-info": "Configure test options below. Pre-filled values are from domain-level settings.",
+            "no-options": "This test has no configurable options. Click \"Run Test\" to execute with default settings.",
+            "error-loading-options": "Error loading test options: {{error}}",
+            "run-button": "Run Test",
+            "triggered-success": "Test triggered successfully! Execution ID: {{id}}",
+            "trigger-failed": "Failed to trigger test: {{error}}",
+            "advanced-options": "Advanced options"
+        },
+        "never": "Never",
+        "na": "N/A",
+        "relative": {
+            "in-less-than-a-minute": "in less than a minute",
+            "just-now": "just now",
+            "in": "in {{label}}",
+            "ago": "{{label}} ago"
+        },
+        "status": {
+            "ok": "OK",
+            "info": "Info",
+            "warning": "Warning",
+            "error": "Error",
+            "unknown": "Unknown",
+            "pending": "Pending",
+            "not-run": "Not run"
+        },
+        "list": {
+            "title": "Tests for ",
+            "loading": "Loading tests...",
+            "loading-plugins": "Loading plugin information...",
+            "no-tests": "No tests available for this domain.",
+            "run-test": "Run Test",
+            "view-results": "View Results",
+            "error-loading": "Error loading tests: {{error}}",
+            "unknown-version": "Unknown",
+            "table": {
+                "plugin": "Test Plugin",
+                "status": "Status",
+                "last-run": "Last Run",
+                "schedule": "Schedule",
+                "actions": "Actions"
+            },
+            "schedule": {
+                "enabled": "Enabled",
+                "disabled": "Disabled"
+            }
+        },
+        "schedule": {
+            "title": "Schedule",
+            "card-title": "Automatic scheduling",
+            "auto-enabled": "Run automatically",
+            "auto-disabled": "Disabled (run manually only)",
+            "interval-label": "Check interval",
+            "hours": "hours",
+            "interval-hint": "Minimum 1 hour. The test will run once per interval.",
+            "next-run": "Next scheduled run",
+            "last-run": "Last run",
+            "no-schedule-yet": "No schedule created yet. Save to create one.",
+            "save": "Save",
+            "save-failed": "Failed to save schedule",
+            "saved": "Schedule saved successfully."
+        },
+        "results": {
+            "loading": "Loading test results...",
+            "no-results": "No test results yet. Click \"Run Test Now\" to execute the test.",
+            "title": "Test Results ({{count}})",
+            "run-test-now": "Run Test Now",
+            "back-to-tests": "Back to Tests",
+            "delete-all": "Delete All",
+            "delete-confirm": "Are you sure you want to delete this test result?",
+            "delete-all-confirm": "Are you sure you want to delete ALL test results for this test? This cannot be undone.",
+            "delete-failed": "Failed to delete result",
+            "delete-all-failed": "Failed to delete results",
+            "configure": "Configure",
+            "domain-level": "Domain-level",
+            "error-loading": "Error loading test results: {{error}}",
+            "table": {
+                "executed-at": "Executed At",
+                "status": "Status",
+                "message": "Message",
+                "duration": "Duration",
+                "type": "Type",
+                "actions": "Actions"
+            },
+            "type": {
+                "scheduled": "Scheduled",
+                "manual": "Manual"
+            },
+            "pending": {
+                "queued": "Queued, waiting to run…",
+                "running": "Running…"
+            },
+            "view": "View"
+        },
+        "result": {
+            "title": "Test Result Details",
+            "loading": "Loading test result...",
+            "relaunch": "Relaunch Test",
+            "delete": "Delete Result",
+            "back-to-results": "Back to Results",
+            "relaunch-failed": "Failed to relaunch test",
+            "delete-confirm": "Are you sure you want to delete this test result?",
+            "delete-failed": "Failed to delete result",
+            "error-loading": "Error loading test result: {{error}}",
+            "milliseconds": "milliseconds",
+            "seconds": "seconds",
+            "type": {
+                "scheduled": "Scheduled Test",
+                "manual": "Manual Test"
+            },
+            "test-options": "Test Options",
+            "full-report": "Full Report",
+            "field": {
+                "domain": "Domain:",
+                "executed-at": "Executed At:",
+                "duration": "Duration:",
+                "status": "Status:",
+                "status-message": "Status Message:",
+                "error": "Error:",
+                "plugin-version": "Plugin Version:"
+            }
+        }
+    },
     "plugins": {
         "tests": {
             "title": "Domain Tests",
@@ -551,7 +678,6 @@
             "error-loading": "Error loading tests: {{error}}",
             "error-loading-test": "Error loading test: {{error}}",
             "test-info-not-found": "Error: Test information not found",
-            "back-to-tests": "Back to Tests",
             "table": {
                 "name": "Test Name",
                 "version": "Version",
@@ -597,13 +723,16 @@
                 "options-cleaned": "Orphaned options removed successfully",
                 "update-failed": "Failed to update options: {{error}}",
                 "clean-failed": "Failed to clean options: {{error}}"
-            }
+            },
+            "back-button": "Back to Plugins"
         }
     },
     "zones": {
         "upload": "Import a zone",
         "import-text": "Import from text",
         "import-file": "Import from file",
-        "return-to": "Go to the zone"
+        "return-to": "Go to the zone",
+        "return-to-results": "Back to Results",
+        "return-to-tests": "Back to Tests"
     }
 }

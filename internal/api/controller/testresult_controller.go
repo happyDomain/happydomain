@@ -142,7 +142,7 @@ func (tc *TestResultController) ListAvailableTests(c *gin.Context) {
 
 		info := TestInfo{
 			PluginName: pluginNames[0],
-			Enabled:    false,
+			Enabled:    true, // enabled by default unless explicitly disabled via a schedule
 		}
 
 		// Check if there's a schedule

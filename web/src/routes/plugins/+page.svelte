@@ -36,11 +36,16 @@
     } from "@sveltestrap/sveltestrap";
 
     import { t } from '$lib/translations';
-    import { listPlugins } from '$lib/api/plugins';
-
-    let pluginsPromise = $state(listPlugins());
+    import { plugins, refreshPlugins } from '$lib/stores/plugins';
 
     let searchQuery = $state('');
+
+    // Load plugins if not already loaded
+    $effect(() => {
+        if ($plugins === undefined) {
+            refreshPlugins();
+        }
+    });
 </script>
 
 <svelte:head>
@@ -58,9 +63,9 @@
                 <span class="lead">
                     {$t('plugins.tests.description')}
                 </span>
-                {#await pluginsPromise then plugins}
-                    <span>{$t('plugins.tests.available-count', { count: Object.keys(plugins ?? {}).length })}</span>
-                {/await}
+                {#if $plugins}
+                    <span>{$t('plugins.tests.available-count', { count: Object.keys($plugins).length })}</span>
+                {/if}
             </p>
         </Col>
     </Row>
@@ -80,14 +85,14 @@
         </Col>
     </Row>
 
-    {#await pluginsPromise}
+    {#if !$plugins}
         <Card body>
             <p class="text-center mb-0">
                 <span class="spinner-border spinner-border-sm me-2"></span>
                 {$t('plugins.tests.loading')}
             </p>
         </Card>
-    {:then plugins}
+    {:else}
         <div class="table-responsive">
             <Table hover bordered>
                 <thead>
@@ -99,14 +104,14 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {#if !plugins || Object.keys(plugins).length == 0}
+                    {#if Object.keys($plugins).length == 0}
                         <tr>
                             <td colspan="4" class="text-center text-muted py-4">
                                 {$t('plugins.tests.no-tests')}
                             </td>
                         </tr>
                     {:else}
-                        {#each Object.entries(plugins ?? {}).filter(([name, _info]) => name.toLowerCase().indexOf(searchQuery.toLowerCase()) > -1) as [pluginName, pluginInfo]}
+                        {#each Object.entries($plugins).filter(([name, _info]) => name.toLowerCase().indexOf(searchQuery.toLowerCase()) > -1) as [pluginName, pluginInfo]}
                             <tr>
                                 <td><strong>{pluginInfo.name || pluginName}</strong></td>
                                 <td>{pluginInfo.version}</td>
@@ -141,12 +146,5 @@
                 </tbody>
             </Table>
         </div>
-    {:catch error}
-        <Card body color="danger">
-            <p class="mb-0">
-                <Icon name="exclamation-triangle-fill"></Icon>
-                {$t('plugins.tests.error-loading', { error: error.message })}
-            </p>
-        </Card>
-    {/await}
+    {/if}
 </Container>

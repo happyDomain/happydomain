@@ -476,6 +476,24 @@
         "no-group": "Divers",
         "title": "Vos groupes"
     },
+    "tests": {
+        "run-test": {
+            "title": "Lancer le test",
+            "loading-options": "Chargement des options du test...",
+            "configure-info": "Configurez les options du test ci-dessous. Les valeurs préremplies proviennent des paramètres au niveau du domaine.",
+            "no-options": "Ce test n'a pas d'options configurables. Cliquez sur \"Lancer le test\" pour l'exécuter avec les paramètres par défaut.",
+            "error-loading-options": "Erreur lors du chargement des options du test : {{error}}",
+            "run-button": "Lancer le test"
+        },
+        "never": "Jamais",
+        "na": "N/A",
+        "relative": {
+            "in-less-than-a-minute": "dans moins d'une minute",
+            "just-now": "à l'instant",
+            "in": "dans {{label}}",
+            "ago": "il y a {{label}}"
+        }
+    },
     "plugins": {
         "tests": {
             "title": "Tests de domaines",
@@ -534,7 +552,8 @@
                 "options-cleaned": "Options orphelines supprimées avec succès",
                 "update-failed": "Échec de la mise à jour des options : {{error}}",
                 "clean-failed": "Échec du nettoyage des options : {{error}}"
-            }
+            },
+            "back-button": "Retour aux plugins"
         }
     },
     "zones": {

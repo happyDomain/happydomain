@@ -81,7 +81,11 @@
                             ? "/logs"
                             : page.route.id.startsWith("/domains/[dn]/history")
                               ? "/history"
-                              : ""
+                              : page.route.id.startsWith("/domains/[dn]/tests/[tname]")
+                                ? `/tests/${page.params.tname!}`
+                                : page.route.id.startsWith("/domains/[dn]/tests")
+                                  ? "/tests"
+                                  : ""
                         : ""),
             );
         }
@@ -172,7 +176,35 @@
                     <SelectDomain bind:selectedDomain />
                 </div>
 
-                {#if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs"))}
+                {#if page.route.id && page.route.id.startsWith("/domains/[dn]/tests/[tname]")}
+                    {#if page.route.id.startsWith("/domains/[dn]/tests/[tname]/results/")}
+                        <Button
+                            class="mt-2"
+                            outline
+                            color="primary"
+                            href={"/domains/" +
+                                encodeURIComponent(domainLink(selectedDomain)) +
+                                "/tests/" +
+                                encodeURIComponent(page.params.tname!) +
+                                "/results"}
+                        >
+                            <Icon name="chevron-left" />
+                            {$t("zones.return-to-results")}
+                        </Button>
+                    {:else}
+                        <Button
+                            class="mt-2"
+                            outline
+                            color="primary"
+                            href={"/domains/" +
+                                encodeURIComponent(domainLink(selectedDomain)) +
+                                "/tests"}
+                        >
+                            <Icon name="chevron-left" />
+                            {$t("zones.return-to-tests")}
+                        </Button>
+                    {/if}
+                {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/tests"))}
                     <Button
                         class="mt-2"
                         outline
@@ -225,6 +257,9 @@
                                 </DropdownItem>
                                 <DropdownItem href={`/domains/${domainLink(selectedDomain)}/logs`}>
                                     {$t("domains.actions.audit")}
+                                </DropdownItem>
+                                <DropdownItem href={`/domains/${domainLink(selectedDomain)}/tests`}>
+                                    {$t("domains.actions.view-tests")}
                                 </DropdownItem>
                                 <DropdownItem divider />
                                 <DropdownItem on:click={viewZone} disabled={!$sortedDomains}>
