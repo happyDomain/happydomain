@@ -144,7 +144,4 @@ type CheckerScheduleUsecase interface {
 	// RescheduleOverdueTests reschedules overdue tests to run soon, spread over a
 	// short window to avoid scheduler famine after a suspend or server restart.
 	RescheduleOverdueChecks() (int, error)
-
-	// PrepareCheckOptions fetches and merges plugin options for a scheduled check execution.
-	PrepareCheckOptions(schedule *CheckerSchedule) (CheckerOptions, error)
 }
