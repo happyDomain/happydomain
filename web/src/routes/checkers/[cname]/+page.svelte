@@ -40,7 +40,7 @@
     import { t } from "$lib/translations";
     import { toasts } from "$lib/stores/toasts";
     import PageTitle from "$lib/components/PageTitle.svelte";
-    import { getCheckStatus, getCheckOptions, updateCheckOptions } from "$lib/api/checks";
+    import { getCheckStatus, getCheckOptions, updateCheckOptions } from "$lib/api/checkers";
     import Resource from "$lib/components/inputs/Resource.svelte";
     import CheckerOptionsGroups from "$lib/components/checkers/CheckerOptionsGroups.svelte";
 
