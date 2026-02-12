@@ -26,6 +26,30 @@ import (
 	"time"
 )
 
+// Auto-fill variable identifiers for checker option fields.
+const (
+	// AutoFillDomainName fills the option with the fully qualified domain name
+	// of the domain being tested (e.g. "example.com.").
+	AutoFillDomainName = "domain_name"
+
+	// AutoFillSubdomain fills the option with the subdomain relative to the zone
+	// (e.g. "www" for "www.example.com." in zone "example.com."). Only
+	// applicable for service-scoped tests.
+	AutoFillSubdomain = "subdomain"
+
+	// AutoFillZone fills the option with the zone object. Only applicable
+	// for domain-scoped and service-scoped tests.
+	AutoFillZone = "zone"
+
+	// AutoFillServiceType fills the option with the service type identifier
+	// (e.g. "abstract.MatrixIM"). Only applicable for service-scoped tests.
+	AutoFillServiceType = "service_type"
+
+	// AutoFillService fills the option with the service object. Only applicable
+	// for service-scoped tests.
+	AutoFillService = "service"
+)
+
 const (
 	CheckResultStatusUnknown CheckResultStatus = iota
 	CheckResultStatusCritical
@@ -110,6 +134,8 @@ type CheckerStatus struct {
 }
 
 type CheckerUsecase interface {
+	BuildMergedCheckerOptions(string, *Identifier, *Identifier, *Identifier, CheckerOptions) (CheckerOptions, error)
+	GetStoredCheckerOptionsNoDefault(string, *Identifier, *Identifier, *Identifier) (CheckerOptions, error)
 	GetChecker(string) (Checker, error)
 	GetCheckerOptions(string, *Identifier, *Identifier, *Identifier) (*CheckerOptions, error)
 	GetCheckerResponse(Checker) CheckerResponse
