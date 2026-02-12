@@ -31,3 +31,61 @@ export function fromDatetimeLocal(datetimeLocal: string): string | null {
         return null;
     }
 }
+
+/**
+ * Format a date string for display in check UI
+ * @param dateString ISO date string or undefined
+ * @param style Display style: "short", "medium", or "long"
+ * @param t i18n translation function
+ * @returns Formatted date string, or $t("checks.never") if undefined/invalid
+ */
+export function formatCheckDate(
+    dateString: string | undefined,
+    style: "short" | "medium" | "long",
+    t: (k: string) => string,
+): string {
+    if (!dateString) return t("checks.never");
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return t("checks.never");
+    return new Intl.DateTimeFormat(undefined, {
+        dateStyle: style,
+        timeStyle: "short",
+    }).format(d);
+}
+
+/**
+ * Format a date string as a relative time (e.g. "in 3h 20m" or "5m ago")
+ * @param dateString ISO date string or undefined
+ * @param t i18n translation function
+ * @returns Relative time string, or empty string if undefined/invalid
+ */
+export function formatRelative(dateString: string | undefined, t: (k: string, params?: Record<string, string>) => string): string {
+    if (!dateString) return "";
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return "";
+    const now = new Date();
+    const diffMs = d.getTime() - now.getTime();
+    const absDiffMs = Math.abs(diffMs);
+
+    if (absDiffMs < 60_000)
+        return diffMs > 0
+            ? t("checks.relative.in-less-than-a-minute")
+            : t("checks.relative.just-now");
+
+    const minutes = Math.floor(absDiffMs / 60_000);
+    const hours = Math.floor(absDiffMs / 3_600_000);
+    const days = Math.floor(absDiffMs / 86_400_000);
+
+    let label: string;
+    if (days > 0) {
+        label = `${days}d ${hours % 24}h`;
+    } else if (hours > 0) {
+        label = `${hours}h ${minutes % 60}m`;
+    } else {
+        label = `${minutes}m`;
+    }
+
+    return diffMs > 0
+        ? t("checks.relative.in", { label })
+        : t("checks.relative.ago", { label });
+}
