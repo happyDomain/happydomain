@@ -35,22 +35,34 @@
         edit?: boolean;
         index: string;
         specs?: Field;
+        readonly?: boolean;
         value: any;
-        [key: string]: any
+        [key: string]: any;
     }
 
     let {
         edit = false,
         index,
         specs = { id: "", type: "" },
+        readonly = false,
         value = $bindable(),
         ...rest
     }: Props = $props();
     let val: any = $state(value);
 
-    let unit: string | null = $derived(specs.type === "time.Duration" || specs.type === "common.Duration" ? "s" : null);
+    let unit: string | null = $derived(
+        specs.type === "time.Duration" || specs.type === "common.Duration" ? "s" : null,
+    );
 
-    let inputtype: InputType = $derived((specs.type && (specs.type.startsWith("uint") || specs.type.startsWith("int"))) ? "number" : (specs.type && specs.type === "bool" ? "checkbox" : (specs.textarea ? "textarea" : "text")));
+    let inputtype: InputType = $derived(
+        specs.type && (specs.type.startsWith("uint") || specs.type.startsWith("int"))
+            ? "number"
+            : specs.type && specs.type === "bool"
+              ? "checkbox"
+              : specs.textarea
+                ? "textarea"
+                : "text",
+    );
 
     let inputmax: number | undefined = $derived(computeInputmax(specs));
     let inputmin: number | undefined = $derived(computeInputmin(specs));
@@ -105,15 +117,17 @@
             !checkBase64(val)
         ) {
             if (checkBase64(val + "==")) {
-                return
+                return (
                     t.get("errors.base64") +
                     " " +
-                    t.get("errors.suggestion", { suggestion: `${val}==` });
+                    t.get("errors.suggestion", { suggestion: `${val}==` })
+                );
             } else if (checkBase64(val + "=")) {
-                return
+                return (
                     t.get("errors.base64") +
                     " " +
-                    t.get("errors.suggestion", { suggestion: `${val}=` });
+                    t.get("errors.suggestion", { suggestion: `${val}=` })
+                );
             } else if (checkBase64(val + "a")) {
                 return t.get("errors.base64") + " " + t.get("errors.base64-unfinished");
             } else {
@@ -124,18 +138,21 @@
     }
 
     function parseValue(e: InputEvent) {
-        if (e.target && 'value' in e.target) {
+        if (e.target && "value" in e.target) {
             const target = e.target as HTMLInputElement;
             val = target.value;
 
             if (
                 specs.type &&
                 (specs.type.startsWith("int") ||
-                 specs.type.startsWith("uint") ||
-                 specs.type == "time.Duration" ||
-                 specs.type == "common.Duration")
+                    specs.type.startsWith("uint") ||
+                    specs.type == "time.Duration" ||
+                    specs.type == "common.Duration")
             ) {
-                if (target.value.length != 0 && target.value == parseInt(target.value, 10).toString()) {
+                if (
+                    target.value.length != 0 &&
+                    target.value == parseInt(target.value, 10).toString()
+                ) {
                     value = parseInt(target.value, 10);
                 } else if (specs.type == "time.Duration" || specs.type == "common.Duration") {
                     // Allow 1m, 1s, ...
@@ -154,6 +171,7 @@
             id={"spec-" + index + "-" + specs.id}
             type="select"
             required={specs.required}
+            {readonly}
             bind:value
             on:focus={() => dispatch("focus")}
             on:blur={() => dispatch("blur")}
@@ -170,8 +188,8 @@
             {feedback}
             invalid={feedback !== undefined}
             placeholder={specs.placeholder}
-            plaintext={!edit}
-            readonly={!edit}
+            plaintext={!edit || readonly}
+            readonly={!edit || readonly}
             required={specs.required}
             bind:checked={value}
             on:focus={() => dispatch("focus")}
@@ -187,8 +205,8 @@
             min={inputmin}
             max={inputmax}
             placeholder={specs.placeholder}
-            plaintext={!edit}
-            readonly={!edit}
+            plaintext={!edit || readonly}
+            readonly={!edit || readonly}
             required={specs.required}
             bind:value={val}
             on:focus={() => dispatch("focus")}

@@ -37,8 +37,9 @@
         index: string;
         showDescription?: boolean;
         specs: Field;
+        readonly?: boolean;
         value: any;
-        [key: string]: any
+        [key: string]: any;
     }
 
     let {
@@ -47,6 +48,7 @@
         index,
         showDescription = true,
         specs,
+        readonly = false,
         value = $bindable(),
         ...rest
     }: Props = $props();
@@ -71,6 +73,7 @@
                     {edit}
                     {index}
                     {specs}
+                    {readonly}
                     bind:value
                     on:focus={() => dispatch("focus")}
                     on:blur={() => dispatch("blur")}
