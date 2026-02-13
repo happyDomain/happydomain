@@ -33,7 +33,11 @@
     import { appConfig } from "$lib/stores/config";
     import { providers } from "$lib/stores/providers";
     import { toasts } from "$lib/stores/toasts";
-    import { t } from "$lib/translations";
+    import { locale, t } from "$lib/translations";
+
+    $effect(() => {
+        document.documentElement.lang = $locale;
+    });
 
     const { MODE } = import.meta.env;
 
