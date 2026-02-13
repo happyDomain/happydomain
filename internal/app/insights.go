@@ -30,27 +30,42 @@ import (
 	"net/http"
 	"runtime"
 	"runtime/debug"
-	"strings"
 	"time"
 
 	"git.happydns.org/happyDomain/internal/api/controller"
-	"git.happydns.org/happyDomain/internal/storage"
+	insightUC "git.happydns.org/happyDomain/internal/usecase/insight"
 	"git.happydns.org/happyDomain/model"
 )
 
 const (
 	InsightsUpdateInterval = 24 * time.Hour
 	InsightsEndpoint       = "https://insights.happydomain.org/collect"
+
+	insightsHTTPTimeout = 10 * time.Second
 )
+
+// allowedBuildSettings lists the Go build settings that are safe to include in
+// telemetry. Other settings (e.g. -ldflags values, module paths) are omitted.
+var allowedBuildSettings = map[string]struct{}{
+	"CGO_ENABLED":  {},
+	"GOARCH":       {},
+	"GOAMD64":      {},
+	"GOARM":        {},
+	"GOMIPS":       {},
+	"GOOS":         {},
+	"vcs":          {},
+	"vcs.time":     {},
+	"vcs.modified": {},
+}
 
 type insightsCollector struct {
 	cfg   *happydns.Options
-	store storage.Storage
-	stop  chan bool
+	store insightUC.CollectStorage
+	stop  chan struct{}
 }
 
 func (c *insightsCollector) Close() {
-	c.stop <- true
+	c.stop <- struct{}{}
 }
 
 func (c *insightsCollector) Run() {
@@ -99,92 +114,15 @@ func (c *insightsCollector) LastRun() (time.Time, bool) {
 	return *timestamp, true
 }
 
-func (c *insightsCollector) collect() (*happydns.Insights, error) {
-	_, instance, _ := c.store.LastInsightsRun()
-
-	// Basic info
-	data := happydns.Insights{
-		InsightsID: instance.String(),
-		Version:    controller.HDVersion,
-	}
-
-	// Build info
-	data.Build.Settings, data.Build.GoVersion = buildInfo()
-
-	// OS info
-	data.OS.Type = runtime.GOOS
-	data.OS.Arch = runtime.GOARCH
-	data.OS.NumCPU = runtime.NumCPU()
-
-	// Config info
-	data.Config.DisableEmbeddedLogin = c.cfg.DisableEmbeddedLogin
-	data.Config.DisableProviders = c.cfg.DisableProviders
-	data.Config.DisableRegistration = c.cfg.DisableRegistration
-	data.Config.HasBaseURL = c.cfg.BasePath != ""
-	data.Config.HasDevProxy = c.cfg.DevProxy != ""
-	data.Config.HasExternalAuth = c.cfg.ExternalAuth.String() != ""
-	data.Config.HasListmonkURL = c.cfg.ListmonkURL.String() != ""
-	data.Config.LocalBind = strings.HasPrefix(c.cfg.Bind, "127.0.0.1:") || strings.HasPrefix(c.cfg.Bind, "[::1]:")
-	data.Config.NbOidcProviders = len(c.cfg.OIDCClients)
-	data.Config.NoAuthActive = c.cfg.NoAuth
-	data.Config.NoMail = c.cfg.NoMail
-	data.Config.NonUnixAdminBind = strings.Contains(c.cfg.AdminBind, ":")
-	data.Config.StorageEngine = string(c.cfg.StorageEngine)
-
-	// Database info
-	data.Database.Version = c.store.SchemaVersion()
-
-	if authusers, err := c.store.ListAllAuthUsers(); err != nil {
-		return nil, err
-	} else {
-		for authusers.Next() {
-			data.Database.NbAuthUsers++
-		}
-	}
-
-	users, err := c.store.ListAllUsers()
-	if err != nil {
-		return nil, err
-	}
-
-	data.Database.Providers = map[string]int{}
-	data.UserSettings.Languages = map[string]int{}
-	data.UserSettings.FieldHints = map[int]int{}
-	data.UserSettings.ZoneView = map[int]int{}
-	for users.Next() {
-		data.Database.NbUsers++
-
-		user := users.Item()
-
-		if user.Settings.Language != "" {
-			data.UserSettings.Languages[user.Settings.Language]++
-		}
-		if user.Settings.Newsletter {
-			data.UserSettings.Newsletter++
-		}
-		data.UserSettings.FieldHints[user.Settings.FieldHint]++
-		data.UserSettings.ZoneView[user.Settings.ZoneView]++
-
-		if providers, err := c.store.ListProviders(user); err == nil {
-			for _, provider := range providers {
-				data.Database.Providers[provider.Type] += 1
-			}
-		}
-
-		if domains, err := c.store.ListDomains(user); err == nil {
-			data.Database.NbDomains += len(domains)
-
-			for _, domain := range domains {
-				data.Database.NbZones += len(domain.ZoneHistory)
-			}
-		}
-	}
-
-	return &data, nil
-}
-
 func (c *insightsCollector) send() error {
-	data, err := c.collect()
+	_, instance, err := c.store.LastInsightsRun()
+	if err != nil {
+		return fmt.Errorf("could not retrieve instance ID: %w", err)
+	}
+
+	buildSettings, goVersion := buildInfo()
+
+	data, err := insightUC.Collect(c.cfg, c.store, instance.String(), controller.HDVersion, buildSettings, goVersion)
 	if err != nil {
 		return err
 	}
@@ -194,7 +132,8 @@ func (c *insightsCollector) send() error {
 		return err
 	}
 
-	resp, err := http.Post(InsightsEndpoint, "application/json", bytes.NewReader(dataenc))
+	client := &http.Client{Timeout: insightsHTTPTimeout}
+	resp, err := client.Post(InsightsEndpoint, "application/json", bytes.NewReader(dataenc))
 	if err != nil {
 		return fmt.Errorf("could not send insights: %w", err)
 	}
@@ -214,9 +153,15 @@ func buildInfo() (map[string]string, string) {
 			if setting.Value == "" {
 				continue
 			}
+			if _, allowed := allowedBuildSettings[setting.Key]; !allowed {
+				continue
+			}
 			bInfo[setting.Key] = setting.Value
 		}
 		version = info.GoVersion
 	}
+	// Include runtime arch/OS even without build info
+	bInfo["runtime.GOOS"] = runtime.GOOS
+	bInfo["runtime.GOARCH"] = runtime.GOARCH
 	return bInfo, version
 }

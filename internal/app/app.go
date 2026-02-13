@@ -238,7 +238,7 @@ func (app *App) initInsights() {
 		app.insights = &insightsCollector{
 			cfg:   app.cfg,
 			store: app.store,
-			stop:  make(chan bool),
+			stop:  make(chan struct{}, 1),
 		}
 	}
 }
