@@ -38,6 +38,17 @@ func DeclareAuthenticationRoutes(cfg *happydns.Options, baserouter, apirouter *g
 	apirouter.POST("/auth", lc.Login)
 	apirouter.POST("/auth/logout", lc.Logout)
 
+	if localChallenge, ok := dependancies.CaptchaVerifier().(happydns.CaptchaLocalChallenge); ok {
+		apirouter.GET("/auth/challenge", func(c *gin.Context) {
+			challenge, err := localChallenge.NewChallenge()
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"errmsg": err.Error()})
+				return
+			}
+			c.Data(http.StatusOK, "application/json", challenge)
+		})
+	}
+
 	if len(cfg.OIDCClients) > 0 {
 		oidcp := controller.NewOIDCProvider(cfg, dependancies.AuthenticationUsecase())
 

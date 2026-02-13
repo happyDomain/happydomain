@@ -30,6 +30,8 @@ import (
 // Returns a no-op verifier when provider is empty.
 func NewVerifier(provider string) happydns.CaptchaVerifier {
 	switch provider {
+	case "altcha":
+		return NewAltchaVerifier()
 	case "hcaptcha":
 		return &hCaptchaVerifier{}
 	case "recaptchav2":

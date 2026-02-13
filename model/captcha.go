@@ -21,6 +21,10 @@
 
 package happydns
 
+import (
+	"encoding/json"
+)
+
 // CaptchaVerifier is implemented by all captcha providers.
 type CaptchaVerifier interface {
 	// Provider returns the provider identifier ("hcaptcha", "recaptchav2", "turnstile", or "").
@@ -29,6 +33,10 @@ type CaptchaVerifier interface {
 	SiteKey() string
 	// Verify checks the token returned by the captcha widget.
 	Verify(token, remoteIP string) error
+}
+
+type CaptchaLocalChallenge interface {
+	NewChallenge() (json.RawMessage, error)
 }
 
 type FailureTracker interface {

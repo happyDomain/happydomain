@@ -28,6 +28,7 @@
     let { token = $bindable() }: { token: string | null } = $props();
 
     let container: HTMLDivElement | undefined = $state();
+    let altchaWidget: HTMLElement | undefined = $state();
     let widgetId: unknown = $state(undefined);
 
     const provider = $derived($appConfig.captcha_provider);
@@ -37,7 +38,7 @@
         token = t;
     }
 
-    function loadScript(src: string): Promise<void> {
+    function loadScript(src: string, isModule = false): Promise<void> {
         return new Promise((resolve, reject) => {
             if (document.querySelector(`script[src="${src}"]`)) {
                 resolve();
@@ -45,8 +46,12 @@
             }
             const script = document.createElement("script");
             script.src = src;
-            script.async = true;
-            script.defer = true;
+            if (isModule) {
+                script.type = "module";
+            } else {
+                script.async = true;
+                script.defer = true;
+            }
             script.onload = () => resolve();
             script.onerror = reject;
             document.head.appendChild(script);
@@ -54,17 +59,25 @@
     }
 
     async function renderWidget() {
-        if (!container || !provider || !siteKey) return;
+        if (!provider) return;
 
-        if (provider === "hcaptcha") {
+        if (provider === "altcha") {
+            await loadScript(
+                "https://cdn.jsdelivr.net/gh/altcha-org/altcha/dist/altcha.min.js",
+                true,
+            );
+        } else if (provider === "hcaptcha") {
+            if (!siteKey) return;
             await loadScript("https://js.hcaptcha.com/1/api.js?render=explicit");
             // @ts-ignore
             widgetId = hcaptcha.render(container, { sitekey: siteKey, callback: onToken });
         } else if (provider === "recaptchav2") {
+            if (!siteKey) return;
             await loadScript("https://www.google.com/recaptcha/api.js?render=explicit");
             // @ts-ignore
             widgetId = grecaptcha.render(container, { sitekey: siteKey, callback: onToken });
         } else if (provider === "turnstile") {
+            if (!siteKey) return;
             await loadScript(
                 "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit",
             );
@@ -75,6 +88,13 @@
 
     export function reset() {
         token = null;
+        if (provider === "altcha") {
+            if (altchaWidget) {
+                // @ts-ignore
+                altchaWidget.reset?.();
+            }
+            return;
+        }
         if (widgetId === undefined) return;
 
         if (provider === "hcaptcha") {
@@ -94,6 +114,21 @@
     });
 </script>
 
-{#if provider}
+{#if provider === "altcha"}
+    <div class="mb-3">
+        <altcha-widget
+            bind:this={altchaWidget}
+            challengeurl="/api/auth/challenge"
+            onstatechange={(ev: CustomEvent<{ payload: string; state: string }>) => {
+                const { payload, state } = ev.detail;
+                if (state === "verified" && payload) {
+                    token = payload;
+                } else {
+                    token = null;
+                }
+            }}
+        ></altcha-widget>
+    </div>
+{:else if provider}
     <div bind:this={container} class="my-2"></div>
 {/if}
