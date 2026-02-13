@@ -21,9 +21,15 @@
 
 package happydns
 
-import ()
-
 type LoginRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required"`
+	Email        string `json:"email" binding:"required,email"`
+	Password     string `json:"password" binding:"required"`
+	CaptchaToken string `json:"captcha_token,omitempty"`
+}
+
+// LoginErrorResponse is returned on failed login attempts.
+// It includes the error message and optionally signals that captcha is required.
+type LoginErrorResponse struct {
+	Message         string `json:"errmsg"`
+	CaptchaRequired bool   `json:"captcha_required,omitempty"`
 }

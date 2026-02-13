@@ -55,7 +55,7 @@ func init() {
 	flag.StringVar(&MsgHeaderColor, "msg-header-color", MsgHeaderColor, "Background color of the banner added at the top of the app")
 }
 
-func DeclareRoutes(cfg *happydns.Options, router *gin.Engine) {
+func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, captchaVerifier happydns.CaptchaVerifier) {
 	appConfig := map[string]interface{}{}
 
 	if cfg.DisableProviders {
@@ -87,6 +87,11 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.Engine) {
 
 	if HideVoxPeople {
 		appConfig["hide_feedback"] = true
+	}
+
+	if captchaVerifier.Provider() != "" {
+		appConfig["captcha_provider"] = captchaVerifier.Provider()
+		appConfig["captcha_site_key"] = captchaVerifier.SiteKey()
 	}
 
 	if appcfg, err := json.MarshalIndent(appConfig, "", "  "); err != nil {

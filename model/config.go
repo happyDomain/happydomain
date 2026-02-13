@@ -92,6 +92,13 @@ type Options struct {
 	MailSMTPTLSSNoVerify bool
 
 	OIDCClients []OIDCSettings
+
+	// CaptchaProvider selects the captcha provider ("hcaptcha", "recaptchav2", "turnstile", or "").
+	CaptchaProvider string
+
+	// CaptchaLoginThreshold is the number of consecutive login failures before captcha is required.
+	// 0 means always require captcha at login (when provider is configured).
+	CaptchaLoginThreshold int
 }
 
 // GetBaseURL returns the full url to the absolute ExternalURL, including BaseURL.

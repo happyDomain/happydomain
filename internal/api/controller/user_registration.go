@@ -33,11 +33,13 @@ import (
 
 type RegistrationController struct {
 	auService happydns.AuthUserUsecase
+	captcha   happydns.CaptchaVerifier
 }
 
-func NewRegistrationController(auService happydns.AuthUserUsecase) *RegistrationController {
+func NewRegistrationController(auService happydns.AuthUserUsecase, captchaVerifier happydns.CaptchaVerifier) *RegistrationController {
 	return &RegistrationController{
 		auService: auService,
+		captcha:   captchaVerifier,
 	}
 }
 
@@ -61,6 +63,14 @@ func (rc *RegistrationController) RegisterNewUser(c *gin.Context) {
 		log.Printf("%s sends invalid User JSON: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{Message: fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
+	}
+
+	if rc.captcha.Provider() != "" {
+		if err := rc.captcha.Verify(uu.CaptchaToken, c.ClientIP()); err != nil {
+			log.Printf("%s: captcha verification failed during registration: %s", c.ClientIP(), err.Error())
+			c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{Message: "Captcha verification failed."})
+			return
+		}
 	}
 
 	err = rc.auService.CanRegister(uu)

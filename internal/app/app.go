@@ -31,6 +31,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	api "git.happydns.org/happyDomain/internal/api/route"
+	"git.happydns.org/happyDomain/internal/captcha"
 	"git.happydns.org/happyDomain/internal/mailer"
 	"git.happydns.org/happyDomain/internal/newsletter"
 	"git.happydns.org/happyDomain/internal/session"
@@ -71,14 +72,16 @@ type Usecases struct {
 }
 
 type App struct {
-	cfg        *happydns.Options
-	mailer     *mailer.Mailer
-	newsletter happydns.NewsletterSubscriptor
-	router     *gin.Engine
-	srv        *http.Server
-	insights   *insightsCollector
-	store      storage.Storage
-	usecases   Usecases
+	captchaVerifier happydns.CaptchaVerifier
+	cfg             *happydns.Options
+	failureTracker  *captcha.FailureTracker
+	insights        *insightsCollector
+	mailer          *mailer.Mailer
+	newsletter      happydns.NewsletterSubscriptor
+	router          *gin.Engine
+	srv             *http.Server
+	store           storage.Storage
+	usecases        Usecases
 }
 
 func (a *App) AuthenticationUsecase() happydns.AuthenticationUsecase {
@@ -89,12 +92,20 @@ func (a *App) AuthUserUsecase() happydns.AuthUserUsecase {
 	return a.usecases.authUser
 }
 
+func (a *App) CaptchaVerifier() happydns.CaptchaVerifier {
+	return a.captchaVerifier
+}
+
 func (a *App) DomainUsecase() happydns.DomainUsecase {
 	return a.usecases.domain
 }
 
 func (a *App) DomainLogUsecase() happydns.DomainLogUsecase {
 	return a.usecases.domainLog
+}
+
+func (a *App) FailureTracker() happydns.FailureTracker {
+	return a.failureTracker
 }
 
 func (a *App) Orchestrator() *orchestrator.Orchestrator {
@@ -167,6 +178,7 @@ func NewApp(cfg *happydns.Options) *App {
 	app.initNewsletter()
 	app.initInsights()
 	app.initUsecases()
+	app.initCaptcha()
 	app.setupRouter()
 
 	return app
@@ -181,9 +193,21 @@ func NewAppWithStorage(cfg *happydns.Options, store storage.Storage) *App {
 	app.initMailer()
 	app.initNewsletter()
 	app.initUsecases()
+	app.initCaptcha()
 	app.setupRouter()
 
 	return app
+}
+
+func (app *App) initCaptcha() {
+	app.captchaVerifier = captcha.NewVerifier(app.cfg.CaptchaProvider)
+
+	threshold := app.cfg.CaptchaLoginThreshold
+	if threshold <= 0 {
+		threshold = 3
+	}
+
+	app.failureTracker = captcha.NewFailureTracker(threshold, 15*time.Minute)
 }
 
 func (app *App) initMailer() {
@@ -296,7 +320,7 @@ func (app *App) setupRouter() {
 	))
 
 	api.DeclareRoutes(app.cfg, app.router, app)
-	web.DeclareRoutes(app.cfg, app.router)
+	web.DeclareRoutes(app.cfg, app.router, app.captchaVerifier)
 }
 
 func (app *App) Start() {
@@ -330,5 +354,9 @@ func (app *App) Stop() {
 
 	if app.insights != nil {
 		app.insights.Close()
+	}
+
+	if app.failureTracker != nil {
+		app.failureTracker.Close()
 	}
 }

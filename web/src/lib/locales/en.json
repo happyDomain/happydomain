@@ -171,6 +171,9 @@
             "description": "The email functionality has been disabled on this server. Please contact your administrator for assistance."
         }
     },
+    "captcha": {
+        "human-check": "Are you a human? Please check the box below to continue:"
+    },
     "errors": {
         "404": {
             "title": "Page not found",

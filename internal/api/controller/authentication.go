@@ -34,12 +34,16 @@ import (
 )
 
 type LoginController struct {
-	authService happydns.AuthenticationUsecase
+	authService    happydns.AuthenticationUsecase
+	captcha        happydns.CaptchaVerifier
+	failureTracker happydns.FailureTracker
 }
 
-func NewLoginController(authService happydns.AuthenticationUsecase) *LoginController {
+func NewLoginController(authService happydns.AuthenticationUsecase, captchaVerifier happydns.CaptchaVerifier, failureTracker happydns.FailureTracker) *LoginController {
 	return &LoginController{
-		authService: authService,
+		authService:    authService,
+		captcha:        captchaVerifier,
+		failureTracker: failureTracker,
 	}
 }
 
@@ -82,11 +86,51 @@ func (lc *LoginController) Login(c *gin.Context) {
 		return
 	}
 
+	// Check if captcha is required for this IP/email combination
+	if lc.captcha.Provider() != "" {
+		requiresCaptcha := lc.failureTracker.RequiresCaptcha(c.ClientIP(), request.Email)
+
+		if requiresCaptcha {
+			if request.CaptchaToken == "" {
+				c.JSON(http.StatusUnauthorized, happydns.LoginErrorResponse{
+					Message:         "Captcha verification required.",
+					CaptchaRequired: true,
+				})
+				return
+			}
+
+			if err := lc.captcha.Verify(request.CaptchaToken, c.ClientIP()); err != nil {
+				log.Printf("%s: captcha verification failed: %s", c.ClientIP(), err.Error())
+				c.JSON(http.StatusUnauthorized, happydns.LoginErrorResponse{
+					Message:         "Captcha verification failed.",
+					CaptchaRequired: true,
+				})
+				return
+			}
+		}
+	}
+
 	user, err := lc.authService.AuthenticateUserWithPassword(request)
 	if err != nil {
 		log.Printf("%s: %s", c.ClientIP(), err.Error())
-		c.JSON(http.StatusUnauthorized, happydns.ErrorResponse{Message: "Invalid username or password."})
+
+		if lc.captcha.Provider() != "" {
+			lc.failureTracker.RecordFailure(c.ClientIP(), request.Email)
+			if lc.failureTracker.RequiresCaptcha(c.ClientIP(), request.Email) {
+				c.JSON(http.StatusUnauthorized, happydns.LoginErrorResponse{
+					Message:         "Invalid username or password.",
+					CaptchaRequired: true,
+				})
+				return
+			}
+		}
+
+		c.JSON(http.StatusUnauthorized, happydns.LoginErrorResponse{Message: "Invalid username or password."})
 		return
+	}
+
+	if lc.captcha.Provider() != "" {
+		lc.failureTracker.RecordSuccess(c.ClientIP(), request.Email)
 	}
 
 	middleware.SessionLoginOK(c, user)

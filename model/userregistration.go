@@ -25,8 +25,9 @@ import ()
 
 // UserRegistration contains all the informations required to perform a plain registration.
 type UserRegistration struct {
-	Email      string
-	Password   string
-	Language   string `json:"lang,omitempty"`
-	Newsletter bool   `json:"wantReceiveUpdate,omitempty"`
+	Email        string
+	Password     string
+	Language     string `json:"lang,omitempty"`
+	Newsletter   bool   `json:"wantReceiveUpdate,omitempty"`
+	CaptchaToken string `json:"captcha_token,omitempty"`
 }

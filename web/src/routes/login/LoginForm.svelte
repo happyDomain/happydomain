@@ -28,12 +28,13 @@
     import { Button, FormGroup, Input, Label, Spinner } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
-    import { authUser, cleanUserSession } from "$lib/api/user";
+    import { authUserWithCaptcha, CaptchaRequiredError, cleanUserSession } from "$lib/api/user";
     import type { LoginForm } from "$lib/model/user";
     import { appConfig } from "$lib/stores/config";
     import { providers } from "$lib/stores/providers";
     import { toasts } from "$lib/stores/toasts";
     import { refreshUserSession } from "$lib/stores/usersession";
+    import CaptchaWidget from "$lib/components/CaptchaWidget.svelte";
 
     let loginForm: LoginForm = $state({
         email: "",
@@ -42,6 +43,9 @@
     let emailState: boolean | undefined = $state();
     let passwordState: boolean | undefined = $state();
     let formSent = $state(false);
+    let captchaRequired = $state(false);
+    let captchaToken: string | null = $state(null);
+    let captchaWidget: ReturnType<typeof CaptchaWidget> | undefined = $state();
 
     let formElm: HTMLFormElement | undefined = $state();
 
@@ -57,7 +61,11 @@
             emailState = undefined;
             passwordState = undefined;
 
-            authUser(loginForm).then(
+            const formWithCaptcha = captchaToken
+                ? { ...loginForm, captcha_token: captchaToken }
+                : loginForm;
+
+            authUserWithCaptcha(formWithCaptcha).then(
                 () => {
                     cleanUserSession();
                     providers.set(undefined);
@@ -77,11 +85,22 @@
                     formSent = false;
                     emailState = false;
                     passwordState = false;
-                    toasts.addErrorToast({
-                        title: $t("errors.login"),
-                        message: error,
-                        timeout: 20000,
-                    });
+
+                    if (error instanceof CaptchaRequiredError) {
+                        captchaRequired = true;
+                        captchaToken = null;
+                        if (captchaWidget) captchaWidget.reset();
+                    } else {
+                        if (captchaRequired && captchaWidget) {
+                            captchaToken = null;
+                            captchaWidget.reset();
+                        }
+                        toasts.addErrorToast({
+                            title: $t("errors.login"),
+                            message: error,
+                            timeout: 20000,
+                        });
+                    }
                 },
             );
         }
@@ -130,6 +149,10 @@
             bind:value={loginForm.password}
         />
     </FormGroup>
+    {#if $appConfig.captcha_provider && captchaRequired}
+        <p>{$t("captcha.human-check")}</p>
+        <CaptchaWidget bind:this={captchaWidget} bind:token={captchaToken} />
+    {/if}
     <div class="d-flex flex-column flex-lg-row gap-2 justify-content-around">
         <Button type="submit" color="primary" disabled={formSent}>
             {#if formSent}

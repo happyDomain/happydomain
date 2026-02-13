@@ -157,6 +157,9 @@
         "sent-recovery": "Passwort-Wiederherstellungs-E-Mail gesendet!",
         "recover": "Um Ihr Konto wiederherzustellen, senden wir Ihnen eine E-Mail mit einem Link, mit dem Sie Ihr Passwort neu definieren können"
     },
+    "captcha": {
+        "human-check": "Sind Sie ein Mensch? Bitte aktivieren Sie das untenstehende Kästchen, um fortzufahren:"
+    },
     "errors": {
         "404": {
             "title": "Seite nicht gefunden",

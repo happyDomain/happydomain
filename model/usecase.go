@@ -24,8 +24,10 @@ package happydns
 type UsecaseDependancies interface {
 	AuthenticationUsecase() AuthenticationUsecase
 	AuthUserUsecase() AuthUserUsecase
+	CaptchaVerifier() CaptchaVerifier
 	DomainUsecase() DomainUsecase
 	DomainLogUsecase() DomainLogUsecase
+	FailureTracker() FailureTracker
 	ProviderUsecase(secure bool) ProviderUsecase
 	ProviderSettingsUsecase() ProviderSettingsUsecase
 	ProviderSpecsUsecase() ProviderSpecsUsecase

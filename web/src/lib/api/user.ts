@@ -44,6 +44,43 @@ export async function authUser(form: LoginForm): Promise<User> {
     return unwrapSdkResponse(await postAuth({ body: form })) as unknown as User;
 }
 
+export class CaptchaRequiredError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "CaptchaRequiredError";
+    }
+}
+
+export async function authUserWithCaptcha(form: LoginForm): Promise<User> {
+    // Use raw fetch to bypass the customFetch session-refresh wrapper,
+    // which would consume the 401 response before we can inspect captcha_required.
+    const baseUrl = typeof window !== 'undefined' ? "/api/" : "http://localhost/api/";
+    const response = await fetch(`${baseUrl}auth`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+    });
+
+    if (!response.ok) {
+        let body: Record<string, unknown> = {};
+        try {
+            body = await response.json();
+        } catch {
+            // ignore
+        }
+
+        if (body.captcha_required) {
+            throw new CaptchaRequiredError(
+                typeof body.errmsg === 'string' ? body.errmsg : "Captcha verification required."
+            );
+        }
+
+        throw new Error(typeof body.errmsg === 'string' ? body.errmsg : "Invalid username or password.");
+    }
+
+    return response.json() as Promise<User>;
+}
+
 export async function logout(): Promise<boolean> {
     return unwrapEmptyResponse(await postAuthLogout());
 }

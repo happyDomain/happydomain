@@ -157,6 +157,9 @@
         "sent-recovery": "¡Correo de recuperación de contraseña enviado!",
         "recover": "Para recuperar tu cuenta, te enviaremos un correo electrónico con un enlace que te permitirá redefinir tu contraseña"
     },
+    "captcha": {
+        "human-check": "¿Eres humano? Por favor, marca la casilla de abajo para continuar:"
+    },
     "errors": {
         "404": {
             "title": "Página no encontrada",

@@ -26,11 +26,13 @@ export interface SignUpForm {
     password: string;
     wantReceiveUpdate: boolean;
     lang: string;
+    captcha_token?: string;
 }
 
 export interface LoginForm {
     email: string;
     password: string;
+    captcha_token?: string;
 }
 
 export interface User {

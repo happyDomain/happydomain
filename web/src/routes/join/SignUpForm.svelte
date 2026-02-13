@@ -32,6 +32,7 @@
     import { checkWeakPassword, checkPasswordConfirmation } from "$lib/password";
     import { appConfig } from "$lib/stores/config";
     import { toasts } from "$lib/stores/toasts";
+    import CaptchaWidget from "$lib/components/CaptchaWidget.svelte";
 
     let signupForm: SignUpForm = $state({
         email: "",
@@ -44,6 +45,8 @@
     let passwordState: boolean | undefined = $derived(checkWeakPassword(signupForm.password));
     let passwordConfirmState: boolean | undefined = $state();
     let formSent = $state(false);
+    let captchaToken: string | null = $state(null);
+    let captchaWidget: ReturnType<typeof CaptchaWidget> | undefined = $state();
 
     let formElm: HTMLFormElement | undefined = $state();
 
@@ -56,7 +59,10 @@
         if (valid && emailState && passwordState && passwordConfirmState) {
             formSent = true;
             signupForm.lang = $locale;
-            registerUser(signupForm).then(
+            const formWithCaptcha = captchaToken
+                ? { ...signupForm, captcha_token: captchaToken }
+                : signupForm;
+            registerUser(formWithCaptcha).then(
                 () => {
                     formSent = false;
                     toasts.addToast({
@@ -71,6 +77,8 @@
                 },
                 (error) => {
                     formSent = false;
+                    captchaToken = null;
+                    if (captchaWidget) captchaWidget.reset();
                     toasts.addErrorToast({
                         title: $t("errors.registration"),
                         message: error,
@@ -147,6 +155,10 @@
             bind:checked={signupForm.wantReceiveUpdate}
         />
     </FormGroup>
+    {#if $appConfig.captcha_provider}
+        <p>{$t("captcha.human-check")}</p>
+        <CaptchaWidget bind:this={captchaWidget} bind:token={captchaToken} />
+    {/if}
     <div class="d-flex justify-content-around gap-2">
         <Button type="submit" color="primary" disabled={formSent}>
             {#if formSent}

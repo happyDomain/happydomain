@@ -33,7 +33,7 @@ import (
 )
 
 func DeclareAuthenticationRoutes(cfg *happydns.Options, baserouter, apirouter *gin.RouterGroup, dependancies happydns.UsecaseDependancies) *controller.LoginController {
-	lc := controller.NewLoginController(dependancies.AuthenticationUsecase())
+	lc := controller.NewLoginController(dependancies.AuthenticationUsecase(), dependancies.CaptchaVerifier(), dependancies.FailureTracker())
 
 	apirouter.POST("/auth", lc.Login)
 	apirouter.POST("/auth/logout", lc.Logout)

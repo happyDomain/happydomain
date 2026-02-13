@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,19 +19,20 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package route
+package happydns
 
-import (
-	"github.com/gin-gonic/gin"
+// CaptchaVerifier is implemented by all captcha providers.
+type CaptchaVerifier interface {
+	// Provider returns the provider identifier ("hcaptcha", "recaptchav2", "turnstile", or "").
+	Provider() string
+	// SiteKey returns the public site key to be embedded in the frontend.
+	SiteKey() string
+	// Verify checks the token returned by the captcha widget.
+	Verify(token, remoteIP string) error
+}
 
-	"git.happydns.org/happyDomain/internal/api/controller"
-	"git.happydns.org/happyDomain/model"
-)
-
-func DeclareRegistrationRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) *controller.RegistrationController {
-	rc := controller.NewRegistrationController(dependancies.AuthUserUsecase(), dependancies.CaptchaVerifier())
-
-	router.POST("/users", rc.RegisterNewUser)
-
-	return rc
+type FailureTracker interface {
+	RecordFailure(ip, email string)
+	RecordSuccess(ip, email string)
+	RequiresCaptcha(ip, email string) bool
 }

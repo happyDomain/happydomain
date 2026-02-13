@@ -150,6 +150,9 @@
         "sent-recovery": "Envoi d'un courriel de récupération de mot de passe !",
         "recover": "Afin de récupérer votre compte, nous vous enverrons un courriel contenant un lien qui vous permettra de redéfinir votre mot de passe"
     },
+    "captcha": {
+        "human-check": "Êtes-vous un humain ? Veuillez cocher la case ci-dessous pour continuer :"
+    },
     "errors": {
         "404": {
             "title": "Page introuvable",

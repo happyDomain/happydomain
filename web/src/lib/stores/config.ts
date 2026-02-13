@@ -24,6 +24,8 @@ import { writable } from 'svelte/store';
 import type { Color } from "@sveltestrap/sveltestrap";
 
 interface AppConfig {
+    captcha_provider?: string;
+    captcha_site_key?: string;
     disable_embedded_login?: boolean;
     disable_providers?: boolean;
     disable_registration?: boolean;
