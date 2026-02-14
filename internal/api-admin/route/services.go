@@ -27,17 +27,16 @@ import (
 	"git.happydns.org/happyDomain/internal/api-admin/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
 	"git.happydns.org/happyDomain/internal/storage"
-	"git.happydns.org/happyDomain/model"
 )
 
-func declareZoneServiceRoutes(apiZonesRoutes *gin.RouterGroup, zc *controller.ZoneController, dependancies happydns.UsecaseDependancies, store storage.Storage) {
+func declareZoneServiceRoutes(apiZonesRoutes *gin.RouterGroup, zc *controller.ZoneController, dep Dependencies, store storage.Storage) {
 	sc := controller.NewServiceController(
-		dependancies.ServiceUsecase(),
-		dependancies.ZoneServiceUsecase(),
+		dep.Service,
+		dep.ZoneService,
 	)
 
 	apiZonesServiceIdRoutes := apiZonesRoutes.Group("/services/:serviceid")
-	apiZonesServiceIdRoutes.Use(middleware.ServiceIdHandler(dependancies.ServiceUsecase()))
+	apiZonesServiceIdRoutes.Use(middleware.ServiceIdHandler(dep.Service))
 	apiZonesServiceIdRoutes.GET("", sc.GetZoneService)
 	apiZonesServiceIdRoutes.PUT("", sc.UpdateZoneService)
 	apiZonesServiceIdRoutes.DELETE("", sc.DeleteZoneService)

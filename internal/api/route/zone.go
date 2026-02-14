@@ -29,15 +29,15 @@ import (
 	happydns "git.happydns.org/happyDomain/model"
 )
 
-func DeclareZoneRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
+func DeclareZoneRoutes(router *gin.RouterGroup, zoneUC happydns.ZoneUsecase, domainUC happydns.DomainUsecase, zoneCorrApplier happydns.ZoneCorrectionApplierUsecase, zoneServiceUC happydns.ZoneServiceUsecase, serviceUC happydns.ServiceUsecase) {
 	zc := controller.NewZoneController(
-		dependancies.ZoneUsecase(),
-		dependancies.DomainUsecase(),
-		dependancies.ZoneCorrectionApplierUsecase(),
+		zoneUC,
+		domainUC,
+		zoneCorrApplier,
 	)
 
 	apiZonesRoutes := router.Group("/zone/:zoneid")
-	apiZonesRoutes.Use(middleware.ZoneHandler(dependancies.ZoneUsecase()))
+	apiZonesRoutes.Use(middleware.ZoneHandler(zoneUC))
 
 	apiZonesRoutes.GET("", zc.GetZone)
 
@@ -50,7 +50,7 @@ func DeclareZoneRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDep
 	apiZonesSubdomainRoutes.Use(middleware.SubdomainHandler)
 	apiZonesSubdomainRoutes.GET("", zc.GetZoneSubdomain)
 
-	DeclareZoneServiceRoutes(apiZonesRoutes, apiZonesSubdomainRoutes, zc, dependancies)
+	DeclareZoneServiceRoutes(apiZonesRoutes, apiZonesSubdomainRoutes, zc, zoneServiceUC, serviceUC, zoneUC)
 
 	apiZonesRoutes.POST("/records", zc.AddRecords)
 	apiZonesRoutes.POST("/records/delete", zc.DeleteRecords)

@@ -29,19 +29,19 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareProviderRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
-	pc := controller.NewProviderController(dependancies.ProviderUsecase(true))
+func DeclareProviderRoutes(router *gin.RouterGroup, providerUC happydns.ProviderUsecase) {
+	pc := controller.NewProviderController(providerUC)
 
 	router.GET("/providers", pc.ListProviders)
 	router.POST("/providers", pc.AddProvider)
 
 	apiProvidersMetaRoutes := router.Group("/providers/:pid")
-	apiProvidersMetaRoutes.Use(middleware.ProviderMetaHandler(dependancies.ProviderUsecase(true)))
+	apiProvidersMetaRoutes.Use(middleware.ProviderMetaHandler(providerUC))
 
 	apiProvidersMetaRoutes.DELETE("", pc.DeleteProvider)
 
 	apiProviderRoutes := router.Group("/providers/:pid")
-	apiProviderRoutes.Use(middleware.ProviderHandler(dependancies.ProviderUsecase(true)))
+	apiProviderRoutes.Use(middleware.ProviderHandler(providerUC))
 
 	apiProviderRoutes.GET("", pc.GetProvider)
 	apiProviderRoutes.PUT("", pc.UpdateProvider)

@@ -28,8 +28,8 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareSessionRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
-	sc := controller.NewSessionController(dependancies.SessionUsecase())
+func DeclareSessionRoutes(router *gin.RouterGroup, sessionUC happydns.SessionUsecase) {
+	sc := controller.NewSessionController(sessionUC)
 
 	router.GET("/session", sc.GetSession)
 	router.DELETE("/session", sc.ClearSession)

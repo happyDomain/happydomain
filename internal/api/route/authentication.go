@@ -32,13 +32,13 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareAuthenticationRoutes(cfg *happydns.Options, baserouter, apirouter *gin.RouterGroup, dependancies happydns.UsecaseDependancies) *controller.LoginController {
-	lc := controller.NewLoginController(dependancies.AuthenticationUsecase(), dependancies.CaptchaVerifier(), dependancies.FailureTracker())
+func DeclareAuthenticationRoutes(cfg *happydns.Options, baserouter, apirouter *gin.RouterGroup, authUC happydns.AuthenticationUsecase, captchaVerifier happydns.CaptchaVerifier, failureTracker happydns.FailureTracker) *controller.LoginController {
+	lc := controller.NewLoginController(authUC, captchaVerifier, failureTracker)
 
 	apirouter.POST("/auth", lc.Login)
 	apirouter.POST("/auth/logout", lc.Logout)
 
-	if localChallenge, ok := dependancies.CaptchaVerifier().(happydns.CaptchaLocalChallenge); ok {
+	if localChallenge, ok := captchaVerifier.(happydns.CaptchaLocalChallenge); ok {
 		apirouter.GET("/auth/challenge", func(c *gin.Context) {
 			challenge, err := localChallenge.NewChallenge()
 			if err != nil {
@@ -50,7 +50,7 @@ func DeclareAuthenticationRoutes(cfg *happydns.Options, baserouter, apirouter *g
 	}
 
 	if len(cfg.OIDCClients) > 0 {
-		oidcp := controller.NewOIDCProvider(cfg, dependancies.AuthenticationUsecase())
+		oidcp := controller.NewOIDCProvider(cfg, authUC)
 
 		authRoutes := baserouter.Group("/auth")
 
@@ -71,6 +71,6 @@ func DeclareAuthenticationRoutes(cfg *happydns.Options, baserouter, apirouter *g
 	return lc
 }
 
-func DeclareAuthenticationCheckRoutes(apiAuthRoutes *gin.RouterGroup, dependancies happydns.UsecaseDependancies, lc *controller.LoginController) {
+func DeclareAuthenticationCheckRoutes(apiAuthRoutes *gin.RouterGroup, lc *controller.LoginController) {
 	apiAuthRoutes.GET("/auth", lc.GetLoggedUser)
 }

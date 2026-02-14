@@ -29,27 +29,27 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareDomainRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
+func DeclareDomainRoutes(router *gin.RouterGroup, domainUC happydns.DomainUsecase, domainLogUC happydns.DomainLogUsecase, remoteZoneImporter happydns.RemoteZoneImporterUsecase, zoneImporter happydns.ZoneImporterUsecase, zoneUC happydns.ZoneUsecase, zoneCorrApplier happydns.ZoneCorrectionApplierUsecase, zoneServiceUC happydns.ZoneServiceUsecase, serviceUC happydns.ServiceUsecase) {
 	dc := controller.NewDomainController(
-		dependancies.DomainUsecase(),
-		dependancies.RemoteZoneImporterUsecase(),
-		dependancies.ZoneImporterUsecase(),
+		domainUC,
+		remoteZoneImporter,
+		zoneImporter,
 	)
 
 	router.GET("/domains", dc.GetDomains)
 	router.POST("/domains", dc.AddDomain)
 
 	apiDomainsRoutes := router.Group("/domains/:domain")
-	apiDomainsRoutes.Use(middleware.DomainHandler(dependancies.DomainUsecase(), false))
+	apiDomainsRoutes.Use(middleware.DomainHandler(domainUC, false))
 
 	apiDomainsRoutes.GET("", dc.GetDomain)
 	apiDomainsRoutes.PUT("", dc.UpdateDomain)
 	apiDomainsRoutes.DELETE("", dc.DelDomain)
 
-	DeclareDomainLogRoutes(apiDomainsRoutes, dependancies)
+	DeclareDomainLogRoutes(apiDomainsRoutes, domainLogUC)
 
 	apiDomainsRoutes.POST("/zone", dc.ImportZone)
 	apiDomainsRoutes.POST("/retrieve_zone", dc.RetrieveZone)
 
-	DeclareZoneRoutes(apiDomainsRoutes, dependancies)
+	DeclareZoneRoutes(apiDomainsRoutes, zoneUC, domainUC, zoneCorrApplier, zoneServiceUC, serviceUC)
 }

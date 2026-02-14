@@ -29,17 +29,17 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareUsersRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies, lc *controller.LoginController) *controller.UserController {
-	uc := controller.NewUserController(dependancies.UserUsecase(), lc)
+func DeclareUsersRoutes(router *gin.RouterGroup, userUC happydns.UserUsecase, lc *controller.LoginController) *controller.UserController {
+	uc := controller.NewUserController(userUC, lc)
 
 	apiUserRoutes := router.Group("/users/:uid")
-	apiUserRoutes.Use(middleware.UserHandler(dependancies.UserUsecase()))
+	apiUserRoutes.Use(middleware.UserHandler(userUC))
 
 	apiUserRoutes.GET("", uc.GetUser)
 	apiUserRoutes.GET("/avatar.png", uc.GetUserAvatar)
 
 	apiSameUserRoutes := router.Group("/users/:uid")
-	apiSameUserRoutes.Use(middleware.UserHandler(dependancies.UserUsecase()))
+	apiSameUserRoutes.Use(middleware.UserHandler(userUC))
 	apiSameUserRoutes.Use(middleware.SameUserHandler)
 
 	apiSameUserRoutes.DELETE("", uc.DeleteMyUser)

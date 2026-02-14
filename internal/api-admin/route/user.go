@@ -26,11 +26,10 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api-admin/controller"
 	"git.happydns.org/happyDomain/internal/storage"
-	"git.happydns.org/happyDomain/model"
 )
 
-func declareUsersRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies, store storage.Storage) {
-	sc := controller.NewUserController(store, dependancies.UserUsecase())
+func declareUsersRoutes(router *gin.RouterGroup, dep Dependencies, store storage.Storage) {
+	sc := controller.NewUserController(store, dep.User)
 
 	router.GET("/users", sc.GetUsers)
 	router.POST("/users", sc.NewUser)
@@ -43,6 +42,6 @@ func declareUsersRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDe
 	apiUsersRoutes.PUT("", sc.UpdateUser)
 	apiUsersRoutes.DELETE("", sc.DeleteUser)
 
-	declareDomainRoutes(apiUsersRoutes, dependancies, store)
-	declareProviderRoutes(apiUsersRoutes, dependancies, store)
+	declareDomainRoutes(apiUsersRoutes, dep, store)
+	declareProviderRoutes(apiUsersRoutes, dep, store)
 }

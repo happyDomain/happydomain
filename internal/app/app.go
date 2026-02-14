@@ -84,89 +84,6 @@ type App struct {
 	usecases        Usecases
 }
 
-func (a *App) AuthenticationUsecase() happydns.AuthenticationUsecase {
-	return a.usecases.authentication
-}
-
-func (a *App) AuthUserUsecase() happydns.AuthUserUsecase {
-	return a.usecases.authUser
-}
-
-func (a *App) CaptchaVerifier() happydns.CaptchaVerifier {
-	return a.captchaVerifier
-}
-
-func (a *App) DomainUsecase() happydns.DomainUsecase {
-	return a.usecases.domain
-}
-
-func (a *App) DomainLogUsecase() happydns.DomainLogUsecase {
-	return a.usecases.domainLog
-}
-
-func (a *App) FailureTracker() happydns.FailureTracker {
-	return a.failureTracker
-}
-
-func (a *App) Orchestrator() *orchestrator.Orchestrator {
-	return a.usecases.orchestrator
-}
-
-func (a *App) ProviderUsecase(secure bool) happydns.ProviderUsecase {
-	if secure {
-		return a.usecases.provider
-	} else {
-		return a.usecases.providerAdmin
-	}
-}
-
-func (a *App) ProviderSettingsUsecase() happydns.ProviderSettingsUsecase {
-	return a.usecases.providerSettings
-}
-
-func (a *App) ProviderSpecsUsecase() happydns.ProviderSpecsUsecase {
-	return a.usecases.providerSpecs
-}
-
-func (a *App) ResolverUsecase() happydns.ResolverUsecase {
-	return a.usecases.resolver
-}
-
-func (a *App) RemoteZoneImporterUsecase() happydns.RemoteZoneImporterUsecase {
-	return a.usecases.orchestrator.RemoteZoneImporter
-}
-
-func (a *App) ServiceUsecase() happydns.ServiceUsecase {
-	return a.usecases.service
-}
-
-func (a *App) ServiceSpecsUsecase() happydns.ServiceSpecsUsecase {
-	return a.usecases.serviceSpecs
-}
-
-func (a *App) SessionUsecase() happydns.SessionUsecase {
-	return a.usecases.session
-}
-
-func (a *App) UserUsecase() happydns.UserUsecase {
-	return a.usecases.user
-}
-
-func (a *App) ZoneCorrectionApplierUsecase() happydns.ZoneCorrectionApplierUsecase {
-	return a.usecases.orchestrator.ZoneCorrectionApplier
-}
-
-func (a *App) ZoneImporterUsecase() happydns.ZoneImporterUsecase {
-	return a.usecases.orchestrator.ZoneImporter
-}
-
-func (a *App) ZoneUsecase() happydns.ZoneUsecase {
-	return a.usecases.zone
-}
-
-func (a *App) ZoneServiceUsecase() happydns.ZoneServiceUsecase {
-	return a.usecases.zoneService
-}
 
 func NewApp(cfg *happydns.Options) *App {
 	app := &App{
@@ -319,7 +236,27 @@ func (app *App) setupRouter() {
 		session.NewSessionStore(app.cfg, app.store, []byte(app.cfg.JWTSecretKey)),
 	))
 
-	api.DeclareRoutes(app.cfg, app.router, app)
+	api.DeclareRoutes(app.cfg, app.router, api.Dependencies{
+		Authentication:        app.usecases.authentication,
+		AuthUser:              app.usecases.authUser,
+		CaptchaVerifier:       app.captchaVerifier,
+		Domain:                app.usecases.domain,
+		DomainLog:             app.usecases.domainLog,
+		FailureTracker:        app.failureTracker,
+		Provider:              app.usecases.provider,
+		ProviderSettings:      app.usecases.providerSettings,
+		ProviderSpecs:         app.usecases.providerSpecs,
+		RemoteZoneImporter:    app.usecases.orchestrator.RemoteZoneImporter,
+		Resolver:              app.usecases.resolver,
+		Service:               app.usecases.service,
+		ServiceSpecs:          app.usecases.serviceSpecs,
+		Session:               app.usecases.session,
+		User:                  app.usecases.user,
+		Zone:                  app.usecases.zone,
+		ZoneCorrectionApplier: app.usecases.orchestrator.ZoneCorrectionApplier,
+		ZoneImporter:          app.usecases.orchestrator.ZoneImporter,
+		ZoneService:           app.usecases.zoneService,
+	})
 	web.DeclareRoutes(app.cfg, app.router, app.captchaVerifier)
 }
 

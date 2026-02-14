@@ -27,14 +27,13 @@ import (
 	"git.happydns.org/happyDomain/internal/api-admin/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
 	"git.happydns.org/happyDomain/internal/storage"
-	"git.happydns.org/happyDomain/model"
 )
 
-func declareDomainRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies, store storage.Storage) {
+func declareDomainRoutes(router *gin.RouterGroup, dep Dependencies, store storage.Storage) {
 	dc := controller.NewDomainController(
-		dependancies.DomainUsecase(),
-		dependancies.RemoteZoneImporterUsecase(),
-		dependancies.ZoneImporterUsecase(),
+		dep.Domain,
+		dep.RemoteZoneImporter,
+		dep.ZoneImporter,
 		store,
 	)
 
@@ -45,11 +44,11 @@ func declareDomainRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseD
 	router.DELETE("/domains/:domain", dc.DeleteDomain)
 
 	apiDomainsRoutes := router.Group("/domains/:domain")
-	apiDomainsRoutes.Use(middleware.DomainHandler(dependancies.DomainUsecase(), true))
+	apiDomainsRoutes.Use(middleware.DomainHandler(dep.Domain, true))
 
 	apiDomainsRoutes.GET("", dc.GetDomain)
 	apiDomainsRoutes.PUT("", dc.UpdateDomain)
 
 	apiDomainsRoutes.PUT("/zones", dc.UpdateZones)
-	declareZoneRoutes(apiDomainsRoutes, dependancies, store)
+	declareZoneRoutes(apiDomainsRoutes, dep, store)
 }

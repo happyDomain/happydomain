@@ -29,13 +29,13 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareUserRecoveryRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies, auc *controller.AuthUserController) *controller.UserRecoveryController {
-	urc := controller.NewUserRecoveryController(dependancies.AuthUserUsecase())
+func DeclareUserRecoveryRoutes(router *gin.RouterGroup, authUserUC happydns.AuthUserUsecase, auc *controller.AuthUserController) *controller.UserRecoveryController {
+	urc := controller.NewUserRecoveryController(authUserUC)
 
 	router.PATCH("/users", urc.UserRecoveryOperations)
 
 	apiUserRoutes := router.Group("/users/:uid")
-	apiUserRoutes.Use(middleware.AuthUserHandler(dependancies.AuthUserUsecase()))
+	apiUserRoutes.Use(middleware.AuthUserHandler(authUserUC))
 
 	apiUserRoutes.POST("/email", urc.ValidateUserAddress)
 	apiUserRoutes.POST("/recovery", urc.RecoverUserAccount)

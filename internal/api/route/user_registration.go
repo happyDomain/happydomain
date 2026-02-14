@@ -28,8 +28,8 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareRegistrationRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) *controller.RegistrationController {
-	rc := controller.NewRegistrationController(dependancies.AuthUserUsecase(), dependancies.CaptchaVerifier())
+func DeclareRegistrationRoutes(router *gin.RouterGroup, authUserUC happydns.AuthUserUsecase, captchaVerifier happydns.CaptchaVerifier) *controller.RegistrationController {
+	rc := controller.NewRegistrationController(authUserUC, captchaVerifier)
 
 	router.POST("/users", rc.RegisterNewUser)
 

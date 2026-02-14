@@ -25,10 +25,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/controller"
-	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareRecordRoutes(apiRoutes *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
+func DeclareRecordRoutes(apiRoutes *gin.RouterGroup) {
 	rc := controller.NewRecordController()
 
 	apiRoutes.POST("/records", rc.ParseRecords)

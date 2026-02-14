@@ -26,18 +26,32 @@ import (
 
 	api "git.happydns.org/happyDomain/internal/api/route"
 	"git.happydns.org/happyDomain/internal/storage"
-	"git.happydns.org/happyDomain/model"
+	happydns "git.happydns.org/happyDomain/model"
 )
 
-func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, s storage.Storage, dependancies happydns.UsecaseDependancies) {
+// Dependencies holds all use cases required to register the admin API routes.
+type Dependencies struct {
+	AuthUser              happydns.AuthUserUsecase
+	Domain                happydns.DomainUsecase
+	Provider              happydns.ProviderUsecase
+	RemoteZoneImporter    happydns.RemoteZoneImporterUsecase
+	Service               happydns.ServiceUsecase
+	User                  happydns.UserUsecase
+	Zone                  happydns.ZoneUsecase
+	ZoneCorrectionApplier happydns.ZoneCorrectionApplierUsecase
+	ZoneImporter          happydns.ZoneImporterUsecase
+	ZoneService           happydns.ZoneServiceUsecase
+}
+
+func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, s storage.Storage, dep Dependencies) {
 	apiRoutes := router.Group("/api")
 
 	declareBackupRoutes(cfg, apiRoutes, s)
-	declareDomainRoutes(apiRoutes, dependancies, s)
-	declareProviderRoutes(apiRoutes, dependancies, s)
+	declareDomainRoutes(apiRoutes, dep, s)
+	declareProviderRoutes(apiRoutes, dep, s)
 	declareSessionsRoutes(cfg, apiRoutes, s)
-	declareUserAuthsRoutes(apiRoutes, dependancies, s)
-	declareUsersRoutes(apiRoutes, dependancies, s)
+	declareUserAuthsRoutes(apiRoutes, dep, s)
+	declareUsersRoutes(apiRoutes, dep, s)
 	declareTidyRoutes(apiRoutes, s)
 	api.DeclareVersionRoutes(apiRoutes)
 }

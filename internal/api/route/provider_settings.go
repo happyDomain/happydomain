@@ -29,8 +29,8 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareProviderSettingsRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
-	psc := controller.NewProviderSettingsController(dependancies.ProviderSettingsUsecase())
+func DeclareProviderSettingsRoutes(router *gin.RouterGroup, providerSettingsUC happydns.ProviderSettingsUsecase) {
+	psc := controller.NewProviderSettingsController(providerSettingsUC)
 
 	apiProviderSpecsRoutes := router.Group("/providers/_specs/:psid")
 	apiProviderSpecsRoutes.Use(middleware.ProviderSpecsHandler)

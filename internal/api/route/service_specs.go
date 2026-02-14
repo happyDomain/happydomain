@@ -29,8 +29,8 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareServiceSpecsRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
-	ssc := controller.NewServiceSpecsController(dependancies.ServiceSpecsUsecase())
+func DeclareServiceSpecsRoutes(router *gin.RouterGroup, serviceSpecsUC happydns.ServiceSpecsUsecase) {
+	ssc := controller.NewServiceSpecsController(serviceSpecsUC)
 
 	router.GET("/service_specs", ssc.ListServiceSpecs)
 

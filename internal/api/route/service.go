@@ -29,15 +29,15 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareZoneServiceRoutes(apiZonesRoutes, apiZonesSubdomainRoutes *gin.RouterGroup, zc *controller.ZoneController, dependancies happydns.UsecaseDependancies) {
-	sc := controller.NewServiceController(dependancies.ZoneServiceUsecase(), dependancies.ServiceUsecase(), dependancies.ZoneUsecase())
+func DeclareZoneServiceRoutes(apiZonesRoutes, apiZonesSubdomainRoutes *gin.RouterGroup, zc *controller.ZoneController, zoneServiceUC happydns.ZoneServiceUsecase, serviceUC happydns.ServiceUsecase, zoneUC happydns.ZoneUsecase) {
+	sc := controller.NewServiceController(zoneServiceUC, serviceUC, zoneUC)
 
 	apiZonesRoutes.PATCH("", sc.UpdateZoneService)
 
 	apiZonesSubdomainRoutes.POST("/services", sc.AddZoneService)
 
 	apiZonesSubdomainServiceIdRoutes := apiZonesSubdomainRoutes.Group("/services/:serviceid")
-	apiZonesSubdomainServiceIdRoutes.Use(middleware.ServiceIdHandler(dependancies.ServiceUsecase()))
+	apiZonesSubdomainServiceIdRoutes.Use(middleware.ServiceIdHandler(serviceUC))
 	apiZonesSubdomainServiceIdRoutes.GET("", sc.GetZoneService)
 	apiZonesSubdomainServiceIdRoutes.DELETE("", sc.DeleteZoneService)
 }

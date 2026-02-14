@@ -28,8 +28,8 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareDomainLogRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
-	dlc := controller.NewDomainLogController(dependancies.DomainLogUsecase())
+func DeclareDomainLogRoutes(router *gin.RouterGroup, domainLogUC happydns.DomainLogUsecase) {
+	dlc := controller.NewDomainLogController(domainLogUC)
 
 	router.GET("/logs", dlc.GetDomainLogs)
 }

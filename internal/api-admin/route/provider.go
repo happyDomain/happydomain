@@ -27,26 +27,25 @@ import (
 	"git.happydns.org/happyDomain/internal/api-admin/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
 	"git.happydns.org/happyDomain/internal/storage"
-	"git.happydns.org/happyDomain/model"
 )
 
-func declareProviderRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies, store storage.Storage) {
-	pc := controller.NewProviderController(dependancies.ProviderUsecase(false), store)
+func declareProviderRoutes(router *gin.RouterGroup, dep Dependencies, store storage.Storage) {
+	pc := controller.NewProviderController(dep.Provider, store)
 
 	router.GET("/providers", pc.ListProviders)
 	router.POST("/providers", pc.AddProvider)
 	router.DELETE("/providers", pc.ClearProviders)
 
 	apiProvidersMetaRoutes := router.Group("/providers/:pid")
-	apiProvidersMetaRoutes.Use(middleware.ProviderMetaHandler(dependancies.ProviderUsecase(false)))
+	apiProvidersMetaRoutes.Use(middleware.ProviderMetaHandler(dep.Provider))
 
 	apiProvidersMetaRoutes.DELETE("", pc.DeleteProvider)
 
 	apiProvidersRoutes := router.Group("/providers/:pid")
-	apiProvidersRoutes.Use(middleware.ProviderHandler(dependancies.ProviderUsecase(false)))
+	apiProvidersRoutes.Use(middleware.ProviderHandler(dep.Provider))
 
 	apiProvidersRoutes.GET("", pc.GetProvider)
 	apiProvidersRoutes.PUT("", pc.UpdateProvider)
 
-	declareDomainRoutes(apiProvidersRoutes, dependancies, store)
+	declareDomainRoutes(apiProvidersRoutes, dep, store)
 }

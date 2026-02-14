@@ -28,8 +28,8 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareResolverRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
-	rc := controller.NewResolverController(dependancies.ResolverUsecase())
+func DeclareResolverRoutes(router *gin.RouterGroup, resolverUC happydns.ResolverUsecase) {
+	rc := controller.NewResolverController(resolverUC)
 
 	router.POST("/resolver", rc.RunResolver)
 }

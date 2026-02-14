@@ -28,8 +28,8 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareProviderSpecsRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies) {
-	pc := controller.NewProviderSpecsController(dependancies.ProviderSpecsUsecase())
+func DeclareProviderSpecsRoutes(router *gin.RouterGroup, providerSpecsUC happydns.ProviderSpecsUsecase) {
+	pc := controller.NewProviderSpecsController(providerSpecsUC)
 
 	router.GET("/providers/_specs", pc.ListProviders)
 

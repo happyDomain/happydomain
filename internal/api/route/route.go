@@ -25,8 +25,32 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/model"
+	happydns "git.happydns.org/happyDomain/model"
 )
+
+// Dependencies holds all use cases required to register the public API routes.
+// It is a plain struct — no methods, no interface — constructed once in app.go.
+type Dependencies struct {
+	Authentication        happydns.AuthenticationUsecase
+	AuthUser              happydns.AuthUserUsecase
+	CaptchaVerifier       happydns.CaptchaVerifier
+	Domain                happydns.DomainUsecase
+	DomainLog             happydns.DomainLogUsecase
+	FailureTracker        happydns.FailureTracker
+	Provider              happydns.ProviderUsecase
+	ProviderSettings      happydns.ProviderSettingsUsecase
+	ProviderSpecs         happydns.ProviderSpecsUsecase
+	RemoteZoneImporter    happydns.RemoteZoneImporterUsecase
+	Resolver              happydns.ResolverUsecase
+	Service               happydns.ServiceUsecase
+	ServiceSpecs          happydns.ServiceSpecsUsecase
+	Session               happydns.SessionUsecase
+	User                  happydns.UserUsecase
+	Zone                  happydns.ZoneUsecase
+	ZoneCorrectionApplier happydns.ZoneCorrectionApplierUsecase
+	ZoneImporter          happydns.ZoneImporterUsecase
+	ZoneService           happydns.ZoneServiceUsecase
+}
 
 //	@title			happyDomain API
 //	@version		0.1
@@ -48,38 +72,37 @@ import (
 //	@name						Authorization
 //	@description				Description for what is this security definition being used
 
-func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, dependancies happydns.UsecaseDependancies) {
-	// Declare routes
+func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, dep Dependencies) {
 	baseRoutes := router.Group("")
 
 	declareRouteSwagger(cfg, baseRoutes)
 
 	apiRoutes := router.Group("/api")
 
-	lc := DeclareAuthenticationRoutes(cfg, baseRoutes, apiRoutes, dependancies)
-	auc := DeclareAuthUserRoutes(apiRoutes, dependancies, lc)
-	DeclareProviderSpecsRoutes(apiRoutes, dependancies)
-	DeclareRegistrationRoutes(apiRoutes, dependancies)
-	DeclareResolverRoutes(apiRoutes, dependancies)
-	DeclareServiceSpecsRoutes(apiRoutes, dependancies)
-	DeclareUserRecoveryRoutes(apiRoutes, dependancies, auc)
+	lc := DeclareAuthenticationRoutes(cfg, baseRoutes, apiRoutes, dep.Authentication, dep.CaptchaVerifier, dep.FailureTracker)
+	auc := DeclareAuthUserRoutes(apiRoutes, dep.AuthUser, lc)
+	DeclareProviderSpecsRoutes(apiRoutes, dep.ProviderSpecs)
+	DeclareRegistrationRoutes(apiRoutes, dep.AuthUser, dep.CaptchaVerifier)
+	DeclareResolverRoutes(apiRoutes, dep.Resolver)
+	DeclareServiceSpecsRoutes(apiRoutes, dep.ServiceSpecs)
+	DeclareUserRecoveryRoutes(apiRoutes, dep.AuthUser, auc)
 	DeclareVersionRoutes(apiRoutes)
 
 	apiAuthRoutes := router.Group("/api")
 
 	if cfg.NoAuth {
-		apiAuthRoutes.Use(middleware.NoAuthMiddleware(dependancies.AuthenticationUsecase()))
+		apiAuthRoutes.Use(middleware.NoAuthMiddleware(dep.Authentication))
 	} else {
-		apiAuthRoutes.Use(middleware.JwtAuthMiddleware(dependancies.AuthenticationUsecase(), cfg.JWTSigningMethod, cfg.JWTSecretKey))
-		apiAuthRoutes.Use(middleware.SessionMiddleware(dependancies.AuthenticationUsecase()))
+		apiAuthRoutes.Use(middleware.JwtAuthMiddleware(dep.Authentication, cfg.JWTSigningMethod, cfg.JWTSecretKey))
+		apiAuthRoutes.Use(middleware.SessionMiddleware(dep.Authentication))
 	}
 	apiAuthRoutes.Use(middleware.AuthRequired())
 
-	DeclareAuthenticationCheckRoutes(apiAuthRoutes, dependancies, lc)
-	DeclareDomainRoutes(apiAuthRoutes, dependancies)
-	DeclareProviderRoutes(apiAuthRoutes, dependancies)
-	DeclareProviderSettingsRoutes(apiAuthRoutes, dependancies)
-	DeclareRecordRoutes(apiAuthRoutes, dependancies)
-	DeclareUsersRoutes(apiAuthRoutes, dependancies, lc)
-	DeclareSessionRoutes(apiAuthRoutes, dependancies)
+	DeclareAuthenticationCheckRoutes(apiAuthRoutes, lc)
+	DeclareDomainRoutes(apiAuthRoutes, dep.Domain, dep.DomainLog, dep.RemoteZoneImporter, dep.ZoneImporter, dep.Zone, dep.ZoneCorrectionApplier, dep.ZoneService, dep.Service)
+	DeclareProviderRoutes(apiAuthRoutes, dep.Provider)
+	DeclareProviderSettingsRoutes(apiAuthRoutes, dep.ProviderSettings)
+	DeclareRecordRoutes(apiAuthRoutes)
+	DeclareUsersRoutes(apiAuthRoutes, dep.User, lc)
+	DeclareSessionRoutes(apiAuthRoutes, dep.Session)
 }

@@ -53,10 +53,21 @@ func NewAdmin(app *App) *Admin {
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
 
-	// Prepare usecases
+	// Prepare usecases (admin uses unrestricted provider access)
 	app.usecases.providerAdmin = providerUC.NewService(app.store)
 
-	admin.DeclareRoutes(app.cfg, router, app.store, app)
+	admin.DeclareRoutes(app.cfg, router, app.store, admin.Dependencies{
+		AuthUser:              app.usecases.authUser,
+		Domain:                app.usecases.domain,
+		Provider:              app.usecases.providerAdmin,
+		RemoteZoneImporter:    app.usecases.orchestrator.RemoteZoneImporter,
+		Service:               app.usecases.service,
+		User:                  app.usecases.user,
+		Zone:                  app.usecases.zone,
+		ZoneCorrectionApplier: app.usecases.orchestrator.ZoneCorrectionApplier,
+		ZoneImporter:          app.usecases.orchestrator.ZoneImporter,
+		ZoneService:           app.usecases.zoneService,
+	})
 	web.DeclareRoutes(app.cfg, router)
 
 	return &Admin{

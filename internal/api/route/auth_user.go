@@ -31,11 +31,11 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareAuthUserRoutes(router *gin.RouterGroup, dependancies happydns.UsecaseDependancies, lc *controller.LoginController) *controller.AuthUserController {
-	ac := controller.NewAuthUserController(dependancies.AuthUserUsecase(), lc)
+func DeclareAuthUserRoutes(router *gin.RouterGroup, authUserUC happydns.AuthUserUsecase, lc *controller.LoginController) *controller.AuthUserController {
+	ac := controller.NewAuthUserController(authUserUC, lc)
 
 	apiUserAuthRoutes := router.Group("/users/:uid")
-	apiUserAuthRoutes.Use(middleware.AuthUserHandler(dependancies.AuthUserUsecase()))
+	apiUserAuthRoutes.Use(middleware.AuthUserHandler(authUserUC))
 	apiUserAuthRoutes.GET("/is_auth_user", func(c *gin.Context) {
 		c.Status(http.StatusNoContent)
 	})
