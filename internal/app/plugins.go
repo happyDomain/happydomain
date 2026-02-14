@@ -30,6 +30,7 @@ import (
 
 	"git.happydns.org/happyDomain/checks"
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/providers"
 )
 
 // pluginLoader attempts to find and register one specific kind of plugin
@@ -46,6 +47,7 @@ type pluginLoader func(p *plugin.Plugin, fname string) (found bool, err error)
 // knows about. To support a new plugin type, add a single entry here.
 var pluginLoaders = []pluginLoader{
 	loadCheckPlugin,
+	loadProviderPlugin,
 }
 
 // loadCheckPlugin handles the NewTestPlugin symbol.
@@ -68,6 +70,29 @@ func loadCheckPlugin(p *plugin.Plugin, fname string) (bool, error) {
 
 	checks.RegisterCheck(pluginname, myplugin)
 	log.Printf("Plugin %s loaded", pluginname)
+	return true, nil
+}
+
+// loadProviderPlugin handles the NewProviderPlugin symbol.
+func loadProviderPlugin(_ *PluginManager, p *plugin.Plugin, fname string) (bool, error) {
+	sym, err := p.Lookup("NewProviderPlugin")
+	if err != nil {
+		// Symbol not present in this .so — not an error.
+		return false, nil
+	}
+
+	factory, ok := sym.(func() (happydns.ProviderCreatorFunc, happydns.ProviderInfos, error))
+	if !ok {
+		return true, fmt.Errorf("symbol NewProviderPlugin has unexpected type %T", sym)
+	}
+
+	creator, infos, err := factory()
+	if err != nil {
+		return true, err
+	}
+
+	providers.RegisterProvider(creator, infos)
+	log.Printf("Plugin provider %q registered from %s", infos.Name, fname)
 	return true, nil
 }
 
