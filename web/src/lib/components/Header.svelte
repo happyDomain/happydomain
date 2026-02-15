@@ -24,7 +24,7 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { page } from "$app/state";
-    import type { ClassValue } from 'svelte/elements';
+    import type { ClassValue } from "svelte/elements";
 
     import {
         Button,
@@ -47,7 +47,6 @@
     import { toasts } from "$lib/stores/toasts";
     import { t, locales, locale } from "$lib/translations";
 
-
     interface Props {
         class?: ClassValue;
         sw_state: { triedUpdate: boolean; hasUpdate: boolean };
@@ -55,15 +54,13 @@
 
     let { class: className, sw_state }: Props = $props();
     let helpLink = $derived(
-        page.route && page.route.id ? (
-            page.route.id.startsWith("/providers/new/[ptype]") ? (
-                getHelpPathFromProvider(page.url.pathname.split("/")[3])
-            ) : (
-                "https://help.happydomain.org/" + encodeURIComponent($locale) + getHelpPathFromRoute(page.route.id)
-            )
-        ) : (
-            "https://help.happydomain.org/" + encodeURIComponent($locale)
-        )
+        page.route && page.route.id
+            ? page.route.id.startsWith("/providers/new/[ptype]")
+                ? getHelpPathFromProvider(page.url.pathname.split("/")[3])
+                : "https://help.happydomain.org/" +
+                  encodeURIComponent($locale) +
+                  getHelpPathFromRoute(page.route.id)
+            : "https://help.happydomain.org/" + encodeURIComponent($locale),
     );
 
     function getHelpPathFromProvider(ptype: string): string {
@@ -188,10 +185,7 @@
                         {$t("menu.dns-resolver")}
                     </DropdownItem>
                     <DropdownItem divider />
-                    <DropdownItem
-                        active={page.route && page.route.id == "/me"}
-                        href="/me"
-                    >
+                    <DropdownItem active={page.route && page.route.id == "/me"} href="/me">
                         {$t("menu.my-account")}
                     </DropdownItem>
                     {#if $userSession.email !== "_no_auth"}
@@ -232,10 +226,7 @@
                 <DropdownToggle nav caret>{$locale}</DropdownToggle>
                 <DropdownMenu end>
                     {#each $locales as lang}
-                        <DropdownItem
-                            active={$locale == lang}
-                            on:click={() => ($locale = lang)}
-                        >
+                        <DropdownItem active={$locale == lang} on:click={() => ($locale = lang)}>
                             {$t(`locales.${lang}`)}
                         </DropdownItem>
                     {/each}
