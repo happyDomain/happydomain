@@ -475,7 +475,7 @@
         "showrrtypes-title": "Show DNS record types",
         "preferences": {
             "title": "Preferences",
-          "description": "Customize your preferences"
+            "description": "Customize your preferences"
         },
         "security": {
             "title": "Security & Access",

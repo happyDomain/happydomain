@@ -93,7 +93,7 @@ func (sc *ServiceController) AddZoneService(c *gin.Context) {
 	c.JSON(http.StatusOK, zone)
 }
 
-// GetServiceService retrieves the designated Service.
+// GetZoneService retrieves the designated Service.
 //
 //	@Summary	Get the Service.
 //	@Schemes
