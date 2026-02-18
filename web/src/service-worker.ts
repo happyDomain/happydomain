@@ -53,11 +53,16 @@ self.addEventListener('fetch', (event) => {
 
         // `build`/`files` can always be served from the cache
         if (ASSETS.includes(url.pathname)) {
-            if (url.search.length) {
-                url.search = "";
-                return cache.match(new Request(url.toString(), event.request));
+            // Strip query string for asset cache lookup (assets are keyed by pathname only)
+            const cacheKey = url.search.length
+                ? new Request(url.origin + url.pathname)
+                : event.request;
+            const responseFromCache = await cache.match(cacheKey);
+            if (responseFromCache) {
+                return responseFromCache;
             }
-            return cache.match(event.request);
+            // Fall back to network if not yet in cache (e.g. install race condition)
+            return fetch(event.request);
         }
 
         if (
@@ -72,7 +77,7 @@ self.addEventListener('fetch', (event) => {
 
             const response = await fetch(event.request);
             if (response.status === 200) {
-                cache.put(event.request, response.clone());
+                await cache.put(event.request, response.clone());
             }
 
             return response;
@@ -83,8 +88,8 @@ self.addEventListener('fetch', (event) => {
         try {
             const response = await fetch(event.request);
 
-            if (response.status === 200 && url.pathname != "/api/auth") {
-                cache.put(event.request, response.clone());
+            if (response.status === 200 && !url.pathname.startsWith("/api/auth")) {
+                await cache.put(event.request, response.clone());
             }
 
             return response;
