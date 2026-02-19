@@ -23,6 +23,7 @@
 
 <script lang="ts">
     import { page } from "$app/state";
+    import { fly } from "svelte/transition";
 
     import { Icon } from "@sveltestrap/sveltestrap";
 
@@ -42,6 +43,7 @@
     <div
         class="card"
         style="position: fixed; bottom: calc(7vh + max(1.7vw, 1.7vh)); right: calc(4vw + max(1.7vw, 1.7vh)); z-index: 1052; max-width: 400px;"
+        transition:fly={{ x: 20, y: 20, duration: 200 }}
     >
         <div class="card-body row row-cols-2 justify-content-center align-items-center">
             <div class="col d-flex mb-3 flex-fill">
@@ -74,7 +76,7 @@
                 <a
                     href="https://framaforms.org/quel-est-votre-avis-sur-happydns-1610366701?u={$userSession.id
                         ? $userSession.id
-                        : 0}&amp;i={instancename}&amp;p={page.route ? ('&amp;p=' + page.route.id) : ''}&amp;l={$locale}"
+                        : 0}&amp;i={instancename}{page.route ? ('&p=' + page.route.id) : ''}&amp;l={$locale}"
                     target="_blank"
                     rel="noreferrer"
                     class="btn btn-lg btn-light flex-fill fw-bolder"
