@@ -1,26 +1,27 @@
 {
-  "background_color": "#343a40",
-  "theme_color": "#1cb487",
-  "description": "Finaly a simple interface for domain names.",
-  "display": "fullscreen",
-  "icons": [
-    {
-      "src": "/img/icons/apple-touch-icon-180x180.png",
-      "sizes": "180x180",
-      "type": "image/png"
-    },
-    {
-      "src": "/img/icons/android-chrome-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/img/icons/android-chrome-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ],
-  "name": "happyDomain",
-  "short_name": "happyDomain",
-  "start_url": "/"
+    "background_color": "#343a40",
+    "theme_color": "#1cb487",
+    "description": "Finally a simple interface for domain names.",
+    "display": "standalone",
+    "icons": [
+        {
+            "src": "/img/icons/apple-touch-icon-180x180.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        },
+        {
+            "src": "/img/icons/android-chrome-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/img/icons/android-chrome-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "name": "happyDomain",
+    "short_name": "happyDomain",
+    "start_url": "/",
+    "id": "/"
 }
