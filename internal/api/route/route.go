@@ -72,7 +72,7 @@ type Dependencies struct {
 //	@name						Authorization
 //	@description				Description for what is this security definition being used
 
-func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, dep Dependencies) {
+func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependencies) {
 	baseRoutes := router.Group("")
 
 	declareRouteSwagger(cfg, baseRoutes)
