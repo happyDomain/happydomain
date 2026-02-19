@@ -235,7 +235,15 @@ func (app *App) setupRouter() {
 		session.NewSessionStore(app.cfg, app.store, []byte(app.cfg.JWTSecretKey)),
 	))
 
-	api.DeclareRoutes(app.cfg, app.router, api.Dependencies{
+	if len(app.cfg.BasePath) > 0 {
+		app.router.GET("/", func(c *gin.Context) {
+			c.Redirect(http.StatusFound, app.cfg.BasePath)
+		})
+	}
+
+	baserouter := app.router.Group(app.cfg.BasePath)
+
+	api.DeclareRoutes(app.cfg, baserouter, api.Dependencies{
 		Authentication:        app.usecases.authentication,
 		AuthUser:              app.usecases.authUser,
 		CaptchaVerifier:       app.captchaVerifier,
@@ -256,7 +264,8 @@ func (app *App) setupRouter() {
 		ZoneImporter:          app.usecases.orchestrator.ZoneImporter,
 		ZoneService:           app.usecases.zoneService,
 	})
-	web.DeclareRoutes(app.cfg, app.router, app.captchaVerifier)
+	web.DeclareRoutes(app.cfg, baserouter, app.captchaVerifier)
+	web.NoRoute(app.cfg, app.router)
 }
 
 func (app *App) Start() {

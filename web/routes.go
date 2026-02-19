@@ -54,7 +54,7 @@ func init() {
 	flag.StringVar(&MsgHeaderColor, "msg-header-color", MsgHeaderColor, "Background color of the banner added at the top of the app")
 }
 
-func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, captchaVerifier happydns.CaptchaVerifier) {
+func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, captchaVerifier happydns.CaptchaVerifier) {
 	appConfig := map[string]any{}
 
 	if cfg.DisableProviders {
@@ -121,7 +121,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, captchaVerifier ha
 	router.GET("/fonts/*path", func(c *gin.Context) { c.Writer.Header().Set("Cache-Control", "public, max-age=604800, immutable") }, serveOrReverse("", cfg))
 	router.GET("/img/*path", func(c *gin.Context) { c.Writer.Header().Set("Cache-Control", "public, max-age=604800, immutable") }, serveOrReverse("", cfg))
 	router.GET("/favicon.ico", func(c *gin.Context) { c.Writer.Header().Set("Cache-Control", "public, max-age=604800, immutable") }, serveOrReverse("", cfg))
-	router.GET("/manifest.json", serveOrReverse("", cfg))
+	router.GET("/manifest.json", serveOrReverse("/manifest.json", cfg))
 	router.GET("/robots.txt", serveOrReverse("", cfg))
 	router.GET("/service-worker.js", serveOrReverse("", cfg))
 
@@ -138,9 +138,11 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, captchaVerifier ha
 	router.GET("/tools/*_", serveOrReverse("/", cfg))
 	router.GET("/resolver/*_", serveOrReverse("/", cfg))
 	router.GET("/zones/*_", serveOrReverse("/", cfg))
+}
 
+func NoRoute(cfg *happydns.Options, router *gin.Engine) {
 	router.NoRoute(func(c *gin.Context) {
-		if strings.HasPrefix(c.Request.URL.Path, "/api") || strings.Contains(c.Request.Header.Get("Accept"), "application/json") {
+		if strings.HasPrefix(c.Request.URL.Path, cfg.BasePath+"/api") || strings.Contains(c.Request.Header.Get("Accept"), "application/json") {
 			c.JSON(404, gin.H{"code": "PAGE_NOT_FOUND", "errmsg": "Page not found"})
 		} else {
 			serveOrReverse("/", cfg)(c)
@@ -225,6 +227,15 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 				log.Println("Unable to return index.html:", err.Error())
 			}
 		}
+	} else if forced_url == "/manifest.json" {
+		// Serve altered manifest.json
+		return func(c *gin.Context) {
+			f, _ := Assets.Open("manifest.json")
+			v, _ := io.ReadAll(f)
+			v2 := strings.Replace(strings.Replace(string(v), "\"id\": \"/\"", "\"id\": \""+cfg.BasePath+"\"", 1), "\"start_url\": \"/\"", "\"start_url\": \""+cfg.BasePath+"\"", 1)
+
+			c.Data(http.StatusOK, "application/manifest+json", []byte(v2))
+		}
 	} else if forced_url != "" {
 		// Serve forced_url
 		return func(c *gin.Context) {
@@ -233,7 +244,7 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 	} else {
 		// Serve requested file
 		return func(c *gin.Context) {
-			c.FileFromFS(c.Request.URL.Path, Assets)
+			c.FileFromFS(strings.TrimPrefix(c.Request.URL.Path, cfg.BasePath), Assets)
 		}
 	}
 }
