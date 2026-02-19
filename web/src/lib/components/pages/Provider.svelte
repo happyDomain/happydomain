@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
+    import { navigate } from "$lib/stores/config";
 
     import { Button, Col, Container, Row, Spinner } from "@sveltestrap/sveltestrap";
 
@@ -58,14 +58,14 @@
     function createProviderForm(ptype: string, providerId: string | null, value: ProviderSettingsState | null, edit: boolean): ProviderForm {
         const pf = new ProviderForm(
             ptype,
-            () => refreshProviders().then(() => goto("/?newProvider")),
+            () => refreshProviders().then(() => navigate("/?newProvider")),
             providerId,
             value,
             () => {
                 if (edit) {
-                    goto("/providers");
+                    navigate("/providers");
                 } else {
-                    goto("/providers/new");
+                    navigate("/providers/new");
                 }
             },
         );

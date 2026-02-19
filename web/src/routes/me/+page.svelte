@@ -24,6 +24,8 @@
 <script lang="ts">
     import { Container, ListGroup, Spinner } from "@sveltestrap/sveltestrap";
 
+    import { getOidcProvider } from "$lib/api/auth";
+    import { isAuthUser } from "$lib/api/user";
     import { userSession } from "$lib/stores/usersession";
     import { t } from "$lib/translations";
 
@@ -32,9 +34,7 @@
     import SessionsManager from "./SessionsManager.svelte";
     import UserSettingsForm from "./UserSettingsForm.svelte";
 
-    let is_auth_user_req = $userSession.id
-        ? fetch(`/api/users/${$userSession.id}/is_auth_user`)
-        : false;
+    let is_auth_user_req = $userSession.id ? isAuthUser($userSession) : false;
 </script>
 
 <svelte:head>
@@ -87,15 +87,13 @@
                     <Spinner />
                 </div>
             {:then res}
-                {#if res && res.status === 204}
+                {#if res}
                     <ChangePasswordForm />
                 {:else}
-                    {#await fetch("/auth/has_oidc") then res}
-                        {#await res.json() then oidc}
-                            <div class="alert alert-secondary">
-                                {$t("account.no-password-change", { provider: oidc.provider })}
-                            </div>
-                        {/await}
+                    {#await getOidcProvider() then oidc}
+                        <div class="alert alert-secondary">
+                            {$t("account.no-password-change", { provider: oidc.provider })}
+                        </div>
                     {/await}
                 {/if}
             {/await}
@@ -113,7 +111,7 @@
                 </div>
             {:then res}
                 <ListGroup>
-                    <DeleteAccountCard externalAuth={res && res.status !== 204} />
+                    <DeleteAccountCard externalAuth={!res} />
                 </ListGroup>
             {/await}
         {:else}

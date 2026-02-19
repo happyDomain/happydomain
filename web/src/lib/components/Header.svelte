@@ -22,7 +22,6 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
     import { page } from "$app/state";
     import type { ClassValue } from "svelte/elements";
 
@@ -41,7 +40,7 @@
     import { logout as APILogout } from "$lib/api/user";
     import HelpButton from "$lib/components/Help.svelte";
     import Logo from "$lib/components/Logo.svelte";
-    import { appConfig } from "$lib/stores/config";
+    import { appConfig, navigate } from "$lib/stores/config";
     import { providersSpecs } from "$lib/stores/providers";
     import { userSession, refreshUserSession } from "$lib/stores/usersession";
     import { toasts } from "$lib/stores/toasts";
@@ -104,7 +103,7 @@
                 refreshUserSession().then(
                     () => {},
                     () => {
-                        goto("/login");
+                        navigate("/login");
                     },
                 );
             },

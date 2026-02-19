@@ -41,7 +41,7 @@ function onSWupdate(sw_state: { hasUpdate: boolean }, installingWorker: ServiceW
     sw_state.hasUpdate = true;
 }
 
-export const load: Load = async ({ fetch, route, url }) => {
+export const load: Load = async ({ route, url }) => {
     const { MODE } = import.meta.env;
 
     const initLocale =
@@ -94,7 +94,7 @@ export const load: Load = async ({ fetch, route, url }) => {
 
     // Load user session if any
     try {
-        const user = await refreshUserSession(fetch);
+        const user = await refreshUserSession();
         if (!url.searchParams.has("lang") && get(locale) != user.settings.language) {
             locale.set(user.settings.language);
         }

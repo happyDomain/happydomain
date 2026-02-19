@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
+    import { navigate } from "$lib/stores/config";
 
     import { Spinner } from "@sveltestrap/sveltestrap";
 
@@ -44,7 +44,7 @@
     let selectedHistory: string = $derived(data.history);
     function historyChange(history: string) {
         if (data.history != history) {
-            goto(
+            navigate(
                 "/domains/" +
                     encodeURIComponent(
                         $domains_idx[data.domain.domain]

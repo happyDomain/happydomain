@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
+    import { navigate } from "$lib/stores/config";
 
     import { Alert, Icon, Spinner } from "@sveltestrap/sveltestrap";
 
@@ -43,7 +43,7 @@
             () => {
                 refreshDomains().then(
                     () => {
-                        goto(
+                        navigate(
                             `/domains/${encodeURIComponent($domains_idx[data.domain.domain] ? data.domain.domain : data.domain.id)}`,
                         );
                     },

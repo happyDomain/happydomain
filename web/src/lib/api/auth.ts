@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2022-2024 happyDomain
+// Copyright (c) 2022-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,20 +19,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { writable, type Writable } from "svelte/store";
-import { getAuth } from "$lib/api-base/sdk.gen";
-import { unwrapSdkResponse } from "$lib/api/errors";
-import type { User } from "$lib/model/user";
+import { base } from "$lib/stores/config";
 
-export const userSession: Writable<User> = writable({} as User);
-
-export async function refreshUserSession() {
-    try {
-        const user = unwrapSdkResponse(await getAuth()) as unknown as User;
-        userSession.set(user);
-        return user;
-    } catch (err) {
-        userSession.set({} as User);
-        throw err;
-    }
+export async function getOidcProvider(): Promise<{ provider: string }> {
+    const res = await fetch(`${base}/auth/has_oidc`);
+    return res.json();
 }

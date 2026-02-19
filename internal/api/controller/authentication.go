@@ -58,7 +58,7 @@ func NewLoginController(authService happydns.AuthenticationUsecase, captchaVerif
 //	@Security		securitydefinitions.basic
 //	@Success		200	{object}	happydns.User
 //	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
-//	@Router			/auth/user [get]
+//	@Router			/auth [get]
 func (lc *LoginController) GetLoggedUser(c *gin.Context) {
 	c.JSON(http.StatusOK, c.MustGet("LoggedUser"))
 }

@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
+    import { navigate } from "$lib/stores/config";
     import { createEventDispatcher } from "svelte";
 
     import {
@@ -76,7 +76,7 @@
         }
 
         if (!provider) {
-            goto("/domains/new/" + encodeURIComponent(value));
+            navigate("/domains/new/" + encodeURIComponent(value));
         } else {
             addDomain(value, provider).then(
                 (domain) => {

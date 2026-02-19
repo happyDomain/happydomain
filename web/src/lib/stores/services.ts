@@ -19,6 +19,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import { getServiceSpecs } from "$lib/api-base/sdk.gen";
+import { unwrapSdkResponse } from "$lib/api/errors";
 import { derived, writable, type Writable } from "svelte/store";
 import type { ServiceInfos } from "$lib/model/service_specs.svelte";
 
@@ -30,16 +32,15 @@ export async function refreshServicesSpecs() {
     servicesSpecsLoaded.set(false);
     servicesSpecsError.set(null);
 
-    const res = await fetch("/api/service_specs", { headers: { Accept: "application/json" } });
-    if (res.status == 200) {
-        const map = await res.json();
+    try {
+        const map = unwrapSdkResponse(await getServiceSpecs()) as Record<string, ServiceInfos>;
         servicesSpecs.set(map);
         servicesSpecsLoaded.set(true);
         return map;
-    } else {
-        const errmsg = (await res.json()).errmsg;
+    } catch (err) {
+        const errmsg = err instanceof Error ? err.message : String(err);
         servicesSpecsError.set(errmsg);
-        throw new Error(errmsg);
+        throw err;
     }
 }
 

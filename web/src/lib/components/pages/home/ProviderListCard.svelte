@@ -22,8 +22,6 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
-
     import {
         Button,
         Card,
@@ -33,7 +31,7 @@
 
     import ProviderList from "$lib/components/providers/List.svelte";
     import type { Provider } from "$lib/model/provider";
-    import { appConfig } from "$lib/stores/config";
+    import { appConfig, navigate } from "$lib/stores/config";
     import {
         providers,
         providersSpecs,
@@ -67,7 +65,7 @@
             items={$providers}
             noLabel
             bind:selectedProvider={filteredProvider}
-            on:new-provider={() => goto("/providers/new")}
+            on:new-provider={() => navigate("/providers/new")}
         />
     {/if}
 </Card>

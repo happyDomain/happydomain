@@ -22,12 +22,10 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
-
     import { Alert, Col, Container, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import { validateEmail } from "$lib/api/user";
-    import { appConfig } from "$lib/stores/config";
+    import { appConfig, navigate } from "$lib/stores/config";
     import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
     import EmailConfirmationForm from "./EmailConfirmationForm.svelte";
@@ -50,7 +48,7 @@
                             timeout: 5000,
                             type: "success",
                         });
-                        goto("/login");
+                        navigate("/login");
                     },
                     (err) => {
                         error = err;

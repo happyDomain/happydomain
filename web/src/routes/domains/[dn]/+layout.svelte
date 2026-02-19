@@ -22,7 +22,8 @@
 -->
 
 <script lang="ts">
-    import { goto, invalidateAll } from "$app/navigation";
+    import { invalidateAll } from "$app/navigation";
+    import { navigate } from "$lib/stores/config";
     import { page } from "$app/state";
 
     import {
@@ -73,7 +74,7 @@
     let selectedDomain = $derived(data.domain.id);
     function domainChange(dn: string) {
         if (dn != data.domain.id) {
-            goto(
+            navigate(
                 "/domains/" +
                     encodeURIComponent(domainLink(dn)) +
                     (page.route.id
@@ -102,7 +103,7 @@
         retrievalInProgress = false;
         if (page.data.definedhistory) {
             refreshDomains().then(() => {
-                goto(
+                navigate(
                     "/domains/" +
                         encodeURIComponent(domainLink(selectedDomain)) +
                         "/" +
@@ -130,11 +131,11 @@
                 refreshDomains().then(
                     () => {
                         deleteInProgress = false;
-                        goto("/domains");
+                        navigate("/domains");
                     },
                     () => {
                         deleteInProgress = false;
-                        goto("/domains");
+                        navigate("/domains");
                     },
                 );
             },

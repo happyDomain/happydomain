@@ -3,6 +3,9 @@ import { build, files, version } from '$service-worker';
 // Create a unique cache name for this deployment
 const CACHE = `cache-${version}`;
 
+// Derive base path from SW scope (e.g. "https://example.com/subpath/" → "/subpath")
+const BASE = new URL(self.registration.scope).pathname.replace(/\/$/, '');
+
 const ASSETS = [
     ...build, // the app itself
     ...files  // everything in `static`
@@ -50,9 +53,12 @@ self.addEventListener('fetch', (event) => {
     async function respond() {
         const url = new URL(event.request.url);
         const cache = await caches.open(CACHE);
+        const pathname = BASE && url.pathname.startsWith(BASE)
+            ? url.pathname.slice(BASE.length)
+            : url.pathname;
 
         // `build`/`files` can always be served from the cache
-        if (ASSETS.includes(url.pathname)) {
+        if (ASSETS.includes(pathname)) {
             // Strip query string for asset cache lookup (assets are keyed by pathname only)
             const cacheKey = url.search.length
                 ? new Request(url.origin + url.pathname)
@@ -66,8 +72,8 @@ self.addEventListener('fetch', (event) => {
         }
 
         if (
-            url.pathname.startsWith("/api/providers/_specs") ||
-                url.pathname.startsWith("/api/service_specs/")
+            pathname.startsWith("/api/providers/_specs") ||
+                pathname.startsWith("/api/service_specs/")
         ) {
             // cache first
             const responseFromCache = await caches.match(event.request);
@@ -88,7 +94,7 @@ self.addEventListener('fetch', (event) => {
         try {
             const response = await fetch(event.request);
 
-            if (response.status === 200 && !url.pathname.startsWith("/api/auth")) {
+            if (response.status === 200 && !pathname.startsWith("/api/auth")) {
                 await cache.put(event.request, response.clone());
             }
 

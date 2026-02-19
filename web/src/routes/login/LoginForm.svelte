@@ -22,15 +22,16 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
     import { page } from "$app/state";
 
     import { Button, FormGroup, Input, Label, Spinner } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
-    import { authUserWithCaptcha, CaptchaRequiredError, cleanUserSession } from "$lib/api/user";
+    import { getOidcProvider } from "$lib/api/auth";
+    import { authUser, cleanUserSession } from "$lib/api/user";
+    import { CaptchaRequiredError } from "$lib/hey-api";
     import type { LoginForm } from "$lib/model/user";
-    import { appConfig } from "$lib/stores/config";
+    import { appConfig, navigate } from "$lib/stores/config";
     import { providers } from "$lib/stores/providers";
     import { toasts } from "$lib/stores/toasts";
     import { refreshUserSession } from "$lib/stores/usersession";
@@ -65,7 +66,7 @@
                 ? { ...loginForm, captcha_token: captchaToken }
                 : loginForm;
 
-            authUserWithCaptcha(formWithCaptcha).then(
+            authUser(formWithCaptcha).then(
                 () => {
                     cleanUserSession();
                     providers.set(undefined);
@@ -76,9 +77,9 @@
 
                     const nextParam = page.url.searchParams.get("next");
                     if (nextParam) {
-                        goto(decodeURIComponent(nextParam));
+                        navigate(decodeURIComponent(nextParam));
                     } else {
-                        goto("/");
+                        navigate("/");
                     }
                 },
                 (error) => {
@@ -114,7 +115,7 @@
                 timeout: 10000,
             });
         } else {
-            goto("/forgotten-password");
+            navigate("/forgotten-password");
         }
     }
 </script>
@@ -161,23 +162,21 @@
             {$t("common.go")}
         </Button>
         {#if $appConfig.oidc_configured}
-            {#await fetch("/auth/has_oidc") then res}
-                {#await res.json() then oidc}
-                    <Button href="/auth/oidc" color="secondary">
-                        {#if oidc.provider == "google.com"}
-                            <i class="bi bi-google"></i>
-                        {:else if oidc.provider == "gitlab.com" || oidc.provider == "framagit.org"}
-                            <i class="bi bi-gitlab"></i>
-                        {:else if oidc.provider == "github.com"}
-                            <i class="bi bi-github"></i>
-                        {:else if oidc.provider == "microsoft.com"}
-                            <i class="bi bi-microsoft"></i>
-                        {:else if oidc.provider == "apple.com"}
-                            <i class="bi bi-apple"></i>
-                        {/if}
-                        {$t("account.oidc-login", { provider: oidc.provider })}
-                    </Button>
-                {/await}
+            {#await getOidcProvider() then oidc}
+                <Button href="/auth/oidc" color="secondary">
+                    {#if oidc.provider == "google.com"}
+                        <i class="bi bi-google"></i>
+                    {:else if oidc.provider == "gitlab.com" || oidc.provider == "framagit.org"}
+                        <i class="bi bi-gitlab"></i>
+                    {:else if oidc.provider == "github.com"}
+                        <i class="bi bi-github"></i>
+                    {:else if oidc.provider == "microsoft.com"}
+                        <i class="bi bi-microsoft"></i>
+                    {:else if oidc.provider == "apple.com"}
+                        <i class="bi bi-apple"></i>
+                    {/if}
+                    {$t("account.oidc-login", { provider: oidc.provider })}
+                </Button>
             {/await}
         {/if}
         <Button type="button" on:click={handleForgottenPassword} outline color="dark">

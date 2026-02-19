@@ -22,6 +22,7 @@
 package web
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"io"
@@ -38,7 +39,6 @@ import (
 )
 
 var (
-	indexTpl       *template.Template
 	CustomHeadHTML = ""
 	CustomBodyHTML = ""
 	HideVoxPeople  = false
@@ -99,106 +99,135 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, captchaVerifi
 		CustomHeadHTML += `<script id="app-config" type="application/json">` + string(appcfg) + `</script>`
 	}
 
-	if cfg.DevProxy != "" {
-		router.GET("/.svelte-kit/*_", serveOrReverse("", cfg))
-		router.GET("/node_modules/*_", serveOrReverse("", cfg))
-		router.GET("/@vite/*_", serveOrReverse("", cfg))
-		router.GET("/@id/*_", serveOrReverse("", cfg))
-		router.GET("/@fs/*_", serveOrReverse("", cfg))
-		router.GET("/src/*_", serveOrReverse("", cfg))
-		router.GET("/home/*_", serveOrReverse("", cfg))
-	}
-	router.GET("/_app/*_", func(c *gin.Context) { c.Writer.Header().Set("Cache-Control", "public, max-age=604800, immutable") }, serveOrReverse("", cfg))
+	serveFile := serveOrReverse("", cfg)
+	serveIndex := serveOrReverse("/", cfg)
+	serveManifest := serveOrReverse("/manifest.json", cfg)
+	immutable := func(c *gin.Context) { c.Writer.Header().Set("Cache-Control", "public, max-age=604800, immutable") }
 
-	router.GET("/", serveOrReverse("/", cfg))
-	router.GET("/index.html", serveOrReverse("/", cfg))
+	if cfg.DevProxy != "" {
+		router.GET("/.svelte-kit/*_", serveFile)
+		router.GET("/node_modules/*_", serveFile)
+		router.GET("/@vite/*_", serveFile)
+		router.GET("/@id/*_", serveFile)
+		router.GET("/@fs/*_", serveFile)
+		router.GET("/src/*_", serveFile)
+		router.GET("/home/*_", serveFile)
+	}
+	router.GET("/_app/*_", immutable, serveFile)
+
+	router.GET("/", serveIndex)
+	router.GET("/index.html", serveIndex)
 
 	// Routes handled by the showcase
-	router.GET("/en/*_", serveOrReverse("/", cfg))
-	router.GET("/fr/*_", serveOrReverse("/", cfg))
+	router.GET("/en/*_", serveIndex)
+	router.GET("/fr/*_", serveIndex)
 
 	// Routes for real existings files
-	router.GET("/fonts/*path", func(c *gin.Context) { c.Writer.Header().Set("Cache-Control", "public, max-age=604800, immutable") }, serveOrReverse("", cfg))
-	router.GET("/img/*path", func(c *gin.Context) { c.Writer.Header().Set("Cache-Control", "public, max-age=604800, immutable") }, serveOrReverse("", cfg))
-	router.GET("/favicon.ico", func(c *gin.Context) { c.Writer.Header().Set("Cache-Control", "public, max-age=604800, immutable") }, serveOrReverse("", cfg))
-	router.GET("/manifest.json", serveOrReverse("/manifest.json", cfg))
-	router.GET("/robots.txt", serveOrReverse("", cfg))
-	router.GET("/service-worker.js", serveOrReverse("", cfg))
+	router.GET("/fonts/*path", immutable, serveFile)
+	router.GET("/img/*path", immutable, serveFile)
+	router.GET("/favicon.ico", immutable, serveFile)
+	router.GET("/manifest.json", serveManifest)
+	router.GET("/robots.txt", serveFile)
+	router.GET("/service-worker.js", serveFile)
 
 	// Routes to virtual content
-	router.GET("/domains/*_", serveOrReverse("/", cfg))
-	router.GET("/email-validation", serveOrReverse("/", cfg))
-	router.GET("/forgotten-password", serveOrReverse("/", cfg))
-	router.GET("/join", serveOrReverse("/", cfg))
-	router.GET("/login", serveOrReverse("/", cfg))
-	router.GET("/me", serveOrReverse("/", cfg))
-	router.GET("/onboarding/*_", serveOrReverse("/", cfg))
-	router.GET("/providers/*_", serveOrReverse("/", cfg))
-	router.GET("/services/*_", serveOrReverse("/", cfg))
-	router.GET("/tools/*_", serveOrReverse("/", cfg))
-	router.GET("/resolver/*_", serveOrReverse("/", cfg))
-	router.GET("/zones/*_", serveOrReverse("/", cfg))
+	router.GET("/domains/*_", serveIndex)
+	router.GET("/email-validation", serveIndex)
+	router.GET("/forgotten-password", serveIndex)
+	router.GET("/join", serveIndex)
+	router.GET("/login", serveIndex)
+	router.GET("/me", serveIndex)
+	router.GET("/onboarding/*_", serveIndex)
+	router.GET("/providers/*_", serveIndex)
+	router.GET("/services/*_", serveIndex)
+	router.GET("/tools/*_", serveIndex)
+	router.GET("/resolver/*_", serveIndex)
+	router.GET("/zones/*_", serveIndex)
 }
 
 func NoRoute(cfg *happydns.Options, router *gin.Engine) {
+	serveIndex := serveOrReverse("/", cfg)
 	router.NoRoute(func(c *gin.Context) {
 		if strings.HasPrefix(c.Request.URL.Path, cfg.BasePath+"/api") || strings.Contains(c.Request.Header.Get("Accept"), "application/json") {
 			c.JSON(404, gin.H{"code": "PAGE_NOT_FOUND", "errmsg": "Page not found"})
+		} else if cfg.BasePath != "" && !strings.HasPrefix(c.Request.URL.Path, cfg.BasePath) {
+			c.Redirect(http.StatusFound, cfg.BasePath+c.Request.URL.Path)
 		} else {
-			serveOrReverse("/", cfg)(c)
+			serveIndex(c)
 		}
 	})
 }
 
 func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 	if cfg.DevProxy != "" {
+		// Parse once at creation time, not per request
+		devURL, err := url.Parse(cfg.DevProxy)
+		if err != nil {
+			return func(c *gin.Context) {
+				http.Error(c.Writer, "invalid dev proxy URL: "+err.Error(), http.StatusInternalServerError)
+			}
+		}
+
 		// Forward to the Vue dev proxy
 		return func(c *gin.Context) {
-			if u, err := url.Parse(cfg.DevProxy); err != nil {
-				http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
+			u := *devURL // copy to avoid mutating shared state across requests
+			if forced_url != "" {
+				u.Path = path.Join(u.Path, forced_url)
 			} else {
-				if forced_url != "" {
-					u.Path = path.Join(u.Path, forced_url)
-				} else {
-					u.Path = path.Join(u.Path, c.Request.URL.Path)
+				u.Path = path.Join(u.Path, c.Request.URL.Path)
+			}
+			u.RawQuery = c.Request.URL.RawQuery
+
+			r, err := http.NewRequest(c.Request.Method, u.String(), c.Request.Body)
+			if err != nil {
+				http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			resp, err := http.DefaultClient.Do(r)
+			if err != nil {
+				http.Error(c.Writer, err.Error(), http.StatusBadGateway)
+				return
+			}
+			defer resp.Body.Close()
+
+			if u.Path != "/" || resp.StatusCode != 200 {
+				for key, vals := range resp.Header {
+					for _, v := range vals {
+						c.Writer.Header().Add(key, v)
+					}
 				}
-
-				u.RawQuery = c.Request.URL.RawQuery
-
-				if r, err := http.NewRequest(c.Request.Method, u.String(), c.Request.Body); err != nil {
-					http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
-				} else if resp, err := http.DefaultClient.Do(r); err != nil {
-					http.Error(c.Writer, err.Error(), http.StatusBadGateway)
-				} else {
-					defer resp.Body.Close()
-
-					if u.Path != "/" || resp.StatusCode != 200 {
-						for key := range resp.Header {
-							c.Writer.Header().Add(key, resp.Header.Get(key))
-						}
-						c.Writer.WriteHeader(resp.StatusCode)
-
-						io.Copy(c.Writer, resp.Body)
-					} else {
-						for key := range resp.Header {
-							if strings.ToLower(key) != "content-length" {
-								c.Writer.Header().Add(key, resp.Header.Get(key))
-							}
-						}
-
-						v, _ := io.ReadAll(resp.Body)
-
-						v2 := strings.Replace(strings.Replace(string(v), "</head>", "{{ .Head }}</head>", 1), "</body>", "{{ .Body }}</body>", 1)
-
-						indexTpl = template.Must(template.New("index.html").Parse(v2))
-
-						if err := indexTpl.ExecuteTemplate(c.Writer, "index.html", map[string]string{
-							"Body": CustomBodyHTML,
-							"Head": CustomHeadHTML,
-						}); err != nil {
-							log.Println("Unable to return index.html:", err.Error())
+				c.Writer.WriteHeader(resp.StatusCode)
+				io.Copy(c.Writer, resp.Body)
+			} else {
+				for key, vals := range resp.Header {
+					if !strings.EqualFold(key, "content-length") {
+						for _, v := range vals {
+							c.Writer.Header().Add(key, v)
 						}
 					}
+				}
+
+				v, err := io.ReadAll(resp.Body)
+				if err != nil {
+					http.Error(c.Writer, err.Error(), http.StatusBadGateway)
+					return
+				}
+
+				// Local template per request — no race condition on a package-level var
+				tpl, err := template.New("index.html").Parse(
+					strings.Replace(strings.Replace(string(v),
+						"</head>", "{{ .Head }}</head>", 1),
+						"</body>", "{{ .Body }}</body>", 1),
+				)
+				if err != nil {
+					http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				if err := tpl.Execute(c.Writer, map[string]string{
+					"Body": CustomBodyHTML,
+					"Head": CustomHeadHTML,
+				}); err != nil {
+					log.Println("Unable to return index.html:", err.Error())
 				}
 			}
 		}
@@ -207,31 +236,60 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 			c.String(http.StatusNotFound, "404 Page not found - interface not embedded in binary, please compile with -tags web")
 		}
 	} else if forced_url == "/" {
-		// Serve altered index.html
+		// Pre-render index.html once at handler creation time
+		f, err := Assets.Open("index.html")
+		if err != nil {
+			log.Println("Unable to open embedded index.html:", err)
+			return func(c *gin.Context) {
+				c.String(http.StatusInternalServerError, "index.html not found in embedded assets")
+			}
+		}
+		v, err := io.ReadAll(f)
+		if err != nil {
+			log.Println("Unable to read embedded index.html:", err)
+			return func(c *gin.Context) {
+				c.String(http.StatusInternalServerError, "failed to read embedded index.html")
+			}
+		}
+
+		rendered := []byte(strings.Replace(strings.Replace(string(v), "</head>", CustomHeadHTML+"</head>", 1), "</body>", CustomBodyHTML+"</body>", 1))
+
+		if cfg.BasePath != "" {
+			rendered = bytes.ReplaceAll(
+				bytes.ReplaceAll(
+					bytes.ReplaceAll(
+						bytes.ReplaceAll(
+							rendered,
+							[]byte(`href="/`),
+							append([]byte(`href="`), append([]byte(cfg.BasePath), '/')...),
+						),
+						[]byte(`import("/`),
+						append([]byte(`import("`), append([]byte(cfg.BasePath), '/')...),
+					),
+					[]byte(`base: "`),
+					append([]byte(`base: "`), []byte(cfg.BasePath)...),
+				),
+				[]byte("</head>"),
+				[]byte(`<base href="`+cfg.BasePath+`"></head>`),
+			)
+		}
+
 		return func(c *gin.Context) {
-			if indexTpl == nil {
-				// Create template from file
-				f, _ := Assets.Open("index.html")
-				v, _ := io.ReadAll(f)
-
-				v2 := strings.Replace(strings.Replace(string(v), "</head>", "{{ .Head }}</head>", 1), "</body>", "{{ .Body }}</body>", 1)
-
-				indexTpl = template.Must(template.New("index.html").Parse(v2))
-			}
-
-			// Serve template
-			if err := indexTpl.ExecuteTemplate(c.Writer, "index.html", map[string]string{
-				"Body": CustomBodyHTML,
-				"Head": CustomHeadHTML,
-			}); err != nil {
-				log.Println("Unable to return index.html:", err.Error())
-			}
+			c.Data(http.StatusOK, "text/html; charset=utf-8", rendered)
 		}
 	} else if forced_url == "/manifest.json" {
 		// Serve altered manifest.json
 		return func(c *gin.Context) {
-			f, _ := Assets.Open("manifest.json")
-			v, _ := io.ReadAll(f)
+			f, err := Assets.Open("manifest.json")
+			if err != nil {
+				c.String(http.StatusInternalServerError, "manifest.json not found in embedded assets")
+				return
+			}
+			v, err := io.ReadAll(f)
+			if err != nil {
+				c.String(http.StatusInternalServerError, "failed to read manifest.json")
+				return
+			}
 			v2 := strings.Replace(strings.Replace(string(v), "\"id\": \"/\"", "\"id\": \""+cfg.BasePath+"\"", 1), "\"start_url\": \"/\"", "\"start_url\": \""+cfg.BasePath+"\"", 1)
 
 			c.Data(http.StatusOK, "application/manifest+json", []byte(v2))

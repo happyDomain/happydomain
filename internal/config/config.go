@@ -98,6 +98,10 @@ func ConsolidateConfig() (opts *happydns.Options, err error) {
 	} else {
 		opts.BasePath = ""
 	}
+	if opts.DevProxy != "" && opts.BasePath != "" {
+		err = fmt.Errorf("-base-path is not supported in -dev mode")
+		return
+	}
 
 	if opts.NoMail && opts.MailSMTPHost != "" {
 		err = fmt.Errorf("-no-mail and -mail-smtp-* cannot be defined at the same time")

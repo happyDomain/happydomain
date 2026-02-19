@@ -19,6 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import { base } from "$lib/stores/config";
 import { refreshUserSession } from "$lib/stores/usersession";
 import type { CreateClientConfig } from "./api-base/client.gen";
 
@@ -26,6 +27,13 @@ export class NotAuthorizedError extends Error {
     constructor(message: string) {
         super(message);
         this.name = "NotAuthorizedError";
+    }
+}
+
+export class CaptchaRequiredError extends NotAuthorizedError {
+    constructor(message: string) {
+        super(message);
+        this.name = "CaptchaRequiredError";
     }
 }
 
@@ -39,8 +47,24 @@ export class ProviderNoDomainListingSupport extends Error {
 async function customFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
     const response = await fetch(input, init);
 
-    // Handle 401 Unauthorized - attempt session refresh and retry
+    // Handle 401 Unauthorized - check for captcha requirement first, then attempt session refresh
     if (response.status === 401) {
+        if (response.headers.get("content-type")?.includes("application/json")) {
+            const clone = response.clone();
+            try {
+                const json = await clone.json();
+                if (json.captcha_required) {
+                    throw new CaptchaRequiredError(
+                        typeof json.errmsg === "string"
+                            ? json.errmsg
+                            : "Captcha verification required.",
+                    );
+                }
+            } catch (err) {
+                if (err instanceof CaptchaRequiredError) throw err;
+                // ignore JSON parsing errors
+            }
+        }
         try {
             await refreshUserSession();
             // Retry the original request after successful session refresh
@@ -66,7 +90,7 @@ async function customFetch(input: RequestInfo | URL, init?: RequestInit): Promis
             if (
                 response.status === 400 &&
                 json.error ===
-                "error in openapi3filter.SecurityRequirementsError: security requirements failed: invalid session"
+                    "error in openapi3filter.SecurityRequirementsError: security requirements failed: invalid session"
             ) {
                 throw new NotAuthorizedError(json.error.substring(80));
             }
@@ -79,7 +103,10 @@ async function customFetch(input: RequestInfo | URL, init?: RequestInit): Promis
             }
         } catch (err) {
             // If it's one of our custom errors, re-throw it
-            if (err instanceof NotAuthorizedError || err instanceof ProviderNoDomainListingSupport) {
+            if (
+                err instanceof NotAuthorizedError ||
+                err instanceof ProviderNoDomainListingSupport
+            ) {
                 throw err;
             }
             // Otherwise, ignore JSON parsing errors and return the original response
@@ -92,7 +119,7 @@ async function customFetch(input: RequestInfo | URL, init?: RequestInit): Promis
 export const createClientConfig: CreateClientConfig = (config) => {
     // In test environments (Node.js), we need a full URL with protocol and host
     // In browser environments, relative URLs work fine
-    const baseUrl = typeof window !== 'undefined' ? "/api/" : "http://localhost/api/";
+    const baseUrl = typeof window !== "undefined" ? base + "/api/" : "http://localhost/api/";
 
     return {
         ...config,

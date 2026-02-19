@@ -28,7 +28,7 @@
 </script>
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
+    import { navigate } from "$lib/stores/config";
 
     import {
         Button,
@@ -65,7 +65,7 @@
             message: $t("account.delete.success"),
             type: "primary",
         });
-        goto("/login");
+        navigate("/login");
     }
 
     function deletionError(err: Error): void {
