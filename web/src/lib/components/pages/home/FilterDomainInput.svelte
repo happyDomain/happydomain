@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
+    import { navigate } from "$lib/stores/config";
 
     import {
         Button,
@@ -56,7 +56,7 @@
         if (actionAddDomain) {
             addDomainToProvider();
         } else if (filteredDomains.length > 0) {
-            goto("/domains/" + encodeURIComponent(filteredDomains[0].id));
+            navigate("/domains/" + encodeURIComponent(filteredDomains[0].id));
         }
     }
 
@@ -88,7 +88,7 @@
                 },
             );
         } else {
-            goto("/domains/new/" + encodeURIComponent($filteredName));
+            navigate("/domains/new/" + encodeURIComponent($filteredName));
         }
     }
 

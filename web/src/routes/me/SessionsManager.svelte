@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
+    import { navigate } from "$lib/stores/config";
 
     import {
         Button,
@@ -63,7 +63,7 @@
         is_closing_sessions = true;
         await deleteSessions();
         is_closing_sessions = false;
-        goto("/login");
+        navigate("/login");
     }
 
     let newSessionModalOpen = $state(false);

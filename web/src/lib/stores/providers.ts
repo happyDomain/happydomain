@@ -19,6 +19,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import { getProvidersSpecs } from "$lib/api-base/sdk.gen";
+import { unwrapSdkResponse } from "$lib/api/errors";
 import { listProviders } from "$lib/api/provider";
 import type { Provider, ProviderInfos } from "$lib/model/provider";
 import { filteredProvider } from "$lib/stores/home";
@@ -62,12 +64,7 @@ export const providers_idx = derived(providers, ($providers: Array<Provider> | u
 });
 
 export async function refreshProvidersSpecs() {
-    const res = await fetch("/api/providers/_specs", { headers: { Accept: "application/json" } });
-    if (res.status == 200) {
-        const map = await res.json();
-        providersSpecs.set(map);
-        return map;
-    } else {
-        throw new Error((await res.json()).errmsg);
-    }
+    const map = unwrapSdkResponse(await getProvidersSpecs()) as Record<string, ProviderInfos>;
+    providersSpecs.set(map);
+    return map;
 }

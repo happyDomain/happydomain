@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
+    import { navigate } from "$lib/stores/config";
     import { createEventDispatcher } from "svelte";
 
     import {
@@ -108,7 +108,7 @@
 
     function updateProvider(event: Event, item: Provider) {
         event.stopPropagation();
-        goto("/providers/" + encodeURIComponent(item._id));
+        navigate("/providers/" + encodeURIComponent(item._id));
     }
 
     async function delProvider(event: Event, item: Provider) {

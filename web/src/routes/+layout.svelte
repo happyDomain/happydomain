@@ -25,12 +25,10 @@
     import "bootstrap-icons/font/bootstrap-icons.css";
     import "../app.scss";
 
-    import { goto } from "$app/navigation";
-
     import Header from "$lib/components/Header.svelte";
     import Toaster from "$lib/components/Toaster.svelte";
     import VoxPeople from "$lib/components/VoxPeople.svelte";
-    import { appConfig } from "$lib/stores/config";
+    import { appConfig, navigate } from "$lib/stores/config";
     import { providers } from "$lib/stores/providers";
     import { toasts } from "$lib/stores/toasts";
     import { locale, t } from "$lib/translations";
@@ -53,7 +51,7 @@
 
     window.onunhandledrejection = (e) => {
         if (e.reason.name == "NotAuthorizedError") {
-            goto("/login");
+            navigate("/login");
             providers.set(undefined);
             toasts.addErrorToast({
                 title: $t("errors.session.title"),

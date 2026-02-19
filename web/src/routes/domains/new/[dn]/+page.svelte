@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
+    import { navigate } from "$lib/stores/config";
 
     import { Button, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
@@ -69,7 +69,7 @@
                 });
 
                 refreshDomains();
-                goto("/domains/");
+                navigate("/domains/");
             },
             (error) => {
                 addingNewDomain = false;

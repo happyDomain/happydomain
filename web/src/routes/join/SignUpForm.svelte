@@ -22,15 +22,13 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
-
     import { Button, FormGroup, Icon, Input, Label, Spinner } from "@sveltestrap/sveltestrap";
 
     import { t, locale } from "$lib/translations";
     import { registerUser } from "$lib/api/user";
     import type { SignUpForm } from "$lib/model/user";
     import { checkWeakPassword, checkPasswordConfirmation } from "$lib/password";
-    import { appConfig } from "$lib/stores/config";
+    import { appConfig, navigate } from "$lib/stores/config";
     import { toasts } from "$lib/stores/toasts";
     import CaptchaWidget from "$lib/components/CaptchaWidget.svelte";
 
@@ -73,7 +71,7 @@
                         type: "success",
                         timeout: 5000,
                     });
-                    goto("/login");
+                    navigate("/login");
                 },
                 (error) => {
                     formSent = false;

@@ -32,6 +32,7 @@ import {
     postUsersByUserIdSettings,
     getUsersByUserId,
 } from "$lib/api-base/sdk.gen";
+import { client } from "$lib/api-base/client.gen";
 import type { UserSettings } from "$lib/model/usersettings";
 import type { User, SignUpForm, LoginForm } from "$lib/model/user";
 import { unwrapSdkResponse, unwrapEmptyResponse } from "./errors";
@@ -42,43 +43,6 @@ export async function registerUser(form: SignUpForm): Promise<User> {
 
 export async function authUser(form: LoginForm): Promise<User> {
     return unwrapSdkResponse(await postAuth({ body: form })) as unknown as User;
-}
-
-export class CaptchaRequiredError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = "CaptchaRequiredError";
-    }
-}
-
-export async function authUserWithCaptcha(form: LoginForm): Promise<User> {
-    // Use raw fetch to bypass the customFetch session-refresh wrapper,
-    // which would consume the 401 response before we can inspect captcha_required.
-    const baseUrl = typeof window !== 'undefined' ? "/api/" : "http://localhost/api/";
-    const response = await fetch(`${baseUrl}auth`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-    });
-
-    if (!response.ok) {
-        let body: Record<string, unknown> = {};
-        try {
-            body = await response.json();
-        } catch {
-            // ignore
-        }
-
-        if (body.captcha_required) {
-            throw new CaptchaRequiredError(
-                typeof body.errmsg === 'string' ? body.errmsg : "Captcha verification required."
-            );
-        }
-
-        throw new Error(typeof body.errmsg === 'string' ? body.errmsg : "Invalid username or password.");
-    }
-
-    return response.json() as Promise<User>;
 }
 
 export async function logout(): Promise<boolean> {
@@ -183,6 +147,14 @@ export function cleanUserSession(): void {
             sessionStorage.removeItem(k);
         }
     }
+}
+
+export async function isAuthUser(user: User): Promise<boolean> {
+    const result = await client.get({
+        url: "/users/{userId}/is_auth_user",
+        path: { userId: user.id },
+    } as any);
+    return result.response?.status === 204;
 }
 
 export async function getUser(id: string): Promise<User> {
