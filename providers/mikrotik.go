@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -22,39 +22,46 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	_ "github.com/StackExchange/dnscontrol/v4/providers/hexonet"
+	_ "github.com/StackExchange/dnscontrol/v4/providers/mikrotik"
 
 	"git.happydns.org/happyDomain/internal/adapters"
 	"git.happydns.org/happyDomain/model"
 )
 
-type HexonetAPI struct {
-	APILogin    string `json:"apilogin,omitempty" happydomain:"label=API Login,placeholder=your-hexonet-account-id,required"`
-	APIPassword string `json:"apipassword,omitempty" happydomain:"label=API Password,placeholder=your-hexonet-account-password,required"`
-	APIEntity   string `json:"apientity,omitempty" happydomain:"label=API Entity,default=LIVE,choices=LIVE;OTE,description=Choose between the LIVE and the OT&E system"`
+type MikrotikAPI struct {
+	Host      string `json:"host,omitempty" happydomain:"label=Host,placeholder=http://192.168.88.1:8080,required,description=RouterOS REST API endpoint"`
+	Username  string `json:"username,omitempty" happydomain:"label=Username,placeholder=admin,required"`
+	Password  string `json:"password,omitempty" happydomain:"label=Password,required,secret"`
+	ZoneHints string `json:"zonehints,omitempty" happydomain:"label=Zone Hints,placeholder=internal.corp.local\\,home.arpa,description=Comma-separated list of zone names to help identify multi-label zones"`
 }
 
-func (s *HexonetAPI) DNSControlName() string {
-	return "HEXONET"
+func (s *MikrotikAPI) DNSControlName() string {
+	return "MIKROTIK"
 }
 
-func (s *HexonetAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+func (s *MikrotikAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 	return adapter.NewDNSControlProviderAdapter(s)
 }
 
-func (s *HexonetAPI) ToDNSControlConfig() (map[string]string, error) {
-	return map[string]string{
-		"apilogin":    s.APILogin,
-		"apipassword": s.APIPassword,
-		"apientity":   s.APIEntity,
-	}, nil
+func (s *MikrotikAPI) ToDNSControlConfig() (map[string]string, error) {
+	config := map[string]string{
+		"host":     s.Host,
+		"username": s.Username,
+		"password": s.Password,
+	}
+
+	if s.ZoneHints != "" {
+		config["zonehints"] = s.ZoneHints
+	}
+
+	return config, nil
 }
 
 func init() {
 	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
-		return &HexonetAPI{}
+		return &MikrotikAPI{}
 	}, happydns.ProviderInfos{
-		Name:        "Hexonet",
-		Description: "Service providers for the domain industry.",
+		Name:        "MikroTik",
+		Description: "If your zone is hosted on a MikroTik RouterOS device, managed via its REST API static DNS entries.",
 	}, RegisterProvider)
 }

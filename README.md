@@ -12,7 +12,7 @@ It runs as a single stateless Linux binary, backed by a database (currently: Lev
 
 * An ultra fast web interface without compromise
 * Multiple domains management
-* Support for 44+ DNS providers (including dynamic DNS, RFC 2136) thanks to [DNSControl](https://stackexchange.github.io/dnscontrol/)
+* Support for 60+ DNS providers (including dynamic DNS, RFC 2136) thanks to [DNSControl](https://stackexchange.github.io/dnscontrol/)
 * Support for the most recents resource records thanks to [CoreDNS's library](https://github.com/miekg/dns)
 * Zone editor with a diff view to review the changes before propagation
 * Keep an history of published changes

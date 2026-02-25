@@ -16,7 +16,7 @@ happyDomain 是一款免费的 Web 应用，可集中管理来自不同注册商
 
 * 高性能 Web 界面，响应迅速
 * 支持多域名管理
-* 支持 44+ DNS 提供商（含动态 DNS、RFC 2136），得益于 [DNSControl](https://stackexchange.github.io/dnscontrol/)
+* 支持 60+ DNS 提供商（含动态 DNS、RFC 2136），得益于 [DNSControl](https://stackexchange.github.io/dnscontrol/)
 * 支持最新资源记录类型，得益于 [CoreDNS 库](https://github.com/miekg/dns)
 * 区域编辑器支持差异对比，部署前轻松审查变更
 * 保留部署变更历史记录
