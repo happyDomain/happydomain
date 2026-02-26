@@ -22,7 +22,14 @@
 -->
 
 <script lang="ts">
-    import { Button, Icon, Input, InputGroup, ListGroup, ListGroupItem } from "@sveltestrap/sveltestrap";
+    import {
+        Button,
+        Icon,
+        Input,
+        InputGroup,
+        ListGroup,
+        ListGroupItem,
+    } from "@sveltestrap/sveltestrap";
 
     import type { Domain } from "$lib/model/domain";
     import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
@@ -71,8 +78,8 @@
     const type = "svcs.SPF";
 
     function addDirective() {
-        if (val.f.length > 1 && val.f[val.f.length - 1].indexOf("all") >= 0) {
-            val.f.splice(val.f.length-1, 0, "");
+        if (val.f.length >= 1 && val.f[val.f.length - 1].indexOf("all") >= 0) {
+            val.f.splice(val.f.length - 1, 0, "");
         } else {
             val.f.push("");
         }
@@ -98,12 +105,12 @@
         edit
         index="v"
         specs={{
-              id: "v",
-              label: "Version",
-              placeholder: "spf1",
-              type: "string",
-              description: "Defines the version of SPF to use.",
-              }}
+            id: "v",
+            label: "Version",
+            placeholder: "spf1",
+            type: "string",
+            description: "Defines the version of SPF to use.",
+        }}
         bind:value={val.v}
     />
 
@@ -112,10 +119,7 @@
         {#each val.f as directive, i}
             <ListGroupItem>
                 <InputGroup>
-                    <Input
-                        bsSize="sm"
-                        bind:value={val.f[i]}
-                    />
+                    <Input bsSize="sm" bind:value={val.f[i]} />
                     <Button
                         type="button"
                         color="danger"
@@ -128,12 +132,7 @@
                 </InputGroup>
             </ListGroupItem>
         {/each}
-        <ListGroupItem
-            tag="button"
-            class="text-muted fst-italic"
-            action
-            onclick={addDirective}
-        >
+        <ListGroupItem tag="button" class="text-muted fst-italic" action onclick={addDirective}>
             New directive
         </ListGroupItem>
     </ListGroup>
