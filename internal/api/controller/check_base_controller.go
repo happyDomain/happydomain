@@ -58,11 +58,13 @@ func (bc *BaseCheckerController) ListCheckers(c *gin.Context) {
 	res := map[string]happydns.CheckerResponse{}
 
 	for name, checker := range *checkers {
+		_, hasHTML := checker.(happydns.CheckerHTMLReporter)
 		res[name] = happydns.CheckerResponse{
-			ID:           name,
-			Name:         checker.Name(),
-			Availability: checker.Availability(),
-			Options:      checker.Options(),
+			ID:            name,
+			Name:          checker.Name(),
+			Availability:  checker.Availability(),
+			Options:       checker.Options(),
+			HasHTMLReport: hasHTML,
 		}
 	}
 
@@ -73,11 +75,13 @@ func (bc *BaseCheckerController) ListCheckers(c *gin.Context) {
 func (bc *BaseCheckerController) GetCheckerStatus(c *gin.Context) {
 	checker := c.MustGet("checker").(happydns.Checker)
 
+	_, hasHTML := checker.(happydns.CheckerHTMLReporter)
 	c.JSON(http.StatusOK, happydns.CheckerResponse{
-		ID:           checker.ID(),
-		Name:         checker.Name(),
-		Availability: checker.Availability(),
-		Options:      checker.Options(),
+		ID:            checker.ID(),
+		Name:          checker.Name(),
+		Availability:  checker.Availability(),
+		Options:       checker.Options(),
+		HasHTMLReport: hasHTML,
 	})
 }
 

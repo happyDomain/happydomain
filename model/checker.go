@@ -21,6 +21,8 @@
 
 package happydns
 
+import "encoding/json"
+
 // Auto-fill variable identifiers for checker option fields.
 const (
 	// AutoFillDomainName fills the option with the fully qualified domain name
@@ -57,11 +59,22 @@ type Checker interface {
 	RunCheck(options CheckerOptions, meta map[string]string) (*CheckResult, error)
 }
 
+// CheckerHTMLReporter is an optional interface checkers can implement
+// to render their stored report as a full HTML document (for iframe embedding).
+// Detect support with a type assertion: _, ok := checker.(CheckerHTMLReporter)
+type CheckerHTMLReporter interface {
+	// GetHTMLReport generates an HTML document from the JSON-encoded report data
+	// stored in CheckResult.Report.
+	// The raw parameter contains the JSON bytes of the Report field as stored.
+	GetHTMLReport(raw json.RawMessage) (string, error)
+}
+
 type CheckerResponse struct {
-	ID           string                      `json:"id"`
-	Name         string                      `json:"name"`
-	Availability CheckerAvailability         `json:"availability"`
-	Options      CheckerOptionsDocumentation `json:"options"`
+	ID            string                      `json:"id"`
+	Name          string                      `json:"name"`
+	Availability  CheckerAvailability         `json:"availability"`
+	Options       CheckerOptionsDocumentation `json:"options"`
+	HasHTMLReport bool                        `json:"has_html_report,omitempty"`
 }
 
 type SetCheckerOptionsRequest struct {

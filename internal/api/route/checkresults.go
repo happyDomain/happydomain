@@ -76,6 +76,7 @@ func DeclareScopedCheckResultRoutes(
 		{
 			apiCheckResultsRoutes.GET("", tc.GetCheckResult)
 			apiCheckResultsRoutes.DELETE("", tc.DropCheckResult)
+			apiCheckResultsRoutes.GET("/report", tc.GetCheckResultHTMLReport)
 		}
 	}
 }
