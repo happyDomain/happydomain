@@ -33,6 +33,7 @@
     import { refreshDomains } from "$lib/stores/domains";
     import { providers_idx, providersSpecs, refreshProvidersSpecs } from "$lib/stores/providers";
     import { t } from "$lib/translations";
+    import { getStatusColor, getStatusIcon } from "$lib/utils/check";
 
     interface Props {
         class?: ClassValue;
@@ -88,7 +89,6 @@
                             <a
                                 href="/providers/{encodeURIComponent(item.id_provider)}"
                                 class="d-flex align-items-center gap-2 text-decoration-none"
-                                onclick={(e) => e.stopPropagation()}
                             >
                                 <ImgProvider
                                     id_provider={item.id_provider}
@@ -107,7 +107,16 @@
                         {/if}
                     </td>
                     <td>
-                        <Badge color="success">OK</Badge>
+                        {#if item.last_check_status !== undefined}
+                            <a
+                                href="/domains/{encodeURIComponent(item.domain)}/checks"
+                                class="text-decoration-none"
+                            >
+                                <Badge color={getStatusColor(item.last_check_status)}>
+                                    <Icon name={getStatusIcon(item.last_check_status)} />
+                                </Badge>
+                            </a>
+                        {/if}
                     </td>
                     <td class="text-end">
                         <ButtonGroup size="sm">

@@ -48,6 +48,7 @@ func DeclareDomainRoutes(
 		domainUC,
 		remoteZoneImporter,
 		zoneImporter,
+		checkResultUC,
 	)
 
 	router.GET("/domains", dc.GetDomains)
