@@ -22,11 +22,13 @@
 package controller
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
+	"git.happydns.org/happyDomain/checks"
 	"git.happydns.org/happyDomain/internal/api/middleware"
 	"git.happydns.org/happyDomain/model"
 )
@@ -470,6 +472,65 @@ func (tc *CheckResultController) GetCheckResult(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, result)
+}
+
+// GetCheckResultHTMLReport returns the HTML report for a specific check result
+//
+//	@Summary		Get check result HTML report
+//	@Description	Returns the full HTML document generated from the check result's report data. Only available for checkers that implement HTML reporting.
+//	@Tags			checks
+//	@Produce		html
+//	@Param			domain		path		string	true	"Domain identifier"
+//	@Param			cname		path		string	true	"Check plugin name"
+//	@Param			result_id	path		string	true	"Result ID"
+//	@Success		200			{string}	string	"HTML document"
+//	@Failure		404			{object}	happydns.ErrorResponse
+//	@Failure		500			{object}	happydns.ErrorResponse
+//	@Router			/domains/{domain}/checks/{cname}/results/{result_id}/report [get]
+func (tc *CheckResultController) GetCheckResultHTMLReport(c *gin.Context) {
+	checkName := c.Param("cname")
+	resultIDStr := c.Param("result_id")
+	targetID, err := tc.getTargetFromContext(c)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	resultID, err := happydns.NewIdentifierFromString(resultIDStr)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusBadRequest, fmt.Errorf("invalid result ID"))
+		return
+	}
+
+	result, err := tc.checkResultUC.GetCheckResult(checkName, tc.scope, targetID, resultID)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusNotFound, err)
+		return
+	}
+
+	checker, err := tc.checkerUC.GetChecker(checkName)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusNotFound, err)
+		return
+	}
+
+	raw, err := json.Marshal(result.Report)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	htmlContent, supported, err := checks.GetHTMLReport(checker, json.RawMessage(raw))
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+	if !supported {
+		middleware.ErrorResponse(c, http.StatusNotFound, fmt.Errorf("checker %q does not support HTML reports", checkName))
+		return
+	}
+
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(htmlContent))
 }
 
 // DropCheckResult deletes a specific check result

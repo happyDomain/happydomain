@@ -32,6 +32,7 @@ import {
     getDomainsByDomainChecks,
     getDomainsByDomainChecksByCnameResults,
     getDomainsByDomainChecksByCnameResultsByResultId,
+    getDomainsByDomainChecksByCnameResultsByResultIdReport,
     deleteDomainsByDomainChecksByCnameResults,
     deleteDomainsByDomainChecksByCnameResultsByResultId,
     getDomainsByDomainChecksByCnameExecutionsByExecutionId,
@@ -225,6 +226,18 @@ export async function deleteAllCheckResults(
     await deleteDomainsByDomainChecksByCnameResults({
         path: { domain: domainId, cname: checkName },
     });
+}
+
+export async function getCheckResultHTMLReport(
+    domainId: string,
+    checkName: string,
+    resultId: string,
+): Promise<string> {
+    return unwrapSdkResponse(
+        await getDomainsByDomainChecksByCnameResultsByResultIdReport({
+            path: { domain: domainId, cname: checkName, result_id: resultId },
+        }),
+    ) as string;
 }
 
 export async function getCheckExecution(
