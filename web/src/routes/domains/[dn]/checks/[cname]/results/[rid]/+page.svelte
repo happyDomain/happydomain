@@ -22,34 +22,18 @@
 -->
 
 <script lang="ts">
-    import {
-        Alert,
-        Badge,
-        Button,
-        ButtonGroup,
-        Card,
-        CardBody,
-        CardHeader,
-        Col,
-        Icon,
-        Row,
-        Spinner,
-        Table,
-    } from "@sveltestrap/sveltestrap";
+    import { Alert, Spinner } from "@sveltestrap/sveltestrap";
 
+    import { onDestroy } from "svelte";
     import { t } from "$lib/translations";
     import { page } from "$app/state";
-    import { navigate } from "$lib/stores/config";
     import {
         getCheckStatus,
         getCheckResult,
         getCheckResultHTMLReport,
-        deleteCheckResult,
-        triggerCheck,
     } from "$lib/api/checks";
     import type { Domain } from "$lib/model/domain";
-    import type { CheckResult } from "$lib/model/check";
-    import { getStatusColor, getStatusKey, formatDuration, formatCheckDate } from "$lib/utils";
+    import { currentCheckResult, currentCheckInfo, showHTMLReport } from "$lib/stores/checks";
 
     interface Props {
         data: { domain: Domain };
@@ -63,70 +47,20 @@
     let resultPromise = $derived(getCheckResult(data.domain.id, checkName, resultId));
     let checkPromise = $derived(getCheckStatus(checkName));
     let htmlReportPromise = $derived(getCheckResultHTMLReport(data.domain.id, checkName, resultId));
-    let errorMessage = $state<string | null>(null);
-    let resolvedResult = $state<CheckResult | null>(null);
-    let isRelaunching = $state(false);
-    let showHTML = $state(true);
-
-    function downloadBlob(content: string, filename: string, mime: string) {
-        const blob = new Blob([content], { type: mime });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
-    }
-
-    function downloadJSON(result: CheckResult) {
-        downloadBlob(
-            JSON.stringify(result.report, null, 2),
-            `${checkName}-${resultId}.json`,
-            "application/json",
-        );
-    }
-
-    async function downloadHTML() {
-        const html = await htmlReportPromise;
-        downloadBlob(html, `${checkName}-${resultId}.html`, "text/html");
-    }
 
     $effect(() => {
-        resultPromise.then((r) => {
-            resolvedResult = r;
-        });
+        resultPromise.then((r) => currentCheckResult.set(r));
     });
 
-    async function handleRelaunch() {
-        if (!resolvedResult) return;
+    $effect(() => {
+        checkPromise.then((c) => currentCheckInfo.set(c));
+    });
 
-        isRelaunching = true;
-        try {
-            await triggerCheck(data.domain.id, checkName, resolvedResult.options);
-            navigate(
-                `/domains/${encodeURIComponent(data.domain.domain)}/checks/${encodeURIComponent(checkName)}`,
-            );
-        } catch (error: any) {
-            errorMessage = error.message || $t("checks.result.relaunch-failed");
-        } finally {
-            isRelaunching = false;
-        }
-    }
-
-    async function handleDelete() {
-        if (!confirm($t("checks.result.delete-confirm"))) {
-            return;
-        }
-
-        try {
-            await deleteCheckResult(data.domain.id, checkName, resultId);
-            navigate(
-                `/domains/${encodeURIComponent(data.domain.domain)}/checks/${encodeURIComponent(checkName)}`,
-            );
-        } catch (error: any) {
-            errorMessage = error.message || $t("checks.result.delete-failed");
-        }
-    }
+    onDestroy(() => {
+        currentCheckResult.set(null);
+        currentCheckInfo.set(null);
+        showHTMLReport.set(true);
+    });
 </script>
 
 <svelte:head>
@@ -135,258 +69,37 @@
     </title>
 </svelte:head>
 
-<div class="flex-fill pb-4 pt-2 mw-100">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="text-truncate">
-            <span class="font-monospace">{data.domain.domain}</span>
-            &ndash;
-            {$t("checks.result.title")}
-        </h2>
-        <div class="d-flex gap-2">
-            <Button
-                color="primary"
-                outline
-                onclick={handleRelaunch}
-                disabled={!resolvedResult || isRelaunching}
-            >
-                {#if isRelaunching}
-                    <Spinner size="sm" />
-                {:else}
-                    <Icon name="arrow-repeat"></Icon>
-                {/if}
-                <span class="d-none d-lg-inline">
-                    {$t("checks.result.relaunch")}
-                </span>
-            </Button>
-            <Button color="danger" outline onclick={handleDelete} disabled={!resolvedResult}>
-                <Icon name="trash"></Icon>
-                <span class="d-none d-lg-inline">
-                    {$t("checks.result.delete")}
-                </span>
-            </Button>
-        </div>
-    </div>
-
-    {#if errorMessage}
-        {#key errorMessage}
-            <Alert color="danger" dismissible>
-                <Icon name="exclamation-triangle-fill"></Icon>
-                {errorMessage}
-            </Alert>
-        {/key}
-    {/if}
-
+<div class="flex-fill mw-100 d-flex flex-column">
     {#await Promise.all([resultPromise, checkPromise])}
         <div class="mt-5 text-center flex-fill">
             <Spinner />
             <p>{$t("checks.result.loading")}</p>
         </div>
     {:then [result, check]}
-        <Row>
-            <Col lg>
-                <Card class="mb-3">
-                    <CardHeader>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-end gap-2">
-                                <h4 class="mb-0">
-                                    {check.name || checkName}
-                                </h4>
-                            </div>
-                            {#if result.scheduled_check}
-                                <Badge color="info">
-                                    <Icon name="clock"></Icon>
-                                    {$t("checks.result.type.scheduled")}
-                                </Badge>
-                            {:else}
-                                <Badge color="secondary">
-                                    <Icon name="hand-index"></Icon>
-                                    {$t("checks.result.type.manual")}
-                                </Badge>
-                            {/if}
-                        </div>
-                    </CardHeader>
-                    <CardBody class="p-2">
-                        <Table borderless size="sm" class="mb-0">
-                            <tbody>
-                                <tr>
-                                    <th style="width: 200px">{$t("checks.result.field.domain")}</th>
-                                    <td class="font-monospace">{data.domain.domain}</td>
-                                </tr>
-                                <tr>
-                                    <th>{$t("checks.result.field.executed-at")}</th>
-                                    <td>{formatCheckDate(result.executed_at, "long", $t)}</td>
-                                </tr>
-                                <tr>
-                                    <th>{$t("checks.result.field.duration")}</th>
-                                    <td>{formatDuration(result.duration, $t)}</td>
-                                </tr>
-                                <tr>
-                                    <th>{$t("checks.result.field.status")}</th>
-                                    <td>
-                                        <Badge color={getStatusColor(result.status)}>
-                                            {$t(getStatusKey(result.status))}
-                                        </Badge>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>{$t("checks.result.field.status-message")}</th>
-                                    <td>{result.status_line}</td>
-                                </tr>
-                                {#if result.error}
-                                    <tr>
-                                        <th>{$t("checks.result.field.error")}</th>
-                                        <td class="text-danger">{result.error}</td>
-                                    </tr>
-                                {/if}
-                            </tbody>
-                        </Table>
-                    </CardBody>
-                </Card>
-            </Col>
-            {#if result.options && Object.keys(result.options).length > 0}
-                <Col lg>
-                    <Card class="mb-3">
-                        <CardHeader>
-                            <h5 class="mb-0">
-                                <Icon name="sliders"></Icon>
-                                {$t("checks.result.check-options")}
-                            </h5>
-                        </CardHeader>
-                        <CardBody class="p-2">
-                            <Table borderless size="sm" class="mb-0">
-                                <tbody>
-                                    {#each Object.entries(check.options ?? {}) as [optKey, optVals]}
-                                        {#each optVals as option}
-                                            {@const value =
-                                                (option.id
-                                                    ? result.options[option.id]
-                                                    : undefined) ||
-                                                option.default ||
-                                                option.placeholder ||
-                                                ""}
-                                            <tr>
-                                                <th
-                                                    class="text-truncate"
-                                                    style="max-width: min(200px, 40vw)"
-                                                    title={option.label}
-                                                >
-                                                    {option.label}:
-                                                </th>
-                                                <td class:text-truncate={typeof value !== "object"}>
-                                                    {#if typeof value === "object"}
-                                                        <pre class="mb-0"><code
-                                                                >{JSON.stringify(
-                                                                    value,
-                                                                    null,
-                                                                    2,
-                                                                )}</code
-                                                            ></pre>
-                                                    {:else}
-                                                        {value}
-                                                    {/if}
-                                                </td>
-                                            </tr>
-                                        {/each}
-                                    {/each}
-                                </tbody>
-                            </Table>
-                        </CardBody>
-                    </Card>
-                </Col>
-            {/if}
-        </Row>
-
         {#if result.report || check.has_html_report}
-            <Card class="mt-3">
-                <CardHeader>
-                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
-                        <h5 class="mb-0">
-                            <Icon name="file-earmark-text"></Icon>
-                            {$t("checks.result.full-report")}
-                        </h5>
-                        <div class="d-flex gap-2 align-items-center flex-wrap">
-                            {#if check.has_html_report}
-                                <ButtonGroup size="sm">
-                                    <Button
-                                        color="secondary"
-                                        outline
-                                        active={showHTML}
-                                        onclick={() => (showHTML = true)}
-                                    >
-                                        <Icon name="file-earmark-richtext"></Icon>
-                                        {$t("checks.result.view-html")}
-                                    </Button>
-                                    <Button
-                                        color="secondary"
-                                        outline
-                                        active={!showHTML}
-                                        onclick={() => (showHTML = false)}
-                                    >
-                                        <Icon name="braces"></Icon>
-                                        {$t("checks.result.view-json")}
-                                    </Button>
-                                </ButtonGroup>
-                            {/if}
-                            <ButtonGroup size="sm">
-                                {#if check.has_html_report}
-                                    <Button color="outline-secondary" onclick={downloadHTML}>
-                                        <Icon name="download"></Icon>
-                                        {$t("checks.result.download-html")}
-                                    </Button>
-                                {/if}
-                                {#if result.report != null}
-                                    <Button
-                                        color="outline-secondary"
-                                        onclick={() => downloadJSON(result)}
-                                    >
-                                        <Icon name="download"></Icon>
-                                        {$t("checks.result.download-json")}
-                                    </Button>
-                                {/if}
-                            </ButtonGroup>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardBody class="p-0">
-                    {#if check.has_html_report && showHTML}
-                        {#await htmlReportPromise}
-                            <div class="text-center p-4"><Spinner /></div>
-                        {:then html}
-                            <iframe
-                                srcdoc={html}
-                                sandbox
-                                title={$t("checks.result.full-report")}
-                                style="width: 100%; min-height: 600px; border: none; display: block;"
-                            ></iframe>
-                        {:catch}
-                            <pre class="bg-light p-3 rounded mb-0 overflow-x-scroll"><code
-                                    >{JSON.stringify(result.report, null, 2)}</code
-                                ></pre>
-                        {/await}
-                    {:else if typeof result.report === "string"}
-                        <pre class="bg-light p-3 rounded mb-0 overflow-x-scroll"><code
-                                >{result.report}</code
-                            ></pre>
-                    {:else}
-                        <pre class="bg-light p-3 rounded mb-0 overflow-x-scroll"><code
-                                >{JSON.stringify(result.report, null, 2)}</code
-                            ></pre>
-                    {/if}
-                </CardBody>
-            </Card>
+            {#if check.has_html_report && $showHTMLReport}
+                {#await htmlReportPromise}
+                    <div class="text-center p-4"><Spinner /></div>
+                {:then html}
+                    <iframe
+                        srcdoc={html}
+                        sandbox=""
+                        title={$t("checks.result.full-report")}
+                        class="flex-fill"
+                        style="width: 100%; border: none; display: block;"
+                    ></iframe>
+                {:catch}
+                    <pre class="bg-light p-3 rounded mb-0"><code>{JSON.stringify(result.report, null, 2)}</code></pre>
+                {/await}
+            {:else if typeof result.report === "string"}
+                <pre class="bg-light p-3 rounded mb-0"><code>{result.report}</code></pre>
+            {:else}
+                <pre class="bg-light p-3 rounded mb-0"><code>{JSON.stringify(result.report, null, 2)}</code></pre>
+            {/if}
         {/if}
     {:catch error}
-        <Card body color="danger">
-            <p class="mb-0">
-                <Icon name="exclamation-triangle-fill"></Icon>
-                {$t("checks.result.error-loading", { error: error.message })}
-            </p>
-        </Card>
+        <Alert color="danger" class="m-3">
+            {$t("checks.result.error-loading", { error: error.message })}
+        </Alert>
     {/await}
 </div>
-
-<style>
-    pre {
-        overflow-x: scroll;
-    }
-</style>

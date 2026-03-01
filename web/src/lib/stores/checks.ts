@@ -20,7 +20,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { listChecks } from "$lib/api/checks";
-import type { CheckerList } from "$lib/model/check";
+import type { CheckerInfo, CheckerList, CheckResult } from "$lib/model/check";
 import { writable, type Writable } from "svelte/store";
 
 export const checks: Writable<CheckerList | undefined> = writable(undefined);
@@ -30,3 +30,7 @@ export async function refreshChecks() {
     checks.set(data);
     return data;
 }
+
+export const currentCheckResult: Writable<CheckResult | null> = writable(null);
+export const currentCheckInfo: Writable<CheckerInfo | null> = writable(null);
+export const showHTMLReport: Writable<boolean> = writable(true);
