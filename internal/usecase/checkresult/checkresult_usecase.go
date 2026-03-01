@@ -208,6 +208,72 @@ func (u *CheckResultUsecase) FailCheckExecution(executionId happydns.Identifier,
 	return u.storage.UpdateCheckExecution(execution)
 }
 
+// GetWorstCheckStatus returns the worst (most critical) status from the most
+// recent result of each checker for a given target. Returns nil if no results exist.
+func (u *CheckResultUsecase) GetWorstCheckStatus(targetType happydns.CheckScopeType, targetId happydns.Identifier, userId happydns.Identifier) (*happydns.CheckResultStatus, error) {
+	results, err := u.ListAllCheckResultsByTarget(targetType, targetId, userId, 0)
+	if err != nil || len(results) == 0 {
+		return nil, err
+	}
+
+	// Keep only the latest result per checker
+	latest := map[string]*happydns.CheckResult{}
+	for _, r := range results {
+		if prev, ok := latest[r.CheckerName]; !ok || r.ExecutedAt.After(prev.ExecutedAt) {
+			latest[r.CheckerName] = r
+		}
+	}
+
+	// Find minimum (worst) status among latest results, ignoring Unknown (which
+	// means the check couldn't run, not that the domain is in a bad state).
+	var worst *happydns.CheckResultStatus
+	for _, r := range latest {
+		s := r.Status
+		if s == happydns.CheckResultStatusUnknown {
+			continue
+		}
+		if worst == nil || s < *worst {
+			worst = &s
+		}
+	}
+
+	return worst, nil
+}
+
+// GetWorstCheckStatusByUser fetches all results for the user once and returns
+// a map from target ID string to worst (most critical) status per target.
+func (u *CheckResultUsecase) GetWorstCheckStatusByUser(targetType happydns.CheckScopeType, userId happydns.Identifier) (map[string]*happydns.CheckResultStatus, error) {
+	allResults, err := u.storage.ListCheckResultsByUser(userId, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	type key struct {
+		target  string
+		checker string
+	}
+	latest := map[key]*happydns.CheckResult{}
+	for _, r := range allResults {
+		if r.CheckType != targetType || r.CheckerName == "" {
+			continue
+		}
+		k := key{target: r.TargetId.String(), checker: r.CheckerName}
+		if prev, ok := latest[k]; !ok || r.ExecutedAt.After(prev.ExecutedAt) {
+			latest[k] = r
+		}
+	}
+
+	worst := map[string]*happydns.CheckResultStatus{}
+	for k, r := range latest {
+		s := r.Status
+		if prev, ok := worst[k.target]; !ok || s < *prev {
+			worst[k.target] = &s
+		}
+	}
+
+	return worst, nil
+}
+
 // DeleteCompletedExecutions removes execution records that are completed
 func (u *CheckResultUsecase) DeleteCompletedExecutions(olderThan time.Duration) error {
 	cutoffTime := time.Now().Add(-olderThan)

@@ -43,6 +43,7 @@ export interface Domain extends MiniDomain {
     group: string;
     zone_history: Array<string>;
     zone_meta?: Record<string, ZoneHistory>;
+    last_check_status?: number;
 }
 
 export interface DomainLog {
