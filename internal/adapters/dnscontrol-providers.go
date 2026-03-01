@@ -26,11 +26,13 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/StackExchange/dnscontrol/v4/models"
 	dnscontrol "github.com/StackExchange/dnscontrol/v4/pkg/providers"
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/metrics"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -150,7 +152,11 @@ func NewDNSControlProviderAdapter(configAdapter DNSControlConfigAdapter) (ret ha
 		auditor = p.RecordAuditor
 	}
 
-	return &DNSControlAdapterNSProvider{provider, auditor}, nil
+	return &DNSControlAdapterNSProvider{
+		DNSServiceProvider: provider,
+		RecordAuditor:      auditor,
+		providerName:       configAdapter.DNSControlName(),
+	}, nil
 }
 
 // DNSControlAdapterNSProvider wraps a DNSControl provider to implement the happyDomain ProviderActuator interface.
@@ -160,6 +166,8 @@ type DNSControlAdapterNSProvider struct {
 	DNSServiceProvider dnscontrol.DNSServiceProvider
 	// RecordAuditor validates records for provider-specific requirements
 	RecordAuditor dnscontrol.RecordAuditor
+	// providerName is the DNSControl provider name used for metrics labels
+	providerName string
 }
 
 // CanListZones checks if the provider supports listing zones (domains).
@@ -182,10 +190,17 @@ func (p *DNSControlAdapterNSProvider) CanCreateDomain() bool {
 func (p *DNSControlAdapterNSProvider) GetZoneRecords(domain string) (ret []happydns.Record, err error) {
 	var records models.Records
 
+	start := time.Now()
 	defer func() {
 		if a := recover(); a != nil {
 			err = fmt.Errorf("%s", a)
 		}
+		status := "success"
+		if err != nil {
+			status = "error"
+		}
+		metrics.ProviderAPICallsTotal.WithLabelValues(p.providerName, "get_zone_records", status).Inc()
+		metrics.ProviderAPIDuration.WithLabelValues(p.providerName, "get_zone_records").Observe(time.Since(start).Seconds())
 	}()
 
 	records, err = p.DNSServiceProvider.GetZoneRecords(strings.TrimSuffix(domain, "."), nil)
@@ -205,6 +220,16 @@ func (p *DNSControlAdapterNSProvider) GetZoneRecords(domain string) (ret []happy
 // before computing corrections.
 // Returns a slice of corrections, the total number of corrections needed, and any error.
 func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []happydns.Record) (ret []*happydns.Correction, nbCorrections int, err error) {
+	start := time.Now()
+	defer func() {
+		status := "success"
+		if err != nil {
+			status = "error"
+		}
+		metrics.ProviderAPICallsTotal.WithLabelValues(p.providerName, "get_zone_corrections", status).Inc()
+		metrics.ProviderAPIDuration.WithLabelValues(p.providerName, "get_zone_corrections").Observe(time.Since(start).Seconds())
+	}()
+
 	var dc *models.DomainConfig
 	dc, err = NewDNSControlDomainConfig(strings.TrimSuffix(domain, "."), rrs)
 	if err != nil {
@@ -255,23 +280,47 @@ func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []ha
 // CreateDomain creates a new zone (domain) on the provider.
 // The fqdn parameter should be a fully qualified domain name (with or without trailing dot).
 // Returns an error if the provider doesn't support domain creation or if creation fails.
-func (p *DNSControlAdapterNSProvider) CreateDomain(fqdn string) error {
+func (p *DNSControlAdapterNSProvider) CreateDomain(fqdn string) (err error) {
+	start := time.Now()
+	defer func() {
+		status := "success"
+		if err != nil {
+			status = "error"
+		}
+		metrics.ProviderAPICallsTotal.WithLabelValues(p.providerName, "create_domain", status).Inc()
+		metrics.ProviderAPIDuration.WithLabelValues(p.providerName, "create_domain").Observe(time.Since(start).Seconds())
+	}()
+
 	zc, ok := p.DNSServiceProvider.(dnscontrol.ZoneCreator)
 	if !ok {
-		return fmt.Errorf("Provider doesn't support domain creation.")
+		err = fmt.Errorf("Provider doesn't support domain creation.")
+		return
 	}
 
-	return zc.EnsureZoneExists(strings.TrimSuffix(fqdn, "."), nil)
+	err = zc.EnsureZoneExists(strings.TrimSuffix(fqdn, "."), nil)
+	return
 }
 
 // ListZones retrieves a list of all zones (domains) managed by this provider.
 // Returns a slice of domain names or an error if the provider doesn't support listing
 // or if the operation fails.
-func (p *DNSControlAdapterNSProvider) ListZones() ([]string, error) {
+func (p *DNSControlAdapterNSProvider) ListZones() (zones []string, err error) {
+	start := time.Now()
+	defer func() {
+		status := "success"
+		if err != nil {
+			status = "error"
+		}
+		metrics.ProviderAPICallsTotal.WithLabelValues(p.providerName, "list_zones", status).Inc()
+		metrics.ProviderAPIDuration.WithLabelValues(p.providerName, "list_zones").Observe(time.Since(start).Seconds())
+	}()
+
 	zl, ok := p.DNSServiceProvider.(dnscontrol.ZoneLister)
 	if !ok {
-		return nil, fmt.Errorf("Provider doesn't support domain listing.")
+		err = fmt.Errorf("Provider doesn't support domain listing.")
+		return
 	}
 
-	return zl.ListZones()
+	zones, err = zl.ListZones()
+	return
 }
