@@ -23,11 +23,9 @@ package main
 
 import (
 	"log"
-	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/earthboundkid/versioninfo/v2"
 	"github.com/fatih/color"
@@ -63,7 +61,6 @@ func main() {
 	}
 
 	log.Println("This is happyDomain", versioninfo.Short())
-	rand.Seed(time.Now().UTC().UnixNano())
 
 	// Disabled colors in dnscontrol corrections
 	color.NoColor = true
