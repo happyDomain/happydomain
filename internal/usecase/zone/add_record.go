@@ -66,13 +66,13 @@ func (uc *AddRecordUsecase) Add(zone *happydns.Zone, origin string, record happy
 					svc_rrs = append([]happydns.Record{record}, svc_rrs...)
 
 					// Recreate the service
-					newsvc, _, err := svcs.AnalyzeZone(origin, svc_rrs)
+					mergedsvc, _, err := svcs.AnalyzeZone(origin, svc_rrs)
 					if err != nil {
 						return err
 					}
 
 					// Replace in zone
-					zone.Services[dn] = append(zone.Services[dn][:i], append(newsvc[dn], zone.Services[dn][i+1:]...)...)
+					zone.Services[dn] = append(zone.Services[dn][:i], append(mergedsvc[dn], zone.Services[dn][i+1:]...)...)
 
 					break
 				}

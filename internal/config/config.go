@@ -62,7 +62,7 @@ func ConsolidateConfig() (opts *happydns.Options, err error) {
 		"happydomain.conf",
 	}
 
-	if home, err := os.UserConfigDir(); err == nil {
+	if home, dirErr := os.UserConfigDir(); dirErr == nil {
 		configLocations = append(configLocations, path.Join(home, "happydomain", "happydomain.conf"))
 	}
 

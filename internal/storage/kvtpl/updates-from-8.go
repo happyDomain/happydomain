@@ -32,7 +32,7 @@ import (
 	"git.happydns.org/happyDomain/services/providers/google"
 )
 
-func migrateFrom8(s *KVStorage) (err error) {
+func migrateFrom8(s *KVStorage) error {
 	migrateFrom7SvcType = make(map[string]func(json.RawMessage) (json.RawMessage, error))
 
 	// google.GSuite

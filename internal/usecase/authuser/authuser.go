@@ -163,7 +163,7 @@ func (s *Service) CreateAuthUser(uu happydns.UserRegistration) (*happydns.UserAu
 	user.AllowCommercials = uu.Newsletter
 
 	// Persist the new user in the storage layer
-	if err := s.store.CreateAuthUser(user); err != nil {
+	if err = s.store.CreateAuthUser(user); err != nil {
 		return nil, happydns.InternalError{
 			Err:         fmt.Errorf("unable to create user in storage: %w", err),
 			UserMessage: "Sorry, we are currently unable to create your account. Please try again later.",

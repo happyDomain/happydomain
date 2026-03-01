@@ -89,12 +89,12 @@ corrections:
 		for ic, wc := range form.WantedCorrections {
 			if wc.Equals(cr.Id) {
 				log.Printf("%s: apply correction: %s", domain.DomainName, cr.Msg)
-				err := cr.F()
+				corrErr := cr.F()
 
-				if err != nil {
-					log.Printf("%s: unable to apply correction: %s", domain.DomainName, err.Error())
-					uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed record update (%s): %s", cr.Msg, err.Error())))
-					errs = errors.Join(errs, fmt.Errorf("%s: %w", cr.Msg, err))
+				if corrErr != nil {
+					log.Printf("%s: unable to apply correction: %s", domain.DomainName, corrErr.Error())
+					uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed record update (%s): %s", cr.Msg, corrErr.Error())))
+					errs = errors.Join(errs, fmt.Errorf("%s: %w", cr.Msg, corrErr))
 					// Stop the zone update if we didn't change it yet
 					if i == 0 {
 						break corrections

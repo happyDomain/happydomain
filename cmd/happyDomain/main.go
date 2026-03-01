@@ -83,7 +83,7 @@ func main() {
 
 	var adminSrv *app.Admin
 	if opts.AdminBind != "" {
-		adminSrv := app.NewAdmin(a)
+		adminSrv = app.NewAdmin(a)
 		go adminSrv.Start()
 	}
 

@@ -279,8 +279,9 @@ func (zc *ZoneController) AddRecords(c *gin.Context) {
 		return
 	}
 
+	var rr happydns.Record
 	for _, record := range records {
-		rr, err := helpers.ParseRecord(record, domain.DomainName)
+		rr, err = helpers.ParseRecord(record, domain.DomainName)
 		if err != nil {
 			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 			return
@@ -340,8 +341,9 @@ func (zc *ZoneController) DeleteRecords(c *gin.Context) {
 		return
 	}
 
+	var rr happydns.Record
 	for _, record := range records {
-		rr, err := helpers.ParseRecord(record, domain.DomainName)
+		rr, err = helpers.ParseRecord(record, domain.DomainName)
 		if err != nil {
 			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 			return

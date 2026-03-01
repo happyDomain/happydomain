@@ -70,13 +70,13 @@ func (r *Mailer) SendMail(to *mail.Address, subject, content string) (err error)
 		"Content":     content,
 	}
 
-	if t, err := template.New("mailText").Parse(mailTXTTpl); err != nil {
+	t, err := template.New("mailText").Parse(mailTXTTpl)
+	if err != nil {
 		return err
-	} else {
-		m.SetBodyWriter("text/plain", func(w io.Writer) error {
-			return t.Execute(w, tplData)
-		})
 	}
+	m.SetBodyWriter("text/plain", func(w io.Writer) error {
+		return t.Execute(w, tplData)
+	})
 
 	// Convert text from Markdown to HTML
 	md := goldmark.New(
@@ -95,18 +95,18 @@ func (r *Mailer) SendMail(to *mail.Address, subject, content string) (err error)
 		return
 	}
 
-	if data, err := web.GetEmbedFS().Open("build/img/happydomain.png"); err == nil {
+	if data, imgErr := web.GetEmbedFS().Open("build/img/happydomain.png"); imgErr == nil {
 		m.EmbedReader("happydomain.png", data)
 	}
 
-	if t, err := template.New("mailHTML").Parse(mailHTMLTpl); err != nil {
+	t, err = template.New("mailHTML").Parse(mailHTMLTpl)
+	if err != nil {
 		return err
-	} else {
-		m.AddAlternativeWriter("text/html", func(w io.Writer) error {
-			tplData["Content"] = buf.String()
-			return t.Execute(w, tplData)
-		})
 	}
+	m.AddAlternativeWriter("text/html", func(w io.Writer) error {
+		tplData["Content"] = buf.String()
+		return t.Execute(w, tplData)
+	})
 
 	if err = r.SendMethod.PrepareAndSend(m); err != nil {
 		return

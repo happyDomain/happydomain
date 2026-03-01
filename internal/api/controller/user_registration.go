@@ -66,7 +66,7 @@ func (rc *RegistrationController) RegisterNewUser(c *gin.Context) {
 	}
 
 	if rc.captcha.Provider() != "" {
-		if err := rc.captcha.Verify(uu.CaptchaToken, c.ClientIP()); err != nil {
+		if err = rc.captcha.Verify(uu.CaptchaToken, c.ClientIP()); err != nil {
 			log.Printf("%s: captcha verification failed during registration: %s", c.ClientIP(), err.Error())
 			c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{Message: "Captcha verification failed."})
 			return

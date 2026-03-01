@@ -99,7 +99,7 @@ func (lc *LoginController) Login(c *gin.Context) {
 				return
 			}
 
-			if err := lc.captcha.Verify(request.CaptchaToken, c.ClientIP()); err != nil {
+			if err = lc.captcha.Verify(request.CaptchaToken, c.ClientIP()); err != nil {
 				log.Printf("%s: captcha verification failed: %s", c.ClientIP(), err.Error())
 				c.JSON(http.StatusUnauthorized, happydns.LoginErrorResponse{
 					Message:         "Captcha verification failed.",

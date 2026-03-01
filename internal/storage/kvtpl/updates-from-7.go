@@ -56,11 +56,12 @@ func explodeAbstractEMail(dn happydns.Subdomain, in *happydns.ServiceMessage) ([
 	if len(val.MX) > 0 {
 		var mxs svcs.MXs
 
+		var rr dns.RR
 		for _, mx := range val.MX {
 			if _, ok := mx["preference"]; !ok {
 				mx["preference"] = 0.0
 			}
-			rr, err := dns.NewRR(fmt.Sprintf("zZzZ. 0 IN MX %.0f %s", mx["preference"].(float64), helpers.DomainFQDN(mx["target"].(string), "zZzZ.")))
+			rr, err = dns.NewRR(fmt.Sprintf("zZzZ. 0 IN MX %.0f %s", mx["preference"].(float64), helpers.DomainFQDN(mx["target"].(string), "zZzZ.")))
 			if err != nil {
 				return nil, err
 			} else {
@@ -191,7 +192,7 @@ func explodeAbstractEMail(dn happydns.Subdomain, in *happydns.ServiceMessage) ([
 
 var migrateFrom7SvcType map[string]func(json.RawMessage) (json.RawMessage, error)
 
-func migrateFrom7(s *KVStorage) (err error) {
+func migrateFrom7(s *KVStorage) error {
 	migrateFrom7SvcType = make(map[string]func(json.RawMessage) (json.RawMessage, error))
 
 	// abstract.ACMEChallenge
