@@ -175,6 +175,40 @@
     "captcha": {
         "human-check": "Are you a human? Please check the box below to continue:"
     },
+    "domaininfo": {
+        "page-title": "Domain Information",
+        "page-description": "Look up registration information for any domain name",
+        "domain-description": "Enter the domain name you want to look up, e.g. {{domain}}.",
+        "lookup": "Look up",
+        "registrar": "Registrar",
+        "registrar-url": "Registrar website",
+        "nameservers": "Nameservers",
+        "creation-date": "Registered on",
+        "expiration-date": "Expires on",
+        "status": "Domain status",
+        "no-expiration": "No expiration date available",
+        "no-creation": "No registration date available",
+        "no-registrar": "Unknown registrar",
+        "expires-in": "Expires in {{days}} days",
+        "expired": "Expired {{days}} days ago",
+        "expires-today": "Expires today",
+        "domain-not-found": "This domain name does not appear to be registered.",
+        "error": "Could not retrieve domain information.",
+        "status-descriptions": {
+            "ok": "The domain is active with no restrictions.",
+            "active": "The domain is active.",
+            "clientTransferProhibited": "Transfer to another registrar is locked.",
+            "serverTransferProhibited": "Transfer is prohibited by the registry.",
+            "clientUpdateProhibited": "Domain updates are locked.",
+            "serverUpdateProhibited": "Domain updates are prohibited by the registry.",
+            "clientDeleteProhibited": "Domain deletion is locked.",
+            "serverDeleteProhibited": "Domain deletion is prohibited by the registry.",
+            "clientHold": "The domain is on hold (not resolving).",
+            "serverHold": "The domain is on hold by the registry.",
+            "pendingTransfer": "A transfer to another registrar is pending.",
+            "pendingDelete": "The domain is pending deletion."
+        }
+    },
     "errors": {
         "404": {
             "title": "Page not found",
@@ -239,6 +273,7 @@
         "my-domains": "My domains",
         "my-providers": "My domain providers",
         "dns-resolver": "DNS resolver",
+        "domain-info": "Domain Information",
         "checkers": "Domain Checkers",
         "my-account": "My account",
         "logout": "Sign out",
