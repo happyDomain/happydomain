@@ -192,4 +192,12 @@ type CheckResultUsecase interface {
 
 	// FailCheckExecution marks an execution as failed
 	FailCheckExecution(executionId Identifier, errorMsg string) error
+
+	// GetWorstCheckStatus returns the worst (most critical) status from the most
+	// recent result of each checker for a given target. Returns nil if no results exist.
+	GetWorstCheckStatus(targetType CheckScopeType, targetId Identifier, userId Identifier) (*CheckResultStatus, error)
+
+	// GetWorstCheckStatusByUser returns a map from target ID string to worst check
+	// status for all targets of the given type owned by the user, in a single pass.
+	GetWorstCheckStatusByUser(targetType CheckScopeType, userId Identifier) (map[string]*CheckResultStatus, error)
 }

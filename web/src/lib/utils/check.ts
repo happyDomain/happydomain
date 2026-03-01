@@ -31,6 +31,21 @@ export function getStatusKey(status: CheckResultStatus | HappydnsCheckResultStat
     }
 }
 
+export function getStatusIcon(status: CheckResultStatus | HappydnsCheckResultStatus | undefined): string {
+    switch (status) {
+        case CheckResultStatus.OK:
+            return "check-circle-fill";
+        case CheckResultStatus.Info:
+            return "info-circle-fill";
+        case CheckResultStatus.Warn:
+            return "exclamation-triangle-fill";
+        case CheckResultStatus.Crit:
+            return "exclamation-octagon-fill";
+        default:
+            return "question-circle-fill";
+    }
+}
+
 export function formatDuration(duration: number | undefined, t: (k: string) => string): string {
     if (!duration) return t("checks.na");
     const seconds = duration / 1000000000;
