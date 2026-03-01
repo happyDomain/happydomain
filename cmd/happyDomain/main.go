@@ -33,6 +33,7 @@ import (
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/app"
 	"git.happydns.org/happyDomain/internal/config"
+	"git.happydns.org/happyDomain/internal/metrics"
 	_ "git.happydns.org/happyDomain/internal/storage/inmemory"
 	_ "git.happydns.org/happyDomain/internal/storage/leveldb"
 	_ "git.happydns.org/happyDomain/internal/storage/oracle-nosql"
@@ -56,8 +57,10 @@ func main() {
 	}
 	if Version == "custom-build" {
 		controller.HDVersion.Version = versioninfo.Short()
+		metrics.SetBuildInfo(versioninfo.Short())
 	} else {
 		versioninfo.Version = Version
+		metrics.SetBuildInfo(Version)
 	}
 
 	log.Println("This is happyDomain", versioninfo.Short())
