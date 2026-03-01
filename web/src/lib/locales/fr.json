@@ -153,6 +153,40 @@
     "captcha": {
         "human-check": "Êtes-vous un humain ? Veuillez cocher la case ci-dessous pour continuer :"
     },
+    "domaininfo": {
+        "page-title": "Informations sur le domaine",
+        "page-description": "Recherchez les informations d'enregistrement pour n'importe quel nom de domaine",
+        "domain-description": "Entrez le nom de domaine que vous souhaitez rechercher, par ex. {{domain}}.",
+        "lookup": "Rechercher",
+        "registrar": "Bureau d'enregistrement",
+        "registrar-url": "Site du registrar",
+        "nameservers": "Serveurs de noms",
+        "creation-date": "Enregistré le",
+        "expiration-date": "Expire le",
+        "status": "Statut du domaine",
+        "no-expiration": "Aucune date d'expiration disponible",
+        "no-creation": "Aucune date d'enregistrement disponible",
+        "no-registrar": "Registrar inconnu",
+        "expires-in": "Expire dans {{days}} jours",
+        "expired": "Expiré il y a {{days}} jours",
+        "expires-today": "Expire aujourd'hui",
+        "domain-not-found": "Ce nom de domaine ne semble pas être enregistré.",
+        "error": "Impossible de récupérer les informations du domaine.",
+        "status-descriptions": {
+            "ok": "Le domaine est actif sans restrictions.",
+            "active": "Le domaine est actif.",
+            "clientTransferProhibited": "Le transfert vers un autre registrar est verrouillé.",
+            "serverTransferProhibited": "Le transfert est interdit par le registre.",
+            "clientUpdateProhibited": "Les modifications du domaine sont verrouillées.",
+            "serverUpdateProhibited": "Les modifications du domaine sont interdites par le registre.",
+            "clientDeleteProhibited": "La suppression du domaine est verrouillée.",
+            "serverDeleteProhibited": "La suppression du domaine est interdite par le registre.",
+            "clientHold": "Le domaine est suspendu (ne résout pas).",
+            "serverHold": "Le domaine est suspendu par le registre.",
+            "pendingTransfer": "Un transfert vers un autre registrar est en cours.",
+            "pendingDelete": "Le domaine est en attente de suppression."
+        }
+    },
     "errors": {
         "404": {
             "title": "Page introuvable",
@@ -216,6 +250,7 @@
     "menu": {
         "my-domains": "Mes domaines",
         "dns-resolver": "Résolveur DNS",
+        "domain-info": "Informations sur le domaine",
         "my-account": "Mon compte",
         "logout": "Se déconnecter",
         "provider-features": "Fournisseurs supportés",

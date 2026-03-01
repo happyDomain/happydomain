@@ -160,6 +160,40 @@
     "captcha": {
         "human-check": "क्या आप इंसान हैं? जारी रखने के लिए कृपया नीचे दिया गया बॉक्स चेक करें:"
     },
+    "domaininfo": {
+        "page-title": "डोमेन जानकारी",
+        "page-description": "किसी भी डोमेन नाम की पंजीकरण जानकारी देखें",
+        "domain-description": "वह डोमेन नाम दर्ज करें जिसे आप देखना चाहते हैं, जैसे {{domain}}।",
+        "lookup": "खोजें",
+        "registrar": "रजिस्ट्रार",
+        "registrar-url": "रजिस्ट्रार वेबसाइट",
+        "nameservers": "नेमसर्वर",
+        "creation-date": "पंजीकृत तिथि",
+        "expiration-date": "समाप्ति तिथि",
+        "status": "डोमेन स्थिति",
+        "no-expiration": "समाप्ति तिथि उपलब्ध नहीं",
+        "no-creation": "पंजीकरण तिथि उपलब्ध नहीं",
+        "no-registrar": "अज्ञात रजिस्ट्रार",
+        "expires-in": "{{days}} दिनों में समाप्त होगा",
+        "expired": "{{days}} दिन पहले समाप्त हो गया",
+        "expires-today": "आज समाप्त होगा",
+        "domain-not-found": "यह डोमेन नाम पंजीकृत नहीं लगता।",
+        "error": "डोमेन जानकारी प्राप्त नहीं हो सकी।",
+        "status-descriptions": {
+            "ok": "डोमेन बिना किसी प्रतिबंध के सक्रिय है।",
+            "active": "डोमेन सक्रिय है।",
+            "clientTransferProhibited": "किसी अन्य रजिस्ट्रार को स्थानांतरण लॉक है।",
+            "serverTransferProhibited": "रजिस्ट्री द्वारा स्थानांतरण निषिद्ध है।",
+            "clientUpdateProhibited": "डोमेन अपडेट लॉक हैं।",
+            "serverUpdateProhibited": "रजिस्ट्री द्वारा डोमेन अपडेट निषिद्ध हैं।",
+            "clientDeleteProhibited": "डोमेन हटाना लॉक है।",
+            "serverDeleteProhibited": "रजिस्ट्री द्वारा डोमेन हटाना निषिद्ध है।",
+            "clientHold": "डोमेन होल्ड पर है (रिज़ॉल्व नहीं हो रहा)।",
+            "serverHold": "रजिस्ट्री द्वारा डोमेन होल्ड पर है।",
+            "pendingTransfer": "किसी अन्य रजिस्ट्रार को स्थानांतरण लंबित है।",
+            "pendingDelete": "डोमेन हटाने की प्रतीक्षा में है।"
+        }
+    },
     "errors": {
         "404": {
             "title": "पृष्ठ नहीं मिला",
@@ -224,6 +258,7 @@
         "my-domains": "मेरे डोमेन",
         "my-providers": "मेरे डोमेन प्रदाता",
         "dns-resolver": "DNS रिज़ॉल्वर",
+        "domain-info": "डोमेन जानकारी",
         "my-account": "मेरा खाता",
         "logout": "साइन आउट",
         "provider-features": "समर्थित प्रदाता",

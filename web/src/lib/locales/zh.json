@@ -169,6 +169,40 @@
     "captcha": {
         "human-check": "您是人类吗？请勾选下方的框以继续："
     },
+    "domaininfo": {
+        "page-title": "域名信息",
+        "page-description": "查询任意域名的注册信息",
+        "domain-description": "输入您要查询的域名，例如 {{domain}}。",
+        "lookup": "查询",
+        "registrar": "注册商",
+        "registrar-url": "注册商网站",
+        "nameservers": "域名服务器",
+        "creation-date": "注册日期",
+        "expiration-date": "到期日期",
+        "status": "域名状态",
+        "no-expiration": "无到期日期信息",
+        "no-creation": "无注册日期信息",
+        "no-registrar": "未知注册商",
+        "expires-in": "{{days}} 天后到期",
+        "expired": "已于 {{days}} 天前到期",
+        "expires-today": "今日到期",
+        "domain-not-found": "该域名似乎未被注册。",
+        "error": "无法获取域名信息。",
+        "status-descriptions": {
+            "ok": "域名处于活跃状态，无任何限制。",
+            "active": "域名处于活跃状态。",
+            "clientTransferProhibited": "转移至其他注册商的功能已锁定。",
+            "serverTransferProhibited": "注册局禁止转移。",
+            "clientUpdateProhibited": "域名更新功能已锁定。",
+            "serverUpdateProhibited": "注册局禁止域名更新。",
+            "clientDeleteProhibited": "域名删除功能已锁定。",
+            "serverDeleteProhibited": "注册局禁止删除域名。",
+            "clientHold": "域名已暂停（无法解析）。",
+            "serverHold": "注册局已暂停该域名。",
+            "pendingTransfer": "正在等待转移至其他注册商。",
+            "pendingDelete": "域名等待删除中。"
+        }
+    },
     "errors": {
         "404": {
             "title": "页面未找到",
@@ -233,6 +267,7 @@
         "my-domains": "我的域名",
         "my-providers": "我的提供商",
         "dns-resolver": "DNS解析器",
+        "domain-info": "域名信息",
         "my-account": "个人中心",
         "logout": "退出",
         "provider-features": "支持的提供商",

@@ -160,6 +160,40 @@
     "captcha": {
         "human-check": "Sind Sie ein Mensch? Bitte aktivieren Sie das untenstehende Kästchen, um fortzufahren:"
     },
+    "domaininfo": {
+        "page-title": "Domain-Informationen",
+        "page-description": "Registrierungsinformationen für jeden Domainnamen nachschlagen",
+        "domain-description": "Geben Sie den Domainnamen ein, den Sie nachschlagen möchten, z.B. {{domain}}.",
+        "lookup": "Nachschlagen",
+        "registrar": "Registrar",
+        "registrar-url": "Registrar-Website",
+        "nameservers": "Nameserver",
+        "creation-date": "Registriert am",
+        "expiration-date": "Läuft ab am",
+        "status": "Domain-Status",
+        "no-expiration": "Kein Ablaufdatum verfügbar",
+        "no-creation": "Kein Registrierungsdatum verfügbar",
+        "no-registrar": "Unbekannter Registrar",
+        "expires-in": "Läuft in {{days}} Tagen ab",
+        "expired": "Vor {{days}} Tagen abgelaufen",
+        "expires-today": "Läuft heute ab",
+        "domain-not-found": "Dieser Domainname scheint nicht registriert zu sein.",
+        "error": "Domain-Informationen konnten nicht abgerufen werden.",
+        "status-descriptions": {
+            "ok": "Die Domain ist ohne Einschränkungen aktiv.",
+            "active": "Die Domain ist aktiv.",
+            "clientTransferProhibited": "Der Transfer zu einem anderen Registrar ist gesperrt.",
+            "serverTransferProhibited": "Der Transfer ist durch die Registry verboten.",
+            "clientUpdateProhibited": "Domain-Änderungen sind gesperrt.",
+            "serverUpdateProhibited": "Domain-Änderungen sind durch die Registry verboten.",
+            "clientDeleteProhibited": "Das Löschen der Domain ist gesperrt.",
+            "serverDeleteProhibited": "Das Löschen der Domain ist durch die Registry verboten.",
+            "clientHold": "Die Domain ist gesperrt (wird nicht aufgelöst).",
+            "serverHold": "Die Domain ist durch die Registry gesperrt.",
+            "pendingTransfer": "Ein Transfer zu einem anderen Registrar steht aus.",
+            "pendingDelete": "Die Domain steht vor der Löschung."
+        }
+    },
     "errors": {
         "404": {
             "title": "Seite nicht gefunden",
@@ -224,6 +258,7 @@
         "my-domains": "Meine Domains",
         "my-providers": "Meine Domain-Anbieter",
         "dns-resolver": "DNS-Resolver",
+        "domain-info": "Domain-Informationen",
         "my-account": "Mein Konto",
         "logout": "Abmelden",
         "provider-features": "Unterstützte Anbieter",

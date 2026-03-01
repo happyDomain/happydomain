@@ -160,6 +160,40 @@
     "captcha": {
         "human-check": "¿Eres humano? Por favor, marca la casilla de abajo para continuar:"
     },
+    "domaininfo": {
+        "page-title": "Información del dominio",
+        "page-description": "Busca información de registro para cualquier nombre de dominio",
+        "domain-description": "Introduce el nombre de dominio que quieres buscar, p.ej. {{domain}}.",
+        "lookup": "Buscar",
+        "registrar": "Registrador",
+        "registrar-url": "Sitio web del registrador",
+        "nameservers": "Servidores de nombres",
+        "creation-date": "Registrado el",
+        "expiration-date": "Expira el",
+        "status": "Estado del dominio",
+        "no-expiration": "No hay fecha de vencimiento disponible",
+        "no-creation": "No hay fecha de registro disponible",
+        "no-registrar": "Registrador desconocido",
+        "expires-in": "Expira en {{days}} días",
+        "expired": "Expiró hace {{days}} días",
+        "expires-today": "Expira hoy",
+        "domain-not-found": "Este nombre de dominio no parece estar registrado.",
+        "error": "No se pudo recuperar la información del dominio.",
+        "status-descriptions": {
+            "ok": "El dominio está activo sin restricciones.",
+            "active": "El dominio está activo.",
+            "clientTransferProhibited": "La transferencia a otro registrador está bloqueada.",
+            "serverTransferProhibited": "La transferencia está prohibida por el registro.",
+            "clientUpdateProhibited": "Las actualizaciones del dominio están bloqueadas.",
+            "serverUpdateProhibited": "Las actualizaciones del dominio están prohibidas por el registro.",
+            "clientDeleteProhibited": "La eliminación del dominio está bloqueada.",
+            "serverDeleteProhibited": "La eliminación del dominio está prohibida por el registro.",
+            "clientHold": "El dominio está en espera (no resuelve).",
+            "serverHold": "El dominio está en espera por el registro.",
+            "pendingTransfer": "Hay una transferencia a otro registrador pendiente.",
+            "pendingDelete": "El dominio está pendiente de eliminación."
+        }
+    },
     "errors": {
         "404": {
             "title": "Página no encontrada",
@@ -224,6 +258,7 @@
         "my-domains": "Mis dominios",
         "my-providers": "Mis proveedores de dominios",
         "dns-resolver": "Resolvedor DNS",
+        "domain-info": "Información del dominio",
         "my-account": "Mi cuenta",
         "logout": "Cerrar sesión",
         "provider-features": "Proveedores compatibles",
