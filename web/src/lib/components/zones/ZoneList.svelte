@@ -91,7 +91,7 @@
 
 {#snippet domainRow(domain: ZoneListDomain)}
     <DomainWithProvider {domain} />
-    {#if badges}{@render badges({ domain })}{:else}
+    {#if badges}{@render badges(domain)}{:else}
         <Badge color="success">OK</Badge>
     {/if}
 {/snippet}

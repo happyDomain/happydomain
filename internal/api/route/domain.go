@@ -34,6 +34,7 @@ func DeclareDomainRoutes(router *gin.RouterGroup, domainUC happydns.DomainUsecas
 		domainUC,
 		remoteZoneImporter,
 		zoneImporter,
+		checkResultUC,
 	)
 
 	router.GET("/domains", dc.GetDomains)
