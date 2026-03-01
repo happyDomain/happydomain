@@ -30,6 +30,7 @@ import (
 	"sync"
 	"time"
 
+	"git.happydns.org/happyDomain/internal/metrics"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/usecase/checkresult"
 	"git.happydns.org/happyDomain/model"
@@ -221,6 +222,7 @@ func newCheckScheduler(
 // enqueue pushes an item to the priority queue and wakes one idle worker.
 func (s *checkScheduler) enqueue(item *queueItem) {
 	s.queue.Push(item)
+	metrics.SchedulerQueueDepth.Set(float64(s.queue.Len()))
 	select {
 	case s.workAvail <- struct{}{}:
 	default:
@@ -497,6 +499,7 @@ func (w *worker) run(wg *sync.WaitGroup) {
 	for {
 		// Drain: try to grab work before blocking.
 		if item := w.scheduler.queue.Pop(); item != nil {
+			metrics.SchedulerQueueDepth.Set(float64(w.scheduler.queue.Len()))
 			w.executeCheck(item)
 			continue
 		}
@@ -519,6 +522,13 @@ func (w *worker) executeCheck(item *queueItem) {
 
 	execution := item.execution
 	schedule := item.schedule
+
+	metrics.SchedulerActiveWorkers.Inc()
+	checkStart := time.Now()
+	defer func() {
+		metrics.SchedulerActiveWorkers.Dec()
+		metrics.SchedulerCheckDuration.WithLabelValues(schedule.CheckerName).Observe(time.Since(checkStart).Seconds())
+	}()
 
 	// Always update schedule NextRun after execution, whether it succeeds or fails.
 	// This prevents the schedule from being re-queued on the next tick if the test fails.
@@ -645,6 +655,9 @@ func (w *worker) executeCheck(item *queueItem) {
 		result.StatusLine = "Unknown error"
 		result.Error = "No result or error returned from check"
 	}
+
+	// Record check status metric
+	metrics.SchedulerChecksTotal.WithLabelValues(schedule.CheckerName, result.Status.String()).Inc()
 
 	// Save the result
 	if err := w.scheduler.resultUsecase.CreateCheckResult(result); err != nil {
