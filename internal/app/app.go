@@ -33,6 +33,7 @@ import (
 	api "git.happydns.org/happyDomain/internal/api/route"
 	"git.happydns.org/happyDomain/internal/captcha"
 	"git.happydns.org/happyDomain/internal/mailer"
+	"git.happydns.org/happyDomain/internal/metrics"
 	"git.happydns.org/happyDomain/internal/newsletter"
 	"git.happydns.org/happyDomain/internal/session"
 	"git.happydns.org/happyDomain/internal/storage"
@@ -178,6 +179,8 @@ func (app *App) initStorageEngine() {
 		if err = app.store.MigrateSchema(); err != nil {
 			log.Fatal("Could not migrate database: ", err)
 		}
+
+		app.store = newInstrumentedStorage(app.store)
 	}
 }
 
@@ -294,7 +297,7 @@ func (app *App) setupRouter() {
 
 	gin.ForceConsoleColor()
 	app.router = gin.New()
-	app.router.Use(gin.Logger(), gin.Recovery(), sessions.Sessions(
+	app.router.Use(gin.Logger(), gin.Recovery(), metrics.HTTPMiddleware(), sessions.Sessions(
 		session.COOKIE_NAME,
 		session.NewSessionStore(app.cfg, app.store, []byte(app.cfg.JWTSecretKey)),
 	))
