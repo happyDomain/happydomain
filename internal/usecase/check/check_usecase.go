@@ -334,12 +334,14 @@ func (tu *checkerUsecase) OverwriteSomeCheckerOptions(cname string, userid *happ
 // GetCheckerResponse builds a CheckerResponse from a Checker, including
 // capability detection and interval spec.
 func (tu *checkerUsecase) GetCheckerResponse(checker happydns.Checker) happydns.CheckerResponse {
+	_, hasHTML := checker.(happydns.CheckerHTMLReporter)
 	return happydns.CheckerResponse{
-		ID:           checker.ID(),
-		Name:         checker.Name(),
-		Availability: checker.Availability(),
-		Options:      checker.Options(),
-		Interval:     checks.GetCheckInterval(checker),
+		ID:            checker.ID(),
+		Name:          checker.Name(),
+		Availability:  checker.Availability(),
+		Options:       checker.Options(),
+		Interval:      checks.GetCheckInterval(checker),
+		HasHTMLReport: hasHTML,
 	}
 }
 

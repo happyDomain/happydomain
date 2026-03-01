@@ -25,6 +25,7 @@
 package checks // import "git.happydns.org/happyDomain/checks"
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -69,4 +70,15 @@ func GetCheckInterval(checker happydns.Checker) *happydns.CheckIntervalSpec {
 	}
 	spec := ip.CheckInterval()
 	return &spec
+}
+
+// GetHTMLReport renders an HTML report for the given checker and raw JSON report data.
+// Returns (html, true, nil) if the checker supports HTML reports, or ("", false, nil) if not.
+func GetHTMLReport(checker happydns.Checker, raw json.RawMessage) (string, bool, error) {
+	hr, ok := checker.(happydns.CheckerHTMLReporter)
+	if !ok {
+		return "", false, nil
+	}
+	html, err := hr.GetHTMLReport(raw)
+	return html, true, err
 }

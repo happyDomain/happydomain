@@ -23,6 +23,7 @@ package happydns
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 )
 
@@ -84,12 +85,23 @@ type CheckerIntervalProvider interface {
 	CheckInterval() CheckIntervalSpec
 }
 
+// CheckerHTMLReporter is an optional interface checkers can implement
+// to render their stored report as a full HTML document (for iframe embedding).
+// Detect support with a type assertion: _, ok := checker.(CheckerHTMLReporter)
+type CheckerHTMLReporter interface {
+	// GetHTMLReport generates an HTML document from the JSON-encoded report data
+	// stored in CheckResult.Report.
+	// The raw parameter contains the JSON bytes of the Report field as stored.
+	GetHTMLReport(raw json.RawMessage) (string, error)
+}
+
 type CheckerResponse struct {
-	ID           string                      `json:"id"`
-	Name         string                      `json:"name"`
-	Availability CheckerAvailability         `json:"availability"`
-	Options      CheckerOptionsDocumentation `json:"options"`
-	Interval     *CheckIntervalSpec          `json:"interval"`
+	ID            string                      `json:"id"`
+	Name          string                      `json:"name"`
+	Availability  CheckerAvailability         `json:"availability"`
+	Options       CheckerOptionsDocumentation `json:"options"`
+	Interval      *CheckIntervalSpec          `json:"interval"`
+	HasHTMLReport bool                        `json:"has_html_report,omitempty"`
 }
 
 type SetCheckerOptionsRequest struct {

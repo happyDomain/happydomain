@@ -715,7 +715,11 @@
                 "status": "Status:",
                 "status-message": "Message:",
                 "error": "Error:"
-            }
+            },
+            "view-html": "HTML Report",
+            "view-json": "Raw JSON",
+            "download-html": "Download HTML",
+            "download-json": "Download JSON"
         },
         "title": "Checkers",
         "description": "Configure automated checks for your domains",
