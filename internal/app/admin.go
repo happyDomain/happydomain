@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	admin "git.happydns.org/happyDomain/internal/api-admin/route"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
@@ -55,6 +56,8 @@ func NewAdmin(app *App) *Admin {
 
 	// Prepare usecases (admin uses unrestricted provider access)
 	app.usecases.providerAdmin = providerUC.NewService(app.store)
+
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	admin.DeclareRoutes(app.cfg, router, app.store, admin.Dependencies{
 		AuthUser:              app.usecases.authUser,
