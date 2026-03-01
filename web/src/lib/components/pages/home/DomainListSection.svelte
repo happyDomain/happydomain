@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { Icon } from "@sveltestrap/sveltestrap";
+
     import FilterDomainInput from "$lib/components/pages/home/FilterDomainInput.svelte";
     import CardImportableDomains from "$lib/components/providers/CardImportableDomains.svelte";
     import ZoneList from "$lib/components/zones/ZoneList.svelte";
@@ -30,6 +32,7 @@
     import { domains } from "$lib/stores/domains";
     import { filteredGroup, filteredName, filteredProvider } from "$lib/stores/home";
     import { t } from "$lib/translations";
+    import { getStatusColor, getStatusIcon } from "$lib/utils/check";
 
     let noDomainsList = $state(false);
 
@@ -58,7 +61,18 @@
 <FilterDomainInput class="mb-3" />
 
 {#if filteredDomains.length}
-    <ZoneList button display_by_groups domains={filteredDomains} links show_empty_groups />
+    <ZoneList button display_by_groups domains={filteredDomains} links show_empty_groups>
+        {#snippet badges(domain: Domain)}
+            {#if domain.last_check_status !== undefined}
+                <a
+                    href="/domains/{encodeURIComponent(domain.domain)}/checks"
+                    class={"text-" + getStatusColor(domain.last_check_status)}
+                >
+                    <Icon name={getStatusIcon(domain.last_check_status)} />
+                </a>
+            {/if}
+        {/snippet}
+    </ZoneList>
 {:else}
     <div class="my-4 text-center text-muted">
         {$t("domains.filtered-no-result")}
