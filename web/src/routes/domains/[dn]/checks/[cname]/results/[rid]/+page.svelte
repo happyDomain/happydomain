@@ -26,6 +26,7 @@
         Alert,
         Badge,
         Button,
+        ButtonGroup,
         Card,
         CardBody,
         CardHeader,
@@ -42,6 +43,7 @@
     import {
         getCheckStatus,
         getCheckResult,
+        getCheckResultHTMLReport,
         deleteCheckResult,
         triggerCheck,
     } from "$lib/api/checks";
@@ -60,9 +62,34 @@
 
     let resultPromise = $derived(getCheckResult(data.domain.id, checkName, resultId));
     let checkPromise = $derived(getCheckStatus(checkName));
+    let htmlReportPromise = $derived(getCheckResultHTMLReport(data.domain.id, checkName, resultId));
     let errorMessage = $state<string | null>(null);
     let resolvedResult = $state<CheckResult | null>(null);
     let isRelaunching = $state(false);
+    let showHTML = $state(true);
+
+    function downloadBlob(content: string, filename: string, mime: string) {
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function downloadJSON(result: CheckResult) {
+        downloadBlob(
+            JSON.stringify(result.report, null, 2),
+            `${checkName}-${resultId}.json`,
+            "application/json",
+        );
+    }
+
+    async function downloadHTML() {
+        const html = await htmlReportPromise;
+        downloadBlob(html, `${checkName}-${resultId}.html`, "text/html");
+    }
 
     $effect(() => {
         resultPromise.then((r) => {
@@ -269,19 +296,79 @@
             {/if}
         </Row>
 
-        {#if result.report}
-            <Card>
+        {#if result.report || check.has_html_report}
+            <Card class="mt-3">
                 <CardHeader>
-                    <h5 class="mb-0">
-                        <Icon name="file-earmark-text"></Icon>
-                        {$t("checks.result.full-report")}
-                    </h5>
+                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                        <h5 class="mb-0">
+                            <Icon name="file-earmark-text"></Icon>
+                            {$t("checks.result.full-report")}
+                        </h5>
+                        <div class="d-flex gap-2 align-items-center flex-wrap">
+                            {#if check.has_html_report}
+                                <ButtonGroup size="sm">
+                                    <Button
+                                        color="secondary"
+                                        outline
+                                        active={showHTML}
+                                        onclick={() => (showHTML = true)}
+                                    >
+                                        <Icon name="file-earmark-richtext"></Icon>
+                                        {$t("checks.result.view-html")}
+                                    </Button>
+                                    <Button
+                                        color="secondary"
+                                        outline
+                                        active={!showHTML}
+                                        onclick={() => (showHTML = false)}
+                                    >
+                                        <Icon name="braces"></Icon>
+                                        {$t("checks.result.view-json")}
+                                    </Button>
+                                </ButtonGroup>
+                            {/if}
+                            <ButtonGroup size="sm">
+                                {#if check.has_html_report}
+                                    <Button color="outline-secondary" onclick={downloadHTML}>
+                                        <Icon name="download"></Icon>
+                                        {$t("checks.result.download-html")}
+                                    </Button>
+                                {/if}
+                                {#if result.report != null}
+                                    <Button
+                                        color="outline-secondary"
+                                        onclick={() => downloadJSON(result)}
+                                    >
+                                        <Icon name="download"></Icon>
+                                        {$t("checks.result.download-json")}
+                                    </Button>
+                                {/if}
+                            </ButtonGroup>
+                        </div>
+                    </div>
                 </CardHeader>
-                <CardBody class="text-truncate p-0">
-                    {#if typeof result.report === "string"}
-                        <pre class="bg-light p-3 rounded mb-0"><code>{result.report}</code></pre>
+                <CardBody class="p-0">
+                    {#if check.has_html_report && showHTML}
+                        {#await htmlReportPromise}
+                            <div class="text-center p-4"><Spinner /></div>
+                        {:then html}
+                            <iframe
+                                srcdoc={html}
+                                sandbox
+                                title={$t("checks.result.full-report")}
+                                style="width: 100%; min-height: 600px; border: none; display: block;"
+                            ></iframe>
+                        {:catch}
+                            <pre class="bg-light p-3 rounded mb-0 overflow-x-scroll"><code
+                                    >{JSON.stringify(result.report, null, 2)}</code
+                                ></pre>
+                        {/await}
+                    {:else if typeof result.report === "string"}
+                        <pre class="bg-light p-3 rounded mb-0 overflow-x-scroll"><code
+                                >{result.report}</code
+                            ></pre>
                     {:else}
-                        <pre class="bg-light p-3 rounded mb-0"><code
+                        <pre class="bg-light p-3 rounded mb-0 overflow-x-scroll"><code
                                 >{JSON.stringify(result.report, null, 2)}</code
                             ></pre>
                     {/if}
