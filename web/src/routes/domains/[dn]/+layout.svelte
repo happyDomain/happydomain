@@ -22,10 +22,11 @@
 -->
 
 <script lang="ts">
+    // SvelteKit imports
     import { invalidateAll } from "$app/navigation";
-    import { navigate } from "$lib/stores/config";
     import { page } from "$app/state";
 
+    // Component imports
     import {
         Button,
         Col,
@@ -39,11 +40,8 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { deleteDomain as APIDeleteDomain } from "$lib/api/domains";
-    import SelectDomain from "$lib/components/domains/SelectDomain.svelte";
-    import { isReverseZone } from "$lib/dns";
-    import type { Domain } from "$lib/model/domain";
-    import type { ZoneMeta } from "$lib/model/zone";
+    // Store imports
+    import { navigate } from "$lib/stores/config";
     import { domains_idx, refreshDomains } from "$lib/stores/domains";
     import {
         retrieveZone as StoreRetrieveZone,
@@ -51,7 +49,21 @@
         sortedDomainsWithIntermediate,
         thisZone,
     } from "$lib/stores/thiszone";
+
+    // Utility imports
+    import { isReverseZone } from "$lib/dns";
     import { t } from "$lib/translations";
+
+    // Model imports
+    import type { Domain } from "$lib/model/domain";
+    import type { ZoneMeta } from "$lib/model/zone";
+
+    // API imports
+    import { deleteDomain as APIDeleteDomain } from "$lib/api/domains";
+
+    // Local components
+    import CheckResultSidebar from "./checks/CheckResultSidebar.svelte";
+    import SelectDomain from "$lib/components/domains/SelectDomain.svelte";
     import ButtonZonePublish from "./ButtonZonePublish.svelte";
     import ModalDiffZone from "./ModalDiffZone.svelte";
     import ModalDomainDelete, { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
@@ -60,6 +72,7 @@
     import NewSubdomainPath, { controls as ctrlNewSubdomain } from "./NewSubdomainPath.svelte";
     import SubdomainListTiny from "./SubdomainListTiny.svelte";
 
+    // Props
     interface Props {
         data: { domain: Domain };
         children?: import("svelte").Snippet;
@@ -67,37 +80,37 @@
 
     let { data, children }: Props = $props();
 
+    // Derived values
+    let selectedHistory: string | undefined = $derived(page.data.history);
+
+    // Local state
+    let selectedDomain = $state(data.domain.id);
+    let retrievalInProgress = $state(false);
+    let deleteInProgress = $state(false);
+
+    // Functions
     function domainLink(dn: string): string {
         return $domains_idx[$domains_idx[dn].domain] ? $domains_idx[dn].domain : dn;
     }
 
-    let selectedDomain = $derived(data.domain.id);
     function domainChange(dn: string) {
-        if (dn != data.domain.id) {
-            navigate(
-                "/domains/" +
-                    encodeURIComponent(domainLink(dn)) +
-                    (page.route.id
-                        ? page.route.id.startsWith("/domains/[dn]/logs")
-                            ? "/logs"
-                            : page.route.id.startsWith("/domains/[dn]/history")
-                              ? "/history"
-                              : page.route.id.startsWith("/domains/[dn]/checks/[cname]")
-                                ? `/checks/${page.params.cname!}`
-                                : page.route.id.startsWith("/domains/[dn]/checks")
-                                  ? "/checks"
-                                  : ""
-                        : ""),
-            );
-        }
-        if (selectedDomain != dn) {
-            selectedDomain = dn;
-        }
+        navigate(
+            "/domains/" +
+                encodeURIComponent(domainLink(dn)) +
+                (page.route.id
+                    ? page.route.id.startsWith("/domains/[dn]/logs")
+                        ? "/logs"
+                        : page.route.id.startsWith("/domains/[dn]/history")
+                          ? "/history"
+                          : page.route.id.startsWith("/domains/[dn]/checks/[cname]")
+                            ? `/checks/${page.params.cname!}`
+                            : page.route.id.startsWith("/domains/[dn]/checks")
+                              ? "/checks"
+                              : ""
+                    : ""),
+        );
     }
 
-    let selectedHistory: string | undefined = $derived(page.data.history);
-
-    let retrievalInProgress = $state(false);
     async function retrieveZone() {
         retrievalInProgress = true;
         retrieveZoneDone(await StoreRetrieveZone(data.domain));
@@ -127,7 +140,6 @@
         ctrlViewZone.Open(data.domain, selectedHistory);
     }
 
-    let deleteInProgress = false;
     function detachDomain(): void {
         deleteInProgress = true;
         APIDeleteDomain($domains_idx[selectedDomain].id).then(
@@ -149,11 +161,13 @@
             },
         );
     }
+
+    // Effects
     $effect(() => {
-        domainChange(selectedDomain);
-    });
-    $effect(() => {
-        domainChange(data.domain.id);
+        // Navigate when user selects a different domain from the dropdown
+        if (selectedDomain !== data.domain.id) {
+            domainChange(selectedDomain);
+        }
     });
 </script>
 
@@ -180,7 +194,7 @@
                 {#if page.route.id && page.route.id.startsWith("/domains/[dn]/checks/[cname]")}
                     {#if page.route.id.startsWith("/domains/[dn]/checks/[cname]/results/")}
                         <Button
-                            class="mt-2"
+                            class="my-2"
                             outline
                             color="primary"
                             href={"/domains/" +
@@ -192,6 +206,11 @@
                             <Icon name="chevron-left" />
                             {$t("zones.return-to-results")}
                         </Button>
+                        <CheckResultSidebar
+                            domain={data.domain}
+                            cname={page.params.cname!}
+                            rid={page.params.rid!}
+                        />
                     {:else}
                         <Button
                             class="mt-2"
@@ -204,6 +223,7 @@
                             <Icon name="chevron-left" />
                             {$t("zones.return-to-checks")}
                         </Button>
+                        <div class="flex-fill"></div>
                     {/if}
                 {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/checks"))}
                     <Button
@@ -215,6 +235,7 @@
                         <Icon name="chevron-left" />
                         {$t("zones.return-to")}
                     </Button>
+                    <div class="flex-fill"></div>
                 {:else}
                     <div class="d-flex gap-2 pb-2 sticky-top" style="padding-top: 10px">
                         <Button
@@ -224,7 +245,7 @@
                             size="sm"
                             class="flex-fill"
                             disabled={!$sortedDomains}
-                            on:click={() => ctrlNewSubdomain.Open()}
+                            onclick={() => ctrlNewSubdomain.Open()}
                         >
                             <Icon name="server" />
                             {$t("domains.add-a-subdomain")}
@@ -263,20 +284,20 @@
                                     {$t("domains.actions.view-checks")}
                                 </DropdownItem>
                                 <DropdownItem divider />
-                                <DropdownItem on:click={viewZone} disabled={!$sortedDomains}>
+                                <DropdownItem onclick={viewZone} disabled={!$sortedDomains}>
                                     {$t("domains.actions.view")}
                                 </DropdownItem>
-                                <DropdownItem on:click={retrieveZone}>
+                                <DropdownItem onclick={retrieveZone}>
                                     {$t("domains.actions.reimport")}
                                 </DropdownItem>
-                                <DropdownItem on:click={() => ctrlUploadZone.Open()}>
+                                <DropdownItem onclick={() => ctrlUploadZone.Open()}>
                                     {$t("domains.actions.upload")}
                                 </DropdownItem>
                                 <DropdownItem divider />
                                 <DropdownItem disabled title="Coming soon...">
                                     {$t("domains.actions.share")}
                                 </DropdownItem>
-                                <DropdownItem on:click={() => ctrlDomainDelete.Open()}>
+                                <DropdownItem onclick={() => ctrlDomainDelete.Open()}>
                                     {$t("domains.stop")}
                                 </DropdownItem>
                                 <DropdownItem divider />
@@ -326,22 +347,22 @@
                             </span>
                         {/if}
                     </div>
-                {/if}
+                    
+                    <div class="flex-fill"></div>
 
-                <div class="flex-fill"></div>
-
-                {#if !(page.data.isZonePage && data.domain.zone_history && $domains_idx[selectedDomain] && data.domain.id === $domains_idx[selectedDomain].id && $sortedDomainsWithIntermediate && selectedHistory)}
-                    <Button
-                        color="danger"
-                        class="mt-3"
-                        outline
-                        on:click={() => ctrlDomainDelete.Open()}
-                    >
-                        <Icon name="trash" />
-                        {$t("domains.stop")}
-                    </Button>
-                {:else}
-                    <ButtonZonePublish domain={data.domain} history={selectedHistory} />
+                    {#if !(page.data.isZonePage && data.domain.zone_history && $domains_idx[selectedDomain] && data.domain.id === $domains_idx[selectedDomain].id && $sortedDomainsWithIntermediate && selectedHistory)}
+                        <Button
+                            color="danger"
+                            class="mt-3"
+                            outline
+                            onclick={() => ctrlDomainDelete.Open()}
+                            >
+                            <Icon name="trash" />
+                            {$t("domains.stop")}
+                        </Button>
+                    {:else}
+                        <ButtonZonePublish domain={data.domain} history={selectedHistory} />
+                    {/if}
                 {/if}
             {:else}
                 <div class="mt-4 text-center">
@@ -349,9 +370,12 @@
                 </div>
             {/if}
         </Col>
-        <Col sm={8} md={9} class="d-flex">
+        <div
+            class="col-sm-8 col-md-9 d-flex"
+            class:p-0={page.route && page.route.id == "/domains/[dn]/checks/[cname]/results/[rid]"}
+        >
             {@render children?.()}
-        </Col>
+        </div>
     </Row>
 </Container>
 
