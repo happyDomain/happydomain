@@ -35,7 +35,7 @@ func (i *StorageEngine) String() string {
 
 func (i *StorageEngine) Set(value string) (err error) {
 	if _, ok := StorageEngines[value]; !ok {
-		return fmt.Errorf("Unexistant storage engine: please select one between: %v", GetStorageEngines())
+		return fmt.Errorf("unexistant storage engine: please select one between: %v", GetStorageEngines())
 	}
 	*i = StorageEngine(value)
 	return nil

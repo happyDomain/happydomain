@@ -78,7 +78,7 @@ type Options struct {
 	StorageEngine string
 
 	ListmonkURL url.URL
-	ListmonkId  int
+	ListmonkID  int
 
 	// MailFrom holds the content of the From field for all e-mails that
 	// will be send.

@@ -46,7 +46,7 @@ func GeneratePassword() (password string, err error) {
 		// This one is to avoid problem with openssl
 		{"/", "^"},
 	} {
-		password = strings.Replace(password, i[0], i[1], -1)
+		password = strings.ReplaceAll(password, i[0], i[1])
 	}
 
 	return

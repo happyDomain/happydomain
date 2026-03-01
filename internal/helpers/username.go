@@ -33,7 +33,7 @@ func GenUsername(email string) (toName string) {
 		toName = email[0:strings.Index(email, "@")]
 	}
 	if len(toName) > 1 {
-		toNameCopy := strings.Replace(toName, ".", " ", -1)
+		toNameCopy := strings.ReplaceAll(toName, ".", " ")
 		toName = ""
 		lastRuneIsSpace := true
 		for _, runeValue := range toNameCopy {

@@ -36,20 +36,20 @@ import (
 
 type ListmonkNewsletterSubscription struct {
 	ListmonkURL *url.URL
-	ListmonkId  int
+	ListmonkID  int
 }
 
 type ListmonkSubscriber struct {
-	Email                   string                 `json:"email"`
-	Name                    string                 `json:"name"`
-	Status                  string                 `json:"status,omitempty"`
-	Lists                   []int                  `json:"lists"`
+	Email                   string         `json:"email"`
+	Name                    string         `json:"name"`
+	Status                  string         `json:"status,omitempty"`
+	Lists                   []int          `json:"lists"`
 	Attribs                 map[string]any `json:"attribs,omitempty"`
-	PreconfirmSubscriptions bool                   `json:"preconfirm_subscriptions,omitempty"`
+	PreconfirmSubscriptions bool           `json:"preconfirm_subscriptions,omitempty"`
 }
 
 func (ns *ListmonkNewsletterSubscription) SubscribeToNewsletter(u happydns.UserInfo) error {
-	if ns.ListmonkId == 0 {
+	if ns.ListmonkID == 0 {
 		log.Println("SubscribeToNewsletter: not subscribing user as newsletter list id is not defined.")
 		return nil
 	}
@@ -61,7 +61,7 @@ func (ns *ListmonkNewsletterSubscription) SubscribeToNewsletter(u happydns.UserI
 		Email:                   u.GetEmail(),
 		Name:                    helpers.GenUsername(u.GetEmail()),
 		Status:                  "enabled",
-		Lists:                   []int{ns.ListmonkId},
+		Lists:                   []int{ns.ListmonkID},
 		PreconfirmSubscriptions: true,
 	}
 

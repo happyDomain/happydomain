@@ -41,7 +41,7 @@ func TestGeneratePassword(t *testing.T) {
 	t.Run("password does not contain replaced characters", func(t *testing.T) {
 		forbiddenChars := []string{"v", "u", "l", "1", "o", "O", "0", "/"}
 
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			password, err := GeneratePassword()
 			if err != nil {
 				t.Fatalf("GeneratePassword() returned error: %v", err)
@@ -59,7 +59,7 @@ func TestGeneratePassword(t *testing.T) {
 		replacementChars := []string{"*", "(", "%", "?", "@", "!", ">", "^"}
 		foundChars := make(map[string]bool)
 
-		for i := 0; i < 1000; i++ {
+		for range 1000 {
 			password, err := GeneratePassword()
 			if err != nil {
 				t.Fatalf("GeneratePassword() returned error: %v", err)
@@ -81,7 +81,7 @@ func TestGeneratePassword(t *testing.T) {
 		passwords := make(map[string]bool)
 		iterations := 100
 
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			password, err := GeneratePassword()
 			if err != nil {
 				t.Fatalf("GeneratePassword() returned error: %v", err)
@@ -98,7 +98,7 @@ func TestGeneratePassword(t *testing.T) {
 	t.Run("password uses valid characters", func(t *testing.T) {
 		validChars := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+*(%?@!>^="
 
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			password, err := GeneratePassword()
 			if err != nil {
 				t.Fatalf("GeneratePassword() returned error: %v", err)
@@ -116,7 +116,7 @@ func TestGeneratePassword(t *testing.T) {
 		charCounts := make(map[rune]int)
 		iterations := 1000
 
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			password, err := GeneratePassword()
 			if err != nil {
 				t.Fatalf("GeneratePassword() returned error: %v", err)
@@ -134,7 +134,7 @@ func TestGeneratePassword(t *testing.T) {
 	})
 
 	t.Run("password ends with valid character", func(t *testing.T) {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			password, err := GeneratePassword()
 			if err != nil {
 				t.Fatalf("GeneratePassword() returned error: %v", err)
@@ -162,7 +162,7 @@ func TestGeneratePasswordNonEmpty(t *testing.T) {
 func TestGeneratePasswordConsistentLength(t *testing.T) {
 	lengths := make(map[int]int)
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		password, err := GeneratePassword()
 		if err != nil {
 			t.Fatalf("GeneratePassword() returned error: %v", err)
@@ -194,7 +194,7 @@ func TestGeneratePasswordReplacements(t *testing.T) {
 	}
 
 	t.Run("verifies character replacements", func(t *testing.T) {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			password, err := GeneratePassword()
 			if err != nil {
 				t.Fatalf("GeneratePassword() returned error: %v", err)
@@ -210,7 +210,7 @@ func TestGeneratePasswordReplacements(t *testing.T) {
 }
 
 func BenchmarkGeneratePassword(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, err := GeneratePassword()
 		if err != nil {
 			b.Fatalf("GeneratePassword() returned error: %v", err)

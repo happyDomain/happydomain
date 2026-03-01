@@ -84,7 +84,6 @@ type App struct {
 	usecases        Usecases
 }
 
-
 func NewApp(cfg *happydns.Options) *App {
 	app := &App{
 		cfg: cfg,
@@ -167,7 +166,7 @@ func (app *App) initNewsletter() {
 	if app.cfg.ListmonkURL.String() != "" {
 		app.newsletter = &newsletter.ListmonkNewsletterSubscription{
 			ListmonkURL: &app.cfg.ListmonkURL,
-			ListmonkId:  app.cfg.ListmonkId,
+			ListmonkID:  app.cfg.ListmonkID,
 		}
 	} else {
 		app.newsletter = &newsletter.DummyNewsletterSubscription{}

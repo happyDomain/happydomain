@@ -51,7 +51,7 @@ func (t *SMTPMailer) WithTLSNoVerify() {
 	}
 }
 
-// Send sends an e-mail to the given recipients using configured SMTP host.
+// PrepareAndSend sends an e-mail to the given recipients using configured SMTP host.
 func (t *SMTPMailer) PrepareAndSend(m ...*gomail.Message) (err error) {
 	err = t.Dialer.DialAndSend(m...)
 

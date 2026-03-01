@@ -47,7 +47,7 @@ func declareFlags(o *happydns.Options) {
 	flag.BoolVar(&o.OptOutInsights, "opt-out-insights", false, "Disable the anonymous usage statistics report. If you care about this project and don't participate in discussions, don't opt-out.")
 
 	flag.Var(&URL{&o.ListmonkURL}, "newsletter-server-url", "Base URL of the listmonk newsletter server")
-	flag.IntVar(&o.ListmonkId, "newsletter-id", 1, "Listmonk identifier of the list receiving the new user")
+	flag.IntVar(&o.ListmonkID, "newsletter-id", 1, "Listmonk identifier of the list receiving the new user")
 
 	flag.BoolVar(&o.NoMail, "no-mail", o.NoMail, "Disable all automatic mails, skip email verification at registration")
 	flag.Var(&mailAddress{&o.MailFrom}, "mail-from", "Define the sender name and address for all e-mail sent")

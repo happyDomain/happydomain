@@ -65,7 +65,7 @@ func (t *SystemSendmail) Send(from string, to []string, msg io.WriterTo) error {
 	return nil
 }
 
-// Send sends an e-mail to the given recipients using the sendmail command.
+// PrepareAndSend sends an e-mail to the given recipients using the sendmail command.
 func (t *SystemSendmail) PrepareAndSend(m ...*gomail.Message) (err error) {
 	err = gomail.Send(t, m...)
 	return
