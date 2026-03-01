@@ -25,7 +25,6 @@ import (
 	"encoding/json"
 	"flag"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -185,7 +184,7 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 							}
 						}
 
-						v, _ := ioutil.ReadAll(resp.Body)
+						v, _ := io.ReadAll(resp.Body)
 
 						v2 := strings.Replace(strings.Replace(string(v), "</head>", "{{ .Head }}</head>", 1), "</body>", "{{ .Body }}</body>", 1)
 
@@ -211,7 +210,7 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 			if indexTpl == nil {
 				// Create template from file
 				f, _ := Assets.Open("index.html")
-				v, _ := ioutil.ReadAll(f)
+				v, _ := io.ReadAll(f)
 
 				v2 := strings.Replace(strings.Replace(string(v), "</head>", "{{ .Head }}</head>", 1), "</body>", "{{ .Body }}</body>", 1)
 

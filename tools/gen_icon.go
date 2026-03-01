@@ -20,12 +20,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 //go:build ignore
-// +build ignore
 
 package main
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -65,7 +63,7 @@ func main() {
 
 	err := filepath.Walk(dir, func(srcFile string, info os.FileInfo, err error) error {
 		if filepath.Ext(srcFile) == ".png" {
-			data, err := ioutil.ReadFile(srcFile)
+			data, err := os.ReadFile(srcFile)
 			if err != nil {
 				return err
 			}
