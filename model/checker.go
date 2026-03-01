@@ -49,6 +49,21 @@ const (
 
 type CheckResultStatus int
 
+func (s CheckResultStatus) String() string {
+	switch s {
+	case CheckResultStatusOK:
+		return "ok"
+	case CheckResultStatusWarn:
+		return "warning"
+	case CheckResultStatusCritical:
+		return "critical"
+	case CheckResultStatusInfo:
+		return "info"
+	default:
+		return "unknown"
+	}
+}
+
 type CheckerOptions map[string]any
 
 type Checker interface {
