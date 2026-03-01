@@ -44,9 +44,8 @@ func GenField(field reflect.StructField) (f *happydns.Field) {
 	}
 
 	tag := field.Tag.Get("happydomain")
-	tuples := strings.Split(tag, ",")
 
-	for _, t := range tuples {
+	for t := range strings.SplitSeq(tag, ",") {
 		kv := strings.SplitN(t, "=", 2)
 		if len(kv) > 1 {
 			switch strings.ToLower(kv[0]) {

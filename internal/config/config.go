@@ -143,17 +143,17 @@ func ConsolidateConfig() (opts *happydns.Options, err error) {
 
 // parseLine treats a config line and place the read value in the variable
 // declared to the corresponding flag.
-func parseLine(o *happydns.Options, line string) (err error) {
+func parseLine(_ *happydns.Options, line string) (err error) {
 	fields := strings.SplitN(line, "=", 2)
-	orig_key := strings.TrimSpace(fields[0])
+	origKey := strings.TrimSpace(fields[0])
 	value := strings.TrimSpace(fields[1])
 
 	if len(value) == 0 {
 		return
 	}
 
-	key := strings.TrimPrefix(strings.TrimPrefix(orig_key, "HAPPYDNS_"), "HAPPYDOMAIN_")
-	key = strings.Replace(key, "_", "-", -1)
+	key := strings.TrimPrefix(strings.TrimPrefix(origKey, "HAPPYDNS_"), "HAPPYDOMAIN_")
+	key = strings.ReplaceAll(key, "_", "-")
 	key = strings.ToLower(key)
 
 	err = flag.Set(key, value)
