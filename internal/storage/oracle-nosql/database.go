@@ -78,11 +78,11 @@ func (s *NoSQLStorage) Close() error {
 	return s.client.Close()
 }
 
-func (n *NoSQLStorage) DecodeData(data interface{}, v interface{}) error {
+func (n *NoSQLStorage) DecodeData(data any, v any) error {
 	return json.Unmarshal([]byte(jsonutil.AsJSON(data)), v)
 }
 
-func (n *NoSQLStorage) Get(key string, v interface{}) error {
+func (n *NoSQLStorage) Get(key string, v any) error {
 	gkey := &types.MapValue{}
 	gkey.Put("key", key)
 
@@ -108,7 +108,7 @@ func (n *NoSQLStorage) Get(key string, v interface{}) error {
 	return n.DecodeData(data, v)
 }
 
-func (n *NoSQLStorage) Put(key string, v interface{}) error {
+func (n *NoSQLStorage) Put(key string, v any) error {
 	data, err := json.Marshal(v)
 	if err != nil {
 		return fmt.Errorf("unable to marshal data: %w", err)

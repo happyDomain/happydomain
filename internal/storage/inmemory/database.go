@@ -94,7 +94,7 @@ func (s *InMemoryStorage) Close() error {
 }
 
 // DecodeData decodes data from the interface (expected to be []byte) into v.
-func (s *InMemoryStorage) DecodeData(data interface{}, v interface{}) error {
+func (s *InMemoryStorage) DecodeData(data any, v any) error {
 	b, ok := data.([]byte)
 	if !ok {
 		return fmt.Errorf("data to decode are not in []byte format (%T)", data)
@@ -111,7 +111,7 @@ func (s *InMemoryStorage) Has(key string) (bool, error) {
 }
 
 // Get retrieves a value by key and decodes it into v.
-func (s *InMemoryStorage) Get(key string, v interface{}) error {
+func (s *InMemoryStorage) Get(key string, v any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	data, exists := s.data[key]
@@ -122,7 +122,7 @@ func (s *InMemoryStorage) Get(key string, v interface{}) error {
 }
 
 // Put stores a value with the given key.
-func (s *InMemoryStorage) Put(key string, v interface{}) error {
+func (s *InMemoryStorage) Put(key string, v any) error {
 	data, err := json.Marshal(v)
 	if err != nil {
 		return err

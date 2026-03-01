@@ -27,7 +27,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ApiResponse(c *gin.Context, data interface{}, err error) {
+func ApiResponse(c *gin.Context, data any, err error) {
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, ErrorResponse{Message: err.Error()})
 		return

@@ -26,7 +26,7 @@ import (
 )
 
 // GenDefaultSettingsForm generates a generic CustomForm presenting all the fields in one page.
-func GenDefaultSettingsForm(data interface{}) *happydns.CustomForm {
+func GenDefaultSettingsForm(data any) *happydns.CustomForm {
 	return &happydns.CustomForm{
 		Fields:                 GenStructFields(data),
 		NextButtonText:         "common.create-thing",

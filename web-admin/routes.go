@@ -47,7 +47,7 @@ var (
 )
 
 func DeclareRoutes(cfg *happydns.Options, router *gin.Engine) {
-	appConfig := map[string]interface{}{
+	appConfig := map[string]any{
 		"version": controller.HDVersion,
 	}
 

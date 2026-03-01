@@ -52,7 +52,7 @@ func (s *GSuite) GenComment() string {
 	return "5 MX + SPF directives"
 }
 
-func (s *GSuite) Initialize() (interface{}, error) {
+func (s *GSuite) Initialize() (any, error) {
 	for i, mx := range []string{
 		"aspmx.l.google.com.",
 		"alt1.aspmx.l.google.com.",

@@ -112,7 +112,7 @@ func (ssc *ServiceSpecsController) GetServiceSpec(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			serviceType	path		string	true	"The service's type"
-//	@Success		200			{object}	interface{}
+//	@Success		200			{object}	any
 //	@Failure		404			{object}	happydns.ErrorResponse	"Service type does not exist"
 //	@Failure		500			{object}	happydns.ErrorResponse	"Internal error"
 //	@Router			/service_specs/{serviceType}/init [post]

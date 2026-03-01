@@ -64,7 +64,7 @@ func JwtAuthMiddleware(authService happydns.AuthenticationUsecase, signingMethod
 		// Validate the token and retrieve claims
 		claims := &UserClaims{}
 		_, err := jwt.ParseWithClaims(token, claims,
-			func(token *jwt.Token) (interface{}, error) {
+			func(token *jwt.Token) (any, error) {
 				return secretKey, nil
 			}, jwt.WithValidMethods([]string{signingMethod}))
 		if err != nil {

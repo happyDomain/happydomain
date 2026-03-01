@@ -45,7 +45,7 @@ type Iterator[T any] interface {
 
 	// Raw returns the raw (non-decoded) value at the current iterator position.
 	// Should only be called after a successful call to Next().
-	Raw() interface{}
+	Raw() any
 
 	// Err returns the first error encountered during iteration, if any.
 	Err() error

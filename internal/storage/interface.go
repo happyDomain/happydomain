@@ -63,15 +63,15 @@ type Iterator interface {
 	Next() bool
 	Valid() bool
 	Key() string
-	Value() interface{}
+	Value() any
 }
 
 type KVStorage interface {
 	Close() error
-	DecodeData(i interface{}, v interface{}) error
+	DecodeData(i any, v any) error
 	Has(key string) (bool, error)
-	Get(key string, v interface{}) error
-	Put(key string, v interface{}) error
+	Get(key string, v any) error
+	Put(key string, v any) error
 	FindIdentifierKey(prefix string) (key string, id happydns.Identifier, err error)
 	Delete(key string) error
 	Search(prefix string) Iterator

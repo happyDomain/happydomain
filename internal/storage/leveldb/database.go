@@ -65,11 +65,11 @@ func (s *LevelDBStorage) Close() error {
 	return s.db.Close()
 }
 
-func decodeData(data []byte, v interface{}) error {
+func decodeData(data []byte, v any) error {
 	return json.Unmarshal(data, v)
 }
 
-func (s *LevelDBStorage) DecodeData(data interface{}, v interface{}) error {
+func (s *LevelDBStorage) DecodeData(data any, v any) error {
 	b, ok := data.([]byte)
 	if !ok {
 		return fmt.Errorf("data to decode are not in []byte format (%T)", data)
@@ -81,7 +81,7 @@ func (s *LevelDBStorage) Has(key string) (bool, error) {
 	return s.db.Has([]byte(key), nil)
 }
 
-func (s *LevelDBStorage) Get(key string, v interface{}) error {
+func (s *LevelDBStorage) Get(key string, v any) error {
 	data, err := s.db.Get([]byte(key), nil)
 	if err != nil {
 		if goerrors.Is(err, leveldb.ErrNotFound) {
@@ -93,7 +93,7 @@ func (s *LevelDBStorage) Get(key string, v interface{}) error {
 	return decodeData(data, v)
 }
 
-func (s *LevelDBStorage) Put(key string, v interface{}) error {
+func (s *LevelDBStorage) Put(key string, v any) error {
 	data, err := json.Marshal(v)
 	if err != nil {
 		return err

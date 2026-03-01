@@ -37,7 +37,7 @@ func migrateFrom8(s *KVStorage) error {
 
 	// google.GSuite
 	migrateFrom7SvcType["google.GSuite"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {

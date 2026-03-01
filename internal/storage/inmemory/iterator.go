@@ -57,7 +57,7 @@ func (it *KVIterator) Key() string {
 }
 
 // Value returns the current value.
-func (it *KVIterator) Value() interface{} {
+func (it *KVIterator) Value() any {
 	if it.index < 0 || it.index >= len(it.keys) {
 		return []byte{}
 	}

@@ -60,7 +60,7 @@ func ovh_settingsForm(edit bool) *happydns.CustomForm {
 	return form
 }
 
-func ovh_settingsAskCredentials(fu happydns.FormUsecase, recallid string) (*happydns.CustomForm, map[string]interface{}, error) {
+func ovh_settingsAskCredentials(fu happydns.FormUsecase, recallid string) (*happydns.CustomForm, map[string]any, error) {
 	client, err := ovh.NewClient("ovh-eu", appKey, appSecret, "")
 	if err != nil {
 		return nil, nil, fmt.Errorf("Unable to generate Consumer key, as OVH client can't be created: %w", err)
@@ -83,12 +83,12 @@ func ovh_settingsAskCredentials(fu happydns.FormUsecase, recallid string) (*happ
 			PreviousButtonText:  "common.previous",
 			NextButtonLink:      response.ValidationURL,
 			PreviousButtonState: 0,
-		}, map[string]interface{}{
+		}, map[string]any{
 			"consumerkey": response.ConsumerKey,
 		}, nil
 }
 
-func (s *OVHAPI) DisplaySettingsForm(state int32, genRecallId happydns.GenRecallID, fu happydns.FormUsecase) (*happydns.CustomForm, map[string]interface{}, error) {
+func (s *OVHAPI) DisplaySettingsForm(state int32, genRecallId happydns.GenRecallID, fu happydns.FormUsecase) (*happydns.CustomForm, map[string]any, error) {
 	switch state {
 	case 0:
 		return ovh_settingsForm(s.ConsumerKey != ""), nil, nil

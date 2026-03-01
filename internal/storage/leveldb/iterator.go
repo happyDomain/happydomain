@@ -43,7 +43,7 @@ func (it *LevelDBIterator) Key() string {
 	return string(it.iter.Key())
 }
 
-func (it *LevelDBIterator) Value() interface{} {
+func (it *LevelDBIterator) Value() any {
 	return it.iter.Value()
 }
 

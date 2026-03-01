@@ -30,7 +30,7 @@ type ProviderSettingsState struct {
 
 type ProviderSettingsResponse struct {
 	Provider *Provider              `json:"Provider,omitempty" swaggertype:"object"`
-	Values   map[string]interface{} `json:"values,omitempty"`
+	Values   map[string]any `json:"values,omitempty"`
 	Form     *CustomForm            `json:"form,omitempty"`
 }
 

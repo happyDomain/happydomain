@@ -95,7 +95,7 @@ func (it *KVIterator[T]) DropItem() error {
 
 // Raw returns the raw (non-decoded) value at the current iterator position.
 // Should only be called after a successful call to Next().
-func (it *KVIterator[T]) Raw() interface{} {
+func (it *KVIterator[T]) Raw() any {
 	if it.iter == nil || !it.iter.Valid() {
 		return []byte{}
 	}

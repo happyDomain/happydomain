@@ -57,13 +57,13 @@ type DNSMsg struct {
 	Question []DNSQuestion
 
 	// Answer is the list of Answer records in the DNS response.
-	Answer []interface{} `swaggertype:"object"`
+	Answer []any `swaggertype:"object"`
 
 	// Ns is the list of Authoritative records in the DNS response.
-	Ns []interface{} `swaggertype:"object"`
+	Ns []any `swaggertype:"object"`
 
 	// Extra is the list of extra records in the DNS response.
-	Extra []interface{} `swaggertype:"object"`
+	Extra []any `swaggertype:"object"`
 }
 
 type ResolverUsecase interface {

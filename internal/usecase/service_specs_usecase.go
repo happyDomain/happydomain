@@ -64,7 +64,7 @@ func (ssu *serviceSpecsUsecase) GetServiceSpecs(svctype reflect.Type) (*happydns
 	return ssu.getSpecs(svctype)
 }
 
-func (ssu *serviceSpecsUsecase) InitializeService(svctype reflect.Type) (interface{}, error) {
+func (ssu *serviceSpecsUsecase) InitializeService(svctype reflect.Type) (any, error) {
 	// Create a new instance of the service
 	svcPtr := reflect.New(svctype)
 	svc := svcPtr.Interface()

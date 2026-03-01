@@ -38,8 +38,8 @@ import (
 // abstract.EMail
 func explodeAbstractEMail(dn happydns.Subdomain, in *happydns.ServiceMessage) ([]*happydns.ServiceMessage, error) {
 	var val struct {
-		MX      []map[string]interface{} `json:"mx,omitempty"`
-		SPF     map[string]interface{}   `json:"spf,omitempty"`
+		MX      []map[string]any `json:"mx,omitempty"`
+		SPF     map[string]any   `json:"spf,omitempty"`
 		DKIM    map[string]*svcs.DKIM    `json:"dkim,omitempty"`
 		DMARC   *svcs.DMARCFields        `json:"dmarc,omitempty"`
 		MTA_STS *svcs.MTASTSFields       `json:"mta_sts,omitempty"`
@@ -83,8 +83,8 @@ func explodeAbstractEMail(dn happydns.Subdomain, in *happydns.ServiceMessage) ([
 	}
 
 	if val.SPF != nil {
-		if _, ok := val.SPF["directives"].([]interface{}); ok {
-			directives := val.SPF["directives"].([]interface{})
+		if _, ok := val.SPF["directives"].([]any); ok {
+			directives := val.SPF["directives"].([]any)
 			var dir []string
 			for _, directive := range directives {
 				dir = append(dir, directive.(string))
@@ -197,7 +197,7 @@ func migrateFrom7(s *KVStorage) error {
 
 	// abstract.ACMEChallenge
 	migrateFrom7SvcType["abstract.ACMEChallenge"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
@@ -219,7 +219,7 @@ func migrateFrom7(s *KVStorage) error {
 
 	// abstract.Delegation
 	migrateFrom7SvcType["abstract.Delegation"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
@@ -228,7 +228,7 @@ func migrateFrom7(s *KVStorage) error {
 
 		var delegation abstract.Delegation
 
-		if nss, ok := val["ns"].([]interface{}); ok {
+		if nss, ok := val["ns"].([]any); ok {
 			for _, ns := range nss {
 				rr, err := dns.NewRR(fmt.Sprintf("zZzZ. 0 IN NS %s", helpers.DomainFQDN(ns.(string), "zZzZ")))
 				if err != nil {
@@ -240,9 +240,9 @@ func migrateFrom7(s *KVStorage) error {
 			}
 		}
 
-		if dss, ok := val["ds"].([]interface{}); ok {
+		if dss, ok := val["ds"].([]any); ok {
 			for _, dsI := range dss {
-				ds := dsI.(map[string]interface{})
+				ds := dsI.(map[string]any)
 				rr, err := dns.NewRR(fmt.Sprintf("zZzZ. 0 IN DS %.0f %.0f %.0f %s", ds["keytag"].(float64), ds["algorithm"].(float64), ds["digestType"].(float64), ds["digest"].(string)))
 				if err != nil {
 					return nil, err
@@ -258,7 +258,7 @@ func migrateFrom7(s *KVStorage) error {
 
 	// abstract.GithubOrgVerif
 	migrateFrom7SvcType["abstract.GithubOrgVerif"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
@@ -280,7 +280,7 @@ func migrateFrom7(s *KVStorage) error {
 
 	// abstract.GitlabPageVerif
 	migrateFrom7SvcType["abstract.GitlabPageVerif"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
@@ -302,7 +302,7 @@ func migrateFrom7(s *KVStorage) error {
 
 	// abstract.GoogleVerif
 	migrateFrom7SvcType["abstract.GoogleVerif"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
@@ -324,7 +324,7 @@ func migrateFrom7(s *KVStorage) error {
 
 	// abstract.KeybaseVerif
 	migrateFrom7SvcType["abstract.KeybaseVerif"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
@@ -346,7 +346,7 @@ func migrateFrom7(s *KVStorage) error {
 
 	// abstract.MatrixIM
 	migrateFrom7SvcType["abstract.MatrixIM"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
@@ -355,9 +355,9 @@ func migrateFrom7(s *KVStorage) error {
 
 		var matrix abstract.MatrixIM
 
-		if mat, ok := val["matrix"].([]interface{}); ok {
+		if mat, ok := val["matrix"].([]any); ok {
 			for _, mI := range mat {
-				m := mI.(map[string]interface{})
+				m := mI.(map[string]any)
 				rr, err := dns.NewRR(fmt.Sprintf("_matrix._tcp.zZzZ. 0 IN SRV %.0f %.0f %.0f %s", m["priority"].(float64), m["weight"].(float64), m["port"].(float64), helpers.DomainFQDN(m["target"].(string), "zZzZ.")))
 				if err != nil {
 					return nil, err
@@ -373,7 +373,7 @@ func migrateFrom7(s *KVStorage) error {
 
 	// abstract.OpenPGP
 	migrateFrom7SvcType["abstract.OpenPGP"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
@@ -398,7 +398,7 @@ func migrateFrom7(s *KVStorage) error {
 
 	// abstract.SMimeCert
 	migrateFrom7SvcType["abstract.SMimeCert"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
@@ -423,7 +423,7 @@ func migrateFrom7(s *KVStorage) error {
 
 	// abstract.Origin
 	migrateFrom7SvcType["abstract.Origin"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
@@ -440,8 +440,8 @@ func migrateFrom7(s *KVStorage) error {
 			origin.SOA = helpers.RRRelative(rr, "zZzZ").(*dns.SOA)
 		}
 
-		if _, ok := val["ns"].([]interface{}); ok {
-			for _, nsI := range val["ns"].([]interface{}) {
+		if _, ok := val["ns"].([]any); ok {
+			for _, nsI := range val["ns"].([]any) {
 				rr, err := dns.NewRR(fmt.Sprintf("zZzZ. 0 IN NS %s", helpers.DomainFQDN(nsI.(string), "zZzZ.")))
 				if err != nil {
 					return nil, err
@@ -457,7 +457,7 @@ func migrateFrom7(s *KVStorage) error {
 
 	// abstract.NSOnlyOrigin
 	migrateFrom7SvcType["abstract.NSOnlyOrigin"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
@@ -466,8 +466,8 @@ func migrateFrom7(s *KVStorage) error {
 
 		var origin abstract.NSOnlyOrigin
 
-		if _, ok := val["ns"].([]interface{}); ok {
-			for _, nsI := range val["ns"].([]interface{}) {
+		if _, ok := val["ns"].([]any); ok {
+			for _, nsI := range val["ns"].([]any) {
 				rr, err := dns.NewRR(fmt.Sprintf("zZzZ. 0 IN NS %s", helpers.DomainFQDN(nsI.(string), "zZzZ.")))
 				if err != nil {
 					return nil, err
@@ -483,7 +483,7 @@ func migrateFrom7(s *KVStorage) error {
 
 	// abstract.RFC6186
 	migrateFrom7SvcType["abstract.RFC6186"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
@@ -492,9 +492,9 @@ func migrateFrom7(s *KVStorage) error {
 
 		var rfc6186 abstract.RFC6186
 
-		if _, ok := val["submission"].([]interface{}); ok {
-			for _, clientI := range val["submission"].([]interface{}) {
-				client := clientI.(map[string]interface{})
+		if _, ok := val["submission"].([]any); ok {
+			for _, clientI := range val["submission"].([]any) {
+				client := clientI.(map[string]any)
 				rr, err := dns.NewRR(fmt.Sprintf("%s.zZzZ. 0 IN SRV %.0f %.0f %.0f %s", helpers.DomainJoin("_submission", "_tcp"), client["priority"].(float64), client["weight"].(float64), client["port"].(float64), helpers.DomainFQDN(client["target"].(string), "zZzZ.")))
 				if err != nil {
 					return nil, err
@@ -504,9 +504,9 @@ func migrateFrom7(s *KVStorage) error {
 				}
 			}
 		}
-		if _, ok := val["imaps"].([]interface{}); ok {
-			for _, clientI := range val["imaps"].([]interface{}) {
-				client := clientI.(map[string]interface{})
+		if _, ok := val["imaps"].([]any); ok {
+			for _, clientI := range val["imaps"].([]any) {
+				client := clientI.(map[string]any)
 				rr, err := dns.NewRR(fmt.Sprintf("%s.zZzZ. 0 IN SRV %.0f %.0f %.0f %s", helpers.DomainJoin("_imaps", "_tcp"), client["priority"].(float64), client["weight"].(float64), client["port"].(float64), helpers.DomainFQDN(client["target"].(string), "zZzZ.")))
 				if err != nil {
 					return nil, err
@@ -516,9 +516,9 @@ func migrateFrom7(s *KVStorage) error {
 				}
 			}
 		}
-		if _, ok := val["pop3s"].([]interface{}); ok {
-			for _, clientI := range val["pop3s"].([]interface{}) {
-				client := clientI.(map[string]interface{})
+		if _, ok := val["pop3s"].([]any); ok {
+			for _, clientI := range val["pop3s"].([]any) {
+				client := clientI.(map[string]any)
 				rr, err := dns.NewRR(fmt.Sprintf("%s.zZzZ. 0 IN SRV %.0f %.0f %.0f %s", helpers.DomainJoin("_pop3s", "_tcp"), client["priority"].(float64), client["weight"].(float64), client["port"].(float64), helpers.DomainFQDN(client["target"].(string), "zZzZ.")))
 				if err != nil {
 					return nil, err
@@ -528,9 +528,9 @@ func migrateFrom7(s *KVStorage) error {
 				}
 			}
 		}
-		if _, ok := val["submissions"].([]interface{}); ok {
-			for _, clientI := range val["submissions"].([]interface{}) {
-				client := clientI.(map[string]interface{})
+		if _, ok := val["submissions"].([]any); ok {
+			for _, clientI := range val["submissions"].([]any) {
+				client := clientI.(map[string]any)
 				rr, err := dns.NewRR(fmt.Sprintf("%s.zZzZ. 0 IN SRV %.0f %.0f %.0f %s", helpers.DomainJoin("_submissions", "_tcp"), client["priority"].(float64), client["weight"].(float64), client["port"].(float64), helpers.DomainFQDN(client["target"].(string), "zZzZ.")))
 				if err != nil {
 					return nil, err
@@ -540,9 +540,9 @@ func migrateFrom7(s *KVStorage) error {
 				}
 			}
 		}
-		if _, ok := val["imap"].([]interface{}); ok {
-			for _, clientI := range val["imap"].([]interface{}) {
-				client := clientI.(map[string]interface{})
+		if _, ok := val["imap"].([]any); ok {
+			for _, clientI := range val["imap"].([]any) {
+				client := clientI.(map[string]any)
 				rr, err := dns.NewRR(fmt.Sprintf("%s.zZzZ. 0 IN SRV %.0f %.0f %.0f %s", helpers.DomainJoin("_imap", "_tcp"), client["priority"].(float64), client["weight"].(float64), client["port"].(float64), helpers.DomainFQDN(client["target"].(string), "zZzZ.")))
 				if err != nil {
 					return nil, err
@@ -552,9 +552,9 @@ func migrateFrom7(s *KVStorage) error {
 				}
 			}
 		}
-		if _, ok := val["pop3"].([]interface{}); ok {
-			for _, clientI := range val["pop3"].([]interface{}) {
-				client := clientI.(map[string]interface{})
+		if _, ok := val["pop3"].([]any); ok {
+			for _, clientI := range val["pop3"].([]any) {
+				client := clientI.(map[string]any)
 				rr, err := dns.NewRR(fmt.Sprintf("%s.zZzZ. 0 IN SRV %.0f %.0f %.0f %s", helpers.DomainJoin("_pop3", "_tcp"), client["priority"].(float64), client["weight"].(float64), client["port"].(float64), helpers.DomainFQDN(client["target"].(string), "zZzZ.")))
 				if err != nil {
 					return nil, err
@@ -570,7 +570,7 @@ func migrateFrom7(s *KVStorage) error {
 
 	// abstract.ScalewayChallenge
 	migrateFrom7SvcType["abstract.ScalewayChallenge"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
@@ -592,7 +592,7 @@ func migrateFrom7(s *KVStorage) error {
 
 	// abstract.Server
 	migrateFrom7SvcType["abstract.Server"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
@@ -621,9 +621,9 @@ func migrateFrom7(s *KVStorage) error {
 			}
 		}
 
-		if _, ok := val["SSHFP"].([]interface{}); ok {
-			for _, sshfpI := range val["SSHFP"].([]interface{}) {
-				sshfp := sshfpI.(map[string]interface{})
+		if _, ok := val["SSHFP"].([]any); ok {
+			for _, sshfpI := range val["SSHFP"].([]any) {
+				sshfp := sshfpI.(map[string]any)
 				rr, err := dns.NewRR(fmt.Sprintf("zZzZ. 0 IN SSHFP %.0f %.0f %s", sshfp["algorithm"], sshfp["type"], sshfp["fingerprint"]))
 				if err != nil {
 					return nil, err
@@ -639,7 +639,7 @@ func migrateFrom7(s *KVStorage) error {
 
 	// abstract.XMPP
 	migrateFrom7SvcType["abstract.XMPP"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
@@ -648,9 +648,9 @@ func migrateFrom7(s *KVStorage) error {
 
 		var xmpp abstract.XMPP
 
-		if _, ok := val["Client"].([]interface{}); ok {
-			for _, clientI := range val["Client"].([]interface{}) {
-				client := clientI.(map[string]interface{})
+		if _, ok := val["Client"].([]any); ok {
+			for _, clientI := range val["Client"].([]any) {
+				client := clientI.(map[string]any)
 				rr, err := dns.NewRR(fmt.Sprintf("_xmpp-client._tcp.zZzZ. 0 IN SRV %.0f %.0f %.0f %s", client["priority"], client["weight"], client["port"], helpers.DomainFQDN(client["target"].(string), "zZzZ.")))
 				if err != nil {
 					return nil, err
@@ -661,9 +661,9 @@ func migrateFrom7(s *KVStorage) error {
 			}
 		}
 
-		if _, ok := val["Server"].([]interface{}); ok {
-			for _, serverI := range val["Server"].([]interface{}) {
-				server := serverI.(map[string]interface{})
+		if _, ok := val["Server"].([]any); ok {
+			for _, serverI := range val["Server"].([]any) {
+				server := serverI.(map[string]any)
 				rr, err := dns.NewRR(fmt.Sprintf("_xmpp-server._tcp.zZzZ. 0 IN SRV %.0f %.0f %.0f %s", server["priority"], server["weight"], server["port"], helpers.DomainFQDN(server["target"].(string), "zZzZ.")))
 				if err != nil {
 					return nil, err
@@ -674,9 +674,9 @@ func migrateFrom7(s *KVStorage) error {
 			}
 		}
 
-		if _, ok := val["Jabber"].([]interface{}); ok {
-			for _, jabberI := range val["Jabber"].([]interface{}) {
-				jabber := jabberI.(map[string]interface{})
+		if _, ok := val["Jabber"].([]any); ok {
+			for _, jabberI := range val["Jabber"].([]any) {
+				jabber := jabberI.(map[string]any)
 				rr, err := dns.NewRR(fmt.Sprintf("_jabber._tcp.zZzZ. 0 IN SRV %.0f %.0f %.0f %s", jabber["priority"], jabber["weight"], jabber["port"], helpers.DomainFQDN(jabber["target"].(string), "zZzZ.")))
 				if err != nil {
 					return nil, err
@@ -842,7 +842,7 @@ func migrateFrom7(s *KVStorage) error {
 
 	// svcs.MXs
 	migrateFrom7SvcType["svcs.MXs"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
@@ -851,8 +851,8 @@ func migrateFrom7(s *KVStorage) error {
 
 		var mxs svcs.MXs
 
-		for _, mxI := range val["mx"].([]interface{}) {
-			mx := mxI.(map[string]interface{})
+		for _, mxI := range val["mx"].([]any) {
+			mx := mxI.(map[string]any)
 			if _, ok := mx["preference"]; !ok {
 				mx["preference"] = 0.0
 			}
@@ -869,14 +869,14 @@ func migrateFrom7(s *KVStorage) error {
 
 	// svcs.SPF
 	migrateFrom7SvcType["svcs.SPF"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
 			return nil, err
 		}
 
-		directives := val["directives"].([]interface{})
+		directives := val["directives"].([]any)
 		var dir []string
 		for _, directive := range directives {
 			dir = append(dir, directive.(string))
@@ -892,7 +892,7 @@ func migrateFrom7(s *KVStorage) error {
 
 	// svcs.TLSAs
 	migrateFrom7SvcType["svcs.TLSAs"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
@@ -901,8 +901,8 @@ func migrateFrom7(s *KVStorage) error {
 
 		var tlsa svcs.TLSAs
 
-		for _, tlsaI := range val["tlsa"].([]interface{}) {
-			t := tlsaI.(map[string]interface{})
+		for _, tlsaI := range val["tlsa"].([]any) {
+			t := tlsaI.(map[string]any)
 			rr, err := dns.NewRR(fmt.Sprintf("%s 0 IN TLSA %.0f %.0f %.0f %s", helpers.DomainJoin(fmt.Sprintf("_%.0f._%s.zZzZ.", t["port"].(float64), t["proto"].(string))), t["certusage"].(float64), t["selector"].(float64), t["matchingtype"].(float64), t["certificate"].(string)))
 			if err != nil {
 				return nil, err
@@ -968,7 +968,7 @@ func migrateFrom7(s *KVStorage) error {
 
 	// svcs.UnknownSRV
 	migrateFrom7SvcType["svcs.UnknownSRV"] = func(in json.RawMessage) (json.RawMessage, error) {
-		val := map[string]interface{}{}
+		val := map[string]any{}
 
 		err := json.Unmarshal(in, &val)
 		if err != nil {
@@ -977,9 +977,9 @@ func migrateFrom7(s *KVStorage) error {
 
 		var usrv svcs.UnknownSRV
 
-		if mat, ok := val["srv"].([]interface{}); ok {
+		if mat, ok := val["srv"].([]any); ok {
 			for _, mI := range mat {
-				m := mI.(map[string]interface{})
+				m := mI.(map[string]any)
 				rr, err := dns.NewRR(fmt.Sprintf("%s 0 IN SRV %.0f %.0f %.0f %s", helpers.DomainJoin("_"+val["name"].(string), "_"+val["proto"].(string), "zZzZ"), m["priority"].(float64), m["weight"].(float64), m["port"].(float64), helpers.DomainFQDN(m["target"].(string), "zZzZ.")))
 				if err != nil {
 					return nil, err

@@ -87,7 +87,7 @@ func RegisterSubServices(t reflect.Type) {
 		if _, ok := subServices[t.String()]; !ok {
 			log.Println("Registering new subservice:", t.String())
 
-			subServices[t.String()] = func() interface{} {
+			subServices[t.String()] = func() any {
 				return reflect.New(t).Interface()
 			}
 		}
@@ -104,7 +104,7 @@ func RegisterSubServices(t reflect.Type) {
 
 		log.Println("Registering new subservice:", t.String())
 
-		subServices[t.String()] = func() interface{} {
+		subServices[t.String()] = func() any {
 			return reflect.New(t).Interface()
 		}
 	}
@@ -137,7 +137,7 @@ func FindService(name string) (happydns.ServiceBody, error) {
 	return svc.Creator(), nil
 }
 
-func FindSubService(name string) (interface{}, error) {
+func FindSubService(name string) (any, error) {
 	if svc, ok := services[name]; ok {
 		return svc.Creator(), nil
 	} else if ssvc, ok := subServices[name]; ok {

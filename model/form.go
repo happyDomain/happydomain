@@ -84,7 +84,7 @@ type Field struct {
 	Placeholder string `json:"placeholder,omitempty"`
 
 	// Default is the preselected value or the default value in case the field is not filled by the user.
-	Default interface{} `json:"default,omitempty"`
+	Default any `json:"default,omitempty"`
 
 	// Choices holds the differents choices shown to the user in <select> tag.
 	Choices []string `json:"choices,omitempty"`
@@ -126,7 +126,7 @@ type GenRecallID func() string
 // CustomSettingsForm are functions to declare when we want to display a custom user experience when asking for Source's settings.
 type CustomSettingsForm interface {
 	// DisplaySettingsForm generates the CustomForm corresponding to the asked target state.
-	DisplaySettingsForm(int32, GenRecallID, FormUsecase) (*CustomForm, map[string]interface{}, error)
+	DisplaySettingsForm(int32, GenRecallID, FormUsecase) (*CustomForm, map[string]any, error)
 }
 
 type FormUsecase interface {

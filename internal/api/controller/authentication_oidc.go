@@ -149,7 +149,7 @@ func (p *OIDCProvider) CompleteOIDC(c *gin.Context) {
 		return
 	}
 
-	var claims map[string]interface{}
+	var claims map[string]any
 	if err = idToken.Claims(&claims); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: fmt.Sprintf("Unable to retrieve user profile: %s", err.Error())})
 		return

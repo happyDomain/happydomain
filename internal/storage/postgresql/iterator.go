@@ -86,6 +86,6 @@ func (it *PostgreSQLIterator) Key() string {
 }
 
 // Value returns the current value as []byte
-func (it *PostgreSQLIterator) Value() interface{} {
+func (it *PostgreSQLIterator) Value() any {
 	return it.value
 }

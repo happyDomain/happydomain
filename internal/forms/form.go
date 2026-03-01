@@ -25,7 +25,7 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DoSettingState(fu happydns.FormUsecase, state *happydns.FormState, data interface{}, defaultForm func(interface{}) *happydns.CustomForm) (form *happydns.CustomForm, d map[string]interface{}, err error) {
+func DoSettingState(fu happydns.FormUsecase, state *happydns.FormState, data any, defaultForm func(any) *happydns.CustomForm) (form *happydns.CustomForm, d map[string]any, err error) {
 	if csf, ok := data.(happydns.CustomSettingsForm); ok {
 		return csf.DisplaySettingsForm(state.State, func() string {
 			return state.Recall

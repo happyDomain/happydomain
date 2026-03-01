@@ -94,7 +94,7 @@ func (i *Iterator) Key() string {
 	return key.(string)
 }
 
-func (i *Iterator) Value() interface{} {
+func (i *Iterator) Value() any {
 	value, _ := i.results[i.cur_result].Get("value")
 	return value
 }

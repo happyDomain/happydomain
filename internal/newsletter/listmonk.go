@@ -44,7 +44,7 @@ type ListmonkSubscriber struct {
 	Name                    string                 `json:"name"`
 	Status                  string                 `json:"status,omitempty"`
 	Lists                   []int                  `json:"lists"`
-	Attribs                 map[string]interface{} `json:"attribs,omitempty"`
+	Attribs                 map[string]any `json:"attribs,omitempty"`
 	PreconfirmSubscriptions bool                   `json:"preconfirm_subscriptions,omitempty"`
 }
 

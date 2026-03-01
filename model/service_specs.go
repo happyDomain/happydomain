@@ -85,7 +85,7 @@ const (
 )
 
 type ServiceCreator func() ServiceBody
-type SubServiceCreator func() interface{}
+type SubServiceCreator func() any
 
 type ServiceSpecs struct {
 	Fields []Field `json:"fields,omitempty"`
@@ -94,12 +94,12 @@ type ServiceSpecs struct {
 // ServiceInitializer is an optional interface that services can implement
 // to provide custom initialization logic for creating new service instances.
 type ServiceInitializer interface {
-	Initialize() (interface{}, error)
+	Initialize() (any, error)
 }
 
 type ServiceSpecsUsecase interface {
 	ListServices() map[string]ServiceInfos
 	GetServiceIcon(string) ([]byte, error)
 	GetServiceSpecs(reflect.Type) (*ServiceSpecs, error)
-	InitializeService(reflect.Type) (interface{}, error)
+	InitializeService(reflect.Type) (any, error)
 }

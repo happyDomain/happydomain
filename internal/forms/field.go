@@ -79,7 +79,7 @@ func GenField(field reflect.StructField) (f *happydns.Field) {
 }
 
 // GenStructFields generates corresponding SourceFields of the given Source.
-func GenStructFields(data interface{}) (fields []*happydns.Field) {
+func GenStructFields(data any) (fields []*happydns.Field) {
 	if data != nil {
 		dataMeta := reflect.Indirect(reflect.ValueOf(data)).Type()
 

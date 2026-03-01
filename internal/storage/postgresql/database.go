@@ -119,7 +119,7 @@ func (s *PostgreSQLStorage) Close() error {
 	return nil
 }
 
-func (s *PostgreSQLStorage) DecodeData(data interface{}, v interface{}) error {
+func (s *PostgreSQLStorage) DecodeData(data any, v any) error {
 	var bytes []byte
 
 	switch d := data.(type) {
@@ -146,7 +146,7 @@ func (s *PostgreSQLStorage) Has(key string) (bool, error) {
 	return exists, nil
 }
 
-func (s *PostgreSQLStorage) Get(key string, v interface{}) error {
+func (s *PostgreSQLStorage) Get(key string, v any) error {
 	query := fmt.Sprintf("SELECT data FROM %s WHERE key = $1", s.table)
 
 	var jsonData []byte
@@ -161,7 +161,7 @@ func (s *PostgreSQLStorage) Get(key string, v interface{}) error {
 	return json.Unmarshal(jsonData, v)
 }
 
-func (s *PostgreSQLStorage) Put(key string, v interface{}) error {
+func (s *PostgreSQLStorage) Put(key string, v any) error {
 	// Marshal value to JSON
 	jsonData, err := json.Marshal(v)
 	if err != nil {
