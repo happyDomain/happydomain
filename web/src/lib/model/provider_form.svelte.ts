@@ -20,7 +20,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { goto } from "$app/navigation";
-import cuid from "cuid";
+import { createId } from "@paralleldrive/cuid2";
 
 import { getProviderSettings } from "$lib/api/provider_settings";
 import type { CustomForm } from "$lib/model/custom_form.svelte";
@@ -47,7 +47,7 @@ export class ProviderForm {
     ) {
         this.ptype = ptype;
         this.state = -1;
-        this.providerId = providerId ? providerId : cuid();
+        this.providerId = providerId ? providerId : createId();
         this.form = undefined;
         this.value = value ? value : { recall: this.providerId, state: this.state };
         this.on_done = on_done;
