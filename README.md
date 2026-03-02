@@ -3,21 +3,41 @@ happyDomain
 
 happyDomain is a free web application that centralizes the management of your domain names from different registrars and hosts.
 
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](./LICENSE)
+[![Docker Hub](https://img.shields.io/docker/pulls/happydomain/happydomain)](https://hub.docker.com/r/happydomain/happydomain)
+[![Build Status](https://drone.nemunai.re/api/badges/happyDomain/happyDomain/status.svg)](https://drone.nemunai.re/happyDomain/happyDomain)
+[![Feedback](https://img.shields.io/badge/feedback-welcome-brightgreen)](https://feedback.happydomain.org/)
+
 ![Screenshots of happyDomain](./docs/header.webp)
 
-It consists of a HTTP REST API written in Golang (primarily based on https://stackexchange.github.io/dnscontrol/ and https://github.com/miekg/dns) with a nice web interface written with [Svelte](https://svelte.dev/).
-It runs as a single stateless Linux binary, backed by a database (currently: LevelDB, more to come soon).
+It consists of a HTTP REST API written in Golang (primarily based on https://dnscontrol.org/ and https://github.com/miekg/dns) with a nice web interface written with [Svelte](https://svelte.dev/).
+It runs as a single stateless Linux binary, backed by a database.
 
-**Features:**
+
+Table of Contents
+-----------------
+
+- [Features](#features)
+- [Getting Started With Docker](#getting-started-with-docker)
+- [Install from binary](#install-from-binary)
+- [Configuration](#use-happydomain)
+- [Building from source](#building)
+- [Development environment](#development-environment)
+- [Contributing](#contributing)
+- [License](#license)
+
+
+Features
+--------
 
 * An ultra fast web interface without compromise
 * Multiple domains management
-* Support for 60+ DNS providers (including dynamic DNS, RFC 2136) thanks to [DNSControl](https://stackexchange.github.io/dnscontrol/)
+* Support for 60+ DNS providers (including dynamic DNS, RFC 2136) thanks to [DNSControl](https://dnscontrol.org/)
 * Support for the most recents resource records thanks to [CoreDNS's library](https://github.com/miekg/dns)
 * Zone editor with a diff view to review the changes before propagation
 * Keep an history of published changes
 * Contextual help
-* Multiple users with authentication or one user without authtication
+* Multiple users with authentication or one user without authentication
 * Compatible with external authentication (OpenId Connect or through JWT tokens: Auth0, ...)
 
 **happyDomain is functional but still very much a work in progress: it's a carefully crafted proof of concept that evolves thanks to you!**
@@ -27,8 +47,8 @@ Given the diversity of DNS configurations and user needs, we haven't yet identif
 [Whether it works for you or not, we need your feedback!](https://feedback.happydomain.org/) What do you think of our approach to simplifying domain name management? Your impressions at this stage help us guide the project according to **your actual expectations**.
 
 
-Using Docker
-------------
+Getting Started With Docker
+---------------------------
 
 We are a Docker sponsored OSS project! Thus you can easily try and/or deploy our app using Docker/podman/kubernetes/...
 
@@ -258,3 +278,20 @@ cd web; npm run dev
 ```
 
 With this setup, static assets integrated inside the go binary will not be used, instead it'll forward all requests for static assets to the node server, that do dynamic reload, etc.
+
+
+Contributing
+------------
+
+Contributions are welcome! Here's how you can help:
+
+- **Report bugs:** Open an issue on your favorite forge: [GitHub](https://github.com/happyDomain/happydomain/issues), [Gitlab](https://gitlab.com/happyDomain/happydomain/-/issues), [Framagit](https://framagit.org/happyDomain/happydomain/-/issues), [Codeberg](https://codeberg.org/happyDomain/happyDomain/issues), we're highly responsive.
+- **Share feedback:** [Tell us what you think](https://feedback.happydomain.org/), your input guides the project.
+
+
+License
+-------
+
+happyDomain is licensed under the [GNU Affero General Public License v3.0](./LICENSE) (AGPL-3.0).
+
+A commercial license is also available, contact us if interested.
