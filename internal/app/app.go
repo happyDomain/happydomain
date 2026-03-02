@@ -181,6 +181,7 @@ func (app *App) initStorageEngine() {
 		}
 
 		app.store = newInstrumentedStorage(app.store)
+		metrics.NewStorageStatsCollector(storage.NewStatsProvider(app.store))
 	}
 }
 
