@@ -37,11 +37,12 @@
     <a
         href={"#" + (dn ? dn : "@")}
         title={fqdn(dn, origin.domain)}
-        class="d-block text-truncate font-monospace text-muted text-decoration-none"
-        style={"max-width: none; padding-left: " +
-            (dn === "" ? 0 : dn.split(".").length * 10) +
-            "px"}
+        class="d-block text-truncate font-monospace text-body text-decoration-none"
+        class:fw-bolder={!dn}
+        style="max-width: none;"
+        style:padding-left={(dn === "" ? 0 : dn.split(".").length * 10) + "px"}
     >
-        {fqdn(dn, origin.domain)}
+        {#if dn}{dn}<span class="text-muted" style="opacity: 0.6;">.{origin.domain}</span
+            >{:else}{origin.domain}{/if}
     </a>
 {/each}

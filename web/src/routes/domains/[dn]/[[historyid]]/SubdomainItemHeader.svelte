@@ -26,7 +26,7 @@
 
     import { deleteZoneService } from "$lib/api/zone";
     import { controls as ctrlNewAlias } from "$lib/components/modals/Alias.svelte";
-    import { controls as ctrlRecord } from '$lib/components/modals/Record.svelte';
+    import { controls as ctrlRecord } from "$lib/components/modals/Record.svelte";
     import { controls as ctrlNewService } from "$lib/components/services/NewServicePath.svelte";
     import { controls as ctrlService } from "$lib/components/modals/Service.svelte";
     import { fqdn, unreverseDomain } from "$lib/dns";
@@ -56,7 +56,9 @@
         zoneId,
         reverseZone = false,
         showResources = true,
-        toggleShowResources = () => { showResources = !showResources; },
+        toggleShowResources = () => {
+            showResources = !showResources;
+        },
     }: Props = $props();
 
     function isCNAME(services: Array<ServiceCombined>) {
@@ -83,16 +85,15 @@
     }
 </script>
 
-<div
-    class="sticky-top bg-light d-flex align-items-center mb-2 gap-2"
-    style="z-index: 1"
->
+<div class="sticky-top bg-light d-flex align-items-center mb-2 gap-2" style="z-index: 1">
     <div
         role="button"
         tabindex="0"
         class="h2 text-truncate mb-0"
         class:text-muted={services.length === 0 && dn != ""}
-        style:cursor={(services.length || dn == "") && !isPTR(services) && !isCNAME(services) ? "pointer": "default"}
+        style:cursor={(services.length || dn == "") && !isPTR(services) && !isCNAME(services)
+            ? "pointer"
+            : "default"}
         onclick={toggleShowResources}
         onkeypress={toggleShowResources}
     >
@@ -110,19 +111,26 @@
         <span class="font-monospace" title={fqdn(dn, origin.domain)}>
             {#if reverseZone}
                 {unreverseDomain(fqdn(dn, origin.domain))}
+            {:else if dn}
+                {dn}<span class="text-muted" style="opacity: 0.6;">.{origin.domain}</span>
             {:else}
-                {fqdn(dn, origin.domain)}
+                {origin.domain}
             {/if}
         </span>
     </div>
     {#if isCNAME(services) || isPTR(services)}
+        {@const dn = isPTR(services)
+            ? services[0].Service.Record?.Ptr
+            : services[0].Service.cname.Target}
         <span class="text-truncate text-muted lead">
             <Icon name="arrow-right" />
             <span class="font-monospace">
-                {#if isPTR(services)}
-                    {services[0].Service.Record.Ptr}
+                {#if dn.endsWith(origin.domain)}
+                    {dn.substring(0, dn.length - origin.domain.length - 1)}<span
+                        style="opacity: 0.5;">.{origin.domain}</span
+                    >
                 {:else}
-                    {services[0].Service.cname.Target}
+                    {dn}
                 {/if}
             </span>
         </span>
@@ -130,11 +138,7 @@
         <Badge color="primary" id={"popoversvc-" + dn.replace(".", "__")} style="cursor: pointer;">
             {$t("domains.n-services", { count: services.length })}
         </Badge>
-        <Popover
-            dismissible
-            placement="bottom"
-            target={"popoversvc-" + dn.replace(".", "__")}
-        >
+        <Popover dismissible placement="bottom" target={"popoversvc-" + dn.replace(".", "__")}>
             {#each services as service}
                 {#if $servicesSpecs[service._svctype]}
                     <strong>{$servicesSpecs[service._svctype].name}:</strong>
@@ -202,7 +206,7 @@
         </Button>
     {/if}
     {#if !showResources || ($userSession.settings && $userSession.settings.zoneview !== ZoneViewGrid)}
-        {#if ($userSession.settings && $userSession.settings.zoneview === ZoneViewRecords)}
+        {#if $userSession.settings && $userSession.settings.zoneview === ZoneViewRecords}
             <Button
                 type="button"
                 color="primary"

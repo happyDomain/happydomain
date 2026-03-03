@@ -53,6 +53,17 @@ footer {
     background: $gray-100;
 }
 
+a.text-body:not(.list-group-item-action),
+a.text-dark:not(.list-group-item-action),
+a.text-muted:not(.list-group-item-action) {
+    &:hover {
+        font-weight: bold;
+    }
+    &:hover span {
+        font-weight: normal;
+    }
+}
+
 .text-indent {
     text-indent: 1em;
 }
