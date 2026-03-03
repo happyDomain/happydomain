@@ -43,9 +43,9 @@
         thisZone,
     } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
+    import { navigate } from "$lib/stores/config";
     import { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
     import { controls as ctrlUploadZone } from "./ModalUploadZone.svelte";
-    import { controls as ctrlViewZone } from "./ModalViewZone.svelte";
     import { controls as ctrlNewSubdomain } from "./NewSubdomainPath.svelte";
     import SubdomainListTiny from "./SubdomainListTiny.svelte";
 
@@ -72,7 +72,7 @@
 
     function viewZone(): void {
         if (!selectedHistory) return;
-        ctrlViewZone.Open(origin, selectedHistory);
+        navigate(`/domains/${domainLink(selectedDomain)}/export`);
     }
 </script>
 

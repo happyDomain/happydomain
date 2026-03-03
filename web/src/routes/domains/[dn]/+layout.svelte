@@ -38,7 +38,6 @@
     import ModalDiffZone from "./ModalDiffZone.svelte";
     import ModalDomainDelete, { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
     import ModalUploadZone from "./ModalUploadZone.svelte";
-    import ModalViewZone from "./ModalViewZone.svelte";
     import NewSubdomainPath from "./NewSubdomainPath.svelte";
     import ServiceSidebar from "./ServiceSidebar.svelte";
     import ZoneSidebar from "./ZoneSidebar.svelte";
@@ -65,7 +64,9 @@
                             ? "/logs"
                             : page.route.id.startsWith("/domains/[dn]/history")
                               ? "/history"
-                              : ""
+                              : page.route.id.startsWith("/domains/[dn]/[[historyid]]/export")
+                                ? "/export"
+                                : ""
                         : ""),
             );
         }
@@ -141,7 +142,7 @@
                     <SelectDomain bind:selectedDomain />
                 </div>
 
-                {#if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs"))}
+                {#if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
                     <Button
                         class="mt-2"
                         outline
@@ -203,8 +204,6 @@
 />
 
 <ModalDomainDelete on:detachDomain={detachDomain} />
-
-<ModalViewZone />
 
 <ModalDiffZone
     domain={data.domain}

@@ -36,6 +36,7 @@
         "by": "por",
         "cancel": "Cancelar",
         "cancel-edit": "Cancelar edición",
+        "copy-clipboard": "Copiar al portapapeles",
         "continue": "Continuar",
         "create-thing": "Crear {{thing}}",
         "delete": "Eliminar",

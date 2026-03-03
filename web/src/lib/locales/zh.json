@@ -37,6 +37,7 @@
         "by": "由",
         "cancel": "取消",
         "cancel-edit": "取消编辑",
+        "copy-clipboard": "复制到剪贴板",
         "continue": "继续",
         "create-thing": "创建{{thing}}",
         "delete": "删除",

@@ -37,6 +37,7 @@
         "by": "by",
         "cancel": "Cancel",
         "cancel-edit": "Cancel edit",
+        "copy-clipboard": "Copy to clipboard",
         "continue": "Continue",
         "create-thing": "Create {{thing}}",
         "delete": "Delete",
