@@ -28,12 +28,12 @@
     import Service from "$lib/components/services/Service.svelte";
     import RecordText from "$lib/components/records/RecordText.svelte";
     import { controls as ctrlRecord } from "$lib/components/modals/Record.svelte";
-    import { controls as ctrlService } from "$lib/components/modals/Service.svelte";
     import { printRR } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service.svelte";
     import { ZoneViewGrid, ZoneViewList, ZoneViewRecords } from "$lib/model/usersettings";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
+    import { navigate } from "$lib/stores/config";
     import { userSession } from "$lib/stores/usersession";
     import { t } from "$lib/translations";
 
@@ -45,6 +45,13 @@
     }
 
     let { dn, origin, services, zoneId }: Props = $props();
+
+    function openService(service: ServiceCombined) {
+        const subdomainParam = (service._domain === "" || service._domain === "@") ? "@" : service._domain;
+        navigate(
+            `/domains/${encodeURIComponent(origin.domain)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(subdomainParam)}/${encodeURIComponent(service._id!)}`,
+        );
+    }
 </script>
 
 {#if $userSession.settings.zoneview === ZoneViewRecords || $userSession.settings.zoneview === ZoneViewList}
@@ -98,7 +105,7 @@
                             <td
                                 class="d-flex justify-content-between gap-2"
                                 style="cursor: pointer"
-                                onclick={() => ctrlService.Open(service)}
+                                onclick={() => openService(service)}
                             >
                                 <div style="min-width: 0" class="d-flex align-items-center gap-1">
                                     <strong
@@ -131,6 +138,7 @@
             {#key service}
                 <ServiceCard
                     {dn}
+                    {origin}
                     {service}
                     {zoneId}
                 />
@@ -138,6 +146,7 @@
         {/each}
         <ServiceCard
             {dn}
+            {origin}
             {zoneId}
         />
     </div>
