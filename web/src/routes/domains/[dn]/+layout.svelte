@@ -26,39 +26,21 @@
     import { navigate } from "$lib/stores/config";
     import { page } from "$app/state";
 
-    import {
-        Button,
-        Col,
-        Container,
-        Dropdown,
-        DropdownItem,
-        DropdownMenu,
-        DropdownToggle,
-        Icon,
-        Row,
-        Spinner,
-    } from "@sveltestrap/sveltestrap";
+    import { Button, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import { deleteDomain as APIDeleteDomain } from "$lib/api/domains";
     import SelectDomain from "$lib/components/domains/SelectDomain.svelte";
-    import { isReverseZone } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { ZoneMeta } from "$lib/model/zone";
     import { domains_idx, refreshDomains } from "$lib/stores/domains";
-    import {
-        retrieveZone as StoreRetrieveZone,
-        sortedDomains,
-        sortedDomainsWithIntermediate,
-        thisZone,
-    } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
     import ButtonZonePublish from "./ButtonZonePublish.svelte";
     import ModalDiffZone from "./ModalDiffZone.svelte";
     import ModalDomainDelete, { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
-    import ModalUploadZone, { controls as ctrlUploadZone } from "./ModalUploadZone.svelte";
-    import ModalViewZone, { controls as ctrlViewZone } from "./ModalViewZone.svelte";
-    import NewSubdomainPath, { controls as ctrlNewSubdomain } from "./NewSubdomainPath.svelte";
-    import SubdomainListTiny from "./SubdomainListTiny.svelte";
+    import ModalUploadZone from "./ModalUploadZone.svelte";
+    import ModalViewZone from "./ModalViewZone.svelte";
+    import NewSubdomainPath from "./NewSubdomainPath.svelte";
+    import ZoneSidebar from "./ZoneSidebar.svelte";
 
     interface Props {
         data: { domain: Domain };
@@ -93,14 +75,7 @@
 
     let selectedHistory: string | undefined = $derived(page.data.history);
 
-    let retrievalInProgress = $state(false);
-    async function retrieveZone() {
-        retrievalInProgress = true;
-        retrieveZoneDone(await StoreRetrieveZone(data.domain));
-    }
-
     function retrieveZoneDone(zm: ZoneMeta): void {
-        retrievalInProgress = false;
         if (page.data.definedhistory) {
             refreshDomains().then(() => {
                 navigate(
@@ -113,14 +88,6 @@
         } else {
             invalidateAll();
         }
-    }
-
-    function viewZone(): void {
-        if (!selectedHistory) {
-            return;
-        }
-
-        ctrlViewZone.Open(data.domain, selectedHistory);
     }
 
     let deleteInProgress = false;
@@ -184,118 +151,17 @@
                         {$t("zones.return-to")}
                     </Button>
                 {:else}
-                    <div class="d-flex gap-2 pb-2 sticky-top" style="padding-top: 10px">
-                        <Button
-                            type="button"
-                            color="secondary"
-                            outline
-                            size="sm"
-                            class="flex-fill"
-                            disabled={!$sortedDomains}
-                            on:click={() => ctrlNewSubdomain.Open()}
-                        >
-                            <Icon name="server" />
-                            {$t("domains.add-a-subdomain")}
-                        </Button>
-                        <Dropdown>
-                            <DropdownToggle
-                                color="secondary"
-                                outline
-                                size="sm"
-                                aria-label={$t("domains.actions.others", {
-                                    domain: $domains_idx[selectedDomain].domain,
-                                })}
-                                title={$t("domains.actions.others", {
-                                    domain: $domains_idx[selectedDomain].domain,
-                                })}
-                            >
-                                {#if retrievalInProgress}
-                                    <Spinner size="sm" />
-                                {:else}
-                                    <Icon name="gear-fill" aria-hidden="true" />
-                                {/if}
-                            </DropdownToggle>
-                            <DropdownMenu>
-                                <DropdownItem header class="font-monospace">
-                                    {data.domain.domain}
-                                </DropdownItem>
-                                <DropdownItem
-                                    href={`/domains/${domainLink(selectedDomain)}/history`}
-                                >
-                                    {$t("domains.actions.history")}
-                                </DropdownItem>
-                                <DropdownItem href={`/domains/${domainLink(selectedDomain)}/logs`}>
-                                    {$t("domains.actions.audit")}
-                                </DropdownItem>
-                                <DropdownItem divider />
-                                <DropdownItem on:click={viewZone} disabled={!$sortedDomains}>
-                                    {$t("domains.actions.view")}
-                                </DropdownItem>
-                                <DropdownItem on:click={retrieveZone}>
-                                    {$t("domains.actions.reimport")}
-                                </DropdownItem>
-                                <DropdownItem on:click={() => ctrlUploadZone.Open()}>
-                                    {$t("domains.actions.upload")}
-                                </DropdownItem>
-                                <DropdownItem divider />
-                                <DropdownItem disabled title="Coming soon...">
-                                    {$t("domains.actions.share")}
-                                </DropdownItem>
-                                <DropdownItem on:click={() => ctrlDomainDelete.Open()}>
-                                    {$t("domains.stop")}
-                                </DropdownItem>
-                                <DropdownItem divider />
-                                <DropdownItem
-                                    href={"/providers/" +
-                                        encodeURIComponent(
-                                            $domains_idx[selectedDomain].id_provider,
-                                        )}
-                                >
-                                    {$t("provider.update")}
-                                </DropdownItem>
-                            </DropdownMenu>
-                        </Dropdown>
-                    </div>
-                    <div style="min-height:0; overflow-y: auto;" class="placeholder-glow">
-                        {#if $sortedDomains && $sortedDomainsWithIntermediate && $thisZone && $thisZone.id == selectedHistory}
-                            {#if $sortedDomains.length == 0}
-                                <div class="text-truncate font-monospace text-muted">
-                                    {data.domain.domain}
-                                </div>
-                            {:else if isReverseZone(data.domain.domain)}
-                                <SubdomainListTiny domains={$sortedDomains} origin={data.domain} />
-                            {:else}
-                                <SubdomainListTiny
-                                    domains={$sortedDomainsWithIntermediate}
-                                    origin={data.domain}
-                                />
-                            {/if}
-                        {:else}
-                            <span class="d-block text-truncate font-monospace text-muted">
-                                {data.domain.domain}
-                            </span>
-                            <span class="d-block placeholder ms-3 mb-1">
-                                {data.domain.domain}
-                            </span>
-                            <span class="d-block placeholder ms-3 mb-1">
-                                {data.domain.domain}
-                            </span>
-                            <span class="d-block placeholder ms-4 mb-1">
-                                {data.domain.domain}
-                            </span>
-                            <span class="d-block placeholder ms-4 mb-1">
-                                {data.domain.domain}
-                            </span>
-                            <span class="d-block placeholder ms-3">
-                                {data.domain.domain}
-                            </span>
-                        {/if}
-                    </div>
+                    <ZoneSidebar
+                        origin={data.domain}
+                        {selectedDomain}
+                        {selectedHistory}
+                        onretrieveZoneDone={retrieveZoneDone}
+                    />
                 {/if}
 
                 <div class="flex-fill"></div>
 
-                {#if !(page.data.isZonePage && data.domain.zone_history && $domains_idx[selectedDomain] && data.domain.id === $domains_idx[selectedDomain].id && $sortedDomainsWithIntermediate && selectedHistory)}
+                {#if !(data.domain.zone_history && $domains_idx[selectedDomain] && data.domain.id === $domains_idx[selectedDomain].id && selectedHistory)}
                     <Button
                         color="danger"
                         class="mt-3"
