@@ -24,9 +24,8 @@
 <script lang="ts">
     import { Input } from "@sveltestrap/sveltestrap";
 
-    import { getRrtype, newRR, type dnsTypeA, type dnsTypeAAAA, type dnsTypeSSHFP } from "$lib/dns_rr";
+    import { getRrtype, newRR } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";
-    import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import TableRecords from "$lib/components/records/TableRecords.svelte";
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
@@ -56,30 +55,22 @@
 {/if}
 <div>
     <h4 class="text-primary pb-1 border-bottom border-1">Server Connectivity (A/AAA records)</h4>
-    {#if value["A"]}
-        <RecordLine {dn} {origin} bind:rr={value["A"]} />
-    {/if}
-    {#if value["AAAA"]}
-        <RecordLine {dn} {origin} bind:rr={value["AAAA"]} />
-    {/if}
-
-    <div class="my-2"></div>
 
     {#if value["A"]}
         <BasicInput
             edit
             index="A"
             specs={{
-                  id: "A",
-                  label: "IPv4",
-                  type: "net.IP",
-                  }}
+                id: "A",
+                label: "IPv4",
+                type: "net.IP",
+            }}
             bind:value={value["A"].A}
         />
     {:else}
         <Input
-            onclick={() => value["A"] = newRR(dn, getRrtype("A"))}
-            oninput={() => value["A"] = newRR(dn, getRrtype("A"))}
+            onclick={() => (value["A"] = newRR(dn, getRrtype("A")))}
+            oninput={() => (value["A"] = newRR(dn, getRrtype("A")))}
         />
     {/if}
     {#if value["AAAA"]}
@@ -87,35 +78,28 @@
             edit
             index="AAAA"
             specs={{
-                  id: "AAAA",
-                  label: "IPv6",
-                  type: "net.IP",
-                  }}
+                id: "AAAA",
+                label: "IPv6",
+                type: "net.IP",
+            }}
             bind:value={value["AAAA"].AAAA}
         />
     {:else}
         <Input
             label="test"
-            onclick={() => value["AAAA"] = newRR(dn, getRrtype("AAAA"))}
-            oninput={() => value["AAAA"] = newRR(dn, getRrtype("AAAA"))}
+            onclick={() => (value["AAAA"] = newRR(dn, getRrtype("AAAA")))}
+            oninput={() => (value["AAAA"] = newRR(dn, getRrtype("AAAA")))}
         />
     {/if}
 </div>
-<hr>
+<hr />
 <div>
     <h4 class="text-primary pb-1 border-bottom border-1">
         SSH Fingerprint
         <small class="text-muted">Server's SSH fingerprint</small>
     </h4>
     <!--RecordsLines {dn} {origin} bind:rrs={value["ns"]} /-->
-    <TableRecords
-        class="mt-3"
-        {dn}
-        edit
-        {origin}
-        rrs={value["SSHFP"]}
-        rrtype="SSHFP"
-    >
+    <TableRecords class="mt-3" {dn} edit {origin} rrs={value["SSHFP"]} rrtype="SSHFP">
         {#snippet header(field: string)}
             {#if field == "Algorithm"}
                 Algorithm
@@ -131,8 +115,8 @@
                     edit
                     index={"SSHFP-" + idx.toString()}
                     specs={{
-                          id: "algorithm",
-                          type: "uint"
+                        id: "algorithm",
+                        type: "uint",
                     }}
                     bind:value={value["SSHFP"][idx][field]}
                 />
@@ -141,8 +125,8 @@
                     edit
                     index={"SSHFP-" + idx.toString()}
                     specs={{
-                          id: "type",
-                          type: "uint"
+                        id: "type",
+                        type: "uint",
                     }}
                     bind:value={value["SSHFP"][idx][field]}
                 />

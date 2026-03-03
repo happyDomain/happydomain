@@ -25,7 +25,6 @@
     import { Button, Icon, Input } from "@sveltestrap/sveltestrap";
 
     import type { Domain } from "$lib/model/domain";
-    import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import { servicesSpecs } from "$lib/stores/services";
     import type { dnsResource, dnsTypeTXT } from "$lib/dns_rr";
@@ -49,7 +48,14 @@
     });
 
     // svelte-ignore state_referenced_locally
-    let val = $derived(value["txt"] ? new TLSRPTPolicy(value["txt"]) : new TLSRPTPolicy({ Hdr: { Name: dn, Rrtype: 16, Class: 1, Ttl: 3600, Rdlength: 0 }, Txt: "" }));
+    let val = $derived(
+        value["txt"]
+            ? new TLSRPTPolicy(value["txt"])
+            : new TLSRPTPolicy({
+                  Hdr: { Name: dn, Rrtype: 16, Class: 1, Ttl: 3600, Rdlength: 0 },
+                  Txt: "",
+              }),
+    );
 
     const type = "svcs.TLS_RPT";
 </script>
@@ -61,20 +67,16 @@
 {/if}
 <div>
     <h4 class="text-primary pb-1 border-bottom border-1">Aggregate Report URI</h4>
-    {#if value["txt"]}
-        <RecordLine class="mb-4" {dn} {origin} bind:rr={value["txt"]} />
-    {/if}
-
     <BasicInput
         edit
         index="v"
         specs={{
-              id: "v",
-              label: "Version",
-              placeholder: "TLSRPTv1",
-              type: "string",
-              description: "Defines the version of TLSRPT to use",
-              }}
+            id: "v",
+            label: "Version",
+            placeholder: "TLSRPTv1",
+            type: "string",
+            description: "Defines the version of TLSRPT to use",
+        }}
         bind:value={val.v}
     />
 
@@ -92,7 +94,8 @@
                             <Input
                                 bsSize="sm"
                                 value={val.rua[idx]}
-                                oninput={(e) => val.updateRua(idx, (e.target as HTMLInputElement).value)}
+                                oninput={(e) =>
+                                    val.updateRua(idx, (e.target as HTMLInputElement).value)}
                             />
                         </td>
                         <td>
@@ -108,12 +111,9 @@
                         </td>
                     </tr>
                 {/each}
-                {:else}
+            {:else}
                 <tr>
-                    <td
-                        colspan={2}
-                        class="fst-italic text-center"
-                    >
+                    <td colspan={2} class="fst-italic text-center">
                         {$t("common.no-content")}
                     </td>
                 </tr>

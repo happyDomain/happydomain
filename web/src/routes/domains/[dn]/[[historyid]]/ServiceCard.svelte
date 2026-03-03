@@ -33,6 +33,7 @@
     } from "@sveltestrap/sveltestrap";
 
     import ServiceBadges from "./ServiceBadges.svelte";
+    import { controls as ctrlServiceDetails } from "../ServiceDetailsOffcanvas.svelte";
     import { controls as ctrlServicePath } from "$lib/components/services/NewServicePath.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service.svelte";
@@ -52,9 +53,7 @@
     function openService() {
         if (service) {
             const subdomainParam = dn === "" ? "@" : dn;
-            navigate(
-                `/domains/${encodeURIComponent(origin.domain)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(subdomainParam)}/${encodeURIComponent(service._id!)}`,
-            );
+            ctrlServiceDetails.Open(service);
         } else {
             ctrlServicePath.Open(dn);
         }

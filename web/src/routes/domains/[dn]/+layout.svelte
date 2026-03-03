@@ -39,6 +39,7 @@
     import ModalDomainDelete, { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
     import ModalUploadZone from "./ModalUploadZone.svelte";
     import NewSubdomainPath from "./NewSubdomainPath.svelte";
+    import ServiceDetailsOffcanvas from "./ServiceDetailsOffcanvas.svelte";
     import ServiceSidebar from "./ServiceSidebar.svelte";
     import ZoneSidebar from "./ZoneSidebar.svelte";
 
@@ -210,3 +211,5 @@
     {selectedHistory}
     on:retrieveZoneDone={(ev) => retrieveZoneDone(ev.detail)}
 />
+
+<ServiceDetailsOffcanvas domain={data.domain} {selectedHistory} />

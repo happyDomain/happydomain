@@ -23,7 +23,6 @@
 
 <script lang="ts">
     import BasicInput from "$lib/components/inputs/basic.svelte";
-    import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { dnsResource, dnsTypeTXT } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
@@ -62,7 +61,8 @@
         if (value["txt"]) {
             // Construct subdomain from organization name
             if (organizationName) {
-                value["txt"].Hdr.Name = `_github-challenge-${organizationName.replace(/^_github-challenge-(.+?)-org(\..*)?/, "$1")}-org`;
+                value["txt"].Hdr.Name =
+                    `_github-challenge-${organizationName.replace(/^_github-challenge-(.+?)-org(\..*)?/, "$1")}-org`;
             }
             value["txt"].Txt = verificationCode;
         }
@@ -70,19 +70,17 @@
 </script>
 
 <div>
-    <RecordLine {dn} {origin} bind:rr={value["txt"]!} />
-
     <BasicInput
         class="mt-3"
         edit
         index="organization-name"
         specs={{
-              id: "organization-name",
-              label: "Organization Name",
-              description: "Your GitHub organization name",
-              type: "string",
-              placeholder: "my-org",
-              }}
+            id: "organization-name",
+            label: "Organization Name",
+            description: "Your GitHub organization name",
+            type: "string",
+            placeholder: "my-org",
+        }}
         bind:value={organizationName}
     />
 
@@ -90,12 +88,12 @@
         edit
         index="verification-code"
         specs={{
-              id: "verification-code",
-              label: "Code",
-              description: "The verification code provided by GitHub",
-              type: "string",
-              placeholder: "Enter the code from GitHub organization settings",
-              }}
+            id: "verification-code",
+            label: "Code",
+            description: "The verification code provided by GitHub",
+            type: "string",
+            placeholder: "Enter the code from GitHub organization settings",
+        }}
         bind:value={verificationCode}
     />
 </div>

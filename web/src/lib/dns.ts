@@ -297,3 +297,55 @@ export function parseKeyValueTxt(input: string): Record<string, string> {
 export function emptyRR(): dnsRR {
     return newRR("", 0);
 }
+
+/**
+ * Recursively traverses a service field value according to its type descriptor
+ * and appends any leaf DNS resource records found to the provided array.
+ *
+ * Handles array types (prefixed with "[]"), pointer types (prefixed with "*"),
+ * and leaf DNS types ("dns.*", "happydns.Record", "happydns.TXT", "happydns.SPF").
+ * Non-DNS composite types (sub-services) are not traversed.
+ *
+ * @param type  - The field type string as defined in the service spec.
+ * @param value - The corresponding runtime value from the service instance.
+ * @param rrs   - Accumulator array that receives the collected dnsRR objects.
+ */
+function collectFieldRRs(type: string, value: any, rrs: dnsRR[]) {
+    if (value === null || value === undefined) return;
+    if (type.startsWith("[]")) {
+        if (Array.isArray(value)) {
+            for (const item of value) {
+                collectFieldRRs(type.substring(2), item, rrs);
+            }
+        }
+    } else if (type.startsWith("*")) {
+        collectFieldRRs(type.substring(1), value, rrs);
+    } else if (
+        type.startsWith("dns.") ||
+        type === "happydns.Record" ||
+        type === "happydns.TXT" ||
+        type === "happydns.SPF"
+    ) {
+        rrs.push(value);
+    }
+}
+
+/**
+ * Extracts all DNS resource records from a service instance given its spec fields.
+ *
+ * Iterates over the top-level fields of a service spec and delegates to
+ * {@link collectFieldRRs} for each field, accumulating every leaf dnsRR found
+ * in the service value.
+ *
+ * @param fields - The array of field descriptors from a ServiceSpec, or null.
+ * @param value  - The service instance value (ServiceCombined.Service).
+ * @returns      An array of dnsRR objects contained in the service.
+ */
+export function collectRRs(fields: Array<{ type: string; id: string }> | null, value: any): dnsRR[] {
+    if (!fields || !value) return [];
+    const rrs: dnsRR[] = [];
+    for (const field of fields) {
+        collectFieldRRs(field.type, value[field.id], rrs);
+    }
+    return rrs;
+}

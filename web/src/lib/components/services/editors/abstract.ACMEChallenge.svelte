@@ -23,7 +23,6 @@
 
 <script lang="ts">
     import BasicInput from "$lib/components/inputs/basic.svelte";
-    import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { dnsResource, dnsTypeTXT } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
@@ -58,18 +57,17 @@
 </script>
 
 <div>
-    <RecordLine {dn} {origin} bind:rr={value["txt"]!} />
     <BasicInput
         class="mt-3"
         edit
         index="challenge-token"
         specs={{
-              id: "challenge-token",
-              label: "Challenge Token",
-              description: "The ACME challenge token for domain validation",
-              type: "string",
-              placeholder: "Enter the challenge token from your ACME client",
-              }}
+            id: "challenge-token",
+            label: "Challenge Token",
+            description: "The ACME challenge token for domain validation",
+            type: "string",
+            placeholder: "Enter the challenge token from your ACME client",
+        }}
         bind:value={challengeToken}
     />
 </div>

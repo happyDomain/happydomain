@@ -22,7 +22,6 @@
 -->
 
 <script lang="ts">
-    import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { dnsResource, dnsTypeSMIMEA } from "$lib/dns_rr";
@@ -55,19 +54,19 @@
     async function computeHash(username: string): Promise<string> {
         const encoder = new TextEncoder();
         const data = encoder.encode(username);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
         const hashArray = new Uint8Array(hashBuffer);
         // Take first 28 bytes (224 bits) and convert to hex
         const hash224 = hashArray.slice(0, 28);
         return Array.from(hash224)
-            .map(b => b.toString(16).padStart(2, '0'))
-            .join('');
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
     }
 
     // When username changes, compute hash
     $effect(() => {
         if (value["username"]) {
-            computeHash(value["username"]).then(hash => {
+            computeHash(value["username"]).then((hash) => {
                 nameHash = hash;
             });
         }
@@ -92,8 +91,6 @@
 </script>
 
 <div>
-    <RecordLine {dn} {origin} bind:rr={value["smimea"]!} />
-
     <BasicInput
         class="mt-3"
         edit
@@ -101,7 +98,8 @@
         specs={{
             id: "username",
             label: "Username",
-            description: "Email username (e.g., 'user' for user@domain.com). The SHA-224 hash will be computed automatically.",
+            description:
+                "Email username (e.g., 'user' for user@domain.com). The SHA-224 hash will be computed automatically.",
             type: "string",
             placeholder: "user",
         }}

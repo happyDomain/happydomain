@@ -359,6 +359,7 @@
         "form-new": "Añadir un nuevo servicio a {{domain}}",
         "new": "Nuevo servicio",
         "new-description": "Haz clic aquí para añadir un nuevo servicio a este subdominio.",
+        "default-ttl": "TTL predeterminado",
         "ttl": "TTL",
         "ttl-long": "Tiempo de vida",
         "ttl-tip": "0 significa TTL predeterminado, otros valores se expresan en segundos"

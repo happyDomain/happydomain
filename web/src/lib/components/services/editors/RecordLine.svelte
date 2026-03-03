@@ -37,11 +37,13 @@
         dn: string;
         origin: Domain;
         rr: dnsRR;
+        onopen?: () => void;
     }
 
-    let { class: className = "", dn, origin, rr = $bindable(emptyRR()) }: Props = $props();
+    let { class: className = "", dn, origin, rr = $bindable(emptyRR()), onopen }: Props = $props();
 
     function openEditor() {
+        onopen?.();
         controls.Open(rr, dn);
     }
 </script>

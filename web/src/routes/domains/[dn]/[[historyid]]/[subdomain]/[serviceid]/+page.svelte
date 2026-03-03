@@ -27,10 +27,10 @@
     import { onDestroy } from "svelte";
     import { page } from "$app/state";
 
-    import { Button, Icon, Input, Label, Spinner } from "@sveltestrap/sveltestrap";
+    import { Button, Icon, Spinner } from "@sveltestrap/sveltestrap";
 
     import { initializeService } from "$lib/api/service_specs";
-    import { addZoneService, deleteZoneService, updateZoneService } from "$lib/api/zone";
+    import { addZoneService, updateZoneService } from "$lib/api/zone";
     import ServiceEditor from "$lib/components/services/ServiceEditor.svelte";
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
@@ -80,28 +80,10 @@
     });
 
     let addServiceInProgress = $state(false);
-    let deleteServiceInProgress = $state(false);
 
     function goBack() {
         navigate(
             `/domains/${encodeURIComponent(data.domain.domain)}/${encodeURIComponent(data.history)}`,
-        );
-    }
-
-    function deleteService() {
-        if (!service || !$thisZone) return;
-
-        deleteServiceInProgress = true;
-        deleteZoneService(data.domain, $thisZone.id, service).then(
-            (z) => {
-                thisZone.set(z);
-                deleteServiceInProgress = false;
-                goBack();
-            },
-            (err) => {
-                deleteServiceInProgress = false;
-                throw err;
-            },
         );
     }
 
@@ -142,12 +124,6 @@
     $effect(() => {
         helpLinkOverride.set(helpLink(service));
     });
-
-    let canDelete = $derived(
-        !!service?._id &&
-            service._svctype !== "abstract.Origin" &&
-            service._svctype !== "abstract.NSOnlyOrigin",
-    );
 </script>
 
 {#if serviceLoading || (data.serviceid !== "new" && !$thisZone)}
@@ -196,36 +172,9 @@
         </form>
 
         <div class="d-flex justify-content-end align-items-center gap-2 mt-3">
-            <Label for="svc_ttl" title={$t("service.ttl-long")}>{$t("service.ttl")}</Label>
-            <Input
-                id="svc_ttl"
-                min="0"
-                type="number"
-                style="width: 8em"
-                title={$t("service.ttl-tip")}
-                bind:value={service._ttl}
-                on:input={(e: any) =>
-                    parseInt(e.target.value, 10)
-                        ? (service!._ttl = parseInt(e.target.value, 10))
-                        : (service!._ttl = 0)}
-            />
-            {#if canDelete}
-                <Button
-                    color="danger"
-                    disabled={addServiceInProgress || deleteServiceInProgress}
-                    title={$t("service.delete")}
-                    on:click={deleteService}
-                >
-                    {#if deleteServiceInProgress}
-                        <Spinner size="sm" />
-                    {:else}
-                        <Icon name="trash" />
-                    {/if}
-                </Button>
-            {/if}
             {#if service._id}
                 <Button
-                    disabled={addServiceInProgress || deleteServiceInProgress}
+                    disabled={addServiceInProgress}
                     form="addSvcForm"
                     type="submit"
                     color="success"

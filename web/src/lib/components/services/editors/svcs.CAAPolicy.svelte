@@ -22,24 +22,15 @@
 -->
 
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
-
-    import { Alert, Badge, Button, FormGroup, Icon, Input } from "@sveltestrap/sveltestrap";
+    import { Alert, Button, FormGroup, Icon, Input } from "@sveltestrap/sveltestrap";
 
     import type { dnsResource } from "$lib/dns_rr";
-    import TableInput from "$lib/components/inputs/table.svelte";
-    import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
-    import ResourceRawInput from "$lib/components/inputs/raw.svelte";
     import CAAIssuer from "./CAA-issuer.svelte";
     import CAAIodef from "./CAA-iodef.svelte";
     import type { Domain } from "$lib/model/domain";
     import { servicesSpecs } from "$lib/stores/services";
     import { t } from "$lib/translations";
     import { CAAPolicy, newCAARecord, type CAATag } from "$lib/services/caa.svelte";
-
-    import issuers from "$lib/services/caa-issuers";
-
-    const dispatch = createEventDispatcher();
 
     interface Props {
         dn: string;
@@ -52,8 +43,8 @@
 
     function addIssuer(tag: CAATag): (e: CustomEvent<string>) => void {
         return (e: CustomEvent<string>) => {
-            if (!value["caa"]) value["caa"] = []
-            if (!Array.isArray(value["caa"])) value["caa"] = [value["caa"]]
+            if (!value["caa"]) value["caa"] = [];
+            if (!Array.isArray(value["caa"])) value["caa"] = [value["caa"]];
             value["caa"].push(newCAARecord(dn, tag, e.detail));
         };
     }
@@ -67,12 +58,6 @@
     <p class="text-muted">
         {$servicesSpecs[type].description}
     </p>
-{/if}
-
-{#if value["caa"] && Array.isArray(value["caa"])}
-    {#each value["caa"] as caa, i}
-        <RecordLine {dn} {origin} bind:rr={value["caa"][i]} />
-    {/each}
 {/if}
 
 <h4 class="mt-4">{$t("resources.CAA.title")}</h4>
@@ -102,7 +87,9 @@
                             bind:flag={val.records[k].Flag}
                             bind:tag={val.records[k].Tag}
                             bind:value={val.records[k].Value}
-                            on:delete-issuer={() => { val.records.splice(k, 1); }}
+                            on:delete-issuer={() => {
+                                val.records.splice(k, 1);
+                            }}
                         />
                     </li>
                 {/if}
@@ -115,10 +102,7 @@
         {/if}
         {#if !readonly}
             <li style:list-style="'+ '">
-                <CAAIssuer
-                    newone
-                    on:add-issuer={addIssuer("issue")}
-                />
+                <CAAIssuer newone on:add-issuer={addIssuer("issue")} />
             </li>
         {/if}
     </ul>
@@ -156,7 +140,9 @@
                             bind:flag={val.records[k].Flag}
                             bind:tag={val.records[k].Tag}
                             bind:value={val.records[k].Value}
-                            on:delete-issuer={() => { val.records.splice(k, 1); }}
+                            on:delete-issuer={() => {
+                                val.records.splice(k, 1);
+                            }}
                         />
                     </li>
                 {/if}
@@ -179,10 +165,7 @@
         {/if}
         {#if !readonly}
             <li style:list-style="'+ '">
-                <CAAIssuer
-                    newone
-                    on:add-issuer={addIssuer("issuewild")}
-                />
+                <CAAIssuer newone on:add-issuer={addIssuer("issuewild")} />
             </li>
         {/if}
     </ul>
@@ -227,7 +210,9 @@
                             bind:flag={val.records[k].Flag}
                             bind:tag={val.records[k].Tag}
                             bind:value={val.records[k].Value}
-                            on:delete-issuer={() => { val.records.splice(k, 1); }}
+                            on:delete-issuer={() => {
+                                val.records.splice(k, 1);
+                            }}
                         />
                     </li>
                 {/if}
@@ -235,10 +220,7 @@
         {/if}
         {#if !readonly}
             <li style:list-style="'+ '">
-                <CAAIssuer
-                    newone
-                    on:add-issuer={addIssuer("issuemail")}
-                />
+                <CAAIssuer newone on:add-issuer={addIssuer("issuemail")} />
             </li>
         {/if}
     </ul>
@@ -283,7 +265,9 @@
                             bind:flag={val.records[k].Flag}
                             bind:tag={val.records[k].Tag}
                             bind:value={val.records[k].Value}
-                            on:delete-issuer={() => { val.records.splice(k, 1); }}
+                            on:delete-issuer={() => {
+                                val.records.splice(k, 1);
+                            }}
                         />
                     </li>
                 {/if}
@@ -291,10 +275,7 @@
         {/if}
         {#if !readonly}
             <li style:list-style="'+ '">
-                <CAAIssuer
-                    newone
-                    on:add-issuer={addIssuer("issuevmc")}
-                />
+                <CAAIssuer newone on:add-issuer={addIssuer("issuevmc")} />
             </li>
         {/if}
     </ul>
@@ -319,16 +300,15 @@
                 bind:flag={val.records[k].Flag}
                 bind:tag={val.records[k].Tag}
                 bind:value={val.records[k].Value}
-                on:delete-iodef={() => { val.records.splice(k, 1); }}
+                on:delete-iodef={() => {
+                    val.records.splice(k, 1);
+                }}
             />
         {/if}
     {/each}
 {/if}
 {#if !readonly}
-    <CAAIodef
-        newone
-        on:add-iodef={addIssuer("iodef")}
-    />
+    <CAAIodef newone on:add-iodef={addIssuer("iodef")} />
 {/if}
 
 <h4 class="mt-4">{$t("resources.CAA.contact-info")}</h4>
@@ -356,7 +336,9 @@
                                 type="button"
                                 size="sm"
                                 color="danger"
-                                on:click={() => { val.records.splice(k, 1); }}
+                                on:click={() => {
+                                    val.records.splice(k, 1);
+                                }}
                             >
                                 <Icon name="trash" />
                             </Button>
@@ -374,12 +356,13 @@
         color="primary"
         outline
         on:click={() => {
-            if (!value["caa"]) value["caa"] = []
-            if (!Array.isArray(value["caa"])) value["caa"] = [value["caa"]]
+            if (!value["caa"]) value["caa"] = [];
+            if (!Array.isArray(value["caa"])) value["caa"] = [value["caa"]];
             value["caa"].push(newCAARecord(dn, "contactemail", ""));
         }}
     >
-        <Icon name="plus" /> {$t("resources.CAA.add-contact-email")}
+        <Icon name="plus" />
+        {$t("resources.CAA.add-contact-email")}
     </Button>
 {/if}
 
@@ -402,7 +385,9 @@
                                 type="button"
                                 size="sm"
                                 color="danger"
-                                on:click={() => { val.records.splice(k, 1); }}
+                                on:click={() => {
+                                    val.records.splice(k, 1);
+                                }}
                             >
                                 <Icon name="trash" />
                             </Button>
@@ -420,11 +405,12 @@
         color="primary"
         outline
         on:click={() => {
-            if (!value["caa"]) value["caa"] = []
-            if (!Array.isArray(value["caa"])) value["caa"] = [value["caa"]]
+            if (!value["caa"]) value["caa"] = [];
+            if (!Array.isArray(value["caa"])) value["caa"] = [value["caa"]];
             value["caa"].push(newCAARecord(dn, "contactphone", ""));
         }}
     >
-        <Icon name="plus" /> {$t("resources.CAA.add-contact-phone")}
+        <Icon name="plus" />
+        {$t("resources.CAA.add-contact-phone")}
     </Button>
 {/if}

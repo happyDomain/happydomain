@@ -23,7 +23,6 @@
 
 <script lang="ts">
     import type { Domain } from "$lib/model/domain";
-    import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import { servicesSpecs } from "$lib/stores/services";
     import type { dnsResource } from "$lib/dns_rr";
@@ -64,20 +63,16 @@
 {/if}
 <div>
     <h4 class="text-primary pb-1 border-bottom border-1">MTA Strict Transport Security</h4>
-    {#if value["txt"]}
-        <RecordLine class="mb-4" {dn} {origin} bind:rr={value["txt"]} />
-    {/if}
-
     <BasicInput
         edit
         index="v"
         specs={{
-              id: "v",
-              label: "Version",
-              placeholder: "STSv1",
-              type: "string",
-              description: "Defines the version of STS to use.",
-              }}
+            id: "v",
+            label: "Version",
+            placeholder: "STSv1",
+            type: "string",
+            description: "Defines the version of STS to use.",
+        }}
         bind:value={val.v}
     />
 
@@ -85,12 +80,12 @@
         edit
         index="id"
         specs={{
-              id: "id",
-              label: "Policy Identifier",
-              placeholder: "20160831085700Z",
-              type: "string",
-              description: "A short string used to track policy updates.",
-              }}
+            id: "id",
+            label: "Policy Identifier",
+            placeholder: "20160831085700Z",
+            type: "string",
+            description: "A short string used to track policy updates.",
+        }}
         bind:value={val.id}
     />
 </div>

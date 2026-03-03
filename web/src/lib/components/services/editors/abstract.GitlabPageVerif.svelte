@@ -23,7 +23,6 @@
 
 <script lang="ts">
     import BasicInput from "$lib/components/inputs/basic.svelte";
-    import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { dnsResource, dnsTypeTXT } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
@@ -46,29 +45,32 @@
     }
 
     // Extract verification code from TXT record
-    let verificationCode = $state(value["txt"]?.Txt?.replace("gitlab-pages-verification-code=", "") || "");
+    let verificationCode = $state(
+        value["txt"]?.Txt?.replace("gitlab-pages-verification-code=", "") || "",
+    );
 
     // Sync verification code back to TXT record
     $effect(() => {
         if (value["txt"]) {
-            value["txt"].Txt = "gitlab-pages-verification-code=" + verificationCode.replace(/^gitlab-pages-verification-code=/, "");
+            value["txt"].Txt =
+                "gitlab-pages-verification-code=" +
+                verificationCode.replace(/^gitlab-pages-verification-code=/, "");
         }
     });
 </script>
 
 <div>
-    <RecordLine {dn} {origin} bind:rr={value["txt"]!} />
     <BasicInput
         class="mt-3"
         edit
         index="verification-code"
         specs={{
-              id: "verification-code",
-              label: "Verification Code",
-              description: "The verification code provided by GitLab Pages",
-              type: "string",
-              placeholder: "Enter the code from GitLab Pages settings",
-              }}
+            id: "verification-code",
+            label: "Verification Code",
+            description: "The verification code provided by GitLab Pages",
+            type: "string",
+            placeholder: "Enter the code from GitLab Pages settings",
+        }}
         bind:value={verificationCode}
     />
 </div>

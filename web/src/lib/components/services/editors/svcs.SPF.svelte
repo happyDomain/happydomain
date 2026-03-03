@@ -27,7 +27,6 @@
     import { Button, Icon, InputGroup, ListGroup, ListGroupItem } from "@sveltestrap/sveltestrap";
 
     import type { Domain } from "$lib/model/domain";
-    import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import { servicesSpecs } from "$lib/stores/services";
     import type { dnsResource, dnsTypeTXT } from "$lib/dns_rr";
@@ -99,9 +98,6 @@
 {/if}
 <div>
     <h4 class="text-primary pb-1 border-bottom border-1">Sender Policy Framework</h4>
-    {#if value["txt"]}
-        <RecordLine class="mb-4" {dn} {origin} bind:rr={value["txt"]} />
-    {/if}
 
     <BasicInput
         edit

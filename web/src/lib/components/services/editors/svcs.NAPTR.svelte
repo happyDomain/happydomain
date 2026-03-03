@@ -23,7 +23,6 @@
 
 <script lang="ts">
     import BasicInput from "$lib/components/inputs/basic.svelte";
-    import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { dnsResource } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
@@ -45,8 +44,6 @@
 </script>
 
 <div>
-    <RecordLine {dn} {origin} bind:rr={value["naptr"]!} />
-
     <BasicInput
         class="mt-3"
         edit

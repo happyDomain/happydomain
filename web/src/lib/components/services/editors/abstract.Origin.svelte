@@ -24,7 +24,6 @@
 <script lang="ts">
     import type { Domain } from "$lib/model/domain";
     import SOA from "$lib/components/records/SOA.svelte";
-    import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import TableRecords from "$lib/components/records/TableRecords.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
     import { servicesSpecs } from "$lib/stores/services";
@@ -46,32 +45,19 @@
 {/if}
 <div>
     <h4 class="text-primary pb-1 border-bottom border-1">Start Of Authority (SOA record)</h4>
-    <RecordLine {dn} {origin} bind:rr={value["soa"]} />
     <SOA class="mt-3" bind:value={value["soa"]} />
 </div>
-<hr>
+<hr />
 <div>
-    <h4 class="text-primary pb-1 border-bottom border-1">Zone's Name Servers  (NS records)</h4>
-    <!--RecordsLines {dn} {origin} bind:rrs={value["ns"]} /-->
-    <TableRecords
-        class="mt-3"
-        {dn}
-        edit
-        {origin}
-        rrs={value["ns"]}
-        rrtype="NS"
-    >
+    <h4 class="text-primary pb-1 border-bottom border-1">Zone's Name Servers (NS records)</h4>
+    <TableRecords class="mt-3" {dn} edit {origin} rrs={value["ns"]} rrtype="NS">
         {#snippet header(field: string)}
             {#if field == "Ns"}
                 Name Servers
             {/if}
         {/snippet}
         {#snippet field(idx: number, field: string)}
-            <RawInput
-                edit
-                index={idx.toString()}
-                bind:value={value["ns"][idx][field]}
-            />
+            <RawInput edit index={idx.toString()} bind:value={value["ns"][idx][field]} />
         {/snippet}
     </TableRecords>
 </div>

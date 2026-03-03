@@ -27,7 +27,7 @@
     import TableRecords from "$lib/components/records/TableRecords.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
     import BasicInput from "$lib/components/inputs/basic.svelte";
-    import type { dnsResource, dnsTypeMX, dnsTypeTXT } from "$lib/dns_rr";
+    import type { dnsResource, dnsTypeMX } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
     import { servicesSpecs } from "$lib/stores/services";
 
@@ -35,7 +35,7 @@
         dn: string;
         origin: Domain;
         readonly?: boolean;
-        value: dnsResource & { validationMX?: dnsTypeMX; };
+        value: dnsResource & { validationMX?: dnsTypeMX };
     }
 
     let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
@@ -50,7 +50,7 @@
 
     // Extract validation code from ValidationMX record
     let validationCode = $state(
-        value["validationMX"]?.Mx?.replace(/\.mx-verification\.google\.com\.?$/, "") || ""
+        value["validationMX"]?.Mx?.replace(/\.mx-verification\.google\.com\.?$/, "") || "",
     );
 
     // Sync validation code to ValidationMX record
@@ -62,7 +62,9 @@
                 value["validationMX"].Preference = 15;
             }
             // Update the Mx field with proper formatting
-            const cleanCode = validationCode.trim().replace(/\.mx-verification\.google\.com\.?$/, "");
+            const cleanCode = validationCode
+                .trim()
+                .replace(/\.mx-verification\.google\.com\.?$/, "");
             value["validationMX"].Mx = cleanCode + ".mx-verification.google.com.";
         } else if (value["validationMX"] && (!validationCode || validationCode.trim() === "")) {
             // Remove ValidationMX if validation code is empty
@@ -81,8 +83,8 @@
     <div class="alert alert-info mb-3">
         <strong>G Suite / Google Workspace Configuration</strong>
         <p class="mb-0">
-            This service configures MX records for Google's mail servers and SPF directives.
-            The validation MX record is optional and only needed during initial domain setup.
+            This service configures MX records for Google's mail servers and SPF directives. The
+            validation MX record is optional and only needed during initial domain setup.
         </p>
     </div>
 
@@ -90,7 +92,8 @@
     <div class="mb-4">
         <h4 class="text-primary pb-1 border-bottom border-1">Validation MX Record (Optional)</h4>
         <p class="text-muted small">
-            This verification record is only needed during initial Google domain setup and can be removed after verification.
+            This verification record is only needed during initial Google domain setup and can be
+            removed after verification.
         </p>
         <BasicInput
             class="mt-3"
@@ -106,61 +109,61 @@
             bind:value={validationCode}
         />
         {#if value["validationMX"]}
-        <div class="mt-3">
-            <RecordLine {dn} {origin} bind:rr={value["validationMX"]!} />
-        </div>
+            <div class="mt-3">
+                <RecordLine {dn} {origin} bind:rr={value["validationMX"]!} />
+            </div>
         {/if}
     </div>
 
     <!-- MX Records -->
     {#if value["mx"]}
-    <div class="mb-4">
-        <h4 class="text-primary pb-1 border-bottom border-1">Google MX Records</h4>
-        <TableRecords
-            class="mt-3"
-            {dn}
-            edit={!readonly}
-            {origin}
-            rrs={value["mx"] as dnsTypeMX[]}
-            rrtype="MX"
-        >
-            {#snippet header(field: string)}
-                {#if field == "Mx"}
-                    Mail Server
-                {:else if field == "Preference"}
-                    Priority
-                {/if}
-            {/snippet}
-            {#snippet field(idx: number, field: string)}
-                {#if value["mx"] && (value["mx"] as dnsTypeMX[])[idx]}
-                    {#if field == "Preference"}
-                        <RawInput
-                            edit={!readonly}
-                            index={field + idx.toString()}
-                            specs={{
-                                  id: "preference",
-                                  type: "uint",
-                            }}
-                            bind:value={(value["mx"] as dnsTypeMX[])[idx].Preference}
-                        />
-                    {:else if field == "Mx"}
-                        <RawInput
-                            edit={!readonly}
-                            index={field + idx.toString()}
-                            bind:value={(value["mx"] as dnsTypeMX[])[idx].Mx}
-                        />
+        <div class="mb-4">
+            <h4 class="text-primary pb-1 border-bottom border-1">Google MX Records</h4>
+            <TableRecords
+                class="mt-3"
+                {dn}
+                edit={!readonly}
+                {origin}
+                rrs={value["mx"] as dnsTypeMX[]}
+                rrtype="MX"
+            >
+                {#snippet header(field: string)}
+                    {#if field == "Mx"}
+                        Mail Server
+                    {:else if field == "Preference"}
+                        Priority
                     {/if}
-                {/if}
-            {/snippet}
-        </TableRecords>
-    </div>
+                {/snippet}
+                {#snippet field(idx: number, field: string)}
+                    {#if value["mx"] && (value["mx"] as dnsTypeMX[])[idx]}
+                        {#if field == "Preference"}
+                            <RawInput
+                                edit={!readonly}
+                                index={field + idx.toString()}
+                                specs={{
+                                    id: "preference",
+                                    type: "uint",
+                                }}
+                                bind:value={(value["mx"] as dnsTypeMX[])[idx].Preference}
+                            />
+                        {:else if field == "Mx"}
+                            <RawInput
+                                edit={!readonly}
+                                index={field + idx.toString()}
+                                bind:value={(value["mx"] as dnsTypeMX[])[idx].Mx}
+                            />
+                        {/if}
+                    {/if}
+                {/snippet}
+            </TableRecords>
+        </div>
     {/if}
 
     <!-- SPF TXT Record -->
     {#if value["txt"]}
-    <div class="mb-4">
-        <h4 class="text-primary pb-1 border-bottom border-1">SPF Record</h4>
-        <RecordLine {dn} {origin} bind:rr={value["txt"]!} />
-    </div>
+        <div class="mb-4">
+            <h4 class="text-primary pb-1 border-bottom border-1">SPF Record</h4>
+            <RecordLine {dn} {origin} bind:rr={value["txt"]!} />
+        </div>
     {/if}
 </div>

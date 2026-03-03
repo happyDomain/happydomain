@@ -24,9 +24,8 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
 
-    import { Badge, Button, FormGroup, Icon, Input } from "@sveltestrap/sveltestrap";
+    import { Button, Icon, Input } from "@sveltestrap/sveltestrap";
 
-    import { type dnsTypeCAA } from "$lib/dns_rr";
     import { t } from "$lib/translations";
     import CAAIssuerParameter from "./CAA-issuer-parameter.svelte";
     import { issuers, rev_issuers } from "$lib/services/caa-issuers";
@@ -42,7 +41,13 @@
         value?: string;
     }
 
-    let { flag = $bindable(0), newone = false, readonly = false, tag = $bindable(""), value = $bindable("") }: Props = $props();
+    let {
+        flag = $bindable(0),
+        newone = false,
+        readonly = false,
+        tag = $bindable(""),
+        value = $bindable(""),
+    }: Props = $props();
 
     // svelte-ignore state_referenced_locally
     let val = $state(parseCAAIssuer(value, newone));
@@ -56,8 +61,7 @@
 
     const editable_parameters: Record<number, boolean> = $state({});
     function addParameter() {
-        if (val.Parameters == null)
-          val.Parameters = [];
+        if (val.Parameters == null) val.Parameters = [];
         editable_parameters[val.Parameters.length] = true;
         val.Parameters.push("");
     }
@@ -65,12 +69,7 @@
 
 <div class="d-flex gap-2 mb-2">
     {#if (newone && val.IssuerDomainName == undefined) || (val.IssuerDomainName && rev_issuers[val.IssuerDomainName])}
-        <Input
-            type="select"
-            name="select"
-            {readonly}
-            bind:value={val.IssuerDomainName}
-        >
+        <Input type="select" name="select" {readonly} bind:value={val.IssuerDomainName}>
             {#each Object.keys(issuers) as issuer}
                 <option value={issuers[issuer][0]}>{issuer}</option>
             {/each}
@@ -80,7 +79,13 @@
         <Input type="text" bind:value={val.IssuerDomainName} />
     {/if}
     {#if !newone}
-        <Button tabindex={0} type="button" color="danger" outline on:click={() => dispatch("delete-issuer")}>
+        <Button
+            tabindex={0}
+            type="button"
+            color="danger"
+            outline
+            on:click={() => dispatch("delete-issuer")}
+        >
             <Icon name="trash" />
         </Button>
     {:else}
