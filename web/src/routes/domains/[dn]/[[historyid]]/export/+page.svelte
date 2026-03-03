@@ -23,10 +23,15 @@
 
 <script lang="ts">
     import { Button, Spinner } from "@sveltestrap/sveltestrap";
+    import hljs from "highlight.js/lib/core";
+    import dns from "highlight.js/lib/languages/dns";
+    import "highlight.js/styles/github.css";
 
     import { viewZone as APIViewZone } from "$lib/api/zone";
     import type { Domain } from "$lib/model/domain";
     import { t } from "$lib/translations";
+
+    hljs.registerLanguage("dns", dns);
 
     interface Props {
         data: { domain: Domain; history: string };
@@ -40,6 +45,10 @@
             copied = true;
             setTimeout(() => (copied = false), 2000);
         });
+    }
+
+    function highlight(content: string): string {
+        return hljs.highlight(content, { language: "dns" }).value;
     }
 </script>
 
@@ -69,6 +78,6 @@
                 {$t("common.copy-clipboard")}
             </Button>
         </div>
-        <pre class="flex-fill mb-0">{zoneContent}</pre>
+        <pre class="flex-fill mb-0"><code>{@html highlight(zoneContent)}</code></pre>
     {/await}
 </div>

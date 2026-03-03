@@ -38,10 +38,11 @@
 	"type": "module",
 	"dependencies": {
 		"@hey-api/openapi-ts": "^0.90.6",
+		"@paralleldrive/cuid2": "^3.3.0",
 		"@sveltestrap/sveltestrap": "^7.0.0",
 		"bootstrap": "^5.3.0",
 		"bootstrap-icons": "^1.13.0",
-		"@paralleldrive/cuid2": "^3.3.0",
+		"highlight.js": "^11.11.1",
 		"html-escaper": "^3.0.0",
 		"sass": "^1.97.0",
 		"sass-loader": "^16.0.0",
