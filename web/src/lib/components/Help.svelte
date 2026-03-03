@@ -22,25 +22,71 @@
 -->
 
 <script lang="ts">
+    import { page } from "$app/state";
     import { Button, Icon, type Color } from "@sveltestrap/sveltestrap";
 
-    import { t } from "$lib/translations";
+    import { helpLinkOverride } from "$lib/stores/help";
+    import { providersSpecs } from "$lib/stores/providers";
+    import { locale, t } from "$lib/translations";
 
     interface Props {
         class?: string;
-        color?: Color | 'link' | string;
-        href: string;
-        size?: 'sm' | 'lg' | string;
+        color?: Color | "link" | string;
+        size?: "sm" | "lg" | string;
         title?: string | null;
     }
 
-    let {
-        class: className = "",
-        color = "primary",
-        href,
-        size = "",
-        title = null
-    }: Props = $props();
+    let { class: className = "", color = "primary", size = "", title = null }: Props = $props();
+
+    function getHelpPathFromProvider(ptype: string): string {
+        if ($providersSpecs && $providersSpecs[ptype]) {
+            return $providersSpecs[ptype].helplink;
+        } else {
+            return "https://help.happydomain.org/";
+        }
+    }
+
+    function getHelpPathFromRoute(routeId: string): string {
+        const path = routeId.split("/");
+
+        if (path.length < 2) return "/";
+
+        switch (path[1]) {
+            case "":
+                return "/pages/home/";
+            case "providers":
+                if (path.length > 2) {
+                    if (path[2] == "new") return "/pages/source-new-choice/";
+                    return "/pages/source-update/";
+                }
+                return "/pages/source-list/";
+            case "domains":
+                if (path.length == 2) return "/pages/home/";
+                if (path.length > 3 && path[3] == "new") return "/pages/domain-new/";
+                return "/pages/domain-abstract/";
+            case "me":
+                return "/pages/me/";
+            case "resolver":
+                return "/pages/tools-client/";
+            default:
+                return "/";
+        }
+    }
+
+    let href = $derived(
+        $helpLinkOverride !== null
+            ? "https://help.happydomain.org/" +
+                  encodeURIComponent($locale) +
+                  "/" +
+                  $helpLinkOverride
+            : page.route && page.route.id
+              ? page.route.id.startsWith("/providers/new/[ptype]")
+                  ? getHelpPathFromProvider(page.url.pathname.split("/")[3])
+                  : "https://help.happydomain.org/" +
+                    encodeURIComponent($locale) +
+                    getHelpPathFromRoute(page.route.id)
+              : "https://help.happydomain.org/" + encodeURIComponent($locale),
+    );
 </script>
 
 <Button

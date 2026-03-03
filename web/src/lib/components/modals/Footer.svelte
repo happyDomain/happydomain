@@ -26,13 +26,11 @@
 
     import { Button, Icon, Input, Label, ModalFooter, Spinner } from "@sveltestrap/sveltestrap";
 
-    import HelpButton from "$lib/components/Help.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service.svelte";
-    import { locale, t } from "$lib/translations";
+    import { t } from "$lib/translations";
 
     const dispatch = createEventDispatcher();
-
 
     interface Props {
         toggle: () => void;
@@ -59,32 +57,8 @@
         canDelete = false,
         canContinue = false,
         addServiceInProgress = false,
-        deleteServiceInProgress = false
+        deleteServiceInProgress = false,
     }: Props = $props();
-
-    function helpLink($locale: string, service: ServiceCombined | null) {
-        let href = "";
-        if (service && service._svctype) {
-            const svcPart = service._svctype.toLowerCase().split(".");
-            if (svcPart.length === 2) {
-                if (svcPart[0] === "svcs") {
-                    href = "records/" + svcPart[1].toUpperCase() + "/";
-                } else if (svcPart[0] === "abstract") {
-                    href = "services/" + svcPart[1] + "/";
-                } else if (svcPart[0] === "provider") {
-                    href = "services/providers/" + svcPart[1] + "/";
-                } else {
-                    href = svcPart[svcPart.length - 1] + "/";
-                }
-            } else {
-                href = svcPart[svcPart.length - 1] + "/";
-            }
-        } else {
-            href = "";
-        }
-        return "https://help.happydomain.org/" + $locale + "/" + href;
-    }
-    let helpHref = $derived(helpLink($locale, service));
 
     let recordsHeight = 120;
     let recordsHeightResize = $state(false);
@@ -121,8 +95,6 @@
                     ? (service._ttl = parseInt(e.target.value, 10))
                     : (service._ttl = 0)}
         />
-    {:else if step === 2}
-        <HelpButton color="info" href={helpHref} title={$t("common.help")} />
     {/if}
     {#if update}
         <Button

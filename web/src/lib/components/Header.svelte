@@ -41,7 +41,6 @@
     import HelpButton from "$lib/components/Help.svelte";
     import Logo from "$lib/components/Logo.svelte";
     import { appConfig, navigate } from "$lib/stores/config";
-    import { providersSpecs } from "$lib/stores/providers";
     import { userSession, refreshUserSession } from "$lib/stores/usersession";
     import { toasts } from "$lib/stores/toasts";
     import { t, locales, locale } from "$lib/translations";
@@ -52,50 +51,6 @@
     }
 
     let { class: className, sw_state }: Props = $props();
-    let helpLink = $derived(
-        page.route && page.route.id
-            ? page.route.id.startsWith("/providers/new/[ptype]")
-                ? getHelpPathFromProvider(page.url.pathname.split("/")[3])
-                : "https://help.happydomain.org/" +
-                  encodeURIComponent($locale) +
-                  getHelpPathFromRoute(page.route.id)
-            : "https://help.happydomain.org/" + encodeURIComponent($locale),
-    );
-
-    function getHelpPathFromProvider(ptype: string): string {
-        if ($providersSpecs && $providersSpecs[ptype]) {
-            return $providersSpecs[ptype].helplink;
-        } else {
-            return "https://help.happydomain.org/";
-        }
-    }
-
-    function getHelpPathFromRoute(routeId: string) {
-        const path = routeId.split("/");
-
-        if (path.length < 2) return "/";
-
-        switch (path[1]) {
-            case "":
-                return "/pages/home/";
-            case "providers":
-                if (path.length > 2) {
-                    if (path[2] == "new") return "/pages/source-new-choice/";
-                    return "/pages/source-update/";
-                }
-                return "/pages/source-list/";
-            case "domains":
-                if (path.length == 2) return "/pages/home/";
-                if (path.length > 3 && path[3] == "new") return "/pages/domain-new/";
-                return "/pages/domain-abstract/";
-            case "me":
-                return "/pages/me/";
-            case "resolver":
-                return "/pages/tools-client/";
-            default:
-                return "/";
-        }
-    }
 
     function logout() {
         APILogout().then(
@@ -134,7 +89,6 @@
     </NavbarBrand>
     <Nav class="ms-auto align-items-center" navbar>
         <HelpButton
-            href={helpLink}
             size={$userSession.id ? "sm" : undefined}
             class={$userSession.id ? "my-2" : "mx-1"}
         />

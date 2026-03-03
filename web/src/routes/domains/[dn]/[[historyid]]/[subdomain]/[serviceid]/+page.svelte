@@ -24,21 +24,22 @@
 <script lang="ts">
     // @ts-ignore
     import { escape } from "html-escaper";
+    import { onDestroy } from "svelte";
     import { page } from "$app/state";
 
     import { Button, Icon, Input, Label, Spinner } from "@sveltestrap/sveltestrap";
 
     import { initializeService } from "$lib/api/service_specs";
     import { addZoneService, deleteZoneService, updateZoneService } from "$lib/api/zone";
-    import HelpButton from "$lib/components/Help.svelte";
     import ServiceEditor from "$lib/components/services/ServiceEditor.svelte";
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import { ServiceCombined } from "$lib/model/service.svelte";
+    import { helpLinkOverride } from "$lib/stores/help";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
     import { navigate } from "$lib/stores/config";
-    import { locale, t } from "$lib/translations";
+    import { t } from "$lib/translations";
 
     interface Props {
         data: {
@@ -124,8 +125,8 @@
         );
     }
 
-    function helpLink(locale: string, svc: ServiceCombined | null): string {
-        if (!svc?._svctype) return "https://help.happydomain.org/" + locale + "/";
+    function helpLink(svc: ServiceCombined | null): string {
+        if (!svc?._svctype) return "";
         const svcPart = svc._svctype.toLowerCase().split(".");
         let path = svcPart[svcPart.length - 1] + "/";
         if (svcPart.length === 2) {
@@ -133,10 +134,14 @@
             else if (svcPart[0] === "abstract") path = "services/" + svcPart[1] + "/";
             else if (svcPart[0] === "provider") path = "services/providers/" + svcPart[1] + "/";
         }
-        return "https://help.happydomain.org/" + locale + "/" + path;
+        return "reference/" + path;
     }
 
-    let helpHref = $derived(helpLink($locale, service));
+    onDestroy(() => helpLinkOverride.set(null));
+
+    $effect(() => {
+        helpLinkOverride.set(helpLink(service));
+    });
 
     let canDelete = $derived(
         !!service?._id &&
@@ -204,7 +209,6 @@
                         ? (service!._ttl = parseInt(e.target.value, 10))
                         : (service!._ttl = 0)}
             />
-            <HelpButton color="info" href={helpHref} title={$t("common.help")} />
             {#if canDelete}
                 <Button
                     color="danger"
