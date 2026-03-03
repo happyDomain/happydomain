@@ -84,7 +84,7 @@
     }
 </script>
 
-<div class="sticky-top bg-light d-flex align-items-center mb-2 gap-2" style="z-index: 1">
+<div class="sticky-top bg-light d-flex align-items-center mb-3 gap-2" style="z-index: 1">
     <div
         role="button"
         tabindex="0"

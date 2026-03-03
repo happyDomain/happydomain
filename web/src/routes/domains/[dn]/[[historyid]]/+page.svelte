@@ -57,16 +57,12 @@
         <p>{$t("wait.loading")}</p>
     </div>
 {:else}
-    <div style="max-width: 100%;" class="w-100 pt-1">
+    <div style="max-width: 100%;" class="w-100 pt-1 mb-5">
         <SubdomainList
-            subdomains={!$sortedDomainsWithIntermediate || $sortedDomains.length == 0 ? [''] : $sortedDomainsWithIntermediate}
+            subdomains={!$sortedDomainsWithIntermediate || $sortedDomains.length == 0 ? [""] : $sortedDomainsWithIntermediate}
         >
             {#snippet subdomain(dn, services)}
-                <SubdomainItem
-                    {dn}
-                    origin={data.domain}
-                    {services}
-                >
+                <SubdomainItem {dn} origin={data.domain} {services}>
                     <UserResource
                         dn={dn ? dn : "@"}
                         origin={data.domain}
@@ -79,6 +75,4 @@
     </div>
 {/if}
 
-<AliasModal
-    origin={data.domain}
-/>
+<AliasModal origin={data.domain} />

@@ -28,10 +28,9 @@
     import Service from "$lib/components/services/Service.svelte";
     import RecordText from "$lib/components/records/RecordText.svelte";
     import { controls as ctrlRecord } from "$lib/components/modals/Record.svelte";
-    import { printRR } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service.svelte";
-    import { ZoneViewGrid, ZoneViewList, ZoneViewRecords } from "$lib/model/usersettings";
+    import { ZoneViewList, ZoneViewRecords } from "$lib/model/usersettings";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { navigate } from "$lib/stores/config";
     import { userSession } from "$lib/stores/usersession";
@@ -47,7 +46,7 @@
     let { dn, origin, services, zoneId }: Props = $props();
 
     function openService(service: ServiceCombined) {
-        const subdomainParam = (service._domain === "" || service._domain === "@") ? "@" : service._domain;
+        const subdomainParam = service._domain === "" || service._domain === "@" ? "@" : service._domain;
         navigate(
             `/domains/${encodeURIComponent(origin.domain)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(subdomainParam)}/${encodeURIComponent(service._id!)}`,
         );
@@ -67,17 +66,17 @@
                         {#await getServiceSpec(service._svctype)}
                             <tr>
                                 <td class="text-center">
-                                    <div class="spinner-border spinner-border-sm me-2" role="status">
+                                    <div
+                                        class="spinner-border spinner-border-sm me-2"
+                                        role="status"
+                                    >
                                         <span class="visually-hidden">{$t("common.loading")}</span>
                                     </div>
                                     {$t("common.loading")}
                                 </td>
                             </tr>
                         {:then specs}
-                            <Service
-                                {specs}
-                                bind:value={service.Service}
-                            >
+                            <Service {specs} bind:value={service.Service}>
                                 {#snippet aservice(type: string, rr: any)}
                                     {#if rr}
                                         <tr>
@@ -86,11 +85,7 @@
                                                 style="cursor: pointer"
                                                 onclick={() => ctrlRecord.Open(rr, service._domain)}
                                             >
-                                                <RecordText
-                                                    {dn}
-                                                    {origin}
-                                                    {rr}
-                                                />
+                                                <RecordText {dn} {origin} {rr} />
                                                 {#if $servicesSpecsLoaded}
                                                     <strong class="text-muted" style="white-space: nowrap">{$servicesSpecs[service._svctype].name}</strong>
                                                 {/if}
@@ -133,21 +128,16 @@
         </table>
     {/if}
 {:else}
-    <div class="d-flex justify-content-around flex-wrap">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 pb-3 px-1">
         {#each services as service}
-            {#key service}
-                <ServiceCard
-                    {dn}
-                    {origin}
-                    {service}
-                    {zoneId}
-                />
-            {/key}
+            <div class="col mb-2 mb-md-3 px-2">
+                {#key service}
+                    <ServiceCard {dn} {origin} {service} {zoneId} />
+                {/key}
+            </div>
         {/each}
-        <ServiceCard
-            {dn}
-            {origin}
-            {zoneId}
-        />
+        <div class="col mb-2 mb-md-3 px-2 new-service-card">
+            <ServiceCard {dn} {origin} {zoneId} />
+        </div>
     </div>
 {/if}

@@ -34,11 +34,11 @@
 
     import ServiceBadges from "./ServiceBadges.svelte";
     import { controls as ctrlServicePath } from "$lib/components/services/NewServicePath.svelte";
-    import type { Domain } from '$lib/model/domain';
-    import type { ServiceCombined } from '$lib/model/service.svelte';
-    import { servicesSpecs, servicesSpecsLoaded } from '$lib/stores/services';
-    import { navigate } from '$lib/stores/config';
-    import { t } from '$lib/translations';
+    import type { Domain } from "$lib/model/domain";
+    import type { ServiceCombined } from "$lib/model/service.svelte";
+    import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
+    import { navigate } from "$lib/stores/config";
+    import { t } from "$lib/translations";
 
     interface Props {
         dn: string;
@@ -62,9 +62,8 @@
 </script>
 
 <Card
-    class="card-hover mb-3"
-    style={"cursor: pointer; width: 32%; min-width: 225px;" +
-          (!service ? "border-style: dashed; " : "")}
+    class="card-hover h-100"
+    style={"cursor: pointer;" + (!service ? "border-style: dashed; border-width: 2px" : "")}
     on:click={openService}
 >
     {#if !$servicesSpecsLoaded}
@@ -78,7 +77,7 @@
                     {#if service}
                         {$servicesSpecs[service._svctype].name}
                     {:else}
-                        <Icon name="plus" /> {$t("service.new")}
+                        <Icon name="plus-circle" /> {$t("service.new")}
                     {/if}
                 </CardTitle>
                 <ServiceBadges {service} />

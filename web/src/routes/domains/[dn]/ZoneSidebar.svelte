@@ -82,7 +82,7 @@
         color="secondary"
         outline
         size="sm"
-        class="flex-fill"
+        class="flex-fill text-truncate"
         disabled={!$sortedDomains}
         on:click={() => ctrlNewSubdomain.Open()}
     >
@@ -147,9 +147,9 @@
 <div style="min-height:0; overflow-y: auto;" class="placeholder-glow">
     {#if $sortedDomains && $sortedDomainsWithIntermediate && $thisZone && $thisZone.id == selectedHistory}
         {#if isReverseZone(origin.domain)}
-            <SubdomainListTiny domains={$sortedDomains} origin={origin} />
+            <SubdomainListTiny domains={$sortedDomains} {origin} />
         {:else}
-            <SubdomainListTiny domains={$sortedDomainsWithIntermediate} origin={origin} />
+            <SubdomainListTiny domains={$sortedDomainsWithIntermediate} {origin} />
         {/if}
     {:else}
         <span class="d-block text-truncate font-monospace text-muted">
