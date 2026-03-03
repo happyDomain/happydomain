@@ -53,6 +53,13 @@ footer {
     background: $gray-100;
 }
 
+.new-service-card .card-hover {
+    opacity: 0.5;
+}
+.new-service-card .card-hover:hover {
+    opacity: 0.8;
+}
+
 a.text-body:not(.list-group-item-action),
 a.text-dark:not(.list-group-item-action),
 a.text-muted:not(.list-group-item-action) {
