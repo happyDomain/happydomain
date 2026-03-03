@@ -40,6 +40,7 @@
     import ModalUploadZone from "./ModalUploadZone.svelte";
     import ModalViewZone from "./ModalViewZone.svelte";
     import NewSubdomainPath from "./NewSubdomainPath.svelte";
+    import ServiceSidebar from "./ServiceSidebar.svelte";
     import ZoneSidebar from "./ZoneSidebar.svelte";
 
     interface Props {
@@ -150,6 +151,13 @@
                         <Icon name="chevron-left" />
                         {$t("zones.return-to")}
                     </Button>
+                {:else if page.route.id === "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]"}
+                    <ServiceSidebar
+                        origin={data.domain}
+                        subdomain={page.data.subdomain ?? ""}
+                        serviceid={page.data.serviceid ?? ""}
+                        historyId={page.data.history ?? ""}
+                    />
                 {:else}
                     <ZoneSidebar
                         origin={data.domain}

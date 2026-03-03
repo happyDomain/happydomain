@@ -28,7 +28,6 @@
 
     import NewServicePath from "$lib/components/services/NewServicePath.svelte";
     import RecordModal from "$lib/components/modals/Record.svelte";
-    import ServiceModal from "$lib/components/modals/Service.svelte";
     import type { Domain } from "$lib/model/domain";
     import { domains_idx } from "$lib/stores/domains";
     import { thisZone } from "$lib/stores/thiszone";
@@ -70,15 +69,10 @@
 {#if $thisZone && $thisZone.id == selectedHistory}
     {@render children?.()}
 
-    <NewServicePath origin={data.domain} zone={$thisZone} />
+    <NewServicePath origin={data.domain} zone={$thisZone} historyId={data.history} />
     <RecordModal
         origin={data.domain}
         zone={$thisZone}
-    />
-    <ServiceModal
-        origin={data.domain}
-        zone={$thisZone}
-        on:update-zone-services={(event) => thisZone.set(event.detail)}
     />
 {:else}
     <div class="flex-fill d-flex flex-column">

@@ -64,6 +64,10 @@ a.text-muted:not(.list-group-item-action) {
     }
 }
 
+a.sidebar-back.text-muted:hover {
+    color: var(--bs-black) !important;
+}
+
 .text-indent {
     text-indent: 1em;
 }

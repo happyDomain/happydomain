@@ -28,12 +28,11 @@
     import { controls as ctrlNewAlias } from "$lib/components/modals/Alias.svelte";
     import { controls as ctrlRecord } from "$lib/components/modals/Record.svelte";
     import { controls as ctrlNewService } from "$lib/components/services/NewServicePath.svelte";
-    import { controls as ctrlService } from "$lib/components/modals/Service.svelte";
     import { fqdn, unreverseDomain } from "$lib/dns";
-    import type { dnsRR } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service.svelte";
     import { ZoneViewGrid, ZoneViewRecords } from "$lib/model/usersettings";
+    import { navigate } from "$lib/stores/config";
     import { servicesSpecs } from "$lib/stores/services";
     import { thisAliases, thisZone } from "$lib/stores/thiszone";
     import { userSession } from "$lib/stores/usersession";
@@ -174,7 +173,12 @@
             outline
             size="sm"
             title={$t("domains.edit-target")}
-            on:click={() => ctrlService.Open(services[0])}
+            on:click={() => {
+                const subdomainParam = dn === "" ? "@" : dn;
+                navigate(
+                    `/domains/${encodeURIComponent(origin.domain)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(subdomainParam)}/${encodeURIComponent(services[0]._id!)}`,
+                );
+            }}
         >
             <Icon name="pencil" />
         </Button>

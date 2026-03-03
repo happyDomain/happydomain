@@ -31,27 +31,35 @@
     import ServiceSelectorModal, {
         controls as ctrlServiceSelector,
     } from "$lib/components/modals/ServiceSelector.svelte";
-    import { controls as ctrlService } from "$lib/components/modals/Service.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service.svelte";
     import type { Zone } from "$lib/model/zone";
+    import { navigate } from "$lib/stores/config";
 
     interface Props {
         origin: Domain;
         zone: Zone;
+        historyId: string;
     }
 
-    let { origin, zone }: Props = $props();
+    let { origin, zone, historyId }: Props = $props();
 
     function Open(domain: string): void {
         ctrlServiceSelector.Open(domain);
     }
 
     controls.Open = Open;
+
+    function onShowNextModal(event: CustomEvent<{ _svctype: string; _domain: string }>) {
+        const { _svctype, _domain } = event.detail;
+        const subdomainParam = _domain === "" ? "@" : _domain;
+        navigate(
+            `/domains/${encodeURIComponent(origin.domain)}/${encodeURIComponent(historyId)}/${encodeURIComponent(subdomainParam)}/new?type=${encodeURIComponent(_svctype)}`,
+        );
+    }
 </script>
 
 <ServiceSelectorModal
     {origin}
     zservices={zone.services}
-    on:show-next-modal={(event) => ctrlService.Open(event.detail)}
+    on:show-next-modal={onShowNextModal}
 />
