@@ -36,6 +36,7 @@
         "by": "von",
         "cancel": "Abbrechen",
         "cancel-edit": "Bearbeitung abbrechen",
+        "copy-clipboard": "In die Zwischenablage kopieren",
         "continue": "Fortfahren",
         "create-thing": "{{thing}} erstellen",
         "delete": "Löschen",
