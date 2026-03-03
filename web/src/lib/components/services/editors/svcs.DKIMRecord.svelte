@@ -25,7 +25,6 @@
     import { Button, Icon, Input } from "@sveltestrap/sveltestrap";
 
     import type { Domain } from "$lib/model/domain";
-    import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import { servicesSpecs } from "$lib/stores/services";
     import type { dnsResource } from "$lib/dns_rr";
@@ -74,23 +73,6 @@
     });
 
     const type = "svcs.DKIM";
-
-    function addDirective() {
-        if (!val.f) {
-            val.f = [];
-        }
-        if (val.f.length > 1 && val.f[val.f.length - 1].indexOf("all") >= 0) {
-            val.f.splice(val.f.length-1, 0, "");
-        } else {
-            val.f.push("");
-        }
-    }
-
-    function delDirective(idx: number) {
-        if (val.f) {
-            val.f.splice(idx, 1);
-        }
-    }
 </script>
 
 {#if $servicesSpecs[type]}
@@ -101,21 +83,17 @@
 <div>
     <h4 class="text-primary pb-1 border-bottom border-1">DomainKeys Identified Mail</h4>
 
-    {#if value["txt"]}
-        <RecordLine class="mb-4" {dn} {origin} bind:rr={value["txt"]} />
-    {/if}
-
     <form id="addSvcForm">
         <BasicInput
             edit
             index="v"
             specs={{
-                  id: "v",
-                  label: "Version",
-                  placeholder: "DKIM1",
-                  type: "string",
-                  description: "Defines the version of DKIM to use.",
-                  }}
+                id: "v",
+                label: "Version",
+                placeholder: "DKIM1",
+                type: "string",
+                description: "Defines the version of DKIM to use.",
+            }}
             bind:value={val.v}
         />
 
@@ -123,12 +101,12 @@
             edit
             index="selector"
             specs={{
-                  id: "selector",
-                  label: "Selector",
-                  placeholder: "mail",
-                  type: "string",
-                  description: "Name of the key.",
-                  }}
+                id: "selector",
+                label: "Selector",
+                placeholder: "mail",
+                type: "string",
+                description: "Name of the key.",
+            }}
             bind:value={selector}
         />
 
@@ -144,10 +122,7 @@
                     {#each val.h as rua, idx}
                         <tr>
                             <td>
-                                <Input
-                                    bsSize="sm"
-                                    bind:value={val.h[idx]}
-                                />
+                                <Input bsSize="sm" bind:value={val.h[idx]} />
                             </td>
                             <td>
                                 <Button
@@ -155,7 +130,9 @@
                                     color="danger"
                                     outline
                                     size="sm"
-                                    onclick={() => { if (val.h) val.h.splice(idx, 1); }}
+                                    onclick={() => {
+                                        if (val.h) val.h.splice(idx, 1);
+                                    }}
                                 >
                                     <Icon name="trash" />
                                 </Button>
@@ -164,10 +141,7 @@
                     {/each}
                 {:else}
                     <tr>
-                        <td
-                            colspan={2}
-                            class="fst-italic text-center"
-                        >
+                        <td colspan={2} class="fst-italic text-center">
                             {$t("common.no-content")}
                         </td>
                     </tr>
@@ -181,7 +155,10 @@
                             color="primary"
                             outline
                             size="sm"
-                            onclick={() => { if (!val.h) val.h = []; val.h.push(""); }}
+                            onclick={() => {
+                                if (!val.h) val.h = [];
+                                val.h.push("");
+                            }}
                         >
                             <Icon name="plus" />
                             {$t("common.new-row")}
@@ -195,11 +172,11 @@
             edit
             index="k"
             specs={{
-                  id: "k",
-                  label: "Key Type",
-                  choices: ["rsa", "ed25519"],
-                  type: "string",
-                  }}
+                id: "k",
+                label: "Key Type",
+                choices: ["rsa", "ed25519"],
+                type: "string",
+            }}
             bind:value={val.k}
         />
 
@@ -207,11 +184,11 @@
             edit
             index="n"
             specs={{
-                  id: "n",
-                  label: "Notes",
-                  type: "string",
-                  description: "Notes intended for a foreign postmaster."
-                  }}
+                id: "n",
+                label: "Notes",
+                type: "string",
+                description: "Notes intended for a foreign postmaster.",
+            }}
             bind:value={val.n}
         />
 
@@ -219,10 +196,10 @@
             edit
             index="p"
             specs={{
-                  id: "p",
-                  label: "Public Key",
-                  type: "string",
-                  }}
+                id: "p",
+                label: "Public Key",
+                type: "string",
+            }}
             bind:value={val.p}
         />
 
@@ -237,10 +214,7 @@
                     {#each val.s as rua, idx}
                         <tr>
                             <td>
-                                <Input
-                                    bsSize="sm"
-                                    bind:value={val.s[idx]}
-                                />
+                                <Input bsSize="sm" bind:value={val.s[idx]} />
                             </td>
                             <td>
                                 <Button
@@ -248,7 +222,9 @@
                                     color="danger"
                                     outline
                                     size="sm"
-                                    onclick={() => { if (val.s) val.s.splice(idx, 1); }}
+                                    onclick={() => {
+                                        if (val.s) val.s.splice(idx, 1);
+                                    }}
                                 >
                                     <Icon name="trash" />
                                 </Button>
@@ -257,10 +233,7 @@
                     {/each}
                 {:else}
                     <tr>
-                        <td
-                            colspan={2}
-                            class="fst-italic text-center"
-                        >
+                        <td colspan={2} class="fst-italic text-center">
                             {$t("common.no-content")}
                         </td>
                     </tr>
@@ -274,7 +247,10 @@
                             color="primary"
                             outline
                             size="sm"
-                            onclick={() => { if (!val.s) val.s = []; val.s.push(""); }}
+                            onclick={() => {
+                                if (!val.s) val.s = [];
+                                val.s.push("");
+                            }}
                         >
                             <Icon name="plus" />
                             {$t("common.new-row")}
@@ -295,10 +271,7 @@
                     {#each val.t as rua, idx}
                         <tr>
                             <td>
-                                <Input
-                                    bsSize="sm"
-                                    bind:value={val.t[idx]}
-                                />
+                                <Input bsSize="sm" bind:value={val.t[idx]} />
                             </td>
                             <td>
                                 <Button
@@ -306,7 +279,9 @@
                                     color="danger"
                                     outline
                                     size="sm"
-                                    onclick={() => { if (val.t) val.t.splice(idx, 1); }}
+                                    onclick={() => {
+                                        if (val.t) val.t.splice(idx, 1);
+                                    }}
                                 >
                                     <Icon name="trash" />
                                 </Button>
@@ -315,10 +290,7 @@
                     {/each}
                 {:else}
                     <tr>
-                        <td
-                            colspan={2}
-                            class="fst-italic text-center"
-                        >
+                        <td colspan={2} class="fst-italic text-center">
                             {$t("common.no-content")}
                         </td>
                     </tr>
@@ -332,7 +304,10 @@
                             color="primary"
                             outline
                             size="sm"
-                            onclick={() => { if (!val.t) val.t = []; val.t.push(""); }}
+                            onclick={() => {
+                                if (!val.t) val.t = [];
+                                val.t.push("");
+                            }}
                         >
                             <Icon name="plus" />
                             {$t("common.new-row")}
@@ -342,5 +317,4 @@
             </tfoot>
         </table>
     </form>
-
 </div>

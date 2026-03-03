@@ -22,26 +22,25 @@
 -->
 
 <script lang="ts">
-    import {
-        Badge,
-    } from "@sveltestrap/sveltestrap";
+    import type { ClassValue } from "svelte/elements";
+    import { Badge } from "@sveltestrap/sveltestrap";
 
-    import { nsrrtype } from '$lib/dns';
-    import type { ServiceCombined } from '$lib/model/service.svelte';
-    import { servicesSpecs, servicesSpecsLoaded } from '$lib/stores/services';
-    import { userSession } from '$lib/stores/usersession';
+    import { nsrrtype } from "$lib/dns";
+    import type { ServiceCombined } from "$lib/model/service.svelte";
+    import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
+    import { userSession } from "$lib/stores/usersession";
 
     interface Props {
+        class?: ClassValue;
         service: ServiceCombined | null;
     }
 
-    let { service }: Props = $props();
-
+    let { service, class: className = "" }: Props = $props();
 </script>
 
 {#if service && $userSession.settings && $servicesSpecsLoaded}
     {#if $servicesSpecs[service._svctype].categories && $servicesSpecs[service._svctype].categories.length && !$userSession.settings.showrrtypes}
-        <div class="d-flex align-items-center gap-1">
+        <div class="d-flex align-items-center gap-1 {className}">
             {#each $servicesSpecs[service._svctype].categories as category}
                 <Badge color="secondary">
                     {category}
@@ -49,7 +48,7 @@
             {/each}
         </div>
     {:else if $servicesSpecs[service._svctype].record_types && $servicesSpecs[service._svctype].record_types.length && $userSession.settings.showrrtypes}
-        <div class="d-flex align-items-center gap-1">
+        <div class="d-flex align-items-center gap-1 {className}">
             {#each $servicesSpecs[service._svctype].record_types as rrtype}
                 <Badge color="info">
                     {nsrrtype(rrtype)}

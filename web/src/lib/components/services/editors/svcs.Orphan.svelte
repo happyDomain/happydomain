@@ -24,7 +24,6 @@
 <script lang="ts">
     import { getServiceSpec } from "$lib/api/service_specs";
     import type { ServiceSpec } from "$lib/model/service_specs.svelte";
-    import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import RecordEditor from "$lib/components/records/Editor.svelte";
     import type { Domain } from "$lib/model/domain";
     import { newRecord } from "$lib/model/service_specs.svelte";
@@ -44,13 +43,13 @@
         origin,
         readonly = false,
         type = "svcs.Orphan",
-        value = $bindable({ }),
+        value = $bindable({}),
     }: Props = $props();
 
     let sspecs: ServiceSpec = {} as ServiceSpec;
 
     $effect(() => {
-        getServiceSpec(type).then((res) => sspecs = res);
+        getServiceSpec(type).then((res) => (sspecs = res));
     });
 </script>
 
@@ -64,22 +63,21 @@
     {#if valueKey instanceof Array}
         {#each valueKey as v, i}
             {#if i > 0}
-                <hr>
+                <hr />
             {/if}
-            <RecordEditor
-                bind:dn={dn}
-                {origin}
-                bind:record={valueKey[i]}
-            />
+            <RecordEditor bind:dn {origin} bind:record={valueKey[i]} />
         {/each}
-        <button type="button" class="btn btn-primary" aria-label="Add new record" onclick={() => sspecs.fields && valueKey.push(newRecord(sspecs.fields.filter((field: any) => field.id == key)[0]))}>
+        <button
+            type="button"
+            class="btn btn-primary"
+            aria-label="Add new record"
+            onclick={() =>
+                sspecs.fields &&
+                valueKey.push(newRecord(sspecs.fields.filter((field: any) => field.id == key)[0]))}
+        >
             <i class="bi bi-plus"></i>
         </button>
     {:else}
-        <RecordEditor
-            bind:dn={dn}
-            {origin}
-            bind:record={(value as any)[key]}
-        />
+        <RecordEditor bind:dn {origin} bind:record={(value as any)[key]} />
     {/if}
 {/each}

@@ -22,20 +22,15 @@
 -->
 
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
-
-    import { Alert, Badge, Button, FormGroup, Icon, Input } from "@sveltestrap/sveltestrap";
+    import { Button, FormGroup, Icon, Input } from "@sveltestrap/sveltestrap";
 
     import type { Domain } from "$lib/model/domain";
-    import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import { servicesSpecs } from "$lib/stores/services";
     import type { dnsResource } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
     import { t } from "$lib/translations";
     import { parseDMARC, stringifyDMARC } from "$lib/services/dmarc";
-
-    const dispatch = createEventDispatcher();
 
     interface Props {
         dn: string;
@@ -70,22 +65,20 @@
     </p>
 {/if}
 <div>
-    <h4 class="text-primary pb-1 border-bottom border-1">Domain-based Message Authentication, Reporting, and Conformance</h4>
-    {#if value["txt"]}
-        <RecordLine class="mb-4" {dn} {origin} bind:rr={value["txt"]} />
-    {/if}
-
+    <h4 class="text-primary pb-1 border-bottom border-1">
+        Domain-based Message Authentication, Reporting, and Conformance
+    </h4>
     <form id="addSvcForm">
         <BasicInput
             edit
             index="v"
             specs={{
-                  id: "v",
-                  label: "Version",
-                  placeholder: "DMARCv1",
-                  type: "string",
-                  description: "Defines the version of DMARC to use",
-                  }}
+                id: "v",
+                label: "Version",
+                placeholder: "DMARCv1",
+                type: "string",
+                description: "Defines the version of DMARC to use",
+            }}
             bind:value={val.v}
         />
 
@@ -93,13 +86,13 @@
             edit
             index="p"
             specs={{
-                  id: "p",
-                  label: "Requested Mail Receiver policy",
-                  type: "string",
-                  description: "Indicates the policy to be enacted by the Receiver",
-                  choices: ["none", "quarantine", "reject"],
-                  default: "none",
-                  }}
+                id: "p",
+                label: "Requested Mail Receiver policy",
+                type: "string",
+                description: "Indicates the policy to be enacted by the Receiver",
+                choices: ["none", "quarantine", "reject"],
+                default: "none",
+            }}
             bind:value={val.p}
         />
 
@@ -107,13 +100,14 @@
             edit
             index="sp"
             specs={{
-                  id: "sp",
-                  label: "Requested Mail Receiver policy for all subdomains",
-                  type: "string",
-                  description: "Indicates the policy to be enacted by the Receiver when it receives mail for a subdomain",
-                  choices: ["none", "quarantine", "reject"],
-                  default: "none",
-                  }}
+                id: "sp",
+                label: "Requested Mail Receiver policy for all subdomains",
+                type: "string",
+                description:
+                    "Indicates the policy to be enacted by the Receiver when it receives mail for a subdomain",
+                choices: ["none", "quarantine", "reject"],
+                default: "none",
+            }}
             bind:value={val.sp}
         />
 
@@ -131,11 +125,7 @@
                     {#each val.rua as rua, idx}
                         <tr>
                             <td>
-                                <Input
-                                    type="text"
-                                    bsSize="sm"
-                                    bind:value={val.rua[idx]}
-                                />
+                                <Input type="text" bsSize="sm" bind:value={val.rua[idx]} />
                             </td>
                             <td>
                                 <Button
@@ -152,10 +142,7 @@
                     {/each}
                 {:else}
                     <tr>
-                        <td
-                            colspan={2}
-                            class="fst-italic text-center"
-                        >
+                        <td colspan={2} class="fst-italic text-center">
                             {$t("common.no-content")}
                         </td>
                     </tr>
@@ -194,11 +181,7 @@
                     {#each val.ruf as ruf, idx}
                         <tr>
                             <td>
-                                <Input
-                                    type="text"
-                                    bsSize="sm"
-                                    bind:value={val.ruf[idx]}
-                                />
+                                <Input type="text" bsSize="sm" bind:value={val.ruf[idx]} />
                             </td>
                             <td>
                                 <Button
@@ -215,10 +198,7 @@
                     {/each}
                 {:else}
                     <tr>
-                        <td
-                            colspan={2}
-                            class="fst-italic text-center"
-                        >
+                        <td colspan={2} class="fst-italic text-center">
                             {$t("common.no-content")}
                         </td>
                     </tr>
@@ -248,7 +228,7 @@
                 type="checkbox"
                 label="Strict DKIM Alignment"
                 checked={val.adkim == "s"}
-                on:change={() => val.adkim = val.adkim == "s" ? "r" : "s"}
+                on:change={() => (val.adkim = val.adkim == "s" ? "r" : "s")}
             />
         </FormGroup>
 
@@ -258,7 +238,7 @@
                 type="checkbox"
                 label="Strict SPF Alignment"
                 checked={val.aspf == "s"}
-                on:change={() => val.aspf = val.aspf == "s" ? "r" : "s"}
+                on:change={() => (val.aspf = val.aspf == "s" ? "r" : "s")}
             />
         </FormGroup>
 
@@ -266,15 +246,14 @@
             edit
             index="ri"
             specs={{
-                  id: "ri",
-                  label: "Interval between aggregate reports",
-                  type: "time.Duration",
-                  }}
+                id: "ri",
+                label: "Interval between aggregate reports",
+                type: "time.Duration",
+            }}
             bind:value={val.ri}
         />
 
-        <h4 class="mt-1 text-primary pb-1 border-bottom border-1">Failure reporting options
-        </h4>
+        <h4 class="mt-1 text-primary pb-1 border-bottom border-1">Failure reporting options</h4>
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
@@ -286,11 +265,7 @@
                     {#each val.fo as fo, idx}
                         <tr>
                             <td>
-                                <Input
-                                    type="text"
-                                    bsSize="sm"
-                                    bind:value={val.fo[idx]}
-                                />
+                                <Input type="text" bsSize="sm" bind:value={val.fo[idx]} />
                             </td>
                             <td>
                                 <Button
@@ -307,10 +282,7 @@
                     {/each}
                 {:else}
                     <tr>
-                        <td
-                            colspan={2}
-                            class="fst-italic text-center"
-                        >
+                        <td colspan={2} class="fst-italic text-center">
                             {$t("common.no-content")}
                         </td>
                     </tr>
@@ -346,11 +318,7 @@
                     {#each val.rf as rf, idx}
                         <tr>
                             <td>
-                                <Input
-                                    type="text"
-                                    bsSize="sm"
-                                    bind:value={val.rf[idx]}
-                                />
+                                <Input type="text" bsSize="sm" bind:value={val.rf[idx]} />
                             </td>
                             <td>
                                 <Button
@@ -367,10 +335,7 @@
                     {/each}
                 {:else}
                     <tr>
-                        <td
-                            colspan={2}
-                            class="fst-italic text-center"
-                        >
+                        <td colspan={2} class="fst-italic text-center">
                             {$t("common.no-content")}
                         </td>
                     </tr>
@@ -398,12 +363,12 @@
             edit
             index="pct"
             specs={{
-                  id: "pct",
-                  label: "Policy applies on",
-                  placeholder: "100",
-                  type: "number",
-                  description: "Percentage of messages to which the DMARC policy is to be applied.",
-                  }}
+                id: "pct",
+                label: "Policy applies on",
+                placeholder: "100",
+                type: "number",
+                description: "Percentage of messages to which the DMARC policy is to be applied.",
+            }}
             bind:value={val.pct}
         />
     </form>

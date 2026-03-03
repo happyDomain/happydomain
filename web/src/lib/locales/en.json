@@ -395,6 +395,7 @@
         "form-new": "Add a new service to {{domain}}",
         "new": "New service",
         "new-description": "Click here to add a new service to this subdomain.",
+        "default-ttl": "Default TTL",
         "ttl": "TTL",
         "ttl-long": "Time-To-Live",
         "ttl-tip": "0 means default TTL, others values are exprimed in seconds"

@@ -23,7 +23,6 @@
 
 <script lang="ts">
     import type { Domain } from "$lib/model/domain";
-    import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import TableRecords from "$lib/components/records/TableRecords.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
     import type { dnsResource, dnsTypeMX } from "$lib/dns_rr";
@@ -55,42 +54,35 @@
 <div>
     <h4 class="text-primary pb-1 border-bottom border-1">EMail Servers (MX records)</h4>
     {#if value["mx"]}
-    <TableRecords
-        class="mt-3"
-        {dn}
-        edit
-        {origin}
-        rrs={value["mx"] as dnsTypeMX[]}
-        rrtype="MX"
-    >
-        {#snippet header(field: string)}
-            {#if field == "Mx"}
-                Target
-            {:else if field == "Preference"}
-                Preference
-            {/if}
-        {/snippet}
-        {#snippet field(idx: number, field: string)}
-            {#if value["mx"] && (value["mx"] as dnsTypeMX[])[idx]}
-                {#if field == "Preference"}
-                    <RawInput
-                        edit
-                        index={field + idx.toString()}
-                        specs={{
-                              id: "preference",
-                              type: "uint",
-                        }}
-                        bind:value={(value["mx"] as dnsTypeMX[])[idx].Preference}
-                    />
-                {:else if field == "Mx"}
-                    <RawInput
-                        edit
-                        index={field + idx.toString()}
-                        bind:value={(value["mx"] as dnsTypeMX[])[idx].Mx}
-                    />
+        <TableRecords class="mt-3" {dn} edit {origin} rrs={value["mx"] as dnsTypeMX[]} rrtype="MX">
+            {#snippet header(field: string)}
+                {#if field == "Mx"}
+                    Target
+                {:else if field == "Preference"}
+                    Preference
                 {/if}
-            {/if}
-        {/snippet}
-    </TableRecords>
+            {/snippet}
+            {#snippet field(idx: number, field: string)}
+                {#if value["mx"] && (value["mx"] as dnsTypeMX[])[idx]}
+                    {#if field == "Preference"}
+                        <RawInput
+                            edit
+                            index={field + idx.toString()}
+                            specs={{
+                                id: "preference",
+                                type: "uint",
+                            }}
+                            bind:value={(value["mx"] as dnsTypeMX[])[idx].Preference}
+                        />
+                    {:else if field == "Mx"}
+                        <RawInput
+                            edit
+                            index={field + idx.toString()}
+                            bind:value={(value["mx"] as dnsTypeMX[])[idx].Mx}
+                        />
+                    {/if}
+                {/if}
+            {/snippet}
+        </TableRecords>
     {/if}
 </div>

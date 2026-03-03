@@ -23,7 +23,6 @@
 
 <script lang="ts">
     import BasicInput from "$lib/components/inputs/basic.svelte";
-    import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { dnsResource, dnsTypeTXT } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
@@ -46,30 +45,33 @@
     }
 
     // Extract verification code from TXT record
-    let verificationCode = $state(value["txt"]?.Txt?.replace("keybase-site-verification=", "") || "");
+    let verificationCode = $state(
+        value["txt"]?.Txt?.replace("keybase-site-verification=", "") || "",
+    );
 
     // Sync verification code back to TXT record
     $effect(() => {
         if (value["txt"]) {
             value["txt"].Hdr.Name = "_keybase";
-            value["txt"].Txt = "keybase-site-verification=" + verificationCode.replace(/^keybase-site-verification=/, "");
+            value["txt"].Txt =
+                "keybase-site-verification=" +
+                verificationCode.replace(/^keybase-site-verification=/, "");
         }
     });
 </script>
 
 <div>
-    <RecordLine {dn} {origin} bind:rr={value["txt"]!} />
     <BasicInput
         class="mt-3"
         edit
         index="verification-code"
         specs={{
-              id: "verification-code",
-              label: "Verification Code",
-              description: "The verification code provided by Keybase",
-              type: "string",
-              placeholder: "Enter the code from Keybase",
-              }}
+            id: "verification-code",
+            label: "Verification Code",
+            description: "The verification code provided by Keybase",
+            type: "string",
+            placeholder: "Enter the code from Keybase",
+        }}
         bind:value={verificationCode}
     />
 </div>

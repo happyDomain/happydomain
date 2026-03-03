@@ -372,6 +372,7 @@
         "form-new": "为{{domain}}添加服务",
         "new": "新服务",
         "new-description": "点击此处添加服务。",
+        "default-ttl": "默认 TTL",
         "ttl": "TTL",
         "ttl-long": "生存时间",
         "ttl-tip": "0为默认TTL，其他值单位为秒"
