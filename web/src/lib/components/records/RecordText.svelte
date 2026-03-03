@@ -22,9 +22,15 @@
 -->
 
 <script lang="ts">
+    import hljs from "highlight.js/lib/core";
+    import dns from "highlight.js/lib/languages/dns";
+    import "highlight.js/styles/github.css";
+
     import { printRR } from "$lib/dns";
     import type { dnsRR } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";
+
+    hljs.registerLanguage("dns", dns);
 
     interface Props {
         class?: string;
@@ -37,5 +43,5 @@
 </script>
 
 <div class="text-truncate font-monospace {className}">
-    {printRR(rr, dn, origin.domain)}
+    {@html hljs.highlight(printRR(rr, dn, origin.domain), { language: "dns" }).value}
 </div>
