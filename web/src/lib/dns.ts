@@ -36,6 +36,17 @@ export const dns_common_types: Array<string> = [
     "SOA",
 ];
 
+/**
+ * Resolves a domain name label to a fully qualified domain name (FQDN).
+ *
+ * - `"@"` and `""` are treated as the zone apex and return `origin` as-is.
+ * - A label already ending with `"."` is already absolute and returned unchanged.
+ * - Otherwise the label is appended to `origin` with a separating dot.
+ *
+ * @param input  - The relative label or special value (`"@"`, `""`).
+ * @param origin - The zone origin (should itself be a FQDN ending with `"."`).
+ * @returns The absolute domain name.
+ */
 export function fqdn(input: string, origin: string) {
     if (input === "@") {
         return origin;
@@ -48,6 +59,17 @@ export function fqdn(input: string, origin: string) {
     }
 }
 
+/**
+ * Compares two domain names from root to leaf for use in sort functions.
+ *
+ * Labels are compared right-to-left (TLD first), case-insensitively, so that
+ * sibling zones are grouped together. Shorter domains sort before longer ones
+ * when all their labels match.
+ *
+ * @param a - First domain name (string, `Domain`, or `{ domain: string }`).
+ * @param b - Second domain name.
+ * @returns Negative if `a < b`, positive if `a > b`, zero if equal.
+ */
 export function domainCompare(
     a: string | Domain | { domain: string },
     b: string | Domain | { domain: string },
@@ -74,6 +96,17 @@ export function domainCompare(
     return as.length - bs.length;
 }
 
+/**
+ * Compares two FQDNs with zone-aware ordering for use in sort functions.
+ *
+ * Similar to {@link domainCompare} but skips the TLD comparison so that names
+ * within the same zone are ordered by their subdomain labels first, then by
+ * the apex label. This keeps zone records grouped in a natural tree order.
+ *
+ * @param a - First domain name (string, `Domain`, or `{ domain: string }`).
+ * @param b - Second domain name.
+ * @returns Negative if `a < b`, positive if `a > b`, zero if equal.
+ */
 export function fqdnCompare(
     a: string | Domain | { domain: string },
     b: string | Domain | { domain: string },
@@ -105,6 +138,15 @@ export function fqdnCompare(
     return as.length - bs.length;
 }
 
+/**
+ * Converts a numeric DNS class value to its mnemonic string.
+ *
+ * Recognised values: 1 → `"IN"`, 3 → `"CH"`, 4 → `"HS"`, 254 → `"NONE"`.
+ * Unknown values return `"##"`.
+ *
+ * @param input - Numeric DNS class as returned by the server.
+ * @returns The class mnemonic string.
+ */
 export function nsclass(input: number): string {
     switch (input) {
         case 1:
@@ -120,6 +162,16 @@ export function nsclass(input: number): string {
     }
 }
 
+/**
+ * Formats a TTL value (in seconds) as a human-readable duration string.
+ *
+ * The result uses the largest applicable units in order: days (`d`), hours
+ * (`h`), minutes (`m`), seconds (`s`). Zero-valued units are omitted.
+ * Examples: `3661` → `"1h 1m 1s"`, `86400` → `"1d"`.
+ *
+ * @param input - TTL in seconds.
+ * @returns Human-readable duration string.
+ */
 export function nsttl(input: number): string {
     let ret = "";
 
@@ -142,6 +194,21 @@ export function nsttl(input: number): string {
     return ret.trim();
 }
 
+/**
+ * Validates a domain name against DNS naming rules.
+ *
+ * - Returns `undefined` when `dn` is empty (no opinion).
+ * - Returns `false` when `dn` does not belong to `origin` after FQDN resolution.
+ * - Returns `true` / `false` based on RFC label rules: total length 1–254,
+ *   each label 1–63 characters. By default labels may start with `_` (for
+ *   service names); pass `only_ldh = true` to enforce strict LDH rules.
+ * - A leading `*` label (wildcard) is accepted and skipped during validation.
+ *
+ * @param dn        - The domain name to validate (relative or absolute).
+ * @param origin    - Zone origin used to resolve relative names (default `""`).
+ * @param only_ldh  - When `true`, disallow leading underscores in labels.
+ * @returns `true` if valid, `false` if invalid, `undefined` if empty input.
+ */
 export function validateDomain(
     dn: string,
     origin: string = "",
@@ -184,10 +251,27 @@ export function validateDomain(
     return ret;
 }
 
+/**
+ * Returns `true` when the given FQDN is a reverse DNS zone.
+ *
+ * Checks for both IPv4 (`*.in-addr.arpa.`) and IPv6 (`*.ip6.arpa.`) suffixes.
+ *
+ * @param fqdn - Fully qualified domain name to test.
+ */
 export function isReverseZone(fqdn: string) {
     return fqdn.endsWith("in-addr.arpa.") || fqdn.endsWith("ip6.arpa.");
 }
 
+/**
+ * Expands a possibly-abbreviated IPv6 address into its full 8-group form.
+ *
+ * Handles the `::` zero-compression notation. Each group is zero-padded to
+ * exactly 4 hex digits. Returns `null` if the address cannot be parsed or
+ * does not yield exactly 8 groups.
+ *
+ * @param addr - IPv6 address string (may contain `::` abbreviation).
+ * @returns Full 8-group colon-separated hex string, or `null` on error.
+ */
 function normalizeIPv6(addr: string): string | null {
     try {
         const parts = addr.split("::");
@@ -208,6 +292,18 @@ function normalizeIPv6(addr: string): string | null {
     }
 }
 
+/**
+ * Converts an IP address to its reverse DNS domain name (PTR record owner).
+ *
+ * - IPv4: octets are reversed and `.in-addr.arpa.` is appended.
+ *   Partial addresses are zero-padded to 4 octets before reversal.
+ * - IPv6: the address is normalised to full form, colons removed, digits
+ *   reversed individually, and `.ip6.arpa.` is appended.
+ *
+ * @param ip - IPv4 or IPv6 address string.
+ * @returns The corresponding reverse-zone domain name.
+ * @throws {Error} If the IPv6 address is invalid.
+ */
 export function reverseDomain(ip: string) {
     let suffix = ".in-addr.arpa.";
 
@@ -229,6 +325,18 @@ export function reverseDomain(ip: string) {
     return fields.reverse().join(".") + suffix;
 }
 
+/**
+ * Converts a reverse DNS domain name back to a human-readable IP address.
+ *
+ * - For `*.in-addr.arpa.` names the dot-separated nibbles are reversed to
+ *   reconstruct the IPv4 address.
+ * - For `*.ip6.arpa.` names the nibbles are grouped by 4, reversed, and
+ *   joined with colons; the result is then abbreviated using standard IPv6
+ *   `::` compression and leading-zero stripping.
+ *
+ * @param dn - Reverse DNS domain name (must end with `in-addr.arpa.` or `ip6.arpa.`).
+ * @returns The corresponding IP address string.
+ */
 export function unreverseDomain(dn: string) {
     let split_char = ".";
     let group = 1;
@@ -251,6 +359,18 @@ export function unreverseDomain(dn: string) {
         .replace(/0+$/, "");
 }
 
+/**
+ * Formats a DNS resource record as a zone-file line.
+ *
+ * The owner name is resolved via {@link fqdn} using the optional `dn` and
+ * `origin` context. TTL and class fields are included only when non-zero.
+ * Output format: `<owner> [<ttl>] [<class>] <type> <rdata>`
+ *
+ * @param rr     - The DNS resource record to format.
+ * @param dn     - Optional subdomain context for resolving the owner name.
+ * @param origin - Optional zone origin for resolving the owner name.
+ * @returns Zone-file representation of the record.
+ */
 export function printRR(rr: dnsRR, dn?: string, origin?: string): string {
     let domain = rr.Hdr.Name || "@";
     if (dn && origin) domain = fqdn(domain, fqdn(dn, origin));
@@ -268,6 +388,16 @@ export function printRR(rr: dnsRR, dn?: string, origin?: string): string {
     );
 }
 
+/**
+ * Parses a semicolon-delimited `key=value` TXT record string into an object.
+ *
+ * Surrounding double-quotes are stripped before parsing. Each pair is split on
+ * the first `=` only, so values may contain additional `=` characters. Pairs
+ * missing a key or a value are silently ignored.
+ *
+ * @param input - Raw TXT record string (e.g. `"v=spf1; a; ~all"`).
+ * @returns Object mapping trimmed keys to trimmed values.
+ */
 export function parseKeyValueTxt(input: string): Record<string, string> {
     // Remove surrounding quotes if present
     const trimmed = input.trim().replace(/^"|"$/g, "");
@@ -294,6 +424,14 @@ export function parseKeyValueTxt(input: string): Record<string, string> {
     return result;
 }
 
+/**
+ * Creates a new, blank DNS resource record with an empty name and type 0.
+ *
+ * Useful as a default/placeholder value when a `dnsRR` object is required
+ * before real data is available.
+ *
+ * @returns A zeroed-out `dnsRR` instance.
+ */
 export function emptyRR(): dnsRR {
     return newRR("", 0);
 }
