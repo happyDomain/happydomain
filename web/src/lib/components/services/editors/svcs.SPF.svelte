@@ -22,14 +22,9 @@
 -->
 
 <script lang="ts">
-    import {
-        Button,
-        Icon,
-        Input,
-        InputGroup,
-        ListGroup,
-        ListGroupItem,
-    } from "@sveltestrap/sveltestrap";
+    import { tick } from "svelte";
+
+    import { Button, Icon, InputGroup, ListGroup, ListGroupItem } from "@sveltestrap/sveltestrap";
 
     import type { Domain } from "$lib/model/domain";
     import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
@@ -77,12 +72,19 @@
 
     const type = "svcs.SPF";
 
-    function addDirective() {
+    let inputRefs: HTMLInputElement[] = [];
+
+    async function addDirective() {
+        let newIdx: number;
         if (val.f.length >= 1 && val.f[val.f.length - 1].indexOf("all") >= 0) {
+            newIdx = val.f.length - 1;
             val.f.splice(val.f.length - 1, 0, "");
         } else {
+            newIdx = val.f.length;
             val.f.push("");
         }
+        await tick();
+        inputRefs[newIdx]?.focus();
     }
 
     function delDirective(idx: number) {
@@ -117,14 +119,17 @@
     <h5 class="text-primary pb-1 border-bottom border-1">Directives</h5>
     <ListGroup>
         {#each val.f as directive, i}
-            <ListGroupItem>
+            <ListGroupItem class="p-0">
                 <InputGroup>
-                    <Input bsSize="sm" bind:value={val.f[i]} />
+                    <input
+                        class="form-control border-0"
+                        bind:value={val.f[i]}
+                        bind:this={inputRefs[i]}
+                    />
                     <Button
                         type="button"
-                        color="danger"
-                        outline
-                        size="sm"
+                        color="link"
+                        class="text-danger"
                         onclick={() => delDirective(i)}
                     >
                         <Icon name="trash" />
