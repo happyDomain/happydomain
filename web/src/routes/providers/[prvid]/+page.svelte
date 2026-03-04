@@ -22,12 +22,9 @@
 -->
 
 <script lang="ts">
-    import { Button, Icon } from "@sveltestrap/sveltestrap";
-
     import ProviderFormPage from "$lib/components/pages/Provider.svelte";
     import type { Provider } from "$lib/model/provider";
     import type { ProviderSettingsState } from "$lib/model/provider_settings";
-    import { t } from "$lib/translations";
 
     interface Props {
         data: { provider: Provider; provider_id: string };
@@ -38,17 +35,8 @@
     let value: ProviderSettingsState = $derived({ ...data.provider, state: 0 });
 </script>
 
-<h1 class="text-center my-2">
-    <Button type="button" class="fw-bolder" color="link" on:click={() => history.go(-1)}>
-        <Icon name="chevron-left" />
-    </Button>
-    {$t("wait.updating")}
-    {#if value}
-        <em>{value._comment}</em>
-    {/if}
-</h1>
-<hr class="mt-0 mb-0" />
 <ProviderFormPage
+    class="mb-5"
     edit
     ptype={data.provider._srctype}
     state={0}

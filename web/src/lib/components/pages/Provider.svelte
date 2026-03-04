@@ -22,8 +22,10 @@
 -->
 
 <script lang="ts">
-    import { Col, Container, Row, Spinner } from "@sveltestrap/sveltestrap";
+    import type { ClassValue } from "svelte/elements";
+    import { Spinner } from "@sveltestrap/sveltestrap";
 
+    import PageTitle from "$lib/components/PageTitle.svelte";
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
     import PForm from "$lib/components/forms/Provider.svelte";
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
@@ -37,7 +39,7 @@
     if ($providersSpecs == null) refreshProvidersSpecs();
 
     interface Props {
-        // Inputs
+        class?: ClassValue;
         edit?: boolean;
         ptype: string;
         state: number;
@@ -46,6 +48,7 @@
     }
 
     let {
+        class: className = "",
         edit = false,
         ptype,
         state: formstate,
@@ -74,53 +77,32 @@
     let form: ProviderForm = $derived(createProviderForm(ptype, providerId, value, edit));
 </script>
 
+<PageTitle title={$t(value ? "wait.updating" : "provider.new-form")} subtitle={value ? value?._comment : ($providersSpecs ? $providersSpecs[ptype].description : "")}>
+    <ImgProvider {ptype} style="max-height: 5rem; width: auto;" />
+</PageTitle>
 {#if $providersSpecs == null}
-    <div class="mt-5 d-flex justify-content-center align-items-center gap-2">
+    <div class="mt-5 d-flex justify-content-center align-items-center gap-2 {className}">
         <Spinner color="primary" />
         {$t("wait.retrieving-setting")}
     </div>
 {:else}
-    <Container fluid class="flex-fill d-flex">
-        <Row class="flex-fill">
-            <Col lg="4" md="5" style="background-color: #edf5f2;">
-                <div class="text-center mb-3">
-                    <ImgProvider {ptype} style="max-width: 100%; max-height: 10em" />
-                </div>
-                <h3>
-                    {$providersSpecs[ptype].name}
-                </h3>
-
-                <p class="text-muted text-justify">
-                    {$providersSpecs[ptype].description}
-                </p>
-
-                {#if form.form && form.form.sideText}
-                    <hr />
-                    <p class="text-justify">
-                        {form.form.sideText}
-                    </p>
-                {/if}
-            </Col>
-
-            <Col lg="8" md="7" class="d-flex flex-column pt-2 pb-3">
-                {#if form.form == null}
-                    <div class="d-flex flex-fill justify-content-center align-items-center gap-2">
-                        <Spinner color="primary" />
-                        {$t("wait.retrieving-setting")}
-                    </div>
-                {:else}
-                    <PForm bind:form={form} {ptype} />
-                    <SettingsStateButtons
-                        class="d-flex justify-content-end mt-3"
-                        {edit}
-                        form={form.form}
-                        nextInProgress={form.nextInProgress}
-                        previousInProgress={form.previousInProgress}
-                        submitForm="providerform"
-                        on:previous-state={() => form.previousState().then(() => (form = form))}
-                    />
-                {/if}
-            </Col>
-        </Row>
-    </Container>
+    {#if form.form == null}
+        <div class="d-flex flex-fill justify-content-center align-items-center gap-2 {className}">
+            <Spinner color="primary" />
+            {$t("wait.retrieving-setting")}
+        </div>
+    {:else}
+        <div class={className}>
+            <PForm bind:form={form} {ptype} />
+            <SettingsStateButtons
+                class="d-flex justify-content-end mt-3"
+                {edit}
+                form={form.form}
+                nextInProgress={form.nextInProgress}
+                previousInProgress={form.previousInProgress}
+                submitForm="providerform"
+                on:previous-state={() => form.previousState().then(() => (form = form))}
+            />
+        </div>
+    {/if}
 {/if}

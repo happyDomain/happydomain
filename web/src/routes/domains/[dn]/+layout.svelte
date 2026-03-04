@@ -148,15 +148,13 @@
                 </div>
 
                 {#if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
-                    <Button
-                        class="mt-2"
-                        outline
-                        color="primary"
-                        href={"/domains/" + encodeURIComponent(domainLink(selectedDomain))}
+                    <a
+                        href="/domains/{encodeURIComponent(domainLink(selectedDomain))}"
+                        class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
                     >
                         <Icon name="chevron-left" />
                         {$t("zones.return-to")}
-                    </Button>
+                    </a>
                 {:else if page.route.id === "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]"}
                     <ServiceSidebar
                         origin={data.domain}

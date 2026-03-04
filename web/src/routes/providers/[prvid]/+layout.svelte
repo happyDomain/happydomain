@@ -22,20 +22,39 @@
 -->
 
 <script lang="ts">
+    import { Col, Container, Row } from "@sveltestrap/sveltestrap";
+
+    import ProviderSidebar from "$lib/components/providers/Sidebar.svelte";
     import type { Provider } from "$lib/model/provider";
-    import { t } from "$lib/translations";
+    import { providers, refreshProviders } from "$lib/stores/providers";
 
     let {
         children,
         data,
     }: {
         children?: import("svelte").Snippet;
-        data: { provider: Provider };
+        data: { provider: Provider; provider_id: string };
     } = $props();
+
+    if (!$providers) refreshProviders();
 </script>
 
 <svelte:head>
     <title>{data.provider._comment} - happyDomain</title>
 </svelte:head>
 
-{@render children?.()}
+<Container fluid class="d-flex flex-column flex-fill">
+    <Row class="flex-fill">
+        <Col
+            sm={4}
+            md={3}
+            class="py-3 sticky-top d-flex flex-column"
+            style="background-color: #edf5f2; overflow-y: auto; max-height: 100vh; z-index: 0"
+        >
+            <ProviderSidebar currentProviderId={data.provider_id} />
+        </Col>
+        <Col sm={8} md={9} class="d-flex flex-column">
+            {@render children?.()}
+        </Col>
+    </Row>
+</Container>
