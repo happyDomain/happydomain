@@ -30,8 +30,9 @@
     } from "@sveltestrap/sveltestrap";
 
     import ProviderList from "$lib/components/providers/List.svelte";
+    import NewProviderModal, { controls as newProviderControls } from "$lib/components/modals/NewProvider.svelte";
     import type { Provider } from "$lib/model/provider";
-    import { appConfig, navigate } from "$lib/stores/config";
+    import { appConfig } from "$lib/stores/config";
     import {
         providers,
         providersSpecs,
@@ -46,11 +47,13 @@
     let { filteredProvider = $bindable(null), ...rest }: Props = $props();
 </script>
 
+<NewProviderModal />
+
 <Card {...rest}>
     <div class="card-header d-flex justify-content-between align-items-center">
         {$t("provider.title")}
         {#if !$appConfig.disable_providers}
-            <Button size="sm" color="light" href="/providers/new">
+            <Button size="sm" color="light" on:click={() => newProviderControls.Open()}>
                 <Icon name="plus" />
             </Button>
         {/if}
@@ -65,7 +68,7 @@
             items={$providers}
             noLabel
             bind:selectedProvider={filteredProvider}
-            on:new-provider={() => navigate("/providers/new")}
+            on:new-provider={() => newProviderControls.Open()}
         />
     {/if}
 </Card>

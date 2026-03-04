@@ -180,9 +180,14 @@
                         color="danger"
                         class="mt-3"
                         outline
+                        disabled={deleteInProgress}
                         on:click={() => ctrlDomainDelete.Open()}
                     >
-                        <Icon name="trash" />
+                        {#if deleteInProgress}
+                            <Spinner size="sm" />
+                        {:else}
+                            <Icon name="trash" />
+                        {/if}
                         {$t("domains.stop")}
                     </Button>
                 {:else}

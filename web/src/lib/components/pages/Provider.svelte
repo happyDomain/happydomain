@@ -65,7 +65,7 @@
                 if (edit) {
                     navigate("/providers");
                 } else {
-                    navigate("/providers/new");
+                    navigate("/providers?newProvider");
                 }
             },
         );

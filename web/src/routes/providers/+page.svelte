@@ -22,13 +22,14 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
+    import { page } from "$app/state";
+    import { onMount } from "svelte";
 
     import { Button, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import PageTitle from "$lib/components/PageTitle.svelte";
     import ProviderList from "$lib/components/providers/List.svelte";
-    import { appConfig } from "$lib/stores/config";
+    import { appConfig, navigate } from "$lib/stores/config";
     import { domains, refreshDomains } from "$lib/stores/domains";
     import { providers, refreshProviders } from "$lib/stores/providers";
     import { t } from "$lib/translations";
@@ -37,6 +38,12 @@
         refreshDomains();
     }
     refreshProviders();
+
+    onMount(() => {
+        if (page.url.searchParams.has("newProvider")) {
+            newProviderControls.Open();
+        }
+    });
 </script>
 
 <svelte:head>
@@ -69,9 +76,9 @@
                 <div class="mt-5">
                     <ProviderList
                         items={$providers}
-                        on:new-provider={() => goto("providers/new")}
+                        on:new-provider={() => selectProviderTypeControls.Open()}
                         on:click={(event) =>
-                            goto("providers/" + encodeURIComponent(event.detail._id))}
+                            navigate("providers/" + encodeURIComponent(event.detail._id))}
                     />
                 </div>
             {/if}
