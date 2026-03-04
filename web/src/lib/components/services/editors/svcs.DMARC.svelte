@@ -26,7 +26,6 @@
 
     import type { Domain } from "$lib/model/domain";
     import BasicInput from "$lib/components/inputs/basic.svelte";
-    import { servicesSpecs } from "$lib/stores/services";
     import type { dnsResource } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
     import { t } from "$lib/translations";
@@ -59,11 +58,6 @@
     const type = "svcs.DMARC";
 </script>
 
-{#if $servicesSpecs[type]}
-    <p class="text-muted">
-        {$servicesSpecs[type].description}
-    </p>
-{/if}
 <div>
     <h4 class="text-primary pb-1 border-bottom border-1">
         Domain-based Message Authentication, Reporting, and Conformance

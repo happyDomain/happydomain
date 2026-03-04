@@ -29,7 +29,6 @@
     import TableRecords from "$lib/components/records/TableRecords.svelte";
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
-    import { servicesSpecs } from "$lib/stores/services";
 
     interface Props {
         dn: string;
@@ -48,11 +47,6 @@
     const type = "abstract.Server";
 </script>
 
-{#if $servicesSpecs[type]}
-    <p class="text-muted">
-        {$servicesSpecs[type].description}
-    </p>
-{/if}
 <div>
     <h4 class="text-primary pb-1 border-bottom border-1">Server Connectivity (A/AAA records)</h4>
 

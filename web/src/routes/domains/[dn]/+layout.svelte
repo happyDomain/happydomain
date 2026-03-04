@@ -136,9 +136,13 @@
             style="background-color: #edf5f2; overflow-y: auto; max-height: 100vh; z-index: 0"
         >
             {#if $domains_idx[selectedDomain]}
+                {@const isZonePage =
+                    page.route.id &&
+                    (page.route.id === "/domains/[dn]" ||
+                        page.route.id === "/domains/[dn]/[[historyid]]")}
                 <div class="d-flex">
-                    <Button href="/domains/" class="fw-bolder" color="link">
-                        <Icon name="chevron-up" />
+                    <Button href={isZonePage ? "/domains/" : "."} class="fw-bolder" color="link">
+                        <Icon name={isZonePage ? "chevron-up" : "chevron-left"} />
                     </Button>
                     <SelectDomain bind:selectedDomain />
                 </div>

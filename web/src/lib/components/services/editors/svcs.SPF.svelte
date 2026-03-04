@@ -28,7 +28,6 @@
 
     import type { Domain } from "$lib/model/domain";
     import BasicInput from "$lib/components/inputs/basic.svelte";
-    import { servicesSpecs } from "$lib/stores/services";
     import type { dnsResource, dnsTypeTXT } from "$lib/dns_rr";
     import { newRR } from "$lib/dns_rr";
 
@@ -91,11 +90,6 @@
     }
 </script>
 
-{#if $servicesSpecs[type]}
-    <p class="text-muted">
-        {$servicesSpecs[type].description}
-    </p>
-{/if}
 <div>
     <h4 class="text-primary pb-1 border-bottom border-1">Sender Policy Framework</h4>
 

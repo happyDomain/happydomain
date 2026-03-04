@@ -28,7 +28,6 @@
     import CAAIssuer from "./CAA-issuer.svelte";
     import CAAIodef from "./CAA-iodef.svelte";
     import type { Domain } from "$lib/model/domain";
-    import { servicesSpecs } from "$lib/stores/services";
     import { t } from "$lib/translations";
     import { CAAPolicy, newCAARecord, type CAATag } from "$lib/services/caa.svelte";
 
@@ -53,12 +52,6 @@
 
     const type = "svcs.CAAPolicy";
 </script>
-
-{#if $servicesSpecs[type]}
-    <p class="text-muted">
-        {$servicesSpecs[type].description}
-    </p>
-{/if}
 
 <h4 class="mt-4">{$t("resources.CAA.title")}</h4>
 

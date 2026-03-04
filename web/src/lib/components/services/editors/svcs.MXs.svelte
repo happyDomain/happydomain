@@ -26,7 +26,6 @@
     import TableRecords from "$lib/components/records/TableRecords.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
     import type { dnsResource, dnsTypeMX } from "$lib/dns_rr";
-    import { servicesSpecs } from "$lib/stores/services";
 
     interface Props {
         dn: string;
@@ -46,11 +45,6 @@
     });
 </script>
 
-{#if $servicesSpecs[type]}
-    <p class="text-muted">
-        {$servicesSpecs[type].description}
-    </p>
-{/if}
 <div>
     <h4 class="text-primary pb-1 border-bottom border-1">EMail Servers (MX records)</h4>
     {#if value["mx"]}

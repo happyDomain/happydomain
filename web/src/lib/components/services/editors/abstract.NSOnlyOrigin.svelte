@@ -25,7 +25,6 @@
     import type { Domain } from "$lib/model/domain";
     import TableRecords from "$lib/components/records/TableRecords.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
-    import { servicesSpecs } from "$lib/stores/services";
 
     interface Props {
         dn: string;
@@ -37,11 +36,6 @@
     const type = "abstract.Origin";
 </script>
 
-{#if $servicesSpecs[type]}
-    <p class="text-muted">
-        {$servicesSpecs[type].description}
-    </p>
-{/if}
 <div>
     <h4 class="text-primary pb-1 border-bottom border-1">Zone's Name Servers (NS records)</h4>
     <TableRecords class="mt-3" {dn} edit {origin} rrs={value["ns"]} rrtype="NS">

@@ -26,6 +26,7 @@
 
     import { Button, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
+    import PageTitle from "$lib/components/PageTitle.svelte";
     import ProviderList from "$lib/components/providers/List.svelte";
     import { appConfig } from "$lib/stores/config";
     import { domains, refreshDomains } from "$lib/stores/domains";
@@ -43,44 +44,37 @@
 </svelte:head>
 
 <Container class="flex-fill my-5">
-    <div class="text-center">
-        <h1 class="display-6 fw-bold">
-            {$t("provider.title")}
-        </h1>
-        <p class="lead mt-1">
-            {$t("provider.description")}
-        </p>
-    </div>
+    <Row>
+        <Col md={{ size: 8, offset: 2 }}>
+            <PageTitle title={$t("provider.title")} subtitle={$t("provider.description")}>
+                {#if !$appConfig.disable_providers}
+                    <div class="d-flex justify-content-end mb-2">
+                        <Button
+                            type="button"
+                            color="primary"
+                            on:click={() => selectProviderTypeControls.Open()}
+                        >
+                            <Icon name="plus" />
+                            {$t("common.add-new-thing", { thing: $t("provider.kind") })}
+                        </Button>
+                    </div>
+                {/if}
+            </PageTitle>
 
-    {#if !$providers}
-        <div class="d-flex justify-content-center mt-5">
-            <Spinner color="primary" />
-        </div>
-    {:else}
-        <div class="mt-5">
-            <Row>
-                <Col md={{ size: 8, offset: 2 }}>
-                    {#if !$appConfig.disable_providers}
-                        <div class="d-flex justify-content-end mb-2">
-                            <Button
-                                type="button"
-                                color="dark"
-                                on:click={() => goto("providers/new")}
-                            >
-                                <Icon name="plus" />
-                                {$t("common.add-new-thing", { thing: $t("provider.kind") })}
-                            </Button>
-                        </div>
-                    {/if}
-
+            {#if !$providers}
+                <div class="d-flex justify-content-center mt-5">
+                    <Spinner color="primary" />
+                </div>
+            {:else}
+                <div class="mt-5">
                     <ProviderList
                         items={$providers}
                         on:new-provider={() => goto("providers/new")}
                         on:click={(event) =>
                             goto("providers/" + encodeURIComponent(event.detail._id))}
                     />
-                </Col>
-            </Row>
-        </div>
-    {/if}
+                </div>
+            {/if}
+        </Col>
+    </Row>
 </Container>

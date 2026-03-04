@@ -132,7 +132,8 @@
             "monitoring": "监控",
             "summary": "概览",
             "provider": "托管方",
-            "title": "查看区域"
+            "title": "查看区域",
+            "subtitle": "您的区域文件（标准 BIND 格式）"
         },
         "see-records": "查看记录",
         "alias-creation": "添加指向{{domain}}的别名：",
@@ -140,7 +141,9 @@
         "placeholder-search": "my.domain.",
         "placeholder-new": "my.new.domain.",
         "placeholder-new-sub": "new.subdomain",
-        "form-new-subdomain": "在{{domain}}下添加子域名："
+        "form-new-subdomain": "在{{domain}}下添加子域名：",
+        "add-title": "新域名",
+        "add-subtitle": "选择托管您区域的 DNS 提供商"
     },
     "domaingroups": {
         "manage": "管理域名组",
@@ -220,7 +223,8 @@
         "published-on": "发布于",
         "see": "查看当时区域",
         "title": "区域变更历史",
-        "used-on": "最近使用于"
+        "used-on": "最近使用于",
+        "subtitle": "浏览您区域的所有历史版本"
     },
     "logs": {
         "date": "日期",
@@ -228,7 +232,8 @@
         "level": "级别",
         "no-entry": "暂无日志记录。",
         "title": "域名日志",
-        "user": "用户"
+        "user": "用户",
+        "subtitle": "此域名上所有活动的完整记录"
     },
     "menu": {
         "my-domains": "我的域名",
@@ -508,9 +513,13 @@
         "showDNSSEC": "在答案中显示DNSSEC记录（如果有）"
     },
     "zones": {
+        "viewer": "区域查看器",
+        "viewer-subtitle": "一览您的所有服务",
         "upload": "导入区域",
         "import-text": "从文本导入",
         "import-file": "从文件导入",
-        "return-to": "返回区域"
+        "return-to": "返回区域",
+        "retrieve": "正在获取区域",
+        "retrieve-subtitle": "正在从您的提供商获取 DNS 记录"
     }
 }

@@ -25,6 +25,7 @@
     import { Container, Icon, Spinner, Table } from "@sveltestrap/sveltestrap";
 
     import { listProviders } from "$lib/api/provider_specs";
+    import PageTitle from "$lib/components/PageTitle.svelte";
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
     import { t } from "$lib/translations";
 
@@ -54,9 +55,7 @@
             <thead>
                 <tr class="sticky-top bg-light" style="z-index:0">
                     <th style="background: none">
-                        <h1 class="position-absolute display-6 fw-bold" style="bottom: 0">
-                            {$t("menu.provider-features")}
-                        </h1>
+                        <PageTitle title={$t("menu.provider-features")} />
                     </th>
                     {#each capabilities as cap}
                         <th

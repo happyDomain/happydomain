@@ -24,6 +24,7 @@
 <script lang="ts">
     import { Container, ListGroup, Spinner } from "@sveltestrap/sveltestrap";
 
+    import PageTitle from "$lib/components/PageTitle.svelte";
     import { getOidcProvider } from "$lib/api/auth";
     import { isAuthUser } from "$lib/api/user";
     import { userSession } from "$lib/stores/usersession";
@@ -42,14 +43,7 @@
 </svelte:head>
 
 <Container class="my-4 pb-5">
-    <div class="text-center">
-        <h1 class="display-6 fw-bold">
-            {$t("settings.title")}
-        </h1>
-        <p class="lead mt-1" style="text-wrap: balance;">
-            {$t("settings.subtitle")}
-        </p>
-    </div>
+    <PageTitle title={$t("settings.title")} subtitle={$t("settings.subtitle")} />
     {#if !$userSession.settings}
         <div class="d-flex justify-content-center">
             <Spinner color="primary" />

@@ -27,7 +27,6 @@
     import RecordEditor from "$lib/components/records/Editor.svelte";
     import type { Domain } from "$lib/model/domain";
     import { newRecord } from "$lib/model/service_specs.svelte";
-    import { servicesSpecs } from "$lib/stores/services";
     import type { dnsResource } from "$lib/dns_rr";
 
     interface Props {
@@ -53,11 +52,6 @@
     });
 </script>
 
-{#if $servicesSpecs[type]}
-    <p class="text-muted">
-        {$servicesSpecs[type].description}
-    </p>
-{/if}
 {#each Object.keys(value) as key}
     {@const valueKey = (value as any)[key]}
     {#if valueKey instanceof Array}

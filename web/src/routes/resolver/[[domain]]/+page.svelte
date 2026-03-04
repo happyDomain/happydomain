@@ -34,6 +34,7 @@
     import { recordsFields } from "$lib/resolver";
     import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
+    import PageTitle from "$lib/components/PageTitle.svelte";
     import ResolverForm from "./Form.svelte";
 
     interface Props {
@@ -158,11 +159,7 @@
         <Row class="flex-grow-1">
             <Col md={{ offset: 0, size: 4 }} class="bg-light pt-3 pb-5">
                 <div class="sticky-top">
-                    <div class="mb-4">
-                        <h1 class="display-6 fw-bold">
-                            {$t("menu.dns-resolver")}
-                        </h1>
-                    </div>
+                    <PageTitle title={$t("menu.dns-resolver")} domain={domain} />
                     <ResolverForm bind:request_pending value={form} on:submit={resolveDomain} />
                 </div>
             </Col>
@@ -279,15 +276,7 @@
     </Container>
 {:else}
     <div class="my-5 container flex-fill">
-        <div class="text-center">
-            <h1 class="display-6 fw-bold">
-                <i class="bi bi-search"></i>
-                {$t("menu.dns-resolver")}
-            </h1>
-            <p class="lead mt-1">
-                {$t("resolver.page-description")}
-            </p>
-        </div>
+        <PageTitle title={$t("menu.dns-resolver")} subtitle={$t("resolver.page-description")} />
         <Row class="justify-content-center mt-4">
             <Col md="10" lg="8">
                 <div class="card rounded-4 p-2">

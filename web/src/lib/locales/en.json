@@ -97,6 +97,8 @@
         "add-a-service": "Add a service",
         "add-alias": "Add alias",
         "add-an-alias": "Add an alias to {{domain}}",
+        "add-title": "New Domain",
+        "add-subtitle": "Select the DNS provider hosting your zone",
         "add-now": "Add it now!",
         "create-on-provider": "Create on {{provider}}",
         "added-success": "Great! {{domain}} has been added. You can manage it right now.",
@@ -137,7 +139,8 @@
             "monitoring": "Monitoring",
             "summary": "Summary",
             "provider": "Zone hosted on",
-            "title": "View zone"
+            "title": "View zone",
+            "subtitle": "Your zone in standard BIND format"
         },
         "see-records": "See corresponding records",
         "alias-creation": "Add an alias pointing to {{domain}}:",
@@ -225,6 +228,7 @@
         "published-on": "Published on",
         "see": "Display the zone at this time",
         "title": "History of changes to the zone ",
+        "subtitle": "Browse all past versions of your zone",
         "used-on": "Last used on"
     },
     "logs": {
@@ -233,6 +237,7 @@
         "level": "Level",
         "no-entry": "No entry in the domain log.",
         "title": "Domain's logs ",
+        "subtitle": "A full trace of all activity on this domain",
         "user": "User"
     },
     "menu": {
@@ -541,6 +546,10 @@
         "showDNSSEC": "Show DNSSEC records in answer (if any)"
     },
     "zones": {
+        "viewer": "Zone Viewer",
+        "viewer-subtitle": "Your services at a glance",
+        "retrieve": "Retrieving Zone",
+        "retrieve-subtitle": "Fetching DNS records from your provider",
         "upload": "Import a zone",
         "import-text": "Import from text",
         "import-file": "Import from file",

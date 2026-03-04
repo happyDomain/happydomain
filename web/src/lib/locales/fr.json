@@ -89,6 +89,8 @@
         "add-a-service": "Ajouter un service",
         "add-alias": "Ajout d'alias",
         "add-an-alias": "Ajouter un alias vers {{domain}}",
+        "add-title": "Nouveau domaine",
+        "add-subtitle": "Sélectionnez le fournisseur DNS qui héberge votre zone",
         "add-now": "Ajouter maintenant !",
         "added-success": "Bravo ! {{domain}} a été ajouté. Vous pouvez désormais le gérer.",
         "apply": {
@@ -127,6 +129,7 @@
             "monitoring": "Suivi",
             "summary": "Résumé",
             "title": "Voir la zone",
+            "subtitle": "Votre zone au format BIND standard",
             "provider": "Zone hébergée par"
         },
         "see-records": "Voir les enregistrements correspondants",
@@ -204,6 +207,7 @@
         "published-on": "Publiée le",
         "see": "Voir la zone à ce moment",
         "title": "Historique des changements la zone ",
+        "subtitle": "Retrouvez toutes les versions passées de votre zone",
         "used-on": "Dernière utilisation le"
     },
     "logs": {
@@ -212,6 +216,7 @@
         "level": "Niveau",
         "no-entry": "Aucune entrée dans le journal du domaine.",
         "title": "Journal du domaine ",
+        "subtitle": "Trace complète de toutes les activités sur ce domaine",
         "user": "Utilisateur"
     },
     "menu": {
@@ -479,6 +484,10 @@
         "title": "Vos groupes"
     },
     "zones": {
+        "viewer": "Visualiseur de zone",
+        "viewer-subtitle": "Vos services en un coup d'œil",
+        "retrieve": "Récupération de la zone",
+        "retrieve-subtitle": "Récupération des enregistrements DNS depuis votre fournisseur",
         "upload": "Importer une zone",
         "import-text": "Depuis du texte",
         "import-file": "Depuis un fichier de zone",

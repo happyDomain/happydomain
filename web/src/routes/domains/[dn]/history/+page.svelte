@@ -26,6 +26,7 @@
 
     import { getDomain } from "$lib/api/domains";
     import DiffZone from "$lib/components/zones/DiffZone.svelte";
+    import PageTitle from "$lib/components/PageTitle.svelte";
     import type { Domain, ZoneHistory } from "$lib/model/domain";
     import { getUser } from "$lib/stores/users";
     import { t } from "$lib/translations";
@@ -49,7 +50,7 @@
 </script>
 
 <div class="flex-fill pb-4 pt-2">
-    <h2>{$t("history.title")} <span class="font-monospace">{data.domain.domain}</span></h2>
+    <PageTitle title={$t("history.title")} domain={data.domain.domain} subtitle={$t("history.subtitle")} />
     {#await getDomain(data.domain.id)}
         <div class="mt-5 text-center flex-fill">
             <Spinner />

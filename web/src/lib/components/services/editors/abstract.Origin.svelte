@@ -26,7 +26,6 @@
     import SOA from "$lib/components/records/SOA.svelte";
     import TableRecords from "$lib/components/records/TableRecords.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
-    import { servicesSpecs } from "$lib/stores/services";
 
     interface Props {
         dn: string;
@@ -38,11 +37,6 @@
     const type = "abstract.Origin";
 </script>
 
-{#if $servicesSpecs[type]}
-    <p class="text-muted">
-        {$servicesSpecs[type].description}
-    </p>
-{/if}
 <div>
     <h4 class="text-primary pb-1 border-bottom border-1">Start Of Authority (SOA record)</h4>
     <SOA class="mt-3" bind:value={value["soa"]} />

@@ -28,6 +28,7 @@
     import "highlight.js/styles/github.css";
 
     import { viewZone as APIViewZone } from "$lib/api/zone";
+    import PageTitle from "$lib/components/PageTitle.svelte";
     import type { Domain } from "$lib/model/domain";
     import { t } from "$lib/translations";
 
@@ -39,7 +40,16 @@
 
     let { data }: Props = $props();
 
+    let zoneContent = $state<string | null>(null);
     let copied = $state(false);
+
+    $effect(() => {
+        zoneContent = null;
+        APIViewZone(data.domain, data.history).then((content) => {
+            zoneContent = content;
+        });
+    });
+
     function copyToClipboard(content: string): void {
         navigator.clipboard.writeText(content).then(() => {
             copied = true;
@@ -53,22 +63,18 @@
 </script>
 
 <div class="flex-fill pb-1 pt-2 d-flex flex-column" style="min-width: 0;">
-    {#await APIViewZone(data.domain, data.history)}
-        <h2>{$t("domains.view.title")} <span class="font-monospace">{data.domain.domain}</span></h2>
-        <div class="mt-5 text-center">
-            <Spinner />
-            <p>{$t("wait.formating")}</p>
-        </div>
-    {:then zoneContent}
-        <div class="d-flex align-items-center justify-content-between mb-2">
-            <h2 class="mb-0">
-                {$t("domains.view.title")} <span class="font-monospace">{data.domain.domain}</span>
-            </h2>
+    <PageTitle
+        title={$t("domains.view.title")}
+        domain={data.domain.domain}
+        subtitle={$t("domains.view.subtitle")}
+    >
+        <div class="flex-fill d-flex flex-column justify-content-end mb-2">
             <Button
                 color="secondary"
                 outline
                 size="sm"
-                onclick={() => copyToClipboard(zoneContent)}
+                onclick={() => zoneContent && copyToClipboard(zoneContent)}
+                disabled={!zoneContent}
             >
                 {#if copied}
                     <i class="bi bi-clipboard-check"></i>
@@ -78,6 +84,13 @@
                 {$t("common.copy-clipboard")}
             </Button>
         </div>
+    </PageTitle>
+    {#if zoneContent === null}
+        <div class="mt-5 text-center">
+            <Spinner />
+            <p>{$t("wait.formating")}</p>
+        </div>
+    {:else}
         <pre class="flex-fill mb-0"><code>{@html highlight(zoneContent)}</code></pre>
-    {/await}
+    {/if}
 </div>

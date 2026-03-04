@@ -26,6 +26,7 @@
 
     import { Alert, Icon, Spinner } from "@sveltestrap/sveltestrap";
 
+    import PageTitle from "$lib/components/PageTitle.svelte";
     import type { Domain } from "$lib/model/domain";
     import { retrieveZone } from "$lib/stores/thiszone";
     import { domains_idx, refreshDomains } from "$lib/stores/domains";
@@ -54,39 +55,24 @@
     });
 </script>
 
-{#await rz}
-    <div class="flex-fill d-flex flex-column">
-        <h2 class="d-flex align-items-center">
-            <Spinner type="grow" />
-            <span class="ms-2 mt-1 font-monospace">
-                {data.domain.domain}
-            </span>
-        </h2>
-
+<div class="flex-fill d-flex flex-column">
+    <PageTitle title={$t("zones.retrieve")} domain={data.domain.domain} subtitle={$t("zones.retrieve-subtitle")} />
+    {#await rz}
         <div class="mt-4 text-center flex-fill">
             <Spinner />
             <p>{$t("wait.importing")}</p>
         </div>
-    </div>
-{:then}
-    <div class="flex-fill d-flex flex-column">
-        <h2 class="d-flex align-items-center">
-            <Spinner type="grow" />
-            <span class="ms-2 mt-1 font-monospace">
-                {data.domain.domain}
-            </span>
-        </h2>
-
+    {:then}
         <div class="mt-4 text-center flex-fill">
             <Spinner />
             <p>{$t("wait.wait")}</p>
         </div>
-    </div>
-{:catch main_error}
-    <div class="mt-4 text-center flex-fill">
-        <Alert color="danger" fade={false}>
-            <strong>{$t("errors.domain-import")}</strong>
-            {main_error}
-        </Alert>
-    </div>
-{/await}
+    {:catch main_error}
+        <div class="mt-4 text-center flex-fill">
+            <Alert color="danger" fade={false}>
+                <strong>{$t("errors.domain-import")}</strong>
+                {main_error}
+            </Alert>
+        </div>
+    {/await}
+</div>

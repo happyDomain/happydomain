@@ -25,6 +25,7 @@
     import { Button, Col, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import AliasModal from "$lib/components/modals/Alias.svelte";
+    import PageTitle from "$lib/components/PageTitle.svelte";
     import SubdomainItem from "./SubdomainItem.svelte";
     import SubdomainList from "./SubdomainList.svelte";
     import UserResource from "./UserResource.svelte";
@@ -39,6 +40,13 @@
     }
 
     let { data }: Props = $props();
+
+    let isHistorical = $derived(
+        data.domain.zone_history &&
+        data.domain.zone_history.length > 0 &&
+        !!data.history &&
+        data.history !== data.domain.zone_history[0]
+    );
 </script>
 
 {#if !data.domain}
@@ -58,6 +66,14 @@
     </div>
 {:else}
     <div style="max-width: 100%;" class="w-100 pt-1 mb-5">
+        <PageTitle title={$t("zones.viewer")} subtitle={$t("zones.viewer-subtitle")} domain={data.domain.domain}>
+            {#if isHistorical}
+                <span class="badge bg-warning text-dark">
+                    <Icon name="clock-history" />
+                    {$t("history.title")}
+                </span>
+            {/if}
+        </PageTitle>
         <SubdomainList
             subdomains={!$sortedDomainsWithIntermediate || $sortedDomains.length == 0 ? [""] : $sortedDomainsWithIntermediate}
         >

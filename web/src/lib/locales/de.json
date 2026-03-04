@@ -90,6 +90,8 @@
         "add-a-service": "Einen Dienst hinzufügen",
         "add-alias": "Alias hinzufügen",
         "add-an-alias": "Einen Alias hinzufügen",
+        "add-title": "Neue Domain",
+        "add-subtitle": "Wählen Sie den DNS-Anbieter, der Ihre Zone hostet",
         "add-now": "Jetzt hinzufügen!",
         "added-success": "Super! {{domain}} wurde hinzugefügt. Sie können sie sofort verwalten.",
         "apply": {
@@ -128,7 +130,8 @@
             "monitoring": "Überwachung",
             "summary": "Zusammenfassung",
             "provider": "Zone gehostet auf",
-            "title": "Zone anzeigen"
+            "title": "Zone anzeigen",
+            "subtitle": "Ihre Zone im Standard-BIND-Format"
         },
         "see-records": "Entsprechende Einträge anzeigen",
         "alias-creation": "Einen Alias hinzufügen, der auf {{domain}} zeigt:",
@@ -211,6 +214,7 @@
         "published-on": "Veröffentlicht am",
         "see": "Zone zu diesem Zeitpunkt anzeigen",
         "title": "Änderungsverlauf der Zone ",
+        "subtitle": "Alle früheren Versionen Ihrer Zone anzeigen",
         "used-on": "Zuletzt verwendet am"
     },
     "logs": {
@@ -219,6 +223,7 @@
         "level": "Stufe",
         "no-entry": "Kein Eintrag im Domain-Log.",
         "title": "Domain-Logs ",
+        "subtitle": "Vollständige Aufzeichnung aller Aktivitäten dieser Domain",
         "user": "Benutzer"
     },
     "menu": {
@@ -485,6 +490,10 @@
         "showDNSSEC": "DNSSEC-Einträge in der Antwort anzeigen (falls vorhanden)"
     },
     "zones": {
+        "viewer": "Zonen-Übersicht",
+        "viewer-subtitle": "Ihre Dienste auf einen Blick",
+        "retrieve": "Zone wird abgerufen",
+        "retrieve-subtitle": "DNS-Einträge werden vom Anbieter abgerufen",
         "upload": "Zone importieren",
         "import-text": "Aus Text importieren",
         "import-file": "Aus Datei importieren"

@@ -31,6 +31,7 @@
 
     import { initializeService } from "$lib/api/service_specs";
     import { addZoneService, updateZoneService } from "$lib/api/zone";
+    import PageTitle from "$lib/components/PageTitle.svelte";
     import ServiceEditor from "$lib/components/services/ServiceEditor.svelte";
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
@@ -57,6 +58,17 @@
 
     let service: ServiceCombined | null = $state(null);
     let serviceLoading = $state(false);
+
+    let serviceTitle = $derived.by(() => {
+        const svc = service;
+        if (!svc) return "";
+        if (svc._id) {
+            return $servicesSpecsLoaded && $servicesSpecs[svc._svctype]
+                ? $t("common.update-what", { what: $servicesSpecs[svc._svctype].name } as any)
+                : $t("service.update");
+        }
+        return $t("service.add");
+    });
 
     $effect(() => {
         if (data.serviceid !== "new") {
@@ -132,31 +144,15 @@
     </div>
 {:else if service}
     <div class="flex-fill">
-        <h2 class="d-flex align-items-center gap-2 pt-2 rounded">
-            <Button
-                color="link"
-                class="p-0 text-reset"
-                title={$t("common.cancel")}
-                on:click={goBack}
-            >
-                <Icon name="chevron-left" />
-            </Button>
-            {#if service._id}
-                {#if $servicesSpecsLoaded && $servicesSpecs[service._svctype]}
-                    {$t("common.update-what", {
-                        what: $servicesSpecs[service._svctype].name,
-                    } as any)}
-                {:else}
-                    {$t("service.update")}
-                {/if}
-            {:else}
-                {@html $t("service.form-new", {
-                    domain: `<span class="font-monospace">${escape(fqdn(service._domain, data.domain.domain))}</span>`,
-                })}
-            {/if}
-        </h2>
+        <PageTitle
+            title={serviceTitle}
+            subtitle={$servicesSpecs && $servicesSpecs[service._svctype]
+                ? $servicesSpecs[service._svctype].description
+                : undefined}
+            domain={fqdn(service._domain, data.domain.domain)}
+        />
 
-        <form id="addSvcForm" class="mt-2" onsubmit={submitServiceForm}>
+        <form id="addSvcForm" onsubmit={submitServiceForm}>
             {#if !$servicesSpecsLoaded}
                 <div class="d-flex justify-content-center">
                     <Spinner />

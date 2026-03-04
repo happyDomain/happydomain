@@ -27,6 +27,7 @@
     import { Button, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import { addDomain } from "$lib/api/domains";
+    import PageTitle from "$lib/components/PageTitle.svelte";
     import ProviderNewModal, {
         controls as ctrlProvider,
     } from "$lib/components/modals/NewProvider.svelte";
@@ -88,13 +89,12 @@
 </svelte:head>
 
 <Container class="d-flex flex-column flex-fill" fluid>
-    <h1 class="text-center my-2">
-        <Button type="button" class="fw-bolder" color="link" on:click={() => history.go(-1)}>
+    <PageTitle title={$t("domains.add-title")} domain={data.dn} subtitle={$t("domains.add-subtitle")}>
+        <Button type="button" color="link" size="sm" on:click={() => history.go(-1)}>
             <Icon name="chevron-left" />
+            {$t("common.cancel")}
         </Button>
-        {$t("provider.select-provider")}
-    </h1>
-    <hr class="mt-0 mb-0" />
+    </PageTitle>
 
     {#if addingNewDomain || !$providers}
         <div class="flex-fill d-flex justify-content-center align-items-center">

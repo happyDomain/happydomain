@@ -29,7 +29,6 @@
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import type { dnsResource, dnsTypeMX } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
-    import { servicesSpecs } from "$lib/stores/services";
 
     interface Props {
         dn: string;
@@ -72,12 +71,6 @@
         }
     });
 </script>
-
-{#if $servicesSpecs[type]}
-    <p class="text-muted">
-        {$servicesSpecs[type].description}
-    </p>
-{/if}
 
 <div>
     <div class="alert alert-info mb-3">

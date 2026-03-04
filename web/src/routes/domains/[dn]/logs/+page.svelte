@@ -25,6 +25,7 @@
     import { Badge, Button, Icon, Table, Spinner } from "@sveltestrap/sveltestrap";
 
     import { getDomainLogs } from "$lib/api/domains";
+    import PageTitle from "$lib/components/PageTitle.svelte";
     import type { Domain } from "$lib/model/domain";
     import { getUser } from "$lib/stores/users";
     import { t } from "$lib/translations";
@@ -37,7 +38,7 @@
 </script>
 
 <div class="flex-fill pb-4 pt-2">
-    <h2>{$t("logs.title")} <span class="font-monospace">{data.domain.domain}</span></h2>
+    <PageTitle title={$t("logs.title")} domain={data.domain.domain} subtitle={$t("logs.subtitle")} />
     {#await getDomainLogs(data.domain.id)}
         <div class="mt-5 text-center flex-fill">
             <Spinner />
