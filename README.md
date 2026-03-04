@@ -6,6 +6,7 @@ happyDomain is a free web application that centralizes the management of your do
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](./LICENSE)
 [![Docker Hub](https://img.shields.io/docker/pulls/happydomain/happydomain)](https://hub.docker.com/r/happydomain/happydomain)
 [![Build Status](https://drone.nemunai.re/api/badges/happyDomain/happyDomain/status.svg)](https://drone.nemunai.re/happyDomain/happyDomain)
+[![Matrix](https://img.shields.io/badge/matrix-%23000000?style=for-the-badge&logo=matrix&logoColor=white)](https://matrix.to/#/%23happyDNS:matrix.org)
 [![Feedback](https://img.shields.io/badge/feedback-welcome-brightgreen)](https://feedback.happydomain.org/)
 
 ![Screenshots of happyDomain](./docs/header.webp)
