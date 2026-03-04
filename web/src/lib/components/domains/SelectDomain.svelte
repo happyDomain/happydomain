@@ -39,11 +39,7 @@
     <Input type="select" class={className} bind:value={selectedDomain}>
         {#each Object.keys($domains_by_groups) as gname}
             {@const group = $domains_by_groups[gname]}
-            <optgroup
-                label={gname == "undefined" || !gname
-                      ? $t("domaingroups.no-group")
-                      : gname}
-            >
+            <optgroup label={gname == "undefined" || !gname ? $t("domaingroups.no-group") : gname}>
                 {#each group as domain}
                     <option value={domain.id}>{domain.domain}</option>
                 {/each}

@@ -22,31 +22,13 @@
 -->
 
 <script lang="ts">
-    // @ts-ignore
-    import { escape } from "html-escaper";
-    import {
-        Button,
-        Card,
-        CardHeader,
-        Col,
-        Container,
-        Icon,
-        Row,
-        Spinner,
-    } from "@sveltestrap/sveltestrap";
-
-    import { createDomain } from "$lib/api/provider";
     import FilterDomainInput from "$lib/components/pages/home/FilterDomainInput.svelte";
     import CardImportableDomains from "$lib/components/providers/CardImportableDomains.svelte";
-    import DomainGroupList from "$lib/components/forms/DomainGroupList.svelte";
-    import Logo from "$lib/components/Logo.svelte";
     import ZoneList from "$lib/components/zones/ZoneList.svelte";
     import { fqdnCompare } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import { domains } from "$lib/stores/domains";
-    import { filteredGroup, filteredName, filteredProvider } from '$lib/stores/home';
-    import { providersSpecs } from "$lib/stores/providers";
-    import { toasts } from "$lib/stores/toasts";
+    import { filteredGroup, filteredName, filteredProvider } from "$lib/stores/home";
     import { t } from "$lib/translations";
 
     let noDomainsList = $state(false);
@@ -60,11 +42,11 @@
             myDomains = $domains.filter(
                 (d) =>
                     (!$filteredName || d.domain.indexOf($filteredName) >= 0) &&
-                     (!$filteredProvider || d.id_provider === $filteredProvider._id) &&
-                     ($filteredGroup === null ||
-                      d.group === $filteredGroup ||
-                      (($filteredGroup === "" || $filteredGroup === "undefined") &&
-                       (d.group === "" || d.group === undefined))),
+                    (!$filteredProvider || d.id_provider === $filteredProvider._id) &&
+                    ($filteredGroup === null ||
+                        d.group === $filteredGroup ||
+                        (($filteredGroup === "" || $filteredGroup === "undefined") &&
+                            (d.group === "" || d.group === undefined))),
             );
             myDomains.sort(fqdnCompare);
         }
@@ -79,7 +61,7 @@
     <ZoneList button display_by_groups domains={filteredDomains} links />
 {:else}
     <div class="my-4 text-center text-muted">
-        {$t('domains.filtered-no-result')}
+        {$t("domains.filtered-no-result")}
     </div>
 {/if}
 

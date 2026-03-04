@@ -29,7 +29,7 @@
     import { filteredName } from "$lib/stores/serviceSelector";
     import { t } from "$lib/translations";
     interface Props {
-        [key: string]: any
+        [key: string]: any;
     }
 
     let { ...rest }: Props = $props();
@@ -41,13 +41,13 @@
         if (input) {
             input.focus();
         }
-    })
+    });
 </script>
 
 <Input
     id="filterserviceinput"
     autocomplete="off"
-    placeholder={$t('common.filter')}
+    placeholder={$t("common.filter")}
     bind:value={$filteredName}
     {...rest}
 />

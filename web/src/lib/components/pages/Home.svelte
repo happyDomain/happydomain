@@ -22,13 +22,8 @@
 -->
 
 <script lang="ts">
-    import {
-        Col,
-        Container,
-        Row,
-    } from "@sveltestrap/sveltestrap";
+    import { Col, Container, Row } from "@sveltestrap/sveltestrap";
 
-    import { createDomain } from "$lib/api/provider";
     import DomainListSection from "$lib/components/pages/home/DomainListSection.svelte";
     import Logo from "$lib/components/Logo.svelte";
     import Sidebar from "$lib/components/pages/home/Sidebar.svelte";

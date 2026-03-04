@@ -32,7 +32,6 @@
 
     const dispatch = createEventDispatcher();
 
-
     interface Props {
         active?: boolean;
         disabled?: boolean;
@@ -40,12 +39,7 @@
         svc: ServiceInfos;
     }
 
-    let {
-        active = false,
-        disabled = false,
-        reason = "",
-        svc
-    }: Props = $props();
+    let { active = false, disabled = false, reason = "", svc }: Props = $props();
 </script>
 
 <ListGroupItem {active} class="d-flex" {disabled} tag="button" on:click={() => dispatch("click")}>

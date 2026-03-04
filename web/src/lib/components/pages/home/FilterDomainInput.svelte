@@ -22,8 +22,6 @@
 -->
 
 <script lang="ts">
-    import { navigate } from "$lib/stores/config";
-
     import {
         Button,
         Icon,
@@ -36,15 +34,16 @@
 
     import { addDomain } from "$lib/api/domains";
     import { fqdn, validateDomain } from "$lib/dns";
-    import { domains, domains_by_name, refreshDomains } from '$lib/stores/domains';
-    import { filteredName, filteredProvider } from '$lib/stores/home';
-    import { providers } from '$lib/stores/providers';
+    import { navigate } from "$lib/stores/config";
+    import { domains, domains_by_name, refreshDomains } from "$lib/stores/domains";
+    import { filteredName, filteredProvider } from "$lib/stores/home";
+    import { providers } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 
     interface Props {
         autofocus?: boolean;
         noButton?: boolean;
-        [key: string]: any
+        [key: string]: any;
     }
 
     let { autofocus = false, noButton = false, ...rest }: Props = $props();
@@ -97,8 +96,23 @@
         return validateDomain(val, "", false);
     }
 
-    let filteredDomains = $derived(!$domains ? [] : $domains.filter((dn) => dn.domain == fqdn($filteredName, "") && (!$filteredProvider || !$domains_by_name[fqdn($filteredName, "")].reduce((acc, d) => acc || d.id_provider == $filteredProvider._id, false))));
-    let actionAddDomain = $derived(($domains && $filteredName && filteredDomains.length == 0) || ($domains && $domains.length == 0));
+    let filteredDomains = $derived(
+        !$domains
+            ? []
+            : $domains.filter(
+                  (dn) =>
+                      dn.domain == fqdn($filteredName, "") &&
+                      (!$filteredProvider ||
+                          !$domains_by_name[fqdn($filteredName, "")].reduce(
+                              (acc, d) => acc || d.id_provider == $filteredProvider._id,
+                              false,
+                          )),
+              ),
+    );
+    let actionAddDomain = $derived(
+        ($domains && $filteredName && filteredDomains.length == 0) ||
+            ($domains && $domains.length == 0),
+    );
 </script>
 
 <form onsubmit={submitFilterDomainInput}>
@@ -131,7 +145,12 @@
                     bind:value={$filteredName}
                 />
                 {#if !noButton && $filteredName.length}
-                    <Button type="submit" outline color={actionAddDomain ? "primary" : "secondary"} disabled={addingNewDomain}>
+                    <Button
+                        type="submit"
+                        outline
+                        color={actionAddDomain ? "primary" : "secondary"}
+                        disabled={addingNewDomain}
+                    >
                         {#if addingNewDomain}
                             <Spinner size="sm" class="me-1" />
                         {/if}

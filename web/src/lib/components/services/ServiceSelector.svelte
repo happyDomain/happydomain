@@ -30,7 +30,6 @@
     import type { Domain } from "$lib/model/domain";
     import type { ProviderInfos } from "$lib/model/provider";
     import type { ServiceCombined } from "$lib/model/service.svelte";
-    import type { ServiceInfos } from "$lib/model/service_specs.svelte";
     import { providers_idx } from "$lib/stores/providers";
     import { servicesSpecsList, servicesSpecsLoaded } from "$lib/stores/services";
     import { filteredName } from "$lib/stores/serviceSelector";
@@ -43,12 +42,7 @@
         zservices: Record<string, Array<ServiceCombined>>;
     }
 
-    let {
-        dn,
-        origin,
-        value = $bindable(null),
-        zservices
-    }: Props = $props();
+    let { dn, origin, value = $bindable(null), zservices }: Props = $props();
 
     let families = [
         {
@@ -76,12 +70,19 @@
 
     let filteredServicesResult = $derived(
         provider_specs !== null
-            ? filterServices($servicesSpecsList, provider_specs, zservices, dn, $filteredName, filtered_family)
-            : { available: [], disabled: [] }
+            ? filterServices(
+                  $servicesSpecsList,
+                  provider_specs,
+                  zservices,
+                  dn,
+                  $filteredName,
+                  filtered_family,
+              )
+            : { available: [], disabled: [] },
     );
 
     function handleKeyDown(event: KeyboardEvent) {
-        if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') {
+        if (event.key !== "ArrowUp" && event.key !== "ArrowDown") {
             return;
         }
 
@@ -93,16 +94,16 @@
         // Combine available and disabled services into a single navigable list
         const allServices = [
             ...filteredServicesResult.available,
-            ...filteredServicesResult.disabled.map(d => d.svc)
+            ...filteredServicesResult.disabled.map((d) => d.svc),
         ];
 
         if (allServices.length === 0) return;
 
         // Find current index based on selected value
-        const currentIndex = allServices.findIndex(svc => svc._svctype === value);
+        const currentIndex = allServices.findIndex((svc) => svc._svctype === value);
 
         let newIndex: number;
-        if (event.key === 'ArrowDown') {
+        if (event.key === "ArrowDown") {
             // Move down, wrap to top if at end
             newIndex = currentIndex < allServices.length - 1 ? currentIndex + 1 : 0;
         } else {

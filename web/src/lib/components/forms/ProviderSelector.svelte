@@ -35,7 +35,7 @@
 
     interface Props {
         value?: string | null;
-        [key: string]: any
+        [key: string]: any;
     }
 
     let { value = $bindable(null), ...rest }: Props = $props();

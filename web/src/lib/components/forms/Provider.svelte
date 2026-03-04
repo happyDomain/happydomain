@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { run, preventDefault } from 'svelte/legacy';
+    import { run, preventDefault } from "svelte/legacy";
 
     import { createEventDispatcher, onMount } from "svelte";
 

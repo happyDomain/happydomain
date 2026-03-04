@@ -53,7 +53,6 @@
     {flush}
     isActive={(item) => selectedGroup != null && item === selectedGroup}
     on:click={selectGroup}
-    
 >
     {#snippet children({ item })}
         {#if item === "" || item === "undefined"}

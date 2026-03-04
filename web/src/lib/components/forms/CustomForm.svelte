@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { run } from 'svelte/legacy';
+    import { run } from "svelte/legacy";
 
     import ResourceInput from "$lib/components/inputs/Resource.svelte";
     import type { CustomForm } from "$lib/model/custom_form.svelte";
@@ -32,8 +32,8 @@
     interface Props {
         form: CustomForm;
         value: any;
-        children?: import('svelte').Snippet;
-        [key: string]: any
+        children?: import("svelte").Snippet;
+        [key: string]: any;
     }
 
     let { form, value = $bindable(), children, ...rest }: Props = $props();

@@ -22,12 +22,11 @@
 -->
 
 <script lang="ts">
-    import type { Snippet } from 'svelte';
+    import type { Snippet } from "svelte";
 
-    import SVC from './Service.svelte'
-    import SVCField from './ServiceField.svelte'
+    import SVC from "./Service.svelte";
+    import SVCField from "./ServiceField.svelte";
     import { getServiceSpec } from "$lib/api/service_specs";
-    import type { ServiceInfos } from "$lib/model/service_specs.svelte";
 
     export let type: string;
     export let value: any;
@@ -37,11 +36,7 @@
 {#if type.startsWith("[]")}
     {#if value}
         {#each value as row, i}
-            <SVCField
-                {aservice}
-                type={type.substring(2)}
-                bind:value={value[i]}
-            />
+            <SVCField {aservice} type={type.substring(2)} bind:value={value[i]} />
         {/each}
     {:else}
         <!--[]{type.substring(2)} => {value}-->
@@ -49,11 +44,7 @@
     {/if}
 {:else if type.startsWith("*")}
     {#if value}
-        <SVCField
-            {aservice}
-            type={type.substring(1)}
-            bind:value={value}
-        />
+        <SVCField {aservice} type={type.substring(1)} bind:value />
     {:else}
         <!--*{type.substring(1)} => {value}-->
         {@render aservice(type.substring(1), null)}
@@ -63,10 +54,6 @@
     {@render aservice(type, value)}
 {:else}
     {#await getServiceSpec(type) then specs}
-        <SVC
-            {aservice}
-            {specs}
-            bind:value={value}
-        />
+        <SVC {aservice} {specs} bind:value />
     {/await}
 {/if}

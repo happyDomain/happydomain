@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher } from "svelte";
 
     import Record from "$lib/components/domains/Record.svelte";
     import type { ServiceRecord } from "$lib/model/zone";
@@ -37,17 +37,11 @@
 </script>
 
 {#if service}
-    <div
-        class="flex-fill m-0 d-flex flex-column"
-        style:max-width="100%"
-    >
+    <div class="flex-fill m-0 d-flex flex-column" style:max-width="100%">
         {#each Object.keys(service) as i}
             {@const record = service[i]}
             {#if record && record.Hdr}
-                <div
-                    class="bg-light p-1 border-1 border-bottom"
-                    style="border-color: darkgray"
-                >
+                <div class="bg-light p-1 border-1 border-bottom" style="border-color: darkgray">
                     <Record
                         class="mx-1"
                         {record}
@@ -56,10 +50,7 @@
                 </div>
             {:else if record && record.length}
                 {#each record as r}
-                    <div
-                        class="bg-light p-1 border-1 border-bottom"
-                        style="border-color: darkgray"
-                    >
+                    <div class="bg-light p-1 border-1 border-bottom" style="border-color: darkgray">
                         <Record
                             class="mx-1"
                             record={r}

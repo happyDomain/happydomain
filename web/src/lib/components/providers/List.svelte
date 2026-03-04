@@ -22,7 +22,6 @@
 -->
 
 <script lang="ts">
-    import { navigate } from "$lib/stores/config";
     import { createEventDispatcher } from "svelte";
 
     import {
@@ -43,6 +42,7 @@
     import HListGroup from "$lib/components/ListGroup.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { Provider } from "$lib/model/provider";
+    import { navigate } from "$lib/stores/config";
     import { domains, refreshDomains } from "$lib/stores/domains";
     import {
         providers,
@@ -61,7 +61,7 @@
         selectedProvider?: Provider | null;
         items: Array<any>;
         toolbar?: boolean;
-        [key: string]: any
+        [key: string]: any;
     }
 
     let {
@@ -76,8 +76,11 @@
 
     if (!$providersSpecs) refreshProvidersSpecs();
 
-    function domainsInProvider(domains: Array<Domain> | undefined, providers: Array<Provider> | undefined): Record<string, number> {
-        const tmp: Record<string, number> = { };
+    function domainsInProvider(
+        domains: Array<Domain> | undefined,
+        providers: Array<Provider> | undefined,
+    ): Record<string, number> {
+        const tmp: Record<string, number> = {};
 
         if (domains && providers) {
             for (const p of providers) {
@@ -90,12 +93,13 @@
                 }
                 tmp[domain.id_provider]++;
             }
-
         }
 
         return tmp;
     }
-    let domain_in_providers: Record<string, number> = $derived(domainsInProvider($domains, $providers));
+    let domain_in_providers: Record<string, number> = $derived(
+        domainsInProvider($domains, $providers),
+    );
 
     function selectProvider(event: CustomEvent<Provider>) {
         if (selectedProvider && selectedProvider._id == event.detail._id) {
@@ -118,7 +122,12 @@
             // Check that there is no domain attached
             const related_domains = $domains.filter((dn) => dn.id_provider == item._id);
             if (related_domains.length > 0) {
-                if (!confirm(`There are ${related_domains.length} domains related to this provider, are you sure you want to delete all those domains too?`)) return;
+                if (
+                    !confirm(
+                        `There are ${related_domains.length} domains related to this provider, are you sure you want to delete all those domains too?`,
+                    )
+                )
+                    return;
 
                 for (const domain of related_domains) {
                     await deleteDomain(domain.id);
@@ -156,7 +165,7 @@
             <form onsubmit={goNewProvider}>
                 {@html $t("provider.empty", {
                     action: `<button type="submit" class="btn btn-link p-0">${$t("provider.empty-action")}</button>`,
-                  })}
+                })}
             </form>
         {/snippet}
         {#snippet children({ item })}
@@ -204,7 +213,11 @@
                                 >
                                     <Icon name="pencil" />
                                 </Button>
-                                <Button color="light" size="sm" on:click={(e) => delProvider(e, item)}>
+                                <Button
+                                    color="light"
+                                    size="sm"
+                                    on:click={(e) => delProvider(e, item)}
+                                >
                                     <Icon name="trash" />
                                 </Button>
                             </ButtonGroup>

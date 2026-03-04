@@ -24,15 +24,19 @@
 <script lang="ts">
     import { providers_idx } from "$lib/stores/providers";
 
-
     interface Props {
         id_provider?: string | undefined;
         ptype?: string | undefined;
         style?: string;
-        [key: string]: any
+        [key: string]: any;
     }
 
-    let { id_provider = undefined, ptype = undefined, style = "max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em", ...rest }: Props = $props();
+    let {
+        id_provider = undefined,
+        ptype = undefined,
+        style = "max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em",
+        ...rest
+    }: Props = $props();
 </script>
 
 {#if ptype}

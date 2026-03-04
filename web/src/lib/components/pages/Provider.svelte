@@ -22,15 +22,14 @@
 -->
 
 <script lang="ts">
-    import { navigate } from "$lib/stores/config";
-
-    import { Button, Col, Container, Row, Spinner } from "@sveltestrap/sveltestrap";
+    import { Col, Container, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
     import PForm from "$lib/components/forms/Provider.svelte";
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
     import { ProviderForm } from "$lib/model/provider_form.svelte";
     import type { ProviderSettingsState } from "$lib/model/provider_settings";
+    import { navigate } from "$lib/stores/config";
     import { providersSpecs, refreshProviders, refreshProvidersSpecs } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 

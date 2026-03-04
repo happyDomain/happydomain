@@ -24,12 +24,7 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
 
-    import {
-        Button,
-        Icon,
-        Table,
-    } from "@sveltestrap/sveltestrap";
-    import { printRR } from "$lib/dns";
+    import { Button, Icon, Table } from "@sveltestrap/sveltestrap";
     import { getRrtype, newRR, rdatafields, type dnsRR } from "$lib/dns_rr";
     import { controls } from "$lib/components/modals/Record.svelte";
     import type { Domain } from "$lib/model/domain";
@@ -46,7 +41,16 @@
         rrtype: string;
     }
 
-    let { class: className = "", dn, edit, field, header, origin, rrs = $bindable([]), rrtype }: Props = $props();
+    let {
+        class: className = "",
+        dn,
+        edit,
+        field,
+        header,
+        origin,
+        rrs = $bindable([]),
+        rrtype,
+    }: Props = $props();
 
     function addLine() {
         if (!rrs) rrs = [];
@@ -54,7 +58,7 @@
         const newrr = newRR(dn, getRrtype(rrtype));
 
         if (rrs.length) {
-            newrr.Hdr = JSON.parse(JSON.stringify(rrs[rrs.length-1].Hdr));
+            newrr.Hdr = JSON.parse(JSON.stringify(rrs[rrs.length - 1].Hdr));
         }
 
         rrs.push(newrr);
@@ -72,7 +76,7 @@
     }
 </script>
 
-<Table hover striped>
+<Table hover striped class={className}>
     <thead>
         <tr>
             {#each rdatafields(rrtype) as field}
@@ -125,25 +129,22 @@
             {/each}
         {:else}
             <tr>
-                <td
-                    colspan={rdatafields(rrtype).length}
-                    class="fst-italic text-center"
-                >
+                <td colspan={rdatafields(rrtype).length} class="fst-italic text-center">
                     {$t("common.no-content")}
                 </td>
             </tr>
         {/if}
     </tbody>
-        {#if edit}
-            <tfoot>
-                <tr>
-                    <td colspan={1}>
-                        <Button type="button" color="primary" outline size="sm" on:click={addLine}>
-                            <Icon name="plus" />
-                            {$t("common.new-row")}
-                        </Button>
-                    </td>
-                </tr>
-            </tfoot>
-        {/if}
+    {#if edit}
+        <tfoot>
+            <tr>
+                <td colspan={1}>
+                    <Button type="button" color="primary" outline size="sm" on:click={addLine}>
+                        <Icon name="plus" />
+                        {$t("common.new-row")}
+                    </Button>
+                </td>
+            </tr>
+        </tfoot>
+    {/if}
 </Table>

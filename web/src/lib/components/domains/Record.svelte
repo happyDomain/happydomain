@@ -22,10 +22,10 @@
 -->
 
 <script lang="ts">
-    import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher } from "svelte";
 
-    import { nsrrtype, rdatatostr } from '$lib/dns';
-    import type { dnsRR } from '$lib/dns_rr';
+    import { nsrrtype, rdatatostr } from "$lib/dns";
+    import type { dnsRR } from "$lib/dns_rr";
 
     const dispatch = createEventDispatcher();
 
@@ -37,7 +37,7 @@
     let { class: className, record }: Props = $props();
 
     function openRecord() {
-        dispatch('show-record', record);
+        dispatch("show-record", record);
     }
 </script>
 
@@ -48,16 +48,15 @@
     onclick={openRecord}
     onkeypress={openRecord}
 >
-    <span
-        class="font-monospace text-truncate"
-        title={rdatatostr(record)}
-    >
-        {record.Hdr.Name?record.Hdr.Name:'@'} {nsrrtype(record.Hdr.Rrtype)} {rdatatostr(record)}
+    <span class="font-monospace text-truncate" title={rdatatostr(record)}>
+        {record.Hdr.Name ? record.Hdr.Name : "@"}
+        {nsrrtype(record.Hdr.Rrtype)}
+        {rdatatostr(record)}
     </span>
 </div>
 
 <style>
- .record:hover {
-     background: #ccc;
- }
+    .record:hover {
+        background: #ccc;
+    }
 </style>

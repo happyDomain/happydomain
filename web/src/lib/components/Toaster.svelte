@@ -42,7 +42,7 @@
                     if (toast.onclick) toast.onclick();
                 }}
                 onkeypress={(e) => {
-                    if ((e.key === 'Enter' || e.key === ' ') && toast.onclick) {
+                    if ((e.key === "Enter" || e.key === " ") && toast.onclick) {
                         e.preventDefault();
                         toast.onclick();
                     }

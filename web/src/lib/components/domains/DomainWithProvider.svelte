@@ -30,13 +30,10 @@
         domain: MiniDomain;
     }
 
-    let { class: className = '', domain }: Props = $props();
+    let { class: className = "", domain }: Props = $props();
 </script>
 
-<div
-    class="d-flex my-1 {className}"
-    style="min-width: 0"
->
+<div class="d-flex my-1 {className}" style="min-width: 0">
     <div class="d-inline-block text-center" style="width: 50px;">
         <ImgProvider id_provider={domain.id_provider} />
     </div>
