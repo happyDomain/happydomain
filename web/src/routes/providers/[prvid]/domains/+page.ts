@@ -21,18 +21,6 @@
 
 import { redirect, type Load } from "@sveltejs/kit";
 
-import { filteredProvider } from "$lib/stores/home";
-
-export const load: Load = async ({ parent, params }) => {
-    if (!params.prvid) {
-        redirect(302, "/providers/");
-    }
-
-    const { provider } = await parent();
-
-    filteredProvider.set(provider);
-
-    return {
-        provider,
-    };
+export const load: Load = ({ params }) => {
+    redirect(301, `/domains?provider=${encodeURIComponent(params.prvid!)}`);
 };
