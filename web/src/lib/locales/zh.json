@@ -401,6 +401,7 @@
         "empty-action": "添加一个",
         "find": "列表中未找到您的提供商？",
         "name-your": "命名提供商",
+        "linked-domains": "关联域名",
         "no-name": "未命名",
         "provider": "{{provider}}的域名",
         "kind": "域名提供商",

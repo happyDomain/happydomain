@@ -386,6 +386,7 @@
         "empty-action": "añadiendo uno",
         "find": "¿No encuentras tu proveedor de dominios aquí?",
         "name-your": "Nombra tu proveedor de dominios",
+        "linked-domains": "Dominios vinculados",
         "no-name": "Sin nombre",
         "provider": "Dominios alojados en {{provider}}",
         "kind": "proveedor de dominios",

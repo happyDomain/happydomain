@@ -386,6 +386,7 @@
         "empty-action": "einen hinzuzufügen",
         "find": "Können Sie Ihren Domain-Anbieter hier nicht finden?",
         "name-your": "Benennen Sie Ihren Domain-Anbieter",
+        "linked-domains": "Verknüpfte Domains",
         "no-name": "Kein Name",
         "provider": "Domains bei {{provider}}",
         "kind": "Domain-Anbieter",

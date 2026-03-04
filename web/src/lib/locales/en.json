@@ -444,6 +444,7 @@
         "available-types": "Resources Types available",
         "import-domains": "Import all domains",
         "new-form": "New domain provider form",
+        "linked-domains": "Linked domains",
         "update": "Update domain provider"
     },
     "upgrade": {

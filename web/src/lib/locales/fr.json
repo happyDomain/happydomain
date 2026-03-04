@@ -475,6 +475,7 @@
         "check-config": "Vérifiez les paramètres de votre hébergeur de domaines",
         "empty": "Vous n'avez enregistré aucun hébergeur de domaines. Essayez {{action}} !\n",
         "empty-action": "d'en ajouter un",
+        "linked-domains": "Domaines liés",
         "no-name": "Sans nom"
     },
     "domaingroups": {
