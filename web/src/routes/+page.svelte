@@ -22,12 +22,14 @@
 -->
 
 <script>
+    import { page } from "$app/state";
+
     import Onboarding from "$lib/components/modals/Onboarding.svelte";
     import Home from "$lib/components/pages/Home.svelte";
     import { domains } from "$lib/stores/domains";
 
     // Decide to show onboarding only on page load
-    const showOnboarding = !$domains || !$domains.length;
+    const showOnboarding = !$domains || !$domains.length || page.url.searchParams.has("onboarding");
 </script>
 
 <svelte:head>

@@ -22,14 +22,14 @@
 -->
 
 <script lang="ts">
-    import { page } from "$app/stores";
-    import { goto } from "$app/navigation";
+    import { page } from "$app/state";
     import { get } from "svelte/store";
     import { Col, Container, Row } from "@sveltestrap/sveltestrap";
 
     import DomainListSection from "$lib/components/pages/home/DomainListSection.svelte";
     import Logo from "$lib/components/Logo.svelte";
     import Sidebar from "$lib/components/pages/home/Sidebar.svelte";
+    import { navigate } from "$lib/stores/config";
     import { domains, refreshDomains } from "$lib/stores/domains";
     import { filteredGroup, filteredName, filteredProvider } from "$lib/stores/home";
     import {
@@ -42,7 +42,7 @@
     import { t } from "$lib/translations";
 
     // Initialize filter stores from URL query params
-    const searchParams = $page.url.searchParams;
+    const searchParams = page.url.searchParams;
     filteredName.set(searchParams.get("name") || "");
     filteredGroup.set(searchParams.has("group") ? searchParams.get("group") : null);
 
@@ -88,7 +88,7 @@
         const currentSearch = window.location.search.replace(/^\?/, "");
         if (newSearch !== currentSearch) {
             const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : "");
-            goto(newUrl, { replaceState: true, keepFocus: true, noScroll: true });
+            navigate(newUrl, { replaceState: true, keepFocus: true, noScroll: true });
         }
     });
 </script>
