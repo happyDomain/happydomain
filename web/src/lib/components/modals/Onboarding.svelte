@@ -22,7 +22,6 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
     import { page } from "$app/state";
     import { onMount } from "svelte";
 
@@ -31,8 +30,6 @@
         Badge,
         Button,
         Card,
-        CardBody,
-        CardGroup,
         Col,
         Icon,
         Modal,
@@ -40,15 +37,12 @@
         ModalFooter,
         ModalHeader,
         Row,
-        Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import CardImportableDomains from "$lib/components/providers/CardImportableDomains.svelte";
+    import DomainImport from "$lib/components/forms/DomainImport.svelte";
+    import ProviderConnect from "$lib/components/forms/ProviderConnect.svelte";
     import LocaleSelect from "$lib/components/LocaleSelect.svelte";
     import Logo from "$lib/components/Logo.svelte";
-    import NewDomainInput from "$lib/components/inputs/NewDomain.svelte";
-    import PForm from "$lib/components/forms/Provider.svelte";
-    import ProviderSelector from "$lib/components/forms/ProviderSelector.svelte";
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
     import ZoneList from "$lib/components/zones/ZoneList.svelte";
     import type { Provider } from "$lib/model/provider";
@@ -63,10 +57,7 @@
 
     let { isOpen = $bindable(false) }: Props = $props();
     let form: ProviderForm = $state({} as ProviderForm);
-    let myDomain: string = $state("");
-    let myDomainInProgress = $state(false);
     let myProvider: Provider = $state({} as Provider);
-    let noDomainsList = $state(false);
     let step = $state(0);
     let providerType: string = $state("");
 
@@ -89,9 +80,9 @@
         step += 1;
     }
 
-    function providerAdded(event: CustomEvent<Provider>) {
+    function providerAdded(provider: Provider) {
         refreshProviders();
-        myProvider = event.detail;
+        myProvider = provider;
         step += 1;
     }
 
@@ -193,7 +184,18 @@
                         })}
                     </p>
                     <Alert color="warning">
-                        <strong>{$t("onboarding.welcome.beta.intro")}</strong> {$t("onboarding.welcome.beta.part1")} <a href="https://git.happyDomain.org/happydomain/-/issues" target="_blank">{$t("onboarding.welcome.beta.report")}</a> <a href="https://github.com/happyDomain/happydomain/issues" target="_blank"><Icon name="github" /></a> <a href="https://gitlab.com/happyDomain/happydomain/-/issues" target="_blank"><Icon name="gitlab" /></a>{$t("onboarding.welcome.beta.part2")}
+                        <strong>{$t("onboarding.welcome.beta.intro")}</strong>
+                        {$t("onboarding.welcome.beta.part1")}
+                        <a href="https://git.happyDomain.org/happydomain/-/issues" target="_blank"
+                            >{$t("onboarding.welcome.beta.report")}</a
+                        >
+                        <a href="https://github.com/happyDomain/happydomain/issues" target="_blank"
+                            ><Icon name="github" /></a
+                        >
+                        <a
+                            href="https://gitlab.com/happyDomain/happydomain/-/issues"
+                            target="_blank"><Icon name="gitlab" /></a
+                        >{$t("onboarding.welcome.beta.part2")}
                     </Alert>
                     <Row cols={{ sm: 1, md: 2, xl: 4 }}>
                         <Col class="mb-3">
@@ -254,44 +256,32 @@
                     </Row>
                 {:else if step == 1}
                     <h3 class="fw-bolder">{$t("onboarding.connect.title")}</h3>
-                    {#if providerType}
-                        <PForm bind:form ptype={providerType} on:done={providerAdded} />
-                    {:else}
-                        <p>
-                            {$t("onboarding.connect.intro")}
-                        </p>
-                        <ProviderSelector
-                            on:provider-selected={(event) => (providerType = event.detail.ptype)}
-                        />
+                    {#if !providerType}
+                        <p>{$t("onboarding.connect.intro")}</p>
                     {/if}
+                    <ProviderConnect
+                        bind:form
+                        bind:providerType
+                        formId="providerform"
+                        ondone={providerAdded}
+                    />
                 {:else if step == 2}
                     <h3 class="fw-bolder">{$t("onboarding.import.title")}</h3>
-                    <p>
-                        {$t("onboarding.import.intro")}
-                    </p>
-                    <CardImportableDomains provider={myProvider} bind:noDomainsList />
-                    {#if !myProvider || noDomainsList}
-                        <!-- svelte-ignore a11y_autofocus -->
-                        <NewDomainInput
-                            bind:addingNewDomain={myDomainInProgress}
-                            autofocus
-                            class="mt-3"
-                            id="newDomain"
-                            formId="newDomainForm"
-                            provider={myProvider}
-                            bind:value={myDomain}
-                        />
-                        {#if $domains}
-                            <ZoneList class="mt-3" domains={$domains}>
-                                {#snippet badges()}
-                                                                                <Badge  color="success">
-                                        <Icon name="check" />
-                                        {$t("onboarding.import.imported")}
-                                    </Badge>
-                                                                            {/snippet}
-                            </ZoneList>
-                        {/if}
-                    {/if}
+                    <p>{$t("onboarding.import.intro")}</p>
+                    <DomainImport provider={myProvider}>
+                        {#snippet extra()}
+                            {#if $domains}
+                                <ZoneList class="mt-3" domains={$domains}>
+                                    {#snippet badges()}
+                                        <Badge color="success">
+                                            <Icon name="check" />
+                                            {$t("onboarding.import.imported")}
+                                        </Badge>
+                                    {/snippet}
+                                </ZoneList>
+                            {/if}
+                        {/snippet}
+                    </DomainImport>
                 {:else if step == 3}
                     {#if $domains && $domains.length}
                         <h3 class="text-center display-4">🎉</h3>

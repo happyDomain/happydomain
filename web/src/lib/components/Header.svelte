@@ -113,7 +113,7 @@
                 </DropdownToggle>
                 <DropdownMenu end>
                     <DropdownItem
-                        active={page.route && (page.route.id == "/" || page.route.id == "/domains")}
+                        active={page.route && page.route.id == "/domains"}
                         href="/domains/"
                     >
                         {$t("menu.my-domains")}

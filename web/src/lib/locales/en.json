@@ -71,6 +71,8 @@
         "records": "{{n:eq; 0:no {{type}} record; 1:{{type}} record; default:{{type}} records}}"
     },
     "domains": {
+        "title": "Your domains",
+        "description": "Browse and manage all your domain names in one place",
         "kind": "domain",
         "subdomain": "subdomain",
         "actions": {
@@ -100,6 +102,7 @@
         "add-title": "New Domain",
         "add-subtitle": "Select the DNS provider hosting your zone",
         "add-now": "Add it now!",
+        "search-placeholder": "Search domains…",
         "create-on-provider": "Create on {{provider}}",
         "added-success": "Great! {{domain}} has been added. You can manage it right now.",
         "apply": {
@@ -151,6 +154,7 @@
         "form-new-subdomain": "Add a new subdomain under {{domain}}:"
     },
     "domaingroups": {
+        "all": "All groups",
         "manage": "Manage your domain groups",
         "new": "New group",
         "no-group": "Miscellaneous",
@@ -424,6 +428,7 @@
         "usage": "Here is an example on how to use the generated secret:"
     },
     "provider": {
+        "all": "All providers",
         "another": "Use another provider",
         "associations": "{{count:eq; 0:no domain associated; 1:{{count}} domain associated; default:{{count}} domains associated}}",
         "check-config": "Check your provider configuration",

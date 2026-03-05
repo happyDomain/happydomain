@@ -137,7 +137,8 @@
         "alias-creation-sample": "Cela va créer cet alias :",
         "placeholder-new": "mon.nouveau.domaine.",
         "form-new-subdomain": "Ajout d'un sous-domaine sous {{domain}} :",
-        "placeholder-new-sub": "new.subdomain"
+        "placeholder-new-sub": "new.subdomain",
+        "search-placeholder": "Rechercher des domaines…"
     },
     "email": {
         "address": "Adresse électronique",
@@ -457,6 +458,7 @@
         "showDNSSEC": "Afficher les enregistrements DNSSEC dans la réponse (s'il y en a)"
     },
     "provider": {
+        "all": "Tous les fournisseurs",
         "another": "Choisir un autre fournisseur",
         "delete": "Supprimer cet hébergeur de domaines",
         "find": "Vous ne trouvez pas votre hébergeur de domaines ici ?",
@@ -479,6 +481,7 @@
         "no-name": "Sans nom"
     },
     "domaingroups": {
+        "all": "Tous les groupes",
         "manage": "Vos groupes de domaines",
         "new": "Nouveau groupe",
         "no-group": "Divers",

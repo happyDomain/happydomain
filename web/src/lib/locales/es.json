@@ -93,6 +93,7 @@
         "add-title": "Nuevo dominio",
         "add-subtitle": "Seleccione el proveedor DNS que aloja su zona",
         "add-now": "¡Añádelo ahora!",
+        "search-placeholder": "Buscar dominios…",
         "added-success": "¡Genial! Se ha añadido {{domain}}. Puedes gestionarlo ahora mismo.",
         "apply": {
             "additions": "{{count:eq; 0:ninguna adición; 1:{{count}} adición; default:{{count}} adiciones}}",
@@ -141,6 +142,7 @@
         "form-new-subdomain": "Añadir un nuevo subdominio bajo {{domain}}:"
     },
     "domaingroups": {
+        "all": "Todos los grupos",
         "manage": "Gestiona tus grupos de dominios",
         "new": "Nuevo grupo",
         "no-group": "Misceláneos",
@@ -378,6 +380,7 @@
         "usage": "Aquí hay un ejemplo de cómo usar el secreto generado:"
     },
     "provider": {
+        "all": "Todos los proveedores",
         "another": "Usar otro proveedor",
         "associations": "{{count:eq; 0:ningún dominio asociado; 1:{{count}} dominio asociado; default:{{count}} dominios asociados}}",
         "check-config": "Comprobar la configuración de tu proveedor",

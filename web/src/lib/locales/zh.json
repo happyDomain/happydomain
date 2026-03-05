@@ -94,6 +94,7 @@
         "add-alias": "添加别名",
         "add-an-alias": "添加别名",
         "add-now": "立即添加！",
+        "search-placeholder": "搜索域名…",
         "added-success": "搞定！{{domain}}已添加，现在可以开始管理。",
         "apply": {
             "additions": "{{count:eq; 0:无新增; 1:{{count}}条新增; default:{{count}}条新增}}",
@@ -146,6 +147,7 @@
         "add-subtitle": "选择托管您区域的 DNS 提供商"
     },
     "domaingroups": {
+        "all": "所有分组",
         "manage": "管理域名组",
         "new": "新建分组",
         "no-group": "未分类",
@@ -391,6 +393,7 @@
         "usage": "使用示例："
     },
     "provider": {
+        "all": "所有提供商",
         "another": "使用其他提供商",
         "associations": "{{count:eq; 0:暂无关联域名; 1:1个关联域名; default:{{count}}个关联域名}}",
         "check-config": "检查提供商配置",

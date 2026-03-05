@@ -93,6 +93,7 @@
         "add-title": "Neue Domain",
         "add-subtitle": "Wählen Sie den DNS-Anbieter, der Ihre Zone hostet",
         "add-now": "Jetzt hinzufügen!",
+        "search-placeholder": "Domains suchen…",
         "added-success": "Super! {{domain}} wurde hinzugefügt. Sie können sie sofort verwalten.",
         "apply": {
             "additions": "{{count:eq; 0:keine Hinzufügungen; 1:{{count}} Hinzufügung; default:{{count}} Hinzufügungen}}",
@@ -141,6 +142,7 @@
         "form-new-subdomain": "Eine neue Subdomain unter {{domain}} hinzufügen:"
     },
     "domaingroups": {
+        "all": "Alle Gruppen",
         "manage": "Verwalten Sie Ihre Domain-Gruppen",
         "new": "Neue Gruppe",
         "no-group": "Verschiedenes",
@@ -378,6 +380,7 @@
         "usage": "Hier ist ein Beispiel, wie Sie das generierte Geheimnis verwenden können:"
     },
     "provider": {
+        "all": "Alle Anbieter",
         "another": "Einen anderen Anbieter verwenden",
         "associations": "{{count:eq; 0:keine Domain verknüpft; 1:{{count}} Domain verknüpft; default:{{count}} Domains verknüpft}}",
         "check-config": "Überprüfen Sie Ihre Anbieterkonfiguration",

@@ -32,9 +32,8 @@
 <script lang="ts">
     import { Modal, ModalBody, ModalFooter, ModalHeader } from "@sveltestrap/sveltestrap";
 
+    import ProviderConnect from "$lib/components/forms/ProviderConnect.svelte";
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
-    import ProviderFormComponent from "$lib/components/forms/Provider.svelte";
-    import ProviderSelector from "$lib/components/forms/ProviderSelector.svelte";
     import { ProviderForm } from "$lib/model/provider_form.svelte";
     import { refreshProviders } from "$lib/stores/providers";
     import { t } from "$lib/translations";
@@ -62,10 +61,6 @@
         }
     }
 
-    function selectProvider(event: CustomEvent<{ ptype: string }>) {
-        ptype = event.detail.ptype;
-    }
-
     function finished() {
         isOpen = false;
         refreshProviders();
@@ -88,14 +83,7 @@
         {$t("provider.new-form")}
     </ModalHeader>
     <ModalBody>
-        {#if !ptype}
-            <p>
-                {$t("provider.select-provider")}
-            </p>
-            <ProviderSelector on:provider-selected={selectProvider} />
-        {:else}
-            <ProviderFormComponent bind:form={form} formId="providermodal" {ptype} on:done={finished} />
-        {/if}
+        <ProviderConnect bind:form bind:providerType={ptype} formId="providermodal" ondone={finished} />
     </ModalBody>
     <ModalFooter>
         {#if ptype && form}
