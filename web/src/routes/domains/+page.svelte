@@ -34,15 +34,23 @@
         Row,
     } from "@sveltestrap/sveltestrap";
 
+    import { addDomain } from "$lib/api/domains";
     import PageTitle from "$lib/components/PageTitle.svelte";
     import DomainTable from "$lib/components/domains/Table.svelte";
     import NewDomainModal, {
         controls as newDomainControls,
     } from "$lib/components/modals/NewDomain.svelte";
+    import PickProvider, {
+        controls as pickProviderControls,
+    } from "$lib/components/modals/PickProvider.svelte";
+    import type { Provider } from "$lib/model/provider";
     import { navigate } from "$lib/stores/config";
-    import { domains } from "$lib/stores/domains";
+    import { domains, refreshDomains } from "$lib/stores/domains";
     import { providers } from "$lib/stores/providers";
+    import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
+
+    const newDomainName = page.url.searchParams.get("new");
 
     let searchQuery = $state("");
     let selectedProviderId = $state(page.url.searchParams.get("provider") ?? "");
@@ -73,6 +81,25 @@
             navigate(newUrl, { replaceState: true, keepFocus: true, noScroll: true });
         }
     });
+
+    $effect(() => {
+        if (newDomainName) {
+            pickProviderControls.Open();
+        }
+    });
+
+    async function onNewDomainProviderSelected(provider: Provider) {
+        const domain = await addDomain(newDomainName!, provider);
+        toasts.addToast({
+            title: $t("domains.attached-new"),
+            message: $t("domains.added-success", { domain: domain.domain }),
+            href: "/domains/" + domain.domain,
+            color: "success",
+            timeout: 5000,
+        });
+        refreshDomains();
+        navigate("/domains/" + domain.domain);
+    }
 </script>
 
 <svelte:head>
@@ -80,6 +107,7 @@
 </svelte:head>
 
 <NewDomainModal />
+<PickProvider ondone={onNewDomainProviderSelected} />
 
 <Container class="flex-fill my-5">
     <PageTitle title={$t("domains.title")} subtitle={$t("domains.description")}>

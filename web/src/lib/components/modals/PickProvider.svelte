@@ -37,10 +37,8 @@
         ModalBody,
         ModalFooter,
         ModalHeader,
-        Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import DomainImport from "$lib/components/forms/DomainImport.svelte";
     import ProviderPicker from "$lib/components/forms/ProviderPicker.svelte";
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
     import type { Provider } from "$lib/model/provider";
@@ -49,26 +47,20 @@
     import { t } from "$lib/translations";
 
     interface Props {
-        isOpen?: boolean;
+        ondone?: (provider: Provider) => void;
     }
 
-    let { isOpen = $bindable(false) }: Props = $props();
+    let { ondone }: Props = $props();
 
-    // step 0: pick or add a provider
-    // step 1: import / add domains
-    let step = $state(0);
-
+    let isOpen = $state(false);
     let addingProvider = $state(false);
     let providerType = $state("");
     let form: ProviderForm = $state({} as ProviderForm);
-    let myProvider: Provider = $state({} as Provider);
 
     function Open(): void {
         isOpen = true;
-        step = 0;
         addingProvider = !$providers || $providers.length === 0;
         providerType = "";
-        myProvider = {} as Provider;
     }
 
     controls.Open = Open;
@@ -77,9 +69,9 @@
         isOpen = !isOpen;
     }
 
-    function onProviderSelected(provider: Provider): void {
-        myProvider = provider;
-        step = 1;
+    function providerSelected(provider: Provider): void {
+        isOpen = false;
+        ondone?.(provider);
     }
 
     function previous(): void {
@@ -100,57 +92,39 @@
     <ModalHeader {toggle} class="bg-primary-subtle ps-4 pt-4 align-items-start">
         {$t("domains.add-title")}
     </ModalHeader>
-
     <ModalBody>
-        {#if step === 0}
-            <p>
-                {$t("provider.select-provider")}
-            </p>
-            <ProviderPicker
-                bind:addingProvider
-                bind:form
-                bind:providerType
-                formId="newdomainproviderform"
-                ondone={onProviderSelected}
-            />
-        {:else if myProvider && myProvider._id}
-            <DomainImport provider={myProvider} />
-        {:else}
-            <div class="d-flex justify-content-center align-items-center gap-2 my-3">
-                <Spinner color="primary" />
-            </div>
-        {/if}
+        <p>
+            {$t("provider.select-provider")}
+        </p>
+        <ProviderPicker
+            bind:addingProvider
+            bind:form
+            bind:providerType
+            formId="pickproviderform"
+            ondone={providerSelected}
+        />
     </ModalBody>
-
     <ModalFooter>
-        {#if step === 0 && addingProvider && providerType && form}
+        {#if addingProvider && providerType && form}
             <SettingsStateButtons
                 canDoNext={form.state >= 0}
                 class="d-flex justify-content-end"
-                submitForm="newdomainproviderform"
+                submitForm="pickproviderform"
                 form={form.form}
                 nextInProgress={form.nextInProgress}
                 previousInProgress={form.previousInProgress}
                 on:previous-state={previous}
             />
-        {:else if step === 0}
+        {:else}
             <Button color="outline-secondary" onclick={toggle}>
                 {$t("common.cancel")}
             </Button>
-            {#if addingProvider}
+            {#if addingProvider && $providers && $providers.length > 0}
                 <Button color="outline-secondary" onclick={previous}>
                     <Icon name="chevron-left" />
                     {$t("common.previous")}
                 </Button>
             {/if}
-        {:else}
-            <Button color="outline-secondary" onclick={() => (step = 0)}>
-                <Icon name="chevron-left" />
-                {$t("common.previous")}
-            </Button>
-            <Button color="primary" onclick={toggle}>
-                {$t("common.got-it")}
-            </Button>
         {/if}
     </ModalFooter>
 </Modal>

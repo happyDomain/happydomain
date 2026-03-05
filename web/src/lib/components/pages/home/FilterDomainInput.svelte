@@ -33,10 +33,12 @@
     } from "@sveltestrap/sveltestrap";
 
     import { addDomain } from "$lib/api/domains";
+    import PickProvider, { controls as pickProviderControls } from "$lib/components/modals/PickProvider.svelte";
     import { fqdn, validateDomain } from "$lib/dns";
     import { navigate } from "$lib/stores/config";
     import { domains, domains_by_name, refreshDomains } from "$lib/stores/domains";
     import { filteredName, filteredProvider } from "$lib/stores/home";
+    import type { Provider } from "$lib/model/provider";
     import { providers } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 
@@ -87,8 +89,24 @@
                 },
             );
         } else {
-            navigate("/domains/new/" + encodeURIComponent($filteredName));
+            addingNewDomain = false;
+            pickProviderControls.Open();
         }
+    }
+
+    function onProviderSelected(provider: Provider) {
+        addingNewDomain = true;
+        addDomain($filteredName, provider).then(
+            () => {
+                addingNewDomain = false;
+                filteredName.set("");
+                refreshDomains();
+            },
+            (error) => {
+                addingNewDomain = false;
+                throw error;
+            },
+        );
     }
 
     let newDomainState: boolean | undefined = $derived(validateNewDomain($filteredName));
@@ -114,6 +132,8 @@
             ($domains && $domains.length == 0),
     );
 </script>
+
+<PickProvider ondone={onProviderSelected} />
 
 <form onsubmit={submitFilterDomainInput}>
     <ListGroup {...rest}>

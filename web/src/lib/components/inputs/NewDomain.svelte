@@ -22,7 +22,6 @@
 -->
 
 <script lang="ts">
-    import { navigate } from "$lib/stores/config";
     import { createEventDispatcher } from "svelte";
 
     import {
@@ -36,6 +35,7 @@
     } from "@sveltestrap/sveltestrap";
 
     import { addDomain } from "$lib/api/domains";
+    import PickProvider, { controls as pickProviderControls } from "$lib/components/modals/PickProvider.svelte";
     import { validateDomain } from "$lib/dns";
     import type { Provider } from "$lib/model/provider";
     import { refreshDomains } from "$lib/stores/domains";
@@ -76,7 +76,8 @@
         }
 
         if (!provider) {
-            navigate("/domains/new/" + encodeURIComponent(value));
+            pickProviderControls.Open();
+            addingNewDomain = false;
         } else {
             addDomain(value, provider).then(
                 (domain) => {
@@ -93,11 +94,29 @@
         }
     }
 
+    async function onProviderSelected(selectedProvider: Provider) {
+        addingNewDomain = true;
+        addDomain(value, selectedProvider).then(
+            (domain) => {
+                addingNewDomain = false;
+                value = "";
+                refreshDomains();
+                dispatch("newDomainAdded", domain);
+            },
+            (error) => {
+                addingNewDomain = false;
+                throw error;
+            },
+        );
+    }
+
     let newDomainState: boolean | undefined = $derived(validateNewDomain(value));
     function validateNewDomain(val: string): boolean | undefined {
         return validateDomain(val, "", false);
     }
 </script>
+
+<PickProvider ondone={onProviderSelected} />
 
 <form id={formId} onsubmit={addDomainToProvider}>
     <ListGroup {...rest}>
