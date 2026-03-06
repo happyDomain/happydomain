@@ -26,8 +26,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gin-contrib/sessions"
+	ginsessions "github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	gorillasessions "github.com/gorilla/sessions"
 
 	"git.happydns.org/happyDomain/model"
 )
@@ -43,15 +44,49 @@ func AuthRequired() gin.HandlerFunc {
 	}
 }
 
+// gorillasessionExposer is satisfied by the concrete gin-contrib/sessions
+// type, which wraps a *gorilla/sessions.Session and exposes it via Session().
+// Using a duck-typed local interface avoids importing gin-contrib internals.
+type gorillasessionExposer interface {
+	Session() *gorillasessions.Session
+}
+
 func SessionLoginOK(c *gin.Context, user happydns.UserInfo) error {
-	session := sessions.Default(c)
+	session := ginsessions.Default(c)
+
+	// Phase 1: invalidate the pre-login session to prevent session fixation.
+	// Preserve the original session options (Secure flag, Path, MaxAge) so
+	// we can restore them on the new session.
+	// Setting MaxAge=-1 causes the store to delete the server-side record and
+	// send an expired cookie on Save().
+	var origOptions *gorillasessions.Options
+	if gs, ok := session.(gorillasessionExposer); ok {
+		if gs.Session().Options != nil {
+			opts := *gs.Session().Options // copy by value
+			origOptions = &opts
+		}
+	}
 
 	session.Clear()
+	session.Options(ginsessions.Options{MaxAge: -1})
+	session.Save()
+
+	// Phase 2: create a genuinely new session with a fresh ID.
+	// Reset the gorilla session's ID so the store generates a new one,
+	// then restore the original cookie options.
+	if gs, ok := session.(gorillasessionExposer); ok {
+		gs.Session().ID = ""
+		if origOptions != nil {
+			origOptions.MaxAge = 86400 * 30 // restore positive MaxAge
+			gs.Session().Options = origOptions
+		}
+	}
+
 	session.Set("iduser", user.GetUserId())
 	err := session.Save()
 	if err != nil {
 		return happydns.InternalError{
-			Err:         fmt.Errorf("failed to save save user session: %s", err),
+			Err:         fmt.Errorf("failed to save user session: %s", err),
 			UserMessage: "Invalid username or password.",
 		}
 	}
