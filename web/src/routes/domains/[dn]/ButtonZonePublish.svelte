@@ -25,10 +25,10 @@
     import { Button, Icon, Spinner } from "@sveltestrap/sveltestrap";
 
     import { getDomain as APIGetDomain } from "$lib/api/domains";
-    import { diffZoneSummary as APIDiffZoneSummary } from "$lib/api/zone";
     import type { Domain } from "$lib/model/domain";
     import { domains_idx } from "$lib/stores/domains";
     import { thisZone } from "$lib/stores/thiszone";
+    import { getCachedDiffZoneSummary } from "$lib/stores/zonediff";
     import { t } from "$lib/translations";
     import { controls as ctrlDiffZone } from "./ModalDiffZone.svelte";
     import { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
@@ -55,8 +55,7 @@
 
 {#if $domains_idx[domain.id] && $thisZone}
     {#if $domains_idx[domain.id].zone_history && history === $domains_idx[domain.id].zone_history[0]}
-        {#key $thisZone}
-            {#await APIDiffZoneSummary(domain, "@", $thisZone.id)}
+        {#await getCachedDiffZoneSummary(domain, "@", $thisZone.id)}
                 <Button
                     class="mt-2 mb-3"
                     size="lg"
@@ -97,8 +96,7 @@
                     <Icon name="trash" />
                     {$t("domains.stop")}
                 </Button>
-            {/await}
-        {/key}
+        {/await}
     {:else}
         <Button
             size="lg"

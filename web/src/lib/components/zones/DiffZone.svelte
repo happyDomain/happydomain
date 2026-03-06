@@ -26,8 +26,8 @@
 
     import { Icon, Spinner } from "@sveltestrap/sveltestrap";
 
-    import { diffZone as APIDiffZone } from "$lib/api/zone";
     import type { Correction } from "$lib/model/correction";
+    import { getCachedDiffZone } from "$lib/stores/zonediff";
     import type { Domain } from "$lib/model/domain";
     import { t } from "$lib/translations";
 
@@ -56,7 +56,7 @@
     const correctionsIdx: Record<string, Correction> = {};
 
     function computeDiff(domain: Domain, zoneTo: string, zoneFrom: string) {
-        APIDiffZone(domain, zoneTo, zoneFrom).then(
+        getCachedDiffZone(domain, zoneTo, zoneFrom).then(
             (v: Array<Correction>) => {
                 let zoneDiffCreated = 0;
                 let zoneDiffDeleted = 0;
