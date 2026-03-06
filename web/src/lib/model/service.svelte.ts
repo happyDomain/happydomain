@@ -53,6 +53,20 @@ export class ServiceMeta {
             if (init._tmp_hint_nb !== undefined) this._tmp_hint_nb = init._tmp_hint_nb;
         }
     }
+
+    toJSON() {
+        return {
+            _svctype: this._svctype,
+            _id: this._id,
+            _ownerid: this._ownerid,
+            _domain: this._domain,
+            _ttl: this._ttl,
+            _comment: this._comment,
+            _mycomment: this._mycomment,
+            _aliases: this._aliases,
+            _tmp_hint_nb: this._tmp_hint_nb,
+        };
+    }
 }
 
 export class ServiceCombined extends ServiceMeta {
@@ -74,5 +88,12 @@ export class ServiceCombined extends ServiceMeta {
         if (init?.Service !== undefined) {
             this.Service = init.Service;
         }
+    }
+
+    toJSON() {
+        return {
+            ...super.toJSON(),
+            Service: this.Service,
+        };
     }
 }

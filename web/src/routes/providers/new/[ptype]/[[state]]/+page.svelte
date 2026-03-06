@@ -44,7 +44,7 @@
             class="py-3 sticky-top d-flex flex-column"
             style="background-color: #edf5f2; overflow-y: auto; max-height: 100vh; z-index: 0"
         >
-            <ProviderSidebar currentProviderId={data.providerId} />
+            <ProviderSidebar currentProviderId={data.providerId ?? ""} />
         </Col>
         <Col sm={8} md={9} class="d-flex flex-column">
             <ProviderFormPage ptype={data.ptype} state={data.state} providerId={data.providerId} />

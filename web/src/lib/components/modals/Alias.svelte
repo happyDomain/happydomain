@@ -47,6 +47,7 @@
     } from "@sveltestrap/sveltestrap";
 
     import { addZoneService } from "$lib/api/zone";
+    import { ServiceCombined } from "$lib/model/service.svelte";
     import DomainInput from "$lib/components/inputs/Domain.svelte";
     import { fqdn, validateDomain } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
@@ -107,11 +108,11 @@
 
         if (zone && validSubDomain) {
             addAliasInProgress = true;
-            addZoneService(origin, zone.id, {
+            addZoneService(origin, zone.id, new ServiceCombined({
                 _domain: value,
                 _svctype: "svcs.CNAME",
                 Service: { cname: { Hdr: { Rrtype: 5, Class: 1 }, Target: dn ? dn : "@" } },
-            }).then(
+            })).then(
                 (z) => {
                     thisZone.set(z);
                     addAliasInProgress = false;

@@ -2,8 +2,9 @@ import { describe, it, expect, beforeEach, vitest } from 'vitest';
 import { get } from 'svelte/store';
 
 import { thisZone, thisAliases, sortedDomains, sortedDomainsWithIntermediate, getZone } from './thiszone';
-import type { Zone } from '$lib/model/zone';
 import type { Domain } from '$lib/model/domain';
+import { ServiceCombined } from '$lib/model/service.svelte';
+import type { Zone } from '$lib/model/zone';
 import { createMockResponse } from '$lib/test-utils/api-mocks';
 
 describe('Zone Store', () => {
@@ -18,10 +19,10 @@ describe('Zone Store', () => {
   it('should compute aliases correctly', () => {
     const zone = {
       services: {
-        'example.com': [{ _svctype: 'svcs.CNAME', _domain: 'example.com', Service: { Target: 'target.com' } }],
+        'example.com': [new ServiceCombined({ _svctype: 'svcs.CNAME', _domain: 'example.com', Service: { Target: 'target.com' } })],
       },
-    } as Partial<Zone>;
-    thisZone.set(zone as Zone);
+    } as unknown as Zone;
+    thisZone.set(zone);
     expect(get(thisAliases)).toEqual({ 'target.com': ['example.com'] });
   });
 
@@ -31,8 +32,8 @@ describe('Zone Store', () => {
         'b.example.com': [],
         'a.example.com': [],
       },
-    } as Partial<Zone>;
-    thisZone.set(zone as Zone);
+    } as unknown as Zone;
+    thisZone.set(zone);
     expect(get(sortedDomains)).toEqual(['a.example.com', 'b.example.com']);
   });
 
@@ -42,8 +43,8 @@ describe('Zone Store', () => {
         'a.b.example.com': [],
         'b.example.com': [],
       },
-    } as Partial<Zone>;
-    thisZone.set(zone as Zone);
+    } as unknown as Zone;
+    thisZone.set(zone);
     const result = get(sortedDomainsWithIntermediate);
     expect(result).toContain('b.example.com');
     expect(result).toContain('a.b.example.com');

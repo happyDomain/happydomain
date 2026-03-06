@@ -45,12 +45,12 @@
     import { t } from "$lib/translations";
 
     interface Props {
-        class: ClassValue;
+        class?: ClassValue;
         items: Array<any>;
         [key: string]: any;
     }
 
-    let { class: className, items, ...rest }: Props = $props();
+    let { class: className = "", items, ...rest }: Props = $props();
 
     if (!$providersSpecs) refreshProvidersSpecs();
 
