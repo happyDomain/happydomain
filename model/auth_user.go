@@ -85,7 +85,7 @@ func (u *UserAuth) JoinNewsletter() bool {
 
 // DefinePassword erases the current UserAuth's password by the new one given.
 func (u *UserAuth) DefinePassword(password string) (err error) {
-	u.Password, err = bcrypt.GenerateFromPassword([]byte(password), 0)
+	u.Password, err = bcrypt.GenerateFromPassword([]byte(password), 12)
 	u.PasswordRecoveryKey = nil
 
 	return
