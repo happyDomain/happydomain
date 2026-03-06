@@ -37,6 +37,13 @@ export class CaptchaRequiredError extends NotAuthorizedError {
     }
 }
 
+export class RateLimitedError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "RateLimitedError";
+    }
+}
+
 export class ProviderNoDomainListingSupport extends Error {
     constructor(message: string) {
         super(message);
@@ -52,6 +59,26 @@ export function setRefreshingSession(val: boolean) {
 
 async function customFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
     const response = await fetch(input, init);
+
+    // Handle 429 Too Many Requests — rate-limited without captcha provider
+    if (response.status === 429) {
+        if (response.headers.get("content-type")?.includes("application/json")) {
+            const clone = response.clone();
+            try {
+                const json = await clone.json();
+                if (json.rate_limited) {
+                    throw new RateLimitedError(
+                        typeof json.errmsg === "string"
+                            ? json.errmsg
+                            : "Too many failed login attempts. Please wait before trying again.",
+                    );
+                }
+            } catch (err) {
+                if (err instanceof RateLimitedError) throw err;
+                // ignore JSON parsing errors
+            }
+        }
+    }
 
     // Handle 401 Unauthorized - check for captcha requirement first, then attempt session refresh
     if (response.status === 401) {

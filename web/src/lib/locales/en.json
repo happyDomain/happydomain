@@ -196,6 +196,7 @@
         "domain-list": "This provider doesn't permit to list existing domains. Use the above form to add one.",
         "error": "Error",
         "login": "Login error",
+        "rate-limited": "Too many failed login attempts. Please wait a moment before trying again.",
         "logout": "Logout error",
         "occurs": "An error occurs when {{when}}!",
         "password": "Password is required",

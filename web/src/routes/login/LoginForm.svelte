@@ -29,7 +29,7 @@
     import { t } from "$lib/translations";
     import { getOidcProvider } from "$lib/api/auth";
     import { authUser, cleanUserSession } from "$lib/api/user";
-    import { CaptchaRequiredError } from "$lib/hey-api";
+    import { CaptchaRequiredError, RateLimitedError } from "$lib/hey-api";
     import type { LoginForm } from "$lib/model/user";
     import { appConfig, navigate } from "$lib/stores/config";
     import { providers } from "$lib/stores/providers";
@@ -45,6 +45,7 @@
     let passwordState: boolean | undefined = $state();
     let formSent = $state(false);
     let captchaRequired = $state(false);
+    let rateLimited = $state(false);
     let captchaToken: string | null = $state(null);
     let captchaWidget: ReturnType<typeof CaptchaWidget> | undefined = $state();
 
@@ -87,7 +88,9 @@
                     emailState = false;
                     passwordState = false;
 
-                    if (error instanceof CaptchaRequiredError) {
+                    if (error instanceof RateLimitedError) {
+                        rateLimited = true;
+                    } else if (error instanceof CaptchaRequiredError) {
                         captchaRequired = true;
                         captchaToken = null;
                         if (captchaWidget) captchaWidget.reset();
@@ -150,12 +153,15 @@
             bind:value={loginForm.password}
         />
     </FormGroup>
+    {#if rateLimited}
+        <p class="text-danger">{$t("errors.rate-limited")}</p>
+    {/if}
     {#if $appConfig.captcha_provider && captchaRequired}
         <p>{$t("captcha.human-check")}</p>
         <CaptchaWidget bind:this={captchaWidget} bind:token={captchaToken} />
     {/if}
     <div class="d-flex flex-column flex-lg-row gap-2 justify-content-around">
-        <Button type="submit" color="primary" disabled={formSent}>
+        <Button type="submit" color="primary" disabled={formSent || rateLimited}>
             {#if formSent}
                 <Spinner size="sm" />
             {/if}

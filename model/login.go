@@ -28,8 +28,10 @@ type LoginRequest struct {
 }
 
 // LoginErrorResponse is returned on failed login attempts.
-// It includes the error message and optionally signals that captcha is required.
+// It includes the error message and optionally signals that captcha is required
+// or that the client is rate-limited.
 type LoginErrorResponse struct {
 	Message         string `json:"errmsg"`
 	CaptchaRequired bool   `json:"captcha_required,omitempty"`
+	RateLimited     bool   `json:"rate_limited,omitempty"`
 }

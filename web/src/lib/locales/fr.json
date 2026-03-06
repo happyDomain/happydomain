@@ -173,6 +173,7 @@
         "domain-list": "Ce fournisseur ne permet pas de répertorier les domaines existants. Utilisez le formulaire ci-dessus pour en ajouter un.",
         "error": "Erreur",
         "login": "Erreur de connexion",
+        "rate-limited": "Too many failed login attempts. Please wait a moment before trying again.",
         "logout": "Erreur de déconnexion",
         "occurs": "Une erreur se produit lorsque {{when}} !",
         "password": "Le mot de passe est obligatoire",

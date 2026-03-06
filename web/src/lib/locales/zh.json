@@ -190,6 +190,7 @@
         "domain-list": "此提供商不支持列出域名，请使用下方表单添加。",
         "error": "错误",
         "login": "登录失败",
+        "rate-limited": "Too many failed login attempts. Please wait a moment before trying again.",
         "logout": "退出失败",
         "occurs": "{{when}}发生错误！",
         "password": "请输入密码",

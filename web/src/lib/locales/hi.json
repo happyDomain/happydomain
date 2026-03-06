@@ -181,6 +181,7 @@
         "domain-list": "यह प्रदाता मौजूदा डोमेन को सूचीबद्ध करने की अनुमति नहीं देता है। एक जोड़ने के लिए नीचे दिए गए फॉर्म का उपयोग करें।",
         "error": "त्रुटि",
         "login": "लॉगिन त्रुटि",
+        "rate-limited": "Too many failed login attempts. Please wait a moment before trying again.",
         "logout": "लॉगआउट त्रुटि",
         "occurs": "{{when}} समय एक त्रुटि हुई!",
         "password": "पासवर्ड आवश्यक है",

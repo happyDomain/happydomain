@@ -181,6 +181,7 @@
         "domain-list": "Este proveedor no permite listar los dominios existentes. Usa el formulario a continuación para añadir uno.",
         "error": "Error",
         "login": "Error de inicio de sesión",
+        "rate-limited": "Too many failed login attempts. Please wait a moment before trying again.",
         "logout": "Error de cierre de sesión",
         "occurs": "¡Ocurrió un error cuando {{when}}!",
         "password": "Se requiere contraseña",

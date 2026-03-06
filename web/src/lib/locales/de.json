@@ -181,6 +181,7 @@
         "domain-list": "Dieser Anbieter erlaubt keine Auflistung vorhandener Domains. Verwenden Sie das Formular unten, um eine hinzuzufügen.",
         "error": "Fehler",
         "login": "Anmeldefehler",
+        "rate-limited": "Too many failed login attempts. Please wait a moment before trying again.",
         "logout": "Abmeldefehler",
         "occurs": "Beim {{when}} ist ein Fehler aufgetreten!",
         "password": "Passwort ist erforderlich",
