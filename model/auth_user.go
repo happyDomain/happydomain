@@ -93,7 +93,7 @@ func (u *UserAuth) DefinePassword(password string) (err error) {
 
 // CheckPassword compares the given password to the hashed one in the UserAuth struct.
 func (u *UserAuth) CheckPassword(password string) bool {
-	if len(password) < 8 {
+	if len(password) < 8 || len(password) > 72 {
 		return false
 	}
 

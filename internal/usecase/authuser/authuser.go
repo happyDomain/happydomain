@@ -89,6 +89,9 @@ func (s *Service) checkPasswordConstraints(password, confirmation string) error 
 	if len(password) < 8 {
 		return happydns.ValidationError{Msg: "password must be at least 8 characters long"}
 	}
+	if len(password) > 72 {
+		return happydns.ValidationError{Msg: "password must be at most 72 characters long"}
+	}
 
 	if !regexp.MustCompile(`[a-z]`).MatchString(password) {
 		return happydns.ValidationError{Msg: "Password must contain lower case letters."}
