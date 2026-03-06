@@ -122,7 +122,7 @@ func Test_AuthenticateUserWithPassword_WrongPassword(t *testing.T) {
 		Email:    "a@b.c",
 		Password: "wrong-password",
 	})
-	if err == nil || err.Error() != `tries to login as "a@b.c", but sent an invalid password` {
+	if err == nil || err.Error() != `invalid password` {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
@@ -151,7 +151,7 @@ func Test_AuthenticateUserWithPassword_WeakPassword(t *testing.T) {
 		Email:    "a@b.c",
 		Password: "weak",
 	})
-	if err == nil || err.Error() != `tries to login as "a@b.c", but sent an invalid password` {
+	if err == nil || err.Error() != `invalid password` {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
@@ -180,7 +180,7 @@ func Test_AuthenticateUserWithPassword_UnverifiedEmail(t *testing.T) {
 		Email:    "a@b.c",
 		Password: "v3rySecure",
 	})
-	if err == nil || err.Error() != `tries to login as "a@b.c", but has not verified email` {
+	if err == nil || err.Error() != `account email not verified` {
 		t.Errorf("unexpected error: %v", err)
 	}
 }

@@ -112,7 +112,7 @@ func (lc *LoginController) Login(c *gin.Context) {
 
 	user, err := lc.authService.AuthenticateUserWithPassword(request)
 	if err != nil {
-		log.Printf("%s: %s", c.ClientIP(), err.Error())
+		log.Printf("%s %s: %s", c.ClientIP(), request.Email, err.Error())
 
 		if lc.captcha.Provider() != "" {
 			lc.failureTracker.RecordFailure(c.ClientIP(), request.Email)

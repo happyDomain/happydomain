@@ -77,16 +77,16 @@ func (lu *loginUsecase) AuthenticateUserWithPassword(request happydns.LoginReque
 	// Retrieve the given user
 	user, err := lu.store.GetAuthUserByEmail(request.Email)
 	if err != nil {
-		return nil, fmt.Errorf("user's email (%s) not found: %s", request.Email, err.Error())
+		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
 	if !user.CheckPassword(request.Password) {
-		return nil, fmt.Errorf("tries to login as %q, but sent an invalid password", request.Email)
+		return nil, fmt.Errorf("invalid password")
 	}
 
 	// Ensure the account is enabled
 	if !lu.config.NoMail && user.EmailVerification == nil {
-		return nil, fmt.Errorf("tries to login as %q, but has not verified email", request.Email)
+		return nil, fmt.Errorf("account email not verified")
 	}
 
 	// Record the successful login time and transparently upgrade the hash cost if needed
