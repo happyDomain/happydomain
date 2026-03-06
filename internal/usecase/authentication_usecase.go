@@ -89,5 +89,10 @@ func (lu *loginUsecase) AuthenticateUserWithPassword(request happydns.LoginReque
 		return nil, fmt.Errorf("tries to login as %q, but has not verified email", request.Email)
 	}
 
+	// Record the successful login time
+	now := time.Now()
+	user.LastLoggedIn = &now
+	lu.store.UpdateAuthUser(user)
+
 	return lu.CompleteAuthentication(user)
 }
