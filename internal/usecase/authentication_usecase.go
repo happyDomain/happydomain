@@ -25,6 +25,8 @@ import (
 	"fmt"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"git.happydns.org/happyDomain/internal/usecase/authuser"
 	"git.happydns.org/happyDomain/internal/usecase/user"
 	"git.happydns.org/happyDomain/model"
@@ -77,6 +79,9 @@ func (lu *loginUsecase) AuthenticateUserWithPassword(request happydns.LoginReque
 	// Retrieve the given user
 	user, err := lu.store.GetAuthUserByEmail(request.Email)
 	if err != nil {
+		// Perform a dummy bcrypt comparison to equalize timing with the
+		// valid-user path and prevent email enumeration via response time.
+		bcrypt.CompareHashAndPassword([]byte("$2a$12$dummy.hash.that.never.matches.any.real.password.value"), []byte(request.Password))
 		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
