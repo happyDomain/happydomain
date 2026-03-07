@@ -97,7 +97,9 @@ func (s *SessionStore) New(r *http.Request, name string) (*sessions.Session, err
 	}
 
 	err := s.load(session)
-	session.IsNew = false
+	if err == nil {
+		session.IsNew = false
+	}
 	return session, err
 }
 
