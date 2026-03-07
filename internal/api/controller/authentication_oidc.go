@@ -46,6 +46,7 @@ const (
 	SESSION_KEY_OIDC_STATE = "oidc-state"
 	SESSION_KEY_OIDC_PKCE  = "oidc-pkce"
 	SESSION_KEY_OIDC_NONCE = "oidc-nonce"
+	SESSION_KEY_OIDC_NEXT  = "oidc-next"
 )
 
 type OIDCProvider struct {
@@ -95,6 +96,12 @@ func NewOIDCProvider(cfg *happydns.Options, authService happydns.AuthenticationU
 func (p *OIDCProvider) RedirectOIDC(c *gin.Context) {
 	session := sessions.Default(c)
 
+	// Capture and validate the post-login redirect destination.
+	// Only accept same-origin relative paths to prevent open redirect.
+	if next := c.Query("next"); next != "" && strings.HasPrefix(next, "/") && !strings.HasPrefix(next, "//") {
+		session.Set(SESSION_KEY_OIDC_NEXT, next)
+	}
+
 	state := make([]byte, 32)
 	_, err := rand.Read(state)
 	if err != nil {
@@ -139,10 +146,12 @@ func (p *OIDCProvider) CompleteOIDC(c *gin.Context) {
 
 	pkceVerifier, _ := session.Get(SESSION_KEY_OIDC_PKCE).(string)
 	expectedNonce, _ := session.Get(SESSION_KEY_OIDC_NONCE).(string)
+	nextPath, _ := session.Get(SESSION_KEY_OIDC_NEXT).(string)
 
 	session.Delete(SESSION_KEY_OIDC_STATE)
 	session.Delete(SESSION_KEY_OIDC_PKCE)
 	session.Delete(SESSION_KEY_OIDC_NONCE)
+	session.Delete(SESSION_KEY_OIDC_NEXT)
 	err := session.Save()
 	if err != nil {
 		log.Println("Unable to CompleteOIDC, session.Save fails:", err)
@@ -212,5 +221,9 @@ func (p *OIDCProvider) CompleteOIDC(c *gin.Context) {
 
 	middleware.SessionLoginOK(c, &profile)
 
-	c.Redirect(http.StatusFound, p.config.GetBaseURL()+"/")
+	redirectTo := p.config.GetBaseURL() + "/"
+	if nextPath != "" {
+		redirectTo = p.config.GetBaseURL() + nextPath
+	}
+	c.Redirect(http.StatusFound, redirectTo)
 }

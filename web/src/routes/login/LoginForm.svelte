@@ -175,7 +175,7 @@
         </Button>
         {#if $appConfig.oidc_configured}
             {#await getOidcProvider() then oidc}
-                <Button href="/auth/oidc" color="secondary">
+                <Button href={"/auth/oidc" + (page.url.searchParams.get("next") ? "?next=" + page.url.searchParams.get("next") : "")} color="secondary">
                     {#if oidc.provider == "google.com"}
                         <i class="bi bi-google"></i>
                     {:else if oidc.provider == "gitlab.com" || oidc.provider == "framagit.org"}
