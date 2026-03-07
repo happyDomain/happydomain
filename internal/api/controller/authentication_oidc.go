@@ -26,7 +26,7 @@ package controller
 import (
 	"context"
 	"crypto/rand"
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -171,7 +171,7 @@ func (p *OIDCProvider) CompleteOIDC(c *gin.Context) {
 			return
 		}
 
-		hash := sha1.Sum([]byte(profile.Email))
+		hash := sha256.Sum256([]byte(profile.Email))
 		profile.Id = hash[:]
 	}
 
