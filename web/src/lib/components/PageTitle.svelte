@@ -24,6 +24,11 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
 
+    interface BreadcrumbItem {
+        label: string;
+        href?: string;
+    }
+
     interface Props {
         /** Main section title (e.g. "Zone Editor", "History") */
         title: string;
@@ -31,11 +36,13 @@
         domain?: string;
         /** Optional subtitle or contextual hint below the title */
         subtitle?: string;
+        /** Breadcrumb navigation trail; last item is the current page */
+        breadcrumb?: BreadcrumbItem[];
         /** Optional slot for status badges, health checks, or summary indicators */
         children?: Snippet;
     }
 
-    let { title, domain, subtitle, children }: Props = $props();
+    let { title, domain, subtitle, breadcrumb, children }: Props = $props();
 </script>
 
 <header class="page-title mb-4">
@@ -47,6 +54,21 @@
             <h1 class="display-5 page-title-heading">{title}</h1>
             {#if subtitle}
                 <p class="page-title-subtitle text-muted">{subtitle}</p>
+            {/if}
+            {#if breadcrumb && breadcrumb.length > 0}
+                <nav aria-label="Breadcrumb">
+                    <ol class="breadcrumb mb-0 mt-2">
+                        {#each breadcrumb as item, i}
+                            <li class="breadcrumb-item" class:active={i === breadcrumb.length - 1}>
+                                {#if item.href && i !== breadcrumb.length - 1}
+                                    <a href={item.href}>{item.label}</a>
+                                {:else}
+                                    <span>{item.label}</span>
+                                {/if}
+                            </li>
+                        {/each}
+                    </ol>
+                </nav>
             {/if}
         </div>
         {#if children}
@@ -63,6 +85,28 @@
         border-bottom: 1px solid rgba(0, 0, 0, 0.07);
     }
 
+    /* Breadcrumb */
+    nav {
+        --bs-breadcrumb-divider: ">";
+        font-size: 0.85rem;
+    }
+    .breadcrumb-item a {
+        text-decoration: none;
+    }
+
+    .breadcrumb-item a {
+        text-decoration: none;
+        opacity: 0.75;
+        transition: opacity 0.15s ease;
+    }
+
+    .breadcrumb-item a:hover {
+        opacity: 1;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    /* Title block */
     .page-title-text::before {
         content: "";
         display: block;
