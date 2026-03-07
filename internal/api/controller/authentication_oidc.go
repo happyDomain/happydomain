@@ -45,6 +45,7 @@ import (
 const (
 	SESSION_KEY_OIDC_STATE = "oidc-state"
 	SESSION_KEY_OIDC_PKCE  = "oidc-pkce"
+	SESSION_KEY_OIDC_NONCE = "oidc-nonce"
 )
 
 type OIDCProvider struct {
@@ -102,10 +103,19 @@ func (p *OIDCProvider) RedirectOIDC(c *gin.Context) {
 		return
 	}
 
+	nonce := make([]byte, 32)
+	if _, err = rand.Read(nonce); err != nil {
+		log.Println("Unable to redirect_OIDC, rand.Read fails:", err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: "Sorry, we are currently unable to respond to your request. Please retry later."})
+		return
+	}
+	nonceStr := hex.EncodeToString(nonce)
+
 	pkceVerifier := oauth2.GenerateVerifier()
 
 	session.Set(SESSION_KEY_OIDC_STATE, hex.EncodeToString(state))
 	session.Set(SESSION_KEY_OIDC_PKCE, pkceVerifier)
+	session.Set(SESSION_KEY_OIDC_NONCE, nonceStr)
 	err = session.Save()
 	if err != nil {
 		log.Println("Unable to redirect_OIDC, session.Save fails:", err)
@@ -113,7 +123,7 @@ func (p *OIDCProvider) RedirectOIDC(c *gin.Context) {
 		return
 	}
 
-	c.Redirect(http.StatusFound, p.oauth2config.AuthCodeURL(hex.EncodeToString(state), oauth2.S256ChallengeOption(pkceVerifier)))
+	c.Redirect(http.StatusFound, p.oauth2config.AuthCodeURL(hex.EncodeToString(state), oauth2.S256ChallengeOption(pkceVerifier), oauth2.SetAuthURLParam("nonce", nonceStr)))
 }
 
 func (p *OIDCProvider) CompleteOIDC(c *gin.Context) {
@@ -128,9 +138,11 @@ func (p *OIDCProvider) CompleteOIDC(c *gin.Context) {
 	}
 
 	pkceVerifier, _ := session.Get(SESSION_KEY_OIDC_PKCE).(string)
+	expectedNonce, _ := session.Get(SESSION_KEY_OIDC_NONCE).(string)
 
 	session.Delete(SESSION_KEY_OIDC_STATE)
 	session.Delete(SESSION_KEY_OIDC_PKCE)
+	session.Delete(SESSION_KEY_OIDC_NONCE)
 	err := session.Save()
 	if err != nil {
 		log.Println("Unable to CompleteOIDC, session.Save fails:", err)
@@ -155,6 +167,12 @@ func (p *OIDCProvider) CompleteOIDC(c *gin.Context) {
 	if err != nil {
 		log.Printf("CompleteOIDC: failed to verify ID Token: %s", err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: "Sorry, we are currently unable to respond to your request. Please retry later."})
+		return
+	}
+
+	if idToken.Nonce != expectedNonce {
+		log.Printf("CompleteOIDC: nonce mismatch: got %q, expected %q", idToken.Nonce, expectedNonce)
+		c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{Message: "Invalid nonce in ID token"})
 		return
 	}
 
