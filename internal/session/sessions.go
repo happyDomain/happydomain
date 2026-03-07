@@ -102,7 +102,9 @@ func (s *SessionStore) Save(r *http.Request, w http.ResponseWriter, session *ses
 	var cookieValue string
 
 	if s.options.MaxAge < 0 || session.Options.MaxAge < 0 {
-		s.storage.DeleteSession(session.ID)
+		if err := s.storage.DeleteSession(session.ID); err != nil {
+			return err
+		}
 	} else {
 		if session.ID == "" {
 			session.ID = sessionUC.NewSessionID()
