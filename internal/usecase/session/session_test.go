@@ -562,10 +562,10 @@ func Test_SessionExpiration(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// Verify expiration is set to approximately 1 year from now
-	expectedExpiration := time.Now().Add(24 * 365 * time.Hour)
+	// Verify expiration is set to approximately SESSION_MAX_DURATION from now
+	expectedExpiration := time.Now().Add(session.SESSION_MAX_DURATION)
 	timeDiff := sess.ExpiresOn.Sub(expectedExpiration)
 	if timeDiff < -1*time.Minute || timeDiff > 1*time.Minute {
-		t.Errorf("expected expiration to be around 1 year from now, got %v", sess.ExpiresOn)
+		t.Errorf("expected expiration to be around %v from now, got %v", session.SESSION_MAX_DURATION, sess.ExpiresOn)
 	}
 }

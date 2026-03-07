@@ -50,7 +50,7 @@ func NewSessionStore(opts *happydns.Options, storage sessionUC.SessionStorage, k
 		Codecs: securecookie.CodecsFromPairs(keyPairs...),
 		options: &sessions.Options{
 			Path:     opts.BasePath + "/",
-			MaxAge:   86400 * 30,
+			MaxAge:   int(sessionUC.SESSION_MAX_DURATION.Seconds()),
 			Secure:   opts.DevProxy == "" && opts.ExternalURL.Scheme != "http",
 			HttpOnly: true,
 			SameSite: http.SameSiteLaxMode,
@@ -171,6 +171,11 @@ func (s *SessionStore) load(session *sessions.Session) error {
 		session.Values["created_on"] = mysession.IssuedAt
 	}
 	if !mysession.ExpiresOn.IsZero() {
+		if mysession.ExpiresOn.Before(time.Now()) {
+			// Session has expired; delete it and treat this as a new session.
+			_ = s.storage.DeleteSession(session.ID)
+			return fmt.Errorf("session has expired")
+		}
 		session.Values["expires_on"] = mysession.ExpiresOn
 	}
 
@@ -210,11 +215,12 @@ func (s *SessionStore) save(session *sessions.Session, ua string) error {
 	}
 
 	if exOn == nil {
-		expiresOn = time.Now().Add(time.Second * time.Duration(session.Options.MaxAge))
+		expiresOn = time.Now().Add(sessionUC.SESSION_MAX_DURATION)
 	} else {
 		expiresOn = exOn.(time.Time)
-		if expiresOn.Sub(time.Now().Add(time.Second*time.Duration(session.Options.MaxAge))) < 0 {
-			expiresOn = time.Now().Add(time.Second * time.Duration(session.Options.MaxAge))
+		// Auto-renew if the session expires within the renewal window.
+		if time.Until(expiresOn) < sessionUC.SESSION_RENEWAL_THRESHOLD {
+			expiresOn = time.Now().Add(sessionUC.SESSION_MAX_DURATION)
 		}
 	}
 

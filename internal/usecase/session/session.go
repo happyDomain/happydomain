@@ -33,7 +33,11 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-const SESSION_MAX_DURATION = 24 * 365 * time.Hour
+const SESSION_MAX_DURATION = 15 * 24 * time.Hour
+
+// SESSION_RENEWAL_THRESHOLD is the remaining lifetime below which a session
+// is automatically renewed to SESSION_MAX_DURATION on the next request.
+const SESSION_RENEWAL_THRESHOLD = 7 * 24 * time.Hour
 
 // Service handles all session-related operations.
 // This consolidates what were previously separate usecase structs into a single service.
