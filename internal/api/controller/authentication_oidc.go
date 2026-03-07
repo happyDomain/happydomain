@@ -148,16 +148,16 @@ func (p *OIDCProvider) CompleteOIDC(c *gin.Context) {
 	expectedNonce, _ := session.Get(SESSION_KEY_OIDC_NONCE).(string)
 	nextPath, _ := session.Get(SESSION_KEY_OIDC_NEXT).(string)
 
+	// Consume the OIDC session keys in-memory now. The actual session.Save()
+	// is deferred to SessionLoginOK (via session.Clear + new session). On any
+	// error below the in-memory changes are discarded, preserving the session
+	// keys so the user can retry without restarting the whole flow. The
+	// authorization code itself is single-use at the provider level, so
+	// replaying the callback with the same code is rejected there.
 	session.Delete(SESSION_KEY_OIDC_STATE)
 	session.Delete(SESSION_KEY_OIDC_PKCE)
 	session.Delete(SESSION_KEY_OIDC_NONCE)
 	session.Delete(SESSION_KEY_OIDC_NEXT)
-	err := session.Save()
-	if err != nil {
-		log.Println("Unable to CompleteOIDC, session.Save fails:", err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: "Sorry, we are currently unable to respond to your request. Please retry later."})
-		return
-	}
 
 	oauth2Token, err := p.oauth2config.Exchange(c, c.Query("code"), oauth2.VerifierOption(pkceVerifier))
 	if err != nil {
