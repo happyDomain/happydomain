@@ -133,8 +133,8 @@
                         <div class="text-truncate">
                             {session.description}
                             <small class="text-muted">
-                                {#await window.crypto.subtle.digest("SHA-1", new TextEncoder().encode(session.id)) then sessid}
-                                    {Array.from(new Uint8Array(sessid))
+                                {#await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(session.id)) then sessid}
+                                    {Array.from(new Uint8Array(sessid).slice(0, 6))
                                         .map((b) => b.toString(16).padStart(2, "0"))
                                         .join("")}
                                 {/await}
