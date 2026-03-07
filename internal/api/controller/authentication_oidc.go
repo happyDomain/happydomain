@@ -44,6 +44,7 @@ import (
 
 const (
 	SESSION_KEY_OIDC_STATE = "oidc-state"
+	SESSION_KEY_OIDC_PKCE  = "oidc-pkce"
 )
 
 type OIDCProvider struct {
@@ -101,7 +102,10 @@ func (p *OIDCProvider) RedirectOIDC(c *gin.Context) {
 		return
 	}
 
+	pkceVerifier := oauth2.GenerateVerifier()
+
 	session.Set(SESSION_KEY_OIDC_STATE, hex.EncodeToString(state))
+	session.Set(SESSION_KEY_OIDC_PKCE, pkceVerifier)
 	err = session.Save()
 	if err != nil {
 		log.Println("Unable to redirect_OIDC, session.Save fails:", err)
@@ -109,7 +113,7 @@ func (p *OIDCProvider) RedirectOIDC(c *gin.Context) {
 		return
 	}
 
-	c.Redirect(http.StatusFound, p.oauth2config.AuthCodeURL(hex.EncodeToString(state)))
+	c.Redirect(http.StatusFound, p.oauth2config.AuthCodeURL(hex.EncodeToString(state), oauth2.S256ChallengeOption(pkceVerifier)))
 }
 
 func (p *OIDCProvider) CompleteOIDC(c *gin.Context) {
@@ -123,7 +127,10 @@ func (p *OIDCProvider) CompleteOIDC(c *gin.Context) {
 		return
 	}
 
+	pkceVerifier, _ := session.Get(SESSION_KEY_OIDC_PKCE).(string)
+
 	session.Delete(SESSION_KEY_OIDC_STATE)
+	session.Delete(SESSION_KEY_OIDC_PKCE)
 	err := session.Save()
 	if err != nil {
 		log.Println("Unable to CompleteOIDC, session.Save fails:", err)
@@ -131,7 +138,7 @@ func (p *OIDCProvider) CompleteOIDC(c *gin.Context) {
 		return
 	}
 
-	oauth2Token, err := p.oauth2config.Exchange(c, c.Query("code"))
+	oauth2Token, err := p.oauth2config.Exchange(c, c.Query("code"), oauth2.VerifierOption(pkceVerifier))
 	if err != nil {
 		log.Printf("CompleteOIDC: failed to exchange token: %s", err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: "Sorry, we are currently unable to respond to your request. Please retry later."})
