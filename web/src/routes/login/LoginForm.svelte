@@ -78,7 +78,13 @@
 
                     const nextParam = page.url.searchParams.get("next");
                     if (nextParam) {
-                        navigate(decodeURIComponent(nextParam));
+                        const decoded = decodeURIComponent(nextParam);
+                        // Only allow same-origin relative paths to prevent open redirect
+                        if (decoded.startsWith("/") && !decoded.startsWith("//")) {
+                            navigate(decoded);
+                        } else {
+                            navigate("/");
+                        }
                     } else {
                         navigate("/");
                     }
