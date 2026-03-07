@@ -64,20 +64,15 @@ export async function addSession(description: string): Promise<Session> {
 }
 
 export async function updateSession(session: Session): Promise<Session> {
-    if (session.id) {
-        return unwrapSdkResponse(
-            await putSessionsBySessionId({
-                path: { sessionId: session.id },
-                body: session as any,
-            }),
-        ) as Session;
-    } else {
-        return unwrapSdkResponse(
-            await postSessions({
-                body: session as any,
-            }),
-        ) as Session;
+    if (!session.id) {
+        throw new Error("updateSession requires an existing session id; use addSession to create a new one");
     }
+    return unwrapSdkResponse(
+        await putSessionsBySessionId({
+            path: { sessionId: session.id },
+            body: session as any,
+        }),
+    ) as Session;
 }
 
 export async function deleteSession(id: string): Promise<boolean> {
