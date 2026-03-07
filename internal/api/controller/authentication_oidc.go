@@ -28,7 +28,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -134,24 +133,28 @@ func (p *OIDCProvider) CompleteOIDC(c *gin.Context) {
 
 	oauth2Token, err := p.oauth2config.Exchange(c, c.Query("code"))
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: fmt.Sprintf("Failed to exchange token: %s", err.Error())})
+		log.Printf("CompleteOIDC: failed to exchange token: %s", err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: "Sorry, we are currently unable to respond to your request. Please retry later."})
 		return
 	}
 	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
 	if !ok {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: "No id_token field in oauth2 token."})
+		log.Printf("CompleteOIDC: no id_token field in oauth2 token")
+		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: "Sorry, we are currently unable to respond to your request. Please retry later."})
 		return
 	}
 
 	idToken, err := p.oidcVerifier.Verify(c, rawIDToken)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: fmt.Sprintf("Failed to verify ID Token: %s", err.Error())})
+		log.Printf("CompleteOIDC: failed to verify ID Token: %s", err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: "Sorry, we are currently unable to respond to your request. Please retry later."})
 		return
 	}
 
 	var claims map[string]any
 	if err = idToken.Claims(&claims); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: fmt.Sprintf("Unable to retrieve user profile: %s", err.Error())})
+		log.Printf("CompleteOIDC: unable to retrieve user profile: %s", err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: "Sorry, we are currently unable to respond to your request. Please retry later."})
 		return
 	}
 
@@ -177,7 +180,8 @@ func (p *OIDCProvider) CompleteOIDC(c *gin.Context) {
 
 	_, err = p.authService.CompleteAuthentication(&profile)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: fmt.Sprintf("Unable to complete authentication: %s", err.Error())})
+		log.Printf("CompleteOIDC: unable to complete authentication: %s", err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: "Sorry, we are currently unable to respond to your request. Please retry later."})
 		return
 	}
 
