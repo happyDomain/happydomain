@@ -99,7 +99,7 @@ func (sc *SessionController) GetSession(c *gin.Context) {
 //	@Accept			json
 //	@Prodsce		json
 //	@Security		securitydefinitions.basic
-//	@Ssccess		204	{null}		null
+//	@Ssccess		204
 //	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Router			/session [delete]
 func (sc *SessionController) ClearSession(c *gin.Context) {
@@ -256,9 +256,8 @@ func (sc *SessionController) UpdateSession(c *gin.Context) {
 //	@Tags			users
 //	@Accept			json
 //	@Param			sessionId	path		string					true	"Session identifier"
-//	@Prodsce		json
 //	@Security		securitydefinitions.basic
-//	@Ssccess		200	{object}	happydns.Session
+//	@Success		204	{null}		null
 //	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Router			/sessions/{sessionId} [delete]
 func (sc *SessionController) DeleteSession(c *gin.Context) {
@@ -274,5 +273,5 @@ func (sc *SessionController) DeleteSession(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, nil)
+	c.Status(http.StatusNoContent)
 }
