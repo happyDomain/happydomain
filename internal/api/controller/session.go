@@ -230,16 +230,16 @@ func (sc *SessionController) UpdateSession(c *gin.Context) {
 		return
 	}
 
-	s, err := sc.sessionService.GetUserSession(myuser, c.Param("sid"))
+	err = sc.sessionService.UpdateUserSession(myuser, c.Param("sid"), func(newsession *happydns.Session) {
+		newsession.Description = us.Description
+		newsession.ExpiresOn = us.ExpiresOn
+	})
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
 
-	err = sc.sessionService.UpdateUserSession(myuser, c.Param("sid"), func(newsession *happydns.Session) {
-		newsession.Description = us.Description
-		newsession.ExpiresOn = us.ExpiresOn
-	})
+	s, err := sc.sessionService.GetUserSession(myuser, c.Param("sid"))
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
