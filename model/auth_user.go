@@ -83,9 +83,12 @@ func (u *UserAuth) JoinNewsletter() bool {
 	return u.AllowCommercials
 }
 
+// bcryptCost is the target bcrypt cost used when hashing passwords.
+const bcryptCost = 12
+
 // DefinePassword erases the current UserAuth's password by the new one given.
 func (u *UserAuth) DefinePassword(password string) (err error) {
-	u.Password, err = bcrypt.GenerateFromPassword([]byte(password), 12)
+	u.Password, err = bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
 	u.PasswordRecoveryKey = nil
 
 	return
@@ -98,6 +101,14 @@ func (u *UserAuth) CheckPassword(password string) bool {
 	}
 
 	return bcrypt.CompareHashAndPassword(u.Password, []byte(password)) == nil
+}
+
+// NeedsRehash reports whether the stored password hash was generated with a
+// lower cost than the current target, meaning it should be transparently
+// upgraded on the next successful login.
+func (u *UserAuth) NeedsRehash() bool {
+	cost, err := bcrypt.Cost(u.Password)
+	return err != nil || cost < bcryptCost
 }
 
 type AuthUserUsecase interface {
