@@ -22,11 +22,13 @@
 import { writable, type Writable } from "svelte/store";
 import { getAuth } from "$lib/api-base/sdk.gen";
 import { unwrapSdkResponse } from "$lib/api/errors";
+import { setRefreshingSession } from "$lib/hey-api";
 import type { User } from "$lib/model/user";
 
 export const userSession: Writable<User> = writable({} as User);
 
 export async function refreshUserSession() {
+    setRefreshingSession(true);
     try {
         const user = unwrapSdkResponse(await getAuth()) as unknown as User;
         userSession.set(user);
@@ -34,5 +36,7 @@ export async function refreshUserSession() {
     } catch (err) {
         userSession.set({} as User);
         throw err;
+    } finally {
+        setRefreshingSession(false);
     }
 }

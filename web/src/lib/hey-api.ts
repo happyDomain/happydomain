@@ -44,6 +44,12 @@ export class ProviderNoDomainListingSupport extends Error {
     }
 }
 
+let _isRefreshingSession = false;
+
+export function setRefreshingSession(val: boolean) {
+    _isRefreshingSession = val;
+}
+
 async function customFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
     const response = await fetch(input, init);
 
@@ -64,6 +70,11 @@ async function customFetch(input: RequestInfo | URL, init?: RequestInit): Promis
                 if (err instanceof CaptchaRequiredError) throw err;
                 // ignore JSON parsing errors
             }
+        }
+        // Avoid infinite loop: if refreshUserSession is already in progress (either called
+        // directly by the app or by a previous retry), just fail immediately.
+        if (_isRefreshingSession) {
+            throw new NotAuthorizedError("Not authenticated");
         }
         try {
             await refreshUserSession();
