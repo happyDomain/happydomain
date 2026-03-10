@@ -25,6 +25,7 @@
     import { navigate } from "$lib/stores/config";
 
     import {
+        Badge,
         Button,
         Input,
         InputGroup,
@@ -140,7 +141,9 @@
                                 {/await}
                             </small>
                             {#if session.id === current_session.id}
-                                ({$t("sessions.current")})
+                                <Badge>
+                                    {$t("sessions.current")}
+                                </Badge>
                             {/if}
                         </div>
                         <div>
