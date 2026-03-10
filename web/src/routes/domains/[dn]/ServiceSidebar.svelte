@@ -107,7 +107,7 @@
 {/if}
 
 <!-- Sibling services at current subdomain -->
-<ul class="list-unstyled mb-0 overflow-y-auto" style:padding-left={servicesPadding}>
+<ul class="list-unstyled mt-2 mb-0 overflow-y-auto" style:padding-left={servicesPadding}>
     {#each services as service}
         {@const isActive = service._id === serviceid}
         <li class="mb-1">
