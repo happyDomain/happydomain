@@ -35,7 +35,13 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { triggerCheck, getDomainCheckOptions, getCheckStatus } from "$lib/api/checkers";
+    import {
+        triggerCheck,
+        triggerServiceCheck,
+        getDomainCheckOptions,
+        getServiceCheckOptions,
+        getCheckStatus,
+    } from "$lib/api/checkers";
     import type { CheckerOptions } from "$lib/model/checker";
     import Resource from "$lib/components/inputs/Resource.svelte";
     import { toasts } from "$lib/stores/toasts";
@@ -43,10 +49,17 @@
 
     interface Props {
         domainId: string;
+        zoneId?: string;
+        subdomain?: string;
+        serviceid?: string;
         onCheckTriggered?: (execution_id: string, checker_name: string) => void;
     }
 
-    let { domainId, onCheckTriggered }: Props = $props();
+    let { domainId, zoneId, subdomain, serviceid, onCheckTriggered }: Props = $props();
+
+    const isServiceScoped = $derived(
+        zoneId !== undefined && subdomain !== undefined && serviceid !== undefined,
+    );
 
     let isOpen = $state(false);
     let checkName = $state<string>("");
@@ -64,7 +77,9 @@
         checkDisplayName = displayName;
         runOptions = {};
         checkStatusPromise = getCheckStatus(name);
-        domainOptionsPromise = getDomainCheckOptions(domainId, name);
+        domainOptionsPromise = isServiceScoped
+            ? getServiceCheckOptions(domainId, zoneId!, subdomain!, serviceid!, name)
+            : getDomainCheckOptions(domainId, name);
         isOpen = true;
 
         // Pre-populate with domain options when they load
@@ -76,7 +91,16 @@
     async function handleRunCheck() {
         triggering = true;
         try {
-            const result = await triggerCheck(domainId, checkName, runOptions);
+            const result = isServiceScoped
+                ? await triggerServiceCheck(
+                      domainId,
+                      zoneId!,
+                      subdomain!,
+                      serviceid!,
+                      checkName,
+                      runOptions,
+                  )
+                : await triggerCheck(domainId, checkName, runOptions);
             toasts.addToast({
                 message: $t("checkers.run-check.triggered-success", { id: result.execution_id }),
                 type: "success",

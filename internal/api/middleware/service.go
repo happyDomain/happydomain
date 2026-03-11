@@ -43,3 +43,21 @@ func ServiceIdHandler(suService happydns.ServiceUsecase) gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func ServiceHandler(suService happydns.ServiceUsecase) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		zone := c.MustGet("zone").(*happydns.Zone)
+		serviceid := c.MustGet("serviceid").(happydns.Identifier)
+		subdomain := c.MustGet("subdomain").(happydns.Subdomain)
+
+		_, svc := zone.FindSubdomainService(subdomain, serviceid)
+		if svc == nil {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Service not found: %s", serviceid)})
+			return
+		}
+
+		c.Set("service", svc)
+
+		c.Next()
+	}
+}

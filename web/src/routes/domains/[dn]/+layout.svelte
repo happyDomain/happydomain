@@ -44,8 +44,7 @@
     import { deleteDomain as APIDeleteDomain } from "$lib/api/domains";
 
     // Local components
-    import CheckResultSidebar from "./checks/CheckResultSidebar.svelte";
-    import DomainCheckerSidebar from "$lib/components/checkers/DomainCheckerSidebar.svelte";
+    import ChecksSidebarContent from "$lib/components/checkers/ChecksSidebarContent.svelte";
     import SelectDomain from "$lib/components/domains/SelectDomain.svelte";
     import ButtonZonePublish from "./ButtonZonePublish.svelte";
     import ModalDiffZone from "./ModalDiffZone.svelte";
@@ -168,41 +167,30 @@
                     <SelectDomain bind:selectedDomain />
                 </div>
 
-                {#if page.route.id && page.route.id.startsWith("/domains/[dn]/checks/[cname]")}
-                    {#if page.route.id.startsWith("/domains/[dn]/checks/[cname]/results/")}
-                        <a
-                            href={"/domains/" +
-                                encodeURIComponent(domainLink(selectedDomain)) +
-                                "/checks/" +
-                                encodeURIComponent(page.params.cname!) +
-                                "/results"}
-                            class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
-                        >
-                            <Icon name="chevron-left" />
-                            {$t("zones.return-to-results")}
-                        </a>
-                        <CheckResultSidebar
-                            domain={data.domain}
-                            cname={page.params.cname!}
-                            rid={page.params.rid!}
-                        />
-                    {:else}
-                        <a
-                            href="/domains/{encodeURIComponent(domainLink(selectedDomain))}/checks"
-                            class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
-                        >
-                            <Icon name="chevron-left" />
-                            {$t("checkers.title")}
-                        </a>
-                        {#if page.params.cname}
-                            <DomainCheckerSidebar
-                                class="mt-3"
-                                domainName={data.domain.domain}
-                                currentCheckerName={page.params.cname}
-                            />
-                        {/if}
-                        <div class="flex-fill"></div>
-                    {/if}
+                {#if page.route.id && page.route.id.startsWith("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checks/")}
+                    {@const serviceChecksBase = `/domains/${encodeURIComponent(domainLink(selectedDomain))}/${page.params.historyid ? encodeURIComponent(page.params.historyid) : ""}/${encodeURIComponent(page.params.subdomain!)}/${encodeURIComponent(page.params.serviceid!)}/checks`}
+                    <ChecksSidebarContent
+                        domain={data.domain}
+                        checksBase={serviceChecksBase}
+                        backHref={`/domains/${encodeURIComponent(domainLink(selectedDomain))}/${page.params.historyid ? encodeURIComponent(page.params.historyid) : ""}`}
+                        serviceContext={page.data.zoneId
+                            ? {
+                                  zoneId: page.data.zoneId,
+                                  subdomain: page.data.subdomain || page.params.subdomain!,
+                                  serviceid: page.params.serviceid!,
+                              }
+                            : undefined}
+                    />
+                {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/checks/[cname]")}
+                    <ChecksSidebarContent
+                        domain={data.domain}
+                        checksBase={"/domains/" +
+                            encodeURIComponent(domainLink(selectedDomain)) +
+                            "/checks"}
+                        backHref={"/domains/" +
+                            encodeURIComponent(domainLink(selectedDomain)) +
+                            "/checks"}
+                    />
                 {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export") || page.route.id == "/domains/[dn]/checks")}
                     <a
                         href="/domains/{encodeURIComponent(domainLink(selectedDomain))}"
@@ -211,9 +199,14 @@
                         <Icon name="chevron-left" />
                         {$t("zones.return-to")}
                     </a>
-                {:else if page.route.id === "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]"}
+                {:else if page.route.id === "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]" || page.route.id.startsWith("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checks")}
                     <ServiceSidebar
                         origin={data.domain}
+                        pageSuffix={page.route.id.startsWith(
+                            "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checks",
+                        )
+                            ? "/checks"
+                            : ""}
                         subdomain={page.data.subdomain ?? ""}
                         serviceid={page.data.serviceid ?? ""}
                         historyId={page.data.history ?? ""}
@@ -255,7 +248,10 @@
         </Col>
         <div
             class="col-sm-8 col-md-9 d-flex"
-            class:p-0={page.route && page.route.id == "/domains/[dn]/checks/[cname]/results/[rid]"}
+            class:p-0={page.route &&
+                (page.route.id == "/domains/[dn]/checks/[cname]/results/[rid]" ||
+                    page.route.id ==
+                        "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checks/[cname]/results/[rid]")}
         >
             {@render children?.()}
         </div>
