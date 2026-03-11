@@ -31,6 +31,7 @@
 
 <script lang="ts">
     import {
+        Badge,
         Button,
         Icon,
         Input,
@@ -40,6 +41,7 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
+    import { listServiceAvailableCheckers } from "$lib/api/checkers";
     import { getServiceSpec } from "$lib/api/service_specs";
     import { deleteZoneService, updateZoneService } from "$lib/api/zone";
     import ServiceBadges from "./[[historyid]]/ServiceBadges.svelte";
@@ -47,9 +49,11 @@
     import { collectRRs } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import { navigate } from "$lib/stores/config";
+    import { checkers } from "$lib/stores/checkers";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
+    import { getStatusColor, getStatusKey } from "$lib/utils";
 
     interface Props {
         domain: Domain;
@@ -93,6 +97,19 @@
         !!service?._id &&
             service._svctype !== "abstract.Origin" &&
             service._svctype !== "abstract.NSOnlyOrigin",
+    );
+
+    const zoneId = $derived(selectedHistory || domain.zone_history?.[0] || "");
+    const subdomain = $derived(service._domain || "@");
+    const checksPromise = $derived(
+        service._id && zoneId
+            ? listServiceAvailableCheckers(domain.id, zoneId, subdomain, service._id)
+            : null,
+    );
+    const serviceChecksPath = $derived(
+        service._id && zoneId
+            ? `/domains/${encodeURIComponent(domain.domain)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(service._domain || "@")}/${encodeURIComponent(service._id)}/checks`
+            : null,
     );
 
     let ttlSaveInProgress = $state(false);
@@ -144,9 +161,66 @@
             {#await getServiceSpec(service._svctype) then specs}
                 {@const rrs = collectRRs(specs.fields, service.Service)}
                 {#each rrs as rr, i}
-                    <RecordLine dn={service._domain || ""} origin={domain} bind:rr={rrs[i]} onopen={() => (isOpen = false)} />
+                    <RecordLine
+                        dn={service._domain || ""}
+                        origin={domain}
+                        bind:rr={rrs[i]}
+                        onopen={() => (isOpen = false)}
+                    />
                 {/each}
             {/await}
+        {/if}
+        {#if checksPromise}
+            <div class="mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <small class="text-muted fw-semibold text-uppercase">
+                        {$t("checkers.service-checks")}
+                    </small>
+                    {#if serviceChecksPath}
+                        <a href={serviceChecksPath} class="small" onclick={() => (isOpen = false)}>
+                            {$t("checkers.view-all")} →
+                        </a>
+                    {/if}
+                </div>
+                {#await checksPromise}
+                    <div class="text-center py-2">
+                        <Spinner size="sm" />
+                    </div>
+                {:then availableCheckers}
+                    {#if availableCheckers && availableCheckers.length > 0}
+                        <div class="d-flex flex-column gap-1">
+                            {#each availableCheckers as check}
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a
+                                        href={serviceChecksPath +
+                                            "/" +
+                                            check.checker_name +
+                                            "/results"}
+                                        class="text-truncate me-2"
+                                        onclick={() => (isOpen = false)}
+                                    >
+                                        {$checkers?.[check.checker_name]?.name ??
+                                            check.checker_name}
+                                    </a>
+                                    {#if check.last_result !== undefined}
+                                        <Badge color={getStatusColor(check.last_result.status)}>
+                                            {$t(getStatusKey(check.last_result.status))}
+                                        </Badge>
+                                    {:else}
+                                        <Badge color="secondary">
+                                            {$t("checkers.status.not-run")}
+                                        </Badge>
+                                    {/if}
+                                </div>
+                            {/each}
+                        </div>
+                    {:else}
+                        <small class="text-muted fst-italic">{$t("checkers.no-checks")}</small>
+                    {/if}
+                {:catch}
+                    <small class="text-danger">{$t("checkers.load-error")}</small>
+                {/await}
+            </div>
         {/if}
         <div class="flex-fill"></div>
         {#if service._id}

@@ -35,13 +35,15 @@ import (
 )
 
 type ZoneController struct {
+	checkResultUC         happydns.CheckResultUsecase
 	domainService         happydns.DomainUsecase
 	zoneCorrectionService happydns.ZoneCorrectionApplierUsecase
 	zoneService           happydns.ZoneUsecase
 }
 
-func NewZoneController(zoneService happydns.ZoneUsecase, domainService happydns.DomainUsecase, zoneCorrectionService happydns.ZoneCorrectionApplierUsecase) *ZoneController {
+func NewZoneController(zoneService happydns.ZoneUsecase, domainService happydns.DomainUsecase, zoneCorrectionService happydns.ZoneCorrectionApplierUsecase, checkResultUC happydns.CheckResultUsecase) *ZoneController {
 	return &ZoneController{
+		checkResultUC:         checkResultUC,
 		domainService:         domainService,
 		zoneCorrectionService: zoneCorrectionService,
 		zoneService:           zoneService,
@@ -59,14 +61,37 @@ func NewZoneController(zoneService happydns.ZoneUsecase, domainService happydns.
 //	@Security		securitydefinitions.basic
 //	@Param			domainId	path		string	true	"Domain identifier"
 //	@Param			zoneId		path		string	true	"Zone identifier"
-//	@Success		200			{object}	happydns.Zone
+//	@Success		200			{object}	happydns.ZoneWithServicesCheckStatus
 //	@Failure		401			{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Failure		404			{object}	happydns.ErrorResponse	"Domain or Zone not found"
 //	@Router			/domains/{domainId}/zone/{zoneId} [get]
 func (zc *ZoneController) GetZone(c *gin.Context) {
+	user := middleware.MyUser(c)
 	zone := c.MustGet("zone").(*happydns.Zone)
 
-	c.JSON(http.StatusOK, zone)
+	result := &happydns.ZoneWithServicesCheckStatus{Zone: zone}
+
+	if zc.checkResultUC != nil && user != nil {
+		statusByService, err := zc.checkResultUC.GetWorstCheckStatusByUser(happydns.CheckScopeService, user.Id)
+		if err != nil {
+			log.Printf("GetWorstCheckStatusByUser: %s", err.Error())
+		} else if statusByService != nil {
+			result.ServicesCheckStatus = make(map[string]*happydns.CheckResultStatus)
+			for subdomain := range zone.Services {
+				for _, svc := range zone.Services[subdomain] {
+					key := svc.Id.String()
+					if status, ok := statusByService[key]; ok {
+						result.ServicesCheckStatus[key] = status
+					}
+				}
+			}
+			if len(result.ServicesCheckStatus) == 0 {
+				result.ServicesCheckStatus = nil
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, result)
 }
 
 // GetZoneSubdomain returns the services associated with a given subdomain.

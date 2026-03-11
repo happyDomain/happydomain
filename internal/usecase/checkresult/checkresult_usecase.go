@@ -23,6 +23,7 @@ package checkresult
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"git.happydns.org/happyDomain/model"
@@ -48,24 +49,34 @@ func NewCheckResultUsecase(storage CheckResultStorage, options *happydns.Options
 
 // ListCheckerStatuses returns all checkers applicable to scope with their schedule
 // and most recent result for the given target.
-func (u *CheckResultUsecase) ListCheckerStatuses(scope happydns.CheckScopeType, targetID happydns.Identifier) ([]happydns.CheckerStatus, error) {
+func (u *CheckResultUsecase) ListCheckerStatuses(scope happydns.CheckScopeType, targetID happydns.Identifier, domain *happydns.Domain, service *happydns.Service) ([]happydns.CheckerStatus, error) {
 	plugins, err := u.checkerUC.ListCheckers()
 	if err != nil {
 		return nil, err
 	}
 
+	// Get schedules for this target
 	schedules, err := u.checkerScheduleUC.ListSchedulesByTarget(scope, targetID)
 	if err != nil {
 		return nil, err
 	}
 
+	// Build schedule map
 	scheduleMap := make(map[string]*happydns.CheckerSchedule, len(schedules))
 	for _, sched := range schedules {
 		scheduleMap[sched.CheckerName] = sched
 	}
 
+	// Get service type for LimitToServices filtering
+	var serviceType string
+	if scope == happydns.CheckScopeService && service != nil {
+		serviceType = service.Type
+	}
+
+	// Build response with last results
 	var statuses []happydns.CheckerStatus
 	for checkername, check := range *plugins {
+		// Filter plugins by scope
 		if scope == happydns.CheckScopeDomain && !check.Availability().ApplyToDomain {
 			continue
 		}
@@ -73,16 +84,26 @@ func (u *CheckResultUsecase) ListCheckerStatuses(scope happydns.CheckScopeType, 
 			continue
 		}
 
+		// Filter plugins by service type if LimitToServices is set
+		if scope == happydns.CheckScopeService && serviceType != "" {
+			limitTo := check.Availability().LimitToServices
+			if len(limitTo) > 0 && !slices.Contains(limitTo, serviceType) {
+				continue
+			}
+		}
+
 		info := happydns.CheckerStatus{
 			CheckerName:   checkername,
 			NotDiscovered: true,
 		}
 
+		// Check if there's a schedule
 		if sched, ok := scheduleMap[checkername]; ok {
 			info.Enabled = sched.Enabled
 			info.Schedule = sched
 			info.NotDiscovered = false
 
+			// Get last result
 			results, err := u.ListCheckResultsByTarget(checkername, scope, targetID, 1)
 			if err == nil && len(results) > 0 {
 				info.LastResult = results[0]

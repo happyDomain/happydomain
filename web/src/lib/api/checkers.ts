@@ -40,6 +40,17 @@ import {
     getDomainsByDomainChecksByCnameExecutionsByExecutionId,
     postPluginsTestsSchedules,
     putPluginsTestsSchedulesByScheduleId,
+    getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecks,
+    postDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCname,
+    getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameExecutionsByExecutionId,
+    getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameOptions,
+    postDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameOptions,
+    putDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameOptions,
+    getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameResults,
+    getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameResultsByResultId,
+    deleteDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameResultsByResultId,
+    deleteDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameResults,
+    getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameResultsByResultIdReport,
 } from "$lib/api-base/sdk.gen";
 import { unwrapSdkResponse } from "./errors";
 import type {
@@ -282,4 +293,212 @@ export async function getCheckExecution(
             path: { domain: domainId, cname: checkName, execution_id: executionId },
         }),
     ) as unknown as CheckExecution;
+}
+
+// --- Service-scoped check API functions ---
+
+export async function listServiceAvailableCheckers(
+    domainId: string,
+    zoneId: string,
+    subdomain: string,
+    serviceid: string,
+): Promise<AvailableChecker[]> {
+    return unwrapSdkResponse(
+        await getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecks({
+            path: { domain: domainId, zoneid: zoneId, subdomain, serviceid },
+        }),
+    ) as unknown as AvailableChecker[];
+}
+
+export async function triggerServiceCheck(
+    domainId: string,
+    zoneId: string,
+    subdomain: string,
+    serviceid: string,
+    checkId: string,
+    options?: CheckerOptions,
+): Promise<{ execution_id?: string }> {
+    const filteredOptions = options
+        ? Object.fromEntries(
+              Object.entries(options).filter(([, v]) => v !== "" && v !== null && v !== undefined),
+          )
+        : undefined;
+    return unwrapSdkResponse(
+        await postDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCname({
+            path: { domain: domainId, zoneid: zoneId, subdomain, serviceid, cname: checkId } as any,
+            body: { options: filteredOptions } as any,
+        }),
+    ) as { execution_id?: string };
+}
+
+export async function getServiceCheckExecution(
+    domainId: string,
+    zoneId: string,
+    subdomain: string,
+    serviceid: string,
+    checkName: string,
+    executionId: string,
+): Promise<CheckExecution> {
+    return unwrapSdkResponse(
+        await getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameExecutionsByExecutionId(
+            {
+                path: {
+                    domain: domainId,
+                    zoneid: zoneId,
+                    subdomain,
+                    serviceid,
+                    cname: checkName,
+                    execution_id: executionId,
+                } as any,
+            },
+        ),
+    ) as unknown as CheckExecution;
+}
+
+export async function getServiceCheckOptions(
+    domainId: string,
+    zoneId: string,
+    subdomain: string,
+    serviceid: string,
+    checkId: string,
+): Promise<CheckerOptions> {
+    return unwrapSdkResponse(
+        await getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameOptions({
+            path: { domain: domainId, zoneid: zoneId, subdomain, serviceid, cname: checkId } as any,
+        }),
+    ) as CheckerOptions;
+}
+
+export async function addServiceCheckOptions(
+    domainId: string,
+    zoneId: string,
+    subdomain: string,
+    serviceid: string,
+    checkId: string,
+    options: CheckerOptions,
+): Promise<boolean> {
+    return unwrapSdkResponse(
+        await postDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameOptions({
+            path: { domain: domainId, zoneid: zoneId, subdomain, serviceid, cname: checkId } as any,
+            body: options as any,
+        }),
+    ) as boolean;
+}
+
+export async function updateServiceCheckOptions(
+    domainId: string,
+    zoneId: string,
+    subdomain: string,
+    serviceid: string,
+    checkId: string,
+    options: CheckerOptions,
+): Promise<boolean> {
+    return unwrapSdkResponse(
+        await putDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameOptions({
+            path: { domain: domainId, zoneid: zoneId, subdomain, serviceid, cname: checkId } as any,
+            body: options as any,
+        }),
+    ) as boolean;
+}
+
+export async function listServiceCheckResults(
+    domainId: string,
+    zoneId: string,
+    subdomain: string,
+    serviceid: string,
+    checkName: string,
+): Promise<CheckResult[]> {
+    return unwrapSdkResponse(
+        await getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameResults({
+            path: {
+                domain: domainId,
+                zoneid: zoneId,
+                subdomain,
+                serviceid,
+                cname: checkName,
+            } as any,
+        }),
+    ) as unknown as CheckResult[];
+}
+
+export async function getServiceCheckResult(
+    domainId: string,
+    zoneId: string,
+    subdomain: string,
+    serviceid: string,
+    checkName: string,
+    resultId: string,
+): Promise<CheckResult> {
+    return unwrapSdkResponse(
+        await getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameResultsByResultId(
+            {
+                path: {
+                    domain: domainId,
+                    zoneid: zoneId,
+                    subdomain,
+                    serviceid,
+                    cname: checkName,
+                    result_id: resultId,
+                } as any,
+            },
+        ),
+    ) as unknown as CheckResult;
+}
+
+export async function deleteServiceCheckResult(
+    domainId: string,
+    zoneId: string,
+    subdomain: string,
+    serviceid: string,
+    checkName: string,
+    resultId: string,
+): Promise<void> {
+    await deleteDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameResultsByResultId(
+        {
+            path: {
+                domain: domainId,
+                zoneid: zoneId,
+                subdomain,
+                serviceid,
+                cname: checkName,
+                result_id: resultId,
+            } as any,
+        },
+    );
+}
+
+export async function deleteAllServiceCheckResults(
+    domainId: string,
+    zoneId: string,
+    subdomain: string,
+    serviceid: string,
+    checkName: string,
+): Promise<void> {
+    await deleteDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameResults({
+        path: { domain: domainId, zoneid: zoneId, subdomain, serviceid, cname: checkName } as any,
+    });
+}
+
+export async function getServiceCheckResultHTMLReport(
+    domainId: string,
+    zoneId: string,
+    subdomain: string,
+    serviceid: string,
+    checkName: string,
+    resultId: string,
+): Promise<string> {
+    return unwrapSdkResponse(
+        await getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameResultsByResultIdReport(
+            {
+                path: {
+                    domain: domainId,
+                    zoneid: zoneId,
+                    subdomain,
+                    serviceid,
+                    cname: checkName,
+                    result_id: resultId,
+                } as any,
+            },
+        ),
+    ) as string;
 }

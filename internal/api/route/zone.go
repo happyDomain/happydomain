@@ -45,6 +45,7 @@ func DeclareZoneRoutes(
 		zoneUC,
 		domainUC,
 		zoneCorrApplier,
+		checkResultUC,
 	)
 
 	apiZonesRoutes := router.Group("/zone/:zoneid")

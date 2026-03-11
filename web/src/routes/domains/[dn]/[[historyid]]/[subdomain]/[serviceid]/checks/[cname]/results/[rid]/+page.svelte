@@ -25,31 +25,31 @@
     import { page } from "$app/state";
     import {
         getCheckStatus,
-        getCheckResult,
-        getCheckResultHTMLReport,
-        getCheckResultMetrics,
+        getServiceCheckResult,
+        getServiceCheckResultHTMLReport,
+        getServiceCheckResultMetrics,
     } from "$lib/api/checkers";
     import type { Domain } from "$lib/model/domain";
     import CheckResultView from "$lib/components/checkers/CheckResultView.svelte";
 
     interface Props {
-        data: { domain: Domain };
+        data: { domain: Domain; zoneId: string; subdomain: string; serviceid: string };
     }
 
     let { data }: Props = $props();
 
-    const checkName = $derived(page.params.cname || "");
+    const checkerName = $derived(page.params.cname || "");
     const resultId = $derived(page.params.rid || "");
 
-    const resultPromise = $derived(getCheckResult(data.domain.id, checkName, resultId));
-    const checkPromise = $derived(getCheckStatus(checkName));
-    const htmlReportPromise = $derived(getCheckResultHTMLReport(data.domain.id, checkName, resultId));
-    const getMetrics = $derived(() => getCheckResultMetrics(data.domain.id, checkName, resultId));
+    const resultPromise = $derived(getServiceCheckResult(data.domain.id, data.zoneId, data.subdomain, data.serviceid, checkerName, resultId));
+    const checkPromise = $derived(getCheckStatus(checkerName));
+    const htmlReportPromise = $derived(getServiceCheckResultHTMLReport(data.domain.id, data.zoneId, data.subdomain, data.serviceid, checkerName, resultId));
+    const getMetrics = $derived(() => getServiceCheckResultMetrics(data.domain.id, data.zoneId, data.subdomain, data.serviceid, checkerName, resultId));
 </script>
 
 <svelte:head>
     <title>
-        Check Result - {checkName} - {data.domain.domain} - happyDomain
+        Check Result - {checkerName} - {data.domain.domain} - happyDomain
     </title>
 </svelte:head>
 
