@@ -34,6 +34,7 @@ func DeclareZoneRoutes(router *gin.RouterGroup, zoneUC happydns.ZoneUsecase, dom
 		zoneUC,
 		domainUC,
 		zoneCorrApplier,
+		checkResultUC,
 	)
 
 	apiZonesRoutes := router.Group("/zone/:zoneid")

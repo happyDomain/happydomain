@@ -29,7 +29,7 @@
     import PageTitle from "$lib/components/PageTitle.svelte";
     import { t } from "$lib/translations";
     import {
-        listAvailableCheckers,
+        listServiceAvailableCheckers,
         updateCheckSchedule,
         createCheckSchedule,
     } from "$lib/api/checkers";
@@ -39,16 +39,24 @@
     import { toasts } from "$lib/stores/toasts";
 
     interface Props {
-        data: { domain: Domain };
+        data: { domain: Domain; zoneId: string; subdomain: string; serviceid: string };
     }
 
     let { data }: Props = $props();
 
-    const checkName = $derived(page.params.cname || "");
-    const checkDisplayName = $derived($checkers?.[checkName]?.name || checkName);
+    const checkerName = $derived(page.params.cname || "");
+    const checkerDisplayName = $derived($checkers?.[checkerName]?.name || checkerName);
+
+    function serviceChecksBasePath(): string {
+        const dn = encodeURIComponent(data.domain.domain);
+        const historyid = page.params.historyid ? encodeURIComponent(page.params.historyid) : "";
+        const sub = encodeURIComponent(page.params.subdomain!);
+        const svc = encodeURIComponent(data.serviceid);
+        return `/domains/${dn}/${historyid}/${sub}/${svc}/checks`;
+    }
 
     // Resolved check data
-    let check = $state<AvailableChecker | null>(null);
+    let checker = $state<AvailableChecker | null>(null);
     let loading = $state(true);
     let loadError = $state<string | null>(null);
 
@@ -57,13 +65,18 @@
     let formIntervalHours = $state(24);
     let saving = $state(false);
 
-    async function loadCheck() {
+    async function loadChecker() {
         loading = true;
         loadError = null;
         try {
-            const checks = await listAvailableCheckers(data.domain.id);
-            const found = checks?.find((c) => c.checker_name === checkName) ?? null;
-            check = found;
+            const checkers = await listServiceAvailableCheckers(
+                data.domain.id,
+                data.zoneId,
+                data.subdomain,
+                data.serviceid,
+            );
+            const found = checkers?.find((c) => c.checker_name === checkerName) ?? null;
+            checker = found;
             if (found) {
                 formEnabled = found.enabled;
                 formIntervalHours =
@@ -80,26 +93,26 @@
         }
     }
 
-    loadCheck();
+    loadChecker();
 
     async function handleSave() {
-        if (!check) return;
+        if (!checker) return;
         saving = true;
 
         try {
             const intervalNs = Math.max(formIntervalHours, 1) * 3600 * 1e9;
 
-            if (check.schedule) {
-                await updateCheckSchedule(check.schedule.id!, {
-                    ...check.schedule,
+            if (checker.schedule) {
+                await updateCheckSchedule(checker.schedule.id!, {
+                    ...checker.schedule,
                     enabled: formEnabled,
                     interval: intervalNs,
                 });
             } else {
                 await createCheckSchedule({
-                    checker_name: check.checker_name,
-                    target_type: CheckScopeType.CheckScopeDomain,
-                    target_id: data.domain.id,
+                    checker_name: checker.checker_name,
+                    target_type: CheckScopeType.CheckScopeService,
+                    target_id: data.serviceid,
                     interval: intervalNs,
                     enabled: formEnabled,
                 });
@@ -110,7 +123,7 @@
                 type: "success",
                 timeout: 3000,
             });
-            await loadCheck();
+            await loadChecker();
         } catch (e: any) {
             toasts.addErrorToast({
                 title: $t("checkers.schedule.save-failed"),
@@ -124,7 +137,7 @@
 
 <svelte:head>
     <title>
-        {checkName} - {$t("checkers.schedule.title")} - {data.domain.domain} - happyDomain
+        {checkerName} - {$t("checkers.schedule.title")} - {data.domain.domain} - happyDomain
     </title>
 </svelte:head>
 
@@ -132,11 +145,11 @@
     <PageTitle
         title={$t("checkers.schedule.title")}
         domain={data.domain.domain}
-        subtitle={checkDisplayName}
+        subtitle={checkerDisplayName}
     >
         <Button
             color="info"
-            href={`/domains/${encodeURIComponent(data.domain.domain)}/checks/${encodeURIComponent(checkName)}/results`}
+            href={`${serviceChecksBasePath()}/${encodeURIComponent(checkerName)}/results`}
         >
             <Icon name="bar-chart-fill"></Icon>
             {$t("checkers.list.view-results")}
@@ -155,16 +168,16 @@
                 {$t("checkers.list.error-loading", { error: loadError })}
             </p>
         </Card>
-    {:else if !check}
+    {:else if !checker}
         <Card body>
             <p class="text-center text-muted mb-0">
                 <Icon name="info-circle"></Icon>
-                {$t("checkers.list.no-checks")}
+                {$t("checkers.list.no-checks-service")}
             </p>
         </Card>
     {:else}
         <CheckerScheduleCard
-            checker={check}
+            {checker}
             bind:formEnabled
             bind:formIntervalHours
             {saving}

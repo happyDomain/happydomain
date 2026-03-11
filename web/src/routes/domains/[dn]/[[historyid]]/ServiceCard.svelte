@@ -38,8 +38,10 @@
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service.svelte";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
+    import { thisZone } from "$lib/stores/thiszone";
     import { navigate } from "$lib/stores/config";
     import { t } from "$lib/translations";
+    import { getStatusColor, getStatusIcon } from "$lib/utils/check";
 
     interface Props {
         dn: string;
@@ -79,7 +81,13 @@
                         <Icon name="plus-circle" /> {$t("service.new")}
                     {/if}
                 </CardTitle>
-                <ServiceBadges {service} />
+                {#if service?._id && $thisZone?.services_check_status?.[service._id] !== undefined}
+                    <span class={"text-" + getStatusColor($thisZone.services_check_status![service._id])}>
+                        <Icon name={getStatusIcon($thisZone.services_check_status![service._id])} />
+                    </span>
+                {:else}
+                    <ServiceBadges {service} />
+                {/if}
             </div>
             <CardSubtitle class="mb-2 text-muted fst-italic">
                 {#if service}

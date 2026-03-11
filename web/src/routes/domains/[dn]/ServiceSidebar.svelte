@@ -29,26 +29,25 @@
 
     interface Props {
         origin: Domain;
+        pageSuffix?: string;
         subdomain: string;
         serviceid: string;
         historyId: string;
     }
 
-    let { origin, subdomain, serviceid, historyId }: Props = $props();
+    let { origin, pageSuffix = "", subdomain, serviceid, historyId }: Props = $props();
 
     // Ancestors from shallowest to deepest:
     // "" → [], "www" → [], "a.b" → ["b"], "a.b.c" → ["c", "b.c"]
-    let ancestors = $derived(
-        (() => {
-            if (!subdomain) return [];
-            const parts = subdomain.split(".");
-            const result: string[] = [];
-            for (let k = 1; k < parts.length; k++) {
-                result.push(parts.slice(parts.length - k).join("."));
-            }
-            return result;
-        })(),
-    );
+    let ancestors = $derived.by(() => {
+        if (!subdomain) return [];
+        const parts = subdomain.split(".");
+        const result: string[] = [];
+        for (let k = 1; k < parts.length; k++) {
+            result.push(parts.slice(parts.length - k).join("."));
+        }
+        return result;
+    });
 
     let services = $derived($thisZone?.services[subdomain] ?? []);
 
@@ -65,7 +64,7 @@
     }
 
     function serviceLink(svc: { _id?: string }): string {
-        return `/domains/${origin.domain}/${historyId}/${subdomain === "" ? "@" : subdomain}/${svc._id}`;
+        return `/domains/${origin.domain}/${historyId}/${subdomain === "" ? "@" : subdomain}/${svc._id}${pageSuffix}`;
     }
 </script>
 
@@ -77,7 +76,7 @@
     title={fqdn("", origin.domain)}
     class="d-block text-truncate text-body font-monospace text-decoration-none"
     class:fw-bold={subdomain === ""}
-    style="max-width: none; padding-left: 0px"
+    style="max-width: none; padding-left: 0px; height: 2em"
 >
     {fqdn("", origin.domain)}
 </a>

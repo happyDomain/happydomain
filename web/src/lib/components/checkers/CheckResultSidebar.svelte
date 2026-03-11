@@ -31,7 +31,6 @@
         Button,
         ButtonGroup,
         Card,
-        CardBody,
         CardHeader,
         CardTitle,
         Icon,
@@ -44,7 +43,14 @@
     import { toasts } from "$lib/stores/toasts";
 
     // API imports
-    import { deleteCheckResult, getCheckResultHTMLReport, triggerCheck } from "$lib/api/checkers";
+    import {
+        deleteCheckResult,
+        deleteServiceCheckResult,
+        getCheckResultHTMLReport,
+        getServiceCheckResultHTMLReport,
+        triggerCheck,
+        triggerServiceCheck,
+    } from "$lib/api/checkers";
 
     // Utility imports
     import { getStatusColor, getStatusKey, formatDuration, formatCheckDate } from "$lib/utils";
@@ -58,9 +64,15 @@
         domain: Domain;
         cname: string;
         rid: string;
+        checksBase: string;
+        serviceContext?: {
+            zoneId: string;
+            subdomain: string;
+            serviceid: string;
+        };
     }
 
-    let { domain, cname, rid }: Props = $props();
+    let { domain, cname, rid, checksBase, serviceContext }: Props = $props();
 
     // Local state
     let isRelaunching = $state(false);
@@ -70,10 +82,19 @@
         if (!$currentCheckResult) return;
         isRelaunching = true;
         try {
-            await triggerCheck(domain.id, cname, $currentCheckResult.options);
-            navigate(
-                `/domains/${encodeURIComponent(domain.domain)}/checks/${encodeURIComponent(cname)}`,
-            );
+            if (serviceContext) {
+                await triggerServiceCheck(
+                    domain.id,
+                    serviceContext.zoneId,
+                    serviceContext.subdomain,
+                    serviceContext.serviceid,
+                    cname,
+                    $currentCheckResult.options,
+                );
+            } else {
+                await triggerCheck(domain.id, cname, $currentCheckResult.options);
+            }
+            navigate(`${checksBase}/${encodeURIComponent(cname)}`);
         } catch (error: any) {
             toasts.addErrorToast({
                 message: error.message || $t("checkers.result.relaunch-failed"),
@@ -86,10 +107,19 @@
     async function handleDelete() {
         if (!confirm($t("checkers.result.delete-confirm"))) return;
         try {
-            await deleteCheckResult(domain.id, cname, rid);
-            navigate(
-                `/domains/${encodeURIComponent(domain.domain)}/checks/${encodeURIComponent(cname)}`,
-            );
+            if (serviceContext) {
+                await deleteServiceCheckResult(
+                    domain.id,
+                    serviceContext.zoneId,
+                    serviceContext.subdomain,
+                    serviceContext.serviceid,
+                    cname,
+                    rid,
+                );
+            } else {
+                await deleteCheckResult(domain.id, cname, rid);
+            }
+            navigate(`${checksBase}/${encodeURIComponent(cname)}`);
         } catch (error: any) {
             toasts.addErrorToast({ message: error.message || $t("checkers.result.delete-failed") });
         }
@@ -106,7 +136,19 @@
     }
 
     async function downloadHTML() {
-        const html = await getCheckResultHTMLReport(domain.id, cname, rid);
+        let html: string;
+        if (serviceContext) {
+            html = await getServiceCheckResultHTMLReport(
+                domain.id,
+                serviceContext.zoneId,
+                serviceContext.subdomain,
+                serviceContext.serviceid,
+                cname,
+                rid,
+            );
+        } else {
+            html = await getCheckResultHTMLReport(domain.id, cname, rid);
+        }
         downloadBlob(html, `${cname}-${rid}.html`, "text/html");
     }
 
@@ -138,42 +180,44 @@
                 {/if}
             </div>
         </CardHeader>
-        <Table borderless size="sm" class="mb-0">
-            <tbody>
-                <tr>
-                    <th style="width: 80px; white-space: nowrap"
-                        >{$t("checkers.result.field.executed-at")}</th
-                    >
-                    <td>{formatCheckDate($currentCheckResult.executed_at, "short", $t)}</td>
-                </tr>
-                <tr>
-                    <th>{$t("checkers.result.field.duration")}</th>
-                    <td>{formatDuration($currentCheckResult.duration, $t)}</td>
-                </tr>
-                <tr>
-                    <th>{$t("checkers.result.field.status")}</th>
-                    <td>
-                        <Badge color={getStatusColor($currentCheckResult.status)}>
-                            {$t(getStatusKey($currentCheckResult.status))}
-                        </Badge>
-                    </td>
-                </tr>
-                <tr>
-                    <th>{$t("checkers.result.field.status-message")}</th>
-                    <td class="text-truncate" style="max-width: 0"
-                        >{$currentCheckResult.status_line}</td
-                    >
-                </tr>
-                {#if $currentCheckResult.error}
+        <div class="overflow-x-auto rounded-2">
+            <Table borderless size="sm" class="mb-0">
+                <tbody>
                     <tr>
-                        <th>{$t("checkers.result.field.error")}</th>
-                        <td class="text-danger text-truncate" style="max-width: 0"
-                            >{$currentCheckResult.error}</td
-                        >
+                        <th style="width: 80px; white-space: nowrap">
+                            {$t("checkers.result.field.executed-at")}
+                        </th>
+                        <td>{formatCheckDate($currentCheckResult.executed_at, "short", $t)}</td>
                     </tr>
-                {/if}
-            </tbody>
-        </Table>
+                    <tr>
+                        <th>{$t("checkers.result.field.duration")}</th>
+                        <td>{formatDuration($currentCheckResult.duration, $t)}</td>
+                    </tr>
+                    <tr>
+                        <th>{$t("checkers.result.field.status")}</th>
+                        <td>
+                            <Badge color={getStatusColor($currentCheckResult.status)}>
+                                {$t(getStatusKey($currentCheckResult.status))}
+                            </Badge>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{$t("checkers.result.field.status-message")}</th>
+                        <td class="text-truncate" style="max-width: 0">
+                            {$currentCheckResult.status_line}
+                        </td>
+                    </tr>
+                    {#if $currentCheckResult.error}
+                        <tr>
+                            <th>{$t("checkers.result.field.error")}</th>
+                            <td class="text-danger text-truncate" style="max-width: 0">
+                                {$currentCheckResult.error}
+                            </td>
+                        </tr>
+                    {/if}
+                </tbody>
+            </Table>
+        </div>
     </Card>
     {#if $currentCheckInfo?.options && $currentCheckResult.options && Object.keys($currentCheckResult.options).length > 0}
         <Card class="mt-3">
@@ -183,37 +227,41 @@
                     {$t("checkers.result.check-options")}
                 </CardTitle>
             </CardHeader>
-            <Table borderless size="sm" class="mb-0">
-                <tbody>
-                    {#each Object.entries($currentCheckInfo.options) as [optKey, optVals]}
-                        {#each optVals as option}
-                            {@const value =
-                                (option.id ? $currentCheckResult.options[option.id] : undefined) ||
-                                option.default ||
-                                option.placeholder ||
-                                ""}
-                            <tr>
-                                <th
-                                    class="text-truncate"
-                                    style="max-width: 90px"
-                                    title={option.label}
-                                >
-                                    {option.label}:
-                                </th>
-                                <td class:text-truncate={typeof value !== "object"}>
-                                    {#if typeof value === "object"}
-                                        <pre class="mb-0" style="font-size: 0.75em"><code
-                                                >{JSON.stringify(value, null, 2)}</code
-                                            ></pre>
-                                    {:else}
-                                        {value}
-                                    {/if}
-                                </td>
-                            </tr>
+            <div class="overflow-x-auto rounded-2">
+                <Table borderless size="sm" class="mb-0">
+                    <tbody>
+                        {#each Object.entries($currentCheckInfo.options) as [optKey, optVals]}
+                            {#each optVals as option}
+                                {@const value =
+                                    (option.id
+                                        ? $currentCheckResult.options[option.id]
+                                        : undefined) ||
+                                    option.default ||
+                                    option.placeholder ||
+                                    ""}
+                                <tr>
+                                    <th
+                                        class="text-truncate"
+                                        style="max-width: 90px"
+                                        title={option.label}
+                                    >
+                                        {option.label}:
+                                    </th>
+                                    <td class:text-truncate={typeof value !== "object"}>
+                                        {#if typeof value === "object"}
+                                            <pre class="mb-0" style="font-size: 0.75em"><code
+                                                    >{JSON.stringify(value, null, 2)}</code
+                                                ></pre>
+                                        {:else}
+                                            {value}
+                                        {/if}
+                                    </td>
+                                </tr>
+                            {/each}
                         {/each}
-                    {/each}
-                </tbody>
-            </Table>
+                    </tbody>
+                </Table>
+            </div>
         </Card>
     {/if}
 

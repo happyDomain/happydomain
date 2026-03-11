@@ -32,9 +32,37 @@
         class?: ClassValue;
         domainName: string;
         currentCheckerName: string;
+        checksBase?: string;
+        scope?: "domain" | "service";
+        serviceType?: string;
     }
 
-    let { class: className = "", domainName, currentCheckerName }: Props = $props();
+    let {
+        class: className = "",
+        domainName,
+        currentCheckerName,
+        checksBase: checksBaseProp = undefined,
+        scope = "domain",
+        serviceType = undefined,
+    }: Props = $props();
+
+    let checksBase = $derived(
+        checksBaseProp ?? `/domains/${encodeURIComponent(domainName)}/checks`,
+    );
+    let onResults = $derived(page.route.id?.includes("/results") === true && !page.params.rid);
+
+    function isCheckVisible(checkerInfo: NonNullable<typeof $checks>[string]): boolean {
+        const avail = checkerInfo.availability;
+        if (!avail) return true;
+        if (scope === "domain" && !avail.applyToDomain) return false;
+        if (scope === "service") {
+            if (!avail.applyToService) return false;
+            if (avail.limitToServices && avail.limitToServices.length > 0) {
+                if (!serviceType || !avail.limitToServices.includes(serviceType)) return false;
+            }
+        }
+        return true;
+    }
 </script>
 
 <nav class="checker-sidebar d-flex flex-column h-100 {className}">
@@ -45,51 +73,44 @@
     {:else}
         <ul class="list-unstyled mb-0 flex-fill overflow-auto">
             {#each Object.entries($checkers) as [checkerName, checkerInfo]}
-                {@const isActive = checkerName === currentCheckerName}
-                {@const onResults = page.route.id?.startsWith(
-                    "/domains/[dn]/checks/[cname]/results",
-                )}
-                <li>
-                    <div
-                        class="checker-item d-flex align-items-center gap-1 py-2 px-2 rounded {isActive
-                            ? 'fw-bold text-primary active'
-                            : 'text-muted'}"
-                    >
-                        <a
-                            href="/domains/{encodeURIComponent(
-                                domainName,
-                            )}/checks/{encodeURIComponent(checkerName)}{onResults
-                                ? '/results'
-                                : ''}"
-                            class="text-truncate flex-fill text-decoration-none {isActive
-                                ? 'text-primary'
+                {#if isCheckVisible(checkerInfo)}
+                    {@const isActive = checkerName === currentCheckerName}
+                    <li>
+                        <div
+                            class="checker-item d-flex align-items-center gap-1 py-2 px-2 rounded {isActive
+                                ? 'fw-bold text-primary active'
                                 : 'text-muted'}"
                         >
-                            {checkerInfo.name || checkerName}
-                        </a>
-                        {#if onResults}
                             <a
-                                href="/domains/{encodeURIComponent(
-                                    domainName,
-                                )}/checks/{encodeURIComponent(checkerName)}"
-                                class="checker-action text-muted"
-                                title="Configure"
+                                href="{checksBase}/{encodeURIComponent(checkerName)}{onResults
+                                    ? '/results'
+                                    : ''}"
+                                class="text-truncate flex-fill text-decoration-none {isActive
+                                    ? 'text-primary'
+                                    : 'text-muted'}"
                             >
-                                <Icon name="gear" />
+                                {checkerInfo.name || checkerName}
                             </a>
-                        {:else}
-                            <a
-                                href="/domains/{encodeURIComponent(
-                                    domainName,
-                                )}/checks/{encodeURIComponent(checkerName)}/results"
-                                class="checker-action text-muted"
-                                title="Results"
-                            >
-                                <Icon name="bar-chart-fill" />
-                            </a>
-                        {/if}
-                    </div>
-                </li>
+                            {#if onResults}
+                                <a
+                                    href="{checksBase}/{encodeURIComponent(checkerName)}"
+                                    class="checker-action text-muted"
+                                    title="Configure"
+                                >
+                                    <Icon name="gear" />
+                                </a>
+                            {:else}
+                                <a
+                                    href="{checksBase}/{encodeURIComponent(checkerName)}/results"
+                                    class="checker-action text-muted"
+                                    title="Results"
+                                >
+                                    <Icon name="bar-chart-fill" />
+                                </a>
+                            {/if}
+                        </div>
+                    </li>
+                {/if}
             {/each}
         </ul>
     {/if}

@@ -112,16 +112,24 @@ func (uc *CheckerController) CheckerOptionHandler(c *gin.Context) {
 //	@Tags			checks
 //	@Accept			json
 //	@Produce		json
-//	@Param			cid	path		string	true	"Check name"
+//	@Param			cid			path		string	true	"Check name"
+//	@Param			domain		path		string	false	"Domain identifier"
+//	@Param			zoneid		path		string	false	"Zone identifier"
+//	@Param			subdomain	path		string	false	"Subdomain"
+//	@Param			serviceid	path		string	false	"Service identifier"
 //	@Success		200		{object}	happydns.CheckerOptions		"Check options as key-value pairs"
 //	@Failure		404		{object}	happydns.ErrorResponse	"Check not found"
 //	@Failure		500		{object}	happydns.ErrorResponse	"Internal server error"
 //	@Router			/checks/{cid}/options [get]
+//	@Router			/domains/{domain}/checks/{cid}/options [get]
+//	@Router			/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checks/{cid}/options [get]
 func (uc *CheckerController) GetCheckerOptions(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 	cname := c.Param("cid")
 
-	uc.GetCheckerOptionsWithScope(c, cname, &user.Id, nil, nil)
+	domainID, serviceID := getDomainAndServiceIDFromContext(c)
+
+	uc.GetCheckerOptionsWithScope(c, cname, &user.Id, domainID, serviceID)
 }
 
 // AddCheckerOptions adds or overwrites specific options for a check for the authenticated user.
@@ -132,18 +140,26 @@ func (uc *CheckerController) GetCheckerOptions(c *gin.Context) {
 //	@Tags			checks
 //	@Accept			json
 //	@Produce		json
-//	@Param			cid	path		string									true	"Check name"
-//	@Param			body	body		happydns.SetCheckerOptionsRequest	true	"Options to add or overwrite"
+//	@Param			cid			path		string									true	"Check name"
+//	@Param			domain		path		string									false	"Domain identifier"
+//	@Param			zoneid		path		string									false	"Zone identifier"
+//	@Param			subdomain	path		string									false	"Subdomain"
+//	@Param			serviceid	path		string									false	"Service identifier"
+//	@Param			body		body		happydns.SetCheckerOptionsRequest			true	"Options to add or overwrite"
 //	@Success		200		{object}	bool								"Success status"
 //	@Failure		400		{object}	happydns.ErrorResponse				"Invalid request body"
 //	@Failure		404		{object}	happydns.ErrorResponse				"Check not found"
 //	@Failure		500		{object}	happydns.ErrorResponse				"Internal server error"
 //	@Router			/checks/{cid}/options [post]
+//	@Router			/domains/{domain}/checks/{cid}/options [post]
+//	@Router			/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checks/{cid}/options [post]
 func (uc *CheckerController) AddCheckerOptions(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 	cname := c.Param("cid")
 
-	uc.AddCheckerOptionsWithScope(c, cname, &user.Id, nil, nil)
+	domainID, serviceID := getDomainAndServiceIDFromContext(c)
+
+	uc.AddCheckerOptionsWithScope(c, cname, &user.Id, domainID, serviceID)
 }
 
 // ChangeCheckerOptions replaces all options for a check for the authenticated user.
@@ -154,18 +170,26 @@ func (uc *CheckerController) AddCheckerOptions(c *gin.Context) {
 //	@Tags			checks
 //	@Accept			json
 //	@Produce		json
-//	@Param			cid	path		string									true	"Checker name"
-//	@Param			body	body		happydns.SetCheckerOptionsRequest	true	"New complete set of options"
+//	@Param			cid			path		string									true	"Checker name"
+//	@Param			domain		path		string									false	"Domain identifier"
+//	@Param			zoneid		path		string									false	"Zone identifier"
+//	@Param			subdomain	path		string									false	"Subdomain"
+//	@Param			serviceid	path		string									false	"Service identifier"
+//	@Param			body		body		happydns.SetCheckerOptionsRequest			true	"New complete set of options"
 //	@Success		200		{object}	bool								"Success status"
 //	@Failure		400		{object}	happydns.ErrorResponse				"Invalid request body"
 //	@Failure		404		{object}	happydns.ErrorResponse				"Checker not found"
 //	@Failure		500		{object}	happydns.ErrorResponse				"Internal server error"
 //	@Router			/checks/{cid}/options [put]
+//	@Router			/domains/{domain}/checks/{cid}/options [put]
+//	@Router			/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checks/{cid}/options [put]
 func (uc *CheckerController) ChangeCheckerOptions(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 	cname := c.Param("cid")
 
-	uc.ChangeCheckerOptionsWithScope(c, cname, &user.Id, nil, nil)
+	domainID, serviceID := getDomainAndServiceIDFromContext(c)
+
+	uc.ChangeCheckerOptionsWithScope(c, cname, &user.Id, domainID, serviceID)
 }
 
 // GetCheckerOption retrieves a specific option value for a check for the authenticated user.
@@ -176,12 +200,18 @@ func (uc *CheckerController) ChangeCheckerOptions(c *gin.Context) {
 //	@Tags			checks
 //	@Accept			json
 //	@Produce		json
-//	@Param			cid		path		string	true	"Check name"
+//	@Param			cid			path		string	true	"Check name"
 //	@Param			optname		path		string	true	"Option name"
+//	@Param			domain		path		string	false	"Domain identifier"
+//	@Param			zoneid		path		string	false	"Zone identifier"
+//	@Param			subdomain	path		string	false	"Subdomain"
+//	@Param			serviceid	path		string	false	"Service identifier"
 //	@Success		200			{object}	object	"Option value (type varies)"
 //	@Failure		404			{object}	happydns.ErrorResponse	"Check not found"
 //	@Failure		500			{object}	happydns.ErrorResponse	"Internal server error"
 //	@Router			/checks/{cid}/options/{optname} [get]
+//	@Router			/domains/{domain}/checks/{cid}/options/{optname} [get]
+//	@Router			/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checks/{cid}/options/{optname} [get]
 func (uc *CheckerController) GetCheckerOption(c *gin.Context) {
 	uc.GetCheckerOptionValue(c)
 }
@@ -194,14 +224,20 @@ func (uc *CheckerController) GetCheckerOption(c *gin.Context) {
 //	@Tags			checks
 //	@Accept			json
 //	@Produce		json
-//	@Param			cid		path		string	true	"Check name"
+//	@Param			cid			path		string	true	"Check name"
 //	@Param			optname		path		string	true	"Option name"
+//	@Param			domain		path		string	false	"Domain identifier"
+//	@Param			zoneid		path		string	false	"Zone identifier"
+//	@Param			subdomain	path		string	false	"Subdomain"
+//	@Param			serviceid	path		string	false	"Service identifier"
 //	@Param			body		body		object	true	"Option value (type varies by option)"
 //	@Success		200			{object}	bool	"Success status"
 //	@Failure		400			{object}	happydns.ErrorResponse	"Invalid request body"
 //	@Failure		404			{object}	happydns.ErrorResponse	"Check not found"
 //	@Failure		500			{object}	happydns.ErrorResponse	"Internal server error"
 //	@Router			/checks/{cid}/options/{optname} [put]
+//	@Router			/domains/{domain}/checks/{cid}/options/{optname} [put]
+//	@Router			/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checks/{cid}/options/{optname} [put]
 func (uc *CheckerController) SetCheckerOption(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)
 	cname := c.Param("cid")

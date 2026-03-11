@@ -123,7 +123,7 @@ func (zc *ZoneController) DeleteZone(c *gin.Context) {
 //	@Router			/users/{uid}/domains/{domain}/zones/{zoneid} [get]
 //	@Router			/users/{uid}/providers/{pid}/domains/{domain}/zones/{zoneid} [get]
 func (zc *ZoneController) GetZone(c *gin.Context) {
-	apizc := controller.NewZoneController(zc.zoneService, zc.domainService, zc.zoneCorrectionService)
+	apizc := controller.NewZoneController(zc.zoneService, zc.domainService, zc.zoneCorrectionService, nil)
 	apizc.GetZone(c)
 }
 

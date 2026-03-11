@@ -34,16 +34,18 @@ import (
 )
 
 type ServiceController struct {
-	suService happydns.ServiceUsecase
-	duService happydns.ZoneServiceUsecase
-	zuService happydns.ZoneUsecase
+	checkResultUC happydns.CheckResultUsecase
+	suService     happydns.ServiceUsecase
+	duService     happydns.ZoneServiceUsecase
+	zuService     happydns.ZoneUsecase
 }
 
-func NewServiceController(duService happydns.ZoneServiceUsecase, suService happydns.ServiceUsecase, zuService happydns.ZoneUsecase) *ServiceController {
+func NewServiceController(duService happydns.ZoneServiceUsecase, suService happydns.ServiceUsecase, zuService happydns.ZoneUsecase, checkResultUC happydns.CheckResultUsecase) *ServiceController {
 	return &ServiceController{
-		duService: duService,
-		suService: suService,
-		zuService: zuService,
+		checkResultUC: checkResultUC,
+		duService:     duService,
+		suService:     suService,
+		zuService:     zuService,
 	}
 }
 
@@ -106,18 +108,26 @@ func (sc *ServiceController) AddZoneService(c *gin.Context) {
 //	@Param			zoneId		path		string	true	"Zone identifier"
 //	@Param			subdomain	path		string	true	"Part of the subdomain considered for the service (@ for the root of the zone ; subdomain is relative to the root, do not include it)"
 //	@Param			serviceId	path		string	true	"Service identifier"
-//	@Success		200			{object}	happydns.Service
+//	@Success		200			{object}	happydns.ServiceWithCheckStatus
 //	@Failure		401			{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Failure		404			{object}	happydns.ErrorResponse	"Domain or Zone not found"
 //	@Router			/domains/{domainId}/zone/{zoneId}/{subdomain}/services/{serviceId} [get]
 func (sc *ServiceController) GetZoneService(c *gin.Context) {
-	zone := c.MustGet("zone").(*happydns.Zone)
-	serviceid := c.MustGet("serviceid").(happydns.Identifier)
-	subdomain := c.MustGet("subdomain").(happydns.Subdomain)
+	user := middleware.MyUser(c)
+	svc := c.MustGet("service").(*happydns.Service)
 
-	_, svc := zone.FindSubdomainService(subdomain, serviceid)
+	result := &happydns.ServiceWithCheckStatus{Service: svc}
 
-	c.JSON(http.StatusOK, svc)
+	if sc.checkResultUC != nil && user != nil {
+		status, err := sc.checkResultUC.GetWorstCheckStatus(happydns.CheckScopeService, svc.Id, user.Id)
+		if err != nil {
+			log.Printf("GetWorstCheckStatus: %s", err.Error())
+		} else {
+			result.LastCheckStatus = status
+		}
+	}
+
+	c.JSON(http.StatusOK, result)
 }
 
 // UpdateZoneService adds or updates a service inside the given Zone.

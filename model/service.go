@@ -93,6 +93,13 @@ type ServiceRecord struct {
 	RR     Record `json:"rr,omitempty"`
 }
 
+type ServiceWithCheckStatus struct {
+	*Service
+	// LastCheckStatus is the worst status across the most recent result of each
+	// checker that has run on this service. Nil if no results exist yet.
+	LastCheckStatus *CheckResultStatus `json:"last_check_status,omitempty"`
+}
+
 type ServiceUsecase interface {
 	ListRecords(*Domain, *Zone, *Service) ([]Record, error)
 	ValidateService(ServiceBody, Subdomain, Origin) ([]byte, error)

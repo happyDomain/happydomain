@@ -30,17 +30,20 @@ import (
 )
 
 func DeclareZoneServiceRoutes(apiZonesRoutes, apiZonesSubdomainRoutes *gin.RouterGroup, zc *controller.ZoneController, zoneServiceUC happydns.ZoneServiceUsecase, serviceUC happydns.ServiceUsecase, zoneUC happydns.ZoneUsecase, checkerUC happydns.CheckerUsecase, checkResultUC happydns.CheckResultUsecase, checkScheduler happydns.SchedulerUsecase) {
-	sc := controller.NewServiceController(zoneServiceUC, serviceUC, zoneUC)
+	sc := controller.NewServiceController(zoneServiceUC, serviceUC, zoneUC, checkResultUC)
 
 	apiZonesRoutes.PATCH("", sc.UpdateZoneService)
 
 	apiZonesSubdomainRoutes.POST("/services", sc.AddZoneService)
 
-	apiZonesSubdomainServiceIdRoutes := apiZonesSubdomainRoutes.Group("/services/:serviceid")
-	apiZonesSubdomainServiceIdRoutes.Use(middleware.ServiceIdHandler(serviceUC))
-	apiZonesSubdomainServiceIdRoutes.GET("", sc.GetZoneService)
-	apiZonesSubdomainServiceIdRoutes.DELETE("", sc.DeleteZoneService)
+	apiZonesSubdomainServiceIDRoutes := apiZonesSubdomainRoutes.Group("/services/:serviceid")
+	apiZonesSubdomainServiceIDRoutes.Use(middleware.ServiceIdHandler(serviceUC))
+	apiZonesSubdomainServiceIDRoutes.DELETE("", sc.DeleteZoneService)
+
+	apiZonesSubdomainServiceRoutes := apiZonesSubdomainRoutes.Group("/services/:serviceid")
+	apiZonesSubdomainServiceRoutes.Use(middleware.ServiceIdHandler(serviceUC), middleware.ServiceHandler(serviceUC))
+	apiZonesSubdomainServiceRoutes.GET("", sc.GetZoneService)
 
 	// Declare test result routes for service scope
-	DeclareScopedCheckResultRoutes(apiZonesSubdomainServiceIdRoutes, checkerUC, checkResultUC, checkScheduler, happydns.CheckScopeService)
+	DeclareScopedCheckResultRoutes(apiZonesSubdomainServiceRoutes, checkerUC, checkResultUC, checkScheduler, happydns.CheckScopeService)
 }
