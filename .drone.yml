@@ -203,6 +203,53 @@ steps:
       password:
         from_secret: docker_password
 
+  - name: publish release on gitea
+    image: plugins/gitea-release
+    settings:
+      api_key:
+        from_secret: git_nemunaire_token
+      base_url: https://git.nemunai.re
+      draft: true
+      prerelease: true
+      files:
+        - happydomain-src.tar.gz
+        - happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+        - happydomain-darwin-${DRONE_STAGE_ARCH}
+    when:
+      event:
+        - tag
+
+  - name: publish release on codeberg
+    image: plugins/gitea-release
+    settings:
+      api_key:
+        from_secret: codeberg_token
+      base_url: https://codeberg.org
+      draft: true
+      prerelease: true
+      files:
+        - happydomain-src.tar.gz
+        - happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+        - happydomain-darwin-${DRONE_STAGE_ARCH}
+    when:
+      event:
+        - tag
+
+  - name: publish release on github
+    image: plugins/github-release
+    settings:
+      api_key:
+        from_secret: github_release_token
+      draft: true
+      prerelease: true
+      files:
+        - happydomain-src.tar.gz
+        - happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+        - happydomain-darwin-${DRONE_STAGE_ARCH}
+    when:
+      event:
+        - tag
+
 trigger:
   branch:
     exclude:
@@ -388,6 +435,50 @@ steps:
         from_secret: docker_username
       password:
         from_secret: docker_password
+
+  - name: publish release on gitea
+    image: plugins/gitea-release
+    settings:
+      api_key:
+        from_secret: git_nemunaire_token
+      base_url: https://git.nemunai.re
+      draft: true
+      prerelease: true
+      files:
+        - happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+        - happydomain-darwin-${DRONE_STAGE_ARCH}
+    when:
+      event:
+        - tag
+
+  - name: publish release on codeberg
+    image: plugins/gitea-release
+    settings:
+      api_key:
+        from_secret: codeberg_token
+      base_url: https://codeberg.org
+      draft: true
+      prerelease: true
+      files:
+        - happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+        - happydomain-darwin-${DRONE_STAGE_ARCH}
+    when:
+      event:
+        - tag
+
+  - name: publish release on github
+    image: plugins/github-release
+    settings:
+      api_key:
+        from_secret: github_release_token
+      draft: true
+      prerelease: true
+      files:
+        - happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+        - happydomain-darwin-${DRONE_STAGE_ARCH}
+    when:
+      event:
+        - tag
 
 trigger:
   event:
