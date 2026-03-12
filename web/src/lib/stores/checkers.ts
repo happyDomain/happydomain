@@ -34,3 +34,6 @@ export async function refreshCheckers() {
 export const currentCheckResult: Writable<CheckResult | null> = writable(null);
 export const currentCheckInfo: Writable<CheckerInfo | null> = writable(null);
 export const showHTMLReport: Writable<boolean> = writable(true);
+
+export type ReportViewMode = "metrics" | "html" | "json";
+export const reportViewMode: Writable<ReportViewMode> = writable("html");

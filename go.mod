@@ -21,6 +21,7 @@ require (
 	github.com/mileusna/useragent v1.3.5
 	github.com/oracle/nosql-go-sdk v1.4.7
 	github.com/ovh/go-ovh v1.9.0
+	github.com/prometheus-community/pro-bing v0.8.0
 	github.com/rrivera/identicon v0.0.0-20240116195454-d5ba35832c0d
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.1

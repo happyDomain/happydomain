@@ -395,6 +395,118 @@ func (tc *CheckResultController) GetCheckResultHTMLReport(c *gin.Context) {
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(htmlContent))
 }
 
+// GetCheckResultMetrics returns time-series metrics extracted from check results
+//
+//	@Summary		Get check result metrics
+//	@Description	Returns time-series metrics suitable for charting, extracted from recent check results. Only available for checkers that implement metrics reporting.
+//	@Tags			checks
+//	@Produce		json
+//	@Param			domain		path		string	true	"Domain identifier"
+//	@Param			zoneid		path		string	false	"Zone identifier"
+//	@Param			subdomain	path		string	false	"Subdomain"
+//	@Param			serviceid	path		string	false	"Service identifier"
+//	@Param			cname		path		string	true	"Check plugin name"
+//	@Param			limit		query		int		false	"Maximum number of results to extract metrics from (default: 100)"
+//	@Success		200			{object}	happydns.MetricsReport
+//	@Failure		404			{object}	happydns.ErrorResponse
+//	@Failure		500			{object}	happydns.ErrorResponse
+//	@Router			/domains/{domain}/checks/{cname}/metrics [get]
+//	@Router			/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checks/{cname}/metrics [get]
+func (tc *CheckResultController) GetCheckResultMetrics(c *gin.Context) {
+	checkName := c.Param("cname")
+	targetID, err := tc.getTargetFromContext(c)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	limit := 100
+	if limitStr := c.Query("limit"); limitStr != "" {
+		fmt.Sscanf(limitStr, "%d", &limit)
+	}
+
+	checker, err := tc.checkerUC.GetChecker(checkName)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusNotFound, err)
+		return
+	}
+
+	results, err := tc.checkResultUC.ListCheckResultsByTarget(checkName, tc.scope, targetID, limit)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	report, supported, err := checks.GetMetrics(checker, results)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+	if !supported {
+		middleware.ErrorResponse(c, http.StatusNotFound, fmt.Errorf("checker %q does not support metrics", checkName))
+		return
+	}
+
+	c.JSON(http.StatusOK, report)
+}
+
+// GetSingleCheckResultMetrics returns metrics extracted from a single check result
+//
+//	@Summary		Get single check result metrics
+//	@Description	Returns metrics extracted from a single check result. Only available for checkers that implement metrics reporting.
+//	@Tags			checks
+//	@Produce		json
+//	@Param			domain		path		string	true	"Domain identifier"
+//	@Param			zoneid		path		string	false	"Zone identifier"
+//	@Param			subdomain	path		string	false	"Subdomain"
+//	@Param			serviceid	path		string	false	"Service identifier"
+//	@Param			cname		path		string	true	"Check plugin name"
+//	@Param			result_id	path		string	true	"Result ID"
+//	@Success		200			{object}	happydns.MetricsReport
+//	@Failure		404			{object}	happydns.ErrorResponse
+//	@Failure		500			{object}	happydns.ErrorResponse
+//	@Router			/domains/{domain}/checks/{cname}/results/{result_id}/metrics [get]
+//	@Router			/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checks/{cname}/results/{result_id}/metrics [get]
+func (tc *CheckResultController) GetSingleCheckResultMetrics(c *gin.Context) {
+	checkName := c.Param("cname")
+	resultIDStr := c.Param("result_id")
+	targetID, err := tc.getTargetFromContext(c)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	resultID, err := happydns.NewIdentifierFromString(resultIDStr)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusBadRequest, fmt.Errorf("invalid result ID"))
+		return
+	}
+
+	result, err := tc.checkResultUC.GetCheckResult(checkName, tc.scope, targetID, resultID)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusNotFound, err)
+		return
+	}
+
+	checker, err := tc.checkerUC.GetChecker(checkName)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusNotFound, err)
+		return
+	}
+
+	report, supported, err := checks.GetMetrics(checker, []*happydns.CheckResult{result})
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+	if !supported {
+		middleware.ErrorResponse(c, http.StatusNotFound, fmt.Errorf("checker %q does not support metrics", checkName))
+		return
+	}
+
+	c.JSON(http.StatusOK, report)
+}
+
 // DropCheckResult deletes a specific check result
 //
 //	@Summary		Delete check result

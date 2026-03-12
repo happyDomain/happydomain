@@ -71,3 +71,14 @@ func GetHTMLReport(checker happydns.Checker, raw json.RawMessage) (string, bool,
 	html, err := hr.GetHTMLReport(raw)
 	return html, true, err
 }
+
+// GetMetrics extracts time-series metrics from a slice of check results.
+// Returns (report, true, nil) if the checker supports metrics, or (nil, false, nil) if not.
+func GetMetrics(checker happydns.Checker, results []*happydns.CheckResult) (*happydns.MetricsReport, bool, error) {
+	mr, ok := checker.(happydns.CheckerMetricsReporter)
+	if !ok {
+		return nil, false, nil
+	}
+	report, err := mr.ExtractMetrics(results)
+	return report, true, err
+}

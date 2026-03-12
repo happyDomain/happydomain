@@ -69,6 +69,22 @@ export enum CheckExecutionStatus {
     CheckExecutionFailed = 3,
 }
 
+export interface MetricPoint {
+    timestamp: string;
+    value: number;
+}
+
+export interface MetricSeries {
+    name: string;
+    label: string;
+    unit: string;
+    points: MetricPoint[];
+}
+
+export interface MetricsReport {
+    series: MetricSeries[];
+}
+
 export interface AvailableChecker {
     checker_name: string;
     enabled: boolean;

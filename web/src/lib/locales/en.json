@@ -717,6 +717,7 @@
                 "status-message": "Message:",
                 "error": "Error:"
             },
+            "view-metrics": "Metrics",
             "view-html": "HTML Report",
             "view-json": "Raw JSON",
             "download-html": "Download HTML",
