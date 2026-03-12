@@ -242,6 +242,7 @@ steps:
         from_secret: github_release_token
       draft: true
       prerelease: true
+      github_url: https://github.com
       files:
         - happydomain-src.tar.gz
         - happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
@@ -473,6 +474,7 @@ steps:
         from_secret: github_release_token
       draft: true
       prerelease: true
+      github_url: https://github.com
       files:
         - happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
         - happydomain-darwin-${DRONE_STAGE_ARCH}
