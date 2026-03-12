@@ -290,6 +290,37 @@ Contributions are welcome! Here's how you can help:
 - **Share feedback:** [Tell us what you think](https://feedback.happydomain.org/), your input guides the project.
 
 
+AI Disclaimer
+-------------
+
+There have been questions about AI usage in project development. Our project handles domain name management, a sensitive area where mistakes can cause real outages, it's important to explain how AI is used in the development process.
+
+AI is used as a helper for:
+
+- verification of code quality and searching for vulnerabilities
+- cleaning up and improving documentation, comments and code
+- assistance during development
+- double-checking PRs and commits after human review
+
+AI is not used for:
+
+- writing entire features or components
+- "vibe coding" approach
+- code without line-by-line verification by a human
+- code without tests
+
+The project has:
+
+- CI/CD pipeline automation with tests and linting to ensure code quality
+- verification by experienced developers
+
+So AI is just an assistant and a tool for developers to increase productivity and ensure code quality. The work is done by developers.
+
+We do not differentiate between bad human code and AI vibe code. There are strict requirements for any code to be merged to keep the codebase maintainable. Even if code is written manually by a human, it's not guaranteed to be merged. Vibe code is not allowed and such PRs are rejected.
+
+*Inspired by the [Databasus AI disclaimer](https://github.com/databasus/databasus#ai-disclaimer).*
+
+
 License
 -------
 
