@@ -80,6 +80,16 @@ func getDomainAndServiceIDFromContext(c *gin.Context) (domainID *happydns.Identi
 // GetCheckerOptionsWithScope retrieves all options for a check with the given scope.
 func (bc *BaseCheckerController) GetCheckerOptionsWithScope(c *gin.Context, cname string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier) {
 	opts, err := bc.checkerService.GetCheckerOptions(cname, userId, domainId, serviceId)
+
+	// For non-basic type, stringify
+	if opts != nil {
+		for i, opt := range *opts {
+			if svc, ok := opt.(*happydns.ServiceMessage); ok {
+				(*opts)[i] = svc.Type + ": " + svc.Comment
+			}
+		}
+	}
+
 	happydns.ApiResponse(c, opts, err)
 }
 

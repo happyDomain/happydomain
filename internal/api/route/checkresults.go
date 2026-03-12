@@ -29,6 +29,9 @@ import (
 
 // DeclareScopedCheckResultRoutes declares test result routes for a specific scope (domain, zone, or service)
 func DeclareScopedCheckResultRoutes(apiChecksRoutes *gin.RouterGroup, tc *controller.CheckResultController) {
+	// Check metrics route
+	apiChecksRoutes.GET("/metrics", tc.GetCheckResultMetrics)
+
 	// Check results routes
 	apiChecksRoutes.GET("/results", tc.ListCheckResults)
 	apiChecksRoutes.DELETE("/results", tc.DropCheckResults)
@@ -38,5 +41,6 @@ func DeclareScopedCheckResultRoutes(apiChecksRoutes *gin.RouterGroup, tc *contro
 		apiCheckResultsRoutes.GET("", tc.GetCheckResult)
 		apiCheckResultsRoutes.DELETE("", tc.DropCheckResult)
 		apiCheckResultsRoutes.GET("/report", tc.GetCheckResultHTMLReport)
+		apiCheckResultsRoutes.GET("/metrics", tc.GetSingleCheckResultMetrics)
 	}
 }

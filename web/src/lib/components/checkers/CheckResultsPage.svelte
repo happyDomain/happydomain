@@ -39,9 +39,10 @@
     import { getCheckStatus } from "$lib/api/checkers";
     import PageTitle from "$lib/components/PageTitle.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { CheckExecution, CheckResult } from "$lib/model/checker";
+    import type { CheckExecution, CheckResult, MetricsReport } from "$lib/model/checker";
     import { CheckExecutionStatus, CheckScopeType } from "$lib/model/checker";
     import RunCheckModal from "$lib/components/modals/RunCheckModal.svelte";
+    import CheckMetricsChart from "$lib/components/checkers/CheckMetricsChart.svelte";
     import { getStatusColor, getStatusKey, formatDuration, formatCheckDate } from "$lib/utils";
 
     interface Props {
@@ -55,6 +56,7 @@
         getExecution: (executionId: string) => Promise<CheckExecution>;
         deleteResult: (resultId: string) => Promise<void>;
         deleteAllResults: () => Promise<void>;
+        loadMetrics?: () => Promise<MetricsReport>;
         zoneId?: string;
         subdomain?: string;
         serviceid?: string;
@@ -71,6 +73,7 @@
         getExecution,
         deleteResult,
         deleteAllResults,
+        loadMetrics,
         zoneId,
         subdomain,
         serviceid,
@@ -79,8 +82,18 @@
     let resultsPromise = $state(loadResults());
     let checkerPromise = $derived(getCheckStatus(checkerName));
     let checkerDisplayName = $state(checkerName);
+    let metricsReport = $state<MetricsReport | null>(null);
     $effect(() => {
-        checkerPromise.then((c) => (checkerDisplayName = c.name || checkerName)).catch(() => {});
+        checkerPromise
+            .then((c) => {
+                checkerDisplayName = c.name || checkerName;
+                if (c.has_metrics && loadMetrics) {
+                    loadMetrics()
+                        .then((r) => (metricsReport = r))
+                        .catch(() => {});
+                }
+            })
+            .catch(() => {});
     });
     let runCheckModal: RunCheckModal;
     let errorMessage = $state<string | null>(null);
@@ -193,6 +206,13 @@
             <p>{$t("checkers.results.loading")}</p>
         </div>
     {:then results}
+        {#if metricsReport}
+            <Card class="mb-3">
+                <div class="card-body">
+                    <CheckMetricsChart report={metricsReport} />
+                </div>
+            </Card>
+        {/if}
         {#if (!results || results.length === 0) && pendingExecutions.length === 0}
             <Card body>
                 <p class="text-center text-muted mb-0">

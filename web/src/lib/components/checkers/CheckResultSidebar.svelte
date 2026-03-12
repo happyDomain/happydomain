@@ -39,7 +39,7 @@
     } from "@sveltestrap/sveltestrap";
 
     // Store imports
-    import { currentCheckResult, currentCheckInfo, showHTMLReport } from "$lib/stores/checkers";
+    import { currentCheckResult, currentCheckInfo, showHTMLReport, reportViewMode } from "$lib/stores/checkers";
     import { toasts } from "$lib/stores/toasts";
 
     // API imports
@@ -267,25 +267,39 @@
 
     <div class="my-3 flex-fill"></div>
 
-    {#if $currentCheckInfo?.has_html_report || $currentCheckResult.report != null}
-        {#if $currentCheckInfo?.has_html_report}
+    {#if $currentCheckInfo?.has_html_report || $currentCheckInfo?.has_metrics || $currentCheckResult.report != null}
+        {#if $currentCheckInfo?.has_metrics || $currentCheckInfo?.has_html_report}
             <ButtonGroup class="w-100 mb-2">
+                {#if $currentCheckInfo?.has_metrics}
+                    <Button
+                        size="sm"
+                        color="secondary"
+                        outline
+                        active={$reportViewMode === "metrics"}
+                        onclick={() => { reportViewMode.set("metrics"); showHTMLReport.set(false); }}
+                    >
+                        <Icon name="graph-up"></Icon>
+                        {$t("checkers.result.view-metrics")}
+                    </Button>
+                {/if}
+                {#if $currentCheckInfo?.has_html_report}
+                    <Button
+                        size="sm"
+                        color="secondary"
+                        outline
+                        active={$reportViewMode === "html" || (!$currentCheckInfo?.has_metrics && $showHTMLReport)}
+                        onclick={() => { reportViewMode.set("html"); showHTMLReport.set(true); }}
+                    >
+                        <Icon name="file-earmark-richtext"></Icon>
+                        {$t("checkers.result.view-html")}
+                    </Button>
+                {/if}
                 <Button
                     size="sm"
                     color="secondary"
                     outline
-                    active={$showHTMLReport}
-                    onclick={() => showHTMLReport.set(true)}
-                >
-                    <Icon name="file-earmark-richtext"></Icon>
-                    {$t("checkers.result.view-html")}
-                </Button>
-                <Button
-                    size="sm"
-                    color="secondary"
-                    outline
-                    active={!$showHTMLReport}
-                    onclick={() => showHTMLReport.set(false)}
+                    active={$reportViewMode === "json" || (!$currentCheckInfo?.has_metrics && !$currentCheckInfo?.has_html_report)}
+                    onclick={() => { reportViewMode.set("json"); showHTMLReport.set(false); }}
                 >
                     <Icon name="braces"></Icon>
                     {$t("checkers.result.view-json")}

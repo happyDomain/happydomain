@@ -95,6 +95,34 @@ type CheckerHTMLReporter interface {
 	GetHTMLReport(raw json.RawMessage) (string, error)
 }
 
+// MetricPoint represents a single data point in a time series.
+type MetricPoint struct {
+	Timestamp time.Time `json:"timestamp"`
+	Value     float64   `json:"value"`
+}
+
+// MetricSeries represents a named time series with a display label and unit.
+type MetricSeries struct {
+	Name   string        `json:"name"`
+	Label  string        `json:"label"`
+	Unit   string        `json:"unit"`
+	Points []MetricPoint `json:"points"`
+}
+
+// MetricsReport contains all metric series extracted from check results.
+type MetricsReport struct {
+	Series []MetricSeries `json:"series"`
+}
+
+// CheckerMetricsReporter is an optional interface checkers can implement
+// to signal that they produce time-series metrics suitable for charting.
+// Detect support with a type assertion: _, ok := checker.(CheckerMetricsReporter)
+type CheckerMetricsReporter interface {
+	// ExtractMetrics builds time series from a slice of check results.
+	// Each result's ExecutedAt becomes the timestamp for that data point.
+	ExtractMetrics(results []*CheckResult) (*MetricsReport, error)
+}
+
 type CheckerResponse struct {
 	ID            string                      `json:"id"`
 	Name          string                      `json:"name"`
@@ -102,6 +130,7 @@ type CheckerResponse struct {
 	Options       CheckerOptionsDocumentation `json:"options"`
 	Interval      *CheckIntervalSpec          `json:"interval"`
 	HasHTMLReport bool                        `json:"has_html_report,omitempty"`
+	HasMetrics    bool                        `json:"has_metrics,omitempty"`
 }
 
 type SetCheckerOptionsRequest struct {
