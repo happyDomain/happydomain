@@ -51,6 +51,10 @@ import {
     deleteDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameResultsByResultId,
     deleteDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameResults,
     getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameResultsByResultIdReport,
+    getDomainsByDomainChecksByCnameMetrics,
+    getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameMetrics,
+    getDomainsByDomainChecksByCnameResultsByResultIdMetrics,
+    getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameResultsByResultIdMetrics,
 } from "$lib/api-base/sdk.gen";
 import { unwrapSdkResponse } from "./errors";
 import type {
@@ -62,6 +66,7 @@ import type {
     CheckResult,
     CheckExecution,
     CheckScopeType,
+    MetricsReport,
 } from "$lib/model/checker";
 
 export async function listCheckers(): Promise<CheckerList> {
@@ -501,4 +506,77 @@ export async function getServiceCheckResultHTMLReport(
             },
         ),
     ) as string;
+}
+
+// --- Metrics API functions ---
+
+export async function getCheckMetrics(
+    domainId: string,
+    checkName: string,
+    limit: number = 100,
+): Promise<MetricsReport> {
+    return unwrapSdkResponse(
+        await getDomainsByDomainChecksByCnameMetrics({
+            path: { domain: domainId, cname: checkName },
+            query: { limit },
+        }),
+    ) as unknown as MetricsReport;
+}
+
+export async function getServiceCheckMetrics(
+    domainId: string,
+    zoneId: string,
+    subdomain: string,
+    serviceid: string,
+    checkName: string,
+    limit: number = 100,
+): Promise<MetricsReport> {
+    return unwrapSdkResponse(
+        await getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameMetrics({
+            path: {
+                domain: domainId,
+                zoneid: zoneId,
+                subdomain,
+                serviceid,
+                cname: checkName,
+            } as any,
+            query: { limit },
+        }),
+    ) as unknown as MetricsReport;
+}
+
+export async function getCheckResultMetrics(
+    domainId: string,
+    checkName: string,
+    resultId: string,
+): Promise<MetricsReport> {
+    return unwrapSdkResponse(
+        await getDomainsByDomainChecksByCnameResultsByResultIdMetrics({
+            path: { domain: domainId, cname: checkName, result_id: resultId },
+        }),
+    ) as unknown as MetricsReport;
+}
+
+export async function getServiceCheckResultMetrics(
+    domainId: string,
+    zoneId: string,
+    subdomain: string,
+    serviceid: string,
+    checkName: string,
+    resultId: string,
+): Promise<MetricsReport> {
+    return unwrapSdkResponse(
+        await getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidChecksByCnameResultsByResultIdMetrics(
+            {
+                path: {
+                    domain: domainId,
+                    zoneid: zoneId,
+                    subdomain,
+                    serviceid,
+                    cname: checkName,
+                    result_id: resultId,
+                } as any,
+            },
+        ),
+    ) as unknown as MetricsReport;
 }

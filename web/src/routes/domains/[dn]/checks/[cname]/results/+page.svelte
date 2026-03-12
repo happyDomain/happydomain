@@ -28,6 +28,7 @@
         deleteCheckResult,
         deleteAllCheckResults,
         getCheckExecution,
+        getCheckMetrics,
     } from "$lib/api/checkers";
     import type { Domain } from "$lib/model/domain";
     import { CheckScopeType } from "$lib/model/checker";
@@ -55,4 +56,5 @@
     getExecution={(id) => getCheckExecution(data.domain.id, checkName, id)}
     deleteResult={(id) => deleteCheckResult(data.domain.id, checkName, id)}
     deleteAllResults={() => deleteAllCheckResults(data.domain.id, checkName)}
+    loadMetrics={() => getCheckMetrics(data.domain.id, checkName, 50)}
 />

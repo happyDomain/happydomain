@@ -28,6 +28,7 @@
         deleteServiceCheckResult,
         deleteAllServiceCheckResults,
         getServiceCheckExecution,
+        getServiceCheckMetrics,
     } from "$lib/api/checkers";
     import type { Domain } from "$lib/model/domain";
     import { CheckScopeType } from "$lib/model/checker";
@@ -66,6 +67,8 @@
         deleteServiceCheckResult(data.domain.id, data.zoneId, data.subdomain, data.serviceid, checkerName, id)}
     deleteAllResults={() =>
         deleteAllServiceCheckResults(data.domain.id, data.zoneId, data.subdomain, data.serviceid, checkerName)}
+    loadMetrics={() =>
+        getServiceCheckMetrics(data.domain.id, data.zoneId, data.subdomain, data.serviceid, checkerName, 50)}
     zoneId={data.zoneId}
     subdomain={data.subdomain}
     serviceid={data.serviceid}

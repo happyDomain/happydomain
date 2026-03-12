@@ -26,7 +26,7 @@
 
     import { onDestroy } from "svelte";
     import { t } from "$lib/translations";
-    import type { CheckerInfo, CheckResult } from "$lib/model/checker";
+    import type { CheckerInfo, CheckResult, MetricsReport } from "$lib/model/checker";
     import {
         currentCheckResult,
         currentCheckInfo,
@@ -38,12 +38,28 @@
         resultPromise: Promise<CheckResult>;
         checkPromise: Promise<CheckerInfo>;
         htmlReportPromise: Promise<string>;
+        getMetrics: () => Promise<MetricsReport>;
     }
 
-    let { resultPromise, checkPromise, htmlReportPromise }: Props = $props();
+    let { resultPromise, checkPromise, htmlReportPromise, getMetrics }: Props = $props();
+
+    let metricsReport = $state<MetricsReport | null>(null);
 
     $effect(() => {
         resultPromise.then((r) => currentCheckResult.set(r));
+    });
+
+    $effect(() => {
+        metricsReport = null;
+        checkPromise.then((c) => {
+            currentCheckInfo.set(c);
+            if (c.has_metrics) {
+                reportViewMode.set("metrics");
+                getMetrics()
+                    .then((r) => (metricsReport = r))
+                    .catch(() => {});
+            }
+        });
     });
 
     onDestroy(() => {
@@ -62,7 +78,34 @@
         </div>
     {:then [result, check]}
         {#if result.report || check.has_html_report || check.has_metrics}
-            {#if check.has_html_report && ($reportViewMode === "html" || ($showHTMLReport && $reportViewMode !== "json"))}
+            {#if check.has_metrics && $reportViewMode === "metrics"}
+                <div class="p-3 flex-fill">
+                    {#if metricsReport}
+                        <Table size="sm" hover striped>
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th class="text-end">Value</th>
+                                    <th>Unit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {#each metricsReport.series as series}
+                                    {#each series.points as point}
+                                        <tr>
+                                            <td>{series.label}</td>
+                                            <td class="text-end font-monospace">{point.value}</td>
+                                            <td class="text-muted">{series.unit}</td>
+                                        </tr>
+                                    {/each}
+                                {/each}
+                            </tbody>
+                        </Table>
+                    {:else}
+                        <div class="text-center p-4"><Spinner /></div>
+                    {/if}
+                </div>
+            {:else if check.has_html_report && ($reportViewMode === "html" || ($showHTMLReport && $reportViewMode !== "json"))}
                 {#await htmlReportPromise}
                     <div class="text-center p-4"><Spinner /></div>
                 {:then html}
