@@ -151,6 +151,7 @@ func (a *Analyzer) UseRR(rr happydns.Record, domain string, svc happydns.Service
 			found = true
 			a.zone[k] = a.zone[len(a.zone)-1]
 			a.zone = a.zone[:len(a.zone)-1]
+			break
 		}
 	}
 
