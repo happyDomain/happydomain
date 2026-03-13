@@ -22,9 +22,7 @@
 package svcs
 
 import (
-	"crypto/sha1"
 	"errors"
-	"io"
 	"reflect"
 	"strings"
 
@@ -78,7 +76,7 @@ func (a *Analyzer) SearchRR(arrs ...AnalyzerRecordFilter) (rrs []happydns.Record
 }
 
 func (a *Analyzer) addService(rr happydns.Record, domain string, svc happydns.ServiceBody) error {
-	// Remove origin to get an relative domain here
+	// Remove origin to get a relative domain here
 	domain = strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(domain, "."), strings.TrimSuffix(a.origin, ".")), ".")
 
 	for _, service := range a.services[happydns.Subdomain(domain)] {
@@ -89,8 +87,10 @@ func (a *Analyzer) addService(rr happydns.Record, domain string, svc happydns.Se
 		}
 	}
 
-	hash := sha1.New()
-	io.WriteString(hash, rr.String())
+	id, err := happydns.NewRandomIdentifier()
+	if err != nil {
+		return err
+	}
 
 	var ttl uint32 = 0
 	if rr.Header().Ttl != a.defaultTTL {
@@ -100,7 +100,7 @@ func (a *Analyzer) addService(rr happydns.Record, domain string, svc happydns.Se
 	a.services[happydns.Subdomain(domain)] = append(a.services[happydns.Subdomain(domain)], &happydns.Service{
 		Service: svc,
 		ServiceMeta: happydns.ServiceMeta{
-			Id:          hash.Sum(nil),
+			Id:          id,
 			Type:        reflect.Indirect(reflect.ValueOf(svc)).Type().String(),
 			Domain:      domain,
 			Ttl:         ttl,
