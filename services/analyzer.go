@@ -32,8 +32,12 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// ServiceAnalyzer is a callback function that inspects DNS records in an
+// Analyzer and claims those that belong to a particular service type.
 type ServiceAnalyzer func(*Analyzer) error
 
+// Analyzer holds the state for zone analysis: the remaining unclaimed DNS
+// records, the services discovered so far, and the zone origin.
 type Analyzer struct {
 	origin              string
 	zone                []happydns.Record
@@ -42,10 +46,13 @@ type Analyzer struct {
 	claimedSPFDirectives map[string]map[string]bool // domain -> directive -> claimed
 }
 
+// GetOrigin returns the FQDN of the zone being analyzed.
 func (a *Analyzer) GetOrigin() string {
 	return a.origin
 }
 
+// AnalyzerRecordFilter specifies criteria for matching DNS records.
+// Zero-value fields are treated as wildcards (match anything).
 type AnalyzerRecordFilter struct {
 	Prefix       string
 	Domain       string
@@ -55,6 +62,8 @@ type AnalyzerRecordFilter struct {
 	Ttl          uint32
 }
 
+// SearchRR returns all unclaimed records that match at least one of the given
+// filters. Each record appears at most once in the result.
 func (a *Analyzer) SearchRR(arrs ...AnalyzerRecordFilter) (rrs []happydns.Record) {
 	for _, record := range a.zone {
 		for _, arr := range arrs {
@@ -75,6 +84,8 @@ func (a *Analyzer) SearchRR(arrs ...AnalyzerRecordFilter) (rrs []happydns.Record
 	return
 }
 
+// addService registers a service for the given domain. If the same service
+// instance is already registered, its metadata is updated instead.
 func (a *Analyzer) addService(rr happydns.Record, domain string, svc happydns.ServiceBody) error {
 	// Remove origin to get a relative domain here
 	domain = strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(domain, "."), strings.TrimSuffix(a.origin, ".")), ".")
@@ -145,6 +156,9 @@ func (a *Analyzer) GetClaimedSPFDirectives(domain string) map[string]bool {
 	return a.claimedSPFDirectives[domain]
 }
 
+// UseRR claims a DNS record, removing it from the pool of unclaimed records,
+// and associates it with the given service. If svc is nil the record is
+// simply removed without registering a service.
 func (a *Analyzer) UseRR(rr happydns.Record, domain string, svc happydns.ServiceBody) error {
 	found := false
 	for k, record := range a.zone {
@@ -168,6 +182,8 @@ func (a *Analyzer) UseRR(rr happydns.Record, domain string, svc happydns.Service
 	return a.addService(rr, domain, svc)
 }
 
+// getMostUsedTTL returns the TTL value that appears most frequently across
+// all records in the zone.
 func getMostUsedTTL(zone []happydns.Record) uint32 {
 	ttls := map[uint32]int{}
 	for _, rr := range zone {
@@ -184,8 +200,11 @@ func getMostUsedTTL(zone []happydns.Record) uint32 {
 	return max
 }
 
+// AnalyzeZone converts raw DNS records into higher-level services by running
+// each registered ServiceAnalyzer in priority order. Records not claimed by
+// any analyzer are wrapped as Orphan services.
 func AnalyzeZone(origin string, records []happydns.Record) (svcs map[happydns.Subdomain][]*happydns.Service, defaultTTL uint32, err error) {
-	// Create a copy of the records as we'll changed them in the process
+	// Create a copy of the records as we'll change them in the process
 	zone := make([]happydns.Record, len(records))
 	for i, record := range records {
 		zone[i] = helpers.CopyRecord(record)
