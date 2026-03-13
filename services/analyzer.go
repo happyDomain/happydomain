@@ -36,36 +36,21 @@ import (
 // Analyzer and claims those that belong to a particular service type.
 type ServiceAnalyzer func(*Analyzer) error
 
-// Analyzer holds the state for zone analysis: the remaining unclaimed DNS
-// records, the services discovered so far, and the zone origin.
-type Analyzer struct {
-	origin              string
-	zone                []happydns.Record
-	services            map[happydns.Subdomain][]*happydns.Service
-	defaultTTL          uint32
-	claimedSPFDirectives map[string]map[string]bool // domain -> directive -> claimed
-}
-
-// GetOrigin returns the FQDN of the zone being analyzed.
-func (a *Analyzer) GetOrigin() string {
-	return a.origin
-}
-
-// AnalyzerRecordFilter specifies criteria for matching DNS records.
-// Zero-value fields are treated as wildcards (match anything).
-type AnalyzerRecordFilter struct {
-	Prefix       string
-	Domain       string
-	SubdomainsOf string
-	Contains     string
-	Type         uint16
-	Ttl          uint32
+// recordPool holds DNS records and tracks which ones have been claimed by
+// service analyzers.
+type recordPool struct {
+	zone    []happydns.Record
+	claimed []bool
 }
 
 // SearchRR returns all unclaimed records that match at least one of the given
 // filters. Each record appears at most once in the result.
-func (a *Analyzer) SearchRR(arrs ...AnalyzerRecordFilter) (rrs []happydns.Record) {
-	for _, record := range a.zone {
+func (p *recordPool) SearchRR(arrs ...AnalyzerRecordFilter) (rrs []happydns.Record) {
+	for i, record := range p.zone {
+		if p.claimed[i] {
+			continue
+		}
+
 		for _, arr := range arrs {
 			rhdr := record.Header()
 			rdtype := rhdr.Rrtype
@@ -84,16 +69,40 @@ func (a *Analyzer) SearchRR(arrs ...AnalyzerRecordFilter) (rrs []happydns.Record
 	return
 }
 
-// addService registers a service for the given domain. If the same service
-// instance is already registered, its metadata is updated instead.
-func (a *Analyzer) addService(rr happydns.Record, domain string, svc happydns.ServiceBody) error {
-	// Remove origin to get a relative domain here
-	domain = strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(domain, "."), strings.TrimSuffix(a.origin, ".")), ".")
+// markClaimed marks a record as claimed. Returns an error if the record is not
+// found or was already claimed.
+func (p *recordPool) markClaimed(rr happydns.Record) error {
+	for k, record := range p.zone {
+		if record == rr {
+			if p.claimed[k] {
+				return errors.New("Record already claimed.")
+			}
+			p.claimed[k] = true
+			return nil
+		}
+	}
+	return errors.New("Record not found.")
+}
 
-	for _, service := range a.services[happydns.Subdomain(domain)] {
+// serviceAccumulator collects services discovered during zone analysis,
+// keyed by subdomain. It deduplicates services and normalizes domain names.
+type serviceAccumulator struct {
+	origin     string
+	defaultTTL uint32
+	services   map[happydns.Subdomain][]*happydns.Service
+}
+
+// addService registers a service for the given domain. If the same service
+// instance is already registered, it is a no-op.
+func (sa *serviceAccumulator) addService(rr happydns.Record, domain string, svc happydns.ServiceBody) error {
+	// Remove origin to get a relative domain here
+	domain = strings.TrimSuffix(helpers.DomainRelative(domain, sa.origin), ".")
+	if domain == "@" {
+		domain = ""
+	}
+
+	for _, service := range sa.services[happydns.Subdomain(domain)] {
 		if service.Service == svc {
-			service.Comment = svc.GenComment()
-			service.NbResources = svc.GetNbResources()
 			return nil
 		}
 	}
@@ -104,23 +113,64 @@ func (a *Analyzer) addService(rr happydns.Record, domain string, svc happydns.Se
 	}
 
 	var ttl uint32 = 0
-	if rr.Header().Ttl != a.defaultTTL {
+	if rr.Header().Ttl != sa.defaultTTL {
 		ttl = rr.Header().Ttl
 	}
 
-	a.services[happydns.Subdomain(domain)] = append(a.services[happydns.Subdomain(domain)], &happydns.Service{
+	sa.services[happydns.Subdomain(domain)] = append(sa.services[happydns.Subdomain(domain)], &happydns.Service{
 		Service: svc,
 		ServiceMeta: happydns.ServiceMeta{
-			Id:          id,
-			Type:        reflect.Indirect(reflect.ValueOf(svc)).Type().String(),
-			Domain:      domain,
-			Ttl:         ttl,
-			Comment:     svc.GenComment(),
-			NbResources: svc.GetNbResources(),
+			Id:     id,
+			Type:   reflect.Indirect(reflect.ValueOf(svc)).Type().String(),
+			Domain: domain,
+			Ttl:    ttl,
 		},
 	})
 
 	return nil
+}
+
+// AnalyzerRecordFilter specifies criteria for matching DNS records.
+// Zero-value fields are treated as wildcards (match anything).
+type AnalyzerRecordFilter struct {
+	Prefix       string
+	Domain       string
+	SubdomainsOf string
+	Contains     string
+	Type         uint16
+	Ttl          uint32
+}
+
+// Analyzer holds the state for zone analysis. It is composed of a recordPool
+// (DNS records with mark-delete claiming) and a serviceAccumulator (services
+// discovered so far, keyed by subdomain).
+//
+// # Claim protocol
+//
+// ServiceAnalyzer callbacks are invoked in weight order (lowest first).
+// Each analyzer inspects the pool via SearchRR, then claims matching records
+// with UseRR. UseRR marks the record as claimed and registers the service.
+// Claimed records are invisible to subsequent SearchRR calls.
+//
+// For SPF, analyzers call ClaimSPFDirective to claim individual directives
+// without claiming the whole TXT record. The SPF analyzer (weight 1) runs
+// later and filters out claimed directives.
+//
+// After all analyzers run, unclaimed records are wrapped as Orphan services.
+type Analyzer struct {
+	recordPool
+	serviceAccumulator
+	claimedSPFDirectives map[string]map[string]bool // domain -> directive -> claimed
+}
+
+// GetOrigin returns the FQDN of the zone being analyzed.
+func (a *Analyzer) GetOrigin() string {
+	return a.origin
+}
+
+// GetDefaultTTL returns the default TTL for the zone being analyzed.
+func (a *Analyzer) GetDefaultTTL() uint32 {
+	return a.defaultTTL
 }
 
 // ClaimSPFDirective marks an SPF directive as claimed by the given service for
@@ -136,8 +186,8 @@ func (a *Analyzer) ClaimSPFDirective(domain string, directive string, svc happyd
 	a.claimedSPFDirectives[domain][directive] = true
 
 	// Ensure the service is registered (addService deduplicates)
-	for _, record := range a.zone {
-		if record.Header().Name == domain {
+	for i, record := range a.zone {
+		if !a.claimed[i] && record.Header().Name == domain {
 			return a.addService(record, domain, svc)
 		}
 	}
@@ -156,22 +206,12 @@ func (a *Analyzer) GetClaimedSPFDirectives(domain string) map[string]bool {
 	return a.claimedSPFDirectives[domain]
 }
 
-// UseRR claims a DNS record, removing it from the pool of unclaimed records,
+// UseRR claims a DNS record, marking it as claimed in the record pool,
 // and associates it with the given service. If svc is nil the record is
-// simply removed without registering a service.
+// simply claimed without registering a service.
 func (a *Analyzer) UseRR(rr happydns.Record, domain string, svc happydns.ServiceBody) error {
-	found := false
-	for k, record := range a.zone {
-		if record == rr {
-			found = true
-			a.zone[k] = a.zone[len(a.zone)-1]
-			a.zone = a.zone[:len(a.zone)-1]
-			break
-		}
-	}
-
-	if !found {
-		return errors.New("Record not found.")
+	if err := a.markClaimed(rr); err != nil {
+		return err
 	}
 
 	// svc nil, just drop the record from the zone (probably handle another way)
@@ -213,10 +253,15 @@ func AnalyzeZone(origin string, records []happydns.Record) (svcs map[happydns.Su
 	defaultTTL = getMostUsedTTL(records)
 
 	a := Analyzer{
-		origin:     origin,
-		zone:       zone,
-		services:   map[happydns.Subdomain][]*happydns.Service{},
-		defaultTTL: defaultTTL,
+		recordPool: recordPool{
+			zone:    zone,
+			claimed: make([]bool, len(zone)),
+		},
+		serviceAccumulator: serviceAccumulator{
+			origin:     origin,
+			defaultTTL: defaultTTL,
+			services:   map[happydns.Subdomain][]*happydns.Service{},
+		},
 	}
 
 	for i, record := range a.zone {
@@ -240,8 +285,11 @@ func AnalyzeZone(origin string, records []happydns.Record) (svcs map[happydns.Su
 		}
 	}
 
-	// Consider records not used by services as Orphan
-	for _, record := range a.zone {
+	// Consider unclaimed records as Orphan
+	for i, record := range a.zone {
+		if a.claimed[i] {
+			continue
+		}
 		// Skip DNSSEC records
 		if helpers.IsDNSSECType(record.Header().Rrtype) {
 			continue

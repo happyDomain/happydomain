@@ -34,6 +34,18 @@ func (msg *Service) Meta() *ServiceMeta {
 	return &msg.ServiceMeta
 }
 
+// MarshalJSON computes Comment and NbResources from Service just before
+// serialization so that these derived fields are always fresh.
+func (s *Service) MarshalJSON() ([]byte, error) {
+	if s.Service != nil {
+		s.Comment = s.Service.GenComment()
+		s.NbResources = s.Service.GetNbResources()
+	}
+
+	type serviceAlias Service
+	return json.Marshal((*serviceAlias)(s))
+}
+
 // ServiceBody represents a service provided by one or more DNS record.
 type ServiceBody interface {
 	// GetNbResources get the number of main Resources contains in the Service.

@@ -96,8 +96,6 @@ func (zone *Zone) eraseService(subdomain Subdomain, old *Service, idx int, new *
 			zone.Services[subdomain] = append(zone.Services[subdomain][:idx], zone.Services[subdomain][idx+1:]...)
 		}
 	} else {
-		new.Comment = new.Service.GenComment()
-		new.NbResources = new.Service.GetNbResources()
 		zone.Services[subdomain][idx] = new
 	}
 

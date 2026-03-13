@@ -52,8 +52,6 @@ func (uc *AddToZoneUsecase) AddService(zone *happydns.Zone, subdomain happydns.S
 
 	service.Id = hash
 	service.Domain = string(subdomain)
-	service.NbResources = service.Service.GetNbResources()
-	service.Comment = service.Service.GenComment()
 
 	zone.Services[subdomain] = append(zone.Services[subdomain], service)
 

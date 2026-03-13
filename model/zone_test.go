@@ -351,12 +351,12 @@ func TestZoneEraseServiceWithReplacement(t *testing.T) {
 		t.Errorf("EraseService() service.Type = %q; want %q", service.Type, "test.NewService")
 	}
 
-	if service.NbResources != 5 {
-		t.Errorf("EraseService() service.NbResources = %d; want 5", service.NbResources)
+	if service.Service.GetNbResources() != 5 {
+		t.Errorf("EraseService() service.GetNbResources() = %d; want 5", service.Service.GetNbResources())
 	}
 
-	if service.Comment != "new service" {
-		t.Errorf("EraseService() service.Comment = %q; want %q", service.Comment, "new service")
+	if service.Service.GenComment() != "new service" {
+		t.Errorf("EraseService() service.GenComment() = %q; want %q", service.Service.GenComment(), "new service")
 	}
 }
 
@@ -401,12 +401,12 @@ func TestZoneEraseServiceWithoutMeta(t *testing.T) {
 		t.Error("EraseServiceWithoutMeta() should preserve service ID")
 	}
 
-	if service.NbResources != 7 {
-		t.Errorf("EraseServiceWithoutMeta() service.NbResources = %d; want 7", service.NbResources)
+	if service.Service.GetNbResources() != 7 {
+		t.Errorf("EraseServiceWithoutMeta() service.GetNbResources() = %d; want 7", service.Service.GetNbResources())
 	}
 
-	if service.Comment != "updated service" {
-		t.Errorf("EraseServiceWithoutMeta() service.Comment = %q; want %q", service.Comment, "updated service")
+	if service.Service.GenComment() != "updated service" {
+		t.Errorf("EraseServiceWithoutMeta() service.GenComment() = %q; want %q", service.Service.GenComment(), "updated service")
 	}
 }
 
