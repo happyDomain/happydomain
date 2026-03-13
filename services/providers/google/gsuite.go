@@ -22,6 +22,7 @@
 package google // import "git.happydns.org/happyDomain/services/providers/google"
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -32,16 +33,12 @@ import (
 )
 
 type GSuite struct {
-	MX           []*dns.MX     `json:"mx,omitempty"`
-	SPF          *happydns.TXT `json:"txt"`
-	ValidationMX *dns.MX       `json:"validationMX,omitempty"`
+	MX           []*dns.MX `json:"mx,omitempty"`
+	ValidationMX *dns.MX   `json:"validationMX,omitempty"`
 }
 
 func (s *GSuite) GetNbResources() int {
 	nb := len(s.MX)
-	if s.SPF != nil {
-		nb += 1
-	}
 	if s.ValidationMX != nil {
 		nb += 1
 	}
@@ -49,7 +46,17 @@ func (s *GSuite) GetNbResources() int {
 }
 
 func (s *GSuite) GenComment() string {
-	return "5 MX + SPF directives"
+	return "5 MX + SPF"
+}
+
+// GetSPFDirectives implements happydns.SPFContributor.
+func (s *GSuite) GetSPFDirectives() []string {
+	return []string{"include:_spf.google.com"}
+}
+
+// GetSPFAllPolicy implements happydns.SPFContributor.
+func (s *GSuite) GetSPFAllPolicy() string {
+	return ""
 }
 
 func (s *GSuite) Initialize() (any, error) {
@@ -73,9 +80,6 @@ func (s *GSuite) Initialize() (any, error) {
 		s.MX = append(s.MX, rr.(*dns.MX))
 	}
 
-	s.SPF = happydns.NewTXT(helpers.NewRecord("", "TXT", 0, "").(*dns.TXT))
-	s.SPF.Txt = "v=spf1 include:_spf.google.com ~all"
-
 	return s, nil
 }
 
@@ -84,15 +88,24 @@ func (s *GSuite) GetRecords(domain string, ttl uint32, origin string) (rrs []hap
 		rrs = append(rrs, mx)
 	}
 
-	if s.SPF != nil {
-		rrs = append(rrs, s.SPF)
-	}
-
 	if s.ValidationMX != nil {
 		rrs = append(rrs, s.ValidationMX)
 	}
 
 	return
+}
+
+// UnmarshalJSON provides backward compatibility by silently ignoring the
+// old "txt" SPF field that was previously stored in GSuite services.
+func (s *GSuite) UnmarshalJSON(data []byte) error {
+	type gsuiteAlias GSuite
+	aux := &struct {
+		*gsuiteAlias
+		SPF json.RawMessage `json:"txt"`
+	}{
+		gsuiteAlias: (*gsuiteAlias)(s),
+	}
+	return json.Unmarshal(data, aux)
 }
 
 func gsuite_analyze(a *svcs.Analyzer) (err error) {
@@ -135,20 +148,8 @@ func gsuite_analyze(a *svcs.Analyzer) (err error) {
 				}
 			}
 
-			for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Domain: dn}) {
-				if txt, ok := record.(*happydns.TXT); ok {
-					content := txt.Txt
-					if strings.HasPrefix(content, "v=spf1") && strings.Contains(content, "_spf.google.com") {
-						googlerr.SPF = txt
-						if err = a.UseRR(
-							record,
-							dn,
-							googlerr,
-						); err != nil {
-							return
-						}
-					}
-				}
+			if err = a.ClaimSPFDirective(dn, "include:_spf.google.com", googlerr); err != nil {
+				return
 			}
 		}
 	}

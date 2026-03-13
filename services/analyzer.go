@@ -37,10 +37,11 @@ import (
 type ServiceAnalyzer func(*Analyzer) error
 
 type Analyzer struct {
-	origin     string
-	zone       []happydns.Record
-	services   map[happydns.Subdomain][]*happydns.Service
-	defaultTTL uint32
+	origin              string
+	zone                []happydns.Record
+	services            map[happydns.Subdomain][]*happydns.Service
+	defaultTTL          uint32
+	claimedSPFDirectives map[string]map[string]bool // domain -> directive -> claimed
 }
 
 func (a *Analyzer) GetOrigin() string {
@@ -108,6 +109,39 @@ func (a *Analyzer) addService(rr happydns.Record, domain string, svc happydns.Se
 	})
 
 	return nil
+}
+
+// ClaimSPFDirective marks an SPF directive as claimed by the given service for
+// a domain. The directive is not removed from the zone; instead it will be
+// filtered out when the SPF service analyzer runs later.
+func (a *Analyzer) ClaimSPFDirective(domain string, directive string, svc happydns.ServiceBody) error {
+	if a.claimedSPFDirectives == nil {
+		a.claimedSPFDirectives = map[string]map[string]bool{}
+	}
+	if a.claimedSPFDirectives[domain] == nil {
+		a.claimedSPFDirectives[domain] = map[string]bool{}
+	}
+	a.claimedSPFDirectives[domain][directive] = true
+
+	// Ensure the service is registered (addService deduplicates)
+	for _, record := range a.zone {
+		if record.Header().Name == domain {
+			return a.addService(record, domain, svc)
+		}
+	}
+
+	// If no record matched, use a synthetic one for the hash
+	rr := helpers.NewRecord(domain, "TXT", a.defaultTTL, a.origin)
+	return a.addService(rr, domain, svc)
+}
+
+// GetClaimedSPFDirectives returns the set of SPF directives claimed by other
+// services for the given domain.
+func (a *Analyzer) GetClaimedSPFDirectives(domain string) map[string]bool {
+	if a.claimedSPFDirectives == nil {
+		return nil
+	}
+	return a.claimedSPFDirectives[domain]
 }
 
 func (a *Analyzer) UseRR(rr happydns.Record, domain string, svc happydns.ServiceBody) error {

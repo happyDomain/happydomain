@@ -46,6 +46,21 @@ type ServiceBody interface {
 	GetRecords(domain string, ttl uint32, origin string) ([]Record, error)
 }
 
+// SPFContributor is implemented by services that contribute SPF directives.
+// When multiple services implement this interface for the same domain, their
+// directives are merged into a single SPF TXT record (RFC 7208 requires
+// exactly one SPF record per domain).
+type SPFContributor interface {
+	// GetSPFDirectives returns the SPF directives this service contributes
+	// (e.g. "include:_spf.google.com", "ip4:203.0.113.0/24").
+	// The "v=spf1" prefix and "all" mechanism must NOT be included.
+	GetSPFDirectives() []string
+
+	// GetSPFAllPolicy returns the desired "all" policy (e.g. "~all", "-all").
+	// Return "" if the service has no opinion; the default is "~all".
+	GetSPFAllPolicy() string
+}
+
 // ServiceMeta holds the metadata associated to a Service.
 type ServiceMeta struct {
 	// Type is the string representation of the Service's type.

@@ -90,11 +90,119 @@ func (s *SPFFields) String() string {
 	return strings.Join(directives, " ")
 }
 
+// GetSPFDirectives implements happydns.SPFContributor by parsing the stored
+// TXT record and returning all directives except the "all" mechanism.
+func (s *SPF) GetSPFDirectives() []string {
+	t := SPFFields{}
+	if err := t.Analyze(s.Record.Txt); err != nil {
+		return nil
+	}
+
+	var directives []string
+	for _, d := range t.Directives {
+		if !strings.HasSuffix(d, "all") {
+			directives = append(directives, d)
+		}
+	}
+	return directives
+}
+
+// GetSPFAllPolicy implements happydns.SPFContributor by extracting the "all"
+// mechanism from the stored TXT record.
+func (s *SPF) GetSPFAllPolicy() string {
+	t := SPFFields{}
+	if err := t.Analyze(s.Record.Txt); err != nil {
+		return ""
+	}
+
+	for _, d := range t.Directives {
+		if strings.HasSuffix(d, "all") {
+			return d
+		}
+	}
+	return ""
+}
+
+// spfAllPolicyRank returns a numeric rank for SPF "all" policies.
+// Higher rank means stricter policy.
+func spfAllPolicyRank(policy string) int {
+	switch policy {
+	case "-all":
+		return 4
+	case "~all":
+		return 3
+	case "?all":
+		return 2
+	case "+all":
+		return 1
+	default:
+		return 0
+	}
+}
+
+// ResolveSPFAllPolicy picks the strictest "all" policy from the given set.
+// Returns "~all" if no valid policy is provided.
+func ResolveSPFAllPolicy(policies []string) string {
+	best := ""
+	bestRank := 0
+	for _, p := range policies {
+		if r := spfAllPolicyRank(p); r > bestRank {
+			bestRank = r
+			best = p
+		}
+	}
+	if best == "" {
+		return "~all"
+	}
+	return best
+}
+
+// MergeSPFDirectives deduplicates directives across multiple sets.
+func MergeSPFDirectives(directiveSets ...[]string) []string {
+	seen := map[string]bool{}
+	var merged []string
+	for _, set := range directiveSets {
+		for _, d := range set {
+			if !seen[d] {
+				seen[d] = true
+				merged = append(merged, d)
+			}
+		}
+	}
+	return merged
+}
+
+// filterClaimedDirectives removes directives that have been claimed by other
+// services (e.g. GSuite claiming "include:_spf.google.com") from the SPF
+// record text. Returns the filtered TXT content.
+func filterClaimedDirectives(txt string, claimed map[string]bool) string {
+	if len(claimed) == 0 {
+		return txt
+	}
+
+	fields := strings.Fields(txt)
+	var kept []string
+	for _, f := range fields {
+		if !claimed[f] {
+			kept = append(kept, f)
+		}
+	}
+	return strings.Join(kept, " ")
+}
+
 func spf_analyze(a *Analyzer) (err error) {
 	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Contains: "v=spf1"}) {
 		domain := record.Header().Name
+		claimed := a.GetClaimedSPFDirectives(domain)
+
+		relRecord := helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*happydns.TXT)
+
+		if len(claimed) > 0 {
+			relRecord.Txt = filterClaimedDirectives(relRecord.Txt, claimed)
+		}
+
 		err = a.UseRR(record, domain, &SPF{
-			Record: helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*happydns.TXT),
+			Record: relRecord,
 		})
 		if err != nil {
 			return
@@ -108,11 +216,20 @@ func spf_analyze(a *Analyzer) (err error) {
 		}
 
 		domain := record.Header().Name
+		claimed := a.GetClaimedSPFDirectives(domain)
+
+		txt := &happydns.TXT{
+			Hdr: spf.Hdr,
+			Txt: spf.Txt,
+		}
+		relRecord := helpers.RRRelativeSubdomain(txt, a.GetOrigin(), domain).(*happydns.TXT)
+
+		if len(claimed) > 0 {
+			relRecord.Txt = filterClaimedDirectives(relRecord.Txt, claimed)
+		}
+
 		err = a.UseRR(record, domain, &SPF{
-			Record: helpers.RRRelativeSubdomain(&happydns.TXT{
-				Hdr: spf.Hdr,
-				Txt: spf.Txt,
-			}, a.GetOrigin(), domain).(*happydns.TXT),
+			Record: relRecord,
 		})
 		if err != nil {
 			return
