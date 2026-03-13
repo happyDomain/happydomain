@@ -38,6 +38,10 @@ const (
 	// applicable for service-scoped tests.
 	AutoFillSubdomain = "subdomain"
 
+	// AutoFillZone fills the option with the zone object. Only applicable
+	// for domain-scoped and service-scoped tests.
+	AutoFillZone = "zone"
+
 	// AutoFillServiceType fills the option with the service type identifier
 	// (e.g. "abstract.MatrixIM"). Only applicable for service-scoped tests.
 	AutoFillServiceType = "service_type"

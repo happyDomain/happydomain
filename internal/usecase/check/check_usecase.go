@@ -238,6 +238,14 @@ func (tu *checkerUsecase) buildAutoFillContext(userid *happydns.Identifier, doma
 	if domainid != nil {
 		if domain, err := tu.autoFillStore.GetDomain(*domainid); err == nil {
 			ctx[happydns.AutoFillDomainName] = domain.DomainName
+
+			if len(domain.ZoneHistory) > 0 {
+				// The first element in ZoneHistory is the current (most recent) zone.
+				zoneMsg, err := tu.autoFillStore.GetZone(domain.ZoneHistory[0])
+				if err == nil {
+					ctx[happydns.AutoFillZone] = zoneMsg
+				}
+			}
 		}
 	} else if serviceid != nil && userid != nil {
 		// To resolve service context we need to find which domain/zone owns the service.
@@ -263,6 +271,7 @@ func (tu *checkerUsecase) buildAutoFillContext(userid *happydns.Identifier, doma
 					if svc.Id.Equals(*serviceid) {
 						ctx[happydns.AutoFillDomainName] = domain.DomainName
 						ctx[happydns.AutoFillSubdomain] = string(subdomain)
+						ctx[happydns.AutoFillZone] = zoneMsg
 						ctx[happydns.AutoFillService] = svc
 						ctx[happydns.AutoFillServiceType] = svc.Type
 						return ctx
