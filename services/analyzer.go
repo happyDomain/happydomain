@@ -69,6 +69,7 @@ func (a *Analyzer) SearchRR(arrs ...AnalyzerRecordFilter) (rrs []happydns.Record
 				(arr.Ttl == 0 || rhdr.Ttl == arr.Ttl) &&
 				(arr.Contains == "" || strings.Contains(record.String(), arr.Contains)) {
 				rrs = append(rrs, record)
+				break
 			}
 		}
 	}
