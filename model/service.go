@@ -58,6 +58,13 @@ type ServiceBody interface {
 	GetRecords(domain string, ttl uint32, origin string) ([]Record, error)
 }
 
+// MetadataEnricher is implemented by ServiceBody types that store fields
+// not derivable from DNS records alone. After re-analysis, EnrichFromPrevious
+// is called on the new service body with the previous instance of the same type.
+type MetadataEnricher interface {
+	EnrichFromPrevious(old ServiceBody)
+}
+
 // SPFContributor is implemented by services that contribute SPF directives.
 // When multiple services implement this interface for the same domain, their
 // directives are merged into a single SPF TXT record (RFC 7208 requires

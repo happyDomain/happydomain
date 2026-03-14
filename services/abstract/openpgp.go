@@ -46,6 +46,12 @@ func (s *OpenPGP) GenComment() string {
 	return fmt.Sprintf("%s", s.Username)
 }
 
+func (s *OpenPGP) EnrichFromPrevious(old happydns.ServiceBody) {
+	if prev, ok := old.(*OpenPGP); ok {
+		s.Username = prev.Username
+	}
+}
+
 func (s *OpenPGP) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
 	if s.Username != "" {
 		identifier := fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
@@ -68,6 +74,12 @@ func (s *SMimeCert) GetNbResources() int {
 
 func (s *SMimeCert) GenComment() string {
 	return fmt.Sprintf("%s", s.Username)
+}
+
+func (s *SMimeCert) EnrichFromPrevious(old happydns.ServiceBody) {
+	if prev, ok := old.(*SMimeCert); ok {
+		s.Username = prev.Username
+	}
 }
 
 func (s *SMimeCert) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {

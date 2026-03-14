@@ -71,6 +71,13 @@ func (uc *AddRecordUsecase) Add(zone *happydns.Zone, origin string, record happy
 						return err
 					}
 
+					ReassociateMetadata(
+						map[happydns.Subdomain][]*happydns.Service{dn: {foundsamesvc}},
+						mergedsvc,
+						origin,
+						0,
+					)
+
 					// Replace in zone
 					zone.Services[dn] = append(zone.Services[dn][:i], append(mergedsvc[dn], zone.Services[dn][i+1:]...)...)
 

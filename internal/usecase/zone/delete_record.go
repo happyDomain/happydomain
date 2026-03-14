@@ -74,6 +74,13 @@ func (uc *DeleteRecordUsecase) delete(zone *happydns.Zone, origin string, record
 		if err != nil {
 			return err
 		}
+
+		ReassociateMetadata(
+			map[happydns.Subdomain][]*happydns.Service{dn: {svc}},
+			newsvc,
+			origin,
+			0,
+		)
 	}
 
 	// Register in zone

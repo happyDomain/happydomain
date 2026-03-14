@@ -23,6 +23,7 @@ package orchestrator
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
@@ -33,12 +34,14 @@ import (
 type ZoneImporterUsecase struct {
 	domainUpdater DomainUpdater
 	zoneCreator   *zoneUC.CreateZoneUsecase
+	zoneGetter    *zoneUC.GetZoneUsecase
 }
 
-func NewZoneImporterUsecase(domainUpdater DomainUpdater, zoneCreator *zoneUC.CreateZoneUsecase) *ZoneImporterUsecase {
+func NewZoneImporterUsecase(domainUpdater DomainUpdater, zoneCreator *zoneUC.CreateZoneUsecase, zoneGetter *zoneUC.GetZoneUsecase) *ZoneImporterUsecase {
 	return &ZoneImporterUsecase{
 		domainUpdater: domainUpdater,
 		zoneCreator:   zoneCreator,
+		zoneGetter:    zoneGetter,
 	}
 }
 
@@ -46,6 +49,15 @@ func (uc *ZoneImporterUsecase) Import(user *happydns.User, domain *happydns.Doma
 	services, defaultTTL, err := svcs.AnalyzeZone(domain.DomainName, rrs)
 	if err != nil {
 		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to perform the analysis of your zone: %s", err.Error())}
+	}
+
+	if len(domain.ZoneHistory) > 0 {
+		prevZone, err := uc.zoneGetter.Get(domain.ZoneHistory[0])
+		if err != nil {
+			log.Printf("ReassociateMetadata: unable to load previous zone %s: %s (metadata will not be transferred)", domain.ZoneHistory[0], err)
+		} else {
+			zoneUC.ReassociateMetadata(prevZone.Services, services, domain.DomainName, defaultTTL)
+		}
 	}
 
 	now := time.Now()

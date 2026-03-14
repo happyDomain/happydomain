@@ -218,6 +218,7 @@ func (app *App) initUsecases() {
 		zoneService.ListRecordsUC,
 		providerAdminService,
 		zoneService.CreateZoneUC,
+		zoneService.GetZoneUC,
 		providerAdminService,
 		zoneService.UpdateZoneUC,
 	)
