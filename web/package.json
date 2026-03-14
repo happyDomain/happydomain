@@ -35,6 +35,9 @@
 		"vite": "^7.0.0",
 		"vitest": "^4.0.0"
 	},
+	"resolutions": {
+		"vite": "^7.0.0"
+	},
 	"type": "module",
 	"dependencies": {
 		"@hey-api/openapi-ts": "^0.90.6",
