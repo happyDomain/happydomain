@@ -24,6 +24,7 @@ import { listDomains } from "$lib/api/domains";
 import type { Domain } from "$lib/model/domain";
 
 export const domains: Writable<Array<Domain> | undefined> = writable(undefined);
+export const newlyGroups: Writable<Array<string>> = writable([]);
 
 export async function refreshDomains() {
     const data = await listDomains();

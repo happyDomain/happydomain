@@ -156,6 +156,7 @@
         "all": "All groups",
         "manage": "Manage your domain groups",
         "new": "New group",
+        "drop-here": "Drop a domain here",
         "no-group": "Miscellaneous",
         "title": "Your groups"
     },

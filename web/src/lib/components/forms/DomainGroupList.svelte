@@ -25,7 +25,7 @@
     import { createEventDispatcher } from "svelte";
 
     import HListGroup from "$lib/components/ListGroup.svelte";
-    import { groups } from "$lib/stores/domains";
+    import { groups, newlyGroups } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
     const dispatch = createEventDispatcher();
@@ -49,7 +49,7 @@
 
 <HListGroup
     button
-    items={$groups}
+    items={[...$groups, ...$newlyGroups.filter((g) => !$groups.includes(g))]}
     {flush}
     isActive={(item) => selectedGroup != null && item === selectedGroup}
     on:click={selectGroup}

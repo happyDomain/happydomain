@@ -44,7 +44,7 @@
     import ZoneList from "$lib/components/zones/ZoneList.svelte";
     import { updateDomain } from "$lib/api/domains";
     import type { Domain } from "$lib/model/domain";
-    import { groups, domains, refreshDomains } from "$lib/stores/domains";
+    import { groups, domains, newlyGroups, refreshDomains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
     interface Props {
@@ -66,6 +66,7 @@
         if (newgroup.length && mygroups.indexOf(newgroup) < 0) {
             mygroups.push(newgroup);
             mygroups = mygroups;
+            newlyGroups.update((gs) => gs.includes(newgroup) ? gs : [...gs, newgroup]);
         }
         newgroup = "";
     }

@@ -485,6 +485,7 @@
         "all": "Tous les groupes",
         "manage": "Vos groupes de domaines",
         "new": "Nouveau groupe",
+        "drop-here": "Déposez un domaine ici",
         "no-group": "Divers",
         "title": "Vos groupes"
     },

@@ -27,7 +27,8 @@
     import { Badge } from "@sveltestrap/sveltestrap";
     import { ListGroup } from "@sveltestrap/sveltestrap";
     import DomainWithProvider from "$lib/components/domains/DomainWithProvider.svelte";
-    import { domains_idx } from "$lib/stores/domains";
+    import { updateDomain } from "$lib/api/domains";
+    import { domains_idx, newlyGroups, refreshDomains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
     const dispatch = createEventDispatcher();
@@ -44,38 +45,87 @@
         flush?: boolean;
         links?: boolean;
         display_by_groups?: boolean;
+        show_empty_groups?: boolean;
         domains?: Array<ZoneListDomain>;
-        no_domain?: import('svelte').Snippet;
-        badges?: import('svelte').Snippet<[any]>;
-        [key: string]: any
+        no_domain?: import("svelte").Snippet;
+        badges?: import("svelte").Snippet<[any]>;
+        [key: string]: any;
     }
 
     let {
         flush = false,
         links = false,
         display_by_groups = false,
+        show_empty_groups = false,
         domains = [],
         no_domain,
         badges,
         ...rest
     }: Props = $props();
 
-    function genGroups(domains: Array<ZoneListDomain>, display_by_groups: boolean) {
+    function genGroups(domains: Array<ZoneListDomain>, display_by_groups: boolean, show_empty_groups: boolean, extraGroups: Array<string>) {
         if (!display_by_groups) {
             return { "": domains };
         }
 
-        const groups: Record<string, Array<ZoneListDomain>> = { };
+        const groups: Record<string, Array<ZoneListDomain>> = {};
 
         for (const domain of domains) {
-            const group = domain.group ?? '';
+            const group = domain.group ?? "";
             (groups[group] ??= []).push(domain);
+        }
+
+        if (show_empty_groups) {
+            for (const g of extraGroups) {
+                if (!(g in groups)) {
+                    groups[g] = [];
+                }
+            }
         }
 
         return groups;
     }
 
-    let groups: Record<string, Array<ZoneListDomain>> = $derived(genGroups(domains, display_by_groups));
+    let localDomains: Array<ZoneListDomain> = $state([...domains]);
+    $effect(() => {
+        localDomains = [...domains];
+    });
+
+    let groups: Record<string, Array<ZoneListDomain>> = $derived(
+        genGroups(localDomains, display_by_groups, show_empty_groups, $newlyGroups),
+    );
+
+    let draggedDomain: ZoneListDomain | null = $state(null);
+    let dragOverGroup: string | null = $state(null);
+
+    async function handleDrop(targetGroup: string) {
+        if (!draggedDomain || (draggedDomain.group ?? "") === targetGroup) return;
+
+        const fullDomain = $domains_idx[draggedDomain.domain] ?? $domains_idx[draggedDomain.id];
+        if (!fullDomain) return;
+
+        const prevGroup = draggedDomain.group;
+        const domainId = draggedDomain.domain || draggedDomain.id;
+
+        // Optimistic update
+        localDomains = localDomains.map((d) =>
+            d.domain === domainId || d.id === domainId ? { ...d, group: targetGroup } : d,
+        );
+        draggedDomain = null;
+        dragOverGroup = null;
+
+        fullDomain.group = targetGroup;
+        try {
+            await updateDomain(fullDomain);
+            refreshDomains();
+        } catch {
+            // Revert on error
+            fullDomain.group = prevGroup;
+            localDomains = localDomains.map((d) =>
+                d.domain === domainId || d.id === domainId ? { ...d, group: prevGroup } : d,
+            );
+        }
+    }
 
     function getDomainHref(domain: ZoneListDomain): string | undefined {
         if (links && !domain.href) {
@@ -99,35 +149,76 @@
     {#if domains.length === 0}
         {@render no_domain?.()}
     {:else}
-        {#each Object.keys(groups).sort((a,b) => !a || !b ? (!a ? 1 : -1) : a.toLowerCase().localeCompare(b.toLowerCase())) as gname}
+        {#each Object.keys(groups).sort((a, b) => {
+                    const aEmpty = groups[a].length === 0;
+                    const bEmpty = groups[b].length === 0;
+                    if (aEmpty !== bEmpty) return aEmpty ? 1 : -1;
+                    if (!a || !b) return !a ? 1 : -1;
+                    return a.toLowerCase().localeCompare(b.toLowerCase());
+                }) as gname}
             {@const gdomains = groups[gname]}
             <div
                 class:mb-2={Object.keys(groups).length != 1}
+                class:drag-over={display_by_groups && dragOverGroup === gname}
+                ondragover={display_by_groups
+                    ? (e) => {
+                          e.preventDefault();
+                          dragOverGroup = gname;
+                      }
+                    : undefined}
+                ondragleave={display_by_groups
+                    ? (e) => {
+                          if (!e.currentTarget.contains(e.relatedTarget as Node))
+                              dragOverGroup = null;
+                      }
+                    : undefined}
+                ondrop={display_by_groups
+                    ? (e) => {
+                          e.preventDefault();
+                          handleDrop(gname);
+                      }
+                    : undefined}
             >
                 {#if Object.keys(groups).length != 1}
                     <div class="d-flex align-items-center">
-                        <hr class="flex-fill">
-                        <h3
-                            class="px-2"
-                        >
+                        <hr class="flex-fill" />
+                        <h3 class="px-2">
                             {#if gname === ""}
                                 {$t("domaingroups.no-group")}
                             {:else}
                                 {gname}
                             {/if}
                         </h3>
-                        <hr class="flex-fill">
+                        <hr class="flex-fill" />
                     </div>
                 {/if}
-                <ListGroup
-                    {flush}
-                >
+                <ListGroup {flush}>
+                    {#if display_by_groups && gdomains.length === 0}
+                        <div
+                            class="list-group-item text-center text-muted py-3 empty-group-placeholder"
+                        >
+                            {$t("domaingroups.drop-here")}
+                        </div>
+                    {/if}
                     {#each gdomains as item}
                         {@const href = getDomainHref(item)}
                         {#if href}
                             <a
                                 class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-dark"
+                                class:draggable-item={display_by_groups}
                                 {href}
+                                draggable={display_by_groups || undefined}
+                                ondragstart={display_by_groups
+                                    ? () => {
+                                          draggedDomain = item;
+                                      }
+                                    : undefined}
+                                ondragend={display_by_groups
+                                    ? () => {
+                                          draggedDomain = null;
+                                          dragOverGroup = null;
+                                      }
+                                    : undefined}
                                 onclick={() => dispatch("click", item)}
                             >
                                 {@render domainRow(item)}
@@ -135,7 +226,20 @@
                         {:else}
                             <button
                                 class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-dark"
+                                class:draggable-item={display_by_groups}
                                 type="button"
+                                draggable={display_by_groups || undefined}
+                                ondragstart={display_by_groups
+                                    ? () => {
+                                          draggedDomain = item;
+                                      }
+                                    : undefined}
+                                ondragend={display_by_groups
+                                    ? () => {
+                                          draggedDomain = null;
+                                          dragOverGroup = null;
+                                      }
+                                    : undefined}
                                 onclick={() => dispatch("click", item)}
                             >
                                 {@render domainRow(item)}
@@ -147,3 +251,18 @@
         {/each}
     {/if}
 </div>
+
+<style>
+    .draggable-item {
+        cursor: grab;
+    }
+    .drag-over {
+        background-color: var(--bs-primary-bg-subtle, #cfe2ff);
+        border-radius: 0.25rem;
+        outline: 2px dashed var(--bs-primary, #0d6efd);
+    }
+    .empty-group-placeholder {
+        min-height: 3rem;
+        border-style: dashed;
+    }
+</style>

@@ -58,7 +58,7 @@
 <FilterDomainInput class="mb-3" />
 
 {#if filteredDomains.length}
-    <ZoneList button display_by_groups domains={filteredDomains} links />
+    <ZoneList button display_by_groups domains={filteredDomains} links show_empty_groups />
 {:else}
     <div class="my-4 text-center text-muted">
         {$t("domains.filtered-no-result")}

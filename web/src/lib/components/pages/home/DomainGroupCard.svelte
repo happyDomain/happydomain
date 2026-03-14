@@ -22,17 +22,13 @@
 -->
 
 <script lang="ts">
-    import {
-        Button,
-        Card,
-        Icon,
-    } from "@sveltestrap/sveltestrap";
+    import { Button, Card, Icon } from "@sveltestrap/sveltestrap";
 
     import DomainGroupList from "$lib/components/forms/DomainGroupList.svelte";
     import DomainGroupModal, { controls as ctrlDomainGroup } from "$lib/components/modals/DomainGroup.svelte";
+    import NewDomainGroupModal, { controls as ctrlNewDomainGroup } from "$lib/components/modals/NewDomainGroup.svelte";
     import { domains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
-
 
     interface Props {
         class?: string;
@@ -46,18 +42,32 @@
     <Card class="mb-3 ${className}">
         <div class="card-header d-flex justify-content-between align-items-center">
             {$t("domaingroups.title")}
-            <Button
-                type="button"
-                size="sm"
-                color="light"
-                title={$t("domaingroups.manage")}
-                on:click={() => ctrlDomainGroup.Open()}
-            >
-                <Icon name="grid-fill" />
-            </Button>
+            <div>
+                <Button
+                    type="button"
+                    size="sm"
+                    color="light"
+                    class="d-none d-lg-inline-block"
+                    title={$t("domaingroups.new")}
+                    on:click={() => ctrlNewDomainGroup.Open()}
+                >
+                    <Icon name="plus-lg" />
+                </Button>
+                <Button
+                    type="button"
+                    size="sm"
+                    color="light"
+                    class="d-lg-none"
+                    title={$t("domaingroups.manage")}
+                    on:click={() => ctrlDomainGroup.Open()}
+                >
+                    <Icon name="grid-fill" />
+                </Button>
+            </div>
         </div>
         <DomainGroupList flush bind:selectedGroup={filteredGroup} />
     </Card>
 {/if}
 
+<NewDomainGroupModal />
 <DomainGroupModal />
