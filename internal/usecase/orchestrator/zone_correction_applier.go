@@ -62,7 +62,12 @@ func NewZoneCorrectionApplierUsecase(
 	}
 }
 
-func (uc *ZoneCorrectionApplierUsecase) Apply(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, form *happydns.ApplyZoneForm) (*happydns.Zone, error) {
+func (uc *ZoneCorrectionApplierUsecase) Apply(
+	user *happydns.User,
+	domain *happydns.Domain,
+	zone *happydns.Zone,
+	form *happydns.ApplyZoneForm,
+) (*happydns.Zone, error) {
 	provider, err := uc.providerService.GetUserProvider(user, domain.ProviderId)
 	if err != nil {
 		return nil, err

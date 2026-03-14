@@ -45,7 +45,12 @@ func NewActionOnDomainUsecase(domainUpdater DomainUpdater, zoneCreator *zoneUC.C
 	}
 }
 
-func (uc *ActionOnDomainUsecase) ActionOnEditableZone(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, act func(zone *happydns.Zone) error) (*happydns.Zone, error) {
+func (uc *ActionOnDomainUsecase) ActionOnEditableZone(
+	user *happydns.User,
+	domain *happydns.Domain,
+	zone *happydns.Zone,
+	act func(zone *happydns.Zone) error,
+) (*happydns.Zone, error) {
 	var err error
 	newZone := zone
 

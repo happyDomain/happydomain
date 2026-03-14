@@ -42,7 +42,12 @@ type DomainController struct {
 	store              domain.DomainStorage
 }
 
-func NewDomainController(duService happydns.DomainUsecase, remoteZoneImporter happydns.RemoteZoneImporterUsecase, zoneImporter happydns.ZoneImporterUsecase, store domain.DomainStorage) *DomainController {
+func NewDomainController(
+	duService happydns.DomainUsecase,
+	remoteZoneImporter happydns.RemoteZoneImporterUsecase,
+	zoneImporter happydns.ZoneImporterUsecase,
+	store domain.DomainStorage,
+) *DomainController {
 	return &DomainController{
 		duService,
 		remoteZoneImporter,

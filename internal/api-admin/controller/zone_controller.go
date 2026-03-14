@@ -40,7 +40,12 @@ type ZoneController struct {
 	store                 zone.ZoneStorage
 }
 
-func NewZoneController(domainService happydns.DomainUsecase, zoneService happydns.ZoneUsecase, zoneCorrectionService happydns.ZoneCorrectionApplierUsecase, store zone.ZoneStorage) *ZoneController {
+func NewZoneController(
+	domainService happydns.DomainUsecase,
+	zoneService happydns.ZoneUsecase,
+	zoneCorrectionService happydns.ZoneCorrectionApplierUsecase,
+	store zone.ZoneStorage,
+) *ZoneController {
 	return &ZoneController{
 		domainService,
 		zoneService,

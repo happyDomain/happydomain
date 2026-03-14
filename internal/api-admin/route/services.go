@@ -29,7 +29,12 @@ import (
 	"git.happydns.org/happyDomain/internal/storage"
 )
 
-func declareZoneServiceRoutes(apiZonesRoutes *gin.RouterGroup, zc *controller.ZoneController, dep Dependencies, store storage.Storage) {
+func declareZoneServiceRoutes(
+	apiZonesRoutes *gin.RouterGroup,
+	zc *controller.ZoneController,
+	dep Dependencies,
+	store storage.Storage,
+) {
 	sc := controller.NewServiceController(
 		dep.Service,
 		dep.ZoneService,

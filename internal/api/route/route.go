@@ -79,7 +79,14 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 
 	apiRoutes := router.Group("/api")
 
-	lc := DeclareAuthenticationRoutes(cfg, baseRoutes, apiRoutes, dep.Authentication, dep.CaptchaVerifier, dep.FailureTracker)
+	lc := DeclareAuthenticationRoutes(
+		cfg,
+		baseRoutes,
+		apiRoutes,
+		dep.Authentication,
+		dep.CaptchaVerifier,
+		dep.FailureTracker,
+	)
 	auc := DeclareAuthUserRoutes(apiRoutes, dep.AuthUser, lc)
 	DeclareProviderSpecsRoutes(apiRoutes, dep.ProviderSpecs)
 	DeclareRegistrationRoutes(apiRoutes, dep.AuthUser, dep.CaptchaVerifier)
@@ -99,7 +106,17 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 	apiAuthRoutes.Use(middleware.AuthRequired())
 
 	DeclareAuthenticationCheckRoutes(apiAuthRoutes, lc)
-	DeclareDomainRoutes(apiAuthRoutes, dep.Domain, dep.DomainLog, dep.RemoteZoneImporter, dep.ZoneImporter, dep.Zone, dep.ZoneCorrectionApplier, dep.ZoneService, dep.Service)
+	DeclareDomainRoutes(
+		apiAuthRoutes,
+		dep.Domain,
+		dep.DomainLog,
+		dep.RemoteZoneImporter,
+		dep.ZoneImporter,
+		dep.Zone,
+		dep.ZoneCorrectionApplier,
+		dep.ZoneService,
+		dep.Service,
+	)
 	DeclareProviderRoutes(apiAuthRoutes, dep.Provider)
 	DeclareProviderSettingsRoutes(apiAuthRoutes, dep.ProviderSettings)
 	DeclareRecordRoutes(apiAuthRoutes)

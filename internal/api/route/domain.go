@@ -29,7 +29,17 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareDomainRoutes(router *gin.RouterGroup, domainUC happydns.DomainUsecase, domainLogUC happydns.DomainLogUsecase, remoteZoneImporter happydns.RemoteZoneImporterUsecase, zoneImporter happydns.ZoneImporterUsecase, zoneUC happydns.ZoneUsecase, zoneCorrApplier happydns.ZoneCorrectionApplierUsecase, zoneServiceUC happydns.ZoneServiceUsecase, serviceUC happydns.ServiceUsecase) {
+func DeclareDomainRoutes(
+	router *gin.RouterGroup,
+	domainUC happydns.DomainUsecase,
+	domainLogUC happydns.DomainLogUsecase,
+	remoteZoneImporter happydns.RemoteZoneImporterUsecase,
+	zoneImporter happydns.ZoneImporterUsecase,
+	zoneUC happydns.ZoneUsecase,
+	zoneCorrApplier happydns.ZoneCorrectionApplierUsecase,
+	zoneServiceUC happydns.ZoneServiceUsecase,
+	serviceUC happydns.ServiceUsecase,
+) {
 	dc := controller.NewDomainController(
 		domainUC,
 		remoteZoneImporter,
@@ -51,5 +61,12 @@ func DeclareDomainRoutes(router *gin.RouterGroup, domainUC happydns.DomainUsecas
 	apiDomainsRoutes.POST("/zone", dc.ImportZone)
 	apiDomainsRoutes.POST("/retrieve_zone", dc.RetrieveZone)
 
-	DeclareZoneRoutes(apiDomainsRoutes, zoneUC, domainUC, zoneCorrApplier, zoneServiceUC, serviceUC)
+	DeclareZoneRoutes(
+		apiDomainsRoutes,
+		zoneUC,
+		domainUC,
+		zoneCorrApplier,
+		zoneServiceUC,
+		serviceUC,
+	)
 }

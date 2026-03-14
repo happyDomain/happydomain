@@ -32,7 +32,14 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareAuthenticationRoutes(cfg *happydns.Options, baserouter, apirouter *gin.RouterGroup, authUC happydns.AuthenticationUsecase, captchaVerifier happydns.CaptchaVerifier, failureTracker happydns.FailureTracker) *controller.LoginController {
+func DeclareAuthenticationRoutes(
+	cfg *happydns.Options,
+	baserouter,
+	apirouter *gin.RouterGroup,
+	authUC happydns.AuthenticationUsecase,
+	captchaVerifier happydns.CaptchaVerifier,
+	failureTracker happydns.FailureTracker,
+) *controller.LoginController {
 	lc := controller.NewLoginController(authUC, captchaVerifier, failureTracker)
 
 	apirouter.POST("/auth", lc.Login)

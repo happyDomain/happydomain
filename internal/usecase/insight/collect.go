@@ -48,7 +48,14 @@ type CollectStorage interface {
 }
 
 // Collect gathers anonymous usage statistics about the running instance.
-func Collect(cfg *happydns.Options, store CollectStorage, instanceID string, version happydns.VersionResponse, buildSettings map[string]string, goVersion string) (*happydns.Insights, error) {
+func Collect(
+	cfg *happydns.Options,
+	store CollectStorage,
+	instanceID string,
+	version happydns.VersionResponse,
+	buildSettings map[string]string,
+	goVersion string,
+) (*happydns.Insights, error) {
 	data := happydns.Insights{
 		InsightsID: instanceID,
 		Version:    version,

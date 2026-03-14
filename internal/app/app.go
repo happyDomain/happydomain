@@ -185,7 +185,12 @@ func (app *App) initInsights() {
 
 func (app *App) initUsecases() {
 	sessionService := sessionUC.NewService(app.store)
-	authUserService := authuserUC.NewAuthUserUsecases(app.cfg, app.mailer, app.store, sessionService)
+	authUserService := authuserUC.NewAuthUserUsecases(
+		app.cfg,
+		app.mailer,
+		app.store,
+		sessionService,
+	)
 	domainLogService := domainlogUC.NewService(app.store)
 	providerService := providerUC.NewRestrictedService(app.cfg, app.store)
 	providerAdminService := providerUC.NewService(app.store)
@@ -201,11 +206,27 @@ func (app *App) initUsecases() {
 	app.usecases.zone = zoneService
 	app.usecases.domainLog = domainLogService
 
-	domainService := domainUC.NewService(app.store, providerAdminService, zoneService.GetZoneUC, providerAdminService, domainLogService)
+	domainService := domainUC.NewService(
+		app.store,
+		providerAdminService,
+		zoneService.GetZoneUC,
+		providerAdminService,
+		domainLogService,
+	)
 	app.usecases.domain = domainService
-	app.usecases.zoneService = zoneServiceUC.NewZoneServiceUsecases(domainService, zoneService.CreateZoneUC, serviceService.ValidateServiceUC, app.store)
+	app.usecases.zoneService = zoneServiceUC.NewZoneServiceUsecases(
+		domainService,
+		zoneService.CreateZoneUC,
+		serviceService.ValidateServiceUC,
+		app.store,
+	)
 
-	app.usecases.user = userUC.NewUserUsecases(app.store, app.newsletter, authUserService, sessionService)
+	app.usecases.user = userUC.NewUserUsecases(
+		app.store,
+		app.newsletter,
+		authUserService,
+		sessionService,
+	)
 	app.usecases.authentication = usecase.NewAuthenticationUsecase(app.cfg, app.store, app.usecases.user)
 	app.usecases.authUser = authUserService
 	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg)
@@ -244,27 +265,31 @@ func (app *App) setupRouter() {
 
 	baserouter := app.router.Group(app.cfg.BasePath)
 
-	api.DeclareRoutes(app.cfg, baserouter, api.Dependencies{
-		Authentication:        app.usecases.authentication,
-		AuthUser:              app.usecases.authUser,
-		CaptchaVerifier:       app.captchaVerifier,
-		Domain:                app.usecases.domain,
-		DomainLog:             app.usecases.domainLog,
-		FailureTracker:        app.failureTracker,
-		Provider:              app.usecases.provider,
-		ProviderSettings:      app.usecases.providerSettings,
-		ProviderSpecs:         app.usecases.providerSpecs,
-		RemoteZoneImporter:    app.usecases.orchestrator.RemoteZoneImporter,
-		Resolver:              app.usecases.resolver,
-		Service:               app.usecases.service,
-		ServiceSpecs:          app.usecases.serviceSpecs,
-		Session:               app.usecases.session,
-		User:                  app.usecases.user,
-		Zone:                  app.usecases.zone,
-		ZoneCorrectionApplier: app.usecases.orchestrator.ZoneCorrectionApplier,
-		ZoneImporter:          app.usecases.orchestrator.ZoneImporter,
-		ZoneService:           app.usecases.zoneService,
-	})
+	api.DeclareRoutes(
+		app.cfg,
+		baserouter,
+		api.Dependencies{
+			Authentication:        app.usecases.authentication,
+			AuthUser:              app.usecases.authUser,
+			CaptchaVerifier:       app.captchaVerifier,
+			Domain:                app.usecases.domain,
+			DomainLog:             app.usecases.domainLog,
+			FailureTracker:        app.failureTracker,
+			Provider:              app.usecases.provider,
+			ProviderSettings:      app.usecases.providerSettings,
+			ProviderSpecs:         app.usecases.providerSpecs,
+			RemoteZoneImporter:    app.usecases.orchestrator.RemoteZoneImporter,
+			Resolver:              app.usecases.resolver,
+			Service:               app.usecases.service,
+			ServiceSpecs:          app.usecases.serviceSpecs,
+			Session:               app.usecases.session,
+			User:                  app.usecases.user,
+			Zone:                  app.usecases.zone,
+			ZoneCorrectionApplier: app.usecases.orchestrator.ZoneCorrectionApplier,
+			ZoneImporter:          app.usecases.orchestrator.ZoneImporter,
+			ZoneService:           app.usecases.zoneService,
+		},
+	)
 	web.DeclareRoutes(app.cfg, baserouter, app.captchaVerifier)
 	web.NoRoute(app.cfg, app.router)
 }
