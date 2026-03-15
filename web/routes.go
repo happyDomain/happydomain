@@ -134,6 +134,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, captchaVerifi
 	router.GET("/domains/*_", serveIndex)
 	router.GET("/email-validation", serveIndex)
 	router.GET("/forgotten-password", serveIndex)
+	router.GET("/generator/*_", serveIndex)
 	router.GET("/join", serveIndex)
 	router.GET("/login", serveIndex)
 	router.GET("/me", serveIndex)

@@ -22,22 +22,28 @@
 package controller
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"reflect"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
+	serviceUC "git.happydns.org/happyDomain/internal/usecase/service"
 	"git.happydns.org/happyDomain/model"
 )
 
 type ServiceSpecsController struct {
-	sSpecsServices happydns.ServiceSpecsUsecase
+	sSpecsServices     happydns.ServiceSpecsUsecase
+	listRecordsService *serviceUC.ListRecordsUsecase
 }
 
 func NewServiceSpecsController(sSpecsServices happydns.ServiceSpecsUsecase) *ServiceSpecsController {
 	return &ServiceSpecsController{
-		sSpecsServices: sSpecsServices,
+		sSpecsServices:     sSpecsServices,
+		listRecordsService: serviceUC.NewListRecordsUsecase(),
 	}
 }
 
@@ -79,7 +85,7 @@ func (ssc *ServiceSpecsController) GetServiceSpecIcon(c *gin.Context) {
 	c.Data(http.StatusOK, "image/png", cnt)
 }
 
-// getServiceSpec returns a description of the expected fields.
+// GetServiceSpec returns a description of the expected fields.
 //
 //	@Summary	Get the service expected fields.
 //	@Schemes
@@ -126,4 +132,55 @@ func (ssc *ServiceSpecsController) InitializeServiceSpec(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, initialized)
+}
+
+// GenerateRecords returns the DNS records that the service would generate.
+//
+//	@Summary	Generate DNS records for a service.
+//	@Schemes
+//	@Description	Return the DNS records that the given service configuration would generate.
+//	@Tags			service_specs
+//	@Accept			json
+//	@Produce		json
+//	@Param			serviceType	path		string	true	"The service's type"
+//	@Param			domain		query		string	true	"The domain to use to generate the records"
+//	@Param			ttl		query		int	false	"The TTL used by the generated records"
+//	@Success		200			{array}		happydns.Record
+//	@Failure		400			{object}	happydns.ErrorResponse	"Invalid request body"
+//	@Failure		404			{object}	happydns.ErrorResponse	"Service type does not exist"
+//	@Failure		500			{object}	happydns.ErrorResponse	"Internal error"
+//	@Router			/service_specs/{serviceType}/records [post]
+func (ssc *ServiceSpecsController) GenerateRecords(c *gin.Context) {
+	svctype := c.MustGet("servicetype").(reflect.Type)
+	domain := c.Query("domain")
+	ttl, _ := strconv.Atoi(c.Query("ttl"))
+
+	if ttl == 0 {
+		ttl = 3600
+	}
+
+	svc, err := ssc.sSpecsServices.InitializeService(svctype)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	err = c.ShouldBindJSON(&svc)
+	if err != nil {
+		log.Printf("%s sends invalid domain JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
+		return
+	}
+
+	records, err := ssc.listRecordsService.List(&happydns.Service{
+		ServiceMeta: happydns.ServiceMeta{
+			Domain: domain,
+		},
+		Service: svc.(happydns.ServiceBody),
+	}, domain, uint32(ttl))
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(http.StatusOK, records)
 }

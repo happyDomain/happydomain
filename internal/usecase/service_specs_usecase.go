@@ -33,13 +33,19 @@ import (
 	"git.happydns.org/happyDomain/services"
 )
 
+// serviceSpecsUsecase implements happydns.ServiceSpecsUsecase, providing
+// introspection into registered DNS services: listing them, retrieving their
+// field specifications, and generating preview DNS records.
 type serviceSpecsUsecase struct {
 }
 
+// NewServiceSpecsUsecase creates a new ServiceSpecsUsecase.
 func NewServiceSpecsUsecase() happydns.ServiceSpecsUsecase {
 	return &serviceSpecsUsecase{}
 }
 
+// ListServices returns metadata (ServiceInfos) for every registered DNS service,
+// keyed by service type identifier.
 func (ssu *serviceSpecsUsecase) ListServices() map[string]happydns.ServiceInfos {
 	services := svcs.ListServices()
 
@@ -51,6 +57,9 @@ func (ssu *serviceSpecsUsecase) ListServices() map[string]happydns.ServiceInfos 
 	return ret
 }
 
+// GetServiceIcon returns the raw PNG icon bytes for the service identified by
+// ssid (with or without the ".png" suffix). Returns NotFoundError if no icon
+// is registered for that service.
 func (ssu *serviceSpecsUsecase) GetServiceIcon(ssid string) ([]byte, error) {
 	cnt, ok := svcs.Icons[strings.TrimSuffix(ssid, ".png")]
 	if !ok {
@@ -60,10 +69,18 @@ func (ssu *serviceSpecsUsecase) GetServiceIcon(ssid string) ([]byte, error) {
 	return cnt, nil
 }
 
+// GetServiceSpecs returns the field specifications for a service type,
+// describing each configurable field with its type, label, constraints, and
+// other UI metadata.
 func (ssu *serviceSpecsUsecase) GetServiceSpecs(svctype reflect.Type) (*happydns.ServiceSpecs, error) {
 	return ssu.getSpecs(svctype)
 }
 
+// InitializeService returns a new instance of the service type populated with
+// sensible default values. If the service implements ServiceInitializer its
+// Initialize method is called; otherwise defaults are derived by reflection:
+// slices of scalar types are pre-populated with one empty element, nested
+// structs and DNS record types are recursively initialized.
 func (ssu *serviceSpecsUsecase) InitializeService(svctype reflect.Type) (any, error) {
 	// Create a new instance of the service
 	svcPtr := reflect.New(svctype)
@@ -110,6 +127,7 @@ func (ssu *serviceSpecsUsecase) InitializeService(svctype reflect.Type) (any, er
 	return svc, nil
 }
 
+// countSettableFields returns the number of exported, non-anonymous fields in v.
 func (ssu *serviceSpecsUsecase) countSettableFields(v reflect.Value) int {
 	count := 0
 	for i := 0; i < v.NumField(); i++ {
@@ -123,6 +141,10 @@ func (ssu *serviceSpecsUsecase) countSettableFields(v reflect.Value) int {
 	return count
 }
 
+// initializeStructFields recursively initializes exported fields of a struct
+// value: slices become empty non-nil slices, maps become empty non-nil maps,
+// DNS types are initialized via initializeDNSRecord, and nested structs are
+// processed recursively.
 func (ssu *serviceSpecsUsecase) initializeStructFields(v reflect.Value) {
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
@@ -174,7 +196,9 @@ func (ssu *serviceSpecsUsecase) initializeStructFields(v reflect.Value) {
 	}
 }
 
-// isDNSType checks if a type is from the miekg/dns package or a happyDomain DNS abstraction
+// isDNSType reports whether t is a DNS record type — either from the
+// github.com/miekg/dns package or a happyDomain model type that embeds a
+// dns.RR_Header field named "Hdr".
 func (ssu *serviceSpecsUsecase) isDNSType(t reflect.Type) bool {
 	pkgPath := t.PkgPath()
 

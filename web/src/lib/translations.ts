@@ -39,6 +39,7 @@ interface Params {
     min?: number;
     max?: number;
     suggestion?: string;
+    svctype?: string;
     // add more parameters that are used here
 }
 

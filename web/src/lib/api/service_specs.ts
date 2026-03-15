@@ -23,7 +23,9 @@ import {
     getServiceSpecs,
     getServiceSpecsByServiceType,
     postServiceSpecsByServiceTypeInit,
+    postServiceSpecsByServiceTypeRecords,
 } from "$lib/api-base/sdk.gen";
+import type { dnsRR } from "$lib/dns_rr";
 import type { ServiceInfos, ServiceSpec } from "$lib/model/service_specs.svelte";
 import { unwrapSdkResponse } from "./errors";
 
@@ -50,4 +52,16 @@ export async function initializeService(ssid: string): Promise<any> {
             path: { serviceType: ssid },
         }),
     );
+}
+
+export async function generateServiceRecords(ssid: string, value: any, domain?: string): Promise<dnsRR[]> {
+    const query: Record<string, string> = {};
+    if (domain) query.domain = domain;
+    return unwrapSdkResponse(
+        await postServiceSpecsByServiceTypeRecords({
+            path: { serviceType: ssid },
+            body: value,
+            query: query as any,
+        })
+    ) as dnsRR[];
 }
