@@ -26,8 +26,7 @@ import (
 	"log"
 	"net/mail"
 	"reflect"
-	"regexp"
-	"strings"
+	"unicode"
 
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
@@ -96,13 +95,27 @@ func (s *Service) checkPasswordConstraints(password, confirmation string) error 
 		return happydns.ValidationError{Msg: "password must be at most 72 characters long"}
 	}
 
-	if !regexp.MustCompile(`[a-z]`).MatchString(password) {
+	var hasLower, hasUpper, hasDigit, hasSymbol bool
+	for _, r := range password {
+		switch {
+		case unicode.IsLower(r):
+			hasLower = true
+		case unicode.IsUpper(r):
+			hasUpper = true
+		case unicode.IsDigit(r):
+			hasDigit = true
+		default:
+			hasSymbol = true
+		}
+	}
+
+	if !hasLower {
 		return happydns.ValidationError{Msg: "Password must contain lower case letters."}
-	} else if !regexp.MustCompile(`[A-Z]`).MatchString(password) {
+	} else if !hasUpper {
 		return happydns.ValidationError{Msg: "Password must contain upper case letters."}
-	} else if !regexp.MustCompile(`[0-9]`).MatchString(password) {
+	} else if !hasDigit {
 		return happydns.ValidationError{Msg: "Password must contain numbers."}
-	} else if len(password) < 11 && !regexp.MustCompile(`[^a-zA-Z0-9]`).MatchString(password) {
+	} else if len(password) < 11 && !hasSymbol {
 		return happydns.ValidationError{Msg: "Password must be longer or contain symbols."}
 	}
 
@@ -138,7 +151,7 @@ func (s *Service) ChangePassword(user *happydns.UserAuth, newPassword string) er
 // already exists with the given email address, after sending a notification to the existing user.
 func (s *Service) CreateAuthUser(uu happydns.UserRegistration) (*happydns.UserAuth, error) {
 	// Validate email format
-	if len(uu.Email) <= 3 || !strings.Contains(uu.Email, "@") {
+	if _, err := mail.ParseAddress(uu.Email); err != nil {
 		return nil, happydns.ValidationError{Msg: "the given email is invalid"}
 	}
 
