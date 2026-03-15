@@ -183,10 +183,14 @@ func TestCreateAuthUser_EmailAlreadyUsed(t *testing.T) {
 		t.Fatalf("setup user creation failed: %v", err)
 	}
 
-	// Try creating again with the same email
-	_, err = service.CreateAuthUser(reg)
-	if err == nil || err.Error() != "an account already exists with the given address. Try logging in." {
-		t.Errorf("expected duplicate email error, got: %v", err)
+	// Try creating again with the same email — should return nil user, nil error
+	// to prevent user enumeration.
+	user, err := service.CreateAuthUser(reg)
+	if err != nil {
+		t.Errorf("expected no error for duplicate email (anti-enumeration), got: %v", err)
+	}
+	if user != nil {
+		t.Errorf("expected nil user for duplicate email, got: %v", user)
 	}
 }
 

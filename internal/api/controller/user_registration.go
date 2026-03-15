@@ -52,7 +52,7 @@ func NewRegistrationController(auService happydns.AuthUserUsecase, captchaVerifi
 //	@Accept			json
 //	@Produce		json
 //	@Param			body	body		happydns.UserRegistration	true	"Account information"
-//	@Success		200		{object}	happydns.User		"The created user"
+//	@Success		204
 //	@Failure		400		{object}	happydns.ErrorResponse		"Invalid input"
 //	@Failure		500		{object}	happydns.ErrorResponse
 //	@Router			/users [post]
@@ -85,7 +85,10 @@ func (rc *RegistrationController) RegisterNewUser(c *gin.Context) {
 		return
 	}
 
-	log.Printf("%s: registers new user: %s", c.ClientIP(), user.Email)
+	if user != nil {
+		log.Printf("%s: registers new user: %s", c.ClientIP(), user.Email)
+	}
 
-	c.JSON(http.StatusOK, user)
+	// Always return the same response to prevent user enumeration.
+	c.Status(http.StatusNoContent)
 }

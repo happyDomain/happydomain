@@ -23,10 +23,13 @@ package authuser
 
 import (
 	"fmt"
+	"log"
+	"net/mail"
 	"reflect"
 	"regexp"
 	"strings"
 
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -131,6 +134,8 @@ func (s *Service) ChangePassword(user *happydns.UserAuth, newPassword string) er
 }
 
 // CreateAuthUser validates the registration request, creates the user, and optionally sends a validation email.
+// To prevent user enumeration, this method returns nil user with nil error when an account
+// already exists with the given email address, after sending a notification to the existing user.
 func (s *Service) CreateAuthUser(uu happydns.UserRegistration) (*happydns.UserAuth, error) {
 	// Validate email format
 	if len(uu.Email) <= 3 || !strings.Contains(uu.Email, "@") {
@@ -152,7 +157,9 @@ func (s *Service) CreateAuthUser(uu happydns.UserRegistration) (*happydns.UserAu
 		}
 	}
 	if exists {
-		return nil, happydns.ValidationError{Msg: "an account already exists with the given address. Try logging in."}
+		// Send a notification to the existing user (best effort) to avoid user enumeration.
+		s.sendDuplicateRegistrationNotice(uu.Email)
+		return nil, nil
 	}
 
 	// Create the user object
@@ -184,6 +191,33 @@ func (s *Service) CreateAuthUser(uu happydns.UserRegistration) (*happydns.UserAu
 	}
 
 	return user, nil
+}
+
+// sendDuplicateRegistrationNotice sends an email to an existing user when someone
+// attempts to register with their email address.
+func (s *Service) sendDuplicateRegistrationNotice(email string) {
+	if s.mailer == nil || reflect.ValueOf(s.mailer).IsNil() {
+		return
+	}
+
+	toName := helpers.GenUsername(email)
+	err := s.mailer.SendMail(
+		&mail.Address{Name: toName, Address: email},
+		"Registration attempt on happyDomain",
+		fmt.Sprintf(`Hi %s,
+
+Someone (possibly you) attempted to create a new account on happyDomain
+using your email address.
+
+If this was you, you already have an account. You can log in or use the
+password recovery feature if you have forgotten your password.
+
+If this was not you, you can safely ignore this email.
+`, toName),
+	)
+	if err != nil {
+		log.Printf("unable to send duplicate registration notice to %s: %v", email, err)
+	}
 }
 
 // DeleteAuthUser deletes an authenticated user from the system, ensuring their sessions are also removed.
@@ -235,7 +269,7 @@ func (s *Service) SendRecoveryLink(user *happydns.UserAuth) error {
 }
 
 // GenerateValidationLink generates an email validation link for the given user.
-func (s *Service) GenerateValidationLink(user *happydns.UserAuth) string {
+func (s *Service) GenerateValidationLink(user *happydns.UserAuth) (string, error) {
 	return s.emailValidation.GenerateLink(user)
 }
 
