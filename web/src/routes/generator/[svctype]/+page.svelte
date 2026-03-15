@@ -195,7 +195,7 @@
                             <p class="card-text text-muted">
                                 {$t("generator.svctype.cta-text")}
                             </p>
-                            <a href="/join" class="btn btn-primary">{$t("generator.svctype.cta-button")}</a>
+                            <a href="/register" class="btn btn-primary">{$t("generator.svctype.cta-button")}</a>
                         </div>
                     </div>
                 </Col>
