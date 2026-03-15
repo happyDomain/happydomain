@@ -24,6 +24,7 @@
 <script lang="ts">
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import type { Domain } from "$lib/model/domain";
+    import { domainJoin } from "$lib/dns";
     import type { dnsResource, dnsTypeSMIMEA } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
 
@@ -85,7 +86,7 @@
     // When name hash changes, update the domain name
     $effect(() => {
         if (nameHash && value["smimea"]?.Hdr) {
-            value["smimea"].Hdr.Name = nameHash + "._smimecert." + dn;
+            value["smimea"].Hdr.Name = domainJoin(nameHash, "_smimecert", dn);
         }
     });
 </script>

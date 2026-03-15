@@ -48,7 +48,7 @@
         value = $bindable(),
         ...rest
     }: Props = $props();
-    let val: any = $state(value);
+    let val: any = $derived(value);
 
     let unit: string | null = $derived(
         specs.type === "time.Duration" || specs.type === "common.Duration" ? "s" : null,

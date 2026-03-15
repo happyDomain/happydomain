@@ -60,6 +60,44 @@ export function fqdn(input: string, origin: string) {
 }
 
 /**
+ * Joins domain labels into a single domain name.
+ *
+ * The labels are processed from left to right and appended with `"."`
+ * separators until one of the following conditions stops the process:
+ *
+ * - `"@"` stops processing and represents the zone apex.
+ * - `""` is ignored and skipped.
+ * - If the resulting string ends with `"."`, it is considered absolute
+ *   and no further labels are appended.
+ *
+ * The resulting domain is returned without a leading `"."`.
+ *
+ * @param domains - Domain labels to join (left to right).
+ * @returns The combined domain name.
+ */
+export function domainJoin(...domains: string[]): string {
+    let ret = "";
+
+    for (const d of domains) {
+        if (d === "@") {
+            break;
+        } else if (d !== "") {
+            ret += "." + d;
+        }
+
+        if (ret.length > 0 && ret[ret.length - 1] === ".") {
+            break;
+        }
+    }
+
+    if (ret.length >= 1) {
+        ret = ret.slice(1);
+    }
+
+    return ret;
+}
+
+/**
  * Compares two domain names from root to leaf for use in sort functions.
  *
  * Labels are compared right-to-left (TLD first), case-insensitively, so that
