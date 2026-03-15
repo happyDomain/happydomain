@@ -118,7 +118,7 @@ type AuthUserUsecase interface {
 	CreateAuthUser(UserRegistration) (*UserAuth, error)
 	DeleteAuthUser(*UserAuth, string) error
 	GenerateRecoveryLink(*UserAuth) (string, error)
-	GenerateValidationLink(*UserAuth) string
+	GenerateValidationLink(*UserAuth) (string, error)
 	GetAuthUser(Identifier) (*UserAuth, error)
 	GetAuthUserByEmail(string) (*UserAuth, error)
 	ResetPassword(*UserAuth, AccountRecoveryForm) error
@@ -128,7 +128,7 @@ type AuthUserUsecase interface {
 }
 
 type EmailValidationUsecase interface {
-	GenerateLink(user *UserAuth) string
+	GenerateLink(user *UserAuth) (string, error)
 	SendLink(user *UserAuth) error
 	Validate(user *UserAuth, form AddressValidationForm) error
 }

@@ -37,8 +37,8 @@ import type { UserSettings } from "$lib/model/usersettings";
 import type { User, SignUpForm, LoginForm } from "$lib/model/user";
 import { unwrapSdkResponse, unwrapEmptyResponse } from "./errors";
 
-export async function registerUser(form: SignUpForm): Promise<User> {
-    return unwrapSdkResponse(await postUsers({ body: form })) as unknown as User;
+export async function registerUser(form: SignUpForm): Promise<boolean> {
+    return unwrapEmptyResponse(await postUsers({ body: form }));
 }
 
 export async function authUser(form: LoginForm): Promise<User> {

@@ -210,7 +210,8 @@ func (ac *AuthUserController) DeleteAuthUser(c *gin.Context) {
 func (ac *AuthUserController) EmailValidationLink(c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
-	happydns.ApiResponse(c, ac.auService.GenerateValidationLink(user), nil)
+	link, err := ac.auService.GenerateValidationLink(user)
+	happydns.ApiResponse(c, link, err)
 }
 
 // RecoverUserAcct generates an account recovery link for a user.
