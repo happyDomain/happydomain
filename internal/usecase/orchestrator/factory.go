@@ -19,6 +19,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+// Package orchestrator wires together lower-level use-cases to implement the
+// multi-step workflows that span provider access, zone storage, and domain
+// history management.  It sits between the HTTP/API layer and the individual
+// domain/zone use-cases, coordinating the sequence of operations required to
+// import, diff, and publish DNS zones.
 package orchestrator
 
 import (
@@ -47,12 +52,24 @@ type ZoneCorrector interface {
 	ListZoneCorrections(provider *happydns.Provider, domain *happydns.Domain, records []happydns.Record) ([]*happydns.Correction, int, error)
 }
 
+// Orchestrator aggregates the use-cases that together implement the DNS zone
+// lifecycle: importing zones from a provider, listing required corrections, and
+// applying those corrections back to the provider.
 type Orchestrator struct {
-	RemoteZoneImporter    *RemoteZoneImporterUsecase
+	// RemoteZoneImporter fetches a live zone from the provider and stores it.
+	RemoteZoneImporter *RemoteZoneImporterUsecase
+	// ZoneCorrectionApplier lists and applies the corrections needed to bring
+	// the provider in sync with the desired zone state.
 	ZoneCorrectionApplier *ZoneCorrectionApplierUsecase
-	ZoneImporter          *ZoneImporterUsecase
+	// ZoneImporter converts a flat list of DNS records into a happyDomain zone
+	// and persists it in the domain history.
+	ZoneImporter *ZoneImporterUsecase
 }
 
+// NewOrchestrator constructs an Orchestrator by wiring up all required
+// dependencies.  It builds the shared ZoneImporterUsecase and
+// ZoneCorrectionListerUsecase internally so callers do not need to manage
+// those intermediate objects.
 func NewOrchestrator(
 	appendDomainLog domainlogUC.DomainLogAppender,
 	domainUpdater DomainUpdater,

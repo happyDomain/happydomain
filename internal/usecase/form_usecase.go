@@ -25,16 +25,21 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// formUsecase implements happydns.FormUsecase, providing form-related helpers
+// such as base URL generation used when building dynamic forms.
 type formUsecase struct {
 	config *happydns.Options
 }
 
+// NewFormUsecase returns a FormUsecase backed by the given application options.
 func NewFormUsecase(cfg *happydns.Options) happydns.FormUsecase {
 	return &formUsecase{
 		config: cfg,
 	}
 }
 
+// GetBaseURL returns the application's base URL, used when constructing
+// absolute links inside forms (e.g. OAuth redirect URIs).
 func (fu *formUsecase) GetBaseURL() string {
 	return fu.config.GetBaseURL()
 }

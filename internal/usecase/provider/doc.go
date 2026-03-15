@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2025 happyDomain
+// Copyright (c) 2020-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,35 +19,12 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package zone
-
-import (
-	"fmt"
-
-	serviceUC "git.happydns.org/happyDomain/internal/usecase/service"
-	"git.happydns.org/happyDomain/model"
-)
-
-// ParseZone deserialises a ZoneMessage (the storage representation) into a
-// Zone by parsing each service payload. It returns an error if any service
-// under any subdomain cannot be decoded.
-func ParseZone(msg *happydns.ZoneMessage) (*happydns.Zone, error) {
-	var z happydns.Zone
-
-	z.ZoneMeta = msg.ZoneMeta
-	z.Services = map[happydns.Subdomain][]*happydns.Service{}
-
-	for subdn, svcs := range msg.Services {
-		for _, svc := range svcs {
-			s, err := serviceUC.ParseService(svc)
-			if err != nil {
-				return nil, fmt.Errorf("under %q, unable to parse service %q: %w", subdn, svc, err)
-			}
-
-			z.Services[subdn] = append(z.Services[subdn], s)
-		}
-
-	}
-
-	return &z, nil
-}
+// Package provider implements the use cases for DNS provider management.
+// Service handles creation, retrieval, update, and deletion of providers,
+// with ownership enforcement (a user may only access their own providers).
+// RestrictedService wraps Service and enforces the DisableProviders
+// configuration flag.  Zone and domain operations (record retrieval,
+// correction listing, domain existence checking) are provided as separate
+// methods so they can be consumed by higher-level orchestration use cases
+// without circular imports.
+package provider

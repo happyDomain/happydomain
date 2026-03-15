@@ -27,16 +27,21 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// GetZoneUsecase handles retrieving Zones from storage, with optional
+// domain-history validation.
 type GetZoneUsecase struct {
 	store ZoneStorage
 }
 
+// NewGetZoneUsecase constructs a GetZoneUsecase backed by the given storage
+// implementation.
 func NewGetZoneUsecase(store ZoneStorage) *GetZoneUsecase {
 	return &GetZoneUsecase{
 		store: store,
 	}
 }
 
+// Get retrieves and fully parses the Zone identified by zoneID.
 func (uc *GetZoneUsecase) Get(zoneID happydns.Identifier) (*happydns.Zone, error) {
 	zonemsg, err := uc.store.GetZone(zoneID)
 	if err != nil {
@@ -46,6 +51,8 @@ func (uc *GetZoneUsecase) Get(zoneID happydns.Identifier) (*happydns.Zone, error
 	return ParseZone(zonemsg)
 }
 
+// GetMeta retrieves the metadata of the zone identified by zoneID without
+// deserialising its service tree.
 func (uc *GetZoneUsecase) GetMeta(zoneID happydns.Identifier) (*happydns.ZoneMeta, error) {
 	zonemsg, err := uc.store.GetZone(zoneID)
 	if err != nil {
@@ -55,6 +62,9 @@ func (uc *GetZoneUsecase) GetMeta(zoneID happydns.Identifier) (*happydns.ZoneMet
 	return &zonemsg.ZoneMeta, nil
 }
 
+// GetInDomain retrieves the zone identified by zoneID after verifying that it
+// exists in domain's history. Returns a NotFoundError if the zone is not part
+// of that domain or cannot be loaded from storage.
 func (uc *GetZoneUsecase) GetInDomain(zoneID happydns.Identifier, domain *happydns.Domain) (*happydns.Zone, error) {
 	// Check that the zoneid exists in the domain history
 	if !domain.HasZone(zoneID) {

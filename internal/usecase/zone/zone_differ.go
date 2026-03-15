@@ -28,11 +28,15 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// ZoneDifferUsecase computes the set of DNS corrections needed to transition
+// from one stored zone snapshot to another, expanded zone.
 type ZoneDifferUsecase struct {
 	listRecords *ListRecordsUsecase
 	getZone     *GetZoneUsecase
 }
 
+// NewZoneDifferUsecase constructs a ZoneDifferUsecase with the given zone-
+// retrieval and record-listing dependencies.
 func NewZoneDifferUsecase(getZone *GetZoneUsecase, listRecords *ListRecordsUsecase) *ZoneDifferUsecase {
 	return &ZoneDifferUsecase{
 		listRecords: listRecords,
@@ -40,6 +44,9 @@ func NewZoneDifferUsecase(getZone *GetZoneUsecase, listRecords *ListRecordsUseca
 	}
 }
 
+// Diff loads the zone identified by oldzoneid (validating it belongs to
+// domain), expands both the old and new zones into flat record lists, and
+// returns the minimal set of corrections to go from the old to the new state.
 func (uc *ZoneDifferUsecase) Diff(domain *happydns.Domain, newzone *happydns.Zone, oldzoneid happydns.Identifier) ([]*happydns.Correction, error) {
 	oldzone, err := uc.getZone.GetInDomain(oldzoneid, domain)
 	if err != nil {

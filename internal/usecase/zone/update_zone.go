@@ -27,11 +27,14 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// UpdateZoneUsecase handles the fetch-mutate-save cycle for a Zone.
 type UpdateZoneUsecase struct {
 	store   ZoneStorage
 	getZone *GetZoneUsecase
 }
 
+// NewUpdateZoneUsease constructs an UpdateZoneUsecase backed by the given
+// storage and zone-retrieval dependencies.
 func NewUpdateZoneUsease(store ZoneStorage, getZone *GetZoneUsecase) *UpdateZoneUsecase {
 	return &UpdateZoneUsecase{
 		store:   store,
@@ -39,6 +42,9 @@ func NewUpdateZoneUsease(store ZoneStorage, getZone *GetZoneUsecase) *UpdateZone
 	}
 }
 
+// Update fetches the zone identified by zoneID, applies updateFn to it, and
+// persists the result. It returns a ValidationError if updateFn changes the
+// zone identifier, or an InternalError if the storage write fails.
 func (uc *UpdateZoneUsecase) Update(zoneID happydns.Identifier, updateFn func(*happydns.Zone)) error {
 	zone, err := uc.getZone.Get(zoneID)
 	if err != nil {

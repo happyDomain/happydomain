@@ -27,12 +27,15 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// ProviderValidator verifies that a provider configuration is functional before it is persisted.
 type ProviderValidator interface {
 	Validate(*happydns.Provider) error
 }
 
+// DefaultProviderValidator instantiates the provider and, when zone listing is supported, performs a live check.
 type DefaultProviderValidator struct{}
 
+// Validate instantiates the provider and, if it supports zone listing, calls ListZones to confirm credentials are valid.
 func (v *DefaultProviderValidator) Validate(p *happydns.Provider) error {
 	instance, err := p.InstantiateProvider()
 	if err != nil {

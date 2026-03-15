@@ -29,11 +29,13 @@ import (
 	"git.happydns.org/happyDomain/providers"
 )
 
+// Service handles CRUD operations on DNS providers, with ownership enforcement.
 type Service struct {
 	store     ProviderStorage
 	validator ProviderValidator
 }
 
+// NewService creates a new Service backed by the given storage.
 func NewService(store ProviderStorage) *Service {
 	return &Service{
 		store:     store,
@@ -207,6 +209,7 @@ type RestrictedService struct {
 	config *happydns.Options
 }
 
+// NewRestrictedService creates a RestrictedService backed by the given configuration and storage.
 func NewRestrictedService(cfg *happydns.Options, store ProviderStorage) *RestrictedService {
 	s := NewService(store)
 	return &RestrictedService{
@@ -215,6 +218,7 @@ func NewRestrictedService(cfg *happydns.Options, store ProviderStorage) *Restric
 	}
 }
 
+// CreateProvider refuses the operation when DisableProviders is set, otherwise delegates to Service.
 func (s *RestrictedService) CreateProvider(user *happydns.User, msg *happydns.ProviderMessage) (*happydns.Provider, error) {
 	if s.config.DisableProviders {
 		return nil, happydns.ForbiddenError{Msg: "cannot add provider as DisableProviders parameter is set."}
@@ -223,6 +227,7 @@ func (s *RestrictedService) CreateProvider(user *happydns.User, msg *happydns.Pr
 	return s.Service.CreateProvider(user, msg)
 }
 
+// DeleteProvider refuses the operation when DisableProviders is set, otherwise delegates to Service.
 func (s *RestrictedService) DeleteProvider(user *happydns.User, providerID happydns.Identifier) error {
 	if s.config.DisableProviders {
 		return happydns.ForbiddenError{Msg: "cannot delete provider as DisableProviders parameter is set."}
@@ -231,6 +236,7 @@ func (s *RestrictedService) DeleteProvider(user *happydns.User, providerID happy
 	return s.Service.DeleteProvider(user, providerID)
 }
 
+// UpdateProvider refuses the operation when DisableProviders is set, otherwise delegates to Service.
 func (s *RestrictedService) UpdateProvider(providerID happydns.Identifier, user *happydns.User, updateFn func(*happydns.Provider)) error {
 	if s.config.DisableProviders {
 		return happydns.ForbiddenError{Msg: "cannot update provider as DisableProviders parameter is set."}
@@ -239,6 +245,7 @@ func (s *RestrictedService) UpdateProvider(providerID happydns.Identifier, user 
 	return s.Service.UpdateProvider(providerID, user, updateFn)
 }
 
+// UpdateProviderFromMessage refuses the operation when DisableProviders is set, otherwise delegates to Service.
 func (s *RestrictedService) UpdateProviderFromMessage(providerID happydns.Identifier, user *happydns.User, p *happydns.ProviderMessage) error {
 	if s.config.DisableProviders {
 		return happydns.ForbiddenError{Msg: "cannot update provider as DisableProviders parameter is set."}

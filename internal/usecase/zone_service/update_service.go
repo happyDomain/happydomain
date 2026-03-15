@@ -29,16 +29,23 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// UpdateServiceUsecase replaces an existing service within a zone in-place.
 type UpdateServiceUsecase struct {
 	store serviceUC.ZoneUpdaterStorage
 }
 
+// NewUpdateServiceUsecase creates an UpdateServiceUsecase with the given
+// storage dependency.
 func NewUpdateServiceUsecase(store serviceUC.ZoneUpdaterStorage) *UpdateServiceUsecase {
 	return &UpdateServiceUsecase{
 		store: store,
 	}
 }
 
+// Update replaces the service identified by serviceid under subdomain in zone
+// with newservice, updates the zone's LastModified timestamp, and persists the
+// change.  A validation error is returned when the service cannot be found;
+// an internal error is returned when the storage update fails.
 func (uc *UpdateServiceUsecase) Update(
 	zone *happydns.Zone,
 	subdomain happydns.Subdomain,

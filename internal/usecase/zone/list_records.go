@@ -31,16 +31,22 @@ import (
 	svcs "git.happydns.org/happyDomain/services"
 )
 
+// ListRecordsUsecase expands the service tree of a Zone into flat lists of raw
+// DNS records and provides helpers to render them as a standard zone file.
 type ListRecordsUsecase struct {
 	serviceListRecordsUC *service.ListRecordsUsecase
 }
 
+// NewListRecordsUsecase constructs a ListRecordsUsecase with the given
+// service record-listing dependency.
 func NewListRecordsUsecase(serviceListRecordsUC *service.ListRecordsUsecase) *ListRecordsUsecase {
 	return &ListRecordsUsecase{
 		serviceListRecordsUC: serviceListRecordsUC,
 	}
 }
 
+// ToZoneFile renders all records of zone as a standard zone-file string,
+// with the SOA record placed first.
 func (uc *ListRecordsUsecase) ToZoneFile(domain *happydns.Domain, zone *happydns.Zone) (string, error) {
 	records, err := uc.List(domain, zone)
 	if err != nil {
@@ -58,6 +64,9 @@ func (uc *ListRecordsUsecase) ToZoneFile(domain *happydns.Domain, zone *happydns
 	return ret, nil
 }
 
+// List expands every service in zone into its raw DNS records, ensures the SOA
+// record is first, and merges SPF contributions into single TXT records per
+// domain name.
 func (uc *ListRecordsUsecase) List(domain *happydns.Domain, zone *happydns.Zone) (rrs []happydns.Record, err error) {
 	var svc_rrs []happydns.Record
 

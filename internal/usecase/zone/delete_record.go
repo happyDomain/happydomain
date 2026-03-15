@@ -31,11 +31,16 @@ import (
 	"git.happydns.org/happyDomain/services"
 )
 
+// DeleteRecordUsecase handles removing a single DNS record from an in-memory
+// Zone, re-analysing the affected service to keep the zone consistent and
+// promoting orphan records to proper services when possible.
 type DeleteRecordUsecase struct {
 	serviceListRecordsUC  *service.ListRecordsUsecase
 	serviceSearchRecordUC *service.SearchRecordUsecase
 }
 
+// NewDeleteRecordUsecase constructs a DeleteRecordUsecase with the given
+// service record-listing and record-search dependencies.
 func NewDeleteRecordUsecase(serviceListRecordsUC *service.ListRecordsUsecase, serviceSearchRecordUC *service.SearchRecordUsecase) *DeleteRecordUsecase {
 	return &DeleteRecordUsecase{
 		serviceListRecordsUC:  serviceListRecordsUC,
@@ -94,6 +99,10 @@ func (uc *DeleteRecordUsecase) delete(zone *happydns.Zone, origin string, record
 	return nil
 }
 
+// Delete locates the service that owns record in zone, removes the record from
+// it, and re-analyses the remaining records to rebuild the service. If the
+// owning service is an Orphan, remaining orphan records are re-analysed to
+// promote any newly recognisable services.
 func (uc *DeleteRecordUsecase) Delete(zone *happydns.Zone, origin string, record happydns.Record) error {
 	dn, svc, err := uc.serviceSearchRecordUC.Search(zone, record)
 	if err != nil {
@@ -118,6 +127,9 @@ func (uc *DeleteRecordUsecase) Delete(zone *happydns.Zone, origin string, record
 	return nil
 }
 
+// ReanalyzeOrphan collects all remaining Orphan records under dn and
+// re-analyses them. Any records that can now be attributed to a proper service
+// are removed from their Orphan containers and registered as new services.
 func (uc *DeleteRecordUsecase) ReanalyzeOrphan(zone *happydns.Zone, origin string, dn happydns.Subdomain) error {
 	var records []happydns.Record
 

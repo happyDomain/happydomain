@@ -32,6 +32,10 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// ZoneCorrectionApplierUsecase applies a user-selected subset of zone
+// corrections to the provider and, on success, snapshots the zone into the
+// domain history.  It embeds ZoneCorrectionListerUsecase to compute the full
+// diff before filtering to the requested corrections.
 type ZoneCorrectionApplierUsecase struct {
 	*ZoneCorrectionListerUsecase
 	appendDomainLog domainlogUC.DomainLogAppender
@@ -41,6 +45,9 @@ type ZoneCorrectionApplierUsecase struct {
 	clock           func() time.Time
 }
 
+// NewZoneCorrectionApplierUsecase creates a ZoneCorrectionApplierUsecase with
+// the given dependencies.  The lister is embedded so that Apply can compute
+// the full correction diff in a single call.
 func NewZoneCorrectionApplierUsecase(
 	appendDomainLog domainlogUC.DomainLogAppender,
 	domainUpdater DomainUpdater,
@@ -58,6 +65,12 @@ func NewZoneCorrectionApplierUsecase(
 	}
 }
 
+// Apply executes the corrections listed in form.WantedCorrections against the
+// provider.  Each correction is matched by ID against the live diff; unmatched
+// or failed corrections abort the operation.  On success the applied zone is
+// committed (publish date, author, commit message recorded) and a new derived
+// zone is prepended to the domain's history so future edits start from the
+// published state.  Returns the newly created zone or a descriptive error.
 func (uc *ZoneCorrectionApplierUsecase) Apply(
 	user *happydns.User,
 	domain *happydns.Domain,

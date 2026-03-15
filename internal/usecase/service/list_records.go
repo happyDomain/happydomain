@@ -26,12 +26,18 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// ListRecordsUsecase expands a Service into its raw DNS records.
 type ListRecordsUsecase struct{}
 
+// NewListRecordsUsecase returns a new ListRecordsUsecase.
 func NewListRecordsUsecase() *ListRecordsUsecase {
 	return &ListRecordsUsecase{}
 }
 
+// List generates the DNS records produced by svc.  Record names are made
+// absolute relative to origin and any record whose TTL is zero inherits
+// defaultTTL.  When svc.Ttl is non-zero it overrides defaultTTL for all
+// records of this service.
 func (uc *ListRecordsUsecase) List(svc *happydns.Service, origin string, defaultTTL uint32) ([]happydns.Record, error) {
 	if svc.Ttl != 0 {
 		defaultTTL = svc.Ttl

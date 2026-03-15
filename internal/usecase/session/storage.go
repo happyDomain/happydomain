@@ -25,6 +25,8 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// SessionStorage is the persistence interface required by [Service]. Any
+// storage backend that implements these methods can be injected via [NewService].
 type SessionStorage interface {
 	// ListAllSessions retrieves the list of known Sessions.
 	ListAllSessions() (happydns.Iterator[happydns.Session], error)

@@ -33,11 +33,18 @@ type DomainUpdater interface {
 	Update(domainID happydns.Identifier, user *happydns.User, updateFn func(*happydns.Domain)) error
 }
 
+// ActionOnDomainUsecase ensures that any mutation is performed against an
+// editable (non-committed, non-published) zone snapshot.  When the target
+// zone has already been committed or published it derives a new zone from it
+// before executing the caller's action, so that the historical record is
+// never altered.
 type ActionOnDomainUsecase struct {
 	domainUpdater DomainUpdater
 	zoneCreator   *zoneUC.CreateZoneUsecase
 }
 
+// NewActionOnDomainUsecase creates an ActionOnDomainUsecase with the given
+// domain updater and zone creator dependencies.
 func NewActionOnDomainUsecase(domainUpdater DomainUpdater, zoneCreator *zoneUC.CreateZoneUsecase) *ActionOnDomainUsecase {
 	return &ActionOnDomainUsecase{
 		domainUpdater: domainUpdater,
@@ -45,6 +52,10 @@ func NewActionOnDomainUsecase(domainUpdater DomainUpdater, zoneCreator *zoneUC.C
 	}
 }
 
+// ActionOnEditableZone executes act against an editable zone.  If zone is
+// already committed or published, a new derivative zone is created, prepended
+// to the domain's history, and act is called on that new zone instead.  The
+// zone that was actually mutated is returned together with any error.
 func (uc *ActionOnDomainUsecase) ActionOnEditableZone(
 	user *happydns.User,
 	domain *happydns.Domain,

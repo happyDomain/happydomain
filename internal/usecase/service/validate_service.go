@@ -29,12 +29,19 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// ValidateServiceUsecase verifies that a ServiceBody can produce at least one
+// DNS record and computes a SHA-1 fingerprint of the resulting RDATA.
 type ValidateServiceUsecase struct{}
 
+// NewValidateServiceUsecase returns a new ValidateServiceUsecase.
 func NewValidateServiceUsecase() *ValidateServiceUsecase {
 	return &ValidateServiceUsecase{}
 }
 
+// Validate calls svc.GetRecords with the given subdomain and origin.  It
+// returns an error when no records are generated, otherwise it returns a
+// SHA-1 hash of all record strings concatenated — suitable for change
+// detection on the client side.
 func (uc *ValidateServiceUsecase) Validate(svc happydns.ServiceBody, subdomain happydns.Subdomain, origin happydns.Origin) ([]byte, error) {
 	rrs, err := svc.GetRecords(string(subdomain), 0, string(origin))
 	if err != nil {

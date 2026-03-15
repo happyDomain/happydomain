@@ -27,16 +27,22 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// SearchRecordUsecase locates the Service and subdomain that own a given DNS
+// record within a Zone.
 type SearchRecordUsecase struct {
 	serviceListRecordsUC *ListRecordsUsecase
 }
 
+// NewSearchRecordUsecase returns a SearchRecordUsecase backed by the provided
+// ListRecordsUsecase.
 func NewSearchRecordUsecase(serviceListRecordsUC *ListRecordsUsecase) *SearchRecordUsecase {
 	return &SearchRecordUsecase{
 		serviceListRecordsUC: serviceListRecordsUC,
 	}
 }
 
+// ExistsInService reports whether record is produced by svc.  Two records are
+// considered equal when their name, type, class, and RDATA all match.
 func (uc *SearchRecordUsecase) ExistsInService(svc *happydns.Service, record happydns.Record) (bool, error) {
 	records, err := uc.serviceListRecordsUC.List(svc, "", 0)
 	if err != nil {
@@ -55,6 +61,9 @@ func (uc *SearchRecordUsecase) ExistsInService(svc *happydns.Service, record hap
 	return false, nil
 }
 
+// Search scans every subdomain in zone and returns the first subdomain and
+// Service that produce record.  Returns an empty subdomain and nil service
+// when no match is found.
 func (uc *SearchRecordUsecase) Search(zone *happydns.Zone, record happydns.Record) (happydns.Subdomain, *happydns.Service, error) {
 	for dn, _ := range zone.Services {
 		svc, err := uc.SearchInSubdomain(zone, dn, record)
@@ -66,6 +75,8 @@ func (uc *SearchRecordUsecase) Search(zone *happydns.Zone, record happydns.Recor
 	return "", nil, nil
 }
 
+// SearchInSubdomain looks for record among the services attached to subdomain
+// in zone.  Returns nil when subdomain does not exist or no service matches.
 func (uc *SearchRecordUsecase) SearchInSubdomain(zone *happydns.Zone, subdomain happydns.Subdomain, record happydns.Record) (*happydns.Service, error) {
 	services, ok := zone.Services[subdomain]
 	if !ok {

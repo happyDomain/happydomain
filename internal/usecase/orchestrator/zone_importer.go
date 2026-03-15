@@ -31,12 +31,17 @@ import (
 	"git.happydns.org/happyDomain/services"
 )
 
+// ZoneImporterUsecase converts a flat slice of DNS records into a structured
+// happyDomain zone, preserving metadata from the previous zone when available,
+// and persists the result as the newest entry in the domain's zone history.
 type ZoneImporterUsecase struct {
 	domainUpdater DomainUpdater
 	zoneCreator   *zoneUC.CreateZoneUsecase
 	zoneGetter    *zoneUC.GetZoneUsecase
 }
 
+// NewZoneImporterUsecase creates a ZoneImporterUsecase with the given domain
+// updater, zone creator, and zone getter.
 func NewZoneImporterUsecase(domainUpdater DomainUpdater, zoneCreator *zoneUC.CreateZoneUsecase, zoneGetter *zoneUC.GetZoneUsecase) *ZoneImporterUsecase {
 	return &ZoneImporterUsecase{
 		domainUpdater: domainUpdater,
@@ -45,6 +50,9 @@ func NewZoneImporterUsecase(domainUpdater DomainUpdater, zoneCreator *zoneUC.Cre
 	}
 }
 
+// Import analyzes rrs into services, optionally carries over metadata from the
+// domain's most recent zone, persists the new zone, and prepends its ID to the
+// domain's history.  Returns the created zone or an error.
 func (uc *ZoneImporterUsecase) Import(user *happydns.User, domain *happydns.Domain, rrs []happydns.Record) (*happydns.Zone, error) {
 	services, defaultTTL, err := svcs.AnalyzeZone(domain.DomainName, rrs)
 	if err != nil {

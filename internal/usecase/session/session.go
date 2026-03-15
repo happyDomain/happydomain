@@ -25,7 +25,6 @@ import (
 	"encoding/base32"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/gorilla/securecookie"
@@ -33,32 +32,29 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// SESSION_MAX_DURATION is the lifetime assigned to every newly created session.
 const SESSION_MAX_DURATION = 15 * 24 * time.Hour
 
 // SESSION_RENEWAL_THRESHOLD is the remaining lifetime below which a session
 // is automatically renewed to SESSION_MAX_DURATION on the next request.
 const SESSION_RENEWAL_THRESHOLD = 7 * 24 * time.Hour
 
-// Service handles all session-related operations.
-// This consolidates what were previously separate usecase structs into a single service.
+// Service handles all session-related operations for happyDomain users. It
+// relies on a [SessionStorage] backend for persistence and enforces ownership
+// checks so that one user can never read or modify another user's sessions.
 type Service struct {
 	store SessionStorage
 }
 
-// NewService creates a new session service.
-// This replaces the old NewSessionUsecases factory function.
+// NewService creates a new session Service backed by the given store.
 func NewService(store SessionStorage) *Service {
 	return &Service{store: store}
 }
 
-// NewSessionUsecases is a backward-compatible alias for NewService.
-// Deprecated: Use NewService instead.
-func NewSessionUsecases(store SessionStorage) *Service {
-	return NewService(store)
-}
-
-// CreateUserSession creates a new session for the given user.
-// Replaces: CreateUserSessionUsecase.Create
+// CreateUserSession creates and persists a new session for user. The session
+// is assigned a random identifier, the current time as its issue date, and an
+// expiry of [SESSION_MAX_DURATION] from now. description is a human-readable
+// label that the user can use to identify the session (e.g. "browser login").
 func (s *Service) CreateUserSession(user *happydns.User, description string) (*happydns.Session, error) {
 	sessid := NewSessionID()
 
@@ -77,8 +73,9 @@ func (s *Service) CreateUserSession(user *happydns.User, description string) (*h
 	return newsession, nil
 }
 
-// GetUserSession retrieves a session for the given user.
-// Replaces: GetUserSessionUsecase.Get
+// GetUserSession retrieves the session identified by sessionID and verifies
+// that it belongs to user. Returns [happydns.ErrSessionNotFound] if the
+// session does not exist or belongs to a different user.
 func (s *Service) GetUserSession(user *happydns.User, sessionID string) (*happydns.Session, error) {
 	session, err := s.store.GetSession(sessionID)
 	if err != nil {
@@ -92,19 +89,21 @@ func (s *Service) GetUserSession(user *happydns.User, sessionID string) (*happyd
 	return session, nil
 }
 
-// ListUserSessions retrieves all sessions for the given user.
-// Replaces: ListUserSessionsUsecase.List
+// ListUserSessions returns all active sessions belonging to user.
 func (s *Service) ListUserSessions(user *happydns.User) ([]*happydns.Session, error) {
 	return s.store.ListUserSessions(user.GetUserId())
 }
 
-// listUserSessionsInternal is a helper that accepts UserInfo interface.
+// listUserSessionsInternal is like [Service.ListUserSessions] but accepts the
+// broader [happydns.UserInfo] interface.
 func (s *Service) listUserSessionsInternal(user happydns.UserInfo) ([]*happydns.Session, error) {
 	return s.store.ListUserSessions(user.GetUserId())
 }
 
-// UpdateUserSession updates a user's session using the provided update function.
-// Replaces: UpdateUserSessionUsecase.Update
+// UpdateUserSession applies updateFunc to the session identified by sessionID
+// and persists the result. The session must belong to user; otherwise an error
+// is returned. The function sets ModifiedOn automatically. Attempting to change
+// the session ID inside updateFunc is rejected with an error.
 func (s *Service) UpdateUserSession(
 	user *happydns.User,
 	sessionID string,
@@ -129,8 +128,9 @@ func (s *Service) UpdateUserSession(
 	return nil
 }
 
-// DeleteUserSession deletes a specific session for the given user.
-// Replaces: DeleteUserSessionUsecase.Delete
+// DeleteUserSession removes the session identified by sessionID. The session
+// must belong to user; an attempt to delete another user's session returns an
+// error and leaves the session untouched.
 func (s *Service) DeleteUserSession(user *happydns.User, sessionID string) error {
 	sess, err := s.GetUserSession(user, sessionID)
 	if err != nil {
@@ -144,8 +144,9 @@ func (s *Service) DeleteUserSession(user *happydns.User, sessionID string) error
 	return nil
 }
 
-// CloseUserSessions closes (deletes) all sessions for the given user.
-// Replaces: CloseUserSessionsUsecase.CloseAll
+// CloseUserSessions deletes all sessions belonging to user. Errors from
+// individual deletions are collected and returned as a combined error so that
+// a single failure does not prevent the remaining sessions from being removed.
 func (s *Service) CloseUserSessions(user *happydns.User) error {
 	sessions, err := s.ListUserSessions(user)
 	if err != nil {
@@ -162,7 +163,8 @@ func (s *Service) CloseUserSessions(user *happydns.User) error {
 	return errs
 }
 
-// closeUserSessionsInternal is a helper that accepts UserInfo interface.
+// closeUserSessionsInternal is like [Service.CloseUserSessions] but accepts
+// the broader [happydns.UserInfo] interface.
 func (s *Service) closeUserSessionsInternal(user happydns.UserInfo) error {
 	sessions, err := s.listUserSessionsInternal(user)
 	if err != nil {
@@ -179,19 +181,23 @@ func (s *Service) closeUserSessionsInternal(user happydns.UserInfo) error {
 	return errs
 }
 
-// CloseAll implements SessionCloserUsecase interface.
-// Closes all sessions for the given user.
+// CloseAll deletes all sessions for user. It satisfies the
+// SessionCloserUsecase interface and accepts the broader [happydns.UserInfo]
+// type so callers are not required to hold a full [happydns.User] value.
 func (s *Service) CloseAll(user happydns.UserInfo) error {
 	return s.closeUserSessionsInternal(user)
 }
 
-// ByID implements SessionCloserUsecase interface.
-// Closes all sessions for a user identified by ID.
+// ByID deletes all sessions for the user identified by userID. It satisfies
+// the SessionCloserUsecase interface, allowing callers that only have a user
+// identifier to invalidate all of that user's sessions without constructing a
+// full [happydns.User] value.
 func (s *Service) ByID(userID happydns.Identifier) error {
 	return s.CloseUserSessions(&happydns.User{Id: userID})
 }
 
-// NewSessionID generates a new random session identifier.
+// NewSessionID generates a random session identifier encoded
+// as a base32 string without padding characters.
 func NewSessionID() string {
-	return strings.TrimRight(base32.StdEncoding.EncodeToString(securecookie.GenerateRandomKey(64)), "=")
+	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(securecookie.GenerateRandomKey(64))
 }

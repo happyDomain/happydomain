@@ -25,16 +25,20 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// CreateZoneUsecase handles persisting a new Zone in storage.
 type CreateZoneUsecase struct {
 	store ZoneStorage
 }
 
+// NewCreateZoneUsecase constructs a CreateZoneUsecase backed by the given
+// storage implementation.
 func NewCreateZoneUsecase(store ZoneStorage) *CreateZoneUsecase {
 	return &CreateZoneUsecase{
 		store: store,
 	}
 }
 
+// Create persists zone in storage and returns any storage error.
 func (uc *CreateZoneUsecase) Create(zone *happydns.Zone) error {
 	return uc.store.CreateZone(zone)
 }

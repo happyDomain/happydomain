@@ -28,6 +28,9 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// RemoteZoneImporterUsecase fetches the live DNS records for a domain directly
+// from the provider and delegates to ZoneImporterUsecase to persist them.  It
+// also appends a domain log entry on success.
 type RemoteZoneImporterUsecase struct {
 	appendDomainLog domainlogUC.DomainLogAppender
 	providerService ProviderGetter
@@ -35,6 +38,8 @@ type RemoteZoneImporterUsecase struct {
 	zoneRetriever   ZoneRetriever
 }
 
+// NewRemoteZoneImporterUsecase creates a RemoteZoneImporterUsecase wired to
+// the given log appender, provider getter, zone importer, and zone retriever.
 func NewRemoteZoneImporterUsecase(
 	appendDomainLog domainlogUC.DomainLogAppender,
 	providerService ProviderGetter,
@@ -49,6 +54,9 @@ func NewRemoteZoneImporterUsecase(
 	}
 }
 
+// Import resolves the provider for the domain, retrieves its current records,
+// and imports them via ZoneImporterUsecase.  A domain log entry is appended on
+// success.  Returns the newly created zone or an error.
 func (uc *RemoteZoneImporterUsecase) Import(user *happydns.User, domain *happydns.Domain) (*happydns.Zone, error) {
 	provider, err := uc.providerService.GetUserProvider(user, domain.ProviderId)
 	if err != nil {

@@ -25,16 +25,20 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// DeleteZoneUsecase handles removing a Zone from storage.
 type DeleteZoneUsecase struct {
 	store ZoneStorage
 }
 
+// NewDeleteZoneUsecase constructs a DeleteZoneUsecase backed by the given
+// storage implementation.
 func NewDeleteZoneUsecase(store ZoneStorage) *DeleteZoneUsecase {
 	return &DeleteZoneUsecase{
 		store: store,
 	}
 }
 
+// Delete removes the zone identified by zoneID from storage.
 func (uc *DeleteZoneUsecase) Delete(zoneID happydns.Identifier) error {
 	return uc.store.DeleteZone(zoneID)
 }

@@ -28,11 +28,14 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// AddToZoneUsecase validates a new service and appends it to a zone.
 type AddToZoneUsecase struct {
 	store           serviceUC.ZoneUpdaterStorage
 	validateService *serviceUC.ValidateServiceUsecase
 }
 
+// NewAddToZoneUsecase creates an AddToZoneUsecase with the given storage and
+// validation dependencies.
 func NewAddToZoneUsecase(store serviceUC.ZoneUpdaterStorage, validateService *serviceUC.ValidateServiceUsecase) *AddToZoneUsecase {
 	return &AddToZoneUsecase{
 		store:           store,
@@ -40,6 +43,10 @@ func NewAddToZoneUsecase(store serviceUC.ZoneUpdaterStorage, validateService *se
 	}
 }
 
+// AddService validates service, assigns it a content-derived identifier, and
+// appends it to zone under subdomain.  The updated zone is persisted via the
+// storage layer.  An error is returned when validation fails or the storage
+// update cannot be completed.
 func (uc *AddToZoneUsecase) AddService(
 	zone *happydns.Zone,
 	subdomain happydns.Subdomain,

@@ -28,6 +28,9 @@ import (
 	"git.happydns.org/happyDomain/services"
 )
 
+// ParseService deserialises a ServiceMessage into a typed Service value.
+// It looks up the concrete ServiceBody type by msg.Type, then JSON-decodes
+// msg.Service into it.
 func ParseService(msg *happydns.ServiceMessage) (svc *happydns.Service, err error) {
 	svc = &happydns.Service{}
 

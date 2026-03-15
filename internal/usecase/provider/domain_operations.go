@@ -41,7 +41,7 @@ func (s *Service) CreateDomainOnProvider(provider *happydns.Provider, fqdn strin
 	return p.CreateDomain(fqdn)
 }
 
-// CreateDomainOnProvider for RestrictedService enforces configuration restrictions.
+// CreateDomainOnProvider refuses the operation when DisableProviders is set, otherwise delegates to Service.
 func (s *RestrictedService) CreateDomainOnProvider(provider *happydns.Provider, fqdn string) error {
 	if s.config.DisableProviders {
 		return happydns.ForbiddenError{Msg: "cannot create domain on provider as DisableProviders parameter is set."}

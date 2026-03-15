@@ -29,16 +29,23 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// DeleteFromZoneUsecase removes a service from a zone by its identifier.
 type DeleteFromZoneUsecase struct {
 	store serviceUC.ZoneUpdaterStorage
 }
 
+// NewDeleteFromZoneUsecase creates a DeleteFromZoneUsecase with the given
+// storage dependency.
 func NewDeleteFromZoneUsecase(store serviceUC.ZoneUpdaterStorage) *DeleteFromZoneUsecase {
 	return &DeleteFromZoneUsecase{
 		store: store,
 	}
 }
 
+// DeleteService erases the service identified by serviceid from subdomain
+// within zone, updates the zone's LastModified timestamp, and persists the
+// change.  A validation error is returned when the service cannot be found;
+// an internal error is returned when the storage update fails.
 func (uc *DeleteFromZoneUsecase) DeleteService(zone *happydns.Zone, subdomain happydns.Subdomain, serviceid happydns.Identifier) error {
 	err := zone.EraseService(subdomain, serviceid, nil)
 	if err != nil {

@@ -25,6 +25,8 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// ZoneUpdaterStorage is the storage interface required by use cases that need
+// to persist changes to a Zone.
 type ZoneUpdaterStorage interface {
 	// UpdateZone updates the fields of the given Zone.
 	UpdateZone(zone *happydns.Zone) error

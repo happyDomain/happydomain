@@ -28,16 +28,24 @@ import (
 	"git.happydns.org/happyDomain/services"
 )
 
+// AddRecordUsecase handles adding a single DNS record to an in-memory Zone,
+// merging it into an existing compatible service or registering a new one.
 type AddRecordUsecase struct {
 	serviceListRecordsUC *service.ListRecordsUsecase
 }
 
+// NewAddRecordUsecase constructs an AddRecordUsecase with the given service
+// record-listing dependency.
 func NewAddRecordUsecase(serviceListRecordsUC *service.ListRecordsUsecase) *AddRecordUsecase {
 	return &AddRecordUsecase{
 		serviceListRecordsUC: serviceListRecordsUC,
 	}
 }
 
+// Add inserts record into zone under origin. The record name is first
+// qualified to a FQDN. If a service of the same type already exists under the
+// target subdomain, the record is merged into that service and the service is
+// re-analysed; otherwise a new service is appended.
 func (uc *AddRecordUsecase) Add(zone *happydns.Zone, origin string, record happydns.Record) error {
 	record = helpers.CopyRecord(record)
 

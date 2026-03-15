@@ -19,6 +19,18 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+// Package zoneService implements the use cases for managing DNS services
+// within a zone.  A "service" in happyDomain is a logical grouping of related
+// DNS records under a subdomain.  The package provides:
+//
+//   - AddToZoneUsecase – validates and appends a new service to a zone.
+//   - DeleteFromZoneUsecase – removes a service from a zone by ID.
+//   - UpdateServiceUsecase – replaces a service in-place within a zone.
+//   - ActionOnDomainUsecase – ensures mutations always target an editable
+//     (non-committed) zone snapshot, creating a derivative zone when needed.
+//
+// The Service facade exposes all of the above through a unified API consumed
+// by the HTTP handler layer.
 package zoneService
 
 import (
@@ -27,6 +39,8 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// Service is the facade that composes all zone-service use cases and exposes
+// them through a unified API consumed by the HTTP handler layer.
 type Service struct {
 	ActionOnDomainUC *ActionOnDomainUsecase
 	AddToZoneUC      *AddToZoneUsecase
@@ -34,6 +48,7 @@ type Service struct {
 	UpdateServiceUC  *UpdateServiceUsecase
 }
 
+// NewZoneServiceUsecases wires up and returns a fully initialized Service.
 func NewZoneServiceUsecases(
 	domainUpdater DomainUpdater,
 	zoneCreator *zoneUC.CreateZoneUsecase,
@@ -48,6 +63,7 @@ func NewZoneServiceUsecases(
 	}
 }
 
+// ActionOnEditableZone delegates to ActionOnDomainUsecase.ActionOnEditableZone.
 func (s *Service) ActionOnEditableZone(
 	user *happydns.User,
 	domain *happydns.Domain,
@@ -57,6 +73,7 @@ func (s *Service) ActionOnEditableZone(
 	return s.ActionOnDomainUC.ActionOnEditableZone(user, domain, zone, act)
 }
 
+// AddServiceToZone delegates to AddToZoneUsecase.AddService.
 func (s *Service) AddServiceToZone(
 	user *happydns.User,
 	domain *happydns.Domain,
@@ -68,6 +85,7 @@ func (s *Service) AddServiceToZone(
 	return zone, s.AddToZoneUC.AddService(zone, subdomain, origin, service)
 }
 
+// RemoveServiceFromZone delegates to DeleteFromZoneUsecase.DeleteService.
 func (s *Service) RemoveServiceFromZone(
 	user *happydns.User,
 	domain *happydns.Domain,
@@ -78,6 +96,7 @@ func (s *Service) RemoveServiceFromZone(
 	return zone, s.DeleteFromZoneUC.DeleteService(zone, subdomain, serviceID)
 }
 
+// UpdateZoneService delegates to UpdateServiceUsecase.Update.
 func (s *Service) UpdateZoneService(
 	user *happydns.User,
 	domain *happydns.Domain,

@@ -25,6 +25,7 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// ProviderStorage is the persistence interface required by the provider use cases.
 type ProviderStorage interface {
 	// ListAllProviders retrieves the list of known Providers.
 	ListAllProviders() (happydns.Iterator[happydns.ProviderMessage], error)
