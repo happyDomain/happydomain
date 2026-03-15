@@ -25,7 +25,6 @@ import (
 	"fmt"
 	"log"
 	"net/mail"
-	"reflect"
 	"unicode"
 
 	"git.happydns.org/happyDomain/internal/helpers"
@@ -193,13 +192,11 @@ func (s *Service) CreateAuthUser(uu happydns.UserRegistration) (*happydns.UserAu
 		}
 	}
 
-	// Optionally send the validation email if mailer is configured
-	if s.mailer != nil && !reflect.ValueOf(s.mailer).IsNil() {
-		if err = s.emailValidation.SendLink(user); err != nil {
-			return nil, happydns.InternalError{
-				Err:         fmt.Errorf("unable to send validation email: %w", err),
-				UserMessage: "Sorry, we are currently unable to create your account. Please try again later.",
-			}
+	// Send the validation email
+	if err = s.emailValidation.SendLink(user); err != nil {
+		return nil, happydns.InternalError{
+			Err:         fmt.Errorf("unable to send validation email: %w", err),
+			UserMessage: "Sorry, we are currently unable to create your account. Please try again later.",
 		}
 	}
 
@@ -209,10 +206,6 @@ func (s *Service) CreateAuthUser(uu happydns.UserRegistration) (*happydns.UserAu
 // sendDuplicateRegistrationNotice sends an email to an existing user when someone
 // attempts to register with their email address.
 func (s *Service) sendDuplicateRegistrationNotice(email string) {
-	if s.mailer == nil || reflect.ValueOf(s.mailer).IsNil() {
-		return
-	}
-
 	toName := helpers.GenUsername(email)
 	err := s.mailer.SendMail(
 		&mail.Address{Name: toName, Address: email},

@@ -23,6 +23,7 @@ package user_test
 
 import (
 	"bytes"
+	"net/mail"
 	"testing"
 
 	"git.happydns.org/happyDomain/internal/storage"
@@ -33,6 +34,13 @@ import (
 	"git.happydns.org/happyDomain/internal/usecase/user"
 	"git.happydns.org/happyDomain/model"
 )
+
+// noopMailer is a mock mailer that discards all emails.
+type noopMailer struct{}
+
+func (n *noopMailer) SendMail(to *mail.Address, subject, content string) error {
+	return nil
+}
 
 // Mock implementations for testing
 type mockNewsletterSubscriptor struct {
@@ -83,7 +91,7 @@ func createTestService(t *testing.T) (*user.Service, storage.Storage, *mockNewsl
 		DisableRegistration: false,
 	}
 	sessionService := sessionUC.NewService(db)
-	authUserService := authuserUC.NewAuthUserUsecases(cfg, nil, db, sessionService)
+	authUserService := authuserUC.NewAuthUserUsecases(cfg, &noopMailer{}, db, sessionService)
 
 	newsletter := &mockNewsletterSubscriptor{}
 	sessionCloser := &mockSessionCloser{}
