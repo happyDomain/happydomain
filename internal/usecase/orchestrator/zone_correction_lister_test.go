@@ -22,12 +22,13 @@
 package orchestrator_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
+	"git.happydns.org/happyDomain/internal/usecase/orchestrator"
 	serviceUC "git.happydns.org/happyDomain/internal/usecase/service"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
-	"git.happydns.org/happyDomain/internal/usecase/orchestrator"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -48,7 +49,7 @@ type mockZoneCorrector struct {
 	err         error
 }
 
-func (m *mockZoneCorrector) ListZoneCorrections(_ *happydns.Provider, _ *happydns.Domain, _ []happydns.Record) ([]*happydns.Correction, int, error) {
+func (m *mockZoneCorrector) ListZoneCorrections(_ context.Context, _ *happydns.Provider, _ *happydns.Domain, _ []happydns.Record) ([]*happydns.Correction, int, error) {
 	return m.corrections, m.nbDiff, m.err
 }
 
@@ -80,7 +81,7 @@ func TestZoneCorrectionLister_List_Success(t *testing.T) {
 		Services: map[happydns.Subdomain][]*happydns.Service{},
 	}
 
-	got, nbDiff, err := uc.List(user, domain, zone)
+	got, nbDiff, err := uc.List(context.Background(), user, domain, zone)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -118,7 +119,7 @@ func TestZoneCorrectionLister_List_ProviderError(t *testing.T) {
 		ZoneMeta: happydns.ZoneMeta{DefaultTTL: 3600},
 	}
 
-	_, _, err := uc.List(user, domain, zone)
+	_, _, err := uc.List(context.Background(), user, domain, zone)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -146,7 +147,7 @@ func TestZoneCorrectionLister_List_ZoneCorrectorError(t *testing.T) {
 		Services: map[happydns.Subdomain][]*happydns.Service{},
 	}
 
-	_, _, err := uc.List(user, domain, zone)
+	_, _, err := uc.List(context.Background(), user, domain, zone)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -172,7 +173,7 @@ func TestZoneCorrectionLister_List_NoCorrections(t *testing.T) {
 		Services: map[happydns.Subdomain][]*happydns.Service{},
 	}
 
-	got, nbDiff, err := uc.List(user, domain, zone)
+	got, nbDiff, err := uc.List(context.Background(), user, domain, zone)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

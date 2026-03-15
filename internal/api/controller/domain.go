@@ -234,7 +234,7 @@ func (dc *DomainController) RetrieveZone(c *gin.Context) {
 	}
 	domain := c.MustGet("domain").(*happydns.Domain)
 
-	zone, err := dc.remoteZoneImporter.Import(user, domain)
+	zone, err := dc.remoteZoneImporter.Import(c.Request.Context(), user, domain)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

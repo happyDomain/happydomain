@@ -22,7 +22,9 @@
 package orchestrator
 
 import (
+	"context"
 	"fmt"
+	"log"
 
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	"git.happydns.org/happyDomain/model"
@@ -34,7 +36,7 @@ import (
 type RemoteZoneImporterUsecase struct {
 	appendDomainLog domainlogUC.DomainLogAppender
 	providerService ProviderGetter
-	zoneImporter    *ZoneImporterUsecase
+	zoneImporter    happydns.ZoneImporterUsecase
 	zoneRetriever   ZoneRetriever
 }
 
@@ -43,7 +45,7 @@ type RemoteZoneImporterUsecase struct {
 func NewRemoteZoneImporterUsecase(
 	appendDomainLog domainlogUC.DomainLogAppender,
 	providerService ProviderGetter,
-	zoneImporter *ZoneImporterUsecase,
+	zoneImporter happydns.ZoneImporterUsecase,
 	zoneRetriever ZoneRetriever,
 ) *RemoteZoneImporterUsecase {
 	return &RemoteZoneImporterUsecase{
@@ -57,25 +59,24 @@ func NewRemoteZoneImporterUsecase(
 // Import resolves the provider for the domain, retrieves its current records,
 // and imports them via ZoneImporterUsecase.  A domain log entry is appended on
 // success.  Returns the newly created zone or an error.
-func (uc *RemoteZoneImporterUsecase) Import(user *happydns.User, domain *happydns.Domain) (*happydns.Zone, error) {
+func (uc *RemoteZoneImporterUsecase) Import(ctx context.Context, user *happydns.User, domain *happydns.Domain) (*happydns.Zone, error) {
 	provider, err := uc.providerService.GetUserProvider(user, domain.ProviderId)
 	if err != nil {
 		return nil, err
 	}
 
-	zone, err := uc.zoneRetriever.RetrieveZone(provider, domain.DomainName)
+	zone, err := uc.zoneRetriever.RetrieveZone(ctx, provider, domain.DomainName)
 	if err != nil {
-		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to retrieve the zone from server: %s", err.Error())}
+		return nil, fmt.Errorf("unable to retrieve the zone from server: %w", err)
 	}
 
-	// import
 	myZone, err := uc.zoneImporter.Import(user, domain, zone)
 	if err != nil {
 		return nil, err
 	}
 
-	if uc.appendDomainLog != nil {
-		uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_INFO, fmt.Sprintf("Zone imported from provider API: %s", myZone.Id.String())))
+	if err := uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_INFO, fmt.Sprintf("Zone imported from provider API: %s", myZone.Id.String()))); err != nil {
+		log.Printf("unable to append domain log for %s: %s", domain.DomainName, err.Error())
 	}
 
 	return myZone, nil

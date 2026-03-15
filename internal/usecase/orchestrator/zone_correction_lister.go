@@ -22,6 +22,8 @@
 package orchestrator
 
 import (
+	"context"
+
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
 )
@@ -55,6 +57,7 @@ func NewZoneCorrectionListerUsecase(
 // computation to the ZoneCorrector. The second return value is the total
 // number of corrections before any filtering.
 func (uc *ZoneCorrectionListerUsecase) List(
+	ctx context.Context,
 	user *happydns.User,
 	domain *happydns.Domain,
 	zone *happydns.Zone,
@@ -69,5 +72,5 @@ func (uc *ZoneCorrectionListerUsecase) List(
 		return nil, 0, err
 	}
 
-	return uc.zoneCorrector.ListZoneCorrections(provider, domain, records)
+	return uc.zoneCorrector.ListZoneCorrections(ctx, provider, domain, records)
 }

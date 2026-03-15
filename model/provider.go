@@ -22,6 +22,7 @@
 package happydns
 
 import (
+	"context"
 	"encoding/json"
 )
 
@@ -130,8 +131,8 @@ type ProviderUsecase interface {
 	GetUserProviderMeta(*User, Identifier) (*ProviderMeta, error)
 	ListHostedDomains(*Provider) ([]string, error)
 	ListUserProviders(*User) ([]*ProviderMeta, error)
-	ListZoneCorrections(provider *Provider, domain *Domain, records []Record) ([]*Correction, int, error)
-	RetrieveZone(*Provider, string) ([]Record, error)
+	ListZoneCorrections(ctx context.Context, provider *Provider, domain *Domain, records []Record) ([]*Correction, int, error)
+	RetrieveZone(context.Context, *Provider, string) ([]Record, error)
 	TestDomainExistence(*Provider, string) error
 	UpdateProvider(Identifier, *User, func(*Provider)) error
 	UpdateProviderFromMessage(Identifier, *User, *ProviderMessage) error

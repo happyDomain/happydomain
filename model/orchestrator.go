@@ -21,15 +21,15 @@
 
 package happydns
 
-import ()
+import "context"
 
 type RemoteZoneImporterUsecase interface {
-	Import(*User, *Domain) (*Zone, error)
+	Import(context.Context, *User, *Domain) (*Zone, error)
 }
 
 type ZoneCorrectionApplierUsecase interface {
-	Apply(*User, *Domain, *Zone, *ApplyZoneForm) (*Zone, error)
-	List(*User, *Domain, *Zone) ([]*Correction, int, error)
+	Apply(context.Context, *User, *Domain, *Zone, *ApplyZoneForm) (*Zone, error)
+	List(context.Context, *User, *Domain, *Zone) ([]*Correction, int, error)
 }
 
 type ZoneImporterUsecase interface {

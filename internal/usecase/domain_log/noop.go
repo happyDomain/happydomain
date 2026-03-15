@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2025 happyDomain
+// Copyright (c) 2020-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,31 +19,19 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package provider
+package domainlog
 
 import (
-	"context"
-	"fmt"
+	"log"
 
 	"git.happydns.org/happyDomain/model"
 )
 
-// RetrieveZone retrieves the current zone records for the given domain from the provider.
-func (s *Service) RetrieveZone(_ context.Context, provider *happydns.Provider, name string) ([]happydns.Record, error) {
-	instance, err := provider.InstantiateProvider()
-	if err != nil {
-		return nil, fmt.Errorf("unable to instantiate provider: %w", err)
-	}
+// NoopDomainLogAppender is a fallback implementation of DomainLogAppender
+// that prints log entries to stdout instead of persisting them.
+type NoopDomainLogAppender struct{}
 
-	return instance.GetZoneRecords(name)
-}
-
-// ListZoneCorrections lists the corrections needed to synchronize the zone with the given records.
-func (s *Service) ListZoneCorrections(_ context.Context, provider *happydns.Provider, domain *happydns.Domain, records []happydns.Record) ([]*happydns.Correction, int, error) {
-	instance, err := provider.InstantiateProvider()
-	if err != nil {
-		return nil, 0, fmt.Errorf("unable to instantiate provider: %w", err)
-	}
-
-	return instance.GetZoneCorrections(domain.DomainName, records)
+func (NoopDomainLogAppender) AppendDomainLog(domain *happydns.Domain, entry *happydns.DomainLog) error {
+	log.Printf("domain=%s %s\n", domain.DomainName, entry.Content)
+	return nil
 }
