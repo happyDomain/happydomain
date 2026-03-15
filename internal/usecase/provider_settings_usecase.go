@@ -22,24 +22,22 @@
 package usecase
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"git.happydns.org/happyDomain/internal/forms"
-	"git.happydns.org/happyDomain/internal/usecase/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
 type providerSettingsUsecase struct {
 	config          *happydns.Options
 	providerService happydns.ProviderUsecase
-	store           provider.ProviderStorage
 }
 
-func NewProviderSettingsUsecase(cfg *happydns.Options, ps happydns.ProviderUsecase, store provider.ProviderStorage) happydns.ProviderSettingsUsecase {
+func NewProviderSettingsUsecase(cfg *happydns.Options, ps happydns.ProviderUsecase) happydns.ProviderSettingsUsecase {
 	return &providerSettingsUsecase{
 		config:          cfg,
 		providerService: ps,
-		store:           store,
 	}
 }
 
@@ -55,56 +53,43 @@ func (psu *providerSettingsUsecase) NextProviderSettingsState(state *happydns.Pr
 			return nil, nil, happydns.ForbiddenError{Msg: "cannot change provider settings as DisableProviders parameter is set."}
 		}
 
-		p, err := state.ProviderBody.InstantiateProvider()
+		providerJSON, err := json.Marshal(state.ProviderBody)
 		if err != nil {
-			return nil, nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to instantiate provider: %s", err.Error())}
+			return nil, nil, happydns.InternalError{
+				Err:         fmt.Errorf("unable to marshal provider body: %w", err),
+				UserMessage: happydns.TryAgainErr,
+			}
 		}
 
-		if p.CanListZones() {
-			if _, err = p.ListZones(); err != nil {
-				return nil, nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to list provider's zones: %s", err.Error())}
-			}
+		msg := &happydns.ProviderMessage{
+			ProviderMeta: happydns.ProviderMeta{
+				Type:    pType,
+				Comment: state.Name,
+			},
+			Provider: providerJSON,
 		}
 
 		if state.Id == nil {
-			provider := &happydns.Provider{
-				Provider: state.ProviderBody,
-				ProviderMeta: happydns.ProviderMeta{
-					Type:    pType,
-					Owner:   user.Id,
-					Comment: state.Name,
-				},
-			}
-			// Create a new Provider
-			err = psu.store.CreateProvider(provider)
+			// Create a new Provider via the service layer
+			provider, err := psu.providerService.CreateProvider(user, msg)
 			if err != nil {
-				return nil, nil, happydns.InternalError{
-					Err:         fmt.Errorf("unable to CreateProvider: %w", err),
-					UserMessage: happydns.TryAgainErr,
-				}
+				return nil, nil, err
 			}
 
 			return provider, nil, nil
 		} else {
-			// Update an existing Provider
-			p, err := psu.providerService.GetUserProvider(user, *state.Id)
+			// Update an existing Provider via the service layer
+			err := psu.providerService.UpdateProviderFromMessage(*state.Id, user, msg)
 			if err != nil {
-				return nil, nil, happydns.NotFoundError{Msg: fmt.Sprintf("unable to retrieve the original provider: %s", err.Error())}
+				return nil, nil, err
 			}
 
-			newp := &happydns.Provider{
-				ProviderMeta: p.ProviderMeta,
-				Provider:     state.ProviderBody,
-			}
-			err = psu.store.UpdateProvider(newp)
+			provider, err := psu.providerService.GetUserProvider(user, *state.Id)
 			if err != nil {
-				return nil, nil, happydns.InternalError{
-					Err:         fmt.Errorf("unable to UpdateProvider: %w", err),
-					UserMessage: happydns.TryAgainErr,
-				}
+				return nil, nil, err
 			}
 
-			return newp, nil, nil
+			return provider, nil, nil
 		}
 	}
 

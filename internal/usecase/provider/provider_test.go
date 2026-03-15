@@ -74,12 +74,14 @@ func (v *mockValidator) Validate(p *happydns.Provider) error {
 	return nil
 }
 
-func Test_CreateProvider(t *testing.T) {
+func newTestService(t *testing.T) (*provider.Service, storage.Storage) {
 	mem, _ := inmemory.NewInMemoryStorage()
 	db, _ := kv.NewKVDatabase(mem)
-	providerService := provider.NewService(db)
-	// Replace validator with mock to avoid actual DNS validation
-	providerService.SetValidator(&mockValidator{})
+	return provider.NewService(db, &mockValidator{}), db
+}
+
+func Test_CreateProvider(t *testing.T) {
+	providerService, db := newTestService(t)
 
 	user := createTestUser(t, db, "test@example.com")
 	msg := createTestProviderMessage(t, "DDNSServer", "Test DDNS Provider")
@@ -110,10 +112,7 @@ func Test_CreateProvider(t *testing.T) {
 }
 
 func Test_GetUserProvider(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
-	providerService := provider.NewService(db)
-	providerService.SetValidator(&mockValidator{})
+	providerService, db := newTestService(t)
 
 	user := createTestUser(t, db, "test@example.com")
 
@@ -139,10 +138,7 @@ func Test_GetUserProvider(t *testing.T) {
 }
 
 func Test_GetUserProvider_WrongUser(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
-	providerService := provider.NewService(db)
-	providerService.SetValidator(&mockValidator{})
+	providerService, db := newTestService(t)
 
 	user1 := createTestUser(t, db, "user1@example.com")
 	user2 := createTestUser(t, db, "user2@example.com")
@@ -165,9 +161,7 @@ func Test_GetUserProvider_WrongUser(t *testing.T) {
 }
 
 func Test_GetUserProvider_NotFound(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
-	providerService := provider.NewService(db)
+	providerService, db := newTestService(t)
 
 	user := createTestUser(t, db, "test@example.com")
 
@@ -182,10 +176,7 @@ func Test_GetUserProvider_NotFound(t *testing.T) {
 }
 
 func Test_GetUserProviderMeta(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
-	providerService := provider.NewService(db)
-	providerService.SetValidator(&mockValidator{})
+	providerService, db := newTestService(t)
 
 	user := createTestUser(t, db, "test@example.com")
 
@@ -211,10 +202,7 @@ func Test_GetUserProviderMeta(t *testing.T) {
 }
 
 func Test_ListUserProviders(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
-	providerService := provider.NewService(db)
-	providerService.SetValidator(&mockValidator{})
+	providerService, db := newTestService(t)
 
 	user := createTestUser(t, db, "test@example.com")
 
@@ -244,10 +232,7 @@ func Test_ListUserProviders(t *testing.T) {
 }
 
 func Test_ListUserProviders_MultipleUsers(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
-	providerService := provider.NewService(db)
-	providerService.SetValidator(&mockValidator{})
+	providerService, db := newTestService(t)
 
 	user1 := createTestUser(t, db, "user1@example.com")
 	user2 := createTestUser(t, db, "user2@example.com")
@@ -288,10 +273,7 @@ func Test_ListUserProviders_MultipleUsers(t *testing.T) {
 }
 
 func Test_UpdateProvider(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
-	providerService := provider.NewService(db)
-	providerService.SetValidator(&mockValidator{})
+	providerService, db := newTestService(t)
 
 	user := createTestUser(t, db, "test@example.com")
 
@@ -321,10 +303,7 @@ func Test_UpdateProvider(t *testing.T) {
 }
 
 func Test_UpdateProvider_PreventIdChange(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
-	providerService := provider.NewService(db)
-	providerService.SetValidator(&mockValidator{})
+	providerService, db := newTestService(t)
 
 	user := createTestUser(t, db, "test@example.com")
 
@@ -349,10 +328,7 @@ func Test_UpdateProvider_PreventIdChange(t *testing.T) {
 }
 
 func Test_UpdateProvider_WrongUser(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
-	providerService := provider.NewService(db)
-	providerService.SetValidator(&mockValidator{})
+	providerService, db := newTestService(t)
 
 	user1 := createTestUser(t, db, "user1@example.com")
 	user2 := createTestUser(t, db, "user2@example.com")
@@ -374,10 +350,7 @@ func Test_UpdateProvider_WrongUser(t *testing.T) {
 }
 
 func Test_DeleteProvider(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
-	providerService := provider.NewService(db)
-	providerService.SetValidator(&mockValidator{})
+	providerService, db := newTestService(t)
 
 	user := createTestUser(t, db, "test@example.com")
 
@@ -401,6 +374,35 @@ func Test_DeleteProvider(t *testing.T) {
 	}
 	if err != happydns.ErrProviderNotFound {
 		t.Errorf("expected ErrProviderNotFound, got %v", err)
+	}
+}
+
+func Test_DeleteProvider_WrongUser(t *testing.T) {
+	providerService, db := newTestService(t)
+
+	user1 := createTestUser(t, db, "user1@example.com")
+	user2 := createTestUser(t, db, "user2@example.com")
+
+	// Create a provider for user1
+	msg := createTestProviderMessage(t, "DDNSServer", "User1 Provider")
+	createdProvider, err := providerService.CreateProvider(user1, msg)
+	if err != nil {
+		t.Fatalf("unexpected error creating provider: %v", err)
+	}
+
+	// Try to delete the provider as user2
+	err = providerService.DeleteProvider(user2, createdProvider.Id)
+	if err == nil {
+		t.Error("expected error when deleting another user's provider")
+	}
+	if err != happydns.ErrProviderNotFound {
+		t.Errorf("expected ErrProviderNotFound, got %v", err)
+	}
+
+	// Verify the provider still exists for user1
+	_, err = providerService.GetUserProvider(user1, createdProvider.Id)
+	if err != nil {
+		t.Errorf("provider should still exist for user1, got error: %v", err)
 	}
 }
 
@@ -462,8 +464,7 @@ func Test_RestrictedService_UpdateProvider_Disabled(t *testing.T) {
 	db, _ := kv.NewKVDatabase(mem)
 
 	// First create a provider without restrictions
-	unrestricted := provider.NewService(db)
-	unrestricted.SetValidator(&mockValidator{})
+	unrestricted := provider.NewService(db, &mockValidator{})
 	user := createTestUser(t, db, "test@example.com")
 	msg := createTestProviderMessage(t, "DDNSServer", "Test Provider")
 	createdProvider, err := unrestricted.CreateProvider(user, msg)
@@ -493,8 +494,7 @@ func Test_RestrictedService_DeleteProvider_Disabled(t *testing.T) {
 	db, _ := kv.NewKVDatabase(mem)
 
 	// First create a provider without restrictions
-	unrestricted := provider.NewService(db)
-	unrestricted.SetValidator(&mockValidator{})
+	unrestricted := provider.NewService(db, &mockValidator{})
 	user := createTestUser(t, db, "test@example.com")
 	msg := createTestProviderMessage(t, "DDNSServer", "Test Provider")
 	createdProvider, err := unrestricted.CreateProvider(user, msg)
