@@ -23,6 +23,7 @@ package zone
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/miekg/dns"
 
@@ -55,29 +56,30 @@ func (uc *ListRecordsUsecase) ToZoneFile(domain *happydns.Domain, zone *happydns
 		}
 	}
 
-	var ret string
+	var ret strings.Builder
 
 	for _, rr := range records {
-		ret += rr.String() + "\n"
+		ret.WriteString(rr.String())
+		ret.WriteString("\n")
 	}
 
-	return ret, nil
+	return ret.String(), nil
 }
 
 // List expands every service in zone into its raw DNS records, ensures the SOA
 // record is first, and merges SPF contributions into single TXT records per
 // domain name.
 func (uc *ListRecordsUsecase) List(domain *happydns.Domain, zone *happydns.Zone) (rrs []happydns.Record, err error) {
-	var svc_rrs []happydns.Record
+	var svcRRs []happydns.Record
 
 	for _, services := range zone.Services {
 		for _, svc := range services {
-			svc_rrs, err = uc.serviceListRecordsUC.List(svc, domain.DomainName, zone.DefaultTTL)
+			svcRRs, err = uc.serviceListRecordsUC.List(svc, domain.DomainName, zone.DefaultTTL)
 			if err != nil {
 				return
 			}
 
-			rrs = append(rrs, svc_rrs...)
+			rrs = append(rrs, svcRRs...)
 		}
 
 		// Ensure SOA is the first record

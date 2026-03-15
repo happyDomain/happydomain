@@ -552,6 +552,29 @@
         "ttl": "Remaining time in cache",
         "showDNSSEC": "Show DNSSEC records in answer (if any)"
     },
+    "generator": {
+        "title": "DNS Record Generators",
+        "description": "Free online DNS record generators: CAA, DMARC, SPF, MX, DKIM, SRV, and more. Build and preview DNS zone records instantly.",
+        "subtitle": "Pick a record type to build and preview its DNS zone entry — no account needed.",
+        "icon-alt": "{{name}} icon",
+        "svctype": {
+            "title": "{{name}} Generator",
+            "page-title": "DNS Record Generator",
+            "description": "Free online {{name}} DNS record generator. Configure and preview your {{name}} record in zone file format.",
+            "not-found": "Service type <code>{{svctype}}</code> not found.",
+            "browse-all": "Browse all generators",
+            "domain-settings": "Your Domain Name",
+            "domain-help": "Enter the domain name where the record will be created. The generated records will use this domain.",
+            "configure-record": "Fill the Required Information",
+            "generated-records": "Get the Generated DNS Records",
+            "fill-form": "Fill in the form above to generate records.",
+            "generating": "Generating…",
+            "no-records": "No records generated.",
+            "cta-title": "Handle DNS complexity with happyDomain",
+            "cta-text": "happyDomain lets you manage all your DNS records through a visual interface — no zone file editing required.",
+            "cta-button": "Create a free account"
+        }
+    },
     "zones": {
         "viewer": "Zone Viewer",
         "viewer-subtitle": "Your services at a glance",

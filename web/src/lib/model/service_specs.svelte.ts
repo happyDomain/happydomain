@@ -27,6 +27,10 @@ import { getAvailableResourceTypes, type ProviderInfos } from "$lib/model/provid
 import type { ServiceCombined } from "$lib/model/service.svelte";
 import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
 
+export const SERVICE_FAMILY_ABSTRACT = "abstract";
+export const SERVICE_FAMILY_HIDDEN = "hidden";
+export const SERVICE_FAMILY_PROVIDER = "provider";
+
 export class ServiceRestrictions {
     alone = $state(false);
     exclusive = $state<Array<string>>([]);

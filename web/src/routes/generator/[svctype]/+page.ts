@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2022-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,27 +19,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package route
+import type { Load } from "@sveltejs/kit";
 
-import (
-	"github.com/gin-gonic/gin"
-
-	"git.happydns.org/happyDomain/internal/api/controller"
-	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/model"
-)
-
-func DeclareServiceSpecsRoutes(router *gin.RouterGroup, serviceSpecsUC happydns.ServiceSpecsUsecase) {
-	ssc := controller.NewServiceSpecsController(serviceSpecsUC)
-
-	router.GET("/service_specs", ssc.ListServiceSpecs)
-
-	router.GET("/service_specs/:ssid/icon.png", ssc.GetServiceSpecIcon)
-
-	apiServiceSpecsRoutes := router.Group("/service_specs/:ssid")
-	apiServiceSpecsRoutes.Use(middleware.ServiceSpecsHandler)
-
-	apiServiceSpecsRoutes.GET("", ssc.GetServiceSpec)
-	apiServiceSpecsRoutes.POST("/init", ssc.InitializeServiceSpec)
-	apiServiceSpecsRoutes.POST("/records", ssc.GenerateRecords)
-}
+export const load: Load = async ({ params }) => {
+    return { svctype: (params as Record<string, string>).svctype };
+};
