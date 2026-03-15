@@ -23,6 +23,7 @@ package authuser_test
 
 import (
 	"fmt"
+	"net/mail"
 	"testing"
 	"time"
 
@@ -32,6 +33,13 @@ import (
 	"git.happydns.org/happyDomain/internal/usecase/authuser"
 	"git.happydns.org/happyDomain/model"
 )
+
+// NoopMailer is a mock mailer that discards all emails.
+type NoopMailer struct{}
+
+func (n *NoopMailer) SendMail(to *mail.Address, subject, content string) error {
+	return nil
+}
 
 // MockCloseUserSessionsUsecase is a mock implementation of SessionCloserUsecase.
 type MockCloseUserSessionsUsecase struct {
@@ -56,8 +64,7 @@ func setupTestService() (*authuser.Service, storage.Storage) {
 		DisableRegistration: false,
 	}
 	mockCloseSessions := &MockCloseUserSessionsUsecase{}
-	// Pass nil mailer to avoid sending emails in tests
-	service := authuser.NewAuthUserUsecases(cfg, nil, store, mockCloseSessions)
+	service := authuser.NewAuthUserUsecases(cfg, &NoopMailer{}, store, mockCloseSessions)
 	return service, store
 }
 
@@ -84,7 +91,7 @@ func TestCanRegister_Closed(t *testing.T) {
 		DisableRegistration: true, // Registration closed
 	}
 	mockCloseSessions := &MockCloseUserSessionsUsecase{}
-	service := authuser.NewAuthUserUsecases(cfg, nil, store, mockCloseSessions)
+	service := authuser.NewAuthUserUsecases(cfg, &NoopMailer{}, store, mockCloseSessions)
 
 	reg := happydns.UserRegistration{
 		Email:    "test@example.com",
@@ -362,7 +369,7 @@ func TestDeleteAuthUser(t *testing.T) {
 			return nil
 		},
 	}
-	service := authuser.NewAuthUserUsecases(cfg, nil, store, mockCloseSessions)
+	service := authuser.NewAuthUserUsecases(cfg, &NoopMailer{}, store, mockCloseSessions)
 
 	user := &happydns.UserAuth{
 		Email: "test@example.com",

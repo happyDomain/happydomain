@@ -76,7 +76,7 @@ type App struct {
 	cfg             *happydns.Options
 	failureTracker  *captcha.FailureTracker
 	insights        *insightsCollector
-	mailer          *mailer.Mailer
+	mailer          happydns.Mailer
 	newsletter      happydns.NewsletterSubscriptor
 	router          *gin.Engine
 	srv             *http.Server
@@ -128,19 +128,22 @@ func (app *App) initCaptcha() {
 
 func (app *App) initMailer() {
 	if app.cfg.MailSMTPHost != "" {
-		app.mailer = &mailer.Mailer{
+		m := &mailer.Mailer{
 			MailFrom:   &app.cfg.MailFrom,
 			SendMethod: mailer.NewSMTPMailer(app.cfg.MailSMTPHost, app.cfg.MailSMTPPort, app.cfg.MailSMTPUsername, app.cfg.MailSMTPPassword),
 		}
 
 		if app.cfg.MailSMTPTLSSNoVerify {
-			app.mailer.SendMethod.(*mailer.SMTPMailer).WithTLSNoVerify()
+			m.SendMethod.(*mailer.SMTPMailer).WithTLSNoVerify()
 		}
+		app.mailer = m
 	} else if !app.cfg.NoMail {
 		app.mailer = &mailer.Mailer{
 			MailFrom:   &app.cfg.MailFrom,
 			SendMethod: &mailer.SystemSendmail{},
 		}
+	} else {
+		app.mailer = &mailer.LogMailer{}
 	}
 }
 
