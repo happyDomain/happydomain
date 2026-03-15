@@ -22,6 +22,7 @@
 package orchestrator
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -72,12 +73,13 @@ func NewZoneCorrectionApplierUsecase(
 // zone is prepended to the domain's history so future edits start from the
 // published state.  Returns the newly created zone or a descriptive error.
 func (uc *ZoneCorrectionApplierUsecase) Apply(
+	ctx context.Context,
 	user *happydns.User,
 	domain *happydns.Domain,
 	zone *happydns.Zone,
 	form *happydns.ApplyZoneForm,
 ) (*happydns.Zone, error) {
-	corrections, _, err := uc.List(user, domain, zone)
+	corrections, _, err := uc.List(ctx, user, domain, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +103,9 @@ corrections:
 
 				if corrErr != nil {
 					log.Printf("%s: unable to apply correction: %s", domain.DomainName, corrErr.Error())
-					uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed record update (%s): %s", cr.Msg, corrErr.Error())))
+					if logErr := uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed record update (%s): %s", cr.Msg, corrErr.Error()))); logErr != nil {
+						log.Printf("unable to append domain log for %s: %s", domain.DomainName, logErr.Error())
+					}
 					errs = errors.Join(errs, fmt.Errorf("%s: %w", cr.Msg, corrErr))
 					// Stop if no corrections have been successfully applied yet
 					if appliedCount == 0 {
@@ -124,14 +128,20 @@ corrections:
 	}
 
 	if errs != nil {
-		uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d of %d corrections applied, errors occurred.", zone.Id.String(), appliedCount, nbcorrections)))
+		if logErr := uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d of %d corrections applied, errors occurred.", zone.Id.String(), appliedCount, nbcorrections))); logErr != nil {
+			log.Printf("unable to append domain log for %s: %s", domain.DomainName, logErr.Error())
+		}
 		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to update the zone (%d of %d corrections applied): %s", appliedCount, nbcorrections, errs.Error())}
 	} else if unmatchedCount > 0 {
-		uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d corrections were not found in the current diff.", zone.Id.String(), unmatchedCount)))
+		if logErr := uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d corrections were not found in the current diff.", zone.Id.String(), unmatchedCount))); logErr != nil {
+			log.Printf("unable to append domain log for %s: %s", domain.DomainName, logErr.Error())
+		}
 		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to perform %d corrections that were not found in the current diff", unmatchedCount)}
 	}
 
-	uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ACK, fmt.Sprintf("Zone published (%s), %d corrections applied with success", zone.Id.String(), nbcorrections)))
+	if logErr := uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ACK, fmt.Sprintf("Zone published (%s), %d corrections applied with success", zone.Id.String(), nbcorrections))); logErr != nil {
+		log.Printf("unable to append domain log for %s: %s", domain.DomainName, logErr.Error())
+	}
 
 	// Create a new zone in history for further updates
 	newZone := zone.DerivateNew()

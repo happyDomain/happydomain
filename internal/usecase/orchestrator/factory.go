@@ -27,6 +27,8 @@
 package orchestrator
 
 import (
+	"context"
+
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
@@ -44,12 +46,12 @@ type ProviderGetter interface {
 
 // ZoneRetriever is an interface for retrieving zones from providers.
 type ZoneRetriever interface {
-	RetrieveZone(provider *happydns.Provider, name string) ([]happydns.Record, error)
+	RetrieveZone(ctx context.Context, provider *happydns.Provider, name string) ([]happydns.Record, error)
 }
 
 // ZoneCorrector is an interface for getting zone corrections.
 type ZoneCorrector interface {
-	ListZoneCorrections(provider *happydns.Provider, domain *happydns.Domain, records []happydns.Record) ([]*happydns.Correction, int, error)
+	ListZoneCorrections(ctx context.Context, provider *happydns.Provider, domain *happydns.Domain, records []happydns.Record) ([]*happydns.Correction, int, error)
 }
 
 // Orchestrator aggregates the use-cases that together implement the DNS zone
