@@ -158,9 +158,9 @@
             {#if !$appConfig.disable_registration}
                 <Button
                     class="d-none d-md-inline-block mx-1"
-                    outline={!page.route || page.route.id != "/join"}
+                    outline={!page.route || page.route.id != "/register"}
                     color="dark"
-                    href="/join"
+                    href="/register"
                 >
                     <Icon name="person-plus-fill" aria-hidden="true" />
                     {$t("menu.signup")}

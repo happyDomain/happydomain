@@ -52,7 +52,7 @@
             {#if !$appConfig.disable_registration}
                 <div class="text-center mt-4">
                     {$t("account.ask-have")}
-                    <a href="/join" class="fw-bold">
+                    <a href="/register" class="fw-bold">
                         {$t("account.join")}
                     </a>
                 </div>

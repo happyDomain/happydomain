@@ -26,5 +26,5 @@ import { appConfig } from "$lib/stores/config";
 
 export const load: Load = async () => {
     if (get(appConfig).disable_registration) redirect(302, "/login");
-    else redirect(302, "/join");
+    else redirect(302, "/register");
 };
