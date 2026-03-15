@@ -29,9 +29,9 @@ import (
 
 // CreateDomainOnProvider creates a domain on the given provider.
 func (s *Service) CreateDomainOnProvider(provider *happydns.Provider, fqdn string) error {
-	p, err := provider.InstantiateProvider()
+	p, err := instantiate(provider)
 	if err != nil {
-		return fmt.Errorf("unable to instantiate the provider: %w", err)
+		return err
 	}
 
 	if !p.CanCreateDomain() {
@@ -41,20 +41,11 @@ func (s *Service) CreateDomainOnProvider(provider *happydns.Provider, fqdn strin
 	return p.CreateDomain(fqdn)
 }
 
-// CreateDomainOnProvider refuses the operation when DisableProviders is set, otherwise delegates to Service.
-func (s *RestrictedService) CreateDomainOnProvider(provider *happydns.Provider, fqdn string) error {
-	if s.config.DisableProviders {
-		return happydns.ForbiddenError{Msg: "cannot create domain on provider as DisableProviders parameter is set."}
-	}
-
-	return s.Service.CreateDomainOnProvider(provider, fqdn)
-}
-
 // ListHostedDomains lists all domains hosted on the given provider.
 func (s *Service) ListHostedDomains(provider *happydns.Provider) ([]string, error) {
-	p, err := provider.InstantiateProvider()
+	p, err := instantiate(provider)
 	if err != nil {
-		return nil, fmt.Errorf("unable to instantiate the provider: %w", err)
+		return nil, err
 	}
 
 	if !p.CanListZones() {
@@ -66,9 +57,9 @@ func (s *Service) ListHostedDomains(provider *happydns.Provider) ([]string, erro
 
 // TestDomainExistence tests whether a domain exists on the given provider.
 func (s *Service) TestDomainExistence(provider *happydns.Provider, name string) error {
-	instance, err := provider.InstantiateProvider()
+	instance, err := instantiate(provider)
 	if err != nil {
-		return fmt.Errorf("unable to instantiate provider: %w", err)
+		return err
 	}
 
 	_, err = instance.GetZoneRecords(name)

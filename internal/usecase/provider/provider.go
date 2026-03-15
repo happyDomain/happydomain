@@ -22,6 +22,7 @@
 package provider
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -35,17 +36,16 @@ type Service struct {
 	validator ProviderValidator
 }
 
-// NewService creates a new Service backed by the given storage.
-func NewService(store ProviderStorage) *Service {
+// NewService creates a new provider Service. If validator is nil,
+// the DefaultProviderValidator is used.
+func NewService(store ProviderStorage, validator ProviderValidator) *Service {
+	if validator == nil {
+		validator = &DefaultProviderValidator{}
+	}
 	return &Service{
 		store:     store,
-		validator: &DefaultProviderValidator{},
+		validator: validator,
 	}
-}
-
-// SetValidator allows replacing the validator (useful for testing).
-func (s *Service) SetValidator(v ProviderValidator) {
-	s.validator = v
 }
 
 // ParseProvider converts a ProviderMessage to a Provider.
@@ -60,6 +60,15 @@ func ParseProvider(msg *happydns.ProviderMessage) (p *happydns.Provider, err err
 
 	err = json.Unmarshal(msg.Provider, &p.Provider)
 	return
+}
+
+// instantiate is a helper that instantiates a provider and wraps errors consistently.
+func instantiate(p *happydns.Provider) (happydns.ProviderActuator, error) {
+	instance, err := p.InstantiateProvider()
+	if err != nil {
+		return nil, fmt.Errorf("unable to instantiate provider: %w", err)
+	}
+	return instance, nil
 }
 
 // CreateProvider creates a new provider for the given user.
@@ -123,7 +132,10 @@ func (s *Service) GetUserProviderMeta(user *happydns.User, providerID happydns.I
 func (s *Service) ListUserProviders(user *happydns.User) ([]*happydns.ProviderMeta, error) {
 	items, err := s.store.ListProviders(user)
 	if err != nil {
-		return nil, fmt.Errorf("list providers failed: %w", err)
+		return nil, happydns.InternalError{
+			Err:         fmt.Errorf("failed to list providers: %w", err),
+			UserMessage: "Sorry, we are currently unable to list your providers. Please try again later.",
+		}
 	}
 
 	metas := make([]*happydns.ProviderMeta, 0, len(items))
@@ -177,21 +189,10 @@ func (s *Service) UpdateProviderFromMessage(providerID happydns.Identifier, user
 
 // DeleteProvider deletes a provider for the given user.
 func (s *Service) DeleteProvider(user *happydns.User, providerID happydns.Identifier) error {
-	// TODO: Find another way to avoid import cycle
-	// We should verify that no domains are using this provider before deleting
-	/*domains, err := s.listDomains.List(user)
-	if err != nil {
-		return happydns.InternalError{
-			Err:         fmt.Errorf("failed to list domains: %w", err),
-			UserMessage: "Sorry, we are currently unable to perform this action. Please try again later.",
-		}
+	// Verify ownership before deleting
+	if _, err := s.getUserProvider(user, providerID); err != nil {
+		return err
 	}
-
-	for _, d := range domains {
-		if d.ProviderId.Equals(providerID) {
-			return fmt.Errorf("You cannot delete this provider because it is still used by: %s", d.DomainName)
-		}
-	}*/
 
 	if err := s.store.DeleteProvider(providerID); err != nil {
 		return happydns.InternalError{
@@ -203,18 +204,17 @@ func (s *Service) DeleteProvider(user *happydns.User, providerID happydns.Identi
 	return nil
 }
 
-// RestrictedService wraps Service with configuration-based restrictions.
+// RestrictedService wraps a ProviderUsecase with configuration-based restrictions.
 type RestrictedService struct {
-	Service
+	inner  happydns.ProviderUsecase
 	config *happydns.Options
 }
 
 // NewRestrictedService creates a RestrictedService backed by the given configuration and storage.
 func NewRestrictedService(cfg *happydns.Options, store ProviderStorage) *RestrictedService {
-	s := NewService(store)
 	return &RestrictedService{
-		*s,
-		cfg,
+		inner:  NewService(store, nil),
+		config: cfg,
 	}
 }
 
@@ -224,7 +224,7 @@ func (s *RestrictedService) CreateProvider(user *happydns.User, msg *happydns.Pr
 		return nil, happydns.ForbiddenError{Msg: "cannot add provider as DisableProviders parameter is set."}
 	}
 
-	return s.Service.CreateProvider(user, msg)
+	return s.inner.CreateProvider(user, msg)
 }
 
 // DeleteProvider refuses the operation when DisableProviders is set, otherwise delegates to Service.
@@ -233,7 +233,7 @@ func (s *RestrictedService) DeleteProvider(user *happydns.User, providerID happy
 		return happydns.ForbiddenError{Msg: "cannot delete provider as DisableProviders parameter is set."}
 	}
 
-	return s.Service.DeleteProvider(user, providerID)
+	return s.inner.DeleteProvider(user, providerID)
 }
 
 // UpdateProvider refuses the operation when DisableProviders is set, otherwise delegates to Service.
@@ -242,7 +242,7 @@ func (s *RestrictedService) UpdateProvider(providerID happydns.Identifier, user 
 		return happydns.ForbiddenError{Msg: "cannot update provider as DisableProviders parameter is set."}
 	}
 
-	return s.Service.UpdateProvider(providerID, user, updateFn)
+	return s.inner.UpdateProvider(providerID, user, updateFn)
 }
 
 // UpdateProviderFromMessage refuses the operation when DisableProviders is set, otherwise delegates to Service.
@@ -251,5 +251,43 @@ func (s *RestrictedService) UpdateProviderFromMessage(providerID happydns.Identi
 		return happydns.ForbiddenError{Msg: "cannot update provider as DisableProviders parameter is set."}
 	}
 
-	return s.Service.UpdateProviderFromMessage(providerID, user, p)
+	return s.inner.UpdateProviderFromMessage(providerID, user, p)
+}
+
+func (s *RestrictedService) CreateDomainOnProvider(provider *happydns.Provider, fqdn string) error {
+	if s.config.DisableProviders {
+		return happydns.ForbiddenError{Msg: "cannot create domain on provider as DisableProviders parameter is set."}
+	}
+
+	return s.inner.CreateDomainOnProvider(provider, fqdn)
+}
+
+// Read-only operations delegate directly.
+
+func (s *RestrictedService) GetUserProvider(user *happydns.User, providerID happydns.Identifier) (*happydns.Provider, error) {
+	return s.inner.GetUserProvider(user, providerID)
+}
+
+func (s *RestrictedService) GetUserProviderMeta(user *happydns.User, providerID happydns.Identifier) (*happydns.ProviderMeta, error) {
+	return s.inner.GetUserProviderMeta(user, providerID)
+}
+
+func (s *RestrictedService) ListUserProviders(user *happydns.User) ([]*happydns.ProviderMeta, error) {
+	return s.inner.ListUserProviders(user)
+}
+
+func (s *RestrictedService) ListHostedDomains(provider *happydns.Provider) ([]string, error) {
+	return s.inner.ListHostedDomains(provider)
+}
+
+func (s *RestrictedService) ListZoneCorrections(ctx context.Context, provider *happydns.Provider, domain *happydns.Domain, records []happydns.Record) ([]*happydns.Correction, int, error) {
+	return s.inner.ListZoneCorrections(ctx, provider, domain, records)
+}
+
+func (s *RestrictedService) RetrieveZone(ctx context.Context, provider *happydns.Provider, name string) ([]happydns.Record, error) {
+	return s.inner.RetrieveZone(ctx, provider, name)
+}
+
+func (s *RestrictedService) TestDomainExistence(provider *happydns.Provider, name string) error {
+	return s.inner.TestDomainExistence(provider, name)
 }

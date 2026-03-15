@@ -23,16 +23,15 @@ package provider
 
 import (
 	"context"
-	"fmt"
 
 	"git.happydns.org/happyDomain/model"
 )
 
 // RetrieveZone retrieves the current zone records for the given domain from the provider.
 func (s *Service) RetrieveZone(_ context.Context, provider *happydns.Provider, name string) ([]happydns.Record, error) {
-	instance, err := provider.InstantiateProvider()
+	instance, err := instantiate(provider)
 	if err != nil {
-		return nil, fmt.Errorf("unable to instantiate provider: %w", err)
+		return nil, err
 	}
 
 	return instance.GetZoneRecords(name)
@@ -40,9 +39,9 @@ func (s *Service) RetrieveZone(_ context.Context, provider *happydns.Provider, n
 
 // ListZoneCorrections lists the corrections needed to synchronize the zone with the given records.
 func (s *Service) ListZoneCorrections(_ context.Context, provider *happydns.Provider, domain *happydns.Domain, records []happydns.Record) ([]*happydns.Correction, int, error) {
-	instance, err := provider.InstantiateProvider()
+	instance, err := instantiate(provider)
 	if err != nil {
-		return nil, 0, fmt.Errorf("unable to instantiate provider: %w", err)
+		return nil, 0, err
 	}
 
 	return instance.GetZoneCorrections(domain.DomainName, records)

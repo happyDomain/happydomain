@@ -54,7 +54,7 @@ func NewAdmin(app *App) *Admin {
 	router.Use(gin.Logger(), gin.Recovery())
 
 	// Prepare usecases (admin uses unrestricted provider access)
-	app.usecases.providerAdmin = providerUC.NewService(app.store)
+	app.usecases.providerAdmin = providerUC.NewService(app.store, nil)
 
 	admin.DeclareRoutes(
 		app.cfg,

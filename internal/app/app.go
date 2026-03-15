@@ -193,14 +193,14 @@ func (app *App) initUsecases() {
 	)
 	domainLogService := domainlogUC.NewService(app.store)
 	providerService := providerUC.NewRestrictedService(app.cfg, app.store)
-	providerAdminService := providerUC.NewService(app.store)
+	providerAdminService := providerUC.NewService(app.store, nil)
 	serviceService := serviceUC.NewServiceUsecases()
 	zoneService := zoneUC.NewZoneUsecases(app.store, serviceService)
 
 	app.usecases.providerSpecs = usecase.NewProviderSpecsUsecase()
 	app.usecases.provider = providerService
 	app.usecases.providerAdmin = providerAdminService
-	app.usecases.providerSettings = usecase.NewProviderSettingsUsecase(app.cfg, app.usecases.provider, app.store)
+	app.usecases.providerSettings = usecase.NewProviderSettingsUsecase(app.cfg, app.usecases.provider)
 	app.usecases.service = serviceService
 	app.usecases.serviceSpecs = usecase.NewServiceSpecsUsecase()
 	app.usecases.zone = zoneService
