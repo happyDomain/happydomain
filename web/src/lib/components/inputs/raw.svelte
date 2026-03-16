@@ -24,7 +24,14 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
 
-    import { Input, InputGroup, InputGroupText, type InputType } from "@sveltestrap/sveltestrap";
+    import {
+        Button,
+        Icon,
+        Input,
+        InputGroup,
+        InputGroupText,
+        type InputType,
+    } from "@sveltestrap/sveltestrap";
 
     import type { Field } from "$lib/model/custom_form.svelte";
     import { t } from "$lib/translations";
@@ -54,6 +61,8 @@
         specs.type === "time.Duration" || specs.type === "common.Duration" ? "s" : null,
     );
 
+    let secretVisible = $state(false);
+
     let inputtype: InputType = $derived(
         specs.type && (specs.type.startsWith("uint") || specs.type.startsWith("int"))
             ? "number"
@@ -61,7 +70,9 @@
               ? "checkbox"
               : specs.textarea
                 ? "textarea"
-                : "text",
+                : specs.secret && !secretVisible
+                  ? "password"
+                  : "text",
     );
 
     let inputmax: number | undefined = $derived(computeInputmax(specs));
@@ -217,5 +228,18 @@
 
     {#if unit !== null}
         <InputGroupText>{unit}</InputGroupText>
+    {/if}
+
+    {#if specs.secret}
+        <Button
+            color="secondary"
+            outline
+            size="sm"
+            type="button"
+            onclick={() => (secretVisible = !secretVisible)}
+            title={secretVisible ? "Hide" : "Show"}
+        >
+            <Icon name={secretVisible ? "eye-slash" : "eye"} />
+        </Button>
     {/if}
 </InputGroup>

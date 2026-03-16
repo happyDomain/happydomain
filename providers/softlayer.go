@@ -30,7 +30,7 @@ import (
 
 type SoftLayerAPI struct {
 	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=yourUsername,required"`
-	APIKey   string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=yourApiKeyFromSoftLayer,required"`
+	APIKey   string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=yourApiKeyFromSoftLayer,required,secret"`
 }
 
 func (s *SoftLayerAPI) DNSControlName() string {

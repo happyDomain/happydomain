@@ -29,7 +29,7 @@ import (
 )
 
 type DNSimpleAPI struct {
-	Token string `json:"token,omitempty" happydomain:"label=Token,placeholder=xxxxxxxxxx,required,description=Provide a DNSimple account access token."`
+	Token string `json:"token,omitempty" happydomain:"label=Token,placeholder=xxxxxxxxxx,required,secret,description=Provide a DNSimple account access token."`
 }
 
 func (s *DNSimpleAPI) DNSControlName() string {

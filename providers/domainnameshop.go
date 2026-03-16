@@ -29,8 +29,8 @@ import (
 )
 
 type DomainnameshopAPI struct {
-	Token  string `json:"token,omitempty" happydomain:"label=Token,placeholder=your-domainnameshop-token,required,description=Domainnameshop API Token."`
-	Secret string `json:"secret,omitempty" happydomain:"label=Secret,placeholder=your-domainnameshop-secret,required,description=Domainnameshop API Secret."`
+	Token  string `json:"token,omitempty" happydomain:"label=Token,placeholder=your-domainnameshop-token,required,secret,description=Domainnameshop API Token."`
+	Secret string `json:"secret,omitempty" happydomain:"label=Secret,placeholder=your-domainnameshop-secret,required,secret,description=Domainnameshop API Secret."`
 }
 
 func (s *DomainnameshopAPI) DNSControlName() string {

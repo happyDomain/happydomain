@@ -29,8 +29,8 @@ import (
 )
 
 type CscGlobalAPI struct {
-	ApiKey             string `json:"ApiKey,omitempty" happydomain:"label=API key,placeholder=xxxxxxxx,required,description=Your API key"`
-	UserToken          string `json:"UserToken,omitempty" happydomain:"label=User token,placeholder=xxxxxxxx,required,description=Your user token"`
+	ApiKey             string `json:"ApiKey,omitempty" happydomain:"label=API key,placeholder=xxxxxxxx,required,secret,description=Your API key"`
+	UserToken          string `json:"UserToken,omitempty" happydomain:"label=User token,placeholder=xxxxxxxx,required,secret,description=Your user token"`
 	NotificationEmails string `json:"NotificationEmails,omitempty" happydomain:"label=Notification emails,placeholder=xxxxxxxx,description=Optional comma-separated list of email addresses to send notifications to"`
 }
 

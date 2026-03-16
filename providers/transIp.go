@@ -30,8 +30,8 @@ import (
 
 type TransIpAPI struct {
 	AccountName string `json:"account_name,omitempty" happydomain:"label=Account name,placeholder=xxxxxxxx,description=Your account name."`
-	PrivateKey  string `json:"private_key,omitempty" happydomain:"label=Private key,placeholder=xxxxxxxx,description=Your account private key."`
-	AccessToken string `json:"access_token,omitempty" happydomain:"label=Access token,placeholder=xxxxxxxx,description=Your access roken."`
+	PrivateKey  string `json:"private_key,omitempty" happydomain:"label=Private key,placeholder=xxxxxxxx,secret,description=Your account private key."`
+	AccessToken string `json:"access_token,omitempty" happydomain:"label=Access token,placeholder=xxxxxxxx,secret,description=Your access roken."`
 }
 
 func (s *TransIpAPI) DNSControlName() string {

@@ -30,7 +30,7 @@ import (
 
 type LoopiaAPI struct {
 	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=username@loopiaapi,required,description=Your Loopia API user name."`
-	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,description=Your Loopia API password."`
+	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,secret,description=Your Loopia API password."`
 }
 
 func (s *LoopiaAPI) DNSControlName() string {

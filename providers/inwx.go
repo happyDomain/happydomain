@@ -30,7 +30,7 @@ import (
 
 type INWXAPI struct {
 	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=xxxxxxxx,required,description=The username you usually use to log on INWX services."`
-	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,description=The password associated with you INWX account."`
+	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,secret,description=The password associated with you INWX account."`
 }
 
 func (s *INWXAPI) DNSControlName() string {

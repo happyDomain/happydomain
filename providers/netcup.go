@@ -30,7 +30,7 @@ import (
 
 type NetcupAPI struct {
 	ApiKey         string `json:"api_key,omitempty" happydomain:"label=API key,placeholder=your-api-key,required,description=Netcup API key."`
-	ApiPassword    string `json:"api_password,omitempty" happydomain:"label=Password,placeholder=api-password,required,description=Netcup API password."`
+	ApiPassword    string `json:"api_password,omitempty" happydomain:"label=Password,placeholder=api-password,required,secret,description=Netcup API password."`
 	CustomerNumber string `json:"customer_number,omitempty" happydomain:"label=Customer number,placeholder=123456,required,description=Netcup customer number."`
 }
 

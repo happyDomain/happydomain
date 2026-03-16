@@ -29,7 +29,7 @@ import (
 )
 
 type NamedotcomAPI struct {
-	APIKey  string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=yourApiKeyFromNamedotcom,required"`
+	APIKey  string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=yourApiKeyFromNamedotcom,required,secret"`
 	APIUser string `json:"apiuser,omitempty" happydomain:"label=API User,placeholder=yourUsername,required"`
 }
 

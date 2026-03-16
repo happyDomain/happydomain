@@ -29,9 +29,9 @@ import (
 )
 
 type ClouDNSAPI struct {
-	AuthID    string `json:"AuthID,omitempty" happydomain:"label=Auth ID,placeholder=xxxxxxxx,required,description=Your ClouDNS auth ID"`
-	SubAuthID string `json:"SubAuthID,omitempty" happydomain:"label=Sub Auth ID,placeholder=xxxxxxxx,description=Your ClouDNS subauth token"`
-	Password  string `json:"Password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,description=Your ClouDNS API password token"`
+	AuthID    string `json:"AuthID,omitempty" happydomain:"label=Auth ID,placeholder=xxxxxxxx,required,secret,description=Your ClouDNS auth ID"`
+	SubAuthID string `json:"SubAuthID,omitempty" happydomain:"label=Sub Auth ID,placeholder=xxxxxxxx,secret,description=Your ClouDNS subauth token"`
+	Password  string `json:"Password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,secret,description=Your ClouDNS API password token"`
 }
 
 func (s *ClouDNSAPI) DNSControlName() string {

@@ -30,7 +30,7 @@ import (
 
 type LuaDnsAPI struct {
 	Email  string `json:"email,omitempty" happydomain:"label=E-mail,placeholder=xxxxxxxx,required,description=Your email."`
-	ApiKey string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx,required,description=Your API key."`
+	ApiKey string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx,required,secret,description=Your API key."`
 }
 
 func (s *LuaDnsAPI) DNSControlName() string {

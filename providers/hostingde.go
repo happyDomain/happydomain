@@ -29,7 +29,7 @@ import (
 )
 
 type HostingdeAPI struct {
-	Token          string `json:"token,omitempty" happydomain:"label=Token,placeholder=your-api-key,required,description=Provide your Hosting.de account access token."`
+	Token          string `json:"token,omitempty" happydomain:"label=Token,placeholder=your-api-key,required,secret,description=Provide your Hosting.de account access token."`
 	OwnerAccountId string `json:"ownerAccountId,omitempty" happydomain:"label=Owner Account,placeholder=xxxxxxxxx,description=Identifier of the account owner."`
 }
 

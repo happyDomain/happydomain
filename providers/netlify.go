@@ -29,7 +29,7 @@ import (
 )
 
 type NetlifyAPI struct {
-	Token string `json:"token,omitempty" happydomain:"label=Netlify Access Token,placeholder=xxxxxxxxxx,required,description=Get your token on https://app.netlify.com/user/applications#personal-access-tokens."`
+	Token string `json:"token,omitempty" happydomain:"label=Netlify Access Token,placeholder=xxxxxxxxxx,required,secret,description=Get your token on https://app.netlify.com/user/applications#personal-access-tokens."`
 	Slug  string `json:"slug,omitempty" happydomain:"label=Account Slug,description=Optional account slug (help us to understand how it is used)."`
 }
 

@@ -29,7 +29,7 @@ import (
 )
 
 type GcoreAPI struct {
-	ApiKey string `json:"api_key,omitempty" happydomain:"label=API key,placeholder=xxxxxxxx,required,description=Your GCORE API Token."`
+	ApiKey string `json:"api_key,omitempty" happydomain:"label=API key,placeholder=xxxxxxxx,required,secret,description=Your GCORE API Token."`
 }
 
 func (s *GcoreAPI) DNSControlName() string {

@@ -29,8 +29,8 @@ import (
 )
 
 type InternetbsAPI struct {
-	ApiKey   string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx,required,description=Your API key."`
-	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,description=Your account password."`
+	ApiKey   string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx,required,secret,description=Your API key."`
+	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,secret,description=Your account password."`
 }
 
 func (s *InternetbsAPI) DNSControlName() string {

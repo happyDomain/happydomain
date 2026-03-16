@@ -29,7 +29,7 @@ import (
 )
 
 type PacketframeAPI struct {
-	Token string `json:"token,omitempty" happydomain:"label=Token,placeholder=xxxxxxxx,required,description=Your Packetframe Token."`
+	Token string `json:"token,omitempty" happydomain:"label=Token,placeholder=xxxxxxxx,required,secret,description=Your Packetframe Token."`
 }
 
 func (s *PacketframeAPI) DNSControlName() string {

@@ -30,7 +30,7 @@ import (
 
 type MythicBeastsAPI struct {
 	KeyID  string `json:"keyID,omitempty" happydomain:"label=API key ID,placeholder=xxxxxxxx,required,description=Your API key ID."`
-	Secret string `json:"secret,omitempty" happydomain:"label=Secret,placeholder=xxxxxxxx,required,description=Your API secret."`
+	Secret string `json:"secret,omitempty" happydomain:"label=Secret,placeholder=xxxxxxxx,required,secret,description=Your API secret."`
 }
 
 func (s *MythicBeastsAPI) DNSControlName() string {

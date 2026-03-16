@@ -29,8 +29,8 @@ import (
 )
 
 type DNSMadeEasyAPI struct {
-	ApiKey    string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx,required,description=API Key to retrieve from your account: See https://api-docs.dnsmadeeasy.com/."`
-	SecretKey string `json:"secret_key,omitempty" happydomain:"label=Secret Key,placeholder=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx,required,description=Secret key that comes with your API Key."`
+	ApiKey    string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx,required,secret,description=API Key to retrieve from your account: See https://api-docs.dnsmadeeasy.com/."`
+	SecretKey string `json:"secret_key,omitempty" happydomain:"label=Secret Key,placeholder=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx,required,secret,description=Secret key that comes with your API Key."`
 }
 
 func (s *DNSMadeEasyAPI) DNSControlName() string {

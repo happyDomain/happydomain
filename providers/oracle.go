@@ -31,7 +31,7 @@ import (
 type OracleAPI struct {
 	Compartment string `json:"compartment,omitempty" happydomain:"label=Compartment,placeholder=ORACLE_COMPARTMENT,description=Compartment."`
 	Fingerprint string `json:"fingerprint,omitempty" happydomain:"label=Fingerprint,placeholder=ORACLE_FINGERPRINT,required,description=Fingerprint."`
-	PrivateKey  string `json:"private_key,omitempty" happydomain:"label=Private hey,placeholder=ORACLE_PRIVATE_KEY,required,description=Private key."`
+	PrivateKey  string `json:"private_key,omitempty" happydomain:"label=Private key,placeholder=ORACLE_PRIVATE_KEY,required,secret,description=Private key."`
 	Region      string `json:"region,omitempty" happydomain:"label=Region,placeholder=ORACLE_REGION,required,description=Region."`
 	TenancyOcid string `json:"tenancy_ocid,omitempty" happydomain:"label=Tenancy OCID,placeholder=ORACLE_TENANCY_OCID,required,description=Tenancy OCID."`
 	UserOcid    string `json:"user_ocid,omitempty" happydomain:"label=User OCID,placeholder=ORACLE_USER_OCID,required,description=User OCID."`

@@ -29,7 +29,7 @@ import (
 )
 
 type RwthAPI struct {
-	ApiKey string `json:"api_key,omitempty" happydomain:"label=API key,placeholder=xxxxxxxx,required,description=Your RWTH API Token."`
+	ApiKey string `json:"api_key,omitempty" happydomain:"label=API key,placeholder=xxxxxxxx,required,secret,description=Your RWTH API Token."`
 }
 
 func (s *RwthAPI) DNSControlName() string {

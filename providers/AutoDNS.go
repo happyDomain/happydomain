@@ -30,7 +30,7 @@ import (
 
 type AutoDNSAPI struct {
 	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=autodns.service-account@example.com,required,description=Your AutoDNS user name."`
-	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,description=Your AutoDNS password."`
+	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,secret,description=Your AutoDNS password."`
 	Context  string `json:"context,omitempty" happydomain:"label=Context,placeholder=33004,description=Your AutoDNS context."`
 }
 

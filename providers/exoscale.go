@@ -29,8 +29,8 @@ import (
 )
 
 type ExoscaleAPI struct {
-	ApiKey      string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx,required,description=Your API key."`
-	SecretKey   string `json:"secretkey,omitempty" happydomain:"label=Secret Key,placeholder=xxxxxxxx,required,description=Your secret key."`
+	ApiKey      string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx,required,secret,description=Your API key."`
+	SecretKey   string `json:"secretkey,omitempty" happydomain:"label=Secret Key,placeholder=xxxxxxxx,required,secret,description=Your secret key."`
 	DnsEndpoint string `json:"dns_endpoint,omitempty" happydomain:"label=DNS endpoint,placeholder=xxxxxxxx,description=DNS endpointy."`
 }
 
