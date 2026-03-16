@@ -108,13 +108,19 @@
             "additions": "{{count:eq; 0:no additions; 1:{{count}} addition; default:{{count}} additions}}",
             "button": "Apply modifications",
             "deletions": "{{count:eq; 0:no deletions; 1:{{count}} deletion; default:{{count}} deletions}}",
+            "double-check": "You see this confirmation dialog because you choose in your preference to always confirm before applying corrections.",
             "done": {
                 "title": "Zone applied successfully!",
                 "description": "Your zone {{zone}} have been successfully propagated!"
             },
             "modifications": "{{count:eq; 0:no modification; 1:{{count}} modification; default:{{count}} modifications}}",
             "nochange": "There is no changes to apply! Current zone is in sync with the server.",
-            "others": "{{count:eq; 0:no other change; 1:{{count}} other change; default:{{count}} others changes}}"
+            "change-already-applied": "Changes you requested seems to be already applied.",
+            "others": "{{count:eq; 0:no other change; 1:{{count}} other change; default:{{count}} others changes}}",
+            "prepare-info": "The provider will execute {{nbDiffs}} correction(s) for your {{nbSelected}} selected change(s):",
+            "prepare-warning": "The number of corrections differs from your selection. Please review before confirming.",
+            "confirm": "Confirm & Apply",
+            "back": "Back"
         },
         "attached-new": "New domain attached to happyDomain!",
         "commit-msg": "What's changed?",
@@ -507,6 +513,13 @@
         "success": "Continue to enjoy happyDomain.",
         "success-change": "Your settings has been saved.",
         "title": "Settings",
+        "applyconfirm": {
+            "title": "Confirmation before applying",
+            "description": "Choose when to show a confirmation step before applying changes to your DNS provider",
+            "unexpected": "Ask on unexpected differences",
+            "always": "Always ask",
+            "never": "Never ask, overwrite on publish"
+        },
         "zoneview": {
             "grid": "Grid view (easiest)",
             "list": "List view (fastest)",

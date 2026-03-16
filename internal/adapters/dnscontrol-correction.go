@@ -22,6 +22,7 @@
 package adapter
 
 import (
+	"crypto/sha256"
 	"strings"
 
 	dnscontrol "github.com/StackExchange/dnscontrol/v4/models"
@@ -88,9 +89,24 @@ func DNSControlDiffByRecord(oldrrs []happydns.Record, newrrs []happydns.Record, 
 
 	ret := make([]*happydns.Correction, len(corrections))
 	for i, correction := range corrections {
+		id := sha256.Sum224([]byte(correction.MsgsJoined))
+
+		var oldRecords []happydns.Record
+		for _, rc := range correction.Old {
+			oldRecords = append(oldRecords, rc.ToRR())
+		}
+
+		var newRecords []happydns.Record
+		for _, rc := range correction.New {
+			newRecords = append(newRecords, rc.ToRR())
+		}
+
 		ret[i] = &happydns.Correction{
-			Msg:  correction.MsgsJoined,
-			Kind: DNSControlFromCorrectionType(correction.Type),
+			Id:         id[:],
+			Msg:        correction.MsgsJoined,
+			Kind:       DNSControlFromCorrectionType(correction.Type),
+			OldRecords: oldRecords,
+			NewRecords: newRecords,
 		}
 	}
 
@@ -130,4 +146,72 @@ func NewDNSControlDomainConfig(origin string, rrs []happydns.Record) (*dnscontro
 		Name:    strings.TrimSuffix(origin, "."),
 		Records: records,
 	}, err
+}
+
+// recordKey returns a canonical string for matching records by name, type, and rdata.
+func recordKey(r happydns.Record) string {
+	return r.String()
+}
+
+// BuildTargetRecords computes the target record set by applying the selected
+// corrections to the provider's current records. It starts with a copy of
+// providerRecords, then for each correction whose ID is in selectedIDs:
+//   - Addition: appends NewRecords
+//   - Deletion: removes matching OldRecords
+//   - Update: removes matching OldRecords, appends NewRecords
+func BuildTargetRecords(
+	providerRecords []happydns.Record,
+	corrections []*happydns.Correction,
+	selectedIDs []happydns.Identifier,
+) []happydns.Record {
+	// Build a set of selected IDs for fast lookup.
+	selected := make(map[string]bool, len(selectedIDs))
+	for _, id := range selectedIDs {
+		selected[string(id)] = true
+	}
+
+	// Start with a copy of provider records.
+	result := make([]happydns.Record, len(providerRecords))
+	copy(result, providerRecords)
+
+	for _, cr := range corrections {
+		if !selected[string(cr.Id)] {
+			continue
+		}
+
+		switch cr.Kind {
+		case happydns.CorrectionKindAddition:
+			result = append(result, cr.NewRecords...)
+
+		case happydns.CorrectionKindDeletion:
+			result = removeRecords(result, cr.OldRecords)
+
+		case happydns.CorrectionKindUpdate:
+			result = removeRecords(result, cr.OldRecords)
+			result = append(result, cr.NewRecords...)
+		}
+	}
+
+	return result
+}
+
+// removeRecords removes records from the slice that match any of the toRemove
+// records by their canonical string representation. Each toRemove record
+// removes at most one match.
+func removeRecords(records []happydns.Record, toRemove []happydns.Record) []happydns.Record {
+	removeKeys := make(map[string]int, len(toRemove))
+	for _, r := range toRemove {
+		removeKeys[recordKey(r)]++
+	}
+
+	result := make([]happydns.Record, 0, len(records))
+	for _, r := range records {
+		key := recordKey(r)
+		if removeKeys[key] > 0 {
+			removeKeys[key]--
+			continue
+		}
+		result = append(result, r)
+	}
+	return result
 }

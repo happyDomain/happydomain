@@ -24,6 +24,7 @@ import {
     postDomainsByDomainIdZoneByZoneIdView,
     postDomainsByDomainIdRetrieveZone,
     postDomainsByDomainIdZoneByZoneIdApplyChanges,
+    postDomainsByDomainIdZoneByZoneIdPrepareChanges,
     postDomainsByDomainIdZone,
     postDomainsByDomainIdZoneByZoneIdDiffByOldZoneId,
     postDomainsByDomainIdZoneByZoneIdDiffByOldZoneIdSummary,
@@ -36,7 +37,7 @@ import {
 } from "$lib/api-base/sdk.gen";
 import { printRR } from "$lib/dns";
 import type { dnsRR } from "$lib/dns_rr";
-import type { Correction } from "$lib/model/correction";
+import type { Correction, FullCorrection } from "$lib/model/correction";
 import type { Domain } from "$lib/model/domain";
 import type { ServiceCombined, ServiceMeta } from "$lib/model/service.svelte";
 import type { Zone, ZoneMeta } from "$lib/model/zone";
@@ -78,6 +79,19 @@ export async function applyZone(
             body: { wantedCorrections, commitMessage } as any,
         }),
     ) as unknown as ZoneMeta;
+}
+
+export async function prepareZone(
+    domain: Domain,
+    id: string,
+    wantedCorrections: Array<string>,
+): Promise<{ corrections: Array<FullCorrection>; nbDiffs: number }> {
+    return unwrapSdkResponse(
+        await postDomainsByDomainIdZoneByZoneIdPrepareChanges({
+            path: { domainId: domain.id, zoneId: id },
+            body: { wantedCorrections } as any,
+        }),
+    ) as { corrections: Array<FullCorrection>; nbDiffs: number };
 }
 
 export async function importZone(domain: Domain, id: string, file: any): Promise<ZoneMeta> {

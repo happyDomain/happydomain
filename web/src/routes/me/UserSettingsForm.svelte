@@ -107,6 +107,22 @@
     </div>
 
     <div class="list-group-item">
+        <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center gap-3">
+            <label for="applyconfirm-select" class="flex-grow-1 cursor-pointer mb-0">
+                <div class="h5 mb-1">{$t("settings.applyconfirm.title")}</div>
+                <p class="mb-0 text-muted small">{$t("settings.applyconfirm.description")}</p>
+            </label>
+            <div class="settings-input">
+                <Input id="applyconfirm-select" type="select" bind:value={settings.applyconfirm}>
+                    <option value={0}>{$t("settings.applyconfirm.unexpected")}</option>
+                    <option value={1}>{$t("settings.applyconfirm.always")}</option>
+                    <option value={2}>{$t("settings.applyconfirm.never")}</option>
+                </Input>
+            </div>
+        </div>
+    </div>
+
+    <div class="list-group-item">
         <div class="d-flex flex-column">
             <div class="mb-3">
                 <h5 class="mb-1">{$t("settings.zoneview.title")}</h5>

@@ -36,6 +36,12 @@ const (
 	ZONEVIEW_RECORDS
 )
 
+const (
+	APPLYCONFIRM_UNEXPECTED = iota
+	APPLYCONFIRM_ALWAYS
+	APPLYCONFIRM_NEVER
+)
+
 // UserSettings represents the settings for an account.
 type UserSettings struct {
 	// Language saves the locale defined by the user.
@@ -50,6 +56,9 @@ type UserSettings struct {
 	// ZoneView keeps the view of the zone wanted by the user.
 	ZoneView int `json:"zoneview"`
 
+	// ApplyConfirm stores when to show a confirmation step before applying changes.
+	ApplyConfirm int `json:"applyconfirm"`
+
 	// ShowRRTypes tells if we show equivalent RRTypes in interface (for advanced users).
 	ShowRRTypes bool `json:"showrrtypes,omitempty"`
 }
@@ -60,6 +69,7 @@ func DefaultUserSettings() *UserSettings {
 		Newsletter:  false,
 		FieldHint:   FIELDHINT_FOCUSED,
 		ZoneView:    ZONEVIEW_GRID,
-		ShowRRTypes: false,
+		ApplyConfirm: APPLYCONFIRM_UNEXPECTED,
+		ShowRRTypes:  false,
 	}
 }

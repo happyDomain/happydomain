@@ -89,7 +89,9 @@
                 );
             });
         } else {
-            invalidateAll();
+            refreshDomains().then(() => {
+                invalidateAll();
+            });
         }
     }
 
@@ -213,10 +215,6 @@
 
 <ModalDomainDelete on:detachDomain={detachDomain} />
 
-<ModalDiffZone
-    domain={data.domain}
-    {selectedHistory}
-    on:retrieveZoneDone={(ev) => retrieveZoneDone(ev.detail)}
-/>
+<ModalDiffZone domain={data.domain} {selectedHistory} />
 
 <ServiceDetailsOffcanvas domain={data.domain} {selectedHistory} />

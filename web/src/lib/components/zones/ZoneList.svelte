@@ -120,7 +120,7 @@
             refreshDomains();
         } catch {
             // Revert on error
-            fullDomain.group = prevGroup;
+            fullDomain.group = prevGroup ?? "";
             localDomains = localDomains.map((d) =>
                 d.domain === domainId || d.id === domainId ? { ...d, group: prevGroup } : d,
             );

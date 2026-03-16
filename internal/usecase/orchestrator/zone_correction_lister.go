@@ -24,53 +24,79 @@ package orchestrator
 import (
 	"context"
 
+	adapter "git.happydns.org/happyDomain/internal/adapters"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
 )
 
 // ZoneCorrectionListerUsecase computes the list of corrections needed to
 // synchronize a zone's desired state with the records currently published by
-// the provider.
+// the provider. It fetches provider records, expands the WIP zone to records,
+// and computes a local diff without executable closures.
 type ZoneCorrectionListerUsecase struct {
 	providerService ProviderGetter
 	listRecords     *zoneUC.ListRecordsUsecase
 	zoneCorrector   ZoneCorrector
+	zoneRetriever   ZoneRetriever
 }
 
 // NewZoneCorrectionListerUsecase creates a ZoneCorrectionListerUsecase with
-// the given provider getter, record lister, and zone corrector.
+// the given provider getter, record lister, zone corrector, and zone retriever.
 func NewZoneCorrectionListerUsecase(
 	providerService ProviderGetter,
 	listRecords *zoneUC.ListRecordsUsecase,
 	zoneCorrector ZoneCorrector,
+	zoneRetriever ZoneRetriever,
 ) *ZoneCorrectionListerUsecase {
 	return &ZoneCorrectionListerUsecase{
 		providerService: providerService,
 		listRecords:     listRecords,
 		zoneCorrector:   zoneCorrector,
+		zoneRetriever:   zoneRetriever,
 	}
 }
 
+// listWithRecords is the internal implementation that returns the corrections
+// along with the provider and WIP records used to compute them.
+func (uc *ZoneCorrectionListerUsecase) listWithRecords(
+	ctx context.Context,
+	user *happydns.User,
+	domain *happydns.Domain,
+	zone *happydns.Zone,
+) ([]*happydns.Correction, []happydns.Record, []happydns.Record, int, error) {
+	provider, err := uc.providerService.GetUserProvider(user, domain.ProviderId)
+	if err != nil {
+		return nil, nil, nil, 0, err
+	}
+
+	providerRecords, err := uc.zoneRetriever.RetrieveZone(ctx, provider, domain.DomainName)
+	if err != nil {
+		return nil, nil, nil, 0, err
+	}
+
+	wipRecords, err := uc.listRecords.List(domain, zone)
+	if err != nil {
+		return nil, nil, nil, 0, err
+	}
+
+	corrections, nbDiffs, err := adapter.DNSControlDiffByRecord(providerRecords, wipRecords, domain.DomainName)
+	if err != nil {
+		return nil, nil, nil, nbDiffs, err
+	}
+
+	return corrections, providerRecords, wipRecords, nbDiffs, nil
+}
+
 // List returns the corrections required to bring the provider's live DNS
-// records in line with the given zone. It resolves the provider for the
-// domain, expands the zone into individual records, and delegates diff
-// computation to the ZoneCorrector. The second return value is the total
-// number of corrections before any filtering.
+// records in line with the given zone. It fetches the current provider
+// records, expands the zone into individual records, and computes the diff
+// locally. The second return value is the total number of corrections.
 func (uc *ZoneCorrectionListerUsecase) List(
 	ctx context.Context,
 	user *happydns.User,
 	domain *happydns.Domain,
 	zone *happydns.Zone,
 ) ([]*happydns.Correction, int, error) {
-	provider, err := uc.providerService.GetUserProvider(user, domain.ProviderId)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	records, err := uc.listRecords.List(domain, zone)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return uc.zoneCorrector.ListZoneCorrections(ctx, provider, domain, records)
+	corrections, _, _, nbDiffs, err := uc.listWithRecords(ctx, user, domain, zone)
+	return corrections, nbDiffs, err
 }

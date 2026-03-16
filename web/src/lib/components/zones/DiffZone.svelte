@@ -24,9 +24,10 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
 
-    import { Icon, Spinner } from "@sveltestrap/sveltestrap";
+    import { Spinner } from "@sveltestrap/sveltestrap";
 
-    import type { Correction } from "$lib/model/correction";
+    import DiffZoneView from "./DiffZoneView.svelte";
+    import type { Correction, FullCorrection } from "$lib/model/correction";
     import { getCachedDiffZone } from "$lib/stores/zonediff";
     import type { Domain } from "$lib/model/domain";
     import { t } from "$lib/translations";
@@ -38,8 +39,9 @@
         zoneFrom: string;
         zoneTo: string;
         selectable?: boolean;
+        disabled?: boolean;
         selectedDiff?: Array<string> | null;
-        nodiff?: import('svelte').Snippet;
+        nodiff?: import("svelte").Snippet;
     }
 
     let {
@@ -47,11 +49,12 @@
         zoneFrom,
         zoneTo,
         selectable = false,
+        disabled = false,
         selectedDiff = $bindable(null),
-        nodiff
+        nodiff,
     }: Props = $props();
 
-    let zoneDiff: Array<{ className: string; msg: string; id: string }> | null = $state(null);
+    let zoneDiff: Array<FullCorrection> | null = $state(null);
 
     const correctionsIdx: Record<string, Correction> = {};
 
@@ -65,30 +68,25 @@
                 selectedDiff = [];
                 if (v) {
                     for (const c of v) {
-                        if (!c.id) return;
+                        if (!c.id || c.kind === undefined) return;
 
                         correctionsIdx[c.id] = c;
 
-                        let className = "";
                         if (c.kind == 1) {
-                            className = "text-success";
                             zoneDiffCreated += 1;
                         } else if (c.kind == 2) {
-                            className = "text-warning";
                             zoneDiffModified += 1;
                         } else if (c.kind == 3) {
-                            className = "text-danger";
                             zoneDiffDeleted += 1;
                         } else if (c.kind == 99) {
-                            className = "text-info";
                         }
 
                         zoneDiff.push({
-                            className,
                             msg: c.msg,
                             id: c.id,
+                            kind: c.kind,
                         });
-                        selectedDiff.push(c.id)
+                        selectedDiff.push(c.id);
                     }
                 }
                 dispatch("computed-diff", {
@@ -128,34 +126,13 @@
         <Spinner color="warning" />
         <p>{$t("wait.exporting")}</p>
     </div>
-{:else if zoneDiff.length == 0}
-    {#if nodiff}{@render nodiff()}{:else}Aucune différence.{/if}
 {:else}
-    {#each zoneDiff as line, n}
-        <div
-            class={"font-monospace " + line.className}
-            class:col={selectable}
-            class:form-check={selectable}
-        >
-            {#if selectable}
-                <input
-                    type="checkbox"
-                    class="form-check-input"
-                    id="correction-{line.id}"
-                    bind:group={selectedDiff}
-                    value={line.id}
-                    onchange={dispatchSelectionSummary}
-                />
-                <label
-                    class="form-check-label"
-                    for="correction-{line.id}"
-                    style="padding-left: 1em; text-indent: -1em;"
-                >
-                    {line.msg}
-                </label>
-            {:else}
-                {line.msg}
-            {/if}
-        </div>
-    {/each}
+    <DiffZoneView
+        {disabled}
+        {nodiff}
+        {selectable}
+        bind:selectedDiff
+        {zoneDiff}
+        on:change={dispatchSelectionSummary}
+    />
 {/if}

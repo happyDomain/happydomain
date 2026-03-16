@@ -223,6 +223,46 @@ func (zc *ZoneController) ApplyZoneCorrections(c *gin.Context) {
 	c.JSON(http.StatusOK, newZone.ZoneMeta)
 }
 
+// PrepareZoneCorrections computes the executable corrections without applying them.
+//
+//	@Summary	Preview the corrections the provider will execute.
+//	@Schemes
+//	@Description	Compute the executable corrections for the selected changes without applying them.
+//	@Tags			zones
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			domainId	path		string					true	"Domain identifier"
+//	@Param			zoneId		path		string					true	"Zone identifier"
+//	@Param			body		body		happydns.PrepareZoneForm	true	"Selected corrections to prepare"
+//	@Success		200			{object}	happydns.PrepareZoneResponse	"The executable corrections"
+//	@Failure		400			{object}	happydns.ErrorResponse		"Invalid input"
+//	@Failure		401			{object}	happydns.ErrorResponse		"Authentication failure"
+//	@Failure		404			{object}	happydns.ErrorResponse		"Domain or Zone not found"
+//	@Failure		500			{object}	happydns.ErrorResponse
+//	@Router			/domains/{domainId}/zone/{zoneId}/prepare_changes [post]
+func (zc *ZoneController) PrepareZoneCorrections(c *gin.Context) {
+	user := c.MustGet("LoggedUser").(*happydns.User)
+	domain := c.MustGet("domain").(*happydns.Domain)
+	zone := c.MustGet("zone").(*happydns.Zone)
+
+	var form happydns.PrepareZoneForm
+	err := c.ShouldBindJSON(&form)
+	if err != nil {
+		log.Printf("%s sends invalid PrepareZoneForm JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
+		return
+	}
+
+	response, err := zc.zoneCorrectionService.Prepare(c.Request.Context(), user, domain, zone, &form)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
 // ExportZone creates a flatten export of the zone.
 //
 //	@Summary	Get flatten zone file.

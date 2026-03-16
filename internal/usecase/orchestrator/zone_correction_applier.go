@@ -23,37 +23,39 @@ package orchestrator
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"time"
 
+	adapter "git.happydns.org/happyDomain/internal/adapters"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
+	svcs "git.happydns.org/happyDomain/services"
 )
 
 // ZoneCorrectionApplierUsecase applies a user-selected subset of zone
-// corrections to the provider and, on success, snapshots the zone into the
-// domain history.  It embeds ZoneCorrectionListerUsecase to compute the full
-// diff before filtering to the requested corrections.
+// corrections to the provider and, on success, creates a published snapshot
+// in the domain history. The WIP zone at ZoneHistory[0] is never modified.
 type ZoneCorrectionApplierUsecase struct {
 	*ZoneCorrectionListerUsecase
 	appendDomainLog domainlogUC.DomainLogAppender
 	domainUpdater   DomainUpdater
 	zoneCreator     *zoneUC.CreateZoneUsecase
+	zoneGetter      *zoneUC.GetZoneUsecase
 	zoneUpdater     *zoneUC.UpdateZoneUsecase
 	clock           func() time.Time
 }
 
 // NewZoneCorrectionApplierUsecase creates a ZoneCorrectionApplierUsecase with
-// the given dependencies.  The lister is embedded so that Apply can compute
+// the given dependencies. The lister is embedded so that Apply can compute
 // the full correction diff in a single call.
 func NewZoneCorrectionApplierUsecase(
 	appendDomainLog domainlogUC.DomainLogAppender,
 	domainUpdater DomainUpdater,
 	lister *ZoneCorrectionListerUsecase,
 	zoneCreator *zoneUC.CreateZoneUsecase,
+	zoneGetter *zoneUC.GetZoneUsecase,
 	zoneUpdater *zoneUC.UpdateZoneUsecase,
 ) *ZoneCorrectionApplierUsecase {
 	return &ZoneCorrectionApplierUsecase{
@@ -61,17 +63,78 @@ func NewZoneCorrectionApplierUsecase(
 		appendDomainLog:             appendDomainLog,
 		domainUpdater:               domainUpdater,
 		zoneCreator:                 zoneCreator,
+		zoneGetter:                  zoneGetter,
 		zoneUpdater:                 zoneUpdater,
 		clock:                       time.Now,
 	}
 }
 
-// Apply executes the corrections listed in form.WantedCorrections against the
-// provider.  Each correction is matched by ID against the live diff; unmatched
-// or failed corrections abort the operation.  On success the applied zone is
-// committed (publish date, author, commit message recorded) and a new derived
-// zone is prepended to the domain's history so future edits start from the
-// published state.  Returns the newly created zone or a descriptive error.
+// computeExecutableCorrections computes the executable corrections for the
+// given selection. It performs the diff, builds the target record set, and asks
+// the provider what it would execute to reach that target state.
+func (uc *ZoneCorrectionApplierUsecase) computeExecutableCorrections(
+	ctx context.Context,
+	user *happydns.User,
+	domain *happydns.Domain,
+	zone *happydns.Zone,
+	wantedCorrections []happydns.Identifier,
+) (execCorrections []*happydns.Correction, targetRecords []happydns.Record, nbDiffs int, err error) {
+	// Step 1: Compute the diff and get provider/WIP records.
+	corrections, providerRecords, _, nbDiffs, err := uc.listWithRecords(ctx, user, domain, zone)
+	if err != nil {
+		return nil, nil, nbDiffs, err
+	}
+
+	// Step 2: Build target records from selected corrections.
+	targetRecords = adapter.BuildTargetRecords(providerRecords, corrections, wantedCorrections)
+
+	// Step 3: Get executable corrections from the provider for the target state.
+	provider, err := uc.providerService.GetUserProvider(user, domain.ProviderId)
+	if err != nil {
+		return nil, nil, nbDiffs, err
+	}
+
+	execCorrections, nbDiffs, err = uc.zoneCorrector.ListZoneCorrections(ctx, provider, domain, targetRecords)
+	if err != nil {
+		return nil, nil, nbDiffs, fmt.Errorf("unable to compute executable corrections: %w", err)
+	}
+
+	return execCorrections, targetRecords, nbDiffs, nil
+}
+
+// Prepare computes the executable corrections for the given selection without
+// applying them. This lets the user see exactly what the provider will execute
+// before confirming.
+func (uc *ZoneCorrectionApplierUsecase) Prepare(
+	ctx context.Context,
+	user *happydns.User,
+	domain *happydns.Domain,
+	zone *happydns.Zone,
+	form *happydns.PrepareZoneForm,
+) (*happydns.PrepareZoneResponse, error) {
+	execCorrections, _, nbDiffs, err := uc.computeExecutableCorrections(ctx, user, domain, zone, form.WantedCorrections)
+	if err != nil {
+		return nil, err
+	}
+
+	return &happydns.PrepareZoneResponse{
+		Corrections: execCorrections,
+		NbDiffs:     nbDiffs,
+	}, nil
+}
+
+// Apply executes the selected corrections against the provider and creates a
+// published snapshot zone inserted at ZoneHistory[1] (after the WIP zone at
+// position 0). The WIP zone is never modified.
+//
+// Flow:
+//  1. Compute the diff (corrections + provider/WIP records)
+//  2. Build the target record set from selected corrections
+//  3. Ask the provider to compute executable corrections for the target state
+//  4. Execute all returned corrections
+//  5. Create a published snapshot zone from the target records
+//  6. Insert the snapshot at ZoneHistory[1]
+//  7. Return the published snapshot zone
 func (uc *ZoneCorrectionApplierUsecase) Apply(
 	ctx context.Context,
 	user *happydns.User,
@@ -79,83 +142,92 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(
 	zone *happydns.Zone,
 	form *happydns.ApplyZoneForm,
 ) (*happydns.Zone, error) {
-	corrections, _, err := uc.List(ctx, user, domain, zone)
+	executableCorrections, targetRecords, _, err := uc.computeExecutableCorrections(ctx, user, domain, zone, form.WantedCorrections)
 	if err != nil {
 		return nil, err
 	}
 
-	nbcorrections := len(form.WantedCorrections)
-
-	// Track which wanted corrections were successfully applied, without mutating the input.
-	matched := make([]bool, len(form.WantedCorrections))
-	var errs error
+	// Step 4: Execute all corrections.
 	appliedCount := 0
-
-corrections:
-	for _, cr := range corrections {
-		for i, wc := range form.WantedCorrections {
-			if matched[i] {
-				continue
+	for _, cr := range executableCorrections {
+		log.Printf("%s: apply correction: %s", domain.DomainName, cr.Msg)
+		if corrErr := cr.F(); corrErr != nil {
+			log.Printf("%s: unable to apply correction: %s", domain.DomainName, corrErr.Error())
+			if logErr := uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed record update (%s): %s", cr.Msg, corrErr.Error()))); logErr != nil {
+				log.Printf("unable to append domain log for %s: %s", domain.DomainName, logErr.Error())
 			}
-			if wc.Equals(cr.Id) {
-				log.Printf("%s: apply correction: %s", domain.DomainName, cr.Msg)
-				corrErr := cr.F()
-
-				if corrErr != nil {
-					log.Printf("%s: unable to apply correction: %s", domain.DomainName, corrErr.Error())
-					if logErr := uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed record update (%s): %s", cr.Msg, corrErr.Error()))); logErr != nil {
-						log.Printf("unable to append domain log for %s: %s", domain.DomainName, logErr.Error())
-					}
-					errs = errors.Join(errs, fmt.Errorf("%s: %w", cr.Msg, corrErr))
-					// Stop if no corrections have been successfully applied yet
-					if appliedCount == 0 {
-						break corrections
-					}
-				} else {
-					appliedCount++
-					matched[i] = true
-				}
-				break
+			if appliedCount == 0 {
+				return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to apply correction: %s", corrErr.Error())}
 			}
+			if logErr := uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d of %d corrections applied, errors occurred.", zone.Id.String(), appliedCount, len(executableCorrections)))); logErr != nil {
+				log.Printf("unable to append domain log for %s: %s", domain.DomainName, logErr.Error())
+			}
+			return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to update the zone (%d of %d corrections applied): %s", appliedCount, len(executableCorrections), corrErr.Error())}
 		}
+		appliedCount++
 	}
 
-	unmatchedCount := 0
-	for _, m := range matched {
-		if !m {
-			unmatchedCount++
-		}
-	}
-
-	if errs != nil {
-		if logErr := uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d of %d corrections applied, errors occurred.", zone.Id.String(), appliedCount, nbcorrections))); logErr != nil {
-			log.Printf("unable to append domain log for %s: %s", domain.DomainName, logErr.Error())
-		}
-		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to update the zone (%d of %d corrections applied): %s", appliedCount, nbcorrections, errs.Error())}
-	} else if unmatchedCount > 0 {
-		if logErr := uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ERR, fmt.Sprintf("Failed zone publishing (%s): %d corrections were not found in the current diff.", zone.Id.String(), unmatchedCount))); logErr != nil {
-			log.Printf("unable to append domain log for %s: %s", domain.DomainName, logErr.Error())
-		}
-		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to perform %d corrections that were not found in the current diff", unmatchedCount)}
-	}
-
-	if logErr := uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ACK, fmt.Sprintf("Zone published (%s), %d corrections applied with success", zone.Id.String(), nbcorrections))); logErr != nil {
+	if logErr := uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_ACK, fmt.Sprintf("Zone published (%s), %d corrections applied with success", zone.Id.String(), appliedCount))); logErr != nil {
 		log.Printf("unable to append domain log for %s: %s", domain.DomainName, logErr.Error())
 	}
 
-	// Create a new zone in history for further updates
-	newZone := zone.DerivateNew()
-	err = uc.zoneCreator.Create(newZone)
+	// Step 5: Create a published snapshot zone from target records.
+	services, defaultTTL, err := svcs.AnalyzeZone(domain.DomainName, targetRecords)
 	if err != nil {
 		return nil, happydns.InternalError{
-			Err:         fmt.Errorf("unable to CreateZone: %w", err),
-			UserMessage: "Sorry, we are unable to create the zone now.",
+			Err:         fmt.Errorf("unable to analyze target zone: %w", err),
+			UserMessage: "Sorry, we are unable to analyze the published zone.",
 		}
 	}
 
+	// Carry over metadata from WIP zone.
+	if zone.Services != nil {
+		zoneUC.ReassociateMetadata(zone.Services, services, domain.DomainName, defaultTTL)
+	}
+
+	// Also carry over metadata from the previous published zone if available.
+	if len(domain.ZoneHistory) > 1 {
+		prevZone, prevErr := uc.zoneGetter.Get(domain.ZoneHistory[1])
+		if prevErr != nil {
+			log.Printf("ReassociateMetadata: unable to load previous zone %s: %s (metadata will not be transferred)", domain.ZoneHistory[1], prevErr)
+		} else {
+			zoneUC.ReassociateMetadata(prevZone.Services, services, domain.DomainName, defaultTTL)
+		}
+	}
+
+	now := uc.clock()
+	snapshot := &happydns.Zone{
+		ZoneMeta: happydns.ZoneMeta{
+			IdAuthor:     user.Id,
+			DefaultTTL:   defaultTTL,
+			LastModified: now,
+			CommitMsg:    &form.CommitMsg,
+			CommitDate:   &now,
+			Published:    &now,
+			ParentZone:   &zone.ZoneMeta.Id,
+		},
+		Services: services,
+	}
+
+	err = uc.zoneCreator.Create(snapshot)
+	if err != nil {
+		return nil, happydns.InternalError{
+			Err:         fmt.Errorf("unable to CreateZone for published snapshot: %w", err),
+			UserMessage: "Sorry, we are unable to create the published zone snapshot.",
+		}
+	}
+
+	// Step 6: Insert snapshot at ZoneHistory[1] (after WIP at position 0).
 	err = uc.domainUpdater.Update(domain.Id, user, func(domain *happydns.Domain) {
-		domain.ZoneHistory = append(
-			[]happydns.Identifier{newZone.Id}, domain.ZoneHistory...)
+		if len(domain.ZoneHistory) == 0 {
+			domain.ZoneHistory = []happydns.Identifier{snapshot.Id}
+		} else {
+			newHistory := make([]happydns.Identifier, 0, len(domain.ZoneHistory)+1)
+			newHistory = append(newHistory, domain.ZoneHistory[0])
+			newHistory = append(newHistory, snapshot.Id)
+			newHistory = append(newHistory, domain.ZoneHistory[1:]...)
+			domain.ZoneHistory = newHistory
+		}
 	})
 	if err != nil {
 		return nil, happydns.InternalError{
@@ -164,21 +236,5 @@ corrections:
 		}
 	}
 
-	// Commit changes in previous zone
-	now := uc.clock()
-	err = uc.zoneUpdater.Update(zone.ZoneMeta.Id, func(zone *happydns.Zone) {
-		zone.ZoneMeta.IdAuthor = user.Id
-		zone.CommitMsg = &form.CommitMsg
-		zone.ZoneMeta.CommitDate = &now
-		zone.ZoneMeta.Published = &now
-		zone.LastModified = now
-	})
-	if err != nil {
-		return nil, happydns.InternalError{
-			Err:         fmt.Errorf("unable to commit zone changes: %w", err),
-			UserMessage: "Sorry, we are unable to commit the zone changes now.",
-		}
-	}
-
-	return newZone, nil
+	return snapshot, nil
 }

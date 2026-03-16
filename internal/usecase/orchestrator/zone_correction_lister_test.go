@@ -53,21 +53,28 @@ func (m *mockZoneCorrector) ListZoneCorrections(_ context.Context, _ *happydns.P
 	return m.corrections, m.nbDiff, m.err
 }
 
+// mockZoneRetriever implements ZoneRetriever for testing.
+type mockZoneRetriever struct {
+	records []happydns.Record
+	err     error
+}
+
+func (m *mockZoneRetriever) RetrieveZone(_ context.Context, _ *happydns.Provider, _ string) ([]happydns.Record, error) {
+	return m.records, m.err
+}
+
 func newTestListRecordsUsecase() *zoneUC.ListRecordsUsecase {
 	return zoneUC.NewListRecordsUsecase(serviceUC.NewListRecordsUsecase())
 }
 
 func TestZoneCorrectionLister_List_Success(t *testing.T) {
 	provider := &happydns.Provider{}
-	corrections := []*happydns.Correction{
-		{Msg: "add A record", Kind: happydns.CorrectionKindAddition},
-		{Msg: "delete MX record", Kind: happydns.CorrectionKindDeletion},
-	}
 
 	uc := orchestrator.NewZoneCorrectionListerUsecase(
 		&mockProviderGetter{provider: provider},
 		newTestListRecordsUsecase(),
-		&mockZoneCorrector{corrections: corrections, nbDiff: 2},
+		&mockZoneCorrector{},
+		&mockZoneRetriever{records: nil},
 	)
 
 	user := &happydns.User{Id: happydns.Identifier([]byte("test-user"))}
@@ -85,19 +92,11 @@ func TestZoneCorrectionLister_List_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if nbDiff != 2 {
-		t.Errorf("expected nbDiff=2, got %d", nbDiff)
+	if nbDiff != 0 {
+		t.Errorf("expected nbDiff=0, got %d", nbDiff)
 	}
-	if len(got) != len(corrections) {
-		t.Errorf("expected %d corrections, got %d", len(corrections), len(got))
-	}
-	for i, c := range got {
-		if c.Msg != corrections[i].Msg {
-			t.Errorf("correction[%d].Msg = %q, want %q", i, c.Msg, corrections[i].Msg)
-		}
-		if c.Kind != corrections[i].Kind {
-			t.Errorf("correction[%d].Kind = %v, want %v", i, c.Kind, corrections[i].Kind)
-		}
+	if len(got) != 0 {
+		t.Errorf("expected 0 corrections, got %d", len(got))
 	}
 }
 
@@ -108,6 +107,7 @@ func TestZoneCorrectionLister_List_ProviderError(t *testing.T) {
 		&mockProviderGetter{err: providerErr},
 		newTestListRecordsUsecase(),
 		&mockZoneCorrector{},
+		&mockZoneRetriever{},
 	)
 
 	user := &happydns.User{Id: happydns.Identifier([]byte("test-user"))}
@@ -128,13 +128,14 @@ func TestZoneCorrectionLister_List_ProviderError(t *testing.T) {
 	}
 }
 
-func TestZoneCorrectionLister_List_ZoneCorrectorError(t *testing.T) {
-	correctorErr := errors.New("zone correction failed")
+func TestZoneCorrectionLister_List_RetrieveZoneError(t *testing.T) {
+	retrieveErr := errors.New("zone retrieval failed")
 
 	uc := orchestrator.NewZoneCorrectionListerUsecase(
 		&mockProviderGetter{provider: &happydns.Provider{}},
 		newTestListRecordsUsecase(),
-		&mockZoneCorrector{err: correctorErr},
+		&mockZoneCorrector{},
+		&mockZoneRetriever{err: retrieveErr},
 	)
 
 	user := &happydns.User{Id: happydns.Identifier([]byte("test-user"))}
@@ -151,8 +152,8 @@ func TestZoneCorrectionLister_List_ZoneCorrectorError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
-	if !errors.Is(err, correctorErr) {
-		t.Errorf("expected %v, got %v", correctorErr, err)
+	if !errors.Is(err, retrieveErr) {
+		t.Errorf("expected %v, got %v", retrieveErr, err)
 	}
 }
 
@@ -161,6 +162,7 @@ func TestZoneCorrectionLister_List_NoCorrections(t *testing.T) {
 		&mockProviderGetter{provider: &happydns.Provider{}},
 		newTestListRecordsUsecase(),
 		&mockZoneCorrector{corrections: nil, nbDiff: 0},
+		&mockZoneRetriever{records: nil},
 	)
 
 	user := &happydns.User{Id: happydns.Identifier([]byte("test-user"))}

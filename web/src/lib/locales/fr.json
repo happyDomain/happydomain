@@ -103,7 +103,11 @@
             },
             "nochange": "Il n'y a pas de changement à faire ! Cette zone est synchronisée avec le serveur.",
             "modifications": "{{count:eq; 0:pas de modifications; 1:{{count}} modification; default:{{count}} modifications}}",
-            "others": "{{count:eq; 0:pas d'autres changements; 1:{{count}} autre changement; default:{{count}} autres changements}}"
+            "others": "{{count:eq; 0:pas d'autres changements; 1:{{count}} autre changement; default:{{count}} autres changements}}",
+            "prepare-info": "Le fournisseur exécutera {{nbDiffs}} correction(s) pour vos {{nbSelected}} modification(s) sélectionnée(s) :",
+            "prepare-warning": "Le nombre de corrections diffère de votre sélection. Veuillez vérifier avant de confirmer.",
+            "confirm": "Confirmer et appliquer",
+            "back": "Retour"
         },
         "attached-new": "Nouveau domaine lié à happyDomain!",
         "commit-msg": "Qu'est-ce qui a changé ?",
@@ -421,6 +425,13 @@
         "success": "Vous pouvez continuer d'apprécier happyDomain.",
         "success-change": "Vos paramètres ont été sauvegardés.",
         "title": "Paramètres",
+        "applyconfirm": {
+            "title": "Confirmation avant application",
+            "description": "Choisissez quand afficher une étape de confirmation avant d'appliquer les modifications à votre fournisseur DNS",
+            "unexpected": "Demander en cas de différences inattendues",
+            "always": "Toujours demander",
+            "never": "Ne jamais demander, écraser lors de la publication"
+        },
         "zoneview": {
             "grid": "Vue en grille (la plus lisible)",
             "list": "Vue en liste (la plus rapide)",

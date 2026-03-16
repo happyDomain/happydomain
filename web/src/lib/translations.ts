@@ -40,6 +40,9 @@ interface Params {
     max?: number;
     suggestion?: string;
     svctype?: string;
+    name?: string;
+    nbDiffs?: number;
+    nbSelected?: number;
     // add more parameters that are used here
 }
 

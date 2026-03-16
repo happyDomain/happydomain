@@ -51,6 +51,7 @@ func DeclareZoneRoutes(
 	apiZonesRoutes.POST("/diff/:oldzoneid", zc.DiffZonesHandler, zc.DiffZones)
 	apiZonesRoutes.POST("/diff/:oldzoneid/summary", zc.DiffZonesHandler, zc.DiffZonesSummary)
 	apiZonesRoutes.POST("/view", zc.ExportZone)
+	apiZonesRoutes.POST("/prepare_changes", zc.PrepareZoneCorrections)
 	apiZonesRoutes.POST("/apply_changes", zc.ApplyZoneCorrections)
 
 	apiZonesSubdomainRoutes := apiZonesRoutes.Group("/:subdomain")

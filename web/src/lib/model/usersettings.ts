@@ -28,10 +28,15 @@ export const ZoneViewGrid = 0;
 export const ZoneViewList = 1;
 export const ZoneViewRecords = 2;
 
+export const ApplyConfirmUnexpected = 0;
+export const ApplyConfirmAlways = 1;
+export const ApplyConfirmNever = 2;
+
 export interface UserSettings {
     language: string;
     newsletter: boolean;
     fieldhint: number;
     zoneview: number;
+    applyconfirm: number;
     showrrtypes: boolean;
 }

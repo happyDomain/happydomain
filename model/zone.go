@@ -172,3 +172,12 @@ type ApplyZoneForm struct {
 	WantedCorrections []Identifier `json:"wantedCorrections"`
 	CommitMsg         string       `json:"commitMessage"`
 }
+
+type PrepareZoneForm struct {
+	WantedCorrections []Identifier `json:"wantedCorrections"`
+}
+
+type PrepareZoneResponse struct {
+	Corrections []*Correction `json:"corrections"`
+	NbDiffs     int           `json:"nbDiffs"`
+}

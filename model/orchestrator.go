@@ -30,6 +30,7 @@ type RemoteZoneImporterUsecase interface {
 type ZoneCorrectionApplierUsecase interface {
 	Apply(context.Context, *User, *Domain, *Zone, *ApplyZoneForm) (*Zone, error)
 	List(context.Context, *User, *Domain, *Zone) ([]*Correction, int, error)
+	Prepare(context.Context, *User, *Domain, *Zone, *PrepareZoneForm) (*PrepareZoneResponse, error)
 }
 
 type ZoneImporterUsecase interface {
