@@ -72,7 +72,7 @@ func (uc *ActionOnDomainUsecase) ActionOnEditableZone(
 		err = uc.zoneCreator.Create(newZone)
 		if err != nil {
 			return nil, happydns.InternalError{
-				Err:         fmt.Errorf("unable to CreateZone in importZone: %s\n", err),
+				Err:         fmt.Errorf("unable to CreateZone in importZone: %s", err),
 				UserMessage: "Sorry, we are unable to create your zone.",
 			}
 		}
@@ -85,7 +85,7 @@ func (uc *ActionOnDomainUsecase) ActionOnEditableZone(
 		})
 		if err != nil {
 			return nil, happydns.InternalError{
-				Err:         fmt.Errorf("unable to UpdateDomain in importZone: %s\n", err),
+				Err:         fmt.Errorf("unable to UpdateDomain in importZone: %s", err),
 				UserMessage: "Sorry, we are unable to create your zone.",
 			}
 		}

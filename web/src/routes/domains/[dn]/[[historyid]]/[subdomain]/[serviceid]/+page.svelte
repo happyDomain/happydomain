@@ -41,6 +41,7 @@
     import { thisZone } from "$lib/stores/thiszone";
     import { navigate } from "$lib/stores/config";
     import { t } from "$lib/translations";
+    import { refreshDomains } from "$lib/stores/domains";
 
     interface Props {
         data: {
@@ -93,9 +94,9 @@
 
     let addServiceInProgress = $state(false);
 
-    function goBack() {
+    function goBack(historyid?: string) {
         navigate(
-            `/domains/${encodeURIComponent(data.domain.domain)}/${encodeURIComponent(data.history)}`,
+            `/domains/${encodeURIComponent(data.domain.domain)}/${encodeURIComponent(historyid ? historyid : data.history)}`,
         );
     }
 
@@ -110,7 +111,13 @@
             (z) => {
                 thisZone.set(z);
                 addServiceInProgress = false;
-                goBack();
+                if (service?._id) {
+                    goBack();
+                } else {
+                    refreshDomains().then(() => {
+                        goBack(z.id);
+                    });
+                }
             },
             (err) => {
                 addServiceInProgress = false;

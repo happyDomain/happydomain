@@ -73,7 +73,7 @@ func (s *Service) ActionOnEditableZone(
 	return s.ActionOnDomainUC.ActionOnEditableZone(user, domain, zone, act)
 }
 
-// AddServiceToZone delegates to AddToZoneUsecase.AddService.
+// AddServiceToZone ensures the zone is editable then delegates to AddToZoneUsecase.AddService.
 func (s *Service) AddServiceToZone(
 	user *happydns.User,
 	domain *happydns.Domain,
@@ -82,10 +82,12 @@ func (s *Service) AddServiceToZone(
 	origin happydns.Origin,
 	service *happydns.Service,
 ) (*happydns.Zone, error) {
-	return zone, s.AddToZoneUC.AddService(zone, subdomain, origin, service)
+	return s.ActionOnDomainUC.ActionOnEditableZone(user, domain, zone, func(z *happydns.Zone) error {
+		return s.AddToZoneUC.AddService(z, subdomain, origin, service)
+	})
 }
 
-// RemoveServiceFromZone delegates to DeleteFromZoneUsecase.DeleteService.
+// RemoveServiceFromZone ensures the zone is editable then delegates to DeleteFromZoneUsecase.DeleteService.
 func (s *Service) RemoveServiceFromZone(
 	user *happydns.User,
 	domain *happydns.Domain,
@@ -93,10 +95,12 @@ func (s *Service) RemoveServiceFromZone(
 	subdomain happydns.Subdomain,
 	serviceID happydns.Identifier,
 ) (*happydns.Zone, error) {
-	return zone, s.DeleteFromZoneUC.DeleteService(zone, subdomain, serviceID)
+	return s.ActionOnDomainUC.ActionOnEditableZone(user, domain, zone, func(z *happydns.Zone) error {
+		return s.DeleteFromZoneUC.DeleteService(z, subdomain, serviceID)
+	})
 }
 
-// UpdateZoneService delegates to UpdateServiceUsecase.Update.
+// UpdateZoneService ensures the zone is editable then delegates to UpdateServiceUsecase.Update.
 func (s *Service) UpdateZoneService(
 	user *happydns.User,
 	domain *happydns.Domain,
@@ -105,5 +109,7 @@ func (s *Service) UpdateZoneService(
 	serviceID happydns.Identifier,
 	service *happydns.Service,
 ) (*happydns.Zone, error) {
-	return zone, s.UpdateServiceUC.Update(zone, subdomain, serviceID, service)
+	return s.ActionOnDomainUC.ActionOnEditableZone(user, domain, zone, func(z *happydns.Zone) error {
+		return s.UpdateServiceUC.Update(z, subdomain, serviceID, service)
+	})
 }
