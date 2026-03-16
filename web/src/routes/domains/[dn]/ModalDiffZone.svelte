@@ -121,7 +121,10 @@
         try {
             await APIApplyZone(domain, selectedHistory, selectedDiff, diffCommitMsg);
             invalidateZoneDiff();
-            if ($thisZone) getZone(domain, $thisZone.id);
+            if ($thisZone)
+                getZone(domain, $thisZone.id).then(() => {
+                    invalidateZoneDiff();
+                });
         } finally {
             isOpen = false;
         }
@@ -302,7 +305,9 @@
                 </Button>
                 <Button
                     color="success"
-                    disabled={propagationInProgress || !prepareResponse || prepareResponse.nbDiffs == 0}
+                    disabled={propagationInProgress ||
+                        !prepareResponse ||
+                        prepareResponse.nbDiffs == 0}
                     on:click={doApply}
                 >
                     {#if propagationInProgress}

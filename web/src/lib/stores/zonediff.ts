@@ -19,11 +19,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import { writable } from "svelte/store";
 import { diffZone as APIDiffZone, diffZoneSummary as APIDiffZoneSummary } from "$lib/api/zone";
 import type { Correction } from "$lib/model/correction";
 import type { Domain } from "$lib/model/domain";
 import type { Zone } from "$lib/model/zone";
 import { thisZone } from "$lib/stores/thiszone";
+
+export const zoneDiffVersion = writable(0);
 
 const summaryCache = new Map<string, Promise<{ nbDiffs: number }>>();
 const fullDiffCache = new Map<string, Promise<Array<Correction>>>();
@@ -39,12 +42,14 @@ thisZone.subscribe((zone) => {
         summaryCache.clear();
         fullDiffCache.clear();
         previousZone = zone;
+        zoneDiffVersion.update((v) => v + 1);
     }
 });
 
 export function invalidateZoneDiff(): void {
     summaryCache.clear();
     fullDiffCache.clear();
+    zoneDiffVersion.update((v) => v + 1);
 }
 
 export function getCachedDiffZoneSummary(
