@@ -291,7 +291,7 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 				c.String(http.StatusInternalServerError, "failed to read manifest.json")
 				return
 			}
-			v2 := strings.Replace(strings.Replace(string(v), "\"id\": \"/\"", "\"id\": \""+cfg.BasePath+"\"", 1), "\"start_url\": \"/\"", "\"start_url\": \""+cfg.BasePath+"\"", 1)
+			v2 := strings.Replace(strings.Replace(string(v), "\"id\": \"/\"", "\"id\": \""+cfg.BasePath+"\"/", 1), "\"start_url\": \"/\"", "\"start_url\": \""+cfg.BasePath+"\"/", 1)
 
 			c.Data(http.StatusOK, "application/manifest+json", []byte(v2))
 		}
