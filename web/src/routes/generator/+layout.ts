@@ -19,23 +19,5 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { error, type Load } from "@sveltejs/kit";
-import { get } from "svelte/store";
-
-import { servicesSpecs } from "$lib/services_specs";
-import { t } from "$lib/translations";
-
-export const load: Load = async ({ params }) => {
-    const svctype = (params as Record<string, string>).svctype;
-
-    if (!servicesSpecs[svctype]) {
-        error(404, {
-            message: get(t)("generator.svctype.not-found", { svctype }),
-        });
-    }
-
-    return {
-        svctype,
-        spec: servicesSpecs[svctype],
-    };
-};
+export const ssr = true;
+export const prerender = true;

@@ -143,7 +143,7 @@
                     (page.route.id === "/domains/[dn]" ||
                         page.route.id === "/domains/[dn]/[[historyid]]")}
                 <div class="d-flex">
-                    <Button href={isZonePage ? "/domains/" : "."} class="fw-bolder" color="link">
+                    <Button href={isZonePage ? "/domains/" : ".."} class="fw-bolder" color="link">
                         <Icon name={isZonePage ? "chevron-up" : "chevron-left"} />
                     </Button>
                     <SelectDomain bind:selectedDomain />

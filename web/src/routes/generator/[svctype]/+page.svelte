@@ -24,11 +24,7 @@
 <script lang="ts">
     import { Col, Container, Input, Row, Spinner } from "@sveltestrap/sveltestrap";
 
-    import {
-        generateServiceRecords,
-        initializeService,
-        listServiceSpecs,
-    } from "$lib/api/service_specs";
+    import { generateServiceRecords } from "$lib/api/service_specs";
     import PageTitle from "$lib/components/PageTitle.svelte";
     import ServiceEditor from "$lib/components/services/ServiceEditor.svelte";
     import type { Domain } from "$lib/model/domain";
@@ -38,40 +34,16 @@
     import type { dnsRR } from "$lib/dns_rr";
 
     interface Props {
-        data: { svctype: string };
+        data: { svctype: string; spec: ServiceInfos };
     }
 
     let { data }: Props = $props();
 
     let svctype = $derived(data.svctype);
-
-    let dataPromise = $derived(Promise.all([listServiceSpecs(), initializeService(svctype)]));
-
-    let spec: ServiceInfos | null = $state(null);
-
-    $effect(() => {
-        dataPromise
-            .then(([specs, _iv]) => {
-                spec = specs[svctype] ?? null;
-            })
-            .catch(() => {
-                spec = null;
-            });
-    });
+    let svcSpec = $derived(data.spec);
 
     let domain: string = $state("");
-
     let serviceValue: any = $state({});
-
-    $effect(() => {
-        dataPromise
-            .then(([_, iv]) => {
-                serviceValue = iv ?? {};
-            })
-            .catch(() => {
-                serviceValue = {};
-            });
-    });
 
     let recordsPromise: Promise<dnsRR[]> | null = $state(null);
     let generateDebounce: ReturnType<typeof setTimeout>;
@@ -81,7 +53,11 @@
         domain; // track domain changes
         clearTimeout(generateDebounce);
         generateDebounce = setTimeout(() => {
-            recordsPromise = generateServiceRecords(svctype, serviceValue, (domain && !domain.endsWith(".") ? domain + "." : domain) || undefined);
+            recordsPromise = generateServiceRecords(
+                svctype,
+                serviceValue,
+                (domain && !domain.endsWith(".") ? domain + "." : domain) || undefined,
+            );
         }, 400);
     });
 
@@ -96,115 +72,96 @@
 </script>
 
 <svelte:head>
-    {#if spec}
-        <title>{$t("generator.svctype.title", { name: spec.name })} - happyDomain</title>
+    {#if svcSpec}
+        <title>{$t("generator.svctype.title", { name: svcSpec.name })} - happyDomain</title>
         <meta
             name="description"
-            content={$t("generator.svctype.description", { name: spec.name })}
+            content={$t("generator.svctype.description", { name: svcSpec.name })}
         />
     {:else}
         <title>{$t("generator.svctype.page-title")} - happyDomain</title>
     {/if}
 </svelte:head>
 
-{#await dataPromise}
-    <div class="d-flex justify-content-center mt-5">
-        <Spinner />
-    </div>
-{:then [specs, _iv]}
-    {#if !specs[svctype]}
-        <div class="my-5 container flex-fill">
-            <div class="alert alert-warning">
-                {@html $t("generator.svctype.not-found", { svctype })}
-                <a href="/generator">{$t("generator.svctype.browse-all")}</a>
+<Container fluid class="my-4 flex-fill">
+    <Row class="justify-content-center">
+        <Col lg="8" xl="7">
+            <PageTitle
+                title={$t("generator.svctype.title", { name: svcSpec.name })}
+                subtitle={svcSpec.description}
+            />
+
+            <div class="card mb-4">
+                <h4 class="card-header fw-semibold">
+                    1. {$t("generator.svctype.domain-settings")}
+                </h4>
+                <div class="card-body">
+                    <p class="text-muted small mb-2">
+                        {$t("generator.svctype.domain-help")}
+                    </p>
+                    <Input type="text" autofocus placeholder="example.com." bind:value={domain} />
+                </div>
             </div>
-        </div>
-    {:else}
-        {@const svcSpec = specs[svctype]}
 
-        <Container fluid class="my-4 flex-fill">
-            <Row class="justify-content-center">
-                <Col lg="8" xl="7">
-                    <PageTitle
-                        title={$t("generator.svctype.title", { name: svcSpec.name })}
-                        subtitle={svcSpec.description}
-                    />
+            <div class="card mb-4">
+                <h4 class="card-header fw-semibold">
+                    2. {$t("generator.svctype.configure-record")}
+                </h4>
+                <div class="card-body">
+                    {#key svctype}
+                        <ServiceEditor
+                            dn=""
+                            origin={mockDomain}
+                            type={svctype}
+                            bind:value={serviceValue}
+                        />
+                    {/key}
+                </div>
+            </div>
 
-                    <div class="card mb-4">
-                        <h4 class="card-header fw-semibold">
-                            1. {$t("generator.svctype.domain-settings")}
-                        </h4>
-                        <div class="card-body">
-                            <p class="text-muted small mb-2">
-                                {$t("generator.svctype.domain-help")}
-                            </p>
-                            <Input type="text" autofocus placeholder="example.com." bind:value={domain} />
+            <div class="card mb-4">
+                <h4 class="card-header fw-semibold">
+                    3. {$t("generator.svctype.generated-records")}
+                </h4>
+                <div class="card-body p-0">
+                    {#if recordsPromise === null}
+                        <div class="p-3 text-muted small">
+                            {$t("generator.svctype.fill-form")}
                         </div>
-                    </div>
-
-                    <div class="card mb-4">
-                        <h4 class="card-header fw-semibold">
-                            2. {$t("generator.svctype.configure-record")}
-                        </h4>
-                        <div class="card-body">
-                            {#key svctype}
-                                <ServiceEditor
-                                    dn=""
-                                    origin={mockDomain}
-                                    type={svctype}
-                                    bind:value={serviceValue}
-                                />
-                            {/key}
-                        </div>
-                    </div>
-
-                    <div class="card mb-4">
-                        <h4 class="card-header fw-semibold">
-                            3. {$t("generator.svctype.generated-records")}
-                        </h4>
-                        <div class="card-body p-0">
-                            {#if recordsPromise === null}
-                                <div class="p-3 text-muted small">
-                                    {$t("generator.svctype.fill-form")}
-                                </div>
+                    {:else}
+                        {#await recordsPromise}
+                            <div class="p-3 d-flex align-items-center gap-2 text-muted">
+                                <Spinner size="sm" />
+                                <span>{$t("generator.svctype.generating")}</span>
+                            </div>
+                        {:then records}
+                            {#if records && records.length > 0}
+                                <pre class="mb-0 p-3 font-monospace small">{records
+                                        .map((rr) => printRR(rr))
+                                        .join("\n")}</pre>
                             {:else}
-                                {#await recordsPromise}
-                                    <div class="p-3 d-flex align-items-center gap-2 text-muted">
-                                        <Spinner size="sm" />
-                                        <span>{$t("generator.svctype.generating")}</span>
-                                    </div>
-                                {:then records}
-                                    {#if records && records.length > 0}
-                                        <pre class="mb-0 p-3 font-monospace small">{records.map((rr) => printRR(rr)).join(
-                                                "\n",
-                                            )}</pre>
-                                    {:else}
-                                        <div class="p-3 text-muted small">
-                                            {$t("generator.svctype.no-records")}
-                                        </div>
-                                    {/if}
-                                {:catch err}
-                                    <div class="p-3 text-danger small">{err.message}</div>
-                                {/await}
+                                <div class="p-3 text-muted small">
+                                    {$t("generator.svctype.no-records")}
+                                </div>
                             {/if}
-                        </div>
-                    </div>
+                        {:catch err}
+                            <div class="p-3 text-danger small">{err.message}</div>
+                        {/await}
+                    {/if}
+                </div>
+            </div>
 
-                    <div class="card border-primary mb-4">
-                        <div class="card-body">
-                            <h5 class="card-title">{$t("generator.svctype.cta-title")}</h5>
-                            <p class="card-text text-muted">
-                                {$t("generator.svctype.cta-text")}
-                            </p>
-                            <a href="/register" class="btn btn-primary">{$t("generator.svctype.cta-button")}</a>
-                        </div>
-                    </div>
-                </Col>
-            </Row>
-        </Container>
-    {/if}
-{:catch err}
-    <div class="my-5 container flex-fill">
-        <div class="alert alert-danger">{err.message}</div>
-    </div>
-{/await}
+            <div class="card border-primary mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">{$t("generator.svctype.cta-title")}</h5>
+                    <p class="card-text text-muted">
+                        {$t("generator.svctype.cta-text")}
+                    </p>
+                    <a href="/register" class="btn btn-primary"
+                        >{$t("generator.svctype.cta-button")}</a
+                    >
+                </div>
+            </div>
+        </Col>
+    </Row>
+</Container>

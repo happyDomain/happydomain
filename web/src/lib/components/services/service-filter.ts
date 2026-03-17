@@ -36,7 +36,7 @@ export function filterServices(
             (svc.record_types && svc.record_types.some((rtype) => nsrrtype(rtype).toLowerCase().indexOf(filteredName.toLowerCase()) >= 0)) ||
             (svc.categories && svc.categories.some((category) => category.toLowerCase().indexOf(filteredName.toLowerCase()) >= 0));
 
-        return familyMatch && nameMatch;
+        return familyMatch && !!nameMatch;
     }
 
     // Separate available and disabled services, applying filters

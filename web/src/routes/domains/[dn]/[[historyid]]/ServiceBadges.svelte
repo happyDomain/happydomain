@@ -39,7 +39,7 @@
 </script>
 
 {#if service && $userSession.settings && $servicesSpecsLoaded}
-    {#if $servicesSpecs[service._svctype].categories && $servicesSpecs[service._svctype].categories.length && !$userSession.settings.showrrtypes}
+    {#if $servicesSpecs[service._svctype].categories?.length && !$userSession.settings.showrrtypes}
         <div class="d-flex align-items-center gap-1 {className}">
             {#each $servicesSpecs[service._svctype].categories as category}
                 <Badge color="secondary">
@@ -47,7 +47,7 @@
                 </Badge>
             {/each}
         </div>
-    {:else if $servicesSpecs[service._svctype].record_types && $servicesSpecs[service._svctype].record_types.length && $userSession.settings.showrrtypes}
+    {:else if $servicesSpecs[service._svctype].record_types?.length && $userSession.settings.showrrtypes}
         <div class="d-flex align-items-center gap-1 {className}">
             {#each $servicesSpecs[service._svctype].record_types as rrtype}
                 <Badge color="info">

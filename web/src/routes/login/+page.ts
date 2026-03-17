@@ -25,6 +25,9 @@ import { get } from "svelte/store";
 import { appConfig } from "$lib/stores/config";
 import { userSession } from "$lib/stores/usersession";
 
+export const ssr = true;
+export const prerender = true;
+
 export const load: Load = async ({ parent }) => {
     const data = await parent();
 

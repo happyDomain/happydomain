@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { onMount } from "svelte";
     import "bootstrap-icons/font/bootstrap-icons.css";
     import "../app.scss";
 
@@ -49,22 +50,24 @@
         children?: import("svelte").Snippet;
     } = $props();
 
-    window.onunhandledrejection = (e) => {
-        if (e.reason.name == "NotAuthorizedError") {
-            navigate("/login");
-            providers.set(undefined);
-            toasts.addErrorToast({
-                title: $t("errors.session.title"),
-                message: $t("errors.session.content"),
-                timeout: 10000,
-            });
-        } else {
-            toasts.addErrorToast({
-                message: e.reason.message,
-                timeout: 30000,
-            });
-        }
-    };
+    onMount(() => {
+        window.onunhandledrejection = (e) => {
+            if (e.reason.name == "NotAuthorizedError") {
+                navigate("/login");
+                providers.set(undefined);
+                toasts.addErrorToast({
+                    title: $t("errors.session.title"),
+                    message: $t("errors.session.content"),
+                    timeout: 10000,
+                });
+            } else {
+                toasts.addErrorToast({
+                    message: e.reason.message,
+                    timeout: 30000,
+                });
+            }
+        };
+    });
 </script>
 
 {#if $appConfig.msg_header}

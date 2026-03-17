@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { onMount } from "svelte";
     import { page } from "$app/state";
     import { fly } from "svelte/transition";
 
@@ -30,8 +31,12 @@
     import { userSession } from "$lib/stores/usersession";
     import { t, locale } from "$lib/translations";
 
-    const instancename = encodeURIComponent(window.location.hostname);
+    let instancename = $state("");
     let showCard = $state(false);
+
+    onMount(() => {
+        instancename = encodeURIComponent(window.location.hostname);
+    });
 </script>
 
 {#if showCard}
@@ -39,7 +44,7 @@
         role="presentation"
         style="background-color: #0007; position: fixed; width: 100vw; height: 100vh; top:0; left: 0; z-index: 1050"
         onclick={() => (showCard = false)}
-></div>
+    ></div>
     <div
         class="card"
         style="position: fixed; bottom: calc(7vh + max(1.7vw, 1.7vh)); right: calc(4vw + max(1.7vw, 1.7vh)); z-index: 1052; max-width: 400px;"
@@ -76,7 +81,9 @@
                 <a
                     href="https://framaforms.org/quel-est-votre-avis-sur-happydns-1610366701?u={$userSession.id
                         ? $userSession.id
-                        : 0}&amp;i={instancename}{page.route ? ('&p=' + page.route.id) : ''}&amp;l={$locale}"
+                        : 0}&amp;i={instancename}{page.route
+                        ? '&p=' + page.route.id
+                        : ''}&amp;l={$locale}"
                     target="_blank"
                     rel="noreferrer"
                     class="btn btn-lg btn-light flex-fill fw-bolder"

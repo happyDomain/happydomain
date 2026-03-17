@@ -27,6 +27,7 @@ import { refreshUserSession } from "$lib/stores/usersession";
 import { config as tsConfig, locale, loadTranslations, t } from "$lib/translations";
 
 export const ssr = false;
+export const trailingSlash = "always";
 
 const sw_state = { triedUpdate: false, hasUpdate: false };
 
@@ -47,9 +48,9 @@ export const load: Load = async ({ route, url }) => {
     const initLocale =
         url.searchParams.get("lang") ||
         locale.get() ||
-        (window.navigator.language ? window.navigator.language.substring(0,2) : null) ||
-        window.navigator.languages[0] ||
-        tsConfig.fallbackLocale ||
+        (window?.navigator.language ? window.navigator.language.substring(0, 2) : null) ||
+        window?.navigator.languages[0] ||
+        tsConfig?.fallbackLocale ||
         "en";
 
     await loadTranslations(initLocale, url.pathname);

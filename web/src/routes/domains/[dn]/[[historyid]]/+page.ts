@@ -20,15 +20,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import type { Load } from "@sveltejs/kit";
-import { get } from "svelte/store";
-
-import { servicesSpecsLoaded, refreshServicesSpecs } from "$lib/stores/services";
 
 export const load: Load = async ({ parent }) => {
     const data = await parent();
-
-    if (!get(servicesSpecsLoaded))
-        refreshServicesSpecs();
 
     return {
         ...data,

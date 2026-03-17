@@ -32,14 +32,14 @@ export const SERVICE_FAMILY_HIDDEN = "hidden";
 export const SERVICE_FAMILY_PROVIDER = "provider";
 
 export class ServiceRestrictions {
-    alone = $state(false);
-    exclusive = $state<Array<string>>([]);
-    glue = $state(false);
-    leaf = $state(false);
-    nearAlone = $state(false);
-    needTypes = $state<Array<number>>([]);
-    rootOnly = $state(false);
-    single = $state(false);
+    alone?: boolean = $state(false);
+    exclusive?: Array<string> = $state([]);
+    glue?: boolean = $state(false);
+    leaf?: boolean = $state(false);
+    nearAlone?: boolean = $state(false);
+    needTypes?: Array<number> = $state([]);
+    rootOnly?: boolean = $state(false);
+    single?: boolean = $state(false);
 
     constructor(data?: Partial<ServiceRestrictions>) {
         if (data) {
@@ -58,12 +58,12 @@ export class ServiceRestrictions {
 export class ServiceInfos {
     name = $state("");
     _svctype = $state("");
-    _svcicon = $state("");
+    _svcicon?: string = $state("");
     description = $state("");
     family = $state("");
-    categories = $state<Array<string>>([]);
-    record_types = $state<Array<number>>([]);
-    tabs = $state(false);
+    categories?: Array<string> | null = $state([]);
+    record_types?: Array<number> | null = $state([]);
+    tabs?: boolean = $state(false);
     restrictions = $state(new ServiceRestrictions());
 
     constructor(data?: Partial<ServiceInfos>) {

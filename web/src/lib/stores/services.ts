@@ -24,17 +24,17 @@ import { unwrapSdkResponse } from "$lib/api/errors";
 import { derived, writable, type Writable } from "svelte/store";
 import type { ServiceInfos } from "$lib/model/service_specs.svelte";
 
-export const servicesSpecs: Writable<Record<string, ServiceInfos>> = writable({});
-export const servicesSpecsLoaded: Writable<boolean> = writable(false);
+import { servicesSpecs as genspecs } from "$lib/services_specs";
+
+export const servicesSpecs: Writable<Record<string, ServiceInfos>> = writable(genspecs);
+export const servicesSpecsLoaded: Writable<boolean> = writable(true);
 export const servicesSpecsError: Writable<string | null> = writable(null);
 
 export async function refreshServicesSpecs() {
-    servicesSpecsLoaded.set(false);
-    servicesSpecsError.set(null);
-
     try {
         const map = unwrapSdkResponse(await getServiceSpecs()) as Record<string, ServiceInfos>;
         servicesSpecs.set(map);
+        servicesSpecsError.set(null);
         servicesSpecsLoaded.set(true);
         return map;
     } catch (err) {

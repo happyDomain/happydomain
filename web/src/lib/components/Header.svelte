@@ -76,6 +76,7 @@
 <Navbar
     class="{className} {$userSession.id ? 'p-0' : ''}"
     style="z-index: 100"
+    id="nav"
     container
     expand="xs"
     light

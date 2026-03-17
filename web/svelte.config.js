@@ -14,7 +14,6 @@ const config = {
         paths: {
             relative: process.env.NODE_ENV === "production",
         },
-        prerender: { entries: [] },
     },
 };
 
