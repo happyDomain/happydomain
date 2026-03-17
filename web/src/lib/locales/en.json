@@ -86,6 +86,7 @@
             "upload": "Import a zone file",
             "view": "View my zone",
             "view-checks": "View checks",
+            "whois": "View registration data",
             "others": "More actions on {{domain}}"
         },
         "alert": {

@@ -76,7 +76,8 @@
             "rollback": "Revenir à cette version",
             "share": "Partager la zone…",
             "upload": "Importer un fichier de zone",
-            "view": "Voir ma zone"
+            "view": "Voir ma zone",
+            "whois": "Voir les infos d'enregistrement"
         },
         "alert": {
             "remove": "Cette action retirera définitivement le domaine {{domain}} de votre liste. L'historique et les zones abstraites seront supprimés. Cela ne supprimera ni n'affectera votre domaine auprès de votre fournisseur, ni ne modifiera ce qui est actuellement diffusé. Cela ne concerne seulement que ce que vous voyez dans happyDomain. Êtes-vous certain de vouloir continuer ?",

@@ -49,6 +49,7 @@ interface Params {
     providers?: string;
     services?: string;
     label?: string;
+    days?: number;
     // add more parameters that are used here
 }
 
