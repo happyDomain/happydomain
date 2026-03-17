@@ -317,6 +317,8 @@ func (s *checkScheduler) checkSchedules() {
 			ScheduleId:  &schedule.Id,
 			CheckerName: schedule.CheckerName,
 			OwnerId:     schedule.OwnerId,
+			InsideType:  schedule.InsideType,
+			InsideId:    schedule.InsideId,
 			TargetType:  schedule.TargetType,
 			TargetId:    schedule.TargetId,
 			Status:      happydns.CheckExecutionPending,
@@ -348,12 +350,14 @@ func (s *checkScheduler) checkSchedules() {
 // It creates the execution record synchronously (so the caller gets an ID back)
 // and then routes the item through runNowChan so the main loop controls
 // all queue insertions.
-func (s *checkScheduler) TriggerOnDemandCheck(checkerName string, targetType happydns.CheckScopeType, targetId happydns.Identifier, ownerId happydns.Identifier, options happydns.CheckerOptions) (happydns.Identifier, error) {
+func (s *checkScheduler) TriggerOnDemandCheck(checkerName string, targetType happydns.CheckScopeType, targetId happydns.Identifier, insideScopeType *happydns.CheckScopeType, insideId *happydns.Identifier, ownerId happydns.Identifier, options happydns.CheckerOptions) (happydns.Identifier, error) {
 	schedule := &happydns.CheckerSchedule{
 		CheckerName: checkerName,
 		OwnerId:     ownerId,
 		TargetType:  targetType,
 		TargetId:    targetId,
+		InsideType:  insideScopeType,
+		InsideId:    insideId,
 		Interval:    0, // On-demand, no interval
 		Enabled:     true,
 		Options:     options,
@@ -365,6 +369,8 @@ func (s *checkScheduler) TriggerOnDemandCheck(checkerName string, targetType hap
 		ScheduleId:  nil,
 		CheckerName: checkerName,
 		OwnerId:     ownerId,
+		InsideType:  insideScopeType,
+		InsideId:    insideId,
 		TargetType:  targetType,
 		TargetId:    targetId,
 		Status:      happydns.CheckExecutionPending,

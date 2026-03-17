@@ -59,7 +59,7 @@ type CheckResultStorage interface {
 	ListCheckerSchedulesByUser(userId happydns.Identifier) ([]*happydns.CheckerSchedule, error)
 
 	// ListCheckerSchedulesByTarget retrieves all schedules for a specific target
-	ListCheckerSchedulesByTarget(targetType happydns.CheckScopeType, targetId happydns.Identifier) ([]*happydns.CheckerSchedule, error)
+	ListCheckerSchedulesByTarget(targetType happydns.CheckScopeType, targetId happydns.Identifier, insideType *happydns.CheckScopeType, insideId *happydns.Identifier) ([]*happydns.CheckerSchedule, error)
 
 	// GetCheckerSchedule retrieves a specific schedule by ID
 	GetCheckerSchedule(scheduleId happydns.Identifier) (*happydns.CheckerSchedule, error)

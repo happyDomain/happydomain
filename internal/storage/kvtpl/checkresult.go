@@ -249,7 +249,7 @@ func (s *KVStorage) ListCheckerSchedulesByUser(userId happydns.Identifier) ([]*h
 }
 
 // ListCheckerSchedulesByTarget retrieves all schedules for a specific target
-func (s *KVStorage) ListCheckerSchedulesByTarget(targetType happydns.CheckScopeType, targetId happydns.Identifier) ([]*happydns.CheckerSchedule, error) {
+func (s *KVStorage) ListCheckerSchedulesByTarget(targetType happydns.CheckScopeType, targetId happydns.Identifier, insideType *happydns.CheckScopeType, insideId *happydns.Identifier) ([]*happydns.CheckerSchedule, error) {
 	prefix := fmt.Sprintf("checkschedule.bytarget|%d|%s|", targetType, targetId.String())
 	iter := s.db.Search(prefix)
 	defer iter.Release()
@@ -273,6 +273,26 @@ func (s *KVStorage) ListCheckerSchedulesByTarget(targetType happydns.CheckScopeT
 		schedKey := makeCheckerScheduleKey(scheduleId)
 		if err := s.db.Get(schedKey, &sched); err != nil {
 			continue
+		}
+
+		// Post-filter by insideType/insideId
+		if insideType == nil {
+			if sched.InsideType != nil {
+				continue
+			}
+		} else {
+			if sched.InsideType == nil || *sched.InsideType != *insideType {
+				continue
+			}
+			if insideId == nil {
+				if sched.InsideId != nil {
+					continue
+				}
+			} else {
+				if sched.InsideId == nil || !sched.InsideId.Equals(*insideId) {
+					continue
+				}
+			}
 		}
 
 		schedules = append(schedules, &sched)

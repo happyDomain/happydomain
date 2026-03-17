@@ -30,12 +30,12 @@
     import PageTitle from "$lib/components/PageTitle.svelte";
     import { t } from "$lib/translations";
     import {
-        listAvailableCheckers,
+        listServiceAvailableCheckers,
         updateCheckSchedule,
         createCheckSchedule,
         getCheckStatus,
-        getDomainCheckOptions,
-        updateDomainCheckOptions,
+        getServiceCheckOptions,
+        updateServiceCheckOptions,
     } from "$lib/api/checkers";
     import type { Domain } from "$lib/model/domain";
     import { CheckScopeType, type AvailableChecker, type CheckerInfo } from "$lib/model/checker";
@@ -43,19 +43,27 @@
     import { toasts } from "$lib/stores/toasts";
 
     interface Props {
-        data: { domain: Domain };
+        data: { domain: Domain; zoneId: string; subdomain: string; serviceid: string };
     }
 
     let { data }: Props = $props();
 
     const NS_PER_HOUR = 3600 * 1e9;
 
-    const checkName = $derived(page.params.cname || "");
-    const checkDisplayName = $derived($checkers?.[checkName]?.name || checkName);
-    const intervalSpec = $derived($checkers?.[checkName]?.interval);
+    const checkerName = $derived(page.params.cname || "");
+    const checkerDisplayName = $derived($checkers?.[checkerName]?.name || checkerName);
+    const intervalSpec = $derived($checkers?.[checkerName]?.interval);
+
+    function serviceChecksBasePath(): string {
+        const dn = encodeURIComponent(data.domain.domain);
+        const historyid = page.params.historyid ? encodeURIComponent(page.params.historyid) : "";
+        const sub = encodeURIComponent(page.params.subdomain!);
+        const svc = encodeURIComponent(data.serviceid);
+        return `/domains/${dn}/${historyid}/${sub}/${svc}/checks`;
+    }
 
     // Resolved check data
-    let check = $state<AvailableChecker | null>(null);
+    let checker = $state<AvailableChecker | null>(null);
     let checkStatus = $state<CheckerInfo | null>(null);
     let loading = $state(true);
     let loadError = $state<string | null>(null);
@@ -66,26 +74,35 @@
     let saving = $state(false);
 
     // Options state
-    let domainOptionValues = $state<Record<string, any>>({});
+    let serviceOptionValues = $state<Record<string, any>>({});
 
-    async function loadCheck() {
+    async function loadChecker() {
         loading = true;
         loadError = null;
         try {
-            const [checks, status, options] = await Promise.all([
-                listAvailableCheckers(data.domain.id),
-                getCheckStatus(checkName),
-                getDomainCheckOptions(data.domain.id, checkName).catch(() => ({})),
+            const [checkerList, status, options] = await Promise.all([
+                listServiceAvailableCheckers(
+                    data.domain.id,
+                    data.zoneId,
+                    data.subdomain,
+                    data.serviceid,
+                ),
+                getCheckStatus(checkerName),
+                getServiceCheckOptions(
+                    data.domain.id,
+                    data.zoneId,
+                    data.subdomain,
+                    data.serviceid,
+                    checkerName,
+                ),
             ]);
-            const found = checks?.find((c) => c.checker_name === checkName) ?? null;
-            check = found;
+            const found = checkerList?.find((c) => c.checker_name === checkerName) ?? null;
+            checker = found;
             checkStatus = status;
-            domainOptionValues = { ...(options || {}) };
+            serviceOptionValues = { ...(options || {}) };
             if (found) {
                 formEnabled = found.enabled;
-                const defaultHours = intervalSpec?.default
-                    ? intervalSpec.default / NS_PER_HOUR
-                    : 24;
+                const defaultHours = intervalSpec?.default ? intervalSpec.default / NS_PER_HOUR : 24;
                 formIntervalHours =
                     found.schedule &&
                     found.schedule.interval !== undefined &&
@@ -100,26 +117,26 @@
         }
     }
 
-    loadCheck();
+    loadChecker();
 
     async function handleSave() {
-        if (!check) return;
+        if (!checker) return;
         saving = true;
 
         try {
             const intervalNs = Math.max(formIntervalHours, 1) * 3600 * 1e9;
 
-            if (check.schedule) {
-                await updateCheckSchedule(check.schedule.id!, {
-                    ...check.schedule,
+            if (checker.schedule) {
+                await updateCheckSchedule(checker.schedule.id!, {
+                    ...checker.schedule,
                     enabled: formEnabled,
                     interval: intervalNs,
                 });
             } else {
                 await createCheckSchedule({
-                    checker_name: check.checker_name,
-                    target_type: CheckScopeType.CheckScopeDomain,
-                    target_id: data.domain.id,
+                    checker_name: checker.checker_name,
+                    target_type: CheckScopeType.CheckScopeService,
+                    target_id: data.serviceid,
                     interval: intervalNs,
                     enabled: formEnabled,
                 });
@@ -130,7 +147,7 @@
                 type: "success",
                 timeout: 3000,
             });
-            await loadCheck();
+            await loadChecker();
         } catch (e: any) {
             toasts.addErrorToast({
                 title: $t("checkers.schedule.save-failed"),
@@ -144,24 +161,23 @@
 
 <svelte:head>
     <title>
-        {checkDisplayName} - {data.domain.domain} - happyDomain
+        {checkerName} - {$t("checkers.schedule.title")} - {data.domain.domain} - happyDomain
     </title>
 </svelte:head>
 
 <div class="flex-fill pb-4 pt-2">
     <PageTitle
-        title={checkDisplayName}
+        title={$t("checkers.schedule.title")}
         domain={data.domain.domain}
+        subtitle={checkerDisplayName}
     >
-        {#if $checkers && (!$checkers[checkName].availability || $checkers[checkName].availability.applyToDomain || $checkers[checkName].availability.applyToZone)}
-            <Button
-                color="info"
-                href={`/domains/${encodeURIComponent(data.domain.domain)}/checks/${encodeURIComponent(checkName)}/results`}
-            >
-                <Icon name="bar-chart-fill"></Icon>
-                {$t("checkers.list.view-results")}
-            </Button>
-        {/if}
+        <Button
+            color="info"
+            href={`${serviceChecksBasePath()}/${encodeURIComponent(checkerName)}/results`}
+        >
+            <Icon name="bar-chart-fill"></Icon>
+            {$t("checkers.list.view-results")}
+        </Button>
     </PageTitle>
 
     {#if loading}
@@ -176,23 +192,36 @@
                 {$t("checkers.list.error-loading", { error: loadError })}
             </p>
         </Card>
+    {:else if !checker}
+        <Card body>
+            <p class="text-center text-muted mb-0">
+                <Icon name="info-circle"></Icon>
+                {$t("checkers.list.no-checks-service")}
+            </p>
+        </Card>
     {:else}
-        {#if check}
-            <CheckerScheduleCard
-                checker={check}
-                {intervalSpec}
-                bind:formEnabled
-                bind:formIntervalHours
-                {saving}
-                onSave={handleSave}
-            />
-        {/if}
+        <CheckerScheduleCard
+            {checker}
+            {intervalSpec}
+            bind:formEnabled
+            bind:formIntervalHours
+            {saving}
+            onSave={handleSave}
+        />
 
         <CheckerOptionsCard
-            options={checkStatus?.options?.domainOpts ?? []}
-            bind:optionValues={domainOptionValues}
-            title={$t("checkers.option-groups.domain-settings")}
-            saveOptionsFn={(values) => updateDomainCheckOptions(data.domain.id, checkName, values)}
+            options={checkStatus?.options?.serviceOpts ?? []}
+            bind:optionValues={serviceOptionValues}
+            title={$t("checkers.option-groups.service-settings")}
+            saveOptionsFn={(values) =>
+                updateServiceCheckOptions(
+                    data.domain.id,
+                    data.zoneId,
+                    data.subdomain,
+                    data.serviceid,
+                    checkerName,
+                    values,
+                )}
         />
     {/if}
 </div>

@@ -29,7 +29,7 @@ import (
 type SchedulerUsecase interface {
 	Run()
 	Close()
-	TriggerOnDemandCheck(checkerName string, targetType CheckScopeType, targetID Identifier, userID Identifier, options CheckerOptions) (Identifier, error)
+	TriggerOnDemandCheck(checkerName string, targetType CheckScopeType, targetID Identifier, insideScopeType *CheckScopeType, insideID *Identifier, userID Identifier, options CheckerOptions) (Identifier, error)
 	GetSchedulerStatus() SchedulerStatus
 	SetEnabled(enabled bool) error
 	RescheduleUpcomingChecks() (int, error)
@@ -45,6 +45,12 @@ type CheckerSchedule struct {
 
 	// OwnerId is the owner of the schedule
 	OwnerId Identifier `json:"owner_id" swaggertype:"string"`
+
+	// InsideType indicates the scope level of the parent target
+	InsideType *CheckScopeType `json:"check_type"`
+
+	// InsideId is the identifier of the parent target (User/Domain)
+	InsideId *Identifier `json:"inside_id" swaggertype:"string"`
 
 	// TargetType indicates what type of target to check
 	TargetType CheckScopeType `json:"target_type"`
@@ -98,7 +104,7 @@ type CheckerScheduleUsecase interface {
 	ListUserSchedules(userId Identifier) ([]*CheckerSchedule, error)
 
 	// ListSchedulesByTarget retrieves all schedules for a specific target
-	ListSchedulesByTarget(targetType CheckScopeType, targetId Identifier) ([]*CheckerSchedule, error)
+	ListSchedulesByTarget(targetType CheckScopeType, targetId Identifier, insideType *CheckScopeType, insideId *Identifier) ([]*CheckerSchedule, error)
 
 	// GetSchedule retrieves a specific schedule by ID
 	GetSchedule(scheduleId Identifier) (*CheckerSchedule, error)
@@ -128,7 +134,7 @@ type CheckerScheduleUsecase interface {
 	ValidateScheduleOwnership(scheduleId Identifier, ownerId Identifier) error
 
 	// DeleteSchedulesForTarget removes all schedules for a target
-	DeleteSchedulesForTarget(targetType CheckScopeType, targetId Identifier) error
+	DeleteSchedulesForTarget(targetType CheckScopeType, targetId Identifier, insideType *CheckScopeType, insideId *Identifier, ownerId Identifier) error
 
 	// ListUpcomingSchedules retrieves the next limit enabled schedules sorted by NextRun ascending.
 	ListUpcomingSchedules(limit int) ([]*CheckerSchedule, error)

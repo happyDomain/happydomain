@@ -801,7 +801,7 @@ func Test_DiscoverAndEnsureSchedules_CreatesForMissingPlugin(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	schedules, err := db.ListCheckerSchedulesByTarget(happydns.CheckScopeDomain, domain.Id)
+	schedules, err := db.ListCheckerSchedulesByTarget(happydns.CheckScopeDomain, domain.Id, nil, nil)
 	if err != nil {
 		t.Fatalf("failed to list schedules: %v", err)
 	}
@@ -838,7 +838,7 @@ func Test_DiscoverAndEnsureSchedules_SkipsExistingSchedule(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	schedules, err := db.ListCheckerSchedulesByTarget(happydns.CheckScopeDomain, domain.Id)
+	schedules, err := db.ListCheckerSchedulesByTarget(happydns.CheckScopeDomain, domain.Id, nil, nil)
 	if err != nil {
 		t.Fatalf("failed to list schedules: %v", err)
 	}
@@ -861,7 +861,7 @@ func Test_DiscoverAndEnsureSchedules_SkipsServiceOnlyChecker(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	schedules, err := db.ListCheckerSchedulesByTarget(happydns.CheckScopeDomain, domain.Id)
+	schedules, err := db.ListCheckerSchedulesByTarget(happydns.CheckScopeDomain, domain.Id, nil, nil)
 	if err != nil {
 		t.Fatalf("failed to list schedules: %v", err)
 	}

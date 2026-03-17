@@ -32,6 +32,7 @@ const (
 	CheckScopeInstance CheckScopeType = iota
 	CheckScopeUser
 	CheckScopeDomain
+	CheckScopeZone
 	CheckScopeService
 	CheckScopeOnDemand
 )
@@ -94,6 +95,12 @@ type CheckResult struct {
 	// TargetId is the identifier of the target (User/Domain/Service)
 	TargetId Identifier `json:"target_id" swaggertype:"string"`
 
+	// InsideType indicates the scope level of the parent target
+	InsideType *CheckScopeType `json:"inside_type"`
+
+	// InsideId is the identifier of the parent target (User/Domain)
+	InsideId *Identifier `json:"inside_id" swaggertype:"string"`
+
 	// OwnerId is the owner of the check
 	OwnerId Identifier `json:"owner_id" swaggertype:"string"`
 
@@ -136,6 +143,12 @@ type CheckExecution struct {
 	// OwnerId is the owner of the check
 	OwnerId Identifier `json:"owner_id" swaggertype:"string"`
 
+	// InsideType indicates the scope level of the parent target
+	InsideType *CheckScopeType `json:"check_type"`
+
+	// InsideId is the identifier of the parent target (User/Domain)
+	InsideId *Identifier `json:"inside_id" swaggertype:"string"`
+
 	// TargetType indicates the scope level of the check
 	TargetType CheckScopeType `json:"target_type"`
 
@@ -162,25 +175,25 @@ type CheckExecution struct {
 type CheckResultUsecase interface {
 	// ListCheckerStatuses returns all checkers applicable to scope with their
 	// schedule and most recent result for the given target.
-	ListCheckerStatuses(scope CheckScopeType, targetID Identifier) ([]CheckerStatus, error)
+	ListCheckerStatuses(scope CheckScopeType, targetID Identifier, insideScope *CheckScopeType, insideID *Identifier, user *User, domain *Domain, service *Service) ([]CheckerStatus, error)
 
-	// ListCheckResultsByTarget retrieves check results for a specific target
-	ListCheckResultsByTarget(checkerName string, targetType CheckScopeType, targetId Identifier, limit int) ([]*CheckResult, error)
+	// ListCheckResultsByTarget retrieves check results for a specific target owned by userId
+	ListCheckResultsByTarget(checkerName string, targetType CheckScopeType, targetId Identifier, insideScope *CheckScopeType, insideID *Identifier, userId Identifier, limit int) ([]*CheckResult, error)
 
 	// ListAllCheckResultsByTarget retrieves all check results for a target across all checkers
-	ListAllCheckResultsByTarget(targetType CheckScopeType, targetId Identifier, userId Identifier, limit int) ([]*CheckResult, error)
+	ListAllCheckResultsByTarget(targetType CheckScopeType, targetId Identifier, insideScope *CheckScopeType, insideID *Identifier, userId Identifier, limit int) ([]*CheckResult, error)
 
-	// GetCheckResult retrieves a specific check result
-	GetCheckResult(checkName string, targetType CheckScopeType, targetId Identifier, resultId Identifier) (*CheckResult, error)
+	// GetCheckResult retrieves a specific check result owned by userId
+	GetCheckResult(checkName string, targetType CheckScopeType, targetId Identifier, resultId Identifier, insideScope *CheckScopeType, insideID *Identifier, userId Identifier) (*CheckResult, error)
 
 	// CreateCheckResult stores a new check result and enforces retention policy
 	CreateCheckResult(result *CheckResult) error
 
-	// DeleteCheckResult removes a specific check result
-	DeleteCheckResult(checkName string, targetType CheckScopeType, targetId Identifier, resultId Identifier) error
+	// DeleteCheckResult removes a specific check result owned by userId
+	DeleteCheckResult(checkName string, targetType CheckScopeType, targetId Identifier, resultId Identifier, insideScope *CheckScopeType, insideID *Identifier, userId Identifier) error
 
-	// DeleteAllCheckResults removes all results for a specific checker+target combination
-	DeleteAllCheckResults(checkName string, targetType CheckScopeType, targetId Identifier) error
+	// DeleteAllCheckResults removes all results for a specific checker+target combination owned by userId
+	DeleteAllCheckResults(checkName string, targetType CheckScopeType, targetId Identifier, insideScope *CheckScopeType, insideID *Identifier, userId Identifier) error
 
 	// GetCheckExecution retrieves the status of a check execution
 	GetCheckExecution(executionId Identifier) (*CheckExecution, error)
@@ -205,7 +218,7 @@ type CheckResultUsecase interface {
 
 	// GetWorstCheckStatus returns the worst (most critical) status from the most
 	// recent result of each checker for a given target. Returns nil if no results exist.
-	GetWorstCheckStatus(targetType CheckScopeType, targetId Identifier, userId Identifier) (*CheckResultStatus, error)
+	GetWorstCheckStatus(targetType CheckScopeType, targetId Identifier, insideScope *CheckScopeType, insideID *Identifier, userId Identifier) (*CheckResultStatus, error)
 
 	// GetWorstCheckStatusByUser returns a map from target ID string to worst check
 	// status for all targets of the given type owned by the user, in a single pass.

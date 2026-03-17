@@ -621,9 +621,11 @@
         },
         "list": {
             "title": "Checks for ",
+            "title-service": "Checks for {{service}}",
             "loading": "Loading checkers...",
             "loading-checkers": "Loading checker information...",
             "no-checks": "No checks available for this domain.",
+            "no-checks-service": "No checks available for this service.",
             "run-check": "Run Check",
             "view-results": "View Results",
             "configure": "Configure",
@@ -639,7 +641,14 @@
             "schedule": {
                 "enabled": "Enabled",
                 "disabled": "Disabled"
-            }
+            },
+            "loading-checks": "Loading checker information..."
+        },
+        "other-checkers": {
+            "title": "Other available checkers",
+            "description": "These checkers are not directly associated with this domain but can be configured with domain-specific options.",
+            "no-checkers": "No other checkers available.",
+            "configure": "Configure"
         },
         "schedule": {
             "title": "Schedule",
@@ -728,6 +737,10 @@
         "loading": "Loading checkers...",
         "loading-info": "Loading checker information...",
         "no-checkers": "No checkers available",
+        "service-checks": "Service Checks",
+        "view-all": "View all",
+        "no-checks": "No checks available",
+        "load-error": "Error loading checks",
         "error-loading": "Error loading checkers: {{error}}",
         "error-loading-checker": "Error loading checker: {{error}}",
         "checker-info-not-found": "Error: Checker information not found",

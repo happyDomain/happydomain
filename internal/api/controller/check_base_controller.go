@@ -65,6 +65,18 @@ func (bc *BaseCheckerController) GetCheckerStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, bc.checkerService.GetCheckerResponse(checker))
 }
 
+// getDomainAndServiceIDFromContext extracts optional domainID and serviceID from the gin context.
+func getDomainAndServiceIDFromContext(c *gin.Context) (domainID *happydns.Identifier, serviceID *happydns.Identifier) {
+	if dn, ok := c.Get("domain"); ok {
+		domainID = &dn.(*happydns.Domain).Id
+	}
+	if svcid, ok := c.Get("serviceid"); ok {
+		tmp := svcid.(happydns.Identifier)
+		serviceID = &tmp
+	}
+	return
+}
+
 // GetCheckerOptionsWithScope retrieves all options for a check with the given scope.
 func (bc *BaseCheckerController) GetCheckerOptionsWithScope(c *gin.Context, cname string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier) {
 	opts, err := bc.checkerService.GetCheckerOptions(cname, userId, domainId, serviceId)

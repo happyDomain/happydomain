@@ -183,7 +183,7 @@ func Test_ListCheckResultsByTarget_DefaultLimit(t *testing.T) {
 		}
 	}
 
-	results, err := uc.ListCheckResultsByTarget("checker", happydns.CheckScopeDomain, targetId, 0)
+	results, err := uc.ListCheckResultsByTarget("checker", happydns.CheckScopeDomain, targetId, nil, nil, ownerId, 0)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -212,7 +212,7 @@ func Test_ListCheckResultsByTarget_CustomLimit(t *testing.T) {
 		}
 	}
 
-	results, err := uc.ListCheckResultsByTarget("checker", happydns.CheckScopeDomain, targetId, 2)
+	results, err := uc.ListCheckResultsByTarget("checker", happydns.CheckScopeDomain, targetId, nil, nil, ownerId, 2)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -231,7 +231,7 @@ func Test_DeleteAllCheckResults_Empty(t *testing.T) {
 
 	targetId, _ := happydns.NewRandomIdentifier()
 
-	if err := uc.DeleteAllCheckResults("checker", happydns.CheckScopeDomain, targetId); err != nil {
+	if err := uc.DeleteAllCheckResults("checker", happydns.CheckScopeDomain, targetId, nil, nil, targetId); err != nil {
 		t.Fatalf("unexpected error on empty store: %v", err)
 	}
 }
@@ -269,7 +269,7 @@ func Test_DeleteAllCheckResults_OnlyTargetDeleted(t *testing.T) {
 		}
 	}
 
-	if err := uc.DeleteAllCheckResults("checker", happydns.CheckScopeDomain, targetId1); err != nil {
+	if err := uc.DeleteAllCheckResults("checker", happydns.CheckScopeDomain, targetId1, nil, nil, ownerId); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 

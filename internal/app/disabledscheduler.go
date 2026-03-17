@@ -34,7 +34,7 @@ type disabledScheduler struct{}
 func (d *disabledScheduler) Run()   {}
 func (d *disabledScheduler) Close() {}
 
-func (d *disabledScheduler) TriggerOnDemandCheck(checkName string, targetType happydns.CheckScopeType, targetId happydns.Identifier, userId happydns.Identifier, options happydns.CheckerOptions) (happydns.Identifier, error) {
+func (d *disabledScheduler) TriggerOnDemandCheck(checkName string, targetType happydns.CheckScopeType, targetId happydns.Identifier, _ *happydns.CheckScopeType, _ *happydns.Identifier, userId happydns.Identifier, options happydns.CheckerOptions) (happydns.Identifier, error) {
 	return happydns.Identifier{}, fmt.Errorf("test scheduler is disabled in configuration")
 }
 

@@ -23,6 +23,7 @@ package checkresult
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"git.happydns.org/happyDomain/model"
@@ -48,24 +49,36 @@ func NewCheckResultUsecase(storage CheckResultStorage, options *happydns.Options
 
 // ListCheckerStatuses returns all checkers applicable to scope with their schedule
 // and most recent result for the given target.
-func (u *CheckResultUsecase) ListCheckerStatuses(scope happydns.CheckScopeType, targetID happydns.Identifier) ([]happydns.CheckerStatus, error) {
+func (u *CheckResultUsecase) ListCheckerStatuses(scope happydns.CheckScopeType, targetID happydns.Identifier, insideScope *happydns.CheckScopeType, insideID *happydns.Identifier, user *happydns.User, domain *happydns.Domain, service *happydns.Service) ([]happydns.CheckerStatus, error) {
 	plugins, err := u.checkerUC.ListCheckers()
 	if err != nil {
 		return nil, err
 	}
 
-	schedules, err := u.checkerScheduleUC.ListSchedulesByTarget(scope, targetID)
+	// Get schedules for this target
+	schedules, err := u.checkerScheduleUC.ListSchedulesByTarget(scope, targetID, insideScope, insideID)
 	if err != nil {
 		return nil, err
 	}
 
+	// Build schedule map
 	scheduleMap := make(map[string]*happydns.CheckerSchedule, len(schedules))
 	for _, sched := range schedules {
-		scheduleMap[sched.CheckerName] = sched
+		if sched.OwnerId.Equals(user.Id) {
+			scheduleMap[sched.CheckerName] = sched
+		}
 	}
 
+	// Get service type for LimitToServices filtering
+	var serviceType string
+	if scope == happydns.CheckScopeService && service != nil {
+		serviceType = service.Type
+	}
+
+	// Build response with last results
 	var statuses []happydns.CheckerStatus
 	for checkername, check := range *plugins {
+		// Filter plugins by scope
 		if scope == happydns.CheckScopeDomain && !check.Availability().ApplyToDomain {
 			continue
 		}
@@ -73,17 +86,27 @@ func (u *CheckResultUsecase) ListCheckerStatuses(scope happydns.CheckScopeType, 
 			continue
 		}
 
+		// Filter plugins by service type if LimitToServices is set
+		if scope == happydns.CheckScopeService && serviceType != "" {
+			limitTo := check.Availability().LimitToServices
+			if len(limitTo) > 0 && !slices.Contains(limitTo, serviceType) {
+				continue
+			}
+		}
+
 		info := happydns.CheckerStatus{
 			CheckerName:   checkername,
 			NotDiscovered: true,
 		}
 
+		// Check if there's a schedule
 		if sched, ok := scheduleMap[checkername]; ok {
 			info.Enabled = sched.Enabled
 			info.Schedule = sched
 			info.NotDiscovered = false
 
-			results, err := u.ListCheckResultsByTarget(checkername, scope, targetID, 1)
+			// Get last result
+			results, err := u.ListCheckResultsByTarget(checkername, scope, targetID, insideScope, insideID, user.Id, 1)
 			if err == nil && len(results) > 0 {
 				info.LastResult = results[0]
 			}
@@ -95,18 +118,33 @@ func (u *CheckResultUsecase) ListCheckerStatuses(scope happydns.CheckScopeType, 
 	return statuses, nil
 }
 
-// ListCheckResultsByTarget retrieves check results for a specific target
-func (u *CheckResultUsecase) ListCheckResultsByTarget(pluginName string, targetType happydns.CheckScopeType, targetId happydns.Identifier, limit int) ([]*happydns.CheckResult, error) {
+// ListCheckResultsByTarget retrieves check results for a specific target owned by userId
+func (u *CheckResultUsecase) ListCheckResultsByTarget(pluginName string, targetType happydns.CheckScopeType, targetId happydns.Identifier, insideScope *happydns.CheckScopeType, insideID *happydns.Identifier, userId happydns.Identifier, limit int) ([]*happydns.CheckResult, error) {
 	// Apply default limit if not specified
 	if limit <= 0 {
 		limit = 5 // Default to 5 most recent results
 	}
 
-	return u.storage.ListCheckResults(pluginName, targetType, targetId, limit)
+	results, err := u.storage.ListCheckResults(pluginName, targetType, targetId, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	results = filterResultsByInside(results, insideScope, insideID)
+
+	// Filter by owner
+	owned := results[:0]
+	for _, r := range results {
+		if r.OwnerId.Equals(userId) {
+			owned = append(owned, r)
+		}
+	}
+
+	return owned, nil
 }
 
 // ListAllCheckResultsByTarget retrieves all check results for a target across all plugins
-func (u *CheckResultUsecase) ListAllCheckResultsByTarget(targetType happydns.CheckScopeType, targetId happydns.Identifier, userId happydns.Identifier, limit int) ([]*happydns.CheckResult, error) {
+func (u *CheckResultUsecase) ListAllCheckResultsByTarget(targetType happydns.CheckScopeType, targetId happydns.Identifier, insideScope *happydns.CheckScopeType, insideID *happydns.Identifier, userId happydns.Identifier, limit int) ([]*happydns.CheckResult, error) {
 	// Get all results for the user and filter by target
 	allResults, err := u.storage.ListCheckResultsByUser(userId, 0)
 	if err != nil {
@@ -121,6 +159,8 @@ func (u *CheckResultUsecase) ListAllCheckResultsByTarget(targetType happydns.Che
 		}
 	}
 
+	results = filterResultsByInside(results, insideScope, insideID)
+
 	// Apply limit
 	if limit > 0 && len(results) > limit {
 		results = results[:limit]
@@ -129,9 +169,48 @@ func (u *CheckResultUsecase) ListAllCheckResultsByTarget(targetType happydns.Che
 	return results, nil
 }
 
-// GetCheckResult retrieves a specific check result
-func (u *CheckResultUsecase) GetCheckResult(pluginName string, targetType happydns.CheckScopeType, targetId happydns.Identifier, resultId happydns.Identifier) (*happydns.CheckResult, error) {
-	return u.storage.GetCheckResult(pluginName, targetType, targetId, resultId)
+// filterResultsByInside filters check results by insideScope/insideID.
+// If insideScope is nil, only results with nil InsideType are returned.
+func filterResultsByInside(results []*happydns.CheckResult, insideScope *happydns.CheckScopeType, insideID *happydns.Identifier) []*happydns.CheckResult {
+	filtered := results[:0]
+	for _, r := range results {
+		if insideScope == nil {
+			if r.InsideType == nil {
+				filtered = append(filtered, r)
+			}
+		} else {
+			if r.InsideType != nil && *r.InsideType == *insideScope && insideID != nil && r.InsideId != nil && r.InsideId.Equals(*insideID) {
+				filtered = append(filtered, r)
+			}
+		}
+	}
+	return filtered
+}
+
+// GetCheckResult retrieves a specific check result owned by userId
+func (u *CheckResultUsecase) GetCheckResult(pluginName string, targetType happydns.CheckScopeType, targetId happydns.Identifier, resultId happydns.Identifier, insideScope *happydns.CheckScopeType, insideID *happydns.Identifier, userId happydns.Identifier) (*happydns.CheckResult, error) {
+	result, err := u.storage.GetCheckResult(pluginName, targetType, targetId, resultId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Verify the result belongs to the expected inside scope
+	if insideScope == nil {
+		if result.InsideType != nil {
+			return nil, happydns.ErrNotFound
+		}
+	} else {
+		if result.InsideType == nil || *result.InsideType != *insideScope || insideID == nil || result.InsideId == nil || !result.InsideId.Equals(*insideID) {
+			return nil, happydns.ErrNotFound
+		}
+	}
+
+	// Verify ownership
+	if !result.OwnerId.Equals(userId) {
+		return nil, happydns.ErrNotFound
+	}
+
+	return result, nil
 }
 
 // CreateCheckResult stores a new check result and enforces retention policy
@@ -150,21 +229,33 @@ func (u *CheckResultUsecase) CreateCheckResult(result *happydns.CheckResult) err
 	return u.storage.DeleteOldCheckResults(result.CheckerName, result.CheckType, result.TargetId, maxResults)
 }
 
-// DeleteCheckResult removes a specific check result
-func (u *CheckResultUsecase) DeleteCheckResult(pluginName string, targetType happydns.CheckScopeType, targetId happydns.Identifier, resultId happydns.Identifier) error {
+// DeleteCheckResult removes a specific check result owned by userId
+func (u *CheckResultUsecase) DeleteCheckResult(pluginName string, targetType happydns.CheckScopeType, targetId happydns.Identifier, resultId happydns.Identifier, insideScope *happydns.CheckScopeType, insideID *happydns.Identifier, userId happydns.Identifier) error {
+	result, err := u.storage.GetCheckResult(pluginName, targetType, targetId, resultId)
+	if err != nil {
+		return err
+	}
+	if !result.OwnerId.Equals(userId) {
+		return happydns.ErrNotFound
+	}
 	return u.storage.DeleteCheckResult(pluginName, targetType, targetId, resultId)
 }
 
-// DeleteAllCheckResults removes all results for a specific plugin+target combination
-func (u *CheckResultUsecase) DeleteAllCheckResults(pluginName string, targetType happydns.CheckScopeType, targetId happydns.Identifier) error {
+// DeleteAllCheckResults removes all results for a specific plugin+target combination owned by userId
+func (u *CheckResultUsecase) DeleteAllCheckResults(pluginName string, targetType happydns.CheckScopeType, targetId happydns.Identifier, insideScope *happydns.CheckScopeType, insideID *happydns.Identifier, userId happydns.Identifier) error {
 	// Get all results first
 	results, err := u.storage.ListCheckResults(pluginName, targetType, targetId, 0)
 	if err != nil {
 		return err
 	}
 
-	// Delete each result
+	results = filterResultsByInside(results, insideScope, insideID)
+
+	// Delete only results owned by the requesting user
 	for _, r := range results {
+		if !r.OwnerId.Equals(userId) {
+			continue
+		}
 		if err := u.storage.DeleteCheckResult(pluginName, targetType, targetId, r.Id); err != nil {
 			return err
 		}
@@ -242,6 +333,8 @@ func (u *CheckResultUsecase) FailCheckExecution(executionId happydns.Identifier,
 		CheckerName:    execution.CheckerName,
 		CheckType:      execution.TargetType,
 		TargetId:       execution.TargetId,
+		InsideType:     execution.InsideType,
+		InsideId:       execution.InsideId,
 		OwnerId:        execution.OwnerId,
 		ExecutedAt:     time.Now(),
 		ScheduledCheck: execution.ScheduleId != nil,
@@ -263,8 +356,8 @@ func (u *CheckResultUsecase) FailCheckExecution(executionId happydns.Identifier,
 
 // GetWorstCheckStatus returns the worst (most critical) status from the most
 // recent result of each checker for a given target. Returns nil if no results exist.
-func (u *CheckResultUsecase) GetWorstCheckStatus(targetType happydns.CheckScopeType, targetId happydns.Identifier, userId happydns.Identifier) (*happydns.CheckResultStatus, error) {
-	results, err := u.ListAllCheckResultsByTarget(targetType, targetId, userId, 0)
+func (u *CheckResultUsecase) GetWorstCheckStatus(targetType happydns.CheckScopeType, targetId happydns.Identifier, insideScope *happydns.CheckScopeType, insideID *happydns.Identifier, userId happydns.Identifier) (*happydns.CheckResultStatus, error) {
+	results, err := u.ListAllCheckResultsByTarget(targetType, targetId, insideScope, insideID, userId, 0)
 	if err != nil || len(results) == 0 {
 		return nil, err
 	}

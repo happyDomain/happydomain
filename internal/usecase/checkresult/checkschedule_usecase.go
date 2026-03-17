@@ -63,8 +63,8 @@ func (u *CheckScheduleUsecase) ListUserSchedules(userId happydns.Identifier) ([]
 }
 
 // ListSchedulesByTarget retrieves all schedules for a specific target
-func (u *CheckScheduleUsecase) ListSchedulesByTarget(targetType happydns.CheckScopeType, targetId happydns.Identifier) ([]*happydns.CheckerSchedule, error) {
-	return u.storage.ListCheckerSchedulesByTarget(targetType, targetId)
+func (u *CheckScheduleUsecase) ListSchedulesByTarget(targetType happydns.CheckScopeType, targetId happydns.Identifier, insideType *happydns.CheckScopeType, insideId *happydns.Identifier) ([]*happydns.CheckerSchedule, error) {
+	return u.storage.ListCheckerSchedulesByTarget(targetType, targetId, insideType, insideId)
 }
 
 // GetSchedule retrieves a specific schedule by ID
@@ -290,12 +290,16 @@ func (u *CheckScheduleUsecase) CreateDefaultSchedulesForTarget(
 	checkerName string,
 	targetType happydns.CheckScopeType,
 	targetId happydns.Identifier,
+	insideType *happydns.CheckScopeType,
+	insideId *happydns.Identifier,
 	ownerId happydns.Identifier,
 	enabled bool,
 ) error {
 	schedule := &happydns.CheckerSchedule{
 		CheckerName: checkerName,
 		OwnerId:     ownerId,
+		InsideType:  insideType,
+		InsideId:    insideId,
 		TargetType:  targetType,
 		TargetId:    targetId,
 		Interval:    u.getDefaultInterval(checkerName, targetType),
@@ -379,13 +383,16 @@ func (u *CheckScheduleUsecase) RescheduleOverdueChecks() (int, error) {
 }
 
 // DeleteSchedulesForTarget removes all schedules for a target
-func (u *CheckScheduleUsecase) DeleteSchedulesForTarget(targetType happydns.CheckScopeType, targetId happydns.Identifier) error {
-	schedules, err := u.storage.ListCheckerSchedulesByTarget(targetType, targetId)
+func (u *CheckScheduleUsecase) DeleteSchedulesForTarget(targetType happydns.CheckScopeType, targetId happydns.Identifier, insideType *happydns.CheckScopeType, insideId *happydns.Identifier, ownerId happydns.Identifier) error {
+	schedules, err := u.storage.ListCheckerSchedulesByTarget(targetType, targetId, insideType, insideId)
 	if err != nil {
 		return err
 	}
 
 	for _, schedule := range schedules {
+		if !schedule.OwnerId.Equals(ownerId) {
+			continue
+		}
 		if err := u.storage.DeleteCheckerSchedule(schedule.Id); err != nil {
 			return err
 		}
@@ -425,7 +432,7 @@ func (u *CheckScheduleUsecase) DiscoverAndEnsureSchedules() error {
 				continue
 			}
 
-			schedules, err := u.ListSchedulesByTarget(happydns.CheckScopeDomain, domain.Id)
+			schedules, err := u.ListSchedulesByTarget(happydns.CheckScopeDomain, domain.Id, nil, nil)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("listing schedules for domain %s: %w", domain.Id, err))
 				continue

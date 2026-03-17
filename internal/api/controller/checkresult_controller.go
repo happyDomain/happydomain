@@ -59,7 +59,7 @@ func NewCheckResultController(
 func (tc *CheckResultController) getTargetFromContext(c *gin.Context) (happydns.Identifier, error) {
 	switch tc.scope {
 	case happydns.CheckScopeUser:
-		user := c.MustGet("user").(*happydns.User)
+		user := middleware.MyUser(c)
 		return user.Id, nil
 	case happydns.CheckScopeDomain:
 		domain := c.MustGet("domain").(*happydns.Domain)
@@ -73,24 +73,47 @@ func (tc *CheckResultController) getTargetFromContext(c *gin.Context) (happydns.
 	}
 }
 
+// getInsideFromContext extracts the inside scope and ID from context based on scope.
+// For service scope, the inside is the zone. For other scopes, both are nil.
+func (tc *CheckResultController) getInsideFromContext(c *gin.Context) (*happydns.CheckScopeType, *happydns.Identifier) {
+	if insideZone, ok := c.Get("zone"); tc.scope == happydns.CheckScopeService && ok {
+		scopetmp := happydns.CheckScopeZone
+		return &scopetmp, &insideZone.(*happydns.Zone).Id
+	}
+	return nil, nil
+}
+
 // ListAvailableChecks lists all available check plugins for the target scope
 //
 //	@Summary		List available checks
 //	@Description	Retrieves all available check plugins for the target scope with their last execution status if enabled
 //	@Tags			checks
 //	@Produce		json
-//	@Param			domain	path		string	true	"Domain identifier"
+//	@Param			domain		path		string	true	"Domain identifier"
+//	@Param			zoneid		path		string	false	"Zone identifier"
+//	@Param			subdomain	path		string	false	"Subdomain"
+//	@Param			serviceid	path		string	false	"Service identifier"
 //	@Success		200		{array}		object	"List of available checks"
 //	@Failure		500		{object}	happydns.ErrorResponse
 //	@Router			/domains/{domain}/checks [get]
+//	@Router			/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checks [get]
 func (tc *CheckResultController) ListAvailableChecks(c *gin.Context) {
+	user := middleware.MyUser(c)
+	domain := c.MustGet("domain").(*happydns.Domain)
+	var service *happydns.Service
+
+	if svc, ok := c.Get("service"); ok {
+		service = svc.(*happydns.Service)
+	}
+
 	targetID, err := tc.getTargetFromContext(c)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
 
-	checks, err := tc.checkResultUC.ListCheckerStatuses(tc.scope, targetID)
+	insideScope, insideID := tc.getInsideFromContext(c)
+	checks, err := tc.checkResultUC.ListCheckerStatuses(tc.scope, targetID, insideScope, insideID, user, domain, service)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -105,12 +128,17 @@ func (tc *CheckResultController) ListAvailableChecks(c *gin.Context) {
 //	@Description	Retrieves the 5 most recent check results for a specific plugin and target
 //	@Tags			checks
 //	@Produce		json
-//	@Param			domain	path		string	true	"Domain identifier"
-//	@Param			cname	path		string	true	"Check plugin name"
+//	@Param			domain		path		string	true	"Domain identifier"
+//	@Param			zoneid		path		string	false	"Zone identifier"
+//	@Param			subdomain	path		string	false	"Subdomain"
+//	@Param			serviceid	path		string	false	"Service identifier"
+//	@Param			cname		path		string	true	"Check plugin name"
 //	@Success		200		{array}		happydns.CheckResult
 //	@Failure		500		{object}	happydns.ErrorResponse
 //	@Router			/domains/{domain}/checks/{cname} [get]
+//	@Router			/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checks/{cname} [get]
 func (tc *CheckResultController) ListLatestCheckResults(c *gin.Context) {
+	user := middleware.MyUser(c)
 	checkName := c.Param("cname")
 	targetID, err := tc.getTargetFromContext(c)
 	if err != nil {
@@ -118,7 +146,8 @@ func (tc *CheckResultController) ListLatestCheckResults(c *gin.Context) {
 		return
 	}
 
-	results, err := tc.checkResultUC.ListCheckResultsByTarget(checkName, tc.scope, targetID, 5)
+	insideScope, insideID := tc.getInsideFromContext(c)
+	results, err := tc.checkResultUC.ListCheckResultsByTarget(checkName, tc.scope, targetID, insideScope, insideID, user.Id, 5)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -134,13 +163,17 @@ func (tc *CheckResultController) ListLatestCheckResults(c *gin.Context) {
 //	@Tags			checks
 //	@Accept			json
 //	@Produce		json
-//	@Param			domain	path		string	true	"Domain identifier"
-//	@Param			cname	path		string	true	"Check plugin name"
+//	@Param			domain		path		string	true	"Domain identifier"
+//	@Param			zoneid		path		string	false	"Zone identifier"
+//	@Param			subdomain	path		string	false	"Subdomain"
+//	@Param			serviceid	path		string	false	"Service identifier"
+//	@Param			cname		path		string	true	"Check plugin name"
 //	@Param			body	body		object	false	"Optional: Plugin options"
 //	@Success		202		{object}	object{execution_id=string}
 //	@Failure		400		{object}	happydns.ErrorResponse
 //	@Failure		500		{object}	happydns.ErrorResponse
 //	@Router			/domains/{domain}/checks/{cname} [post]
+//	@Router			/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checks/{cname} [post]
 func (tc *CheckResultController) TriggerCheck(c *gin.Context) {
 	user := middleware.MyUser(c)
 	checkName := c.Param("cname")
@@ -148,6 +181,15 @@ func (tc *CheckResultController) TriggerCheck(c *gin.Context) {
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
+	}
+
+	var insideId *happydns.Identifier
+	var insideScope *happydns.CheckScopeType
+	if insideZone, ok := c.Get("zone"); tc.scope == happydns.CheckScopeService && ok {
+		scopetmp := happydns.CheckScopeZone
+		insideScope = &scopetmp
+
+		insideId = &insideZone.(*happydns.Zone).Id
 	}
 
 	// Parse run options
@@ -158,7 +200,7 @@ func (tc *CheckResultController) TriggerCheck(c *gin.Context) {
 	}
 
 	// Trigger the test via scheduler (returns error if scheduler is disabled)
-	executionID, err := tc.checkScheduler.TriggerOnDemandCheck(checkName, tc.scope, targetID, user.Id, options.Options)
+	executionID, err := tc.checkScheduler.TriggerOnDemandCheck(checkName, tc.scope, targetID, insideScope, insideId, user.Id, options.Options)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -174,13 +216,18 @@ func (tc *CheckResultController) TriggerCheck(c *gin.Context) {
 //	@Tags			checks
 //	@Produce		json
 //	@Param			domain			path		string	true	"Domain identifier"
+//	@Param			zoneid			path		string	false	"Zone identifier"
+//	@Param			subdomain		path		string	false	"Subdomain"
+//	@Param			serviceid		path		string	false	"Service identifier"
 //	@Param			cname			path		string	true	"Check plugin name"
 //	@Param			execution_id	path		string	true	"Execution ID"
 //	@Success		200				{object}	happydns.CheckExecution
 //	@Failure		404				{object}	happydns.ErrorResponse
 //	@Failure		500				{object}	happydns.ErrorResponse
 //	@Router			/domains/{domain}/checks/{cname}/executions/{execution_id} [get]
+//	@Router			/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checks/{cname}/executions/{execution_id} [get]
 func (tc *CheckResultController) GetCheckExecutionStatus(c *gin.Context) {
+	user := middleware.MyUser(c)
 	executionIDStr := c.Param("execution_id")
 	executionID, err := happydns.NewIdentifierFromString(executionIDStr)
 	if err != nil {
@@ -194,6 +241,11 @@ func (tc *CheckResultController) GetCheckExecutionStatus(c *gin.Context) {
 		return
 	}
 
+	if !execution.OwnerId.Equals(user.Id) {
+		middleware.ErrorResponse(c, http.StatusNotFound, happydns.ErrNotFound)
+		return
+	}
+
 	c.JSON(http.StatusOK, execution)
 }
 
@@ -203,13 +255,18 @@ func (tc *CheckResultController) GetCheckExecutionStatus(c *gin.Context) {
 //	@Description	Lists all check results for a specific check plugin and target
 //	@Tags			checks
 //	@Produce		json
-//	@Param			domain	path		string	true	"Domain identifier"
-//	@Param			cname	path		string	true	"Check plugin name"
+//	@Param			domain		path		string	true	"Domain identifier"
+//	@Param			zoneid		path		string	false	"Zone identifier"
+//	@Param			subdomain	path		string	false	"Subdomain"
+//	@Param			serviceid	path		string	false	"Service identifier"
+//	@Param			cname		path		string	true	"Check plugin name"
 //	@Param			limit	query		int		false	"Maximum number of results to return (default: 10)"
 //	@Success		200		{array}		happydns.CheckResult
 //	@Failure		500		{object}	happydns.ErrorResponse
 //	@Router			/domains/{domain}/checks/{cname}/results [get]
+//	@Router			/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checks/{cname}/results [get]
 func (tc *CheckResultController) ListCheckResults(c *gin.Context) {
+	user := middleware.MyUser(c)
 	checkName := c.Param("cname")
 	targetID, err := tc.getTargetFromContext(c)
 	if err != nil {
@@ -223,7 +280,8 @@ func (tc *CheckResultController) ListCheckResults(c *gin.Context) {
 		fmt.Sscanf(limitStr, "%d", &limit)
 	}
 
-	results, err := tc.checkResultUC.ListCheckResultsByTarget(checkName, tc.scope, targetID, limit)
+	insideScope, insideID := tc.getInsideFromContext(c)
+	results, err := tc.checkResultUC.ListCheckResultsByTarget(checkName, tc.scope, targetID, insideScope, insideID, user.Id, limit)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -238,12 +296,17 @@ func (tc *CheckResultController) ListCheckResults(c *gin.Context) {
 //	@Description	Deletes all check results for a specific check plugin and target
 //	@Tags			checks
 //	@Produce		json
-//	@Param			domain	path		string	true	"Domain identifier"
-//	@Param			cname	path		string	true	"Check plugin name"
+//	@Param			domain		path		string	true	"Domain identifier"
+//	@Param			zoneid		path		string	false	"Zone identifier"
+//	@Param			subdomain	path		string	false	"Subdomain"
+//	@Param			serviceid	path		string	false	"Service identifier"
+//	@Param			cname		path		string	true	"Check plugin name"
 //	@Success		204		"No Content"
 //	@Failure		500		{object}	happydns.ErrorResponse
 //	@Router			/domains/{domain}/checks/{cname}/results [delete]
+//	@Router			/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checks/{cname}/results [delete]
 func (tc *CheckResultController) DropCheckResults(c *gin.Context) {
+	user := middleware.MyUser(c)
 	checkName := c.Param("cname")
 	targetID, err := tc.getTargetFromContext(c)
 	if err != nil {
@@ -251,7 +314,8 @@ func (tc *CheckResultController) DropCheckResults(c *gin.Context) {
 		return
 	}
 
-	err = tc.checkResultUC.DeleteAllCheckResults(checkName, tc.scope, targetID)
+	insideScope, insideID := tc.getInsideFromContext(c)
+	err = tc.checkResultUC.DeleteAllCheckResults(checkName, tc.scope, targetID, insideScope, insideID, user.Id)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -260,20 +324,25 @@ func (tc *CheckResultController) DropCheckResults(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// GetCheckPluginResult retrieves a specific check result
+// GetCheckResult retrieves a specific check result
 //
 //	@Summary		Get check result
 //	@Description	Retrieves a specific check result by ID
 //	@Tags			checks
 //	@Produce		json
 //	@Param			domain		path		string	true	"Domain identifier"
+//	@Param			zoneid		path		string	false	"Zone identifier"
+//	@Param			subdomain	path		string	false	"Subdomain"
+//	@Param			serviceid	path		string	false	"Service identifier"
 //	@Param			cname		path		string	true	"Check plugin name"
 //	@Param			result_id	path		string	true	"Result ID"
 //	@Success		200			{object}	happydns.CheckResult
 //	@Failure		404			{object}	happydns.ErrorResponse
 //	@Failure		500			{object}	happydns.ErrorResponse
 //	@Router			/domains/{domain}/checks/{cname}/results/{result_id} [get]
+//	@Router			/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checks/{cname}/results/{result_id} [get]
 func (tc *CheckResultController) GetCheckResult(c *gin.Context) {
+	user := middleware.MyUser(c)
 	checkName := c.Param("cname")
 	resultIDStr := c.Param("result_id")
 	targetID, err := tc.getTargetFromContext(c)
@@ -288,7 +357,8 @@ func (tc *CheckResultController) GetCheckResult(c *gin.Context) {
 		return
 	}
 
-	result, err := tc.checkResultUC.GetCheckResult(checkName, tc.scope, targetID, resultID)
+	insideScope, insideID := tc.getInsideFromContext(c)
+	result, err := tc.checkResultUC.GetCheckResult(checkName, tc.scope, targetID, resultID, insideScope, insideID, user.Id)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusNotFound, err)
 		return
@@ -304,13 +374,18 @@ func (tc *CheckResultController) GetCheckResult(c *gin.Context) {
 //	@Tags			checks
 //	@Produce		html
 //	@Param			domain		path		string	true	"Domain identifier"
+//	@Param			zoneid		path		string	false	"Zone identifier"
+//	@Param			subdomain	path		string	false	"Subdomain"
+//	@Param			serviceid	path		string	false	"Service identifier"
 //	@Param			cname		path		string	true	"Check plugin name"
 //	@Param			result_id	path		string	true	"Result ID"
 //	@Success		200			{string}	string	"HTML document"
 //	@Failure		404			{object}	happydns.ErrorResponse
 //	@Failure		500			{object}	happydns.ErrorResponse
 //	@Router			/domains/{domain}/checks/{cname}/results/{result_id}/report [get]
+//	@Router			/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checks/{cname}/results/{result_id}/report [get]
 func (tc *CheckResultController) GetCheckResultHTMLReport(c *gin.Context) {
+	user := middleware.MyUser(c)
 	checkName := c.Param("cname")
 	resultIDStr := c.Param("result_id")
 	targetID, err := tc.getTargetFromContext(c)
@@ -325,7 +400,8 @@ func (tc *CheckResultController) GetCheckResultHTMLReport(c *gin.Context) {
 		return
 	}
 
-	result, err := tc.checkResultUC.GetCheckResult(checkName, tc.scope, targetID, resultID)
+	insideScope, insideID := tc.getInsideFromContext(c)
+	result, err := tc.checkResultUC.GetCheckResult(checkName, tc.scope, targetID, resultID, insideScope, insideID, user.Id)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusNotFound, err)
 		return
@@ -363,13 +439,18 @@ func (tc *CheckResultController) GetCheckResultHTMLReport(c *gin.Context) {
 //	@Tags			checks
 //	@Produce		json
 //	@Param			domain		path		string	true	"Domain identifier"
+//	@Param			zoneid		path		string	false	"Zone identifier"
+//	@Param			subdomain	path		string	false	"Subdomain"
+//	@Param			serviceid	path		string	false	"Service identifier"
 //	@Param			cname		path		string	true	"Check plugin name"
 //	@Param			result_id	path		string	true	"Result ID"
 //	@Success		204			"No Content"
 //	@Failure		404			{object}	happydns.ErrorResponse
 //	@Failure		500			{object}	happydns.ErrorResponse
 //	@Router			/domains/{domain}/checks/{cname}/results/{result_id} [delete]
+//	@Router			/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checks/{cname}/results/{result_id} [delete]
 func (tc *CheckResultController) DropCheckResult(c *gin.Context) {
+	user := middleware.MyUser(c)
 	checkName := c.Param("cname")
 	resultIDStr := c.Param("result_id")
 	targetID, err := tc.getTargetFromContext(c)
@@ -384,7 +465,8 @@ func (tc *CheckResultController) DropCheckResult(c *gin.Context) {
 		return
 	}
 
-	err = tc.checkResultUC.DeleteCheckResult(checkName, tc.scope, targetID, resultID)
+	insideScope, insideID := tc.getInsideFromContext(c)
+	err = tc.checkResultUC.DeleteCheckResult(checkName, tc.scope, targetID, resultID, insideScope, insideID, user.Id)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusNotFound, err)
 		return

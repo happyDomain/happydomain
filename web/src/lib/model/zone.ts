@@ -19,6 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import { type CheckResultStatus } from "$lib/model/checker";
 import type { ServiceCombined } from "$lib/model/service.svelte";
 
 export interface ServiceRecord {
@@ -41,4 +42,5 @@ export interface ZoneMeta {
 
 export interface Zone extends ZoneMeta {
     services: Record<string, Array<ServiceCombined>>;
+    services_check_status?: Record<string, CheckResultStatus>;
 }

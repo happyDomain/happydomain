@@ -40,7 +40,7 @@
         options: Array<any>;
         optionValues: Record<string, any>;
         title: string;
-        saveOptionsFn: (values: Record<string, any>) => Promise<void>;
+        saveOptionsFn: (values: Record<string, any>) => Promise<void | boolean>;
     }
 
     let { options, optionValues = $bindable(), title, saveOptionsFn }: Props = $props();

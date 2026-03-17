@@ -22,23 +22,17 @@
 -->
 
 <script lang="ts">
-    import { navigate } from "$lib/stores/config";
-    import { page } from "$app/state";
-    import { Card, Icon, Table, Badge, Button, Spinner } from "@sveltestrap/sveltestrap";
+    import { Spinner } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
     import PageTitle from "$lib/components/PageTitle.svelte";
-    import {
-        listAvailableCheckers,
-        updateCheckSchedule,
-        createCheckSchedule,
-    } from "$lib/api/checkers";
+    import CheckersAvailabilityTable from "$lib/components/checkers/CheckersAvailabilityTable.svelte";
+    import { listAvailableCheckers } from "$lib/api/checkers";
     import type { Domain } from "$lib/model/domain";
-    import { CheckScopeType, type AvailableChecker } from "$lib/model/checker";
+    import type { AvailableChecker } from "$lib/model/checker";
+    import { CheckScopeType } from "$lib/model/checker";
+    import CheckersList from "$lib/components/checkers/CheckersList.svelte";
     import { checkers } from "$lib/stores/checkers";
-    import { toasts } from "$lib/stores/toasts";
-    import RunCheckModal from "$lib/components/modals/RunCheckModal.svelte";
-    import { getStatusColor, getStatusKey, formatCheckDate } from "$lib/utils";
 
     interface Props {
         data: { domain: Domain };
@@ -46,50 +40,28 @@
 
     let { data }: Props = $props();
 
-    let checksPromise = $derived(listAvailableCheckers(data.domain.id));
-    let runCheckModal: RunCheckModal;
-    let togglingChecks = $state(new Set<string>());
+    let domainCheckers = $state<AvailableChecker[] | null>(null);
 
-    function handleCheckTriggered(_: string, checkName: string) {
-        // Refresh the check list to show updated status
-        checksPromise = listAvailableCheckers(data.domain.id);
-        navigate(`/domains/${page.params.dn!}/checks/${checkName}/results`);
+    async function fetchAndStoreDomainCheckers(): Promise<AvailableChecker[]> {
+        const result = await listAvailableCheckers(data.domain.id);
+        domainCheckers = result;
+        return result;
     }
 
-    async function handleToggleEnabled(checker: AvailableChecker) {
-        const next = new Set(togglingChecks);
-        next.add(checker.checker_name);
-        togglingChecks = next;
+    let domainCheckerNames = $derived(
+        domainCheckers
+            ? new Set(domainCheckers.map((c: AvailableChecker) => c.checker_name))
+            : null,
+    );
 
-        try {
-            const newEnabled = !checker.enabled;
-            if (checker.schedule) {
-                await updateCheckSchedule(checker.schedule.id!, {
-                    ...checker.schedule,
-                    enabled: newEnabled,
-                });
-            } else {
-                // No schedule record yet — create one to persist the disabled state.
-                // (Enabled → Enabled needs no action since that's the implicit default.)
-                await createCheckSchedule({
-                    checker_name: checker.checker_name,
-                    target_type: CheckScopeType.CheckScopeDomain,
-                    target_id: data.domain.id,
-                    interval: 0,
-                    enabled: newEnabled,
-                });
-            }
-            checksPromise = listAvailableCheckers(data.domain.id);
-        } catch (e: any) {
-            toasts.addErrorToast({
-                title: $t("checkers.list.error-loading", { error: e.message }),
-            });
-        } finally {
-            const after = new Set(togglingChecks);
-            after.delete(checker.checker_name);
-            togglingChecks = after;
-        }
-    }
+    let otherCheckers = $derived.by(() => {
+        if (!$checkers || !domainCheckerNames) return null;
+        return Object.entries($checkers).filter(
+            ([name]) => !domainCheckerNames!.has(name) && $checkers[name].options?.domainOpts,
+        );
+    });
+
+    const basePath = $derived(`/domains/${encodeURIComponent(data.domain.domain)}/checks`);
 </script>
 
 <svelte:head>
@@ -99,124 +71,28 @@
 <div class="flex-fill pb-4 pt-2">
     <PageTitle title={$t("checkers.list.title")} domain={data.domain.domain} />
 
-    {#await checksPromise}
-        <div class="mt-5 text-center flex-fill">
-            <Spinner />
-            <p>{$t("checkers.list.loading")}</p>
-        </div>
-    {:then availableCheckers}
-        {#if !$checkers}
-            <div class="mt-5 text-center flex-fill">
-                <Spinner />
-                <p>{$t("checkers.list.loading-checks")}</p>
-            </div>
-        {:else if !availableCheckers || availableCheckers.length === 0}
-            <Card body class="mt-3">
-                <p class="text-center text-muted mb-0">
-                    <Icon name="info-circle"></Icon>
-                    {$t("checkers.list.no-checks")}
-                </p>
-            </Card>
-        {:else}
-            <Table hover striped class="mt-3">
-                <thead>
-                    <tr>
-                        <th>{$t("checkers.list.table.checker")}</th>
-                        <th>{$t("checkers.list.table.status")}</th>
-                        <th>{$t("checkers.list.table.last-run")}</th>
-                        <th>{$t("checkers.list.table.schedule")}</th>
-                        <th>{$t("checkers.list.table.actions")}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {#each availableCheckers as checker}
-                        {@const checkInfo = $checkers[checker.checker_name]}
-                        <tr>
-                            <td class="align-middle">
-                                <strong>{checkInfo?.name || checker.checker_name}</strong>
-                            </td>
-                            <td class="align-middle text-center">
-                                {#if checker.last_result !== undefined}
-                                    <Badge color={getStatusColor(checker.last_result.status)}>
-                                        {$t(getStatusKey(checker.last_result.status))}
-                                    </Badge>
-                                {:else}
-                                    <Badge color="secondary">{$t("checkers.status.not-run")}</Badge>
-                                {/if}
-                            </td>
-                            <td class="align-middle">
-                                {formatCheckDate(checker.last_result?.executed_at, "short", $t)}
-                            </td>
-                            <td class="align-middle">
-                                <div class="form-check form-switch mb-0">
-                                    <input
-                                        class="form-check-input"
-                                        type="checkbox"
-                                        role="switch"
-                                        id="toggle-{checker.checker_name}"
-                                        checked={checker.enabled}
-                                        disabled={togglingChecks.has(checker.checker_name)}
-                                        onchange={() => handleToggleEnabled(checker)}
-                                    />
-                                    <label
-                                        class="form-check-label small"
-                                        for="toggle-{checker.checker_name}"
-                                    >
-                                        {checker.enabled
-                                            ? $t("checkers.list.schedule.enabled")
-                                            : $t("checkers.list.schedule.disabled")}
-                                    </label>
-                                </div>
-                            </td>
-                            <td class="align-middle">
-                                <div class="d-flex gap-2">
-                                    <Button
-                                        size="sm"
-                                        color="primary"
-                                        onclick={() =>
-                                            runCheckModal.open(
-                                                checker.checker_name,
-                                                checkInfo?.name || checker.checker_name,
-                                            )}
-                                    >
-                                        <Icon name="play-fill"></Icon>
-                                        {$t("checkers.list.run-check")}
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        color="info"
-                                        href={`/domains/${encodeURIComponent(data.domain.domain)}/checks/${encodeURIComponent(checker.checker_name)}/results`}
-                                    >
-                                        <Icon name="bar-chart-fill"></Icon>
-                                        {$t("checkers.list.view-results")}
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        color="dark"
-                                        href={`/domains/${encodeURIComponent(data.domain.domain)}/checks/${encodeURIComponent(checker.checker_name)}`}
-                                        title={$t("checkers.list.configure")}
-                                    >
-                                        <Icon name="gear"></Icon>
-                                    </Button>
-                                </div>
-                            </td>
-                        </tr>
-                    {/each}
-                </tbody>
-            </Table>
-        {/if}
-    {:catch error}
-        <Card body color="danger" class="mt-3">
-            <p class="mb-0">
-                <Icon name="exclamation-triangle-fill"></Icon>
-                {$t("checkers.list.error-loading", { error: error.message })}
-            </p>
-        </Card>
-    {/await}
-</div>
+    <CheckersList
+        fetchCheckers={fetchAndStoreDomainCheckers}
+        {basePath}
+        domainId={data.domain.id}
+        targetType={CheckScopeType.CheckScopeDomain}
+        targetId={data.domain.id}
+        noChecksKey="checkers.list.no-checks"
+    />
 
-<RunCheckModal
-    domainId={data.domain.id}
-    onCheckTriggered={handleCheckTriggered}
-    bind:this={runCheckModal}
-/>
+    {#if otherCheckers === null}
+        <div class="mt-5 text-center">
+            <Spinner size="sm" />
+            <span class="ms-2">{$t("checkers.list.loading-checks")}</span>
+        </div>
+    {:else if otherCheckers.length > 0}
+        <h4 class="mt-5 mb-3">{$t("checkers.other-checkers.title")}</h4>
+        <p class="text-muted">{$t("checkers.other-checkers.description")}</p>
+
+        <CheckersAvailabilityTable
+            checkers={otherCheckers}
+            {basePath}
+            configureKey="checkers.other-checkers.configure"
+        />
+    {/if}
+</div>
