@@ -17,19 +17,19 @@ const (
 )
 
 func init() {
-	RegisterChecker("domain-expiration", &DomainExpirationCheck{})
+	RegisterChecker("domain-registration", &DomainRegistrationCheck{})
 }
 
-type DomainExpirationCheck struct{}
+type DomainRegistrationCheck struct{}
 
-func (p *DomainExpirationCheck) ID() string   { return "domain-expiration" }
-func (p *DomainExpirationCheck) Name() string { return "Domain Expiration" }
+func (p *DomainRegistrationCheck) ID() string   { return "domain-registration" }
+func (p *DomainRegistrationCheck) Name() string { return "Domain Registration" }
 
-func (p *DomainExpirationCheck) Availability() happydns.CheckerAvailability {
+func (p *DomainRegistrationCheck) Availability() happydns.CheckerAvailability {
 	return happydns.CheckerAvailability{ApplyToDomain: true}
 }
 
-func (p *DomainExpirationCheck) Options() happydns.CheckerOptionsDocumentation {
+func (p *DomainRegistrationCheck) Options() happydns.CheckerOptionsDocumentation {
 	return happydns.CheckerOptionsDocumentation{
 		RunOpts: []happydns.CheckerOptionDocumentation{
 			{Id: "domainName", Type: "string", Label: "Domain name", AutoFill: happydns.AutoFillDomainName, Required: true},
@@ -37,11 +37,12 @@ func (p *DomainExpirationCheck) Options() happydns.CheckerOptionsDocumentation {
 		UserOpts: []happydns.CheckerOptionDocumentation{
 			{Id: "warningDays", Type: "number", Label: "Days before expiration to warn", Default: DEFAULT_WARNING_DAYS},
 			{Id: "criticalDays", Type: "number", Label: "Days before expiration to alert", Default: DEFAULT_CRITICAL_DAYS},
+			{Id: "requiredStatuses", Type: "string", Label: "Required lock statuses (comma-separated)", Default: "clientTransferProhibited"},
 		},
 	}
 }
 
-func (p *DomainExpirationCheck) RunCheck(ctx context.Context, options happydns.CheckerOptions, meta map[string]string) (*happydns.CheckResult, error) {
+func (p *DomainRegistrationCheck) RunCheck(ctx context.Context, options happydns.CheckerOptions, meta map[string]string) (*happydns.CheckResult, error) {
 	// 1. Extract domainName
 	domainName, ok := options["domainName"].(string)
 	if !ok || domainName == "" {
@@ -53,7 +54,13 @@ func (p *DomainExpirationCheck) RunCheck(ctx context.Context, options happydns.C
 	warningDays := extractInt(options, "warningDays", DEFAULT_WARNING_DAYS)
 	criticalDays := extractInt(options, "criticalDays", DEFAULT_CRITICAL_DAYS)
 
-	// 3. Try RDAP, fallback to WHOIS
+	// 3. Extract required statuses
+	requiredStatusesStr := "clientTransferProhibited"
+	if v, ok := options["requiredStatuses"].(string); ok && v != "" {
+		requiredStatusesStr = v
+	}
+
+	// 4. Try RDAP, fallback to WHOIS
 	info, err := domaininfo.GetDomainRDAPInfo(ctx, happydns.Origin(domainName))
 	if err != nil {
 		info, err = domaininfo.GetDomainWhoisInfo(ctx, happydns.Origin(domainName))
@@ -62,38 +69,78 @@ func (p *DomainExpirationCheck) RunCheck(ctx context.Context, options happydns.C
 		}
 	}
 
-	// 4. Check expiration date presence
+	// 5. Evaluate expiration status
+	expirationStatus := happydns.CheckResultStatusUnknown
+	var expirationLine string
+
 	if info.ExpirationDate == nil {
-		return &happydns.CheckResult{
-			Status:     happydns.CheckResultStatusUnknown,
-			StatusLine: "Expiration date not available",
-			Report:     info,
-		}, nil
+		expirationStatus = happydns.CheckResultStatusUnknown
+		expirationLine = "Expiration date not available"
+	} else {
+		daysUntil := int(math.Ceil(time.Until(*info.ExpirationDate).Hours() / 24))
+
+		switch {
+		case daysUntil < 0:
+			expirationStatus = happydns.CheckResultStatusCritical
+			expirationLine = fmt.Sprintf("Domain expired %d day(s) ago (expired on %s)", -daysUntil, info.ExpirationDate.Format("2006-01-02"))
+		case daysUntil < criticalDays:
+			expirationStatus = happydns.CheckResultStatusCritical
+			expirationLine = fmt.Sprintf("Domain expires in %d day(s) (on %s)", daysUntil, info.ExpirationDate.Format("2006-01-02"))
+		case daysUntil < warningDays:
+			expirationStatus = happydns.CheckResultStatusWarn
+			expirationLine = fmt.Sprintf("Domain expires in %d day(s) (on %s)", daysUntil, info.ExpirationDate.Format("2006-01-02"))
+		default:
+			expirationStatus = happydns.CheckResultStatusOK
+			expirationLine = fmt.Sprintf("Domain valid until %s (%d days)", info.ExpirationDate.Format("2006-01-02"), daysUntil)
+		}
 	}
 
-	// 5. Compute days remaining
-	daysUntil := int(math.Ceil(time.Until(*info.ExpirationDate).Hours() / 24))
+	// 6. Evaluate lock status
+	lockStatus := happydns.CheckResultStatusOK
+	var lockLine string
 
-	// 6. Determine status
-	var status happydns.CheckResultStatus
-	var statusLine string
-	switch {
-	case daysUntil < 0:
-		status = happydns.CheckResultStatusCritical
-		statusLine = fmt.Sprintf("Domain expired %d day(s) ago (expired on %s)", -daysUntil, info.ExpirationDate.Format("2006-01-02"))
-	case daysUntil < criticalDays:
-		status = happydns.CheckResultStatusCritical
-		statusLine = fmt.Sprintf("Domain expires in %d day(s) (on %s)", daysUntil, info.ExpirationDate.Format("2006-01-02"))
-	case daysUntil < warningDays:
-		status = happydns.CheckResultStatusWarn
-		statusLine = fmt.Sprintf("Domain expires in %d day(s) (on %s)", daysUntil, info.ExpirationDate.Format("2006-01-02"))
-	default:
-		status = happydns.CheckResultStatusOK
-		statusLine = fmt.Sprintf("Domain valid until %s (%d days)", info.ExpirationDate.Format("2006-01-02"), daysUntil)
+	var requiredStatuses []string
+	for _, s := range strings.Split(requiredStatusesStr, ",") {
+		s = strings.TrimSpace(s)
+		if s != "" {
+			requiredStatuses = append(requiredStatuses, s)
+		}
+	}
+
+	if len(requiredStatuses) > 0 {
+		statusSet := make(map[string]bool, len(info.Status))
+		for _, s := range info.Status {
+			statusSet[s] = true
+		}
+
+		var missing []string
+		for _, req := range requiredStatuses {
+			if !statusSet[req] {
+				missing = append(missing, req)
+			}
+		}
+
+		if len(missing) > 0 {
+			lockStatus = happydns.CheckResultStatusCritical
+			lockLine = fmt.Sprintf("Missing lock status: %s", strings.Join(missing, ", "))
+		} else {
+			lockLine = fmt.Sprintf("All required statuses present: %s", strings.Join(requiredStatuses, ", "))
+		}
+	}
+
+	// 7. Combine results: worst status wins (lower value = more severe)
+	finalStatus := expirationStatus
+	if lockStatus < finalStatus {
+		finalStatus = lockStatus
+	}
+
+	statusLine := expirationLine
+	if lockLine != "" {
+		statusLine = expirationLine + "; " + lockLine
 	}
 
 	return &happydns.CheckResult{
-		Status:     status,
+		Status:     finalStatus,
 		StatusLine: statusLine,
 		Report:     info,
 	}, nil
