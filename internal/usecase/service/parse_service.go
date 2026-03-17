@@ -24,6 +24,7 @@ package service
 import (
 	"encoding/json"
 
+	"git.happydns.org/happyDomain/internal/forms"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 )
@@ -41,5 +42,10 @@ func ParseService(msg *happydns.ServiceMessage) (svc *happydns.Service, err erro
 	}
 
 	err = json.Unmarshal(msg.Service, &svc.Service)
+	if err != nil {
+		return
+	}
+
+	err = forms.ValidateStructValues(svc.Service)
 	return
 }

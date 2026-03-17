@@ -22,7 +22,9 @@
 package forms // import "git.happydns.org/happyDomain/forms"
 
 import (
+	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 
 	"git.happydns.org/happyDomain/model"
@@ -76,6 +78,53 @@ func GenField(field reflect.StructField) (f *happydns.Field) {
 		}
 	}
 	return
+}
+
+// ValidateStructValues validates the field values of a struct against the
+// constraints declared in its happydomain struct tags (choices, required).
+// Since the struct is already typed, basic type checking is handled by the
+// JSON decoder; this function validates higher-level constraints.
+func ValidateStructValues(data any) error {
+	if data == nil {
+		return nil
+	}
+
+	v := reflect.Indirect(reflect.ValueOf(data))
+	t := v.Type()
+
+	for i := 0; i < t.NumField(); i++ {
+		sf := t.Field(i)
+		if sf.Anonymous {
+			if err := ValidateStructValues(v.Field(i).Interface()); err != nil {
+				return err
+			}
+			continue
+		}
+
+		field := GenField(sf)
+		fv := v.Field(i)
+
+		if field.Required && fv.IsZero() {
+			label := field.Label
+			if label == "" {
+				label = field.Id
+			}
+			return fmt.Errorf("field %q is required", label)
+		}
+
+		if len(field.Choices) > 0 && fv.Kind() == reflect.String {
+			s := fv.String()
+			if s != "" && !slices.Contains(field.Choices, s) {
+				label := field.Label
+				if label == "" {
+					label = field.Id
+				}
+				return fmt.Errorf("field %q: value %q is not a valid choice (valid: %v)", label, s, field.Choices)
+			}
+		}
+	}
+
+	return nil
 }
 
 // GenStructFields generates corresponding SourceFields of the given Source.

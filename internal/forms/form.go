@@ -33,6 +33,9 @@ func DoSettingState(fu happydns.FormUsecase, state *happydns.FormState, data any
 	}
 
 	if state.State == 1 {
+		if verr := ValidateStructValues(data); verr != nil {
+			return nil, nil, verr
+		}
 		err = happydns.DoneForm
 	} else {
 		form = defaultForm(data)
