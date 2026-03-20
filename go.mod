@@ -9,7 +9,7 @@ require (
 	github.com/altcha-org/altcha-lib-go v1.0.0
 	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/earthboundkid/versioninfo/v2 v2.24.1
-	github.com/fatih/color v1.18.0
+	github.com/fatih/color v1.19.0
 	github.com/gin-contrib/sessions v1.0.4
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-mail/mail v2.3.1+incompatible
