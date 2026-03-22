@@ -36,6 +36,7 @@
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import { ServiceCombined } from "$lib/model/service.svelte";
+    import { domainLink } from "$lib/stores/domains";
     import { helpLinkOverride } from "$lib/stores/help";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
@@ -96,7 +97,7 @@
 
     function goBack(historyid?: string) {
         navigate(
-            `/domains/${encodeURIComponent(data.domain.domain)}/${encodeURIComponent(historyid ? historyid : data.history)}`,
+            `/domains/${encodeURIComponent(domainLink(data.domain.id))}/${encodeURIComponent(historyid ? historyid : data.history)}`,
         );
     }
 

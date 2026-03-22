@@ -32,7 +32,7 @@
     import SelectDomain from "$lib/components/domains/SelectDomain.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { ZoneMeta } from "$lib/model/zone";
-    import { domains_idx, refreshDomains } from "$lib/stores/domains";
+    import { domainLink, domains_idx, refreshDomains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
     import ButtonZonePublish from "./ButtonZonePublish.svelte";
     import ModalDiffZone from "./ModalDiffZone.svelte";
@@ -49,10 +49,6 @@
     }
 
     let { data, children }: Props = $props();
-
-    function domainLink(dn: string): string {
-        return $domains_idx[$domains_idx[dn].domain] ? $domains_idx[dn].domain : dn;
-    }
 
     let selectedDomain = $derived(data.domain.id);
     function domainChange(dn: string) {

@@ -35,7 +35,7 @@
     import { isReverseZone } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { ZoneMeta } from "$lib/model/zone";
-    import { domains_idx } from "$lib/stores/domains";
+    import { domains_idx, domainLink } from "$lib/stores/domains";
     import {
         retrieveZone as StoreRetrieveZone,
         sortedDomains,
@@ -57,10 +57,6 @@
     }
 
     let { origin, selectedDomain, selectedHistory, onretrieveZoneDone }: Props = $props();
-
-    function domainLink(dn: string): string {
-        return $domains_idx[$domains_idx[dn].domain] ? $domains_idx[dn].domain : dn;
-    }
 
     let retrievalInProgress = $state(false);
     async function retrieveZone() {
@@ -136,8 +132,7 @@
             </DropdownItem>
             <DropdownItem divider />
             <DropdownItem
-                href={"/providers/" +
-                    encodeURIComponent($domains_idx[selectedDomain].id_provider)}
+                href={"/providers/" + encodeURIComponent($domains_idx[selectedDomain].id_provider)}
             >
                 {$t("provider.update")}
             </DropdownItem>

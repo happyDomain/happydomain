@@ -24,6 +24,7 @@
 <script lang="ts">
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
+    import { domainLink } from "$lib/stores/domains";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
 
@@ -61,11 +62,11 @@
     );
 
     function subdomainLink(dn: string): string {
-        return `/domains/${origin.domain}/${historyId}#${dn ? dn : "@"}`;
+        return `/domains/${domainLink(origin.id)}/${historyId}#${dn ? dn : "@"}`;
     }
 
     function serviceLink(svc: { _id?: string }): string {
-        return `/domains/${origin.domain}/${historyId}/${subdomain === "" ? "@" : subdomain}/${svc._id}`;
+        return `/domains/${domainLink(origin.id)}/${historyId}/${subdomain === "" ? "@" : subdomain}/${svc._id}`;
     }
 </script>
 

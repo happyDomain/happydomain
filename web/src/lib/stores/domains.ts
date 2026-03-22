@@ -19,7 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { derived, writable, type Writable } from "svelte/store";
+import { get, derived, writable, type Writable } from "svelte/store";
 import { listDomains } from "$lib/api/domains";
 import type { Domain } from "$lib/model/domain";
 
@@ -106,3 +106,8 @@ export const domains_by_groups = derived(domains, ($domains: Array<Domain> | und
 
     return groups;
 });
+
+export function domainLink(dnid: string): string {
+    return get(domains_idx)[get(domains_idx)[dnid].domain] ? get(domains_idx)[dnid].domain : dnid;
+}
+

@@ -47,6 +47,7 @@
     import { collectRRs } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import { navigate } from "$lib/stores/config";
+    import { domainLink } from "$lib/stores/domains";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
@@ -144,7 +145,12 @@
             {#await getServiceSpec(service._svctype) then specs}
                 {@const rrs = collectRRs(specs.fields, service.Service)}
                 {#each rrs as rr, i}
-                    <RecordLine dn={service._domain || ""} origin={domain} bind:rr={rrs[i]} onopen={() => (isOpen = false)} />
+                    <RecordLine
+                        dn={service._domain || ""}
+                        origin={domain}
+                        bind:rr={rrs[i]}
+                        onopen={() => (isOpen = false)}
+                    />
                 {/each}
             {/await}
         {/if}
@@ -196,7 +202,7 @@
                 on:click={() => {
                     isOpen = false;
                     navigate(
-                        `/domains/${encodeURIComponent(domain.domain)}/${encodeURIComponent(selectedHistory ?? "")}/${encodeURIComponent(service._domain ? service._domain : "@")}/${encodeURIComponent(service._id!)}`,
+                        `/domains/${encodeURIComponent(domainLink(domain.id))}/${encodeURIComponent(selectedHistory ?? "")}/${encodeURIComponent(service._domain ? service._domain : "@")}/${encodeURIComponent(service._id!)}`,
                     );
                 }}
             >
