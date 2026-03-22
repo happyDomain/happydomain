@@ -365,6 +365,7 @@
         "add": "Ajout d'un service",
         "all": "Tout",
         "delete": "Supprimer ce service",
+        "edit": "Modifier ce service",
         "update": "Mettre à jour ce service",
         "form-new": "Ajout d'un service sur {{domain}}",
         "new": "Nouveau service",

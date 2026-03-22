@@ -207,7 +207,7 @@
                 }}
             >
                 <Icon name="pencil" />
-                {$t("service.update")}
+                {$t("service.edit")}
             </Button>
         </div>
     </OffcanvasBody>

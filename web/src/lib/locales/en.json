@@ -407,6 +407,7 @@
         "add": "Add service",
         "all": "All",
         "delete": "Delete this service",
+        "edit": "Edit this service",
         "update": "Update this service",
         "form-new": "Add a new service to {{domain}}",
         "new": "New service",
