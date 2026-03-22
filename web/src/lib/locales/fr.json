@@ -393,7 +393,9 @@
         "wait": "Veuillez patienter",
         "retrieving-domains": "Récupération de vos domaines...",
         "retrieving-provider": "Récupération des informations sur l'hébergeur...",
-        "retrieving-providers": "Récupération de vos hébergeurs de domaines ..."
+        "retrieving-providers": "Récupération de vos hébergeurs de domaines ...",
+        "preparation": "Préparation des modifications\u202f\u2026",
+        "propagation": "Publication de vos modifications\u202f\u2026"
     },
     "settings": {
         "description": "Personnalisez vos préférences",

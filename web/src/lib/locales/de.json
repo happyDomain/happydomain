@@ -422,7 +422,9 @@
         "wait": "Bitte warten",
         "retrieving-domains": "Abrufen Ihrer Domains...",
         "retrieving-provider": "Abrufen von Informationen zum Hosting-Anbieter...",
-        "retrieving-providers": "Abrufen Ihrer Anbieter..."
+        "retrieving-providers": "Abrufen Ihrer Anbieter...",
+        "preparation": "Änderungen werden vorbereitet \u2026",
+        "propagation": "Ihre Änderungen werden veröffentlicht \u2026"
     },
     "settings": {
         "subtitle": "Passen Sie Ihr happyDomain-Erlebnis an Ihre Bedürfnisse an",

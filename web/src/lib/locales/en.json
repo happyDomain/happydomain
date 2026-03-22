@@ -478,7 +478,9 @@
         "wait": "Please wait",
         "retrieving-domains": "Retrieving your domains...",
         "retrieving-provider": "Retrieving hosting provider information...",
-        "retrieving-providers": "Retrieving your providers..."
+        "retrieving-providers": "Retrieving your providers...",
+        "preparation": "Preparing changes…",
+        "propagation": "Publishing your changes…"
     },
     "settings": {
         "subtitle": "Tailor your happyDomain experience to your needs",

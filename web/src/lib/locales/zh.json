@@ -437,7 +437,9 @@
         "wait": "请稍候",
         "retrieving-domains": "检索您的域名...",
         "retrieving-provider": "检索托管提供商信息...",
-        "retrieving-providers": "检索您的提供商..."
+        "retrieving-providers": "检索您的提供商...",
+        "preparation": "正在准备更改\u2026",
+        "propagation": "正在发布您的更改\u2026"
     },
     "settings": {
         "subtitle": "根据您的需求定制您的happyDomain体验",

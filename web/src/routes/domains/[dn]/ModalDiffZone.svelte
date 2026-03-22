@@ -43,7 +43,7 @@
     } from "@sveltestrap/sveltestrap";
 
     import { applyZone as APIApplyZone, prepareZone as APIPrepareZone } from "$lib/api/zone";
-    import type { Correction, FullCorrection } from "$lib/model/correction";
+    import type { FullCorrection } from "$lib/model/correction";
     import type { Domain } from "$lib/model/domain";
     import {
         ApplyConfirmUnexpected,
@@ -175,7 +175,12 @@
         </ModalHeader>
     {/if}
     <ModalBody>
-        {#if preparePhase === "select" && prepareInProgress}
+        {#if propagationInProgress}
+            <div class="my-2 text-center">
+                <Spinner color="success" />
+                <p>{$t("wait.propagation")}</p>
+            </div>
+        {:else if prepareInProgress}
             <div class="my-2 text-center">
                 <Spinner color="warning" />
                 <p>{$t("wait.preparation")}</p>
