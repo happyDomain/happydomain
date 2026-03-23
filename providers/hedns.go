@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/hedns"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -61,5 +62,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Hurricane Electric",
 		Description: "American Internet service provider.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

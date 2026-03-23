@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/gcloud"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -58,5 +59,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Google Cloud DNS",
 		Description: "Google's globally distributed, scalable, and reliable managed DNS service.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

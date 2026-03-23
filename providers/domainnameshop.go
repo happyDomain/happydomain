@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/domainnameshop"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -54,5 +55,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Domeneshop AS",
 		Description: "Norwegian registrar and hosting company",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

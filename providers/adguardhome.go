@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/adguardhome"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -56,5 +57,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "AdGuard Home",
 		Description: "Local network-wide ad blocker and DNS server with DNS rewrite capabilities.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"testing"
 
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
@@ -32,14 +33,13 @@ import (
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/providers"
 )
 
 // Mock implementations for testing
 
 func init() {
 	// Register the mock provider
-	providers.RegisterProvider(func() happydns.ProviderBody {
+	providerReg.RegisterProvider(func() happydns.ProviderBody {
 		return &mockProviderBody{}
 	}, happydns.ProviderInfos{
 		Name:        "Mock Provider",

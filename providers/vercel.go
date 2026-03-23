@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/vercel"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -54,5 +55,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Vercel",
 		Description: "DNS management for domains associated with Vercel projects.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

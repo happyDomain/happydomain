@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,7 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package providers // import "git.happydns.org/happyDomain/providers"
+package provider
 
 import (
 	"fmt"
@@ -29,30 +29,30 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-// providers stores all existing Provider in happyDNS.
-var providersList map[string]happydns.ProviderCreator = map[string]happydns.ProviderCreator{}
+// providerRegistry stores all existing Provider in happyDNS.
+var providerRegistry = map[string]happydns.ProviderCreator{}
 
-// RegisterProvider declares the existence of the given Provider.
+// RegisterProvider registers a provider definition globally.
 func RegisterProvider(creator happydns.ProviderCreatorFunc, infos happydns.ProviderInfos) {
 	provider := creator()
 	baseType := reflect.Indirect(reflect.ValueOf(provider)).Type()
 	name := baseType.Name()
 	log.Println("Registering new provider:", name)
 
-	providersList[name] = happydns.ProviderCreator{
+	providerRegistry[name] = happydns.ProviderCreator{
 		Creator: creator,
 		Infos:   infos,
 	}
 }
 
-// GetProviders retrieves the list of all existing Providers.
-func GetProviders() *map[string]happydns.ProviderCreator {
-	return &providersList
+// GetProviders returns all registered provider definitions.
+func GetProviders() map[string]happydns.ProviderCreator {
+	return providerRegistry
 }
 
 // FindProvider returns the Provider corresponding to the given name, or an error if it doesn't exist.
 func FindProvider(name string) (happydns.ProviderBody, error) {
-	src, ok := providersList[name]
+	src, ok := providerRegistry[name]
 	if !ok {
 		return nil, fmt.Errorf("Unable to find corresponding provider for `%s`.", name)
 	}

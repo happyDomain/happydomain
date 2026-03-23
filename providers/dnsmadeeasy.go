@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/dnsmadeeasy"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -54,5 +55,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "DNSMadeEasy",
 		Description: "Fast and reliable DNS service provider.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

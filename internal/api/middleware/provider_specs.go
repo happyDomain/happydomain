@@ -27,13 +27,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happyDomain/providers"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 )
 
 func ProviderSpecsHandler(c *gin.Context) {
 	psid := string(c.Param("psid"))
 
-	pbody, err := providers.FindProvider(psid)
+	pbody, err := providerReg.FindProvider(psid)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find provider: %s", err.Error())})
 		return

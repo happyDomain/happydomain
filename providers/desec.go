@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/desec"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -52,5 +53,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "deSEC",
 		Description: "Free and secure DNS hosting with DNSSEC support.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

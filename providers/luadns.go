@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/luadns"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -54,5 +55,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "LuaDNS",
 		Description: "Bulk DNS hosting company with Git integration",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

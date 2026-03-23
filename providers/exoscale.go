@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/exoscale"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -56,5 +57,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Exoscale",
 		Description: "Cloud computing provider based in Switzerland, offering infrastructure-as-a-service (IaaS) solutions.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

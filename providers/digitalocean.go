@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/digitalocean"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -52,5 +53,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "DigitalOcean",
 		Description: "Cloud infrastructure provider with managed DNS service.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

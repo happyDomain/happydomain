@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/inwx"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -54,5 +55,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "INWX.de",
 		Description: "Berlin-based domain registrar.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

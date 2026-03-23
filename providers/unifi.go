@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/unifi"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -79,5 +80,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "UniFi",
 		Description: "If your local DNS is managed by a UniFi Network controller (local or cloud access).",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

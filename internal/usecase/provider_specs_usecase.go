@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"git.happydns.org/happyDomain/internal/forms"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/providers"
 )
@@ -37,10 +38,10 @@ func NewProviderSpecsUsecase() happydns.ProviderSpecsUsecase {
 }
 
 func (psu *providerSpecsUsecase) ListProviders() map[string]happydns.ProviderInfos {
-	srcs := providers.GetProviders()
+	srcs := providerReg.GetProviders()
 
 	ret := map[string]happydns.ProviderInfos{}
-	for k, src := range *srcs {
+	for k, src := range srcs {
 		ret[k] = src.Infos
 	}
 
@@ -57,7 +58,7 @@ func (psu *providerSpecsUsecase) GetProviderIcon(psid string) ([]byte, error) {
 }
 
 func (psu *providerSpecsUsecase) GetProviderSpecs(psid string) (*happydns.ProviderSpecs, error) {
-	pcreator, ok := (*providers.GetProviders())[psid]
+	pcreator, ok := providerReg.GetProviders()[psid]
 	if !ok {
 		return nil, happydns.NotFoundError{Msg: happydns.ErrProviderNotFound.Error()}
 	}

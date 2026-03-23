@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/rwth"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -52,5 +53,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "RWTH Aachen University",
 		Description: "German University",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

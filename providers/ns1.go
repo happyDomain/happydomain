@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/ns1"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -52,5 +53,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "NS1",
 		Description: "Intelligent DNS and traffic management platform (now part of IBM).",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

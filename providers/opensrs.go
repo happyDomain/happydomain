@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/opensrs"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -56,5 +57,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "OpenSRS",
 		Description: "Domain registrar platform and wholesale domain services provider based in Toronto, Canada, and part of Tucows.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

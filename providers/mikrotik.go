@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/mikrotik"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -63,5 +64,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "MikroTik",
 		Description: "If your zone is hosted on a MikroTik RouterOS device, managed via its REST API static DNS entries.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

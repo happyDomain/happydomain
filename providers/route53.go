@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/route53"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -76,5 +77,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "AWS Route 53",
 		Description: "Amazon's highly available and scalable DNS web service with global anycast network.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

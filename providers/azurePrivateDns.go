@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/azureprivatedns"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -60,5 +61,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Azure Private DNS",
 		Description: "Exclusively to manage Private DNS zones. Use Azure DNS for public zones.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

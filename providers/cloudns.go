@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/cloudns"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -56,5 +57,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "ClouDNS",
 		Description: "ClouDNS LTD is provider of global Managed DNS services, including GeoDNS, Anycast DNS and DDoS protected DNS",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

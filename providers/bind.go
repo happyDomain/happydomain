@@ -27,6 +27,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/bind"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -62,7 +63,7 @@ func init() {
 		}, happydns.ProviderInfos{
 			Name:        "Bind files/RFC 1035",
 			Description: "Use zone files saved in the RFC 1035 format.",
-		}, RegisterProvider)
+		}, providerReg.RegisterProvider)
 		return nil
 	})
 }

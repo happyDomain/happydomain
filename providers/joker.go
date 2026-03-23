@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/joker"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -64,5 +65,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Joker.com",
 		Description: "Domain registrar and DNS hosting service.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

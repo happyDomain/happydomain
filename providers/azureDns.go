@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/azuredns"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -60,5 +61,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Azure DNS",
 		Description: "Cloud computing service operated by Microsoft",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

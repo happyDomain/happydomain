@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/cscglobal"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -56,5 +57,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "CSC Global",
 		Description: "Corporation Service Company (CSC) provides various business, legal, and financial services.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

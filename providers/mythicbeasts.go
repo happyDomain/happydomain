@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/mythicbeasts"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -54,5 +55,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Mythic Beasts",
 		Description: "UK-based internet infrastructure company specializing in domain registration, web hosting, and virtual & dedicated servers.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

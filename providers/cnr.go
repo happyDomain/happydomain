@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/cnr"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -56,5 +57,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "CentralNic Reseller (CNR)",
 		Description: "DNS and domain management through CentralNic Reseller platform.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

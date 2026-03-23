@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/dnscale"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -59,5 +60,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "DNScale",
 		Description: "European DNS hosting provider with advanced features and API support.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

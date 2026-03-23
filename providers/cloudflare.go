@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/cloudflare"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -54,5 +55,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Cloudflare",
 		Description: "Global CDN and DNS provider with advanced features like proxy and DNSSEC support.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

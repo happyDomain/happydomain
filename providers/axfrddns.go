@@ -28,6 +28,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/axfrddns"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -69,5 +70,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Dynamic DNS",
 		Description: "If your zone is hosted on an authoritative name server that support Dynamic DNS (RFC 2136), such as Bind, Knot, ...",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

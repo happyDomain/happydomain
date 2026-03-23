@@ -26,8 +26,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/providers"
 )
 
 // Service handles CRUD operations on DNS providers, with ownership enforcement.
@@ -53,7 +53,7 @@ func ParseProvider(msg *happydns.ProviderMessage) (p *happydns.Provider, err err
 	p = &happydns.Provider{}
 
 	p.ProviderMeta = msg.ProviderMeta
-	p.Provider, err = providers.FindProvider(msg.Type)
+	p.Provider, err = providerReg.FindProvider(msg.Type)
 	if err != nil {
 		return
 	}

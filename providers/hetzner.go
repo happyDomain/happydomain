@@ -26,6 +26,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/hetznerv2"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -63,5 +64,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Hetzner DNS",
 		Description: "German hosting provider with DNS services.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

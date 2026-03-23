@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/oracle"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -62,5 +63,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Oracle Cloud",
 		Description: "American multinational computer technology corporation headquartered in Austin, Texas",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

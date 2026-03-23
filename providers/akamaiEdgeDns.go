@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/akamaiedgedns"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -62,5 +63,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Akamai Edge DNS",
 		Description: "American content delivery network and cloud service company - https://www.akamai.com",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

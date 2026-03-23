@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/fortigate"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -63,5 +64,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "FortiGate",
 		Description: "Fortinet FortiGate firewall with internal DNS server.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }

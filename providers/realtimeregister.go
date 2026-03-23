@@ -25,6 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/realtimeregister"
 
 	"git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -63,5 +64,5 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Realtime Register",
 		Description: "Domain registrar and DNS hosting provider.",
-	}, RegisterProvider)
+	}, providerReg.RegisterProvider)
 }
