@@ -26,9 +26,9 @@ import (
 	"log"
 	"time"
 
+	svc "git.happydns.org/happyDomain/internal/service"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
 )
 
 // ZoneImporterUsecase converts a flat slice of DNS records into a structured
@@ -54,7 +54,7 @@ func NewZoneImporterUsecase(domainUpdater DomainUpdater, zoneCreator *zoneUC.Cre
 // domain's most recent zone, persists the new zone, and prepends its ID to the
 // domain's history.  Returns the created zone or an error.
 func (uc *ZoneImporterUsecase) Import(user *happydns.User, domain *happydns.Domain, rrs []happydns.Record) (*happydns.Zone, error) {
-	services, defaultTTL, err := svcs.AnalyzeZone(domain.DomainName, rrs)
+	services, defaultTTL, err := svc.AnalyzeZone(domain.DomainName, rrs)
 	if err != nil {
 		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to perform the analysis of your zone: %s", err.Error())}
 	}

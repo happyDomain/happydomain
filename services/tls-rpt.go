@@ -29,6 +29,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/helpers"
+	svc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -97,8 +98,8 @@ func (t *TLS_RPTField) String() string {
 	return fmt.Sprintf("v=TLSRPTv%d; rua=%s", t.Version, strings.Join(t.Rua, ","))
 }
 
-func tlsrpt_analyze(a *Analyzer) (err error) {
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_smtp._tls."}) {
+func tlsrpt_analyze(a *svc.Analyzer) (err error) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_smtp._tls."}) {
 		txt, ok := record.(*happydns.TXT)
 
 		// rfc8460: 3. records that do not begin with "v=TLSRPTv1;" are discarded
@@ -120,7 +121,7 @@ func tlsrpt_analyze(a *Analyzer) (err error) {
 }
 
 func init() {
-	RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &TLS_RPT{}
 		},

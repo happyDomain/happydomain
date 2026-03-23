@@ -30,6 +30,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/helpers"
+	svc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -162,8 +163,8 @@ func (s *DKIMRedirection) GetRecords(domain string, ttl uint32, origin string) (
 	return []happydns.Record{&cname}, nil
 }
 
-func dkim_analyze(a *Analyzer) (err error) {
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT}) {
+func dkim_analyze(a *svc.Analyzer) (err error) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeTXT}) {
 		dkidx := strings.Index(record.Header().Name, "._domainkey.")
 		if dkidx <= 0 {
 			continue
@@ -188,8 +189,8 @@ func dkim_analyze(a *Analyzer) (err error) {
 	return
 }
 
-func dkimcname_analyze(a *Analyzer) (err error) {
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME}) {
+func dkimcname_analyze(a *svc.Analyzer) (err error) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeCNAME}) {
 		dkidx := strings.Index(record.Header().Name, "._domainkey.")
 		if dkidx <= 0 {
 			continue
@@ -209,7 +210,7 @@ func dkimcname_analyze(a *Analyzer) (err error) {
 }
 
 func init() {
-	RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &DKIMRecord{}
 		},
@@ -232,7 +233,7 @@ func init() {
 		},
 		1,
 	)
-	RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &DKIMRedirection{}
 		},

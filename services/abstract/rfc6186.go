@@ -29,7 +29,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
+	svc "git.happydns.org/happyDomain/internal/service"
 )
 
 type RFC6186 struct {
@@ -141,7 +141,7 @@ func (s *RFC6186) GetRecords(domain string, ttl uint32, origin string) ([]happyd
 	return rrs, nil
 }
 
-func rfc6186_analyze(a *svcs.Analyzer) error {
+func rfc6186_analyze(a *svc.Analyzer) error {
 	emailDomains := map[string]*RFC6186{}
 
 	for _, prefix := range []string{
@@ -152,7 +152,7 @@ func rfc6186_analyze(a *svcs.Analyzer) error {
 		"_pop3._tcp.",
 		"_pop3s._tcp.",
 	} {
-		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Prefix: prefix, Type: dns.TypeSRV}) {
+		for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Prefix: prefix, Type: dns.TypeSRV}) {
 			domain := strings.TrimPrefix(record.Header().Name, prefix)
 
 			if _, ok := emailDomains[domain]; !ok {
@@ -178,7 +178,7 @@ func rfc6186_analyze(a *svcs.Analyzer) error {
 }
 
 func init() {
-	svcs.RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &RFC6186{}
 		},

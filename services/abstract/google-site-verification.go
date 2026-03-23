@@ -28,7 +28,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
+	svc "git.happydns.org/happyDomain/internal/service"
 )
 
 type GoogleVerif struct {
@@ -47,8 +47,8 @@ func (s *GoogleVerif) GetRecords(domain string, ttl uint32, origin string) ([]ha
 	return []happydns.Record{s.Record}, nil
 }
 
-func googleverification_analyze(a *svcs.Analyzer) error {
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT}) {
+func googleverification_analyze(a *svc.Analyzer) error {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeTXT}) {
 		domain := record.Header().Name
 		if txt, ok := record.(*happydns.TXT); ok && strings.HasPrefix(txt.Txt, "google-site-verification=") {
 			a.UseRR(record, domain, &GoogleVerif{
@@ -60,7 +60,7 @@ func googleverification_analyze(a *svcs.Analyzer) error {
 }
 
 func init() {
-	svcs.RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &GoogleVerif{}
 		},

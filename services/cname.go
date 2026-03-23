@@ -25,6 +25,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/helpers"
+	svc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -60,9 +61,9 @@ func (s *SpecialCNAME) GetRecords(domain string, ttl uint32, origin string) (rrs
 	return []happydns.Record{s.Record}, nil
 }
 
-func specialalias_analyze(a *Analyzer) error {
+func specialalias_analyze(a *svc.Analyzer) error {
 	// Try handle specials domains using CNAME
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME, Prefix: "_"}) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeCNAME, Prefix: "_"}) {
 		subdomains := SRV_DOMAIN.FindStringSubmatch(record.Header().Name)
 		if cname, ok := record.(*dns.CNAME); ok && len(subdomains) == 4 {
 			a.UseRR(record, subdomains[3], &SpecialCNAME{
@@ -73,8 +74,8 @@ func specialalias_analyze(a *Analyzer) error {
 	return nil
 }
 
-func alias_analyze(a *Analyzer) error {
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeCNAME}) {
+func alias_analyze(a *svc.Analyzer) error {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeCNAME}) {
 		if cname, ok := record.(*dns.CNAME); ok {
 			domain := record.Header().Name
 			a.UseRR(record, domain, &CNAME{
@@ -86,7 +87,7 @@ func alias_analyze(a *Analyzer) error {
 }
 
 func init() {
-	RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &SpecialCNAME{}
 		},
@@ -106,7 +107,7 @@ func init() {
 		},
 		99999997,
 	)
-	RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &CNAME{}
 		},

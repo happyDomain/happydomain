@@ -29,6 +29,8 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+
+	svc "git.happydns.org/happyDomain/internal/service"
 )
 
 func TestCAAPolicy(t *testing.T) {
@@ -50,7 +52,7 @@ func TestCAAPolicy(t *testing.T) {
 		t.Fatalf("dns.NewRR failed: %v", err)
 	}
 
-	s, _, err := svcs.AnalyzeZone("example.com.", []happydns.Record{rr1, rr2, rr3, rr4})
+	s, _, err := svc.AnalyzeZone("example.com.", []happydns.Record{rr1, rr2, rr3, rr4})
 	if err != nil {
 		t.Fatalf("AnalyzeZone failed: %v", err)
 	}

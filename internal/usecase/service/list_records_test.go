@@ -6,9 +6,10 @@ import (
 
 	"github.com/miekg/dns"
 
+	intsvc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/internal/usecase/service"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
+	_ "git.happydns.org/happyDomain/services"
 )
 
 func TestListOneRecord(t *testing.T) {
@@ -25,7 +26,7 @@ func TestListOneRecord(t *testing.T) {
 
 	txt := happydns.NewTXT(rr.(*dns.TXT))
 
-	s, _, err := svcs.AnalyzeZone(origin, []happydns.Record{txt})
+	s, _, err := intsvc.AnalyzeZone(origin, []happydns.Record{txt})
 	if err != nil {
 		t.Fatalf("AnalyzeZone failed: %v", err)
 	}
@@ -74,7 +75,7 @@ func TestListRecordDefaultTTL(t *testing.T) {
 
 	txt := happydns.NewTXT(rr.(*dns.TXT))
 
-	s, _, err := svcs.AnalyzeZone(origin, []happydns.Record{txt})
+	s, _, err := intsvc.AnalyzeZone(origin, []happydns.Record{txt})
 	if err != nil {
 		t.Fatalf("AnalyzeZone failed: %v", err)
 	}
@@ -102,7 +103,7 @@ func TestListRecordRelative(t *testing.T) {
 
 	txt := happydns.NewTXT(rr.(*dns.TXT))
 
-	s, _, err := svcs.AnalyzeZone("", []happydns.Record{txt})
+	s, _, err := intsvc.AnalyzeZone("", []happydns.Record{txt})
 	if err != nil {
 		t.Fatalf("AnalyzeZone failed: %v", err)
 	}

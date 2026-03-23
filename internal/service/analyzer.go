@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,7 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package svcs
+package service
 
 import (
 	"errors"
@@ -240,6 +240,10 @@ func getMostUsedTTL(zone []happydns.Record) uint32 {
 	return max
 }
 
+// OrphanCreator is a function that creates an Orphan service wrapping a DNS record.
+// It is set by the services package during init() to avoid a circular import.
+var OrphanCreator func(record happydns.Record) happydns.ServiceBody
+
 // AnalyzeZone converts raw DNS records into higher-level services by running
 // each registered ServiceAnalyzer in priority order. Records not claimed by
 // any analyzer are wrapped as Orphan services.
@@ -286,21 +290,23 @@ func AnalyzeZone(origin string, records []happydns.Record) (svcs map[happydns.Su
 	}
 
 	// Consider unclaimed records as Orphan
-	for i, record := range a.zone {
-		if a.claimed[i] {
-			continue
-		}
-		// Skip DNSSEC records
-		if helpers.IsDNSSECType(record.Header().Rrtype) {
-			continue
-		}
-		if record.Header().Name == "__dnssec."+origin && record.Header().Rrtype == dns.TypeTXT {
-			continue
-		}
+	if OrphanCreator != nil {
+		for i, record := range a.zone {
+			if a.claimed[i] {
+				continue
+			}
+			// Skip DNSSEC records
+			if helpers.IsDNSSECType(record.Header().Rrtype) {
+				continue
+			}
+			if record.Header().Name == "__dnssec."+origin && record.Header().Rrtype == dns.TypeTXT {
+				continue
+			}
 
-		domain := record.Header().Name
+			domain := record.Header().Name
 
-		a.addService(record, domain, &Orphan{helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain)})
+			a.addService(record, domain, OrphanCreator(helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain)))
+		}
 	}
 
 	svcs = a.services

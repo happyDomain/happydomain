@@ -30,6 +30,7 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/pkg/spflib"
 
 	"git.happydns.org/happyDomain/internal/helpers"
+	svc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -190,8 +191,8 @@ func filterClaimedDirectives(txt string, claimed map[string]bool) string {
 	return strings.Join(kept, " ")
 }
 
-func spf_analyze(a *Analyzer) (err error) {
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Contains: "v=spf1"}) {
+func spf_analyze(a *svc.Analyzer) (err error) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeTXT, Contains: "v=spf1"}) {
 		domain := record.Header().Name
 		claimed := a.GetClaimedSPFDirectives(domain)
 
@@ -209,7 +210,7 @@ func spf_analyze(a *Analyzer) (err error) {
 		}
 	}
 
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeSPF, Contains: "v=spf1"}) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeSPF, Contains: "v=spf1"}) {
 		spf, ok := record.(*happydns.SPF)
 		if !ok {
 			continue
@@ -240,7 +241,7 @@ func spf_analyze(a *Analyzer) (err error) {
 }
 
 func init() {
-	RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &SPF{}
 		},

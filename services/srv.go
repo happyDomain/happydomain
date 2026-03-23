@@ -28,6 +28,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/helpers"
+	svc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -60,10 +61,10 @@ func (s *UnknownSRV) GetRecords(domain string, ttl uint32, origin string) ([]hap
 	return rrs, nil
 }
 
-func srv_analyze(a *Analyzer) error {
+func srv_analyze(a *svc.Analyzer) error {
 	srvDomains := map[string]map[string]*UnknownSRV{}
 
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeSRV}) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeSRV}) {
 		subdomains := SRV_DOMAIN.FindStringSubmatch(record.Header().Name)
 		if len(subdomains) < 4 {
 			continue
@@ -92,7 +93,7 @@ func srv_analyze(a *Analyzer) error {
 }
 
 func init() {
-	RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &UnknownSRV{}
 		},

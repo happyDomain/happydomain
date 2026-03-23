@@ -26,9 +26,10 @@ import (
 	"reflect"
 
 	"git.happydns.org/happyDomain/internal/helpers"
+	intsvc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/internal/usecase/service"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
+	svcs "git.happydns.org/happyDomain/services"
 )
 
 // DeleteRecordUsecase handles removing a single DNS record from an in-memory
@@ -75,7 +76,7 @@ func (uc *DeleteRecordUsecase) delete(zone *happydns.Zone, origin string, record
 
 	if len(svc_rrs) > 0 {
 		// Recreate the service
-		newsvc, _, err = svcs.AnalyzeZone(origin, svc_rrs)
+		newsvc, _, err = intsvc.AnalyzeZone(origin, svc_rrs)
 		if err != nil {
 			return err
 		}
@@ -150,7 +151,7 @@ func (uc *DeleteRecordUsecase) ReanalyzeOrphan(zone *happydns.Zone, origin strin
 	}
 
 	// Redo analysis
-	newsvcs, _, err := svcs.AnalyzeZone(origin, records)
+	newsvcs, _, err := intsvc.AnalyzeZone(origin, records)
 	if err != nil {
 		return err
 	}

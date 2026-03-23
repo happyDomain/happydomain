@@ -27,6 +27,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/helpers"
+	svc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -61,10 +62,10 @@ func (s *SSHFPs) GetRecords(domain string, ttl uint32, origin string) (rrs []hap
 	return
 }
 
-func sshfp_analyze(a *Analyzer) error {
+func sshfp_analyze(a *svc.Analyzer) error {
 	pool := map[string][]happydns.Record{}
 
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeSSHFP}) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeSSHFP}) {
 		domain := record.Header().Name
 
 		pool[domain] = append(pool[domain], record)
@@ -90,7 +91,7 @@ func sshfp_analyze(a *Analyzer) error {
 }
 
 func init() {
-	RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &SSHFPs{}
 		},

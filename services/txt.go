@@ -27,6 +27,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/helpers"
+	svc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -46,8 +47,8 @@ func (ss *TXT) GetRecords(domain string, ttl uint32, origin string) ([]happydns.
 	return []happydns.Record{ss.Record}, nil
 }
 
-func txt_analyze(a *Analyzer) (err error) {
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT}) {
+func txt_analyze(a *svc.Analyzer) (err error) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeTXT}) {
 		// Skip DNSSEC record added by dnscontrol
 		if strings.HasPrefix(record.Header().Name, "__dnssec") {
 			continue
@@ -68,7 +69,7 @@ func txt_analyze(a *Analyzer) (err error) {
 }
 
 func init() {
-	RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &TXT{}
 		},

@@ -30,7 +30,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
+	svc "git.happydns.org/happyDomain/internal/service"
 )
 
 type XMPP struct {
@@ -87,8 +87,8 @@ func (s *XMPP) GetRecords(domain string, ttl uint32, origin string) ([]happydns.
 	return rrs, nil
 }
 
-func xmpp_subanalyze(a *svcs.Analyzer, prefix string, xmppDomains map[string]*XMPP) error {
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Prefix: prefix, Type: dns.TypeSRV}) {
+func xmpp_subanalyze(a *svc.Analyzer, prefix string, xmppDomains map[string]*XMPP) error {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Prefix: prefix, Type: dns.TypeSRV}) {
 		domain := strings.TrimPrefix(record.Header().Name, prefix)
 
 		if _, ok := xmppDomains[domain]; !ok {
@@ -109,7 +109,7 @@ func xmpp_subanalyze(a *svcs.Analyzer, prefix string, xmppDomains map[string]*XM
 	return nil
 }
 
-func xmpp_analyze(a *svcs.Analyzer) error {
+func xmpp_analyze(a *svc.Analyzer) error {
 	xmppDomains := map[string]*XMPP{}
 
 	xmpp_subanalyze(a, "_jabber._tcp.", xmppDomains)
@@ -120,7 +120,7 @@ func xmpp_analyze(a *svcs.Analyzer) error {
 }
 
 func init() {
-	svcs.RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &XMPP{}
 		},

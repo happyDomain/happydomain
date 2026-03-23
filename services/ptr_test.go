@@ -29,6 +29,8 @@ import (
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+
+	svc "git.happydns.org/happyDomain/internal/service"
 )
 
 func TestPTRService(t *testing.T) {
@@ -39,7 +41,7 @@ func TestPTRService(t *testing.T) {
 		t.Fatalf("dns.NewRR failed: %v", err)
 	}
 
-	s, _, err := svcs.AnalyzeZone("in-addr.arpa.", []happydns.Record{rr})
+	s, _, err := svc.AnalyzeZone("in-addr.arpa.", []happydns.Record{rr})
 	if err != nil {
 		t.Fatalf("AnalyzeZone failed: %v", err)
 	}

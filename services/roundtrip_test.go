@@ -30,8 +30,9 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/helpers"
+	intsvc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
-	svcs "git.happydns.org/happyDomain/services"
+	_ "git.happydns.org/happyDomain/services"
 	_ "git.happydns.org/happyDomain/services/abstract"
 	_ "git.happydns.org/happyDomain/services/providers/google"
 )
@@ -42,7 +43,7 @@ import (
 func roundTrip(t *testing.T, origin string, records []happydns.Record) []happydns.Record {
 	t.Helper()
 
-	services, defaultTTL, err := svcs.AnalyzeZone(origin, records)
+	services, defaultTTL, err := intsvc.AnalyzeZone(origin, records)
 	if err != nil {
 		t.Fatalf("AnalyzeZone failed: %v", err)
 	}
@@ -246,7 +247,7 @@ func TestRoundTrip_GSuite_MX(t *testing.T) {
 		mustNewRR(t, fmt.Sprintf("example.com. 3600 IN TXT \"v=spf1 include:_spf.google.com ~all\"")),
 	}
 
-	services, _, err := svcs.AnalyzeZone(origin, records)
+	services, _, err := intsvc.AnalyzeZone(origin, records)
 	if err != nil {
 		t.Fatalf("AnalyzeZone failed: %v", err)
 	}
@@ -296,7 +297,7 @@ func TestRoundTrip_GSuite_SPFClaimed(t *testing.T) {
 		mustNewRR(t, fmt.Sprintf("example.com. 3600 IN TXT \"v=spf1 include:_spf.google.com ip4:203.0.113.0/24 ~all\"")),
 	}
 
-	services, _, err := svcs.AnalyzeZone(origin, records)
+	services, _, err := intsvc.AnalyzeZone(origin, records)
 	if err != nil {
 		t.Fatalf("AnalyzeZone failed: %v", err)
 	}

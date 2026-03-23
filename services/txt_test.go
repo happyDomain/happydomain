@@ -29,6 +29,8 @@ import (
 	"git.happydns.org/happyDomain/internal/usecase/service"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+
+	svc "git.happydns.org/happyDomain/internal/service"
 )
 
 func TestTXTAnalyze(t *testing.T) {
@@ -41,7 +43,7 @@ func TestTXTAnalyze(t *testing.T) {
 
 	txt := happydns.NewTXT(rr.(*dns.TXT))
 
-	s, _, err := svcs.AnalyzeZone("example.com.", []happydns.Record{txt})
+	s, _, err := svc.AnalyzeZone("example.com.", []happydns.Record{txt})
 	if err != nil {
 		t.Fatalf("AnalyzeZone failed: %v", err)
 	}

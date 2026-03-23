@@ -29,7 +29,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
+	svc "git.happydns.org/happyDomain/internal/service"
 )
 
 type Server struct {
@@ -88,10 +88,10 @@ func (s *Server) GetRecords(domain string, ttl uint32, origin string) (rrs []hap
 	return
 }
 
-func server_analyze(a *svcs.Analyzer) error {
+func server_analyze(a *svc.Analyzer) error {
 	pool := map[string][]happydns.Record{}
 
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeA}, svcs.AnalyzerRecordFilter{Type: dns.TypeAAAA}, svcs.AnalyzerRecordFilter{Type: dns.TypeSSHFP}) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeA}, svc.AnalyzerRecordFilter{Type: dns.TypeAAAA}, svc.AnalyzerRecordFilter{Type: dns.TypeSSHFP}) {
 		domain := record.Header().Name
 
 		pool[domain] = append(pool[domain], record)
@@ -139,7 +139,7 @@ next_pool:
 }
 
 func init() {
-	svcs.RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &Server{}
 		},

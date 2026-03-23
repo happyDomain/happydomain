@@ -28,8 +28,8 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/helpers"
+	svc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
 )
 
 type GSuite struct {
@@ -108,10 +108,10 @@ func (s *GSuite) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, aux)
 }
 
-func gsuite_analyze(a *svcs.Analyzer) (err error) {
+func gsuite_analyze(a *svc.Analyzer) (err error) {
 	var googlemx []string
 
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeMX}) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeMX}) {
 		if mx, ok := record.(*dns.MX); ok {
 			if strings.ToLower(mx.Mx) == "aspmx.l.google.com." {
 				googlemx = append(googlemx, record.Header().Name)
@@ -124,7 +124,7 @@ func gsuite_analyze(a *svcs.Analyzer) (err error) {
 		for _, dn := range googlemx {
 			googlerr := &GSuite{}
 
-			for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeMX, Domain: dn}) {
+			for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeMX, Domain: dn}) {
 				if mx, ok := record.(*dns.MX); ok {
 					if strings.HasSuffix(mx.Mx, "mx-verification.google.com.") {
 						googlerr.ValidationMX = mx
@@ -158,7 +158,7 @@ func gsuite_analyze(a *svcs.Analyzer) (err error) {
 }
 
 func init() {
-	svcs.RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &GSuite{}
 		},
@@ -166,6 +166,7 @@ func init() {
 		happydns.ServiceInfos{
 			Name:        "G Suite",
 			Description: "The suite of cloud computing, productivity and collaboration tools by Google.",
+			Icon:        "/api/service_specs/google.GSuite/icon.png",
 			Family:      happydns.SERVICE_FAMILY_PROVIDER,
 			Categories: []string{
 				"email",

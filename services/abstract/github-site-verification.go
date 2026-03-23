@@ -28,7 +28,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
+	svc "git.happydns.org/happyDomain/internal/service"
 )
 
 type GithubOrgVerif struct {
@@ -51,8 +51,8 @@ func (s *GithubOrgVerif) GetRecords(domain string, ttl uint32, origin string) ([
 	return []happydns.Record{s.Record}, nil
 }
 
-func githubverification_analyze(a *svcs.Analyzer) error {
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_github-challenge-"}) {
+func githubverification_analyze(a *svc.Analyzer) error {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_github-challenge-"}) {
 		dnparts := strings.Split(record.Header().Name, ".")
 		if len(dnparts) > 1 {
 			domain := strings.Join(dnparts[1:], ".")
@@ -68,7 +68,7 @@ func githubverification_analyze(a *svcs.Analyzer) error {
 }
 
 func init() {
-	svcs.RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &GithubOrgVerif{}
 		},

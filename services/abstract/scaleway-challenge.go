@@ -28,7 +28,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
+	svc "git.happydns.org/happyDomain/internal/service"
 )
 
 type ScalewayChallenge struct {
@@ -47,8 +47,8 @@ func (s *ScalewayChallenge) GetRecords(domain string, ttl uint32, origin string)
 	return []happydns.Record{s.Record}, nil
 }
 
-func scalewaychallenge_analyze(a *svcs.Analyzer) error {
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_scaleway-challenge"}) {
+func scalewaychallenge_analyze(a *svc.Analyzer) error {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_scaleway-challenge"}) {
 		domain := strings.TrimPrefix(record.Header().Name, "_scaleway-challenge.")
 		if record.Header().Rrtype == dns.TypeTXT {
 			a.UseRR(record, domain, &ScalewayChallenge{
@@ -60,7 +60,7 @@ func scalewaychallenge_analyze(a *svcs.Analyzer) error {
 }
 
 func init() {
-	svcs.RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &ScalewayChallenge{}
 		},

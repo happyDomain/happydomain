@@ -29,6 +29,8 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+
+	svc "git.happydns.org/happyDomain/internal/service"
 )
 
 func TestMXs(t *testing.T) {
@@ -50,7 +52,7 @@ func TestMXs(t *testing.T) {
 		t.Fatalf("dns.NewRR failed: %v", err)
 	}
 
-	s, _, err := svcs.AnalyzeZone("example.com.", []happydns.Record{mx1, mx2, mx3, mx4})
+	s, _, err := svc.AnalyzeZone("example.com.", []happydns.Record{mx1, mx2, mx3, mx4})
 	if err != nil {
 		t.Fatalf("AnalyzeZone failed: %v", err)
 	}

@@ -28,10 +28,10 @@ import (
 	"time"
 
 	adapter "git.happydns.org/happyDomain/internal/adapters"
+	svc "git.happydns.org/happyDomain/internal/service"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
-	svcs "git.happydns.org/happyDomain/services"
 )
 
 // ZoneCorrectionApplierUsecase applies a user-selected subset of zone
@@ -172,7 +172,7 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(
 	}
 
 	// Step 5: Create a published snapshot zone from target records.
-	services, defaultTTL, err := svcs.AnalyzeZone(domain.DomainName, targetRecords)
+	services, defaultTTL, err := svc.AnalyzeZone(domain.DomainName, targetRecords)
 	if err != nil {
 		return nil, happydns.InternalError{
 			Err:         fmt.Errorf("unable to analyze target zone: %w", err),

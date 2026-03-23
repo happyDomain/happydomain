@@ -30,7 +30,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
+	svc "git.happydns.org/happyDomain/internal/service"
 )
 
 type OpenPGP struct {
@@ -93,8 +93,8 @@ func (s *SMimeCert) GetRecords(domain string, ttl uint32, origin string) ([]happ
 	return []happydns.Record{s.Record}, nil
 }
 
-func openpgpkey_analyze(a *svcs.Analyzer) (err error) {
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeOPENPGPKEY, Contains: "._openpgpkey."}) {
+func openpgpkey_analyze(a *svc.Analyzer) (err error) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeOPENPGPKEY, Contains: "._openpgpkey."}) {
 		if record.Header().Rrtype == dns.TypeOPENPGPKEY {
 			domain := record.Header().Name
 			domain = domain[strings.Index(domain, "._openpgpkey")+13:]
@@ -114,8 +114,8 @@ func openpgpkey_analyze(a *svcs.Analyzer) (err error) {
 	return
 }
 
-func smimea_analyze(a *svcs.Analyzer) (err error) {
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeSMIMEA, Contains: "._smimecert."}) {
+func smimea_analyze(a *svc.Analyzer) (err error) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeSMIMEA, Contains: "._smimecert."}) {
 		if record.Header().Rrtype == dns.TypeSMIMEA {
 			domain := record.Header().Name
 			domain = domain[strings.Index(domain, "._smimecert")+12:]
@@ -137,7 +137,7 @@ func smimea_analyze(a *svcs.Analyzer) (err error) {
 }
 
 func init() {
-	svcs.RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &OpenPGP{}
 		},
@@ -161,7 +161,7 @@ func init() {
 		},
 		1,
 	)
-	svcs.RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &SMimeCert{}
 		},

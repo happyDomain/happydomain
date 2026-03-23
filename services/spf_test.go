@@ -27,6 +27,7 @@ import (
 
 	"github.com/miekg/dns"
 
+	intsvc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 	_ "git.happydns.org/happyDomain/services/providers/google"
@@ -114,7 +115,7 @@ func TestSPFAnalyze(t *testing.T) {
 
 	txt := happydns.NewTXT(rr.(*dns.TXT))
 
-	s, _, err := svcs.AnalyzeZone("example.com.", []happydns.Record{txt})
+	s, _, err := intsvc.AnalyzeZone("example.com.", []happydns.Record{txt})
 	if err != nil {
 		t.Fatalf("AnalyzeZone failed: %v", err)
 	}
@@ -163,7 +164,7 @@ func TestSPFAnalyzeWithGSuiteClaimedDirectives(t *testing.T) {
 	}
 	records = append(records, happydns.NewTXT(spfRR.(*dns.TXT)))
 
-	s, _, err := svcs.AnalyzeZone("example.com.", records)
+	s, _, err := intsvc.AnalyzeZone("example.com.", records)
 	if err != nil {
 		t.Fatalf("AnalyzeZone failed: %v", err)
 	}

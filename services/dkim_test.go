@@ -29,6 +29,8 @@ import (
 
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+
+	svc "git.happydns.org/happyDomain/internal/service"
 )
 
 func TestDKIMRecord(t *testing.T) {
@@ -40,7 +42,7 @@ func TestDKIMRecord(t *testing.T) {
 		t.Fatalf("dns.NewRR failed: %v", err)
 	}
 
-	s, _, err := svcs.AnalyzeZone("example.com.", []happydns.Record{rr})
+	s, _, err := svc.AnalyzeZone("example.com.", []happydns.Record{rr})
 	if err != nil {
 		t.Fatalf("AnalyzeZone failed: %v", err)
 	}
@@ -101,7 +103,7 @@ func TestDKIMRedirection(t *testing.T) {
 		t.Fatalf("dns.NewRR failed: %v", err)
 	}
 
-	s, _, err := svcs.AnalyzeZone("example.com.", []happydns.Record{rr})
+	s, _, err := svc.AnalyzeZone("example.com.", []happydns.Record{rr})
 	if err != nil {
 		t.Fatalf("AnalyzeZone failed: %v", err)
 	}

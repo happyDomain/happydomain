@@ -28,6 +28,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/helpers"
+	svc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -100,9 +101,9 @@ type TLSAFields struct {
 	Certificate  happydns.HexaString `json:"certificate"`
 }
 
-func tlsa_analyze(a *Analyzer) (err error) {
+func tlsa_analyze(a *svc.Analyzer) (err error) {
 	pool := map[string]*TLSAs{}
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTLSA}) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeTLSA}) {
 		subdomains := TLSA_DOMAIN.FindStringSubmatch(record.Header().Name)
 		if _, ok := record.(*dns.TLSA); ok && len(subdomains) == 4 {
 			if _, ok := pool[subdomains[3]]; !ok {
@@ -129,7 +130,7 @@ func tlsa_analyze(a *Analyzer) (err error) {
 }
 
 func init() {
-	RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &TLSAs{}
 		},

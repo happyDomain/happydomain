@@ -28,7 +28,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
+	svc "git.happydns.org/happyDomain/internal/service"
 )
 
 type Delegation struct {
@@ -59,10 +59,10 @@ func (s *Delegation) GetRecords(domain string, ttl uint32, origin string) (rrs [
 	return
 }
 
-func delegation_analyze(a *svcs.Analyzer) error {
+func delegation_analyze(a *svc.Analyzer) error {
 	delegations := map[string]*Delegation{}
 
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS}) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeNS}) {
 		// Origin cannot be a delegation
 		if record.Header().Name == a.GetOrigin() {
 			continue
@@ -85,7 +85,7 @@ func delegation_analyze(a *svcs.Analyzer) error {
 	}
 
 	for subdomain := range delegations {
-		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeDS, Domain: subdomain}) {
+		for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeDS, Domain: subdomain}) {
 			if _, ok := record.(*dns.DS); ok {
 				delegations[subdomain].DS = append(delegations[subdomain].DS, helpers.RRRelativeSubdomain(record, a.GetOrigin(), subdomain).(*dns.DS))
 
@@ -102,7 +102,7 @@ func delegation_analyze(a *svcs.Analyzer) error {
 }
 
 func init() {
-	svcs.RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &Delegation{}
 		},

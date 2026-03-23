@@ -27,6 +27,7 @@ import (
 
 	"github.com/miekg/dns"
 
+	svc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -76,7 +77,11 @@ func (s *Orphan) UnmarshalJSON(b []byte) error {
 }
 
 func init() {
-	RegisterService(
+	svc.OrphanCreator = func(record happydns.Record) happydns.ServiceBody {
+		return &Orphan{record}
+	}
+
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &Orphan{}
 		},

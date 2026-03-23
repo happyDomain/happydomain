@@ -23,9 +23,9 @@ package zone
 
 import (
 	"git.happydns.org/happyDomain/internal/helpers"
+	intsvc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/internal/usecase/service"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
 )
 
 // AddRecordUsecase handles adding a single DNS record to an in-memory Zone,
@@ -52,7 +52,7 @@ func (uc *AddRecordUsecase) Add(zone *happydns.Zone, origin string, record happy
 	record.Header().Name = helpers.DomainFQDN(record.Header().Name, origin)
 
 	// Research the service in which the record should be found
-	newsvc, _, err := svcs.AnalyzeZone(origin, []happydns.Record{record})
+	newsvc, _, err := intsvc.AnalyzeZone(origin, []happydns.Record{record})
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (uc *AddRecordUsecase) Add(zone *happydns.Zone, origin string, record happy
 					svc_rrs = append([]happydns.Record{record}, svc_rrs...)
 
 					// Recreate the service
-					mergedsvc, _, err := svcs.AnalyzeZone(origin, svc_rrs)
+					mergedsvc, _, err := intsvc.AnalyzeZone(origin, svc_rrs)
 					if err != nil {
 						return err
 					}

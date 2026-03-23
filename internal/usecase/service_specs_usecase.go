@@ -29,8 +29,9 @@ import (
 
 	"github.com/miekg/dns"
 
+	intsvc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
+	svcs "git.happydns.org/happyDomain/services"
 )
 
 // serviceSpecsUsecase implements happydns.ServiceSpecsUsecase, providing
@@ -47,7 +48,7 @@ func NewServiceSpecsUsecase() happydns.ServiceSpecsUsecase {
 // ListServices returns metadata (ServiceInfos) for every registered DNS service,
 // keyed by service type identifier.
 func (ssu *serviceSpecsUsecase) ListServices() map[string]happydns.ServiceInfos {
-	services := svcs.ListServices()
+	services := intsvc.ListServices()
 
 	ret := map[string]happydns.ServiceInfos{}
 	for k, service := range *services {

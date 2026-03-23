@@ -30,8 +30,9 @@ import (
 	"fmt"
 	"os"
 
+	intsvc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
+	_ "git.happydns.org/happyDomain/services"
 	_ "git.happydns.org/happyDomain/services/abstract"
 	_ "git.happydns.org/happyDomain/services/providers/google"
 )
@@ -53,7 +54,7 @@ func main() {
 	defer fd.Close()
 
 	// Collect ServiceSpecs
-	services := svcs.ListServices()
+	services := intsvc.ListServices()
 
 	sspecs := map[string]happydns.ServiceInfos{}
 	for k, service := range *services {

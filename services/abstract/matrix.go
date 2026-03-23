@@ -30,7 +30,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
+	svc "git.happydns.org/happyDomain/internal/service"
 )
 
 type MatrixIM struct {
@@ -87,10 +87,10 @@ func (s *MatrixIM) GetRecords(domain string, ttl uint32, origin string) ([]happy
 	return rrs, nil
 }
 
-func matrix_analyze(a *svcs.Analyzer) error {
+func matrix_analyze(a *svc.Analyzer) error {
 	matrixDomains := map[string]*MatrixIM{}
 
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Prefix: "_matrix._tcp.", Type: dns.TypeSRV}) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Prefix: "_matrix._tcp.", Type: dns.TypeSRV}) {
 		domain := strings.TrimPrefix(record.Header().Name, "_matrix._tcp.")
 
 		if _, ok := matrixDomains[domain]; !ok {
@@ -111,7 +111,7 @@ func matrix_analyze(a *svcs.Analyzer) error {
 }
 
 func init() {
-	svcs.RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &MatrixIM{}
 		},

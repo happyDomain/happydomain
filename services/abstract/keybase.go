@@ -28,7 +28,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
+	svc "git.happydns.org/happyDomain/internal/service"
 )
 
 type KeybaseVerif struct {
@@ -47,8 +47,8 @@ func (s *KeybaseVerif) GetRecords(domain string, ttl uint32, origin string) ([]h
 	return []happydns.Record{s.Record}, nil
 }
 
-func keybaseverification_analyze(a *svcs.Analyzer) error {
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_keybase"}) {
+func keybaseverification_analyze(a *svc.Analyzer) error {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_keybase"}) {
 		domain := strings.TrimPrefix(record.Header().Name, "_keybase.")
 		if record.Header().Rrtype == dns.TypeTXT {
 			a.UseRR(record, domain, &KeybaseVerif{
@@ -60,7 +60,7 @@ func keybaseverification_analyze(a *svcs.Analyzer) error {
 }
 
 func init() {
-	svcs.RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &KeybaseVerif{}
 		},

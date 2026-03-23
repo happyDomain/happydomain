@@ -25,6 +25,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/helpers"
+	svc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -44,8 +45,8 @@ func (s *PTR) GetRecords(domain string, ttl uint32, origin string) (rrs []happyd
 	return []happydns.Record{s.Record}, nil
 }
 
-func pointer_analyze(a *Analyzer) error {
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypePTR}) {
+func pointer_analyze(a *svc.Analyzer) error {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypePTR}) {
 		if ptr, ok := record.(*dns.PTR); ok {
 			domain := record.Header().Name
 			newrr := &PTR{
@@ -59,7 +60,7 @@ func pointer_analyze(a *Analyzer) error {
 }
 
 func init() {
-	RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &PTR{}
 		},

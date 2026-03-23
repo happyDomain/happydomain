@@ -25,8 +25,8 @@ import (
 	"encoding/json"
 
 	"git.happydns.org/happyDomain/internal/forms"
+	intsvc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
 )
 
 // ParseService deserialises a ServiceMessage into a typed Service value.
@@ -36,7 +36,7 @@ func ParseService(msg *happydns.ServiceMessage) (svc *happydns.Service, err erro
 	svc = &happydns.Service{}
 
 	svc.ServiceMeta = msg.ServiceMeta
-	svc.Service, err = svcs.FindService(msg.Type)
+	svc.Service, err = intsvc.FindService(msg.Type)
 	if err != nil {
 		return
 	}

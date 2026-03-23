@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,7 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package svcs
+package service
 
 import (
 	"fmt"
@@ -61,9 +61,6 @@ func RegisterService(creator happydns.ServiceCreator, analyzer ServiceAnalyzer, 
 
 	// Override given parameters by true one
 	infos.Type = name
-	if _, ok := Icons[name]; ok {
-		infos.Icon = "/api/service_specs/" + name + "/icon.png"
-	}
 
 	svc := &Svc{
 		creator,

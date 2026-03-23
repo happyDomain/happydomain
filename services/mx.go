@@ -29,6 +29,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/helpers"
+	svc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -85,11 +86,11 @@ func (s *MXs) GetRecords(domain string, ttl uint32, origin string) (rrs []happyd
 	return
 }
 
-func mx_analyze(a *Analyzer) (err error) {
+func mx_analyze(a *svc.Analyzer) (err error) {
 	services := map[string]*MXs{}
 
 	// Handle only MX records
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeMX}) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeMX}) {
 		dn := record.Header().Name
 
 		if _, ok := services[dn]; !ok {
@@ -117,7 +118,7 @@ func mx_analyze(a *Analyzer) (err error) {
 }
 
 func init() {
-	RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &MXs{}
 		},

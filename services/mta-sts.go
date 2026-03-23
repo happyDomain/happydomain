@@ -29,6 +29,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/helpers"
+	svc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -93,8 +94,8 @@ func (t *MTASTSFields) String() string {
 	return fmt.Sprintf("v=STSv%d; id=%s", t.Version, t.Id)
 }
 
-func mtasts_analyze(a *Analyzer) (err error) {
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_mta-sts."}) {
+func mtasts_analyze(a *svc.Analyzer) (err error) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_mta-sts."}) {
 		txt, ok := record.(*happydns.TXT)
 		// rfc8461: 3.1 records that do not begin with "v=STSv1;" are discarded
 		if !ok || !strings.HasPrefix(txt.Txt, "v=STS") {
@@ -115,7 +116,7 @@ func mtasts_analyze(a *Analyzer) (err error) {
 }
 
 func init() {
-	RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &MTA_STS{}
 		},

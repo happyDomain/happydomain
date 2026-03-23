@@ -29,6 +29,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/helpers"
+	svc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services/common"
 )
@@ -213,8 +214,8 @@ func (t *DMARCFields) String() string {
 	return strings.Join(fields, ";")
 }
 
-func dmarc_analyze(a *Analyzer) (err error) {
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_dmarc"}) {
+func dmarc_analyze(a *svc.Analyzer) (err error) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_dmarc"}) {
 		domain := strings.TrimPrefix(record.Header().Name, "_dmarc.")
 
 		err = a.UseRR(record, domain, &DMARC{
@@ -229,7 +230,7 @@ func dmarc_analyze(a *Analyzer) (err error) {
 }
 
 func init() {
-	RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &DMARC{}
 		},

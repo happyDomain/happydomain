@@ -28,7 +28,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
-	"git.happydns.org/happyDomain/services"
+	svc "git.happydns.org/happyDomain/internal/service"
 )
 
 type NSOnlyOrigin struct {
@@ -91,10 +91,10 @@ func (s *Origin) GetRecords(domain string, ttl uint32, origin string) ([]happydn
 	return rrs, nil
 }
 
-func origin_analyze(a *svcs.Analyzer) error {
+func origin_analyze(a *svc.Analyzer) error {
 	hasSOA := false
 
-	for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeSOA}) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeSOA}) {
 		if soa, ok := record.(*dns.SOA); ok {
 			hasSOA = true
 
@@ -109,7 +109,7 @@ func origin_analyze(a *svcs.Analyzer) error {
 				origin,
 			)
 
-			for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS, Domain: domain}) {
+			for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeNS, Domain: domain}) {
 				if ns, ok := record.(*dns.NS); ok {
 					origin.NameServers = append(origin.NameServers, helpers.RRRelativeSubdomain(ns, a.GetOrigin(), domain).(*dns.NS))
 					a.UseRR(
@@ -125,7 +125,7 @@ func origin_analyze(a *svcs.Analyzer) error {
 	if !hasSOA {
 		origin := &NSOnlyOrigin{}
 
-		for _, record := range a.SearchRR(svcs.AnalyzerRecordFilter{Type: dns.TypeNS, Domain: a.GetOrigin()}) {
+		for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeNS, Domain: a.GetOrigin()}) {
 			if ns, ok := record.(*dns.NS); ok {
 				domain := record.Header().Name
 				origin.NameServers = append(origin.NameServers, helpers.RRRelativeSubdomain(ns, a.GetOrigin(), domain).(*dns.NS))
@@ -142,7 +142,7 @@ func origin_analyze(a *svcs.Analyzer) error {
 }
 
 func init() {
-	svcs.RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &Origin{}
 		},
@@ -168,7 +168,7 @@ func init() {
 		},
 		0,
 	)
-	svcs.RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &NSOnlyOrigin{}
 		},

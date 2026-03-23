@@ -28,13 +28,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happyDomain/services"
+	intsvc "git.happydns.org/happyDomain/internal/service"
 )
 
 func ServiceSpecsHandler(c *gin.Context) {
 	ssid := string(c.Param("ssid"))
 
-	svc, err := svcs.FindSubService(ssid)
+	svc, err := intsvc.FindSubService(ssid)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": fmt.Sprintf("Unable to find specs: %s", err.Error())})
 		return

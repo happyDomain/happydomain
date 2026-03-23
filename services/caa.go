@@ -29,6 +29,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/helpers"
+	svc "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services/common"
 )
@@ -233,10 +234,10 @@ func (analyzed *CAAFields) Analyze(flag uint8, tag, value string) error {
 	return nil
 }
 
-func caa_analyze(a *Analyzer) (err error) {
+func caa_analyze(a *svc.Analyzer) (err error) {
 	pool := map[string]*CAAPolicy{}
 
-	for _, record := range a.SearchRR(AnalyzerRecordFilter{Type: dns.TypeCAA}) {
+	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeCAA}) {
 		domain := record.Header().Name
 
 		if record.Header().Rrtype == dns.TypeCAA {
@@ -258,7 +259,7 @@ func caa_analyze(a *Analyzer) (err error) {
 }
 
 func init() {
-	RegisterService(
+	svc.RegisterService(
 		func() happydns.ServiceBody {
 			return &CAAPolicy{}
 		},

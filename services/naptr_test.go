@@ -29,6 +29,8 @@ import (
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
+
+	svc "git.happydns.org/happyDomain/internal/service"
 )
 
 func TestNAPTR(t *testing.T) {
@@ -38,7 +40,7 @@ func TestNAPTR(t *testing.T) {
 		t.Fatalf("dns.NewRR failed: %v", err)
 	}
 
-	s, _, err := svcs.AnalyzeZone("example.com.", []happydns.Record{rr})
+	s, _, err := svc.AnalyzeZone("example.com.", []happydns.Record{rr})
 	if err != nil {
 		t.Fatalf("AnalyzeZone failed: %v", err)
 	}
