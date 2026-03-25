@@ -69,7 +69,7 @@ func (tu *tidyUpUsecase) TidyAuthUsers() error {
 		}
 	}
 
-	return nil
+	return iter.Err()
 }
 
 func (tu *tidyUpUsecase) TidyDomains() error {
@@ -99,7 +99,7 @@ func (tu *tidyUpUsecase) TidyDomains() error {
 		}
 	}
 
-	return nil
+	return iter.Err()
 }
 
 func (tu *tidyUpUsecase) TidyDomainLogs() error {
@@ -121,7 +121,7 @@ func (tu *tidyUpUsecase) TidyDomainLogs() error {
 		}
 	}
 
-	return nil
+	return iter.Err()
 }
 
 func (tu *tidyUpUsecase) TidyProviders() error {
@@ -144,7 +144,7 @@ func (tu *tidyUpUsecase) TidyProviders() error {
 		}
 	}
 
-	return nil
+	return iter.Err()
 }
 
 func (tu *tidyUpUsecase) TidySessions() error {
@@ -167,7 +167,7 @@ func (tu *tidyUpUsecase) TidySessions() error {
 		}
 	}
 
-	return nil
+	return iter.Err()
 }
 
 func (tu *tidyUpUsecase) TidyUsers() error {
@@ -188,6 +188,10 @@ func (tu *tidyUpUsecase) TidyZones() error {
 		for _, zh := range domain.ZoneHistory {
 			referencedZones = append(referencedZones, zh)
 		}
+	}
+
+	if err = iterdn.Err(); err != nil {
+		return err
 	}
 
 	iter, err := tu.store.ListAllZones()
@@ -216,5 +220,5 @@ func (tu *tidyUpUsecase) TidyZones() error {
 		}
 	}
 
-	return nil
+	return iter.Err()
 }

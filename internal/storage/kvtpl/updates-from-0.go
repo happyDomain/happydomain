@@ -122,6 +122,10 @@ func migrateFrom0_sourcesProvider(s *KVStorage) (err error) {
 		}
 	}
 
+	if err = iter.Err(); err != nil {
+		return
+	}
+
 	return
 }
 
@@ -145,6 +149,10 @@ func migrateFrom0_reparentDomains(s *KVStorage) (err error) {
 		if err != nil {
 			return
 		}
+	}
+
+	if err = iter.Err(); err != nil {
+		return
 	}
 
 	return

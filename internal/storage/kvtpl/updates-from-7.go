@@ -1046,6 +1046,10 @@ func migrateFrom7(s *KVStorage) error {
 		}
 	}
 
+	if err := zones.Err(); err != nil {
+		return err
+	}
+
 	zones, err = s.ListAllZones()
 	if err != nil {
 		return err
@@ -1080,6 +1084,10 @@ func migrateFrom7(s *KVStorage) error {
 				}
 			}
 		}
+	}
+
+	if err := zones.Err(); err != nil {
+		return err
 	}
 
 	return nil

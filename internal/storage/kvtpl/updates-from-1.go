@@ -132,6 +132,10 @@ func migrateFrom1_users_tree(s *KVStorage) (err error) {
 		}
 	}
 
+	if err = iter.Err(); err != nil {
+		return
+	}
+
 	return
 }
 
@@ -160,6 +164,10 @@ func migrateFrom1_domains(s *KVStorage, oldUserId int64, newUserId string) (err 
 				return
 			}
 		}
+	}
+
+	if err = iter.Err(); err != nil {
+		return
 	}
 
 	return
@@ -192,6 +200,10 @@ func migrateFrom1_provider(s *KVStorage, oldUserId int64, newUserId string) (err
 		}
 	}
 
+	if err = iter.Err(); err != nil {
+		return
+	}
+
 	return
 }
 
@@ -220,6 +232,10 @@ func migrateFrom1_zone(s *KVStorage, oldUserId int64, newUserId string) (err err
 				return
 			}
 		}
+	}
+
+	if err = iter.Err(); err != nil {
+		return
 	}
 
 	return

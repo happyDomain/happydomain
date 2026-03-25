@@ -92,5 +92,9 @@ func migrateFrom8(s *KVStorage) error {
 		}
 	}
 
+	if err := zones.Err(); err != nil {
+		return err
+	}
+
 	return nil
 }

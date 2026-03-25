@@ -71,6 +71,10 @@ func (s *KVStorage) ListAuthUserSessions(user *happydns.UserAuth) (sessions []*h
 		}
 	}
 
+	if err = iter.Err(); err != nil {
+		return
+	}
+
 	return
 }
 
@@ -88,6 +92,10 @@ func (s *KVStorage) ListUserSessions(userid happydns.Identifier) (sessions []*ha
 		if session.IdUser.Equals(userid) {
 			sessions = append(sessions, &session)
 		}
+	}
+
+	if err = iter.Err(); err != nil {
+		return
 	}
 
 	return
@@ -112,5 +120,5 @@ func (s *KVStorage) ClearSessions() error {
 		}
 	}
 
-	return nil
+	return iter.Err()
 }

@@ -51,6 +51,10 @@ func (s *KVStorage) ListDomains(u *happydns.User) (domains []*happydns.Domain, e
 		}
 	}
 
+	if err = iter.Err(); err != nil {
+		return
+	}
+
 	return
 }
 
@@ -124,5 +128,5 @@ func (s *KVStorage) ClearDomains() error {
 		}
 	}
 
-	return nil
+	return iter.Err()
 }

@@ -59,6 +59,10 @@ func (s *KVStorage) ListProviders(u *happydns.User) (srcs happydns.ProviderMessa
 		srcs = append(srcs, srcMsg)
 	}
 
+	if err = iter.Err(); err != nil {
+		return
+	}
+
 	return
 }
 
@@ -108,5 +112,5 @@ func (s *KVStorage) ClearProviders() error {
 		}
 	}
 
-	return nil
+	return iter.Err()
 }

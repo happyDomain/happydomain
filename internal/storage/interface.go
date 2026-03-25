@@ -64,6 +64,7 @@ type Iterator interface {
 	Valid() bool
 	Key() string
 	Value() any
+	Err() error
 }
 
 type KVStorage interface {

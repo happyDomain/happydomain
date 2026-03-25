@@ -60,6 +60,10 @@ func (s *KVStorage) GetUserByEmail(email string) (*happydns.User, error) {
 		}
 	}
 
+	if err := users.Err(); err != nil {
+		return nil, err
+	}
+
 	return nil, happydns.ErrUserNotFound
 }
 
@@ -76,6 +80,7 @@ func (s *KVStorage) UserExists(email string) bool {
 		}
 	}
 
+	// Note: iterator errors are swallowed here since the function returns bool only
 	return false
 }
 
@@ -114,5 +119,5 @@ func (s *KVStorage) ClearUsers() error {
 		}
 	}
 
-	return nil
+	return iter.Err()
 }

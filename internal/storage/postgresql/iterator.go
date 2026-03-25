@@ -89,3 +89,8 @@ func (it *PostgreSQLIterator) Key() string {
 func (it *PostgreSQLIterator) Value() any {
 	return it.value
 }
+
+// Err returns the last error encountered during iteration
+func (it *PostgreSQLIterator) Err() error {
+	return it.err
+}

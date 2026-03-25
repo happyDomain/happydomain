@@ -111,7 +111,10 @@ func (it *KVIterator[T]) Key() string {
 
 // Err returns the first error encountered during iteration, if any.
 func (it *KVIterator[T]) Err() error {
-	return it.err
+	if it.err != nil {
+		return it.err
+	}
+	return it.iter.Err()
 }
 
 // Close releases resources held by the underlying LevelDB iterator.

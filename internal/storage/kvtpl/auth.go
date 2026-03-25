@@ -60,6 +60,10 @@ func (s *KVStorage) GetAuthUserByEmail(email string) (*happydns.UserAuth, error)
 		}
 	}
 
+	if err := users.Err(); err != nil {
+		return nil, err
+	}
+
 	return nil, fmt.Errorf("Unable to find user with email address '%s'.", email)
 }
 
@@ -75,6 +79,10 @@ func (s *KVStorage) AuthUserExists(email string) (bool, error) {
 		if user.Email == email {
 			return true, nil
 		}
+	}
+
+	if err := users.Err(); err != nil {
+		return false, err
 	}
 
 	return false, nil
@@ -112,5 +120,5 @@ func (s *KVStorage) ClearAuthUsers() error {
 		}
 	}
 
-	return nil
+	return iter.Err()
 }

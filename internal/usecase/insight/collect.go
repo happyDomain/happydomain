@@ -89,6 +89,9 @@ func Collect(
 		for authusers.Next() {
 			data.Database.NbAuthUsers++
 		}
+		if err := authusers.Err(); err != nil {
+			return nil, err
+		}
 	}
 
 	users, err := store.ListAllUsers()
@@ -127,6 +130,10 @@ func Collect(
 				data.Database.NbZones += len(domain.ZoneHistory)
 			}
 		}
+	}
+
+	if err := users.Err(); err != nil {
+		return nil, err
 	}
 
 	return &data, nil

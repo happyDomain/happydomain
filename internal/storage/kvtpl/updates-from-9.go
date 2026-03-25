@@ -44,5 +44,9 @@ func migrateFrom9(s *KVStorage) (err error) {
 		}
 	}
 
+	if err := sessions.Err(); err != nil {
+		return err
+	}
+
 	return nil
 }

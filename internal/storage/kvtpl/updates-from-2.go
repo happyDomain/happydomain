@@ -102,6 +102,10 @@ func migrateFrom2_users_tree(s *KVStorage) (err error) {
 		}
 	}
 
+	if err = iter.Err(); err != nil {
+		return
+	}
+
 	return
 }
 
@@ -201,6 +205,10 @@ func migrateFrom2_session(s *KVStorage, oldUserId happydns.HexaString, newUserId
 		}
 	}
 
+	if err = kvIter.Err(); err != nil {
+		return
+	}
+
 	return
 }
 
@@ -265,6 +273,10 @@ func migrateFrom2_provider(s *KVStorage, oldUserId happydns.HexaString, newUserI
 				}
 			}
 		}
+	}
+
+	if err = kvIter.Err(); err != nil {
+		return
 	}
 
 	return
@@ -352,6 +364,10 @@ func migrateFrom2_domains(s *KVStorage, oldUserId happydns.HexaString, newUserId
 				}
 			}
 		}
+	}
+
+	if err = kvIter.Err(); err != nil {
+		return
 	}
 
 	return

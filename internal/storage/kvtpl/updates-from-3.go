@@ -63,5 +63,9 @@ func migrateFrom3_records(s *KVStorage) error {
 		}
 	}
 
+	if err := iter.Err(); err != nil {
+		return err
+	}
+
 	return nil
 }

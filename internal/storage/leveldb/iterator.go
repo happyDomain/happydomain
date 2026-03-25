@@ -51,6 +51,10 @@ func (it *LevelDBIterator) Valid() bool {
 	return it.iter.Valid()
 }
 
+func (it *LevelDBIterator) Err() error {
+	return it.iter.Error()
+}
+
 func (it *LevelDBIterator) Release() {
 	it.iter.Release()
 }

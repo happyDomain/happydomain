@@ -79,6 +79,10 @@ func (s *KVStorage) ListDomainLogs(domain *happydns.Domain) (logs []*happydns.Do
 		logs = append(logs, &z)
 	}
 
+	if err = iter.Err(); err != nil {
+		return
+	}
+
 	return
 }
 

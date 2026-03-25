@@ -92,5 +92,5 @@ func (s *KVStorage) ClearZones() error {
 		}
 	}
 
-	return nil
+	return iter.Err()
 }

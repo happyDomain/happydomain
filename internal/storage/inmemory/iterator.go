@@ -69,6 +69,11 @@ func (it *KVIterator) Valid() bool {
 	return it.index >= 0 && it.index < len(it.keys)
 }
 
+// Err returns nil as in-memory iterators never error.
+func (it *KVIterator) Err() error {
+	return nil
+}
+
 // Release releases the iterator resources.
 func (it *KVIterator) Release() {
 	// No resources to release for in-memory iterator
