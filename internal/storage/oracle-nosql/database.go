@@ -24,6 +24,8 @@ package database
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+	"sync"
 
 	"github.com/oracle/nosql-go-sdk/nosqldb"
 	"github.com/oracle/nosql-go-sdk/nosqldb/auth/iam"
@@ -36,9 +38,11 @@ import (
 )
 
 type NoSQLStorage struct {
-	client *nosqldb.Client
-	config *nosqldb.Config
-	table  string
+	client            *nosqldb.Client
+	config            *nosqldb.Config
+	table             string
+	prepareSearchOnce sync.Once
+	searchStmt        nosqldb.PreparedStatement
 }
 
 // NewOCINoSQLStorage establishes the connection to the database
@@ -59,6 +63,7 @@ func NewOCINoSQLStorage(cfg *OCINoSQLConfig) (s *NoSQLStorage, err error) {
 		Mode:                  "cloud",
 		Region:                common.Region(cfg.Region),
 		AuthorizationProvider: authProvider,
+		RateLimitingEnabled:   true,
 	}
 
 	// Create client
@@ -187,10 +192,50 @@ func (n *NoSQLStorage) Delete(key string) error {
 	return nil
 }
 
-func (n *NoSQLStorage) Search(prefix string) storage.Iterator {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE regex_like(key, '%s.*')", n.table, prefix)
+// escapeRegexLiteral escapes regex-special characters with a single backslash,
+// suitable for bind variables where the value is passed directly to the regex engine.
+func escapeRegexLiteral(s string) string {
+	for _, ch := range []string{`\`, `|`, `.`, `^`, `$`, `*`, `+`, `?`, `(`, `)`, `[`, `]`, `{`, `}`} {
+		s = strings.ReplaceAll(s, ch, `\`+ch)
+	}
+	return s
+}
 
-	return NewIteratorFromRequest(n, &nosqldb.QueryRequest{
-		Statement: query,
+// escapeRegexForSQL escapes regex-special characters with double backslashes,
+// suitable for embedding in SQL string literals (the SQL parser consumes one level).
+func escapeRegexForSQL(s string) string {
+	for _, ch := range []string{`\`, `|`, `.`, `^`, `$`, `*`, `+`, `?`, `(`, `)`, `[`, `]`, `{`, `}`} {
+		s = strings.ReplaceAll(s, ch, `\\`+ch)
+	}
+	return s
+}
+
+func (n *NoSQLStorage) prepareSearch() error {
+	var err error
+	n.prepareSearchOnce.Do(func() {
+		stmt := fmt.Sprintf(
+			"DECLARE $pattern STRING; SELECT * FROM %s WHERE regex_like(key, $pattern)",
+			n.table,
+		)
+		res, e := n.client.Prepare(&nosqldb.PrepareRequest{Statement: stmt})
+		if e != nil {
+			err = e
+			return
+		}
+		n.searchStmt = res.PreparedStatement
 	})
+	return err
+}
+
+func (n *NoSQLStorage) Search(prefix string) storage.Iterator {
+	if err := n.prepareSearch(); err != nil {
+		// Fall back to unprepared query (SQL string literal needs double-escaped regex)
+		query := fmt.Sprintf("SELECT * FROM %s WHERE regex_like(key, '%s.*')", n.table, strings.ReplaceAll(escapeRegexForSQL(prefix), "'", "''"))
+		return NewIteratorFromRequest(n, &nosqldb.QueryRequest{Statement: query})
+	}
+
+	// Struct copy — each Search gets its own bindVariables map
+	stmt := n.searchStmt
+	stmt.SetVariable("$pattern", escapeRegexLiteral(prefix)+".*")
+	return NewIteratorFromRequest(n, &nosqldb.QueryRequest{PreparedStatement: &stmt})
 }

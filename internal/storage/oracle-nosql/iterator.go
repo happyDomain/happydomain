@@ -23,19 +23,20 @@ package database
 
 import (
 	"log"
+	"time"
 
 	"github.com/oracle/nosql-go-sdk/nosqldb"
+	"github.com/oracle/nosql-go-sdk/nosqldb/nosqlerr"
 	"github.com/oracle/nosql-go-sdk/nosqldb/types"
 )
 
 type Iterator struct {
-	firstPassed bool
-	n           *NoSQLStorage
-	req         *nosqldb.QueryRequest
-	res         *nosqldb.QueryResult
-	results     []*types.MapValue
-	cur_result  int
-	err         error
+	n          *NoSQLStorage
+	req        *nosqldb.QueryRequest
+	results    []*types.MapValue
+	cur_result int
+	started    bool
+	err        error
 }
 
 func NewIteratorFromRequest(n *NoSQLStorage, req *nosqldb.QueryRequest) *Iterator {
@@ -45,41 +46,57 @@ func NewIteratorFromRequest(n *NoSQLStorage, req *nosqldb.QueryRequest) *Iterato
 	}
 }
 
-func (i *Iterator) Release() {}
+func (i *Iterator) Release() {
+	i.req.Close()
+}
 
 func (i *Iterator) Next() bool {
 	i.err = nil
 
-	if i.res == nil {
-		if i.firstPassed && i.req.IsDone() {
+	// Advance within current batch.
+	if i.results != nil {
+		i.cur_result++
+		if i.cur_result < len(i.results) {
+			return true
+		}
+	}
+
+	// Fetch new batches until we get results or the query is done.
+	// The SDK may return empty batches (e.g. during auto-preparation
+	// or when the read limit is hit), so we must loop.
+	// Note: IsDone() checks continuationKey == nil, which is also true
+	// for a fresh QueryRequest that has never been executed. We skip the
+	// check only before the first Query() call.
+	for {
+		if i.started && i.req.IsDone() {
 			return false
 		}
-		i.firstPassed = true
 
-		i.res, i.err = i.n.client.Query(i.req)
+		res, err := i.n.client.Query(i.req)
+		if err != nil {
+			// Retry with backoff on rate-limit errors
+			if nosqlerr.Is(err, nosqlerr.ReadLimitExceeded, nosqlerr.WriteLimitExceeded, nosqlerr.RequestTimeout) {
+				log.Println("rate limited in iterator, backing off:", err.Error())
+				time.Sleep(2 * time.Second)
+				continue
+			}
+			i.err = err
+			log.Println("error in iterator:", err.Error())
+			return false
+		}
+		i.started = true
+
+		i.results, i.err = res.GetResults()
 		if i.err != nil {
 			log.Println("error in iterator:", i.err.Error())
 			return false
 		}
-		i.results = nil
-	}
 
-	if i.results == nil {
-		i.results, i.err = i.res.GetResults()
-		if i.err != nil {
-			log.Println("error in iterator:", i.err.Error())
-			return false
+		if len(i.results) > 0 {
+			i.cur_result = 0
+			return true
 		}
-		i.cur_result = 0
-	} else {
-		i.cur_result += 1
 	}
-
-	if i.cur_result+1 >= len(i.results) {
-		i.res = nil
-	}
-
-	return i.cur_result < len(i.results)
 }
 
 func (i *Iterator) Valid() bool {
@@ -97,4 +114,8 @@ func (i *Iterator) Key() string {
 func (i *Iterator) Value() any {
 	value, _ := i.results[i.cur_result].Get("value")
 	return value
+}
+
+func (i *Iterator) Err() error {
+	return i.err
 }
