@@ -36,6 +36,8 @@ export class Toast implements NewToast {
     message: string = "";
     timeout: number | undefined = undefined;
     timeoutInterval: ReturnType<typeof setTimeout> | undefined = undefined;
+    remainingTime: number | undefined = undefined;
+    startTime: number | undefined = undefined;
     dismissFunc: (id: string) => void;
     onclick: undefined | (() => void) = undefined;
 
@@ -56,11 +58,18 @@ export class Toast implements NewToast {
     }
 
     pause() {
+        if (this.timeoutInterval === undefined) return;
         clearTimeout(this.timeoutInterval);
+        this.timeoutInterval = undefined;
+        this.remainingTime = (this.remainingTime ?? this.timeout ?? 0) - (Date.now() - (this.startTime ?? Date.now()));
     }
 
     resume() {
-        this.timeoutInterval = setTimeout(() => this.dismissFunc(this.id), this.timeout);
+        if (this.timeoutInterval !== undefined) return;
+        if (this.remainingTime === undefined) this.remainingTime = this.timeout;
+        if (!this.remainingTime) return;
+        this.startTime = Date.now();
+        this.timeoutInterval = setTimeout(() => this.dismissFunc(this.id), this.remainingTime);
     }
 
     getColor(): Color {

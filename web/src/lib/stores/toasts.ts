@@ -23,12 +23,12 @@ import { writable } from "svelte/store";
 import { Toast, type NewToast } from "$lib/model/toast";
 
 function createToastsStore() {
-    const { subscribe, update } = writable([]);
+    const { subscribe, update } = writable<Toast[]>([]);
 
     const addToast = (o: NewToast) => {
         const toast = new Toast(o, dismiss);
 
-        update((all: any) => {
+        update((all: Toast[]) => {
             all.unshift(toast);
             return all;
         });
@@ -42,7 +42,7 @@ function createToastsStore() {
     };
 
     const dismiss = (id: string) => {
-        update((all: any) => all.filter((t: any) => t.id !== id));
+        update((all: Toast[]) => all.filter((t: Toast) => t.id !== id));
     };
 
     return {

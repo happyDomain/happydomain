@@ -29,10 +29,16 @@
 
 <div class="toast-container position-fixed top-0 end-0 p-3">
     {#each $toasts as toast}
-        <Toast>
+        <Toast onmouseenter={() => toast.pause()} onmouseleave={() => toast.resume()}>
             <ToastHeader toggle={() => toast.dismiss()} icon={toast.getColor()}>
                 {#if toast.title}{toast.title}{:else}happyDomain{/if}
             </ToastHeader>
+            {#if toast.timeout}
+                <div
+                    class="toast-progress bg-{toast.getColor()}"
+                    style="animation-duration: {toast.timeout}ms"
+                ></div>
+            {/if}
             <div
                 class="toast-body"
                 role="button"
@@ -41,7 +47,7 @@
                 onclick={() => {
                     if (toast.onclick) toast.onclick();
                 }}
-                onkeypress={(e) => {
+                onkeydown={(e) => {
                     if ((e.key === "Enter" || e.key === " ") && toast.onclick) {
                         e.preventDefault();
                         toast.onclick();
@@ -53,3 +59,26 @@
         </Toast>
     {/each}
 </div>
+
+<style>
+    .toast-progress {
+        height: 4px;
+        width: 100%;
+        animation: toast-shrink linear forwards;
+        transform-origin: left;
+        opacity: 0.75;
+    }
+
+    :global(.toast:hover .toast-progress) {
+        animation-play-state: paused;
+    }
+
+    @keyframes toast-shrink {
+        from {
+            width: 100%;
+        }
+        to {
+            width: 0%;
+        }
+    }
+</style>
