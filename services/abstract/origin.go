@@ -66,12 +66,12 @@ func (s *Origin) GetNbResources() int {
 }
 
 func (s *Origin) GenComment() string {
-	if len(s.NameServers) > 0 {
+	if s.SOA == nil {
 		return fmt.Sprintf("%d NS", len(s.NameServers))
 	}
 
 	ns := ""
-	if s.NameServers != nil {
+	if len(s.NameServers) > 0 {
 		ns = fmt.Sprintf(" + %d NS", len(s.NameServers))
 	}
 
