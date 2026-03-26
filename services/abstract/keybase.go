@@ -51,9 +51,11 @@ func keybaseverification_analyze(a *svc.Analyzer) error {
 	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_keybase"}) {
 		domain := strings.TrimPrefix(record.Header().Name, "_keybase.")
 		if record.Header().Rrtype == dns.TypeTXT {
-			a.UseRR(record, domain, &KeybaseVerif{
+			if err := a.UseRR(record, domain, &KeybaseVerif{
 				Record: helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*happydns.TXT),
-			})
+			}); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

@@ -76,11 +76,13 @@ func delegation_analyze(a *svc.Analyzer) error {
 
 			delegations[dn].NameServers = append(delegations[dn].NameServers, helpers.RRRelativeSubdomain(ns, a.GetOrigin(), dn).(*dns.NS))
 
-			a.UseRR(
+			if err := a.UseRR(
 				record,
 				dn,
 				delegations[dn],
-			)
+			); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -89,11 +91,13 @@ func delegation_analyze(a *svc.Analyzer) error {
 			if _, ok := record.(*dns.DS); ok {
 				delegations[subdomain].DS = append(delegations[subdomain].DS, helpers.RRRelativeSubdomain(record, a.GetOrigin(), subdomain).(*dns.DS))
 
-				a.UseRR(
+				if err := a.UseRR(
 					record,
 					subdomain,
 					delegations[subdomain],
-				)
+				); err != nil {
+					return err
+				}
 			}
 		}
 	}

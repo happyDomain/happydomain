@@ -51,9 +51,11 @@ func scalewaychallenge_analyze(a *svc.Analyzer) error {
 	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_scaleway-challenge"}) {
 		domain := strings.TrimPrefix(record.Header().Name, "_scaleway-challenge.")
 		if record.Header().Rrtype == dns.TypeTXT {
-			a.UseRR(record, domain, &ScalewayChallenge{
+			if err := a.UseRR(record, domain, &ScalewayChallenge{
 				Record: helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*happydns.TXT),
-			})
+			}); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

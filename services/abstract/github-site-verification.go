@@ -58,9 +58,11 @@ func githubverification_analyze(a *svc.Analyzer) error {
 			domain := strings.Join(dnparts[1:], ".")
 
 			if record.Header().Rrtype == dns.TypeTXT {
-				a.UseRR(record, domain, &GithubOrgVerif{
+				if err := a.UseRR(record, domain, &GithubOrgVerif{
 					Record: helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*happydns.TXT),
-				})
+				}); err != nil {
+					return err
+				}
 			}
 		}
 	}

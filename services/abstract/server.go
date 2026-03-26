@@ -131,7 +131,9 @@ next_pool:
 				s.SSHFP[i] = helpers.RRRelativeSubdomain(s.SSHFP[i], a.GetOrigin(), dn).(*dns.SSHFP)
 			}
 
-			a.UseRR(rr, dn, s)
+			if err := a.UseRR(rr, dn, s); err != nil {
+				return err
+			}
 		}
 	}
 

@@ -165,11 +165,13 @@ func rfc6186_analyze(a *svc.Analyzer) error {
 
 				emailDomains[domain].Records = append(emailDomains[domain].Records, helpers.RRRelativeSubdomain(srv, a.GetOrigin(), domain).(*dns.SRV))
 
-				a.UseRR(
+				if err := a.UseRR(
 					record,
 					domain,
 					emailDomains[domain],
-				)
+				); err != nil {
+					return err
+				}
 			}
 		}
 	}

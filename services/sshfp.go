@@ -82,7 +82,9 @@ func sshfp_analyze(a *svc.Analyzer) error {
 					FingerPrint: sshfp.FingerPrint,
 				})
 
-				a.UseRR(rr, dn, s)
+				if err := a.UseRR(rr, dn, s); err != nil {
+					return err
+				}
 			}
 		}
 	}

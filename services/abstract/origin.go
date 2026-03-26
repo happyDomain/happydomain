@@ -103,20 +103,24 @@ func origin_analyze(a *svc.Analyzer) error {
 				SOA: helpers.RRRelativeSubdomain(soa, a.GetOrigin(), domain).(*dns.SOA),
 			}
 
-			a.UseRR(
+			if err := a.UseRR(
 				record,
 				domain,
 				origin,
-			)
+			); err != nil {
+				return err
+			}
 
 			for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeNS, Domain: domain}) {
 				if ns, ok := record.(*dns.NS); ok {
 					origin.NameServers = append(origin.NameServers, helpers.RRRelativeSubdomain(ns, a.GetOrigin(), domain).(*dns.NS))
-					a.UseRR(
+					if err := a.UseRR(
 						record,
 						domain,
 						origin,
-					)
+					); err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -129,11 +133,13 @@ func origin_analyze(a *svc.Analyzer) error {
 			if ns, ok := record.(*dns.NS); ok {
 				domain := record.Header().Name
 				origin.NameServers = append(origin.NameServers, helpers.RRRelativeSubdomain(ns, a.GetOrigin(), domain).(*dns.NS))
-				a.UseRR(
+				if err := a.UseRR(
 					record,
 					domain,
 					origin,
-				)
+				); err != nil {
+					return err
+				}
 			}
 		}
 	}

@@ -53,7 +53,9 @@ func pointer_analyze(a *svc.Analyzer) error {
 				Record: helpers.RRRelativeSubdomain(ptr, a.GetOrigin(), domain).(*dns.PTR),
 			}
 
-			a.UseRR(record, domain, newrr)
+			if err := a.UseRR(record, domain, newrr); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

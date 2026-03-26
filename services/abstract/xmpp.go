@@ -98,11 +98,13 @@ func xmpp_subanalyze(a *svc.Analyzer, prefix string, xmppDomains map[string]*XMP
 		if srv, ok := record.(*dns.SRV); ok {
 			xmppDomains[domain].Records = append(xmppDomains[domain].Records, helpers.RRRelativeSubdomain(srv, a.GetOrigin(), domain).(*dns.SRV))
 
-			a.UseRR(
+			if err := a.UseRR(
 				record,
 				domain,
 				xmppDomains[domain],
-			)
+			); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -112,9 +114,15 @@ func xmpp_subanalyze(a *svc.Analyzer, prefix string, xmppDomains map[string]*XMP
 func xmpp_analyze(a *svc.Analyzer) error {
 	xmppDomains := map[string]*XMPP{}
 
-	xmpp_subanalyze(a, "_jabber._tcp.", xmppDomains)
-	xmpp_subanalyze(a, "_xmpp-client._tcp.", xmppDomains)
-	xmpp_subanalyze(a, "_xmpp-server._tcp.", xmppDomains)
+	if err := xmpp_subanalyze(a, "_jabber._tcp.", xmppDomains); err != nil {
+		return err
+	}
+	if err := xmpp_subanalyze(a, "_xmpp-client._tcp.", xmppDomains); err != nil {
+		return err
+	}
+	if err := xmpp_subanalyze(a, "_xmpp-server._tcp.", xmppDomains); err != nil {
+		return err
+	}
 
 	return nil
 }

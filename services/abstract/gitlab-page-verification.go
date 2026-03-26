@@ -51,9 +51,11 @@ func gitlabverification_analyze(a *svc.Analyzer) error {
 	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_gitlab-pages-verification-code"}) {
 		domain := strings.TrimPrefix(record.Header().Name, "_gitlab-pages-verification-code.")
 		if txt, ok := record.(*dns.TXT); ok && strings.HasPrefix(strings.Join(txt.Txt, ""), "gitlab-pages-verification-code=") {
-			a.UseRR(record, domain, &GitlabPageVerif{
+			if err := a.UseRR(record, domain, &GitlabPageVerif{
 				Record: helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*happydns.TXT),
-			})
+			}); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

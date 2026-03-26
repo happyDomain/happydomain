@@ -51,9 +51,11 @@ func acmechallenge_analyze(a *svc.Analyzer) error {
 	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeTXT, Prefix: "_acme-challenge"}) {
 		domain := strings.TrimPrefix(record.Header().Name, "_acme-challenge.")
 		if record.Header().Rrtype == dns.TypeTXT {
-			a.UseRR(record, domain, &ACMEChallenge{
+			if err := a.UseRR(record, domain, &ACMEChallenge{
 				Record: helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*happydns.TXT),
-			})
+			}); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

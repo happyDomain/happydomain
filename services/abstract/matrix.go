@@ -100,11 +100,13 @@ func matrix_analyze(a *svc.Analyzer) error {
 		if srv, ok := record.(*dns.SRV); ok {
 			matrixDomains[domain].Records = append(matrixDomains[domain].Records, helpers.RRRelativeSubdomain(srv, a.GetOrigin(), domain).(*dns.SRV))
 
-			a.UseRR(
+			if err := a.UseRR(
 				srv,
 				domain,
 				matrixDomains[domain],
-			)
+			); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

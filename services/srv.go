@@ -83,11 +83,13 @@ func srv_analyze(a *svc.Analyzer) error {
 
 		srvDomains[domain][svc].Records = append(srvDomains[domain][svc].Records, helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*dns.SRV))
 
-		a.UseRR(
+		if err := a.UseRR(
 			record,
 			subdomains[3],
 			srvDomains[domain][svc],
-		)
+		); err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -51,9 +51,11 @@ func googleverification_analyze(a *svc.Analyzer) error {
 	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeTXT}) {
 		domain := record.Header().Name
 		if txt, ok := record.(*happydns.TXT); ok && strings.HasPrefix(txt.Txt, "google-site-verification=") {
-			a.UseRR(record, domain, &GoogleVerif{
+			if err := a.UseRR(record, domain, &GoogleVerif{
 				Record: helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*happydns.TXT),
-			})
+			}); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
