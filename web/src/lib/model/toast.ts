@@ -19,8 +19,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { createId } from "@paralleldrive/cuid2";
-
 import type { Color } from "@sveltestrap/sveltestrap";
 
 export interface NewToast {
@@ -32,7 +30,7 @@ export interface NewToast {
 }
 
 export class Toast implements NewToast {
-    id: string = createId();
+    id: string = crypto.randomUUID();
     type: "info" | "success" | "warning" | "error" = "info";
     title: string = "";
     message: string = "";

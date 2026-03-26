@@ -19,8 +19,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { createId } from "@paralleldrive/cuid2";
-
 import { getProviderSettings } from "$lib/api/provider_settings";
 import type { CustomForm } from "$lib/model/custom_form.svelte";
 import { isProvider, type Provider } from "$lib/model/provider";
@@ -46,7 +44,7 @@ export class ProviderForm {
     ) {
         this.ptype = ptype;
         this.state = -1;
-        this.providerId = providerId ? providerId : createId();
+        this.providerId = providerId ? providerId : crypto.randomUUID();
         this.form = undefined;
         this.value = value ? value : { recall: this.providerId, state: this.state };
         this.on_done = on_done;
