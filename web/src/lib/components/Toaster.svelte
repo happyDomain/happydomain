@@ -22,12 +22,31 @@
 -->
 
 <script lang="ts">
+    import { onMount } from "svelte";
     import { Toast, ToastHeader } from "@sveltestrap/sveltestrap";
 
     import { toasts } from "$lib/stores/toasts";
+
+    let hidden = false;
+
+    onMount(() => {
+        const handleVisibilityChange = () => {
+            hidden = document.hidden;
+            for (const toast of $toasts) {
+                if (document.hidden) {
+                    toast.pause();
+                } else {
+                    toast.resume();
+                }
+            }
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    });
 </script>
 
-<div class="toast-container position-fixed top-0 end-0 p-3">
+<div class="toast-container position-fixed top-0 end-0 p-3" class:page-hidden={hidden}>
     {#each $toasts as toast}
         <Toast onmouseenter={() => toast.pause()} onmouseleave={() => toast.resume()}>
             <ToastHeader toggle={() => toast.dismiss()} icon={toast.getColor()}>
@@ -69,7 +88,8 @@
         opacity: 0.75;
     }
 
-    :global(.toast:hover .toast-progress) {
+    :global(.toast:hover .toast-progress),
+    .page-hidden :global(.toast-progress) {
         animation-play-state: paused;
     }
 

@@ -50,7 +50,7 @@ export class Toast implements NewToast {
 
         this.dismissFunc = dismiss;
 
-        if (this.timeout) this.resume();
+        if (this.timeout && (typeof document === "undefined" || !document.hidden)) this.resume();
     }
 
     dismiss() {
