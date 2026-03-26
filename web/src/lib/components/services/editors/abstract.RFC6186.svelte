@@ -47,23 +47,27 @@
 
     // Service type configurations with their prefixes
     const services = [
-        { key: "submission", prefix: "_submission._tcp.", label: "Email Submission" },
-        { key: "submissions", prefix: "_submissions._tcp.", label: "Email Submission over TLS (RFC 8314)" },
-        { key: "imap", prefix: "_imap._tcp.", label: "IMAP" },
-        { key: "imaps", prefix: "_imaps._tcp.", label: "IMAP over TLS" },
-        { key: "pop3", prefix: "_pop3._tcp.", label: "POP3" },
-        { key: "pop3s", prefix: "_pop3s._tcp.", label: "POP3 over TLS" },
+        { key: "submission", prefix: "_submission._tcp", label: "Email Submission" },
+        {
+            key: "submissions",
+            prefix: "_submissions._tcp",
+            label: "Email Submission over TLS (RFC 8314)",
+        },
+        { key: "imap", prefix: "_imap._tcp", label: "IMAP" },
+        { key: "imaps", prefix: "_imaps._tcp", label: "IMAP over TLS" },
+        { key: "pop3", prefix: "_pop3._tcp", label: "POP3" },
+        { key: "pop3s", prefix: "_pop3s._tcp", label: "POP3 over TLS" },
     ];
 
     // Initialize service arrays from srv (one-time, breaks circular dependency)
     let initialized = $state(false);
 
-    // Initialize service arrays on mount
+    // Initialize service arrays on mount (runs once regardless of whether srv is empty)
     $effect(() => {
-        if (!initialized && srvArray && srvArray.length > 0) {
+        if (!initialized) {
             for (const service of services) {
-                (value as any)[service.key] = srvArray.filter((srv: dnsTypeSRV) =>
-                    srv?.Hdr?.Name?.startsWith(service.prefix) || false
+                (value as any)[service.key] = (srvArray ?? []).filter(
+                    (srv: dnsTypeSRV) => srv?.Hdr?.Name?.startsWith(service.prefix) || false,
                 );
             }
             initialized = true;
@@ -97,7 +101,7 @@
         <h5 class="pb-1 border-bottom border-1">{service.label}</h5>
         <TableRecords
             class="mt-3"
-            dn={service.prefix.replace(/\.$/, "")}
+            dn={service.prefix}
             edit
             {origin}
             bind:rrs={(value as any)[service.key]}
@@ -121,8 +125,8 @@
                         edit
                         index={service.key + idx.toString()}
                         specs={{
-                              id: field,
-                              type: field == "Target" ? "string" : "uint16",
+                            id: field,
+                            type: field == "Target" ? "string" : "uint16",
                         }}
                         bind:value={serviceArray[idx][field as keyof dnsTypeSRV]}
                     />

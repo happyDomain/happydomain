@@ -48,17 +48,17 @@ func (s *RFC6186) GenComment() string {
 	for _, record := range s.Records {
 		domain := record.Hdr.Name
 
-		if strings.HasPrefix(domain, "_submission._tcp.") {
+		if strings.HasPrefix(domain, "_submission._tcp") {
 			submission += 1
-		} else if strings.HasPrefix(domain, "_submissions._tcp.") {
+		} else if strings.HasPrefix(domain, "_submissions._tcp") {
 			submissionS += 1
-		} else if strings.HasPrefix(domain, "_imap._tcp.") {
+		} else if strings.HasPrefix(domain, "_imap._tcp") {
 			imap += 1
-		} else if strings.HasPrefix(domain, "_imaps._tcp.") {
+		} else if strings.HasPrefix(domain, "_imaps._tcp") {
 			imaps += 1
-		} else if strings.HasPrefix(domain, "_pop3._tcp.") {
+		} else if strings.HasPrefix(domain, "_pop3._tcp") {
 			pop3 += 1
-		} else if strings.HasPrefix(domain, "_pop3s._tcp.") {
+		} else if strings.HasPrefix(domain, "_pop3s._tcp") {
 			pop3s += 1
 		}
 	}
