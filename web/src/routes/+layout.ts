@@ -105,6 +105,7 @@ export const load: Load = async ({ route, url }) => {
                 type: 'error',
                 title: get(t)("errors.session.title"),
                 message: get(t)("errors.session.content"),
+                timeout: 10000,
             });
             throw redirect(302, '/login?next=' + encodeURIComponent(url.pathname));
         }

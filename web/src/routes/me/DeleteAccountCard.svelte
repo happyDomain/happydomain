@@ -64,6 +64,7 @@
             title: $t("account.delete.deleted"),
             message: $t("account.delete.success"),
             type: "primary",
+            timeout: 5000,
         });
         navigate("/login");
     }

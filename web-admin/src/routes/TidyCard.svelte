@@ -44,7 +44,8 @@
             });
         } catch (err) {
             toasts.addErrorToast({
-                message: err instanceof Error ? err.message : "Unknown error occurred"
+                message: err instanceof Error ? err.message : "Unknown error occurred",
+                timeout: 10000,
             });
         } finally {
             isProcessing = false;
