@@ -53,7 +53,7 @@
     // Initialize serviceName and protocol from first SRV record
     $effect(() => {
         if (srvArray?.[0]?.Hdr?.Name) {
-            const match = srvArray[0].Hdr.Name.match(/^_([^.]+)\._(\w+)\./);
+            const match = srvArray[0].Hdr.Name.match(/^_([^.]+)\._(\w+)/);
             if (match) {
                 serviceName = match[1];
                 protocol = match[2];

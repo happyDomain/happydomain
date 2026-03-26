@@ -51,7 +51,7 @@
     const getTlsaArray = (): dnsRR[] => (value["tlsa"] as any) as dnsRR[];
 
     if (getTlsaArray()?.[0]?.Hdr?.Name) {
-        const match = getTlsaArray()[0].Hdr.Name.match(/^_(\d+)\._(\w+)\./);
+        const match = getTlsaArray()[0].Hdr.Name.match(/^_(\d+)\._(\w+)/);
         if (match) {
             port = parseInt(match[1], 10);
             protocol = match[2];
