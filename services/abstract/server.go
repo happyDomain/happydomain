@@ -120,17 +120,17 @@ next_pool:
 		}
 
 		// Register the use only now, to avoid registering multi-A/AAAA
-		for _, rr := range rrs {
-			if s.A != nil {
-				s.A = helpers.RRRelativeSubdomain(s.A, a.GetOrigin(), dn).(*dns.A)
-			}
-			if s.AAAA != nil {
-				s.AAAA = helpers.RRRelativeSubdomain(s.AAAA, a.GetOrigin(), dn).(*dns.AAAA)
-			}
-			for i := range s.SSHFP {
-				s.SSHFP[i] = helpers.RRRelativeSubdomain(s.SSHFP[i], a.GetOrigin(), dn).(*dns.SSHFP)
-			}
+		if s.A != nil {
+			s.A = helpers.RRRelativeSubdomain(s.A, a.GetOrigin(), dn).(*dns.A)
+		}
+		if s.AAAA != nil {
+			s.AAAA = helpers.RRRelativeSubdomain(s.AAAA, a.GetOrigin(), dn).(*dns.AAAA)
+		}
+		for i := range s.SSHFP {
+			s.SSHFP[i] = helpers.RRRelativeSubdomain(s.SSHFP[i], a.GetOrigin(), dn).(*dns.SSHFP)
+		}
 
+		for _, rr := range rrs {
 			if err := a.UseRR(rr, dn, s); err != nil {
 				return err
 			}
