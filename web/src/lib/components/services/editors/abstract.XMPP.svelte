@@ -42,7 +42,7 @@
         records?: dnsTypeSRV[];
         "xmpp-client"?: dnsTypeSRV[];
         "xmpp-server"?: dnsTypeSRV[];
-        "jabber"?: dnsTypeSRV[];
+        jabber?: dnsTypeSRV[];
         [key: string]: any;
     };
 
@@ -53,9 +53,9 @@
 
     // Service type configurations with their prefixes
     const services = [
-        { key: "xmpp-client", prefix: "_xmpp-client._tcp.", label: "XMPP Client" },
-        { key: "xmpp-server", prefix: "_xmpp-server._tcp.", label: "XMPP Server" },
-        { key: "jabber", prefix: "_jabber._tcp.", label: "Jabber" },
+        { key: "xmpp-client", prefix: "_xmpp-client._tcp", label: "XMPP Client" },
+        { key: "xmpp-server", prefix: "_xmpp-server._tcp", label: "XMPP Server" },
+        { key: "jabber", prefix: "_jabber._tcp", label: "Jabber" },
     ];
 
     // Initialize service arrays from records (one-time, breaks circular dependency)
@@ -64,8 +64,8 @@
     $effect(() => {
         if (!initialized && valueData.records) {
             for (const service of services) {
-                valueData[service.key] = valueData.records.filter((srv) =>
-                    srv?.Hdr?.Name?.startsWith(service.prefix) || false
+                valueData[service.key] = valueData.records.filter(
+                    (srv) => srv?.Hdr?.Name?.startsWith(service.prefix) || false,
                 );
             }
             initialized = true;
@@ -98,7 +98,7 @@
         <h5 class="pb-1 border-bottom border-1">{service.label}</h5>
         <TableRecords
             class="mt-3"
-            dn={service.prefix.replace(/\.$/, "")}
+            dn={service.prefix}
             edit
             {origin}
             bind:rrs={valueData[service.key]}
@@ -121,8 +121,8 @@
                         edit
                         index={service.key + idx.toString()}
                         specs={{
-                              id: field,
-                              type: field == "Target" ? "string" : "uint16",
+                            id: field,
+                            type: field == "Target" ? "string" : "uint16",
                         }}
                         bind:value={valueData[service.key][idx][field]}
                     />
