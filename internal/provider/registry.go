@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"slices"
 
 	"git.happydns.org/happyDomain/model"
 )
@@ -48,6 +49,15 @@ func RegisterProvider(creator happydns.ProviderCreatorFunc, infos happydns.Provi
 // GetProviders returns all registered provider definitions.
 func GetProviders() map[string]happydns.ProviderCreator {
 	return providerRegistry
+}
+
+// ProviderHasCapability checks if the registered provider type has the given capability.
+func ProviderHasCapability(provider *happydns.Provider, capability string) bool {
+	creator, ok := providerRegistry[provider.Type]
+	if !ok {
+		return false
+	}
+	return slices.Contains(creator.Infos.Capabilities, capability)
 }
 
 // FindProvider returns the Provider corresponding to the given name, or an error if it doesn't exist.
