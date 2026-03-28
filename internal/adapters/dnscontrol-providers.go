@@ -39,7 +39,7 @@ import (
 // and sets the help link to the DNSControl documentation for that provider.
 func RegisterDNSControlProviderAdapter(creator happydns.ProviderCreatorFunc, infos happydns.ProviderInfos, registerFunc happydns.RegisterProviderFunc) {
 	prvInstance := creator().(DNSControlConfigAdapter)
-	infos.Capabilities = GetDNSControlProviderCapabilities(prvInstance)
+	infos.Capabilities = append(infos.Capabilities, GetDNSControlProviderCapabilities(prvInstance)...)
 	infos.HelpLink = "https://docs.dnscontrol.org/service-providers/providers/" + strings.ToLower(prvInstance.DNSControlName())
 
 	registerFunc(creator, infos)
