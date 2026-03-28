@@ -68,7 +68,8 @@ func init() {
 	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &DDNSServer{}
 	}, happydns.ProviderInfos{
-		Name:        "Dynamic DNS",
-		Description: "If your zone is hosted on an authoritative name server that support Dynamic DNS (RFC 2136), such as Bind, Knot, ...",
+		Name:         "Dynamic DNS",
+		Description:  "If your zone is hosted on an authoritative name server that support Dynamic DNS (RFC 2136), such as Bind, Knot, ...",
+		Capabilities: []string{"manages-soa-serial"},
 	}, providerReg.RegisterProvider)
 }

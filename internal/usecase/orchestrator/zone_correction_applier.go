@@ -28,10 +28,12 @@ import (
 	"time"
 
 	adapter "git.happydns.org/happyDomain/internal/adapters"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
 	svc "git.happydns.org/happyDomain/internal/service"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/services/abstract"
 )
 
 // ZoneCorrectionApplierUsecase applies a user-selected subset of zone
@@ -43,6 +45,7 @@ type ZoneCorrectionApplierUsecase struct {
 	domainUpdater   DomainUpdater
 	zoneCreator     *zoneUC.CreateZoneUsecase
 	zoneGetter      *zoneUC.GetZoneUsecase
+	zoneRetriever   ZoneRetriever
 	zoneUpdater     *zoneUC.UpdateZoneUsecase
 	clock           func() time.Time
 }
@@ -56,6 +59,7 @@ func NewZoneCorrectionApplierUsecase(
 	lister *ZoneCorrectionListerUsecase,
 	zoneCreator *zoneUC.CreateZoneUsecase,
 	zoneGetter *zoneUC.GetZoneUsecase,
+	zoneRetriever ZoneRetriever,
 	zoneUpdater *zoneUC.UpdateZoneUsecase,
 ) *ZoneCorrectionApplierUsecase {
 	return &ZoneCorrectionApplierUsecase{
@@ -64,6 +68,7 @@ func NewZoneCorrectionApplierUsecase(
 		domainUpdater:               domainUpdater,
 		zoneCreator:                 zoneCreator,
 		zoneGetter:                  zoneGetter,
+		zoneRetriever:               zoneRetriever,
 		zoneUpdater:                 zoneUpdater,
 		clock:                       time.Now,
 	}
@@ -171,8 +176,22 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(
 		log.Printf("unable to append domain log for %s: %s", domain.DomainName, logErr.Error())
 	}
 
-	// Step 5: Create a published snapshot zone from target records.
-	services, defaultTTL, err := svc.AnalyzeZone(domain.DomainName, targetRecords)
+	// Step 4b: If provider manages SOA serial, re-fetch to get the actual published state.
+	publishedRecords := targetRecords
+	refetched := false
+	provider, provErr := uc.providerService.GetUserProvider(user, domain.ProviderId)
+	if provErr == nil && providerReg.ProviderHasCapability(provider, "manages-soa-serial") {
+		fetched, fetchErr := uc.zoneRetriever.RetrieveZone(ctx, provider, domain.DomainName)
+		if fetchErr != nil {
+			log.Printf("%s: unable to re-fetch zone after deploy, using target records: %s", domain.DomainName, fetchErr)
+		} else {
+			publishedRecords = fetched
+			refetched = true
+		}
+	}
+
+	// Step 5: Create a published snapshot zone from published records.
+	services, defaultTTL, err := svc.AnalyzeZone(domain.DomainName, publishedRecords)
 	if err != nil {
 		return nil, happydns.InternalError{
 			Err:         fmt.Errorf("unable to analyze target zone: %w", err),
@@ -221,6 +240,25 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(
 		}
 	}
 
+	// Step 5b: If we re-fetched, update the WIP zone's Origin SOA serial to match.
+	if refetched {
+		if newSerial, ok := extractOriginSOASerial(snapshot); ok {
+			if updateErr := uc.zoneUpdater.Update(zone.Id, func(z *happydns.Zone) {
+				if services, exists := z.Services[""]; exists {
+					for _, s := range services {
+						if s.Type == "abstract.Origin" {
+							if origin, ok := s.Service.(*abstract.Origin); ok && origin.SOA != nil {
+								origin.SOA.Serial = newSerial
+							}
+						}
+					}
+				}
+			}); updateErr != nil {
+				log.Printf("%s: unable to update WIP zone SOA serial: %s", domain.DomainName, updateErr)
+			}
+		}
+	}
+
 	// Step 6: Insert snapshot at ZoneHistory[1] (after WIP at position 0).
 	err = uc.domainUpdater.Update(domain.Id, user, func(domain *happydns.Domain) {
 		if len(domain.ZoneHistory) == 0 {
@@ -248,4 +286,19 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(
 	}
 
 	return snapshot, nil
+}
+
+// extractOriginSOASerial extracts the SOA serial from the Origin service
+// at the zone apex, if present.
+func extractOriginSOASerial(zone *happydns.Zone) (uint32, bool) {
+	if services, exists := zone.Services[""]; exists {
+		for _, s := range services {
+			if s.Type == "abstract.Origin" {
+				if origin, ok := s.Service.(*abstract.Origin); ok && origin.SOA != nil {
+					return origin.SOA.Serial, true
+				}
+			}
+		}
+	}
+	return 0, false
 }

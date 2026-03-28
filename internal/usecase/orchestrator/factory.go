@@ -87,7 +87,7 @@ func NewOrchestrator(
 	zoneCorrectionLister := NewZoneCorrectionListerUsecase(providerService, listRecords, zoneCorrectorService, zoneRetrieverService)
 	return &Orchestrator{
 		RemoteZoneImporter:    NewRemoteZoneImporterUsecase(appendDomainLog, providerService, zoneImporter, zoneRetrieverService),
-		ZoneCorrectionApplier: NewZoneCorrectionApplierUsecase(appendDomainLog, domainUpdater, zoneCorrectionLister, zoneCreator, zoneGetter, zoneUpdater),
+		ZoneCorrectionApplier: NewZoneCorrectionApplierUsecase(appendDomainLog, domainUpdater, zoneCorrectionLister, zoneCreator, zoneGetter, zoneRetrieverService, zoneUpdater),
 		ZoneImporter:          zoneImporter,
 	}
 }
