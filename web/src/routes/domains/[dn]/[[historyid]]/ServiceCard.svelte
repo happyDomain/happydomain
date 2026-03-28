@@ -30,6 +30,7 @@
         CardSubtitle,
         Icon,
         Spinner,
+        Progress,
     } from "@sveltestrap/sveltestrap";
 
     import ServiceBadges from "./ServiceBadges.svelte";
@@ -38,8 +39,8 @@
     import type { Domain } from "$lib/model/domain";
     import type { ServiceCombined } from "$lib/model/service.svelte";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
-    import { navigate } from "$lib/stores/config";
     import { t } from "$lib/translations";
+    import PropagationCountdown from "$lib/components/services/PropagationCountdown.svelte";
 
     interface Props {
         dn: string;
@@ -49,6 +50,9 @@
     }
 
     let { dn, origin, service = $bindable(null), zoneId }: Props = $props();
+
+    // Will be changed by PropagationCountdown
+    let isPropagating = $state(true);
 
     function openService() {
         if (service) {
@@ -62,7 +66,7 @@
 
 <Card
     class="card-hover h-100"
-    style={"cursor: pointer;" + (!service ? "border-style: dashed; border-width: 2px" : "")}
+    style={"cursor: pointer; " + (!service ? "border-style: dashed; border-width: 2px" : "")}
     on:click={openService}
 >
     {#if !$servicesSpecsLoaded}
@@ -79,7 +83,24 @@
                         <Icon name="plus-circle" /> {$t("service.new")}
                     {/if}
                 </CardTitle>
-                <ServiceBadges {service} />
+                {#if service?._propagated_at && isPropagating}
+                    <Progress
+                        class="rounded"
+                        barClassName="px-2 text-end"
+                        value={100}
+                        color="primary"
+                        striped
+                        animated
+                    >
+                        <PropagationCountdown
+                            bind:isPropagating
+                            propagatedAt={service?._propagated_at}
+                            localeString="service.propagating"
+                        />
+                    </Progress>
+                {:else}
+                    <ServiceBadges {service} />
+                {/if}
             </div>
             <CardSubtitle class="mb-2 text-muted fst-italic">
                 {#if service}

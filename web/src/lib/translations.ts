@@ -43,6 +43,7 @@ interface Params {
     name?: string;
     nbDiffs?: number;
     nbSelected?: number;
+    countdown?: string;
     // add more parameters that are used here
 }
 

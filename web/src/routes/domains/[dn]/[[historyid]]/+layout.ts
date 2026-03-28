@@ -1,7 +1,7 @@
+import { get } from "svelte/store";
 import { error, redirect, type Load } from "@sveltejs/kit";
 
-import { domains_idx } from "$lib/stores/domains";
-import { getZone } from "$lib/stores/thiszone";
+import { getZone, thisZone } from "$lib/stores/thiszone";
 
 export const load: Load = async ({ parent, params }) => {
     const data = await parent();
@@ -32,7 +32,10 @@ export const load: Load = async ({ parent, params }) => {
 
     const zoneId: string = domain.zone_history[zhidx];
 
-    getZone(domain, zoneId);
+    const currentZone = get(thisZone);
+    if (currentZone?.id !== zoneId) {
+        getZone(domain, zoneId);
+    }
 
     return {
         ...data,

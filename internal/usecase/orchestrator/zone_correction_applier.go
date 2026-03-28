@@ -78,11 +78,11 @@ func (uc *ZoneCorrectionApplierUsecase) computeExecutableCorrections(
 	domain *happydns.Domain,
 	zone *happydns.Zone,
 	wantedCorrections []happydns.Identifier,
-) (execCorrections []*happydns.Correction, targetRecords []happydns.Record, nbDiffs int, err error) {
+) (execCorrections []*happydns.Correction, targetRecords []happydns.Record, providerRecords []happydns.Record, nbDiffs int, err error) {
 	// Step 1: Compute the diff and get provider/WIP records.
 	corrections, providerRecords, _, nbDiffs, err := uc.listWithRecords(ctx, user, domain, zone)
 	if err != nil {
-		return nil, nil, nbDiffs, err
+		return nil, nil, nil, nbDiffs, err
 	}
 
 	// Step 2: Build target records from selected corrections.
@@ -91,15 +91,15 @@ func (uc *ZoneCorrectionApplierUsecase) computeExecutableCorrections(
 	// Step 3: Get executable corrections from the provider for the target state.
 	provider, err := uc.providerService.GetUserProvider(user, domain.ProviderId)
 	if err != nil {
-		return nil, nil, nbDiffs, err
+		return nil, nil, nil, nbDiffs, err
 	}
 
 	execCorrections, nbDiffs, err = uc.zoneCorrector.ListZoneCorrections(ctx, provider, domain, targetRecords)
 	if err != nil {
-		return nil, nil, nbDiffs, fmt.Errorf("unable to compute executable corrections: %w", err)
+		return nil, nil, nil, nbDiffs, fmt.Errorf("unable to compute executable corrections: %w", err)
 	}
 
-	return execCorrections, targetRecords, nbDiffs, nil
+	return execCorrections, targetRecords, providerRecords, nbDiffs, nil
 }
 
 // Prepare computes the executable corrections for the given selection without
@@ -112,7 +112,7 @@ func (uc *ZoneCorrectionApplierUsecase) Prepare(
 	zone *happydns.Zone,
 	form *happydns.PrepareZoneForm,
 ) (*happydns.PrepareZoneResponse, error) {
-	execCorrections, _, nbDiffs, err := uc.computeExecutableCorrections(ctx, user, domain, zone, form.WantedCorrections)
+	execCorrections, _, _, nbDiffs, err := uc.computeExecutableCorrections(ctx, user, domain, zone, form.WantedCorrections)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +142,7 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(
 	zone *happydns.Zone,
 	form *happydns.ApplyZoneForm,
 ) (*happydns.Zone, error) {
-	executableCorrections, targetRecords, _, err := uc.computeExecutableCorrections(ctx, user, domain, zone, form.WantedCorrections)
+	executableCorrections, targetRecords, providerRecords, _, err := uc.computeExecutableCorrections(ctx, user, domain, zone, form.WantedCorrections)
 	if err != nil {
 		return nil, err
 	}
@@ -196,6 +196,10 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(
 	}
 
 	now := uc.clock()
+
+	// Compute propagation times for changed services on the snapshot.
+	SetPropagationTimes(services, providerRecords, domain.DomainName, defaultTTL, now)
+
 	snapshot := &happydns.Zone{
 		ZoneMeta: happydns.ZoneMeta{
 			IdAuthor:     user.Id,
@@ -234,6 +238,13 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(
 			Err:         fmt.Errorf("unable to UpdateDomain: %w", err),
 			UserMessage: "Sorry, we are unable to update the domain history now.",
 		}
+	}
+
+	// Update propagation times on the WIP zone as well.
+	if updateErr := uc.zoneUpdater.Update(zone.Id, func(wipZone *happydns.Zone) {
+		SetPropagationTimes(wipZone.Services, providerRecords, domain.DomainName, wipZone.DefaultTTL, now)
+	}); updateErr != nil {
+		log.Printf("%s: unable to update WIP zone propagation times: %s", domain.DomainName, updateErr)
 	}
 
 	return snapshot, nil

@@ -19,7 +19,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { get } from "svelte/store";
 import { derived, writable, type Writable } from "svelte/store";
 import { domainCompare } from "$lib/dns";
 import { retrieveZone as APIRetrieveZone, getZone as APIGetZone } from "$lib/api/zone";
@@ -83,11 +82,6 @@ export const sortedDomainsWithIntermediate = derived(sortedDomains, ($sortedDoma
 
 // getZone retrieve a given zone
 export async function getZone(domain: Domain, zoneId: string) {
-    const currentZone = get(thisZone);
-    if (currentZone?.id === zoneId) {
-        return currentZone;
-    }
-
     thisZone.set(null);
 
     const zone = await APIGetZone(domain, zoneId);

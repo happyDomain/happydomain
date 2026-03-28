@@ -31,3 +31,31 @@ export function fromDatetimeLocal(datetimeLocal: string): string | null {
         return null;
     }
 }
+
+/**
+ * Format a countdown timer string from a target date.
+ * Displays the remaining time in a human-readable format (e.g., "2d 5h", "3h 20m").
+ * @param date Target date to count down to
+ * @returns Formatted countdown string (e.g., "2d 5h", "30m", "45s"), or "0m" if date is in the past
+ */
+export function formatCountdown(date: Date): string {
+    const diff = date.getTime() - Date.now();
+    if (diff <= 0) return "0m";
+
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) {
+        return `${days}d ${hours % 24}h`;
+    } else if (hours > 0) {
+        return `${hours}h ${minutes % 60}m`;
+    } else if (minutes > 9) {
+        return `${minutes}m`;
+    } else if (minutes > 0) {
+        return `${minutes}m ${seconds % 60}s`;
+    } else {
+        return `${seconds}s`;
+    }
+}

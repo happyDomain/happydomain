@@ -65,6 +65,7 @@ func transferMetadata(oldSvc, newSvc *happydns.Service, origin string, defaultTT
 	newSvc.UserComment = oldSvc.UserComment
 	newSvc.OwnerId = oldSvc.OwnerId
 	newSvc.Aliases = oldSvc.Aliases
+	newSvc.PropagatedAt = oldSvc.PropagatedAt
 
 	if oldSvc.Ttl != 0 {
 		serviceTtl := oldSvc.Ttl

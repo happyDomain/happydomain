@@ -29,6 +29,7 @@ export class ServiceMeta {
     _mycomment? = $state<string | undefined>(undefined);
     _aliases? = $state<Array<string> | undefined>(undefined);
     _tmp_hint_nb? = $state<number | undefined>(undefined);
+    _propagated_at? = $state<string | undefined>(undefined);
 
     constructor(init?: {
         _svctype: string;
@@ -40,6 +41,7 @@ export class ServiceMeta {
         _mycomment?: string;
         _aliases?: Array<string>;
         _tmp_hint_nb?: number;
+        _propagated_at?: string;
     }) {
         if (init) {
             this._svctype = init._svctype;
@@ -51,6 +53,7 @@ export class ServiceMeta {
             if (init._mycomment !== undefined) this._mycomment = init._mycomment;
             if (init._aliases !== undefined) this._aliases = init._aliases;
             if (init._tmp_hint_nb !== undefined) this._tmp_hint_nb = init._tmp_hint_nb;
+            if (init._propagated_at !== undefined) this._propagated_at = init._propagated_at;
         }
     }
 
@@ -65,6 +68,7 @@ export class ServiceMeta {
             _mycomment: this._mycomment,
             _aliases: this._aliases,
             _tmp_hint_nb: this._tmp_hint_nb,
+            _propagated_at: this._propagated_at,
         };
     }
 }
@@ -82,6 +86,7 @@ export class ServiceCombined extends ServiceMeta {
         _mycomment?: string;
         _aliases?: Array<string>;
         _tmp_hint_nb?: number;
+        _propagated_at?: string;
         Service?: any;
     }) {
         super(init);

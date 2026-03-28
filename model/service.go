@@ -23,6 +23,7 @@ package happydns
 
 import (
 	"encoding/json"
+	"time"
 )
 
 type Service struct {
@@ -109,6 +110,10 @@ type ServiceMeta struct {
 
 	// NbResources holds the number of Resources stored inside this Service.
 	NbResources int `json:"_tmp_hint_nb"`
+
+	// PropagatedAt is the estimated time at which the last published changes
+	// for this service will be fully propagated (old cached records expired).
+	PropagatedAt *time.Time `json:"_propagated_at,omitempty"`
 }
 
 // ServiceCombined combined ServiceMeta + Service

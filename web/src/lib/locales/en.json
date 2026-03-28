@@ -415,7 +415,10 @@
         "default-ttl": "Default TTL",
         "ttl": "TTL",
         "ttl-long": "Time-To-Live",
-        "ttl-tip": "0 means default TTL, others values are exprimed in seconds"
+        "ttl-tip": "0 means default TTL, others values are exprimed in seconds",
+        "propagating": "Propagating {{countdown}}",
+        "propagation-in-progress": "DNS propagation in progress",
+        "propagation-remaining": "Propagation complete in {{countdown}}"
     },
     "records": {
         "add": "Add record",

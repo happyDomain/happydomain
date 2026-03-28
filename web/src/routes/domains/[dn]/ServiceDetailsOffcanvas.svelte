@@ -43,6 +43,7 @@
     import { getServiceSpec } from "$lib/api/service_specs";
     import { deleteZoneService, updateZoneService } from "$lib/api/zone";
     import ServiceBadges from "./[[historyid]]/ServiceBadges.svelte";
+    import PropagationStatus from "$lib/components/services/PropagationStatus.svelte";
     import RecordLine from "$lib/components/services/editors/RecordLine.svelte";
     import { collectRRs } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
@@ -154,6 +155,7 @@
                 {/each}
             {/await}
         {/if}
+        <PropagationStatus propagatedAt={service._propagated_at} />
         <div class="flex-fill"></div>
         {#if service._id}
             <div class="d-flex align-items-center gap-2 mt-2">
