@@ -22,6 +22,7 @@
 package domain
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -32,12 +33,12 @@ import (
 
 // ProviderGetter is an interface for getting providers.
 type ProviderGetter interface {
-	GetUserProvider(user *happydns.User, providerID happydns.Identifier) (*happydns.Provider, error)
+	GetUserProvider(ctx context.Context, user *happydns.User, providerID happydns.Identifier) (*happydns.Provider, error)
 }
 
 // DomainExistenceTester is an interface for testing domain existence.
 type DomainExistenceTester interface {
-	TestDomainExistence(provider *happydns.Provider, name string) error
+	TestDomainExistence(ctx context.Context, provider *happydns.Provider, name string) error
 }
 
 type Service struct {
@@ -65,18 +66,18 @@ func NewService(
 }
 
 // CreateDomain creates a new domain for the given user.
-func (s *Service) CreateDomain(user *happydns.User, uz *happydns.Domain) error {
+func (s *Service) CreateDomain(ctx context.Context, user *happydns.User, uz *happydns.Domain) error {
 	uz, err := happydns.NewDomain(user, uz.DomainName, uz.ProviderId)
 	if err != nil {
 		return err
 	}
 
-	provider, err := s.providerService.GetUserProvider(user, uz.ProviderId)
+	provider, err := s.providerService.GetUserProvider(ctx, user, uz.ProviderId)
 	if err != nil {
 		return happydns.ValidationError{Msg: fmt.Sprintf("unable to find the provider.")}
 	}
 
-	if err = s.domainExistence.TestDomainExistence(provider, uz.DomainName); err != nil {
+	if err = s.domainExistence.TestDomainExistence(ctx, provider, uz.DomainName); err != nil {
 		return happydns.NotFoundError{Msg: err.Error()}
 	}
 

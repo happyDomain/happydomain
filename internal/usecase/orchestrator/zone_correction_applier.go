@@ -94,7 +94,7 @@ func (uc *ZoneCorrectionApplierUsecase) computeExecutableCorrections(
 	targetRecords = adapter.BuildTargetRecords(providerRecords, corrections, wantedCorrections)
 
 	// Step 3: Get executable corrections from the provider for the target state.
-	provider, err := uc.providerService.GetUserProvider(user, domain.ProviderId)
+	provider, err := uc.providerService.GetUserProvider(ctx, user, domain.ProviderId)
 	if err != nil {
 		return nil, nil, nil, nbDiffs, err
 	}
@@ -179,7 +179,7 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(
 	// Step 4b: If provider manages SOA serial, re-fetch to get the actual published state.
 	publishedRecords := targetRecords
 	refetched := false
-	provider, provErr := uc.providerService.GetUserProvider(user, domain.ProviderId)
+	provider, provErr := uc.providerService.GetUserProvider(ctx, user, domain.ProviderId)
 	if provErr == nil && providerReg.ProviderHasCapability(provider, "manages-soa-serial") {
 		fetched, fetchErr := uc.zoneRetriever.RetrieveZone(ctx, provider, domain.DomainName)
 		if fetchErr != nil {

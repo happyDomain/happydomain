@@ -61,7 +61,7 @@ func (pc *ProviderController) ListProviders(c *gin.Context) {
 		return
 	}
 
-	providers, err := pc.providerService.ListUserProviders(user)
+	providers, err := pc.providerService.ListUserProviders(c.Request.Context(), user)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -119,7 +119,7 @@ func (pc *ProviderController) AddProvider(c *gin.Context) {
 		return
 	}
 
-	provider, err := pc.providerService.CreateProvider(user, &usrc)
+	provider, err := pc.providerService.CreateProvider(c.Request.Context(), user, &usrc)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -157,7 +157,7 @@ func (pc *ProviderController) UpdateProvider(c *gin.Context) {
 		return
 	}
 
-	err = pc.providerService.UpdateProviderFromMessage(old.Id, user, &provider)
+	err = pc.providerService.UpdateProviderFromMessage(c.Request.Context(), old.Id, user, &provider)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -191,7 +191,7 @@ func (pc *ProviderController) DeleteProvider(c *gin.Context) {
 
 	providermeta := c.MustGet("providermeta").(*happydns.ProviderMeta)
 
-	err := pc.providerService.DeleteProvider(user, providermeta.Id)
+	err := pc.providerService.DeleteProvider(c.Request.Context(), user, providermeta.Id)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -220,7 +220,7 @@ func (pc *ProviderController) DeleteProvider(c *gin.Context) {
 func (pc *ProviderController) GetDomainsHostedByProvider(c *gin.Context) {
 	provider := c.MustGet("provider").(*happydns.Provider)
 
-	domains, err := pc.providerService.ListHostedDomains(provider)
+	domains, err := pc.providerService.ListHostedDomains(c.Request.Context(), provider)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
@@ -249,7 +249,7 @@ func (pc *ProviderController) GetDomainsHostedByProvider(c *gin.Context) {
 func (pc *ProviderController) CreateDomainOnProvider(c *gin.Context) {
 	provider := c.MustGet("provider").(*happydns.Provider)
 
-	err := pc.providerService.CreateDomainOnProvider(provider, c.Param("fqdn"))
+	err := pc.providerService.CreateDomainOnProvider(c.Request.Context(), provider, c.Param("fqdn"))
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return

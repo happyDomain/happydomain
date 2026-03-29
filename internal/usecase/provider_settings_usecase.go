@@ -22,6 +22,7 @@
 package usecase
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -41,7 +42,7 @@ func NewProviderSettingsUsecase(cfg *happydns.Options, ps happydns.ProviderUseca
 	}
 }
 
-func (psu *providerSettingsUsecase) NextProviderSettingsState(state *happydns.ProviderSettingsState, pType string, user *happydns.User) (*happydns.Provider, *happydns.ProviderSettingsResponse, error) {
+func (psu *providerSettingsUsecase) NextProviderSettingsState(ctx context.Context, state *happydns.ProviderSettingsState, pType string, user *happydns.User) (*happydns.Provider, *happydns.ProviderSettingsResponse, error) {
 	fu := NewFormUsecase(psu.config)
 
 	form, p, err := forms.DoSettingState(fu, &state.FormState, state.ProviderBody, forms.GenDefaultSettingsForm)
@@ -71,7 +72,7 @@ func (psu *providerSettingsUsecase) NextProviderSettingsState(state *happydns.Pr
 
 		if state.Id == nil {
 			// Create a new Provider via the service layer
-			provider, err := psu.providerService.CreateProvider(user, msg)
+			provider, err := psu.providerService.CreateProvider(ctx, user, msg)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -79,12 +80,12 @@ func (psu *providerSettingsUsecase) NextProviderSettingsState(state *happydns.Pr
 			return provider, nil, nil
 		} else {
 			// Update an existing Provider via the service layer
-			err := psu.providerService.UpdateProviderFromMessage(*state.Id, user, msg)
+			err := psu.providerService.UpdateProviderFromMessage(ctx, *state.Id, user, msg)
 			if err != nil {
 				return nil, nil, err
 			}
 
-			provider, err := psu.providerService.GetUserProvider(user, *state.Id)
+			provider, err := psu.providerService.GetUserProvider(ctx, user, *state.Id)
 			if err != nil {
 				return nil, nil, err
 			}

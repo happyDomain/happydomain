@@ -106,7 +106,7 @@ func (dc *DomainController) AddDomain(c *gin.Context) {
 		return
 	}
 
-	err = dc.domainService.CreateDomain(user, &uz)
+	err = dc.domainService.CreateDomain(c.Request.Context(), user, &uz)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

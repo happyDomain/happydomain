@@ -22,6 +22,7 @@
 package domain_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -34,6 +35,8 @@ import (
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
 )
+
+var ctx = context.Background()
 
 // Mock implementations for testing
 
@@ -159,7 +162,7 @@ func Test_CreateDomain(t *testing.T) {
 		ProviderId: providerId,
 	}
 
-	err := service.CreateDomain(user, domainToCreate)
+	err := service.CreateDomain(ctx, user, domainToCreate)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -205,7 +208,7 @@ func Test_CreateDomain_InvalidProvider(t *testing.T) {
 		ProviderId: invalidProviderId,
 	}
 
-	err := service.CreateDomain(user, domainToCreate)
+	err := service.CreateDomain(ctx, user, domainToCreate)
 	if err == nil {
 		t.Error("expected error when creating domain with invalid provider")
 	}
@@ -224,7 +227,7 @@ func Test_GetUserDomain(t *testing.T) {
 		DomainName: "example.com",
 		ProviderId: providerId,
 	}
-	err := service.CreateDomain(user, domainToCreate)
+	err := service.CreateDomain(ctx, user, domainToCreate)
 	if err != nil {
 		t.Fatalf("failed to create domain: %v", err)
 	}
@@ -265,7 +268,7 @@ func Test_GetUserDomain_WrongUser(t *testing.T) {
 		DomainName: "user1-domain.com",
 		ProviderId: providerId,
 	}
-	err := service.CreateDomain(user1, domainToCreate)
+	err := service.CreateDomain(ctx, user1, domainToCreate)
 	if err != nil {
 		t.Fatalf("failed to create domain: %v", err)
 	}
@@ -317,7 +320,7 @@ func Test_GetUserDomainByFQDN(t *testing.T) {
 		DomainName: "example.com.",
 		ProviderId: providerId,
 	}
-	err := service.CreateDomain(user, domainToCreate)
+	err := service.CreateDomain(ctx, user, domainToCreate)
 	if err != nil {
 		t.Fatalf("failed to create domain: %v", err)
 	}
@@ -352,7 +355,7 @@ func Test_ListUserDomains(t *testing.T) {
 			DomainName: name,
 			ProviderId: providerId,
 		}
-		err := service.CreateDomain(user, domainToCreate)
+		err := service.CreateDomain(ctx, user, domainToCreate)
 		if err != nil {
 			t.Fatalf("failed to create domain %s: %v", name, err)
 		}
@@ -385,7 +388,7 @@ func Test_ListUserDomains_MultipleUsers(t *testing.T) {
 			DomainName: fmt.Sprintf("user1-domain%d.com", i),
 			ProviderId: providerId1,
 		}
-		err := service.CreateDomain(user1, domainToCreate)
+		err := service.CreateDomain(ctx, user1, domainToCreate)
 		if err != nil {
 			t.Fatalf("failed to create domain: %v", err)
 		}
@@ -396,7 +399,7 @@ func Test_ListUserDomains_MultipleUsers(t *testing.T) {
 		DomainName: "user2-domain.com",
 		ProviderId: providerId2,
 	}
-	err := service.CreateDomain(user2, domainToCreate)
+	err := service.CreateDomain(ctx, user2, domainToCreate)
 	if err != nil {
 		t.Fatalf("failed to create domain: %v", err)
 	}
@@ -451,7 +454,7 @@ func Test_UpdateDomain(t *testing.T) {
 		DomainName: "example.com",
 		ProviderId: providerId,
 	}
-	err := service.CreateDomain(user, domainToCreate)
+	err := service.CreateDomain(ctx, user, domainToCreate)
 	if err != nil {
 		t.Fatalf("failed to create domain: %v", err)
 	}
@@ -503,7 +506,7 @@ func Test_UpdateDomain_PreventIdChange(t *testing.T) {
 		DomainName: "example.com",
 		ProviderId: providerId,
 	}
-	err := service.CreateDomain(user, domainToCreate)
+	err := service.CreateDomain(ctx, user, domainToCreate)
 	if err != nil {
 		t.Fatalf("failed to create domain: %v", err)
 	}
@@ -546,7 +549,7 @@ func Test_UpdateDomain_WrongUser(t *testing.T) {
 		DomainName: "user1-domain.com",
 		ProviderId: providerId,
 	}
-	err := service.CreateDomain(user1, domainToCreate)
+	err := service.CreateDomain(ctx, user1, domainToCreate)
 	if err != nil {
 		t.Fatalf("failed to create domain: %v", err)
 	}
@@ -580,7 +583,7 @@ func Test_DeleteDomain(t *testing.T) {
 		DomainName: "example.com",
 		ProviderId: providerId,
 	}
-	err := service.CreateDomain(user, domainToCreate)
+	err := service.CreateDomain(ctx, user, domainToCreate)
 	if err != nil {
 		t.Fatalf("failed to create domain: %v", err)
 	}
@@ -621,7 +624,7 @@ func Test_UpdateDomain_Alias(t *testing.T) {
 		DomainName: "example.com",
 		ProviderId: providerId,
 	}
-	err := service.CreateDomain(user, domainToCreate)
+	err := service.CreateDomain(ctx, user, domainToCreate)
 	if err != nil {
 		t.Fatalf("failed to create domain: %v", err)
 	}

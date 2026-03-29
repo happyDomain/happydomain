@@ -21,7 +21,7 @@
 
 package happydns
 
-import ()
+import "context"
 
 type ProviderSettingsState struct {
 	FormState
@@ -35,5 +35,5 @@ type ProviderSettingsResponse struct {
 }
 
 type ProviderSettingsUsecase interface {
-	NextProviderSettingsState(*ProviderSettingsState, string, *User) (*Provider, *ProviderSettingsResponse, error)
+	NextProviderSettingsState(context.Context, *ProviderSettingsState, string, *User) (*Provider, *ProviderSettingsResponse, error)
 }

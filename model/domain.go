@@ -22,6 +22,7 @@
 package happydns
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -101,7 +102,7 @@ type Subdomain string
 type Origin string
 
 type DomainUsecase interface {
-	CreateDomain(*User, *Domain) error
+	CreateDomain(context.Context, *User, *Domain) error
 	DeleteDomain(Identifier) error
 	ExtendsDomainWithZoneMeta(*Domain) (*DomainWithZoneMetadata, error)
 	GetUserDomain(*User, Identifier) (*Domain, error)

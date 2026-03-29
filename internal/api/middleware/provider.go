@@ -47,7 +47,7 @@ func ProviderMetaHandler(providerService happydns.ProviderUsecase) gin.HandlerFu
 		}
 
 		// Retrieve provider meta
-		providermeta, err := providerService.GetUserProviderMeta(user, pid)
+		providermeta, err := providerService.GetUserProviderMeta(c.Request.Context(), user, pid)
 		if err != nil {
 			ErrorResponse(c, http.StatusNotFound, fmt.Errorf("provider not found"))
 			return
@@ -77,7 +77,7 @@ func ProviderHandler(providerService happydns.ProviderUsecase) gin.HandlerFunc {
 		}
 
 		// Retrieve provider
-		provider, err := providerService.GetUserProvider(user, pid)
+		provider, err := providerService.GetUserProvider(c.Request.Context(), user, pid)
 		if err != nil {
 			ErrorResponse(c, http.StatusNotFound, fmt.Errorf("provider not found"))
 			return

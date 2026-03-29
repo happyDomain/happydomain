@@ -124,18 +124,18 @@ func (p *Provider) Meta() *ProviderMeta {
 }
 
 type ProviderUsecase interface {
-	CreateProvider(*User, *ProviderMessage) (*Provider, error)
-	CreateDomainOnProvider(*Provider, string) error
-	DeleteProvider(*User, Identifier) error
-	GetUserProvider(*User, Identifier) (*Provider, error)
-	GetUserProviderMeta(*User, Identifier) (*ProviderMeta, error)
-	ListHostedDomains(*Provider) ([]string, error)
-	ListUserProviders(*User) ([]*ProviderMeta, error)
-	ListZoneCorrections(ctx context.Context, provider *Provider, domain *Domain, records []Record) ([]*Correction, int, error)
+	CreateProvider(context.Context, *User, *ProviderMessage) (*Provider, error)
+	CreateDomainOnProvider(context.Context, *Provider, string) error
+	DeleteProvider(context.Context, *User, Identifier) error
+	GetUserProvider(context.Context, *User, Identifier) (*Provider, error)
+	GetUserProviderMeta(context.Context, *User, Identifier) (*ProviderMeta, error)
+	ListHostedDomains(context.Context, *Provider) ([]string, error)
+	ListUserProviders(context.Context, *User) ([]*ProviderMeta, error)
+	ListZoneCorrections(context.Context, *Provider, *Domain, []Record) ([]*Correction, int, error)
 	RetrieveZone(context.Context, *Provider, string) ([]Record, error)
-	TestDomainExistence(*Provider, string) error
-	UpdateProvider(Identifier, *User, func(*Provider)) error
-	UpdateProviderFromMessage(Identifier, *User, *ProviderMessage) error
+	TestDomainExistence(context.Context, *Provider, string) error
+	UpdateProvider(context.Context, Identifier, *User, func(*Provider)) error
+	UpdateProviderFromMessage(context.Context, Identifier, *User, *ProviderMessage) error
 }
 
 type ProviderActuator interface {

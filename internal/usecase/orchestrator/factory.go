@@ -41,7 +41,7 @@ type DomainUpdater interface {
 
 // ProviderGetter is an interface for getting providers.
 type ProviderGetter interface {
-	GetUserProvider(user *happydns.User, providerID happydns.Identifier) (*happydns.Provider, error)
+	GetUserProvider(ctx context.Context, user *happydns.User, providerID happydns.Identifier) (*happydns.Provider, error)
 }
 
 // ZoneRetriever is an interface for retrieving zones from providers.

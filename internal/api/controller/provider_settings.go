@@ -78,7 +78,7 @@ func (psc *ProviderSettingsController) NextProviderSettingsState(c *gin.Context)
 		return
 	}
 
-	provider, form, err := psc.pSettingsServices.NextProviderSettingsState(&uss, pType, user)
+	provider, form, err := psc.pSettingsServices.NextProviderSettingsState(c.Request.Context(), &uss, pType, user)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

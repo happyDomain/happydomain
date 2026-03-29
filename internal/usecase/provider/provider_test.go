@@ -22,6 +22,7 @@
 package provider_test
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -32,6 +33,8 @@ import (
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/providers"
 )
+
+var ctx = context.Background()
 
 func createTestUser(t *testing.T, store storage.Storage, email string) *happydns.User {
 	user := &happydns.User{
@@ -86,7 +89,7 @@ func Test_CreateProvider(t *testing.T) {
 	user := createTestUser(t, db, "test@example.com")
 	msg := createTestProviderMessage(t, "DDNSServer", "Test DDNS Provider")
 
-	p, err := providerService.CreateProvider(user, msg)
+	p, err := providerService.CreateProvider(ctx, user, msg)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -118,13 +121,13 @@ func Test_GetUserProvider(t *testing.T) {
 
 	// Create a provider
 	msg := createTestProviderMessage(t, "DDNSServer", "Test Provider")
-	createdProvider, err := providerService.CreateProvider(user, msg)
+	createdProvider, err := providerService.CreateProvider(ctx, user, msg)
 	if err != nil {
 		t.Fatalf("unexpected error creating provider: %v", err)
 	}
 
 	// Retrieve the provider
-	retrievedProvider, err := providerService.GetUserProvider(user, createdProvider.Id)
+	retrievedProvider, err := providerService.GetUserProvider(ctx, user, createdProvider.Id)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -145,13 +148,13 @@ func Test_GetUserProvider_WrongUser(t *testing.T) {
 
 	// Create a provider for user1
 	msg := createTestProviderMessage(t, "DDNSServer", "User1 Provider")
-	createdProvider, err := providerService.CreateProvider(user1, msg)
+	createdProvider, err := providerService.CreateProvider(ctx, user1, msg)
 	if err != nil {
 		t.Fatalf("unexpected error creating provider: %v", err)
 	}
 
 	// Try to retrieve the provider as user2
-	_, err = providerService.GetUserProvider(user2, createdProvider.Id)
+	_, err = providerService.GetUserProvider(ctx, user2, createdProvider.Id)
 	if err == nil {
 		t.Error("expected error when retrieving another user's provider")
 	}
@@ -166,7 +169,7 @@ func Test_GetUserProvider_NotFound(t *testing.T) {
 	user := createTestUser(t, db, "test@example.com")
 
 	nonexistentID := happydns.Identifier([]byte("nonexistent-id"))
-	_, err := providerService.GetUserProvider(user, nonexistentID)
+	_, err := providerService.GetUserProvider(ctx, user, nonexistentID)
 	if err == nil {
 		t.Error("expected error when retrieving nonexistent provider")
 	}
@@ -182,13 +185,13 @@ func Test_GetUserProviderMeta(t *testing.T) {
 
 	// Create a provider
 	msg := createTestProviderMessage(t, "DDNSServer", "Test Provider Meta")
-	createdProvider, err := providerService.CreateProvider(user, msg)
+	createdProvider, err := providerService.CreateProvider(ctx, user, msg)
 	if err != nil {
 		t.Fatalf("unexpected error creating provider: %v", err)
 	}
 
 	// Retrieve the provider metadata
-	meta, err := providerService.GetUserProviderMeta(user, createdProvider.Id)
+	meta, err := providerService.GetUserProviderMeta(ctx, user, createdProvider.Id)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -207,21 +210,21 @@ func Test_ListUserProviders(t *testing.T) {
 	user := createTestUser(t, db, "test@example.com")
 
 	// Create multiple providers
-	_, err := providerService.CreateProvider(user, createTestProviderMessage(t, "DDNSServer", "Provider 1"))
+	_, err := providerService.CreateProvider(ctx, user, createTestProviderMessage(t, "DDNSServer", "Provider 1"))
 	if err != nil {
 		t.Fatalf("unexpected error creating provider 1: %v", err)
 	}
-	_, err = providerService.CreateProvider(user, createTestProviderMessage(t, "DDNSServer", "Provider 2"))
+	_, err = providerService.CreateProvider(ctx, user, createTestProviderMessage(t, "DDNSServer", "Provider 2"))
 	if err != nil {
 		t.Fatalf("unexpected error creating provider 2: %v", err)
 	}
-	_, err = providerService.CreateProvider(user, createTestProviderMessage(t, "DDNSServer", "Provider 3"))
+	_, err = providerService.CreateProvider(ctx, user, createTestProviderMessage(t, "DDNSServer", "Provider 3"))
 	if err != nil {
 		t.Fatalf("unexpected error creating provider 3: %v", err)
 	}
 
 	// List providers
-	providers, err := providerService.ListUserProviders(user)
+	providers, err := providerService.ListUserProviders(ctx, user)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -238,23 +241,23 @@ func Test_ListUserProviders_MultipleUsers(t *testing.T) {
 	user2 := createTestUser(t, db, "user2@example.com")
 
 	// Create providers for user1
-	_, err := providerService.CreateProvider(user1, createTestProviderMessage(t, "DDNSServer", "User1 Provider 1"))
+	_, err := providerService.CreateProvider(ctx, user1, createTestProviderMessage(t, "DDNSServer", "User1 Provider 1"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	_, err = providerService.CreateProvider(user1, createTestProviderMessage(t, "DDNSServer", "User1 Provider 2"))
+	_, err = providerService.CreateProvider(ctx, user1, createTestProviderMessage(t, "DDNSServer", "User1 Provider 2"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	// Create provider for user2
-	_, err = providerService.CreateProvider(user2, createTestProviderMessage(t, "DDNSServer", "User2 Provider 1"))
+	_, err = providerService.CreateProvider(ctx, user2, createTestProviderMessage(t, "DDNSServer", "User2 Provider 1"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	// List providers for user1
-	user1Providers, err := providerService.ListUserProviders(user1)
+	user1Providers, err := providerService.ListUserProviders(ctx, user1)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -263,7 +266,7 @@ func Test_ListUserProviders_MultipleUsers(t *testing.T) {
 	}
 
 	// List providers for user2
-	user2Providers, err := providerService.ListUserProviders(user2)
+	user2Providers, err := providerService.ListUserProviders(ctx, user2)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -279,13 +282,13 @@ func Test_UpdateProvider(t *testing.T) {
 
 	// Create a provider
 	msg := createTestProviderMessage(t, "DDNSServer", "Original comment")
-	createdProvider, err := providerService.CreateProvider(user, msg)
+	createdProvider, err := providerService.CreateProvider(ctx, user, msg)
 	if err != nil {
 		t.Fatalf("unexpected error creating provider: %v", err)
 	}
 
 	// Update the provider
-	err = providerService.UpdateProvider(createdProvider.Id, user, func(p *happydns.Provider) {
+	err = providerService.UpdateProvider(ctx, createdProvider.Id, user, func(p *happydns.Provider) {
 		p.Comment = "Updated comment"
 	})
 	if err != nil {
@@ -293,7 +296,7 @@ func Test_UpdateProvider(t *testing.T) {
 	}
 
 	// Verify the provider was updated
-	updated, err := providerService.GetUserProvider(user, createdProvider.Id)
+	updated, err := providerService.GetUserProvider(ctx, user, createdProvider.Id)
 	if err != nil {
 		t.Fatalf("unexpected error retrieving updated provider: %v", err)
 	}
@@ -309,14 +312,14 @@ func Test_UpdateProvider_PreventIdChange(t *testing.T) {
 
 	// Create a provider
 	msg := createTestProviderMessage(t, "DDNSServer", "Test Provider")
-	createdProvider, err := providerService.CreateProvider(user, msg)
+	createdProvider, err := providerService.CreateProvider(ctx, user, msg)
 	if err != nil {
 		t.Fatalf("unexpected error creating provider: %v", err)
 	}
 
 	// Try to change the provider ID
 	newID := happydns.Identifier([]byte("new-provider-id"))
-	err = providerService.UpdateProvider(createdProvider.Id, user, func(p *happydns.Provider) {
+	err = providerService.UpdateProvider(ctx, createdProvider.Id, user, func(p *happydns.Provider) {
 		p.Id = newID
 	})
 	if err == nil {
@@ -335,13 +338,13 @@ func Test_UpdateProvider_WrongUser(t *testing.T) {
 
 	// Create a provider for user1
 	msg := createTestProviderMessage(t, "DDNSServer", "User1 Provider")
-	createdProvider, err := providerService.CreateProvider(user1, msg)
+	createdProvider, err := providerService.CreateProvider(ctx, user1, msg)
 	if err != nil {
 		t.Fatalf("unexpected error creating provider: %v", err)
 	}
 
 	// Try to update the provider as user2
-	err = providerService.UpdateProvider(createdProvider.Id, user2, func(p *happydns.Provider) {
+	err = providerService.UpdateProvider(ctx, createdProvider.Id, user2, func(p *happydns.Provider) {
 		p.Comment = "Hijacked"
 	})
 	if err == nil {
@@ -356,19 +359,19 @@ func Test_DeleteProvider(t *testing.T) {
 
 	// Create a provider
 	msg := createTestProviderMessage(t, "DDNSServer", "Test Provider")
-	createdProvider, err := providerService.CreateProvider(user, msg)
+	createdProvider, err := providerService.CreateProvider(ctx, user, msg)
 	if err != nil {
 		t.Fatalf("unexpected error creating provider: %v", err)
 	}
 
 	// Delete the provider
-	err = providerService.DeleteProvider(user, createdProvider.Id)
+	err = providerService.DeleteProvider(ctx, user, createdProvider.Id)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	// Verify the provider was deleted
-	_, err = providerService.GetUserProvider(user, createdProvider.Id)
+	_, err = providerService.GetUserProvider(ctx, user, createdProvider.Id)
 	if err == nil {
 		t.Error("expected error when retrieving deleted provider")
 	}
@@ -385,13 +388,13 @@ func Test_DeleteProvider_WrongUser(t *testing.T) {
 
 	// Create a provider for user1
 	msg := createTestProviderMessage(t, "DDNSServer", "User1 Provider")
-	createdProvider, err := providerService.CreateProvider(user1, msg)
+	createdProvider, err := providerService.CreateProvider(ctx, user1, msg)
 	if err != nil {
 		t.Fatalf("unexpected error creating provider: %v", err)
 	}
 
 	// Try to delete the provider as user2
-	err = providerService.DeleteProvider(user2, createdProvider.Id)
+	err = providerService.DeleteProvider(ctx, user2, createdProvider.Id)
 	if err == nil {
 		t.Error("expected error when deleting another user's provider")
 	}
@@ -400,7 +403,7 @@ func Test_DeleteProvider_WrongUser(t *testing.T) {
 	}
 
 	// Verify the provider still exists for user1
-	_, err = providerService.GetUserProvider(user1, createdProvider.Id)
+	_, err = providerService.GetUserProvider(ctx, user1, createdProvider.Id)
 	if err != nil {
 		t.Errorf("provider should still exist for user1, got error: %v", err)
 	}
@@ -450,7 +453,7 @@ func Test_RestrictedService_CreateProvider_Disabled(t *testing.T) {
 	user := createTestUser(t, db, "test@example.com")
 	msg := createTestProviderMessage(t, "DDNSServer", "Test Provider")
 
-	_, err := providerService.CreateProvider(user, msg)
+	_, err := providerService.CreateProvider(ctx, user, msg)
 	if err == nil {
 		t.Error("expected error when creating provider with DisableProviders=true")
 	}
@@ -467,7 +470,7 @@ func Test_RestrictedService_UpdateProvider_Disabled(t *testing.T) {
 	unrestricted := provider.NewService(db, &mockValidator{})
 	user := createTestUser(t, db, "test@example.com")
 	msg := createTestProviderMessage(t, "DDNSServer", "Test Provider")
-	createdProvider, err := unrestricted.CreateProvider(user, msg)
+	createdProvider, err := unrestricted.CreateProvider(ctx, user, msg)
 	if err != nil {
 		t.Fatalf("unexpected error creating provider: %v", err)
 	}
@@ -478,7 +481,7 @@ func Test_RestrictedService_UpdateProvider_Disabled(t *testing.T) {
 	}
 	restrictedService := provider.NewRestrictedService(config, db)
 
-	err = restrictedService.UpdateProvider(createdProvider.Id, user, func(p *happydns.Provider) {
+	err = restrictedService.UpdateProvider(ctx, createdProvider.Id, user, func(p *happydns.Provider) {
 		p.Comment = "Updated"
 	})
 	if err == nil {
@@ -497,7 +500,7 @@ func Test_RestrictedService_DeleteProvider_Disabled(t *testing.T) {
 	unrestricted := provider.NewService(db, &mockValidator{})
 	user := createTestUser(t, db, "test@example.com")
 	msg := createTestProviderMessage(t, "DDNSServer", "Test Provider")
-	createdProvider, err := unrestricted.CreateProvider(user, msg)
+	createdProvider, err := unrestricted.CreateProvider(ctx, user, msg)
 	if err != nil {
 		t.Fatalf("unexpected error creating provider: %v", err)
 	}
@@ -508,7 +511,7 @@ func Test_RestrictedService_DeleteProvider_Disabled(t *testing.T) {
 	}
 	restrictedService := provider.NewRestrictedService(config, db)
 
-	err = restrictedService.DeleteProvider(user, createdProvider.Id)
+	err = restrictedService.DeleteProvider(ctx, user, createdProvider.Id)
 	if err == nil {
 		t.Error("expected error when deleting provider with DisableProviders=true")
 	}

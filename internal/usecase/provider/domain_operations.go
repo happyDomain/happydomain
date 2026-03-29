@@ -22,13 +22,14 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 
 	"git.happydns.org/happyDomain/model"
 )
 
 // CreateDomainOnProvider creates a domain on the given provider.
-func (s *Service) CreateDomainOnProvider(provider *happydns.Provider, fqdn string) error {
+func (s *Service) CreateDomainOnProvider(_ context.Context, provider *happydns.Provider, fqdn string) error {
 	p, err := instantiate(provider)
 	if err != nil {
 		return err
@@ -42,7 +43,7 @@ func (s *Service) CreateDomainOnProvider(provider *happydns.Provider, fqdn strin
 }
 
 // ListHostedDomains lists all domains hosted on the given provider.
-func (s *Service) ListHostedDomains(provider *happydns.Provider) ([]string, error) {
+func (s *Service) ListHostedDomains(_ context.Context, provider *happydns.Provider) ([]string, error) {
 	p, err := instantiate(provider)
 	if err != nil {
 		return nil, err
@@ -56,7 +57,7 @@ func (s *Service) ListHostedDomains(provider *happydns.Provider) ([]string, erro
 }
 
 // TestDomainExistence tests whether a domain exists on the given provider.
-func (s *Service) TestDomainExistence(provider *happydns.Provider, name string) error {
+func (s *Service) TestDomainExistence(_ context.Context, provider *happydns.Provider, name string) error {
 	instance, err := instantiate(provider)
 	if err != nil {
 		return err

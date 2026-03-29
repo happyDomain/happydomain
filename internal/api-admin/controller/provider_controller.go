@@ -184,7 +184,7 @@ func (pc *ProviderController) UpdateProvider(c *gin.Context) {
 func (pc *ProviderController) ClearProviders(c *gin.Context) {
 	user := middleware.MyUser(c)
 	if user != nil {
-		providers, err := pc.providerService.ListUserProviders(user)
+		providers, err := pc.providerService.ListUserProviders(c.Request.Context(), user)
 		if err != nil {
 			middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 			return

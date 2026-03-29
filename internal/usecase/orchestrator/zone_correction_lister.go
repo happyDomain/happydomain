@@ -64,7 +64,7 @@ func (uc *ZoneCorrectionListerUsecase) listWithRecords(
 	domain *happydns.Domain,
 	zone *happydns.Zone,
 ) ([]*happydns.Correction, []happydns.Record, []happydns.Record, int, error) {
-	provider, err := uc.providerService.GetUserProvider(user, domain.ProviderId)
+	provider, err := uc.providerService.GetUserProvider(ctx, user, domain.ProviderId)
 	if err != nil {
 		return nil, nil, nil, 0, err
 	}
