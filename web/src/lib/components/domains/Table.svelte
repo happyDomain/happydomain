@@ -24,14 +24,13 @@
 <script lang="ts">
     import type { ClassValue } from "svelte/elements";
 
-    import { Badge, Button, ButtonGroup, Icon, Spinner, Table } from "@sveltestrap/sveltestrap";
+    import { Spinner, Table } from "@sveltestrap/sveltestrap";
 
     import { deleteDomain } from "$lib/api/domains";
-    import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
+    import DomainTableRow from "$lib/components/domains/DomainTableRow.svelte";
     import type { Domain } from "$lib/model/domain";
-    import { navigate } from "$lib/stores/config";
     import { refreshDomains } from "$lib/stores/domains";
-    import { providers_idx, providersSpecs, refreshProvidersSpecs } from "$lib/stores/providers";
+    import { providersSpecs, refreshProvidersSpecs } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 
     interface Props {
@@ -76,61 +75,7 @@
         </thead>
         <tbody>
             {#each items as item (item.id)}
-                <tr
-                    style="cursor: pointer"
-                    onclick={() => navigate("/domains/" + encodeURIComponent(item.domain))}
-                >
-                    <td class="fw-semibold">{item.domain}</td>
-                    <td>{item.group || ""}</td>
-                    <td>
-                        {#if $providers_idx && $providers_idx[item.id_provider]}
-                            {@const provider = $providers_idx[item.id_provider]}
-                            <a
-                                href="/providers/{encodeURIComponent(item.id_provider)}"
-                                class="d-flex align-items-center gap-2 text-decoration-none"
-                                onclick={(e) => e.stopPropagation()}
-                            >
-                                <ImgProvider
-                                    id_provider={item.id_provider}
-                                    style="max-width: 1.5em; max-height: 1.5em; object-fit: contain;"
-                                />
-                                {#if provider._comment}
-                                    {provider._comment}
-                                {:else if $providersSpecs && $providersSpecs[provider._srctype]}
-                                    {$providersSpecs[provider._srctype].name}
-                                {:else}
-                                    {provider._srctype}
-                                {/if}
-                            </a>
-                        {:else}
-                            <em class="text-muted">{item.id_provider}</em>
-                        {/if}
-                    </td>
-                    <td>
-                        <Badge color="success">OK</Badge>
-                    </td>
-                    <td class="text-end">
-                        <ButtonGroup size="sm">
-                            <Button
-                                color="outline-secondary"
-                                title={$t("domains.actions.view")}
-                                onclick={(e) => {
-                                    e.stopPropagation();
-                                    navigate("/domains/" + encodeURIComponent(item.domain));
-                                }}
-                            >
-                                <Icon name="eye" />
-                            </Button>
-                            <Button
-                                color="outline-danger"
-                                title={$t("domains.stop")}
-                                onclick={(e) => delDomain(e, item)}
-                            >
-                                <Icon name="trash" />
-                            </Button>
-                        </ButtonGroup>
-                    </td>
-                </tr>
+                <DomainTableRow domain={item} ondelete={delDomain} />
             {/each}
         </tbody>
     </Table>
