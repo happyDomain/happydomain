@@ -172,6 +172,11 @@ func (s *instrumentedStorage) CreateProvider(prvd *happydns.Provider) (err error
 	return s.inner.CreateProvider(prvd)
 }
 
+func (s *instrumentedStorage) CreateProviderFromMessage(msg *happydns.ProviderMessage) (err error) {
+	defer observe("create", "provider")(&err)
+	return s.inner.CreateProviderFromMessage(msg)
+}
+
 func (s *instrumentedStorage) CreateSnapshot(snap *happydns.ObservationSnapshot) (err error) {
 	defer observe("create", "observation_snapshot")(&err)
 	return s.inner.CreateSnapshot(snap)
@@ -624,6 +629,11 @@ func (s *instrumentedStorage) UpdateExecution(exec *happydns.Execution) (err err
 func (s *instrumentedStorage) UpdateProvider(prvd *happydns.Provider) (err error) {
 	defer observe("update", "provider")(&err)
 	return s.inner.UpdateProvider(prvd)
+}
+
+func (s *instrumentedStorage) UpdateProviderFromRawMessage(msg *happydns.ProviderMessage) (err error) {
+	defer observe("update", "provider")(&err)
+	return s.inner.UpdateProviderFromRawMessage(msg)
 }
 
 func (s *instrumentedStorage) UpdateSession(session *happydns.Session) (err error) {

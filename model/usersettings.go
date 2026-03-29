@@ -67,6 +67,9 @@ type UserSettings struct {
 
 	// ShowRRTypes tells if we show equivalent RRTypes in interface (for advanced users).
 	ShowRRTypes bool `json:"showrrtypes,omitempty"`
+
+	// SecretMethod is the user's preferred secret management method for provider credentials.
+	SecretMethod string `json:"secret_method,omitempty"`
 }
 
 func DefaultUserSettings() *UserSettings {

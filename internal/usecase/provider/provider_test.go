@@ -22,10 +22,14 @@
 package provider_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
+	"flag"
 	"testing"
 
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	"git.happydns.org/happyDomain/internal/usecase/provider"
@@ -78,7 +82,7 @@ func (v *mockValidator) Validate(p *happydns.Provider) error {
 
 func newTestService(t *testing.T) (*provider.Service, storage.Storage) {
 	db, _ := inmemory.Instantiate()
-	return provider.NewService(db, &mockValidator{}), db
+	return provider.NewService(nil, nil, db, &mockValidator{}), db
 }
 
 func Test_CreateProvider(t *testing.T) {
@@ -445,7 +449,7 @@ func Test_RestrictedService_CreateProvider_Disabled(t *testing.T) {
 	config := &happydns.Options{
 		DisableProviders: true,
 	}
-	providerService := provider.NewRestrictedService(config, db)
+	providerService := provider.NewRestrictedService(config, db, nil)
 
 	user := createTestUser(t, db, "test@example.com")
 	msg := createTestProviderMessage(t, "DDNSServer", "Test Provider")
@@ -463,7 +467,7 @@ func Test_RestrictedService_UpdateProvider_Disabled(t *testing.T) {
 	db, _ := inmemory.Instantiate()
 
 	// First create a provider without restrictions
-	unrestricted := provider.NewService(db, &mockValidator{})
+	unrestricted := provider.NewService(nil, nil, db, &mockValidator{})
 	user := createTestUser(t, db, "test@example.com")
 	msg := createTestProviderMessage(t, "DDNSServer", "Test Provider")
 	createdProvider, err := unrestricted.CreateProvider(ctx, user, msg)
@@ -475,7 +479,7 @@ func Test_RestrictedService_UpdateProvider_Disabled(t *testing.T) {
 	config := &happydns.Options{
 		DisableProviders: true,
 	}
-	restrictedService := provider.NewRestrictedService(config, db)
+	restrictedService := provider.NewRestrictedService(config, db, nil)
 
 	err = restrictedService.UpdateProvider(ctx, createdProvider.Id, user, func(p *happydns.Provider) {
 		p.Comment = "Updated"
@@ -492,7 +496,7 @@ func Test_RestrictedService_DeleteProvider_Disabled(t *testing.T) {
 	db, _ := inmemory.Instantiate()
 
 	// First create a provider without restrictions
-	unrestricted := provider.NewService(db, &mockValidator{})
+	unrestricted := provider.NewService(nil, nil, db, &mockValidator{})
 	user := createTestUser(t, db, "test@example.com")
 	msg := createTestProviderMessage(t, "DDNSServer", "Test Provider")
 	createdProvider, err := unrestricted.CreateProvider(ctx, user, msg)
@@ -504,7 +508,7 @@ func Test_RestrictedService_DeleteProvider_Disabled(t *testing.T) {
 	config := &happydns.Options{
 		DisableProviders: true,
 	}
-	restrictedService := provider.NewRestrictedService(config, db)
+	restrictedService := provider.NewRestrictedService(config, db, nil)
 
 	err = restrictedService.DeleteProvider(ctx, user, createdProvider.Id)
 	if err == nil {
@@ -512,5 +516,318 @@ func Test_RestrictedService_DeleteProvider_Disabled(t *testing.T) {
 	}
 	if _, ok := err.(happydns.ForbiddenError); !ok {
 		t.Errorf("expected ForbiddenError, got: %T", err)
+	}
+}
+
+// ---- Secret management integration tests ----
+
+// testSecretKey32 is a 32-byte key (64 hex chars) used for instance-key tests.
+var testSecretKey32 = hex.EncodeToString(bytes.Repeat([]byte{0xDE}, 32))
+
+func newTestServiceWithSecrets(t *testing.T, mgr *secret.Manager, cfg *happydns.Options) (*provider.Service, storage.Storage) {
+	t.Helper()
+	db, _ := inmemory.Instantiate()
+	return provider.NewService(cfg, mgr, db, &mockValidator{}), db
+}
+
+func newPlaintextManager(t *testing.T) *secret.Manager {
+	t.Helper()
+	mgr, err := secret.NewManagerFromConfig(&happydns.Options{SecretMethod: "plaintext"})
+	if err != nil {
+		t.Fatalf("failed to create plaintext manager: %v", err)
+	}
+	return mgr
+}
+
+func newInstanceKeyManager(t *testing.T) *secret.Manager {
+	t.Helper()
+	if err := flag.Set("secret-key", testSecretKey32); err != nil {
+		t.Fatalf("failed to set secret-key flag: %v", err)
+	}
+	mgr, err := secret.NewManagerFromConfig(&happydns.Options{SecretMethod: "instance-key"})
+	if err != nil {
+		t.Fatalf("failed to create instance-key manager: %v", err)
+	}
+	return mgr
+}
+
+// Test_Secrets_Plaintext_RoundTrip verifies that provider credentials survive
+// a create→get round-trip when the plaintext secret manager is active.
+func Test_Secrets_Plaintext_RoundTrip(t *testing.T) {
+	mgr := newPlaintextManager(t)
+	svc, db := newTestServiceWithSecrets(t, mgr, &happydns.Options{})
+	user := createTestUser(t, db, "plaintext@example.com")
+	msg := createTestProviderMessage(t, "DDNSServer", "Plaintext provider")
+
+	created, err := svc.CreateProvider(ctx, user, msg)
+	if err != nil {
+		t.Fatalf("CreateProvider error: %v", err)
+	}
+
+	got, err := svc.GetUserProvider(ctx, user, created.Id)
+	if err != nil {
+		t.Fatalf("GetUserProvider error: %v", err)
+	}
+	if got.Comment != "Plaintext provider" {
+		t.Errorf("expected comment 'Plaintext provider', got %q", got.Comment)
+	}
+}
+
+// Test_Secrets_Plaintext_StoredAsEnvelope verifies that even with the plaintext
+// backend, credentials are wrapped in a SecretEnvelope in the database.
+func Test_Secrets_Plaintext_StoredAsEnvelope(t *testing.T) {
+	mgr := newPlaintextManager(t)
+	cfg := &happydns.Options{}
+	svc, db := newTestServiceWithSecrets(t, mgr, cfg)
+	user := createTestUser(t, db, "envelope@example.com")
+	msg := createTestProviderMessage(t, "DDNSServer", "Envelope test")
+
+	created, err := svc.CreateProvider(ctx, user, msg)
+	if err != nil {
+		t.Fatalf("CreateProvider error: %v", err)
+	}
+
+	// Read the raw stored message directly from storage.
+	stored, err := db.GetProvider(created.Id)
+	if err != nil {
+		t.Fatalf("GetProvider (raw) error: %v", err)
+	}
+
+	// The stored Provider field should be a SecretEnvelope, not raw credentials.
+	var envelope happydns.SecretEnvelope
+	if err := json.Unmarshal(stored.Provider, &envelope); err != nil {
+		t.Fatalf("failed to unmarshal stored Provider as SecretEnvelope: %v", err)
+	}
+	if envelope.Version != 1 {
+		t.Errorf("expected envelope Version=1, got %d", envelope.Version)
+	}
+	if envelope.Method != "plaintext" {
+		t.Errorf("expected envelope Method=plaintext, got %q", envelope.Method)
+	}
+}
+
+// Test_Secrets_InstanceKey_RoundTrip verifies encrypt→decrypt round-trip with
+// the AES-256-GCM instance-key backend.
+func Test_Secrets_InstanceKey_RoundTrip(t *testing.T) {
+	mgr := newInstanceKeyManager(t)
+	cfg := &happydns.Options{SecretMethod: "instance-key"}
+	svc, db := newTestServiceWithSecrets(t, mgr, cfg)
+	user := createTestUser(t, db, "instancekey@example.com")
+	msg := createTestProviderMessage(t, "DDNSServer", "InstanceKey provider")
+
+	created, err := svc.CreateProvider(ctx, user, msg)
+	if err != nil {
+		t.Fatalf("CreateProvider error: %v", err)
+	}
+
+	got, err := svc.GetUserProvider(ctx, user, created.Id)
+	if err != nil {
+		t.Fatalf("GetUserProvider error: %v", err)
+	}
+	if got.Comment != "InstanceKey provider" {
+		t.Errorf("expected comment 'InstanceKey provider', got %q", got.Comment)
+	}
+}
+
+// Test_Secrets_InstanceKey_EncryptedAtRest verifies that credentials are not
+// stored in cleartext when the instance-key backend is active.
+func Test_Secrets_InstanceKey_EncryptedAtRest(t *testing.T) {
+	mgr := newInstanceKeyManager(t)
+	cfg := &happydns.Options{SecretMethod: "instance-key"}
+	svc, db := newTestServiceWithSecrets(t, mgr, cfg)
+	user := createTestUser(t, db, "encrypted@example.com")
+
+	ddns := &providers.DDNSServer{
+		Server:  "192.168.1.1",
+		KeyName: "mysecretkey",
+		KeyAlgo: "hmac-sha256",
+		KeyBlob: []byte("supersecretvalue"),
+	}
+	providerJSON, _ := json.Marshal(ddns)
+	msg := &happydns.ProviderMessage{
+		ProviderMeta: happydns.ProviderMeta{Type: "DDNSServer"},
+		Provider:     providerJSON,
+	}
+
+	created, err := svc.CreateProvider(ctx, user, msg)
+	if err != nil {
+		t.Fatalf("CreateProvider error: %v", err)
+	}
+
+	stored, err := db.GetProvider(created.Id)
+	if err != nil {
+		t.Fatalf("GetProvider (raw) error: %v", err)
+	}
+
+	// The raw stored bytes should NOT contain the secret value in plaintext.
+	if bytes.Contains(stored.Provider, []byte("supersecretvalue")) {
+		t.Error("secret value found in plaintext in the stored provider data")
+	}
+	if bytes.Contains(stored.Provider, []byte("mysecretkey")) {
+		t.Error("key name found in plaintext in the stored provider data")
+	}
+}
+
+// Test_Secrets_LegacyPlaintext_BackwardCompat verifies that providers stored
+// before the secret management system (raw JSON, no envelope) are still readable.
+func Test_Secrets_LegacyPlaintext_BackwardCompat(t *testing.T) {
+	mgr := newPlaintextManager(t)
+	cfg := &happydns.Options{}
+	db, _ := inmemory.Instantiate()
+	svc := provider.NewService(cfg, mgr, db, &mockValidator{})
+	user := createTestUser(t, db, "legacy@example.com")
+
+	// Insert a provider directly with raw JSON (simulating pre-envelope data).
+	ddns := &providers.DDNSServer{
+		Server:  "10.0.0.1",
+		KeyName: "legacykey",
+		KeyAlgo: "hmac-sha256",
+		KeyBlob: []byte("legacyvalue"),
+	}
+	rawCredentials, _ := json.Marshal(ddns)
+	legacy := &happydns.ProviderMessage{
+		ProviderMeta: happydns.ProviderMeta{
+			Type:    "DDNSServer",
+			Comment: "Legacy provider",
+			Owner:   user.Id,
+		},
+		Provider: rawCredentials,
+	}
+	if err := db.CreateProviderFromMessage(legacy); err != nil {
+		t.Fatalf("failed to insert legacy provider: %v", err)
+	}
+
+	// GetUserProvider should transparently handle the raw (non-envelope) JSON.
+	got, err := svc.GetUserProvider(ctx, user, legacy.Id)
+	if err != nil {
+		t.Fatalf("GetUserProvider for legacy provider error: %v", err)
+	}
+	if got.Comment != "Legacy provider" {
+		t.Errorf("expected comment 'Legacy provider', got %q", got.Comment)
+	}
+}
+
+// Test_Secrets_Update_ReEncrypts verifies that updating a provider re-seals
+// credentials with the active secret method.
+func Test_Secrets_Update_ReEncrypts(t *testing.T) {
+	mgr := newPlaintextManager(t)
+	cfg := &happydns.Options{}
+	svc, db := newTestServiceWithSecrets(t, mgr, cfg)
+	user := createTestUser(t, db, "update@example.com")
+	msg := createTestProviderMessage(t, "DDNSServer", "Original comment")
+
+	created, err := svc.CreateProvider(ctx, user, msg)
+	if err != nil {
+		t.Fatalf("CreateProvider error: %v", err)
+	}
+
+	err = svc.UpdateProvider(ctx, created.Id, user, func(p *happydns.Provider) {
+		p.Comment = "Updated comment"
+	})
+	if err != nil {
+		t.Fatalf("UpdateProvider error: %v", err)
+	}
+
+	got, err := svc.GetUserProvider(ctx, user, created.Id)
+	if err != nil {
+		t.Fatalf("GetUserProvider error: %v", err)
+	}
+	if got.Comment != "Updated comment" {
+		t.Errorf("expected 'Updated comment', got %q", got.Comment)
+	}
+
+	// Updated provider should still be stored as an envelope.
+	stored, err := db.GetProvider(created.Id)
+	if err != nil {
+		t.Fatalf("db.GetProvider error: %v", err)
+	}
+	var envelope happydns.SecretEnvelope
+	if err := json.Unmarshal(stored.Provider, &envelope); err != nil {
+		t.Fatalf("stored Provider after update is not an envelope: %v", err)
+	}
+	if envelope.Version != 1 {
+		t.Errorf("expected envelope Version=1 after update, got %d", envelope.Version)
+	}
+}
+
+// Test_Secrets_PerUserMethod verifies that a user's SecretMethod setting
+// overrides the instance default.
+func Test_Secrets_PerUserMethod(t *testing.T) {
+	if err := flag.Set("secret-key", testSecretKey32); err != nil {
+		t.Fatalf("failed to set secret-key flag: %v", err)
+	}
+	ikMgr, err := secret.NewManagerFromConfig(&happydns.Options{SecretMethod: "instance-key"})
+	if err != nil {
+		t.Fatalf("failed to create manager: %v", err)
+	}
+
+	// Create a service where instance default is instance-key,
+	// but one user prefers plaintext.
+	cfg := &happydns.Options{SecretMethod: "instance-key"}
+	db, _ := inmemory.Instantiate()
+	svc := provider.NewService(cfg, ikMgr, db, &mockValidator{})
+
+	user := createTestUser(t, db, "peruser@example.com")
+	user.Settings.SecretMethod = "plaintext"
+	msg := createTestProviderMessage(t, "DDNSServer", "Per-user plaintext")
+
+	created, err := svc.CreateProvider(ctx, user, msg)
+	if err != nil {
+		t.Fatalf("CreateProvider error: %v", err)
+	}
+
+	stored, err := db.GetProvider(created.Id)
+	if err != nil {
+		t.Fatalf("db.GetProvider error: %v", err)
+	}
+	var envelope happydns.SecretEnvelope
+	if err := json.Unmarshal(stored.Provider, &envelope); err != nil {
+		t.Fatalf("stored Provider is not an envelope: %v", err)
+	}
+	// Should be stored as plaintext, not instance-key.
+	if envelope.Method != "plaintext" {
+		t.Errorf("expected user's preferred method 'plaintext', got %q", envelope.Method)
+	}
+}
+
+// Test_Secrets_DisableUserSecretMethod verifies that the DisableUserSecretMethod
+// config flag forces the instance-level method even when the user has a preference.
+func Test_Secrets_DisableUserSecretMethod(t *testing.T) {
+	if err := flag.Set("secret-key", testSecretKey32); err != nil {
+		t.Fatalf("failed to set secret-key flag: %v", err)
+	}
+	ikMgr, err := secret.NewManagerFromConfig(&happydns.Options{SecretMethod: "instance-key"})
+	if err != nil {
+		t.Fatalf("failed to create manager: %v", err)
+	}
+
+	// DisableUserSecretMethod=true means per-user overrides are ignored.
+	cfg := &happydns.Options{
+		SecretMethod:            "instance-key",
+		DisableUserSecretMethod: true,
+	}
+	db, _ := inmemory.Instantiate()
+	svc := provider.NewService(cfg, ikMgr, db, &mockValidator{})
+
+	user := createTestUser(t, db, "disabled@example.com")
+	user.Settings.SecretMethod = "plaintext" // user wants plaintext, but it's disabled
+	msg := createTestProviderMessage(t, "DDNSServer", "DisableUserMethod test")
+
+	created, err := svc.CreateProvider(ctx, user, msg)
+	if err != nil {
+		t.Fatalf("CreateProvider error: %v", err)
+	}
+
+	stored, err := db.GetProvider(created.Id)
+	if err != nil {
+		t.Fatalf("db.GetProvider error: %v", err)
+	}
+	var envelope happydns.SecretEnvelope
+	if err := json.Unmarshal(stored.Provider, &envelope); err != nil {
+		t.Fatalf("stored Provider is not an envelope: %v", err)
+	}
+	// Should be stored with instance-key despite the user's plaintext preference.
+	if envelope.Method != "instance-key" {
+		t.Errorf("expected instance-level method 'instance-key', got %q", envelope.Method)
 	}
 }

@@ -34,6 +34,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	admin "git.happydns.org/happyDomain/internal/api-admin/route"
+	"git.happydns.org/happyDomain/internal/secret"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	"git.happydns.org/happyDomain/model"
@@ -56,7 +57,11 @@ func NewAdmin(app *App) *Admin {
 	router.Use(gin.Logger(), gin.Recovery())
 
 	// Prepare usecases (admin uses unrestricted provider access)
-	app.usecases.providerAdmin = providerUC.NewService(app.store, nil)
+	secretManager, err := secret.NewManagerFromConfig(app.cfg)
+	if err != nil {
+		log.Fatalf("unable to initialize secret manager for admin: %v", err)
+	}
+	app.usecases.providerAdmin = providerUC.NewService(app.cfg, secretManager, app.store, nil)
 	if app.usecases.checkerOptionsUC == nil {
 		app.usecases.checkerOptionsUC = checkerUC.NewCheckerOptionsUsecase(app.store, app.store)
 	}
