@@ -227,7 +227,7 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(
 			CommitMsg:    &form.CommitMsg,
 			CommitDate:   &now,
 			Published:    &now,
-			ParentZone:   &zone.ZoneMeta.Id,
+			ParentZone:   zone.ParentZone,
 		},
 		Services: services,
 	}
@@ -239,6 +239,9 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(
 			UserMessage: "Sorry, we are unable to create the published zone snapshot.",
 		}
 	}
+
+	// Update the parent zone of the WIP zone
+	zone.ParentZone = &snapshot.Id
 
 	// Step 5b: If we re-fetched, update the WIP zone's Origin SOA serial to match.
 	if refetched {
