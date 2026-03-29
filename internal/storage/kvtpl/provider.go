@@ -94,6 +94,21 @@ func (s *KVStorage) UpdateProvider(prvd *happydns.Provider) error {
 	return s.db.Put(fmt.Sprintf("provider-%s", prvd.Id.String()), prvd)
 }
 
+func (s *KVStorage) CreateProviderFromMessage(msg *happydns.ProviderMessage) error {
+	key, id, err := s.db.FindIdentifierKey("provider-")
+	if err != nil {
+		return err
+	}
+
+	msg.Id = id
+
+	return s.db.Put(key, msg)
+}
+
+func (s *KVStorage) UpdateProviderFromRawMessage(msg *happydns.ProviderMessage) error {
+	return s.db.Put(fmt.Sprintf("provider-%s", msg.Id.String()), msg)
+}
+
 func (s *KVStorage) DeleteProvider(prvdId happydns.Identifier) error {
 	return s.db.Delete(fmt.Sprintf("provider-%s", prvdId.String()))
 }

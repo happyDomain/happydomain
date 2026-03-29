@@ -45,6 +45,12 @@ type ProviderStorage interface {
 	// DeleteProvider removes the given Provider from the database.
 	DeleteProvider(prvdid happydns.Identifier) error
 
+	// CreateProviderFromMessage creates a provider from a pre-serialized message.
+	CreateProviderFromMessage(msg *happydns.ProviderMessage) error
+
+	// UpdateProviderFromMessage updates a provider from a pre-serialized message.
+	UpdateProviderFromRawMessage(msg *happydns.ProviderMessage) error
+
 	// ClearProviders deletes all Providers present in the database.
 	ClearProviders() error
 }

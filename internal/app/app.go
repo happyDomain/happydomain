@@ -34,6 +34,7 @@ import (
 	"git.happydns.org/happyDomain/internal/captcha"
 	"git.happydns.org/happyDomain/internal/mailer"
 	"git.happydns.org/happyDomain/internal/newsletter"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/session"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/usecase"
@@ -195,8 +196,14 @@ func (app *App) initUsecases() {
 		sessionService,
 	)
 	domainLogService := domainlogUC.NewService(app.store)
-	providerService := providerUC.NewRestrictedService(app.cfg, app.store)
-	providerAdminService := providerUC.NewService(app.store, nil)
+
+	secretManager, err := secret.NewManagerFromConfig(app.cfg)
+	if err != nil {
+		log.Fatalf("unable to initialize secret manager: %v", err)
+	}
+
+	providerService := providerUC.NewRestrictedService(app.cfg, app.store, secretManager)
+	providerAdminService := providerUC.NewService(app.cfg, secretManager, app.store, nil)
 	serviceService := serviceUC.NewServiceUsecases()
 	zoneService := zoneUC.NewZoneUsecases(app.store, serviceService)
 

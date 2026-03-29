@@ -27,22 +27,27 @@ import (
 	"fmt"
 
 	providerReg "git.happydns.org/happyDomain/internal/provider"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/model"
 )
 
 // Service handles CRUD operations on DNS providers, with ownership enforcement.
 type Service struct {
+	cfg       *happydns.Options
+	secrets   *secret.Manager
 	store     ProviderStorage
 	validator ProviderValidator
 }
 
 // NewService creates a new provider Service. If validator is nil,
 // the DefaultProviderValidator is used.
-func NewService(store ProviderStorage, validator ProviderValidator) *Service {
+func NewService(cfg *happydns.Options, secrets *secret.Manager, store ProviderStorage, validator ProviderValidator) *Service {
 	if validator == nil {
 		validator = &DefaultProviderValidator{}
 	}
 	return &Service{
+		cfg:       cfg,
+		secrets:   secrets,
 		store:     store,
 		validator: validator,
 	}
@@ -71,8 +76,50 @@ func instantiate(p *happydns.Provider) (happydns.ProviderActuator, error) {
 	return instance, nil
 }
 
+// resolveSecretMethod determines which secret method to use for the given user.
+func (s *Service) resolveSecretMethod(user *happydns.User) string {
+	if s.cfg != nil && !s.cfg.DisableUserSecretMethod {
+		if m := user.Settings.SecretMethod; m != "" {
+			return m
+		}
+	}
+	if s.cfg != nil && s.cfg.SecretMethod != "" {
+		return s.cfg.SecretMethod
+	}
+	return ""
+}
+
+// openProviderSecret decrypts a provider's raw JSON if it's a SecretEnvelope,
+// otherwise returns it unchanged (legacy plaintext).
+func (s *Service) openProviderSecret(ctx context.Context, raw json.RawMessage) (json.RawMessage, error) {
+	if s.secrets == nil {
+		return raw, nil
+	}
+	if envelope, ok := secret.TryParseEnvelope(raw); ok {
+		return s.secrets.Open(ctx, envelope)
+	}
+	return raw, nil
+}
+
+// sealProviderMessage encrypts the Provider field of a ProviderMessage.
+func (s *Service) sealProviderMessage(ctx context.Context, user *happydns.User, msg *happydns.ProviderMessage) error {
+	if s.secrets == nil {
+		return nil
+	}
+	method := s.resolveSecretMethod(user)
+	envelope, err := s.secrets.Seal(ctx, method, user.Id, msg.Id, msg.Provider)
+	if err != nil {
+		return fmt.Errorf("failed to seal provider secret: %w", err)
+	}
+	msg.Provider, err = json.Marshal(envelope)
+	if err != nil {
+		return fmt.Errorf("failed to marshal secret envelope: %w", err)
+	}
+	return nil
+}
+
 // CreateProvider creates a new provider for the given user.
-func (s *Service) CreateProvider(_ context.Context, user *happydns.User, msg *happydns.ProviderMessage) (*happydns.Provider, error) {
+func (s *Service) CreateProvider(ctx context.Context, user *happydns.User, msg *happydns.ProviderMessage) (*happydns.Provider, error) {
 	provider, err := ParseProvider(msg)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse provider: %w", err)
@@ -84,10 +131,31 @@ func (s *Service) CreateProvider(_ context.Context, user *happydns.User, msg *ha
 
 	provider.Owner = user.Id
 
-	if err := s.store.CreateProvider(provider); err != nil {
-		return nil, happydns.InternalError{
-			Err:         fmt.Errorf("failed to save provider: %w", err),
-			UserMessage: "Sorry, we are currently unable to create the given provider. Please try again later.",
+	if s.secrets != nil {
+		// Seal and store as message
+		sealedMsg, err := provider.ToMessage()
+		if err != nil {
+			return nil, fmt.Errorf("unable to serialize provider: %w", err)
+		}
+		sealedMsg.Owner = user.Id
+
+		if err := s.sealProviderMessage(ctx, user, &sealedMsg); err != nil {
+			return nil, err
+		}
+
+		if err := s.store.CreateProviderFromMessage(&sealedMsg); err != nil {
+			return nil, happydns.InternalError{
+				Err:         fmt.Errorf("failed to save provider: %w", err),
+				UserMessage: "Sorry, we are currently unable to create the given provider. Please try again later.",
+			}
+		}
+		provider.Id = sealedMsg.Id
+	} else {
+		if err := s.store.CreateProvider(provider); err != nil {
+			return nil, happydns.InternalError{
+				Err:         fmt.Errorf("failed to save provider: %w", err),
+				UserMessage: "Sorry, we are currently unable to create the given provider. Please try again later.",
+			}
 		}
 	}
 
@@ -109,10 +177,15 @@ func (s *Service) getUserProvider(user *happydns.User, providerID happydns.Ident
 }
 
 // GetUserProvider retrieves a provider for the given user.
-func (s *Service) GetUserProvider(_ context.Context, user *happydns.User, providerID happydns.Identifier) (*happydns.Provider, error) {
+func (s *Service) GetUserProvider(ctx context.Context, user *happydns.User, providerID happydns.Identifier) (*happydns.Provider, error) {
 	p, err := s.getUserProvider(user, providerID)
 	if err != nil {
 		return nil, err
+	}
+
+	p.Provider, err = s.openProviderSecret(ctx, p.Provider)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt provider secret: %w", err)
 	}
 
 	return ParseProvider(p)
@@ -164,7 +237,20 @@ func (s *Service) UpdateProvider(ctx context.Context, providerID happydns.Identi
 		return happydns.ValidationError{Msg: fmt.Sprintf("unable to validate provider attributes: %s", err.Error())}
 	}
 
-	err = s.store.UpdateProvider(provider)
+	if s.secrets != nil {
+		sealedMsg, err := provider.ToMessage()
+		if err != nil {
+			return fmt.Errorf("unable to serialize provider: %w", err)
+		}
+
+		if err := s.sealProviderMessage(ctx, user, &sealedMsg); err != nil {
+			return err
+		}
+
+		err = s.store.UpdateProviderFromRawMessage(&sealedMsg)
+	} else {
+		err = s.store.UpdateProvider(provider)
+	}
 	if err != nil {
 		return happydns.InternalError{
 			Err:         fmt.Errorf("unable to UpdateProvider in UpdateProvider: %w", err),
@@ -213,9 +299,9 @@ type RestrictedService struct {
 }
 
 // NewRestrictedService creates a RestrictedService backed by the given configuration and storage.
-func NewRestrictedService(cfg *happydns.Options, store ProviderStorage) *RestrictedService {
+func NewRestrictedService(cfg *happydns.Options, store ProviderStorage, secrets *secret.Manager) *RestrictedService {
 	return &RestrictedService{
-		inner:  NewService(store, nil),
+		inner:  NewService(cfg, secrets, store, nil),
 		config: cfg,
 	}
 }

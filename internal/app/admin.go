@@ -33,6 +33,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	admin "git.happydns.org/happyDomain/internal/api-admin/route"
+	"git.happydns.org/happyDomain/internal/secret"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/web-admin"
@@ -54,7 +55,11 @@ func NewAdmin(app *App) *Admin {
 	router.Use(gin.Logger(), gin.Recovery())
 
 	// Prepare usecases (admin uses unrestricted provider access)
-	app.usecases.providerAdmin = providerUC.NewService(app.store, nil)
+	secretManager, err := secret.NewManagerFromConfig(app.cfg)
+	if err != nil {
+		log.Fatalf("unable to initialize secret manager for admin: %v", err)
+	}
+	app.usecases.providerAdmin = providerUC.NewService(app.cfg, secretManager, app.store, nil)
 
 	admin.DeclareRoutes(
 		app.cfg,

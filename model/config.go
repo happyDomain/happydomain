@@ -74,6 +74,14 @@ type Options struct {
 	// OptOutInsights disable the anonymous usage statistics report.
 	OptOutInsights bool
 
+	// SecretMethod is the default secret management method for provider credentials.
+	// Values: "plaintext" (default), "instance-key".
+	SecretMethod string
+
+	// DisableUserSecretMethod prevents users from choosing their own secret method.
+	// When true, the instance default (SecretMethod) is always used.
+	DisableUserSecretMethod bool
+
 	// StorageEngine points to the storage engine used.
 	StorageEngine string
 

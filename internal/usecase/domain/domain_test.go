@@ -124,7 +124,7 @@ func createTestProvider(t *testing.T, store storage.Storage, user *happydns.User
 
 func setupTestService(store storage.Storage) (*domain.Service, *mockDomainLogAppender) {
 	// Create the provider service
-	providerService := providerUC.NewService(store, nil)
+	providerService := providerUC.NewService(store, nil, nil, nil)
 
 	// Create the zone usecase
 	getZone := zoneUC.NewGetZoneUsecase(store)
