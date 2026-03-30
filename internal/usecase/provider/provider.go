@@ -183,7 +183,9 @@ func (s *Service) UpdateProviderFromMessage(providerID happydns.Identifier, user
 	}
 
 	return s.UpdateProvider(providerID, user, func(provider *happydns.Provider) {
-		*provider = *newprovider
+		provider.Type = newprovider.Type
+		provider.Comment = newprovider.Comment
+		provider.Provider = newprovider.Provider
 	})
 }
 
