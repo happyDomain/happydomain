@@ -29,8 +29,8 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/helpers"
-	"git.happydns.org/happyDomain/model"
 	svc "git.happydns.org/happyDomain/internal/service"
+	"git.happydns.org/happyDomain/model"
 )
 
 type OpenPGP struct {
@@ -54,7 +54,8 @@ func (s *OpenPGP) EnrichFromPrevious(old happydns.ServiceBody) {
 
 func (s *OpenPGP) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
 	if s.Username != "" {
-		identifier := fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
+		hash := sha256.Sum256([]byte(s.Username))
+		identifier := fmt.Sprintf("%x", hash[:28])
 		if !strings.HasPrefix(domain, identifier) {
 			return nil, fmt.Errorf("Invalid prefix")
 		}
@@ -84,8 +85,9 @@ func (s *SMimeCert) EnrichFromPrevious(old happydns.ServiceBody) {
 
 func (s *SMimeCert) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
 	if s.Username != "" {
-		identifier := fmt.Sprintf("%x", sha256.Sum224([]byte(s.Username)))
-		if !strings.HasPrefix(domain, identifier) {
+		hash := sha256.Sum256([]byte(s.Username))
+		identifier := fmt.Sprintf("%x", hash[:28])
+		if !strings.HasPrefix(s.Record.Hdr.Name, identifier) {
 			return nil, fmt.Errorf("Invalid prefix")
 		}
 	}

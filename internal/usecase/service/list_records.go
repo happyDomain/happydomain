@@ -22,6 +22,9 @@
 package service
 
 import (
+	"fmt"
+	"reflect"
+
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 )
@@ -45,7 +48,7 @@ func (uc *ListRecordsUsecase) List(svc *happydns.Service, origin string, default
 
 	records, err := svc.Service.GetRecords(svc.Domain, defaultTTL, origin)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("during %s generation: %w", reflect.TypeOf(svc.Service).Elem().Name(), err)
 	}
 
 	for i, record := range records {
