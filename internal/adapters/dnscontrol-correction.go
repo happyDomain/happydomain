@@ -27,7 +27,10 @@ import (
 
 	dnscontrol "github.com/StackExchange/dnscontrol/v4/models"
 	"github.com/StackExchange/dnscontrol/v4/pkg/diff2"
+	"github.com/StackExchange/dnscontrol/v4/pkg/domaintags"
 	"github.com/StackExchange/dnscontrol/v4/pkg/dnsrr"
+	_ "github.com/StackExchange/dnscontrol/v4/pkg/rtype"
+	"github.com/StackExchange/dnscontrol/v4/pkg/rtypecontrol"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
@@ -118,6 +121,7 @@ func DNSControlDiffByRecord(oldrrs []happydns.Record, newrrs []happydns.Record, 
 // before converting to DNSControl format.
 // The origin parameter specifies the zone name (with or without trailing dot).
 func DNSControlRRtoRC(rrs []happydns.Record, origin string) (dnscontrol.Records, error) {
+	originNoTrailingDot := strings.TrimSuffix(origin, ".")
 	records := make([]*dnscontrol.RecordConfig, len(rrs))
 
 	for i, rr := range rrs {
@@ -126,10 +130,25 @@ func DNSControlRRtoRC(rrs []happydns.Record, origin string) (dnscontrol.Records,
 			rr = record.ToRR()
 		}
 
-		rc, err := dnsrr.RRtoRC(rr.(dns.RR), strings.TrimSuffix(origin, "."))
-		if err != nil {
-			return nil, err
+		typeName := dns.TypeToString[rr.Header().Rrtype]
+
+		var rc dnscontrol.RecordConfig
+		var err error
+
+		if _, ok := rtypecontrol.Func[typeName]; ok {
+			dcn := domaintags.MakeDomainNameVarieties(originNoTrailingDot)
+			rcPtr, e := rtypecontrol.NewRecordConfigFromStruct(rr.Header().Name, rr.Header().Ttl, typeName, rr, dcn)
+			if e != nil {
+				return nil, e
+			}
+			rc = *rcPtr
+		} else {
+			rc, err = dnsrr.RRtoRC(rr.(dns.RR), originNoTrailingDot)
+			if err != nil {
+				return nil, err
+			}
 		}
+
 		records[i] = &rc
 	}
 
