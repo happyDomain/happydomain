@@ -16,7 +16,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/gorilla/securecookie v1.1.2
 	github.com/gorilla/sessions v1.4.0
-	github.com/lib/pq v1.12.0
+	github.com/lib/pq v1.12.2
 	github.com/libdns/ionos v1.2.0
 	github.com/libdns/libdns v1.1.1
 	github.com/miekg/dns v1.1.72
