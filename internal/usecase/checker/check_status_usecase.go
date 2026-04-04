@@ -22,6 +22,8 @@
 package checker
 
 import (
+	"slices"
+
 	checkerPkg "git.happydns.org/happyDomain/internal/checker"
 	"git.happydns.org/happyDomain/model"
 )
@@ -89,6 +91,11 @@ func (u *CheckStatusUsecase) ListCheckerStatuses(target happydns.CheckTarget) ([
 		case happydns.CheckScopeService:
 			if !def.Availability.ApplyToService {
 				continue
+			}
+			if len(def.Availability.LimitToServices) > 0 && target.ServiceType != "" {
+				if !slices.Contains(def.Availability.LimitToServices, target.ServiceType) {
+					continue
+				}
 			}
 		}
 

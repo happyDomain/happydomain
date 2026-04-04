@@ -60,6 +60,23 @@ func (u *CheckPlanUsecase) ListCheckPlansByTarget(target happydns.CheckTarget) (
 	return u.store.ListCheckPlansByTarget(target)
 }
 
+// ListCheckPlansByTargetAndChecker returns all check plans matching both the
+// given target and the given checkerID, filtering in a single pass to avoid
+// fetching then discarding unrelated plans.
+func (u *CheckPlanUsecase) ListCheckPlansByTargetAndChecker(target happydns.CheckTarget, checkerID string) ([]*happydns.CheckPlan, error) {
+	plans, err := u.store.ListCheckPlansByTarget(target)
+	if err != nil {
+		return nil, err
+	}
+	filtered := plans[:0]
+	for _, p := range plans {
+		if p.CheckerID == checkerID {
+			filtered = append(filtered, p)
+		}
+	}
+	return filtered, nil
+}
+
 // CreateCheckPlan validates that the checker exists and persists the plan.
 func (u *CheckPlanUsecase) CreateCheckPlan(plan *happydns.CheckPlan) error {
 	if checkerPkg.FindChecker(plan.CheckerID) == nil {

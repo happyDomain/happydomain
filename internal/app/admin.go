@@ -33,6 +33,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	admin "git.happydns.org/happyDomain/internal/api-admin/route"
+	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/web-admin"
@@ -55,6 +56,9 @@ func NewAdmin(app *App) *Admin {
 
 	// Prepare usecases (admin uses unrestricted provider access)
 	app.usecases.providerAdmin = providerUC.NewService(app.store, nil)
+	if app.usecases.checkerOptionsUC == nil {
+		app.usecases.checkerOptionsUC = checkerUC.NewCheckerOptionsUsecase(app.store, app.store)
+	}
 
 	admin.DeclareRoutes(
 		app.cfg,
@@ -71,6 +75,8 @@ func NewAdmin(app *App) *Admin {
 			ZoneCorrectionApplier: app.usecases.orchestrator.ZoneCorrectionApplier,
 			ZoneImporter:          app.usecases.orchestrator.ZoneImporter,
 			ZoneService:           app.usecases.zoneService,
+			CheckerOptionsUC:      app.usecases.checkerOptionsUC,
+			CheckScheduler:        app.usecases.checkerScheduler,
 		},
 	)
 	web.DeclareRoutes(app.cfg, router)

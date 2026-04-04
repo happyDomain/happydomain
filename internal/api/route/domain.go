@@ -39,6 +39,7 @@ func DeclareDomainRoutes(
 	zoneCorrApplier happydns.ZoneCorrectionApplierUsecase,
 	zoneServiceUC happydns.ZoneServiceUsecase,
 	serviceUC happydns.ServiceUsecase,
+	cc *controller.CheckerController,
 ) {
 	dc := controller.NewDomainController(
 		domainUC,
@@ -61,6 +62,11 @@ func DeclareDomainRoutes(
 	apiDomainsRoutes.POST("/zone", dc.ImportZone)
 	apiDomainsRoutes.POST("/retrieve_zone", dc.RetrieveZone)
 
+	// Mount domain-scoped checker routes.
+	if cc != nil {
+		DeclareScopedCheckerRoutes(apiDomainsRoutes, cc)
+	}
+
 	DeclareZoneRoutes(
 		apiDomainsRoutes,
 		zoneUC,
@@ -68,5 +74,6 @@ func DeclareDomainRoutes(
 		zoneCorrApplier,
 		zoneServiceUC,
 		serviceUC,
+		cc,
 	)
 }

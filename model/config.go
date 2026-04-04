@@ -93,6 +93,10 @@ type Options struct {
 
 	OIDCClients []OIDCSettings
 
+	// CheckerMaxConcurrency is the maximum number of checker jobs that can
+	// run simultaneously. Defaults to runtime.NumCPU().
+	CheckerMaxConcurrency int
+
 	// CaptchaProvider selects the captcha provider ("hcaptcha", "recaptchav2", "turnstile", or "").
 	CaptchaProvider string
 

@@ -26,6 +26,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
+	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	happydns "git.happydns.org/happyDomain/model"
 )
 
@@ -36,11 +37,18 @@ func DeclareZoneRoutes(
 	zoneCorrApplier happydns.ZoneCorrectionApplierUsecase,
 	zoneServiceUC happydns.ZoneServiceUsecase,
 	serviceUC happydns.ServiceUsecase,
+	cc *controller.CheckerController,
 ) {
+	var checkStatusUC *checkerUC.CheckStatusUsecase
+	if cc != nil {
+		checkStatusUC = cc.StatusUC()
+	}
+
 	zc := controller.NewZoneController(
 		zoneUC,
 		domainUC,
 		zoneCorrApplier,
+		checkStatusUC,
 	)
 
 	apiZonesRoutes := router.Group("/zone/:zoneid")
@@ -65,6 +73,7 @@ func DeclareZoneRoutes(
 		zoneServiceUC,
 		serviceUC,
 		zoneUC,
+		cc,
 	)
 
 	apiZonesRoutes.POST("/records", zc.AddRecords)

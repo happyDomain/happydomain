@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,12 +19,23 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package main
+package route
 
-//go:generate go run tools/gen_icon.go providers providers
-//go:generate go run tools/gen_icon.go services svcs
-//go:generate go run tools/gen_rr_typescript.go web/src/lib/dns_rr.ts
-//go:generate go run tools/gen_service_specs.go -o web/src/lib/services_specs.ts
-//go:generate go run tools/gen_dns_type_mapping.go -o internal/usecase/service_specs_dns_types.go
-//go:generate swag init --parseDependency --exclude internal/api-admin/ --generalInfo internal/api/route/route.go
-//go:generate swag init --parseDependency --output docs-admin --exclude internal/api/ --generalInfo internal/api-admin/route/route.go
+import (
+	"github.com/gin-gonic/gin"
+
+	"git.happydns.org/happyDomain/internal/api-admin/controller"
+)
+
+func declareSchedulerRoutes(router *gin.RouterGroup, dep Dependencies) {
+	if dep.CheckScheduler == nil {
+		return
+	}
+	ctrl := controller.NewAdminSchedulerController(dep.CheckScheduler)
+
+	schedulerRoute := router.Group("/scheduler")
+	schedulerRoute.GET("", ctrl.GetSchedulerStatus)
+	schedulerRoute.POST("/enable", ctrl.EnableScheduler)
+	schedulerRoute.POST("/disable", ctrl.DisableScheduler)
+	schedulerRoute.POST("/reschedule-upcoming", ctrl.RescheduleUpcoming)
+}

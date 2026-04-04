@@ -31,6 +31,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
 	"git.happydns.org/happyDomain/internal/helpers"
+	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -38,13 +39,15 @@ type ZoneController struct {
 	domainService         happydns.DomainUsecase
 	zoneCorrectionService happydns.ZoneCorrectionApplierUsecase
 	zoneService           happydns.ZoneUsecase
+	checkStatusUC         *checkerUC.CheckStatusUsecase
 }
 
-func NewZoneController(zoneService happydns.ZoneUsecase, domainService happydns.DomainUsecase, zoneCorrectionService happydns.ZoneCorrectionApplierUsecase) *ZoneController {
+func NewZoneController(zoneService happydns.ZoneUsecase, domainService happydns.DomainUsecase, zoneCorrectionService happydns.ZoneCorrectionApplierUsecase, checkStatusUC *checkerUC.CheckStatusUsecase) *ZoneController {
 	return &ZoneController{
 		domainService:         domainService,
 		zoneCorrectionService: zoneCorrectionService,
 		zoneService:           zoneService,
+		checkStatusUC:         checkStatusUC,
 	}
 }
 
@@ -59,14 +62,27 @@ func NewZoneController(zoneService happydns.ZoneUsecase, domainService happydns.
 //	@Security		securitydefinitions.basic
 //	@Param			domainId	path		string	true	"Domain identifier"
 //	@Param			zoneId		path		string	true	"Zone identifier"
-//	@Success		200			{object}	happydns.Zone
+//	@Success		200			{object}	happydns.ZoneWithServicesCheckStatus
 //	@Failure		401			{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Failure		404			{object}	happydns.ErrorResponse	"Domain or Zone not found"
 //	@Router			/domains/{domainId}/zone/{zoneId} [get]
 func (zc *ZoneController) GetZone(c *gin.Context) {
 	zone := c.MustGet("zone").(*happydns.Zone)
 
-	c.JSON(http.StatusOK, zone)
+	result := &happydns.ZoneWithServicesCheckStatus{Zone: zone}
+
+	if zc.checkStatusUC != nil {
+		user := middleware.MyUser(c)
+		domain := c.MustGet("domain").(*happydns.Domain)
+		statusByService, err := zc.checkStatusUC.GetWorstServiceStatuses(user.Id, domain.Id, zone)
+		if err != nil {
+			log.Printf("GetWorstServiceStatuses: %s", err.Error())
+		} else {
+			result.ServicesCheckStatus = statusByService
+		}
+	}
+
+	c.JSON(http.StatusOK, result)
 }
 
 // GetZoneSubdomain returns the services associated with a given subdomain.

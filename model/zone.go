@@ -154,6 +154,14 @@ type ZoneServices struct {
 	Services []*Service `json:"services"`
 }
 
+// ZoneWithServicesCheckStatus wraps a Zone with the worst check status for each service.
+type ZoneWithServicesCheckStatus struct {
+	*Zone
+	// ServicesCheckStatus holds the worst check status for each service,
+	// keyed by service identifier string. Nil/absent if no results exist yet.
+	ServicesCheckStatus map[string]*Status `json:"services_check_status,omitempty"`
+}
+
 type ZoneUsecase interface {
 	AddRecord(*Zone, string, Record) error
 	CreateZone(*Zone) error

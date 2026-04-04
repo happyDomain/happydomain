@@ -38,6 +38,7 @@ import (
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/usecase"
 	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
+	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	domainUC "git.happydns.org/happyDomain/internal/usecase/domain"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	"git.happydns.org/happyDomain/internal/usecase/orchestrator"
@@ -69,6 +70,12 @@ type Usecases struct {
 	zoneService      happydns.ZoneServiceUsecase
 
 	orchestrator *orchestrator.Orchestrator
+
+	checkerEngine    happydns.CheckerEngine
+	checkerOptionsUC *checkerUC.CheckerOptionsUsecase
+	checkerPlanUC    *checkerUC.CheckPlanUsecase
+	checkerStatusUC  *checkerUC.CheckStatusUsecase
+	checkerScheduler *checkerUC.Scheduler
 }
 
 type App struct {
@@ -252,6 +259,18 @@ func (app *App) initUsecases() {
 		providerAdminService,
 		zoneService.UpdateZoneUC,
 	)
+
+	// Checker system.
+	app.usecases.checkerOptionsUC = checkerUC.NewCheckerOptionsUsecase(app.store, app.store)
+	app.usecases.checkerPlanUC = checkerUC.NewCheckPlanUsecase(app.store)
+	app.usecases.checkerStatusUC = checkerUC.NewCheckStatusUsecase(app.store, app.store, app.store, app.store)
+	app.usecases.checkerEngine = checkerUC.NewCheckerEngine(
+		app.usecases.checkerOptionsUC,
+		app.store,
+		app.store,
+		app.store,
+	)
+	app.usecases.checkerScheduler = checkerUC.NewScheduler(app.usecases.checkerEngine, app.cfg.CheckerMaxConcurrency, app.store, app.store, app.store, app.store)
 }
 
 func (app *App) setupRouter() {
@@ -297,6 +316,12 @@ func (app *App) setupRouter() {
 			ZoneCorrectionApplier: app.usecases.orchestrator.ZoneCorrectionApplier,
 			ZoneImporter:          app.usecases.orchestrator.ZoneImporter,
 			ZoneService:           app.usecases.zoneService,
+
+			CheckerEngine:    app.usecases.checkerEngine,
+			CheckerOptionsUC: app.usecases.checkerOptionsUC,
+			CheckPlanUC:      app.usecases.checkerPlanUC,
+			CheckStatusUC:    app.usecases.checkerStatusUC,
+			PlannedProvider:  app.usecases.checkerScheduler,
 		},
 	)
 	web.DeclareRoutes(app.cfg, baserouter, app.captchaVerifier)
@@ -314,6 +339,10 @@ func (app *App) Start() {
 		go app.insights.Run()
 	}
 
+	if app.usecases.checkerScheduler != nil {
+		app.usecases.checkerScheduler.Start(context.Background())
+	}
+
 	log.Printf("Public interface listening on %s\n", app.cfg.Bind)
 	if err := app.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("listen: %s\n", err)
@@ -325,6 +354,10 @@ func (app *App) Stop() {
 	defer cancel()
 	if err := app.srv.Shutdown(ctx); err != nil {
 		log.Fatal("Server Shutdown:", err)
+	}
+
+	if app.usecases.checkerScheduler != nil {
+		app.usecases.checkerScheduler.Stop()
 	}
 
 	// Close storage

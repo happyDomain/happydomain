@@ -26,6 +26,7 @@ import (
 
 	api "git.happydns.org/happyDomain/internal/api/route"
 	"git.happydns.org/happyDomain/internal/storage"
+	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	happydns "git.happydns.org/happyDomain/model"
 )
 
@@ -41,14 +42,18 @@ type Dependencies struct {
 	ZoneCorrectionApplier happydns.ZoneCorrectionApplierUsecase
 	ZoneImporter          happydns.ZoneImporterUsecase
 	ZoneService           happydns.ZoneServiceUsecase
+	CheckerOptionsUC      *checkerUC.CheckerOptionsUsecase
+	CheckScheduler        *checkerUC.Scheduler
 }
 
 func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, s storage.Storage, dep Dependencies) {
 	apiRoutes := router.Group("/api")
 
 	declareBackupRoutes(cfg, apiRoutes, s)
+	declareCheckersRoutes(apiRoutes, dep)
 	declareDomainRoutes(apiRoutes, dep, s)
 	declareProviderRoutes(apiRoutes, dep, s)
+	declareSchedulerRoutes(apiRoutes, dep)
 	declareSessionsRoutes(cfg, apiRoutes, s)
 	declareUserAuthsRoutes(apiRoutes, dep, s)
 	declareUsersRoutes(apiRoutes, dep, s)

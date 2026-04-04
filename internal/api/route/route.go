@@ -24,12 +24,14 @@ package route
 import (
 	"github.com/gin-gonic/gin"
 
+	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
+	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	happydns "git.happydns.org/happyDomain/model"
 )
 
 // Dependencies holds all use cases required to register the public API routes.
-// It is a plain struct — no methods, no interface — constructed once in app.go.
+// It is a plain struct - no methods, no interface - constructed once in app.go.
 type Dependencies struct {
 	Authentication        happydns.AuthenticationUsecase
 	AuthUser              happydns.AuthUserUsecase
@@ -50,6 +52,12 @@ type Dependencies struct {
 	ZoneCorrectionApplier happydns.ZoneCorrectionApplierUsecase
 	ZoneImporter          happydns.ZoneImporterUsecase
 	ZoneService           happydns.ZoneServiceUsecase
+
+	CheckerEngine    happydns.CheckerEngine
+	CheckerOptionsUC *checkerUC.CheckerOptionsUsecase
+	CheckPlanUC      *checkerUC.CheckPlanUsecase
+	CheckStatusUC    *checkerUC.CheckStatusUsecase
+	PlannedProvider  checkerUC.PlannedJobProvider
 }
 
 //	@title			happyDomain API
@@ -105,6 +113,19 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 	}
 	apiAuthRoutes.Use(middleware.AuthRequired())
 
+	// Initialize checker controller if checker engine is available.
+	var cc *controller.CheckerController
+	if dep.CheckerEngine != nil {
+		cc = DeclareCheckerRoutes(
+			apiAuthRoutes,
+			dep.CheckerEngine,
+			dep.CheckerOptionsUC,
+			dep.CheckPlanUC,
+			dep.CheckStatusUC,
+			dep.PlannedProvider,
+		)
+	}
+
 	DeclareAuthenticationCheckRoutes(apiAuthRoutes, lc)
 	DeclareDomainRoutes(
 		apiAuthRoutes,
@@ -116,6 +137,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 		dep.ZoneCorrectionApplier,
 		dep.ZoneService,
 		dep.Service,
+		cc,
 	)
 	DeclareProviderRoutes(apiAuthRoutes, dep.Provider)
 	DeclareProviderSettingsRoutes(apiAuthRoutes, dep.ProviderSettings)

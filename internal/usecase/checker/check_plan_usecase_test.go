@@ -124,6 +124,41 @@ func TestCheckPlanUsecase_ListByTarget(t *testing.T) {
 	}
 }
 
+func TestCheckPlanUsecase_ListByTargetAndChecker(t *testing.T) {
+	uc, _ := setupPlanUC(t)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	did, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
+
+	// Create a plan for plan_test_checker.
+	plan := &happydns.CheckPlan{
+		CheckerID: "plan_test_checker",
+		Target:    target,
+	}
+	if err := uc.CreateCheckPlan(plan); err != nil {
+		t.Fatalf("CreateCheckPlan() error: %v", err)
+	}
+
+	// Query for the matching checker - should return the plan.
+	plans, err := uc.ListCheckPlansByTargetAndChecker(target, "plan_test_checker")
+	if err != nil {
+		t.Fatalf("ListCheckPlansByTargetAndChecker() error: %v", err)
+	}
+	if len(plans) != 1 {
+		t.Errorf("expected 1 plan, got %d", len(plans))
+	}
+
+	// Query for a different checker on the same target - should return nothing.
+	plans2, err := uc.ListCheckPlansByTargetAndChecker(target, "other_checker")
+	if err != nil {
+		t.Fatalf("ListCheckPlansByTargetAndChecker() error: %v", err)
+	}
+	if len(plans2) != 0 {
+		t.Errorf("expected 0 plans for different checker, got %d", len(plans2))
+	}
+}
+
 func TestCheckPlanUsecase_UpdatePreservesIdAndTarget(t *testing.T) {
 	uc, _ := setupPlanUC(t)
 
@@ -164,6 +199,92 @@ func TestCheckPlanUsecase_UpdatePreservesIdAndTarget(t *testing.T) {
 	}
 	if result.Enabled["rule_a"] != false {
 		t.Errorf("expected Enabled to be updated")
+	}
+}
+
+func TestCheckPlanUsecase_UpdateScopeMismatch(t *testing.T) {
+	uc, _ := setupPlanUC(t)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	uid2, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
+
+	plan := &happydns.CheckPlan{
+		CheckerID: "plan_test_checker",
+		Target:    target,
+	}
+	if err := uc.CreateCheckPlan(plan); err != nil {
+		t.Fatalf("CreateCheckPlan() error: %v", err)
+	}
+
+	// Update with a different user scope should fail.
+	wrongScope := happydns.CheckTarget{UserId: uid2.String()}
+	_, err := uc.UpdateCheckPlan(wrongScope, plan.Id, &happydns.CheckPlan{
+		CheckerID: "plan_test_checker",
+		Enabled:   map[string]bool{"rule_a": false},
+	})
+	if err == nil {
+		t.Fatal("expected error when scope doesn't match plan target")
+	}
+
+	// Verify the original plan is unchanged.
+	got, err := uc.GetCheckPlan(target, plan.Id)
+	if err != nil {
+		t.Fatalf("GetCheckPlan() error: %v", err)
+	}
+	if got.Enabled != nil {
+		t.Errorf("expected original plan to be unchanged, got Enabled=%v", got.Enabled)
+	}
+}
+
+func TestCheckPlanUsecase_GetScopeMismatch(t *testing.T) {
+	uc, _ := setupPlanUC(t)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	uid2, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
+
+	plan := &happydns.CheckPlan{
+		CheckerID: "plan_test_checker",
+		Target:    target,
+	}
+	if err := uc.CreateCheckPlan(plan); err != nil {
+		t.Fatalf("CreateCheckPlan() error: %v", err)
+	}
+
+	// Get with a different user scope should fail.
+	wrongScope := happydns.CheckTarget{UserId: uid2.String()}
+	_, err := uc.GetCheckPlan(wrongScope, plan.Id)
+	if err == nil {
+		t.Fatal("expected error when scope doesn't match plan target")
+	}
+}
+
+func TestCheckPlanUsecase_DeleteScopeMismatch(t *testing.T) {
+	uc, _ := setupPlanUC(t)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	uid2, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
+
+	plan := &happydns.CheckPlan{
+		CheckerID: "plan_test_checker",
+		Target:    target,
+	}
+	if err := uc.CreateCheckPlan(plan); err != nil {
+		t.Fatalf("CreateCheckPlan() error: %v", err)
+	}
+
+	// Delete with a different user scope should fail.
+	wrongScope := happydns.CheckTarget{UserId: uid2.String()}
+	if err := uc.DeleteCheckPlan(wrongScope, plan.Id); err == nil {
+		t.Fatal("expected error when scope doesn't match plan target")
+	}
+
+	// Verify the plan still exists.
+	_, err := uc.GetCheckPlan(target, plan.Id)
+	if err != nil {
+		t.Fatalf("plan should still exist after failed delete: %v", err)
 	}
 }
 
