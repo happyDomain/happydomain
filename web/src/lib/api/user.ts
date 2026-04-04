@@ -31,8 +31,8 @@ import {
     postUsersByUserIdDelete,
     postUsersByUserIdSettings,
     getUsersByUserId,
+    getUsersByUserIdIsAuthUser,
 } from "$lib/api-base/sdk.gen";
-import { client } from "$lib/api-base/client.gen";
 import type { UserSettings } from "$lib/model/usersettings";
 import type { User, SignUpForm, LoginForm } from "$lib/model/user";
 import { unwrapSdkResponse, unwrapEmptyResponse } from "./errors";
@@ -150,11 +150,11 @@ export function cleanUserSession(): void {
 }
 
 export async function isAuthUser(user: User): Promise<boolean> {
-    const result = await client.get({
-        url: "/users/{userId}/is_auth_user",
-        path: { userId: user.id },
-    } as any);
-    return result.response?.status === 204;
+    return unwrapEmptyResponse(
+        await getUsersByUserIdIsAuthUser({
+            path: { userId: user.id },
+        }),
+    );
 }
 
 export async function getUser(id: string): Promise<User> {

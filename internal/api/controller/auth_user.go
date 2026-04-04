@@ -87,6 +87,23 @@ func (ac *AuthUserController) ChangePassword(c *gin.Context) {
 	ac.lc.Logout(c)
 }
 
+// IsAuthUser checks if the currently authenticated session matches the given user identifier.
+//
+//	@Summary	Check if current user
+//	@Schemes
+//	@Description	Check if the currently authenticated session matches the given user identifier.
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			userId	path	string	true	"User identifier"
+//	@Success		204		{null}	null
+//	@Failure		401		{object}	happydns.ErrorResponse	"Authentication failure"
+//	@Router			/users/{userId}/is_auth_user [get]
+func (ac *AuthUserController) IsAuthUser(c *gin.Context) {
+	c.Status(http.StatusNoContent)
+}
+
 // DeleteAuthUser delete the account related to the given user.
 //
 //	@Summary	Drop account

@@ -22,8 +22,6 @@
 package route
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/controller"
@@ -36,9 +34,7 @@ func DeclareAuthUserRoutes(router *gin.RouterGroup, authUserUC happydns.AuthUser
 
 	apiUserAuthRoutes := router.Group("/users/:uid")
 	apiUserAuthRoutes.Use(middleware.AuthUserHandler(authUserUC))
-	apiUserAuthRoutes.GET("/is_auth_user", func(c *gin.Context) {
-		c.Status(http.StatusNoContent)
-	})
+	apiUserAuthRoutes.GET("/is_auth_user", ac.IsAuthUser)
 	apiUserAuthRoutes.POST("/delete", ac.DeleteAuthUser)
 	apiUserAuthRoutes.POST("/new_password", ac.ChangePassword)
 
