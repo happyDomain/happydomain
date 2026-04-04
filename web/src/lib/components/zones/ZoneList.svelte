@@ -158,6 +158,7 @@
                 }) as gname}
             {@const gdomains = groups[gname]}
             <div
+                role="list"
                 class:mb-2={Object.keys(groups).length != 1}
                 class:drag-over={display_by_groups && dragOverGroup === gname}
                 ondragover={display_by_groups
