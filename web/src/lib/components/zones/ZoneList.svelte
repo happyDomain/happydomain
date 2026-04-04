@@ -256,9 +256,6 @@
 </div>
 
 <style>
-    .draggable-item {
-        cursor: grab;
-    }
     .drag-over {
         background-color: var(--bs-primary-bg-subtle, #cfe2ff);
         border-radius: 0.25rem;
