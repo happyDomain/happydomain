@@ -22,22 +22,61 @@
 -->
 
 <script lang="ts">
-    import type { HappydnsObservationSnapshot } from "$lib/api-base/types.gen";
+    import { Spinner } from "@sveltestrap/sveltestrap";
+
+    import { t } from "$lib/translations";
+    import type { CheckerScope, CheckMetric, ObservationSnapshotWithData } from "$lib/api/checkers";
+    import { getScopedExecutionHTMLReport } from "$lib/api/checkers";
+    import { showHTMLReport, cachedHTMLReport } from "$lib/stores/checkers";
 
     interface Props {
-        observations: HappydnsObservationSnapshot;
+        observations: ObservationSnapshotWithData;
+        metrics?: CheckMetric[] | null;
+        scope?: CheckerScope;
+        checkerId?: string;
+        execId?: string;
     }
 
-    let { observations }: Props = $props();
+    let { observations, scope, checkerId, execId }: Props = $props();
+
+    let htmlReportPromise = $state<Promise<string> | null>(null);
+
+    $effect(() => {
+        if ($showHTMLReport && scope && checkerId && execId && observations?.data) {
+            const keys = Object.keys(observations.data);
+            if (keys.length > 0) {
+                const promise = getScopedExecutionHTMLReport(scope, checkerId, execId, keys[0]);
+                promise.then((html) => cachedHTMLReport.set(html)).catch(() => {});
+                htmlReportPromise = promise;
+            }
+        }
+    });
 </script>
 
 {#if observations?.data && Object.keys(observations.data).length > 0}
     <div
-        class="flex-fill"
+        class="flex-fill d-flex"
         style="overflow: auto; padding: var(--bs-card-spacer-y) var(--bs-card-spacer-x)"
     >
-        <pre class="mb-0" style="width: 0; min-width: 100%"><code
-                >{JSON.stringify(observations.data, null, 2)}</code
-            ></pre>
+        {#if $showHTMLReport && htmlReportPromise}
+            {#await htmlReportPromise}
+                <div class="text-center p-4"><Spinner /></div>
+            {:then html}
+                <iframe
+                    srcdoc={html}
+                    sandbox=""
+                    title={$t("checkers.result.full-report")}
+                    style="width: 100%; min-height: 600px; border: none; display: block;"
+                ></iframe>
+            {:catch}
+                <pre class="mb-0" style="width: 0; min-width: 100%"><code
+                        >{JSON.stringify(observations.data, null, 2)}</code
+                    ></pre>
+            {/await}
+        {:else}
+            <pre class="mb-0" style="width: 0; min-width: 100%"><code
+                    >{JSON.stringify(observations.data, null, 2)}</code
+                ></pre>
+        {/if}
     </div>
 {/if}

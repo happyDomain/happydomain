@@ -44,3 +44,6 @@ export const currentObservations: Writable<ObservationSnapshotWithData | undefin
 export type ReportViewMode = "json" | "html" | "metrics";
 export const reportViewMode: Writable<ReportViewMode> = writable("json");
 export const showHTMLReport: Readable<boolean> = derived(reportViewMode, ($m) => $m === "html");
+
+// Cached HTML report content, shared between the report card and sidebar download button.
+export const cachedHTMLReport: Writable<string | null> = writable(null);

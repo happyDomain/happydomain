@@ -22,11 +22,14 @@
 package controller
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
+	checkerPkg "git.happydns.org/happyDomain/internal/checker"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/model"
 )
@@ -265,4 +268,59 @@ func (cc *CheckerController) GetExecutionResult(c *gin.Context) {
 	}
 
 	c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Rule result not found"})
+}
+
+// GetExecutionHTMLReport returns the HTML report for a specific observation of an execution.
+//
+//	@Summary		Get execution observation HTML report
+//	@Description	Returns the full HTML document generated from an observation's data. Only available for observation providers that implement HTML reporting.
+//	@Tags			checkers
+//	@Produce		html
+//	@Param			checkerId	path	string	true	"Checker ID"
+//	@Param			executionId	path	string	true	"Execution ID"
+//	@Param			obsKey		path	string	true	"Observation key"
+//	@Param			domain		path	string	true	"Domain identifier"
+//	@Param			zoneid		path	string	true	"Zone identifier"
+//	@Param			subdomain	path	string	true	"Subdomain"
+//	@Param			serviceid	path	string	true	"Service identifier"
+//	@Success		200	{string}	string	"HTML document"
+//	@Failure		404	{object}	happydns.ErrorResponse
+//	@Failure		500	{object}	happydns.ErrorResponse
+//	@Router			/domains/{domain}/checkers/{checkerId}/executions/{executionId}/observations/{obsKey}/report [get]
+//	@Router			/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checkers/{checkerId}/executions/{executionId}/observations/{obsKey}/report [get]
+func (cc *CheckerController) GetExecutionHTMLReport(c *gin.Context) {
+	exec := c.MustGet("execution").(*happydns.Execution)
+
+	snap, err := cc.statusUC.GetObservationsByExecution(targetFromContext(c), exec.Id)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Observations not available"})
+		return
+	}
+
+	obsKey := c.Param("obsKey")
+	val, ok := snap.Data[obsKey]
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Observation key not found"})
+		return
+	}
+
+	raw, err := json.Marshal(val)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	htmlContent, supported, err := checkerPkg.GetHTMLReport(obsKey, json.RawMessage(raw))
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+	if !supported {
+		middleware.ErrorResponse(c, http.StatusNotFound, fmt.Errorf("observation %q does not support HTML reports", obsKey))
+		return
+	}
+
+	c.Header("Content-Security-Policy", "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'")
+	c.Header("X-Content-Type-Options", "nosniff")
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(htmlContent))
 }

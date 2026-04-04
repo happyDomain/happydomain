@@ -98,6 +98,7 @@ func DeclareScopedCheckerRoutes(scopedRouter *gin.RouterGroup, cc *controller.Ch
 	// Observations (under execution).
 	executionID.GET("/observations", cc.GetExecutionObservations)
 	executionID.GET("/observations/:obsKey", cc.GetExecutionObservation)
+	executionID.GET("/observations/:obsKey/report", cc.GetExecutionHTMLReport)
 
 	// Results (under execution).
 	executionID.GET("/results", cc.GetExecutionResults)

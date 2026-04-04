@@ -34,6 +34,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	checkerPkg "git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/model"
@@ -91,6 +92,17 @@ func (p *testObservationProvider) Collect(ctx context.Context, opts happydns.Che
 	return map[string]any{"v": 1}, nil
 }
 
+// testHTMLObservationProvider implements CheckerHTMLReporter for HTML report tests.
+type testHTMLObservationProvider struct{}
+
+func (p *testHTMLObservationProvider) Key() happydns.ObservationKey { return "test_html_obs" }
+func (p *testHTMLObservationProvider) Collect(ctx context.Context, opts happydns.CheckerOptions) (any, error) {
+	return map[string]any{"html": true}, nil
+}
+func (p *testHTMLObservationProvider) GetHTMLReport(raw json.RawMessage) (string, error) {
+	return "<html><body>test report</body></html>", nil
+}
+
 // testCheckRule produces a fixed status.
 type testCheckRule struct {
 	name   string
@@ -126,6 +138,12 @@ func registerTestChecker() string {
 
 // newTestController creates a CheckerController with in-memory storage.
 func newTestController(engine happydns.CheckerEngine) *CheckerController {
+	cc, _ := newTestControllerWithStorage(engine)
+	return cc
+}
+
+// newTestControllerWithStorage creates a CheckerController and returns the underlying storage.
+func newTestControllerWithStorage(engine happydns.CheckerEngine) (*CheckerController, storage.Storage) {
 	store, err := inmemory.Instantiate()
 	if err != nil {
 		panic(err)
@@ -133,7 +151,7 @@ func newTestController(engine happydns.CheckerEngine) *CheckerController {
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
 	planUC := checkerUC.NewCheckPlanUsecase(store)
 	statusUC := checkerUC.NewCheckStatusUsecase(store, store, store, store)
-	return NewCheckerController(engine, optionsUC, planUC, statusUC, nil)
+	return NewCheckerController(engine, optionsUC, planUC, statusUC, nil), store
 }
 
 // --- targetFromContext tests ---
@@ -539,5 +557,166 @@ func TestPlanHandler_NotFound(t *testing.T) {
 
 	if w.Code != http.StatusNotFound {
 		t.Fatalf("expected 404, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+// --- GetExecutionHTMLReport tests ---
+
+// seedExecutionWithObservations creates an execution backed by a snapshot containing the given
+// observation data. It returns the execution (with ID assigned by the store).
+func seedExecutionWithObservations(t *testing.T, store storage.Storage, target happydns.CheckTarget, data map[happydns.ObservationKey]json.RawMessage) *happydns.Execution {
+	t.Helper()
+
+	snap := &happydns.ObservationSnapshot{
+		Target:      target,
+		CollectedAt: time.Now(),
+		Data:        data,
+	}
+	if err := store.CreateSnapshot(snap); err != nil {
+		t.Fatalf("CreateSnapshot: %v", err)
+	}
+
+	eval := &happydns.CheckEvaluation{
+		CheckerID:  "html_test_checker",
+		Target:     target,
+		SnapshotID: snap.Id,
+	}
+	if err := store.CreateEvaluation(eval); err != nil {
+		t.Fatalf("CreateEvaluation: %v", err)
+	}
+
+	exec := &happydns.Execution{
+		CheckerID:    "html_test_checker",
+		Target:       target,
+		Status:       happydns.ExecutionDone,
+		EvaluationID: &eval.Id,
+	}
+	if err := store.CreateExecution(exec); err != nil {
+		t.Fatalf("CreateExecution: %v", err)
+	}
+	return exec
+}
+
+func init() {
+	// Register the HTML observation provider once for tests.
+	checkerPkg.RegisterObservationProvider(&testHTMLObservationProvider{})
+}
+
+func TestGetExecutionHTMLReport_ObservationsNotAvailable(t *testing.T) {
+	cc := newTestController(&stubCheckerEngine{})
+
+	// Create an execution with no evaluation/snapshot backing.
+	fakeExecID, _ := happydns.NewRandomIdentifier()
+	exec := &happydns.Execution{
+		Id:        fakeExecID,
+		CheckerID: "html_test_checker",
+		Status:    happydns.ExecutionDone,
+	}
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/report", nil)
+	c.Set("execution", exec)
+	c.Params = gin.Params{{Key: "obsKey", Value: "test_html_obs"}}
+
+	cc.GetExecutionHTMLReport(c)
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestGetExecutionHTMLReport_ObservationKeyNotFound(t *testing.T) {
+	cc, store := newTestControllerWithStorage(&stubCheckerEngine{})
+
+	target := happydns.CheckTarget{DomainId: "d1"}
+	exec := seedExecutionWithObservations(t, store, target, map[happydns.ObservationKey]json.RawMessage{
+		"test_html_obs": json.RawMessage(`{"v":1}`),
+	})
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/report", nil)
+	c.Set("execution", exec)
+	c.Params = gin.Params{{Key: "obsKey", Value: "nonexistent_key"}}
+
+	cc.GetExecutionHTMLReport(c)
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+// testNoHTMLObservationProvider is a provider that does NOT implement CheckerHTMLReporter.
+type testNoHTMLObservationProvider struct{}
+
+func (p *testNoHTMLObservationProvider) Key() happydns.ObservationKey { return "test_no_html_obs" }
+func (p *testNoHTMLObservationProvider) Collect(ctx context.Context, opts happydns.CheckerOptions) (any, error) {
+	return map[string]any{"v": 1}, nil
+}
+
+func init() {
+	checkerPkg.RegisterObservationProvider(&testNoHTMLObservationProvider{})
+}
+
+func TestGetExecutionHTMLReport_ProviderDoesNotSupportHTML(t *testing.T) {
+	cc, store := newTestControllerWithStorage(&stubCheckerEngine{})
+
+	target := happydns.CheckTarget{DomainId: "d1"}
+	exec := seedExecutionWithObservations(t, store, target, map[happydns.ObservationKey]json.RawMessage{
+		"test_no_html_obs": json.RawMessage(`{"v":1}`),
+	})
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/report", nil)
+	c.Set("execution", exec)
+	c.Params = gin.Params{{Key: "obsKey", Value: "test_no_html_obs"}}
+
+	cc.GetExecutionHTMLReport(c)
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 (unsupported), got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestGetExecutionHTMLReport_Success(t *testing.T) {
+	cc, store := newTestControllerWithStorage(&stubCheckerEngine{})
+
+	target := happydns.CheckTarget{DomainId: "d1"}
+	exec := seedExecutionWithObservations(t, store, target, map[happydns.ObservationKey]json.RawMessage{
+		"test_html_obs": json.RawMessage(`{"v":1}`),
+	})
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/report", nil)
+	c.Set("execution", exec)
+	c.Params = gin.Params{{Key: "obsKey", Value: "test_html_obs"}}
+
+	cc.GetExecutionHTMLReport(c)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	body := w.Body.String()
+	if body != "<html><body>test report</body></html>" {
+		t.Errorf("unexpected body: %s", body)
+	}
+
+	ct := w.Header().Get("Content-Type")
+	if ct != "text/html; charset=utf-8" {
+		t.Errorf("expected Content-Type text/html, got %q", ct)
+	}
+
+	csp := w.Header().Get("Content-Security-Policy")
+	if csp == "" {
+		t.Error("expected Content-Security-Policy header to be set")
+	}
+
+	xcto := w.Header().Get("X-Content-Type-Options")
+	if xcto != "nosniff" {
+		t.Errorf("expected X-Content-Type-Options nosniff, got %q", xcto)
 	}
 }

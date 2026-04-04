@@ -31,6 +31,7 @@ import {
     deleteDomainsByDomainCheckersByCheckerIdExecutionsByExecutionId,
     getDomainsByDomainCheckersByCheckerIdExecutionsByExecutionId,
     getDomainsByDomainCheckersByCheckerIdExecutionsByExecutionIdObservations,
+    getDomainsByDomainCheckersByCheckerIdExecutionsByExecutionIdObservationsByObsKeyReport,
     getDomainsByDomainCheckersByCheckerIdExecutionsByExecutionIdResults,
     getDomainsByDomainCheckersByCheckerIdOptions,
     putDomainsByDomainCheckersByCheckerIdOptions,
@@ -44,6 +45,7 @@ import {
     deleteDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdExecutionsByExecutionId,
     getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdExecutionsByExecutionId,
     getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdExecutionsByExecutionIdObservations,
+    getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdExecutionsByExecutionIdObservationsByObsKeyReport,
     getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdExecutionsByExecutionIdResults,
     getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdOptions,
     putDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdOptions,
@@ -367,4 +369,26 @@ export async function updateScopedCheckPlan(
             body: plan as HappydnsCheckPlanWritable,
         }),
     ) as HappydnsCheckPlan;
+}
+
+// HTML report functions
+
+export async function getScopedExecutionHTMLReport(
+    scope: CheckerScope,
+    checkerId: string,
+    executionId: string,
+    obsKey: string,
+): Promise<string> {
+    if (isServiceScope(scope)) {
+        return unwrapSdkResponse(
+            await getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdExecutionsByExecutionIdObservationsByObsKeyReport({
+                path: { domain: scope.domainId, zoneid: scope.zoneId, subdomain: scope.subdomain, serviceid: scope.serviceId, checkerId, executionId, obsKey },
+            }),
+        ) as string;
+    }
+    return unwrapSdkResponse(
+        await getDomainsByDomainCheckersByCheckerIdExecutionsByExecutionIdObservationsByObsKeyReport({
+            path: { domain: scope.domainId, checkerId, executionId, obsKey },
+        }),
+    ) as string;
 }

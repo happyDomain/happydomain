@@ -32,7 +32,7 @@
         getScopedExecutionObservations,
         getCheckStatus,
     } from "$lib/api/checkers";
-    import { currentExecution, currentCheckInfo, currentObservations } from "$lib/stores/checkers";
+    import { currentExecution, currentCheckInfo, currentObservations, reportViewMode, cachedHTMLReport } from "$lib/stores/checkers";
     import ObservationReportCard from "./ObservationReportCard.svelte";
 
     interface Props {
@@ -50,6 +50,7 @@
     $effect(() => {
         loading = true;
         error = undefined;
+        cachedHTMLReport.set(null);
 
         Promise.all([
             getScopedExecution(scope, checkerId, execId),
@@ -61,6 +62,17 @@
                 currentCheckInfo.set(checkerInfo);
                 currentObservations.set(observations);
                 checkerName = checkerInfo.name ?? checkerId;
+                // Default to metrics view if supported, then HTML, then JSON
+                if (checkerInfo.has_metrics) {
+                    reportViewMode.set("metrics");
+                    getScopedExecutionMetrics(scope, checkerId, execId)
+                        .then((m) => (metricsData = m))
+                        .catch(() => {});
+                } else if (checkerInfo.has_html_report) {
+                    reportViewMode.set("html");
+                } else {
+                    reportViewMode.set("json");
+                }
                 loading = false;
             },
             (err) => {
@@ -74,6 +86,8 @@
         currentExecution.set(undefined);
         currentCheckInfo.set(undefined);
         currentObservations.set(undefined);
+        reportViewMode.set("json");
+        cachedHTMLReport.set(null);
     });
 </script>
 
@@ -98,5 +112,10 @@
         </Alert>
     </Container>
 {:else if $currentObservations}
-    <ObservationReportCard observations={$currentObservations} />
+    <ObservationReportCard
+        observations={$currentObservations}
+        {scope}
+        {checkerId}
+        {execId}
+    />
 {/if}

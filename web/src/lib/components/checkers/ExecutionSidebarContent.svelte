@@ -34,12 +34,13 @@
     } from "@sveltestrap/sveltestrap";
 
     import { navigate } from "$lib/stores/config";
-    import { currentExecution, currentCheckInfo, currentObservations } from "$lib/stores/checkers";
+    import { currentExecution, currentCheckInfo, currentObservations, reportViewMode, cachedHTMLReport } from "$lib/stores/checkers";
     import { toasts } from "$lib/stores/toasts";
     import type { CheckerScope } from "$lib/api/checkers";
     import {
         triggerScopedCheck,
         deleteScopedExecution,
+        getScopedExecutionHTMLReport,
     } from "$lib/api/checkers";
     import {
         getExecutionStatusColor,
@@ -113,6 +114,20 @@
             `${checkerId}-${execId}.json`,
             "application/json",
         );
+    }
+
+    async function downloadHTML() {
+        if (!$currentObservations?.data) return;
+        const keys = Object.keys($currentObservations.data);
+        if (keys.length === 0) return;
+        try {
+            const html = $cachedHTMLReport ?? await getScopedExecutionHTMLReport(scope, checkerId, execId, keys[0]);
+            downloadBlob(html, `${checkerId}-${execId}.html`, "text/html");
+        } catch (error: any) {
+            toasts.addErrorToast({
+                message: error.message || "Failed to download HTML report",
+            });
+        }
     }
 </script>
 
@@ -188,27 +203,55 @@
 
     <div class="my-3 flex-fill"></div>
 
-    <!-- TODO: Metrics and HTML report not yet implemented -->
     <ButtonGroup class="w-100 mb-2">
-        <Button size="sm" color="secondary" outline disabled title="Not yet available">
-            <Icon name="graph-up"></Icon>
-            {$t("checkers.result.view-metrics")}
-        </Button>
-        <Button size="sm" color="secondary" outline disabled title="Not yet available">
-            <Icon name="file-earmark-richtext"></Icon>
-            {$t("checkers.result.view-html")}
-        </Button>
-        <Button size="sm" color="secondary" outline active>
+        {#if $currentCheckInfo?.has_metrics}
+            <Button
+                size="sm"
+                color="secondary"
+                outline
+                active={$reportViewMode === "metrics"}
+                onclick={() => {
+                    reportViewMode.set("metrics");
+                }}
+            >
+                <Icon name="graph-up"></Icon>
+                {$t("checkers.result.view-metrics")}
+            </Button>
+        {/if}
+        {#if $currentCheckInfo?.has_html_report}
+            <Button
+                size="sm"
+                color="secondary"
+                outline
+                active={$reportViewMode === "html"}
+                onclick={() => {
+                    reportViewMode.set("html");
+                }}
+            >
+                <Icon name="file-earmark-richtext"></Icon>
+                {$t("checkers.result.view-html")}
+            </Button>
+        {/if}
+        <Button
+            size="sm"
+            color="secondary"
+            outline
+            active={$reportViewMode === "json"}
+            onclick={() => {
+                reportViewMode.set("json");
+            }}
+        >
             <Icon name="braces"></Icon>
             {$t("checkers.result.view-json")}
         </Button>
     </ButtonGroup>
     <ButtonGroup class="w-100">
-        <!-- TODO: HTML report download not yet available -->
-        <Button size="sm" color="outline-secondary" disabled title="Not yet available">
-            <Icon name="download"></Icon>
-            {$t("checkers.result.download-html")}
-        </Button>
+        {#if $currentCheckInfo?.has_html_report}
+            <Button size="sm" color="outline-secondary" onclick={downloadHTML}>
+                <Icon name="download"></Icon>
+                {$t("checkers.result.download-html")}
+            </Button>
+        {/if}
         <Button
             size="sm"
             color="outline-secondary"
