@@ -75,10 +75,10 @@ type ProviderMeta struct {
 	Type string `json:"_srctype" binding:"required"`
 
 	// Id is the Provider's identifier.
-	Id Identifier `json:"_id" swaggertype:"string" binding:"required"`
+	Id Identifier `json:"_id" swaggertype:"string" binding:"required" readonly:"true"`
 
 	// Owner is the User's identifier for the current Provider.
-	Owner Identifier `json:"_ownerid" swaggertype:"string" binding:"required"`
+	Owner Identifier `json:"_ownerid" swaggertype:"string" binding:"required" readonly:"true"`
 
 	// Comment is a string that helps user to distinguish the Provider.
 	Comment string `json:"_comment,omitempty"`

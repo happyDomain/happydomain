@@ -42,7 +42,7 @@ type DomainCreationInput struct {
 // Domain holds information about a domain name own by a User.
 type Domain struct {
 	// Id is the Domain's identifier in the database.
-	Id Identifier `json:"id" swaggertype:"string" binding:"required"`
+	Id Identifier `json:"id" swaggertype:"string" binding:"required" readonly:"true"`
 
 	// Owner is the identifier of the Domain's Owner.
 	Owner Identifier `json:"id_owner" swaggertype:"string" binding:"required"`
@@ -59,7 +59,7 @@ type Domain struct {
 
 	// ZoneHistory are the identifiers to the Zone attached to the current
 	// Domain.
-	ZoneHistory []Identifier `json:"zone_history" swaggertype:"array,string" binding:"required"`
+	ZoneHistory []Identifier `json:"zone_history" swaggertype:"array,string" binding:"required" readonly:"true"`
 }
 
 // DomainUpdateInput is used for swagger documentation as Domain update.

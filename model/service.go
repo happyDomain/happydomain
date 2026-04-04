@@ -84,10 +84,10 @@ type SPFContributor interface {
 // ServiceMeta holds the metadata associated to a Service.
 type ServiceMeta struct {
 	// Type is the string representation of the Service's type.
-	Type string `json:"_svctype" binding:"required"`
+	Type string `json:"_svctype" binding:"required" readonly:"true"`
 
 	// Id is the Service's identifier.
-	Id Identifier `json:"_id,omitempty" swaggertype:"string"`
+	Id Identifier `json:"_id,omitempty" swaggertype:"string" readonly:"true"`
 
 	// OwnerId is the User's identifier for the current Service.
 	OwnerId Identifier `json:"_ownerid,omitempty" swaggertype:"string"`

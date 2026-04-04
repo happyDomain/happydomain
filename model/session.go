@@ -28,16 +28,16 @@ import (
 // Session holds information about a User's currently connected.
 type Session struct {
 	// Id is the Session's identifier.
-	Id string `json:"id" binding:"required"`
+	Id string `json:"id" binding:"required" readonly:"true"`
 
 	// IdUser is the User's identifier of the Session.
-	IdUser Identifier `json:"login" swaggertype:"string" binding:"required"`
+	IdUser Identifier `json:"login" swaggertype:"string" binding:"required" readonly:"true"`
 
 	// Description is a user defined string aims to identify each session.
 	Description string `json:"description" binding:"required"`
 
 	// IssuedAt holds the creation date of the Session.
-	IssuedAt time.Time `json:"time" binding:"required" format:"date-time"`
+	IssuedAt time.Time `json:"time" binding:"required" format:"date-time" readonly:"true"`
 
 	// ExpiresOn holds the expirate date of the Session.
 	ExpiresOn time.Time `json:"exp" binding:"required" format:"date-time"`

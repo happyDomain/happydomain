@@ -30,7 +30,7 @@ import (
 // UserAuth represents an account used for authentication (not used in case of external auth).
 type UserAuth struct {
 	// Id is the User's identifier.
-	Id Identifier `json:"id" swaggertype:"string"`
+	Id Identifier `json:"id" swaggertype:"string" readonly:"true"`
 
 	// Email is the User's login and mean of contact.
 	Email string `json:"email"`
@@ -45,7 +45,7 @@ type UserAuth struct {
 	PasswordRecoveryKey []byte `json:"passwordRecoveryKey,omitempty"`
 
 	// CreatedAt is the time when the User has register is account.
-	CreatedAt time.Time `json:"createdAt" format:"date-time"`
+	CreatedAt time.Time `json:"createdAt" format:"date-time" readonly:"true"`
 
 	// LastLoggedIn is the time when the User has logged in for the last time.
 	LastLoggedIn *time.Time `json:"lastLoggedIn,omitempty" format:"date-time"`

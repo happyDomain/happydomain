@@ -41,19 +41,19 @@ const (
 
 type DomainLog struct {
 	// Id is the Log's identifier in the database.
-	Id Identifier `json:"id" swaggertype:"string" binding:"required"`
+	Id Identifier `json:"id" swaggertype:"string" binding:"required" readonly:"true"`
 
 	// IdUser is the identifier of the person responsible for the action.
-	IdUser Identifier `json:"id_user" swaggertype:"string" binding:"required"`
+	IdUser Identifier `json:"id_user" swaggertype:"string" binding:"required" readonly:"true"`
 
 	// Date is the date of the action.
-	Date time.Time `json:"date" binding:"required" format:"date-time"`
+	Date time.Time `json:"date" binding:"required" format:"date-time" readonly:"true"`
 
 	// Content is the description of the action logged.
-	Content string `json:"content" binding:"required"`
+	Content string `json:"content" binding:"required" readonly:"true"`
 
 	// Level reports the criticity level of the action logged.
-	Level int8 `json:"level" binding:"required"`
+	Level int8 `json:"level" binding:"required" readonly:"true"`
 }
 
 type DomainLogWithDomainId struct {

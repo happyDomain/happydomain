@@ -29,16 +29,16 @@ import (
 // User represents an account.
 type User struct {
 	// Id is the User's identifier.
-	Id Identifier `json:"id" swaggertype:"string" binding:"required"`
+	Id Identifier `json:"id" swaggertype:"string" binding:"required" readonly:"true"`
 
 	// Email is the User's login and means of contact.
 	Email string `json:"email" binding:"required"`
 
 	// CreatedAt is the time when the User logs in for the first time.
-	CreatedAt time.Time `json:"created_at" format:"date-time" binding:"required"`
+	CreatedAt time.Time `json:"created_at" format:"date-time" binding:"required" readonly:"true"`
 
 	// LastSeen is the time when the User used happyDNS for the last time (in a 12h frame).
-	LastSeen time.Time `json:"last_seen" format:"date-time" binding:"required"`
+	LastSeen time.Time `json:"last_seen" format:"date-time" binding:"required" readonly:"true"`
 
 	// Settings holds the settings for an account.
 	Settings UserSettings `json:"settings" binding:"required"`
