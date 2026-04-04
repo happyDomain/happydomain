@@ -91,7 +91,7 @@
         }
     }
 
-    let deleteInProgress = false;
+    let deleteInProgress = $state(false);
     function detachDomain(): void {
         deleteInProgress = true;
         APIDeleteDomain($domains_idx[selectedDomain].id).then(
