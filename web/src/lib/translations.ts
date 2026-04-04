@@ -44,6 +44,8 @@ interface Params {
     nbDiffs?: number;
     nbSelected?: number;
     countdown?: string;
+    error?: string;
+    options?: string;
     // add more parameters that are used here
 }
 

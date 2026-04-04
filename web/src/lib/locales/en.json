@@ -78,6 +78,7 @@
         "subdomain": "subdomain",
         "actions": {
             "audit": "View changes logs",
+            "checks": "Domain checks",
             "do-migration": "Migrate now",
             "history": "View changes history",
             "propagate": "Publish my changes",
@@ -256,6 +257,7 @@
         "my-domains": "My domains",
         "my-providers": "My domain providers",
         "dns-resolver": "DNS resolver",
+        "checkers": "Configure Checkers",
         "my-account": "My account",
         "logout": "Sign out",
         "provider-features": "Supported providers",
@@ -604,5 +606,247 @@
         "import-text": "Import from text",
         "import-file": "Import from file",
         "return-to": "Go to the zone"
+    },
+    "checkers": {
+        "run-check": {
+            "title": "Run Check",
+            "loading-options": "Loading checker options...",
+            "select-rule": "Rule to check",
+            "configure-info": "Configure checker options below. Pre-filled values are from domain-level settings.",
+            "no-options": "This checker has no configurable options. Click \"Run Check\" to execute with default settings.",
+            "no-run-options": "This checker has no run-time options. You can still override advanced settings below.",
+            "error-loading-options": "Error loading checker options: {{error}}",
+            "run-button": "Run Check",
+            "triggered-success": "Check triggered successfully! Execution ID: {{id}}",
+            "trigger-failed": "Failed to trigger check: {{error}}",
+            "advanced-options": "Advanced options",
+            "rules": "Rules"
+        },
+        "never": "Never",
+        "na": "N/A",
+        "relative": {
+            "in-less-than-a-minute": "in less than a minute",
+            "just-now": "just now",
+            "in": "in {{label}}",
+            "ago": "{{label}} ago"
+        },
+        "status": {
+            "ok": "OK",
+            "info": "Info",
+            "warning": "Warning",
+            "critical": "Critical",
+            "error": "Error",
+            "unknown": "Unknown",
+            "pending": "Pending",
+            "planned": "Planned",
+            "running": "Running",
+            "not-run": "Not run"
+        },
+        "list": {
+            "title": "Checks for ",
+            "title-service": "Checks for {{service}}",
+            "loading": "Loading checkers...",
+            "loading-checkers": "Loading checker information...",
+            "no-checks": "No checks available for this domain.",
+            "no-checks-service": "No checks available for this service.",
+            "run-check": "Run Check",
+            "view-results": "View Results",
+            "configure": "Configure",
+            "error-loading": "Error loading checkers: {{error}}",
+            "unknown-version": "Unknown",
+            "table": {
+                "checker": "Checker",
+                "status": "Status",
+                "last-run": "Last Run",
+                "schedule": "Schedule",
+                "actions": "Actions"
+            },
+            "schedule": {
+                "enabled": "Enabled",
+                "disabled": "Disabled"
+            },
+            "loading-checks": "Loading checker information..."
+        },
+        "other-checkers": {
+            "title": "Other available checkers",
+            "description": "These checkers are not directly associated with this domain but can be configured with domain-specific options.",
+            "no-checkers": "No other checkers available.",
+            "configure": "Configure"
+        },
+        "schedule": {
+            "title": "Schedule",
+            "card-title": "Automatic scheduling",
+            "auto-enabled": "Run automatically",
+            "auto-disabled": "Disabled (run manually only)",
+            "interval-label": "Check interval",
+            "hours": "hours",
+            "interval-hint": "Minimum 1 hour. The check will run once per interval.",
+            "interval-hint-bounded": "Between {{min}} and {{max}} hours.",
+            "next-run": "Next scheduled run",
+            "last-run": "Last run",
+            "no-schedule-yet": "No schedule created yet. Save to create one.",
+            "save": "Save",
+            "save-failed": "Failed to save schedule",
+            "saved": "Schedule saved successfully."
+        },
+        "executions": {
+            "loading": "Loading check results...",
+            "no-results": "No check results yet. Click \"Run Check Now\" to execute the check.",
+            "title": "Check Executions ({{count}})",
+            "run-check-now": "Run Check Now",
+            "back-to-checks": "Back to checks",
+            "delete-all": "Delete All",
+            "delete-confirm": "Are you sure you want to delete this check result?",
+            "delete-all-confirm": "Are you sure you want to delete ALL check results for this checker? This cannot be undone.",
+            "deleted-all": "All check results have been deleted.",
+            "delete-failed": "Failed to delete result",
+            "delete-all-failed": "Failed to delete results",
+            "configure": "Configure",
+            "domain-level": "Domain-level",
+            "error-loading": "Error loading checker results: {{error}}",
+            "error-deleting": "Error deleting execution: {{error}}",
+            "table": {
+                "executed-at": "Executed At",
+                "status": "Status",
+                "message": "Message",
+                "duration": "Duration",
+                "type": "Type",
+                "actions": "Actions"
+            },
+            "type": {
+                "scheduled": "Scheduled",
+                "manual": "Manual"
+            },
+            "pending": {
+                "queued": "Queued",
+                "queued-description": "Queued, waiting to run\u2026",
+                "running": "Running",
+                "running-description": "Check is currently running\u2026"
+            },
+            "view": "View"
+        },
+        "execution": {
+            "title": "Check Execution Details",
+            "field": {
+                "ended-at": "Ended At:",
+                "trigger": "Trigger:",
+                "error": "Error:"
+            },
+            "status": {
+                "pending": "Pending",
+                "running": "Running",
+                "done": "Done",
+                "failed": "Failed",
+                "unknown": "Unknown"
+            }
+        },
+        "result": {
+            "title": "Check Result Details",
+            "loading": "Loading check result...",
+            "relaunch": "Relaunch Check",
+            "delete": "Delete Result",
+            "relaunch-failed": "Failed to relaunch check",
+            "delete-confirm": "Are you sure you want to delete this check?",
+            "delete-failed": "Failed to delete result",
+            "error-loading": "Error loading check: {{error}}",
+            "milliseconds": "milliseconds",
+            "seconds": "seconds",
+            "type": {
+                "scheduled": "Scheduled Check",
+                "manual": "Manual Check"
+            },
+            "check-options": "Check Options",
+            "full-report": "Full Report",
+            "field": {
+                "domain": "Domain:",
+                "executed-at": "Executed At:",
+                "duration": "Duration:",
+                "status": "Status:",
+                "status-message": "Message:",
+                "error": "Error:"
+            },
+            "view-metrics": "Metrics",
+            "view-html": "HTML Report",
+            "view-json": "Raw JSON",
+            "download-html": "Download HTML",
+            "download-json": "Download JSON"
+        },
+        "title": "Checkers",
+        "description": "Configure automated checks for your domains",
+        "available-count": "Available: {{count}} checkers",
+        "search-placeholder": "Search checkers...",
+        "loading": "Loading checkers...",
+        "loading-info": "Loading checker information...",
+        "no-checkers": "No checkers available",
+        "service-checks": "Service Checks",
+        "view-all": "View all",
+        "no-checks": "No checks available",
+        "load-error": "Error loading checks",
+        "error-loading": "Error loading checkers: {{error}}",
+        "error-loading-checker": "Error loading checker: {{error}}",
+        "checker-info-not-found": "Error: Checker information not found",
+        "back-to-checkers": "Back to checkers",
+        "table": {
+            "name": "Checker Name",
+            "availability": "Availability",
+            "actions": "Actions",
+            "manage": "Manage"
+        },
+        "availability": {
+            "domain": "Domain",
+            "zone": "Zone",
+            "provider-specific": "Provider-specific",
+            "service-specific": "Service-specific",
+            "general": "General",
+            "user-level": "User-level",
+            "domain-level": "Domain-level",
+            "zone-level": "Zone-level",
+            "service-level": "Service-level",
+            "providers": "Providers: {{providers}}",
+            "services": "Services: {{services}}"
+        },
+        "actions": {
+            "configure": "Configure"
+        },
+        "sidebar": {
+            "back-to-list": "Back to checkers list"
+        },
+        "detail": {
+            "checker-information": "Checker Information",
+            "name": "Name:",
+            "availability": "Availability:",
+            "loading-options": "Loading options...",
+            "check-rules": "Check Individual Rules",
+            "admin-options": "Admin Options",
+            "configuration": "Configuration",
+            "save": "Save",
+            "save-changes": "Save Changes",
+            "no-configurable-options": "This checker has no configurable options.",
+            "error-loading-options": "Error loading options: {{error}}",
+            "orphaned-options": "Orphaned options detected: {{options}}",
+            "clean-up": "Clean Up",
+            "read-only": "Read-only"
+        },
+        "option-groups": {
+            "global-settings": "Global Settings",
+            "domain-settings": "Domain-specific Settings",
+            "service-settings": "Service-specific Settings",
+            "checker-parameters": "Checker Parameters",
+            "type": "Type: {{type}}",
+            "required": "Required",
+            "auto-fill": "Auto-filled Fields"
+        },
+        "auto-fill": {
+            "domain_name": "auto-filled: domain name",
+            "subdomain": "auto-filled: subdomain",
+            "service_type": "auto-filled: service type",
+            "generic": "auto-filled: {{key}}"
+        },
+        "messages": {
+            "options-updated": "Checker options updated successfully",
+            "options-cleaned": "Orphaned options removed successfully",
+            "update-failed": "Failed to update options: {{error}}",
+            "clean-failed": "Failed to clean options: {{error}}"
+        }
     }
 }

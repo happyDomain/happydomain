@@ -19,6 +19,54 @@ export function toDatetimeLocal(isoString: string | null | undefined): string {
 }
 
 /**
+ * Format a Go time.Duration (nanoseconds) into a human-readable string.
+ * @param ns Duration in nanoseconds
+ * @returns Human-readable string such as "30s", "5m 30s", "2h 15m", "3d 4h"
+ */
+export function formatDuration(ns: number | undefined): string {
+    if (ns == null) return "—";
+    const totalSeconds = Math.floor(ns / 1e9);
+    if (totalSeconds < 60) return `${totalSeconds}s`;
+    const minutes = Math.floor(totalSeconds / 60);
+    const remainSeconds = totalSeconds % 60;
+    if (minutes < 60) {
+        return remainSeconds > 0 ? `${minutes}m ${remainSeconds}s` : `${minutes}m`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const remainMinutes = minutes % 60;
+    if (hours < 24) {
+        return remainMinutes > 0 ? `${hours}h ${remainMinutes}m` : `${hours}h`;
+    }
+    const days = Math.floor(hours / 24);
+    const remainHours = hours % 24;
+    return remainHours > 0 ? `${days}d ${remainHours}h` : `${days}d`;
+}
+
+/**
+ * Format a date string to relative time (e.g. "in 5m", "3h ago").
+ * @param dateStr ISO 8601 date string
+ * @returns Human-readable relative time string
+ */
+export function formatRelative(dateStr: string | undefined): string {
+    if (!dateStr) return "—";
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = date.getTime() - now.getTime();
+    const absSeconds = Math.floor(Math.abs(diffMs) / 1000);
+    const absMinutes = Math.floor(absSeconds / 60);
+    const absHours = Math.floor(absMinutes / 60);
+    const absDays = Math.floor(absHours / 24);
+
+    let rel: string;
+    if (absSeconds < 60) rel = `${absSeconds}s`;
+    else if (absMinutes < 60) rel = `${absMinutes}m`;
+    else if (absHours < 24) rel = `${absHours}h`;
+    else rel = `${absDays}d`;
+
+    return diffMs >= 0 ? `in ${rel}` : `${rel} ago`;
+}
+
+/**
  * Convert datetime-local format back to ISO 8601 string
  * @param datetimeLocal Datetime-local format string (YYYY-MM-DDTHH:mm)
  * @returns ISO 8601 datetime string, or null if invalid
