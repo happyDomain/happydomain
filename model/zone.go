@@ -42,16 +42,16 @@ type ZoneMeta struct {
 	DefaultTTL uint32 `json:"default_ttl" binding:"required"`
 
 	// LastModified holds the time when the last modification has been made on this Zone.
-	LastModified time.Time `json:"last_modified" binding:"required"`
+	LastModified time.Time `json:"last_modified" format:"date-time" binding:"required"`
 
 	// CommitMsg is a message defined by the User to give a label to this Zone revision.
 	CommitMsg *string `json:"commit_message,omitempty"`
 
 	// CommitDate is the time when the commit has been made.
-	CommitDate *time.Time `json:"commit_date,omitempty"`
+	CommitDate *time.Time `json:"commit_date,omitempty" format:"date-time"`
 
 	// Published indicates whether the Zone has already been published or not.
-	Published *time.Time `json:"published,omitempty"`
+	Published *time.Time `json:"published,omitempty" format:"date-time"`
 }
 
 // ZoneMessage is the intermediate struct for parsing zones.

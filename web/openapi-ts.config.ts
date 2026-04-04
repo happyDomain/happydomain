@@ -8,5 +8,13 @@ export default defineConfig({
             name: "@hey-api/client-fetch",
             runtimeConfigPath: "$lib/hey-api.ts",
         },
+        {
+            name: "@hey-api/sdk",
+            transformer: true,
+        },
+        {
+            name: "@hey-api/transformers",
+            dates: true,
+        },
     ],
 });

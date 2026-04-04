@@ -113,7 +113,7 @@ type ServiceMeta struct {
 
 	// PropagatedAt is the estimated time at which the last published changes
 	// for this service will be fully propagated (old cached records expired).
-	PropagatedAt *time.Time `json:"_propagated_at,omitempty"`
+	PropagatedAt *time.Time `json:"_propagated_at,omitempty" format:"date-time"`
 }
 
 // ServiceCombined combined ServiceMeta + Service

@@ -47,7 +47,7 @@ type DomainLog struct {
 	IdUser Identifier `json:"id_user" swaggertype:"string" binding:"required"`
 
 	// Date is the date of the action.
-	Date time.Time `json:"date" binding:"required"`
+	Date time.Time `json:"date" binding:"required" format:"date-time"`
 
 	// Content is the description of the action logged.
 	Content string `json:"content" binding:"required"`

@@ -37,13 +37,13 @@ type Session struct {
 	Description string `json:"description" binding:"required"`
 
 	// IssuedAt holds the creation date of the Session.
-	IssuedAt time.Time `json:"time" binding:"required"`
+	IssuedAt time.Time `json:"time" binding:"required" format:"date-time"`
 
 	// ExpiresOn holds the expirate date of the Session.
-	ExpiresOn time.Time `json:"exp" binding:"required"`
+	ExpiresOn time.Time `json:"exp" binding:"required" format:"date-time"`
 
 	// ModifiedOn is the last time the session has been updated.
-	ModifiedOn time.Time `json:"upd" binding:"required"`
+	ModifiedOn time.Time `json:"upd" binding:"required" format:"date-time"`
 
 	// Content stores data filled by other modules.
 	Content string `json:"content,omitempty"`
@@ -55,7 +55,7 @@ type SessionInput struct {
 	Description string `json:"description"`
 
 	// ExpiresOn holds the expirate date of the Session.
-	ExpiresOn time.Time `json:"exp"`
+	ExpiresOn time.Time `json:"exp" format:"date-time"`
 }
 
 // ClearSession removes all content from the Session.

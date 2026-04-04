@@ -36,7 +36,7 @@ type UserAuth struct {
 	Email string `json:"email"`
 
 	// EmailVerification is the time when the User verify its email address.
-	EmailVerification *time.Time `json:"emailVerification,omitempty"`
+	EmailVerification *time.Time `json:"emailVerification,omitempty" format:"date-time"`
 
 	// Password is hashed.
 	Password []byte `json:"password,omitempty"`
@@ -45,10 +45,10 @@ type UserAuth struct {
 	PasswordRecoveryKey []byte `json:"passwordRecoveryKey,omitempty"`
 
 	// CreatedAt is the time when the User has register is account.
-	CreatedAt time.Time `json:"createdAt"`
+	CreatedAt time.Time `json:"createdAt" format:"date-time"`
 
 	// LastLoggedIn is the time when the User has logged in for the last time.
-	LastLoggedIn *time.Time `json:"lastLoggedIn,omitempty"`
+	LastLoggedIn *time.Time `json:"lastLoggedIn,omitempty" format:"date-time"`
 
 	// AllowCommercials stores the user preference regarding email contacts.
 	AllowCommercials bool `json:"allowCommercials"`

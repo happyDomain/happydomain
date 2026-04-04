@@ -29,7 +29,7 @@ import (
 type UserProfile struct {
 	UserId    []byte    `json:"userid"`
 	Name      string    `json:"username"`
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"created_at" format:"date-time"`
 }
 
 func (u *UserProfile) GetUserId() Identifier {
