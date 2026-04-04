@@ -38,6 +38,11 @@ type DomainLister interface {
 	ListAllDomains() (happydns.Iterator[happydns.Domain], error)
 }
 
+// ZoneGetter is the minimal interface needed by the scheduler to load zones for service discovery.
+type ZoneGetter interface {
+	GetZone(id happydns.Identifier) (*happydns.ZoneMessage, error)
+}
+
 // CheckAutoFillStorage provides access to domain, zone and user data
 // needed to resolve auto-fill field values at execution time.
 type CheckAutoFillStorage interface {
@@ -97,6 +102,11 @@ type ExecutionStorage interface {
 	DeleteExecutionsByChecker(checkerID string, target happydns.CheckTarget) error
 	TidyExecutionIndexes() error
 	ClearExecutions() error
+}
+
+// PlannedJobProvider exposes upcoming scheduler jobs from the in-memory queue.
+type PlannedJobProvider interface {
+	GetPlannedJobsForChecker(checkerID string, target happydns.CheckTarget) []*SchedulerJob
 }
 
 // ObservationSnapshotStorage provides persistence for observation snapshots.

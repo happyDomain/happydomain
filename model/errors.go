@@ -30,6 +30,7 @@ var (
 	ErrAuthUserNotFound        = errors.New("auth user not found")
 	ErrCheckPlanNotFound       = errors.New("check plan not found")
 	ErrCheckEvaluationNotFound = errors.New("check evaluation not found")
+	ErrCheckerNotFound         = errors.New("checker not found")
 	ErrDomainNotFound          = errors.New("domain not found")
 	ErrDomainLogNotFound       = errors.New("domain log not found")
 	ErrExecutionNotFound       = errors.New("execution not found")

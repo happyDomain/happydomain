@@ -1,0 +1,637 @@
+// This file is part of the happyDomain (R) project.
+// Copyright (c) 2020-2025 happyDomain
+// Authors: Pierre-Olivier Mercier, et al.
+//
+// This program is offered under a commercial and under the AGPL license.
+// For commercial licensing, contact us at <contact@happydomain.org>.
+//
+// For AGPL licensing:
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+package checker
+
+import (
+	"container/heap"
+	"context"
+	"hash/fnv"
+	"log"
+	"slices"
+	"sync"
+	"time"
+
+	checkerPkg "git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/model"
+)
+
+const (
+	minSpacing       = 2 * time.Second
+	maxCatchUpWindow = 10 * time.Minute
+	defaultInterval  = 24 * time.Hour
+)
+
+// SchedulerJob represents a single scheduled checker execution.
+type SchedulerJob struct {
+	CheckerID string               `json:"checkerID"`
+	Target    happydns.CheckTarget `json:"target"`
+	PlanID    *happydns.Identifier `json:"planID" swaggertype:"string"`
+	Interval  time.Duration        `json:"interval" swaggertype:"integer"`
+	NextRun   time.Time            `json:"nextRun"`
+	index     int                  // heap index
+}
+
+// SchedulerQueue is a min-heap of SchedulerJobs sorted by NextRun.
+type SchedulerQueue []*SchedulerJob
+
+func (q SchedulerQueue) Len() int           { return len(q) }
+func (q SchedulerQueue) Less(i, j int) bool { return q[i].NextRun.Before(q[j].NextRun) }
+func (q SchedulerQueue) Swap(i, j int) {
+	q[i], q[j] = q[j], q[i]
+	q[i].index = i
+	q[j].index = j
+}
+
+func (q *SchedulerQueue) Push(x any) {
+	n := len(*q)
+	job := x.(*SchedulerJob)
+	job.index = n
+	*q = append(*q, job)
+}
+
+func (q *SchedulerQueue) Pop() any {
+	old := *q
+	n := len(old)
+	job := old[n-1]
+	old[n-1] = nil
+	job.index = -1
+	*q = old[:n-1]
+	return job
+}
+
+func (q *SchedulerQueue) Peek() *SchedulerJob {
+	if len(*q) == 0 {
+		return nil
+	}
+	return (*q)[0]
+}
+
+// SchedulerStatus holds a snapshot of the scheduler's current state.
+type SchedulerStatus struct {
+	Running  bool            `json:"running"`
+	JobCount int             `json:"job_count"`
+	NextJobs []*SchedulerJob `json:"next_jobs,omitempty"`
+}
+
+// Scheduler manages periodic execution of checkers.
+type Scheduler struct {
+	queue          SchedulerQueue
+	engine         happydns.CheckerEngine
+	planStore      CheckPlanStorage
+	domainStore    DomainLister
+	zoneStore      ZoneGetter
+	stateStore     SchedulerStateStorage
+	cancel         context.CancelFunc
+	done           chan struct{}
+	wg             sync.WaitGroup
+	mu             sync.RWMutex
+	running        bool
+	ctx            context.Context
+	maxConcurrency int
+}
+
+// NewScheduler creates a new Scheduler.
+func NewScheduler(engine happydns.CheckerEngine, maxConcurrency int, planStore CheckPlanStorage, domainStore DomainLister, zoneStore ZoneGetter, stateStore SchedulerStateStorage) *Scheduler {
+	if maxConcurrency <= 0 {
+		maxConcurrency = 1
+	}
+	return &Scheduler{
+		engine:         engine,
+		planStore:      planStore,
+		domainStore:    domainStore,
+		zoneStore:      zoneStore,
+		stateStore:     stateStore,
+		maxConcurrency: maxConcurrency,
+	}
+}
+
+// Start begins the scheduler loop in a goroutine.
+func (s *Scheduler) Start(ctx context.Context) {
+	ctx, cancel := context.WithCancel(ctx)
+	s.mu.Lock()
+	s.ctx = ctx
+	s.cancel = cancel
+	s.running = true
+	s.done = make(chan struct{})
+	s.buildQueue()
+	s.spreadOverdueJobs()
+	s.mu.Unlock()
+	go s.run(ctx)
+}
+
+// Stop halts the scheduler and waits for in-flight workers to finish.
+func (s *Scheduler) Stop() {
+	s.mu.Lock()
+	s.running = false
+	cancel := s.cancel
+	done := s.done
+	s.mu.Unlock()
+	if cancel != nil {
+		cancel()
+	}
+	if done != nil {
+		<-done
+	}
+}
+
+// GetStatus returns a snapshot of the scheduler's current state.
+func (s *Scheduler) GetStatus() SchedulerStatus {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	status := SchedulerStatus{
+		Running:  s.running,
+		JobCount: s.queue.Len(),
+	}
+
+	n := min(20, s.queue.Len())
+	if n > 0 {
+		tmp := make(SchedulerQueue, s.queue.Len())
+		copy(tmp, s.queue)
+		for i, job := range tmp {
+			cp := *job
+			cp.index = i
+			tmp[i] = &cp
+		}
+		status.NextJobs = make([]*SchedulerJob, 0, n)
+		for range n {
+			status.NextJobs = append(status.NextJobs, heap.Pop(&tmp).(*SchedulerJob))
+		}
+	}
+
+	return status
+}
+
+// SetEnabled starts or stops the scheduler. The provided ctx is used as the
+// parent context for the new scheduler loop when enabled is true.
+func (s *Scheduler) SetEnabled(ctx context.Context, enabled bool) error {
+	s.mu.RLock()
+	wasRunning := s.running
+	s.mu.RUnlock()
+
+	if wasRunning {
+		s.Stop()
+	}
+	if enabled {
+		s.Start(ctx)
+	}
+	return nil
+}
+
+// RebuildQueue rebuilds the scheduler queue and returns the new job count.
+func (s *Scheduler) RebuildQueue() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.buildQueue()
+	s.spreadOverdueJobs()
+	return s.queue.Len()
+}
+
+func (s *Scheduler) run(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("Scheduler: panic in run loop: %v", r)
+		}
+		s.wg.Wait()
+		close(s.done)
+	}()
+
+	sem := make(chan struct{}, s.maxConcurrency)
+
+	for {
+		ready, cancelled := s.waitForNextJob(ctx)
+		if cancelled {
+			return
+		}
+		if !ready {
+			continue
+		}
+
+		s.mu.Lock()
+		if s.queue.Len() == 0 {
+			s.mu.Unlock()
+			continue
+		}
+		job := heap.Pop(&s.queue).(*SchedulerJob)
+		s.mu.Unlock()
+
+		// Find plan if applicable.
+		var plan *happydns.CheckPlan
+		if job.PlanID != nil {
+			p, err := s.planStore.GetCheckPlan(*job.PlanID)
+			if err == nil {
+				plan = p
+			}
+		}
+
+		if !s.acquireWorkerSlot(ctx, sem, job) {
+			return
+		}
+
+		s.wg.Add(1)
+		go s.executeJob(ctx, job, plan, sem)
+
+		// Advance to next cycle, skipping past cycles.
+		now := time.Now()
+		for job.NextRun.Before(now) {
+			job.NextRun = job.NextRun.Add(job.Interval)
+		}
+		// Add jitter for next cycle.
+		job.NextRun = job.NextRun.Add(computeJitter(job.CheckerID, job.Target.String(), job.NextRun, job.Interval))
+		s.mu.Lock()
+		heap.Push(&s.queue, job)
+		s.mu.Unlock()
+	}
+}
+
+// waitForNextJob blocks until the next job is due or the context is cancelled.
+// It returns (true, false) when a job is ready to run, (false, false) when the
+// loop should re-evaluate (queue rebuild), and (false, true) when the context
+// is done.
+func (s *Scheduler) waitForNextJob(ctx context.Context) (ready, cancelled bool) {
+	s.mu.RLock()
+	qLen := s.queue.Len()
+	s.mu.RUnlock()
+
+	if qLen == 0 {
+		select {
+		case <-ctx.Done():
+			return false, true
+		case <-time.After(1 * time.Minute):
+			s.mu.Lock()
+			s.buildQueue()
+			s.mu.Unlock()
+			return false, false
+		}
+	}
+
+	s.mu.RLock()
+	next := s.queue.Peek()
+	var delay time.Duration
+	if next != nil {
+		delay = time.Until(next.NextRun)
+	}
+	s.mu.RUnlock()
+
+	if delay <= 0 {
+		return true, false
+	}
+
+	timer := time.NewTimer(delay)
+	select {
+	case <-ctx.Done():
+		timer.Stop()
+		return false, true
+	case <-timer.C:
+		return true, false
+	}
+}
+
+// acquireWorkerSlot blocks until a concurrency slot is available or the context
+// is cancelled. Returns false when the context is done.
+func (s *Scheduler) acquireWorkerSlot(ctx context.Context, sem chan struct{}, job *SchedulerJob) bool {
+	select {
+	case sem <- struct{}{}:
+		return true
+	default:
+		log.Printf("Scheduler: all %d workers busy, waiting for a slot (checker %s on %s)", s.maxConcurrency, job.CheckerID, job.Target.String())
+		select {
+		case sem <- struct{}{}:
+			return true
+		case <-ctx.Done():
+			return false
+		}
+	}
+}
+
+// executeJob runs a single checker execution in its own goroutine.
+// The caller must have incremented s.wg and acquired a slot from sem.
+func (s *Scheduler) executeJob(ctx context.Context, job *SchedulerJob, plan *happydns.CheckPlan, sem chan struct{}) {
+	defer func() { <-sem; s.wg.Done() }()
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("Scheduler: panic in worker for checker %s on %s: %v", job.CheckerID, job.Target.String(), r)
+		}
+	}()
+	log.Printf("Scheduler: running checker %s on %s", job.CheckerID, job.Target.String())
+	exec, err := s.engine.CreateExecution(job.CheckerID, job.Target, plan)
+	if err != nil {
+		log.Printf("Scheduler: checker %s on %s failed to create execution: %v", job.CheckerID, job.Target.String(), err)
+		return
+	}
+	_, err = s.engine.RunExecution(ctx, exec, plan, nil)
+	if err != nil {
+		log.Printf("Scheduler: checker %s on %s failed: %v", job.CheckerID, job.Target.String(), err)
+	}
+	if s.stateStore != nil {
+		if err := s.stateStore.SetLastSchedulerRun(time.Now()); err != nil {
+			log.Printf("Scheduler: failed to persist last run time: %v", err)
+		}
+	}
+}
+func (s *Scheduler) buildQueue() {
+	s.queue = s.queue[:0]
+
+	var lastRun time.Time
+	if s.stateStore != nil {
+		if t, err := s.stateStore.GetLastSchedulerRun(); err != nil {
+			log.Printf("Scheduler: failed to read last run time: %v", err)
+		} else {
+			lastRun = t
+		}
+	}
+
+	checkers := checkerPkg.GetCheckers()
+	plans, err := s.loadAllPlans()
+	if err != nil {
+		log.Printf("Scheduler: failed to load plans, skipping queue build: %v", err)
+		return
+	}
+
+	// Build a set of disabled (checker, target) pairs.
+	disabledSet := make(map[string]bool)
+	planMap := make(map[string]*happydns.CheckPlan)
+	for _, p := range plans {
+		key := p.CheckerID + "|" + p.Target.String()
+		planMap[key] = p
+		if p.IsFullyDisabled() {
+			disabledSet[key] = true
+		}
+	}
+
+	// Collect checkers by scope for efficient iteration.
+	var domainCheckers, serviceCheckers []struct {
+		id  string
+		def *happydns.CheckerDefinition
+	}
+	for checkerID, def := range checkers {
+		if def.Availability.ApplyToDomain {
+			domainCheckers = append(domainCheckers, struct {
+				id  string
+				def *happydns.CheckerDefinition
+			}{checkerID, def})
+		}
+		if def.Availability.ApplyToService {
+			serviceCheckers = append(serviceCheckers, struct {
+				id  string
+				def *happydns.CheckerDefinition
+			}{checkerID, def})
+		}
+	}
+
+	// Auto-discovery: enumerate all domains and schedule applicable checkers.
+	domains := s.loadAllDomains()
+	for _, domain := range domains {
+		uid := domain.Owner
+		did := domain.Id
+		domainTarget := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
+		domainTargetStr := domainTarget.String()
+
+		for _, c := range domainCheckers {
+			key := c.id + "|" + domainTargetStr
+			if disabledSet[key] {
+				continue
+			}
+			plan := planMap[key]
+
+			interval := s.effectiveInterval(c.def, plan)
+			offset := computeOffset(c.id, domainTargetStr, interval)
+			nextRun := computeNextRun(interval, offset, lastRun)
+
+			job := &SchedulerJob{
+				CheckerID: c.id,
+				Target:    domainTarget,
+				Interval:  interval,
+				NextRun:   nextRun,
+			}
+			if plan != nil {
+				job.PlanID = &plan.Id
+			}
+			heap.Push(&s.queue, job)
+		}
+
+		// Service-level discovery: load the latest zone and match services.
+		if len(serviceCheckers) > 0 {
+			services := s.loadDomainServices(domain)
+			for _, svc := range services {
+				sid := svc.Id
+				svcTarget := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String(), ServiceId: sid.String(), ServiceType: svc.Type}
+				svcTargetStr := svcTarget.String()
+
+				for _, c := range serviceCheckers {
+					if len(c.def.Availability.LimitToServices) > 0 && !slices.Contains(c.def.Availability.LimitToServices, svc.Type) {
+						continue
+					}
+					key := c.id + "|" + svcTargetStr
+					if disabledSet[key] {
+						continue
+					}
+					plan := planMap[key]
+
+					interval := s.effectiveInterval(c.def, plan)
+					offset := computeOffset(c.id, svcTargetStr, interval)
+					nextRun := computeNextRun(interval, offset, lastRun)
+
+					job := &SchedulerJob{
+						CheckerID: c.id,
+						Target:    svcTarget,
+						Interval:  interval,
+						NextRun:   nextRun,
+					}
+					if plan != nil {
+						job.PlanID = &plan.Id
+					}
+					heap.Push(&s.queue, job)
+				}
+			}
+		}
+	}
+}
+
+func (s *Scheduler) loadAllPlans() ([]*happydns.CheckPlan, error) {
+	iter, err := s.planStore.ListAllCheckPlans()
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+
+	var plans []*happydns.CheckPlan
+	for iter.Next() {
+		plans = append(plans, iter.Item())
+	}
+	return plans, nil
+}
+
+func (s *Scheduler) loadAllDomains() []*happydns.Domain {
+	if s.domainStore == nil {
+		return nil
+	}
+	iter, err := s.domainStore.ListAllDomains()
+	if err != nil {
+		log.Printf("Scheduler: failed to list domains for auto-discovery: %v", err)
+		return nil
+	}
+	defer iter.Close()
+
+	var domains []*happydns.Domain
+	for iter.Next() {
+		d := iter.Item()
+		domains = append(domains, d)
+	}
+	return domains
+}
+
+func (s *Scheduler) loadDomainServices(domain *happydns.Domain) []*happydns.ServiceMessage {
+	if s.zoneStore == nil || len(domain.ZoneHistory) == 0 {
+		return nil
+	}
+
+	latestZoneID := domain.ZoneHistory[len(domain.ZoneHistory)-1]
+	zone, err := s.zoneStore.GetZone(latestZoneID)
+	if err != nil {
+		log.Printf("Scheduler: failed to load zone %s for domain %s: %v", latestZoneID, domain.DomainName, err)
+		return nil
+	}
+
+	var services []*happydns.ServiceMessage
+	for _, svcs := range zone.Services {
+		services = append(services, svcs...)
+	}
+	return services
+}
+
+func (s *Scheduler) effectiveInterval(def *happydns.CheckerDefinition, plan *happydns.CheckPlan) time.Duration {
+	interval := defaultInterval
+	if def.Interval != nil {
+		interval = def.Interval.Default
+	}
+
+	if plan != nil && plan.Interval != nil {
+		interval = *plan.Interval
+	}
+
+	// Clamp to bounds.
+	if def.Interval != nil {
+		if interval < def.Interval.Min {
+			interval = def.Interval.Min
+		}
+		if interval > def.Interval.Max {
+			interval = def.Interval.Max
+		}
+	}
+
+	return interval
+}
+
+func (s *Scheduler) spreadOverdueJobs() {
+	now := time.Now()
+	var overdue []*SchedulerJob
+
+	for s.queue.Len() > 0 && s.queue.Peek().NextRun.Before(now) {
+		overdue = append(overdue, heap.Pop(&s.queue).(*SchedulerJob))
+	}
+
+	if len(overdue) == 0 {
+		return
+	}
+
+	window := time.Duration(len(overdue)) * minSpacing
+	window = min(window, maxCatchUpWindow)
+
+	for i, job := range overdue {
+		delay := window * time.Duration(i) / time.Duration(len(overdue))
+		job.NextRun = now.Add(delay)
+		heap.Push(&s.queue, job)
+	}
+}
+
+// GetPlannedJobsForChecker returns a snapshot of scheduled jobs for the given checker and target.
+func (s *Scheduler) GetPlannedJobsForChecker(checkerID string, target happydns.CheckTarget) []*SchedulerJob {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	tStr := target.String()
+	var result []*SchedulerJob
+	for _, job := range s.queue {
+		if job.CheckerID == checkerID && job.Target.String() == tStr {
+			cp := *job
+			result = append(result, &cp)
+		}
+	}
+	return result
+}
+
+// computeOffset returns a deterministic offset within the interval.
+func computeOffset(checkerID, targetStr string, interval time.Duration) time.Duration {
+	h := fnv.New64a()
+	h.Write([]byte(checkerID + targetStr))
+	return time.Duration(h.Sum64()%uint64(interval.Nanoseconds())) * time.Nanosecond
+}
+
+// computeJitter returns a small deterministic jitter (~5% of interval).
+func computeJitter(checkerID, targetStr string, cycleTime time.Time, interval time.Duration) time.Duration {
+	h := fnv.New64a()
+	h.Write([]byte(checkerID + targetStr + cycleTime.Format(time.RFC3339)))
+	maxJitter := interval / 20 // 5%
+	if maxJitter <= 0 {
+		return 0
+	}
+	return time.Duration(h.Sum64()%uint64(maxJitter.Nanoseconds())) * time.Nanosecond
+}
+
+// computeNextRun calculates the next run time based on interval, offset, and
+// the last time the scheduler was known to be active. When lastActive is zero
+// (first execution), it behaves as before. Otherwise it detects jobs that were
+// missed during downtime (slot in (lastActive, now]) and schedules them
+// immediately so spreadOverdueJobs can stagger them, while skipping jobs that
+// already ran (slot <= lastActive).
+func computeNextRun(interval, offset time.Duration, lastActive time.Time) time.Time {
+	now := time.Now()
+
+	// Use Unix nanoseconds to avoid time.Duration overflow with ancient epochs.
+	nowNano := now.UnixNano()
+	intervalNano := int64(interval)
+	offsetNano := int64(offset) % intervalNano
+
+	// Find the most recent grid slot <= now.
+	cycleN := (nowNano - offsetNano) / intervalNano
+	slotNano := cycleN*intervalNano + offsetNano
+	if slotNano > nowNano {
+		slotNano -= intervalNano
+	}
+	slot := time.Unix(0, slotNano)
+
+	if lastActive.IsZero() {
+		// First execution: schedule at the next future slot.
+		if !slot.After(now) {
+			return slot.Add(interval)
+		}
+		return slot
+	}
+
+	// Slot was missed during downtime, schedule now for catch-up.
+	if slot.After(lastActive) && !slot.After(now) {
+		return now
+	}
+
+	// Slot already executed before shutdown; advance to next cycle.
+	return slot.Add(interval)
+}
