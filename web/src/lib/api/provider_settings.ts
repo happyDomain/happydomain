@@ -20,14 +20,15 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { postProvidersSpecsByProviderTypeSettings } from "$lib/api-base/sdk.gen";
+import type { FormState } from "$lib/model/custom_form.svelte";
 import { isProvider, type Provider } from "$lib/model/provider";
-import type { ProviderSettingsResponse, ProviderSettingsState } from "$lib/model/provider_settings";
+import type { ProviderSettingsResponse } from "$lib/model/provider_settings";
 import { unwrapSdkResponse } from "./errors";
 
 export async function getProviderSettings(
     psid: string,
     state: number,
-    settings: ProviderSettingsState,
+    settings: FormState,
     recallid: number | undefined = undefined,
 ): Promise<ProviderSettingsResponse> {
     if (!state) state = 0;
@@ -38,7 +39,7 @@ export async function getProviderSettings(
     const data = unwrapSdkResponse(
         await postProvidersSpecsByProviderTypeSettings({
             path: { providerType: psid },
-            body: settings as any,
+            body: settings,
         }),
     );
 

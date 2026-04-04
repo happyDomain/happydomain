@@ -40,7 +40,7 @@
     });
     let passwordConfirmation: string = $state("");
     let emailState: boolean | undefined = $state();
-    let passwordState: boolean | undefined = $derived(checkWeakPassword(signupForm.password));
+    let passwordState: boolean | undefined = $derived(checkWeakPassword(signupForm.password!));
     let passwordConfirmState: boolean | undefined = $state();
     let formSent = $state(false);
     let captchaToken: string | null = $state(null);
@@ -103,7 +103,7 @@
             invalid={emailState !== undefined && !emailState}
             valid={emailState}
             bind:value={signupForm.email}
-            on:change={() => (emailState = signupForm.email.indexOf("@") > 0)}
+            on:change={() => (emailState = signupForm.email!.indexOf("@") > 0)}
         />
         <div id="emailHelpBlock" class="form-text">
             {$t("account.signup.address-why", {
@@ -124,7 +124,7 @@
             invalid={passwordState !== undefined && !passwordState}
             valid={passwordState}
             bind:value={signupForm.password}
-            on:change={() => (passwordState = checkWeakPassword(signupForm.password))}
+            on:change={() => (passwordState = checkWeakPassword(signupForm.password!))}
         />
     </FormGroup>
     <FormGroup>
@@ -140,7 +140,7 @@
             bind:value={passwordConfirmation}
             on:change={() =>
                 (passwordConfirmState = checkPasswordConfirmation(
-                    signupForm.password,
+                    signupForm.password!,
                     passwordConfirmation,
                 ))}
         />

@@ -98,11 +98,13 @@
         return domains !== undefined && domains.reduce((acc, d) => acc || d.id_provider == provider._id, false);
     }
 
-    async function importDomain(domain: { domain: string; wait: boolean }, noToast: boolean) {
-        domain.wait = true;
-        addDomain(domain.domain, provider).then(
+    let domainsInProgress = $state(new Set<string>());
+
+    async function importDomain(domainName: string, noToast: boolean) {
+        domainsInProgress.add(domainName);
+        addDomain(domainName, provider).then(
             (mydomain) => {
-                domain.wait = false;
+                domainsInProgress.delete(domainName);
                 if (!noToast) {
                     toasts.addToast({
                         title: $t("domains.attached-new"),
@@ -116,7 +118,7 @@
                 if (!allImportInProgress) refreshDomains();
             },
             (error) => {
-                domain.wait = false;
+                domainsInProgress.delete(domainName);
                 throw error;
             },
         );
@@ -128,7 +130,7 @@
             allImportInProgress = true;
             for (const d of importableDomainsList.filter((dn) => dn.indexOf($filteredName) >= 0)) {
                 if (!haveDomain($domains_idx, d)) {
-                    await importDomain({ domain: d, wait: false }, true);
+                    await importDomain(d, true);
                 }
             }
             allImportInProgress = false;
@@ -141,7 +143,7 @@
         createDomainInProgress = true;
         try {
             await createDomain(provider, fqdn($filteredName, ""));
-            await importDomain({ domain: fqdn($filteredName, ""), wait: false }, false);
+            await importDomain(fqdn($filteredName, ""), false);
             refreshDomainList(provider);
             createDomainInProgress = false;
         } catch (err) {
@@ -230,7 +232,6 @@
                 {#each importableDomainsList.map((dn) => ({
                     domain: dn,
                     id_provider: provider._id,
-                    wait: false,
                 })).filter((dn) => dn.domain.indexOf($filteredName) >= 0) as domain}
                     <ListGroupItem class="d-flex justify-content-between align-items-center text-muted">
                         <DomainWithProvider {domain} />
@@ -246,10 +247,10 @@
                                     class="ms-1"
                                     color="primary"
                                     size="sm"
-                                    disabled={domain.wait || allImportInProgress}
-                                    on:click={() => importDomain(domain, false)}
+                                    disabled={domainsInProgress.has(domain.domain) || allImportInProgress}
+                                    on:click={() => importDomain(domain.domain, false)}
                                 >
-                                    {#if domain.wait}
+                                    {#if domainsInProgress.has(domain.domain)}
                                         <Spinner size="sm" />
                                     {/if}
                                     {$t("domains.add-now")}
@@ -270,7 +271,7 @@
             {/if}
             {#if !$appConfig.disable_providers && $filteredName && $providersSpecs && $providersSpecs[provider._srctype] && $providersSpecs[provider._srctype].capabilities.indexOf('CreateDomain') >= 0 && !importableDomainsList.filter((dn) => dn == $filteredName).length}
                 <ListGroupItem class="d-flex justify-content-between align-items-center">
-                    <DomainWithProvider class="text-muted fst-italic" domain={{domain: fqdn($filteredName, ""), id_provider: provider._id, wait: false}} />
+                    <DomainWithProvider class="text-muted fst-italic" domain={{domain: fqdn($filteredName, ""), id_provider: provider._id}} />
                     <div>
                         <Button
                             type="button"

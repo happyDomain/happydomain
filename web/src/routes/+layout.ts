@@ -96,7 +96,7 @@ export const load: Load = async ({ route, url }) => {
     // Load user session if any
     try {
         const user = await refreshUserSession();
-        if (!url.searchParams.has("lang") && get(locale) != user.settings.language) {
+        if (!url.searchParams.has("lang") && user.settings && user.settings.language && get(locale) != user.settings.language) {
             locale.set(user.settings.language);
         }
     } catch (err) {

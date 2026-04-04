@@ -42,7 +42,7 @@ export async function registerUser(form: SignUpForm): Promise<boolean> {
 }
 
 export async function authUser(form: LoginForm): Promise<User> {
-    return unwrapSdkResponse(await postAuth({ body: form })) as unknown as User;
+    return unwrapSdkResponse(await postAuth({ body: form })) as User;
 }
 
 export async function logout(): Promise<boolean> {
@@ -162,5 +162,5 @@ export async function getUser(id: string): Promise<User> {
         await getUsersByUserId({
             path: { userId: id },
         }),
-    ) as unknown as User;
+    ) as User;
 }

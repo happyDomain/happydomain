@@ -19,36 +19,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-export interface ZoneHistory {
-    id: string;
-    id_author: string;
-    default_ttl: number;
-    last_modified: Date;
-    commit_message: string;
-    commit_date: Date;
-    published?: Date;
-}
+import type {
+    HappydnsDomainLog,
+    HappydnsDomainWithZoneMetadata,
+    HappydnsZoneMeta,
+} from "$lib/api-base/types.gen";
 
-export interface MiniDomain {
-    id_provider: string;
-    domain: string;
+export type ZoneHistory = HappydnsZoneMeta;
 
-    // interface property
-    wait?: boolean;
-}
+export type Domain = HappydnsDomainWithZoneMetadata;
 
-export interface Domain extends MiniDomain {
-    id: string;
-    id_owner: string;
-    group: string;
-    zone_history: Array<string>;
-    zone_meta?: Record<string, ZoneHistory>;
-}
-
-export interface DomainLog {
-    id: string;
-    id_user: string;
-    date: Date;
-    content: string;
-    level: number;
-}
+export type DomainLog = HappydnsDomainLog;

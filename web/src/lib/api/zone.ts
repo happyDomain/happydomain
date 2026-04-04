@@ -65,7 +65,7 @@ export async function retrieveZone(domain: Domain): Promise<ZoneMeta> {
         await postDomainsByDomainIdRetrieveZone({
             path: { domainId: domain.id },
         }),
-    ) as unknown as ZoneMeta;
+    );
 }
 
 export async function applyZone(
@@ -79,7 +79,7 @@ export async function applyZone(
             path: { domainId: domain.id, zoneId: id },
             body: { wantedCorrections, commitMessage },
         }),
-    ) as unknown as ZoneMeta;
+    );
 }
 
 export async function prepareZone(
@@ -101,7 +101,7 @@ export async function importZone(domain: Domain, file: File | Blob): Promise<Zon
             path: { domainId: domain.id },
             body: { zone: file },
         }),
-    ) as unknown as ZoneMeta;
+    ) as ZoneMeta;
 }
 
 export async function diffZone(

@@ -46,7 +46,7 @@
             (settings) => {
                 refreshUserSession().then(() => {
                     formSent = false;
-                    if (settings.language != $locale) {
+                    if (settings.language && settings.language != $locale) {
                         $locale = settings.language;
                     }
 

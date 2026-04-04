@@ -19,12 +19,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-export interface ProviderInfos {
-    name: string;
-    description: string;
-    capabilities: Array<string>;
-    helplink: string;
-}
+import type { HappydnsProviderInfos, HappydnsProviderMeta } from "$lib/api-base/types.gen";
+
+export type ProviderInfos = Required<HappydnsProviderInfos>;
 
 export function getAvailableResourceTypes(pi: ProviderInfos): Array<number> {
     const availableResourceTypes = [];
@@ -40,22 +37,12 @@ export function getAvailableResourceTypes(pi: ProviderInfos): Array<number> {
 
 export type ProviderList = Record<string, ProviderInfos>;
 
-export interface ProviderMeta {
-    _srctype: string;
-    _id: string;
-    _ownerid: string;
-    _comment: string;
-}
-
-export interface ProviderData extends ProviderMeta {
-    Provider: Record<string, unknown>;
-}
+export type ProviderMeta = HappydnsProviderMeta;
 
 export interface Provider extends ProviderMeta {
     Provider: Record<string, unknown>;
 }
 
 export function isProvider(e: unknown): e is Provider {
-    return typeof e === "object" && e !== null &&
-        "Provider" in e && "_id" in e && "_srctype" in e;
+    return typeof e === "object" && e !== null && "Provider" in e && "_id" in e && "_srctype" in e;
 }

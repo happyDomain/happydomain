@@ -39,7 +39,7 @@ export async function listSessions(): Promise<Array<Session>> {
  * Uses the /session endpoint (singular).
  */
 export async function getCurrentSession(): Promise<Session> {
-    return unwrapSdkResponse(await getSession()) as unknown as Session;
+    return unwrapSdkResponse(await getSession()) as Session;
 }
 
 export async function addSession(description: string): Promise<Session> {
@@ -47,7 +47,7 @@ export async function addSession(description: string): Promise<Session> {
         await postSessions({
             body: { description },
         }),
-    ) as unknown as Session;
+    ) as Session;
 }
 
 export async function updateSession(session: Session): Promise<Session> {
@@ -61,7 +61,7 @@ export async function updateSession(session: Session): Promise<Session> {
             path: { sessionId: session.id },
             body: { description: session.description, exp: session.exp },
         }),
-    ) as unknown as Session;
+    ) as Session;
 }
 
 export async function deleteSession(id: string): Promise<boolean> {

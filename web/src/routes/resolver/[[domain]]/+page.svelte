@@ -137,7 +137,7 @@
 
         if (form.domain === domain) {
             resolve(form);
-        } else {
+        } else if (form.domain) {
             navigate("/resolver/" + encodeURIComponent(form.domain), {
                 state: { form, showDNSSEC },
                 noScroll: true,
@@ -159,7 +159,7 @@
         <Row class="flex-grow-1">
             <Col md={{ offset: 0, size: 4 }} class="bg-light pt-3 pb-5">
                 <div class="sticky-top">
-                    <PageTitle title={$t("menu.dns-resolver")} domain={domain} />
+                    <PageTitle title={$t("menu.dns-resolver")} {domain} />
                     <ResolverForm bind:request_pending value={form} on:submit={resolveDomain} />
                 </div>
             </Col>

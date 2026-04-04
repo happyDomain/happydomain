@@ -23,11 +23,11 @@
 
 <script lang="ts">
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
-    import type { MiniDomain } from "$lib/model/domain";
+    import type { HappydnsDomain } from "$lib/api-base/types.gen";
 
     interface Props {
         class?: string;
-        domain: MiniDomain;
+        domain: Pick<HappydnsDomain, 'domain' | 'id_provider'>;
     }
 
     let { class: className = "", domain }: Props = $props();

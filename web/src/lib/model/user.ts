@@ -19,26 +19,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import type { UserSettings } from "./usersettings";
+import type { HappydnsLoginRequest, HappydnsUser, HappydnsUserRegistration } from "$lib/api-base/types.gen";
 
-export interface SignUpForm {
-    email: string;
-    password: string;
-    wantReceiveUpdate: boolean;
-    lang: string;
-    captcha_token?: string;
-}
-
-export interface LoginForm {
-    email: string;
-    password: string;
-    captcha_token?: string;
-}
-
-export interface User {
-    id: string;
-    email: string;
-    created_at: Date;
-    last_seen: Date;
-    settings: UserSettings;
-}
+export type SignUpForm = HappydnsUserRegistration;
+export type LoginForm = HappydnsLoginRequest;
+export type User = HappydnsUser;

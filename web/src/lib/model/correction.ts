@@ -19,14 +19,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-export interface Correction {
-    id?: string;
-    msg: string;
-    kind?: number;
-}
+import type { HappydnsCorrection } from "$lib/api-base/types.gen";
 
-export interface FullCorrection {
-    id: string;
-    msg: string;
-    kind: number;
-}
+export type Correction = HappydnsCorrection;
+
+export type FullCorrection = Required<HappydnsCorrection>;

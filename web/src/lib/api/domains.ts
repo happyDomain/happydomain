@@ -86,5 +86,5 @@ export async function getDomainLogs(id: string): Promise<Array<DomainLog>> {
         await getDomainsByDomainIdLogs({
             path: { domainId: id },
         }),
-    ) as unknown as Array<DomainLog>;
+    ) as Array<DomainLog>;
 }

@@ -20,14 +20,14 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { postResolver } from "$lib/api-base/sdk.gen";
-import type { ControllerDnsMsg } from "$lib/api-base/types.gen";
+import type { HappydnsResolverResponse } from "$lib/api-base/types.gen";
 import type { ResolverForm } from "$lib/model/resolver";
 import { unwrapSdkResponse } from "./errors";
 
-export async function resolve(form: ResolverForm): Promise<ControllerDnsMsg> {
+export async function resolve(form: ResolverForm): Promise<HappydnsResolverResponse> {
     return unwrapSdkResponse(
         await postResolver({
             body: form,
         }),
-    ) as ControllerDnsMsg;
+    ) as HappydnsResolverResponse;
 }

@@ -22,8 +22,6 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
-
     import { Input, Spinner } from "@sveltestrap/sveltestrap";
 
     import { saveAccountSettings } from "$lib/api/user";
@@ -33,7 +31,7 @@
     import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
     interface Props {
-        [key: string]: any
+        [key: string]: unknown;
     }
 
     let { ...rest }: Props = $props();
@@ -48,7 +46,7 @@
             (settings) => {
                 refreshUserSession().then(() => {
                     formSent = false;
-                    if (settings.language != $locale) {
+                    if (settings.language && settings.language != $locale) {
                         $locale = settings.language;
                     }
                 });

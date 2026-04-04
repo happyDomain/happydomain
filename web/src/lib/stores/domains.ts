@@ -28,7 +28,9 @@ export const newlyGroups: Writable<Array<string>> = writable([]);
 
 export async function refreshDomains() {
     const data = await listDomains();
-    data.forEach((e) => { if (!e.group) e.group = "" });
+    data.forEach((e) => {
+        if (!e.group) e.group = "";
+    });
     domains.set(data);
     return data;
 }
@@ -39,10 +41,10 @@ export const groups = derived(domains, ($domains: Array<Domain> | undefined) => 
     const groups = new Set<string>();
 
     for (const domain of $domains) {
-        groups.add(domain.group);
+        groups.add(domain.group || "");
     }
 
-    return Array.from(groups).sort((a,b) => {
+    return Array.from(groups).sort((a, b) => {
         if (!a) return 1;
         if (!b) return -1;
         return a.toLowerCase().localeCompare(b.toLowerCase());
@@ -54,7 +56,7 @@ export const domains_idx = derived(domains, ($domains: Array<Domain> | undefined
 
     if (!$domains) return idx;
 
-    const multiview = new Set<string>();;
+    const multiview = new Set<string>();
 
     for (const d of $domains) {
         idx[d.id] = d;
@@ -97,11 +99,11 @@ export const domains_by_groups = derived(domains, ($domains: Array<Domain> | und
     }
 
     for (const domain of $domains) {
-        if (groups[domain.group] === undefined) {
-            groups[domain.group] = [];
+        if (groups[domain.group || ""] === undefined) {
+            groups[domain.group || ""] = [];
         }
 
-        groups[domain.group].push(domain);
+        groups[domain.group || ""].push(domain);
     }
 
     return groups;
@@ -110,4 +112,3 @@ export const domains_by_groups = derived(domains, ($domains: Array<Domain> | und
 export function domainLink(dnid: string): string {
     return get(domains_idx)[get(domains_idx)[dnid].domain] ? get(domains_idx)[dnid].domain : dnid;
 }
-

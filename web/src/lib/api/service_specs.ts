@@ -25,6 +25,7 @@ import {
     postServiceSpecsByServiceTypeInit,
     postServiceSpecsByServiceTypeRecords,
 } from "$lib/api-base/sdk.gen";
+import type { HappydnsService } from "$lib/api-base/types.gen";
 import type { dnsRR } from "$lib/dns_rr";
 import type { ServiceInfos, ServiceSpec } from "$lib/model/service_specs.svelte";
 import { unwrapSdkResponse } from "./errors";
@@ -58,7 +59,7 @@ export async function generateServiceRecords(ssid: string, value: Record<string,
     return unwrapSdkResponse(
         await postServiceSpecsByServiceTypeRecords({
             path: { serviceType: ssid },
-            body: value as any,
+            body: value as HappydnsService,
             query: { domain: domain || "" },
         })
     ) as dnsRR[];
