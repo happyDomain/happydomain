@@ -36,7 +36,7 @@
         readonly?: boolean;
         specs: Field;
         type: string;
-        value: any;
+        value: Record<string, unknown>;
     }
 
     let {

@@ -30,7 +30,7 @@
     const dispatch = createEventDispatcher();
 
     interface Props {
-        service?: any;
+        service?: { [key: string]: any } | null;
     }
 
     let { service = null }: Props = $props();

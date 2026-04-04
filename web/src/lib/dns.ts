@@ -502,7 +502,7 @@ function collectFieldRRs(type: string, value: any, rrs: dnsRR[]) {
         type === "happydns.TXT" ||
         type === "happydns.SPF"
     ) {
-        rrs.push(value);
+        rrs.push(value as dnsRR);
     }
 }
 
@@ -517,7 +517,7 @@ function collectFieldRRs(type: string, value: any, rrs: dnsRR[]) {
  * @param value  - The service instance value (ServiceCombined.Service).
  * @returns      An array of dnsRR objects contained in the service.
  */
-export function collectRRs(fields: Array<{ type: string; id: string }> | null, value: any): dnsRR[] {
+export function collectRRs(fields: Array<{ type: string; id: string }> | null, value: Record<string, unknown> | null | undefined): dnsRR[] {
     if (!fields || !value) return [];
     const rrs: dnsRR[] = [];
     for (const field of fields) {

@@ -29,7 +29,7 @@
     import RecordText from "$lib/components/records/RecordText.svelte";
     import { controls as ctrlRecord } from "$lib/components/modals/Record.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { HappydnsService } from "$lib/api-base/types.gen";
+    import type { ServiceWithValue } from "$lib/model/service.svelte";
     import { ZoneViewList, ZoneViewRecords } from "$lib/model/usersettings";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { navigate } from "$lib/stores/config";
@@ -39,14 +39,15 @@
     interface Props {
         dn: string;
         origin: Domain;
-        services: Array<HappydnsService>;
+        services: Array<ServiceWithValue>;
         zoneId: string;
     }
 
     let { dn, origin, services, zoneId }: Props = $props();
 
-    function openService(service: HappydnsService) {
-        const subdomainParam = service._domain === "" || service._domain === "@" ? "@" : service._domain;
+    function openService(service: ServiceWithValue) {
+        const subdomainParam =
+            service._domain === "" || service._domain === "@" ? "@" : service._domain;
         navigate(
             `/domains/${encodeURIComponent(origin.domain)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(subdomainParam)}/${encodeURIComponent(service._id!)}`,
         );
@@ -87,7 +88,12 @@
                                             >
                                                 <RecordText {dn} {origin} {rr} />
                                                 {#if $servicesSpecsLoaded}
-                                                    <strong class="text-muted" style="white-space: nowrap">{$servicesSpecs[service._svctype].name}</strong>
+                                                    <strong
+                                                        class="text-muted"
+                                                        style="white-space: nowrap"
+                                                    >
+                                                        {$servicesSpecs[service._svctype].name}
+                                                    </strong>
                                                 {/if}
                                             </td>
                                         </tr>
@@ -104,7 +110,9 @@
                             >
                                 <div style="min-width: 0" class="d-flex align-items-center gap-1">
                                     <strong
-                                        title={$servicesSpecs[service._svctype].description ? $servicesSpecs[service._svctype].description : null}
+                                        title={$servicesSpecs[service._svctype].description
+                                            ? $servicesSpecs[service._svctype].description
+                                            : null}
                                         style="white-space: nowrap"
                                     >
                                         {$servicesSpecs[service._svctype].name}

@@ -34,9 +34,9 @@
         index: string;
         noDecorate?: boolean;
         readonly?: boolean;
-        specs: any;
+        specs: Field;
         type: string;
-        value: any;
+        value: Array<Record<string, any>>;
     }
 
     let {
@@ -46,7 +46,7 @@
         readonly = false,
         specs,
         type,
-        value = $bindable()
+        value = $bindable(),
     }: Props = $props();
 
     let linespecs: Array<Field> | null | undefined = $state(undefined);
@@ -63,7 +63,7 @@
 
     function addLine() {
         if (!value) value = [];
-        value.push(linespecs ? {} : "");
+        value.push(linespecs ? {} : ("" as any));
         value = value;
     }
 

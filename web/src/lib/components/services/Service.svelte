@@ -31,8 +31,8 @@
 
     interface Props {
         specs: ServiceSpec;
-        value: any;
-        aservice: Snippet<[string, any]>;
+        value: Record<string, any>;
+        aservice: Snippet<[string, unknown]>;
     }
 
     let { specs, value = $bindable(), aservice }: Props = $props();

@@ -29,7 +29,7 @@
         dn: string;
         origin: Domain;
         type: string;
-        value: any;
+        value: Record<string, any>;
     }
 
     let { dn, origin, type, value = $bindable({}) }: Props = $props();
@@ -44,7 +44,7 @@
             const path = `./editors/${filename}`;
 
             if (editorModules[path]) {
-                const module = await editorModules[path]() as { default: any };
+                const module = await editorModules[path]() as { default: typeof OrphanEditor };
                 return module.default;
             }
 

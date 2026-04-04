@@ -107,7 +107,7 @@
                     },
                 );
             },
-            (err: any) => {
+            (err: unknown) => {
                 deleteInProgress = false;
                 throw err;
             },

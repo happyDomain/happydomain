@@ -36,7 +36,7 @@
     interface Props {
         class?: ClassValue;
         items: Array<Domain>;
-        [key: string]: any;
+        [key: string]: unknown;
     }
 
     let { class: className, items, ...rest }: Props = $props();

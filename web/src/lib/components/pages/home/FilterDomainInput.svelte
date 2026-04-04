@@ -45,7 +45,7 @@
     interface Props {
         autofocus?: boolean;
         noButton?: boolean;
-        [key: string]: any;
+        [key: string]: unknown;
     }
 
     let { autofocus = false, noButton = false, ...rest }: Props = $props();

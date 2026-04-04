@@ -27,6 +27,7 @@ import {
     deleteDomainsByDomainId,
     getDomainsByDomainIdLogs,
 } from "$lib/api-base/sdk.gen";
+import type { HappydnsDomainUpdateInput } from "$lib/api-base/types.gen";
 import type { Domain, DomainLog } from "$lib/model/domain";
 import type { Provider } from "$lib/model/provider";
 import { unwrapSdkResponse, unwrapEmptyResponse } from "./errors";
@@ -56,21 +57,13 @@ export async function addDomain(domain: string, provider: Provider | undefined):
     ) as Domain;
 }
 
-export async function updateDomain(domain: Domain): Promise<Domain> {
-    if (domain.id) {
-        return unwrapSdkResponse(
-            await putDomainsByDomainId({
-                path: { domainId: domain.id },
-                body: { group: domain.group },
-            }),
-        ) as Domain;
-    } else {
-        return unwrapSdkResponse(
-            await postDomains({
-                body: domain,
-            }),
-        ) as Domain;
-    }
+export async function updateDomain(id: string, body: HappydnsDomainUpdateInput): Promise<Domain> {
+    return unwrapSdkResponse(
+        await putDomainsByDomainId({
+            path: { domainId: id },
+            body,
+        }),
+    ) as Domain;
 }
 
 export async function deleteDomain(id: string): Promise<boolean> {

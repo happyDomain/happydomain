@@ -59,7 +59,7 @@
                         title: $t("password.changed"),
                         message: $t("password.success-change"),
                         timeout: 5000,
-                        color: "success",
+                        type: "success",
                     });
                     navigate("/login");
                 },

@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, type Snippet } from "svelte";
 
     import { Badge } from "@sveltestrap/sveltestrap";
     import { ListGroup } from "@sveltestrap/sveltestrap";
@@ -47,9 +47,9 @@
         display_by_groups?: boolean;
         show_empty_groups?: boolean;
         domains?: Array<ZoneListDomain>;
-        no_domain?: import("svelte").Snippet;
-        badges?: import("svelte").Snippet<[any]>;
-        [key: string]: any;
+        no_domain?: Snippet;
+        badges?: Snippet<[{ domain: ZoneListDomain }]>;
+        [key: string]: unknown;
     }
 
     let {
@@ -118,7 +118,7 @@
 
         fullDomain.group = targetGroup;
         try {
-            await updateDomain(fullDomain);
+            await updateDomain(fullDomain.id, { group: targetGroup });
             refreshDomains();
         } catch {
             // Revert on error

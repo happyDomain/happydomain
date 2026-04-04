@@ -41,7 +41,7 @@
 
     interface Props {
         filteredProvider?: Provider | null;
-        [key: string]: any
+        [key: string]: unknown
     }
 
     let { filteredProvider = $bindable(null), ...rest }: Props = $props();

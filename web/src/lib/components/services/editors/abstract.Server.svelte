@@ -33,7 +33,7 @@
     interface Props {
         dn: string;
         origin: Domain;
-        value: any;
+        value: Record<string, any>;
     }
 
     let { dn, origin, value = $bindable({}) }: Props = $props();

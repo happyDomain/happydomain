@@ -29,6 +29,8 @@
     import ObjectInput from "$lib/components/inputs/object.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
     import TableInput from "$lib/components/inputs/table.svelte";
+    import type { Field } from "$lib/model/custom_form.svelte";
+    import type { ServiceInfos } from "$lib/model/service_specs.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -39,7 +41,7 @@
         noDecorate?: boolean;
         readonly?: boolean;
         showDescription?: boolean;
-        specs?: any;
+        specs?: Field | ServiceInfos;
         type: string;
         value: any;
     }
@@ -53,7 +55,7 @@
         showDescription = true,
         specs = undefined,
         type,
-        value = $bindable()
+        value = $bindable(),
     }: Props = $props();
 
     function sanitizeType(t: string) {
@@ -63,7 +65,7 @@
     }
 </script>
 
-{#if specs && specs.hide}
+{#if specs && "hide" in specs && specs.hide}
     <!-- hidden input -->
 {:else if type.substring(0, 2) === "[]" && type !== "[]byte" && type !== "[]uint8"}
     <TableInput
@@ -71,7 +73,7 @@
         {index}
         {noDecorate}
         {readonly}
-        {specs}
+        specs={specs as Field}
         type={sanitizeType(type)}
         bind:value
     />
@@ -80,7 +82,7 @@
         edit={edit || editToolbar}
         {index}
         {readonly}
-        {specs}
+        specs={specs as Field}
         type={sanitizeType(type)}
         bind:value
     />
@@ -90,7 +92,7 @@
         {editToolbar}
         {index}
         {readonly}
-        {specs}
+        specs={specs as ServiceInfos}
         type={sanitizeType(type)}
         bind:value
         on:delete-this-service={(event) => dispatch("delete-this-service", event.detail)}
@@ -101,7 +103,7 @@
         edit={edit || editToolbar}
         {index}
         {readonly}
-        {specs}
+        specs={specs as Field}
         type={sanitizeType(type)}
         bind:value
     />
@@ -111,7 +113,7 @@
         {index}
         {readonly}
         {showDescription}
-        {specs}
+        specs={specs as Field}
         type={sanitizeType(type)}
         bind:value
     />

@@ -29,7 +29,7 @@
     import { filteredName } from "$lib/stores/serviceSelector";
     import { t } from "$lib/translations";
     interface Props {
-        [key: string]: any;
+        [key: string]: unknown;
     }
 
     let { ...rest }: Props = $props();

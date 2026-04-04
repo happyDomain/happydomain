@@ -21,7 +21,7 @@
 
 import type { Field } from "$lib/model/custom_form.svelte";
 
-export function fillUndefinedValues(value: any, spec: Field) {
+export function fillUndefinedValues(value: Record<string, unknown>, spec: Field) {
     if (value[spec.id] === undefined && spec.type.length) {
         let vartype = spec.type;
         if (vartype[0] == "*") vartype = vartype.substring(1);

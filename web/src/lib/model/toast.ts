@@ -20,11 +20,13 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import type { Color } from "@sveltestrap/sveltestrap";
+import { navigate } from "$lib/stores/config";
 
 export interface NewToast {
     type?: "info" | "success" | "warning" | "error";
     title?: string;
     message?: string;
+    href?: string;
     timeout?: number | undefined;
     onclick?: () => void;
 }
@@ -46,6 +48,16 @@ export class Toast implements NewToast {
         if (obj.title !== undefined) this.title = obj.title;
         if (obj.message !== undefined) this.message = obj.message;
         if (obj.onclick !== undefined) this.onclick = obj.onclick;
+        if (obj.href !== undefined && this.onclick === undefined) {
+            const href = obj.href;
+            this.onclick = () => {
+                if (href.startsWith('/')) {
+                    navigate(href);
+                } else {
+                    window.location.href = href;
+                }
+            };
+        }
         this.timeout = obj.timeout;
 
         this.dismissFunc = dismiss;
@@ -61,7 +73,9 @@ export class Toast implements NewToast {
         if (this.timeoutInterval === undefined) return;
         clearTimeout(this.timeoutInterval);
         this.timeoutInterval = undefined;
-        this.remainingTime = (this.remainingTime ?? this.timeout ?? 0) - (Date.now() - (this.startTime ?? Date.now()));
+        this.remainingTime =
+            (this.remainingTime ?? this.timeout ?? 0) -
+            (Date.now() - (this.startTime ?? Date.now()));
     }
 
     resume() {

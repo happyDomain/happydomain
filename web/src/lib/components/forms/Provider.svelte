@@ -61,7 +61,6 @@
         <CustomForm
             form={form.form}
             bind:value={form.value.Provider}
-            on:input={(event) => (form.value.Provider = event.detail)}
         >
             {#if form.state === 0}
                 <ResourceInput

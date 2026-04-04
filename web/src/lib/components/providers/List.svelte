@@ -59,9 +59,9 @@
         noLabel?: boolean;
         noDropdown?: boolean;
         selectedProvider?: Provider | null;
-        items: Array<any>;
+        items: Array<Provider>;
         toolbar?: boolean;
-        [key: string]: any;
+        [key: string]: unknown;
     }
 
     let {

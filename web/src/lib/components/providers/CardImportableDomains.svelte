@@ -54,7 +54,7 @@
     interface Props {
         provider: Provider;
         noDomainsList?: boolean;
-        [key: string]: any
+        [key: string]: unknown
     }
 
     let { provider, noDomainsList = $bindable(false), ...rest }: Props = $props();
@@ -110,7 +110,7 @@
                         title: $t("domains.attached-new"),
                         message: $t("domains.added-success", { domain: mydomain.domain }),
                         href: "/domains/" + mydomain.domain,
-                        color: "success",
+                        type: "success",
                         timeout: 5000,
                     });
                 }

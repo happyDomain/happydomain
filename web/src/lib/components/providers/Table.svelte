@@ -46,8 +46,8 @@
 
     interface Props {
         class?: ClassValue;
-        items: Array<any>;
-        [key: string]: any;
+        items: Array<Provider>;
+        [key: string]: unknown;
     }
 
     let { class: className = "", items, ...rest }: Props = $props();

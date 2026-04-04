@@ -29,7 +29,7 @@
  * @returns A mock Response object
  */
 export function createMockResponse(
-    data: any,
+    data: unknown,
     status: number = 200,
     statusText: string = "OK"
 ): Response {
@@ -57,6 +57,6 @@ export function createMockResponse(
  * @param status HTTP status code (default: 200)
  * @returns A mock fetch function
  */
-export function createMockFetch(data: any, status: number = 200) {
+export function createMockFetch(data: unknown, status: number = 200) {
     return () => Promise.resolve(createMockResponse(data, status));
 }

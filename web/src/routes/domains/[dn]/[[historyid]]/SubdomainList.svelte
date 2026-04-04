@@ -24,11 +24,11 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
 
-    import type { HappydnsService } from "$lib/api-base/types.gen";
+    import type { ServiceWithValue } from "$lib/model/service.svelte";
     import { thisZone } from "$lib/stores/thiszone";
 
     interface Props {
-        subdomain: Snippet<[string, Array<HappydnsService>]>;
+        subdomain: Snippet<[string, Array<ServiceWithValue>]>;
         subdomains: Array<string>;
     }
 

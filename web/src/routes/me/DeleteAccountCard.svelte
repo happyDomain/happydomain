@@ -48,7 +48,7 @@
 
     interface Props {
         externalAuth?: boolean;
-        [key: string]: any
+        [key: string]: unknown
     }
 
     let { externalAuth = false, ...rest }: Props = $props();
@@ -63,7 +63,7 @@
         toasts.addToast({
             title: $t("account.delete.deleted"),
             message: $t("account.delete.success"),
-            type: "primary",
+            type: "success",
             timeout: 5000,
         });
         navigate("/login");
@@ -73,7 +73,7 @@
         formSent = false;
         toasts.addErrorToast({
             title: $t("errors.account-delete"),
-            message: err,
+            message: err.message,
             timeout: 5000,
         });
     }

@@ -39,7 +39,7 @@
         specs: Field;
         readonly?: boolean;
         value: any;
-        [key: string]: any;
+        [key: string]: unknown;
     }
 
     let {

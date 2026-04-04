@@ -97,7 +97,7 @@
                 });
                 dispatchSelectionSummary();
             },
-            (err: any) => {
+            (err: unknown) => {
                 dispatch("error", err);
             },
         );

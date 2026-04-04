@@ -53,7 +53,7 @@
                         title: $t("email.sent-recovery"),
                         message: $t("email.instruction.check-inbox"),
                         timeout: 20000,
-                        color: "success",
+                        type: "success",
                     });
                     navigate("/login");
                 },

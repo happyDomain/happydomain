@@ -31,9 +31,9 @@
 
     interface Props {
         form: CustomForm;
-        value: any;
+        value: Record<string, any> | undefined;
         children?: import("svelte").Snippet;
-        [key: string]: any;
+        [key: string]: unknown;
     }
 
     let { form, value = $bindable(), children, ...rest }: Props = $props();
@@ -68,7 +68,7 @@
                 index={"" + index}
                 specs={field}
                 type={field.type}
-                bind:value={value[field.id]}
+                bind:value={value![field.id]}
             />
         {/each}
     {/if}

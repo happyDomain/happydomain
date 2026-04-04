@@ -43,7 +43,7 @@
     let svcSpec = $derived(data.spec);
 
     let domain: string = $state("");
-    let serviceValue: any = $state({});
+    let serviceValue: Record<string, unknown> = $state({});
 
     let recordsPromise: Promise<dnsRR[]> | null = $state(null);
     let generateDebounce: ReturnType<typeof setTimeout>;

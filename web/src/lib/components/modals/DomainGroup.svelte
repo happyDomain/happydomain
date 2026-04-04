@@ -30,7 +30,6 @@
 </script>
 
 <script lang="ts">
-    import { untrack } from 'svelte';
     import {
         Button,
         Input,
@@ -46,6 +45,7 @@
     import type { Domain } from "$lib/model/domain";
     import { groups, domains, newlyGroups, refreshDomains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
+    import type { HappydnsDomainUpdateInput } from "$lib/api-base";
 
     interface Props {
         isOpen?: boolean;
@@ -66,15 +66,15 @@
         if (newgroup.length && mygroups.indexOf(newgroup) < 0) {
             mygroups.push(newgroup);
             mygroups = mygroups;
-            newlyGroups.update((gs) => gs.includes(newgroup) ? gs : [...gs, newgroup]);
+            newlyGroups.update((gs) => (gs.includes(newgroup) ? gs : [...gs, newgroup]));
         }
         newgroup = "";
     }
 
-    async function changeGroup(event: Event, domain: Domain) {
+    async function changeGroup(event: Event, id: string, domain: HappydnsDomainUpdateInput) {
         if (event.currentTarget && event.currentTarget instanceof HTMLSelectElement) {
             domain.group = event.currentTarget.value;
-            domain = await updateDomain(domain);
+            await updateDomain(id, domain);
             refreshDomains();
         }
     }
@@ -120,7 +120,7 @@
                         <Input
                             type="select"
                             value={domain.group}
-                            on:change={(event) => changeGroup(event, domain)}
+                            on:change={(event) => changeGroup(event, domain.id, domain)}
                         >
                             <option value="">{$t("domaingroups.no-group")}</option>
                             {#each mygroups as group}

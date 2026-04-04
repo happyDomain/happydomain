@@ -54,7 +54,7 @@
                         title: $t("settings.success-change"),
                         message: $t("settings.success"),
                         timeout: 5000,
-                        color: "success",
+                        type: "success",
                     });
 
                     navigate("/");

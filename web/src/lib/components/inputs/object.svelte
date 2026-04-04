@@ -43,7 +43,7 @@
         readonly?: boolean;
         specs: ServiceInfos;
         type: string;
-        value: any;
+        value: Record<string, unknown>;
     }
 
     let {

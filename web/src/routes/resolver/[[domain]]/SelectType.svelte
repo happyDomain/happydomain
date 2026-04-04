@@ -28,7 +28,7 @@
 
     interface Props {
         value?: string;
-        [key: string]: any
+        [key: string]: unknown
     }
 
     let { value = $bindable("ANY"), ...rest }: Props = $props();

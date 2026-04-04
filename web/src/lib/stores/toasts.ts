@@ -55,4 +55,4 @@ function createToastsStore() {
     };
 }
 
-export const toasts: any = createToastsStore();
+export const toasts = createToastsStore();

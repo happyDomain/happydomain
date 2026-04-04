@@ -31,11 +31,11 @@ export interface DKIMValue {
     s?: string[];
     t?: string[];
     f?: string[];
-    [key: string]: any;
+    [key: string]: string | string[] | undefined;
 }
 
 export function parseDKIM(val: string): DKIMValue {
-    const kv = parseKeyValueTxt(val) as any;
+    const kv = parseKeyValueTxt(val);
 
     return {
         ...kv,

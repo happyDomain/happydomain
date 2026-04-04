@@ -47,7 +47,7 @@
             f: fields.slice(1),
         };
     }
-    function stringifySPF(val: any) {
+    function stringifySPF(val: { v?: string; f: string[] }) {
         return "v=" + (val["v"] ? val["v"] : "spf1") + " " + val.f.join(" ");
     }
     let val = $state(parseSPF(value["txt"]?.Txt || "v=spf1 -all"));

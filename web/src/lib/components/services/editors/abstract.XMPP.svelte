@@ -31,7 +31,7 @@
         dn: string;
         origin: Domain;
         readonly?: boolean;
-        value: dnsResource;
+        value: Record<string, any>;
     }
 
     let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();

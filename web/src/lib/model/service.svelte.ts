@@ -19,11 +19,21 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import type { HappydnsService } from "$lib/api-base/types.gen";
+
+/**
+ * Narrows the generated HappydnsService.Service from `unknown` to its
+ * actual runtime shape so callers can bind and index into it safely.
+ */
+export interface ServiceWithValue extends HappydnsService {
+    Service: Record<string, any>;
+}
+
 export class ServiceMeta {
-    _svctype = $state<string>('');
+    _svctype = $state<string>("");
     _id? = $state<string | undefined>(undefined);
     _ownerid? = $state<string | undefined>(undefined);
-    _domain = $state<string>('');
+    _domain = $state<string>("");
     _ttl = $state<number>(0);
     _comment? = $state<string | undefined>(undefined);
     _mycomment? = $state<string | undefined>(undefined);
@@ -74,7 +84,7 @@ export class ServiceMeta {
 }
 
 export class ServiceCombined extends ServiceMeta {
-    Service = $state<Record<string, unknown> | null>(null);
+    Service = $state<Record<string, any>>({});
 
     constructor(init?: {
         _svctype: string;
@@ -87,7 +97,7 @@ export class ServiceCombined extends ServiceMeta {
         _aliases?: Array<string>;
         _tmp_hint_nb?: number;
         _propagated_at?: Date;
-        Service?: Record<string, unknown> | null;
+        Service?: Record<string, any>;
     }) {
         super(init);
         if (init?.Service !== undefined) {

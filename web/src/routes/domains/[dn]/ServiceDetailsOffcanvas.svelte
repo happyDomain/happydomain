@@ -22,10 +22,10 @@
 -->
 
 <script module lang="ts">
-    import type { HappydnsService } from "$lib/api-base/types.gen";
+    import type { ServiceWithValue } from "$lib/model/service.svelte";
 
     export const controls = {
-        Open(service: HappydnsService): void {},
+        Open(service: ServiceWithValue): void {},
     };
 </script>
 
@@ -61,8 +61,8 @@
 
     let { domain, selectedHistory = "", isOpen = $bindable(false) }: Props = $props();
 
-    let service: HappydnsService = $state({} as HappydnsService);
-    function Open(svc: HappydnsService): void {
+    let service: ServiceWithValue = $state({} as ServiceWithValue);
+    function Open(svc: ServiceWithValue): void {
         isOpen = true;
         service = svc;
     }
@@ -144,7 +144,7 @@
         </div>
         {#if service._svctype && service.Service}
             {#await getServiceSpec(service._svctype) then specs}
-                {@const rrs = collectRRs(specs.fields, service.Service)}
+                {@const rrs = collectRRs(specs.fields, service.Service as Record<string, unknown>)}
                 {#each rrs as rr, i}
                     <RecordLine
                         dn={service._domain || ""}
@@ -170,8 +170,8 @@
                     style="width: 8em"
                     title={$t("service.ttl-tip")}
                     bind:value={service._ttl}
-                    on:change={(e: any) => {
-                        service._ttl = parseInt(e.target.value, 10) || 0;
+                    on:change={(e: Event) => {
+                        service._ttl = parseInt((e.target as HTMLInputElement).value, 10) || 0;
                         saveTtl();
                     }}
                 />

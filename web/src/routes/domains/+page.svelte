@@ -94,7 +94,7 @@
             title: $t("domains.attached-new"),
             message: $t("domains.added-success", { domain: domain.domain }),
             href: "/domains/" + domain.domain,
-            color: "success",
+            type: "success",
             timeout: 5000,
         });
         refreshDomains();

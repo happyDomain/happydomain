@@ -37,7 +37,7 @@
         loading?: import('svelte').Snippet;
         empty?: import('svelte').Snippet;
         children?: import('svelte').Snippet<[any]>;
-        [key: string]: any
+        [key: string]: unknown
     }
 
     let {

@@ -30,6 +30,7 @@
 
     import { resolve as APIResolve } from "$lib/api/resolver";
     import { nsrrtype, nsttl } from "$lib/dns";
+    import type { dnsRR } from "$lib/dns_rr";
     import type { ResolverForm as ResolverFormT } from "$lib/model/resolver";
     import { recordsFields } from "$lib/resolver";
     import { toasts } from "$lib/stores/toasts";
@@ -54,7 +55,7 @@
     let error_response: string | null = $state(null);
     let request_pending = $state(false);
     let question: ResolverFormT | null = $state(null);
-    let responses: Array<any> | "no-answer" | null = $state(null);
+    let responses: Array<dnsRR> | "no-answer" | null = $state(null);
 
     function resolve(form: ResolverFormT) {
         if (!form.domain) return;
@@ -64,7 +65,7 @@
                 error_response = null;
                 question = Object.assign({}, form);
                 if (response.answer) {
-                    responses = response.answer;
+                    responses = response.answer as unknown as Array<dnsRR>;
                 } else {
                     responses = "no-answer";
                 }
@@ -101,7 +102,7 @@
         }
     });
 
-    function filteredResponses(responses: Array<any>, showDNSSEC: boolean): Array<any> {
+    function filteredResponses(responses: Array<dnsRR>, showDNSSEC: boolean): Array<dnsRR> {
         if (!responses) {
             return [];
         }
@@ -115,8 +116,8 @@
         }
     }
 
-    function responseByType(filteredResponses: Array<any>): Record<string, Array<any>> {
-        const ret: Record<string, Array<any>> = {};
+    function responseByType(filteredResponses: Array<dnsRR>): Record<string, Array<dnsRR>> {
+        const ret: Record<string, Array<dnsRR>> = {};
 
         for (const i in filteredResponses) {
             if (!ret[filteredResponses[i].Hdr.Rrtype]) {

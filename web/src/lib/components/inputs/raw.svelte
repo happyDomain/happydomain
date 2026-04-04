@@ -44,7 +44,7 @@
         specs?: Field;
         readonly?: boolean;
         value: any;
-        [key: string]: any;
+        [key: string]: unknown;
     }
 
     let {
@@ -78,7 +78,7 @@
     let inputmax: number | undefined = $derived(computeInputmax(specs));
     let inputmin: number | undefined = $derived(computeInputmin(specs));
 
-    function computeInputmax(specs: any) {
+    function computeInputmax(specs: Field) {
         if (specs.type) {
             if (specs.type == "int8" || specs.type == "uint8") return 255;
             else if (specs.type == "int16" || specs.type == "uint16") return 65536;
@@ -99,7 +99,7 @@
         }
         return undefined;
     }
-    function computeInputmin(specs: any) {
+    function computeInputmin(specs: Field) {
         if (inputmax) {
             if (specs.type && specs.type.startsWith("uint")) return 0;
             else return -inputmax - 1;
@@ -117,12 +117,16 @@
     }
 
     let feedback: string | undefined = $derived(computeFeedback(value));
-    function computeFeedback(val: any) {
-        if (inputmax && val > inputmax) {
-            return t.get("errors.too-high", { max: inputmax });
-        } else if (inputmin && val < inputmin) {
-            return t.get("errors.too-low", { min: inputmin });
-        } else if (
+    function computeFeedback(val: unknown) {
+        if (typeof val === "number") {
+            if (inputmax && val > inputmax) {
+                return t.get("errors.too-high", { max: inputmax });
+            } else if (inputmin && val < inputmin) {
+                return t.get("errors.too-low", { min: inputmin });
+            }
+        }
+        if (
+            typeof val === "string" &&
             specs.type &&
             (specs.type === "[]uint8" || specs.type === "[]byte") &&
             !checkBase64(val)

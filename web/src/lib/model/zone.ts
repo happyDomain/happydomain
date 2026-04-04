@@ -19,7 +19,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import type { HappydnsService, HappydnsZoneMeta } from "$lib/api-base/types.gen";
+import type { HappydnsZoneMeta } from "$lib/api-base/types.gen";
+import type { ServiceWithValue } from "$lib/model/service.svelte";
 
 export interface ServiceRecord {
     str: string;
@@ -32,5 +33,5 @@ export interface ServiceRecord {
 export type ZoneMeta = HappydnsZoneMeta;
 
 export interface Zone extends ZoneMeta {
-    services: Record<string, Array<HappydnsService>>;
+    services: Record<string, Array<ServiceWithValue>>;
 }

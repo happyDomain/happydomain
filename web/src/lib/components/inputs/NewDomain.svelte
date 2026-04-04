@@ -50,7 +50,7 @@
         preAddFunc?: (arg0: string) => Promise<boolean>;
         provider?: Provider;
         value?: string;
-        [key: string]: any
+        [key: string]: unknown
     }
 
     let {

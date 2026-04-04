@@ -28,7 +28,7 @@
         id_provider?: string | undefined;
         ptype?: string | undefined;
         style?: string;
-        [key: string]: any;
+        [key: string]: unknown;
     }
 
     let {

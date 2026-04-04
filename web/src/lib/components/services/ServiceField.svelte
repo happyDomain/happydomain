@@ -30,7 +30,7 @@
 
     export let type: string;
     export let value: any;
-    export let aservice: Snippet<[string, any]>;
+    export let aservice: Snippet<[string, unknown]>;
 </script>
 
 {#if type.startsWith("[]")}

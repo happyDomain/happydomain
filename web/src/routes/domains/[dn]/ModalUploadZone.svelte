@@ -75,7 +75,7 @@
                 uploadInProgress = false;
                 dispatch("retrieveZoneDone", v);
             },
-            (err: any) => {
+            (err: unknown) => {
                 uploadInProgress = false;
                 throw err;
             },
