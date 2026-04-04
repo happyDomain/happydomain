@@ -106,6 +106,25 @@ type Field struct {
 	Description string `json:"description,omitempty"`
 }
 
+// FieldFromCheckerOption converts a CheckerOptionDocumentation into a Field,
+// mapping the common subset of attributes. Keep this in sync when either
+// struct gains new fields.
+func FieldFromCheckerOption(opt CheckerOptionDocumentation) Field {
+	return Field{
+		Id:          opt.Id,
+		Type:        opt.Type,
+		Label:       opt.Label,
+		Placeholder: opt.Placeholder,
+		Default:     opt.Default,
+		Choices:     opt.Choices,
+		Required:    opt.Required,
+		Secret:      opt.Secret,
+		Hide:        opt.Hide,
+		Textarea:    opt.Textarea,
+		Description: opt.Description,
+	}
+}
+
 type FormState struct {
 	// Id for an already existing element.
 	Id *Identifier `json:"_id,omitempty" swaggertype:"string"`
