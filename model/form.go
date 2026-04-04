@@ -72,10 +72,10 @@ type CustomForm struct {
 // Field
 type Field struct {
 	// Id is the field identifier.
-	Id string `json:"id"`
+	Id string `json:"id" binding:"required"`
 
 	// Type is the string representation of the field's type.
-	Type string `json:"type"`
+	Type string `json:"type" binding:"required"`
 
 	// Label is the title given to the field, displayed as <label> tag on the interface.
 	Label string `json:"label,omitempty"`

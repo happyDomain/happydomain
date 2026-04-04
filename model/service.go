@@ -84,7 +84,7 @@ type SPFContributor interface {
 // ServiceMeta holds the metadata associated to a Service.
 type ServiceMeta struct {
 	// Type is the string representation of the Service's type.
-	Type string `json:"_svctype"`
+	Type string `json:"_svctype" binding:"required"`
 
 	// Id is the Service's identifier.
 	Id Identifier `json:"_id,omitempty" swaggertype:"string"`
@@ -93,10 +93,10 @@ type ServiceMeta struct {
 	OwnerId Identifier `json:"_ownerid,omitempty" swaggertype:"string"`
 
 	// Domain contains the abstract domain where this Service relates.
-	Domain string `json:"_domain"`
+	Domain string `json:"_domain" binding:"required"`
 
 	// Ttl contains the specific TTL for the underlying Resources.
-	Ttl uint32 `json:"_ttl"`
+	Ttl uint32 `json:"_ttl" binding:"required"`
 
 	// Comment is a string that helps user to distinguish the Service.
 	Comment string `json:"_comment,omitempty"`
@@ -109,7 +109,7 @@ type ServiceMeta struct {
 	Aliases []string `json:"_aliases,omitempty"`
 
 	// NbResources holds the number of Resources stored inside this Service.
-	NbResources int `json:"_tmp_hint_nb"`
+	NbResources int `json:"_tmp_hint_nb" binding:"required"`
 
 	// PropagatedAt is the estimated time at which the last published changes
 	// for this service will be fully propagated (old cached records expired).

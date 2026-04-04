@@ -42,24 +42,30 @@ type DomainCreationInput struct {
 // Domain holds information about a domain name own by a User.
 type Domain struct {
 	// Id is the Domain's identifier in the database.
-	Id Identifier `json:"id" swaggertype:"string"`
+	Id Identifier `json:"id" swaggertype:"string" binding:"required"`
 
 	// Owner is the identifier of the Domain's Owner.
-	Owner Identifier `json:"id_owner" swaggertype:"string"`
+	Owner Identifier `json:"id_owner" swaggertype:"string" binding:"required"`
 
 	// ProviderId is the identifier of the Provider used to access and edit the
 	// Domain.
-	ProviderId Identifier `json:"id_provider" swaggertype:"string"`
+	ProviderId Identifier `json:"id_provider" swaggertype:"string" binding:"required"`
 
 	// DomainName is the FQDN of the managed Domain.
-	DomainName string `json:"domain"`
+	DomainName string `json:"domain" binding:"required"`
 
 	// Group is a hint string aims to group domains.
 	Group string `json:"group,omitempty"`
 
 	// ZoneHistory are the identifiers to the Zone attached to the current
 	// Domain.
-	ZoneHistory []Identifier `json:"zone_history" swaggertype:"array,string"`
+	ZoneHistory []Identifier `json:"zone_history" swaggertype:"array,string" binding:"required"`
+}
+
+// DomainUpdateInput is used for swagger documentation as Domain update.
+type DomainUpdateInput struct {
+	// Group is a hint string aims to group domains.
+	Group string `json:"group,omitempty"`
 }
 
 func NewDomain(user *User, name string, providerID Identifier) (*Domain, error) {

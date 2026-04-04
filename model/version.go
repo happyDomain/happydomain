@@ -24,7 +24,7 @@ package happydns
 import ()
 
 type VersionResponse struct {
-	Version    string `json:"version"`
-	LastCommit string `json:"last-commit"`
-	DirtyBuild bool   `json:"dirty-build"`
+	Version    string `json:"version" binding:"required"`
+	LastCommit string `json:"last-commit" binding:"required"`
+	DirtyBuild bool   `json:"dirty-build,omitempty"`
 }

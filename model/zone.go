@@ -30,19 +30,19 @@ import (
 // ZoneMeta holds the metadata associated to a Zone.
 type ZoneMeta struct {
 	// Id is the Zone's identifier.
-	Id Identifier `json:"id" swaggertype:"string"`
+	Id Identifier `json:"id" swaggertype:"string" binding:"required"`
 
 	// IdAuthor is the User's identifier for the current Zone.
-	IdAuthor Identifier `json:"id_author" swaggertype:"string"`
+	IdAuthor Identifier `json:"id_author" swaggertype:"string" binding:"required"`
 
 	// ParentZone identifies the parental zone of this one.
 	ParentZone *Identifier `json:"parent,omitempty" swaggertype:"string"`
 
 	// DefaultTTL is the TTL to use when no TTL has been defined for a record in this Zone.
-	DefaultTTL uint32 `json:"default_ttl"`
+	DefaultTTL uint32 `json:"default_ttl" binding:"required"`
 
 	// LastModified holds the time when the last modification has been made on this Zone.
-	LastModified time.Time `json:"last_modified,omitempty"`
+	LastModified time.Time `json:"last_modified" binding:"required"`
 
 	// CommitMsg is a message defined by the User to give a label to this Zone revision.
 	CommitMsg *string `json:"commit_message,omitempty"`
@@ -63,7 +63,7 @@ type ZoneMessage struct {
 // Zone contains ZoneMeta + map of services by subdomains.
 type Zone struct {
 	ZoneMeta
-	Services map[Subdomain][]*Service `json:"services"`
+	Services map[Subdomain][]*Service `json:"services" binding:"required"`
 }
 
 // DerivateNew creates a new Zone from the current one, by copying all fields.
@@ -178,6 +178,6 @@ type PrepareZoneForm struct {
 }
 
 type PrepareZoneResponse struct {
-	Corrections []*Correction `json:"corrections"`
-	NbDiffs     int           `json:"nbDiffs"`
+	Corrections []*Correction `json:"corrections" binding:"required"`
+	NbDiffs     int           `json:"nbDiffs" binding:"required"`
 }

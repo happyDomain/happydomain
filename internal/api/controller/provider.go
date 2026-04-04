@@ -137,7 +137,7 @@ func (pc *ProviderController) AddProvider(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			providerId	path	string				true	"Provider identifier"
-//	@Param			body		body	happydns.Provider	true	"The new object overriding the current provider"
+//	@Param			body		body	happydns.ProviderMinimal	true	"The new object overriding the current provider"
 //	@Security		securitydefinitions.basic
 //	@Success		200	{object}	happydns.Provider
 //	@Failure		400	{object}	happydns.ErrorResponse	"Invalid input"

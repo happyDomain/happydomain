@@ -53,13 +53,13 @@ type ServiceRestrictions struct {
 }
 
 type ServiceInfos struct {
-	Name         string              `json:"name"`
-	Type         string              `json:"_svctype"`
+	Name         string              `json:"name" binding:"required"`
+	Type         string              `json:"_svctype" binding:"required"`
 	Icon         string              `json:"_svcicon,omitempty"`
-	Description  string              `json:"description"`
-	Family       string              `json:"family"`
-	Categories   []string            `json:"categories"`
-	RecordTypes  []uint16            `json:"record_types"`
+	Description  string              `json:"description" binding:"required"`
+	Family       string              `json:"family" binding:"required"`
+	Categories   []string            `json:"categories" binding:"required"`
+	RecordTypes  []uint16            `json:"record_types" binding:"required"`
 	Tabs         bool                `json:"tabs,omitempty"`
 	Restrictions ServiceRestrictions `json:"restrictions,omitempty"`
 }

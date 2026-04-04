@@ -29,19 +29,19 @@ import (
 // User represents an account.
 type User struct {
 	// Id is the User's identifier.
-	Id Identifier `json:"id" swaggertype:"string"`
+	Id Identifier `json:"id" swaggertype:"string" binding:"required"`
 
 	// Email is the User's login and means of contact.
-	Email string `json:"email"`
+	Email string `json:"email" binding:"required"`
 
 	// CreatedAt is the time when the User logs in for the first time.
-	CreatedAt time.Time `json:"created_at,omitempty"`
+	CreatedAt time.Time `json:"created_at" binding:"required"`
 
 	// LastSeen is the time when the User used happyDNS for the last time (in a 12h frame).
-	LastSeen time.Time `json:"last_seen,omitempty"`
+	LastSeen time.Time `json:"last_seen" binding:"required"`
 
 	// Settings holds the settings for an account.
-	Settings UserSettings `json:"settings,omitempty"`
+	Settings UserSettings `json:"settings" binding:"required"`
 }
 
 func (u *User) GetUserId() Identifier {

@@ -25,28 +25,37 @@ import (
 	"time"
 )
 
-// Session holds informatin about a User's currently connected.
+// Session holds information about a User's currently connected.
 type Session struct {
 	// Id is the Session's identifier.
-	Id string `json:"id"`
+	Id string `json:"id" binding:"required"`
 
 	// IdUser is the User's identifier of the Session.
-	IdUser Identifier `json:"login" swaggertype:"string"`
+	IdUser Identifier `json:"login" swaggertype:"string" binding:"required"`
 
 	// Description is a user defined string aims to identify each session.
-	Description string `json:"description"`
+	Description string `json:"description" binding:"required"`
 
 	// IssuedAt holds the creation date of the Session.
-	IssuedAt time.Time `json:"time"`
+	IssuedAt time.Time `json:"time" binding:"required"`
 
 	// ExpiresOn holds the expirate date of the Session.
-	ExpiresOn time.Time `json:"exp"`
+	ExpiresOn time.Time `json:"exp" binding:"required"`
 
 	// ModifiedOn is the last time the session has been updated.
-	ModifiedOn time.Time `json:"upd"`
+	ModifiedOn time.Time `json:"upd" binding:"required"`
 
 	// Content stores data filled by other modules.
 	Content string `json:"content,omitempty"`
+}
+
+// SessionInput is used for creating or updating a session.
+type SessionInput struct {
+	// Description is a user defined string aims to identify each session.
+	Description string `json:"description"`
+
+	// ExpiresOn holds the expirate date of the Session.
+	ExpiresOn time.Time `json:"exp"`
 }
 
 // ClearSession removes all content from the Session.

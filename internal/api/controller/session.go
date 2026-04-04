@@ -175,12 +175,12 @@ func (sc *SessionController) GetSessions(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		securitydefinitions.basic
-//	@Param			body	body		happydns.Session		true	"Session to create"
+//	@Param			body	body		happydns.SessionInput	true	"Session to create"
 //	@Success		200		{object}	happydns.Session
 //	@Failure		401		{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Router			/sessions [post]
 func (sc *SessionController) CreateSession(c *gin.Context) {
-	var us happydns.Session
+	var us happydns.SessionInput
 	err := c.ShouldBindJSON(&us)
 	if err != nil {
 		log.Printf("%s sends invalid Session JSON: %s", c.ClientIP(), err.Error())
@@ -213,12 +213,12 @@ func (sc *SessionController) CreateSession(c *gin.Context) {
 //	@Produce		json
 //	@Security		securitydefinitions.basic
 //	@Param			sessionId	path		string					true	"Session identifier"
-//	@Param			body		body		happydns.Session		true	"Session fields to update"
+//	@Param			body		body		happydns.SessionInput	true	"Session fields to update"
 //	@Success		200			{object}	happydns.Session
 //	@Failure		401			{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Router			/sessions/{sessionId} [put]
 func (sc *SessionController) UpdateSession(c *gin.Context) {
-	var us happydns.Session
+	var us happydns.SessionInput
 	err := c.ShouldBindJSON(&us)
 	if err != nil {
 		log.Printf("%s sends invalid Session JSON: %s", c.ClientIP(), err.Error())

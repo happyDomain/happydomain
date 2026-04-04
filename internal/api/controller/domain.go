@@ -150,7 +150,7 @@ func (dc *DomainController) GetDomain(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			domainId	path	string			true	"Domain identifier"
-//	@Param			body		body	happydns.Domain	true	"The new object overriding the current domain"
+//	@Param			body		body	happydns.DomainUpdateInput	true	"The fields to update"
 //	@Security		securitydefinitions.basic
 //	@Success		200	{object}	happydns.Domain
 //	@Failure		400	{object}	happydns.ErrorResponse	"Invalid input"
@@ -167,7 +167,7 @@ func (dc *DomainController) UpdateDomain(c *gin.Context) {
 		return
 	}
 
-	var domain happydns.Domain
+	var domain happydns.DomainUpdateInput
 	err := c.ShouldBindJSON(&domain)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})

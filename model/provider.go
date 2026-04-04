@@ -34,10 +34,10 @@ type ProviderBody interface {
 // ProviderInfos describes the purpose of a user usable provider.
 type ProviderInfos struct {
 	// Name is the name displayed.
-	Name string `json:"name"`
+	Name string `json:"name" binding:"required"`
 
 	// Description is a brief description of what the provider is.
-	Description string `json:"description"`
+	Description string `json:"description" binding:"required"`
 
 	// Capabilites is a list of special ability of the provider (automatically filled).
 	Capabilities []string `json:"capabilities,omitempty"`
@@ -72,13 +72,13 @@ type ProviderMinimal struct {
 // ProviderMeta holds the metadata associated to a Provider.
 type ProviderMeta struct {
 	// Type is the string representation of the Provider's type.
-	Type string `json:"_srctype"`
+	Type string `json:"_srctype" binding:"required"`
 
 	// Id is the Provider's identifier.
-	Id Identifier `json:"_id" swaggertype:"string"`
+	Id Identifier `json:"_id" swaggertype:"string" binding:"required"`
 
 	// Owner is the User's identifier for the current Provider.
-	Owner Identifier `json:"_ownerid" swaggertype:"string"`
+	Owner Identifier `json:"_ownerid" swaggertype:"string" binding:"required"`
 
 	// Comment is a string that helps user to distinguish the Provider.
 	Comment string `json:"_comment,omitempty"`

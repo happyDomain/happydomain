@@ -36,8 +36,8 @@ const (
 type Correction struct {
 	F          func() error   `json:"-"`
 	Id         Identifier     `json:"id,omitempty" swaggertype:"string"`
-	Msg        string         `json:"msg"`
-	Kind       CorrectionKind `json:"kind,omitempty"`
+	Msg        string         `json:"msg" binding:"required"`
+	Kind       CorrectionKind `json:"kind" binding:"required"`
 	OldRecords []Record       `json:"-"`
 	NewRecords []Record       `json:"-"`
 }
