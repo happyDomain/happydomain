@@ -670,7 +670,10 @@
             "view-html": "HTML Report",
             "view-json": "Raw JSON",
             "download-html": "Download HTML",
-            "download-json": "Download JSON"
+            "download-json": "Download JSON",
+            "metric-name": "Metric",
+            "metric-value": "Value",
+            "metric-unit": "Unit"
         },
         "title": "Checkers",
         "description": "Configure automated checks for your domains",

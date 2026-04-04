@@ -31,8 +31,10 @@ import {
     deleteDomainsByDomainCheckersByCheckerIdExecutionsByExecutionId,
     getDomainsByDomainCheckersByCheckerIdExecutionsByExecutionId,
     getDomainsByDomainCheckersByCheckerIdExecutionsByExecutionIdObservations,
+    getDomainsByDomainCheckersByCheckerIdExecutionsByExecutionIdMetrics,
     getDomainsByDomainCheckersByCheckerIdExecutionsByExecutionIdObservationsByObsKeyReport,
     getDomainsByDomainCheckersByCheckerIdExecutionsByExecutionIdResults,
+    getDomainsByDomainCheckersByCheckerIdMetrics,
     getDomainsByDomainCheckersByCheckerIdOptions,
     putDomainsByDomainCheckersByCheckerIdOptions,
     getDomainsByDomainCheckersByCheckerIdPlans,
@@ -45,8 +47,10 @@ import {
     deleteDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdExecutionsByExecutionId,
     getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdExecutionsByExecutionId,
     getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdExecutionsByExecutionIdObservations,
+    getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdExecutionsByExecutionIdMetrics,
     getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdExecutionsByExecutionIdObservationsByObsKeyReport,
     getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdExecutionsByExecutionIdResults,
+    getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdMetrics,
     getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdOptions,
     putDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdOptions,
     getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdPlans,
@@ -369,6 +373,50 @@ export async function updateScopedCheckPlan(
             body: plan as HappydnsCheckPlanWritable,
         }),
     ) as HappydnsCheckPlan;
+}
+
+// --- Metrics types and API functions ---
+
+export type CheckMetric = CheckerCheckMetric;
+
+export async function getScopedCheckerMetrics(
+    scope: CheckerScope,
+    checkerId: string,
+    limit: number = 100,
+): Promise<CheckMetric[]> {
+    if (isServiceScope(scope)) {
+        return unwrapSdkResponse(
+            await getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdMetrics({
+                path: { domain: scope.domainId, zoneid: scope.zoneId, subdomain: scope.subdomain, serviceid: scope.serviceId, checkerId },
+                query: { limit },
+            }),
+        ) as CheckMetric[];
+    }
+    return unwrapSdkResponse(
+        await getDomainsByDomainCheckersByCheckerIdMetrics({
+            path: { domain: scope.domainId, checkerId },
+            query: { limit },
+        }),
+    ) as CheckMetric[];
+}
+
+export async function getScopedExecutionMetrics(
+    scope: CheckerScope,
+    checkerId: string,
+    executionId: string,
+): Promise<CheckMetric[]> {
+    if (isServiceScope(scope)) {
+        return unwrapSdkResponse(
+            await getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdExecutionsByExecutionIdMetrics({
+                path: { domain: scope.domainId, zoneid: scope.zoneId, subdomain: scope.subdomain, serviceid: scope.serviceId, checkerId, executionId },
+            }),
+        ) as CheckMetric[];
+    }
+    return unwrapSdkResponse(
+        await getDomainsByDomainCheckersByCheckerIdExecutionsByExecutionIdMetrics({
+            path: { domain: scope.domainId, checkerId, executionId },
+        }),
+    ) as CheckMetric[];
 }
 
 // HTML report functions

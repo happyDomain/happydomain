@@ -28,8 +28,8 @@
     import { t } from "$lib/translations";
     import { toasts } from "$lib/stores/toasts";
     import type { HappydnsExecution } from "$lib/api-base/types.gen";
-    import type { CheckerScope } from "$lib/api/checkers";
-    import { listScopedExecutions, getCheckStatus, deleteScopedExecution, deleteAllScopedExecutions } from "$lib/api/checkers";
+    import type { CheckerScope, CheckMetric } from "$lib/api/checkers";
+    import { listScopedExecutions, getCheckStatus, deleteScopedExecution, deleteAllScopedExecutions, getScopedCheckerMetrics } from "$lib/api/checkers";
     import {
         getExecutionStatusColor,
         getExecutionStatusI18nKey,
@@ -39,6 +39,7 @@
     } from "$lib/utils";
     import PageTitle from "$lib/components/PageTitle.svelte";
     import RunCheckModal from "$lib/components/modals/RunCheckModal.svelte";
+    import CheckMetricsChart from "$lib/components/checkers/CheckMetricsChart.svelte";
 
     interface Props {
         scope: CheckerScope;
@@ -53,10 +54,17 @@
     let executions = $state<HappydnsExecution[]>([]);
     let executionsPromise: Promise<HappydnsExecution[]> = $derived(loadExecutions());
     let runCheckModal = $state<RunCheckModal>();
+    let metricsData = $state<CheckMetric[] | null>(null);
 
     $effect(() => {
+        metricsData = null;
         getCheckStatus(checkerId).then((s) => {
             resolvedName = s.name ?? checkerId;
+            if (s.has_metrics) {
+                getScopedCheckerMetrics(scope, checkerId)
+                    .then((m) => (metricsData = m))
+                    .catch((e) => console.warn("Failed to load checker metrics", e));
+            }
         });
     });
 
@@ -179,6 +187,13 @@
             </p>
         </Card>
     {:then _executions}
+        {#if metricsData && metricsData.length > 0}
+            <Card class="mb-3">
+                <div class="card-body">
+                    <CheckMetricsChart metrics={metricsData} />
+                </div>
+            </Card>
+        {/if}
         {#if executions.length === 0}
             <Alert color="info">
                 <Icon name="info-circle" />

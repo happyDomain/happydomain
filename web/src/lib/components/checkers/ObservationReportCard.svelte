@@ -22,12 +22,13 @@
 -->
 
 <script lang="ts">
-    import { Spinner } from "@sveltestrap/sveltestrap";
+    import { Spinner, Table } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
     import type { CheckerScope, CheckMetric, ObservationSnapshotWithData } from "$lib/api/checkers";
     import { getScopedExecutionHTMLReport } from "$lib/api/checkers";
-    import { showHTMLReport, cachedHTMLReport } from "$lib/stores/checkers";
+    import { showHTMLReport, reportViewMode, cachedHTMLReport } from "$lib/stores/checkers";
+    import CheckMetricsChart from "./CheckMetricsChart.svelte";
 
     interface Props {
         observations: ObservationSnapshotWithData;
@@ -37,7 +38,7 @@
         execId?: string;
     }
 
-    let { observations, scope, checkerId, execId }: Props = $props();
+    let { observations, metrics = null, scope, checkerId, execId }: Props = $props();
 
     let htmlReportPromise = $state<Promise<string> | null>(null);
 
@@ -58,7 +59,36 @@
         class="flex-fill d-flex"
         style="overflow: auto; padding: var(--bs-card-spacer-y) var(--bs-card-spacer-x)"
     >
-        {#if $showHTMLReport && htmlReportPromise}
+        {#if $reportViewMode === "metrics" && metrics && metrics.length > 0}
+            <div style="width: 100%;">
+                <CheckMetricsChart {metrics} />
+                <Table size="sm" hover striped class="mt-3">
+                    <thead>
+                        <tr>
+                            <th>{$t("checkers.result.metric-name")}</th>
+                            <th class="text-end">{$t("checkers.result.metric-value")}</th>
+                            <th>{$t("checkers.result.metric-unit")}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {#each metrics as metric}
+                            <tr>
+                                <td>
+                                    {metric.name}
+                                    {#if metric.labels}
+                                        <small class="text-muted">
+                                            {Object.entries(metric.labels).map(([k, v]) => `${k}=${v}`).join(", ")}
+                                        </small>
+                                    {/if}
+                                </td>
+                                <td class="text-end font-monospace">{metric.value}</td>
+                                <td class="text-muted">{metric.unit ?? ""}</td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </Table>
+            </div>
+        {:else if $showHTMLReport && htmlReportPromise}
             {#await htmlReportPromise}
                 <div class="text-center p-4"><Spinner /></div>
             {:then html}

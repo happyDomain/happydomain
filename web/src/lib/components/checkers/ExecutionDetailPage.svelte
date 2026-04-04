@@ -26,10 +26,11 @@
     import { Alert, Card, Container, Icon } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
-    import type { CheckerScope } from "$lib/api/checkers";
+    import type { CheckerScope, CheckMetric } from "$lib/api/checkers";
     import {
         getScopedExecution,
         getScopedExecutionObservations,
+        getScopedExecutionMetrics,
         getCheckStatus,
     } from "$lib/api/checkers";
     import { currentExecution, currentCheckInfo, currentObservations, reportViewMode, cachedHTMLReport } from "$lib/stores/checkers";
@@ -46,10 +47,12 @@
     let checkerName = $state<string>("");
     let loading = $state(true);
     let error = $state<string | undefined>(undefined);
+    let metricsData = $state<CheckMetric[] | null>(null);
 
     $effect(() => {
         loading = true;
         error = undefined;
+        metricsData = null;
         cachedHTMLReport.set(null);
 
         Promise.all([
@@ -67,7 +70,7 @@
                     reportViewMode.set("metrics");
                     getScopedExecutionMetrics(scope, checkerId, execId)
                         .then((m) => (metricsData = m))
-                        .catch(() => {});
+                        .catch((e) => console.warn("Failed to load execution metrics", e));
                 } else if (checkerInfo.has_html_report) {
                     reportViewMode.set("html");
                 } else {
@@ -114,6 +117,7 @@
 {:else if $currentObservations}
     <ObservationReportCard
         observations={$currentObservations}
+        metrics={metricsData}
         {scope}
         {checkerId}
         {execId}
