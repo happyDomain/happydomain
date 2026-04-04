@@ -36,8 +36,8 @@ export const thisAliases = derived(thisZone, ($thisZone) => {
 
     Object.entries($thisZone.services).forEach(([dn, services]) => {
         services?.forEach((svc) => {
-            if (svc._svctype === "svcs.CNAME" && svc.Service) {
-                const target = svc.Service.Target as string;
+            if (svc._svctype === "svcs.CNAME" && svc.Service && typeof svc.Service === "object") {
+                const target = (svc.Service as Record<string, unknown>).Target as string;
                 aliases[target] = [...(aliases[target] || []), dn];
             }
         });

@@ -22,10 +22,10 @@
 -->
 
 <script module lang="ts">
-    import type { ServiceCombined } from "$lib/model/service.svelte";
+    import type { HappydnsService } from "$lib/api-base/types.gen";
 
     export const controls = {
-        Open(service: ServiceCombined): void {},
+        Open(service: HappydnsService): void {},
     };
 </script>
 
@@ -61,8 +61,8 @@
 
     let { domain, selectedHistory = "", isOpen = $bindable(false) }: Props = $props();
 
-    let service: ServiceCombined = $state({} as ServiceCombined);
-    function Open(svc: ServiceCombined): void {
+    let service: HappydnsService = $state({} as HappydnsService);
+    function Open(svc: HappydnsService): void {
         isOpen = true;
         service = svc;
     }

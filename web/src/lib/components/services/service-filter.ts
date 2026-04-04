@@ -1,5 +1,5 @@
 import { nsrrtype } from "$lib/dns";
-import type { ServiceCombined } from "$lib/model/service.svelte";
+import type { HappydnsService } from "$lib/api-base/types.gen";
 import { passRestrictions, type ServiceInfos } from "$lib/model/service_specs.svelte";
 import type { ProviderInfos } from "$lib/model/provider";
 
@@ -11,7 +11,7 @@ export interface FilteredServices {
 export function filterServices(
     servicesList: ServiceInfos[],
     providerSpecs: ProviderInfos,
-    zservices: Record<string, Array<ServiceCombined>>,
+    zservices: Record<string, Array<HappydnsService>>,
     dn: string,
     filteredName: string,
     filteredFamily: string | null = null

@@ -29,6 +29,7 @@
 
     import { Button, Icon, Spinner } from "@sveltestrap/sveltestrap";
 
+    import type { HappydnsService } from "$lib/api-base/types.gen";
     import { initializeService } from "$lib/api/service_specs";
     import { addZoneService, updateZoneService } from "$lib/api/zone";
     import PageTitle from "$lib/components/PageTitle.svelte";
@@ -58,7 +59,7 @@
 
     let svcType: string = $derived(page.url.searchParams.get("type") ?? "");
 
-    let service: ServiceCombined | null = $state(null);
+    let service: HappydnsService | null = $state(null);
     let serviceLoading = $state(false);
 
     let serviceTitle = $derived.by(() => {
@@ -127,7 +128,7 @@
         );
     }
 
-    function helpLink(svc: ServiceCombined | null): string {
+    function helpLink(svc: HappydnsService | null): string {
         if (!svc?._svctype) return "";
         const svcPart = svc._svctype.toLowerCase().split(".");
         let path = svcPart[svcPart.length - 1] + "/";

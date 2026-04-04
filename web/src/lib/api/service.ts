@@ -20,8 +20,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { getDomainsByDomainIdZoneByZoneIdBySubdomainServicesByServiceId } from "$lib/api-base/sdk.gen";
+import type { HappydnsService } from "$lib/api-base/types.gen";
 import type { Domain } from "$lib/model/domain";
-import type { ServiceCombined } from "$lib/model/service.svelte";
 import { unwrapSdkResponse } from "./errors";
 
 export async function getService(
@@ -29,7 +29,7 @@ export async function getService(
     zoneid: string,
     subdomain: string,
     svcid: string,
-): Promise<ServiceCombined> {
+): Promise<HappydnsService> {
     return unwrapSdkResponse(
         await getDomainsByDomainIdZoneByZoneIdBySubdomainServicesByServiceId({
             path: {
@@ -39,5 +39,5 @@ export async function getService(
                 serviceId: svcid,
             },
         }),
-    ) as ServiceCombined;
+    ) as HappydnsService;
 }

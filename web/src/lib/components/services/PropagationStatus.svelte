@@ -28,14 +28,12 @@
     import PropagationCountdown from "./PropagationCountdown.svelte";
 
     interface Props {
-        propagatedAt?: string | null;
+        propagatedAt?: Date;
     }
 
     let { propagatedAt }: Props = $props();
 
-    let _propagatedAt = $derived(propagatedAt ? new Date(propagatedAt) : null);
-
-    let isPropagating = $derived(_propagatedAt && _propagatedAt > new Date());
+    let isPropagating = $derived(propagatedAt && propagatedAt > new Date());
 </script>
 
 {#if isPropagating}

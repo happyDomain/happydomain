@@ -29,7 +29,7 @@
     import { filterServices } from "./service-filter";
     import type { Domain } from "$lib/model/domain";
     import type { ProviderInfos } from "$lib/model/provider";
-    import type { ServiceCombined } from "$lib/model/service.svelte";
+    import type { HappydnsService } from "$lib/api-base/types.gen";
     import { providers_idx } from "$lib/stores/providers";
     import { servicesSpecsList, servicesSpecsLoaded } from "$lib/stores/services";
     import { filteredName } from "$lib/stores/serviceSelector";
@@ -39,7 +39,7 @@
         dn: string;
         origin: Domain;
         value?: string | null;
-        zservices: Record<string, Array<ServiceCombined>>;
+        zservices: Record<string, Array<HappydnsService>>;
     }
 
     let { dn, origin, value = $bindable(null), zservices }: Props = $props();

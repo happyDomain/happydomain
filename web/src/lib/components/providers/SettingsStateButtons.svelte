@@ -37,7 +37,7 @@
         form?: CustomForm | null;
         nextInProgress?: boolean;
         previousInProgress?: boolean;
-        submitForm?: string | null;
+        submitForm?: string;
         [key: string]: any
     }
 
@@ -47,7 +47,7 @@
         form = null,
         nextInProgress = false,
         previousInProgress = false,
-        submitForm = null,
+        submitForm,
         ...rest
     }: Props = $props();
 

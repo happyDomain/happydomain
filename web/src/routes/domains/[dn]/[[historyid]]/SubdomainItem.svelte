@@ -27,14 +27,14 @@
     import SubdomainItemHeader from "./SubdomainItemHeader.svelte";
     import { isReverseZone } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service.svelte";
+    import type { HappydnsService } from "$lib/api-base/types.gen";
     import { thisZone } from "$lib/stores/thiszone";
 
     interface Props {
         children: Snippet;
         dn: string;
         origin: Domain;
-        services: Array<ServiceCombined>;
+        services: Array<HappydnsService>;
     }
 
     let { children, dn, origin, services }: Props = $props();

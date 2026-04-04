@@ -26,13 +26,13 @@
     import { Badge } from "@sveltestrap/sveltestrap";
 
     import { nsrrtype } from "$lib/dns";
-    import type { ServiceCombined } from "$lib/model/service.svelte";
+    import type { HappydnsService } from "$lib/api-base/types.gen";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { userSession } from "$lib/stores/usersession";
 
     interface Props {
         class?: ClassValue;
-        service: ServiceCombined | null;
+        service: HappydnsService | null;
     }
 
     let { service, class: className = "" }: Props = $props();

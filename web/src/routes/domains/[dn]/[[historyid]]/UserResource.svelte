@@ -29,7 +29,7 @@
     import RecordText from "$lib/components/records/RecordText.svelte";
     import { controls as ctrlRecord } from "$lib/components/modals/Record.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service.svelte";
+    import type { HappydnsService } from "$lib/api-base/types.gen";
     import { ZoneViewList, ZoneViewRecords } from "$lib/model/usersettings";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { navigate } from "$lib/stores/config";
@@ -39,13 +39,13 @@
     interface Props {
         dn: string;
         origin: Domain;
-        services: Array<ServiceCombined>;
+        services: Array<HappydnsService>;
         zoneId: string;
     }
 
     let { dn, origin, services, zoneId }: Props = $props();
 
-    function openService(service: ServiceCombined) {
+    function openService(service: HappydnsService) {
         const subdomainParam = service._domain === "" || service._domain === "@" ? "@" : service._domain;
         navigate(
             `/domains/${encodeURIComponent(origin.domain)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(subdomainParam)}/${encodeURIComponent(service._id!)}`,

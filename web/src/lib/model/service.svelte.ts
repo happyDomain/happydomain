@@ -24,12 +24,12 @@ export class ServiceMeta {
     _id? = $state<string | undefined>(undefined);
     _ownerid? = $state<string | undefined>(undefined);
     _domain = $state<string>('');
-    _ttl? = $state<number | undefined>(undefined);
+    _ttl = $state<number>(0);
     _comment? = $state<string | undefined>(undefined);
     _mycomment? = $state<string | undefined>(undefined);
     _aliases? = $state<Array<string> | undefined>(undefined);
-    _tmp_hint_nb? = $state<number | undefined>(undefined);
-    _propagated_at? = $state<string | undefined>(undefined);
+    _tmp_hint_nb = $state<number>(0);
+    _propagated_at? = $state<Date | undefined>(undefined);
 
     constructor(init?: {
         _svctype: string;
@@ -41,7 +41,7 @@ export class ServiceMeta {
         _mycomment?: string;
         _aliases?: Array<string>;
         _tmp_hint_nb?: number;
-        _propagated_at?: string;
+        _propagated_at?: Date;
     }) {
         if (init) {
             this._svctype = init._svctype;
@@ -86,7 +86,7 @@ export class ServiceCombined extends ServiceMeta {
         _mycomment?: string;
         _aliases?: Array<string>;
         _tmp_hint_nb?: number;
-        _propagated_at?: string;
+        _propagated_at?: Date;
         Service?: Record<string, unknown> | null;
     }) {
         super(init);

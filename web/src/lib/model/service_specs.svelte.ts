@@ -24,7 +24,7 @@ import { get } from "svelte/store";
 import { getRrtype, newRR } from "$lib/dns_rr";
 import type { Field } from "$lib/model/custom_form.svelte";
 import { getAvailableResourceTypes, type ProviderInfos } from "$lib/model/provider";
-import type { ServiceCombined } from "$lib/model/service.svelte";
+import type { HappydnsService } from "$lib/api-base/types.gen";
 import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
 
 export const SERVICE_FAMILY_ABSTRACT = "abstract";
@@ -94,7 +94,7 @@ export class ServiceSpec {
 export function passRestrictions(
     svcinfo: ServiceInfos,
     provider_specs: ProviderInfos,
-    zservices: Record<string, Array<ServiceCombined>>,
+    zservices: Record<string, Array<HappydnsService>>,
     dn: string,
 ): null | string {
     if (svcinfo.restrictions) {

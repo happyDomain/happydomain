@@ -40,7 +40,6 @@ import { printRR } from "$lib/dns";
 import type { dnsRR } from "$lib/dns_rr";
 import type { Correction, FullCorrection } from "$lib/model/correction";
 import type { Domain } from "$lib/model/domain";
-import type { ServiceCombined, ServiceMeta } from "$lib/model/service.svelte";
 import type { Zone, ZoneMeta } from "$lib/model/zone";
 import { unwrapSdkResponse } from "./errors";
 
@@ -49,7 +48,7 @@ export async function getZone(domain: Domain, id: string): Promise<Zone> {
         await getDomainsByDomainIdZoneByZoneId({
             path: { domainId: domain.id, zoneId: id },
         }),
-    ) as unknown as Zone;
+    ) as Zone;
 }
 
 export async function viewZone(domain: Domain, id: string): Promise<string> {
@@ -131,7 +130,7 @@ export async function diffZoneSummary(
 export async function addZoneService(
     domain: Domain,
     id: string,
-    service: ServiceCombined,
+    service: HappydnsService,
 ): Promise<Zone> {
     let subdomain = service._domain;
     if (subdomain === "") subdomain = "@";
@@ -139,28 +138,28 @@ export async function addZoneService(
     return unwrapSdkResponse(
         await postDomainsByDomainIdZoneByZoneIdBySubdomainServices({
             path: { domainId: domain.id, zoneId: id, subdomain },
-            body: service as HappydnsService,
+            body: service,
         }),
-    ) as unknown as Zone;
+    ) as Zone;
 }
 
 export async function updateZoneService(
     domain: Domain,
     id: string,
-    service: ServiceCombined,
+    service: HappydnsService,
 ): Promise<Zone> {
     return unwrapSdkResponse(
         await patchDomainsByDomainIdZoneByZoneId({
             path: { domainId: domain.id, zoneId: id },
-            body: service as HappydnsService,
+            body: service,
         }),
-    ) as unknown as Zone;
+    ) as Zone;
 }
 
 export async function deleteZoneService(
     domain: Domain,
     id: string,
-    service: ServiceMeta,
+    service: HappydnsService,
 ): Promise<Zone> {
     let subdomain = service._domain;
     if (subdomain === "") subdomain = "@";
@@ -171,7 +170,7 @@ export async function deleteZoneService(
         await deleteDomainsByDomainIdZoneByZoneIdBySubdomainServicesByServiceId({
             path: { domainId: domain.id, zoneId: id, subdomain, serviceId: svcid },
         }),
-    ) as unknown as Zone;
+    ) as Zone;
 }
 
 export async function addZoneRecord(
@@ -185,7 +184,7 @@ export async function addZoneRecord(
             path: { domainId: domain.id, zoneId: id },
             body: [printRR(record, subdomain)],
         }),
-    ) as unknown as Zone;
+    ) as Zone;
 }
 
 export async function deleteZoneRecord(
@@ -199,7 +198,7 @@ export async function deleteZoneRecord(
             path: { domainId: domain.id, zoneId: id },
             body: [printRR(record, subdomain)],
         }),
-    ) as unknown as Zone;
+    ) as Zone;
 }
 
 export async function updateZoneRecord(
@@ -214,5 +213,5 @@ export async function updateZoneRecord(
             path: { domainId: domain.id, zoneId: id },
             body: { oldrr: printRR(oldrr, subdomain), newrr: printRR(newrr, subdomain) },
         }),
-    ) as unknown as Zone;
+    ) as Zone;
 }

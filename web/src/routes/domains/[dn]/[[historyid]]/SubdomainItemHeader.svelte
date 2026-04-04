@@ -30,7 +30,7 @@
     import { controls as ctrlNewService } from "$lib/components/services/NewServicePath.svelte";
     import { fqdn, unreverseDomain } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service.svelte";
+    import type { HappydnsService } from "$lib/api-base/types.gen";
     import { ZoneViewGrid, ZoneViewRecords } from "$lib/model/usersettings";
     import { navigate } from "$lib/stores/config";
     import { servicesSpecs } from "$lib/stores/services";
@@ -41,7 +41,7 @@
     interface Props {
         dn: string;
         origin: Domain;
-        services: Array<ServiceCombined>;
+        services: Array<HappydnsService>;
         zoneId: string;
         reverseZone?: boolean;
         showResources?: boolean;
@@ -60,11 +60,11 @@
         },
     }: Props = $props();
 
-    function isCNAME(services: Array<ServiceCombined>) {
+    function isCNAME(services: Array<HappydnsService>) {
         return services.length === 1 && services[0]._svctype === "svcs.CNAME";
     }
 
-    function isPTR(services: Array<ServiceCombined>) {
+    function isPTR(services: Array<HappydnsService>) {
         return services.length === 1 && services[0]._svctype === "svcs.PTR";
     }
 
@@ -118,9 +118,10 @@
         </span>
     </div>
     {#if isCNAME(services) || isPTR(services)}
+        {@const svcData = services[0].Service as Record<string, unknown> | undefined}
         {@const dn = (isPTR(services)
-            ? (services[0].Service?.Record as Record<string, unknown> | undefined)?.Ptr
-            : (services[0].Service?.cname as Record<string, unknown> | undefined)?.Target) as string}
+            ? (svcData?.Record as Record<string, unknown> | undefined)?.Ptr
+            : (svcData?.cname as Record<string, unknown> | undefined)?.Target) as string}
         <span class="text-truncate text-muted lead">
             <Icon name="arrow-right" />
             <span class="font-monospace">

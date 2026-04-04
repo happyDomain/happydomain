@@ -30,7 +30,7 @@
     interface Props {
         isPropagating?: boolean;
         localeString?: string;
-        propagatedAt?: string | null;
+        propagatedAt?: Date;
     }
 
     let {
@@ -38,8 +38,6 @@
         propagatedAt,
         localeString = "service.propagation-remaining",
     }: Props = $props();
-
-    let _propagatedAt = $derived(propagatedAt ? new Date(propagatedAt) : null);
 
     let countdown = $state("");
     let interval: ReturnType<typeof setInterval>;
@@ -49,15 +47,15 @@
     });
 
     $effect(() => {
-        if (_propagatedAt) {
-            isPropagating = _propagatedAt > new Date();
+        if (propagatedAt) {
+            isPropagating = propagatedAt > new Date();
 
             if (interval) clearInterval(interval);
 
-            countdown = formatCountdown(_propagatedAt);
+            countdown = formatCountdown(propagatedAt);
             interval = setInterval(() => {
-                countdown = formatCountdown(_propagatedAt);
-                if (_propagatedAt <= new Date()) {
+                countdown = formatCountdown(propagatedAt!);
+                if (propagatedAt! <= new Date()) {
                     isPropagating = false;
                     clearInterval(interval);
                 }
