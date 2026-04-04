@@ -48,11 +48,11 @@ export interface ProviderMeta {
 }
 
 export interface ProviderData extends ProviderMeta {
-    Provider: any;
+    Provider: Record<string, unknown>;
 }
 
 export interface Provider extends ProviderMeta {
-    Provider: any;
+    Provider: Record<string, unknown>;
 }
 
 export function isProvider(e: unknown): e is Provider {

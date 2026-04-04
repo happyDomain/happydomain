@@ -74,7 +74,7 @@ export class ServiceMeta {
 }
 
 export class ServiceCombined extends ServiceMeta {
-    Service = $state<any>(null);
+    Service = $state<Record<string, unknown> | null>(null);
 
     constructor(init?: {
         _svctype: string;
@@ -87,7 +87,7 @@ export class ServiceCombined extends ServiceMeta {
         _aliases?: Array<string>;
         _tmp_hint_nb?: number;
         _propagated_at?: string;
-        Service?: any;
+        Service?: Record<string, unknown> | null;
     }) {
         super(init);
         if (init?.Service !== undefined) {

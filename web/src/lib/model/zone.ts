@@ -23,7 +23,7 @@ import type { ServiceCombined } from "$lib/model/service.svelte";
 
 export interface ServiceRecord {
     str: string;
-    rr: any; // dns.RR
+    rr: Record<string, unknown>; // dns.RR
 
     // ui
     edit?: boolean;
@@ -32,7 +32,7 @@ export interface ServiceRecord {
 export interface ZoneMeta {
     id: string;
     id_author: string;
-    default_ttl: Number;
+    default_ttl: number;
     last_modified: Date;
     commit_message?: string;
     commit_date?: Date;

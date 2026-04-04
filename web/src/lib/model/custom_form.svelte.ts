@@ -49,7 +49,7 @@ export class CustomForm {
 }
 
 export class FormState {
-    _id? = $state<any>();
+    _id? = $state<string>();
     _comment? = $state<string>();
     state = $state<number>(0);
     recall? = $state<string>();

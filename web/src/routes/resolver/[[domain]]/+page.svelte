@@ -63,8 +63,8 @@
             (response) => {
                 error_response = null;
                 question = Object.assign({}, form);
-                if (response.Answer) {
-                    responses = response.Answer;
+                if (response.answer) {
+                    responses = response.answer;
                 } else {
                     responses = "no-answer";
                 }

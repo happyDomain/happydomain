@@ -118,9 +118,9 @@
         </span>
     </div>
     {#if isCNAME(services) || isPTR(services)}
-        {@const dn = isPTR(services)
-            ? services[0].Service.Record?.Ptr
-            : services[0].Service.cname.Target}
+        {@const dn = (isPTR(services)
+            ? (services[0].Service?.Record as Record<string, unknown> | undefined)?.Ptr
+            : (services[0].Service?.cname as Record<string, unknown> | undefined)?.Target) as string}
         <span class="text-truncate text-muted lead">
             <Icon name="arrow-right" />
             <span class="font-monospace">

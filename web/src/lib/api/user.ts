@@ -161,6 +161,6 @@ export async function getUser(id: string): Promise<User> {
     return unwrapSdkResponse(
         await getUsersByUserId({
             path: { userId: id },
-        } as any),
+        }),
     ) as unknown as User;
 }

@@ -32,7 +32,7 @@
 
     let { data }: Props = $props();
 
-    let value: ProviderSettingsState = $derived({ ...data.provider, state: 0 });
+    let value: ProviderSettingsState = $derived({ ...data.provider, state: 0 } as unknown as ProviderSettingsState);
 </script>
 
 <ProviderFormPage

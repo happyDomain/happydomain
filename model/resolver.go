@@ -40,30 +40,48 @@ type ResolverRequest struct {
 	Type string `json:"type"`
 }
 
+// DNSQuestion holds a single DNS question entry.
 type DNSQuestion struct {
 	// Name is the domain name researched.
-	Name string
+	Name string `json:"name"`
 
 	// Qtype is the type of record researched.
-	Qtype uint16
+	Qtype uint16 `json:"qtype"`
 
 	// Qclass is the class of record researched.
-	Qclass uint16
+	Qclass uint16 `json:"qclass"`
 }
 
-// DNSMsg is the documentation struct corresponding to dns.Msg
-type DNSMsg struct {
+// ResolverResponse is the API response for a DNS resolution.
+type ResolverResponse struct {
 	// Question is the Question section of the DNS response.
-	Question []DNSQuestion
+	Question []DNSQuestion `json:"question"`
 
 	// Answer is the list of Answer records in the DNS response.
-	Answer []any `swaggertype:"object"`
+	Answer []dns.RR `json:"answer" swaggertype:"object"`
 
 	// Ns is the list of Authoritative records in the DNS response.
-	Ns []any `swaggertype:"object"`
+	Ns []dns.RR `json:"ns" swaggertype:"object"`
 
 	// Extra is the list of extra records in the DNS response.
-	Extra []any `swaggertype:"object"`
+	Extra []dns.RR `json:"extra" swaggertype:"object"`
+}
+
+// NewResolverResponseFromMsg converts a dns.Msg to a ResolverResponse.
+func NewResolverResponseFromMsg(msg *dns.Msg) *ResolverResponse {
+	resp := &ResolverResponse{
+		Answer: msg.Answer,
+		Ns:     msg.Ns,
+		Extra:  msg.Extra,
+	}
+	for _, q := range msg.Question {
+		resp.Question = append(resp.Question, DNSQuestion{
+			Name:   q.Name,
+			Qtype:  q.Qtype,
+			Qclass: q.Qclass,
+		})
+	}
+	return resp
 }
 
 type ResolverUsecase interface {

@@ -21,7 +21,7 @@
 
 import {
     getSessions,
-    getSession as getSdkSession,
+    getSession,
     postSessions,
     putSessionsBySessionId,
     deleteSessionsBySessionId,
@@ -35,44 +35,33 @@ export async function listSessions(): Promise<Array<Session>> {
 }
 
 /**
- * Get a specific session by ID.
- * Note: This endpoint does not exist in the current OpenAPI spec.
- * This function will throw an error for now.
- */
-export async function getSession(id: string): Promise<Session> {
-    // TODO: This endpoint (GET /sessions/{sessionId}) is not in the OpenAPI spec
-    // For now, we'll have to use a direct fetch or wait for the spec to be updated
-    throw new Error("getSession by ID is not implemented in the current API");
-}
-
-/**
  * Get the current session.
  * Uses the /session endpoint (singular).
  */
 export async function getCurrentSession(): Promise<Session> {
-    return unwrapSdkResponse(await getSdkSession()) as Session;
+    return unwrapSdkResponse(await getSession()) as unknown as Session;
 }
 
 export async function addSession(description: string): Promise<Session> {
     return unwrapSdkResponse(
         await postSessions({
-            body: {
-                description,
-            } as any,
+            body: { description },
         }),
-    ) as Session;
+    ) as unknown as Session;
 }
 
 export async function updateSession(session: Session): Promise<Session> {
     if (!session.id) {
-        throw new Error("updateSession requires an existing session id; use addSession to create a new one");
+        throw new Error(
+            "updateSession requires an existing session id; use addSession to create a new one",
+        );
     }
     return unwrapSdkResponse(
         await putSessionsBySessionId({
             path: { sessionId: session.id },
-            body: session as any,
+            body: { description: session.description, exp: session.exp },
         }),
-    ) as Session;
+    ) as unknown as Session;
 }
 
 export async function deleteSession(id: string): Promise<boolean> {

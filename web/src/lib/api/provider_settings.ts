@@ -20,20 +20,20 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { postProvidersSpecsByProviderTypeSettings } from "$lib/api-base/sdk.gen";
-import type { Provider } from "$lib/model/provider";
-import type { ProviderSettingsResponse } from "$lib/model/provider_settings";
+import { isProvider, type Provider } from "$lib/model/provider";
+import type { ProviderSettingsResponse, ProviderSettingsState } from "$lib/model/provider_settings";
 import { unwrapSdkResponse } from "./errors";
 
 export async function getProviderSettings(
     psid: string,
     state: number,
-    settings: any,
+    settings: ProviderSettingsState,
     recallid: number | undefined = undefined,
 ): Promise<ProviderSettingsResponse> {
     if (!state) state = 0;
-    if (!settings) settings = {};
+    if (!settings) settings = { state };
     settings.state = state;
-    if (recallid) settings.recall = recallid;
+    if (recallid) settings.recall = String(recallid);
 
     const data = unwrapSdkResponse(
         await postProvidersSpecsByProviderTypeSettings({
@@ -42,11 +42,9 @@ export async function getProviderSettings(
         }),
     );
 
-    // If the response has _id, it means the provider setup is complete
-    // Throw the Provider object to match old API behavior
-    if ((data as any)._id) {
+    if (isProvider(data)) {
         throw data as Provider;
-    } else if ((data as any).form) {
+    } else if ("form" in data) {
         return data as ProviderSettingsResponse;
     } else {
         throw new Error("Not implemented");

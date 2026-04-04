@@ -28,6 +28,7 @@ import {
     putProvidersByProviderId,
     deleteProvidersByProviderId,
 } from "$lib/api-base/sdk.gen";
+import type { HappydnsProviderMinimal } from "$lib/api-base/types.gen";
 import type { Provider } from "$lib/model/provider";
 import { unwrapSdkResponse, unwrapEmptyResponse } from "./errors";
 
@@ -51,17 +52,12 @@ export async function listImportableDomains(provider: Provider): Promise<Array<s
     ) as Array<string>;
 }
 
-/**
- * Create a domain at the provider.
- * Note: The old API used POST, but the current OpenAPI spec has GET endpoint.
- * This might need investigation if it doesn't work as expected.
- */
 export async function createDomain(provider: Provider, fqdn: string): Promise<boolean> {
-    return unwrapSdkResponse(
+    return unwrapEmptyResponse(
         await getProvidersByProviderIdDomainsByFqdn({
-            path: { providerId: provider._id, fqdn } as any,
+            path: { providerId: provider._id, fqdn },
         }),
-    ) as unknown as boolean;
+    );
 }
 
 export async function updateProvider(provider: Provider): Promise<Provider> {
@@ -69,13 +65,13 @@ export async function updateProvider(provider: Provider): Promise<Provider> {
         return unwrapSdkResponse(
             await putProvidersByProviderId({
                 path: { providerId: provider._id },
-                body: provider as any,
+                body: provider as unknown as HappydnsProviderMinimal,
             }),
         ) as Provider;
     } else {
         return unwrapSdkResponse(
             await postProviders({
-                body: provider as any,
+                body: provider as unknown as HappydnsProviderMinimal,
             }),
         ) as Provider;
     }

@@ -42,32 +42,6 @@ func NewResolverController(resolverService happydns.ResolverUsecase) *ResolverCo
 	}
 }
 
-// DNSMsg is the documentation struct corresponding to dns.Msg
-type DNSMsg struct {
-	// Question is the Question section of the DNS response.
-	Question []DNSQuestion
-
-	// Answer is the list of Answer records in the DNS response.
-	Answer []any `swaggertype:"array,object"`
-
-	// Ns is the list of Authoritative records in the DNS response.
-	Ns []any `swaggertype:"array,object"`
-
-	// Extra is the list of extra records in the DNS response.
-	Extra []any `swaggertype:"array,object"`
-}
-
-type DNSQuestion struct {
-	// Name is the domain name researched.
-	Name string
-
-	// Qtype is the type of record researched.
-	Qtype uint16
-
-	// Qclass is the class of record researched.
-	Qclass uint16
-}
-
 // RunResolver performs a NS resolution for a given domain, with options.
 //
 //	@Summary	Perform a DNS resolution.
@@ -77,7 +51,7 @@ type DNSQuestion struct {
 //	@Accept			json
 //	@Produce		json
 //	@Param			body	body		happydns.ResolverRequest	true	"Options to the resolution"
-//	@Success		200		{object}	DNSMsg
+//	@Success		200		{object}	happydns.ResolverResponse
 //	@Failure		400		{object}	happydns.ErrorResponse	"Invalid input"
 //	@Failure		401		{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Failure		403		{object}	happydns.ErrorResponse	"The resolver refused to treat our request"
@@ -99,5 +73,5 @@ func (rc *ResolverController) RunResolver(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, r)
+	c.JSON(http.StatusOK, happydns.NewResolverResponseFromMsg(r))
 }

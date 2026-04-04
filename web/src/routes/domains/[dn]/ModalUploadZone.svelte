@@ -69,7 +69,7 @@
         if (uploadModalActiveTab != "uploadText" && zoneImportFiles?.[0]) {
             file = zoneImportFiles[0];
         }
-        APIImportZone(domain, selectedHistory, file).then(
+        APIImportZone(domain, file).then(
             (v) => {
                 isOpen = false;
                 uploadInProgress = false;

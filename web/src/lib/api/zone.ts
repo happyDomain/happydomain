@@ -35,6 +35,7 @@ import {
     postDomainsByDomainIdZoneByZoneIdRecordsDelete,
     patchDomainsByDomainIdZoneByZoneIdRecords,
 } from "$lib/api-base/sdk.gen";
+import type { HappydnsService } from "$lib/api-base/types.gen";
 import { printRR } from "$lib/dns";
 import type { dnsRR } from "$lib/dns_rr";
 import type { Correction, FullCorrection } from "$lib/model/correction";
@@ -76,7 +77,7 @@ export async function applyZone(
     return unwrapSdkResponse(
         await postDomainsByDomainIdZoneByZoneIdApplyChanges({
             path: { domainId: domain.id, zoneId: id },
-            body: { wantedCorrections, commitMessage } as any,
+            body: { wantedCorrections, commitMessage },
         }),
     ) as unknown as ZoneMeta;
 }
@@ -89,19 +90,16 @@ export async function prepareZone(
     return unwrapSdkResponse(
         await postDomainsByDomainIdZoneByZoneIdPrepareChanges({
             path: { domainId: domain.id, zoneId: id },
-            body: { wantedCorrections } as any,
+            body: { wantedCorrections },
         }),
     ) as { corrections: Array<FullCorrection>; nbDiffs: number };
 }
 
-export async function importZone(domain: Domain, id: string, file: any): Promise<ZoneMeta> {
-    const formData = new FormData();
-    formData.append("zone", file);
-
+export async function importZone(domain: Domain, file: File | Blob): Promise<ZoneMeta> {
     return unwrapSdkResponse(
         await postDomainsByDomainIdZone({
             path: { domainId: domain.id },
-            body: formData as any,
+            body: { zone: file },
         }),
     ) as unknown as ZoneMeta;
 }
@@ -141,7 +139,7 @@ export async function addZoneService(
     return unwrapSdkResponse(
         await postDomainsByDomainIdZoneByZoneIdBySubdomainServices({
             path: { domainId: domain.id, zoneId: id, subdomain },
-            body: service as any,
+            body: service as HappydnsService,
         }),
     ) as unknown as Zone;
 }
@@ -154,7 +152,7 @@ export async function updateZoneService(
     return unwrapSdkResponse(
         await patchDomainsByDomainIdZoneByZoneId({
             path: { domainId: domain.id, zoneId: id },
-            body: service as any,
+            body: service as HappydnsService,
         }),
     ) as unknown as Zone;
 }
@@ -185,7 +183,7 @@ export async function addZoneRecord(
     return unwrapSdkResponse(
         await postDomainsByDomainIdZoneByZoneIdRecords({
             path: { domainId: domain.id, zoneId: id },
-            body: [printRR(record, subdomain)] as any,
+            body: [printRR(record, subdomain)],
         }),
     ) as unknown as Zone;
 }
@@ -199,7 +197,7 @@ export async function deleteZoneRecord(
     return unwrapSdkResponse(
         await postDomainsByDomainIdZoneByZoneIdRecordsDelete({
             path: { domainId: domain.id, zoneId: id },
-            body: [printRR(record, subdomain)] as any,
+            body: [printRR(record, subdomain)],
         }),
     ) as unknown as Zone;
 }
@@ -214,7 +212,7 @@ export async function updateZoneRecord(
     return unwrapSdkResponse(
         await patchDomainsByDomainIdZoneByZoneIdRecords({
             path: { domainId: domain.id, zoneId: id },
-            body: { oldrr: printRR(oldrr, subdomain), newrr: printRR(newrr, subdomain) } as any,
+            body: { oldrr: printRR(oldrr, subdomain), newrr: printRR(newrr, subdomain) },
         }),
     ) as unknown as Zone;
 }

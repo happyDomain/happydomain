@@ -51,7 +51,7 @@ export async function addDomain(domain: string, provider: Provider | undefined):
             body: {
                 domain,
                 id_provider,
-            } as any,
+            },
         }),
     ) as Domain;
 }
@@ -61,13 +61,13 @@ export async function updateDomain(domain: Domain): Promise<Domain> {
         return unwrapSdkResponse(
             await putDomainsByDomainId({
                 path: { domainId: domain.id },
-                body: domain as any,
+                body: { group: domain.group },
             }),
         ) as Domain;
     } else {
         return unwrapSdkResponse(
             await postDomains({
-                body: domain as any,
+                body: domain,
             }),
         ) as Domain;
     }

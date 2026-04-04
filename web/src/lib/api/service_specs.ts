@@ -46,22 +46,20 @@ export async function getServiceSpec(ssid: string): Promise<ServiceSpec> {
     }
 }
 
-export async function initializeService(ssid: string): Promise<any> {
+export async function initializeService(ssid: string): Promise<Record<string, unknown>> {
     return unwrapSdkResponse(
         await postServiceSpecsByServiceTypeInit({
             path: { serviceType: ssid },
         }),
-    );
+    ) as Record<string, unknown>;
 }
 
-export async function generateServiceRecords(ssid: string, value: any, domain?: string): Promise<dnsRR[]> {
-    const query: Record<string, string> = {};
-    if (domain) query.domain = domain;
+export async function generateServiceRecords(ssid: string, value: Record<string, unknown>, domain?: string): Promise<dnsRR[]> {
     return unwrapSdkResponse(
         await postServiceSpecsByServiceTypeRecords({
             path: { serviceType: ssid },
-            body: value,
-            query: query as any,
+            body: value as any,
+            query: { domain: domain || "" },
         })
     ) as dnsRR[];
 }
