@@ -47,8 +47,8 @@
         addingNewDomain?: boolean;
         autofocus?: boolean;
         noButton?: boolean;
-        preAddFunc?: null | ((arg0: string) => Promise<boolean>);
-        provider?: Provider | null;
+        preAddFunc?: (arg0: string) => Promise<boolean>;
+        provider?: Provider;
         value?: string;
         [key: string]: any
     }
@@ -57,8 +57,8 @@
         addingNewDomain = $bindable(false),
         autofocus = false,
         noButton = false,
-        preAddFunc = null,
-        provider = null,
+        preAddFunc,
+        provider,
         value = $bindable(""),
         ...rest
     }: Props = $props();

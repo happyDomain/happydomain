@@ -37,7 +37,7 @@
     import { controls as ctrlServiceDetails } from "../ServiceDetailsOffcanvas.svelte";
     import { controls as ctrlServicePath } from "$lib/components/services/NewServicePath.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service.svelte";
+    import type { HappydnsService } from "$lib/api-base/types.gen";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { t } from "$lib/translations";
     import PropagationCountdown from "$lib/components/services/PropagationCountdown.svelte";
@@ -45,11 +45,11 @@
     interface Props {
         dn: string;
         origin: Domain;
-        service?: ServiceCombined | null;
+        service?: HappydnsService;
         zoneId: string;
     }
 
-    let { dn, origin, service = $bindable(null), zoneId }: Props = $props();
+    let { dn, origin, service, zoneId }: Props = $props();
 
     // Will be changed by PropagationCountdown
     let isPropagating = $state(true);

@@ -59,7 +59,7 @@
 
     let svcType: string = $derived(page.url.searchParams.get("type") ?? "");
 
-    let service: HappydnsService | null = $state(null);
+    let service: HappydnsService | undefined = $state();
     let serviceLoading = $state(false);
 
     let serviceTitle = $derived.by(() => {
@@ -76,7 +76,7 @@
     $effect(() => {
         if (data.serviceid !== "new") {
             const svcs = $thisZone?.services[data.subdomain];
-            service = svcs?.find((s) => s._id === data.serviceid) ?? null;
+            service = svcs?.find((s) => s._id === data.serviceid);
         }
     });
 
@@ -128,7 +128,7 @@
         );
     }
 
-    function helpLink(svc: HappydnsService | null): string {
+    function helpLink(svc: HappydnsService | undefined): string {
         if (!svc?._svctype) return "";
         const svcPart = svc._svctype.toLowerCase().split(".");
         let path = svcPart[svcPart.length - 1] + "/";

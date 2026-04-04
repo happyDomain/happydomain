@@ -59,8 +59,8 @@
                 body: {
                     domain: domain,
                     group: group || undefined,
-                    id_owner: id_owner || undefined,
-                    id_provider: id_provider || undefined,
+                    id_owner: id_owner,
+                    id_provider: id_provider,
                 }
             });
 

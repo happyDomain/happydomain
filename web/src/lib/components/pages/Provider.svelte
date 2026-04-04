@@ -43,8 +43,8 @@
         edit?: boolean;
         ptype: string;
         state: number;
-        providerId?: string | null;
-        value?: ProviderSettingsState | null;
+        providerId?: string;
+        value?: ProviderSettingsState;
     }
 
     let {
@@ -52,12 +52,12 @@
         edit = false,
         ptype,
         state: formstate,
-        providerId = null,
-        value = $bindable(null)
+        providerId,
+        value = $bindable()
     }: Props = $props();
 
     //
-    function createProviderForm(ptype: string, providerId: string | null, value: ProviderSettingsState | null, edit: boolean): ProviderForm {
+    function createProviderForm(ptype: string, providerId: string | undefined, value: ProviderSettingsState | undefined, edit: boolean): ProviderForm {
         const pf = new ProviderForm(
             ptype,
             () => refreshProviders().then(() => navigate("/?newProvider")),

@@ -35,7 +35,7 @@
     interface Props {
         toggle: () => void;
         step: number;
-        service?: ServiceCombined | null;
+        service?: ServiceCombined;
         form?: string;
         origin?: Domain | undefined;
         update?: boolean;
@@ -49,7 +49,7 @@
     let {
         toggle,
         step,
-        service = $bindable(null),
+        service = $bindable(),
         form = "addSvcForm",
         origin = undefined,
         update = false,

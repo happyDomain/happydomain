@@ -34,7 +34,7 @@
     interface Props {
         canDoNext?: boolean;
         edit?: boolean;
-        form?: CustomForm | null;
+        form?: CustomForm;
         nextInProgress?: boolean;
         previousInProgress?: boolean;
         submitForm?: string;
@@ -44,7 +44,7 @@
     let {
         canDoNext = true,
         edit = false,
-        form = null,
+        form,
         nextInProgress = false,
         previousInProgress = false,
         submitForm,

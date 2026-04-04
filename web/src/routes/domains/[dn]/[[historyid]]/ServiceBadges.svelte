@@ -32,7 +32,7 @@
 
     interface Props {
         class?: ClassValue;
-        service: HappydnsService | null;
+        service?: HappydnsService;
     }
 
     let { service, class: className = "" }: Props = $props();
