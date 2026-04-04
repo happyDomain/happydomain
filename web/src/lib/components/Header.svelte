@@ -132,6 +132,15 @@
                         <Icon name="search" class="me-2" />
                         {$t("menu.dns-resolver")}
                     </DropdownItem>
+                    <DropdownItem
+                        active={page.route &&
+                            (page.route.id == "/checkers" ||
+                                page.route.id?.startsWith("/checkers/"))}
+                        href="/checkers"
+                    >
+                        <Icon name="activity" class="me-2" />
+                        {$t("menu.checkers")}
+                    </DropdownItem>
                     <DropdownItem divider />
                     <DropdownItem active={page.route && page.route.id == "/me"} href="/me">
                         <Icon name="gear" class="me-2" />

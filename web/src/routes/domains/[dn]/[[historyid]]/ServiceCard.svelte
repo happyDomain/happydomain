@@ -39,7 +39,9 @@
     import type { Domain } from "$lib/model/domain";
     import type { ServiceWithValue } from "$lib/model/service.svelte";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
+    import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
+    import { getStatusColor, getStatusIcon } from "$lib/utils";
     import PropagationCountdown from "$lib/components/services/PropagationCountdown.svelte";
 
     interface Props {
@@ -83,7 +85,11 @@
                         <Icon name="plus-circle" /> {$t("service.new")}
                     {/if}
                 </CardTitle>
-                {#if service?._propagated_at && isPropagating}
+                {#if service?._id && $thisZone?.services_check_status?.[service._id] !== undefined}
+                    <span class={"text-" + getStatusColor($thisZone.services_check_status![service._id])}>
+                        <Icon name={getStatusIcon($thisZone.services_check_status![service._id])} />
+                    </span>
+                {:else if service?._propagated_at && isPropagating}
                     <Progress
                         class="rounded"
                         barClassName="px-2 text-end"

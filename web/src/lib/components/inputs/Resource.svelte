@@ -31,6 +31,7 @@
     import TableInput from "$lib/components/inputs/table.svelte";
     import type { Field } from "$lib/model/custom_form.svelte";
     import type { ServiceInfos } from "$lib/model/service_specs.svelte";
+    import type { CheckerCheckerOptionDocumentation } from "$lib/api-base/types.gen";
 
     const dispatch = createEventDispatcher();
 
@@ -41,7 +42,7 @@
         noDecorate?: boolean;
         readonly?: boolean;
         showDescription?: boolean;
-        specs?: Field | ServiceInfos;
+        specs?: Field | ServiceInfos | CheckerCheckerOptionDocumentation;
         type: string;
         value: any;
     }

@@ -179,6 +179,14 @@
         <div class="d-flex justify-content-end align-items-center gap-2 mt-3">
             {#if service._id}
                 <Button
+                    color="info"
+                    outline
+                    href="checks"
+                >
+                    <Icon name="shield-check" />
+                    {$t("checkers.title")}
+                </Button>
+                <Button
                     disabled={addServiceInProgress}
                     form="addSvcForm"
                     type="submit"

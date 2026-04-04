@@ -31,6 +31,7 @@
 
 <script lang="ts">
     import {
+        Badge,
         Button,
         Icon,
         Input,
@@ -40,6 +41,7 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
+    import { listScopedCheckers } from "$lib/api/checkers";
     import { getServiceSpec } from "$lib/api/service_specs";
     import { deleteZoneService, updateZoneService } from "$lib/api/zone";
     import ServiceBadges from "./[[historyid]]/ServiceBadges.svelte";
@@ -48,10 +50,12 @@
     import { collectRRs } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import { navigate } from "$lib/stores/config";
+    import { checkers } from "$lib/stores/checkers";
     import { domainLink } from "$lib/stores/domains";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
+    import { getStatusColor, getStatusI18nKey } from "$lib/utils";
 
     interface Props {
         domain: Domain;
@@ -95,6 +99,19 @@
         !!service?._id &&
             service._svctype !== "abstract.Origin" &&
             service._svctype !== "abstract.NSOnlyOrigin",
+    );
+
+    const zoneId = $derived(selectedHistory || domain.zone_history?.[0] || "");
+    const subdomain = $derived(service._domain || "@");
+    const checksPromise = $derived(
+        service._id && zoneId
+            ? listScopedCheckers({ domainId: domain.id, zoneId, subdomain, serviceId: service._id })
+            : null,
+    );
+    const serviceChecksPath = $derived(
+        service._id && zoneId
+            ? `/domains/${encodeURIComponent(domain.domain)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(service._domain || "@")}/${encodeURIComponent(service._id)}/checks`
+            : null,
     );
 
     let ttlSaveInProgress = $state(false);
@@ -156,6 +173,59 @@
             {/await}
         {/if}
         <PropagationStatus propagatedAt={service._propagated_at} />
+        {#if checksPromise}
+            <div class="mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <small class="text-muted fw-semibold text-uppercase">
+                        {$t("checkers.service-checks")}
+                    </small>
+                    {#if serviceChecksPath}
+                        <a href={serviceChecksPath} class="small" onclick={() => (isOpen = false)}>
+                            {$t("checkers.view-all")} →
+                        </a>
+                    {/if}
+                </div>
+                {#await checksPromise}
+                    <div class="text-center py-2">
+                        <Spinner size="sm" />
+                    </div>
+                {:then checkerStatuses}
+                    {#if checkerStatuses && checkerStatuses.length > 0}
+                        <div class="d-flex flex-column gap-1">
+                            {#each checkerStatuses as check}
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a
+                                        href={serviceChecksPath +
+                                            "/" +
+                                            check.id +
+                                            "/executions"}
+                                        class="text-truncate me-2"
+                                        onclick={() => (isOpen = false)}
+                                    >
+                                        {$checkers?.[check.id ?? ""]?.name ??
+                                            check.name ??
+                                            check.id}
+                                    </a>
+                                    {#if check.latestExecution?.result}
+                                        <Badge color={getStatusColor(check.latestExecution.result.status)}>
+                                            {$t(getStatusI18nKey(check.latestExecution.result.status))}
+                                        </Badge>
+                                    {:else}
+                                        <Badge color="secondary">
+                                            {$t("checkers.status.not-run")}
+                                        </Badge>
+                                    {/if}
+                                </div>
+                            {/each}
+                        </div>
+                    {:else}
+                        <small class="text-muted fst-italic">{$t("checkers.no-checks")}</small>
+                    {/if}
+                {:catch}
+                    <small class="text-danger">{$t("checkers.load-error")}</small>
+                {/await}
+            </div>
+        {/if}
         <div class="flex-fill"></div>
         {#if service._id}
             <div class="d-flex align-items-center gap-2 mt-2">

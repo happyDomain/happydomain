@@ -46,6 +46,10 @@ interface Params {
     countdown?: string;
     error?: string;
     options?: string;
+    key?: string;
+    intervalMin?: string;
+    intervalMax?: string;
+    intervalDefault?: string;
     // add more parameters that are used here
 }
 

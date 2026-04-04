@@ -27,21 +27,17 @@
             "signup": "Sign up!",
             "success": "Registration successfully performed!",
             "login-now": "You can now login with your credentials."
-        },
-        "see-again": "Happy to see you again!"
+        }
     },
     "common": {
         "add": "Add",
         "add-new-thing": "Add new {{thing}}",
         "add-object": "Add a {{thing}} object to this service",
-        "by": "by",
         "cancel": "Cancel",
-        "cancel-edit": "Cancel edit",
         "copy-clipboard": "Copy to clipboard",
         "continue": "Continue",
         "create-thing": "Create {{thing}}",
         "delete": "Delete",
-        "delete-thing": "Delete {{thing}}",
         "domain": "Domain or subdomain",
         "edit": "Edit",
         "field": "Field",
@@ -49,7 +45,6 @@
         "go": "Go!",
         "go-back": "Go Back",
         "got-it": "Got it!",
-        "name": "Name",
         "next": "Next",
         "no-content": "No content",
         "no-thing": "No {{thing}}",
@@ -61,7 +56,6 @@
         "resolver": "Resolver",
         "run": "Run the request!",
         "survey": "A remark? A comment to share? Don't hesitate to write to us!",
-        "spinning": "Spinning",
         "update": "Update",
         "update-what": "Update {{what}}",
         "welcome": {
@@ -79,7 +73,6 @@
         "actions": {
             "audit": "View changes logs",
             "checks": "Domain checks",
-            "do-migration": "Migrate now",
             "history": "View changes history",
             "propagate": "Publish my changes",
             "reimport": "Fetch current deployed zone",
@@ -90,11 +83,7 @@
             "others": "More actions on {{domain}}"
         },
         "alert": {
-            "remove": "This action only removes {{domain}} from your happyDomain managed domains. All history and abstracted zones will be discarded. The domain {{domain}} remains fully intact at the provider. Are you sure you want to continue?",
-            "unable-retrieve": {
-                "description": "Unfortunately, we were unable to retrieve information for the domain {{domain}}:",
-                "title": "Unable to retrieve domain information"
-            }
+            "remove": "This action only removes {{domain}} from your happyDomain managed domains. All history and abstracted zones will be discarded. The domain {{domain}} remains fully intact at the provider. Are you sure you want to continue?"
         },
         "and-more-filtered": "{{count:eq; 0:no more filtered domain; 1:1 more filtered domain; default:{{count}} more filtered domains}}",
         "add-a-subdomain": "Add a subdomain",
@@ -111,10 +100,6 @@
             "button": "Apply modifications",
             "deletions": "{{count:eq; 0:no deletions; 1:{{count}} deletion; default:{{count}} deletions}}",
             "double-check": "You see this confirmation dialog because you choose in your preference to always confirm before applying corrections.",
-            "done": {
-                "title": "Zone applied successfully!",
-                "description": "Your zone {{zone}} have been successfully propagated!"
-            },
             "modifications": "{{count:eq; 0:no modification; 1:{{count}} modification; default:{{count}} modifications}}",
             "nochange": "There is no changes to apply! Current zone is in sync with the server.",
             "change-already-applied": "Changes you requested seems to be already applied.",
@@ -132,8 +117,6 @@
         "drop-pointer": "Drop pointer",
         "edit-target": "Edit target",
         "give-explicit-name": "Give an explicit name in order to easily find this service.",
-        "history": "History",
-        "list": "List importable domains",
         "n-aliases": "{{count:lt; 2:{{count}} alias; default:{{count}} aliases}}",
         "n-services": "{{count:lt; 2:{{count}} service; default:{{count}} services}}",
         "filtered-no-result": "There is no domain with those filters.",
@@ -142,17 +125,12 @@
         "save-modifications": "Save those modifications",
         "stop": "Stop managing this domain",
         "view": {
-            "abstract": "Abstract zone",
             "cancel-title": "Keep my domain in happyDomain",
             "description": "Review the modifications that will be applied to {{domain}}",
-            "live": "Live records",
-            "monitoring": "Monitoring",
-            "summary": "Summary",
             "provider": "Zone hosted on",
             "title": "View zone",
             "subtitle": "Your zone in standard BIND format"
         },
-        "see-records": "See corresponding records",
         "alias-creation": "Add an alias pointing to {{domain}}:",
         "alias-creation-sample": "This will create the alias:",
         "placeholder-search": "my.domain.",
@@ -198,26 +176,19 @@
         "account-delete": "An error occurs when trying to delete your account",
         "address": "Email address is required",
         "address-valid": "A valid email address is required",
-        "domain-access": "An error occurs when trying to access domain's list.",
-        "domain-attach": "An error occurs when attaching the domain to happyDomain",
         "domain-have": "It appears you don't have any domain name registered on this provider.",
         "domain-import": "An error occurs when trying to synchronize this domain:",
         "domain-list": "This provider doesn't permit to list existing domains. Use the above form to add one.",
-        "error": "Error",
         "login": "Login error",
         "rate-limited": "Too many failed login attempts. Please wait a moment before trying again.",
         "logout": "Logout error",
-        "occurs": "An error occurs when {{when}}!",
         "password": "Password is required",
         "password-change": "Unable to change your password account",
         "password-match": "Password and its confirmation doesn't match.",
         "password-weak": "Password needs to be stronger: at least 8 characters with numbers, lower case and upper case characters.",
-        "provider-delete": "Something went wrong during provider deletion",
         "recovery": "Password recovery problem",
         "resolve": "An error occurs when trying to resolve the domain.",
         "registration": "Registration problem",
-        "rr-add": "An error occurs when trying to add RR to the zone:",
-        "rr-delete": "An error occurs when trying to delete RR in the zone:",
         "session": {
             "title": "Authentication timeout",
             "content": "Invalid session, you have been logged out: {{err}}. Please login again."
@@ -285,18 +256,6 @@
             "unified": {
                 "title": "Unified Management",
                 "description": "Manage all your domains in one place, regardless of where they're registered."
-            },
-            "comprehensive": {
-                "title": "Comprehensive Features",
-                "description": "Experience the future of DNS management with history, diff, tests, ..."
-            },
-            "intuitive": {
-                "title": "Intuitive Interface",
-                "description": "Simple and user-friendly interface for both beginners and DNS experts."
-            },
-            "templates": {
-                "title": "One-Click Templates",
-                "description": "Configure common services with pre-built templates in seconds."
             }
         },
         "connect": {
@@ -346,14 +305,11 @@
     "password": {
         "change": "Change my password",
         "changed": "Password Successfully Changed",
-        "confirm-new": "Confirm your new password",
         "confirm-title": "Confirm New Password",
         "confirm-description": "Re-enter your new password to confirm",
         "confirmation": "Password confirmation",
         "current-title": "Current Password",
         "current-description": "Enter your current password to verify your identity",
-        "enter": "Enter your current password",
-        "enter-new": "Enter your new password",
         "new-title": "New Password",
         "new-description": "Choose a strong password with at least 8 characters, including numbers, lowercase and uppercase letters",
         "fill": "In order to recover your account, please fill the following form, with a fresh password.",
@@ -429,7 +385,6 @@
         "delete": "Delete this record",
         "update": "Update this record",
         "form-new": "Add a new record to {{domain}}",
-        "new": "New record",
         "rrtype": "type",
         "ttl": "Time-to-live"
     },
@@ -447,11 +402,9 @@
         "associations": "{{count:eq; 0:no domain associated; 1:{{count}} domain associated; default:{{count}} domains associated}}",
         "check-config": "Check your provider configuration",
         "description": "Manage your DNS provider connections and credentials",
-        "create-domain": "Create a new domain on {{provider}}",
         "delete": "Delete this domain provider",
         "empty": "You have no provider defined currently. Try {{action}}!",
         "empty-action": "adding one",
-        "find": "Can't find your domain provider here?",
         "name-your": "Name your domain provider",
         "no-name": "No name",
         "provider": "Domains living on {{provider}}",
@@ -460,7 +413,6 @@
         "provider-name": "Host's name",
         "provider-type": "Hosting provider type",
         "title": "Your domain providers",
-        "available-types": "Resources Types available",
         "import-domains": "Import all domains",
         "new-form": "New domain provider form",
         "linked-domains": "Linked domains",
@@ -476,11 +428,8 @@
         "formating": "Please wait while we format your zone …",
         "importing": "Please wait while we are importing your domain …",
         "loading": "Loading domain's services …",
-        "loading-account": "Loading your account …",
-        "loading-record": "Loading records …",
         "retrieving-setting": "Retrieving host settings' form...",
         "updating": "Updating your domain name host",
-        "validating": "Validating domain …",
         "wait": "Please wait",
         "retrieving-domains": "Retrieving your domains...",
         "retrieving-provider": "Retrieving hosting provider information...",
@@ -510,14 +459,12 @@
             "title": "Security & Access",
             "description": "Manage your authentication and security settings",
             "sessions": {
-                "title": "Active Sessions",
-                "description": "Manage your active login sessions and API keys"
+                "title": "Active Sessions"
             },
             "password": {
                 "description": "Set a new password for your account"
             }
         },
-        "sessions": "Sessions",
         "showrrtypes": "Show resource type associated with services (for users familiar with DNS)",
         "success": "Continue to enjoy happyDomain.",
         "success-change": "Your settings has been saved.",
@@ -562,7 +509,6 @@
         "domain-description": "Indicate the domain you search the records. For example, you can try {{domain}}.",
         "error-description": "The DNS query could not be completed due to an error.",
         "field-description": "What kind of DNS record you want to see. For example: A is for IPv4, AAAA is for IPv6, ...",
-        "field-description-more-info": "More information here",
         "no-answer": "The DNS query completed successfully, but no records were found for this domain and type.",
         "no-records-description": "Your query returned no results.",
         "page-description": "Query DNS records for any domain",
@@ -584,7 +530,6 @@
             "page-title": "DNS Record Generator",
             "description": "Free online {{name}} DNS record generator. Configure and preview your {{name}} record in zone file format.",
             "not-found": "Service type <code>{{svctype}}</code> not found.",
-            "browse-all": "Browse all generators",
             "domain-settings": "Your Domain Name",
             "domain-help": "Enter the domain name where the record will be created. The generated records will use this domain.",
             "configure-record": "Fill the Required Information",
@@ -605,13 +550,13 @@
         "upload": "Import a zone",
         "import-text": "Import from text",
         "import-file": "Import from file",
-        "return-to": "Go to the zone"
+        "return-to": "Go to the zone",
+        "return-to-results": "Back to results"
     },
     "checkers": {
         "run-check": {
             "title": "Run Check",
             "loading-options": "Loading checker options...",
-            "select-rule": "Rule to check",
             "configure-info": "Configure checker options below. Pre-filled values are from domain-level settings.",
             "no-options": "This checker has no configurable options. Click \"Run Check\" to execute with default settings.",
             "no-run-options": "This checker has no run-time options. You can still override advanced settings below.",
@@ -623,13 +568,6 @@
             "rules": "Rules"
         },
         "never": "Never",
-        "na": "N/A",
-        "relative": {
-            "in-less-than-a-minute": "in less than a minute",
-            "just-now": "just now",
-            "in": "in {{label}}",
-            "ago": "{{label}} ago"
-        },
         "status": {
             "ok": "OK",
             "info": "Info",
@@ -637,23 +575,17 @@
             "critical": "Critical",
             "error": "Error",
             "unknown": "Unknown",
-            "pending": "Pending",
             "planned": "Planned",
             "running": "Running",
             "not-run": "Not run"
         },
         "list": {
             "title": "Checks for ",
-            "title-service": "Checks for {{service}}",
             "loading": "Loading checkers...",
-            "loading-checkers": "Loading checker information...",
             "no-checks": "No checks available for this domain.",
-            "no-checks-service": "No checks available for this service.",
-            "run-check": "Run Check",
             "view-results": "View Results",
             "configure": "Configure",
             "error-loading": "Error loading checkers: {{error}}",
-            "unknown-version": "Unknown",
             "table": {
                 "checker": "Checker",
                 "status": "Status",
@@ -664,26 +596,18 @@
             "schedule": {
                 "enabled": "Enabled",
                 "disabled": "Disabled"
-            },
-            "loading-checks": "Loading checker information..."
+            }
         },
         "other-checkers": {
             "title": "Other available checkers",
-            "description": "These checkers are not directly associated with this domain but can be configured with domain-specific options.",
-            "no-checkers": "No other checkers available.",
-            "configure": "Configure"
+            "description": "These checkers are not directly associated with this domain but can be configured with domain-specific options."
         },
         "schedule": {
-            "title": "Schedule",
             "card-title": "Automatic scheduling",
-            "auto-enabled": "Run automatically",
-            "auto-disabled": "Disabled (run manually only)",
             "interval-label": "Check interval",
+            "minutes": "minutes",
             "hours": "hours",
-            "interval-hint": "Minimum 1 hour. The check will run once per interval.",
-            "interval-hint-bounded": "Between {{min}} and {{max}} hours.",
-            "next-run": "Next scheduled run",
-            "last-run": "Last run",
+            "interval-hint": "Between {{intervalMin}} and {{intervalMax}}. Default: {{intervalDefault}}. The check will run once per interval.",
             "no-schedule-yet": "No schedule created yet. Save to create one.",
             "save": "Save",
             "save-failed": "Failed to save schedule",
@@ -694,34 +618,17 @@
             "no-results": "No check results yet. Click \"Run Check Now\" to execute the check.",
             "title": "Check Executions ({{count}})",
             "run-check-now": "Run Check Now",
-            "back-to-checks": "Back to checks",
             "delete-all": "Delete All",
-            "delete-confirm": "Are you sure you want to delete this check result?",
             "delete-all-confirm": "Are you sure you want to delete ALL check results for this checker? This cannot be undone.",
             "deleted-all": "All check results have been deleted.",
-            "delete-failed": "Failed to delete result",
-            "delete-all-failed": "Failed to delete results",
             "configure": "Configure",
-            "domain-level": "Domain-level",
             "error-loading": "Error loading checker results: {{error}}",
             "error-deleting": "Error deleting execution: {{error}}",
             "table": {
                 "executed-at": "Executed At",
                 "status": "Status",
-                "message": "Message",
                 "duration": "Duration",
-                "type": "Type",
                 "actions": "Actions"
-            },
-            "type": {
-                "scheduled": "Scheduled",
-                "manual": "Manual"
-            },
-            "pending": {
-                "queued": "Queued",
-                "queued-description": "Queued, waiting to run\u2026",
-                "running": "Running",
-                "running-description": "Check is currently running\u2026"
             },
             "view": "View"
         },
@@ -729,8 +636,7 @@
             "title": "Check Execution Details",
             "field": {
                 "ended-at": "Ended At:",
-                "trigger": "Trigger:",
-                "error": "Error:"
+                "trigger": "Trigger:"
             },
             "status": {
                 "pending": "Pending",
@@ -741,30 +647,25 @@
             }
         },
         "result": {
-            "title": "Check Result Details",
             "loading": "Loading check result...",
             "relaunch": "Relaunch Check",
-            "delete": "Delete Result",
             "relaunch-failed": "Failed to relaunch check",
-            "delete-confirm": "Are you sure you want to delete this check?",
-            "delete-failed": "Failed to delete result",
             "error-loading": "Error loading check: {{error}}",
-            "milliseconds": "milliseconds",
-            "seconds": "seconds",
             "type": {
                 "scheduled": "Scheduled Check",
                 "manual": "Manual Check"
             },
-            "check-options": "Check Options",
             "full-report": "Full Report",
             "field": {
-                "domain": "Domain:",
                 "executed-at": "Executed At:",
                 "duration": "Duration:",
                 "status": "Status:",
                 "status-message": "Message:",
-                "error": "Error:"
+                "error": "Error:",
+                "rule": "Rule",
+                "message": "Message"
             },
+            "no-results": "No results available for this execution.",
             "view-metrics": "Metrics",
             "view-html": "HTML Report",
             "view-json": "Raw JSON",
@@ -785,7 +686,6 @@
         "error-loading": "Error loading checkers: {{error}}",
         "error-loading-checker": "Error loading checker: {{error}}",
         "checker-info-not-found": "Error: Checker information not found",
-        "back-to-checkers": "Back to checkers",
         "table": {
             "name": "Checker Name",
             "availability": "Availability",
@@ -795,21 +695,10 @@
         "availability": {
             "domain": "Domain",
             "zone": "Zone",
-            "provider-specific": "Provider-specific",
-            "service-specific": "Service-specific",
             "general": "General",
-            "user-level": "User-level",
             "domain-level": "Domain-level",
             "zone-level": "Zone-level",
-            "service-level": "Service-level",
-            "providers": "Providers: {{providers}}",
-            "services": "Services: {{services}}"
-        },
-        "actions": {
-            "configure": "Configure"
-        },
-        "sidebar": {
-            "back-to-list": "Back to checkers list"
+            "service-level": "Service-level"
         },
         "detail": {
             "checker-information": "Checker Information",
@@ -820,21 +709,17 @@
             "admin-options": "Admin Options",
             "configuration": "Configuration",
             "save": "Save",
-            "save-changes": "Save Changes",
             "no-configurable-options": "This checker has no configurable options.",
             "error-loading-options": "Error loading options: {{error}}",
             "orphaned-options": "Orphaned options detected: {{options}}",
             "clean-up": "Clean Up",
-            "read-only": "Read-only"
+            "read-only": "Read-only",
+            "auto-fill": "Auto-filled fields"
         },
         "option-groups": {
-            "global-settings": "Global Settings",
             "domain-settings": "Domain-specific Settings",
             "service-settings": "Service-specific Settings",
-            "checker-parameters": "Checker Parameters",
-            "type": "Type: {{type}}",
-            "required": "Required",
-            "auto-fill": "Auto-filled Fields"
+            "checker-parameters": "Checker Parameters"
         },
         "auto-fill": {
             "domain_name": "auto-filled: domain name",

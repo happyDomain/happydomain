@@ -29,6 +29,7 @@
     import { Button, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import { deleteDomain as APIDeleteDomain } from "$lib/api/domains";
+    import ChecksSidebarContent from "$lib/components/checkers/ChecksSidebarContent.svelte";
     import SelectDomain from "$lib/components/domains/SelectDomain.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { ZoneMeta } from "$lib/model/zone";
@@ -42,6 +43,7 @@
     import ServiceDetailsOffcanvas from "./ServiceDetailsOffcanvas.svelte";
     import ServiceSidebar from "./ServiceSidebar.svelte";
     import ZoneSidebar from "./ZoneSidebar.svelte";
+    import { thisZone } from "$lib/stores/thiszone";
 
     interface Props {
         data: { domain: Domain };
@@ -57,13 +59,15 @@
                 "/domains/" +
                     encodeURIComponent(domainLink(dn)) +
                     (page.route.id
-                        ? page.route.id.startsWith("/domains/[dn]/logs")
-                            ? "/logs"
-                            : page.route.id.startsWith("/domains/[dn]/history")
-                              ? "/history"
-                              : page.route.id.startsWith("/domains/[dn]/[[historyid]]/export")
-                                ? "/export"
-                                : ""
+                        ? page.route.id.startsWith("/domains/[dn]/checks")
+                            ? "/checks"
+                            : page.route.id.startsWith("/domains/[dn]/logs")
+                              ? "/logs"
+                              : page.route.id.startsWith("/domains/[dn]/history")
+                                ? "/history"
+                                : page.route.id.startsWith("/domains/[dn]/[[historyid]]/export")
+                                  ? "/export"
+                                  : ""
                         : ""),
             );
         }
@@ -145,7 +149,15 @@
                     <SelectDomain bind:selectedDomain />
                 </div>
 
-                {#if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
+                {#if page.route.id && page.route.id.startsWith("/domains/[dn]/checks")}
+                    <ChecksSidebarContent
+                        domain={data.domain}
+                        checksBase={"/domains/" +
+                            encodeURIComponent(domainLink(selectedDomain)) +
+                            "/checks"}
+                        backHref={"/domains/" + encodeURIComponent(domainLink(selectedDomain))}
+                    />
+                {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
                     <a
                         href="/domains/{encodeURIComponent(domainLink(selectedDomain))}"
                         class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
@@ -153,6 +165,32 @@
                         <Icon name="chevron-left" />
                         {$t("zones.return-to")}
                     </a>
+                {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checks")}
+                    <ChecksSidebarContent
+                        domain={data.domain}
+                        checksBase={"/domains/" +
+                            encodeURIComponent(domainLink(selectedDomain)) +
+                            "/" +
+                            encodeURIComponent(page.data.history ?? "") +
+                            "/" +
+                            encodeURIComponent(page.params.subdomain ?? "") +
+                            "/" +
+                            encodeURIComponent(page.data.serviceid ?? "") +
+                            "/checks"}
+                        backHref={"/domains/" +
+                            encodeURIComponent(domainLink(selectedDomain)) +
+                            "/" +
+                            encodeURIComponent(page.data.history ?? "") +
+                            "/" +
+                            encodeURIComponent(page.params.subdomain ?? "") +
+                            "/" +
+                            encodeURIComponent(page.data.serviceid ?? "")}
+                        serviceContext={{
+                            zoneId: page.data.zoneId ?? "",
+                            subdomain: page.data.subdomain ?? "",
+                            serviceid: page.data.serviceid ?? "",
+                        }}
+                    />
                 {:else if page.route.id === "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]"}
                     <ServiceSidebar
                         origin={data.domain}
@@ -169,9 +207,8 @@
                     />
                 {/if}
 
-                <div class="flex-fill"></div>
-
                 {#if !(data.domain.zone_history && $domains_idx[selectedDomain] && data.domain.id === $domains_idx[selectedDomain].id && selectedHistory)}
+                    <div class="flex-fill"></div>
                     <Button
                         color="danger"
                         class="mt-3"
@@ -186,7 +223,8 @@
                         {/if}
                         {$t("domains.stop")}
                     </Button>
-                {:else}
+                {:else if $domains_idx[data.domain.id] && $thisZone}
+                    <div class="flex-fill"></div>
                     <ButtonZonePublish domain={data.domain} history={selectedHistory} />
                 {/if}
             {:else}
@@ -195,9 +233,14 @@
                 </div>
             {/if}
         </Col>
-        <Col sm={8} md={9} class="d-flex">
+        <div
+            class="col-sm-8 col-md-9 d-flex"
+            class:p-0={page.route &&
+                (page.route.id == "/domains/[dn]/checks/[checkerId]/executions/[execId]" ||
+                page.route.id == "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checks/[checkerId]/executions/[execId]")}
+        >
             {@render children?.()}
-        </Col>
+        </div>
     </Row>
 </Container>
 
