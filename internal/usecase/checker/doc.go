@@ -19,22 +19,5 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package happydns
-
-import ()
-
-type TidyUpUseCase interface {
-	TidyAll() error
-	TidyAuthUsers() error
-	TidyCheckEvaluations() error
-	TidyCheckPlans() error
-	TidyCheckerConfigurations() error
-	TidyExecutions() error
-	TidySnapshots() error
-	TidyDomains() error
-	TidyDomainLogs() error
-	TidyProviders() error
-	TidySessions() error
-	TidyUsers() error
-	TidyZones() error
-}
+// Package checker provides the usecase layer for the checker/monitoring system.
+package checker // import "git.happydns.org/happyDomain/internal/usecase/checker"

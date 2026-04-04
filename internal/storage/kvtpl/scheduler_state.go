@@ -19,22 +19,26 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package happydns
+package database
 
-import ()
+import (
+	"errors"
+	"time"
 
-type TidyUpUseCase interface {
-	TidyAll() error
-	TidyAuthUsers() error
-	TidyCheckEvaluations() error
-	TidyCheckPlans() error
-	TidyCheckerConfigurations() error
-	TidyExecutions() error
-	TidySnapshots() error
-	TidyDomains() error
-	TidyDomainLogs() error
-	TidyProviders() error
-	TidySessions() error
-	TidyUsers() error
-	TidyZones() error
+	"git.happydns.org/happyDomain/model"
+)
+
+const schedulerLastRunKey = "scheduler-lastrun"
+
+func (s *KVStorage) GetLastSchedulerRun() (time.Time, error) {
+	var t time.Time
+	err := s.db.Get(schedulerLastRunKey, &t)
+	if errors.Is(err, happydns.ErrNotFound) {
+		return time.Time{}, nil
+	}
+	return t, err
+}
+
+func (s *KVStorage) SetLastSchedulerRun(t time.Time) error {
+	return s.db.Put(schedulerLastRunKey, t)
 }

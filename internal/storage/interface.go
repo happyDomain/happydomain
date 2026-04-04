@@ -23,6 +23,7 @@ package storage // import "git.happydns.org/happyDomain/internal/storage"
 
 import (
 	"git.happydns.org/happyDomain/internal/usecase/authuser"
+	"git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/internal/usecase/domain"
 	"git.happydns.org/happyDomain/internal/usecase/domain_log"
 	"git.happydns.org/happyDomain/internal/usecase/insight"
@@ -40,6 +41,12 @@ type ProviderAndDomainStorage interface {
 
 type Storage interface {
 	authuser.AuthUserStorage
+	checker.CheckPlanStorage
+	checker.CheckerOptionsStorage
+	checker.CheckEvaluationStorage
+	checker.ExecutionStorage
+	checker.ObservationSnapshotStorage
+	checker.SchedulerStateStorage
 	domain.DomainStorage
 	domainlog.DomainLogStorage
 	insight.InsightStorage

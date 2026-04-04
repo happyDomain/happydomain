@@ -41,7 +41,20 @@ func NewTidyUpUsecase(store storage.Storage) happydns.TidyUpUseCase {
 }
 
 func (tu *tidyUpUsecase) TidyAll() error {
-	for _, tidy := range []func() error{tu.TidySessions, tu.TidyAuthUsers, tu.TidyUsers, tu.TidyProviders, tu.TidyDomains, tu.TidyZones, tu.TidyDomainLogs} {
+	for _, tidy := range []func() error{
+		tu.TidySessions,
+		tu.TidyAuthUsers,
+		tu.TidyUsers,
+		tu.TidyProviders,
+		tu.TidyDomains,
+		tu.TidyZones,
+		tu.TidyDomainLogs,
+		tu.TidyCheckPlans,
+		tu.TidyCheckerConfigurations,
+		tu.TidyExecutions,
+		tu.TidyCheckEvaluations,
+		tu.TidySnapshots,
+	} {
 		if err := tidy(); err != nil {
 			return err
 		}
@@ -70,6 +83,227 @@ func (tu *tidyUpUsecase) TidyAuthUsers() error {
 	}
 
 	return iter.Err()
+}
+
+func (tu *tidyUpUsecase) TidyCheckEvaluations() error {
+	iter, err := tu.store.ListAllEvaluations()
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	for iter.Next() {
+		eval := iter.Item()
+
+		drop := false
+
+		if eval.Target.UserId != "" {
+			userId, err := happydns.NewIdentifierFromString(eval.Target.UserId)
+			if err == nil {
+				if _, err = tu.store.GetUser(userId); errors.Is(err, happydns.ErrUserNotFound) {
+					log.Printf("Deleting orphan check evaluation (user %s not found): %s\n", eval.Target.UserId, eval.Id.String())
+					drop = true
+				}
+			}
+		}
+
+		if !drop && eval.Target.DomainId != "" {
+			domainId, err := happydns.NewIdentifierFromString(eval.Target.DomainId)
+			if err == nil {
+				if _, err = tu.store.GetDomain(domainId); errors.Is(err, happydns.ErrDomainNotFound) {
+					log.Printf("Deleting orphan check evaluation (domain %s not found): %s\n", eval.Target.DomainId, eval.Id.String())
+					drop = true
+				}
+			}
+		}
+
+		if !drop && eval.PlanID != nil {
+			if _, err = tu.store.GetCheckPlan(*eval.PlanID); errors.Is(err, happydns.ErrCheckPlanNotFound) {
+				log.Printf("Deleting orphan check evaluation (plan %s not found): %s\n", eval.PlanID.String(), eval.Id.String())
+				drop = true
+			}
+		}
+
+		if drop {
+			if err = tu.store.DeleteEvaluation(eval.Id); err != nil {
+				return err
+			}
+		}
+	}
+
+	if err = iter.Err(); err != nil {
+		return err
+	}
+
+	return tu.store.TidyEvaluationIndexes()
+}
+
+func (tu *tidyUpUsecase) TidyCheckPlans() error {
+	iter, err := tu.store.ListAllCheckPlans()
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	for iter.Next() {
+		plan := iter.Item()
+
+		if plan.Target.UserId != "" {
+			userId, err := happydns.NewIdentifierFromString(plan.Target.UserId)
+			if err == nil {
+				_, err = tu.store.GetUser(userId)
+				if errors.Is(err, happydns.ErrUserNotFound) {
+					log.Printf("Deleting orphan check plan (user %s not found): %s\n", plan.Target.UserId, plan.Id.String())
+					_ = tu.store.DeleteEvaluationsByChecker(plan.CheckerID, plan.Target)
+					_ = tu.store.DeleteExecutionsByChecker(plan.CheckerID, plan.Target)
+					if err = iter.DropItem(); err != nil {
+						return err
+					}
+					continue
+				}
+			}
+		}
+
+		if plan.Target.DomainId != "" {
+			domainId, err := happydns.NewIdentifierFromString(plan.Target.DomainId)
+			if err == nil {
+				_, err = tu.store.GetDomain(domainId)
+				if errors.Is(err, happydns.ErrDomainNotFound) {
+					log.Printf("Deleting orphan check plan (domain %s not found): %s\n", plan.Target.DomainId, plan.Id.String())
+					_ = tu.store.DeleteEvaluationsByChecker(plan.CheckerID, plan.Target)
+					_ = tu.store.DeleteExecutionsByChecker(plan.CheckerID, plan.Target)
+					if err = iter.DropItem(); err != nil {
+						return err
+					}
+					continue
+				}
+			}
+		}
+	}
+
+	if err := iter.Err(); err != nil {
+		return err
+	}
+
+	return tu.store.TidyCheckPlanIndexes()
+}
+
+func (tu *tidyUpUsecase) TidyCheckerConfigurations() error {
+	iter, err := tu.store.ListAllCheckerConfigurations()
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	for iter.Next() {
+		cfg := iter.Item()
+
+		if cfg.UserId != nil {
+			if _, err = tu.store.GetUser(*cfg.UserId); errors.Is(err, happydns.ErrUserNotFound) {
+				log.Printf("Deleting orphan checker configuration (user %s not found): %s\n", cfg.UserId.String(), cfg.CheckName)
+				if err = iter.DropItem(); err != nil {
+					return err
+				}
+				continue
+			} else if err != nil {
+				return err
+			}
+		}
+
+		if cfg.DomainId != nil {
+			domain, err := tu.store.GetDomain(*cfg.DomainId)
+			if errors.Is(err, happydns.ErrDomainNotFound) {
+				log.Printf("Deleting orphan checker configuration (domain %s not found): %s\n", cfg.DomainId.String(), cfg.CheckName)
+				if err = iter.DropItem(); err != nil {
+					return err
+				}
+				continue
+			} else if err != nil {
+				return err
+			}
+
+			if cfg.ServiceId != nil && len(domain.ZoneHistory) > 0 {
+				zone, err := tu.store.GetZone(domain.ZoneHistory[len(domain.ZoneHistory)-1])
+				if err != nil {
+					return err
+				}
+				found := false
+				for _, svcs := range zone.Services {
+					for _, svc := range svcs {
+						if svc.Id.Equals(*cfg.ServiceId) {
+							found = true
+							break
+						}
+					}
+					if found {
+						break
+					}
+				}
+				if !found {
+					log.Printf("Deleting orphan checker configuration (service %s not found in domain %s): %s\n", cfg.ServiceId.String(), cfg.DomainId.String(), cfg.CheckName)
+					if err = iter.DropItem(); err != nil {
+						return err
+					}
+					continue
+				}
+			}
+		}
+	}
+
+	return iter.Err()
+}
+
+func (tu *tidyUpUsecase) TidyExecutions() error {
+	iter, err := tu.store.ListAllExecutions()
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	for iter.Next() {
+		exec := iter.Item()
+
+		drop := false
+
+		if exec.Target.UserId != "" {
+			userId, err := happydns.NewIdentifierFromString(exec.Target.UserId)
+			if err == nil {
+				if _, err = tu.store.GetUser(userId); errors.Is(err, happydns.ErrUserNotFound) {
+					log.Printf("Deleting orphan execution (user %s not found): %s\n", exec.Target.UserId, exec.Id.String())
+					drop = true
+				}
+			}
+		}
+
+		if !drop && exec.Target.DomainId != "" {
+			domainId, err := happydns.NewIdentifierFromString(exec.Target.DomainId)
+			if err == nil {
+				if _, err = tu.store.GetDomain(domainId); errors.Is(err, happydns.ErrDomainNotFound) {
+					log.Printf("Deleting orphan execution (domain %s not found): %s\n", exec.Target.DomainId, exec.Id.String())
+					drop = true
+				}
+			}
+		}
+
+		if !drop && exec.PlanID != nil {
+			if _, err = tu.store.GetCheckPlan(*exec.PlanID); errors.Is(err, happydns.ErrCheckPlanNotFound) {
+				log.Printf("Deleting orphan execution (plan %s not found): %s\n", exec.PlanID.String(), exec.Id.String())
+				drop = true
+			}
+		}
+
+		if drop {
+			if err = tu.store.DeleteExecution(exec.Id); err != nil {
+				return err
+			}
+		}
+	}
+
+	if err = iter.Err(); err != nil {
+		return err
+	}
+
+	return tu.store.TidyExecutionIndexes()
 }
 
 func (tu *tidyUpUsecase) TidyDomains() error {
@@ -161,6 +395,45 @@ func (tu *tidyUpUsecase) TidySessions() error {
 		if errors.Is(err, happydns.ErrUserNotFound) {
 			// Drop session from unexistant users
 			log.Printf("Deleting orphan session (user %s not found): %v\n", session.IdUser.String(), session)
+			if err = iter.DropItem(); err != nil {
+				return err
+			}
+		}
+	}
+
+	return iter.Err()
+}
+
+func (tu *tidyUpUsecase) TidySnapshots() error {
+	// Collect all snapshot IDs referenced by evaluations.
+	evalIter, err := tu.store.ListAllEvaluations()
+	if err != nil {
+		return err
+	}
+	defer evalIter.Close()
+
+	referencedSnapshots := make(map[string]struct{})
+	for evalIter.Next() {
+		eval := evalIter.Item()
+		if !eval.SnapshotID.IsEmpty() {
+			referencedSnapshots[eval.SnapshotID.String()] = struct{}{}
+		}
+	}
+	if err = evalIter.Err(); err != nil {
+		return err
+	}
+
+	// Delete snapshots not referenced by any evaluation.
+	iter, err := tu.store.ListAllSnapshots()
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	for iter.Next() {
+		snap := iter.Item()
+		if _, ok := referencedSnapshots[snap.Id.String()]; !ok {
+			log.Printf("Deleting orphan snapshot: %s\n", snap.Id.String())
 			if err = iter.DropItem(); err != nil {
 				return err
 			}
