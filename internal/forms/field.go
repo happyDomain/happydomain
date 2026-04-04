@@ -90,7 +90,13 @@ func ValidateStructValues(data any) error {
 	}
 
 	v := reflect.Indirect(reflect.ValueOf(data))
+	if !v.IsValid() {
+		return nil
+	}
 	t := v.Type()
+	if t.Kind() != reflect.Struct {
+		return nil
+	}
 
 	for i := 0; i < t.NumField(); i++ {
 		sf := t.Field(i)
@@ -124,6 +130,87 @@ func ValidateStructValues(data any) error {
 		}
 	}
 
+	return nil
+}
+
+// ValidateMapValues validates a map[string]any against a slice of Field definitions.
+// It checks required fields, choices constraints, basic type compatibility,
+// and rejects unknown keys not declared in any field definition.
+func ValidateMapValues(opts map[string]any, fields []happydns.Field) error {
+	known := make(map[string]*happydns.Field, len(fields))
+	for i := range fields {
+		known[fields[i].Id] = &fields[i]
+	}
+
+	// Reject unknown keys.
+	for k := range opts {
+		if _, ok := known[k]; !ok {
+			return fmt.Errorf("unknown option %q", k)
+		}
+	}
+
+	for _, f := range fields {
+		v, exists := opts[f.Id]
+
+		label := f.Label
+		if label == "" {
+			label = f.Id
+		}
+
+		// Required check.
+		if f.Required {
+			if !exists || v == nil {
+				return fmt.Errorf("field %q is required", label)
+			}
+			if s, ok := v.(string); ok && s == "" {
+				return fmt.Errorf("field %q is required", label)
+			}
+		}
+
+		if !exists || v == nil {
+			continue
+		}
+
+		// Choices check.
+		if len(f.Choices) > 0 {
+			s, ok := v.(string)
+			if !ok {
+				return fmt.Errorf("field %q: expected a string value for choices field", label)
+			}
+			if s != "" && !slices.Contains(f.Choices, s) {
+				return fmt.Errorf("field %q: value %q is not a valid choice (valid: %v)", label, s, f.Choices)
+			}
+		}
+
+		// Basic type check.
+		if f.Type != "" {
+			if err := checkMapValueType(f.Type, v, label); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// checkMapValueType performs a basic type compatibility check between a Field.Type
+// string and the actual value from a map[string]any (JSON-decoded).
+func checkMapValueType(fieldType string, value any, label string) error {
+	switch {
+	case strings.HasPrefix(fieldType, "string"):
+		if _, ok := value.(string); !ok {
+			return fmt.Errorf("field %q: expected string, got %T", label, value)
+		}
+	case strings.HasPrefix(fieldType, "int") || strings.HasPrefix(fieldType, "uint") || strings.HasPrefix(fieldType, "float"):
+		// JSON numbers decode as float64.
+		if _, ok := value.(float64); !ok {
+			return fmt.Errorf("field %q: expected number, got %T", label, value)
+		}
+	case fieldType == "bool":
+		if _, ok := value.(bool); !ok {
+			return fmt.Errorf("field %q: expected bool, got %T", label, value)
+		}
+	}
 	return nil
 }
 
