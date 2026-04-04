@@ -114,8 +114,8 @@ func Collect(
 		if user.Settings.Newsletter {
 			data.UserSettings.Newsletter++
 		}
-		data.UserSettings.FieldHints[user.Settings.FieldHint]++
-		data.UserSettings.ZoneView[user.Settings.ZoneView]++
+		data.UserSettings.FieldHints[int(user.Settings.FieldHint)]++
+		data.UserSettings.ZoneView[int(user.Settings.ZoneView)]++
 
 		if providers, err := store.ListProviders(user); err == nil {
 			for _, provider := range providers {

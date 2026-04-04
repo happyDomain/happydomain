@@ -68,9 +68,9 @@ func (sc *SessionController) SessionHandler(c *gin.Context) {
 //	@Description	Get the content of the current user's session.
 //	@Tags			users
 //	@Accept			json
-//	@Prodsce		json
+//	@Produce		json
 //	@Security		securitydefinitions.basic
-//	@Ssccess		200	{object}	happydns.Session
+//	@Success		200	{object}	happydns.Session
 //	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Router			/session [get]
 func (sc *SessionController) GetSession(c *gin.Context) {
@@ -97,9 +97,9 @@ func (sc *SessionController) GetSession(c *gin.Context) {
 //	@Description	Remove the content of the current user's session.
 //	@Tags			users
 //	@Accept			json
-//	@Prodsce		json
+//	@Produce		json
 //	@Security		securitydefinitions.basic
-//	@Ssccess		204
+//	@Success		204
 //	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Router			/session [delete]
 func (sc *SessionController) ClearSession(c *gin.Context) {
@@ -117,9 +117,9 @@ func (sc *SessionController) ClearSession(c *gin.Context) {
 //	@Description	Closes all sessions for a given user.
 //	@Tags			users
 //	@Accept			json
-//	@Prodsce		json
+//	@Produce		json
 //	@Security		securitydefinitions.basic
-//	@Ssccess		204	{null}		null
+//	@Success		204
 //	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Router			/sessions [delete]
 func (sc *SessionController) ClearUserSessions(c *gin.Context) {
@@ -145,9 +145,9 @@ func (sc *SessionController) ClearUserSessions(c *gin.Context) {
 //	@Description	List the sessions open for the current user
 //	@Tags			users
 //	@Accept			json
-//	@Prodsce		json
+//	@Produce		json
 //	@Security		securitydefinitions.basic
-//	@Ssccess		200	{object}	happydns.Session
+//	@Success		200	{array}		happydns.Session
 //	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Router			/sessions [get]
 func (sc *SessionController) GetSessions(c *gin.Context) {
@@ -173,10 +173,11 @@ func (sc *SessionController) GetSessions(c *gin.Context) {
 //	@Description	Create a new session for the current user.
 //	@Tags			users
 //	@Accept			json
-//	@Prodsce		json
+//	@Produce		json
 //	@Security		securitydefinitions.basic
-//	@Ssccess		200	{object}	happydns.Session
-//	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
+//	@Param			body	body		happydns.Session		true	"Session to create"
+//	@Success		200		{object}	happydns.Session
+//	@Failure		401		{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Router			/sessions [post]
 func (sc *SessionController) CreateSession(c *gin.Context) {
 	var us happydns.Session
@@ -199,7 +200,7 @@ func (sc *SessionController) CreateSession(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"id": sess.Id})
+	c.JSON(http.StatusOK, sess)
 }
 
 // UpdateSession update a session owned by the current user
@@ -209,11 +210,12 @@ func (sc *SessionController) CreateSession(c *gin.Context) {
 //	@Description	Update	a session owned	by the current user.
 //	@Tags			users
 //	@Accept			json
-//	@Param			sessionId	path	string	true	"Session identifier"
-//	@Prodsce		json
+//	@Produce		json
 //	@Security		securitydefinitions.basic
-//	@Ssccess		200	{object}	happydns.Session
-//	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
+//	@Param			sessionId	path		string					true	"Session identifier"
+//	@Param			body		body		happydns.Session		true	"Session fields to update"
+//	@Success		200			{object}	happydns.Session
+//	@Failure		401			{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Router			/sessions/{sessionId} [put]
 func (sc *SessionController) UpdateSession(c *gin.Context) {
 	var us happydns.Session

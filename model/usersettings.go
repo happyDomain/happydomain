@@ -23,23 +23,29 @@ package happydns
 
 import ()
 
-const (
-	FIELDHINT_HIDE = iota
-	FIELDHINT_TOOLTIP
-	FIELDHINT_FOCUSED
-	FIELDHINT_ALWAYS
-)
+type FieldHint uint8
 
 const (
-	ZONEVIEW_GRID = iota
-	ZONEVIEW_LIST
-	ZONEVIEW_RECORDS
+	FieldHintHide    FieldHint = iota
+	FieldHintTooltip
+	FieldHintFocused
+	FieldHintAlways
 )
 
+type ZoneView uint8
+
 const (
-	APPLYCONFIRM_UNEXPECTED = iota
-	APPLYCONFIRM_ALWAYS
-	APPLYCONFIRM_NEVER
+	ZoneViewGrid    ZoneView = iota
+	ZoneViewList
+	ZoneViewRecords
+)
+
+type ApplyConfirm uint8
+
+const (
+	ApplyConfirmUnexpected ApplyConfirm = iota
+	ApplyConfirmAlways
+	ApplyConfirmNever
 )
 
 // UserSettings represents the settings for an account.
@@ -51,13 +57,13 @@ type UserSettings struct {
 	Newsletter bool `json:"newsletter,omitempty"`
 
 	// FieldHint stores the way form hints are displayed.
-	FieldHint int `json:"fieldhint"`
+	FieldHint FieldHint `json:"fieldhint"`
 
 	// ZoneView keeps the view of the zone wanted by the user.
-	ZoneView int `json:"zoneview"`
+	ZoneView ZoneView `json:"zoneview"`
 
 	// ApplyConfirm stores when to show a confirmation step before applying changes.
-	ApplyConfirm int `json:"applyconfirm"`
+	ApplyConfirm ApplyConfirm `json:"applyconfirm"`
 
 	// ShowRRTypes tells if we show equivalent RRTypes in interface (for advanced users).
 	ShowRRTypes bool `json:"showrrtypes,omitempty"`
@@ -65,11 +71,11 @@ type UserSettings struct {
 
 func DefaultUserSettings() *UserSettings {
 	return &UserSettings{
-		Language:    "en",
-		Newsletter:  false,
-		FieldHint:   FIELDHINT_FOCUSED,
-		ZoneView:    ZONEVIEW_GRID,
-		ApplyConfirm: APPLYCONFIRM_UNEXPECTED,
+		Language:     "en",
+		Newsletter:   false,
+		FieldHint:    FieldHintFocused,
+		ZoneView:     ZoneViewGrid,
+		ApplyConfirm: ApplyConfirmUnexpected,
 		ShowRRTypes:  false,
 	}
 }

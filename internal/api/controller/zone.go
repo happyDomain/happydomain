@@ -145,7 +145,7 @@ func (zc *ZoneController) DiffZonesHandler(c *gin.Context) {
 //	@Param			domainId	path		string			true	"Domain identifier"
 //	@Param			zoneId		path		string			true	"Zone identifier to use as the new one."
 //	@Param			oldZoneId		path		string			true	"Zone identifier to use as the old one. Currently only @ are expected, to use the currently deployed zone."
-//	@Success		200			{object}	[]happydns.Correction	"Differences, reported as text, one diff per item"
+//	@Success		200			{array}		happydns.Correction	"Differences, reported as text, one diff per item"
 //	@Failure		400			{object}	happydns.ErrorResponse	"Invalid input"
 //	@Failure		401			{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Failure		404			{object}	happydns.ErrorResponse	"Domain not found"
@@ -194,7 +194,7 @@ func (zc *ZoneController) DiffZonesSummary(c *gin.Context) {
 //	@Security		securitydefinitions.basic
 //	@Param			domainId	path		string				true	"Domain identifier"
 //	@Param			zoneId		path		string				true	"Zone identifier"
-//	@Param			body		body		[]string			true	"Differences (from /diff_zones) to apply"
+//	@Param			body		body		happydns.ApplyZoneForm	true	"Differences to apply with commit message"
 //	@Success		200			{object}	happydns.ZoneMeta	"The new Zone metadata containing the current zone"
 //	@Failure		400			{object}	happydns.ErrorResponse		"Invalid input"
 //	@Failure		401			{object}	happydns.ErrorResponse		"Authentication failure"

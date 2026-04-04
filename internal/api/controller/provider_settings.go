@@ -54,7 +54,7 @@ func NewProviderSettingsController(pSettingsServices happydns.ProviderSettingsUs
 //	@Param			body			body	happydns.ProviderSettingsState	true	"The current state of the Provider's settings, possibly empty (but not null)"
 //	@Security		securitydefinitions.basic
 //	@Success		200	{object}	happydns.Provider	"The Provider has been created with the given settings"
-//	@Success		202	{object}	happydns.ProviderSettingsResponse	"The settings need more rafinement"
+//	@Success		202	{object}	happydns.ProviderSettingsResponse	"The settings need more refinement"
 //	@Failure		400	{object}	happydns.ErrorResponse				"Invalid input"
 //	@Failure		401	{object}	happydns.ErrorResponse				"Authentication failure"
 //	@Failure		404	{object}	happydns.ErrorResponse				"Provider not found"

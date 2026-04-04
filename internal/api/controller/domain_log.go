@@ -51,7 +51,7 @@ func NewDomainLogController(domainLogService happydns.DomainLogUsecase) *DomainL
 //	@Produce		json
 //	@Param			domainId	path	string	true	"Domain identifier"
 //	@Security		securitydefinitions.basic
-//	@Success		200	{object}	[]happydns.DomainLog
+//	@Success		200	{array}		happydns.DomainLog
 //	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Failure		404	{object}	happydns.ErrorResponse	"Domain not found"
 //	@Router			/domains/{domainId}/logs [get]

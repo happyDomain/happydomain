@@ -197,7 +197,7 @@ func (pc *ProviderController) DeleteProvider(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusNoContent, nil)
+	c.Status(http.StatusNoContent)
 }
 
 // GetDomainsHostedByProvider lists domains available to management from the given Provider.
@@ -210,7 +210,7 @@ func (pc *ProviderController) DeleteProvider(c *gin.Context) {
 //	@Produce		json
 //	@Param			providerId	path	string	true	"Provider identifier"
 //	@Security		securitydefinitions.basic
-//	@Success		200	{object}	happydns.Provider
+//	@Success		200	{array}		string
 //	@Failure		400	{object}	happydns.ErrorResponse	"Unable to instantiate the provider"
 //	@Failure		400	{object}	happydns.ErrorResponse	"The provider doesn't support domain listing"
 //	@Failure		400	{object}	happydns.ErrorResponse	"Provider error"
@@ -238,8 +238,9 @@ func (pc *ProviderController) GetDomainsHostedByProvider(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			providerId	path	string	true	"Provider identifier"
+//	@Param			fqdn		path	string	true	"Fully qualified domain name"
 //	@Security		securitydefinitions.basic
-//	@Success		200	{object}	happydns.Provider
+//	@Success		204	"Domain created successfully"
 //	@Failure		400	{object}	happydns.ErrorResponse	"Unable to instantiate the provider"
 //	@Failure		400	{object}	happydns.ErrorResponse	"The provider doesn't support domain listing"
 //	@Failure		400	{object}	happydns.ErrorResponse	"Provider error"
@@ -255,5 +256,5 @@ func (pc *ProviderController) CreateDomainOnProvider(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, true)
+	c.Status(http.StatusNoContent)
 }

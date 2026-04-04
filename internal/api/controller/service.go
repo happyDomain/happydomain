@@ -56,9 +56,10 @@ func NewServiceController(duService happydns.ZoneServiceUsecase, suService happy
 //	@Accept			json
 //	@Produce		json
 //	@Security		securitydefinitions.basic
-//	@Param			domainId	path		string	true	"Domain identifier"
-//	@Param			zoneId		path		string	true	"Zone identifier"
-//	@Param			subdomain	path		string	true	"Part of the subdomain considered for the service (@ for the root of the zone ; subdomain is relative to the root, do not include it)"
+//	@Param			domainId	path		string				true	"Domain identifier"
+//	@Param			zoneId		path		string				true	"Zone identifier"
+//	@Param			subdomain	path		string				true	"Part of the subdomain considered for the service (@ for the root of the zone ; subdomain is relative to the root, do not include it)"
+//	@Param			body		body		happydns.Service	true	"Service to add"
 //	@Success		200			{object}	happydns.Zone
 //	@Failure		400			{object}	happydns.ErrorResponse	"Invalid input"
 //	@Failure		401			{object}	happydns.ErrorResponse	"Authentication failure"

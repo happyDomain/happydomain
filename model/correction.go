@@ -30,7 +30,7 @@ const (
 	CorrectionKindAddition
 	CorrectionKindUpdate
 	CorrectionKindDeletion
-	CorrectionKindOther = 99
+	CorrectionKindOther CorrectionKind = 99
 )
 
 type Correction struct {

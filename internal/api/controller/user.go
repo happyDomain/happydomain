@@ -53,7 +53,8 @@ func NewUserController(userService happydns.UserUsecase, lc *LoginController) *U
 //	@Tags			users
 //	@Accept			json
 //	@Produce		json
-//	@Success		200		{object}	happydns.User		"The created user"
+//	@Param			userId	path		string				true	"User identifier"
+//	@Success		200		{object}	happydns.User		"The user"
 //	@Failure		500		{object}	happydns.ErrorResponse
 //	@Router			/users/{userId} [get]
 func (uc *UserController) GetUser(c *gin.Context) {

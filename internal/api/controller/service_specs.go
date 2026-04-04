@@ -145,6 +145,7 @@ func (ssc *ServiceSpecsController) InitializeServiceSpec(c *gin.Context) {
 //	@Param			serviceType	path		string	true	"The service's type"
 //	@Param			domain		query		string	true	"The domain to use to generate the records"
 //	@Param			ttl		query		int	false	"The TTL used by the generated records"
+//	@Param			body		body		happydns.Service	true	"The service configuration to generate records for"
 //	@Success		200			{array}		happydns.Record
 //	@Failure		400			{object}	happydns.ErrorResponse	"Invalid request body"
 //	@Failure		404			{object}	happydns.ErrorResponse	"Service type does not exist"

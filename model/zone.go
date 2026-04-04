@@ -169,12 +169,12 @@ type ZoneUsecase interface {
 }
 
 type ApplyZoneForm struct {
-	WantedCorrections []Identifier `json:"wantedCorrections"`
+	WantedCorrections []Identifier `json:"wantedCorrections" swaggertype:"array,string"`
 	CommitMsg         string       `json:"commitMessage"`
 }
 
 type PrepareZoneForm struct {
-	WantedCorrections []Identifier `json:"wantedCorrections"`
+	WantedCorrections []Identifier `json:"wantedCorrections" swaggertype:"array,string"`
 }
 
 type PrepareZoneResponse struct {

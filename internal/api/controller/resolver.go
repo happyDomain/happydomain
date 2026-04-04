@@ -48,13 +48,13 @@ type DNSMsg struct {
 	Question []DNSQuestion
 
 	// Answer is the list of Answer records in the DNS response.
-	Answer []any `swaggertype:"object"`
+	Answer []any `swaggertype:"array,object"`
 
 	// Ns is the list of Authoritative records in the DNS response.
-	Ns []any `swaggertype:"object"`
+	Ns []any `swaggertype:"array,object"`
 
 	// Extra is the list of extra records in the DNS response.
-	Extra []any `swaggertype:"object"`
+	Extra []any `swaggertype:"array,object"`
 }
 
 type DNSQuestion struct {
@@ -78,7 +78,6 @@ type DNSQuestion struct {
 //	@Produce		json
 //	@Param			body	body		happydns.ResolverRequest	true	"Options to the resolution"
 //	@Success		200		{object}	DNSMsg
-//	@Success		204		{object}	happydns.ErrorResponse	"No content"
 //	@Failure		400		{object}	happydns.ErrorResponse	"Invalid input"
 //	@Failure		401		{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Failure		403		{object}	happydns.ErrorResponse	"The resolver refused to treat our request"
