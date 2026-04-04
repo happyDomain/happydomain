@@ -63,7 +63,12 @@
         ...rest
     }: Props = $props();
 
-    function genGroups(domains: Array<ZoneListDomain>, display_by_groups: boolean, show_empty_groups: boolean, extraGroups: Array<string>) {
+    function genGroups(
+        domains: Array<ZoneListDomain>,
+        display_by_groups: boolean,
+        show_empty_groups: boolean,
+        extraGroups: Array<string>,
+    ) {
         if (!display_by_groups) {
             return { "": domains };
         }
@@ -86,10 +91,7 @@
         return groups;
     }
 
-    let localDomains: Array<ZoneListDomain> = $state([...domains]);
-    $effect(() => {
-        localDomains = [...domains];
-    });
+    let localDomains: Array<ZoneListDomain> = $derived([...domains]);
 
     let groups: Record<string, Array<ZoneListDomain>> = $derived(
         genGroups(localDomains, display_by_groups, show_empty_groups, $newlyGroups),
@@ -150,12 +152,12 @@
         {@render no_domain?.()}
     {:else}
         {#each Object.keys(groups).sort((a, b) => {
-                    const aEmpty = groups[a].length === 0;
-                    const bEmpty = groups[b].length === 0;
-                    if (aEmpty !== bEmpty) return aEmpty ? 1 : -1;
-                    if (!a || !b) return !a ? 1 : -1;
-                    return a.toLowerCase().localeCompare(b.toLowerCase());
-                }) as gname}
+            const aEmpty = groups[a].length === 0;
+            const bEmpty = groups[b].length === 0;
+            if (aEmpty !== bEmpty) return aEmpty ? 1 : -1;
+            if (!a || !b) return !a ? 1 : -1;
+            return a.toLowerCase().localeCompare(b.toLowerCase());
+        }) as gname}
             {@const gdomains = groups[gname]}
             <div
                 role="list"
