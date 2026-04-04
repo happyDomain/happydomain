@@ -52,10 +52,14 @@
 
     let current_session_req = getCurrentSession();
     let sessions_req = $state(listSessions());
+    let deleting_sessions = $state(new Set<string>());
 
     async function del(session: Session) {
-        session.delete_in_progress = true;
+        deleting_sessions.add(session.id);
+        deleting_sessions = deleting_sessions;
         await deleteSession(session.id);
+        deleting_sessions.delete(session.id);
+        deleting_sessions = deleting_sessions;
         sessions_req = listSessions();
     }
 
@@ -170,12 +174,12 @@
                         <Button
                             color="danger"
                             disabled={session.id === current_session.id ||
-                                session.delete_in_progress ||
+                                deleting_sessions.has(session.id) ||
                                 is_closing_sessions}
                             outline
                             on:click={() => del(session)}
                         >
-                            {#if session.delete_in_progress}
+                            {#if deleting_sessions.has(session.id)}
                                 <Spinner size="sm" />
                             {:else}
                                 <i class="bi bi-trash"></i>
