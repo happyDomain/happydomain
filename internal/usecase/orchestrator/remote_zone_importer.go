@@ -34,10 +34,11 @@ import (
 // from the provider and delegates to ZoneImporterUsecase to persist them.  It
 // also appends a domain log entry on success.
 type RemoteZoneImporterUsecase struct {
-	appendDomainLog domainlogUC.DomainLogAppender
-	providerService ProviderGetter
-	zoneImporter    happydns.ZoneImporterUsecase
-	zoneRetriever   ZoneRetriever
+	appendDomainLog    domainlogUC.DomainLogAppender
+	providerService    ProviderGetter
+	zoneImporter       happydns.ZoneImporterUsecase
+	zoneRetriever      ZoneRetriever
+	schedulerNotifier  happydns.SchedulerDomainNotifier
 }
 
 // NewRemoteZoneImporterUsecase creates a RemoteZoneImporterUsecase wired to
@@ -77,6 +78,10 @@ func (uc *RemoteZoneImporterUsecase) Import(ctx context.Context, user *happydns.
 
 	if err := uc.appendDomainLog.AppendDomainLog(domain, happydns.NewDomainLog(user, happydns.LOG_INFO, fmt.Sprintf("Zone imported from provider API: %s", myZone.Id.String()))); err != nil {
 		log.Printf("unable to append domain log for %s: %s", domain.DomainName, err.Error())
+	}
+
+	if uc.schedulerNotifier != nil {
+		uc.schedulerNotifier.NotifyDomainChange(domain)
 	}
 
 	return myZone, nil

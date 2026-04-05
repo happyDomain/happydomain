@@ -95,12 +95,14 @@ type SchedulerStatus struct {
 // Scheduler manages periodic execution of checkers.
 type Scheduler struct {
 	queue          SchedulerQueue
+	jobKeys        map[string]bool
 	engine         happydns.CheckerEngine
 	planStore      CheckPlanStorage
 	domainStore    DomainLister
 	zoneStore      ZoneGetter
 	stateStore     SchedulerStateStorage
 	cancel         context.CancelFunc
+	wake           chan struct{}
 	done           chan struct{}
 	wg             sync.WaitGroup
 	mu             sync.RWMutex
@@ -120,6 +122,8 @@ func NewScheduler(engine happydns.CheckerEngine, maxConcurrency int, planStore C
 		domainStore:    domainStore,
 		zoneStore:      zoneStore,
 		stateStore:     stateStore,
+		jobKeys:        make(map[string]bool),
+		wake:           make(chan struct{}, 1),
 		maxConcurrency: maxConcurrency,
 	}
 }
@@ -250,23 +254,15 @@ func (s *Scheduler) run(ctx context.Context) {
 		s.wg.Add(1)
 		go s.executeJob(ctx, job, plan, sem)
 
-		// Advance to next cycle, skipping past cycles.
-		now := time.Now()
-		for job.NextRun.Before(now) {
-			job.NextRun = job.NextRun.Add(job.Interval)
-		}
-		// Add jitter for next cycle.
-		job.NextRun = job.NextRun.Add(computeJitter(job.CheckerID, job.Target.String(), job.NextRun, job.Interval))
-		s.mu.Lock()
-		heap.Push(&s.queue, job)
-		s.mu.Unlock()
+		// Advance to next cycle and re-enqueue.
+		s.rescheduleJob(job)
 	}
 }
 
-// waitForNextJob blocks until the next job is due or the context is cancelled.
-// It returns (true, false) when a job is ready to run, (false, false) when the
-// loop should re-evaluate (queue rebuild), and (false, true) when the context
-// is done.
+// waitForNextJob blocks until the next job is due, the queue is woken, or the
+// context is cancelled. It returns (true, false) when a job is ready to run,
+// (false, false) when the loop should re-evaluate (wake or queue rebuild), and
+// (false, true) when the context is done.
 func (s *Scheduler) waitForNextJob(ctx context.Context) (ready, cancelled bool) {
 	s.mu.RLock()
 	qLen := s.queue.Len()
@@ -276,6 +272,8 @@ func (s *Scheduler) waitForNextJob(ctx context.Context) (ready, cancelled bool) 
 		select {
 		case <-ctx.Done():
 			return false, true
+		case <-s.wake:
+			return false, false
 		case <-time.After(1 * time.Minute):
 			s.mu.Lock()
 			s.buildQueue()
@@ -301,6 +299,9 @@ func (s *Scheduler) waitForNextJob(ctx context.Context) (ready, cancelled bool) 
 	case <-ctx.Done():
 		timer.Stop()
 		return false, true
+	case <-s.wake:
+		timer.Stop()
+		return false, false
 	case <-timer.C:
 		return true, false
 	}
@@ -348,8 +349,25 @@ func (s *Scheduler) executeJob(ctx context.Context, job *SchedulerJob, plan *hap
 		}
 	}
 }
+
+// rescheduleJob advances job.NextRun past the current time, adds jitter,
+// and pushes the job back onto the scheduler queue.
+func (s *Scheduler) rescheduleJob(job *SchedulerJob) {
+	now := time.Now()
+	for job.NextRun.Before(now) {
+		job.NextRun = job.NextRun.Add(job.Interval)
+	}
+	job.NextRun = job.NextRun.Add(computeJitter(job.CheckerID, job.Target.String(), job.NextRun, job.Interval))
+	key := job.CheckerID + "|" + job.Target.String()
+	s.mu.Lock()
+	heap.Push(&s.queue, job)
+	s.jobKeys[key] = true
+	s.mu.Unlock()
+}
+
 func (s *Scheduler) buildQueue() {
 	s.queue = s.queue[:0]
+	s.jobKeys = make(map[string]bool)
 
 	var lastRun time.Time
 	if s.stateStore != nil {
@@ -367,16 +385,7 @@ func (s *Scheduler) buildQueue() {
 		return
 	}
 
-	// Build a set of disabled (checker, target) pairs.
-	disabledSet := make(map[string]bool)
-	planMap := make(map[string]*happydns.CheckPlan)
-	for _, p := range plans {
-		key := p.CheckerID + "|" + p.Target.String()
-		planMap[key] = p
-		if p.IsFullyDisabled() {
-			disabledSet[key] = true
-		}
-	}
+	disabledSet, planMap := buildPlanIndex(plans)
 
 	// Collect checkers by scope for efficient iteration.
 	var domainCheckers, serviceCheckers []struct {
@@ -404,29 +413,9 @@ func (s *Scheduler) buildQueue() {
 		uid := domain.Owner
 		did := domain.Id
 		domainTarget := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
-		domainTargetStr := domainTarget.String()
 
 		for _, c := range domainCheckers {
-			key := c.id + "|" + domainTargetStr
-			if disabledSet[key] {
-				continue
-			}
-			plan := planMap[key]
-
-			interval := s.effectiveInterval(c.def, plan)
-			offset := computeOffset(c.id, domainTargetStr, interval)
-			nextRun := computeNextRun(interval, offset, lastRun)
-
-			job := &SchedulerJob{
-				CheckerID: c.id,
-				Target:    domainTarget,
-				Interval:  interval,
-				NextRun:   nextRun,
-			}
-			if plan != nil {
-				job.PlanID = &plan.Id
-			}
-			heap.Push(&s.queue, job)
+			s.enqueueJob(c.id, c.def, domainTarget, disabledSet, planMap, lastRun)
 		}
 
 		// Service-level discovery: load the latest zone and match services.
@@ -435,36 +424,196 @@ func (s *Scheduler) buildQueue() {
 			for _, svc := range services {
 				sid := svc.Id
 				svcTarget := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String(), ServiceId: sid.String(), ServiceType: svc.Type}
-				svcTargetStr := svcTarget.String()
 
 				for _, c := range serviceCheckers {
 					if len(c.def.Availability.LimitToServices) > 0 && !slices.Contains(c.def.Availability.LimitToServices, svc.Type) {
 						continue
 					}
-					key := c.id + "|" + svcTargetStr
-					if disabledSet[key] {
-						continue
-					}
-					plan := planMap[key]
-
-					interval := s.effectiveInterval(c.def, plan)
-					offset := computeOffset(c.id, svcTargetStr, interval)
-					nextRun := computeNextRun(interval, offset, lastRun)
-
-					job := &SchedulerJob{
-						CheckerID: c.id,
-						Target:    svcTarget,
-						Interval:  interval,
-						NextRun:   nextRun,
-					}
-					if plan != nil {
-						job.PlanID = &plan.Id
-					}
-					heap.Push(&s.queue, job)
+					s.enqueueJob(c.id, c.def, svcTarget, disabledSet, planMap, lastRun)
 				}
 			}
 		}
 	}
+}
+
+// NotifyDomainChange incrementally adds scheduler jobs for a domain
+// without rebuilding the entire queue. Call this after a domain is
+// created or its zone is imported/published.
+func (s *Scheduler) NotifyDomainChange(domain *happydns.Domain) {
+	checkers := checkerPkg.GetCheckers()
+
+	// Load plans relevant to this domain.
+	uid := domain.Owner
+	did := domain.Id
+	domainTarget := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
+
+	plans, err := s.planStore.ListCheckPlansByTarget(domainTarget)
+	if err != nil {
+		log.Printf("Scheduler: NotifyDomainChange: failed to load plans: %v", err)
+	}
+	disabledSet, planMap := buildPlanIndex(plans)
+
+	// Load services outside the lock to avoid holding the mutex during I/O.
+	services := s.loadDomainServices(domain)
+
+	// Build the set of desired job keys for this domain so we can detect stale entries.
+	wantKeys := make(map[string]bool)
+	didStr := did.String()
+	for checkerID, def := range checkers {
+		if def.Availability.ApplyToDomain {
+			key := checkerID + "|" + domainTarget.String()
+			if !disabledSet[key] {
+				wantKeys[key] = true
+			}
+		}
+		if def.Availability.ApplyToService {
+			for _, svc := range services {
+				if len(def.Availability.LimitToServices) > 0 && !slices.Contains(def.Availability.LimitToServices, svc.Type) {
+					continue
+				}
+				svcTarget := happydns.CheckTarget{UserId: uid.String(), DomainId: didStr, ServiceId: svc.Id.String(), ServiceType: svc.Type}
+				key := checkerID + "|" + svcTarget.String()
+				if !disabledSet[key] {
+					wantKeys[key] = true
+				}
+			}
+		}
+	}
+
+	var added, removed int
+	s.mu.Lock()
+
+	// Remove stale jobs for this domain that are no longer wanted.
+	for i := 0; i < len(s.queue); {
+		job := s.queue[i]
+		if job.Target.DomainId == didStr {
+			key := job.CheckerID + "|" + job.Target.String()
+			if !wantKeys[key] {
+				delete(s.jobKeys, key)
+				s.queue[i] = s.queue[len(s.queue)-1]
+				s.queue[len(s.queue)-1] = nil
+				s.queue = s.queue[:len(s.queue)-1]
+				removed++
+				continue
+			}
+		}
+		i++
+	}
+	if removed > 0 {
+		heap.Init(&s.queue)
+	}
+
+	// Add new jobs for this domain.
+	for checkerID, def := range checkers {
+		if def.Availability.ApplyToDomain {
+			if s.enqueueJob(checkerID, def, domainTarget, disabledSet, planMap, time.Time{}) {
+				added++
+			}
+		}
+
+		if def.Availability.ApplyToService {
+			for _, svc := range services {
+				if len(def.Availability.LimitToServices) > 0 && !slices.Contains(def.Availability.LimitToServices, svc.Type) {
+					continue
+				}
+				sid := svc.Id
+				svcTarget := happydns.CheckTarget{UserId: uid.String(), DomainId: didStr, ServiceId: sid.String(), ServiceType: svc.Type}
+				if s.enqueueJob(checkerID, def, svcTarget, disabledSet, planMap, time.Time{}) {
+					added++
+				}
+			}
+		}
+	}
+
+	s.mu.Unlock()
+
+	if added > 0 || removed > 0 {
+		log.Printf("Scheduler: NotifyDomainChange(%s): added %d jobs, removed %d stale jobs", domain.DomainName, added, removed)
+		// Wake the run loop so it re-evaluates the queue head.
+		select {
+		case s.wake <- struct{}{}:
+		default:
+		}
+	}
+}
+
+// NotifyDomainRemoved removes all scheduler jobs for the given domain.
+func (s *Scheduler) NotifyDomainRemoved(domainID happydns.Identifier) {
+	s.mu.Lock()
+	n := 0
+	for i := 0; i < len(s.queue); {
+		job := s.queue[i]
+		if job.Target.DomainId == domainID.String() {
+			key := job.CheckerID + "|" + job.Target.String()
+			delete(s.jobKeys, key)
+			// Swap with last and shrink.
+			s.queue[i] = s.queue[len(s.queue)-1]
+			s.queue[len(s.queue)-1] = nil
+			s.queue = s.queue[:len(s.queue)-1]
+			n++
+		} else {
+			i++
+		}
+	}
+	if n > 0 {
+		heap.Init(&s.queue)
+	}
+	s.mu.Unlock()
+
+	if n > 0 {
+		log.Printf("Scheduler: NotifyDomainRemoved(%s): removed %d jobs", domainID, n)
+	}
+}
+
+// buildPlanIndex builds disabled and plan lookup maps from a slice of plans.
+func buildPlanIndex(plans []*happydns.CheckPlan) (disabledSet map[string]bool, planMap map[string]*happydns.CheckPlan) {
+	disabledSet = make(map[string]bool)
+	planMap = make(map[string]*happydns.CheckPlan)
+	for _, p := range plans {
+		key := p.CheckerID + "|" + p.Target.String()
+		planMap[key] = p
+		if p.IsFullyDisabled() {
+			disabledSet[key] = true
+		}
+	}
+	return
+}
+
+// enqueueJob creates and pushes a scheduler job if the key is not already
+// present and not disabled. When lastActive is zero (e.g. NotifyDomainChange),
+// the job is scheduled at now + jitter; otherwise offset-based grid scheduling
+// is used. Must be called with s.mu held. Returns true if a job was added.
+func (s *Scheduler) enqueueJob(checkerID string, def *happydns.CheckerDefinition, target happydns.CheckTarget, disabledSet map[string]bool, planMap map[string]*happydns.CheckPlan, lastActive time.Time) bool {
+	targetStr := target.String()
+	key := checkerID + "|" + targetStr
+	if s.jobKeys[key] || disabledSet[key] {
+		return false
+	}
+
+	plan := planMap[key]
+	interval := s.effectiveInterval(def, plan)
+
+	var nextRun time.Time
+	if lastActive.IsZero() {
+		now := time.Now()
+		nextRun = now.Add(computeJitter(checkerID, targetStr, now, interval))
+	} else {
+		offset := computeOffset(checkerID, targetStr, interval)
+		nextRun = computeNextRun(interval, offset, lastActive)
+	}
+
+	job := &SchedulerJob{
+		CheckerID: checkerID,
+		Target:    target,
+		Interval:  interval,
+		NextRun:   nextRun,
+	}
+	if plan != nil {
+		job.PlanID = &plan.Id
+	}
+	heap.Push(&s.queue, job)
+	s.jobKeys[key] = true
+	return true
 }
 
 func (s *Scheduler) loadAllPlans() ([]*happydns.CheckPlan, error) {

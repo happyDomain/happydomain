@@ -91,3 +91,10 @@ func NewOrchestrator(
 		ZoneImporter:          zoneImporter,
 	}
 }
+
+// SetSchedulerNotifier sets the optional scheduler notifier on the
+// sub-usecases that create or publish zones.
+func (o *Orchestrator) SetSchedulerNotifier(notifier happydns.SchedulerDomainNotifier) {
+	o.RemoteZoneImporter.schedulerNotifier = notifier
+	o.ZoneCorrectionApplier.schedulerNotifier = notifier
+}

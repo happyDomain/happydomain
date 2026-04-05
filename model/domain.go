@@ -114,6 +114,13 @@ type DomainWithCheckStatus struct {
 type Subdomain string
 type Origin string
 
+// SchedulerDomainNotifier is an optional callback to notify the scheduler
+// about domain changes so it can incrementally update its job queue.
+type SchedulerDomainNotifier interface {
+	NotifyDomainChange(domain *Domain)
+	NotifyDomainRemoved(domainID Identifier)
+}
+
 type DomainUsecase interface {
 	CreateDomain(context.Context, *User, *DomainCreationInput) (*Domain, error)
 	DeleteDomain(Identifier) error

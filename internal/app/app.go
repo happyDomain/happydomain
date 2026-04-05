@@ -272,6 +272,10 @@ func (app *App) initUsecases() {
 		app.store,
 	)
 	app.usecases.checkerScheduler = checkerUC.NewScheduler(app.usecases.checkerEngine, app.cfg.CheckerMaxConcurrency, app.store, app.store, app.store, app.store)
+
+	// Wire scheduler notifications for incremental queue updates.
+	domainService.SetSchedulerNotifier(app.usecases.checkerScheduler)
+	app.usecases.orchestrator.SetSchedulerNotifier(app.usecases.checkerScheduler)
 }
 
 func (app *App) setupRouter() {

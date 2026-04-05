@@ -42,11 +42,12 @@ type DomainExistenceTester interface {
 }
 
 type Service struct {
-	store             DomainStorage
-	providerService   ProviderGetter
-	getZone           *zoneUC.GetZoneUsecase
-	domainExistence   DomainExistenceTester
-	domainLogAppender domainLogUC.DomainLogAppender
+	store               DomainStorage
+	providerService     ProviderGetter
+	getZone             *zoneUC.GetZoneUsecase
+	domainExistence     DomainExistenceTester
+	domainLogAppender   domainLogUC.DomainLogAppender
+	schedulerNotifier   happydns.SchedulerDomainNotifier
 }
 
 func NewService(
@@ -63,6 +64,12 @@ func NewService(
 		domainExistence:   domainExistence,
 		domainLogAppender: domainLogAppender,
 	}
+}
+
+// SetSchedulerNotifier sets the optional scheduler notifier for incremental
+// queue updates on domain creation/deletion.
+func (s *Service) SetSchedulerNotifier(notifier happydns.SchedulerDomainNotifier) {
+	s.schedulerNotifier = notifier
 }
 
 // CreateDomain creates a new domain for the given user.
@@ -91,6 +98,10 @@ func (s *Service) CreateDomain(ctx context.Context, user *happydns.User, input *
 	// Add a log entry
 	if s.domainLogAppender != nil {
 		s.domainLogAppender.AppendDomainLog(uz, happydns.NewDomainLog(user, happydns.LOG_INFO, fmt.Sprintf("Domain name %s added.", uz.DomainName)))
+	}
+
+	if s.schedulerNotifier != nil {
+		s.schedulerNotifier.NotifyDomainChange(uz)
 	}
 
 	return uz, nil
@@ -192,6 +203,10 @@ func (s *Service) DeleteDomain(domainID happydns.Identifier) error {
 			Err:         fmt.Errorf("unable to DeleteDomain: %w", err),
 			UserMessage: fmt.Sprintf("unable to delete your domain: %s", err.Error()),
 		}
+	}
+
+	if s.schedulerNotifier != nil {
+		s.schedulerNotifier.NotifyDomainRemoved(domainID)
 	}
 
 	return nil

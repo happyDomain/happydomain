@@ -41,13 +41,14 @@ import (
 // in the domain history. The WIP zone at ZoneHistory[0] is never modified.
 type ZoneCorrectionApplierUsecase struct {
 	*ZoneCorrectionListerUsecase
-	appendDomainLog domainlogUC.DomainLogAppender
-	domainUpdater   DomainUpdater
-	zoneCreator     *zoneUC.CreateZoneUsecase
-	zoneGetter      *zoneUC.GetZoneUsecase
-	zoneRetriever   ZoneRetriever
-	zoneUpdater     *zoneUC.UpdateZoneUsecase
-	clock           func() time.Time
+	appendDomainLog    domainlogUC.DomainLogAppender
+	domainUpdater      DomainUpdater
+	zoneCreator        *zoneUC.CreateZoneUsecase
+	zoneGetter         *zoneUC.GetZoneUsecase
+	zoneRetriever      ZoneRetriever
+	zoneUpdater        *zoneUC.UpdateZoneUsecase
+	schedulerNotifier  happydns.SchedulerDomainNotifier
+	clock              func() time.Time
 }
 
 // NewZoneCorrectionApplierUsecase creates a ZoneCorrectionApplierUsecase with
@@ -286,6 +287,10 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(
 		SetPropagationTimes(wipZone.Services, providerRecords, domain.DomainName, wipZone.DefaultTTL, now)
 	}); updateErr != nil {
 		log.Printf("%s: unable to update WIP zone propagation times: %s", domain.DomainName, updateErr)
+	}
+
+	if uc.schedulerNotifier != nil {
+		uc.schedulerNotifier.NotifyDomainChange(domain)
 	}
 
 	return snapshot, nil
