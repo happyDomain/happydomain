@@ -22,7 +22,6 @@
 package controller
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -190,21 +189,15 @@ func (cc *CheckerController) GetExecutionObservations(c *gin.Context) {
 //	@Router		/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checkers/{checkerId}/executions/{executionId}/observations/{obsKey} [get]
 func (cc *CheckerController) GetExecutionObservation(c *gin.Context) {
 	exec := c.MustGet("execution").(*happydns.Execution)
-
-	snap, err := cc.statusUC.GetObservationsByExecution(targetFromContext(c), exec.Id)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Observations not available"})
-		return
-	}
-
 	obsKey := c.Param("obsKey")
-	val, ok := snap.Data[obsKey]
-	if !ok {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Observation key not found"})
+
+	val, err := cc.statusUC.GetSnapshotByExecution(targetFromContext(c), exec.Id, obsKey)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Observation not available"})
 		return
 	}
 
-	c.JSON(http.StatusOK, val)
+	c.Data(http.StatusOK, "application/json; charset=utf-8", val)
 }
 
 // GetExecutionResults returns the evaluation (per-rule states) for an execution.
@@ -290,27 +283,15 @@ func (cc *CheckerController) GetExecutionResult(c *gin.Context) {
 //	@Router			/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checkers/{checkerId}/executions/{executionId}/observations/{obsKey}/report [get]
 func (cc *CheckerController) GetExecutionHTMLReport(c *gin.Context) {
 	exec := c.MustGet("execution").(*happydns.Execution)
-
-	snap, err := cc.statusUC.GetObservationsByExecution(targetFromContext(c), exec.Id)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Observations not available"})
-		return
-	}
-
 	obsKey := c.Param("obsKey")
-	val, ok := snap.Data[obsKey]
-	if !ok {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Observation key not found"})
-		return
-	}
 
-	raw, err := json.Marshal(val)
+	val, err := cc.statusUC.GetSnapshotByExecution(targetFromContext(c), exec.Id, obsKey)
 	if err != nil {
-		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Observation not available"})
 		return
 	}
 
-	htmlContent, supported, err := checkerPkg.GetHTMLReport(obsKey, json.RawMessage(raw))
+	htmlContent, supported, err := checkerPkg.GetHTMLReport(obsKey, val)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

@@ -119,3 +119,11 @@ type ObservationSnapshotStorage interface {
 	DeleteSnapshot(snapID happydns.Identifier) error
 	ClearSnapshots() error
 }
+
+// ObservationCacheStorage provides a lightweight cache mapping (target, observation key)
+// to the snapshot that holds the most recent data.
+type ObservationCacheStorage interface {
+	ListAllCachedObservations() (happydns.Iterator[happydns.ObservationCacheEntry], error)
+	GetCachedObservation(target happydns.CheckTarget, key happydns.ObservationKey) (*happydns.ObservationCacheEntry, error)
+	PutCachedObservation(target happydns.CheckTarget, key happydns.ObservationKey, entry *happydns.ObservationCacheEntry) error
+}

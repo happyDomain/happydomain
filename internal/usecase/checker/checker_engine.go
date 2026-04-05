@@ -23,6 +23,7 @@ package checker
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -37,6 +38,7 @@ type checkerEngine struct {
 	evalStore  CheckEvaluationStorage
 	execStore  ExecutionStorage
 	snapStore  ObservationSnapshotStorage
+	cacheStore ObservationCacheStorage
 }
 
 // NewCheckerEngine creates a new CheckerEngine implementation.
@@ -45,12 +47,14 @@ func NewCheckerEngine(
 	evalStore CheckEvaluationStorage,
 	execStore ExecutionStorage,
 	snapStore ObservationSnapshotStorage,
+	cacheStore ObservationCacheStorage,
 ) happydns.CheckerEngine {
 	return &checkerEngine{
-		optionsUC: optionsUC,
-		evalStore: evalStore,
-		execStore: execStore,
-		snapStore: snapStore,
+		optionsUC:  optionsUC,
+		evalStore:  evalStore,
+		execStore:  execStore,
+		snapStore:  snapStore,
+		cacheStore: cacheStore,
 	}
 }
 
@@ -141,8 +145,35 @@ func (e *checkerEngine) runPipeline(ctx context.Context, def *happydns.CheckerDe
 		return happydns.CheckState{}, nil, fmt.Errorf("resolving options: %w", err)
 	}
 
+	// Build observation cache lookup for cross-checker reuse.
+	var cacheLookup checkerPkg.ObservationCacheLookup
+	if e.cacheStore != nil {
+		cacheLookup = func(target happydns.CheckTarget, key happydns.ObservationKey) (json.RawMessage, time.Time, error) {
+			entry, err := e.cacheStore.GetCachedObservation(target, key)
+			if err != nil {
+				return nil, time.Time{}, err
+			}
+			snap, err := e.snapStore.GetSnapshot(entry.SnapshotID)
+			if err != nil {
+				return nil, time.Time{}, err
+			}
+			raw, ok := snap.Data[key]
+			if !ok {
+				return nil, time.Time{}, fmt.Errorf("observation %q not in snapshot", key)
+			}
+			return raw, entry.CollectedAt, nil
+		}
+	}
+
+	var freshness time.Duration
+	if plan != nil && plan.Interval != nil {
+		freshness = *plan.Interval
+	} else if plan != nil && def.Interval != nil {
+		freshness = def.Interval.Default
+	}
+
 	// Create observation context for lazy data collection.
-	obsCtx := checkerPkg.NewObservationContext(target, mergedOpts)
+	obsCtx := checkerPkg.NewObservationContext(target, mergedOpts, cacheLookup, freshness)
 
 	// Evaluate all rules, skipping disabled ones.
 	states := make([]happydns.CheckState, 0, len(def.Rules))
@@ -172,6 +203,18 @@ func (e *checkerEngine) runPipeline(ctx context.Context, def *happydns.CheckerDe
 	}
 	if err := e.snapStore.CreateSnapshot(snap); err != nil {
 		return happydns.CheckState{}, nil, fmt.Errorf("creating snapshot: %w", err)
+	}
+
+	// Update observation cache pointers for cross-checker reuse.
+	if e.cacheStore != nil {
+		for key := range snap.Data {
+			if err := e.cacheStore.PutCachedObservation(target, key, &happydns.ObservationCacheEntry{
+				SnapshotID:  snap.Id,
+				CollectedAt: snap.CollectedAt,
+			}); err != nil {
+				log.Printf("warning: failed to cache observation %q for target %s: %v", key, target.String(), err)
+			}
+		}
 	}
 
 	// Persist evaluation.

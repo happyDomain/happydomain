@@ -54,6 +54,7 @@ func (tu *tidyUpUsecase) TidyAll() error {
 		tu.TidyExecutions,
 		tu.TidyCheckEvaluations,
 		tu.TidySnapshots,
+		tu.TidyObservationCache,
 	} {
 		if err := tidy(); err != nil {
 			return err
@@ -304,6 +305,27 @@ func (tu *tidyUpUsecase) TidyExecutions() error {
 	}
 
 	return tu.store.TidyExecutionIndexes()
+}
+
+func (tu *tidyUpUsecase) TidyObservationCache() error {
+	iter, err := tu.store.ListAllCachedObservations()
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	for iter.Next() {
+		entry := iter.Item()
+
+		if _, err = tu.store.GetSnapshot(entry.SnapshotID); errors.Is(err, happydns.ErrSnapshotNotFound) {
+			log.Printf("Deleting stale observation cache entry (snapshot %s not found)\n", entry.SnapshotID.String())
+			if err = iter.DropItem(); err != nil {
+				return err
+			}
+		}
+	}
+
+	return iter.Err()
 }
 
 func (tu *tidyUpUsecase) TidyDomains() error {

@@ -30,6 +30,7 @@ type TidyUpUseCase interface {
 	TidyCheckPlans() error
 	TidyCheckerConfigurations() error
 	TidyExecutions() error
+	TidyObservationCache() error
 	TidySnapshots() error
 	TidyDomains() error
 	TidyDomainLogs() error

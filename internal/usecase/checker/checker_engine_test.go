@@ -52,8 +52,8 @@ func (r *testCheckRule) Name() string        { return r.name }
 func (r *testCheckRule) Description() string { return "test rule: " + r.name }
 
 func (r *testCheckRule) Evaluate(ctx context.Context, obs happydns.ObservationGetter, opts happydns.CheckerOptions) happydns.CheckState {
-	_, err := obs.Get(ctx, "test_obs")
-	if err != nil {
+	var data map[string]any
+	if err := obs.Get(ctx, "test_obs", &data); err != nil {
 		return happydns.CheckState{Status: happydns.StatusError, Message: err.Error()}
 	}
 	return happydns.CheckState{Status: r.status, Message: r.name + " passed", Code: r.name}
@@ -79,7 +79,7 @@ func TestCheckerEngine_RunOK(t *testing.T) {
 	})
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -143,7 +143,7 @@ func TestCheckerEngine_RunWarn(t *testing.T) {
 	})
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -188,7 +188,7 @@ func TestCheckerEngine_RunPerRuleDisable(t *testing.T) {
 	})
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -278,7 +278,7 @@ func TestCheckerEngine_RunNotFound(t *testing.T) {
 		t.Fatalf("Instantiate() returned error: %v", err)
 	}
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	target := happydns.CheckTarget{UserId: uid.String()}
@@ -386,5 +386,62 @@ func TestCheckerEngine_RunExecution_CheckerDisappeared(t *testing.T) {
 	}
 	if persisted.Status != happydns.ExecutionFailed {
 		t.Errorf("expected execution status Failed, got %d", persisted.Status)
+	}
+}
+
+func TestCheckerEngine_RunPopulatesObservationCache(t *testing.T) {
+	store, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatalf("Instantiate() returned error: %v", err)
+	}
+
+	checker.RegisterObservationProvider(&testObservationProvider{})
+	checker.RegisterChecker(&happydns.CheckerDefinition{
+		ID:   "test_checker_cache",
+		Name: "Test Checker Cache",
+		Availability: happydns.CheckerAvailability{
+			ApplyToDomain: true,
+		},
+		Rules: []happydns.CheckRule{
+			&testCheckRule{name: "rule_cache", status: happydns.StatusOK},
+		},
+	})
+
+	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	did, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
+
+	exec, err := engine.CreateExecution("test_checker_cache", target, nil)
+	if err != nil {
+		t.Fatalf("CreateExecution() returned error: %v", err)
+	}
+
+	_, err = engine.RunExecution(context.Background(), exec, nil, nil)
+	if err != nil {
+		t.Fatalf("RunExecution() returned error: %v", err)
+	}
+
+	// Verify observation cache was populated for the "test_obs" key.
+	entry, err := store.GetCachedObservation(target, "test_obs")
+	if err != nil {
+		t.Fatalf("GetCachedObservation() returned error: %v", err)
+	}
+	if entry.SnapshotID.IsEmpty() {
+		t.Error("expected non-empty snapshot ID in cache entry")
+	}
+	if entry.CollectedAt.IsZero() {
+		t.Error("expected non-zero CollectedAt in cache entry")
+	}
+
+	// Verify the cached snapshot actually exists and contains the data.
+	snap, err := store.GetSnapshot(entry.SnapshotID)
+	if err != nil {
+		t.Fatalf("GetSnapshot() returned error: %v", err)
+	}
+	if _, ok := snap.Data["test_obs"]; !ok {
+		t.Error("expected 'test_obs' key in snapshot data")
 	}
 }

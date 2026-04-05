@@ -269,6 +269,7 @@ func (app *App) initUsecases() {
 		app.store,
 		app.store,
 		app.store,
+		app.store,
 	)
 	app.usecases.checkerScheduler = checkerUC.NewScheduler(app.usecases.checkerEngine, app.cfg.CheckerMaxConcurrency, app.store, app.store, app.store, app.store)
 }

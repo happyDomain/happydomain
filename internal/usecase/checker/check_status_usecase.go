@@ -22,6 +22,7 @@
 package checker
 
 import (
+	"encoding/json"
 	"log"
 	"slices"
 
@@ -343,4 +344,19 @@ func (u *CheckStatusUsecase) GetMetricsByDomain(domainId happydns.Identifier, li
 		return nil, err
 	}
 	return u.extractMetricsFromExecutions(execs)
+}
+
+// GetSnapshotByExecution returns the raw observation data for a single key from an execution after verifying scope.
+func (u *CheckStatusUsecase) GetSnapshotByExecution(scope happydns.CheckTarget, execID happydns.Identifier, obsKey string) (json.RawMessage, error) {
+	snap, err := u.GetObservationsByExecution(scope, execID)
+	if err != nil {
+		return nil, err
+	}
+
+	raw, ok := snap.Data[obsKey]
+	if !ok {
+		return nil, happydns.ErrSnapshotNotFound
+	}
+
+	return raw, nil
 }

@@ -22,6 +22,7 @@
 package checker_test
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -721,4 +722,118 @@ func TestCheckStatusUsecase_GetMetricsByUser_LimitApplied(t *testing.T) {
 		t.Fatalf("GetMetricsByUser(limit=2) error: %v", err)
 	}
 	_ = metrics
+}
+
+func TestCheckStatusUsecase_GetSnapshotByExecution(t *testing.T) {
+	uc, _, ms := setupStatusUC(t)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
+
+	// Create snapshot with observation data.
+	snap := &happydns.ObservationSnapshot{
+		Target:      target,
+		CollectedAt: time.Now(),
+		Data: map[happydns.ObservationKey]json.RawMessage{
+			"dns_records": json.RawMessage(`{"records":["A 1.2.3.4"]}`),
+		},
+	}
+	if err := ms.CreateSnapshot(snap); err != nil {
+		t.Fatalf("CreateSnapshot() error: %v", err)
+	}
+
+	eval := &happydns.CheckEvaluation{
+		CheckerID:  "status_test_checker",
+		Target:     target,
+		SnapshotID: snap.Id,
+	}
+	if err := ms.CreateEvaluation(eval); err != nil {
+		t.Fatalf("CreateEvaluation() error: %v", err)
+	}
+
+	exec := &happydns.Execution{
+		CheckerID:    "status_test_checker",
+		Target:       target,
+		Status:       happydns.ExecutionDone,
+		EvaluationID: &eval.Id,
+	}
+	if err := ms.CreateExecution(exec); err != nil {
+		t.Fatalf("CreateExecution() error: %v", err)
+	}
+
+	raw, err := uc.GetSnapshotByExecution(target, exec.Id, "dns_records")
+	if err != nil {
+		t.Fatalf("GetSnapshotByExecution() error: %v", err)
+	}
+
+	var parsed map[string]any
+	if err := json.Unmarshal(raw, &parsed); err != nil {
+		t.Fatalf("failed to unmarshal observation data: %v", err)
+	}
+	if _, ok := parsed["records"]; !ok {
+		t.Error("expected 'records' key in observation data")
+	}
+}
+
+func TestCheckStatusUsecase_GetSnapshotByExecution_KeyNotFound(t *testing.T) {
+	uc, _, ms := setupStatusUC(t)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
+
+	snap := &happydns.ObservationSnapshot{
+		Target:      target,
+		CollectedAt: time.Now(),
+		Data:        map[happydns.ObservationKey]json.RawMessage{},
+	}
+	if err := ms.CreateSnapshot(snap); err != nil {
+		t.Fatalf("CreateSnapshot() error: %v", err)
+	}
+
+	eval := &happydns.CheckEvaluation{
+		CheckerID:  "status_test_checker",
+		Target:     target,
+		SnapshotID: snap.Id,
+	}
+	if err := ms.CreateEvaluation(eval); err != nil {
+		t.Fatalf("CreateEvaluation() error: %v", err)
+	}
+
+	exec := &happydns.Execution{
+		CheckerID:    "status_test_checker",
+		Target:       target,
+		Status:       happydns.ExecutionDone,
+		EvaluationID: &eval.Id,
+	}
+	if err := ms.CreateExecution(exec); err != nil {
+		t.Fatalf("CreateExecution() error: %v", err)
+	}
+
+	_, err := uc.GetSnapshotByExecution(target, exec.Id, "nonexistent_key")
+	if err == nil {
+		t.Fatal("expected error for nonexistent observation key")
+	}
+}
+
+func TestCheckStatusUsecase_GetSnapshotByExecution_ScopeMismatch(t *testing.T) {
+	uc, _, ms := setupStatusUC(t)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	uid2, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
+
+	exec := &happydns.Execution{
+		CheckerID: "status_test_checker",
+		Target:    target,
+		Status:    happydns.ExecutionDone,
+	}
+	if err := ms.CreateExecution(exec); err != nil {
+		t.Fatalf("CreateExecution() error: %v", err)
+	}
+
+	wrongScope := happydns.CheckTarget{UserId: uid2.String()}
+	_, err := uc.GetSnapshotByExecution(wrongScope, exec.Id, "any_key")
+	if err == nil {
+		t.Fatal("expected error when scope doesn't match")
+	}
 }
