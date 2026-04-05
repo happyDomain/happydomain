@@ -95,6 +95,8 @@ type ExecutionStorage interface {
 	ListAllExecutions() (happydns.Iterator[happydns.Execution], error)
 	ListExecutionsByPlan(planID happydns.Identifier) ([]*happydns.Execution, error)
 	ListExecutionsByChecker(checkerID string, target happydns.CheckTarget, limit int) ([]*happydns.Execution, error)
+	ListExecutionsByUser(userId happydns.Identifier, limit int) ([]*happydns.Execution, error)
+	ListExecutionsByDomain(domainId happydns.Identifier, limit int) ([]*happydns.Execution, error)
 	GetExecution(execID happydns.Identifier) (*happydns.Execution, error)
 	CreateExecution(exec *happydns.Execution) error
 	UpdateExecution(exec *happydns.Execution) error

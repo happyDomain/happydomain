@@ -53,6 +53,7 @@ func DeclareCheckerRoutes(
 	// Global: /api/checkers
 	checkers := apiRoutes.Group("/checkers")
 	checkers.GET("", cc.ListCheckers)
+	checkers.GET("/metrics", cc.GetUserMetrics)
 
 	checkerID := checkers.Group("/:checkerId")
 	checkerID.Use(cc.CheckerHandler)
@@ -68,6 +69,7 @@ func DeclareCheckerRoutes(
 func DeclareScopedCheckerRoutes(scopedRouter *gin.RouterGroup, cc *controller.CheckerController) {
 	checkers := scopedRouter.Group("/checkers")
 	checkers.GET("", cc.ListAvailableChecks)
+	checkers.GET("/metrics", cc.GetDomainMetrics)
 
 	checkerID := checkers.Group("/:checkerId")
 	checkerID.Use(cc.CheckerHandler)
@@ -84,6 +86,9 @@ func DeclareScopedCheckerRoutes(scopedRouter *gin.RouterGroup, cc *controller.Ch
 	planID.PUT("", cc.UpdateCheckPlan)
 	planID.DELETE("", cc.DeleteCheckPlan)
 
+	// Per-checker metrics.
+	checkerID.GET("/metrics", cc.GetCheckerMetrics)
+
 	// Executions.
 	executions := checkerID.Group("/executions")
 	executions.GET("", cc.ListExecutions)
@@ -94,6 +99,9 @@ func DeclareScopedCheckerRoutes(scopedRouter *gin.RouterGroup, cc *controller.Ch
 	executionID.Use(cc.ExecutionHandler)
 	executionID.GET("", cc.GetExecutionStatus)
 	executionID.DELETE("", cc.DeleteExecution)
+
+	// Metrics (under execution).
+	executionID.GET("/metrics", cc.GetExecutionMetrics)
 
 	// Observations (under execution).
 	executionID.GET("/observations", cc.GetExecutionObservations)

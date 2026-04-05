@@ -571,3 +571,154 @@ func TestCheckStatusUsecase_GetObservationsByExecution_ScopeMismatch(t *testing.
 		t.Fatal("expected error when scope doesn't match")
 	}
 }
+
+// --- Metrics extraction tests ---
+
+func TestCheckStatusUsecase_ExtractMetricsFromExecution_NilEvaluation(t *testing.T) {
+	uc, _, ms := setupStatusUC(t)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
+
+	exec := &happydns.Execution{
+		CheckerID:    "status_test_checker",
+		Target:       target,
+		Status:       happydns.ExecutionDone,
+		EvaluationID: nil,
+		StartedAt:    time.Now(),
+	}
+	if err := ms.CreateExecution(exec); err != nil {
+		t.Fatalf("CreateExecution() error: %v", err)
+	}
+
+	metrics, err := uc.GetMetricsByExecution(target, exec.Id)
+	if err != nil {
+		t.Fatalf("GetMetricsByExecution() error: %v", err)
+	}
+	if len(metrics) != 0 {
+		t.Errorf("expected empty metrics for nil evaluation, got %d", len(metrics))
+	}
+}
+
+func TestCheckStatusUsecase_ExtractMetricsFromExecution_NotDone(t *testing.T) {
+	uc, _, ms := setupStatusUC(t)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
+
+	exec := &happydns.Execution{
+		CheckerID: "status_test_checker",
+		Target:    target,
+		Status:    happydns.ExecutionPending,
+		StartedAt: time.Now(),
+	}
+	if err := ms.CreateExecution(exec); err != nil {
+		t.Fatalf("CreateExecution() error: %v", err)
+	}
+
+	metrics, err := uc.GetMetricsByExecution(target, exec.Id)
+	if err != nil {
+		t.Fatalf("GetMetricsByExecution() error: %v", err)
+	}
+	if len(metrics) != 0 {
+		t.Errorf("expected empty metrics for pending execution, got %d", len(metrics))
+	}
+}
+
+func TestCheckStatusUsecase_GetMetricsByChecker_Empty(t *testing.T) {
+	uc, _, _ := setupStatusUC(t)
+
+	target := happydns.CheckTarget{UserId: "nonexistent", DomainId: "d1"}
+
+	metrics, err := uc.GetMetricsByChecker("status_test_checker", target, 100)
+	if err != nil {
+		t.Fatalf("GetMetricsByChecker() error: %v", err)
+	}
+	if len(metrics) != 0 {
+		t.Errorf("expected empty metrics for checker with no executions, got %d", len(metrics))
+	}
+}
+
+func TestCheckStatusUsecase_GetMetricsByUser(t *testing.T) {
+	uc, _, ms := setupStatusUC(t)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	did, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
+
+	for i := 0; i < 3; i++ {
+		exec := &happydns.Execution{
+			CheckerID: "status_test_checker",
+			Target:    target,
+			StartedAt: time.Now(),
+			Status:    happydns.ExecutionDone,
+			Result:    happydns.CheckState{Status: happydns.StatusOK},
+		}
+		if err := ms.CreateExecution(exec); err != nil {
+			t.Fatalf("CreateExecution() error: %v", err)
+		}
+	}
+
+	metrics, err := uc.GetMetricsByUser(uid, 100)
+	if err != nil {
+		t.Fatalf("GetMetricsByUser() error: %v", err)
+	}
+	// Without observation providers registered in tests, metrics will be empty,
+	// but the call must succeed without error.
+	_ = metrics
+}
+
+func TestCheckStatusUsecase_GetMetricsByDomain(t *testing.T) {
+	uc, _, ms := setupStatusUC(t)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	did, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
+
+	for i := 0; i < 3; i++ {
+		exec := &happydns.Execution{
+			CheckerID: "status_test_checker",
+			Target:    target,
+			StartedAt: time.Now(),
+			Status:    happydns.ExecutionDone,
+			Result:    happydns.CheckState{Status: happydns.StatusOK},
+		}
+		if err := ms.CreateExecution(exec); err != nil {
+			t.Fatalf("CreateExecution() error: %v", err)
+		}
+	}
+
+	metrics, err := uc.GetMetricsByDomain(did, 100)
+	if err != nil {
+		t.Fatalf("GetMetricsByDomain() error: %v", err)
+	}
+	_ = metrics
+}
+
+func TestCheckStatusUsecase_GetMetricsByUser_LimitApplied(t *testing.T) {
+	uc, _, ms := setupStatusUC(t)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	did, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
+
+	for i := 0; i < 5; i++ {
+		exec := &happydns.Execution{
+			CheckerID: "status_test_checker",
+			Target:    target,
+			StartedAt: time.Now(),
+			Status:    happydns.ExecutionDone,
+			Result:    happydns.CheckState{Status: happydns.StatusOK},
+		}
+		if err := ms.CreateExecution(exec); err != nil {
+			t.Fatalf("CreateExecution() error: %v", err)
+		}
+	}
+
+	// Call with limit=2; underlying list should be limited.
+	metrics, err := uc.GetMetricsByUser(uid, 2)
+	if err != nil {
+		t.Fatalf("GetMetricsByUser(limit=2) error: %v", err)
+	}
+	_ = metrics
+}

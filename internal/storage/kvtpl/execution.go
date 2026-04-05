@@ -30,18 +30,40 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+func executionUserIndexKey(userId string, execId string) string {
+	return fmt.Sprintf("chckexec-user|%s|%s", userId, execId)
+}
+
+func executionDomainIndexKey(domainId string, execId string) string {
+	return fmt.Sprintf("chckexec-domain|%s|%s", domainId, execId)
+}
+
 func (s *KVStorage) ListExecutionsByPlan(planID happydns.Identifier) ([]*happydns.Execution, error) {
 	return listByIndex(s, fmt.Sprintf("chckexec-plan|%s|", planID.String()), s.GetExecution)
 }
 
-func (s *KVStorage) ListExecutionsByChecker(checkerID string, target happydns.CheckTarget, limit int) ([]*happydns.Execution, error) {
+// listRecentExecutions scans a prefix, decodes executions, sorts by most
+// recent first, and applies an optional limit.
+func (s *KVStorage) listRecentExecutions(prefix string, limit int) ([]*happydns.Execution, error) {
 	return listByIndexSorted(
 		s,
-		fmt.Sprintf("chckexec-chkr|%s|%s|", checkerID, target.String()),
+		prefix,
 		s.GetExecution,
 		func(a, b *happydns.Execution) bool { return a.StartedAt.After(b.StartedAt) },
 		limit,
 	)
+}
+
+func (s *KVStorage) ListExecutionsByChecker(checkerID string, target happydns.CheckTarget, limit int) ([]*happydns.Execution, error) {
+	return s.listRecentExecutions(fmt.Sprintf("chckexec-chkr|%s|%s|", checkerID, target.String()), limit)
+}
+
+func (s *KVStorage) ListExecutionsByUser(userId happydns.Identifier, limit int) ([]*happydns.Execution, error) {
+	return s.listRecentExecutions(fmt.Sprintf("chckexec-user|%s|", userId.String()), limit)
+}
+
+func (s *KVStorage) ListExecutionsByDomain(domainId happydns.Identifier, limit int) ([]*happydns.Execution, error) {
+	return s.listRecentExecutions(fmt.Sprintf("chckexec-domain|%s|", domainId.String()), limit)
 }
 
 func (s *KVStorage) ListAllExecutions() (happydns.Iterator[happydns.Execution], error) {
@@ -81,6 +103,20 @@ func (s *KVStorage) CreateExecution(exec *happydns.Execution) error {
 	checkerIndexKey := fmt.Sprintf("chckexec-chkr|%s|%s|%s", exec.CheckerID, exec.Target.String(), exec.Id.String())
 	if err := s.db.Put(checkerIndexKey, true); err != nil {
 		return err
+	}
+
+	// Secondary index by user.
+	if exec.Target.UserId != "" {
+		if err := s.db.Put(executionUserIndexKey(exec.Target.UserId, exec.Id.String()), true); err != nil {
+			return err
+		}
+	}
+
+	// Secondary index by domain.
+	if exec.Target.DomainId != "" {
+		if err := s.db.Put(executionDomainIndexKey(exec.Target.DomainId, exec.Id.String()), true); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -133,6 +169,34 @@ func (s *KVStorage) UpdateExecution(exec *happydns.Execution) error {
 		return err
 	}
 
+	// Clean up stale user index if UserId changed.
+	if old.Target.UserId != "" && old.Target.UserId != exec.Target.UserId {
+		if err := s.db.Delete(executionUserIndexKey(old.Target.UserId, exec.Id.String())); err != nil {
+			log.Printf("UpdateExecution: failed to delete stale user index for user %s: %v\n", old.Target.UserId, err)
+		}
+	}
+
+	// Update secondary index by user.
+	if exec.Target.UserId != "" {
+		if err := s.db.Put(executionUserIndexKey(exec.Target.UserId, exec.Id.String()), true); err != nil {
+			return err
+		}
+	}
+
+	// Clean up stale domain index if DomainId changed.
+	if old.Target.DomainId != "" && old.Target.DomainId != exec.Target.DomainId {
+		if err := s.db.Delete(executionDomainIndexKey(old.Target.DomainId, exec.Id.String())); err != nil {
+			log.Printf("UpdateExecution: failed to delete stale domain index for domain %s: %v\n", old.Target.DomainId, err)
+		}
+	}
+
+	// Update secondary index by domain.
+	if exec.Target.DomainId != "" {
+		if err := s.db.Put(executionDomainIndexKey(exec.Target.DomainId, exec.Id.String()), true); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -152,6 +216,18 @@ func (s *KVStorage) DeleteExecution(execID happydns.Identifier) error {
 	checkerIndexKey := fmt.Sprintf("chckexec-chkr|%s|%s|%s", exec.CheckerID, exec.Target.String(), execID.String())
 	if err := s.db.Delete(checkerIndexKey); err != nil {
 		log.Printf("DeleteExecution: failed to delete checker index %s: %v\n", checkerIndexKey, err)
+	}
+
+	if exec.Target.UserId != "" {
+		if err := s.db.Delete(executionUserIndexKey(exec.Target.UserId, execID.String())); err != nil {
+			log.Printf("DeleteExecution: failed to delete user index for user %s: %v\n", exec.Target.UserId, err)
+		}
+	}
+
+	if exec.Target.DomainId != "" {
+		if err := s.db.Delete(executionDomainIndexKey(exec.Target.DomainId, execID.String())); err != nil {
+			log.Printf("DeleteExecution: failed to delete domain index for domain %s: %v\n", exec.Target.DomainId, err)
+		}
 	}
 
 	return s.db.Delete(fmt.Sprintf("chckexec|%s", execID.String()))
@@ -183,6 +259,18 @@ func (s *KVStorage) DeleteExecutionsByChecker(checkerID string, target happydns.
 			planIndexKey := fmt.Sprintf("chckexec-plan|%s|%s", exec.PlanID.String(), exec.Id.String())
 			if err := s.db.Delete(planIndexKey); err != nil {
 				log.Printf("DeleteExecutionsByChecker: failed to delete plan index %s: %v\n", planIndexKey, err)
+			}
+		}
+
+		if exec.Target.UserId != "" {
+			if err := s.db.Delete(executionUserIndexKey(exec.Target.UserId, exec.Id.String())); err != nil {
+				log.Printf("DeleteExecutionsByChecker: failed to delete user index for user %s: %v\n", exec.Target.UserId, err)
+			}
+		}
+
+		if exec.Target.DomainId != "" {
+			if err := s.db.Delete(executionDomainIndexKey(exec.Target.DomainId, exec.Id.String())); err != nil {
+				log.Printf("DeleteExecutionsByChecker: failed to delete domain index for domain %s: %v\n", exec.Target.DomainId, err)
 			}
 		}
 
@@ -230,11 +318,23 @@ func (s *KVStorage) TidyExecutionIndexes() error {
 	// Tidy chckexec-chkr|{checkerID}|{target}|{execId} indexes.
 	s.tidyLastSegmentIndex("chckexec-chkr|", "execution checker", s.execExists)
 
+	// Tidy chckexec-user|{userId}|{execId} indexes.
+	s.tidyTwoPartIndex("chckexec-user|", "execution user", func(id happydns.Identifier) bool {
+		_, err := s.GetUser(id)
+		return err == nil
+	}, s.execExists)
+
+	// Tidy chckexec-domain|{domainId}|{execId} indexes.
+	s.tidyTwoPartIndex("chckexec-domain|", "execution domain", func(id happydns.Identifier) bool {
+		_, err := s.GetDomain(id)
+		return err == nil
+	}, s.execExists)
+
 	return nil
 }
 
 func (s *KVStorage) ClearExecutions() error {
-	// Delete secondary indexes (chckexec-plan|..., chckexec-chkr|...).
+	// Delete secondary indexes (chckexec-plan|..., chckexec-chkr|..., chckexec-user|..., chckexec-domain|...).
 	if err := s.clearByPrefix("chckexec-"); err != nil {
 		return err
 	}

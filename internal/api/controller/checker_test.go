@@ -720,3 +720,38 @@ func TestGetExecutionHTMLReport_Success(t *testing.T) {
 		t.Errorf("expected X-Content-Type-Options nosniff, got %q", xcto)
 	}
 }
+
+// --- getLimitParam tests ---
+
+func newContextWithQuery(query string) *gin.Context {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/?"+query, nil)
+	return c
+}
+
+func TestGetLimitParam(t *testing.T) {
+	tests := []struct {
+		name         string
+		query        string
+		defaultLimit int
+		expected     int
+	}{
+		{"empty query returns default", "", 100, 100},
+		{"valid limit", "limit=50", 100, 50},
+		{"zero returns default", "limit=0", 100, 100},
+		{"negative returns default", "limit=-5", 100, 100},
+		{"non-numeric returns default", "limit=abc", 100, 100},
+		{"large value capped to maxLimit", "limit=1500", 100, 1000},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := newContextWithQuery(tt.query)
+			got := getLimitParam(c, tt.defaultLimit)
+			if got != tt.expected {
+				t.Errorf("getLimitParam(%q, %d) = %d, want %d", tt.query, tt.defaultLimit, got, tt.expected)
+			}
+		})
+	}
+}

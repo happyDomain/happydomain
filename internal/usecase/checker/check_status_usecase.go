@@ -22,11 +22,18 @@
 package checker
 
 import (
+	"log"
 	"slices"
 
 	checkerPkg "git.happydns.org/happyDomain/internal/checker"
 	"git.happydns.org/happyDomain/model"
 )
+
+// worstStatusMaxExecs is the maximum number of executions fetched when
+// computing worst-status aggregations.  It prevents unbounded memory usage
+// on long-lived accounts while being generous enough for any realistic
+// scenario.
+const worstStatusMaxExecs = 10000
 
 // CheckStatusUsecase handles aggregation of checker statuses and evaluation/execution queries.
 type CheckStatusUsecase struct {
@@ -179,37 +186,88 @@ func (u *CheckStatusUsecase) DeleteExecutionsByChecker(checkerID string, target 
 	return u.execStore.DeleteExecutionsByChecker(checkerID, target)
 }
 
+// worstStatuses groups executions by a key extracted via keyFn, keeps only
+// the latest execution per (key, checker) pair, and returns the worst status
+// per key.
+func worstStatuses(execs []*happydns.Execution, keyFn func(*happydns.Execution) string) map[string]*happydns.Status {
+	type groupKey struct {
+		key     string
+		checker string
+	}
+	latest := map[groupKey]*happydns.Execution{}
+	for _, exec := range execs {
+		k := keyFn(exec)
+		if k == "" || exec.Status != happydns.ExecutionDone {
+			continue
+		}
+		gk := groupKey{key: k, checker: exec.CheckerID}
+		if prev, ok := latest[gk]; !ok || exec.StartedAt.After(prev.StartedAt) {
+			latest[gk] = exec
+		}
+	}
+
+	worst := map[string]*happydns.Status{}
+	for gk, exec := range latest {
+		s := exec.Result.Status
+		if s == happydns.StatusUnknown {
+			continue
+		}
+		if prev, ok := worst[gk.key]; !ok || s > *prev {
+			worst[gk.key] = &s
+		}
+	}
+
+	if len(worst) == 0 {
+		return nil
+	}
+	return worst
+}
+
+// GetWorstDomainStatuses fetches all executions for a user and returns the worst
+// (most critical) status per domain. It keeps only the latest execution per
+// (domain, checker) pair and reports the worst status among them.
+func (u *CheckStatusUsecase) GetWorstDomainStatuses(userId happydns.Identifier) (map[string]*happydns.Status, error) {
+	execs, err := u.execStore.ListExecutionsByUser(userId, worstStatusMaxExecs)
+	if err != nil {
+		return nil, err
+	}
+	return worstStatuses(execs, func(e *happydns.Execution) string {
+		return e.Target.DomainId
+	}), nil
+}
+
 // GetWorstServiceStatuses returns the worst check status for each service in the zone.
-// It iterates all services and all registered checkers, fetching the latest execution
-// for each (service, checker) pair, and returns the worst status per service.
+// It fetches all executions for the domain in a single query, then aggregates
+// the worst status per service in memory.
 func (u *CheckStatusUsecase) GetWorstServiceStatuses(userId happydns.Identifier, domainId happydns.Identifier, zone *happydns.Zone) (map[string]*happydns.Status, error) {
-	checkers := checkerPkg.GetCheckers()
-	if len(checkers) == 0 {
-		return nil, nil
+	execs, err := u.execStore.ListExecutionsByDomain(domainId, worstStatusMaxExecs)
+	if err != nil {
+		return nil, err
+	}
+
+	type key struct {
+		serviceId string
+		checker   string
+	}
+	latest := map[key]*happydns.Execution{}
+	for _, exec := range execs {
+		if exec.Target.ServiceId == "" || exec.Status != happydns.ExecutionDone {
+			continue
+		}
+		k := key{serviceId: exec.Target.ServiceId, checker: exec.CheckerID}
+		if prev, ok := latest[k]; !ok || exec.StartedAt.After(prev.StartedAt) {
+			latest[k] = exec
+		}
 	}
 
 	result := make(map[string]*happydns.Status)
-	for subdomain := range zone.Services {
-		for _, svc := range zone.Services[subdomain] {
-			target := happydns.CheckTarget{
-				UserId:    &userId,
-				DomainId:  &domainId,
-				ServiceId: &svc.Id,
-			}
-			var worst *happydns.Status
-			for _, def := range checkers {
-				execs, err := u.execStore.ListExecutionsByChecker(def.ID, target, 1)
-				if err != nil || len(execs) == 0 {
-					continue
-				}
-				s := execs[0].Result.Status
-				if worst == nil || s > *worst {
-					worst = &s
-				}
-			}
-			if worst != nil {
-				result[svc.Id.String()] = worst
-			}
+	for k, exec := range latest {
+		s := exec.Result.Status
+		if s == happydns.StatusUnknown {
+			continue
+		}
+		if prev, ok := result[k.serviceId]; !ok || s > *prev {
+			result[k.serviceId] = &s
 		}
 	}
 
@@ -232,4 +290,85 @@ func (u *CheckStatusUsecase) GetResultsByExecution(scope happydns.CheckTarget, e
 		return nil, happydns.ErrCheckEvaluationNotFound
 	}
 	return u.evalStore.GetEvaluation(*exec.EvaluationID)
+}
+
+// snapshotForExecution returns the observation snapshot associated with an execution.
+func (u *CheckStatusUsecase) snapshotForExecution(exec *happydns.Execution) (*happydns.ObservationSnapshot, error) {
+	if exec.EvaluationID == nil {
+		return nil, happydns.ErrCheckEvaluationNotFound
+	}
+
+	eval, err := u.evalStore.GetEvaluation(*exec.EvaluationID)
+	if err != nil {
+		return nil, err
+	}
+
+	return u.snapStore.GetSnapshot(eval.SnapshotID)
+}
+
+// extractMetricsFromExecution extracts metrics from a single execution's snapshot.
+func (u *CheckStatusUsecase) extractMetricsFromExecution(exec *happydns.Execution) ([]happydns.CheckMetric, error) {
+	if exec.Status != happydns.ExecutionDone || exec.EvaluationID == nil {
+		return nil, nil
+	}
+
+	snap, err := u.snapshotForExecution(exec)
+	if err != nil {
+		return nil, err
+	}
+
+	return checkerPkg.GetAllMetrics(snap)
+}
+
+// extractMetricsFromExecutions extracts metrics from a list of executions.
+func (u *CheckStatusUsecase) extractMetricsFromExecutions(execs []*happydns.Execution) ([]happydns.CheckMetric, error) {
+	var allMetrics []happydns.CheckMetric
+	for _, exec := range execs {
+		metrics, err := u.extractMetricsFromExecution(exec)
+		if err != nil {
+			log.Printf("extractMetricsFromExecutions: exec %s: %v", exec.Id.String(), err)
+			continue
+		}
+		allMetrics = append(allMetrics, metrics...)
+	}
+	return allMetrics, nil
+}
+
+// GetMetricsByExecution extracts metrics from a single execution's snapshot after verifying scope.
+func (u *CheckStatusUsecase) GetMetricsByExecution(scope happydns.CheckTarget, execID happydns.Identifier) ([]happydns.CheckMetric, error) {
+	exec, err := u.execStore.GetExecution(execID)
+	if err != nil {
+		return nil, err
+	}
+	if !targetMatchesResource(scope, exec.Target) {
+		return nil, happydns.ErrExecutionNotFound
+	}
+	return u.extractMetricsFromExecution(exec)
+}
+
+// GetMetricsByChecker extracts metrics from recent executions of a checker on a target.
+func (u *CheckStatusUsecase) GetMetricsByChecker(checkerID string, target happydns.CheckTarget, limit int) ([]happydns.CheckMetric, error) {
+	execs, err := u.execStore.ListExecutionsByChecker(checkerID, target, limit)
+	if err != nil {
+		return nil, err
+	}
+	return u.extractMetricsFromExecutions(execs)
+}
+
+// GetMetricsByUser extracts metrics from recent executions for a user across all checkers.
+func (u *CheckStatusUsecase) GetMetricsByUser(userId happydns.Identifier, limit int) ([]happydns.CheckMetric, error) {
+	execs, err := u.execStore.ListExecutionsByUser(userId, limit)
+	if err != nil {
+		return nil, err
+	}
+	return u.extractMetricsFromExecutions(execs)
+}
+
+// GetMetricsByDomain extracts metrics from recent executions for a domain (including services).
+func (u *CheckStatusUsecase) GetMetricsByDomain(domainId happydns.Identifier, limit int) ([]happydns.CheckMetric, error) {
+	execs, err := u.execStore.ListExecutionsByDomain(domainId, limit)
+	if err != nil {
+		return nil, err
+	}
+	return u.extractMetricsFromExecutions(execs)
 }
