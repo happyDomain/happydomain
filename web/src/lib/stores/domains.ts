@@ -110,5 +110,10 @@ export const domains_by_groups = derived(domains, ($domains: Array<Domain> | und
 });
 
 export function domainLink(dnid: string): string {
-    return get(domains_idx)[get(domains_idx)[dnid].domain] ? get(domains_idx)[dnid].domain : dnid;
+    const idx = get(domains_idx);
+    const entry = idx[dnid];
+    if (entry && idx[entry.domain]) {
+        return entry.domain;
+    }
+    return dnid;
 }
