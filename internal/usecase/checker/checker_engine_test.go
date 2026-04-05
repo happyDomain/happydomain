@@ -23,6 +23,9 @@ package checker_test
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"git.happydns.org/happyDomain/internal/checker"
@@ -38,7 +41,7 @@ func (p *testObservationProvider) Key() happydns.ObservationKey {
 	return "test_obs"
 }
 
-func (p *testObservationProvider) Collect(ctx context.Context, target happydns.CheckTarget, opts happydns.CheckerOptions) (any, error) {
+func (p *testObservationProvider) Collect(ctx context.Context, opts happydns.CheckerOptions) (any, error) {
 	return map[string]any{"value": 42}, nil
 }
 
@@ -443,5 +446,141 @@ func TestCheckerEngine_RunPopulatesObservationCache(t *testing.T) {
 	}
 	if _, ok := snap.Data["test_obs"]; !ok {
 		t.Error("expected 'test_obs' key in snapshot data")
+	}
+}
+
+func TestCheckerEngine_RunWithEndpointOverride(t *testing.T) {
+	// Start a fake remote checker that responds to POST /collect.
+	var gotRequest happydns.ExternalCollectRequest
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/collect" {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+		if err := json.NewDecoder(r.Body).Decode(&gotRequest); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(happydns.ExternalCollectResponse{
+			Data: json.RawMessage(`{"value":99}`),
+		})
+	}))
+	defer srv.Close()
+
+	store, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatalf("Instantiate() returned error: %v", err)
+	}
+
+	const checkerID = "test_checker_endpoint"
+	checker.RegisterChecker(&happydns.CheckerDefinition{
+		ID:   checkerID,
+		Name: "Test Checker Endpoint",
+		Availability: happydns.CheckerAvailability{
+			ApplyToDomain: true,
+		},
+		ObservationKeys: []happydns.ObservationKey{"test_obs"},
+		Rules: []happydns.CheckRule{
+			&testCheckRule{name: "rule_endpoint", status: happydns.StatusOK},
+		},
+	})
+
+	// Store admin-level configuration with the endpoint pointing to our test server.
+	if err := store.UpdateCheckerConfiguration(checkerID, nil, nil, nil, happydns.CheckerOptions{
+		"endpoint": srv.URL,
+	}); err != nil {
+		t.Fatalf("UpdateCheckerConfiguration() returned error: %v", err)
+	}
+
+	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	did, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
+
+	exec, err := engine.CreateExecution(checkerID, target, nil)
+	if err != nil {
+		t.Fatalf("CreateExecution() returned error: %v", err)
+	}
+
+	eval, err := engine.RunExecution(context.Background(), exec, nil, nil)
+	if err != nil {
+		t.Fatalf("RunExecution() returned error: %v", err)
+	}
+
+	if eval == nil {
+		t.Fatal("RunExecution() returned nil evaluation")
+	}
+
+	// The engine should have delegated to the HTTP endpoint.
+	if gotRequest.Key != "test_obs" {
+		t.Errorf("remote received Key = %q, want %q", gotRequest.Key, "test_obs")
+	}
+
+	if exec.Result.Status != happydns.StatusOK {
+		t.Errorf("expected status OK, got %s", exec.Result.Status)
+	}
+}
+
+func TestCheckerEngine_RunWithEndpointOverride_RemoteFailure(t *testing.T) {
+	// Start a remote checker that always returns an error.
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(happydns.ExternalCollectResponse{
+			Error: "remote collector is down",
+		})
+	}))
+	defer srv.Close()
+
+	store, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatalf("Instantiate() returned error: %v", err)
+	}
+
+	const checkerID = "test_checker_endpoint_fail"
+	checker.RegisterChecker(&happydns.CheckerDefinition{
+		ID:   checkerID,
+		Name: "Test Checker Endpoint Fail",
+		Availability: happydns.CheckerAvailability{
+			ApplyToDomain: true,
+		},
+		ObservationKeys: []happydns.ObservationKey{"test_obs"},
+		Rules: []happydns.CheckRule{
+			&testCheckRule{name: "rule_endpoint_fail", status: happydns.StatusOK},
+		},
+	})
+
+	if err := store.UpdateCheckerConfiguration(checkerID, nil, nil, nil, happydns.CheckerOptions{
+		"endpoint": srv.URL,
+	}); err != nil {
+		t.Fatalf("UpdateCheckerConfiguration() returned error: %v", err)
+	}
+
+	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	did, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
+
+	exec, err := engine.CreateExecution(checkerID, target, nil)
+	if err != nil {
+		t.Fatalf("CreateExecution() returned error: %v", err)
+	}
+
+	eval, err := engine.RunExecution(context.Background(), exec, nil, nil)
+	if err != nil {
+		t.Fatalf("RunExecution() returned error: %v", err)
+	}
+
+	// The rule should report an error state because observation collection failed.
+	if exec.Result.Status != happydns.StatusError {
+		t.Errorf("expected status Error, got %s", exec.Result.Status)
+	}
+
+	if len(eval.States) != 1 {
+		t.Fatalf("expected 1 state, got %d", len(eval.States))
 	}
 }

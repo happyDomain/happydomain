@@ -175,6 +175,13 @@ func (e *checkerEngine) runPipeline(ctx context.Context, def *happydns.CheckerDe
 	// Create observation context for lazy data collection.
 	obsCtx := checkerPkg.NewObservationContext(target, mergedOpts, cacheLookup, freshness)
 
+	// If an endpoint is configured, override observation providers with HTTP transport.
+	if endpoint, ok := mergedOpts["endpoint"].(string); ok && endpoint != "" {
+		for _, key := range def.ObservationKeys {
+			obsCtx.SetProviderOverride(key, checkerPkg.NewHTTPObservationProvider(key, endpoint))
+		}
+	}
+
 	// Evaluate all rules, skipping disabled ones.
 	states := make([]happydns.CheckState, 0, len(def.Rules))
 	for _, rule := range def.Rules {
