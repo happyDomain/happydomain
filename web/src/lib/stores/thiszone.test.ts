@@ -60,7 +60,7 @@ describe('Zone Store', () => {
       zone_history: ['123'],
     };
     const zoneId = '123';
-    const mockZone = { id: zoneId, name: 'example.com' };
+    const mockZone = { id: zoneId, name: 'example.com', last_modified: '2024-01-01T00:00:00Z', services: {} };
 
     // Mock de l'API with proper Response object
     globalThis.fetch = vitest.fn(() =>
@@ -68,7 +68,8 @@ describe('Zone Store', () => {
     ) as any;
 
     const zone = await getZone(domain, zoneId);
-    expect(zone).toEqual(mockZone);
-    expect(get(thisZone)).toEqual(mockZone);
+    const expectedZone = { id: zoneId, name: 'example.com', last_modified: new Date('2024-01-01T00:00:00Z'), services: {} };
+    expect(zone).toEqual(expectedZone);
+    expect(get(thisZone)).toEqual(expectedZone);
   });
 });
