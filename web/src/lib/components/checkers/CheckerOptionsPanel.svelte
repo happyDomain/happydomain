@@ -75,11 +75,13 @@
         onclean,
     }: Props = $props();
 
-    // Filter out auto-fill fields from editable groups (they are system-provided).
+    // Filter out auto-fill and noOverride fields from editable groups.
+    // Auto-fill fields are system-provided; noOverride fields can only be
+    // changed at the scope where they are defined (typically admin).
     let filteredEditableGroups = $derived(
         editableGroups.map((g) => ({
             ...g,
-            opts: g.opts.filter((opt) => !opt.autoFill),
+            opts: g.opts.filter((opt) => !opt.autoFill && !opt.noOverride),
         })),
     );
 

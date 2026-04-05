@@ -130,7 +130,7 @@ export function collectAllOptionDocs(
             ...(r.options?.userOpts || []),
             ...(r.options?.domainOpts || []),
         ]),
-    ];
+    ].filter((o) => !o.noOverride);
 }
 
 export function splitPositionalOptions(

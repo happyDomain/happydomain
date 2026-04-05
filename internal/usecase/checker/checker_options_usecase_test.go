@@ -1440,3 +1440,215 @@ func TestValidateOptions_SkipsAutoFillFields(t *testing.T) {
 		t.Fatalf("auto-fill required field should be skipped during validation, got: %v", err)
 	}
 }
+
+// --- NoOverride tests ---
+
+func TestGetCheckerOptions_NoOverridePreservesAdminValue(t *testing.T) {
+	registerTestChecker("no_override_merge", &happydns.CheckerDefinition{
+		Options: happydns.CheckerOptionsDocumentation{
+			AdminOpts: []happydns.CheckerOptionDocumentation{
+				{Id: "locked", Type: "boolean", NoOverride: true},
+			},
+			UserOpts: []happydns.CheckerOptionDocumentation{
+				{Id: "threshold", Type: "number"},
+			},
+		},
+	})
+
+	store := newOptionsStore()
+	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
+
+	uid := idPtr()
+
+	// Set at admin scope.
+	store.UpdateCheckerConfiguration("no_override_merge", nil, nil, nil, happydns.CheckerOptions{
+		"locked": true,
+	})
+	// Attempt to override at user scope (should be ignored during merge).
+	store.UpdateCheckerConfiguration("no_override_merge", uid, nil, nil, happydns.CheckerOptions{
+		"locked":    false,
+		"threshold": float64(42),
+	})
+
+	merged, err := uc.GetCheckerOptions("no_override_merge", uid, nil, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if merged["locked"] != true {
+		t.Errorf("expected locked=true (admin value preserved), got %v", merged["locked"])
+	}
+	if merged["threshold"] != float64(42) {
+		t.Errorf("expected threshold=42 (user value applied), got %v", merged["threshold"])
+	}
+}
+
+func TestGetCheckerOptions_NoOverrideAllowsSameScope(t *testing.T) {
+	registerTestChecker("no_override_same_scope", &happydns.CheckerDefinition{
+		Options: happydns.CheckerOptionsDocumentation{
+			AdminOpts: []happydns.CheckerOptionDocumentation{
+				{Id: "locked", Type: "boolean", NoOverride: true},
+			},
+		},
+	})
+
+	store := newOptionsStore()
+	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
+
+	// Only admin scope sets the value, no conflict.
+	store.UpdateCheckerConfiguration("no_override_same_scope", nil, nil, nil, happydns.CheckerOptions{
+		"locked": true,
+	})
+
+	merged, err := uc.GetCheckerOptions("no_override_same_scope", nil, nil, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if merged["locked"] != true {
+		t.Errorf("expected locked=true, got %v", merged["locked"])
+	}
+}
+
+func TestBuildMergedCheckerOptionsWithAutoFill_NoOverrideBlocksRunOpts(t *testing.T) {
+	registerTestChecker("no_override_runopt", &happydns.CheckerDefinition{
+		Options: happydns.CheckerOptionsDocumentation{
+			AdminOpts: []happydns.CheckerOptionDocumentation{
+				{Id: "locked", Type: "boolean", NoOverride: true},
+			},
+			UserOpts: []happydns.CheckerOptionDocumentation{
+				{Id: "threshold", Type: "number"},
+			},
+		},
+	})
+
+	store := newOptionsStore()
+	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
+
+	uid := idPtr()
+
+	// Admin sets locked=true.
+	store.UpdateCheckerConfiguration("no_override_runopt", nil, nil, nil, happydns.CheckerOptions{
+		"locked": true,
+	})
+	// User sets threshold.
+	store.UpdateCheckerConfiguration("no_override_runopt", uid, nil, nil, happydns.CheckerOptions{
+		"threshold": float64(10),
+	})
+
+	// RunOpts tries to override locked.
+	merged, err := uc.BuildMergedCheckerOptionsWithAutoFill("no_override_runopt", uid, nil, nil, happydns.CheckerOptions{
+		"locked": false,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if merged["locked"] != true {
+		t.Errorf("expected locked=true (NoOverride should block runOpts), got %v", merged["locked"])
+	}
+	if merged["threshold"] != float64(10) {
+		t.Errorf("expected threshold=10, got %v", merged["threshold"])
+	}
+}
+
+func TestSetCheckerOptions_StripsNoOverrideAtLowerScope(t *testing.T) {
+	registerTestChecker("no_override_set", &happydns.CheckerDefinition{
+		Options: happydns.CheckerOptionsDocumentation{
+			AdminOpts: []happydns.CheckerOptionDocumentation{
+				{Id: "locked", Type: "boolean", NoOverride: true},
+			},
+			UserOpts: []happydns.CheckerOptionDocumentation{
+				{Id: "threshold", Type: "number"},
+			},
+		},
+	})
+
+	store := newOptionsStore()
+	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
+
+	uid := idPtr()
+
+	// Try to set locked at user scope; should be silently stripped.
+	err := uc.SetCheckerOptions("no_override_set", uid, nil, nil, happydns.CheckerOptions{
+		"locked":    true,
+		"threshold": float64(99),
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Check what was actually stored.
+	stored := store.data[posKey("no_override_set", uid, nil, nil)]
+	if _, ok := stored["locked"]; ok {
+		t.Error("expected locked to be stripped from user-scope storage")
+	}
+	if stored["threshold"] != float64(99) {
+		t.Errorf("expected threshold=99 to be stored, got %v", stored["threshold"])
+	}
+}
+
+func TestAddCheckerOptions_StripsNoOverrideAtLowerScope(t *testing.T) {
+	registerTestChecker("no_override_add", &happydns.CheckerDefinition{
+		Options: happydns.CheckerOptionsDocumentation{
+			AdminOpts: []happydns.CheckerOptionDocumentation{
+				{Id: "locked", Type: "boolean", NoOverride: true},
+			},
+			UserOpts: []happydns.CheckerOptionDocumentation{
+				{Id: "threshold", Type: "number"},
+			},
+		},
+	})
+
+	store := newOptionsStore()
+	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
+
+	uid := idPtr()
+
+	// Pre-populate user scope with threshold.
+	store.UpdateCheckerConfiguration("no_override_add", uid, nil, nil, happydns.CheckerOptions{
+		"threshold": float64(50),
+	})
+
+	// Try to add locked at user scope; should be silently skipped.
+	result, err := uc.AddCheckerOptions("no_override_add", uid, nil, nil, happydns.CheckerOptions{
+		"locked":    true,
+		"threshold": float64(75),
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if _, ok := result["locked"]; ok {
+		t.Error("expected locked to be skipped in AddCheckerOptions result")
+	}
+	if result["threshold"] != float64(75) {
+		t.Errorf("expected threshold=75, got %v", result["threshold"])
+	}
+}
+
+func TestSetCheckerOption_RejectsNoOverrideAtLowerScope(t *testing.T) {
+	registerTestChecker("no_override_set_single", &happydns.CheckerDefinition{
+		Options: happydns.CheckerOptionsDocumentation{
+			AdminOpts: []happydns.CheckerOptionDocumentation{
+				{Id: "locked", Type: "boolean", NoOverride: true},
+			},
+		},
+	})
+
+	store := newOptionsStore()
+	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
+
+	uid := idPtr()
+
+	// Setting at admin scope should work.
+	err := uc.SetCheckerOption("no_override_set_single", nil, nil, nil, "locked", true)
+	if err != nil {
+		t.Fatalf("expected SetCheckerOption at admin scope to succeed, got: %v", err)
+	}
+
+	// Setting at user scope should fail.
+	err = uc.SetCheckerOption("no_override_set_single", uid, nil, nil, "locked", false)
+	if err == nil {
+		t.Fatal("expected error when setting NoOverride field at lower scope")
+	}
+	if !strings.Contains(err.Error(), "cannot be overridden") {
+		t.Errorf("unexpected error message: %v", err)
+	}
+}
