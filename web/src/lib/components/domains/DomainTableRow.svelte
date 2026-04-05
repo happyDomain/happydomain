@@ -25,13 +25,14 @@
     import { Badge, Button, ButtonGroup, Icon } from "@sveltestrap/sveltestrap";
 
     import ProviderLink from "$lib/components/providers/ProviderLink.svelte";
-    import type { Domain } from "$lib/model/domain";
+    import type { HappydnsDomainWithCheckStatus } from "$lib/api-base/types.gen";
     import { navigate } from "$lib/stores/config";
     import { t } from "$lib/translations";
+    import { getStatusColor, getStatusIcon } from "$lib/utils/checkers";
 
     interface Props {
-        domain: Domain;
-        ondelete: (event: Event, domain: Domain) => void;
+        domain: HappydnsDomainWithCheckStatus;
+        ondelete: (event: Event, domain: HappydnsDomainWithCheckStatus) => void;
     }
 
     let { domain, ondelete }: Props = $props();
@@ -47,7 +48,15 @@
         <ProviderLink id_provider={domain.id_provider} onclick={(e) => e.stopPropagation()} />
     </td>
     <td>
-        <Badge color="success">OK</Badge>
+        <a
+            href="/domains/{encodeURIComponent(domain.domain)}/checks"
+            class="text-decoration-none"
+            onclick={(e) => e.stopPropagation()}
+        >
+            <Badge color={getStatusColor(domain.last_check_status)}>
+                <Icon name={getStatusIcon(domain.last_check_status)} />
+            </Badge>
+        </a>
     </td>
     <td class="text-end">
         <ButtonGroup size="sm">

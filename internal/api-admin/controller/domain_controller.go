@@ -74,7 +74,7 @@ func NewDomainController(
 func (dc *DomainController) ListDomains(c *gin.Context) {
 	user := middleware.MyUser(c)
 	if user != nil {
-		apidc := controller.NewDomainController(dc.domainService, dc.remoteZoneImporter, dc.zoneImporter)
+		apidc := controller.NewDomainController(dc.domainService, dc.remoteZoneImporter, dc.zoneImporter, nil)
 		apidc.GetDomains(c)
 		return
 	}

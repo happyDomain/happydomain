@@ -28,14 +28,14 @@
 
     import { deleteDomain } from "$lib/api/domains";
     import DomainTableRow from "$lib/components/domains/DomainTableRow.svelte";
-    import type { Domain } from "$lib/model/domain";
+    import type { HappydnsDomainWithCheckStatus } from "$lib/api-base/types.gen";
     import { refreshDomains } from "$lib/stores/domains";
     import { providersSpecs, refreshProvidersSpecs } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 
     interface Props {
         class?: ClassValue;
-        items: Array<Domain>;
+        items: Array<HappydnsDomainWithCheckStatus>;
         [key: string]: unknown;
     }
 
@@ -43,7 +43,7 @@
 
     if (!$providersSpecs) refreshProvidersSpecs();
 
-    async function delDomain(event: Event, item: Domain) {
+    async function delDomain(event: Event, item: HappydnsDomainWithCheckStatus) {
         event.stopPropagation();
 
         if (!confirm($t("domains.alert.remove", { domain: item.domain }))) return;

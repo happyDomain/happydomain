@@ -27,21 +27,25 @@ import {
     deleteDomainsByDomainId,
     getDomainsByDomainIdLogs,
 } from "$lib/api-base/sdk.gen";
-import type { HappydnsDomainUpdateInput } from "$lib/api-base/types.gen";
+import type {
+    HappydnsDomainUpdateInput,
+    HappydnsDomainWithCheckStatus,
+    HappydnsDomainWithZoneMetadata,
+} from "$lib/api-base/types.gen";
 import type { Domain, DomainLog } from "$lib/model/domain";
 import type { Provider } from "$lib/model/provider";
 import { unwrapSdkResponse, unwrapEmptyResponse } from "./errors";
 
-export async function listDomains(): Promise<Array<Domain>> {
-    return unwrapSdkResponse(await getDomains()) as Array<Domain>;
+export async function listDomains(): Promise<Array<HappydnsDomainWithCheckStatus>> {
+    return unwrapSdkResponse(await getDomains()) as Array<HappydnsDomainWithCheckStatus>;
 }
 
-export async function getDomain(id: string): Promise<Domain> {
+export async function getDomain(id: string): Promise<HappydnsDomainWithZoneMetadata> {
     return unwrapSdkResponse(
         await getDomainsByDomainId({
             path: { domainId: id },
         }),
-    ) as Domain;
+    ) as HappydnsDomainWithZoneMetadata;
 }
 
 export async function addDomain(domain: string, provider: Provider | undefined): Promise<Domain> {

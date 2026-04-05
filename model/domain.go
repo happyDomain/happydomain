@@ -104,6 +104,13 @@ type DomainWithZoneMetadata struct {
 	ZoneMeta map[string]*ZoneMeta `json:"zone_meta"`
 }
 
+type DomainWithCheckStatus struct {
+	*Domain
+	// LastCheckStatus is the worst status across the most recent result of each
+	// checker that has run on this domain. Nil if no results exist yet.
+	LastCheckStatus *Status `json:"last_check_status,omitempty"`
+}
+
 type Subdomain string
 type Origin string
 

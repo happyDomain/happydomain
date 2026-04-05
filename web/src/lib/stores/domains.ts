@@ -21,9 +21,9 @@
 
 import { get, derived, writable, type Writable } from "svelte/store";
 import { listDomains } from "$lib/api/domains";
-import type { Domain } from "$lib/model/domain";
+import type { HappydnsDomainWithCheckStatus } from "$lib/api-base/types.gen";
 
-export const domains: Writable<Array<Domain> | undefined> = writable(undefined);
+export const domains: Writable<Array<HappydnsDomainWithCheckStatus> | undefined> = writable(undefined);
 export const newlyGroups: Writable<Array<string>> = writable([]);
 
 export async function refreshDomains() {
@@ -35,7 +35,7 @@ export async function refreshDomains() {
     return data;
 }
 
-export const groups = derived(domains, ($domains: Array<Domain> | undefined) => {
+export const groups = derived(domains, ($domains: Array<HappydnsDomainWithCheckStatus> | undefined) => {
     if (!$domains) return [];
 
     const groups = new Set<string>();
@@ -51,8 +51,8 @@ export const groups = derived(domains, ($domains: Array<Domain> | undefined) => 
     });
 });
 
-export const domains_idx = derived(domains, ($domains: Array<Domain> | undefined) => {
-    const idx: Record<string, Domain> = {};
+export const domains_idx = derived(domains, ($domains: Array<HappydnsDomainWithCheckStatus> | undefined) => {
+    const idx: Record<string, HappydnsDomainWithCheckStatus> = {};
 
     if (!$domains) return idx;
 
@@ -75,8 +75,8 @@ export const domains_idx = derived(domains, ($domains: Array<Domain> | undefined
     return idx;
 });
 
-export const domains_by_name = derived(domains, ($domains: Array<Domain> | undefined) => {
-    const idx: Record<string, Array<Domain>> = {};
+export const domains_by_name = derived(domains, ($domains: Array<HappydnsDomainWithCheckStatus> | undefined) => {
+    const idx: Record<string, Array<HappydnsDomainWithCheckStatus>> = {};
 
     if (!$domains) return idx;
 
@@ -91,8 +91,8 @@ export const domains_by_name = derived(domains, ($domains: Array<Domain> | undef
     return idx;
 });
 
-export const domains_by_groups = derived(domains, ($domains: Array<Domain> | undefined) => {
-    const groups: Record<string, Array<Domain>> = {};
+export const domains_by_groups = derived(domains, ($domains: Array<HappydnsDomainWithCheckStatus> | undefined) => {
+    const groups: Record<string, Array<HappydnsDomainWithCheckStatus>> = {};
 
     if ($domains === undefined) {
         return groups;

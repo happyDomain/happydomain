@@ -22,21 +22,24 @@
 -->
 
 <script lang="ts">
+    import { Icon } from "@sveltestrap/sveltestrap";
+
     import FilterDomainInput from "$lib/components/pages/home/FilterDomainInput.svelte";
     import CardImportableDomains from "$lib/components/providers/CardImportableDomains.svelte";
     import ZoneList from "$lib/components/zones/ZoneList.svelte";
+    import type { HappydnsDomainWithCheckStatus } from "$lib/api-base/types.gen";
     import { fqdnCompare } from "$lib/dns";
-    import type { Domain } from "$lib/model/domain";
     import { domains } from "$lib/stores/domains";
     import { filteredGroup, filteredName, filteredProvider } from "$lib/stores/home";
     import { t } from "$lib/translations";
+    import { getStatusColor, getStatusIcon } from "$lib/utils/checkers";
 
     let noDomainsList = $state(false);
 
-    let filteredDomains: Array<Domain> = $derived(refreshFilteredDomains());
+    let filteredDomains: Array<HappydnsDomainWithCheckStatus> = $derived(refreshFilteredDomains());
 
-    function refreshFilteredDomains(): Array<Domain> {
-        let myDomains: Array<Domain> = [];
+    function refreshFilteredDomains(): Array<HappydnsDomainWithCheckStatus> {
+        let myDomains: Array<HappydnsDomainWithCheckStatus> = [];
 
         if ($domains) {
             myDomains = $domains.filter(
@@ -58,7 +61,16 @@
 <FilterDomainInput class="mb-3" />
 
 {#if filteredDomains.length}
-    <ZoneList button display_by_groups domains={filteredDomains} links show_empty_groups />
+    <ZoneList button display_by_groups domains={filteredDomains} links show_empty_groups>
+        {#snippet badges({ domain })}
+            <a
+                href="/domains/{encodeURIComponent(domain.domain)}/checks"
+                class={"text-" + getStatusColor(domain.last_check_status)}
+            >
+                <Icon name={getStatusIcon(domain.last_check_status)} />
+            </a>
+        {/snippet}
+    </ZoneList>
 {:else}
     <div class="my-4 text-center text-muted">
         {$t("domains.filtered-no-result")}

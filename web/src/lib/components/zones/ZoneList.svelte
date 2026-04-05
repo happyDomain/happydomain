@@ -21,7 +21,7 @@
      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 
-<script lang="ts">
+<script lang="ts" generics="T extends HappydnsDomain = HappydnsDomain">
     import { createEventDispatcher, type Snippet } from "svelte";
     import { fly, fade } from "svelte/transition";
     import { flip } from "svelte/animate";
@@ -30,27 +30,20 @@
     import { ListGroup } from "@sveltestrap/sveltestrap";
     import DomainWithProvider from "$lib/components/domains/DomainWithProvider.svelte";
     import { updateDomain } from "$lib/api/domains";
+    import type { HappydnsDomain } from "$lib/api-base/types.gen";
     import { domains_idx, newlyGroups, refreshDomains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
     const dispatch = createEventDispatcher();
-
-    interface ZoneListDomain {
-        id: string;
-        domain: string;
-        id_provider: string;
-        group?: string;
-        href?: string;
-    }
 
     interface Props {
         flush?: boolean;
         links?: boolean;
         display_by_groups?: boolean;
         show_empty_groups?: boolean;
-        domains?: Array<ZoneListDomain>;
+        domains?: Array<T>;
         no_domain?: Snippet;
-        badges?: Snippet<[{ domain: ZoneListDomain }]>;
+        badges?: Snippet<[{ domain: T }]>;
         [key: string]: unknown;
     }
 
@@ -66,7 +59,7 @@
     }: Props = $props();
 
     function genGroups(
-        domains: Array<ZoneListDomain>,
+        domains: Array<T>,
         display_by_groups: boolean,
         show_empty_groups: boolean,
         extraGroups: Array<string>,
@@ -75,7 +68,7 @@
             return { "": domains };
         }
 
-        const groups: Record<string, Array<ZoneListDomain>> = {};
+        const groups: Record<string, Array<T>> = {};
 
         for (const domain of domains) {
             const group = domain.group ?? "";
@@ -93,9 +86,9 @@
         return groups;
     }
 
-    let localDomains: Array<ZoneListDomain> = $derived([...domains]);
+    let localDomains: Array<T> = $derived([...domains]);
 
-    let groups: Record<string, Array<ZoneListDomain>> = $derived(
+    let groups: Record<string, Array<T>> = $derived(
         genGroups(localDomains, display_by_groups, show_empty_groups, $newlyGroups),
     );
 
@@ -106,7 +99,7 @@
     let nonEmptyGroupCount: number = $derived(
         Object.values(groups).filter((g) => g.length > 0).length,
     );
-    let draggedDomain: ZoneListDomain | null = $state(null);
+    let draggedDomain: T | null = $state(null);
     let dragOverGroup: string | null = $state(null);
 
     function toggleGroup(gname: string) {
@@ -156,19 +149,19 @@
         }
     }
 
-    function getDomainHref(domain: ZoneListDomain): string | undefined {
-        if (links && !domain.href) {
+    function getDomainHref(domain: T): string | undefined {
+        if (links) {
             if ($domains_idx[domain.domain]) {
                 return "/domains/" + encodeURIComponent(domain.domain);
             } else {
                 return "/domains/" + encodeURIComponent(domain.id);
             }
         }
-        return domain.href;
+        return undefined;
     }
 </script>
 
-{#snippet domainRow(domain: ZoneListDomain)}
+{#snippet domainRow(domain: T)}
     <DomainWithProvider {domain} />
     {#if badges}{@render badges({ domain })}{:else}
         <Badge color="success">OK</Badge>

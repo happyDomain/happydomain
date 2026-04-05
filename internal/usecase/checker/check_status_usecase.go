@@ -239,42 +239,14 @@ func (u *CheckStatusUsecase) GetWorstDomainStatuses(userId happydns.Identifier) 
 // GetWorstServiceStatuses returns the worst check status for each service in the zone.
 // It fetches all executions for the domain in a single query, then aggregates
 // the worst status per service in memory.
-func (u *CheckStatusUsecase) GetWorstServiceStatuses(userId happydns.Identifier, domainId happydns.Identifier, zone *happydns.Zone) (map[string]*happydns.Status, error) {
+func (u *CheckStatusUsecase) GetWorstServiceStatuses(userId happydns.Identifier, domainId happydns.Identifier) (map[string]*happydns.Status, error) {
 	execs, err := u.execStore.ListExecutionsByDomain(domainId, worstStatusMaxExecs)
 	if err != nil {
 		return nil, err
 	}
-
-	type key struct {
-		serviceId string
-		checker   string
-	}
-	latest := map[key]*happydns.Execution{}
-	for _, exec := range execs {
-		if exec.Target.ServiceId == "" || exec.Status != happydns.ExecutionDone {
-			continue
-		}
-		k := key{serviceId: exec.Target.ServiceId, checker: exec.CheckerID}
-		if prev, ok := latest[k]; !ok || exec.StartedAt.After(prev.StartedAt) {
-			latest[k] = exec
-		}
-	}
-
-	result := make(map[string]*happydns.Status)
-	for k, exec := range latest {
-		s := exec.Result.Status
-		if s == happydns.StatusUnknown {
-			continue
-		}
-		if prev, ok := result[k.serviceId]; !ok || s > *prev {
-			result[k.serviceId] = &s
-		}
-	}
-
-	if len(result) == 0 {
-		return nil, nil
-	}
-	return result, nil
+	return worstStatuses(execs, func(e *happydns.Execution) string {
+		return e.Target.ServiceId
+	}), nil
 }
 
 // GetResultsByExecution returns the evaluation (with per-rule states) for an execution after verifying scope.

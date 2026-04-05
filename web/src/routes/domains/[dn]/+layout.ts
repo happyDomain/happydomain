@@ -1,7 +1,7 @@
 import { error, type Load } from "@sveltejs/kit";
 import { get } from "svelte/store";
 
-import type { Domain } from "$lib/model/domain";
+import type { HappydnsDomainWithCheckStatus } from "$lib/api-base/types.gen";
 import { domains, domains_idx, refreshDomains } from "$lib/stores/domains";
 
 export const load: Load = async ({ parent, params }) => {
@@ -15,7 +15,7 @@ export const load: Load = async ({ parent, params }) => {
         });
     }
 
-    const domain: Domain | null = get(domains_idx)[params.dn];
+    const domain: HappydnsDomainWithCheckStatus | null = get(domains_idx)[params.dn];
 
     if (!domain) {
         error(404, {

@@ -30,6 +30,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
+	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -37,13 +38,15 @@ type DomainController struct {
 	domainService      happydns.DomainUsecase
 	remoteZoneImporter happydns.RemoteZoneImporterUsecase
 	zoneImporter       happydns.ZoneImporterUsecase
+	checkStatusUC      *checkerUC.CheckStatusUsecase
 }
 
-func NewDomainController(domainService happydns.DomainUsecase, remoteZoneImporter happydns.RemoteZoneImporterUsecase, zoneImporter happydns.ZoneImporterUsecase) *DomainController {
+func NewDomainController(domainService happydns.DomainUsecase, remoteZoneImporter happydns.RemoteZoneImporterUsecase, zoneImporter happydns.ZoneImporterUsecase, checkStatusUC *checkerUC.CheckStatusUsecase) *DomainController {
 	return &DomainController{
 		domainService:      domainService,
 		remoteZoneImporter: remoteZoneImporter,
 		zoneImporter:       zoneImporter,
+		checkStatusUC:      checkStatusUC,
 	}
 }
 
@@ -56,7 +59,7 @@ func NewDomainController(domainService happydns.DomainUsecase, remoteZoneImporte
 //	@Accept			json
 //	@Produce		json
 //	@Security		securitydefinitions.basic
-//	@Success		200	{array}		happydns.Domain
+//	@Success		200	{array}		happydns.DomainWithCheckStatus
 //	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Failure		404	{object}	happydns.ErrorResponse	"Unable to retrieve user's domains"
 //	@Router			/domains [get]
@@ -73,7 +76,25 @@ func (dc *DomainController) GetDomains(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, domains)
+	var statusByDomain map[string]*happydns.Status
+	if dc.checkStatusUC != nil {
+		var err error
+		statusByDomain, err = dc.checkStatusUC.GetWorstDomainStatuses(user.Id)
+		if err != nil {
+			log.Printf("GetWorstDomainStatuses: %s", err.Error())
+		}
+	}
+
+	result := make([]*happydns.DomainWithCheckStatus, 0, len(domains))
+	for _, d := range domains {
+		entry := &happydns.DomainWithCheckStatus{Domain: d}
+		if statusByDomain != nil {
+			entry.LastCheckStatus = statusByDomain[d.Id.String()]
+		}
+		result = append(result, entry)
+	}
+
+	c.JSON(http.StatusOK, result)
 }
 
 // AddDomain appends a new domain to those managed.

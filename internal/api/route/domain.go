@@ -26,6 +26,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
+	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -40,11 +41,13 @@ func DeclareDomainRoutes(
 	zoneServiceUC happydns.ZoneServiceUsecase,
 	serviceUC happydns.ServiceUsecase,
 	cc *controller.CheckerController,
+	checkStatusUC *checkerUC.CheckStatusUsecase,
 ) {
 	dc := controller.NewDomainController(
 		domainUC,
 		remoteZoneImporter,
 		zoneImporter,
+		checkStatusUC,
 	)
 
 	router.GET("/domains", dc.GetDomains)

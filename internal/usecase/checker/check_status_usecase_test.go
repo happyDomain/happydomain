@@ -408,7 +408,7 @@ func TestCheckStatusUsecase_GetWorstServiceStatuses(t *testing.T) {
 		t.Fatalf("CreateExecution() error: %v", err)
 	}
 
-	worst, err := uc.GetWorstServiceStatuses(uid, did, nil)
+	worst, err := uc.GetWorstServiceStatuses(uid, did)
 	if err != nil {
 		t.Fatalf("GetWorstServiceStatuses() error: %v", err)
 	}
@@ -432,7 +432,7 @@ func TestCheckStatusUsecase_GetWorstServiceStatuses_Empty(t *testing.T) {
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
 
-	result, err := uc.GetWorstServiceStatuses(uid, did, nil)
+	result, err := uc.GetWorstServiceStatuses(uid, did)
 	if err != nil {
 		t.Fatalf("GetWorstServiceStatuses() error: %v", err)
 	}

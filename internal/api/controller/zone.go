@@ -74,7 +74,7 @@ func (zc *ZoneController) GetZone(c *gin.Context) {
 	if zc.checkStatusUC != nil {
 		user := middleware.MyUser(c)
 		domain := c.MustGet("domain").(*happydns.Domain)
-		statusByService, err := zc.checkStatusUC.GetWorstServiceStatuses(user.Id, domain.Id, zone)
+		statusByService, err := zc.checkStatusUC.GetWorstServiceStatuses(user.Id, domain.Id)
 		if err != nil {
 			log.Printf("GetWorstServiceStatuses: %s", err.Error())
 		} else {
