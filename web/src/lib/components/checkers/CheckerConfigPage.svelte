@@ -51,9 +51,10 @@
         domainName: string;
         editableGroups: (status: any) => { label: string; opts: any[] }[];
         readOnlyGroups: (status: any) => { key: string; label: string; opts: any[] }[];
+        showSchedule?: boolean;
     }
 
-    let { scope, checksBase, checkerId, domainName, editableGroups, readOnlyGroups }: Props = $props();
+    let { scope, checksBase, checkerId, domainName, editableGroups, readOnlyGroups, showSchedule = true }: Props = $props();
 
     let checkStatusPromise = $derived(getCheckStatus(checkerId));
     let checkOptionsPromise = $derived(getScopedCheckOptions(scope, checkerId));
@@ -141,6 +142,7 @@
             {@const editable = editableGroups(status)}
             {@const readOnly = readOnlyGroups(status)}
             <Row class="mb-4">
+                {#if showSchedule}
                 <Col md={6}>
                     <CheckerScheduleCard {scope} {checkerId} bind:plan {intervalSpec} />
 
@@ -155,6 +157,7 @@
                         />
                     {/if}
                 </Col>
+                {/if}
 
                 <Col md={6}>
                     <CheckerOptionsPanel

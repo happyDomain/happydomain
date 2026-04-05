@@ -22,15 +22,7 @@
 -->
 
 <script lang="ts">
-    import {
-        Alert,
-        Badge,
-        Card,
-        CardBody,
-        CardHeader,
-        Icon,
-        Table,
-    } from "@sveltestrap/sveltestrap";
+    import { Alert, Badge, Card, Icon, Table } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
     import type { CheckerScope } from "$lib/api/checkers";
@@ -63,6 +55,16 @@
             ([id, def]) => !configuredIds.has(id) && def.availability?.[filterAvailability],
         );
     }
+
+    function getChildrenCheckers(configuredIds: Set<string>): [string, CheckerCheckerDefinition][] {
+        if (!$checkers) return [];
+        return Object.entries($checkers).filter(
+            ([id, def]) =>
+                !configuredIds.has(id) &&
+                !def.availability?.[filterAvailability] &&
+                (def.availability?.applyToZone || def.availability?.applyToService),
+        );
+    }
 </script>
 
 <svelte:head>
@@ -70,7 +72,7 @@
 </svelte:head>
 
 <div class="flex-fill mt-1 mb-5">
-    <PageTitle title={title} domain={domainName}></PageTitle>
+    <PageTitle {title} domain={domainName}></PageTitle>
 
     {#await checkersPromise}
         <Card body>
@@ -159,18 +161,16 @@
         {@const configuredIds = getConfiguredCheckerIds(checkerStatuses)}
         {@const unconfigured = getUnconfiguredCheckers(configuredIds)}
         {#if unconfigured.length > 0}
-            <Card>
-                <CardHeader>
-                    <strong>{$t("checkers.other-checkers.title")}</strong>
-                </CardHeader>
-                <CardBody>
-                    <p class="text-muted">{$t("checkers.other-checkers.description")}</p>
-                    <CheckersAvailabilityTable
-                        checkers={unconfigured}
-                        basePath={checksBase}
-                    />
-                </CardBody>
-            </Card>
+            <h4 class="mt-4">{$t("checkers.other-checkers.title")}</h4>
+            <p class="text-muted">{$t("checkers.other-checkers.description")}</p>
+            <CheckersAvailabilityTable checkers={unconfigured} basePath={checksBase} />
+        {/if}
+
+        {@const children = getChildrenCheckers(configuredIds)}
+        {#if children.length > 0}
+            <h4 class="mt-4">{$t("checkers.children-checkers.title")}</h4>
+            <p class="text-muted">{$t("checkers.children-checkers.description")}</p>
+            <CheckersAvailabilityTable checkers={children} basePath={checksBase} />
         {/if}
     {:catch error}
         <Alert color="danger">

@@ -27,11 +27,13 @@
     import { t } from "$lib/translations";
     import type { Domain } from "$lib/model/domain";
     import { domainLink } from "$lib/stores/domains";
+    import { checkers } from "$lib/stores/checkers";
     import CheckerConfigPage from "$lib/components/checkers/CheckerConfigPage.svelte";
 
     let domain: Domain = $derived(page.data.domain);
     let checkerId = $derived(page.params.checkerId!);
     let checksBase = $derived(`/domains/${domainLink(domain.id)}/checks`);
+    let isDomainChecker = $derived(!!$checkers?.[checkerId]?.availability?.applyToDomain);
 </script>
 
 <CheckerConfigPage
@@ -39,6 +41,7 @@
     {checksBase}
     {checkerId}
     domainName={domain.domain}
+    showSchedule={isDomainChecker}
     editableGroups={(status) => [
         {
             label: $t("checkers.option-groups.domain-settings"),

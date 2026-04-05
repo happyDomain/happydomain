@@ -602,6 +602,10 @@
             "title": "Other available checkers",
             "description": "These checkers are not directly associated with this domain but can be configured with domain-specific options."
         },
+        "children-checkers": {
+            "title": "Zone & service checkers",
+            "description": "These checkers apply to zones or individual services. You can configure them here, but results will only appear when running checks at the appropriate scope."
+        },
         "schedule": {
             "card-title": "Automatic scheduling",
             "interval-label": "Check interval",
