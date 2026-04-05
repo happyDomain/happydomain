@@ -30,6 +30,7 @@ import (
 	"github.com/earthboundkid/versioninfo/v2"
 	"github.com/fatih/color"
 
+	_ "git.happydns.org/happyDomain/checkers"
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/app"
 	"git.happydns.org/happyDomain/internal/config"
