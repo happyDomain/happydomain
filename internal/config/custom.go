@@ -25,7 +25,26 @@ import (
 	"encoding/base64"
 	"net/mail"
 	"net/url"
+	"strings"
 )
+
+// stringSlice is a flag.Value that accumulates string values across repeated
+// invocations of the same flag (e.g. -plugins-directory a -plugins-directory b).
+type stringSlice struct {
+	Values *[]string
+}
+
+func (s *stringSlice) String() string {
+	if s.Values == nil {
+		return ""
+	}
+	return strings.Join(*s.Values, ",")
+}
+
+func (s *stringSlice) Set(value string) error {
+	*s.Values = append(*s.Values, value)
+	return nil
+}
 
 type JWTSecretKey struct {
 	Secret *[]byte
