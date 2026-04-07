@@ -22,6 +22,7 @@
 import { redirect, type Load } from "@sveltejs/kit";
 import { get } from "svelte/store";
 
+import { refreshServicesSpecs } from "$lib/stores/services";
 import { toasts } from "$lib/stores/toasts";
 import { refreshUserSession } from "$lib/stores/usersession";
 import { config as tsConfig, locale, loadTranslations, t } from "$lib/translations";
@@ -110,6 +111,8 @@ export const load: Load = async ({ route, url }) => {
             throw redirect(302, '/login?next=' + encodeURIComponent(url.pathname));
         }
     }
+
+    refreshServicesSpecs();
 
     return {
         sw_state,

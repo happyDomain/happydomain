@@ -35,6 +35,7 @@ import (
 	sdk "git.happydns.org/checker-sdk-go/checker"
 	"git.happydns.org/happyDomain/internal/checker"
 	providerReg "git.happydns.org/happyDomain/internal/provider"
+	svcs "git.happydns.org/happyDomain/internal/service"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -73,6 +74,7 @@ func safeCall(symbol string, fname string, fn func() error) (err error) {
 var pluginLoaders = []pluginLoader{
 	loadCheckerPlugin,
 	loadProviderPlugin,
+	loadServicePlugin,
 }
 
 // loadCheckerPlugin handles the NewCheckerPlugin symbol exported by checkers
@@ -152,6 +154,53 @@ func loadProviderPlugin(p pluginSymbols, fname string) (bool, error) {
 
 	providerReg.RegisterProviderAs(qualified, creator, infos)
 	log.Printf("Plugin provider %q registered as %q (%s)", infos.Name, qualified, fname)
+	return true, nil
+}
+
+// loadServicePlugin handles the NewServicePlugin symbol exported by service
+// plugins. The factory returns the creator/analyzer/infos triple along with
+// the analyzer weight and any aliases the service should be reachable under.
+func loadServicePlugin(p pluginSymbols, fname string) (bool, error) {
+	sym, err := p.Lookup("NewServicePlugin")
+	if err != nil {
+		// Symbol not present in this .so, not an error.
+		return false, nil
+	}
+
+	factory, ok := sym.(func() (happydns.ServiceCreator, svcs.ServiceAnalyzer, happydns.ServiceInfos, uint32, []string, error))
+	if !ok {
+		return true, fmt.Errorf("symbol NewServicePlugin has unexpected type %T", sym)
+	}
+
+	var (
+		creator  happydns.ServiceCreator
+		analyzer svcs.ServiceAnalyzer
+		infos    happydns.ServiceInfos
+		weight   uint32
+		aliases  []string
+	)
+	if err := safeCall("NewServicePlugin", fname, func() error {
+		var ferr error
+		creator, analyzer, infos, weight, aliases, ferr = factory()
+		return ferr
+	}); err != nil {
+		return true, err
+	}
+	if creator == nil {
+		return true, fmt.Errorf("NewServicePlugin returned a nil ServiceCreator")
+	}
+
+	svcs.RegisterService(creator, analyzer, infos, weight, aliases...)
+
+	// The built-in sub-service walker only descends into types whose package
+	// path lives under git.happydns.org/happyDomain/services. Plugin services
+	// live elsewhere, so we must explicitly walk their type tree to register
+	// any nested struct types as sub-services; otherwise (de)serialisation
+	// of plugin payloads breaks for anything more than a flat struct.
+	baseType := reflect.Indirect(reflect.ValueOf(creator())).Type()
+	svcs.RegisterPluginSubServices(baseType)
+
+	log.Printf("Plugin service %q (%s) loaded", infos.Name, fname)
 	return true, nil
 }
 
