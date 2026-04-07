@@ -68,7 +68,7 @@ func declareFlags(o *happydns.Options) {
 	flag.StringVar(&o.CaptchaProvider, "captcha-provider", o.CaptchaProvider, "Captcha provider to use for bot protection (altcha, hcaptcha, recaptchav2, turnstile, or empty to disable)")
 	flag.IntVar(&o.CaptchaLoginThreshold, "captcha-login-threshold", 3, "Number of failed login attempts before captcha is required (0 = always require when provider configured)")
 
-	flag.Var(&stringSlice{&o.PluginsDirectories}, "plugins-directory", "Path to a directory containing checker plugins (.so files); may be repeated")
+	flag.Var(&stringSlice{&o.PluginsDirectories}, "plugins-directory", "Path to a directory containing checker, provider or service plugins (.so files); may be repeated")
 
 	// Others flags are declared in some other files likes sources, storages, ... when they need specials configurations
 }

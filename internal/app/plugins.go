@@ -30,9 +30,12 @@ import (
 	"os"
 	"path/filepath"
 	"plugin"
+	"reflect"
 
 	sdk "git.happydns.org/checker-sdk-go/checker"
 	"git.happydns.org/happyDomain/internal/checker"
+	providerReg "git.happydns.org/happyDomain/internal/provider"
+	"git.happydns.org/happyDomain/model"
 )
 
 // pluginSymbols is the minimal subset of *plugin.Plugin used by the loaders.
@@ -69,6 +72,7 @@ func safeCall(symbol string, fname string, fn func() error) (err error) {
 // knows about. To support a new plugin type, add a single entry here.
 var pluginLoaders = []pluginLoader{
 	loadCheckerPlugin,
+	loadProviderPlugin,
 }
 
 // loadCheckerPlugin handles the NewCheckerPlugin symbol exported by checkers
@@ -106,6 +110,48 @@ func loadCheckerPlugin(p pluginSymbols, fname string) (bool, error) {
 	checker.RegisterObservationProvider(provider)
 	checker.RegisterExternalizableChecker(def)
 	log.Printf("Plugin %s (%s) loaded", def.ID, fname)
+	return true, nil
+}
+
+// loadProviderPlugin handles the NewProviderPlugin symbol exported by DNS
+// provider plugins. The factory returns the creator/infos pair that the
+// provider registry expects.
+func loadProviderPlugin(p pluginSymbols, fname string) (bool, error) {
+	sym, err := p.Lookup("NewProviderPlugin")
+	if err != nil {
+		// Symbol not present in this .so, not an error.
+		return false, nil
+	}
+
+	factory, ok := sym.(func() (happydns.ProviderCreatorFunc, happydns.ProviderInfos, error))
+	if !ok {
+		return true, fmt.Errorf("symbol NewProviderPlugin has unexpected type %T", sym)
+	}
+
+	var (
+		creator happydns.ProviderCreatorFunc
+		infos   happydns.ProviderInfos
+	)
+	if err := safeCall("NewProviderPlugin", fname, func() error {
+		var ferr error
+		creator, infos, ferr = factory()
+		return ferr
+	}); err != nil {
+		return true, err
+	}
+	if creator == nil {
+		return true, fmt.Errorf("NewProviderPlugin returned a nil ProviderCreatorFunc")
+	}
+
+	// Plugin-registered providers go through the qualified-name API so that
+	// two plugins exporting providers with the same struct name (in different
+	// packages) cannot silently overwrite each other in the global registry.
+	sample := creator()
+	baseType := reflect.Indirect(reflect.ValueOf(sample)).Type()
+	qualified := baseType.String()
+
+	providerReg.RegisterProviderAs(qualified, creator, infos)
+	log.Printf("Plugin provider %q registered as %q (%s)", infos.Name, qualified, fname)
 	return true, nil
 }
 
