@@ -15,6 +15,14 @@ steps:
       - go install github.com/swaggo/swag/cmd/swag@latest
       - go generate ./...
 
+  - name: update frontend version
+    image: node:24-alpine
+    commands:
+      - cd web && npm version "${DRONE_TAG##v}" --no-git-tag-version --allow-same-version
+    when:
+      event:
+        - tag
+
   - name: frontend
     image: node:24-alpine
     commands:
@@ -212,6 +220,14 @@ steps:
       - sed -i '/npm run build/d;/npm run generate:api/d' web/assets.go web-admin/assets.go
       - go install github.com/swaggo/swag/cmd/swag@latest
       - go generate ./...
+
+  - name: update frontend version
+    image: node:24-alpine
+    commands:
+      - cd web && npm version "${DRONE_TAG##v}" --no-git-tag-version --allow-same-version
+    when:
+      event:
+        - tag
 
   - name: frontend
     image: node:24-alpine
