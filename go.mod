@@ -6,6 +6,7 @@ toolchain go1.26.2
 
 require (
 	git.happydns.org/checker-matrix v0.0.0-20260407211824-2bb91d33d489
+	git.happydns.org/checker-ns-restrictions v0.0.0-20260415205411-f1e3096f606d
 	git.happydns.org/checker-ping v0.0.0-20260407194626-a2ebf17774fc
 	git.happydns.org/checker-sdk-go v0.5.0
 	git.happydns.org/checker-zonemaster v0.0.0-20260407202727-979757b5a8fc

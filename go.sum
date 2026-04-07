@@ -10,6 +10,8 @@ codeberg.org/miekg/dns v0.6.73/go.mod h1:58Y3ZTg6Z5ZEm/ZAAwHehbZfrD4u5mE4RByHoPE
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 git.happydns.org/checker-matrix v0.0.0-20260407211824-2bb91d33d489 h1:pTGfGq88Dj4Y60LJLSW4FvpUubeYpNlwuxKt/2IFzdo=
 git.happydns.org/checker-matrix v0.0.0-20260407211824-2bb91d33d489/go.mod h1:fQjY1yWYFucu+Ebn5uYM7ZWTJNQIgjMENI/8tqlaR98=
+git.happydns.org/checker-ns-restrictions v0.0.0-20260415205411-f1e3096f606d h1:WqNi0vYSu7ZtPC4zNTwrZM64WcceaOistkF9qMxFQvE=
+git.happydns.org/checker-ns-restrictions v0.0.0-20260415205411-f1e3096f606d/go.mod h1:Sw8SqlrTAi3ZSVQQ+5kKE8reekxvLRm7oYlUYfJD+Z4=
 git.happydns.org/checker-ping v0.0.0-20260407194626-a2ebf17774fc h1:jKEOx2NDbHHxjCy1fUkcn1RgpzOKbE+bGRsF+ITNigI=
 git.happydns.org/checker-ping v0.0.0-20260407194626-a2ebf17774fc/go.mod h1:wphWmslFhKcpWfJTrHdChv8DkhUP9jwis7V2jy7vOX0=
 git.happydns.org/checker-sdk-go v0.5.0 h1:wpFIK/vxanrAYf1OlewSnSCYc7KOJKdu88uUWB7HIQI=
