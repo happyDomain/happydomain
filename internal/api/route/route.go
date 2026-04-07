@@ -37,6 +37,7 @@ type Dependencies struct {
 	AuthUser              happydns.AuthUserUsecase
 	CaptchaVerifier       happydns.CaptchaVerifier
 	Domain                happydns.DomainUsecase
+	DomainInfo            happydns.DomainInfoUsecase
 	DomainLog             happydns.DomainLogUsecase
 	FailureTracker        happydns.FailureTracker
 	Provider              happydns.ProviderUsecase
@@ -98,6 +99,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 		dep.FailureTracker,
 	)
 	auc := DeclareAuthUserRoutes(apiRoutes, dep.AuthUser, lc)
+	DeclareDomainInfoRoutes(apiRoutes.Group("/domaininfo/:domain"), dep.DomainInfo)
 	DeclareProviderSpecsRoutes(apiRoutes, dep.ProviderSpecs)
 	DeclareRegistrationRoutes(apiRoutes, dep.AuthUser, dep.CaptchaVerifier)
 	DeclareResolverRoutes(apiRoutes, dep.Resolver)
@@ -143,6 +145,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 		dep.Service,
 		cc,
 		dep.CheckStatusUC,
+		dep.DomainInfo,
 	)
 	DeclareProviderRoutes(apiAuthRoutes, dep.Provider)
 	DeclareProviderSettingsRoutes(apiAuthRoutes, dep.ProviderSettings)

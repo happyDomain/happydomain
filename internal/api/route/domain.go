@@ -42,6 +42,7 @@ func DeclareDomainRoutes(
 	serviceUC happydns.ServiceUsecase,
 	cc *controller.CheckerController,
 	checkStatusUC *checkerUC.CheckStatusUsecase,
+	domainInfoUC happydns.DomainInfoUsecase,
 ) {
 	dc := controller.NewDomainController(
 		domainUC,
@@ -60,6 +61,7 @@ func DeclareDomainRoutes(
 	apiDomainsRoutes.PUT("", dc.UpdateDomain)
 	apiDomainsRoutes.DELETE("", dc.DelDomain)
 
+	DeclareDomainInfoRoutes(apiDomainsRoutes.Group("/info"), domainInfoUC)
 	DeclareDomainLogRoutes(apiDomainsRoutes, domainLogUC)
 
 	apiDomainsRoutes.POST("/zone", dc.ImportZone)

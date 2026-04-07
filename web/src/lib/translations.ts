@@ -47,6 +47,7 @@ interface Params {
     error?: string;
     options?: string;
     key?: string;
+    days?: number;
     intervalMin?: string;
     intervalMax?: string;
     intervalDefault?: string;

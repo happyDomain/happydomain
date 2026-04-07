@@ -45,6 +45,7 @@
     import { t } from "$lib/translations";
     import { navigate } from "$lib/stores/config";
     import { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
+    import { controls as ctrlDomainWhois } from "./ModalDomainWhois.svelte";
     import { controls as ctrlUploadZone } from "./ModalUploadZone.svelte";
     import { controls as ctrlNewSubdomain } from "./NewSubdomainPath.svelte";
     import SubdomainListTiny from "./SubdomainListTiny.svelte";
@@ -115,6 +116,9 @@
             </DropdownItem>
             <DropdownItem href={`/domains/${domainLink(selectedDomain)}/checks`}>
                 {$t("domains.actions.checks")}
+            </DropdownItem>
+            <DropdownItem on:click={() => ctrlDomainWhois.Open()}>
+                {$t("domains.actions.whois")}
             </DropdownItem>
             <DropdownItem divider />
             <DropdownItem on:click={viewZone} disabled={!$sortedDomains}>

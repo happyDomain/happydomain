@@ -31,6 +31,7 @@ var (
 	ErrCheckPlanNotFound       = errors.New("check plan not found")
 	ErrCheckEvaluationNotFound = errors.New("check evaluation not found")
 	ErrCheckerNotFound         = errors.New("checker not found")
+	ErrDomainDoesNotExist      = errors.New("domain name doesn't exist")
 	ErrDomainNotFound          = errors.New("domain not found")
 	ErrDomainLogNotFound       = errors.New("domain log not found")
 	ErrExecutionNotFound       = errors.New("execution not found")

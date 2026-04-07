@@ -133,6 +133,13 @@
                         {$t("menu.dns-resolver")}
                     </DropdownItem>
                     <DropdownItem
+                        active={page.route && page.route.id == "/whois/[[domain]]"}
+                        href="/whois"
+                    >
+                        <Icon name="info-circle" class="me-2" />
+                        {$t("menu.whois")}
+                    </DropdownItem>
+                    <DropdownItem
                         active={page.route &&
                             (page.route.id == "/checkers" ||
                                 page.route.id?.startsWith("/checkers/"))}

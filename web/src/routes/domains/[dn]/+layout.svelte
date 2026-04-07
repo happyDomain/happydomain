@@ -38,6 +38,7 @@
     import ButtonZonePublish from "./ButtonZonePublish.svelte";
     import ModalDiffZone from "./ModalDiffZone.svelte";
     import ModalDomainDelete, { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
+    import ModalDomainWhois from "./ModalDomainWhois.svelte";
     import ModalUploadZone from "./ModalUploadZone.svelte";
     import NewSubdomainPath from "./NewSubdomainPath.svelte";
     import ServiceDetailsOffcanvas from "./ServiceDetailsOffcanvas.svelte";
@@ -253,6 +254,8 @@
 />
 
 <ModalDomainDelete on:detachDomain={detachDomain} />
+
+<ModalDomainWhois domain={data.domain.domain} />
 
 <ModalDiffZone domain={data.domain} {selectedHistory} />
 
