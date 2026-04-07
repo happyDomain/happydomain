@@ -22,8 +22,39 @@
 package domaininfo
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"net/url"
+	"strings"
+
+	"git.happydns.org/happyDomain/model"
 )
+
+// GetDomainInfo tries RDAP first, then falls back to WHOIS. It strips
+// any trailing dot from the domain and short-circuits on
+// ErrDomainDoesNotExist.
+func GetDomainInfo(ctx context.Context, fqdn happydns.Origin) (*happydns.DomainInfo, error) {
+	domain := happydns.Origin(strings.TrimSuffix(string(fqdn), "."))
+
+	info, err := GetDomainRDAPInfo(ctx, domain)
+	if err == nil {
+		return info, nil
+	}
+	if errors.Is(err, happydns.ErrDomainDoesNotExist) {
+		return nil, err
+	}
+
+	info, err = GetDomainWhoisInfo(ctx, domain)
+	if err == nil {
+		return info, nil
+	}
+	if errors.Is(err, happydns.ErrDomainDoesNotExist) {
+		return nil, err
+	}
+
+	return nil, fmt.Errorf("unable to retrieve RDAP/WHOIS info: %w", err)
+}
 
 // sanitizeURL returns a pointer to the URL string only if it uses http or
 // https. Any other scheme (javascript:, data:, etc.) or malformed URL yields
