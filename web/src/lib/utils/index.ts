@@ -3,4 +3,5 @@
  */
 
 export { toDatetimeLocal, fromDatetimeLocal, formatDuration } from './datetime';
+export { formatBytes } from './format';
 export { getStatusColor, getStatusIcon, getStatusI18nKey, getExecutionStatusColor, getExecutionStatusI18nKey, formatCheckDate, withInheritedPlaceholders, splitPositionalOptions, downloadBlob, collectAllOptionDocs, availabilityBadges, getOrphanedOptionKeys, filterValidOptions } from './checkers';
