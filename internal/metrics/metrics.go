@@ -23,6 +23,7 @@ package metrics
 
 import (
 	"strconv"
+	"sync/atomic"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -47,9 +48,24 @@ var (
 	})
 
 	// Scheduler metrics
-	SchedulerQueueDepth = promauto.NewGauge(prometheus.GaugeOpts{
+	//
+	// schedulerQueueDepthFn is consulted at scrape time by the GaugeFunc
+	// registered below. The scheduler installs its accessor via
+	// RegisterSchedulerQueueDepth at construction, which avoids sprinkling
+	// gauge.Set calls across every queue mutation site.
+	schedulerQueueDepthFn atomic.Pointer[func() float64]
+
+	// SchedulerQueueDepth is kept as a package-level var (rather than the
+	// blank identifier) so it is discoverable via grep alongside the other
+	// metric vars and easy to reference from tests.
+	SchedulerQueueDepth = promauto.NewGaugeFunc(prometheus.GaugeOpts{
 		Name: "happydomain_scheduler_queue_depth",
 		Help: "Number of items currently in the check scheduler queue.",
+	}, func() float64 {
+		if fn := schedulerQueueDepthFn.Load(); fn != nil {
+			return (*fn)()
+		}
+		return 0
 	})
 
 	SchedulerActiveWorkers = promauto.NewGauge(prometheus.GaugeOpts{
@@ -105,4 +121,17 @@ var (
 // formatted as RFC3339 (UTC) and may be empty if unknown.
 func SetBuildInfo(version, revision, buildDate string, dirty bool) {
 	BuildInfo.WithLabelValues(version, revision, strconv.FormatBool(dirty), buildDate).Set(1)
+}
+
+// RegisterSchedulerQueueDepth installs the accessor used at scrape time to
+// report the current scheduler queue depth. The function is invoked from the
+// Prometheus scrape goroutine, so it must be safe to call concurrently with
+// queue mutations and must not block for long. Passing nil unregisters the
+// accessor (the gauge will then report 0).
+func RegisterSchedulerQueueDepth(fn func() float64) {
+	if fn == nil {
+		schedulerQueueDepthFn.Store(nil)
+		return
+	}
+	schedulerQueueDepthFn.Store(&fn)
 }

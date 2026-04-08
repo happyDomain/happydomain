@@ -31,6 +31,7 @@ import (
 	"time"
 
 	checkerPkg "git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/internal/metrics"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -143,7 +144,7 @@ func NewScheduler(
 	if maxConcurrency <= 0 {
 		maxConcurrency = 1
 	}
-	return &Scheduler{
+	s := &Scheduler{
 		engine:         engine,
 		planStore:      planStore,
 		domainStore:    domainStore,
@@ -155,6 +156,19 @@ func NewScheduler(
 		gate:           gate,
 		onExecute:      onExecute,
 	}
+	// The scheduler queue depth is exposed via a Prometheus GaugeFunc that
+	// reads the live queue length at scrape time. This avoids having to call
+	// gauge.Set after every queue mutation site (Push/Pop/Init/buildQueue/…).
+	metrics.RegisterSchedulerQueueDepth(s.queueDepthForMetrics)
+	return s
+}
+
+// queueDepthForMetrics returns the current queue length under the read lock.
+// It is invoked from the Prometheus scrape goroutine.
+func (s *Scheduler) queueDepthForMetrics() float64 {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return float64(s.queue.Len())
 }
 
 // Start begins the scheduler loop in a goroutine.
@@ -184,6 +198,10 @@ func (s *Scheduler) Stop() {
 	if done != nil {
 		<-done
 	}
+	// Drop the queue-depth accessor so a stopped scheduler does not keep its
+	// closure (and the captured queue) reachable for the lifetime of the
+	// process. This is essential in tests that spin schedulers up and down.
+	metrics.RegisterSchedulerQueueDepth(nil)
 }
 
 // GetStatus returns a snapshot of the scheduler's current state.
@@ -365,7 +383,11 @@ func (s *Scheduler) acquireWorkerSlot(ctx context.Context, sem chan struct{}, jo
 // The caller must have incremented s.wg and acquired a slot from sem.
 func (s *Scheduler) executeJob(ctx context.Context, job *SchedulerJob, plan *happydns.CheckPlan, sem chan struct{}) {
 	defer func() { <-sem; s.wg.Done() }()
+	metrics.SchedulerActiveWorkers.Inc()
+	checkStart := time.Now()
 	defer func() {
+		metrics.SchedulerActiveWorkers.Dec()
+		metrics.SchedulerCheckDuration.WithLabelValues(job.CheckerID).Observe(time.Since(checkStart).Seconds())
 		if r := recover(); r != nil {
 			log.Printf("Scheduler: panic in worker for checker %s on %s: %v", job.CheckerID, job.Target.String(), r)
 		}
@@ -373,6 +395,7 @@ func (s *Scheduler) executeJob(ctx context.Context, job *SchedulerJob, plan *hap
 	log.Printf("Scheduler: running checker %s on %s", job.CheckerID, job.Target.String())
 	exec, err := s.engine.CreateExecution(job.CheckerID, job.Target, plan)
 	if err != nil {
+		metrics.SchedulerChecksTotal.WithLabelValues(job.CheckerID, "error").Inc()
 		log.Printf("Scheduler: checker %s on %s failed to create execution: %v", job.CheckerID, job.Target.String(), err)
 		return
 	}
@@ -380,9 +403,12 @@ func (s *Scheduler) executeJob(ctx context.Context, job *SchedulerJob, plan *hap
 		s.onExecute(job.Target)
 	}
 	_, err = s.engine.RunExecution(ctx, exec, plan, nil)
+	status := "success"
 	if err != nil {
+		status = "error"
 		log.Printf("Scheduler: checker %s on %s failed: %v", job.CheckerID, job.Target.String(), err)
 	}
+	metrics.SchedulerChecksTotal.WithLabelValues(job.CheckerID, status).Inc()
 	if s.stateStore != nil {
 		if err := s.stateStore.SetLastSchedulerRun(time.Now()); err != nil {
 			log.Printf("Scheduler: failed to persist last run time: %v", err)
