@@ -106,6 +106,46 @@ func mapRDAPDomain(domainInfo *rdap.Domain) (*happydns.DomainInfo, error) {
 		name = domainInfo.LDHName
 	}
 
+	// Contacts
+	rdapRoleMap := map[string]string{
+		"registrant":     "registrant",
+		"administrative": "admin",
+		"technical":      "tech",
+	}
+	contacts := make(map[string]*happydns.ContactInfo)
+	for _, ent := range domainInfo.Entities {
+		if ent.VCard == nil || ent.Roles == nil {
+			continue
+		}
+		for _, role := range ent.Roles {
+			key, ok := rdapRoleMap[role]
+			if !ok {
+				continue
+			}
+			ci := &happydns.ContactInfo{
+				Name:       ent.VCard.Name(),
+				Email:      ent.VCard.Email(),
+				Street:     ent.VCard.StreetAddress(),
+				City:       ent.VCard.Locality(),
+				Province:   ent.VCard.Region(),
+				PostalCode: ent.VCard.PostalCode(),
+				Country:    ent.VCard.Country(),
+				Phone:      ent.VCard.Tel(),
+			}
+			if props := ent.VCard.Get("org"); len(props) > 0 {
+				if s, ok := props[0].Value.(string); ok {
+					ci.Organization = s
+				}
+			}
+			contacts[key] = ci
+		}
+	}
+
+	var contactsPtr map[string]*happydns.ContactInfo
+	if len(contacts) > 0 {
+		contactsPtr = contacts
+	}
+
 	return &happydns.DomainInfo{
 		Name:           name,
 		Nameservers:    nameservers,
@@ -114,5 +154,6 @@ func mapRDAPDomain(domainInfo *rdap.Domain) (*happydns.DomainInfo, error) {
 		Registrar:      registrar,
 		RegistrarURL:   registrarURL,
 		Status:         domainInfo.Status,
+		Contacts:       contactsPtr,
 	}, nil
 }

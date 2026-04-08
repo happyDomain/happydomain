@@ -85,6 +85,35 @@ func mapWhoisResult(result *whoisparser.WhoisInfo) *happydns.DomainInfo {
 		status = result.Domain.Status
 	}
 
+	// Contacts
+	contacts := make(map[string]*happydns.ContactInfo)
+	whoisContacts := map[string]*whoisparser.Contact{
+		"registrant": result.Registrant,
+		"admin":      result.Administrative,
+		"tech":       result.Technical,
+	}
+	for key, wc := range whoisContacts {
+		if wc == nil {
+			continue
+		}
+		contacts[key] = &happydns.ContactInfo{
+			Name:         wc.Name,
+			Organization: wc.Organization,
+			Email:        wc.Email,
+			Street:       wc.Street,
+			City:         wc.City,
+			Province:     wc.Province,
+			PostalCode:   wc.PostalCode,
+			Country:      wc.Country,
+			Phone:        wc.Phone,
+		}
+	}
+
+	var contactsPtr map[string]*happydns.ContactInfo
+	if len(contacts) > 0 {
+		contactsPtr = contacts
+	}
+
 	return &happydns.DomainInfo{
 		Name:           name,
 		Nameservers:    nameservers,
@@ -93,5 +122,6 @@ func mapWhoisResult(result *whoisparser.WhoisInfo) *happydns.DomainInfo {
 		Registrar:      registrar,
 		RegistrarURL:   registrarURL,
 		Status:         status,
+		Contacts:       contactsPtr,
 	}
 }

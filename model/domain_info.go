@@ -26,14 +26,27 @@ import (
 	"time"
 )
 
+type ContactInfo struct {
+	Name         string `json:"name,omitempty"`
+	Organization string `json:"organization,omitempty"`
+	Email        string `json:"email,omitempty"`
+	Street       string `json:"street,omitempty"`
+	City         string `json:"city,omitempty"`
+	Province     string `json:"province,omitempty"`
+	PostalCode   string `json:"postal_code,omitempty"`
+	Country      string `json:"country,omitempty"`
+	Phone        string `json:"phone,omitempty"`
+}
+
 type DomainInfo struct {
-	Name           string     `json:"name"`
-	Nameservers    []string   `json:"nameservers"`
-	CreationDate   *time.Time `json:"creation"`
-	ExpirationDate *time.Time `json:"expiration"`
-	Registrar      string     `json:"registrar"`
-	RegistrarURL   *string    `json:"registrar_url"`
-	Status         []string   `json:"status"`
+	Name           string                  `json:"name"`
+	Nameservers    []string                `json:"nameservers"`
+	CreationDate   *time.Time              `json:"creation"`
+	ExpirationDate *time.Time              `json:"expiration"`
+	Registrar      string                  `json:"registrar"`
+	RegistrarURL   *string                 `json:"registrar_url"`
+	Status         []string                `json:"status"`
+	Contacts       map[string]*ContactInfo `json:"contacts,omitempty"`
 }
 
 type DomainInfoGetter func(context.Context, Origin) (*DomainInfo, error)

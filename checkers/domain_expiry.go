@@ -44,8 +44,9 @@ const (
 
 // WHOISData represents WHOIS observation data.
 type WHOISData struct {
-	ExpiryDate time.Time `json:"expiryDate"`
-	Registrar  string    `json:"registrar"`
+	ExpiryDate time.Time                          `json:"expiryDate"`
+	Registrar  string                             `json:"registrar"`
+	Contacts   map[string]*happydns.ContactInfo   `json:"contacts,omitempty"`
 }
 
 // whoisProvider is a placeholder WHOIS observation provider.
@@ -78,6 +79,7 @@ func (p *whoisProvider) Collect(ctx context.Context, opts happydns.CheckerOption
 	return &WHOISData{
 		ExpiryDate: *info.ExpirationDate,
 		Registrar:  registrar,
+		Contacts:   info.Contacts,
 	}, nil
 }
 
