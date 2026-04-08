@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	admin "git.happydns.org/happyDomain/internal/api-admin/route"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
@@ -59,6 +60,8 @@ func NewAdmin(app *App) *Admin {
 	if app.usecases.checkerOptionsUC == nil {
 		app.usecases.checkerOptionsUC = checkerUC.NewCheckerOptionsUsecase(app.store, app.store)
 	}
+
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	admin.DeclareRoutes(
 		app.cfg,
