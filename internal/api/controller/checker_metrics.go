@@ -22,8 +22,11 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -31,15 +34,138 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-// respondWithMetrics writes metrics as a JSON array.
+// respondWithMetrics writes metrics in the format requested by the Accept header.
+// JSON is the default (preserving the previous API contract for clients that
+// send Accept: */* or omit the header). Prometheus text exposition is only
+// returned when explicitly requested via Accept: text/plain.
 func respondWithMetrics(c *gin.Context, metrics []happydns.CheckMetric) {
 	if metrics == nil {
 		metrics = []happydns.CheckMetric{}
 	}
+
+	if wantsPrometheusText(c.GetHeader("Accept")) {
+		c.Data(http.StatusOK, "text/plain; version=0.0.4; charset=utf-8", []byte(renderPrometheus(metrics)))
+		return
+	}
+
 	c.JSON(http.StatusOK, metrics)
 }
 
 const maxLimit = 1000
+
+// wantsPrometheusText returns true when the Accept header explicitly asks for
+// text/plain (or the Prometheus exposition media type) without also accepting
+// JSON. This keeps the JSON API the default for browsers and generic clients
+// while letting `curl -H 'Accept: text/plain'` opt into the Prometheus format.
+func wantsPrometheusText(accept string) bool {
+	if accept == "" {
+		return false
+	}
+	if strings.Contains(accept, "application/json") {
+		return false
+	}
+	return strings.Contains(accept, "text/plain") ||
+		strings.Contains(accept, "application/openmetrics-text")
+}
+
+// escapePromLabelValue escapes a label value for the Prometheus text exposition
+// format. The spec only allows three escape sequences inside label values:
+// `\\`, `\"` and `\n`. Using fmt's %q is unsafe because it can emit \xNN or
+// \uNNNN sequences that Prometheus rejects.
+func escapePromLabelValue(s string) string {
+	var b strings.Builder
+	b.Grow(len(s) + 2)
+	for i := 0; i < len(s); i++ {
+		switch c := s[i]; c {
+		case '\\':
+			b.WriteString(`\\`)
+		case '"':
+			b.WriteString(`\"`)
+		case '\n':
+			b.WriteString(`\n`)
+		default:
+			b.WriteByte(c)
+		}
+	}
+	return b.String()
+}
+
+// renderPrometheus formats metrics as Prometheus text exposition format
+// (version 0.0.4). It only emits constructs allowed by that format: HELP/TYPE
+// metadata and untyped samples — no OpenMetrics-only directives such as # UNIT.
+func renderPrometheus(metrics []happydns.CheckMetric) string {
+	type metricMeta struct {
+		unit string
+	}
+	seen := map[string]metricMeta{}
+	var names []string
+
+	for _, m := range metrics {
+		if _, ok := seen[m.Name]; !ok {
+			seen[m.Name] = metricMeta{unit: m.Unit}
+			names = append(names, m.Name)
+		}
+	}
+	sort.Strings(names)
+
+	var b strings.Builder
+	nameIdx := map[string]int{}
+	for i, name := range names {
+		nameIdx[name] = i
+	}
+
+	// Sort metrics by name order, then by timestamp.
+	sorted := make([]happydns.CheckMetric, len(metrics))
+	copy(sorted, metrics)
+	sort.Slice(sorted, func(i, j int) bool {
+		ni, nj := nameIdx[sorted[i].Name], nameIdx[sorted[j].Name]
+		if ni != nj {
+			return ni < nj
+		}
+		return sorted[i].Timestamp.Before(sorted[j].Timestamp)
+	})
+
+	currentName := ""
+	for _, m := range sorted {
+		if m.Name != currentName {
+			currentName = m.Name
+			meta := seen[m.Name]
+			if meta.unit != "" {
+				// Surface the unit as a HELP comment so it stays parseable
+				// under Prometheus text 0.0.4 (which has no # UNIT directive).
+				fmt.Fprintf(&b, "# HELP %s unit: %s\n", m.Name, meta.unit)
+			}
+			fmt.Fprintf(&b, "# TYPE %s untyped\n", m.Name)
+		}
+
+		b.WriteString(m.Name)
+		if len(m.Labels) > 0 {
+			b.WriteByte('{')
+			first := true
+			labelKeys := make([]string, 0, len(m.Labels))
+			for k := range m.Labels {
+				labelKeys = append(labelKeys, k)
+			}
+			sort.Strings(labelKeys)
+			for _, k := range labelKeys {
+				if !first {
+					b.WriteByte(',')
+				}
+				fmt.Fprintf(&b, "%s=\"%s\"", k, escapePromLabelValue(m.Labels[k]))
+				first = false
+			}
+			b.WriteByte('}')
+		}
+
+		fmt.Fprintf(&b, " %g", m.Value)
+		if !m.Timestamp.IsZero() {
+			fmt.Fprintf(&b, " %d", m.Timestamp.UnixMilli())
+		}
+		b.WriteByte('\n')
+	}
+
+	return b.String()
+}
 
 func getLimitParam(c *gin.Context, defaultLimit int) int {
 	if l := c.Query("limit"); l != "" {
@@ -56,9 +182,9 @@ func getLimitParam(c *gin.Context, defaultLimit int) int {
 // GetUserMetrics returns metrics across all checkers for the authenticated user.
 //
 //	@Summary		Get all user metrics
-//	@Description	Returns metrics from all recent executions for the authenticated user as a JSON array.
+//	@Description	Returns metrics from all recent executions for the authenticated user. Format depends on Accept header: application/json for JSON, otherwise Prometheus text.
 //	@Tags			checkers
-//	@Produce		json
+//	@Produce		json,plain
 //	@Param			limit	query	int	false	"Maximum number of executions to extract metrics from (default: 100)"
 //	@Success		200	{array}	checker.CheckMetric
 //	@Router			/checkers/metrics [get]
@@ -83,9 +209,9 @@ func (cc *CheckerController) GetUserMetrics(c *gin.Context) {
 // GetDomainMetrics returns metrics for a domain and its service children.
 //
 //	@Summary		Get domain metrics
-//	@Description	Returns metrics from recent executions for a domain and all its services as a JSON array.
+//	@Description	Returns metrics from recent executions for a domain and all its services. Format depends on Accept header: application/json for JSON, otherwise Prometheus text.
 //	@Tags			checkers
-//	@Produce		json
+//	@Produce		json,plain
 //	@Param			domain	path	string	true	"Domain identifier"
 //	@Param			limit	query	int		false	"Maximum number of executions (default: 100)"
 //	@Success		200	{array}	checker.CheckMetric
@@ -111,9 +237,9 @@ func (cc *CheckerController) GetDomainMetrics(c *gin.Context) {
 // GetCheckerMetrics returns metrics for a specific checker on a target.
 //
 //	@Summary		Get checker metrics
-//	@Description	Returns metrics from recent executions of a specific checker on a target as a JSON array.
+//	@Description	Returns metrics from recent executions of a specific checker on a target. Format depends on Accept header: application/json for JSON, otherwise Prometheus text.
 //	@Tags			checkers
-//	@Produce		json
+//	@Produce		json,plain
 //	@Param			checkerId	path	string	true	"Checker ID"
 //	@Param			domain		path	string	true	"Domain identifier"
 //	@Param			zoneid		path	string	false	"Zone identifier"
@@ -140,9 +266,9 @@ func (cc *CheckerController) GetCheckerMetrics(c *gin.Context) {
 // GetExecutionMetrics returns metrics for a single execution.
 //
 //	@Summary		Get execution metrics
-//	@Description	Returns metrics extracted from a single execution's observation snapshot as a JSON array.
+//	@Description	Returns metrics extracted from a single execution's observation snapshot. Format depends on Accept header: application/json for JSON, otherwise Prometheus text.
 //	@Tags			checkers
-//	@Produce		json
+//	@Produce		json,plain
 //	@Param			checkerId	path	string	true	"Checker ID"
 //	@Param			executionId	path	string	true	"Execution ID"
 //	@Param			domain		path	string	true	"Domain identifier"
