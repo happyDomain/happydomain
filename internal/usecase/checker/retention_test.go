@@ -50,17 +50,38 @@ func TestDecide_FullDetailWindow(t *testing.T) {
 	now := time.Date(2026, 4, 8, 12, 0, 0, 0, time.UTC)
 	p := DefaultRetentionPolicy(365)
 
+	// 20 executions in the first 20 minutes, all inside 0..1 day window.
 	var execs []*happydns.Execution
-	for i := 0; i < 50; i++ {
-		execs = append(execs, mkExec(fmt.Sprintf("e%d", i), time.Duration(i)*time.Hour, now))
+	for i := 0; i < 20; i++ {
+		execs = append(execs, mkExec(fmt.Sprintf("e%d", i), time.Duration(i)*time.Minute, now))
 	}
 
 	keep, drop := p.Decide(execs, now)
 	if len(drop) != 0 {
-		t.Fatalf("expected no drops in <7d window, got %d", len(drop))
+		t.Fatalf("expected no drops in <1d window, got %d", len(drop))
 	}
-	if len(keep) != 50 {
-		t.Fatalf("expected 50 keeps, got %d", len(keep))
+	if len(keep) != 20 {
+		t.Fatalf("expected 20 keeps, got %d", len(keep))
+	}
+}
+
+func TestDecide_HourlyBucket(t *testing.T) {
+	now := time.Date(2026, 4, 8, 12, 0, 0, 0, time.UTC)
+	p := DefaultRetentionPolicy(365)
+
+	// 6 executions in the same hour ~3 days ago (inside hourly window).
+	var execs []*happydns.Execution
+	base := 3*24*time.Hour + 30*time.Minute
+	for i := 0; i < 6; i++ {
+		execs = append(execs, mkExec(fmt.Sprintf("e%d", i), base+time.Duration(i)*time.Minute, now))
+	}
+
+	keep, drop := p.Decide(execs, now)
+	if len(keep) != p.PerHourKept {
+		t.Fatalf("expected %d keeps in hourly bucket, got %d", p.PerHourKept, len(keep))
+	}
+	if len(drop) != 6-p.PerHourKept {
+		t.Fatalf("expected %d drops, got %d", 6-p.PerHourKept, len(drop))
 	}
 }
 
@@ -160,6 +181,57 @@ func TestDecide_HardCutoff(t *testing.T) {
 	}
 	if len(drop) != 1 || string(drop[0]) != "old" {
 		t.Fatalf("expected 'old' to be dropped, got %v", drop)
+	}
+}
+
+func TestDecide_SmallRetentionCollapseTiers(t *testing.T) {
+	now := time.Date(2026, 4, 8, 12, 0, 0, 0, time.UTC)
+	p := DefaultRetentionPolicy(3)
+
+	// With retentionDays=3, tiers collapse:
+	//   FullDetailDays=1, HourlyBucketDays=3, DailyBucketDays=3,
+	//   WeeklyBucketDays=3 - only full-detail and hourly tiers are reachable.
+
+	var execs []*happydns.Execution
+	// 3 executions inside full-detail window (< 1 day).
+	for i := 0; i < 3; i++ {
+		execs = append(execs, mkExec(fmt.Sprintf("recent%d", i), time.Duration(i)*time.Minute, now))
+	}
+	// 4 executions in the same hour, ~2 days ago (hourly tier).
+	base := 2*24*time.Hour + 30*time.Minute
+	for i := 0; i < 4; i++ {
+		execs = append(execs, mkExec(fmt.Sprintf("hourly%d", i), base+time.Duration(i)*time.Minute, now))
+	}
+	// 1 execution beyond retention (5 days ago).
+	execs = append(execs, mkExec("expired", 5*24*time.Hour, now))
+
+	keep, drop := p.Decide(execs, now)
+	// 3 full-detail + 1 hourly kept + 3 hourly dropped + 1 expired dropped
+	if len(keep) != 3+p.PerHourKept {
+		t.Fatalf("expected %d keeps, got %d", 3+p.PerHourKept, len(keep))
+	}
+	if len(drop) != 4-p.PerHourKept+1 {
+		t.Fatalf("expected %d drops, got %d", 4-p.PerHourKept+1, len(drop))
+	}
+}
+
+func TestDecide_BoundaryFullDetailToHourly(t *testing.T) {
+	now := time.Date(2026, 4, 8, 12, 0, 0, 0, time.UTC)
+	p := DefaultRetentionPolicy(365)
+
+	// Execution exactly at the full-detail boundary (age == exactly 1 day).
+	// !t.Before(fullCutoff) is true when t == fullCutoff, so this lands in full-detail.
+	exactBoundary := mkExec("boundary", 24*time.Hour, now)
+	// Execution 1 second past the boundary (age == 1 day + 1s) lands in hourly.
+	pastBoundary := mkExec("past", 24*time.Hour+time.Second, now)
+
+	keep, drop := p.Decide([]*happydns.Execution{exactBoundary, pastBoundary}, now)
+	// Both should be kept (one as full-detail, one as hourly).
+	if len(keep) != 2 {
+		t.Fatalf("expected 2 keeps, got %d (keep=%v, drop=%v)", len(keep), keep, drop)
+	}
+	if len(drop) != 0 {
+		t.Fatalf("expected 0 drops, got %d", len(drop))
 	}
 }
 

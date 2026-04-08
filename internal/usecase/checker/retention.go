@@ -38,7 +38,8 @@ import (
 //
 //	  age window                | kept
 //	  ------------------------- | ------------------------------------------
-//	  0 .. 7 days               | every execution
+//	  0 .. 1 day                | every execution
+//	  1 .. 7 days               | up to 1 execution per hour per (checker,target)
 //	  7 .. 30 days              | up to 2 executions per day per (checker,target)
 //	  30 .. D/2 days            | up to 1 execution per week per (checker,target)
 //	  D/2 .. D days             | up to 1 execution per month per (checker,target)
@@ -53,7 +54,11 @@ type RetentionPolicy struct {
 
 	// FullDetailDays: every execution kept under this age.
 	FullDetailDays int
-	// DailyBucketDays: between FullDetailDays and DailyBucketDays, keep
+	// HourlyBucketDays: between FullDetailDays and HourlyBucketDays, keep
+	// PerHourKept executions per UTC hour per (checker,target).
+	HourlyBucketDays int
+	PerHourKept      int
+	// DailyBucketDays: between HourlyBucketDays and DailyBucketDays, keep
 	// PerDayKept executions per UTC day per (checker,target).
 	DailyBucketDays int
 	PerDayKept      int
@@ -74,10 +79,12 @@ func DefaultRetentionPolicy(retentionDays int) RetentionPolicy {
 	}
 	return RetentionPolicy{
 		RetentionDays:    retentionDays,
-		FullDetailDays:   7,
-		DailyBucketDays:  30,
+		FullDetailDays:   min(1, retentionDays),
+		HourlyBucketDays: min(7, retentionDays),
+		PerHourKept:      1,
+		DailyBucketDays:  min(30, retentionDays),
 		PerDayKept:       2,
-		WeeklyBucketDays: max(retentionDays/2, 31),
+		WeeklyBucketDays: min(max(retentionDays/2, 31), retentionDays),
 		PerWeekKept:      1,
 		PerMonthKept:     1,
 	}
@@ -121,6 +128,7 @@ func (p RetentionPolicy) Decide(executions []*happydns.Execution, now time.Time)
 
 	hardCutoff := now.AddDate(0, 0, -p.RetentionDays)
 	fullCutoff := now.AddDate(0, 0, -p.FullDetailDays)
+	hourlyCutoff := now.AddDate(0, 0, -p.HourlyBucketDays)
 	dailyCutoff := now.AddDate(0, 0, -p.DailyBucketDays)
 	weeklyCutoff := now.AddDate(0, 0, -p.WeeklyBucketDays)
 
@@ -130,6 +138,7 @@ func (p RetentionPolicy) Decide(executions []*happydns.Execution, now time.Time)
 			return group[i].StartedAt.After(group[j].StartedAt)
 		})
 
+		hourBuckets := map[string]int{}
 		dayBuckets := map[string]int{}
 		weekBuckets := map[string]int{}
 		monthBuckets := map[string]int{}
@@ -140,8 +149,16 @@ func (p RetentionPolicy) Decide(executions []*happydns.Execution, now time.Time)
 			case t.Before(hardCutoff):
 				drop = append(drop, e.Id)
 			case !t.Before(fullCutoff):
-				// 0 .. FullDetailDays - keep everything.
+				// 0 .. FullDetailDays: keep everything.
 				keep = append(keep, e.Id)
+			case !t.Before(hourlyCutoff):
+				k := t.UTC().Format("2006-01-02T15")
+				if hourBuckets[k] < p.PerHourKept {
+					hourBuckets[k]++
+					keep = append(keep, e.Id)
+				} else {
+					drop = append(drop, e.Id)
+				}
 			case !t.Before(dailyCutoff):
 				k := t.UTC().Format("2006-01-02")
 				if dayBuckets[k] < p.PerDayKept {
