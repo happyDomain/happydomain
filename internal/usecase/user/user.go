@@ -89,26 +89,26 @@ func (s *Service) GetUserByEmail(email string) (*happydns.User, error) {
 }
 
 // UpdateUser updates a user using the provided update function.
-func (s *Service) UpdateUser(id happydns.Identifier, updateFn func(*happydns.User)) error {
+func (s *Service) UpdateUser(id happydns.Identifier, updateFn func(*happydns.User)) (*happydns.User, error) {
 	user, err := s.store.GetUser(id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	updateFn(user)
 
 	if !user.Id.Equals(id) {
-		return happydns.ValidationError{Msg: "you cannot change the user identifier"}
+		return nil, happydns.ValidationError{Msg: "you cannot change the user identifier"}
 	}
 
 	if err := s.store.CreateOrUpdateUser(user); err != nil {
-		return happydns.InternalError{
+		return nil, happydns.InternalError{
 			Err:         fmt.Errorf("failed to update user: %w", err),
 			UserMessage: "Sorry, we are currently unable to update your user. Please retry later.",
 		}
 	}
 
-	return nil
+	return user, nil
 }
 
 // ChangeUserSettings updates the settings for a user.

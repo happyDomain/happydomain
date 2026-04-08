@@ -42,6 +42,10 @@ type User struct {
 
 	// Settings holds the settings for an account.
 	Settings UserSettings `json:"settings" binding:"required"`
+
+	// Quota holds admin-controlled limits for the account. It is never
+	// writable through the user-facing API; only the admin API can update it.
+	Quota UserQuota `json:"quota"`
 }
 
 func (u *User) GetUserId() Identifier {
@@ -63,5 +67,5 @@ type UserUsecase interface {
 	GenerateUserAvatar(*User, int, io.Writer) error
 	GetUser(Identifier) (*User, error)
 	GetUserByEmail(string) (*User, error)
-	UpdateUser(Identifier, func(*User)) error
+	UpdateUser(Identifier, func(*User)) (*User, error)
 }

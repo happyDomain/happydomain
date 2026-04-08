@@ -272,14 +272,17 @@ func Test_UpdateUser(t *testing.T) {
 	}
 
 	// Update the user
-	err := service.UpdateUser(userID, func(u *happydns.User) {
+	updated, err := service.UpdateUser(userID, func(u *happydns.User) {
 		u.Email = "updated@example.com"
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+	if updated.Email != "updated@example.com" {
+		t.Errorf("returned user should have updated email, got %s", updated.Email)
+	}
 
-	// Verify the user was updated
+	// Verify the user was updated in storage
 	updatedUser, err := service.GetUser(userID)
 	if err != nil {
 		t.Fatalf("unexpected error retrieving updated user: %v", err)
@@ -303,7 +306,7 @@ func Test_UpdateUser_PreventIdChange(t *testing.T) {
 	}
 
 	// Try to change the user ID
-	err := service.UpdateUser(userID, func(u *happydns.User) {
+	_, err := service.UpdateUser(userID, func(u *happydns.User) {
 		u.Id = happydns.Identifier([]byte("new-id"))
 	})
 	if err == nil {
@@ -319,7 +322,7 @@ func Test_UpdateUser_PreventIdChange(t *testing.T) {
 func Test_UpdateUser_NotFound(t *testing.T) {
 	service, _, _, _ := createTestService(t)
 
-	err := service.UpdateUser(happydns.Identifier([]byte("nonexistent")), func(u *happydns.User) {
+	_, err := service.UpdateUser(happydns.Identifier([]byte("nonexistent")), func(u *happydns.User) {
 		u.Email = "updated@example.com"
 	})
 	if err == nil {
@@ -361,6 +364,89 @@ func Test_ChangeUserSettings(t *testing.T) {
 	}
 	if storedUser.Settings.Language != "fr" {
 		t.Errorf("expected stored language 'fr', got %s", storedUser.Settings.Language)
+	}
+}
+
+func Test_ChangeUserSettings_PreservesQuota(t *testing.T) {
+	service, mem, _, _ := createTestService(t)
+
+	// Create a user with quota set
+	user := &happydns.User{
+		Id:       happydns.Identifier([]byte("user-123")),
+		Email:    "test@example.com",
+		Settings: *happydns.DefaultUserSettings(),
+		Quota: happydns.UserQuota{
+			MaxChecksPerDay:  42,
+			RetentionDays:    30,
+			SchedulingPaused: true,
+		},
+	}
+	if err := mem.CreateOrUpdateUser(user); err != nil {
+		t.Fatalf("failed to create test user: %v", err)
+	}
+
+	// Change settings (should not touch quota)
+	err := service.ChangeUserSettings(user, happydns.UserSettings{Language: "de"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify quota is untouched in storage
+	storedUser, err := service.GetUser(user.Id)
+	if err != nil {
+		t.Fatalf("unexpected error retrieving user: %v", err)
+	}
+	if storedUser.Quota.MaxChecksPerDay != 42 {
+		t.Errorf("expected MaxChecksPerDay 42 after settings change, got %d", storedUser.Quota.MaxChecksPerDay)
+	}
+	if storedUser.Quota.RetentionDays != 30 {
+		t.Errorf("expected RetentionDays 30 after settings change, got %d", storedUser.Quota.RetentionDays)
+	}
+	if !storedUser.Quota.SchedulingPaused {
+		t.Error("expected SchedulingPaused to remain true after settings change")
+	}
+}
+
+func Test_UpdateUser_Quota(t *testing.T) {
+	service, mem, _, _ := createTestService(t)
+
+	userID := happydns.Identifier([]byte("user-123"))
+	user := &happydns.User{
+		Id:    userID,
+		Email: "test@example.com",
+	}
+	if err := mem.CreateOrUpdateUser(user); err != nil {
+		t.Fatalf("failed to create test user: %v", err)
+	}
+
+	// Update quota through UpdateUser (simulates admin path)
+	_, err := service.UpdateUser(userID, func(u *happydns.User) {
+		u.Quota = happydns.UserQuota{
+			MaxChecksPerDay:     100,
+			RetentionDays:       60,
+			InactivityPauseDays: -1,
+			SchedulingPaused:    true,
+		}
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	storedUser, err := service.GetUser(userID)
+	if err != nil {
+		t.Fatalf("unexpected error retrieving user: %v", err)
+	}
+	if storedUser.Quota.MaxChecksPerDay != 100 {
+		t.Errorf("expected MaxChecksPerDay 100, got %d", storedUser.Quota.MaxChecksPerDay)
+	}
+	if storedUser.Quota.RetentionDays != 60 {
+		t.Errorf("expected RetentionDays 60, got %d", storedUser.Quota.RetentionDays)
+	}
+	if storedUser.Quota.InactivityPauseDays != -1 {
+		t.Errorf("expected InactivityPauseDays -1, got %d", storedUser.Quota.InactivityPauseDays)
+	}
+	if !storedUser.Quota.SchedulingPaused {
+		t.Error("expected SchedulingPaused true")
 	}
 }
 

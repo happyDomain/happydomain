@@ -24,6 +24,7 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -168,7 +169,20 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	}
 	uu.Id = user.Id
 
-	happydns.ApiResponse(c, uu, uc.store.CreateOrUpdateUser(uu))
+	updated, err := uc.userService.UpdateUser(uu.Id, func(u *happydns.User) {
+		// Stamp quota update time if quota fields changed.
+		if uu.Quota != u.Quota {
+			uu.Quota.UpdatedAt = time.Now()
+		}
+
+		u.Email = uu.Email
+		u.CreatedAt = uu.CreatedAt
+		u.LastSeen = uu.LastSeen
+		u.Settings = uu.Settings
+		u.Quota = uu.Quota
+	})
+
+	happydns.ApiResponse(c, updated, err)
 }
 
 // deleteUser removes a specific user from the database.

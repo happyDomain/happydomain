@@ -27,6 +27,7 @@
 
     import { getUsersByUid, getUsersByUidDomains, getUsersByUidProviders } from "$lib/api-admin";
     import UserInfoCard from "./UserInfoCard.svelte";
+    import UserQuotaCard from "./UserQuotaCard.svelte";
     import UserDomainsCard from "./domains/UserDomainsCard.svelte";
     import UserProvidersCard from "./providers/UserProvidersCard.svelte";
 
@@ -55,8 +56,9 @@
         {@const user = userR.data}
         {#if user}
             <Row>
-                <Col md={8} lg={6}>
+                <Col md={8} lg={6} class="d-flex flex-column gap-4">
                     <UserInfoCard {user} {uid} />
+                    <UserQuotaCard {user} {uid} />
                 </Col>
 
                 <Col md={8} lg={6} class="d-flex flex-column gap-4">
