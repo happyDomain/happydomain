@@ -34,6 +34,10 @@ func (s *KVStorage) ListAllDomains() (happydns.Iterator[happydns.Domain], error)
 	return NewKVIterator[happydns.Domain](s.db, iter), nil
 }
 
+func (s *KVStorage) CountDomains() (int, error) {
+	return s.countByPrefix("domain-")
+}
+
 func (s *KVStorage) ListDomains(u *happydns.User) (domains []*happydns.Domain, err error) {
 	iter := s.db.Search("domain-")
 	defer iter.Release()

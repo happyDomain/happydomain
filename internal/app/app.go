@@ -181,6 +181,7 @@ func (app *App) initStorageEngine() {
 			log.Fatal("Could not migrate database: ", err)
 		}
 
+		metrics.NewStorageStatsCollector(storage.NewStatsProvider(app.store))
 		app.store = newInstrumentedStorage(app.store)
 	}
 }

@@ -29,6 +29,11 @@ type DomainStorage interface {
 	// ListAllDomains retrieves the list of known Domains.
 	ListAllDomains() (happydns.Iterator[happydns.Domain], error)
 
+	// CountDomains returns the total number of Domains in storage.
+	// Implementations should make this efficient (e.g. count keys without
+	// decoding values) so it can be called from observability paths.
+	CountDomains() (int, error)
+
 	// ListDomains retrieves all Domains associated to the given User.
 	ListDomains(user *happydns.User) ([]*happydns.Domain, error)
 

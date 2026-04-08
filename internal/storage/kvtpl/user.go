@@ -33,6 +33,10 @@ func (s *KVStorage) ListAllUsers() (happydns.Iterator[happydns.User], error) {
 	return NewKVIterator[happydns.User](s.db, iter), nil
 }
 
+func (s *KVStorage) CountUsers() (int, error) {
+	return s.countByPrefix("user-")
+}
+
 func (s *KVStorage) getUser(key string) (*happydns.User, error) {
 	u := &happydns.User{}
 	err := s.db.Get(key, &u)

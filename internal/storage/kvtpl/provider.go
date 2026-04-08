@@ -34,6 +34,10 @@ func (s *KVStorage) ListAllProviders() (happydns.Iterator[happydns.ProviderMessa
 	return NewKVIterator[happydns.ProviderMessage](s.db, iter), nil
 }
 
+func (s *KVStorage) CountProviders() (int, error) {
+	return s.countByPrefix("provider-")
+}
+
 func (s *KVStorage) getProviderMeta(id happydns.Identifier) (*happydns.ProviderMessage, error) {
 	srcMsg := &happydns.ProviderMessage{}
 	err := s.db.Get(id.String(), srcMsg)

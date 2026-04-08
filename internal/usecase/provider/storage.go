@@ -30,6 +30,11 @@ type ProviderStorage interface {
 	// ListAllProviders retrieves the list of known Providers.
 	ListAllProviders() (happydns.Iterator[happydns.ProviderMessage], error)
 
+	// CountProviders returns the total number of Providers in storage.
+	// Implementations should make this efficient (e.g. count keys without
+	// decoding values) so it can be called from observability paths.
+	CountProviders() (int, error)
+
 	// ListProviders retrieves all providers own by the given User.
 	ListProviders(user *happydns.User) (happydns.ProviderMessages, error)
 

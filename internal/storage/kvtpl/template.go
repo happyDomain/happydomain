@@ -171,3 +171,17 @@ func (s *KVStorage) clearByPrefix(prefix string) error {
 	}
 	return nil
 }
+
+// countByPrefix counts the number of keys matching the given prefix without
+// decoding their values. It is the foundation of the Count* methods exposed
+// to observability code.
+func (s *KVStorage) countByPrefix(prefix string) (int, error) {
+	iter := s.db.Search(prefix)
+	defer iter.Release()
+
+	n := 0
+	for iter.Next() {
+		n++
+	}
+	return n, iter.Err()
+}

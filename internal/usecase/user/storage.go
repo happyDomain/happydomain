@@ -29,6 +29,11 @@ type UserStorage interface {
 	// ListAllUsers retrieves the list of known Users.
 	ListAllUsers() (happydns.Iterator[happydns.User], error)
 
+	// CountUsers returns the total number of Users in storage. Implementations
+	// should make this efficient (e.g. count keys without decoding values) so
+	// it can be called from observability paths like Prometheus scrapes.
+	CountUsers() (int, error)
+
 	// GetUser retrieves the User with the given identifier.
 	GetUser(userid happydns.Identifier) (*happydns.User, error)
 

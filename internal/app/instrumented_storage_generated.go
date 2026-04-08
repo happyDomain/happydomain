@@ -102,6 +102,26 @@ func (s *instrumentedStorage) ClearZones() (err error) {
 
 func (s *instrumentedStorage) Close() error { return s.inner.Close() }
 
+func (s *instrumentedStorage) CountDomains() (ret int, err error) {
+	defer observe("count", "domain")(&err)
+	return s.inner.CountDomains()
+}
+
+func (s *instrumentedStorage) CountProviders() (ret int, err error) {
+	defer observe("count", "provider")(&err)
+	return s.inner.CountProviders()
+}
+
+func (s *instrumentedStorage) CountUsers() (ret int, err error) {
+	defer observe("count", "user")(&err)
+	return s.inner.CountUsers()
+}
+
+func (s *instrumentedStorage) CountZones() (ret int, err error) {
+	defer observe("count", "zone")(&err)
+	return s.inner.CountZones()
+}
+
 func (s *instrumentedStorage) CreateAuthUser(user *happydns.UserAuth) (err error) {
 	defer observe("create", "authuser")(&err)
 	return s.inner.CreateAuthUser(user)

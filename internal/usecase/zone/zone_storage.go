@@ -29,6 +29,11 @@ type ZoneStorage interface {
 	// ListAllZones retrieves the list of known Zones.
 	ListAllZones() (happydns.Iterator[happydns.ZoneMessage], error)
 
+	// CountZones returns the total number of Zones in storage.
+	// Implementations should make this efficient (e.g. count keys without
+	// decoding values) so it can be called from observability paths.
+	CountZones() (int, error)
+
 	// GetZoneMeta retrieves metadatas of the Zone with the given identifier.
 	GetZoneMeta(zoneid happydns.Identifier) (*happydns.ZoneMeta, error)
 

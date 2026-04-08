@@ -70,6 +70,10 @@ func (s *inMemoryZoneStorage) ListAllZones() (happydns.Iterator[happydns.ZoneMes
 	return nil, fmt.Errorf("not implemented")
 }
 
+func (s *inMemoryZoneStorage) CountZones() (int, error) {
+	return len(s.zones), nil
+}
+
 func (s *inMemoryZoneStorage) GetZoneMeta(zoneid happydns.Identifier) (*happydns.ZoneMeta, error) {
 	z, ok := s.zones[zoneid.String()]
 	if !ok {

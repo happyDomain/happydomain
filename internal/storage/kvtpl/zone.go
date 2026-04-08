@@ -33,6 +33,10 @@ func (s *KVStorage) ListAllZones() (happydns.Iterator[happydns.ZoneMessage], err
 	return NewKVIterator[happydns.ZoneMessage](s.db, iter), nil
 }
 
+func (s *KVStorage) CountZones() (int, error) {
+	return s.countByPrefix("domain.zone-")
+}
+
 func (s *KVStorage) GetZone(id happydns.Identifier) (*happydns.ZoneMessage, error) {
 	z := &happydns.ZoneMessage{}
 	err := s.db.Get(fmt.Sprintf("domain.zone-%s", id.String()), &z)
