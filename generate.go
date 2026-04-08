@@ -21,6 +21,7 @@
 
 package main
 
+//go:generate go run tools/gen_instrumented_storage.go
 //go:generate go run tools/gen_icon.go providers providers
 //go:generate go run tools/gen_icon.go services svcs
 //go:generate go run tools/gen_rr_typescript.go web/src/lib/dns_rr.ts

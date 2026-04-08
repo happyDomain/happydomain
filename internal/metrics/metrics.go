@@ -22,6 +22,8 @@
 package metrics
 
 import (
+	"strconv"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -90,15 +92,17 @@ var (
 		Buckets: prometheus.DefBuckets,
 	}, []string{"operation", "entity"})
 
-	// Build info
+	// Build info. Always 1; the metadata is carried in the labels so that
+	// dashboards and alerts can group/diff across deployments.
 	BuildInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "happydomain_build_info",
-		Help: "Build information about the running happyDomain instance.",
-	}, []string{"version"})
+		Help: "Build information about the running happyDomain instance. Always 1; metadata is in the labels.",
+	}, []string{"version", "revision", "dirty", "build_date"})
 )
 
-// SetBuildInfo records the application version in the build info metric.
-// Call this once during application startup.
-func SetBuildInfo(version string) {
-	BuildInfo.WithLabelValues(version).Set(1)
+// SetBuildInfo records the application build metadata in the build info
+// metric. Call this once during application startup. buildDate should be
+// formatted as RFC3339 (UTC) and may be empty if unknown.
+func SetBuildInfo(version, revision, buildDate string, dirty bool) {
+	BuildInfo.WithLabelValues(version, revision, strconv.FormatBool(dirty), buildDate).Set(1)
 }

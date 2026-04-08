@@ -26,6 +26,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/earthboundkid/versioninfo/v2"
 	"github.com/fatih/color"
@@ -34,6 +35,7 @@ import (
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/app"
 	"git.happydns.org/happyDomain/internal/config"
+	"git.happydns.org/happyDomain/internal/metrics"
 	_ "git.happydns.org/happyDomain/internal/storage/inmemory"
 	_ "git.happydns.org/happyDomain/internal/storage/leveldb"
 	_ "git.happydns.org/happyDomain/internal/storage/oracle-nosql"
@@ -55,11 +57,19 @@ func main() {
 		LastCommit: versioninfo.Revision,
 		DirtyBuild: versioninfo.DirtyBuild,
 	}
+	v := Version
 	if Version == "custom-build" {
-		controller.HDVersion.Version = versioninfo.Short()
+		v = versioninfo.Short()
+		controller.HDVersion.Version = v
 	} else {
 		versioninfo.Version = Version
 	}
+	metrics.SetBuildInfo(
+		v,
+		versioninfo.Revision,
+		versioninfo.LastCommit.UTC().Format(time.RFC3339),
+		versioninfo.DirtyBuild,
+	)
 
 	log.Println("This is happyDomain", versioninfo.Short())
 
