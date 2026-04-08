@@ -67,9 +67,33 @@ func RegisterService(creator happydns.ServiceCreator, analyzer ServiceAnalyzer, 
 	// A second registration of the same name almost always means a plugin is
 	// shadowing a built-in (or another plugin) by accident. Log loudly and
 	// keep the existing entry rather than silently overwriting it.
+	//
+	// We validate the primary name *and* every alias up-front, before
+	// touching the registry, so that a collision on an alias cannot leave
+	// the service half-registered (primary in, some aliases in, the rest
+	// rejected). Either the whole set lands or none of it does.
 	if _, exists := services[name]; exists {
 		log.Printf("Warning: service %q is already registered; ignoring duplicate registration", name)
 		return
+	}
+	for _, alias := range aliases {
+		if alias == name {
+			log.Printf("Warning: service %q lists its own primary name as an alias; ignoring registration", name)
+			return
+		}
+		if _, exists := services[alias]; exists {
+			log.Printf("Warning: service %q cannot be registered: alias %q is already taken; ignoring registration", name, alias)
+			return
+		}
+	}
+	// Catch duplicates *within* the alias list itself.
+	seen := make(map[string]struct{}, len(aliases))
+	for _, alias := range aliases {
+		if _, dup := seen[alias]; dup {
+			log.Printf("Warning: service %q lists alias %q twice; ignoring registration", name, alias)
+			return
+		}
+		seen[alias] = struct{}{}
 	}
 
 	// Invalidate ordered_services, which serve as cache
@@ -88,12 +112,7 @@ func RegisterService(creator happydns.ServiceCreator, analyzer ServiceAnalyzer, 
 	}
 	services[name] = svc
 
-	// Register aliases
 	for _, alias := range aliases {
-		if _, exists := services[alias]; exists {
-			log.Printf("Warning: service alias %q is already registered; ignoring", alias)
-			continue
-		}
 		services[alias] = svc
 	}
 
