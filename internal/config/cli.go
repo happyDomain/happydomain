@@ -25,6 +25,7 @@ import (
 	"flag"
 	"fmt"
 	"runtime"
+	"time"
 
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
@@ -47,6 +48,9 @@ func declareFlags(o *happydns.Options) {
 	flag.Var(&URL{&o.ExternalAuth}, "external-auth", "Base URL to use for login and registration (use embedded forms if left empty)")
 	flag.BoolVar(&o.OptOutInsights, "opt-out-insights", false, "Disable the anonymous usage statistics report. If you care about this project and don't participate in discussions, don't opt-out.")
 	flag.IntVar(&o.CheckerMaxConcurrency, "checker-max-concurrency", runtime.NumCPU(), "Maximum number of checker jobs that can run simultaneously")
+	flag.IntVar(&o.CheckerRetentionDays, "checker-retention-days", 365, "System-wide default retention horizon for check execution history (overridable per user)")
+	flag.DurationVar(&o.CheckerJanitorInterval, "checker-janitor-interval", 6*time.Hour, "How often the checker retention janitor runs")
+	flag.IntVar(&o.CheckerInactivityPauseDays, "checker-inactivity-pause-days", 90, "Pause checks for users that haven't logged in for this many days (0 disables, overridable per user)")
 
 	flag.Var(&URL{&o.ListmonkURL}, "newsletter-server-url", "Base URL of the listmonk newsletter server")
 	flag.IntVar(&o.ListmonkID, "newsletter-id", 1, "Listmonk identifier of the list receiving the new user")

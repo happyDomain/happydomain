@@ -109,10 +109,25 @@ type Scheduler struct {
 	running        bool
 	ctx            context.Context
 	maxConcurrency int
+
+	// gate, if set, is consulted before launching each job. Returning false
+	// causes the scheduler to skip (and reschedule) the job, e.g. when the
+	// owning user is paused or has been inactive for too long.
+	gate func(target happydns.CheckTarget) bool
 }
 
-// NewScheduler creates a new Scheduler.
-func NewScheduler(engine happydns.CheckerEngine, maxConcurrency int, planStore CheckPlanStorage, domainStore DomainLister, zoneStore ZoneGetter, stateStore SchedulerStateStorage) *Scheduler {
+// NewScheduler creates a new Scheduler. The optional gate function, if
+// non-nil, is consulted before launching each job; returning false causes
+// the scheduler to skip (and reschedule) the job.
+func NewScheduler(
+	engine happydns.CheckerEngine,
+	maxConcurrency int,
+	planStore CheckPlanStorage,
+	domainStore DomainLister,
+	zoneStore ZoneGetter,
+	stateStore SchedulerStateStorage,
+	gate func(target happydns.CheckTarget) bool,
+) *Scheduler {
 	if maxConcurrency <= 0 {
 		maxConcurrency = 1
 	}
@@ -125,6 +140,7 @@ func NewScheduler(engine happydns.CheckerEngine, maxConcurrency int, planStore C
 		jobKeys:        make(map[string]bool),
 		wake:           make(chan struct{}, 1),
 		maxConcurrency: maxConcurrency,
+		gate:           gate,
 	}
 }
 
@@ -236,7 +252,15 @@ func (s *Scheduler) run(ctx context.Context) {
 			continue
 		}
 		job := heap.Pop(&s.queue).(*SchedulerJob)
+		gate := s.gate
 		s.mu.Unlock()
+
+		// Honour the user-level gate before doing any work.
+		if gate != nil && !gate(job.Target) {
+			// log.Printf("Scheduler: skipping checker %s on %s (gated by user policy)", job.CheckerID, job.Target.String())
+			s.rescheduleJob(job)
+			continue
+		}
 
 		// Find plan if applicable.
 		var plan *happydns.CheckPlan

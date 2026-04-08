@@ -76,6 +76,8 @@ type Usecases struct {
 	checkerPlanUC    *checkerUC.CheckPlanUsecase
 	checkerStatusUC  *checkerUC.CheckStatusUsecase
 	checkerScheduler *checkerUC.Scheduler
+	checkerJanitor   *checkerUC.Janitor
+	checkerUserGater *checkerUC.UserGater
 }
 
 type App struct {
@@ -237,12 +239,13 @@ func (app *App) initUsecases() {
 		app.store,
 	)
 
-	app.usecases.user = userUC.NewUserUsecases(
+	userService := userUC.NewUserUsecases(
 		app.store,
 		app.newsletter,
 		authUserService,
 		sessionService,
 	)
+	app.usecases.user = userService
 	app.usecases.authentication = usecase.NewAuthenticationUsecase(app.cfg, app.store, app.usecases.user)
 	app.usecases.authUser = authUserService
 	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg)
@@ -271,7 +274,17 @@ func (app *App) initUsecases() {
 		app.store,
 		app.store,
 	)
-	app.usecases.checkerScheduler = checkerUC.NewScheduler(app.usecases.checkerEngine, app.cfg.CheckerMaxConcurrency, app.store, app.store, app.store, app.store)
+	// Build the user-level gate so paused or long-inactive users do not
+	// get checked. The same user resolver is reused by the janitor for
+	// per-user retention overrides.
+	app.usecases.checkerUserGater = checkerUC.NewUserGater(app.store, app.cfg.CheckerInactivityPauseDays)
+	app.usecases.checkerScheduler = checkerUC.NewScheduler(app.usecases.checkerEngine, app.cfg.CheckerMaxConcurrency, app.store, app.store, app.store, app.store, app.usecases.checkerUserGater.Allow)
+
+	// Invalidate the scheduler's user gate cache whenever a user is updated
+	// (e.g. login refreshing LastSeen, admin toggling SchedulingPaused).
+	userService.SetOnUserChanged(func(id happydns.Identifier) {
+		app.usecases.checkerUserGater.Invalidate(id.String())
+	})
 
 	// Retention janitor.
 	app.usecases.checkerJanitor = checkerUC.NewJanitor(

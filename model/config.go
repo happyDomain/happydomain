@@ -26,6 +26,7 @@ import (
 	"net/mail"
 	"net/url"
 	"path"
+	"time"
 )
 
 // Options stores the configuration of the software.
@@ -96,6 +97,20 @@ type Options struct {
 	// CheckerMaxConcurrency is the maximum number of checker jobs that can
 	// run simultaneously. Defaults to runtime.NumCPU().
 	CheckerMaxConcurrency int
+
+	// CheckerRetentionDays is the system-wide default for how many days of
+	// check execution history are kept. Per-user UserQuota.RetentionDays
+	// overrides this value.
+	CheckerRetentionDays int
+
+	// CheckerJanitorInterval is how often the retention janitor runs.
+	CheckerJanitorInterval time.Duration
+
+	// CheckerInactivityPauseDays is the system-wide default number of days
+	// without login after which the scheduler stops running checks for a
+	// user. 0 disables inactivity pausing globally; per-user UserQuota
+	// overrides this value.
+	CheckerInactivityPauseDays int
 
 	// CaptchaProvider selects the captcha provider ("hcaptcha", "recaptchav2", "turnstile", or "").
 	CaptchaProvider string

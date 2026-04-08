@@ -201,7 +201,7 @@ func newTestScheduler(engine happydns.CheckerEngine, domains []*happydns.Domain)
 	dl := &mockDomainLister{domains: domains}
 	zg := &mockZoneGetter{zones: make(map[string]*happydns.ZoneMessage)}
 	ss := &mockStateStore{}
-	sched := NewScheduler(engine, 2, ps, dl, zg, ss)
+	sched := NewScheduler(engine, 2, ps, dl, zg, ss, nil)
 	return sched, ps, ss
 }
 
@@ -326,7 +326,7 @@ func TestScheduler_SetEnabled(t *testing.T) {
 	sched.Stop()
 }
 
-func TestScheduler_SetGate(t *testing.T) {
+func TestScheduler_Gate(t *testing.T) {
 	engine := &mockEngine{}
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -337,10 +337,12 @@ func TestScheduler_SetGate(t *testing.T) {
 		DomainName: "gate-test.example.",
 	}
 
-	sched, _, _ := newTestScheduler(engine, []*happydns.Domain{domain})
-
 	var gated atomic.Int32
-	sched.SetGate(func(target happydns.CheckTarget) bool {
+	ps := &mockPlanStore{}
+	dl := &mockDomainLister{domains: []*happydns.Domain{domain}}
+	zg := &mockZoneGetter{zones: make(map[string]*happydns.ZoneMessage)}
+	ss := &mockStateStore{}
+	sched := NewScheduler(engine, 2, ps, dl, zg, ss, func(target happydns.CheckTarget) bool {
 		gated.Add(1)
 		return false // block all jobs
 	})

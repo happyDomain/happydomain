@@ -61,12 +61,13 @@ func (lu *loginUsecase) CompleteAuthentication(uinfo happydns.UserInfo) (*happyd
 			return nil, fmt.Errorf("unable to create user account: %w", err)
 		}
 	} else if (uinfo.GetEmail() != "" && user.Email != uinfo.GetEmail()) || time.Since(user.LastSeen) > time.Hour*12 {
-		if uinfo.GetEmail() != "" {
-			user.Email = uinfo.GetEmail()
-		}
-		user.LastSeen = time.Now()
-
-		err = lu.store.CreateOrUpdateUser(user)
+		email := uinfo.GetEmail()
+		user, err = lu.userService.UpdateUser(user.Id, func(u *happydns.User) {
+			if email != "" {
+				u.Email = email
+			}
+			u.LastSeen = time.Now()
+		})
 		if err != nil {
 			return nil, fmt.Errorf("has a correct JWT, user has been found, but an error occured when trying to update the user's information: %w", err)
 		}

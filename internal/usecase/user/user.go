@@ -35,6 +35,7 @@ type Service struct {
 	newsletter        happydns.NewsletterSubscriptor
 	authUser          happydns.AuthUserUsecase
 	closeUserSessions happydns.SessionCloserUsecase
+	onUserChanged     func(happydns.Identifier)
 }
 
 func NewUserUsecases(
@@ -49,6 +50,13 @@ func NewUserUsecases(
 		authUser:          authUser,
 		closeUserSessions: closeUserSessions,
 	}
+}
+
+// SetOnUserChanged installs a callback invoked after any successful user
+// update (via UpdateUser). This is used to invalidate caches that depend on
+// user state, such as the scheduler's UserGater.
+func (s *Service) SetOnUserChanged(fn func(happydns.Identifier)) {
+	s.onUserChanged = fn
 }
 
 // CreateUser creates a new user with the given information.
@@ -108,13 +116,25 @@ func (s *Service) UpdateUser(id happydns.Identifier, updateFn func(*happydns.Use
 		}
 	}
 
+	if s.onUserChanged != nil {
+		s.onUserChanged(id)
+	}
+
 	return user, nil
 }
 
 // ChangeUserSettings updates the settings for a user.
 func (s *Service) ChangeUserSettings(user *happydns.User, newSettings happydns.UserSettings) error {
 	user.Settings = newSettings
-	return s.store.CreateOrUpdateUser(user)
+	if err := s.store.CreateOrUpdateUser(user); err != nil {
+		return err
+	}
+
+	if s.onUserChanged != nil {
+		s.onUserChanged(user.Id)
+	}
+
+	return nil
 }
 
 // DeleteUser deletes a user by their identifier.
