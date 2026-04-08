@@ -273,6 +273,17 @@ func (app *App) initUsecases() {
 	)
 	app.usecases.checkerScheduler = checkerUC.NewScheduler(app.usecases.checkerEngine, app.cfg.CheckerMaxConcurrency, app.store, app.store, app.store, app.store)
 
+	// Retention janitor.
+	app.usecases.checkerJanitor = checkerUC.NewJanitor(
+		app.store,
+		app.store,
+		app.store,
+		app.store,
+		app.store,
+		checkerUC.DefaultRetentionPolicy(app.cfg.CheckerRetentionDays),
+		app.cfg.CheckerJanitorInterval,
+	)
+
 	// Wire scheduler notifications for incremental queue updates.
 	domainService.SetSchedulerNotifier(app.usecases.checkerScheduler)
 	app.usecases.orchestrator.SetSchedulerNotifier(app.usecases.checkerScheduler)
@@ -348,6 +359,10 @@ func (app *App) Start() {
 		app.usecases.checkerScheduler.Start(context.Background())
 	}
 
+	if app.usecases.checkerJanitor != nil {
+		app.usecases.checkerJanitor.Start(context.Background())
+	}
+
 	log.Printf("Public interface listening on %s\n", app.cfg.Bind)
 	if err := app.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("listen: %s\n", err)
@@ -363,6 +378,10 @@ func (app *App) Stop() {
 
 	if app.usecases.checkerScheduler != nil {
 		app.usecases.checkerScheduler.Stop()
+	}
+
+	if app.usecases.checkerJanitor != nil {
+		app.usecases.checkerJanitor.Stop()
 	}
 
 	// Close storage
