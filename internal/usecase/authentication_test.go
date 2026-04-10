@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
-	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
 	"git.happydns.org/happyDomain/internal/usecase"
 	userUC "git.happydns.org/happyDomain/internal/usecase/user"
 	"git.happydns.org/happyDomain/model"
@@ -22,8 +21,7 @@ func (u testUserInfo) GetEmail() string               { return u.email }
 func (u testUserInfo) JoinNewsletter() bool           { return u.newsletter }
 
 func Test_CompleteAuthentication(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil)
 	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, db, userUsecase)
 
@@ -62,8 +60,7 @@ func (ds *testNewsletterSubscription) SubscribeToNewsletter(u happydns.UserInfo)
 }
 
 func Test_CompleteAuthentication_WithNewsletter(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	mockNewsletterSubscription := &testNewsletterSubscription{}
 	userUsecase := userUC.NewUserUsecases(db, mockNewsletterSubscription, nil, nil)
 	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, db, userUsecase)
@@ -99,8 +96,7 @@ func Test_CompleteAuthentication_WithNewsletter(t *testing.T) {
 }
 
 func Test_AuthenticateUserWithPassword_WrongPassword(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 
 	authUser := &happydns.UserAuth{
 		Email: "a@b.c",
@@ -128,8 +124,7 @@ func Test_AuthenticateUserWithPassword_WrongPassword(t *testing.T) {
 }
 
 func Test_AuthenticateUserWithPassword_WeakPassword(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 
 	authUser := &happydns.UserAuth{
 		Email: "a@b.c",
@@ -157,8 +152,7 @@ func Test_AuthenticateUserWithPassword_WeakPassword(t *testing.T) {
 }
 
 func Test_AuthenticateUserWithPassword_UnverifiedEmail(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 
 	authUser := &happydns.UserAuth{
 		Email: "a@b.c",
@@ -186,8 +180,7 @@ func Test_AuthenticateUserWithPassword_UnverifiedEmail(t *testing.T) {
 }
 
 func Test_AuthenticateUserWithPassword_NoEmail(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 
 	authUser := &happydns.UserAuth{
 		Email: "a@b.c",
@@ -215,8 +208,7 @@ func Test_AuthenticateUserWithPassword_NoEmail(t *testing.T) {
 }
 
 func Test_AuthenticateUserWithPassword(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 
 	now := time.Now()
 	authUser := &happydns.UserAuth{

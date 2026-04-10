@@ -27,7 +27,6 @@ import (
 
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
-	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
 	"git.happydns.org/happyDomain/internal/usecase/session"
 	"git.happydns.org/happyDomain/model"
 )
@@ -44,8 +43,7 @@ func createTestUser(t *testing.T, store storage.Storage, email string) *happydns
 }
 
 func Test_CreateUserSession(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)
 
 	user := createTestUser(t, db, "test@example.com")
@@ -82,8 +80,7 @@ func Test_CreateUserSession(t *testing.T) {
 }
 
 func Test_GetUserSession(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)
 
 	user := createTestUser(t, db, "test@example.com")
@@ -109,8 +106,7 @@ func Test_GetUserSession(t *testing.T) {
 }
 
 func Test_GetUserSession_WrongUser(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)
 
 	user1 := createTestUser(t, db, "user1@example.com")
@@ -133,8 +129,7 @@ func Test_GetUserSession_WrongUser(t *testing.T) {
 }
 
 func Test_GetUserSession_NotFound(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)
 
 	user := createTestUser(t, db, "test@example.com")
@@ -149,8 +144,7 @@ func Test_GetUserSession_NotFound(t *testing.T) {
 }
 
 func Test_ListUserSessions(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)
 
 	user := createTestUser(t, db, "test@example.com")
@@ -181,8 +175,7 @@ func Test_ListUserSessions(t *testing.T) {
 }
 
 func Test_ListUserSessions_MultipleUsers(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)
 
 	user1 := createTestUser(t, db, "user1@example.com")
@@ -224,8 +217,7 @@ func Test_ListUserSessions_MultipleUsers(t *testing.T) {
 }
 
 func Test_UpdateUserSession(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)
 
 	user := createTestUser(t, db, "test@example.com")
@@ -258,8 +250,7 @@ func Test_UpdateUserSession(t *testing.T) {
 }
 
 func Test_UpdateUserSession_PreventIdChange(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)
 
 	user := createTestUser(t, db, "test@example.com")
@@ -283,8 +274,7 @@ func Test_UpdateUserSession_PreventIdChange(t *testing.T) {
 }
 
 func Test_UpdateUserSession_WrongUser(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)
 
 	user1 := createTestUser(t, db, "user1@example.com")
@@ -306,8 +296,7 @@ func Test_UpdateUserSession_WrongUser(t *testing.T) {
 }
 
 func Test_DeleteUserSession(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)
 
 	user := createTestUser(t, db, "test@example.com")
@@ -335,8 +324,7 @@ func Test_DeleteUserSession(t *testing.T) {
 }
 
 func Test_DeleteUserSession_WrongUser(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)
 
 	user1 := createTestUser(t, db, "user1@example.com")
@@ -362,8 +350,7 @@ func Test_DeleteUserSession_WrongUser(t *testing.T) {
 }
 
 func Test_CloseUserSessions(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)
 
 	user := createTestUser(t, db, "test@example.com")
@@ -399,8 +386,7 @@ func Test_CloseUserSessions(t *testing.T) {
 }
 
 func Test_CloseUserSessions_MultipleUsers(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)
 
 	user1 := createTestUser(t, db, "user1@example.com")
@@ -453,8 +439,7 @@ func (u testUserInfo) GetEmail() string               { return "" }
 func (u testUserInfo) JoinNewsletter() bool           { return false }
 
 func Test_CloseAll_UserInfoInterface(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)
 
 	userID := happydns.Identifier([]byte("user-123"))
@@ -494,8 +479,7 @@ func Test_CloseAll_UserInfoInterface(t *testing.T) {
 }
 
 func Test_ByID(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)
 
 	userID := happydns.Identifier([]byte("user-123"))
@@ -550,8 +534,7 @@ func Test_NewSessionID(t *testing.T) {
 }
 
 func Test_SessionExpiration(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)
 
 	user := createTestUser(t, db, "test@example.com")

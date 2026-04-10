@@ -21,16 +21,18 @@
 
 package inmemory
 
+import "encoding/json"
+
 // KVIterator implements the storage.Iterator interface for in-memory KVStorage.
 type KVIterator struct {
 	keys    []string
-	data    map[string][]byte
+	data    map[string]json.RawMessage
 	index   int
 	current string
 }
 
 // NewKVIterator creates a new iterator for the given keys and data.
-func NewKVIterator(keys []string, data map[string][]byte) *KVIterator {
+func NewKVIterator(keys []string, data map[string]json.RawMessage) *KVIterator {
 	return &KVIterator{
 		keys:  keys,
 		data:  data,

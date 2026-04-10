@@ -28,7 +28,6 @@ import (
 
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
-	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
 	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
 	sessionUC "git.happydns.org/happyDomain/internal/usecase/session"
 	"git.happydns.org/happyDomain/internal/usecase/user"
@@ -81,11 +80,7 @@ func (u testUserInfo) GetEmail() string               { return u.email }
 func (u testUserInfo) JoinNewsletter() bool           { return u.joinNewsletter }
 
 func createTestService(t *testing.T) (*user.Service, storage.Storage, *mockNewsletterSubscriptor, *mockSessionCloser) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, err := kv.NewKVDatabase(mem)
-	if err != nil {
-		t.Fatalf("failed to create in-memory storage: %v", err)
-	}
+	db, _ := inmemory.Instantiate()
 
 	cfg := &happydns.Options{
 		DisableRegistration: false,

@@ -28,7 +28,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"time"
 
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
@@ -36,36 +35,14 @@ import (
 
 // InMemoryStorage implements the Storage interface using in-memory data structures.
 type InMemoryStorage struct {
-	mu                  sync.Mutex
-	data                map[string][]byte // Generic key-value store for KVStorage interface
-	authUsers           map[string]*happydns.UserAuth
-	authUsersByEmail    map[string]happydns.Identifier
-	domains             map[string]*happydns.Domain
-	domainLogs          map[string]*happydns.DomainLogWithDomainId
-	domainLogsByDomains map[string][]*happydns.Identifier
-	providers           map[string]*happydns.ProviderMessage
-	sessions            map[string]*happydns.Session
-	users               map[string]*happydns.User
-	usersByEmail        map[string]*happydns.User
-	zones               map[string]*happydns.ZoneMessage
-	lastInsightsRun     *time.Time
-	lastInsightsID      happydns.Identifier
+	mu   sync.Mutex
+	data map[string]json.RawMessage
 }
 
 // NewInMemoryStorage creates a new instance of InMemoryStorage.
 func NewInMemoryStorage() (*InMemoryStorage, error) {
 	return &InMemoryStorage{
-		data:                make(map[string][]byte),
-		authUsers:           make(map[string]*happydns.UserAuth),
-		authUsersByEmail:    make(map[string]happydns.Identifier),
-		domains:             make(map[string]*happydns.Domain),
-		domainLogs:          make(map[string]*happydns.DomainLogWithDomainId),
-		domainLogsByDomains: make(map[string][]*happydns.Identifier),
-		providers:           make(map[string]*happydns.ProviderMessage),
-		sessions:            make(map[string]*happydns.Session),
-		users:               make(map[string]*happydns.User),
-		usersByEmail:        make(map[string]*happydns.User),
-		zones:               make(map[string]*happydns.ZoneMessage),
+		data: make(map[string]json.RawMessage),
 	}, nil
 }
 
@@ -93,11 +70,11 @@ func (s *InMemoryStorage) Close() error {
 	return nil
 }
 
-// DecodeData decodes data from the interface (expected to be []byte) into v.
+// DecodeData decodes data from the interface (expected to be json.RawMessage) into v.
 func (s *InMemoryStorage) DecodeData(data any, v any) error {
-	b, ok := data.([]byte)
+	b, ok := data.(json.RawMessage)
 	if !ok {
-		return fmt.Errorf("data to decode are not in []byte format (%T)", data)
+		return fmt.Errorf("data to decode are not in json.RawMessage format (%T)", data)
 	}
 	return json.Unmarshal(b, v)
 }
@@ -176,11 +153,9 @@ func (s *InMemoryStorage) Search(prefix string) storage.Iterator {
 	sort.Strings(keys)
 
 	// Copy data for the iterator to avoid concurrent access issues
-	data := make(map[string][]byte, len(keys))
+	data := make(map[string]json.RawMessage, len(keys))
 	for _, k := range keys {
-		dataCopy := make([]byte, len(s.data[k]))
-		copy(dataCopy, s.data[k])
-		data[k] = dataCopy
+		data[k] = append(json.RawMessage(nil), s.data[k]...)
 	}
 
 	return NewKVIterator(keys, data)

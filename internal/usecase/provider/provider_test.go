@@ -28,7 +28,6 @@ import (
 
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
-	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
 	"git.happydns.org/happyDomain/internal/usecase/provider"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/providers"
@@ -78,8 +77,7 @@ func (v *mockValidator) Validate(p *happydns.Provider) error {
 }
 
 func newTestService(t *testing.T) (*provider.Service, storage.Storage) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	return provider.NewService(db, &mockValidator{}), db
 }
 
@@ -443,8 +441,7 @@ func Test_ParseProvider_InvalidType(t *testing.T) {
 }
 
 func Test_RestrictedService_CreateProvider_Disabled(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	config := &happydns.Options{
 		DisableProviders: true,
 	}
@@ -463,8 +460,7 @@ func Test_RestrictedService_CreateProvider_Disabled(t *testing.T) {
 }
 
 func Test_RestrictedService_UpdateProvider_Disabled(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 
 	// First create a provider without restrictions
 	unrestricted := provider.NewService(db, &mockValidator{})
@@ -493,8 +489,7 @@ func Test_RestrictedService_UpdateProvider_Disabled(t *testing.T) {
 }
 
 func Test_RestrictedService_DeleteProvider_Disabled(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 
 	// First create a provider without restrictions
 	unrestricted := provider.NewService(db, &mockValidator{})

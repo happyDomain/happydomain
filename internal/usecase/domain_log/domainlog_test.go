@@ -27,7 +27,6 @@ import (
 
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
-	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
 	"git.happydns.org/happyDomain/internal/usecase/domain_log"
 	"git.happydns.org/happyDomain/model"
 )
@@ -55,8 +54,7 @@ func createTestDomain(t *testing.T, store storage.Storage, user *happydns.User, 
 }
 
 func Test_AppendDomainLog(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	logService := domainlog.NewService(db)
 
 	user := createTestUser(t, db, "test@example.com")
@@ -99,8 +97,7 @@ func Test_AppendDomainLog(t *testing.T) {
 }
 
 func Test_ListDomainLogs(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	logService := domainlog.NewService(db)
 
 	user := createTestUser(t, db, "test@example.com")
@@ -153,8 +150,7 @@ func Test_ListDomainLogs(t *testing.T) {
 }
 
 func Test_ListDomainLogs_MultipleDomains(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	logService := domainlog.NewService(db)
 
 	user := createTestUser(t, db, "test@example.com")
@@ -201,8 +197,7 @@ func Test_ListDomainLogs_MultipleDomains(t *testing.T) {
 }
 
 func Test_UpdateDomainLog(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	logService := domainlog.NewService(db)
 
 	user := createTestUser(t, db, "test@example.com")
@@ -240,8 +235,7 @@ func Test_UpdateDomainLog(t *testing.T) {
 }
 
 func Test_DeleteDomainLog(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	logService := domainlog.NewService(db)
 
 	user := createTestUser(t, db, "test@example.com")
@@ -280,8 +274,7 @@ func Test_DeleteDomainLog(t *testing.T) {
 }
 
 func Test_AppendDomainLog_DifferentLogLevels(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	logService := domainlog.NewService(db)
 
 	user := createTestUser(t, db, "test@example.com")
@@ -318,8 +311,7 @@ func Test_AppendDomainLog_DifferentLogLevels(t *testing.T) {
 }
 
 func Test_ListDomainLogs_EmptyDomain(t *testing.T) {
-	mem, _ := inmemory.NewInMemoryStorage()
-	db, _ := kv.NewKVDatabase(mem)
+	db, _ := inmemory.Instantiate()
 	logService := domainlog.NewService(db)
 
 	user := createTestUser(t, db, "test@example.com")
