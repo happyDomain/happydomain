@@ -171,7 +171,24 @@ func (tu *tidyUpUsecase) TidySessions() error {
 }
 
 func (tu *tidyUpUsecase) TidyUsers() error {
-	return nil
+	iter, err := tu.store.ListAllAuthUsers()
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	for iter.Next() {
+		authUser := iter.Item()
+
+		if authUser.EmailVerification == nil && authUser.LastLoggedIn == nil && time.Since(authUser.CreatedAt) > 7*24*time.Hour {
+			log.Printf("Deleting user with unverified email and no login (created %s): %s\n", authUser.CreatedAt.Format(time.RFC3339), authUser.Email)
+			if err = iter.DropItem(); err != nil {
+				return err
+			}
+		}
+	}
+
+	return iter.Err()
 }
 
 func (tu *tidyUpUsecase) TidyZones() error {
