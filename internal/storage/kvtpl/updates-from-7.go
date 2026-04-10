@@ -977,10 +977,17 @@ func migrateFrom7(s *KVStorage) error {
 
 		var usrv svcs.UnknownSRV
 
-		if mat, ok := val["srv"].([]any); ok {
+		name, _ := val["name"].(string)
+		proto, _ := val["proto"].(string)
+
+		if mat, ok := val["srv"].([]any); ok && name != "" && proto != "" {
 			for _, mI := range mat {
 				m := mI.(map[string]any)
-				rr, err := dns.NewRR(fmt.Sprintf("%s 0 IN SRV %.0f %.0f %.0f %s", helpers.DomainJoin("_"+val["name"].(string), "_"+val["proto"].(string), "zZzZ"), m["priority"].(float64), m["weight"].(float64), m["port"].(float64), helpers.DomainFQDN(m["target"].(string), "zZzZ.")))
+				target, _ := m["target"].(string)
+				priority, _ := m["priority"].(float64)
+				weight, _ := m["weight"].(float64)
+				port, _ := m["port"].(float64)
+				rr, err := dns.NewRR(fmt.Sprintf("%s 0 IN SRV %.0f %.0f %.0f %s", helpers.DomainJoin("_"+name, "_"+proto, "zZzZ"), priority, weight, port, helpers.DomainFQDN(target, "zZzZ.")))
 				if err != nil {
 					return nil, err
 				}
