@@ -98,7 +98,7 @@ func (dc *DomainController) AddDomain(c *gin.Context) {
 		return
 	}
 
-	var uz happydns.Domain
+	var uz happydns.DomainCreationInput
 	err := c.ShouldBindJSON(&uz)
 	if err != nil {
 		log.Printf("%s sends invalid Domain JSON: %s", c.ClientIP(), err.Error())
@@ -106,13 +106,13 @@ func (dc *DomainController) AddDomain(c *gin.Context) {
 		return
 	}
 
-	err = dc.domainService.CreateDomain(c.Request.Context(), user, &uz)
+	domain, err := dc.domainService.CreateDomain(c.Request.Context(), user, &uz)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, uz)
+	c.JSON(http.StatusOK, domain)
 }
 
 // GetDomain retrieves information about a given Domain owned by the user.

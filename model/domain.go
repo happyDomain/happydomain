@@ -108,7 +108,7 @@ type Subdomain string
 type Origin string
 
 type DomainUsecase interface {
-	CreateDomain(context.Context, *User, *Domain) error
+	CreateDomain(context.Context, *User, *DomainCreationInput) (*Domain, error)
 	DeleteDomain(Identifier) error
 	ExtendsDomainWithZoneMeta(*Domain) (*DomainWithZoneMetadata, error)
 	GetUserDomain(*User, Identifier) (*Domain, error)

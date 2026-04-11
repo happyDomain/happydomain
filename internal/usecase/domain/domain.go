@@ -66,23 +66,23 @@ func NewService(
 }
 
 // CreateDomain creates a new domain for the given user.
-func (s *Service) CreateDomain(ctx context.Context, user *happydns.User, uz *happydns.Domain) error {
-	uz, err := happydns.NewDomain(user, uz.DomainName, uz.ProviderId)
+func (s *Service) CreateDomain(ctx context.Context, user *happydns.User, input *happydns.DomainCreationInput) (*happydns.Domain, error) {
+	uz, err := happydns.NewDomain(user, input.DomainName, input.ProviderId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	provider, err := s.providerService.GetUserProvider(ctx, user, uz.ProviderId)
 	if err != nil {
-		return happydns.ValidationError{Msg: fmt.Sprintf("unable to find the provider.")}
+		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to find the provider.")}
 	}
 
 	if err = s.domainExistence.TestDomainExistence(ctx, provider, uz.DomainName); err != nil {
-		return happydns.NotFoundError{Msg: err.Error()}
+		return nil, happydns.NotFoundError{Msg: err.Error()}
 	}
 
 	if err := s.store.CreateDomain(uz); err != nil {
-		return happydns.InternalError{
+		return nil, happydns.InternalError{
 			Err:         fmt.Errorf("unable to CreateDomain: %s", err),
 			UserMessage: "Sorry, we are unable to create your domain now.",
 		}
@@ -93,7 +93,7 @@ func (s *Service) CreateDomain(ctx context.Context, user *happydns.User, uz *hap
 		s.domainLogAppender.AppendDomainLog(uz, happydns.NewDomainLog(user, happydns.LOG_INFO, fmt.Sprintf("Domain name %s added.", uz.DomainName)))
 	}
 
-	return nil
+	return uz, nil
 }
 
 // GetUserDomain retrieves a domain by ID for the given user.
