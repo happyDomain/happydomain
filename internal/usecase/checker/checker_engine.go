@@ -32,6 +32,12 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// ExecutionCallbackSetter is implemented by checker engines that support
+// notification callbacks after execution completion.
+type ExecutionCallbackSetter interface {
+	SetExecutionCallback(func(*happydns.Execution, *happydns.CheckEvaluation))
+}
+
 // checkerEngine implements the happydns.CheckerEngine interface.
 type checkerEngine struct {
 	optionsUC     *CheckerOptionsUsecase
@@ -42,6 +48,13 @@ type checkerEngine struct {
 	entryStore    DiscoveryEntryStorage
 	obsRefStore   DiscoveryObservationStorage
 	relatedLookup checkerPkg.RelatedObservationLookup
+
+	onComplete func(exec *happydns.Execution, eval *happydns.CheckEvaluation)
+}
+
+// SetExecutionCallback registers a callback invoked after each successful execution.
+func (e *checkerEngine) SetExecutionCallback(cb func(*happydns.Execution, *happydns.CheckEvaluation)) {
+	e.onComplete = cb
 }
 
 // NewCheckerEngine creates a new CheckerEngine implementation. Passing nil
@@ -143,6 +156,12 @@ func (e *checkerEngine) RunExecution(ctx context.Context, exec *happydns.Executi
 	exec.EvaluationID = &eval.Id
 	if err := e.execStore.UpdateExecution(exec); err != nil {
 		log.Printf("CheckerEngine: failed to update execution: %v", err)
+	}
+
+	// Fire notification callback (runs synchronously within the caller's goroutine
+	// so that shutdown can wait for it to complete).
+	if e.onComplete != nil {
+		e.onComplete(exec, eval)
 	}
 
 	return eval, nil
