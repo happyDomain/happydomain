@@ -26,11 +26,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"sync/atomic"
 	"time"
 
 	checkerPkg "git.happydns.org/happyDomain/internal/checker"
 	"git.happydns.org/happyDomain/model"
 )
+
+// executionCallback is the signature stored under onComplete. Wrapping it in a
+// named type lets us hold it via atomic.Pointer without leaking the function
+// type spelling everywhere.
+type executionCallback func(*happydns.Execution, *happydns.CheckEvaluation)
+
+// ExecutionCallbackSetter is implemented by checker engines that support
+// notification callbacks after execution completion.
+type ExecutionCallbackSetter interface {
+	SetExecutionCallback(func(*happydns.Execution, *happydns.CheckEvaluation))
+}
 
 // checkerEngine implements the happydns.CheckerEngine interface.
 type checkerEngine struct {
@@ -42,6 +54,21 @@ type checkerEngine struct {
 	entryStore    DiscoveryEntryStorage
 	obsRefStore   DiscoveryObservationStorage
 	relatedLookup checkerPkg.RelatedObservationLookup
+
+	// onComplete is read concurrently by RunExecution from worker goroutines
+	// while SetExecutionCallback writes it during app wiring (and potentially
+	// later, defensively). atomic.Pointer keeps the load/store race-free.
+	onComplete atomic.Pointer[executionCallback]
+}
+
+// SetExecutionCallback registers a callback invoked after each successful execution.
+func (e *checkerEngine) SetExecutionCallback(cb func(*happydns.Execution, *happydns.CheckEvaluation)) {
+	if cb == nil {
+		e.onComplete.Store(nil)
+		return
+	}
+	wrapped := executionCallback(cb)
+	e.onComplete.Store(&wrapped)
 }
 
 // NewCheckerEngine creates a new CheckerEngine implementation. Passing nil
@@ -143,6 +170,13 @@ func (e *checkerEngine) RunExecution(ctx context.Context, exec *happydns.Executi
 	exec.EvaluationID = &eval.Id
 	if err := e.execStore.UpdateExecution(exec); err != nil {
 		log.Printf("CheckerEngine: failed to update execution: %v", err)
+	}
+
+	// Fire notification callback. The callback decides synchronously whether
+	// to notify and advances state, but actual sender invocations are
+	// dispatched to a worker pool so a slow channel cannot wedge the engine.
+	if cb := e.onComplete.Load(); cb != nil {
+		(*cb)(exec, eval)
 	}
 
 	return eval, nil
