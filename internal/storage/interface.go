@@ -27,6 +27,7 @@ import (
 	"git.happydns.org/happyDomain/internal/usecase/domain"
 	"git.happydns.org/happyDomain/internal/usecase/domain_log"
 	"git.happydns.org/happyDomain/internal/usecase/insight"
+	"git.happydns.org/happyDomain/internal/usecase/notification"
 	"git.happydns.org/happyDomain/internal/usecase/provider"
 	"git.happydns.org/happyDomain/internal/usecase/session"
 	"git.happydns.org/happyDomain/internal/usecase/user"
@@ -53,6 +54,10 @@ type Storage interface {
 	domain.DomainStorage
 	domainlog.DomainLogStorage
 	insight.InsightStorage
+	notification.NotificationChannelStorage
+	notification.NotificationPreferenceStorage
+	notification.NotificationStateStorage
+	notification.NotificationRecordStorage
 	provider.ProviderStorage
 	session.SessionStorage
 	user.UserStorage
