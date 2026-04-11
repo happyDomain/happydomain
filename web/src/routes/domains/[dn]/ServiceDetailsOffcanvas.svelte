@@ -149,7 +149,7 @@
                     <RecordLine
                         dn={service._domain || ""}
                         origin={domain}
-                        bind:rr={rrs[i]}
+                        rr={rrs[i]}
                         onopen={() => (isOpen = false)}
                     />
                 {/each}
