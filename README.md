@@ -8,8 +8,13 @@ happyDomain is a free web application that centralizes the management of your do
 [![Build Status](https://drone.nemunai.re/api/badges/happyDomain/happyDomain/status.svg)](https://drone.nemunai.re/happyDomain/happyDomain)
 [![Matrix](https://img.shields.io/badge/matrix-%23000000?style=for-the-badge&logo=matrix&logoColor=white)](https://matrix.to/#/%23happyDNS:matrix.org)
 [![Feedback](https://img.shields.io/badge/feedback-welcome-brightgreen)](https://feedback.happydomain.org/)
+[![Try Online](https://img.shields.io/badge/Try_it_online-brightgreen?style=for-the-badge)](https://try.happydomain.org/)
+[![GitHub Stars](https://img.shields.io/github/stars/happyDomain/happydomain)](https://github.com/happyDomain/happydomain)
+[![Latest Release](https://img.shields.io/github/v/release/happyDomain/happydomain)](https://github.com/happyDomain/happydomain/releases)
 
 ![Screenshots of happyDomain](./docs/header.webp)
+
+**Website:** [happydomain.org](https://www.happydomain.org/) | **Demo:** [try.happydomain.org](https://try.happydomain.org/)
 
 It consists of a HTTP REST API written in Golang (primarily based on https://dnscontrol.org/ and https://github.com/miekg/dns) with a nice web interface written with [Svelte](https://svelte.dev/).
 It runs as a single stateless Linux binary, backed by a database.
@@ -75,7 +80,7 @@ In order to deploy happyDomain, check the [Docker image documentation](https://h
 Install from binary
 -------------------
 
-Prebuilt binaries are availables at: <https://get.happydomain.org/>
+Prebuilt binaries are available at: <https://get.happydomain.org/>
 
 Choose a directory (the latest version available, or `master`) and choose the binary that corresponds to your operating system and CPU architecture.
 
