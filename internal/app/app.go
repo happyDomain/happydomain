@@ -35,6 +35,7 @@ import (
 	"git.happydns.org/happyDomain/internal/mailer"
 	"git.happydns.org/happyDomain/internal/metrics"
 	"git.happydns.org/happyDomain/internal/newsletter"
+	notifPkg "git.happydns.org/happyDomain/internal/notification"
 	"git.happydns.org/happyDomain/internal/session"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/usecase"
@@ -43,6 +44,7 @@ import (
 	domainUC "git.happydns.org/happyDomain/internal/usecase/domain"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	emailAutoconfigUC "git.happydns.org/happyDomain/internal/usecase/emailautoconfig"
+	notifUC "git.happydns.org/happyDomain/internal/usecase/notification"
 	"git.happydns.org/happyDomain/internal/usecase/orchestrator"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	serviceUC "git.happydns.org/happyDomain/internal/usecase/service"
@@ -84,6 +86,9 @@ type Usecases struct {
 	checkerScheduler *checkerUC.Scheduler
 	checkerJanitor   *checkerUC.Janitor
 	checkerUserGater *checkerUC.UserGater
+
+	notificationDispatcher *notifUC.Dispatcher
+	notificationRegistry   *notifPkg.Registry
 }
 
 type App struct {
@@ -331,6 +336,33 @@ func (app *App) initUsecases() {
 	// Wire scheduler notifications for incremental queue updates.
 	domainService.SetSchedulerNotifier(app.usecases.checkerScheduler)
 	app.usecases.orchestrator.SetSchedulerNotifier(app.usecases.checkerScheduler)
+
+	// Notification system: dispatcher fans out checker results to user
+	// channels (email/webhook/UnifiedPush) based on per-target preferences.
+	baseURL := app.cfg.GetBaseURL()
+	registry := notifPkg.NewRegistry()
+	registry.Register(notifPkg.Adapt(notifPkg.NewEmailSender(app.mailer, baseURL)))
+	registry.Register(notifPkg.Adapt(notifPkg.NewWebhookSender(baseURL)))
+	registry.Register(notifPkg.Adapt(notifPkg.NewUnifiedPushSender(baseURL)))
+	app.usecases.notificationRegistry = registry
+	resolver := notifUC.NewResolver(app.store, app.store)
+	pool := notifUC.NewPool(registry, app.store)
+	tester := notifUC.NewTester(registry)
+	stateLocker := notifUC.NewStateLocker()
+	ack := notifUC.NewAckService(app.store, stateLocker)
+	app.usecases.notificationDispatcher = notifUC.NewDispatcher(
+		app.store,
+		app.store,
+		app.store,
+		resolver,
+		pool,
+		tester,
+		ack,
+		stateLocker,
+	)
+	if cb, ok := app.usecases.checkerEngine.(checkerUC.ExecutionCallbackSetter); ok {
+		cb.SetExecutionCallback(app.usecases.notificationDispatcher.OnExecutionComplete)
+	}
 }
 
 func (app *App) setupRouter() {
@@ -386,6 +418,12 @@ func (app *App) setupRouter() {
 			PlannedProvider:     app.usecases.checkerScheduler,
 			BudgetChecker:       app.usecases.checkerUserGater,
 			CountManualTriggers: app.cfg.CheckerCountManualTriggers,
+
+			NotificationDispatcher: app.usecases.notificationDispatcher,
+			NotificationRegistry:   app.usecases.notificationRegistry,
+			NotificationChannels:   app.store,
+			NotificationPrefs:      app.store,
+			NotificationRecords:    app.store,
 		},
 	)
 	web.DeclareRoutes(app.cfg, baserouter, app.captchaVerifier)
@@ -428,6 +466,10 @@ func (app *App) Start() {
 		app.usecases.checkerUserGater.Start(context.Background())
 	}
 
+	if app.usecases.notificationDispatcher != nil {
+		app.usecases.notificationDispatcher.Start()
+	}
+
 	log.Printf("Public interface listening on %s\n", app.cfg.Bind)
 	if err := app.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("listen: %s\n", err)
@@ -448,6 +490,12 @@ func (app *App) Stop() {
 
 	if app.usecases.checkerUserGater != nil {
 		app.usecases.checkerUserGater.Stop()
+	}
+
+	// Drain in-flight notification sends after the scheduler is stopped
+	// so no new jobs can be enqueued while we wait.
+	if app.usecases.notificationDispatcher != nil {
+		app.usecases.notificationDispatcher.Stop()
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

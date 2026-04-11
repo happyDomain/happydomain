@@ -22,7 +22,6 @@
 package notification
 
 import (
-	"errors"
 	"time"
 
 	"git.happydns.org/happyDomain/model"
@@ -41,24 +40,21 @@ func NewAckService(stateStore NotificationStateStorage, locker *StateLocker) *Ac
 	return &AckService{stateStore: stateStore, locker: locker, nowFn: time.Now}
 }
 
-// Requires an existing dispatcher-created state so clients cannot materialize states by guessing IDs.
+// An existing state record (created by the dispatcher when an execution
+// completed) is required: acknowledging an issue that the dispatcher has
+// never observed is rejected with ErrNotificationStateNotFound. This avoids
+// letting an authenticated client materialize arbitrary state records by
+// guessing checker IDs or target tuples.
 func (a *AckService) AcknowledgeIssue(userId happydns.Identifier, checkerID string, target happydns.CheckTarget, acknowledgedBy string, annotation string) error {
 	unlock := a.locker.Lock(checkerID, target, userId)
 	defer unlock()
 
 	state, err := a.stateStore.GetState(checkerID, target, userId)
-	if errors.Is(err, happydns.ErrNotificationStateNotFound) {
-		// Create a new state if one doesn't exist yet.
-		state = &happydns.NotificationState{
-			CheckerID:  checkerID,
-			Target:     target,
-			UserId:     userId,
-			LastStatus: happydns.StatusUnknown,
-		}
-	} else if err != nil {
+	if err != nil {
 		return err
 	}
-	// Defense in depth: storage key already encodes userId.
+	// Defense in depth: the storage key already encodes userId, but reject any
+	// state whose stored UserId disagrees rather than silently overwriting.
 	if !state.UserId.Equals(userId) {
 		return happydns.ErrNotificationStateNotFound
 	}
@@ -79,6 +75,9 @@ func (a *AckService) ClearAcknowledgement(userId happydns.Identifier, checkerID 
 	state, err := a.stateStore.GetState(checkerID, target, userId)
 	if err != nil {
 		return err
+	}
+	if !state.UserId.Equals(userId) {
+		return happydns.ErrNotificationStateNotFound
 	}
 
 	state.ClearAcknowledgement()

@@ -31,7 +31,9 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
+	notifPkg "git.happydns.org/happyDomain/internal/notification"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
+	notifUC "git.happydns.org/happyDomain/internal/usecase/notification"
 	happydns "git.happydns.org/happyDomain/model"
 )
 
@@ -67,6 +69,12 @@ type Dependencies struct {
 	PlannedProvider     checkerUC.PlannedJobProvider
 	BudgetChecker       checkerUC.BudgetChecker
 	CountManualTriggers bool
+
+	NotificationDispatcher *notifUC.Dispatcher
+	NotificationRegistry   *notifPkg.Registry
+	NotificationChannels   notifUC.NotificationChannelStorage
+	NotificationPrefs      notifUC.NotificationPreferenceStorage
+	NotificationRecords    notifUC.NotificationRecordStorage
 }
 
 //	@title			happyDomain API
@@ -154,6 +162,19 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 		)
 	}
 
+	// Initialize notification controller if dispatcher is available.
+	var nc *controller.NotificationController
+	if dep.NotificationDispatcher != nil {
+		nc = DeclareNotificationRoutes(
+			apiAuthRoutes,
+			dep.NotificationDispatcher,
+			dep.NotificationRegistry,
+			dep.NotificationChannels,
+			dep.NotificationPrefs,
+			dep.NotificationRecords,
+		)
+	}
+
 	DeclareAuthenticationCheckRoutes(apiAuthRoutes, lc)
 	DeclareDomainRoutes(
 		apiAuthRoutes,
@@ -168,6 +189,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 		cc,
 		dep.CheckStatusUC,
 		dep.DomainInfo,
+		nc,
 	)
 	DeclareProviderRoutes(apiAuthRoutes, dep.Provider)
 	DeclareProviderSettingsRoutes(apiAuthRoutes, dep.ProviderSettings)

@@ -68,7 +68,8 @@ func DeclareCheckerRoutes(
 
 // DeclareScopedCheckerRoutes registers checker routes scoped to a domain or service.
 // Called for both /api/domains/:domain/checkers and .../services/:serviceid/checkers.
-func DeclareScopedCheckerRoutes(scopedRouter *gin.RouterGroup, cc *controller.CheckerController) {
+// nc may be nil if the notification system is not configured.
+func DeclareScopedCheckerRoutes(scopedRouter *gin.RouterGroup, cc *controller.CheckerController, nc *controller.NotificationController) {
 	checkers := scopedRouter.Group("/checkers")
 	checkers.GET("", cc.ListAvailableChecks)
 	checkers.GET("/metrics", cc.GetDomainMetrics)
@@ -113,4 +114,10 @@ func DeclareScopedCheckerRoutes(scopedRouter *gin.RouterGroup, cc *controller.Ch
 	// Results (under execution).
 	executionID.GET("/results", cc.GetExecutionResults)
 	executionID.GET("/results/:ruleName", cc.GetExecutionResult)
+
+	// Acknowledgement (requires notification system).
+	if nc != nil {
+		checkerID.POST("/acknowledge", nc.AcknowledgeIssue)
+		checkerID.DELETE("/acknowledge", nc.ClearAcknowledgement)
+	}
 }

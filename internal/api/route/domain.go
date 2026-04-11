@@ -43,6 +43,7 @@ func DeclareDomainRoutes(
 	cc *controller.CheckerController,
 	checkStatusUC *checkerUC.CheckStatusUsecase,
 	domainInfoUC happydns.DomainInfoUsecase,
+	nc *controller.NotificationController,
 ) {
 	dc := controller.NewDomainController(
 		domainUC,
@@ -72,7 +73,7 @@ func DeclareDomainRoutes(
 
 	// Mount domain-scoped checker routes.
 	if cc != nil {
-		DeclareScopedCheckerRoutes(apiDomainsRoutes, cc)
+		DeclareScopedCheckerRoutes(apiDomainsRoutes, cc, nc)
 	}
 
 	DeclareZoneRoutes(
@@ -83,5 +84,6 @@ func DeclareDomainRoutes(
 		zoneServiceUC,
 		serviceUC,
 		cc,
+		nc,
 	)
 }

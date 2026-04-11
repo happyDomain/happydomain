@@ -37,6 +37,7 @@ func DeclareZoneServiceRoutes(
 	serviceUC happydns.ServiceUsecase,
 	zoneUC happydns.ZoneUsecase,
 	cc *controller.CheckerController,
+	nc *controller.NotificationController,
 ) {
 	sc := controller.NewServiceController(zoneServiceUC, serviceUC, zoneUC)
 
@@ -51,6 +52,6 @@ func DeclareZoneServiceRoutes(
 
 	// Mount service-scoped checker routes.
 	if cc != nil {
-		DeclareScopedCheckerRoutes(apiZonesSubdomainServiceIDRoutes, cc)
+		DeclareScopedCheckerRoutes(apiZonesSubdomainServiceIDRoutes, cc, nc)
 	}
 }

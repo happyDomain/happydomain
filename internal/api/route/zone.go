@@ -38,6 +38,7 @@ func DeclareZoneRoutes(
 	zoneServiceUC happydns.ZoneServiceUsecase,
 	serviceUC happydns.ServiceUsecase,
 	cc *controller.CheckerController,
+	nc *controller.NotificationController,
 ) {
 	var checkStatusUC *checkerUC.CheckStatusUsecase
 	if cc != nil {
@@ -74,6 +75,7 @@ func DeclareZoneRoutes(
 		serviceUC,
 		zoneUC,
 		cc,
+		nc,
 	)
 
 	apiZonesRoutes.POST("/records", zc.AddRecords)
