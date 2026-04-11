@@ -39,7 +39,7 @@ type ZoneMeta struct {
 	ParentZone *Identifier `json:"parent,omitempty" swaggertype:"string"`
 
 	// DefaultTTL is the TTL to use when no TTL has been defined for a record in this Zone.
-	DefaultTTL uint32 `json:"default_ttl" binding:"required"`
+	DefaultTTL uint32 `json:"default_ttl" validate:"required"`
 
 	// LastModified holds the time when the last modification has been made on this Zone.
 	LastModified time.Time `json:"last_modified" format:"date-time" binding:"required"`
