@@ -23,6 +23,7 @@ package notification
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -281,6 +282,25 @@ func (d *Dispatcher) sendAndRecord(ch *happydns.NotificationChannel, payload *no
 	if err := d.recordStore.CreateRecord(rec); err != nil {
 		log.Printf("notification: failed to log record: %v", err)
 	}
+}
+
+// SendTestNotification sends a test notification through the given channel.
+func (d *Dispatcher) SendTestNotification(ch *happydns.NotificationChannel, user *happydns.User) error {
+	sender, ok := d.senders[ch.Type]
+	if !ok {
+		return fmt.Errorf("no sender for channel type %q", ch.Type)
+	}
+
+	payload := &notifPkg.NotificationPayload{
+		User:       user,
+		CheckerID:  "test",
+		DomainName: "example.com",
+		OldStatus:  happydns.StatusOK,
+		NewStatus:  happydns.StatusWarn,
+		BaseURL:    d.baseURL,
+	}
+
+	return sender.Send(ch, payload)
 }
 
 func (d *Dispatcher) updateState(state *happydns.NotificationState, newStatus happydns.Status) {
