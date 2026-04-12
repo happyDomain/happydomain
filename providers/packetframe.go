@@ -53,5 +53,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Packetframe",
 		Description: "Open Source CDN",
+		Website:     "https://packetframe.com",
 	}, providerReg.RegisterProvider)
 }

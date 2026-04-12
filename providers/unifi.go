@@ -80,5 +80,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "UniFi",
 		Description: "If your local DNS is managed by a UniFi Network controller (local or cloud access).",
+		Website:     "https://ui.com",
 	}, providerReg.RegisterProvider)
 }

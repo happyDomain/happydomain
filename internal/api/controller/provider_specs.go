@@ -69,13 +69,14 @@ func (psc *ProviderSpecsController) ListProviders(c *gin.Context) {
 func (psc *ProviderSpecsController) GetProviderSpecIcon(c *gin.Context) {
 	psid := string(c.Param("psid"))
 
-	cnt, err := psc.pSpecsServices.GetProviderIcon(psid)
+	cnt, contentType, err := psc.pSpecsServices.GetProviderIcon(psid)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
 
-	c.Data(http.StatusOK, "image/png", cnt)
+	c.Header("Cache-Control", "public, max-age=86400")
+	c.Data(http.StatusOK, contentType, cnt)
 }
 
 // GetProviderSpec returns a description of the expected settings and the provider capabilities.

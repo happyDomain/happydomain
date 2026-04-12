@@ -53,5 +53,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "DNSimple",
 		Description: "Easy DNS hosting provider.",
+		Website:     "https://dnsimple.com",
 	}, providerReg.RegisterProvider)
 }

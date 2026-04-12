@@ -53,5 +53,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Linode (Akamai)",
 		Description: "Cloud infrastructure provider with managed DNS service.",
+		Website:     "https://www.linode.com",
 	}, providerReg.RegisterProvider)
 }

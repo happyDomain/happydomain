@@ -31,6 +31,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
+	"git.happydns.org/happyDomain/internal/favicon"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	happydns "git.happydns.org/happyDomain/model"
 )
@@ -43,6 +44,7 @@ type Dependencies struct {
 	CaptchaVerifier       happydns.CaptchaVerifier
 	Domain                happydns.DomainUsecase
 	DomainInfo            happydns.DomainInfoUsecase
+	FaviconService        *favicon.FaviconService
 	DomainLog             happydns.DomainLogUsecase
 	FailureTracker        happydns.FailureTracker
 	Provider              happydns.ProviderUsecase
@@ -120,6 +122,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 		},
 	})
 	DeclareDomainInfoRoutes(apiRoutes.Group("/domaininfo/:domain", domainInfoRLMiddleware), dep.DomainInfo)
+	DeclareFaviconRoutes(apiRoutes, dep.FaviconService)
 	DeclareProviderSpecsRoutes(apiRoutes, dep.ProviderSpecs)
 	DeclareRegistrationRoutes(apiRoutes, dep.AuthUser, dep.CaptchaVerifier)
 	DeclareResolverRoutes(apiRoutes, dep.Resolver)

@@ -57,5 +57,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "AutoDNS / InterNetX",
 		Description: "German hosting provider.",
+		Website:     "https://www.internetx.com",
 	}, providerReg.RegisterProvider)
 }

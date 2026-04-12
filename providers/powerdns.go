@@ -73,5 +73,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "PowerDNS",
 		Description: "If your zone is hosted on an authoritative name server that runs PowerDNS, with available HTTP API",
+		Website:     "https://www.powerdns.com",
 	}, providerReg.RegisterProvider)
 }

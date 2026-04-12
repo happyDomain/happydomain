@@ -60,5 +60,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "DNScale",
 		Description: "European DNS hosting provider with advanced features and API support.",
+		Website:     "https://www.dnscale.com",
 	}, providerReg.RegisterProvider)
 }

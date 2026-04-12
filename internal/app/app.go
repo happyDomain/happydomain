@@ -36,6 +36,7 @@ import (
 	"git.happydns.org/happyDomain/internal/metrics"
 	"git.happydns.org/happyDomain/internal/newsletter"
 	"git.happydns.org/happyDomain/internal/session"
+	"git.happydns.org/happyDomain/internal/favicon"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/usecase"
 	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
@@ -86,6 +87,7 @@ type Usecases struct {
 type App struct {
 	captchaVerifier happydns.CaptchaVerifier
 	cfg             *happydns.Options
+	faviconService  *favicon.FaviconService
 	failureTracker  *captcha.FailureTracker
 	insights        *insightsCollector
 	mailer          happydns.Mailer
@@ -221,7 +223,8 @@ func (app *App) initUsecases() {
 	serviceService := serviceUC.NewServiceUsecases()
 	zoneService := zoneUC.NewZoneUsecases(app.store, serviceService)
 
-	app.usecases.providerSpecs = usecase.NewProviderSpecsUsecase()
+	app.faviconService = favicon.NewFaviconService()
+	app.usecases.providerSpecs = usecase.NewProviderSpecsUsecase(app.faviconService)
 	app.usecases.provider = providerService
 	app.usecases.providerAdmin = providerAdminService
 	app.usecases.providerSettings = usecase.NewProviderSettingsUsecase(app.cfg, app.usecases.provider)
@@ -350,6 +353,7 @@ func (app *App) setupRouter() {
 			CaptchaVerifier:       app.captchaVerifier,
 			Domain:                app.usecases.domain,
 			DomainInfo:            app.usecases.domainInfo,
+			FaviconService:        app.faviconService,
 			DomainLog:             app.usecases.domainLog,
 			FailureTracker:        app.failureTracker,
 			Provider:              app.usecases.provider,

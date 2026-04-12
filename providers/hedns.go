@@ -62,5 +62,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Hurricane Electric",
 		Description: "American Internet service provider.",
+		Website:     "https://dns.he.net",
 	}, providerReg.RegisterProvider)
 }

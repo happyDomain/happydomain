@@ -55,5 +55,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Namecheap",
 		Description: "Domain registrar and web hosting company with DNS management.",
+		Website:     "https://www.namecheap.com",
 	}, providerReg.RegisterProvider)
 }

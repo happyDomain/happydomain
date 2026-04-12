@@ -55,5 +55,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Gandi",
 		Description: "Domain registrar and hosting provider with LiveDNS service.",
+		Website:     "https://www.gandi.net",
 	}, providerReg.RegisterProvider)
 }

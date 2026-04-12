@@ -57,5 +57,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "ClouDNS",
 		Description: "ClouDNS LTD is provider of global Managed DNS services, including GeoDNS, Anycast DNS and DDoS protected DNS",
+		Website:     "https://www.cloudns.net",
 	}, providerReg.RegisterProvider)
 }

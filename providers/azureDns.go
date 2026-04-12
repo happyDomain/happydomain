@@ -61,5 +61,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Azure DNS",
 		Description: "Cloud computing service operated by Microsoft",
+		Website:     "https://azure.microsoft.com/products/dns",
 	}, providerReg.RegisterProvider)
 }

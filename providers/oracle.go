@@ -63,5 +63,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Oracle Cloud",
 		Description: "American multinational computer technology corporation headquartered in Austin, Texas",
+		Website:     "https://www.oracle.com/cloud/",
 	}, providerReg.RegisterProvider)
 }

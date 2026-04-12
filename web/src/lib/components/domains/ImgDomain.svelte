@@ -1,6 +1,6 @@
 <!--
      This file is part of the happyDomain (R) project.
-     Copyright (c) 2022-2024 happyDomain
+     Copyright (c) 2022-2025 happyDomain
      Authors: Pierre-Olivier Mercier, et al.
 
      This program is offered under a commercial and under the AGPL license.
@@ -22,27 +22,33 @@
 -->
 
 <script lang="ts">
-    import ImgDomain from "$lib/components/domains/ImgDomain.svelte";
-    import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
-    import type { HappydnsDomain } from "$lib/api-base/types.gen";
-
     interface Props {
-        class?: string;
-        domain: Pick<HappydnsDomain, 'domain' | 'id_provider'>;
+        domain: string;
+        style?: string;
+        [key: string]: unknown;
     }
 
-    let { class: className = "", domain }: Props = $props();
+    let {
+        domain,
+        style = "max-width: 100%; max-height: 2.5em",
+        ...rest
+    }: Props = $props();
+
+    let error = $state(false);
+
+    // Strip trailing dot from FQDN for favicon lookup
+    let cleanDomain = $derived(domain.replace(/\.$/, ""));
 </script>
 
-<div class="d-flex align-items-center my-1 {className}" style="min-width: 0">
-    <div class="d-inline-block text-center position-relative" style="width: 50px;">
-        <ImgDomain domain={domain.domain} style="max-width: 32px; max-height: 32px" />
-        <ImgProvider
-            id_provider={domain.id_provider}
-            style="max-width: 16px; max-height: 16px; position: absolute; bottom: -2px; right: 2px;"
-        />
-    </div>
-    <div class="font-monospace text-truncate flex-shrink-1">
-        {domain.domain}
-    </div>
-</div>
+{#if !error && cleanDomain}
+    <img
+        src={"/api/favicon/" + encodeURIComponent(cleanDomain)}
+        alt={cleanDomain}
+        title={cleanDomain}
+        {style}
+        {...rest}
+        onerror={() => (error = true)}
+    />
+{:else}
+    <span {style} {...rest}></span>
+{/if}
