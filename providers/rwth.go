@@ -53,5 +53,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "RWTH Aachen University",
 		Description: "German University",
+		Website:     "https://www.rwth-aachen.de",
 	}, providerReg.RegisterProvider)
 }

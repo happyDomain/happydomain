@@ -59,5 +59,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Google Cloud DNS",
 		Description: "Google's globally distributed, scalable, and reliable managed DNS service.",
+		Website:     "https://cloud.google.com/dns",
 	}, providerReg.RegisterProvider)
 }

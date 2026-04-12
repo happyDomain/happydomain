@@ -55,5 +55,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Internet.bs",
 		Description: "Domain registration and web hosting company based in the Bahamas",
+		Website:     "https://internetbs.net",
 	}, providerReg.RegisterProvider)
 }

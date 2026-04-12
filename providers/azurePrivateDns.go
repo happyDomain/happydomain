@@ -61,5 +61,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Azure Private DNS",
 		Description: "Exclusively to manage Private DNS zones. Use Azure DNS for public zones.",
+		Website:     "https://azure.microsoft.com/products/dns",
 	}, providerReg.RegisterProvider)
 }

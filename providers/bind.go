@@ -63,6 +63,7 @@ func init() {
 		}, happydns.ProviderInfos{
 			Name:        "Bind files/RFC 1035",
 			Description: "Use zone files saved in the RFC 1035 format.",
+			Website:     "https://www.isc.org/bind/",
 		}, providerReg.RegisterProvider)
 		return nil
 	})

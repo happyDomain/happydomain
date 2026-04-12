@@ -25,6 +25,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
+	"git.happydns.org/happyDomain/internal/favicon"
 	happydns "git.happydns.org/happyDomain/model"
 )
 
@@ -35,6 +36,7 @@ type Dependencies struct {
 	AuthUser              happydns.AuthUserUsecase
 	CaptchaVerifier       happydns.CaptchaVerifier
 	Domain                happydns.DomainUsecase
+	FaviconService        *favicon.FaviconService
 	DomainLog             happydns.DomainLogUsecase
 	FailureTracker        happydns.FailureTracker
 	Provider              happydns.ProviderUsecase
@@ -88,6 +90,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 		dep.FailureTracker,
 	)
 	auc := DeclareAuthUserRoutes(apiRoutes, dep.AuthUser, lc)
+	DeclareFaviconRoutes(apiRoutes, dep.FaviconService)
 	DeclareProviderSpecsRoutes(apiRoutes, dep.ProviderSpecs)
 	DeclareRegistrationRoutes(apiRoutes, dep.AuthUser, dep.CaptchaVerifier)
 	DeclareResolverRoutes(apiRoutes, dep.Resolver)

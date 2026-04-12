@@ -60,5 +60,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Hosting.de",
 		Description: "German hosting provider.",
+		Website:     "https://www.hosting.de",
 	}, providerReg.RegisterProvider)
 }

@@ -62,5 +62,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Alibaba Cloud DNS",
 		Description: "Alibaba Cloud's global DNS service (formerly Aliyun DNS).",
+		Website:     "https://www.alibabacloud.com/product/dns",
 	}, providerReg.RegisterProvider)
 }

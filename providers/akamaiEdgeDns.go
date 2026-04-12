@@ -63,5 +63,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Akamai Edge DNS",
 		Description: "American content delivery network and cloud service company - https://www.akamai.com",
+		Website:     "https://www.akamai.com",
 	}, providerReg.RegisterProvider)
 }

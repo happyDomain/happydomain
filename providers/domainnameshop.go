@@ -55,5 +55,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Domeneshop AS",
 		Description: "Norwegian registrar and hosting company",
+		Website:     "https://domene.shop",
 	}, providerReg.RegisterProvider)
 }

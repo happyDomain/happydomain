@@ -49,5 +49,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "IONOS",
 		Description: "German hosting provider (1&1 IONOS)",
+		Website:     "https://www.ionos.com",
 	}, providerReg.RegisterProvider)
 }

@@ -57,5 +57,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Netcup",
 		Description: "German registrar and hosting company",
+		Website:     "https://www.netcup.de",
 	}, providerReg.RegisterProvider)
 }

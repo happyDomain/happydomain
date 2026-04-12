@@ -77,5 +77,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "AWS Route 53",
 		Description: "Amazon's highly available and scalable DNS web service with global anycast network.",
+		Website:     "https://aws.amazon.com/route53/",
 	}, providerReg.RegisterProvider)
 }

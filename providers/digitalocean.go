@@ -53,5 +53,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "DigitalOcean",
 		Description: "Cloud infrastructure provider with managed DNS service.",
+		Website:     "https://www.digitalocean.com",
 	}, providerReg.RegisterProvider)
 }

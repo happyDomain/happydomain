@@ -68,5 +68,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "OVH",
 		Description: "European cloud and hosting provider with DNS services.",
+		Website:     "https://www.ovh.com",
 	}, providerReg.RegisterProvider)
 }

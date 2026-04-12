@@ -64,5 +64,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "MikroTik",
 		Description: "If your zone is hosted on a MikroTik RouterOS device, managed via its REST API static DNS entries.",
+		Website:     "https://mikrotik.com",
 	}, providerReg.RegisterProvider)
 }

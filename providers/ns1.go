@@ -53,5 +53,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "NS1",
 		Description: "Intelligent DNS and traffic management platform (now part of IBM).",
+		Website:     "https://ns1.com",
 	}, providerReg.RegisterProvider)
 }

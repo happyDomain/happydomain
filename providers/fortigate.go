@@ -64,5 +64,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "FortiGate",
 		Description: "Fortinet FortiGate firewall with internal DNS server.",
+		Website:     "https://www.fortinet.com",
 	}, providerReg.RegisterProvider)
 }

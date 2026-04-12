@@ -55,5 +55,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Cloudflare",
 		Description: "Global CDN and DNS provider with advanced features like proxy and DNSSEC support.",
+		Website:     "https://www.cloudflare.com",
 	}, providerReg.RegisterProvider)
 }

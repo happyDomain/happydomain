@@ -60,5 +60,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Netlify",
 		Description: "US remote-first cloud computing company.",
+		Website:     "https://www.netlify.com",
 	}, providerReg.RegisterProvider)
 }

@@ -44,6 +44,9 @@ type ProviderInfos struct {
 
 	// HelpLink is the link to the documentation of the provider configuration.
 	HelpLink string `json:"helplink,omitempty"`
+
+	// Website is the URL of the provider's website, used for favicon fetching.
+	Website string `json:"website,omitempty"`
 }
 
 // RegisterProviderFunc abstract the registration of a Provider

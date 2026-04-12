@@ -53,5 +53,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Infomaniak",
 		Description: "Swiss cloud and hosting provider with DNS management and privacy-focused services.",
+		Website:     "https://www.infomaniak.com",
 	}, providerReg.RegisterProvider)
 }

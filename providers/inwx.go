@@ -55,5 +55,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "INWX.de",
 		Description: "Berlin-based domain registrar.",
+		Website:     "https://www.inwx.de",
 	}, providerReg.RegisterProvider)
 }

@@ -57,5 +57,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Sakura Cloud",
 		Description: "Japanees Cloud Provider",
+		Website:     "https://cloud.sakura.ad.jp",
 	}, providerReg.RegisterProvider)
 }

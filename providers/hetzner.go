@@ -64,5 +64,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Hetzner DNS",
 		Description: "German hosting provider with DNS services.",
+		Website:     "https://www.hetzner.com",
 	}, providerReg.RegisterProvider)
 }

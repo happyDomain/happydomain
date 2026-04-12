@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2025 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,20 +19,17 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package happydns
+package route
 
-import ()
+import (
+	"github.com/gin-gonic/gin"
 
-type ProviderSpecs struct {
-	// Fields describes the settings needed to configure the provider.
-	Fields []*Field `json:"fields,omitempty"`
+	"git.happydns.org/happyDomain/internal/api/controller"
+	"git.happydns.org/happyDomain/internal/favicon"
+)
 
-	// Capabilities exposes what the provider can do.
-	Capabilities []string `json:"capabilities,omitempty"`
-}
+func DeclareFaviconRoutes(router *gin.RouterGroup, faviconService *favicon.FaviconService) {
+	fc := controller.NewFaviconController(faviconService)
 
-type ProviderSpecsUsecase interface {
-	ListProviders() map[string]ProviderInfos
-	GetProviderIcon(string) ([]byte, string, error)
-	GetProviderSpecs(string) (*ProviderSpecs, error)
+	router.GET("/favicon/:domain", fc.GetDomainFavicon)
 }

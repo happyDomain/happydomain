@@ -55,5 +55,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Vercel",
 		Description: "DNS management for domains associated with Vercel projects.",
+		Website:     "https://vercel.com",
 	}, providerReg.RegisterProvider)
 }
