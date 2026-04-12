@@ -1,0 +1,552 @@
+{
+    "account": {
+        "ask-have": "Ĉu vi ne jam havas konton en nia bela platformo?",
+        "delete": {
+            "delete": "Danĝera zono",
+            "delete-button": "Forigi mian konton",
+            "deleted": "Konto Forigita",
+            "description": "Permanente forigi vian konton",
+            "confirm": "Se vi volas forigi vian konton kaj ĉiujn datumojn asociitajn kun ĝi, premu la forigan butonon:",
+            "confirm-twice": "Konfirmante la forigon, vi permanente kaj nerevokeble forigos vian konton de nia datumbazo kaj perdos vian aliron al nia facila administra interfaco por viaj domajnoj.",
+            "confirm-password": "Por certigi ke tio estas vere vi, bonvolu enigi vian pasvorton:",
+            "consequence": "Viaj domajnoj posedataj en aliaj platformoj ne estos tuŝitaj de la forigo, ili daŭre respondos kun la nuna datumaro.",
+            "remain-data": "Pro teknikaj kialoj, via konto estos forigita tuj post via validigo, sed iuj datumoj de via konto persistos ĝis la venonta datumbaza purigado.",
+            "success": "Via konto estis sukcese forigita. Ni esperas vidi vin baldaŭ denove."
+        },
+        "join": "Aliĝi nun!",
+        "no-password-change": "Vi estas identigita per ekstera servo, se vi bezonas ŝanĝi vian pasvorton, ŝanĝu ĝin en la dediĉita interfaco de {{provider}}.",
+        "oidc-login": "Ensaluti per {{provider}}",
+        "ready-login": "Preta ensaluti!",
+        "signup": {
+            "already": "Ĉu jam membro?",
+            "join-call": "Aliĝu al nia bela platformo en malpli ol 2 minutoj!",
+            "address-why": "Ni uzos vian adreson por {{identify}} vin en ĉi tiu platformo, kaj por kontakti vin pro {{security-operations}}.",
+            "identify": "identigi",
+            "security-operations": "sekurecaj kialoj",
+            "receive-update": "Tenu min informita pri estontaj grandaj plibonigoj",
+            "signup": "Registriĝi!",
+            "success": "Registriĝo sukcese plenumita!",
+            "login-now": "Vi nun povas ensaluti per viaj akreditaĵoj."
+        },
+        "see-again": "Ĝojas vidi vin denove!"
+    },
+    "common": {
+        "add": "Aldoni",
+        "add-new-thing": "Aldoni novan {{thing}}",
+        "add-object": "Aldoni {{thing}} objekton al ĉi tiu servo",
+        "by": "de",
+        "cancel": "Nuligi",
+        "cancel-edit": "Nuligi redakton",
+        "copy-clipboard": "Kopii al tondujo",
+        "continue": "Daŭrigi",
+        "create-thing": "Krei {{thing}}",
+        "delete": "Forigi",
+        "delete-thing": "Forigi {{thing}}",
+        "domain": "Domajno aŭ subdomajno",
+        "edit": "Redakti",
+        "field": "Kampo",
+        "filter": "Filtri",
+        "go": "Ek!",
+        "got-it": "Komprenita!",
+        "name": "Nomo",
+        "next": "Sekva",
+        "no-content": "Neniu enhavo",
+        "no-thing": "Neniu {{thing}}",
+        "new-row": "Nova vico",
+        "other": "Alia",
+        "password": "Pasvorto",
+        "previous": "Antaŭa",
+        "rename": "Alinomi",
+        "resolver": "Solvililo",
+        "run": "Lanĉi la peton!",
+        "survey": "Rimarko? Komento por kunhavigi? Ne hezitu skribi al ni!",
+        "spinning": "Ŝarĝante",
+        "update": "Ĝisdatigi",
+        "update-what": "Ĝisdatigi {{what}}",
+        "welcome": {
+            "start": "Bonvenon al ",
+            "end": "!"
+        },
+        "help": "Helpo!",
+        "records": "{{n:eq; 0:neniu {{type}} rikordo; 1:{{type}} rikordo; default:{{type}} rikordoj}}"
+    },
+    "domains": {
+        "title": "Viaj domajnoj",
+        "description": "Foliumi kaj administri ĉiujn viajn domajnojn en unu loko",
+        "kind": "domajno",
+        "subdomain": "subdomajno",
+        "actions": {
+            "audit": "Vidi ŝanĝajn protokolojn",
+            "do-migration": "Migrigi nun",
+            "history": "Vidi historion de ŝanĝoj",
+            "propagate": "Publikigi miajn ŝanĝojn",
+            "reimport": "Preni nunan deplojatan zonon",
+            "rollback": "Reveni al ĉi tiu versio",
+            "share": "Kunhavigi la zonon…",
+            "upload": "Importi zondosieron",
+            "view": "Vidi mian zonon",
+            "others": "Pliaj agoj pri {{domain}}"
+        },
+        "alert": {
+            "remove": "Ĉi tiu ago nur forigas {{domain}} de viaj happyDomain-administritaj domajnoj. Tuta historio kaj abstraktaj zonoj estos forĵetitaj. La domajno {{domain}} restas plene sendifekta ĉe la provizanto. Ĉu vi certas ke vi volas daŭrigi?",
+            "unable-retrieve": {
+                "description": "Bedaŭrinde, ni ne povis ricevi informojn por la domajno {{domain}}:",
+                "title": "Ne eblas ricevi domajnajn informojn"
+            }
+        },
+        "and-more-filtered": "{{count:eq; 0:neniu plia filtrita domajno; 1:1 plia filtrita domajno; default:{{count}} pliaj filtritaj domajnoj}}",
+        "add-a-subdomain": "Aldoni subdomajnon",
+        "add-a-service": "Aldoni servon",
+        "add-alias": "Aldoni alias",
+        "add-an-alias": "Aldoni alias al {{domain}}",
+        "add-title": "Nova Domajno",
+        "add-now": "Aldoni ĝin nun!",
+        "search-placeholder": "Serĉi domajnojn…",
+        "create-on-provider": "Krei ĉe {{provider}}",
+        "added-success": "Bonege! {{domain}} estis aldonita. Vi povas administri ĝin nun.",
+        "apply": {
+            "additions": "{{count:eq; 0:neniu aldono; 1:{{count}} aldono; default:{{count}} aldonoj}}",
+            "button": "Apliki modifojn",
+            "deletions": "{{count:eq; 0:neniu forigo; 1:{{count}} forigo; default:{{count}} forigoj}}",
+            "double-check": "Vi vidas ĉi tiun konfirman dialogon ĉar vi elektis en viaj preferoj ĉiam konfirmi antaŭ ol apliki korektojn.",
+            "done": {
+                "title": "Zono sukcese aplikita!",
+                "description": "Via zono {{zone}} estis sukcese disvastigita!"
+            },
+            "modifications": "{{count:eq; 0:neniu modifo; 1:{{count}} modifo; default:{{count}} modifoj}}",
+            "nochange": "Ne estas ŝanĝoj por apliki! Nuna zono estas sinkronigita kun la servilo.",
+            "change-already-applied": "Ŝanĝoj kiujn vi petis ŝajnas esti jam aplikita.",
+            "others": "{{count:eq; 0:neniu alia ŝanĝo; 1:{{count}} alia ŝanĝo; default:{{count}} aliaj ŝanĝoj}}",
+            "prepare-info": "La provizanto plenumos {{nbDiffs}} korekto(j)n por viaj {{nbSelected}} elektita(j) ŝanĝo(j):",
+            "prepare-warning": "La nombro de korektoj malsamas de via elekto. Bonvolu revizii antaŭ ol konfirmi.",
+            "confirm": "Konfirmi kaj Apliki",
+            "back": "Reen"
+        },
+        "attached-new": "Nova domajno alkroĉita al happyDomain!",
+        "commit-msg": "Kio ŝanĝiĝis?",
+        "create-new-key": "Krei novan {{id}} ŝlosilon",
+        "discard": "Forĵeti",
+        "drop-alias": "Forigi alias",
+        "drop-pointer": "Forigi montrilon",
+        "edit-target": "Redakti celon",
+        "give-explicit-name": "Donu eksplicitan nomon por facile trovi ĉi tiun servon.",
+        "history": "Historio",
+        "list": "Listo de importeblaj domajnoj",
+        "n-aliases": "{{count:lt; 2:{{count}} alias; default:{{count}} aliasoj}}",
+        "n-services": "{{count:lt; 2:{{count}} servo; default:{{count}} servoj}}",
+        "filtered-no-result": "Ne estas domajno kun ĉi tiuj filtriloj.",
+        "please-fill-fields": "Bonvolu plenigi la jenajn kampojn:",
+        "removal": "Konfirmi Domajnan Forigon",
+        "save-modifications": "Konservi ĉi tiujn modifojn",
+        "stop": "Ĉesi administri ĉi tiun domajnon",
+        "view": {
+            "abstract": "Abstrakta zono",
+            "cancel-title": "Teni mian domajnon en happyDomain",
+            "description": "Revizii la modifojn kiuj estos aplikita al {{domain}}",
+            "live": "Vivaj rikordoj",
+            "monitoring": "Monitorado",
+            "summary": "Resumo",
+            "provider": "Zono gastigita ĉe",
+            "title": "Vidi zonon",
+            "subtitle": "Via zono en norma BIND-formato"
+        },
+        "see-records": "Vidi respondajn rikordojn",
+        "alias-creation": "Aldoni alias montrantan al {{domain}}:",
+        "alias-creation-sample": "Ĉi tio kreos la alias:",
+        "placeholder-search": "mia.domajno.",
+        "placeholder-new": "mia.nova.domajno.",
+        "placeholder-new-sub": "nova.subdomajno",
+        "form-new-subdomain": "Aldoni novan subdomajnon sub {{domain}}:"
+    },
+    "domaingroups": {
+        "all": "Ĉiuj grupoj",
+        "manage": "Administri viajn domajnajn grupojn",
+        "new": "Nova grupo",
+        "drop-here": "Demeti domajnon ĉi tie",
+        "no-group": "Diversaj",
+        "title": "Viaj grupoj"
+    },
+    "email": {
+        "address": "Retpoŝta adreso",
+        "instruction": {
+            "bad-link": "La ligilo kiun vi sekvis estas nevalida. Kontrolu ke vi kopiis la tutan ligilon kaj reprovu.",
+            "check-inbox": "Bonvolu kontroli vian enirkeston por validigi vian retpoŝtan adreson.",
+            "new-confirmation": "Se vi bezonas novan konfirman retpoŝton, simple enigu vian adreson en la formularo sube.",
+            "validate-address": "Por validigi vian retpoŝtan adreson, bonvolu kontroli vian enirkeston kaj sekvi la ligilon enhavitan en la mesaĝo.",
+            "validated": "Via nova retpoŝta adreso nun estas validigita!"
+        },
+        "send-again": "Resendi la konfirman retpoŝton",
+        "send-recover": "Sendu al mi retpoŝton por retrovi mian konton",
+        "sent": "Konfirma retpoŝto sendita!",
+        "sent-recovery": "Pasvorta retrova retpoŝto sendita!",
+        "recover": "Por retrovi vian konton, ni sendos al vi retpoŝton enhavantan ligilon kiu permesos al vi redifini vian pasvorton",
+        "validation-unavailable": {
+            "title": "Retpoŝta Validigo Nehavebla",
+            "description": "La retpoŝta funkcieco estis malebligita en ĉi tiu servilo. Bonvolu kontakti vian administranton por asistado."
+        }
+    },
+    "captcha": {
+        "human-check": "Ĉu vi estas homo? Bonvolu marki la skatolon sube por daŭrigi:"
+    },
+    "errors": {
+        "404": {
+            "title": "Paĝo ne trovita",
+            "content": "La paĝo kiun vi serĉas ne estis trovita."
+        },
+        "account-delete": "Eraro okazas dum provo forigi vian konton",
+        "address": "Retpoŝta adreso estas bezonata",
+        "address-valid": "Valida retpoŝta adreso estas bezonata",
+        "domain-access": "Eraro okazas dum provo aliri domajnan liston.",
+        "domain-attach": "Eraro okazas dum alkroĉado de la domajno al happyDomain",
+        "domain-have": "Ŝajnas ke vi ne havas iun domajnon registritan ĉe ĉi tiu provizanto.",
+        "domain-import": "Eraro okazas dum provo sinkronigi ĉi tiun domajnon:",
+        "domain-list": "Ĉi tiu provizanto ne permesas listigi ekzistantajn domajnojn. Uzu la supran formularon por aldoni unu.",
+        "error": "Eraro",
+        "login": "Ensaluta eraro",
+        "rate-limited": "Tro multaj malsukcesaj ensalutaj provoj. Bonvolu atendi momenton antaŭ ol reprovi.",
+        "logout": "Elsaluta eraro",
+        "occurs": "Eraro okazas kiam {{when}}!",
+        "password": "Pasvorto estas bezonata",
+        "password-change": "Ne eblas ŝanĝi vian pasvortan konton",
+        "password-match": "Pasvorto kaj ĝia konfirmo ne kongruas.",
+        "password-weak": "Pasvorto devas esti pli forta: almenaŭ 8 signoj kun nombroj, minusklaj kaj majusklaj signoj.",
+        "provider-delete": "Io misis dum provizanta forigo",
+        "recovery": "Pasvorta retrova problemo",
+        "resolve": "Eraro okazas dum provo solvi la domajnon.",
+        "registration": "Registriĝa problemo",
+        "rr-add": "Eraro okazas dum provo aldoni RR al la zono:",
+        "rr-delete": "Eraro okazas dum provo forigi RR en la zono:",
+        "session": {
+            "title": "Aŭtentika tempolimo",
+            "content": "Nevalida sesio, vi estis elsalutita: {{err}}. Bonvolu ensaluti denove."
+        },
+        "settings-change": "Ne eblas ŝanĝi viajn agordojn",
+        "account-no-auth": "Vi uzas happyDomain sen aŭtentikigo. Vi ne povas administri aliajn kontajn ecojn.",
+        "domain-all-imported": "Ĉi tiu konto ĉe {{provider}} ne havas plian domajnon por importi.",
+        "too-high": "Nombro tro alta, maks: {{max}}",
+        "too-low": "Nombro tro malalta, min: {{min}}",
+        "base64": "Nevalida base64-ĉeno.",
+        "base64-illegal-char": "Nevalida signo uzita.",
+        "base64-unfinished": "Nefinita ĉeno.",
+        "suggestion": "Ĉu vi celis: {{suggestion}}"
+    },
+    "history": {
+        "committed-on": "Enmetita je",
+        "created-on": "Kreita je",
+        "diff": "Vidi diferencojn",
+        "expires-on": "Eksvalidiĝas je",
+        "modified-on": "Modifita je",
+        "published-on": "Publikigita je",
+        "see": "Montri la zonon je ĉi tiu tempo",
+        "title": "Historio de ŝanĝoj al la zono ",
+        "subtitle": "Foliumi ĉiujn pasintajn versiojn de via zono",
+        "used-on": "Laste uzita je"
+    },
+    "logs": {
+        "date": "Dato",
+        "description": "Ago/priskribo",
+        "level": "Nivelo",
+        "no-entry": "Neniu eniro en la domajna protokolo.",
+        "title": "Domajnaj protokoloj ",
+        "subtitle": "Plena spuro de ĉiu agado en ĉi tiu domajno",
+        "user": "Uzanto"
+    },
+    "menu": {
+        "my-domains": "Miaj domajnoj",
+        "my-providers": "Miaj domajnaj provizantoj",
+        "dns-resolver": "DNS-solvililo",
+        "my-account": "Mia konto",
+        "logout": "Elsaluti",
+        "provider-features": "Subtenataj provizantoj",
+        "signup": "Registriĝi",
+        "signin": "Ensaluti",
+        "quick-menu": "Rapida Aliro"
+    },
+    "onboarding": {
+        "steps": {
+            "welcome": "Bonvenon",
+            "connect": "Konekti Domajnan Provizanton",
+            "import": "Importi Domajnojn",
+            "explore": "Esplori Funkciojn"
+        },
+        "intro": "Ni agordu vian konton kaj komencu administri viajn domajnojn. Sekvu ĉi tiujn simplajn paŝojn por komenci.",
+        "welcome": {
+            "beta": {
+                "intro": "Ĝi estas beta-programaro! 🏗️",
+                "part1": "happyDomain estas funkcia sed ankoraŭ tre multe laborata. Se io ne funkcias, bonvolu",
+                "report": "diri al ni kio misas",
+                "part2": ". Ni estas tre respondemaj kaj ĉiu raportita cimo helpas nin plibonigi la ilon por ĉiuj. Dankon anticipe 🙏"
+            },
+            "purpose": "{{happyDomain}} faras domajnan administradon simpla kaj intuicia. Ĉu vi havas unu domajnon aŭ centojn, nia platformo donas al vi centralizitan manieron administri ilin ĉiujn.",
+            "use": "Uzu {{happyDomain}} kiel anstataŭan interfacon al via kutima domajna provizanto. Ĝi daŭre dependos de la infrastrukturo de via provizanto, per nia simpla interfaco.",
+            "unified": {
+                "title": "Unuigita Administrado",
+                "description": "Administru ĉiujn viajn domajnojn en unu loko, sendepende de kie ili estas registritaj."
+            },
+            "comprehensive": {
+                "title": "Kompletaj Funkcioj",
+                "description": "Spertu la estontecon de DNS-administrado kun historio, diferencoj, testoj, ..."
+            },
+            "intuitive": {
+                "title": "Intuicia Interfaco",
+                "description": "Simpla kaj uzantamika interfaco por kaj komencantoj kaj DNS-spertuloj."
+            },
+            "templates": {
+                "title": "Unu-klakaj Ŝablonoj",
+                "description": "Agordu oftajn servojn kun antaŭkonstruitaj ŝablonoj en sekundoj."
+            }
+        },
+        "connect": {
+            "title": "Konektu Vian Unuan Domajnan Provizanton",
+            "intro": "Konektu vian domajnan registrilon aŭ DNS-provizanton por aŭtomate importi viajn domajnojn. Ni subtenas plej multajn gravajn provizantojn.",
+            "noprovider": "Ĉu vi ne povas trovi vian provizanton en ĉi tiu listo?",
+            "noproviderTellUs": "Diru al ni kio estas via",
+            "nodomain": "Mi ne posedas iun domajnon ankoraŭ"
+        },
+        "import": {
+            "title": "Importu Viajn Domajnojn",
+            "intro": "Elektu la domajnojn kiujn vi volas administri per happyDomain.",
+            "imported": "Importita"
+        },
+        "explore": {
+            "understood": "Komprenita!",
+            "done": "Vi estas preta!",
+            "bravo": "{{count:eq; 1:Via domajno estas; default:Viaj domajnoj estas}} nun ĝuste agordita kaj preta por uzo.",
+            "title": "Esploru happyDomain-Funkciojn",
+            "intro": "Nun ke via domajno estas agordita, malkovru ĉiujn potencajn funkciojn kiujn happyDomain ofertas:",
+            "history": {
+                "title": "Rikorda Historio",
+                "description": "Spuru ĉiujn ŝanĝojn faritajn al viaj DNS-rikordoj kun versia historio kaj revenaj opcioj.",
+                "link": "Vidi historion"
+            },
+            "api": {
+                "title": "API-Aliro",
+                "description": "Aŭtomatigu domajnan administradon per nia kompleta API por programistoj kaj teamoj.",
+                "link": "API-Dokumentaro"
+            },
+            "monitoring": {
+                "title": "Monitorado",
+                "description": "Realtempa monitorado de viaj domajnoj kun avertoj por iuj problemoj aŭ eksvalidiĝoj."
+            },
+            "security": {
+                "title": "Sekureca Kontrolo",
+                "description": "Aŭtomataj sekurecaj kontroloj por certigi ke viaj domajnaj agordoj sekvas plej bonajn praktikojn."
+            },
+            "soon": "baldaŭ"
+        },
+        "no-sale": {
+            "title": "Vi bezonas posedi domajnon por uzi happyDomain.",
+            "description": "{{happyDomain}} ne vendas domajnojn ankoraŭ. Por komenci uzi nian interfacon, vi bezonas aĉeti domajnon de unu el niaj subtenataj provizantoj.",
+            "buy-advice": "Ni donos iom da gvidado en la proksima estonteco pri kiel facile aĉeti domajnan nomon. Do restu ĝisdatigita kaj kontaktu nin se vi povas helpi nin konstrui ampleksan gvidilon."
+        }
+    },
+    "password": {
+        "change": "Ŝanĝi mian pasvorton",
+        "changed": "Pasvorto Sukcese Ŝanĝita",
+        "confirm-new": "Konfirmu vian novan pasvorton",
+        "confirm-title": "Konfirmi Novan Pasvorton",
+        "confirm-description": "Reenigu vian novan pasvorton por konfirmi",
+        "confirmation": "Pasvorta konfirmo",
+        "current-title": "Nuna Pasvorto",
+        "current-description": "Enigu vian nunan pasvorton por konfirmi vian identecon",
+        "enter": "Enigu vian nunan pasvorton",
+        "enter-new": "Enigu vian novan pasvorton",
+        "new-title": "Nova Pasvorto",
+        "new-description": "Elektu fortan pasvorton kun almenaŭ 8 signoj, inkluzive nombrojn, minusklajn kaj majusklajn literojn",
+        "fill": "Por retrovi vian konton, bonvolu plenigi la jenan formularon, kun freŝa pasvorto.",
+        "forgotten": "Ĉu forgesita pasvorto?",
+        "new": "Nova pasvorto",
+        "redefine": "Redifini mian pasvorton",
+        "redefined": "Pasvorto sukcese redifinita!",
+        "recovery-unavailable": {
+            "title": "Pasvorta Retrovo Nehavebla",
+            "description": "La retpoŝta funkcieco estis malebligita en ĉi tiu servilo. Bonvolu kontakti vian administranton por restarigi vian pasvorton."
+        },
+        "success": "Vi nun povas ensaluti per via nova pasvorto.",
+        "success-change": "La pasvorto de via konto estis sukcese ŝanĝita."
+    },
+    "resources": {
+        "CAA": {
+            "all-issuers-title": "Ĉiuj eldonantoj rajtigitaj.",
+            "all-issuers-body": "Kun ĉi tiuj parametroj, ĉiuj eldonantoj povas krei atestilon por ĉi tiu domajno kaj subdomajno.",
+            "all-wild-issuers-body": "Kun ĉi tiuj parametroj, ĉiuj eldonantoj povas krei ĵokeran atestilon por ĉi tiu domajno kaj subdomajno.",
+            "auth-issuers": "Rajtigitaj Eldonantoj",
+            "incident-response": "Incidenta Respondo",
+            "incident-response-text": "Kiel vi volus esti kontaktita en kazo de malobservo de la nuna sekureca politiko?",
+            "mail-issuers": "S/MIME-atestila eldonado",
+            "mail-all-allowed-title": "Neniu CA-limigo por S/MIME-atestila eldonado.",
+            "mail-all-allowed-body": "Ĉiuj CA povas eldoni S/MIME-atestilojn por via domajno. Vi devus malpermesi aŭ limigi al certaj CA. S/MIME-atestiloj estas uzataj ekzemple por subskribi kaj ĉifri retpoŝtajn komunikadojn. Se vi ne uzas tian atestilon, vi devus malpermesi ĝian eldonadon.",
+            "no-issuers-hint": "Malpermesi ĉiun atestilan eldonadon",
+            "no-issuers-title": "Neniuj rajtigitaj eldonantoj.",
+            "no-issuers-body": "Kun ĉi tiuj parametroj, neniuj atestilaj aŭtoritatoj povas eldoni atestilon por ĉi tiu subdomajno.",
+            "no-mail-hint": "Malpermesi S/MIME-atestilan eldonadon",
+            "no-mail-title": "Neniuj rajtigitaj eldonantoj por S/MIME-atestiloj.",
+            "no-mail-body": "Kun ĉi tiuj parametroj, neniuj atestilaj aŭtoritatoj povas eldoni S/MIME-atestilojn por ĉi tiu domajno kaj ĝiaj subdomajnoj.",
+            "no-wild-hint": "Malpermesi ĵokeran atestilan eldonadon",
+            "no-wild-title": "Neniuj rajtigitaj eldonantoj por ĵokeraj atestiloj.",
+            "no-wild-body": "Kun ĉi tiuj parametroj, neniuj atestilaj aŭtoritatoj povas eldoni ĵokerajn atestilojn por ĉi tiu domajno kaj ĝiaj subdomajnoj. La jenaj agordoj povas supersedi ĉi tiun limigon:",
+            "title": "Atestila Rajtigo",
+            "wild-issuers": "Ĵokera atestila eldonado",
+            "wild-same-title": "Same kiel regula atestila eldonado.",
+            "wild-same-body": "Kun ĉi tiuj parametroj, rajtigitaj eldonantoj de regula atestilo ankaŭ povas eldoni ĵokerajn atestilojn por ĉi tiu domajno kaj ĝiaj subdomajnoj."
+        }
+    },
+    "service": {
+        "add": "Aldoni servon",
+        "all": "Ĉiuj",
+        "delete": "Forigi servon",
+        "edit": "Redakti servon",
+        "update": "Ĝisdatigi servon",
+        "form-new": "Aldoni servon por {{domain}}",
+        "new": "Nova servo",
+        "new-description": "Klaku ĉi tie por aldoni servon.",
+        "default-ttl": "Defaŭlta TTL",
+        "ttl": "TTL",
+        "ttl-long": "Tempo Por Vivi",
+        "ttl-tip": "0 por defaŭlta TTL, aliaj valoroj estas en sekundoj"
+    },
+    "sessions": {
+        "close-all": "Fermi ĉiujn sesiojn",
+        "create": "Krei API-ŝlosilon",
+        "current": "Nuna sesio",
+        "description": "Nomu la sesion",
+        "secret": "Sesia sekreto",
+        "usage": "Uzada ekzemplo:"
+    },
+    "provider": {
+        "all": "Ĉiuj provizantoj",
+        "another": "Uzi alian provizanton",
+        "associations": "{{count:eq; 0:neniu asociita domajno; 1:1 asociita domajno; default:{{count}} asociitaj domajnoj}}",
+        "check-config": "Kontroli provizantan agordon",
+        "description": "Administri DNS-provizantajn konektojn kaj akreditaĵojn",
+        "create-domain": "Krei domajnon ĉe {{provider}}",
+        "delete": "Forigi provizanton",
+        "empty": "Neniu provizanto ankoraŭ, {{action}}?",
+        "empty-action": "aldoni unu",
+        "find": "Ĉu vi ne trovis vian provizanton?",
+        "name-your": "Nomu vian provizanton",
+        "linked-domains": "Ligitaj domajnoj",
+        "no-name": "Sennoma",
+        "provider": "Domajnoj de {{provider}}",
+        "kind": "Domajna provizanto",
+        "select-provider": "Unue, elektu la provizanton kiu gastigas vian domajnon:",
+        "provider-name": "Gastiganta nomo",
+        "provider-type": "Provizanta tipo",
+        "title": "Miaj provizantoj",
+        "available-types": "Haveblaj resursaj tipoj",
+        "import-domains": "Importi ĉiujn domajnojn",
+        "new-form": "Aldoni provizanton",
+        "update": "Ĝisdatigi provizanton"
+    },
+    "upgrade": {
+        "title": "Ĝisdatigo havebla!",
+        "content": "Nova versio de happyDomain estas havebla. Klaku ĉi tie por refreŝigi la paĝon."
+    },
+    "wait": {
+        "asking-domains": "Demandante provizanton por la listo de domajnoj...",
+        "exporting": "Eksportante zonon, bonvolu atendi…",
+        "formating": "Formatante zonon, bonvolu atendi…",
+        "importing": "Importante domajnojn, bonvolu atendi…",
+        "loading": "Ŝarĝante domajnajn servojn…",
+        "loading-account": "Ŝarĝante vian konton…",
+        "loading-record": "Ŝarĝante rikordon…",
+        "retrieving-setting": "Ricevante gastigantan agordan formularon...",
+        "updating": "Ĝisdatigante vian domajnan gastiganton",
+        "validating": "Validigante domajnon…",
+        "wait": "Bonvolu atendi",
+        "retrieving-domains": "Ricevante viajn domajnojn...",
+        "retrieving-provider": "Ricevante gastigantan provizantan informon...",
+        "retrieving-providers": "Ricevante viajn provizantojn...",
+        "preparation": "Preparante viajn ŝanĝojn…",
+        "propagation": "Disvastigante viajn ŝanĝojn…"
+    },
+    "settings": {
+        "subtitle": "Adapta vian happyDomain-sperton",
+        "fieldhint": {
+            "title": "Kampaj sugestoj",
+            "description": "Elektu kiel montri helpajn tekstojn por formularaj kampoj",
+            "hide": "Kaŝi",
+            "tooltip": "Montri kiel ŝpruchelpilon apud la kampo",
+            "focused": "Montri sub la kampo kiam fokusita",
+            "always": "Ĉiam montri sub la kampo"
+        },
+        "language": "Lingvo",
+        "language-description": "Elektu vian preferatan interfacon lingvon",
+        "save": "Konservi agordojn",
+        "showrrtypes-title": "Montri DNS-rikordajn tipojn",
+        "preferences": {
+            "title": "Preferoj",
+            "description": "Agordu viajn preferojn"
+        },
+        "security": {
+            "title": "Sekureco kaj Aliro",
+            "description": "Administru viajn aŭtentikigon kaj sekurecajn agordojn",
+            "sessions": {
+                "title": "Aktivaj sesioj",
+                "description": "Administru viajn aktivajn ensalutajn sesiojn kaj API-ŝlosilojn"
+            },
+            "password": {
+                "description": "Agordu novan pasvorton por via konto"
+            }
+        },
+        "sessions": "Sesioj",
+        "showrrtypes": "Montri resursajn tipojn asociitajn kun servo (por spertuloj)",
+        "success": "Ĝuu happyDomain plu.",
+        "success-change": "Viaj agordoj estis konservitaj.",
+        "title": "Agordoj",
+        "zoneview": {
+            "grid": "Krada vido (plej simpla)",
+            "list": "Lista vido (plej rapida)",
+            "records": "Listo kun rikordoj (spertula)",
+            "title": "Zona vido",
+            "description": "Elektu kiel vi volas montri vian domajnan zonon"
+        }
+    },
+    "record": {
+        "A": "IPv4-adreso",
+        "AAAA": "IPv6-adreso",
+        "common-records": "Oftaj rikordoj",
+        "Expire": "Eksvalidiĝi",
+        "Mbox": "Reteja respondeca retadreso",
+        "Minttl": "Negativa kaŝmemora TTL",
+        "Mx": "Poŝta servilo",
+        "Ns": "Noma servilo",
+        "Preference": "Prefero",
+        "Priority": "Prioritato",
+        "Refresh": "Refreŝigi",
+        "Retry": "Reprovi",
+        "Serial": "Seria numero",
+        "Target": "Celo",
+        "Txt": "Teksto",
+        "Weight": "Pezvaloro"
+    },
+    "resolver": {
+        "advanced": "Uzi proprajn agordojn?",
+        "custom": "Propra solvililo",
+        "custom-description": "Enigu la adreson de la solvililo kiun vi volas uzi (domajna nomo aŭ IP).",
+        "domain-description": "Enigu la domajnan nomon por serĉi. Ekzemple, vi povas provi {{domain}}.",
+        "error-description": "La DNS-demando ne estis kompletigita pro eraro.",
+        "field-description": "Elektu la DNS-rikordan tipon por serĉi. Ekzemple: A por IPv4-adreso, AAAA por IPv6-adreso, ...",
+        "field-description-more-info": "Klaku ĉi tie por pli da informo",
+        "no-answer": "La DNS-demando sukcese plenumiĝis, sed ne trovis rikordon por ĉi tiu domajno kaj tipo.",
+        "no-records-description": "La demando revenis neniun rezulton.",
+        "page-description": "Serĉi DNS-rikordojn por iu domajno",
+        "query-failed": "Demando malsukcesis",
+        "query-results": "Demandaj rezultoj",
+        "resolver-description": "Ĉi tiu estas la servilo kiun ni demandos.",
+        "results-description": "DNS-rikordoj trovitaj por {{domain}} ({{type}} rikordoj)",
+        "results-description-default": "DNS-rikordoj trovitaj laŭ via peto",
+        "ttl": "Kaŝmemora tempo restanta",
+        "showDNSSEC": "Montri DNSSEC-rikordojn en la respondo (se haveblaj)"
+    },
+    "zones": {
+        "viewer": "Zona vidilo",
+        "viewer-subtitle": "Superrigardo de ĉiuj viaj servoj",
+        "upload": "Importi zonon",
+        "import-text": "Importi el teksto",
+        "import-file": "Importi el dosiero",
+        "return-to": "Iri al la zono",
+        "retrieve": "Ricevi zonon",
+        "retrieve-subtitle": "Prenante DNS-rikordojn de via provizanto"
+    }
+}

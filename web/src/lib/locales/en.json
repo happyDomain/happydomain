@@ -170,7 +170,7 @@
     "email": {
         "address": "Email address",
         "instruction": {
-            "bad-link": "The link you follow is invalid. Check you copy the entier link and retry.",
+            "bad-link": "The link you followed is invalid. Check that you copied the entire link and retry.",
             "check-inbox": "Please check your inbox in order to validate your e-mail address.",
             "new-confirmation": "If you need a new confirmation e-mail, just enter your address in the form below.",
             "validate-address": "In order to validate your e-mail address, please check your inbox, and follow the link contained in the message.",
@@ -179,7 +179,7 @@
         "send-again": "Re-send the confirmation e-mail",
         "send-recover": "Send me an e-mail to recover my account",
         "sent": "Confirmation e-mail sent!",
-        "sent-recovery": "Password recovery email send!",
+        "sent-recovery": "Password recovery email sent!",
         "recover": "In order to recover your account, we'll send you an e-mail containing a link that will allow you to redefine your password",
         "validation-unavailable": {
             "title": "Email Validation Unavailable",
@@ -192,7 +192,7 @@
     "errors": {
         "404": {
             "title": "Page not found",
-            "content": "The page you are look for was not found."
+            "content": "The page you are looking for was not found."
         },
         "account-delete": "An error occurs when trying to delete your account",
         "address": "Email address is required",
@@ -219,7 +219,7 @@
         "rr-delete": "An error occurs when trying to delete RR in the zone:",
         "session": {
             "title": "Authentication timeout",
-            "content": "Invalid session, your have been logged out: {{err}}. Please login again."
+            "content": "Invalid session, you have been logged out: {{err}}. Please login again."
         },
         "settings-change": "Unable to change your settings",
         "account-no-auth": "You're using happyDomain without authentication. You cannot manage other account properties.",
@@ -228,7 +228,7 @@
         "too-low": "Number too low, min: {{min}}",
         "base64": "Invalid base64 string.",
         "base64-illegal-char": "Illegal character used.",
-        "base64-unfinished": "Unfinised string.",
+        "base64-unfinished": "Unfinished string.",
         "suggestion": "Did you mean: {{suggestion}}"
     },
     "history": {

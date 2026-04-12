@@ -1,0 +1,532 @@
+{
+    "account": {
+        "ask-have": "Musei saikan platforma de šangga akūn?",
+        "delete": {
+            "delete": "Holhongga ba",
+            "delete-button": "Mini šangga be mayambume",
+            "deleted": "Šangga Mayambuha",
+            "description": "Šangga be teni mayambume",
+            "confirm": "Šangga be mayambuki serengge, ere be gidame:",
+            "confirm-twice": "Mayambure be temgetulerengge, šangga be teni mayambumbi, happyDomain de dosire be nakambi.",
+            "confirm-password": "Si sini šangga be temgetuleme, 通过密码验证:",
+            "consequence": "Sini 域名 enculeme waka, kemuni necin i baitalambi.",
+            "remain-data": "Teknik i šajin, šangga be mayambumbi, damu 备份数据 kemuni bi.",
+            "success": "Šangga be mayambuha. Sirame acaha de erdemu."
+        },
+        "join": "Te dosimbi!",
+        "no-password-change": "Si tulergi servise i šangga, {{provider}} de 密码 be halame.",
+        "oidc-login": "{{provider}} i šangga i dosimbi",
+        "ready-login": "Dosire erin oho!",
+        "signup": {
+            "already": "Šangga bihenio?",
+            "join-call": "Musei platforma de dosime, 2 minut i dolo!",
+            "address-why": "Sini 邮箱 be {{identify}} jai {{security-operations}} de baitalambi.",
+            "identify": "temgetuleme",
+            "security-operations": "an i karmangga šajin",
+            "receive-update": "Encu 大改进 be alame",
+            "signup": "Šangga arame!",
+            "success": "Šangga arame wajiha!",
+            "login-now": "Te dosime ombi."
+        },
+        "see-again": "Sirame acaha de erdemu!"
+    },
+    "common": {
+        "add": "Nongtime",
+        "add-new-thing": "Acingga {{thing}} be nongtime",
+        "add-object": "Acingga {{thing}} be ere servise de nongtime",
+        "by": "i",
+        "cancel": "Nakame",
+        "cancel-edit": "Dasame nakame",
+        "copy-clipboard": "剪贴板 de ešeme",
+        "continue": "Sirame",
+        "create-thing": "{{thing}} be arame",
+        "delete": "Mayambume",
+        "delete-thing": "{{thing}} be mayambume",
+        "domain": "域名 eici 子域名",
+        "edit": "Dasame",
+        "field": "Uju",
+        "filter": "Siftame",
+        "go": "Yabume!",
+        "got-it": "Saha!",
+        "name": "Gebu",
+        "next": "Sirame",
+        "no-content": "Acingga akū",
+        "no-thing": "{{thing}} akū",
+        "new-row": "Acingga mudan",
+        "other": "Encu",
+        "password": "密码",
+        "previous": "Julergi",
+        "rename": "Gebu be halame",
+        "resolver": "Solvililo",
+        "run": "Baitalame!",
+        "survey": "Gisuren bihenio? Muse de alame!",
+        "spinning": "Šaršame",
+        "update": "Šangname",
+        "update-what": "{{what}} be šangname",
+        "welcome": {
+            "start": "Okdome ",
+            "end": "!"
+        },
+        "help": "Tusa!",
+        "records": "{{n:eq; 0:{{type}} 记录 akū; 1:{{type}} 记录 emke; default:{{type}} 记录}}"
+    },
+    "domains": {
+        "title": "Sini 域名",
+        "description": "Sini 域名 be emu bade tuwame kadalame",
+        "kind": "域名",
+        "subdomain": "子域名",
+        "actions": {
+            "audit": "Šangname i bithe be tuwame",
+            "do-migration": "Te 移转",
+            "history": "Šangname i suduri be tuwame",
+            "propagate": "Mini šangname be selgime",
+            "reimport": "Te i 区域 be gaimbi",
+            "rollback": "Ere erin de amasi bedereme",
+            "share": "区域 be 分享…",
+            "upload": "区域 文件 be 引入",
+            "view": "Mini 区域 be tuwame",
+            "others": "{{domain}} i encu baitan"
+        },
+        "alert": {
+            "remove": "Ere baitan {{domain}} be happyDomain i kadalara 域名 i dorgici mayambumbi. Sini 域名 kemuni 提供商 de bi. Mayambume temgetulerengge?",
+            "unable-retrieve": {
+                "description": "{{domain}} i 域名 be ejehe de, nimeku bi:",
+                "title": "域名 be ejehe de, nimeku bi"
+            }
+        },
+        "and-more-filtered": "{{count:eq; 0:encu 筛选域名 akū; 1:emke encu 筛选域名; default:{{count}} encu 筛选域名}}",
+        "add-a-subdomain": "子域名 be nongtime",
+        "add-a-service": "服务 be nongtime",
+        "add-alias": "别名 be nongtime",
+        "add-an-alias": "{{domain}} de 别名 be nongtime",
+        "add-title": "Acingga 域名",
+        "add-now": "Te nongtime!",
+        "search-placeholder": "域名 be baimbi…",
+        "create-on-provider": "{{provider}} de arame",
+        "added-success": "Sain! {{domain}} be nongtiha. Te kadalame ombi.",
+        "apply": {
+            "additions": "{{count:eq; 0:nongtime akū; 1:{{count}} nongtime; default:{{count}} nongtime}}",
+            "button": "Šangname be isebume",
+            "deletions": "{{count:eq; 0:mayambume akū; 1:{{count}} mayambume; default:{{count}} mayambume}}",
+            "double-check": "Si 设定 de, šangname be isebure de temgetulerengge.",
+            "done": {
+                "title": "区域 be isebuha!",
+                "description": "Sini 区域 {{zone}} be selgiyehe!"
+            },
+            "modifications": "{{count:eq; 0:šangname akū; 1:{{count}} šangname; default:{{count}} šangname}}",
+            "nochange": "Šangname akū! Te i 区域 服务器 de acanahabi.",
+            "change-already-applied": "Sini šangname be isebuhe bihe.",
+            "others": "{{count:eq; 0:encu šangname akū; 1:{{count}} encu šangname; default:{{count}} encu šangname}}",
+            "prepare-info": "提供商 {{nbDiffs}} 修正 be ilgame, sini {{nbSelected}} šangname de:",
+            "prepare-warning": "修正 i ton sini sonjohon de acanarakū. Temgetuleme.",
+            "confirm": "Temgetuleme Isebume",
+            "back": "Amasi"
+        },
+        "attached-new": "Acingga 域名 be happyDomain de nongtiha!",
+        "commit-msg": "Ai šangname?",
+        "create-new-key": "Acingga {{id}} 钥匙 be arame",
+        "discard": "Waliyame",
+        "drop-alias": "别名 be mayambume",
+        "drop-pointer": "指针 be mayambume",
+        "edit-target": "目标 be dasame",
+        "give-explicit-name": "Ere 服务 be sabure de, acingga gebu be buku.",
+        "history": "Suduri",
+        "list": "引入域名 i ton",
+        "n-aliases": "{{count:lt; 2:{{count}} 别名; default:{{count}} 别名}}",
+        "n-services": "{{count:lt; 2:{{count}} 服务; default:{{count}} 服务}}",
+        "filtered-no-result": "Ere 筛选 de 域名 akū.",
+        "please-fill-fields": "Ere uju be ebu:",
+        "removal": "域名 be mayambume temgetuleme",
+        "save-modifications": "Šangname be eješume",
+        "stop": "Ere 域名 be kadalame nakame",
+        "view": {
+            "abstract": "抽象 区域",
+            "cancel-title": "域名 be happyDomain de erembume",
+            "description": "{{domain}} de isebure šangname be tuwame",
+            "live": "Te i 记录",
+            "monitoring": "监控",
+            "summary": "Gisun i ešengge",
+            "provider": "区域 提供商",
+            "title": "区域 be tuwame",
+            "subtitle": "Sini 区域 BIND 格式 de"
+        },
+        "see-records": "记录 be tuwame",
+        "alias-creation": "{{domain}} de 别名 be nongtime:",
+        "alias-creation-sample": "Ere 别名 be arame:",
+        "placeholder-search": "mini.域名.",
+        "placeholder-new": "mini.acingga.域名.",
+        "placeholder-new-sub": "acingga.子域名",
+        "form-new-subdomain": "{{domain}} i fejile acingga 子域名 be nongtime:"
+    },
+    "domaingroups": {
+        "all": "Uheri 群组",
+        "manage": "域名 群组 be kadalame",
+        "new": "Acingga 群组",
+        "drop-here": "域名 be ere de sindame",
+        "no-group": "Encu",
+        "title": "Sini 群组"
+    },
+    "email": {
+        "address": "邮箱 地址",
+        "instruction": {
+            "bad-link": "Si takūraha 链接 be 复制, amasi bedere.",
+            "check-inbox": "Sini 邮箱 be tuwame, 验证 邮件 be baimi.",
+            "new-confirmation": "Acingga 验证 邮件 be bairengge, 邮箱 be ebu.",
+            "validate-address": "邮箱 be 验证, 邮件 i 链接 be takūrame.",
+            "validated": "Sini acingga 邮箱 be 验证 oho!"
+        },
+        "send-again": "验证 邮件 be dasame takūrame",
+        "send-recover": "Sini 邮箱 de 账户 恢复 邮件 be takūrame",
+        "sent": "验证 邮件 be takūraha!",
+        "sent-recovery": "密码 恢复 邮件 be takūraha!",
+        "recover": "Sini 账户 be 恢复, 邮件 de 链接 be takūrame, 密码 be halame",
+        "validation-unavailable": {
+            "title": "邮箱 验证 Ojorakū",
+            "description": "Ere 服务器 de 邮箱 功能 be nakaha. 管理员 de alame."
+        }
+    },
+    "captcha": {
+        "human-check": "Si niyalma inuo? Ere 框 be temgetuleme:"
+    },
+    "errors": {
+        "404": {
+            "title": "页面 Saburakū",
+            "content": "Si baime 页面 be saburakū."
+        },
+        "account-delete": "账户 be mayambure de nimeku bi",
+        "address": "邮箱 地址 be ebu",
+        "address-valid": "Valid 邮箱 地址 be ebu",
+        "domain-access": "域名 ton be ejehe de nimeku bi.",
+        "domain-attach": "域名 be happyDomain de nongtire de nimeku bi",
+        "domain-have": "Ere 提供商 de sini 域名 akū.",
+        "domain-import": "域名 be 同步 de nimeku bi:",
+        "domain-list": "Ere 提供商 域名 ton be tuwaburakū. Form be baitalame.",
+        "error": "Nimeku",
+        "login": "登录 nimeku",
+        "rate-limited": "登录 失败 nimeku. Tergun dosime.",
+        "logout": "登出 nimeku",
+        "occurs": "{{when}} de nimeku bi!",
+        "password": "密码 be ebu",
+        "password-change": "密码 be halame ojorakū",
+        "password-match": "密码 jai 验证 acanarakū.",
+        "password-weak": "密码 be enculeme: 8 字符, 数字, 大小写.",
+        "provider-delete": "提供商 be mayambure de nimeku bi",
+        "recovery": "密码 恢复 nimeku",
+        "resolve": "域名 be solvire de nimeku bi.",
+        "registration": "注册 nimeku",
+        "rr-add": "区域 de RR nongtire de nimeku bi:",
+        "rr-delete": "区域 de RR mayambure de nimeku bi:",
+        "session": {
+            "title": "验证 时间 wajiha",
+            "content": "Session valid waka, si 登出 oho: {{err}}. Amasi 登录."
+        },
+        "settings-change": "设置 be halame ojorakū",
+        "account-no-auth": "Si happyDomain be 验证 akū i baitalambi. 账户 be kadalame ojorakū.",
+        "domain-all-imported": "{{provider}} de encu 引入 域名 akū.",
+        "too-high": "数字 amba, max: {{max}}",
+        "too-low": "数字 ajige, min: {{min}}",
+        "base64": "Valid base64 waka.",
+        "base64-illegal-char": "Valid akū 字符.",
+        "base64-unfinished": "Nakaha 字符串.",
+        "suggestion": "Si ere be baimbi: {{suggestion}}"
+    },
+    "history": {
+        "committed-on": "提交 erin",
+        "created-on": "Arare erin",
+        "diff": "Differens be tuwame",
+        "expires-on": "Eksvalidiĝo erin",
+        "modified-on": "Šangname erin",
+        "published-on": "Publikige erin",
+        "see": "Ere erin i 区域 be tuwame",
+        "title": "区域 šangname i suduri",
+        "subtitle": "Sini 区域 i suduri be tuwame",
+        "used-on": "Enenggi baitaha erin"
+    },
+    "logs": {
+        "date": "Inenggi",
+        "description": "Baitan/Gisun",
+        "level": "Necin",
+        "no-entry": "域名 日志 de ejehe akū.",
+        "title": "域名 日志",
+        "subtitle": "Ere 域名 i baitan i ejehe",
+        "user": "Baitalasi"
+    },
+    "menu": {
+        "my-domains": "Mini 域名",
+        "my-providers": "Mini 域名 提供商",
+        "dns-resolver": "DNS 解析器",
+        "my-account": "Mini 账户",
+        "logout": "登出",
+        "provider-features": "支持的 提供商",
+        "signup": "注册",
+        "signin": "登录",
+        "quick-menu": "快速 访问"
+    },
+    "onboarding": {
+        "steps": {
+            "welcome": "Okdome",
+            "connect": "域名 提供商 be 接入",
+            "import": "域名 be 引入",
+            "explore": "功能 be tuwame"
+        },
+        "intro": "Sini 账户 be 设置, 域名 be kadalame. Ere 简单 步骤 be 按照 me.",
+        "welcome": {
+            "beta": {
+                "intro": "Ere beta 软件! 🏗️",
+                "part1": "happyDomain kemuni baitalame ombi, damu šangname bi. Nimeku bihe,",
+                "report": "muse de alame",
+                "part2": ". Muse erin i 回复, nimeku be alangge tusa. Baime 😊"
+            },
+            "purpose": "{{happyDomain}} 域名 管理 be 简单 直观 i arame. Emu 域名 eici 域名 bi, musei platforma de emu bade kadalame.",
+            "use": "{{happyDomain}} be sini 提供商 i 接口 be 代用. 提供商 i 基础设施 be 依赖, damu 简单 接口 be baitalame.",
+            "unified": {
+                "title": "统一 管理",
+                "description": "域名 be emu bade kadalame, 注册地 be 不问."
+            },
+            "comprehensive": {
+                "title": "完整 功能",
+                "description": "DNS 管理 i 将来 be 体验, suduri, diff, 测试..."
+            },
+            "intuitive": {
+                "title": "直观 接口",
+                "description": "简单 用户友好 接口, 新手 jai 专家 de."
+            },
+            "templates": {
+                "title": "一键 模板",
+                "description": "常用 服务 be 模板 i 秒级 配置."
+            }
+        },
+        "connect": {
+            "title": "Sini 域名 提供商 be 接入",
+            "intro": "域名 注册商 eici DNS 提供商 be 接入, 域名 be 自动 引入. Muse 大部分 提供商 be 支持.",
+            "noprovider": "Sini 提供商 be saburakūn?",
+            "noproviderTellUs": "Muse de alame",
+            "nodomain": "Bi 域名 be 拥有 akū"
+        },
+        "import": {
+            "title": "域名 be 引入",
+            "intro": "happyDomain de kadalare 域名 be sonjome.",
+            "imported": "引入 oho"
+        },
+        "explore": {
+            "understood": "Saha!",
+            "done": "Wajiha!",
+            "bravo": "{{count:eq; 1:Sini 域名; default:Sini 域名}} te 配置 oho, 用法 de 预备.",
+            "title": "happyDomain 功能 be 探索",
+            "intro": "域名 配置 wajiha, happyDomain i 功能 be 发现:",
+            "history": {
+                "title": "记录 历史",
+                "description": "DNS 记录 i šangname be 追踪, 版本 历史 jai 回滚 选项.",
+                "link": "历史 be tuwame"
+            },
+            "api": {
+                "title": "API 访问",
+                "description": "域名 管理 be API i 自动化, 开发者 jai 团队 de.",
+                "link": "API 文档"
+            },
+            "monitoring": {
+                "title": "监控",
+                "description": "域名 i 实时 监控, 问题 eici 过期 警报."
+            },
+            "security": {
+                "title": "安全 检查",
+                "description": "域名 配置 i 安全 审计, 最佳 实践 be 遵循."
+            },
+            "soon": "ere inenggi"
+        },
+        "no-sale": {
+            "title": "happyDomain be 用法 de 域名 be 拥有.",
+            "description": "{{happyDomain}} 域名 be 卖 akū. Musei 接口 be 用法 de, 支持 提供商 i 域名 be 购买.",
+            "buy-advice": "Muse 域名 购买 指南 be ere inenggi 发布. 关注 jai muse de 联系."
+        }
+    },
+    "password": {
+        "change": "密码 be halame",
+        "changed": "密码 Šangname Wajiha",
+        "confirm-new": "Acingga 密码 be 验证",
+        "confirm-title": "Acingga 密码 验证",
+        "confirm-description": "Acingga 密码 be amasi ebu",
+        "confirmation": "密码 验证",
+        "current-title": "Te i 密码",
+        "current-description": "Te i 密码 be ebu, 身份 be 验证",
+        "enter": "Te i 密码 be ebu",
+        "enter-new": "Acingga 密码 be ebu",
+        "new-title": "Acingga 密码",
+        "new-description": "强密码 be 选择, 8 字符, 数字, 大小写",
+        "fill": "账户 be 恢复, acingga 密码 be ebu.",
+        "forgotten": "密码 be onggoho?",
+        "new": "Acingga 密码",
+        "redefine": "密码 be 重设",
+        "redefined": "密码 重设 wajiha!",
+        "recovery-unavailable": {
+            "title": "密码 恢复 Ojorakū",
+            "description": "Ere 服务器 de 邮箱 功能 be nakaha. 管理员 de 联系."
+        },
+        "success": "Te acingga 密码 i 登录 ombi.",
+        "success-change": "Sini 账户 密码 be šangname wajiha."
+    },
+    "resources": {
+        "CAA": {
+            "all-issuers-title": "Uheri 发行者 授权.",
+            "all-issuers-body": "Ere 参数 de, uheri 发行者 域名 jai 子域名 de 证书 be arame.",
+            "all-wild-issuers-body": "Ere 参数 de, uheri 发行者 域名 jai 子域名 de 通配符 证书 be arame.",
+            "auth-issuers": "授权 发行者",
+            "incident-response": "事件 响应",
+            "incident-response-text": "安全 策略 违反 de, si 容易 be 联系?",
+            "mail-issuers": "S/MIME 证书 发行",
+            "mail-all-allowed-title": "S/MIME 证书 发行 de CA 限制 akū.",
+            "mail-all-allowed-body": "Uheri CA S/MIME 证书 be 发行. Si 限制 eici 禁止 be 设置. S/MIME 证书 邮件 签名 加密 de 用法. 用法 akū de, 禁止 be 设置.",
+            "no-issuers-hint": "Uheri 证书 发行 be 禁止",
+            "no-issuers-title": "授权 发行者 akū.",
+            "no-issuers-body": "Ere 参数 de, 证书 机构 子域名 de 证书 be arame ojorakū.",
+            "no-mail-hint": "S/MIME 证书 发行 be 禁止",
+            "no-mail-title": "S/MIME 证书 授权 发行者 akū.",
+            "no-mail-body": "Ere 参数 de, 证书 机构 域名 jai 子域名 de S/MIME 证书 be arame ojorakū.",
+            "no-wild-hint": "通配符 证书 发行 be 禁止",
+            "no-wild-title": "通配符 证书 授权 发行者 akū.",
+            "no-wild-body": "Ere 参数 de, 证书 机构 域名 jai 子域名 de 通配符 证书 be arame ojorakū. Ere 限制 be 超越:",
+            "title": "证书 授权",
+            "wild-issuers": "通配符 证书 发行",
+            "wild-same-title": "常规 证书 发行 i adali.",
+            "wild-same-body": "Ere 参数 de, 常规 证书 授权 发行者 域名 jai 子域名 de 通配符 证书 be arame."
+        }
+    },
+    "service": {
+        "add": "服务 be nongtime",
+        "all": "Uheri",
+        "delete": "服务 be mayambume",
+        "edit": "服务 be dasame",
+        "update": "服务 be šangname",
+        "form-new": "{{domain}} de 服务 be nongtime",
+        "new": "Acingga 服务",
+        "new-description": "Ere de gidame, 服务 be nongtime.",
+        "default-ttl": "默认 TTL",
+        "ttl": "TTL",
+        "ttl-long": "TTL (生存时间)",
+        "ttl-tip": "0 默认 TTL, encu 数字 秒"
+    },
+    "sessions": {
+        "close-all": "Uheri 会话 be karmame",
+        "create": "API 钥匙 be arame",
+        "current": "Te i 会话",
+        "description": "会话 be 命名",
+        "secret": "会话 秘密",
+        "usage": "用法 示例:"
+    },
+    "provider": {
+        "all": "Uheri 提供商",
+        "another": "Encu 提供商 be 用法",
+        "associations": "{{count:eq; 0:关联 域名 akū; 1:emke 关联 域名; default:{{count}} 关联 域名}}",
+        "check-config": "提供商 设置 be 检查",
+        "description": "DNS 提供商 连接 jai 凭证 be 管理",
+        "create-domain": "{{provider}} de 域名 be arame",
+        "delete": "提供商 be mayambume",
+        "empty": "提供商 akū, {{action}}?",
+        "empty-action": "emke be nongtime",
+        "find": "Sini 提供商 be saburakūn?",
+        "name-your": "Sini 提供商 be 命名",
+        "linked-domains": "关联 域名",
+        "no-name": "Gebu akū",
+        "provider": "{{provider}} i 域名",
+        "kind": "域名 提供商",
+        "title": "Sini 提供商",
+        "select": "提供商 be sonjome",
+        "select-special": "Acingga 提供商 be sonjome",
+        "resell": "域名 be 转售",
+        "resell-description": "Sini 客户 de 域名 be 转售, happyDomain i 接口 be 用法.",
+        "hosting": "Hosting 提供商",
+        "hosting-description": "Sini 网站 eici 应用 be 托管, 域名 be 管理.",
+        "title-special": "Acingga 提供商 be 增加",
+        "no-hosting": "Hosting 提供商 akū.",
+        "no-reseller": "域名 转售商 akū."
+    },
+    "resolver": {
+        "title": "DNS 解析器",
+        "description": "域名 DNS 记录 be 查询",
+        "placeholder": "域名 be ebu",
+        "type": "记录 类型",
+        "type-placeholder": "记录 类型 be sonjome",
+        "resolver": "解析器",
+        "resolver-placeholder": "解析器 be sonjome",
+        "query": "查询",
+        "result": "查询 结果",
+        "no-result": "查询 结果 akū.",
+        "error": "查询 错误",
+        "success": "查询 成功",
+        "advanced": "自定义 设置 be 用法?",
+        "custom": "自定义 解析器",
+        "custom-description": "用法 解析器 地址 be ebu (域名 eici IP).",
+        "domain-description": "搜索 域名 be ebu. 示例: {{domain}}.",
+        "error-description": "DNS 查询 错误 de 完成 ojorakū.",
+        "field-description": "搜索 DNS 记录 类型 be 选择. 示例: A IPv4, AAAA IPv6...",
+        "field-description-more-info": "更多信息 de ere de gidame",
+        "no-answer": "DNS 查询 成功, damu 域名 jai 类型 de 记录 akū.",
+        "no-records-description": "查询 结果 akū.",
+        "page-description": "域名 DNS 记录 be 搜索",
+        "query-failed": "查询 失败",
+        "query-results": "查询 结果",
+        "resolver-description": "Ere 查询 服务器.",
+        "results-description": "{{domain}} de DNS 记录 发现 ({{type}} 记录)",
+        "results-description-default": "请求 DNS 记录 发现",
+        "ttl": "缓存 时间 剩余",
+        "showDNSSEC": "响应 de DNSSEC 记录 显示 (可用 时)"
+    },
+    "settings": {
+        "title": "设置",
+        "description": "账户 设置 be 管理",
+        "language": "语言",
+        "language-description": "界面 语言 be 选择",
+        "theme": "主题",
+        "theme-description": "界面 主题 be 选择",
+        "theme-light": "浅色",
+        "theme-dark": "深色",
+        "theme-system": "系统 默认",
+        "timezone": "时区",
+        "timezone-description": "时区 be 选择",
+        "notifications": "通知",
+        "notifications-description": "通知 设置 be 管理",
+        "email-notifications": "邮件 通知",
+        "email-notifications-description": "邮件 通知 be 接收",
+        "push-notifications": "推送 通知",
+        "push-notifications-description": "推送 通知 be 接收"
+    },
+    "zones": {
+        "viewer": "区域 查看器",
+        "viewer-subtitle": "Uheri 服务 概览",
+        "upload": "区域 be 引入",
+        "import-text": "文本 be 引入",
+        "import-file": "文件 be 引入",
+        "return-to": "区域 de bedere",
+        "retrieve": "区域 be 获取",
+        "retrieve-subtitle": "提供商 DNS 记录 be 获取"
+    },
+    "record": {
+        "A": "IPv4 地址",
+        "AAAA": "IPv6 地址",
+        "common-records": "常用 记录",
+        "Expire": "过期",
+        "Mbox": "邮箱 负责人 地址",
+        "Minttl": "负面 缓存 TTL",
+        "Mx": "邮件 服务器",
+        "Ns": "名称 服务器",
+        "Preference": "优先级",
+        "Priority": "优先级",
+        "Refresh": "刷新",
+        "Retry": "重试",
+        "Serial": "序列号",
+        "Target": "目标",
+        "Txt": "文本",
+        "Weight": "权重"
+    },
+    "options": {
+        "view": {
+            "grid": "网格 视图",
+            "grid-description": "服务 be 网格 i 显示",
+            "list": "列表 视图",
+            "list-description": "服务 be 列表 i 显示",
+            "records": "记录 列表 (专家)",
+            "title": "区域 视图",
+            "description": "域名 区域 显示 方式 be 选择"
+        }
+    }
+}
