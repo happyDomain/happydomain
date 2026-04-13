@@ -26,7 +26,7 @@
     import { fly, fade } from "svelte/transition";
     import { flip } from "svelte/animate";
 
-    import { Badge } from "@sveltestrap/sveltestrap";
+    import { Badge, Icon } from "@sveltestrap/sveltestrap";
     import { ListGroup } from "@sveltestrap/sveltestrap";
     import DomainWithProvider from "$lib/components/domains/DomainWithProvider.svelte";
     import { updateDomain } from "$lib/api/domains";
@@ -99,8 +99,33 @@
         genGroups(localDomains, display_by_groups, show_empty_groups, $newlyGroups),
     );
 
+    let collapsedGroups: Set<string> = $state(
+        new Set(JSON.parse(localStorage.getItem("collapsedGroups") || "[]")),
+    );
+
+    let nonEmptyGroupCount: number = $derived(
+        Object.values(groups).filter((g) => g.length > 0).length,
+    );
     let draggedDomain: ZoneListDomain | null = $state(null);
     let dragOverGroup: string | null = $state(null);
+
+    function toggleGroup(gname: string) {
+        const next = new Set(collapsedGroups);
+        if (next.has(gname)) {
+            next.delete(gname);
+        } else {
+            next.add(gname);
+        }
+        collapsedGroups = next;
+        localStorage.setItem("collapsedGroups", JSON.stringify([...next]));
+    }
+
+    function soloGroup(gname: string) {
+        const allGroups = Object.keys(groups);
+        const next = new Set(allGroups.filter((g) => g !== gname));
+        collapsedGroups = next;
+        localStorage.setItem("collapsedGroups", JSON.stringify([...next]));
+    }
 
     async function handleDrop(targetGroup: string) {
         if (!draggedDomain || (draggedDomain.group ?? "") === targetGroup) return;
@@ -185,7 +210,20 @@
                     : undefined}
             >
                 {#if Object.keys(groups).length != 1}
-                    <div class="group-header">
+                    <button
+                        type="button"
+                        class="group-header"
+                        onclick={() => toggleGroup(gname)}
+                        ondblclick={(e) => {
+                            e.preventDefault();
+                            soloGroup(gname);
+                        }}
+                    >
+                        <span
+                            class="group-chevron"
+                            class:collapsed={collapsedGroups.has(gname) && nonEmptyGroupCount > 1}
+                            ><Icon name="chevron-down" /></span
+                        >
                         <span class="group-label">
                             {#if gname === ""}
                                 {$t("domaingroups.no-group")}
@@ -193,69 +231,71 @@
                                 {gname}
                             {/if}
                         </span>
-                    </div>
+                    </button>
                 {/if}
-                <ListGroup {flush}>
-                    {#if display_by_groups && gdomains.length === 0}
-                        <div
-                            class="list-group-item text-center text-muted py-3 empty-group-placeholder"
-                        >
-                            {$t("domaingroups.drop-here")}
-                        </div>
-                    {/if}
-                    {#each gdomains as item (item.id || item.domain)}
-                        {@const href = getDomainHref(item)}
-                        <div
-                            in:fly={{ y: 12, duration: 250, delay: 30 }}
-                            out:fade={{ duration: 150 }}
-                            animate:flip={{ duration: 250 }}
-                        >
-                            {#if href}
-                                <a
-                                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-dark"
-                                    class:draggable-item={display_by_groups}
-                                    {href}
-                                    draggable={display_by_groups || undefined}
-                                    ondragstart={display_by_groups
-                                        ? () => {
-                                              draggedDomain = item;
-                                          }
-                                        : undefined}
-                                    ondragend={display_by_groups
-                                        ? () => {
-                                              draggedDomain = null;
-                                              dragOverGroup = null;
-                                          }
-                                        : undefined}
-                                    onclick={() => dispatch("click", item)}
-                                >
-                                    {@render domainRow(item)}
-                                </a>
-                            {:else}
-                                <button
-                                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-dark"
-                                    class:draggable-item={display_by_groups}
-                                    type="button"
-                                    draggable={display_by_groups || undefined}
-                                    ondragstart={display_by_groups
-                                        ? () => {
-                                              draggedDomain = item;
-                                          }
-                                        : undefined}
-                                    ondragend={display_by_groups
-                                        ? () => {
-                                              draggedDomain = null;
-                                              dragOverGroup = null;
-                                          }
-                                        : undefined}
-                                    onclick={() => dispatch("click", item)}
-                                >
-                                    {@render domainRow(item)}
-                                </button>
-                            {/if}
-                        </div>
-                    {/each}
-                </ListGroup>
+                {#if !collapsedGroups.has(gname) || nonEmptyGroupCount <= 1}
+                    <ListGroup {flush}>
+                        {#if display_by_groups && gdomains.length === 0}
+                            <div
+                                class="list-group-item text-center text-muted py-3 empty-group-placeholder"
+                            >
+                                {$t("domaingroups.drop-here")}
+                            </div>
+                        {/if}
+                        {#each gdomains as item (item.id || item.domain)}
+                            {@const href = getDomainHref(item)}
+                            <div
+                                in:fly={{ y: 12, duration: 250, delay: 30 }}
+                                out:fade={{ duration: 150 }}
+                                animate:flip={{ duration: 250 }}
+                            >
+                                {#if href}
+                                    <a
+                                        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-dark"
+                                        class:draggable-item={display_by_groups}
+                                        {href}
+                                        draggable={display_by_groups || undefined}
+                                        ondragstart={display_by_groups
+                                            ? () => {
+                                                  draggedDomain = item;
+                                              }
+                                            : undefined}
+                                        ondragend={display_by_groups
+                                            ? () => {
+                                                  draggedDomain = null;
+                                                  dragOverGroup = null;
+                                              }
+                                            : undefined}
+                                        onclick={() => dispatch("click", item)}
+                                    >
+                                        {@render domainRow(item)}
+                                    </a>
+                                {:else}
+                                    <button
+                                        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-dark"
+                                        class:draggable-item={display_by_groups}
+                                        type="button"
+                                        draggable={display_by_groups || undefined}
+                                        ondragstart={display_by_groups
+                                            ? () => {
+                                                  draggedDomain = item;
+                                              }
+                                            : undefined}
+                                        ondragend={display_by_groups
+                                            ? () => {
+                                                  draggedDomain = null;
+                                                  dragOverGroup = null;
+                                              }
+                                            : undefined}
+                                        onclick={() => dispatch("click", item)}
+                                    >
+                                        {@render domainRow(item)}
+                                    </button>
+                                {/if}
+                            </div>
+                        {/each}
+                    </ListGroup>
+                {/if}
             </div>
         {/each}
     {/if}
@@ -265,9 +305,14 @@
     .group-header {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
+        gap: 0.25rem;
         margin-bottom: 1rem;
         margin-top: 1.5rem;
+        width: 100%;
+        border: none;
+        background: none;
+        padding: 0;
+        cursor: pointer;
     }
 
     .group-header::before,
@@ -276,6 +321,15 @@
         flex: 1;
         height: 1px;
         background: var(--bs-border-color);
+    }
+
+    .group-chevron {
+        color: var(--bs-secondary-color);
+        transition: transform 0.2s ease;
+    }
+
+    .group-chevron.collapsed {
+        transform: rotate(-90deg);
     }
 
     .group-label {
@@ -290,7 +344,9 @@
         background-color: var(--bs-primary-bg-subtle, #cfe2ff);
         border-radius: 0.5rem;
         outline: 2px dashed var(--bs-primary, #0d6efd);
-        transition: background-color 0.2s ease, outline-color 0.2s ease;
+        transition:
+            background-color 0.2s ease,
+            outline-color 0.2s ease;
     }
 
     .empty-group-placeholder {
@@ -300,7 +356,9 @@
     }
 
     :global(.list-group-item) {
-        transition: background-color 0.15s ease, box-shadow 0.15s ease;
+        transition:
+            background-color 0.15s ease,
+            box-shadow 0.15s ease;
     }
 
     .draggable-item {

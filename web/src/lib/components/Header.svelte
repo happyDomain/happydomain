@@ -37,7 +37,7 @@
         Nav,
     } from "@sveltestrap/sveltestrap";
 
-    import { logout as APILogout } from "$lib/api/user";
+    import { logout as APILogout, cleanUserSession } from "$lib/api/user";
     import HelpButton from "$lib/components/Help.svelte";
     import Logo from "$lib/components/Logo.svelte";
     import { appConfig, navigate } from "$lib/stores/config";
@@ -55,6 +55,7 @@
     function logout() {
         APILogout().then(
             () => {
+                cleanUserSession();
                 refreshUserSession().then(
                     () => {},
                     () => {

@@ -147,6 +147,7 @@ export function cleanUserSession(): void {
             sessionStorage.removeItem(k);
         }
     }
+    localStorage.removeItem("collapsedGroups");
 }
 
 export async function isAuthUser(user: User): Promise<boolean> {
