@@ -24,7 +24,8 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { page } from "$app/state";
-    import { fly } from "svelte/transition";
+    import { fly, fade } from "svelte/transition";
+    import { cubicOut } from "svelte/easing";
 
     import { Icon } from "@sveltestrap/sveltestrap";
 
@@ -42,70 +43,72 @@
 {#if showCard}
     <div
         role="presentation"
-        style="background-color: #0007; position: fixed; width: 100vw; height: 100vh; top:0; left: 0; z-index: 1050"
+        class="vox-backdrop"
+        transition:fade={{ duration: 200 }}
         onclick={() => (showCard = false)}
     ></div>
     <div
-        class="card"
-        style="position: fixed; bottom: calc(7vh + max(1.7vw, 1.7vh)); right: calc(4vw + max(1.7vw, 1.7vh)); z-index: 1052; max-width: 400px;"
-        transition:fly={{ x: 20, y: 20, duration: 200 }}
+        class="card vox-card"
+        transition:fly={{ x: 380, duration: 300, easing: cubicOut }}
     >
-        <div class="card-body row row-cols-2 justify-content-center align-items-center">
-            <div class="col d-flex mb-3 flex-fill">
-                <a
-                    href="https://matrix.to/#/#happyDNS:matrix.org"
-                    target="_blank"
-                    rel="noreferrer"
-                    class="btn btn-lg btn-light flex-fill"
-                    onclick={() => (showCard = false)}
-                    data-umami-event="vox-people-chat"
-                >
-                    <Icon name="chat-text" /><br />
-                    <small>Chat with us</small>
-                </a>
-            </div>
-            <div class="col d-flex mb-3">
-                <a
-                    href="https://help.happydomain.org/{$locale}/"
-                    target="_blank"
-                    rel="noreferrer"
-                    class="btn btn-lg btn-light flex-fill"
-                    onclick={() => (showCard = false)}
-                    data-umami-event="vox-people-help"
-                >
-                    <Icon name="life-preserver" /><br />
-                    <small>Online help</small>
-                </a>
-            </div>
-            <div class="col d-flex flex-fill">
-                <a
-                    href="https://framaforms.org/quel-est-votre-avis-sur-happydns-1610366701?u={$userSession.id
-                        ? $userSession.id
-                        : 0}&amp;i={instancename}{page.route
-                        ? '&p=' + page.route.id
-                        : ''}&amp;l={$locale}"
-                    target="_blank"
-                    rel="noreferrer"
-                    class="btn btn-lg btn-light flex-fill fw-bolder"
-                    onclick={() => (showCard = false)}
-                    data-umami-event="vox-people-feedback"
-                >
-                    <Icon name="pen" /><br />
-                    <small>Write to us</small>
-                </a>
-            </div>
-            <div class="col d-flex">
-                <a
-                    href="https://feedback.happydomain.org/"
-                    target="_blank"
-                    rel="noreferrer"
-                    class="btn btn-lg btn-light flex-fill fw-bolder"
-                    onclick={() => (showCard = false)}
-                    data-umami-event="vox-people-feedback"
-                >
-                    <Icon name="feather" /><br />
-                    <small>Give your feedback</small>
-                </a>
+        <div class="card-body">
+            <div class="row row-cols-2 g-2">
+                <div class="col d-flex">
+                    <a
+                        href="https://matrix.to/#/#happyDNS:matrix.org"
+                        target="_blank"
+                        rel="noreferrer"
+                        class="btn btn-outline-secondary flex-fill vox-action"
+                        onclick={() => (showCard = false)}
+                        data-umami-event="vox-people-chat"
+                    >
+                        <Icon name="chat-text" />
+                        <span>Chat with us</span>
+                    </a>
+                </div>
+                <div class="col d-flex">
+                    <a
+                        href="https://help.happydomain.org/{$locale}/"
+                        target="_blank"
+                        rel="noreferrer"
+                        class="btn btn-outline-secondary flex-fill vox-action"
+                        onclick={() => (showCard = false)}
+                        data-umami-event="vox-people-help"
+                    >
+                        <Icon name="life-preserver" />
+                        <span>Online help</span>
+                    </a>
+                </div>
+                <div class="col d-flex">
+                    <a
+                        href="https://framaforms.org/quel-est-votre-avis-sur-happydns-1610366701?u={$userSession.id
+                            ? $userSession.id
+                            : 0}&amp;i={instancename}{page.route
+                            ? '&p=' + page.route.id
+                            : ''}&amp;l={$locale}"
+                        target="_blank"
+                        rel="noreferrer"
+                        class="btn btn-outline-secondary flex-fill vox-action"
+                        onclick={() => (showCard = false)}
+                        data-umami-event="vox-people-feedback"
+                    >
+                        <Icon name="pen" />
+                        <span>Write to us</span>
+                    </a>
+                </div>
+                <div class="col d-flex">
+                    <a
+                        href="https://feedback.happydomain.org/"
+                        target="_blank"
+                        rel="noreferrer"
+                        class="btn btn-outline-secondary flex-fill vox-action"
+                        onclick={() => (showCard = false)}
+                        data-umami-event="vox-people-feedback"
+                    >
+                        <Icon name="feather" />
+                        <span>Give feedback</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -113,23 +116,75 @@
 <button
     id="voxpeople"
     title={$t("common.survey")}
-    class="d-flex btn btn-light justify-content-center align-items-center"
+    class="d-flex btn justify-content-center align-items-center"
+    class:vox-open={showCard}
     data-umami-event="vox-people"
     onclick={() => (showCard = !showCard)}
 >
-    <Icon name="chat-right-text" />
+    <Icon name={showCard ? "x-lg" : "chat-right-text"} />
 </button>
 
 <style>
+    .vox-backdrop {
+        background-color: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(2px);
+        position: fixed;
+        inset: 0;
+        z-index: 1050;
+    }
+
+    .vox-card {
+        position: fixed;
+        bottom: calc(7vh + 3.5rem);
+        right: 1.5rem;
+        z-index: 1052;
+        max-width: 340px;
+        width: calc(100vw - 3rem);
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        transform-origin: bottom right;
+    }
+
+    .vox-action {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.75rem 0.5rem;
+        border-radius: 0.75rem;
+        font-size: 0.95rem;
+        font-weight: 500;
+        transition: background-color 0.15s, border-color 0.15s;
+    }
+
+    .vox-action :global(.bi) {
+        font-size: 1.4rem;
+    }
+
     #voxpeople {
         position: fixed;
         bottom: 7vh;
-        right: 4vw;
+        right: 1.5rem;
         z-index: 1051;
-        height: max(4vw, 4vh);
-        width: max(4vw, 4vh);
-        border-radius: 4vw;
-        box-shadow: 0 0px 3px 0 #9332bb;
-        font-size: max(1.7vw, 1.7vh);
+        height: 2.75rem;
+        width: 2.75rem;
+        border-radius: 50%;
+        background: var(--bs-primary-bg-subtle);
+        color: var(--bs-primary-text-emphasis);
+        border: 1px solid var(--bs-primary-border-subtle);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        font-size: 1.1rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    }
+
+    #voxpeople:hover {
+        transform: scale(1.08);
+        filter: brightness(0.95);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .vox-open {
+        filter: brightness(0.9);
     }
 </style>

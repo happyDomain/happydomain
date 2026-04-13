@@ -94,17 +94,27 @@
 </script>
 
 <Container class="flex-fill pt-4 pb-5">
-    <h1 class="text-center mb-4">
-        {$t("common.welcome.start")}<Logo height="40" />{$t("common.welcome.end")}
-    </h1>
+    <div class="text-center mb-4">
+        <h1 class="welcome-title">
+            {$t("common.welcome.start")}<Logo height="40" />{$t("common.welcome.end")}
+        </h1>
+    </div>
 
-    <Row>
-        <Col md="8" class="order-1 order-md-0">
+    <Row class="g-4">
+        <Col lg="8" class="order-1 order-lg-0">
             <DomainListSection />
         </Col>
 
-        <Col md="4" class="order-0 order-md-1">
+        <Col lg="4" class="order-0 order-lg-1">
             <Sidebar />
         </Col>
     </Row>
 </Container>
+
+<style>
+    .welcome-title {
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: var(--bs-body-color);
+    }
+</style>

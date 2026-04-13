@@ -117,6 +117,7 @@
 {#if provider === "altcha"}
     <div class="mb-3">
         <altcha-widget
+            class="w-100 d-flex justify-content-center"
             bind:this={altchaWidget}
             challengeurl="/api/auth/challenge"
             onstatechange={(ev: CustomEvent<{ payload: string; state: string }>) => {

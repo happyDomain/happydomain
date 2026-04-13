@@ -24,7 +24,7 @@
 <script lang="ts">
     import { navigate } from "$lib/stores/config";
 
-    import { Button, Col, Input, Row, Spinner } from "@sveltestrap/sveltestrap";
+    import { Button, FormGroup, Input, Spinner } from "@sveltestrap/sveltestrap";
 
     import { recoverAccount } from "$lib/api/user";
     import { checkWeakPassword, checkPasswordConfirmation } from "$lib/password";
@@ -78,65 +78,45 @@
     }
 </script>
 
-<form class="container my-1" onsubmit={goRecover} bind:this={formElm}>
-    <p>
-        {$t("password.fill")}
-    </p>
-    <Row>
-        <label
-            for="password-input"
-            class="col-md-4 col-form-label text-truncate text-md-right fw-bold"
-        >
-            {$t("password.new")}
-        </label>
-        <Col md="6">
-            <Input
-                autocomplete="new-password"
-                feedback={!passwordState ? $t("errors.password-weak") : null}
-                id="password-input"
-                placeholder="xXxXxXxXxX"
-                required
-                type="password"
-                invalid={passwordState !== undefined && !passwordState}
-                valid={passwordState}
-                bind:value
-                on:change={() => (passwordState = checkWeakPassword(value))}
-            />
-        </Col>
-    </Row>
-    <Row class="mt-2">
-        <label
-            for="passwordconfirm-input"
-            class="col-md-4 col-form-label text-truncate text-md-right fw-bold"
-        >
-            {$t("password.confirmation")}
-        </label>
-        <Col md="6">
-            <Input
-                feedback={!passwordConfirmState ? $t("errors.password-match") : null}
-                id="passwordconfirm-input"
-                placeholder="xXxXxXxXxX"
-                required
-                type="password"
-                invalid={passwordConfirmState !== undefined && !passwordConfirmState}
-                valid={passwordConfirmState}
-                bind:value={passwordConfirmation}
-                on:change={() =>
-                    (passwordConfirmState = checkPasswordConfirmation(value, passwordConfirmation))}
-            />
-        </Col>
-    </Row>
-    <Row class="mt-3">
+<form onsubmit={goRecover} bind:this={formElm}>
+    <FormGroup floating label={$t("password.new")}>
+        <Input
+            autocomplete="new-password"
+            feedback={!passwordState ? $t("errors.password-weak") : null}
+            id="password-input"
+            placeholder={$t("password.new")}
+            required
+            type="password"
+            invalid={passwordState !== undefined && !passwordState}
+            valid={passwordState}
+            bind:value
+            on:change={() => (passwordState = checkWeakPassword(value))}
+        />
+    </FormGroup>
+    <FormGroup floating label={$t("password.confirmation")}>
+        <Input
+            feedback={!passwordConfirmState ? $t("errors.password-match") : null}
+            id="passwordconfirm-input"
+            placeholder={$t("password.confirmation")}
+            required
+            type="password"
+            invalid={passwordConfirmState !== undefined && !passwordConfirmState}
+            valid={passwordConfirmState}
+            bind:value={passwordConfirmation}
+            on:change={() =>
+                (passwordConfirmState = checkPasswordConfirmation(value, passwordConfirmation))}
+        />
+    </FormGroup>
+    <div class="d-grid mt-3">
         <Button
-            class="offset-1 col-10 offset-sm-2 col-sm-8 offset-md-3 col-md-6 offset-lg-4 col-lg-4"
             type="submit"
             color="primary"
             disabled={formSent}
         >
             {#if formSent}
-                <Spinner size="sm" />
+                <Spinner size="sm" class="me-1" />
             {/if}
             {$t("password.redefine")}
         </Button>
-    </Row>
+    </div>
 </form>

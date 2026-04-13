@@ -59,86 +59,79 @@
 </script>
 
 <form class={className} onsubmit={preventDefault(submitRequest)}>
-    <FormGroup>
-        <label for="domain">
-            {$t("common.domain")}
-        </label>
+    <FormGroup floating label={$t("common.domain")}>
         <Input
             aria-describedby="domainHelpBlock"
             id="domain"
             class="font-monospace"
             list="my-domains"
             required
-            placeholder="happydomain.org"
+            placeholder={$t("common.domain")}
             bind:value={value.domain}
         />
-        <div id="domainHelpBlock" class="form-text">
-            {@html $t("resolver.domain-description", {
-                domain: `<a href="/resolver/wikipedia.org" class="font-monospace">wikipedia.org</a>`,
-            })}
-        </div>
-        <datalist id="my-domains">
-            {#each sortedDomains as dn (dn.id)}
-                <option>
-                    {dn.domain}
-                </option>
-            {/each}
-        </datalist>
     </FormGroup>
+    <div id="domainHelpBlock" class="form-text mb-3 mt-n2">
+        {@html $t("resolver.domain-description", {
+            domain: `<a href="/resolver/wikipedia.org" class="font-monospace">wikipedia.org</a>`,
+        })}
+    </div>
+    <datalist id="my-domains">
+        {#each sortedDomains as dn (dn.id)}
+            <option>
+                {dn.domain}
+            </option>
+        {/each}
+    </datalist>
 
-    <div class="text-center mb-3">
-        <Button type="button" color="secondary" id="settingsToggler">
+    <div class="mb-3">
+        <button
+            type="button"
+            class="btn btn-sm btn-link text-body-secondary text-decoration-none p-0 d-inline-flex align-items-center gap-1"
+            id="settingsToggler"
+        >
+            <i class="bi bi-sliders"></i>
             {$t("resolver.advanced")}
-        </Button>
+        </button>
     </div>
 
     <Collapse toggler="#settingsToggler">
-        <FormGroup>
-            <label for="select-type">
-                {$t("common.field")}
-            </label>
+        <FormGroup floating label={$t("common.field")}>
             <SelectType
                 aria-describedby="typeHelpBlock"
                 id="select-type"
                 required
                 bind:value={value.type}
             />
-            <div id="typeHelpBlock" class="form-text">
-                {$t("resolver.field-description")}
-            </div>
         </FormGroup>
+        <div id="typeHelpBlock" class="form-text mb-3 mt-n2">
+            {$t("resolver.field-description")}
+        </div>
 
-        <FormGroup>
-            <label for="select-resolver">
-                {$t("common.resolver")}
-            </label>
+        <FormGroup floating label={$t("common.resolver")}>
             <SelectResolver
                 aria-describedby="resolverHelpBlock"
                 id="select-resolver"
                 required
                 bind:value={value.resolver}
             />
-            <div id="resolverHelpBlock" class="form-text">
-                {$t("resolver.resolver-description")}
-            </div>
         </FormGroup>
+        <div id="resolverHelpBlock" class="form-text mb-3 mt-n2">
+            {$t("resolver.resolver-description")}
+        </div>
 
         {#if value.resolver === "custom"}
-            <FormGroup>
-                <label for="custom-resolver">
-                    {$t("resolver.custom")}
-                </label>
+            <FormGroup floating label={$t("resolver.custom")}>
                 <Input
                     aria-describedby="customResolverHelpBlock"
                     id="custom-resolver"
                     required={value.resolver === "custom"}
-                    placeholder="127.0.0.1"
+                    placeholder={$t("resolver.custom")}
                     bind:value={value.custom}
                 />
-                <div id="customResolverHelpBlock" class="form-text">
-                    {$t("resolver.custom-description")}
-                </div>
             </FormGroup>
+            <div id="customResolverHelpBlock" class="form-text mb-3 mt-n2">
+                {$t("resolver.custom-description")}
+            </div>
         {/if}
 
         <Input
@@ -151,11 +144,12 @@
         />
     </Collapse>
 
-    <div class="mx-3 d-flex justify-content-end">
+    <div class="d-grid">
         <Button type="submit" color="primary" disabled={request_pending}>
             {#if request_pending}
-                <Spinner size="sm" />
+                <Spinner size="sm" class="me-1" />
             {/if}
+            <i class="bi bi-search me-1"></i>
             {$t("common.run")}
         </Button>
     </div>

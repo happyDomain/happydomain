@@ -72,10 +72,10 @@
 
 {#if $appConfig.msg_header}
     <div
-        class={($appConfig.msg_header.color ? "bg-" + $appConfig.msg_header.color : "bg-danger") +
-            " text-light text-center fw-bolder pb-1"}
+        class={"text-light text-center fw-semibold py-1 " +
+            ($appConfig.msg_header.color ? "bg-" + $appConfig.msg_header.color : "bg-danger")}
         id="msg_header"
-        style="z-index: 101; margin-bottom: -.2em"
+        style="z-index: 101"
     >
         <small>
             {$appConfig.msg_header.text}

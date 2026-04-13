@@ -25,8 +25,12 @@
     import { Button, Card, Icon } from "@sveltestrap/sveltestrap";
 
     import DomainGroupList from "$lib/components/forms/DomainGroupList.svelte";
-    import DomainGroupModal, { controls as ctrlDomainGroup } from "$lib/components/modals/DomainGroup.svelte";
-    import NewDomainGroupModal, { controls as ctrlNewDomainGroup } from "$lib/components/modals/NewDomainGroup.svelte";
+    import DomainGroupModal, {
+        controls as ctrlDomainGroup,
+    } from "$lib/components/modals/DomainGroup.svelte";
+    import NewDomainGroupModal, {
+        controls as ctrlNewDomainGroup,
+    } from "$lib/components/modals/NewDomainGroup.svelte";
     import { domains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
@@ -39,9 +43,12 @@
 </script>
 
 {#if $domains && $domains.length}
-    <Card class="mb-3 ${className}">
+    <Card class={className}>
         <div class="card-header d-flex justify-content-between align-items-center">
-            {$t("domaingroups.title")}
+            <span class="d-flex align-items-center gap-2">
+                <Icon name="collection" />
+                {$t("domaingroups.title")}
+            </span>
             <div>
                 <Button
                     type="button"

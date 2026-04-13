@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { Col, Row } from "@sveltestrap/sveltestrap";
+    import { Col, Icon, Row } from "@sveltestrap/sveltestrap";
 
     import PageTitle from "$lib/components/PageTitle.svelte";
     import { SERVICE_FAMILY_HIDDEN } from "$lib/model/service_specs.svelte";
@@ -57,7 +57,7 @@
 
     {#each categoryNames as category}
         <section class="mb-5">
-            <h2 class="h4 text-capitalize mb-3">{category}</h2>
+            <h2 class="category-heading">{category}</h2>
             <Row cols={{ xs: 1, sm: 2, md: 3, lg: 4 }}>
                 {#each grouped[category] as svc (svc._svctype)}
                     <Col class="mb-3">
@@ -74,16 +74,17 @@
                                         alt={$t("generator.icon-alt", { name: svc.name })}
                                         width="32"
                                         height="32"
-                                        class="flex-shrink-0"
-                                        style="object-fit: contain;"
+                                        class="svc-icon flex-shrink-0"
                                     />
                                 {:else}
-                                    <span class="flex-shrink-0 fs-4">📄</span>
+                                    <div class="svc-icon-placeholder flex-shrink-0">
+                                        <Icon name="file-earmark-text" />
+                                    </div>
                                 {/if}
-                                <div>
+                                <div class="min-width-0">
                                     <h3 class="h6 card-title mb-1">{svc.name}</h3>
                                     {#if svc.description}
-                                        <p class="card-text small text-muted mb-0">
+                                        <p class="card-text small text-body-secondary mb-0">
                                             {svc.description}
                                         </p>
                                     {/if}
@@ -98,14 +99,52 @@
 </div>
 
 <style>
-    .generator-card {
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        transition:
-            box-shadow 0.15s ease,
-            border-color 0.15s ease;
+    .category-heading {
+        font-size: 1.1rem;
+        font-weight: 600;
+        text-transform: capitalize;
+        color: var(--bs-secondary);
+        letter-spacing: 0.03em;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     }
+
+    .generator-card {
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 0.75rem;
+        transition:
+            box-shadow 0.2s ease,
+            border-color 0.2s ease,
+            transform 0.2s ease;
+    }
+
     .generator-card:hover {
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         border-color: var(--bs-primary);
+        transform: translateY(-2px);
+    }
+
+    .svc-icon {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+        border-radius: 0.375rem;
+    }
+
+    .svc-icon-placeholder {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.04);
+        border-radius: 0.375rem;
+        color: var(--bs-secondary);
+        font-size: 1rem;
+    }
+
+    .min-width-0 {
+        min-width: 0;
     }
 </style>

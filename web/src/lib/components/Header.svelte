@@ -73,56 +73,47 @@
     }
 </script>
 
-<Navbar
-    class="{className} {$userSession.id ? 'p-0' : ''}"
-    style="z-index: 100"
-    id="nav"
-    container
-    expand="xs"
-    light
->
+<Navbar class="{className} py-1" id="nav" container expand="xs" light style="z-index: 100">
     <NavbarBrand
         href="/"
-        style="padding: 0; margin: -.5rem 1rem -.5rem 0;"
+        class="me-3"
+        style="padding: 0;"
         target={$userSession.id ? undefined : "_self"}
     >
         <Logo />
     </NavbarBrand>
-    <Nav class="ms-auto align-items-center" navbar>
-        <HelpButton
-            size={$userSession.id ? "sm" : undefined}
-            class={$userSession.id ? "my-2" : "mx-1"}
-        />
+    <Nav class="ms-auto align-items-center gap-1" navbar>
+        <HelpButton size="sm" class="btn-icon" />
         {#if $userSession.id}
             <Dropdown nav inNavbar>
-                <DropdownToggle nav caret>
-                    <Button color="dark" size="sm">
-                        <Icon name="person" />
-                        {#if $userSession.email !== "_no_auth"}
-                            <span class="d-inline d-sm-none">
-                                {$userSession.email.split("@")[0]}
-                            </span>
-                        {/if}
-                        <span class="d-none d-sm-inline">
-                            {#if $userSession.email !== "_no_auth"}
-                                {$userSession.email}
-                            {:else}
-                                {$t("menu.quick-menu")}
-                            {/if}
+                <DropdownToggle nav caret class="user-toggle">
+                    <Icon name="person-circle" />
+                    {#if $userSession.email !== "_no_auth"}
+                        <span class="d-inline d-sm-none">
+                            {$userSession.email.split("@")[0]}
                         </span>
-                    </Button>
+                    {/if}
+                    <span class="d-none d-sm-inline">
+                        {#if $userSession.email !== "_no_auth"}
+                            {$userSession.email}
+                        {:else}
+                            {$t("menu.quick-menu")}
+                        {/if}
+                    </span>
                 </DropdownToggle>
                 <DropdownMenu end>
                     <DropdownItem
                         active={page.route && page.route.id == "/domains"}
                         href="/domains/"
                     >
+                        <Icon name="globe2" class="me-2" />
                         {$t("menu.my-domains")}
                     </DropdownItem>
                     <DropdownItem
                         active={page.route && page.route.id == "/providers"}
                         href="/providers/"
                     >
+                        <Icon name="hdd-network" class="me-2" />
                         {$t("menu.my-providers")}
                     </DropdownItem>
                     <DropdownItem divider />
@@ -130,54 +121,58 @@
                         active={page.route && page.route.id == "/providers/features"}
                         href="/providers/features"
                     >
+                        <Icon name="buildings" class="me-2" />
                         {$t("menu.provider-features")}
                     </DropdownItem>
                     <DropdownItem
                         active={page.route && page.route.id == "/resolver/[[domain]]"}
                         href="/resolver"
                     >
+                        <Icon name="search" class="me-2" />
                         {$t("menu.dns-resolver")}
                     </DropdownItem>
                     <DropdownItem divider />
                     <DropdownItem active={page.route && page.route.id == "/me"} href="/me">
+                        <Icon name="gear" class="me-2" />
                         {$t("menu.my-account")}
                     </DropdownItem>
                     {#if $userSession.email !== "_no_auth"}
                         <DropdownItem divider />
                         <DropdownItem on:click={logout}>
+                            <Icon name="box-arrow-right" class="me-2" />
                             {$t("menu.logout")}
                         </DropdownItem>
                     {/if}
                 </DropdownMenu>
             </Dropdown>
         {:else}
-            <Button class="mx-1" color="info" href="/resolver">
-                <Icon name="list" aria-hidden="true" />
-                <span class="d-none d-sm-inline">{$t("menu.dns-resolver")}</span>
+            <Button class="btn-sm" color="info" outline href="/resolver">
+                <Icon name="search" aria-hidden="true" />
+                <span class="d-none d-sm-inline ms-1">{$t("menu.dns-resolver")}</span>
             </Button>
 
             {#if !$appConfig.disable_registration}
                 <Button
-                    class="d-none d-md-inline-block mx-1"
+                    class="d-none d-md-inline-block btn-sm"
                     outline={!page.route || page.route.id != "/register"}
                     color="dark"
                     href="/register"
                 >
                     <Icon name="person-plus-fill" aria-hidden="true" />
-                    {$t("menu.signup")}
+                    <span class="ms-1">{$t("menu.signup")}</span>
                 </Button>
             {/if}
             <Button
-                class="d-none d-md-inline-block mx-1"
+                class="d-none d-md-inline-block btn-sm"
                 outline={!page.route || page.route.id != "/login"}
                 color="primary"
                 href="/login"
             >
                 <Icon name="person-check-fill" aria-hidden="true" />
-                {$t("menu.signin")}
+                <span class="ms-1">{$t("menu.signin")}</span>
             </Button>
             <Dropdown nav inNavbar>
-                <DropdownToggle nav caret>{$locale}</DropdownToggle>
+                <DropdownToggle nav caret class="text-uppercase small">{$locale}</DropdownToggle>
                 <DropdownMenu end>
                     {#each $locales as lang}
                         <DropdownItem active={$locale == lang} on:click={() => ($locale = lang)}>

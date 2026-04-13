@@ -22,8 +22,9 @@
 -->
 
 <script lang="ts">
-    import { Card, CardBody, CardHeader, Col, Container, Row } from "@sveltestrap/sveltestrap";
+    import { Col, Container, Row } from "@sveltestrap/sveltestrap";
 
+    import Logo from "$lib/components/Logo.svelte";
     import { appConfig } from "$lib/stores/config";
     import { t } from "$lib/translations";
     import LoginForm from "./LoginForm.svelte";
@@ -33,30 +34,63 @@
     <title>{$t("onboarding.steps.welcome")} - happyDomain</title>
 </svelte:head>
 
-<Container class="my-3">
-    <Row>
-        <Col sm="4" class="d-none d-sm-flex flex-column">
-            <img src="/img/login.webp" alt="Welcome back!" />
+<Container class="my-auto py-4">
+    <Row class="justify-content-center align-items-stretch g-0">
+        <Col md="5" lg="4" class="d-none d-md-block">
+            <div class="login-visual">
+                <img src="/img/login.webp" alt="Welcome back!" class="login-img" />
+            </div>
         </Col>
-        <Col sm="8" class="d-flex flex-column justify-content-center">
-            <Card>
-                <CardHeader>
-                    <h6 class="card-title my-1 fw-bold">
-                        {$t("account.signup.join-call")}
-                    </h6>
-                </CardHeader>
-                <CardBody>
-                    <LoginForm />
-                </CardBody>
-            </Card>
-            {#if !$appConfig.disable_registration}
-                <div class="text-center mt-4">
-                    {$t("account.ask-have")}
-                    <a href="/register" class="fw-bold">
-                        {$t("account.join")}
-                    </a>
+        <Col sm="10" md="7" lg="5">
+            <div class="login-card">
+                <div class="text-center mb-4 d-md-none">
+                    <Logo height="32" />
                 </div>
-            {/if}
+                <h5 class="fw-bold mb-4">{$t("account.signup.join-call")}</h5>
+                <LoginForm />
+                {#if !$appConfig.disable_registration}
+                    <div class="text-center mt-4 pt-3 border-top">
+                        <span class="text-body-secondary">{$t("account.ask-have")}</span>
+                        <a href="/register" class="fw-semibold text-decoration-none ms-1">
+                            {$t("account.join")}
+                        </a>
+                    </div>
+                {/if}
+            </div>
         </Col>
     </Row>
 </Container>
+
+<style>
+    .login-visual {
+        height: 100%;
+        border-radius: 1rem 0 0 1rem;
+        overflow: hidden;
+        background: linear-gradient(135deg, #f0faf7 0%, #e8f4f8 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .login-img {
+        max-width: 100%;
+        object-fit: contain;
+    }
+
+    .login-card {
+        background: #fff;
+        border-radius: 0 1rem 1rem 0;
+        padding: 2.5rem 2rem;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    @media (max-width: 767.98px) {
+        .login-card {
+            border-radius: 1rem;
+        }
+    }
+</style>

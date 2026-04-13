@@ -46,7 +46,7 @@
     });
 </script>
 
-<div class="toast-container position-fixed top-0 end-0 p-3" class:page-hidden={hidden}>
+<div class="toast-container position-fixed top-0 end-0 p-3 mt-5" class:page-hidden={hidden} style="z-index: 1060">
     {#each $toasts as toast}
         <Toast onmouseenter={() => toast.pause()} onmouseleave={() => toast.resume()}>
             <ToastHeader toggle={() => toast.dismiss()} icon={toast.getColor()}>
@@ -80,12 +80,19 @@
 </div>
 
 <style>
+    .toast-container :global(.toast) {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        border: none;
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+
     .toast-progress {
-        height: 4px;
+        height: 3px;
         width: 100%;
         animation: toast-shrink linear forwards;
         transform-origin: left;
-        opacity: 0.75;
+        opacity: 0.8;
     }
 
     :global(.toast:hover .toast-progress),

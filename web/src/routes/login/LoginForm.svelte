@@ -129,15 +129,14 @@
     }
 </script>
 
-<form class="container my-1" bind:this={formElm} onsubmit={testLogin}>
-    <FormGroup>
-        <Label for="email-input">{$t("email.address")}</Label>
+<form bind:this={formElm} onsubmit={testLogin}>
+    <FormGroup floating label={$t("email.address")}>
         <Input
             aria-describedby="emailHelpBlock"
             autocomplete="username"
             autofocus
             id="email-input"
-            placeholder="pMockapetris@usc.edu"
+            placeholder={$t("email.address")}
             required
             type="email"
             invalid={emailState !== undefined && !emailState}
@@ -146,12 +145,11 @@
             on:change={() => (emailState = loginForm.email.indexOf("@") > 0)}
         />
     </FormGroup>
-    <FormGroup>
-        <Label for="password-input">{$t("common.password")}</Label>
+    <FormGroup floating label={$t("common.password")}>
         <Input
             autocomplete="current-password"
             id="password-input"
-            placeholder="xXxXxXxXxX"
+            placeholder={$t("common.password")}
             required
             type="password"
             invalid={passwordState !== undefined && !passwordState}
@@ -159,40 +157,42 @@
             bind:value={loginForm.password}
         />
     </FormGroup>
+    <div class="d-flex justify-content-end mb-3">
+        <button type="button" class="btn btn-link btn-sm text-body-secondary p-0 text-decoration-none" onclick={handleForgottenPassword}>
+            {$t("password.forgotten")}
+        </button>
+    </div>
     {#if rateLimited}
-        <p class="text-danger">{$t("errors.rate-limited")}</p>
+        <div class="alert alert-danger py-2">{$t("errors.rate-limited")}</div>
     {/if}
     {#if $appConfig.captcha_provider && captchaRequired}
-        <p>{$t("captcha.human-check")}</p>
+        <p class="text-body-secondary small">{$t("captcha.human-check")}</p>
         <CaptchaWidget bind:this={captchaWidget} bind:token={captchaToken} />
     {/if}
-    <div class="d-flex flex-column flex-lg-row gap-2 justify-content-around">
+    <div class="d-grid gap-2">
         <Button type="submit" color="primary" disabled={formSent || rateLimited}>
             {#if formSent}
-                <Spinner size="sm" />
+                <Spinner size="sm" class="me-1" />
             {/if}
             {$t("common.go")}
         </Button>
         {#if $appConfig.oidc_configured}
             {#await getOidcProvider() then oidc}
-                <Button href={"/auth/oidc" + (page.url.searchParams.get("next") ? "?next=" + page.url.searchParams.get("next") : "")} color="secondary">
+                <Button href={"/auth/oidc" + (page.url.searchParams.get("next") ? "?next=" + page.url.searchParams.get("next") : "")} outline color="dark">
                     {#if oidc.provider == "google.com"}
-                        <i class="bi bi-google"></i>
+                        <i class="bi bi-google me-2"></i>
                     {:else if oidc.provider == "gitlab.com" || oidc.provider == "framagit.org"}
-                        <i class="bi bi-gitlab"></i>
+                        <i class="bi bi-gitlab me-2"></i>
                     {:else if oidc.provider == "github.com"}
-                        <i class="bi bi-github"></i>
+                        <i class="bi bi-github me-2"></i>
                     {:else if oidc.provider == "microsoft.com"}
-                        <i class="bi bi-microsoft"></i>
+                        <i class="bi bi-microsoft me-2"></i>
                     {:else if oidc.provider == "apple.com"}
-                        <i class="bi bi-apple"></i>
+                        <i class="bi bi-apple me-2"></i>
                     {/if}
                     {$t("account.oidc-login", { provider: oidc.provider })}
                 </Button>
             {/await}
         {/if}
-        <Button type="button" on:click={handleForgottenPassword} outline color="dark">
-            {$t("password.forgotten")}
-        </Button>
     </div>
 </form>

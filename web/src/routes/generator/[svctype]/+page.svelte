@@ -86,28 +86,37 @@
 <Container fluid class="my-4 flex-fill">
     <Row class="justify-content-center">
         <Col lg="8" xl="7">
+            <div class="mb-3">
+                <a href="/generator" class="text-body-secondary text-decoration-none small">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    {$t("common.back")}
+                </a>
+            </div>
+
             <PageTitle
                 title={$t("generator.svctype.title", { name: svcSpec.name })}
                 subtitle={svcSpec.description}
             />
 
-            <div class="card mb-4">
-                <h4 class="card-header fw-semibold">
-                    1. {$t("generator.svctype.domain-settings")}
-                </h4>
-                <div class="card-body">
-                    <p class="text-muted small mb-2">
+            <div class="step-card mb-4">
+                <div class="step-header">
+                    <span class="step-number">1</span>
+                    <h4 class="step-title">{$t("generator.svctype.domain-settings")}</h4>
+                </div>
+                <div class="step-body">
+                    <p class="text-body-secondary small mb-2">
                         {$t("generator.svctype.domain-help")}
                     </p>
                     <Input type="text" autofocus placeholder="example.com." bind:value={domain} />
                 </div>
             </div>
 
-            <div class="card mb-4">
-                <h4 class="card-header fw-semibold">
-                    2. {$t("generator.svctype.configure-record")}
-                </h4>
-                <div class="card-body">
+            <div class="step-card mb-4">
+                <div class="step-header">
+                    <span class="step-number">2</span>
+                    <h4 class="step-title">{$t("generator.svctype.configure-record")}</h4>
+                </div>
+                <div class="step-body">
                     {#key svctype}
                         <ServiceEditor
                             dn=""
@@ -119,28 +128,29 @@
                 </div>
             </div>
 
-            <div class="card mb-4">
-                <h4 class="card-header fw-semibold">
-                    3. {$t("generator.svctype.generated-records")}
-                </h4>
-                <div class="card-body p-0">
+            <div class="step-card mb-4">
+                <div class="step-header">
+                    <span class="step-number">3</span>
+                    <h4 class="step-title">{$t("generator.svctype.generated-records")}</h4>
+                </div>
+                <div class="step-body p-0">
                     {#if recordsPromise === null}
-                        <div class="p-3 text-muted small">
+                        <div class="p-3 text-body-secondary small">
                             {$t("generator.svctype.fill-form")}
                         </div>
                     {:else}
                         {#await recordsPromise}
-                            <div class="p-3 d-flex align-items-center gap-2 text-muted">
+                            <div class="p-3 d-flex align-items-center gap-2 text-body-secondary">
                                 <Spinner size="sm" />
                                 <span>{$t("generator.svctype.generating")}</span>
                             </div>
                         {:then records}
                             {#if records && records.length > 0}
-                                <pre class="mb-0 p-3 font-monospace small">{records
+                                <pre class="records-output">{records
                                         .map((rr) => printRR(rr))
                                         .join("\n")}</pre>
                             {:else}
-                                <div class="p-3 text-muted small">
+                                <div class="p-3 text-body-secondary small">
                                     {$t("generator.svctype.no-records")}
                                 </div>
                             {/if}
@@ -151,17 +161,78 @@
                 </div>
             </div>
 
-            <div class="card border-primary mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">{$t("generator.svctype.cta-title")}</h5>
-                    <p class="card-text text-muted">
-                        {$t("generator.svctype.cta-text")}
-                    </p>
-                    <a href="/register" class="btn btn-primary"
-                        >{$t("generator.svctype.cta-button")}</a
-                    >
+            <div class="cta-card mb-4">
+                <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-3">
+                    <div class="flex-grow-1">
+                        <h5 class="fw-bold mb-1">{$t("generator.svctype.cta-title")}</h5>
+                        <p class="text-body-secondary small mb-0">
+                            {$t("generator.svctype.cta-text")}
+                        </p>
+                    </div>
+                    <a href="/register" class="btn btn-primary flex-shrink-0">
+                        {$t("generator.svctype.cta-button")}
+                    </a>
                 </div>
             </div>
         </Col>
     </Row>
 </Container>
+
+<style>
+    .step-card {
+        background: #fff;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 0.75rem;
+        overflow: hidden;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    .step-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        background: rgba(0, 0, 0, 0.015);
+    }
+
+    .step-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.75rem;
+        height: 1.75rem;
+        border-radius: 50%;
+        background: var(--bs-primary);
+        color: #fff;
+        font-size: 0.8rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .step-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .step-body {
+        padding: 1.25rem;
+    }
+
+    .records-output {
+        margin: 0;
+        padding: 1rem 1.25rem;
+        font-size: 0.8rem;
+        background: #f8f9fa;
+        border-top: 1px solid rgba(0, 0, 0, 0.04);
+        overflow-x: auto;
+    }
+
+    .cta-card {
+        background: linear-gradient(135deg, #f0faf7 0%, #e8f4f8 100%);
+        border: 1px solid rgba(28, 180, 135, 0.2);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+    }
+</style>

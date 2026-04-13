@@ -16,15 +16,30 @@ $enable-gradients: true;
 $enable-responsive-font-sizes: true;
 $enable-cssgrid: true;
 
-$font-family-sans-serif: Montserrat,-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-$font-family-monospace: JetBrainsMono, 'Fantasque Sans Mono', SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+$font-family-sans-serif:
+    Montserrat,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    "Noto Sans",
+    sans-serif,
+    "Apple Color Emoji",
+    "Segoe UI Emoji",
+    "Segoe UI Symbol",
+    "Noto Color Emoji";
+$font-family-monospace:
+    JetBrainsMono, "Fantasque Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
 
 @import "bootstrap/scss/bootstrap";
 
 body {
     display: flex;
     flex-direction: column;
-    min-height:100%;
+    min-height: 100%;
 }
 #app {
     display: flex;
@@ -34,19 +49,38 @@ body {
 }
 
 nav.navbar {
-    box-shadow: 0 0px 3px 0 $primary;
-    border-bottom: 1px solid $primary;
-    transition: padding 1s;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba($primary, 0.65);
+    border-bottom: 1px solid rgba($primary, 0.35);
+    transition:
+        padding 0.3s ease,
+        box-shadow 0.3s ease;
     z-index: 2;
 }
 
 footer {
-    border-top: 3px solid #9332bb;
+    border-top: 2px solid rgba(#9332bb, 0.3);
+}
+
+.dropdown-menu {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+    padding: 0.35rem;
+}
+
+.dropdown-item {
+    border-radius: 0.35rem;
+    padding: 0.4rem 0.75rem;
 }
 
 .badge-gray {
     color: #fff;
     background-color: $gray-600;
+}
+
+.list-group-item-action {
+    transition: background-color 0.15s;
 }
 
 .card-hover:hover {
@@ -83,39 +117,48 @@ a.sidebar-back.text-muted:hover {
 }
 
 @font-face {
-    font-family: 'Montserrat';
+    font-family: "Montserrat";
     font-style: normal;
     font-weight: 400;
-    src: local('Montserrat Regular'), local('Montserrat-Regular'), url(/fonts/Montserrat.woff2) format('woff2');
-    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    src:
+        local("Montserrat Regular"),
+        local("Montserrat-Regular"),
+        url(/fonts/Montserrat.woff2) format("woff2");
+    unicode-range:
+        U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074,
+        U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
     font-display: swap;
 }
 
 @font-face {
     font-family: JetBrainsMono;
-    src: url("/fonts/JetBrainsMono-Regular.woff2") format("woff2"),
-         url("/fonts/JetBrainsMono-Regular.ttf") format("truetype");
+    src:
+        url("/fonts/JetBrainsMono-Regular.woff2") format("woff2"),
+        url("/fonts/JetBrainsMono-Regular.ttf") format("truetype");
     font-style: normal;
     font-weight: 400;
 }
 @font-face {
     font-family: JetBrainsMono;
-    src: url("/fonts/JetBrainsMono-Bold.woff2") format("woff2"),
-         url("/fonts/JetBrainsMono-Bold.ttf") format("truetype");
+    src:
+        url("/fonts/JetBrainsMono-Bold.woff2") format("woff2"),
+        url("/fonts/JetBrainsMono-Bold.ttf") format("truetype");
     font-style: normal;
     font-weight: 700;
 }
 @font-face {
     font-family: JetBrainsMono;
-    src: url("/fonts/JetBrainsMono-Italic.woff2") format("woff2"),
-         url("/fonts/JetBrainsMono-Italic.ttf") format("truetype");
+    src:
+        url("/fonts/JetBrainsMono-Italic.woff2") format("woff2"),
+        url("/fonts/JetBrainsMono-Italic.ttf") format("truetype");
     font-style: italic;
     font-weight: 400;
 }
 @font-face {
     font-family: JetBrainsMono;
-    src: url("/fonts/JetBrainsMono-BoldItalic.woff2") format("woff2"),
-         url("/fonts/JetBrainsMono-BoldItalic.ttf") format("truetype");
+    src:
+        url("/fonts/JetBrainsMono-BoldItalic.woff2") format("woff2"),
+        url("/fonts/JetBrainsMono-BoldItalic.ttf") format("truetype");
     font-style: italic;
     font-weight: 700;
 }
@@ -124,8 +167,14 @@ a.sidebar-back.text-muted:hover {
     @include media-breakpoint-up($breakpoint) {
         $infix: breakpoint-infix($breakpoint, $grid-breakpoints);
 
-        .text#{$infix}-left   { text-align: left !important; }
-        .text#{$infix}-right  { text-align: right !important; }
-        .text#{$infix}-center { text-align: center !important; }
+        .text#{$infix}-left {
+            text-align: left !important;
+        }
+        .text#{$infix}-right {
+            text-align: right !important;
+        }
+        .text#{$infix}-center {
+            text-align: center !important;
+        }
     }
 }

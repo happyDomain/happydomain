@@ -49,9 +49,12 @@
 
 <NewProviderModal />
 
-<Card {...rest}>
+<Card class="sidebar-card" {...rest}>
     <div class="card-header d-flex justify-content-between align-items-center">
-        {$t("provider.title")}
+        <span class="d-flex align-items-center gap-2">
+            <Icon name="hdd-network" />
+            {$t("provider.title")}
+        </span>
         {#if !$appConfig.disable_providers}
             <Button size="sm" color="light" on:click={() => newProviderControls.Open()}>
                 <Icon name="plus" />
@@ -59,7 +62,7 @@
         {/if}
     </div>
     {#if !$providers || !$providersSpecs}
-        <div class="d-flex justify-content-center">
+        <div class="d-flex justify-content-center py-3">
             <Spinner color="primary" />
         </div>
     {:else}

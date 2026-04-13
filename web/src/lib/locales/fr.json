@@ -449,7 +449,7 @@
     "record": {
         "A": "Adresse IPv4",
         "AAAA": "Adresse IPv6",
-        "common-records": "Enregistrements courants",
+        "common-records": "Types courants",
         "Expire": "Expiration",
         "Mbox": "E-mail de l'administrateur",
         "Minttl": "Cache TTL négatif",

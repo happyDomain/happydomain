@@ -24,7 +24,7 @@
 <script lang="ts">
     import { navigate } from "$lib/stores/config";
 
-    import { Button, Col, Input, Row, Spinner } from "@sveltestrap/sveltestrap";
+    import { Button, FormGroup, Input, Spinner } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
     import { forgotAccountPassword } from "$lib/api/user";
@@ -71,40 +71,28 @@
 </script>
 
 <form bind:this={formElm} onsubmit={goSendLink}>
-    <p class="text-center">
-        {$t("email.recover")}.
-    </p>
-    <Row>
-        <label
-            for="email-input"
-            class="col-md-4 col-form-label text-truncate text-md-right fw-bold"
-        >
-            {$t("email.address")}
-        </label>
-        <Col md="6">
-            <Input
-                id="email-input"
-                required
-                autofocus
-                type="email"
-                placeholder="jPostel@isi.edu"
-                autocomplete="username"
-                invalid={emailState}
-                bind:value
-            />
-        </Col>
-    </Row>
-    <Row class="mt-3">
+    <FormGroup floating label={$t("email.address")}>
+        <Input
+            id="email-input"
+            required
+            autofocus
+            type="email"
+            placeholder={$t("email.address")}
+            autocomplete="username"
+            invalid={emailState}
+            bind:value
+        />
+    </FormGroup>
+    <div class="d-grid mt-3">
         <Button
-            class="offset-1 col-10 offset-sm-2 col-sm-8 offset-md-3 col-md-6 offset-lg-4 col-lg-4"
             type="submit"
             color="primary"
             disabled={formSent}
         >
             {#if formSent}
-                <Spinner size="sm" />
+                <Spinner size="sm" class="me-1" />
             {/if}
             {$t("email.send-recover")}
         </Button>
-    </Row>
+    </div>
 </form>

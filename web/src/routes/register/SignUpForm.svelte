@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { Button, FormGroup, Icon, Input, Label, Spinner } from "@sveltestrap/sveltestrap";
+    import { Button, FormGroup, Icon, Input, Spinner } from "@sveltestrap/sveltestrap";
 
     import { t, locale } from "$lib/translations";
     import { registerUser } from "$lib/api/user";
@@ -88,16 +88,15 @@
     }
 </script>
 
-<form class="container my-1" bind:this={formElm} onsubmit={goSignUp}>
-    <FormGroup>
-        <Label for="email-input">{$t("email.address")}</Label>
+<form bind:this={formElm} onsubmit={goSignUp}>
+    <FormGroup floating label={$t("email.address")}>
         <Input
             aria-describedby="emailHelpBlock"
             autocomplete="username"
             autofocus
             feedback={!emailState ? $t("errors.address-valid") : null}
             id="email-input"
-            placeholder="jPostel@isi.edu"
+            placeholder={$t("email.address")}
             required
             type="email"
             invalid={emailState !== undefined && !emailState}
@@ -105,20 +104,19 @@
             bind:value={signupForm.email}
             on:change={() => (emailState = signupForm.email!.indexOf("@") > 0)}
         />
-        <div id="emailHelpBlock" class="form-text">
-            {$t("account.signup.address-why", {
-                identify: $t("account.signup.identify"),
-                "security-operations": $t("account.signup.security-operations"),
-            })}
-        </div>
     </FormGroup>
-    <FormGroup>
-        <Label for="password-input">{$t("common.password")}</Label>
+    <div id="emailHelpBlock" class="form-text mb-3 mt-n2">
+        {$t("account.signup.address-why", {
+            identify: $t("account.signup.identify"),
+            "security-operations": $t("account.signup.security-operations"),
+        })}
+    </div>
+    <FormGroup floating label={$t("common.password")}>
         <Input
             autocomplete="new-password"
             feedback={!passwordState ? $t("errors.password-weak") : null}
             id="password-input"
-            placeholder="xXxXxXxXxX"
+            placeholder={$t("common.password")}
             required
             type="password"
             invalid={passwordState !== undefined && !passwordState}
@@ -127,12 +125,11 @@
             on:change={() => (passwordState = checkWeakPassword(signupForm.password!))}
         />
     </FormGroup>
-    <FormGroup>
-        <Label for="passwordconfirm-input">{$t("password.confirmation")}</Label>
+    <FormGroup floating label={$t("password.confirmation")}>
         <Input
             feedback={!passwordConfirmState ? $t("errors.password-match") : null}
             id="passwordconfirm-input"
-            placeholder="xXxXxXxXxX"
+            placeholder={$t("password.confirmation")}
             required
             type="password"
             invalid={passwordConfirmState !== undefined && !passwordConfirmState}
@@ -145,7 +142,7 @@
                 ))}
         />
     </FormGroup>
-    <FormGroup>
+    <FormGroup class="mb-3">
         <Input
             id="signup-newsletter"
             type="checkbox"
@@ -154,20 +151,17 @@
         />
     </FormGroup>
     {#if $appConfig.captcha_provider}
-        <p>{$t("captcha.human-check")}</p>
+        <p class="text-body-secondary small">{$t("captcha.human-check")}</p>
         <CaptchaWidget bind:this={captchaWidget} bind:token={captchaToken} />
     {/if}
-    <div class="d-flex justify-content-around gap-2">
+    <div class="d-grid">
         <Button type="submit" color="primary" disabled={formSent}>
             {#if formSent}
-                <Spinner size="sm" />
+                <Spinner size="sm" class="me-1" />
             {:else}
-                <Icon name="person-plus" />
+                <Icon name="person-plus" class="me-1" />
             {/if}
             {$t("account.signup.signup")}
-        </Button>
-        <Button href="/login" outline color="dark">
-            {$t("account.signup.already")}
         </Button>
     </div>
 </form>
