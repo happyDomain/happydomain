@@ -37,9 +37,7 @@
 <Container class="my-auto py-4">
     <Row class="justify-content-center align-items-stretch g-0">
         <Col md="5" lg="4" class="d-none d-md-block">
-            <div class="login-visual">
-                <img src="/img/login.webp" alt="Welcome back!" class="login-img" />
-            </div>
+            <div class="login-visual" title="Welcome back!"></div>
         </Col>
         <Col sm="10" md="7" lg="5">
             <div class="login-card">
@@ -66,15 +64,13 @@
         height: 100%;
         border-radius: 1rem 0 0 1rem;
         overflow: hidden;
-        background: linear-gradient(135deg, #f0faf7 0%, #e8f4f8 100%);
+        background: url(/img/login.webp), linear-gradient(135deg, #f0faf7 0%, #e8f4f8 100%);
+        background-size: cover;
+        background-position: center;
+        min-height: 560px;
         display: flex;
         align-items: center;
         justify-content: center;
-    }
-
-    .login-img {
-        max-width: 100%;
-        object-fit: contain;
     }
 
     .login-card {

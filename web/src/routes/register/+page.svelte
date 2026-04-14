@@ -36,9 +36,7 @@
 <Container class="my-auto py-4">
     <Row class="justify-content-center align-items-stretch g-0">
         <Col md="5" lg="4" class="d-none d-md-block">
-            <div class="signup-visual">
-                <img src="/img/signup.webp" alt="Welcome aboard!" class="signup-img" />
-            </div>
+            <div class="signup-visual" title="Welcome aboard!"></div>
         </Col>
         <Col sm="10" md="7" lg="5">
             <div class="signup-card">
@@ -47,7 +45,8 @@
                 </div>
                 <h5 class="fw-bold mb-1">{$t("account.signup.join-call")}</h5>
                 <p class="text-body-secondary small mb-4">
-                    Join our open source and free (as freedom) DNS platform to manage your domains easily!
+                    Join our open source and free (as freedom) DNS platform to manage your domains
+                    easily!
                 </p>
                 <SignUpForm />
                 <div class="text-center mt-4 pt-3 border-top">
@@ -66,15 +65,13 @@
         height: 100%;
         border-radius: 1rem 0 0 1rem;
         overflow: hidden;
-        background: linear-gradient(135deg, #f0faf7 0%, #e8f4f8 100%);
+        background: url(/img/signup.webp), linear-gradient(135deg, #f0faf7 0%, #e8f4f8 100%);
+        background-size: cover;
+        background-position: center;
+        min-height: 560px;
         display: flex;
         align-items: center;
         justify-content: center;
-    }
-
-    .signup-img {
-        max-width: 100%;
-        object-fit: contain;
     }
 
     .signup-card {
