@@ -182,6 +182,9 @@ func (tu *tidyUpUsecase) TidyUsers() error {
 
 		if authUser.EmailVerification == nil && authUser.LastLoggedIn == nil && time.Since(authUser.CreatedAt) > 7*24*time.Hour {
 			log.Printf("Deleting user with unverified email and no login (created %s): %s\n", authUser.CreatedAt.Format(time.RFC3339), authUser.Email)
+			if err = tu.store.DeleteUser(authUser.Id); err != nil && !errors.Is(err, happydns.ErrUserNotFound) {
+				return err
+			}
 			if err = iter.DropItem(); err != nil {
 				return err
 			}
