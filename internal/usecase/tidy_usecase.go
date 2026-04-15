@@ -223,8 +223,8 @@ func (tu *tidyUpUsecase) TidyCheckerConfigurations() error {
 				return err
 			}
 
-			if cfg.ServiceId != nil && len(domain.ZoneHistory) > 0 {
-				zone, err := tu.store.GetZone(domain.ZoneHistory[len(domain.ZoneHistory)-1])
+			if cfg.ServiceId != nil && len(domain.ZoneHistory) > 1 {
+				zone, err := tu.store.GetZone(domain.ZoneHistory[1])
 				if err != nil {
 					return err
 				}

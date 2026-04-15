@@ -505,12 +505,12 @@ func (u *CheckerOptionsUsecase) buildAutoFillContext(
 
 	ctx[happydns.AutoFillDomainName] = domain.DomainName
 
-	// Load the latest zone from domain history.
-	if len(domain.ZoneHistory) == 0 {
+	// Load the latest published zone from domain history (index 0 is WIP).
+	if len(domain.ZoneHistory) < 2 {
 		return ctx, nil
 	}
 
-	latestZoneId := domain.ZoneHistory[len(domain.ZoneHistory)-1]
+	latestZoneId := domain.ZoneHistory[1]
 	zone, err := u.autoFillStore.GetZone(latestZoneId)
 	if err != nil {
 		return ctx, fmt.Errorf("loading zone for auto-fill: %w", err)
@@ -518,13 +518,11 @@ func (u *CheckerOptionsUsecase) buildAutoFillContext(
 	ctx[happydns.AutoFillZone] = zone
 
 	// Resolve service if target has a ServiceId.
-	// Search from the most recent zone backwards through history,
-	// since the service may not exist in the latest zone if it was
-	// updated or reimported.
+	// Search from the latest published zone forward through history.
 	if serviceId := happydns.TargetIdentifier(target.ServiceId); serviceId != nil {
-		for i := len(domain.ZoneHistory) - 1; i >= 0; i-- {
+		for i := 1; i < len(domain.ZoneHistory); i++ {
 			z := zone
-			if i < len(domain.ZoneHistory)-1 {
+			if i > 1 {
 				z, err = u.autoFillStore.GetZone(domain.ZoneHistory[i])
 				if err != nil {
 					continue

@@ -674,11 +674,11 @@ func (s *Scheduler) loadAllDomains() []*happydns.Domain {
 }
 
 func (s *Scheduler) loadDomainServices(domain *happydns.Domain) []*happydns.ServiceMessage {
-	if s.zoneStore == nil || len(domain.ZoneHistory) == 0 {
+	if s.zoneStore == nil || len(domain.ZoneHistory) < 2 {
 		return nil
 	}
 
-	latestZoneID := domain.ZoneHistory[len(domain.ZoneHistory)-1]
+	latestZoneID := domain.ZoneHistory[1]
 	zone, err := s.zoneStore.GetZone(latestZoneID)
 	if err != nil {
 		log.Printf("Scheduler: failed to load zone %s for domain %s: %v", latestZoneID, domain.DomainName, err)
