@@ -352,7 +352,7 @@ func TestPredefinedErrors(t *testing.T) {
 		{
 			name: "ErrAuthUserNotFound",
 			err:  happydns.ErrAuthUserNotFound,
-			msg:  "user not found",
+			msg:  "auth user not found",
 		},
 		{
 			name: "ErrDomainNotFound",
