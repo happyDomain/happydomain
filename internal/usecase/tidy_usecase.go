@@ -223,16 +223,27 @@ func (tu *tidyUpUsecase) TidyCheckerConfigurations() error {
 				return err
 			}
 
-			if cfg.ServiceId != nil && len(domain.ZoneHistory) > 1 {
-				zone, err := tu.store.GetZone(domain.ZoneHistory[1])
-				if err != nil {
-					return err
-				}
+			if cfg.ServiceId != nil && len(domain.ZoneHistory) > 0 {
+				// Check both the WIP zone ([0]) and the latest published
+				// zone ([1]) so we keep configs for services that are
+				// either being worked on or currently live.
 				found := false
-				for _, svcs := range zone.Services {
-					for _, svc := range svcs {
-						if svc.Id.Equals(*cfg.ServiceId) {
-							found = true
+				for _, idx := range []int{0, 1} {
+					if idx >= len(domain.ZoneHistory) {
+						break
+					}
+					zone, err := tu.store.GetZone(domain.ZoneHistory[idx])
+					if err != nil {
+						return err
+					}
+					for _, svcs := range zone.Services {
+						for _, svc := range svcs {
+							if svc.Id.Equals(*cfg.ServiceId) {
+								found = true
+								break
+							}
+						}
+						if found {
 							break
 						}
 					}

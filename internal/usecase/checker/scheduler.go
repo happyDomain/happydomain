@@ -674,20 +674,33 @@ func (s *Scheduler) loadAllDomains() []*happydns.Domain {
 }
 
 func (s *Scheduler) loadDomainServices(domain *happydns.Domain) []*happydns.ServiceMessage {
-	if s.zoneStore == nil || len(domain.ZoneHistory) < 2 {
+	if s.zoneStore == nil || len(domain.ZoneHistory) == 0 {
 		return nil
 	}
 
-	latestZoneID := domain.ZoneHistory[1]
-	zone, err := s.zoneStore.GetZone(latestZoneID)
-	if err != nil {
-		log.Printf("Scheduler: failed to load zone %s for domain %s: %v", latestZoneID, domain.DomainName, err)
-		return nil
-	}
-
+	// Collect services from the WIP zone ([0]) and the latest published
+	// zone ([1]).  This lets the scheduler pick up new services the user
+	// is configuring while still covering what is live.
+	seen := make(map[string]struct{})
 	var services []*happydns.ServiceMessage
-	for _, svcs := range zone.Services {
-		services = append(services, svcs...)
+	for _, idx := range []int{0, 1} {
+		if idx >= len(domain.ZoneHistory) {
+			break
+		}
+		zone, err := s.zoneStore.GetZone(domain.ZoneHistory[idx])
+		if err != nil {
+			log.Printf("Scheduler: failed to load zone %s for domain %s: %v", domain.ZoneHistory[idx], domain.DomainName, err)
+			continue
+		}
+		for _, svcs := range zone.Services {
+			for _, svc := range svcs {
+				key := svc.Id.String()
+				if _, dup := seen[key]; !dup {
+					seen[key] = struct{}{}
+					services = append(services, svc)
+				}
+			}
+		}
 	}
 	return services
 }
