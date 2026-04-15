@@ -22,7 +22,12 @@
 package route
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/gin-gonic/gin"
+
+	ratelimit "github.com/JGLTechnologies/gin-rate-limit"
 
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
@@ -99,7 +104,22 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 		dep.FailureTracker,
 	)
 	auc := DeclareAuthUserRoutes(apiRoutes, dep.AuthUser, lc)
-	DeclareDomainInfoRoutes(apiRoutes.Group("/domaininfo/:domain"), dep.DomainInfo)
+
+	domainInfoRL := ratelimit.InMemoryStore(&ratelimit.InMemoryOptions{
+		Rate:  time.Minute,
+		Limit: 10,
+	})
+	domainInfoRLMiddleware := ratelimit.RateLimiter(domainInfoRL, &ratelimit.Options{
+		ErrorHandler: func(c *gin.Context, info ratelimit.Info) {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, happydns.ErrorResponse{
+				Message: "Too many requests. Please try again later.",
+			})
+		},
+		KeyFunc: func(c *gin.Context) string {
+			return c.ClientIP()
+		},
+	})
+	DeclareDomainInfoRoutes(apiRoutes.Group("/domaininfo/:domain", domainInfoRLMiddleware), dep.DomainInfo)
 	DeclareProviderSpecsRoutes(apiRoutes, dep.ProviderSpecs)
 	DeclareRegistrationRoutes(apiRoutes, dep.AuthUser, dep.CaptchaVerifier)
 	DeclareResolverRoutes(apiRoutes, dep.Resolver)

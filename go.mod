@@ -9,6 +9,7 @@ require (
 	git.happydns.org/checker-ping v0.0.0-20260407194626-a2ebf17774fc
 	git.happydns.org/checker-sdk-go v0.5.0
 	git.happydns.org/checker-zonemaster v0.0.0-20260407202727-979757b5a8fc
+	github.com/JGLTechnologies/gin-rate-limit v1.5.8
 	github.com/StackExchange/dnscontrol/v4 v4.34.0
 	github.com/altcha-org/altcha-lib-go v1.0.0
 	github.com/coreos/go-oidc/v3 v3.18.0
@@ -40,8 +41,11 @@ require (
 require (
 	github.com/alecthomas/kingpin/v2 v2.4.0 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/likexian/gokit v0.25.16 // indirect
+	github.com/redis/go-redis/v9 v9.18.0 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
+	go.uber.org/atomic v1.11.0 // indirect
 )
 
 require (
