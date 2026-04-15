@@ -708,7 +708,7 @@
             "name": "Name:",
             "availability": "Availability:",
             "loading-options": "Loading options...",
-            "check-rules": "Check Individual Rules",
+            "check-rules": "Rules",
             "admin-options": "Admin Options",
             "configuration": "Configuration",
             "save": "Save",

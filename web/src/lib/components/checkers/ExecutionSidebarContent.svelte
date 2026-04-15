@@ -161,17 +161,10 @@
                     {/if}
                     <tr>
                         <th>{$t("checkers.result.field.status")}</th>
-                        <td class="d-flex gap-2 align-items-center">
+                        <td>
                             <Badge color={getStatusColor($currentExecution.result?.status)}>
                                 {$t(getStatusI18nKey($currentExecution.result?.status))}
                             </Badge>
-                            <a
-                                href="{checksBase}/{encodeURIComponent(
-                                    checkerId,
-                                )}/executions/{encodeURIComponent(execId)}/rules"
-                            >
-                                {$t("checkers.detail.check-rules")}
-                            </a>
                         </td>
                     </tr>
                     {#if $currentExecution.result?.message}
@@ -232,6 +225,18 @@
                 {$t("checkers.result.view-html")}
             </Button>
         {/if}
+        <Button
+            size="sm"
+            color="secondary"
+            outline
+            active={$reportViewMode === "rules"}
+            onclick={() => {
+                reportViewMode.set("rules");
+            }}
+        >
+            <Icon name="list-check"></Icon>
+            {$t("checkers.detail.check-rules")}
+        </Button>
         <Button
             size="sm"
             color="secondary"

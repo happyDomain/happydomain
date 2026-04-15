@@ -27,13 +27,22 @@
 
     import { t } from "$lib/translations";
     import type { CheckerScope, CheckMetric } from "$lib/api/checkers";
+    import type { HappydnsCheckEvaluation } from "$lib/api-base/types.gen";
     import {
         getScopedExecution,
         getScopedExecutionObservations,
         getScopedExecutionMetrics,
+        getScopedExecutionResults,
         getCheckStatus,
     } from "$lib/api/checkers";
-    import { currentExecution, currentCheckInfo, currentObservations, reportViewMode, cachedHTMLReport } from "$lib/stores/checkers";
+    import {
+        currentExecution,
+        currentCheckInfo,
+        currentObservations,
+        reportViewMode,
+        cachedHTMLReport,
+    } from "$lib/stores/checkers";
+    import ExecutionResultsCard from "./ExecutionResultsCard.svelte";
     import ObservationReportCard from "./ObservationReportCard.svelte";
 
     interface Props {
@@ -48,11 +57,13 @@
     let loading = $state(true);
     let error = $state<string | undefined>(undefined);
     let metricsData = $state<CheckMetric[] | null>(null);
+    let evaluationData = $state<HappydnsCheckEvaluation | null>(null);
 
     $effect(() => {
         loading = true;
         error = undefined;
         metricsData = null;
+        evaluationData = null;
         cachedHTMLReport.set(null);
 
         Promise.all([
@@ -65,7 +76,11 @@
                 currentCheckInfo.set(checkerInfo);
                 currentObservations.set(observations);
                 checkerName = checkerInfo.name ?? checkerId;
-                // Default to metrics view if supported, then HTML, then JSON
+                // Load rules data
+                getScopedExecutionResults(scope, checkerId, execId)
+                    .then((e) => (evaluationData = e))
+                    .catch((e) => console.warn("Failed to load execution results", e));
+                // Default to metrics view if supported, then HTML, then rules, then JSON
                 if (checkerInfo.has_metrics) {
                     reportViewMode.set("metrics");
                     getScopedExecutionMetrics(scope, checkerId, execId)
@@ -74,7 +89,7 @@
                 } else if (checkerInfo.has_html_report) {
                     reportViewMode.set("html");
                 } else {
-                    reportViewMode.set("json");
+                    reportViewMode.set("rules");
                 }
                 loading = false;
             },
@@ -113,6 +128,10 @@
             <Icon name="exclamation-triangle-fill" />
             {$t("checkers.result.error-loading", { error })}
         </Alert>
+    </Container>
+{:else if $reportViewMode === "rules" && evaluationData}
+    <Container class="flex-fill d-flex flex-column mt-3">
+        <ExecutionResultsCard evaluation={evaluationData} />
     </Container>
 {:else if $currentObservations}
     <ObservationReportCard

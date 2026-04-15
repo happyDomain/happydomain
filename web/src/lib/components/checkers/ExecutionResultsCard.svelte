@@ -22,10 +22,11 @@
 -->
 
 <script lang="ts">
-    import { Card, CardBody, CardHeader, Table } from "@sveltestrap/sveltestrap";
+    import { Badge, Card, CardBody, CardHeader, Table } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
     import type { HappydnsCheckEvaluation } from "$lib/api-base/types.gen";
+    import { getStatusColor, getStatusI18nKey } from "$lib/utils";
 
     interface Props {
         evaluation: HappydnsCheckEvaluation;
@@ -40,10 +41,11 @@
     </CardHeader>
     <CardBody>
         {#if evaluation.states && evaluation.states.length > 0}
-            <Table size="sm" borderless>
+            <Table class="mb-0" size="sm" borderless hover>
                 <thead>
                     <tr>
                         <th>{$t("checkers.result.field.rule")}</th>
+                        <th>{$t("checkers.result.field.status")}</th>
                         <th>{$t("checkers.result.field.message")}</th>
                     </tr>
                 </thead>
@@ -51,6 +53,7 @@
                     {#each evaluation.states as state}
                         <tr>
                             <td><code>{state.code ?? ""}</code></td>
+                            <td><Badge color={getStatusColor(state.status)}>{$t(getStatusI18nKey(state.status))}</Badge></td>
                             <td>{state.message ?? ""}</td>
                         </tr>
                     {/each}

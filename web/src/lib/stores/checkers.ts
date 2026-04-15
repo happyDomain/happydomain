@@ -41,7 +41,7 @@ export const currentCheckInfo: Writable<CheckerCheckerDefinition | undefined> = 
 export const currentObservations: Writable<ObservationSnapshotWithData | undefined> = writable(undefined);
 
 // Report view mode: which panel the main area shows
-export type ReportViewMode = "json" | "html" | "metrics";
+export type ReportViewMode = "json" | "html" | "metrics" | "rules";
 export const reportViewMode: Writable<ReportViewMode> = writable("json");
 export const showHTMLReport: Readable<boolean> = derived(reportViewMode, ($m) => $m === "html");
 
