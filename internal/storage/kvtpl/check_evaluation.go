@@ -73,6 +73,7 @@ func (s *KVStorage) ListEvaluationsByChecker(checkerID string, target happydns.C
 		s.GetEvaluation,
 		func(a, b *happydns.CheckEvaluation) bool { return a.EvaluatedAt.After(b.EvaluatedAt) },
 		limit,
+		nil,
 	)
 }
 

@@ -452,14 +452,14 @@ func (s *instrumentedStorage) ListEvaluationsByPlan(planID happydns.Identifier) 
 	return s.inner.ListEvaluationsByPlan(planID)
 }
 
-func (s *instrumentedStorage) ListExecutionsByChecker(checkerID string, target happydns.CheckTarget, limit int) (ret []*happydns.Execution, err error) {
+func (s *instrumentedStorage) ListExecutionsByChecker(checkerID string, target happydns.CheckTarget, limit int, filter func(*happydns.Execution) bool) (ret []*happydns.Execution, err error) {
 	defer observe("list", "execution")(&err)
-	return s.inner.ListExecutionsByChecker(checkerID, target, limit)
+	return s.inner.ListExecutionsByChecker(checkerID, target, limit, filter)
 }
 
-func (s *instrumentedStorage) ListExecutionsByDomain(domainId happydns.Identifier, limit int) (ret []*happydns.Execution, err error) {
+func (s *instrumentedStorage) ListExecutionsByDomain(domainId happydns.Identifier, limit int, filter func(*happydns.Execution) bool) (ret []*happydns.Execution, err error) {
 	defer observe("list", "execution")(&err)
-	return s.inner.ListExecutionsByDomain(domainId, limit)
+	return s.inner.ListExecutionsByDomain(domainId, limit, filter)
 }
 
 func (s *instrumentedStorage) ListExecutionsByPlan(planID happydns.Identifier) (ret []*happydns.Execution, err error) {
@@ -467,9 +467,9 @@ func (s *instrumentedStorage) ListExecutionsByPlan(planID happydns.Identifier) (
 	return s.inner.ListExecutionsByPlan(planID)
 }
 
-func (s *instrumentedStorage) ListExecutionsByUser(userId happydns.Identifier, limit int) (ret []*happydns.Execution, err error) {
+func (s *instrumentedStorage) ListExecutionsByUser(userId happydns.Identifier, limit int, filter func(*happydns.Execution) bool) (ret []*happydns.Execution, err error) {
 	defer observe("list", "execution")(&err)
-	return s.inner.ListExecutionsByUser(userId, limit)
+	return s.inner.ListExecutionsByUser(userId, limit, filter)
 }
 
 func (s *instrumentedStorage) ListProviders(user *happydns.User) (ret happydns.ProviderMessages, err error) {

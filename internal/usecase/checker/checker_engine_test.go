@@ -111,7 +111,7 @@ func TestCheckerEngine_RunOK(t *testing.T) {
 	}
 
 	// Verify execution was persisted.
-	execs, err := store.ListExecutionsByChecker("test_checker", target, 0)
+	execs, err := store.ListExecutionsByChecker("test_checker", target, 0, nil)
 	if err != nil {
 		t.Fatalf("ListExecutionsByChecker() returned error: %v", err)
 	}
