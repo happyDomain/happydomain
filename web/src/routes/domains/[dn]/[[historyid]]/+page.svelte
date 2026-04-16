@@ -25,18 +25,19 @@
     import { Button, Col, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import AliasModal from "$lib/components/modals/Alias.svelte";
+    import ChecksSummaryBadge from "$lib/components/checkers/ChecksSummaryBadge.svelte";
     import PageTitle from "$lib/components/PageTitle.svelte";
     import SubdomainItem from "./SubdomainItem.svelte";
     import SubdomainList from "./SubdomainList.svelte";
     import UserResource from "./UserResource.svelte";
-    import type { Domain } from "$lib/model/domain";
+    import type { HappydnsDomainWithCheckStatus } from "$lib/api-base/types.gen";
     import type { Zone } from "$lib/model/zone";
-    import { domains_idx } from "$lib/stores/domains";
+    import { domainLink, domains_idx } from "$lib/stores/domains";
     import { sortedDomains, sortedDomainsWithIntermediate, thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
 
     interface Props {
-        data: { domain: Domain; history: string; zoneId: string };
+        data: { domain: HappydnsDomainWithCheckStatus; history: string; zoneId: string };
     }
 
     let { data }: Props = $props();
@@ -47,6 +48,7 @@
         !!data.history &&
         data.history !== data.domain.zone_history[0]
     );
+    let checksBase = $derived(`/domains/${encodeURIComponent(domainLink(data.domain.id))}/checks`);
 </script>
 
 {#if !data.domain}
@@ -67,6 +69,7 @@
 {:else}
     <div style="max-width: 100%;" class="w-100 pt-1 mb-5">
         <PageTitle title={$t("zones.viewer")} subtitle={$t("zones.viewer-subtitle")} domain={data.domain.domain}>
+            <ChecksSummaryBadge status={data.domain.last_check_status} {checksBase} />
             {#if isHistorical}
                 <span class="badge bg-warning text-dark">
                     <Icon name="clock-history" />
