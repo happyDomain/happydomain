@@ -22,9 +22,11 @@
 -->
 
 <script lang="ts">
-    import { Alert, Badge, Card, Icon, Table } from "@sveltestrap/sveltestrap";
+    import { Alert, Badge, Button, Card, Icon, Table } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
+    import { base } from "$lib/stores/config";
+    import { toasts } from "$lib/stores/toasts";
     import type { CheckerScope } from "$lib/api/checkers";
     import { listScopedCheckers } from "$lib/api/checkers";
     import { checkers } from "$lib/stores/checkers";
@@ -44,6 +46,28 @@
     let { scope, checksBase, title, domainName, filterAvailability }: Props = $props();
 
     let checkersPromise = $derived(listScopedCheckers(scope));
+
+    let metricsApiUrl = $derived(
+        scope.zoneId && scope.subdomain !== undefined && scope.serviceId
+            ? `${base}/api/domains/${scope.domainId}/zone/${scope.zoneId}/${scope.subdomain}/services/${scope.serviceId}/checkers/metrics`
+            : `${base}/api/domains/${scope.domainId}/checkers/metrics`
+    );
+
+    async function copyMetricsUrl() {
+        try {
+            await navigator.clipboard.writeText(metricsApiUrl);
+            toasts.addToast({
+                message: $t("checkers.list.prometheus-metrics-copied"),
+                type: "success",
+                timeout: 3000,
+            });
+        } catch (error) {
+            toasts.addErrorToast({
+                message: $t("checkers.list.prometheus-metrics-copy-failed", { error: String(error) }),
+                timeout: 5000,
+            });
+        }
+    }
 
     function getConfiguredCheckerIds(statuses: HappydnsCheckerStatus[]): Set<string> {
         return new Set(statuses.map((s) => s.id).filter((id): id is string => !!id));
@@ -72,7 +96,17 @@
 </svelte:head>
 
 <div class="flex-fill mt-1 mb-5">
-    <PageTitle {title} domain={domainName}></PageTitle>
+    <PageTitle {title} domain={domainName}>
+        <Button
+            color="secondary"
+            outline
+            onclick={copyMetricsUrl}
+            title={metricsApiUrl}
+        >
+            <Icon name="graph-up-arrow"></Icon>
+            {$t("checkers.list.prometheus-metrics")}
+        </Button>
+    </PageTitle>
 
     {#await checkersPromise}
         <Card body>

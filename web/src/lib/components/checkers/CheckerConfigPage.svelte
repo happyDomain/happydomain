@@ -25,6 +25,7 @@
     import { Alert, Button, Card, Col, Icon, Row } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
+    import { base } from "$lib/stores/config";
     import { checkers } from "$lib/stores/checkers";
     import { toasts } from "$lib/stores/toasts";
     import type {
@@ -66,6 +67,11 @@
 
     let checkerDef = $derived($checkers?.[checkerId]);
     let intervalSpec = $derived(checkerDef?.interval);
+    let metricsApiUrl = $derived(
+        scope.zoneId && scope.subdomain !== undefined && scope.serviceId
+            ? `${base}/api/domains/${scope.domainId}/zone/${scope.zoneId}/${scope.subdomain}/services/${scope.serviceId}/checkers/${encodeURIComponent(checkerId)}/metrics`
+            : `${base}/api/domains/${scope.domainId}/checkers/${encodeURIComponent(checkerId)}/metrics`
+    );
 
     let plan = $state<HappydnsCheckPlanWritable>({
         enabled: {},
@@ -91,6 +97,22 @@
             inheritedValues = inherited;
         });
     });
+
+    async function copyMetricsUrl() {
+        try {
+            await navigator.clipboard.writeText(metricsApiUrl);
+            toasts.addToast({
+                message: $t("checkers.list.prometheus-metrics-copied"),
+                type: "success",
+                timeout: 3000,
+            });
+        } catch (error) {
+            toasts.addErrorToast({
+                message: $t("checkers.list.prometheus-metrics-copy-failed", { error: String(error) }),
+                timeout: 5000,
+            });
+        }
+    }
 
     async function saveOptions() {
         savingOptions = true;
@@ -126,6 +148,17 @@
             >
                 <Icon name="bar-chart-fill"></Icon>
                 {$t("checkers.list.view-results")}
+            </Button>
+        {/if}
+        {#if checkerDef?.has_metrics}
+            <Button
+                color="secondary"
+                outline
+                onclick={copyMetricsUrl}
+                title={metricsApiUrl}
+            >
+                <Icon name="graph-up-arrow"></Icon>
+                {$t("checkers.list.prometheus-metrics")}
             </Button>
         {/if}
     </PageTitle>
