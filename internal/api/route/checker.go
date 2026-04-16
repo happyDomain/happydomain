@@ -47,8 +47,10 @@ func DeclareCheckerRoutes(
 	planUC *checkerUC.CheckPlanUsecase,
 	statusUC *checkerUC.CheckStatusUsecase,
 	plannedProvider checkerUC.PlannedJobProvider,
+	budgetChecker checkerUC.BudgetChecker,
+	countManualTriggers bool,
 ) *controller.CheckerController {
-	cc := controller.NewCheckerController(engine, optionsUC, planUC, statusUC, plannedProvider)
+	cc := controller.NewCheckerController(engine, optionsUC, planUC, statusUC, plannedProvider, budgetChecker, countManualTriggers)
 
 	// Global: /api/checkers
 	checkers := apiRoutes.Group("/checkers")

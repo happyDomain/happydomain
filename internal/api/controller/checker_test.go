@@ -151,7 +151,47 @@ func newTestControllerWithStorage(engine happydns.CheckerEngine) (*CheckerContro
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
 	planUC := checkerUC.NewCheckPlanUsecase(store)
 	statusUC := checkerUC.NewCheckStatusUsecase(store, store, store, store)
-	return NewCheckerController(engine, optionsUC, planUC, statusUC, nil), store
+	return NewCheckerController(engine, optionsUC, planUC, statusUC, nil, nil, false), store
+}
+
+// newTestControllerWithBudget creates a CheckerController with a custom
+// BudgetChecker and an explicit countManualTriggers flag, for the
+// manual-trigger quota tests.
+func newTestControllerWithBudget(engine happydns.CheckerEngine, budget checkerUC.BudgetChecker, countManualTriggers bool) *CheckerController {
+	store, err := inmemory.Instantiate()
+	if err != nil {
+		panic(err)
+	}
+	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
+	planUC := checkerUC.NewCheckPlanUsecase(store)
+	statusUC := checkerUC.NewCheckStatusUsecase(store, store, store, store)
+	return NewCheckerController(engine, optionsUC, planUC, statusUC, nil, budget, countManualTriggers)
+}
+
+// stubBudgetChecker is a minimal BudgetChecker for controller tests.
+// allow controls AllowWithInterval; increments counts IncrementUsage calls.
+type stubBudgetChecker struct {
+	allow      bool
+	increments int
+}
+
+func (s *stubBudgetChecker) RateLimiterFor(_ string) func(time.Duration) bool {
+	return func(time.Duration) bool { return !s.allow }
+}
+func (s *stubBudgetChecker) AllowWithInterval(_ happydns.CheckTarget, _ time.Duration) bool {
+	return s.allow
+}
+func (s *stubBudgetChecker) IncrementUsage(_ happydns.CheckTarget) { s.increments++ }
+
+// countingCheckerEngine wraps stubCheckerEngine and counts CreateExecution calls.
+type countingCheckerEngine struct {
+	stubCheckerEngine
+	created int
+}
+
+func (c *countingCheckerEngine) CreateExecution(checkerID string, target happydns.CheckTarget, plan *happydns.CheckPlan) (*happydns.Execution, error) {
+	c.created++
+	return c.stubCheckerEngine.CreateExecution(checkerID, target, plan)
 }
 
 // --- targetFromContext tests ---
@@ -428,6 +468,113 @@ func TestTriggerCheck_EngineError_Returns500(t *testing.T) {
 
 	if w.Code != http.StatusInternalServerError {
 		t.Fatalf("expected 500, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+// postTrigger is a helper that wires up LoggedUser via middleware and fires
+// an async POST to TriggerCheck. Used by the budget-enforcement tests below.
+func postTrigger(cc *CheckerController, user *happydns.User, checkerID string) *httptest.ResponseRecorder {
+	body, _ := json.Marshal(happydns.CheckerRunRequest{})
+	req := httptest.NewRequest("POST", "/checkers/"+checkerID+"/executions", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	router := gin.New()
+	router.POST("/checkers/:checkerId/executions", func(c *gin.Context) {
+		c.Set("LoggedUser", user)
+		c.Next()
+	}, cc.TriggerCheck)
+	router.ServeHTTP(w, req)
+	return w
+}
+
+// When countManualTriggers=false, the quota is never consulted and the
+// counter is never incremented — legacy behavior.
+func TestTriggerCheck_BudgetBypassWhenDisabled(t *testing.T) {
+	checkerID := registerTestChecker()
+
+	engine := &countingCheckerEngine{}
+	// allow=false would normally refuse, but countManualTriggers=false bypasses.
+	budget := &stubBudgetChecker{allow: false}
+	cc := newTestControllerWithBudget(engine, budget, false)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	w := postTrigger(cc, &happydns.User{Id: uid}, checkerID)
+
+	if w.Code != http.StatusAccepted {
+		t.Fatalf("expected 202 (bypass), got %d: %s", w.Code, w.Body.String())
+	}
+	if budget.increments != 0 {
+		t.Errorf("expected no IncrementUsage calls when flag off, got %d", budget.increments)
+	}
+	if engine.created != 1 {
+		t.Errorf("expected 1 CreateExecution call, got %d", engine.created)
+	}
+}
+
+// When countManualTriggers=true but budgetChecker is nil (e.g. checker
+// subsystem initialised without a gater), the code falls through without
+// panicking and behaves like the bypass mode.
+func TestTriggerCheck_NilBudgetCheckerIgnored(t *testing.T) {
+	checkerID := registerTestChecker()
+
+	engine := &countingCheckerEngine{}
+	cc := newTestControllerWithBudget(engine, nil, true)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	w := postTrigger(cc, &happydns.User{Id: uid}, checkerID)
+
+	if w.Code != http.StatusAccepted {
+		t.Fatalf("expected 202 (nil-budget fallback), got %d: %s", w.Code, w.Body.String())
+	}
+	if engine.created != 1 {
+		t.Errorf("expected 1 CreateExecution call, got %d", engine.created)
+	}
+}
+
+// Happy path with flag on and budget allowing: 202 and the usage counter is
+// bumped exactly once.
+func TestTriggerCheck_CountsOnSuccess(t *testing.T) {
+	checkerID := registerTestChecker()
+
+	engine := &countingCheckerEngine{}
+	budget := &stubBudgetChecker{allow: true}
+	cc := newTestControllerWithBudget(engine, budget, true)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	w := postTrigger(cc, &happydns.User{Id: uid}, checkerID)
+
+	if w.Code != http.StatusAccepted {
+		t.Fatalf("expected 202, got %d: %s", w.Code, w.Body.String())
+	}
+	if budget.increments != 1 {
+		t.Errorf("expected IncrementUsage called once, got %d", budget.increments)
+	}
+	if engine.created != 1 {
+		t.Errorf("expected 1 CreateExecution call, got %d", engine.created)
+	}
+}
+
+// Over-budget: the request must be refused with 429 and CreateExecution
+// must NOT be called (no side-effects on a rejected request).
+func TestTriggerCheck_RefusedWhenOverBudget(t *testing.T) {
+	checkerID := registerTestChecker()
+
+	engine := &countingCheckerEngine{}
+	budget := &stubBudgetChecker{allow: false}
+	cc := newTestControllerWithBudget(engine, budget, true)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	w := postTrigger(cc, &happydns.User{Id: uid}, checkerID)
+
+	if w.Code != http.StatusTooManyRequests {
+		t.Fatalf("expected 429, got %d: %s", w.Code, w.Body.String())
+	}
+	if engine.created != 0 {
+		t.Errorf("expected no CreateExecution call on 429, got %d", engine.created)
+	}
+	if budget.increments != 0 {
+		t.Errorf("expected no IncrementUsage call on 429, got %d", budget.increments)
 	}
 }
 

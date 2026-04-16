@@ -30,7 +30,9 @@ import "time"
 // (plan tier, domain caps, payment metadata, ...) will be added here later.
 type UserQuota struct {
 	// MaxChecksPerDay caps the number of checker executions per day for this
-	// user. 0 means "use the system default".
+	// user. 0 means "use the system default". A negative value disables the
+	// daily cap for this user (explicit unlimited, independent of the system
+	// default).
 	MaxChecksPerDay int `json:"max_checks_per_day,omitempty"`
 
 	// RetentionDays is the maximum age (in days) of checker executions kept in

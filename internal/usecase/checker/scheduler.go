@@ -112,13 +112,24 @@ type Scheduler struct {
 
 	// gate, if set, is consulted before launching each job. Returning false
 	// causes the scheduler to skip (and reschedule) the job, e.g. when the
-	// owning user is paused or has been inactive for too long.
-	gate func(target happydns.CheckTarget) bool
+	// owning user is paused, has been inactive for too long, or has
+	// exhausted their daily check quota. The job's interval is passed so
+	// the gate can make interval-aware decisions (e.g. throttle short
+	// intervals before long ones when approaching a budget cap).
+	gate func(target happydns.CheckTarget, interval time.Duration) bool
+
+	// onExecute, if set, is invoked after each scheduled execution is
+	// successfully created. Used to increment per-user usage counters.
+	// Only called for scheduler-driven executions; manual API triggers do
+	// not call this.
+	onExecute func(target happydns.CheckTarget)
 }
 
 // NewScheduler creates a new Scheduler. The optional gate function, if
 // non-nil, is consulted before launching each job; returning false causes
-// the scheduler to skip (and reschedule) the job.
+// the scheduler to skip (and reschedule) the job. The optional onExecute
+// callback, if non-nil, is invoked after each execution is successfully
+// created so callers can update per-user counters.
 func NewScheduler(
 	engine happydns.CheckerEngine,
 	maxConcurrency int,
@@ -126,7 +137,8 @@ func NewScheduler(
 	domainStore DomainLister,
 	zoneStore ZoneGetter,
 	stateStore SchedulerStateStorage,
-	gate func(target happydns.CheckTarget) bool,
+	gate func(target happydns.CheckTarget, interval time.Duration) bool,
+	onExecute func(target happydns.CheckTarget),
 ) *Scheduler {
 	if maxConcurrency <= 0 {
 		maxConcurrency = 1
@@ -141,6 +153,7 @@ func NewScheduler(
 		wake:           make(chan struct{}, 1),
 		maxConcurrency: maxConcurrency,
 		gate:           gate,
+		onExecute:      onExecute,
 	}
 }
 
@@ -256,7 +269,7 @@ func (s *Scheduler) run(ctx context.Context) {
 		s.mu.Unlock()
 
 		// Honour the user-level gate before doing any work.
-		if gate != nil && !gate(job.Target) {
+		if gate != nil && !gate(job.Target, job.Interval) {
 			// log.Printf("Scheduler: skipping checker %s on %s (gated by user policy)", job.CheckerID, job.Target.String())
 			s.rescheduleJob(job)
 			continue
@@ -362,6 +375,9 @@ func (s *Scheduler) executeJob(ctx context.Context, job *SchedulerJob, plan *hap
 	if err != nil {
 		log.Printf("Scheduler: checker %s on %s failed to create execution: %v", job.CheckerID, job.Target.String(), err)
 		return
+	}
+	if s.onExecute != nil {
+		s.onExecute(job.Target)
 	}
 	_, err = s.engine.RunExecution(ctx, exec, plan, nil)
 	if err != nil {

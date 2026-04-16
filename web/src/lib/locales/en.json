@@ -647,6 +647,7 @@
                 "running": "Running",
                 "done": "Done",
                 "failed": "Failed",
+                "rate-limited": "Rate Limited",
                 "unknown": "Unknown"
             }
         },

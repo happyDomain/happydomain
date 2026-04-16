@@ -213,6 +213,11 @@ const (
 	ExecutionRunning
 	ExecutionDone
 	ExecutionFailed
+	// ExecutionRateLimited indicates a planned execution that will be
+	// skipped because the user's MaxChecksPerDay quota is exhausted.
+	// Only used for synthetic planned executions returned by
+	// ListPlannedExecutions; never persisted.
+	ExecutionRateLimited
 )
 
 // TriggerType represents what initiated an execution.

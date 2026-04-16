@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"log"
 	"slices"
+	"time"
 
 	checkerPkg "git.happydns.org/happyDomain/internal/checker"
 	"git.happydns.org/happyDomain/model"
@@ -54,22 +55,56 @@ func NewCheckStatusUsecase(planStore CheckPlanStorage, evalStore CheckEvaluation
 	}
 }
 
+// BudgetChecker exposes the per-user daily quota to the API layer.
+//
+// RateLimiterFor hands out a snapshot predicate that reports whether a
+// scheduled execution of a given interval would be denied by the user's
+// daily budget — either because the hard MaxChecksPerDay cap is reached,
+// or because interval-aware throttling is skipping short-interval jobs to
+// protect rarer ones. The snapshot is resolved once per user so callers
+// can evaluate many intervals without repeated lookups.
+//
+// AllowWithInterval and IncrementUsage let the manual-trigger endpoint
+// enforce the same quota as the scheduler: check before creating the
+// execution, increment on success. All three are implemented by
+// *UserGater.
+type BudgetChecker interface {
+	RateLimiterFor(userID string) func(time.Duration) bool
+	AllowWithInterval(target happydns.CheckTarget, interval time.Duration) bool
+	IncrementUsage(target happydns.CheckTarget)
+}
+
 // ListPlannedExecutions returns synthetic Execution records for upcoming scheduled jobs.
-// Returns nil if provider is nil.
-func ListPlannedExecutions(provider PlannedJobProvider, checkerID string, target happydns.CheckTarget) []*happydns.Execution {
+// Returns nil if provider is nil. When budgetChecker is non-nil, each planned
+// execution is marked with status ExecutionRateLimited instead of
+// ExecutionPending if a job of that interval would be denied by the user's
+// daily budget at the moment of the call.
+func ListPlannedExecutions(provider PlannedJobProvider, budgetChecker BudgetChecker, checkerID string, target happydns.CheckTarget) []*happydns.Execution {
 	if provider == nil {
 		return nil
 	}
 	jobs := provider.GetPlannedJobsForChecker(checkerID, target)
 	result := make([]*happydns.Execution, 0, len(jobs))
+
+	// Resolve the user's rate-limit predicate once, so the loop below does
+	// not reacquire the UserGater's budget lock for every planned job.
+	isLimited := func(time.Duration) bool { return false }
+	if budgetChecker != nil {
+		isLimited = budgetChecker.RateLimiterFor(target.UserId)
+	}
+
 	for _, job := range jobs {
+		status := happydns.ExecutionPending
+		if isLimited(job.Interval) {
+			status = happydns.ExecutionRateLimited
+		}
 		exec := &happydns.Execution{
 			CheckerID: job.CheckerID,
 			PlanID:    job.PlanID,
 			Target:    job.Target,
 			Trigger:   happydns.TriggerInfo{Type: happydns.TriggerSchedule},
 			StartedAt: job.NextRun,
-			Status:    happydns.ExecutionPending,
+			Status:    status,
 		}
 		result = append(result, exec)
 	}

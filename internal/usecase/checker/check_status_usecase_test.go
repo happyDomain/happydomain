@@ -499,9 +499,162 @@ func TestCheckStatusUsecase_GetResultsByExecution_NoEvaluation(t *testing.T) {
 
 func TestCheckStatusUsecase_ListPlannedExecutions(t *testing.T) {
 	// Test with nil provider.
-	result := checkerUC.ListPlannedExecutions(nil, "checker", happydns.CheckTarget{})
+	result := checkerUC.ListPlannedExecutions(nil, nil, "checker", happydns.CheckTarget{})
 	if result != nil {
 		t.Errorf("expected nil for nil provider, got %v", result)
+	}
+}
+
+// fakePlannedProvider is a stub PlannedJobProvider that returns a fixed list
+// of scheduler jobs, used to test ListPlannedExecutions independently of the
+// scheduler.
+type fakePlannedProvider struct {
+	jobs []*checkerUC.SchedulerJob
+}
+
+func (f *fakePlannedProvider) GetPlannedJobsForChecker(checkerID string, target happydns.CheckTarget) []*checkerUC.SchedulerJob {
+	return f.jobs
+}
+
+// fakeBudgetChecker is a stub BudgetChecker. Its verdict can be set as a
+// blanket value (limited=true denies every call) or selectively denied for
+// intervals shorter than denyBelow, mirroring how UserGater throttles
+// short-interval jobs while still allowing longer ones.
+type fakeBudgetChecker struct {
+	limited   bool
+	denyBelow time.Duration
+	calls     int // number of RateLimiterFor invocations, for fanout assertions
+}
+
+func (f *fakeBudgetChecker) RateLimiterFor(userID string) func(time.Duration) bool {
+	f.calls++
+	return func(interval time.Duration) bool {
+		if f.limited {
+			return true
+		}
+		if f.denyBelow > 0 && interval > 0 && interval < f.denyBelow {
+			return true
+		}
+		return false
+	}
+}
+
+// AllowWithInterval / IncrementUsage are present so fakeBudgetChecker
+// satisfies BudgetChecker; ListPlannedExecutions never calls them, so the
+// bodies are intentionally minimal.
+func (f *fakeBudgetChecker) AllowWithInterval(_ happydns.CheckTarget, _ time.Duration) bool {
+	return !f.limited
+}
+func (f *fakeBudgetChecker) IncrementUsage(_ happydns.CheckTarget) {}
+
+func TestCheckStatusUsecase_ListPlannedExecutions_StatusPending(t *testing.T) {
+	uid, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
+	now := time.Now()
+	provider := &fakePlannedProvider{jobs: []*checkerUC.SchedulerJob{
+		{CheckerID: "c1", Target: target, Interval: time.Hour, NextRun: now.Add(time.Hour)},
+		{CheckerID: "c1", Target: target, Interval: 2 * time.Hour, NextRun: now.Add(2 * time.Hour)},
+	}}
+
+	// Nil budget checker -> all entries should be pending.
+	result := checkerUC.ListPlannedExecutions(provider, nil, "c1", target)
+	if len(result) != 2 {
+		t.Fatalf("expected 2 planned executions, got %d", len(result))
+	}
+	for i, exec := range result {
+		if exec.Status != happydns.ExecutionPending {
+			t.Errorf("result[%d].Status = %v; want ExecutionPending", i, exec.Status)
+		}
+		if exec.Trigger.Type != happydns.TriggerSchedule {
+			t.Errorf("result[%d].Trigger.Type = %v; want TriggerSchedule", i, exec.Trigger.Type)
+		}
+	}
+
+	// Budget checker reporting "not rate-limited" -> still pending.
+	result = checkerUC.ListPlannedExecutions(provider, &fakeBudgetChecker{}, "c1", target)
+	for i, exec := range result {
+		if exec.Status != happydns.ExecutionPending {
+			t.Errorf("result[%d].Status = %v; want ExecutionPending when budget OK", i, exec.Status)
+		}
+	}
+}
+
+func TestCheckStatusUsecase_ListPlannedExecutions_StatusRateLimited(t *testing.T) {
+	uid, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
+	now := time.Now()
+	provider := &fakePlannedProvider{jobs: []*checkerUC.SchedulerJob{
+		{CheckerID: "c1", Target: target, Interval: time.Hour, NextRun: now.Add(time.Hour)},
+		{CheckerID: "c1", Target: target, Interval: 2 * time.Hour, NextRun: now.Add(2 * time.Hour)},
+	}}
+
+	result := checkerUC.ListPlannedExecutions(provider, &fakeBudgetChecker{limited: true}, "c1", target)
+	if len(result) != 2 {
+		t.Fatalf("expected 2 planned executions, got %d", len(result))
+	}
+	for i, exec := range result {
+		if exec.Status != happydns.ExecutionRateLimited {
+			t.Errorf("result[%d].Status = %v; want ExecutionRateLimited", i, exec.Status)
+		}
+	}
+}
+
+func TestCheckStatusUsecase_ListPlannedExecutions_MixedByInterval(t *testing.T) {
+	// When throttling is interval-aware, ListPlannedExecutions should flag
+	// short-interval jobs as rate-limited while leaving longer ones pending.
+	uid, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
+	now := time.Now()
+	provider := &fakePlannedProvider{jobs: []*checkerUC.SchedulerJob{
+		{CheckerID: "c1", Target: target, Interval: time.Minute, NextRun: now.Add(time.Minute)},
+		{CheckerID: "c1", Target: target, Interval: 6 * time.Hour, NextRun: now.Add(6 * time.Hour)},
+	}}
+
+	// Throttle anything shorter than 4h (mirrors UserGater's cutoff).
+	result := checkerUC.ListPlannedExecutions(provider, &fakeBudgetChecker{denyBelow: 4 * time.Hour}, "c1", target)
+	if len(result) != 2 {
+		t.Fatalf("expected 2 planned executions, got %d", len(result))
+	}
+	if result[0].Status != happydns.ExecutionRateLimited {
+		t.Errorf("result[0].Status = %v; want ExecutionRateLimited for 1-minute interval", result[0].Status)
+	}
+	if result[1].Status != happydns.ExecutionPending {
+		t.Errorf("result[1].Status = %v; want ExecutionPending for 6-hour interval", result[1].Status)
+	}
+}
+
+func TestCheckStatusUsecase_ListPlannedExecutions_EmptyJobs(t *testing.T) {
+	// Even when rate-limited, an empty provider should produce an empty,
+	// non-nil result (matching the prior behaviour of always returning a
+	// slice when provider is non-nil).
+	provider := &fakePlannedProvider{jobs: nil}
+	result := checkerUC.ListPlannedExecutions(provider, &fakeBudgetChecker{limited: true}, "c1", happydns.CheckTarget{})
+	if result == nil {
+		t.Fatal("expected non-nil (empty) slice, got nil")
+	}
+	if len(result) != 0 {
+		t.Errorf("expected 0 planned executions, got %d", len(result))
+	}
+}
+
+func TestCheckStatusUsecase_ListPlannedExecutions_SnapshotsBudgetOnce(t *testing.T) {
+	// RateLimiterFor must be invoked exactly once per call regardless of
+	// how many planned jobs are returned — this is the whole point of the
+	// closure-based snapshot API (one budget lookup amortised over N jobs).
+	uid, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
+	now := time.Now()
+	provider := &fakePlannedProvider{jobs: []*checkerUC.SchedulerJob{
+		{CheckerID: "c1", Target: target, Interval: time.Minute, NextRun: now},
+		{CheckerID: "c1", Target: target, Interval: time.Hour, NextRun: now},
+		{CheckerID: "c1", Target: target, Interval: 6 * time.Hour, NextRun: now},
+		{CheckerID: "c1", Target: target, Interval: 24 * time.Hour, NextRun: now},
+	}}
+
+	bc := &fakeBudgetChecker{denyBelow: 4 * time.Hour}
+	_ = checkerUC.ListPlannedExecutions(provider, bc, "c1", target)
+	if bc.calls != 1 {
+		t.Errorf("RateLimiterFor called %d times; want 1 (one snapshot per call)", bc.calls)
 	}
 }
 

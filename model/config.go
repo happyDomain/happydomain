@@ -112,6 +112,18 @@ type Options struct {
 	// overrides this value.
 	CheckerInactivityPauseDays int
 
+	// CheckerMaxChecksPerDay is the system-wide default cap on checker
+	// executions per user per day. 0 means unlimited. Per-user
+	// UserQuota.MaxChecksPerDay overrides this value.
+	CheckerMaxChecksPerDay int
+
+	// CheckerCountManualTriggers controls whether manual checker triggers
+	// (POST .../executions) are counted against MaxChecksPerDay. When true,
+	// manual triggers are refused with HTTP 429 once the user is over
+	// budget and increment the per-user daily counter on success. When
+	// false, manual triggers bypass the quota entirely.
+	CheckerCountManualTriggers bool
+
 	// CaptchaProvider selects the captcha provider ("hcaptcha", "recaptchav2", "turnstile", or "").
 	CaptchaProvider string
 

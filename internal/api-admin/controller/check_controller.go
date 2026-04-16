@@ -41,7 +41,9 @@ type AdminCheckerController struct {
 // NewAdminCheckerController creates a new AdminCheckerController.
 func NewAdminCheckerController(optionsUC *checkerUC.CheckerOptionsUsecase) *AdminCheckerController {
 	return &AdminCheckerController{
-		CheckerController: apicontroller.NewCheckerController(nil, optionsUC, nil, nil, nil),
+		// countManualTriggers=false because admin has no budgetChecker (nil),
+		// which means the flag is inert on this path — value is for clarity.
+		CheckerController: apicontroller.NewCheckerController(nil, optionsUC, nil, nil, nil, nil, false),
 	}
 }
 

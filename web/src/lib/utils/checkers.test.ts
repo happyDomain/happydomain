@@ -69,6 +69,7 @@ describe("getExecutionStatusColor", () => {
         expect(getExecutionStatusColor(1)).toBe("primary");
         expect(getExecutionStatusColor(2)).toBe("success");
         expect(getExecutionStatusColor(3)).toBe("danger");
+        expect(getExecutionStatusColor(4)).toBe("warning");
     });
 
     it("returns secondary for undefined", () => {
@@ -82,6 +83,7 @@ describe("getExecutionStatusI18nKey", () => {
         expect(getExecutionStatusI18nKey(1)).toBe("checkers.execution.status.running");
         expect(getExecutionStatusI18nKey(2)).toBe("checkers.execution.status.done");
         expect(getExecutionStatusI18nKey(3)).toBe("checkers.execution.status.failed");
+        expect(getExecutionStatusI18nKey(4)).toBe("checkers.execution.status.rate-limited");
     });
 
     it("returns unknown for undefined", () => {

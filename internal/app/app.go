@@ -277,8 +277,14 @@ func (app *App) initUsecases() {
 	// Build the user-level gate so paused or long-inactive users do not
 	// get checked. The same user resolver is reused by the janitor for
 	// per-user retention overrides.
-	app.usecases.checkerUserGater = checkerUC.NewUserGater(app.store, app.cfg.CheckerInactivityPauseDays)
-	app.usecases.checkerScheduler = checkerUC.NewScheduler(app.usecases.checkerEngine, app.cfg.CheckerMaxConcurrency, app.store, app.store, app.store, app.store, app.usecases.checkerUserGater.Allow)
+	app.usecases.checkerUserGater = checkerUC.NewUserGater(app.store, app.cfg.CheckerInactivityPauseDays, app.cfg.CheckerMaxChecksPerDay)
+	app.usecases.checkerScheduler = checkerUC.NewScheduler(
+		app.usecases.checkerEngine,
+		app.cfg.CheckerMaxConcurrency,
+		app.store, app.store, app.store, app.store,
+		app.usecases.checkerUserGater.AllowWithInterval,
+		app.usecases.checkerUserGater.IncrementUsage,
+	)
 
 	// Invalidate the scheduler's user gate cache whenever a user is updated
 	// (e.g. login refreshing LastSeen, admin toggling SchedulingPaused).
@@ -346,11 +352,13 @@ func (app *App) setupRouter() {
 			ZoneImporter:          app.usecases.orchestrator.ZoneImporter,
 			ZoneService:           app.usecases.zoneService,
 
-			CheckerEngine:    app.usecases.checkerEngine,
-			CheckerOptionsUC: app.usecases.checkerOptionsUC,
-			CheckPlanUC:      app.usecases.checkerPlanUC,
-			CheckStatusUC:    app.usecases.checkerStatusUC,
-			PlannedProvider:  app.usecases.checkerScheduler,
+			CheckerEngine:       app.usecases.checkerEngine,
+			CheckerOptionsUC:    app.usecases.checkerOptionsUC,
+			CheckPlanUC:         app.usecases.checkerPlanUC,
+			CheckStatusUC:       app.usecases.checkerStatusUC,
+			PlannedProvider:     app.usecases.checkerScheduler,
+			BudgetChecker:       app.usecases.checkerUserGater,
+			CountManualTriggers: app.cfg.CheckerCountManualTriggers,
 		},
 	)
 	web.DeclareRoutes(app.cfg, baserouter, app.captchaVerifier)
@@ -376,6 +384,10 @@ func (app *App) Start() {
 		app.usecases.checkerJanitor.Start(context.Background())
 	}
 
+	if app.usecases.checkerUserGater != nil {
+		app.usecases.checkerUserGater.Start(context.Background())
+	}
+
 	log.Printf("Public interface listening on %s\n", app.cfg.Bind)
 	if err := app.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("listen: %s\n", err)
@@ -395,6 +407,10 @@ func (app *App) Stop() {
 
 	if app.usecases.checkerJanitor != nil {
 		app.usecases.checkerJanitor.Stop()
+	}
+
+	if app.usecases.checkerUserGater != nil {
+		app.usecases.checkerUserGater.Stop()
 	}
 
 	// Close storage

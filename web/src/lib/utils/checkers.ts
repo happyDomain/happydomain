@@ -65,7 +65,7 @@ export function getStatusIcon(status: HappydnsStatus | undefined): string {
     }
 }
 
-// HappydnsExecutionStatus: 0=Pending, 1=Running, 2=Done, 3=Failed
+// HappydnsExecutionStatus: 0=Pending, 1=Running, 2=Done, 3=Failed, 4=RateLimited
 
 export function getExecutionStatusColor(status: HappydnsExecutionStatus | undefined): string {
     switch (status) {
@@ -73,6 +73,7 @@ export function getExecutionStatusColor(status: HappydnsExecutionStatus | undefi
         case 1: return "primary";
         case 2: return "success";
         case 3: return "danger";
+        case 4: return "warning";
         default: return "secondary";
     }
 }
@@ -83,6 +84,7 @@ export function getExecutionStatusI18nKey(status: HappydnsExecutionStatus | unde
         case 1: return "checkers.execution.status.running";
         case 2: return "checkers.execution.status.done";
         case 3: return "checkers.execution.status.failed";
+        case 4: return "checkers.execution.status.rate-limited";
         default: return "checkers.execution.status.unknown";
     }
 }

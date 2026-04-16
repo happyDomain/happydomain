@@ -53,11 +53,13 @@ type Dependencies struct {
 	ZoneImporter          happydns.ZoneImporterUsecase
 	ZoneService           happydns.ZoneServiceUsecase
 
-	CheckerEngine    happydns.CheckerEngine
-	CheckerOptionsUC *checkerUC.CheckerOptionsUsecase
-	CheckPlanUC      *checkerUC.CheckPlanUsecase
-	CheckStatusUC    *checkerUC.CheckStatusUsecase
-	PlannedProvider  checkerUC.PlannedJobProvider
+	CheckerEngine       happydns.CheckerEngine
+	CheckerOptionsUC    *checkerUC.CheckerOptionsUsecase
+	CheckPlanUC         *checkerUC.CheckPlanUsecase
+	CheckStatusUC       *checkerUC.CheckStatusUsecase
+	PlannedProvider     checkerUC.PlannedJobProvider
+	BudgetChecker       checkerUC.BudgetChecker
+	CountManualTriggers bool
 }
 
 //	@title			happyDomain API
@@ -123,6 +125,8 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 			dep.CheckPlanUC,
 			dep.CheckStatusUC,
 			dep.PlannedProvider,
+			dep.BudgetChecker,
+			dep.CountManualTriggers,
 		)
 	}
 

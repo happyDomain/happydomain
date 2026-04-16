@@ -37,27 +37,40 @@ import (
 
 // CheckerController handles checker-related API endpoints.
 type CheckerController struct {
-	engine          happydns.CheckerEngine
-	OptionsUC       *checkerUC.CheckerOptionsUsecase
-	planUC          *checkerUC.CheckPlanUsecase
-	statusUC        *checkerUC.CheckStatusUsecase
-	plannedProvider checkerUC.PlannedJobProvider
+	engine              happydns.CheckerEngine
+	OptionsUC           *checkerUC.CheckerOptionsUsecase
+	planUC              *checkerUC.CheckPlanUsecase
+	statusUC            *checkerUC.CheckStatusUsecase
+	plannedProvider     checkerUC.PlannedJobProvider
+	budgetChecker       checkerUC.BudgetChecker
+	countManualTriggers bool
 }
 
 // NewCheckerController creates a new CheckerController.
+//
+// countManualTriggers controls whether manual (API-triggered) checker runs
+// count against the user's MaxChecksPerDay budget. When true and
+// budgetChecker is non-nil, TriggerCheck refuses the request with HTTP 429
+// once the user is over budget and increments the counter on success.
+// When false, manual triggers bypass the quota entirely (legacy behavior).
+// The value is ignored when budgetChecker is nil.
 func NewCheckerController(
 	engine happydns.CheckerEngine,
 	optionsUC *checkerUC.CheckerOptionsUsecase,
 	planUC *checkerUC.CheckPlanUsecase,
 	statusUC *checkerUC.CheckStatusUsecase,
 	plannedProvider checkerUC.PlannedJobProvider,
+	budgetChecker checkerUC.BudgetChecker,
+	countManualTriggers bool,
 ) *CheckerController {
 	return &CheckerController{
-		engine:          engine,
-		OptionsUC:       optionsUC,
-		planUC:          planUC,
-		statusUC:        statusUC,
-		plannedProvider: plannedProvider,
+		engine:              engine,
+		OptionsUC:           optionsUC,
+		planUC:              planUC,
+		statusUC:            statusUC,
+		plannedProvider:     plannedProvider,
+		budgetChecker:       budgetChecker,
+		countManualTriggers: countManualTriggers,
 	}
 }
 
@@ -172,6 +185,7 @@ func (cc *CheckerController) ListAvailableChecks(c *gin.Context) {
 //	@Success	200	{object}	happydns.CheckEvaluation
 //	@Success	202	{object}	happydns.Execution
 //	@Failure	400	{object}	happydns.ErrorResponse
+//	@Failure	429	{object}	happydns.ErrorResponse
 //	@Router		/domains/{domain}/checkers/{checkerId}/executions [post]
 //	@Router		/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checkers/{checkerId}/executions [post]
 func (cc *CheckerController) TriggerCheck(c *gin.Context) {
@@ -190,6 +204,14 @@ func (cc *CheckerController) TriggerCheck(c *gin.Context) {
 		return
 	}
 
+	// Enforce the daily check quota on manual triggers when configured.
+	// Interval=0 means "long-interval" in UserGater terms, so manual triggers
+	// are only denied at the hard limit — never by interval-aware throttling.
+	if cc.countManualTriggers && cc.budgetChecker != nil && !cc.budgetChecker.AllowWithInterval(target, 0) {
+		c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"errmsg": "daily check quota exhausted; try again after 00:00 UTC"})
+		return
+	}
+
 	// Build a temporary plan from enabled rules if provided.
 	var plan *happydns.CheckPlan
 	if len(req.EnabledRules) > 0 {
@@ -204,6 +226,12 @@ func (cc *CheckerController) TriggerCheck(c *gin.Context) {
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
+	}
+	// Count the manual execution against the user's daily budget. Mirrors
+	// the scheduler's onExecute semantics: increment after CreateExecution
+	// succeeds, regardless of whether RunExecution later fails.
+	if cc.countManualTriggers && cc.budgetChecker != nil {
+		cc.budgetChecker.IncrementUsage(target)
 	}
 
 	if c.Query("sync") == "true" {

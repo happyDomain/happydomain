@@ -201,7 +201,7 @@ func newTestScheduler(engine happydns.CheckerEngine, domains []*happydns.Domain)
 	dl := &mockDomainLister{domains: domains}
 	zg := &mockZoneGetter{zones: make(map[string]*happydns.ZoneMessage)}
 	ss := &mockStateStore{}
-	sched := NewScheduler(engine, 2, ps, dl, zg, ss, nil)
+	sched := NewScheduler(engine, 2, ps, dl, zg, ss, nil, nil)
 	return sched, ps, ss
 }
 
@@ -342,10 +342,10 @@ func TestScheduler_Gate(t *testing.T) {
 	dl := &mockDomainLister{domains: []*happydns.Domain{domain}}
 	zg := &mockZoneGetter{zones: make(map[string]*happydns.ZoneMessage)}
 	ss := &mockStateStore{}
-	sched := NewScheduler(engine, 2, ps, dl, zg, ss, func(target happydns.CheckTarget) bool {
+	sched := NewScheduler(engine, 2, ps, dl, zg, ss, func(target happydns.CheckTarget, interval time.Duration) bool {
 		gated.Add(1)
 		return false // block all jobs
-	})
+	}, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -359,6 +359,144 @@ func TestScheduler_Gate(t *testing.T) {
 	// The gate should have been called but no executions should have run.
 	if engine.executionCount() > 0 {
 		t.Error("expected no executions when gate blocks all jobs")
+	}
+}
+
+// injectJob pushes a SchedulerJob directly into a running scheduler's queue
+// and wakes the loop so the new job is observed promptly. It must be called
+// after Start (Start resets the queue via buildQueue).
+func injectJob(t *testing.T, sched *Scheduler, job *SchedulerJob) {
+	t.Helper()
+	sched.mu.Lock()
+	heap.Push(&sched.queue, job)
+	sched.mu.Unlock()
+	select {
+	case sched.wake <- struct{}{}:
+	default:
+	}
+}
+
+func TestScheduler_OnExecute_CalledOnSuccess(t *testing.T) {
+	engine := &mockEngine{}
+	ps := &mockPlanStore{}
+	dl := &mockDomainLister{domains: nil}
+	zg := &mockZoneGetter{zones: make(map[string]*happydns.ZoneMessage)}
+	ss := &mockStateStore{}
+
+	var onExecCalls atomic.Int32
+	var lastTarget atomic.Value // happydns.CheckTarget
+	sched := NewScheduler(engine, 2, ps, dl, zg, ss, nil, func(target happydns.CheckTarget) {
+		onExecCalls.Add(1)
+		lastTarget.Store(target)
+	})
+
+	uid, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
+
+	sched.Start(t.Context())
+	defer sched.Stop()
+
+	// Inject a due job with a long interval so reschedule does not re-run
+	// it within the test window.
+	injectJob(t, sched, &SchedulerJob{
+		CheckerID: "test-checker",
+		Target:    target,
+		Interval:  time.Hour,
+		NextRun:   time.Now(),
+	})
+
+	// Wait for the scheduler to pick up and execute the job.
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) && onExecCalls.Load() == 0 {
+		time.Sleep(20 * time.Millisecond)
+	}
+
+	if got := onExecCalls.Load(); got < 1 {
+		t.Fatalf("expected onExecute to be called at least once, got %d", got)
+	}
+	if got := engine.executionCount(); got < 1 {
+		t.Errorf("expected at least one execution created, got %d", got)
+	}
+	stored, _ := lastTarget.Load().(happydns.CheckTarget)
+	if stored.UserId != target.UserId || stored.DomainId != target.DomainId {
+		t.Errorf("expected onExecute target=%+v, got %+v", target, stored)
+	}
+}
+
+func TestScheduler_OnExecute_NotCalledWhenCreateFails(t *testing.T) {
+	engine := &mockEngine{createErr: happydns.ErrExecutionNotFound}
+	ps := &mockPlanStore{}
+	dl := &mockDomainLister{domains: nil}
+	zg := &mockZoneGetter{zones: make(map[string]*happydns.ZoneMessage)}
+	ss := &mockStateStore{}
+
+	var onExecCalls atomic.Int32
+	sched := NewScheduler(engine, 2, ps, dl, zg, ss, nil, func(target happydns.CheckTarget) {
+		onExecCalls.Add(1)
+	})
+
+	uid, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
+
+	sched.Start(t.Context())
+	defer sched.Stop()
+
+	// Inject a due job that will fail at CreateExecution. Use a long
+	// interval so we do not repeatedly attempt within the test window.
+	injectJob(t, sched, &SchedulerJob{
+		CheckerID: "test-checker",
+		Target:    target,
+		Interval:  time.Hour,
+		NextRun:   time.Now(),
+	})
+
+	// Wait long enough for the scheduler to attempt the job at least once.
+	time.Sleep(250 * time.Millisecond)
+
+	if got := onExecCalls.Load(); got != 0 {
+		t.Errorf("expected onExecute not to be called when CreateExecution fails, got %d", got)
+	}
+	if got := engine.executionCount(); got != 0 {
+		t.Errorf("expected no executions created when CreateExecution fails, got %d", got)
+	}
+}
+
+func TestScheduler_OnExecute_NotCalledWhenGateDenies(t *testing.T) {
+	// onExecute should also be skipped when the gate blocks a job — the
+	// usage counter must only move for jobs that actually produced an
+	// execution.
+	engine := &mockEngine{}
+	ps := &mockPlanStore{}
+	dl := &mockDomainLister{domains: nil}
+	zg := &mockZoneGetter{zones: make(map[string]*happydns.ZoneMessage)}
+	ss := &mockStateStore{}
+
+	var onExecCalls atomic.Int32
+	sched := NewScheduler(engine, 2, ps, dl, zg, ss,
+		func(target happydns.CheckTarget, interval time.Duration) bool { return false },
+		func(target happydns.CheckTarget) { onExecCalls.Add(1) },
+	)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
+
+	sched.Start(t.Context())
+	defer sched.Stop()
+
+	injectJob(t, sched, &SchedulerJob{
+		CheckerID: "test-checker",
+		Target:    target,
+		Interval:  time.Hour,
+		NextRun:   time.Now(),
+	})
+
+	time.Sleep(200 * time.Millisecond)
+
+	if got := onExecCalls.Load(); got != 0 {
+		t.Errorf("expected onExecute not to be called when gate denies, got %d", got)
+	}
+	if got := engine.executionCount(); got != 0 {
+		t.Errorf("expected no executions when gate denies, got %d", got)
 	}
 }
 

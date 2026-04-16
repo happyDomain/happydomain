@@ -83,7 +83,7 @@ func (cc *CheckerController) ListExecutions(c *gin.Context) {
 	}
 
 	if c.Query("include_planned") == "true" || c.Query("include_planned") == "1" {
-		planned := checkerUC.ListPlannedExecutions(cc.plannedProvider, cname, target)
+		planned := checkerUC.ListPlannedExecutions(cc.plannedProvider, cc.budgetChecker, cname, target)
 		execs = append(planned, execs...)
 	}
 
