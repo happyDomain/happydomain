@@ -533,6 +533,31 @@ func Test_NewSessionID(t *testing.T) {
 	}
 }
 
+// Test_SessionIDLen_matches_NewSessionID guards the invariant that
+// session.SessionIDLen is the actual length produced by NewSessionID. If the
+// encoding or key size ever changes without updating the constant, the
+// middleware's IsValidSessionID check would silently reject freshly generated
+// IDs and break Bearer-token auth.
+func Test_SessionIDLen_matches_NewSessionID(t *testing.T) {
+	if got := len(session.NewSessionID()); got != session.SessionIDLen {
+		t.Fatalf("SessionIDLen = %d, but NewSessionID() produced %d chars", session.SessionIDLen, got)
+	}
+}
+
+// Test_SessionIDLen_MatchesNewSessionID guards against the derived
+// SessionIDLen constant drifting from the actual output of NewSessionID.
+// It runs several iterations because base32's length for a given input is
+// fully deterministic, but a future change to sessionIDKeyLen could leave
+// the formula off-by-one if the ceiling adjustment is wrong.
+func Test_SessionIDLen_MatchesNewSessionID(t *testing.T) {
+	for range 32 {
+		id := session.NewSessionID()
+		if len(id) != session.SessionIDLen {
+			t.Fatalf("NewSessionID() produced %d-char string, SessionIDLen is %d", len(id), session.SessionIDLen)
+		}
+	}
+}
+
 func Test_SessionExpiration(t *testing.T) {
 	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)

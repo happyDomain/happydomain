@@ -30,6 +30,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 
+	"git.happydns.org/happyDomain/internal/session"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -57,6 +58,12 @@ func JwtAuthMiddleware(authService happydns.AuthenticationUsecase, signingMethod
 
 		if len(token) == 0 {
 			log.Printf("%s Skip %s authorization due to malformed token", c.ClientIP(), flds[0])
+			c.Next()
+			return
+		}
+
+		// Session IDs are handled by the session store; skip JWT parsing.
+		if session.IsValidSessionID(token) {
 			c.Next()
 			return
 		}

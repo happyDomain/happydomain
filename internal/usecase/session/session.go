@@ -196,8 +196,14 @@ func (s *Service) ByID(userID happydns.Identifier) error {
 	return s.CloseUserSessions(&happydns.User{Id: userID})
 }
 
+// sessionIDKeyLen is the number of random bytes used to generate a session ID.
+const sessionIDKeyLen = 64
+
+// SessionIDLen is the length of a session ID string (base32, no padding).
+const SessionIDLen = (sessionIDKeyLen*8 + 4) / 5
+
 // NewSessionID generates a random session identifier encoded
 // as a base32 string without padding characters.
 func NewSessionID() string {
-	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(securecookie.GenerateRandomKey(64))
+	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(securecookie.GenerateRandomKey(sessionIDKeyLen))
 }
