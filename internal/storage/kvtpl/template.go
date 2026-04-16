@@ -75,8 +75,10 @@ func listByIndex[T any](s *KVStorage, prefix string, getEntity func(happydns.Ide
 	return results, nil
 }
 
-// listByIndexSorted is like listByIndex but sorts results and applies a limit.
-func listByIndexSorted[T any](s *KVStorage, prefix string, getEntity func(happydns.Identifier) (*T, error), less func(*T, *T) bool, limit int) ([]*T, error) {
+// listByIndexSorted is like listByIndex but sorts results, applies an optional
+// filter predicate, and then applies a limit. The limit counts only items that
+// pass the filter; passing nil for filter disables filtering.
+func listByIndexSorted[T any](s *KVStorage, prefix string, getEntity func(happydns.Identifier) (*T, error), less func(*T, *T) bool, limit int, filter func(*T) bool) ([]*T, error) {
 	results, err := listByIndex(s, prefix, getEntity)
 	if err != nil {
 		return nil, err
@@ -86,10 +88,23 @@ func listByIndexSorted[T any](s *KVStorage, prefix string, getEntity func(happyd
 		return less(results[i], results[j])
 	})
 
-	if limit > 0 && len(results) > limit {
-		results = results[:limit]
+	if filter == nil {
+		if limit > 0 && len(results) > limit {
+			results = results[:limit]
+		}
+		return results, nil
 	}
-	return results, nil
+
+	filtered := results[:0]
+	for _, r := range results {
+		if filter(r) {
+			filtered = append(filtered, r)
+			if limit > 0 && len(filtered) >= limit {
+				break
+			}
+		}
+	}
+	return filtered, nil
 }
 
 // tidyTwoPartIndex removes stale secondary index entries of the form

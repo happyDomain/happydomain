@@ -88,13 +88,13 @@ func (s *mockExecStore) DeleteExecution(execID happydns.Identifier) error {
 func (s *mockExecStore) ListAllExecutions() (happydns.Iterator[happydns.Execution], error) {
 	return nil, nil
 }
-func (s *mockExecStore) ListExecutionsByChecker(string, happydns.CheckTarget, int) ([]*happydns.Execution, error) {
+func (s *mockExecStore) ListExecutionsByChecker(string, happydns.CheckTarget, int, func(*happydns.Execution) bool) ([]*happydns.Execution, error) {
 	return nil, nil
 }
-func (s *mockExecStore) ListExecutionsByUser(happydns.Identifier, int) ([]*happydns.Execution, error) {
+func (s *mockExecStore) ListExecutionsByUser(happydns.Identifier, int, func(*happydns.Execution) bool) ([]*happydns.Execution, error) {
 	return nil, nil
 }
-func (s *mockExecStore) ListExecutionsByDomain(happydns.Identifier, int) ([]*happydns.Execution, error) {
+func (s *mockExecStore) ListExecutionsByDomain(happydns.Identifier, int, func(*happydns.Execution) bool) ([]*happydns.Execution, error) {
 	return nil, nil
 }
 func (s *mockExecStore) GetExecution(happydns.Identifier) (*happydns.Execution, error) {

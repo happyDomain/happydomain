@@ -43,27 +43,28 @@ func (s *KVStorage) ListExecutionsByPlan(planID happydns.Identifier) ([]*happydn
 }
 
 // listRecentExecutions scans a prefix, decodes executions, sorts by most
-// recent first, and applies an optional limit.
-func (s *KVStorage) listRecentExecutions(prefix string, limit int) ([]*happydns.Execution, error) {
+// recent first, applies an optional filter predicate, and then applies a limit.
+func (s *KVStorage) listRecentExecutions(prefix string, limit int, filter func(*happydns.Execution) bool) ([]*happydns.Execution, error) {
 	return listByIndexSorted(
 		s,
 		prefix,
 		s.GetExecution,
 		func(a, b *happydns.Execution) bool { return a.StartedAt.After(b.StartedAt) },
 		limit,
+		filter,
 	)
 }
 
-func (s *KVStorage) ListExecutionsByChecker(checkerID string, target happydns.CheckTarget, limit int) ([]*happydns.Execution, error) {
-	return s.listRecentExecutions(fmt.Sprintf("chckexec-chkr|%s|%s|", checkerID, target.String()), limit)
+func (s *KVStorage) ListExecutionsByChecker(checkerID string, target happydns.CheckTarget, limit int, filter func(*happydns.Execution) bool) ([]*happydns.Execution, error) {
+	return s.listRecentExecutions(fmt.Sprintf("chckexec-chkr|%s|%s|", checkerID, target.String()), limit, filter)
 }
 
-func (s *KVStorage) ListExecutionsByUser(userId happydns.Identifier, limit int) ([]*happydns.Execution, error) {
-	return s.listRecentExecutions(fmt.Sprintf("chckexec-user|%s|", userId.String()), limit)
+func (s *KVStorage) ListExecutionsByUser(userId happydns.Identifier, limit int, filter func(*happydns.Execution) bool) ([]*happydns.Execution, error) {
+	return s.listRecentExecutions(fmt.Sprintf("chckexec-user|%s|", userId.String()), limit, filter)
 }
 
-func (s *KVStorage) ListExecutionsByDomain(domainId happydns.Identifier, limit int) ([]*happydns.Execution, error) {
-	return s.listRecentExecutions(fmt.Sprintf("chckexec-domain|%s|", domainId.String()), limit)
+func (s *KVStorage) ListExecutionsByDomain(domainId happydns.Identifier, limit int, filter func(*happydns.Execution) bool) ([]*happydns.Execution, error) {
+	return s.listRecentExecutions(fmt.Sprintf("chckexec-domain|%s|", domainId.String()), limit, filter)
 }
 
 func (s *KVStorage) ListAllExecutions() (happydns.Iterator[happydns.Execution], error) {
