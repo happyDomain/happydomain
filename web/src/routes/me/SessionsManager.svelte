@@ -132,7 +132,7 @@
         </div>
     {:then sessions}
         <ListGroup>
-            {#each sessions as session (session.id)}
+            {#each [...sessions].sort((a, b) => new Date(b.upd || b.time).getTime() - new Date(a.upd || a.time).getTime()) as session (session.id)}
                 <ListGroupItem class="d-flex align-items-center justify-content-between">
                     <div class="flex-fill" style="max-width:90%">
                         <div class="text-truncate">
