@@ -56,6 +56,13 @@ func GetDomainWhoisInfo(ctx context.Context, domain happydns.Origin) (*happydns.
 		return nil, err
 	}
 
+	// Some registries (e.g. Verisign for .com) return a "No match" response
+	// that the parser accepts without error but produces an empty Domain
+	// field. Treat this as a non-existent domain.
+	if result.Domain == nil || result.Domain.Domain == "" {
+		return nil, happydns.ErrDomainDoesNotExist
+	}
+
 	return mapWhoisResult(&result), nil
 }
 
