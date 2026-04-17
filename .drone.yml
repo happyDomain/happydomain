@@ -28,8 +28,8 @@ steps:
     commands:
       - apk --no-cache add tar
       - yarn config set network-timeout 100000
-      - yarn --cwd web install
-      - tar --transform="s@.@./happydomain-${DRONE_COMMIT}@" --exclude-vcs --exclude=./web/node_modules/.cache -czf /dev/shm/happydomain-src.tar.gz .
+      - yarn install
+      - tar --transform="s@.@./happydomain-${DRONE_COMMIT}@" --exclude-vcs --exclude=./node_modules/.cache --exclude=./web/node_modules/.cache --exclude=./web-admin/node_modules/.cache -czf /dev/shm/happydomain-src.tar.gz ./package.json ./package-lock.json ./.npmrc ./node_modules/ ./web/ ./web-admin/
       - mkdir deploy
       - mv /dev/shm/happydomain-src.tar.gz deploy
       - yarn --cwd web --offline run svelte-kit sync && yarn --cwd web --offline generate:api && sed -i "s/hey-api\.ts';/hey-api';/" web/src/lib/api-base/client.gen.ts
@@ -237,8 +237,8 @@ steps:
   - name: frontend
     image: node:24-alpine
     commands:
-      - cd web
       - npm install --network-timeout=100000
+      - cd web
       - npx svelte-kit sync && npm run generate:api
       - npm test
       - npm run build

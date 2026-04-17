@@ -1,0 +1,12 @@
+{
+	"name": "happydomain-monorepo",
+	"version": "0.0.1",
+	"private": true,
+	"workspaces": [
+		"web",
+		"web-admin"
+	],
+	"resolutions": {
+		"vite": "^8.0.0"
+	}
+}
