@@ -154,11 +154,7 @@ steps:
         from_secret: git_nemunaire_token
       base_url: https://git.nemunai.re
       draft: true
-      files:
-        - happydomain-src.tar.gz
-        - happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-        - happydomain-darwin-${DRONE_STAGE_ARCH}
-        - happydomain-sbom.spdx.json
+      files: deploy/*
     when:
       event:
         - tag
@@ -170,11 +166,7 @@ steps:
         from_secret: codeberg_token
       base_url: https://codeberg.org
       draft: true
-      files:
-        - happydomain-src.tar.gz
-        - happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-        - happydomain-darwin-${DRONE_STAGE_ARCH}
-        - happydomain-sbom.spdx.json
+      files: deploy/*
     when:
       event:
         - tag
@@ -186,11 +178,7 @@ steps:
         from_secret: github_release_token
       draft: true
       github_url: https://github.com
-      files:
-        - happydomain-src.tar.gz
-        - happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-        - happydomain-darwin-${DRONE_STAGE_ARCH}
-        - happydomain-sbom.spdx.json
+      files: deploy/*
     when:
       event:
         - tag
@@ -362,9 +350,7 @@ steps:
       base_url: https://git.nemunai.re
       draft: true
       prerelease: true
-      files:
-        - happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-        - happydomain-darwin-${DRONE_STAGE_ARCH}
+      files: deploy/*
     when:
       event:
         - tag
@@ -377,9 +363,7 @@ steps:
       base_url: https://codeberg.org
       draft: true
       prerelease: true
-      files:
-        - happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-        - happydomain-darwin-${DRONE_STAGE_ARCH}
+      files: deploy/*
     when:
       event:
         - tag
@@ -392,9 +376,7 @@ steps:
       draft: true
       prerelease: true
       github_url: https://github.com
-      files:
-        - happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
-        - happydomain-darwin-${DRONE_STAGE_ARCH}
+      files: deploy/*
     when:
       event:
         - tag
