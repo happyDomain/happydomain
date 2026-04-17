@@ -37,14 +37,25 @@ steps:
       - yarn --cwd web-admin --offline run svelte-kit sync && yarn --cwd web-admin --offline generate:api && sed -i "s/hey-api\.ts';/hey-api';/" web/src/lib/api-admin/client.gen.ts
       - yarn --cwd web-admin --offline build
 
+  - name: frontend NOTICE
+    image: node:24-alpine
+    commands:
+      - npx --yes generate-license-file@3 --input web/package.json --output deploy/NOTICE.web --ci
+      - npx --yes generate-license-file@3 --input web-admin/package.json --output deploy/NOTICE.web-admin --ci
+      - for f in deploy/NOTICE.web deploy/NOTICE.web-admin; do { echo '------'; tail -n +3 "$f"; } > "$f.tmp" && mv "$f.tmp" "$f"; done
+    when:
+      event:
+        - tag
+
   - name: backend-commit
     image: golang:1-alpine
     commands:
       - apk add --no-cache git
-      - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - go build -ldflags '-w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
       - ln deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
     environment:
       CGO_ENABLED: 0
+      GOFLAGS: "-tags=netgo,swagger,web"
     when:
       event:
         exclude:
@@ -54,10 +65,16 @@ steps:
     image: golang:1-alpine
     commands:
       - apk add --no-cache git
-      - go build -tags netgo,swagger,web -ldflags '-w -X main.Version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - go build -ldflags '-w -X main.Version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
       - ln deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
+      # Generate NOTICE file (merging Go + frontend)
+      - go install github.com/google/go-licenses@v1.6.0
+      - go-licenses report ./cmd/happyDomain --template .drone-notice.tpl > deploy/NOTICE.go
+      - cat deploy/NOTICE.go deploy/NOTICE.web deploy/NOTICE.web-admin > deploy/NOTICE
+      - rm deploy/NOTICE.go deploy/NOTICE.web deploy/NOTICE.web-admin
     environment:
       CGO_ENABLED: 0
+      GOFLAGS: "-tags=netgo,swagger,web"
     when:
       event:
         - tag
