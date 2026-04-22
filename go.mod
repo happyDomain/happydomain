@@ -15,6 +15,7 @@ require (
 	git.happydns.org/checker-sdk-go v1.5.0
 	git.happydns.org/checker-sip v0.2.0
 	git.happydns.org/checker-srv v0.1.0
+	git.happydns.org/checker-stun-turn v0.1.0
 	git.happydns.org/checker-tls v0.6.2
 	git.happydns.org/checker-xmpp v0.2.0
 	git.happydns.org/checker-zonemaster v0.1.0
@@ -55,8 +56,15 @@ require (
 	github.com/emersion/go-vcard v0.0.0-20230815062825-8fda7d206ec9 // indirect
 	github.com/emersion/go-webdav v0.7.0 // indirect
 	github.com/likexian/gokit v0.25.16 // indirect
+	github.com/pion/dtls/v3 v3.0.4 // indirect
+	github.com/pion/logging v0.2.2 // indirect
+	github.com/pion/randutil v0.1.0 // indirect
+	github.com/pion/stun/v3 v3.0.0 // indirect
+	github.com/pion/transport/v3 v3.0.7 // indirect
+	github.com/pion/turn/v4 v4.0.0 // indirect
 	github.com/redis/go-redis/v9 v9.18.0 // indirect
 	github.com/teambition/rrule-go v1.8.2 // indirect
+	github.com/wlynxg/anet v0.0.3 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 )
