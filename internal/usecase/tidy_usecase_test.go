@@ -80,7 +80,7 @@ func TestTidyObservationCache_RemovesStaleEntries(t *testing.T) {
 
 	// Run tidy.
 	tu := usecase.NewTidyUpUsecase(store)
-	if err := tu.TidyObservationCache(); err != nil {
+	if err := tu.TidyObservationCache(true); err != nil {
 		t.Fatalf("TidyObservationCache() error: %v", err)
 	}
 
@@ -102,7 +102,7 @@ func TestTidyObservationCache_EmptyCache(t *testing.T) {
 	}
 
 	tu := usecase.NewTidyUpUsecase(store)
-	if err := tu.TidyObservationCache(); err != nil {
+	if err := tu.TidyObservationCache(true); err != nil {
 		t.Fatalf("TidyObservationCache() on empty cache error: %v", err)
 	}
 }

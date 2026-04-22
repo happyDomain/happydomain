@@ -76,6 +76,7 @@ func (it *KVIterator[T]) NextWithError() bool {
 		}
 		return true
 	}
+	it.err = nil
 	return false
 }
 

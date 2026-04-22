@@ -24,18 +24,21 @@ package happydns
 import ()
 
 type TidyUpUseCase interface {
-	TidyAll() error
-	TidyAuthUsers() error
-	TidyCheckEvaluations() error
-	TidyCheckPlans() error
-	TidyCheckerConfigurations() error
-	TidyExecutions() error
-	TidyObservationCache() error
-	TidySnapshots() error
-	TidyDomains() error
-	TidyDomainLogs() error
-	TidyProviders() error
-	TidySessions() error
-	TidyUsers() error
-	TidyZones() error
+	// TidyAll runs every tidy pass. When dropInvalid is true, iterators
+	// that encounter undecodable records (e.g. legacy schema drift) will
+	// delete those records; otherwise they are only logged.
+	TidyAll(dropInvalid bool) error
+	TidyAuthUsers(dropInvalid bool) error
+	TidyCheckEvaluations(dropInvalid bool) error
+	TidyCheckPlans(dropInvalid bool) error
+	TidyCheckerConfigurations(dropInvalid bool) error
+	TidyExecutions(dropInvalid bool) error
+	TidyObservationCache(dropInvalid bool) error
+	TidySnapshots(dropInvalid bool) error
+	TidyDomains(dropInvalid bool) error
+	TidyDomainLogs(dropInvalid bool) error
+	TidyProviders(dropInvalid bool) error
+	TidySessions(dropInvalid bool) error
+	TidyUsers(dropInvalid bool) error
+	TidyZones(dropInvalid bool) error
 }

@@ -22,6 +22,9 @@
 package controller
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/model"
@@ -41,14 +44,25 @@ func NewTidyController(tidyUpService happydns.TidyUpUseCase) *TidyController {
 //
 //	@Summary	Tidy up the database
 //	@Schemes
-//	@Description	Performs cleanup and maintenance operations on the database, removing orphaned records and optimizing storage.
+//	@Description	Performs cleanup and maintenance operations on the database, removing orphaned records and optimizing storage. When drop_invalid is true (default), records that fail to decode (e.g. after a schema change) are deleted; set it to false to only log them.
 //	@Tags		admin
 //	@Accept		json
 //	@Produce	json
+//	@Param		drop_invalid	query		bool	false	"Delete records that fail to decode instead of only logging (default true)"
 //	@Security	securitydefinitions.basic
 //	@Success	200	{boolean}	bool
 //	@Failure	500	{object}	happydns.ErrorResponse	"Internal server error"
 //	@Router		/tidy [post]
 func (tc *TidyController) TidyDB(c *gin.Context) {
-	happydns.ApiResponse(c, true, tc.tidyUpService.TidyAll())
+	dropInvalid := true
+	if v := c.Query("drop_invalid"); v != "" {
+		parsed, err := strconv.ParseBool(v)
+		if err != nil {
+			happydns.ApiResponse(c, nil, fmt.Errorf("drop_invalid must be a boolean: %w", err))
+			return
+		}
+		dropInvalid = parsed
+	}
+
+	happydns.ApiResponse(c, true, tc.tidyUpService.TidyAll(dropInvalid))
 }
