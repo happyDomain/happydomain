@@ -343,3 +343,24 @@ func TestRoundTrip_SubdomainServer(t *testing.T) {
 	}
 	assertRoundTrip(t, origin, records)
 }
+
+// TestRoundTrip_CalDAV exercises the RFC 6764 CalDAV SRV records through the
+// full analyze → regenerate path so abstract.CalDAV registration stays honest.
+func TestRoundTrip_CalDAV(t *testing.T) {
+	origin := "example.com."
+	records := []happydns.Record{
+		mustNewRR(t, "_caldavs._tcp.example.com. 3600 IN SRV 10 5 443 dav.example.com."),
+		mustNewRR(t, "_caldav._tcp.example.com.  3600 IN SRV 10 5 80  dav.example.com."),
+	}
+	assertRoundTrip(t, origin, records)
+}
+
+// TestRoundTrip_CardDAV - same for the CardDAV half of RFC 6764.
+func TestRoundTrip_CardDAV(t *testing.T) {
+	origin := "example.com."
+	records := []happydns.Record{
+		mustNewRR(t, "_carddavs._tcp.example.com. 3600 IN SRV 10 5 443 dav.example.com."),
+		mustNewRR(t, "_carddav._tcp.example.com.  3600 IN SRV 10 5 80  dav.example.com."),
+	}
+	assertRoundTrip(t, origin, records)
+}
