@@ -16,6 +16,8 @@ git.happydns.org/checker-ping v0.0.0-20260407194626-a2ebf17774fc h1:jKEOx2NDbHHx
 git.happydns.org/checker-ping v0.0.0-20260407194626-a2ebf17774fc/go.mod h1:wphWmslFhKcpWfJTrHdChv8DkhUP9jwis7V2jy7vOX0=
 git.happydns.org/checker-sdk-go v1.2.0 h1:v4MpKAz0W3PwP+bxx3pya8w893sVH5xTD1of1cc0TV8=
 git.happydns.org/checker-sdk-go v1.2.0/go.mod h1:aNAcfYFfbhvH9kJhE0Njp5GX0dQbxdRB0rJ0KvSC5nI=
+git.happydns.org/checker-tls v0.2.0 h1:2dYpcePBylUc3le76fFlLbxraiLpGESmOhx4NfD7REM=
+git.happydns.org/checker-tls v0.2.0/go.mod h1:0ZSG0CTP007SHBPE7qInESVIOcW+xgucHUhHgj6MeZ8=
 git.happydns.org/checker-zonemaster v0.0.0-20260407202727-979757b5a8fc h1:y5xjoqLA/WztFWhEUifOwnJ6POjl+Udw6bWjzQ2afOw=
 git.happydns.org/checker-zonemaster v0.0.0-20260407202727-979757b5a8fc/go.mod h1:B1P23OMm82GfAtYw8vCbspc7qULsFA0u/tqR+SGAaNw=
 github.com/Azure/azure-sdk-for-go/sdk/azcore v1.21.0 h1:fou+2+WFTib47nS+nz/ozhEBnvU96bKHy6LjRsY4E28=
