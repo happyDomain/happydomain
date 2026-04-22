@@ -9,6 +9,7 @@ require (
 	git.happydns.org/checker-ns-restrictions v0.1.0
 	git.happydns.org/checker-ping v0.1.0
 	git.happydns.org/checker-sdk-go v1.5.0
+	git.happydns.org/checker-tls v0.6.2
 	git.happydns.org/checker-zonemaster v0.1.0
 	github.com/JGLTechnologies/gin-rate-limit v1.5.8
 	github.com/StackExchange/dnscontrol/v4 v4.34.0
