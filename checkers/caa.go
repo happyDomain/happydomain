@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,14 +19,16 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package main
+package checkers
 
-//go:generate go run tools/gen_instrumented_storage.go
-//go:generate go run tools/gen_icon.go providers providers
-//go:generate go run tools/gen_icon.go services svcs
-//go:generate go run tools/gen_rr_typescript.go web/src/lib/dns_rr.ts
-//go:generate go run tools/gen_service_specs.go -o web/src/lib/services_specs.ts
-//go:generate go run tools/gen_dns_type_mapping.go -o internal/usecase/service_specs_dns_types.go
-//go:generate go run tools/gen_caa_issuers.go -o web/src/lib/services/caa-issuers.json https://ccadb.my.salesforce-sites.com/ccadb/AllCAAIdentifiersReportCSVV2
-//go:generate swag init --parseDependency --exclude internal/api-admin/ --generalInfo internal/api/route/route.go
-//go:generate swag init --parseDependency --output docs-admin --exclude internal/api/ --generalInfo internal/api-admin/route/route.go
+import (
+	caa "git.happydns.org/checker-caa/checker"
+	sdk "git.happydns.org/checker-sdk-go/checker"
+	"git.happydns.org/happyDomain/internal/checker"
+)
+
+func init() {
+	prvd := caa.Provider()
+	checker.RegisterObservationProvider(prvd)
+	checker.RegisterExternalizableChecker(prvd.(sdk.CheckerDefinitionProvider).Definition())
+}
