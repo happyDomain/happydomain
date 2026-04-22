@@ -44,6 +44,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -70,6 +71,7 @@ type ObservationContext struct {
 	cache            map[happydns.ObservationKey]json.RawMessage
 	errors           map[happydns.ObservationKey]error
 	inflight         map[happydns.ObservationKey]chan struct{}
+	entries          map[happydns.ObservationKey][]happydns.DiscoveryEntry
 	mu               sync.Mutex
 	cacheLookup      ObservationCacheLookup // nil = no DB cache
 	freshness        time.Duration          // 0 = always collect
@@ -86,9 +88,25 @@ func NewObservationContext(target happydns.CheckTarget, opts happydns.CheckerOpt
 		cache:       make(map[happydns.ObservationKey]json.RawMessage),
 		errors:      make(map[happydns.ObservationKey]error),
 		inflight:    make(map[happydns.ObservationKey]chan struct{}),
+		entries:     make(map[happydns.ObservationKey][]happydns.DiscoveryEntry),
 		cacheLookup: cacheLookup,
 		freshness:   freshness,
 	}
+}
+
+// Entries returns the DiscoveryEntry records published by each observation
+// provider during this run, aggregated by observation key. The engine
+// collects these after rule evaluation to persist them via the discovery
+// store.
+func (oc *ObservationContext) Entries() map[happydns.ObservationKey][]happydns.DiscoveryEntry {
+	oc.mu.Lock()
+	defer oc.mu.Unlock()
+
+	out := make(map[happydns.ObservationKey][]happydns.DiscoveryEntry, len(oc.entries))
+	for k, v := range oc.entries {
+		out[k] = append([]happydns.DiscoveryEntry(nil), v...)
+	}
+	return out
 }
 
 // SetProviderOverride registers a per-context provider that takes precedence
@@ -196,6 +214,16 @@ func (oc *ObservationContext) collect(ctx context.Context, key happydns.Observat
 	val, err := provider.Collect(ctx, oc.opts)
 	if err != nil {
 		return nil, err
+	}
+
+	if pub, ok := provider.(sdk.DiscoveryPublisher); ok {
+		if entries, err := pub.DiscoverEntries(val); err != nil {
+			log.Printf("observation %q: DiscoverEntries failed: %v", key, err)
+		} else if len(entries) > 0 {
+			oc.mu.Lock()
+			oc.entries[key] = entries
+			oc.mu.Unlock()
+		}
 	}
 
 	raw, err := json.Marshal(val)
