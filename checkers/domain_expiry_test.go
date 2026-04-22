@@ -27,6 +27,7 @@ import (
 	"testing"
 	"time"
 
+	sdk "git.happydns.org/checker-sdk-go/checker"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -116,7 +117,7 @@ func TestWhoisProvider_ExtractMetrics(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	metrics, err := p.ExtractMetrics(raw, collected)
+	metrics, err := p.ExtractMetrics(sdk.StaticReportContext(raw), collected)
 	if err != nil {
 		t.Fatal(err)
 	}

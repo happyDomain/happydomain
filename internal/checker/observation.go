@@ -205,6 +205,14 @@ func (oc *ObservationContext) collect(ctx context.Context, key happydns.Observat
 	return json.RawMessage(raw), nil
 }
 
+// GetRelated returns observations produced by other checkers on DiscoveryEntry
+// records that the current target's producer has published. This default
+// implementation returns an empty slice; the engine wires a real lookup via
+// SetRelatedLookup when discovery storage is available.
+func (oc *ObservationContext) GetRelated(ctx context.Context, key happydns.ObservationKey) ([]happydns.RelatedObservation, error) {
+	return nil, nil
+}
+
 // Data returns all cached observation data as pre-serialized JSON.
 func (oc *ObservationContext) Data() map[happydns.ObservationKey]json.RawMessage {
 	oc.mu.Lock()
@@ -244,16 +252,16 @@ func HasHTMLReporter() bool {
 // GetHTMLReport renders an HTML report for the given observation key and raw JSON data.
 // Returns (html, true, nil) if the provider supports HTML reports, or ("", false, nil) if not.
 func GetHTMLReport(key happydns.ObservationKey, raw json.RawMessage) (string, bool, error) {
-	return getHTMLReport(sdk.FindObservationProvider(key), key, raw)
+	return getHTMLReport(sdk.FindObservationProvider(key), key, sdk.StaticReportContext(raw))
 }
 
 // GetHTMLReportCtx is like GetHTMLReport but resolves the provider through
 // the ObservationContext, respecting per-context overrides.
-func (oc *ObservationContext) GetHTMLReportCtx(key happydns.ObservationKey, raw json.RawMessage) (string, bool, error) {
-	return getHTMLReport(oc.getProvider(key), key, raw)
+func (oc *ObservationContext) GetHTMLReportCtx(key happydns.ObservationKey, rc happydns.ReportContext) (string, bool, error) {
+	return getHTMLReport(oc.getProvider(key), key, rc)
 }
 
-func getHTMLReport(provider happydns.ObservationProvider, key happydns.ObservationKey, raw json.RawMessage) (string, bool, error) {
+func getHTMLReport(provider happydns.ObservationProvider, key happydns.ObservationKey, rc happydns.ReportContext) (string, bool, error) {
 	if provider == nil {
 		return "", false, fmt.Errorf("no observation provider registered for key %q", key)
 	}
@@ -262,7 +270,7 @@ func getHTMLReport(provider happydns.ObservationProvider, key happydns.Observati
 	if !ok {
 		return "", false, nil
 	}
-	html, err := hr.GetHTMLReport(raw)
+	html, err := hr.GetHTMLReport(rc)
 	return html, true, err
 }
 
@@ -282,16 +290,16 @@ func HasMetricsReporter() bool {
 // GetMetrics extracts metrics for the given observation key and raw JSON data.
 // Returns (metrics, true, nil) if the provider supports metrics, or (nil, false, nil) if not.
 func GetMetrics(key happydns.ObservationKey, raw json.RawMessage, collectedAt time.Time) ([]happydns.CheckMetric, bool, error) {
-	return getMetrics(sdk.FindObservationProvider(key), key, raw, collectedAt)
+	return getMetrics(sdk.FindObservationProvider(key), key, sdk.StaticReportContext(raw), collectedAt)
 }
 
 // GetMetricsCtx is like GetMetrics but resolves the provider through
 // the ObservationContext, respecting per-context overrides.
-func (oc *ObservationContext) GetMetricsCtx(key happydns.ObservationKey, raw json.RawMessage, collectedAt time.Time) ([]happydns.CheckMetric, bool, error) {
-	return getMetrics(oc.getProvider(key), key, raw, collectedAt)
+func (oc *ObservationContext) GetMetricsCtx(key happydns.ObservationKey, rc happydns.ReportContext, collectedAt time.Time) ([]happydns.CheckMetric, bool, error) {
+	return getMetrics(oc.getProvider(key), key, rc, collectedAt)
 }
 
-func getMetrics(provider happydns.ObservationProvider, key happydns.ObservationKey, raw json.RawMessage, collectedAt time.Time) ([]happydns.CheckMetric, bool, error) {
+func getMetrics(provider happydns.ObservationProvider, key happydns.ObservationKey, rc happydns.ReportContext, collectedAt time.Time) ([]happydns.CheckMetric, bool, error) {
 	if provider == nil {
 		return nil, false, fmt.Errorf("no observation provider registered for key %q", key)
 	}
@@ -300,7 +308,7 @@ func getMetrics(provider happydns.ObservationProvider, key happydns.ObservationK
 	if !ok {
 		return nil, false, nil
 	}
-	metrics, err := mr.ExtractMetrics(raw, collectedAt)
+	metrics, err := mr.ExtractMetrics(rc, collectedAt)
 	return metrics, true, err
 }
 

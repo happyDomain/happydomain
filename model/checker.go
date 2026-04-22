@@ -50,11 +50,12 @@ const (
 )
 
 const (
-	AutoFillDomainName  = sdk.AutoFillDomainName
-	AutoFillSubdomain   = sdk.AutoFillSubdomain
-	AutoFillZone        = sdk.AutoFillZone
-	AutoFillServiceType = sdk.AutoFillServiceType
-	AutoFillService     = sdk.AutoFillService
+	AutoFillDomainName       = sdk.AutoFillDomainName
+	AutoFillSubdomain        = sdk.AutoFillSubdomain
+	AutoFillZone             = sdk.AutoFillZone
+	AutoFillServiceType      = sdk.AutoFillServiceType
+	AutoFillService          = sdk.AutoFillService
+	AutoFillDiscoveryEntries = sdk.AutoFillDiscoveryEntries
 )
 
 type (
@@ -84,6 +85,10 @@ type (
 	ExternalEvaluateRequest     = sdk.ExternalEvaluateRequest
 	ExternalEvaluateResponse    = sdk.ExternalEvaluateResponse
 	ExternalReportRequest       = sdk.ExternalReportRequest
+	DiscoveryEntry              = sdk.DiscoveryEntry
+	DiscoveryPublisher          = sdk.DiscoveryPublisher
+	RelatedObservation          = sdk.RelatedObservation
+	ReportContext               = sdk.ReportContext
 )
 
 const (
