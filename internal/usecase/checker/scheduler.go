@@ -492,7 +492,7 @@ func (s *Scheduler) buildQueue() {
 				svcTarget := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String(), ServiceId: sid.String(), ServiceType: svc.Type}
 
 				for _, c := range serviceCheckers {
-					if len(c.def.Availability.LimitToServices) > 0 && !slices.Contains(c.def.Availability.LimitToServices, svc.Type) {
+					if len(c.def.Availability.LimitToServices) == 0 || !slices.Contains(c.def.Availability.LimitToServices, svc.Type) {
 						continue
 					}
 					s.enqueueJob(c.id, c.def, svcTarget, disabledSet, planMap, lastRun)
@@ -534,7 +534,7 @@ func (s *Scheduler) NotifyDomainChange(domain *happydns.Domain) {
 		}
 		if def.Availability.ApplyToService {
 			for _, svc := range services {
-				if len(def.Availability.LimitToServices) > 0 && !slices.Contains(def.Availability.LimitToServices, svc.Type) {
+				if len(def.Availability.LimitToServices) == 0 || !slices.Contains(def.Availability.LimitToServices, svc.Type) {
 					continue
 				}
 				svcTarget := happydns.CheckTarget{UserId: uid.String(), DomainId: didStr, ServiceId: svc.Id.String(), ServiceType: svc.Type}
@@ -579,7 +579,7 @@ func (s *Scheduler) NotifyDomainChange(domain *happydns.Domain) {
 
 		if def.Availability.ApplyToService {
 			for _, svc := range services {
-				if len(def.Availability.LimitToServices) > 0 && !slices.Contains(def.Availability.LimitToServices, svc.Type) {
+				if len(def.Availability.LimitToServices) == 0 || !slices.Contains(def.Availability.LimitToServices, svc.Type) {
 					continue
 				}
 				sid := svc.Id
