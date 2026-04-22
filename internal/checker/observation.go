@@ -302,10 +302,10 @@ func HasHTMLReporter() bool {
 	return htmlReporterCached
 }
 
-// GetHTMLReport renders an HTML report for the given observation key and raw JSON data.
+// GetHTMLReport renders an HTML report for the given observation key.
 // Returns (html, true, nil) if the provider supports HTML reports, or ("", false, nil) if not.
-func GetHTMLReport(key happydns.ObservationKey, raw json.RawMessage) (string, bool, error) {
-	return getHTMLReport(sdk.FindObservationProvider(key), key, sdk.StaticReportContext(raw))
+func GetHTMLReport(key happydns.ObservationKey, rc happydns.ReportContext) (string, bool, error) {
+	return getHTMLReport(sdk.FindObservationProvider(key), key, rc)
 }
 
 // GetHTMLReportCtx is like GetHTMLReport but resolves the provider through
@@ -340,10 +340,10 @@ func HasMetricsReporter() bool {
 	return metricsReporterCached
 }
 
-// GetMetrics extracts metrics for the given observation key and raw JSON data.
+// GetMetrics extracts metrics for the given observation key.
 // Returns (metrics, true, nil) if the provider supports metrics, or (nil, false, nil) if not.
-func GetMetrics(key happydns.ObservationKey, raw json.RawMessage, collectedAt time.Time) ([]happydns.CheckMetric, bool, error) {
-	return getMetrics(sdk.FindObservationProvider(key), key, sdk.StaticReportContext(raw), collectedAt)
+func GetMetrics(key happydns.ObservationKey, rc happydns.ReportContext, collectedAt time.Time) ([]happydns.CheckMetric, bool, error) {
+	return getMetrics(sdk.FindObservationProvider(key), key, rc, collectedAt)
 }
 
 // GetMetricsCtx is like GetMetrics but resolves the provider through
@@ -365,12 +365,73 @@ func getMetrics(provider happydns.ObservationProvider, key happydns.ObservationK
 	return metrics, true, err
 }
 
+// BuildReportContext returns a ReportContext backed by the primary payload
+// and a lazy Related(key) resolver that delegates to the installed lookup.
+// When lookup is nil (no discovery storage), the returned context has no
+// related observations and behaves like sdk.StaticReportContext(raw).
+func BuildReportContext(ctx context.Context, producerCheckerID string, target happydns.CheckTarget, raw json.RawMessage, lookup RelatedObservationLookup) happydns.ReportContext {
+	if lookup == nil || producerCheckerID == "" {
+		return sdk.StaticReportContext(raw)
+	}
+	return &lazyReportContext{
+		ctx:      ctx,
+		data:     raw,
+		lookup:   lookup,
+		producer: producerCheckerID,
+		target:   target,
+		cache:    make(map[happydns.ObservationKey][]happydns.RelatedObservation),
+	}
+}
+
+// lazyReportContext resolves Related(key) on first access against a host-side lookup closure.
+type lazyReportContext struct {
+	mu       sync.Mutex
+	ctx      context.Context
+	data     json.RawMessage
+	lookup   RelatedObservationLookup
+	producer string
+	target   happydns.CheckTarget
+	cache    map[happydns.ObservationKey][]happydns.RelatedObservation
+}
+
+func (l *lazyReportContext) Data() json.RawMessage { return l.data }
+func (l *lazyReportContext) Related(key happydns.ObservationKey) []happydns.RelatedObservation {
+	l.mu.Lock()
+	if cached, ok := l.cache[key]; ok {
+		l.mu.Unlock()
+		return cached
+	}
+	l.mu.Unlock()
+
+	out, err := l.lookup(l.ctx, l.producer, l.target, key)
+	if err != nil {
+		log.Printf("lazyReportContext: Related(%q): %v", key, err)
+		return nil
+	}
+
+	l.mu.Lock()
+	l.cache[key] = out
+	l.mu.Unlock()
+	return out
+}
+
+// GetHTMLReportWithContext renders an HTML report using a pre-built ReportContext
+// (which may carry Related observations). Returns (html, true, nil) when supported.
+func GetHTMLReportWithContext(key happydns.ObservationKey, rc happydns.ReportContext) (string, bool, error) {
+	return getHTMLReport(sdk.FindObservationProvider(key), key, rc)
+}
+
+// GetMetricsWithContext extracts metrics using a pre-built ReportContext.
+func GetMetricsWithContext(key happydns.ObservationKey, rc happydns.ReportContext, collectedAt time.Time) ([]happydns.CheckMetric, bool, error) {
+	return getMetrics(sdk.FindObservationProvider(key), key, rc, collectedAt)
+}
+
 // GetAllMetrics extracts metrics from all observation keys in a snapshot.
 func GetAllMetrics(snap *happydns.ObservationSnapshot) ([]happydns.CheckMetric, error) {
 	var allMetrics []happydns.CheckMetric
 	var errs []error
 	for key, raw := range snap.Data {
-		metrics, supported, err := GetMetrics(key, raw, snap.CollectedAt)
+		metrics, supported, err := GetMetrics(key, sdk.StaticReportContext(raw), snap.CollectedAt)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("observation %q: %w", key, err))
 			continue

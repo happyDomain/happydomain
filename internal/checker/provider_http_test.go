@@ -29,7 +29,9 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	sdk "git.happydns.org/checker-sdk-go/checker"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -203,6 +205,82 @@ func TestHTTPObservationProvider_CollectConnectionRefused(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "request failed") {
 		t.Errorf("error = %q, want it to mention request failure", err)
+	}
+}
+
+func TestHTTPObservationProvider_CollectForwardsEntries(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(happydns.ExternalCollectResponse{
+			Data: json.RawMessage(`{"ok":true}`),
+			Entries: []happydns.DiscoveryEntry{
+				{Type: "tls.endpoint.v1", Ref: "a.example.com:25"},
+				{Type: "tls.endpoint.v1", Ref: "a.example.com:465"},
+			},
+		})
+	}))
+	defer srv.Close()
+
+	p := NewHTTPObservationProvider("k", srv.URL)
+	if _, err := p.Collect(context.Background(), nil); err != nil {
+		t.Fatalf("Collect: %v", err)
+	}
+	entries, err := p.DiscoverEntries(nil)
+	if err != nil {
+		t.Fatalf("DiscoverEntries: %v", err)
+	}
+	if len(entries) != 2 || entries[1].Ref != "a.example.com:465" {
+		t.Fatalf("unexpected entries: %+v", entries)
+	}
+}
+
+func TestHTTPObservationProvider_GetHTMLReportForwardsRelated(t *testing.T) {
+	var gotReq happydns.ExternalReportRequest
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/report" {
+			t.Errorf("path = %q, want /report", r.URL.Path)
+		}
+		if err := json.NewDecoder(r.Body).Decode(&gotReq); err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+		w.Header().Set("Content-Type", "text/html")
+		io.WriteString(w, "<html>ok</html>")
+	}))
+	defer srv.Close()
+
+	p := NewHTTPObservationProvider("tls", srv.URL)
+	related := map[happydns.ObservationKey][]happydns.RelatedObservation{
+		"tls": {
+			{CheckerID: "xmpp", Key: "tls", Data: json.RawMessage(`{"v":1}`), Ref: "host:443", CollectedAt: time.Unix(42, 0).UTC()},
+		},
+	}
+	rc := sdk.NewReportContext(json.RawMessage(`{"primary":true}`), related)
+
+	html, err := p.GetHTMLReport(rc)
+	if err != nil {
+		t.Fatalf("GetHTMLReport: %v", err)
+	}
+	if html != "<html>ok</html>" {
+		t.Fatalf("html = %q", html)
+	}
+	if gotReq.Key != "tls" {
+		t.Errorf("Key = %q, want tls", gotReq.Key)
+	}
+	if len(gotReq.Related["tls"]) != 1 || gotReq.Related["tls"][0].Ref != "host:443" {
+		t.Errorf("Related not forwarded: %+v", gotReq.Related)
+	}
+}
+
+func TestHTTPObservationProvider_GetHTMLReportSurfaces501(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "not implemented", http.StatusNotImplemented)
+	}))
+	defer srv.Close()
+
+	p := NewHTTPObservationProvider("k", srv.URL)
+	_, err := p.GetHTMLReport(sdk.StaticReportContext(json.RawMessage(`{}`)))
+	if err == nil || !strings.Contains(err.Error(), "does not support") {
+		t.Fatalf("want 'does not support' error, got: %v", err)
 	}
 }
 

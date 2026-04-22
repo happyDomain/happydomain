@@ -22,6 +22,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -32,6 +33,20 @@ import (
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/model"
 )
+
+// buildReportContext returns a ReportContext for the given primary payload.
+// When the engine exposes a related-observation lookup, the context resolves
+// Related(key) against discovery storage; otherwise a static context is
+// returned.
+func (cc *CheckerController) buildReportContext(c *gin.Context, checkerID string, target happydns.CheckTarget, raw json.RawMessage) happydns.ReportContext {
+	var lookup checkerPkg.RelatedObservationLookup
+	if r, ok := cc.engine.(interface {
+		RelatedLookup() checkerPkg.RelatedObservationLookup
+	}); ok {
+		lookup = r.RelatedLookup()
+	}
+	return checkerPkg.BuildReportContext(c.Request.Context(), checkerID, target, raw, lookup)
+}
 
 // ExecutionHandler is a middleware that validates the executionId path parameter,
 // checks target scope, and sets "execution" in context.
@@ -291,7 +306,8 @@ func (cc *CheckerController) GetExecutionHTMLReport(c *gin.Context) {
 		return
 	}
 
-	htmlContent, supported, err := checkerPkg.GetHTMLReport(obsKey, val)
+	rc := cc.buildReportContext(c, exec.CheckerID, targetFromContext(c), val)
+	htmlContent, supported, err := checkerPkg.GetHTMLReport(obsKey, rc)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
