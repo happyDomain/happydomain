@@ -56,6 +56,11 @@ import (
 // Returns the raw data and collection time, or an error if not cached.
 type ObservationCacheLookup func(target happydns.CheckTarget, key happydns.ObservationKey) (json.RawMessage, time.Time, error)
 
+// RelatedObservationLookup resolves observations produced by other checkers
+// on DiscoveryEntry records this checker has published for the given target.
+// It returns the empty slice (not an error) when there is nothing to relate.
+type RelatedObservationLookup func(ctx context.Context, producerCheckerID string, target happydns.CheckTarget, key happydns.ObservationKey) ([]happydns.RelatedObservation, error)
+
 // ObservationContext provides lazy-loading, cached, thread-safe access to observation data.
 // Collected data is serialized to json.RawMessage immediately after collection.
 //
@@ -66,16 +71,18 @@ type ObservationCacheLookup func(target happydns.CheckTarget, key happydns.Obser
 // installs an inflight channel, runs the collection, then closes the
 // channel; the others wait on it and read the cached result afterwards.
 type ObservationContext struct {
-	target           happydns.CheckTarget
-	opts             happydns.CheckerOptions
-	cache            map[happydns.ObservationKey]json.RawMessage
-	errors           map[happydns.ObservationKey]error
-	inflight         map[happydns.ObservationKey]chan struct{}
-	entries          map[happydns.ObservationKey][]happydns.DiscoveryEntry
-	mu               sync.Mutex
-	cacheLookup      ObservationCacheLookup // nil = no DB cache
-	freshness        time.Duration          // 0 = always collect
-	providerOverride map[happydns.ObservationKey]happydns.ObservationProvider
+	target            happydns.CheckTarget
+	opts              happydns.CheckerOptions
+	cache             map[happydns.ObservationKey]json.RawMessage
+	errors            map[happydns.ObservationKey]error
+	inflight          map[happydns.ObservationKey]chan struct{}
+	entries           map[happydns.ObservationKey][]happydns.DiscoveryEntry
+	mu                sync.Mutex
+	cacheLookup       ObservationCacheLookup // nil = no DB cache
+	freshness         time.Duration          // 0 = always collect
+	providerOverride  map[happydns.ObservationKey]happydns.ObservationProvider
+	producerCheckerID string                   // filled by engine; empty = GetRelated always empty
+	relatedLookup     RelatedObservationLookup // nil = GetRelated always empty
 }
 
 // NewObservationContext creates a new ObservationContext for the given target and options.
@@ -233,12 +240,30 @@ func (oc *ObservationContext) collect(ctx context.Context, key happydns.Observat
 	return json.RawMessage(raw), nil
 }
 
+// SetRelatedLookup installs the producer identity and resolver closure the
+// ObservationContext will use to answer GetRelated during rule evaluation.
+// A nil lookup disables GetRelated (returns an empty slice).
+func (oc *ObservationContext) SetRelatedLookup(producerCheckerID string, lookup RelatedObservationLookup) {
+	oc.mu.Lock()
+	defer oc.mu.Unlock()
+	oc.producerCheckerID = producerCheckerID
+	oc.relatedLookup = lookup
+}
+
 // GetRelated returns observations produced by other checkers on DiscoveryEntry
-// records that the current target's producer has published. This default
-// implementation returns an empty slice; the engine wires a real lookup via
-// SetRelatedLookup when discovery storage is available.
+// records this target's producer has published. When no discovery storage is
+// wired (or this checker never published any entries), it returns an empty
+// slice — callers must tolerate that per SDK contract.
 func (oc *ObservationContext) GetRelated(ctx context.Context, key happydns.ObservationKey) ([]happydns.RelatedObservation, error) {
-	return nil, nil
+	oc.mu.Lock()
+	producer := oc.producerCheckerID
+	lookup := oc.relatedLookup
+	oc.mu.Unlock()
+
+	if lookup == nil || producer == "" {
+		return nil, nil
+	}
+	return lookup(ctx, producer, oc.target, key)
 }
 
 // Data returns all cached observation data as pre-serialized JSON.

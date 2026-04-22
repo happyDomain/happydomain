@@ -83,13 +83,23 @@ func (u *CheckerOptionsUsecase) getScopedOptions(
 
 // CheckerOptionsUsecase handles the resolution and persistence of checker options.
 type CheckerOptionsUsecase struct {
-	store         CheckerOptionsStorage
-	autoFillStore CheckAutoFillStorage
+	store          CheckerOptionsStorage
+	autoFillStore  CheckAutoFillStorage
+	discoveryStore DiscoveryEntryStorage
 }
 
 // NewCheckerOptionsUsecase creates a new CheckerOptionsUsecase.
 func NewCheckerOptionsUsecase(store CheckerOptionsStorage, autoFillStore CheckAutoFillStorage) *CheckerOptionsUsecase {
 	return &CheckerOptionsUsecase{store: store, autoFillStore: autoFillStore}
+}
+
+// WithDiscoveryEntryStore enables AutoFillDiscoveryEntries: options fields
+// declaring that auto-fill will be populated with the entries stored for the
+// target (see docs/checker-discovery.md). Passing nil (or not calling this)
+// keeps AutoFillDiscoveryEntries fields unfilled.
+func (u *CheckerOptionsUsecase) WithDiscoveryEntryStore(store DiscoveryEntryStorage) *CheckerOptionsUsecase {
+	u.discoveryStore = store
+	return u
 }
 
 // GetCheckerOptionsPositional returns the raw positional options from all scope levels,
@@ -578,16 +588,21 @@ func (u *CheckerOptionsUsecase) resolveAutoFill(
 
 // BuildMergedCheckerOptionsWithAutoFill merges stored options, runtime overrides,
 // and auto-fill values. Auto-fill values are applied last and always win.
+//
+// The second return value is the set of DiscoveryEntry records injected into
+// AutoFillDiscoveryEntries fields (if any) — exposed so the engine can
+// persist the consumer→entry lineage after the run completes. It is nil
+// when no such field was auto-filled.
 func (u *CheckerOptionsUsecase) BuildMergedCheckerOptionsWithAutoFill(
 	checkerName string,
 	userId *happydns.Identifier,
 	domainId *happydns.Identifier,
 	serviceId *happydns.Identifier,
 	runOpts happydns.CheckerOptions,
-) (happydns.CheckerOptions, error) {
+) (happydns.CheckerOptions, []*happydns.StoredDiscoveryEntry, error) {
 	positionals, err := u.store.GetCheckerConfiguration(checkerName, userId, domainId, serviceId)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	def := checkerPkg.FindChecker(checkerName)
@@ -620,6 +635,8 @@ func (u *CheckerOptionsUsecase) BuildMergedCheckerOptionsWithAutoFill(
 		}
 	}
 
+	var injectedEntries []*happydns.StoredDiscoveryEntry
+
 	// Resolve auto-fill values (always win).
 	if def != nil && len(meta.autoFillIds) > 0 {
 		target := happydns.CheckTarget{
@@ -629,14 +646,52 @@ func (u *CheckerOptionsUsecase) BuildMergedCheckerOptionsWithAutoFill(
 		}
 		ctx, err := u.buildAutoFillContext(target)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
+
+		// AutoFillDiscoveryEntries is resolved from a separate storage surface
+		// (the discovery entry index), loaded lazily on first encounter.
+		var discoveryEntries []*happydns.StoredDiscoveryEntry
+		var discoveryLoaded bool
+
 		for fieldId, autoFillKey := range meta.autoFillIds {
+			if autoFillKey == happydns.AutoFillDiscoveryEntries {
+				if !discoveryLoaded {
+					discoveryLoaded = true
+					if u.discoveryStore != nil {
+						discoveryEntries, err = u.discoveryStore.ListDiscoveryEntriesByTarget(target)
+						if err != nil {
+							return nil, nil, fmt.Errorf("loading discovery entries: %w", err)
+						}
+						if len(discoveryEntries) > 0 {
+							injectedEntries = discoveryEntries
+						}
+					}
+				}
+				merged[fieldId] = sdkEntries(discoveryEntries)
+				continue
+			}
 			if val, ok := ctx[autoFillKey]; ok {
 				merged[fieldId] = val
 			}
 		}
 	}
 
-	return merged, nil
+	return merged, injectedEntries, nil
+}
+
+// sdkEntries converts host-side StoredDiscoveryEntry values to the opaque
+// SDK-level DiscoveryEntry form that is passed to consumer checkers. The
+// producer/target namespacing is not exposed to the consumer — it would be
+// meaningless in that contract.
+func sdkEntries(stored []*happydns.StoredDiscoveryEntry) []happydns.DiscoveryEntry {
+	out := make([]happydns.DiscoveryEntry, 0, len(stored))
+	for _, e := range stored {
+		out = append(out, happydns.DiscoveryEntry{
+			Type:    e.Type,
+			Ref:     e.Ref,
+			Payload: e.Payload,
+		})
+	}
+	return out
 }
