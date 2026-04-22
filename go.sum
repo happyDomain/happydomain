@@ -24,6 +24,8 @@ git.happydns.org/checker-ping v0.1.0 h1:Cu9Upvs/WoAWHi0A/1QahmuqB4/99n/jK29W/Bnv
 git.happydns.org/checker-ping v0.1.0/go.mod h1:P0xv85b2MoVud7UXbfoS0n3qMlyQGfg+uz1knN+7Q7w=
 git.happydns.org/checker-sdk-go v1.5.0 h1:5uD5Cm6xJ+lwnhbJ09iCXGHbYS9zRh+Yh0NeBHkAPBY=
 git.happydns.org/checker-sdk-go v1.5.0/go.mod h1:aNAcfYFfbhvH9kJhE0Njp5GX0dQbxdRB0rJ0KvSC5nI=
+git.happydns.org/checker-srv v0.1.0 h1:3PsKBrfujlZXF5AFzW00TPjgISrHyIigWRkHbkJOLTU=
+git.happydns.org/checker-srv v0.1.0/go.mod h1:39n8R3UNRpfGNdGw9g8EkAaXKdtXTdLxc/XCRz/qFzg=
 git.happydns.org/checker-tls v0.6.2 h1:8oKia1XlD+tklyqrwzmUgFH1Kw8VLSLLF9suZ7Qr14E=
 git.happydns.org/checker-tls v0.6.2/go.mod h1:9tpnxg0iOwS+7If64DRG1jqYonUAgxOBuxwfF5mVkL4=
 git.happydns.org/checker-xmpp v0.2.0 h1:p8c15zEBoWxoYkZ2fmRx42f209WBPMpD00wbH02/lYk=
