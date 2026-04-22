@@ -283,6 +283,7 @@ func (app *App) initUsecases() {
 		app.store,
 		app.store,
 		app.store,
+		app.store,
 	)
 	// Build the user-level gate so paused or long-inactive users do not
 	// get checked. The same user resolver is reused by the janitor for

@@ -53,6 +53,8 @@ const maxResponseBodySize = 10 << 20 // 10 MiB
 type HTTPObservationProvider struct {
 	observationKey happydns.ObservationKey
 	endpoint       string // base URL without trailing slash
+
+	lastEntries []happydns.DiscoveryEntry // entries from the last Collect response, surfaced via DiscoverEntries
 }
 
 // NewHTTPObservationProvider creates a new HTTP-backed observation provider.
@@ -114,7 +116,16 @@ func (p *HTTPObservationProvider) Collect(ctx context.Context, opts happydns.Che
 		return nil, fmt.Errorf("HTTP provider %s: remote returned empty data", p.observationKey)
 	}
 
+	p.lastEntries = result.Entries
+
 	// Return json.RawMessage directly - it implements json.Marshaler,
 	// so ObservationContext.Get() won't double-encode it.
 	return result.Data, nil
+}
+
+// DiscoverEntries implements sdk.DiscoveryPublisher: it exposes the entries
+// carried in the last /collect response so the engine can ingest them
+// through the same path as in-process providers.
+func (p *HTTPObservationProvider) DiscoverEntries(_ any) ([]happydns.DiscoveryEntry, error) {
+	return p.lastEntries, nil
 }

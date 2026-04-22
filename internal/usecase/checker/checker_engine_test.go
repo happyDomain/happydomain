@@ -82,7 +82,7 @@ func TestCheckerEngine_RunOK(t *testing.T) {
 	})
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -146,7 +146,7 @@ func TestCheckerEngine_RunWarn(t *testing.T) {
 	})
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -191,7 +191,7 @@ func TestCheckerEngine_RunPerRuleDisable(t *testing.T) {
 	})
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -281,7 +281,7 @@ func TestCheckerEngine_RunNotFound(t *testing.T) {
 		t.Fatalf("Instantiate() returned error: %v", err)
 	}
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	target := happydns.CheckTarget{UserId: uid.String()}
@@ -310,7 +310,7 @@ func TestCheckerEngine_RunWithScheduledTrigger(t *testing.T) {
 	})
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -363,7 +363,7 @@ func TestCheckerEngine_RunExecution_CheckerDisappeared(t *testing.T) {
 	})
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	target := happydns.CheckTarget{UserId: uid.String()}
@@ -411,7 +411,7 @@ func TestCheckerEngine_RunPopulatesObservationCache(t *testing.T) {
 	})
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -494,7 +494,7 @@ func TestCheckerEngine_RunWithEndpointOverride(t *testing.T) {
 	}
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -559,7 +559,7 @@ func TestCheckerEngine_RunWithEndpointOverride_RemoteFailure(t *testing.T) {
 	}
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -583,4 +583,97 @@ func TestCheckerEngine_RunWithEndpointOverride_RemoteFailure(t *testing.T) {
 	if len(eval.States) != 1 {
 		t.Fatalf("expected 1 state, got %d", len(eval.States))
 	}
+}
+
+// discoveringProvider returns static data and publishes a deterministic
+// DiscoveryEntry per run, simulating a producer checker.
+type discoveringProvider struct {
+	key     happydns.ObservationKey
+	entries []happydns.DiscoveryEntry
+}
+
+func (p *discoveringProvider) Key() happydns.ObservationKey { return p.key }
+func (p *discoveringProvider) Collect(ctx context.Context, opts happydns.CheckerOptions) (any, error) {
+	return map[string]any{"ok": true}, nil
+}
+func (p *discoveringProvider) DiscoverEntries(_ any) ([]happydns.DiscoveryEntry, error) {
+	return p.entries, nil
+}
+
+func TestCheckerEngine_PublishesDiscoveryEntries(t *testing.T) {
+	store, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatalf("Instantiate() returned error: %v", err)
+	}
+
+	provider := &discoveringProvider{
+		key: "test_disc_obs",
+		entries: []happydns.DiscoveryEntry{
+			{Type: "tls.endpoint.v1", Ref: "mail.example.com:25", Payload: json.RawMessage(`{"port":25}`)},
+			{Type: "tls.endpoint.v1", Ref: "mail.example.com:465", Payload: json.RawMessage(`{"port":465}`)},
+		},
+	}
+	checker.RegisterObservationProvider(provider)
+	checker.RegisterChecker(&happydns.CheckerDefinition{
+		ID:   "test_discovery_publisher",
+		Name: "Test Discovery Publisher",
+		Availability: happydns.CheckerAvailability{
+			ApplyToDomain: true,
+		},
+		Rules: []happydns.CheckRule{
+			&testCheckRuleReadingKey{name: "publish_rule", key: "test_disc_obs"},
+		},
+	})
+
+	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	did, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
+
+	exec, err := engine.CreateExecution("test_discovery_publisher", target, nil)
+	if err != nil {
+		t.Fatalf("CreateExecution: %v", err)
+	}
+	if _, err := engine.RunExecution(context.Background(), exec, nil, nil); err != nil {
+		t.Fatalf("RunExecution: %v", err)
+	}
+
+	got, err := store.ListDiscoveryEntriesByProducer("test_discovery_publisher", target)
+	if err != nil {
+		t.Fatalf("ListDiscoveryEntriesByProducer: %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("expected 2 published entries, got %d", len(got))
+	}
+
+	// A second run with the provider publishing no entries should clear
+	// the previously-published set (replace-by-source).
+	provider.entries = nil
+	exec2, _ := engine.CreateExecution("test_discovery_publisher", target, nil)
+	if _, err := engine.RunExecution(context.Background(), exec2, nil, nil); err != nil {
+		t.Fatalf("RunExecution (empty): %v", err)
+	}
+	gotAfter, _ := store.ListDiscoveryEntriesByProducer("test_discovery_publisher", target)
+	if len(gotAfter) != 0 {
+		t.Fatalf("expected 0 entries after empty run, got %d", len(gotAfter))
+	}
+}
+
+// testCheckRuleReadingKey evaluates by calling obs.Get on a specific key,
+// so the rule triggers collection of that observation provider.
+type testCheckRuleReadingKey struct {
+	name string
+	key  happydns.ObservationKey
+}
+
+func (r *testCheckRuleReadingKey) Name() string        { return r.name }
+func (r *testCheckRuleReadingKey) Description() string { return "test rule: " + r.name }
+func (r *testCheckRuleReadingKey) Evaluate(ctx context.Context, obs happydns.ObservationGetter, opts happydns.CheckerOptions) happydns.CheckState {
+	var data map[string]any
+	if err := obs.Get(ctx, r.key, &data); err != nil {
+		return happydns.CheckState{Status: happydns.StatusError, Message: err.Error()}
+	}
+	return happydns.CheckState{Status: happydns.StatusOK, Code: r.name}
 }

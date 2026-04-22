@@ -39,15 +39,19 @@ type checkerEngine struct {
 	execStore  ExecutionStorage
 	snapStore  ObservationSnapshotStorage
 	cacheStore ObservationCacheStorage
+	entryStore DiscoveryEntryStorage
 }
 
-// NewCheckerEngine creates a new CheckerEngine implementation.
+// NewCheckerEngine creates a new CheckerEngine implementation. Passing nil
+// for entryStore disables cross-checker discovery publication; the engine
+// then behaves exactly as before the discovery mechanism was introduced.
 func NewCheckerEngine(
 	optionsUC *CheckerOptionsUsecase,
 	evalStore CheckEvaluationStorage,
 	execStore ExecutionStorage,
 	snapStore ObservationSnapshotStorage,
 	cacheStore ObservationCacheStorage,
+	entryStore DiscoveryEntryStorage,
 ) happydns.CheckerEngine {
 	return &checkerEngine{
 		optionsUC:  optionsUC,
@@ -55,6 +59,7 @@ func NewCheckerEngine(
 		execStore:  execStore,
 		snapStore:  snapStore,
 		cacheStore: cacheStore,
+		entryStore: entryStore,
 	}
 }
 
@@ -221,6 +226,17 @@ func (e *checkerEngine) runPipeline(ctx context.Context, def *happydns.CheckerDe
 			}); err != nil {
 				log.Printf("warning: failed to cache observation %q for target %s: %v", key, target.String(), err)
 			}
+		}
+	}
+
+	// Always replace, including with an empty slice, so stale entries vanish.
+	if e.entryStore != nil {
+		var published []happydns.DiscoveryEntry
+		for _, list := range obsCtx.Entries() {
+			published = append(published, list...)
+		}
+		if err := e.entryStore.ReplaceDiscoveryEntries(def.ID, target, published); err != nil {
+			log.Printf("warning: failed to replace discovery entries for %s on %s: %v", def.ID, target.String(), err)
 		}
 	}
 
