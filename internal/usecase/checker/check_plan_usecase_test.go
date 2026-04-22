@@ -374,6 +374,11 @@ func (s *planStore) UpdateCheckPlan(plan *happydns.CheckPlan) error {
 	return nil
 }
 
+func (s *planStore) RestoreCheckPlan(plan *happydns.CheckPlan) error {
+	s.plans[plan.Id.String()] = plan
+	return nil
+}
+
 func (s *planStore) DeleteCheckPlan(planID happydns.Identifier) error {
 	delete(s.plans, planID.String())
 	return nil

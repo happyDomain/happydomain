@@ -489,6 +489,22 @@ func (s *instrumentedStorage) PutCachedObservation(target happydns.CheckTarget, 
 	return s.inner.PutCachedObservation(target, key, entry)
 }
 
+func (s *instrumentedStorage) RestoreCheckPlan(plan *happydns.CheckPlan) (err error) {
+	defer observe("restore", "check_plan")(&err)
+	return s.inner.RestoreCheckPlan(plan)
+}
+
+func (s *instrumentedStorage) RestoreEvaluation(eval *happydns.CheckEvaluation) (err error) {
+	defer observe("restore", "check_evaluation")(&err)
+	return s.inner.RestoreEvaluation(eval)
+}
+
+func (s *instrumentedStorage) RestoreExecution(exec *happydns.Execution) (err error) {
+	defer observe("restore", "execution")(&err)
+	return s.inner.RestoreExecution(exec)
+}
+
+
 func (s *instrumentedStorage) SchemaVersion() int { return s.inner.SchemaVersion() }
 
 func (s *instrumentedStorage) SetLastSchedulerRun(t time.Time) (err error) {

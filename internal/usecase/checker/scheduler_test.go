@@ -121,8 +121,9 @@ func (s *mockPlanStore) CreateCheckPlan(plan *happydns.CheckPlan) error {
 	s.plans = append(s.plans, plan)
 	return nil
 }
-func (s *mockPlanStore) UpdateCheckPlan(plan *happydns.CheckPlan) error { return nil }
-func (s *mockPlanStore) DeleteCheckPlan(happydns.Identifier) error      { return nil }
+func (s *mockPlanStore) UpdateCheckPlan(plan *happydns.CheckPlan) error  { return nil }
+func (s *mockPlanStore) RestoreCheckPlan(plan *happydns.CheckPlan) error { return nil }
+func (s *mockPlanStore) DeleteCheckPlan(happydns.Identifier) error       { return nil }
 func (s *mockPlanStore) TidyCheckPlanIndexes() error                    { return nil }
 func (s *mockPlanStore) ClearCheckPlans() error                         { return nil }
 

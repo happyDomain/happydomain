@@ -106,6 +106,24 @@ func (s *KVStorage) CreateEvaluation(eval *happydns.CheckEvaluation) error {
 	return nil
 }
 
+// RestoreEvaluation writes an evaluation at its existing Id and rebuilds
+// its secondary indexes. Used by the backup restore path.
+func (s *KVStorage) RestoreEvaluation(eval *happydns.CheckEvaluation) error {
+	if err := s.db.Put(fmt.Sprintf("chckeval|%s", eval.Id.String()), eval); err != nil {
+		return err
+	}
+
+	if eval.PlanID != nil {
+		indexKey := fmt.Sprintf("chckeval-plan|%s|%s", eval.PlanID.String(), eval.Id.String())
+		if err := s.db.Put(indexKey, true); err != nil {
+			return err
+		}
+	}
+
+	checkerIndexKey := fmt.Sprintf("chckeval-chkr|%s|%s|%s", eval.CheckerID, eval.Target.String(), eval.Id.String())
+	return s.db.Put(checkerIndexKey, true)
+}
+
 func (s *KVStorage) DeleteEvaluation(evalID happydns.Identifier) error {
 	// Load first to find plan ID for index cleanup.
 	eval, err := s.GetEvaluation(evalID)

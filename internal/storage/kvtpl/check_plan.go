@@ -138,6 +138,16 @@ func (s *KVStorage) putCheckPlanIndexes(plan *happydns.CheckPlan) error {
 	return nil
 }
 
+// RestoreCheckPlan writes a plan at its existing Id and (re)builds its
+// secondary indexes. Used by the backup restore path, which must preserve
+// the original identifier instead of generating a new one.
+func (s *KVStorage) RestoreCheckPlan(plan *happydns.CheckPlan) error {
+	if err := s.db.Put(fmt.Sprintf("chckpln|%s", plan.Id.String()), plan); err != nil {
+		return err
+	}
+	return s.putCheckPlanIndexes(plan)
+}
+
 func (s *KVStorage) DeleteCheckPlan(planID happydns.Identifier) error {
 	plan, err := s.GetCheckPlan(planID)
 	if err != nil {

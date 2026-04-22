@@ -22,13 +22,17 @@
 package happydns
 
 type Backup struct {
-	Version     int
-	Domains     []*Domain
-	DomainsLogs map[string][]*DomainLog
-	Errors      []string
-	Providers   []*ProviderMessage
-	Sessions    []*Session
-	Users       []*User
-	UsersAuth   UserAuths
-	Zones       []*ZoneMessage
+	Version              int
+	Domains              []*Domain
+	DomainsLogs          map[string][]*DomainLog
+	Errors               []string
+	Providers            []*ProviderMessage
+	Sessions             []*Session
+	Users                []*User
+	UsersAuth            UserAuths
+	Zones                []*ZoneMessage
+	CheckerConfigurations []*CheckerOptionsPositional
+	CheckPlans            []*CheckPlan
+	CheckEvaluations      []*CheckEvaluation
+	Executions            []*Execution
 }

@@ -123,6 +123,40 @@ func (s *KVStorage) CreateExecution(exec *happydns.Execution) error {
 	return nil
 }
 
+// RestoreExecution writes an execution at its existing Id and rebuilds
+// its secondary indexes. Used by the backup restore path.
+func (s *KVStorage) RestoreExecution(exec *happydns.Execution) error {
+	if err := s.db.Put(fmt.Sprintf("chckexec|%s", exec.Id.String()), exec); err != nil {
+		return err
+	}
+
+	if exec.PlanID != nil {
+		indexKey := fmt.Sprintf("chckexec-plan|%s|%s", exec.PlanID.String(), exec.Id.String())
+		if err := s.db.Put(indexKey, true); err != nil {
+			return err
+		}
+	}
+
+	checkerIndexKey := fmt.Sprintf("chckexec-chkr|%s|%s|%s", exec.CheckerID, exec.Target.String(), exec.Id.String())
+	if err := s.db.Put(checkerIndexKey, true); err != nil {
+		return err
+	}
+
+	if exec.Target.UserId != "" {
+		if err := s.db.Put(executionUserIndexKey(exec.Target.UserId, exec.Id.String()), true); err != nil {
+			return err
+		}
+	}
+
+	if exec.Target.DomainId != "" {
+		if err := s.db.Put(executionDomainIndexKey(exec.Target.DomainId, exec.Id.String()), true); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (s *KVStorage) UpdateExecution(exec *happydns.Execution) error {
 	// Load the old record so we can detect changed index keys.
 	old, err := s.GetExecution(exec.Id)

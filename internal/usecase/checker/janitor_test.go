@@ -102,6 +102,7 @@ func (s *mockExecStore) GetExecution(happydns.Identifier) (*happydns.Execution, 
 }
 func (s *mockExecStore) CreateExecution(*happydns.Execution) error                          { return nil }
 func (s *mockExecStore) UpdateExecution(*happydns.Execution) error                          { return nil }
+func (s *mockExecStore) RestoreExecution(*happydns.Execution) error                         { return nil }
 func (s *mockExecStore) DeleteExecutionsByChecker(string, happydns.CheckTarget) error       { return nil }
 func (s *mockExecStore) TidyExecutionIndexes() error                                        { return nil }
 func (s *mockExecStore) ClearExecutions() error                                             { return nil }
@@ -492,6 +493,7 @@ func (s *mockEvalStore) GetLatestEvaluation(happydns.Identifier) (*happydns.Chec
 	return nil, nil
 }
 func (s *mockEvalStore) CreateEvaluation(*happydns.CheckEvaluation) error                    { return nil }
+func (s *mockEvalStore) RestoreEvaluation(*happydns.CheckEvaluation) error                   { return nil }
 func (s *mockEvalStore) DeleteEvaluationsByChecker(string, happydns.CheckTarget) error       { return nil }
 func (s *mockEvalStore) TidyEvaluationIndexes() error                                        { return nil }
 func (s *mockEvalStore) ClearEvaluations() error                                             { return nil }

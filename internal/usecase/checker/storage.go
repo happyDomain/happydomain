@@ -61,6 +61,7 @@ type CheckPlanStorage interface {
 	GetCheckPlan(planID happydns.Identifier) (*happydns.CheckPlan, error)
 	CreateCheckPlan(plan *happydns.CheckPlan) error
 	UpdateCheckPlan(plan *happydns.CheckPlan) error
+	RestoreCheckPlan(plan *happydns.CheckPlan) error
 	DeleteCheckPlan(planID happydns.Identifier) error
 	TidyCheckPlanIndexes() error
 	ClearCheckPlans() error
@@ -84,6 +85,7 @@ type CheckEvaluationStorage interface {
 	GetEvaluation(evalID happydns.Identifier) (*happydns.CheckEvaluation, error)
 	GetLatestEvaluation(planID happydns.Identifier) (*happydns.CheckEvaluation, error)
 	CreateEvaluation(eval *happydns.CheckEvaluation) error
+	RestoreEvaluation(eval *happydns.CheckEvaluation) error
 	DeleteEvaluation(evalID happydns.Identifier) error
 	DeleteEvaluationsByChecker(checkerID string, target happydns.CheckTarget) error
 	TidyEvaluationIndexes() error
@@ -100,6 +102,7 @@ type ExecutionStorage interface {
 	GetExecution(execID happydns.Identifier) (*happydns.Execution, error)
 	CreateExecution(exec *happydns.Execution) error
 	UpdateExecution(exec *happydns.Execution) error
+	RestoreExecution(exec *happydns.Execution) error
 	DeleteExecution(execID happydns.Identifier) error
 	DeleteExecutionsByChecker(checkerID string, target happydns.CheckTarget) error
 	TidyExecutionIndexes() error
