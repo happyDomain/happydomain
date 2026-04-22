@@ -160,6 +160,26 @@ func (bc *BackupController) DoBackup() (ret happydns.Backup) {
 		}
 	}
 
+	// Discovery entries.
+	if entryIter, err := bc.store.ListAllDiscoveryEntries(); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve DiscoveryEntries: %s", err.Error()))
+	} else {
+		defer entryIter.Close()
+		for entryIter.Next() {
+			ret.DiscoveryEntries = append(ret.DiscoveryEntries, entryIter.Item())
+		}
+	}
+
+	// Discovery observation refs.
+	if refIter, err := bc.store.ListAllDiscoveryObservationRefs(); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve DiscoveryObservationRefs: %s", err.Error()))
+	} else {
+		defer refIter.Close()
+		for refIter.Next() {
+			ret.DiscoveryObservationRefs = append(ret.DiscoveryObservationRefs, refIter.Item())
+		}
+	}
+
 	return
 }
 
@@ -236,6 +256,18 @@ func (bc *BackupController) DoRestore(backup *happydns.Backup) (errs error) {
 	// Executions.
 	for _, exec := range backup.Executions {
 		errs = errors.Join(errs, bc.store.RestoreExecution(exec))
+	}
+
+	// Discovery entries. Restored after snapshots (referenced indirectly via
+	// target + producer, no FK), before observation refs which carry snapshot
+	// pointers that must resolve at lookup time.
+	for _, entry := range backup.DiscoveryEntries {
+		errs = errors.Join(errs, bc.store.RestoreDiscoveryEntry(entry))
+	}
+
+	// Discovery observation refs.
+	for _, ref := range backup.DiscoveryObservationRefs {
+		errs = errors.Join(errs, bc.store.RestoreDiscoveryObservationRef(ref))
 	}
 
 	return
