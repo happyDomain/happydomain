@@ -82,7 +82,7 @@ func TestCheckerEngine_RunOK(t *testing.T) {
 	})
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -146,7 +146,7 @@ func TestCheckerEngine_RunWarn(t *testing.T) {
 	})
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -191,7 +191,7 @@ func TestCheckerEngine_RunPerRuleDisable(t *testing.T) {
 	})
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -281,7 +281,7 @@ func TestCheckerEngine_RunNotFound(t *testing.T) {
 		t.Fatalf("Instantiate() returned error: %v", err)
 	}
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	target := happydns.CheckTarget{UserId: uid.String()}
@@ -310,7 +310,7 @@ func TestCheckerEngine_RunWithScheduledTrigger(t *testing.T) {
 	})
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -363,7 +363,7 @@ func TestCheckerEngine_RunExecution_CheckerDisappeared(t *testing.T) {
 	})
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	target := happydns.CheckTarget{UserId: uid.String()}
@@ -411,7 +411,7 @@ func TestCheckerEngine_RunPopulatesObservationCache(t *testing.T) {
 	})
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -494,7 +494,7 @@ func TestCheckerEngine_RunWithEndpointOverride(t *testing.T) {
 	}
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -559,7 +559,7 @@ func TestCheckerEngine_RunWithEndpointOverride_RemoteFailure(t *testing.T) {
 	}
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -626,7 +626,7 @@ func TestCheckerEngine_PublishesDiscoveryEntries(t *testing.T) {
 	})
 
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
-	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store, store)
 
 	uid, _ := happydns.NewRandomIdentifier()
 	did, _ := happydns.NewRandomIdentifier()
@@ -676,4 +676,121 @@ func (r *testCheckRuleReadingKey) Evaluate(ctx context.Context, obs happydns.Obs
 		return happydns.CheckState{Status: happydns.StatusError, Message: err.Error()}
 	}
 	return happydns.CheckState{Status: happydns.StatusOK, Code: r.name}
+}
+
+// consumingProvider reads AutoFillDiscoveryEntries from its options and
+// stores the count so the test can verify entries were injected.
+type consumingProvider struct {
+	key        happydns.ObservationKey
+	lastCount  int
+	lastRefs   []string
+}
+
+func (p *consumingProvider) Key() happydns.ObservationKey { return p.key }
+func (p *consumingProvider) Collect(ctx context.Context, opts happydns.CheckerOptions) (any, error) {
+	entries, _ := opts["consumed_entries"].([]happydns.DiscoveryEntry)
+	p.lastCount = len(entries)
+	p.lastRefs = nil
+	for _, e := range entries {
+		p.lastRefs = append(p.lastRefs, e.Ref)
+	}
+	return map[string]any{"seen": p.lastCount}, nil
+}
+
+// discoveryCaptureRule stores the RelatedObservations it sees on its last
+// evaluation, so tests can assert on GetRelated behavior.
+type discoveryCaptureRule struct {
+	name         string
+	key          happydns.ObservationKey
+	lastRelated  []happydns.RelatedObservation
+}
+
+func (r *discoveryCaptureRule) Name() string        { return r.name }
+func (r *discoveryCaptureRule) Description() string { return "capture related: " + r.name }
+func (r *discoveryCaptureRule) Evaluate(ctx context.Context, obs happydns.ObservationGetter, opts happydns.CheckerOptions) happydns.CheckState {
+	var data map[string]any
+	_ = obs.Get(ctx, r.key, &data)
+	related, _ := obs.GetRelated(ctx, r.key)
+	r.lastRelated = related
+	return happydns.CheckState{Status: happydns.StatusOK, Code: r.name}
+}
+
+func TestCheckerEngine_CrossCheckerDiscovery(t *testing.T) {
+	store, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatalf("Instantiate: %v", err)
+	}
+
+	// Producer: publishes one entry per run.
+	producer := &discoveringProvider{
+		key: "prod_obs",
+		entries: []happydns.DiscoveryEntry{
+			{Type: "t.v1", Ref: "host:443", Payload: json.RawMessage(`{"port":443}`)},
+		},
+	}
+	checker.RegisterObservationProvider(producer)
+	// The producer rule reads its own observation (prod_obs) but queries
+	// related observations by the consumer's key (cons_obs) — that is the
+	// key under which downstream checkers stored their findings about the
+	// producer's entries.
+	producerRule := &discoveryCaptureRule{name: "producer_rule", key: "prod_obs", relatedKey: "cons_obs"}
+	checker.RegisterChecker(&happydns.CheckerDefinition{
+		ID:              "xchk_producer",
+		Name:            "Cross-checker Producer",
+		Availability:    happydns.CheckerAvailability{ApplyToDomain: true},
+		ObservationKeys: []happydns.ObservationKey{"prod_obs"},
+		Rules:           []happydns.CheckRule{producerRule},
+	})
+
+	// Consumer: reads AutoFillDiscoveryEntries, produces an observation.
+	consumer := &consumingProvider{key: "cons_obs"}
+	checker.RegisterObservationProvider(consumer)
+	checker.RegisterChecker(&happydns.CheckerDefinition{
+		ID:   "xchk_consumer",
+		Name: "Cross-checker Consumer",
+		Availability: happydns.CheckerAvailability{ApplyToDomain: true},
+		Options: happydns.CheckerOptionsDocumentation{
+			DomainOpts: []happydns.CheckerOptionDocumentation{
+				{Id: "consumed_entries", Type: "array", AutoFill: happydns.AutoFillDiscoveryEntries},
+			},
+		},
+		ObservationKeys: []happydns.ObservationKey{"cons_obs"},
+		Rules:           []happydns.CheckRule{&testCheckRuleReadingKey{name: "cons_rule", key: "cons_obs"}},
+	})
+
+	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil).WithDiscoveryEntryStore(store)
+	engine := checkerUC.NewCheckerEngine(optionsUC, store, store, store, store, store, store)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	did, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
+
+	// 1) Producer runs first, publishing entries.
+	prodExec, _ := engine.CreateExecution("xchk_producer", target, nil)
+	if _, err := engine.RunExecution(context.Background(), prodExec, nil, nil); err != nil {
+		t.Fatalf("producer first run: %v", err)
+	}
+
+	// 2) Consumer runs: must see the producer's entry in its option.
+	consExec, _ := engine.CreateExecution("xchk_consumer", target, nil)
+	if _, err := engine.RunExecution(context.Background(), consExec, nil, nil); err != nil {
+		t.Fatalf("consumer run: %v", err)
+	}
+	if consumer.lastCount != 1 || len(consumer.lastRefs) != 1 || consumer.lastRefs[0] != "host:443" {
+		t.Fatalf("consumer did not receive AutoFillDiscoveryEntries: count=%d refs=%v", consumer.lastCount, consumer.lastRefs)
+	}
+
+	// 3) Producer runs again: its rule's GetRelated should surface the
+	//    consumer's observation, referencing the original Ref.
+	prodExec2, _ := engine.CreateExecution("xchk_producer", target, nil)
+	if _, err := engine.RunExecution(context.Background(), prodExec2, nil, nil); err != nil {
+		t.Fatalf("producer second run: %v", err)
+	}
+	if len(producerRule.lastRelated) != 1 {
+		t.Fatalf("expected 1 related observation, got %d", len(producerRule.lastRelated))
+	}
+	rel := producerRule.lastRelated[0]
+	if rel.CheckerID != "xchk_consumer" || rel.Ref != "host:443" || rel.Key != "prod_obs" {
+		t.Fatalf("related observation has wrong metadata: %+v", rel)
+	}
 }

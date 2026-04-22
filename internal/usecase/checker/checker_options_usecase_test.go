@@ -1331,7 +1331,7 @@ func TestBuildMergedCheckerOptionsWithAutoFill_InjectsValues(t *testing.T) {
 	uc := checkerUC.NewCheckerOptionsUsecase(optStore, afStore)
 	_ = uc.SetCheckerOptions("af_inject", uid, nil, nil, happydns.CheckerOptions{"user_opt": "hello"})
 
-	merged, err := uc.BuildMergedCheckerOptionsWithAutoFill("af_inject", uid, did, nil, nil)
+	merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill("af_inject", uid, did, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1370,7 +1370,7 @@ func TestBuildMergedCheckerOptionsWithAutoFill_OverridesRunOpts(t *testing.T) {
 	uc := checkerUC.NewCheckerOptionsUsecase(optStore, afStore)
 
 	// Even if runOpts tries to set the auto-fill field, auto-fill wins.
-	merged, err := uc.BuildMergedCheckerOptionsWithAutoFill("af_override", uid, did, nil,
+	merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill("af_override", uid, did, nil,
 		happydns.CheckerOptions{"dn": "user-provided.com."})
 	if err != nil {
 		t.Fatal(err)
@@ -1535,7 +1535,7 @@ func TestBuildMergedCheckerOptionsWithAutoFill_NoOverrideBlocksRunOpts(t *testin
 	})
 
 	// RunOpts tries to override locked.
-	merged, err := uc.BuildMergedCheckerOptionsWithAutoFill("no_override_runopt", uid, nil, nil, happydns.CheckerOptions{
+	merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill("no_override_runopt", uid, nil, nil, happydns.CheckerOptions{
 		"locked": false,
 	})
 	if err != nil {

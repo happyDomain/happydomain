@@ -277,8 +277,10 @@ func (app *App) initUsecases() {
 	app.usecases.checkerOptionsUC = checkerUC.NewCheckerOptionsUsecase(app.store, app.store)
 	app.usecases.checkerPlanUC = checkerUC.NewCheckPlanUsecase(app.store)
 	app.usecases.checkerStatusUC = checkerUC.NewCheckStatusUsecase(app.store, app.store, app.store, app.store)
+	app.usecases.checkerOptionsUC.WithDiscoveryEntryStore(app.store)
 	app.usecases.checkerEngine = checkerUC.NewCheckerEngine(
 		app.usecases.checkerOptionsUC,
+		app.store,
 		app.store,
 		app.store,
 		app.store,

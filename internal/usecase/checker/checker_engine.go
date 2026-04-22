@@ -34,16 +34,18 @@ import (
 
 // checkerEngine implements the happydns.CheckerEngine interface.
 type checkerEngine struct {
-	optionsUC  *CheckerOptionsUsecase
-	evalStore  CheckEvaluationStorage
-	execStore  ExecutionStorage
-	snapStore  ObservationSnapshotStorage
-	cacheStore ObservationCacheStorage
-	entryStore DiscoveryEntryStorage
+	optionsUC     *CheckerOptionsUsecase
+	evalStore     CheckEvaluationStorage
+	execStore     ExecutionStorage
+	snapStore     ObservationSnapshotStorage
+	cacheStore    ObservationCacheStorage
+	entryStore    DiscoveryEntryStorage
+	obsRefStore   DiscoveryObservationStorage
+	relatedLookup checkerPkg.RelatedObservationLookup
 }
 
 // NewCheckerEngine creates a new CheckerEngine implementation. Passing nil
-// for entryStore disables cross-checker discovery publication; the engine
+// for entryStore/obsRefStore disables cross-checker discovery; the engine
 // then behaves exactly as before the discovery mechanism was introduced.
 func NewCheckerEngine(
 	optionsUC *CheckerOptionsUsecase,
@@ -52,14 +54,17 @@ func NewCheckerEngine(
 	snapStore ObservationSnapshotStorage,
 	cacheStore ObservationCacheStorage,
 	entryStore DiscoveryEntryStorage,
+	obsRefStore DiscoveryObservationStorage,
 ) happydns.CheckerEngine {
 	return &checkerEngine{
-		optionsUC:  optionsUC,
-		evalStore:  evalStore,
-		execStore:  execStore,
-		snapStore:  snapStore,
-		cacheStore: cacheStore,
-		entryStore: entryStore,
+		optionsUC:     optionsUC,
+		evalStore:     evalStore,
+		execStore:     execStore,
+		snapStore:     snapStore,
+		cacheStore:    cacheStore,
+		entryStore:    entryStore,
+		obsRefStore:   obsRefStore,
+		relatedLookup: newRelatedLookup(entryStore, obsRefStore, snapStore),
 	}
 }
 
@@ -145,7 +150,7 @@ func (e *checkerEngine) RunExecution(ctx context.Context, exec *happydns.Executi
 
 func (e *checkerEngine) runPipeline(ctx context.Context, def *happydns.CheckerDefinition, target happydns.CheckTarget, plan *happydns.CheckPlan, planID *happydns.Identifier, runOpts happydns.CheckerOptions) (happydns.CheckState, *happydns.CheckEvaluation, error) {
 	// Resolve options (stored + run + auto-fill).
-	mergedOpts, err := e.optionsUC.BuildMergedCheckerOptionsWithAutoFill(def.ID, happydns.TargetIdentifier(target.UserId), happydns.TargetIdentifier(target.DomainId), happydns.TargetIdentifier(target.ServiceId), runOpts)
+	mergedOpts, injectedEntries, err := e.optionsUC.BuildMergedCheckerOptionsWithAutoFill(def.ID, happydns.TargetIdentifier(target.UserId), happydns.TargetIdentifier(target.DomainId), happydns.TargetIdentifier(target.ServiceId), runOpts)
 	if err != nil {
 		return happydns.CheckState{}, nil, fmt.Errorf("resolving options: %w", err)
 	}
@@ -179,6 +184,10 @@ func (e *checkerEngine) runPipeline(ctx context.Context, def *happydns.CheckerDe
 
 	// Create observation context for lazy data collection.
 	obsCtx := checkerPkg.NewObservationContext(target, mergedOpts, cacheLookup, freshness)
+
+	if e.relatedLookup != nil {
+		obsCtx.SetRelatedLookup(def.ID, e.relatedLookup)
+	}
 
 	// If an endpoint is configured, override observation providers with HTTP transport.
 	if endpoint, ok := mergedOpts["endpoint"].(string); ok && endpoint != "" {
@@ -243,6 +252,29 @@ func (e *checkerEngine) runPipeline(ctx context.Context, def *happydns.CheckerDe
 		}
 	}
 
+	// Persist the consumer→entry lineage: for each entry that was fed into
+	// this run via AutoFillDiscoveryEntries, link every observation we just
+	// stored to the original producer's (producer, target, ref) tuple. A
+	// later GetRelated call from the producer walks these refs.
+	if e.obsRefStore != nil && len(injectedEntries) > 0 && len(snap.Data) > 0 {
+		for _, entry := range injectedEntries {
+			for key := range snap.Data {
+				ref := &happydns.DiscoveryObservationRef{
+					ProducerID:  entry.ProducerID,
+					Target:      entry.Target,
+					Ref:         entry.Ref,
+					ConsumerID:  def.ID,
+					Key:         key,
+					SnapshotID:  snap.Id,
+					CollectedAt: snap.CollectedAt,
+				}
+				if err := e.obsRefStore.PutDiscoveryObservationRef(ref); err != nil {
+					log.Printf("warning: failed to persist observation ref for %s/%s: %v", entry.ProducerID, entry.Ref, err)
+				}
+			}
+		}
+	}
+
 	// Persist evaluation.
 	eval := &happydns.CheckEvaluation{
 		PlanID:      planID,
@@ -257,4 +289,60 @@ func (e *checkerEngine) runPipeline(ctx context.Context, def *happydns.CheckerDe
 	}
 
 	return result, eval, nil
+}
+
+// RelatedLookup exposes the engine's Related resolver so controllers can
+// build ReportContexts with cross-checker observations pre-resolved. Returns
+// nil when discovery storage is not wired.
+func (e *checkerEngine) RelatedLookup() checkerPkg.RelatedObservationLookup {
+	return e.relatedLookup
+}
+
+// newRelatedLookup builds the RelatedObservationLookup closure once at engine
+// construction time. Returns nil when any required store is absent.
+func newRelatedLookup(entryStore DiscoveryEntryStorage, obsRefStore DiscoveryObservationStorage, snapStore ObservationSnapshotStorage) checkerPkg.RelatedObservationLookup {
+	if entryStore == nil || obsRefStore == nil || snapStore == nil {
+		return nil
+	}
+	return func(_ context.Context, producerCheckerID string, target happydns.CheckTarget, key happydns.ObservationKey) ([]happydns.RelatedObservation, error) {
+		entries, err := entryStore.ListDiscoveryEntriesByProducer(producerCheckerID, target)
+		if err != nil {
+			return nil, err
+		}
+		var out []happydns.RelatedObservation
+		snapCache := make(map[string]*happydns.ObservationSnapshot)
+		for _, entry := range entries {
+			refs, err := obsRefStore.ListDiscoveryObservationRefs(producerCheckerID, target, entry.Ref)
+			if err != nil {
+				continue
+			}
+			for _, r := range refs {
+				if r.Key != key {
+					continue
+				}
+				snapID := r.SnapshotID.String()
+				snap, ok := snapCache[snapID]
+				if !ok {
+					snap, err = snapStore.GetSnapshot(r.SnapshotID)
+					if err != nil {
+						// Snapshot gone (TTL) — skip silently; implicit GC.
+						continue
+					}
+					snapCache[snapID] = snap
+				}
+				data, ok := snap.Data[r.Key]
+				if !ok {
+					continue
+				}
+				out = append(out, happydns.RelatedObservation{
+					CheckerID:   r.ConsumerID,
+					Key:         r.Key,
+					Data:        data,
+					CollectedAt: r.CollectedAt,
+					Ref:         r.Ref,
+				})
+			}
+		}
+		return out, nil
+	}
 }
