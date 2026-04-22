@@ -45,6 +45,8 @@ type Storage interface {
 	checker.CheckerOptionsStorage
 	checker.CheckEvaluationStorage
 	checker.ExecutionStorage
+	checker.DiscoveryEntryStorage
+	checker.DiscoveryObservationStorage
 	checker.ObservationCacheStorage
 	checker.ObservationSnapshotStorage
 	checker.SchedulerStateStorage

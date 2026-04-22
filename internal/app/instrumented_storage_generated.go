@@ -60,6 +60,16 @@ func (s *instrumentedStorage) ClearCheckerConfigurations() (err error) {
 	return s.inner.ClearCheckerConfigurations()
 }
 
+func (s *instrumentedStorage) ClearDiscoveryEntries() (err error) {
+	defer observe("delete", "discovery_entry")(&err)
+	return s.inner.ClearDiscoveryEntries()
+}
+
+func (s *instrumentedStorage) ClearDiscoveryObservationRefs() (err error) {
+	defer observe("delete", "discovery_observation")(&err)
+	return s.inner.ClearDiscoveryObservationRefs()
+}
+
 func (s *instrumentedStorage) ClearDomains() (err error) {
 	defer observe("delete", "domain")(&err)
 	return s.inner.ClearDomains()
@@ -185,6 +195,16 @@ func (s *instrumentedStorage) DeleteCheckPlan(planID happydns.Identifier) (err e
 func (s *instrumentedStorage) DeleteCheckerConfiguration(checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier) (err error) {
 	defer observe("delete", "check_config")(&err)
 	return s.inner.DeleteCheckerConfiguration(checkerName, userId, domainId, serviceId)
+}
+
+func (s *instrumentedStorage) DeleteDiscoveryEntriesByProducer(producerID string, target happydns.CheckTarget) (err error) {
+	defer observe("delete", "discovery_entry")(&err)
+	return s.inner.DeleteDiscoveryEntriesByProducer(producerID, target)
+}
+
+func (s *instrumentedStorage) DeleteDiscoveryObservationRefsForSnapshot(snapshotID happydns.Identifier) (err error) {
+	defer observe("delete", "discovery_observation")(&err)
+	return s.inner.DeleteDiscoveryObservationRefsForSnapshot(snapshotID)
 }
 
 func (s *instrumentedStorage) DeleteDomain(domainid happydns.Identifier) (err error) {
@@ -362,6 +382,16 @@ func (s *instrumentedStorage) ListAllCheckerConfigurations() (ret happydns.Itera
 	return s.inner.ListAllCheckerConfigurations()
 }
 
+func (s *instrumentedStorage) ListAllDiscoveryEntries() (ret happydns.Iterator[happydns.StoredDiscoveryEntry], err error) {
+	defer observe("list", "discovery_entry")(&err)
+	return s.inner.ListAllDiscoveryEntries()
+}
+
+func (s *instrumentedStorage) ListAllDiscoveryObservationRefs() (ret happydns.Iterator[happydns.DiscoveryObservationRef], err error) {
+	defer observe("list", "discovery_observation")(&err)
+	return s.inner.ListAllDiscoveryObservationRefs()
+}
+
 func (s *instrumentedStorage) ListAllDomainLogs() (ret happydns.Iterator[happydns.DomainLogWithDomainId], err error) {
 	defer observe("list", "domain_log")(&err)
 	return s.inner.ListAllDomainLogs()
@@ -432,6 +462,21 @@ func (s *instrumentedStorage) ListCheckerConfiguration(checkerName string) (ret 
 	return s.inner.ListCheckerConfiguration(checkerName)
 }
 
+func (s *instrumentedStorage) ListDiscoveryEntriesByProducer(producerID string, target happydns.CheckTarget) (ret []*happydns.StoredDiscoveryEntry, err error) {
+	defer observe("list", "discovery_entry")(&err)
+	return s.inner.ListDiscoveryEntriesByProducer(producerID, target)
+}
+
+func (s *instrumentedStorage) ListDiscoveryEntriesByTarget(target happydns.CheckTarget) (ret []*happydns.StoredDiscoveryEntry, err error) {
+	defer observe("list", "discovery_entry")(&err)
+	return s.inner.ListDiscoveryEntriesByTarget(target)
+}
+
+func (s *instrumentedStorage) ListDiscoveryObservationRefs(producerID string, target happydns.CheckTarget, ref string) (ret []*happydns.DiscoveryObservationRef, err error) {
+	defer observe("list", "discovery_observation")(&err)
+	return s.inner.ListDiscoveryObservationRefs(producerID, target, ref)
+}
+
 func (s *instrumentedStorage) ListDomainLogs(domain *happydns.Domain) (ret []*happydns.DomainLog, err error) {
 	defer observe("list", "domain_log")(&err)
 	return s.inner.ListDomainLogs(domain)
@@ -489,9 +534,29 @@ func (s *instrumentedStorage) PutCachedObservation(target happydns.CheckTarget, 
 	return s.inner.PutCachedObservation(target, key, entry)
 }
 
+func (s *instrumentedStorage) PutDiscoveryObservationRef(ref *happydns.DiscoveryObservationRef) (err error) {
+	defer observe("put", "discovery_observation")(&err)
+	return s.inner.PutDiscoveryObservationRef(ref)
+}
+
+func (s *instrumentedStorage) ReplaceDiscoveryEntries(producerID string, target happydns.CheckTarget, entries []happydns.DiscoveryEntry) (err error) {
+	defer observe("update", "discovery_entry")(&err)
+	return s.inner.ReplaceDiscoveryEntries(producerID, target, entries)
+}
+
 func (s *instrumentedStorage) RestoreCheckPlan(plan *happydns.CheckPlan) (err error) {
 	defer observe("restore", "check_plan")(&err)
 	return s.inner.RestoreCheckPlan(plan)
+}
+
+func (s *instrumentedStorage) RestoreDiscoveryEntry(entry *happydns.StoredDiscoveryEntry) (err error) {
+	defer observe("restore", "discovery_entry")(&err)
+	return s.inner.RestoreDiscoveryEntry(entry)
+}
+
+func (s *instrumentedStorage) RestoreDiscoveryObservationRef(ref *happydns.DiscoveryObservationRef) (err error) {
+	defer observe("restore", "discovery_observation")(&err)
+	return s.inner.RestoreDiscoveryObservationRef(ref)
 }
 
 func (s *instrumentedStorage) RestoreEvaluation(eval *happydns.CheckEvaluation) (err error) {
@@ -503,7 +568,6 @@ func (s *instrumentedStorage) RestoreExecution(exec *happydns.Execution) (err er
 	defer observe("restore", "execution")(&err)
 	return s.inner.RestoreExecution(exec)
 }
-
 
 func (s *instrumentedStorage) SchemaVersion() int { return s.inner.SchemaVersion() }
 
