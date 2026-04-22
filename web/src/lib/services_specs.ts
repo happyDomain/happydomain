@@ -182,6 +182,24 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "single": true
         }
     },
+    "abstract.SIP": {
+        "name": "SIP / VoIP",
+        "_svctype": "abstract.SIP",
+        "description": "Expose SIP/VoIP endpoints for your domain (voice, video, messaging).",
+        "family": "abstract",
+        "categories": [
+            "service",
+            "voip"
+        ],
+        "record_types": null,
+        "restrictions": {
+            "nearAlone": true,
+            "needTypes": [
+                33
+            ],
+            "single": true
+        }
+    },
     "abstract.SMimeCert": {
         "name": "SMimeCert",
         "_svctype": "abstract.SMimeCert",
