@@ -45,6 +45,8 @@ var entityMap = map[string]string{
 	"CheckerOptionsStorage":    "check_config",
 	"CheckEvaluationStorage":   "check_evaluation",
 	"ExecutionStorage":         "execution",
+	"DiscoveryEntryStorage":       "discovery_entry",
+	"DiscoveryObservationStorage": "discovery_observation",
 	"ObservationCacheStorage":  "observation_cache",
 	"ObservationSnapshotStorage": "observation_snapshot",
 	"SchedulerStateStorage":    "scheduler_state",
@@ -59,10 +61,11 @@ var entityMap = map[string]string{
 
 // operationOverrides maps method names that don't follow the prefix convention.
 var operationOverrides = map[string]string{
-	"AuthUserExists":    "get",
-	"InsightsRun":       "run",
-	"LastInsightsRun":   "get",
-	"CreateOrUpdateUser": "update",
+	"AuthUserExists":          "get",
+	"InsightsRun":             "run",
+	"LastInsightsRun":         "get",
+	"CreateOrUpdateUser":      "update",
+	"ReplaceDiscoveryEntries": "update",
 }
 
 // skipMethods lists methods that should be passed through without instrumentation.

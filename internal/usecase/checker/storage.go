@@ -130,3 +130,33 @@ type ObservationCacheStorage interface {
 	GetCachedObservation(target happydns.CheckTarget, key happydns.ObservationKey) (*happydns.ObservationCacheEntry, error)
 	PutCachedObservation(target happydns.CheckTarget, key happydns.ObservationKey, entry *happydns.ObservationCacheEntry) error
 }
+
+// DiscoveryEntryStorage persists DiscoveryEntry records published by a
+// producer checker for a given target. Entries are replaced atomically on
+// each collection cycle (see docs/checker-discovery.md).
+type DiscoveryEntryStorage interface {
+	// ListDiscoveryEntriesByTarget returns entries published for a target
+	// across all producers — used to fill AutoFillDiscoveryEntries options.
+	ListDiscoveryEntriesByTarget(target happydns.CheckTarget) ([]*happydns.StoredDiscoveryEntry, error)
+	// ListDiscoveryEntriesByProducer returns entries a producer published
+	// for a target — used to resolve GetRelated.
+	ListDiscoveryEntriesByProducer(producerID string, target happydns.CheckTarget) ([]*happydns.StoredDiscoveryEntry, error)
+	// ReplaceDiscoveryEntries atomically replaces the set of entries
+	// stored for (producerID, target).
+	ReplaceDiscoveryEntries(producerID string, target happydns.CheckTarget, entries []happydns.DiscoveryEntry) error
+	DeleteDiscoveryEntriesByProducer(producerID string, target happydns.CheckTarget) error
+	ListAllDiscoveryEntries() (happydns.Iterator[happydns.StoredDiscoveryEntry], error)
+	RestoreDiscoveryEntry(entry *happydns.StoredDiscoveryEntry) error
+	ClearDiscoveryEntries() error
+}
+
+// DiscoveryObservationStorage persists the lineage linking consumer-produced
+// observations to the DiscoveryEntry records they covered.
+type DiscoveryObservationStorage interface {
+	PutDiscoveryObservationRef(ref *happydns.DiscoveryObservationRef) error
+	ListDiscoveryObservationRefs(producerID string, target happydns.CheckTarget, ref string) ([]*happydns.DiscoveryObservationRef, error)
+	DeleteDiscoveryObservationRefsForSnapshot(snapshotID happydns.Identifier) error
+	ListAllDiscoveryObservationRefs() (happydns.Iterator[happydns.DiscoveryObservationRef], error)
+	RestoreDiscoveryObservationRef(ref *happydns.DiscoveryObservationRef) error
+	ClearDiscoveryObservationRefs() error
+}

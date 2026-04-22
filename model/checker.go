@@ -210,6 +210,32 @@ type ObservationCacheEntry struct {
 	CollectedAt time.Time  `json:"collectedAt"`
 }
 
+// StoredDiscoveryEntry is the host-side persistent form of a DiscoveryEntry:
+// the opaque SDK-level (Type, Ref, Payload) triple augmented with the
+// producing checker and target — the namespace under which the host dedupes
+// and replaces entries across collection cycles.
+type StoredDiscoveryEntry struct {
+	ProducerID string          `json:"producerId"`
+	Target     CheckTarget     `json:"target"`
+	Type       string          `json:"type"`
+	Ref        string          `json:"ref"`
+	Payload    json.RawMessage `json:"payload,omitempty" swaggertype:"object"`
+}
+
+// DiscoveryObservationRef links a consumer's observation to a specific
+// DiscoveryEntry it covered. It lets the host resolve
+// ObservationGetter.GetRelated and ReportContext.Related without re-parsing
+// snapshots.
+type DiscoveryObservationRef struct {
+	ProducerID  string         `json:"producerId"`
+	Target      CheckTarget    `json:"target"`
+	Ref         string         `json:"ref"`
+	ConsumerID  string         `json:"consumerId"`
+	Key         ObservationKey `json:"key"`
+	SnapshotID  Identifier     `json:"snapshotId" swaggertype:"string"`
+	CollectedAt time.Time      `json:"collectedAt" format:"date-time"`
+}
+
 // ExecutionStatus represents the lifecycle state of an execution.
 type ExecutionStatus int
 
