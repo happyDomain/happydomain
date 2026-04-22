@@ -129,3 +129,72 @@ func (p *HTTPObservationProvider) Collect(ctx context.Context, opts happydns.Che
 func (p *HTTPObservationProvider) DiscoverEntries(_ any) ([]happydns.DiscoveryEntry, error) {
 	return p.lastEntries, nil
 }
+
+// report posts an ExternalReportRequest to the remote /report endpoint and
+// returns the raw response body. The related map is built from the
+// ReportContext's Related(key) for the caller-supplied keys so the remote
+// reporter can consume cross-checker observations without an extra lookup.
+func (p *HTTPObservationProvider) report(ctx context.Context, rc happydns.ReportContext, keys []happydns.ObservationKey) ([]byte, error) {
+	related := make(map[happydns.ObservationKey][]happydns.RelatedObservation, len(keys))
+	for _, k := range keys {
+		if rs := rc.Related(k); len(rs) > 0 {
+			related[k] = rs
+		}
+	}
+	reqBody := happydns.ExternalReportRequest{
+		Key:     p.observationKey,
+		Data:    rc.Data(),
+		Related: related,
+	}
+	body, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP provider %s: marshal report request: %w", p.observationKey, err)
+	}
+
+	url := p.endpoint + "/report"
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("HTTP provider %s: create report request: %w", p.observationKey, err)
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	resp, err := httpClient.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP provider %s: report request failed: %w", p.observationKey, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotImplemented {
+		return nil, fmt.Errorf("HTTP provider %s: remote does not support /report", p.observationKey)
+	}
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorBodySize))
+		return nil, fmt.Errorf("HTTP provider %s: report returned status %d: %s", p.observationKey, resp.StatusCode, string(respBody))
+	}
+	return io.ReadAll(io.LimitReader(resp.Body, maxResponseBodySize))
+}
+
+// GetHTMLReport implements happydns.CheckerHTMLReporter by forwarding to
+// POST /report. Related observations present in rc are forwarded under the
+// provider's own observation key — the only key that can meaningfully be
+// consumed by the remote reporter.
+func (p *HTTPObservationProvider) GetHTMLReport(rc happydns.ReportContext) (string, error) {
+	body, err := p.report(context.Background(), rc, []happydns.ObservationKey{p.observationKey})
+	if err != nil {
+		return "", err
+	}
+	return string(body), nil
+}
+
+// ExtractMetrics implements happydns.CheckerMetricsReporter by forwarding to
+// POST /report and expecting a JSON array of happydns.CheckMetric.
+func (p *HTTPObservationProvider) ExtractMetrics(rc happydns.ReportContext, _ time.Time) ([]happydns.CheckMetric, error) {
+	body, err := p.report(context.Background(), rc, []happydns.ObservationKey{p.observationKey})
+	if err != nil {
+		return nil, err
+	}
+	var metrics []happydns.CheckMetric
+	if err := json.Unmarshal(body, &metrics); err != nil {
+		return nil, fmt.Errorf("HTTP provider %s: decode metrics response: %w", p.observationKey, err)
+	}
+	return metrics, nil
+}

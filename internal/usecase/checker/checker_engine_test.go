@@ -698,11 +698,14 @@ func (p *consumingProvider) Collect(ctx context.Context, opts happydns.CheckerOp
 }
 
 // discoveryCaptureRule stores the RelatedObservations it sees on its last
-// evaluation, so tests can assert on GetRelated behavior.
+// evaluation, so tests can assert on GetRelated behavior. `key` is the
+// observation it reads to trigger collection; `relatedKey` is the key it
+// asks GetRelated about (typically the downstream consumer's key).
 type discoveryCaptureRule struct {
-	name         string
-	key          happydns.ObservationKey
-	lastRelated  []happydns.RelatedObservation
+	name        string
+	key         happydns.ObservationKey
+	relatedKey  happydns.ObservationKey
+	lastRelated []happydns.RelatedObservation
 }
 
 func (r *discoveryCaptureRule) Name() string        { return r.name }
@@ -710,7 +713,7 @@ func (r *discoveryCaptureRule) Description() string { return "capture related: "
 func (r *discoveryCaptureRule) Evaluate(ctx context.Context, obs happydns.ObservationGetter, opts happydns.CheckerOptions) happydns.CheckState {
 	var data map[string]any
 	_ = obs.Get(ctx, r.key, &data)
-	related, _ := obs.GetRelated(ctx, r.key)
+	related, _ := obs.GetRelated(ctx, r.relatedKey)
 	r.lastRelated = related
 	return happydns.CheckState{Status: happydns.StatusOK, Code: r.name}
 }
@@ -790,7 +793,7 @@ func TestCheckerEngine_CrossCheckerDiscovery(t *testing.T) {
 		t.Fatalf("expected 1 related observation, got %d", len(producerRule.lastRelated))
 	}
 	rel := producerRule.lastRelated[0]
-	if rel.CheckerID != "xchk_consumer" || rel.Ref != "host:443" || rel.Key != "prod_obs" {
+	if rel.CheckerID != "xchk_consumer" || rel.Ref != "host:443" || rel.Key != "cons_obs" {
 		t.Fatalf("related observation has wrong metadata: %+v", rel)
 	}
 }
