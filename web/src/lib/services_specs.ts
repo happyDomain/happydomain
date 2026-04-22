@@ -78,6 +78,24 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
         "record_types": null,
         "restrictions": {}
     },
+    "abstract.Kerberos": {
+        "name": "Kerberos",
+        "_svctype": "abstract.Kerberos",
+        "description": "Advertise a Kerberos realm (KDC, kadmin, kpasswd) through DNS.",
+        "family": "abstract",
+        "categories": [
+            "service",
+            "authentication"
+        ],
+        "record_types": null,
+        "restrictions": {
+            "nearAlone": true,
+            "needTypes": [
+                33
+            ],
+            "single": true
+        }
+    },
     "abstract.KeybaseVerif": {
         "name": "Keybase Verification",
         "_svctype": "abstract.KeybaseVerif",

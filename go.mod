@@ -8,6 +8,7 @@ require (
 	git.happydns.org/checker-dane v0.1.3
 	git.happydns.org/checker-dangling v0.1.0
 	git.happydns.org/checker-dav v0.1.0
+	git.happydns.org/checker-kerberos v0.2.0
 	git.happydns.org/checker-legacy-records v0.1.0
 	git.happydns.org/checker-matrix v0.1.0
 	git.happydns.org/checker-ns-restrictions v0.1.0
@@ -55,6 +56,12 @@ require (
 	github.com/emersion/go-ical v0.0.0-20240127095438-fc1c9d8fb2b6 // indirect
 	github.com/emersion/go-vcard v0.0.0-20230815062825-8fda7d206ec9 // indirect
 	github.com/emersion/go-webdav v0.7.0 // indirect
+	github.com/hashicorp/go-uuid v1.0.3 // indirect
+	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
+	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
+	github.com/jcmturner/gofork v1.7.6 // indirect
+	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
+	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/likexian/gokit v0.25.16 // indirect
 	github.com/pion/dtls/v3 v3.0.4 // indirect
 	github.com/pion/logging v0.2.2 // indirect
