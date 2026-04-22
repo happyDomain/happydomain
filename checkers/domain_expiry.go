@@ -86,9 +86,9 @@ func (p *whoisProvider) Collect(ctx context.Context, opts happydns.CheckerOption
 }
 
 // ExtractMetrics implements happydns.CheckerMetricsReporter.
-func (p *whoisProvider) ExtractMetrics(raw json.RawMessage, collectedAt time.Time) ([]happydns.CheckMetric, error) {
+func (p *whoisProvider) ExtractMetrics(ctx happydns.ReportContext, collectedAt time.Time) ([]happydns.CheckMetric, error) {
 	var data WHOISData
-	if err := json.Unmarshal(raw, &data); err != nil {
+	if err := json.Unmarshal(ctx.Data(), &data); err != nil {
 		return nil, err
 	}
 

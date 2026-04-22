@@ -99,7 +99,7 @@ func (p *testHTMLObservationProvider) Key() happydns.ObservationKey { return "te
 func (p *testHTMLObservationProvider) Collect(ctx context.Context, opts happydns.CheckerOptions) (any, error) {
 	return map[string]any{"html": true}, nil
 }
-func (p *testHTMLObservationProvider) GetHTMLReport(raw json.RawMessage) (string, error) {
+func (p *testHTMLObservationProvider) GetHTMLReport(ctx happydns.ReportContext) (string, error) {
 	return "<html><body>test report</body></html>", nil
 }
 

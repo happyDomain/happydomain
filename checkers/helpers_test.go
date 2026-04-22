@@ -50,6 +50,10 @@ func (g *stubObservationGetter) Get(ctx context.Context, key happydns.Observatio
 	return json.Unmarshal(raw, dest)
 }
 
+func (g *stubObservationGetter) GetRelated(ctx context.Context, key happydns.ObservationKey) ([]happydns.RelatedObservation, error) {
+	return nil, nil
+}
+
 type errString string
 
 func (e errString) Error() string { return string(e) }
