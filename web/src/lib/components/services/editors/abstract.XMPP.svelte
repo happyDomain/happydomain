@@ -42,6 +42,8 @@
         records?: dnsTypeSRV[];
         "xmpp-client"?: dnsTypeSRV[];
         "xmpp-server"?: dnsTypeSRV[];
+        "xmpps-client"?: dnsTypeSRV[];
+        "xmpps-server"?: dnsTypeSRV[];
         jabber?: dnsTypeSRV[];
         [key: string]: any;
     };
@@ -51,45 +53,35 @@
         valueData.records = [];
     }
 
-    // Service type configurations with their prefixes
+    // Service type configurations with their prefixes. Order: STARTTLS c2s/s2s
+    // first (most common), then XEP-0368 direct-TLS variants, legacy _jabber last.
     const services = [
-        { key: "xmpp-client", prefix: "_xmpp-client._tcp", label: "XMPP Client" },
-        { key: "xmpp-server", prefix: "_xmpp-server._tcp", label: "XMPP Server" },
-        { key: "jabber", prefix: "_jabber._tcp", label: "Jabber" },
+        { key: "xmpp-client", prefix: "_xmpp-client._tcp", label: "XMPP Client (STARTTLS)" },
+        { key: "xmpp-server", prefix: "_xmpp-server._tcp", label: "XMPP Server (STARTTLS)" },
+        { key: "xmpps-client", prefix: "_xmpps-client._tcp", label: "XMPP Client (direct TLS, XEP-0368)" },
+        { key: "xmpps-server", prefix: "_xmpps-server._tcp", label: "XMPP Server (direct TLS, XEP-0368)" },
+        { key: "jabber", prefix: "_jabber._tcp", label: "Jabber (legacy)" },
     ];
 
-    // Initialize service arrays from records (one-time, breaks circular dependency)
-    let initialized = $state(false);
-
-    $effect(() => {
-        if (!initialized && valueData.records) {
-            for (const service of services) {
-                valueData[service.key] = valueData.records.filter(
-                    (srv) => srv?.Hdr?.Name?.startsWith(service.prefix) || false,
-                );
-            }
-            initialized = true;
-        }
-    });
-
-    // Initialize empty arrays for services with no records
-    for (const service of services) {
-        if (!valueData[service.key]) {
-            valueData[service.key] = [] as dnsTypeSRV[];
+    // One-time init: split records into per-service arrays
+    {
+        const records = valueData.records ?? [];
+        for (const service of services) {
+            valueData[service.key] = records.filter(
+                (srv) => srv?.Hdr?.Name?.startsWith(service.prefix) || false,
+            );
         }
     }
 
     // When records in service arrays change, sync back to main array (one-way sync)
     $effect(() => {
-        if (initialized) {
-            const allRecords: dnsTypeSRV[] = [];
-            for (const service of services) {
-                if (valueData[service.key]) {
-                    allRecords.push(...valueData[service.key]);
-                }
+        const allRecords: dnsTypeSRV[] = [];
+        for (const service of services) {
+            if (valueData[service.key]) {
+                allRecords.push(...valueData[service.key]);
             }
-            valueData.records = allRecords;
         }
+        valueData.records = allRecords;
     });
 </script>
 

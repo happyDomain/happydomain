@@ -114,14 +114,17 @@ func xmpp_subanalyze(a *svc.Analyzer, prefix string, xmppDomains map[string]*XMP
 func xmpp_analyze(a *svc.Analyzer) error {
 	xmppDomains := map[string]*XMPP{}
 
-	if err := xmpp_subanalyze(a, "_jabber._tcp.", xmppDomains); err != nil {
-		return err
+	prefixes := []string{
+		"_jabber._tcp.",
+		"_xmpp-client._tcp.",
+		"_xmpp-server._tcp.",
+		"_xmpps-client._tcp.",
+		"_xmpps-server._tcp.",
 	}
-	if err := xmpp_subanalyze(a, "_xmpp-client._tcp.", xmppDomains); err != nil {
-		return err
-	}
-	if err := xmpp_subanalyze(a, "_xmpp-server._tcp.", xmppDomains); err != nil {
-		return err
+	for _, p := range prefixes {
+		if err := xmpp_subanalyze(a, p, xmppDomains); err != nil {
+			return err
+		}
 	}
 
 	return nil
