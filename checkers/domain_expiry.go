@@ -145,14 +145,14 @@ func (r *domainExpiryRule) ValidateOptions(opts happydns.CheckerOptions) error {
 	return nil
 }
 
-func (r *domainExpiryRule) Evaluate(ctx context.Context, obs happydns.ObservationGetter, opts happydns.CheckerOptions) happydns.CheckState {
+func (r *domainExpiryRule) Evaluate(ctx context.Context, obs happydns.ObservationGetter, opts happydns.CheckerOptions) []happydns.CheckState {
 	var whois WHOISData
 	if err := obs.Get(ctx, ObservationKeyWhois, &whois); err != nil {
-		return happydns.CheckState{
+		return []happydns.CheckState{{
 			Status:  happydns.StatusError,
 			Message: fmt.Sprintf("Failed to get WHOIS data: %v", err),
 			Code:    "whois_error",
-		}
+		}}
 	}
 
 	// Read thresholds from options with defaults.
@@ -163,29 +163,29 @@ func (r *domainExpiryRule) Evaluate(ctx context.Context, obs happydns.Observatio
 	meta := map[string]any{"days_remaining": daysRemaining}
 
 	if daysRemaining <= criticalDays {
-		return happydns.CheckState{
+		return []happydns.CheckState{{
 			Status:  happydns.StatusCrit,
 			Message: fmt.Sprintf("Domain expires in %d days", daysRemaining),
 			Code:    "expiry_critical",
 			Meta:    meta,
-		}
+		}}
 	}
 
 	if daysRemaining <= warningDays {
-		return happydns.CheckState{
+		return []happydns.CheckState{{
 			Status:  happydns.StatusWarn,
 			Message: fmt.Sprintf("Domain expires in %d days", daysRemaining),
 			Code:    "expiry_warning",
 			Meta:    meta,
-		}
+		}}
 	}
 
-	return happydns.CheckState{
+	return []happydns.CheckState{{
 		Status:  happydns.StatusOK,
 		Message: fmt.Sprintf("Domain expires in %d days", daysRemaining),
 		Code:    "expiry_ok",
 		Meta:    meta,
-	}
+	}}
 }
 
 func init() {

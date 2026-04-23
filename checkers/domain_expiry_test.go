@@ -58,7 +58,11 @@ func TestDomainExpiryRule_Evaluate(t *testing.T) {
 				ExpiryDate: now.Add(tc.expiresIn),
 				Registrar:  "Test Registrar",
 			})
-			st := rule.Evaluate(context.Background(), obs, tc.opts)
+			states := rule.Evaluate(context.Background(), obs, tc.opts)
+			if len(states) != 1 {
+				t.Fatalf("expected 1 state, got %d", len(states))
+			}
+			st := states[0]
 			if st.Status != tc.want {
 				t.Errorf("status = %v, want %v (msg=%q)", st.Status, tc.want, st.Message)
 			}
@@ -72,7 +76,11 @@ func TestDomainExpiryRule_Evaluate(t *testing.T) {
 func TestDomainExpiryRule_EvaluateObservationError(t *testing.T) {
 	rule := &domainExpiryRule{}
 	obs := &stubObservationGetter{key: ObservationKeyWhois, err: errString("boom")}
-	st := rule.Evaluate(context.Background(), obs, nil)
+	states := rule.Evaluate(context.Background(), obs, nil)
+	if len(states) != 1 {
+		t.Fatalf("expected 1 state, got %d", len(states))
+	}
+	st := states[0]
 	if st.Status != happydns.StatusError {
 		t.Fatalf("expected StatusError, got %v", st.Status)
 	}
