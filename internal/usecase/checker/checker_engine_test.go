@@ -54,12 +54,12 @@ type testCheckRule struct {
 func (r *testCheckRule) Name() string        { return r.name }
 func (r *testCheckRule) Description() string { return "test rule: " + r.name }
 
-func (r *testCheckRule) Evaluate(ctx context.Context, obs happydns.ObservationGetter, opts happydns.CheckerOptions) happydns.CheckState {
+func (r *testCheckRule) Evaluate(ctx context.Context, obs happydns.ObservationGetter, opts happydns.CheckerOptions) []happydns.CheckState {
 	var data map[string]any
 	if err := obs.Get(ctx, "test_obs", &data); err != nil {
-		return happydns.CheckState{Status: happydns.StatusError, Message: err.Error()}
+		return []happydns.CheckState{{Status: happydns.StatusError, Message: err.Error()}}
 	}
-	return happydns.CheckState{Status: r.status, Message: r.name + " passed", Code: r.name}
+	return []happydns.CheckState{{Status: r.status, Message: r.name + " passed"}}
 }
 
 func TestCheckerEngine_RunOK(t *testing.T) {
@@ -225,8 +225,8 @@ func TestCheckerEngine_RunPerRuleDisable(t *testing.T) {
 		t.Errorf("expected status OK (only rule_a active), got %s", exec.Result.Status)
 	}
 
-	if eval.States[0].Code != "rule_a" {
-		t.Errorf("expected rule_a state, got code %s", eval.States[0].Code)
+	if eval.States[0].RuleName != "rule_a" {
+		t.Errorf("expected rule_a state, got rule %s", eval.States[0].RuleName)
 	}
 }
 
@@ -670,12 +670,12 @@ type testCheckRuleReadingKey struct {
 
 func (r *testCheckRuleReadingKey) Name() string        { return r.name }
 func (r *testCheckRuleReadingKey) Description() string { return "test rule: " + r.name }
-func (r *testCheckRuleReadingKey) Evaluate(ctx context.Context, obs happydns.ObservationGetter, opts happydns.CheckerOptions) happydns.CheckState {
+func (r *testCheckRuleReadingKey) Evaluate(ctx context.Context, obs happydns.ObservationGetter, opts happydns.CheckerOptions) []happydns.CheckState {
 	var data map[string]any
 	if err := obs.Get(ctx, r.key, &data); err != nil {
-		return happydns.CheckState{Status: happydns.StatusError, Message: err.Error()}
+		return []happydns.CheckState{{Status: happydns.StatusError, Message: err.Error()}}
 	}
-	return happydns.CheckState{Status: happydns.StatusOK, Code: r.name}
+	return []happydns.CheckState{{Status: happydns.StatusOK}}
 }
 
 // consumingProvider reads AutoFillDiscoveryEntries from its options and
@@ -710,12 +710,12 @@ type discoveryCaptureRule struct {
 
 func (r *discoveryCaptureRule) Name() string        { return r.name }
 func (r *discoveryCaptureRule) Description() string { return "capture related: " + r.name }
-func (r *discoveryCaptureRule) Evaluate(ctx context.Context, obs happydns.ObservationGetter, opts happydns.CheckerOptions) happydns.CheckState {
+func (r *discoveryCaptureRule) Evaluate(ctx context.Context, obs happydns.ObservationGetter, opts happydns.CheckerOptions) []happydns.CheckState {
 	var data map[string]any
 	_ = obs.Get(ctx, r.key, &data)
 	related, _ := obs.GetRelated(ctx, r.relatedKey)
 	r.lastRelated = related
-	return happydns.CheckState{Status: happydns.StatusOK, Code: r.name}
+	return []happydns.CheckState{{Status: happydns.StatusOK}}
 }
 
 func TestCheckerEngine_CrossCheckerDiscovery(t *testing.T) {

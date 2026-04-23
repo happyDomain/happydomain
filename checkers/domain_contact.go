@@ -92,14 +92,14 @@ func (r *domainContactRule) ValidateOptions(opts happydns.CheckerOptions) error 
 	return nil
 }
 
-func (r *domainContactRule) Evaluate(ctx context.Context, obs happydns.ObservationGetter, opts happydns.CheckerOptions) happydns.CheckState {
+func (r *domainContactRule) Evaluate(ctx context.Context, obs happydns.ObservationGetter, opts happydns.CheckerOptions) []happydns.CheckState {
 	var whois WHOISData
 	if err := obs.Get(ctx, ObservationKeyWhois, &whois); err != nil {
-		return happydns.CheckState{
+		return []happydns.CheckState{{
 			Status:  happydns.StatusError,
 			Message: fmt.Sprintf("Failed to get WHOIS data: %v", err),
 			Code:    "contact_error",
-		}
+		}}
 	}
 
 	expectedName, _ := opts["expectedName"].(string)
@@ -107,11 +107,11 @@ func (r *domainContactRule) Evaluate(ctx context.Context, obs happydns.Observati
 	expectedEmail, _ := opts["expectedEmail"].(string)
 
 	if expectedName == "" && expectedOrg == "" && expectedEmail == "" {
-		return happydns.CheckState{
+		return []happydns.CheckState{{
 			Status:  happydns.StatusUnknown,
 			Message: "No expected contact values configured",
 			Code:    "contact_skipped",
-		}
+		}}
 	}
 
 	checkRolesStr := "registrant"
@@ -127,27 +127,33 @@ func (r *domainContactRule) Evaluate(ctx context.Context, obs happydns.Observati
 		}
 	}
 	if len(roles) == 0 {
-		return happydns.CheckState{
+		return []happydns.CheckState{{
 			Status:  happydns.StatusUnknown,
 			Message: "No contact roles to check",
 			Code:    "contact_skipped",
-		}
+		}}
 	}
 
-	worst := happydns.StatusOK
-	var lines []string
-
+	out := make([]happydns.CheckState, 0, len(roles))
 	for _, role := range roles {
 		contact, found := whois.Contacts[role]
 		if !found || contact == nil {
-			lines = append(lines, fmt.Sprintf("%s: contact not found", role))
-			worst = worseStatus(worst, happydns.StatusWarn)
+			out = append(out, happydns.CheckState{
+				Status:  happydns.StatusWarn,
+				Message: "contact not found",
+				Code:    "contact_missing",
+				Subject: role,
+			})
 			continue
 		}
 
 		if isRedacted(contact) {
-			lines = append(lines, fmt.Sprintf("%s: contact info is redacted/private", role))
-			worst = worseStatus(worst, happydns.StatusInfo)
+			out = append(out, happydns.CheckState{
+				Status:  happydns.StatusInfo,
+				Message: "contact info is redacted/private",
+				Code:    "contact_redacted",
+				Subject: role,
+			})
 			continue
 		}
 
@@ -163,18 +169,23 @@ func (r *domainContactRule) Evaluate(ctx context.Context, obs happydns.Observati
 		}
 
 		if len(mismatches) > 0 {
-			lines = append(lines, fmt.Sprintf("%s: %s", role, strings.Join(mismatches, ", ")))
-			worst = worseStatus(worst, happydns.StatusWarn)
+			out = append(out, happydns.CheckState{
+				Status:  happydns.StatusWarn,
+				Message: strings.Join(mismatches, ", "),
+				Code:    "contact_mismatch",
+				Subject: role,
+			})
 		} else {
-			lines = append(lines, fmt.Sprintf("%s: contact info matches", role))
+			out = append(out, happydns.CheckState{
+				Status:  happydns.StatusOK,
+				Message: "contact info matches",
+				Code:    "contact_ok",
+				Subject: role,
+			})
 		}
 	}
 
-	return happydns.CheckState{
-		Status:  worst,
-		Message: strings.Join(lines, "; "),
-		Code:    "contact_result",
-	}
+	return out
 }
 
 // isRedacted reports whether a contact's fields look privacy-protected.

@@ -111,8 +111,8 @@ type testCheckRule struct {
 
 func (r *testCheckRule) Name() string        { return r.name }
 func (r *testCheckRule) Description() string { return "test rule: " + r.name }
-func (r *testCheckRule) Evaluate(ctx context.Context, obs happydns.ObservationGetter, opts happydns.CheckerOptions) happydns.CheckState {
-	return happydns.CheckState{Status: r.status, Code: r.name}
+func (r *testCheckRule) Evaluate(ctx context.Context, obs happydns.ObservationGetter, opts happydns.CheckerOptions) []happydns.CheckState {
+	return []happydns.CheckState{{Status: r.status}}
 }
 
 // registerTestChecker registers a checker for controller tests and returns its ID.

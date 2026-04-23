@@ -269,7 +269,7 @@ func (cc *CheckerController) GetExecutionResult(c *gin.Context) {
 
 	ruleName := c.Param("ruleName")
 	for _, state := range eval.States {
-		if state.Code == ruleName {
+		if state.RuleName == ruleName {
 			c.JSON(http.StatusOK, state)
 			return
 		}

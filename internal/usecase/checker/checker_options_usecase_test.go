@@ -131,8 +131,8 @@ type validatingRule struct {
 
 func (r *validatingRule) Name() string        { return r.name }
 func (r *validatingRule) Description() string { return "validating rule" }
-func (r *validatingRule) Evaluate(_ context.Context, _ happydns.ObservationGetter, _ happydns.CheckerOptions) happydns.CheckState {
-	return happydns.CheckState{Status: happydns.StatusOK}
+func (r *validatingRule) Evaluate(_ context.Context, _ happydns.ObservationGetter, _ happydns.CheckerOptions) []happydns.CheckState {
+	return []happydns.CheckState{{Status: happydns.StatusOK}}
 }
 func (r *validatingRule) ValidateOptions(_ happydns.CheckerOptions) error {
 	return r.validateErr
@@ -146,8 +146,8 @@ type ruleWithOptions struct {
 
 func (r *ruleWithOptions) Name() string        { return r.name }
 func (r *ruleWithOptions) Description() string { return "rule with options" }
-func (r *ruleWithOptions) Evaluate(_ context.Context, _ happydns.ObservationGetter, _ happydns.CheckerOptions) happydns.CheckState {
-	return happydns.CheckState{Status: happydns.StatusOK}
+func (r *ruleWithOptions) Evaluate(_ context.Context, _ happydns.ObservationGetter, _ happydns.CheckerOptions) []happydns.CheckState {
+	return []happydns.CheckState{{Status: happydns.StatusOK}}
 }
 func (r *ruleWithOptions) Options() happydns.CheckerOptionsDocumentation {
 	return r.opts

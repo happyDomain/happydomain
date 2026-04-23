@@ -62,14 +62,14 @@ func (r *domainLockRule) ValidateOptions(opts happydns.CheckerOptions) error {
 	return fmt.Errorf("requiredStatuses must contain at least one EPP status code")
 }
 
-func (r *domainLockRule) Evaluate(ctx context.Context, obs happydns.ObservationGetter, opts happydns.CheckerOptions) happydns.CheckState {
+func (r *domainLockRule) Evaluate(ctx context.Context, obs happydns.ObservationGetter, opts happydns.CheckerOptions) []happydns.CheckState {
 	var whois WHOISData
 	if err := obs.Get(ctx, ObservationKeyWhois, &whois); err != nil {
-		return happydns.CheckState{
+		return []happydns.CheckState{{
 			Status:  happydns.StatusError,
 			Message: fmt.Sprintf("Failed to get WHOIS data: %v", err),
 			Code:    "lock_error",
-		}
+		}}
 	}
 
 	requiredStr := defaultRequiredLockStatuses
@@ -86,11 +86,11 @@ func (r *domainLockRule) Evaluate(ctx context.Context, obs happydns.ObservationG
 	}
 
 	if len(required) == 0 {
-		return happydns.CheckState{
+		return []happydns.CheckState{{
 			Status:  happydns.StatusUnknown,
 			Message: "No required lock statuses configured",
 			Code:    "lock_skipped",
-		}
+		}}
 	}
 
 	present := make(map[string]bool, len(whois.Status))
@@ -106,7 +106,7 @@ func (r *domainLockRule) Evaluate(ctx context.Context, obs happydns.ObservationG
 	}
 
 	if len(missing) > 0 {
-		return happydns.CheckState{
+		return []happydns.CheckState{{
 			Status:  happydns.StatusCrit,
 			Message: fmt.Sprintf("Missing lock status: %s", strings.Join(missing, ", ")),
 			Code:    "lock_missing",
@@ -114,17 +114,17 @@ func (r *domainLockRule) Evaluate(ctx context.Context, obs happydns.ObservationG
 				"missing": missing,
 				"present": whois.Status,
 			},
-		}
+		}}
 	}
 
-	return happydns.CheckState{
+	return []happydns.CheckState{{
 		Status:  happydns.StatusOK,
 		Message: fmt.Sprintf("All required statuses present: %s", strings.Join(required, ", ")),
 		Code:    "lock_ok",
 		Meta: map[string]any{
 			"required": required,
 		},
-	}
+	}}
 }
 
 func init() {

@@ -5,11 +5,11 @@ go 1.25.0
 toolchain go1.26.2
 
 require (
-	git.happydns.org/checker-matrix v0.0.0-20260407211824-2bb91d33d489
-	git.happydns.org/checker-ns-restrictions v0.0.0-20260415205411-f1e3096f606d
-	git.happydns.org/checker-ping v0.0.0-20260407194626-a2ebf17774fc
-	git.happydns.org/checker-sdk-go v0.5.0
-	git.happydns.org/checker-zonemaster v0.0.0-20260407202727-979757b5a8fc
+	git.happydns.org/checker-matrix v0.1.0
+	git.happydns.org/checker-ns-restrictions v0.1.0
+	git.happydns.org/checker-ping v0.1.0
+	git.happydns.org/checker-sdk-go v1.2.0
+	git.happydns.org/checker-zonemaster v0.1.0
 	github.com/JGLTechnologies/gin-rate-limit v1.5.8
 	github.com/StackExchange/dnscontrol/v4 v4.34.0
 	github.com/altcha-org/altcha-lib-go v1.0.0

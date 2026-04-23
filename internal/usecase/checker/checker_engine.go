@@ -202,11 +202,17 @@ func (e *checkerEngine) runPipeline(ctx context.Context, def *happydns.CheckerDe
 		if plan != nil && !plan.IsRuleEnabled(rule.Name()) {
 			continue
 		}
-		state := rule.Evaluate(ctx, obsCtx, mergedOpts)
-		if state.Code == "" {
-			state.Code = rule.Name()
+		ruleStates := rule.Evaluate(ctx, obsCtx, mergedOpts)
+		if len(ruleStates) == 0 {
+			ruleStates = []happydns.CheckState{{
+				Status:  happydns.StatusUnknown,
+				Message: "rule returned no state",
+			}}
 		}
-		states = append(states, state)
+		for i := range ruleStates {
+			ruleStates[i].RuleName = rule.Name()
+		}
+		states = append(states, ruleStates...)
 	}
 
 	// Aggregate results.

@@ -82,7 +82,11 @@ func TestDomainLockRule_Evaluate(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			obs := newWhoisObs(&WHOISData{Status: tc.status})
-			st := rule.Evaluate(context.Background(), obs, tc.opts)
+			states := rule.Evaluate(context.Background(), obs, tc.opts)
+			if len(states) != 1 {
+				t.Fatalf("expected 1 state, got %d", len(states))
+			}
+			st := states[0]
 			if st.Status != tc.want {
 				t.Errorf("status = %v, want %v (msg=%q)", st.Status, tc.want, st.Message)
 			}
@@ -107,7 +111,11 @@ func TestDomainLockRule_NilStatus(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			obs := newWhoisObs(&WHOISData{Status: tc.status})
-			st := rule.Evaluate(context.Background(), obs, nil)
+			states := rule.Evaluate(context.Background(), obs, nil)
+			if len(states) != 1 {
+				t.Fatalf("expected 1 state, got %d", len(states))
+			}
+			st := states[0]
 			if st.Status != happydns.StatusCrit {
 				t.Errorf("status = %v, want Crit", st.Status)
 			}
@@ -121,7 +129,11 @@ func TestDomainLockRule_NilStatus(t *testing.T) {
 func TestDomainLockRule_EvaluateObservationError(t *testing.T) {
 	rule := &domainLockRule{}
 	obs := &stubObservationGetter{key: ObservationKeyWhois, err: errString("nope")}
-	st := rule.Evaluate(context.Background(), obs, nil)
+	states := rule.Evaluate(context.Background(), obs, nil)
+	if len(states) != 1 {
+		t.Fatalf("expected 1 state, got %d", len(states))
+	}
+	st := states[0]
 	if st.Status != happydns.StatusError || st.Code != "lock_error" {
 		t.Errorf("got %v / %q", st.Status, st.Code)
 	}

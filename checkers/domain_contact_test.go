@@ -54,16 +54,19 @@ func TestDomainContactRule_Evaluate(t *testing.T) {
 	obs := newWhoisObs(&WHOISData{Contacts: contactsFixture()})
 
 	cases := []struct {
-		name string
-		opts happydns.CheckerOptions
-		want happydns.Status
-		code string
+		name     string
+		opts     happydns.CheckerOptions
+		wantWorst happydns.Status
+		// wantCodes: if non-nil, expect one state per entry with the listed code
+		// (order matches roles). If nil, expect a single state and use wantCode.
+		wantCodes []string
+		wantCode  string
 	}{
 		{
-			name: "no expectations",
-			opts: nil,
-			want: happydns.StatusUnknown,
-			code: "contact_skipped",
+			name:      "no expectations",
+			opts:      nil,
+			wantWorst: happydns.StatusUnknown,
+			wantCode:  "contact_skipped",
 		},
 		{
 			name: "registrant matches",
@@ -71,16 +74,16 @@ func TestDomainContactRule_Evaluate(t *testing.T) {
 				"expectedName":  "Alice Example",
 				"expectedEmail": "alice@example.com",
 			},
-			want: happydns.StatusOK,
-			code: "contact_result",
+			wantWorst: happydns.StatusOK,
+			wantCodes: []string{"contact_ok"},
 		},
 		{
 			name: "registrant name mismatch",
 			opts: happydns.CheckerOptions{
 				"expectedName": "Carol Other",
 			},
-			want: happydns.StatusWarn,
-			code: "contact_result",
+			wantWorst: happydns.StatusWarn,
+			wantCodes: []string{"contact_mismatch"},
 		},
 		{
 			name: "admin role is redacted",
@@ -88,8 +91,8 @@ func TestDomainContactRule_Evaluate(t *testing.T) {
 				"checkRoles":   "admin",
 				"expectedName": "Alice Example",
 			},
-			want: happydns.StatusInfo,
-			code: "contact_result",
+			wantWorst: happydns.StatusInfo,
+			wantCodes: []string{"contact_redacted"},
 		},
 		{
 			name: "missing role",
@@ -97,8 +100,8 @@ func TestDomainContactRule_Evaluate(t *testing.T) {
 				"checkRoles":   "billing",
 				"expectedName": "Alice Example",
 			},
-			want: happydns.StatusWarn,
-			code: "contact_result",
+			wantWorst: happydns.StatusWarn,
+			wantCodes: []string{"contact_missing"},
 		},
 		{
 			name: "multi-role mixed (worst wins)",
@@ -106,20 +109,43 @@ func TestDomainContactRule_Evaluate(t *testing.T) {
 				"checkRoles":   "registrant,admin",
 				"expectedName": "Alice Example",
 			},
-			// admin is redacted (Info) — Info is worse than OK from registrant.
-			want: happydns.StatusInfo,
-			code: "contact_result",
+			// registrant matches (OK), admin is redacted (Info). Info is worst.
+			wantWorst: happydns.StatusInfo,
+			wantCodes: []string{"contact_ok", "contact_redacted"},
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			st := rule.Evaluate(context.Background(), obs, tc.opts)
-			if st.Status != tc.want {
-				t.Errorf("status = %v, want %v (msg=%q)", st.Status, tc.want, st.Message)
+			states := rule.Evaluate(context.Background(), obs, tc.opts)
+			if tc.wantCodes == nil {
+				if len(states) != 1 {
+					t.Fatalf("expected 1 state, got %d", len(states))
+				}
+				st := states[0]
+				if st.Status != tc.wantWorst {
+					t.Errorf("status = %v, want %v (msg=%q)", st.Status, tc.wantWorst, st.Message)
+				}
+				if st.Code != tc.wantCode {
+					t.Errorf("code = %q, want %q", st.Code, tc.wantCode)
+				}
+				return
 			}
-			if st.Code != tc.code {
-				t.Errorf("code = %q, want %q", st.Code, tc.code)
+			if len(states) != len(tc.wantCodes) {
+				t.Fatalf("state count = %d, want %d", len(states), len(tc.wantCodes))
+			}
+			worst := happydns.StatusOK
+			for i, st := range states {
+				if st.Code != tc.wantCodes[i] {
+					t.Errorf("state[%d].code = %q, want %q", i, st.Code, tc.wantCodes[i])
+				}
+				if st.Subject == "" {
+					t.Errorf("state[%d].Subject is empty", i)
+				}
+				worst = worseStatus(worst, st.Status)
+			}
+			if worst != tc.wantWorst {
+				t.Errorf("worst status = %v, want %v", worst, tc.wantWorst)
 			}
 		})
 	}
@@ -128,7 +154,11 @@ func TestDomainContactRule_Evaluate(t *testing.T) {
 func TestDomainContactRule_EvaluateObservationError(t *testing.T) {
 	rule := &domainContactRule{}
 	obs := &stubObservationGetter{key: ObservationKeyWhois, err: errString("nope")}
-	st := rule.Evaluate(context.Background(), obs, happydns.CheckerOptions{"expectedName": "x"})
+	states := rule.Evaluate(context.Background(), obs, happydns.CheckerOptions{"expectedName": "x"})
+	if len(states) != 1 {
+		t.Fatalf("expected 1 state, got %d", len(states))
+	}
+	st := states[0]
 	if st.Status != happydns.StatusError || st.Code != "contact_error" {
 		t.Errorf("got %v / %q", st.Status, st.Code)
 	}
@@ -199,9 +229,13 @@ func TestWorseStatus(t *testing.T) {
 func TestDomainContactRule_NilContacts(t *testing.T) {
 	rule := &domainContactRule{}
 	obs := newWhoisObs(&WHOISData{})
-	st := rule.Evaluate(context.Background(), obs, happydns.CheckerOptions{
+	states := rule.Evaluate(context.Background(), obs, happydns.CheckerOptions{
 		"expectedName": "Alice",
 	})
+	if len(states) != 1 {
+		t.Fatalf("expected 1 state, got %d", len(states))
+	}
+	st := states[0]
 	if st.Status != happydns.StatusWarn {
 		t.Errorf("status = %v, want Warn", st.Status)
 	}

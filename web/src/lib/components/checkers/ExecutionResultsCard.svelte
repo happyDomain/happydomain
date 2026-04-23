@@ -52,9 +52,14 @@
                 <tbody>
                     {#each evaluation.states as state}
                         <tr>
-                            <td><code>{state.code ?? ""}</code></td>
+                            <td>
+                                <code>{state.rule ?? ""}</code>
+                                {#if state.code}<small class="text-muted"> · {state.code}</small>{/if}
+                            </td>
                             <td><Badge color={getStatusColor(state.status)}>{$t(getStatusI18nKey(state.status))}</Badge></td>
-                            <td>{state.message ?? ""}</td>
+                            <td>
+                                {#if state.subject}<strong>{state.subject}</strong>{#if state.message}: {/if}{/if}{state.message ?? ""}
+                            </td>
                         </tr>
                     {/each}
                 </tbody>
