@@ -9,6 +9,7 @@ require (
 	git.happydns.org/checker-dangling v0.1.0
 	git.happydns.org/checker-dav v0.1.0
 	git.happydns.org/checker-kerberos v0.2.0
+	git.happydns.org/checker-ldap v0.1.0
 	git.happydns.org/checker-legacy-records v0.1.0
 	git.happydns.org/checker-matrix v0.1.0
 	git.happydns.org/checker-ns-restrictions v0.1.0
@@ -50,12 +51,15 @@ require (
 )
 
 require (
+	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
 	github.com/alecthomas/kingpin/v2 v2.4.0 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/emersion/go-ical v0.0.0-20240127095438-fc1c9d8fb2b6 // indirect
 	github.com/emersion/go-vcard v0.0.0-20230815062825-8fda7d206ec9 // indirect
 	github.com/emersion/go-webdav v0.7.0 // indirect
+	github.com/go-asn1-ber/asn1-ber v1.5.7 // indirect
+	github.com/go-ldap/ldap/v3 v3.4.8 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
 	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
