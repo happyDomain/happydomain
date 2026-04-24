@@ -67,6 +67,9 @@ func DeclareDomainRoutes(
 	apiDomainsRoutes.POST("/zone", dc.ImportZone)
 	apiDomainsRoutes.POST("/retrieve_zone", dc.RetrieveZone)
 
+	certCtrl := controller.NewCertificateController()
+	apiDomainsRoutes.POST("/fetch-certificate", certCtrl.FetchCertificate)
+
 	// Mount domain-scoped checker routes.
 	if cc != nil {
 		DeclareScopedCheckerRoutes(apiDomainsRoutes, cc)
