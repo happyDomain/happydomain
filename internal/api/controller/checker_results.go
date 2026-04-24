@@ -38,14 +38,14 @@ import (
 // When the engine exposes a related-observation lookup, the context resolves
 // Related(key) against discovery storage; otherwise a static context is
 // returned.
-func (cc *CheckerController) buildReportContext(c *gin.Context, checkerID string, target happydns.CheckTarget, raw json.RawMessage) happydns.ReportContext {
+func (cc *CheckerController) buildReportContext(c *gin.Context, checkerID string, target happydns.CheckTarget, raw json.RawMessage, states []happydns.CheckState) happydns.ReportContext {
 	var lookup checkerPkg.RelatedObservationLookup
 	if r, ok := cc.engine.(interface {
 		RelatedLookup() checkerPkg.RelatedObservationLookup
 	}); ok {
 		lookup = r.RelatedLookup()
 	}
-	return checkerPkg.BuildReportContext(c.Request.Context(), checkerID, target, raw, lookup)
+	return checkerPkg.BuildReportContext(c.Request.Context(), checkerID, target, raw, lookup, states)
 }
 
 // ExecutionHandler is a middleware that validates the executionId path parameter,
@@ -306,7 +306,11 @@ func (cc *CheckerController) GetExecutionHTMLReport(c *gin.Context) {
 		return
 	}
 
-	rc := cc.buildReportContext(c, exec.CheckerID, targetFromContext(c), val)
+	var states []happydns.CheckState
+	if eval, err := cc.statusUC.GetResultsByExecution(targetFromContext(c), exec.Id); err == nil && eval != nil {
+		states = eval.States
+	}
+	rc := cc.buildReportContext(c, exec.CheckerID, targetFromContext(c), val, states)
 	htmlContent, supported, err := checkerPkg.GetHTMLReport(obsKey, rc)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)

@@ -14,8 +14,8 @@ git.happydns.org/checker-ns-restrictions v0.1.0 h1:SfIst5rHmviH9YGfUH3R108iZpeHk
 git.happydns.org/checker-ns-restrictions v0.1.0/go.mod h1:8B0KhImefLDFNIYYxdztsCq3576PIT7vM5KhXnwZ1Zw=
 git.happydns.org/checker-ping v0.1.0 h1:Cu9Upvs/WoAWHi0A/1QahmuqB4/99n/jK29W/Bnv2y0=
 git.happydns.org/checker-ping v0.1.0/go.mod h1:P0xv85b2MoVud7UXbfoS0n3qMlyQGfg+uz1knN+7Q7w=
-git.happydns.org/checker-sdk-go v1.2.0 h1:v4MpKAz0W3PwP+bxx3pya8w893sVH5xTD1of1cc0TV8=
-git.happydns.org/checker-sdk-go v1.2.0/go.mod h1:aNAcfYFfbhvH9kJhE0Njp5GX0dQbxdRB0rJ0KvSC5nI=
+git.happydns.org/checker-sdk-go v1.4.0 h1:sO8EnF3suhNgYLRsbmCZWJOymH/oNMrOUqj3FEzJArs=
+git.happydns.org/checker-sdk-go v1.4.0/go.mod h1:aNAcfYFfbhvH9kJhE0Njp5GX0dQbxdRB0rJ0KvSC5nI=
 git.happydns.org/checker-zonemaster v0.1.0 h1:1Qa0HtAGTfNU/3XvHhxDNJR9Td8DLQa8PrcNbexoeyI=
 git.happydns.org/checker-zonemaster v0.1.0/go.mod h1:HnVHYW3EZWy03Z0g1KMLUT9XJbIzmgoFBfid/jpe6kA=
 github.com/Azure/azure-sdk-for-go/sdk/azcore v1.21.0 h1:fou+2+WFTib47nS+nz/ozhEBnvU96bKHy6LjRsY4E28=

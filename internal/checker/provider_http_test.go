@@ -254,7 +254,7 @@ func TestHTTPObservationProvider_GetHTMLReportForwardsRelated(t *testing.T) {
 			{CheckerID: "xmpp", Key: "tls", Data: json.RawMessage(`{"v":1}`), Ref: "host:443", CollectedAt: time.Unix(42, 0).UTC()},
 		},
 	}
-	rc := sdk.NewReportContext(json.RawMessage(`{"primary":true}`), related)
+	rc := sdk.NewReportContext(json.RawMessage(`{"primary":true}`), related, nil)
 
 	html, err := p.GetHTMLReport(rc)
 	if err != nil {
@@ -268,6 +268,38 @@ func TestHTTPObservationProvider_GetHTMLReportForwardsRelated(t *testing.T) {
 	}
 	if len(gotReq.Related["tls"]) != 1 || gotReq.Related["tls"][0].Ref != "host:443" {
 		t.Errorf("Related not forwarded: %+v", gotReq.Related)
+	}
+}
+
+func TestHTTPObservationProvider_GetHTMLReportForwardsStates(t *testing.T) {
+	var gotReq happydns.ExternalReportRequest
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&gotReq); err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+		w.Header().Set("Content-Type", "text/html")
+		io.WriteString(w, "<html>ok</html>")
+	}))
+	defer srv.Close()
+
+	p := NewHTTPObservationProvider("tls", srv.URL)
+	states := []happydns.CheckState{
+		{RuleName: "cert_expiry", Status: happydns.StatusCrit, Message: "expires in 3 days"},
+		{RuleName: "chain_valid", Status: happydns.StatusOK},
+	}
+	rc := sdk.NewReportContext(json.RawMessage(`{"primary":true}`), nil, states)
+
+	if _, err := p.GetHTMLReport(rc); err != nil {
+		t.Fatalf("GetHTMLReport: %v", err)
+	}
+	if len(gotReq.States) != len(states) {
+		t.Fatalf("States length = %d, want %d", len(gotReq.States), len(states))
+	}
+	for i, want := range states {
+		if gotReq.States[i].RuleName != want.RuleName || gotReq.States[i].Status != want.Status {
+			t.Errorf("States[%d] = {%q,%v}, want {%q,%v}", i,
+				gotReq.States[i].RuleName, gotReq.States[i].Status, want.RuleName, want.Status)
+		}
 	}
 }
 

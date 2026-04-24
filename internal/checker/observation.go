@@ -365,13 +365,12 @@ func getMetrics(provider happydns.ObservationProvider, key happydns.ObservationK
 	return metrics, true, err
 }
 
-// BuildReportContext returns a ReportContext backed by the primary payload
-// and a lazy Related(key) resolver that delegates to the installed lookup.
-// When lookup is nil (no discovery storage), the returned context has no
-// related observations and behaves like sdk.StaticReportContext(raw).
-func BuildReportContext(ctx context.Context, producerCheckerID string, target happydns.CheckTarget, raw json.RawMessage, lookup RelatedObservationLookup) happydns.ReportContext {
+// BuildReportContext wires raw, states, and a lazy Related(key) resolver into
+// a ReportContext. Pass nil states when none are available; reporters fall
+// back to data-only rendering.
+func BuildReportContext(ctx context.Context, producerCheckerID string, target happydns.CheckTarget, raw json.RawMessage, lookup RelatedObservationLookup, states []happydns.CheckState) happydns.ReportContext {
 	if lookup == nil || producerCheckerID == "" {
-		return sdk.StaticReportContext(raw)
+		return sdk.NewReportContext(raw, nil, states)
 	}
 	return &lazyReportContext{
 		ctx:      ctx,
@@ -379,6 +378,7 @@ func BuildReportContext(ctx context.Context, producerCheckerID string, target ha
 		lookup:   lookup,
 		producer: producerCheckerID,
 		target:   target,
+		states:   states,
 		cache:    make(map[happydns.ObservationKey][]happydns.RelatedObservation),
 	}
 }
@@ -391,10 +391,12 @@ type lazyReportContext struct {
 	lookup   RelatedObservationLookup
 	producer string
 	target   happydns.CheckTarget
+	states   []happydns.CheckState
 	cache    map[happydns.ObservationKey][]happydns.RelatedObservation
 }
 
-func (l *lazyReportContext) Data() json.RawMessage { return l.data }
+func (l *lazyReportContext) Data() json.RawMessage          { return l.data }
+func (l *lazyReportContext) States() []happydns.CheckState  { return l.states }
 func (l *lazyReportContext) Related(key happydns.ObservationKey) []happydns.RelatedObservation {
 	l.mu.Lock()
 	defer l.mu.Unlock()

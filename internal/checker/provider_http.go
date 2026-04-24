@@ -145,6 +145,7 @@ func (p *HTTPObservationProvider) report(ctx context.Context, rc happydns.Report
 		Key:     p.observationKey,
 		Data:    rc.Data(),
 		Related: related,
+		States:  rc.States(),
 	}
 	body, err := json.Marshal(reqBody)
 	if err != nil {
