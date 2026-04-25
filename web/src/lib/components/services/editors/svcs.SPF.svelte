@@ -30,6 +30,7 @@
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import type { dnsResource, dnsTypeTXT } from "$lib/dns_rr";
     import { newRR } from "$lib/dns_rr";
+    import { parseSPF, stringifySPF } from "$lib/services/spf";
 
     interface Props {
         dn: string;
@@ -42,19 +43,6 @@
     const DEFAULT_SPF = "v=spf1 -all";
     const ALL_RE = /^[-~?+]?all$/;
 
-    function parseSPF(val: string): { v: string; f: string[] } {
-        const tokens = val.trim().split(/\s+/).filter(Boolean);
-        if (tokens.length === 0) return { v: "spf1", f: [] };
-        if (tokens[0].startsWith("v=")) {
-            return { v: tokens[0].slice(2), f: tokens.slice(1) };
-        }
-        return { v: "spf1", f: tokens };
-    }
-
-    function stringifySPF(v: string, f: string[]): string {
-        return "v=" + (v || "spf1") + (f.length ? " " + f.join(" ") : "");
-    }
-
     if (!value["txt"]) {
         const txtRecord = newRR(dn, 16) as dnsTypeTXT; // TXT record type is 16
         txtRecord.Txt = DEFAULT_SPF;
@@ -62,16 +50,16 @@
     }
 
     const initial = parseSPF(value["txt"].Txt || DEFAULT_SPF);
-    let v = $state(initial.v);
+    let v = $state(initial.v ?? "spf1");
     let f = $state(initial.f);
 
     $effect(() => {
-        value["txt"]!.Txt = stringifySPF(v, f);
+        value["txt"]!.Txt = stringifySPF({ v, f });
     });
 
     const type = "svcs.SPF";
 
-    let inputRefs: HTMLInputElement[] = [];
+    let inputRefs: HTMLInputElement[] = $state([]);
 
     async function addDirective() {
         let newIdx: number;

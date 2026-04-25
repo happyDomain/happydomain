@@ -850,6 +850,72 @@
                 "title": "g= tag is deprecated",
                 "detail": "Granularity was removed in RFC 6376; modern verifiers ignore it."
             }
+        },
+        "spf": {
+            "missing-version": {
+                "title": "Missing v=spf1 prefix",
+                "detail": "An SPF record must start with the version tag v=spf1."
+            },
+            "wrong-version": {
+                "title": "Unsupported SPF version: {{version}}",
+                "detail": "Only v=spf1 is defined. Other versions are unsupported and will be ignored by receivers."
+            },
+            "no-all-mechanism": {
+                "title": "No 'all' mechanism nor redirect",
+                "detail": "Without a terminating 'all' mechanism (or a redirect modifier), receivers fall back to a neutral result for unknown senders. Add e.g. -all or ~all at the end."
+            },
+            "multiple-all": {
+                "title": "Multiple 'all' mechanisms ({{count}})",
+                "detail": "Only one 'all' mechanism is allowed; subsequent ones are ignored."
+            },
+            "all-not-last": {
+                "title": "'all' mechanism is not the last term",
+                "detail": "Mechanisms after 'all' are unreachable. Move 'all' to the end of the record."
+            },
+            "redirect-with-all": {
+                "title": "redirect= modifier combined with an 'all' mechanism",
+                "detail": "When 'all' is present, the redirect modifier is ignored. Remove one of them."
+            },
+            "multiple-redirect": {
+                "title": "Multiple redirect= modifiers",
+                "detail": "Only one redirect modifier is allowed per SPF record."
+            },
+            "ptr-deprecated": {
+                "title": "ptr mechanism is deprecated",
+                "detail": "The 'ptr' mechanism is slow and deprecated by RFC 7208. Use ip4/ip6 or include instead."
+            },
+            "too-many-lookups": {
+                "title": "More than {{max}} DNS lookups ({{count}})",
+                "detail": "RFC 7208 sec. 4.6.4: an SPF record must not require more than 10 DNS lookups. Counting include, a, mx, exists, ptr and redirect locally, this record already exceeds that budget."
+            },
+            "many-lookups": {
+                "title": "Approaching the SPF lookup limit ({{count}}/{{max}})",
+                "detail": "Counting include, a, mx, exists, ptr and redirect locally; recursion may push you above the 10-lookup hard limit."
+            },
+            "mechanism-missing-value": {
+                "title": "Mechanism '{{mechanism}}' requires a value",
+                "detail": "include, exists and redirect must be followed by a domain name (e.g. include:_spf.example.com)."
+            },
+            "duplicate-mechanism": {
+                "title": "Duplicate term: {{mechanism}}",
+                "detail": "Repeating the same mechanism has no effect and bloats the record."
+            },
+            "empty-term": {
+                "title": "Empty SPF term",
+                "detail": "Remove blank entries; a stray space produces an empty directive."
+            },
+            "unknown-mechanism": {
+                "title": "Unknown SPF mechanism '{{mechanism}}'",
+                "detail": "RFC 7208 sec. 5 defines all, include, a, mx, ptr, ip4, ip6 and exists. Anything else is treated as a permerror by verifiers."
+            },
+            "unknown-modifier": {
+                "title": "Unknown SPF modifier '{{modifier}}='",
+                "detail": "Only redirect= and exp= are defined by the SPF RFCs. Verifiers ignore unknown modifiers, but this is usually a typo."
+            },
+            "length-exceeds-txt-string": {
+                "title": "Record length is {{length}} characters",
+                "detail": "A single TXT string is capped at 255 characters; longer records must be split into multiple strings within the same RR."
+            }
         }
     }
 }

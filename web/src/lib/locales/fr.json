@@ -621,6 +621,72 @@
                 "title": "Le tag g= est déprécié",
                 "detail": "Le tag granularité a été supprimé par la RFC 6376 ; les vérificateurs modernes l'ignorent."
             }
+        },
+        "spf": {
+            "missing-version": {
+                "title": "Préfixe v=spf1 manquant",
+                "detail": "Un enregistrement SPF doit commencer par la balise de version v=spf1."
+            },
+            "wrong-version": {
+                "title": "Version SPF non supportée : {{version}}",
+                "detail": "Seule v=spf1 est définie. Les autres versions ne sont pas supportées et seront ignorées par les destinataires."
+            },
+            "no-all-mechanism": {
+                "title": "Aucun mécanisme « all » ni redirect",
+                "detail": "Sans mécanisme « all » terminal (ou modificateur redirect), les destinataires retombent sur un résultat neutre pour les expéditeurs inconnus. Ajoutez par ex. -all ou ~all en fin d'enregistrement."
+            },
+            "multiple-all": {
+                "title": "Plusieurs mécanismes « all » ({{count}})",
+                "detail": "Un seul mécanisme « all » est autorisé ; les suivants sont ignorés."
+            },
+            "all-not-last": {
+                "title": "Le mécanisme « all » n'est pas en dernier",
+                "detail": "Les mécanismes placés après « all » sont inaccessibles. Déplacez « all » à la fin de l'enregistrement."
+            },
+            "redirect-with-all": {
+                "title": "Modificateur redirect= combiné avec un mécanisme « all »",
+                "detail": "Lorsque « all » est présent, le modificateur redirect est ignoré. Retirez l'un des deux."
+            },
+            "multiple-redirect": {
+                "title": "Plusieurs modificateurs redirect=",
+                "detail": "Un seul modificateur redirect est autorisé par enregistrement SPF."
+            },
+            "ptr-deprecated": {
+                "title": "Le mécanisme ptr est déprécié",
+                "detail": "Le mécanisme « ptr » est lent et déprécié par la RFC 7208. Préférez ip4/ip6 ou include."
+            },
+            "too-many-lookups": {
+                "title": "Plus de {{max}} requêtes DNS ({{count}})",
+                "detail": "RFC 7208 sec. 4.6.4 : un enregistrement SPF ne doit pas requérir plus de 10 requêtes DNS. En comptant localement include, a, mx, exists, ptr et redirect, cet enregistrement dépasse déjà ce budget."
+            },
+            "many-lookups": {
+                "title": "Limite SPF approchée ({{count}}/{{max}})",
+                "detail": "Comptage local de include, a, mx, exists, ptr et redirect ; la récursion peut faire dépasser la limite stricte de 10 requêtes."
+            },
+            "mechanism-missing-value": {
+                "title": "Le mécanisme « {{mechanism}} » requiert une valeur",
+                "detail": "include, exists et redirect doivent être suivis d'un nom de domaine (ex. include:_spf.example.com)."
+            },
+            "duplicate-mechanism": {
+                "title": "Terme dupliqué : {{mechanism}}",
+                "detail": "Répéter le même mécanisme n'a aucun effet et alourdit l'enregistrement."
+            },
+            "empty-term": {
+                "title": "Terme SPF vide",
+                "detail": "Supprimez les entrées vides ; un espace orphelin produit une directive vide."
+            },
+            "unknown-mechanism": {
+                "title": "Mécanisme SPF inconnu « {{mechanism}} »",
+                "detail": "La RFC 7208 sec. 5 définit all, include, a, mx, ptr, ip4, ip6 et exists. Tout autre nom est traité comme une erreur permanente par les vérificateurs."
+            },
+            "unknown-modifier": {
+                "title": "Modificateur SPF inconnu « {{modifier}}= »",
+                "detail": "Seuls redirect= et exp= sont définis par les RFC SPF. Les modificateurs inconnus sont ignorés, mais il s'agit le plus souvent d'une faute de frappe."
+            },
+            "length-exceeds-txt-string": {
+                "title": "Longueur de l'enregistrement : {{length}} caractères",
+                "detail": "Une chaîne TXT est limitée à 255 caractères ; les enregistrements plus longs doivent être découpés en plusieurs chaînes au sein du même RR."
+            }
         }
     }
 }

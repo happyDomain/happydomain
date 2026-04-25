@@ -22,12 +22,9 @@
 // Imports here register compliance validators for service types.
 // Add a side-effect import per service that ships compliance checks.
 //
-// Example:
-//   import "../spf";          // registers svcs.SPF
-//   import "../dmarc";        // registers svcs.DMARC
-//
-// Validators are wired progressively; this file is intentionally small at the
-// start and grows as commits add per-record support.
+// Validators are wired progressively; this file grows as commits add
+// per-record support.
 import "$lib/services/dkim/compliance";
+import "$lib/services/spf";
 
 export {};
