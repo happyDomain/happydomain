@@ -180,6 +180,69 @@ func TestListDiscoveryEntriesByTargetAggregatesProducers(t *testing.T) {
 	}
 }
 
+func TestListDiscoveryEntriesByTargetWidensToNarrowerScopes(t *testing.T) {
+	s := newDiscoveryTestStore()
+
+	// Service-scoped publisher (e.g. checker-dane on a TLSA service).
+	svc := happydns.CheckTarget{UserId: "u1", DomainId: "d1", ServiceId: "svc1"}
+	if err := s.ReplaceDiscoveryEntries("checker-dane", svc, []happydns.DiscoveryEntry{
+		{Type: "tls.endpoint.v1", Ref: "host:443"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Another service under the same domain.
+	svc2 := happydns.CheckTarget{UserId: "u1", DomainId: "d1", ServiceId: "svc2"}
+	if err := s.ReplaceDiscoveryEntries("checker-smtp", svc2, []happydns.DiscoveryEntry{
+		{Type: "tls.endpoint.v1", Ref: "mx:25"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	// A service under a different domain — must not leak.
+	other := happydns.CheckTarget{UserId: "u1", DomainId: "d2", ServiceId: "svcX"}
+	if err := s.ReplaceDiscoveryEntries("checker-srv", other, []happydns.DiscoveryEntry{
+		{Type: "tls.endpoint.v1", Ref: "x:443"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Domain-scoped consumer (e.g. checker-tls) sees both services under d1
+	// but not the one under d2.
+	dom := happydns.CheckTarget{UserId: "u1", DomainId: "d1"}
+	got, err := s.ListDiscoveryEntriesByTarget(dom)
+	if err != nil {
+		t.Fatalf("ListDiscoveryEntriesByTarget(domain): %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("domain-scoped lookup: want 2 entries from services under d1, got %d: %#v", len(got), got)
+	}
+	for _, e := range got {
+		if e.Target.DomainId != "d1" {
+			t.Errorf("leaked entry from another domain: %#v", e)
+		}
+	}
+
+	// Service-scoped lookup stays exact.
+	exact, err := s.ListDiscoveryEntriesByTarget(svc)
+	if err != nil {
+		t.Fatalf("ListDiscoveryEntriesByTarget(service): %v", err)
+	}
+	if len(exact) != 1 || exact[0].Ref != "host:443" {
+		t.Fatalf("service-scoped lookup widened unexpectedly: %#v", exact)
+	}
+
+	// User-scoped lookup widens to every domain/service under that user.
+	usr := happydns.CheckTarget{UserId: "u1"}
+	all, err := s.ListDiscoveryEntriesByTarget(usr)
+	if err != nil {
+		t.Fatalf("ListDiscoveryEntriesByTarget(user): %v", err)
+	}
+	if len(all) != 3 {
+		t.Fatalf("user-scoped lookup: want 3 entries across u1, got %d", len(all))
+	}
+}
+
 func TestDiscoveryObservationRefCascadeOnSnapshotDelete(t *testing.T) {
 	s := newDiscoveryTestStore()
 	target := happydns.CheckTarget{DomainId: "domA"}

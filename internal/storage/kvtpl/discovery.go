@@ -61,20 +61,71 @@ func dscObsSnapIndexKey(snapshotID happydns.Identifier, primary string) string {
 
 // --- DiscoveryEntry storage -------------------------------------------------
 
+// dscEntryTargetSearchPrefix returns the key prefix that matches the given
+// target scope plus any narrower scope. RawURLEncoded identifiers never
+// contain "/" or "|", so slash boundaries in the encoded "u/d/s" target form
+// are unambiguous for prefix matching:
+//
+//   - service scope ("u/d/s") → "dscent-tgt|u/d/s|"        (exact)
+//   - domain  scope ("u/d/")  → "dscent-tgt|u/d/"          (this domain + any service under it)
+//   - user    scope ("u//")   → "dscent-tgt|u/"            (this user + any domain/service)
+//   - empty   scope ("//")    → "dscent-tgt|"              (all)
+func dscEntryTargetSearchPrefix(target happydns.CheckTarget) string {
+	const base = "dscent-tgt|"
+	switch {
+	case target.ServiceId != "":
+		return base + target.String() + "|"
+	case target.DomainId != "":
+		return base + target.UserId + "/" + target.DomainId + "/"
+	case target.UserId != "":
+		return base + target.UserId + "/"
+	default:
+		return base
+	}
+}
+
+// parseTargetFromIndexKey splits the encoded "u/d/s" portion of a target-index
+// key back into a CheckTarget. The encoding is always 3 fields separated by
+// "/", with empty strings for unset scopes.
+func parseTargetFromIndexKey(s string) (happydns.CheckTarget, bool) {
+	parts := strings.SplitN(s, "/", 3)
+	if len(parts) != 3 {
+		return happydns.CheckTarget{}, false
+	}
+	return happydns.CheckTarget{
+		UserId:    parts[0],
+		DomainId:  parts[1],
+		ServiceId: parts[2],
+	}, true
+}
+
+// ListDiscoveryEntriesByTarget returns every entry published at the given
+// target scope or any narrower scope. A domain-scoped consumer therefore
+// receives entries published at that domain itself and at any service under
+// it; a user-scoped consumer additionally sees entries from any domain it
+// owns. This mirrors the way checkers are layered — service-scoped producers
+// (checker-dane, checker-smtp, …) routinely emit tls.endpoint.v1 entries
+// that domain-scoped consumers (checker-tls, checker-caa) need to aggregate.
 func (s *KVStorage) ListDiscoveryEntriesByTarget(target happydns.CheckTarget) ([]*happydns.StoredDiscoveryEntry, error) {
-	prefix := fmt.Sprintf("dscent-tgt|%s|", target.String())
-	iter := s.db.Search(prefix)
+	iterPrefix := dscEntryTargetSearchPrefix(target)
+	iter := s.db.Search(iterPrefix)
 	defer iter.Release()
 
+	const indexPrefix = "dscent-tgt|"
 	var out []*happydns.StoredDiscoveryEntry
 	for iter.Next() {
-		rest := strings.TrimPrefix(iter.Key(), prefix)
-		parts := strings.SplitN(rest, "|", 3)
-		if len(parts) != 3 {
+		rest := strings.TrimPrefix(iter.Key(), indexPrefix)
+		// rest = "{u}/{d}/{s}|{producer}|{type}|{ref}"
+		parts := strings.SplitN(rest, "|", 4)
+		if len(parts) != 4 {
+			continue
+		}
+		actualTarget, ok := parseTargetFromIndexKey(parts[0])
+		if !ok {
 			continue
 		}
 		entry := &happydns.StoredDiscoveryEntry{}
-		if err := s.db.Get(dscEntryKey(parts[0], target, parts[1], parts[2]), entry); err != nil {
+		if err := s.db.Get(dscEntryKey(parts[1], actualTarget, parts[2], parts[3]), entry); err != nil {
 			// Stale index entry — ignore; tidy will eventually clean it.
 			continue
 		}
