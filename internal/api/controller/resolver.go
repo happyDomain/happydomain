@@ -75,3 +75,33 @@ func (rc *ResolverController) RunResolver(c *gin.Context) {
 
 	c.JSON(http.StatusOK, happydns.NewResolverResponseFromMsg(r))
 }
+
+// FlattenSPF recursively walks an SPF record and reports its DNS-lookup budget.
+//
+//	@Summary	Compute the DNS-lookup budget of an SPF record.
+//	@Schemes
+//	@Description	Recursively walk an SPF record (taken either from a TXT lookup at the supplied domain or from an inline override) and return the recursive lookup tree along with RFC 7208 §4.6.4 budget counters.
+//	@Tags			resolver
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		happydns.SPFFlattenRequest	true	"SPF flatten request"
+//	@Success		200		{object}	happydns.SPFFlattenResponse
+//	@Failure		400		{object}	happydns.ErrorResponse	"Invalid input"
+//	@Failure		500		{object}	happydns.ErrorResponse
+//	@Router			/resolver/spf-flatten [post]
+func (rc *ResolverController) FlattenSPF(c *gin.Context) {
+	var req happydns.SPFFlattenRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("%s sends invalid SPFFlattenRequest JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
+		return
+	}
+
+	resp, err := rc.resolverService.FlattenSPF(req)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}

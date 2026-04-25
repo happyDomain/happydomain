@@ -32,4 +32,5 @@ func DeclareResolverRoutes(router *gin.RouterGroup, resolverUC happydns.Resolver
 	rc := controller.NewResolverController(resolverUC)
 
 	router.POST("/resolver", rc.RunResolver)
+	router.POST("/resolver/spf-flatten", rc.FlattenSPF)
 }

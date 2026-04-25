@@ -47,6 +47,11 @@
         const txtRecord = newRR(dn, 16) as dnsTypeTXT; // TXT record type is 16
         txtRecord.Txt = DEFAULT_SPF;
         value["txt"] = txtRecord;
+    } else if (!/^\s*v=spf1(\s|$)/i.test(value["txt"].Txt || "")) {
+        // The TXT slot may carry residue from another record type (DKIM, etc.)
+        // when the service type was changed in place. Reset to a sane SPF
+        // default rather than mis-parsing the foreign content.
+        value["txt"].Txt = DEFAULT_SPF;
     }
 
     const initial = parseSPF(value["txt"].Txt || DEFAULT_SPF);
@@ -54,6 +59,9 @@
     let f = $state(initial.f);
 
     $effect(() => {
+        // Force per-index dependency tracking so a `bind:value={f[i]}` write
+        // re-runs this effect (and downstream EditorCompliance derivations).
+        for (let i = 0; i < f.length; i++) void f[i];
         value["txt"]!.Txt = stringifySPF({ v, f });
     });
 

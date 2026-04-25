@@ -86,4 +86,79 @@ func NewResolverResponseFromMsg(msg *dns.Msg) *ResolverResponse {
 
 type ResolverUsecase interface {
 	ResolveQuestion(ResolverRequest) (*dns.Msg, error)
+	FlattenSPF(SPFFlattenRequest) (*SPFFlattenResponse, error)
+}
+
+// SPFFlattenRequest asks the backend to recursively walk an SPF record and
+// count its DNS-lookup budget. When Record is set, the resolver evaluates it
+// as the root record (useful while editing) instead of looking up the TXT
+// record at Domain.
+type SPFFlattenRequest struct {
+	// Resolver is the name of the resolver to use (or local or custom).
+	Resolver string `json:"resolver,omitempty"`
+
+	// Custom is the address to the recursive server to use.
+	Custom string `json:"custom,omitempty"`
+
+	// Domain is the FQDN to resolve. It is also used as the apex when the
+	// optional Record field is provided.
+	Domain string `json:"domain"`
+
+	// Record overrides the root SPF record being evaluated. When empty, the
+	// resolver fetches Domain's TXT and looks for "v=spf1".
+	Record string `json:"record,omitempty"`
+}
+
+// SPFNode represents a single mechanism or modifier consuming a DNS lookup
+// while evaluating an SPF record.
+type SPFNode struct {
+	// Domain is the resolved domain for this node (the include / redirect
+	// target, the qualified mechanism domain, or the parent domain when
+	// implicit).
+	Domain string `json:"domain"`
+
+	// Mechanism is the raw term as it appears in the parent record
+	// (e.g. "include:example.com", "redirect=foo.com", "a", "mx:host.com").
+	Mechanism string `json:"mechanism"`
+
+	// Record is the SPF record found at Domain when the node corresponds to
+	// an include or redirect. Empty for a/mx/exists/ptr.
+	Record string `json:"record,omitempty"`
+
+	// LookupsHere counts the local cost of this node (always 1 for the
+	// mechanisms tracked under RFC 7208 §4.6.4).
+	LookupsHere int `json:"lookupsHere"`
+
+	// Error is set when the node could not be fully evaluated. Standard
+	// values are "no-spf", "nxdomain", "timeout", "loop", "syntax".
+	Error string `json:"error,omitempty"`
+
+	// Children are nested includes / redirects.
+	Children []*SPFNode `json:"children,omitempty"`
+}
+
+// SPFFlattenResponse is the result of a recursive SPF flatten.
+type SPFFlattenResponse struct {
+	// Record is the root SPF record that was evaluated.
+	Record string `json:"record"`
+
+	// LookupCount is the total number of SPF terms that consumed a DNS lookup.
+	LookupCount int `json:"lookupCount"`
+
+	// VoidLookups counts NXDOMAIN / no-answer responses observed during the
+	// walk (RFC 7208 §4.6.4 caps this at 2).
+	VoidLookups int `json:"voidLookups"`
+
+	// Exceeded is true when LookupCount exceeds the 10-lookup hard limit.
+	Exceeded bool `json:"exceeded"`
+
+	// VoidExceeded is true when VoidLookups exceeds the 2-void-lookup limit.
+	VoidExceeded bool `json:"voidExceeded"`
+
+	// Truncated is true when evaluation was stopped early (depth, cycle,
+	// budget overrun).
+	Truncated bool `json:"truncated"`
+
+	// Tree is the recursive evaluation tree, rooted at Domain.
+	Tree *SPFNode `json:"tree,omitempty"`
 }
