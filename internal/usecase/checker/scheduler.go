@@ -627,7 +627,7 @@ func (s *Scheduler) NotifyDomainRemoved(domainID happydns.Identifier) {
 	s.mu.Unlock()
 
 	if n > 0 {
-		log.Printf("Scheduler: NotifyDomainRemoved(%s): removed %d jobs", domainID, n)
+		log.Printf("Scheduler: NotifyDomainRemoved(%s): removed %d jobs", domainID.String(), n)
 	}
 }
 
@@ -741,7 +741,7 @@ func (s *Scheduler) loadDomainServices(domain *happydns.Domain) []*happydns.Serv
 		}
 		zone, err := s.zoneStore.GetZone(domain.ZoneHistory[idx])
 		if err != nil {
-			log.Printf("Scheduler: failed to load zone %s for domain %s: %v", domain.ZoneHistory[idx], domain.DomainName, err)
+			log.Printf("Scheduler: failed to load zone %s for domain %s: %v", domain.ZoneHistory[idx].String(), domain.DomainName, err)
 			continue
 		}
 		for _, svcs := range zone.Services {

@@ -62,7 +62,7 @@ func (uc *ZoneImporterUsecase) Import(user *happydns.User, domain *happydns.Doma
 	if len(domain.ZoneHistory) > 0 {
 		prevZone, err := uc.zoneGetter.Get(domain.ZoneHistory[0])
 		if err != nil {
-			log.Printf("ReassociateMetadata: unable to load previous zone %s: %s (metadata will not be transferred)", domain.ZoneHistory[0], err)
+			log.Printf("ReassociateMetadata: unable to load previous zone %s: %s (metadata will not be transferred)", domain.ZoneHistory[0].String(), err)
 		} else {
 			zoneUC.ReassociateMetadata(prevZone.Services, services, domain.DomainName, defaultTTL)
 		}

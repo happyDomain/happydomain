@@ -244,7 +244,7 @@ func (cc *CheckerController) TriggerCheck(c *gin.Context) {
 	} else {
 		go func() {
 			if _, err := cc.engine.RunExecution(context.WithoutCancel(c.Request.Context()), exec, plan, req.Options); err != nil {
-				log.Printf("async RunExecution error for checker %q execution %v: %v", cname, exec.Id, err)
+				log.Printf("async RunExecution error for checker %q execution %s: %v", cname, exec.Id.String(), err)
 			}
 		}()
 		c.JSON(http.StatusAccepted, exec)

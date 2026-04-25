@@ -209,7 +209,7 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(
 	if len(domain.ZoneHistory) > 1 {
 		prevZone, prevErr := uc.zoneGetter.Get(domain.ZoneHistory[1])
 		if prevErr != nil {
-			log.Printf("ReassociateMetadata: unable to load previous zone %s: %s (metadata will not be transferred)", domain.ZoneHistory[1], prevErr)
+			log.Printf("ReassociateMetadata: unable to load previous zone %s: %s (metadata will not be transferred)", domain.ZoneHistory[1].String(), prevErr)
 		} else {
 			zoneUC.ReassociateMetadata(prevZone.Services, services, domain.DomainName, defaultTTL)
 		}

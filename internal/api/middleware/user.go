@@ -75,7 +75,7 @@ func SameUserHandler(c *gin.Context) {
 	user := c.MustGet("user").(*happydns.User)
 
 	if !bytes.Equal(user.Id, myuser.Id) {
-		log.Printf("%s: tries to do action as %s (logged %s)", c.ClientIP(), myuser.Id, user.Id)
+		log.Printf("%s: tries to do action as %s (logged %s)", c.ClientIP(), myuser.Id.String(), user.Id.String())
 		c.AbortWithStatusJSON(http.StatusForbidden, happydns.ErrorResponse{Message: "Not authorized"})
 		return
 	}
