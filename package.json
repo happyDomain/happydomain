@@ -6,6 +6,18 @@
 		"web",
 		"web-admin"
 	],
+	"scripts": {
+		"prepare": "husky"
+	},
+	"devDependencies": {
+		"husky": "^9.1.0",
+		"lint-staged": "^16.0.0"
+	},
+	"lint-staged": {
+		"{web,web-admin}/**/*.{ts,svelte,scss,md,json,html}": [
+			"prettier --write"
+		]
+	},
 	"resolutions": {
 		"vite": "^8.0.0"
 	}
