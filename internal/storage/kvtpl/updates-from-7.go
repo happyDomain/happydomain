@@ -38,12 +38,12 @@ import (
 // abstract.EMail
 func explodeAbstractEMail(dn happydns.Subdomain, in *happydns.ServiceMessage) ([]*happydns.ServiceMessage, error) {
 	var val struct {
-		MX      []map[string]any `json:"mx,omitempty"`
-		SPF     map[string]any   `json:"spf,omitempty"`
-		DKIM    map[string]*svcs.DKIM    `json:"dkim,omitempty"`
-		DMARC   *svcs.DMARCFields        `json:"dmarc,omitempty"`
-		MTA_STS *svcs.MTASTSFields       `json:"mta_sts,omitempty"`
-		TLS_RPT *svcs.TLS_RPTField       `json:"tls_rpt,omitempty"`
+		MX      []map[string]any      `json:"mx,omitempty"`
+		SPF     map[string]any        `json:"spf,omitempty"`
+		DKIM    map[string]*svcs.DKIM `json:"dkim,omitempty"`
+		DMARC   *svcs.DMARCFields     `json:"dmarc,omitempty"`
+		MTA_STS *svcs.MTASTSFields    `json:"mta_sts,omitempty"`
+		TLS_RPT *svcs.TLS_RPTField    `json:"tls_rpt,omitempty"`
 	}
 
 	err := json.Unmarshal(in.Service, &val)
@@ -815,7 +815,12 @@ func migrateFrom7(s *KVStorage) error {
 			return nil, err
 		}
 
-		rr, err := dns.NewRR(fmt.Sprintf("%s.zZzZ. 0 IN CNAME %s", val["SubDomain"], helpers.DomainFQDN(val["Target"], "zZzZ.")))
+		var rr dns.RR
+		if strings.Contains(val["Target"], "IN\tCNAME") {
+			rr, err = dns.NewRR(val["Target"])
+		} else {
+			rr, err = dns.NewRR(fmt.Sprintf("%s.zZzZ. 0 IN CNAME %s", val["SubDomain"], helpers.DomainFQDN(val["Target"], "zZzZ.")))
+		}
 		if err != nil {
 			return nil, err
 		}

@@ -22,6 +22,7 @@
 package database
 
 import (
+	"fmt"
 	"log"
 )
 
@@ -33,6 +34,15 @@ func migrateFrom9(s *KVStorage) (err error) {
 
 	for sessions.Next() {
 		session := sessions.Item()
+		if len(session.Id) != 103 {
+			err = sessions.DropItem()
+			if err != nil {
+				return fmt.Errorf("unable to drop invalid session: %s: %w", session.Id, err)
+			}
+			log.Printf("Drop invalid session identifier: %s", session.Id)
+			continue
+		}
+
 		err := s.UpdateSession(session)
 		if err != nil {
 			return err
