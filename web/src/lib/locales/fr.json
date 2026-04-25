@@ -686,6 +686,34 @@
             "length-exceeds-txt-string": {
                 "title": "Longueur de l'enregistrement : {{length}} caractères",
                 "detail": "Une chaîne TXT est limitée à 255 caractères ; les enregistrements plus longs doivent être découpés en plusieurs chaînes au sein du même RR."
+            },
+            "recursive-too-many-lookups": {
+                "title": "Le parcours SPF récursif dépasse la limite de {{max}} requêtes ({{count}})",
+                "detail": "Une fois tous les include et redirect résolus, cet enregistrement nécessite plus de 10 requêtes DNS. Les destinataires renverront PermError au lieu de l'évaluer."
+            },
+            "recursive-many-lookups": {
+                "title": "Le parcours SPF récursif consomme {{count}}/{{max}} requêtes",
+                "detail": "Vous êtes dans le budget mais proche de la limite. Ajouter un include supplémentaire ou en étendre un existant fera probablement basculer au-delà."
+            },
+            "too-many-void-lookups": {
+                "title": "Plus de {{max}} requêtes DNS « vides » ({{count}})",
+                "detail": "La RFC 7208 §4.6.4 interdit plus de deux réponses NXDOMAIN/NoData lors de l'évaluation SPF ; les destinataires renverront PermError."
+            },
+            "include-loop": {
+                "title": "Boucle d'include SPF sur {{domain}}",
+                "detail": "Un include ou redirect pointe vers un domaine déjà présent dans la chaîne d'évaluation. Cassez le cycle."
+            },
+            "include-no-spf": {
+                "title": "Aucun enregistrement SPF sur {{domain}}",
+                "detail": "Le mécanisme {{mechanism}} pointe vers un domaine qui ne publie pas v=spf1. La requête compte tout de même dans le budget."
+            },
+            "include-resolver-error": {
+                "title": "Impossible de vérifier {{domain}}",
+                "detail": "Le résolveur a rencontré une erreur transitoire ou un dépassement de délai lors de l'évaluation de {{mechanism}}. Réessayez plus tard."
+            },
+            "include-error": {
+                "title": "Problème lors de la résolution de {{domain}}",
+                "detail": "Le mécanisme {{mechanism}} n'a pas pu être totalement évalué."
             }
         }
     }

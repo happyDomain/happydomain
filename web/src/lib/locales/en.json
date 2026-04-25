@@ -915,6 +915,34 @@
             "length-exceeds-txt-string": {
                 "title": "Record length is {{length}} characters",
                 "detail": "A single TXT string is capped at 255 characters; longer records must be split into multiple strings within the same RR."
+            },
+            "recursive-too-many-lookups": {
+                "title": "Recursive SPF walk exceeds the {{max}}-lookup limit ({{count}})",
+                "detail": "After resolving every include and redirect, this record needs more than 10 DNS lookups. Receivers will return PermError instead of evaluating it."
+            },
+            "recursive-many-lookups": {
+                "title": "Recursive SPF walk uses {{count}}/{{max}} lookups",
+                "detail": "You are within the budget but close to the limit. Adding another include or expanding an existing one is likely to push you over."
+            },
+            "too-many-void-lookups": {
+                "title": "More than {{max}} void DNS lookups ({{count}})",
+                "detail": "RFC 7208 §4.6.4 forbids more than two NXDOMAIN/NoData responses while evaluating SPF; receivers will return PermError."
+            },
+            "include-loop": {
+                "title": "SPF include loop on {{domain}}",
+                "detail": "An include or redirect points back to a domain already evaluated in the chain. Break the cycle."
+            },
+            "include-no-spf": {
+                "title": "No SPF record at {{domain}}",
+                "detail": "The mechanism {{mechanism}} resolves to a domain that does not publish v=spf1. The lookup still counts against the budget."
+            },
+            "include-resolver-error": {
+                "title": "Could not check {{domain}}",
+                "detail": "The resolver hit a transient error or a timeout while walking {{mechanism}}. Try again later."
+            },
+            "include-error": {
+                "title": "Issue resolving {{domain}}",
+                "detail": "The mechanism {{mechanism}} could not be fully evaluated."
             }
         }
     }

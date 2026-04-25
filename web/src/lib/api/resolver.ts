@@ -19,8 +19,12 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { postResolver } from "$lib/api-base/sdk.gen";
-import type { HappydnsResolverResponse } from "$lib/api-base/types.gen";
+import { postResolver, postResolverSpfFlatten } from "$lib/api-base/sdk.gen";
+import type {
+    HappydnsResolverResponse,
+    HappydnsSpfFlattenRequest,
+    HappydnsSpfFlattenResponse,
+} from "$lib/api-base/types.gen";
 import type { ResolverForm } from "$lib/model/resolver";
 import { unwrapSdkResponse } from "./errors";
 
@@ -30,4 +34,16 @@ export async function resolve(form: ResolverForm): Promise<HappydnsResolverRespo
             body: form,
         }),
     ) as HappydnsResolverResponse;
+}
+
+export async function flattenSPF(
+    body: HappydnsSpfFlattenRequest,
+    signal?: AbortSignal,
+): Promise<HappydnsSpfFlattenResponse> {
+    return unwrapSdkResponse(
+        await postResolverSpfFlatten({
+            body,
+            signal,
+        }),
+    ) as HappydnsSpfFlattenResponse;
 }

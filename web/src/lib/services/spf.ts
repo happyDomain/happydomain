@@ -19,6 +19,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import { flattenSPF } from "$lib/api/resolver";
+import { fqdn } from "$lib/dns";
 import {
     registerValidators,
     type ComplianceContext,
@@ -308,6 +310,80 @@ export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceI
     return issues;
 }
 
+export async function validateSPFRecursive(
+    val: SPFValue,
+    ctx: ComplianceContext,
+    signal: AbortSignal,
+): Promise<ComplianceIssue[]> {
+    if (!val.v || val.v.toLowerCase() !== "spf1") return [];
+
+    const localBudget = countLocalLookups(val);
+    if (localBudget.count === 0) return [];
+
+    const domain = fqdn(ctx.dn || "@", ctx.origin?.domain ?? "");
+    if (!domain) return [];
+
+    const record = stringifySPF(val);
+    const resp = await flattenSPF({ domain, record }, signal);
+
+    const issues: ComplianceIssue[] = [];
+    const total = resp.lookupCount ?? 0;
+
+    if (resp.exceeded) {
+        issues.push({
+            id: "spf.recursive-too-many-lookups",
+            severity: "error",
+            params: { count: total, max: SPF_LOOKUP_MAX },
+            docUrl: SPF_RFC_URL + "#section-4.6.4",
+        });
+    } else if (total >= SPF_LOOKUP_WARN_THRESHOLD) {
+        issues.push({
+            id: "spf.recursive-many-lookups",
+            severity: "warning",
+            params: { count: total, max: SPF_LOOKUP_MAX },
+            docUrl: SPF_RFC_URL + "#section-4.6.4",
+        });
+    }
+
+    if (resp.voidExceeded) {
+        issues.push({
+            id: "spf.too-many-void-lookups",
+            severity: "warning",
+            params: { count: resp.voidLookups ?? 0, max: 2 },
+            docUrl: SPF_RFC_URL + "#section-4.6.4",
+        });
+    }
+
+    // Surface unreachable / loop / no-spf children as individual issues so the
+    // user can see exactly which include misbehaves. Budget/depth overruns are
+    // already reported as a top-level issue, so we skip them here.
+    const errorToId: Record<string, string> = {
+        loop: "spf.include-loop",
+        "no-spf": "spf.include-no-spf",
+        nxdomain: "spf.include-no-spf",
+        timeout: "spf.include-resolver-error",
+        resolver: "spf.include-resolver-error",
+    };
+    const walk = (node: { domain?: string; mechanism?: string; error?: string; children?: any[] } | undefined) => {
+        if (!node) return;
+        const err = node.error;
+        if (err && err !== "budget" && err !== "depth") {
+            const id = errorToId[err] ?? "spf.include-error";
+            issues.push({
+                id,
+                severity: id === "spf.include-resolver-error" ? "info" : "warning",
+                params: { domain: node.domain ?? "", mechanism: node.mechanism ?? "" },
+            });
+        }
+        for (const c of node.children ?? []) walk(c);
+    };
+    walk(resp.tree as any);
+
+    return issues;
+}
+
 registerValidators("svcs.SPF", {
     sync: (raw, ctx) => validateSPF(parseSPF(raw?.txt?.Txt ?? ""), ctx),
+    async: (raw, ctx, signal) =>
+        validateSPFRecursive(parseSPF(raw?.txt?.Txt ?? ""), ctx, signal),
 });
