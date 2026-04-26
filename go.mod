@@ -13,6 +13,7 @@ require (
 	git.happydns.org/checker-delegation v0.1.0
 	git.happydns.org/checker-dnssec v0.1.0
 	git.happydns.org/checker-dnsviz v0.1.0
+	git.happydns.org/checker-email-autoconfig v0.2.0
 	git.happydns.org/checker-kerberos v0.2.0
 	git.happydns.org/checker-ldap v0.1.0
 	git.happydns.org/checker-legacy-records v0.1.0
