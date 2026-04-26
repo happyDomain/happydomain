@@ -10,6 +10,8 @@ codeberg.org/miekg/dns v0.6.73/go.mod h1:58Y3ZTg6Z5ZEm/ZAAwHehbZfrD4u5mE4RByHoPE
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 git.happydns.org/checker-authoritative-consistency v0.1.0 h1:+0XvJFC7tFVf0Dgruewe+Yy2EEWxtIrEjZdhPERZCFY=
 git.happydns.org/checker-authoritative-consistency v0.1.0/go.mod h1:hPxEDSyrPq+KY9YU5QoZ1btecw/cU/Miouuacaz4wzk=
+git.happydns.org/checker-blacklist v0.1.0 h1:IV44Lxnw0dLBhoyAkAlq9A+hTB5B4RF4vLiW+nX21gg=
+git.happydns.org/checker-blacklist v0.1.0/go.mod h1:DRHkpULz8F6dKm0LUErAAQln0x8XByg+/UxbUY46oZk=
 git.happydns.org/checker-dane v0.1.3 h1:9VpQ4FrWJE/O6MZ08FCk1vmHsr3u5V7478als9Y4jl8=
 git.happydns.org/checker-dane v0.1.3/go.mod h1:md5SQA8M1QGq9MoXe3QVV+m55I+r8lU4iYx5KzvkbII=
 git.happydns.org/checker-dangling v0.1.0 h1:gZVyHAKG2U1FXBt7cPnZsr45JQWZ21jlThKhHckb+i8=
