@@ -23,6 +23,7 @@ require (
 	git.happydns.org/checker-matrix v0.1.0
 	git.happydns.org/checker-ns-restrictions v0.1.0
 	git.happydns.org/checker-ping v0.1.0
+	git.happydns.org/checker-ptr v0.1.0
 	git.happydns.org/checker-resolver-propagation v0.1.0
 	git.happydns.org/checker-sdk-go v1.5.0
 	git.happydns.org/checker-sip v0.2.0
