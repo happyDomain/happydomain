@@ -26,6 +26,8 @@ git.happydns.org/checker-dnsviz v0.1.0 h1:fY3Yi6XXXspaY5ZIiiaXaw3PCvLcyQRUnBLDIy
 git.happydns.org/checker-dnsviz v0.1.0/go.mod h1:/nLkQPEpJTjGvXhWXE8jJaNJGgT35lzSW+vVU6VSZdI=
 git.happydns.org/checker-email-autoconfig v0.2.0 h1:sC4z2HOMMUd7R3izNGQUc37HODVhpwOdGB7jVYmhCqc=
 git.happydns.org/checker-email-autoconfig v0.2.0/go.mod h1:9B6SewkI4tzeAfhK8owhf+EA5lMyr/MOgKjW4L4qk/o=
+git.happydns.org/checker-email-keys v0.2.0 h1:466dNm9+cWGb9H+L5LGy96Ac9rhSbEw9/uUb9ck4DmQ=
+git.happydns.org/checker-email-keys v0.2.0/go.mod h1:xTFot7UIqn5XajMKkbaHEiZMMD3Fcac7RlQyUE2B3+Q=
 git.happydns.org/checker-kerberos v0.2.0 h1:GKPI6LUMa8VngfeHrB8S7qTvnNqvI/UI+1+8yZRy5QE=
 git.happydns.org/checker-kerberos v0.2.0/go.mod h1:M6WndNKJUkNL25KJvFSAEtGxb0iEF3NK/zatzWSw4xo=
 git.happydns.org/checker-ldap v0.1.0 h1:BQqx6yPLNDI7Eynf2l5GboMAxtxCXEGk/37Zp5SWwDk=
@@ -98,6 +100,8 @@ github.com/Joker/jade v1.1.3 h1:Qbeh12Vq6BxURXT1qZBRHsDxeURB8ztcL6f3EXSGeHk=
 github.com/Joker/jade v1.1.3/go.mod h1:T+2WLyt7VH6Lp0TRxQrUYEs64nRc83wkMQrfeIQKduM=
 github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
+github.com/ProtonMail/go-crypto v1.1.0-alpha.0 h1:nHGfwXmFvJrSR9xu8qL7BkO4DqTHXE9N5vPhgY2I+j0=
+github.com/ProtonMail/go-crypto v1.1.0-alpha.0/go.mod h1:rA3QumHc/FZ8pAHreoekgiAbzpNsfQAosU5td4SnOrE=
 github.com/PuerkitoBio/goquery v1.12.0 h1:pAcL4g3WRXekcB9AU/y1mbKez2dbY2AajVhtkO8RIBo=
 github.com/PuerkitoBio/goquery v1.12.0/go.mod h1:802ej+gV2y7bbIhOIoPY5sT183ZW0YFofScC4q/hIpQ=
 github.com/RaveNoX/go-jsoncommentstrip v1.0.0/go.mod h1:78ihd09MekBnJnxpICcwzCMzGrKSKYe4AqU6PDYYpjk=
@@ -189,6 +193,8 @@ github.com/centralnicgroup-opensource/rtldev-middleware-go-sdk/v5 v5.0.18/go.mod
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
+github.com/cloudflare/circl v1.3.7 h1:qlCDlTPz2n9fu58M0Nh1J/JzcFpfgkFHHX3O35r5vcU=
+github.com/cloudflare/circl v1.3.7/go.mod h1:sRTcRWXGLrKw6yIGJ+l7amYJFfAXbZG0kBSc8r4zxgA=
 github.com/cloudflare/cloudflare-go v0.116.0 h1:iRPMnTtnswRpELO65NTwMX4+RTdxZl+Xf/zi+HPE95s=
 github.com/cloudflare/cloudflare-go v0.116.0/go.mod h1:Ds6urDwn/TF2uIU24mu7H91xkKP8gSAHxQ44DSZgVmU=
 github.com/cloudwego/base64x v0.1.6 h1:t11wG9AECkCDk5fMSoxmufanudBtJ+/HemLstXDLI2M=

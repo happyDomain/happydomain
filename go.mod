@@ -14,6 +14,7 @@ require (
 	git.happydns.org/checker-dnssec v0.1.0
 	git.happydns.org/checker-dnsviz v0.1.0
 	git.happydns.org/checker-email-autoconfig v0.2.0
+	git.happydns.org/checker-email-keys v0.2.0
 	git.happydns.org/checker-kerberos v0.2.0
 	git.happydns.org/checker-ldap v0.1.0
 	git.happydns.org/checker-legacy-records v0.1.0
@@ -58,8 +59,10 @@ require (
 
 require (
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
+	github.com/ProtonMail/go-crypto v1.1.0-alpha.0 // indirect
 	github.com/alecthomas/kingpin/v2 v2.4.0 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
+	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/emersion/go-ical v0.0.0-20240127095438-fc1c9d8fb2b6 // indirect
 	github.com/emersion/go-vcard v0.0.0-20230815062825-8fda7d206ec9 // indirect
