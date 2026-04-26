@@ -50,6 +50,8 @@ git.happydns.org/checker-smtp v0.1.0 h1:Sa3adUCXvuI83p/clwq3+/M+6l+WiBppqcuw+nVt
 git.happydns.org/checker-smtp v0.1.0/go.mod h1:bUyR+3X6QMPulwJoNCuEwTCkZJX+gD4aqegHox6HGoY=
 git.happydns.org/checker-srv v0.1.0 h1:3PsKBrfujlZXF5AFzW00TPjgISrHyIigWRkHbkJOLTU=
 git.happydns.org/checker-srv v0.1.0/go.mod h1:39n8R3UNRpfGNdGw9g8EkAaXKdtXTdLxc/XCRz/qFzg=
+git.happydns.org/checker-ssh v0.1.0 h1:UPPg6JA4UeaHcnQk0kM2809JNebbukeqHLL4FvrPVZs=
+git.happydns.org/checker-ssh v0.1.0/go.mod h1:TDMTY+uo/hTSIRwyRp4KXUcTFvBprQRoCAAzNBBl9XE=
 git.happydns.org/checker-stun-turn v0.1.0 h1:Ppfxs7oQlZr0IAPM0cFXo/JxTJmSa4jcUJqQvHH5l7A=
 git.happydns.org/checker-stun-turn v0.1.0/go.mod h1:P8l1X4I+YMqF+2SkwmGFIYiXT/63HcoGAcc+qu2MtoQ=
 git.happydns.org/checker-tls v0.6.2 h1:8oKia1XlD+tklyqrwzmUgFH1Kw8VLSLLF9suZ7Qr14E=
@@ -879,6 +881,8 @@ golang.org/x/term v0.17.0/go.mod h1:lLRBjIVuehSbZlaOtGMbcMncT+aqLLLmKrsjNrUguwk=
 golang.org/x/term v0.18.0/go.mod h1:ILwASektA3OnRv7amZ1xhE/KTR+u50pbXfZ03+6Nx58=
 golang.org/x/term v0.20.0/go.mod h1:8UkIAJTvZgivsXaD6/pH6U9ecQzZ45awqEOzuCvwpFY=
 golang.org/x/term v0.27.0/go.mod h1:iMsnZpn0cago0GOrHO2+Y7u7JPn5AylBrcoWkElMTSM=
+golang.org/x/term v0.42.0 h1:UiKe+zDFmJobeJ5ggPwOshJIVt6/Ft0rcfrXZDLWAWY=
+golang.org/x/term v0.42.0/go.mod h1:Dq/D+snpsbazcBG5+F9Q1n2rXV8Ma+71xEjTRufARgY=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.2/go.mod h1:bEr9sfX3Q8Zfm5fL9x+3itogRgK3+ptLWKqgva+5dAk=
 golang.org/x/text v0.3.3/go.mod h1:5Zoc/QRtKVWzQhOtBMvqHzDpF6irO9z98xDceosuGiQ=
