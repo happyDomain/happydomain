@@ -22,6 +22,8 @@ git.happydns.org/checker-delegation v0.1.0 h1:hlUGu4FZb9uBZXINTShDuGuuaeTQmIdYjm
 git.happydns.org/checker-delegation v0.1.0/go.mod h1:std/OYsToEWzYMf95IfVOuGaF5367WMUUTeORadgjhM=
 git.happydns.org/checker-dnssec v0.1.0 h1:iERjoxNiQZHV3MurkjPLmYYoWTSmne6SPhZrJRXJtaE=
 git.happydns.org/checker-dnssec v0.1.0/go.mod h1:km1/G6pBmr4ZgLAAsnual3i/6TMcps2DvTCwv/mHUII=
+git.happydns.org/checker-dnsviz v0.1.0 h1:fY3Yi6XXXspaY5ZIiiaXaw3PCvLcyQRUnBLDIyduoPE=
+git.happydns.org/checker-dnsviz v0.1.0/go.mod h1:/nLkQPEpJTjGvXhWXE8jJaNJGgT35lzSW+vVU6VSZdI=
 git.happydns.org/checker-kerberos v0.2.0 h1:GKPI6LUMa8VngfeHrB8S7qTvnNqvI/UI+1+8yZRy5QE=
 git.happydns.org/checker-kerberos v0.2.0/go.mod h1:M6WndNKJUkNL25KJvFSAEtGxb0iEF3NK/zatzWSw4xo=
 git.happydns.org/checker-ldap v0.1.0 h1:BQqx6yPLNDI7Eynf2l5GboMAxtxCXEGk/37Zp5SWwDk=
