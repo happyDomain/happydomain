@@ -40,6 +40,8 @@ git.happydns.org/checker-ns-restrictions v0.1.0 h1:SfIst5rHmviH9YGfUH3R108iZpeHk
 git.happydns.org/checker-ns-restrictions v0.1.0/go.mod h1:8B0KhImefLDFNIYYxdztsCq3576PIT7vM5KhXnwZ1Zw=
 git.happydns.org/checker-ping v0.1.0 h1:Cu9Upvs/WoAWHi0A/1QahmuqB4/99n/jK29W/Bnv2y0=
 git.happydns.org/checker-ping v0.1.0/go.mod h1:P0xv85b2MoVud7UXbfoS0n3qMlyQGfg+uz1knN+7Q7w=
+git.happydns.org/checker-ptr v0.1.0 h1:B/oaeiNehMUtBcZXsuVW+lk+tbrIGKz6UiRkUpszKhw=
+git.happydns.org/checker-ptr v0.1.0/go.mod h1:jhi+CDu5K/pStNvL6TB6izjgxxiyjcEI/0uRnUMGKL4=
 git.happydns.org/checker-resolver-propagation v0.1.0 h1:vBF7e+xvHDSR/D/8s1RUg/cISQKSHejJLnLNReLs6uk=
 git.happydns.org/checker-resolver-propagation v0.1.0/go.mod h1:BQNmq0KP72duSp3yMvOskyRGe34Zb72eOKyssUeCqbI=
 git.happydns.org/checker-sdk-go v1.5.0 h1:5uD5Cm6xJ+lwnhbJ09iCXGHbYS9zRh+Yh0NeBHkAPBY=
