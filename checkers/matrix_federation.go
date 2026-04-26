@@ -23,11 +23,13 @@ package checkers
 
 import (
 	matrix "git.happydns.org/checker-matrix/checker"
+	sdk "git.happydns.org/checker-sdk-go/checker"
 	"git.happydns.org/happyDomain/internal/checker"
 )
 
 func init() {
-	checker.RegisterObservationProvider(matrix.Provider())
+	prvd := matrix.Provider()
+	checker.RegisterObservationProvider(prvd)
 	// Not Externalizable checker as it already calls a HTTP API
-	checker.RegisterChecker(matrix.Definition())
+	checker.RegisterChecker(prvd.(sdk.CheckerDefinitionProvider).Definition())
 }

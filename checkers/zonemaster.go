@@ -22,12 +22,14 @@
 package checkers
 
 import (
+	sdk "git.happydns.org/checker-sdk-go/checker"
 	zonemaster "git.happydns.org/checker-zonemaster/checker"
 	"git.happydns.org/happyDomain/internal/checker"
 )
 
 func init() {
-	checker.RegisterObservationProvider(zonemaster.Provider())
+	prvd := zonemaster.Provider()
+	checker.RegisterObservationProvider(prvd)
 	// Not Externalizable checker as it already calls a HTTP API
-	checker.RegisterChecker(zonemaster.Definition())
+	checker.RegisterChecker(prvd.(sdk.CheckerDefinitionProvider).Definition())
 }

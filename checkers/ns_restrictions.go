@@ -23,10 +23,12 @@ package checkers
 
 import (
 	nsr "git.happydns.org/checker-ns-restrictions/checker"
+	sdk "git.happydns.org/checker-sdk-go/checker"
 	"git.happydns.org/happyDomain/internal/checker"
 )
 
 func init() {
-	checker.RegisterObservationProvider(nsr.Provider())
-	checker.RegisterExternalizableChecker(nsr.Definition())
+	prvd := nsr.Provider()
+	checker.RegisterObservationProvider(prvd)
+	checker.RegisterExternalizableChecker(prvd.(sdk.CheckerDefinitionProvider).Definition())
 }

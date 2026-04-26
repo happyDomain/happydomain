@@ -23,10 +23,12 @@ package checkers
 
 import (
 	ping "git.happydns.org/checker-ping/checker"
+	sdk "git.happydns.org/checker-sdk-go/checker"
 	"git.happydns.org/happyDomain/internal/checker"
 )
 
 func init() {
-	checker.RegisterObservationProvider(ping.Provider())
-	checker.RegisterExternalizableChecker(ping.Definition())
+	prvd := ping.Provider()
+	checker.RegisterObservationProvider(prvd)
+	checker.RegisterExternalizableChecker(prvd.(sdk.CheckerDefinitionProvider).Definition())
 }
