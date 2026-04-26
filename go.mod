@@ -10,6 +10,7 @@ require (
 	git.happydns.org/checker-dane v0.1.3
 	git.happydns.org/checker-dangling v0.1.0
 	git.happydns.org/checker-dav v0.1.0
+	git.happydns.org/checker-delegation v0.1.0
 	git.happydns.org/checker-kerberos v0.2.0
 	git.happydns.org/checker-ldap v0.1.0
 	git.happydns.org/checker-legacy-records v0.1.0
