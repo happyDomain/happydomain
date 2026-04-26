@@ -8,6 +8,8 @@ cloud.google.com/go/compute/metadata v0.9.0/go.mod h1:E0bWwX5wTnLPedCKqk3pJmVgCB
 codeberg.org/miekg/dns v0.6.73 h1:4aRD1k1THw49vpe1d+W3KO16adAGN8Raxdi0WGvvbrY=
 codeberg.org/miekg/dns v0.6.73/go.mod h1:58Y3ZTg6Z5ZEm/ZAAwHehbZfrD4u5mE4RByHoPEMyKk=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
+git.happydns.org/checker-alias v0.1.0 h1:4mvBal0pXvT10YtuIyaK+WTkETmeeZqzBPV6bX8bSTw=
+git.happydns.org/checker-alias v0.1.0/go.mod h1:2qMmYg+2Pa/z7JAouJfg7TPCar6FSVWw9vISmjJOsBg=
 git.happydns.org/checker-authoritative-consistency v0.1.0 h1:+0XvJFC7tFVf0Dgruewe+Yy2EEWxtIrEjZdhPERZCFY=
 git.happydns.org/checker-authoritative-consistency v0.1.0/go.mod h1:hPxEDSyrPq+KY9YU5QoZ1btecw/cU/Miouuacaz4wzk=
 git.happydns.org/checker-blacklist v0.1.0 h1:IV44Lxnw0dLBhoyAkAlq9A+hTB5B4RF4vLiW+nX21gg=
