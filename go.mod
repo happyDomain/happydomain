@@ -5,6 +5,7 @@ go 1.25.0
 toolchain go1.26.2
 
 require (
+	git.happydns.org/checker-authoritative-consistency v0.1.0
 	git.happydns.org/checker-dane v0.1.3
 	git.happydns.org/checker-dangling v0.1.0
 	git.happydns.org/checker-dav v0.1.0
