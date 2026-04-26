@@ -46,6 +46,29 @@ func (s *stringSlice) Set(value string) error {
 	return nil
 }
 
+// mapEntry is a flag.Value that writes the flag value into a map under a
+// preset key. Used to register one flag per checker writing into a shared
+// map[string]string on Options.
+type mapEntry struct {
+	Map *map[string]string
+	Key string
+}
+
+func (m *mapEntry) String() string {
+	if m.Map == nil || *m.Map == nil {
+		return ""
+	}
+	return (*m.Map)[m.Key]
+}
+
+func (m *mapEntry) Set(value string) error {
+	if *m.Map == nil {
+		*m.Map = map[string]string{}
+	}
+	(*m.Map)[m.Key] = value
+	return nil
+}
+
 type JWTSecretKey struct {
 	Secret *[]byte
 }

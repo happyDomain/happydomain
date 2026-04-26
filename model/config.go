@@ -134,6 +134,12 @@ type Options struct {
 	// PluginsDirectories lists filesystem paths scanned at startup for
 	// checker plugins (.so files).
 	PluginsDirectories []string
+
+	// CheckerRemoteAddresses maps a checker ID to the URL of a remote HTTP
+	// service that should run that checker's observation collection. When
+	// set for a given checker, this CLI/config value takes precedence over
+	// any per-checker "endpoint" AdminOpt.
+	CheckerRemoteAddresses map[string]string
 }
 
 // GetBaseURL returns the full url to the absolute ExternalURL, including BaseURL.

@@ -27,6 +27,7 @@ import (
 	"runtime"
 	"time"
 
+	"git.happydns.org/happyDomain/internal/checker"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
@@ -69,6 +70,20 @@ func declareFlags(o *happydns.Options) {
 	flag.IntVar(&o.CaptchaLoginThreshold, "captcha-login-threshold", 3, "Number of failed login attempts before captcha is required (0 = always require when provider configured)")
 
 	flag.Var(&stringSlice{&o.PluginsDirectories}, "plugins-directory", "Path to a directory containing checker plugins (.so files); may be repeated")
+
+	// One -checker-<id>-remote-address flag per registered checker. Checkers
+	// register themselves in init() of the blank-imported `checkers` package,
+	// so by the time declareFlags runs the registry is fully populated.
+	if o.CheckerRemoteAddresses == nil {
+		o.CheckerRemoteAddresses = map[string]string{}
+	}
+	for id := range checker.GetCheckers() {
+		flag.Var(
+			&mapEntry{Map: &o.CheckerRemoteAddresses, Key: id},
+			fmt.Sprintf("checker-%s-remote-address", id),
+			fmt.Sprintf("URL of a remote HTTP service that should run the %q checker (overrides any per-checker endpoint AdminOpt)", id),
+		)
+	}
 
 	// Others flags are declared in some other files likes sources, storages, ... when they need specials configurations
 }

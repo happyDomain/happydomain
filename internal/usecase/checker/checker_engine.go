@@ -34,14 +34,23 @@ import (
 
 // checkerEngine implements the happydns.CheckerEngine interface.
 type checkerEngine struct {
-	optionsUC     *CheckerOptionsUsecase
-	evalStore     CheckEvaluationStorage
-	execStore     ExecutionStorage
-	snapStore     ObservationSnapshotStorage
-	cacheStore    ObservationCacheStorage
-	entryStore    DiscoveryEntryStorage
-	obsRefStore   DiscoveryObservationStorage
-	relatedLookup checkerPkg.RelatedObservationLookup
+	optionsUC       *CheckerOptionsUsecase
+	evalStore       CheckEvaluationStorage
+	execStore       ExecutionStorage
+	snapStore       ObservationSnapshotStorage
+	cacheStore      ObservationCacheStorage
+	entryStore      DiscoveryEntryStorage
+	obsRefStore     DiscoveryObservationStorage
+	relatedLookup   checkerPkg.RelatedObservationLookup
+	remoteAddresses map[string]string
+}
+
+// SetRemoteAddresses installs a checker-ID -> remote HTTP endpoint map. When
+// a non-empty entry exists for a checker, runPipeline routes its observation
+// collection through the remote service instead of the local provider, and
+// takes precedence over any per-checker "endpoint" AdminOpt.
+func (e *checkerEngine) SetRemoteAddresses(addrs map[string]string) {
+	e.remoteAddresses = addrs
 }
 
 // NewCheckerEngine creates a new CheckerEngine implementation. Passing nil
@@ -189,8 +198,14 @@ func (e *checkerEngine) runPipeline(ctx context.Context, def *happydns.CheckerDe
 		obsCtx.SetRelatedLookup(def.ID, e.relatedLookup)
 	}
 
-	// If an endpoint is configured, override observation providers with HTTP transport.
-	if endpoint, ok := mergedOpts["endpoint"].(string); ok && endpoint != "" {
+	// If an endpoint is configured, override observation providers with HTTP
+	// transport. The CLI/config -checker-<id>-remote-address value (if set)
+	// wins over the per-checker "endpoint" AdminOpt.
+	endpoint, _ := mergedOpts["endpoint"].(string)
+	if cli, ok := e.remoteAddresses[def.ID]; ok && cli != "" {
+		endpoint = cli
+	}
+	if endpoint != "" {
 		for _, key := range def.ObservationKeys {
 			obsCtx.SetProviderOverride(key, checkerPkg.NewHTTPObservationProvider(key, endpoint))
 		}
