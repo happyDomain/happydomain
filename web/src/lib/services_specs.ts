@@ -268,6 +268,24 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "single": true
         }
     },
+    "svcs.BIMI": {
+        "name": "BIMI",
+        "_svctype": "svcs.BIMI",
+        "description": "Brand Indicators for Message Identification, display brand logos in supporting mail clients.",
+        "family": "",
+        "categories": [
+            "email"
+        ],
+        "record_types": [
+            16
+        ],
+        "restrictions": {
+            "nearAlone": true,
+            "needTypes": [
+                16
+            ]
+        }
+    },
     "svcs.CAAPolicy": {
         "name": "Certification Authority Authorization",
         "_svctype": "svcs.CAAPolicy",
