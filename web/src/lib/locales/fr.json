@@ -796,6 +796,18 @@
             "policy-short-max-age": {
                 "title": "max_age court ({{maxAge}}s)",
                 "detail": "La RFC 8461 recommande au moins une semaine. Des valeurs trop courtes empêchent le cache et forcent les re-téléchargements."
+            },
+            "zone-no-mx": {
+                "title": "La politique liste des motifs mx mais la zone n'a aucun enregistrement MX",
+                "detail": "Les expéditeurs refuseront de livrer le courrier vers ce domaine car aucun MX de l'apex ne correspond à la politique de {{url}}."
+            },
+            "zone-mx-not-covered": {
+                "title": "Le MX « {{host}} » n'est couvert par aucun motif mx de la politique",
+                "detail": "Les expéditeurs appliquant la politique {{mode}} de {{url}} refuseront de livrer vers cet hôte. Ajoutez une entrée mx correspondante."
+            },
+            "policy-mx-unused": {
+                "title": "Le motif mx « {{pattern}} » de la politique ne correspond à aucun MX de la zone",
+                "detail": "Le motif listé dans {{url}} ne correspond à aucun enregistrement MX. Retirez l'entrée ou ajoutez le MX manquant."
             }
         },
         "mx": {

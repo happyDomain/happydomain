@@ -227,6 +227,45 @@ async function mtaStsAsync(
         });
     }
 
+    // Cross-check the policy patterns against the apex MX records of the
+    // current zone (RFC 8461 sec. 4.1). Only meaningful when the policy
+    // actually filters mail and the zone state is known.
+    if ((mode === "enforce" || mode === "testing") && ctx.zone) {
+        const zoneMx = getZoneApexMxHosts(ctx);
+        if (zoneMx.length === 0 && mxList.length > 0) {
+            issues.push({
+                id: "mta_sts.zone-no-mx",
+                severity: "warning",
+                params: { url },
+                docUrl: RFC + "#section-4.1",
+            });
+        } else if (zoneMx.length > 0 && mxList.length > 0) {
+            for (const host of zoneMx) {
+                const matched = mxList.some((p) => mtaStsPatternMatches(p, host));
+                if (!matched) {
+                    issues.push({
+                        id: "mta_sts.zone-mx-not-covered",
+                        severity: mode === "enforce" ? "error" : "warning",
+                        params: { url, host, mode },
+                        field: host,
+                        docUrl: RFC + "#section-4.1",
+                    });
+                }
+            }
+            for (const pattern of mxList) {
+                const matched = zoneMx.some((h) => mtaStsPatternMatches(pattern, h));
+                if (!matched) {
+                    issues.push({
+                        id: "mta_sts.policy-mx-unused",
+                        severity: "info",
+                        params: { url, pattern },
+                        docUrl: RFC + "#section-4.1",
+                    });
+                }
+            }
+        }
+    }
+
     const maxAge = resp.maxAge ?? 0;
     if (!maxAge) {
         issues.push({
@@ -252,6 +291,35 @@ async function mtaStsAsync(
     }
 
     return issues;
+}
+
+// RFC 8461 sec. 4.1: a "*." prefix matches exactly one DNS label; otherwise
+// an exact (case-insensitive) FQDN match is required.
+function mtaStsPatternMatches(pattern: string, host: string): boolean {
+    const p = pattern.toLowerCase().replace(/\.$/, "");
+    const h = host.toLowerCase().replace(/\.$/, "");
+    if (p.startsWith("*.")) {
+        const suffix = p.slice(2);
+        if (!suffix) return false;
+        if (!h.endsWith("." + suffix)) return false;
+        const head = h.slice(0, h.length - suffix.length - 1);
+        return head.length > 0 && !head.includes(".");
+    }
+    return p === h;
+}
+
+function getZoneApexMxHosts(ctx: ComplianceContext): string[] {
+    const services = ctx.findServices("", "svcs.MXs");
+    const hosts: string[] = [];
+    for (const s of services) {
+        const mx = (s.Service as Record<string, any> | undefined)?.mx;
+        if (!Array.isArray(mx)) continue;
+        for (const entry of mx) {
+            const target = entry?.Mx;
+            if (typeof target === "string" && target) hosts.push(target);
+        }
+    }
+    return hosts;
 }
 
 registerValidators("svcs.MTA_STS", { sync: mtaStsSync, async: mtaStsAsync });

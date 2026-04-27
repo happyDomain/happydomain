@@ -19,10 +19,18 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+vi.mock("$lib/api/resolver", () => ({
+    fetchMTAStsPolicy: vi.fn(),
+}));
+
 import "./compliance";
 import { buildContext, getValidators, type ComplianceIssue } from "$lib/services/compliance";
 import type { Domain } from "$lib/model/domain";
+import type { ServiceWithValue } from "$lib/model/service.svelte";
+import type { Zone } from "$lib/model/zone";
+import { fetchMTAStsPolicy } from "$lib/api/resolver";
 
 const ORIGIN = { domain: "example.com." } as unknown as Domain;
 const CTX = buildContext("_mta-sts", ORIGIN, null);
@@ -32,6 +40,35 @@ function run(txt: string, name = "_mta-sts.example.com."): ComplianceIssue[] {
     return v!.sync!({ txt: { Hdr: { Name: name }, Txt: txt } }, CTX);
 }
 const ids = (issues: ComplianceIssue[]) => issues.map((i) => i.id);
+
+function mxSvc(targets: string[]): ServiceWithValue {
+    return {
+        _svctype: "svcs.MXs",
+        Service: { mx: targets.map((t, i) => ({ Mx: t, Preference: 10 + i })) },
+    } as unknown as ServiceWithValue;
+}
+function makeZone(apexMx: string[]): Zone {
+    return { services: { "": [mxSvc(apexMx)] } } as unknown as Zone;
+}
+
+async function runAsync(zone: Zone | null, policyOverride: Record<string, any>): Promise<ComplianceIssue[]> {
+    const v = getValidators("svcs.MTA_STS");
+    expect(v?.async).toBeDefined();
+    (fetchMTAStsPolicy as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        status: "ok",
+        url: "https://mta-sts.example.com/.well-known/mta-sts.txt",
+        version: "STSv1",
+        mode: "enforce",
+        maxAge: 604800,
+        ...policyOverride,
+    });
+    const ctx = buildContext("_mta-sts", ORIGIN, zone);
+    return v!.async!(
+        { txt: { Hdr: { Name: "_mta-sts.example.com." }, Txt: "v=STSv1;id=20240101" } },
+        ctx,
+        new AbortController().signal,
+    );
+}
 
 describe("MTA-STS compliance", () => {
     it("accepts a clean record", () => {
@@ -57,5 +94,79 @@ describe("MTA-STS compliance", () => {
     });
     it("returns no issue on empty TXT", () => {
         expect(run("")).toEqual([]);
+    });
+});
+
+describe("MTA-STS cross-check: policy mx vs zone MX", () => {
+    beforeEach(() => {
+        (fetchMTAStsPolicy as unknown as ReturnType<typeof vi.fn>).mockReset();
+    });
+
+    it("does not flag when every zone MX matches a policy pattern", async () => {
+        const issues = await runAsync(makeZone(["mx1.example.com.", "mx2.example.com."]), {
+            mx: ["mx1.example.com", "mx2.example.com"],
+        });
+        expect(ids(issues)).not.toContain("mta_sts.zone-mx-not-covered");
+        expect(ids(issues)).not.toContain("mta_sts.policy-mx-unused");
+        expect(ids(issues)).not.toContain("mta_sts.zone-no-mx");
+    });
+
+    it("flags zone MX not covered by any policy pattern (error in enforce)", async () => {
+        const issues = await runAsync(makeZone(["mx1.example.com.", "rogue.example.com."]), {
+            mode: "enforce",
+            mx: ["mx1.example.com"],
+        });
+        const e = issues.find((i) => i.id === "mta_sts.zone-mx-not-covered");
+        expect(e).toBeDefined();
+        expect(e!.severity).toBe("error");
+        expect(e!.params?.host).toBe("rogue.example.com.");
+    });
+
+    it("downgrades to warning in testing mode", async () => {
+        const issues = await runAsync(makeZone(["rogue.example.com."]), {
+            mode: "testing",
+            mx: ["mx1.example.com"],
+        });
+        const e = issues.find((i) => i.id === "mta_sts.zone-mx-not-covered");
+        expect(e?.severity).toBe("warning");
+    });
+
+    it("supports wildcard patterns (one label only)", async () => {
+        const issues = await runAsync(
+            makeZone(["mx1.mail.example.com.", "deep.nested.mail.example.com."]),
+            { mx: ["*.mail.example.com"] },
+        );
+        const flagged = issues.filter((i) => i.id === "mta_sts.zone-mx-not-covered");
+        expect(flagged).toHaveLength(1);
+        expect(flagged[0].params?.host).toBe("deep.nested.mail.example.com.");
+    });
+
+    it("flags policy patterns that match no MX (info)", async () => {
+        const issues = await runAsync(makeZone(["mx1.example.com."]), {
+            mx: ["mx1.example.com", "ghost.example.com"],
+        });
+        const u = issues.find((i) => i.id === "mta_sts.policy-mx-unused");
+        expect(u?.severity).toBe("info");
+        expect(u?.params?.pattern).toBe("ghost.example.com");
+    });
+
+    it("warns when policy lists mx but the zone has none", async () => {
+        const issues = await runAsync(makeZone([]), { mx: ["mx1.example.com"] });
+        expect(ids(issues)).toContain("mta_sts.zone-no-mx");
+    });
+
+    it("skips cross-check when mode is none", async () => {
+        const issues = await runAsync(makeZone(["rogue.example.com."]), {
+            mode: "none",
+            mx: ["mx1.example.com"],
+        });
+        expect(ids(issues)).not.toContain("mta_sts.zone-mx-not-covered");
+        expect(ids(issues)).not.toContain("mta_sts.policy-mx-unused");
+    });
+
+    it("skips cross-check when zone is unknown", async () => {
+        const issues = await runAsync(null, { mx: ["mx1.example.com"] });
+        expect(ids(issues)).not.toContain("mta_sts.zone-mx-not-covered");
+        expect(ids(issues)).not.toContain("mta_sts.zone-no-mx");
     });
 });

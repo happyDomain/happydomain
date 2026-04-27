@@ -1025,6 +1025,18 @@
             "policy-short-max-age": {
                 "title": "Policy max_age is short ({{maxAge}}s)",
                 "detail": "RFC 8461 recommends at least one week. Short values defeat caching and force receivers to refetch often."
+            },
+            "zone-no-mx": {
+                "title": "Policy lists mx patterns but the zone has no MX records",
+                "detail": "Receivers will reject mail to this domain because no apex MX matches the policy at {{url}}."
+            },
+            "zone-mx-not-covered": {
+                "title": "MX \"{{host}}\" is not covered by any policy mx pattern",
+                "detail": "Senders enforcing the {{mode}} policy at {{url}} will refuse to deliver to this host. Add a matching mx entry to the policy."
+            },
+            "policy-mx-unused": {
+                "title": "Policy mx pattern \"{{pattern}}\" matches no MX in the zone",
+                "detail": "The pattern listed at {{url}} does not correspond to any MX record. Remove the entry or add the missing MX record."
             }
         },
         "mx": {
