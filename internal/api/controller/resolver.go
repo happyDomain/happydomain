@@ -136,3 +136,35 @@ func (rc *ResolverController) FetchMTASTSPolicy(c *gin.Context) {
 
 	c.JSON(http.StatusOK, resp)
 }
+
+// CheckDMARCReportAuth resolves the RFC 7489 sec. 7.1 authorization record
+// at <owner>._report._dmarc.<externalDomain> and reports whether the external
+// domain accepts reports for the protected owner.
+//
+//	@Summary	Check DMARC cross-domain reporting authorization.
+//	@Schemes
+//	@Description	Resolve the TXT record at <owner>._report._dmarc.<externalDomain> (RFC 7489 sec. 7.1) and report whether the external reporting destination authorizes receiving DMARC reports for the protected owner.
+//	@Tags			resolver
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		happydns.DMARCReportAuthRequest	true	"DMARC report authorization check"
+//	@Success		200		{object}	happydns.DMARCReportAuthResponse
+//	@Failure		400		{object}	happydns.ErrorResponse	"Invalid input"
+//	@Failure		500		{object}	happydns.ErrorResponse
+//	@Router			/resolver/dmarc-report-auth [post]
+func (rc *ResolverController) CheckDMARCReportAuth(c *gin.Context) {
+	var req happydns.DMARCReportAuthRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("%s sends invalid DMARCReportAuthRequest JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
+		return
+	}
+
+	resp, err := rc.resolverService.CheckDMARCReportAuth(req)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}

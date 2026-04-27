@@ -34,4 +34,5 @@ func DeclareResolverRoutes(router *gin.RouterGroup, resolverUC happydns.Resolver
 	router.POST("/resolver", rc.RunResolver)
 	router.POST("/resolver/spf-flatten", rc.FlattenSPF)
 	router.POST("/resolver/mta-sts-policy", rc.FetchMTASTSPolicy)
+	router.POST("/resolver/dmarc-report-auth", rc.CheckDMARCReportAuth)
 }

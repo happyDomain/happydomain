@@ -88,6 +88,48 @@ type ResolverUsecase interface {
 	ResolveQuestion(ResolverRequest) (*dns.Msg, error)
 	FlattenSPF(SPFFlattenRequest) (*SPFFlattenResponse, error)
 	FetchMTASTSPolicy(MTASTSPolicyRequest) (*MTASTSPolicyResponse, error)
+	CheckDMARCReportAuth(DMARCReportAuthRequest) (*DMARCReportAuthResponse, error)
+}
+
+// DMARCReportAuthRequest asks the backend to check whether ExternalDomain
+// authorizes receiving DMARC reports for Owner, by resolving the TXT record
+// at <Owner>._report._dmarc.<ExternalDomain> per RFC 7489 sec. 7.1.
+type DMARCReportAuthRequest struct {
+	// Resolver is the name of the resolver to use (or local or custom).
+	Resolver string `json:"resolver,omitempty"`
+
+	// Custom is the address to the recursive server to use.
+	Custom string `json:"custom,omitempty"`
+
+	// Owner is the protected domain whose DMARC record references the
+	// external reporting destination (e.g. "example.com").
+	Owner string `json:"owner"`
+
+	// ExternalDomain is the FQDN of the reporting destination, taken from
+	// the host part of a rua/ruf URI (e.g. "reports.thirdparty.tld").
+	ExternalDomain string `json:"externalDomain"`
+}
+
+// DMARCReportAuthResponse reports whether ExternalDomain authorizes Owner to
+// send it DMARC aggregate or forensic reports.
+type DMARCReportAuthResponse struct {
+	// QueriedName is the FQDN that was looked up (echoes the synthesized
+	// name so the UI can surface it without rebuilding it).
+	QueriedName string `json:"queriedName"`
+
+	// Status is the high-level outcome:
+	//   "ok"               at least one TXT starting with "v=DMARC1" was found
+	//   "no-dmarc-record"  TXT records exist but none start with v=DMARC1
+	//   "not-found"        NXDOMAIN or no TXT at the synthesized name
+	//   "dns-error"        resolver returned an error or refused
+	//   "resolver-error"   the resolver could not be contacted
+	Status string `json:"status"`
+
+	// ErrorMsg gives a short human-readable reason when Status != "ok".
+	ErrorMsg string `json:"errorMsg,omitempty"`
+
+	// Records is the list of TXT records returned (may be empty).
+	Records []string `json:"records,omitempty"`
 }
 
 // SPFFlattenRequest asks the backend to recursively walk an SPF record and
