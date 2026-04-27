@@ -24,6 +24,7 @@
 <script lang="ts">
     import type { Domain } from "$lib/model/domain";
     import OrphanEditor from '$lib/components/services/editors/svcs.Orphan.svelte';
+    import EditorCompliance from '$lib/components/services/EditorCompliance.svelte';
 
     interface Props {
         dn: string;
@@ -69,6 +70,7 @@
             bind:value={value}
         />
     {/key}
+    <EditorCompliance {dn} {origin} {type} {value} />
 {:catch error}
     <div class="alert alert-warning">
         <p>Failed to load editor for type: {type}</p>

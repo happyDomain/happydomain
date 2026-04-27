@@ -551,5 +551,10 @@
         "import-text": "Depuis du texte",
         "import-file": "Depuis un fichier de zone",
         "return-to": "Retour à la zone"
+    },
+    "compliance": {
+        "title": "Conformité des enregistrements",
+        "checking": "Vérification…",
+        "learn-more": "En savoir plus"
     }
 }

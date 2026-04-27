@@ -780,5 +780,10 @@
             "update-failed": "Failed to update options: {{error}}",
             "clean-failed": "Failed to clean options: {{error}}"
         }
+    },
+    "compliance": {
+        "title": "Records compliance",
+        "checking": "Checking…",
+        "learn-more": "Learn more"
     }
 }
