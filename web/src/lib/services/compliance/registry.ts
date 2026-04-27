@@ -24,6 +24,7 @@
 //
 // Validators are wired progressively; this file grows as commits add
 // per-record support.
+import "$lib/services/bimi/compliance";
 import "$lib/services/dkim/compliance";
 import "$lib/services/dmarc/compliance";
 import "$lib/services/mta_sts/compliance";

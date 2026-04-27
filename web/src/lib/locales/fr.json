@@ -622,6 +622,60 @@
                 "detail": "Le tag granularité a été supprimé par la RFC 6376 ; les vérificateurs modernes l'ignorent."
             }
         },
+        "bimi": {
+            "wrong-owner-name": {
+                "title": "L'enregistrement BIMI n'est pas au bon owner name « {{name}} »",
+                "detail": "Les enregistrements BIMI doivent être publiés sous <sélecteur>._bimi.<domaine>."
+            },
+            "missing-selector": {
+                "title": "Sélecteur manquant",
+                "detail": "Les enregistrements BIMI doivent être publiés sous la forme <sélecteur>._bimi.<domaine>. Utilisez « default » sauf si vous publiez plusieurs logos."
+            },
+            "invalid-selector": {
+                "title": "Sélecteur invalide « {{selector}} »",
+                "detail": "Les sélecteurs ne doivent contenir que des lettres, chiffres, tirets ou soulignés."
+            },
+            "invalid-version": {
+                "title": "Version BIMI non supportée « {{version}} »",
+                "detail": "Seule « BIMI1 » est définie par le draft actuel."
+            },
+            "missing-location": {
+                "title": "URL du logo manquante (l=)",
+                "detail": "BIMI nécessite une URL de logo pointant vers un fichier SVG Tiny PS."
+            },
+            "location-not-https": {
+                "title": "L'URL du logo n'est pas en HTTPS",
+                "detail": "Les clients mail ne récupèrent les logos BIMI qu'en HTTPS."
+            },
+            "location-not-svg": {
+                "title": "L'URL du logo ne se termine pas par .svg",
+                "detail": "BIMI requiert un logo au format SVG Tiny Portable/Secure. L'URL doit pointer vers un fichier .svg."
+            },
+            "authority-not-https": {
+                "title": "L'URL du VMC n'est pas en HTTPS",
+                "detail": "L'URL du Verified Mark Certificate doit utiliser HTTPS."
+            },
+            "authority-not-pem": {
+                "title": "L'URL du VMC ne se termine pas par .pem",
+                "detail": "Le Verified Mark Certificate est habituellement publié au format PEM."
+            },
+            "evidence-not-https": {
+                "title": "L'URL d'evidence n'est pas en HTTPS",
+                "detail": "L'URL du document d'evidence devrait utiliser HTTPS."
+            },
+            "missing-vmc": {
+                "title": "Pas de Verified Mark Certificate (a=)",
+                "detail": "Gmail et Yahoo nécessitent un VMC pour afficher le logo BIMI."
+            },
+            "no-dmarc": {
+                "title": "Aucun enregistrement DMARC publié",
+                "detail": "BIMI nécessite un enregistrement DMARC avec une politique stricte (quarantine ou reject)."
+            },
+            "weak-dmarc-policy": {
+                "title": "La politique DMARC est trop faible pour BIMI",
+                "detail": "Les clients mail n'honorent BIMI que lorsque DMARC est en quarantine ou reject."
+            }
+        },
         "dmarc": {
             "wrong-owner-name": {
                 "title": "L'enregistrement DMARC n'est pas sous _dmarc.{{name}}",
