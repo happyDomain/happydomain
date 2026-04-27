@@ -26,6 +26,7 @@
 // per-record support.
 import "$lib/services/dkim/compliance";
 import "$lib/services/dmarc/compliance";
+import "$lib/services/mta_sts/compliance";
 import "$lib/services/spf";
 
 export {};

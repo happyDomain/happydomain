@@ -692,6 +692,32 @@
                 "detail": "Format attendu : mailto:utilisateur@exemple.fr (un suffixe !taille est autorisé)."
             }
         },
+        "mta_sts": {
+            "wrong-owner-name": {
+                "title": "L'enregistrement MTA-STS n'est pas sous _mta-sts.{{name}}",
+                "detail": "Les enregistrements MTA-STS doivent être publiés sous _mta-sts.<domaine>."
+            },
+            "parse-error": {
+                "title": "Impossible d'analyser l'enregistrement MTA-STS",
+                "detail": "La valeur TXT ne ressemble pas à un enregistrement MTA-STS clé=valeur."
+            },
+            "missing-version": {
+                "title": "Tag v=STSv1 manquant",
+                "detail": "Un enregistrement TXT MTA-STS doit commencer par v=STSv1."
+            },
+            "invalid-version": {
+                "title": "Version MTA-STS non supportée « {{version}} »",
+                "detail": "Seule « STSv1 » est définie par la RFC 8461."
+            },
+            "missing-id": {
+                "title": "Identifiant de politique manquant (id=)",
+                "detail": "MTA-STS requiert un identifiant de politique ; incrémentez-le à chaque changement du fichier de politique."
+            },
+            "invalid-id": {
+                "title": "Identifiant de politique invalide « {{id}} »",
+                "detail": "id doit contenir 1 à 32 caractères alphanumériques (RFC 8461 sec. 3.1)."
+            }
+        },
         "spf": {
             "missing-version": {
                 "title": "Préfixe v=spf1 manquant",

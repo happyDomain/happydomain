@@ -921,6 +921,32 @@
                 "detail": "Expected mailto:user@example.com (an optional !size suffix is allowed)."
             }
         },
+        "mta_sts": {
+            "wrong-owner-name": {
+                "title": "MTA-STS record is not at _mta-sts.{{name}}",
+                "detail": "MTA-STS records must be published at _mta-sts.<domain>."
+            },
+            "parse-error": {
+                "title": "Could not parse the MTA-STS record",
+                "detail": "The TXT value does not look like a key=value MTA-STS record."
+            },
+            "missing-version": {
+                "title": "Missing v=STSv1",
+                "detail": "An MTA-STS TXT record must start with v=STSv1."
+            },
+            "invalid-version": {
+                "title": "Unsupported MTA-STS version \"{{version}}\"",
+                "detail": "Only \"STSv1\" is defined by RFC 8461."
+            },
+            "missing-id": {
+                "title": "Missing policy id (id=)",
+                "detail": "MTA-STS requires a policy identifier; bump it whenever the policy file changes."
+            },
+            "invalid-id": {
+                "title": "Invalid policy id \"{{id}}\"",
+                "detail": "id must be 1 to 32 alphanumeric characters per RFC 8461 sec. 3.1."
+            }
+        },
         "spf": {
             "missing-version": {
                 "title": "Missing v=spf1 prefix",
