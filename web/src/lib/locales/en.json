@@ -784,6 +784,72 @@
     "compliance": {
         "title": "Records compliance",
         "checking": "Checking…",
-        "learn-more": "Learn more"
+        "learn-more": "Learn more",
+        "dkim": {
+            "missing-selector": {
+                "title": "Missing selector",
+                "detail": "DKIM records must be published as <selector>._domainkey.<domain>."
+            },
+            "invalid-selector": {
+                "title": "Invalid selector \"{{selector}}\"",
+                "detail": "Selectors must contain only letters, digits, hyphens or underscores."
+            },
+            "parse-error": {
+                "title": "Could not parse the DKIM record",
+                "detail": "The TXT value does not look like a key=value DKIM record."
+            },
+            "invalid-version": {
+                "title": "Unsupported DKIM version \"{{version}}\"",
+                "detail": "Only \"DKIM1\" is defined by RFC 6376."
+            },
+            "missing-key": {
+                "title": "Missing public key (p=)",
+                "detail": "Every DKIM record must publish a key. Use an empty p= only to revoke a key."
+            },
+            "revoked-key": {
+                "title": "Empty key, this DKIM record is revoked",
+                "detail": "An empty p= tag tells verifiers to ignore this selector."
+            },
+            "invalid-base64": {
+                "title": "Public key is not valid base64",
+                "detail": "p= must contain a base64-encoded SubjectPublicKeyInfo."
+            },
+            "weak-rsa-key": {
+                "title": "RSA key too short",
+                "detail": "RFC 8301 forbids RSA keys shorter than 1024 bits."
+            },
+            "short-rsa-key": {
+                "title": "RSA key shorter than recommended",
+                "detail": "Use 2048-bit (or longer) RSA keys per RFC 8301 §3.2."
+            },
+            "unknown-key-type": {
+                "title": "Unknown key type \"{{type}}\"",
+                "detail": "RFC 6376 defines \"rsa\"; RFC 8463 adds \"ed25519\"."
+            },
+            "deprecated-hash": {
+                "title": "Deprecated hash algorithm \"{{hash}}\"",
+                "detail": "RFC 8301 forbids SHA-1 in DKIM signatures."
+            },
+            "unknown-hash": {
+                "title": "Unknown hash algorithm \"{{hash}}\"",
+                "detail": "Common values are \"sha256\" (and historically \"sha1\")."
+            },
+            "unknown-service-type": {
+                "title": "Unrecognised service type \"{{type}}\"",
+                "detail": "Common values are \"email\" or \"*\"."
+            },
+            "unknown-flag": {
+                "title": "Unknown flag \"{{flag}}\"",
+                "detail": "RFC 6376 defines only \"y\" (testing) and \"s\" (strict i= alignment)."
+            },
+            "testing-mode": {
+                "title": "Testing mode is enabled (t=y)",
+                "detail": "Verifiers may ignore signatures from this selector. Remove the y flag once deployed."
+            },
+            "deprecated-granularity": {
+                "title": "g= tag is deprecated",
+                "detail": "Granularity was removed in RFC 6376; modern verifiers ignore it."
+            }
+        }
     }
 }

@@ -28,4 +28,6 @@
 //
 // Validators are wired progressively; this file is intentionally small at the
 // start and grows as commits add per-record support.
+import "$lib/services/dkim/compliance";
+
 export {};

@@ -555,6 +555,72 @@
     "compliance": {
         "title": "Conformité des enregistrements",
         "checking": "Vérification…",
-        "learn-more": "En savoir plus"
+        "learn-more": "En savoir plus",
+        "dkim": {
+            "missing-selector": {
+                "title": "Sélecteur manquant",
+                "detail": "Les enregistrements DKIM doivent être publiés sous la forme <sélecteur>._domainkey.<domaine>."
+            },
+            "invalid-selector": {
+                "title": "Sélecteur invalide « {{selector}} »",
+                "detail": "Les sélecteurs ne doivent contenir que des lettres, chiffres, tirets ou soulignés."
+            },
+            "parse-error": {
+                "title": "Impossible d'analyser l'enregistrement DKIM",
+                "detail": "La valeur TXT ne ressemble pas à un enregistrement DKIM clé=valeur."
+            },
+            "invalid-version": {
+                "title": "Version DKIM non supportée « {{version}} »",
+                "detail": "Seule la version « DKIM1 » est définie par la RFC 6376."
+            },
+            "missing-key": {
+                "title": "Clé publique manquante (p=)",
+                "detail": "Tout enregistrement DKIM doit publier une clé. Un p= vide ne sert qu'à révoquer la clé."
+            },
+            "revoked-key": {
+                "title": "Clé vide, cet enregistrement DKIM est révoqué",
+                "detail": "Un tag p= vide indique aux vérificateurs d'ignorer ce sélecteur."
+            },
+            "invalid-base64": {
+                "title": "La clé publique n'est pas du base64 valide",
+                "detail": "p= doit contenir un SubjectPublicKeyInfo encodé en base64."
+            },
+            "weak-rsa-key": {
+                "title": "Clé RSA trop courte",
+                "detail": "La RFC 8301 interdit les clés RSA de moins de 1024 bits."
+            },
+            "short-rsa-key": {
+                "title": "Clé RSA plus courte que recommandé",
+                "detail": "Utilisez des clés RSA d'au moins 2048 bits (RFC 8301 §3.2)."
+            },
+            "unknown-key-type": {
+                "title": "Type de clé inconnu « {{type}} »",
+                "detail": "La RFC 6376 définit « rsa » ; la RFC 8463 ajoute « ed25519 »."
+            },
+            "deprecated-hash": {
+                "title": "Algorithme de hachage déprécié « {{hash}} »",
+                "detail": "La RFC 8301 interdit SHA-1 pour les signatures DKIM."
+            },
+            "unknown-hash": {
+                "title": "Algorithme de hachage inconnu « {{hash}} »",
+                "detail": "Les valeurs usuelles sont « sha256 » (et historiquement « sha1 »)."
+            },
+            "unknown-service-type": {
+                "title": "Type de service non reconnu « {{type}} »",
+                "detail": "Les valeurs usuelles sont « email » ou « * »."
+            },
+            "unknown-flag": {
+                "title": "Drapeau inconnu « {{flag}} »",
+                "detail": "La RFC 6376 ne définit que « y » (test) et « s » (alignement i= strict)."
+            },
+            "testing-mode": {
+                "title": "Mode test activé (t=y)",
+                "detail": "Les vérificateurs peuvent ignorer les signatures de ce sélecteur. Retirez le drapeau y une fois en production."
+            },
+            "deprecated-granularity": {
+                "title": "Le tag g= est déprécié",
+                "detail": "Le tag granularité a été supprimé par la RFC 6376 ; les vérificateurs modernes l'ignorent."
+            }
+        }
     }
 }
