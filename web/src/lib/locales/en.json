@@ -851,6 +851,76 @@
                 "detail": "Granularity was removed in RFC 6376; modern verifiers ignore it."
             }
         },
+        "dmarc": {
+            "wrong-owner-name": {
+                "title": "DMARC record is not at _dmarc.{{name}}",
+                "detail": "DMARC records must be published at _dmarc.<domain>."
+            },
+            "parse-error": {
+                "title": "Could not parse the DMARC record",
+                "detail": "The TXT value does not look like a key=value DMARC record."
+            },
+            "missing-version": {
+                "title": "Missing v=DMARC1",
+                "detail": "A DMARC record must start with the version tag v=DMARC1."
+            },
+            "invalid-version": {
+                "title": "Unsupported DMARC version \"{{version}}\"",
+                "detail": "Only \"DMARC1\" is defined by RFC 7489."
+            },
+            "missing-policy": {
+                "title": "Missing policy (p=)",
+                "detail": "DMARC requires a policy: none, quarantine or reject."
+            },
+            "invalid-policy": {
+                "title": "Unknown policy \"{{policy}}\"",
+                "detail": "p= must be one of: none, quarantine, reject."
+            },
+            "invalid-sp": {
+                "title": "Unknown subdomain policy \"{{policy}}\"",
+                "detail": "sp= must be one of: none, quarantine, reject."
+            },
+            "monitoring-only": {
+                "title": "Policy is p=none (monitoring only)",
+                "detail": "Receivers will collect reports but will not act on failed messages. Move to quarantine or reject once you trust the reports."
+            },
+            "invalid-alignment": {
+                "title": "Invalid {{tag}}=\"{{value}}\"",
+                "detail": "Alignment tags must be \"r\" (relaxed) or \"s\" (strict)."
+            },
+            "invalid-pct": {
+                "title": "pct=\"{{pct}}\" is out of range",
+                "detail": "pct must be an integer between 0 and 100."
+            },
+            "partial-deployment": {
+                "title": "DMARC applied to {{pct}}% of mail",
+                "detail": "Only a fraction of failing messages will be subject to the DMARC policy. Use this during rollout, then remove pct= once you trust the policy."
+            },
+            "invalid-ri": {
+                "title": "ri=\"{{ri}}\" is invalid",
+                "detail": "ri must be a positive integer in seconds (default 86400)."
+            },
+            "invalid-fo": {
+                "title": "Unknown failure-reporting option \"{{value}}\"",
+                "detail": "fo= accepts 0, 1, d or s (or a colon-separated combination)."
+            },
+            "unknown-rf": {
+                "title": "Unknown report format \"{{value}}\"",
+                "detail": "Only afrf is defined by RFC 7489."
+            },
+            "empty-uri": {
+                "title": "Empty {{tag}} entry",
+                "detail": "Remove the empty value or replace it with a destination URI."
+            },
+            "invalid-uri-scheme": {
+                "title": "{{tag}} URI \"{{uri}}\" is not mailto/http",
+                "detail": "DMARC report URIs must use mailto: (recommended) or http(s):."
+            },
+            "invalid-mailto": {
+                "title": "Malformed mailto URI in {{tag}}: \"{{uri}}\"",
+                "detail": "Expected mailto:user@example.com (an optional !size suffix is allowed)."
+            }
+        },
         "spf": {
             "missing-version": {
                 "title": "Missing v=spf1 prefix",

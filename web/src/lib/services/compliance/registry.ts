@@ -25,6 +25,7 @@
 // Validators are wired progressively; this file grows as commits add
 // per-record support.
 import "$lib/services/dkim/compliance";
+import "$lib/services/dmarc/compliance";
 import "$lib/services/spf";
 
 export {};

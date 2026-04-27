@@ -622,6 +622,76 @@
                 "detail": "Le tag granularité a été supprimé par la RFC 6376 ; les vérificateurs modernes l'ignorent."
             }
         },
+        "dmarc": {
+            "wrong-owner-name": {
+                "title": "L'enregistrement DMARC n'est pas sous _dmarc.{{name}}",
+                "detail": "Les enregistrements DMARC doivent être publiés sous _dmarc.<domaine>."
+            },
+            "parse-error": {
+                "title": "Impossible d'analyser l'enregistrement DMARC",
+                "detail": "La valeur TXT ne ressemble pas à un enregistrement DMARC clé=valeur."
+            },
+            "missing-version": {
+                "title": "Tag v=DMARC1 manquant",
+                "detail": "Un enregistrement DMARC doit commencer par la balise v=DMARC1."
+            },
+            "invalid-version": {
+                "title": "Version DMARC non supportée « {{version}} »",
+                "detail": "Seule « DMARC1 » est définie par la RFC 7489."
+            },
+            "missing-policy": {
+                "title": "Politique manquante (p=)",
+                "detail": "DMARC requiert une politique : none, quarantine ou reject."
+            },
+            "invalid-policy": {
+                "title": "Politique inconnue « {{policy}} »",
+                "detail": "p= doit être l'une des valeurs : none, quarantine, reject."
+            },
+            "invalid-sp": {
+                "title": "Politique de sous-domaine inconnue « {{policy}} »",
+                "detail": "sp= doit être l'une des valeurs : none, quarantine, reject."
+            },
+            "monitoring-only": {
+                "title": "Politique p=none (mode observation)",
+                "detail": "Les destinataires collecteront les rapports mais n'agiront pas sur les messages en échec. Passez à quarantine ou reject quand vous aurez confiance dans les rapports."
+            },
+            "invalid-alignment": {
+                "title": "{{tag}}=« {{value}} » invalide",
+                "detail": "Les tags d'alignement doivent valoir « r » (relâché) ou « s » (strict)."
+            },
+            "invalid-pct": {
+                "title": "pct=« {{pct}} » hors plage",
+                "detail": "pct doit être un entier entre 0 et 100."
+            },
+            "partial-deployment": {
+                "title": "DMARC appliqué à {{pct}}% du courrier",
+                "detail": "Seule une fraction des messages en échec sera soumise à la politique DMARC. Utile en phase de déploiement, retirez pct= une fois la politique éprouvée."
+            },
+            "invalid-ri": {
+                "title": "ri=« {{ri}} » invalide",
+                "detail": "ri doit être un entier positif en secondes (défaut : 86400)."
+            },
+            "invalid-fo": {
+                "title": "Option de rapport d'échec inconnue « {{value}} »",
+                "detail": "fo= accepte 0, 1, d ou s (ou une combinaison séparée par deux-points)."
+            },
+            "unknown-rf": {
+                "title": "Format de rapport inconnu « {{value}} »",
+                "detail": "Seul afrf est défini par la RFC 7489."
+            },
+            "empty-uri": {
+                "title": "Entrée {{tag}} vide",
+                "detail": "Supprimez la valeur vide ou remplacez-la par une URI de destination."
+            },
+            "invalid-uri-scheme": {
+                "title": "URI {{tag}} « {{uri}} » non mailto/http",
+                "detail": "Les URIs de rapport DMARC doivent utiliser mailto: (recommandé) ou http(s):."
+            },
+            "invalid-mailto": {
+                "title": "URI mailto malformée dans {{tag}} : « {{uri}} »",
+                "detail": "Format attendu : mailto:utilisateur@exemple.fr (un suffixe !taille est autorisé)."
+            }
+        },
         "spf": {
             "missing-version": {
                 "title": "Préfixe v=spf1 manquant",
