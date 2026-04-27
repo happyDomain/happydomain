@@ -945,6 +945,74 @@
             "invalid-id": {
                 "title": "Invalid policy id \"{{id}}\"",
                 "detail": "id must be 1 to 32 alphanumeric characters per RFC 8461 sec. 3.1."
+            },
+            "policy-dns-error": {
+                "title": "Cannot resolve mta-sts host",
+                "detail": "DNS lookup for the mta-sts.<domain> hostname failed. Publish an A/AAAA record so the policy at {{url}} can be reached."
+            },
+            "policy-tls-error": {
+                "title": "TLS handshake failed for the policy host",
+                "detail": "{{error}}"
+            },
+            "policy-not-found": {
+                "title": "No policy file at {{url}}",
+                "detail": "RFC 8461 sec. 3.3: the policy MUST be served at this URL. Publish the file or remove the TXT record."
+            },
+            "policy-http-error": {
+                "title": "Policy fetch returned HTTP {{code}}",
+                "detail": "The policy host responded with a non-2xx status; receivers will treat the policy as missing."
+            },
+            "policy-redirect": {
+                "title": "Policy host attempted a redirect (HTTP {{code}})",
+                "detail": "RFC 8461 sec. 3.3 forbids redirects on the policy URL. Serve the file directly at {{url}}."
+            },
+            "policy-fetch-error": {
+                "title": "Could not fetch the policy",
+                "detail": "{{error}}"
+            },
+            "policy-too-large": {
+                "title": "Policy body is too large",
+                "detail": "The file at {{url}} exceeds the size cap (64 KiB). MTA-STS policies are very small; trim the file."
+            },
+            "policy-missing-version": {
+                "title": "Policy file is missing the version key",
+                "detail": "Add a 'version: STSv1' line at the top of {{url}}."
+            },
+            "policy-invalid-version": {
+                "title": "Policy version \"{{version}}\" is unknown",
+                "detail": "Only \"STSv1\" is defined by RFC 8461."
+            },
+            "policy-missing-mode": {
+                "title": "Policy file is missing the mode key",
+                "detail": "Add a 'mode: enforce' (or testing / none) line in {{url}}."
+            },
+            "policy-invalid-mode": {
+                "title": "Policy mode \"{{mode}}\" is unknown",
+                "detail": "Mode must be one of: enforce, testing, none."
+            },
+            "policy-mode-none": {
+                "title": "Policy mode is \"none\" (MTA-STS effectively disabled)",
+                "detail": "Receivers will treat this as if no policy were published. Switch to enforce once you trust the policy."
+            },
+            "policy-mode-testing": {
+                "title": "Policy mode is \"testing\"",
+                "detail": "Receivers will report failures but still deliver. Switch to enforce once reports are clean."
+            },
+            "policy-missing-mx": {
+                "title": "Policy is missing mx entries",
+                "detail": "A {{mode}} policy must list at least one mx pattern; otherwise no mail can be delivered."
+            },
+            "policy-missing-max-age": {
+                "title": "Policy file is missing max_age",
+                "detail": "Add a 'max_age: <seconds>' line. Common values are 86400 (1 day) to 604800 (1 week) during rollout, then larger."
+            },
+            "policy-invalid-max-age": {
+                "title": "Policy max_age \"{{maxAge}}\" is out of range",
+                "detail": "max_age must be between 0 and 31557600 seconds (1 year)."
+            },
+            "policy-short-max-age": {
+                "title": "Policy max_age is short ({{maxAge}}s)",
+                "detail": "RFC 8461 recommends at least one week. Short values defeat caching and force receivers to refetch often."
             }
         },
         "tlsrpt": {

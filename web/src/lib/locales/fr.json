@@ -716,6 +716,74 @@
             "invalid-id": {
                 "title": "Identifiant de politique invalide « {{id}} »",
                 "detail": "id doit contenir 1 à 32 caractères alphanumériques (RFC 8461 sec. 3.1)."
+            },
+            "policy-dns-error": {
+                "title": "Impossible de résoudre l'hôte mta-sts",
+                "detail": "La résolution DNS de mta-sts.<domaine> a échoué. Publiez un enregistrement A/AAAA pour que la politique à {{url}} soit joignable."
+            },
+            "policy-tls-error": {
+                "title": "Échec du handshake TLS pour l'hôte de politique",
+                "detail": "{{error}}"
+            },
+            "policy-not-found": {
+                "title": "Aucun fichier de politique à {{url}}",
+                "detail": "RFC 8461 sec. 3.3 : la politique DOIT être servie à cette URL. Publiez le fichier ou retirez l'enregistrement TXT."
+            },
+            "policy-http-error": {
+                "title": "Le téléchargement de la politique a renvoyé HTTP {{code}}",
+                "detail": "Le serveur de politique a répondu avec un statut non-2xx ; les destinataires considéreront la politique comme manquante."
+            },
+            "policy-redirect": {
+                "title": "L'hôte de politique a tenté une redirection (HTTP {{code}})",
+                "detail": "RFC 8461 sec. 3.3 interdit les redirections sur l'URL de politique. Servez le fichier directement à {{url}}."
+            },
+            "policy-fetch-error": {
+                "title": "Impossible de télécharger la politique",
+                "detail": "{{error}}"
+            },
+            "policy-too-large": {
+                "title": "Le fichier de politique est trop volumineux",
+                "detail": "Le fichier à {{url}} dépasse la limite de taille (64 Kio). Les politiques MTA-STS sont très courtes ; allégez le fichier."
+            },
+            "policy-missing-version": {
+                "title": "Le fichier de politique n'a pas de clé version",
+                "detail": "Ajoutez une ligne « version: STSv1 » en tête de {{url}}."
+            },
+            "policy-invalid-version": {
+                "title": "Version de politique « {{version}} » inconnue",
+                "detail": "Seule « STSv1 » est définie par la RFC 8461."
+            },
+            "policy-missing-mode": {
+                "title": "Le fichier de politique n'a pas de clé mode",
+                "detail": "Ajoutez une ligne « mode: enforce » (ou testing / none) dans {{url}}."
+            },
+            "policy-invalid-mode": {
+                "title": "Mode de politique « {{mode}} » inconnu",
+                "detail": "Le mode doit être : enforce, testing ou none."
+            },
+            "policy-mode-none": {
+                "title": "Le mode de politique est « none » (MTA-STS effectivement désactivé)",
+                "detail": "Les destinataires se comporteront comme si aucune politique n'était publiée. Passez à enforce quand vous aurez confiance."
+            },
+            "policy-mode-testing": {
+                "title": "Mode de politique « testing »",
+                "detail": "Les destinataires rapporteront les échecs mais livreront tout de même. Passez à enforce une fois les rapports propres."
+            },
+            "policy-missing-mx": {
+                "title": "La politique n'a pas d'entrées mx",
+                "detail": "Une politique {{mode}} doit lister au moins un motif mx ; sinon aucun courrier ne peut être livré."
+            },
+            "policy-missing-max-age": {
+                "title": "Le fichier de politique n'a pas de max_age",
+                "detail": "Ajoutez une ligne « max_age: <secondes> ». Valeurs usuelles : 86400 (1 jour) à 604800 (1 semaine) en déploiement, puis plus."
+            },
+            "policy-invalid-max-age": {
+                "title": "max_age « {{maxAge}} » hors plage",
+                "detail": "max_age doit être compris entre 0 et 31557600 secondes (1 an)."
+            },
+            "policy-short-max-age": {
+                "title": "max_age court ({{maxAge}}s)",
+                "detail": "La RFC 8461 recommande au moins une semaine. Des valeurs trop courtes empêchent le cache et forcent les re-téléchargements."
             }
         },
         "tlsrpt": {

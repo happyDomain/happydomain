@@ -19,8 +19,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { postResolver, postResolverSpfFlatten } from "$lib/api-base/sdk.gen";
+import {
+    postResolver,
+    postResolverMtaStsPolicy,
+    postResolverSpfFlatten,
+} from "$lib/api-base/sdk.gen";
 import type {
+    HappydnsMtastsPolicyRequest,
+    HappydnsMtastsPolicyResponse,
     HappydnsResolverResponse,
     HappydnsSpfFlattenRequest,
     HappydnsSpfFlattenResponse,
@@ -46,4 +52,16 @@ export async function flattenSPF(
             signal,
         }),
     ) as HappydnsSpfFlattenResponse;
+}
+
+export async function fetchMTAStsPolicy(
+    body: HappydnsMtastsPolicyRequest,
+    signal?: AbortSignal,
+): Promise<HappydnsMtastsPolicyResponse> {
+    return unwrapSdkResponse(
+        await postResolverMtaStsPolicy({
+            body,
+            signal,
+        }),
+    ) as HappydnsMtastsPolicyResponse;
 }
