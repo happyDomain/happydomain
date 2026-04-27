@@ -27,6 +27,7 @@
 import "$lib/services/dkim/compliance";
 import "$lib/services/dmarc/compliance";
 import "$lib/services/mta_sts/compliance";
+import "$lib/services/mx/compliance";
 import "$lib/services/spf";
 import "$lib/services/tlsrpt/compliance";
 

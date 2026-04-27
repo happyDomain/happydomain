@@ -798,6 +798,36 @@
                 "detail": "La RFC 8461 recommande au moins une semaine. Des valeurs trop courtes empêchent le cache et forcent les re-téléchargements."
             }
         },
+        "mx": {
+            "null-mx-with-others": {
+                "title": "Un null MX ne peut coexister avec d'autres enregistrements MX",
+                "detail": "La RFC 7505 impose qu'un null MX (cible « . ») soit le seul enregistrement MX du domaine."
+            },
+            "null-mx-non-zero-preference": {
+                "title": "La préférence d'un null MX doit être 0 (reçu {{preference}})",
+                "detail": "La RFC 7505 spécifie une préférence à 0 pour l'enregistrement null MX."
+            },
+            "invalid-target": {
+                "title": "Cible MX invalide « {{target}} »",
+                "detail": "Les cibles MX doivent être des noms d'hôtes valides au sens de la RFC 1035."
+            },
+            "invalid-preference": {
+                "title": "Préférence MX « {{preference}} » hors plage",
+                "detail": "La préférence MX doit être un entier non signé sur 16 bits (0..65535)."
+            },
+            "duplicate-target": {
+                "title": "Cible MX dupliquée « {{target}} »",
+                "detail": "La même cible apparaît plusieurs fois. Ne conservez qu'un seul enregistrement."
+            },
+            "target-is-cname": {
+                "title": "La cible MX « {{target}} » est un CNAME",
+                "detail": "La RFC 5321 sec. 5.1 interdit qu'un MX pointe vers un CNAME."
+            },
+            "target-no-address": {
+                "title": "La cible MX « {{target}} » n'a pas d'A/AAAA dans cette zone",
+                "detail": "Ajoutez une entrée Serveur pour ce nom, ou vérifiez que le FQDN cible est correct."
+            }
+        },
         "tlsrpt": {
             "wrong-owner-name": {
                 "title": "L'enregistrement TLS-RPT n'est pas sous _smtp._tls.{{name}}",

@@ -1027,6 +1027,36 @@
                 "detail": "RFC 8461 recommends at least one week. Short values defeat caching and force receivers to refetch often."
             }
         },
+        "mx": {
+            "null-mx-with-others": {
+                "title": "Null MX cannot coexist with other MX records",
+                "detail": "RFC 7505 requires that a null MX (target \".\") be the only MX record in the set."
+            },
+            "null-mx-non-zero-preference": {
+                "title": "Null MX preference should be 0 (got {{preference}})",
+                "detail": "RFC 7505 specifies preference 0 for the null MX record."
+            },
+            "invalid-target": {
+                "title": "Invalid MX target \"{{target}}\"",
+                "detail": "MX targets must be valid hostnames per RFC 1035."
+            },
+            "invalid-preference": {
+                "title": "MX preference \"{{preference}}\" is out of range",
+                "detail": "MX preference must be a 16-bit unsigned integer (0..65535)."
+            },
+            "duplicate-target": {
+                "title": "Duplicate MX target \"{{target}}\"",
+                "detail": "The same target appears more than once. Keep only one record."
+            },
+            "target-is-cname": {
+                "title": "MX target \"{{target}}\" is a CNAME",
+                "detail": "RFC 5321 sec. 5.1 forbids MX records from pointing to a CNAME."
+            },
+            "target-no-address": {
+                "title": "MX target \"{{target}}\" has no A/AAAA in this zone",
+                "detail": "Add a Server entry for this name, or check that the target FQDN is correct."
+            }
+        },
         "tlsrpt": {
             "wrong-owner-name": {
                 "title": "TLS-RPT record is not at _smtp._tls.{{name}}",
