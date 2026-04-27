@@ -22,11 +22,18 @@
 -->
 
 <script lang="ts">
+    import { FormGroup, Input } from "@sveltestrap/sveltestrap";
+
     import type { Domain } from "$lib/model/domain";
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import type { dnsResource } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
-    import { parseBIMI, stringifyBIMI } from "$lib/services/bimi";
+    import {
+        isBIMIDeclination,
+        parseBIMI,
+        stringifyBIMI,
+        stringifyBIMIDeclination,
+    } from "$lib/services/bimi";
 
     interface Props {
         dn: string;
@@ -40,14 +47,20 @@
         value["txt"] = newRR("default._bimi", getRrtype("TXT")) as any;
     }
 
-    let val = $state(parseBIMI(value["txt"]!.Txt || ""));
+    let initialTxt = value["txt"]!.Txt || "";
+    let val = $state(parseBIMI(initialTxt));
     let selector = $state(
         value["txt"]!.Hdr?.Name?.replace("._bimi", "") || "default",
     );
+    let decline = $state(isBIMIDeclination(initialTxt));
 
     $effect(() => {
         const txt = value["txt"]!;
-        txt.Txt = stringifyBIMI(val, txt.Txt || "");
+        if (decline) {
+            txt.Txt = stringifyBIMIDeclination(val.v || "BIMI1");
+        } else {
+            txt.Txt = stringifyBIMI(val, txt.Txt || "");
+        }
         if (txt.Hdr) {
             txt.Hdr.Name = selector + "._bimi";
         }
@@ -86,43 +99,57 @@
             bind:value={selector}
         />
 
-        <BasicInput
-            edit
-            index="l"
-            specs={{
-                id: "l",
-                label: "Logo",
-                placeholder: "https://example.com/logo.svg",
-                type: "string",
-                description: "HTTPS URL of the SVG Tiny Portable/Secure logo.",
-            }}
-            bind:value={val.l}
-        />
+        <FormGroup>
+            <Input
+                id="bimi-decline"
+                type="checkbox"
+                label="Decline to participate in BIMI"
+                bind:checked={decline}
+            />
+            <small class="form-text text-muted">
+                Publishes an explicit empty record so receivers know your domain has chosen not to participate in BIMI.
+            </small>
+        </FormGroup>
 
-        <BasicInput
-            edit
-            index="a"
-            specs={{
-                id: "a",
-                label: "Authority",
-                placeholder: "https://example.com/vmc.pem",
-                type: "string",
-                description: "HTTPS URL of the Verified Mark Certificate (PEM). Required by Gmail and Yahoo.",
-            }}
-            bind:value={val.a}
-        />
+        {#if !decline}
+            <BasicInput
+                edit
+                index="l"
+                specs={{
+                    id: "l",
+                    label: "Logo",
+                    placeholder: "https://example.com/logo.svg",
+                    type: "string",
+                    description: "HTTPS URL of the SVG Tiny Portable/Secure logo.",
+                }}
+                bind:value={val.l}
+            />
 
-        <BasicInput
-            edit
-            index="e"
-            specs={{
-                id: "e",
-                label: "Evidence",
-                placeholder: "https://example.com/evidence",
-                type: "string",
-                description: "HTTPS URL of an evidence document (optional).",
-            }}
-            bind:value={val.e}
-        />
+            <BasicInput
+                edit
+                index="a"
+                specs={{
+                    id: "a",
+                    label: "Authority",
+                    placeholder: "https://example.com/vmc.pem",
+                    type: "string",
+                    description: "HTTPS URL of the Verified Mark Certificate (PEM). Required by Gmail and Yahoo.",
+                }}
+                bind:value={val.a}
+            />
+
+            <BasicInput
+                edit
+                index="e"
+                specs={{
+                    id: "e",
+                    label: "Evidence",
+                    placeholder: "https://example.com/evidence",
+                    type: "string",
+                    description: "HTTPS URL of an evidence document (optional).",
+                }}
+                bind:value={val.e}
+            />
+        {/if}
     </form>
 </div>

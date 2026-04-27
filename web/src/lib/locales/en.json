@@ -896,6 +896,10 @@
                 "title": "No Verified Mark Certificate (a=)",
                 "detail": "Gmail and Yahoo require a VMC to display the BIMI logo."
             },
+            "declination": {
+                "title": "Declination to participate in BIMI",
+                "detail": "This record explicitly tells receivers that the domain has chosen not to participate in BIMI."
+            },
             "no-dmarc": {
                 "title": "No DMARC record published",
                 "detail": "BIMI requires a DMARC record with an enforcing policy (quarantine or reject)."

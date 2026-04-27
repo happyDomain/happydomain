@@ -20,7 +20,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { describe, it, expect } from "vitest";
-import { parseBIMI, stringifyBIMI } from "./bimi";
+import { isBIMIDeclination, parseBIMI, stringifyBIMI, stringifyBIMIDeclination } from "./bimi";
 
 describe("parseBIMI", () => {
     it("parses a minimal BIMI record", () => {
@@ -94,6 +94,24 @@ describe("stringifyBIMI", () => {
         const out = stringifyBIMI({ v: "BIMI1", l: "https://example.com/logo.svg" });
         expect(out).not.toContain("a=");
         expect(out).not.toContain("e=");
+    });
+});
+
+describe("isBIMIDeclination", () => {
+    it("recognises v=BIMI1;l= as declination", () => {
+        expect(isBIMIDeclination("v=BIMI1;l=")).toBe(true);
+    });
+    it("recognises v=BIMI1; l= ; a= as declination", () => {
+        expect(isBIMIDeclination("v=BIMI1; l= ; a=")).toBe(true);
+    });
+    it("rejects a regular BIMI record", () => {
+        expect(isBIMIDeclination("v=BIMI1;l=https://example.com/logo.svg")).toBe(false);
+    });
+    it("rejects a non-BIMI record", () => {
+        expect(isBIMIDeclination("v=DMARC1;l=")).toBe(false);
+    });
+    it("recognises stringifyBIMIDeclination output", () => {
+        expect(isBIMIDeclination(stringifyBIMIDeclination())).toBe(true);
     });
 });
 

@@ -144,6 +144,37 @@ describe("BIMI compliance: authority & evidence", () => {
     });
 });
 
+describe("BIMI compliance: declination", () => {
+    it("emits only the declination info for v=BIMI1;l= (no zone)", () => {
+        const issues = run("default._bimi", "v=BIMI1;l=");
+        expect(ids(issues)).toEqual(["bimi.declination"]);
+    });
+    it("declination skips URL/VMC checks but keeps DMARC cross-checks", () => {
+        const zone = zoneWith();
+        const issues = run("default._bimi", "v=BIMI1;l=", zone);
+        expect(ids(issues)).toContain("bimi.declination");
+        expect(ids(issues)).toContain("bimi.no-dmarc");
+        expect(ids(issues)).not.toContain("bimi.missing-location");
+        expect(ids(issues)).not.toContain("bimi.missing-vmc");
+    });
+    it("declination flags weak DMARC policy", () => {
+        const zone = zoneWith(dmarcService("v=DMARC1; p=none"));
+        const issues = run("default._bimi", "v=BIMI1;l=", zone);
+        expect(ids(issues)).toContain("bimi.declination");
+        expect(ids(issues)).toContain("bimi.weak-dmarc-policy");
+    });
+    it("declination is fully clean with an enforcing DMARC", () => {
+        const zone = zoneWith(dmarcService("v=DMARC1; p=reject"));
+        const issues = run("default._bimi", "v=BIMI1;l=", zone);
+        expect(ids(issues)).toEqual(["bimi.declination"]);
+    });
+    it("still flags an invalid selector in declination mode", () => {
+        const issues = run("bad selector._bimi", "v=BIMI1;l=");
+        expect(ids(issues)).toContain("bimi.invalid-selector");
+        expect(ids(issues)).toContain("bimi.declination");
+    });
+});
+
 describe("BIMI compliance: DMARC cross-checks", () => {
     it("warns when no DMARC is published", () => {
         const zone = zoneWith();

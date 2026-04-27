@@ -24,7 +24,7 @@ import {
     type ComplianceIssue,
     registerValidators,
 } from "$lib/services/compliance";
-import { parseBIMI } from "$lib/services/bimi";
+import { isBIMIDeclination, parseBIMI } from "$lib/services/bimi";
 import { parseDMARC } from "$lib/services/dmarc";
 
 const SELECTOR_LABEL_RE = /^[A-Za-z0-9_-]+$/;
@@ -88,32 +88,50 @@ function bimiSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceI
         });
     }
 
-    // l= (Location) is mandatory.
-    if (!val.l) {
+    // Declination: a domain that does not wish to participate publishes
+    // v=BIMI1 with an empty l= tag. The URL/VMC checks no longer apply,
+    // but the DMARC cross-check still does: a declining domain still has
+    // to back the declination with an enforcing DMARC policy, otherwise
+    // an attacker could spoof the domain and override the declination.
+    const declination = isBIMIDeclination(txtValue);
+    if (declination) {
         issues.push({
-            id: "bimi.missing-location",
-            severity: "error",
-            field: "l",
-            docUrl: DRAFT,
-        });
-    } else if (!isHttps(val.l)) {
-        issues.push({
-            id: "bimi.location-not-https",
-            severity: "error",
-            field: "l",
-            docUrl: DRAFT,
-        });
-    } else if (!/\.svg(\?|#|$)/i.test(val.l)) {
-        issues.push({
-            id: "bimi.location-not-svg",
-            severity: "warning",
-            field: "l",
+            id: "bimi.declination",
+            severity: "info",
             docUrl: DRAFT,
         });
     }
 
+    // l= (Location) is mandatory outside of declination.
+    if (!declination) {
+        if (!val.l) {
+            issues.push({
+                id: "bimi.missing-location",
+                severity: "error",
+                field: "l",
+                docUrl: DRAFT,
+            });
+        } else if (!isHttps(val.l)) {
+            issues.push({
+                id: "bimi.location-not-https",
+                severity: "error",
+                field: "l",
+                docUrl: DRAFT,
+            });
+        } else if (!/\.svg(\?|#|$)/i.test(val.l)) {
+            issues.push({
+                id: "bimi.location-not-svg",
+                severity: "warning",
+                field: "l",
+                docUrl: DRAFT,
+            });
+        }
+    }
+
     // a= (Authority / VMC) is optional but strongly recommended.
-    if (val.a) {
+    if (declination) {
+        // No-op: VMC is meaningless on a declination record.
+    } else if (val.a) {
         if (!isHttps(val.a)) {
             issues.push({
                 id: "bimi.authority-not-https",
@@ -139,7 +157,7 @@ function bimiSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceI
     }
 
     // e= (Evidence) optional, must be HTTPS if present.
-    if (val.e && !isHttps(val.e)) {
+    if (!declination && val.e && !isHttps(val.e)) {
         issues.push({
             id: "bimi.evidence-not-https",
             severity: "warning",

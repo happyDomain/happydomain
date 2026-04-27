@@ -38,6 +38,20 @@ export function parseBIMI(val: string): BIMIValue {
     };
 }
 
+/**
+ * Detects a BIMI declination record. Per the BIMI draft, a domain that does
+ * not wish to participate publishes a record with v=BIMI1 and an explicitly
+ * empty l= tag.
+ */
+export function isBIMIDeclination(val: string): boolean {
+    if (!/(?:^|;)\s*v\s*=\s*BIMI\d+/i.test(val)) return false;
+    return /(?:^|;)\s*l\s*=\s*(?:;|$)/i.test(val);
+}
+
+export function stringifyBIMIDeclination(version: string = "BIMI1"): string {
+    return `v=${version};l=`;
+}
+
 export function stringifyBIMI(val: BIMIValue, existingTxt: string = ""): string {
     const sep = existingTxt.indexOf("; ") >= 0 ? "; " : ";";
 
