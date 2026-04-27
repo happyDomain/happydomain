@@ -947,6 +947,40 @@
                 "detail": "id must be 1 to 32 alphanumeric characters per RFC 8461 sec. 3.1."
             }
         },
+        "tlsrpt": {
+            "wrong-owner-name": {
+                "title": "TLS-RPT record is not at _smtp._tls.{{name}}",
+                "detail": "TLS-RPT records must be published at _smtp._tls.<domain>."
+            },
+            "parse-error": {
+                "title": "Could not parse the TLS-RPT record",
+                "detail": "The TXT value does not look like a key=value TLS-RPT record."
+            },
+            "missing-version": {
+                "title": "Missing v=TLSRPTv1",
+                "detail": "A TLS-RPT TXT record must start with v=TLSRPTv1."
+            },
+            "invalid-version": {
+                "title": "Unsupported TLS-RPT version \"{{version}}\"",
+                "detail": "Only \"TLSRPTv1\" is defined by RFC 8460."
+            },
+            "missing-rua": {
+                "title": "Missing rua= report destination",
+                "detail": "TLS-RPT requires at least one rua URI to receive aggregate reports."
+            },
+            "empty-rua": {
+                "title": "Empty rua entry",
+                "detail": "Remove the empty value or replace it with a destination URI."
+            },
+            "invalid-rua-scheme": {
+                "title": "rua URI \"{{uri}}\" is not mailto/http",
+                "detail": "TLS-RPT report URIs must use mailto: or http(s):."
+            },
+            "invalid-mailto": {
+                "title": "Malformed mailto URI in rua: \"{{uri}}\"",
+                "detail": "Expected mailto:user@example.com."
+            }
+        },
         "spf": {
             "missing-version": {
                 "title": "Missing v=spf1 prefix",
