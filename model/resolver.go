@@ -87,6 +87,7 @@ func NewResolverResponseFromMsg(msg *dns.Msg) *ResolverResponse {
 type ResolverUsecase interface {
 	ResolveQuestion(ResolverRequest) (*dns.Msg, error)
 	FlattenSPF(SPFFlattenRequest) (*SPFFlattenResponse, error)
+	FetchMTASTSPolicy(MTASTSPolicyRequest) (*MTASTSPolicyResponse, error)
 }
 
 // SPFFlattenRequest asks the backend to recursively walk an SPF record and
@@ -135,6 +136,50 @@ type SPFNode struct {
 
 	// Children are nested includes / redirects.
 	Children []*SPFNode `json:"children,omitempty"`
+}
+
+// MTASTSPolicyRequest asks the backend to fetch and parse the MTA-STS policy
+// file published at https://mta-sts.<Domain>/.well-known/mta-sts.txt
+// (RFC 8461 sec. 3.3).
+type MTASTSPolicyRequest struct {
+	// Domain is the FQDN whose MTA-STS policy should be fetched.
+	Domain string `json:"domain"`
+}
+
+// MTASTSPolicyResponse is the result of an MTA-STS policy fetch.
+type MTASTSPolicyResponse struct {
+	// URL is the policy URL that was fetched.
+	URL string `json:"url"`
+
+	// Status is the high-level outcome:
+	//   "ok"          policy fetched and parsed
+	//   "dns-error"   could not resolve mta-sts.<domain>
+	//   "tls-error"   TLS handshake failed
+	//   "not-found"   HTTP 404 (no policy published)
+	//   "http-error"  any other non-2xx status
+	//   "fetch-error" connection refused, timeout, etc.
+	//   "too-large"   body exceeded the size cap before parsing
+	Status string `json:"status"`
+
+	// HTTPCode is the response status code when an HTTP exchange completed.
+	HTTPCode int `json:"httpCode,omitempty"`
+
+	// ErrorMsg gives a short human-readable reason when Status != "ok".
+	ErrorMsg string `json:"errorMsg,omitempty"`
+
+	// Body is the raw response body (truncated to the size cap) returned for
+	// diagnostic display. Set even when parsing failed.
+	Body string `json:"body,omitempty"`
+
+	// Parsed policy fields. Empty unless Status is "ok".
+	Version string   `json:"version,omitempty"`
+	Mode    string   `json:"mode,omitempty"`
+	MX      []string `json:"mx,omitempty"`
+	MaxAge  int      `json:"maxAge,omitempty"`
+
+	// Redirected is true when the server tried to redirect us; per RFC 8461
+	// sec. 3.3 we MUST NOT follow.
+	Redirected bool `json:"redirected,omitempty"`
 }
 
 // SPFFlattenResponse is the result of a recursive SPF flatten.

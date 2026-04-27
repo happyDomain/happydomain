@@ -105,3 +105,34 @@ func (rc *ResolverController) FlattenSPF(c *gin.Context) {
 
 	c.JSON(http.StatusOK, resp)
 }
+
+// FetchMTASTSPolicy retrieves and parses the MTA-STS policy file at
+// https://mta-sts.<domain>/.well-known/mta-sts.txt.
+//
+//	@Summary	Fetch and parse an MTA-STS policy file.
+//	@Schemes
+//	@Description	Fetch the MTA-STS policy file at https://mta-sts.<domain>/.well-known/mta-sts.txt and return its parsed fields, along with diagnostic information when the fetch or parse fails.
+//	@Tags			resolver
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		happydns.MTASTSPolicyRequest	true	"MTA-STS policy fetch request"
+//	@Success		200		{object}	happydns.MTASTSPolicyResponse
+//	@Failure		400		{object}	happydns.ErrorResponse	"Invalid input"
+//	@Failure		500		{object}	happydns.ErrorResponse
+//	@Router			/resolver/mta-sts-policy [post]
+func (rc *ResolverController) FetchMTASTSPolicy(c *gin.Context) {
+	var req happydns.MTASTSPolicyRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("%s sends invalid MTASTSPolicyRequest JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
+		return
+	}
+
+	resp, err := rc.resolverService.FetchMTASTSPolicy(req)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
