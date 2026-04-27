@@ -39,22 +39,11 @@
 
     let { dn, origin, value = $bindable({}) }: Props = $props();
 
-    // Initialize TXT record if it doesn't exist
-    $effect(() => {
-        if (!value["txt"]) {
-            value["txt"] = newRR(dn, getRrtype("TXT")) as dnsTypeTXT;
-        }
-    });
+    if (!value["txt"]) {
+        value["txt"] = newRR(dn, getRrtype("TXT")) as dnsTypeTXT;
+    }
 
-    // svelte-ignore state_referenced_locally
-    let val = $derived(
-        value["txt"]
-            ? new TLSRPTPolicy(value["txt"])
-            : new TLSRPTPolicy({
-                  Hdr: { Name: dn, Rrtype: 16, Class: 1, Ttl: 3600, Rdlength: 0 },
-                  Txt: "",
-              }),
-    );
+    let val = $derived(new TLSRPTPolicy(value["txt"] as dnsTypeTXT));
 
     const type = "svcs.TLS_RPT";
 </script>

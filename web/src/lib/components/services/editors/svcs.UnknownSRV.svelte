@@ -46,20 +46,12 @@
     // Type-safe accessor for srv as array
     const srvArray = $derived(value["srv"] as any as Array<dnsTypeSRV>);
 
-    // Extract service name and protocol from first record's domain name
-    let serviceName = $state<string>("http");
-    let protocol = $state<string>("tcp");
-
-    // Initialize serviceName and protocol from first SRV record
-    $effect(() => {
-        if (srvArray?.[0]?.Hdr?.Name) {
-            const match = srvArray[0].Hdr.Name.match(/^_([^.]+)\._(\w+)/);
-            if (match) {
-                serviceName = match[1];
-                protocol = match[2];
-            }
-        }
-    });
+    // One-time extract of service name and protocol from first SRV record's name
+    const initialMatch = (value["srv"] as any as Array<dnsTypeSRV>)?.[0]?.Hdr?.Name?.match(
+        /^_([^.]+)\._([^.]+)/,
+    );
+    let serviceName = $state<string>(initialMatch?.[1] ?? "http");
+    let protocol = $state<string>(initialMatch?.[2] ?? "tcp");
 
     // Construct the full DN with service and protocol prefix
     let fullDn = $derived(`_${serviceName}._${protocol}`);

@@ -48,9 +48,6 @@
         value.username = "";
     }
 
-    // Name hash state
-    let nameHash = $state("");
-
     // Compute SHA-224 hash from username
     async function computeHash(username: string): Promise<string> {
         const encoder = new TextEncoder();
@@ -64,22 +61,26 @@
             .join("");
     }
 
-    // When username changes, compute hash
+    // Initial name hash: extract from existing Hdr.Name if present, else empty
+    function initialNameHash(): string {
+        const existing = value["openpgpkey"]?.Hdr?.Name;
+        if (!value["username"] && existing) {
+            const parts = existing.split("._openpgpkey");
+            if (parts.length > 0 && parts[0]) {
+                return parts[0];
+            }
+        }
+        return "";
+    }
+
+    let nameHash = $state(initialNameHash());
+
+    // When username changes, recompute hash
     $effect(() => {
         if (value["username"]) {
             computeHash(value["username"]).then((hash) => {
                 nameHash = hash;
             });
-        }
-    });
-
-    // Extract name hash from existing domain name on load
-    $effect(() => {
-        if (!value["username"] && value["openpgpkey"]?.Hdr?.Name && !nameHash) {
-            const parts = value["openpgpkey"].Hdr.Name.split("._openpgpkey");
-            if (parts.length > 0 && parts[0]) {
-                nameHash = parts[0];
-            }
         }
     });
 

@@ -39,33 +39,34 @@
 
     let { dn, origin, value = $bindable({}) }: Props = $props();
 
-    function parseSPF(val: string) {
-        const fields = val.split(" ");
+    const DEFAULT_SPF = "v=spf1 -all";
+    const ALL_RE = /^[-~?+]?all$/;
 
-        return {
-            v: fields[0].replace(/^v=/, ""),
-            f: fields.slice(1),
-        };
+    function parseSPF(val: string): { v: string; f: string[] } {
+        const tokens = val.trim().split(/\s+/).filter(Boolean);
+        if (tokens.length === 0) return { v: "spf1", f: [] };
+        if (tokens[0].startsWith("v=")) {
+            return { v: tokens[0].slice(2), f: tokens.slice(1) };
+        }
+        return { v: "spf1", f: tokens };
     }
-    function stringifySPF(val: { v?: string; f: string[] }) {
-        return "v=" + (val["v"] ? val["v"] : "spf1") + " " + val.f.join(" ");
+
+    function stringifySPF(v: string, f: string[]): string {
+        return "v=" + (v || "spf1") + (f.length ? " " + f.join(" ") : "");
     }
-    let val = $state(parseSPF(value["txt"]?.Txt || "v=spf1 -all"));
+
+    if (!value["txt"]) {
+        const txtRecord = newRR(dn, 16) as dnsTypeTXT; // TXT record type is 16
+        txtRecord.Txt = DEFAULT_SPF;
+        value["txt"] = txtRecord;
+    }
+
+    const initial = parseSPF(value["txt"].Txt || DEFAULT_SPF);
+    let v = $state(initial.v);
+    let f = $state(initial.f);
 
     $effect(() => {
-        if (value["txt"]?.Txt) {
-            val = parseSPF(value["txt"].Txt);
-        }
-    });
-    $effect(() => {
-        if (!value["txt"]) {
-            const txtRecord = newRR(dn, 16) as dnsTypeTXT; // TXT record type is 16
-            txtRecord.Txt = "v=spf1 -all";
-            value["txt"] = txtRecord;
-        }
-        if (value["txt"]) {
-            value["txt"].Txt = stringifySPF(val);
-        }
+        value["txt"]!.Txt = stringifySPF(v, f);
     });
 
     const type = "svcs.SPF";
@@ -74,19 +75,19 @@
 
     async function addDirective() {
         let newIdx: number;
-        if (val.f.length >= 1 && val.f[val.f.length - 1].indexOf("all") >= 0) {
-            newIdx = val.f.length - 1;
-            val.f.splice(val.f.length - 1, 0, "");
+        if (f.length >= 1 && ALL_RE.test(f[f.length - 1])) {
+            newIdx = f.length - 1;
+            f.splice(newIdx, 0, "");
         } else {
-            newIdx = val.f.length;
-            val.f.push("");
+            newIdx = f.length;
+            f.push("");
         }
         await tick();
         inputRefs[newIdx]?.focus();
     }
 
     function delDirective(idx: number) {
-        val.f.splice(idx, 1);
+        f.splice(idx, 1);
     }
 </script>
 
@@ -103,17 +104,17 @@
             type: "string",
             description: "Defines the version of SPF to use.",
         }}
-        bind:value={val.v}
+        bind:value={v}
     />
 
     <h5 class="text-primary pb-1 border-bottom border-1">Directives</h5>
     <ListGroup>
-        {#each val.f as directive, i}
+        {#each f as _, i (i)}
             <ListGroupItem class="p-0">
                 <InputGroup>
                     <input
                         class="form-control border-0"
-                        bind:value={val.f[i]}
+                        bind:value={f[i]}
                         bind:this={inputRefs[i]}
                     />
                     <Button

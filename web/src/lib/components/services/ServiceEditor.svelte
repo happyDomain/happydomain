@@ -61,12 +61,14 @@
         </div>
     </div>
 {:then EditorComponent}
-    <EditorComponent
-        {dn}
-        {origin}
-        {type}
-        bind:value={value}
-    />
+    {#key value}
+        <EditorComponent
+            {dn}
+            {origin}
+            {type}
+            bind:value={value}
+        />
+    {/key}
 {:catch error}
     <div class="alert alert-warning">
         <p>Failed to load editor for type: {type}</p>

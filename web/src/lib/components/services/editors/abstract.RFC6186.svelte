@@ -42,9 +42,6 @@
         (value as any)["srv"] = [];
     }
 
-    // Type-safe accessor for srv as array
-    const srvArray = $derived((value as any)["srv"] as Array<dnsTypeSRV>);
-
     // Service type configurations with their prefixes
     const services = [
         { key: "submission", prefix: "_submission._tcp", label: "Email Submission" },
@@ -59,40 +56,26 @@
         { key: "pop3s", prefix: "_pop3s._tcp", label: "POP3 over TLS" },
     ];
 
-    // Initialize service arrays from srv (one-time, breaks circular dependency)
-    let initialized = $state(false);
-
-    // Initialize service arrays on mount (runs once regardless of whether srv is empty)
-    $effect(() => {
-        if (!initialized) {
-            for (const service of services) {
-                (value as any)[service.key] = (srvArray ?? []).filter(
-                    (srv: dnsTypeSRV) => srv?.Hdr?.Name?.startsWith(service.prefix) || false,
-                );
-            }
-            initialized = true;
-        }
-    });
-
-    // Initialize empty arrays for services with no records
-    for (const service of services) {
-        if (!(value as any)[service.key]) {
-            (value as any)[service.key] = [];
+    // One-time init: split records from srv into per-service arrays
+    {
+        const srvArray = ((value as any)["srv"] ?? []) as Array<dnsTypeSRV>;
+        for (const service of services) {
+            (value as any)[service.key] = srvArray.filter(
+                (srv: dnsTypeSRV) => srv?.Hdr?.Name?.startsWith(service.prefix) || false,
+            );
         }
     }
 
     // When records in service arrays change, sync back to main array (one-way sync)
     $effect(() => {
-        if (initialized) {
-            const allRecords: Array<dnsTypeSRV> = [];
-            for (const service of services) {
-                const serviceArray = (value as any)[service.key] as Array<dnsTypeSRV>;
-                if (serviceArray) {
-                    allRecords.push(...serviceArray);
-                }
+        const allRecords: Array<dnsTypeSRV> = [];
+        for (const service of services) {
+            const serviceArray = (value as any)[service.key] as Array<dnsTypeSRV>;
+            if (serviceArray) {
+                allRecords.push(...serviceArray);
             }
-            (value as any)["srv"] = allRecords;
         }
+        (value as any)["srv"] = allRecords;
     });
 </script>
 

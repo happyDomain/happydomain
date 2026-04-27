@@ -56,16 +56,11 @@
     // GitHub verification code
     let verificationCode = $state(value["txt"]?.Txt || "");
 
-    // Sync data back to TXT record
     $effect(() => {
-        if (value["txt"]) {
-            // Construct subdomain from organization name
-            if (organizationName) {
-                value["txt"].Hdr.Name =
-                    `_github-challenge-${organizationName.replace(/^_github-challenge-(.+?)-org(\..*)?/, "$1")}-org`;
-            }
-            value["txt"].Txt = verificationCode;
+        if (organizationName) {
+            value["txt"]!.Hdr.Name = `_github-challenge-${organizationName}-org`;
         }
+        value["txt"]!.Txt = verificationCode;
     });
 </script>
 

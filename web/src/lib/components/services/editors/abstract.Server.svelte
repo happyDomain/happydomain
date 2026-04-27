@@ -38,11 +38,9 @@
 
     let { dn, origin, value = $bindable({}) }: Props = $props();
 
-    $effect(() => {
-        if (!value["SSHFP"]) {
-            value["SSHFP"] = [];
-        }
-    });
+    if (!value["SSHFP"]) {
+        value["SSHFP"] = [];
+    }
 
     const type = "abstract.Server";
 </script>

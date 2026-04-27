@@ -39,35 +39,18 @@
 
     let { dn, origin, value = $bindable({}) }: Props = $props();
 
-    // Initialize value["txt"] if it doesn't exist
     if (!value["txt"]) {
         value["txt"] = newRR("._domainkey", getRrtype("TXT")) as any;
     }
 
-    let val = $state(parseDKIM(value["txt"]?.Txt || ""));
-    $effect(() => {
-        if (value["txt"]?.Txt !== undefined) {
-            val = parseDKIM(value["txt"].Txt);
-        }
-    });
-    $effect(() => {
-        if (!value["txt"]) {
-            value["txt"] = newRR(selector + "._domainkey", getRrtype("TXT")) as any;
-        }
-        if (value["txt"]) {
-            value["txt"].Txt = stringifyDKIM(val, value["txt"].Txt || "");
-        }
-    });
+    let val = $state(parseDKIM(value["txt"]!.Txt || ""));
+    let selector = $state(value["txt"]!.Hdr?.Name?.replace("._domainkey", "") || "");
 
-    let selector = $state(value["txt"]?.Hdr?.Name?.replace("._domainkey", "") || "");
     $effect(() => {
-        if (value["txt"]?.Hdr?.Name) {
-            selector = value["txt"].Hdr.Name.replace("._domainkey", "");
-        }
-    });
-    $effect(() => {
-        if (value["txt"]?.Hdr) {
-            value["txt"].Hdr.Name = selector + "._domainkey";
+        const txt = value["txt"]!;
+        txt.Txt = stringifyDKIM(val, txt.Txt || "");
+        if (txt.Hdr) {
+            txt.Hdr.Name = selector + "._domainkey";
         }
     });
 

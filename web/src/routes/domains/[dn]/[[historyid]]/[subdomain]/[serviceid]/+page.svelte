@@ -167,12 +167,14 @@
                     <Spinner />
                 </div>
             {:else}
-                <ServiceEditor
-                    dn={service._domain}
-                    origin={data.domain}
-                    type={service._svctype}
-                    bind:value={service.Service}
-                />
+                {#key data.serviceid}
+                    <ServiceEditor
+                        dn={service._domain}
+                        origin={data.domain}
+                        type={service._svctype}
+                        bind:value={service.Service}
+                    />
+                {/key}
             {/if}
         </form>
 

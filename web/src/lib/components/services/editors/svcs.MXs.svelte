@@ -37,12 +37,9 @@
 
     const type = "svcs.MXs";
 
-    // Ensure mx is always an array at runtime
-    $effect(() => {
-        if (value["mx"] && !Array.isArray(value["mx"])) {
-            value["mx"] = [value["mx"]];
-        }
-    });
+    if (value["mx"] && !Array.isArray(value["mx"])) {
+        value["mx"] = [value["mx"]];
+    }
 </script>
 
 <div>

@@ -48,8 +48,15 @@
         value.username = "";
     }
 
-    // Name hash state
-    let nameHash = $state("");
+    // One-time init: extract existing name hash from domain name if no username
+    let initialNameHash = "";
+    if (!value["username"] && value["smimea"]?.Hdr?.Name) {
+        const parts = value["smimea"].Hdr.Name.split("._smimecert");
+        if (parts.length > 0 && parts[0]) {
+            initialNameHash = parts[0];
+        }
+    }
+    let nameHash = $state(initialNameHash);
 
     // Compute SHA-224 hash from username
     async function computeHash(username: string): Promise<string> {
@@ -70,16 +77,6 @@
             computeHash(value["username"]).then((hash) => {
                 nameHash = hash;
             });
-        }
-    });
-
-    // Extract name hash from existing domain name on load
-    $effect(() => {
-        if (!value["username"] && value["smimea"]?.Hdr?.Name && !nameHash) {
-            const parts = value["smimea"].Hdr.Name.split("._smimecert");
-            if (parts.length > 0 && parts[0]) {
-                nameHash = parts[0];
-            }
         }
     });
 

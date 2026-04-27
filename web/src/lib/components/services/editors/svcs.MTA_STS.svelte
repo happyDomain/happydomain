@@ -36,20 +36,14 @@
 
     let { dn, origin, value = $bindable({}) }: Props = $props();
 
+    if (!value["txt"]) {
+        value["txt"] = newRR(dn, getRrtype("TXT")) as any;
+    }
+
     let val = $state(parseMTASTS(value["txt"]?.Txt || ""));
 
     $effect(() => {
-        if (value["txt"]?.Txt !== undefined) {
-            val = parseMTASTS(value["txt"].Txt);
-        }
-    });
-    $effect(() => {
-        if (!value["txt"]) {
-            value["txt"] = newRR(dn, getRrtype("TXT")) as any;
-        }
-        if (value["txt"]) {
-            value["txt"].Txt = stringifyMTASTS(val, value["txt"]?.Txt || "");
-        }
+        value["txt"]!.Txt = stringifyMTASTS(val, value["txt"]?.Txt || "");
     });
 
     const type = "svcs.MTA_STS";

@@ -39,20 +39,14 @@
 
     let { dn, origin, value = $bindable({}) }: Props = $props();
 
+    if (!value["txt"]) {
+        value["txt"] = newRR(dn, getRrtype("TXT")) as any;
+    }
+
     let val = $state(parseDMARC(value["txt"]?.Txt || ""));
 
     $effect(() => {
-        if (value["txt"]?.Txt !== undefined) {
-            val = parseDMARC(value["txt"].Txt);
-        }
-    });
-    $effect(() => {
-        if (!value["txt"]) {
-            value["txt"] = newRR(dn, getRrtype("TXT")) as any;
-        }
-        if (value["txt"]) {
-            value["txt"].Txt = stringifyDMARC(val, value["txt"]?.Txt || "");
-        }
+        value["txt"]!.Txt = stringifyDMARC(val, value["txt"]?.Txt || "");
     });
 
     const type = "svcs.DMARC";
