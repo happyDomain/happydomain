@@ -19,6 +19,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import { checkDMARCReportAuth } from "$lib/api/resolver";
+import { fqdn } from "$lib/dns";
 import {
     type ComplianceContext,
     type ComplianceIssue,
@@ -38,6 +40,29 @@ function isMailto(uri: string): boolean {
 
 function isHttp(uri: string): boolean {
     return /^https?:/i.test(uri.trim());
+}
+
+// protectedDomainOf returns the apex domain that the DMARC record protects,
+// derived from the editing context. The DMARC owner name lives at
+// "_dmarc.<protected>", so we strip the "_dmarc" leading label of ctx.dn and
+// resolve against ctx.origin.
+function protectedDomainOf(ctx: ComplianceContext): string {
+    const sub = (ctx.dn ?? "").replace(/^_dmarc(\.|$)/i, "$1").replace(/^\./, "");
+    const origin = ctx.origin?.domain ?? "";
+    const protectedFqdn = fqdn(sub || "@", origin);
+    return protectedFqdn.replace(/\.$/, "").toLowerCase();
+}
+
+// mailtoTarget extracts the destination domain from a "mailto:" URI, dropping
+// the optional "!size" suffix allowed by RFC 7489 sec. 6.2 ("!10m" etc.).
+// Returns null when the URI is not a syntactically valid mailto address.
+function mailtoTarget(uri: string): { address: string; domain: string } | null {
+    const stripped = uri.trim().replace(/^mailto:/i, "");
+    if (!stripped) return null;
+    const address = stripped.split("!")[0];
+    const at = address.lastIndexOf("@");
+    if (at <= 0 || at === address.length - 1) return null;
+    return { address, domain: address.slice(at + 1).toLowerCase() };
 }
 
 function dmarcSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceIssue[] {
@@ -241,6 +266,32 @@ function dmarcSync(raw: Record<string, any>, ctx: ComplianceContext): Compliance
     for (const u of val.rua ?? []) uriCheck(u, "rua");
     for (const u of val.ruf ?? []) uriCheck(u, "ruf");
 
+    // Surface external reporting destinations. RFC 7489 sec. 7.1 requires the
+    // external domain to publish an authorization record; we hint at it here
+    // and the async validator does the actual lookup.
+    const protectedDomain = protectedDomainOf(ctx);
+    if (protectedDomain) {
+        const externalDomains = new Set<string>();
+        for (const tag of ["rua", "ruf"] as const) {
+            for (const u of val[tag] ?? []) {
+                if (!isMailto(u)) continue;
+                const t = mailtoTarget(u);
+                if (!t) continue;
+                if (t.domain && t.domain !== protectedDomain) {
+                    externalDomains.add(t.domain);
+                }
+            }
+        }
+        for (const d of externalDomains) {
+            issues.push({
+                id: "dmarc.external-reporting",
+                severity: "info",
+                params: { domain: d },
+                docUrl: RFC + "#section-7.1",
+            });
+        }
+    }
+
     // Cross-record checks: DMARC depends on at least one aligned mechanism
     // (DKIM or SPF). When the zone state is available, surface configurations
     // where alignment is structurally impossible.
@@ -270,4 +321,94 @@ function dmarcSync(raw: Record<string, any>, ctx: ComplianceContext): Compliance
     return issues;
 }
 
-registerValidators("svcs.DMARC", { sync: dmarcSync });
+// dmarcAsync verifies the RFC 7489 sec. 7.1 cross-domain reporting
+// authorization for every distinct external mailto destination found in the
+// rua/ruf lists. The check is skipped when no external destination is in use,
+// or when the protected owner cannot be derived from the editing context.
+async function dmarcAsync(
+    raw: Record<string, any>,
+    ctx: ComplianceContext,
+    signal: AbortSignal,
+): Promise<ComplianceIssue[]> {
+    const txt = raw?.txt;
+    const txtValue: string = typeof txt?.Txt === "string" ? txt.Txt : "";
+    if (!txtValue.trim()) return [];
+
+    let val: DMARCValue;
+    try {
+        val = parseDMARC(txtValue);
+    } catch {
+        return [];
+    }
+
+    const protectedDomain = protectedDomainOf(ctx);
+    if (!protectedDomain) return [];
+
+    // Map each external domain to the (tag, address) pair that referenced it
+    // first, so the issue can point back at the offending URI.
+    type Ref = { tag: "rua" | "ruf"; address: string };
+    const externals = new Map<string, Ref>();
+    for (const tag of ["rua", "ruf"] as const) {
+        for (const u of val[tag] ?? []) {
+            if (!isMailto(u)) continue;
+            const t = mailtoTarget(u);
+            if (!t || t.domain === protectedDomain) continue;
+            if (!externals.has(t.domain)) {
+                externals.set(t.domain, { tag, address: t.address });
+            }
+        }
+    }
+    if (externals.size === 0) return [];
+
+    const issues: ComplianceIssue[] = [];
+    for (const [domain, ref] of externals) {
+        const resp = await checkDMARCReportAuth(
+            { owner: protectedDomain, externalDomain: domain },
+            signal,
+        );
+        if (signal.aborted) return [];
+
+        const queriedName = resp.queriedName ?? "";
+        switch (resp.status) {
+            case "ok":
+                break;
+            case "no-dmarc-record":
+                issues.push({
+                    id: "dmarc.report-auth-no-dmarc",
+                    severity: "error",
+                    params: { domain, queriedName, address: ref.address, tag: ref.tag },
+                    field: ref.tag,
+                    docUrl: RFC + "#section-7.1",
+                });
+                break;
+            case "not-found":
+                issues.push({
+                    id: "dmarc.report-auth-missing",
+                    severity: "error",
+                    params: { domain, queriedName, address: ref.address, tag: ref.tag },
+                    field: ref.tag,
+                    docUrl: RFC + "#section-7.1",
+                });
+                break;
+            case "dns-error":
+            case "resolver-error":
+            default:
+                issues.push({
+                    id: "dmarc.report-auth-resolver-error",
+                    severity: "warning",
+                    params: {
+                        domain,
+                        queriedName,
+                        tag: ref.tag,
+                        error: resp.errorMsg ?? "",
+                    },
+                    field: ref.tag,
+                    docUrl: RFC + "#section-7.1",
+                });
+                break;
+        }
+    }
+    return issues;
+}
+
+registerValidators("svcs.DMARC", { sync: dmarcSync, async: dmarcAsync });

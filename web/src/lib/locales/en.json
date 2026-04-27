@@ -931,6 +931,22 @@
             "strict-dkim-no-record": {
                 "title": "adkim=s but no DKIM record in this zone",
                 "detail": "Strict DKIM alignment requires the d= signing domain to match exactly. With no DKIM published, only SPF alignment can succeed."
+            },
+            "external-reporting": {
+                "title": "Reports go to external domain {{domain}}",
+                "detail": "RFC 7489 sec. 7.1 requires {{domain}} to publish a TXT record authorizing report delivery for this domain."
+            },
+            "report-auth-missing": {
+                "title": "{{domain}} does not authorize reports for this domain",
+                "detail": "No TXT record found at {{queriedName}}. Without it, {{address}} will silently drop your DMARC reports."
+            },
+            "report-auth-no-dmarc": {
+                "title": "Authorization record at {{domain}} is malformed",
+                "detail": "{{queriedName}} returned TXT records but none start with v=DMARC1; reports may not be accepted."
+            },
+            "report-auth-resolver-error": {
+                "title": "Could not check report authorization at {{domain}}",
+                "detail": "Resolving {{queriedName}} failed: {{error}}"
             }
         },
         "mta_sts": {

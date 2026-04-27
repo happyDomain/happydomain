@@ -210,6 +210,37 @@ describe("DMARC compliance: cross-checks with DKIM / SPF", () => {
     });
 });
 
+describe("DMARC compliance: external reporting (sync hint)", () => {
+    it("flags a rua to a domain different from the protected one", () => {
+        const issues = run("v=DMARC1;p=reject;rua=mailto:dmarc@thirdparty.tld");
+        const ext = issues.find((i) => i.id === "dmarc.external-reporting");
+        expect(ext).toBeDefined();
+        expect(ext?.params).toMatchObject({ domain: "thirdparty.tld" });
+    });
+    it("does not flag a rua pointing at the protected domain itself", () => {
+        const issues = run("v=DMARC1;p=reject;rua=mailto:dmarc@example.com");
+        expect(ids(issues)).not.toContain("dmarc.external-reporting");
+    });
+    it("does not flag a rua pointing at a subdomain of the protected domain", () => {
+        // Same apex, different label. Strictly speaking RFC 7489 still wants
+        // an authorization record across labels, but this is a sync-only hint;
+        // the async check still runs against the resolver.
+        const issues = run("v=DMARC1;p=reject;rua=mailto:dmarc@reports.example.com");
+        const ext = issues.find((i) => i.id === "dmarc.external-reporting");
+        expect(ext?.params).toMatchObject({ domain: "reports.example.com" });
+    });
+    it("dedupes external destinations", () => {
+        const issues = run(
+            "v=DMARC1;p=reject;rua=mailto:a@thirdparty.tld;ruf=mailto:b@thirdparty.tld",
+        );
+        expect(issues.filter((i) => i.id === "dmarc.external-reporting")).toHaveLength(1);
+    });
+    it("ignores http rua URIs (only mailto carries an external domain)", () => {
+        const issues = run("v=DMARC1;p=reject;rua=https://thirdparty.tld/collect");
+        expect(ids(issues)).not.toContain("dmarc.external-reporting");
+    });
+});
+
 describe("DMARC compliance: graceful empty input", () => {
     it("returns no issue on empty TXT", () => {
         expect(run("")).toEqual([]);

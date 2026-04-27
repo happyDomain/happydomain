@@ -699,6 +699,22 @@
                 "title": "p={{policy}} mais aucun DKIM ni SPF dans cette zone",
                 "detail": "Tous les messages légitimes échoueront DMARC et seront mis en quarantaine ou rejetés. Publiez DKIM et/ou SPF avant d'appliquer la politique."
             },
+            "external-reporting": {
+                "title": "Les rapports sont envoyés au domaine externe {{domain}}",
+                "detail": "La RFC 7489 sec. 7.1 impose que {{domain}} publie un enregistrement TXT autorisant la réception des rapports pour ce domaine."
+            },
+            "report-auth-missing": {
+                "title": "{{domain}} n'autorise pas les rapports pour ce domaine",
+                "detail": "Aucun enregistrement TXT trouvé à {{queriedName}}. Sans cet enregistrement, {{address}} ignorera silencieusement vos rapports DMARC."
+            },
+            "report-auth-no-dmarc": {
+                "title": "L'enregistrement d'autorisation à {{domain}} est malformé",
+                "detail": "{{queriedName}} renvoie des TXT, mais aucun ne commence par v=DMARC1 ; les rapports risquent d'être rejetés."
+            },
+            "report-auth-resolver-error": {
+                "title": "Impossible de vérifier l'autorisation à {{domain}}",
+                "detail": "La résolution de {{queriedName}} a échoué : {{error}}"
+            },
             "strict-dkim-no-record": {
                 "title": "adkim=s mais aucun enregistrement DKIM dans cette zone",
                 "detail": "L'alignement DKIM strict requiert que le domaine signataire d= corresponde exactement. Sans DKIM publié, seul l'alignement SPF peut aboutir."

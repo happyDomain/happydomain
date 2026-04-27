@@ -21,10 +21,13 @@
 
 import {
     postResolver,
+    postResolverDmarcReportAuth,
     postResolverMtaStsPolicy,
     postResolverSpfFlatten,
 } from "$lib/api-base/sdk.gen";
 import type {
+    HappydnsDmarcReportAuthRequest,
+    HappydnsDmarcReportAuthResponse,
     HappydnsMtastsPolicyRequest,
     HappydnsMtastsPolicyResponse,
     HappydnsResolverResponse,
@@ -64,4 +67,16 @@ export async function fetchMTAStsPolicy(
             signal,
         }),
     ) as HappydnsMtastsPolicyResponse;
+}
+
+export async function checkDMARCReportAuth(
+    body: HappydnsDmarcReportAuthRequest,
+    signal?: AbortSignal,
+): Promise<HappydnsDmarcReportAuthResponse> {
+    return unwrapSdkResponse(
+        await postResolverDmarcReportAuth({
+            body,
+            signal,
+        }),
+    ) as HappydnsDmarcReportAuthResponse;
 }
