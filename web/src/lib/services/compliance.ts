@@ -60,6 +60,12 @@ export interface ComplianceContext {
      * @param type Optional service type filter (e.g. "svcs.DKIM").
      */
     findServices(subdomain: string, type?: string): ServiceWithValue[];
+    /**
+     * Iterate every service in the zone, optionally filtered by service type.
+     * Used by cross-record validators (e.g. DMARC checking that DKIM or SPF
+     * records exist anywhere in the zone).
+     */
+    findAllServices(type?: string): ServiceWithValue[];
 }
 
 export type SyncValidator = (
@@ -111,6 +117,16 @@ export function buildContext(dn: string, origin: Domain, zone: Zone | null): Com
             if (!zone) return [];
             const services = zone.services?.[subdomain] ?? [];
             return type ? services.filter((s) => s._svctype === type) : services.slice();
+        },
+        findAllServices(type) {
+            if (!zone?.services) return [];
+            const out: ServiceWithValue[] = [];
+            for (const services of Object.values(zone.services)) {
+                for (const svc of services) {
+                    if (!type || svc._svctype === type) out.push(svc);
+                }
+            }
+            return out;
         },
     };
 }

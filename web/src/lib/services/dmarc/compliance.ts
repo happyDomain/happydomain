@@ -40,7 +40,7 @@ function isHttp(uri: string): boolean {
     return /^https?:/i.test(uri.trim());
 }
 
-function dmarcSync(raw: Record<string, any>, _ctx: ComplianceContext): ComplianceIssue[] {
+function dmarcSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceIssue[] {
     const issues: ComplianceIssue[] = [];
     const txt = raw?.txt;
     if (!txt) return issues;
@@ -240,6 +240,32 @@ function dmarcSync(raw: Record<string, any>, _ctx: ComplianceContext): Complianc
     };
     for (const u of val.rua ?? []) uriCheck(u, "rua");
     for (const u of val.ruf ?? []) uriCheck(u, "ruf");
+
+    // Cross-record checks: DMARC depends on at least one aligned mechanism
+    // (DKIM or SPF). When the zone state is available, surface configurations
+    // where alignment is structurally impossible.
+    const policy = val.p ?? "";
+    const enforcing = policy === "quarantine" || policy === "reject";
+    const dkimRecords = ctx.findAllServices("svcs.DKIMRecord");
+    const spfRecords = ctx.findAllServices("svcs.SPF");
+    const hasDkim = dkimRecords.length > 0;
+    const hasSpf = spfRecords.length > 0;
+
+    if (ctx.zone) {
+        if (!hasDkim && !hasSpf) {
+            issues.push({
+                id: enforcing ? "dmarc.no-alignment-source-enforcing" : "dmarc.no-alignment-source",
+                severity: enforcing ? "error" : "warning",
+                docUrl: RFC + "#section-3",
+            });
+        } else if (val.adkim === "s" && !hasDkim) {
+            issues.push({
+                id: "dmarc.strict-dkim-no-record",
+                severity: "warning",
+                docUrl: RFC + "#section-3.1",
+            });
+        }
+    }
 
     return issues;
 }

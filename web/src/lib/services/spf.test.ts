@@ -29,6 +29,7 @@ const ctx: ComplianceContext = {
     origin: { id: "test", domain: "example.com" } as unknown as Domain,
     zone: null,
     findServices: () => [],
+    findAllServices: () => [],
 };
 
 const ids = (issues: { id: string }[]) => issues.map((i) => i.id);

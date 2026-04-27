@@ -919,6 +919,18 @@
             "invalid-mailto": {
                 "title": "Malformed mailto URI in {{tag}}: \"{{uri}}\"",
                 "detail": "Expected mailto:user@example.com (an optional !size suffix is allowed)."
+            },
+            "no-alignment-source": {
+                "title": "No DKIM or SPF record found in this zone",
+                "detail": "DMARC needs at least one aligned mechanism. Without a DKIM or SPF record, no message can pass DMARC."
+            },
+            "no-alignment-source-enforcing": {
+                "title": "p={{policy}} but no DKIM or SPF record in this zone",
+                "detail": "Every legitimate message will fail DMARC and be quarantined or rejected. Publish DKIM and/or SPF before enforcing."
+            },
+            "strict-dkim-no-record": {
+                "title": "adkim=s but no DKIM record in this zone",
+                "detail": "Strict DKIM alignment requires the d= signing domain to match exactly. With no DKIM published, only SPF alignment can succeed."
             }
         },
         "mta_sts": {
