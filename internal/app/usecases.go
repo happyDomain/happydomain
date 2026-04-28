@@ -121,10 +121,11 @@ func (app *App) initUsecases() {
 	)
 
 	// Checker system.
-	app.usecases.checkerOptionsUC = checkerUC.NewCheckerOptionsUsecase(app.store, app.store)
+	app.usecases.checkerOptionsUC = checkerUC.NewCheckerOptionsUsecase(app.store, app.store).
+		WithDiscoveryEntryStore(app.store).
+		WithAdminOptions(app.cfg.CheckerAdminOptions)
 	app.usecases.checkerPlanUC = checkerUC.NewCheckPlanUsecase(app.store)
 	app.usecases.checkerStatusUC = checkerUC.NewCheckStatusUsecase(app.store, app.store, app.store, app.store)
-	app.usecases.checkerOptionsUC.WithDiscoveryEntryStore(app.store)
 	app.usecases.checkerEngine = checkerUC.NewCheckerEngine(
 		app.usecases.checkerOptionsUC,
 		app.store,
@@ -134,11 +135,6 @@ func (app *App) initUsecases() {
 		app.store,
 		app.store,
 	)
-	if setter, ok := app.usecases.checkerEngine.(interface {
-		SetRemoteAddresses(map[string]string)
-	}); ok {
-		setter.SetRemoteAddresses(app.cfg.CheckerRemoteAddresses)
-	}
 	// Build the user-level gate so paused or long-inactive users do not
 	// get checked. The same user resolver is reused by the janitor for
 	// per-user retention overrides.

@@ -140,11 +140,13 @@ type Options struct {
 	// checker plugins (.so files).
 	PluginsDirectories []string
 
-	// CheckerRemoteAddresses maps a checker ID to the URL of a remote HTTP
-	// service that should run that checker's observation collection. When
-	// set for a given checker, this CLI/config value takes precedence over
-	// any per-checker "endpoint" AdminOpt.
-	CheckerRemoteAddresses map[string]string
+	// CheckerAdminOptions holds per-checker admin-scope option overrides
+	// supplied at startup via CLI flags or environment variables. The outer
+	// key is a checker ID; the inner map mirrors the checker's AdminOpts
+	// (one key per option Id). When set, these values take precedence over
+	// the same options stored in the database, including the "endpoint"
+	// AdminOpt added by RegisterExternalizableChecker.
+	CheckerAdminOptions map[string]CheckerOptions
 }
 
 // GetBaseURL returns the full url to the absolute ExternalURL, including BaseURL.

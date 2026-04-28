@@ -25,6 +25,7 @@ import (
 	"flag"
 	"fmt"
 	"runtime"
+	"strings"
 	"time"
 
 	"git.happydns.org/happyDomain/internal/checker"
@@ -73,21 +74,46 @@ func declareFlags(o *happydns.Options) {
 
 	flag.Var(&stringSlice{&o.PluginsDirectories}, "plugins-directory", "Path to a directory containing checker plugins (.so files); may be repeated")
 
-	// One -checker-<id>-remote-address flag per registered checker. Checkers
-	// register themselves in init() of the blank-imported `checkers` package,
-	// so by the time declareFlags runs the registry is fully populated.
-	if o.CheckerRemoteAddresses == nil {
-		o.CheckerRemoteAddresses = map[string]string{}
+	// Register one -checker-<id>-<opt-id> flag per registered checker AdminOpt.
+	// Checkers register themselves in init() of the blank-imported `checkers`
+	// package, so by the time declareFlags runs the registry is fully
+	// populated. Values set here win over the same options stored in the DB
+	// (handled by the checker engine when merging options).
+	if o.CheckerAdminOptions == nil {
+		o.CheckerAdminOptions = map[string]happydns.CheckerOptions{}
 	}
-	for id := range checker.GetCheckers() {
-		flag.Var(
-			&mapEntry{Map: &o.CheckerRemoteAddresses, Key: id},
-			fmt.Sprintf("checker-%s-remote-address", id),
-			fmt.Sprintf("URL of a remote HTTP service that should run the %q checker (overrides any per-checker endpoint AdminOpt)", id),
-		)
+	for id, def := range checker.GetCheckers() {
+		if len(def.Options.AdminOpts) == 0 {
+			continue
+		}
+		if o.CheckerAdminOptions[id] == nil {
+			o.CheckerAdminOptions[id] = happydns.CheckerOptions{}
+		}
+		opts := o.CheckerAdminOptions[id]
+		for _, opt := range def.Options.AdminOpts {
+			flag.Var(
+				&checkerOptionFlag{Opts: opts, Key: opt.Id, Type: opt.Type},
+				fmt.Sprintf("checker-%s-%s", id, strings.ToLower(opt.Id)),
+				adminOptFlagUsage(id, opt),
+			)
+		}
 	}
 
 	// Others flags are declared in some other files likes sources, storages, ... when they need specials configurations
+}
+
+// adminOptFlagUsage returns the help string shown for a checker AdminOpt
+// CLI flag. It prefers the option's own description, falling back to its
+// label, and always names the checker so the flag's purpose is unambiguous.
+func adminOptFlagUsage(checkerID string, opt happydns.CheckerOptionDocumentation) string {
+	switch {
+	case opt.Description != "":
+		return fmt.Sprintf("[checker %s] %s", checkerID, opt.Description)
+	case opt.Label != "":
+		return fmt.Sprintf("[checker %s] %s", checkerID, opt.Label)
+	default:
+		return fmt.Sprintf("Admin-scope option %q for checker %q", opt.Id, checkerID)
+	}
 }
 
 // parseCLI parse the flags and treats extra args as configuration filename.

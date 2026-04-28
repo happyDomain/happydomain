@@ -86,6 +86,7 @@ type CheckerOptionsUsecase struct {
 	store          CheckerOptionsStorage
 	autoFillStore  CheckAutoFillStorage
 	discoveryStore DiscoveryEntryStorage
+	adminOptions   map[string]happydns.CheckerOptions
 }
 
 // NewCheckerOptionsUsecase creates a new CheckerOptionsUsecase.
@@ -99,6 +100,16 @@ func NewCheckerOptionsUsecase(store CheckerOptionsStorage, autoFillStore CheckAu
 // keeps AutoFillDiscoveryEntries fields unfilled.
 func (u *CheckerOptionsUsecase) WithDiscoveryEntryStore(store DiscoveryEntryStorage) *CheckerOptionsUsecase {
 	u.discoveryStore = store
+	return u
+}
+
+// WithAdminOptions installs per-checker admin-scope option overrides sourced
+// from CLI flags / env vars. They are applied with the highest priority in
+// GetCheckerOptions (so the admin panel reflects effective values) and in
+// BuildMergedCheckerOptionsWithAutoFill (so executions use them). Calling
+// with nil or an empty map is a no-op.
+func (u *CheckerOptionsUsecase) WithAdminOptions(opts map[string]happydns.CheckerOptions) *CheckerOptionsUsecase {
+	u.adminOptions = opts
 	return u
 }
 
@@ -160,6 +171,10 @@ func (u *CheckerOptionsUsecase) GetCheckerOptions(
 			}
 			merged[k] = v
 		}
+	}
+	// CLI admin opts win over everything stored in the DB.
+	if cliAdmin := u.adminOptions[checkerName]; len(cliAdmin) > 0 {
+		maps.Copy(merged, cliAdmin)
 	}
 	return merged, nil
 }
@@ -675,6 +690,11 @@ func (u *CheckerOptionsUsecase) BuildMergedCheckerOptionsWithAutoFill(
 				merged[fieldId] = val
 			}
 		}
+	}
+
+	// CLI admin opts win over everything, including auto-fill.
+	if cliAdmin := u.adminOptions[checkerName]; len(cliAdmin) > 0 {
+		maps.Copy(merged, cliAdmin)
 	}
 
 	return merged, injectedEntries, nil

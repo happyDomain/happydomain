@@ -8,6 +8,12 @@ services:
       - "8080:8081"
     environment:
       HAPPYDOMAIN_NO_AUTH: "1"
+
+      # Override some checkers options: use local checkers instead of remote public ones
+      HAPPYDOMAIN_CHECKER_MATRIXIM_FEDERATIONTESTERSERVER: "http://matrixfederationtester:8080/api/report?server_name=%s"
+      HAPPYDOMAIN_CHECKER_ZONEMASTER_ZONEMASTERAPIURL: "http://zonemaster:5000"
+      HAPPYDOMAIN_CHECKER_DNSVIZ_ENDPOINT: "http://dnsviz:8080"
+
       # Add more settings here
       # HAPPYDOMAIN_MAIL_SMTP_HOST: "mailer"
 
@@ -15,6 +21,24 @@ services:
 
     volumes:
       - storage:/var/lib/happydomain:rw
+
+  dnsviz:
+    image: happydomain/checker-dnsviz
+    build:
+      context: ../checker-dnsviz
+      dockerfile: Dockerfile
+    restart: unless-stopped
+
+  matrixfederationtester:
+    image: matrixdotorg/federation-tester-backend
+    environment:
+      BIND_ADDRESS: "0.0.0.0:8080"
+    restart: unless-stopped
+
+  zonemaster:
+    image: zonemaster/backend
+    command: full
+    restart: unless-stopped
 
 volumes:
   storage:

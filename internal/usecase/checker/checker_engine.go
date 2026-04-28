@@ -44,17 +44,16 @@ type ExecutionCallbackSetter interface {
 	SetExecutionCallback(func(*happydns.Execution, *happydns.CheckEvaluation))
 }
 
-// checkerEngine implements the happydns.CheckerEngine interface.
-type checkerEngine struct {
-	optionsUC       *CheckerOptionsUsecase
-	evalStore       CheckEvaluationStorage
-	execStore       ExecutionStorage
-	snapStore       ObservationSnapshotStorage
-	cacheStore      ObservationCacheStorage
-	entryStore      DiscoveryEntryStorage
-	obsRefStore     DiscoveryObservationStorage
-	relatedLookup   checkerPkg.RelatedObservationLookup
-	remoteAddresses map[string]string
+// Engine implements the happydns.CheckerEngine interface.
+type Engine struct {
+	optionsUC     *CheckerOptionsUsecase
+	evalStore     CheckEvaluationStorage
+	execStore     ExecutionStorage
+	snapStore     ObservationSnapshotStorage
+	cacheStore    ObservationCacheStorage
+	entryStore    DiscoveryEntryStorage
+	obsRefStore   DiscoveryObservationStorage
+	relatedLookup checkerPkg.RelatedObservationLookup
 
 	// onComplete is read concurrently by RunExecution from worker goroutines
 	// while SetExecutionCallback writes it during app wiring (and potentially
@@ -63,21 +62,13 @@ type checkerEngine struct {
 }
 
 // SetExecutionCallback registers a callback invoked after each successful execution.
-func (e *checkerEngine) SetExecutionCallback(cb func(*happydns.Execution, *happydns.CheckEvaluation)) {
+func (e *Engine) SetExecutionCallback(cb func(*happydns.Execution, *happydns.CheckEvaluation)) {
 	if cb == nil {
 		e.onComplete.Store(nil)
 		return
 	}
 	wrapped := executionCallback(cb)
 	e.onComplete.Store(&wrapped)
-}
-
-// SetRemoteAddresses installs a checker-ID -> remote HTTP endpoint map. When
-// a non-empty entry exists for a checker, runPipeline routes its observation
-// collection through the remote service instead of the local provider, and
-// takes precedence over any per-checker "endpoint" AdminOpt.
-func (e *checkerEngine) SetRemoteAddresses(addrs map[string]string) {
-	e.remoteAddresses = addrs
 }
 
 // NewCheckerEngine creates a new CheckerEngine implementation. Passing nil
@@ -91,8 +82,8 @@ func NewCheckerEngine(
 	cacheStore ObservationCacheStorage,
 	entryStore DiscoveryEntryStorage,
 	obsRefStore DiscoveryObservationStorage,
-) happydns.CheckerEngine {
-	return &checkerEngine{
+) *Engine {
+	return &Engine{
 		optionsUC:     optionsUC,
 		evalStore:     evalStore,
 		execStore:     execStore,
@@ -105,7 +96,7 @@ func NewCheckerEngine(
 }
 
 // CreateExecution validates the checker and creates a pending Execution record.
-func (e *checkerEngine) CreateExecution(checkerID string, target happydns.CheckTarget, plan *happydns.CheckPlan) (*happydns.Execution, error) {
+func (e *Engine) CreateExecution(checkerID string, target happydns.CheckTarget, plan *happydns.CheckPlan) (*happydns.Execution, error) {
 	if checkerPkg.FindChecker(checkerID) == nil {
 		return nil, fmt.Errorf("%w: %s", happydns.ErrCheckerNotFound, checkerID)
 	}
@@ -136,7 +127,7 @@ func (e *checkerEngine) CreateExecution(checkerID string, target happydns.CheckT
 }
 
 // RunExecution takes an existing execution and runs the checker pipeline.
-func (e *checkerEngine) RunExecution(ctx context.Context, exec *happydns.Execution, plan *happydns.CheckPlan, runOpts happydns.CheckerOptions) (*happydns.CheckEvaluation, error) {
+func (e *Engine) RunExecution(ctx context.Context, exec *happydns.Execution, plan *happydns.CheckPlan, runOpts happydns.CheckerOptions) (*happydns.CheckEvaluation, error) {
 	log.Printf("CheckerEngine: running checker %s on %s", exec.CheckerID, exec.Target.String())
 
 	def := checkerPkg.FindChecker(exec.CheckerID)
@@ -191,7 +182,7 @@ func (e *checkerEngine) RunExecution(ctx context.Context, exec *happydns.Executi
 	return eval, nil
 }
 
-func (e *checkerEngine) runPipeline(ctx context.Context, def *happydns.CheckerDefinition, target happydns.CheckTarget, plan *happydns.CheckPlan, planID *happydns.Identifier, runOpts happydns.CheckerOptions) (happydns.CheckState, *happydns.CheckEvaluation, error) {
+func (e *Engine) runPipeline(ctx context.Context, def *happydns.CheckerDefinition, target happydns.CheckTarget, plan *happydns.CheckPlan, planID *happydns.Identifier, runOpts happydns.CheckerOptions) (happydns.CheckState, *happydns.CheckEvaluation, error) {
 	// Resolve options (stored + run + auto-fill).
 	mergedOpts, injectedEntries, err := e.optionsUC.BuildMergedCheckerOptionsWithAutoFill(def.ID, happydns.TargetIdentifier(target.UserId), happydns.TargetIdentifier(target.DomainId), happydns.TargetIdentifier(target.ServiceId), runOpts)
 	if err != nil {
@@ -233,13 +224,10 @@ func (e *checkerEngine) runPipeline(ctx context.Context, def *happydns.CheckerDe
 	}
 
 	// If an endpoint is configured, override observation providers with HTTP
-	// transport. The CLI/config -checker-<id>-remote-address value (if set)
-	// wins over the per-checker "endpoint" AdminOpt.
-	endpoint, _ := mergedOpts["endpoint"].(string)
-	if cli, ok := e.remoteAddresses[def.ID]; ok && cli != "" {
-		endpoint = cli
-	}
-	if endpoint != "" {
+	// transport. The "endpoint" AdminOpt (added by RegisterExternalizableChecker)
+	// may be set in the DB or by a -checker-<id>-endpoint CLI flag; both feed
+	// into mergedOpts above, with the CLI value winning.
+	if endpoint, ok := mergedOpts["endpoint"].(string); ok && endpoint != "" {
 		for _, key := range def.ObservationKeys {
 			obsCtx.SetProviderOverride(key, checkerPkg.NewHTTPObservationProvider(key, endpoint))
 		}
@@ -349,7 +337,7 @@ func (e *checkerEngine) runPipeline(ctx context.Context, def *happydns.CheckerDe
 // reconcile state left over from a previous process that crashed or was
 // killed mid-execution: without it, the affected executions would remain
 // "running" forever in the UI. Returns the number of executions updated.
-func (e *checkerEngine) RecoverStaleExecutions(ctx context.Context) (int, error) {
+func (e *Engine) RecoverStaleExecutions(ctx context.Context) (int, error) {
 	iter, err := e.execStore.ListAllExecutions()
 	if err != nil {
 		return 0, fmt.Errorf("listing executions: %w", err)
@@ -380,7 +368,7 @@ func (e *checkerEngine) RecoverStaleExecutions(ctx context.Context) (int, error)
 // RelatedLookup exposes the engine's Related resolver so controllers can
 // build ReportContexts with cross-checker observations pre-resolved. Returns
 // nil when discovery storage is not wired.
-func (e *checkerEngine) RelatedLookup() checkerPkg.RelatedObservationLookup {
+func (e *Engine) RelatedLookup() checkerPkg.RelatedObservationLookup {
 	return e.relatedLookup
 }
 
