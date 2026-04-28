@@ -30,6 +30,8 @@ git.happydns.org/checker-email-keys v0.2.0 h1:466dNm9+cWGb9H+L5LGy96Ac9rhSbEw9/u
 git.happydns.org/checker-email-keys v0.2.0/go.mod h1:xTFot7UIqn5XajMKkbaHEiZMMD3Fcac7RlQyUE2B3+Q=
 git.happydns.org/checker-happydeliver v0.1.0 h1:ERjLGkOH18NIUapL50LOogr+tfGEmSd5OJd1fav3Vo8=
 git.happydns.org/checker-happydeliver v0.1.0/go.mod h1:2jtD+G/TnyBavfufFk8gb6at6EulvyoH0aREbKsIoiM=
+git.happydns.org/checker-http v0.1.0 h1:T/lppYNMgeLjwSTLwhfoiBKZJTNY8I5x1QKeomBrj3o=
+git.happydns.org/checker-http v0.1.0/go.mod h1:KNMHJcnq2xtf0uedSno9FmFJw447q5CSVxlrBEsLIec=
 git.happydns.org/checker-kerberos v0.2.0 h1:GKPI6LUMa8VngfeHrB8S7qTvnNqvI/UI+1+8yZRy5QE=
 git.happydns.org/checker-kerberos v0.2.0/go.mod h1:M6WndNKJUkNL25KJvFSAEtGxb0iEF3NK/zatzWSw4xo=
 git.happydns.org/checker-ldap v0.1.0 h1:BQqx6yPLNDI7Eynf2l5GboMAxtxCXEGk/37Zp5SWwDk=
