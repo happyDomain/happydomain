@@ -459,7 +459,9 @@ func (s *Scheduler) buildQueue() {
 		def *happydns.CheckerDefinition
 	}
 	for checkerID, def := range checkers {
-		if def.Availability.ApplyToDomain {
+		// ApplyToZone is treated as ApplyToDomain: CheckTarget has no
+		// zone identifier, so zone-scoped checkers run per-domain.
+		if def.Availability.ApplyToDomain || def.Availability.ApplyToZone {
 			domainCheckers = append(domainCheckers, struct {
 				id  string
 				def *happydns.CheckerDefinition
@@ -526,7 +528,7 @@ func (s *Scheduler) NotifyDomainChange(domain *happydns.Domain) {
 	wantKeys := make(map[string]bool)
 	didStr := did.String()
 	for checkerID, def := range checkers {
-		if def.Availability.ApplyToDomain {
+		if def.Availability.ApplyToDomain || def.Availability.ApplyToZone {
 			key := checkerID + "|" + domainTarget.String()
 			if !disabledSet[key] {
 				wantKeys[key] = true
@@ -571,7 +573,7 @@ func (s *Scheduler) NotifyDomainChange(domain *happydns.Domain) {
 
 	// Add new jobs for this domain.
 	for checkerID, def := range checkers {
-		if def.Availability.ApplyToDomain {
+		if def.Availability.ApplyToDomain || def.Availability.ApplyToZone {
 			if s.enqueueJob(checkerID, def, domainTarget, disabledSet, planMap, time.Time{}) {
 				added++
 			}

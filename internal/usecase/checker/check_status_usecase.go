@@ -128,7 +128,9 @@ func (u *CheckStatusUsecase) ListCheckerStatuses(target happydns.CheckTarget) ([
 	for _, def := range checkers {
 		switch target.Scope() {
 		case happydns.CheckScopeDomain:
-			if !def.Availability.ApplyToDomain {
+			// CheckTarget has no zone identifier, so zone-scoped
+			// checkers surface at the domain scope.
+			if !def.Availability.ApplyToDomain && !def.Availability.ApplyToZone {
 				continue
 			}
 		case happydns.CheckScopeService:
