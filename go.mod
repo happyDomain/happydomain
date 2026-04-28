@@ -5,6 +5,7 @@ go 1.25.0
 toolchain go1.26.2
 
 require (
+	git.happydns.org/checker-dangling v0.1.0
 	git.happydns.org/checker-legacy-records v0.1.0
 	git.happydns.org/checker-matrix v0.1.0
 	git.happydns.org/checker-ns-restrictions v0.1.0
