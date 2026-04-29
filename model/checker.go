@@ -143,9 +143,9 @@ type CheckerOptionsPositional struct {
 
 // CheckPlan is an optional user override for a checker on a specific target.
 type CheckPlan struct {
-	Id        Identifier      `json:"id" swaggertype:"string" binding:"required" readonly:"true"`
-	CheckerID string          `json:"checkerId" binding:"required" readonly:"true"`
-	Target    CheckTarget     `json:"target" binding:"required" readonly:"true"`
+	Id        Identifier      `json:"id" swaggertype:"string" validate:"required" readonly:"true"`
+	CheckerID string          `json:"checkerId" validate:"required" readonly:"true"`
+	Target    CheckTarget     `json:"target" validate:"required" readonly:"true"`
 	Interval  *time.Duration  `json:"interval,omitempty" swaggertype:"integer"`
 	Enabled   map[string]bool `json:"enabled,omitempty"`
 }
