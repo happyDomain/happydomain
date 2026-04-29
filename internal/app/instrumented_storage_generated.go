@@ -262,6 +262,11 @@ func (s *instrumentedStorage) DeleteZone(zoneid happydns.Identifier) (err error)
 	return s.inner.DeleteZone(zoneid)
 }
 
+func (s *instrumentedStorage) FindDomainsByName(fqdn string) (ret []*happydns.Domain, err error) {
+	defer observe("get", "domain")(&err)
+	return s.inner.FindDomainsByName(fqdn)
+}
+
 func (s *instrumentedStorage) GetAuthUser(id happydns.Identifier) (ret *happydns.UserAuth, err error) {
 	defer observe("get", "authuser")(&err)
 	return s.inner.GetAuthUser(id)

@@ -26,6 +26,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/miekg/dns"
+
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -86,6 +88,35 @@ func (s *KVStorage) GetDomainByDN(u *happydns.User, dn string) ([]*happydns.Doma
 		if domain.DomainName == dn {
 			ret = append(ret, domain)
 		}
+	}
+
+	if len(ret) == 0 {
+		return nil, happydns.ErrNotFound
+	}
+
+	return ret, nil
+}
+
+func (s *KVStorage) FindDomainsByName(fqdn string) ([]*happydns.Domain, error) {
+	target := dns.Fqdn(fqdn)
+
+	iter := s.db.Search("domain-")
+	defer iter.Release()
+
+	var ret []*happydns.Domain
+	for iter.Next() {
+		var d happydns.Domain
+		if err := s.db.DecodeData(iter.Value(), &d); err != nil {
+			return nil, err
+		}
+		if d.DomainName == target {
+			cp := d
+			ret = append(ret, &cp)
+		}
+	}
+
+	if err := iter.Err(); err != nil {
+		return nil, err
 	}
 
 	if len(ret) == 0 {

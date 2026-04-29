@@ -43,6 +43,11 @@ type DomainStorage interface {
 	// GetDomainByDN is like GetDomain but look for the domain name instead of identifier.
 	GetDomainByDN(user *happydns.User, fqdn string) ([]*happydns.Domain, error)
 
+	// FindDomainsByName looks up Domains by FQDN across all users (no
+	// ownership filter). Used by unauthenticated endpoints like the
+	// email auto-configuration HTTP responders.
+	FindDomainsByName(fqdn string) ([]*happydns.Domain, error)
+
 	// CreateDomain creates a record in the database for the given Domain.
 	CreateDomain(domain *happydns.Domain) error
 

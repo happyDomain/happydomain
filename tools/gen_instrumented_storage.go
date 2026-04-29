@@ -311,6 +311,7 @@ func inferOperation(name string) string {
 		{"ListAll", "list"},
 		{"List", "list"},
 		{"Get", "get"},
+		{"Find", "get"},
 		{"Count", "count"},
 		{"Create", "create"},
 		{"Update", "update"},
