@@ -415,6 +415,29 @@
         "propagation-in-progress": "DNS propagation in progress",
         "propagation-remaining": "Propagation complete in {{countdown}}"
     },
+    "services": {
+        "email-autoconfig": {
+            "title": "Email Auto-configuration",
+            "intro": "Publishes IMAP/POP/SMTP settings via RFC 6186 SRV records, Mozilla Autoconfig, and Microsoft Autodiscover so mail clients can configure themselves automatically.",
+            "incoming": "Incoming server",
+            "outgoing": "Outgoing server",
+            "discovery": "Discovery",
+            "branding": "Branding",
+            "protocol": "Protocol",
+            "hostname": "Hostname",
+            "port": "Port",
+            "auth": "Authentication",
+            "incoming-hostname-desc": "FQDN of your IMAP/POP3 server.",
+            "outgoing-hostname-desc": "FQDN of your SMTP submission server.",
+            "publish-http": "Publish HTTP discovery (autoconfig./autodiscover. CNAMEs)",
+            "publish-http-desc": "When enabled, happyDomain creates CNAMEs for autoconfig.<your-domain> and autodiscover.<your-domain> pointing to this happyDomain instance, which serves the corresponding XML over HTTPS so Thunderbird and Outlook can self-configure.",
+            "exchange": "Exchange Server (optional)",
+            "exchange-desc": "Hostname of an on-premises Microsoft Exchange server. Enables MAPI/EWS in the Autodiscover response.",
+            "display-name": "Provider Display Name",
+            "display-short-name": "Short Name",
+            "username-format": "Username Format"
+        }
+    },
     "records": {
         "add": "Add record",
         "class": "Class",

@@ -16,6 +16,44 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "nearAlone": true
         }
     },
+    "abstract.CalDAV": {
+        "name": "CalDAV (Calendar)",
+        "_svctype": "abstract.CalDAV",
+        "description": "Announce a CalDAV calendar server for the domain via SRV records (RFC 6764).",
+        "family": "abstract",
+        "categories": [
+            "service",
+            "groupware"
+        ],
+        "record_types": null,
+        "restrictions": {
+            "nearAlone": true,
+            "needTypes": [
+                33,
+                16
+            ],
+            "single": true
+        }
+    },
+    "abstract.CardDAV": {
+        "name": "CardDAV (Address Book)",
+        "_svctype": "abstract.CardDAV",
+        "description": "Announce a CardDAV address book server for the domain via SRV records (RFC 6764).",
+        "family": "abstract",
+        "categories": [
+            "service",
+            "groupware"
+        ],
+        "record_types": null,
+        "restrictions": {
+            "nearAlone": true,
+            "needTypes": [
+                33,
+                16
+            ],
+            "single": true
+        }
+    },
     "abstract.Delegation": {
         "name": "Delegation",
         "_svctype": "abstract.Delegation",
@@ -37,6 +75,26 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "leaf": true,
             "needTypes": [
                 2
+            ],
+            "single": true
+        }
+    },
+    "abstract.EmailAutoConfig": {
+        "name": "Email Auto-configuration",
+        "_svctype": "abstract.EmailAutoConfig",
+        "description": "Publish IMAP/POP/SMTP settings for mail clients via RFC 6186, Mozilla Autoconfig, and Microsoft Autodiscover.",
+        "family": "abstract",
+        "categories": [
+            "email"
+        ],
+        "record_types": [
+            33,
+            5
+        ],
+        "restrictions": {
+            "nearAlone": true,
+            "needTypes": [
+                33
             ],
             "single": true
         }
@@ -108,6 +166,34 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
         "restrictions": {
             "nearAlone": true
         }
+    },
+    "abstract.LDAP": {
+        "name": "LDAP Directory",
+        "_svctype": "abstract.LDAP",
+        "description": "Expose an LDAP directory under your domain.",
+        "family": "abstract",
+        "categories": [
+            "service"
+        ],
+        "record_types": null,
+        "restrictions": {
+            "nearAlone": true,
+            "needTypes": [
+                33
+            ],
+            "single": true
+        }
+    },
+    "abstract.LibravatarServer": {
+        "name": "Federated Avatar",
+        "_svctype": "abstract.LibravatarServer",
+        "description": "Declare a libravatar server for this subdomain.",
+        "family": "abstract",
+        "categories": [
+            "service"
+        ],
+        "record_types": null,
+        "restrictions": {}
     },
     "abstract.MatrixIM": {
         "name": "Matrix IM",
@@ -186,7 +272,7 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.RFC6186": {
         "name": "E-Mail Services Discovery",
         "_svctype": "abstract.RFC6186",
-        "description": "Make email clients aware of the domain configuration to send and receive emails. RFC 6186",
+        "description": "Low-level RFC 6186 SRV records. Most users should prefer the higher-level Email Auto-configuration service.",
         "family": "abstract",
         "categories": [
             "email"

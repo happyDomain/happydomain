@@ -414,6 +414,29 @@
         "propagation-in-progress": "Propagation DNS en cours",
         "propagation-remaining": "Propagation complète dans {{countdown}}"
     },
+    "services": {
+        "email-autoconfig": {
+            "title": "Auto-configuration des clients de messagerie",
+            "intro": "Publie les paramètres IMAP/POP/SMTP via les enregistrements SRV (RFC 6186), Mozilla Autoconfig et Microsoft Autodiscover, afin que les clients mail puissent se configurer automatiquement.",
+            "incoming": "Serveur entrant",
+            "outgoing": "Serveur sortant",
+            "discovery": "Découverte",
+            "branding": "Identité visuelle",
+            "protocol": "Protocole",
+            "hostname": "Nom d'hôte",
+            "port": "Port",
+            "auth": "Authentification",
+            "incoming-hostname-desc": "Nom de domaine pleinement qualifié de votre serveur IMAP/POP3.",
+            "outgoing-hostname-desc": "Nom de domaine pleinement qualifié de votre serveur SMTP de soumission.",
+            "publish-http": "Publier la découverte HTTP (CNAME autoconfig./autodiscover.)",
+            "publish-http-desc": "Une fois activé, happyDomain crée des enregistrements CNAME pour autoconfig.<votre-domaine> et autodiscover.<votre-domaine> pointant vers cette instance d'happyDomain, qui sert le XML correspondant en HTTPS afin que Thunderbird et Outlook se configurent automatiquement.",
+            "exchange": "Serveur Exchange (optionnel)",
+            "exchange-desc": "Nom d'hôte d'un serveur Microsoft Exchange sur site. Active MAPI/EWS dans la réponse Autodiscover.",
+            "display-name": "Nom d'affichage du fournisseur",
+            "display-short-name": "Nom court",
+            "username-format": "Format du nom d'utilisateur"
+        }
+    },
     "upgrade": {
         "title": "Une mise à jour est disponible !",
         "content": "Une nouvelle version d'happyDomain est disponible. Pour l'activer, vous pouvez cliquer ici pour rafraîchir la page."
