@@ -37,7 +37,7 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { getCheckStatus, getScopedCheckOptions, triggerScopedCheck } from "$lib/api/checkers";
+    import { getCheckStatus, getScopedCheckOptions, getScopedCheckPlans, triggerScopedCheck } from "$lib/api/checkers";
     import type { CheckerScope } from "$lib/api/checkers";
     import { collectAllOptionDocs } from "$lib/utils/checkers";
     import type {
@@ -47,6 +47,7 @@
         HappydnsCheckerOptions,
         HappydnsCheckerOptionsPositional,
         HappydnsCheckerRunRequest,
+        HappydnsCheckPlan,
     } from "$lib/api-base/types.gen";
     import Resource from "$lib/components/inputs/Resource.svelte";
     import { toasts } from "$lib/stores/toasts";
@@ -83,12 +84,14 @@
         resolvedStatus = null;
         checkStatusPromise = getCheckStatus(name);
         scopedOptionsPromise = getScopedCheckOptions(scope, name);
+        const plansPromise = getScopedCheckPlans(scope, name).catch(() => [] as HappydnsCheckPlan[]);
         isOpen = true;
 
-        Promise.all([checkStatusPromise, scopedOptionsPromise]).then(
-            ([status, options]: [
+        Promise.all([checkStatusPromise, scopedOptionsPromise, plansPromise]).then(
+            ([status, options, plans]: [
                 CheckerCheckerDefinition,
                 HappydnsCheckerOptionsPositional[],
+                HappydnsCheckPlan[],
             ]) => {
                 resolvedStatus = status;
                 scopedDefaults = Object.assign({}, ...(options || []).map((p) => p.options || {}));
@@ -99,6 +102,21 @@
                     if (opt.id && opt.choices?.length && opt.id in scopedDefaults) {
                         runOptions[opt.id] = scopedDefaults[opt.id];
                     }
+                }
+
+                // Pre-select rules according to the existing plan (if any). Without a
+                // plan, leave activeRules empty so every rule stays active by default.
+                const rules = status.rules || [];
+                const planEnabled = plans?.[0]?.enabled;
+                if (planEnabled && rules.length > 0) {
+                    const next: Record<number, boolean> = {};
+                    for (let i = 0; i < rules.length; i++) {
+                        const rname = rules[i].name;
+                        if (rname && rname in planEnabled) {
+                            next[i] = planEnabled[rname];
+                        }
+                    }
+                    activeRules = next;
                 }
             },
         );
