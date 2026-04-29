@@ -13,7 +13,10 @@ steps:
     commands:
       - sed -i '/npm run build/d;/npm run generate:api/d' web/assets.go web-admin/assets.go
       - go install github.com/swaggo/swag/cmd/swag@latest
+      - go mod download
       - go generate ./...
+    environment:
+      CGO_ENABLED: 0
 
   - name: update frontend version
     image: node:24-alpine
@@ -224,7 +227,10 @@ steps:
     commands:
       - sed -i '/npm run build/d;/npm run generate:api/d' web/assets.go web-admin/assets.go
       - go install github.com/swaggo/swag/cmd/swag@latest
+      - go mod download
       - go generate ./...
+    environment:
+      CGO_ENABLED: 0
 
   - name: update frontend version
     image: node:24-alpine

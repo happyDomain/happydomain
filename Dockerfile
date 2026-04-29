@@ -2,18 +2,25 @@ FROM golang:1-alpine AS gogenerator
 
 WORKDIR /go/src/git.happydns.org/happydomain
 
+# First download dependancies
+COPY go.mod go.sum ./
+
+RUN go mod download && \
+    go install github.com/swaggo/swag/cmd/swag@latest
+
+# Generate go code
+COPY checkers ./checkers
 COPY cmd ./cmd
-COPY tools ./tools
 COPY internal ./internal
 COPY model ./model
 COPY providers ./providers
 COPY services ./services
+COPY tools ./tools
 COPY web/ ./web
 COPY web-admin/ ./web-admin
 COPY generate.go ./
 
 RUN sed -i '/npm run build/d;/npm run generate:api/d' web/assets.go web-admin/assets.go && \
-    go install github.com/swaggo/swag/cmd/swag@latest && \
     go generate -v ./...
 
 
@@ -21,7 +28,7 @@ FROM node:24-alpine AS nodebuild
 
 WORKDIR /go/src/git.happydns.org/happydomain
 
-COPY --from=gogenerator docs/ docs/
+COPY --from=gogenerator /go/src/git.happydns.org/happydomain/docs/ docs/
 COPY web/ web/
 
 RUN yarn config set network-timeout 100000 && \
@@ -30,7 +37,7 @@ RUN yarn config set network-timeout 100000 && \
     yarn --cwd web --offline build
 
 
-COPY --from=gogenerator docs-admin/ docs-admin/
+COPY --from=gogenerator /go/src/git.happydns.org/happydomain/docs-admin/ docs-admin/
 COPY web-admin/ web-admin/
 
 RUN yarn config set network-timeout 100000 && \
@@ -52,12 +59,13 @@ COPY --from=gogenerator /go/src/git.happydns.org/happydomain/web/src/lib/dns_rr.
 COPY --from=gogenerator /go/src/git.happydns.org/happydomain/internal/usecase/service_specs_dns_types.go internal/usecase/service_specs_dns_types.go
 COPY --from=gogenerator /go/src/git.happydns.org/happydomain/docs/ docs/
 COPY --from=gogenerator /go/src/git.happydns.org/happydomain/docs-admin/ docs-admin/
+COPY checkers ./checkers
 COPY cmd ./cmd
-COPY tools ./tools
 COPY internal ./internal
 COPY model ./model
 COPY providers ./providers
 COPY services ./services
+COPY tools ./tools
 COPY generate.go go.mod go.sum ./
 
 RUN go build -v -tags netgo,swagger,web -ldflags '-w' ./cmd/happyDomain/
