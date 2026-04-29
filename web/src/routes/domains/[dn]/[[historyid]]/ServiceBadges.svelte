@@ -38,7 +38,7 @@
     let { service, class: className = "" }: Props = $props();
 </script>
 
-{#if service && $userSession.settings && $servicesSpecsLoaded}
+{#if service && $userSession.settings && $servicesSpecsLoaded && $servicesSpecs[service._svctype]}
     {#if $servicesSpecs[service._svctype].categories?.length && !$userSession.settings.showrrtypes}
         <div class="d-flex align-items-center gap-1 {className}">
             {#each $servicesSpecs[service._svctype].categories as category}

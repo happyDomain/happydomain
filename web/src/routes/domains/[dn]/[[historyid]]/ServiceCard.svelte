@@ -76,11 +76,11 @@
             <Spinner color="primary" />
         </div>
     {:else}
-        <CardBody title={service ? $servicesSpecs[service._svctype].name : undefined}>
+        <CardBody title={service && $servicesSpecs[service._svctype] ? $servicesSpecs[service._svctype].name : undefined}>
             <div class="d-flex justify-content-between gap-1 mb-2">
                 <CardTitle class="text-truncate mb-0">
                     {#if service}
-                        {$servicesSpecs[service._svctype].name}
+                        {$servicesSpecs[service._svctype]?.name ?? service._svctype}
                     {:else}
                         <Icon name="plus-circle" /> {$t("service.new")}
                     {/if}
@@ -110,7 +110,7 @@
             </div>
             <CardSubtitle class="mb-2 text-muted fst-italic">
                 {#if service}
-                    {$servicesSpecs[service._svctype].description}
+                    {$servicesSpecs[service._svctype]?.description ?? ""}
                 {:else}
                     {$t("service.new-description")}
                 {/if}
