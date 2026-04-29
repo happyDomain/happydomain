@@ -36,7 +36,7 @@ import (
 
 // EmailAutoconfigController serves the public mail-client auto-configuration
 // endpoints used by Thunderbird (Mozilla Autoconfig) and Outlook (Microsoft
-// Autodiscover).
+// Autodiscover), plus the Caddy on-demand TLS validation hook.
 type EmailAutoconfigController struct {
 	uc happydns.EmailAutoconfigUsecase
 }
@@ -149,4 +149,37 @@ func (ec *EmailAutoconfigController) MSAutodiscover(c *gin.Context) {
 	}
 
 	c.Data(http.StatusOK, "application/xml; charset=utf-8", body)
+}
+
+// CaddyAsk implements the Caddy on-demand TLS "ask" endpoint. Caddy treats
+// any 2xx response as "go ahead and issue the cert" and any other status as
+// "deny". The endpoint is scoped strictly to autoconfig./autodiscover.
+// subdomains so happyDomain never authorises certs for arbitrary domains.
+//
+//	@Summary	Caddy on-demand TLS validation
+//	@Description	Returns 200 when happyDomain hosts the email auto-configuration for the requested domain.
+//	@Tags			email-autoconfig
+//	@Param			domain	query	string	true	"FQDN Caddy is about to obtain a certificate for"
+//	@Success		200
+//	@Failure		400
+//	@Failure		404
+//	@Router			/caddy/ask [get]
+func (ec *EmailAutoconfigController) CaddyAsk(c *gin.Context) {
+	domain := strings.TrimSpace(c.Query("domain"))
+	if domain == "" {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	managed, err := ec.uc.IsManaged(domain)
+	if err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	if !managed {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	c.Status(http.StatusOK)
 }

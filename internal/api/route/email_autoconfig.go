@@ -34,9 +34,10 @@ import (
 )
 
 // DeclareEmailAutoconfigRoutes wires the public HTTP endpoints for mail-client
-// auto-configuration onto the provided base route group: the well-known XML
-// paths dictated by the standards (Mozilla and Microsoft).
-func DeclareEmailAutoconfigRoutes(baseRoutes *gin.RouterGroup, uc happydns.EmailAutoconfigUsecase) {
+// auto-configuration onto the provided base and API route groups. baseRoutes
+// receives the well-known XML paths dictated by the standards (Mozilla and
+// Microsoft); apiRoutes receives the Caddy validation hook.
+func DeclareEmailAutoconfigRoutes(baseRoutes, apiRoutes *gin.RouterGroup, uc happydns.EmailAutoconfigUsecase) {
 	if uc == nil {
 		return
 	}
@@ -71,4 +72,7 @@ func DeclareEmailAutoconfigRoutes(baseRoutes *gin.RouterGroup, uc happydns.Email
 		baseRoutes.GET(path, rl, ctrl.MSAutodiscover)
 		baseRoutes.POST(path, rl, ctrl.MSAutodiscover)
 	}
+
+	// Caddy on-demand TLS ask hook.
+	apiRoutes.GET("/caddy/ask", rl, ctrl.CaddyAsk)
 }

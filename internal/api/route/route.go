@@ -121,7 +121,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 		},
 	})
 	DeclareDomainInfoRoutes(apiRoutes.Group("/domaininfo/:domain", domainInfoRLMiddleware), dep.DomainInfo)
-	DeclareEmailAutoconfigRoutes(baseRoutes, dep.EmailAutoconfig)
+	DeclareEmailAutoconfigRoutes(baseRoutes, apiRoutes, dep.EmailAutoconfig)
 	DeclareProviderSpecsRoutes(apiRoutes, dep.ProviderSpecs)
 	DeclareRegistrationRoutes(apiRoutes, dep.AuthUser, dep.CaptchaVerifier)
 	DeclareResolverRoutes(apiRoutes, dep.Resolver)

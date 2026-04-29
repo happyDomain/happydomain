@@ -22,12 +22,19 @@
 package happydns
 
 // EmailAutoconfigUsecase serves the public mail-client auto-configuration
-// endpoints (Mozilla Autoconfig + Microsoft Autodiscover).
+// endpoints (Mozilla Autoconfig + Microsoft Autodiscover) and the Caddy
+// on-demand TLS validation hook.
 //
 // All methods take fully-qualified domain names. The usecase looks up the
 // owning Domain in storage, finds the latest Zone, and reads the
 // EmailAutoConfig service body to render the appropriate response.
 type EmailAutoconfigUsecase interface {
+	// IsManaged returns true if the given FQDN is hosted by happyDomain
+	// for the email auto-configuration purpose. It strips an
+	// "autoconfig." or "autodiscover." prefix and checks that the parent
+	// domain has a configured EmailAutoConfig service.
+	IsManaged(fqdn string) (bool, error)
+
 	// MozillaConfig renders the Thunderbird-style XML for the given
 	// domain. emailAddress may be empty.
 	MozillaConfig(domainFQDN, emailAddress string) ([]byte, error)

@@ -20,10 +20,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // Package emailautoconfig serves the public mail-client auto-configuration
-// HTTP endpoints (Mozilla Autoconfig + Microsoft Autodiscover).
+// HTTP endpoints (Mozilla Autoconfig + Microsoft Autodiscover) and the Caddy
+// on-demand TLS validation hook.
 package emailautoconfig
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -94,6 +96,25 @@ func (uc *Usecase) findService(parentFQDN string) (*abstract.EmailAutoConfig, *h
 	}
 
 	return nil, nil, happydns.ErrNotFound
+}
+
+// IsManaged reports whether happyDomain hosts the email auto-configuration
+// for the given FQDN. Used by the Caddy on-demand TLS ask endpoint.
+func (uc *Usecase) IsManaged(fqdn string) (bool, error) {
+	fqdn = dns.Fqdn(fqdn)
+	if !strings.HasPrefix(fqdn, "autoconfig.") && !strings.HasPrefix(fqdn, "autodiscover.") {
+		return false, nil
+	}
+
+	parent := stripDiscoveryPrefix(fqdn)
+	_, _, err := uc.findService(parent)
+	if err != nil {
+		if errors.Is(err, happydns.ErrNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
 
 // MozillaConfig renders the Thunderbird-style XML for the given FQDN.
