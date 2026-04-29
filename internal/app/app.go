@@ -409,12 +409,9 @@ func (app *App) Start() {
 }
 
 func (app *App) Stop() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := app.srv.Shutdown(ctx); err != nil {
-		log.Fatal("Server Shutdown:", err)
-	}
-
+	// Stop background workers first so they don't dispatch new work while
+	// the HTTP server is draining. Each Stop() cancels its context and
+	// waits for in-flight goroutines to return.
 	if app.usecases.checkerScheduler != nil {
 		app.usecases.checkerScheduler.Stop()
 	}
@@ -425,6 +422,14 @@ func (app *App) Stop() {
 
 	if app.usecases.checkerUserGater != nil {
 		app.usecases.checkerUserGater.Stop()
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := app.srv.Shutdown(ctx); err != nil {
+		// Don't log.Fatal here: that would skip the storage/insights
+		// cleanup below and risk leaving state on disk inconsistent.
+		log.Printf("Server Shutdown: %v", err)
 	}
 
 	// Close storage
