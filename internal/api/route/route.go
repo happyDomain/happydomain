@@ -44,6 +44,7 @@ type Dependencies struct {
 	Domain                happydns.DomainUsecase
 	DomainInfo            happydns.DomainInfoUsecase
 	DomainLog             happydns.DomainLogUsecase
+	EmailAutoconfig       happydns.EmailAutoconfigUsecase
 	FailureTracker        happydns.FailureTracker
 	Provider              happydns.ProviderUsecase
 	ProviderSettings      happydns.ProviderSettingsUsecase
@@ -120,6 +121,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 		},
 	})
 	DeclareDomainInfoRoutes(apiRoutes.Group("/domaininfo/:domain", domainInfoRLMiddleware), dep.DomainInfo)
+	DeclareEmailAutoconfigRoutes(baseRoutes, dep.EmailAutoconfig)
 	DeclareProviderSpecsRoutes(apiRoutes, dep.ProviderSpecs)
 	DeclareRegistrationRoutes(apiRoutes, dep.AuthUser, dep.CaptchaVerifier)
 	DeclareResolverRoutes(apiRoutes, dep.Resolver)
