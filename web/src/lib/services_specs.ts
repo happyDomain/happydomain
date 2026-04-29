@@ -413,6 +413,24 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             ]
         }
     },
+    "svcs.DMARCReport": {
+        "name": "DMARC allow receiving reports",
+        "_svctype": "svcs.DMARCReport",
+        "description": "Allow a domain to receive DMARC reports for another domain.",
+        "family": "",
+        "categories": [
+            "email"
+        ],
+        "record_types": [
+            16
+        ],
+        "restrictions": {
+            "nearAlone": true,
+            "needTypes": [
+                16
+            ]
+        }
+    },
     "svcs.MTA_STS": {
         "name": "MTA-STS",
         "_svctype": "svcs.MTA_STS",
