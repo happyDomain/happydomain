@@ -187,7 +187,7 @@ func init() {
 		rfc6186_analyze,
 		happydns.ServiceInfos{
 			Name:        "E-Mail Services Discovery",
-			Description: "Make email clients aware of the domain configuration to send and receive emails. RFC 6186",
+			Description: "Low-level RFC 6186 SRV records. Most users should prefer the higher-level Email Auto-configuration service.",
 			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"email",
@@ -200,6 +200,6 @@ func init() {
 				},
 			},
 		},
-		2,
+		5,
 	)
 }
