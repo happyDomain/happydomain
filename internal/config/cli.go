@@ -65,6 +65,8 @@ func declareFlags(o *happydns.Options) {
 	flag.StringVar(&o.MailSMTPPassword, "mail-smtp-password", o.MailSMTPPassword, "Password associated with the given username for SMTP authentication")
 	flag.BoolVar(&o.MailSMTPTLSSNoVerify, "mail-smtp-tls-no-verify", o.MailSMTPTLSSNoVerify, "Do not verify certificate validity on SMTP connection")
 
+	flag.StringVar(&o.MailAutoconfigHost, "mail-autoconfig-host", o.MailAutoconfigHost, "Public FQDN serving Mozilla Autoconfig and Microsoft Autodiscover (defaults to externalurl host)")
+
 	flag.StringVar(&o.CaptchaProvider, "captcha-provider", o.CaptchaProvider, "Captcha provider to use for bot protection (altcha, hcaptcha, recaptchav2, turnstile, or empty to disable)")
 	flag.IntVar(&o.CaptchaLoginThreshold, "captcha-login-threshold", 3, "Number of failed login attempts before captcha is required (0 = always require when provider configured)")
 

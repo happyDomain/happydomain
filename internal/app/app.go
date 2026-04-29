@@ -42,6 +42,7 @@ import (
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	domainUC "git.happydns.org/happyDomain/internal/usecase/domain"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
+	emailAutoconfigUC "git.happydns.org/happyDomain/internal/usecase/emailautoconfig"
 	"git.happydns.org/happyDomain/internal/usecase/orchestrator"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	serviceUC "git.happydns.org/happyDomain/internal/usecase/service"
@@ -51,6 +52,7 @@ import (
 	zoneServiceUC "git.happydns.org/happyDomain/internal/usecase/zone_service"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/pkg/domaininfo"
+	"git.happydns.org/happyDomain/services/abstract"
 	"git.happydns.org/happyDomain/web"
 )
 
@@ -60,6 +62,7 @@ type Usecases struct {
 	domain           happydns.DomainUsecase
 	domainInfo       happydns.DomainInfoUsecase
 	domainLog        happydns.DomainLogUsecase
+	emailAutoconfig  happydns.EmailAutoconfigUsecase
 	provider         happydns.ProviderUsecase
 	providerAdmin    happydns.ProviderUsecase
 	providerSpecs    happydns.ProviderSpecsUsecase
@@ -234,6 +237,15 @@ func (app *App) initUsecases() {
 	)
 	app.usecases.domainLog = domainLogService
 
+	// Email auto-configuration: derive the autoconfig CNAME target from
+	// MailAutoconfigHost (if set) or fall back to ExternalURL.Host.
+	autoconfigHost := app.cfg.MailAutoconfigHost
+	if autoconfigHost == "" {
+		autoconfigHost = app.cfg.ExternalURL.Hostname()
+	}
+	abstract.SetAutoconfigHost(autoconfigHost)
+	app.usecases.emailAutoconfig = emailAutoconfigUC.NewUsecase(app.store, zoneService.GetZoneUC)
+
 	domainService := domainUC.NewService(
 		app.store,
 		providerAdminService,
@@ -351,6 +363,7 @@ func (app *App) setupRouter() {
 			Domain:                app.usecases.domain,
 			DomainInfo:            app.usecases.domainInfo,
 			DomainLog:             app.usecases.domainLog,
+			EmailAutoconfig:       app.usecases.emailAutoconfig,
 			FailureTracker:        app.failureTracker,
 			Provider:              app.usecases.provider,
 			ProviderSettings:      app.usecases.providerSettings,
