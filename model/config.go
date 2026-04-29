@@ -63,6 +63,11 @@ type Options struct {
 	// ...), when it needs to use complete URL, not only relative parts.
 	ExternalURL url.URL
 
+	// MailAutoconfigHost is the public FQDN that the email auto-configuration
+	// service should target with autoconfig./autodiscover. CNAMEs. When empty,
+	// it falls back to ExternalURL.Host.
+	MailAutoconfigHost string
+
 	// JWTSecretKey stores the private key to sign and verify JWT tokens.
 	JWTSecretKey []byte
 
