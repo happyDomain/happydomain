@@ -45,7 +45,13 @@
 
     let { scope, checksBase, title, domainName, filterAvailability }: Props = $props();
 
-    let checkersPromise = $derived(listScopedCheckers(scope));
+    let checkersPromise = $derived(
+        listScopedCheckers(scope).then((list) =>
+            [...list].sort((a, b) =>
+                (a.name || a.id || "").localeCompare(b.name || b.id || ""),
+            ),
+        ),
+    );
 
     let metricsApiUrl = $derived(
         scope.zoneId && scope.subdomain !== undefined && scope.serviceId
@@ -73,20 +79,32 @@
         return new Set(statuses.map((s) => s.id).filter((id): id is string => !!id));
     }
 
+    function sortCheckersByName(
+        entries: [string, CheckerCheckerDefinition][],
+    ): [string, CheckerCheckerDefinition][] {
+        return entries.sort(([idA, defA], [idB, defB]) =>
+            (defA.name || idA).localeCompare(defB.name || idB),
+        );
+    }
+
     function getUnconfiguredCheckers(configuredIds: Set<string>): [string, CheckerCheckerDefinition][] {
         if (!$checkers) return [];
-        return Object.entries($checkers).filter(
-            ([id, def]) => !configuredIds.has(id) && def.availability?.[filterAvailability],
+        return sortCheckersByName(
+            Object.entries($checkers).filter(
+                ([id, def]) => !configuredIds.has(id) && def.availability?.[filterAvailability],
+            ),
         );
     }
 
     function getChildrenCheckers(configuredIds: Set<string>): [string, CheckerCheckerDefinition][] {
         if (!$checkers) return [];
-        return Object.entries($checkers).filter(
-            ([id, def]) =>
-                !configuredIds.has(id) &&
-                !def.availability?.[filterAvailability] &&
-                (def.availability?.applyToZone || def.availability?.applyToService),
+        return sortCheckersByName(
+            Object.entries($checkers).filter(
+                ([id, def]) =>
+                    !configuredIds.has(id) &&
+                    !def.availability?.[filterAvailability] &&
+                    (def.availability?.applyToZone || def.availability?.applyToService),
+            ),
         );
     }
 </script>
