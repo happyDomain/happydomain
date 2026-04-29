@@ -59,6 +59,17 @@
 
         <UserSettingsForm bind:settings={$userSession.settings} />
 
+        <h2 id="notifications" class="display-7 fw-bold mt-5">
+            <i class="bi bi-bell"></i>
+            {$t("settings.notifications.title")}
+        </h2>
+        <p class="lead">
+            {$t("settings.notifications.description")}
+        </p>
+        <a class="btn btn-outline-primary" href="/me/notifications">
+            {$t("settings.notifications.manage")}
+        </a>
+
         {#if $userSession.email !== "_no_auth"}
             <h2 id="security" class="display-7 fw-bold mt-5">
                 <i class="bi bi-shield"></i>
