@@ -295,6 +295,39 @@ func (e *checkerEngine) runPipeline(ctx context.Context, def *happydns.CheckerDe
 	return result, eval, nil
 }
 
+// RecoverStaleExecutions scans all executions and marks any still in Pending
+// or Running state as Failed. It is intended to be called at startup to
+// reconcile state left over from a previous process that crashed or was
+// killed mid-execution: without it, the affected executions would remain
+// "running" forever in the UI. Returns the number of executions updated.
+func (e *checkerEngine) RecoverStaleExecutions(ctx context.Context) (int, error) {
+	iter, err := e.execStore.ListAllExecutions()
+	if err != nil {
+		return 0, fmt.Errorf("listing executions: %w", err)
+	}
+	defer iter.Close()
+
+	n := 0
+	for iter.Next() {
+		exec := iter.Item()
+		if exec.Status != happydns.ExecutionPending && exec.Status != happydns.ExecutionRunning {
+			continue
+		}
+		endTime := time.Now()
+		exec.Status = happydns.ExecutionFailed
+		exec.EndedAt = &endTime
+		if exec.Error == "" {
+			exec.Error = "execution interrupted by server restart"
+		}
+		if err := e.execStore.UpdateExecution(exec); err != nil {
+			log.Printf("CheckerEngine: failed to recover stale execution %s: %v", exec.Id.String(), err)
+			continue
+		}
+		n++
+	}
+	return n, nil
+}
+
 // RelatedLookup exposes the engine's Related resolver so controllers can
 // build ReportContexts with cross-checker observations pre-resolved. Returns
 // nil when discovery storage is not wired.

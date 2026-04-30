@@ -403,6 +403,19 @@ func (app *App) Start() {
 		go app.insights.Run()
 	}
 
+	// Reconcile executions left "running" by a previous process that
+	// crashed or was killed mid-run, before the scheduler starts queuing
+	// new work.
+	if recoverer, ok := app.usecases.checkerEngine.(interface {
+		RecoverStaleExecutions(ctx context.Context) (int, error)
+	}); ok {
+		if n, err := recoverer.RecoverStaleExecutions(context.Background()); err != nil {
+			log.Printf("CheckerEngine: failed to recover stale executions: %v", err)
+		} else if n > 0 {
+			log.Printf("CheckerEngine: recovered %d stale execution(s) from previous run", n)
+		}
+	}
+
 	if app.usecases.checkerScheduler != nil {
 		app.usecases.checkerScheduler.Start(context.Background())
 	}
