@@ -25,11 +25,10 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api-admin/controller"
-	"git.happydns.org/happyDomain/internal/storage"
 )
 
-func declareUserAuthsRoutes(router *gin.RouterGroup, dep Dependencies, store storage.Storage) {
-	ac := controller.NewAuthUserController(dep.AuthUser, store)
+func declareUserAuthsRoutes(router *gin.RouterGroup, dep Dependencies) {
+	ac := controller.NewAuthUserController(dep.AuthUser, dep.AdminAuthUser)
 
 	router.GET("/auth", ac.GetAuthUsers)
 	router.POST("/auth", ac.NewAuthUser)

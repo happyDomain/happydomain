@@ -70,6 +70,7 @@ func NewAdmin(app *App) *Admin {
 		router,
 		app.store,
 		admin.Dependencies{
+			AdminAuthUser:         app.usecases.authUserAdmin,
 			AdminSession:          sessionUC.NewService(app.store),
 			AdminUser:             app.usecases.userAdmin,
 			AuthUser:              app.usecases.authUser,

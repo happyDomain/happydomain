@@ -24,32 +24,30 @@ package controller
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
 	"git.happydns.org/happyDomain/internal/helpers"
-	"git.happydns.org/happyDomain/internal/usecase/authuser"
-	"git.happydns.org/happyDomain/model"
+	happydns "git.happydns.org/happyDomain/model"
 )
 
 type AuthUserController struct {
-	auService happydns.AuthUserUsecase
-	store     authuser.AuthUserStorage
+	auService    happydns.AuthUserUsecase
+	adminService happydns.AdminAuthUserUsecase
 }
 
-func NewAuthUserController(auService happydns.AuthUserUsecase, store authuser.AuthUserStorage) *AuthUserController {
+func NewAuthUserController(auService happydns.AuthUserUsecase, adminService happydns.AdminAuthUserUsecase) *AuthUserController {
 	return &AuthUserController{
-		auService,
-		store,
+		auService:    auService,
+		adminService: adminService,
 	}
 }
 
 func (ac *AuthUserController) AuthUserHandler(c *gin.Context) {
 	user, err := middleware.AuthUserHandlerBase(ac.auService, c)
 	if err != nil {
-		user, err = ac.store.GetAuthUserByEmail(c.Param("uid"))
+		user, err = ac.auService.GetAuthUserByEmail(c.Param("uid"))
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusNotFound, happydns.ErrorResponse{Message: "User not found"})
 			return
@@ -73,18 +71,7 @@ func (ac *AuthUserController) AuthUserHandler(c *gin.Context) {
 //	@Failure		500	{object}	happydns.ErrorResponse
 //	@Router			/auth [get]
 func (ac *AuthUserController) GetAuthUsers(c *gin.Context) {
-	iter, err := ac.store.ListAllAuthUsers()
-	if err != nil {
-		happydns.ApiResponse(c, nil, err)
-		return
-	}
-	defer iter.Close()
-
-	var users []*happydns.UserAuth
-	for iter.Next() {
-		users = append(users, iter.Item())
-	}
-
+	users, err := ac.adminService.ListAllAuthUsers()
 	happydns.ApiResponse(c, users, err)
 }
 
@@ -110,7 +97,7 @@ func (ac *AuthUserController) NewAuthUser(c *gin.Context) {
 	}
 	uu.Id = []byte{}
 
-	happydns.ApiResponse(c, uu, ac.store.CreateAuthUser(uu))
+	happydns.ApiResponse(c, uu, ac.adminService.AdminCreateAuthUser(uu))
 }
 
 // DeleteAuthUsers deletes all user accounts.
@@ -125,7 +112,7 @@ func (ac *AuthUserController) NewAuthUser(c *gin.Context) {
 //	@Failure		500	{object}	happydns.ErrorResponse
 //	@Router			/auth [delete]
 func (ac *AuthUserController) DeleteAuthUsers(c *gin.Context) {
-	happydns.ApiResponse(c, true, ac.store.ClearAuthUsers())
+	happydns.ApiResponse(c, true, ac.adminService.ClearAuthUsers())
 }
 
 // GetAuthUser retrieves a specific user by identifier.
@@ -172,7 +159,7 @@ func (ac *AuthUserController) UpdateAuthUser(c *gin.Context) {
 	}
 	uu.Id = user.Id
 
-	happydns.ApiResponse(c, uu, ac.store.UpdateAuthUser(uu))
+	happydns.ApiResponse(c, uu, ac.adminService.AdminUpdateAuthUser(uu))
 }
 
 // DeleteAuthUser deletes a specific user account.
@@ -191,7 +178,7 @@ func (ac *AuthUserController) UpdateAuthUser(c *gin.Context) {
 func (ac *AuthUserController) DeleteAuthUser(c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
-	happydns.ApiResponse(c, true, ac.store.DeleteAuthUser(user))
+	happydns.ApiResponse(c, true, ac.adminService.AdminDeleteAuthUser(user))
 }
 
 // EmailValidationLink generates an email validation link for a user.
@@ -281,7 +268,7 @@ func (ac *AuthUserController) ResetUserPasswd(c *gin.Context) {
 		return
 	}
 
-	happydns.ApiResponse(c, urp, ac.store.UpdateAuthUser(user))
+	happydns.ApiResponse(c, urp, ac.adminService.AdminUpdateAuthUser(user))
 }
 
 // SendRecoverUserAcct sends an account recovery email to the user.
@@ -338,7 +325,5 @@ func (ac *AuthUserController) SendValidateUserEmail(c *gin.Context) {
 func (ac *AuthUserController) ValidateEmail(c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
-	now := time.Now()
-	user.EmailVerification = &now
-	happydns.ApiResponse(c, user, ac.store.UpdateAuthUser(user))
+	happydns.ApiResponse(c, user, ac.adminService.MarkEmailValidated(user))
 }

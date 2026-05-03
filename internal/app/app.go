@@ -61,6 +61,7 @@ import (
 type Usecases struct {
 	authentication   happydns.AuthenticationUsecase
 	authUser         happydns.AuthUserUsecase
+	authUserAdmin    happydns.AdminAuthUserUsecase
 	domain           happydns.DomainUsecase
 	domainInfo       happydns.DomainInfoUsecase
 	domainLog        happydns.DomainLogUsecase
@@ -277,6 +278,7 @@ func (app *App) initUsecases() {
 	app.usecases.userAdmin = userService
 	app.usecases.authentication = usecase.NewAuthenticationUsecase(app.cfg, app.store, app.usecases.user)
 	app.usecases.authUser = authUserService
+	app.usecases.authUserAdmin = authUserService
 	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg)
 	app.usecases.session = sessionService
 

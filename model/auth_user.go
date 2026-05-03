@@ -127,6 +127,21 @@ type AuthUserUsecase interface {
 	ValidateEmail(*UserAuth, AddressValidationForm) error
 }
 
+// AdminAuthUserUsecase exposes administrative auth-user operations that
+// bypass the caller-scoped checks of AuthUserUsecase (registration form,
+// current-password verification, etc.). Admin callers can list every auth
+// user, create or replace one from a raw UserAuth, force-delete an account,
+// wipe the table, persist mutations performed elsewhere (password reset),
+// and mark an account's email as verified.
+type AdminAuthUserUsecase interface {
+	ListAllAuthUsers() ([]*UserAuth, error)
+	AdminCreateAuthUser(*UserAuth) error
+	AdminUpdateAuthUser(*UserAuth) error
+	AdminDeleteAuthUser(*UserAuth) error
+	ClearAuthUsers() error
+	MarkEmailValidated(*UserAuth) error
+}
+
 type EmailValidationUsecase interface {
 	GenerateLink(user *UserAuth) (string, error)
 	SendLink(user *UserAuth) error

@@ -32,6 +32,7 @@ import (
 
 // Dependencies holds all use cases required to register the admin API routes.
 type Dependencies struct {
+	AdminAuthUser         happydns.AdminAuthUserUsecase
 	AdminSession          happydns.AdminSessionUsecase
 	AdminUser             happydns.AdminUserUsecase
 	AuthUser              happydns.AuthUserUsecase
@@ -58,7 +59,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, s storage.Storage,
 	declareProviderRoutes(apiRoutes, dep, s)
 	declareSchedulerRoutes(apiRoutes, dep)
 	declareSessionsRoutes(cfg, apiRoutes, dep)
-	declareUserAuthsRoutes(apiRoutes, dep, s)
+	declareUserAuthsRoutes(apiRoutes, dep)
 	declareUsersRoutes(apiRoutes, dep, s)
 	declareTidyRoutes(apiRoutes, s)
 	api.DeclareVersionRoutes(apiRoutes)
