@@ -138,6 +138,15 @@ type ProviderUsecase interface {
 	UpdateProviderFromMessage(context.Context, Identifier, *User, *ProviderMessage) error
 }
 
+// AdminProviderUsecase exposes administrative provider operations that are
+// not scoped to a specific User. Admin callers can list every provider,
+// force-delete one by ID, and wipe the table.
+type AdminProviderUsecase interface {
+	ListAllProviderMetas() ([]*ProviderMeta, error)
+	DeleteProviderByID(Identifier) error
+	ClearProviders() error
+}
+
 type ProviderActuator interface {
 	CanCreateDomain() bool
 	CanListZones() bool

@@ -23,26 +23,24 @@ package controller
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/usecase/provider"
-	"git.happydns.org/happyDomain/model"
+	happydns "git.happydns.org/happyDomain/model"
 )
 
 type ProviderController struct {
 	providerService happydns.ProviderUsecase
-	store           provider.ProviderStorage
+	adminService    happydns.AdminProviderUsecase
 }
 
-func NewProviderController(providerService happydns.ProviderUsecase, store provider.ProviderStorage) *ProviderController {
+func NewProviderController(providerService happydns.ProviderUsecase, adminService happydns.AdminProviderUsecase) *ProviderController {
 	return &ProviderController{
-		providerService,
-		store,
+		providerService: providerService,
+		adminService:    adminService,
 	}
 }
 
@@ -62,25 +60,13 @@ func NewProviderController(providerService happydns.ProviderUsecase, store provi
 func (pc *ProviderController) ListProviders(c *gin.Context) {
 	user := middleware.MyUser(c)
 	if user != nil {
-		srcmeta, err := pc.store.ListProviders(user)
-		happydns.ApiResponse(c, srcmeta.Metas(), err)
+		metas, err := pc.providerService.ListUserProviders(c.Request.Context(), user)
+		happydns.ApiResponse(c, metas, err)
 		return
 	}
 
-	iter, err := pc.store.ListAllProviders()
-	if err != nil {
-		middleware.ErrorResponse(c, http.StatusInternalServerError, fmt.Errorf("unable to list providers: %w", err))
-		return
-	}
-	defer iter.Close()
-
-	var res []*happydns.ProviderMeta
-	for iter.Next() {
-		provider := iter.Item()
-		res = append(res, &provider.ProviderMeta)
-	}
-
-	happydns.ApiResponse(c, res, nil)
+	metas, err := pc.adminService.ListAllProviderMetas()
+	happydns.ApiResponse(c, metas, err)
 }
 
 // AddProvider appends a new provider.
@@ -101,7 +87,6 @@ func (pc *ProviderController) ListProviders(c *gin.Context) {
 func (pc *ProviderController) AddProvider(c *gin.Context) {
 	apidc := controller.NewProviderController(pc.providerService)
 	apidc.AddProvider(c)
-	return
 }
 
 // DeleteProvider removes a provider from the database.
@@ -122,7 +107,7 @@ func (pc *ProviderController) AddProvider(c *gin.Context) {
 func (pc *ProviderController) DeleteProvider(c *gin.Context) {
 	srcMeta := c.MustGet("providermeta").(*happydns.ProviderMeta)
 
-	happydns.ApiResponse(c, true, pc.store.DeleteProvider(srcMeta.Id))
+	happydns.ApiResponse(c, true, pc.adminService.DeleteProviderByID(srcMeta.Id))
 }
 
 // GetProvider retrieves information about a given provider.
@@ -142,7 +127,6 @@ func (pc *ProviderController) DeleteProvider(c *gin.Context) {
 func (pc *ProviderController) GetProvider(c *gin.Context) {
 	apidc := controller.NewProviderController(pc.providerService)
 	apidc.GetProvider(c)
-	return
 }
 
 // UpdateProvider updates the information about a given provider.
@@ -165,7 +149,6 @@ func (pc *ProviderController) GetProvider(c *gin.Context) {
 func (pc *ProviderController) UpdateProvider(c *gin.Context) {
 	apidc := controller.NewProviderController(pc.providerService)
 	apidc.UpdateProvider(c)
-	return
 }
 
 // ClearProviders removes all providers from the database.
@@ -191,8 +174,7 @@ func (pc *ProviderController) ClearProviders(c *gin.Context) {
 		}
 
 		for _, p := range providers {
-			e := pc.store.DeleteProvider(p.Id)
-			if e != nil {
+			if e := pc.adminService.DeleteProviderByID(p.Id); e != nil {
 				err = errors.Join(err, e)
 			}
 		}
@@ -206,5 +188,5 @@ func (pc *ProviderController) ClearProviders(c *gin.Context) {
 		return
 	}
 
-	happydns.ApiResponse(c, true, pc.store.ClearProviders())
+	happydns.ApiResponse(c, true, pc.adminService.ClearProviders())
 }

@@ -58,7 +58,8 @@ func NewAdmin(app *App) *Admin {
 	router.Use(gin.Logger(), gin.Recovery())
 
 	// Prepare usecases (admin uses unrestricted provider access)
-	app.usecases.providerAdmin = providerUC.NewService(app.store, nil)
+	providerAdminService := providerUC.NewService(app.store, nil)
+	app.usecases.providerAdmin = providerAdminService
 	if app.usecases.checkerOptionsUC == nil {
 		app.usecases.checkerOptionsUC = checkerUC.NewCheckerOptionsUsecase(app.store, app.store)
 	}
@@ -71,6 +72,7 @@ func NewAdmin(app *App) *Admin {
 		app.store,
 		admin.Dependencies{
 			AdminAuthUser:         app.usecases.authUserAdmin,
+			AdminProvider:         providerAdminService,
 			AdminSession:          sessionUC.NewService(app.store),
 			AdminUser:             app.usecases.userAdmin,
 			AuthUser:              app.usecases.authUser,

@@ -30,7 +30,7 @@ import (
 )
 
 func declareProviderRoutes(router *gin.RouterGroup, dep Dependencies, store storage.Storage) {
-	pc := controller.NewProviderController(dep.Provider, store)
+	pc := controller.NewProviderController(dep.Provider, dep.AdminProvider)
 
 	router.GET("/providers", pc.ListProviders)
 	router.POST("/providers", pc.AddProvider)
