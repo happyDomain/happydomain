@@ -32,9 +32,9 @@ import (
 func declareDomainRoutes(router *gin.RouterGroup, dep Dependencies, store storage.Storage) {
 	dc := controller.NewDomainController(
 		dep.Domain,
+		dep.AdminDomain,
 		dep.RemoteZoneImporter,
 		dep.ZoneImporter,
-		store,
 	)
 
 	router.GET("/domains", dc.ListDomains)

@@ -63,6 +63,7 @@ type Usecases struct {
 	authUser         happydns.AuthUserUsecase
 	authUserAdmin    happydns.AdminAuthUserUsecase
 	domain           happydns.DomainUsecase
+	domainAdmin      happydns.AdminDomainUsecase
 	domainInfo       happydns.DomainInfoUsecase
 	domainLog        happydns.DomainLogUsecase
 	emailAutoconfig  happydns.EmailAutoconfigUsecase
@@ -261,6 +262,7 @@ func (app *App) initUsecases() {
 		domainLogService,
 	)
 	app.usecases.domain = domainService
+	app.usecases.domainAdmin = domainService
 	app.usecases.zoneService = zoneServiceUC.NewZoneServiceUsecases(
 		domainService,
 		zoneService.CreateZoneUC,

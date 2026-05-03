@@ -130,3 +130,16 @@ type DomainUsecase interface {
 	ListUserDomains(*User) ([]*Domain, error)
 	UpdateDomain(Identifier, *User, func(*Domain)) error
 }
+
+// AdminDomainUsecase exposes administrative domain operations that bypass
+// the caller-scoped checks of DomainUsecase. Admin callers can list every
+// domain, fetch any domain by ID or by FQDN+owner, create or replace one
+// from a raw Domain, and wipe the table.
+type AdminDomainUsecase interface {
+	ListAllDomains() ([]*Domain, error)
+	GetDomainByID(Identifier) (*Domain, error)
+	GetDomainsByFQDN(*User, string) ([]*Domain, error)
+	AdminCreateDomain(*Domain) error
+	AdminUpdateDomain(*Domain) error
+	ClearDomains() error
+}
