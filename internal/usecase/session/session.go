@@ -196,6 +196,24 @@ func (s *Service) ByID(userID happydns.Identifier) error {
 	return s.CloseUserSessions(&happydns.User{Id: userID})
 }
 
+// ClearAllSessions removes every session in the system. It is intended for
+// administrative operations that need to forcibly log out every user.
+func (s *Service) ClearAllSessions() error {
+	return s.store.ClearSessions()
+}
+
+// GetSessionByID retrieves a session by its identifier without verifying
+// ownership. It is intended for administrative operations only.
+func (s *Service) GetSessionByID(sessionID string) (*happydns.Session, error) {
+	return s.store.GetSession(sessionID)
+}
+
+// DeleteSessionByID removes a session by its identifier without verifying
+// ownership. It is intended for administrative operations only.
+func (s *Service) DeleteSessionByID(sessionID string) error {
+	return s.store.DeleteSession(sessionID)
+}
+
 // sessionIDKeyLen is the number of random bytes used to generate a session ID.
 const sessionIDKeyLen = 64
 

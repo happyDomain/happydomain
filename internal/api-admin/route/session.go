@@ -25,12 +25,11 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api-admin/controller"
-	"git.happydns.org/happyDomain/internal/storage"
-	"git.happydns.org/happyDomain/model"
+	happydns "git.happydns.org/happyDomain/model"
 )
 
-func declareSessionsRoutes(cfg *happydns.Options, router *gin.RouterGroup, store storage.Storage) {
-	sc := controller.NewSessionController(cfg, store)
+func declareSessionsRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependencies) {
+	sc := controller.NewSessionController(cfg, dep.AdminSession)
 
 	router.DELETE("/sessions", sc.DeleteSessions)
 

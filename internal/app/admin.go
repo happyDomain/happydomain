@@ -37,6 +37,7 @@ import (
 	backupUC "git.happydns.org/happyDomain/internal/usecase/backup"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
+	sessionUC "git.happydns.org/happyDomain/internal/usecase/session"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/web-admin"
 )
@@ -69,6 +70,7 @@ func NewAdmin(app *App) *Admin {
 		router,
 		app.store,
 		admin.Dependencies{
+			AdminSession:          sessionUC.NewService(app.store),
 			AuthUser:              app.usecases.authUser,
 			Backup:                backupUC.NewUsecase(app.store),
 			Domain:                app.usecases.domain,

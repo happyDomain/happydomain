@@ -76,3 +76,12 @@ type SessionUsecase interface {
 	ListUserSessions(*User) ([]*Session, error)
 	UpdateUserSession(*User, string, func(*Session)) error
 }
+
+// AdminSessionUsecase exposes administrative session operations that are not
+// scoped to a specific User. It is intended for the admin API where requests
+// already carry sufficient privilege to act on any session.
+type AdminSessionUsecase interface {
+	ClearAllSessions() error
+	GetSessionByID(string) (*Session, error)
+	DeleteSessionByID(string) error
+}

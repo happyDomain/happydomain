@@ -26,19 +26,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happyDomain/internal/usecase/session"
-	"git.happydns.org/happyDomain/model"
+	happydns "git.happydns.org/happyDomain/model"
 )
 
 type SessionController struct {
-	config *happydns.Options
-	store  session.SessionStorage
+	config         *happydns.Options
+	sessionService happydns.AdminSessionUsecase
 }
 
-func NewSessionController(cfg *happydns.Options, store session.SessionStorage) *SessionController {
+func NewSessionController(cfg *happydns.Options, sessionService happydns.AdminSessionUsecase) *SessionController {
 	return &SessionController{
-		config: cfg,
-		store:  store,
+		config:         cfg,
+		sessionService: sessionService,
 	}
 }
 
@@ -54,7 +53,7 @@ func NewSessionController(cfg *happydns.Options, store session.SessionStorage) *
 //	@Failure		500	{object}	happydns.ErrorResponse	"Internal server error"
 //	@Router			/sessions [delete]
 func (sc *SessionController) DeleteSessions(c *gin.Context) {
-	happydns.ApiResponse(c, true, sc.store.ClearSessions())
+	happydns.ApiResponse(c, true, sc.sessionService.ClearAllSessions())
 }
 
 // sessionHandler is a middleware that loads a session by ID and adds it to the context.
@@ -66,7 +65,7 @@ func (sc *SessionController) DeleteSessions(c *gin.Context) {
 //	@Param			sessionid	path	string	true	"Session identifier"
 //	@Failure		404			{object}	happydns.ErrorResponse	"Session not found"
 func (sc *SessionController) SessionHandler(c *gin.Context) {
-	session, err := sc.store.GetSession(c.Param("sessionid"))
+	session, err := sc.sessionService.GetSessionByID(c.Param("sessionid"))
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, happydns.ErrorResponse{Message: err.Error()})
 		return
@@ -107,5 +106,5 @@ func (sc *SessionController) GetSession(c *gin.Context) {
 //	@Failure		500			{object}	happydns.ErrorResponse	"Internal server error"
 //	@Router			/sessions/{sessionid} [delete]
 func (sc *SessionController) DeleteSession(c *gin.Context) {
-	happydns.ApiResponse(c, true, sc.store.DeleteSession(c.Param("sessionid")))
+	happydns.ApiResponse(c, true, sc.sessionService.DeleteSessionByID(c.Param("sessionid")))
 }
