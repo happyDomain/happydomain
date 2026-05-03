@@ -26,14 +26,11 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api-admin/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/storage"
 )
 
 func declareZoneServiceRoutes(
 	apiZonesRoutes *gin.RouterGroup,
-	zc *controller.ZoneController,
 	dep Dependencies,
-	store storage.Storage,
 ) {
 	sc := controller.NewServiceController(
 		dep.Service,

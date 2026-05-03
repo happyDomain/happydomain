@@ -26,10 +26,9 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api-admin/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/storage"
 )
 
-func declareDomainRoutes(router *gin.RouterGroup, dep Dependencies, store storage.Storage) {
+func declareDomainRoutes(router *gin.RouterGroup, dep Dependencies) {
 	dc := controller.NewDomainController(
 		dep.Domain,
 		dep.AdminDomain,
@@ -50,5 +49,5 @@ func declareDomainRoutes(router *gin.RouterGroup, dep Dependencies, store storag
 	apiDomainsRoutes.PUT("", dc.UpdateDomain)
 
 	apiDomainsRoutes.PUT("/zones", dc.UpdateZones)
-	declareZoneRoutes(apiDomainsRoutes, dep, store)
+	declareZoneRoutes(apiDomainsRoutes, dep)
 }

@@ -26,10 +26,9 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api-admin/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/storage"
 )
 
-func declareProviderRoutes(router *gin.RouterGroup, dep Dependencies, store storage.Storage) {
+func declareProviderRoutes(router *gin.RouterGroup, dep Dependencies) {
 	pc := controller.NewProviderController(dep.Provider, dep.AdminProvider)
 
 	router.GET("/providers", pc.ListProviders)
@@ -47,5 +46,5 @@ func declareProviderRoutes(router *gin.RouterGroup, dep Dependencies, store stor
 	apiProvidersRoutes.GET("", pc.GetProvider)
 	apiProvidersRoutes.PUT("", pc.UpdateProvider)
 
-	declareDomainRoutes(apiProvidersRoutes, dep, store)
+	declareDomainRoutes(apiProvidersRoutes, dep)
 }

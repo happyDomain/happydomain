@@ -25,10 +25,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api-admin/controller"
-	"git.happydns.org/happyDomain/internal/storage"
 )
 
-func declareUsersRoutes(router *gin.RouterGroup, dep Dependencies, store storage.Storage) {
+func declareUsersRoutes(router *gin.RouterGroup, dep Dependencies) {
 	sc := controller.NewUserController(dep.User, dep.AdminUser)
 
 	router.GET("/users", sc.GetUsers)
@@ -42,6 +41,6 @@ func declareUsersRoutes(router *gin.RouterGroup, dep Dependencies, store storage
 	apiUsersRoutes.PUT("", sc.UpdateUser)
 	apiUsersRoutes.DELETE("", sc.DeleteUser)
 
-	declareDomainRoutes(apiUsersRoutes, dep, store)
-	declareProviderRoutes(apiUsersRoutes, dep, store)
+	declareDomainRoutes(apiUsersRoutes, dep)
+	declareProviderRoutes(apiUsersRoutes, dep)
 }
