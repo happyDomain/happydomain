@@ -74,6 +74,7 @@ type Usecases struct {
 	service          happydns.ServiceUsecase
 	serviceSpecs     happydns.ServiceSpecsUsecase
 	user             happydns.UserUsecase
+	userAdmin        happydns.AdminUserUsecase
 	zone             happydns.ZoneUsecase
 	zoneService      happydns.ZoneServiceUsecase
 
@@ -273,6 +274,7 @@ func (app *App) initUsecases() {
 		sessionService,
 	)
 	app.usecases.user = userService
+	app.usecases.userAdmin = userService
 	app.usecases.authentication = usecase.NewAuthenticationUsecase(app.cfg, app.store, app.usecases.user)
 	app.usecases.authUser = authUserService
 	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg)

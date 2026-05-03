@@ -29,7 +29,7 @@ import (
 )
 
 func declareUsersRoutes(router *gin.RouterGroup, dep Dependencies, store storage.Storage) {
-	sc := controller.NewUserController(store, dep.User)
+	sc := controller.NewUserController(dep.User, dep.AdminUser)
 
 	router.GET("/users", sc.GetUsers)
 	router.POST("/users", sc.NewUser)

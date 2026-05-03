@@ -29,26 +29,25 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/usecase/user"
-	"git.happydns.org/happyDomain/model"
+	happydns "git.happydns.org/happyDomain/model"
 )
 
 type UserController struct {
-	userService happydns.UserUsecase
-	store       user.UserStorage
+	userService  happydns.UserUsecase
+	adminService happydns.AdminUserUsecase
 }
 
-func NewUserController(store user.UserStorage, userService happydns.UserUsecase) *UserController {
+func NewUserController(userService happydns.UserUsecase, adminService happydns.AdminUserUsecase) *UserController {
 	return &UserController{
-		userService,
-		store,
+		userService:  userService,
+		adminService: adminService,
 	}
 }
 
 func (uc *UserController) UserHandler(c *gin.Context) {
 	user, err := middleware.UserHandlerBase(uc.userService, c)
 	if err != nil {
-		user, err = uc.store.GetUserByEmail(c.Param("uid"))
+		user, err = uc.userService.GetUserByEmail(c.Param("uid"))
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusNotFound, happydns.ErrorResponse{Message: "User not found"})
 			return
@@ -72,17 +71,7 @@ func (uc *UserController) UserHandler(c *gin.Context) {
 //	@Failure		500		{object}	happydns.ErrorResponse
 //	@Router			/users [get]
 func (uc *UserController) GetUsers(c *gin.Context) {
-	iter, err := uc.store.ListAllUsers()
-	if err != nil {
-		happydns.ApiResponse(c, nil, err)
-		return
-	}
-
-	var users []*happydns.User
-	for iter.Next() {
-		users = append(users, iter.Item())
-	}
-
+	users, err := uc.adminService.ListAllUsers()
 	happydns.ApiResponse(c, users, err)
 }
 
@@ -107,7 +96,7 @@ func (uc *UserController) NewUser(c *gin.Context) {
 		return
 	}
 
-	happydns.ApiResponse(c, uu, uc.store.CreateOrUpdateUser(uu))
+	happydns.ApiResponse(c, uu, uc.adminService.CreateOrUpdateUser(uu))
 }
 
 // deleteUsers deletes all users from the database.
@@ -122,7 +111,7 @@ func (uc *UserController) NewUser(c *gin.Context) {
 //	@Failure		500		{object}	happydns.ErrorResponse
 //	@Router			/users [delete]
 func (uc *UserController) DeleteUsers(c *gin.Context) {
-	happydns.ApiResponse(c, true, uc.store.ClearUsers())
+	happydns.ApiResponse(c, true, uc.adminService.ClearUsers())
 }
 
 // getUser retrieves a specific user from the database.
@@ -201,5 +190,5 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 func (uc *UserController) DeleteUser(c *gin.Context) {
 	user := c.MustGet("user").(*happydns.User)
 
-	happydns.ApiResponse(c, true, uc.store.DeleteUser(user.Id))
+	happydns.ApiResponse(c, true, uc.adminService.DeleteUserByID(user.Id))
 }

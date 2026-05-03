@@ -33,6 +33,7 @@ import (
 // Dependencies holds all use cases required to register the admin API routes.
 type Dependencies struct {
 	AdminSession          happydns.AdminSessionUsecase
+	AdminUser             happydns.AdminUserUsecase
 	AuthUser              happydns.AuthUserUsecase
 	Backup                happydns.BackupUsecase
 	Domain                happydns.DomainUsecase

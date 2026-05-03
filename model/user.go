@@ -69,3 +69,15 @@ type UserUsecase interface {
 	GetUserByEmail(string) (*User, error)
 	UpdateUser(Identifier, func(*User)) (*User, error)
 }
+
+// AdminUserUsecase exposes administrative user operations that bypass the
+// caller-scoped checks of UserUsecase. Admin callers can create/replace any
+// user, list every user, wipe the user table, and force-delete users that
+// the standard DeleteUser refuses to remove (e.g. locally-authenticated
+// accounts which are otherwise expected to delete themselves).
+type AdminUserUsecase interface {
+	ListAllUsers() ([]*User, error)
+	CreateOrUpdateUser(*User) error
+	ClearUsers() error
+	DeleteUserByID(Identifier) error
+}

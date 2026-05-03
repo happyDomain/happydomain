@@ -159,3 +159,44 @@ func (s *Service) DeleteUser(userid happydns.Identifier) error {
 func (s *Service) GenerateUserAvatar(user *happydns.User, size int, writer io.Writer) error {
 	return avatar.GenerateUserAvatar(user, size, writer)
 }
+
+// ListAllUsers returns every user in the system. It is intended for
+// administrative callers and materialises the underlying iterator into a
+// slice so the caller does not need to manage iteration.
+func (s *Service) ListAllUsers() ([]*happydns.User, error) {
+	iter, err := s.store.ListAllUsers()
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+
+	var users []*happydns.User
+	for iter.Next() {
+		users = append(users, iter.Item())
+	}
+	return users, iter.Err()
+}
+
+// CreateOrUpdateUser persists user as-is, without any of the validations
+// applied by CreateUser. It is intended for administrative callers (e.g.
+// backup restoration, manual user creation) that need to set fields like
+// Id and CreatedAt directly.
+func (s *Service) CreateOrUpdateUser(user *happydns.User) error {
+	return s.store.CreateOrUpdateUser(user)
+}
+
+// ClearUsers removes every user from the database. It is intended for
+// administrative callers performing a full reset.
+func (s *Service) ClearUsers() error {
+	return s.store.ClearUsers()
+}
+
+// DeleteUserByID force-removes the user identified by userID, without the
+// "is this a local-auth account?" guard performed by DeleteUser. It is
+// intended for administrative callers that need to remove any user.
+func (s *Service) DeleteUserByID(userID happydns.Identifier) error {
+	if err := s.store.DeleteUser(userID); err != nil {
+		return err
+	}
+	return s.closeUserSessions.ByID(userID)
+}
