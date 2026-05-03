@@ -25,12 +25,10 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api-admin/controller"
-	"git.happydns.org/happyDomain/internal/storage"
-	"git.happydns.org/happyDomain/internal/usecase"
 )
 
-func declareTidyRoutes(router *gin.RouterGroup, store storage.Storage) {
-	tc := controller.NewTidyController(usecase.NewTidyUpUsecase(store))
+func declareTidyRoutes(router *gin.RouterGroup, dep Dependencies) {
+	tc := controller.NewTidyController(dep.TidyUp)
 
 	router.POST("/tidy", tc.TidyDB)
 }

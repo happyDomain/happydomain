@@ -25,7 +25,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	api "git.happydns.org/happyDomain/internal/api/route"
-	"git.happydns.org/happyDomain/internal/storage"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	happydns "git.happydns.org/happyDomain/model"
 )
@@ -50,9 +49,10 @@ type Dependencies struct {
 	ZoneService           happydns.ZoneServiceUsecase
 	CheckerOptionsUC      *checkerUC.CheckerOptionsUsecase
 	CheckScheduler        *checkerUC.Scheduler
+	TidyUp                happydns.TidyUpUseCase
 }
 
-func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, s storage.Storage, dep Dependencies) {
+func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, dep Dependencies) {
 	apiRoutes := router.Group("/api")
 
 	declareBackupRoutes(apiRoutes, dep)
@@ -63,6 +63,6 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, s storage.Storage,
 	declareSessionsRoutes(cfg, apiRoutes, dep)
 	declareUserAuthsRoutes(apiRoutes, dep)
 	declareUsersRoutes(apiRoutes, dep)
-	declareTidyRoutes(apiRoutes, s)
+	declareTidyRoutes(apiRoutes, dep)
 	api.DeclareVersionRoutes(apiRoutes)
 }

@@ -34,6 +34,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	admin "git.happydns.org/happyDomain/internal/api-admin/route"
+	"git.happydns.org/happyDomain/internal/usecase"
 	backupUC "git.happydns.org/happyDomain/internal/usecase/backup"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
@@ -69,7 +70,6 @@ func NewAdmin(app *App) *Admin {
 	admin.DeclareRoutes(
 		app.cfg,
 		router,
-		app.store,
 		admin.Dependencies{
 			AdminAuthUser:         app.usecases.authUserAdmin,
 			AdminDomain:           app.usecases.domainAdmin,
@@ -89,6 +89,7 @@ func NewAdmin(app *App) *Admin {
 			ZoneService:           app.usecases.zoneService,
 			CheckerOptionsUC:      app.usecases.checkerOptionsUC,
 			CheckScheduler:        app.usecases.checkerScheduler,
+			TidyUp:                usecase.NewTidyUpUsecase(app.store),
 		},
 	)
 	web.DeclareRoutes(app.cfg, router)
