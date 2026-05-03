@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,17 +19,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package route
-
-import (
-	"github.com/gin-gonic/gin"
-
-	"git.happydns.org/happyDomain/internal/api-admin/controller"
-)
-
-func declareBackupRoutes(router *gin.RouterGroup, dep Dependencies) {
-	bc := controller.NewBackupController(dep.Backup)
-
-	router.POST("/backup.json", bc.BackupJSON)
-	router.PUT("/backup.json", bc.RestoreJSON)
-}
+// Package backup implements the admin-level use case for exporting and
+// restoring the full happyDomain database. It walks every owned resource
+// (users, auth users, domains, zones, providers, sessions, checker plans
+// and discovery state) and produces a happydns.Backup payload suitable for
+// later restoration via the same package.
+package backup

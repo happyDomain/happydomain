@@ -38,3 +38,11 @@ type Backup struct {
 	DiscoveryEntries         []*StoredDiscoveryEntry
 	DiscoveryObservationRefs []*DiscoveryObservationRef
 }
+
+// BackupUsecase orchestrates the export and re-import of every persistent
+// resource managed by happyDomain. It is the entry point used by the admin
+// API to take or restore a complete dump of the system.
+type BackupUsecase interface {
+	Backup() Backup
+	Restore(*Backup) error
+}
