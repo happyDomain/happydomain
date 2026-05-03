@@ -29,28 +29,24 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/usecase/zone"
-	"git.happydns.org/happyDomain/model"
+	happydns "git.happydns.org/happyDomain/model"
 )
 
 type ZoneController struct {
 	domainService         happydns.DomainUsecase
 	zoneService           happydns.ZoneUsecase
 	zoneCorrectionService happydns.ZoneCorrectionApplierUsecase
-	store                 zone.ZoneStorage
 }
 
 func NewZoneController(
 	domainService happydns.DomainUsecase,
 	zoneService happydns.ZoneUsecase,
 	zoneCorrectionService happydns.ZoneCorrectionApplierUsecase,
-	store zone.ZoneStorage,
 ) *ZoneController {
 	return &ZoneController{
 		domainService,
 		zoneService,
 		zoneCorrectionService,
-		store,
 	}
 }
 
@@ -80,7 +76,7 @@ func (zc *ZoneController) AddZone(c *gin.Context) {
 	}
 	uz.Id = nil
 
-	happydns.ApiResponse(c, uz, zc.store.CreateZone(uz))
+	happydns.ApiResponse(c, uz, zc.zoneService.CreateZone(uz))
 }
 
 // deleteZone deletes a zone from the system.
@@ -107,7 +103,7 @@ func (zc *ZoneController) DeleteZone(c *gin.Context) {
 		return
 	}
 
-	happydns.ApiResponse(c, true, zc.store.DeleteZone(zoneid))
+	happydns.ApiResponse(c, true, zc.zoneService.DeleteZone(zoneid))
 }
 
 // getZone retrieves a zone's information.
@@ -183,5 +179,5 @@ func (zc *ZoneController) UpdateZone(c *gin.Context) {
 	}
 	uz.Id = zone.Id
 
-	happydns.ApiResponse(c, uz, zc.store.UpdateZone(uz))
+	happydns.ApiResponse(c, uz, zc.zoneService.UpdateZone(zone.Id, func(z *happydns.Zone) { *z = *uz }))
 }

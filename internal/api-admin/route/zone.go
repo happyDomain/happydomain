@@ -34,7 +34,6 @@ func declareZoneRoutes(router *gin.RouterGroup, dep Dependencies, store storage.
 		dep.Domain,
 		dep.Zone,
 		dep.ZoneCorrectionApplier,
-		store,
 	)
 
 	router.GET("/zones", zc.ListZones)
