@@ -24,7 +24,7 @@ package notification
 import (
 	"context"
 
-	notifPkg "git.happydns.org/happyDomain/internal/notification"
+	notifPkg "git.happydns.org/happyDomain/internal/notifier"
 	"git.happydns.org/happyDomain/model"
 )
 

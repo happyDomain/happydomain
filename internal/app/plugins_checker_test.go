@@ -31,7 +31,7 @@ import (
 	"testing"
 
 	sdk "git.happydns.org/checker-sdk-go/checker"
-	"git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/internal/dnschecker"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -134,7 +134,7 @@ func TestLoadCheckerPlugin_Success(t *testing.T) {
 		t.Fatalf("expected success, got (%v, %v)", found, err)
 	}
 
-	if got := checker.FindChecker("dummy-success"); got == nil {
+	if got := dnschecker.FindChecker("dummy-success"); got == nil {
 		t.Errorf("expected checker %q to be registered", "dummy-success")
 	}
 	if got := sdk.FindObservationProvider(happydns.ObservationKey("dummy-dummy-success")); got == nil {

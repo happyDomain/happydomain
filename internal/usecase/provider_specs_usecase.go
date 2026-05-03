@@ -25,7 +25,7 @@ import (
 	"strings"
 
 	"git.happydns.org/happyDomain/internal/forms"
-	providerReg "git.happydns.org/happyDomain/internal/provider"
+	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/providers"
 )

@@ -24,7 +24,7 @@ package checker
 import (
 	"fmt"
 
-	checkerPkg "git.happydns.org/happyDomain/internal/checker"
+	checkerPkg "git.happydns.org/happyDomain/internal/dnschecker"
 	"git.happydns.org/happyDomain/model"
 )
 

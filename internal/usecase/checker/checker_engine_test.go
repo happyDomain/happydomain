@@ -28,7 +28,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/internal/dnschecker"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/model"
@@ -69,8 +69,8 @@ func TestCheckerEngine_RunOK(t *testing.T) {
 	}
 
 	// Register test provider and checker.
-	checker.RegisterObservationProvider(&testObservationProvider{})
-	checker.RegisterChecker(&happydns.CheckerDefinition{
+	dnschecker.RegisterObservationProvider(&testObservationProvider{})
+	dnschecker.RegisterChecker(&happydns.CheckerDefinition{
 		ID:   "test_checker",
 		Name: "Test Checker",
 		Availability: happydns.CheckerAvailability{
@@ -133,7 +133,7 @@ func TestCheckerEngine_RunWarn(t *testing.T) {
 		t.Fatalf("Instantiate() returned error: %v", err)
 	}
 
-	checker.RegisterChecker(&happydns.CheckerDefinition{
+	dnschecker.RegisterChecker(&happydns.CheckerDefinition{
 		ID:   "test_checker_warn",
 		Name: "Test Checker Warn",
 		Availability: happydns.CheckerAvailability{
@@ -177,7 +177,7 @@ func TestCheckerEngine_RunPerRuleDisable(t *testing.T) {
 		t.Fatalf("Instantiate() returned error: %v", err)
 	}
 
-	checker.RegisterChecker(&happydns.CheckerDefinition{
+	dnschecker.RegisterChecker(&happydns.CheckerDefinition{
 		ID:   "test_checker_per_rule",
 		Name: "Test Checker Per Rule",
 		Availability: happydns.CheckerAvailability{
@@ -298,7 +298,7 @@ func TestCheckerEngine_RunWithScheduledTrigger(t *testing.T) {
 		t.Fatalf("Instantiate() returned error: %v", err)
 	}
 
-	checker.RegisterChecker(&happydns.CheckerDefinition{
+	dnschecker.RegisterChecker(&happydns.CheckerDefinition{
 		ID:   "test_checker_sched",
 		Name: "Test Checker Scheduled",
 		Availability: happydns.CheckerAvailability{
@@ -351,7 +351,7 @@ func TestCheckerEngine_RunExecution_CheckerDisappeared(t *testing.T) {
 		t.Fatalf("Instantiate() returned error: %v", err)
 	}
 
-	checker.RegisterChecker(&happydns.CheckerDefinition{
+	dnschecker.RegisterChecker(&happydns.CheckerDefinition{
 		ID:   "test_checker_disappear",
 		Name: "Test Checker Disappear",
 		Availability: happydns.CheckerAvailability{
@@ -398,8 +398,8 @@ func TestCheckerEngine_RunPopulatesObservationCache(t *testing.T) {
 		t.Fatalf("Instantiate() returned error: %v", err)
 	}
 
-	checker.RegisterObservationProvider(&testObservationProvider{})
-	checker.RegisterChecker(&happydns.CheckerDefinition{
+	dnschecker.RegisterObservationProvider(&testObservationProvider{})
+	dnschecker.RegisterChecker(&happydns.CheckerDefinition{
 		ID:   "test_checker_cache",
 		Name: "Test Checker Cache",
 		Availability: happydns.CheckerAvailability{
@@ -474,7 +474,7 @@ func TestCheckerEngine_RunWithEndpointOverride(t *testing.T) {
 	}
 
 	const checkerID = "test_checker_endpoint"
-	checker.RegisterChecker(&happydns.CheckerDefinition{
+	dnschecker.RegisterChecker(&happydns.CheckerDefinition{
 		ID:   checkerID,
 		Name: "Test Checker Endpoint",
 		Availability: happydns.CheckerAvailability{
@@ -540,7 +540,7 @@ func TestCheckerEngine_RunWithEndpointOverride_RemoteFailure(t *testing.T) {
 	}
 
 	const checkerID = "test_checker_endpoint_fail"
-	checker.RegisterChecker(&happydns.CheckerDefinition{
+	dnschecker.RegisterChecker(&happydns.CheckerDefinition{
 		ID:   checkerID,
 		Name: "Test Checker Endpoint Fail",
 		Availability: happydns.CheckerAvailability{
@@ -613,8 +613,8 @@ func TestCheckerEngine_PublishesDiscoveryEntries(t *testing.T) {
 			{Type: "tls.endpoint.v1", Ref: "mail.example.com:465", Payload: json.RawMessage(`{"port":465}`)},
 		},
 	}
-	checker.RegisterObservationProvider(provider)
-	checker.RegisterChecker(&happydns.CheckerDefinition{
+	dnschecker.RegisterObservationProvider(provider)
+	dnschecker.RegisterChecker(&happydns.CheckerDefinition{
 		ID:   "test_discovery_publisher",
 		Name: "Test Discovery Publisher",
 		Availability: happydns.CheckerAvailability{
@@ -731,13 +731,13 @@ func TestCheckerEngine_CrossCheckerDiscovery(t *testing.T) {
 			{Type: "t.v1", Ref: "host:443", Payload: json.RawMessage(`{"port":443}`)},
 		},
 	}
-	checker.RegisterObservationProvider(producer)
+	dnschecker.RegisterObservationProvider(producer)
 	// The producer rule reads its own observation (prod_obs) but queries
 	// related observations by the consumer's key (cons_obs) — that is the
 	// key under which downstream checkers stored their findings about the
 	// producer's entries.
 	producerRule := &discoveryCaptureRule{name: "producer_rule", key: "prod_obs", relatedKey: "cons_obs"}
-	checker.RegisterChecker(&happydns.CheckerDefinition{
+	dnschecker.RegisterChecker(&happydns.CheckerDefinition{
 		ID:              "xchk_producer",
 		Name:            "Cross-checker Producer",
 		Availability:    happydns.CheckerAvailability{ApplyToDomain: true},
@@ -747,8 +747,8 @@ func TestCheckerEngine_CrossCheckerDiscovery(t *testing.T) {
 
 	// Consumer: reads AutoFillDiscoveryEntries, produces an observation.
 	consumer := &consumingProvider{key: "cons_obs"}
-	checker.RegisterObservationProvider(consumer)
-	checker.RegisterChecker(&happydns.CheckerDefinition{
+	dnschecker.RegisterObservationProvider(consumer)
+	dnschecker.RegisterChecker(&happydns.CheckerDefinition{
 		ID:   "xchk_consumer",
 		Name: "Cross-checker Consumer",
 		Availability: happydns.CheckerAvailability{ApplyToDomain: true},

@@ -26,7 +26,7 @@ import (
 	"testing"
 	"time"
 
-	"git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/internal/dnschecker"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
@@ -35,7 +35,7 @@ import (
 
 func setupStatusUC(t *testing.T) (*checkerUC.CheckStatusUsecase, *planStore, storage.Storage) {
 	t.Helper()
-	checker.RegisterChecker(&happydns.CheckerDefinition{
+	dnschecker.RegisterChecker(&happydns.CheckerDefinition{
 		ID:   "status_test_checker",
 		Name: "Status Test Checker",
 		Availability: happydns.CheckerAvailability{

@@ -23,10 +23,10 @@ package checkers
 
 import (
 	blacklist "git.happydns.org/checker-blacklist/checker"
-	"git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/internal/dnschecker"
 )
 
 func init() {
-	checker.RegisterObservationProvider(blacklist.Provider())
-	checker.RegisterExternalizableChecker(blacklist.Definition())
+	dnschecker.RegisterObservationProvider(blacklist.Provider())
+	dnschecker.RegisterExternalizableChecker(blacklist.Definition())
 }

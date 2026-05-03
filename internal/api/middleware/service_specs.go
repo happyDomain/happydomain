@@ -28,7 +28,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	intsvc "git.happydns.org/happyDomain/internal/service"
+	intsvc "git.happydns.org/happyDomain/internal/serviceanalyzer"
 )
 
 func ServiceSpecsHandler(c *gin.Context) {

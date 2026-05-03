@@ -29,7 +29,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	providerReg "git.happydns.org/happyDomain/internal/provider"
+	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	"git.happydns.org/happyDomain/internal/usecase/orchestrator"
 	serviceUC "git.happydns.org/happyDomain/internal/usecase/service"

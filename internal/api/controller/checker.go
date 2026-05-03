@@ -30,7 +30,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	checkerPkg "git.happydns.org/happyDomain/internal/checker"
+	checkerPkg "git.happydns.org/happyDomain/internal/dnschecker"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/model"
 )

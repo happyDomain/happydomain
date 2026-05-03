@@ -24,7 +24,7 @@ package checker_test
 import (
 	"testing"
 
-	"git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/internal/dnschecker"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/model"
 )
@@ -32,7 +32,7 @@ import (
 func setupPlanUC(t *testing.T) (*checkerUC.CheckPlanUsecase, *planStore) {
 	t.Helper()
 	// Register a checker so CreateCheckPlan validation passes.
-	checker.RegisterChecker(&happydns.CheckerDefinition{
+	dnschecker.RegisterChecker(&happydns.CheckerDefinition{
 		ID:   "plan_test_checker",
 		Name: "Plan Test Checker",
 		Availability: happydns.CheckerAvailability{

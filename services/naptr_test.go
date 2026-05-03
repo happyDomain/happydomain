@@ -30,7 +30,7 @@ import (
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 
-	svc "git.happydns.org/happyDomain/internal/service"
+	svc "git.happydns.org/happyDomain/internal/serviceanalyzer"
 )
 
 func TestNAPTR(t *testing.T) {

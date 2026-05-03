@@ -29,7 +29,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	notifPkg "git.happydns.org/happyDomain/internal/notification"
+	notifPkg "git.happydns.org/happyDomain/internal/notifier"
 	"git.happydns.org/happyDomain/model"
 )
 

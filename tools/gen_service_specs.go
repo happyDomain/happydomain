@@ -30,7 +30,7 @@ import (
 	"fmt"
 	"os"
 
-	intsvc "git.happydns.org/happyDomain/internal/service"
+	intsvc "git.happydns.org/happyDomain/internal/serviceanalyzer"
 	"git.happydns.org/happyDomain/model"
 	_ "git.happydns.org/happyDomain/services"
 	_ "git.happydns.org/happyDomain/services/abstract"

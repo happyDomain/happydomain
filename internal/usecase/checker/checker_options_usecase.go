@@ -26,7 +26,7 @@ import (
 	"maps"
 	"sync"
 
-	checkerPkg "git.happydns.org/happyDomain/internal/checker"
+	checkerPkg "git.happydns.org/happyDomain/internal/dnschecker"
 	"git.happydns.org/happyDomain/internal/forms"
 	"git.happydns.org/happyDomain/model"
 )

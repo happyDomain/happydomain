@@ -25,15 +25,15 @@ import (
 	"git.happydns.org/checker-dav/caldav"
 	"git.happydns.org/checker-dav/carddav"
 	sdk "git.happydns.org/checker-sdk-go/checker"
-	"git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/internal/dnschecker"
 )
 
 func init() {
 	caldavPrvd := caldav.Provider()
-	checker.RegisterObservationProvider(caldavPrvd)
-	checker.RegisterExternalizableChecker(caldavPrvd.(sdk.CheckerDefinitionProvider).Definition())
+	dnschecker.RegisterObservationProvider(caldavPrvd)
+	dnschecker.RegisterExternalizableChecker(caldavPrvd.(sdk.CheckerDefinitionProvider).Definition())
 
 	carddavPrvd := carddav.Provider()
-	checker.RegisterObservationProvider(carddavPrvd)
-	checker.RegisterExternalizableChecker(carddavPrvd.(sdk.CheckerDefinitionProvider).Definition())
+	dnschecker.RegisterObservationProvider(carddavPrvd)
+	dnschecker.RegisterExternalizableChecker(carddavPrvd.(sdk.CheckerDefinitionProvider).Definition())
 }

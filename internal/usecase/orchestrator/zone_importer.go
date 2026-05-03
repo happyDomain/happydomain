@@ -26,7 +26,7 @@ import (
 	"log"
 	"time"
 
-	svc "git.happydns.org/happyDomain/internal/service"
+	svc "git.happydns.org/happyDomain/internal/serviceanalyzer"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
 )

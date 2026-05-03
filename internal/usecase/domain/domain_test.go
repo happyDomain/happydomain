@@ -26,7 +26,7 @@ import (
 	"fmt"
 	"testing"
 
-	providerReg "git.happydns.org/happyDomain/internal/provider"
+	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	"git.happydns.org/happyDomain/internal/usecase/domain"

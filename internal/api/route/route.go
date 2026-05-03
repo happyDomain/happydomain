@@ -31,7 +31,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	notifPkg "git.happydns.org/happyDomain/internal/notification"
+	notifPkg "git.happydns.org/happyDomain/internal/notifier"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	notifUC "git.happydns.org/happyDomain/internal/usecase/notification"
 	happydns "git.happydns.org/happyDomain/model"

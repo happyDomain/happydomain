@@ -25,7 +25,7 @@ import (
 	"encoding/json"
 
 	"git.happydns.org/happyDomain/internal/forms"
-	intsvc "git.happydns.org/happyDomain/internal/service"
+	intsvc "git.happydns.org/happyDomain/internal/serviceanalyzer"
 	"git.happydns.org/happyDomain/model"
 )
 

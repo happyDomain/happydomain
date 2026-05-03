@@ -25,7 +25,7 @@ import (
 	_ "github.com/StackExchange/dnscontrol/v4/providers/fortigate"
 
 	"git.happydns.org/happyDomain/internal/adapters"
-	providerReg "git.happydns.org/happyDomain/internal/provider"
+	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 	"git.happydns.org/happyDomain/model"
 )
 

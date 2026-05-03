@@ -35,7 +35,7 @@ import (
 	"git.happydns.org/happyDomain/internal/mailer"
 	"git.happydns.org/happyDomain/internal/metrics"
 	"git.happydns.org/happyDomain/internal/newsletter"
-	notifPkg "git.happydns.org/happyDomain/internal/notification"
+	notifPkg "git.happydns.org/happyDomain/internal/notifier"
 	"git.happydns.org/happyDomain/internal/session"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/usecase"

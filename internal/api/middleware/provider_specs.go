@@ -27,7 +27,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	providerReg "git.happydns.org/happyDomain/internal/provider"
+	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 )
 
 func ProviderSpecsHandler(c *gin.Context) {

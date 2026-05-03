@@ -30,7 +30,7 @@ import (
 
 	dangling "git.happydns.org/checker-dangling/contract"
 	sdk "git.happydns.org/checker-sdk-go/checker"
-	"git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/internal/dnschecker"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/pkg/domaininfo"
 )
@@ -243,9 +243,9 @@ func (r *externalWhoisRule) Evaluate(ctx context.Context, obs happydns.Observati
 }
 
 func init() {
-	checker.RegisterObservationProvider(&externalWhoisProvider{})
+	dnschecker.RegisterObservationProvider(&externalWhoisProvider{})
 
-	checker.RegisterChecker(&happydns.CheckerDefinition{
+	dnschecker.RegisterChecker(&happydns.CheckerDefinition{
 		ID:   "external_whois",
 		Name: "External target WHOIS",
 		Availability: happydns.CheckerAvailability{

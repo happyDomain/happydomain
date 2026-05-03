@@ -27,7 +27,7 @@ import (
 	"strings"
 	"time"
 
-	"git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/internal/dnschecker"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -212,7 +212,7 @@ func worseStatus(a, b happydns.Status) happydns.Status {
 }
 
 func init() {
-	checker.RegisterChecker(&happydns.CheckerDefinition{
+	dnschecker.RegisterChecker(&happydns.CheckerDefinition{
 		ID:   "domain_contact",
 		Name: "Domain Contact Consistency",
 		Availability: happydns.CheckerAvailability{

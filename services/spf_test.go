@@ -27,7 +27,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	intsvc "git.happydns.org/happyDomain/internal/service"
+	intsvc "git.happydns.org/happyDomain/internal/serviceanalyzer"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
 	_ "git.happydns.org/happyDomain/services/providers/google"

@@ -28,7 +28,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
-	svc "git.happydns.org/happyDomain/internal/service"
+	svc "git.happydns.org/happyDomain/internal/serviceanalyzer"
 )
 
 type GoogleVerif struct {

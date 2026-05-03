@@ -32,7 +32,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	notifPkg "git.happydns.org/happyDomain/internal/notification"
+	notifPkg "git.happydns.org/happyDomain/internal/notifier"
 	notifUC "git.happydns.org/happyDomain/internal/usecase/notification"
 	"git.happydns.org/happyDomain/model"
 )

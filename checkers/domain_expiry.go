@@ -29,7 +29,7 @@ import (
 	"time"
 
 	sdk "git.happydns.org/checker-sdk-go/checker"
-	"git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/internal/dnschecker"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/pkg/domaininfo"
 )
@@ -189,9 +189,9 @@ func (r *domainExpiryRule) Evaluate(ctx context.Context, obs happydns.Observatio
 }
 
 func init() {
-	checker.RegisterObservationProvider(&whoisProvider{})
+	dnschecker.RegisterObservationProvider(&whoisProvider{})
 
-	checker.RegisterChecker(&happydns.CheckerDefinition{
+	dnschecker.RegisterChecker(&happydns.CheckerDefinition{
 		ID:   "domain_expiry",
 		Name: "Domain Expiry",
 		Availability: happydns.CheckerAvailability{

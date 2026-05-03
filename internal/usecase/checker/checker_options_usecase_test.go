@@ -27,7 +27,7 @@ import (
 	"strings"
 	"testing"
 
-	"git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/internal/dnschecker"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/model"
 )
@@ -463,7 +463,7 @@ func TestBuildMergedCheckerOptions_NilInputs(t *testing.T) {
 func registerTestChecker(id string, def *happydns.CheckerDefinition) {
 	def.ID = id
 	def.Name = id
-	checker.RegisterChecker(def)
+	dnschecker.RegisterChecker(def)
 }
 
 func TestValidateOptions_UnknownChecker(t *testing.T) {

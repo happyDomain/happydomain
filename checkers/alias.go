@@ -23,10 +23,10 @@ package checkers
 
 import (
 	alias "git.happydns.org/checker-alias/checker"
-	"git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/internal/dnschecker"
 )
 
 func init() {
-	checker.RegisterObservationProvider(alias.Provider())
-	checker.RegisterExternalizableChecker(alias.Definition())
+	dnschecker.RegisterObservationProvider(alias.Provider())
+	dnschecker.RegisterExternalizableChecker(alias.Definition())
 }

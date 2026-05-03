@@ -24,12 +24,12 @@ package checkers
 import (
 	dnsviz "git.happydns.org/checker-dnsviz/checker"
 	sdk "git.happydns.org/checker-sdk-go/checker"
-	"git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/internal/dnschecker"
 )
 
 func init() {
 	prvd := dnsviz.Provider(nil)
-	checker.RegisterObservationProvider(prvd)
+	dnschecker.RegisterObservationProvider(prvd)
 	// DNSViz requires an external subprocess; only register as externalizable.
-	checker.RegisterExternalizableChecker(prvd.(sdk.CheckerDefinitionProvider).Definition())
+	dnschecker.RegisterExternalizableChecker(prvd.(sdk.CheckerDefinitionProvider).Definition())
 }

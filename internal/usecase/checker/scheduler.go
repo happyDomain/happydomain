@@ -30,7 +30,7 @@ import (
 	"sync"
 	"time"
 
-	checkerPkg "git.happydns.org/happyDomain/internal/checker"
+	checkerPkg "git.happydns.org/happyDomain/internal/dnschecker"
 	"git.happydns.org/happyDomain/internal/metrics"
 	"git.happydns.org/happyDomain/model"
 )

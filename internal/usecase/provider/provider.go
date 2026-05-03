@@ -26,7 +26,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	providerReg "git.happydns.org/happyDomain/internal/provider"
+	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 	"git.happydns.org/happyDomain/model"
 )
 

@@ -28,8 +28,8 @@ import (
 	"time"
 
 	adapter "git.happydns.org/happyDomain/internal/adapters"
-	providerReg "git.happydns.org/happyDomain/internal/provider"
-	svc "git.happydns.org/happyDomain/internal/service"
+	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
+	svc "git.happydns.org/happyDomain/internal/serviceanalyzer"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"

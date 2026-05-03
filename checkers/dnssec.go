@@ -23,10 +23,10 @@ package checkers
 
 import (
 	dnssec "git.happydns.org/checker-dnssec/checker"
-	"git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/internal/dnschecker"
 )
 
 func init() {
-	checker.RegisterObservationProvider(dnssec.Provider())
-	checker.RegisterExternalizableChecker(dnssec.Definition())
+	dnschecker.RegisterObservationProvider(dnssec.Provider())
+	dnschecker.RegisterExternalizableChecker(dnssec.Definition())
 }

@@ -27,7 +27,7 @@ import (
 	"strings"
 	"time"
 
-	"git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/internal/dnschecker"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -128,7 +128,7 @@ func (r *domainLockRule) Evaluate(ctx context.Context, obs happydns.ObservationG
 }
 
 func init() {
-	checker.RegisterChecker(&happydns.CheckerDefinition{
+	dnschecker.RegisterChecker(&happydns.CheckerDefinition{
 		ID:   "domain_lock",
 		Name: "Domain Lock Status",
 		Availability: happydns.CheckerAvailability{

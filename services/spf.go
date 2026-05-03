@@ -30,7 +30,7 @@ import (
 	"github.com/StackExchange/dnscontrol/v4/pkg/spflib"
 
 	"git.happydns.org/happyDomain/internal/helpers"
-	svc "git.happydns.org/happyDomain/internal/service"
+	svc "git.happydns.org/happyDomain/internal/serviceanalyzer"
 	"git.happydns.org/happyDomain/model"
 )
 

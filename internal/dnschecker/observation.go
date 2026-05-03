@@ -37,7 +37,7 @@
 // (CheckerHTMLReporter, CheckerMetricsReporter) to produce human-readable
 // reports or extract time-series metrics from collected data.
 
-package checker
+package dnschecker
 
 import (
 	"context"

@@ -32,7 +32,7 @@ import (
 	"plugin"
 
 	sdk "git.happydns.org/checker-sdk-go/checker"
-	"git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/internal/dnschecker"
 )
 
 // pluginSymbols is the minimal subset of *plugin.Plugin used by the loaders.
@@ -103,8 +103,8 @@ func loadCheckerPlugin(p pluginSymbols, fname string) (bool, error) {
 		return true, fmt.Errorf("NewCheckerPlugin returned a nil ObservationProvider")
 	}
 
-	checker.RegisterObservationProvider(provider)
-	checker.RegisterExternalizableChecker(def)
+	dnschecker.RegisterObservationProvider(provider)
+	dnschecker.RegisterExternalizableChecker(def)
 	log.Printf("Plugin %s (%s) loaded", def.ID, fname)
 	return true, nil
 }

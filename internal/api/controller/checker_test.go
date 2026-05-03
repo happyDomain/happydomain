@@ -33,7 +33,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	checkerPkg "git.happydns.org/happyDomain/internal/checker"
+	checkerPkg "git.happydns.org/happyDomain/internal/dnschecker"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
