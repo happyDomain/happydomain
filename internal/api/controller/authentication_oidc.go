@@ -197,7 +197,7 @@ func (p *OIDCProvider) CompleteOIDC(c *gin.Context) {
 	if email, ok := claims["email"].(string); ok {
 		profile.Email = email
 	}
-	if _, ok := claims["email_verified"].(bool); ok {
+	if v, ok := claims["email_verified"].(bool); ok && v {
 		now := time.Now()
 		profile.EmailVerification = &now
 	}
