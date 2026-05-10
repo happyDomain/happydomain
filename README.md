@@ -249,15 +249,23 @@ In order to build the happyDomain project, you'll need the following dependencie
 
 ```
 pushd web; npm install; popd
+pushd web-admin; npm install; popd
 ```
 
-2. Then, generate assets files used by Go code:
+2. Then, build the frontend assets:
+
+```
+go generate web/generate_npm.go
+go generate web-admin/generate_npm.go
+```
+
+3. Generate Go code (API docs, icons, …):
 
 ```
 go generate -tags swagger,web ./...
 ```
 
-3. Finaly, build the Go code:
+4. Finally, build the Go code:
 
 ```
 go build -tags swagger,web ./cmd/happyDomain

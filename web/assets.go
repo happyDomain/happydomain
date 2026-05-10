@@ -30,8 +30,6 @@ import (
 	"net/http"
 )
 
-//go:generate npm run generate:api
-//go:generate npm run build
 //go:embed all:build
 
 var _assets embed.FS

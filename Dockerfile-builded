@@ -1,10 +1,19 @@
 FROM alpine:3.23
 
+ARG VERSION=dev
+
+LABEL org.opencontainers.image.title="happyDomain" \
+      org.opencontainers.image.description="Making DNS simple for everyone" \
+      org.opencontainers.image.url="https://happydomain.org" \
+      org.opencontainers.image.source="https://git.happydns.org/happydomain" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.licenses="AGPL-3.0-or-later"
+
 EXPOSE 8081
 
 ENTRYPOINT ["/usr/sbin/happyDomain"]
 
-HEALTHCHECK CMD curl --fail http://localhost:8081/api/version
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl --fail http://localhost:8081/api/version
 
 ENV HAPPYDOMAIN_LEVELDB_PATH=/data/happydomain.db
 

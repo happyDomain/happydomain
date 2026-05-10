@@ -12,7 +12,8 @@ steps:
     image: golang:1-alpine
     commands:
       - sed -i '/npm run build/d;/npm run generate:api/d' web/assets.go web-admin/assets.go
-      - go install github.com/swaggo/swag/cmd/swag@latest
+      # renovate: datasource=go depName=github.com/swaggo/swag
+      - go install github.com/swaggo/swag/cmd/swag@v1.16.6
       - go mod download
       - go generate ./...
     environment:
@@ -21,7 +22,7 @@ steps:
   - name: update frontend version
     image: node:24-alpine
     commands:
-      - cd web && npm version "${DRONE_TAG##v}" --no-git-tag-version --allow-same-version
+      - cd web && npm version "${DRONE_SEMVER}" --no-git-tag-version --allow-same-version
     when:
       event:
         - tag
@@ -30,8 +31,7 @@ steps:
     image: node:24-alpine
     commands:
       - apk --no-cache add tar
-      - yarn config set network-timeout 100000
-      - yarn install
+      - yarn install --network-timeout 100000
       - tar --transform="s@.@./happydomain-${DRONE_COMMIT}@" --exclude-vcs --exclude=./node_modules/.cache --exclude=./web/node_modules/.cache --exclude=./web-admin/node_modules/.cache -czf /dev/shm/happydomain-src.tar.gz ./package.json ./package-lock.json ./.npmrc ./node_modules/ ./web/ ./web-admin/
       - mkdir deploy
       - mv /dev/shm/happydomain-src.tar.gz deploy
@@ -68,9 +68,10 @@ steps:
     image: golang:1-alpine
     commands:
       - apk add --no-cache git
-      - go build -ldflags '-w -X main.Version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - go build -ldflags '-w -X main.Version=${DRONE_SEMVER} -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
       - ln deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
       # Generate NOTICE file (merging Go + frontend)
+      # renovate: datasource=go depName=github.com/google/go-licenses
       - go install github.com/google/go-licenses@v1.6.0
       - go-licenses report ./cmd/happyDomain --template .drone-notice.tpl > deploy/NOTICE.go
       - cat deploy/NOTICE.go deploy/NOTICE.web deploy/NOTICE.web-admin > deploy/NOTICE
@@ -107,7 +108,7 @@ steps:
     image: golang:1-alpine
     commands:
       - apk add --no-cache git
-      - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_SEMVER}" -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
     environment:
       CGO_ENABLED: 0
       GOOS: darwin
@@ -162,10 +163,33 @@ steps:
       auto_tag: true
       auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
       dockerfile: Dockerfile-builded
+      build_args:
+        - VERSION=${DRONE_BRANCH}-${DRONE_COMMIT}
       username:
         from_secret: docker_username
       password:
         from_secret: docker_password
+    when:
+      event:
+        exclude:
+          - tag
+
+  - name: publish on Docker Hub (tag)
+    image: plugins/docker
+    settings:
+      repo: happydomain/happydomain
+      auto_tag: true
+      auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+      dockerfile: Dockerfile-builded
+      build_args:
+        - VERSION=${DRONE_SEMVER}
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+    when:
+      event:
+        - tag
 
   - name: publish release on gitea
     image: plugins/gitea-release
@@ -174,6 +198,7 @@ steps:
         from_secret: git_nemunaire_token
       base_url: https://git.nemunai.re
       draft: true
+      prerelease: true
       files: deploy/*
     when:
       event:
@@ -186,6 +211,7 @@ steps:
         from_secret: codeberg_token
       base_url: https://codeberg.org
       draft: true
+      prerelease: true
       files: deploy/*
     when:
       event:
@@ -197,6 +223,7 @@ steps:
       api_key:
         from_secret: github_release_token
       draft: true
+      prerelease: true
       github_url: https://github.com
       files: deploy/*
     when:
@@ -226,7 +253,8 @@ steps:
     image: golang:1-alpine
     commands:
       - sed -i '/npm run build/d;/npm run generate:api/d' web/assets.go web-admin/assets.go
-      - go install github.com/swaggo/swag/cmd/swag@latest
+      # renovate: datasource=go depName=github.com/swaggo/swag
+      - go install github.com/swaggo/swag/cmd/swag@v1.16.6
       - go mod download
       - go generate ./...
     environment:
@@ -235,7 +263,7 @@ steps:
   - name: update frontend version
     image: node:24-alpine
     commands:
-      - cd web && npm version "${DRONE_TAG##v}" --no-git-tag-version --allow-same-version
+      - cd web && npm version "${DRONE_SEMVER}" --no-git-tag-version --allow-same-version
     when:
       event:
         - tag
@@ -270,7 +298,7 @@ steps:
     image: golang:1-alpine
     commands:
       - apk add --no-cache git
-      - go build -tags netgo,swagger,web -ldflags '-w -X main.Version=${DRONE_TAG##v} -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - go build -tags netgo,swagger,web -ldflags '-w -X main.Version=${DRONE_SEMVER} -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
       - ln deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
     environment:
       CGO_ENABLED: 0
@@ -305,7 +333,7 @@ steps:
     image: golang:1-alpine
     commands:
       - apk add --no-cache git
-      - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_TAG##v}" -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - go build -tags netgo,swagger,web -ldflags '-w -X "main.Version=${DRONE_SEMVER}" -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
     environment:
       CGO_ENABLED: 0
       GOOS: darwin
@@ -360,10 +388,33 @@ steps:
       auto_tag: true
       auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
       dockerfile: Dockerfile-builded
+      build_args:
+        - VERSION=${DRONE_BRANCH}-${DRONE_COMMIT}
       username:
         from_secret: docker_username
       password:
         from_secret: docker_password
+    when:
+      event:
+        exclude:
+          - tag
+
+  - name: publish on Docker Hub (tag)
+    image: plugins/docker
+    settings:
+      repo: happydomain/happydomain
+      auto_tag: true
+      auto_tag_suffix: ${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+      dockerfile: Dockerfile-builded
+      build_args:
+        - VERSION=${DRONE_SEMVER}
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+    when:
+      event:
+        - tag
 
   - name: publish release on gitea
     image: plugins/gitea-release

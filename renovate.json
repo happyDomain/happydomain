@@ -14,6 +14,16 @@
     "automerge": true,
     "automergeType": "pr"
   },
+  "regexManagers": [
+    {
+      "fileMatch": ["^\\.drone\\.yml$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>[^\\s]+)\\s+- go install [^@]+@(?<currentValue>[^\\s]+)"
+      ],
+      "datasourceTemplate": "{{datasource}}",
+      "depNameTemplate": "{{depName}}"
+    }
+  ],
   "packageRules": [
     {
       "matchManagers": ["npm"],
