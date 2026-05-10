@@ -9,7 +9,13 @@
 RET=$(curl -s ${DEST}"$@")
 CODE=$?
 
-echo "$RET" | jq . 2> /dev/null ||
+if [ -t 1 ]
+then
+    which jq > /dev/null 2> /dev/null &&
+        echo "${RET}" | jq . 2> /dev/null ||
+            echo "$RET"
+else
     echo "$RET"
+fi
 
 exit $CODE
