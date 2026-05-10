@@ -22,13 +22,15 @@
 package checkers
 
 import (
+	"os"
+
 	ping "git.happydns.org/checker-ping/checker"
 	sdk "git.happydns.org/checker-sdk-go/checker"
 	"git.happydns.org/happyDomain/internal/dnschecker"
 )
 
 func init() {
-	prvd := ping.Provider()
+	prvd := ping.ProviderWithPrivileged(os.Getuid() == 0)
 	dnschecker.RegisterObservationProvider(prvd)
 	dnschecker.RegisterExternalizableChecker(prvd.(sdk.CheckerDefinitionProvider).Definition())
 }
