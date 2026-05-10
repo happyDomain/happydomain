@@ -14,11 +14,12 @@
     "automerge": true,
     "automergeType": "pr"
   },
-  "regexManagers": [
+  "customManagers": [
     {
-      "fileMatch": ["^\\.drone\\.yml$"],
+      "customType": "regex",
+      "managerFilePatterns": ["/^\.drone\.yml$/"],
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>[^\\s]+)\\s+- go install [^@]+@(?<currentValue>[^\\s]+)"
+        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>[^\s]+)\s+- go install [^@]+@(?<currentValue>[^\s]+)"
       ],
       "datasourceTemplate": "{{datasource}}",
       "depNameTemplate": "{{depName}}"
@@ -31,9 +32,7 @@
       "enabled": false
     },
     {
-      "matchPackageNames": [
-        "github.com/StackExchange/dnscontrol/v[[:digit:]]"
-      ],
+      "matchPackageNames": ["github.com/StackExchange/dnscontrol/v[[:digit:]]"],
       "enabled": false
     }
   ]
