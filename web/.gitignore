@@ -3,6 +3,7 @@ node_modules
 # Output
 /.svelte-kit
 /build
+/coverage
 /src/lib/api-base
 /src/lib/api-admin
 
