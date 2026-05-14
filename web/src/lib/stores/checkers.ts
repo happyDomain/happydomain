@@ -21,10 +21,7 @@
 
 import { derived, writable, type Readable, type Writable } from "svelte/store";
 import { listCheckers, type ObservationSnapshotWithData } from "$lib/api/checkers";
-import type {
-    CheckerCheckerDefinition,
-    HappydnsExecution,
-} from "$lib/api-base/types.gen";
+import type { CheckerCheckerDefinition, HappydnsExecution } from "$lib/api-base/types.gen";
 
 export const checkers: Writable<Record<string, CheckerCheckerDefinition> | undefined> =
     writable(undefined);
@@ -38,11 +35,22 @@ export async function refreshCheckers() {
 // Stores for the currently viewed execution detail page
 export const currentExecution: Writable<HappydnsExecution | undefined> = writable(undefined);
 export const currentCheckInfo: Writable<CheckerCheckerDefinition | undefined> = writable(undefined);
-export const currentObservations: Writable<ObservationSnapshotWithData | undefined> = writable(undefined);
+export const currentObservations: Writable<ObservationSnapshotWithData | undefined> =
+    writable(undefined);
 
 // Report view mode: which panel the main area shows
 export type ReportViewMode = "json" | "html" | "metrics" | "rules";
-export const reportViewMode: Writable<ReportViewMode> = writable("json");
+
+function createReportViewMode(): Writable<ReportViewMode> {
+    const store = writable<ReportViewMode>("json");
+    currentCheckInfo.subscribe(($info) => {
+        if ($info?.has_html_report) store.set("html");
+        else if ($info?.has_metrics) store.set("metrics");
+        else store.set("rules");
+    });
+    return store;
+}
+export const reportViewMode = createReportViewMode();
 export const showHTMLReport: Readable<boolean> = derived(reportViewMode, ($m) => $m === "html");
 
 // Cached HTML report content, shared between the report card and sidebar download button.

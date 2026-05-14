@@ -197,20 +197,6 @@
     <div class="my-3 flex-fill"></div>
 
     <ButtonGroup class="w-100 mb-2">
-        {#if $currentCheckInfo?.has_metrics}
-            <Button
-                size="sm"
-                color="secondary"
-                outline
-                active={$reportViewMode === "metrics"}
-                onclick={() => {
-                    reportViewMode.set("metrics");
-                }}
-            >
-                <Icon name="graph-up"></Icon>
-                {$t("checkers.result.view-metrics")}
-            </Button>
-        {/if}
         {#if $currentCheckInfo?.has_html_report}
             <Button
                 size="sm"
@@ -223,6 +209,20 @@
             >
                 <Icon name="file-earmark-richtext"></Icon>
                 {$t("checkers.result.view-html")}
+            </Button>
+        {/if}
+        {#if $currentCheckInfo?.has_metrics}
+            <Button
+                size="sm"
+                color="secondary"
+                outline
+                active={$reportViewMode === "metrics"}
+                onclick={() => {
+                    reportViewMode.set("metrics");
+                }}
+            >
+                <Icon name="graph-up"></Icon>
+                {$t("checkers.result.view-metrics")}
             </Button>
         {/if}
         <Button
