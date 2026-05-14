@@ -72,7 +72,7 @@
         </div>
     {:else}
         <ul class="list-unstyled mb-0 flex-fill overflow-auto">
-            {#each Object.entries($checkers) as [checkerName, checkerInfo]}
+            {#each Object.entries($checkers).sort(([, a], [, b]) => (a.name || "").localeCompare(b.name || "")) as [checkerName, checkerInfo]}
                 {#if isCheckVisible(checkerInfo)}
                     {@const isActive = checkerName === currentCheckerName}
                     <li>
