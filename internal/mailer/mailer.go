@@ -70,12 +70,13 @@ func (r *Mailer) SendMail(to *mail.Address, subject, content string) (err error)
 		"Content":     content,
 	}
 
-	t, err := template.New("mailText").Parse(mailTXTTpl)
+	txtTpl, err := template.New("mailText").Parse(mailTXTTpl)
 	if err != nil {
 		return err
 	}
+	txtData := tplData
 	m.SetBodyWriter("text/plain", func(w io.Writer) error {
-		return t.Execute(w, tplData)
+		return txtTpl.Execute(w, txtData)
 	})
 
 	// Convert text from Markdown to HTML
@@ -99,13 +100,17 @@ func (r *Mailer) SendMail(to *mail.Address, subject, content string) (err error)
 		m.EmbedReader("happydomain.png", data)
 	}
 
-	t, err = template.New("mailHTML").Parse(mailHTMLTpl)
+	htmlTpl, err := template.New("mailHTML").Parse(mailHTMLTpl)
 	if err != nil {
 		return err
 	}
+	htmlData := map[string]string{}
+	for k, v := range tplData {
+		htmlData[k] = v
+	}
+	htmlData["Content"] = buf.String()
 	m.AddAlternativeWriter("text/html", func(w io.Writer) error {
-		tplData["Content"] = buf.String()
-		return t.Execute(w, tplData)
+		return htmlTpl.Execute(w, htmlData)
 	})
 
 	if err = r.SendMethod.PrepareAndSend(m); err != nil {
