@@ -40,6 +40,8 @@ git.happydns.org/checker-email-keys v0.2.0 h1:466dNm9+cWGb9H+L5LGy96Ac9rhSbEw9/u
 git.happydns.org/checker-email-keys v0.2.0/go.mod h1:xTFot7UIqn5XajMKkbaHEiZMMD3Fcac7RlQyUE2B3+Q=
 git.happydns.org/checker-happydeliver v0.1.0 h1:ERjLGkOH18NIUapL50LOogr+tfGEmSd5OJd1fav3Vo8=
 git.happydns.org/checker-happydeliver v0.1.0/go.mod h1:2jtD+G/TnyBavfufFk8gb6at6EulvyoH0aREbKsIoiM=
+git.happydns.org/checker-happydeliver v0.2.0 h1:hzhd+7ClW8hzIiuWoalM3Fp/q0RhlB05990xDP4CmME=
+git.happydns.org/checker-happydeliver v0.2.0/go.mod h1:2jtD+G/TnyBavfufFk8gb6at6EulvyoH0aREbKsIoiM=
 git.happydns.org/checker-http v0.1.0 h1:T/lppYNMgeLjwSTLwhfoiBKZJTNY8I5x1QKeomBrj3o=
 git.happydns.org/checker-http v0.1.0/go.mod h1:KNMHJcnq2xtf0uedSno9FmFJw447q5CSVxlrBEsLIec=
 git.happydns.org/checker-http v0.2.0/go.mod h1:qNfakw4MxKg6Q4uboqw4u0NRyDmu56a1T5ZrPVma7rE=
