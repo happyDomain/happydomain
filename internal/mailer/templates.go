@@ -155,8 +155,4 @@ const mailHTMLTpl = `
 </html>`
 
 // mailHTMLTpl is the template used for text emails.
-const mailTXTTpl = `{{ .Content }}
-
---
-Fred - customer support @ happyDomain
-Legal notice: https://www.happydomain.org/en/legal-notice/`
+const mailTXTTpl = "{{ .Content }}\n\n-- \nFred - customer support @ happyDomain\nLegal notice: https://www.happydomain.org/en/legal-notice/"
