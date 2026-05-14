@@ -174,6 +174,17 @@ func (u *Usecase) Backup() happydns.Backup {
 		}
 	}
 
+	// Observation snapshots.
+	if snapIter, err := u.store.ListAllSnapshots(); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve ObservationSnapshots: %s", err.Error()))
+	} else {
+		defer snapIter.Close()
+		for snapIter.Next() {
+			snap := snapIter.Item()
+			ret.ObservationSnapshots = append(ret.ObservationSnapshots, snap)
+		}
+	}
+
 	return ret
 }
 
@@ -262,6 +273,25 @@ func (u *Usecase) Restore(backup *happydns.Backup) error {
 	// Discovery observation refs.
 	for _, ref := range backup.DiscoveryObservationRefs {
 		errs = errors.Join(errs, u.store.RestoreDiscoveryObservationRef(ref))
+	}
+
+	// Observation snapshots (restored last; rebuild cache from snapshot data).
+	for _, snap := range backup.ObservationSnapshots {
+		if err := u.store.RestoreSnapshot(snap); err != nil {
+			errs = errors.Join(errs, err)
+			continue
+		}
+		for key := range snap.Data {
+			existing, _ := u.store.GetCachedObservation(snap.Target, key)
+			if existing == nil || snap.CollectedAt.After(existing.CollectedAt) {
+				if err := u.store.PutCachedObservation(snap.Target, key, &happydns.ObservationCacheEntry{
+					SnapshotID:  snap.Id,
+					CollectedAt: snap.CollectedAt,
+				}); err != nil {
+					errs = errors.Join(errs, err)
+				}
+			}
+		}
 	}
 
 	return errs

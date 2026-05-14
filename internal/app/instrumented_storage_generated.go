@@ -649,6 +649,11 @@ func (s *instrumentedStorage) RestoreExecution(exec *happydns.Execution) (err er
 	return s.inner.RestoreExecution(exec)
 }
 
+func (s *instrumentedStorage) RestoreSnapshot(snap *happydns.ObservationSnapshot) (err error) {
+	defer observe("restore", "observation_snapshot")(&err)
+	return s.inner.RestoreSnapshot(snap)
+}
+
 func (s *instrumentedStorage) SchemaVersion() int { return s.inner.SchemaVersion() }
 
 func (s *instrumentedStorage) SetLastSchedulerRun(t time.Time) (err error) {

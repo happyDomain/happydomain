@@ -51,6 +51,10 @@ func (s *KVStorage) CreateSnapshot(snap *happydns.ObservationSnapshot) error {
 	return s.db.Put(key, snap)
 }
 
+func (s *KVStorage) RestoreSnapshot(snap *happydns.ObservationSnapshot) error {
+	return s.db.Put(fmt.Sprintf("chcksnap|%s", snap.Id.String()), snap)
+}
+
 func (s *KVStorage) DeleteSnapshot(snapID happydns.Identifier) error {
 	return s.db.Delete(fmt.Sprintf("chcksnap|%s", snapID.String()))
 }

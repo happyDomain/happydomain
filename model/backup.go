@@ -37,6 +37,7 @@ type Backup struct {
 	Executions               []*Execution
 	DiscoveryEntries         []*StoredDiscoveryEntry
 	DiscoveryObservationRefs []*DiscoveryObservationRef
+	ObservationSnapshots     []*ObservationSnapshot
 }
 
 // BackupUsecase orchestrates the export and re-import of every persistent

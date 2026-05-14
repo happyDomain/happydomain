@@ -119,6 +119,7 @@ type ObservationSnapshotStorage interface {
 	ListAllSnapshots() (happydns.Iterator[happydns.ObservationSnapshot], error)
 	GetSnapshot(snapID happydns.Identifier) (*happydns.ObservationSnapshot, error)
 	CreateSnapshot(snap *happydns.ObservationSnapshot) error
+	RestoreSnapshot(snap *happydns.ObservationSnapshot) error
 	DeleteSnapshot(snapID happydns.Identifier) error
 	ClearSnapshots() error
 }

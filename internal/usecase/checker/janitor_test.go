@@ -534,8 +534,9 @@ func (s *mockSnapStore) ListAllSnapshots() (happydns.Iterator[happydns.Observati
 func (s *mockSnapStore) GetSnapshot(happydns.Identifier) (*happydns.ObservationSnapshot, error) {
 	return nil, nil
 }
-func (s *mockSnapStore) CreateSnapshot(*happydns.ObservationSnapshot) error { return nil }
-func (s *mockSnapStore) ClearSnapshots() error                              { return nil }
+func (s *mockSnapStore) CreateSnapshot(*happydns.ObservationSnapshot) error  { return nil }
+func (s *mockSnapStore) RestoreSnapshot(*happydns.ObservationSnapshot) error { return nil }
+func (s *mockSnapStore) ClearSnapshots() error                               { return nil }
 
 // --- helpers ---
 
