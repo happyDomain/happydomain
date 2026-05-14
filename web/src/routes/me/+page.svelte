@@ -101,6 +101,12 @@
                         </div>
                     {/await}
                 {/if}
+            {:catch}
+                {#await getOidcProvider() then oidc}
+                    <div class="alert alert-secondary">
+                        {$t("account.no-password-change", { provider: oidc.provider })}
+                    </div>
+                {/await}
             {/await}
 
             <h2 class="display-7 fw-bold mt-5" id="delete-account">
@@ -117,6 +123,10 @@
             {:then res}
                 <ListGroup>
                     <DeleteAccountCard externalAuth={!res} />
+                </ListGroup>
+            {:catch}
+                <ListGroup>
+                    <DeleteAccountCard externalAuth={true} />
                 </ListGroup>
             {/await}
         {:else}
