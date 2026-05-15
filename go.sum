@@ -78,6 +78,8 @@ git.happydns.org/checker-srv v0.1.0 h1:3PsKBrfujlZXF5AFzW00TPjgISrHyIigWRkHbkJOL
 git.happydns.org/checker-srv v0.1.0/go.mod h1:39n8R3UNRpfGNdGw9g8EkAaXKdtXTdLxc/XCRz/qFzg=
 git.happydns.org/checker-ssh v0.1.0 h1:UPPg6JA4UeaHcnQk0kM2809JNebbukeqHLL4FvrPVZs=
 git.happydns.org/checker-ssh v0.1.0/go.mod h1:TDMTY+uo/hTSIRwyRp4KXUcTFvBprQRoCAAzNBBl9XE=
+git.happydns.org/checker-ssh v0.2.0 h1:ophyXU6HzEYly+fnVOoE5W/mKggCJX1G2IiMiA9oiC4=
+git.happydns.org/checker-ssh v0.2.0/go.mod h1:o+wclK7mmkBL/7bAkBMNXJhlo5J983ERcuQ6C6rqCTY=
 git.happydns.org/checker-stun-turn v0.1.0 h1:Ppfxs7oQlZr0IAPM0cFXo/JxTJmSa4jcUJqQvHH5l7A=
 git.happydns.org/checker-stun-turn v0.1.0/go.mod h1:P8l1X4I+YMqF+2SkwmGFIYiXT/63HcoGAcc+qu2MtoQ=
 git.happydns.org/checker-stun-turn v0.2.0 h1:fJs9dlqh0WXyCh6EHmXZfFjk4BxngrFh1w4/xzqePqw=
