@@ -73,7 +73,8 @@ func (s *EmailSender) Send(_ context.Context, c EmailConfig, payload *Notificati
 
 	// Strip CR/LF to prevent RFC 5322 header injection.
 	safeDomain := stripCRLF(payload.DomainName)
-	subject := fmt.Sprintf("[happyDomain] %s: %s", safeDomain, payload.NewStatus)
+	safeChecker := stripCRLF(payload.CheckerID)
+	subject := fmt.Sprintf("[happyDomain] %s (%s) %s: %s", safeDomain, safeChecker, statusDirection(payload.OldStatus, payload.NewStatus), payload.NewStatus)
 
 	// Wrap third-party-sourced fields as Markdown code spans to neutralize injected link syntax in DKIM-signed mail; Annotation is user-authored, no boundary.
 	var body strings.Builder
@@ -98,6 +99,16 @@ func (s *EmailSender) Send(_ context.Context, c EmailConfig, payload *Notificati
 	}
 
 	return s.mailer.SendMail(to, subject, body.String())
+}
+
+func statusDirection(old, new happydns.Status) string {
+	if new > old {
+		return "degraded"
+	}
+	if new < old {
+		return "recovered"
+	}
+	return "changed"
 }
 
 func stripCRLF(s string) string {
