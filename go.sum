@@ -16,6 +16,8 @@ git.happydns.org/checker-alias v0.3.0 h1:mXtAMv7MT+pY5X1F2ZiUczGi64w1Tzdl3IHsZD7
 git.happydns.org/checker-alias v0.3.0/go.mod h1:1MOKZE4rGCA/iWiSAW0JOCp+oA950y5vwoFevfslcDw=
 git.happydns.org/checker-authoritative-consistency v0.1.0 h1:+0XvJFC7tFVf0Dgruewe+Yy2EEWxtIrEjZdhPERZCFY=
 git.happydns.org/checker-authoritative-consistency v0.1.0/go.mod h1:hPxEDSyrPq+KY9YU5QoZ1btecw/cU/Miouuacaz4wzk=
+git.happydns.org/checker-authoritative-consistency v0.2.0 h1:iPp0b9RWAUfSoFdnz6xMa8seJ/1n5CTpZAGhnPtKKqQ=
+git.happydns.org/checker-authoritative-consistency v0.2.0/go.mod h1:hPxEDSyrPq+KY9YU5QoZ1btecw/cU/Miouuacaz4wzk=
 git.happydns.org/checker-blacklist v0.1.0 h1:IV44Lxnw0dLBhoyAkAlq9A+hTB5B4RF4vLiW+nX21gg=
 git.happydns.org/checker-blacklist v0.1.0/go.mod h1:DRHkpULz8F6dKm0LUErAAQln0x8XByg+/UxbUY46oZk=
 git.happydns.org/checker-blacklist v0.2.0 h1:GZO7CyLeUmvT/Z1Zh23pBB/H6O/AcYcWkCtmIuUQX3Y=
