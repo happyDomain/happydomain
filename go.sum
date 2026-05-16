@@ -40,6 +40,8 @@ git.happydns.org/checker-dav v0.2.0 h1:kbsCWD3U3g1gjPhBZSGeRd6P4DZ4F0N416o47o5eO
 git.happydns.org/checker-dav v0.2.0/go.mod h1:W7fv92xPlU0Rrox7qN/vPvHAzTeBsJ7+dqfuLx5lyRg=
 git.happydns.org/checker-delegation v0.1.0 h1:hlUGu4FZb9uBZXINTShDuGuuaeTQmIdYjmaM1367v5U=
 git.happydns.org/checker-delegation v0.1.0/go.mod h1:std/OYsToEWzYMf95IfVOuGaF5367WMUUTeORadgjhM=
+git.happydns.org/checker-delegation v0.2.0 h1:c9ZmMPAPGdwUYOoh8QkZzUgM20h6/JnviwCYJKGob40=
+git.happydns.org/checker-delegation v0.2.0/go.mod h1:std/OYsToEWzYMf95IfVOuGaF5367WMUUTeORadgjhM=
 git.happydns.org/checker-dnssec v0.1.0 h1:iERjoxNiQZHV3MurkjPLmYYoWTSmne6SPhZrJRXJtaE=
 git.happydns.org/checker-dnssec v0.1.0/go.mod h1:km1/G6pBmr4ZgLAAsnual3i/6TMcps2DvTCwv/mHUII=
 git.happydns.org/checker-dnsviz v0.1.0 h1:fY3Yi6XXXspaY5ZIiiaXaw3PCvLcyQRUnBLDIyduoPE=
