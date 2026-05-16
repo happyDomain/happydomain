@@ -10,7 +10,7 @@ require (
 	git.happydns.org/checker-blacklist v0.2.0
 	git.happydns.org/checker-caa v0.2.2
 	git.happydns.org/checker-dane v0.2.0
-	git.happydns.org/checker-dangling v0.1.0
+	git.happydns.org/checker-dangling v0.2.0
 	git.happydns.org/checker-dav v0.2.0
 	git.happydns.org/checker-delegation v0.1.0
 	git.happydns.org/checker-dnssec v0.1.0

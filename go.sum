@@ -32,6 +32,8 @@ git.happydns.org/checker-dane v0.2.0 h1:itN9q3zfZeiJgibyjUhQsHDr5StLSDk5CgOHBE3O
 git.happydns.org/checker-dane v0.2.0/go.mod h1:GEdoDOO4LdwQQouPgl0JHyOFsMWGSp2mxdU5H9FCses=
 git.happydns.org/checker-dangling v0.1.0 h1:gZVyHAKG2U1FXBt7cPnZsr45JQWZ21jlThKhHckb+i8=
 git.happydns.org/checker-dangling v0.1.0/go.mod h1:pVvhXkZiKueKhWe878GrN+7BMRrqtJDfTSKLX5eCC5M=
+git.happydns.org/checker-dangling v0.2.0 h1:5T/CqxhxLyASZyNK9SWZKamlAvXA/9K6xlqo4ahRd+U=
+git.happydns.org/checker-dangling v0.2.0/go.mod h1:pVvhXkZiKueKhWe878GrN+7BMRrqtJDfTSKLX5eCC5M=
 git.happydns.org/checker-dav v0.1.0 h1:7IcviX3IKWdCzzxkILFegOgTrq20EX8CQ+jdfKeP2bs=
 git.happydns.org/checker-dav v0.1.0/go.mod h1:xLBErwwNqEd27aVCkVFnPEIKFdUqvTqvbhq4AoHXIOY=
 git.happydns.org/checker-dav v0.2.0 h1:kbsCWD3U3g1gjPhBZSGeRd6P4DZ4F0N416o47o5eO8s=
