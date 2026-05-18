@@ -81,18 +81,20 @@
                     .then((e) => (evaluationData = e))
                     .catch((e) => console.warn("Failed to load execution results", e));
                 // On execution error, default to rules view to surface failures.
-                // Otherwise default to metrics view if supported, then HTML, then rules, then JSON
+                // Otherwise default to HTML view if supported, then metrics, then rules, then JSON
                 if (execution.status === 3) {
                     reportViewMode.set("rules");
+                } else if (checkerInfo.has_html_report) {
+                    reportViewMode.set("html");
                 } else if (checkerInfo.has_metrics) {
                     reportViewMode.set("metrics");
+                } else {
+                    reportViewMode.set("rules");
+                }
+                if (checkerInfo.has_metrics) {
                     getScopedExecutionMetrics(scope, checkerId, execId)
                         .then((m) => (metricsData = m))
                         .catch((e) => console.warn("Failed to load execution metrics", e));
-                } else if (checkerInfo.has_html_report) {
-                    reportViewMode.set("html");
-                } else {
-                    reportViewMode.set("rules");
                 }
                 loading = false;
             },
