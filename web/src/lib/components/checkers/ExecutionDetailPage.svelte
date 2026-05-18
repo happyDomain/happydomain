@@ -27,7 +27,11 @@
 
     import { t } from "$lib/translations";
     import type { CheckerScope, CheckMetric } from "$lib/api/checkers";
-    import type { HappydnsCheckEvaluation } from "$lib/api-base/types.gen";
+    import type {
+        CheckerCheckerDefinition,
+        HappydnsCheckEvaluation,
+        HappydnsExecution,
+    } from "$lib/api-base/types.gen";
     import {
         getScopedExecution,
         getScopedExecutionObservations,
@@ -55,47 +59,100 @@
 
     let checkerName = $state<string>("");
     let loading = $state(true);
+    let running = $state(false);
     let error = $state<string | undefined>(undefined);
     let metricsData = $state<CheckMetric[] | null>(null);
     let evaluationData = $state<HappydnsCheckEvaluation | null>(null);
 
+    let pollTimer: ReturnType<typeof setInterval> | undefined;
+
+    function isInProgress(status: number | undefined): boolean {
+        return status === 0 || status === 1;
+    }
+
+    function loadTerminalData(
+        execution: HappydnsExecution,
+        checkerInfo: CheckerCheckerDefinition,
+        scopeArg: CheckerScope,
+        checkerIdArg: string,
+        execIdArg: string,
+    ) {
+        getScopedExecutionObservations(scopeArg, checkerIdArg, execIdArg)
+            .then((observations) => currentObservations.set(observations))
+            .catch((e) => console.warn("Failed to load execution observations", e));
+        getScopedExecutionResults(scopeArg, checkerIdArg, execIdArg)
+            .then((e) => (evaluationData = e))
+            .catch((e) => console.warn("Failed to load execution results", e));
+        if (execution.status === 3) {
+            reportViewMode.set("rules");
+        } else if (checkerInfo.has_html_report) {
+            reportViewMode.set("html");
+        } else if (checkerInfo.has_metrics) {
+            reportViewMode.set("metrics");
+        } else {
+            reportViewMode.set("rules");
+        }
+        if (checkerInfo.has_metrics) {
+            getScopedExecutionMetrics(scopeArg, checkerIdArg, execIdArg)
+                .then((m) => (metricsData = m))
+                .catch((e) => console.warn("Failed to load execution metrics", e));
+        }
+    }
+
+    function startPolling(
+        checkerInfo: CheckerCheckerDefinition,
+        scopeArg: CheckerScope,
+        checkerIdArg: string,
+        execIdArg: string,
+    ) {
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(async () => {
+            try {
+                const execution = await getScopedExecution(scopeArg, checkerIdArg, execIdArg);
+                currentExecution.set(execution);
+                if (!isInProgress(execution.status)) {
+                    clearInterval(pollTimer);
+                    pollTimer = undefined;
+                    running = false;
+                    loadTerminalData(execution, checkerInfo, scopeArg, checkerIdArg, execIdArg);
+                    loading = false;
+                }
+            } catch (e) {
+                console.warn("Failed to poll execution status", e);
+            }
+        }, 3000);
+    }
+
     $effect(() => {
         loading = true;
+        running = false;
         error = undefined;
         metricsData = null;
         evaluationData = null;
         cachedHTMLReport.set(null);
+        if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = undefined;
+        }
+
+        const scopeArg = scope;
+        const checkerIdArg = checkerId;
+        const execIdArg = execId;
 
         Promise.all([
-            getScopedExecution(scope, checkerId, execId),
-            getCheckStatus(checkerId),
-            getScopedExecutionObservations(scope, checkerId, execId),
+            getScopedExecution(scopeArg, checkerIdArg, execIdArg),
+            getCheckStatus(checkerIdArg),
         ]).then(
-            ([execution, checkerInfo, observations]) => {
+            ([execution, checkerInfo]) => {
                 currentExecution.set(execution);
                 currentCheckInfo.set(checkerInfo);
-                currentObservations.set(observations);
-                checkerName = checkerInfo.name ?? checkerId;
-                // Load rules data
-                getScopedExecutionResults(scope, checkerId, execId)
-                    .then((e) => (evaluationData = e))
-                    .catch((e) => console.warn("Failed to load execution results", e));
-                // On execution error, default to rules view to surface failures.
-                // Otherwise default to HTML view if supported, then metrics, then rules, then JSON
-                if (execution.status === 3) {
-                    reportViewMode.set("rules");
-                } else if (checkerInfo.has_html_report) {
-                    reportViewMode.set("html");
-                } else if (checkerInfo.has_metrics) {
-                    reportViewMode.set("metrics");
-                } else {
-                    reportViewMode.set("rules");
+                checkerName = checkerInfo.name ?? checkerIdArg;
+                if (isInProgress(execution.status)) {
+                    running = true;
+                    startPolling(checkerInfo, scopeArg, checkerIdArg, execIdArg);
+                    return;
                 }
-                if (checkerInfo.has_metrics) {
-                    getScopedExecutionMetrics(scope, checkerId, execId)
-                        .then((m) => (metricsData = m))
-                        .catch((e) => console.warn("Failed to load execution metrics", e));
-                }
+                loadTerminalData(execution, checkerInfo, scopeArg, checkerIdArg, execIdArg);
                 loading = false;
             },
             (err) => {
@@ -106,6 +163,10 @@
     });
 
     onDestroy(() => {
+        if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = undefined;
+        }
         currentExecution.set(undefined);
         currentCheckInfo.set(undefined);
         currentObservations.set(undefined);
@@ -123,7 +184,9 @@
         <Card body>
             <p class="text-center mb-0">
                 <span class="spinner-border spinner-border-sm me-2"></span>
-                {$t("checkers.result.loading")}
+                {running
+                    ? $t("checkers.execution.status.running")
+                    : $t("checkers.result.loading")}
             </p>
         </Card>
     </Container>
