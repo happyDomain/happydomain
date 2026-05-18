@@ -79,6 +79,20 @@
 
     let selectedHistory: string | undefined = $derived(page.data.history);
 
+    let isZonePage = $derived(
+        page.route.id === "/domains/[dn]" ||
+            page.route.id === "/domains/[dn]/[[historyid]]",
+    );
+    let showPublishFooter = $derived(
+        isZonePage &&
+            !!data.domain.zone_history &&
+            !!$domains_idx[selectedDomain] &&
+            data.domain.id === $domains_idx[selectedDomain]?.id &&
+            !!selectedHistory &&
+            !!$thisZone,
+    );
+    let showDetachFooter = $derived(isZonePage && !showPublishFooter);
+
     function retrieveZoneDone(zm: ZoneMeta): void {
         if (page.data.definedhistory) {
             refreshDomains().then(() => {
@@ -135,14 +149,11 @@
         <Col
             sm={4}
             md={3}
-            class="py-2 sticky-top d-flex flex-column justify-content-between"
+            class="py-2 sticky-top d-flex flex-column"
             style="background-color: #edf5f2; overflow-y: auto; max-height: 100vh; z-index: 0"
         >
             {#if $domains_idx[selectedDomain]}
-                {@const isZonePage =
-                    page.route.id &&
-                    (page.route.id === "/domains/[dn]" ||
-                        page.route.id === "/domains/[dn]/[[historyid]]")}
+                <!-- Header: back button + domain selector -->
                 <div class="d-flex">
                     <Button href={isZonePage ? "/domains/" : ".."} class="fw-bolder" color="link">
                         <Icon name={isZonePage ? "chevron-up" : "chevron-left"} />
@@ -150,66 +161,71 @@
                     <SelectDomain bind:selectedDomain />
                 </div>
 
-                {#if page.route.id && page.route.id.startsWith("/domains/[dn]/checks")}
-                    <ChecksSidebarContent
-                        domain={data.domain}
-                        checksBase={"/domains/" +
-                            encodeURIComponent(domainLink(selectedDomain)) +
-                            "/checks"}
-                        backHref={"/domains/" + encodeURIComponent(domainLink(selectedDomain))}
-                    />
-                {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
-                    <a
-                        href="/domains/{encodeURIComponent(domainLink(selectedDomain))}"
-                        class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
-                    >
-                        <Icon name="chevron-left" />
-                        {$t("zones.return-to")}
-                    </a>
-                {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checks")}
-                    <ChecksSidebarContent
-                        domain={data.domain}
-                        checksBase={"/domains/" +
-                            encodeURIComponent(domainLink(selectedDomain)) +
-                            "/" +
-                            encodeURIComponent(page.data.history ?? "") +
-                            "/" +
-                            encodeURIComponent(page.params.subdomain ?? "") +
-                            "/" +
-                            encodeURIComponent(page.data.serviceid ?? "") +
-                            "/checks"}
-                        backHref={"/domains/" +
-                            encodeURIComponent(domainLink(selectedDomain)) +
-                            "/" +
-                            encodeURIComponent(page.data.history ?? "") +
-                            "/" +
-                            encodeURIComponent(page.params.subdomain ?? "") +
-                            "/" +
-                            encodeURIComponent(page.data.serviceid ?? "")}
-                        serviceContext={{
-                            zoneId: page.data.zoneId ?? "",
-                            subdomain: page.data.subdomain ?? "",
-                            serviceid: page.data.serviceid ?? "",
-                        }}
-                    />
-                {:else if page.route.id === "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]"}
-                    <ServiceSidebar
-                        origin={data.domain}
-                        subdomain={page.data.subdomain ?? ""}
-                        serviceid={page.data.serviceid ?? ""}
-                        historyId={page.data.history ?? ""}
-                    />
-                {:else}
-                    <ZoneSidebar
-                        origin={data.domain}
-                        {selectedDomain}
-                        {selectedHistory}
-                        onretrieveZoneDone={retrieveZoneDone}
-                    />
-                {/if}
+                <!-- Main content: routed sidebar -->
+                <div class="flex-fill d-flex flex-column">
+                    {#if page.route.id && page.route.id.startsWith("/domains/[dn]/checks")}
+                        <ChecksSidebarContent
+                            domain={data.domain}
+                            checksBase={"/domains/" +
+                                encodeURIComponent(domainLink(selectedDomain)) +
+                                "/checks"}
+                            backHref={"/domains/" + encodeURIComponent(domainLink(selectedDomain))}
+                        />
+                    {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
+                        <a
+                            href="/domains/{encodeURIComponent(domainLink(selectedDomain))}"
+                            class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
+                        >
+                            <Icon name="chevron-left" />
+                            {$t("zones.return-to")}
+                        </a>
+                    {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checks")}
+                        <ChecksSidebarContent
+                            domain={data.domain}
+                            checksBase={"/domains/" +
+                                encodeURIComponent(domainLink(selectedDomain)) +
+                                "/" +
+                                encodeURIComponent(page.data.history ?? "") +
+                                "/" +
+                                encodeURIComponent(page.params.subdomain ?? "") +
+                                "/" +
+                                encodeURIComponent(page.data.serviceid ?? "") +
+                                "/checks"}
+                            backHref={"/domains/" +
+                                encodeURIComponent(domainLink(selectedDomain)) +
+                                "/" +
+                                encodeURIComponent(page.data.history ?? "") +
+                                "/" +
+                                encodeURIComponent(page.params.subdomain ?? "") +
+                                "/" +
+                                encodeURIComponent(page.data.serviceid ?? "")}
+                            serviceContext={{
+                                zoneId: page.data.zoneId ?? "",
+                                subdomain: page.data.subdomain ?? "",
+                                serviceid: page.data.serviceid ?? "",
+                            }}
+                        />
+                    {:else if page.route.id === "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]"}
+                        <ServiceSidebar
+                            origin={data.domain}
+                            subdomain={page.data.subdomain ?? ""}
+                            serviceid={page.data.serviceid ?? ""}
+                            historyId={page.data.history ?? ""}
+                        />
+                    {:else}
+                        <ZoneSidebar
+                            origin={data.domain}
+                            {selectedDomain}
+                            {selectedHistory}
+                            onretrieveZoneDone={retrieveZoneDone}
+                        />
+                    {/if}
+                </div>
 
-                {#if !(data.domain.zone_history && $domains_idx[selectedDomain] && data.domain.id === $domains_idx[selectedDomain].id && selectedHistory)}
-                    <div class="flex-fill"></div>
+                <!-- Footer: only on the main zone view -->
+                {#if showPublishFooter}
+                    <ButtonZonePublish domain={data.domain} history={selectedHistory} />
+                {:else if showDetachFooter}
                     <Button
                         color="danger"
                         class="mt-3"
@@ -224,9 +240,6 @@
                         {/if}
                         {$t("domains.stop")}
                     </Button>
-                {:else if $domains_idx[data.domain.id] && $thisZone}
-                    <div class="flex-fill"></div>
-                    <ButtonZonePublish domain={data.domain} history={selectedHistory} />
                 {/if}
             {:else}
                 <div class="mt-4 text-center">
