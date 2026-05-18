@@ -92,6 +92,8 @@ git.happydns.org/checker-smtp v0.1.0 h1:Sa3adUCXvuI83p/clwq3+/M+6l+WiBppqcuw+nVt
 git.happydns.org/checker-smtp v0.1.0/go.mod h1:bUyR+3X6QMPulwJoNCuEwTCkZJX+gD4aqegHox6HGoY=
 git.happydns.org/checker-srv v0.1.0 h1:3PsKBrfujlZXF5AFzW00TPjgISrHyIigWRkHbkJOLTU=
 git.happydns.org/checker-srv v0.1.0/go.mod h1:39n8R3UNRpfGNdGw9g8EkAaXKdtXTdLxc/XCRz/qFzg=
+git.happydns.org/checker-srv v0.2.0 h1:WkZ4jKydcYIDrT85br5bfFz27vnH2/7y2WZ00eN7Bzs=
+git.happydns.org/checker-srv v0.2.0/go.mod h1:NFJLiPKeoWKXAwRcmo+WxRLYhRELwXGb2qrY3q1DQyc=
 git.happydns.org/checker-ssh v0.1.0 h1:UPPg6JA4UeaHcnQk0kM2809JNebbukeqHLL4FvrPVZs=
 git.happydns.org/checker-ssh v0.1.0/go.mod h1:TDMTY+uo/hTSIRwyRp4KXUcTFvBprQRoCAAzNBBl9XE=
 git.happydns.org/checker-ssh v0.2.0 h1:ophyXU6HzEYly+fnVOoE5W/mKggCJX1G2IiMiA9oiC4=
@@ -102,6 +104,8 @@ git.happydns.org/checker-stun-turn v0.2.0 h1:fJs9dlqh0WXyCh6EHmXZfFjk4BxngrFh1w4
 git.happydns.org/checker-stun-turn v0.2.0/go.mod h1:P8l1X4I+YMqF+2SkwmGFIYiXT/63HcoGAcc+qu2MtoQ=
 git.happydns.org/checker-tls v0.6.2 h1:8oKia1XlD+tklyqrwzmUgFH1Kw8VLSLLF9suZ7Qr14E=
 git.happydns.org/checker-tls v0.6.2/go.mod h1:9tpnxg0iOwS+7If64DRG1jqYonUAgxOBuxwfF5mVkL4=
+git.happydns.org/checker-tls v0.7.0 h1:mfNHYbHMGS40y+N2rudC2svT/xLK7KCiSa7V8/RhcTM=
+git.happydns.org/checker-tls v0.7.0/go.mod h1:wlY4UI3owvqMAtOcXLmskpTpZ7xPjuiV6M42+rFZDQo=
 git.happydns.org/checker-xmpp v0.2.0 h1:p8c15zEBoWxoYkZ2fmRx42f209WBPMpD00wbH02/lYk=
 git.happydns.org/checker-xmpp v0.2.0/go.mod h1:Mrq1QxtkwZiYCDDlPf+r3pE+NT8wpqReBDhD7eGs0R4=
 git.happydns.org/checker-zonemaster v0.1.0 h1:1Qa0HtAGTfNU/3XvHhxDNJR9Td8DLQa8PrcNbexoeyI=
@@ -664,6 +668,8 @@ github.com/quic-go/quic-go v0.59.0 h1:OLJkp1Mlm/aS7dpKgTc6cnpynnD2Xg7C1pwL6vy/SA
 github.com/quic-go/quic-go v0.59.0/go.mod h1:upnsH4Ju1YkqpLXC305eW3yDZ4NfnNbmQRCMWS58IKU=
 github.com/redis/go-redis/v9 v9.18.0 h1:pMkxYPkEbMPwRdenAzUNyFNrDgHx9U+DrBabWNfSRQs=
 github.com/redis/go-redis/v9 v9.18.0/go.mod h1:k3ufPphLU5YXwNTUcCRXGxUoF1fqxnhFQmscfkCoDA0=
+github.com/refraction-networking/utls v1.8.2 h1:j4Q1gJj0xngdeH+Ox/qND11aEfhpgoEvV+S9iJ2IdQo=
+github.com/refraction-networking/utls v1.8.2/go.mod h1:jkSOEkLqn+S/jtpEHPOsVv/4V4EVnelwbMQl4vCWXAM=
 github.com/robertkrimen/otto v0.5.1 h1:avDI4ToRk8k1hppLdYFTuuzND41n37vPGJU7547dGf0=
 github.com/robertkrimen/otto v0.5.1/go.mod h1:bS433I4Q9p+E5pZLu7r17vP6FkE6/wLxBdmKjoqJXF8=
 github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=

@@ -31,10 +31,10 @@ require (
 	git.happydns.org/checker-sdk-go v1.7.0
 	git.happydns.org/checker-sip v0.2.0
 	git.happydns.org/checker-smtp v0.1.0
-	git.happydns.org/checker-srv v0.1.0
+	git.happydns.org/checker-srv v0.2.0
 	git.happydns.org/checker-ssh v0.2.0
 	git.happydns.org/checker-stun-turn v0.2.0
-	git.happydns.org/checker-tls v0.6.2
+	git.happydns.org/checker-tls v0.7.0
 	git.happydns.org/checker-xmpp v0.2.0
 	git.happydns.org/checker-zonemaster v0.1.0
 	github.com/JGLTechnologies/gin-rate-limit v1.5.8
@@ -92,6 +92,7 @@ require (
 	github.com/pion/transport/v3 v3.0.7 // indirect
 	github.com/pion/turn/v4 v4.0.0 // indirect
 	github.com/redis/go-redis/v9 v9.18.0 // indirect
+	github.com/refraction-networking/utls v1.8.2 // indirect
 	github.com/teambition/rrule-go v1.8.2 // indirect
 	github.com/wlynxg/anet v0.0.3 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
