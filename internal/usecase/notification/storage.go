@@ -63,3 +63,7 @@ type UserGetter interface {
 type DomainGetter interface {
 	GetDomain(id happydns.Identifier) (*happydns.Domain, error)
 }
+
+type ZoneGetter interface {
+	GetZone(id happydns.Identifier) (*happydns.ZoneMessage, error)
+}

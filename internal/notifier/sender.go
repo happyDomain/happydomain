@@ -38,14 +38,15 @@ type Recipient struct {
 
 // Senders receive only render-needed data — no user object, no server config — so adding a transport cannot leak privileged data.
 type NotificationPayload struct {
-	Recipient  Recipient
-	CheckerID  string
-	Target     happydns.CheckTarget
-	DomainName string
-	OldStatus  happydns.Status
-	NewStatus  happydns.Status
-	States     []happydns.CheckState
-	Annotation string
+	Recipient    Recipient
+	CheckerID    string
+	Target       happydns.CheckTarget
+	DomainName   string
+	ServiceDomain string // FQDN of the specific service (subdomain.domain), empty when the check is domain-scoped
+	OldStatus    happydns.Status
+	NewStatus    happydns.Status
+	States       []happydns.CheckState
+	Annotation   string
 }
 
 type ChannelConfig interface {

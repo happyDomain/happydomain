@@ -185,6 +185,7 @@ func (app *App) initUsecases() {
 		app.store,
 		app.store,
 		app.store,
+		app.store,
 		resolver,
 		pool,
 		tester,

@@ -35,6 +35,7 @@ type Dispatcher struct {
 	stateStore  NotificationStateStorage
 	userStore   UserGetter
 	domainStore DomainGetter
+	zoneStore   ZoneGetter
 
 	resolver *Resolver
 	pool     *Pool
@@ -51,6 +52,7 @@ func NewDispatcher(
 	stateStore NotificationStateStorage,
 	userStore UserGetter,
 	domainStore DomainGetter,
+	zoneStore ZoneGetter,
 	resolver *Resolver,
 	pool *Pool,
 	tester *Tester,
@@ -61,6 +63,7 @@ func NewDispatcher(
 		stateStore:  stateStore,
 		userStore:   userStore,
 		domainStore: domainStore,
+		zoneStore:   zoneStore,
 		resolver:    resolver,
 		pool:        pool,
 		tester:      tester,
@@ -147,9 +150,31 @@ func (d *Dispatcher) loadOrInitState(exec *happydns.Execution, userId happydns.I
 
 func (d *Dispatcher) buildPayload(user *happydns.User, exec *happydns.Execution, eval *happydns.CheckEvaluation, oldStatus, newStatus happydns.Status) *notifPkg.NotificationPayload {
 	var domainName string
+	var serviceDomain string
+
 	if did := happydns.TargetIdentifier(exec.Target.DomainId); did != nil {
 		if domain, err := d.domainStore.GetDomain(*did); err == nil {
 			domainName = domain.DomainName
+			if sid := happydns.TargetIdentifier(exec.Target.ServiceId); sid != nil && d.zoneStore != nil && len(domain.ZoneHistory) > 0 {
+				if zone, err := d.zoneStore.GetZone(domain.ZoneHistory[0]); err == nil {
+					for _, svcs := range zone.Services {
+						for _, svc := range svcs {
+							if svc.Id.Equals(*sid) {
+								sub := svc.Domain
+								if sub == "" || sub == "@" {
+									serviceDomain = domainName
+								} else {
+									serviceDomain = sub + "." + domainName
+								}
+								break
+							}
+						}
+						if serviceDomain != "" {
+							break
+						}
+					}
+				}
+			}
 		}
 	}
 	if domainName == "" {
@@ -162,13 +187,14 @@ func (d *Dispatcher) buildPayload(user *happydns.User, exec *happydns.Execution,
 	}
 
 	return &notifPkg.NotificationPayload{
-		Recipient:  notifPkg.Recipient{Email: user.Email},
-		CheckerID:  exec.CheckerID,
-		Target:     exec.Target,
-		DomainName: domainName,
-		OldStatus:  oldStatus,
-		NewStatus:  newStatus,
-		States:     states,
+		Recipient:     notifPkg.Recipient{Email: user.Email},
+		CheckerID:     exec.CheckerID,
+		Target:        exec.Target,
+		DomainName:    domainName,
+		ServiceDomain: serviceDomain,
+		OldStatus:     oldStatus,
+		NewStatus:     newStatus,
+		States:        states,
 	}
 }
 

@@ -72,7 +72,11 @@ func (s *EmailSender) Send(_ context.Context, c EmailConfig, payload *Notificati
 	to := &mail.Address{Address: addr}
 
 	// Strip CR/LF to prevent RFC 5322 header injection.
-	safeDomain := stripCRLF(payload.DomainName)
+	displayDomain := payload.DomainName
+	if payload.ServiceDomain != "" {
+		displayDomain = payload.ServiceDomain
+	}
+	safeDomain := stripCRLF(displayDomain)
 	safeChecker := stripCRLF(payload.CheckerID)
 	subject := fmt.Sprintf("[happyDomain] %s (%s) %s: %s", safeDomain, safeChecker, statusDirection(payload.OldStatus, payload.NewStatus), payload.NewStatus)
 
