@@ -80,8 +80,11 @@
                 getScopedExecutionResults(scope, checkerId, execId)
                     .then((e) => (evaluationData = e))
                     .catch((e) => console.warn("Failed to load execution results", e));
-                // Default to metrics view if supported, then HTML, then rules, then JSON
-                if (checkerInfo.has_metrics) {
+                // On execution error, default to rules view to surface failures.
+                // Otherwise default to metrics view if supported, then HTML, then rules, then JSON
+                if (execution.status === 3) {
+                    reportViewMode.set("rules");
+                } else if (checkerInfo.has_metrics) {
                     reportViewMode.set("metrics");
                     getScopedExecutionMetrics(scope, checkerId, execId)
                         .then((m) => (metricsData = m))
