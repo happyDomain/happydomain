@@ -52,6 +52,8 @@ git.happydns.org/checker-email-autoconfig v0.3.0 h1:6eHQRo0s0vFV1KDNfUki8Zc790+Y
 git.happydns.org/checker-email-autoconfig v0.3.0/go.mod h1:9B6SewkI4tzeAfhK8owhf+EA5lMyr/MOgKjW4L4qk/o=
 git.happydns.org/checker-email-keys v0.2.0 h1:466dNm9+cWGb9H+L5LGy96Ac9rhSbEw9/uUb9ck4DmQ=
 git.happydns.org/checker-email-keys v0.2.0/go.mod h1:xTFot7UIqn5XajMKkbaHEiZMMD3Fcac7RlQyUE2B3+Q=
+git.happydns.org/checker-email-keys v0.3.0 h1:QitYbgRXRbD6HtsXt9law1fYkMn8JfLTLpzy+GaUPHU=
+git.happydns.org/checker-email-keys v0.3.0/go.mod h1:4ydAC6FU0dAUGH9IpjpSaoiK0ZU5rqomVyDqohd9hjw=
 git.happydns.org/checker-happydeliver v0.1.0 h1:ERjLGkOH18NIUapL50LOogr+tfGEmSd5OJd1fav3Vo8=
 git.happydns.org/checker-happydeliver v0.1.0/go.mod h1:2jtD+G/TnyBavfufFk8gb6at6EulvyoH0aREbKsIoiM=
 git.happydns.org/checker-happydeliver v0.2.0 h1:hzhd+7ClW8hzIiuWoalM3Fp/q0RhlB05990xDP4CmME=
@@ -150,6 +152,8 @@ github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
 github.com/ProtonMail/go-crypto v1.1.0-alpha.0 h1:nHGfwXmFvJrSR9xu8qL7BkO4DqTHXE9N5vPhgY2I+j0=
 github.com/ProtonMail/go-crypto v1.1.0-alpha.0/go.mod h1:rA3QumHc/FZ8pAHreoekgiAbzpNsfQAosU5td4SnOrE=
+github.com/ProtonMail/go-crypto v1.4.1 h1:9RfcZHqEQUvP8RzecWEUafnZVtEvrBVL9BiF67IQOfM=
+github.com/ProtonMail/go-crypto v1.4.1/go.mod h1:e1OaTyu5SYVrO9gKOEhTc+5UcXtTUa+P3uLudwcgPqo=
 github.com/PuerkitoBio/goquery v1.12.0 h1:pAcL4g3WRXekcB9AU/y1mbKez2dbY2AajVhtkO8RIBo=
 github.com/PuerkitoBio/goquery v1.12.0/go.mod h1:802ej+gV2y7bbIhOIoPY5sT183ZW0YFofScC4q/hIpQ=
 github.com/RaveNoX/go-jsoncommentstrip v1.0.0/go.mod h1:78ihd09MekBnJnxpICcwzCMzGrKSKYe4AqU6PDYYpjk=
@@ -245,6 +249,8 @@ github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XL
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cloudflare/circl v1.3.7 h1:qlCDlTPz2n9fu58M0Nh1J/JzcFpfgkFHHX3O35r5vcU=
 github.com/cloudflare/circl v1.3.7/go.mod h1:sRTcRWXGLrKw6yIGJ+l7amYJFfAXbZG0kBSc8r4zxgA=
+github.com/cloudflare/circl v1.6.3 h1:9GPOhQGF9MCYUeXyMYlqTR6a5gTrgR/fBLXvUgtVcg8=
+github.com/cloudflare/circl v1.6.3/go.mod h1:2eXP6Qfat4O/Yhh8BznvKnJ+uzEoTQ6jVKJRn81BiS4=
 github.com/cloudflare/cloudflare-go v0.116.0 h1:iRPMnTtnswRpELO65NTwMX4+RTdxZl+Xf/zi+HPE95s=
 github.com/cloudflare/cloudflare-go v0.116.0/go.mod h1:Ds6urDwn/TF2uIU24mu7H91xkKP8gSAHxQ44DSZgVmU=
 github.com/cloudwego/base64x v0.1.6 h1:t11wG9AECkCDk5fMSoxmufanudBtJ+/HemLstXDLI2M=
