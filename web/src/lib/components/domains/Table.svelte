@@ -54,12 +54,12 @@
 </script>
 
 {#if !items}
-    <div class="d-flex gap-2 align-items-center justify-content-center my-3 {className}">
+    <div class={["d-flex gap-2 align-items-center justify-content-center my-3", className]}>
         <Spinner color="primary" />
         {$t("wait.retrieving-domains")}
     </div>
 {:else if items.length === 0}
-    <div class="text-center my-3 {className}">
+    <div class={["text-center my-3", className]}>
         {$t("domains.filtered-no-result")}
     </div>
 {:else}

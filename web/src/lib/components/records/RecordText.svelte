@@ -32,16 +32,18 @@
 
     hljs.registerLanguage("dns", dns);
 
+    import type { ClassValue } from "svelte/elements";
+
     interface Props {
-        class?: string;
+        class?: ClassValue;
         dn: string;
         origin: Domain;
         rr: dnsRR;
     }
 
-    let { class: className = "", dn, origin, rr = $bindable() }: Props = $props();
+    let { class: className, dn, origin, rr = $bindable() }: Props = $props();
 </script>
 
-<div class="text-truncate font-monospace {className}">
+<div class={["text-truncate font-monospace", className]}>
     {@html hljs.highlight(printRR(rr, dn, origin.domain), { language: "dns" }).value}
 </div>

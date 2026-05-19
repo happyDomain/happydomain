@@ -35,12 +35,12 @@
         service?: HappydnsService;
     }
 
-    let { service, class: className = "" }: Props = $props();
+    let { service, class: className }: Props = $props();
 </script>
 
 {#if service && $userSession.settings && $servicesSpecsLoaded && $servicesSpecs[service._svctype]}
     {#if $servicesSpecs[service._svctype].categories?.length && !$userSession.settings.showrrtypes}
-        <div class="d-flex align-items-center gap-1 {className}">
+        <div class={["d-flex align-items-center gap-1", className]}>
             {#each $servicesSpecs[service._svctype].categories as category}
                 <Badge color="secondary">
                     {category}
@@ -48,7 +48,7 @@
             {/each}
         </div>
     {:else if $servicesSpecs[service._svctype].record_types?.length && $userSession.settings.showrrtypes}
-        <div class="d-flex align-items-center gap-1 {className}">
+        <div class={["d-flex align-items-center gap-1", className]}>
             {#each $servicesSpecs[service._svctype].record_types as rrtype}
                 <Badge color="info">
                     {nsrrtype(rrtype)}

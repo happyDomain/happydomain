@@ -22,18 +22,20 @@
 -->
 
 <script lang="ts">
+    import type { ClassValue } from "svelte/elements";
+
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
     import type { HappydnsDomain } from "$lib/api-base/types.gen";
 
     interface Props {
-        class?: string;
+        class?: ClassValue;
         domain: Pick<HappydnsDomain, 'domain' | 'id_provider'>;
     }
 
-    let { class: className = "", domain }: Props = $props();
+    let { class: className, domain }: Props = $props();
 </script>
 
-<div class="d-flex my-1 {className}" style="min-width: 0">
+<div class={["d-flex my-1", className]} style="min-width: 0">
     <div class="d-inline-block text-center" style="width: 50px;">
         <ImgProvider id_provider={domain.id_provider} />
     </div>

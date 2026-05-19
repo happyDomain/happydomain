@@ -36,7 +36,7 @@
         title?: string;
     }
 
-    let { class: className = "", color = "primary", size = "", title }: Props = $props();
+    let { class: className, color = "primary", size = "", title }: Props = $props();
 
     function getHelpPathFromProvider(ptype: string): string {
         if ($providersSpecs && $providersSpecs[ptype]) {

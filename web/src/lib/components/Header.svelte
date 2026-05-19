@@ -74,7 +74,7 @@
     }
 </script>
 
-<Navbar class="{className} py-1" id="nav" container expand="xs" light style="z-index: 100">
+<Navbar class={[className, "py-1"]} id="nav" container expand="xs" light style="z-index: 100">
     <NavbarBrand
         href="/"
         class="me-3"

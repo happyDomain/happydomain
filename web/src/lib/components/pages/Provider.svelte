@@ -48,7 +48,7 @@
     }
 
     let {
-        class: className = "",
+        class: className,
         edit = false,
         ptype,
         state: formstate,
@@ -81,13 +81,13 @@
     <ImgProvider {ptype} style="max-height: 5rem; width: auto;" />
 </PageTitle>
 {#if $providersSpecs == null}
-    <div class="mt-5 d-flex justify-content-center align-items-center gap-2 {className}">
+    <div class={["mt-5 d-flex justify-content-center align-items-center gap-2", className]}>
         <Spinner color="primary" />
         {$t("wait.retrieving-setting")}
     </div>
 {:else}
     {#if form.form == null}
-        <div class="d-flex flex-fill justify-content-center align-items-center gap-2 {className}">
+        <div class={["d-flex flex-fill justify-content-center align-items-center gap-2", className]}>
             <Spinner color="primary" />
             {$t("wait.retrieving-setting")}
         </div>

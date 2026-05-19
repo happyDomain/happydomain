@@ -22,11 +22,13 @@
 -->
 
 <script lang="ts">
+    import type { ClassValue } from "svelte/elements";
+
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import type { dnsTypeSOA } from "$lib/dns_rr";
 
     interface Props {
-        class: string;
+        class?: ClassValue;
         value?: dnsTypeSOA;
     }
 

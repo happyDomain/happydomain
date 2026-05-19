@@ -25,6 +25,7 @@
     import { preventDefault } from 'svelte/legacy';
 
     import { createEventDispatcher } from "svelte";
+    import type { ClassValue } from "svelte/elements";
 
     import { Button, Collapse, FormGroup, Input, Spinner } from "@sveltestrap/sveltestrap";
 
@@ -37,7 +38,7 @@
     const dispatch = createEventDispatcher();
 
     interface Props {
-        class?: string;
+        class?: ClassValue;
         value?: ResolverForm;
         showDNSSEC?: boolean;
         sortedDomains?: Array<Domain>;
@@ -45,7 +46,7 @@
     }
 
     let {
-        class: className = "",
+        class: className,
         value = $bindable({ domain: "", type: "ANY", resolver: "local" }),
         showDNSSEC = $bindable(false),
         sortedDomains = [],

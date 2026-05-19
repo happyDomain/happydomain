@@ -22,18 +22,20 @@
 -->
 
 <script lang="ts">
+    import type { ClassValue } from "svelte/elements";
+
     import RecordText from "$lib/components/records/RecordText.svelte";
     import type { dnsRR } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";
 
     interface Props {
-        class?: string;
+        class?: ClassValue;
         dn: string;
         origin: Domain;
         rrs: Array<dnsRR>;
     }
 
-    let { class: className = "", dn, origin, rrs }: Props = $props();
+    let { class: className, dn, origin, rrs }: Props = $props();
 </script>
 
 <div class={className}>

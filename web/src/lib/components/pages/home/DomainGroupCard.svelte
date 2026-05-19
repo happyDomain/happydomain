@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import type { ClassValue } from "svelte/elements";
+
     import { Button, Card, Icon } from "@sveltestrap/sveltestrap";
 
     import DomainGroupList from "$lib/components/forms/DomainGroupList.svelte";
@@ -35,11 +37,11 @@
     import { t } from "$lib/translations";
 
     interface Props {
-        class?: string;
+        class?: ClassValue;
         filteredGroup?: string | null;
     }
 
-    let { class: className = "", filteredGroup = $bindable(null) }: Props = $props();
+    let { class: className, filteredGroup = $bindable(null) }: Props = $props();
 </script>
 
 {#if $domains && $domains.length}

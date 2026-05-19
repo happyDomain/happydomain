@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import type { ClassValue } from "svelte/elements";
+
     import { Button, Icon, Spinner } from "@sveltestrap/sveltestrap";
 
     import { getDomain as APIGetDomain } from "$lib/api/domains";
@@ -34,12 +36,12 @@
     import { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
 
     interface Props {
-        class?: string;
+        class?: ClassValue;
         domain: Domain;
         history: string;
     }
 
-    let { class: className = "", domain, history }: Props = $props();
+    let { class: className, domain, history }: Props = $props();
 
     async function getDomain(id: string): Promise<Domain> {
         return await APIGetDomain(id);
@@ -55,7 +57,7 @@
 </script>
 
 {#if $domains_idx[domain.id] && $thisZone}
-    <div class="d-flex flex-column {className}">
+    <div class={["d-flex flex-column", className]}>
         {#if $domains_idx[domain.id].zone_history && history === $domains_idx[domain.id].zone_history[0]}
             {#key $zoneDiffVersion}
                 {#await getCachedDiffZoneSummary(domain, "@", $thisZone.id)}

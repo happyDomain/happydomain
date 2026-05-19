@@ -50,7 +50,7 @@
         [key: string]: unknown;
     }
 
-    let { class: className = "", items, ...rest }: Props = $props();
+    let { class: className, items, ...rest }: Props = $props();
 
     if (!$providersSpecs) refreshProvidersSpecs();
 
@@ -112,12 +112,12 @@
 <NewProviderModal />
 
 {#if !items || $providersSpecs == null}
-    <div class="d-flex gap-2 align-items-center justify-content-center my-3 {className}">
+    <div class={["d-flex gap-2 align-items-center justify-content-center my-3", className]}>
         <Spinner color="primary" />
         {$t("wait.retrieving-providers")}
     </div>
 {:else if items.length === 0}
-    <div class="text-center my-3 {className}">
+    <div class={["text-center my-3", className]}>
         <form
             onsubmit={(e) => {
                 e.preventDefault();

@@ -38,7 +38,7 @@
     }
 
     let {
-        class: className = "",
+        class: className,
         domainName,
         currentCheckerName,
         checksBase: checksBaseProp = undefined,
@@ -65,7 +65,7 @@
     }
 </script>
 
-<nav class="checker-sidebar d-flex flex-column h-100 {className}">
+<nav class={["checker-sidebar d-flex flex-column h-100", className]}>
     {#if !$checkers}
         <div class="d-flex gap-2 align-items-center justify-content-center my-3 text-muted">
             <Spinner size="sm" color="primary" />

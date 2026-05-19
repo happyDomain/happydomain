@@ -24,13 +24,15 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
 
+    import type { ClassValue } from "svelte/elements";
+
     import { nsrrtype, rdatatostr } from "$lib/dns";
     import type { dnsRR } from "$lib/dns_rr";
 
     const dispatch = createEventDispatcher();
 
     interface Props {
-        class: string;
+        class?: ClassValue;
         record: dnsRR;
     }
 
@@ -42,7 +44,7 @@
 </script>
 
 <div
-    class="record d-flex gap-1 {className}"
+    class={["record d-flex gap-1", className]}
     role="button"
     tabindex="0"
     onclick={openRecord}

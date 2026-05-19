@@ -23,6 +23,7 @@
 
 <script lang="ts">
     import type { Snippet } from "svelte";
+    import type { ClassValue } from "svelte/elements";
 
     import { Button, Icon, Table } from "@sveltestrap/sveltestrap";
     import { getRrtype, newRR, rdatafields, type dnsRR } from "$lib/dns_rr";
@@ -31,7 +32,7 @@
     import { t } from "$lib/translations";
 
     interface Props {
-        class?: string;
+        class?: ClassValue;
         dn: string;
         edit: boolean;
         field: Snippet<[number, string]>;
@@ -42,7 +43,7 @@
     }
 
     let {
-        class: className = "",
+        class: className,
         dn,
         edit,
         field,

@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import type { ClassValue } from "svelte/elements";
+
     import {
         Button,
         Icon,
@@ -33,14 +35,14 @@
     import type { Domain } from "$lib/model/domain";
 
     interface Props {
-        class?: string;
+        class?: ClassValue;
         dn: string;
         origin: Domain;
         rr: dnsRR;
         onopen?: () => void;
     }
 
-    let { class: className = "", dn, origin, rr = $bindable(emptyRR()), onopen }: Props = $props();
+    let { class: className, dn, origin, rr = $bindable(emptyRR()), onopen }: Props = $props();
 
     function openEditor() {
         onopen?.();
@@ -48,7 +50,7 @@
     }
 </script>
 
-<div class="d-flex {className}">
+<div class={["d-flex", className]}>
     <RecordText
         class="flex-fill m-0 px-1 bg-light sticky-top pt-1 pb-1 border-1 border-bottom"
         {dn}
