@@ -80,8 +80,7 @@
     let selectedHistory: string | undefined = $derived(page.data.history);
 
     let isZonePage = $derived(
-        page.route.id === "/domains/[dn]" ||
-            page.route.id === "/domains/[dn]/[[historyid]]",
+        page.route.id === "/domains/[dn]" || page.route.id === "/domains/[dn]/[[historyid]]",
     );
     let showPublishFooter = $derived(
         isZonePage &&
@@ -150,10 +149,10 @@
             sm={4}
             md={3}
             class="py-2 sticky-top d-flex flex-column"
-            style="background-color: #edf5f2; overflow-y: auto; max-height: 100vh; z-index: 0"
+            style="background-color: #edf5f2; z-index: 0; max-height: 100vh; overflow-y: auto;"
         >
             {#if $domains_idx[selectedDomain]}
-                <!-- Header: back button + domain selector -->
+                <!-- Header: back button + domain selector (always visible) -->
                 <div class="d-flex">
                     <Button href={isZonePage ? "/domains/" : ".."} class="fw-bolder" color="link">
                         <Icon name={isZonePage ? "chevron-up" : "chevron-left"} />
@@ -161,75 +160,90 @@
                     <SelectDomain bind:selectedDomain />
                 </div>
 
-                <!-- Main content: routed sidebar -->
-                <div class="flex-fill d-flex flex-column">
-                    {#if page.route.id && page.route.id.startsWith("/domains/[dn]/checks")}
-                        <ChecksSidebarContent
-                            domain={data.domain}
-                            checksBase={"/domains/" +
-                                encodeURIComponent(domainLink(selectedDomain)) +
-                                "/checks"}
-                            backHref={"/domains/" + encodeURIComponent(domainLink(selectedDomain))}
-                        />
-                    {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
-                        <a
-                            href="/domains/{encodeURIComponent(domainLink(selectedDomain))}"
-                            class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
-                        >
-                            <Icon name="chevron-left" />
-                            {$t("zones.return-to")}
-                        </a>
-                    {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checks")}
-                        <ChecksSidebarContent
-                            domain={data.domain}
-                            checksBase={"/domains/" +
-                                encodeURIComponent(domainLink(selectedDomain)) +
-                                "/" +
-                                encodeURIComponent(page.data.history ?? "") +
-                                "/" +
-                                encodeURIComponent(page.params.subdomain ?? "") +
-                                "/" +
-                                encodeURIComponent(page.data.serviceid ?? "") +
-                                "/checks"}
-                            backHref={"/domains/" +
-                                encodeURIComponent(domainLink(selectedDomain)) +
-                                "/" +
-                                encodeURIComponent(page.data.history ?? "") +
-                                "/" +
-                                encodeURIComponent(page.params.subdomain ?? "") +
-                                "/" +
-                                encodeURIComponent(page.data.serviceid ?? "")}
-                            serviceContext={{
-                                zoneId: page.data.zoneId ?? "",
-                                subdomain: page.data.subdomain ?? "",
-                                serviceid: page.data.serviceid ?? "",
-                            }}
-                        />
-                    {:else if page.route.id === "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]"}
-                        <ServiceSidebar
-                            origin={data.domain}
-                            subdomain={page.data.subdomain ?? ""}
-                            serviceid={page.data.serviceid ?? ""}
-                            historyId={page.data.history ?? ""}
-                        />
-                    {:else}
-                        <ZoneSidebar
-                            origin={data.domain}
-                            {selectedDomain}
-                            {selectedHistory}
-                            onretrieveZoneDone={retrieveZoneDone}
-                        />
-                    {/if}
-                </div>
+                <!-- Main content: routed sidebar (scrolls along with the Col itself) -->
+                {#if page.route.id && page.route.id.startsWith("/domains/[dn]/checks")}
+                    <ChecksSidebarContent
+                        domain={data.domain}
+                        checksBase={"/domains/" +
+                            encodeURIComponent(domainLink(selectedDomain)) +
+                            "/checks"}
+                        backHref={"/domains/" + encodeURIComponent(domainLink(selectedDomain))}
+                    />
+                {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
+                    <a
+                        href="/domains/{encodeURIComponent(domainLink(selectedDomain))}"
+                        class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
+                    >
+                        <Icon name="chevron-left" />
+                        {$t("zones.return-to")}
+                    </a>
+                {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checks")}
+                    <ChecksSidebarContent
+                        domain={data.domain}
+                        checksBase={"/domains/" +
+                            encodeURIComponent(domainLink(selectedDomain)) +
+                            "/" +
+                            encodeURIComponent(page.data.history ?? "") +
+                            "/" +
+                            encodeURIComponent(page.params.subdomain ?? "") +
+                            "/" +
+                            encodeURIComponent(page.data.serviceid ?? "") +
+                            "/checks"}
+                        backHref={"/domains/" +
+                            encodeURIComponent(domainLink(selectedDomain)) +
+                            "/" +
+                            encodeURIComponent(page.data.history ?? "") +
+                            "/" +
+                            encodeURIComponent(page.params.subdomain ?? "") +
+                            "/" +
+                            encodeURIComponent(page.data.serviceid ?? "")}
+                        serviceContext={{
+                            zoneId: page.data.zoneId ?? "",
+                            subdomain: page.data.subdomain ?? "",
+                            serviceid: page.data.serviceid ?? "",
+                        }}
+                    />
+                {:else if page.route.id === "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]"}
+                    <ServiceSidebar
+                        origin={data.domain}
+                        subdomain={page.data.subdomain ?? ""}
+                        serviceid={page.data.serviceid ?? ""}
+                        historyId={page.data.history ?? ""}
+                    />
+                {:else}
+                    <ZoneSidebar
+                        origin={data.domain}
+                        {selectedDomain}
+                        {selectedHistory}
+                        onretrieveZoneDone={retrieveZoneDone}
+                    />
+                {/if}
 
-                <!-- Footer: only on the main zone view -->
+                <!-- Spacer so the last sidebar item isn't hidden behind the fixed footer -->
+                {#if showPublishFooter || showDetachFooter}
+                    <div class="sidebar-footer-spacer"></div>
+                {/if}
+            {:else}
+                <div class="mt-4 text-center">
+                    <Spinner color="primary" />
+                </div>
+            {/if}
+        </Col>
+
+        <!-- Fixed footer pinned to the bottom of the viewport, matching sidebar width -->
+        {#if $domains_idx[selectedDomain] && (showPublishFooter || showDetachFooter)}
+            <div class="sidebar-footer-fixed col-sm-4 col-md-3">
                 {#if showPublishFooter}
-                    <ButtonZonePublish domain={data.domain} history={selectedHistory} />
-                {:else if showDetachFooter}
+                    <ButtonZonePublish
+                        class="w-100 border-top border-muted pt-2"
+                        domain={data.domain}
+                        history={selectedHistory}
+                    />
+                {:else}
                     <Button
                         color="danger"
-                        class="mt-3"
                         outline
+                        class="w-100"
                         disabled={deleteInProgress}
                         on:click={() => ctrlDomainDelete.Open()}
                     >
@@ -241,17 +255,15 @@
                         {$t("domains.stop")}
                     </Button>
                 {/if}
-            {:else}
-                <div class="mt-4 text-center">
-                    <Spinner color="primary" />
-                </div>
-            {/if}
-        </Col>
+            </div>
+        {/if}
+
         <div
             class="col-sm-8 col-md-9 d-flex"
             class:p-0={page.route &&
                 (page.route.id == "/domains/[dn]/checks/[checkerId]/executions/[execId]" ||
-                page.route.id == "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checks/[checkerId]/executions/[execId]")}
+                    page.route.id ==
+                        "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checks/[checkerId]/executions/[execId]")}
         >
             {@render children?.()}
         </div>
@@ -273,3 +285,18 @@
 <ModalDiffZone domain={data.domain} {selectedHistory} />
 
 <ServiceDetailsOffcanvas domain={data.domain} {selectedHistory} />
+
+<style>
+    .sidebar-footer-fixed {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        padding: 0.75rem;
+        background-color: #edf5f2;
+        z-index: 10;
+    }
+    .sidebar-footer-spacer {
+        flex-shrink: 0;
+        height: 3.5rem;
+    }
+</style>

@@ -34,11 +34,12 @@
     import { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
 
     interface Props {
+        class?: string;
         domain: Domain;
         history: string;
     }
 
-    let { domain, history }: Props = $props();
+    let { class: className = "", domain, history }: Props = $props();
 
     async function getDomain(id: string): Promise<Domain> {
         return await APIGetDomain(id);
@@ -54,95 +55,88 @@
 </script>
 
 {#if $domains_idx[domain.id] && $thisZone}
-    {#if $domains_idx[domain.id].zone_history && history === $domains_idx[domain.id].zone_history[0]}
-        {#key $zoneDiffVersion}
-            {#await getCachedDiffZoneSummary(domain, "@", $thisZone.id)}
-                <Button
-                    class="mt-2 mb-3"
-                    size="lg"
-                    color="success"
-                    outline
-                    title={$t("domains.actions.propagate")}
-                    on:click={showDiff}
-                >
-                    <Spinner size="sm" />
-                    {$t("domains.actions.propagate")}
-                </Button>
-            {:then zoneDiffSummary}
-                <Button
-                    class="mt-2 mb-3"
-                    size="lg"
-                    color="success"
-                    outline={zoneDiffSummary && !zoneDiffSummary.nbDiffs}
-                    title={$t("domains.actions.propagate")}
-                    on:click={showDiff}
-                >
-                    <Icon name="cloud-upload" aria-hidden="true" />
-                    {$t("domains.actions.propagate")}
-                    {#if zoneDiffSummary && zoneDiffSummary.nbDiffs}
-                        <small class="text-muted">({zoneDiffSummary.nbDiffs})</small>
-                    {/if}
-                </Button>
-            {:catch err}
-                <p class="mb-0 text-center">
-                    <Icon name="exclamation-triangle" class="text-danger" />
-                    {err}
-                </p>
-                <Button
-                    color="danger"
-                    class="mt-3"
-                    outline
-                    on:click={() => ctrlDomainDelete.Open()}
-                >
-                    <Icon name="trash" />
-                    {$t("domains.stop")}
-                </Button>
-            {/await}
-        {/key}
-    {:else}
-        <Button
-            size="lg"
-            color="warning"
-            title={$t("domains.actions.rollback")}
-            on:click={showDiff}
-        >
-            <Icon name="cloud-upload" aria-hidden="true" />
-            {$t("domains.actions.rollback")}
-        </Button>
-        <p class="mt-2 mb-1 text-center">
-            {#await getDomain(domain.id)}
-                Chargement des informations de l'historique
-            {:then domain}
-                {#if domain.zone_meta && domain.zone_meta[history]}
-                    {@const history_meta = domain.zone_meta[history]}
-                    <span class="d-block text-truncate">
-                        {#if history_meta.published}
-                            Publiée le
-                            {new Intl.DateTimeFormat(undefined, {
-                                dateStyle: "long",
-                                timeStyle: "long",
-                            }).format(new Date(history_meta.published))}
-                        {:else if history_meta.commit_date}
-                            Enregistrée le
-                            {new Intl.DateTimeFormat(undefined, {
-                                dateStyle: "long",
-                                timeStyle: "long",
-                            }).format(new Date(history_meta.commit_date))}
-                        {:else}
-                            Dernière modification le
-                            {new Intl.DateTimeFormat(undefined, {
-                                dateStyle: "long",
-                                timeStyle: "long",
-                            }).format(new Date(history_meta.last_modified))}
+    <div class="d-flex flex-column {className}">
+        {#if $domains_idx[domain.id].zone_history && history === $domains_idx[domain.id].zone_history[0]}
+            {#key $zoneDiffVersion}
+                {#await getCachedDiffZoneSummary(domain, "@", $thisZone.id)}
+                    <Button
+                        color="primary"
+                        outline
+                        title={$t("domains.actions.propagate")}
+                        on:click={showDiff}
+                    >
+                        <Spinner size="sm" />
+                        {$t("domains.actions.propagate")}
+                    </Button>
+                {:then zoneDiffSummary}
+                    <Button
+                        color="primary"
+                        outline={zoneDiffSummary && !zoneDiffSummary.nbDiffs}
+                        title={$t("domains.actions.propagate")}
+                        on:click={showDiff}
+                    >
+                        <Icon name="cloud-upload" aria-hidden="true" />
+                        {$t("domains.actions.propagate")}
+                        {#if zoneDiffSummary && zoneDiffSummary.nbDiffs}
+                            <small class="text-muted">({zoneDiffSummary.nbDiffs})</small>
                         {/if}
-                    </span>
-                    {#if history_meta.commit_message}
-                        <span class="d-block text-truncate" title={history_meta.commit_message}>
-                            {history_meta.commit_message}
+                    </Button>
+                {:catch err}
+                    <p class="mb-0 text-center">
+                        <Icon name="exclamation-triangle" class="text-danger" />
+                        {err}
+                    </p>
+                    <Button
+                        color="danger"
+                        class="mt-3"
+                        outline
+                        on:click={() => ctrlDomainDelete.Open()}
+                    >
+                        <Icon name="trash" />
+                        {$t("domains.stop")}
+                    </Button>
+                {/await}
+            {/key}
+        {:else}
+            <Button color="warning" title={$t("domains.actions.rollback")} on:click={showDiff}>
+                <Icon name="cloud-upload" aria-hidden="true" />
+                {$t("domains.actions.rollback")}
+            </Button>
+            <p class="mt-2 mb-1 text-center">
+                {#await getDomain(domain.id)}
+                    Chargement des informations de l'historique
+                {:then domain}
+                    {#if domain.zone_meta && domain.zone_meta[history]}
+                        {@const history_meta = domain.zone_meta[history]}
+                        <span class="d-block text-truncate">
+                            {#if history_meta.published}
+                                Publiée le
+                                {new Intl.DateTimeFormat(undefined, {
+                                    dateStyle: "long",
+                                    timeStyle: "long",
+                                }).format(new Date(history_meta.published))}
+                            {:else if history_meta.commit_date}
+                                Enregistrée le
+                                {new Intl.DateTimeFormat(undefined, {
+                                    dateStyle: "long",
+                                    timeStyle: "long",
+                                }).format(new Date(history_meta.commit_date))}
+                            {:else}
+                                Dernière modification le
+                                {new Intl.DateTimeFormat(undefined, {
+                                    dateStyle: "long",
+                                    timeStyle: "long",
+                                }).format(new Date(history_meta.last_modified))}
+                            {/if}
                         </span>
+                        {#if history_meta.commit_message}
+                            <span class="d-block text-truncate" title={history_meta.commit_message}>
+                                {history_meta.commit_message}
+                            </span>
+                        {/if}
                     {/if}
-                {/if}
-            {/await}
-        </p>
-    {/if}
+                {/await}
+            </p>
+        {/if}
+    </div>
 {/if}
