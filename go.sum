@@ -44,6 +44,8 @@ git.happydns.org/checker-delegation v0.2.0 h1:c9ZmMPAPGdwUYOoh8QkZzUgM20h6/Jnviw
 git.happydns.org/checker-delegation v0.2.0/go.mod h1:std/OYsToEWzYMf95IfVOuGaF5367WMUUTeORadgjhM=
 git.happydns.org/checker-dnssec v0.1.0 h1:iERjoxNiQZHV3MurkjPLmYYoWTSmne6SPhZrJRXJtaE=
 git.happydns.org/checker-dnssec v0.1.0/go.mod h1:km1/G6pBmr4ZgLAAsnual3i/6TMcps2DvTCwv/mHUII=
+git.happydns.org/checker-dnssec v0.1.1 h1:x5vz6YDY1XcRggaMmPmpaBHCU7+vCAQiAESz7pb0OTM=
+git.happydns.org/checker-dnssec v0.1.1/go.mod h1:km1/G6pBmr4ZgLAAsnual3i/6TMcps2DvTCwv/mHUII=
 git.happydns.org/checker-dnsviz v0.1.0 h1:fY3Yi6XXXspaY5ZIiiaXaw3PCvLcyQRUnBLDIyduoPE=
 git.happydns.org/checker-dnsviz v0.1.0/go.mod h1:/nLkQPEpJTjGvXhWXE8jJaNJGgT35lzSW+vVU6VSZdI=
 git.happydns.org/checker-email-autoconfig v0.2.0 h1:sC4z2HOMMUd7R3izNGQUc37HODVhpwOdGB7jVYmhCqc=
