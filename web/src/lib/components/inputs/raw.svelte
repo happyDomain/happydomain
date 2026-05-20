@@ -75,6 +75,16 @@
                   : "text",
     );
 
+    // Placeholders (used to show an inherited value when the field is empty)
+    // would otherwise leak secret values in plaintext, since the `placeholder`
+    // HTML attribute is not masked by type="password". Replace with bullets of
+    // the same length while the eye toggle is off.
+    let displayPlaceholder: string | undefined = $derived(
+        specs.secret && !secretVisible && specs.placeholder
+            ? "•".repeat(specs.placeholder.length)
+            : specs.placeholder,
+    );
+
     let inputmax: number | undefined = $derived(computeInputmax(specs));
     let inputmin: number | undefined = $derived(computeInputmin(specs));
 
@@ -202,7 +212,7 @@
             class="fw-bold"
             {feedback}
             invalid={feedback !== undefined}
-            placeholder={specs.placeholder}
+            placeholder={displayPlaceholder}
             plaintext={!edit || readonly}
             readonly={!edit || readonly}
             required={specs.required}
@@ -219,7 +229,7 @@
             invalid={feedback !== undefined}
             min={inputmin}
             max={inputmax}
-            placeholder={specs.placeholder}
+            placeholder={displayPlaceholder}
             plaintext={!edit || readonly}
             readonly={!edit || readonly}
             required={specs.required}
