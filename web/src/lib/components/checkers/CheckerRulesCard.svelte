@@ -99,7 +99,7 @@
     let toggleable = $derived(rules.filter((r) => r.name && !ruleFailure(r.name)));
 
     let allEnabled = $derived(
-        plan && toggleable.length > 0 && toggleable.every((r) => plan!.enabled?.[r.name!]),
+        plan && toggleable.length > 0 && toggleable.some((r) => plan!.enabled?.[r.name!]),
     );
 
     function toggleAll() {
