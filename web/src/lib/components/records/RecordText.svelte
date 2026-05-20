@@ -41,7 +41,7 @@
         rr: dnsRR;
     }
 
-    let { class: className, dn, origin, rr = $bindable() }: Props = $props();
+    let { class: className, dn, origin, rr }: Props = $props();
 </script>
 
 <div class={["text-truncate font-monospace", className]}>

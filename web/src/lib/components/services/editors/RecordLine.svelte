@@ -55,7 +55,7 @@
         class="flex-fill m-0 px-1 bg-light sticky-top pt-1 pb-1 border-1 border-bottom"
         {dn}
         {origin}
-        bind:rr={rr}
+        {rr}
     />
     <Button
         color="light"

@@ -41,6 +41,8 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
+    import { invalidateAll } from "$app/navigation";
+
     import { listScopedCheckers } from "$lib/api/checkers";
     import { getServiceSpec } from "$lib/api/service_specs";
     import { deleteZoneService, updateZoneService } from "$lib/api/zone";
@@ -51,7 +53,7 @@
     import type { Domain } from "$lib/model/domain";
     import { navigate } from "$lib/stores/config";
     import { checkers } from "$lib/stores/checkers";
-    import { domainLink } from "$lib/stores/domains";
+    import { domainLink, refreshDomains } from "$lib/stores/domains";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
@@ -84,9 +86,14 @@
         deleteInProgress = true;
         deleteZoneService(domain, $thisZone.id, service).then(
             (z) => {
-                thisZone.set(z);
                 deleteInProgress = false;
                 isOpen = false;
+                service = {} as ServiceWithValue;
+                if (z.id !== selectedHistory) {
+                    refreshDomains().then(() => invalidateAll());
+                } else {
+                    thisZone.set(z);
+                }
             },
             (err) => {
                 deleteInProgress = false;
