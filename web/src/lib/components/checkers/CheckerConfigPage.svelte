@@ -39,7 +39,7 @@
         updateScopedCheckOptions,
         getScopedCheckStatus,
     } from "$lib/api/checkers";
-    import { splitPositionalOptions } from "$lib/utils";
+    import { splitPositionalOptions, collectAutoFillKeys } from "$lib/utils";
     import PageTitle from "$lib/components/PageTitle.svelte";
     import CheckerScheduleCard from "./CheckerScheduleCard.svelte";
     import CheckerRulesCard from "./CheckerRulesCard.svelte";
@@ -92,11 +92,14 @@
     });
 
     $effect(() => {
-        checkOptionsPromise.then((positionals: HappydnsCheckerOptionsPositional[]) => {
-            const { current, inherited } = splitPositionalOptions(positionals);
-            optionValues = current;
-            inheritedValues = inherited;
-        });
+        Promise.all([checkStatusPromise, checkOptionsPromise]).then(
+            ([status, positionals]: [any, HappydnsCheckerOptionsPositional[]]) => {
+                const autoFillKeys = status ? collectAutoFillKeys(status) : new Set<string>();
+                const { current, inherited } = splitPositionalOptions(positionals, autoFillKeys);
+                optionValues = current;
+                inheritedValues = inherited;
+            },
+        );
     });
 
     async function copyMetricsUrl() {

@@ -41,7 +41,7 @@
     import type { CheckerCheckerOptionDocumentation, CheckerCheckRuleInfo, HappydnsCheckerOptionsPositional } from "$lib/api-base/types.gen";
     import CheckerRulesCard from "$lib/components/checkers/CheckerRulesCard.svelte";
     import CheckerOptionsPanel from "$lib/components/checkers/CheckerOptionsPanel.svelte";
-    import { availabilityBadges, splitPositionalOptions, getOrphanedOptionKeys, filterValidOptions } from "$lib/utils";
+    import { availabilityBadges, splitPositionalOptions, collectAutoFillKeys, getOrphanedOptionKeys, filterValidOptions } from "$lib/utils";
 
     let checkerId = $derived(page.params.checkerId!);
 
@@ -59,11 +59,14 @@
     });
 
     $effect(() => {
-        checkOptionsPromise.then((positionals: HappydnsCheckerOptionsPositional[]) => {
-            const { current, inherited } = splitPositionalOptions(positionals);
-            optionValues = current;
-            inheritedValues = inherited;
-        });
+        Promise.all([checkStatusPromise, checkOptionsPromise]).then(
+            ([status, positionals]: [any, HappydnsCheckerOptionsPositional[]]) => {
+                const autoFillKeys = status ? collectAutoFillKeys(status) : new Set<string>();
+                const { current, inherited } = splitPositionalOptions(positionals, autoFillKeys);
+                optionValues = current;
+                inheritedValues = inherited;
+            },
+        );
     });
 
     async function saveOptions() {

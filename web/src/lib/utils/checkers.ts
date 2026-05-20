@@ -135,18 +135,53 @@ export function collectAllOptionDocs(
     ].filter((o) => !o.noOverride);
 }
 
+// splitPositionalOptions separates the user-editable "current scope" options
+// from less-specific scopes' options (presented as inherited placeholders).
+//
+// The controller appends an extra positional carrying resolved auto-fill
+// values; it is not user-stored configuration and must not be treated as the
+// current scope (otherwise the actual stored values get pushed into
+// `inherited` and saving the form sends nil overrides). Callers pass the set
+// of auto-fill option ids derived from the option documentation so we can
+// drop that positional.
 export function splitPositionalOptions(
     positionals: { options?: Record<string, unknown> | null }[],
+    autoFillKeys: Set<string> = new Set(),
 ): { current: Record<string, unknown>; inherited: Record<string, unknown> } {
-    const current =
-        positionals.length > 0 ? (positionals[positionals.length - 1]?.options ?? {}) : {};
+    const stored = positionals.filter((p) => {
+        const keys = Object.keys(p.options ?? {});
+        return keys.length === 0 || keys.some((k) => !autoFillKeys.has(k));
+    });
+    const current = stored.length > 0 ? (stored[stored.length - 1]?.options ?? {}) : {};
     const inherited: Record<string, unknown> = {};
-    for (let i = 0; i < positionals.length - 1; i++) {
-        for (const [k, v] of Object.entries(positionals[i].options ?? {})) {
+    for (let i = 0; i < stored.length - 1; i++) {
+        for (const [k, v] of Object.entries(stored[i].options ?? {})) {
             inherited[k] = v;
         }
     }
     return { current: { ...current }, inherited };
+}
+
+// collectAutoFillKeys returns the set of option ids flagged as auto-fill in
+// the checker's option documentation (top-level groups and per-rule groups).
+export function collectAutoFillKeys(status: CheckerWithOptions): Set<string> {
+    const keys = new Set<string>();
+    const addAll = (opts?: CheckerCheckerOptionDocumentation[]) => {
+        opts?.forEach((o) => {
+            if (o.id && o.autoFill) keys.add(o.id);
+        });
+    };
+    addAll(status.options?.runOpts);
+    addAll(status.options?.adminOpts);
+    addAll(status.options?.userOpts);
+    addAll(status.options?.domainOpts);
+    status.rules?.forEach((r) => {
+        addAll(r.options?.runOpts);
+        addAll(r.options?.adminOpts);
+        addAll(r.options?.userOpts);
+        addAll(r.options?.domainOpts);
+    });
+    return keys;
 }
 
 export function downloadBlob(content: string, filename: string, mime: string) {
