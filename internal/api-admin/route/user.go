@@ -28,7 +28,7 @@ import (
 )
 
 func declareUsersRoutes(router *gin.RouterGroup, dep Dependencies) {
-	sc := controller.NewUserController(dep.User, dep.AdminUser)
+	sc := controller.NewUserController(dep.User, dep.AdminUser, dep.AuthUser, dep.AdminAuthUser)
 
 	router.GET("/users", sc.GetUsers)
 	router.POST("/users", sc.NewUser)
@@ -40,6 +40,7 @@ func declareUsersRoutes(router *gin.RouterGroup, dep Dependencies) {
 	apiUsersRoutes.GET("", sc.GetUser)
 	apiUsersRoutes.PUT("", sc.UpdateUser)
 	apiUsersRoutes.DELETE("", sc.DeleteUser)
+	apiUsersRoutes.POST("/new_auth", sc.NewAuthUser)
 
 	declareDomainRoutes(apiUsersRoutes, dep)
 	declareProviderRoutes(apiUsersRoutes, dep)

@@ -29,18 +29,23 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
+	"git.happydns.org/happyDomain/internal/helpers"
 	happydns "git.happydns.org/happyDomain/model"
 )
 
 type UserController struct {
-	userService  happydns.UserUsecase
-	adminService happydns.AdminUserUsecase
+	userService      happydns.UserUsecase
+	adminService     happydns.AdminUserUsecase
+	authService      happydns.AuthUserUsecase
+	authAdminService happydns.AdminAuthUserUsecase
 }
 
-func NewUserController(userService happydns.UserUsecase, adminService happydns.AdminUserUsecase) *UserController {
+func NewUserController(userService happydns.UserUsecase, adminService happydns.AdminUserUsecase, authService happydns.AuthUserUsecase, authAdminService happydns.AdminAuthUserUsecase) *UserController {
 	return &UserController{
-		userService:  userService,
-		adminService: adminService,
+		userService:      userService,
+		adminService:     adminService,
+		authService:      authService,
+		authAdminService: authAdminService,
 	}
 }
 
@@ -191,4 +196,57 @@ func (uc *UserController) DeleteUser(c *gin.Context) {
 	user := c.MustGet("user").(*happydns.User)
 
 	happydns.ApiResponse(c, true, uc.adminService.DeleteUserByID(user.Id))
+}
+
+type newAuthUserResponse struct {
+	Password string             `json:"password"`
+	AuthUser *happydns.UserAuth `json:"authUser"`
+}
+
+// NewAuthUser creates a UserAuth for the given existing User.
+//
+//	@Summary		Create auth account for a user.
+//	@Schemes
+//	@Description	Generate a UserAuth for the given existing User, using the user's email and a freshly generated password returned in the response.
+//	@Tags			admin-users
+//	@Accept			json
+//	@Produce		json
+//	@Param			uid		path		string					true	"User ID or email"
+//	@Success		200		{object}	newAuthUserResponse		"Generated password and created auth user"
+//	@Failure		404		{object}	happydns.ErrorResponse	"User not found"
+//	@Failure		500		{object}	happydns.ErrorResponse
+//	@Router			/users/{uid}/new_auth [post]
+func (uc *UserController) NewAuthUser(c *gin.Context) {
+	user := c.MustGet("user").(*happydns.User)
+
+	password, err := helpers.GeneratePassword()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	au, err := happydns.NewUserAuth(user.Email, password)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: err.Error()})
+		return
+	}
+	au.Id = user.Id
+
+	if existing, err := uc.authService.GetAuthUser(user.Id); err == nil && existing != nil {
+		c.AbortWithStatusJSON(http.StatusConflict, happydns.ErrorResponse{Message: "An auth account already exists for this user."})
+		return
+	}
+	if existing, err := uc.authService.GetAuthUserByEmail(user.Email); err == nil && existing != nil {
+		c.AbortWithStatusJSON(http.StatusConflict, happydns.ErrorResponse{Message: "An auth account with this email already exists."})
+		return
+	}
+
+	// AdminUpdateAuthUser persists at the supplied Id (Put), unlike
+	// AdminCreateAuthUser which always allocates a fresh identifier.
+	if err := uc.authAdminService.AdminUpdateAuthUser(au); err != nil {
+		happydns.ApiResponse(c, nil, err)
+		return
+	}
+
+	happydns.ApiResponse(c, newAuthUserResponse{Password: password, AuthUser: au}, nil)
 }

@@ -26,6 +26,7 @@
     import { Alert, Button, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import { getUsersByUid, getUsersByUidDomains, getUsersByUidProviders } from "$lib/api-admin";
+    import UserCreateAuthCard from "./UserCreateAuthCard.svelte";
     import UserInfoCard from "./UserInfoCard.svelte";
     import UserQuotaCard from "./UserQuotaCard.svelte";
     import UserDomainsCard from "./domains/UserDomainsCard.svelte";
@@ -59,6 +60,7 @@
                 <Col md={8} lg={6} class="d-flex flex-column gap-4">
                     <UserInfoCard {user} {uid} />
                     <UserQuotaCard {user} {uid} />
+                    <UserCreateAuthCard {uid} email={user.email || ""} />
                 </Col>
 
                 <Col md={8} lg={6} class="d-flex flex-column gap-4">
