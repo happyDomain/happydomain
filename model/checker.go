@@ -151,6 +151,9 @@ type CheckPlan struct {
 	Target    CheckTarget     `json:"target" validate:"required" readonly:"true"`
 	Interval  *time.Duration  `json:"interval,omitempty" swaggertype:"integer"`
 	Enabled   map[string]bool `json:"enabled,omitempty"`
+	// Disabled, when true, pauses the automatic scheduling of this plan
+	// regardless of per-rule Enabled state. Manual runs are unaffected.
+	Disabled bool `json:"disabled,omitempty"`
 }
 
 // IsFullyDisabled returns true if the enabled map is non-empty and every entry is false.

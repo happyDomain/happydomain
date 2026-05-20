@@ -782,6 +782,8 @@
         },
         "schedule": {
             "card-title": "Automatic scheduling",
+            "disable-label": "Disable automatic schedule",
+            "disable-hint": "When disabled, this checker is no longer executed automatically. You can still trigger it manually.",
             "interval-label": "Check interval",
             "minutes": "minutes",
             "hours": "hours",

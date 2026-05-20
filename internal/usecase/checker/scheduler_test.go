@@ -791,12 +791,19 @@ func TestBuildPlanIndex(t *testing.T) {
 			Target:    target,
 			Enabled:   map[string]bool{"r1": true},
 		},
+		{
+			CheckerID: "c3",
+			Target:    target,
+			Enabled:   map[string]bool{"r1": true},
+			Disabled:  true,
+		},
 	}
 
 	disabled, planMap := buildPlanIndex(plans)
 
 	key1 := "c1|" + target.String()
 	key2 := "c2|" + target.String()
+	key3 := "c3|" + target.String()
 
 	if !disabled[key1] {
 		t.Error("expected c1 to be in disabled set")
@@ -804,11 +811,17 @@ func TestBuildPlanIndex(t *testing.T) {
 	if disabled[key2] {
 		t.Error("expected c2 to NOT be in disabled set")
 	}
+	if !disabled[key3] {
+		t.Error("expected c3 (Disabled=true) to be in disabled set")
+	}
 	if planMap[key1] != plans[0] {
 		t.Error("expected planMap to contain c1 plan")
 	}
 	if planMap[key2] != plans[1] {
 		t.Error("expected planMap to contain c2 plan")
+	}
+	if planMap[key3] != plans[2] {
+		t.Error("expected planMap to contain c3 plan")
 	}
 }
 

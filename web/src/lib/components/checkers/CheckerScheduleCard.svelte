@@ -78,6 +78,7 @@
                 plan = {
                     enabled: s.enabled ?? {},
                     interval: s.interval ?? defaultIntervalNs,
+                    disabled: s.disabled ?? false,
                 };
             }
         });
@@ -89,6 +90,7 @@
             const planData: HappydnsCheckPlanWritable = {
                 enabled: plan.enabled,
                 interval: plan.interval,
+                disabled: plan.disabled ?? false,
             };
             if (existingPlanId) {
                 await updateScopedCheckPlan(scope, checkerId, existingPlanId, planData);
@@ -162,6 +164,24 @@
     <CardBody>
         <form id="form-schedule">
             <FormGroup>
+                <div class="form-check form-switch">
+                    <Input
+                        type="switch"
+                        id="schedule-disabled-toggle"
+                        checked={plan.disabled ?? false}
+                        onchange={(e: Event) => {
+                            plan.disabled = (e.target as HTMLInputElement).checked;
+                        }}
+                    />
+                    <Label for="schedule-disabled-toggle" class="form-check-label">
+                        {$t("checkers.schedule.disable-label")}
+                    </Label>
+                </div>
+                <small class="text-muted d-block">
+                    {$t("checkers.schedule.disable-hint")}
+                </small>
+            </FormGroup>
+            <FormGroup>
                 <Label>{$t("checkers.schedule.interval-label")}</Label>
                 <div class="d-flex align-items-center gap-2">
                     <Input
@@ -172,6 +192,7 @@
                         oninput={(e: Event) =>
                             setIntervalValue(parseInt((e.target as HTMLInputElement).value) || 1)}
                         style="width: 100px"
+                        disabled={plan.disabled ?? false}
                     />
                     <span>{useMinutes ? $t("checkers.schedule.minutes") : $t("checkers.schedule.hours")}</span>
                 </div>

@@ -650,7 +650,7 @@ func buildPlanIndex(plans []*happydns.CheckPlan) (disabledSet map[string]bool, p
 	for _, p := range plans {
 		key := p.CheckerID + "|" + p.Target.String()
 		planMap[key] = p
-		if p.IsFullyDisabled() {
+		if p.Disabled || p.IsFullyDisabled() {
 			disabledSet[key] = true
 		}
 	}
