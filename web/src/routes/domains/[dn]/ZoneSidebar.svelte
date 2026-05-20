@@ -104,7 +104,7 @@
                 <Icon name="gear-fill" aria-hidden="true" />
             {/if}
         </DropdownToggle>
-        <DropdownMenu>
+        <DropdownMenu style="z-index: 11;">
             <DropdownItem header class="font-monospace">
                 {origin.domain}
             </DropdownItem>

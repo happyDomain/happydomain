@@ -22,7 +22,9 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -245,8 +247,8 @@ func (ac *AuthUserController) ResetUserPasswd(c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
 	urp := &resetPassword{}
-	err := c.ShouldBindJSON(&urp)
-	if err != nil {
+	err := c.ShouldBindJSON(urp)
+	if err != nil && !errors.Is(err, io.EOF) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{Message: fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
 		return
 	}
