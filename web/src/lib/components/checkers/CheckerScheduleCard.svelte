@@ -96,6 +96,14 @@
                 const created = await createScopedCheckPlan(scope, checkerId, planData);
                 existingPlanId = created.id;
             }
+        } finally {
+            saving = false;
+        }
+    }
+
+    async function handleSave() {
+        try {
+            await save();
             toasts.addToast({
                 message: $t("checkers.schedule.saved"),
                 type: "success",
@@ -106,10 +114,10 @@
                 message: $t("checkers.schedule.save-failed") + ": " + String(error),
                 timeout: 10000,
             });
-        } finally {
-            saving = false;
         }
     }
+
+    export { save };
 
     function intervalDisplayValue(): number {
         return Math.round((plan.interval ?? defaultIntervalNs) / unitNs);
@@ -142,7 +150,7 @@
 <Card class="mb-3">
     <CardHeader class="d-flex align-items-center justify-content-between">
         <strong>{$t("checkers.schedule.card-title")}</strong>
-        <Button form="form-schedule" color="success" size="sm" onclick={save} disabled={saving}>
+        <Button form="form-schedule" color="success" size="sm" onclick={handleSave} disabled={saving}>
             {#if saving}
                 <span class="spinner-border spinner-border-sm me-1"></span>
             {:else}

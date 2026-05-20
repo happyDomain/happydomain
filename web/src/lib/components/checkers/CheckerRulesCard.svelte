@@ -44,11 +44,29 @@
         inheritedValues: Record<string, unknown>;
         saving: boolean;
         onsave: () => Promise<void>;
+        onsaveplan?: () => Promise<void>;
         plan?: HappydnsCheckPlan | HappydnsCheckPlanWritable;
         precheckFailures?: Record<string, string>;
     }
 
-    let { rules, optionValues = $bindable(), inheritedValues, saving, onsave, plan = $bindable(), precheckFailures }: Props = $props();
+    let { rules, optionValues = $bindable(), inheritedValues, saving, onsave, onsaveplan, plan = $bindable(), precheckFailures }: Props = $props();
+
+    async function handleSavePlan() {
+        if (!onsaveplan) return;
+        try {
+            await onsaveplan();
+            toasts.addToast({
+                message: $t("checkers.messages.rules-updated"),
+                type: "success",
+                timeout: 5000,
+            });
+        } catch (error) {
+            toasts.addErrorToast({
+                message: $t("checkers.messages.rules-update-failed", { error: String(error) }),
+                timeout: 10000,
+            });
+        }
+    }
 
     async function handleSave() {
         try {
@@ -92,6 +110,7 @@
             enabled[rule.name!] = newVal;
         }
         plan.enabled = enabled;
+        handleSavePlan();
     }
 </script>
 
@@ -155,6 +174,7 @@
                                             ...plan.enabled,
                                             [rule.name]: !(plan.enabled?.[rule.name] ?? false),
                                         };
+                                        handleSavePlan();
                                     }
                                 }}
                             />

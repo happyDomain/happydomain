@@ -76,6 +76,7 @@
     let plan = $state<HappydnsCheckPlanWritable>({
         enabled: {},
     });
+    let scheduleCard = $state<{ save: () => Promise<void> } | undefined>(undefined);
 
     $effect(() => {
         checkStatusPromise.then((status) => {
@@ -167,7 +168,7 @@
             <Row class="mb-4">
                 {#if showSchedule}
                 <Col md={6}>
-                    <CheckerScheduleCard {scope} {checkerId} bind:plan {intervalSpec} />
+                    <CheckerScheduleCard bind:this={scheduleCard} {scope} {checkerId} bind:plan {intervalSpec} />
 
                     {#if status.rules && status.rules.length > 0}
                         <CheckerRulesCard
@@ -176,6 +177,7 @@
                             {inheritedValues}
                             saving={savingOptions}
                             onsave={saveOptions}
+                            onsaveplan={() => scheduleCard?.save()}
                             bind:plan
                             precheckFailures={status.precheckFailures}
                         />

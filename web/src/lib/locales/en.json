@@ -913,7 +913,9 @@
             "options-updated": "Checker options updated successfully",
             "options-cleaned": "Orphaned options removed successfully",
             "update-failed": "Failed to update options: {{error}}",
-            "clean-failed": "Failed to clean options: {{error}}"
+            "clean-failed": "Failed to clean options: {{error}}",
+            "rules-updated": "Checker rules updated successfully",
+            "rules-update-failed": "Failed to update rules: {{error}}"
         }
     },
     "compliance": {
