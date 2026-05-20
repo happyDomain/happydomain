@@ -788,10 +788,12 @@
             "minutes": "minutes",
             "hours": "hours",
             "interval-hint": "Between {{intervalMin}} and {{intervalMax}}. Default: {{intervalDefault}}. The check will run once per interval.",
-            "no-schedule-yet": "No schedule created yet. Save to create one.",
-            "save": "Save",
             "save-failed": "Failed to save schedule",
-            "saved": "Schedule saved successfully."
+            "saved": "Schedule saved successfully.",
+            "enable-label": "Enable automatic scheduling",
+            "enabled": "Enabled",
+            "disabled": "Disabled",
+            "paused-hint": "Automatic scheduling is paused. You can still trigger checks manually."
         },
         "executions": {
             "loading": "Loading check results...",

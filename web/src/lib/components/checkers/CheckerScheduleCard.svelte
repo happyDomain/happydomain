@@ -23,12 +23,9 @@
 
 <script lang="ts">
     import {
-        Alert,
-        Button,
         Card,
         CardBody,
         CardHeader,
-        FormGroup,
         Icon,
         Input,
         Label,
@@ -57,8 +54,9 @@
 
     let existingPlanId = $state<string | undefined>(undefined);
     let saving = $state(false);
+    let saveStatus = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
+    let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
-    // Determine whether to use minutes or hours as the UI unit.
     let useMinutes = $derived(
         intervalSpec != null && intervalSpec.min != null && intervalSpec.min < NS_PER_HOUR
     );
@@ -103,23 +101,26 @@
         }
     }
 
-    async function handleSave() {
-        try {
-            await save();
-            toasts.addToast({
-                message: $t("checkers.schedule.saved"),
-                type: "success",
-                timeout: 5000,
-            });
-        } catch (error) {
-            toasts.addErrorToast({
-                message: $t("checkers.schedule.save-failed") + ": " + String(error),
-                timeout: 10000,
-            });
-        }
-    }
-
     export { save };
+
+    function triggerAutosave() {
+        clearTimeout(debounceTimer);
+        saveStatus = 'idle';
+        debounceTimer = setTimeout(async () => {
+            saveStatus = 'saving';
+            try {
+                await save();
+                saveStatus = 'saved';
+                setTimeout(() => { if (saveStatus === 'saved') saveStatus = 'idle'; }, 2000);
+            } catch (error) {
+                saveStatus = 'error';
+                toasts.addErrorToast({
+                    message: $t("checkers.schedule.save-failed") + ": " + String(error),
+                    timeout: 10000,
+                });
+            }
+        }, 700);
+    }
 
     function intervalDisplayValue(): number {
         return Math.round((plan.interval ?? defaultIntervalNs) / unitNs);
@@ -147,70 +148,77 @@
         const m = Math.round(ns / NS_PER_MINUTE);
         return `${m}min`;
     }
+
+    let isEnabled = $derived(!(plan.disabled ?? false));
 </script>
 
 <Card class="mb-3">
-    <CardHeader class="d-flex align-items-center justify-content-between">
-        <strong>{$t("checkers.schedule.card-title")}</strong>
-        <Button form="form-schedule" color="success" size="sm" onclick={handleSave} disabled={saving}>
-            {#if saving}
-                <span class="spinner-border spinner-border-sm me-1"></span>
-            {:else}
-                <Icon name="check-circle"></Icon>
-            {/if}
-            {$t("checkers.schedule.save")}
-        </Button>
+    <CardHeader class="d-flex align-items-center gap-3">
+        <strong class="me-auto">{$t("checkers.schedule.card-title")}</strong>
+
+        {#if saveStatus === 'saving'}
+            <span class="spinner-border spinner-border-sm text-muted"></span>
+        {:else if saveStatus === 'saved'}
+            <span class="text-success small d-flex align-items-center gap-1">
+                <Icon name="check-circle" />
+                {$t("checkers.schedule.saved")}
+            </span>
+        {:else if saveStatus === 'error'}
+            <span class="text-danger small d-flex align-items-center gap-1">
+                <Icon name="exclamation-circle" />
+                {$t("checkers.schedule.save-failed")}
+            </span>
+        {/if}
+
+        <div class="d-flex align-items-center gap-2">
+            <Label for="schedule-enabled-toggle" class="mb-0 text-nowrap user-select-none">
+                <span class={isEnabled ? "text-success fw-semibold" : "text-muted"}>
+                    {isEnabled ? $t("checkers.schedule.enabled") : $t("checkers.schedule.disabled")}
+                </span>
+            </Label>
+            <Input
+                type="switch"
+                id="schedule-enabled-toggle"
+                checked={isEnabled}
+                onchange={(e: Event) => {
+                    plan.disabled = !(e.target as HTMLInputElement).checked;
+                    triggerAutosave();
+                }}
+            />
+        </div>
     </CardHeader>
+
     <CardBody>
-        <form id="form-schedule">
-            <FormGroup>
-                <div class="form-check form-switch">
-                    <Input
-                        type="switch"
-                        id="schedule-disabled-toggle"
-                        checked={plan.disabled ?? false}
-                        onchange={(e: Event) => {
-                            plan.disabled = (e.target as HTMLInputElement).checked;
-                        }}
-                    />
-                    <Label for="schedule-disabled-toggle" class="form-check-label">
-                        {$t("checkers.schedule.disable-label")}
-                    </Label>
-                </div>
-                <small class="text-muted d-block">
-                    {$t("checkers.schedule.disable-hint")}
-                </small>
-            </FormGroup>
-            <FormGroup>
-                <Label>{$t("checkers.schedule.interval-label")}</Label>
+        {#if isEnabled}
+            <div>
+                <Label class="mb-1">{$t("checkers.schedule.interval-label")}</Label>
                 <div class="d-flex align-items-center gap-2">
                     <Input
                         type="number"
                         min={Math.round(minNs / unitNs)}
                         max={Math.round(maxNs / unitNs)}
                         value={intervalDisplayValue()}
-                        oninput={(e: Event) =>
-                            setIntervalValue(parseInt((e.target as HTMLInputElement).value) || 1)}
+                        oninput={(e: Event) => {
+                            setIntervalValue(parseInt((e.target as HTMLInputElement).value) || 1);
+                            triggerAutosave();
+                        }}
                         style="width: 100px"
-                        disabled={plan.disabled ?? false}
                     />
                     <span>{useMinutes ? $t("checkers.schedule.minutes") : $t("checkers.schedule.hours")}</span>
                 </div>
-                <small class="text-muted">
+                <small class="text-muted mt-1 d-block">
                     {$t("checkers.schedule.interval-hint", {
                         intervalMin: formatDuration(minNs),
                         intervalMax: formatDuration(maxNs),
                         intervalDefault: formatDuration(defaultIntervalNs),
                     })}
                 </small>
-            </FormGroup>
-        </form>
-
-        {#if !existingPlanId}
-            <Alert color="info" class="mb-0 mt-2">
-                <Icon name="info-circle" />
-                {$t("checkers.schedule.no-schedule-yet")}
-            </Alert>
+            </div>
+        {:else}
+            <p class="text-muted mb-0 d-flex align-items-center gap-2">
+                <Icon name="pause-circle" />
+                {$t("checkers.schedule.paused-hint")}
+            </p>
         {/if}
     </CardBody>
 </Card>
