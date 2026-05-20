@@ -107,7 +107,7 @@
                         }
                         toasts.addErrorToast({
                             title: $t("errors.login"),
-                            message: error,
+                            message: error instanceof Error ? error.message : String(error),
                             timeout: 20000,
                         });
                     }

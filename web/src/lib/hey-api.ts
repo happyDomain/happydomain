@@ -82,6 +82,7 @@ async function customFetch(input: RequestInfo | URL, init?: RequestInit): Promis
 
     // Handle 401 Unauthorized - check for captcha requirement first, then attempt session refresh
     if (response.status === 401) {
+        let errmsg: string | null = null;
         if (response.headers.get("content-type")?.includes("application/json")) {
             const clone = response.clone();
             try {
@@ -93,10 +94,27 @@ async function customFetch(input: RequestInfo | URL, init?: RequestInit): Promis
                             : "Captcha verification required.",
                     );
                 }
+                if (typeof json.errmsg === "string") {
+                    errmsg = json.errmsg;
+                }
             } catch (err) {
                 if (err instanceof CaptchaRequiredError) throw err;
                 // ignore JSON parsing errors
             }
+        }
+
+        // The /auth endpoint itself never warrants a session refresh: a 401 on GET /auth
+        // means "not logged in" and on POST /auth means "wrong credentials". Return the
+        // raw response so the SDK can surface the actual error message from the body.
+        const reqUrl = input instanceof Request ? input.url : String(input);
+        if (/\/auth\/?$/.test(reqUrl)) {
+            return response;
+        }
+
+        // If the server returned an explicit error message, it's an application-level error
+        // (e.g. wrong credentials), not a session expiry — throw it directly.
+        if (errmsg !== null) {
+            throw new Error(errmsg);
         }
         // Avoid infinite loop: if refreshUserSession is already in progress (either called
         // directly by the app or by a previous retry), just fail immediately.
