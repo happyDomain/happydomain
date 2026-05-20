@@ -37,7 +37,12 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { getCheckStatus, getScopedCheckOptions, getScopedCheckPlans, triggerScopedCheck } from "$lib/api/checkers";
+    import {
+        getCheckStatus,
+        getScopedCheckOptions,
+        getScopedCheckPlans,
+        triggerScopedCheck,
+    } from "$lib/api/checkers";
     import type { CheckerScope } from "$lib/api/checkers";
     import { collectAllOptionDocs } from "$lib/utils/checkers";
     import type {
@@ -84,7 +89,9 @@
         resolvedStatus = null;
         checkStatusPromise = getCheckStatus(name);
         scopedOptionsPromise = getScopedCheckOptions(scope, name);
-        const plansPromise = getScopedCheckPlans(scope, name).catch(() => [] as HappydnsCheckPlan[]);
+        const plansPromise = getScopedCheckPlans(scope, name).catch(
+            () => [] as HappydnsCheckPlan[],
+        );
         isOpen = true;
 
         Promise.all([checkStatusPromise, scopedOptionsPromise, plansPromise]).then(
@@ -166,7 +173,9 @@
             const rules = resolvedStatus?.rules ?? [];
             let enabledRules: Record<string, boolean> | undefined;
             if (rules.length > 0) {
-                const hasDisabled = rules.some((_r: CheckerCheckRuleInfo, idx: number) => activeRules[idx] === false);
+                const hasDisabled = rules.some(
+                    (_r: CheckerCheckRuleInfo, idx: number) => activeRules[idx] === false,
+                );
                 if (hasDisabled) {
                     enabledRules = {};
                     for (let i = 0; i < rules.length; i++) {
@@ -216,13 +225,14 @@
                 </div>
             {:then [status, _domainOpts]}
                 {@const rules = status.rules || []}
-                {@const activeRulesForOpts = rules.map(
-                    (r: CheckerCheckRuleInfo, i: number) =>
-                        activeRules[i] !== false ? r : null,
+                {@const activeRulesForOpts = rules.map((r: CheckerCheckRuleInfo, i: number) =>
+                    activeRules[i] !== false ? r : null,
                 )}
                 {@const runOpts = [
                     ...(status.options?.runOpts || []),
-                    ...activeRulesForOpts.flatMap((r: CheckerCheckRuleInfo | null) => r?.options?.runOpts || []),
+                    ...activeRulesForOpts.flatMap(
+                        (r: CheckerCheckRuleInfo | null) => r?.options?.runOpts || [],
+                    ),
                 ].filter((o: CheckerCheckerOptionDocumentation) => !o.noOverride)}
                 {@const otherOpts = [
                     ...(status.options?.adminOpts || []),
@@ -265,7 +275,7 @@
                                 </FormGroup>
                             {/if}
                         {/each}
-                        {#if otherOpts.length > 0}
+                        {#if otherOpts.length > 0 || rules.length >= 1}
                             <button
                                 type="button"
                                 class="btn btn-link btn-sm px-0 mb-2 text-muted d-flex align-items-center gap-1 text-decoration-none"
@@ -278,18 +288,39 @@
                                 {#each otherOpts as optDoc}
                                     {@const optName = optDoc.id}
                                     {#if optName}
-                                    <FormGroup>
-                                        <Resource
-                                            edit={true}
-                                            index={optName}
-                                            specs={specsWithPlaceholder(optDoc)}
-                                            type={optDoc.type || "string"}
-                                            readonly={!!optDoc.autoFill}
-                                            bind:value={runOptions[optName]}
-                                        />
-                                    </FormGroup>
+                                        <FormGroup>
+                                            <Resource
+                                                edit={true}
+                                                index={optName}
+                                                specs={specsWithPlaceholder(optDoc)}
+                                                type={optDoc.type || "string"}
+                                                readonly={!!optDoc.autoFill}
+                                                bind:value={runOptions[optName]}
+                                            />
+                                        </FormGroup>
                                     {/if}
                                 {/each}
+                                {#if rules.length >= 1}
+                                    {#if otherOpts.length > 0}<hr />{/if}
+                                    <FormGroup>
+                                        <Label>{$t("checkers.run-check.rules")}</Label>
+                                        {#each rules as rule, idx}
+                                            {@const isActive = activeRules[idx] !== false}
+                                            <div class="my-3 form-check">
+                                                <Input
+                                                    type="checkbox"
+                                                    id="run-check-rule-{idx}"
+                                                    label={rule.name ?? String(idx)}
+                                                    checked={isActive}
+                                                    onchange={() => (activeRules[idx] = !isActive)}
+                                                />
+                                                {#if rule.description}
+                                                    <div class="form-text">{rule.description}</div>
+                                                {/if}
+                                            </div>
+                                        {/each}
+                                    </FormGroup>
+                                {/if}
                             {/if}
                         {/if}
                     {:else}
@@ -297,24 +328,6 @@
                             <Icon name="info-circle"></Icon>
                             {$t("checkers.run-check.no-options")}
                         </Alert>
-                    {/if}
-                    {#if rules.length >= 1}
-                        <hr />
-                        <FormGroup>
-                            <Label>{$t("checkers.run-check.rules")}</Label>
-                            {#each rules as rule, idx}
-                                {@const isActive = activeRules[idx] !== false}
-                                <div class="form-check">
-                                    <Input
-                                        type="checkbox"
-                                        id="run-check-rule-{idx}"
-                                        label={rule.name ?? String(idx)}
-                                        checked={isActive}
-                                        onchange={() => (activeRules[idx] = !isActive)}
-                                    />
-                                </div>
-                            {/each}
-                        </FormGroup>
                     {/if}
                 </Form>
             {:catch error}
@@ -329,12 +342,7 @@
         <Button type="button" color="secondary" onclick={toggle} disabled={triggering}>
             {$t("common.cancel")}
         </Button>
-        <Button
-            type="submit"
-            form="run-check-modal"
-            color="primary"
-            disabled={triggering}
-        >
+        <Button type="submit" form="run-check-modal" color="primary" disabled={triggering}>
             {#if triggering}
                 <Spinner size="sm" class="me-1" />
             {:else}
