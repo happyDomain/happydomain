@@ -79,9 +79,18 @@
     let scheduleCard = $state<{ save: () => Promise<void> } | undefined>(undefined);
 
     $effect(() => {
+        // Reset state when switching checkers
+        checkerId;
+        plan = { enabled: {} };
+        resolvedStatus = null;
+        optionValues = {};
+        inheritedValues = {};
+    });
+
+    $effect(() => {
         checkStatusPromise.then((status) => {
             resolvedStatus = status;
-            if (status?.rules && Object.keys(plan.enabled ?? {}).length === 0) {
+            if (status?.rules) {
                 const enabled: Record<string, boolean> = {};
                 for (const rule of status.rules) {
                     if (rule.name) enabled[rule.name] = true;
