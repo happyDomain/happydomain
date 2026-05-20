@@ -224,7 +224,7 @@ func (ac *AuthUserController) RecoverUserAcct(c *gin.Context) {
 }
 
 type resetPassword struct {
-	Password string
+	Password string `json:"password"`
 }
 
 // ResetUserPasswd resets a user's password.

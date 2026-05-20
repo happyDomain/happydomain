@@ -23,50 +23,70 @@
 
 <script lang="ts">
     import {
+        Alert,
         Button,
         Card,
         CardBody,
         CardHeader,
         Icon,
+        Input,
+        InputGroup,
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { postAuthByUidResetPassword } from '$lib/api-admin';
-    import { toasts } from '$lib/stores/toasts';
+    import { postAuthByUidResetPassword } from "$lib/api-admin";
+    import { toasts } from "$lib/stores/toasts";
 
     interface Props {
         uid: string;
     }
 
-    let {
-        uid,
-    }: Props = $props();
+    let { uid }: Props = $props();
 
     let actionLoading = $state(false);
+    let generatedPassword = $state("");
 
     async function handleResetPassword() {
-        if (!confirm('Are you sure you want to reset this user\'s password? A random password will be generated.')) return;
+        if (
+            !confirm(
+                "Are you sure you want to reset this user's password? A random password will be generated.",
+            )
+        )
+            return;
 
         actionLoading = true;
+        generatedPassword = "";
         try {
             const response = await postAuthByUidResetPassword({
                 path: { uid },
-                body: { password: '' }
+                body: { password: "" },
             });
-            const password = response.data?.password || '';
-            await navigator.clipboard.writeText(password);
-            toasts.addToast({
-                message: 'Password reset successfully and copied to clipboard',
-                type: 'success',
-                timeout: 5000,
-            });
+            generatedPassword = response.data?.password || "";
+            await copyPassword();
         } catch (error) {
             toasts.addErrorToast({
-                message: 'Failed to reset password: ' + error,
+                message: "Failed to reset password: " + error,
                 timeout: 10000,
             });
         } finally {
             actionLoading = false;
+        }
+    }
+
+    async function copyPassword() {
+        try {
+            await navigator.clipboard.writeText(generatedPassword);
+            toasts.addToast({
+                message: "Password reset successfully and copied to clipboard.",
+                type: "success",
+                timeout: 5000,
+            });
+        } catch {
+            toasts.addToast({
+                message: "Password reset successfully. Copy it manually below.",
+                type: "success",
+                timeout: 5000,
+            });
         }
     }
 </script>
@@ -79,12 +99,21 @@
         </h5>
     </CardHeader>
     <CardBody class="d-flex flex-column gap-2">
-        <Button
-            color="danger"
-            outline
-            onclick={handleResetPassword}
-            disabled={actionLoading}
-        >
+        {#if generatedPassword}
+            <Alert color="success">
+                <p class="mb-2">
+                    <Icon name="check-circle" class="me-1" />
+                    Password reset. Share this with the user — it won't be shown again.
+                </p>
+                <InputGroup>
+                    <Input type="text" value={generatedPassword} readonly />
+                    <Button color="secondary" outline onclick={copyPassword}>
+                        <Icon name="clipboard" />
+                    </Button>
+                </InputGroup>
+            </Alert>
+        {/if}
+        <Button color="danger" outline onclick={handleResetPassword} disabled={actionLoading}>
             {#if actionLoading}
                 <Spinner size="sm" class="me-2" />
             {:else}
