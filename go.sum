@@ -24,6 +24,8 @@ git.happydns.org/checker-blacklist v0.2.0 h1:GZO7CyLeUmvT/Z1Zh23pBB/H6O/AcYcWkCt
 git.happydns.org/checker-blacklist v0.2.0/go.mod h1:DRHkpULz8F6dKm0LUErAAQln0x8XByg+/UxbUY46oZk=
 git.happydns.org/checker-blacklist v0.3.0 h1:cx2eQHEWnBbR0GJlPNyMc4HEbAeRleCOhsvum+H1pXY=
 git.happydns.org/checker-blacklist v0.3.0/go.mod h1:ts2hTNGuIrscavgvDdW8Kmlb4JtL6VFZc5VITvNy1g4=
+git.happydns.org/checker-blacklist v0.4.0 h1:mTOWz2tcMXGU2WFVM9VLxnSJ7mFXL2Lhq5NBq+lUU7g=
+git.happydns.org/checker-blacklist v0.4.0/go.mod h1:huOwQWfAA+Wo+WbUbtyRIS/Y0eA+C3YrguGuJL+3qEE=
 git.happydns.org/checker-caa v0.2.0 h1:KfCXKMDKg4gl5cv4zNPkUnnbWWBVVymj6Cv9FRJmFRY=
 git.happydns.org/checker-caa v0.2.0/go.mod h1:7ecPoFRYT0+Fl5DG17Xvz9Xh2alwgEpSSaE2rp0EcT0=
 git.happydns.org/checker-caa v0.2.1 h1:EoRtC6e1IEbSdHaHNE0MpKRfrz2FKmDaVOkaWeael6Y=
@@ -92,6 +94,8 @@ git.happydns.org/checker-sdk-go v1.7.0 h1:dSgo2js5mfXluLc6x0WWZ0MQULd9XV2GI9z0Us
 git.happydns.org/checker-sdk-go v1.7.0/go.mod h1:aNAcfYFfbhvH9kJhE0Njp5GX0dQbxdRB0rJ0KvSC5nI=
 git.happydns.org/checker-sdk-go v1.8.0 h1:2lhcSc16rnCaszdQi1nerszb2c3fVh5XNS11pLrXuK4=
 git.happydns.org/checker-sdk-go v1.8.0/go.mod h1:aNAcfYFfbhvH9kJhE0Njp5GX0dQbxdRB0rJ0KvSC5nI=
+git.happydns.org/checker-sdk-go v1.9.0 h1:orBRymir+p6PMHVa4focryPKhTVWT7JAv6u9Ido5KF0=
+git.happydns.org/checker-sdk-go v1.9.0/go.mod h1:aNAcfYFfbhvH9kJhE0Njp5GX0dQbxdRB0rJ0KvSC5nI=
 git.happydns.org/checker-sip v0.2.0 h1:ZBYZO/ocBhdFKM70xEZOL/v4OJ36BWU6wPVBcS871NM=
 git.happydns.org/checker-sip v0.2.0/go.mod h1:B32Nq41GrRWHvWzueZXLFsDSqDvndocaGdEl59meMrM=
 git.happydns.org/checker-smtp v0.1.0 h1:Sa3adUCXvuI83p/clwq3+/M+6l+WiBppqcuw+nVtdP0=

@@ -7,7 +7,7 @@ toolchain go1.26.3
 require (
 	git.happydns.org/checker-alias v0.3.0
 	git.happydns.org/checker-authoritative-consistency v0.2.0
-	git.happydns.org/checker-blacklist v0.3.0
+	git.happydns.org/checker-blacklist v0.4.0
 	git.happydns.org/checker-caa v0.2.2
 	git.happydns.org/checker-dane v0.2.0
 	git.happydns.org/checker-dangling v0.2.0
@@ -28,7 +28,7 @@ require (
 	git.happydns.org/checker-ptr v0.1.0
 	git.happydns.org/checker-resolver-propagation v0.1.0
 	git.happydns.org/checker-reverse-zone v0.1.0
-	git.happydns.org/checker-sdk-go v1.8.0
+	git.happydns.org/checker-sdk-go v1.9.0
 	git.happydns.org/checker-sip v0.2.0
 	git.happydns.org/checker-smtp v0.1.0
 	git.happydns.org/checker-srv v0.2.0
