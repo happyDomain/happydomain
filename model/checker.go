@@ -205,9 +205,17 @@ type ObservationSnapshot struct {
 }
 
 // ObservationCacheEntry is a lightweight pointer to cached observation data in a snapshot.
+//
+// EnabledRulesHash fingerprints the rule-enable map that was in effect when
+// the observation was collected. The engine recomputes the hash before
+// reading the cache and bypasses the freshness window if it does not match,
+// so a re-enabled rule does not consume stale data collected while it was
+// disabled. Empty string means "no rule constraint was recorded" (legacy
+// entries or full-default executions).
 type ObservationCacheEntry struct {
-	SnapshotID  Identifier `json:"snapshotId"`
-	CollectedAt time.Time  `json:"collectedAt"`
+	SnapshotID       Identifier `json:"snapshotId"`
+	CollectedAt      time.Time  `json:"collectedAt"`
+	EnabledRulesHash string     `json:"enabledRulesHash,omitempty"`
 }
 
 // StoredDiscoveryEntry is the host-side persistent form of a DiscoveryEntry:

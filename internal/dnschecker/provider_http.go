@@ -31,6 +31,7 @@ import (
 	"strings"
 	"time"
 
+	sdk "git.happydns.org/checker-sdk-go/checker"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -76,8 +77,9 @@ func (p *HTTPObservationProvider) Key() happydns.ObservationKey {
 // ObservationContext.Get() will marshal without double-encoding.
 func (p *HTTPObservationProvider) Collect(ctx context.Context, opts happydns.CheckerOptions) (any, error) {
 	reqBody := happydns.ExternalCollectRequest{
-		Key:     p.observationKey,
-		Options: opts,
+		Key:          p.observationKey,
+		Options:      opts,
+		EnabledRules: sdk.EnabledRulesFromContext(ctx),
 	}
 
 	body, err := json.Marshal(reqBody)

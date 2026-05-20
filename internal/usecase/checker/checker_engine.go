@@ -23,15 +23,57 @@ package checker
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
+	"sort"
 	"sync/atomic"
 	"time"
 
+	sdk "git.happydns.org/checker-sdk-go/checker"
 	checkerPkg "git.happydns.org/happyDomain/internal/dnschecker"
 	"git.happydns.org/happyDomain/model"
 )
+
+// buildEnabledRules materializes the per-rule enable map the host will use
+// for both Collect (via context) and Evaluate (via filter). Rules absent
+// from the plan default to enabled (matching CheckPlan.IsRuleEnabled).
+func buildEnabledRules(def *happydns.CheckerDefinition, plan *happydns.CheckPlan) map[string]bool {
+	m := make(map[string]bool, len(def.Rules))
+	for _, r := range def.Rules {
+		m[r.Name()] = plan == nil || plan.IsRuleEnabled(r.Name())
+	}
+	return m
+}
+
+// enabledRulesHash returns a stable, content-addressed fingerprint of the
+// rule-enable map. Used to invalidate cached observations when the set of
+// enabled rules differs from the one in effect at the previous collection.
+// An empty / all-true map hashes to "" so legacy entries stay reusable.
+func enabledRulesHash(m map[string]bool) string {
+	if len(m) == 0 {
+		return ""
+	}
+	allTrue := true
+	names := make([]string, 0, len(m))
+	for k, v := range m {
+		names = append(names, k)
+		if !v {
+			allTrue = false
+		}
+	}
+	if allTrue {
+		return ""
+	}
+	sort.Strings(names)
+	h := sha256.New()
+	for _, n := range names {
+		fmt.Fprintf(h, "%s=%t\n", n, m[n])
+	}
+	return hex.EncodeToString(h.Sum(nil)[:8])
+}
 
 // executionCallback is the signature stored under onComplete. Wrapping it in a
 // named type lets us hold it via atomic.Pointer without leaking the function
@@ -192,20 +234,20 @@ func (e *Engine) runPipeline(ctx context.Context, def *happydns.CheckerDefinitio
 	// Build observation cache lookup for cross-checker reuse.
 	var cacheLookup checkerPkg.ObservationCacheLookup
 	if e.cacheStore != nil {
-		cacheLookup = func(target happydns.CheckTarget, key happydns.ObservationKey) (json.RawMessage, time.Time, error) {
+		cacheLookup = func(target happydns.CheckTarget, key happydns.ObservationKey) (json.RawMessage, time.Time, string, error) {
 			entry, err := e.cacheStore.GetCachedObservation(target, key)
 			if err != nil {
-				return nil, time.Time{}, err
+				return nil, time.Time{}, "", err
 			}
 			snap, err := e.snapStore.GetSnapshot(entry.SnapshotID)
 			if err != nil {
-				return nil, time.Time{}, err
+				return nil, time.Time{}, "", err
 			}
 			raw, ok := snap.Data[key]
 			if !ok {
-				return nil, time.Time{}, fmt.Errorf("observation %q not in snapshot", key)
+				return nil, time.Time{}, "", fmt.Errorf("observation %q not in snapshot", key)
 			}
-			return raw, entry.CollectedAt, nil
+			return raw, entry.CollectedAt, entry.EnabledRulesHash, nil
 		}
 	}
 
@@ -216,8 +258,15 @@ func (e *Engine) runPipeline(ctx context.Context, def *happydns.CheckerDefinitio
 		freshness = def.Interval.Default
 	}
 
+	// Resolve the per-rule enable map once; reuse for Collect (via ctx) and
+	// for the cache fingerprint that gates observation freshness reuse.
+	enabledRules := buildEnabledRules(def, plan)
+	rulesHash := enabledRulesHash(enabledRules)
+	ctx = sdk.WithEnabledRules(ctx, enabledRules)
+
 	// Create observation context for lazy data collection.
 	obsCtx := checkerPkg.NewObservationContext(target, mergedOpts, cacheLookup, freshness)
+	obsCtx.SetEnabledRulesHash(rulesHash)
 
 	if e.relatedLookup != nil {
 		obsCtx.SetRelatedLookup(def.ID, e.relatedLookup)
@@ -273,8 +322,9 @@ func (e *Engine) runPipeline(ctx context.Context, def *happydns.CheckerDefinitio
 	if e.cacheStore != nil {
 		for key := range snap.Data {
 			if err := e.cacheStore.PutCachedObservation(target, key, &happydns.ObservationCacheEntry{
-				SnapshotID:  snap.Id,
-				CollectedAt: snap.CollectedAt,
+				SnapshotID:       snap.Id,
+				CollectedAt:      snap.CollectedAt,
+				EnabledRulesHash: rulesHash,
 			}); err != nil {
 				log.Printf("warning: failed to cache observation %q for target %s: %v", key, target.String(), err)
 			}

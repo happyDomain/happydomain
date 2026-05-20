@@ -50,8 +50,9 @@ import (
 )
 
 // ObservationCacheLookup resolves a cached observation for a target+key.
-// Returns the raw data and collection time, or an error if not cached.
-type ObservationCacheLookup func(target happydns.CheckTarget, key happydns.ObservationKey) (json.RawMessage, time.Time, error)
+// Returns the raw data, collection time, and the EnabledRulesHash recorded
+// at collection time (empty for legacy entries), or an error if not cached.
+type ObservationCacheLookup func(target happydns.CheckTarget, key happydns.ObservationKey) (json.RawMessage, time.Time, string, error)
 
 // RelatedObservationLookup resolves observations produced by other checkers
 // on DiscoveryEntry records this checker has published for the given target.
@@ -77,6 +78,7 @@ type ObservationContext struct {
 	mu                sync.Mutex
 	cacheLookup       ObservationCacheLookup // nil = no DB cache
 	freshness         time.Duration          // 0 = always collect
+	enabledRulesHash  string                 // current execution's rule-enable fingerprint; cache entries with a different hash bypass the freshness window
 	providerOverride  map[happydns.ObservationKey]happydns.ObservationProvider
 	producerCheckerID string                   // filled by engine; empty = GetRelated always empty
 	relatedLookup     RelatedObservationLookup // nil = GetRelated always empty
@@ -96,6 +98,17 @@ func NewObservationContext(target happydns.CheckTarget, opts happydns.CheckerOpt
 		cacheLookup: cacheLookup,
 		freshness:   freshness,
 	}
+}
+
+// SetEnabledRulesHash records the fingerprint of the rule-enable map in
+// effect for this execution. Subsequent cache lookups compare against
+// this value and bypass the freshness window on mismatch, so observations
+// collected while a rule was disabled do not satisfy reads that would
+// now include that rule.
+func (oc *ObservationContext) SetEnabledRulesHash(h string) {
+	oc.mu.Lock()
+	defer oc.mu.Unlock()
+	oc.enabledRulesHash = h
 }
 
 // Entries returns the DiscoveryEntry records published by each observation
@@ -203,8 +216,14 @@ func (oc *ObservationContext) Get(ctx context.Context, key happydns.ObservationK
 // or errors map and signalling waiters.
 func (oc *ObservationContext) collect(ctx context.Context, key happydns.ObservationKey) (json.RawMessage, error) {
 	if oc.cacheLookup != nil && oc.freshness > 0 {
-		if raw, collectedAt, err := oc.cacheLookup(oc.target, key); err == nil {
-			if time.Since(collectedAt) < oc.freshness {
+		if raw, collectedAt, cachedHash, err := oc.cacheLookup(oc.target, key); err == nil {
+			// Bypass the freshness window when the cached observation was
+			// collected with a different rule-enable set: a re-enabled rule
+			// would otherwise be served data gathered while it was off.
+			oc.mu.Lock()
+			currentHash := oc.enabledRulesHash
+			oc.mu.Unlock()
+			if cachedHash == currentHash && time.Since(collectedAt) < oc.freshness {
 				return raw, nil
 			}
 		}
