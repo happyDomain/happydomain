@@ -119,16 +119,6 @@
         try {
             await updateScopedCheckOptions(scope, checkerId, optionValues);
             checkOptionsPromise = getScopedCheckOptions(scope, checkerId);
-            toasts.addToast({
-                message: $t("checkers.messages.options-updated"),
-                type: "success",
-                timeout: 5000,
-            });
-        } catch (error) {
-            toasts.addErrorToast({
-                message: $t("checkers.messages.update-failed", { error: String(error) }),
-                timeout: 10000,
-            });
         } finally {
             savingOptions = false;
         }

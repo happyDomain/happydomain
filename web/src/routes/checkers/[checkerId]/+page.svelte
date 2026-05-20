@@ -71,16 +71,6 @@
         try {
             await updateCheckOptions(checkerId, optionValues);
             checkOptionsPromise = getCheckOptions(checkerId);
-            toasts.addToast({
-                message: $t("checkers.messages.options-updated"),
-                type: "success",
-                timeout: 5000,
-            });
-        } catch (error) {
-            toasts.addErrorToast({
-                message: $t("checkers.messages.update-failed", { error: String(error) }),
-                timeout: 10000,
-            });
         } finally {
             saving = false;
         }

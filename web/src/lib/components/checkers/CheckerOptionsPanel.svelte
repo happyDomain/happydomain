@@ -36,6 +36,7 @@
         HappydnsCheckerOptionsPositional,
     } from "$lib/api-base/types.gen";
     import { t } from "$lib/translations";
+    import { toasts } from "$lib/stores/toasts";
     import { withInheritedPlaceholders } from "$lib/utils/checkers";
     import ResourceInput from "$lib/components/inputs/Resource.svelte";
     import CheckerOptionsGroups from "./CheckerOptionsGroups.svelte";
@@ -58,7 +59,7 @@
         optionValues: Record<string, unknown>;
         inheritedValues: Record<string, unknown>;
         saving: boolean;
-        onsave: () => void;
+        onsave: () => Promise<void>;
         orphanedOpts?: string[];
         onclean?: () => void;
     }
@@ -95,6 +96,22 @@
             readOnlyGroups.some((g) => g.opts.length > 0) ||
             autoFillOpts.length > 0,
     );
+
+    async function handleSave() {
+        try {
+            await onsave();
+            toasts.addToast({
+                message: $t("checkers.messages.options-updated"),
+                type: "success",
+                timeout: 5000,
+            });
+        } catch (error) {
+            toasts.addErrorToast({
+                message: $t("checkers.messages.update-failed", { error: String(error) }),
+                timeout: 10000,
+            });
+        }
+    }
 </script>
 
 {#await checkOptionsPromise}
@@ -132,7 +149,7 @@
                     color="success"
                     form={"group-" + gid}
                     size="sm"
-                    onclick={onsave}
+                    onclick={handleSave}
                     disabled={saving}
                 >
                     {#if saving}
@@ -144,7 +161,7 @@
                 </Button>
             </CardHeader>
             <CardBody>
-                <Form id={"group-" + gid} onsubmit={onsave}>
+                <Form id={"group-" + gid} onsubmit={handleSave}>
                     {#each withInheritedPlaceholders(group.opts, optionValues, inheritedValues) as optDoc, index}
                         {#if optDoc.id}
                             <ResourceInput

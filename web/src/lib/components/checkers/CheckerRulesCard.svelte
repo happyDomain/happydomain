@@ -34,6 +34,7 @@
     } from "@sveltestrap/sveltestrap";
     import type { CheckerCheckRuleInfo, HappydnsCheckPlan, HappydnsCheckPlanWritable } from "$lib/api-base/types.gen";
     import { t } from "$lib/translations";
+    import { toasts } from "$lib/stores/toasts";
     import { withInheritedPlaceholders } from "$lib/utils/checkers";
     import ResourceInput from "$lib/components/inputs/Resource.svelte";
 
@@ -42,12 +43,28 @@
         optionValues: Record<string, unknown>;
         inheritedValues: Record<string, unknown>;
         saving: boolean;
-        onsave: () => void;
+        onsave: () => Promise<void>;
         plan?: HappydnsCheckPlan | HappydnsCheckPlanWritable;
         precheckFailures?: Record<string, string>;
     }
 
     let { rules, optionValues = $bindable(), inheritedValues, saving, onsave, plan = $bindable(), precheckFailures }: Props = $props();
+
+    async function handleSave() {
+        try {
+            await onsave();
+            toasts.addToast({
+                message: $t("checkers.messages.options-updated"),
+                type: "success",
+                timeout: 5000,
+            });
+        } catch (error) {
+            toasts.addErrorToast({
+                message: $t("checkers.messages.update-failed", { error: String(error) }),
+                timeout: 10000,
+            });
+        }
+    }
 
     let hasRuleOpts = $derived(
         rules.some((r) => (r.options?.adminOpts?.length ?? 0) + (r.options?.userOpts?.length ?? 0) > 0),
@@ -104,7 +121,7 @@
                 type="button"
                 color="success"
                 size="sm"
-                onclick={onsave}
+                onclick={handleSave}
                 disabled={saving}
             >
                 {#if saving}
@@ -160,7 +177,7 @@
                 </div>
                 {#if ruleOpts.length > 0}
                     <div class="ms-4 mt-2">
-                        <Form onsubmit={onsave}>
+                        <Form onsubmit={handleSave}>
                             {#each withInheritedPlaceholders(ruleOpts, optionValues, inheritedValues) as optDoc, index}
                                 {#if optDoc.id}
                                     <ResourceInput
