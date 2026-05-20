@@ -78,7 +78,15 @@
         execIdArg: string,
     ) {
         getScopedExecutionObservations(scopeArg, checkerIdArg, execIdArg)
-            .then((observations) => currentObservations.set(observations))
+            .then((observations) => {
+                currentObservations.set(observations);
+                if (
+                    (!observations || Object.keys(observations.data).length == 0) &&
+                    ($reportViewMode == "html" || $reportViewMode == "metrics")
+                ) {
+                    reportViewMode.set("rules");
+                }
+            })
             .catch((e) => console.warn("Failed to load execution observations", e));
         getScopedExecutionResults(scopeArg, checkerIdArg, execIdArg)
             .then((e) => (evaluationData = e))
@@ -95,7 +103,10 @@
         if (checkerInfo.has_metrics) {
             getScopedExecutionMetrics(scopeArg, checkerIdArg, execIdArg)
                 .then((m) => (metricsData = m))
-                .catch((e) => console.warn("Failed to load execution metrics", e));
+                .catch((e) => {
+                    console.warn("Failed to load execution metrics", e);
+                    if ($reportViewMode == "metrics") reportViewMode.set("rules");
+                });
         }
     }
 
@@ -184,9 +195,7 @@
         <Card body>
             <p class="text-center mb-0">
                 <span class="spinner-border spinner-border-sm me-2"></span>
-                {running
-                    ? $t("checkers.execution.status.running")
-                    : $t("checkers.result.loading")}
+                {running ? $t("checkers.execution.status.running") : $t("checkers.result.loading")}
             </p>
         </Card>
     </Container>
