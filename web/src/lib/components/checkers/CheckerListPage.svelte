@@ -26,7 +26,6 @@
 
     import { t } from "$lib/translations";
     import { base } from "$lib/stores/config";
-    import { toasts } from "$lib/stores/toasts";
     import type { CheckerScope } from "$lib/api/checkers";
     import { listScopedCheckers } from "$lib/api/checkers";
     import { checkers } from "$lib/stores/checkers";
@@ -34,6 +33,7 @@
     import { getStatusColor, getStatusI18nKey, formatCheckDate } from "$lib/utils";
     import CheckersAvailabilityTable from "./CheckersAvailabilityTable.svelte";
     import PageTitle from "$lib/components/PageTitle.svelte";
+    import PrometheusMetricsModal from "./PrometheusMetricsModal.svelte";
 
     interface Props {
         scope: CheckerScope;
@@ -59,21 +59,7 @@
             : `${base}/api/domains/${scope.domainId}/checkers/metrics`
     );
 
-    async function copyMetricsUrl() {
-        try {
-            await navigator.clipboard.writeText(metricsApiUrl);
-            toasts.addToast({
-                message: $t("checkers.list.prometheus-metrics-copied"),
-                type: "success",
-                timeout: 3000,
-            });
-        } catch (error) {
-            toasts.addErrorToast({
-                message: $t("checkers.list.prometheus-metrics-copy-failed", { error: String(error) }),
-                timeout: 5000,
-            });
-        }
-    }
+    let metricsModalOpen = $state(false);
 
     function getConfiguredCheckerIds(statuses: HappydnsCheckerStatus[]): Set<string> {
         return new Set(statuses.map((s) => s.id).filter((id): id is string => !!id));
@@ -118,8 +104,7 @@
         <Button
             color="secondary"
             outline
-            onclick={copyMetricsUrl}
-            title={metricsApiUrl}
+            onclick={() => (metricsModalOpen = true)}
         >
             <Icon name="graph-up-arrow"></Icon>
             {$t("checkers.list.prometheus-metrics")}
@@ -231,3 +216,5 @@
         </Alert>
     {/await}
 </div>
+
+<PrometheusMetricsModal bind:isOpen={metricsModalOpen} url={metricsApiUrl} />

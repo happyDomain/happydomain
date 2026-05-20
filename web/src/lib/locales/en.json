@@ -758,6 +758,14 @@
             "prometheus-metrics": "Prometheus Metrics",
             "prometheus-metrics-copied": "Prometheus metrics URL copied to clipboard",
             "prometheus-metrics-copy-failed": "Failed to copy Prometheus metrics URL: {{error}}",
+            "prometheus-metrics-modal": {
+                "title": "Prometheus Metrics Endpoint",
+                "description": "Point your Prometheus instance at the URL above to scrape metrics from happyDomain's checks. The endpoint exposes standard Prometheus exposition format and authenticates with your existing happyDomain session or API token.",
+                "example": "scrape_configs:\n  - job_name: 'happydomain'\n    metrics_path: '{{path}}'\n    static_configs:\n      - targets: ['{{host}}']",
+                "copy": "Copy URL",
+                "copied": "Copied!",
+                "close": "Close"
+            },
             "configure": "Configure",
             "error-loading": "Error loading checkers: {{error}}",
             "table": {

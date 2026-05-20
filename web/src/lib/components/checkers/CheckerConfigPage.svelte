@@ -27,7 +27,6 @@
     import { t } from "$lib/translations";
     import { base } from "$lib/stores/config";
     import { checkers } from "$lib/stores/checkers";
-    import { toasts } from "$lib/stores/toasts";
     import type {
         HappydnsCheckPlan,
         HappydnsCheckPlanWritable,
@@ -44,6 +43,7 @@
     import CheckerScheduleCard from "./CheckerScheduleCard.svelte";
     import CheckerRulesCard from "./CheckerRulesCard.svelte";
     import CheckerOptionsPanel from "./CheckerOptionsPanel.svelte";
+    import PrometheusMetricsModal from "./PrometheusMetricsModal.svelte";
 
     interface Props {
         scope: CheckerScope;
@@ -77,6 +77,7 @@
         enabled: {},
     });
     let scheduleCard = $state<{ save: () => Promise<void> } | undefined>(undefined);
+    let metricsModalOpen = $state(false);
 
     $effect(() => {
         // Reset state when switching checkers
@@ -111,22 +112,6 @@
         );
     });
 
-    async function copyMetricsUrl() {
-        try {
-            await navigator.clipboard.writeText(metricsApiUrl);
-            toasts.addToast({
-                message: $t("checkers.list.prometheus-metrics-copied"),
-                type: "success",
-                timeout: 3000,
-            });
-        } catch (error) {
-            toasts.addErrorToast({
-                message: $t("checkers.list.prometheus-metrics-copy-failed", { error: String(error) }),
-                timeout: 5000,
-            });
-        }
-    }
-
     async function saveOptions() {
         savingOptions = true;
         try {
@@ -157,8 +142,7 @@
             <Button
                 color="secondary"
                 outline
-                onclick={copyMetricsUrl}
-                title={metricsApiUrl}
+                onclick={() => (metricsModalOpen = true)}
             >
                 <Icon name="graph-up-arrow"></Icon>
                 {$t("checkers.list.prometheus-metrics")}
@@ -222,3 +206,5 @@
         </Alert>
     {/await}
 </div>
+
+<PrometheusMetricsModal bind:isOpen={metricsModalOpen} url={metricsApiUrl} />
