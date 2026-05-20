@@ -125,7 +125,7 @@ func (app *App) initUsecases() {
 		WithDiscoveryEntryStore(app.store).
 		WithAdminOptions(app.cfg.CheckerAdminOptions)
 	app.usecases.checkerPlanUC = checkerUC.NewCheckPlanUsecase(app.store)
-	app.usecases.checkerStatusUC = checkerUC.NewCheckStatusUsecase(app.store, app.store, app.store, app.store)
+	app.usecases.checkerStatusUC = checkerUC.NewCheckStatusUsecase(app.store, app.store, app.store, app.store, app.usecases.checkerOptionsUC)
 	app.usecases.checkerEngine = checkerUC.NewCheckerEngine(
 		app.usecases.checkerOptionsUC,
 		app.store,

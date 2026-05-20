@@ -22,6 +22,7 @@
 package checker
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"slices"
@@ -43,15 +44,22 @@ type CheckStatusUsecase struct {
 	evalStore CheckEvaluationStorage
 	execStore ExecutionStorage
 	snapStore ObservationSnapshotStorage
+	optionsUC *CheckerOptionsUsecase
 }
 
 // NewCheckStatusUsecase creates a new CheckStatusUsecase.
-func NewCheckStatusUsecase(planStore CheckPlanStorage, evalStore CheckEvaluationStorage, execStore ExecutionStorage, snapStore ObservationSnapshotStorage) *CheckStatusUsecase {
+//
+// optionsUC is used to resolve the effective merged options at each
+// target scope so ListCheckerStatuses can populate per-rule precheck
+// failures. Passing nil disables precheck enrichment (the status list
+// still works, the UI just sees no precheck reasons).
+func NewCheckStatusUsecase(planStore CheckPlanStorage, evalStore CheckEvaluationStorage, execStore ExecutionStorage, snapStore ObservationSnapshotStorage, optionsUC *CheckerOptionsUsecase) *CheckStatusUsecase {
 	return &CheckStatusUsecase{
 		planStore: planStore,
 		evalStore: evalStore,
 		execStore: execStore,
 		snapStore: snapStore,
+		optionsUC: optionsUC,
 	}
 }
 
@@ -161,6 +169,22 @@ func (u *CheckStatusUsecase) ListCheckerStatuses(target happydns.CheckTarget) ([
 			}
 		}
 		status.EnabledRules = enabledRules
+
+		if u.optionsUC != nil && len(def.Rules) > 0 {
+			opts, optErr := u.optionsUC.GetCheckerOptions(
+				def.ID,
+				happydns.TargetIdentifier(target.UserId),
+				happydns.TargetIdentifier(target.DomainId),
+				happydns.TargetIdentifier(target.ServiceId),
+			)
+			if optErr != nil {
+				log.Printf("ListCheckerStatuses: resolve options for precheck on %s: %v", def.ID, optErr)
+			} else if failures, pcErr := checkerPkg.PrecheckRules(context.Background(), def, opts); pcErr != nil {
+				log.Printf("ListCheckerStatuses: precheck on %s: %v", def.ID, pcErr)
+			} else if len(failures) > 0 {
+				status.PrecheckFailures = failures
+			}
+		}
 
 		execs, err := u.execStore.ListExecutionsByChecker(def.ID, target, 1, nil)
 		if err != nil {

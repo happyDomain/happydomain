@@ -183,7 +183,7 @@ func TestGetDomains_WithCheckStatuses(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create in-memory store: %v", err)
 	}
-	statusUC := checkerUC.NewCheckStatusUsecase(store, store, store, store)
+	statusUC := checkerUC.NewCheckStatusUsecase(store, store, store, store, nil)
 
 	// Create executions: domain 1 has WARN, domain 2 has OK, domain 3 has none.
 	for _, tc := range []struct {

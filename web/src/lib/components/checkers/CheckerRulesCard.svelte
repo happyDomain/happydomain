@@ -44,24 +44,35 @@
         saving: boolean;
         onsave: () => void;
         plan?: HappydnsCheckPlan | HappydnsCheckPlanWritable;
+        precheckFailures?: Record<string, string>;
     }
 
-    let { rules, optionValues = $bindable(), inheritedValues, saving, onsave, plan = $bindable() }: Props = $props();
+    let { rules, optionValues = $bindable(), inheritedValues, saving, onsave, plan = $bindable(), precheckFailures }: Props = $props();
 
     let hasRuleOpts = $derived(
         rules.some((r) => (r.options?.adminOpts?.length ?? 0) + (r.options?.userOpts?.length ?? 0) > 0),
     );
 
+    function ruleFailure(name: string | undefined): string | undefined {
+        if (!name) return undefined;
+        return precheckFailures?.[name];
+    }
+
+    // "All" reflects only rules that are eligible to run; precheck-failing
+    // rules are excluded from the bulk toggle so the checkbox is never
+    // forced into a state the user couldn't reach manually.
+    let toggleable = $derived(rules.filter((r) => r.name && !ruleFailure(r.name)));
+
     let allEnabled = $derived(
-        plan && rules.length > 0 && rules.every((r) => r.name && plan!.enabled?.[r.name]),
+        plan && toggleable.length > 0 && toggleable.every((r) => plan!.enabled?.[r.name!]),
     );
 
     function toggleAll() {
         if (!plan) return;
         const newVal = !allEnabled;
-        const enabled: Record<string, boolean> = {};
-        for (const rule of rules) {
-            if (rule.name) enabled[rule.name] = newVal;
+        const enabled: Record<string, boolean> = { ...(plan.enabled || {}) };
+        for (const rule of toggleable) {
+            enabled[rule.name!] = newVal;
         }
         plan.enabled = enabled;
     }
@@ -111,6 +122,7 @@
                 ...(rule.options?.adminOpts || []),
                 ...(rule.options?.userOpts || []),
             ]}
+            {@const failure = ruleFailure(rule.name)}
             <ListGroupItem>
                 <div class="d-flex align-items-start gap-2 mb-1">
                     {#if plan}
@@ -118,9 +130,10 @@
                             <input
                                 class="form-check-input"
                                 type="checkbox"
-                                checked={plan.enabled?.[rule.name ?? ""] ?? false}
+                                checked={failure ? false : (plan.enabled?.[rule.name ?? ""] ?? false)}
+                                disabled={!!failure}
                                 onchange={() => {
-                                    if (rule.name && plan) {
+                                    if (rule.name && plan && !failure) {
                                         plan.enabled = {
                                             ...plan.enabled,
                                             [rule.name]: !(plan.enabled?.[rule.name] ?? false),
@@ -131,12 +144,15 @@
                         </div>
                     {:else}
                         <Icon
-                            name="check2-circle"
-                            class="text-success mt-1 flex-shrink-0"
+                            name={failure ? "exclamation-triangle" : "check2-circle"}
+                            class={failure ? "text-warning mt-1 flex-shrink-0" : "text-success mt-1 flex-shrink-0"}
                         ></Icon>
                     {/if}
                     <div class="flex-grow-1">
-                        <strong>{rule.name}</strong>
+                        <strong class={failure ? "text-muted" : ""}>{rule.name}</strong>
+                        {#if failure}
+                            <Badge color="warning" class="ms-2">{failure}</Badge>
+                        {/if}
                         {#if rule.description}
                             <p class="text-muted small mb-0">{rule.description}</p>
                         {/if}

@@ -52,7 +52,7 @@ func setupStatusUC(t *testing.T) (*checkerUC.CheckStatusUsecase, *planStore, sto
 	if err != nil {
 		t.Fatalf("Instantiate() returned error: %v", err)
 	}
-	uc := checkerUC.NewCheckStatusUsecase(ps, ms, ms, ms)
+	uc := checkerUC.NewCheckStatusUsecase(ps, ms, ms, ms, nil)
 	return uc, ps, ms
 }
 

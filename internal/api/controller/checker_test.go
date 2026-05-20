@@ -150,7 +150,7 @@ func newTestControllerWithStorage(engine happydns.CheckerEngine) (*CheckerContro
 	}
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
 	planUC := checkerUC.NewCheckPlanUsecase(store)
-	statusUC := checkerUC.NewCheckStatusUsecase(store, store, store, store)
+	statusUC := checkerUC.NewCheckStatusUsecase(store, store, store, store, optionsUC)
 	return NewCheckerController(engine, optionsUC, planUC, statusUC, nil, nil, false), store
 }
 
@@ -164,7 +164,7 @@ func newTestControllerWithBudget(engine happydns.CheckerEngine, budget checkerUC
 	}
 	optionsUC := checkerUC.NewCheckerOptionsUsecase(store, nil)
 	planUC := checkerUC.NewCheckPlanUsecase(store)
-	statusUC := checkerUC.NewCheckStatusUsecase(store, store, store, store)
+	statusUC := checkerUC.NewCheckStatusUsecase(store, store, store, store, optionsUC)
 	return NewCheckerController(engine, optionsUC, planUC, statusUC, nil, budget, countManualTriggers)
 }
 

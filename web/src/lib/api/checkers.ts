@@ -120,6 +120,19 @@ function isServiceScope(scope: CheckerScope): scope is CheckerScope & { zoneId: 
     return !!(scope.zoneId && scope.subdomain !== undefined && scope.serviceId);
 }
 
+// getScopedCheckStatus returns the HappydnsCheckerStatus for a single
+// checker at the given target scope, or undefined if the checker is not
+// available there. Unlike getCheckStatus (which hits the static global
+// /checkers/{id} route), this carries plan, enabledRules and
+// precheckFailures populated against the effective options.
+export async function getScopedCheckStatus(
+    scope: CheckerScope,
+    checkerId: string,
+): Promise<HappydnsCheckerStatus | undefined> {
+    const list = await listScopedCheckers(scope);
+    return list.find((s) => s.id === checkerId);
+}
+
 export async function listScopedCheckers(
     scope: CheckerScope,
 ): Promise<HappydnsCheckerStatus[]> {

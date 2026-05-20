@@ -73,6 +73,9 @@ type (
 	CheckRuleInfo               = sdk.CheckRuleInfo
 	CheckRule                   = sdk.CheckRule
 	CheckRuleWithOptions        = sdk.CheckRuleWithOptions
+	RulePrecheck                = sdk.RulePrecheck
+	RulePrecheckRequest         = sdk.RulePrecheckRequest
+	RulePrecheckResponse        = sdk.RulePrecheckResponse
 	ObservationGetter           = sdk.ObservationGetter
 	CheckAggregator             = sdk.CheckAggregator
 	CheckerHTMLReporter         = sdk.CheckerHTMLReporter
@@ -177,12 +180,19 @@ func (p *CheckPlan) IsRuleEnabled(ruleName string) bool {
 }
 
 // CheckerStatus combines a checker definition with its latest execution and plan for a target.
+//
+// PrecheckFailures is the per-rule precheck outcome for the effective
+// options resolved at the target's scope: keys are rule names, values
+// are the reason the rule cannot run (typically "<X> API key is not
+// configured"). Rules that pass their precheck — or do not implement
+// one — are absent. Empty/omitted means "no rule is currently gated".
 type CheckerStatus struct {
 	*CheckerDefinition
-	LatestExecution *Execution      `json:"latestExecution,omitempty"`
-	Plan            *CheckPlan      `json:"plan,omitempty"`
-	Enabled         bool            `json:"enabled"`
-	EnabledRules    map[string]bool `json:"enabledRules"`
+	LatestExecution  *Execution        `json:"latestExecution,omitempty"`
+	Plan             *CheckPlan        `json:"plan,omitempty"`
+	Enabled          bool              `json:"enabled"`
+	EnabledRules     map[string]bool   `json:"enabledRules"`
+	PrecheckFailures map[string]string `json:"precheckFailures,omitempty"`
 }
 
 // CheckEvaluation is the result of running a checker on observed data.

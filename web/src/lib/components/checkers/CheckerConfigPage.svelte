@@ -35,9 +35,9 @@
     } from "$lib/api-base/types.gen";
     import type { CheckerScope } from "$lib/api/checkers";
     import {
-        getCheckStatus,
         getScopedCheckOptions,
         updateScopedCheckOptions,
+        getScopedCheckStatus,
     } from "$lib/api/checkers";
     import { splitPositionalOptions } from "$lib/utils";
     import PageTitle from "$lib/components/PageTitle.svelte";
@@ -57,7 +57,7 @@
 
     let { scope, checksBase, checkerId, domainName, editableGroups, readOnlyGroups, showSchedule = true }: Props = $props();
 
-    let checkStatusPromise = $derived(getCheckStatus(checkerId));
+    let checkStatusPromise = $derived(getScopedCheckStatus(scope, checkerId));
     let checkOptionsPromise = $derived(getScopedCheckOptions(scope, checkerId));
 
     let resolvedStatus = $state<any>(null);
@@ -187,6 +187,7 @@
                             saving={savingOptions}
                             onsave={saveOptions}
                             bind:plan
+                            precheckFailures={status.precheckFailures}
                         />
                     {/if}
                 </Col>
