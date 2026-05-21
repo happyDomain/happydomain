@@ -97,9 +97,21 @@
                     if (error instanceof RateLimitedError) {
                         rateLimited = true;
                     } else if (error instanceof CaptchaRequiredError) {
+                        if (
+                            error instanceof Error &&
+                            error.message.toLowerCase().includes("captcha")
+                        ) {
+                            emailState = undefined;
+                            passwordState = undefined;
+                        }
                         captchaRequired = true;
                         captchaToken = null;
                         if (captchaWidget) captchaWidget.reset();
+                        toasts.addErrorToast({
+                            title: $t("errors.login"),
+                            message: error instanceof Error ? error.message : String(error),
+                            timeout: 10000,
+                        });
                     } else {
                         if (captchaRequired && captchaWidget) {
                             captchaToken = null;
