@@ -17,7 +17,7 @@ require (
 	git.happydns.org/checker-dnsviz v0.1.0
 	git.happydns.org/checker-email-autoconfig v0.3.0
 	git.happydns.org/checker-email-keys v0.3.0
-	git.happydns.org/checker-happydeliver v0.2.0
+	git.happydns.org/checker-happydeliver v0.3.0
 	git.happydns.org/checker-http v0.2.0
 	git.happydns.org/checker-kerberos v0.2.0
 	git.happydns.org/checker-ldap v0.1.0

@@ -64,6 +64,8 @@ git.happydns.org/checker-happydeliver v0.1.0 h1:ERjLGkOH18NIUapL50LOogr+tfGEmSd5
 git.happydns.org/checker-happydeliver v0.1.0/go.mod h1:2jtD+G/TnyBavfufFk8gb6at6EulvyoH0aREbKsIoiM=
 git.happydns.org/checker-happydeliver v0.2.0 h1:hzhd+7ClW8hzIiuWoalM3Fp/q0RhlB05990xDP4CmME=
 git.happydns.org/checker-happydeliver v0.2.0/go.mod h1:2jtD+G/TnyBavfufFk8gb6at6EulvyoH0aREbKsIoiM=
+git.happydns.org/checker-happydeliver v0.3.0 h1:7uBEPabui8xe3urXhdyWwL71KvzgBUj5WQXEetTKWlQ=
+git.happydns.org/checker-happydeliver v0.3.0/go.mod h1:2jtD+G/TnyBavfufFk8gb6at6EulvyoH0aREbKsIoiM=
 git.happydns.org/checker-http v0.1.0 h1:T/lppYNMgeLjwSTLwhfoiBKZJTNY8I5x1QKeomBrj3o=
 git.happydns.org/checker-http v0.1.0/go.mod h1:KNMHJcnq2xtf0uedSno9FmFJw447q5CSVxlrBEsLIec=
 git.happydns.org/checker-http v0.2.0 h1:vvoGvp6kk6qySjNXXUCJGkLCj6IRnEB5GQPZ2d5pcg0=
