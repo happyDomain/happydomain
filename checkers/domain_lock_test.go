@@ -77,6 +77,36 @@ func TestDomainLockRule_Evaluate(t *testing.T) {
 			want:   happydns.StatusOK,
 			code:   "lock_ok",
 		},
+		{
+			name:   "spaced WHOIS status matches camelCase requirement",
+			status: []string{"client transfer prohibited", "client delete prohibited"},
+			opts:   nil,
+			want:   happydns.StatusOK,
+			code:   "lock_ok",
+		},
+		{
+			name:   "dashed WHOIS status matches camelCase requirement",
+			status: []string{"client-transfer-prohibited"},
+			opts:   nil,
+			want:   happydns.StatusOK,
+			code:   "lock_ok",
+		},
+		{
+			name:   "spaced required matches camelCase WHOIS status",
+			status: []string{"clientTransferProhibited"},
+			opts:   happydns.CheckerOptions{"requiredStatuses": "client transfer prohibited"},
+			want:   happydns.StatusOK,
+			code:   "lock_ok",
+		},
+		{
+			name:   "spaced WHOIS missing one of several required",
+			status: []string{"client transfer prohibited"},
+			opts: happydns.CheckerOptions{
+				"requiredStatuses": "clientTransferProhibited,clientUpdateProhibited",
+			},
+			want: happydns.StatusCrit,
+			code: "lock_missing",
+		},
 	}
 
 	for _, tc := range cases {
@@ -136,6 +166,24 @@ func TestDomainLockRule_EvaluateObservationError(t *testing.T) {
 	st := states[0]
 	if st.Status != happydns.StatusError || st.Code != "lock_error" {
 		t.Errorf("got %v / %q", st.Status, st.Code)
+	}
+}
+
+func TestNormalizeLockStatus(t *testing.T) {
+	cases := []struct {
+		in, want string
+	}{
+		{"clientTransferProhibited", "clienttransferprohibited"},
+		{"client transfer prohibited", "clienttransferprohibited"},
+		{"client-transfer-prohibited", "clienttransferprohibited"},
+		{"client_transfer_prohibited", "clienttransferprohibited"},
+		{"  Client Transfer Prohibited  ", "clienttransferprohibited"},
+		{"", ""},
+	}
+	for _, tc := range cases {
+		if got := normalizeLockStatus(tc.in); got != tc.want {
+			t.Errorf("normalizeLockStatus(%q) = %q, want %q", tc.in, got, tc.want)
+		}
 	}
 }
 

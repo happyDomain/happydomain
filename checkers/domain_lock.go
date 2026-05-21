@@ -37,6 +37,17 @@ const defaultRequiredLockStatuses = "clientTransferProhibited"
 // statuses (e.g. clientTransferProhibited) as reported by RDAP/WHOIS.
 type domainLockRule struct{}
 
+// normalizeLockStatus strips spaces, dashes and underscores and lowercases
+// the value so that "client transfer prohibited", "client-transfer-prohibited"
+// and "clientTransferProhibited" all compare equal.
+func normalizeLockStatus(s string) string {
+	s = strings.ToLower(s)
+	s = strings.ReplaceAll(s, " ", "")
+	s = strings.ReplaceAll(s, "-", "")
+	s = strings.ReplaceAll(s, "_", "")
+	return s
+}
+
 func (r *domainLockRule) Name() string {
 	return "domain_lock_check"
 }
@@ -95,12 +106,12 @@ func (r *domainLockRule) Evaluate(ctx context.Context, obs happydns.ObservationG
 
 	present := make(map[string]bool, len(whois.Status))
 	for _, s := range whois.Status {
-		present[strings.ToLower(s)] = true
+		present[normalizeLockStatus(s)] = true
 	}
 
 	var missing []string
 	for _, req := range required {
-		if !present[strings.ToLower(req)] {
+		if !present[normalizeLockStatus(req)] {
 			missing = append(missing, req)
 		}
 	}
