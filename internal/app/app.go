@@ -47,6 +47,7 @@ import (
 )
 
 type Usecases struct {
+	backup           happydns.BackupUsecase
 	authentication   happydns.AuthenticationUsecase
 	authUser         happydns.AuthUserUsecase
 	authUserAdmin    happydns.AdminAuthUserUsecase

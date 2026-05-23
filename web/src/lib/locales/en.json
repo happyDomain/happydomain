@@ -1,6 +1,13 @@
 {
     "account": {
         "ask-have": "Don't already have an account on our beautiful platform?",
+        "export": {
+            "title": "Export my data",
+            "description": "Download a complete archive of all your data stored in happyDomain.",
+            "button": "Download my data",
+            "warning": "The exported file contains sensitive data: active session tokens (usable to log in as you) and provider API credentials. Keep it secure and do not share it.",
+            "partial": "The export completed with errors, some data may be missing:"
+        },
         "delete": {
             "delete": "Dangerous zone",
             "delete-button": "Delete my account",

@@ -119,7 +119,7 @@ type ServiceMeta struct {
 // ServiceCombined combined ServiceMeta + Service
 type ServiceMessage struct {
 	ServiceMeta
-	Service json.RawMessage `json:"Service"`
+	Service json.RawMessage `json:"Service" swaggertype:"object"`
 }
 
 func (msg *ServiceMessage) Meta() *ServiceMeta {

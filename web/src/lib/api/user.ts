@@ -150,6 +150,20 @@ export function cleanUserSession(): void {
     localStorage.removeItem("collapsedGroups");
 }
 
+export async function exportUserData(user: User): Promise<{ text: string; errors: string[] }> {
+    const res = await fetch(`/api/users/${user.id}/export.json`, { credentials: "include" });
+    if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.errmsg ?? "Export failed");
+    }
+    const text = await res.text();
+    if (res.status === 207) {
+        const parsed = JSON.parse(text) as { errors?: string[] };
+        return { text, errors: parsed.errors ?? [] };
+    }
+    return { text, errors: [] };
+}
+
 export async function isAuthUser(user: User): Promise<boolean> {
     return unwrapEmptyResponse(
         await getUsersByUserIdIsAuthUser({

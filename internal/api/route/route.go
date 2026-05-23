@@ -40,6 +40,7 @@ import (
 // Dependencies holds all use cases required to register the public API routes.
 // It is a plain struct - no methods, no interface - constructed once in app.go.
 type Dependencies struct {
+	Backup                happydns.BackupUsecase
 	Authentication        happydns.AuthenticationUsecase
 	AuthUser              happydns.AuthUserUsecase
 	CaptchaVerifier       happydns.CaptchaVerifier
@@ -194,6 +195,6 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 	DeclareProviderRoutes(apiAuthRoutes, dep.Provider)
 	DeclareProviderSettingsRoutes(apiAuthRoutes, dep.ProviderSettings)
 	DeclareRecordRoutes(apiAuthRoutes)
-	DeclareUsersRoutes(apiAuthRoutes, dep.User, lc)
+	DeclareUsersRoutes(apiAuthRoutes, dep.User, dep.Backup, lc)
 	DeclareSessionRoutes(apiAuthRoutes, dep.Session)
 }

@@ -57,6 +57,7 @@ func (app *App) setupRouter() {
 		app.cfg,
 		baserouter,
 		api.Dependencies{
+			Backup:                app.usecases.backup,
 			Authentication:        app.usecases.authentication,
 			AuthUser:              app.usecases.authUser,
 			CaptchaVerifier:       app.captchaVerifier,

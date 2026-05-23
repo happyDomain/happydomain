@@ -45,5 +45,6 @@ type Backup struct {
 // API to take or restore a complete dump of the system.
 type BackupUsecase interface {
 	Backup() Backup
+	BackupUser(user *User) Backup
 	Restore(*Backup) error
 }

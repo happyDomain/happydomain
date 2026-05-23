@@ -39,6 +39,54 @@ func NewUsecase(store storage.Storage) *Usecase {
 	return &Usecase{store: store}
 }
 
+func (u *Usecase) backupOneUser(user *happydns.User, ret *happydns.Backup) {
+	ret.Users = append(ret.Users, user)
+
+	// Domains
+	ds, err := u.store.ListDomains(user)
+	if err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Domain names of %s (%s): %s", user.Id.String(), user.Email, err.Error()))
+	} else {
+		ret.Domains = append(ret.Domains, ds...)
+
+		for _, dn := range ds {
+			// Domain logs
+			ls, logErr := u.store.ListDomainLogs(dn)
+			if logErr != nil {
+				ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve domain's logs %s/%s (%s): %s", user.Id.String(), dn.Id.String(), dn.DomainName, logErr.Error()))
+			} else {
+				ret.DomainsLogs[dn.Id.String()] = ls
+			}
+
+			// Zones
+			for _, zid := range dn.ZoneHistory {
+				z, zoneErr := u.store.GetZone(zid)
+				if zoneErr != nil {
+					ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve domain's zone %s/%s (%s): zoneid=%s: %s", user.Id.String(), dn.Id.String(), dn.DomainName, zid.String(), zoneErr.Error()))
+				} else {
+					ret.Zones = append(ret.Zones, z)
+				}
+			}
+		}
+	}
+
+	// Providers
+	ps, err := u.store.ListProviders(user)
+	if err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Providers: %s", err.Error()))
+	} else {
+		ret.Providers = append(ret.Providers, ps...)
+	}
+
+	// Sessions
+	ss, err := u.store.ListUserSessions(user.Id)
+	if err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Sessions: %s", err.Error()))
+	} else {
+		ret.Sessions = append(ret.Sessions, ss...)
+	}
+}
+
 func (u *Usecase) Backup() happydns.Backup {
 	ret := happydns.Backup{
 		Version:     u.store.SchemaVersion(),
@@ -62,55 +110,8 @@ func (u *Usecase) Backup() happydns.Backup {
 		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Users: %s", err.Error()))
 	} else {
 		defer iter.Close()
-
 		for iter.Next() {
-			user := iter.Item()
-
-			ret.Users = append(ret.Users, user)
-
-			// Domains
-			ds, err := u.store.ListDomains(user)
-			if err != nil {
-				ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Domain names of %s (%s): %s", user.Id.String(), user.Email, err.Error()))
-			} else {
-				ret.Domains = append(ret.Domains, ds...)
-
-				for _, dn := range ds {
-					// Domain logs
-					ls, logErr := u.store.ListDomainLogs(dn)
-					if logErr != nil {
-						ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve domain's logs %s/%s (%s): %s", user.Id.String(), dn.Id.String(), dn.DomainName, logErr.Error()))
-					} else {
-						ret.DomainsLogs[dn.Id.String()] = ls
-					}
-
-					// Zones
-					for _, zid := range dn.ZoneHistory {
-						z, zoneErr := u.store.GetZone(zid)
-						if zoneErr != nil {
-							ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve domain's zone %s/%s (%s): zoneid=%s: %s", user.Id.String(), dn.Id.String(), dn.DomainName, zid.String(), zoneErr.Error()))
-						} else {
-							ret.Zones = append(ret.Zones, z)
-						}
-					}
-				}
-			}
-
-			// Providers
-			ps, err := u.store.ListProviders(user)
-			if err != nil {
-				ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Providers: %s", err.Error()))
-			} else {
-				ret.Providers = append(ret.Providers, ps...)
-			}
-
-			// Sessions
-			ss, err := u.store.ListUserSessions(user.Id)
-			if err != nil {
-				ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Sessions: %s", err.Error()))
-			} else {
-				ret.Sessions = append(ret.Sessions, ss...)
-			}
+			u.backupOneUser(iter.Item(), &ret)
 		}
 	}
 
@@ -182,6 +183,99 @@ func (u *Usecase) Backup() happydns.Backup {
 		for snapIter.Next() {
 			snap := snapIter.Item()
 			ret.ObservationSnapshots = append(ret.ObservationSnapshots, snap)
+		}
+	}
+
+	return ret
+}
+
+func (u *Usecase) BackupUser(user *happydns.User) happydns.Backup {
+	uid := user.Id.String()
+
+	ret := happydns.Backup{
+		Version:     u.store.SchemaVersion(),
+		DomainsLogs: map[string][]*happydns.DomainLog{},
+	}
+
+	// UserAuth for this user — strip credentials before export.
+	if ua, err := u.store.GetAuthUser(user.Id); err == nil {
+		ua.Password = nil
+		ua.PasswordRecoveryKey = nil
+		ret.UsersAuth = append(ret.UsersAuth, ua)
+	} else if !errors.Is(err, happydns.ErrAuthUserNotFound) {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve UserAuth: %s", err.Error()))
+	}
+
+	u.backupOneUser(user, &ret)
+
+	// Strip session IDs — they are live credentials, not portable data.
+	for _, s := range ret.Sessions {
+		s.Id = ""
+	}
+
+	// Checker configurations scoped to this user.
+	if cfgIter, err := u.store.ListAllCheckerConfigurations(); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve CheckerConfigurations: %s", err.Error()))
+	} else {
+		defer cfgIter.Close()
+		for cfgIter.Next() {
+			cfg := cfgIter.Item()
+			if cfg.UserId != nil && cfg.UserId.Equals(user.Id) {
+				ret.CheckerConfigurations = append(ret.CheckerConfigurations, cfg)
+			}
+		}
+	}
+
+	// Check plans scoped to this user (indexed lookup).
+	if plans, err := u.store.ListCheckPlansByUser(user.Id); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve CheckPlans: %s", err.Error()))
+	} else {
+		ret.CheckPlans = append(ret.CheckPlans, plans...)
+	}
+
+	// Check evaluations scoped to this user.
+	if evalIter, err := u.store.ListAllEvaluations(); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve CheckEvaluations: %s", err.Error()))
+	} else {
+		defer evalIter.Close()
+		for evalIter.Next() {
+			eval := evalIter.Item()
+			if eval.Target.UserId == uid {
+				ret.CheckEvaluations = append(ret.CheckEvaluations, eval)
+			}
+		}
+	}
+
+	// Executions scoped to this user (indexed lookup, no limit).
+	if execs, err := u.store.ListExecutionsByUser(user.Id, 0, nil); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Executions: %s", err.Error()))
+	} else {
+		ret.Executions = append(ret.Executions, execs...)
+	}
+
+	// Discovery entries scoped to this user.
+	if entryIter, err := u.store.ListAllDiscoveryEntries(); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve DiscoveryEntries: %s", err.Error()))
+	} else {
+		defer entryIter.Close()
+		for entryIter.Next() {
+			entry := entryIter.Item()
+			if entry.Target.UserId == uid {
+				ret.DiscoveryEntries = append(ret.DiscoveryEntries, entry)
+			}
+		}
+	}
+
+	// Discovery observation refs scoped to this user.
+	if refIter, err := u.store.ListAllDiscoveryObservationRefs(); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve DiscoveryObservationRefs: %s", err.Error()))
+	} else {
+		defer refIter.Close()
+		for refIter.Next() {
+			ref := refIter.Item()
+			if ref.Target.UserId == uid {
+				ret.DiscoveryObservationRefs = append(ret.DiscoveryObservationRefs, ref)
+			}
 		}
 	}
 

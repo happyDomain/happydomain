@@ -87,7 +87,7 @@ type ProviderMeta struct {
 // ProviderMessage combined ProviderMeta + Provider in a parsable way
 type ProviderMessage struct {
 	ProviderMeta
-	Provider json.RawMessage `json:"Provider"`
+	Provider json.RawMessage `json:"Provider" swaggertype:"object"`
 }
 
 func (msg *ProviderMessage) Meta() *ProviderMeta {

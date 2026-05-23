@@ -25,6 +25,7 @@ import (
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
 	"git.happydns.org/happyDomain/internal/usecase"
 	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
+	backupUC "git.happydns.org/happyDomain/internal/usecase/backup"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	domainUC "git.happydns.org/happyDomain/internal/usecase/domain"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
@@ -56,6 +57,7 @@ func (app *App) initUsecases() {
 	serviceService := serviceUC.NewServiceUsecases()
 	zoneService := zoneUC.NewZoneUsecases(app.store, serviceService)
 
+	app.usecases.backup = backupUC.NewUsecase(app.store)
 	app.usecases.providerSpecs = usecase.NewProviderSpecsUsecase()
 	app.usecases.provider = providerService
 	app.usecases.providerAdmin = providerAdminService

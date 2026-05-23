@@ -36,12 +36,14 @@ import (
 type UserController struct {
 	lc          *LoginController
 	userService happydns.UserUsecase
+	backupUC    happydns.BackupUsecase
 }
 
-func NewUserController(userService happydns.UserUsecase, lc *LoginController) *UserController {
+func NewUserController(userService happydns.UserUsecase, backupUC happydns.BackupUsecase, lc *LoginController) *UserController {
 	return &UserController{
 		lc:          lc,
 		userService: userService,
+		backupUC:    backupUC,
 	}
 }
 
@@ -159,6 +161,31 @@ func (uc *UserController) ChangeUserSettings(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, user.Settings)
+}
+
+// ExportUserData exports all data associated with the current user account.
+//
+//	@Summary		Export user data.
+//	@Schemes
+//	@Description	Export all data associated with the current user account (GDPR/DSAR).
+//	@Tags			users
+//	@Produce		json
+//	@Param			uid	path	string	true	"User identifier"
+//	@Security		securitydefinitions.basic
+//	@Success		200	{object}	happydns.Backup	"User data export (complete)"
+//	@Success		207	{object}	happydns.Backup	"Partial user data export; check the errors field"
+//	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
+//	@Failure		403	{object}	happydns.ErrorResponse	"Not your account"
+//	@Router			/users/{uid}/export.json [get]
+func (uc *UserController) ExportUserData(c *gin.Context) {
+	user := c.MustGet("user").(*happydns.User)
+	backup := uc.backupUC.BackupUser(user)
+	c.Header("Content-Disposition", `attachment; filename="happydomain-export.json"`)
+	status := http.StatusOK
+	if len(backup.Errors) > 0 {
+		status = http.StatusMultiStatus
+	}
+	c.JSON(status, backup)
 }
 
 // DeleteMyUser deletes the current user's account.

@@ -1,6 +1,13 @@
 {
     "account": {
         "ask-have": "Vous n'avez pas encore de compte sur notre sympathique plateforme ?",
+        "export": {
+            "title": "Exporter mes données",
+            "description": "Téléchargez une archive complète de toutes vos données stockées dans happyDomain.",
+            "button": "Télécharger mes données",
+            "warning": "Le fichier exporté contient des données sensibles : des jetons de session actifs (utilisables pour se connecter à votre place) et des identifiants d'API de fournisseurs. Conservez-le en lieu sûr et ne le partagez pas.",
+            "partial": "L'export s'est terminé avec des erreurs, certaines données peuvent être manquantes :"
+        },
         "delete": {
             "delete": "Zone dangereuse",
             "deleted": "Compte supprimé",

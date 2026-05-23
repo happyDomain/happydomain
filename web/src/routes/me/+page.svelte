@@ -32,6 +32,7 @@
 
     import ChangePasswordForm from "./ChangePasswordForm.svelte";
     import DeleteAccountCard from "./DeleteAccountCard.svelte";
+    import ExportDataButton from "./ExportDataButton.svelte";
     import SessionsManager from "./SessionsManager.svelte";
     import UserSettingsForm from "./UserSettingsForm.svelte";
 
@@ -108,6 +109,15 @@
                     </div>
                 {/await}
             {/await}
+
+            <h2 class="display-7 fw-bold mt-5" id="export-data">
+                <i class="bi bi-download"></i>
+                {$t("account.export.title")}
+            </h2>
+            <p class="lead">
+                {$t("account.export.description")}
+            </p>
+            <ExportDataButton />
 
             <h2 class="display-7 fw-bold mt-5" id="delete-account">
                 <i class="bi bi-x-circle"></i>

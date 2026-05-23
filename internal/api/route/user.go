@@ -29,8 +29,8 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func DeclareUsersRoutes(router *gin.RouterGroup, userUC happydns.UserUsecase, lc *controller.LoginController) *controller.UserController {
-	uc := controller.NewUserController(userUC, lc)
+func DeclareUsersRoutes(router *gin.RouterGroup, userUC happydns.UserUsecase, backupUC happydns.BackupUsecase, lc *controller.LoginController) *controller.UserController {
+	uc := controller.NewUserController(userUC, backupUC, lc)
 
 	apiUserRoutes := router.Group("/users/:uid")
 	apiUserRoutes.Use(middleware.UserHandler(userUC))
@@ -43,6 +43,7 @@ func DeclareUsersRoutes(router *gin.RouterGroup, userUC happydns.UserUsecase, lc
 	apiSameUserRoutes.Use(middleware.SameUserHandler)
 
 	apiSameUserRoutes.DELETE("", uc.DeleteMyUser)
+	apiSameUserRoutes.GET("/export.json", uc.ExportUserData)
 	apiSameUserRoutes.GET("/settings", uc.GetUserSettings)
 	apiSameUserRoutes.POST("/settings", uc.ChangeUserSettings)
 
