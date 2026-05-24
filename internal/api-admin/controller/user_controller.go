@@ -33,19 +33,31 @@ import (
 	happydns "git.happydns.org/happyDomain/model"
 )
 
+// UserStats holds aggregate resource counts for a single user.
+type UserStats struct {
+	User          *happydns.User `json:"user"`
+	ProviderCount int            `json:"provider_count"`
+	DomainCount   int            `json:"domain_count"`
+	ZoneCount     int            `json:"zone_count"`
+}
+
 type UserController struct {
 	userService      happydns.UserUsecase
 	adminService     happydns.AdminUserUsecase
 	authService      happydns.AuthUserUsecase
 	authAdminService happydns.AdminAuthUserUsecase
+	adminDomain      happydns.AdminDomainUsecase
+	adminProvider    happydns.AdminProviderUsecase
 }
 
-func NewUserController(userService happydns.UserUsecase, adminService happydns.AdminUserUsecase, authService happydns.AuthUserUsecase, authAdminService happydns.AdminAuthUserUsecase) *UserController {
+func NewUserController(userService happydns.UserUsecase, adminService happydns.AdminUserUsecase, authService happydns.AuthUserUsecase, authAdminService happydns.AdminAuthUserUsecase, adminDomain happydns.AdminDomainUsecase, adminProvider happydns.AdminProviderUsecase) *UserController {
 	return &UserController{
 		userService:      userService,
 		adminService:     adminService,
 		authService:      authService,
 		authAdminService: authAdminService,
+		adminDomain:      adminDomain,
+		adminProvider:    adminProvider,
 	}
 }
 
@@ -249,4 +261,59 @@ func (uc *UserController) NewAuthUser(c *gin.Context) {
 	}
 
 	happydns.ApiResponse(c, newAuthUserResponse{Password: password, AuthUser: au}, nil)
+}
+
+// getUsersStats returns resource counts (providers, domains, zones) for each user.
+//
+//	@Summary		User resource stats.
+//	@Schemes
+//	@Description	Retrieve provider, domain and zone counts for every user.
+//	@Tags			admin-users
+//	@Accept			json
+//	@Produce		json
+//	@Success		200		{array}		controller.UserStats	"Per-user statistics"
+//	@Failure		500		{object}	happydns.ErrorResponse
+//	@Router			/users/stats [get]
+func (uc *UserController) GetUserStats(c *gin.Context) {
+	users, err := uc.adminService.ListAllUsers()
+	if err != nil {
+		happydns.ApiResponse(c, nil, err)
+		return
+	}
+
+	domainCount := map[string]int{}
+	zoneCount := map[string]int{}
+	domains, err := uc.adminDomain.ListAllDomains()
+	if err != nil {
+		happydns.ApiResponse(c, nil, err)
+		return
+	}
+	for _, d := range domains {
+		key := d.Owner.String()
+		domainCount[key]++
+		zoneCount[key] += len(d.ZoneHistory)
+	}
+
+	providerCount := map[string]int{}
+	providers, err := uc.adminProvider.ListAllProviderMetas()
+	if err != nil {
+		happydns.ApiResponse(c, nil, err)
+		return
+	}
+	for _, p := range providers {
+		providerCount[p.Owner.String()]++
+	}
+
+	stats := make([]UserStats, 0, len(users))
+	for _, u := range users {
+		key := u.Id.String()
+		stats = append(stats, UserStats{
+			User:          u,
+			ProviderCount: providerCount[key],
+			DomainCount:   domainCount[key],
+			ZoneCount:     zoneCount[key],
+		})
+	}
+
+	happydns.ApiResponse(c, stats, nil)
 }

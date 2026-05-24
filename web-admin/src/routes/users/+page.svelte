@@ -79,7 +79,11 @@
                 {/await}
             </p>
         </Col>
-        <Col md={4} class="text-end">
+        <Col md={4} class="d-flex gap-2 justify-content-end align-items-start">
+            <Button color="secondary" outline href="/users/stats">
+                <Icon name="bar-chart-fill"></Icon>
+                Statistics
+            </Button>
             <Button color="primary" href="/users/new">
                 <Icon name="plus-circle"></Icon>
                 Create User

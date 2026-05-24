@@ -28,9 +28,10 @@ import (
 )
 
 func declareUsersRoutes(router *gin.RouterGroup, dep Dependencies) {
-	sc := controller.NewUserController(dep.User, dep.AdminUser, dep.AuthUser, dep.AdminAuthUser)
+	sc := controller.NewUserController(dep.User, dep.AdminUser, dep.AuthUser, dep.AdminAuthUser, dep.AdminDomain, dep.AdminProvider)
 
 	router.GET("/users", sc.GetUsers)
+	router.GET("/users/stats", sc.GetUserStats)
 	router.POST("/users", sc.NewUser)
 	router.DELETE("/users", sc.DeleteUsers)
 
