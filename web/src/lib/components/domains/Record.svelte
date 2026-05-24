@@ -59,6 +59,6 @@
 
 <style>
     .record:hover {
-        background: #ccc;
+        background: var(--hd-bg-inset);
     }
 </style>

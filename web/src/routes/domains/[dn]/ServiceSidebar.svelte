@@ -140,7 +140,7 @@
     }
 
     .service-item:hover {
-        background-color: rgba(0, 0, 0, 0.06);
+        background-color: var(--hd-bg-overlay);
     }
 
     .service-item.active {

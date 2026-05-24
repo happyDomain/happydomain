@@ -1,0 +1,973 @@
+// ============================================================================
+// happyDomain × Bootstrap 5 — SCSS Customization
+// ----------------------------------------------------------------------------
+// Drop-in override for a Bootstrap 5 (>=5.3) build.
+//
+// Usage:
+//   1. Have Bootstrap's SCSS source available (`bootstrap/scss/...`)
+//   2. Compile this file as your single entry point:
+//        sass happydomain-bootstrap.scss happydomain-bootstrap.css
+//   3. Include the compiled CSS.
+//
+// Targets Bootstrap 5.3+ (uses the `$theme-colors`, `$utilities`,
+// `data-bs-theme` and color-mode CSS-var system).
+// ============================================================================
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  1. FONTS  — Brand display + UI + Mono
+// ─────────────────────────────────────────────────────────────────────────────
+
+@import "@fontsource-variable/hanken-grotesk/wght.css";
+@import "@fontsource-variable/jetbrains-mono/wght.css";
+@import "@fontsource-variable/quicksand/wght.css";
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  2. BRAND TOKENS  (mirror of colors_and_type.css — kept as Sass scalars so
+//     they can drive Bootstrap maps before `@import "bootstrap"`.)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// — Brand plum ramp ──────────────────────────────────────────────────────────
+$hd-plum-50: #f7f1fa;
+$hd-plum-100: #ecdcf2;
+$hd-plum-200: #d6b1e3;
+$hd-plum-300: #b985ce;
+$hd-plum-400: #985bb3;
+$hd-plum-500: #743b91;
+$hd-plum-600: #54206c;
+$hd-plum-700: #360b48; // BRAND DARK ANCHOR
+$hd-plum-800: #240630;
+$hd-plum-900: #14031c;
+
+// — Brand dark semantic roles (plum surface system) ───────────────────────────
+$hd-brand-dark: $hd-plum-700; // canonical plum surface
+$hd-brand-dark-hover: $hd-plum-800; // deepen on hover/active
+$hd-brand-dark-fg: $hd-plum-50; // primary text on plum surface
+$hd-brand-dark-muted: $hd-plum-200; // secondary text / eyebrows on plum surface
+$hd-brand-dark-border: $hd-plum-600; // dividers within plum surfaces
+$hd-brand-dark-subtle: $hd-plum-50; // subtle plum tint on light backgrounds
+
+// — Dark mode canvas (plum-tinted, replaces green-tinted #0c0f0e) ─────────────
+$hd-bg-canvas-dark: #0f0a11;
+
+// — Brand green ramp ──────────────────────────────────────────────────────────
+$hd-green-50: #edfaf5;
+$hd-green-100: #d0f2e6;
+$hd-green-200: #9de4ca;
+$hd-green-300: #56c8a4;
+$hd-green-400: #2dba93;
+$hd-green-500: #1cb487; // PRIMARY
+$hd-green-600: #17a377;
+$hd-green-700: #128f67;
+$hd-green-800: #0d7254;
+$hd-green-900: #084d38;
+
+// — Neutrals (light) ─────────────────────────────────────────────────────────
+$hd-bg-canvas: #ffffff;
+$hd-bg-default: #fafafa;
+$hd-bg-subtle: #f4f4f5;
+$hd-bg-inset: #eeeeef;
+
+$hd-fg-1: #0a0a0b;
+$hd-fg-2: #3f3f46;
+$hd-fg-3: #71717a;
+$hd-fg-4: #a1a1aa;
+
+$hd-border-1: #e4e4e7;
+$hd-border-2: #d1d1d6;
+$hd-border-3: #a1a1aa;
+
+// — Semantic ─────────────────────────────────────────────────────────────────
+$hd-success: $hd-green-500;
+$hd-success-bg: $hd-green-50;
+$hd-danger: #e5484d;
+$hd-danger-bg: #fff1f2;
+$hd-warning: #f59e0b;
+$hd-warning-bg: #fffbeb;
+$hd-info: #0ea5e9;
+$hd-info-bg: #f0f9ff;
+
+// — Focus ring ───────────────────────────────────────────────────────────────
+$hd-focus-ring: rgba(28, 180, 135, 0.22);
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  3. BOOTSTRAP VARIABLE OVERRIDES
+//     (declared BEFORE importing bootstrap/scss/variables)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Color system ────────────────────────────────────────────────────────────
+// Re-point Bootstrap's $green to our brand ramp so the generated utilities
+// (`text-success`, `bg-success`, etc) match exactly.
+$primary: $hd-green-500;
+$secondary: $hd-fg-3;
+$success: $hd-green-500;
+$info: $hd-info;
+$warning: $hd-warning;
+$danger: $hd-danger;
+$light: $hd-bg-subtle;
+$dark: $hd-fg-1;
+
+// Bootstrap 5.3 builds its grayscale from $gray-* — align it to Zinc-ish.
+$white: #ffffff;
+$gray-100: $hd-bg-subtle;
+$gray-200: $hd-bg-inset;
+$gray-300: $hd-border-1;
+$gray-400: $hd-border-2;
+$gray-500: $hd-border-3;
+$gray-600: $hd-fg-3;
+$gray-700: $hd-fg-2;
+$gray-800: #27272a;
+$gray-900: $hd-fg-1;
+$black: #000000;
+
+// Custom theme color: "accent" — same green but available as a separate slot
+// so designers can use `.btn-accent`, `.text-accent`, etc.
+$custom-theme-colors: (
+    "accent": $hd-green-500,
+    "brand": $hd-green-500,
+    "plum": $hd-plum-500,
+);
+
+// ── Body / surfaces ─────────────────────────────────────────────────────────
+$body-bg: $hd-bg-default;
+$body-color: $hd-fg-2;
+$body-secondary-color: $hd-fg-3;
+$body-secondary-bg: $hd-bg-subtle;
+$body-tertiary-color: $hd-fg-4;
+$body-tertiary-bg: $hd-bg-inset;
+$body-emphasis-color: $hd-fg-1;
+
+// ── Borders ─────────────────────────────────────────────────────────────────
+$border-color: $hd-border-1;
+$border-color-translucent: $hd-border-1;
+
+$border-radius: 6px; // --hd-radius
+$border-radius-sm: 4px; // --hd-radius-sm
+$border-radius-lg: 8px; // --hd-radius-md
+$border-radius-xl: 12px; // --hd-radius-lg
+$border-radius-xxl: 12px;
+$border-radius-pill: 9999px;
+
+// ── Links ───────────────────────────────────────────────────────────────────
+$link-color: $hd-green-500;
+$link-hover-color: $hd-green-700;
+$link-decoration: none;
+$link-hover-decoration: underline;
+
+// ── Typography ──────────────────────────────────────────────────────────────
+$font-family-sans-serif:
+    "Hanken Grotesk Variable",
+    "Hanken Grotesk",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+$font-family-monospace:
+    "JetBrains Mono Variable", JetBrainsMono, "Fantasque Sans Mono", "SFMono-Regular", Menlo,
+    Consolas, monospace;
+$font-family-base: $font-family-sans-serif;
+
+$font-size-root: null; // honour browser default
+$font-size-base: 0.9375rem; // 15px — --hd-text-base
+$font-size-sm: 0.8125rem; // --hd-text-sm
+$font-size-lg: 1.0625rem; // --hd-text-md
+
+$font-weight-lighter: 300;
+$font-weight-light: 300;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+$font-weight-base: $font-weight-normal;
+
+$line-height-base: 1.5; // --hd-leading-normal
+$line-height-sm: 1.375; // --hd-leading-snug
+$line-height-lg: 1.625; // --hd-leading-relaxed
+
+// Heading scale (matches --hd-text-*xl)
+$h1-font-size: 2.25rem; // --hd-text-3xl
+$h2-font-size: 1.875rem; // --hd-text-2xl
+$h3-font-size: 1.5rem; // --hd-text-xl
+$h4-font-size: 1.25rem; // --hd-text-lg
+$h5-font-size: 1.0625rem; // --hd-text-md
+$h6-font-size: 0.9375rem; // --hd-text-base
+
+$headings-font-family: $font-family-sans-serif;
+$headings-font-weight: 600;
+$headings-line-height: 1.2;
+$headings-color: $hd-fg-1;
+
+$display-font-family: "Quicksand Variable", "Quicksand", sans-serif;
+$display-font-weight: 700;
+$display-line-height: 1.2;
+
+$small-font-size: 0.8125rem;
+$text-muted: $hd-fg-3;
+
+// ── Spacing (Bootstrap's spacer scale — kept default, but explicit) ─────────
+$spacer: 1rem;
+$spacers: (
+    0: 0,
+    1: $spacer * 0.25,
+    // 4px
+    2: $spacer * 0.5,
+    // 8px
+    3: $spacer * 0.75,
+    // 12px
+    4: $spacer,
+    // 16px
+    5: $spacer * 1.25,
+    // 20px
+    6: $spacer * 1.5,
+    // 24px
+    7: $spacer * 2,
+    // 32px
+    8: $spacer * 2.5,
+    // 40px
+    9: $spacer * 3,
+    // 48px
+    10: $spacer * 4,
+    // 64px
+    11: $spacer * 5, // 80px
+);
+
+// ── Shadows — flat system, separation by border ─────────────────────────────
+$enable-shadows: false;
+$enable-gradients: false;
+$enable-rounded: true;
+$enable-transitions: true;
+$enable-reduced-motion: true;
+$enable-smooth-scroll: true;
+
+$box-shadow: none;
+$box-shadow-sm: none;
+$box-shadow-lg: none;
+$box-shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+
+// ── Focus ring ──────────────────────────────────────────────────────────────
+$focus-ring-width: 3px;
+$focus-ring-opacity: 1;
+$focus-ring-color: $hd-focus-ring;
+$focus-ring-blur: 0;
+$focus-ring-box-shadow: 0 0 0 $focus-ring-width $focus-ring-color;
+
+// ── Components ──────────────────────────────────────────────────────────────
+
+// Buttons
+$btn-font-weight: 500;
+$btn-border-radius: $border-radius;
+$btn-border-radius-sm: $border-radius-sm;
+$btn-border-radius-lg: $border-radius-lg;
+$btn-padding-y: 0.5rem;
+$btn-padding-x: 0.875rem;
+$btn-focus-width: 3px;
+$btn-focus-box-shadow: $focus-ring-box-shadow;
+$btn-disabled-opacity: 0.5;
+$btn-transition:
+    color 0.12s ease-in-out,
+    background-color 0.12s ease-in-out,
+    border-color 0.12s ease-in-out;
+
+// Forms
+$input-bg: $hd-bg-canvas;
+$input-color: $hd-fg-1;
+$input-border-color: $hd-border-1;
+$input-border-radius: $border-radius;
+$input-border-radius-sm: $border-radius-sm;
+$input-border-radius-lg: $border-radius-lg;
+$input-padding-y: 0.5rem;
+$input-padding-x: 0.75rem;
+$input-placeholder-color: $hd-fg-4;
+$input-focus-border-color: $hd-green-400;
+$input-focus-box-shadow: $focus-ring-box-shadow;
+$input-box-shadow: $box-shadow-inset;
+
+$form-label-color: $hd-fg-2;
+$form-label-font-weight: 500;
+$form-label-font-size: $font-size-sm;
+
+$form-check-input-border: 1px solid $hd-border-2;
+$form-check-input-checked-bg-color: $hd-green-500;
+$form-check-input-focus-box-shadow: $focus-ring-box-shadow;
+
+// Cards
+$card-border-color: $hd-border-1;
+$card-border-radius: $border-radius-lg;
+$card-inner-border-radius: subtract($card-border-radius, 1px);
+$card-cap-bg: $hd-bg-subtle;
+$card-cap-color: $hd-fg-1;
+$card-bg: $hd-bg-canvas;
+$card-box-shadow: none;
+$card-spacer-y: 1rem;
+$card-spacer-x: 1.25rem;
+
+// Navbar
+$navbar-padding-y: 0.75rem;
+$navbar-light-color: $hd-fg-2;
+$navbar-light-hover-color: $hd-fg-1;
+$navbar-light-active-color: $hd-green-700;
+$navbar-light-brand-color: $hd-fg-1;
+$navbar-light-brand-hover-color: $hd-fg-1;
+
+// Dropdowns
+$dropdown-bg: $hd-bg-canvas;
+$dropdown-border-color: $hd-border-1;
+$dropdown-border-radius: $border-radius-lg;
+$dropdown-box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+$dropdown-link-hover-bg: $hd-bg-subtle;
+$dropdown-link-active-bg: $hd-green-50;
+$dropdown-link-active-color: $hd-green-700;
+
+// Modals
+$modal-content-bg: $hd-bg-canvas;
+$modal-content-border-color: $hd-border-1;
+$modal-content-border-radius: $border-radius-xl;
+$modal-content-box-shadow-xs: 0 8px 24px rgba(0, 0, 0, 0.08);
+$modal-content-box-shadow-sm-up: 0 16px 48px rgba(0, 0, 0, 0.12);
+$modal-backdrop-bg: #0a0a0b;
+$modal-backdrop-opacity: 0.4;
+
+// Alerts
+$alert-border-radius: $border-radius;
+$alert-border-width: 1px;
+$alert-padding-y: 0.75rem;
+$alert-padding-x: 1rem;
+
+// Badges
+$badge-font-size: 0.75em;
+$badge-font-weight: 600;
+$badge-padding-y: 0.25em;
+$badge-padding-x: 0.5em;
+$badge-border-radius: $border-radius-sm;
+
+// Tables
+$table-border-color: $hd-border-1;
+$table-striped-bg: $hd-bg-subtle;
+$table-hover-bg: $hd-bg-subtle;
+$table-color: $hd-fg-2;
+
+// Code
+$code-color: $hd-green-700;
+$code-font-size: 0.9em;
+$kbd-bg: $hd-fg-1;
+$pre-color: $hd-fg-2;
+
+// Tooltip / popover
+$tooltip-bg: $hd-fg-1;
+$tooltip-color: $hd-bg-canvas;
+$tooltip-border-radius: $border-radius-sm;
+$tooltip-font-size: $font-size-sm;
+$popover-bg: $hd-bg-canvas;
+$popover-border-color: $hd-border-1;
+$popover-border-radius: $border-radius-lg;
+$popover-box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  4. BOOTSTRAP IMPORT
+//     Adjust this path to your `bootstrap/scss/` location.
+// ─────────────────────────────────────────────────────────────────────────────
+
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+@import "bootstrap/scss/maps";
+@import "bootstrap/scss/mixins";
+@import "bootstrap/scss/utilities";
+
+// Extend $theme-colors with our custom slots
+$theme-colors: map-merge($theme-colors, $custom-theme-colors);
+
+// Now pull the rest of Bootstrap in
+@import "bootstrap/scss/root";
+@import "bootstrap/scss/reboot";
+@import "bootstrap/scss/type";
+@import "bootstrap/scss/images";
+@import "bootstrap/scss/containers";
+@import "bootstrap/scss/grid";
+@import "bootstrap/scss/tables";
+@import "bootstrap/scss/forms";
+@import "bootstrap/scss/buttons";
+@import "bootstrap/scss/transitions";
+@import "bootstrap/scss/dropdown";
+@import "bootstrap/scss/button-group";
+@import "bootstrap/scss/nav";
+@import "bootstrap/scss/navbar";
+@import "bootstrap/scss/card";
+@import "bootstrap/scss/accordion";
+@import "bootstrap/scss/breadcrumb";
+@import "bootstrap/scss/pagination";
+@import "bootstrap/scss/badge";
+@import "bootstrap/scss/alert";
+@import "bootstrap/scss/progress";
+@import "bootstrap/scss/list-group";
+@import "bootstrap/scss/close";
+@import "bootstrap/scss/toasts";
+@import "bootstrap/scss/modal";
+@import "bootstrap/scss/tooltip";
+@import "bootstrap/scss/popover";
+@import "bootstrap/scss/carousel";
+@import "bootstrap/scss/spinners";
+@import "bootstrap/scss/offcanvas";
+@import "bootstrap/scss/placeholders";
+@import "bootstrap/scss/helpers";
+@import "bootstrap/scss/utilities/api";
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  5. happyDomain CSS CUSTOM PROPERTIES
+//     Exposed alongside Bootstrap's so existing `--hd-*` references keep working.
+// ─────────────────────────────────────────────────────────────────────────────
+
+:root,
+[data-bs-theme="light"] {
+    // Plum ramp
+    --hd-plum-50: #{$hd-plum-50};
+    --hd-plum-100: #{$hd-plum-100};
+    --hd-plum-200: #{$hd-plum-200};
+    --hd-plum-300: #{$hd-plum-300};
+    --hd-plum-400: #{$hd-plum-400};
+    --hd-plum-500: #{$hd-plum-500};
+    --hd-plum-600: #{$hd-plum-600};
+    --hd-plum-700: #{$hd-plum-700};
+    --hd-plum-800: #{$hd-plum-800};
+    --hd-plum-900: #{$hd-plum-900};
+
+    // Brand dark roles
+    --hd-brand-dark: #{$hd-brand-dark};
+    --hd-brand-dark-hover: #{$hd-brand-dark-hover};
+    --hd-brand-dark-fg: #{$hd-brand-dark-fg};
+    --hd-brand-dark-muted: #{$hd-brand-dark-muted};
+    --hd-brand-dark-border: #{$hd-brand-dark-border};
+    --hd-brand-dark-subtle: #{$hd-brand-dark-subtle};
+
+    // Brand ramp
+    --hd-green-50: #{$hd-green-50};
+    --hd-green-100: #{$hd-green-100};
+    --hd-green-200: #{$hd-green-200};
+    --hd-green-300: #{$hd-green-300};
+    --hd-green-400: #{$hd-green-400};
+    --hd-green-500: #{$hd-green-500};
+    --hd-green-600: #{$hd-green-600};
+    --hd-green-700: #{$hd-green-700};
+    --hd-green-800: #{$hd-green-800};
+    --hd-green-900: #{$hd-green-900};
+
+    // Surfaces
+    --hd-bg-canvas: #{$hd-bg-canvas};
+    --hd-bg-default: #{$hd-bg-default};
+    --hd-bg-subtle: #{$hd-bg-subtle};
+    --hd-bg-inset: #{$hd-bg-inset};
+    --hd-bg-overlay: rgba(0, 0, 0, 0.04);
+
+    // Foreground
+    --hd-fg-1: #{$hd-fg-1};
+    --hd-fg-2: #{$hd-fg-2};
+    --hd-fg-3: #{$hd-fg-3};
+    --hd-fg-4: #{$hd-fg-4};
+    --hd-fg-inverse: #ffffff;
+
+    // Borders
+    --hd-border-1: #{$hd-border-1};
+    --hd-border-2: #{$hd-border-2};
+    --hd-border-3: #{$hd-border-3};
+
+    // Accent
+    --hd-accent: #{$hd-green-500};
+    --hd-accent-hover: #{$hd-green-600};
+    --hd-accent-fg: #ffffff;
+    --hd-accent-subtle: #{$hd-green-50};
+    --hd-accent-muted: #{$hd-green-100};
+    --hd-accent-border: #{$hd-green-200};
+    --hd-focus-ring: #{$hd-focus-ring};
+
+    // Semantic
+    --hd-success: #{$hd-success};
+    --hd-success-bg: #{$hd-success-bg};
+    --hd-danger: #{$hd-danger};
+    --hd-danger-bg: #{$hd-danger-bg};
+    --hd-warning: #{$hd-warning};
+    --hd-warning-bg: #{$hd-warning-bg};
+    --hd-info: #{$hd-info};
+    --hd-info-bg: #{$hd-info-bg};
+
+    // DNS diff
+    --hd-diff-add: #{$hd-green-500};
+    --hd-diff-add-bg: #{$hd-green-50};
+    --hd-diff-add-line: #{$hd-green-100};
+    --hd-diff-del: #{$hd-danger};
+    --hd-diff-del-bg: #{$hd-danger-bg};
+    --hd-diff-del-line: #ffd6d8;
+    --hd-diff-mod: #{$hd-warning};
+    --hd-diff-mod-bg: #{$hd-warning-bg};
+
+    // Fonts
+    --hd-font-brand: "Quicksand Variable", "Quicksand", sans-serif;
+    --hd-font-ui: "DM Sans", system-ui, -apple-system, sans-serif;
+    --hd-font-mono: "DM Mono", "SFMono-Regular", Consolas, monospace;
+
+    // Radii
+    --hd-radius-none: 0;
+    --hd-radius-xs: 2px;
+    --hd-radius-sm: 4px;
+    --hd-radius: 6px;
+    --hd-radius-md: 8px;
+    --hd-radius-lg: 12px;
+    --hd-radius-full: 9999px;
+
+    // Shadows
+    --hd-shadow-none: none;
+    --hd-shadow-focus: 0 0 0 3px var(--hd-focus-ring);
+    --hd-shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  6. DARK MODE  (Bootstrap 5.3 `data-bs-theme="dark"`)
+//     Mirrors the dark-mode block in colors_and_type.css.
+// ─────────────────────────────────────────────────────────────────────────────
+
+[data-bs-theme="dark"] {
+    // Bootstrap CSS vars
+    --bs-body-bg: #111514; // content default (green-tinted surfaces unchanged)
+    --bs-body-bg-rgb: 17, 21, 20;
+    --bs-body-color: #b8c4bf;
+    --bs-body-color-rgb: 184, 196, 191;
+    --bs-emphasis-color: #f4f7f6;
+    --bs-secondary-color: #7a9189;
+    --bs-secondary-bg: #181d1b;
+    --bs-tertiary-color: #4a5e58;
+    --bs-tertiary-bg: #1e2422;
+    --bs-dark: #f4f7f6;
+    --bs-dark-rgb: 244, 247, 246;
+    --bs-light: #1e2422;
+    --bs-light-rgb: 30, 36, 34;
+
+    --bs-border-color: #1f2c27;
+    --bs-border-color-translucent: rgba(255, 255, 255, 0.1);
+    --bs-link-color: #22d3a3;
+    --bs-link-color-rgb: 34, 211, 163;
+    --bs-link-hover-color: #56c8a4;
+    --bs-code-color: #56c8a4;
+    --bs-primary: #22d3a3;
+    --bs-primary-rgb: 34, 211, 163;
+    --bs-primary-bg-subtle: #0d2a22;
+    --bs-primary-border-subtle: #1a5c47;
+    --bs-primary-text-emphasis: #56c8a4;
+    --bs-success: #22d3a3;
+    --bs-success-rgb: 34, 211, 163;
+    --bs-success-bg-subtle: #0d2a22;
+    --bs-danger: #f87171;
+    --bs-danger-rgb: 248, 113, 113;
+    --bs-danger-bg-subtle: #2a1010;
+    --bs-warning: #fbbf24;
+    --bs-warning-rgb: 251, 191, 36;
+    --bs-warning-bg-subtle: #2a1f00;
+    --bs-info: #38bdf8;
+    --bs-info-rgb: 56, 189, 248;
+    --bs-info-bg-subtle: #0c1e2a;
+
+    // happyDomain CSS vars
+    --hd-bg-canvas: #{$hd-bg-canvas-dark}; // plum-tinted, replaces green #0c0f0e
+    --hd-bg-default: #111514;
+    --hd-bg-subtle: #181d1b;
+    --hd-bg-inset: #1e2422;
+    --hd-bg-overlay: rgba(255, 255, 255, 0.04);
+
+    --hd-fg-1: #f4f7f6;
+    --hd-fg-2: #b8c4bf;
+    --hd-fg-3: #7a9189;
+    --hd-fg-4: #4a5e58;
+    --hd-fg-inverse: #0c0f0e;
+
+    --hd-border-1: #1f2c27;
+    --hd-border-2: #293c36;
+    --hd-border-3: #3a5249;
+
+    --hd-accent: #22d3a3;
+    --hd-accent-hover: #1cb487;
+    --hd-accent-fg: #0c0f0e;
+    --hd-accent-subtle: #0d2a22;
+    --hd-accent-muted: #0f3329;
+    --hd-accent-border: #1a5c47;
+    --hd-focus-ring: rgba(34, 211, 163, 0.25);
+
+    --hd-success: #22d3a3;
+    --hd-success-bg: #0d2a22;
+    --hd-danger: #f87171;
+    --hd-danger-bg: #2a1010;
+    --hd-warning: #fbbf24;
+    --hd-warning-bg: #2a1f00;
+    --hd-info: #38bdf8;
+    --hd-info-bg: #0c1e2a;
+
+    --hd-diff-add: #22d3a3;
+    --hd-diff-add-bg: #0d2a22;
+    --hd-diff-add-line: #0f3329;
+    --hd-diff-del: #f87171;
+    --hd-diff-del-bg: #2a1010;
+    --hd-diff-del-line: #3a1515;
+    --hd-diff-mod: #fbbf24;
+    --hd-diff-mod-bg: #2a1f00;
+
+    --hd-shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+[data-bs-theme="dark"] .form-switch .form-check-input:not(:checked):not(:focus) {
+    --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%28255%2C255%2C255%2C.25%29'/%3e%3c/svg%3e");
+}
+
+[data-bs-theme="dark"] .modal-content {
+    --bs-modal-bg: var(--hd-bg-canvas);
+    --bs-modal-color: var(--hd-fg-2);
+    --bs-modal-border-color: var(--hd-border-1);
+    --bs-modal-header-border-color: var(--hd-border-1);
+    --bs-modal-footer-border-color: var(--hd-border-1);
+}
+
+[data-bs-theme="dark"] .table {
+    --bs-table-color: var(--hd-fg-2);
+    --bs-table-bg: transparent;
+    --bs-table-border-color: var(--hd-border-1);
+    --bs-table-striped-color: var(--hd-fg-2);
+    --bs-table-striped-bg: rgba(255, 255, 255, 0.03);
+    --bs-table-hover-color: var(--hd-fg-1);
+    --bs-table-hover-bg: rgba(255, 255, 255, 0.04);
+    --bs-table-active-bg: rgba(255, 255, 255, 0.06);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  7. COMPONENT REFINEMENTS  — small tweaks to align Bootstrap with the system
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Use brand font for `.display-*` headings
+.display-1,
+.display-2,
+.display-3,
+.display-4,
+.display-5,
+.display-6 {
+    font-family: var(--hd-font-brand);
+    letter-spacing: -0.02em;
+}
+
+// Tighten button hover — flat system, no shadow lift
+.btn-primary,
+.btn-success {
+    --bs-btn-bg: var(--hd-accent);
+    --bs-btn-border-color: var(--hd-accent);
+    --bs-btn-hover-bg: var(--hd-accent-hover);
+    --bs-btn-hover-border-color: var(--hd-accent-hover);
+    --bs-btn-active-bg: var(--hd-accent-hover);
+    --bs-btn-active-border-color: var(--hd-accent-hover);
+    --bs-btn-color: var(--hd-accent-fg);
+    --bs-btn-hover-color: var(--hd-accent-fg);
+    --bs-btn-active-color: var(--hd-accent-fg);
+}
+
+.btn-outline-primary {
+    --bs-btn-color: var(--hd-accent);
+    --bs-btn-border-color: var(--hd-accent-border);
+    --bs-btn-hover-bg: var(--hd-accent-subtle);
+    --bs-btn-hover-border-color: var(--hd-accent);
+    --bs-btn-hover-color: var(--hd-accent-hover);
+    --bs-btn-active-bg: var(--hd-accent);
+    --bs-btn-active-border-color: var(--hd-accent);
+    --bs-btn-active-color: var(--hd-accent-fg);
+}
+
+// Inputs: subtle inset, focus ring uses brand
+.form-control,
+.form-select {
+    background-color: var(--hd-bg-canvas);
+    border-color: var(--hd-border-1);
+    color: var(--hd-fg-1);
+    &:focus {
+        background-color: var(--hd-bg-canvas);
+        border-color: var(--hd-accent);
+        color: var(--hd-fg-1);
+        box-shadow: 0 0 0 3px var(--hd-focus-ring);
+    }
+}
+
+.input-group-text {
+    background-color: var(--hd-bg-subtle);
+    border-color: var(--hd-border-1);
+    color: var(--hd-fg-2);
+}
+
+// Card: flat, 1px border separation
+.card {
+    --bs-card-bg: var(--hd-bg-canvas);
+    --bs-card-border-color: var(--hd-border-1);
+    box-shadow: none;
+}
+
+[data-bs-theme="dark"] .offcanvas,
+[data-bs-theme="dark"] .offcanvas-sm,
+[data-bs-theme="dark"] .offcanvas-md,
+[data-bs-theme="dark"] .offcanvas-lg,
+[data-bs-theme="dark"] .offcanvas-xl,
+[data-bs-theme="dark"] .offcanvas-xxl {
+    --bs-offcanvas-bg: var(--hd-bg-subtle);
+    --bs-offcanvas-border-color: var(--hd-border-1);
+    --bs-offcanvas-color: var(--hd-fg-2);
+}
+
+[data-bs-theme="dark"] .dropdown-menu {
+    --bs-dropdown-bg: var(--hd-bg-subtle);
+    --bs-dropdown-border-color: var(--hd-border-1);
+    --bs-dropdown-color: var(--hd-fg-2);
+    --bs-dropdown-link-color: var(--hd-fg-2);
+    --bs-dropdown-link-hover-bg: var(--hd-bg-inset);
+    --bs-dropdown-link-hover-color: var(--hd-fg-1);
+    --bs-dropdown-link-active-bg: var(--hd-accent-subtle);
+    --bs-dropdown-link-active-color: var(--hd-accent);
+    --bs-dropdown-divider-bg: var(--hd-border-1);
+}
+
+[data-bs-theme="dark"] .card {
+    --bs-card-bg: var(--hd-bg-canvas);
+    --bs-card-cap-bg: var(--hd-bg-default);
+    --bs-card-cap-color: var(--hd-fg-1);
+    --bs-card-color: var(--hd-fg-2);
+    --bs-card-border-color: var(--hd-border-1);
+}
+
+// Alerts: tint background + colored border to match diff/semantic system
+.alert-success {
+    background-color: var(--hd-success-bg);
+    border-color: var(--hd-accent-border);
+    color: #0d6651;
+}
+.alert-danger {
+    background-color: var(--hd-danger-bg);
+    border-color: var(--hd-diff-del-line);
+    color: #9b2c2f;
+}
+.alert-warning {
+    background-color: var(--hd-warning-bg);
+    border-color: #fcd34d;
+    color: #92400e;
+}
+.alert-info {
+    background-color: var(--hd-info-bg);
+    border-color: #bae6fd;
+    color: #075985;
+}
+
+[data-bs-theme="dark"] {
+    .btn-light {
+        --bs-btn-bg: var(--hd-bg-inset);
+        --bs-btn-border-color: var(--hd-border-2);
+        --bs-btn-color: var(--hd-fg-1);
+        --bs-btn-hover-bg: var(--hd-bg-subtle);
+        --bs-btn-hover-border-color: var(--hd-border-1);
+        --bs-btn-hover-color: var(--hd-fg-1);
+        --bs-btn-active-bg: var(--hd-bg-default);
+        --bs-btn-active-border-color: var(--hd-border-1);
+        --bs-btn-active-color: var(--hd-fg-1);
+    }
+
+    .btn-dark {
+        --bs-btn-bg: var(--hd-fg-1);
+        --bs-btn-border-color: var(--hd-fg-1);
+        --bs-btn-color: var(--hd-fg-inverse);
+        --bs-btn-hover-bg: var(--hd-fg-2);
+        --bs-btn-hover-border-color: var(--hd-fg-2);
+        --bs-btn-hover-color: var(--hd-fg-inverse);
+        --bs-btn-active-bg: var(--hd-fg-2);
+        --bs-btn-active-border-color: var(--hd-fg-2);
+        --bs-btn-active-color: var(--hd-fg-inverse);
+    }
+
+    .alert-success {
+        color: var(--hd-success);
+        border-color: var(--hd-accent-border);
+    }
+    .alert-danger {
+        color: var(--hd-danger);
+        border-color: var(--hd-diff-del-line);
+    }
+    .alert-warning {
+        color: var(--hd-warning);
+        border-color: rgba(251, 191, 36, 0.4);
+    }
+    .alert-info {
+        color: var(--hd-info);
+        border-color: rgba(56, 189, 248, 0.35);
+    }
+}
+
+// Code styling
+code,
+.hd-code {
+    font-family: var(--hd-font-mono);
+    background: var(--hd-bg-subtle);
+    border: 1px solid var(--hd-border-1);
+    border-radius: var(--hd-radius-xs);
+    padding: 0.1em 0.35em;
+    color: var(--hd-fg-1);
+}
+
+// Focus visibility — system-wide
+:focus-visible {
+    outline: none;
+    box-shadow: var(--hd-shadow-focus);
+}
+
+// Brand-dark surface — hero blocks, inverse cards, marketing slabs, quote panels
+.hd-brand-dark-surface {
+    background-color: var(--hd-brand-dark);
+    color: var(--hd-brand-dark-fg);
+
+    // Eyebrows, labels, secondary copy inside a plum surface
+    .hd-muted,
+    .text-muted,
+    small {
+        color: var(--hd-brand-dark-muted) !important;
+    }
+
+    // Dividers within the surface
+    hr,
+    .hd-divider {
+        border-color: var(--hd-brand-dark-border);
+        opacity: 1;
+    }
+
+    // Green CTA on plum background — the accent sings here
+    .btn-primary,
+    .btn-success,
+    .btn-accent {
+        --bs-btn-bg: var(--hd-accent);
+        --bs-btn-border-color: var(--hd-accent);
+        --bs-btn-hover-bg: var(--hd-accent-hover);
+        --bs-btn-hover-border-color: var(--hd-accent-hover);
+        --bs-btn-color: var(--hd-accent-fg);
+        --bs-btn-hover-color: var(--hd-accent-fg);
+    }
+
+    &:hover {
+        background-color: var(--hd-brand-dark-hover);
+    }
+}
+
+// Subtle plum callout — quote blocks, testimonials, light-page accents
+.hd-brand-subtle-surface {
+    background-color: var(--hd-brand-dark-subtle);
+    border: 1px solid #{$hd-plum-100};
+    border-radius: var(--hd-radius-md);
+
+    .hd-eyebrow,
+    .hd-label {
+        color: #{$hd-plum-500};
+    }
+
+    h2,
+    h3,
+    h4 {
+        color: #{$hd-plum-800};
+    }
+
+    p,
+    .hd-body {
+        color: #{$hd-plum-600};
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  8. BRAND TYPOGRAPHY UTILITIES  (parity with colors_and_type.css)
+// ─────────────────────────────────────────────────────────────────────────────
+
+.hd-display {
+    font-family: var(--hd-font-brand);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+.hd-h1 {
+    font-family: var(--hd-font-ui);
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--hd-fg-1);
+}
+.hd-h2 {
+    font-family: var(--hd-font-ui);
+    font-size: 1.875rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--hd-fg-1);
+}
+.hd-h3 {
+    font-family: var(--hd-font-ui);
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.375;
+    color: var(--hd-fg-1);
+}
+.hd-body {
+    font-family: var(--hd-font-ui);
+    font-size: 0.9375rem;
+    line-height: 1.625;
+    color: var(--hd-fg-2);
+}
+.hd-small {
+    font-family: var(--hd-font-ui);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--hd-fg-3);
+}
+.hd-label {
+    font-family: var(--hd-font-ui);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--hd-fg-3);
+}
+.hd-mono {
+    font-family: var(--hd-font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.625;
+    color: var(--hd-fg-2);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  9. DNS DIFF UTILITIES  — happyDomain-specific
+// ─────────────────────────────────────────────────────────────────────────────
+
+.hd-diff-add {
+    background: var(--hd-diff-add-bg);
+    border-left: 3px solid var(--hd-diff-add);
+    color: var(--hd-diff-add);
+}
+.hd-diff-del {
+    background: var(--hd-diff-del-bg);
+    border-left: 3px solid var(--hd-diff-del);
+    color: var(--hd-diff-del);
+}
+.hd-diff-mod {
+    background: var(--hd-diff-mod-bg);
+    border-left: 3px solid var(--hd-diff-mod);
+    color: var(--hd-diff-mod);
+}
+
+// Plum text-bg helper (Bootstrap doesn't generate this for custom theme colors)
+.text-bg-plum {
+    color: color-contrast($hd-plum-500) !important;
+    background-color: $hd-plum-500 !important;
+}
+
+// DNS record-type chip (e.g. A, AAAA, MX, TXT, CNAME)
+.hd-record-type {
+    display: inline-block;
+    font-family: var(--hd-font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.15em 0.45em;
+    border-radius: var(--hd-radius-sm);
+    background: var(--hd-bg-inset);
+    color: var(--hd-fg-2);
+    border: 1px solid var(--hd-border-1);
+}

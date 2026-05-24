@@ -180,8 +180,8 @@
 
 <style>
     .step-card {
-        background: #fff;
-        border: 1px solid rgba(0, 0, 0, 0.08);
+        background: var(--hd-bg-canvas);
+        border: 1px solid var(--hd-border-1);
         border-radius: 0.75rem;
         overflow: hidden;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
@@ -192,8 +192,8 @@
         align-items: center;
         gap: 0.75rem;
         padding: 1rem 1.25rem;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-        background: rgba(0, 0, 0, 0.015);
+        border-bottom: 1px solid var(--hd-border-1);
+        background: var(--hd-bg-subtle);
     }
 
     .step-number {
@@ -204,7 +204,7 @@
         height: 1.75rem;
         border-radius: 50%;
         background: var(--bs-primary);
-        color: #fff;
+        color: var(--hd-accent-fg);
         font-size: 0.8rem;
         font-weight: 700;
         flex-shrink: 0;
@@ -224,14 +224,14 @@
         margin: 0;
         padding: 1rem 1.25rem;
         font-size: 0.8rem;
-        background: #f8f9fa;
-        border-top: 1px solid rgba(0, 0, 0, 0.04);
+        background: var(--hd-bg-subtle);
+        border-top: 1px solid var(--hd-border-1);
         overflow-x: auto;
     }
 
     .cta-card {
-        background: linear-gradient(135deg, #f0faf7 0%, #e8f4f8 100%);
-        border: 1px solid rgba(28, 180, 135, 0.2);
+        background: linear-gradient(135deg, var(--hd-accent-subtle) 0%, var(--hd-bg-inset) 100%);
+        border: 1px solid var(--hd-accent-border);
         border-radius: 0.75rem;
         padding: 1.5rem;
     }

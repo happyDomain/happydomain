@@ -83,7 +83,7 @@
         height: 100%;
         border-radius: 1rem 0 0 1rem;
         overflow: hidden;
-        background: linear-gradient(135deg, #f5f0f8 0%, #ede4f3 100%);
+        background: linear-gradient(135deg, var(--hd-bg-subtle) 0%, var(--hd-bg-inset) 100%);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -92,12 +92,12 @@
 
     .recover-visual :global(.recover-icon) {
         font-size: 5rem;
-        color: #9332bb;
+        color: var(--bs-plum);
         opacity: 0.6;
     }
 
     .recover-card {
-        background: #fff;
+        background: var(--hd-bg-canvas);
         border-radius: 0 1rem 1rem 0;
         padding: 2.5rem 2rem;
         box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);

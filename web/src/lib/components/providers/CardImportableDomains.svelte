@@ -42,19 +42,18 @@
     import type { Domain } from "$lib/model/domain";
     import type { Provider } from "$lib/model/provider";
     import { appConfig } from "$lib/stores/config";
-    import { filteredName } from '$lib/stores/home';
+    import { filteredName } from "$lib/stores/home";
     import { providersSpecs } from "$lib/stores/providers";
     import { domains_by_name, domains_idx, refreshDomains } from "$lib/stores/domains";
     import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
-
 
     let importableDomainsList: Array<string> | null = $state(null);
     let discoveryError: string | null = $state(null);
     interface Props {
         provider: Provider;
         noDomainsList?: boolean;
-        [key: string]: unknown
+        [key: string]: unknown;
     }
 
     let { provider, noDomainsList = $bindable(false), ...rest }: Props = $props();
@@ -95,7 +94,10 @@
         } else {
             domains = $domains_by_name[name + "."];
         }
-        return domains !== undefined && domains.reduce((acc, d) => acc || d.id_provider == provider._id, false);
+        return (
+            domains !== undefined &&
+            domains.reduce((acc, d) => acc || d.id_provider == provider._id, false)
+        );
     }
 
     let domainsInProgress = $state(new Set<string>());
@@ -229,11 +231,12 @@
                     </ListGroupItem>
                 {/if}
             {:else}
-                {#each importableDomainsList.map((dn) => ({
-                    domain: dn,
-                    id_provider: provider._id,
-                })).filter((dn) => dn.domain.indexOf($filteredName) >= 0) as domain}
-                    <ListGroupItem class="d-flex justify-content-between align-items-center text-muted">
+                {#each importableDomainsList
+                    .map((dn) => ({ domain: dn, id_provider: provider._id }))
+                    .filter((dn) => dn.domain.indexOf($filteredName) >= 0) as domain}
+                    <ListGroupItem
+                        class="d-flex justify-content-between align-items-center text-muted"
+                    >
                         <DomainWithProvider {domain} />
                         <div>
                             {#if haveDomain($domains_idx, domain.domain)}
@@ -245,9 +248,10 @@
                                 <Button
                                     type="button"
                                     class="ms-1"
-                                    color="primary"
+                                    color="plum"
                                     size="sm"
-                                    disabled={domainsInProgress.has(domain.domain) || allImportInProgress}
+                                    disabled={domainsInProgress.has(domain.domain) ||
+                                        allImportInProgress}
                                     on:click={() => importDomain(domain.domain, false)}
                                 >
                                     {#if domainsInProgress.has(domain.domain)}
@@ -263,15 +267,23 @@
                     <ListGroupItem
                         tag="button"
                         class="text-center text-muted"
-                        on:click={() => $filteredName = ""}
+                        on:click={() => ($filteredName = "")}
                     >
-                        {$t('domains.and-more-filtered', { count: importableDomainsList.length - importableDomainsList.filter((dn) => dn.indexOf($filteredName) >= 0).length })}
+                        {$t("domains.and-more-filtered", {
+                            count:
+                                importableDomainsList.length -
+                                importableDomainsList.filter((dn) => dn.indexOf($filteredName) >= 0)
+                                    .length,
+                        })}
                     </ListGroupItem>
                 {/if}
             {/if}
-            {#if !$appConfig.disable_providers && $filteredName && $providersSpecs && $providersSpecs[provider._srctype] && $providersSpecs[provider._srctype].capabilities.indexOf('CreateDomain') >= 0 && !importableDomainsList.filter((dn) => dn == $filteredName).length}
+            {#if !$appConfig.disable_providers && $filteredName && $providersSpecs && $providersSpecs[provider._srctype] && $providersSpecs[provider._srctype].capabilities.indexOf("CreateDomain") >= 0 && !importableDomainsList.filter((dn) => dn == $filteredName).length}
                 <ListGroupItem class="d-flex justify-content-between align-items-center">
-                    <DomainWithProvider class="text-muted fst-italic" domain={{domain: fqdn($filteredName, ""), id_provider: provider._id}} />
+                    <DomainWithProvider
+                        class="text-muted fst-italic"
+                        domain={{ domain: fqdn($filteredName, ""), id_provider: provider._id }}
+                    />
                     <div>
                         <Button
                             type="button"
@@ -284,7 +296,13 @@
                             {#if createDomainInProgress}
                                 <Spinner size="sm" />
                             {/if}
-                            {$t("domains.create-on-provider", {provider: provider._comment ? provider._comment : $providersSpecs ? $providersSpecs[provider._srctype].name : ""})}
+                            {$t("domains.create-on-provider", {
+                                provider: provider._comment
+                                    ? provider._comment
+                                    : $providersSpecs
+                                      ? $providersSpecs[provider._srctype].name
+                                      : "",
+                            })}
                         </Button>
                     </div>
                 </ListGroupItem>

@@ -51,6 +51,12 @@
     } = $props();
 
     onMount(() => {
+        const mq = window.matchMedia("(prefers-color-scheme: dark)");
+        const applyTheme = (dark: boolean) =>
+            document.documentElement.setAttribute("data-bs-theme", dark ? "dark" : "light");
+        applyTheme(mq.matches);
+        mq.addEventListener("change", (e) => applyTheme(e.matches));
+
         window.onunhandledrejection = (e) => {
             if (e.reason.name == "NotAuthorizedError") {
                 navigate("/login");
@@ -84,7 +90,7 @@
 {/if}
 <Header sw_state={data.sw_state} />
 
-<main class="flex-fill d-flex flex-column justify-content-center bg-light">
+<main class="flex-fill d-flex flex-column justify-content-center">
     {@render children?.()}
 </main>
 

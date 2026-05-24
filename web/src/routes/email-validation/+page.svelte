@@ -123,7 +123,7 @@
         height: 100%;
         border-radius: 1rem 0 0 1rem;
         overflow: hidden;
-        background: linear-gradient(135deg, #edf7f4 0%, #e0f0ed 100%);
+        background: linear-gradient(135deg, var(--hd-accent-subtle) 0%, var(--hd-bg-subtle) 100%);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -132,12 +132,12 @@
 
     .validation-visual :global(.validation-icon) {
         font-size: 5rem;
-        color: #1cb487;
+        color: var(--hd-accent);
         opacity: 0.6;
     }
 
     .validation-card {
-        background: #fff;
+        background: var(--hd-bg-canvas);
         border-radius: 0 1rem 1rem 0;
         padding: 2.5rem 2rem;
         box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);

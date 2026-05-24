@@ -95,7 +95,7 @@
 
 <Container class="flex-fill pt-4 pb-5">
     <div class="text-center mb-4">
-        <h1 class="welcome-title">
+        <h1 class="display-6 welcome-title">
             {$t("common.welcome.start")}<Logo height="40" />{$t("common.welcome.end")}
         </h1>
     </div>
@@ -113,8 +113,8 @@
 
 <style>
     .welcome-title {
-        font-weight: 600;
+        font-weight: 350;
         letter-spacing: -0.01em;
-        color: var(--bs-body-color);
+        color: var(--bs-emphasis-color);
     }
 </style>

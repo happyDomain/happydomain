@@ -65,7 +65,7 @@
         height: 100%;
         border-radius: 1rem 0 0 1rem;
         overflow: hidden;
-        background: url(/img/signup.webp), linear-gradient(135deg, #f0faf7 0%, #e8f4f8 100%);
+        background: url(/img/signup.webp), linear-gradient(135deg, var(--hd-accent-subtle) 0%, var(--hd-bg-inset) 100%);
         background-size: cover;
         background-position: center;
         min-height: 560px;
@@ -75,7 +75,7 @@
     }
 
     .signup-card {
-        background: #fff;
+        background: var(--hd-bg-canvas);
         border-radius: 0 1rem 1rem 0;
         padding: 2.5rem 2rem;
         box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);

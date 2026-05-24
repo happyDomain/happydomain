@@ -355,7 +355,7 @@
     }
 
     .hero-search-card {
-        background: #fff;
+        background: var(--hd-bg-canvas);
         border-radius: 1rem;
         padding: 2rem;
         box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
@@ -363,23 +363,23 @@
 
     .resolver-layout :global(.resolver-sidebar) {
         background: var(--bs-body-bg);
-        border-right: 1px solid rgba(0, 0, 0, 0.06);
+        border-right: 1px solid var(--hd-border-1);
     }
 
     .sidebar-header {
         padding-bottom: 1rem;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        border-bottom: 1px solid var(--hd-border-1);
     }
 
     .resolver-layout :global(.results-col) {
-        background: var(--bs-tertiary-bg, #f8f9fa);
+        background: var(--bs-tertiary-bg);
         min-height: 60vh;
     }
 
     .resolver-loader {
         width: 2.5rem;
         height: 2.5rem;
-        border: 3px solid rgba(28, 180, 135, 0.15);
+        border: 3px solid var(--hd-focus-ring);
         border-top-color: var(--bs-primary);
         border-radius: 50%;
         animation: resolver-spin 0.8s linear infinite;
@@ -410,7 +410,7 @@
         width: 4rem;
         height: 4rem;
         border-radius: 50%;
-        background: var(--bs-tertiary-bg, #f0f0f0);
+        background: var(--bs-tertiary-bg);
         font-size: 1.75rem;
         color: var(--bs-secondary-color);
     }

@@ -68,7 +68,7 @@
     {#each groups as group}
         <Card class="mb-3">
             <CardHeader class="d-flex justify-content-between align-items-center">
-                <code>{group.rule}</code>
+                <span class="font-monospace">{group.rule}</span>
                 <Badge color={getStatusColor(group.worst)}>
                     {$t(getStatusI18nKey(group.worst))}
                 </Badge>

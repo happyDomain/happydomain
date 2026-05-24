@@ -47,6 +47,7 @@
         cachedHTMLReport,
         disableMetrics,
     } from "$lib/stores/checkers";
+    import CheckerLoader from "./CheckerLoader.svelte";
     import ExecutionResultsCard from "./ExecutionResultsCard.svelte";
     import ObservationReportCard from "./ObservationReportCard.svelte";
 
@@ -196,13 +197,13 @@
 </svelte:head>
 
 {#if loading}
-    <Container class="flex-fill d-flex align-items-start mt-5">
-        <Card body>
-            <p class="text-center mb-0">
-                <span class="spinner-border spinner-border-sm me-2"></span>
-                {running ? $t("checkers.execution.status.running") : $t("checkers.result.loading")}
-            </p>
-        </Card>
+    <Container class="flex-fill d-flex flex-column align-items-center justify-content-center mt-5">
+        <CheckerLoader
+            icon={running ? "broadcast" : "search"}
+            label={running
+                ? $t("checkers.execution.status.running")
+                : $t("checkers.result.loading")}
+        />
     </Container>
 {:else if error}
     <Container class="flex-fill d-flex align-items-start mt-5">

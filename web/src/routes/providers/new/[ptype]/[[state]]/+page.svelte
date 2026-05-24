@@ -42,7 +42,7 @@
             sm={4}
             md={3}
             class="py-3 sticky-top d-flex flex-column"
-            style="background-color: #edf5f2; overflow-y: auto; max-height: 100vh; z-index: 0"
+            style="background-color: var(--hd-accent-subtle); overflow-y: auto; max-height: 100vh; z-index: 0"
         >
             <ProviderSidebar currentProviderId={data.providerId ?? ""} />
         </Col>

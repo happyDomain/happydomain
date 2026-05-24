@@ -77,7 +77,9 @@
                                     {metric.name}
                                     {#if metric.labels}
                                         <small class="text-muted">
-                                            {Object.entries(metric.labels).map(([k, v]) => `${k}=${v}`).join(", ")}
+                                            {Object.entries(metric.labels)
+                                                .map(([k, v]) => `${k}=${v}`)
+                                                .join(", ")}
                                         </small>
                                     {/if}
                                 </td>
@@ -99,13 +101,13 @@
                     style="width: 100%; min-height: 600px; border: none; display: block;"
                 ></iframe>
             {:catch}
-                <pre class="mb-0" style="width: 0; min-width: 100%"><code
-                        >{JSON.stringify(observations.data, null, 2)}</code
+                <pre class="mb-0 d-flex flex-column" style="width: 0; min-width: 100%"><code
+                        class="flex-fill">{JSON.stringify(observations.data, null, 2)}</code
                     ></pre>
             {/await}
         {:else}
-            <pre class="mb-0" style="width: 0; min-width: 100%"><code
-                    >{JSON.stringify(observations.data, null, 2)}</code
+            <pre class="mb-0 d-flex flex-column" style="width: 0; min-width: 100%"><code
+                    class="flex-fill">{JSON.stringify(observations.data, null, 2)}</code
                 ></pre>
         {/if}
     </div>

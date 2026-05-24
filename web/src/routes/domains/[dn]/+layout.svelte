@@ -151,7 +151,7 @@
             sm={4}
             md={3}
             class="py-2 sticky-top d-flex flex-column"
-            style="background-color: #edf5f2; z-index: 0; max-height: 100vh; overflow-y: auto;"
+            style="background-color: var(--hd-accent-subtle); z-index: 0; max-height: 100vh; overflow-y: auto;"
         >
             {#if $domains_idx[selectedDomain]}
                 <!-- Header: back button + domain selector (always visible) -->
@@ -309,7 +309,7 @@
         bottom: 0;
         left: 0;
         padding: 0.75rem;
-        background-color: #edf5f2;
+        background-color: var(--hd-accent-subtle);
         z-index: 10;
     }
     .sidebar-footer-spacer {

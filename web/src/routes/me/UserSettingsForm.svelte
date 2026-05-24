@@ -131,7 +131,7 @@
             <ButtonGroup class="pt-2 pb-4" id="zoneview">
                 <Button
                     type="button"
-                    color="secondary"
+                    color="plum"
                     outline={settings.zoneview !== 0}
                     on:click={() => (settings.zoneview = 0)}
                 >
@@ -140,7 +140,7 @@
                 </Button>
                 <Button
                     type="button"
-                    color="secondary"
+                    color="plum"
                     outline={settings.zoneview !== 1}
                     on:click={() => (settings.zoneview = 1)}
                 >
@@ -149,7 +149,7 @@
                 </Button>
                 <Button
                     type="button"
-                    color="secondary"
+                    color="plum"
                     outline={settings.zoneview !== 2}
                     on:click={() => (settings.zoneview = 2)}
                 >
