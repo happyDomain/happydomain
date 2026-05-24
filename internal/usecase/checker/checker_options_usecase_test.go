@@ -421,41 +421,6 @@ func TestAddCheckerOptions_CreatesNewScope(t *testing.T) {
 	}
 }
 
-// --- BuildMergedCheckerOptions tests ---
-
-func TestBuildMergedCheckerOptions(t *testing.T) {
-	stored := happydns.CheckerOptions{"a": "stored", "shared": "stored"}
-	run := happydns.CheckerOptions{"b": "run", "shared": "run"}
-
-	result := checkerUC.BuildMergedCheckerOptions(stored, run)
-	if result["a"] != "stored" {
-		t.Errorf("stored key should be preserved")
-	}
-	if result["b"] != "run" {
-		t.Errorf("run key should be added")
-	}
-	if result["shared"] != "run" {
-		t.Errorf("run should override stored, got %v", result["shared"])
-	}
-}
-
-func TestBuildMergedCheckerOptions_NilInputs(t *testing.T) {
-	result := checkerUC.BuildMergedCheckerOptions(nil, nil)
-	if len(result) != 0 {
-		t.Errorf("expected empty result, got %v", result)
-	}
-
-	result = checkerUC.BuildMergedCheckerOptions(happydns.CheckerOptions{"a": "1"}, nil)
-	if result["a"] != "1" {
-		t.Errorf("stored key should be preserved with nil runOpts")
-	}
-
-	result = checkerUC.BuildMergedCheckerOptions(nil, happydns.CheckerOptions{"b": "2"})
-	if result["b"] != "2" {
-		t.Errorf("run key should be present with nil storedOpts")
-	}
-}
-
 // --- Validation tests ---
 
 // registerTestChecker is a helper that registers a checker in the global
@@ -550,8 +515,8 @@ func TestValidateOptions_DomainScope_AcceptsDomainOpts(t *testing.T) {
 	}
 }
 
-func TestValidateOptions_DomainScope_RejectsAdminOpt(t *testing.T) {
-	registerTestChecker("val_domain_reject_admin", &happydns.CheckerDefinition{
+func TestValidateOptions_DomainScope_AcceptsOverridableAdminOpt(t *testing.T) {
+	registerTestChecker("val_domain_accept_admin", &happydns.CheckerDefinition{
 		Options: happydns.CheckerOptionsDocumentation{
 			AdminOpts: []happydns.CheckerOptionDocumentation{
 				{Id: "admin_key", Type: "string"},
@@ -568,9 +533,33 @@ func TestValidateOptions_DomainScope_RejectsAdminOpt(t *testing.T) {
 	uid := idPtr()
 	did := idPtr()
 
-	err := uc.ValidateOptions("val_domain_reject_admin", uid, did, nil, happydns.CheckerOptions{"admin_key": "x"}, false)
+	err := uc.ValidateOptions("val_domain_accept_admin", uid, did, nil, happydns.CheckerOptions{"admin_key": "x"}, false)
+	if err != nil {
+		t.Fatalf("overridable admin opt should be accepted at domain scope, got: %v", err)
+	}
+}
+
+func TestValidateOptions_DomainScope_RejectsNoOverrideAdminOpt(t *testing.T) {
+	registerTestChecker("val_domain_reject_no_override_admin", &happydns.CheckerDefinition{
+		Options: happydns.CheckerOptionsDocumentation{
+			AdminOpts: []happydns.CheckerOptionDocumentation{
+				{Id: "admin_key", Type: "string", NoOverride: true},
+			},
+			DomainOpts: []happydns.CheckerOptionDocumentation{
+				{Id: "domain_key", Type: "string"},
+			},
+		},
+	})
+
+	store := newOptionsStore()
+	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
+
+	uid := idPtr()
+	did := idPtr()
+
+	err := uc.ValidateOptions("val_domain_reject_no_override_admin", uid, did, nil, happydns.CheckerOptions{"admin_key": "x"}, false)
 	if err == nil {
-		t.Fatal("expected error for admin opt at domain scope")
+		t.Fatal("expected error for NoOverride admin opt at domain scope")
 	}
 }
 
@@ -1073,8 +1062,8 @@ func TestValidateOptions_UserScope_RejectsDomainOpt(t *testing.T) {
 	}
 }
 
-func TestValidateOptions_ServiceScope_RejectsDomainOpt(t *testing.T) {
-	registerTestChecker("val_svc_reject_domain", &happydns.CheckerDefinition{
+func TestValidateOptions_ServiceScope_AcceptsOverridableDomainOpt(t *testing.T) {
+	registerTestChecker("val_svc_accept_domain", &happydns.CheckerDefinition{
 		Options: happydns.CheckerOptionsDocumentation{
 			DomainOpts: []happydns.CheckerOptionDocumentation{
 				{Id: "domain_opt", Type: "string"},
@@ -1091,9 +1080,33 @@ func TestValidateOptions_ServiceScope_RejectsDomainOpt(t *testing.T) {
 	uid := idPtr()
 	did := idPtr()
 	sid := idPtr()
-	err := uc.ValidateOptions("val_svc_reject_domain", uid, did, sid, happydns.CheckerOptions{"domain_opt": "x"}, false)
+	err := uc.ValidateOptions("val_svc_accept_domain", uid, did, sid, happydns.CheckerOptions{"domain_opt": "x"}, false)
+	if err != nil {
+		t.Fatalf("overridable domain opt should be accepted at service scope, got: %v", err)
+	}
+}
+
+func TestValidateOptions_ServiceScope_RejectsNoOverrideDomainOpt(t *testing.T) {
+	registerTestChecker("val_svc_reject_no_override_domain", &happydns.CheckerDefinition{
+		Options: happydns.CheckerOptionsDocumentation{
+			DomainOpts: []happydns.CheckerOptionDocumentation{
+				{Id: "domain_opt", Type: "string", NoOverride: true},
+			},
+			ServiceOpts: []happydns.CheckerOptionDocumentation{
+				{Id: "svc_opt", Type: "string"},
+			},
+		},
+	})
+
+	store := newOptionsStore()
+	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
+
+	uid := idPtr()
+	did := idPtr()
+	sid := idPtr()
+	err := uc.ValidateOptions("val_svc_reject_no_override_domain", uid, did, sid, happydns.CheckerOptions{"domain_opt": "x"}, false)
 	if err == nil {
-		t.Fatal("expected error for domain opt at service scope")
+		t.Fatal("expected error for NoOverride domain opt at service scope")
 	}
 }
 
@@ -1546,6 +1559,31 @@ func TestBuildMergedCheckerOptionsWithAutoFill_NoOverrideBlocksRunOpts(t *testin
 	}
 	if merged["threshold"] != float64(10) {
 		t.Errorf("expected threshold=10, got %v", merged["threshold"])
+	}
+}
+
+func TestBuildMergedCheckerOptionsWithAutoFill_NoOverrideBlocksRunOptsWhenUnset(t *testing.T) {
+	registerTestChecker("no_override_runopt_unset", &happydns.CheckerDefinition{
+		Options: happydns.CheckerOptionsDocumentation{
+			AdminOpts: []happydns.CheckerOptionDocumentation{
+				{Id: "locked", Type: "boolean", NoOverride: true},
+			},
+		},
+	})
+
+	store := newOptionsStore()
+	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
+
+	// No stored value for "locked" at any scope. RunOpts must still not be
+	// able to supply it: NoOverride fields are owned by their declaration scope.
+	merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill("no_override_runopt_unset", nil, nil, nil, happydns.CheckerOptions{
+		"locked": true,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if _, present := merged["locked"]; present {
+		t.Errorf("expected locked to be absent (NoOverride should block runOpts even when unset), got %v", merged["locked"])
 	}
 }
 

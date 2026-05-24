@@ -22,8 +22,10 @@
 package checker
 
 import (
+	"errors"
 	"fmt"
 	"maps"
+	"slices"
 	"sync"
 
 	checkerPkg "git.happydns.org/happyDomain/internal/dnschecker"
@@ -72,13 +74,75 @@ func (u *CheckerOptionsUsecase) getScopedOptions(
 	}
 	for _, p := range positionals {
 		if identifiersEqual(p.UserId, userId) && identifiersEqual(p.DomainId, domainId) && identifiersEqual(p.ServiceId, serviceId) {
-			if p.Options != nil {
-				return p.Options, nil
-			}
-			return make(happydns.CheckerOptions), nil
+			// Return a copy: callers (MergeCheckerOptions, SetCheckerOption)
+			// mutate the result before persisting, and the store may return a
+			// shared reference to its in-memory state.
+			out := make(happydns.CheckerOptions, len(p.Options))
+			maps.Copy(out, p.Options)
+			return out, nil
 		}
 	}
 	return make(happydns.CheckerOptions), nil
+}
+
+// filterOptionsForScope drops keys that must not be persisted at the given
+// scope: auto-fill keys (system-provided at runtime) and NoOverride keys
+// declared at a broader scope. Returns the metadata used so callers can reuse
+// it for further work without re-deriving it.
+func (u *CheckerOptionsUsecase) filterOptionsForScope(
+	checkerName string,
+	scope happydns.CheckScopeType,
+	opts happydns.CheckerOptions,
+) (happydns.CheckerOptions, checkerFieldMeta) {
+	var meta checkerFieldMeta
+	if def := checkerPkg.FindChecker(checkerName); def != nil {
+		meta = computeFieldMeta(def)
+	}
+
+	filtered := make(happydns.CheckerOptions, len(opts))
+	for k, v := range opts {
+		if meta.autoFillIds[k] != "" {
+			continue
+		}
+		if defScope, ok := meta.noOverrideScopes[k]; ok && scope > defScope {
+			continue
+		}
+		filtered[k] = v
+	}
+	return filtered, meta
+}
+
+// mergePositionalsRespectingNoOverride merges positionals from least to most
+// specific scope. Keys flagged NoOverride keep their first-seen (least-specific)
+// value and are not overridden by finer scopes.
+//
+// The input slice is sorted by scope here rather than trusting the caller (or
+// the store) to return positionals in any particular order: the merge result
+// only makes sense least-to-most-specific.
+func mergePositionalsRespectingNoOverride(
+	positionals []*happydns.CheckerOptionsPositional,
+	noOverrideIds map[string]bool,
+) happydns.CheckerOptions {
+	ordered := make([]*happydns.CheckerOptionsPositional, len(positionals))
+	copy(ordered, positionals)
+	slices.SortStableFunc(ordered, func(a, b *happydns.CheckerOptionsPositional) int {
+		sa := scopeFromIdentifiers(a.UserId, a.DomainId, a.ServiceId)
+		sb := scopeFromIdentifiers(b.UserId, b.DomainId, b.ServiceId)
+		return int(sa) - int(sb)
+	})
+
+	merged := make(happydns.CheckerOptions)
+	for _, p := range ordered {
+		for k, v := range p.Options {
+			if noOverrideIds[k] {
+				if _, exists := merged[k]; exists {
+					continue
+				}
+			}
+			merged[k] = v
+		}
+	}
+	return merged
 }
 
 // CheckerOptionsUsecase handles the resolution and persistence of checker options.
@@ -125,14 +189,32 @@ func (u *CheckerOptionsUsecase) GetCheckerOptionsPositional(
 }
 
 // GetAutoFillOptions resolves auto-fill values for a checker and target,
-// returning only the auto-filled key/value pairs.
+// returning only the auto-filled key/value pairs. Returns nil (not an empty
+// map) when there is nothing to fill, so callers can use a simple len check.
 func (u *CheckerOptionsUsecase) GetAutoFillOptions(
 	checkerName string,
 	target happydns.CheckTarget,
 ) (happydns.CheckerOptions, error) {
-	result, err := u.resolveAutoFill(checkerName, target)
+	def := checkerPkg.FindChecker(checkerName)
+	if def == nil {
+		return nil, nil
+	}
+
+	autoFillFields := computeFieldMeta(def).autoFillIds
+	if len(autoFillFields) == 0 {
+		return nil, nil
+	}
+
+	ctx, err := u.buildAutoFillContext(target)
 	if err != nil {
 		return nil, err
+	}
+
+	result := make(happydns.CheckerOptions, len(autoFillFields))
+	for fieldId, autoFillKey := range autoFillFields {
+		if val, ok := ctx[autoFillKey]; ok {
+			result[fieldId] = val
+		}
 	}
 	if len(result) == 0 {
 		return nil, nil
@@ -152,40 +234,31 @@ func (u *CheckerOptionsUsecase) GetCheckerOptions(
 	if err != nil {
 		return nil, err
 	}
-
-	// Determine which fields are NoOverride.
-	var noOverrideIds map[string]bool
-	if def := checkerPkg.FindChecker(checkerName); def != nil {
-		noOverrideIds = computeFieldMeta(def).noOverrideIds
-	}
-
-	merged := make(happydns.CheckerOptions)
-	// positionals are returned in order of increasing specificity.
-	for _, p := range positionals {
-		for k, v := range p.Options {
-			// If the key is NoOverride and already set by a less specific scope, skip it.
-			if noOverrideIds[k] {
-				if _, exists := merged[k]; exists {
-					continue
-				}
-			}
-			merged[k] = v
-		}
-	}
-	// CLI admin opts win over everything stored in the DB.
-	if cliAdmin := u.adminOptions[checkerName]; len(cliAdmin) > 0 {
-		maps.Copy(merged, cliAdmin)
-	}
+	merged, _ := u.mergeStoredOptions(checkerName, positionals)
+	u.overlayCLIAdmin(checkerName, merged)
 	return merged, nil
 }
 
-// BuildMergedCheckerOptions merges stored options with runtime overrides.
-// RunOpts are applied last and win over all stored levels.
-func BuildMergedCheckerOptions(storedOpts happydns.CheckerOptions, runOpts happydns.CheckerOptions) happydns.CheckerOptions {
-	result := make(happydns.CheckerOptions)
-	maps.Copy(result, storedOpts)
-	maps.Copy(result, runOpts)
-	return result
+// mergeStoredOptions merges per-scope positionals (least to most specific,
+// respecting NoOverride). The pre-computed field metadata is returned so
+// callers that already need it (auto-fill resolution, NoOverride checks on
+// runOpts) don't recompute it.
+func (u *CheckerOptionsUsecase) mergeStoredOptions(
+	checkerName string,
+	positionals []*happydns.CheckerOptionsPositional,
+) (happydns.CheckerOptions, checkerFieldMeta) {
+	var meta checkerFieldMeta
+	if def := checkerPkg.FindChecker(checkerName); def != nil {
+		meta = computeFieldMeta(def)
+	}
+	return mergePositionalsRespectingNoOverride(positionals, meta.noOverrideIds), meta
+}
+
+// overlayCLIAdmin applies CLI/env admin overrides on top of dst, in place.
+func (u *CheckerOptionsUsecase) overlayCLIAdmin(checkerName string, dst happydns.CheckerOptions) {
+	if cliAdmin := u.adminOptions[checkerName]; len(cliAdmin) > 0 {
+		maps.Copy(dst, cliAdmin)
+	}
 }
 
 // SetCheckerOptions persists options at the given positional level (full replace).
@@ -198,28 +271,15 @@ func (u *CheckerOptionsUsecase) SetCheckerOptions(
 	serviceId *happydns.Identifier,
 	opts happydns.CheckerOptions,
 ) error {
-	// Determine which field IDs are auto-filled or NoOverride for this checker.
-	var autoFillIds map[string]string
-	var noOverrideScopes map[string]happydns.CheckScopeType
-	if def := checkerPkg.FindChecker(checkerName); def != nil {
-		meta := computeFieldMeta(def)
-		autoFillIds = meta.autoFillIds
-		noOverrideScopes = meta.noOverrideScopes
-	}
-
-	currentScope := scopeFromIdentifiers(userId, domainId, serviceId)
-
-	filtered := make(happydns.CheckerOptions, len(opts))
+	// Drop empties first so filterOptionsForScope doesn't have to handle them.
+	nonEmpty := make(happydns.CheckerOptions, len(opts))
 	for k, v := range opts {
-		if isEmptyValue(v) || autoFillIds[k] != "" {
-			continue
+		if !isEmptyValue(v) {
+			nonEmpty[k] = v
 		}
-		// Defense-in-depth: strip NoOverride fields at scopes below their definition.
-		if defScope, ok := noOverrideScopes[k]; ok && currentScope > defScope {
-			continue
-		}
-		filtered[k] = v
 	}
+	scope := scopeFromIdentifiers(userId, domainId, serviceId)
+	filtered, _ := u.filterOptionsForScope(checkerName, scope, nonEmpty)
 	return u.store.UpdateCheckerConfiguration(checkerName, userId, domainId, serviceId, filtered)
 }
 
@@ -239,22 +299,29 @@ func (u *CheckerOptionsUsecase) MergeCheckerOptions(
 		return nil, err
 	}
 
-	// Determine NoOverride scopes for defense-in-depth stripping.
-	var noOverrideScopes map[string]happydns.CheckScopeType
-	if def := checkerPkg.FindChecker(checkerName); def != nil {
-		noOverrideScopes = computeFieldMeta(def).noOverrideScopes
-	}
-	currentScope := scopeFromIdentifiers(userId, domainId, serviceId)
+	scope := scopeFromIdentifiers(userId, domainId, serviceId)
 
+	// Filter newOpts down to keys we are allowed to persist at this scope.
+	// Pass only non-empties through the filter; empties are sentinels for
+	// deletion and must reach the merge step regardless.
+	nonEmpty := make(happydns.CheckerOptions, len(newOpts))
 	for k, v := range newOpts {
-		// Defense-in-depth: skip NoOverride fields at scopes below their definition.
-		if defScope, ok := noOverrideScopes[k]; ok && currentScope > defScope {
-			continue
+		if !isEmptyValue(v) {
+			nonEmpty[k] = v
 		}
+	}
+	filteredNew, meta := u.filterOptionsForScope(checkerName, scope, nonEmpty)
+
+	// Defense-in-depth: strip any auto-fill keys already in `existing` in case
+	// older records leaked them in before this filter existed.
+	for k := range meta.autoFillIds {
+		delete(existing, k)
+	}
+
+	maps.Copy(existing, filteredNew)
+	for k, v := range newOpts {
 		if isEmptyValue(v) {
 			delete(existing, k)
-		} else {
-			existing[k] = v
 		}
 	}
 	return existing, nil
@@ -309,8 +376,25 @@ func scopeFromIdentifiers(userId, domainId, serviceId *happydns.Identifier) happ
 	return happydns.CheckScopeAdmin
 }
 
+// appendBroaderScopeFields copies fields from a broader scope into dst as
+// keys accepted at a finer scope. The Required flag is stripped because the
+// value may already be set at the broader scope and need not be repeated.
+// If skipNoOverride is true, fields marked NoOverride are dropped entirely.
+func appendBroaderScopeFields(dst, src []happydns.CheckerOptionDocumentation, skipNoOverride bool) []happydns.CheckerOptionDocumentation {
+	for _, f := range src {
+		if skipNoOverride && f.NoOverride {
+			continue
+		}
+		f.Required = false
+		dst = append(dst, f)
+	}
+	return dst
+}
+
 // collectFieldsForScope returns the fields from a CheckerOptionsDocumentation
-// that are valid at the given scope level. RunOpts are never included for
+// that are valid at the given scope level. A more specific scope also accepts
+// any broader-scope field that is not marked NoOverride, since values set at
+// a broader scope can be overridden here. RunOpts are never included for
 // persisted scopes.
 func collectFieldsForScope(doc happydns.CheckerOptionsDocumentation, scope happydns.CheckScopeType) []happydns.CheckerOptionDocumentation {
 	var fields []happydns.CheckerOptionDocumentation
@@ -318,13 +402,63 @@ func collectFieldsForScope(doc happydns.CheckerOptionsDocumentation, scope happy
 	case happydns.CheckScopeAdmin:
 		fields = append(fields, doc.AdminOpts...)
 	case happydns.CheckScopeUser:
+		fields = appendBroaderScopeFields(fields, doc.AdminOpts, true)
 		fields = append(fields, doc.UserOpts...)
 	case happydns.CheckScopeDomain, happydns.CheckScopeZone:
+		fields = appendBroaderScopeFields(fields, doc.AdminOpts, true)
+		fields = appendBroaderScopeFields(fields, doc.UserOpts, true)
 		fields = append(fields, doc.DomainOpts...)
 	case happydns.CheckScopeService:
+		fields = appendBroaderScopeFields(fields, doc.AdminOpts, true)
+		fields = appendBroaderScopeFields(fields, doc.UserOpts, true)
+		fields = appendBroaderScopeFields(fields, doc.DomainOpts, true)
 		fields = append(fields, doc.ServiceOpts...)
 	}
 	return fields
+}
+
+// collectValidatableFields gathers the option fields that should be validated
+// for the given scope, including fields contributed by rules. When withRunOpts
+// is true (trigger time), all persisted-scope fields are accepted as keys
+// (with Required stripped) so that values already merged from a persisted
+// scope aren't rejected as unknown.
+func collectValidatableFields(
+	def *happydns.CheckerDefinition,
+	scope happydns.CheckScopeType,
+	withRunOpts bool,
+) []happydns.CheckerOptionDocumentation {
+	collectFromDoc := func(dst []happydns.CheckerOptionDocumentation, doc happydns.CheckerOptionsDocumentation) []happydns.CheckerOptionDocumentation {
+		if !withRunOpts {
+			return append(dst, collectFieldsForScope(doc, scope)...)
+		}
+		dst = appendBroaderScopeFields(dst, doc.AdminOpts, false)
+		dst = appendBroaderScopeFields(dst, doc.UserOpts, false)
+		dst = appendBroaderScopeFields(dst, doc.DomainOpts, false)
+		dst = appendBroaderScopeFields(dst, doc.ServiceOpts, false)
+		return append(dst, doc.RunOpts...)
+	}
+
+	var fields []happydns.CheckerOptionDocumentation
+	fields = collectFromDoc(fields, def.Options)
+	for _, rule := range def.Rules {
+		if rwo, ok := rule.(happydns.CheckRuleWithOptions); ok {
+			fields = collectFromDoc(fields, rwo.Options())
+		}
+	}
+	return fields
+}
+
+// validateSingleOption validates value against the field schema declared for
+// optName. Unknown keys (not declared anywhere in the checker) are rejected.
+func validateSingleOption(def *happydns.CheckerDefinition, optName string, value any) error {
+	field, ok := computeFieldMeta(def).fields[optName]
+	if !ok {
+		return fmt.Errorf("option %q is not declared by checker %q", optName, def.Name)
+	}
+	return forms.ValidateMapValues(
+		happydns.CheckerOptions{optName: value},
+		[]happydns.Field{happydns.FieldFromCheckerOption(field)},
+	)
 }
 
 // ValidateOptions validates checker options against the checker's field definitions
@@ -345,63 +479,28 @@ func (u *CheckerOptionsUsecase) ValidateOptions(
 	}
 
 	scope := scopeFromIdentifiers(userId, domainId, serviceId)
+	allFields := collectValidatableFields(def, scope, withRunOpts)
 
-	// Collect fields for this scope from the checker definition.
-	// When withRunOpts is true (trigger time), also include all persisted-scope
-	// fields so that options already stored at a different scope level (e.g.
-	// admin-level options merged into the final opts map) are not rejected as
-	// unknown.
-	var allFields []happydns.CheckerOptionDocumentation
-	if withRunOpts {
-		allFields = append(allFields, def.Options.AdminOpts...)
-		allFields = append(allFields, def.Options.UserOpts...)
-		allFields = append(allFields, def.Options.DomainOpts...)
-		allFields = append(allFields, def.Options.ServiceOpts...)
-		allFields = append(allFields, def.Options.RunOpts...)
-	} else {
-		allFields = collectFieldsForScope(def.Options, scope)
-	}
-
-	// Collect fields from rules that declare their own options at this scope.
-	for _, rule := range def.Rules {
-		if rwo, ok := rule.(happydns.CheckRuleWithOptions); ok {
-			ruleDoc := rwo.Options()
-			if withRunOpts {
-				allFields = append(allFields, ruleDoc.AdminOpts...)
-				allFields = append(allFields, ruleDoc.UserOpts...)
-				allFields = append(allFields, ruleDoc.DomainOpts...)
-				allFields = append(allFields, ruleDoc.ServiceOpts...)
-				allFields = append(allFields, ruleDoc.RunOpts...)
-			} else {
-				allFields = append(allFields, collectFieldsForScope(ruleDoc, scope)...)
-			}
-		}
-	}
-
-	// Filter out auto-fill fields: they are system-provided at runtime
-	// and should not be validated against user input.
+	// Strip auto-fill fields: they are system-provided at runtime and should
+	// not be validated against user input.
 	autoFillIds := computeFieldMeta(def).autoFillIds
-	var validatableFields []happydns.CheckerOptionDocumentation
+	asFields := make([]happydns.Field, 0, len(allFields))
 	for _, f := range allFields {
-		if _, isAutoFill := autoFillIds[f.Id]; !isAutoFill {
-			validatableFields = append(validatableFields, f)
+		if _, isAutoFill := autoFillIds[f.Id]; isAutoFill {
+			continue
 		}
+		// CheckerOptionDocumentation is structurally identical to happydns.Field;
+		// forms.ValidateMapValues operates on the latter.
+		asFields = append(asFields, happydns.FieldFromCheckerOption(f))
 	}
 
-	// Validate against field definitions. ValidateMapValues lives in the
-	// forms package and works with happydns.Field; CheckerOptionDocumentation
-	// is structurally identical so an element-wise conversion is enough.
-	if len(validatableFields) > 0 {
-		asFields := make([]happydns.Field, len(validatableFields))
-		for i, opt := range validatableFields {
-			asFields[i] = happydns.FieldFromCheckerOption(opt)
-		}
+	if len(asFields) > 0 {
 		if err := forms.ValidateMapValues(opts, asFields); err != nil {
 			return err
 		}
 	}
 
-	// Check if any rule implements OptionsValidator.
+	// Rule-level semantic validation (beyond field shape).
 	for _, rule := range def.Rules {
 		if v, ok := rule.(happydns.OptionsValidator); ok {
 			if err := v.ValidateOptions(opts); err != nil {
@@ -423,13 +522,24 @@ func (u *CheckerOptionsUsecase) SetCheckerOption(
 	optName string,
 	value any,
 ) error {
-	// Defense-in-depth: reject NoOverride fields at scopes below their definition.
 	if def := checkerPkg.FindChecker(checkerName); def != nil {
 		meta := computeFieldMeta(def)
+		// Auto-fill keys are system-provided at runtime; never persist them.
+		if meta.autoFillIds[optName] != "" {
+			return fmt.Errorf("option %q is auto-filled and cannot be set", optName)
+		}
+		// Defense-in-depth: reject NoOverride fields at scopes below their definition.
 		if defScope, ok := meta.noOverrideScopes[optName]; ok {
 			currentScope := scopeFromIdentifiers(userId, domainId, serviceId)
 			if currentScope > defScope {
 				return fmt.Errorf("option %q cannot be overridden at this scope level", optName)
+			}
+		}
+		// Validate the value against its field schema. Deletions (empty value)
+		// skip shape validation: the key is being removed, not stored.
+		if !isEmptyValue(value) {
+			if err := validateSingleOption(def, optName, value); err != nil {
+				return err
 			}
 		}
 	}
@@ -452,6 +562,9 @@ type checkerFieldMeta struct {
 	autoFillIds      map[string]string
 	noOverrideIds    map[string]bool
 	noOverrideScopes map[string]happydns.CheckScopeType
+	// fields indexes every declared option field by Id (first declaration wins,
+	// matching the scope precedence Admin→User→Domain→Service→Run, then rules).
+	fields map[string]happydns.CheckerOptionDocumentation
 }
 
 // computeFieldMeta returns cached field metadata for a checker definition.
@@ -472,25 +585,42 @@ func buildFieldMeta(def *happydns.CheckerDefinition) checkerFieldMeta {
 		autoFillIds:      make(map[string]string),
 		noOverrideIds:    make(map[string]bool),
 		noOverrideScopes: make(map[string]happydns.CheckScopeType),
+		fields:           make(map[string]happydns.CheckerOptionDocumentation),
 	}
 
 	scanDoc := func(doc happydns.CheckerOptionsDocumentation) {
+		// AutoFill is meaningful at every scope including RunOpts: a per-run
+		// field can legitimately be system-populated. The field index also
+		// covers all groups; first declaration wins to match the lookup order
+		// Admin→User→Domain→Service→Run, then rules.
+		allGroups := [][]happydns.CheckerOptionDocumentation{
+			doc.AdminOpts, doc.UserOpts, doc.DomainOpts, doc.ServiceOpts, doc.RunOpts,
+		}
+		for _, fields := range allGroups {
+			for _, f := range fields {
+				if f.AutoFill != "" {
+					meta.autoFillIds[f.Id] = f.AutoFill
+				}
+				if _, exists := meta.fields[f.Id]; !exists {
+					meta.fields[f.Id] = f
+				}
+			}
+		}
+
+		// NoOverride is a precedence rule between persisted scopes; it has no
+		// meaning for RunOpts (never persisted, supplied per-execution).
 		type scopedGroup struct {
 			fields []happydns.CheckerOptionDocumentation
 			scope  happydns.CheckScopeType
 		}
-		groups := []scopedGroup{
+		persistedGroups := []scopedGroup{
 			{doc.AdminOpts, happydns.CheckScopeAdmin},
 			{doc.UserOpts, happydns.CheckScopeUser},
 			{doc.DomainOpts, happydns.CheckScopeDomain},
 			{doc.ServiceOpts, happydns.CheckScopeService},
-			{doc.RunOpts, happydns.CheckScopeService}, // RunOpts have no distinct scope; use Service as ceiling.
 		}
-		for _, g := range groups {
+		for _, g := range persistedGroups {
 			for _, f := range g.fields {
-				if f.AutoFill != "" {
-					meta.autoFillIds[f.Id] = f.AutoFill
-				}
 				if f.NoOverride {
 					meta.noOverrideIds[f.Id] = true
 					meta.noOverrideScopes[f.Id] = g.scope
@@ -550,7 +680,10 @@ func (u *CheckerOptionsUsecase) buildAutoFillContext(
 			if i > 0 {
 				z, err = u.autoFillStore.GetZone(domain.ZoneHistory[i])
 				if err != nil {
-					continue
+					if errors.Is(err, happydns.ErrZoneNotFound) {
+						continue
+					}
+					return ctx, fmt.Errorf("loading zone for auto-fill: %w", err)
 				}
 			}
 			for subdomain, services := range z.Services {
@@ -569,43 +702,16 @@ func (u *CheckerOptionsUsecase) buildAutoFillContext(
 	return ctx, nil
 }
 
-// resolveAutoFill looks up the checker definition, scans its fields for AutoFill
-// attributes, builds the execution context from storage, and returns a map of
-// field ID to resolved value. Returns an empty map (not nil) when there is
-// nothing to fill.
-func (u *CheckerOptionsUsecase) resolveAutoFill(
-	checkerName string,
-	target happydns.CheckTarget,
-) (happydns.CheckerOptions, error) {
-	def := checkerPkg.FindChecker(checkerName)
-	if def == nil {
-		return make(happydns.CheckerOptions), nil
-	}
-
-	autoFillFields := computeFieldMeta(def).autoFillIds
-	if len(autoFillFields) == 0 {
-		return make(happydns.CheckerOptions), nil
-	}
-
-	ctx, err := u.buildAutoFillContext(target)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make(happydns.CheckerOptions, len(autoFillFields))
-	for fieldId, autoFillKey := range autoFillFields {
-		if val, ok := ctx[autoFillKey]; ok {
-			result[fieldId] = val
-		}
-	}
-	return result, nil
-}
-
-// BuildMergedCheckerOptionsWithAutoFill merges stored options, runtime overrides,
-// and auto-fill values. Auto-fill values are applied last and always win.
+// BuildMergedCheckerOptionsWithAutoFill produces the final option map fed to a
+// checker execution. Precedence, from lowest to highest:
+//
+//	stored(admin → user → domain → service) → runOpts → auto-fill → CLI admin
+//
+// NoOverride fields are honored across stored scopes and reject runOpts
+// entirely (they may only be set at their declaration scope or via CLI admin).
 //
 // The second return value is the set of DiscoveryEntry records injected into
-// AutoFillDiscoveryEntries fields (if any) — exposed so the engine can
+// AutoFillDiscoveryEntries fields (if any): exposed so the engine can
 // persist the consumer→entry lineage after the run completes. It is nil
 // when no such field was auto-filled.
 func (u *CheckerOptionsUsecase) BuildMergedCheckerOptionsWithAutoFill(
@@ -620,40 +726,25 @@ func (u *CheckerOptionsUsecase) BuildMergedCheckerOptionsWithAutoFill(
 		return nil, nil, err
 	}
 
-	def := checkerPkg.FindChecker(checkerName)
+	storedOpts, meta := u.mergeStoredOptions(checkerName, positionals)
 
-	// Merge stored options from least to most specific, respecting NoOverride.
-	var meta checkerFieldMeta
-	if def != nil {
-		meta = computeFieldMeta(def)
-	}
-
-	storedOpts := make(happydns.CheckerOptions)
-	for _, p := range positionals {
-		for k, v := range p.Options {
-			if meta.noOverrideIds[k] {
-				if _, exists := storedOpts[k]; exists {
-					continue
-				}
-			}
-			storedOpts[k] = v
+	// Apply runtime overrides on top. NoOverride fields are owned by their
+	// declaration scope (admin/user/domain/service) and cannot be supplied via
+	// the trigger payload, whether or not a stored value already exists.
+	merged := make(happydns.CheckerOptions, len(storedOpts)+len(runOpts))
+	maps.Copy(merged, storedOpts)
+	for k, v := range runOpts {
+		if meta.noOverrideIds[k] {
+			continue
 		}
-	}
-
-	// Apply runtime overrides on top.
-	merged := BuildMergedCheckerOptions(storedOpts, runOpts)
-
-	// Restore NoOverride fields from storedOpts so that runOpts cannot override them.
-	for id := range meta.noOverrideIds {
-		if v, ok := storedOpts[id]; ok {
-			merged[id] = v
-		}
+		merged[k] = v
 	}
 
 	var injectedEntries []*happydns.StoredDiscoveryEntry
 
-	// Resolve auto-fill values (always win).
-	if def != nil && len(meta.autoFillIds) > 0 {
+	// Resolve auto-fill values (always win). meta is zero when def is nil,
+	// so the len check alone is sufficient.
+	if len(meta.autoFillIds) > 0 {
 		target := happydns.CheckTarget{
 			UserId:    happydns.FormatIdentifier(userId),
 			DomainId:  happydns.FormatIdentifier(domainId),
@@ -693,16 +784,14 @@ func (u *CheckerOptionsUsecase) BuildMergedCheckerOptionsWithAutoFill(
 	}
 
 	// CLI admin opts win over everything, including auto-fill.
-	if cliAdmin := u.adminOptions[checkerName]; len(cliAdmin) > 0 {
-		maps.Copy(merged, cliAdmin)
-	}
+	u.overlayCLIAdmin(checkerName, merged)
 
 	return merged, injectedEntries, nil
 }
 
 // sdkEntries converts host-side StoredDiscoveryEntry values to the opaque
 // SDK-level DiscoveryEntry form that is passed to consumer checkers. The
-// producer/target namespacing is not exposed to the consumer — it would be
+// producer/target namespacing is not exposed to the consumer: it would be
 // meaningless in that contract.
 func sdkEntries(stored []*happydns.StoredDiscoveryEntry) []happydns.DiscoveryEntry {
 	out := make([]happydns.DiscoveryEntry, 0, len(stored))
