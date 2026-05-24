@@ -63,6 +63,12 @@
         // reaching this point means the app is ready to take over the splash.
         document.getElementById("app-splash")?.remove();
 
+        const mq = window.matchMedia("(prefers-color-scheme: dark)");
+        const applyTheme = (dark: boolean) =>
+            document.documentElement.setAttribute("data-bs-theme", dark ? "dark" : "light");
+        applyTheme(mq.matches);
+        mq.addEventListener("change", (e) => applyTheme(e.matches));
+
         window.onunhandledrejection = (e) => {
             if (e.reason.name == "NotAuthorizedError") {
                 goto(resolve("/login"));
@@ -106,7 +112,7 @@
 <NavigationProgress />
 <Header />
 
-<main class="flex-fill d-flex flex-column justify-content-center bg-light">
+<main class="flex-fill d-flex flex-column justify-content-center">
     {@render children?.()}
 </main>
 

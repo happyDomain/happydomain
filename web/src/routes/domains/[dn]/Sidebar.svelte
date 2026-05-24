@@ -185,7 +185,7 @@
         bottom: 0;
         left: 0;
         padding: 0.75rem;
-        background-color: #edf5f2;
+        background-color: var(--hd-accent-subtle);
         z-index: 10;
     }
     .sidebar-footer-spacer {

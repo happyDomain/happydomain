@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { onMount } from "svelte";
     import { goto } from "$app/navigation";
     import { authLinks } from "$links";
     import { page } from "$app/state";
@@ -54,6 +55,16 @@
 
     let { class: className }: Props = $props();
 
+    let isDark = $state(false);
+
+    onMount(() => {
+        const mq = window.matchMedia("(prefers-color-scheme: dark)");
+        isDark = mq.matches;
+        mq.addEventListener("change", (e) => {
+            isDark = e.matches;
+        });
+    });
+
     function logout() {
         APILogout().then(
             () => {
@@ -76,13 +87,22 @@
     }
 </script>
 
-<Navbar class={[className, "py-1"]} id="nav" container expand="xs" light style="z-index: 100">
+<Navbar
+    class={[className, "py-1"]}
+    id="nav"
+    container={!$userSession.id}
+    expand="xs"
+    light={!isDark}
+    dark={isDark}
+    style="background-color: var(--hd-bg-canvas) !important; z-index: 100"
+>
     <NavbarBrand
         href="/"
-        class="me-3"
-        style="padding: 0;"
+        class="me-3 d-flex align-items-top gap-2"
+        style="padding: 0 .75rem;"
         target={$userSession.id ? undefined : "_self"}
     >
+        <img src="/img/icons/android-chrome-512x512.png" alt="" style="height: 24px;" />
         <Logo />
     </NavbarBrand>
     <Nav class="ms-auto align-items-center gap-1" navbar>

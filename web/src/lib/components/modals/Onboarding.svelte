@@ -105,7 +105,7 @@
 <Modal {isOpen} size="xl" scrollable {toggle}>
     <ModalHeader {toggle} class="bg-primary-subtle ps-4 pt-4 align-items-start">
         <h3 class="fw-bolder text-primary mb-1">
-            {$t("common.welcome.start")}<Logo height="30" color="#1cb487" />{$t(
+            {$t("common.welcome.start")}<Logo height="30" color="var(--hd-accent)" />{$t(
                 "common.welcome.end",
             )}
         </h3>
@@ -428,8 +428,8 @@
 
 <style>
     .onboarding-steps {
-        background-color: var(--bs-gray-100);
-        border-right: 1px solid var(--bs-gray-200);
+        background-color: var(--hd-bg-subtle);
+        border-right: 1px solid var(--hd-border-1);
         padding: 1.5rem 0;
     }
 
@@ -438,7 +438,7 @@
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        color: var(--bs-gray-600);
+        color: var(--hd-fg-3);
         font-size: 0.875rem;
         position: relative;
     }
@@ -449,14 +449,14 @@
     }
 
     .step-item.completed {
-        color: var(--bs-gray-800);
+        color: var(--hd-fg-2);
     }
 
     .step-number {
         width: 28px;
         height: 28px;
         border-radius: 50%;
-        background-color: var(--bs-gray-200);
+        background-color: var(--hd-bg-inset);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -488,7 +488,7 @@
         align-items: center;
         justify-content: center;
         margin-bottom: 1rem;
-        color: var(--primary);
+        color: var(--bs-primary);
     }
 
     .feature-title {
@@ -499,7 +499,7 @@
 
     .feature-description {
         font-size: 0.875rem;
-        color: var(--bs-gray-600);
+        color: var(--hd-fg-3);
         line-height: 1.5;
         margin-bottom: 1rem;
         flex-grow: 1;

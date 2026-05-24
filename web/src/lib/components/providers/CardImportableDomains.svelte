@@ -241,7 +241,7 @@
                                 <Button
                                     type="button"
                                     class="ms-1"
-                                    color="primary"
+                                    color="plum"
                                     size="sm"
                                     disabled={domainsInProgress.has(domain.domain) ||
                                         allImportInProgress}

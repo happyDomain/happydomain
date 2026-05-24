@@ -60,7 +60,7 @@
 <style>
     .page-title {
         padding: 0.75rem 0 1rem 0;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+        border-bottom: 1px solid var(--hd-border-1);
     }
 
     .page-title-text::before {
@@ -85,7 +85,7 @@
 
     .page-title-heading {
         margin: 0;
-        color: #1a1a2e;
+        color: var(--bs-emphasis-color);
     }
 
     .page-title-subtitle {

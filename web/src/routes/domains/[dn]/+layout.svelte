@@ -128,7 +128,7 @@
             sm={4}
             md={3}
             class="py-2 sticky-top d-flex flex-column"
-            style="background-color: #edf5f2; z-index: 0; max-height: 100vh; overflow-y: auto;"
+            style="background-color: var(--hd-accent-subtle); z-index: 0; max-height: 100vh; overflow-y: auto;"
         >
             <Sidebar
                 domain={data.domain}

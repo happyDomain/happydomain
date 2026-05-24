@@ -106,9 +106,9 @@
     .features-wrapper {
         overflow-x: auto;
         border-radius: 0.75rem;
-        background: #fff;
+        background: var(--hd-bg-canvas);
         box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
-        border: 1px solid rgba(0, 0, 0, 0.06);
+        border: 1px solid var(--hd-border-1);
     }
 
     .features-wrapper :global(table) {
@@ -118,8 +118,8 @@
     .features-wrapper :global(thead th) {
         position: sticky;
         top: 0;
-        background: #f8f9fa;
-        border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+        background: var(--hd-bg-subtle);
+        border-bottom: 2px solid var(--hd-border-2);
         font-size: 0.82rem;
         font-weight: 600;
         white-space: nowrap;
