@@ -34,7 +34,14 @@
     } from "@sveltestrap/sveltestrap";
 
     import { navigate } from "$lib/stores/config";
-    import { currentExecution, currentCheckInfo, currentObservations, reportViewMode, cachedHTMLReport } from "$lib/stores/checkers";
+    import {
+        currentExecution,
+        currentCheckInfo,
+        currentObservations,
+        reportViewMode,
+        cachedHTMLReport,
+        disableMetrics,
+    } from "$lib/stores/checkers";
     import { toasts } from "$lib/stores/toasts";
     import type { CheckerScope } from "$lib/api/checkers";
     import {
@@ -217,6 +224,7 @@
                 color="secondary"
                 outline
                 active={$reportViewMode === "metrics"}
+                disabled={$disableMetrics}
                 onclick={() => {
                     reportViewMode.set("metrics");
                 }}
@@ -242,6 +250,7 @@
             color="secondary"
             outline
             active={$reportViewMode === "json"}
+            disabled={!$currentObservations?.data}
             onclick={() => {
                 reportViewMode.set("json");
             }}

@@ -45,6 +45,7 @@
         currentObservations,
         reportViewMode,
         cachedHTMLReport,
+        disableMetrics,
     } from "$lib/stores/checkers";
     import ExecutionResultsCard from "./ExecutionResultsCard.svelte";
     import ObservationReportCard from "./ObservationReportCard.svelte";
@@ -102,10 +103,14 @@
         }
         if (checkerInfo.has_metrics) {
             getScopedExecutionMetrics(scopeArg, checkerIdArg, execIdArg)
-                .then((m) => (metricsData = m))
+                .then((m) => {
+                    disableMetrics.set(false);
+                    metricsData = m;
+                })
                 .catch((e) => {
                     console.warn("Failed to load execution metrics", e);
                     if ($reportViewMode == "metrics") reportViewMode.set("rules");
+                    disableMetrics.set(true);
                 });
         }
     }

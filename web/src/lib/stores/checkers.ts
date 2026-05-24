@@ -52,6 +52,7 @@ function createReportViewMode(): Writable<ReportViewMode> {
 }
 export const reportViewMode = createReportViewMode();
 export const showHTMLReport: Readable<boolean> = derived(reportViewMode, ($m) => $m === "html");
+export const disableMetrics: Writable<boolean> = writable(false);
 
 // Cached HTML report content, shared between the report card and sidebar download button.
 export const cachedHTMLReport: Writable<string | null> = writable(null);
