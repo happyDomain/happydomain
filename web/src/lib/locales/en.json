@@ -908,7 +908,10 @@
             "orphaned-options": "Orphaned options detected: {{options}}",
             "clean-up": "Clean Up",
             "read-only": "Read-only",
-            "auto-fill": "Auto-filled fields"
+            "auto-fill": "Auto-filled fields",
+            "overriding-inherited": "Overriding inherited",
+            "inherited-value": "Inherited: {{value}}",
+            "reset-to-inherited": "Reset to inherited"
         },
         "option-groups": {
             "domain-settings": "Domain-specific Settings",

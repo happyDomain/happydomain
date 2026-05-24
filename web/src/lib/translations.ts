@@ -52,6 +52,7 @@ interface Params {
     intervalMax?: string;
     intervalDefault?: string;
     service?: string;
+    value?: string;
     // add more parameters that are used here
 }
 

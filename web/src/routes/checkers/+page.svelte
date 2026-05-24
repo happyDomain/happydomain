@@ -42,9 +42,16 @@
 
     let filteredCheckers = $derived(
         $checkers
-            ? Object.entries($checkers).filter(([name]) =>
-                  name.toLowerCase().includes(searchQuery.toLowerCase()),
-              )
+            ? Object.entries($checkers)
+                  .filter(
+                      ([id, info]) =>
+                          (info.name || id)
+                              .toLowerCase()
+                              .includes(searchQuery.toLowerCase()),
+                  )
+                  .sort(([idA, a], [idB, b]) =>
+                      (a.name || idA).localeCompare(b.name || idB),
+                  )
             : [],
     );
 </script>

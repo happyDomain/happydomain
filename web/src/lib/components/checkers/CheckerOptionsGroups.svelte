@@ -28,8 +28,10 @@
 
     let {
         groups,
+        optionValues = {},
     }: {
         groups: { key: string; label: string; opts: CheckerCheckerOptionDocumentation[] }[];
+        optionValues?: Record<string, unknown>;
     } = $props();
 
     function autoFillLabel(key: string): string {
@@ -58,7 +60,12 @@
                         {/if}
                     </dt>
                     <dd class="col-sm-8">
-                        <span class="text-muted small">{opt.type || "string"}</span>
+                        {#if opt.id && optionValues[opt.id] !== undefined}
+                            <span>{String(optionValues[opt.id])}</span>
+                            <span class="text-muted small ms-1">({opt.type || "string"})</span>
+                        {:else}
+                            <span class="text-muted small">{opt.type || "string"}</span>
+                        {/if}
                         {#if opt.description}
                             <div class="form-text">{opt.description}</div>
                         {/if}

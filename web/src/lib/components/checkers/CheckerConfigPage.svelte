@@ -22,12 +22,14 @@
 -->
 
 <script lang="ts">
-    import { Alert, Button, Card, Col, Icon, Row } from "@sveltestrap/sveltestrap";
+    import { Alert, Badge, Button, Card, CardBody, CardHeader, Col, Icon, Row } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
     import { base } from "$lib/stores/config";
     import { checkers } from "$lib/stores/checkers";
+    import { toasts } from "$lib/stores/toasts";
     import type {
+        CheckerCheckerOptionDocumentation,
         HappydnsCheckPlan,
         HappydnsCheckPlanWritable,
         HappydnsCheckerOptionsPositional,
@@ -38,7 +40,7 @@
         updateScopedCheckOptions,
         getScopedCheckStatus,
     } from "$lib/api/checkers";
-    import { splitPositionalOptions, collectAutoFillKeys } from "$lib/utils";
+    import { splitPositionalOptions, collectAutoFillKeys, collectAllOptionDocs, getOrphanedOptionKeys, filterValidOptions, availabilityBadges } from "$lib/utils";
     import PageTitle from "$lib/components/PageTitle.svelte";
     import CheckerScheduleCard from "./CheckerScheduleCard.svelte";
     import CheckerRulesCard from "./CheckerRulesCard.svelte";
@@ -50,12 +52,13 @@
         checksBase: string;
         checkerId: string;
         domainName: string;
-        editableGroups: (status: any) => { label: string; opts: any[] }[];
-        readOnlyGroups: (status: any) => { key: string; label: string; opts: any[] }[];
+        groups: (status: any) => { editableGroups: { label: string; opts: any[] }[]; readOnlyGroups: { key: string; label: string; opts: any[] }[] };
         showSchedule?: boolean;
+        showCheckerInfo?: boolean;
+        showExecutions?: boolean;
     }
 
-    let { scope, checksBase, checkerId, domainName, editableGroups, readOnlyGroups, showSchedule = true }: Props = $props();
+    let { scope, checksBase, checkerId, domainName, groups, showSchedule = true, showCheckerInfo = false, showExecutions = true }: Props = $props();
 
     let checkStatusPromise = $derived(getScopedCheckStatus(scope, checkerId));
     let checkOptionsPromise = $derived(getScopedCheckOptions(scope, checkerId));
@@ -101,11 +104,22 @@
         });
     });
 
+    // Returns true when a positional belongs to the current page's scope.
+    // A positional with no domainId is admin-scope; one with domainId but no
+    // serviceId is domain-scope; one with both is service-scope.
+    function isCurrentScopePositional(p: { domainId?: unknown; serviceId?: unknown }): boolean {
+        const hasDomain = Array.isArray(p.domainId) ? p.domainId.length > 0 : !!p.domainId;
+        const hasService = Array.isArray(p.serviceId) ? p.serviceId.length > 0 : !!p.serviceId;
+        if (!scope.domainId) return !hasDomain;
+        if (!scope.serviceId) return hasDomain && !hasService;
+        return hasDomain && hasService;
+    }
+
     $effect(() => {
         Promise.all([checkStatusPromise, checkOptionsPromise]).then(
             ([status, positionals]: [any, HappydnsCheckerOptionsPositional[]]) => {
                 const autoFillKeys = status ? collectAutoFillKeys(status) : new Set<string>();
-                const { current, inherited } = splitPositionalOptions(positionals, autoFillKeys);
+                const { current, inherited } = splitPositionalOptions(positionals, autoFillKeys, isCurrentScopePositional);
                 optionValues = current;
                 inheritedValues = inherited;
             },
@@ -121,6 +135,26 @@
             savingOptions = false;
         }
     }
+
+    async function cleanOrphanedOptions(allEditableOpts: CheckerCheckerOptionDocumentation[]) {
+        savingOptions = true;
+        try {
+            await updateScopedCheckOptions(scope, checkerId, filterValidOptions(optionValues, allEditableOpts));
+            checkOptionsPromise = getScopedCheckOptions(scope, checkerId);
+            toasts.addToast({
+                message: $t("checkers.messages.options-cleaned"),
+                type: "success",
+                timeout: 5000,
+            });
+        } catch (error) {
+            toasts.addErrorToast({
+                message: $t("checkers.messages.clean-failed", { error: String(error) }),
+                timeout: 10000,
+            });
+        } finally {
+            savingOptions = false;
+        }
+    }
 </script>
 
 <svelte:head>
@@ -129,7 +163,7 @@
 
 <div class="flex-fill mt-1 mb-5">
     <PageTitle title={resolvedStatus?.name ?? checkerId} domain={domainName}>
-        {#if $checkers && (!$checkers[checkerId]?.availability || $checkers[checkerId].availability.applyToDomain || $checkers[checkerId].availability.applyToZone)}
+        {#if showExecutions && $checkers && (!$checkers[checkerId]?.availability || $checkers[checkerId].availability.applyToDomain || $checkers[checkerId].availability.applyToZone)}
             <Button
                 color="info"
                 href={`${checksBase}/${encodeURIComponent(checkerId)}/executions`}
@@ -138,7 +172,7 @@
                 {$t("checkers.list.view-results")}
             </Button>
         {/if}
-        {#if checkerDef?.has_metrics}
+        {#if scope.domainId && checkerDef?.has_metrics}
             <Button
                 color="secondary"
                 outline
@@ -159,12 +193,41 @@
         </Card>
     {:then status}
         {#if status}
-            {@const editable = editableGroups(status)}
-            {@const readOnly = readOnlyGroups(status)}
+            {@const { editableGroups: editable, readOnlyGroups: readOnly } = groups(status)}
+            {@const allEditableOpts = collectAllOptionDocs(status)}
+            {@const orphanedOpts = getOrphanedOptionKeys(optionValues, allEditableOpts)}
+            {@const hasLeftCol = showSchedule || showCheckerInfo || !!(status.rules && status.rules.length > 0)}
             <Row class="mb-4">
-                {#if showSchedule}
+                {#if hasLeftCol}
                 <Col md={6}>
-                    <CheckerScheduleCard bind:this={scheduleCard} {scope} {checkerId} bind:plan {intervalSpec} />
+                    {#if showCheckerInfo}
+                        <Card class="mb-3">
+                            <CardHeader>
+                                <strong>{$t("checkers.detail.checker-information")}</strong>
+                            </CardHeader>
+                            <CardBody>
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-4">{$t("checkers.detail.name")}</dt>
+                                    <dd class="col-sm-8">{status.name}</dd>
+
+                                    <dt class="col-sm-4">{$t("checkers.detail.availability")}</dt>
+                                    <dd class="col-sm-8">
+                                        {#each availabilityBadges(status.availability, $t) as badge}
+                                            <Badge color={badge.color}>{badge.label}</Badge>
+                                        {:else}
+                                            <Badge color="secondary">
+                                                {$t("checkers.availability.general")}
+                                            </Badge>
+                                        {/each}
+                                    </dd>
+                                </dl>
+                            </CardBody>
+                        </Card>
+                    {/if}
+
+                    {#if showSchedule}
+                        <CheckerScheduleCard bind:this={scheduleCard} {scope} {checkerId} bind:plan {intervalSpec} />
+                    {/if}
 
                     {#if status.rules && status.rules.length > 0}
                         <CheckerRulesCard
@@ -173,9 +236,9 @@
                             {inheritedValues}
                             saving={savingOptions}
                             onsave={saveOptions}
-                            onsaveplan={() => scheduleCard?.save()}
+                            onsaveplan={showSchedule ? () => scheduleCard!.save() : undefined}
                             bind:plan
-                            precheckFailures={status.precheckFailures}
+                            precheckFailures={(status as any).precheckFailures}
                         />
                     {/if}
                 </Col>
@@ -190,6 +253,8 @@
                         {inheritedValues}
                         saving={savingOptions}
                         onsave={saveOptions}
+                        {orphanedOpts}
+                        onclean={() => cleanOrphanedOptions(allEditableOpts)}
                     />
                 </Col>
             </Row>

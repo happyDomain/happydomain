@@ -28,6 +28,7 @@
     import type { Domain } from "$lib/model/domain";
     import { fqdn } from "$lib/dns";
     import { domainLink } from "$lib/stores/domains";
+    import { buildOptionGroupLayout } from "$lib/utils";
     import CheckerConfigPage from "$lib/components/checkers/CheckerConfigPage.svelte";
 
     let domain: Domain = $derived(page.data.domain);
@@ -45,30 +46,5 @@
     {checksBase}
     {checkerId}
     domainName={fqdn(subdomain, domain.domain)}
-    editableGroups={(status) => [
-        {
-            label: $t("checkers.option-groups.service-settings"),
-            opts: status.options?.serviceOpts || [],
-        },
-        {
-            label: $t("checkers.detail.admin-options"),
-            opts: status.options?.adminOpts || [],
-        },
-        {
-            label: $t("checkers.detail.configuration"),
-            opts: status.options?.userOpts || [],
-        },
-    ]}
-    readOnlyGroups={(status) => [
-        {
-            key: "domainOpts",
-            label: $t("checkers.option-groups.domain-settings"),
-            opts: status.options?.domainOpts || [],
-        },
-        {
-            key: "runOpts",
-            label: $t("checkers.option-groups.checker-parameters"),
-            opts: status.options?.runOpts || [],
-        },
-    ]}
+    groups={(status) => buildOptionGroupLayout(status, "service", $t)}
 />

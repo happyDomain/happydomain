@@ -24,6 +24,7 @@
 <script lang="ts">
     import {
         Alert,
+        Badge,
         Button,
         Card,
         CardBody,
@@ -76,13 +77,16 @@
         onclean,
     }: Props = $props();
 
-    // Filter out auto-fill and noOverride fields from editable groups.
-    // Auto-fill fields are system-provided; noOverride fields can only be
-    // changed at the scope where they are defined (typically admin).
+    // Filter out auto-fill fields (system-provided, never user-edited) and
+    // noOverride fields (locked by a broader scope; nothing to do here).
     let filteredEditableGroups = $derived(
         editableGroups.map((g) => ({
             ...g,
-            opts: g.opts.filter((opt) => !opt.autoFill && !opt.noOverride),
+            opts: withInheritedPlaceholders(
+                g.opts.filter((opt) => !opt.autoFill && !opt.noOverride),
+                optionValues,
+                inheritedValues,
+            ),
         })),
     );
 
@@ -162,15 +166,47 @@
             </CardHeader>
             <CardBody>
                 <Form id={"group-" + gid} onsubmit={handleSave}>
-                    {#each withInheritedPlaceholders(group.opts, optionValues, inheritedValues) as optDoc, index}
+                    {#each group.opts as optDoc, index}
                         {#if optDoc.id}
-                            <ResourceInput
-                                edit
-                                index={"" + index}
-                                specs={optDoc}
-                                type={optDoc.type || "string"}
-                                bind:value={optionValues[optDoc.id]}
-                            />
+                            {@const optId = optDoc.id}
+                            {@const inherited = inheritedValues[optId]}
+                            {@const localVal = optionValues[optId]}
+                            {@const isOverriding =
+                                localVal !== undefined &&
+                                localVal !== "" &&
+                                inherited !== undefined}
+                            <div class="option-row mb-2">
+                                <ResourceInput
+                                    edit
+                                    index={"" + index}
+                                    specs={optDoc}
+                                    type={optDoc.type || "string"}
+                                    bind:value={optionValues[optId]}
+                                />
+                                {#if isOverriding}
+                                    <div class="form-text mt-1 d-flex align-items-center gap-2 flex-wrap">
+                                        <Badge color="warning">
+                                            <Icon name="pencil-square"></Icon>
+                                            {$t("checkers.detail.overriding-inherited")}
+                                        </Badge>
+                                        <span class="text-muted">
+                                            {$t("checkers.detail.inherited-value", { value: String(inherited) })}
+                                        </span>
+                                        <Button
+                                            color="link"
+                                            size="sm"
+                                            class="p-0"
+                                            onclick={() => {
+                                                const next = { ...optionValues };
+                                                delete next[optId];
+                                                optionValues = next;
+                                            }}
+                                        >
+                                            {$t("checkers.detail.reset-to-inherited")}
+                                        </Button>
+                                    </div>
+                                {/if}
+                            </div>
                         {/if}
                     {/each}
                 </Form>
@@ -187,10 +223,11 @@
                     opts: autoFillOpts,
                 },
             ]}
+            optionValues={inheritedValues}
         />
     {/if}
 
-    <CheckerOptionsGroups groups={readOnlyGroups} />
+    <CheckerOptionsGroups groups={readOnlyGroups} optionValues={inheritedValues} />
 
     {#if !hasAnyOpts}
         <Card>
