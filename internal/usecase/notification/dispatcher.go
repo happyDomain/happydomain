@@ -22,6 +22,7 @@
 package notification
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
 	"time"
@@ -121,13 +122,13 @@ func (d *Dispatcher) OnExecutionComplete(exec *happydns.Execution, eval *happydn
 		return
 	}
 
-	payload := d.buildPayload(user, exec, eval, oldStatus, newStatus)
+	basePayload := d.buildPayload(user, exec, eval, oldStatus, newStatus)
 
 	// Mark before enqueue so a rapid re-run sees oldStatus == newStatus and skips.
 	d.markNotified(state, newStatus)
 
 	for _, ch := range d.resolver.ResolveChannels(user, pref) {
-		d.pool.Enqueue(ch, payload, user)
+		d.pool.Enqueue(ch, d.payloadForChannel(basePayload, ch), user)
 	}
 }
 
@@ -146,6 +147,21 @@ func (d *Dispatcher) loadOrInitState(exec *happydns.Execution, userId happydns.I
 		return nil, err
 	}
 	return state, nil
+}
+
+// For email channels with a custom address, returns a copy of the payload with Recipient.Email
+// set to that address; otherwise returns base unchanged (safe to share across goroutines).
+func (d *Dispatcher) payloadForChannel(base *notifPkg.NotificationPayload, ch *happydns.NotificationChannel) *notifPkg.NotificationPayload {
+	if ch.Type != notifPkg.ChannelTypeEmail {
+		return base
+	}
+	var cfg notifPkg.EmailConfig
+	if err := json.Unmarshal(ch.Config, &cfg); err != nil || cfg.Address == "" {
+		return base
+	}
+	p := *base
+	p.Recipient.Email = cfg.Address
+	return &p
 }
 
 func (d *Dispatcher) buildPayload(user *happydns.User, exec *happydns.Execution, eval *happydns.CheckEvaluation, oldStatus, newStatus happydns.Status) *notifPkg.NotificationPayload {
