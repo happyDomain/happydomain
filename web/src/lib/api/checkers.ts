@@ -110,25 +110,34 @@ export async function updateCheckOptions(
 // Scope-aware helpers
 
 export interface CheckerScope {
-    domainId: string;
+    /** Omit to target the admin (global) scope. */
+    domainId?: string;
     zoneId?: string;
     subdomain?: string;
     serviceId?: string;
 }
 
-function isServiceScope(scope: CheckerScope): scope is CheckerScope & { zoneId: string; subdomain: string; serviceId: string } {
-    return !!(scope.zoneId && scope.subdomain !== undefined && scope.serviceId);
+function isServiceScope(scope: CheckerScope): scope is CheckerScope & { domainId: string; zoneId: string; subdomain: string; serviceId: string } {
+    return !!(scope.domainId && scope.zoneId && scope.subdomain !== undefined && scope.serviceId);
 }
 
-// getScopedCheckStatus returns the HappydnsCheckerStatus for a single
-// checker at the given target scope, or undefined if the checker is not
-// available there. Unlike getCheckStatus (which hits the static global
-// /checkers/{id} route), this carries plan, enabledRules and
-// precheckFailures populated against the effective options.
+function isAdminScope(scope: CheckerScope): boolean {
+    return !scope.domainId;
+}
+
+// getScopedCheckStatus returns the checker status for a single checker at
+// the given target scope, or undefined if the checker is not available there.
+// For admin scope (no domainId), returns CheckerCheckerDefinition from the
+// global /checkers/{id} route; for domain/service scopes, returns
+// HappydnsCheckerStatus (which also carries plan, enabledRules and
+// precheckFailures populated against effective options).
 export async function getScopedCheckStatus(
     scope: CheckerScope,
     checkerId: string,
-): Promise<HappydnsCheckerStatus | undefined> {
+): Promise<HappydnsCheckerStatus | CheckerCheckerDefinition | undefined> {
+    if (isAdminScope(scope)) {
+        try { return await getCheckStatus(checkerId); } catch { return undefined; }
+    }
     const list = await listScopedCheckers(scope);
     return list.find((s) => s.id === checkerId);
 }
@@ -144,7 +153,7 @@ export async function listScopedCheckers(
         ) as HappydnsCheckerStatus[]) ?? [];
     }
     return (unwrapSdkResponse(
-        await getDomainsByDomainCheckers({ path: { domain: scope.domainId } }),
+        await getDomainsByDomainCheckers({ path: { domain: scope.domainId! } }),
     ) as HappydnsCheckerStatus[]) ?? [];
 }
 
@@ -167,7 +176,7 @@ export async function listScopedExecutions(
     }
     return (unwrapSdkResponse(
         await getDomainsByDomainCheckersByCheckerIdExecutions({
-            path: { domain: scope.domainId, checkerId },
+            path: { domain: scope.domainId!, checkerId },
             query,
         }),
     ) as HappydnsExecution[]) ?? [];
@@ -188,7 +197,7 @@ export async function triggerScopedCheck(
     }
     return unwrapSdkResponse(
         await postDomainsByDomainCheckersByCheckerIdExecutions({
-            path: { domain: scope.domainId, checkerId },
+            path: { domain: scope.domainId!, checkerId },
             body: request,
         }),
     ) as HappydnsExecution;
@@ -208,7 +217,7 @@ export async function getScopedExecution(
     }
     return unwrapSdkResponse(
         await getDomainsByDomainCheckersByCheckerIdExecutionsByExecutionId({
-            path: { domain: scope.domainId, checkerId, executionId },
+            path: { domain: scope.domainId!, checkerId, executionId },
         }),
     ) as HappydnsExecution;
 }
@@ -227,7 +236,7 @@ export async function deleteScopedExecution(
     }
     return unwrapEmptyResponse(
         await deleteDomainsByDomainCheckersByCheckerIdExecutionsByExecutionId({
-            path: { domain: scope.domainId, checkerId, executionId },
+            path: { domain: scope.domainId!, checkerId, executionId },
         }),
     );
 }
@@ -245,7 +254,7 @@ export async function deleteAllScopedExecutions(
     }
     return unwrapEmptyResponse(
         await deleteDomainsByDomainCheckersByCheckerIdExecutions({
-            path: { domain: scope.domainId, checkerId },
+            path: { domain: scope.domainId!, checkerId },
         }),
     );
 }
@@ -264,7 +273,7 @@ export async function getScopedExecutionResults(
     }
     return unwrapSdkResponse(
         await getDomainsByDomainCheckersByCheckerIdExecutionsByExecutionIdResults({
-            path: { domain: scope.domainId, checkerId, executionId },
+            path: { domain: scope.domainId!, checkerId, executionId },
         }),
     ) as HappydnsCheckEvaluation;
 }
@@ -283,7 +292,7 @@ export async function getScopedExecutionObservations(
     }
     return unwrapSdkResponse(
         await getDomainsByDomainCheckersByCheckerIdExecutionsByExecutionIdObservations({
-            path: { domain: scope.domainId, checkerId, executionId },
+            path: { domain: scope.domainId!, checkerId, executionId },
         }),
     ) as ObservationSnapshotWithData;
 }
@@ -292,6 +301,9 @@ export async function getScopedCheckOptions(
     scope: CheckerScope,
     checkerId: string,
 ): Promise<HappydnsCheckerOptionsPositional[]> {
+    if (isAdminScope(scope)) {
+        return getCheckOptions(checkerId);
+    }
     if (isServiceScope(scope)) {
         return (unwrapSdkResponse(
             await getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdOptions({
@@ -301,7 +313,7 @@ export async function getScopedCheckOptions(
     }
     return (unwrapSdkResponse(
         await getDomainsByDomainCheckersByCheckerIdOptions({
-            path: { domain: scope.domainId, checkerId },
+            path: { domain: scope.domainId!, checkerId },
         }),
     ) as HappydnsCheckerOptionsPositional[]) ?? [];
 }
@@ -311,6 +323,9 @@ export async function updateScopedCheckOptions(
     checkerId: string,
     options: HappydnsCheckerOptions,
 ): Promise<HappydnsCheckerOptions> {
+    if (isAdminScope(scope)) {
+        return updateCheckOptions(checkerId, options);
+    }
     if (isServiceScope(scope)) {
         return unwrapSdkResponse(
             await putDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdOptions({
@@ -321,7 +336,7 @@ export async function updateScopedCheckOptions(
     }
     return unwrapSdkResponse(
         await putDomainsByDomainCheckersByCheckerIdOptions({
-            path: { domain: scope.domainId, checkerId },
+            path: { domain: scope.domainId!, checkerId },
             body: options,
         }),
     ) as HappydnsCheckerOptions;
@@ -340,7 +355,7 @@ export async function getScopedCheckPlans(
     }
     return (unwrapSdkResponse(
         await getDomainsByDomainCheckersByCheckerIdPlans({
-            path: { domain: scope.domainId, checkerId },
+            path: { domain: scope.domainId!, checkerId },
         }),
     ) as HappydnsCheckPlan[]) ?? [];
 }
@@ -360,7 +375,7 @@ export async function createScopedCheckPlan(
     }
     return unwrapSdkResponse(
         await postDomainsByDomainCheckersByCheckerIdPlans({
-            path: { domain: scope.domainId, checkerId },
+            path: { domain: scope.domainId!, checkerId },
             body: plan as HappydnsCheckPlanWritable,
         }),
     ) as HappydnsCheckPlan;
@@ -382,7 +397,7 @@ export async function updateScopedCheckPlan(
     }
     return unwrapSdkResponse(
         await putDomainsByDomainCheckersByCheckerIdPlansByPlanId({
-            path: { domain: scope.domainId, checkerId, planId },
+            path: { domain: scope.domainId!, checkerId, planId },
             body: plan as HappydnsCheckPlanWritable,
         }),
     ) as HappydnsCheckPlan;
@@ -407,7 +422,7 @@ export async function getScopedCheckerMetrics(
     }
     return unwrapSdkResponse(
         await getDomainsByDomainCheckersByCheckerIdMetrics({
-            path: { domain: scope.domainId, checkerId },
+            path: { domain: scope.domainId!, checkerId },
             query: { limit },
         }),
     ) as CheckMetric[];
@@ -427,7 +442,7 @@ export async function getScopedExecutionMetrics(
     }
     return unwrapSdkResponse(
         await getDomainsByDomainCheckersByCheckerIdExecutionsByExecutionIdMetrics({
-            path: { domain: scope.domainId, checkerId, executionId },
+            path: { domain: scope.domainId!, checkerId, executionId },
         }),
     ) as CheckMetric[];
 }
@@ -449,7 +464,7 @@ export async function getScopedExecutionHTMLReport(
     }
     return unwrapSdkResponse(
         await getDomainsByDomainCheckersByCheckerIdExecutionsByExecutionIdObservationsByObsKeyReport({
-            path: { domain: scope.domainId, checkerId, executionId, obsKey },
+            path: { domain: scope.domainId!, checkerId, executionId, obsKey },
         }),
     ) as string;
 }
