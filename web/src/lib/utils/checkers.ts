@@ -111,6 +111,7 @@ interface OptionDocGroup {
     adminOpts?: CheckerCheckerOptionDocumentation[];
     userOpts?: CheckerCheckerOptionDocumentation[];
     domainOpts?: CheckerCheckerOptionDocumentation[];
+    serviceOpts?: CheckerCheckerOptionDocumentation[];
 }
 
 interface CheckerWithOptions {
@@ -126,13 +127,79 @@ export function collectAllOptionDocs(
         ...(status.options?.adminOpts || []),
         ...(status.options?.userOpts || []),
         ...(status.options?.domainOpts || []),
+        ...(status.options?.serviceOpts || []),
         ...(status.rules || []).flatMap((r) => [
             ...(r.options?.runOpts || []),
             ...(r.options?.adminOpts || []),
             ...(r.options?.userOpts || []),
             ...(r.options?.domainOpts || []),
+            ...(r.options?.serviceOpts || []),
         ]),
     ].filter((o) => !o.noOverride);
+}
+
+// CheckerPageScope identifies which scope a configuration page targets. It
+// drives the editable/read-only split of the checker's option groups.
+//
+// Semantics (matching the existing per-route layouts):
+//   - "admin":   broadest. User/admin groups are editable; domain/service/run
+//                are read-only (set by deeper pages or at trigger time).
+//   - "domain":  domain/user/admin editable; service/run read-only.
+//   - "service": domain/service/user/admin editable; run read-only.
+export type CheckerPageScope = "admin" | "domain" | "service";
+
+export interface OptionGroup {
+    label: string;
+    opts: CheckerCheckerOptionDocumentation[];
+}
+
+export interface KeyedOptionGroup extends OptionGroup {
+    key: string;
+}
+
+// buildOptionGroupLayout derives the editable / read-only group lists from
+// the checker's option documentation and the page's scope. Replaces the
+// per-route hand-curated arrays so the scope → groups mapping lives in one
+// place. Groups with no fields are omitted.
+export function buildOptionGroupLayout(
+    status: CheckerWithOptions | null | undefined,
+    scope: CheckerPageScope,
+    t: (key: string) => string,
+): { editableGroups: OptionGroup[]; readOnlyGroups: KeyedOptionGroup[] } {
+    const opts = status?.options ?? {};
+
+    // Each entry pairs a group key with how the page should label it.
+    const definitions: { key: "domainOpts" | "serviceOpts" | "userOpts" | "adminOpts" | "runOpts"; labelKey: string }[] = [
+        { key: "domainOpts",  labelKey: "checkers.option-groups.domain-settings" },
+        { key: "serviceOpts", labelKey: "checkers.option-groups.service-settings" },
+        { key: "userOpts",    labelKey: "checkers.detail.configuration" },
+        { key: "adminOpts",   labelKey: "checkers.detail.admin-options" },
+        { key: "runOpts",     labelKey: "checkers.option-groups.checker-parameters" },
+    ];
+
+    // Per-scope group classification. Keys not listed are omitted entirely.
+    const layout: Record<CheckerPageScope, { editable: string[]; readOnly: string[] }> = {
+        admin:   { editable: ["userOpts", "adminOpts"],                            readOnly: ["domainOpts", "serviceOpts", "runOpts"] },
+        domain:  { editable: ["domainOpts", "userOpts", "adminOpts"],              readOnly: ["serviceOpts", "runOpts"] },
+        service: { editable: ["domainOpts", "serviceOpts", "userOpts", "adminOpts"], readOnly: ["runOpts"] },
+    };
+
+    const byKey = new Map(definitions.map((d) => [d.key, d]));
+    const editableGroups: OptionGroup[] = [];
+    const readOnlyGroups: KeyedOptionGroup[] = [];
+
+    for (const key of layout[scope].editable) {
+        const def = byKey.get(key as any);
+        if (!def) continue;
+        editableGroups.push({ label: t(def.labelKey), opts: opts[def.key] || [] });
+    }
+    for (const key of layout[scope].readOnly) {
+        const def = byKey.get(key as any);
+        if (!def) continue;
+        readOnlyGroups.push({ key: def.key, label: t(def.labelKey), opts: opts[def.key] || [] });
+    }
+
+    return { editableGroups, readOnlyGroups };
 }
 
 // splitPositionalOptions separates the user-editable "current scope" options
@@ -144,17 +211,34 @@ export function collectAllOptionDocs(
 // `inherited` and saving the form sends nil overrides). Callers pass the set
 // of auto-fill option ids derived from the option documentation so we can
 // drop that positional.
+//
+// isCurrentScope, when provided, identifies which positional belongs to the
+// page's target scope. If no matching positional exists (nothing has been
+// saved at this scope yet), current is empty and all stored values are
+// inherited. Without this predicate the last stored entry is assumed current,
+// which causes broader-scope values to masquerade as local overrides.
 export function splitPositionalOptions(
-    positionals: { options?: Record<string, unknown> | null }[],
+    positionals: { options?: Record<string, unknown> | null; domainId?: unknown; serviceId?: unknown }[],
     autoFillKeys: Set<string> = new Set(),
+    isCurrentScope: (p: { domainId?: unknown; serviceId?: unknown }) => boolean = () => false,
 ): { current: Record<string, unknown>; inherited: Record<string, unknown> } {
     const stored = positionals.filter((p) => {
         const keys = Object.keys(p.options ?? {});
         return keys.length === 0 || keys.some((k) => !autoFillKeys.has(k));
     });
-    const current = stored.length > 0 ? (stored[stored.length - 1]?.options ?? {}) : {};
+
+    let currentIdx = -1;
+    for (let i = stored.length - 1; i >= 0; i--) {
+        if (isCurrentScope(stored[i])) {
+            currentIdx = i;
+            break;
+        }
+    }
+
+    const current = currentIdx >= 0 ? (stored[currentIdx]?.options ?? {}) : {};
     const inherited: Record<string, unknown> = {};
-    for (let i = 0; i < stored.length - 1; i++) {
+    for (let i = 0; i < stored.length; i++) {
+        if (i === currentIdx) continue;
         for (const [k, v] of Object.entries(stored[i].options ?? {})) {
             inherited[k] = v;
         }
@@ -180,6 +264,7 @@ export function collectAutoFillKeys(status: CheckerWithOptions): Set<string> {
         addAll(r.options?.adminOpts);
         addAll(r.options?.userOpts);
         addAll(r.options?.domainOpts);
+        addAll(r.options?.serviceOpts);
     });
     return keys;
 }
