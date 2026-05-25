@@ -22,7 +22,6 @@
 package middleware
 
 import (
-	"bytes"
 	"encoding/base64"
 	"fmt"
 	"log"
@@ -74,7 +73,7 @@ func SameUserHandler(c *gin.Context) {
 	myuser := c.MustGet("LoggedUser").(*happydns.User)
 	user := c.MustGet("user").(*happydns.User)
 
-	if !bytes.Equal(user.Id, myuser.Id) {
+	if !user.Id.Equals(myuser.Id) {
 		log.Printf("%s: tries to do action as %s (logged %s)", c.ClientIP(), myuser.Id.String(), user.Id.String())
 		c.AbortWithStatusJSON(http.StatusForbidden, happydns.ErrorResponse{Message: "Not authorized"})
 		return

@@ -22,7 +22,6 @@
 package database
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 
@@ -52,7 +51,7 @@ func (s *KVStorage) ListDomains(u *happydns.User) (domains []*happydns.Domain, e
 			return
 		}
 
-		if bytes.Equal(z.Owner, u.Id) {
+		if z.Owner.Equals(u.Id) {
 			domains = append(domains, &z)
 		}
 	}

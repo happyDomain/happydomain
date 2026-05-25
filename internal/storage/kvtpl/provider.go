@@ -22,7 +22,6 @@
 package database
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 
@@ -56,7 +55,7 @@ func (s *KVStorage) ListProviders(u *happydns.User) (srcs happydns.ProviderMessa
 
 	for iter.Next() {
 		srcMsg := iter.Item()
-		if !bytes.Equal(srcMsg.Owner, u.Id) {
+		if !srcMsg.Owner.Equals(u.Id) {
 			continue
 		}
 

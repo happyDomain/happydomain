@@ -22,7 +22,6 @@
 package controller
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"net/http"
@@ -63,7 +62,7 @@ func (uc *UserController) GetUser(c *gin.Context) {
 	myuser := c.MustGet("LoggedUser").(*happydns.User)
 	user := c.MustGet("user").(*happydns.User)
 
-	if bytes.Equal(user.Id, myuser.Id) {
+	if user.Id.Equals(myuser.Id) {
 		c.JSON(http.StatusOK, user)
 	} else {
 		c.JSON(http.StatusOK, &happydns.User{

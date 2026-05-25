@@ -22,7 +22,6 @@
 package happydns
 
 import (
-	"bytes"
 	"fmt"
 	"time"
 )
@@ -141,7 +140,7 @@ func (z *Zone) FindSubdomainService(subdomain Subdomain, id []byte) (int, *Servi
 
 	if services, ok := z.Services[subdomain]; ok {
 		for k, svc := range services {
-			if bytes.Equal(svc.Id, id) {
+			if svc.Id.Equals(id) {
 				return k, svc
 			}
 		}
