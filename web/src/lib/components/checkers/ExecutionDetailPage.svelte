@@ -23,7 +23,7 @@
 
 <script lang="ts">
     import { onDestroy } from "svelte";
-    import { Alert, Card, Container, Icon } from "@sveltestrap/sveltestrap";
+    import { Alert, Container, Icon } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
     import type { CheckerScope, CheckMetric } from "$lib/api/checkers";

@@ -706,6 +706,28 @@ $carousel-caption-color-dark: $hd-dark-fg-1;
 
 $theme-colors: map-merge($theme-colors, $custom-theme-colors);
 
+// .min-w-0 and .min-h-0 let a flex item shrink below its content, to
+// truncate it or to scroll it.
+$utilities: map-merge(
+    $utilities,
+    (
+        "min-width": (
+            property: min-width,
+            class: min-w,
+            values: (
+                0: 0,
+            ),
+        ),
+        "min-height": (
+            property: min-height,
+            class: min-h,
+            values: (
+                0: 0,
+            ),
+        ),
+    )
+);
+
 @import "bootstrap/scss/bootstrap";
 
 // ─────────────────────────────────────────────────────────────────────────────
