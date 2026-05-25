@@ -23,7 +23,7 @@
 
 <script lang="ts">
     import { onDestroy } from "svelte";
-    import { Alert, Card, Container, Icon } from "@sveltestrap/sveltestrap";
+    import { Alert, Container, Icon } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
     import type { CheckerScope, CheckMetric } from "$lib/api/checkers";
@@ -216,7 +216,7 @@
         </Alert>
     </Container>
 {:else if $reportViewMode === "rules" && evaluationData}
-    <Container class="flex-fill d-flex flex-column mt-3">
+    <Container class="flex-fill d-flex flex-column">
         <ExecutionResultsCard evaluation={evaluationData} />
     </Container>
 {:else if $currentObservations}
