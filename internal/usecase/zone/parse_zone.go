@@ -41,7 +41,7 @@ func ParseZone(msg *happydns.ZoneMessage) (*happydns.Zone, error) {
 		for _, svc := range svcs {
 			s, err := serviceUC.ParseService(svc)
 			if err != nil {
-				return nil, fmt.Errorf("under %q, unable to parse service %q: %w", subdn, svc, err)
+				return nil, fmt.Errorf("under %q, unable to parse service %v: %w", subdn, svc, err)
 			}
 
 			z.Services[subdn] = append(z.Services[subdn], s)
