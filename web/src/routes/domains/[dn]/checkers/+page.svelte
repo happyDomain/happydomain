@@ -27,21 +27,16 @@
     import { t } from "$lib/translations";
     import type { Domain } from "$lib/model/domain";
     import { domainLink } from "$lib/stores/domains";
-    import { checkers } from "$lib/stores/checkers";
-    import { buildOptionGroupLayout } from "$lib/utils";
-    import CheckerConfigPage from "$lib/components/checkers/CheckerConfigPage.svelte";
+    import CheckerListPage from "$lib/components/checkers/CheckerListPage.svelte";
 
     let domain: Domain = $derived(page.data.domain);
-    let checkerId = $derived(page.params.checkerId!);
-    let checksBase = $derived(`/domains/${domainLink(domain.id)}/checks`);
-    let isDomainChecker = $derived(!!$checkers?.[checkerId]?.availability?.applyToDomain);
+    let checksBase = $derived(`/domains/${domainLink(domain.id)}/checkers`);
 </script>
 
-<CheckerConfigPage
+<CheckerListPage
     scope={{ domainId: domain.id }}
     {checksBase}
-    {checkerId}
+    title={$t("checkers.list.title") + domain.domain}
     domainName={domain.domain}
-    showSchedule={isDomainChecker}
-    groups={(status) => buildOptionGroupLayout(status, "domain", $t)}
+    filterAvailability="applyToDomain"
 />

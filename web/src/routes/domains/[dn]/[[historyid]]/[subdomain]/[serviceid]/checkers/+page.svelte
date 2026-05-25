@@ -24,24 +24,25 @@
 <script lang="ts">
     import { page } from "$app/state";
 
+    import { t } from "$lib/translations";
     import type { Domain } from "$lib/model/domain";
     import { fqdn } from "$lib/dns";
     import { domainLink } from "$lib/stores/domains";
-    import ExecutionListPage from "$lib/components/checkers/ExecutionListPage.svelte";
+    import CheckerListPage from "$lib/components/checkers/CheckerListPage.svelte";
 
     let domain: Domain = $derived(page.data.domain);
     let zoneId: string = $derived(page.data.zoneId);
     let subdomain: string = $derived(page.data.subdomain);
     let serviceid: string = $derived(page.data.serviceid);
-    let checkerId = $derived(page.params.checkerId!);
     let checksBase = $derived(
-        `/domains/${domainLink(domain.id)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(page.params.subdomain!)}/${encodeURIComponent(serviceid)}/checks`,
+        `/domains/${domainLink(domain.id)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(page.params.subdomain!)}/${encodeURIComponent(serviceid)}/checkers`,
     );
 </script>
 
-<ExecutionListPage
+<CheckerListPage
     scope={{ domainId: domain.id, zoneId, subdomain, serviceId: serviceid }}
     {checksBase}
-    {checkerId}
+    title={$t("checkers.list.title") + fqdn(subdomain, domain.domain)}
     domainName={fqdn(subdomain, domain.domain)}
+    filterAvailability="applyToService"
 />

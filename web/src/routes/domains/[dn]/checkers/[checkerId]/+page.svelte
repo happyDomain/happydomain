@@ -26,25 +26,22 @@
 
     import { t } from "$lib/translations";
     import type { Domain } from "$lib/model/domain";
-    import { fqdn } from "$lib/dns";
     import { domainLink } from "$lib/stores/domains";
+    import { checkers } from "$lib/stores/checkers";
     import { buildOptionGroupLayout } from "$lib/utils";
     import CheckerConfigPage from "$lib/components/checkers/CheckerConfigPage.svelte";
 
     let domain: Domain = $derived(page.data.domain);
-    let zoneId: string = $derived(page.data.zoneId);
-    let subdomain: string = $derived(page.data.subdomain);
-    let serviceid: string = $derived(page.data.serviceid);
     let checkerId = $derived(page.params.checkerId!);
-    let checksBase = $derived(
-        `/domains/${domainLink(domain.id)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(page.params.subdomain!)}/${encodeURIComponent(serviceid)}/checks`,
-    );
+    let checksBase = $derived(`/domains/${domainLink(domain.id)}/checkers`);
+    let isDomainChecker = $derived(!!$checkers?.[checkerId]?.availability?.applyToDomain);
 </script>
 
 <CheckerConfigPage
-    scope={{ domainId: domain.id, zoneId, subdomain, serviceId: serviceid }}
+    scope={{ domainId: domain.id }}
     {checksBase}
     {checkerId}
-    domainName={fqdn(subdomain, domain.domain)}
-    groups={(status) => buildOptionGroupLayout(status, "service", $t)}
+    domainName={domain.domain}
+    showSchedule={isDomainChecker}
+    groups={(status) => buildOptionGroupLayout(status, "domain", $t)}
 />

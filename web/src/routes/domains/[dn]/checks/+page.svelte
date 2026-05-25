@@ -26,17 +26,13 @@
 
     import { t } from "$lib/translations";
     import type { Domain } from "$lib/model/domain";
-    import { domainLink } from "$lib/stores/domains";
-    import CheckerListPage from "$lib/components/checkers/CheckerListPage.svelte";
+    import CheckResultsDashboard from "$lib/components/checkers/CheckResultsDashboard.svelte";
 
     let domain: Domain = $derived(page.data.domain);
-    let checksBase = $derived(`/domains/${domainLink(domain.id)}/checks`);
 </script>
 
-<CheckerListPage
-    scope={{ domainId: domain.id }}
-    {checksBase}
-    title={$t("checkers.list.title") + domain.domain}
+<CheckResultsDashboard
+    domainId={domain.id}
     domainName={domain.domain}
-    filterAvailability="applyToDomain"
+    title={$t("checkers.list.title") + domain.domain}
 />

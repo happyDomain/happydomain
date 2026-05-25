@@ -762,6 +762,7 @@
             "loading": "Loading checkers...",
             "no-checks": "No checks available for this domain.",
             "view-results": "View Results",
+            "history": "History",
             "prometheus-metrics": "Prometheus Metrics",
             "prometheus-metrics-copied": "Prometheus metrics URL copied to clipboard",
             "prometheus-metrics-copy-failed": "Failed to copy Prometheus metrics URL: {{error}}",

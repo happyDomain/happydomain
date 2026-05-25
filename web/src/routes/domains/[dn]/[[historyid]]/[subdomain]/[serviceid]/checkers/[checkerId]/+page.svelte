@@ -27,23 +27,24 @@
     import { t } from "$lib/translations";
     import type { Domain } from "$lib/model/domain";
     import { fqdn } from "$lib/dns";
-    import CheckResultsDashboard from "$lib/components/checkers/CheckResultsDashboard.svelte";
+    import { domainLink } from "$lib/stores/domains";
+    import { buildOptionGroupLayout } from "$lib/utils";
+    import CheckerConfigPage from "$lib/components/checkers/CheckerConfigPage.svelte";
 
     let domain: Domain = $derived(page.data.domain);
     let zoneId: string = $derived(page.data.zoneId);
     let subdomain: string = $derived(page.data.subdomain);
     let serviceid: string = $derived(page.data.serviceid);
-    let label = $derived(fqdn(subdomain, domain.domain));
+    let checkerId = $derived(page.params.checkerId!);
+    let checksBase = $derived(
+        `/domains/${domainLink(domain.id)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(page.params.subdomain!)}/${encodeURIComponent(serviceid)}/checkers`,
+    );
 </script>
 
-<CheckResultsDashboard
-    domainId={domain.id}
-    domainName={label}
-    title={$t("checkers.list.title") + label}
-    serviceTarget={{
-        zoneId,
-        subdomain: page.params.subdomain ?? subdomain,
-        serviceId: serviceid,
-        serviceLabel: label,
-    }}
+<CheckerConfigPage
+    scope={{ domainId: domain.id, zoneId, subdomain, serviceId: serviceid }}
+    {checksBase}
+    {checkerId}
+    domainName={fqdn(subdomain, domain.domain)}
+    groups={(status) => buildOptionGroupLayout(status, "service", $t)}
 />

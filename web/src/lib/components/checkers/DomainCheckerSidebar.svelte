@@ -47,7 +47,7 @@
     }: Props = $props();
 
     let checksBase = $derived(
-        checksBaseProp ?? `/domains/${encodeURIComponent(domainName)}/checks`,
+        checksBaseProp ?? `/domains/${encodeURIComponent(domainName)}/checkers`,
     );
     let onResults = $derived(page.route.id?.includes("/executions") === true && !page.params.execId);
 

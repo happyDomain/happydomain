@@ -60,9 +60,11 @@
                 "/domains/" +
                     encodeURIComponent(domainLink(dn)) +
                     (page.route.id
-                        ? page.route.id.startsWith("/domains/[dn]/checks")
-                            ? "/checks"
-                            : page.route.id.startsWith("/domains/[dn]/logs")
+                        ? page.route.id.startsWith("/domains/[dn]/checkers")
+                            ? "/checkers"
+                            : page.route.id.startsWith("/domains/[dn]/checks")
+                              ? "/checks"
+                              : page.route.id.startsWith("/domains/[dn]/logs")
                               ? "/logs"
                               : page.route.id.startsWith("/domains/[dn]/history")
                                 ? "/history"
@@ -161,15 +163,15 @@
                 </div>
 
                 <!-- Main content: routed sidebar (scrolls along with the Col itself) -->
-                {#if page.route.id && page.route.id.startsWith("/domains/[dn]/checks")}
+                {#if page.route.id && page.route.id.startsWith("/domains/[dn]/checkers")}
                     <ChecksSidebarContent
                         domain={data.domain}
                         checksBase={"/domains/" +
                             encodeURIComponent(domainLink(selectedDomain)) +
-                            "/checks"}
+                            "/checkers"}
                         backHref={"/domains/" + encodeURIComponent(domainLink(selectedDomain))}
                     />
-                {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
+                {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/checks") || page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
                     <a
                         href="/domains/{encodeURIComponent(domainLink(selectedDomain))}"
                         class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
@@ -178,6 +180,21 @@
                         {$t("zones.return-to")}
                     </a>
                 {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checks")}
+                    <a
+                        href={"/domains/" +
+                            encodeURIComponent(domainLink(selectedDomain)) +
+                            "/" +
+                            encodeURIComponent(page.data.history ?? "") +
+                            "/" +
+                            encodeURIComponent(page.params.subdomain ?? "") +
+                            "/" +
+                            encodeURIComponent(page.data.serviceid ?? "")}
+                        class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
+                    >
+                        <Icon name="chevron-left" />
+                        {$t("zones.return-to")}
+                    </a>
+                {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checkers")}
                     <ChecksSidebarContent
                         domain={data.domain}
                         checksBase={"/domains/" +
@@ -188,7 +205,7 @@
                             encodeURIComponent(page.params.subdomain ?? "") +
                             "/" +
                             encodeURIComponent(page.data.serviceid ?? "") +
-                            "/checks"}
+                            "/checkers"}
                         backHref={"/domains/" +
                             encodeURIComponent(domainLink(selectedDomain)) +
                             "/" +
@@ -261,9 +278,9 @@
         <div
             class="col-sm-8 col-md-9 d-flex"
             class:p-0={page.route &&
-                (page.route.id == "/domains/[dn]/checks/[checkerId]/executions/[execId]" ||
+                (page.route.id == "/domains/[dn]/checkers/[checkerId]/executions/[execId]" ||
                     page.route.id ==
-                        "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checks/[checkerId]/executions/[execId]")}
+                        "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checkers/[checkerId]/executions/[execId]")}
         >
             {@render children?.()}
         </div>

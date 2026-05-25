@@ -24,26 +24,18 @@
 <script lang="ts">
     import { page } from "$app/state";
 
-    import { t } from "$lib/translations";
     import type { Domain } from "$lib/model/domain";
-    import { fqdn } from "$lib/dns";
-    import CheckResultsDashboard from "$lib/components/checkers/CheckResultsDashboard.svelte";
+    import { domainLink } from "$lib/stores/domains";
+    import ExecutionListPage from "$lib/components/checkers/ExecutionListPage.svelte";
 
     let domain: Domain = $derived(page.data.domain);
-    let zoneId: string = $derived(page.data.zoneId);
-    let subdomain: string = $derived(page.data.subdomain);
-    let serviceid: string = $derived(page.data.serviceid);
-    let label = $derived(fqdn(subdomain, domain.domain));
+    let checkerId = $derived(page.params.checkerId!);
+    let checksBase = $derived(`/domains/${domainLink(domain.id)}/checkers`);
 </script>
 
-<CheckResultsDashboard
-    domainId={domain.id}
-    domainName={label}
-    title={$t("checkers.list.title") + label}
-    serviceTarget={{
-        zoneId,
-        subdomain: page.params.subdomain ?? subdomain,
-        serviceId: serviceid,
-        serviceLabel: label,
-    }}
+<ExecutionListPage
+    scope={{ domainId: domain.id }}
+    {checksBase}
+    {checkerId}
+    domainName={domain.domain}
 />
