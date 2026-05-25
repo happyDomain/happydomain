@@ -28,8 +28,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/StackExchange/dnscontrol/v4/models"
-	dnscontrol "github.com/StackExchange/dnscontrol/v4/pkg/providers"
+	"github.com/DNSControl/dnscontrol/v4/models"
+	dnscontrol "github.com/DNSControl/dnscontrol/v4/pkg/providers"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/metrics"
@@ -217,7 +217,7 @@ func (p *DNSControlAdapterNSProvider) GetZoneRecords(domain string) (ret []happy
 		}
 	}()
 
-	records, err = p.DNSServiceProvider.GetZoneRecords(strings.TrimSuffix(domain, "."), nil)
+	records, err = p.DNSServiceProvider.GetZoneRecords(&models.DomainConfig{Name: strings.TrimSuffix(domain, ".")})
 	if err != nil {
 		return
 	}
@@ -262,7 +262,7 @@ func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []ha
 
 	// Retrieve current zone
 	var records models.Records
-	records, err = p.DNSServiceProvider.GetZoneRecords(strings.TrimSuffix(domain, "."), nil)
+	records, err = p.DNSServiceProvider.GetZoneRecords(dc)
 	if err != nil {
 		return nil, nbCorrections, err
 	}

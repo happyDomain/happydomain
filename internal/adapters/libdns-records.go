@@ -26,7 +26,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/StackExchange/dnscontrol/v4/pkg/txtutil"
+	"github.com/DNSControl/dnscontrol/v4/pkg/txtutil"
 	"github.com/libdns/libdns"
 	"github.com/miekg/dns"
 

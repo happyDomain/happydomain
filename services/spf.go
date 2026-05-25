@@ -27,7 +27,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"github.com/StackExchange/dnscontrol/v4/pkg/spflib"
+	"github.com/DNSControl/dnscontrol/v4/pkg/spflib"
 
 	"git.happydns.org/happyDomain/internal/helpers"
 	svc "git.happydns.org/happyDomain/internal/serviceanalyzer"

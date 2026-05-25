@@ -1,6 +1,6 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
-// Authors: Pirre-Olivier Mercier, et al.
+// Copyright (c) 2020-2026 happyDomain
+// Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
 // For commercial licensing, contact us at <contact@happydomain.org>.
@@ -22,40 +22,36 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	_ "github.com/DNSControl/dnscontrol/v4/providers/sakuracloud"
+	_ "github.com/DNSControl/dnscontrol/v4/providers/netbird"
 
 	"git.happydns.org/happyDomain/internal/adapters"
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 	"git.happydns.org/happyDomain/model"
 )
 
-type SakuraCloudAPI struct {
-	AccessToken       string `json:"access_token,omitempty" happydomain:"label=Access Token,placeholder=xxxxxxxx,required,description=Your access token"`
-	AccessTokenSecret string `json:"access_token_secret,omitempty" happydomain:"label=Access Token Secret,placeholder=xxxxxxxx,required,secret,description=Your secret"`
-	Endpoint          string `json:"endpoint,omitempty" happydomain:"label=Endpoint,placeholder=https://secure.sakura.ad.jp/cloud/zone/is1a/api/cloud/1.1,description=Any zone endpoint (as DNS service is independent of zone)"`
+type NetbirdAPI struct {
+	Token string `json:"token,omitempty" happydomain:"label=API Token,placeholder=xxxxxxxxxx,required,secret,description=NetBird API token from https://app.netbird.io/settings"`
 }
 
-func (s *SakuraCloudAPI) DNSControlName() string {
-	return "SAKURACLOUD"
+func (s *NetbirdAPI) DNSControlName() string {
+	return "NETBIRD"
 }
 
-func (s *SakuraCloudAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+func (s *NetbirdAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 	return adapter.NewDNSControlProviderAdapter(s)
 }
 
-func (s *SakuraCloudAPI) ToDNSControlConfig() (map[string]string, error) {
+func (s *NetbirdAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"access_token":        s.AccessToken,
-		"access_token_secret": s.AccessTokenSecret,
-		"endpoint":            s.Endpoint,
+		"token": s.Token,
 	}, nil
 }
 
 func init() {
 	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
-		return &SakuraCloudAPI{}
+		return &NetbirdAPI{}
 	}, happydns.ProviderInfos{
-		Name:        "Sakura Cloud",
-		Description: "Japanees Cloud Provider",
+		Name:        "NetBird",
+		Description: "Peer-to-peer DNS service for NetBird networks.",
 	}, providerReg.RegisterProvider)
 }

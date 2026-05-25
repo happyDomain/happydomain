@@ -28,8 +28,8 @@ import (
 	"errors"
 	"testing"
 
-	dnscontrolmodels "github.com/StackExchange/dnscontrol/v4/models"
-	dnscontrol "github.com/StackExchange/dnscontrol/v4/pkg/providers"
+	dnscontrolmodels "github.com/DNSControl/dnscontrol/v4/models"
+	dnscontrol "github.com/DNSControl/dnscontrol/v4/pkg/providers"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 
 	"git.happydns.org/happyDomain/internal/metrics"
@@ -39,9 +39,9 @@ import (
 
 // mockDNSProvider implements dnscontrol.DNSServiceProvider (i.e. models.DNSProvider).
 type mockDNSProvider struct {
-	getZoneRecordsErr    error
-	getZoneRecordsResult dnscontrolmodels.Records
-	correctionsErr       error
+	getZoneRecordsErr     error
+	getZoneRecordsResult  dnscontrolmodels.Records
+	correctionsErr        error
 	panicOnGetZoneRecords bool
 }
 
@@ -49,7 +49,7 @@ func (m *mockDNSProvider) GetNameservers(domain string) ([]*dnscontrolmodels.Nam
 	return nil, nil
 }
 
-func (m *mockDNSProvider) GetZoneRecords(domain string, meta map[string]string) (dnscontrolmodels.Records, error) {
+func (m *mockDNSProvider) GetZoneRecords(dc *dnscontrolmodels.DomainConfig) (dnscontrolmodels.Records, error) {
 	if m.panicOnGetZoneRecords {
 		panic("simulated provider panic")
 	}

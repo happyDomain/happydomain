@@ -22,7 +22,7 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	_ "github.com/StackExchange/dnscontrol/v4/providers/softlayer"
+	_ "github.com/DNSControl/dnscontrol/v4/providers/softlayer"
 
 	"git.happydns.org/happyDomain/internal/adapters"
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"

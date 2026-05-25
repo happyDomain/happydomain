@@ -25,12 +25,12 @@ import (
 	"crypto/sha256"
 	"strings"
 
-	dnscontrol "github.com/StackExchange/dnscontrol/v4/models"
-	"github.com/StackExchange/dnscontrol/v4/pkg/diff2"
-	"github.com/StackExchange/dnscontrol/v4/pkg/domaintags"
-	"github.com/StackExchange/dnscontrol/v4/pkg/dnsrr"
-	_ "github.com/StackExchange/dnscontrol/v4/pkg/rtype"
-	"github.com/StackExchange/dnscontrol/v4/pkg/rtypecontrol"
+	dnscontrol "github.com/DNSControl/dnscontrol/v4/models"
+	"github.com/DNSControl/dnscontrol/v4/pkg/diff2"
+	"github.com/DNSControl/dnscontrol/v4/pkg/dnsrr"
+	"github.com/DNSControl/dnscontrol/v4/pkg/domaintags"
+	_ "github.com/DNSControl/dnscontrol/v4/pkg/rtype"
+	"github.com/DNSControl/dnscontrol/v4/pkg/rtypecontrol"
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"

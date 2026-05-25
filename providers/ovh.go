@@ -24,7 +24,7 @@ package providers // import "git.happydns.org/happyDomain/providers"
 import (
 	"flag"
 
-	_ "github.com/StackExchange/dnscontrol/v4/providers/ovh"
+	_ "github.com/DNSControl/dnscontrol/v4/providers/ovh"
 
 	"git.happydns.org/happyDomain/internal/adapters"
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"

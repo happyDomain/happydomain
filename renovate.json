@@ -1,39 +1,39 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    ":approveMajorUpdates",
-    ":automergeBranch",
-    ":automergeStableNonMajor",
-    ":configMigration",
-    ":enableVulnerabilityAlerts",
-    ":maintainLockFilesWeekly",
-    "mergeConfidence:all-badges"
-  ],
-  "lockFileMaintenance": {
-    "automerge": true,
-    "automergeType": "pr"
-  },
-  "customManagers": [
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["/^\.drone\.yml$/"],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>[^\s]+)\s+- go install [^@]+@(?<currentValue>[^\s]+)"
-      ],
-      "datasourceTemplate": "{{datasource}}",
-      "depNameTemplate": "{{depName}}"
-    }
-  ],
-  "packageRules": [
-    {
-      "matchManagers": ["npm"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "enabled": false
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": [
+        "config:recommended",
+        ":approveMajorUpdates",
+        ":automergeBranch",
+        ":automergeStableNonMajor",
+        ":configMigration",
+        ":enableVulnerabilityAlerts",
+        ":maintainLockFilesWeekly",
+        "mergeConfidence:all-badges"
+    ],
+    "lockFileMaintenance": {
+        "automerge": true,
+        "automergeType": "pr"
     },
-    {
-      "matchPackageNames": ["github.com/StackExchange/dnscontrol/v[[:digit:]]"],
-      "enabled": false
-    }
-  ]
+    "customManagers": [
+        {
+            "customType": "regex",
+            "managerFilePatterns": ["/^\p.drone\.yml$/"],
+            "matchStrings": [
+                "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>[^\s]+)\s+- go install [^@]+@(?<currentValue>[^\s]+)"
+            ],
+            "datasourceTemplate": "{{datasource}}",
+            "depNameTemplate": "{{depName}}"
+        }
+    ],
+    "packageRules": [
+        {
+            "matchManagers": ["npm"],
+            "matchUpdateTypes": ["minor", "patch"],
+            "enabled": false
+        },
+        {
+            "matchPackageNames": ["github.com/DNSControl/dnscontrol/v[[:digit:]]"],
+            "enabled": false
+        }
+    ]
 }

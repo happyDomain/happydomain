@@ -25,7 +25,7 @@ import (
 	"encoding/base64"
 	"strings"
 
-	_ "github.com/StackExchange/dnscontrol/v4/providers/axfrddns"
+	_ "github.com/DNSControl/dnscontrol/v4/providers/axfrddns"
 
 	"git.happydns.org/happyDomain/internal/adapters"
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
