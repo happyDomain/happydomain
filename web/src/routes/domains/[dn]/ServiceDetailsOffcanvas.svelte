@@ -239,8 +239,16 @@
                                             check.id}
                                     </a>
                                     {#if check.latestExecution?.result}
-                                        <Badge color={getStatusColor(check.latestExecution.result.status)}>
-                                            {$t(getStatusI18nKey(check.latestExecution.result.status))}
+                                        <Badge
+                                            color={getStatusColor(
+                                                check.latestExecution.result.status,
+                                            )}
+                                        >
+                                            {$t(
+                                                getStatusI18nKey(
+                                                    check.latestExecution.result.status,
+                                                ),
+                                            )}
                                         </Badge>
                                     {:else}
                                         <Badge color="secondary">

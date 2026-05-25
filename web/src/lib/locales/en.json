@@ -730,6 +730,15 @@
             "rules": "Rules"
         },
         "never": "Never",
+        "dashboard": {
+            "critical": "critical",
+            "needs-attention": "need a look",
+            "need-a-look": "need a look",
+            "all-passing": "all passing",
+            "passing": "passing",
+            "no-message": "No message reported.",
+            "last-run-on": "Last run on {{date}}"
+        },
         "status": {
             "ok": "OK",
             "info": "Info",
@@ -747,6 +756,7 @@
             "no-checks": "No checks available for this domain.",
             "not-applicable": "Not applicable",
             "view-results": "View Results",
+            "view-details": "View Details",
             "history": "History",
             "prometheus-metrics": "Prometheus Metrics",
             "prometheus-metrics-copied": "Prometheus metrics URL copied to clipboard",
