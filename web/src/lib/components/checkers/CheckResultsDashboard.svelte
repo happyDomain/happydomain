@@ -26,12 +26,17 @@
     import { Alert, Card, Icon } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
-    import { listScopedCheckers, type CheckerScope } from "$lib/api/checkers";
+    import {
+        getScopedCheckerMetrics,
+        listScopedCheckers,
+        type CheckerScope,
+    } from "$lib/api/checkers";
     import type { HappydnsCheckerStatus, HappydnsStatus } from "$lib/api-base/types.gen";
     import { thisZone } from "$lib/stores/thiszone";
     import { fqdn } from "$lib/dns";
     import { formatCheckDate, getStatusI18nKey } from "$lib/utils";
     import { StatusCrit, StatusError, StatusWarn } from "$lib/utils/checkers";
+    import CheckMetricsChart from "./CheckMetricsChart.svelte";
     import PageTitle from "$lib/components/PageTitle.svelte";
 
     interface ServiceTarget {
@@ -43,6 +48,7 @@
     interface CheckerItem {
         status: HappydnsCheckerStatus;
         links: CheckerLinks;
+        scope: CheckerScope;
         chip?: string;
     }
 
@@ -147,6 +153,7 @@
             const items: CheckerItem[] = statuses.map((s) => ({
                 status: s,
                 links,
+                scope,
                 chip: serviceTarget.serviceLabel,
             }));
             return [
@@ -179,7 +186,7 @@
             const sec = ensureSection("@");
             const links = linksFor();
             for (const s of domainStatuses) {
-                sec.items.push({ status: s, links });
+                sec.items.push({ status: s, links, scope: { domainId } });
             }
         }
 
@@ -217,8 +224,14 @@
                     subdomain: tg.subdomain,
                     serviceId: tg.serviceId,
                 });
+                const scope: CheckerScope = {
+                    domainId,
+                    zoneId: zone.id!,
+                    subdomain: tg.subdomain,
+                    serviceId: tg.serviceId,
+                };
                 for (const s of statuses) {
-                    sec.items.push({ status: s, links, chip: tg.serviceName });
+                    sec.items.push({ status: s, links, scope, chip: tg.serviceName });
                 }
             });
         }
@@ -374,6 +387,21 @@
                                             class="check-history-link">{$t("checkers.list.history")}</a
                                         >
                                     </p>
+                                    {#if checker.has_metrics && checker.id}
+                                        {#await getScopedCheckerMetrics(item.scope, checker.id)}
+                                            <div class="check-chart-loading">
+                                                <span class="spinner-border spinner-border-sm"></span>
+                                            </div>
+                                        {:then metrics}
+                                            {#if metrics && metrics.length > 0}
+                                                <div class="check-chart">
+                                                    <CheckMetricsChart {metrics} />
+                                                </div>
+                                            {/if}
+                                        {:catch}
+                                            {""}
+                                        {/await}
+                                    {/if}
                                 </div>
                             </article>
                         {/each}
@@ -616,6 +644,14 @@
         color: #6c757d;
         font-size: 0.9rem;
         line-height: 1.4;
+    }
+    .check-chart {
+        margin-top: 0.5rem;
+    }
+    .check-chart-loading {
+        padding: 1rem;
+        text-align: center;
+        color: var(--bs-secondary-color, #6c757d);
     }
     .check-footer {
         margin: 0;
