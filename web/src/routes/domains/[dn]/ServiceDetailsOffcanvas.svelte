@@ -117,7 +117,7 @@
     );
     const serviceChecksPath = $derived(
         service._id && zoneId
-            ? `/domains/${encodeURIComponent(domain.domain)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(service._domain || "@")}/${encodeURIComponent(service._id)}/checks`
+            ? `/domains/${domainLink(domain.id)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(service._domain || "@")}/${encodeURIComponent(service._id)}/checkers`
             : null,
     );
 

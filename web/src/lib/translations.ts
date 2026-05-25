@@ -53,6 +53,7 @@ interface Params {
     intervalDefault?: string;
     service?: string;
     value?: string;
+    date?: string;
     // add more parameters that are used here
 }
 
