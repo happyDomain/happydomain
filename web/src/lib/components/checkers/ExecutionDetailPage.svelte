@@ -47,6 +47,7 @@
         cachedHTMLReport,
         disableMetrics,
     } from "$lib/stores/checkers";
+    import CheckCard from "./CheckCard.svelte";
     import CheckerLoader from "./CheckerLoader.svelte";
     import ExecutionResultsCard from "./ExecutionResultsCard.svelte";
     import ObservationReportCard from "./ObservationReportCard.svelte";
@@ -212,16 +213,26 @@
             {$t("checkers.result.error-loading", { error })}
         </Alert>
     </Container>
-{:else if $reportViewMode === "rules" && evaluationData}
-    <Container class="flex-fill d-flex flex-column mt-3">
-        <ExecutionResultsCard evaluation={evaluationData} />
+{:else}
+    <Container class="mt-3 mb-3">
+        <CheckCard
+            status={$currentExecution?.result?.status}
+            name={checkerName || checkerId}
+            message={$currentExecution?.result?.message}
+            startedAt={$currentExecution?.startedAt}
+        />
     </Container>
-{:else if $currentObservations}
-    <ObservationReportCard
-        observations={$currentObservations}
-        metrics={metricsData}
-        {scope}
-        {checkerId}
-        {execId}
-    />
+    {#if $reportViewMode === "rules" && evaluationData}
+        <Container class="flex-fill d-flex flex-column">
+            <ExecutionResultsCard evaluation={evaluationData} />
+        </Container>
+    {:else if $currentObservations}
+        <ObservationReportCard
+            observations={$currentObservations}
+            metrics={metricsData}
+            {scope}
+            {checkerId}
+            {execId}
+        />
+    {/if}
 {/if}
