@@ -147,17 +147,22 @@ export async function listScopedCheckers(
     options?: { withAvailables?: boolean },
 ): Promise<HappydnsCheckerStatus[]> {
     const query = options?.withAvailables ? { with_availables: true } : undefined;
+    let list: HappydnsCheckerStatus[];
     if (isServiceScope(scope)) {
-        return (unwrapSdkResponse(
+        list = (unwrapSdkResponse(
             await getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckers({
                 path: { domain: scope.domainId, zoneid: scope.zoneId, subdomain: scope.subdomain, serviceid: scope.serviceId },
                 query,
             }),
         ) as HappydnsCheckerStatus[]) ?? [];
+    } else {
+        list = (unwrapSdkResponse(
+            await getDomainsByDomainCheckers({ path: { domain: scope.domainId! }, query }),
+        ) as HappydnsCheckerStatus[]) ?? [];
     }
-    return (unwrapSdkResponse(
-        await getDomainsByDomainCheckers({ path: { domain: scope.domainId! }, query }),
-    ) as HappydnsCheckerStatus[]) ?? [];
+    return list.sort((a, b) =>
+        (a.name || a.id || "").localeCompare(b.name || b.id || ""),
+    );
 }
 
 export async function listScopedExecutions(

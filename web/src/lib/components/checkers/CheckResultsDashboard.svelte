@@ -65,12 +65,6 @@
         return svc._svctype || svc._id || "service";
     }
 
-    function sortByName(statuses: HappydnsCheckerStatus[]): HappydnsCheckerStatus[] {
-        return [...statuses].sort((a, b) =>
-            (a.name || a.id || "").localeCompare(b.name || b.id || ""),
-        );
-    }
-
     async function loadSections(zone: typeof $thisZone): Promise<Section[]> {
         const sections: Section[] = [];
 
@@ -85,7 +79,7 @@
             sections.push({
                 title: serviceTarget.serviceLabel,
                 checkersBase: serviceBase(serviceTarget.zoneId, serviceTarget.subdomain, serviceTarget.serviceId),
-                statuses: sortByName(statuses),
+                statuses,
             });
             return sections;
         }
@@ -94,7 +88,7 @@
         sections.push({
             title: domainName,
             checkersBase: `${domainBase}/checkers`,
-            statuses: sortByName(domainStatuses),
+            statuses: domainStatuses,
         });
 
         if (!zone) return sections;
@@ -128,7 +122,7 @@
             sections.push({
                 title: tg.label,
                 checkersBase: serviceBase(zone.id!, tg.subdomain, tg.serviceId),
-                statuses: sortByName(statuses),
+                statuses,
             });
         });
 

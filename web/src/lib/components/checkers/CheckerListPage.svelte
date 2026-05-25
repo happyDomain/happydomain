@@ -46,11 +46,7 @@
     let { scope, checksBase, title, domainName, filterAvailability }: Props = $props();
 
     let checkersPromise = $derived(
-        listScopedCheckers(scope, { withAvailables: true }).then((list) =>
-            [...list].sort((a, b) =>
-                (a.name || a.id || "").localeCompare(b.name || b.id || ""),
-            ),
-        ),
+        listScopedCheckers(scope, { withAvailables: true }),
     );
 
     let metricsApiUrl = $derived(
