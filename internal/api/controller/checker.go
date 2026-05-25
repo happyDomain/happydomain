@@ -149,17 +149,19 @@ func (cc *CheckerController) CheckerHandler(c *gin.Context) {
 //	@Summary	List available checks with status
 //	@Tags		checkers
 //	@Produce	json
-//	@Param		domain		path	string	true	"Domain identifier"
-//	@Param		zoneid		path	string	true	"Zone identifier"
-//	@Param		subdomain	path	string	true	"Subdomain"
-//	@Param		serviceid	path	string	true	"Service identifier"
+//	@Param		domain			path	string	true	"Domain identifier"
+//	@Param		zoneid			path	string	true	"Zone identifier"
+//	@Param		subdomain		path	string	true	"Subdomain"
+//	@Param		serviceid		path	string	true	"Service identifier"
+//	@Param		with_availables	query	bool	false	"Include checkers applicable to the scope but not auto-scheduled (default: only scheduled or plan-activated checkers)"
 //	@Success	200	{array}	happydns.CheckerStatus
 //	@Router		/domains/{domain}/checkers [get]
 //	@Router		/domains/{domain}/zone/{zoneid}/{subdomain}/services/{serviceid}/checkers [get]
 func (cc *CheckerController) ListAvailableChecks(c *gin.Context) {
 	target := targetFromContext(c)
+	includeAvailables := c.Query("with_availables") == "true"
 
-	result, err := cc.statusUC.ListCheckerStatuses(target)
+	result, err := cc.statusUC.ListCheckerStatuses(target, includeAvailables)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

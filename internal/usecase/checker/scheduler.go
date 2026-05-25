@@ -483,6 +483,9 @@ func (s *Scheduler) buildQueue() {
 		domainTarget := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
 
 		for _, c := range domainCheckers {
+			if !IsAutoScheduled(c.def, domainTarget) {
+				continue
+			}
 			s.enqueueJob(c.id, c.def, domainTarget, disabledSet, planMap, lastRun)
 		}
 
@@ -494,7 +497,7 @@ func (s *Scheduler) buildQueue() {
 				svcTarget := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String(), ServiceId: sid.String(), ServiceType: svc.Type}
 
 				for _, c := range serviceCheckers {
-					if !serviceCheckerApplies(c.def, svc.Type) {
+					if !IsAutoScheduled(c.def, svcTarget) {
 						continue
 					}
 					s.enqueueJob(c.id, c.def, svcTarget, disabledSet, planMap, lastRun)
@@ -528,7 +531,7 @@ func (s *Scheduler) NotifyDomainChange(domain *happydns.Domain) {
 	wantKeys := make(map[string]bool)
 	didStr := did.String()
 	for checkerID, def := range checkers {
-		if def.Availability.ApplyToDomain || def.Availability.ApplyToZone {
+		if IsAutoScheduled(def, domainTarget) {
 			key := checkerID + "|" + domainTarget.String()
 			if !disabledSet[key] {
 				wantKeys[key] = true
@@ -536,10 +539,10 @@ func (s *Scheduler) NotifyDomainChange(domain *happydns.Domain) {
 		}
 		if def.Availability.ApplyToService {
 			for _, svc := range services {
-				if !serviceCheckerApplies(def, svc.Type) {
+				svcTarget := happydns.CheckTarget{UserId: uid.String(), DomainId: didStr, ServiceId: svc.Id.String(), ServiceType: svc.Type}
+				if !IsAutoScheduled(def, svcTarget) {
 					continue
 				}
-				svcTarget := happydns.CheckTarget{UserId: uid.String(), DomainId: didStr, ServiceId: svc.Id.String(), ServiceType: svc.Type}
 				key := checkerID + "|" + svcTarget.String()
 				if !disabledSet[key] {
 					wantKeys[key] = true
@@ -573,7 +576,7 @@ func (s *Scheduler) NotifyDomainChange(domain *happydns.Domain) {
 
 	// Add new jobs for this domain.
 	for checkerID, def := range checkers {
-		if def.Availability.ApplyToDomain || def.Availability.ApplyToZone {
+		if IsAutoScheduled(def, domainTarget) {
 			if s.enqueueJob(checkerID, def, domainTarget, disabledSet, planMap, time.Time{}) {
 				added++
 			}
@@ -581,11 +584,11 @@ func (s *Scheduler) NotifyDomainChange(domain *happydns.Domain) {
 
 		if def.Availability.ApplyToService {
 			for _, svc := range services {
-				if !serviceCheckerApplies(def, svc.Type) {
-					continue
-				}
 				sid := svc.Id
 				svcTarget := happydns.CheckTarget{UserId: uid.String(), DomainId: didStr, ServiceId: sid.String(), ServiceType: svc.Type}
+				if !IsAutoScheduled(def, svcTarget) {
+					continue
+				}
 				if s.enqueueJob(checkerID, def, svcTarget, disabledSet, planMap, time.Time{}) {
 					added++
 				}
@@ -641,6 +644,23 @@ func (s *Scheduler) NotifyDomainRemoved(domainID happydns.Identifier) {
 func serviceCheckerApplies(def *happydns.CheckerDefinition, serviceType string) bool {
 	return len(def.Availability.LimitToServices) > 0 &&
 		slices.Contains(def.Availability.LimitToServices, serviceType)
+}
+
+// IsAutoScheduled reports whether the scheduler would auto-enqueue a job for
+// this checker on this target, ignoring per-plan disabled flags. Service-scoped
+// checkers with an empty LimitToServices are NOT auto-scheduled: they can only
+// run through an explicit CheckPlan.
+func IsAutoScheduled(def *happydns.CheckerDefinition, target happydns.CheckTarget) bool {
+	switch target.Scope() {
+	case happydns.CheckScopeDomain, happydns.CheckScopeZone:
+		return def.Availability.ApplyToDomain || def.Availability.ApplyToZone
+	case happydns.CheckScopeService:
+		if !def.Availability.ApplyToService {
+			return false
+		}
+		return serviceCheckerApplies(def, target.ServiceType)
+	}
+	return false
 }
 
 // buildPlanIndex builds disabled and plan lookup maps from a slice of plans.

@@ -138,22 +138,25 @@ export async function getScopedCheckStatus(
     if (isAdminScope(scope)) {
         try { return await getCheckStatus(checkerId); } catch { return undefined; }
     }
-    const list = await listScopedCheckers(scope);
+    const list = await listScopedCheckers(scope, { withAvailables: true });
     return list.find((s) => s.id === checkerId);
 }
 
 export async function listScopedCheckers(
     scope: CheckerScope,
+    options?: { withAvailables?: boolean },
 ): Promise<HappydnsCheckerStatus[]> {
+    const query = options?.withAvailables ? { with_availables: true } : undefined;
     if (isServiceScope(scope)) {
         return (unwrapSdkResponse(
             await getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckers({
                 path: { domain: scope.domainId, zoneid: scope.zoneId, subdomain: scope.subdomain, serviceid: scope.serviceId },
+                query,
             }),
         ) as HappydnsCheckerStatus[]) ?? [];
     }
     return (unwrapSdkResponse(
-        await getDomainsByDomainCheckers({ path: { domain: scope.domainId! } }),
+        await getDomainsByDomainCheckers({ path: { domain: scope.domainId! }, query }),
     ) as HappydnsCheckerStatus[]) ?? [];
 }
 

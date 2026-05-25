@@ -880,3 +880,48 @@ func TestComputeOffset_WithinInterval(t *testing.T) {
 		t.Errorf("expected offset in [0, %v), got %v", interval, o)
 	}
 }
+
+func TestIsAutoScheduled(t *testing.T) {
+	domainOnly := &happydns.CheckerDefinition{
+		Availability: happydns.CheckerAvailability{ApplyToDomain: true},
+	}
+	zoneOnly := &happydns.CheckerDefinition{
+		Availability: happydns.CheckerAvailability{ApplyToZone: true},
+	}
+	serviceNoLimit := &happydns.CheckerDefinition{
+		Availability: happydns.CheckerAvailability{ApplyToService: true},
+	}
+	serviceWithLimit := &happydns.CheckerDefinition{
+		Availability: happydns.CheckerAvailability{
+			ApplyToService:  true,
+			LimitToServices: []string{"abstract.NS", "abstract.MX"},
+		},
+	}
+
+	domainTarget := happydns.CheckTarget{UserId: "u", DomainId: "d"}
+	svcTargetMatching := happydns.CheckTarget{UserId: "u", DomainId: "d", ServiceId: "s", ServiceType: "abstract.MX"}
+	svcTargetOther := happydns.CheckTarget{UserId: "u", DomainId: "d", ServiceId: "s", ServiceType: "abstract.Origin"}
+
+	cases := []struct {
+		name   string
+		def    *happydns.CheckerDefinition
+		target happydns.CheckTarget
+		want   bool
+	}{
+		{"domain checker on domain target", domainOnly, domainTarget, true},
+		{"zone checker on domain target", zoneOnly, domainTarget, true},
+		{"service checker on domain target", serviceNoLimit, domainTarget, false},
+		{"service checker no LimitToServices on service target", serviceNoLimit, svcTargetMatching, false},
+		{"service checker with matching LimitToServices", serviceWithLimit, svcTargetMatching, true},
+		{"service checker with non-matching LimitToServices", serviceWithLimit, svcTargetOther, false},
+		{"domain checker on service target", domainOnly, svcTargetMatching, false},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := IsAutoScheduled(c.def, c.target); got != c.want {
+				t.Errorf("IsAutoScheduled() = %v; want %v", got, c.want)
+			}
+		})
+	}
+}

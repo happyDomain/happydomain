@@ -120,7 +120,13 @@ func ListPlannedExecutions(provider PlannedJobProvider, budgetChecker BudgetChec
 }
 
 // ListCheckerStatuses aggregates checkers, plans, and latest evaluations into a status list.
-func (u *CheckStatusUsecase) ListCheckerStatuses(target happydns.CheckTarget) ([]happydns.CheckerStatus, error) {
+//
+// When includeAvailables is true the result contains every checker applicable
+// to the target scope (the historical behaviour, used by the management UI).
+// When false, it is restricted to checkers that would be auto-scheduled on
+// this target plus those activated by an existing CheckPlan, so callers can
+// surface only what actually runs.
+func (u *CheckStatusUsecase) ListCheckerStatuses(target happydns.CheckTarget, includeAvailables bool) ([]happydns.CheckerStatus, error) {
 	checkers := checkerPkg.GetCheckers()
 	plans, err := u.planStore.ListCheckPlansByTarget(target)
 	if err != nil {
@@ -150,6 +156,10 @@ func (u *CheckStatusUsecase) ListCheckerStatuses(target happydns.CheckTarget) ([
 					continue
 				}
 			}
+		}
+
+		if !includeAvailables && !IsAutoScheduled(def, target) && planByChecker[def.ID] == nil {
+			continue
 		}
 
 		status := happydns.CheckerStatus{
