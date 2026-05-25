@@ -1,3 +1,5 @@
 ./happydomain
 ./happyDomain
+happydomain.db
+cmd/happyDomain/happyDomain
 node_modules
