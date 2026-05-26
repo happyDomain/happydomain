@@ -49,6 +49,7 @@
 
     interface Section {
         title: string;
+        domain: string;
         sortKey: string;
         items: CheckerItem[];
     }
@@ -138,6 +139,7 @@
             return [
                 {
                     title: subdomainTitle(serviceTarget.subdomain),
+                    domain: serviceTarget.subdomain,
                     sortKey: subdomainSortKey(serviceTarget.subdomain),
                     items: sortItemsBySeverityThenName(items),
                 },
@@ -152,6 +154,7 @@
             if (!s) {
                 s = {
                     title: subdomainTitle(subdomain),
+                    domain: subdomain,
                     sortKey: subdomainSortKey(subdomain),
                     items: [],
                 };
@@ -310,7 +313,10 @@
 
             {#each sections as section}
                 {#if section.items.length > 0}
-                    <h4 class="mt-4 mb-3">{section.title}</h4>
+                    <div class="d-flex align-items-end mt-5 mb-4 gap-3">
+                        <h2 class="mb-0 font-monospace" id={section.domain}>{section.title}</h2>
+                        <hr class="mt-0 mb-2 border-3 border-dark flex-fill" />
+                    </div>
                     <div class="check-stack">
                         {#each section.items as item}
                             {@const checker = item.status}
