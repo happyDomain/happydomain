@@ -35,8 +35,11 @@
     import { domainLink, domains_idx, isManaged } from "$lib/stores/domains";
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
+    import { isReverseZone } from "$lib/dns";
+    import { sortedDomains, sortedDomainsWithIntermediate } from "$lib/stores/thiszone";
     import ButtonZonePublish from "./ButtonZonePublish.svelte";
     import ServiceSidebar from "./ServiceSidebar.svelte";
+    import SubdomainListTiny from "./SubdomainListTiny.svelte";
     import ZoneSidebar from "./ZoneSidebar.svelte";
 
     interface Props {
@@ -94,6 +97,15 @@
             <Icon name="chevron-left" />
             {$t("zones.return-to")}
         </a>
+        <div style="min-height:0; overflow-y: auto;" class="mt-2">
+            {#if $sortedDomains && $sortedDomainsWithIntermediate && $thisZone}
+                {#if isReverseZone(domain.domain)}
+                    <SubdomainListTiny domains={$sortedDomains} origin={domain} />
+                {:else}
+                    <SubdomainListTiny domains={$sortedDomainsWithIntermediate} origin={domain} />
+                {/if}
+            {/if}
+        </div>
     {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checks")}
         <a
             href={resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]", {
