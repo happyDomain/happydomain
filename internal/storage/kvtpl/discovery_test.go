@@ -89,6 +89,40 @@ func (f *fakeKV) Search(prefix string) storage.Iterator {
 	sort.Strings(keys)
 	return &fakeIter{data: f.data, keys: keys, idx: -1}
 }
+func (f *fakeKV) NewBatch() storage.Batch { return &fakeBatch{kv: f} }
+
+type fakeBatchOp struct {
+	put bool
+	key string
+	val json.RawMessage
+}
+
+type fakeBatch struct {
+	kv  *fakeKV
+	ops []fakeBatchOp
+}
+
+func (b *fakeBatch) Put(key string, v any) error {
+	raw, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b.ops = append(b.ops, fakeBatchOp{put: true, key: key, val: raw})
+	return nil
+}
+func (b *fakeBatch) Delete(key string) {
+	b.ops = append(b.ops, fakeBatchOp{put: false, key: key})
+}
+func (b *fakeBatch) Commit() error {
+	for _, op := range b.ops {
+		if op.put {
+			b.kv.data[op.key] = op.val
+		} else {
+			delete(b.kv.data, op.key)
+		}
+	}
+	return nil
+}
 
 type fakeIter struct {
 	data map[string]json.RawMessage

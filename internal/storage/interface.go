@@ -91,4 +91,27 @@ type KVStorage interface {
 	FindIdentifierKey(prefix string) (key string, id happydns.Identifier, err error)
 	Delete(key string) error
 	Search(prefix string) Iterator
+
+	// NewBatch returns a fresh Batch for atomic multi-key writes.
+	NewBatch() Batch
+}
+
+// Batch buffers a set of Put/Delete operations and commits them in a single
+// step. Backends that support transactional writes (LevelDB, PostgreSQL,
+// in-memory) commit the whole batch atomically: either every operation is
+// durable or none is. Backends without that guarantee (Oracle NoSQL) apply
+// the operations sequentially and stop on the first error; callers there
+// must assume partial progress is possible.
+//
+// A Batch is single-use: after Commit it must not be reused.
+type Batch interface {
+	// Put marshals v immediately and stages a write of key. Marshal errors
+	// surface here rather than at Commit.
+	Put(key string, v any) error
+
+	// Delete stages a delete of key. Staging cannot fail.
+	Delete(key string)
+
+	// Commit flushes every staged op.
+	Commit() error
 }
