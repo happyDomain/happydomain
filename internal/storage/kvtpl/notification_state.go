@@ -29,10 +29,15 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+const (
+	notificationStatePrimaryPrefix = "notifstate|"
+)
+
 // Built from explicit fields so SDK changes to CheckTarget can't reshape the key and orphan stored records.
 func notifStateKey(checkerID string, target happydns.CheckTarget, userId happydns.Identifier) string {
 	return fmt.Sprintf(
-		"notifstate|%s|%s|%s/%s/%s",
+		"%s%s|%s|%s/%s/%s",
+		notificationStatePrimaryPrefix,
 		userId.String(),
 		checkerID,
 		target.UserId,
@@ -59,7 +64,7 @@ func (s *KVStorage) DeleteState(checkerID string, target happydns.CheckTarget, u
 }
 
 func (s *KVStorage) ListStatesByUser(userId happydns.Identifier) ([]*happydns.NotificationState, error) {
-	prefix := fmt.Sprintf("notifstate|%s|", userId.String())
+	prefix := fmt.Sprintf("%s%s|", notificationStatePrimaryPrefix, userId.String())
 	iter := s.db.Search(prefix)
 	defer iter.Release()
 

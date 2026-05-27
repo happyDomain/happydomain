@@ -30,38 +30,45 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+const (
+	checkPlanPrimaryPrefix        = "chckpln|"
+	checkPlanByCheckerIndexPrefix = "chckpln-chkr|"
+	checkPlanByTargetIndexPrefix  = "chckpln-tgt|"
+	checkPlanByUserIndexPrefix    = "chckpln-user|"
+)
+
 func planTargetIndexKey(target happydns.CheckTarget, planId string) string {
-	return fmt.Sprintf("chckpln-tgt|%s|%s", target.String(), planId)
+	return fmt.Sprintf("%s%s|%s", checkPlanByTargetIndexPrefix, target.String(), planId)
 }
 
 func planCheckerIndexKey(checkerID string, planId string) string {
-	return fmt.Sprintf("chckpln-chkr|%s|%s", checkerID, planId)
+	return fmt.Sprintf("%s%s|%s", checkPlanByCheckerIndexPrefix, checkerID, planId)
 }
 
 func planUserIndexKey(userId string, planId string) string {
-	return fmt.Sprintf("chckpln-user|%s|%s", userId, planId)
+	return fmt.Sprintf("%s%s|%s", checkPlanByUserIndexPrefix, userId, planId)
 }
 
 func (s *KVStorage) ListAllCheckPlans() (happydns.Iterator[happydns.CheckPlan], error) {
-	iter := s.db.Search("chckpln|")
+	iter := s.db.Search(checkPlanPrimaryPrefix)
 	return NewKVIterator[happydns.CheckPlan](s.db, iter), nil
 }
 
 func (s *KVStorage) ListCheckPlansByTarget(target happydns.CheckTarget) ([]*happydns.CheckPlan, error) {
-	return listByIndex(s, fmt.Sprintf("chckpln-tgt|%s|", target.String()), s.GetCheckPlan)
+	return listByIndex(s, fmt.Sprintf("%s%s|", checkPlanByTargetIndexPrefix, target.String()), s.GetCheckPlan)
 }
 
 func (s *KVStorage) ListCheckPlansByChecker(checkerID string) ([]*happydns.CheckPlan, error) {
-	return listByIndex(s, fmt.Sprintf("chckpln-chkr|%s|", checkerID), s.GetCheckPlan)
+	return listByIndex(s, fmt.Sprintf("%s%s|", checkPlanByCheckerIndexPrefix, checkerID), s.GetCheckPlan)
 }
 
 func (s *KVStorage) ListCheckPlansByUser(userId happydns.Identifier) ([]*happydns.CheckPlan, error) {
-	return listByIndex(s, fmt.Sprintf("chckpln-user|%s|", userId.String()), s.GetCheckPlan)
+	return listByIndex(s, fmt.Sprintf("%s%s|", checkPlanByUserIndexPrefix, userId.String()), s.GetCheckPlan)
 }
 
 func (s *KVStorage) GetCheckPlan(planID happydns.Identifier) (*happydns.CheckPlan, error) {
 	plan := &happydns.CheckPlan{}
-	err := s.db.Get(fmt.Sprintf("chckpln|%s", planID.String()), plan)
+	err := s.db.Get(fmt.Sprintf("%s%s", checkPlanPrimaryPrefix, planID.String()), plan)
 	if errors.Is(err, happydns.ErrNotFound) {
 		return nil, happydns.ErrCheckPlanNotFound
 	}
@@ -69,7 +76,7 @@ func (s *KVStorage) GetCheckPlan(planID happydns.Identifier) (*happydns.CheckPla
 }
 
 func (s *KVStorage) CreateCheckPlan(plan *happydns.CheckPlan) error {
-	key, id, err := s.db.FindIdentifierKey("chckpln|")
+	key, id, err := s.db.FindIdentifierKey(checkPlanPrimaryPrefix)
 	if err != nil {
 		return err
 	}
@@ -88,7 +95,7 @@ func (s *KVStorage) UpdateCheckPlan(plan *happydns.CheckPlan) error {
 		return err
 	}
 
-	if err := s.db.Put(fmt.Sprintf("chckpln|%s", plan.Id.String()), plan); err != nil {
+	if err := s.db.Put(fmt.Sprintf("%s%s", checkPlanPrimaryPrefix, plan.Id.String()), plan); err != nil {
 		return err
 	}
 
@@ -142,7 +149,7 @@ func (s *KVStorage) putCheckPlanIndexes(plan *happydns.CheckPlan) error {
 // secondary indexes. Used by the backup restore path, which must preserve
 // the original identifier instead of generating a new one.
 func (s *KVStorage) RestoreCheckPlan(plan *happydns.CheckPlan) error {
-	if err := s.db.Put(fmt.Sprintf("chckpln|%s", plan.Id.String()), plan); err != nil {
+	if err := s.db.Put(fmt.Sprintf("%s%s", checkPlanPrimaryPrefix, plan.Id.String()), plan); err != nil {
 		return err
 	}
 	return s.putCheckPlanIndexes(plan)
@@ -168,7 +175,7 @@ func (s *KVStorage) DeleteCheckPlan(planID happydns.Identifier) error {
 		}
 	}
 
-	return s.db.Delete(fmt.Sprintf("chckpln|%s", planID.String()))
+	return s.db.Delete(fmt.Sprintf("%s%s", checkPlanPrimaryPrefix, planID.String()))
 }
 
 // deleteCheckPlanSecondaryIndexesByPlanID scans all plan index prefixes to
@@ -176,7 +183,7 @@ func (s *KVStorage) DeleteCheckPlan(planID happydns.Identifier) error {
 // already gone and we don't know which target/checker/user it belonged to.
 func (s *KVStorage) deleteCheckPlanSecondaryIndexesByPlanID(planId happydns.Identifier) {
 	suffix := "|" + planId.String()
-	for _, prefix := range []string{"chckpln-tgt|", "chckpln-chkr|", "chckpln-user|"} {
+	for _, prefix := range []string{checkPlanByTargetIndexPrefix, checkPlanByCheckerIndexPrefix, checkPlanByUserIndexPrefix} {
 		iter := s.db.Search(prefix)
 		for iter.Next() {
 			if strings.HasSuffix(iter.Key(), suffix) {
@@ -196,13 +203,13 @@ func (s *KVStorage) checkPlanExists(id happydns.Identifier) bool {
 
 func (s *KVStorage) TidyCheckPlanIndexes() error {
 	// Tidy chckpln-tgt|{target}|{planId} indexes.
-	s.tidyLastSegmentIndex("chckpln-tgt|", "plan target", s.checkPlanExists)
+	s.tidyLastSegmentIndex(checkPlanByTargetIndexPrefix, "plan target", s.checkPlanExists)
 
 	// Tidy chckpln-chkr|{checkerID}|{planId} indexes.
-	s.tidyLastSegmentIndex("chckpln-chkr|", "plan checker", s.checkPlanExists)
+	s.tidyLastSegmentIndex(checkPlanByCheckerIndexPrefix, "plan checker", s.checkPlanExists)
 
 	// Tidy chckpln-user|{userId}|{planId} indexes.
-	s.tidyTwoPartIndex("chckpln-user|", "plan user", func(id happydns.Identifier) bool {
+	s.tidyTwoPartIndex(checkPlanByUserIndexPrefix, "plan user", func(id happydns.Identifier) bool {
 		_, err := s.GetUser(id)
 		return err == nil
 	}, s.checkPlanExists)

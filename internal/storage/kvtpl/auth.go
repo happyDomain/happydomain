@@ -22,14 +22,41 @@
 package database
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"log"
+	"strings"
 
 	"git.happydns.org/happyDomain/model"
 )
 
+const (
+	authPrimaryPrefix = "auth-"
+	authEmailPrefix   = "auth.email|"
+)
+
+// authEmailIndexKey returns the secondary-index key used to look up an
+// auth user by email. The email is lowercased and trimmed before hashing
+// so "Foo@Bar.COM" and " foo@bar.com " resolve to the same index entry.
+//
+// Total key length: len("auth.email|") + base64.RawURLEncoding(sha256) =
+// 11 + 43 = 54 chars, comfortably under the 64-char limit that some KV
+// backends enforce on keys.
+func authEmailIndexKey(email string) string {
+	normalized := strings.ToLower(strings.TrimSpace(email))
+	sum := sha256.Sum256([]byte(normalized))
+	encoded := base64.RawURLEncoding.EncodeToString(sum[:])
+	return authEmailPrefix + encoded
+}
+
+func authPrimaryKey(id happydns.Identifier) string {
+	return authPrimaryPrefix + id.String()
+}
+
 func (s *KVStorage) ListAllAuthUsers() (happydns.Iterator[happydns.UserAuth], error) {
-	iter := s.db.Search("auth-")
+	iter := s.db.Search(authPrimaryPrefix)
 	return NewKVIterator[happydns.UserAuth](s.db, iter), nil
 }
 
@@ -43,70 +70,116 @@ func (s *KVStorage) getAuthUser(key string) (*happydns.UserAuth, error) {
 }
 
 func (s *KVStorage) GetAuthUser(id happydns.Identifier) (u *happydns.UserAuth, err error) {
-	return s.getAuthUser(fmt.Sprintf("auth-%s", id.String()))
+	return s.getAuthUser(authPrimaryKey(id))
 }
 
+// GetAuthUserByEmail resolves a user via the auth-email index. Returns
+// happydns.ErrAuthUserNotFound when no user matches.
 func (s *KVStorage) GetAuthUserByEmail(email string) (*happydns.UserAuth, error) {
-	users, err := s.ListAllAuthUsers()
+	var idStr string
+	err := s.db.Get(authEmailIndexKey(email), &idStr)
+	if errors.Is(err, happydns.ErrNotFound) {
+		return nil, happydns.ErrAuthUserNotFound
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer users.Close()
 
-	for users.Next() {
-		user := users.Item()
-		if user.Email == email {
-			return user, nil
-		}
+	id, err := happydns.NewIdentifierFromString(idStr)
+	if err != nil {
+		log.Printf("storage: malformed auth-email index value for %q: %v", email, err)
+		return nil, happydns.ErrAuthUserNotFound
 	}
 
-	if err := users.Err(); err != nil {
+	user, err := s.GetAuthUser(id)
+	if err != nil {
 		return nil, err
 	}
 
-	return nil, fmt.Errorf("Unable to find user with email address '%s'.", email)
+	// Defend against stale indexes: confirm the resolved record actually
+	// carries the queried email before handing it back.
+	if !strings.EqualFold(strings.TrimSpace(user.Email), strings.TrimSpace(email)) {
+		return nil, happydns.ErrAuthUserNotFound
+	}
+	return user, nil
 }
 
 func (s *KVStorage) AuthUserExists(email string) (bool, error) {
-	users, err := s.ListAllAuthUsers()
+	_, err := s.GetAuthUserByEmail(email)
+	if errors.Is(err, happydns.ErrAuthUserNotFound) {
+		return false, nil
+	}
 	if err != nil {
 		return false, err
 	}
-	defer users.Close()
-
-	for users.Next() {
-		user := users.Item()
-		if user.Email == email {
-			return true, nil
-		}
-	}
-
-	if err := users.Err(); err != nil {
-		return false, err
-	}
-
-	return false, nil
+	return true, nil
 }
 
 func (s *KVStorage) CreateAuthUser(u *happydns.UserAuth) error {
-	key, id, err := s.db.FindIdentifierKey("auth-")
+	key, id, err := s.db.FindIdentifierKey(authPrimaryPrefix)
 	if err != nil {
 		return err
 	}
 
 	u.Id = id
-	return s.db.Put(key, u)
+	if err := s.db.Put(key, u); err != nil {
+		return err
+	}
+
+	if err := s.db.Put(authEmailIndexKey(u.Email), u.Id.String()); err != nil {
+		// Roll back the primary so a failed index write doesn't orphan
+		// an account that nobody can log in to.
+		if delErr := s.db.Delete(key); delErr != nil {
+			log.Printf("storage: orphan auth user %q after index write failed (rollback also failed: %v)", u.Id.String(), delErr)
+		}
+		return err
+	}
+	return nil
 }
 
 func (s *KVStorage) UpdateAuthUser(u *happydns.UserAuth) error {
-	return s.db.Put(fmt.Sprintf("auth-%s", u.Id.String()), u)
+	// Load the old record so a changed email can deprecate the stale index entry.
+	old, err := s.GetAuthUser(u.Id)
+	if err != nil && !errors.Is(err, happydns.ErrAuthUserNotFound) {
+		return err
+	}
+
+	if err := s.db.Put(authPrimaryKey(u.Id), u); err != nil {
+		return err
+	}
+
+	newIndexKey := authEmailIndexKey(u.Email)
+	if old != nil {
+		oldIndexKey := authEmailIndexKey(old.Email)
+		if oldIndexKey != newIndexKey {
+			if delErr := s.db.Delete(oldIndexKey); delErr != nil {
+				log.Printf("storage: failed to delete stale auth-email index for user %q: %v", u.Id.String(), delErr)
+			}
+		}
+	}
+
+	if err := s.db.Put(newIndexKey, u.Id.String()); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *KVStorage) DeleteAuthUser(u *happydns.UserAuth) error {
-	return s.db.Delete(fmt.Sprintf("auth-%s", u.Id.String()))
+	// Delete the index first so a partial failure hides the account
+	// rather than leaving it visible-but-broken.
+	if err := s.db.Delete(authEmailIndexKey(u.Email)); err != nil {
+		log.Printf("storage: failed to delete auth-email index for user %q: %v", u.Id.String(), err)
+	}
+	return s.db.Delete(authPrimaryKey(u.Id))
 }
 
 func (s *KVStorage) ClearAuthUsers() error {
+	// Wipe the secondary index first; clearByPrefix uses a snapshot
+	// iterator so this is safe to do before the primaries.
+	if err := s.clearByPrefix(authEmailPrefix); err != nil {
+		return err
+	}
+
 	iter, err := s.ListAllAuthUsers()
 	if err != nil {
 		return err
@@ -114,8 +187,7 @@ func (s *KVStorage) ClearAuthUsers() error {
 	defer iter.Close()
 
 	for iter.Next() {
-		err = s.db.Delete(iter.Key())
-		if err != nil {
+		if err := s.db.Delete(fmt.Sprintf("%s%s", authPrimaryPrefix, iter.Item().Id.String())); err != nil {
 			return err
 		}
 	}

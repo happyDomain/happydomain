@@ -27,12 +27,16 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+const (
+	observationCachePrefix = "obscache|"
+)
+
 func obsCacheKey(target happydns.CheckTarget, key happydns.ObservationKey) string {
-	return fmt.Sprintf("obscache|%s-%s", target.String(), key)
+	return fmt.Sprintf("%s%s-%s", observationCachePrefix, target.String(), key)
 }
 
 func (s *KVStorage) ListAllCachedObservations() (happydns.Iterator[happydns.ObservationCacheEntry], error) {
-	iter := s.db.Search("obscache|")
+	iter := s.db.Search(observationCachePrefix)
 	return NewKVIterator[happydns.ObservationCacheEntry](s.db, iter), nil
 }
 

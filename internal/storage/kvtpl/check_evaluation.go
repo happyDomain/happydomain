@@ -30,18 +30,24 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+const (
+	evaluationPrimaryPrefix        = "chckeval|"
+	evaluationByPlanIndexPrefix    = "chckeval-plan|"
+	evaluationByCheckerIndexPrefix = "chckeval-chkr|"
+)
+
 func (s *KVStorage) ListEvaluationsByPlan(planID happydns.Identifier) ([]*happydns.CheckEvaluation, error) {
-	return listByIndex(s, fmt.Sprintf("chckeval-plan|%s|", planID.String()), s.GetEvaluation)
+	return listByIndex(s, fmt.Sprintf("%s%s|", evaluationByPlanIndexPrefix, planID.String()), s.GetEvaluation)
 }
 
 func (s *KVStorage) ListAllEvaluations() (happydns.Iterator[happydns.CheckEvaluation], error) {
-	iter := s.db.Search("chckeval|")
+	iter := s.db.Search(evaluationPrimaryPrefix)
 	return NewKVIterator[happydns.CheckEvaluation](s.db, iter), nil
 }
 
 func (s *KVStorage) GetEvaluation(evalID happydns.Identifier) (*happydns.CheckEvaluation, error) {
 	eval := &happydns.CheckEvaluation{}
-	err := s.db.Get(fmt.Sprintf("chckeval|%s", evalID.String()), eval)
+	err := s.db.Get(fmt.Sprintf("%s%s", evaluationPrimaryPrefix, evalID.String()), eval)
 	if errors.Is(err, happydns.ErrNotFound) {
 		return nil, happydns.ErrCheckEvaluationNotFound
 	}
@@ -69,7 +75,7 @@ func (s *KVStorage) GetLatestEvaluation(planID happydns.Identifier) (*happydns.C
 func (s *KVStorage) ListEvaluationsByChecker(checkerID string, target happydns.CheckTarget, limit int) ([]*happydns.CheckEvaluation, error) {
 	return listByIndexSorted(
 		s,
-		fmt.Sprintf("chckeval-chkr|%s|%s|", checkerID, target.String()),
+		fmt.Sprintf("%s%s|%s|", evaluationByCheckerIndexPrefix, checkerID, target.String()),
 		s.GetEvaluation,
 		func(a, b *happydns.CheckEvaluation) bool { return a.EvaluatedAt.After(b.EvaluatedAt) },
 		limit,
@@ -78,7 +84,7 @@ func (s *KVStorage) ListEvaluationsByChecker(checkerID string, target happydns.C
 }
 
 func (s *KVStorage) CreateEvaluation(eval *happydns.CheckEvaluation) error {
-	key, id, err := s.db.FindIdentifierKey("chckeval|")
+	key, id, err := s.db.FindIdentifierKey(evaluationPrimaryPrefix)
 	if err != nil {
 		return err
 	}
@@ -91,14 +97,14 @@ func (s *KVStorage) CreateEvaluation(eval *happydns.CheckEvaluation) error {
 
 	// Store secondary index by plan if applicable.
 	if eval.PlanID != nil {
-		indexKey := fmt.Sprintf("chckeval-plan|%s|%s", eval.PlanID.String(), eval.Id.String())
+		indexKey := fmt.Sprintf("%s%s|%s", evaluationByPlanIndexPrefix, eval.PlanID.String(), eval.Id.String())
 		if err := s.db.Put(indexKey, true); err != nil {
 			return err
 		}
 	}
 
 	// Store secondary index by checker+target.
-	checkerIndexKey := fmt.Sprintf("chckeval-chkr|%s|%s|%s", eval.CheckerID, eval.Target.String(), eval.Id.String())
+	checkerIndexKey := fmt.Sprintf("%s%s|%s|%s", evaluationByCheckerIndexPrefix, eval.CheckerID, eval.Target.String(), eval.Id.String())
 	if err := s.db.Put(checkerIndexKey, true); err != nil {
 		return err
 	}
@@ -109,18 +115,18 @@ func (s *KVStorage) CreateEvaluation(eval *happydns.CheckEvaluation) error {
 // RestoreEvaluation writes an evaluation at its existing Id and rebuilds
 // its secondary indexes. Used by the backup restore path.
 func (s *KVStorage) RestoreEvaluation(eval *happydns.CheckEvaluation) error {
-	if err := s.db.Put(fmt.Sprintf("chckeval|%s", eval.Id.String()), eval); err != nil {
+	if err := s.db.Put(fmt.Sprintf("%s%s", evaluationPrimaryPrefix, eval.Id.String()), eval); err != nil {
 		return err
 	}
 
 	if eval.PlanID != nil {
-		indexKey := fmt.Sprintf("chckeval-plan|%s|%s", eval.PlanID.String(), eval.Id.String())
+		indexKey := fmt.Sprintf("%s%s|%s", evaluationByPlanIndexPrefix, eval.PlanID.String(), eval.Id.String())
 		if err := s.db.Put(indexKey, true); err != nil {
 			return err
 		}
 	}
 
-	checkerIndexKey := fmt.Sprintf("chckeval-chkr|%s|%s|%s", eval.CheckerID, eval.Target.String(), eval.Id.String())
+	checkerIndexKey := fmt.Sprintf("%s%s|%s|%s", evaluationByCheckerIndexPrefix, eval.CheckerID, eval.Target.String(), eval.Id.String())
 	return s.db.Put(checkerIndexKey, true)
 }
 
@@ -132,23 +138,23 @@ func (s *KVStorage) DeleteEvaluation(evalID happydns.Identifier) error {
 	}
 
 	if eval.PlanID != nil {
-		indexKey := fmt.Sprintf("chckeval-plan|%s|%s", eval.PlanID.String(), eval.Id.String())
+		indexKey := fmt.Sprintf("%s%s|%s", evaluationByPlanIndexPrefix, eval.PlanID.String(), eval.Id.String())
 		if err := s.db.Delete(indexKey); err != nil {
 			log.Printf("DeleteEvaluation: failed to delete plan index %s: %v\n", indexKey, err)
 		}
 	}
 
 	// Clean up checker+target index.
-	checkerIndexKey := fmt.Sprintf("chckeval-chkr|%s|%s|%s", eval.CheckerID, eval.Target.String(), eval.Id.String())
+	checkerIndexKey := fmt.Sprintf("%s%s|%s|%s", evaluationByCheckerIndexPrefix, eval.CheckerID, eval.Target.String(), eval.Id.String())
 	if err := s.db.Delete(checkerIndexKey); err != nil {
 		log.Printf("DeleteEvaluation: failed to delete checker index %s: %v\n", checkerIndexKey, err)
 	}
 
-	return s.db.Delete(fmt.Sprintf("chckeval|%s", evalID.String()))
+	return s.db.Delete(fmt.Sprintf("%s%s", evaluationPrimaryPrefix, evalID.String()))
 }
 
 func (s *KVStorage) DeleteEvaluationsByChecker(checkerID string, target happydns.CheckTarget) error {
-	prefix := fmt.Sprintf("chckeval-chkr|%s|%s|", checkerID, target.String())
+	prefix := fmt.Sprintf("%s%s|%s|", evaluationByCheckerIndexPrefix, checkerID, target.String())
 	iter := s.db.Search(prefix)
 	defer iter.Release()
 
@@ -171,14 +177,14 @@ func (s *KVStorage) DeleteEvaluationsByChecker(checkerID string, target happydns
 
 		// Delete plan index if applicable.
 		if eval.PlanID != nil {
-			planIndexKey := fmt.Sprintf("chckeval-plan|%s|%s", eval.PlanID.String(), eval.Id.String())
+			planIndexKey := fmt.Sprintf("%s%s|%s", evaluationByPlanIndexPrefix, eval.PlanID.String(), eval.Id.String())
 			if err := s.db.Delete(planIndexKey); err != nil {
 				log.Printf("DeleteEvaluationsByChecker: failed to delete plan index %s: %v\n", planIndexKey, err)
 			}
 		}
 
 		// Delete primary record.
-		if err := s.db.Delete(fmt.Sprintf("chckeval|%s", eval.Id.String())); err != nil {
+		if err := s.db.Delete(fmt.Sprintf("%s%s", evaluationPrimaryPrefix, eval.Id.String())); err != nil {
 			log.Printf("DeleteEvaluationsByChecker: failed to delete primary record %s: %v\n", eval.Id.String(), err)
 		}
 
@@ -195,7 +201,7 @@ func (s *KVStorage) DeleteEvaluationsByChecker(checkerID string, target happydns
 // don't know which plan it belonged to.
 func (s *KVStorage) deleteEvalPlanIndexByEvalID(evalId happydns.Identifier) {
 	suffix := "|" + evalId.String()
-	iter := s.db.Search("chckeval-plan|")
+	iter := s.db.Search(evaluationByPlanIndexPrefix)
 	defer iter.Release()
 	for iter.Next() {
 		if strings.HasSuffix(iter.Key(), suffix) {
@@ -213,13 +219,13 @@ func (s *KVStorage) evalExists(id happydns.Identifier) bool {
 
 func (s *KVStorage) TidyEvaluationIndexes() error {
 	// Tidy chckeval-plan|{planId}|{evalId} indexes.
-	s.tidyTwoPartIndex("chckeval-plan|", "evaluation plan", func(id happydns.Identifier) bool {
+	s.tidyTwoPartIndex(evaluationByPlanIndexPrefix, "evaluation plan", func(id happydns.Identifier) bool {
 		_, err := s.GetCheckPlan(id)
 		return err == nil
 	}, s.evalExists)
 
 	// Tidy chckeval-chkr|{checkerID}|{target}|{evalId} indexes.
-	s.tidyLastSegmentIndex("chckeval-chkr|", "evaluation checker", s.evalExists)
+	s.tidyLastSegmentIndex(evaluationByCheckerIndexPrefix, "evaluation checker", s.evalExists)
 
 	return nil
 }

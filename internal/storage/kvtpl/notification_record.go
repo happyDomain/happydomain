@@ -31,8 +31,13 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+const (
+	notificationRecordPrimaryPrefix   = "notifrec|"
+	notificationRecordUserIndexPrefix = "notifrec-user|"
+)
+
 func (s *KVStorage) CreateRecord(rec *happydns.NotificationRecord) error {
-	key, id, err := s.db.FindIdentifierKey("notifrec|")
+	key, id, err := s.db.FindIdentifierKey(notificationRecordPrimaryPrefix)
 	if err != nil {
 		return err
 	}
@@ -42,12 +47,12 @@ func (s *KVStorage) CreateRecord(rec *happydns.NotificationRecord) error {
 		return err
 	}
 
-	indexKey := fmt.Sprintf("notifrec-user|%s|%s", rec.UserId.String(), rec.Id.String())
+	indexKey := fmt.Sprintf("%s%s|%s", notificationRecordUserIndexPrefix, rec.UserId.String(), rec.Id.String())
 	return s.db.Put(indexKey, rec)
 }
 
 func (s *KVStorage) ListRecordsByUser(userId happydns.Identifier, limit int) ([]*happydns.NotificationRecord, error) {
-	prefix := fmt.Sprintf("notifrec-user|%s|", userId.String())
+	prefix := fmt.Sprintf("%s%s|", notificationRecordUserIndexPrefix, userId.String())
 	iter := s.db.Search(prefix)
 	defer iter.Release()
 
@@ -73,7 +78,7 @@ func (s *KVStorage) ListRecordsByUser(userId happydns.Identifier, limit int) ([]
 }
 
 func (s *KVStorage) DeleteRecordsOlderThan(before time.Time) error {
-	iter := s.db.Search("notifrec|")
+	iter := s.db.Search(notificationRecordPrimaryPrefix)
 	defer iter.Release()
 
 	var errs []error
@@ -87,7 +92,7 @@ func (s *KVStorage) DeleteRecordsOlderThan(before time.Time) error {
 			if err := s.db.Delete(iter.Key()); err != nil {
 				errs = append(errs, fmt.Errorf("delete %s: %w", iter.Key(), err))
 			}
-			userIndexKey := fmt.Sprintf("notifrec-user|%s|%s", rec.UserId.String(), rec.Id.String())
+			userIndexKey := fmt.Sprintf("%s%s|%s", notificationRecordUserIndexPrefix, rec.UserId.String(), rec.Id.String())
 			if err := s.db.Delete(userIndexKey); err != nil {
 				errs = append(errs, fmt.Errorf("delete %s: %w", userIndexKey, err))
 			}

@@ -29,16 +29,20 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+const (
+	checkerOptionPrimaryPrefix = "chckrcfg|"
+)
+
 // checkerOptionsKey builds the positional KV key for checker options.
 // Format: chckrcfg|{checkerName}|{userId}|{domainId}|{serviceId}
 func checkerOptionsKey(checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier) string {
-	return fmt.Sprintf("chckrcfg|%s|%s|%s|%s", checkerName,
+	return fmt.Sprintf("%s%s|%s|%s|%s", checkerOptionPrimaryPrefix, checkerName,
 		happydns.FormatIdentifier(userId), happydns.FormatIdentifier(domainId), happydns.FormatIdentifier(serviceId))
 }
 
 // parseCheckerOptionsKey extracts the positional components from a KV key.
 func parseCheckerOptionsKey(key string) (checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier) {
-	trimmed := strings.TrimPrefix(key, "chckrcfg|")
+	trimmed := strings.TrimPrefix(key, checkerOptionPrimaryPrefix)
 	parts := strings.SplitN(trimmed, "|", 4)
 	if len(parts) < 4 {
 		return trimmed, nil, nil, nil
@@ -64,7 +68,7 @@ func parseCheckerOptionsKey(key string) (checkerName string, userId *happydns.Id
 }
 
 func (s *KVStorage) ListAllCheckerConfigurations() (happydns.Iterator[happydns.CheckerOptionsPositional], error) {
-	iter := s.db.Search("chckrcfg|")
+	iter := s.db.Search(checkerOptionPrimaryPrefix)
 	return &checkerOptionsIterator{KVIterator: NewKVIterator[happydns.CheckerOptions](s.db, iter)}, nil
 }
 
@@ -90,7 +94,7 @@ func (it *checkerOptionsIterator) Item() *happydns.CheckerOptionsPositional {
 }
 
 func (s *KVStorage) ListCheckerConfiguration(checkerName string) ([]*happydns.CheckerOptionsPositional, error) {
-	prefix := fmt.Sprintf("chckrcfg|%s|", checkerName)
+	prefix := fmt.Sprintf("%s%s|", checkerOptionPrimaryPrefix, checkerName)
 	iter := s.db.Search(prefix)
 	defer iter.Release()
 

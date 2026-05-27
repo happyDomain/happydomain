@@ -41,12 +41,17 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+const (
+	discoveryPrimaryPrefix = "dscent|"
+	discoveryTargetIndex   = "dscent-tgt|"
+)
+
 func dscEntryKey(producerID string, target happydns.CheckTarget, typ, ref string) string {
-	return fmt.Sprintf("dscent|%s|%s|%s|%s", producerID, target.String(), typ, ref)
+	return fmt.Sprintf("%s%s|%s|%s|%s", discoveryPrimaryPrefix, producerID, target.String(), typ, ref)
 }
 
 func dscEntryTargetIndexKey(producerID string, target happydns.CheckTarget, typ, ref string) string {
-	return fmt.Sprintf("dscent-tgt|%s|%s|%s|%s", target.String(), producerID, typ, ref)
+	return fmt.Sprintf("%s%s|%s|%s|%s", discoveryTargetIndex, target.String(), producerID, typ, ref)
 }
 
 func dscObsKey(producerID string, target happydns.CheckTarget, ref, consumerID string, obsKey happydns.ObservationKey) string {
@@ -71,7 +76,7 @@ func dscObsSnapIndexKey(snapshotID happydns.Identifier, primary string) string {
 //   - user    scope ("u//")   → "dscent-tgt|u/"            (this user + any domain/service)
 //   - empty   scope ("//")    → "dscent-tgt|"              (all)
 func dscEntryTargetSearchPrefix(target happydns.CheckTarget) string {
-	const base = "dscent-tgt|"
+	const base = discoveryTargetIndex
 	switch {
 	case target.ServiceId != "":
 		return base + target.String() + "|"
@@ -111,7 +116,7 @@ func (s *KVStorage) ListDiscoveryEntriesByTarget(target happydns.CheckTarget) ([
 	iter := s.db.Search(iterPrefix)
 	defer iter.Release()
 
-	const indexPrefix = "dscent-tgt|"
+	const indexPrefix = discoveryTargetIndex
 	var out []*happydns.StoredDiscoveryEntry
 	for iter.Next() {
 		rest := strings.TrimPrefix(iter.Key(), indexPrefix)
@@ -135,7 +140,7 @@ func (s *KVStorage) ListDiscoveryEntriesByTarget(target happydns.CheckTarget) ([
 }
 
 func (s *KVStorage) ListDiscoveryEntriesByProducer(producerID string, target happydns.CheckTarget) ([]*happydns.StoredDiscoveryEntry, error) {
-	prefix := fmt.Sprintf("dscent|%s|%s|", producerID, target.String())
+	prefix := fmt.Sprintf("%s%s|%s|", discoveryPrimaryPrefix, producerID, target.String())
 	iter := s.db.Search(prefix)
 	defer iter.Release()
 
@@ -151,7 +156,7 @@ func (s *KVStorage) ListDiscoveryEntriesByProducer(producerID string, target hap
 }
 
 func (s *KVStorage) ListAllDiscoveryEntries() (happydns.Iterator[happydns.StoredDiscoveryEntry], error) {
-	iter := s.db.Search("dscent|")
+	iter := s.db.Search(discoveryPrimaryPrefix)
 	return NewKVIterator[happydns.StoredDiscoveryEntry](s.db, iter), nil
 }
 
@@ -190,7 +195,7 @@ func (s *KVStorage) RestoreDiscoveryEntry(entry *happydns.StoredDiscoveryEntry) 
 }
 
 func (s *KVStorage) DeleteDiscoveryEntriesByProducer(producerID string, target happydns.CheckTarget) error {
-	prefix := fmt.Sprintf("dscent|%s|%s|", producerID, target.String())
+	prefix := fmt.Sprintf("%s%s|%s|", discoveryPrimaryPrefix, producerID, target.String())
 	iter := s.db.Search(prefix)
 	defer iter.Release()
 
@@ -210,10 +215,10 @@ func (s *KVStorage) DeleteDiscoveryEntriesByProducer(producerID string, target h
 }
 
 func (s *KVStorage) ClearDiscoveryEntries() error {
-	if err := s.clearByPrefix("dscent-tgt|"); err != nil {
+	if err := s.clearByPrefix(discoveryTargetIndex); err != nil {
 		return err
 	}
-	return s.clearByPrefix("dscent|")
+	return s.clearByPrefix(discoveryPrimaryPrefix)
 }
 
 // --- DiscoveryObservationRef storage ----------------------------------------

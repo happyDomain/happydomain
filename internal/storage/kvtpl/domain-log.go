@@ -30,6 +30,10 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+const (
+	domainLogPrimaryPrefix = "domain.log|"
+)
+
 // DomainLogIterator wraps KVIterator to populate DomainId from the key
 type DomainLogIterator struct {
 	*KVIterator[happydns.DomainLogWithDomainId]
@@ -60,12 +64,12 @@ func (it *DomainLogIterator) Next() bool {
 }
 
 func (s *KVStorage) ListAllDomainLogs() (happydns.Iterator[happydns.DomainLogWithDomainId], error) {
-	iter := s.db.Search("domain.log|")
+	iter := s.db.Search(domainLogPrimaryPrefix)
 	return NewDomainLogIterator(s.db, iter), nil
 }
 
 func (s *KVStorage) ListDomainLogs(domain *happydns.Domain) (logs []*happydns.DomainLog, err error) {
-	iter := s.db.Search(fmt.Sprintf("domain.log|%s|", domain.Id.String()))
+	iter := s.db.Search(fmt.Sprintf("%s%s|", domainLogPrimaryPrefix, domain.Id.String()))
 	defer iter.Release()
 
 	for iter.Next() {
@@ -99,7 +103,7 @@ func (s *KVStorage) getDomainLog(id string) (l *happydns.DomainLog, d *happydns.
 	}
 
 	d = &happydns.Domain{}
-	err = s.db.Get(fmt.Sprintf("domain-%s", st[1]), d)
+	err = s.db.Get(fmt.Sprintf("%s%s", domainPrimaryPrefix, st[1]), d)
 	if errors.Is(err, happydns.ErrNotFound) {
 		return nil, nil, happydns.ErrDomainNotFound
 	}
@@ -108,7 +112,7 @@ func (s *KVStorage) getDomainLog(id string) (l *happydns.DomainLog, d *happydns.
 }
 
 func (s *KVStorage) CreateDomainLog(d *happydns.Domain, l *happydns.DomainLog) error {
-	key, id, err := s.db.FindIdentifierKey(fmt.Sprintf("domain.log|%s|", d.Id.String()))
+	key, id, err := s.db.FindIdentifierKey(fmt.Sprintf("%s%s|", domainLogPrimaryPrefix, d.Id.String()))
 	if err != nil {
 		return err
 	}
@@ -118,9 +122,9 @@ func (s *KVStorage) CreateDomainLog(d *happydns.Domain, l *happydns.DomainLog) e
 }
 
 func (s *KVStorage) UpdateDomainLog(d *happydns.Domain, l *happydns.DomainLog) error {
-	return s.db.Put(fmt.Sprintf("domain.log|%s|%s", d.Id.String(), l.Id.String()), l)
+	return s.db.Put(fmt.Sprintf("%s%s|%s", domainLogPrimaryPrefix, d.Id.String(), l.Id.String()), l)
 }
 
 func (s *KVStorage) DeleteDomainLog(d *happydns.Domain, l *happydns.DomainLog) error {
-	return s.db.Delete(fmt.Sprintf("domain.log|%s|%s", d.Id.String(), l.Id.String()))
+	return s.db.Delete(fmt.Sprintf("%s%s|%s", domainLogPrimaryPrefix, d.Id.String(), l.Id.String()))
 }

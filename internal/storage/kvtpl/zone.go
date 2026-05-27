@@ -28,18 +28,22 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+const (
+	zonePrimaryPrefix = "domain.zone-"
+)
+
 func (s *KVStorage) ListAllZones() (happydns.Iterator[happydns.ZoneMessage], error) {
-	iter := s.db.Search("domain.zone-")
+	iter := s.db.Search(zonePrimaryPrefix)
 	return NewKVIterator[happydns.ZoneMessage](s.db, iter), nil
 }
 
 func (s *KVStorage) CountZones() (int, error) {
-	return s.countByPrefix("domain.zone-")
+	return s.countByPrefix(zonePrimaryPrefix)
 }
 
 func (s *KVStorage) GetZone(id happydns.Identifier) (*happydns.ZoneMessage, error) {
 	z := &happydns.ZoneMessage{}
-	err := s.db.Get(fmt.Sprintf("domain.zone-%s", id.String()), &z)
+	err := s.db.Get(fmt.Sprintf("%s%s", zonePrimaryPrefix, id.String()), &z)
 	if errors.Is(err, happydns.ErrNotFound) {
 		return nil, happydns.ErrZoneNotFound
 	}
@@ -56,12 +60,12 @@ func (s *KVStorage) getZoneMeta(id string) (z *happydns.ZoneMeta, err error) {
 }
 
 func (s *KVStorage) GetZoneMeta(id happydns.Identifier) (z *happydns.ZoneMeta, err error) {
-	z, err = s.getZoneMeta(fmt.Sprintf("domain.zone-%s", id.String()))
+	z, err = s.getZoneMeta(fmt.Sprintf("%s%s", zonePrimaryPrefix, id.String()))
 	return
 }
 
 func (s *KVStorage) CreateZone(z *happydns.Zone) error {
-	key, id, err := s.db.FindIdentifierKey("domain.zone-")
+	key, id, err := s.db.FindIdentifierKey(zonePrimaryPrefix)
 	if err != nil {
 		return err
 	}
@@ -71,15 +75,15 @@ func (s *KVStorage) CreateZone(z *happydns.Zone) error {
 }
 
 func (s *KVStorage) UpdateZone(z *happydns.Zone) error {
-	return s.db.Put(fmt.Sprintf("domain.zone-%s", z.Id.String()), z)
+	return s.db.Put(fmt.Sprintf("%s%s", zonePrimaryPrefix, z.Id.String()), z)
 }
 
 func (s *KVStorage) UpdateZoneMessage(z *happydns.ZoneMessage) error {
-	return s.db.Put(fmt.Sprintf("domain.zone-%s", z.Id.String()), z)
+	return s.db.Put(fmt.Sprintf("%s%s", zonePrimaryPrefix, z.Id.String()), z)
 }
 
 func (s *KVStorage) DeleteZone(id happydns.Identifier) error {
-	return s.db.Delete(fmt.Sprintf("domain.zone-%s", id.String()))
+	return s.db.Delete(fmt.Sprintf("%s%s", zonePrimaryPrefix, id.String()))
 }
 
 func (s *KVStorage) ClearZones() error {

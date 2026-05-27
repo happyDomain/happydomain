@@ -28,14 +28,18 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+const (
+	observationSnapshotPrefix = "chcksnap|"
+)
+
 func (s *KVStorage) ListAllSnapshots() (happydns.Iterator[happydns.ObservationSnapshot], error) {
-	iter := s.db.Search("chcksnap|")
+	iter := s.db.Search(observationSnapshotPrefix)
 	return NewKVIterator[happydns.ObservationSnapshot](s.db, iter), nil
 }
 
 func (s *KVStorage) GetSnapshot(snapID happydns.Identifier) (*happydns.ObservationSnapshot, error) {
 	snap := &happydns.ObservationSnapshot{}
-	err := s.db.Get(fmt.Sprintf("chcksnap|%s", snapID.String()), snap)
+	err := s.db.Get(fmt.Sprintf("%s%s", observationSnapshotPrefix, snapID.String()), snap)
 	if errors.Is(err, happydns.ErrNotFound) {
 		return nil, happydns.ErrSnapshotNotFound
 	}
@@ -43,7 +47,7 @@ func (s *KVStorage) GetSnapshot(snapID happydns.Identifier) (*happydns.Observati
 }
 
 func (s *KVStorage) CreateSnapshot(snap *happydns.ObservationSnapshot) error {
-	key, id, err := s.db.FindIdentifierKey("chcksnap|")
+	key, id, err := s.db.FindIdentifierKey(observationSnapshotPrefix)
 	if err != nil {
 		return err
 	}
@@ -52,11 +56,11 @@ func (s *KVStorage) CreateSnapshot(snap *happydns.ObservationSnapshot) error {
 }
 
 func (s *KVStorage) RestoreSnapshot(snap *happydns.ObservationSnapshot) error {
-	return s.db.Put(fmt.Sprintf("chcksnap|%s", snap.Id.String()), snap)
+	return s.db.Put(fmt.Sprintf("%s%s", observationSnapshotPrefix, snap.Id.String()), snap)
 }
 
 func (s *KVStorage) DeleteSnapshot(snapID happydns.Identifier) error {
-	return s.db.Delete(fmt.Sprintf("chcksnap|%s", snapID.String()))
+	return s.db.Delete(fmt.Sprintf("%s%s", observationSnapshotPrefix, snapID.String()))
 }
 
 func (s *KVStorage) ClearSnapshots() error {
