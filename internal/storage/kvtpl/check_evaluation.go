@@ -90,44 +90,47 @@ func (s *KVStorage) CreateEvaluation(eval *happydns.CheckEvaluation) error {
 	}
 	eval.Id = id
 
-	// Store the primary record.
-	if err := s.db.Put(key, eval); err != nil {
+	batch := s.db.NewBatch()
+	if err := batch.Put(key, eval); err != nil {
 		return err
 	}
 
-	// Store secondary index by plan if applicable.
 	if eval.PlanID != nil {
 		indexKey := fmt.Sprintf("%s%s|%s", evaluationByPlanIndexPrefix, eval.PlanID.String(), eval.Id.String())
-		if err := s.db.Put(indexKey, true); err != nil {
+		if err := batch.Put(indexKey, true); err != nil {
 			return err
 		}
 	}
 
-	// Store secondary index by checker+target.
 	checkerIndexKey := fmt.Sprintf("%s%s|%s|%s", evaluationByCheckerIndexPrefix, eval.CheckerID, eval.Target.String(), eval.Id.String())
-	if err := s.db.Put(checkerIndexKey, true); err != nil {
+	if err := batch.Put(checkerIndexKey, true); err != nil {
 		return err
 	}
 
-	return nil
+	return batch.Commit()
 }
 
 // RestoreEvaluation writes an evaluation at its existing Id and rebuilds
 // its secondary indexes. Used by the backup restore path.
 func (s *KVStorage) RestoreEvaluation(eval *happydns.CheckEvaluation) error {
-	if err := s.db.Put(fmt.Sprintf("%s%s", evaluationPrimaryPrefix, eval.Id.String()), eval); err != nil {
+	batch := s.db.NewBatch()
+	if err := batch.Put(fmt.Sprintf("%s%s", evaluationPrimaryPrefix, eval.Id.String()), eval); err != nil {
 		return err
 	}
 
 	if eval.PlanID != nil {
 		indexKey := fmt.Sprintf("%s%s|%s", evaluationByPlanIndexPrefix, eval.PlanID.String(), eval.Id.String())
-		if err := s.db.Put(indexKey, true); err != nil {
+		if err := batch.Put(indexKey, true); err != nil {
 			return err
 		}
 	}
 
 	checkerIndexKey := fmt.Sprintf("%s%s|%s|%s", evaluationByCheckerIndexPrefix, eval.CheckerID, eval.Target.String(), eval.Id.String())
-	return s.db.Put(checkerIndexKey, true)
+	if err := batch.Put(checkerIndexKey, true); err != nil {
+		return err
+	}
+
+	return batch.Commit()
 }
 
 func (s *KVStorage) DeleteEvaluation(evalID happydns.Identifier) error {
@@ -137,20 +140,16 @@ func (s *KVStorage) DeleteEvaluation(evalID happydns.Identifier) error {
 		return err
 	}
 
+	batch := s.db.NewBatch()
+
 	if eval.PlanID != nil {
-		indexKey := fmt.Sprintf("%s%s|%s", evaluationByPlanIndexPrefix, eval.PlanID.String(), eval.Id.String())
-		if err := s.db.Delete(indexKey); err != nil {
-			log.Printf("DeleteEvaluation: failed to delete plan index %s: %v\n", indexKey, err)
-		}
+		batch.Delete(fmt.Sprintf("%s%s|%s", evaluationByPlanIndexPrefix, eval.PlanID.String(), eval.Id.String()))
 	}
 
-	// Clean up checker+target index.
-	checkerIndexKey := fmt.Sprintf("%s%s|%s|%s", evaluationByCheckerIndexPrefix, eval.CheckerID, eval.Target.String(), eval.Id.String())
-	if err := s.db.Delete(checkerIndexKey); err != nil {
-		log.Printf("DeleteEvaluation: failed to delete checker index %s: %v\n", checkerIndexKey, err)
-	}
+	batch.Delete(fmt.Sprintf("%s%s|%s|%s", evaluationByCheckerIndexPrefix, eval.CheckerID, eval.Target.String(), eval.Id.String()))
+	batch.Delete(fmt.Sprintf("%s%s", evaluationPrimaryPrefix, evalID.String()))
 
-	return s.db.Delete(fmt.Sprintf("%s%s", evaluationPrimaryPrefix, evalID.String()))
+	return batch.Commit()
 }
 
 func (s *KVStorage) DeleteEvaluationsByChecker(checkerID string, target happydns.CheckTarget) error {
@@ -175,21 +174,14 @@ func (s *KVStorage) DeleteEvaluationsByChecker(checkerID string, target happydns
 			continue
 		}
 
-		// Delete plan index if applicable.
+		batch := s.db.NewBatch()
 		if eval.PlanID != nil {
-			planIndexKey := fmt.Sprintf("%s%s|%s", evaluationByPlanIndexPrefix, eval.PlanID.String(), eval.Id.String())
-			if err := s.db.Delete(planIndexKey); err != nil {
-				log.Printf("DeleteEvaluationsByChecker: failed to delete plan index %s: %v\n", planIndexKey, err)
-			}
+			batch.Delete(fmt.Sprintf("%s%s|%s", evaluationByPlanIndexPrefix, eval.PlanID.String(), eval.Id.String()))
 		}
+		batch.Delete(fmt.Sprintf("%s%s", evaluationPrimaryPrefix, eval.Id.String()))
+		batch.Delete(iter.Key())
 
-		// Delete primary record.
-		if err := s.db.Delete(fmt.Sprintf("%s%s", evaluationPrimaryPrefix, eval.Id.String())); err != nil {
-			log.Printf("DeleteEvaluationsByChecker: failed to delete primary record %s: %v\n", eval.Id.String(), err)
-		}
-
-		// Delete this checker index entry.
-		if err := s.db.Delete(iter.Key()); err != nil {
+		if err := batch.Commit(); err != nil {
 			return err
 		}
 	}

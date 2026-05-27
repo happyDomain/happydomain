@@ -35,7 +35,6 @@ package database
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"git.happydns.org/happyDomain/model"
@@ -162,11 +161,24 @@ func (s *KVStorage) ListAllDiscoveryEntries() (happydns.Iterator[happydns.Stored
 
 // ReplaceDiscoveryEntries atomically replaces the set of entries stored for
 // (producerID, target): everything previously stored is deleted, then the
-// new set is written. Passing an empty `entries` slice simply clears.
+// new set is written, in a single batch. Passing an empty `entries` slice
+// simply clears.
 func (s *KVStorage) ReplaceDiscoveryEntries(producerID string, target happydns.CheckTarget, entries []happydns.DiscoveryEntry) error {
-	if err := s.DeleteDiscoveryEntriesByProducer(producerID, target); err != nil {
-		return err
+	batch := s.db.NewBatch()
+
+	// Stage deletes for every existing entry (primary + target index).
+	prefix := fmt.Sprintf("%s%s|%s|", discoveryPrimaryPrefix, producerID, target.String())
+	iter := s.db.Search(prefix)
+	for iter.Next() {
+		rest := strings.TrimPrefix(iter.Key(), prefix)
+		parts := strings.SplitN(rest, "|", 2)
+		if len(parts) == 2 {
+			batch.Delete(dscEntryTargetIndexKey(producerID, target, parts[0], parts[1]))
+		}
+		batch.Delete(iter.Key())
 	}
+	iter.Release()
+
 	for _, e := range entries {
 		stored := &happydns.StoredDiscoveryEntry{
 			ProducerID: producerID,
@@ -175,23 +187,27 @@ func (s *KVStorage) ReplaceDiscoveryEntries(producerID string, target happydns.C
 			Ref:        e.Ref,
 			Payload:    e.Payload,
 		}
-		if err := s.db.Put(dscEntryKey(producerID, target, e.Type, e.Ref), stored); err != nil {
+		if err := batch.Put(dscEntryKey(producerID, target, e.Type, e.Ref), stored); err != nil {
 			return err
 		}
-		if err := s.db.Put(dscEntryTargetIndexKey(producerID, target, e.Type, e.Ref), true); err != nil {
+		if err := batch.Put(dscEntryTargetIndexKey(producerID, target, e.Type, e.Ref), true); err != nil {
 			return err
 		}
 	}
-	return nil
+	return batch.Commit()
 }
 
 // RestoreDiscoveryEntry writes an entry at its canonical key and rebuilds
 // its target index. Used by the backup restore path.
 func (s *KVStorage) RestoreDiscoveryEntry(entry *happydns.StoredDiscoveryEntry) error {
-	if err := s.db.Put(dscEntryKey(entry.ProducerID, entry.Target, entry.Type, entry.Ref), entry); err != nil {
+	batch := s.db.NewBatch()
+	if err := batch.Put(dscEntryKey(entry.ProducerID, entry.Target, entry.Type, entry.Ref), entry); err != nil {
 		return err
 	}
-	return s.db.Put(dscEntryTargetIndexKey(entry.ProducerID, entry.Target, entry.Type, entry.Ref), true)
+	if err := batch.Put(dscEntryTargetIndexKey(entry.ProducerID, entry.Target, entry.Type, entry.Ref), true); err != nil {
+		return err
+	}
+	return batch.Commit()
 }
 
 func (s *KVStorage) DeleteDiscoveryEntriesByProducer(producerID string, target happydns.CheckTarget) error {
@@ -199,19 +215,16 @@ func (s *KVStorage) DeleteDiscoveryEntriesByProducer(producerID string, target h
 	iter := s.db.Search(prefix)
 	defer iter.Release()
 
+	batch := s.db.NewBatch()
 	for iter.Next() {
 		rest := strings.TrimPrefix(iter.Key(), prefix)
 		parts := strings.SplitN(rest, "|", 2)
 		if len(parts) == 2 {
-			if err := s.db.Delete(dscEntryTargetIndexKey(producerID, target, parts[0], parts[1])); err != nil {
-				log.Printf("DeleteDiscoveryEntriesByProducer: failed to delete target index: %v", err)
-			}
+			batch.Delete(dscEntryTargetIndexKey(producerID, target, parts[0], parts[1]))
 		}
-		if err := s.db.Delete(iter.Key()); err != nil {
-			return err
-		}
+		batch.Delete(iter.Key())
 	}
-	return nil
+	return batch.Commit()
 }
 
 func (s *KVStorage) ClearDiscoveryEntries() error {
@@ -226,18 +239,23 @@ func (s *KVStorage) ClearDiscoveryEntries() error {
 func (s *KVStorage) PutDiscoveryObservationRef(ref *happydns.DiscoveryObservationRef) error {
 	primary := dscObsKey(ref.ProducerID, ref.Target, ref.Ref, ref.ConsumerID, ref.Key)
 
+	batch := s.db.NewBatch()
+
 	// If a previous ref exists at the same primary key under a different
-	// snapshot, clean up its stale snap-index so a later cascade delete for
-	// that earlier snapshot doesn't wipe the primary this call just wrote.
+	// snapshot, drop its stale snap-index so a later cascade delete for that
+	// earlier snapshot doesn't wipe the primary this call just wrote.
 	old := &happydns.DiscoveryObservationRef{}
 	if err := s.db.Get(primary, old); err == nil && !old.SnapshotID.Equals(ref.SnapshotID) {
-		_ = s.db.Delete(dscObsSnapIndexKey(old.SnapshotID, primary))
+		batch.Delete(dscObsSnapIndexKey(old.SnapshotID, primary))
 	}
 
-	if err := s.db.Put(primary, ref); err != nil {
+	if err := batch.Put(primary, ref); err != nil {
 		return err
 	}
-	return s.db.Put(dscObsSnapIndexKey(ref.SnapshotID, primary), primary)
+	if err := batch.Put(dscObsSnapIndexKey(ref.SnapshotID, primary), primary); err != nil {
+		return err
+	}
+	return batch.Commit()
 }
 
 func (s *KVStorage) ListDiscoveryObservationRefs(producerID string, target happydns.CheckTarget, ref string) ([]*happydns.DiscoveryObservationRef, error) {
@@ -265,10 +283,14 @@ func (s *KVStorage) ListAllDiscoveryObservationRefs() (happydns.Iterator[happydn
 // rebuilds its snapshot index. Used by the backup restore path.
 func (s *KVStorage) RestoreDiscoveryObservationRef(ref *happydns.DiscoveryObservationRef) error {
 	primary := dscObsKey(ref.ProducerID, ref.Target, ref.Ref, ref.ConsumerID, ref.Key)
-	if err := s.db.Put(primary, ref); err != nil {
+	batch := s.db.NewBatch()
+	if err := batch.Put(primary, ref); err != nil {
 		return err
 	}
-	return s.db.Put(dscObsSnapIndexKey(ref.SnapshotID, primary), primary)
+	if err := batch.Put(dscObsSnapIndexKey(ref.SnapshotID, primary), primary); err != nil {
+		return err
+	}
+	return batch.Commit()
 }
 
 func (s *KVStorage) DeleteDiscoveryObservationRefsForSnapshot(snapshotID happydns.Identifier) error {
@@ -276,20 +298,17 @@ func (s *KVStorage) DeleteDiscoveryObservationRefsForSnapshot(snapshotID happydn
 	iter := s.db.Search(prefix)
 	defer iter.Release()
 
+	batch := s.db.NewBatch()
 	for iter.Next() {
 		var primary string
 		if err := s.db.DecodeData(iter.Value(), &primary); err != nil || primary == "" {
 			// Fall back to extracting from the key suffix.
 			primary = strings.TrimPrefix(iter.Key(), prefix)
 		}
-		if err := s.db.Delete(primary); err != nil {
-			log.Printf("DeleteDiscoveryObservationRefsForSnapshot: failed to delete primary %s: %v", primary, err)
-		}
-		if err := s.db.Delete(iter.Key()); err != nil {
-			return err
-		}
+		batch.Delete(primary)
+		batch.Delete(iter.Key())
 	}
-	return nil
+	return batch.Commit()
 }
 
 func (s *KVStorage) ClearDiscoveryObservationRefs() error {

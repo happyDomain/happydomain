@@ -43,12 +43,16 @@ func (s *KVStorage) CreateRecord(rec *happydns.NotificationRecord) error {
 	}
 	rec.Id = id
 
-	if err := s.db.Put(key, rec); err != nil {
+	batch := s.db.NewBatch()
+	if err := batch.Put(key, rec); err != nil {
 		return err
 	}
 
 	indexKey := fmt.Sprintf("%s%s|%s", notificationRecordUserIndexPrefix, rec.UserId.String(), rec.Id.String())
-	return s.db.Put(indexKey, rec)
+	if err := batch.Put(indexKey, rec); err != nil {
+		return err
+	}
+	return batch.Commit()
 }
 
 func (s *KVStorage) ListRecordsByUser(userId happydns.Identifier, limit int) ([]*happydns.NotificationRecord, error) {
@@ -89,12 +93,11 @@ func (s *KVStorage) DeleteRecordsOlderThan(before time.Time) error {
 			continue
 		}
 		if rec.SentAt.Before(before) {
-			if err := s.db.Delete(iter.Key()); err != nil {
-				errs = append(errs, fmt.Errorf("delete %s: %w", iter.Key(), err))
-			}
-			userIndexKey := fmt.Sprintf("%s%s|%s", notificationRecordUserIndexPrefix, rec.UserId.String(), rec.Id.String())
-			if err := s.db.Delete(userIndexKey); err != nil {
-				errs = append(errs, fmt.Errorf("delete %s: %w", userIndexKey, err))
+			batch := s.db.NewBatch()
+			batch.Delete(iter.Key())
+			batch.Delete(fmt.Sprintf("%s%s|%s", notificationRecordUserIndexPrefix, rec.UserId.String(), rec.Id.String()))
+			if err := batch.Commit(); err != nil {
+				errs = append(errs, fmt.Errorf("delete record %s: %w", iter.Key(), err))
 			}
 		}
 	}

@@ -96,73 +96,75 @@ func (s *KVStorage) CreateExecution(exec *happydns.Execution) error {
 	}
 	exec.Id = id
 
-	if err := s.db.Put(key, exec); err != nil {
+	batch := s.db.NewBatch()
+	if err := batch.Put(key, exec); err != nil {
 		return err
 	}
 
 	// Secondary index by plan.
 	if exec.PlanID != nil {
 		indexKey := fmt.Sprintf("%s%s|%s", ExecutionByPlanIndexPrefix, exec.PlanID.String(), exec.Id.String())
-		if err := s.db.Put(indexKey, true); err != nil {
+		if err := batch.Put(indexKey, true); err != nil {
 			return err
 		}
 	}
 
 	// Secondary index by checker+target.
 	checkerIndexKey := fmt.Sprintf("%s%s|%s|%s", ExecutionByCheckerIndexPrefix, exec.CheckerID, exec.Target.String(), exec.Id.String())
-	if err := s.db.Put(checkerIndexKey, true); err != nil {
+	if err := batch.Put(checkerIndexKey, true); err != nil {
 		return err
 	}
 
 	// Secondary index by user.
 	if exec.Target.UserId != "" {
-		if err := s.db.Put(executionUserIndexKey(exec.Target.UserId, exec.Id.String()), true); err != nil {
+		if err := batch.Put(executionUserIndexKey(exec.Target.UserId, exec.Id.String()), true); err != nil {
 			return err
 		}
 	}
 
 	// Secondary index by domain.
 	if exec.Target.DomainId != "" {
-		if err := s.db.Put(executionDomainIndexKey(exec.Target.DomainId, exec.Id.String()), true); err != nil {
+		if err := batch.Put(executionDomainIndexKey(exec.Target.DomainId, exec.Id.String()), true); err != nil {
 			return err
 		}
 	}
 
-	return nil
+	return batch.Commit()
 }
 
 // RestoreExecution writes an execution at its existing Id and rebuilds
 // its secondary indexes. Used by the backup restore path.
 func (s *KVStorage) RestoreExecution(exec *happydns.Execution) error {
-	if err := s.db.Put(fmt.Sprintf("%s%s", ExecutionPrimaryPrefix, exec.Id.String()), exec); err != nil {
+	batch := s.db.NewBatch()
+	if err := batch.Put(fmt.Sprintf("%s%s", ExecutionPrimaryPrefix, exec.Id.String()), exec); err != nil {
 		return err
 	}
 
 	if exec.PlanID != nil {
 		indexKey := fmt.Sprintf("%s%s|%s", ExecutionByPlanIndexPrefix, exec.PlanID.String(), exec.Id.String())
-		if err := s.db.Put(indexKey, true); err != nil {
+		if err := batch.Put(indexKey, true); err != nil {
 			return err
 		}
 	}
 
 	checkerIndexKey := fmt.Sprintf("%s%s|%s|%s", ExecutionByCheckerIndexPrefix, exec.CheckerID, exec.Target.String(), exec.Id.String())
-	if err := s.db.Put(checkerIndexKey, true); err != nil {
+	if err := batch.Put(checkerIndexKey, true); err != nil {
 		return err
 	}
 
 	if exec.Target.UserId != "" {
-		if err := s.db.Put(executionUserIndexKey(exec.Target.UserId, exec.Id.String()), true); err != nil {
+		if err := batch.Put(executionUserIndexKey(exec.Target.UserId, exec.Id.String()), true); err != nil {
 			return err
 		}
 	}
 
 	if exec.Target.DomainId != "" {
-		if err := s.db.Put(executionDomainIndexKey(exec.Target.DomainId, exec.Id.String()), true); err != nil {
+		if err := batch.Put(executionDomainIndexKey(exec.Target.DomainId, exec.Id.String()), true); err != nil {
 			return err
 		}
 	}
 
-	return nil
+	return batch.Commit()
 }
 
 func (s *KVStorage) UpdateExecution(exec *happydns.Execution) error {
@@ -172,28 +174,28 @@ func (s *KVStorage) UpdateExecution(exec *happydns.Execution) error {
 		return err
 	}
 
-	if err := s.db.Put(fmt.Sprintf("%s%s", ExecutionPrimaryPrefix, exec.Id.String()), exec); err != nil {
+	batch := s.db.NewBatch()
+	if err := batch.Put(fmt.Sprintf("%s%s", ExecutionPrimaryPrefix, exec.Id.String()), exec); err != nil {
 		return err
+	}
+
+	// Compute new plan index key (if any) once for reuse.
+	newPlanKey := ""
+	if exec.PlanID != nil {
+		newPlanKey = fmt.Sprintf("%s%s|%s", ExecutionByPlanIndexPrefix, exec.PlanID.String(), exec.Id.String())
 	}
 
 	// Clean up stale plan index if PlanID changed.
 	if old.PlanID != nil {
 		oldPlanKey := fmt.Sprintf("%s%s|%s", ExecutionByPlanIndexPrefix, old.PlanID.String(), exec.Id.String())
-		newPlanKey := ""
-		if exec.PlanID != nil {
-			newPlanKey = fmt.Sprintf("%s%s|%s", ExecutionByPlanIndexPrefix, exec.PlanID.String(), exec.Id.String())
-		}
 		if oldPlanKey != newPlanKey {
-			if err := s.db.Delete(oldPlanKey); err != nil {
-				log.Printf("UpdateExecution: failed to delete stale plan index %s: %v\n", oldPlanKey, err)
-			}
+			batch.Delete(oldPlanKey)
 		}
 	}
 
 	// Update secondary index by plan if applicable.
 	if exec.PlanID != nil {
-		indexKey := fmt.Sprintf("%s%s|%s", ExecutionByPlanIndexPrefix, exec.PlanID.String(), exec.Id.String())
-		if err := s.db.Put(indexKey, true); err != nil {
+		if err := batch.Put(newPlanKey, true); err != nil {
 			return err
 		}
 	}
@@ -202,45 +204,39 @@ func (s *KVStorage) UpdateExecution(exec *happydns.Execution) error {
 	oldCheckerKey := fmt.Sprintf("%s%s|%s|%s", ExecutionByCheckerIndexPrefix, old.CheckerID, old.Target.String(), exec.Id.String())
 	newCheckerKey := fmt.Sprintf("%s%s|%s|%s", ExecutionByCheckerIndexPrefix, exec.CheckerID, exec.Target.String(), exec.Id.String())
 	if oldCheckerKey != newCheckerKey {
-		if err := s.db.Delete(oldCheckerKey); err != nil {
-			log.Printf("UpdateExecution: failed to delete stale checker index %s: %v\n", oldCheckerKey, err)
-		}
+		batch.Delete(oldCheckerKey)
 	}
 
 	// Update secondary index by checker+target.
-	if err := s.db.Put(newCheckerKey, true); err != nil {
+	if err := batch.Put(newCheckerKey, true); err != nil {
 		return err
 	}
 
 	// Clean up stale user index if UserId changed.
 	if old.Target.UserId != "" && old.Target.UserId != exec.Target.UserId {
-		if err := s.db.Delete(executionUserIndexKey(old.Target.UserId, exec.Id.String())); err != nil {
-			log.Printf("UpdateExecution: failed to delete stale user index for user %s: %v\n", old.Target.UserId, err)
-		}
+		batch.Delete(executionUserIndexKey(old.Target.UserId, exec.Id.String()))
 	}
 
 	// Update secondary index by user.
 	if exec.Target.UserId != "" {
-		if err := s.db.Put(executionUserIndexKey(exec.Target.UserId, exec.Id.String()), true); err != nil {
+		if err := batch.Put(executionUserIndexKey(exec.Target.UserId, exec.Id.String()), true); err != nil {
 			return err
 		}
 	}
 
 	// Clean up stale domain index if DomainId changed.
 	if old.Target.DomainId != "" && old.Target.DomainId != exec.Target.DomainId {
-		if err := s.db.Delete(executionDomainIndexKey(old.Target.DomainId, exec.Id.String())); err != nil {
-			log.Printf("UpdateExecution: failed to delete stale domain index for domain %s: %v\n", old.Target.DomainId, err)
-		}
+		batch.Delete(executionDomainIndexKey(old.Target.DomainId, exec.Id.String()))
 	}
 
 	// Update secondary index by domain.
 	if exec.Target.DomainId != "" {
-		if err := s.db.Put(executionDomainIndexKey(exec.Target.DomainId, exec.Id.String()), true); err != nil {
+		if err := batch.Put(executionDomainIndexKey(exec.Target.DomainId, exec.Id.String()), true); err != nil {
 			return err
 		}
 	}
 
-	return nil
+	return batch.Commit()
 }
 
 func (s *KVStorage) DeleteExecution(execID happydns.Identifier) error {
@@ -249,31 +245,25 @@ func (s *KVStorage) DeleteExecution(execID happydns.Identifier) error {
 		return err
 	}
 
+	batch := s.db.NewBatch()
+
 	if exec.PlanID != nil {
-		indexKey := fmt.Sprintf("%s%s|%s", ExecutionByPlanIndexPrefix, exec.PlanID.String(), execID.String())
-		if err := s.db.Delete(indexKey); err != nil {
-			log.Printf("DeleteExecution: failed to delete plan index %s: %v\n", indexKey, err)
-		}
+		batch.Delete(fmt.Sprintf("%s%s|%s", ExecutionByPlanIndexPrefix, exec.PlanID.String(), execID.String()))
 	}
 
-	checkerIndexKey := fmt.Sprintf("%s%s|%s|%s", ExecutionByCheckerIndexPrefix, exec.CheckerID, exec.Target.String(), execID.String())
-	if err := s.db.Delete(checkerIndexKey); err != nil {
-		log.Printf("DeleteExecution: failed to delete checker index %s: %v\n", checkerIndexKey, err)
-	}
+	batch.Delete(fmt.Sprintf("%s%s|%s|%s", ExecutionByCheckerIndexPrefix, exec.CheckerID, exec.Target.String(), execID.String()))
 
 	if exec.Target.UserId != "" {
-		if err := s.db.Delete(executionUserIndexKey(exec.Target.UserId, execID.String())); err != nil {
-			log.Printf("DeleteExecution: failed to delete user index for user %s: %v\n", exec.Target.UserId, err)
-		}
+		batch.Delete(executionUserIndexKey(exec.Target.UserId, execID.String()))
 	}
 
 	if exec.Target.DomainId != "" {
-		if err := s.db.Delete(executionDomainIndexKey(exec.Target.DomainId, execID.String())); err != nil {
-			log.Printf("DeleteExecution: failed to delete domain index for domain %s: %v\n", exec.Target.DomainId, err)
-		}
+		batch.Delete(executionDomainIndexKey(exec.Target.DomainId, execID.String()))
 	}
 
-	return s.db.Delete(fmt.Sprintf("%s%s", ExecutionPrimaryPrefix, execID.String()))
+	batch.Delete(fmt.Sprintf("%s%s", ExecutionPrimaryPrefix, execID.String()))
+
+	return batch.Commit()
 }
 
 func (s *KVStorage) DeleteExecutionsByChecker(checkerID string, target happydns.CheckTarget) error {
@@ -298,30 +288,24 @@ func (s *KVStorage) DeleteExecutionsByChecker(checkerID string, target happydns.
 			continue
 		}
 
+		batch := s.db.NewBatch()
+
 		if exec.PlanID != nil {
-			planIndexKey := fmt.Sprintf("%s%s|%s", ExecutionByPlanIndexPrefix, exec.PlanID.String(), exec.Id.String())
-			if err := s.db.Delete(planIndexKey); err != nil {
-				log.Printf("DeleteExecutionsByChecker: failed to delete plan index %s: %v\n", planIndexKey, err)
-			}
+			batch.Delete(fmt.Sprintf("%s%s|%s", ExecutionByPlanIndexPrefix, exec.PlanID.String(), exec.Id.String()))
 		}
 
 		if exec.Target.UserId != "" {
-			if err := s.db.Delete(executionUserIndexKey(exec.Target.UserId, exec.Id.String())); err != nil {
-				log.Printf("DeleteExecutionsByChecker: failed to delete user index for user %s: %v\n", exec.Target.UserId, err)
-			}
+			batch.Delete(executionUserIndexKey(exec.Target.UserId, exec.Id.String()))
 		}
 
 		if exec.Target.DomainId != "" {
-			if err := s.db.Delete(executionDomainIndexKey(exec.Target.DomainId, exec.Id.String())); err != nil {
-				log.Printf("DeleteExecutionsByChecker: failed to delete domain index for domain %s: %v\n", exec.Target.DomainId, err)
-			}
+			batch.Delete(executionDomainIndexKey(exec.Target.DomainId, exec.Id.String()))
 		}
 
-		if err := s.db.Delete(fmt.Sprintf("%s%s", ExecutionPrimaryPrefix, exec.Id.String())); err != nil {
-			log.Printf("DeleteExecutionsByChecker: failed to delete primary record %s: %v\n", exec.Id.String(), err)
-		}
+		batch.Delete(fmt.Sprintf("%s%s", ExecutionPrimaryPrefix, exec.Id.String()))
+		batch.Delete(iter.Key())
 
-		if err := s.db.Delete(iter.Key()); err != nil {
+		if err := batch.Commit(); err != nil {
 			return err
 		}
 	}

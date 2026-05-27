@@ -27,6 +27,7 @@ import (
 	"log"
 	"strings"
 
+	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -82,11 +83,14 @@ func (s *KVStorage) CreateCheckPlan(plan *happydns.CheckPlan) error {
 	}
 	plan.Id = id
 
-	if err := s.db.Put(key, plan); err != nil {
+	batch := s.db.NewBatch()
+	if err := batch.Put(key, plan); err != nil {
 		return err
 	}
-
-	return s.putCheckPlanIndexes(plan)
+	if err := stageCheckPlanIndexes(batch, plan); err != nil {
+		return err
+	}
+	return batch.Commit()
 }
 
 func (s *KVStorage) UpdateCheckPlan(plan *happydns.CheckPlan) error {
@@ -95,7 +99,8 @@ func (s *KVStorage) UpdateCheckPlan(plan *happydns.CheckPlan) error {
 		return err
 	}
 
-	if err := s.db.Put(fmt.Sprintf("%s%s", checkPlanPrimaryPrefix, plan.Id.String()), plan); err != nil {
+	batch := s.db.NewBatch()
+	if err := batch.Put(fmt.Sprintf("%s%s", checkPlanPrimaryPrefix, plan.Id.String()), plan); err != nil {
 		return err
 	}
 
@@ -103,41 +108,40 @@ func (s *KVStorage) UpdateCheckPlan(plan *happydns.CheckPlan) error {
 	oldTargetKey := planTargetIndexKey(old.Target, old.Id.String())
 	newTargetKey := planTargetIndexKey(plan.Target, plan.Id.String())
 	if oldTargetKey != newTargetKey {
-		if err := s.db.Delete(oldTargetKey); err != nil {
-			log.Printf("UpdateCheckPlan: failed to delete stale target index %s: %v\n", oldTargetKey, err)
-		}
+		batch.Delete(oldTargetKey)
 	}
 
 	// Clean up stale checker index if checker changed.
 	oldCheckerKey := planCheckerIndexKey(old.CheckerID, old.Id.String())
 	newCheckerKey := planCheckerIndexKey(plan.CheckerID, plan.Id.String())
 	if oldCheckerKey != newCheckerKey {
-		if err := s.db.Delete(oldCheckerKey); err != nil {
-			log.Printf("UpdateCheckPlan: failed to delete stale checker index %s: %v\n", oldCheckerKey, err)
-		}
+		batch.Delete(oldCheckerKey)
 	}
 
 	// Clean up stale user index if user changed.
 	if old.Target.UserId != "" && old.Target.UserId != plan.Target.UserId {
-		if err := s.db.Delete(planUserIndexKey(old.Target.UserId, old.Id.String())); err != nil {
-			log.Printf("UpdateCheckPlan: failed to delete stale user index for user %s: %v\n", old.Target.UserId, err)
-		}
+		batch.Delete(planUserIndexKey(old.Target.UserId, old.Id.String()))
 	}
 
-	return s.putCheckPlanIndexes(plan)
+	if err := stageCheckPlanIndexes(batch, plan); err != nil {
+		return err
+	}
+	return batch.Commit()
 }
 
-func (s *KVStorage) putCheckPlanIndexes(plan *happydns.CheckPlan) error {
-	if err := s.db.Put(planTargetIndexKey(plan.Target, plan.Id.String()), true); err != nil {
+// stageCheckPlanIndexes stages the target/checker/user index puts for a plan
+// onto the given batch. Caller is responsible for committing.
+func stageCheckPlanIndexes(batch storage.Batch, plan *happydns.CheckPlan) error {
+	if err := batch.Put(planTargetIndexKey(plan.Target, plan.Id.String()), true); err != nil {
 		return err
 	}
 
-	if err := s.db.Put(planCheckerIndexKey(plan.CheckerID, plan.Id.String()), true); err != nil {
+	if err := batch.Put(planCheckerIndexKey(plan.CheckerID, plan.Id.String()), true); err != nil {
 		return err
 	}
 
 	if plan.Target.UserId != "" {
-		if err := s.db.Put(planUserIndexKey(plan.Target.UserId, plan.Id.String()), true); err != nil {
+		if err := batch.Put(planUserIndexKey(plan.Target.UserId, plan.Id.String()), true); err != nil {
 			return err
 		}
 	}
@@ -149,10 +153,14 @@ func (s *KVStorage) putCheckPlanIndexes(plan *happydns.CheckPlan) error {
 // secondary indexes. Used by the backup restore path, which must preserve
 // the original identifier instead of generating a new one.
 func (s *KVStorage) RestoreCheckPlan(plan *happydns.CheckPlan) error {
-	if err := s.db.Put(fmt.Sprintf("%s%s", checkPlanPrimaryPrefix, plan.Id.String()), plan); err != nil {
+	batch := s.db.NewBatch()
+	if err := batch.Put(fmt.Sprintf("%s%s", checkPlanPrimaryPrefix, plan.Id.String()), plan); err != nil {
 		return err
 	}
-	return s.putCheckPlanIndexes(plan)
+	if err := stageCheckPlanIndexes(batch, plan); err != nil {
+		return err
+	}
+	return batch.Commit()
 }
 
 func (s *KVStorage) DeleteCheckPlan(planID happydns.Identifier) error {
@@ -161,21 +169,17 @@ func (s *KVStorage) DeleteCheckPlan(planID happydns.Identifier) error {
 		return err
 	}
 
-	if err := s.db.Delete(planTargetIndexKey(plan.Target, planID.String())); err != nil {
-		log.Printf("DeleteCheckPlan: failed to delete target index: %v\n", err)
-	}
-
-	if err := s.db.Delete(planCheckerIndexKey(plan.CheckerID, planID.String())); err != nil {
-		log.Printf("DeleteCheckPlan: failed to delete checker index: %v\n", err)
-	}
+	batch := s.db.NewBatch()
+	batch.Delete(planTargetIndexKey(plan.Target, planID.String()))
+	batch.Delete(planCheckerIndexKey(plan.CheckerID, planID.String()))
 
 	if plan.Target.UserId != "" {
-		if err := s.db.Delete(planUserIndexKey(plan.Target.UserId, planID.String())); err != nil {
-			log.Printf("DeleteCheckPlan: failed to delete user index for user %s: %v\n", plan.Target.UserId, err)
-		}
+		batch.Delete(planUserIndexKey(plan.Target.UserId, planID.String()))
 	}
 
-	return s.db.Delete(fmt.Sprintf("%s%s", checkPlanPrimaryPrefix, planID.String()))
+	batch.Delete(fmt.Sprintf("%s%s", checkPlanPrimaryPrefix, planID.String()))
+
+	return batch.Commit()
 }
 
 // deleteCheckPlanSecondaryIndexesByPlanID scans all plan index prefixes to

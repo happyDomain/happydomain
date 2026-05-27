@@ -99,16 +99,14 @@ func (s *KVStorage) CreatePreference(pref *happydns.NotificationPreference) erro
 	}
 	pref.Id = id
 
-	if err := s.db.Put(key, pref); err != nil {
+	batch := s.db.NewBatch()
+	if err := batch.Put(key, pref); err != nil {
 		return err
 	}
-	if err := s.db.Put(notifprefUserKey(pref.UserId, pref.Id), ""); err != nil {
-		if delErr := s.db.Delete(key); delErr != nil {
-			log.Printf("storage: orphan preference %q after index write failed (rollback also failed: %v)", pref.Id.String(), delErr)
-		}
+	if err := batch.Put(notifprefUserKey(pref.UserId, pref.Id), ""); err != nil {
 		return err
 	}
-	return nil
+	return batch.Commit()
 }
 
 func (s *KVStorage) UpdatePreference(pref *happydns.NotificationPreference) error {
@@ -121,12 +119,8 @@ func (s *KVStorage) DeletePreference(prefId happydns.Identifier) error {
 		return err
 	}
 
-	if err := s.db.Delete(notifprefUserKey(pref.UserId, prefId)); err != nil {
-		return err
-	}
-	if err := s.db.Delete(notifprefPrimaryKey(prefId)); err != nil {
-		log.Printf("storage: preference %q index removed but primary delete failed: %v", prefId.String(), err)
-		return err
-	}
-	return nil
+	batch := s.db.NewBatch()
+	batch.Delete(notifprefUserKey(pref.UserId, prefId))
+	batch.Delete(notifprefPrimaryKey(prefId))
+	return batch.Commit()
 }

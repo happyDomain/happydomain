@@ -100,17 +100,14 @@ func (s *KVStorage) CreateChannel(ch *happydns.NotificationChannel) error {
 	}
 	ch.Id = id
 
-	if err := s.db.Put(key, ch); err != nil {
+	batch := s.db.NewBatch()
+	if err := batch.Put(key, ch); err != nil {
 		return err
 	}
-	if err := s.db.Put(notifchUserKey(ch.UserId, ch.Id), ""); err != nil {
-		// Roll back primary so a failed index write doesn't orphan it.
-		if delErr := s.db.Delete(key); delErr != nil {
-			log.Printf("storage: orphan channel %q after index write failed (rollback also failed: %v)", ch.Id.String(), delErr)
-		}
+	if err := batch.Put(notifchUserKey(ch.UserId, ch.Id), ""); err != nil {
 		return err
 	}
-	return nil
+	return batch.Commit()
 }
 
 func (s *KVStorage) UpdateChannel(ch *happydns.NotificationChannel) error {
@@ -124,13 +121,8 @@ func (s *KVStorage) DeleteChannel(channelId happydns.Identifier) error {
 		return err
 	}
 
-	// Delete index first so partial failure hides the channel rather than leaving it visible-but-broken.
-	if err := s.db.Delete(notifchUserKey(ch.UserId, channelId)); err != nil {
-		return err
-	}
-	if err := s.db.Delete(notifchPrimaryKey(channelId)); err != nil {
-		log.Printf("storage: channel %q index removed but primary delete failed: %v", channelId.String(), err)
-		return err
-	}
-	return nil
+	batch := s.db.NewBatch()
+	batch.Delete(notifchUserKey(ch.UserId, channelId))
+	batch.Delete(notifchPrimaryKey(channelId))
+	return batch.Commit()
 }
