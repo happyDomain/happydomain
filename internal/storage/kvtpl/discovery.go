@@ -236,8 +236,24 @@ func (s *KVStorage) ClearDiscoveryEntries() error {
 
 // --- DiscoveryObservationRef storage ----------------------------------------
 
+// PutDiscoveryObservationRef writes ref at its canonical primary key and
+// maintains the per-snapshot index used by cascade delete. The function
+// reads the existing primary so it can drop the previous snap-index entry
+// when the snapshot id changes: without that cleanup, a later cascade
+// delete of the older snapshot would wipe the primary this call just wrote.
+//
+// The Get and the batch commit are serialized per primary key by a sharded
+// mutex. Without that, two concurrent writers for the same primary could
+// both observe the same old snapshot id, each stage a delete for it, and
+// then commit their own snap-index entries: the loser's snap-index would
+// outlive its primary write and the next cascade delete of THAT snapshot
+// would erase a primary that no longer belongs to it.
 func (s *KVStorage) PutDiscoveryObservationRef(ref *happydns.DiscoveryObservationRef) error {
 	primary := dscObsKey(ref.ProducerID, ref.Target, ref.Ref, ref.ConsumerID, ref.Key)
+
+	mu := s.lockForObsRef(primary)
+	mu.Lock()
+	defer mu.Unlock()
 
 	batch := s.db.NewBatch()
 

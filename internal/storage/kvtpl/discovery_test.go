@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -305,6 +306,86 @@ func TestDiscoveryObservationRefCascadeOnSnapshotDelete(t *testing.T) {
 	remaining2, _ := s.ListDiscoveryObservationRefs("p", target, "r2")
 	if len(remaining2) != 0 {
 		t.Fatalf("cascade delete missed snapshot refs: %#v", remaining2)
+	}
+}
+
+// TestPutDiscoveryObservationRefConcurrentSamePrimary verifies that
+// concurrent writers targeting the same primary key serialize through the
+// per-primary mutex shard. Without that lock, two writers could both
+// observe the same "old" snapshot id, fail to delete each other's stale
+// snap-index, and leave snap-index entries pointing at a primary that no
+// longer belongs to them. After all writers commit, exactly one snap-index
+// must point at the primary (the one matching the primary's current
+// SnapshotID).
+func TestPutDiscoveryObservationRefConcurrentSamePrimary(t *testing.T) {
+	s := newDiscoveryTestStore()
+	target := happydns.CheckTarget{DomainId: "domA"}
+	primary := dscObsKey("p", target, "r", "c", "k")
+
+	const N = 16
+	var wg sync.WaitGroup
+	errs := make(chan error, N)
+	for i := 0; i < N; i++ {
+		i := i
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			errs <- s.PutDiscoveryObservationRef(&happydns.DiscoveryObservationRef{
+				ProducerID:  "p",
+				Target:      target,
+				Ref:         "r",
+				ConsumerID:  "c",
+				Key:         "k",
+				SnapshotID:  happydns.Identifier{byte(i + 1)},
+				CollectedAt: time.Now(),
+			})
+		}()
+	}
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		if err != nil {
+			t.Fatalf("PutDiscoveryObservationRef: %v", err)
+		}
+	}
+
+	final := &happydns.DiscoveryObservationRef{}
+	if err := s.db.Get(primary, final); err != nil {
+		t.Fatalf("get primary after concurrent puts: %v", err)
+	}
+
+	var pointing []string
+	iter := s.db.Search("dscobs-snap|")
+	for iter.Next() {
+		var p string
+		if err := s.db.DecodeData(iter.Value(), &p); err == nil && p == primary {
+			pointing = append(pointing, iter.Key())
+		}
+	}
+	iter.Release()
+
+	if len(pointing) != 1 {
+		t.Fatalf("expected exactly 1 snap-index pointing at %q after %d concurrent puts, got %d: %v", primary, N, len(pointing), pointing)
+	}
+	want := dscObsSnapIndexKey(final.SnapshotID, primary)
+	if pointing[0] != want {
+		t.Fatalf("snap-index points to wrong snapshot: got %q, want %q", pointing[0], want)
+	}
+}
+
+func TestLockForObsRefStableAcrossCalls(t *testing.T) {
+	s := newDiscoveryTestStore()
+	a := s.lockForObsRef("primary-A")
+	b := s.lockForObsRef("primary-A")
+	c := s.lockForObsRef("primary-B")
+	if a != b {
+		t.Fatal("same key must map to the same mutex shard")
+	}
+	// We do not require different keys to land on different shards (64
+	// shards, infinite keys, collisions are expected), but at minimum the
+	// helper must return a non-nil mutex for every key.
+	if c == nil {
+		t.Fatal("lockForObsRef returned nil for a fresh key")
 	}
 }
 

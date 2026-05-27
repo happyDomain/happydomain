@@ -23,22 +23,46 @@ package database
 
 import (
 	"fmt"
+	"hash/fnv"
 	"log"
 	"sort"
 	"strings"
+	"sync"
 
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
+// obsRefLockShards bounds the table of per-primary-key mutexes used by
+// PutDiscoveryObservationRef. A primary key hashes to a fixed shard so two
+// writers targeting the same primary always pick the same lock, while
+// writers targeting different primaries usually pick different ones and
+// proceed in parallel. 64 is plenty for the volume of concurrent producers
+// happyDomain runs in practice and keeps the per-storage memory cost flat.
+const obsRefLockShards = 64
+
 type KVStorage struct {
 	db storage.KVStorage
+
+	// obsRefMu protects the Get-then-batch-commit sequence inside
+	// PutDiscoveryObservationRef against concurrent writes at the same
+	// primary key. See the godoc on that method for the race it closes.
+	obsRefMu [obsRefLockShards]sync.Mutex
 }
 
 func NewKVDatabase(impl storage.KVStorage) (storage.Storage, error) {
 	return &KVStorage{
-		impl,
+		db: impl,
 	}, nil
+}
+
+// lockForObsRef returns the shard mutex guarding the given primary key.
+// The shard is picked by FNV-1a hash of the key so the same primary key
+// always maps to the same mutex.
+func (s *KVStorage) lockForObsRef(primaryKey string) *sync.Mutex {
+	h := fnv.New32a()
+	_, _ = h.Write([]byte(primaryKey))
+	return &s.obsRefMu[h.Sum32()%obsRefLockShards]
 }
 
 func (s *KVStorage) Close() error {
