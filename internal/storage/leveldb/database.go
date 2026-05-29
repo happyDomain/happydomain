@@ -26,6 +26,7 @@ import (
 	goerrors "errors"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/errors"
@@ -37,7 +38,9 @@ import (
 )
 
 type LevelDBStorage struct {
-	db *leveldb.DB
+	db             *leveldb.DB
+	compactionStop chan struct{} // closed to ask the worker to stop
+	compactionDone chan struct{} // closed by the worker once it has exited
 }
 
 // NewLevelDBStorage establishes the connection to the database. A nil opts
@@ -59,11 +62,49 @@ func NewLevelDBStorage(path string, opts *opt.Options) (s *LevelDBStorage, err e
 		}
 	}
 
-	s = &LevelDBStorage{db}
+	s = &LevelDBStorage{db: db}
 	return
 }
 
+// Compact runs a full-keyspace LevelDB compaction, reclaiming space from
+// tombstones left by deletes (retention janitor, tidy).
+func (s *LevelDBStorage) Compact() error {
+	return s.db.CompactRange(util.Range{})
+}
+
+// StartCompactionWorker launches a goroutine that calls Compact every
+// interval. interval <= 0 is a no-op. The worker is stopped by Close.
+func (s *LevelDBStorage) StartCompactionWorker(interval time.Duration) {
+	if interval <= 0 {
+		return
+	}
+	s.compactionStop = make(chan struct{})
+	s.compactionDone = make(chan struct{})
+	go func() {
+		defer close(s.compactionDone)
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-s.compactionStop:
+				return
+			case <-ticker.C:
+				start := time.Now()
+				if err := s.Compact(); err != nil {
+					log.Printf("LevelDB: compaction failed: %v", err)
+				} else {
+					log.Printf("LevelDB: compaction done in %s", time.Since(start))
+				}
+			}
+		}
+	}()
+}
+
 func (s *LevelDBStorage) Close() error {
+	if s.compactionStop != nil {
+		close(s.compactionStop)
+		<-s.compactionDone
+	}
 	return s.db.Close()
 }
 

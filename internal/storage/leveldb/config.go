@@ -23,6 +23,7 @@ package database
 
 import (
 	"flag"
+	"time"
 
 	"github.com/syndtr/goleveldb/leveldb/filter"
 	"github.com/syndtr/goleveldb/leveldb/opt"
@@ -38,6 +39,7 @@ var (
 	openFilesCacheCapacity int
 	bloomFilterBits        int
 	compactionTableSizeMiB int
+	compactionInterval     time.Duration
 )
 
 func init() {
@@ -49,6 +51,7 @@ func init() {
 	flag.IntVar(&openFilesCacheCapacity, "leveldb-open-files-cache", 4096, "LevelDB open files cache capacity (goleveldb default: 500)")
 	flag.IntVar(&bloomFilterBits, "leveldb-bloom-filter-bits", 10, "Bits per key for the LevelDB Bloom filter; 0 disables it (recommended: 10)")
 	flag.IntVar(&compactionTableSizeMiB, "leveldb-compaction-table-size", 8, "LevelDB compaction table size, in MiB (goleveldb default: 2)")
+	flag.DurationVar(&compactionInterval, "leveldb-compaction-interval", 24*time.Hour, "How often to compact the whole LevelDB keyspace to reclaim space from deleted keys; 0 disables")
 }
 
 // options builds the goleveldb tuning options from the configured flags.
@@ -72,6 +75,8 @@ func Instantiate() (storage.Storage, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	db.StartCompactionWorker(compactionInterval)
 
 	return kv.NewKVDatabase(db)
 }
