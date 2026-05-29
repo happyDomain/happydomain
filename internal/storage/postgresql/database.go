@@ -163,7 +163,7 @@ func (s *PostgreSQLStorage) Get(key string, v any) error {
 
 func (s *PostgreSQLStorage) Put(key string, v any) error {
 	// Marshal value to JSON
-	jsonData, err := json.Marshal(v)
+	jsonData, err := storage.Marshal(v)
 	if err != nil {
 		return fmt.Errorf("failed to marshal value: %w", err)
 	}

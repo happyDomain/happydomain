@@ -23,7 +23,6 @@ package database
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 
 	"git.happydns.org/happyDomain/internal/storage"
@@ -54,7 +53,7 @@ func (s *PostgreSQLStorage) NewBatch() storage.Batch {
 }
 
 func (b *Batch) Put(key string, v any) error {
-	data, err := json.Marshal(v)
+	data, err := storage.Marshal(v)
 	if err != nil {
 		return fmt.Errorf("failed to marshal value: %w", err)
 	}

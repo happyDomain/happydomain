@@ -94,7 +94,7 @@ func (s *LevelDBStorage) Get(key string, v any) error {
 }
 
 func (s *LevelDBStorage) Put(key string, v any) error {
-	data, err := json.Marshal(v)
+	data, err := storage.Marshal(v)
 	if err != nil {
 		return err
 	}

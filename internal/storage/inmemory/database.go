@@ -100,7 +100,7 @@ func (s *InMemoryStorage) Get(key string, v any) error {
 
 // Put stores a value with the given key.
 func (s *InMemoryStorage) Put(key string, v any) error {
-	data, err := json.Marshal(v)
+	data, err := storage.Marshal(v)
 	if err != nil {
 		return err
 	}

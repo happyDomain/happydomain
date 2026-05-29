@@ -19,40 +19,25 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package database
+package storage // import "git.happydns.org/happyDomain/internal/storage"
 
 import (
-	"github.com/syndtr/goleveldb/leveldb"
-
-	"git.happydns.org/happyDomain/internal/storage"
+	"bytes"
+	"encoding/json"
 )
 
-// Batch is the LevelDB-backed implementation of storage.Batch. It defers
-// every staged op to leveldb.Batch so Commit performs a single WAL append
-// and fsync; this gives true cross-key atomicity in addition to being
-// faster than the per-key Put/Delete path.
-type Batch struct {
-	db    *leveldb.DB
-	batch *leveldb.Batch
-}
-
-func (s *LevelDBStorage) NewBatch() storage.Batch {
-	return &Batch{db: s.db, batch: new(leveldb.Batch)}
-}
-
-func (b *Batch) Put(key string, v any) error {
-	data, err := storage.Marshal(v)
-	if err != nil {
-		return err
+// Marshal serializes v the way every storage backend persists values. It uses
+// a json.Encoder with HTML escaping disabled: the stored payloads never reach
+// a browser as raw HTML, so escaping "<", ">" and "&" into < style
+// sequences only wastes encoder work and inflates the bytes written. The
+// trailing newline json.Encoder appends is trimmed so the output matches what
+// json.Marshal would have produced (minus the escaping).
+func Marshal(v any) ([]byte, error) {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(v); err != nil {
+		return nil, err
 	}
-	b.batch.Put([]byte(key), data)
-	return nil
-}
-
-func (b *Batch) Delete(key string) {
-	b.batch.Delete([]byte(key))
-}
-
-func (b *Batch) Commit() error {
-	return b.db.Write(b.batch, nil)
+	return bytes.TrimRight(buf.Bytes(), "\n"), nil
 }

@@ -114,7 +114,7 @@ func (n *NoSQLStorage) Get(key string, v any) error {
 }
 
 func (n *NoSQLStorage) Put(key string, v any) error {
-	data, err := json.Marshal(v)
+	data, err := storage.Marshal(v)
 	if err != nil {
 		return fmt.Errorf("unable to marshal data: %w", err)
 	}
