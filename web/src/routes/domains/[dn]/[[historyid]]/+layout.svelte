@@ -30,7 +30,7 @@
     import NewServicePath from "$lib/components/services/NewServicePath.svelte";
     import RecordModal from "$lib/components/modals/Record.svelte";
     import type { Domain } from "$lib/model/domain";
-    import { domains_idx } from "$lib/stores/domains";
+    import { domains_idx, isManaged } from "$lib/stores/domains";
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
 
@@ -70,7 +70,9 @@
     });
 </script>
 
-{#if $thisZone && $thisZone.id == selectedHistory}
+{#if !isManaged(data.domain)}
+    {@render children?.()}
+{:else if $thisZone && $thisZone.id == selectedHistory}
     {@render children?.()}
 
     <NewServicePath origin={data.domain} zone={$thisZone} historyId={data.history} />

@@ -114,6 +114,10 @@ func (uc *ZoneCorrectionApplierUsecase) Prepare(
 	zone *happydns.Zone,
 	form *happydns.PrepareZoneForm,
 ) (*happydns.PrepareZoneResponse, error) {
+	if !domain.IsManaged() {
+		return nil, happydns.ValidationError{Msg: "this domain is monitor-only and has no DNS provider to compute corrections for"}
+	}
+
 	provider, err := uc.providerService.GetUserProvider(ctx, user, domain.ProviderId)
 	if err != nil {
 		return nil, err
@@ -149,6 +153,10 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(
 	zone *happydns.Zone,
 	form *happydns.ApplyZoneForm,
 ) (*happydns.Zone, error) {
+	if !domain.IsManaged() {
+		return nil, happydns.ValidationError{Msg: "this domain is monitor-only and has no DNS provider to compute corrections for"}
+	}
+
 	provider, err := uc.providerService.GetUserProvider(ctx, user, domain.ProviderId)
 	if err != nil {
 		return nil, err

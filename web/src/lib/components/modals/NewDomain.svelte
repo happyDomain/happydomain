@@ -43,9 +43,14 @@
     import DomainImport from "$lib/components/forms/DomainImport.svelte";
     import ProviderPicker from "$lib/components/forms/ProviderPicker.svelte";
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
+    import { Input } from "@sveltestrap/sveltestrap";
+    import { addDomain } from "$lib/api/domains";
     import type { Provider } from "$lib/model/provider";
     import type { ProviderForm } from "$lib/model/provider_form.svelte.ts";
+    import { goto } from "$app/navigation";
+    import { refreshDomains } from "$lib/stores/domains";
     import { providers } from "$lib/stores/providers";
+    import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
 
     interface Props {
@@ -56,6 +61,7 @@
 
     // step 0: pick or add a provider
     // step 1: import / add domains
+    // step 2: monitor-only domain (no DNS provider)
     let step = $state(0);
 
     let addingProvider = $state(false);
@@ -66,6 +72,8 @@
     let noDomainsList = $state(false);
     let addingNewDomain = $state(false);
     let newDomainValue = $state("");
+    let monitorDomain = $state("");
+    let monitorInProgress = $state(false);
 
     function Open(): void {
         isOpen = true;
@@ -76,6 +84,7 @@
         noDomainsList = false;
         addingNewDomain = false;
         newDomainValue = "";
+        monitorDomain = "";
     }
 
     controls.Open = Open;
@@ -108,6 +117,33 @@
             toggle();
         }
     }
+
+    async function addMonitorOnly(): Promise<void> {
+        const domain = monitorDomain.trim();
+        if (!domain) return;
+
+        monitorInProgress = true;
+        try {
+            const created = await addDomain(domain, undefined);
+            toasts.addToast({
+                title: $t("domains.attached-new"),
+                message: $t("domains.added-success", { domain: created.domain }),
+                href: "/domains/" + created.domain,
+                type: "success",
+                timeout: 5000,
+            });
+            await refreshDomains();
+            toggle();
+            goto("/domains/" + created.domain);
+        } catch (err) {
+            toasts.addErrorToast({
+                title: $t("errors.error"),
+                message: err instanceof Error ? err.message : String(err),
+            });
+        } finally {
+            monitorInProgress = false;
+        }
+    }
 </script>
 
 <Modal {isOpen} scrollable size="lg" {toggle}>
@@ -127,6 +163,34 @@
                 formId="newdomainproviderform"
                 ondone={onProviderSelected}
             />
+            {#if !addingProvider}
+                <hr />
+                <p class="text-muted mb-2">
+                    {$t("domains.monitor-only-hint")}
+                </p>
+                <Button color="outline-secondary" onclick={() => (step = 2)}>
+                    <Icon name="binoculars" class="me-1" />
+                    {$t("domains.monitor-only")}
+                </Button>
+            {/if}
+        {:else if step === 2}
+            <p>
+                {$t("domains.monitor-only-hint")}
+            </p>
+            <form
+                id="newdomainmonitorform"
+                onsubmit={(e) => {
+                    e.preventDefault();
+                    addMonitorOnly();
+                }}
+            >
+                <Input
+                    type="text"
+                    placeholder="example.com"
+                    bind:value={monitorDomain}
+                    disabled={monitorInProgress}
+                />
+            </form>
         {:else if myProvider && myProvider._id}
             <DomainImport
                 provider={myProvider}
@@ -164,6 +228,22 @@
                     {$t("common.previous")}
                 </Button>
             {/if}
+        {:else if step === 2}
+            <Button color="outline-secondary" onclick={() => (step = 0)}>
+                <Icon name="chevron-left" />
+                {$t("common.previous")}
+            </Button>
+            <Button
+                color="primary"
+                type="submit"
+                form="newdomainmonitorform"
+                disabled={monitorInProgress || !monitorDomain.trim()}
+            >
+                {#if monitorInProgress}
+                    <Spinner size="sm" />
+                {/if}
+                {$t("common.add-new-thing", { thing: $t("domains.kind") })}
+            </Button>
         {:else}
             <Button color="outline-secondary" onclick={backToProviderPicker}>
                 <Icon name="chevron-left" />

@@ -79,13 +79,17 @@ func (s *Service) CreateDomain(ctx context.Context, user *happydns.User, input *
 		return nil, err
 	}
 
-	provider, err := s.providerService.GetUserProvider(ctx, user, uz.ProviderId)
-	if err != nil {
-		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to find the provider.")}
-	}
+	// A Domain with no Provider is monitor-only: skip provider resolution and
+	// existence testing, as there is no DNS backend to query.
+	if uz.IsManaged() {
+		provider, err := s.providerService.GetUserProvider(ctx, user, uz.ProviderId)
+		if err != nil {
+			return nil, happydns.ValidationError{Msg: "unable to find the provider."}
+		}
 
-	if err = s.domainExistence.TestDomainExistence(ctx, provider, uz.DomainName); err != nil {
-		return nil, happydns.NotFoundError{Msg: err.Error()}
+		if err = s.domainExistence.TestDomainExistence(ctx, provider, uz.DomainName); err != nil {
+			return nil, happydns.NotFoundError{Msg: err.Error()}
+		}
 	}
 
 	if err := s.store.CreateDomain(uz); err != nil {

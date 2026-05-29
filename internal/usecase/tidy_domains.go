@@ -44,11 +44,14 @@ func (tu *tidyUpUsecase) TidyDomains(dropInvalid bool) error {
 			}
 		}
 
-		if _, err := tu.store.GetProvider(domain.ProviderId); errors.Is(err, happydns.ErrProviderNotFound) {
-			// Drop domain of unexistant provider
-			log.Printf("Deleting orphan domain (provider %s not found): %v\n", domain.ProviderId.String(), domain)
-			if err = iter.DropItem(); err != nil {
-				return err
+		// Monitor-only domains have no Provider, so skip the provider check.
+		if domain.IsManaged() {
+			if _, err := tu.store.GetProvider(domain.ProviderId); errors.Is(err, happydns.ErrProviderNotFound) {
+				// Drop domain of unexistant provider
+				log.Printf("Deleting orphan domain (provider %s not found): %v\n", domain.ProviderId.String(), domain)
+				if err = iter.DropItem(); err != nil {
+					return err
+				}
 			}
 		}
 		return nil

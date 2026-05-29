@@ -117,3 +117,9 @@ export function domainLink(dnid: string): string {
     }
     return dnid;
 }
+
+// isManaged reports whether the domain has a provider handling its zone,
+// mirroring the backend's Domain.IsManaged().
+export function isManaged(domain: Pick<HappydnsDomainWithCheckStatus, "id_provider">): boolean {
+    return !!domain.id_provider;
+}

@@ -2,6 +2,7 @@ import { get } from "svelte/store";
 import { error, redirect, type Load } from "@sveltejs/kit";
 
 import { getZone, thisZone } from "$lib/stores/thiszone";
+import { isManaged } from "$lib/stores/domains";
 
 export const load: Load = async ({ parent, params }) => {
     const data = await parent();
@@ -13,6 +14,15 @@ export const load: Load = async ({ parent, params }) => {
     }
 
     if (!domain.zone_history || domain.zone_history.length === 0) {
+        if (!isManaged(domain)) {
+            return {
+                ...data,
+                history: "",
+                definedhistory: false,
+                zoneId: "",
+            };
+        }
+
         redirect(307, `/domains/${encodeURIComponent(params.dn)}/import_zone`);
     }
 

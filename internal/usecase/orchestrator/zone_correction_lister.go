@@ -64,6 +64,10 @@ func (uc *ZoneCorrectionListerUsecase) listWithRecords(
 	domain *happydns.Domain,
 	zone *happydns.Zone,
 ) ([]*happydns.Correction, []happydns.Record, []happydns.Record, int, error) {
+	if !domain.IsManaged() {
+		return nil, nil, nil, 0, happydns.ValidationError{Msg: "this domain is monitor-only and has no DNS provider to compute corrections for"}
+	}
+
 	provider, err := uc.providerService.GetUserProvider(ctx, user, domain.ProviderId)
 	if err != nil {
 		return nil, nil, nil, 0, err
