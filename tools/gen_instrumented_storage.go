@@ -40,28 +40,28 @@ import (
 
 // entityMap maps each embedded interface type name to the Prometheus entity label.
 var entityMap = map[string]string{
-	"AuthUserStorage":          "authuser",
-	"CheckPlanStorage":         "check_plan",
-	"CheckerOptionsStorage":    "check_config",
-	"CheckEvaluationStorage":   "check_evaluation",
-	"ExecutionStorage":         "execution",
-	"DiscoveryEntryStorage":       "discovery_entry",
-	"DiscoveryObservationStorage": "discovery_observation",
-	"ObservationCacheStorage":  "observation_cache",
-	"ObservationSnapshotStorage": "observation_snapshot",
-	"SchedulerStateStorage":    "scheduler_state",
-	"DomainStorage":            "domain",
+	"AuthUserStorage":                "authuser",
+	"CheckPlanStorage":               "check_plan",
+	"CheckerOptionsStorage":          "check_config",
+	"CheckEvaluationStorage":         "check_evaluation",
+	"ExecutionStorage":               "execution",
+	"DiscoveryEntryStorage":          "discovery_entry",
+	"DiscoveryObservationStorage":    "discovery_observation",
+	"ObservationCacheStorage":        "observation_cache",
+	"ObservationSnapshotStorage":     "observation_snapshot",
+	"SchedulerStateStorage":          "scheduler_state",
+	"DomainStorage":                  "domain",
 	"DomainAvailabilityWatchStorage": "domain_availability_watch",
-	"DomainLogStorage":         "domain_log",
-	"InsightStorage":           "insight",
-	"NotificationChannelStorage":    "notification_channel",
-	"NotificationPreferenceStorage": "notification_preference",
-	"NotificationStateStorage":      "notification_state",
-	"NotificationRecordStorage":     "notification_record",
-	"ProviderStorage":          "provider",
-	"SessionStorage":           "session",
-	"UserStorage":              "user",
-	"ZoneStorage":              "zone",
+	"DomainLogStorage":               "domain_log",
+	"InsightStorage":                 "insight",
+	"NotificationChannelStorage":     "notification_channel",
+	"NotificationPreferenceStorage":  "notification_preference",
+	"NotificationStateStorage":       "notification_state",
+	"NotificationRecordStorage":      "notification_record",
+	"ProviderStorage":                "provider",
+	"SessionStorage":                 "session",
+	"UserStorage":                    "user",
+	"ZoneStorage":                    "zone",
 }
 
 // operationOverrides maps method names that don't follow the prefix convention.
@@ -249,19 +249,21 @@ func newInstrumentedStorage(s storage.Storage) storage.Storage {
 // observe starts a timer and returns a closure that, when called with a
 // pointer to the named return error, records the operation outcome. Use as:
 //
-//	defer observe("get", "user")(&err)
+//	defer observe("GetUser", "get", "user")(&err)
 //
+// The method label is the exact Go method name so full-scan call sites stay
+// distinguishable from point lookups that share the same operation+entity.
 // The closure reads *err at defer-execution time, so it captures the final
 // value of the named return.
-func observe(operation, entity string) func(err *error) {
+func observe(method, operation, entity string) func(err *error) {
 	start := time.Now()
 	return func(err *error) {
 		status := "success"
 		if *err != nil {
 			status = "error"
 		}
-		metrics.StorageOperationsTotal.WithLabelValues(operation, entity, status).Inc()
-		metrics.StorageOperationDuration.WithLabelValues(operation, entity).Observe(time.Since(start).Seconds())
+		metrics.StorageOperationsTotal.WithLabelValues(method, operation, entity, status).Inc()
+		metrics.StorageOperationDuration.WithLabelValues(method, operation, entity).Observe(time.Since(start).Seconds())
 	}
 }
 
@@ -288,7 +290,7 @@ func observe(operation, entity string) func(err *error) {
 
 		fmt.Fprintf(&buf, "func (s *instrumentedStorage) %s(%s) %s {\n",
 			m.Name, rm.params, rm.results)
-		fmt.Fprintf(&buf, "\tdefer observe(%q, %q)(&err)\n", m.Operation, m.Entity)
+		fmt.Fprintf(&buf, "\tdefer observe(%q, %q, %q)(&err)\n", m.Name, m.Operation, m.Entity)
 		fmt.Fprintf(&buf, "\treturn s.inner.%s(%s)\n", m.Name, rm.callArgs)
 		buf.WriteString("}\n\n")
 	}

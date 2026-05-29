@@ -24,291 +24,293 @@ func newInstrumentedStorage(s storage.Storage) storage.Storage {
 // observe starts a timer and returns a closure that, when called with a
 // pointer to the named return error, records the operation outcome. Use as:
 //
-//	defer observe("get", "user")(&err)
+//	defer observe("GetUser", "get", "user")(&err)
 //
+// The method label is the exact Go method name so full-scan call sites stay
+// distinguishable from point lookups that share the same operation+entity.
 // The closure reads *err at defer-execution time, so it captures the final
 // value of the named return.
-func observe(operation, entity string) func(err *error) {
+func observe(method, operation, entity string) func(err *error) {
 	start := time.Now()
 	return func(err *error) {
 		status := "success"
 		if *err != nil {
 			status = "error"
 		}
-		metrics.StorageOperationsTotal.WithLabelValues(operation, entity, status).Inc()
-		metrics.StorageOperationDuration.WithLabelValues(operation, entity).Observe(time.Since(start).Seconds())
+		metrics.StorageOperationsTotal.WithLabelValues(method, operation, entity, status).Inc()
+		metrics.StorageOperationDuration.WithLabelValues(method, operation, entity).Observe(time.Since(start).Seconds())
 	}
 }
 
 func (s *instrumentedStorage) AuthUserExists(email string) (ret bool, err error) {
-	defer observe("get", "authuser")(&err)
+	defer observe("AuthUserExists", "get", "authuser")(&err)
 	return s.inner.AuthUserExists(email)
 }
 
 func (s *instrumentedStorage) ClearAuthUsers() (err error) {
-	defer observe("delete", "authuser")(&err)
+	defer observe("ClearAuthUsers", "delete", "authuser")(&err)
 	return s.inner.ClearAuthUsers()
 }
 
 func (s *instrumentedStorage) ClearCheckPlans() (err error) {
-	defer observe("delete", "check_plan")(&err)
+	defer observe("ClearCheckPlans", "delete", "check_plan")(&err)
 	return s.inner.ClearCheckPlans()
 }
 
 func (s *instrumentedStorage) ClearCheckerConfigurations() (err error) {
-	defer observe("delete", "check_config")(&err)
+	defer observe("ClearCheckerConfigurations", "delete", "check_config")(&err)
 	return s.inner.ClearCheckerConfigurations()
 }
 
 func (s *instrumentedStorage) ClearDiscoveryEntries() (err error) {
-	defer observe("delete", "discovery_entry")(&err)
+	defer observe("ClearDiscoveryEntries", "delete", "discovery_entry")(&err)
 	return s.inner.ClearDiscoveryEntries()
 }
 
 func (s *instrumentedStorage) ClearDiscoveryObservationRefs() (err error) {
-	defer observe("delete", "discovery_observation")(&err)
+	defer observe("ClearDiscoveryObservationRefs", "delete", "discovery_observation")(&err)
 	return s.inner.ClearDiscoveryObservationRefs()
 }
 
 func (s *instrumentedStorage) ClearDomainAvailabilityWatches() (err error) {
-	defer observe("delete", "domain_availability_watch")(&err)
+	defer observe("ClearDomainAvailabilityWatches", "delete", "domain_availability_watch")(&err)
 	return s.inner.ClearDomainAvailabilityWatches()
 }
 
 func (s *instrumentedStorage) ClearDomains() (err error) {
-	defer observe("delete", "domain")(&err)
+	defer observe("ClearDomains", "delete", "domain")(&err)
 	return s.inner.ClearDomains()
 }
 
 func (s *instrumentedStorage) ClearEvaluations() (err error) {
-	defer observe("delete", "check_evaluation")(&err)
+	defer observe("ClearEvaluations", "delete", "check_evaluation")(&err)
 	return s.inner.ClearEvaluations()
 }
 
 func (s *instrumentedStorage) ClearExecutions() (err error) {
-	defer observe("delete", "execution")(&err)
+	defer observe("ClearExecutions", "delete", "execution")(&err)
 	return s.inner.ClearExecutions()
 }
 
 func (s *instrumentedStorage) ClearProviders() (err error) {
-	defer observe("delete", "provider")(&err)
+	defer observe("ClearProviders", "delete", "provider")(&err)
 	return s.inner.ClearProviders()
 }
 
 func (s *instrumentedStorage) ClearSessions() (err error) {
-	defer observe("delete", "session")(&err)
+	defer observe("ClearSessions", "delete", "session")(&err)
 	return s.inner.ClearSessions()
 }
 
 func (s *instrumentedStorage) ClearSnapshots() (err error) {
-	defer observe("delete", "observation_snapshot")(&err)
+	defer observe("ClearSnapshots", "delete", "observation_snapshot")(&err)
 	return s.inner.ClearSnapshots()
 }
 
 func (s *instrumentedStorage) ClearUsers() (err error) {
-	defer observe("delete", "user")(&err)
+	defer observe("ClearUsers", "delete", "user")(&err)
 	return s.inner.ClearUsers()
 }
 
 func (s *instrumentedStorage) ClearZones() (err error) {
-	defer observe("delete", "zone")(&err)
+	defer observe("ClearZones", "delete", "zone")(&err)
 	return s.inner.ClearZones()
 }
 
 func (s *instrumentedStorage) Close() error { return s.inner.Close() }
 
 func (s *instrumentedStorage) CountDomains() (ret int, err error) {
-	defer observe("count", "domain")(&err)
+	defer observe("CountDomains", "count", "domain")(&err)
 	return s.inner.CountDomains()
 }
 
 func (s *instrumentedStorage) CountProviders() (ret int, err error) {
-	defer observe("count", "provider")(&err)
+	defer observe("CountProviders", "count", "provider")(&err)
 	return s.inner.CountProviders()
 }
 
 func (s *instrumentedStorage) CountUsers() (ret int, err error) {
-	defer observe("count", "user")(&err)
+	defer observe("CountUsers", "count", "user")(&err)
 	return s.inner.CountUsers()
 }
 
 func (s *instrumentedStorage) CountZones() (ret int, err error) {
-	defer observe("count", "zone")(&err)
+	defer observe("CountZones", "count", "zone")(&err)
 	return s.inner.CountZones()
 }
 
 func (s *instrumentedStorage) CreateAuthUser(user *happydns.UserAuth) (err error) {
-	defer observe("create", "authuser")(&err)
+	defer observe("CreateAuthUser", "create", "authuser")(&err)
 	return s.inner.CreateAuthUser(user)
 }
 
 func (s *instrumentedStorage) CreateChannel(ch *happydns.NotificationChannel) (err error) {
-	defer observe("create", "notification_channel")(&err)
+	defer observe("CreateChannel", "create", "notification_channel")(&err)
 	return s.inner.CreateChannel(ch)
 }
 
 func (s *instrumentedStorage) CreateCheckPlan(plan *happydns.CheckPlan) (err error) {
-	defer observe("create", "check_plan")(&err)
+	defer observe("CreateCheckPlan", "create", "check_plan")(&err)
 	return s.inner.CreateCheckPlan(plan)
 }
 
 func (s *instrumentedStorage) CreateDomain(domain *happydns.Domain) (err error) {
-	defer observe("create", "domain")(&err)
+	defer observe("CreateDomain", "create", "domain")(&err)
 	return s.inner.CreateDomain(domain)
 }
 
 func (s *instrumentedStorage) CreateDomainAvailabilityWatch(watch *happydns.DomainAvailabilityWatch) (err error) {
-	defer observe("create", "domain_availability_watch")(&err)
+	defer observe("CreateDomainAvailabilityWatch", "create", "domain_availability_watch")(&err)
 	return s.inner.CreateDomainAvailabilityWatch(watch)
 }
 
 func (s *instrumentedStorage) CreateDomainLog(domain *happydns.Domain, log *happydns.DomainLog) (err error) {
-	defer observe("create", "domain_log")(&err)
+	defer observe("CreateDomainLog", "create", "domain_log")(&err)
 	return s.inner.CreateDomainLog(domain, log)
 }
 
 func (s *instrumentedStorage) CreateEvaluation(eval *happydns.CheckEvaluation) (err error) {
-	defer observe("create", "check_evaluation")(&err)
+	defer observe("CreateEvaluation", "create", "check_evaluation")(&err)
 	return s.inner.CreateEvaluation(eval)
 }
 
 func (s *instrumentedStorage) CreateExecution(exec *happydns.Execution) (err error) {
-	defer observe("create", "execution")(&err)
+	defer observe("CreateExecution", "create", "execution")(&err)
 	return s.inner.CreateExecution(exec)
 }
 
 func (s *instrumentedStorage) CreateOrUpdateUser(user *happydns.User) (err error) {
-	defer observe("update", "user")(&err)
+	defer observe("CreateOrUpdateUser", "update", "user")(&err)
 	return s.inner.CreateOrUpdateUser(user)
 }
 
 func (s *instrumentedStorage) CreatePreference(pref *happydns.NotificationPreference) (err error) {
-	defer observe("create", "notification_preference")(&err)
+	defer observe("CreatePreference", "create", "notification_preference")(&err)
 	return s.inner.CreatePreference(pref)
 }
 
 func (s *instrumentedStorage) CreateProvider(prvd *happydns.Provider) (err error) {
-	defer observe("create", "provider")(&err)
+	defer observe("CreateProvider", "create", "provider")(&err)
 	return s.inner.CreateProvider(prvd)
 }
 
 func (s *instrumentedStorage) CreateRecord(rec *happydns.NotificationRecord) (err error) {
-	defer observe("create", "notification_record")(&err)
+	defer observe("CreateRecord", "create", "notification_record")(&err)
 	return s.inner.CreateRecord(rec)
 }
 
 func (s *instrumentedStorage) CreateSnapshot(snap *happydns.ObservationSnapshot) (err error) {
-	defer observe("create", "observation_snapshot")(&err)
+	defer observe("CreateSnapshot", "create", "observation_snapshot")(&err)
 	return s.inner.CreateSnapshot(snap)
 }
 
 func (s *instrumentedStorage) CreateZone(zone *happydns.Zone) (err error) {
-	defer observe("create", "zone")(&err)
+	defer observe("CreateZone", "create", "zone")(&err)
 	return s.inner.CreateZone(zone)
 }
 
 func (s *instrumentedStorage) DeleteAuthUser(user *happydns.UserAuth) (err error) {
-	defer observe("delete", "authuser")(&err)
+	defer observe("DeleteAuthUser", "delete", "authuser")(&err)
 	return s.inner.DeleteAuthUser(user)
 }
 
 func (s *instrumentedStorage) DeleteChannel(channelId happydns.Identifier) (err error) {
-	defer observe("delete", "notification_channel")(&err)
+	defer observe("DeleteChannel", "delete", "notification_channel")(&err)
 	return s.inner.DeleteChannel(channelId)
 }
 
 func (s *instrumentedStorage) DeleteCheckPlan(planID happydns.Identifier) (err error) {
-	defer observe("delete", "check_plan")(&err)
+	defer observe("DeleteCheckPlan", "delete", "check_plan")(&err)
 	return s.inner.DeleteCheckPlan(planID)
 }
 
 func (s *instrumentedStorage) DeleteCheckerConfiguration(checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier) (err error) {
-	defer observe("delete", "check_config")(&err)
+	defer observe("DeleteCheckerConfiguration", "delete", "check_config")(&err)
 	return s.inner.DeleteCheckerConfiguration(checkerName, userId, domainId, serviceId)
 }
 
 func (s *instrumentedStorage) DeleteDiscoveryEntriesByProducer(producerID string, target happydns.CheckTarget) (err error) {
-	defer observe("delete", "discovery_entry")(&err)
+	defer observe("DeleteDiscoveryEntriesByProducer", "delete", "discovery_entry")(&err)
 	return s.inner.DeleteDiscoveryEntriesByProducer(producerID, target)
 }
 
 func (s *instrumentedStorage) DeleteDiscoveryObservationRefsForSnapshot(snapshotID happydns.Identifier) (err error) {
-	defer observe("delete", "discovery_observation")(&err)
+	defer observe("DeleteDiscoveryObservationRefsForSnapshot", "delete", "discovery_observation")(&err)
 	return s.inner.DeleteDiscoveryObservationRefsForSnapshot(snapshotID)
 }
 
 func (s *instrumentedStorage) DeleteDomain(domainid happydns.Identifier) (err error) {
-	defer observe("delete", "domain")(&err)
+	defer observe("DeleteDomain", "delete", "domain")(&err)
 	return s.inner.DeleteDomain(domainid)
 }
 
 func (s *instrumentedStorage) DeleteDomainAvailabilityWatch(id happydns.Identifier) (err error) {
-	defer observe("delete", "domain_availability_watch")(&err)
+	defer observe("DeleteDomainAvailabilityWatch", "delete", "domain_availability_watch")(&err)
 	return s.inner.DeleteDomainAvailabilityWatch(id)
 }
 
 func (s *instrumentedStorage) DeleteDomainLog(domain *happydns.Domain, log *happydns.DomainLog) (err error) {
-	defer observe("delete", "domain_log")(&err)
+	defer observe("DeleteDomainLog", "delete", "domain_log")(&err)
 	return s.inner.DeleteDomainLog(domain, log)
 }
 
 func (s *instrumentedStorage) DeleteEvaluation(evalID happydns.Identifier) (err error) {
-	defer observe("delete", "check_evaluation")(&err)
+	defer observe("DeleteEvaluation", "delete", "check_evaluation")(&err)
 	return s.inner.DeleteEvaluation(evalID)
 }
 
 func (s *instrumentedStorage) DeleteEvaluationsByChecker(checkerID string, target happydns.CheckTarget) (err error) {
-	defer observe("delete", "check_evaluation")(&err)
+	defer observe("DeleteEvaluationsByChecker", "delete", "check_evaluation")(&err)
 	return s.inner.DeleteEvaluationsByChecker(checkerID, target)
 }
 
 func (s *instrumentedStorage) DeleteExecution(execID happydns.Identifier) (err error) {
-	defer observe("delete", "execution")(&err)
+	defer observe("DeleteExecution", "delete", "execution")(&err)
 	return s.inner.DeleteExecution(execID)
 }
 
 func (s *instrumentedStorage) DeleteExecutionsByChecker(checkerID string, target happydns.CheckTarget) (err error) {
-	defer observe("delete", "execution")(&err)
+	defer observe("DeleteExecutionsByChecker", "delete", "execution")(&err)
 	return s.inner.DeleteExecutionsByChecker(checkerID, target)
 }
 
 func (s *instrumentedStorage) DeletePreference(prefId happydns.Identifier) (err error) {
-	defer observe("delete", "notification_preference")(&err)
+	defer observe("DeletePreference", "delete", "notification_preference")(&err)
 	return s.inner.DeletePreference(prefId)
 }
 
 func (s *instrumentedStorage) DeleteProvider(prvdid happydns.Identifier) (err error) {
-	defer observe("delete", "provider")(&err)
+	defer observe("DeleteProvider", "delete", "provider")(&err)
 	return s.inner.DeleteProvider(prvdid)
 }
 
 func (s *instrumentedStorage) DeleteRecordsOlderThan(before time.Time) (err error) {
-	defer observe("delete", "notification_record")(&err)
+	defer observe("DeleteRecordsOlderThan", "delete", "notification_record")(&err)
 	return s.inner.DeleteRecordsOlderThan(before)
 }
 
 func (s *instrumentedStorage) DeleteSession(sessionid string) (err error) {
-	defer observe("delete", "session")(&err)
+	defer observe("DeleteSession", "delete", "session")(&err)
 	return s.inner.DeleteSession(sessionid)
 }
 
 func (s *instrumentedStorage) DeleteSnapshot(snapID happydns.Identifier) (err error) {
-	defer observe("delete", "observation_snapshot")(&err)
+	defer observe("DeleteSnapshot", "delete", "observation_snapshot")(&err)
 	return s.inner.DeleteSnapshot(snapID)
 }
 
 func (s *instrumentedStorage) DeleteState(checkerID string, target happydns.CheckTarget, userId happydns.Identifier) (err error) {
-	defer observe("delete", "notification_state")(&err)
+	defer observe("DeleteState", "delete", "notification_state")(&err)
 	return s.inner.DeleteState(checkerID, target, userId)
 }
 
 func (s *instrumentedStorage) DeleteUser(userid happydns.Identifier) (err error) {
-	defer observe("delete", "user")(&err)
+	defer observe("DeleteUser", "delete", "user")(&err)
 	return s.inner.DeleteUser(userid)
 }
 
 func (s *instrumentedStorage) DeleteZone(zoneid happydns.Identifier) (err error) {
-	defer observe("delete", "zone")(&err)
+	defer observe("DeleteZone", "delete", "zone")(&err)
 	return s.inner.DeleteZone(zoneid)
 }
 
@@ -318,455 +320,455 @@ func (s *instrumentedStorage) ExistsDomainAvailabilityWatch(owner happydns.Ident
 }
 
 func (s *instrumentedStorage) FindDomainsByName(fqdn string) (ret []*happydns.Domain, err error) {
-	defer observe("get", "domain")(&err)
+	defer observe("FindDomainsByName", "get", "domain")(&err)
 	return s.inner.FindDomainsByName(fqdn)
 }
 
 func (s *instrumentedStorage) GetAuthUser(id happydns.Identifier) (ret *happydns.UserAuth, err error) {
-	defer observe("get", "authuser")(&err)
+	defer observe("GetAuthUser", "get", "authuser")(&err)
 	return s.inner.GetAuthUser(id)
 }
 
 func (s *instrumentedStorage) GetAuthUserByEmail(email string) (ret *happydns.UserAuth, err error) {
-	defer observe("get", "authuser")(&err)
+	defer observe("GetAuthUserByEmail", "get", "authuser")(&err)
 	return s.inner.GetAuthUserByEmail(email)
 }
 
 func (s *instrumentedStorage) GetCachedObservation(target happydns.CheckTarget, key happydns.ObservationKey) (ret *happydns.ObservationCacheEntry, err error) {
-	defer observe("get", "observation_cache")(&err)
+	defer observe("GetCachedObservation", "get", "observation_cache")(&err)
 	return s.inner.GetCachedObservation(target, key)
 }
 
 func (s *instrumentedStorage) GetChannel(channelId happydns.Identifier) (ret *happydns.NotificationChannel, err error) {
-	defer observe("get", "notification_channel")(&err)
+	defer observe("GetChannel", "get", "notification_channel")(&err)
 	return s.inner.GetChannel(channelId)
 }
 
 func (s *instrumentedStorage) GetCheckPlan(planID happydns.Identifier) (ret *happydns.CheckPlan, err error) {
-	defer observe("get", "check_plan")(&err)
+	defer observe("GetCheckPlan", "get", "check_plan")(&err)
 	return s.inner.GetCheckPlan(planID)
 }
 
 func (s *instrumentedStorage) GetCheckerConfiguration(checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier) (ret []*happydns.CheckerOptionsPositional, err error) {
-	defer observe("get", "check_config")(&err)
+	defer observe("GetCheckerConfiguration", "get", "check_config")(&err)
 	return s.inner.GetCheckerConfiguration(checkerName, userId, domainId, serviceId)
 }
 
 func (s *instrumentedStorage) GetDomain(domainid happydns.Identifier) (ret *happydns.Domain, err error) {
-	defer observe("get", "domain")(&err)
+	defer observe("GetDomain", "get", "domain")(&err)
 	return s.inner.GetDomain(domainid)
 }
 
 func (s *instrumentedStorage) GetDomainAvailabilityWatch(id happydns.Identifier) (ret *happydns.DomainAvailabilityWatch, err error) {
-	defer observe("get", "domain_availability_watch")(&err)
+	defer observe("GetDomainAvailabilityWatch", "get", "domain_availability_watch")(&err)
 	return s.inner.GetDomainAvailabilityWatch(id)
 }
 
 func (s *instrumentedStorage) GetDomainByDN(user *happydns.User, fqdn string) (ret []*happydns.Domain, err error) {
-	defer observe("get", "domain")(&err)
+	defer observe("GetDomainByDN", "get", "domain")(&err)
 	return s.inner.GetDomainByDN(user, fqdn)
 }
 
 func (s *instrumentedStorage) GetEvaluation(evalID happydns.Identifier) (ret *happydns.CheckEvaluation, err error) {
-	defer observe("get", "check_evaluation")(&err)
+	defer observe("GetEvaluation", "get", "check_evaluation")(&err)
 	return s.inner.GetEvaluation(evalID)
 }
 
 func (s *instrumentedStorage) GetExecution(execID happydns.Identifier) (ret *happydns.Execution, err error) {
-	defer observe("get", "execution")(&err)
+	defer observe("GetExecution", "get", "execution")(&err)
 	return s.inner.GetExecution(execID)
 }
 
 func (s *instrumentedStorage) GetLastSchedulerRun() (ret time.Time, err error) {
-	defer observe("get", "scheduler_state")(&err)
+	defer observe("GetLastSchedulerRun", "get", "scheduler_state")(&err)
 	return s.inner.GetLastSchedulerRun()
 }
 
 func (s *instrumentedStorage) GetLatestEvaluation(planID happydns.Identifier) (ret *happydns.CheckEvaluation, err error) {
-	defer observe("get", "check_evaluation")(&err)
+	defer observe("GetLatestEvaluation", "get", "check_evaluation")(&err)
 	return s.inner.GetLatestEvaluation(planID)
 }
 
 func (s *instrumentedStorage) GetPreference(prefId happydns.Identifier) (ret *happydns.NotificationPreference, err error) {
-	defer observe("get", "notification_preference")(&err)
+	defer observe("GetPreference", "get", "notification_preference")(&err)
 	return s.inner.GetPreference(prefId)
 }
 
 func (s *instrumentedStorage) GetProvider(prvdid happydns.Identifier) (ret *happydns.ProviderMessage, err error) {
-	defer observe("get", "provider")(&err)
+	defer observe("GetProvider", "get", "provider")(&err)
 	return s.inner.GetProvider(prvdid)
 }
 
 func (s *instrumentedStorage) GetSession(sessionid string) (ret *happydns.Session, err error) {
-	defer observe("get", "session")(&err)
+	defer observe("GetSession", "get", "session")(&err)
 	return s.inner.GetSession(sessionid)
 }
 
 func (s *instrumentedStorage) GetSnapshot(snapID happydns.Identifier) (ret *happydns.ObservationSnapshot, err error) {
-	defer observe("get", "observation_snapshot")(&err)
+	defer observe("GetSnapshot", "get", "observation_snapshot")(&err)
 	return s.inner.GetSnapshot(snapID)
 }
 
 func (s *instrumentedStorage) GetState(checkerID string, target happydns.CheckTarget, userId happydns.Identifier) (ret *happydns.NotificationState, err error) {
-	defer observe("get", "notification_state")(&err)
+	defer observe("GetState", "get", "notification_state")(&err)
 	return s.inner.GetState(checkerID, target, userId)
 }
 
 func (s *instrumentedStorage) GetUser(userid happydns.Identifier) (ret *happydns.User, err error) {
-	defer observe("get", "user")(&err)
+	defer observe("GetUser", "get", "user")(&err)
 	return s.inner.GetUser(userid)
 }
 
 func (s *instrumentedStorage) GetUserByEmail(email string) (ret *happydns.User, err error) {
-	defer observe("get", "user")(&err)
+	defer observe("GetUserByEmail", "get", "user")(&err)
 	return s.inner.GetUserByEmail(email)
 }
 
 func (s *instrumentedStorage) GetZone(zoneid happydns.Identifier) (ret *happydns.ZoneMessage, err error) {
-	defer observe("get", "zone")(&err)
+	defer observe("GetZone", "get", "zone")(&err)
 	return s.inner.GetZone(zoneid)
 }
 
 func (s *instrumentedStorage) GetZoneMeta(zoneid happydns.Identifier) (ret *happydns.ZoneMeta, err error) {
-	defer observe("get", "zone")(&err)
+	defer observe("GetZoneMeta", "get", "zone")(&err)
 	return s.inner.GetZoneMeta(zoneid)
 }
 
 func (s *instrumentedStorage) InsightsRun() (err error) {
-	defer observe("run", "insight")(&err)
+	defer observe("InsightsRun", "run", "insight")(&err)
 	return s.inner.InsightsRun()
 }
 
 func (s *instrumentedStorage) LastInsightsRun() (ret *time.Time, ret2 happydns.Identifier, err error) {
-	defer observe("get", "insight")(&err)
+	defer observe("LastInsightsRun", "get", "insight")(&err)
 	return s.inner.LastInsightsRun()
 }
 
 func (s *instrumentedStorage) ListAllAuthUsers() (ret happydns.Iterator[happydns.UserAuth], err error) {
-	defer observe("list", "authuser")(&err)
+	defer observe("ListAllAuthUsers", "list", "authuser")(&err)
 	return s.inner.ListAllAuthUsers()
 }
 
 func (s *instrumentedStorage) ListAllCachedObservations() (ret happydns.Iterator[happydns.ObservationCacheEntry], err error) {
-	defer observe("list", "observation_cache")(&err)
+	defer observe("ListAllCachedObservations", "list", "observation_cache")(&err)
 	return s.inner.ListAllCachedObservations()
 }
 
 func (s *instrumentedStorage) ListAllCheckPlans() (ret happydns.Iterator[happydns.CheckPlan], err error) {
-	defer observe("list", "check_plan")(&err)
+	defer observe("ListAllCheckPlans", "list", "check_plan")(&err)
 	return s.inner.ListAllCheckPlans()
 }
 
 func (s *instrumentedStorage) ListAllCheckerConfigurations() (ret happydns.Iterator[happydns.CheckerOptionsPositional], err error) {
-	defer observe("list", "check_config")(&err)
+	defer observe("ListAllCheckerConfigurations", "list", "check_config")(&err)
 	return s.inner.ListAllCheckerConfigurations()
 }
 
 func (s *instrumentedStorage) ListAllDiscoveryEntries() (ret happydns.Iterator[happydns.StoredDiscoveryEntry], err error) {
-	defer observe("list", "discovery_entry")(&err)
+	defer observe("ListAllDiscoveryEntries", "list", "discovery_entry")(&err)
 	return s.inner.ListAllDiscoveryEntries()
 }
 
 func (s *instrumentedStorage) ListAllDiscoveryObservationRefs() (ret happydns.Iterator[happydns.DiscoveryObservationRef], err error) {
-	defer observe("list", "discovery_observation")(&err)
+	defer observe("ListAllDiscoveryObservationRefs", "list", "discovery_observation")(&err)
 	return s.inner.ListAllDiscoveryObservationRefs()
 }
 
 func (s *instrumentedStorage) ListAllDomainAvailabilityWatches() (ret happydns.Iterator[happydns.DomainAvailabilityWatch], err error) {
-	defer observe("list", "domain_availability_watch")(&err)
+	defer observe("ListAllDomainAvailabilityWatches", "list", "domain_availability_watch")(&err)
 	return s.inner.ListAllDomainAvailabilityWatches()
 }
 
 func (s *instrumentedStorage) ListAllDomainLogs() (ret happydns.Iterator[happydns.DomainLogWithDomainId], err error) {
-	defer observe("list", "domain_log")(&err)
+	defer observe("ListAllDomainLogs", "list", "domain_log")(&err)
 	return s.inner.ListAllDomainLogs()
 }
 
 func (s *instrumentedStorage) ListAllDomains() (ret happydns.Iterator[happydns.Domain], err error) {
-	defer observe("list", "domain")(&err)
+	defer observe("ListAllDomains", "list", "domain")(&err)
 	return s.inner.ListAllDomains()
 }
 
 func (s *instrumentedStorage) ListAllEvaluations() (ret happydns.Iterator[happydns.CheckEvaluation], err error) {
-	defer observe("list", "check_evaluation")(&err)
+	defer observe("ListAllEvaluations", "list", "check_evaluation")(&err)
 	return s.inner.ListAllEvaluations()
 }
 
 func (s *instrumentedStorage) ListAllExecutions() (ret happydns.Iterator[happydns.Execution], err error) {
-	defer observe("list", "execution")(&err)
+	defer observe("ListAllExecutions", "list", "execution")(&err)
 	return s.inner.ListAllExecutions()
 }
 
 func (s *instrumentedStorage) ListAllProviders() (ret happydns.Iterator[happydns.ProviderMessage], err error) {
-	defer observe("list", "provider")(&err)
+	defer observe("ListAllProviders", "list", "provider")(&err)
 	return s.inner.ListAllProviders()
 }
 
 func (s *instrumentedStorage) ListAllSessions() (ret happydns.Iterator[happydns.Session], err error) {
-	defer observe("list", "session")(&err)
+	defer observe("ListAllSessions", "list", "session")(&err)
 	return s.inner.ListAllSessions()
 }
 
 func (s *instrumentedStorage) ListAllSnapshots() (ret happydns.Iterator[happydns.ObservationSnapshot], err error) {
-	defer observe("list", "observation_snapshot")(&err)
+	defer observe("ListAllSnapshots", "list", "observation_snapshot")(&err)
 	return s.inner.ListAllSnapshots()
 }
 
 func (s *instrumentedStorage) ListAllUsers() (ret happydns.Iterator[happydns.User], err error) {
-	defer observe("list", "user")(&err)
+	defer observe("ListAllUsers", "list", "user")(&err)
 	return s.inner.ListAllUsers()
 }
 
 func (s *instrumentedStorage) ListAllZones() (ret happydns.Iterator[happydns.ZoneMessage], err error) {
-	defer observe("list", "zone")(&err)
+	defer observe("ListAllZones", "list", "zone")(&err)
 	return s.inner.ListAllZones()
 }
 
 func (s *instrumentedStorage) ListAuthUserSessions(user *happydns.UserAuth) (ret []*happydns.Session, err error) {
-	defer observe("list", "session")(&err)
+	defer observe("ListAuthUserSessions", "list", "session")(&err)
 	return s.inner.ListAuthUserSessions(user)
 }
 
 func (s *instrumentedStorage) ListChannelsByUser(userId happydns.Identifier) (ret []*happydns.NotificationChannel, err error) {
-	defer observe("list", "notification_channel")(&err)
+	defer observe("ListChannelsByUser", "list", "notification_channel")(&err)
 	return s.inner.ListChannelsByUser(userId)
 }
 
 func (s *instrumentedStorage) ListCheckPlansByChecker(checkerID string) (ret []*happydns.CheckPlan, err error) {
-	defer observe("list", "check_plan")(&err)
+	defer observe("ListCheckPlansByChecker", "list", "check_plan")(&err)
 	return s.inner.ListCheckPlansByChecker(checkerID)
 }
 
 func (s *instrumentedStorage) ListCheckPlansByTarget(target happydns.CheckTarget) (ret []*happydns.CheckPlan, err error) {
-	defer observe("list", "check_plan")(&err)
+	defer observe("ListCheckPlansByTarget", "list", "check_plan")(&err)
 	return s.inner.ListCheckPlansByTarget(target)
 }
 
 func (s *instrumentedStorage) ListCheckPlansByUser(userId happydns.Identifier) (ret []*happydns.CheckPlan, err error) {
-	defer observe("list", "check_plan")(&err)
+	defer observe("ListCheckPlansByUser", "list", "check_plan")(&err)
 	return s.inner.ListCheckPlansByUser(userId)
 }
 
 func (s *instrumentedStorage) ListCheckerConfiguration(checkerName string) (ret []*happydns.CheckerOptionsPositional, err error) {
-	defer observe("list", "check_config")(&err)
+	defer observe("ListCheckerConfiguration", "list", "check_config")(&err)
 	return s.inner.ListCheckerConfiguration(checkerName)
 }
 
 func (s *instrumentedStorage) ListDiscoveryEntriesByProducer(producerID string, target happydns.CheckTarget) (ret []*happydns.StoredDiscoveryEntry, err error) {
-	defer observe("list", "discovery_entry")(&err)
+	defer observe("ListDiscoveryEntriesByProducer", "list", "discovery_entry")(&err)
 	return s.inner.ListDiscoveryEntriesByProducer(producerID, target)
 }
 
 func (s *instrumentedStorage) ListDiscoveryEntriesByTarget(target happydns.CheckTarget) (ret []*happydns.StoredDiscoveryEntry, err error) {
-	defer observe("list", "discovery_entry")(&err)
+	defer observe("ListDiscoveryEntriesByTarget", "list", "discovery_entry")(&err)
 	return s.inner.ListDiscoveryEntriesByTarget(target)
 }
 
 func (s *instrumentedStorage) ListDiscoveryObservationRefs(producerID string, target happydns.CheckTarget, ref string) (ret []*happydns.DiscoveryObservationRef, err error) {
-	defer observe("list", "discovery_observation")(&err)
+	defer observe("ListDiscoveryObservationRefs", "list", "discovery_observation")(&err)
 	return s.inner.ListDiscoveryObservationRefs(producerID, target, ref)
 }
 
 func (s *instrumentedStorage) ListDomainAvailabilityWatches(user *happydns.User) (ret []*happydns.DomainAvailabilityWatch, err error) {
-	defer observe("list", "domain_availability_watch")(&err)
+	defer observe("ListDomainAvailabilityWatches", "list", "domain_availability_watch")(&err)
 	return s.inner.ListDomainAvailabilityWatches(user)
 }
 
 func (s *instrumentedStorage) ListDomainLogs(domain *happydns.Domain) (ret []*happydns.DomainLog, err error) {
-	defer observe("list", "domain_log")(&err)
+	defer observe("ListDomainLogs", "list", "domain_log")(&err)
 	return s.inner.ListDomainLogs(domain)
 }
 
 func (s *instrumentedStorage) ListDomains(user *happydns.User) (ret []*happydns.Domain, err error) {
-	defer observe("list", "domain")(&err)
+	defer observe("ListDomains", "list", "domain")(&err)
 	return s.inner.ListDomains(user)
 }
 
 func (s *instrumentedStorage) ListEvaluationsByChecker(checkerID string, target happydns.CheckTarget, limit int) (ret []*happydns.CheckEvaluation, err error) {
-	defer observe("list", "check_evaluation")(&err)
+	defer observe("ListEvaluationsByChecker", "list", "check_evaluation")(&err)
 	return s.inner.ListEvaluationsByChecker(checkerID, target, limit)
 }
 
 func (s *instrumentedStorage) ListEvaluationsByPlan(planID happydns.Identifier) (ret []*happydns.CheckEvaluation, err error) {
-	defer observe("list", "check_evaluation")(&err)
+	defer observe("ListEvaluationsByPlan", "list", "check_evaluation")(&err)
 	return s.inner.ListEvaluationsByPlan(planID)
 }
 
 func (s *instrumentedStorage) ListExecutionsByChecker(checkerID string, target happydns.CheckTarget, limit int, filter func(*happydns.Execution) bool) (ret []*happydns.Execution, err error) {
-	defer observe("list", "execution")(&err)
+	defer observe("ListExecutionsByChecker", "list", "execution")(&err)
 	return s.inner.ListExecutionsByChecker(checkerID, target, limit, filter)
 }
 
 func (s *instrumentedStorage) ListExecutionsByDomain(domainId happydns.Identifier, limit int, filter func(*happydns.Execution) bool) (ret []*happydns.Execution, err error) {
-	defer observe("list", "execution")(&err)
+	defer observe("ListExecutionsByDomain", "list", "execution")(&err)
 	return s.inner.ListExecutionsByDomain(domainId, limit, filter)
 }
 
 func (s *instrumentedStorage) ListExecutionsByPlan(planID happydns.Identifier) (ret []*happydns.Execution, err error) {
-	defer observe("list", "execution")(&err)
+	defer observe("ListExecutionsByPlan", "list", "execution")(&err)
 	return s.inner.ListExecutionsByPlan(planID)
 }
 
 func (s *instrumentedStorage) ListExecutionsByUser(userId happydns.Identifier, limit int, filter func(*happydns.Execution) bool) (ret []*happydns.Execution, err error) {
-	defer observe("list", "execution")(&err)
+	defer observe("ListExecutionsByUser", "list", "execution")(&err)
 	return s.inner.ListExecutionsByUser(userId, limit, filter)
 }
 
 func (s *instrumentedStorage) ListPreferencesByUser(userId happydns.Identifier) (ret []*happydns.NotificationPreference, err error) {
-	defer observe("list", "notification_preference")(&err)
+	defer observe("ListPreferencesByUser", "list", "notification_preference")(&err)
 	return s.inner.ListPreferencesByUser(userId)
 }
 
 func (s *instrumentedStorage) ListProviders(user *happydns.User) (ret happydns.ProviderMessages, err error) {
-	defer observe("list", "provider")(&err)
+	defer observe("ListProviders", "list", "provider")(&err)
 	return s.inner.ListProviders(user)
 }
 
 func (s *instrumentedStorage) ListRecordsByUser(userId happydns.Identifier, limit int) (ret []*happydns.NotificationRecord, err error) {
-	defer observe("list", "notification_record")(&err)
+	defer observe("ListRecordsByUser", "list", "notification_record")(&err)
 	return s.inner.ListRecordsByUser(userId, limit)
 }
 
 func (s *instrumentedStorage) ListStatesByUser(userId happydns.Identifier) (ret []*happydns.NotificationState, err error) {
-	defer observe("list", "notification_state")(&err)
+	defer observe("ListStatesByUser", "list", "notification_state")(&err)
 	return s.inner.ListStatesByUser(userId)
 }
 
 func (s *instrumentedStorage) ListUserSessions(userid happydns.Identifier) (ret []*happydns.Session, err error) {
-	defer observe("list", "session")(&err)
+	defer observe("ListUserSessions", "list", "session")(&err)
 	return s.inner.ListUserSessions(userid)
 }
 
 func (s *instrumentedStorage) MigrateSchema() error { return s.inner.MigrateSchema() }
 
 func (s *instrumentedStorage) PutCachedObservation(target happydns.CheckTarget, key happydns.ObservationKey, entry *happydns.ObservationCacheEntry) (err error) {
-	defer observe("put", "observation_cache")(&err)
+	defer observe("PutCachedObservation", "put", "observation_cache")(&err)
 	return s.inner.PutCachedObservation(target, key, entry)
 }
 
 func (s *instrumentedStorage) PutDiscoveryObservationRef(ref *happydns.DiscoveryObservationRef) (err error) {
-	defer observe("put", "discovery_observation")(&err)
+	defer observe("PutDiscoveryObservationRef", "put", "discovery_observation")(&err)
 	return s.inner.PutDiscoveryObservationRef(ref)
 }
 
 func (s *instrumentedStorage) PutState(state *happydns.NotificationState) (err error) {
-	defer observe("put", "notification_state")(&err)
+	defer observe("PutState", "put", "notification_state")(&err)
 	return s.inner.PutState(state)
 }
 
 func (s *instrumentedStorage) ReplaceDiscoveryEntries(producerID string, target happydns.CheckTarget, entries []happydns.DiscoveryEntry) (err error) {
-	defer observe("update", "discovery_entry")(&err)
+	defer observe("ReplaceDiscoveryEntries", "update", "discovery_entry")(&err)
 	return s.inner.ReplaceDiscoveryEntries(producerID, target, entries)
 }
 
 func (s *instrumentedStorage) RestoreCheckPlan(plan *happydns.CheckPlan) (err error) {
-	defer observe("restore", "check_plan")(&err)
+	defer observe("RestoreCheckPlan", "restore", "check_plan")(&err)
 	return s.inner.RestoreCheckPlan(plan)
 }
 
 func (s *instrumentedStorage) RestoreDiscoveryEntry(entry *happydns.StoredDiscoveryEntry) (err error) {
-	defer observe("restore", "discovery_entry")(&err)
+	defer observe("RestoreDiscoveryEntry", "restore", "discovery_entry")(&err)
 	return s.inner.RestoreDiscoveryEntry(entry)
 }
 
 func (s *instrumentedStorage) RestoreDiscoveryObservationRef(ref *happydns.DiscoveryObservationRef) (err error) {
-	defer observe("restore", "discovery_observation")(&err)
+	defer observe("RestoreDiscoveryObservationRef", "restore", "discovery_observation")(&err)
 	return s.inner.RestoreDiscoveryObservationRef(ref)
 }
 
 func (s *instrumentedStorage) RestoreEvaluation(eval *happydns.CheckEvaluation) (err error) {
-	defer observe("restore", "check_evaluation")(&err)
+	defer observe("RestoreEvaluation", "restore", "check_evaluation")(&err)
 	return s.inner.RestoreEvaluation(eval)
 }
 
 func (s *instrumentedStorage) RestoreExecution(exec *happydns.Execution) (err error) {
-	defer observe("restore", "execution")(&err)
+	defer observe("RestoreExecution", "restore", "execution")(&err)
 	return s.inner.RestoreExecution(exec)
 }
 
 func (s *instrumentedStorage) RestoreSnapshot(snap *happydns.ObservationSnapshot) (err error) {
-	defer observe("restore", "observation_snapshot")(&err)
+	defer observe("RestoreSnapshot", "restore", "observation_snapshot")(&err)
 	return s.inner.RestoreSnapshot(snap)
 }
 
 func (s *instrumentedStorage) SchemaVersion() int { return s.inner.SchemaVersion() }
 
 func (s *instrumentedStorage) SetLastSchedulerRun(t time.Time) (err error) {
-	defer observe("set", "scheduler_state")(&err)
+	defer observe("SetLastSchedulerRun", "set", "scheduler_state")(&err)
 	return s.inner.SetLastSchedulerRun(t)
 }
 
 func (s *instrumentedStorage) TidyCheckPlanIndexes() (err error) {
-	defer observe("tidy", "check_plan")(&err)
+	defer observe("TidyCheckPlanIndexes", "tidy", "check_plan")(&err)
 	return s.inner.TidyCheckPlanIndexes()
 }
 
 func (s *instrumentedStorage) TidyEvaluationIndexes() (err error) {
-	defer observe("tidy", "check_evaluation")(&err)
+	defer observe("TidyEvaluationIndexes", "tidy", "check_evaluation")(&err)
 	return s.inner.TidyEvaluationIndexes()
 }
 
 func (s *instrumentedStorage) TidyExecutionIndexes() (err error) {
-	defer observe("tidy", "execution")(&err)
+	defer observe("TidyExecutionIndexes", "tidy", "execution")(&err)
 	return s.inner.TidyExecutionIndexes()
 }
 
 func (s *instrumentedStorage) UpdateAuthUser(user *happydns.UserAuth) (err error) {
-	defer observe("update", "authuser")(&err)
+	defer observe("UpdateAuthUser", "update", "authuser")(&err)
 	return s.inner.UpdateAuthUser(user)
 }
 
 func (s *instrumentedStorage) UpdateChannel(ch *happydns.NotificationChannel) (err error) {
-	defer observe("update", "notification_channel")(&err)
+	defer observe("UpdateChannel", "update", "notification_channel")(&err)
 	return s.inner.UpdateChannel(ch)
 }
 
 func (s *instrumentedStorage) UpdateCheckPlan(plan *happydns.CheckPlan) (err error) {
-	defer observe("update", "check_plan")(&err)
+	defer observe("UpdateCheckPlan", "update", "check_plan")(&err)
 	return s.inner.UpdateCheckPlan(plan)
 }
 
 func (s *instrumentedStorage) UpdateCheckerConfiguration(checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier, opts happydns.CheckerOptions) (err error) {
-	defer observe("update", "check_config")(&err)
+	defer observe("UpdateCheckerConfiguration", "update", "check_config")(&err)
 	return s.inner.UpdateCheckerConfiguration(checkerName, userId, domainId, serviceId, opts)
 }
 
 func (s *instrumentedStorage) UpdateDomain(domain *happydns.Domain) (err error) {
-	defer observe("update", "domain")(&err)
+	defer observe("UpdateDomain", "update", "domain")(&err)
 	return s.inner.UpdateDomain(domain)
 }
 
 func (s *instrumentedStorage) UpdateDomainAvailabilityWatch(watch *happydns.DomainAvailabilityWatch) (err error) {
-	defer observe("update", "domain_availability_watch")(&err)
+	defer observe("UpdateDomainAvailabilityWatch", "update", "domain_availability_watch")(&err)
 	return s.inner.UpdateDomainAvailabilityWatch(watch)
 }
 
 func (s *instrumentedStorage) UpdateDomainLog(domain *happydns.Domain, log *happydns.DomainLog) (err error) {
-	defer observe("update", "domain_log")(&err)
+	defer observe("UpdateDomainLog", "update", "domain_log")(&err)
 	return s.inner.UpdateDomainLog(domain, log)
 }
 
 func (s *instrumentedStorage) UpdateExecution(exec *happydns.Execution) (err error) {
-	defer observe("update", "execution")(&err)
+	defer observe("UpdateExecution", "update", "execution")(&err)
 	return s.inner.UpdateExecution(exec)
 }
 
 func (s *instrumentedStorage) UpdatePreference(pref *happydns.NotificationPreference) (err error) {
-	defer observe("update", "notification_preference")(&err)
+	defer observe("UpdatePreference", "update", "notification_preference")(&err)
 	return s.inner.UpdatePreference(pref)
 }
 
 func (s *instrumentedStorage) UpdateProvider(prvd *happydns.Provider) (err error) {
-	defer observe("update", "provider")(&err)
+	defer observe("UpdateProvider", "update", "provider")(&err)
 	return s.inner.UpdateProvider(prvd)
 }
 
 func (s *instrumentedStorage) UpdateSession(session *happydns.Session) (err error) {
-	defer observe("update", "session")(&err)
+	defer observe("UpdateSession", "update", "session")(&err)
 	return s.inner.UpdateSession(session)
 }
 
 func (s *instrumentedStorage) UpdateZone(zone *happydns.Zone) (err error) {
-	defer observe("update", "zone")(&err)
+	defer observe("UpdateZone", "update", "zone")(&err)
 	return s.inner.UpdateZone(zone)
 }

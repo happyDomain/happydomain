@@ -97,16 +97,27 @@ var (
 	}, []string{"provider", "operation"})
 
 	// Storage metrics
+	//
+	// The method label is the exact Go method name (e.g. GetAuthUserByEmail),
+	// so full-scan call sites get their own series instead of being averaged
+	// into the coarse operation+entity rollup (where, for instance, the
+	// GetAuthUserByEmail scan would otherwise hide behind the GetAuthUser point
+	// lookup). The method set is fixed at compile time by the code generator,
+	// so cardinality is bounded.
 	StorageOperationsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "happydomain_storage_operations_total",
 		Help: "Total number of storage operations.",
-	}, []string{"operation", "entity", "status"})
+	}, []string{"method", "operation", "entity", "status"})
 
 	StorageOperationDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "happydomain_storage_operation_duration_seconds",
-		Help:    "Duration of storage operations in seconds.",
-		Buckets: prometheus.DefBuckets,
-	}, []string{"operation", "entity"})
+		Name: "happydomain_storage_operation_duration_seconds",
+		Help: "Duration of storage operations in seconds.",
+		// Extends the Prometheus default buckets up to 30s: full-scan tails on
+		// a large database can exceed the default 10s ceiling, and collapsing
+		// them into +Inf would hide exactly the latency this metric is meant
+		// to surface.
+		Buckets: []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 20, 30},
+	}, []string{"method", "operation", "entity"})
 
 	// Build info. Always 1; the metadata is carried in the labels so that
 	// dashboards and alerts can group/diff across deployments.
