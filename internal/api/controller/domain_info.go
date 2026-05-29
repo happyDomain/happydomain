@@ -24,10 +24,8 @@ package controller
 import (
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
 )
@@ -62,13 +60,9 @@ func (dc *DomainInfoController) GetDomainInfo(c *gin.Context) {
 		domain = dn.(*happydns.Domain).DomainName
 	}
 
-	domain = dns.Fqdn(strings.TrimSpace(domain))
-	if domain == "." {
-		c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{Message: "empty domain name"})
-		return
-	}
-	if _, ok := dns.IsDomainName(domain); !ok {
-		c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{Message: "invalid domain name"})
+	domain, err := happydns.NormalizeDomainName(domain)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{Message: err.Error()})
 		return
 	}
 

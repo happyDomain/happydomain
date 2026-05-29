@@ -87,6 +87,14 @@ func (u *Usecase) backupOneUser(user *happydns.User, ret *happydns.Backup) {
 	} else {
 		ret.Sessions = append(ret.Sessions, ss...)
 	}
+
+	// Domain availability watches
+	ws, err := u.store.ListDomainAvailabilityWatches(user)
+	if err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve DomainAvailabilityWatches: %s", err.Error()))
+	} else {
+		ret.DomainAvailabilityWatches = append(ret.DomainAvailabilityWatches, ws...)
+	}
 }
 
 func (u *Usecase) Backup() happydns.Backup {
@@ -360,6 +368,11 @@ func (u *Usecase) Restore(backup *happydns.Backup) error {
 				errs = errors.Join(errs, u.store.UpdateDomainLog(domain, l))
 			}
 		}
+	}
+
+	// Domain availability watches
+	for _, watch := range backup.DomainAvailabilityWatches {
+		errs = errors.Join(errs, u.store.UpdateDomainAvailabilityWatch(watch))
 	}
 
 	// Zones

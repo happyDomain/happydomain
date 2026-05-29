@@ -39,6 +39,12 @@ const (
 	minSpacing       = 2 * time.Second
 	maxCatchUpWindow = 10 * time.Minute
 	defaultInterval  = 24 * time.Hour
+
+	// availabilityCheckerID is the id of the dedicated checker run against
+	// domain availability watches. It has all CheckerAvailability flags false
+	// so it is never auto-scheduled on managed domains; the scheduler enqueues
+	// it only from the watch enumeration.
+	availabilityCheckerID = happydns.DomainAvailabilityCheckerID
 )
 
 // SchedulerJob represents a single scheduled checker execution.
@@ -100,6 +106,7 @@ type Scheduler struct {
 	engine         happydns.CheckerEngine
 	planStore      CheckPlanStorage
 	domainStore    DomainLister
+	watchStore     WatchLister
 	zoneStore      ZoneGetter
 	stateStore     SchedulerStateStorage
 	cancel         context.CancelFunc
@@ -144,6 +151,7 @@ func NewScheduler(
 	maxConcurrency int,
 	planStore CheckPlanStorage,
 	domainStore DomainLister,
+	watchStore WatchLister,
 	zoneStore ZoneGetter,
 	stateStore SchedulerStateStorage,
 	gate func(target happydns.CheckTarget, interval time.Duration) bool,
@@ -156,6 +164,7 @@ func NewScheduler(
 		engine:         engine,
 		planStore:      planStore,
 		domainStore:    domainStore,
+		watchStore:     watchStore,
 		zoneStore:      zoneStore,
 		stateStore:     stateStore,
 		jobKeys:        make(map[string]bool),
@@ -531,6 +540,15 @@ func (s *Scheduler) buildQueue() {
 			}
 		}
 	}
+
+	// Availability watches: schedule the dedicated availability checker for
+	// each watched name. These are not real domains, so domain-scoped checkers
+	// do not apply; only domain_availability runs, bypassing IsAutoScheduled.
+	if availDef, ok := checkers[availabilityCheckerID]; ok {
+		for _, watch := range s.loadAllWatches() {
+			s.enqueueWatchJob(availDef, watch, disabledSet, planMap, lastRun)
+		}
+	}
 }
 
 // NotifyDomainChange incrementally adds scheduler jobs for a domain
@@ -662,6 +680,42 @@ func (s *Scheduler) NotifyDomainRemoved(domainID happydns.Identifier) {
 	}
 }
 
+// NotifyWatchChange incrementally adds the availability checker job for a
+// newly created watch without rebuilding the entire queue.
+func (s *Scheduler) NotifyWatchChange(watch *happydns.DomainAvailabilityWatch) {
+	availDef, ok := checkerPkg.GetCheckers()[availabilityCheckerID]
+	if !ok {
+		log.Printf("Scheduler: NotifyWatchChange: checker %q not registered", availabilityCheckerID)
+		return
+	}
+
+	target := happydns.CheckTarget{UserId: watch.Owner.String(), DomainId: watch.Id.String()}
+	plans, err := s.planStore.ListCheckPlansByTarget(target)
+	if err != nil {
+		log.Printf("Scheduler: NotifyWatchChange: failed to load plans: %v", err)
+	}
+	disabledSet, planMap := buildPlanIndex(plans)
+
+	s.mu.Lock()
+	added := s.enqueueWatchJob(availDef, watch, disabledSet, planMap, time.Time{})
+	s.mu.Unlock()
+
+	if added {
+		log.Printf("Scheduler: NotifyWatchChange(%s): added availability job", watch.DomainName)
+		select {
+		case s.wake <- struct{}{}:
+		default:
+		}
+	}
+}
+
+// NotifyWatchRemoved removes the availability checker job for the given watch.
+// The watch id is carried in CheckTarget.DomainId, so removal matches on the
+// same field as NotifyDomainRemoved.
+func (s *Scheduler) NotifyWatchRemoved(watchID happydns.Identifier) {
+	s.NotifyDomainRemoved(watchID)
+}
+
 // serviceCheckerApplies reports whether a service-scoped checker should be
 // auto-scheduled for the given service type. Auto-scheduling is restricted to
 // checkers that explicitly declare the service type in LimitToServices; a
@@ -773,6 +827,68 @@ func (s *Scheduler) loadAllDomains() []*happydns.Domain {
 	return domains
 }
 
+func (s *Scheduler) loadAllWatches() []*happydns.DomainAvailabilityWatch {
+	if s.watchStore == nil {
+		return nil
+	}
+	iter, err := s.watchStore.ListAllDomainAvailabilityWatches()
+	if err != nil {
+		log.Printf("Scheduler: failed to list availability watches: %v", err)
+		return nil
+	}
+	defer iter.Close()
+
+	var watches []*happydns.DomainAvailabilityWatch
+	for iter.Next() {
+		watches = append(watches, iter.Item())
+	}
+	return watches
+}
+
+// enqueueWatchJob enqueues the availability checker for a single watch. It
+// mirrors enqueueJob but carries the watch id in CheckTarget.DomainId and
+// honours the watch's optional custom interval (clamped to the checker's
+// bounds). Must be called with s.mu held. Returns true if a job was added.
+func (s *Scheduler) enqueueWatchJob(def *happydns.CheckerDefinition, watch *happydns.DomainAvailabilityWatch, disabledSet map[string]bool, planMap map[string]*happydns.CheckPlan, lastActive time.Time) bool {
+	target := happydns.CheckTarget{UserId: watch.Owner.String(), DomainId: watch.Id.String()}
+	targetStr := target.String()
+	key := availabilityCheckerID + "|" + targetStr
+	if s.jobKeys[key] || disabledSet[key] {
+		return false
+	}
+
+	plan := planMap[key]
+	interval := s.effectiveInterval(def, plan)
+	if watch.Interval != nil && *watch.Interval > 0 {
+		interval = clampInterval(def, *watch.Interval)
+	}
+	if interval <= 0 {
+		interval = defaultInterval
+	}
+
+	var nextRun time.Time
+	if lastActive.IsZero() {
+		now := time.Now()
+		nextRun = now.Add(computeJitter(availabilityCheckerID, targetStr, now, interval))
+	} else {
+		offset := computeOffset(availabilityCheckerID, targetStr, interval)
+		nextRun = computeNextRun(interval, offset, lastActive)
+	}
+
+	job := &SchedulerJob{
+		CheckerID: availabilityCheckerID,
+		Target:    target,
+		Interval:  interval,
+		NextRun:   nextRun,
+	}
+	if plan != nil {
+		job.PlanID = &plan.Id
+	}
+	heap.Push(&s.queue, job)
+	s.jobKeys[key] = true
+	return true
+}
+
 func (s *Scheduler) loadDomainServices(domain *happydns.Domain) []*happydns.ServiceMessage {
 	if s.zoneStore == nil || len(domain.ZoneHistory) == 0 {
 		return nil
@@ -815,7 +931,11 @@ func (s *Scheduler) effectiveInterval(def *happydns.CheckerDefinition, plan *hap
 		interval = *plan.Interval
 	}
 
-	// Clamp to bounds.
+	return clampInterval(def, interval)
+}
+
+// clampInterval clamps interval to def's configured bounds, if any.
+func clampInterval(def *happydns.CheckerDefinition, interval time.Duration) time.Duration {
 	if def.Interval != nil {
 		if interval < def.Interval.Min {
 			interval = def.Interval.Min
@@ -824,7 +944,6 @@ func (s *Scheduler) effectiveInterval(def *happydns.CheckerDefinition, plan *hap
 			interval = def.Interval.Max
 		}
 	}
-
 	return interval
 }
 

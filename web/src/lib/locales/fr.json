@@ -291,7 +291,8 @@
         "signin": "S'identifier",
         "quick-menu": "Accès rapide",
         "my-providers": "Les hébergeurs de mes domaines",
-        "report-problem": "Signaler un problème"
+        "report-problem": "Signaler un problème",
+        "availability": "Surveillance de disponibilité"
     },
     "report": {
         "title": "Signaler un problème",
@@ -576,6 +577,509 @@
     "compliance": {
         "title": "Conformité des enregistrements",
         "checking": "Vérification…",
-        "learn-more": "En savoir plus"
+        "learn-more": "En savoir plus",
+        "dkim": {
+            "missing-selector": {
+                "title": "Sélecteur manquant",
+                "detail": "Les enregistrements DKIM doivent être publiés sous la forme <sélecteur>._domainkey.<domaine>."
+            },
+            "invalid-selector": {
+                "title": "Sélecteur invalide « {{selector}} »",
+                "detail": "Les sélecteurs ne doivent contenir que des lettres, chiffres, tirets ou soulignés."
+            },
+            "parse-error": {
+                "title": "Impossible d'analyser l'enregistrement DKIM",
+                "detail": "La valeur TXT ne ressemble pas à un enregistrement DKIM clé=valeur."
+            },
+            "invalid-version": {
+                "title": "Version DKIM non supportée « {{version}} »",
+                "detail": "Seule la version « DKIM1 » est définie par la RFC 6376."
+            },
+            "missing-key": {
+                "title": "Clé publique manquante (p=)",
+                "detail": "Tout enregistrement DKIM doit publier une clé. Un p= vide ne sert qu'à révoquer la clé."
+            },
+            "revoked-key": {
+                "title": "Clé vide, cet enregistrement DKIM est révoqué",
+                "detail": "Un tag p= vide indique aux vérificateurs d'ignorer ce sélecteur."
+            },
+            "invalid-base64": {
+                "title": "La clé publique n'est pas du base64 valide",
+                "detail": "p= doit contenir un SubjectPublicKeyInfo encodé en base64."
+            },
+            "weak-rsa-key": {
+                "title": "Clé RSA trop courte",
+                "detail": "La RFC 8301 interdit les clés RSA de moins de 1024 bits."
+            },
+            "short-rsa-key": {
+                "title": "Clé RSA plus courte que recommandé",
+                "detail": "Utilisez des clés RSA d'au moins 2048 bits (RFC 8301 §3.2)."
+            },
+            "unknown-key-type": {
+                "title": "Type de clé inconnu « {{type}} »",
+                "detail": "La RFC 6376 définit « rsa » ; la RFC 8463 ajoute « ed25519 »."
+            },
+            "deprecated-hash": {
+                "title": "Algorithme de hachage déprécié « {{hash}} »",
+                "detail": "La RFC 8301 interdit SHA-1 pour les signatures DKIM."
+            },
+            "unknown-hash": {
+                "title": "Algorithme de hachage inconnu « {{hash}} »",
+                "detail": "Les valeurs usuelles sont « sha256 » (et historiquement « sha1 »)."
+            },
+            "unknown-service-type": {
+                "title": "Type de service non reconnu « {{type}} »",
+                "detail": "Les valeurs usuelles sont « email » ou « * »."
+            },
+            "unknown-flag": {
+                "title": "Drapeau inconnu « {{flag}} »",
+                "detail": "La RFC 6376 ne définit que « y » (test) et « s » (alignement i= strict)."
+            },
+            "testing-mode": {
+                "title": "Mode test activé (t=y)",
+                "detail": "Les vérificateurs peuvent ignorer les signatures de ce sélecteur. Retirez le drapeau y une fois en production."
+            },
+            "deprecated-granularity": {
+                "title": "Le tag g= est déprécié",
+                "detail": "Le tag granularité a été supprimé par la RFC 6376 ; les vérificateurs modernes l'ignorent."
+            }
+        },
+        "bimi": {
+            "wrong-owner-name": {
+                "title": "L'enregistrement BIMI n'est pas au bon owner name « {{name}} »",
+                "detail": "Les enregistrements BIMI doivent être publiés sous <sélecteur>._bimi.<domaine>."
+            },
+            "missing-selector": {
+                "title": "Sélecteur manquant",
+                "detail": "Les enregistrements BIMI doivent être publiés sous la forme <sélecteur>._bimi.<domaine>. Utilisez « default » sauf si vous publiez plusieurs logos."
+            },
+            "invalid-selector": {
+                "title": "Sélecteur invalide « {{selector}} »",
+                "detail": "Les sélecteurs ne doivent contenir que des lettres, chiffres, tirets ou soulignés."
+            },
+            "invalid-version": {
+                "title": "Version BIMI non supportée « {{version}} »",
+                "detail": "Seule « BIMI1 » est définie par le draft actuel."
+            },
+            "missing-location": {
+                "title": "URL du logo manquante (l=)",
+                "detail": "BIMI nécessite une URL de logo pointant vers un fichier SVG Tiny PS."
+            },
+            "location-not-https": {
+                "title": "L'URL du logo n'est pas en HTTPS",
+                "detail": "Les clients mail ne récupèrent les logos BIMI qu'en HTTPS."
+            },
+            "location-not-svg": {
+                "title": "L'URL du logo ne se termine pas par .svg",
+                "detail": "BIMI requiert un logo au format SVG Tiny Portable/Secure. L'URL doit pointer vers un fichier .svg."
+            },
+            "authority-not-https": {
+                "title": "L'URL du VMC n'est pas en HTTPS",
+                "detail": "L'URL du Verified Mark Certificate doit utiliser HTTPS."
+            },
+            "authority-not-pem": {
+                "title": "L'URL du VMC ne se termine pas par .pem",
+                "detail": "Le Verified Mark Certificate est habituellement publié au format PEM."
+            },
+            "evidence-not-https": {
+                "title": "L'URL d'evidence n'est pas en HTTPS",
+                "detail": "L'URL du document d'evidence devrait utiliser HTTPS."
+            },
+            "missing-vmc": {
+                "title": "Pas de Verified Mark Certificate (a=)",
+                "detail": "Gmail et Yahoo nécessitent un VMC pour afficher le logo BIMI."
+            },
+            "declination": {
+                "title": "Déclaration de non-participation à BIMI",
+                "detail": "Cet enregistrement indique explicitement aux destinataires que le domaine a choisi de ne pas participer à BIMI."
+            },
+            "no-dmarc": {
+                "title": "Aucun enregistrement DMARC publié",
+                "detail": "BIMI nécessite un enregistrement DMARC avec une politique stricte (quarantine ou reject)."
+            },
+            "weak-dmarc-policy": {
+                "title": "La politique DMARC est trop faible pour BIMI",
+                "detail": "Les clients mail n'honorent BIMI que lorsque DMARC est en quarantine ou reject."
+            }
+        },
+        "dmarc": {
+            "wrong-owner-name": {
+                "title": "L'enregistrement DMARC n'est pas sous _dmarc.{{name}}",
+                "detail": "Les enregistrements DMARC doivent être publiés sous _dmarc.<domaine>."
+            },
+            "parse-error": {
+                "title": "Impossible d'analyser l'enregistrement DMARC",
+                "detail": "La valeur TXT ne ressemble pas à un enregistrement DMARC clé=valeur."
+            },
+            "missing-version": {
+                "title": "Tag v=DMARC1 manquant",
+                "detail": "Un enregistrement DMARC doit commencer par la balise v=DMARC1."
+            },
+            "invalid-version": {
+                "title": "Version DMARC non supportée « {{version}} »",
+                "detail": "Seule « DMARC1 » est définie par la RFC 7489."
+            },
+            "missing-policy": {
+                "title": "Politique manquante (p=)",
+                "detail": "DMARC requiert une politique : none, quarantine ou reject."
+            },
+            "invalid-policy": {
+                "title": "Politique inconnue « {{policy}} »",
+                "detail": "p= doit être l'une des valeurs : none, quarantine, reject."
+            },
+            "invalid-sp": {
+                "title": "Politique de sous-domaine inconnue « {{policy}} »",
+                "detail": "sp= doit être l'une des valeurs : none, quarantine, reject."
+            },
+            "monitoring-only": {
+                "title": "Politique p=none (mode observation)",
+                "detail": "Les destinataires collecteront les rapports mais n'agiront pas sur les messages en échec. Passez à quarantine ou reject quand vous aurez confiance dans les rapports."
+            },
+            "invalid-alignment": {
+                "title": "{{tag}}=« {{value}} » invalide",
+                "detail": "Les tags d'alignement doivent valoir « r » (relâché) ou « s » (strict)."
+            },
+            "invalid-pct": {
+                "title": "pct=« {{pct}} » hors plage",
+                "detail": "pct doit être un entier entre 0 et 100."
+            },
+            "partial-deployment": {
+                "title": "DMARC appliqué à {{pct}}% du courrier",
+                "detail": "Seule une fraction des messages en échec sera soumise à la politique DMARC. Utile en phase de déploiement, retirez pct= une fois la politique éprouvée."
+            },
+            "invalid-ri": {
+                "title": "ri=« {{ri}} » invalide",
+                "detail": "ri doit être un entier positif en secondes (défaut : 86400)."
+            },
+            "invalid-fo": {
+                "title": "Option de rapport d'échec inconnue « {{value}} »",
+                "detail": "fo= accepte 0, 1, d ou s (ou une combinaison séparée par deux-points)."
+            },
+            "unknown-rf": {
+                "title": "Format de rapport inconnu « {{value}} »",
+                "detail": "Seul afrf est défini par la RFC 7489."
+            },
+            "empty-uri": {
+                "title": "Entrée {{tag}} vide",
+                "detail": "Supprimez la valeur vide ou remplacez-la par une URI de destination."
+            },
+            "invalid-uri-scheme": {
+                "title": "URI {{tag}} « {{uri}} » non mailto/http",
+                "detail": "Les URIs de rapport DMARC doivent utiliser mailto: (recommandé) ou http(s):."
+            },
+            "invalid-mailto": {
+                "title": "URI mailto malformée dans {{tag}} : « {{uri}} »",
+                "detail": "Format attendu : mailto:utilisateur@exemple.fr (un suffixe !taille est autorisé)."
+            },
+            "no-alignment-source": {
+                "title": "Aucun enregistrement DKIM ni SPF dans cette zone",
+                "detail": "DMARC requiert au moins un mécanisme aligné. Sans DKIM ni SPF, aucun message ne peut passer DMARC."
+            },
+            "no-alignment-source-enforcing": {
+                "title": "p={{policy}} mais aucun DKIM ni SPF dans cette zone",
+                "detail": "Tous les messages légitimes échoueront DMARC et seront mis en quarantaine ou rejetés. Publiez DKIM et/ou SPF avant d'appliquer la politique."
+            },
+            "external-reporting": {
+                "title": "Les rapports sont envoyés au domaine externe {{domain}}",
+                "detail": "La RFC 7489 sec. 7.1 impose que {{domain}} publie un enregistrement TXT autorisant la réception des rapports pour ce domaine."
+            },
+            "report-auth-missing": {
+                "title": "{{domain}} n'autorise pas les rapports pour ce domaine",
+                "detail": "Aucun enregistrement TXT trouvé à {{queriedName}}. Sans cet enregistrement, {{address}} ignorera silencieusement vos rapports DMARC."
+            },
+            "report-auth-no-dmarc": {
+                "title": "L'enregistrement d'autorisation à {{domain}} est malformé",
+                "detail": "{{queriedName}} renvoie des TXT, mais aucun ne commence par v=DMARC1 ; les rapports risquent d'être rejetés."
+            },
+            "report-auth-resolver-error": {
+                "title": "Impossible de vérifier l'autorisation à {{domain}}",
+                "detail": "La résolution de {{queriedName}} a échoué : {{error}}"
+            },
+            "strict-dkim-no-record": {
+                "title": "adkim=s mais aucun enregistrement DKIM dans cette zone",
+                "detail": "L'alignement DKIM strict requiert que le domaine signataire d= corresponde exactement. Sans DKIM publié, seul l'alignement SPF peut aboutir."
+            }
+        },
+        "mta_sts": {
+            "wrong-owner-name": {
+                "title": "L'enregistrement MTA-STS n'est pas sous _mta-sts.{{name}}",
+                "detail": "Les enregistrements MTA-STS doivent être publiés sous _mta-sts.<domaine>."
+            },
+            "parse-error": {
+                "title": "Impossible d'analyser l'enregistrement MTA-STS",
+                "detail": "La valeur TXT ne ressemble pas à un enregistrement MTA-STS clé=valeur."
+            },
+            "missing-version": {
+                "title": "Tag v=STSv1 manquant",
+                "detail": "Un enregistrement TXT MTA-STS doit commencer par v=STSv1."
+            },
+            "invalid-version": {
+                "title": "Version MTA-STS non supportée « {{version}} »",
+                "detail": "Seule « STSv1 » est définie par la RFC 8461."
+            },
+            "missing-id": {
+                "title": "Identifiant de politique manquant (id=)",
+                "detail": "MTA-STS requiert un identifiant de politique ; incrémentez-le à chaque changement du fichier de politique."
+            },
+            "invalid-id": {
+                "title": "Identifiant de politique invalide « {{id}} »",
+                "detail": "id doit contenir 1 à 32 caractères alphanumériques (RFC 8461 sec. 3.1)."
+            },
+            "policy-dns-error": {
+                "title": "Impossible de résoudre l'hôte mta-sts",
+                "detail": "La résolution DNS de mta-sts.<domaine> a échoué. Publiez un enregistrement A/AAAA pour que la politique à {{url}} soit joignable."
+            },
+            "policy-tls-error": {
+                "title": "Échec du handshake TLS pour l'hôte de politique",
+                "detail": "{{error}}"
+            },
+            "policy-not-found": {
+                "title": "Aucun fichier de politique à {{url}}",
+                "detail": "RFC 8461 sec. 3.3 : la politique DOIT être servie à cette URL. Publiez le fichier ou retirez l'enregistrement TXT."
+            },
+            "policy-http-error": {
+                "title": "Le téléchargement de la politique a renvoyé HTTP {{code}}",
+                "detail": "Le serveur de politique a répondu avec un statut non-2xx ; les destinataires considéreront la politique comme manquante."
+            },
+            "policy-redirect": {
+                "title": "L'hôte de politique a tenté une redirection (HTTP {{code}})",
+                "detail": "RFC 8461 sec. 3.3 interdit les redirections sur l'URL de politique. Servez le fichier directement à {{url}}."
+            },
+            "policy-fetch-error": {
+                "title": "Impossible de télécharger la politique",
+                "detail": "{{error}}"
+            },
+            "policy-too-large": {
+                "title": "Le fichier de politique est trop volumineux",
+                "detail": "Le fichier à {{url}} dépasse la limite de taille (64 Kio). Les politiques MTA-STS sont très courtes ; allégez le fichier."
+            },
+            "policy-missing-version": {
+                "title": "Le fichier de politique n'a pas de clé version",
+                "detail": "Ajoutez une ligne « version: STSv1 » en tête de {{url}}."
+            },
+            "policy-invalid-version": {
+                "title": "Version de politique « {{version}} » inconnue",
+                "detail": "Seule « STSv1 » est définie par la RFC 8461."
+            },
+            "policy-missing-mode": {
+                "title": "Le fichier de politique n'a pas de clé mode",
+                "detail": "Ajoutez une ligne « mode: enforce » (ou testing / none) dans {{url}}."
+            },
+            "policy-invalid-mode": {
+                "title": "Mode de politique « {{mode}} » inconnu",
+                "detail": "Le mode doit être : enforce, testing ou none."
+            },
+            "policy-mode-none": {
+                "title": "Le mode de politique est « none » (MTA-STS effectivement désactivé)",
+                "detail": "Les destinataires se comporteront comme si aucune politique n'était publiée. Passez à enforce quand vous aurez confiance."
+            },
+            "policy-mode-testing": {
+                "title": "Mode de politique « testing »",
+                "detail": "Les destinataires rapporteront les échecs mais livreront tout de même. Passez à enforce une fois les rapports propres."
+            },
+            "policy-missing-mx": {
+                "title": "La politique n'a pas d'entrées mx",
+                "detail": "Une politique {{mode}} doit lister au moins un motif mx ; sinon aucun courrier ne peut être livré."
+            },
+            "policy-missing-max-age": {
+                "title": "Le fichier de politique n'a pas de max_age",
+                "detail": "Ajoutez une ligne « max_age: <secondes> ». Valeurs usuelles : 86400 (1 jour) à 604800 (1 semaine) en déploiement, puis plus."
+            },
+            "policy-invalid-max-age": {
+                "title": "max_age « {{maxAge}} » hors plage",
+                "detail": "max_age doit être compris entre 0 et 31557600 secondes (1 an)."
+            },
+            "policy-short-max-age": {
+                "title": "max_age court ({{maxAge}}s)",
+                "detail": "La RFC 8461 recommande au moins une semaine. Des valeurs trop courtes empêchent le cache et forcent les re-téléchargements."
+            },
+            "zone-no-mx": {
+                "title": "La politique liste des motifs mx mais la zone n'a aucun enregistrement MX",
+                "detail": "Les expéditeurs refuseront de livrer le courrier vers ce domaine car aucun MX de l'apex ne correspond à la politique de {{url}}."
+            },
+            "zone-mx-not-covered": {
+                "title": "Le MX « {{host}} » n'est couvert par aucun motif mx de la politique",
+                "detail": "Les expéditeurs appliquant la politique {{mode}} de {{url}} refuseront de livrer vers cet hôte. Ajoutez une entrée mx correspondante."
+            },
+            "policy-mx-unused": {
+                "title": "Le motif mx « {{pattern}} » de la politique ne correspond à aucun MX de la zone",
+                "detail": "Le motif listé dans {{url}} ne correspond à aucun enregistrement MX. Retirez l'entrée ou ajoutez le MX manquant."
+            }
+        },
+        "mx": {
+            "null-mx-with-others": {
+                "title": "Un null MX ne peut coexister avec d'autres enregistrements MX",
+                "detail": "La RFC 7505 impose qu'un null MX (cible « . ») soit le seul enregistrement MX du domaine."
+            },
+            "null-mx-non-zero-preference": {
+                "title": "La préférence d'un null MX doit être 0 (reçu {{preference}})",
+                "detail": "La RFC 7505 spécifie une préférence à 0 pour l'enregistrement null MX."
+            },
+            "invalid-target": {
+                "title": "Cible MX invalide « {{target}} »",
+                "detail": "Les cibles MX doivent être des noms d'hôtes valides au sens de la RFC 1035."
+            },
+            "invalid-preference": {
+                "title": "Préférence MX « {{preference}} » hors plage",
+                "detail": "La préférence MX doit être un entier non signé sur 16 bits (0..65535)."
+            },
+            "duplicate-target": {
+                "title": "Cible MX dupliquée « {{target}} »",
+                "detail": "La même cible apparaît plusieurs fois. Ne conservez qu'un seul enregistrement."
+            },
+            "target-is-cname": {
+                "title": "La cible MX « {{target}} » est un CNAME",
+                "detail": "La RFC 5321 sec. 5.1 interdit qu'un MX pointe vers un CNAME."
+            },
+            "target-no-address": {
+                "title": "La cible MX « {{target}} » n'a pas d'A/AAAA dans cette zone",
+                "detail": "Ajoutez une entrée Serveur pour ce nom, ou vérifiez que le FQDN cible est correct."
+            }
+        },
+        "tlsrpt": {
+            "wrong-owner-name": {
+                "title": "L'enregistrement TLS-RPT n'est pas sous _smtp._tls.{{name}}",
+                "detail": "Les enregistrements TLS-RPT doivent être publiés sous _smtp._tls.<domaine>."
+            },
+            "parse-error": {
+                "title": "Impossible d'analyser l'enregistrement TLS-RPT",
+                "detail": "La valeur TXT ne ressemble pas à un enregistrement TLS-RPT clé=valeur."
+            },
+            "missing-version": {
+                "title": "Tag v=TLSRPTv1 manquant",
+                "detail": "Un enregistrement TXT TLS-RPT doit commencer par v=TLSRPTv1."
+            },
+            "invalid-version": {
+                "title": "Version TLS-RPT non supportée « {{version}} »",
+                "detail": "Seule « TLSRPTv1 » est définie par la RFC 8460."
+            },
+            "missing-rua": {
+                "title": "Destination rua= manquante",
+                "detail": "TLS-RPT requiert au moins une URI rua pour recevoir les rapports agrégés."
+            },
+            "empty-rua": {
+                "title": "Entrée rua vide",
+                "detail": "Supprimez la valeur vide ou remplacez-la par une URI de destination."
+            },
+            "invalid-rua-scheme": {
+                "title": "URI rua « {{uri}} » non mailto/http",
+                "detail": "Les URIs de rapport TLS-RPT doivent utiliser mailto: ou http(s):."
+            },
+            "invalid-mailto": {
+                "title": "URI mailto malformée dans rua : « {{uri}} »",
+                "detail": "Format attendu : mailto:utilisateur@exemple.fr."
+            }
+        },
+        "spf": {
+            "missing-version": {
+                "title": "Préfixe v=spf1 manquant",
+                "detail": "Un enregistrement SPF doit commencer par la balise de version v=spf1."
+            },
+            "wrong-version": {
+                "title": "Version SPF non supportée : {{version}}",
+                "detail": "Seule v=spf1 est définie. Les autres versions ne sont pas supportées et seront ignorées par les destinataires."
+            },
+            "no-all-mechanism": {
+                "title": "Aucun mécanisme « all » ni redirect",
+                "detail": "Sans mécanisme « all » terminal (ou modificateur redirect), les destinataires retombent sur un résultat neutre pour les expéditeurs inconnus. Ajoutez par ex. -all ou ~all en fin d'enregistrement."
+            },
+            "multiple-all": {
+                "title": "Plusieurs mécanismes « all » ({{count}})",
+                "detail": "Un seul mécanisme « all » est autorisé ; les suivants sont ignorés."
+            },
+            "all-not-last": {
+                "title": "Le mécanisme « all » n'est pas en dernier",
+                "detail": "Les mécanismes placés après « all » sont inaccessibles. Déplacez « all » à la fin de l'enregistrement."
+            },
+            "redirect-with-all": {
+                "title": "Modificateur redirect= combiné avec un mécanisme « all »",
+                "detail": "Lorsque « all » est présent, le modificateur redirect est ignoré. Retirez l'un des deux."
+            },
+            "multiple-redirect": {
+                "title": "Plusieurs modificateurs redirect=",
+                "detail": "Un seul modificateur redirect est autorisé par enregistrement SPF."
+            },
+            "ptr-deprecated": {
+                "title": "Le mécanisme ptr est déprécié",
+                "detail": "Le mécanisme « ptr » est lent et déprécié par la RFC 7208. Préférez ip4/ip6 ou include."
+            },
+            "too-many-lookups": {
+                "title": "Plus de {{max}} requêtes DNS ({{count}})",
+                "detail": "RFC 7208 sec. 4.6.4 : un enregistrement SPF ne doit pas requérir plus de 10 requêtes DNS. En comptant localement include, a, mx, exists, ptr et redirect, cet enregistrement dépasse déjà ce budget."
+            },
+            "many-lookups": {
+                "title": "Limite SPF approchée ({{count}}/{{max}})",
+                "detail": "Comptage local de include, a, mx, exists, ptr et redirect ; la récursion peut faire dépasser la limite stricte de 10 requêtes."
+            },
+            "mechanism-missing-value": {
+                "title": "Le mécanisme « {{mechanism}} » requiert une valeur",
+                "detail": "include, exists et redirect doivent être suivis d'un nom de domaine (ex. include:_spf.example.com)."
+            },
+            "duplicate-mechanism": {
+                "title": "Terme dupliqué : {{mechanism}}",
+                "detail": "Répéter le même mécanisme n'a aucun effet et alourdit l'enregistrement."
+            },
+            "empty-term": {
+                "title": "Terme SPF vide",
+                "detail": "Supprimez les entrées vides ; un espace orphelin produit une directive vide."
+            },
+            "unknown-mechanism": {
+                "title": "Mécanisme SPF inconnu « {{mechanism}} »",
+                "detail": "La RFC 7208 sec. 5 définit all, include, a, mx, ptr, ip4, ip6 et exists. Tout autre nom est traité comme une erreur permanente par les vérificateurs."
+            },
+            "unknown-modifier": {
+                "title": "Modificateur SPF inconnu « {{modifier}}= »",
+                "detail": "Seuls redirect= et exp= sont définis par les RFC SPF. Les modificateurs inconnus sont ignorés, mais il s'agit le plus souvent d'une faute de frappe."
+            },
+            "length-exceeds-txt-string": {
+                "title": "Longueur de l'enregistrement : {{length}} caractères",
+                "detail": "Une chaîne TXT est limitée à 255 caractères ; les enregistrements plus longs doivent être découpés en plusieurs chaînes au sein du même RR."
+            },
+            "recursive-too-many-lookups": {
+                "title": "Le parcours SPF récursif dépasse la limite de {{max}} requêtes ({{count}})",
+                "detail": "Une fois tous les include et redirect résolus, cet enregistrement nécessite plus de 10 requêtes DNS. Les destinataires renverront PermError au lieu de l'évaluer."
+            },
+            "recursive-many-lookups": {
+                "title": "Le parcours SPF récursif consomme {{count}}/{{max}} requêtes",
+                "detail": "Vous êtes dans le budget mais proche de la limite. Ajouter un include supplémentaire ou en étendre un existant fera probablement basculer au-delà."
+            },
+            "too-many-void-lookups": {
+                "title": "Plus de {{max}} requêtes DNS « vides » ({{count}})",
+                "detail": "La RFC 7208 §4.6.4 interdit plus de deux réponses NXDOMAIN/NoData lors de l'évaluation SPF ; les destinataires renverront PermError."
+            },
+            "include-loop": {
+                "title": "Boucle d'include SPF sur {{domain}}",
+                "detail": "Un include ou redirect pointe vers un domaine déjà présent dans la chaîne d'évaluation. Cassez le cycle."
+            },
+            "include-no-spf": {
+                "title": "Aucun enregistrement SPF sur {{domain}}",
+                "detail": "Le mécanisme {{mechanism}} pointe vers un domaine qui ne publie pas v=spf1. La requête compte tout de même dans le budget."
+            },
+            "include-resolver-error": {
+                "title": "Impossible de vérifier {{domain}}",
+                "detail": "Le résolveur a rencontré une erreur transitoire ou un dépassement de délai lors de l'évaluation de {{mechanism}}. Réessayez plus tard."
+            },
+            "include-error": {
+                "title": "Problème lors de la résolution de {{domain}}",
+                "detail": "Le mécanisme {{mechanism}} n'a pas pu être totalement évalué."
+            }
+        }
+    },
+    "availability": {
+        "title": "Liste de surveillance de disponibilité",
+        "description": "Soyez notifié dès qu'un domaine que vous ne possédez pas devient disponible à l'enregistrement.",
+        "kind": "surveillance",
+        "add": "Surveiller un domaine",
+        "domain-placeholder": "exemple.fr",
+        "empty": "Vous ne surveillez aucun domaine pour le moment.",
+        "status-available": "Disponible",
+        "status-registered": "Toujours enregistré",
+        "added-success": "Surveillance de la disponibilité de {{domain}} activée.",
+        "deleted-success": "Surveillance de {{domain}} arrêtée.",
+        "delete-confirm": "Arrêter de surveiller {{domain}} ?",
+        "check-now": "Vérifier maintenant",
+        "checking": "Vérification de la disponibilité…",
+        "last-checked": "Dernière vérification",
+        "never-checked": "Pas encore vérifié"
     }
 }

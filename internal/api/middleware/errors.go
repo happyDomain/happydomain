@@ -50,7 +50,7 @@ func ErrorResponse(c *gin.Context, defaultStatus int, err error) {
 
 		c.AbortWithStatusJSON(status, e.ToErrorResponse())
 		return
-	} else if errors.Is(err, happydns.ErrAuthUserNotFound) || errors.Is(err, happydns.ErrDomainNotFound) || errors.Is(err, happydns.ErrDomainLogNotFound) || errors.Is(err, happydns.ErrProviderNotFound) || errors.Is(err, happydns.ErrSessionNotFound) || errors.Is(err, happydns.ErrUserNotFound) || errors.Is(err, happydns.ErrUserAlreadyExist) || errors.Is(err, happydns.ErrZoneNotFound) {
+	} else if errors.Is(err, happydns.ErrAuthUserNotFound) || errors.Is(err, happydns.ErrDomainNotFound) || errors.Is(err, happydns.ErrDomainAvailabilityWatchNotFound) || errors.Is(err, happydns.ErrDomainLogNotFound) || errors.Is(err, happydns.ErrProviderNotFound) || errors.Is(err, happydns.ErrSessionNotFound) || errors.Is(err, happydns.ErrUserNotFound) || errors.Is(err, happydns.ErrUserAlreadyExist) || errors.Is(err, happydns.ErrZoneNotFound) {
 		c.AbortWithStatusJSON(http.StatusNotFound, happydns.ErrorResponse{
 			Message: err.Error(),
 		})

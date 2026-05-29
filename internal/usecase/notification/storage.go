@@ -67,3 +67,10 @@ type DomainGetter interface {
 type ZoneGetter interface {
 	GetZone(id happydns.Identifier) (*happydns.ZoneMessage, error)
 }
+
+// WatchGetter resolves a domain availability watch by id. Used as a fallback
+// when a notification's CheckTarget.DomainId refers to a watch rather than a
+// real Domain, so the payload carries the watched name.
+type WatchGetter interface {
+	GetDomainAvailabilityWatch(id happydns.Identifier) (*happydns.DomainAvailabilityWatch, error)
+}

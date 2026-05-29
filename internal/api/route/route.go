@@ -42,30 +42,31 @@ import (
 // Dependencies holds all use cases required to register the public API routes.
 // It is a plain struct - no methods, no interface - constructed once in app.go.
 type Dependencies struct {
-	Backup                happydns.BackupUsecase
-	Authentication        happydns.AuthenticationUsecase
-	AuthUser              happydns.AuthUserUsecase
-	CaptchaVerifier       happydns.CaptchaVerifier
-	Domain                happydns.DomainUsecase
-	DomainInfo            happydns.DomainInfoUsecase
-	DomainLog             happydns.DomainLogUsecase
-	EmailAutoconfig       happydns.EmailAutoconfigUsecase
-	FailureTracker        happydns.FailureTracker
-	FaviconService        *favicon.FaviconService
-	OutboundGuard         *netguard.Guard
-	Provider              happydns.ProviderUsecase
-	ProviderSettings      happydns.ProviderSettingsUsecase
-	ProviderSpecs         happydns.ProviderSpecsUsecase
-	RemoteZoneImporter    happydns.RemoteZoneImporterUsecase
-	Resolver              happydns.ResolverUsecase
-	Service               happydns.ServiceUsecase
-	ServiceSpecs          happydns.ServiceSpecsUsecase
-	Session               happydns.SessionUsecase
-	User                  happydns.UserUsecase
-	Zone                  happydns.ZoneUsecase
-	ZoneCorrectionApplier happydns.ZoneCorrectionApplierUsecase
-	ZoneImporter          happydns.ZoneImporterUsecase
-	ZoneService           happydns.ZoneServiceUsecase
+	Backup                  happydns.BackupUsecase
+	Authentication          happydns.AuthenticationUsecase
+	AuthUser                happydns.AuthUserUsecase
+	CaptchaVerifier         happydns.CaptchaVerifier
+	Domain                  happydns.DomainUsecase
+	DomainAvailabilityWatch happydns.DomainAvailabilityWatchUsecase
+	DomainInfo              happydns.DomainInfoUsecase
+	DomainLog               happydns.DomainLogUsecase
+	EmailAutoconfig         happydns.EmailAutoconfigUsecase
+	FailureTracker          happydns.FailureTracker
+	FaviconService          *favicon.FaviconService
+	OutboundGuard           *netguard.Guard
+	Provider                happydns.ProviderUsecase
+	ProviderSettings        happydns.ProviderSettingsUsecase
+	ProviderSpecs           happydns.ProviderSpecsUsecase
+	RemoteZoneImporter      happydns.RemoteZoneImporterUsecase
+	Resolver                happydns.ResolverUsecase
+	Service                 happydns.ServiceUsecase
+	ServiceSpecs            happydns.ServiceSpecsUsecase
+	Session                 happydns.SessionUsecase
+	User                    happydns.UserUsecase
+	Zone                    happydns.ZoneUsecase
+	ZoneCorrectionApplier   happydns.ZoneCorrectionApplierUsecase
+	ZoneImporter            happydns.ZoneImporterUsecase
+	ZoneService             happydns.ZoneServiceUsecase
 
 	CheckerEngine       happydns.CheckerEngine
 	CheckerOptionsUC    *checkerUC.CheckerOptionsUsecase
@@ -203,6 +204,9 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 		nc,
 		dep.OutboundGuard,
 	)
+	if dep.DomainAvailabilityWatch != nil {
+		DeclareDomainAvailabilityWatchRoutes(apiAuthRoutes, dep.DomainAvailabilityWatch, dep.CheckerEngine, dep.CheckStatusUC)
+	}
 	DeclareProviderRoutes(apiAuthRoutes, dep.Provider)
 	DeclareProviderSettingsRoutes(apiAuthRoutes, dep.ProviderSettings)
 	DeclareRecordRoutes(apiAuthRoutes)

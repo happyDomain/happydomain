@@ -51,6 +51,7 @@ var entityMap = map[string]string{
 	"ObservationSnapshotStorage": "observation_snapshot",
 	"SchedulerStateStorage":    "scheduler_state",
 	"DomainStorage":            "domain",
+	"DomainAvailabilityWatchStorage": "domain_availability_watch",
 	"DomainLogStorage":         "domain_log",
 	"InsightStorage":           "insight",
 	"NotificationChannelStorage":    "notification_channel",

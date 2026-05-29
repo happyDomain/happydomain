@@ -142,6 +142,13 @@
                         {$t("menu.whois")}
                     </DropdownItem>
                     <DropdownItem
+                        active={page.route && page.route.id == "/availability"}
+                        href="/availability"
+                    >
+                        <Icon name="bell" class="me-2" />
+                        {$t("menu.availability")}
+                    </DropdownItem>
+                    <DropdownItem
                         active={page.route &&
                             (page.route.id == "/checkers" ||
                                 page.route.id?.startsWith("/checkers/"))}

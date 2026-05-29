@@ -37,6 +37,7 @@ type Dispatcher struct {
 	userStore   UserGetter
 	domainStore DomainGetter
 	zoneStore   ZoneGetter
+	watchStore  WatchGetter
 
 	resolver *Resolver
 	pool     *Pool
@@ -72,6 +73,14 @@ func NewDispatcher(
 		locker:      locker,
 		nowFn:       time.Now,
 	}
+}
+
+// WithWatchStore enables resolving a CheckTarget whose DomainId refers to a
+// domain availability watch (rather than a real Domain), so notifications carry
+// the watched name. Passing nil is a no-op.
+func (d *Dispatcher) WithWatchStore(store WatchGetter) *Dispatcher {
+	d.watchStore = store
+	return d
 }
 
 func (d *Dispatcher) Start() { d.pool.Start() }
@@ -190,6 +199,15 @@ func (d *Dispatcher) buildPayload(user *happydns.User, exec *happydns.Execution,
 						}
 					}
 				}
+			}
+		}
+	}
+	if domainName == "" && d.watchStore != nil {
+		// The DomainId may refer to an availability watch rather than a real
+		// Domain. Fall back to the watch store for the watched name.
+		if did := happydns.TargetIdentifier(exec.Target.DomainId); did != nil {
+			if watch, err := d.watchStore.GetDomainAvailabilityWatch(*did); err == nil {
+				domainName = watch.DomainName
 			}
 		}
 	}

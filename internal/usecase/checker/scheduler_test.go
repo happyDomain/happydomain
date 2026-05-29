@@ -202,7 +202,7 @@ func newTestScheduler(engine happydns.CheckerEngine, domains []*happydns.Domain)
 	dl := &mockDomainLister{domains: domains}
 	zg := &mockZoneGetter{zones: make(map[string]*happydns.ZoneMessage)}
 	ss := &mockStateStore{}
-	sched := NewScheduler(engine, 2, ps, dl, zg, ss, nil, nil)
+	sched := NewScheduler(engine, 2, ps, dl, nil, zg, ss, nil, nil)
 	return sched, ps, ss
 }
 
@@ -342,7 +342,7 @@ func TestScheduler_Gate(t *testing.T) {
 	dl := &mockDomainLister{domains: []*happydns.Domain{domain}}
 	zg := &mockZoneGetter{zones: make(map[string]*happydns.ZoneMessage)}
 	ss := &mockStateStore{}
-	sched := NewScheduler(engine, 2, ps, dl, zg, ss, func(target happydns.CheckTarget, interval time.Duration) bool {
+	sched := NewScheduler(engine, 2, ps, dl, nil, zg, ss, func(target happydns.CheckTarget, interval time.Duration) bool {
 		gated.Add(1)
 		return false // block all jobs
 	}, nil)
@@ -421,7 +421,7 @@ func TestScheduler_OnExecute_CalledOnSuccess(t *testing.T) {
 
 	var onExecCalls atomic.Int32
 	var lastTarget atomic.Value // happydns.CheckTarget
-	sched := NewScheduler(engine, 2, ps, dl, zg, ss, nil, func(target happydns.CheckTarget) {
+	sched := NewScheduler(engine, 2, ps, dl, nil, zg, ss, nil, func(target happydns.CheckTarget) {
 		onExecCalls.Add(1)
 		lastTarget.Store(target)
 	})
@@ -467,7 +467,7 @@ func TestScheduler_OnExecute_NotCalledWhenCreateFails(t *testing.T) {
 	ss := &mockStateStore{}
 
 	var onExecCalls atomic.Int32
-	sched := NewScheduler(engine, 2, ps, dl, zg, ss, nil, func(target happydns.CheckTarget) {
+	sched := NewScheduler(engine, 2, ps, dl, nil, zg, ss, nil, func(target happydns.CheckTarget) {
 		onExecCalls.Add(1)
 	})
 
@@ -508,7 +508,7 @@ func TestScheduler_OnExecute_NotCalledWhenGateDenies(t *testing.T) {
 	ss := &mockStateStore{}
 
 	var onExecCalls atomic.Int32
-	sched := NewScheduler(engine, 2, ps, dl, zg, ss,
+	sched := NewScheduler(engine, 2, ps, dl, nil, zg, ss,
 		func(target happydns.CheckTarget, interval time.Duration) bool { return false },
 		func(target happydns.CheckTarget) { onExecCalls.Add(1) },
 	)
