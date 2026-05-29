@@ -22,6 +22,7 @@
 package database
 
 import (
+	"fmt"
 	"log"
 	"strings"
 )
@@ -42,6 +43,15 @@ import (
 // counterparts) had to scan every user, and ListAuthUserSessions /
 // ListUserSessions had to scan every session; the indexes turn all of
 // them into bounded prefix or point lookups.
+//
+// It also rebuilds the execution and evaluation secondary indexes that now
+// embed a reverseChronoSegment, so range scans return the newest entries first
+// and can stop at the requested limit instead of loading every match and
+// sorting it in memory. Databases written before this revision stored those
+// indexes without the time segment, so the affected prefixes are dropped and
+// rebuilt from the primary records. The execution plan index (chckexec-plan|)
+// keeps its plain layout; only the checker, user and domain execution indexes
+// and both evaluation indexes change shape.
 func migrateFrom11(s *KVStorage) error {
 	if err := migrateFrom11_domains(s); err != nil {
 		return err
@@ -55,7 +65,119 @@ func migrateFrom11(s *KVStorage) error {
 	if err := migrateFrom11_providers(s); err != nil {
 		return err
 	}
-	return migrateFrom11_sessions(s)
+	if err := migrateFrom11_sessions(s); err != nil {
+		return err
+	}
+	if err := rebuildExecutionTimeIndexes(s); err != nil {
+		return err
+	}
+	return rebuildEvaluationTimeIndexes(s)
+}
+
+func rebuildExecutionTimeIndexes(s *KVStorage) error {
+	for _, prefix := range []string{
+		ExecutionByCheckerIndexPrefix,
+		ExecutionByUserIndexPrefix,
+		ExecutionByDomainIndexPrefix,
+	} {
+		if err := s.clearByPrefix(prefix); err != nil {
+			return fmt.Errorf("migrateFrom11: clear %s: %w", prefix, err)
+		}
+	}
+
+	iter, err := s.ListAllExecutions()
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	const batchSize = 1000
+	batch := s.db.NewBatch()
+	pending := 0
+	for iter.Next() {
+		exec := iter.Item()
+		if exec == nil {
+			continue
+		}
+
+		if err := batch.Put(executionCheckerIndexKey(exec.CheckerID, exec.Target, exec.StartedAt, exec.Id.String()), true); err != nil {
+			return err
+		}
+		if exec.Target.UserId != "" {
+			if err := batch.Put(executionUserIndexKey(exec.Target.UserId, exec.StartedAt, exec.Id.String()), true); err != nil {
+				return err
+			}
+		}
+		if exec.Target.DomainId != "" {
+			if err := batch.Put(executionDomainIndexKey(exec.Target.DomainId, exec.StartedAt, exec.Id.String()), true); err != nil {
+				return err
+			}
+		}
+		pending++
+		if pending >= batchSize {
+			if err := batch.Commit(); err != nil {
+				return err
+			}
+			batch = s.db.NewBatch()
+			pending = 0
+		}
+	}
+	if pending > 0 {
+		if err := batch.Commit(); err != nil {
+			return err
+		}
+	}
+	return iter.Err()
+}
+
+func rebuildEvaluationTimeIndexes(s *KVStorage) error {
+	for _, prefix := range []string{
+		evaluationByCheckerIndexPrefix,
+		evaluationByPlanIndexPrefix,
+	} {
+		if err := s.clearByPrefix(prefix); err != nil {
+			return fmt.Errorf("migrateFrom11: clear %s: %w", prefix, err)
+		}
+	}
+
+	iter, err := s.ListAllEvaluations()
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	const batchSize = 1000
+	batch := s.db.NewBatch()
+	pending := 0
+	for iter.Next() {
+		eval := iter.Item()
+		if eval == nil {
+			continue
+		}
+
+		if err := batch.Put(evaluationCheckerIndexKey(eval.CheckerID, eval.Target, eval.EvaluatedAt, eval.Id.String()), true); err != nil {
+			return err
+		}
+		if eval.PlanID != nil {
+			if err := batch.Put(evaluationPlanIndexKey(eval.PlanID.String(), eval.EvaluatedAt, eval.Id.String()), true); err != nil {
+				return err
+			}
+		}
+		pending++
+		if pending >= batchSize {
+			if err := batch.Commit(); err != nil {
+				return err
+			}
+			batch = s.db.NewBatch()
+			pending = 0
+		}
+	}
+	if pending > 0 {
+		if err := batch.Commit(); err != nil {
+			return err
+		}
+	}
+	return iter.Err()
 }
 
 func migrateFrom11_domains(s *KVStorage) error {

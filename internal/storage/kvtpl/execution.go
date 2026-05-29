@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"git.happydns.org/happyDomain/model"
 )
@@ -38,29 +39,32 @@ const (
 	ExecutionByUserIndexPrefix    = "chckexec-user|"
 )
 
-func executionUserIndexKey(userId string, execId string) string {
-	return fmt.Sprintf("%s%s|%s", ExecutionByUserIndexPrefix, userId, execId)
+// The checker, user and domain indexes embed a reverseChronoSegment derived
+// from the execution's StartedAt, so a forward prefix scan returns the most
+// recent executions first and can stop at the requested limit. The plan index
+// keeps the plain {planId}|{execId} layout because ListExecutionsByPlan does
+// not need recency ordering.
+func executionCheckerIndexKey(checkerID string, target happydns.CheckTarget, startedAt time.Time, execId string) string {
+	return fmt.Sprintf("%s%s|%s|%s|%s", ExecutionByCheckerIndexPrefix, checkerID, target.String(), reverseChronoSegment(startedAt), execId)
 }
 
-func executionDomainIndexKey(domainId string, execId string) string {
-	return fmt.Sprintf("%s%s|%s", ExecutionByDomainIndexPrefix, domainId, execId)
+func executionUserIndexKey(userId string, startedAt time.Time, execId string) string {
+	return fmt.Sprintf("%s%s|%s|%s", ExecutionByUserIndexPrefix, userId, reverseChronoSegment(startedAt), execId)
+}
+
+func executionDomainIndexKey(domainId string, startedAt time.Time, execId string) string {
+	return fmt.Sprintf("%s%s|%s|%s", ExecutionByDomainIndexPrefix, domainId, reverseChronoSegment(startedAt), execId)
 }
 
 func (s *KVStorage) ListExecutionsByPlan(planID happydns.Identifier) ([]*happydns.Execution, error) {
 	return listByIndex(s, fmt.Sprintf("%s%s|", ExecutionByPlanIndexPrefix, planID.String()), s.GetExecution)
 }
 
-// listRecentExecutions scans a prefix, decodes executions, sorts by most
-// recent first, applies an optional filter predicate, and then applies a limit.
+// listRecentExecutions scans a time sortable index prefix whose entries are
+// already ordered newest first, applies an optional filter predicate, and stops
+// once limit matches have been collected.
 func (s *KVStorage) listRecentExecutions(prefix string, limit int, filter func(*happydns.Execution) bool) ([]*happydns.Execution, error) {
-	return listByIndexSorted(
-		s,
-		prefix,
-		s.GetExecution,
-		func(a, b *happydns.Execution) bool { return a.StartedAt.After(b.StartedAt) },
-		limit,
-		filter,
-	)
+	return listByPresortedIndex(s, prefix, s.GetExecution, limit, filter)
 }
 
 func (s *KVStorage) ListExecutionsByChecker(checkerID string, target happydns.CheckTarget, limit int, filter func(*happydns.Execution) bool) ([]*happydns.Execution, error) {
@@ -110,21 +114,20 @@ func (s *KVStorage) CreateExecution(exec *happydns.Execution) error {
 	}
 
 	// Secondary index by checker+target.
-	checkerIndexKey := fmt.Sprintf("%s%s|%s|%s", ExecutionByCheckerIndexPrefix, exec.CheckerID, exec.Target.String(), exec.Id.String())
-	if err := batch.Put(checkerIndexKey, true); err != nil {
+	if err := batch.Put(executionCheckerIndexKey(exec.CheckerID, exec.Target, exec.StartedAt, exec.Id.String()), true); err != nil {
 		return err
 	}
 
 	// Secondary index by user.
 	if exec.Target.UserId != "" {
-		if err := batch.Put(executionUserIndexKey(exec.Target.UserId, exec.Id.String()), true); err != nil {
+		if err := batch.Put(executionUserIndexKey(exec.Target.UserId, exec.StartedAt, exec.Id.String()), true); err != nil {
 			return err
 		}
 	}
 
 	// Secondary index by domain.
 	if exec.Target.DomainId != "" {
-		if err := batch.Put(executionDomainIndexKey(exec.Target.DomainId, exec.Id.String()), true); err != nil {
+		if err := batch.Put(executionDomainIndexKey(exec.Target.DomainId, exec.StartedAt, exec.Id.String()), true); err != nil {
 			return err
 		}
 	}
@@ -147,19 +150,18 @@ func (s *KVStorage) RestoreExecution(exec *happydns.Execution) error {
 		}
 	}
 
-	checkerIndexKey := fmt.Sprintf("%s%s|%s|%s", ExecutionByCheckerIndexPrefix, exec.CheckerID, exec.Target.String(), exec.Id.String())
-	if err := batch.Put(checkerIndexKey, true); err != nil {
+	if err := batch.Put(executionCheckerIndexKey(exec.CheckerID, exec.Target, exec.StartedAt, exec.Id.String()), true); err != nil {
 		return err
 	}
 
 	if exec.Target.UserId != "" {
-		if err := batch.Put(executionUserIndexKey(exec.Target.UserId, exec.Id.String()), true); err != nil {
+		if err := batch.Put(executionUserIndexKey(exec.Target.UserId, exec.StartedAt, exec.Id.String()), true); err != nil {
 			return err
 		}
 	}
 
 	if exec.Target.DomainId != "" {
-		if err := batch.Put(executionDomainIndexKey(exec.Target.DomainId, exec.Id.String()), true); err != nil {
+		if err := batch.Put(executionDomainIndexKey(exec.Target.DomainId, exec.StartedAt, exec.Id.String()), true); err != nil {
 			return err
 		}
 	}
@@ -200,9 +202,10 @@ func (s *KVStorage) UpdateExecution(exec *happydns.Execution) error {
 		}
 	}
 
-	// Clean up stale checker+target index if CheckerID or Target changed.
-	oldCheckerKey := fmt.Sprintf("%s%s|%s|%s", ExecutionByCheckerIndexPrefix, old.CheckerID, old.Target.String(), exec.Id.String())
-	newCheckerKey := fmt.Sprintf("%s%s|%s|%s", ExecutionByCheckerIndexPrefix, exec.CheckerID, exec.Target.String(), exec.Id.String())
+	// Clean up stale checker+target index if CheckerID, Target or StartedAt
+	// changed (StartedAt feeds the reverseChronoSegment in the key).
+	oldCheckerKey := executionCheckerIndexKey(old.CheckerID, old.Target, old.StartedAt, exec.Id.String())
+	newCheckerKey := executionCheckerIndexKey(exec.CheckerID, exec.Target, exec.StartedAt, exec.Id.String())
 	if oldCheckerKey != newCheckerKey {
 		batch.Delete(oldCheckerKey)
 	}
@@ -212,26 +215,32 @@ func (s *KVStorage) UpdateExecution(exec *happydns.Execution) error {
 		return err
 	}
 
-	// Clean up stale user index if UserId changed.
-	if old.Target.UserId != "" && old.Target.UserId != exec.Target.UserId {
-		batch.Delete(executionUserIndexKey(old.Target.UserId, exec.Id.String()))
+	// Clean up stale user index if UserId or StartedAt changed.
+	if old.Target.UserId != "" {
+		oldUserKey := executionUserIndexKey(old.Target.UserId, old.StartedAt, exec.Id.String())
+		if exec.Target.UserId == "" || oldUserKey != executionUserIndexKey(exec.Target.UserId, exec.StartedAt, exec.Id.String()) {
+			batch.Delete(oldUserKey)
+		}
 	}
 
 	// Update secondary index by user.
 	if exec.Target.UserId != "" {
-		if err := batch.Put(executionUserIndexKey(exec.Target.UserId, exec.Id.String()), true); err != nil {
+		if err := batch.Put(executionUserIndexKey(exec.Target.UserId, exec.StartedAt, exec.Id.String()), true); err != nil {
 			return err
 		}
 	}
 
-	// Clean up stale domain index if DomainId changed.
-	if old.Target.DomainId != "" && old.Target.DomainId != exec.Target.DomainId {
-		batch.Delete(executionDomainIndexKey(old.Target.DomainId, exec.Id.String()))
+	// Clean up stale domain index if DomainId or StartedAt changed.
+	if old.Target.DomainId != "" {
+		oldDomainKey := executionDomainIndexKey(old.Target.DomainId, old.StartedAt, exec.Id.String())
+		if exec.Target.DomainId == "" || oldDomainKey != executionDomainIndexKey(exec.Target.DomainId, exec.StartedAt, exec.Id.String()) {
+			batch.Delete(oldDomainKey)
+		}
 	}
 
 	// Update secondary index by domain.
 	if exec.Target.DomainId != "" {
-		if err := batch.Put(executionDomainIndexKey(exec.Target.DomainId, exec.Id.String()), true); err != nil {
+		if err := batch.Put(executionDomainIndexKey(exec.Target.DomainId, exec.StartedAt, exec.Id.String()), true); err != nil {
 			return err
 		}
 	}
@@ -251,14 +260,14 @@ func (s *KVStorage) DeleteExecution(execID happydns.Identifier) error {
 		batch.Delete(fmt.Sprintf("%s%s|%s", ExecutionByPlanIndexPrefix, exec.PlanID.String(), execID.String()))
 	}
 
-	batch.Delete(fmt.Sprintf("%s%s|%s|%s", ExecutionByCheckerIndexPrefix, exec.CheckerID, exec.Target.String(), execID.String()))
+	batch.Delete(executionCheckerIndexKey(exec.CheckerID, exec.Target, exec.StartedAt, execID.String()))
 
 	if exec.Target.UserId != "" {
-		batch.Delete(executionUserIndexKey(exec.Target.UserId, execID.String()))
+		batch.Delete(executionUserIndexKey(exec.Target.UserId, exec.StartedAt, execID.String()))
 	}
 
 	if exec.Target.DomainId != "" {
-		batch.Delete(executionDomainIndexKey(exec.Target.DomainId, execID.String()))
+		batch.Delete(executionDomainIndexKey(exec.Target.DomainId, exec.StartedAt, execID.String()))
 	}
 
 	batch.Delete(fmt.Sprintf("%s%s", ExecutionPrimaryPrefix, execID.String()))
@@ -295,11 +304,11 @@ func (s *KVStorage) DeleteExecutionsByChecker(checkerID string, target happydns.
 		}
 
 		if exec.Target.UserId != "" {
-			batch.Delete(executionUserIndexKey(exec.Target.UserId, exec.Id.String()))
+			batch.Delete(executionUserIndexKey(exec.Target.UserId, exec.StartedAt, exec.Id.String()))
 		}
 
 		if exec.Target.DomainId != "" {
-			batch.Delete(executionDomainIndexKey(exec.Target.DomainId, exec.Id.String()))
+			batch.Delete(executionDomainIndexKey(exec.Target.DomainId, exec.StartedAt, exec.Id.String()))
 		}
 
 		batch.Delete(fmt.Sprintf("%s%s", ExecutionPrimaryPrefix, exec.Id.String()))
@@ -342,17 +351,17 @@ func (s *KVStorage) TidyExecutionIndexes() error {
 		return err == nil
 	}, s.execExists)
 
-	// Tidy chckexec-chkr|{checkerID}|{target}|{execId} indexes.
+	// Tidy chckexec-chkr|{checkerID}|{target}|{revTime}|{execId} indexes.
 	s.tidyLastSegmentIndex(ExecutionByCheckerIndexPrefix, "execution checker", s.execExists)
 
-	// Tidy chckexec-user|{userId}|{execId} indexes.
-	s.tidyTwoPartIndex(ExecutionByUserIndexPrefix, "execution user", func(id happydns.Identifier) bool {
+	// Tidy chckexec-user|{userId}|{revTime}|{execId} indexes.
+	s.tidyOwnerTimeIndex(ExecutionByUserIndexPrefix, "execution user", func(id happydns.Identifier) bool {
 		_, err := s.GetUser(id)
 		return err == nil
 	}, s.execExists)
 
-	// Tidy chckexec-domain|{domainId}|{execId} indexes.
-	s.tidyTwoPartIndex(ExecutionByDomainIndexPrefix, "execution domain", func(id happydns.Identifier) bool {
+	// Tidy chckexec-domain|{domainId}|{revTime}|{execId} indexes.
+	s.tidyOwnerTimeIndex(ExecutionByDomainIndexPrefix, "execution domain", func(id happydns.Identifier) bool {
 		_, err := s.GetDomain(id)
 		return err == nil
 	}, s.execExists)

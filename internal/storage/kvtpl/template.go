@@ -25,9 +25,10 @@ import (
 	"fmt"
 	"hash/fnv"
 	"log"
-	"sort"
+	"math"
 	"strings"
 	"sync"
+	"time"
 
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
@@ -99,36 +100,44 @@ func listByIndex[T any](s *KVStorage, prefix string, getEntity func(happydns.Ide
 	return results, nil
 }
 
-// listByIndexSorted is like listByIndex but sorts results, applies an optional
-// filter predicate, and then applies a limit. The limit counts only items that
-// pass the filter; passing nil for filter disables filtering.
-func listByIndexSorted[T any](s *KVStorage, prefix string, getEntity func(happydns.Identifier) (*T, error), less func(*T, *T) bool, limit int, filter func(*T) bool) ([]*T, error) {
-	results, err := listByIndex(s, prefix, getEntity)
-	if err != nil {
-		return nil, err
-	}
+// reverseChronoSegment encodes t as a fixed width, zero padded string whose
+// ascending lexical order matches reverse chronological (newest first) order.
+// Embedding it as a key segment in a secondary index lets a forward prefix scan
+// return the most recent entries first and stop after the requested limit,
+// instead of loading every match and sorting it in memory.
+func reverseChronoSegment(t time.Time) string {
+	return fmt.Sprintf("%020d", uint64(math.MaxInt64)-uint64(t.UnixNano()))
+}
 
-	sort.Slice(results, func(i, j int) bool {
-		return less(results[i], results[j])
-	})
+// listByPresortedIndex scans a secondary index whose keys embed a
+// reverseChronoSegment ahead of the trailing entity id, so iteration already
+// yields entities newest first. It resolves each entity by the last key
+// segment, applies the optional filter, and stops as soon as limit items have
+// been collected (limit <= 0 means no limit). This pushes the limit down to the
+// scan rather than sorting the whole match set in memory.
+func listByPresortedIndex[T any](s *KVStorage, prefix string, getEntity func(happydns.Identifier) (*T, error), limit int, filter func(*T) bool) ([]*T, error) {
+	iter := s.db.Search(prefix)
+	defer iter.Release()
 
-	if filter == nil {
-		if limit > 0 && len(results) > limit {
-			results = results[:limit]
+	var results []*T
+	for iter.Next() {
+		id, err := lastKeySegment(iter.Key())
+		if err != nil {
+			continue
 		}
-		return results, nil
-	}
-
-	filtered := results[:0]
-	for _, r := range results {
-		if filter(r) {
-			filtered = append(filtered, r)
-			if limit > 0 && len(filtered) >= limit {
-				break
-			}
+		entity, err := getEntity(id)
+		if err != nil {
+			continue
+		}
+		if filter != nil && !filter(entity) {
+			continue
+		}
+		results = append(results, entity)
+		if limit > 0 && len(results) >= limit {
+			break
 		}
 	}
-	return filtered, nil
+	return results, iter.Err()
 }
 
 // tidyTwoPartIndex removes stale secondary index entries of the form
@@ -166,6 +175,49 @@ func (s *KVStorage) tidyTwoPartIndex(prefix, label string, validateOwner func(ha
 
 		if !entityExists(entityId) {
 			log.Printf("Deleting stale %s index (entity %s not found): %s\n", label, parts[1], key)
+			_ = s.db.Delete(key)
+		}
+	}
+}
+
+// tidyOwnerTimeIndex removes stale entries from a time sortable secondary index
+// of the form prefix{ownerId}|{revTime}|{entityId}. The owner id is the first
+// segment after the prefix and the entity id is the last segment, so the middle
+// reverseChronoSegment is ignored. Entries with an unparseable owner or entity,
+// a failing owner validation, or a missing entity are deleted.
+func (s *KVStorage) tidyOwnerTimeIndex(prefix, label string, validateOwner func(happydns.Identifier) bool, entityExists func(happydns.Identifier) bool) {
+	iter := s.db.Search(prefix)
+	defer iter.Release()
+	for iter.Next() {
+		key := iter.Key()
+		rest := strings.TrimPrefix(key, prefix)
+		ownerStr, _, ok := strings.Cut(rest, "|")
+		if !ok {
+			_ = s.db.Delete(key)
+			continue
+		}
+
+		ownerId, err := happydns.NewIdentifierFromString(ownerStr)
+		if err != nil {
+			_ = s.db.Delete(key)
+			continue
+		}
+
+		lastPipe := strings.LastIndex(key, "|")
+		entityId, err := happydns.NewIdentifierFromString(key[lastPipe+1:])
+		if err != nil {
+			_ = s.db.Delete(key)
+			continue
+		}
+
+		if validateOwner != nil && !validateOwner(ownerId) {
+			log.Printf("Deleting stale %s index (%s %s not found): %s\n", label, label, ownerStr, key)
+			_ = s.db.Delete(key)
+			continue
+		}
+
+		if !entityExists(entityId) {
+			log.Printf("Deleting stale %s index (entity %s not found): %s\n", label, key[lastPipe+1:], key)
 			_ = s.db.Delete(key)
 		}
 	}
