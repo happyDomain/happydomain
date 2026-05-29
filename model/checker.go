@@ -203,13 +203,21 @@ func (p *CheckPlan) IsRuleEnabled(ruleName string) bool {
 // are the reason the rule cannot run (typically "<X> API key is not
 // configured"). Rules that pass their precheck — or do not implement
 // one — are absent. Empty/omitted means "no rule is currently gated".
+//
+// Eligible / EligibilityReason carry the whole-checker eligibility verdict
+// from the checker's optional CheckEnabler, with fail-open semantics:
+// nil means the checker does not implement CheckEnabler or eligibility
+// could not be determined (keep showing it); &false means it is not
+// applicable to this target and EligibilityReason explains why.
 type CheckerStatus struct {
 	*CheckerDefinition
-	LatestExecution  *Execution        `json:"latestExecution,omitempty"`
-	Plan             *CheckPlan        `json:"plan,omitempty"`
-	Enabled          bool              `json:"enabled"`
-	EnabledRules     map[string]bool   `json:"enabledRules"`
-	PrecheckFailures map[string]string `json:"precheckFailures,omitempty"`
+	LatestExecution   *Execution        `json:"latestExecution,omitempty"`
+	Plan              *CheckPlan        `json:"plan,omitempty"`
+	Enabled           bool              `json:"enabled"`
+	EnabledRules      map[string]bool   `json:"enabledRules"`
+	PrecheckFailures  map[string]string `json:"precheckFailures,omitempty"`
+	Eligible          *bool             `json:"eligible,omitempty"`
+	EligibilityReason string            `json:"eligibilityReason,omitempty"`
 }
 
 // CheckEvaluation is the result of running a checker on observed data.

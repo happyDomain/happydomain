@@ -131,12 +131,23 @@
                     <tbody>
                         {#each checkerStatuses as checker}
                             {@const status = checker.latestExecution?.result?.status}
-                            <tr>
+                            {@const ineligible = checker.eligible === false}
+                            <tr class={ineligible ? "text-muted" : ""}>
                                 <td>
                                     <strong>{checker.name || checker.id}</strong>
+                                    {#if ineligible}
+                                        <div class="small text-muted">
+                                            {checker.eligibilityReason ||
+                                                $t("checkers.list.not-applicable")}
+                                        </div>
+                                    {/if}
                                 </td>
                                 <td>
-                                    {#if checker.latestExecution}
+                                    {#if ineligible}
+                                        <Badge color="secondary">
+                                            {$t("checkers.list.not-applicable")}
+                                        </Badge>
+                                    {:else if checker.latestExecution}
                                         <Badge color={getStatusColor(status)}>
                                             {$t(getStatusI18nKey(status))}
                                         </Badge>
