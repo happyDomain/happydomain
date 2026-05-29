@@ -29,6 +29,7 @@ import (
 
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/errors"
+	"github.com/syndtr/goleveldb/leveldb/opt"
 	"github.com/syndtr/goleveldb/leveldb/util"
 
 	"git.happydns.org/happyDomain/internal/storage"
@@ -39,15 +40,16 @@ type LevelDBStorage struct {
 	db *leveldb.DB
 }
 
-// NewMySQLStorage establishes the connection to the database
-func NewLevelDBStorage(path string) (s *LevelDBStorage, err error) {
+// NewLevelDBStorage establishes the connection to the database. A nil opts
+// uses goleveldb's defaults; callers should pass tuned options (see config.go).
+func NewLevelDBStorage(path string, opts *opt.Options) (s *LevelDBStorage, err error) {
 	var db *leveldb.DB
 
-	db, err = leveldb.OpenFile(path, nil)
+	db, err = leveldb.OpenFile(path, opts)
 	if err != nil {
 		if _, ok := err.(*errors.ErrCorrupted); ok {
 			log.Printf("LevelDB was corrupted; attempting recovery (%s)", err.Error())
-			_, err = leveldb.RecoverFile(path, nil)
+			db, err = leveldb.RecoverFile(path, opts)
 			if err != nil {
 				return
 			}
