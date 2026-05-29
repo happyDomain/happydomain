@@ -294,7 +294,8 @@
         "signup": "Sign up",
         "signin": "Sign in",
         "quick-menu": "Quick Access",
-        "report-problem": "Report a problem"
+        "report-problem": "Report a problem",
+        "availability": "Availability watchlist"
     },
     "report": {
         "title": "Report a problem",
@@ -978,5 +979,22 @@
         "reentry-title": "Credentials to enter again",
         "reentry-references": "This keystore keeps references, not credentials: enter a reference in each credential field.",
         "reentry-secrets": "This keystore keeps credentials, not references: enter each credential itself."
+    },
+    "availability": {
+        "title": "Availability watchlist",
+        "description": "Get notified as soon as a domain you do not own becomes available for registration.",
+        "kind": "watch",
+        "add": "Watch a domain",
+        "domain-placeholder": "example.com",
+        "empty": "You are not watching any domain yet.",
+        "status-available": "Available",
+        "status-registered": "Still registered",
+        "added-success": "Now watching {{domain}} for availability.",
+        "deleted-success": "Stopped watching {{domain}}.",
+        "delete-confirm": "Stop watching {{domain}}?",
+        "check-now": "Check now",
+        "checking": "Checking availability…",
+        "last-checked": "Last checked",
+        "never-checked": "Not checked yet"
     }
 }

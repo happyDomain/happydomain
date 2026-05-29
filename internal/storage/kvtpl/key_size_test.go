@@ -121,6 +121,16 @@ func TestProviderOwnerKeySize(t *testing.T) {
 	assertKeySize(t, "providerOwnerKey", providerOwnerKey(maxID, maxID))
 }
 
+// --- availability watch ---
+
+func TestAvailWatchPrimaryKeySize(t *testing.T) {
+	assertKeySize(t, "availWatchPrimaryKey", fmt.Sprintf("%s%s", availWatchPrimaryPrefix, maxID.String()))
+}
+
+func TestAvailWatchOwnerIndexKeySize(t *testing.T) {
+	assertKeySize(t, "availWatchOwnerIndexKey", availWatchOwnerIndexKey(maxID, maxID))
+}
+
 // --- check plan ---
 
 func TestCheckPlanPrimaryKeySize(t *testing.T) {

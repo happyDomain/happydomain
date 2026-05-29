@@ -26,6 +26,7 @@ import (
 	"git.happydns.org/happyDomain/internal/usecase/authuser"
 	"git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/internal/usecase/domain"
+	"git.happydns.org/happyDomain/internal/usecase/domain_availability"
 	"git.happydns.org/happyDomain/internal/usecase/domain_log"
 	"git.happydns.org/happyDomain/internal/usecase/insight"
 	"git.happydns.org/happyDomain/internal/usecase/notification"
@@ -54,6 +55,7 @@ type Storage interface {
 	checker.ObservationSnapshotStorage
 	checker.SchedulerStateStorage
 	domain.DomainStorage
+	domain_availability.DomainAvailabilityWatchStorage
 	domainlog.DomainLogStorage
 	insight.InsightStorage
 	notification.NotificationChannelStorage

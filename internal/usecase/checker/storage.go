@@ -43,6 +43,18 @@ type ZoneGetter interface {
 	GetZone(id happydns.Identifier) (*happydns.ZoneMessage, error)
 }
 
+// WatchLister is the minimal interface needed by the scheduler to enumerate
+// domain availability watches.
+type WatchLister interface {
+	ListAllDomainAvailabilityWatches() (happydns.Iterator[happydns.DomainAvailabilityWatch], error)
+}
+
+// WatchGetter resolves a single availability watch by id. Used as a fallback
+// when a CheckTarget's DomainId refers to a watch rather than a real domain.
+type WatchGetter interface {
+	GetDomainAvailabilityWatch(id happydns.Identifier) (*happydns.DomainAvailabilityWatch, error)
+}
+
 // CheckAutoFillStorage provides access to domain, zone and user data
 // needed to resolve auto-fill field values at execution time.
 type CheckAutoFillStorage interface {

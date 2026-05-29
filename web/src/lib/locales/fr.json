@@ -293,7 +293,8 @@
         "signin": "S'identifier",
         "quick-menu": "Accès rapide",
         "my-providers": "Les hébergeurs de mes domaines",
-        "report-problem": "Signaler un problème"
+        "report-problem": "Signaler un problème",
+        "availability": "Surveillance de disponibilité"
     },
     "report": {
         "title": "Signaler un problème",
@@ -630,5 +631,22 @@
         "reentry-title": "Identifiants à saisir à nouveau",
         "reentry-references": "Ce coffre conserve des références, pas des identifiants : saisissez une référence dans chaque champ d'identifiant.",
         "reentry-secrets": "Ce coffre conserve des identifiants, pas des références : saisissez chaque identifiant lui-même."
+    },
+    "availability": {
+        "title": "Liste de surveillance de disponibilité",
+        "description": "Soyez notifié dès qu'un domaine que vous ne possédez pas devient disponible à l'enregistrement.",
+        "kind": "surveillance",
+        "add": "Surveiller un domaine",
+        "domain-placeholder": "exemple.fr",
+        "empty": "Vous ne surveillez aucun domaine pour le moment.",
+        "status-available": "Disponible",
+        "status-registered": "Toujours enregistré",
+        "added-success": "Surveillance de la disponibilité de {{domain}} activée.",
+        "deleted-success": "Surveillance de {{domain}} arrêtée.",
+        "delete-confirm": "Arrêter de surveiller {{domain}} ?",
+        "check-now": "Vérifier maintenant",
+        "checking": "Vérification de la disponibilité…",
+        "last-checked": "Dernière vérification",
+        "never-checked": "Pas encore vérifié"
     }
 }

@@ -152,6 +152,7 @@ type CheckerOptionsUsecase struct {
 	store          CheckerOptionsStorage
 	autoFillStore  CheckAutoFillStorage
 	discoveryStore DiscoveryEntryStorage
+	watchStore     WatchGetter
 	adminOptions   map[string]happydns.CheckerOptions
 	secrets        *secret.Manager
 }
@@ -167,6 +168,14 @@ func NewCheckerOptionsUsecase(store CheckerOptionsStorage, autoFillStore CheckAu
 // keeps AutoFillDiscoveryEntries fields unfilled.
 func (u *CheckerOptionsUsecase) WithDiscoveryEntryStore(store DiscoveryEntryStorage) *CheckerOptionsUsecase {
 	u.discoveryStore = store
+	return u
+}
+
+// WithWatchStore enables resolving a CheckTarget whose DomainId refers to a
+// domain availability watch (rather than a real Domain) during auto-fill, so
+// the availability checker receives the watched name. Passing nil is a no-op.
+func (u *CheckerOptionsUsecase) WithWatchStore(store WatchGetter) *CheckerOptionsUsecase {
+	u.watchStore = store
 	return u
 }
 
@@ -756,6 +765,17 @@ func (u *CheckerOptionsUsecase) buildAutoFillContext(
 
 	domain, err := u.autoFillStore.GetDomain(*domainId)
 	if err != nil {
+		// The DomainId may refer to an availability watch rather than a real
+		// Domain. Fall back to the watch store so the availability checker
+		// receives the watched name. Only do so when the Domain genuinely
+		// does not exist; any other error (e.g. a transient storage failure)
+		// must be surfaced as-is.
+		if errors.Is(err, happydns.ErrDomainNotFound) && u.watchStore != nil {
+			if watch, werr := u.watchStore.GetDomainAvailabilityWatch(*domainId); werr == nil {
+				ctx[happydns.AutoFillDomainName] = watch.DomainName
+				return ctx, nil
+			}
+		}
 		return ctx, fmt.Errorf("loading domain for auto-fill: %w", err)
 	}
 

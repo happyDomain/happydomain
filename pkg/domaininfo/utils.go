@@ -28,15 +28,42 @@ import (
 	"net/url"
 	"strings"
 
+	"golang.org/x/sync/singleflight"
+
 	"git.happydns.org/happyDomain/pkg/domaininfo/types"
 )
 
+// lookupGroup deduplicates concurrent GetDomainInfo calls for the same
+// domain, so overlapping checks (e.g. a manual recheck racing the scheduled
+// one) issue a single upstream RDAP/WHOIS lookup instead of one each.
+var lookupGroup singleflight.Group
+
 // GetDomainInfo tries RDAP first, then falls back to WHOIS. It strips
 // any trailing dot from the domain and short-circuits on
-// types.ErrDomainDoesNotExist.
+// types.ErrDomainDoesNotExist. Concurrent calls for the same domain are
+// coalesced into a single upstream lookup: the shared lookup runs
+// detached from any single caller's context (so one caller cancelling
+// doesn't abort the others), while each caller still stops waiting as
+// soon as its own context is done.
 func GetDomainInfo(ctx context.Context, fqdn string) (*DomainInfo, error) {
 	domain := strings.TrimSuffix(fqdn, ".")
 
+	resCh := lookupGroup.DoChan(domain, func() (any, error) {
+		return getDomainInfo(context.WithoutCancel(ctx), domain)
+	})
+
+	select {
+	case res := <-resCh:
+		if res.Err != nil {
+			return nil, res.Err
+		}
+		return res.Val.(*DomainInfo), nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
+
+func getDomainInfo(ctx context.Context, domain string) (*DomainInfo, error) {
 	info, err := GetDomainRDAPInfo(ctx, domain)
 	if err == nil {
 		return info, nil

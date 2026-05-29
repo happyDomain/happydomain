@@ -24,28 +24,29 @@ package happydns
 import "context"
 
 type Backup struct {
-	Version                  int
-	Domains                  []*Domain
-	DomainsLogs              map[string][]*DomainLog
-	Errors                   []string
-	Providers                []*ProviderMessage
-	Safes                    []*Safe           `json:",omitempty"`
-	DefaultKeystores         map[string]string `json:",omitempty"`
-	Sessions                 []*Session
-	Users                    []*User
-	UsersAuth                UserAuths
-	Zones                    []*ZoneMessage
-	NotificationChannels     []*NotificationChannel
-	NotificationPreferences  []*NotificationPreference
-	NotificationStates       []*NotificationState
-	NotificationRecords      []*NotificationRecord
-	CheckerConfigurations    []*CheckerOptionsPositional
-	CheckPlans               []*CheckPlan
-	CheckEvaluations         []*CheckEvaluation
-	Executions               []*Execution
-	DiscoveryEntries         []*StoredDiscoveryEntry
-	DiscoveryObservationRefs []*DiscoveryObservationRef
-	ObservationSnapshots     []*ObservationSnapshot
+	Version                   int
+	Domains                   []*Domain
+	DomainAvailabilityWatches []*DomainAvailabilityWatch
+	DomainsLogs               map[string][]*DomainLog
+	Errors                    []string
+	Providers                 []*ProviderMessage
+	Safes                     []*Safe           `json:",omitempty"`
+	DefaultKeystores          map[string]string `json:",omitempty"`
+	Sessions                  []*Session
+	Users                     []*User
+	UsersAuth                 UserAuths
+	Zones                     []*ZoneMessage
+	NotificationChannels      []*NotificationChannel
+	NotificationPreferences   []*NotificationPreference
+	NotificationStates        []*NotificationState
+	NotificationRecords       []*NotificationRecord
+	CheckerConfigurations     []*CheckerOptionsPositional
+	CheckPlans                []*CheckPlan
+	CheckEvaluations          []*CheckEvaluation
+	Executions                []*Execution
+	DiscoveryEntries          []*StoredDiscoveryEntry
+	DiscoveryObservationRefs  []*DiscoveryObservationRef
+	ObservationSnapshots      []*ObservationSnapshot
 }
 
 // BackupUsecase orchestrates the export and re-import of every persistent

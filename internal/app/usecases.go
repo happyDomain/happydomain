@@ -34,6 +34,7 @@ import (
 	bimiUC "git.happydns.org/happyDomain/internal/usecase/bimi"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	domainUC "git.happydns.org/happyDomain/internal/usecase/domain"
+	domainAvailabilityUC "git.happydns.org/happyDomain/internal/usecase/domain_availability"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	emailAutoconfigUC "git.happydns.org/happyDomain/internal/usecase/emailautoconfig"
 	mtastsUC "git.happydns.org/happyDomain/internal/usecase/mtasts"
@@ -106,6 +107,8 @@ func (app *App) initUsecases() {
 	)
 	app.usecases.domain = domainService
 	app.usecases.domainAdmin = domainService
+	availabilityWatchService := domainAvailabilityUC.NewService(app.store)
+	app.usecases.domainAvailabilityWatch = availabilityWatchService
 	app.usecases.zoneService = zoneServiceUC.NewZoneServiceUsecases(
 		domainService,
 		zoneService.CreateZoneUC,
@@ -147,6 +150,7 @@ func (app *App) initUsecases() {
 	checkerPkg.SetHTTPTimeout(app.cfg.CheckerHTTPTimeout)
 	app.usecases.checkerOptionsUC = checkerUC.NewCheckerOptionsUsecase(app.store, app.store).
 		WithDiscoveryEntryStore(app.store).
+		WithWatchStore(app.store).
 		WithAdminOptions(app.cfg.CheckerAdminOptions).
 		WithSecrets(app.secrets)
 	app.usecases.checkerPlanUC = checkerUC.NewCheckPlanUsecase(app.store)
@@ -167,7 +171,7 @@ func (app *App) initUsecases() {
 	app.usecases.checkerScheduler = checkerUC.NewScheduler(
 		app.usecases.checkerEngine,
 		app.cfg.CheckerMaxConcurrency,
-		app.store, app.store, app.store, app.store,
+		app.store, app.store, app.store, app.store, app.store,
 		app.usecases.checkerUserGater.AllowWithInterval,
 		app.usecases.checkerUserGater.IncrementUsage,
 	).WithEligibilityGate(func(ctx context.Context, checkerID string, target happydns.CheckTarget) (bool, error) {
@@ -222,6 +226,7 @@ func (app *App) initUsecases() {
 	// Wire scheduler notifications for incremental queue updates.
 	domainService.SetSchedulerNotifier(app.usecases.checkerScheduler)
 	app.usecases.orchestrator.SetSchedulerNotifier(app.usecases.checkerScheduler)
+	availabilityWatchService.SetSchedulerNotifier(app.usecases.checkerScheduler)
 
 	// Notification system: dispatcher fans out checker results to user
 	// channels (email/webhook/UnifiedPush) based on per-target preferences.
@@ -253,7 +258,7 @@ func (app *App) initUsecases() {
 		tester,
 		ack,
 		stateLocker,
-	)
+	).WithWatchStore(app.store)
 	if cb, ok := app.usecases.checkerEngine.(checkerUC.ExecutionCallbackSetter); ok {
 		cb.SetExecutionCallback(app.usecases.notificationDispatcher.OnExecutionComplete)
 	}
