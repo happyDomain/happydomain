@@ -52,7 +52,7 @@ func (app *App) Start() {
 		}
 	}
 
-	if app.usecases.checkerScheduler != nil {
+	if app.usecases.checkerScheduler != nil && !app.cfg.DisableCheckerScheduler {
 		app.usecases.checkerScheduler.Start(context.Background())
 	}
 

@@ -129,6 +129,11 @@ type Options struct {
 	// false, manual triggers bypass the quota entirely.
 	CheckerCountManualTriggers bool
 
+	// DisableCheckerScheduler prevents the checker scheduler from starting
+	// automatically at boot. The scheduler can still be enabled at runtime
+	// through the admin API.
+	DisableCheckerScheduler bool
+
 	// CaptchaProvider selects the captcha provider ("hcaptcha", "recaptchav2", "turnstile", or "").
 	CaptchaProvider string
 
