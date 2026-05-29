@@ -26,15 +26,47 @@ import (
 	"fmt"
 	"log"
 	"sort"
+	"strings"
 	"time"
 
 	"git.happydns.org/happyDomain/model"
 )
 
+// Same primary+per-user-index layout as notification_channel.go: the index
+// value is empty and the record is resolved from the primary key.
+
 const (
 	notificationRecordPrimaryPrefix   = "notifrec|"
 	notificationRecordUserIndexPrefix = "notifrec-user|"
 )
+
+func notifrecPrimaryKey(id happydns.Identifier) string {
+	return notificationRecordPrimaryPrefix + id.String()
+}
+
+func notifrecUserKey(userId, recId happydns.Identifier) string {
+	return fmt.Sprintf("%s%s|%s", notificationRecordUserIndexPrefix, userId.String(), recId.String())
+}
+
+func recIdFromUserIndexKey(key string) (string, bool) {
+	rest, ok := strings.CutPrefix(key, notificationRecordUserIndexPrefix)
+	if !ok {
+		return "", false
+	}
+	_, recId, ok := strings.Cut(rest, "|")
+	if !ok || recId == "" {
+		return "", false
+	}
+	return recId, true
+}
+
+func (s *KVStorage) getRecord(recId happydns.Identifier) (*happydns.NotificationRecord, error) {
+	rec := &happydns.NotificationRecord{}
+	if err := s.db.Get(notifrecPrimaryKey(recId), rec); err != nil {
+		return nil, err
+	}
+	return rec, nil
+}
 
 func (s *KVStorage) CreateRecord(rec *happydns.NotificationRecord) error {
 	key, id, err := s.db.FindIdentifierKey(notificationRecordPrimaryPrefix)
@@ -47,28 +79,35 @@ func (s *KVStorage) CreateRecord(rec *happydns.NotificationRecord) error {
 	if err := batch.Put(key, rec); err != nil {
 		return err
 	}
-
-	indexKey := fmt.Sprintf("%s%s|%s", notificationRecordUserIndexPrefix, rec.UserId.String(), rec.Id.String())
-	if err := batch.Put(indexKey, rec); err != nil {
+	if err := batch.Put(notifrecUserKey(rec.UserId, rec.Id), ""); err != nil {
 		return err
 	}
 	return batch.Commit()
 }
 
 func (s *KVStorage) ListRecordsByUser(userId happydns.Identifier, limit int) ([]*happydns.NotificationRecord, error) {
-	prefix := fmt.Sprintf("%s%s|", notificationRecordUserIndexPrefix, userId.String())
+	prefix := notificationRecordUserIndexPrefix + userId.String() + "|"
 	iter := s.db.Search(prefix)
 	defer iter.Release()
 
 	var records []*happydns.NotificationRecord
 	for iter.Next() {
-		var rec happydns.NotificationRecord
-		if err := s.db.DecodeData(iter.Value(), &rec); err != nil {
-			// Corrupt entry: log and skip rather than fail the whole listing.
-			log.Printf("storage: malformed notification record at %q: %v", iter.Key(), err)
+		idStr, ok := recIdFromUserIndexKey(iter.Key())
+		if !ok {
 			continue
 		}
-		records = append(records, &rec)
+		id, err := happydns.NewIdentifierFromString(idStr)
+		if err != nil {
+			log.Printf("storage: malformed notification record index key %q: %v", iter.Key(), err)
+			continue
+		}
+		rec, err := s.getRecord(id)
+		if err != nil {
+			// Index drift: skip rather than fail the whole listing.
+			log.Printf("storage: notification record index points to missing record %q: %v", idStr, err)
+			continue
+		}
+		records = append(records, rec)
 	}
 
 	sort.Slice(records, func(i, j int) bool {
@@ -95,7 +134,7 @@ func (s *KVStorage) DeleteRecordsOlderThan(before time.Time) error {
 		if rec.SentAt.Before(before) {
 			batch := s.db.NewBatch()
 			batch.Delete(iter.Key())
-			batch.Delete(fmt.Sprintf("%s%s|%s", notificationRecordUserIndexPrefix, rec.UserId.String(), rec.Id.String()))
+			batch.Delete(notifrecUserKey(rec.UserId, rec.Id))
 			if err := batch.Commit(); err != nil {
 				errs = append(errs, fmt.Errorf("delete record %s: %w", iter.Key(), err))
 			}
