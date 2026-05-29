@@ -32,7 +32,7 @@
     import SelectDomain from "$lib/components/domains/SelectDomain.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { ZoneMeta } from "$lib/model/zone";
-    import { domainLink, domains_idx } from "$lib/stores/domains";
+    import { domainLink, domains_idx, isManaged } from "$lib/stores/domains";
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
     import ButtonZonePublish from "./ButtonZonePublish.svelte";
@@ -129,6 +129,14 @@
             serviceid={page.data.serviceid ?? ""}
             historyId={page.data.history ?? ""}
         />
+    {:else if !isManaged(domain)}
+        <a
+            href="/domains/{encodeURIComponent(domainLink(selectedDomain))}/checks"
+            class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
+        >
+            <Icon name="activity" />
+            {$t("checkers.view-all")}
+        </a>
     {:else}
         <ZoneSidebar origin={domain} {selectedDomain} {selectedHistory} {onretrieveZoneDone} />
     {/if}

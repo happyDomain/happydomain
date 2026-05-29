@@ -158,7 +158,9 @@
         "placeholder-new": "mon.nouveau.domaine.",
         "form-new-subdomain": "Ajout d'un sous-domaine sous {{domain}} :",
         "placeholder-new-sub": "new.subdomain",
-        "search-placeholder": "Rechercher des domaines…"
+        "search-placeholder": "Rechercher des domaines…",
+        "monitor-only": "Surveillance seule (sans hébergeur DNS)",
+        "monitor-only-hint": "Suivez le statut d'enregistrement d'un domaine (WHOIS/expiration, verrou, propagation) sans gérer sa zone DNS via un hébergeur."
     },
     "email": {
         "address": "Adresse électronique",

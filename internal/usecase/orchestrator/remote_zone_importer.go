@@ -61,6 +61,10 @@ func NewRemoteZoneImporterUsecase(
 // and imports them via ZoneImporterUsecase.  A domain log entry is appended on
 // success.  Returns the newly created zone or an error.
 func (uc *RemoteZoneImporterUsecase) Import(ctx context.Context, user *happydns.User, domain *happydns.Domain) (*happydns.Zone, error) {
+	if !domain.IsManaged() {
+		return nil, happydns.ValidationError{Msg: "this domain is monitor-only and has no DNS provider to import a zone from"}
+	}
+
 	provider, err := uc.providerService.GetUserProvider(ctx, user, domain.ProviderId)
 	if err != nil {
 		return nil, err

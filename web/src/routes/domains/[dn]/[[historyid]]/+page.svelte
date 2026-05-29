@@ -23,7 +23,7 @@
 
 <script lang="ts">
     import { resolve } from "$app/paths";
-    import { Icon, Spinner } from "@sveltestrap/sveltestrap";
+    import { Button, Icon, Spinner } from "@sveltestrap/sveltestrap";
 
     import AliasModal from "$lib/components/modals/Alias.svelte";
     import ChecksSummaryBadge from "$lib/components/checkers/ChecksSummaryBadge.svelte";
@@ -32,7 +32,7 @@
     import SubdomainList from "./SubdomainList.svelte";
     import UserResource from "./UserResource.svelte";
     import type { HappydnsDomainWithCheckStatus } from "$lib/api-base/types.gen";
-    import { domainLink } from "$lib/stores/domains";
+    import { domainLink, isManaged } from "$lib/stores/domains";
     import { sortedDomains, sortedDomainsWithIntermediate, thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
 
@@ -60,6 +60,22 @@
     <div class="mt-5 text-center flex-fill">
         <Spinner />
         <p>{$t("wait.loading")}</p>
+    </div>
+{:else if !isManaged(data.domain)}
+    <div style="max-width: 100%;" class="w-100 pt-1 mb-5">
+        <PageTitle
+            title={$t("domains.monitor-only")}
+            subtitle={$t("domains.monitor-only-hint")}
+            domain={data.domain.domain}
+        >
+            <ChecksSummaryBadge status={data.domain.last_check_status} href={checksHref} />
+        </PageTitle>
+        <div class="text-center my-5">
+            <Button color="primary" href={checksHref}>
+                <Icon name="activity" class="me-1" />
+                {$t("checkers.view-all")}
+            </Button>
+        </div>
     </div>
 {:else if !data.domain.zone_history || data.domain.zone_history.length == 0}
     <div class="mt-4 text-center flex-fill">

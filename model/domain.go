@@ -32,8 +32,9 @@ import (
 // DomainCreationInput is used for swagger documentation as Domain add.
 type DomainCreationInput struct {
 	// ProviderId is the identifier of the Provider used to access and edit the
-	// Domain.
-	ProviderId Identifier `json:"id_provider" swaggertype:"string"`
+	// Domain. It is optional: a Domain with no Provider is monitor-only (checks
+	// run, but no zone is managed).
+	ProviderId Identifier `json:"id_provider,omitempty" swaggertype:"string"`
 
 	// DomainName is the FQDN of the managed Domain.
 	DomainName string `json:"domain"`
@@ -48,8 +49,9 @@ type Domain struct {
 	Owner Identifier `json:"id_owner" swaggertype:"string" binding:"required"`
 
 	// ProviderId is the identifier of the Provider used to access and edit the
-	// Domain.
-	ProviderId Identifier `json:"id_provider" swaggertype:"string" binding:"required"`
+	// Domain. It is optional: a Domain with no Provider is monitor-only (checks
+	// run against the public DNS/WHOIS, but no zone is managed).
+	ProviderId Identifier `json:"id_provider,omitempty" swaggertype:"string"`
 
 	// DomainName is the FQDN of the managed Domain.
 	DomainName string `json:"domain" binding:"required"`
@@ -92,6 +94,13 @@ func NewDomain(user *User, name string, providerID Identifier) (*Domain, error) 
 	}
 
 	return d, nil
+}
+
+// IsManaged reports whether the Domain is backed by a DNS Provider. A
+// monitor-only Domain (no Provider) has its checks run against the public
+// DNS/WHOIS but exposes no zone management.
+func (d *Domain) IsManaged() bool {
+	return len(d.ProviderId) > 0
 }
 
 // HasZone checks if the given Zone's identifier is part of this Domain

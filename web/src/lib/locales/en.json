@@ -152,7 +152,9 @@
         "placeholder-search": "my.domain.",
         "placeholder-new": "my.new.domain.",
         "placeholder-new-sub": "new.subdomain",
-        "form-new-subdomain": "Add a new subdomain under {{domain}}:"
+        "form-new-subdomain": "Add a new subdomain under {{domain}}:",
+        "monitor-only": "Monitor only (no DNS provider)",
+        "monitor-only-hint": "Track a domain's registration status (WHOIS/expiry, lock, propagation) without managing its DNS through a provider."
     },
     "domaingroups": {
         "all": "All groups",
@@ -253,7 +255,8 @@
         "base64-unfinished": "Unfinished string.",
         "suggestion": "Did you mean: {{suggestion}}",
         "email-identifier": "Unable to compute the name hash from the username: {{error}}. You can fill it in manually below.",
-        "clipboard": "Unable to copy: select the text and copy it manually."
+        "clipboard": "Unable to copy: select the text and copy it manually.",
+        "error": "Error"
     },
     "history": {
         "committed-on": "Committed on",

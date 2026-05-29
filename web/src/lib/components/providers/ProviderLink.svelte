@@ -27,14 +27,16 @@
     import { providers_idx, providersSpecs } from "$lib/stores/providers";
 
     interface Props {
-        id_provider: string;
+        id_provider?: string;
         onclick?: (e: MouseEvent) => void;
     }
 
     let { id_provider, onclick }: Props = $props();
 </script>
 
-{#if $providers_idx && $providers_idx[id_provider]}
+{#if !id_provider}
+    <span class="text-muted"></span>
+{:else if $providers_idx && $providers_idx[id_provider]}
     {@const provider = $providers_idx[id_provider]}
     <a
         href={providerLinks().provider(encodeURIComponent(id_provider))}

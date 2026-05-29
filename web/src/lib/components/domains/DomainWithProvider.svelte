@@ -43,20 +43,22 @@
             domain={domain.domain}
             style="width: inherit; height: inherit; object-fit: scale-down;"
         />
-        <button
-            type="button"
-            class="provider-badge"
-            onclick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                goto(`/?provider=${encodeURIComponent(domain.id_provider)}`);
-            }}
-        >
-            <ImgProvider
-                id_provider={domain.id_provider}
-                style="display: block; width: 100%; height: 100%; object-fit: contain; border-radius: 50%;"
-            />
-        </button>
+        {#if domain.id_provider}
+            <button
+                type="button"
+                class="provider-badge"
+                onclick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    goto(`/?provider=${encodeURIComponent(domain.id_provider)}`);
+                }}
+            >
+                <ImgProvider
+                    id_provider={domain.id_provider}
+                    style="display: block; width: 100%; height: 100%; object-fit: contain; border-radius: 50%;"
+                />
+            </button>
+        {/if}
     </div>
     <div class="font-monospace text-truncate flex-shrink-1">
         {domain.domain}

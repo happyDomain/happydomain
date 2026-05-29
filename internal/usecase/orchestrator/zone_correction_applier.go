@@ -95,6 +95,10 @@ func (uc *ZoneCorrectionApplierUsecase) computeExecutableCorrections(
 	targetRecords = adapter.BuildTargetRecords(providerRecords, corrections, wantedCorrections)
 
 	// Step 3: Get executable corrections from the provider for the target state.
+	if !domain.IsManaged() {
+		return nil, nil, nil, nbDiffs, happydns.ValidationError{Msg: "this domain is monitor-only and has no DNS provider to compute corrections for"}
+	}
+
 	provider, err := uc.providerService.GetUserProvider(ctx, user, domain.ProviderId)
 	if err != nil {
 		return nil, nil, nil, nbDiffs, err
