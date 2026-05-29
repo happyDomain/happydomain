@@ -24,8 +24,6 @@ package database
 import (
 	"errors"
 	"fmt"
-	"log"
-	"strings"
 	"time"
 
 	"git.happydns.org/happyDomain/model"
@@ -167,12 +165,13 @@ func (s *KVStorage) DeleteEvaluationsByChecker(checkerID string, target happydns
 
 		eval, err := s.GetEvaluation(evalId)
 		if err != nil {
-			// Primary record already gone; just clean up this index entry
-			// and attempt to clean up the plan index (best-effort scan).
+			// Primary record already gone. Delete the stale checker index entry
+			// we are iterating. The plan index keys its planId first, which a
+			// missing primary no longer reveals, so any stale plan entry is
+			// reclaimed by TidyEvaluationIndexes instead.
 			if err := s.db.Delete(iter.Key()); err != nil {
 				return err
 			}
-			s.deleteEvalPlanIndexByEvalID(evalId)
 			continue
 		}
 
@@ -188,22 +187,6 @@ func (s *KVStorage) DeleteEvaluationsByChecker(checkerID string, target happydns
 		}
 	}
 	return nil
-}
-
-// deleteEvalPlanIndexByEvalID scans plan indexes to remove any entry for the
-// given evaluation ID. Used when the primary record is already gone and we
-// don't know which plan it belonged to.
-func (s *KVStorage) deleteEvalPlanIndexByEvalID(evalId happydns.Identifier) {
-	suffix := "|" + evalId.String()
-	iter := s.db.Search(evaluationByPlanIndexPrefix)
-	defer iter.Release()
-	for iter.Next() {
-		if strings.HasSuffix(iter.Key(), suffix) {
-			if err := s.db.Delete(iter.Key()); err != nil {
-				log.Printf("deleteEvalPlanIndexByEvalID: failed to delete %s: %v\n", iter.Key(), err)
-			}
-		}
-	}
 }
 
 func (s *KVStorage) evalExists(id happydns.Identifier) bool {

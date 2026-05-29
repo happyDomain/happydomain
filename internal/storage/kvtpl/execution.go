@@ -24,8 +24,6 @@ package database
 import (
 	"errors"
 	"fmt"
-	"log"
-	"strings"
 	"time"
 
 	"git.happydns.org/happyDomain/model"
@@ -288,12 +286,25 @@ func (s *KVStorage) DeleteExecutionsByChecker(checkerID string, target happydns.
 
 		exec, err := s.GetExecution(execId)
 		if err != nil {
-			// Primary record already gone; just clean up this index entry
-			// and attempt to clean up other indexes (best-effort scan).
-			if err := s.db.Delete(iter.Key()); err != nil {
+			// Primary record already gone. Delete the stale checker index
+			// entry we are iterating, plus the user and domain index entries,
+			// which share this key's trailing "{revChrono}|{execId}" and so can
+			// be rebuilt without scanning. The plan index keys its planId first,
+			// which a missing primary no longer reveals, so any stale plan entry
+			// is reclaimed by TidyExecutionIndexes instead.
+			batch := s.db.NewBatch()
+			batch.Delete(iter.Key())
+			if tail, ok := lastTwoSegments(iter.Key()); ok {
+				if target.UserId != "" {
+					batch.Delete(ExecutionByUserIndexPrefix + target.UserId + "|" + tail)
+				}
+				if target.DomainId != "" {
+					batch.Delete(ExecutionByDomainIndexPrefix + target.DomainId + "|" + tail)
+				}
+			}
+			if err := batch.Commit(); err != nil {
 				return err
 			}
-			s.deleteExecSecondaryIndexesByExecID(execId)
 			continue
 		}
 
@@ -319,24 +330,6 @@ func (s *KVStorage) DeleteExecutionsByChecker(checkerID string, target happydns.
 		}
 	}
 	return nil
-}
-
-// deleteExecSecondaryIndexesByExecID scans plan, user and domain indexes to
-// remove any entry for the given execution ID. Used when the primary record is
-// already gone and we don't know which plan/user/domain it belonged to.
-func (s *KVStorage) deleteExecSecondaryIndexesByExecID(execId happydns.Identifier) {
-	suffix := "|" + execId.String()
-	for _, prefix := range []string{ExecutionByPlanIndexPrefix, ExecutionByUserIndexPrefix, ExecutionByDomainIndexPrefix} {
-		iter := s.db.Search(prefix)
-		for iter.Next() {
-			if strings.HasSuffix(iter.Key(), suffix) {
-				if err := s.db.Delete(iter.Key()); err != nil {
-					log.Printf("deleteExecSecondaryIndexesByExecID: failed to delete %s: %v\n", iter.Key(), err)
-				}
-			}
-		}
-		iter.Release()
-	}
 }
 
 func (s *KVStorage) execExists(id happydns.Identifier) bool {

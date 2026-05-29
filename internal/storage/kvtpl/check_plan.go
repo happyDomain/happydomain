@@ -24,8 +24,6 @@ package database
 import (
 	"errors"
 	"fmt"
-	"log"
-	"strings"
 
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
@@ -180,24 +178,6 @@ func (s *KVStorage) DeleteCheckPlan(planID happydns.Identifier) error {
 	batch.Delete(fmt.Sprintf("%s%s", checkPlanPrimaryPrefix, planID.String()))
 
 	return batch.Commit()
-}
-
-// deleteCheckPlanSecondaryIndexesByPlanID scans all plan index prefixes to
-// remove any entry for the given plan ID. Used when the primary record is
-// already gone and we don't know which target/checker/user it belonged to.
-func (s *KVStorage) deleteCheckPlanSecondaryIndexesByPlanID(planId happydns.Identifier) {
-	suffix := "|" + planId.String()
-	for _, prefix := range []string{checkPlanByTargetIndexPrefix, checkPlanByCheckerIndexPrefix, checkPlanByUserIndexPrefix} {
-		iter := s.db.Search(prefix)
-		for iter.Next() {
-			if strings.HasSuffix(iter.Key(), suffix) {
-				if err := s.db.Delete(iter.Key()); err != nil {
-					log.Printf("deleteCheckPlanSecondaryIndexesByPlanID: failed to delete %s: %v\n", iter.Key(), err)
-				}
-			}
-		}
-		iter.Release()
-	}
 }
 
 func (s *KVStorage) checkPlanExists(id happydns.Identifier) bool {

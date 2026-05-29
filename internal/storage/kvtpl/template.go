@@ -79,6 +79,23 @@ func lastKeySegment(key string) (happydns.Identifier, error) {
 	return happydns.NewIdentifierFromString(key[i+1:])
 }
 
+// lastTwoSegments returns the final two "|"-separated fields of key, joined
+// with their separator (e.g. "{revChrono}|{entityId}"). It returns ok=false
+// when key has fewer than two "|" separators. Recency indexes that share a
+// "{revChrono}|{entityId}" tail use this to rebuild sibling index keys from a
+// related index key without scanning.
+func lastTwoSegments(key string) (tail string, ok bool) {
+	i := strings.LastIndex(key, "|")
+	if i < 0 {
+		return "", false
+	}
+	j := strings.LastIndex(key[:i], "|")
+	if j < 0 {
+		return "", false
+	}
+	return key[j+1:], true
+}
+
 // listByIndex scans a secondary index prefix, resolves each entity by its
 // last key segment, and returns the collected results.
 func listByIndex[T any](s *KVStorage, prefix string, getEntity func(happydns.Identifier) (*T, error)) ([]*T, error) {
