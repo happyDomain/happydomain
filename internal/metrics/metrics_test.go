@@ -234,7 +234,7 @@ func TestMetricsEndpointParses(t *testing.T) {
 	// Drive at least one observation through every metric family touched by
 	// instrumentation so the endpoint isn't trivially empty.
 	HTTPRequestsTotal.WithLabelValues("GET", "/x", "200").Inc()
-	StorageOperationsTotal.WithLabelValues("get", "user", "success").Inc()
+	StorageOperationsTotal.WithLabelValues("GetUser", "get", "user", "success").Inc()
 	SchedulerChecksTotal.WithLabelValues("dns", "success").Inc()
 	ProviderAPICallsTotal.WithLabelValues("dummy", "list", "success").Inc()
 	SetBuildInfo("test", "deadbee", "2026-04-08T00:00:00Z", false)
