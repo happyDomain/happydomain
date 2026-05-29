@@ -126,7 +126,7 @@ func ListPlannedExecutions(provider PlannedJobProvider, budgetChecker BudgetChec
 // When false, it is restricted to checkers that would be auto-scheduled on
 // this target plus those activated by an existing CheckPlan, so callers can
 // surface only what actually runs.
-func (u *CheckStatusUsecase) ListCheckerStatuses(target happydns.CheckTarget, includeAvailables bool) ([]happydns.CheckerStatus, error) {
+func (u *CheckStatusUsecase) ListCheckerStatuses(ctx context.Context, target happydns.CheckTarget, includeAvailables bool) ([]happydns.CheckerStatus, error) {
 	checkers := checkerPkg.GetCheckers()
 	plans, err := u.planStore.ListCheckPlansByTarget(target)
 	if err != nil {
@@ -136,6 +136,14 @@ func (u *CheckStatusUsecase) ListCheckerStatuses(target happydns.CheckTarget, in
 	planByChecker := make(map[string]*happydns.CheckPlan)
 	for _, p := range plans {
 		planByChecker[p.CheckerID] = p
+	}
+
+	// Auto-fill data (domain, zone, discovery entries) only depends on the
+	// target, which is loop-invariant. Resolve it lazily once per request so
+	// N applicable checkers don't trigger N×GetDomain+GetZone reads.
+	var autoFillCache *AutoFillCache
+	if u.optionsUC != nil {
+		autoFillCache = u.optionsUC.NewAutoFillCache(target)
 	}
 
 	var result []happydns.CheckerStatus
@@ -180,19 +188,37 @@ func (u *CheckStatusUsecase) ListCheckerStatuses(target happydns.CheckTarget, in
 		}
 		status.EnabledRules = enabledRules
 
-		if u.optionsUC != nil && len(def.Rules) > 0 {
-			opts, optErr := u.optionsUC.GetCheckerOptions(
+		// Only checkers with rule prechecks or a whole-checker eligibility gate
+		// can ever produce a verdict here. For the (common) checkers with
+		// neither, skip the option building and EvaluateChecker call entirely,
+		// which would otherwise read storage per checker and, for externalizable
+		// checkers, make a remote round trip while always failing open.
+		if u.optionsUC != nil && (len(def.Rules) > 0 || checkerPkg.CheckerHasEligibilityGate(def, u.optionsUC.HasAdminEndpoint(def.ID))) {
+			// Options must be autofilled the same way Collect receives them
+			// (domain_name / zone / service): both rule prechecks and the
+			// whole-checker CheckEnabler.IsEligible read those values.
+			opts, _, optErr := u.optionsUC.BuildMergedCheckerOptionsCached(
 				def.ID,
 				happydns.TargetIdentifier(target.UserId),
 				happydns.TargetIdentifier(target.DomainId),
 				happydns.TargetIdentifier(target.ServiceId),
+				nil,
+				autoFillCache,
 			)
 			if optErr != nil {
 				log.Printf("ListCheckerStatuses: resolve options for precheck on %s: %v", def.ID, optErr)
-			} else if failures, pcErr := checkerPkg.PrecheckRules(context.Background(), def, opts); pcErr != nil {
+			} else if res, pcErr := checkerPkg.EvaluateChecker(ctx, def, opts); pcErr != nil {
 				log.Printf("ListCheckerStatuses: precheck on %s: %v", def.ID, pcErr)
-			} else if len(failures) > 0 {
-				status.PrecheckFailures = failures
+			} else {
+				// Fail open: hide the checker only on a definitive negative
+				// verdict. When listing what actually runs, drop it entirely;
+				// in the management view, keep it annotated with the reason.
+				if res.Eligible != nil && !*res.Eligible && !includeAvailables {
+					continue
+				}
+				status.PrecheckFailures = res.Failures
+				status.Eligible = res.Eligible
+				status.EligibilityReason = res.EligibilityReason
 			}
 		}
 

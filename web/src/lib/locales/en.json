@@ -737,6 +737,7 @@
             "title": "Checks for ",
             "loading": "Loading checkers...",
             "no-checks": "No checks available for this domain.",
+            "not-applicable": "Not applicable",
             "view-results": "View Results",
             "history": "History",
             "prometheus-metrics": "Prometheus Metrics",

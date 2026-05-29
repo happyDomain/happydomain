@@ -22,6 +22,7 @@
 package checker_test
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -63,7 +64,7 @@ func TestCheckStatusUsecase_ListCheckerStatuses(t *testing.T) {
 	did, _ := happydns.NewRandomIdentifier()
 	target := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
 
-	statuses, err := uc.ListCheckerStatuses(target, true)
+	statuses, err := uc.ListCheckerStatuses(context.Background(), target, true)
 	if err != nil {
 		t.Fatalf("ListCheckerStatuses() error: %v", err)
 	}
@@ -97,7 +98,7 @@ func TestCheckStatusUsecase_ListCheckerStatuses_WithPlan(t *testing.T) {
 		t.Fatalf("CreateCheckPlan() error: %v", err)
 	}
 
-	statuses, err := uc.ListCheckerStatuses(target, true)
+	statuses, err := uc.ListCheckerStatuses(context.Background(), target, true)
 	if err != nil {
 		t.Fatalf("ListCheckerStatuses() error: %v", err)
 	}
@@ -144,7 +145,7 @@ func TestCheckStatusUsecase_ListCheckerStatuses_WithEvaluation(t *testing.T) {
 		t.Fatalf("CreateExecution() error: %v", err)
 	}
 
-	statuses, err := uc.ListCheckerStatuses(target, true)
+	statuses, err := uc.ListCheckerStatuses(context.Background(), target, true)
 	if err != nil {
 		t.Fatalf("ListCheckerStatuses() error: %v", err)
 	}
@@ -156,6 +157,84 @@ func TestCheckStatusUsecase_ListCheckerStatuses_WithEvaluation(t *testing.T) {
 			} else if s.LatestExecution.Result.Status != happydns.StatusOK {
 				t.Errorf("expected latest execution result status OK, got %s", s.LatestExecution.Result.Status)
 			}
+		}
+	}
+}
+
+// ineligibleProvider implements both ObservationProvider and CheckEnabler,
+// always reporting the checker as not applicable.
+type ineligibleProvider struct {
+	key happydns.ObservationKey
+}
+
+func (p *ineligibleProvider) Key() happydns.ObservationKey { return p.key }
+
+func (p *ineligibleProvider) Collect(_ context.Context, _ happydns.CheckerOptions) (any, error) {
+	return map[string]string{}, nil
+}
+
+func (p *ineligibleProvider) IsEligible(_ context.Context, _ happydns.CheckerOptions) (bool, string, error) {
+	return false, "not a reverse zone", nil
+}
+
+func TestCheckStatusUsecase_ListCheckerStatuses_Ineligible(t *testing.T) {
+	dnschecker.RegisterObservationProvider(&ineligibleProvider{key: "inelig_obs"})
+	dnschecker.RegisterChecker(&happydns.CheckerDefinition{
+		ID:   "inelig_checker",
+		Name: "Ineligible Checker",
+		Availability: happydns.CheckerAvailability{
+			ApplyToDomain: true,
+		},
+		ObservationKeys: []happydns.ObservationKey{"inelig_obs"},
+	})
+
+	ps := newPlanStore()
+	ms, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatalf("Instantiate() returned error: %v", err)
+	}
+	optionsUC := checkerUC.NewCheckerOptionsUsecase(ms, ms)
+	uc := checkerUC.NewCheckStatusUsecase(ps, ms, ms, ms, optionsUC)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	did, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
+
+	// A plan makes the checker part of "what runs", so the skip below is
+	// attributable to eligibility rather than the auto-schedule filter.
+	if err := ps.CreateCheckPlan(&happydns.CheckPlan{CheckerID: "inelig_checker", Target: target}); err != nil {
+		t.Fatalf("CreateCheckPlan() error: %v", err)
+	}
+
+	// Management view: ineligible checker is shown, annotated with the reason.
+	all, err := uc.ListCheckerStatuses(context.Background(), target, true)
+	if err != nil {
+		t.Fatalf("ListCheckerStatuses(true) error: %v", err)
+	}
+	var shown *happydns.CheckerStatus
+	for i := range all {
+		if all[i].ID == "inelig_checker" {
+			shown = &all[i]
+		}
+	}
+	if shown == nil {
+		t.Fatal("expected inelig_checker in the management list")
+	}
+	if shown.Eligible == nil || *shown.Eligible {
+		t.Errorf("expected Eligible=false, got %v", shown.Eligible)
+	}
+	if shown.EligibilityReason != "not a reverse zone" {
+		t.Errorf("expected reason 'not a reverse zone', got %q", shown.EligibilityReason)
+	}
+
+	// "What runs" view: ineligible checker is dropped entirely.
+	runs, err := uc.ListCheckerStatuses(context.Background(), target, false)
+	if err != nil {
+		t.Fatalf("ListCheckerStatuses(false) error: %v", err)
+	}
+	for _, s := range runs {
+		if s.ID == "inelig_checker" {
+			t.Error("expected inelig_checker to be skipped from the 'what runs' list")
 		}
 	}
 }

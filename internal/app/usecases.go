@@ -22,6 +22,7 @@
 package app
 
 import (
+	"context"
 	"log"
 	"strings"
 
@@ -154,7 +155,34 @@ func (app *App) initUsecases() {
 		app.store, app.store, app.store, app.store,
 		app.usecases.checkerUserGater.AllowWithInterval,
 		app.usecases.checkerUserGater.IncrementUsage,
-	)
+	).WithEligibilityGate(func(checkerID string, target happydns.CheckTarget) bool {
+		// Honour a checker's CheckEnabler verdict before scheduling it.
+		// Fails open: keep running unless the verdict is a definitive negative.
+		def := checkerPkg.FindChecker(checkerID)
+		if def == nil {
+			return true
+		}
+		// Most checkers have no eligibility gate; skip the option building and
+		// storage reads below, since the verdict would always be fail-open.
+		if !checkerPkg.CheckerHasEligibilityGate(def, app.usecases.checkerOptionsUC.HasAdminEndpoint(checkerID)) {
+			return true
+		}
+		opts, _, err := app.usecases.checkerOptionsUC.BuildMergedCheckerOptionsWithAutoFill(
+			checkerID,
+			happydns.TargetIdentifier(target.UserId),
+			happydns.TargetIdentifier(target.DomainId),
+			happydns.TargetIdentifier(target.ServiceId),
+			nil,
+		)
+		if err != nil {
+			return true
+		}
+		res, err := checkerPkg.EvaluateChecker(context.Background(), def, opts)
+		if err != nil {
+			return true
+		}
+		return res.Eligible == nil || *res.Eligible
+	})
 
 	// Invalidate the scheduler's user gate cache whenever a user is updated
 	// (e.g. login refreshing LastSeen, admin toggling SchedulingPaused).

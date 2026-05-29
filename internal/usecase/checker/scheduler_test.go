@@ -361,6 +361,43 @@ func TestScheduler_Gate(t *testing.T) {
 	}
 }
 
+func TestScheduler_EligibilityGate(t *testing.T) {
+	engine := &mockEngine{}
+	ps := &mockPlanStore{}
+	dl := &mockDomainLister{domains: nil}
+	zg := &mockZoneGetter{zones: make(map[string]*happydns.ZoneMessage)}
+	ss := &mockStateStore{}
+
+	var consulted atomic.Int32
+	sched := NewScheduler(engine, 2, ps, dl, nil, zg, ss, nil, nil).
+		WithEligibilityGate(func(checkerID string, target happydns.CheckTarget) bool {
+			consulted.Add(1)
+			return false // definitively ineligible: block all jobs
+		})
+
+	uid, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
+
+	sched.Start(t.Context())
+	defer sched.Stop()
+
+	injectJob(t, sched, &SchedulerJob{
+		CheckerID: "test-checker",
+		Target:    target,
+		Interval:  time.Hour,
+		NextRun:   time.Now(),
+	})
+
+	time.Sleep(200 * time.Millisecond)
+
+	if consulted.Load() == 0 {
+		t.Error("expected the eligibility gate to be consulted")
+	}
+	if engine.executionCount() > 0 {
+		t.Error("expected no executions when the eligibility gate blocks all jobs")
+	}
+}
+
 // injectJob pushes a SchedulerJob directly into a running scheduler's queue
 // and wakes the loop so the new job is observed promptly. It must be called
 // after Start (Start resets the queue via buildQueue).

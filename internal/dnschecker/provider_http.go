@@ -137,42 +137,47 @@ func (p *HTTPObservationProvider) Collect(ctx context.Context, opts happydns.Che
 }
 
 // Precheck calls the remote /definition endpoint with the given options
-// and returns the per-rule precheck failure map. The embedded
-// CheckerDefinition in the response is discarded — the host uses its
-// own cached definition for everything except the precheck status.
+// and returns the per-rule precheck failures together with the
+// whole-checker eligibility verdict. The embedded CheckerDefinition in the
+// response is discarded — the host uses its own cached definition for
+// everything except the precheck status.
 //
 // A non-nil error means the remote endpoint was unreachable or returned
 // a malformed payload; callers should treat that as "no precheck
 // information available" rather than as a hard failure.
-func (p *HTTPObservationProvider) Precheck(ctx context.Context, opts happydns.CheckerOptions) (map[string]string, error) {
+func (p *HTTPObservationProvider) Precheck(ctx context.Context, opts happydns.CheckerOptions) (PrecheckResult, error) {
 	body, err := json.Marshal(happydns.RulePrecheckRequest{Options: opts})
 	if err != nil {
-		return nil, fmt.Errorf("HTTP provider %s: marshal precheck request: %w", p.observationKey, err)
+		return PrecheckResult{}, fmt.Errorf("HTTP provider %s: marshal precheck request: %w", p.observationKey, err)
 	}
 
 	url := p.endpoint + "/definition"
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
-		return nil, fmt.Errorf("HTTP provider %s: create precheck request: %w", p.observationKey, err)
+		return PrecheckResult{}, fmt.Errorf("HTTP provider %s: create precheck request: %w", p.observationKey, err)
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 
 	resp, err := httpClient.Do(httpReq)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP provider %s: precheck request failed: %w", p.observationKey, err)
+		return PrecheckResult{}, fmt.Errorf("HTTP provider %s: precheck request failed: %w", p.observationKey, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorBodySize))
-		return nil, fmt.Errorf("HTTP provider %s: precheck returned status %d: %s", p.observationKey, resp.StatusCode, string(respBody))
+		return PrecheckResult{}, fmt.Errorf("HTTP provider %s: precheck returned status %d: %s", p.observationKey, resp.StatusCode, string(respBody))
 	}
 
 	var result happydns.RulePrecheckResponse
 	if err := json.NewDecoder(io.LimitReader(resp.Body, maxResponseBodySize)).Decode(&result); err != nil {
-		return nil, fmt.Errorf("HTTP provider %s: decode precheck response: %w", p.observationKey, err)
+		return PrecheckResult{}, fmt.Errorf("HTTP provider %s: decode precheck response: %w", p.observationKey, err)
 	}
-	return result.PrecheckFailures, nil
+	return PrecheckResult{
+		Failures:          result.PrecheckFailures,
+		Eligible:          result.Eligible,
+		EligibilityReason: result.EligibilityReason,
+	}, nil
 }
 
 // DiscoverEntries implements sdk.DiscoveryPublisher: it exposes the entries

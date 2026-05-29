@@ -347,6 +347,24 @@ func (u *CheckerOptionsUsecase) AddCheckerOptions(
 	return merged, nil
 }
 
+// HasAdminEndpoint reports whether checkerName has a non-empty "endpoint"
+// value configured at the admin scope, via CLI/env override or storage. It
+// performs a single admin-scope-only lookup rather than a full merged build,
+// so callers such as CheckerHasEligibilityGate can cheaply determine whether
+// a checker can be delegated to a remote endpoint without paying the cost of
+// BuildMergedCheckerOptions*'s auto-fill and multi-scope merge.
+func (u *CheckerOptionsUsecase) HasAdminEndpoint(checkerName string) bool {
+	if ep, ok := u.adminOptions[checkerName]["endpoint"].(string); ok && ep != "" {
+		return true
+	}
+	admin, err := u.getScopedOptions(checkerName, nil, nil, nil)
+	if err != nil {
+		return false
+	}
+	ep, ok := admin["endpoint"].(string)
+	return ok && ep != ""
+}
+
 // GetCheckerOption returns a single option value from the merged options.
 func (u *CheckerOptionsUsecase) GetCheckerOption(
 	checkerName string,
@@ -702,6 +720,44 @@ func (u *CheckerOptionsUsecase) buildAutoFillContext(
 	return ctx, nil
 }
 
+// AutoFillCache memoizes per-target auto-fill data so callers iterating over
+// many checkers for the same target (e.g. ListCheckerStatuses) only pay the
+// underlying GetDomain/GetZone/ListDiscoveryEntries cost once.
+//
+// Not safe for concurrent use. Build a fresh cache per request.
+type AutoFillCache struct {
+	target           happydns.CheckTarget
+	ctx              map[string]any
+	ctxErr           error
+	ctxLoaded        bool
+	discoveryEntries []*happydns.StoredDiscoveryEntry
+	discoveryErr     error
+	discoveryLoaded  bool
+}
+
+// NewAutoFillCache returns a fresh cache bound to the given target.
+func (u *CheckerOptionsUsecase) NewAutoFillCache(target happydns.CheckTarget) *AutoFillCache {
+	return &AutoFillCache{target: target}
+}
+
+func (c *AutoFillCache) context(u *CheckerOptionsUsecase) (map[string]any, error) {
+	if !c.ctxLoaded {
+		c.ctxLoaded = true
+		c.ctx, c.ctxErr = u.buildAutoFillContext(c.target)
+	}
+	return c.ctx, c.ctxErr
+}
+
+func (c *AutoFillCache) discovery(u *CheckerOptionsUsecase) ([]*happydns.StoredDiscoveryEntry, error) {
+	if !c.discoveryLoaded {
+		c.discoveryLoaded = true
+		if u.discoveryStore != nil {
+			c.discoveryEntries, c.discoveryErr = u.discoveryStore.ListDiscoveryEntriesByTarget(c.target)
+		}
+	}
+	return c.discoveryEntries, c.discoveryErr
+}
+
 // BuildMergedCheckerOptionsWithAutoFill produces the final option map fed to a
 // checker execution. Precedence, from lowest to highest:
 //
@@ -720,6 +776,20 @@ func (u *CheckerOptionsUsecase) BuildMergedCheckerOptionsWithAutoFill(
 	domainId *happydns.Identifier,
 	serviceId *happydns.Identifier,
 	runOpts happydns.CheckerOptions,
+) (happydns.CheckerOptions, []*happydns.StoredDiscoveryEntry, error) {
+	return u.BuildMergedCheckerOptionsCached(checkerName, userId, domainId, serviceId, runOpts, nil)
+}
+
+// BuildMergedCheckerOptionsCached is BuildMergedCheckerOptionsWithAutoFill with
+// a caller-supplied AutoFillCache. When cache is nil a single-use cache is
+// allocated, matching the uncached behavior.
+func (u *CheckerOptionsUsecase) BuildMergedCheckerOptionsCached(
+	checkerName string,
+	userId *happydns.Identifier,
+	domainId *happydns.Identifier,
+	serviceId *happydns.Identifier,
+	runOpts happydns.CheckerOptions,
+	cache *AutoFillCache,
 ) (happydns.CheckerOptions, []*happydns.StoredDiscoveryEntry, error) {
 	positionals, err := u.store.GetCheckerConfiguration(checkerName, userId, domainId, serviceId)
 	if err != nil {
@@ -750,31 +820,24 @@ func (u *CheckerOptionsUsecase) BuildMergedCheckerOptionsWithAutoFill(
 			DomainId:  happydns.FormatIdentifier(domainId),
 			ServiceId: happydns.FormatIdentifier(serviceId),
 		}
-		ctx, err := u.buildAutoFillContext(target)
+		if cache == nil {
+			cache = u.NewAutoFillCache(target)
+		}
+		ctx, err := cache.context(u)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		// AutoFillDiscoveryEntries is resolved from a separate storage surface
-		// (the discovery entry index), loaded lazily on first encounter.
-		var discoveryEntries []*happydns.StoredDiscoveryEntry
-		var discoveryLoaded bool
-
 		for fieldId, autoFillKey := range meta.autoFillIds {
 			if autoFillKey == happydns.AutoFillDiscoveryEntries {
-				if !discoveryLoaded {
-					discoveryLoaded = true
-					if u.discoveryStore != nil {
-						discoveryEntries, err = u.discoveryStore.ListDiscoveryEntriesByTarget(target)
-						if err != nil {
-							return nil, nil, fmt.Errorf("loading discovery entries: %w", err)
-						}
-						if len(discoveryEntries) > 0 {
-							injectedEntries = discoveryEntries
-						}
-					}
+				entries, derr := cache.discovery(u)
+				if derr != nil {
+					return nil, nil, fmt.Errorf("loading discovery entries: %w", derr)
 				}
-				merged[fieldId] = sdkEntries(discoveryEntries)
+				if len(entries) > 0 {
+					injectedEntries = entries
+				}
+				merged[fieldId] = sdkEntries(entries)
 				continue
 			}
 			if val, ok := ctx[autoFillKey]; ok {
