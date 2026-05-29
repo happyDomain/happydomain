@@ -124,6 +124,14 @@ type Scheduler struct {
 	// Only called for scheduler-driven executions; manual API triggers do
 	// not call this.
 	onExecute func(target happydns.CheckTarget)
+
+	// eligible, if set, is consulted before launching each job to honour a
+	// checker's optional CheckEnabler eligibility gate. Returning false
+	// (a definitive negative verdict for this checker/target) causes the
+	// scheduler to skip and reschedule the job. It is evaluated per fire
+	// (i.e. once per interval) rather than at enqueue time so its DNS I/O
+	// stays bounded. It fails open: nil/undetermined/eligible -> true.
+	eligible func(checkerID string, target happydns.CheckTarget) bool
 }
 
 // NewScheduler creates a new Scheduler. The optional gate function, if
@@ -160,6 +168,16 @@ func NewScheduler(
 	// reads the live queue length at scrape time. This avoids having to call
 	// gauge.Set after every queue mutation site (Push/Pop/Init/buildQueue/…).
 	metrics.RegisterSchedulerQueueDepth(s.queueDepthForMetrics)
+	return s
+}
+
+// WithEligibilityGate sets the per-checker eligibility hook consulted before
+// launching each job. Returning false (a definitive CheckEnabler negative for
+// the checker/target) makes the scheduler skip and reschedule the job. The
+// hook must fail open: it returns true when eligibility is unknown or the
+// checker does not implement CheckEnabler.
+func (s *Scheduler) WithEligibilityGate(fn func(checkerID string, target happydns.CheckTarget) bool) *Scheduler {
+	s.eligible = fn
 	return s
 }
 
@@ -284,11 +302,19 @@ func (s *Scheduler) run(ctx context.Context) {
 		}
 		job := heap.Pop(&s.queue).(*SchedulerJob)
 		gate := s.gate
+		eligible := s.eligible
 		s.mu.Unlock()
 
 		// Honour the user-level gate before doing any work.
 		if gate != nil && !gate(job.Target, job.Interval) {
 			// log.Printf("Scheduler: skipping checker %s on %s (gated by user policy)", job.CheckerID, job.Target.String())
+			s.rescheduleJob(job)
+			continue
+		}
+
+		// Honour the checker's eligibility gate (CheckEnabler): skip when the
+		// checker is definitively not applicable to this target.
+		if eligible != nil && !eligible(job.CheckerID, job.Target) {
 			s.rescheduleJob(job)
 			continue
 		}
