@@ -161,3 +161,23 @@ func TestFieldFromCheckerOption(t *testing.T) {
 		t.Errorf("Description = %q, want %q", f.Description, opt.Description)
 	}
 }
+
+func TestValidCheckerID(t *testing.T) {
+	tests := []struct {
+		id   string
+		want bool
+	}{
+		{"checker-tls", true},
+		{"checker_dane", true},
+		{"checker.smtp.v1", true},
+		{"", false},
+		{"bad|id", false},
+		{"|leading", false},
+		{"trailing|", false},
+	}
+	for _, tt := range tests {
+		if got := happydns.ValidCheckerID(tt.id); got != tt.want {
+			t.Errorf("ValidCheckerID(%q) = %v, want %v", tt.id, got, tt.want)
+		}
+	}
+}

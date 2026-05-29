@@ -24,10 +24,24 @@ package happydns
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	sdk "git.happydns.org/checker-sdk-go/checker"
 )
+
+// CheckerIDSeparator is the byte that delimits fields in every storage key
+// that embeds a checker ID (chckrcfg|, chckpln-chkr|, chckexec-chkr|,
+// chckeval-chkr|, dscent|, notifstate|, ...). A checker ID containing it would
+// misalign key parsing and let one checker's records collide with another's,
+// so registration rejects such IDs.
+const CheckerIDSeparator = "|"
+
+// ValidCheckerID reports whether id is safe to embed in happyDomain storage
+// keys. It must not contain CheckerIDSeparator.
+func ValidCheckerID(id string) bool {
+	return id != "" && !strings.Contains(id, CheckerIDSeparator)
+}
 
 // The types and helpers needed by external checker plugins live in the
 // Apache-2.0 licensed checker-sdk-go module. They are re-exported here as

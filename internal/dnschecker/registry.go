@@ -22,6 +22,8 @@
 package dnschecker
 
 import (
+	"log"
+
 	sdk "git.happydns.org/checker-sdk-go/checker"
 	"git.happydns.org/happyDomain/model"
 )
@@ -33,6 +35,10 @@ import (
 
 // RegisterChecker registers a checker definition globally.
 func RegisterChecker(c *happydns.CheckerDefinition) {
+	if !happydns.ValidCheckerID(c.ID) {
+		log.Printf("Warning: refusing to register checker %q: ID must not contain %q", c.ID, happydns.CheckerIDSeparator)
+		return
+	}
 	sdk.RegisterChecker(c)
 }
 
@@ -41,6 +47,10 @@ func RegisterChecker(c *happydns.CheckerDefinition) {
 // so the administrator can optionally configure a remote URL.
 // When the endpoint is left empty, the checker runs locally as usual.
 func RegisterExternalizableChecker(c *happydns.CheckerDefinition) {
+	if !happydns.ValidCheckerID(c.ID) {
+		log.Printf("Warning: refusing to register checker %q: ID must not contain %q", c.ID, happydns.CheckerIDSeparator)
+		return
+	}
 	sdk.RegisterExternalizableChecker(c)
 }
 
