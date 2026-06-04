@@ -39,12 +39,20 @@ func (msg *Service) Meta() *ServiceMeta {
 // serialization so that these derived fields are always fresh.
 func (s *Service) MarshalJSON() ([]byte, error) {
 	if s.Service != nil {
-		s.Comment = s.Service.GenComment()
-		s.NbResources = s.Service.GetNbResources()
+		s.Comment, s.NbResources = safeGenDerived(s.Service)
 	}
 
 	type serviceAlias Service
 	return json.Marshal((*serviceAlias)(s))
+}
+
+// safeGenDerived calls GenComment/GetNbResources but tolerates a panic from
+// a service body whose inner pointers are nil (e.g. data parsed from a
+// truncated/legacy backup payload), so that persisting the surrounding zone
+// still succeeds.
+func safeGenDerived(b ServiceBody) (comment string, nb int) {
+	defer func() { _ = recover() }()
+	return b.GenComment(), b.GetNbResources()
 }
 
 // ServiceBody represents a service provided by one or more DNS record.

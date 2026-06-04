@@ -38,6 +38,9 @@ func (s *PTR) GetNbResources() int {
 }
 
 func (s *PTR) GenComment() string {
+	if s.Record == nil {
+		return ""
+	}
 	return s.Record.Ptr
 }
 
