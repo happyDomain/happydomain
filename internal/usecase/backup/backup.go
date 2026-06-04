@@ -283,6 +283,10 @@ func (u *Usecase) BackupUser(user *happydns.User) happydns.Backup {
 }
 
 func (u *Usecase) Restore(backup *happydns.Backup) error {
+	if current := u.store.SchemaVersion(); backup.Version != 0 && backup.Version != current {
+		return fmt.Errorf("backup schema version %d does not match current database schema version %d", backup.Version, current)
+	}
+
 	var errs error
 
 	// UserAuth
