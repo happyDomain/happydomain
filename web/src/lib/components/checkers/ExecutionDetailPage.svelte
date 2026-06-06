@@ -88,7 +88,10 @@
                     reportViewMode.set("rules");
                 }
             })
-            .catch((e) => console.warn("Failed to load execution observations", e));
+            .catch((e) => {
+                console.warn("Failed to load execution observations", e);
+                reportViewMode.set("rules");
+            });
         getScopedExecutionResults(scopeArg, checkerIdArg, execIdArg)
             .then((e) => (evaluationData = e))
             .catch((e) => console.warn("Failed to load execution results", e));
