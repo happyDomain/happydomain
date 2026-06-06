@@ -19,14 +19,15 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { goto } from '$app/navigation';
-import { writable } from 'svelte/store';
+import { goto } from "$app/navigation";
+import { writable } from "svelte/store";
 
 import type { Color } from "@sveltestrap/sveltestrap";
 
 interface AppConfig {
     captcha_provider?: string;
     captcha_site_key?: string;
+    disable_checker_scheduler?: boolean;
     disable_embedded_login?: boolean;
     disable_providers?: boolean;
     disable_registration?: boolean;
@@ -40,6 +41,7 @@ interface AppConfig {
 }
 
 const defaultConfig: AppConfig = {
+    disable_checker_scheduler: false,
     disable_embedded_login: false,
     disable_providers: false,
     disable_registration: false,
@@ -50,13 +52,13 @@ const defaultConfig: AppConfig = {
 };
 
 function getConfigFromScriptTag(): AppConfig | null {
-    if (typeof document !== 'undefined') {
-        const configScript = document.getElementById('app-config');
+    if (typeof document !== "undefined") {
+        const configScript = document.getElementById("app-config");
         if (configScript) {
             try {
-                return JSON.parse(configScript.textContent || '');
+                return JSON.parse(configScript.textContent || "");
             } catch (e) {
-                console.error('Failed to parse app config:', e);
+                console.error("Failed to parse app config:", e);
             }
         }
     }
@@ -67,9 +69,10 @@ const initialConfig = getConfigFromScriptTag() || defaultConfig;
 
 export const appConfig = writable<AppConfig>(initialConfig);
 
-export const base: string = typeof document !== 'undefined'
-    ? (document.querySelector('base')?.getAttribute('href') ?? '')
-    : '';
+export const base: string =
+    typeof document !== "undefined"
+        ? (document.querySelector("base")?.getAttribute("href") ?? "")
+        : "";
 
 export function navigate(url: string, opts?: Parameters<typeof goto>[1]) {
     return goto(base + url, opts);

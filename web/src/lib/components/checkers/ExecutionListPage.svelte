@@ -26,10 +26,17 @@
     import { Alert, Badge, Button, Card, Icon, Table } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
+    import { appConfig } from "$lib/stores/config";
     import { toasts } from "$lib/stores/toasts";
     import type { HappydnsExecution } from "$lib/api-base/types.gen";
     import type { CheckerScope, CheckMetric } from "$lib/api/checkers";
-    import { listScopedExecutions, getCheckStatus, deleteScopedExecution, deleteAllScopedExecutions, getScopedCheckerMetrics } from "$lib/api/checkers";
+    import {
+        listScopedExecutions,
+        getCheckStatus,
+        deleteScopedExecution,
+        deleteAllScopedExecutions,
+        getScopedCheckerMetrics,
+    } from "$lib/api/checkers";
     import {
         getExecutionStatusColor,
         getExecutionStatusI18nKey,
@@ -162,6 +169,7 @@
             </Button>
             <Button
                 color="primary"
+                disabled={$appConfig.disable_checker_scheduler}
                 onclick={() => runCheckModal?.open(checkerId, resolvedName || checkerId)}
             >
                 <Icon name="play-fill"></Icon>

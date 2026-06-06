@@ -57,6 +57,10 @@ func init() {
 func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, captchaVerifier happydns.CaptchaVerifier) {
 	appConfig := map[string]any{}
 
+	if cfg.DisableCheckerScheduler {
+		appConfig["disable_checker_scheduler"] = true
+	}
+
 	if cfg.DisableProviders {
 		appConfig["disable_providers"] = true
 	}

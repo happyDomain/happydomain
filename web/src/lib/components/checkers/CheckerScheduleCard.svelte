@@ -22,17 +22,15 @@
 -->
 
 <script lang="ts">
-    import {
-        Card,
-        CardBody,
-        CardHeader,
-        Icon,
-        Input,
-        Label,
-    } from "@sveltestrap/sveltestrap";
-    import type { CheckerCheckIntervalSpec, HappydnsCheckPlan, HappydnsCheckPlanWritable } from "$lib/api-base/types.gen";
+    import { Card, CardBody, CardHeader, Icon, Input, Label } from "@sveltestrap/sveltestrap";
+    import type {
+        CheckerCheckIntervalSpec,
+        HappydnsCheckPlan,
+        HappydnsCheckPlanWritable,
+    } from "$lib/api-base/types.gen";
     import { t } from "$lib/translations";
     import { toasts } from "$lib/stores/toasts";
+    import { appConfig } from "$lib/stores/config";
     import type { CheckerScope } from "$lib/api/checkers";
     import {
         getScopedCheckPlans,
@@ -54,11 +52,11 @@
 
     let existingPlanId = $state<string | undefined>(undefined);
     let saving = $state(false);
-    let saveStatus = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
+    let saveStatus = $state<"idle" | "saving" | "saved" | "error">("idle");
     let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
     let useMinutes = $derived(
-        intervalSpec != null && intervalSpec.min != null && intervalSpec.min < NS_PER_HOUR
+        intervalSpec != null && intervalSpec.min != null && intervalSpec.min < NS_PER_HOUR,
     );
     let unitNs = $derived(useMinutes ? NS_PER_MINUTE : NS_PER_HOUR);
 
@@ -105,15 +103,17 @@
 
     function triggerAutosave() {
         clearTimeout(debounceTimer);
-        saveStatus = 'idle';
+        saveStatus = "idle";
         debounceTimer = setTimeout(async () => {
-            saveStatus = 'saving';
+            saveStatus = "saving";
             try {
                 await save();
-                saveStatus = 'saved';
-                setTimeout(() => { if (saveStatus === 'saved') saveStatus = 'idle'; }, 2000);
+                saveStatus = "saved";
+                setTimeout(() => {
+                    if (saveStatus === "saved") saveStatus = "idle";
+                }, 2000);
             } catch (error) {
-                saveStatus = 'error';
+                saveStatus = "error";
                 toasts.addErrorToast({
                     message: $t("checkers.schedule.save-failed") + ": " + String(error),
                     timeout: 10000,
@@ -149,21 +149,21 @@
         return `${m}min`;
     }
 
-    let isEnabled = $derived(!(plan.disabled ?? false));
+    let isEnabled = $derived(!$appConfig.disable_checker_scheduler && !(plan.disabled ?? false));
 </script>
 
 <Card class="mb-3">
     <CardHeader class="d-flex align-items-center gap-3">
         <strong class="me-auto">{$t("checkers.schedule.card-title")}</strong>
 
-        {#if saveStatus === 'saving'}
+        {#if saveStatus === "saving"}
             <span class="spinner-border spinner-border-sm text-muted"></span>
-        {:else if saveStatus === 'saved'}
+        {:else if saveStatus === "saved"}
             <span class="text-success small d-flex align-items-center gap-1">
                 <Icon name="check-circle" />
                 {$t("checkers.schedule.saved")}
             </span>
-        {:else if saveStatus === 'error'}
+        {:else if saveStatus === "error"}
             <span class="text-danger small d-flex align-items-center gap-1">
                 <Icon name="exclamation-circle" />
                 {$t("checkers.schedule.save-failed")}
@@ -179,6 +179,7 @@
             <Input
                 type="switch"
                 id="schedule-enabled-toggle"
+                disabled={$appConfig.disable_checker_scheduler}
                 checked={isEnabled}
                 onchange={(e: Event) => {
                     plan.disabled = !(e.target as HTMLInputElement).checked;
@@ -204,7 +205,11 @@
                         }}
                         style="width: 100px"
                     />
-                    <span>{useMinutes ? $t("checkers.schedule.minutes") : $t("checkers.schedule.hours")}</span>
+                    <span
+                        >{useMinutes
+                            ? $t("checkers.schedule.minutes")
+                            : $t("checkers.schedule.hours")}</span
+                    >
                 </div>
                 <small class="text-muted mt-1 d-block">
                     {$t("checkers.schedule.interval-hint", {
