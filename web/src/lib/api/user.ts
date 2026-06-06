@@ -165,11 +165,15 @@ export async function exportUserData(user: User): Promise<{ text: string; errors
 }
 
 export async function isAuthUser(user: User): Promise<boolean> {
-    return unwrapEmptyResponse(
-        await getUsersByUserIdIsAuthUser({
-            path: { userId: user.id },
-        }),
-    );
+    try {
+        return unwrapEmptyResponse(
+            await getUsersByUserIdIsAuthUser({
+                path: { userId: user.id },
+            }),
+        );
+    } catch {
+        return false;
+    }
 }
 
 export async function getUser(id: string): Promise<User> {
