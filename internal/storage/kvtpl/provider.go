@@ -120,9 +120,11 @@ func (s *KVStorage) CreateProvider(prvd *happydns.Provider) error {
 
 func (s *KVStorage) UpdateProvider(prvd *happydns.Provider) error {
 	// Load the existing record so we can detect an owner change and clean up
-	// the stale index entry.
+	// the stale index entry. UpdateProvider is also used by the backup restore
+	// path where the primary may not exist yet, so a missing old record is not
+	// an error.
 	old, err := s.GetProvider(prvd.Id)
-	if err != nil {
+	if err != nil && !errors.Is(err, happydns.ErrProviderNotFound) {
 		return err
 	}
 
@@ -130,7 +132,7 @@ func (s *KVStorage) UpdateProvider(prvd *happydns.Provider) error {
 		return err
 	}
 
-	if !old.Owner.Equals(prvd.Owner) {
+	if old != nil && !old.Owner.Equals(prvd.Owner) {
 		if err := s.db.Delete(providerOwnerKey(old.Owner, prvd.Id)); err != nil {
 			log.Printf("UpdateProvider: failed to delete stale owner index for owner %s: %v", old.Owner.String(), err)
 		}
