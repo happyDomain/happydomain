@@ -80,9 +80,9 @@
             </p>
         </Col>
         <Col md={4} class="d-flex gap-2 justify-content-end align-items-start">
-            <Button color="secondary" outline href="/users/stats">
+            <Button color="secondary" outline href="/users/counts">
                 <Icon name="bar-chart-fill"></Icon>
-                Statistics
+                Counts
             </Button>
             <Button color="primary" href="/users/new">
                 <Icon name="plus-circle"></Icon>
