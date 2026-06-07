@@ -122,6 +122,30 @@ In order to define a new password, please follow this link now:
 	)
 }
 
+// SendInvitation sends an invitation email containing a recovery link, inviting
+// the recipient to set a password and try happyDomain. It reuses the recovery
+// link mechanism but with a wording dedicated to a fresh invitation.
+func (uc *RecoverAccountUsecase) SendInvitation(user *happydns.UserAuth) error {
+	link, err := uc.GenerateLink(user)
+	if err != nil {
+		return fmt.Errorf("unable to generate invitation link: %w", err)
+	}
+
+	toName := helpers.GenUsername(user.Email)
+
+	return uc.mailer.SendMail(
+		&mail.Address{Name: toName, Address: user.Email},
+		"You're invited to try happyDomain",
+		fmt.Sprintf(`Hi %s,
+
+You've been invited to try happyDomain, our domain name management platform!
+
+To get started, please set your password by following this link now:
+
+[Accept the invitation](%s)`, toName, link),
+	)
+}
+
 // ResetPassword resets the user's password using a recovery form.
 func (uc *RecoverAccountUsecase) ResetPassword(user *happydns.UserAuth, form happydns.AccountRecoveryForm) error {
 	if err := CanRecoverAccount(user, form.Key); err != nil {

@@ -51,6 +51,21 @@ func (s *Service) AdminCreateAuthUser(user *happydns.UserAuth) error {
 	return s.store.CreateAuthUser(user)
 }
 
+// AdminInviteAuthUser creates user with its email already marked as verified,
+// then sends an invitation email containing a link to set a password and start
+// using happyDomain. Intended for administrative callers inviting new testers
+// without the usual self-registration and email-validation flow.
+func (s *Service) AdminInviteAuthUser(user *happydns.UserAuth) error {
+	now := time.Now()
+	user.EmailVerification = &now
+
+	if err := s.store.CreateAuthUser(user); err != nil {
+		return err
+	}
+
+	return s.recovery.SendInvitation(user)
+}
+
 // AdminUpdateAuthUser persists changes to user. It is the write-side
 // counterpart used by admin endpoints that mutate a UserAuth in memory
 // (password reset, raw update) and need to commit the result.

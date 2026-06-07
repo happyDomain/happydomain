@@ -35,12 +35,39 @@
         Row,
     } from "@sveltestrap/sveltestrap";
 
-    import { getAuth, deleteAuthByUid } from '$lib/api-admin';
+    import { getAuth, deleteAuthByUid, postAuthInvite } from '$lib/api-admin';
     import { toasts } from '$lib/stores/toasts';
 
     let authUsersQ = $state(getAuth());
 
     let searchQuery = $state('');
+
+    async function sendInvitation() {
+        const email = prompt('Enter the email address to invite:');
+        if (!email) {
+            return;
+        }
+
+        try {
+            await postAuthInvite({
+                body: {
+                    email: email,
+                },
+            });
+            // Refresh the auth users list
+            authUsersQ = getAuth();
+            toasts.addToast({
+                message: `Invitation sent to "${email}" successfully`,
+                type: 'success',
+                timeout: 5000,
+            });
+        } catch (error) {
+            toasts.addErrorToast({
+                message: 'Failed to send invitation: ' + error,
+                timeout: 10000,
+            });
+        }
+    }
 </script>
 
 <Container class="flex-fill my-5">
@@ -59,7 +86,11 @@
                 {/await}
             </p>
         </Col>
-        <Col md={4} class="text-end">
+        <Col md={4} class="text-end d-flex gap-2 justify-content-md-end align-items-start">
+            <Button color="primary" outline onclick={sendInvitation}>
+                <Icon name="envelope-plus"></Icon>
+                Send Invitation
+            </Button>
             <Button color="primary" href="/auth_users/new">
                 <Icon name="plus-circle"></Icon>
                 Create Auth User

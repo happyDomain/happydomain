@@ -102,6 +102,32 @@ func (ac *AuthUserController) NewAuthUser(c *gin.Context) {
 	happydns.ApiResponse(c, uu, ac.adminService.AdminCreateAuthUser(uu))
 }
 
+// InviteAuthUser creates a new user account, marks its email as verified, and
+// sends an invitation email.
+//
+//	@Summary		Invite a new user
+//	@Schemes
+//	@Description	Create a new user account with an already verified email, then send an invitation email containing a link to set a password and start using happyDomain.
+//	@Tags			admin-users
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		happydns.UserAuth	true	"User data"
+//	@Success		200		{object}	happydns.UserAuth
+//	@Failure		400		{object}	happydns.ErrorResponse	"Invalid input"
+//	@Failure		500		{object}	happydns.ErrorResponse
+//	@Router			/auth/invite [post]
+func (ac *AuthUserController) InviteAuthUser(c *gin.Context) {
+	uu := &happydns.UserAuth{}
+	err := c.ShouldBindJSON(&uu)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{Message: fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
+		return
+	}
+	uu.Id = []byte{}
+
+	happydns.ApiResponse(c, uu, ac.adminService.AdminInviteAuthUser(uu))
+}
+
 // DeleteAuthUsers deletes all user accounts.
 //
 //	@Summary		Delete all users

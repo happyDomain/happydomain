@@ -32,6 +32,7 @@ func declareUserAuthsRoutes(router *gin.RouterGroup, dep Dependencies) {
 
 	router.GET("/auth", ac.GetAuthUsers)
 	router.POST("/auth", ac.NewAuthUser)
+	router.POST("/auth/invite", ac.InviteAuthUser)
 	router.DELETE("/auth", ac.DeleteAuthUsers)
 
 	apiUsersRoutes := router.Group("/auth/:uid")

@@ -136,6 +136,7 @@ type AuthUserUsecase interface {
 type AdminAuthUserUsecase interface {
 	ListAllAuthUsers() ([]*UserAuth, error)
 	AdminCreateAuthUser(*UserAuth) error
+	AdminInviteAuthUser(*UserAuth) error
 	AdminUpdateAuthUser(*UserAuth) error
 	AdminDeleteAuthUser(*UserAuth) error
 	ClearAuthUsers() error
