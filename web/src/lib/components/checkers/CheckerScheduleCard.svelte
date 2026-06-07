@@ -52,7 +52,6 @@
 
     let existingPlanId = $state<string | undefined>(undefined);
     let saving = $state(false);
-    let saveStatus = $state<"idle" | "saving" | "saved" | "error">("idle");
     let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
     let useMinutes = $derived(
@@ -103,17 +102,15 @@
 
     function triggerAutosave() {
         clearTimeout(debounceTimer);
-        saveStatus = "idle";
         debounceTimer = setTimeout(async () => {
-            saveStatus = "saving";
             try {
                 await save();
-                saveStatus = "saved";
-                setTimeout(() => {
-                    if (saveStatus === "saved") saveStatus = "idle";
-                }, 2000);
+                toasts.addToast({
+                    type: "success",
+                    message: $t("checkers.schedule.saved"),
+                    timeout: 3000,
+                });
             } catch (error) {
-                saveStatus = "error";
                 toasts.addErrorToast({
                     message: $t("checkers.schedule.save-failed") + ": " + String(error),
                     timeout: 10000,
@@ -156,18 +153,8 @@
     <CardHeader class="d-flex align-items-center gap-3">
         <strong class="me-auto">{$t("checkers.schedule.card-title")}</strong>
 
-        {#if saveStatus === "saving"}
+        {#if saving}
             <span class="spinner-border spinner-border-sm text-muted"></span>
-        {:else if saveStatus === "saved"}
-            <span class="text-success small d-flex align-items-center gap-1">
-                <Icon name="check-circle" />
-                {$t("checkers.schedule.saved")}
-            </span>
-        {:else if saveStatus === "error"}
-            <span class="text-danger small d-flex align-items-center gap-1">
-                <Icon name="exclamation-circle" />
-                {$t("checkers.schedule.save-failed")}
-            </span>
         {/if}
 
         <div class="d-flex align-items-center gap-2">
