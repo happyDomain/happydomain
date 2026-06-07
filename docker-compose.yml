@@ -36,7 +36,7 @@ services:
     restart: unless-stopped
 
     volumes:
-      - storage:/var/lib/happydomain:rw
+      - storage:/data:rw
 
   dnsviz:
     image: happydomain/checker-dnsviz
