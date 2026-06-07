@@ -150,9 +150,9 @@
 <Card class="mb-4">
     <CardHeader>
         <h5 class="mb-0 d-flex align-items-center gap-2">
-            <Icon name={authUser.emailVerification === null ? "envelope-exclamation" : "envelope-check"}></Icon>
+            <Icon name={authUser.emailVerification == null ? "envelope-exclamation" : "envelope-check"}></Icon>
             Email Verification
-            {#if authUser.emailVerification !== null}
+            {#if authUser.emailVerification != null}
                 <Badge color="success">Verified</Badge>
             {:else}
                 <Badge color="danger">Not Verified</Badge>
@@ -160,7 +160,7 @@
         </h5>
     </CardHeader>
     <CardBody class="d-flex flex-column gap-2">
-        {#if authUser.emailVerification !== null}
+        {#if authUser.emailVerification != null}
             <Button
                 color="warning"
                 outline
