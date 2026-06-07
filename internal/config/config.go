@@ -142,6 +142,14 @@ func ConsolidateConfig() (opts *happydns.Options, err error) {
 		return
 	}
 
+	// DisableEmbeddedLogin only hides the built-in login form in favor of an
+	// alternative method. Without OIDC or an external-auth URL configured,
+	// there is no alternative, so the form stays visible to avoid lockout and
+	// the flag has no effect. Warn the operator about the no-op.
+	if opts.DisableEmbeddedLogin && len(opts.OIDCClients) == 0 && opts.ExternalAuth.String() == "" {
+		log.Println("Warning: -disable-embedded-login is set but neither OIDC nor -external-auth is configured; the embedded login form remains available to avoid locking you out.")
+	}
+
 	return
 }
 
