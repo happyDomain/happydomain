@@ -32,9 +32,9 @@ import (
 const (
 	ExecutionPrimaryPrefix        = "chckexec|"
 	ExecutionByCheckerIndexPrefix = "chckexec-chkr|"
-	ExecutionByDomainIndexPrefix  = "chckexec-domain|"
+	ExecutionByDomainIndexPrefix  = "exd|"
 	ExecutionByPlanIndexPrefix    = "chckexec-plan|"
-	ExecutionByUserIndexPrefix    = "chckexec-user|"
+	ExecutionByUserIndexPrefix    = "exu|"
 )
 
 // The checker, user and domain indexes embed a reverseChronoSegment derived
@@ -347,13 +347,13 @@ func (s *KVStorage) TidyExecutionIndexes() error {
 	// Tidy chckexec-chkr|{checkerID}|{target}|{revTime}|{execId} indexes.
 	s.tidyLastSegmentIndex(ExecutionByCheckerIndexPrefix, "execution checker", s.execExists)
 
-	// Tidy chckexec-user|{userId}|{revTime}|{execId} indexes.
+	// Tidy exu|{userId}|{revTime}|{execId} indexes.
 	s.tidyOwnerTimeIndex(ExecutionByUserIndexPrefix, "execution user", func(id happydns.Identifier) bool {
 		_, err := s.GetUser(id)
 		return err == nil
 	}, s.execExists)
 
-	// Tidy chckexec-domain|{domainId}|{revTime}|{execId} indexes.
+	// Tidy exd|{domainId}|{revTime}|{execId} indexes.
 	s.tidyOwnerTimeIndex(ExecutionByDomainIndexPrefix, "execution domain", func(id happydns.Identifier) bool {
 		_, err := s.GetDomain(id)
 		return err == nil
@@ -363,9 +363,11 @@ func (s *KVStorage) TidyExecutionIndexes() error {
 }
 
 func (s *KVStorage) ClearExecutions() error {
-	// Delete secondary indexes (chckexec-plan|..., chckexec-chkr|..., chckexec-user|..., chckexec-domain|...).
-	if err := s.clearByPrefix("chckexec-"); err != nil {
-		return err
+	// Delete secondary indexes (chckexec-plan|..., chckexec-chkr|..., exu|..., exd|...).
+	for _, pfx := range []string{ExecutionByPlanIndexPrefix, ExecutionByCheckerIndexPrefix, ExecutionByUserIndexPrefix, ExecutionByDomainIndexPrefix} {
+		if err := s.clearByPrefix(pfx); err != nil {
+			return err
+		}
 	}
 
 	// Delete primary records (chckexec|...).

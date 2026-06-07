@@ -31,7 +31,7 @@ import (
 
 const (
 	evaluationPrimaryPrefix        = "chckeval|"
-	evaluationByPlanIndexPrefix    = "chckeval-plan|"
+	evaluationByPlanIndexPrefix    = "evp|"
 	evaluationByCheckerIndexPrefix = "chckeval-chkr|"
 )
 
@@ -208,9 +208,11 @@ func (s *KVStorage) TidyEvaluationIndexes() error {
 }
 
 func (s *KVStorage) ClearEvaluations() error {
-	// Delete secondary indexes (chckeval-plan|..., chckeval-chkr|...).
-	if err := s.clearByPrefix("chckeval-"); err != nil {
-		return err
+	// Delete secondary indexes (evp|..., chckeval-chkr|...).
+	for _, pfx := range []string{evaluationByPlanIndexPrefix, evaluationByCheckerIndexPrefix} {
+		if err := s.clearByPrefix(pfx); err != nil {
+			return err
+		}
 	}
 
 	// Delete primary records (chckeval|...).

@@ -22,7 +22,6 @@
 package database
 
 import (
-	"fmt"
 	"log"
 	"strings"
 
@@ -30,90 +29,63 @@ import (
 )
 
 const (
-	checkerOptionPrimaryPrefix = "chckrcfg|"
+	// checkerOptionPrimaryPrefix is the prefix for all checker option primaries.
+	// Key layout: "cfg|" (4) + hash28(compound) (28) = 32 chars.
+	checkerOptionPrimaryPrefix = "cfg|"
+
+	// checkerOptionNameIndexPrefix is the secondary index for scan-by-checker-name.
+	// Key layout: "cfg-c|" (6) + hash28(checkerName) (28) + "|" (1) + hash28(compound) (28) = 63 chars.
+	checkerOptionNameIndexPrefix = "cfg-c|"
 )
 
-// checkerOptionsKey builds the positional KV key for checker options.
-// Format: chckrcfg|{checkerName}|{userId}|{domainId}|{serviceId}
-func checkerOptionsKey(checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier) string {
-	return fmt.Sprintf("%s%s|%s|%s|%s", checkerOptionPrimaryPrefix, checkerName,
-		happydns.FormatIdentifier(userId), happydns.FormatIdentifier(domainId), happydns.FormatIdentifier(serviceId))
+// checkerOptionsCompound builds the canonical compound string used as the hash
+// input for the primary key.
+func checkerOptionsCompound(checkerName string, userId, domainId, serviceId *happydns.Identifier) string {
+	return checkerName + "|" +
+		happydns.FormatIdentifier(userId) + "|" +
+		happydns.FormatIdentifier(domainId) + "|" +
+		happydns.FormatIdentifier(serviceId)
 }
 
-// parseCheckerOptionsKey extracts the positional components from a KV key.
-func parseCheckerOptionsKey(key string) (checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier) {
-	trimmed := strings.TrimPrefix(key, checkerOptionPrimaryPrefix)
-	parts := strings.SplitN(trimmed, "|", 4)
-	if len(parts) < 4 {
-		return trimmed, nil, nil, nil
-	}
+// checkerOptionsKey returns the primary key for a checker option entry.
+// The full (checkerName, userId, domainId, serviceId) compound is hashed so
+// the key is bounded regardless of checker name or identifier count.
+func checkerOptionsKey(checkerName string, userId, domainId, serviceId *happydns.Identifier) string {
+	return checkerOptionPrimaryPrefix + hash28(checkerOptionsCompound(checkerName, userId, domainId, serviceId))
+}
 
-	checkerName = parts[0]
-	if parts[1] != "" {
-		if id, err := happydns.NewIdentifierFromString(parts[1]); err == nil {
-			userId = &id
-		}
-	}
-	if parts[2] != "" {
-		if id, err := happydns.NewIdentifierFromString(parts[2]); err == nil {
-			domainId = &id
-		}
-	}
-	if parts[3] != "" {
-		if id, err := happydns.NewIdentifierFromString(parts[3]); err == nil {
-			serviceId = &id
-		}
-	}
-	return
+// checkerOptionNameIndexKey returns the secondary index key used to enumerate
+// all option entries for a given checker name.
+func checkerOptionNameIndexKey(checkerName, compoundHash string) string {
+	return checkerOptionNameIndexPrefix + hash28(checkerName) + "|" + compoundHash
 }
 
 func (s *KVStorage) ListAllCheckerConfigurations() (happydns.Iterator[happydns.CheckerOptionsPositional], error) {
 	iter := s.db.Search(checkerOptionPrimaryPrefix)
-	return &checkerOptionsIterator{KVIterator: NewKVIterator[happydns.CheckerOptions](s.db, iter)}, nil
-}
-
-// checkerOptionsIterator wraps KVIterator[CheckerOptions] and enriches each
-// item with positional fields parsed from the storage key.
-type checkerOptionsIterator struct {
-	*KVIterator[happydns.CheckerOptions]
-}
-
-func (it *checkerOptionsIterator) Item() *happydns.CheckerOptionsPositional {
-	opts := it.KVIterator.Item()
-	if opts == nil {
-		return nil
-	}
-	cn, uid, did, sid := parseCheckerOptionsKey(it.Key())
-	return &happydns.CheckerOptionsPositional{
-		CheckName: cn,
-		UserId:    uid,
-		DomainId:  did,
-		ServiceId: sid,
-		Options:   *opts,
-	}
+	return NewKVIterator[happydns.CheckerOptionsPositional](s.db, iter), nil
 }
 
 func (s *KVStorage) ListCheckerConfiguration(checkerName string) ([]*happydns.CheckerOptionsPositional, error) {
-	prefix := fmt.Sprintf("%s%s|", checkerOptionPrimaryPrefix, checkerName)
+	prefix := checkerOptionNameIndexPrefix + hash28(checkerName) + "|"
+
 	iter := s.db.Search(prefix)
 	defer iter.Release()
 
 	var results []*happydns.CheckerOptionsPositional
 	for iter.Next() {
-		var opts happydns.CheckerOptions
-		if err := s.db.DecodeData(iter.Value(), &opts); err != nil {
-			log.Printf("ListCheckerConfiguration: error decoding checker config at key %q: %s", iter.Key(), err)
+		i := strings.LastIndex(iter.Key(), "|")
+		if i < 0 {
 			continue
 		}
+		compoundHash := iter.Key()[i+1:]
+		primaryKey := checkerOptionPrimaryPrefix + compoundHash
 
-		cn, uid, did, sid := parseCheckerOptionsKey(iter.Key())
-		results = append(results, &happydns.CheckerOptionsPositional{
-			CheckName: cn,
-			UserId:    uid,
-			DomainId:  did,
-			ServiceId: sid,
-			Options:   opts,
-		})
+		var stored happydns.CheckerOptionsPositional
+		if err := s.db.Get(primaryKey, &stored); err != nil {
+			log.Printf("ListCheckerConfiguration: error loading checker config at key %q: %s", primaryKey, err)
+			continue
+		}
+		results = append(results, &stored)
 	}
 	return results, nil
 }
@@ -138,15 +110,9 @@ func (s *KVStorage) GetCheckerConfiguration(checkerName string, userId *happydns
 		}
 
 		key := checkerOptionsKey(checkerName, sc.uid, sc.did, sc.sid)
-		var opts happydns.CheckerOptions
-		if err := s.db.Get(key, &opts); err == nil {
-			results = append(results, &happydns.CheckerOptionsPositional{
-				CheckName: checkerName,
-				UserId:    sc.uid,
-				DomainId:  sc.did,
-				ServiceId: sc.sid,
-				Options:   opts,
-			})
+		var stored happydns.CheckerOptionsPositional
+		if err := s.db.Get(key, &stored); err == nil {
+			results = append(results, &stored)
 		}
 	}
 
@@ -154,26 +120,42 @@ func (s *KVStorage) GetCheckerConfiguration(checkerName string, userId *happydns
 }
 
 func (s *KVStorage) UpdateCheckerConfiguration(checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier, opts happydns.CheckerOptions) error {
-	key := checkerOptionsKey(checkerName, userId, domainId, serviceId)
-	return s.db.Put(key, opts)
+	compoundHash := hash28(checkerOptionsCompound(checkerName, userId, domainId, serviceId))
+	primaryKey := checkerOptionPrimaryPrefix + compoundHash
+	indexKey := checkerOptionNameIndexKey(checkerName, compoundHash)
+
+	stored := happydns.CheckerOptionsPositional{
+		CheckName: checkerName,
+		UserId:    userId,
+		DomainId:  domainId,
+		ServiceId: serviceId,
+		Options:   opts,
+	}
+
+	batch := s.db.NewBatch()
+	if err := batch.Put(primaryKey, stored); err != nil {
+		return err
+	}
+	if err := batch.Put(indexKey, ""); err != nil {
+		return err
+	}
+	return batch.Commit()
 }
 
 func (s *KVStorage) DeleteCheckerConfiguration(checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier) error {
-	key := checkerOptionsKey(checkerName, userId, domainId, serviceId)
-	return s.db.Delete(key)
+	compoundHash := hash28(checkerOptionsCompound(checkerName, userId, domainId, serviceId))
+	primaryKey := checkerOptionPrimaryPrefix + compoundHash
+	indexKey := checkerOptionNameIndexKey(checkerName, compoundHash)
+
+	batch := s.db.NewBatch()
+	batch.Delete(primaryKey)
+	batch.Delete(indexKey)
+	return batch.Commit()
 }
 
 func (s *KVStorage) ClearCheckerConfigurations() error {
-	iter, err := s.ListAllCheckerConfigurations()
-	if err != nil {
+	if err := s.clearByPrefix(checkerOptionNameIndexPrefix); err != nil {
 		return err
 	}
-	defer iter.Close()
-
-	for iter.Next() {
-		if err := s.db.Delete(iter.Key()); err != nil {
-			return err
-		}
-	}
-	return nil
+	return s.clearByPrefix(checkerOptionPrimaryPrefix)
 }

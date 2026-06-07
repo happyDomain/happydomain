@@ -22,6 +22,8 @@
 package database
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"hash/fnv"
 	"log"
@@ -117,13 +119,36 @@ func listByIndex[T any](s *KVStorage, prefix string, getEntity func(happydns.Ide
 	return results, nil
 }
 
-// reverseChronoSegment encodes t as a fixed width, zero padded string whose
-// ascending lexical order matches reverse chronological (newest first) order.
-// Embedding it as a key segment in a secondary index lets a forward prefix scan
-// return the most recent entries first and stop after the requested limit,
-// instead of loading every match and sorting it in memory.
+// maxKeySize is the hard backend limit some KV stores enforce on key lengths.
+// Every key builder in this package is sized to stay within it; key_size_test.go
+// asserts the bound for each.
+const maxKeySize = 64
+
+// hash28 returns the 28-char base64url encoding of the first 21 bytes of the
+// SHA-256 of s, for use in key construction.
+func hash28(s string) string {
+	h := sha256.Sum256([]byte(s))
+	return base64.RawURLEncoding.EncodeToString(h[:21])
+}
+
+// sortableBase32 is a 32-character alphabet whose ASCII order matches its
+// base32 value order (0=0, …, 9=9, A=10, …, V=31), making strings encoded
+// with it sort lexicographically the same way as the underlying numbers.
+const sortableBase32 = "0123456789ABCDEFGHIJKLMNOPQRSTUV"
+
+// reverseChronoSegment encodes t as a fixed 13-char string whose ascending
+// lexical order matches reverse chronological (newest first) order. A
+// sort-preserving base32 alphabet is used so that lexicographic and numerical
+// ordering agree, letting a forward KV prefix scan return the most recent
+// entries first and stop after the requested limit.
 func reverseChronoSegment(t time.Time) string {
-	return fmt.Sprintf("%020d", uint64(math.MaxInt64)-uint64(t.UnixNano()))
+	v := uint64(math.MaxInt64) - uint64(t.UnixNano())
+	var buf [13]byte
+	for i := 12; i >= 0; i-- {
+		buf[i] = sortableBase32[v&31]
+		v >>= 5
+	}
+	return string(buf[:])
 }
 
 // listByPresortedIndex scans a secondary index whose keys embed a

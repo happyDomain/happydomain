@@ -33,17 +33,16 @@ const (
 	notificationStatePrimaryPrefix = "notifstate|"
 )
 
-// Built from explicit fields so SDK changes to CheckTarget can't reshape the key and orphan stored records.
+// notifStateKey builds a bounded key for a notification state entry.
+//
+// Key layout: "notifstate|" (11) + userId (22) + "|" (1) + hash28 (28) = 62 chars.
+//
+// The (checkerID, target) pair is SHA-256 hashed and truncated to 21 bytes so
+// the total key length never exceeds 64 chars regardless of checker name or
+// target field lengths.
 func notifStateKey(checkerID string, target happydns.CheckTarget, userId happydns.Identifier) string {
-	return fmt.Sprintf(
-		"%s%s|%s|%s/%s/%s",
-		notificationStatePrimaryPrefix,
-		userId.String(),
-		checkerID,
-		target.UserId,
-		target.DomainId,
-		target.ServiceId,
-	)
+	compound := checkerID + "|" + target.UserId + "/" + target.DomainId + "/" + target.ServiceId
+	return fmt.Sprintf("%s%s|%s", notificationStatePrimaryPrefix, userId.String(), hash28(compound))
 }
 
 func (s *KVStorage) GetState(checkerID string, target happydns.CheckTarget, userId happydns.Identifier) (*happydns.NotificationState, error) {

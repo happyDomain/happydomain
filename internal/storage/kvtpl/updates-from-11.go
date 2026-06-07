@@ -311,7 +311,7 @@ func migrateFrom11_sessions(s *KVStorage) error {
 			continue
 		}
 
-		if err := s.db.Put(sessionUserIndexKey(session.IdUser, hash), ""); err != nil {
+		if err := s.db.Put(sessionUserIndexKey(session.IdUser, sessionShortHash(hash)), hash); err != nil {
 			return err
 		}
 		n++

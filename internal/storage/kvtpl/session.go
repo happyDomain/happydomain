@@ -27,20 +27,30 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strings"
 
 	"git.happydns.org/happyDomain/model"
 )
 
 const (
 	sessionPrimaryPrefix = "user.session-"
-	sessionUserPrefix    = "user.session-user|"
+	sessionUserPrefix    = "su|"
 )
 
 // sessionHash returns the base64-RawURLEncoded SHA-256 of the raw session id.
 func sessionHash(id string) string {
 	h := sha256.Sum256([]byte(id))
 	return base64.RawURLEncoding.EncodeToString(h[:])
+}
+
+// sessionShortHash truncates a full session hash to 32 chars (24 bytes of the
+// underlying SHA-256) for use in the user secondary index key. 24 bytes is a
+// multiple of 3, so the first 32 base64url chars map exactly to the first 24
+// bytes with no padding ambiguity. The full hash is stored as the index value.
+func sessionShortHash(fullHash string) string {
+	if len(fullHash) < 32 {
+		return fullHash
+	}
+	return fullHash[:32]
 }
 
 // sessionKey generates a hashed database key for a session ID.
@@ -53,60 +63,19 @@ func sessionPrimaryKeyFromHash(hash string) string {
 	return sessionPrimaryPrefix + hash
 }
 
-// sessionUserIndexKey builds the per-user secondary index key for a session,
-// keyed by the SHA-256 hash of the raw session id (same hash used for the
-// primary key).
-func sessionUserIndexKey(uid happydns.Identifier, hash string) string {
-	return fmt.Sprintf("%s%s|%s", sessionUserPrefix, uid.String(), hash)
-}
-
-// hashFromSessionUserIndexKey extracts the session hash suffix from a user
-// index key. Returns the empty string if the key is malformed.
-func hashFromSessionUserIndexKey(key string) string {
-	rest, ok := strings.CutPrefix(key, sessionUserPrefix)
-	if !ok {
-		return ""
-	}
-	_, hash, ok := strings.Cut(rest, "|")
-	if !ok {
-		return ""
-	}
-	return hash
+// sessionUserIndexKey builds the per-user secondary index key for a session.
+// The key embeds a 24-byte (32 base64 char) prefix of the session hash so the
+// full key fits within the 64-char backend limit. The full hash is stored as
+// the index value so the primary record can be located during lookups.
+//
+// Key layout: "su|" (3) + uid (22) + "|" (1) + shortHash (32) = 58 chars.
+func sessionUserIndexKey(uid happydns.Identifier, shortHash string) string {
+	return fmt.Sprintf("%s%s|%s", sessionUserPrefix, uid.String(), shortHash)
 }
 
 func (s *KVStorage) ListAllSessions() (happydns.Iterator[happydns.Session], error) {
-	// Restrict to the primary prefix only; the user-index prefix is a
-	// subspace of "user.session-" and would otherwise be reported here too.
 	iter := s.db.Search(sessionPrimaryPrefix)
-	return &primarySessionIterator{KVIterator: NewKVIterator[happydns.Session](s.db, iter)}, nil
-}
-
-// primarySessionIterator filters out user-index keys that share the
-// "user.session-" prefix with the primary records.
-type primarySessionIterator struct {
-	*KVIterator[happydns.Session]
-}
-
-func (it *primarySessionIterator) Next() bool {
-	for it.KVIterator.Next() {
-		if strings.HasPrefix(it.Key(), sessionUserPrefix) {
-			continue
-		}
-		return true
-	}
-	return false
-}
-
-// NextWithError mirrors Next's filtering so Tidy doesn't observe
-// user-index entries (whose values don't decode as Session) and drop them.
-func (it *primarySessionIterator) NextWithError() bool {
-	for it.KVIterator.NextWithError() {
-		if strings.HasPrefix(it.Key(), sessionUserPrefix) {
-			continue
-		}
-		return true
-	}
-	return false
+	return NewKVIterator[happydns.Session](s.db, iter), nil
 }
 
 func (s *KVStorage) getSession(id string) (*happydns.Session, error) {
@@ -132,13 +101,14 @@ func (s *KVStorage) listSessionsByUserID(userid happydns.Identifier) ([]*happydn
 
 	var sessions []*happydns.Session
 	for iter.Next() {
-		hash := hashFromSessionUserIndexKey(iter.Key())
-		if hash == "" {
-			log.Printf("storage: malformed session index key %q", iter.Key())
+		// The index value holds the full session hash needed to locate the primary.
+		var fullHash string
+		if err := s.db.DecodeData(iter.Value(), &fullHash); err != nil || fullHash == "" {
+			log.Printf("storage: malformed session index value at %q", iter.Key())
 			continue
 		}
 		session := &happydns.Session{}
-		if err := s.db.Get(sessionPrimaryKeyFromHash(hash), session); err != nil {
+		if err := s.db.Get(sessionPrimaryKeyFromHash(fullHash), session); err != nil {
 			if errors.Is(err, happydns.ErrNotFound) {
 				// Index drift: skip; tidy will clean it up.
 				log.Printf("storage: session index %q points to missing primary", iter.Key())
@@ -170,7 +140,7 @@ func (s *KVStorage) UpdateSession(session *happydns.Session) error {
 	// the stale user index so it doesn't outlive this update.
 	old := &happydns.Session{}
 	if err := s.db.Get(primary, old); err == nil && !old.IdUser.IsEmpty() && !old.IdUser.Equals(session.IdUser) {
-		if delErr := s.db.Delete(sessionUserIndexKey(old.IdUser, hash)); delErr != nil {
+		if delErr := s.db.Delete(sessionUserIndexKey(old.IdUser, sessionShortHash(hash))); delErr != nil {
 			log.Printf("storage: failed to delete stale session user index for %s: %v", old.IdUser.String(), delErr)
 		}
 	}
@@ -180,9 +150,10 @@ func (s *KVStorage) UpdateSession(session *happydns.Session) error {
 	}
 
 	// Only index sessions that belong to a known user; anonymous sessions
-	// are still reachable via the primary key.
+	// are still reachable via the primary key. The index value holds the full
+	// hash so listSessionsByUserID can locate the primary.
 	if !session.IdUser.IsEmpty() {
-		if err := s.db.Put(sessionUserIndexKey(session.IdUser, hash), ""); err != nil {
+		if err := s.db.Put(sessionUserIndexKey(session.IdUser, sessionShortHash(hash)), hash); err != nil {
 			return err
 		}
 	}
@@ -196,7 +167,7 @@ func (s *KVStorage) DeleteSession(id string) error {
 	// fall through to a best-effort delete of the primary key.
 	if session, err := s.getSession(primary); err == nil {
 		if !session.IdUser.IsEmpty() {
-			if delErr := s.db.Delete(sessionUserIndexKey(session.IdUser, sessionHash(id))); delErr != nil {
+			if delErr := s.db.Delete(sessionUserIndexKey(session.IdUser, sessionShortHash(sessionHash(id)))); delErr != nil {
 				log.Printf("storage: failed to delete session user index for %s: %v", session.IdUser.String(), delErr)
 			}
 		}
@@ -219,10 +190,6 @@ func (s *KVStorage) ClearSessions() error {
 	defer iter.Release()
 
 	for iter.Next() {
-		// Be defensive against future index keys sharing the prefix.
-		if strings.HasPrefix(iter.Key(), sessionUserPrefix) {
-			continue
-		}
 		if err := s.db.Delete(iter.Key()); err != nil {
 			return err
 		}
