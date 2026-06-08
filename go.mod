@@ -50,6 +50,7 @@ require (
 	github.com/gorilla/securecookie v1.1.2
 	github.com/gorilla/sessions v1.4.0
 	github.com/lib/pq v1.12.3
+	github.com/libdns/godaddy v1.1.0
 	github.com/libdns/ionos v1.2.0
 	github.com/libdns/libdns v1.1.1
 	github.com/libdns/spaceship v1.0.0
@@ -258,7 +259,6 @@ require (
 	go.opentelemetry.io/otel/metric v1.43.0 // indirect
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.uber.org/ratelimit v0.3.1 // indirect
-	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.27.0 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
