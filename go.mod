@@ -71,6 +71,7 @@ require (
 require (
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
+	github.com/adamantal/go-dreamhost v0.1.1 // indirect
 	github.com/alecthomas/kingpin/v2 v2.4.0 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.24 // indirect
@@ -89,6 +90,7 @@ require (
 	github.com/jcmturner/gofork v1.7.6 // indirect
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
+	github.com/libdns/dreamhost v0.2.0 // indirect
 	github.com/likexian/gokit v0.25.16 // indirect
 	github.com/pion/dtls/v3 v3.0.4 // indirect
 	github.com/pion/logging v0.2.2 // indirect
@@ -109,6 +111,8 @@ require (
 	github.com/wlynxg/anet v0.0.3 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
+	go.uber.org/zap v1.27.1 // indirect
 )
 
 require (
