@@ -86,7 +86,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     go build -tags netgo,swagger,web -ldflags "-w -X main.Version=${VERSION}" ./cmd/happyDomain/
 
 
-FROM alpine:3.23
+FROM alpine:3.24
 
 ARG VERSION=dev
 
