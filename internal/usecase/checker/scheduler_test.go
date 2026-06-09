@@ -370,9 +370,9 @@ func TestScheduler_EligibilityGate(t *testing.T) {
 
 	var consulted atomic.Int32
 	sched := NewScheduler(engine, 2, ps, dl, nil, zg, ss, nil, nil).
-		WithEligibilityGate(func(checkerID string, target happydns.CheckTarget) bool {
+		WithEligibilityGate(func(ctx context.Context, checkerID string, target happydns.CheckTarget) (bool, error) {
 			consulted.Add(1)
-			return false // definitively ineligible: block all jobs
+			return false, nil // definitively ineligible: block all jobs
 		})
 
 	uid, _ := happydns.NewRandomIdentifier()
@@ -380,6 +380,12 @@ func TestScheduler_EligibilityGate(t *testing.T) {
 
 	sched.Start(t.Context())
 	defer sched.Stop()
+
+	// The gate is consulted off the dispatch loop: the first lookup fails open
+	// and refreshes in the background. Prime the cache and wait for the negative
+	// verdict to land before scheduling, so the job sees a definitive skip.
+	sched.checkEligible(t.Context(), "test-checker", target)
+	waitForEligibility(t, sched, "test-checker", target, false)
 
 	injectJob(t, sched, &SchedulerJob{
 		CheckerID: "test-checker",
@@ -394,8 +400,103 @@ func TestScheduler_EligibilityGate(t *testing.T) {
 		t.Error("expected the eligibility gate to be consulted")
 	}
 	if engine.executionCount() > 0 {
-		t.Error("expected no executions when the eligibility gate blocks all jobs")
+		t.Error("expected no executions once the cached verdict is ineligible")
 	}
+}
+
+func TestScheduler_EligibilityGate_Cached(t *testing.T) {
+	engine := &mockEngine{}
+	ps := &mockPlanStore{}
+	dl := &mockDomainLister{domains: nil}
+	zg := &mockZoneGetter{zones: make(map[string]*happydns.ZoneMessage)}
+	ss := &mockStateStore{}
+
+	var consulted atomic.Int32
+	sched := NewScheduler(engine, 2, ps, dl, nil, zg, ss, nil, nil).
+		WithEligibilityGate(func(ctx context.Context, checkerID string, target happydns.CheckTarget) (bool, error) {
+			consulted.Add(1)
+			return true, nil
+		})
+
+	uid, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
+
+	// The first lookup fails open and refreshes once in the background; later
+	// lookups reuse the cached verdict without consulting the gate again.
+	if !sched.checkEligible(t.Context(), "test-checker", target) {
+		t.Fatal("expected the checker to be eligible (fail open)")
+	}
+	waitForEligibility(t, sched, "test-checker", target, true)
+	for range 3 {
+		if !sched.checkEligible(t.Context(), "test-checker", target) {
+			t.Fatal("expected the checker to be eligible")
+		}
+	}
+	if got := consulted.Load(); got != 1 {
+		t.Fatalf("expected the gate to be consulted once, got %d", got)
+	}
+
+	// A different (checker, target) pair is a distinct cache key.
+	sched.checkEligible(t.Context(), "other-checker", target)
+	waitForEligibility(t, sched, "other-checker", target, true)
+	if got := consulted.Load(); got != 2 {
+		t.Fatalf("expected a second consult for a new key, got %d", got)
+	}
+
+	// An expired entry is recomputed.
+	sched.eligibilityMu.Lock()
+	sched.eligibilityCache["test-checker|"+target.String()] = eligibilityCacheEntry{allow: true, expires: time.Now().Add(-time.Minute)}
+	sched.eligibilityMu.Unlock()
+	sched.checkEligible(t.Context(), "test-checker", target)
+	waitForCount(t, &consulted, 3)
+}
+
+func TestScheduler_EligibilityGate_NilFailsOpen(t *testing.T) {
+	engine := &mockEngine{}
+	ps := &mockPlanStore{}
+	dl := &mockDomainLister{domains: nil}
+	zg := &mockZoneGetter{zones: make(map[string]*happydns.ZoneMessage)}
+	ss := &mockStateStore{}
+
+	sched := NewScheduler(engine, 2, ps, dl, nil, zg, ss, nil, nil)
+
+	uid, _ := happydns.NewRandomIdentifier()
+	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
+	if !sched.checkEligible(t.Context(), "test-checker", target) {
+		t.Fatal("expected fail-open eligibility when no gate is configured")
+	}
+}
+
+// waitForEligibility blocks until the scheduler's eligibility cache holds the
+// expected verdict for the (checker, target) pair, or fails the test. It lets
+// tests synchronize on the background refresh spawned by checkEligible.
+func waitForEligibility(t *testing.T, sched *Scheduler, checkerID string, target happydns.CheckTarget, want bool) {
+	t.Helper()
+	key := checkerID + "|" + target.String()
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		sched.eligibilityMu.Lock()
+		e, ok := sched.eligibilityCache[key]
+		sched.eligibilityMu.Unlock()
+		if ok && e.allow == want {
+			return
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	t.Fatalf("timed out waiting for eligibility verdict %v on %s", want, key)
+}
+
+// waitForCount blocks until the counter reaches want, or fails the test.
+func waitForCount(t *testing.T, counter *atomic.Int32, want int32) {
+	t.Helper()
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if counter.Load() == want {
+			return
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	t.Fatalf("timed out waiting for count %d, got %d", want, counter.Load())
 }
 
 // injectJob pushes a SchedulerJob directly into a running scheduler's queue

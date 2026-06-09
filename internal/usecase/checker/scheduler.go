@@ -45,6 +45,31 @@ const (
 	// so it is never auto-scheduled on managed domains; the scheduler enqueues
 	// it only from the watch enumeration.
 	availabilityCheckerID = happydns.DomainAvailabilityCheckerID
+
+	// eligibilityCacheTTL bounds how long a checker's eligibility verdict is
+	// reused before being recomputed. Eligibility (e.g. reverse zone, presence
+	// of an MX) is stable, so a long TTL keeps the verdict's DNS/storage I/O
+	// off the dispatch loop across the typical multi-hour check intervals while
+	// still re-testing roughly once a day.
+	eligibilityCacheTTL = 24 * time.Hour
+
+	// eligibilityErrorCacheTTL bounds how long a verdict obtained after a
+	// transient evaluation error (e.g. an unreachable remote checker
+	// endpoint) is reused. It is deliberately much shorter than
+	// eligibilityCacheTTL so a definitively-ineligible checker is not stuck
+	// running for up to a day because of a single blip; the next refresh
+	// retries soon and can settle on the real (possibly negative) verdict.
+	eligibilityErrorCacheTTL = 1 * time.Minute
+
+	// eligibilityEvalTimeout bounds a single background eligibility evaluation.
+	// It is deliberately short and independent of the (much longer) timeout a
+	// real observation Collect needs: an undetermined verdict simply fails open,
+	// so the gate must not spend a Collect-sized budget probing eligibility.
+	eligibilityEvalTimeout = 5 * time.Second
+
+	// eligibilitySweepInterval is how often the background sweeper evicts
+	// expired eligibility-cache entries, off the dispatch/refresh path.
+	eligibilitySweepInterval = 10 * time.Minute
 )
 
 // SchedulerJob represents a single scheduled checker execution.
@@ -133,12 +158,33 @@ type Scheduler struct {
 	onExecute func(target happydns.CheckTarget)
 
 	// eligible, if set, is consulted before launching each job to honour a
-	// checker's optional CheckEnabler eligibility gate. Returning false
+	// checker's optional CheckEnabler eligibility gate. Returning (false, nil)
 	// (a definitive negative verdict for this checker/target) causes the
-	// scheduler to skip and reschedule the job. It is evaluated per fire
-	// (i.e. once per interval) rather than at enqueue time so its DNS I/O
-	// stays bounded. It fails open: nil/undetermined/eligible -> true.
-	eligible func(checkerID string, target happydns.CheckTarget) bool
+	// scheduler to skip and reschedule the job. Verdicts are memoized in
+	// eligibilityCache for eligibilityCacheTTL so the DNS/storage I/O it
+	// performs is not repeated on every fire, and recomputed off the dispatch
+	// loop (see checkEligible). The passed context is the scheduler's run
+	// context bounded by eligibilityEvalTimeout, so the gate's I/O is cancelled
+	// on shutdown and cannot run longer than a single eligibility budget. It
+	// fails open: nil/undetermined/eligible -> true. A non-nil error indicates
+	// the verdict is inconclusive (e.g. a transient evaluation failure) and is
+	// cached only for eligibilityErrorCacheTTL so a blip cannot silently gate
+	// off (or on) a checker for the full eligibilityCacheTTL.
+	eligible func(ctx context.Context, checkerID string, target happydns.CheckTarget) (bool, error)
+
+	eligibilityMu    sync.Mutex
+	eligibilityCache map[string]eligibilityCacheEntry
+	// eligibilityRefreshing tracks (checker, target) keys whose verdict is
+	// currently being recomputed in the background, so a cache miss spawns at
+	// most one refresh goroutine per key.
+	eligibilityRefreshing map[string]bool
+}
+
+// eligibilityCacheEntry is a memoized eligibility verdict for a (checker,
+// target) pair, valid until expires.
+type eligibilityCacheEntry struct {
+	allow   bool
+	expires time.Time
 }
 
 // NewScheduler creates a new Scheduler. The optional gate function, if
@@ -161,17 +207,19 @@ func NewScheduler(
 		maxConcurrency = 1
 	}
 	s := &Scheduler{
-		engine:         engine,
-		planStore:      planStore,
-		domainStore:    domainStore,
-		watchStore:     watchStore,
-		zoneStore:      zoneStore,
-		stateStore:     stateStore,
-		jobKeys:        make(map[string]bool),
-		wake:           make(chan struct{}, 1),
-		maxConcurrency: maxConcurrency,
-		gate:           gate,
-		onExecute:      onExecute,
+		engine:                engine,
+		planStore:             planStore,
+		domainStore:           domainStore,
+		watchStore:            watchStore,
+		zoneStore:             zoneStore,
+		stateStore:            stateStore,
+		jobKeys:               make(map[string]bool),
+		wake:                  make(chan struct{}, 1),
+		maxConcurrency:        maxConcurrency,
+		gate:                  gate,
+		onExecute:             onExecute,
+		eligibilityCache:      make(map[string]eligibilityCacheEntry),
+		eligibilityRefreshing: make(map[string]bool),
 	}
 	// The scheduler queue depth is exposed via a Prometheus GaugeFunc that
 	// reads the live queue length at scrape time. This avoids having to call
@@ -184,10 +232,81 @@ func NewScheduler(
 // launching each job. Returning false (a definitive CheckEnabler negative for
 // the checker/target) makes the scheduler skip and reschedule the job. The
 // hook must fail open: it returns true when eligibility is unknown or the
-// checker does not implement CheckEnabler.
-func (s *Scheduler) WithEligibilityGate(fn func(checkerID string, target happydns.CheckTarget) bool) *Scheduler {
+// checker does not implement CheckEnabler. The hook is invoked off the dispatch
+// loop with a context bounded by eligibilityEvalTimeout (see checkEligible).
+func (s *Scheduler) WithEligibilityGate(fn func(ctx context.Context, checkerID string, target happydns.CheckTarget) (bool, error)) *Scheduler {
 	s.eligible = fn
 	return s
+}
+
+// checkEligible returns the eligibility verdict for the checker/target pair,
+// reusing a cached verdict for up to eligibilityCacheTTL. It is called from the
+// serial dispatch loop and must never block on the gate's storage/DNS/HTTP I/O:
+// on a cache miss it fails open (returns true) and recomputes the verdict in
+// the background, so a slow or unreachable remote checker cannot stall the loop.
+// The freshly computed verdict gates the next fire, an interval later. This
+// stale-while-revalidate behaviour is consistent with the gate's overall
+// fail-open contract. When no gate is configured the job is always eligible.
+func (s *Scheduler) checkEligible(ctx context.Context, checkerID string, target happydns.CheckTarget) bool {
+	if s.eligible == nil {
+		return true
+	}
+
+	key := checkerID + "|" + target.String()
+	now := time.Now()
+
+	s.eligibilityMu.Lock()
+	if e, ok := s.eligibilityCache[key]; ok && now.Before(e.expires) {
+		s.eligibilityMu.Unlock()
+		return e.allow
+	}
+	// Miss or expired: fail open now and refresh off the dispatch path. Spawn
+	// at most one refresh per key so repeated fires don't pile up goroutines.
+	if s.eligibilityRefreshing[key] {
+		s.eligibilityMu.Unlock()
+		return true
+	}
+	s.eligibilityRefreshing[key] = true
+	s.eligibilityMu.Unlock()
+
+	// Track the refresh on s.wg so Stop() waits for it rather than leaking it.
+	// The eval gets its own short, cancellable budget so an unreachable remote
+	// neither runs for a Collect-sized timeout nor delays shutdown.
+	s.wg.Go(func() {
+		evalCtx, cancel := context.WithTimeout(ctx, eligibilityEvalTimeout)
+		defer cancel()
+		allow, err := s.eligible(evalCtx, checkerID, target)
+
+		ttl := eligibilityCacheTTL
+		if err != nil {
+			// Inconclusive verdict (e.g. transient error reaching a remote
+			// checker endpoint): re-test soon rather than locking in a
+			// possibly-wrong verdict for a full day.
+			ttl = eligibilityErrorCacheTTL
+		}
+
+		s.eligibilityMu.Lock()
+		delete(s.eligibilityRefreshing, key)
+		s.eligibilityCache[key] = eligibilityCacheEntry{allow: allow, expires: time.Now().Add(ttl)}
+		s.eligibilityMu.Unlock()
+	})
+
+	return true
+}
+
+// sweepEligibilityCache evicts expired eligibility-cache entries. It is
+// invoked periodically by the background sweeper started by Start, off the
+// dispatch and refresh paths, so a full-map scan never competes with
+// checkEligible for eligibilityMu.
+func (s *Scheduler) sweepEligibilityCache() {
+	now := time.Now()
+	s.eligibilityMu.Lock()
+	defer s.eligibilityMu.Unlock()
+	for k, e := range s.eligibilityCache {
+		if now.After(e.expires) {
+			delete(s.eligibilityCache, k)
+		}
+	}
 }
 
 // queueDepthForMetrics returns the current queue length under the read lock.
@@ -210,6 +329,24 @@ func (s *Scheduler) Start(ctx context.Context) {
 	s.spreadOverdueJobs()
 	s.mu.Unlock()
 	go s.run(ctx)
+	s.wg.Add(1)
+	go s.eligibilitySweepLoop(ctx)
+}
+
+// eligibilitySweepLoop periodically evicts expired eligibility-cache entries
+// until ctx is cancelled.
+func (s *Scheduler) eligibilitySweepLoop(ctx context.Context) {
+	defer s.wg.Done()
+	ticker := time.NewTicker(eligibilitySweepInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			s.sweepEligibilityCache()
+		}
+	}
 }
 
 // Stop halts the scheduler and waits for in-flight workers to finish.
@@ -311,7 +448,6 @@ func (s *Scheduler) run(ctx context.Context) {
 		}
 		job := heap.Pop(&s.queue).(*SchedulerJob)
 		gate := s.gate
-		eligible := s.eligible
 		s.mu.Unlock()
 
 		// Honour the user-level gate before doing any work.
@@ -323,7 +459,7 @@ func (s *Scheduler) run(ctx context.Context) {
 
 		// Honour the checker's eligibility gate (CheckEnabler): skip when the
 		// checker is definitively not applicable to this target.
-		if eligible != nil && !eligible(job.CheckerID, job.Target) {
+		if !s.checkEligible(ctx, job.CheckerID, job.Target) {
 			s.rescheduleJob(job)
 			continue
 		}
@@ -656,11 +792,13 @@ func (s *Scheduler) NotifyDomainChange(domain *happydns.Domain) {
 func (s *Scheduler) NotifyDomainRemoved(domainID happydns.Identifier) {
 	s.mu.Lock()
 	n := 0
+	var removedKeys []string
 	for i := 0; i < len(s.queue); {
 		job := s.queue[i]
 		if job.Target.DomainId == domainID.String() {
 			key := job.CheckerID + "|" + job.Target.String()
 			delete(s.jobKeys, key)
+			removedKeys = append(removedKeys, key)
 			// Swap with last and shrink.
 			s.queue[i] = s.queue[len(s.queue)-1]
 			s.queue[len(s.queue)-1] = nil
@@ -674,6 +812,15 @@ func (s *Scheduler) NotifyDomainRemoved(domainID happydns.Identifier) {
 		heap.Init(&s.queue)
 	}
 	s.mu.Unlock()
+
+	if len(removedKeys) > 0 {
+		s.eligibilityMu.Lock()
+		for _, key := range removedKeys {
+			delete(s.eligibilityCache, key)
+			delete(s.eligibilityRefreshing, key)
+		}
+		s.eligibilityMu.Unlock()
+	}
 
 	if n > 0 {
 		log.Printf("Scheduler: NotifyDomainRemoved(%s): removed %d jobs", domainID.String(), n)

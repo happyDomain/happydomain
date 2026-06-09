@@ -159,17 +159,17 @@ func (app *App) initUsecases() {
 		app.store, app.store, app.store, app.store, app.store,
 		app.usecases.checkerUserGater.AllowWithInterval,
 		app.usecases.checkerUserGater.IncrementUsage,
-	).WithEligibilityGate(func(checkerID string, target happydns.CheckTarget) bool {
+	).WithEligibilityGate(func(ctx context.Context, checkerID string, target happydns.CheckTarget) (bool, error) {
 		// Honour a checker's CheckEnabler verdict before scheduling it.
 		// Fails open: keep running unless the verdict is a definitive negative.
 		def := checkerPkg.FindChecker(checkerID)
 		if def == nil {
-			return true
+			return true, nil
 		}
 		// Most checkers have no eligibility gate; skip the option building and
 		// storage reads below, since the verdict would always be fail-open.
 		if !checkerPkg.CheckerHasEligibilityGate(def, app.usecases.checkerOptionsUC.HasAdminEndpoint(checkerID)) {
-			return true
+			return true, nil
 		}
 		opts, _, err := app.usecases.checkerOptionsUC.BuildMergedCheckerOptionsWithAutoFill(
 			checkerID,
@@ -179,13 +179,15 @@ func (app *App) initUsecases() {
 			nil,
 		)
 		if err != nil {
-			return true
+			return true, err
 		}
-		res, err := checkerPkg.EvaluateChecker(context.Background(), def, opts)
+		// ctx is already bounded by the scheduler's eligibility budget and
+		// cancelled on shutdown.
+		res, err := checkerPkg.EvaluateChecker(ctx, def, opts)
 		if err != nil {
-			return true
+			return true, err
 		}
-		return res.Eligible == nil || *res.Eligible
+		return res.Eligible == nil || *res.Eligible, nil
 	})
 
 	// Invalidate the scheduler's user gate cache whenever a user is updated
