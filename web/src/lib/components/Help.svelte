@@ -53,21 +53,76 @@
 
         switch (path[1]) {
             case "":
-                return "/pages/home/";
-            case "providers":
-                if (path.length > 2) {
-                    if (path[2] == "new") return "/pages/source-new-choice/";
-                    return "/pages/source-update/";
-                }
-                return "/pages/source-list/";
-            case "domains":
-                if (path.length == 2) return "/pages/home/";
-                if (path.length > 3 && path[3] == "new") return "/pages/domain-new/";
-                return "/pages/domain-abstract/";
+            case "en":
+            case "fr":
+                // Authenticated dashboard / landing.
+                return "/pages/domains/";
+
+            case "login":
+            case "forgotten-password":
+                return "/pages/login/";
+
+            case "register":
+            case "email-validation":
+                return "/pages/signup/";
+
             case "me":
+                if (path[2] == "notifications") return "/pages/notifications/";
                 return "/pages/me/";
+
+            case "providers":
+                if (path[2] == "features") return "/pages/provider-features/";
+                if (path[2] == "new") return "/pages/provider-new-choice/";
+                // /providers/[prvid] and /providers/[prvid]/domains
+                if (path.length > 2) return "/pages/provider-update/";
+                return "/pages/provider-list/";
+
+            case "domains":
+                // /domains
+                if (path.length <= 2) return "/pages/domains/";
+                // /domains/new and /domains/new/[dn]
+                if (path[2] == "new") return "/pages/domain-new/";
+                // /domains/[dn]/...
+                switch (path[3]) {
+                    case "history":
+                    case "logs":
+                        return "/pages/domain-history/";
+                    case "import_zone":
+                        return "/pages/import-export/";
+                    case "checks":
+                    case "checkers":
+                        return "/pages/checks/";
+                    case "[[historyid]]":
+                        // /domains/[dn]/[[historyid]]/export
+                        if (path[4] == "export") return "/pages/import-export/";
+                        // /domains/[dn]/[[historyid]]/[subdomain]/...
+                        if (path[4] == "[subdomain]") {
+                            if (path[5] == "[serviceid]") {
+                                if (path[6] == "checks" || path[6] == "checkers")
+                                    return "/pages/checks/";
+                                return "/pages/services/";
+                            }
+                            return "/pages/subdomains/";
+                        }
+                        // Bare zone editor.
+                        return "/pages/domain-abstract/";
+                    default:
+                        return "/pages/domain-abstract/";
+                }
+
+            case "availability":
+            case "whois":
+                return "/pages/domain-availability/";
+
             case "resolver":
                 return "/pages/tools-client/";
+
+            case "checkers":
+                return "/pages/checks/";
+
+            case "generator":
+                return "/pages/services/";
+
             default:
                 return "/";
         }
