@@ -113,13 +113,9 @@
             (z) => {
                 thisZone.set(z);
                 addServiceInProgress = false;
-                if (service?._id) {
-                    goBack();
-                } else {
-                    refreshDomains().then(() => {
-                        goBack(z.id);
-                    });
-                }
+                refreshDomains().then(() => {
+                    goBack(z.id);
+                });
             },
             (err) => {
                 addServiceInProgress = false;
