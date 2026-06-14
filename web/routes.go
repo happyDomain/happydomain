@@ -23,8 +23,10 @@ package web
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -32,6 +34,7 @@ import (
 	"path"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -229,6 +232,35 @@ func setNoCache(c *gin.Context) {
 	c.Writer.Header().Set("Cache-Control", "no-cache")
 }
 
+// readAsset reads an embedded asset in full, closing the handle.
+func readAsset(name string) ([]byte, error) {
+	f, err := Assets.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return io.ReadAll(f)
+}
+
+// errorHandler returns a handler that always replies with a plain-text error.
+func errorHandler(status int, msg string) gin.HandlerFunc {
+	return func(c *gin.Context) { c.String(status, msg) }
+}
+
+// servePrerendered serves a document that is fixed for the lifetime of the
+// handler. It is always revalidated (no-cache) but carries an ETag computed
+// once, so revalidation returns a 304 instead of re-downloading the whole
+// document. See staleReloadJS.
+func servePrerendered(name, contentType string, rendered []byte) gin.HandlerFunc {
+	etag := fmt.Sprintf(`"%x"`, sha256.Sum256(rendered))
+	return func(c *gin.Context) {
+		setNoCache(c)
+		c.Writer.Header().Set("ETag", etag)
+		c.Writer.Header().Set("Content-Type", contentType)
+		http.ServeContent(c.Writer, c.Request, name, time.Time{}, bytes.NewReader(rendered))
+	}
+}
+
 func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 	if cfg.DevProxy != "" {
 		// Parse once at creation time, not per request
@@ -308,19 +340,10 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 		}
 	} else if forced_url == "/" {
 		// Pre-render index.html once at handler creation time
-		f, err := Assets.Open("index.html")
+		v, err := readAsset("index.html")
 		if err != nil {
-			log.Println("Unable to open embedded index.html:", err)
-			return func(c *gin.Context) {
-				c.String(http.StatusInternalServerError, "index.html not found in embedded assets")
-			}
-		}
-		v, err := io.ReadAll(f)
-		if err != nil {
-			log.Println("Unable to read embedded index.html:", err)
-			return func(c *gin.Context) {
-				c.String(http.StatusInternalServerError, "failed to read embedded index.html")
-			}
+			log.Println("Unable to load embedded index.html:", err)
+			return errorHandler(http.StatusInternalServerError, "index.html not available in embedded assets")
 		}
 
 		rendered := []byte(strings.Replace(strings.Replace(string(v), "</head>", CustomHeadHTML+"</head>", 1), "</body>", CustomBodyHTML+"</body>", 1))
@@ -345,31 +368,18 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 			)
 		}
 
-		return func(c *gin.Context) {
-			// Revalidate the HTML so clients always load a page pointing at
-			// content-hashed bundles that still exist after a deploy, rather
-			// than a cached page referencing dropped hashes. See staleReloadJS.
-			setNoCache(c)
-			c.Data(http.StatusOK, "text/html; charset=utf-8", rendered)
-		}
+		return servePrerendered("index.html", "text/html; charset=utf-8", rendered)
 	} else if forced_url == "/manifest.json" {
-		// Serve altered manifest.json
-		return func(c *gin.Context) {
-			f, err := Assets.Open("manifest.json")
-			if err != nil {
-				c.String(http.StatusInternalServerError, "manifest.json not found in embedded assets")
-				return
-			}
-			v, err := io.ReadAll(f)
-			if err != nil {
-				c.String(http.StatusInternalServerError, "failed to read manifest.json")
-				return
-			}
-			v2 := strings.Replace(strings.Replace(string(v), "\"id\": \"/\"", "\"id\": \""+cfg.BasePath+"\"/", 1), "\"start_url\": \"/\"", "\"start_url\": \""+cfg.BasePath+"/\"", 1)
-
-			setNoCache(c)
-			c.Data(http.StatusOK, "application/manifest+json", []byte(v2))
+		// Serve altered manifest.json, pre-rendered once at handler creation.
+		v, err := readAsset("manifest.json")
+		if err != nil {
+			log.Println("Unable to load embedded manifest.json:", err)
+			return errorHandler(http.StatusInternalServerError, "manifest.json not available in embedded assets")
 		}
+
+		rendered := []byte(strings.Replace(strings.Replace(string(v), "\"id\": \"/\"", "\"id\": \""+cfg.BasePath+"\"/", 1), "\"start_url\": \"/\"", "\"start_url\": \""+cfg.BasePath+"/\"", 1))
+
+		return servePrerendered("manifest.json", "application/manifest+json", rendered)
 	} else if forced_url != "" {
 		// Serve forced_url
 		return func(c *gin.Context) {
@@ -420,6 +430,12 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 				// pinned to an old version, so always revalidate it. (Browsers
 				// largely bypass the HTTP cache for the worker script already,
 				// but this is cheap insurance against an intermediary proxy.)
+				setNoCache(c)
+			case strings.HasPrefix(reqPath, "/_app/"):
+				// Non-content-hashed files under /_app/ (version.json, env.js):
+				// they keep a stable URL but their content changes per deploy,
+				// so they must be revalidated. version.json in particular drives
+				// SvelteKit's update detection and must never be pinned.
 				setNoCache(c)
 			}
 
