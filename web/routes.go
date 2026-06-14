@@ -415,6 +415,12 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 				// so a changed favicon or image is picked up without waiting
 				// out a long max-age, unlike the old immutable header.
 				c.Writer.Header().Set("Cache-Control", "public, max-age=86400, must-revalidate")
+			case reqPath == "/service-worker.js":
+				// The worker drives all client-side caching; it must never be
+				// pinned to an old version, so always revalidate it. (Browsers
+				// largely bypass the HTTP cache for the worker script already,
+				// but this is cheap insurance against an intermediary proxy.)
+				setNoCache(c)
 			}
 
 			// Serve straight from the handle we just opened rather than letting
