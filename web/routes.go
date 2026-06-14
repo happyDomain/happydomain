@@ -165,7 +165,6 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, captchaVerifi
 	serveFile := serveOrReverse("", cfg)
 	serveIndex := serveOrReverse("/", cfg)
 	serveManifest := serveOrReverse("/manifest.json", cfg)
-	immutable := func(c *gin.Context) { c.Writer.Header().Set("Cache-Control", "public, max-age=604800, immutable") }
 
 	if cfg.DevProxy != "" {
 		router.GET("/.svelte-kit/*_", serveFile)
@@ -186,9 +185,9 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, captchaVerifi
 	router.GET("/fr/*_", serveIndex)
 
 	// Routes for real existings files
-	router.GET("/fonts/*path", immutable, serveFile)
-	router.GET("/img/*path", immutable, serveFile)
-	router.GET("/favicon.ico", immutable, serveFile)
+	router.GET("/fonts/*path", serveFile)
+	router.GET("/img/*path", serveFile)
+	router.GET("/favicon.ico", serveFile)
 	router.GET("/manifest.json", serveManifest)
 	router.GET("/robots.txt", serveFile)
 	router.GET("/service-worker.js", serveFile)
@@ -380,6 +379,7 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 		// Serve requested file
 		return func(c *gin.Context) {
 			reqPath := strings.TrimPrefix(c.Request.URL.Path, cfg.BasePath)
+			isImmutable := strings.HasPrefix(reqPath, "/_app/immutable/")
 
 			f, err := Assets.Open(reqPath)
 			if err != nil {
@@ -390,7 +390,7 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 				// asset (e.g. a dropped .css) we must mark the negative response
 				// no-cache so it can never be cached as immutable (which would
 				// otherwise be inherited from the Cache-Control set below).
-				if strings.HasPrefix(reqPath, "/_app/immutable/") {
+				if isImmutable {
 					setNoCache(c)
 					if strings.HasSuffix(reqPath, ".js") {
 						c.Data(http.StatusOK, "text/javascript; charset=utf-8", []byte(staleReloadJS))
@@ -402,12 +402,19 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 			}
 			defer f.Close()
 
-			// The immutable directive is set only now that the asset is known
-			// to exist, so a 404 can never inherit a week-long, never-revalidated
-			// Cache-Control header. Content-hashed bundles are safe to pin
-			// forever: the URL itself changes whenever the content does.
-			if strings.HasPrefix(reqPath, "/_app/immutable/") {
+			// Cache policy is decided only now that the asset is known to
+			// exist, so a 404 can never inherit a long-lived Cache-Control
+			// header.
+			switch {
+			case isImmutable:
+				// Content-hashed bundles are safe to pin forever: the URL
+				// itself changes whenever the content does.
 				c.Writer.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+			case strings.HasPrefix(reqPath, "/fonts/"), strings.HasPrefix(reqPath, "/img/"), reqPath == "/favicon.ico":
+				// Stable URLs (not content-hashed): cacheable but revalidated,
+				// so a changed favicon or image is picked up without waiting
+				// out a long max-age, unlike the old immutable header.
+				c.Writer.Header().Set("Cache-Control", "public, max-age=86400, must-revalidate")
 			}
 
 			// Serve straight from the handle we just opened rather than letting
