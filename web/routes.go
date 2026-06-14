@@ -46,6 +46,65 @@ var (
 	MsgHeaderText  = ""
 )
 
+// staleReloadJS is served (with a 200) in place of a 404 when a client requests
+// a content-hashed bundle under /_app/immutable/ that no longer exists. That can
+// only happen to a browser running a *stale, cached* HTML page after a deploy:
+// the embedded binary ships new bundle hashes and drops the old ones, so the
+// page's bootstrapping import() would normally 404 and the SPA would render but
+// never finish starting (visible but frozen).
+//
+// Because the browser evaluates this as the very module it was trying to import,
+// returning a tiny self-healing script here lets already-stuck clients recover on
+// their own: it forces a one-shot cache-busting reload so the browser fetches the
+// current HTML (which points at bundles that actually exist).
+//
+// Reload-loop guard: the primary guard is storage-independent — if the URL
+// already carries our _fresh marker, we already redirected once and the bundle
+// is *still* missing, so the deploy is genuinely broken; we stop reloading and
+// let the import reject rather than spin. The sessionStorage check is only a
+// best-effort secondary guard across separate navigations, and its failure (e.g.
+// Safari private mode throwing on setItem) can no longer cause an ungated loop.
+//
+// Two things make this robust against "kit.start is not a function":
+//   1. The reload is issued SYNCHRONOUSLY during evaluation, so navigation is
+//      committed before SvelteKit's bootstrap `.then(([kit]) => kit.start(...))`
+//      microtask can run against this (non-)module.
+//   2. We THROW at the end of evaluation, so the failing `import()` rejects
+//      instead of resolving to this module. Promise.all rejects, the bootstrap
+//      `.then` is skipped, and kit.start is never reached. On a guarded second
+//      load (when no reload is issued) this surfaces as a clean import rejection
+//      rather than a confusing TypeError.
+//
+// Note: happyDomain ships a service worker, but we deliberately do NOT touch the
+// Cache Storage API here. The service worker already manages its own cache
+// lifecycle (it drops old-version caches on activate), the synchronous reload
+// fetches fresh HTML through the worker's network-first path anyway, and doing
+// async `caches.*` work would only push the reload into a microtask chain that
+// loses the race against kit.start.
+const staleReloadJS = `(function () {
+  var KEY = '__hd_stale_reload__';
+  var now = Date.now();
+  // Storage-independent guard: if we already redirected with _fresh and the
+  // bundle is still missing, stop here (no reload loop, even without storage).
+  try {
+    if (new URL(window.location.href).searchParams.has('_fresh')) return;
+  } catch (e) {}
+  // Best-effort secondary guard across separate navigations; failure is ignored.
+  try {
+    if (now - parseInt(sessionStorage.getItem(KEY) || '0', 10) < 10000) return;
+    sessionStorage.setItem(KEY, String(now));
+  } catch (e) {}
+  try {
+    var u = new URL(window.location.href);
+    u.searchParams.set('_fresh', String(now));
+    window.location.replace(u.toString());
+  } catch (e) {
+    try { window.location.reload(); } catch (e2) {}
+  }
+})();
+throw new Error('happydomain: stale bundle, reloading');
+`
+
 func init() {
 	flag.StringVar(&CustomHeadHTML, "custom-head-html", CustomHeadHTML, "Add custom HTML right before </head>")
 	flag.StringVar(&CustomBodyHTML, "custom-body-html", CustomBodyHTML, "Add custom HTML right before </body>")
@@ -161,6 +220,14 @@ func NoRoute(cfg *happydns.Options, router *gin.Engine) {
 			serveIndex(c)
 		}
 	})
+}
+
+// setNoCache marks a response as revalidate-before-reuse. It is the inverse of
+// the immutable middleware and is used for the documents (index.html, manifest,
+// and the stale-bundle fallback) that must never pin a browser to dropped
+// content-hashed bundles after a deploy. See staleReloadJS.
+func setNoCache(c *gin.Context) {
+	c.Writer.Header().Set("Cache-Control", "no-cache")
 }
 
 func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
@@ -280,6 +347,10 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 		}
 
 		return func(c *gin.Context) {
+			// Revalidate the HTML so clients always load a page pointing at
+			// content-hashed bundles that still exist after a deploy, rather
+			// than a cached page referencing dropped hashes. See staleReloadJS.
+			setNoCache(c)
 			c.Data(http.StatusOK, "text/html; charset=utf-8", rendered)
 		}
 	} else if forced_url == "/manifest.json" {
@@ -297,6 +368,7 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 			}
 			v2 := strings.Replace(strings.Replace(string(v), "\"id\": \"/\"", "\"id\": \""+cfg.BasePath+"\"/", 1), "\"start_url\": \"/\"", "\"start_url\": \""+cfg.BasePath+"/\"", 1)
 
+			setNoCache(c)
 			c.Data(http.StatusOK, "application/manifest+json", []byte(v2))
 		}
 	} else if forced_url != "" {
@@ -307,7 +379,30 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 	} else {
 		// Serve requested file
 		return func(c *gin.Context) {
-			c.FileFromFS(strings.TrimPrefix(c.Request.URL.Path, cfg.BasePath), Assets)
+			reqPath := strings.TrimPrefix(c.Request.URL.Path, cfg.BasePath)
+
+			// A missing content-hashed bundle means a stale cached client: hand
+			// it a self-healing reload module (200) instead of a dead 404 so an
+			// already-stuck client recovers on its own.
+			if strings.HasPrefix(reqPath, "/_app/immutable/") && strings.HasSuffix(reqPath, ".js") {
+				f, err := Assets.Open(reqPath)
+				if err != nil {
+					setNoCache(c)
+					c.Data(http.StatusOK, "text/javascript; charset=utf-8", []byte(staleReloadJS))
+					return
+				}
+				defer f.Close()
+
+				// Serve straight from the handle we just opened rather than
+				// letting FileFromFS reopen and re-stat the same file: this is
+				// the hot path (every JS chunk of every page load).
+				if fi, err := f.Stat(); err == nil {
+					http.ServeContent(c.Writer, c.Request, reqPath, fi.ModTime(), f)
+					return
+				}
+			}
+
+			c.FileFromFS(reqPath, Assets)
 		}
 	}
 }
