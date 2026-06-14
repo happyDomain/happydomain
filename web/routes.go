@@ -176,7 +176,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, captchaVerifi
 		router.GET("/src/*_", serveFile)
 		router.GET("/home/*_", serveFile)
 	}
-	router.GET("/_app/*_", immutable, serveFile)
+	router.GET("/_app/*_", serveFile)
 
 	router.GET("/", serveIndex)
 	router.GET("/index.html", serveIndex)
@@ -381,25 +381,41 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 		return func(c *gin.Context) {
 			reqPath := strings.TrimPrefix(c.Request.URL.Path, cfg.BasePath)
 
-			// A missing content-hashed bundle means a stale cached client: hand
-			// it a self-healing reload module (200) instead of a dead 404 so an
-			// already-stuck client recovers on its own.
-			if strings.HasPrefix(reqPath, "/_app/immutable/") && strings.HasSuffix(reqPath, ".js") {
-				f, err := Assets.Open(reqPath)
-				if err != nil {
+			f, err := Assets.Open(reqPath)
+			if err != nil {
+				// A missing content-hashed bundle under /_app/immutable/ means
+				// a stale cached client. For a JS chunk we hand back a
+				// self-healing reload module (200) so the client recovers on
+				// its own (see staleReloadJS); for any other missing immutable
+				// asset (e.g. a dropped .css) we must mark the negative response
+				// no-cache so it can never be cached as immutable (which would
+				// otherwise be inherited from the Cache-Control set below).
+				if strings.HasPrefix(reqPath, "/_app/immutable/") {
 					setNoCache(c)
-					c.Data(http.StatusOK, "text/javascript; charset=utf-8", []byte(staleReloadJS))
-					return
+					if strings.HasSuffix(reqPath, ".js") {
+						c.Data(http.StatusOK, "text/javascript; charset=utf-8", []byte(staleReloadJS))
+						return
+					}
 				}
-				defer f.Close()
+				c.FileFromFS(reqPath, Assets) // produces the regular 404
+				return
+			}
+			defer f.Close()
 
-				// Serve straight from the handle we just opened rather than
-				// letting FileFromFS reopen and re-stat the same file: this is
-				// the hot path (every JS chunk of every page load).
-				if fi, err := f.Stat(); err == nil {
-					http.ServeContent(c.Writer, c.Request, reqPath, fi.ModTime(), f)
-					return
-				}
+			// The immutable directive is set only now that the asset is known
+			// to exist, so a 404 can never inherit a week-long, never-revalidated
+			// Cache-Control header. Content-hashed bundles are safe to pin
+			// forever: the URL itself changes whenever the content does.
+			if strings.HasPrefix(reqPath, "/_app/immutable/") {
+				c.Writer.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+			}
+
+			// Serve straight from the handle we just opened rather than letting
+			// FileFromFS reopen and re-stat the same file: this is the hot path
+			// (every asset of every page load).
+			if fi, err := f.Stat(); err == nil {
+				http.ServeContent(c.Writer, c.Request, reqPath, fi.ModTime(), f)
+				return
 			}
 
 			c.FileFromFS(reqPath, Assets)
