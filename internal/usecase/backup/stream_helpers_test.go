@@ -2,6 +2,7 @@ package backup_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -37,4 +38,15 @@ func dumpUser(t *testing.T, uc *backup.Usecase, user *happydns.User) happydns.Ba
 		t.Fatalf("WriteBackupUser produced invalid JSON: %v", err)
 	}
 	return ret
+}
+
+// restoreDump feeds an in-memory backup through the streaming restore.
+func restoreDump(t *testing.T, uc *backup.Usecase, ctx context.Context, dump *happydns.Backup) error {
+	t.Helper()
+
+	b, err := json.Marshal(dump)
+	if err != nil {
+		t.Fatalf("marshal backup: %v", err)
+	}
+	return uc.RestoreReader(ctx, bytes.NewReader(b))
 }

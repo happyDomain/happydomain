@@ -26,6 +26,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -44,7 +45,7 @@ type failingRestore struct {
 	err error
 }
 
-func (f failingRestore) Restore(context.Context, *happydns.Backup) error { return f.err }
+func (f failingRestore) RestoreReader(context.Context, io.Reader) error { return f.err }
 
 // What went wrong reaches the administrator, and the server logs: an error
 // value encodes in JSON as an empty object.

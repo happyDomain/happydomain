@@ -23,7 +23,6 @@ package backup_test
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 	"time"
 
@@ -59,22 +58,13 @@ func TestBackupRestoreDomainWatches(t *testing.T) {
 	if len(dump.Errors) > 0 {
 		t.Fatalf("backup errors: %v", dump.Errors)
 	}
-	raw, err := json.Marshal(dump)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var restored happydns.Backup
-	if err := json.Unmarshal(raw, &restored); err != nil {
-		t.Fatal(err)
-	}
-
 	dst, err := inmemory.Instantiate()
 	if err != nil {
 		t.Fatal(err)
 	}
 	for range 2 {
-		if err := backup.NewUsecase(dst, plaintextSecrets(t)).Restore(context.Background(), &restored); err != nil {
-			t.Fatalf("Restore: %v", err)
+		if err := restoreDump(t, backup.NewUsecase(dst, plaintextSecrets(t)), context.Background(), &dump); err != nil {
+			t.Fatalf("RestoreReader: %v", err)
 		}
 	}
 

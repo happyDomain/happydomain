@@ -123,7 +123,7 @@ func TestRestoreSealsCheckerOptions(t *testing.T) {
 			Options:   happydns.CheckerOptions{"token": alreadySealed},
 		},
 	}}
-	if err := backup.NewUsecase(db, secrets).Restore(context.Background(), in); err != nil {
+	if err := restoreDump(t, backup.NewUsecase(db, secrets), context.Background(), in); err != nil {
 		t.Fatalf("Restore: %v", err)
 	}
 
@@ -175,7 +175,7 @@ func TestRestoreReportsUnsealableCheckerOptions(t *testing.T) {
 		{CheckName: backupSecretChecker, UserId: &owner, Options: happydns.CheckerOptions{"token": 42}},
 		{CheckName: backupSecretChecker, UserId: &owner, DomainId: &domain, Options: happydns.CheckerOptions{"plain": "kept"}},
 	}}
-	if err := backup.NewUsecase(db, plaintextSecrets(t)).Restore(context.Background(), in); err == nil {
+	if err := restoreDump(t, backup.NewUsecase(db, plaintextSecrets(t)), context.Background(), in); err == nil {
 		t.Error("Restore of a non-string secret option succeeded, want an error")
 	}
 

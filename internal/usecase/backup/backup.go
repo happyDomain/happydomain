@@ -358,6 +358,20 @@ func (u *Usecase) WriteBackup(w io.Writer) error {
 	uai, err := u.store.ListAllAuthUsers()
 	streamIteratorField(s, "UsersAuth", "AuthUsers", uai, err, addErr, nil)
 
+	// Safes first, as RestoreReader applies fields in document order: the
+	// sealed values of the providers only open with them, and with
+	// the instance keyset, which is not part of the backup.
+	safeIter, err := u.store.ListAllSafes()
+	streamIteratorField(s, "Safes", "Safes", safeIter, err, addErr, nil)
+
+	// The keystore each owner chose for new secrets.
+	if defaults, err := u.store.ListDefaultKeystores(); err != nil {
+		addErr(fmt.Sprintf("unable to retrieve default keystores: %s", err.Error()))
+	} else if len(defaults) > 0 {
+		s.beginField("DefaultKeystores")
+		s.marshal(defaults)
+	}
+
 	// User-scoped tables, one user at a time.
 	u.streamUserScoped(s, addErr, false, false, func(fn func(*happydns.User)) {
 		u.forEachUser(addErr, fn)
@@ -383,19 +397,6 @@ func (u *Usecase) WriteBackup(w io.Writer) error {
 
 	recIter, err := u.store.ListAllRecords()
 	streamIteratorField(s, "NotificationRecords", "NotificationRecords", recIter, err, addErr, nil)
-
-	// Safes: the sealed values of the providers only open with them, and with
-	// the instance keyset, which is not part of the backup.
-	safeIter, err := u.store.ListAllSafes()
-	streamIteratorField(s, "Safes", "Safes", safeIter, err, addErr, nil)
-
-	// The keystore each owner chose for new secrets.
-	if defaults, err := u.store.ListDefaultKeystores(); err != nil {
-		addErr(fmt.Sprintf("unable to retrieve default keystores: %s", err.Error()))
-	} else if len(defaults) > 0 {
-		s.beginField("DefaultKeystores")
-		s.marshal(defaults)
-	}
 
 	// Global, unbounded tables: streamed one record at a time.
 	cfgIter, err := u.store.ListAllCheckerConfigurations()
@@ -546,33 +547,124 @@ func (u *Usecase) WriteBackupUser(w io.Writer, user *happydns.User) error {
 	return s.w.Flush()
 }
 
-func (u *Usecase) Restore(ctx context.Context, backup *happydns.Backup) error {
-	if current := u.store.SchemaVersion(); backup.Version != 0 && backup.Version != current {
-		return fmt.Errorf("backup schema version %d does not match current database schema version %d", backup.Version, current)
+// The restore* helpers each apply a single decoded record to the store. They
+// are shared by the in-memory Restore and the streaming RestoreReader so both
+// paths agree on how every record type is persisted.
+
+func (u *Usecase) restoreAuthUser(ua *happydns.UserAuth) error {
+	return u.store.UpdateAuthUser(ua)
+}
+
+func (u *Usecase) restoreUser(user *happydns.User) error {
+	return u.store.CreateOrUpdateUser(user)
+}
+
+func (u *Usecase) restoreProvider(ctx context.Context, provider *happydns.ProviderMessage) error {
+	p, err := providerUC.ParseProvider(provider)
+	if err != nil {
+		return err
 	}
+
+	// Sealed values are restored as they are; clear ones, from a backup
+	// taken before sealing existed, are sealed under the current policy.
+	if err := u.secrets.SealObjectInto(ctx, providerUC.SecretContext(p), p.Provider, secret.Destination{}.UnderPolicy()); err != nil {
+		return fmt.Errorf("provider %s: %w", p.Id.String(), err)
+	}
+
+	return u.store.UpdateProvider(p)
+}
+
+func (u *Usecase) restoreDomain(domain *happydns.Domain) error {
+	return u.store.UpdateDomain(domain)
+}
+
+// restoreDomainLogs applies every log of a single domain. Only the domain id is
+// needed to key the logs, so the full Domain need not be reconstructed.
+func (u *Usecase) restoreDomainLogs(domainID string, logs []*happydns.DomainLog) error {
+	id, err := happydns.NewIdentifierFromString(domainID)
+	if err != nil {
+		return fmt.Errorf("invalid domain id %q in DomainsLogs: %w", domainID, err)
+	}
+	d := &happydns.Domain{Id: id}
 
 	var errs error
-
-	// UserAuth
-	for _, ua := range backup.UsersAuth {
-		errs = errors.Join(errs, u.store.UpdateAuthUser(ua))
+	for _, l := range logs {
+		errs = errors.Join(errs, u.store.UpdateDomainLog(d, l))
 	}
+	return errs
+}
 
-	// Users
-	for _, user := range backup.Users {
-		if err := u.store.CreateOrUpdateUser(user); err != nil {
-			errs = errors.Join(errs, err)
-		}
+func (u *Usecase) restoreDomainWatch(w *happydns.DomainWatch) error {
+	if w == nil {
+		return nil
 	}
+	return u.store.RestoreDomainWatch(w)
+}
 
-	// Safes, before the providers: sealing a clear value restored below
-	// must find the owner's safe rather than create another one.
-	for _, safe := range backup.Safes {
-		errs = errors.Join(errs, u.restoreSafe(ctx, safe))
+func (u *Usecase) restoreZoneTemplate(t *happydns.ZoneTemplateMessage) error {
+	if t == nil {
+		return nil
 	}
+	return u.store.RestoreZoneTemplate(t)
+}
 
-	// The keystore each owner chose, once their safes are back.
-	for owner, ref := range backup.DefaultKeystores {
+func (u *Usecase) restoreZone(zmsg *happydns.ZoneMessage) error {
+	zone, err := zoneUC.ParseZone(zmsg)
+	if err != nil {
+		return err
+	}
+	return u.store.UpdateZone(zone)
+}
+
+func (u *Usecase) restoreSession(session *happydns.Session) error {
+	return u.store.UpdateSession(session)
+}
+
+func (u *Usecase) restoreCheckerConfiguration(ctx context.Context, cfg *happydns.CheckerOptionsPositional) error {
+	if cfg == nil {
+		return nil
+	}
+	// After the safes: secret options in clear are sealed.
+	opts, err := checkerUC.RestoreOptions(ctx, u.secrets, cfg.CheckName, cfg.UserId, cfg.DomainId, cfg.ServiceId, cfg.Options)
+	if err != nil {
+		return fmt.Errorf("options of %s: %w", cfg.CheckName, err)
+	}
+	return u.store.UpdateCheckerConfiguration(cfg.CheckName, cfg.UserId, cfg.DomainId, cfg.ServiceId, opts)
+}
+
+func (u *Usecase) restoreChannel(ch *happydns.NotificationChannel) error {
+	if ch == nil {
+		return nil
+	}
+	return u.store.RestoreChannel(ch)
+}
+
+func (u *Usecase) restorePreference(pref *happydns.NotificationPreference) error {
+	if pref == nil {
+		return nil
+	}
+	return u.store.RestorePreference(pref)
+}
+
+func (u *Usecase) restoreState(state *happydns.NotificationState) error {
+	if state == nil {
+		return nil
+	}
+	return u.store.PutState(state)
+}
+
+func (u *Usecase) restoreNotificationRecord(rec *happydns.NotificationRecord) error {
+	if rec == nil {
+		return nil
+	}
+	return u.store.RestoreRecord(rec)
+}
+
+// restoreDefaultKeystores applies the keystore each owner chose, once their
+// safes are back.
+func (u *Usecase) restoreDefaultKeystores(defaults map[string]string) error {
+	var errs error
+	for owner, ref := range defaults {
 		id, err := happydns.NewIdentifierFromString(owner)
 		if err != nil {
 			errs = errors.Join(errs, fmt.Errorf("default keystore of %q: %w", owner, err))
@@ -580,151 +672,153 @@ func (u *Usecase) Restore(ctx context.Context, backup *happydns.Backup) error {
 		}
 		errs = errors.Join(errs, u.store.PutDefaultKeystore(id, ref))
 	}
+	return errs
+}
 
-	// Providers
-	for _, provider := range backup.Providers {
-		p, err := providerUC.ParseProvider(provider)
-		if err != nil {
-			errs = errors.Join(errs, err)
-			continue
-		}
+func (u *Usecase) restoreCheckPlan(plan *happydns.CheckPlan) error {
+	return u.store.RestoreCheckPlan(plan)
+}
 
-		// Sealed values are restored as they are; clear ones, from a backup
-		// taken before sealing existed, are sealed under the current policy.
-		if err := u.secrets.SealObjectInto(ctx, providerUC.SecretContext(p), p.Provider, secret.Destination{}.UnderPolicy()); err != nil {
-			errs = errors.Join(errs, fmt.Errorf("provider %s: %w", p.Id.String(), err))
-			continue
-		}
+func (u *Usecase) restoreEvaluation(eval *happydns.CheckEvaluation) error {
+	return u.store.RestoreEvaluation(eval)
+}
 
-		errs = errors.Join(errs, u.store.UpdateProvider(p))
+func (u *Usecase) restoreExecution(exec *happydns.Execution) error {
+	return u.store.RestoreExecution(exec)
+}
+
+func (u *Usecase) restoreDiscoveryEntry(entry *happydns.StoredDiscoveryEntry) error {
+	return u.store.RestoreDiscoveryEntry(entry)
+}
+
+func (u *Usecase) restoreDiscoveryObservationRef(ref *happydns.DiscoveryObservationRef) error {
+	return u.store.RestoreDiscoveryObservationRef(ref)
+}
+
+func (u *Usecase) restoreSnapshot(snap *happydns.ObservationSnapshot) error {
+	if err := u.store.RestoreSnapshot(snap); err != nil {
+		return err
 	}
 
-	// Domains
-	for _, domain := range backup.Domains {
-		if err := u.store.UpdateDomain(domain); err != nil {
-			errs = errors.Join(errs, err)
-		} else {
-			// Domain logs
-			for _, l := range backup.DomainsLogs[domain.Id.String()] {
-				errs = errors.Join(errs, u.store.UpdateDomainLog(domain, l))
+	var errs error
+	for key := range snap.Data {
+		existing, _ := u.store.GetCachedObservation(snap.Target, key)
+		if existing == nil || snap.CollectedAt.After(existing.CollectedAt) {
+			if err := u.store.PutCachedObservation(snap.Target, key, &happydns.ObservationCacheEntry{
+				SnapshotID:  snap.Id,
+				CollectedAt: snap.CollectedAt,
+			}); err != nil {
+				errs = errors.Join(errs, err)
+			}
+		}
+	}
+	return errs
+}
+
+// RestoreReader streams a backup from r, decoding and applying one record at a
+// time so the whole dataset is never held in memory. This makes restores safe
+// on memory-constrained hosts, mirroring WriteBackup on the export side: a
+// previous version decoded the entire document into a happydns.Backup first,
+// which could exhaust memory long before any record was applied.
+//
+// Records are applied in the order their fields appear in the document, which
+// is the order WriteBackup emits them. This ordering carries the dependencies
+// between record types: Version is validated first, check plans land before the
+// evaluations that reference them, and observation refs before the snapshots
+// restored last. Per-record store errors are collected and returned joined; a
+// malformed document instead returns the underlying json error (e.g.
+// *json.SyntaxError) so callers can tell client input apart from restore
+// failures.
+func (u *Usecase) RestoreReader(ctx context.Context, r io.Reader) error {
+	dec := json.NewDecoder(r)
+
+	tok, err := dec.Token()
+	if err != nil {
+		return err
+	}
+	if d, ok := tok.(json.Delim); !ok || d != '{' {
+		return fmt.Errorf("invalid backup: expected a JSON object")
+	}
+
+	var errs error
+	for dec.More() {
+		keyTok, err := dec.Token()
+		if err != nil {
+			return err
+		}
+		key, _ := keyTok.(string)
+
+		switch key {
+		case "Version":
+			var v int
+			if err := dec.Decode(&v); err != nil {
+				return err
+			}
+			if current := u.store.SchemaVersion(); v != 0 && v != current {
+				return fmt.Errorf("backup schema version %d does not match current database schema version %d", v, current)
+			}
+		case "UsersAuth":
+			errs = errors.Join(errs, decodeArray(dec, u.restoreAuthUser))
+		case "Users":
+			errs = errors.Join(errs, decodeArray(dec, u.restoreUser))
+		case "Safes":
+			// Before the providers: sealing a clear value restored below
+			// must find the owner's safe rather than create another one.
+			errs = errors.Join(errs, decodeArray(dec, func(safe *happydns.Safe) error { return u.restoreSafe(ctx, safe) }))
+		case "DefaultKeystores":
+			var defaults map[string]string
+			if err := dec.Decode(&defaults); err != nil {
+				return err
+			}
+			errs = errors.Join(errs, u.restoreDefaultKeystores(defaults))
+		case "Providers":
+			errs = errors.Join(errs, decodeArray(dec, func(pm *happydns.ProviderMessage) error { return u.restoreProvider(ctx, pm) }))
+		case "Domains":
+			errs = errors.Join(errs, decodeArray(dec, u.restoreDomain))
+		case "DomainsLogs":
+			errs = errors.Join(errs, u.decodeDomainsLogs(dec))
+		case "Zones":
+			errs = errors.Join(errs, decodeArray(dec, u.restoreZone))
+		case "Sessions":
+			errs = errors.Join(errs, decodeArray(dec, u.restoreSession))
+		case "DomainWatches":
+			errs = errors.Join(errs, decodeArray(dec, u.restoreDomainWatch))
+		case "ZoneTemplates":
+			errs = errors.Join(errs, decodeArray(dec, u.restoreZoneTemplate))
+		case "NotificationChannels":
+			errs = errors.Join(errs, decodeArray(dec, u.restoreChannel))
+		case "NotificationPreferences":
+			errs = errors.Join(errs, decodeArray(dec, u.restorePreference))
+		case "NotificationStates":
+			errs = errors.Join(errs, decodeArray(dec, u.restoreState))
+		case "NotificationRecords":
+			errs = errors.Join(errs, decodeArray(dec, u.restoreNotificationRecord))
+		case "CheckerConfigurations":
+			errs = errors.Join(errs, decodeArray(dec, func(cfg *happydns.CheckerOptionsPositional) error { return u.restoreCheckerConfiguration(ctx, cfg) }))
+		case "CheckPlans":
+			errs = errors.Join(errs, decodeArray(dec, u.restoreCheckPlan))
+		case "CheckEvaluations":
+			errs = errors.Join(errs, decodeArray(dec, u.restoreEvaluation))
+		case "Executions":
+			errs = errors.Join(errs, decodeArray(dec, u.restoreExecution))
+		case "DiscoveryEntries":
+			errs = errors.Join(errs, decodeArray(dec, u.restoreDiscoveryEntry))
+		case "DiscoveryObservationRefs":
+			errs = errors.Join(errs, decodeArray(dec, u.restoreDiscoveryObservationRef))
+		case "ObservationSnapshots":
+			errs = errors.Join(errs, decodeArray(dec, u.restoreSnapshot))
+		default:
+			// Unknown field (e.g. the export-only "Errors"): discard its
+			// value without materialising it.
+			if err := skipValue(dec); err != nil {
+				return err
 			}
 		}
 	}
 
-	// Zones
-	for _, zmsg := range backup.Zones {
-		zone, err := zoneUC.ParseZone(zmsg)
-		if err != nil {
-			errs = errors.Join(errs, err)
-		} else {
-			errs = errors.Join(errs, u.store.UpdateZone(zone))
-		}
-	}
-
-	// Sessions
-	for _, session := range backup.Sessions {
-		errs = errors.Join(errs, u.store.UpdateSession(session))
-	}
-
-	for _, w := range backup.DomainWatches {
-		if w == nil {
-			continue
-		}
-		errs = errors.Join(errs, u.store.RestoreDomainWatch(w))
-	}
-
-	for _, t := range backup.ZoneTemplates {
-		if t == nil {
-			continue
-		}
-		errs = errors.Join(errs, u.store.RestoreZoneTemplate(t))
-	}
-
-	// Notification channels, then the preferences pointing at them, under
-	// their own identifiers.
-	for _, ch := range backup.NotificationChannels {
-		if ch == nil {
-			continue
-		}
-		errs = errors.Join(errs, u.store.RestoreChannel(ch))
-	}
-	for _, pref := range backup.NotificationPreferences {
-		if pref == nil {
-			continue
-		}
-		errs = errors.Join(errs, u.store.RestorePreference(pref))
-	}
-	for _, state := range backup.NotificationStates {
-		if state == nil {
-			continue
-		}
-		errs = errors.Join(errs, u.store.PutState(state))
-	}
-	for _, rec := range backup.NotificationRecords {
-		if rec == nil {
-			continue
-		}
-		errs = errors.Join(errs, u.store.RestoreRecord(rec))
-	}
-
-	// Checker configurations.
-	for _, cfg := range backup.CheckerConfigurations {
-		if cfg == nil {
-			continue
-		}
-		// After the safes: secret options in clear are sealed.
-		opts, err := checkerUC.RestoreOptions(ctx, u.secrets, cfg.CheckName, cfg.UserId, cfg.DomainId, cfg.ServiceId, cfg.Options)
-		if err != nil {
-			errs = errors.Join(errs, fmt.Errorf("options of %s: %w", cfg.CheckName, err))
-			continue
-		}
-		errs = errors.Join(errs, u.store.UpdateCheckerConfiguration(cfg.CheckName, cfg.UserId, cfg.DomainId, cfg.ServiceId, opts))
-	}
-
-	// Check plans.
-	for _, plan := range backup.CheckPlans {
-		errs = errors.Join(errs, u.store.RestoreCheckPlan(plan))
-	}
-
-	// Check evaluations (reference plans, restored above).
-	for _, eval := range backup.CheckEvaluations {
-		errs = errors.Join(errs, u.store.RestoreEvaluation(eval))
-	}
-
-	// Executions.
-	for _, exec := range backup.Executions {
-		errs = errors.Join(errs, u.store.RestoreExecution(exec))
-	}
-
-	// Discovery entries. Restored after snapshots (referenced indirectly via
-	// target + producer, no FK), before observation refs which carry snapshot
-	// pointers that must resolve at lookup time.
-	for _, entry := range backup.DiscoveryEntries {
-		errs = errors.Join(errs, u.store.RestoreDiscoveryEntry(entry))
-	}
-
-	// Discovery observation refs.
-	for _, ref := range backup.DiscoveryObservationRefs {
-		errs = errors.Join(errs, u.store.RestoreDiscoveryObservationRef(ref))
-	}
-
-	// Observation snapshots (restored last; rebuild cache from snapshot data).
-	for _, snap := range backup.ObservationSnapshots {
-		if err := u.store.RestoreSnapshot(snap); err != nil {
-			errs = errors.Join(errs, err)
-			continue
-		}
-		for key := range snap.Data {
-			existing, _ := u.store.GetCachedObservation(snap.Target, key)
-			if existing == nil || snap.CollectedAt.After(existing.CollectedAt) {
-				if err := u.store.PutCachedObservation(snap.Target, key, &happydns.ObservationCacheEntry{
-					SnapshotID:  snap.Id,
-					CollectedAt: snap.CollectedAt,
-				}); err != nil {
-					errs = errors.Join(errs, err)
-				}
-			}
-		}
+	// Consume the closing '}'.
+	if _, err := dec.Token(); err != nil {
+		return err
 	}
 
 	return errs
@@ -748,4 +842,99 @@ func (u *Usecase) restoreSafe(ctx context.Context, safe *happydns.Safe) error {
 		return err
 	}
 	return u.store.UpdateSafe(safe)
+}
+
+// decodeArray reads a JSON array field element by element, decoding each into a
+// fresh T and applying it immediately, so only one element is resident at a
+// time. A decode/structural error stops the array and is returned unwrapped (so
+// callers can inspect its concrete json type); apply errors are joined.
+func decodeArray[T any](dec *json.Decoder, apply func(T) error) error {
+	tok, err := dec.Token()
+	if err != nil {
+		return err
+	}
+	if tok == nil {
+		// JSON null in place of the array.
+		return nil
+	}
+	if d, ok := tok.(json.Delim); !ok || d != '[' {
+		return fmt.Errorf("invalid backup: expected a JSON array")
+	}
+
+	var errs error
+	for dec.More() {
+		var item T
+		if err := dec.Decode(&item); err != nil {
+			return err
+		}
+		if err := apply(item); err != nil {
+			errs = errors.Join(errs, err)
+		}
+	}
+
+	// Consume the closing ']'.
+	if _, err := dec.Token(); err != nil {
+		return err
+	}
+	return errs
+}
+
+// decodeDomainsLogs reads the DomainsLogs object (domain id -> logs), applying
+// each domain's logs as it is decoded. A single domain's logs are bounded, so
+// decoding them as one slice keeps the footprint small.
+func (u *Usecase) decodeDomainsLogs(dec *json.Decoder) error {
+	tok, err := dec.Token()
+	if err != nil {
+		return err
+	}
+	if tok == nil {
+		return nil
+	}
+	if d, ok := tok.(json.Delim); !ok || d != '{' {
+		return fmt.Errorf("invalid backup: DomainsLogs must be a JSON object")
+	}
+
+	var errs error
+	for dec.More() {
+		keyTok, err := dec.Token()
+		if err != nil {
+			return err
+		}
+		domainID, _ := keyTok.(string)
+
+		var logs []*happydns.DomainLog
+		if err := dec.Decode(&logs); err != nil {
+			return err
+		}
+		errs = errors.Join(errs, u.restoreDomainLogs(domainID, logs))
+	}
+
+	// Consume the closing '}'.
+	if _, err := dec.Token(); err != nil {
+		return err
+	}
+	return errs
+}
+
+// skipValue consumes and discards the next JSON value (scalar, array or object)
+// without buffering nested structures into memory.
+func skipValue(dec *json.Decoder) error {
+	depth := 0
+	for {
+		tok, err := dec.Token()
+		if err != nil {
+			return err
+		}
+		if d, ok := tok.(json.Delim); ok {
+			switch d {
+			case '[', '{':
+				depth++
+			case ']', '}':
+				depth--
+			}
+		}
+		if depth == 0 {
+			return nil
+		}
+	}
 }

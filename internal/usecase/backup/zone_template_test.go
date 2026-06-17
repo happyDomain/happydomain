@@ -23,7 +23,6 @@ package backup_test
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
@@ -61,22 +60,13 @@ func TestBackupRestoreZoneTemplates(t *testing.T) {
 	if len(dump.ZoneTemplates) != 2 {
 		t.Fatalf("backup holds %d templates, want 2", len(dump.ZoneTemplates))
 	}
-	raw, err := json.Marshal(dump)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var restored happydns.Backup
-	if err := json.Unmarshal(raw, &restored); err != nil {
-		t.Fatal(err)
-	}
-
 	dst, err := inmemory.Instantiate()
 	if err != nil {
 		t.Fatal(err)
 	}
 	for range 2 {
-		if err := backup.NewUsecase(dst, plaintextSecrets(t)).Restore(context.Background(), &restored); err != nil {
-			t.Fatalf("Restore: %v", err)
+		if err := restoreDump(t, backup.NewUsecase(dst, plaintextSecrets(t)), context.Background(), &dump); err != nil {
+			t.Fatalf("RestoreReader: %v", err)
 		}
 	}
 

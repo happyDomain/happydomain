@@ -26,19 +26,22 @@ import (
 	"io"
 )
 
+// Backup is the document exchanged by the backup endpoints. RestoreReader
+// applies the fields in document order, so the field order below carries the
+// dependencies between record types: safes before the providers and checker
+// options sealed into them, plans before the evaluations referencing them.
 type Backup struct {
 	Version                  int
-	Domains                  []*Domain
-	DomainsLogs              map[string][]*DomainLog
-	DomainWatches            []*DomainWatch `json:",omitempty"`
-	Errors                   []string
-	Providers                []*ProviderMessage
+	UsersAuth                UserAuths
+	Users                    []*User
 	Safes                    []*Safe           `json:",omitempty"`
 	DefaultKeystores         map[string]string `json:",omitempty"`
-	Sessions                 []*Session
-	Users                    []*User
-	UsersAuth                UserAuths
+	Domains                  []*Domain
+	DomainsLogs              map[string][]*DomainLog
 	Zones                    []*ZoneMessage
+	Providers                []*ProviderMessage
+	Sessions                 []*Session
+	DomainWatches            []*DomainWatch         `json:",omitempty"`
 	ZoneTemplates            []*ZoneTemplateMessage `json:",omitempty"`
 	NotificationChannels     []*NotificationChannel
 	NotificationPreferences  []*NotificationPreference
@@ -51,6 +54,7 @@ type Backup struct {
 	DiscoveryEntries         []*StoredDiscoveryEntry
 	DiscoveryObservationRefs []*DiscoveryObservationRef
 	ObservationSnapshots     []*ObservationSnapshot
+	Errors                   []string
 }
 
 // BackupUsecase orchestrates the export and re-import of every persistent
@@ -63,5 +67,7 @@ type BackupUsecase interface {
 	// WriteBackupUser streams a single user's data export as JSON to w, with
 	// credentials and live session IDs stripped.
 	WriteBackupUser(w io.Writer, user *User) error
-	Restore(context.Context, *Backup) error
+	// RestoreReader streams a backup from r, applying one record at a time so
+	// the whole dataset is never held in memory.
+	RestoreReader(ctx context.Context, r io.Reader) error
 }

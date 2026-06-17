@@ -22,7 +22,10 @@
 package controller
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 
@@ -70,14 +73,19 @@ func (bc *BackupController) BackupJSON(c *gin.Context) {
 //	@Failure		500		{object}	happydns.ErrorResponse	"Restore errors"
 //	@Router			/backup.json [put]
 func (bc *BackupController) RestoreJSON(c *gin.Context) {
-	var backup happydns.Backup
-	if err := c.ShouldBindJSON(&backup); err != nil {
-		log.Printf("%s sends invalid Backup JSON: %s", c.ClientIP(), err.Error())
-		c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{Message: fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
-		return
-	}
+	// Stream the body so a large dump is never decoded into memory all at once
+	// (which could exhaust memory on small hosts before the restore even ran).
+	if err := bc.backup.RestoreReader(c.Request.Context(), c.Request.Body); err != nil {
+		// A malformed document is the client's fault (400); anything else is a
+		// failure while applying records (500).
+		var syntaxErr *json.SyntaxError
+		var typeErr *json.UnmarshalTypeError
+		if errors.As(err, &syntaxErr) || errors.As(err, &typeErr) || errors.Is(err, io.ErrUnexpectedEOF) {
+			log.Printf("%s sends invalid Backup JSON: %s", c.ClientIP(), err.Error())
+			c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{Message: fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
+			return
+		}
 
-	if err := bc.backup.Restore(c.Request.Context(), &backup); err != nil {
 		log.Printf("%s restores a backup with errors: %s", c.ClientIP(), err.Error())
 		// An error value encodes in JSON as an empty object: answer its
 		// text, every error of the restore included.

@@ -24,7 +24,12 @@ package backup_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"strings"
 	"testing"
+	"time"
 
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
@@ -147,7 +152,7 @@ func TestRestoreSkipsUnparsableProvider(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := backup.NewUsecase(dst, plaintextSecrets(t)).Restore(context.Background(), &dump); err == nil {
+	if err := restoreDump(t, backup.NewUsecase(dst, plaintextSecrets(t)), context.Background(), &dump); err == nil {
 		t.Error("Restore of an unknown provider type succeeded, want an error")
 	}
 
@@ -156,5 +161,218 @@ func TestRestoreSkipsUnparsableProvider(t *testing.T) {
 	}
 	if _, err := dst.GetProvider(bad.Id); err == nil {
 		t.Error("the unknown provider was stored")
+	}
+}
+
+var fixedTime = time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+
+// populateStore fills store with a representative dataset spanning the
+// user-scoped tables (Users, Domains, DomainsLogs, Sessions), the domain
+// watches and zone templates, a positional table (CheckerConfigurations) and
+// the global iterator tables (Executions, DiscoveryEntries). Providers and
+// Zones are intentionally left out: they round-trip through Parse* helpers
+// covered by their own tests, and their re-marshalling is not guaranteed to be
+// byte-identical.
+func populateStore(t *testing.T, store storage.Storage) {
+	t.Helper()
+
+	for _, email := range []string{"alice@example.com", "bob@example.com"} {
+		uid := happydns.Identifier([]byte("user-" + email))
+
+		if err := store.CreateOrUpdateUser(&happydns.User{Id: uid, Email: email, CreatedAt: fixedTime, LastSeen: fixedTime}); err != nil {
+			t.Fatalf("CreateOrUpdateUser(%s): %v", email, err)
+		}
+
+		if err := store.UpdateAuthUser(&happydns.UserAuth{Id: uid, Email: email, CreatedAt: fixedTime, Password: []byte("hash")}); err != nil {
+			t.Fatalf("UpdateAuthUser(%s): %v", email, err)
+		}
+
+		domain := &happydns.Domain{
+			Id:          happydns.Identifier([]byte("dom-" + email)),
+			Owner:       uid,
+			DomainName:  email + ".example.",
+			ZoneHistory: []happydns.Identifier{},
+		}
+		if err := store.UpdateDomain(domain); err != nil {
+			t.Fatalf("UpdateDomain(%s): %v", email, err)
+		}
+
+		log := &happydns.DomainLog{
+			Id:      happydns.Identifier([]byte("log-" + email)),
+			IdUser:  uid,
+			Date:    fixedTime,
+			Content: "domain created",
+			Level:   1,
+		}
+		if err := store.UpdateDomainLog(domain, log); err != nil {
+			t.Fatalf("UpdateDomainLog(%s): %v", email, err)
+		}
+
+		session := &happydns.Session{
+			Id:          "sess-" + email,
+			IdUser:      uid,
+			Description: "test session",
+			IssuedAt:    fixedTime,
+			ExpiresOn:   fixedTime.Add(time.Hour),
+			ModifiedOn:  fixedTime,
+		}
+		if err := store.UpdateSession(session); err != nil {
+			t.Fatalf("UpdateSession(%s): %v", email, err)
+		}
+
+		watch := &happydns.DomainWatch{
+			Id:         happydns.Identifier([]byte("watch-" + email)),
+			UserId:     uid,
+			DomainName: email + ".example.",
+			CreatedAt:  fixedTime,
+		}
+		if err := store.RestoreDomainWatch(watch); err != nil {
+			t.Fatalf("RestoreDomainWatch(%s): %v", email, err)
+		}
+
+		tpl := &happydns.ZoneTemplateMessage{
+			ZoneTemplateMeta: happydns.ZoneTemplateMeta{
+				Id:     happydns.Identifier([]byte("tpl-" + email)),
+				UserId: &uid,
+				Name:   "template of " + email,
+			},
+		}
+		if err := store.RestoreZoneTemplate(tpl); err != nil {
+			t.Fatalf("RestoreZoneTemplate(%s): %v", email, err)
+		}
+
+		if err := store.UpdateCheckerConfiguration("dnssec", &uid, nil, nil, happydns.CheckerOptions{"mode": "strict"}); err != nil {
+			t.Fatalf("UpdateCheckerConfiguration(%s): %v", email, err)
+		}
+
+		exec := &happydns.Execution{
+			Id:        happydns.Identifier([]byte("exec-" + email)),
+			CheckerID: "dnssec",
+			Target:    happydns.CheckTarget{UserId: uid.String()},
+			StartedAt: fixedTime,
+		}
+		if err := store.RestoreExecution(exec); err != nil {
+			t.Fatalf("RestoreExecution(%s): %v", email, err)
+		}
+
+		entry := &happydns.StoredDiscoveryEntry{
+			ProducerID: "producer1",
+			Target:     happydns.CheckTarget{UserId: uid.String()},
+			Type:       "ns",
+			Ref:        "ref-" + email,
+		}
+		if err := store.RestoreDiscoveryEntry(entry); err != nil {
+			t.Fatalf("RestoreDiscoveryEntry(%s): %v", email, err)
+		}
+	}
+}
+
+func countUsers(t *testing.T, store storage.Storage) int {
+	t.Helper()
+	it, err := store.ListAllUsers()
+	if err != nil {
+		t.Fatalf("ListAllUsers: %v", err)
+	}
+	defer it.Close()
+	n := 0
+	for it.Next() {
+		n++
+	}
+	return n
+}
+
+// Test_BackupRoundTrip checks that streaming a backup out and back in is
+// lossless: a backup taken from a populated store, restored into a fresh store
+// through RestoreReader, then exported again, yields the exact same bytes. The
+// in-memory store iterates keys in sorted order, so a byte-for-byte comparison
+// is deterministic and transitively verifies that every field of every record
+// survived the round trip.
+func Test_BackupRoundTrip(t *testing.T) {
+	src, _ := inmemory.Instantiate()
+	populateStore(t, src)
+
+	var first bytes.Buffer
+	if err := backup.NewUsecase(src, plaintextSecrets(t)).WriteBackup(&first); err != nil {
+		t.Fatalf("WriteBackup (source): %v", err)
+	}
+
+	// Sanity: the backup must actually carry the data we put in, otherwise a
+	// trivially empty round trip would pass.
+	if !strings.Contains(first.String(), "alice@example.com") || !strings.Contains(first.String(), "template of alice@example.com") {
+		t.Fatalf("backup does not contain expected data: %s", first.String())
+	}
+
+	dst, _ := inmemory.Instantiate()
+	if err := backup.NewUsecase(dst, plaintextSecrets(t)).RestoreReader(context.Background(), bytes.NewReader(first.Bytes())); err != nil {
+		t.Fatalf("RestoreReader: %v", err)
+	}
+
+	if n := countUsers(t, dst); n != 2 {
+		t.Fatalf("restored store has %d users, want 2", n)
+	}
+
+	var second bytes.Buffer
+	if err := backup.NewUsecase(dst, plaintextSecrets(t)).WriteBackup(&second); err != nil {
+		t.Fatalf("WriteBackup (restored): %v", err)
+	}
+
+	if !bytes.Equal(first.Bytes(), second.Bytes()) {
+		t.Fatalf("round trip is not lossless:\n--- first ---\n%s\n--- second ---\n%s", first.String(), second.String())
+	}
+}
+
+// Test_RestoreReader_SkipsExportOnlyErrorsField ensures the trailing "Errors"
+// field produced on export is ignored on import rather than treated as a record
+// to restore.
+func Test_RestoreReader_SkipsExportOnlyErrorsField(t *testing.T) {
+	dst, _ := inmemory.Instantiate()
+	version := dst.SchemaVersion()
+
+	carolID := happydns.Identifier([]byte("user-carol"))
+	doc := fmt.Sprintf(`{
+		"Version": %d,
+		"Users": [{"id": "%s", "email": "carol@example.com"}],
+		"Errors": ["unable to retrieve something", "another failure"]
+	}`, version, carolID.String())
+
+	if err := backup.NewUsecase(dst, plaintextSecrets(t)).RestoreReader(context.Background(), strings.NewReader(doc)); err != nil {
+		t.Fatalf("RestoreReader: %v", err)
+	}
+
+	if n := countUsers(t, dst); n != 1 {
+		t.Fatalf("restored store has %d users, want 1", n)
+	}
+}
+
+// Test_RestoreReader_VersionMismatch rejects a backup whose schema version does
+// not match the target database.
+func Test_RestoreReader_VersionMismatch(t *testing.T) {
+	dst, _ := inmemory.Instantiate()
+
+	doc := fmt.Sprintf(`{"Version": %d}`, dst.SchemaVersion()+1)
+
+	err := backup.NewUsecase(dst, plaintextSecrets(t)).RestoreReader(context.Background(), strings.NewReader(doc))
+	if err == nil {
+		t.Fatal("expected an error on schema version mismatch, got nil")
+	}
+	if !strings.Contains(err.Error(), "schema version") {
+		t.Fatalf("expected a schema version error, got: %v", err)
+	}
+}
+
+// Test_RestoreReader_MalformedJSON surfaces a decode error (rather than
+// silently succeeding) when the stream is not valid JSON, and exposes it as a
+// *json.SyntaxError so callers can map it to a client error.
+func Test_RestoreReader_MalformedJSON(t *testing.T) {
+	dst, _ := inmemory.Instantiate()
+
+	err := backup.NewUsecase(dst, plaintextSecrets(t)).RestoreReader(context.Background(), strings.NewReader(`{"Users": [ not json ]}`))
+	if err == nil {
+		t.Fatal("expected an error on malformed JSON, got nil")
+	}
+
+	var syntaxErr *json.SyntaxError
+	if !errors.As(err, &syntaxErr) {
+		t.Fatalf("expected a *json.SyntaxError, got %T: %v", err, err)
 	}
 }

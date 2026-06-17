@@ -76,7 +76,7 @@ func TestBackupRestoreNotifications(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := backup.NewUsecase(dst, plaintextSecrets(t)).Restore(context.Background(), &restored); err != nil {
+	if err := restoreDump(t, backup.NewUsecase(dst, plaintextSecrets(t)), context.Background(), &restored); err != nil {
 		t.Fatalf("Restore: %v", err)
 	}
 
@@ -97,7 +97,7 @@ func TestBackupRestoreNotifications(t *testing.T) {
 	}
 
 	// Restored again over itself: still one of each.
-	if err := backup.NewUsecase(dst, plaintextSecrets(t)).Restore(context.Background(), &restored); err != nil {
+	if err := restoreDump(t, backup.NewUsecase(dst, plaintextSecrets(t)), context.Background(), &restored); err != nil {
 		t.Fatalf("second Restore: %v", err)
 	}
 	if chs, _ := dst.ListChannelsByUser(user.Id); len(chs) != 1 {
@@ -215,7 +215,7 @@ func TestBackupRestoreNotificationStatesAndRecords(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := backup.NewUsecase(dst, plaintextSecrets(t)).Restore(context.Background(), &restored); err != nil {
+	if err := restoreDump(t, backup.NewUsecase(dst, plaintextSecrets(t)), context.Background(), &restored); err != nil {
 		t.Fatalf("Restore: %v", err)
 	}
 
@@ -235,7 +235,7 @@ func TestBackupRestoreNotificationStatesAndRecords(t *testing.T) {
 		t.Errorf("restored record = %+v, want %+v", recs[0], rec)
 	}
 
-	if err := backup.NewUsecase(dst, plaintextSecrets(t)).Restore(context.Background(), &restored); err != nil {
+	if err := restoreDump(t, backup.NewUsecase(dst, plaintextSecrets(t)), context.Background(), &restored); err != nil {
 		t.Fatalf("second Restore: %v", err)
 	}
 	if recs, _ := dst.ListRecordsByUser(user.Id, 0); len(recs) != 1 {

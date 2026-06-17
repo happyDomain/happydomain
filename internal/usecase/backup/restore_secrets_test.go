@@ -81,7 +81,7 @@ func TestBackupCopiesStoredSecretsVerbatim(t *testing.T) {
 			secretProviderMessage(user.Id, 2, `{"host":"h","apikey":"hds:1:AQ:c2VhbGVk"}`),
 		},
 	}
-	if err := uc.Restore(context.Background(), in); err != nil {
+	if err := restoreDump(t, uc, context.Background(), in); err != nil {
 		t.Fatalf("Restore: %v", err)
 	}
 
@@ -122,7 +122,7 @@ func TestRestoreSealsClearAndKeepsSealed(t *testing.T) {
 			secretProviderMessage(owner, 2, `{"host":"h","apikey":"hds:1:AQ:c2VhbGVk"}`),
 		},
 	}
-	if err := uc.Restore(context.Background(), in); err != nil {
+	if err := restoreDump(t, uc, context.Background(), in); err != nil {
 		t.Fatalf("Restore: %v", err)
 	}
 
@@ -154,7 +154,7 @@ func TestRestoreRefusesRedactedSecrets(t *testing.T) {
 			secretProviderMessage(happydns.Identifier{0xaa}, 1, `{"host":"h","apikey":"`+happydns.RedactedSecret+`"}`),
 		},
 	}
-	if err := uc.Restore(context.Background(), in); err == nil {
+	if err := restoreDump(t, uc, context.Background(), in); err == nil {
 		t.Error("Restore of a redacted secret succeeded, want an error")
 	}
 	if _, err := db.GetProvider(happydns.Identifier{1}); err == nil {
@@ -176,7 +176,7 @@ func TestBackupUserRedactsSecretType(t *testing.T) {
 			secretProviderMessage(user.Id, 2, `{"host":"h","apikey":"hds:1:AQ:c2VhbGVk"}`),
 		},
 	}
-	if err := uc.Restore(context.Background(), in); err != nil {
+	if err := restoreDump(t, uc, context.Background(), in); err != nil {
 		t.Fatalf("Restore: %v", err)
 	}
 
@@ -250,7 +250,7 @@ func TestBackupRestoreSafes(t *testing.T) {
 		t.Fatal(err)
 	}
 	dstSecrets, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: dst})
-	if err := backup.NewUsecase(dst, dstSecrets).Restore(context.Background(), &restored); err != nil {
+	if err := restoreDump(t, backup.NewUsecase(dst, dstSecrets), context.Background(), &restored); err != nil {
 		t.Fatalf("Restore: %v", err)
 	}
 
@@ -271,7 +271,7 @@ func TestBackupRestoreSafes(t *testing.T) {
 
 	// Restored again, as onto the instance it came from: the safe is updated
 	// in place and still opens what it sealed.
-	if err := backup.NewUsecase(dst, dstSecrets).Restore(context.Background(), &restored); err != nil {
+	if err := restoreDump(t, backup.NewUsecase(dst, dstSecrets), context.Background(), &restored); err != nil {
 		t.Fatalf("second Restore: %v", err)
 	}
 	if s, err := dst.GetSafeByOwner(owner, secret.KindInstance); err != nil || !s.Id.Equals(dump.Safes[0].Id) {
@@ -349,7 +349,7 @@ func TestRestoreRefusesSafesOfAnotherKeyset(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if err := backup.NewUsecase(dst, dstSecrets).Restore(context.Background(), &dump); err == nil {
+			if err := restoreDump(t, backup.NewUsecase(dst, dstSecrets), context.Background(), &dump); err == nil {
 				t.Error("Restore succeeded, want the safe refused")
 			}
 			if _, err := dst.GetSafe(dump.Safes[0].Id); !errors.Is(err, happydns.ErrSafeNotFound) {
@@ -375,7 +375,7 @@ func TestRestoreHonoursContext(t *testing.T) {
 			secretProviderMessage(happydns.Identifier{0xaa}, 1, `{"host":"h","apikey":"legacy"}`),
 		},
 	}
-	if err := uc.Restore(ctx, in); !errors.Is(err, context.Canceled) {
+	if err := restoreDump(t, uc, ctx, in); !errors.Is(err, context.Canceled) {
 		t.Errorf("Restore: got %v, want context.Canceled", err)
 	}
 	if _, err := db.GetProvider(happydns.Identifier{1}); err == nil {
@@ -425,7 +425,7 @@ func TestBackupRestoreDefaultKeystores(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := backup.NewUsecase(dst, plaintextSecrets(t)).Restore(context.Background(), &restored); err != nil {
+	if err := restoreDump(t, backup.NewUsecase(dst, plaintextSecrets(t)), context.Background(), &restored); err != nil {
 		t.Fatalf("Restore: %v", err)
 	}
 
@@ -443,7 +443,7 @@ func TestBackupRestoreDefaultKeystores(t *testing.T) {
 
 	// A record naming no valid owner is reported, not applied.
 	bad := happydns.Backup{DefaultKeystores: map[string]string{"not-an-id": "instance"}}
-	if err := backup.NewUsecase(dst, plaintextSecrets(t)).Restore(context.Background(), &bad); err == nil {
+	if err := restoreDump(t, backup.NewUsecase(dst, plaintextSecrets(t)), context.Background(), &bad); err == nil {
 		t.Error("Restore accepted a default keystore of an invalid owner")
 	}
 }
