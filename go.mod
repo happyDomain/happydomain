@@ -5,7 +5,7 @@ go 1.26
 toolchain go1.26.4
 
 require (
-	git.happydns.org/checker-alias v0.3.0
+	git.happydns.org/checker-alias v0.3.1
 	git.happydns.org/checker-authoritative-consistency v0.2.0
 	git.happydns.org/checker-blacklist v0.4.0
 	git.happydns.org/checker-caa v0.2.2
