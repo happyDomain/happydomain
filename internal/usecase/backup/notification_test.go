@@ -54,7 +54,7 @@ func TestBackupRestoreNotifications(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	dump := backup.NewUsecase(src, plaintextSecrets(t)).Backup()
+	dump := dumpAll(t, backup.NewUsecase(src, plaintextSecrets(t)))
 	if len(dump.Errors) > 0 {
 		t.Fatalf("backup errors: %v", dump.Errors)
 	}
@@ -124,7 +124,7 @@ func TestBackupUserRedactsChannelSecrets(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ret := backup.NewUsecase(db, plaintextSecrets(t), backup.WithChannelRedactor(exportRegistry(t))).BackupUser(user)
+	ret := dumpUser(t, backup.NewUsecase(db, plaintextSecrets(t), backup.WithChannelRedactor(exportRegistry(t))), user)
 	if len(ret.Errors) > 0 {
 		t.Fatalf("export errors: %v", ret.Errors)
 	}
@@ -157,7 +157,7 @@ func TestBackupUserWithholdsUnknownChannelConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ret := backup.NewUsecase(db, plaintextSecrets(t), backup.WithChannelRedactor(exportRegistry(t))).BackupUser(user)
+	ret := dumpUser(t, backup.NewUsecase(db, plaintextSecrets(t), backup.WithChannelRedactor(exportRegistry(t))), user)
 	if len(ret.NotificationChannels) != 1 {
 		t.Fatalf("export holds %d channels, want 1", len(ret.NotificationChannels))
 	}
@@ -173,7 +173,7 @@ func TestBackupUserWithoutRedactorCarriesNoChannel(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ret := backup.NewUsecase(db, plaintextSecrets(t)).BackupUser(user)
+	ret := dumpUser(t, backup.NewUsecase(db, plaintextSecrets(t)), user)
 	if len(ret.NotificationChannels) != 0 {
 		t.Errorf("the user export carries %d channels", len(ret.NotificationChannels))
 	}
@@ -194,7 +194,7 @@ func TestBackupRestoreNotificationStatesAndRecords(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	dump := backup.NewUsecase(src, plaintextSecrets(t)).Backup()
+	dump := dumpAll(t, backup.NewUsecase(src, plaintextSecrets(t)))
 	if len(dump.Errors) > 0 {
 		t.Fatalf("backup errors: %v", dump.Errors)
 	}
@@ -257,7 +257,7 @@ func TestBackupUserCarriesItsStatesAndRecords(t *testing.T) {
 		}
 	}
 
-	ret := backup.NewUsecase(src, plaintextSecrets(t)).BackupUser(user)
+	ret := dumpUser(t, backup.NewUsecase(src, plaintextSecrets(t)), user)
 	if len(ret.Errors) > 0 {
 		t.Fatalf("backup errors: %v", ret.Errors)
 	}

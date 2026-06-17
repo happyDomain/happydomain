@@ -50,7 +50,10 @@ func NewBackupController(backup happydns.BackupUsecase) *BackupController {
 //	@Failure		500	{object}	happydns.ErrorResponse
 //	@Router			/backup.json [post]
 func (bc *BackupController) BackupJSON(c *gin.Context) {
-	c.JSON(http.StatusOK, bc.backup.Backup())
+	c.Header("Content-Type", "application/json; charset=utf-8")
+	if err := bc.backup.WriteBackup(c.Writer); err != nil {
+		log.Printf("%s: error while streaming backup: %s", c.ClientIP(), err.Error())
+	}
 }
 
 // RestoreJSON restores a complete backup of the system.

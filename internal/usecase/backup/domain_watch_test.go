@@ -51,11 +51,11 @@ func TestBackupRestoreDomainWatches(t *testing.T) {
 	}
 
 	uc := backup.NewUsecase(src, plaintextSecrets(t))
-	if dump := uc.BackupUser(user); len(dump.DomainWatches) != 1 {
+	if dump := dumpUser(t, uc, user); len(dump.DomainWatches) != 1 {
 		t.Errorf("user export holds %d watches, want 1", len(dump.DomainWatches))
 	}
 
-	dump := uc.Backup()
+	dump := dumpAll(t, uc)
 	if len(dump.Errors) > 0 {
 		t.Fatalf("backup errors: %v", dump.Errors)
 	}
@@ -101,7 +101,7 @@ func TestBackupUserCarriesOnlyTheirWatches(t *testing.T) {
 		}
 	}
 
-	dump := backup.NewUsecase(src, plaintextSecrets(t)).BackupUser(user)
+	dump := dumpUser(t, backup.NewUsecase(src, plaintextSecrets(t)), user)
 	if len(dump.DomainWatches) != 1 || dump.DomainWatches[0].DomainName != "mine.example" {
 		t.Errorf("user export holds %+v, want only the watch of the user", dump.DomainWatches)
 	}

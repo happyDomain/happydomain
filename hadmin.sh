@@ -36,20 +36,25 @@ if [ -n "${HADMIN_PASSWORD}" ]; then
         echo "hadmin: admin login failed: ${ERRMSG:-check HADMIN_PASSWORD}" >&2
         exit 1
     fi
-
-    RET=$(curl -s -H "Authorization: Bearer ${TOKEN}" ${DEST}"$@")
-else
-    RET=$(curl -s ${DEST}"$@")
 fi
-CODE=$?
 
-if [ -t 1 ]
+# Wrapped in a function so the session token, when there is one, is added
+# without having to build a word-split-safe argument list.
+hadmin_curl() {
+    if [ -n "${TOKEN}" ]; then
+        curl -s -H "Authorization: Bearer ${TOKEN}" ${DEST}"$@"
+    else
+        curl -s ${DEST}"$@"
+    fi
+}
+
+if [ -t 1 ] && which jq > /dev/null 2> /dev/null
 then
-    which jq > /dev/null 2> /dev/null &&
-        echo "${RET}" | jq . 2> /dev/null ||
-            echo "$RET"
+    hadmin_curl "$@" | jq .
+    CODE=$?
 else
-    echo "$RET"
+    hadmin_curl "$@"
+    CODE=$?
 fi
 
 exit $CODE

@@ -21,7 +21,10 @@
 
 package happydns
 
-import "context"
+import (
+	"context"
+	"io"
+)
 
 type Backup struct {
 	Version                  int
@@ -54,7 +57,11 @@ type Backup struct {
 // resource managed by happyDomain. It is the entry point used by the admin
 // API to take or restore a complete dump of the system.
 type BackupUsecase interface {
-	Backup() Backup
-	BackupUser(user *User) Backup
+	// WriteBackup streams a complete backup as JSON to w with a memory
+	// footprint independent of database size.
+	WriteBackup(w io.Writer) error
+	// WriteBackupUser streams a single user's data export as JSON to w, with
+	// credentials and live session IDs stripped.
+	WriteBackupUser(w io.Writer, user *User) error
 	Restore(context.Context, *Backup) error
 }

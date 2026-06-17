@@ -50,11 +50,11 @@ func TestBackupRestoreZoneTemplates(t *testing.T) {
 	}
 
 	uc := backup.NewUsecase(src, plaintextSecrets(t))
-	if dump := uc.BackupUser(user); len(dump.ZoneTemplates) != 1 || dump.ZoneTemplates[0].Name != "mine" {
+	if dump := dumpUser(t, uc, user); len(dump.ZoneTemplates) != 1 || dump.ZoneTemplates[0].Name != "mine" {
 		t.Errorf("user export holds %+v, want only the template of the user", dump.ZoneTemplates)
 	}
 
-	dump := uc.Backup()
+	dump := dumpAll(t, uc)
 	if len(dump.Errors) > 0 {
 		t.Fatalf("backup errors: %v", dump.Errors)
 	}

@@ -59,7 +59,7 @@ func TestBackupUserWithholdsCheckerOptions(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ret := backup.NewUsecase(db, plaintextSecrets(t)).BackupUser(user)
+	ret := dumpUser(t, backup.NewUsecase(db, plaintextSecrets(t)), user)
 	found := 0
 	for _, cfg := range ret.CheckerConfigurations {
 		switch cfg.CheckName {

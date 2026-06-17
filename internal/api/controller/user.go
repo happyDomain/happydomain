@@ -178,13 +178,15 @@ func (uc *UserController) ChangeUserSettings(c *gin.Context) {
 //	@Router			/users/{uid}/export.json [get]
 func (uc *UserController) ExportUserData(c *gin.Context) {
 	user := c.MustGet("user").(*happydns.User)
-	backup := uc.backupUC.BackupUser(user)
+	// Stream the export so a user's whole dataset is never held in memory (nor
+	// copied again by the JSON renderer). Per-record errors are reported in the
+	// document's "Errors" field; a non-nil error here means the stream broke
+	// after the 200 header was already sent.
 	c.Header("Content-Disposition", `attachment; filename="happydomain-export.json"`)
-	status := http.StatusOK
-	if len(backup.Errors) > 0 {
-		status = http.StatusMultiStatus
+	c.Header("Content-Type", "application/json; charset=utf-8")
+	if err := uc.backupUC.WriteBackupUser(c.Writer, user); err != nil {
+		log.Printf("%s: error while streaming user export: %s", c.ClientIP(), err.Error())
 	}
-	c.JSON(status, backup)
 }
 
 // DeleteMyUser deletes the current user's account.

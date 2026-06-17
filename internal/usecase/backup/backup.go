@@ -22,10 +22,12 @@
 package backup
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 
 	"git.happydns.org/happyDomain/internal/forms"
 	"git.happydns.org/happyDomain/internal/secret"
@@ -64,253 +66,134 @@ func NewUsecase(store storage.Storage, secrets *secret.Manager, opts ...Option) 
 	return u
 }
 
-func (u *Usecase) backupOneUser(user *happydns.User, ret *happydns.Backup) {
-	ret.Users = append(ret.Users, user)
+// jsonStreamer writes a JSON object incrementally to an underlying writer.
+// It lets WriteBackup emit a complete backup without ever materialising the
+// whole dataset in memory: each record is marshalled and flushed on its own,
+// so only one record (plus a small fixed buffer) is resident at a time. This
+// keeps the peak memory footprint bounded regardless of database size.
+type jsonStreamer struct {
+	w          *bufio.Writer
+	err        error
+	wroteField bool
+}
 
-	// Domains
-	ds, err := u.store.ListDomains(user)
+func newJSONStreamer(w io.Writer) *jsonStreamer {
+	return &jsonStreamer{w: bufio.NewWriterSize(w, 32*1024)}
+}
+
+func (s *jsonStreamer) raw(str string) {
+	if s.err != nil {
+		return
+	}
+	_, s.err = s.w.WriteString(str)
+}
+
+func (s *jsonStreamer) marshal(v any) {
+	if s.err != nil {
+		return
+	}
+	var b []byte
+	b, s.err = json.Marshal(v)
+	if s.err != nil {
+		return
+	}
+	_, s.err = s.w.Write(b)
+}
+
+// beginField writes the leading comma (when needed), the quoted field name and
+// the colon separator.
+func (s *jsonStreamer) beginField(name string) {
+	if s.wroteField {
+		s.raw(",")
+	}
+	s.wroteField = true
+	s.marshal(name)
+	s.raw(":")
+}
+
+// arrayField opens a JSON array field and returns a helper to append elements.
+func (s *jsonStreamer) arrayField(name string) *arrayWriter {
+	s.beginField(name)
+	s.raw("[")
+	return &arrayWriter{s: s, first: true}
+}
+
+type arrayWriter struct {
+	s     *jsonStreamer
+	first bool
+}
+
+func (a *arrayWriter) item(v any) {
+	if !a.first {
+		a.s.raw(",")
+	}
+	a.first = false
+	a.s.marshal(v)
+}
+
+func (a *arrayWriter) end() { a.s.raw("]") }
+
+// streamIteratorField writes the content of a store iterator as a JSON array
+// field, encoding and discarding one item at a time. Used for the global (non
+// user-scoped) tables, which are also the ones that grow without bound. When
+// keep is non-nil only the items it accepts are emitted, which lets a per-user
+// export reuse the same global iterators filtered down to one owner.
+func streamIteratorField[T any](s *jsonStreamer, name, label string, it happydns.Iterator[T], err error, addErr func(string), keep func(*T) bool) {
+	a := s.arrayField(name)
+	defer a.end()
+
 	if err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Domain names of %s (%s): %s", user.Id.String(), user.Email, err.Error()))
-	} else {
-		ret.Domains = append(ret.Domains, ds...)
+		addErr(fmt.Sprintf("unable to retrieve %s: %s", label, err.Error()))
+		return
+	}
+	defer it.Close()
 
-		for _, dn := range ds {
-			// Domain logs
-			ls, logErr := u.store.ListDomainLogs(dn)
-			if logErr != nil {
-				ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve domain's logs %s/%s (%s): %s", user.Id.String(), dn.Id.String(), dn.DomainName, logErr.Error()))
-			} else {
-				ret.DomainsLogs[dn.Id.String()] = ls
-			}
-
-			// Zones
-			for _, zid := range dn.ZoneHistory {
-				z, zoneErr := u.store.GetZone(zid)
-				if zoneErr != nil {
-					ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve domain's zone %s/%s (%s): zoneid=%s: %s", user.Id.String(), dn.Id.String(), dn.DomainName, zid.String(), zoneErr.Error()))
-				} else {
-					ret.Zones = append(ret.Zones, z)
-				}
-			}
+	for it.Next() {
+		item := it.Item()
+		if keep == nil || keep(item) {
+			a.item(item)
 		}
 	}
-
-	// Providers
-	ps, err := u.store.ListProviders(user)
-	if err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Providers: %s", err.Error()))
-	} else {
-		ret.Providers = append(ret.Providers, ps...)
-	}
-
-	// Sessions
-	ss, err := u.store.ListUserSessions(user.Id)
-	if err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Sessions: %s", err.Error()))
-	} else {
-		ret.Sessions = append(ret.Sessions, ss...)
+	if err := it.Err(); err != nil {
+		addErr(fmt.Sprintf("unable to retrieve every %s: %s", label, err.Error()))
 	}
 }
 
-func (u *Usecase) Backup() happydns.Backup {
-	ret := happydns.Backup{
-		Version:     u.store.SchemaVersion(),
-		DomainsLogs: map[string][]*happydns.DomainLog{},
-	}
+// streamSliceField writes an already-materialised slice as a JSON array field.
+// Used where the store exposes an indexed per-user lookup instead of an
+// iterator.
+func streamSliceField[T any](s *jsonStreamer, name, label string, items []T, err error, addErr func(string)) {
+	a := s.arrayField(name)
+	defer a.end()
 
-	// UserAuth
-	uai, err := u.store.ListAllAuthUsers()
 	if err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve AuthUsers: %s", err.Error()))
-	} else {
-		defer uai.Close()
-		for uai.Next() {
-			ret.UsersAuth = append(ret.UsersAuth, uai.Item())
-		}
+		addErr(fmt.Sprintf("unable to retrieve %s: %s", label, err.Error()))
+		return
 	}
+	for _, item := range items {
+		a.item(item)
+	}
+}
 
-	// Users
-	iter, err := u.store.ListAllUsers()
+// userSeq invokes fn for each user that should appear in a backup. The
+// full-system backup walks every user lazily (one at a time); a single-user
+// export calls fn exactly once.
+type userSeq func(fn func(*happydns.User))
+
+// forEachUser walks every user lazily. The user-scoped arrays each require
+// their own pass (a flat JSON object cannot interleave several top-level
+// arrays), which trades a few extra table scans for a bounded memory
+// footprint: only one user's data is held at a time.
+func (u *Usecase) forEachUser(addErr func(string), fn func(*happydns.User)) {
+	it, err := u.store.ListAllUsers()
 	if err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Users: %s", err.Error()))
-	} else {
-		defer iter.Close()
-		for iter.Next() {
-			u.backupOneUser(iter.Item(), &ret)
-		}
+		addErr(fmt.Sprintf("unable to retrieve Users: %s", err.Error()))
+		return
 	}
-
-	// Notification channels, their configuration as stored.
-	if chIter, err := u.store.ListAllChannels(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationChannels: %s", err.Error()))
-	} else {
-		defer chIter.Close()
-		for chIter.Next() {
-			ret.NotificationChannels = append(ret.NotificationChannels, chIter.Item())
-		}
-		if err := chIter.Err(); err != nil {
-			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve every NotificationChannel: %s", err.Error()))
-		}
+	defer it.Close()
+	for it.Next() {
+		fn(it.Item())
 	}
-
-	// Domain watches.
-	if watchIter, err := u.store.ListAllDomainWatches(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve DomainWatches: %s", err.Error()))
-	} else {
-		defer watchIter.Close()
-		for watchIter.Next() {
-			ret.DomainWatches = append(ret.DomainWatches, watchIter.Item())
-		}
-		if err := watchIter.Err(); err != nil {
-			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve every DomainWatch: %s", err.Error()))
-		}
-	}
-
-	// Zone templates, of the users and global.
-	if tplIter, err := u.store.ListAllZoneTemplates(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve ZoneTemplates: %s", err.Error()))
-	} else {
-		defer tplIter.Close()
-		for tplIter.Next() {
-			ret.ZoneTemplates = append(ret.ZoneTemplates, tplIter.Item())
-		}
-		if err := tplIter.Err(); err != nil {
-			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve every ZoneTemplate: %s", err.Error()))
-		}
-	}
-
-	// Notification preferences.
-	if prefIter, err := u.store.ListAllPreferences(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationPreferences: %s", err.Error()))
-	} else {
-		defer prefIter.Close()
-		for prefIter.Next() {
-			ret.NotificationPreferences = append(ret.NotificationPreferences, prefIter.Item())
-		}
-		if err := prefIter.Err(); err != nil {
-			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve every NotificationPreference: %s", err.Error()))
-		}
-	}
-
-	// Notification states, acknowledgements included.
-	if stIter, err := u.store.ListAllStates(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationStates: %s", err.Error()))
-	} else {
-		defer stIter.Close()
-		for stIter.Next() {
-			ret.NotificationStates = append(ret.NotificationStates, stIter.Item())
-		}
-		if err := stIter.Err(); err != nil {
-			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve every NotificationState: %s", err.Error()))
-		}
-	}
-
-	// Notification records, the history of what was sent.
-	if recIter, err := u.store.ListAllRecords(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationRecords: %s", err.Error()))
-	} else {
-		defer recIter.Close()
-		for recIter.Next() {
-			ret.NotificationRecords = append(ret.NotificationRecords, recIter.Item())
-		}
-		if err := recIter.Err(); err != nil {
-			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve every NotificationRecord: %s", err.Error()))
-		}
-	}
-
-	// Safes: the sealed values of the providers above only open with them,
-	// and with the instance keyset, which is not part of the backup.
-	if safeIter, err := u.store.ListAllSafes(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Safes: %s", err.Error()))
-	} else {
-		defer safeIter.Close()
-		for safeIter.Next() {
-			ret.Safes = append(ret.Safes, safeIter.Item())
-		}
-		if err := safeIter.Err(); err != nil {
-			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve every Safe: %s", err.Error()))
-		}
-	}
-
-	// The keystore each owner chose for new secrets.
-	if defaults, err := u.store.ListDefaultKeystores(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve default keystores: %s", err.Error()))
-	} else if len(defaults) > 0 {
-		ret.DefaultKeystores = defaults
-	}
-
-	// Checker configurations (positional, one entry per (checker, user?, domain?, service?)).
-	if cfgIter, err := u.store.ListAllCheckerConfigurations(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve CheckerConfigurations: %s", err.Error()))
-	} else {
-		defer cfgIter.Close()
-		for cfgIter.Next() {
-			ret.CheckerConfigurations = append(ret.CheckerConfigurations, cfgIter.Item())
-		}
-	}
-
-	// Check plans.
-	if planIter, err := u.store.ListAllCheckPlans(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve CheckPlans: %s", err.Error()))
-	} else {
-		defer planIter.Close()
-		for planIter.Next() {
-			ret.CheckPlans = append(ret.CheckPlans, planIter.Item())
-		}
-	}
-
-	// Check evaluations.
-	if evalIter, err := u.store.ListAllEvaluations(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve CheckEvaluations: %s", err.Error()))
-	} else {
-		defer evalIter.Close()
-		for evalIter.Next() {
-			ret.CheckEvaluations = append(ret.CheckEvaluations, evalIter.Item())
-		}
-	}
-
-	// Executions.
-	if execIter, err := u.store.ListAllExecutions(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Executions: %s", err.Error()))
-	} else {
-		defer execIter.Close()
-		for execIter.Next() {
-			ret.Executions = append(ret.Executions, execIter.Item())
-		}
-	}
-
-	// Discovery entries.
-	if entryIter, err := u.store.ListAllDiscoveryEntries(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve DiscoveryEntries: %s", err.Error()))
-	} else {
-		defer entryIter.Close()
-		for entryIter.Next() {
-			ret.DiscoveryEntries = append(ret.DiscoveryEntries, entryIter.Item())
-		}
-	}
-
-	// Discovery observation refs.
-	if refIter, err := u.store.ListAllDiscoveryObservationRefs(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve DiscoveryObservationRefs: %s", err.Error()))
-	} else {
-		defer refIter.Close()
-		for refIter.Next() {
-			ret.DiscoveryObservationRefs = append(ret.DiscoveryObservationRefs, refIter.Item())
-		}
-	}
-
-	// Observation snapshots.
-	if snapIter, err := u.store.ListAllSnapshots(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve ObservationSnapshots: %s", err.Error()))
-	} else {
-		defer snapIter.Close()
-		for snapIter.Next() {
-			snap := snapIter.Item()
-			ret.ObservationSnapshots = append(ret.ObservationSnapshots, snap)
-		}
-	}
-
-	return ret
 }
 
 // redactProviderMessage returns a copy of pm whose `secret`-tagged settings
@@ -332,161 +215,335 @@ func redactProviderMessage(pm *happydns.ProviderMessage) (*happydns.ProviderMess
 	return &msg, nil
 }
 
-func (u *Usecase) BackupUser(user *happydns.User) happydns.Backup {
-	uid := user.Id.String()
+// streamUserScoped writes the Users, Domains, DomainsLogs, Zones, Providers
+// and Sessions fields, all derived from the users yielded by each. WriteBackup feeds it every user; WriteBackupUser feeds it a
+// single one. When stripSessionID is set the live session IDs are blanked out
+// (per-user export), as they are credentials rather than portable data. When
+// redactProviders is set, provider secret settings are replaced by
+// happydns.RedactedSecret before being written: this file leaves happyDomain,
+// so it must not carry anything that still opens a door. The administrative
+// WriteBackup keeps them, as Restore has to put working providers back.
+func (u *Usecase) streamUserScoped(s *jsonStreamer, addErr func(string), stripSessionID, redactProviders bool, each userSeq) {
+	// Users.
+	users := s.arrayField("Users")
+	each(func(user *happydns.User) { users.item(user) })
+	users.end()
 
-	ret := happydns.Backup{
-		Version:     u.store.SchemaVersion(),
-		DomainsLogs: map[string][]*happydns.DomainLog{},
+	// Domains.
+	domains := s.arrayField("Domains")
+	each(func(user *happydns.User) {
+		ds, err := u.store.ListDomains(user)
+		if err != nil {
+			addErr(fmt.Sprintf("unable to retrieve Domain names of %s (%s): %s", user.Id.String(), user.Email, err.Error()))
+			return
+		}
+		for _, dn := range ds {
+			domains.item(dn)
+		}
+	})
+	domains.end()
+
+	// Domain logs (keyed by domain id). ListDomains errors were already
+	// reported during the Domains pass, so they are skipped silently here.
+	s.beginField("DomainsLogs")
+	s.raw("{")
+	firstLog := true
+	each(func(user *happydns.User) {
+		ds, err := u.store.ListDomains(user)
+		if err != nil {
+			return
+		}
+		for _, dn := range ds {
+			ls, logErr := u.store.ListDomainLogs(dn)
+			if logErr != nil {
+				addErr(fmt.Sprintf("unable to retrieve domain's logs %s/%s (%s): %s", user.Id.String(), dn.Id.String(), dn.DomainName, logErr.Error()))
+				continue
+			}
+			if !firstLog {
+				s.raw(",")
+			}
+			firstLog = false
+			s.marshal(dn.Id.String())
+			s.raw(":")
+			s.marshal(ls)
+		}
+	})
+	s.raw("}")
+
+	// Zones (referenced through each domain's history).
+	zones := s.arrayField("Zones")
+	each(func(user *happydns.User) {
+		ds, err := u.store.ListDomains(user)
+		if err != nil {
+			return
+		}
+		for _, dn := range ds {
+			for _, zid := range dn.ZoneHistory {
+				z, zoneErr := u.store.GetZone(zid)
+				if zoneErr != nil {
+					addErr(fmt.Sprintf("unable to retrieve domain's zone %s/%s (%s): zoneid=%s: %s", user.Id.String(), dn.Id.String(), dn.DomainName, zid.String(), zoneErr.Error()))
+					continue
+				}
+				zones.item(z)
+			}
+		}
+	})
+	zones.end()
+
+	// Providers.
+	providers := s.arrayField("Providers")
+	each(func(user *happydns.User) {
+		ps, err := u.store.ListProviders(user)
+		if err != nil {
+			addErr(fmt.Sprintf("unable to retrieve Providers: %s", err.Error()))
+			return
+		}
+		for _, p := range ps {
+			if !redactProviders {
+				providers.item(p)
+				continue
+			}
+
+			redacted, err := redactProviderMessage(p)
+			if err != nil {
+				addErr(fmt.Sprintf("unable to redact Provider %s: %s", p.Id.String(), err.Error()))
+				// Fail closed: an unredactable body is exported without its
+				// settings rather than in clear.
+				stripped := *p
+				stripped.Provider = json.RawMessage("{}")
+				providers.item(&stripped)
+				continue
+			}
+			providers.item(redacted)
+		}
+	})
+	providers.end()
+
+	// Sessions.
+	sessions := s.arrayField("Sessions")
+	each(func(user *happydns.User) {
+		ss, err := u.store.ListUserSessions(user.Id)
+		if err != nil {
+			addErr(fmt.Sprintf("unable to retrieve Sessions: %s", err.Error()))
+			return
+		}
+		for _, ses := range ss {
+			if stripSessionID {
+				ses.Id = ""
+			}
+			sessions.item(ses)
+		}
+	})
+	sessions.end()
+}
+
+// WriteBackup streams a complete backup as JSON directly to w. It produces the
+// same document shape as Backup (consumable by Restore) but with a memory
+// footprint independent of database size, making it safe on memory-constrained
+// hosts. Per-record retrieval errors are collected and emitted in the trailing
+// "Errors" field, mirroring Backup. The returned error is non-nil only on a
+// write/marshal failure (e.g. the client disconnects); since output is streamed
+// the HTTP status has already been sent and cannot be changed at that point.
+func (u *Usecase) WriteBackup(w io.Writer) error {
+	s := newJSONStreamer(w)
+	var errs []string
+	addErr := func(msg string) { errs = append(errs, msg) }
+
+	s.raw("{")
+
+	s.beginField("Version")
+	s.marshal(u.store.SchemaVersion())
+
+	// UserAuth.
+	uai, err := u.store.ListAllAuthUsers()
+	streamIteratorField(s, "UsersAuth", "AuthUsers", uai, err, addErr, nil)
+
+	// User-scoped tables, one user at a time.
+	u.streamUserScoped(s, addErr, false, false, func(fn func(*happydns.User)) {
+		u.forEachUser(addErr, fn)
+	})
+
+	watchIter, err := u.store.ListAllDomainWatches()
+	streamIteratorField(s, "DomainWatches", "DomainWatches", watchIter, err, addErr, nil)
+
+	// Zone templates, of the users and global.
+	tplIter, err := u.store.ListAllZoneTemplates()
+	streamIteratorField(s, "ZoneTemplates", "ZoneTemplates", tplIter, err, addErr, nil)
+
+	// Notification tables: channels as stored, preferences, states
+	// (acknowledgements included) and the history of what was sent.
+	chIter, err := u.store.ListAllChannels()
+	streamIteratorField(s, "NotificationChannels", "NotificationChannels", chIter, err, addErr, nil)
+
+	prefIter, err := u.store.ListAllPreferences()
+	streamIteratorField(s, "NotificationPreferences", "NotificationPreferences", prefIter, err, addErr, nil)
+
+	stIter, err := u.store.ListAllStates()
+	streamIteratorField(s, "NotificationStates", "NotificationStates", stIter, err, addErr, nil)
+
+	recIter, err := u.store.ListAllRecords()
+	streamIteratorField(s, "NotificationRecords", "NotificationRecords", recIter, err, addErr, nil)
+
+	// Safes: the sealed values of the providers only open with them, and with
+	// the instance keyset, which is not part of the backup.
+	safeIter, err := u.store.ListAllSafes()
+	streamIteratorField(s, "Safes", "Safes", safeIter, err, addErr, nil)
+
+	// The keystore each owner chose for new secrets.
+	if defaults, err := u.store.ListDefaultKeystores(); err != nil {
+		addErr(fmt.Sprintf("unable to retrieve default keystores: %s", err.Error()))
+	} else if len(defaults) > 0 {
+		s.beginField("DefaultKeystores")
+		s.marshal(defaults)
 	}
 
+	// Global, unbounded tables: streamed one record at a time.
+	cfgIter, err := u.store.ListAllCheckerConfigurations()
+	streamIteratorField(s, "CheckerConfigurations", "CheckerConfigurations", cfgIter, err, addErr, nil)
+
+	planIter, err := u.store.ListAllCheckPlans()
+	streamIteratorField(s, "CheckPlans", "CheckPlans", planIter, err, addErr, nil)
+
+	evalIter, err := u.store.ListAllEvaluations()
+	streamIteratorField(s, "CheckEvaluations", "CheckEvaluations", evalIter, err, addErr, nil)
+
+	execIter, err := u.store.ListAllExecutions()
+	streamIteratorField(s, "Executions", "Executions", execIter, err, addErr, nil)
+
+	entryIter, err := u.store.ListAllDiscoveryEntries()
+	streamIteratorField(s, "DiscoveryEntries", "DiscoveryEntries", entryIter, err, addErr, nil)
+
+	refIter, err := u.store.ListAllDiscoveryObservationRefs()
+	streamIteratorField(s, "DiscoveryObservationRefs", "DiscoveryObservationRefs", refIter, err, addErr, nil)
+
+	snapIter, err := u.store.ListAllSnapshots()
+	streamIteratorField(s, "ObservationSnapshots", "ObservationSnapshots", snapIter, err, addErr, nil)
+
+	// Errors collected along the way, emitted last so they can be gathered
+	// while streaming.
+	s.beginField("Errors")
+	s.marshal(errs)
+
+	s.raw("}")
+
+	if s.err != nil {
+		return s.err
+	}
+	return s.w.Flush()
+}
+
+// WriteBackupUser streams a single user's data export as JSON directly to w,
+// with the same memory benefit as WriteBackup. It produces the same document
+// shape (consumable by Restore) but scoped to one user: credentials and live
+// session IDs are stripped, and the global tables are filtered to records owned
+// by the user. Observation snapshots are intentionally omitted, matching the
+// resources exposed by the GDPR export. Per-record errors are collected into
+// the trailing "Errors" field; a non-nil return means the stream broke after
+// the HTTP status was already sent.
+func (u *Usecase) WriteBackupUser(w io.Writer, user *happydns.User) error {
+	uid := user.Id.String()
+	s := newJSONStreamer(w)
+	var errs []string
+	addErr := func(msg string) { errs = append(errs, msg) }
+
+	s.raw("{")
+
+	s.beginField("Version")
+	s.marshal(u.store.SchemaVersion())
+
 	// UserAuth for this user — strip credentials before export.
+	auth := s.arrayField("UsersAuth")
 	if ua, err := u.store.GetAuthUser(user.Id); err == nil {
 		ua.Password = nil
 		ua.PasswordRecoveryKey = nil
-		ret.UsersAuth = append(ret.UsersAuth, ua)
+		auth.item(ua)
 	} else if !errors.Is(err, happydns.ErrAuthUserNotFound) {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve UserAuth: %s", err.Error()))
+		addErr(fmt.Sprintf("unable to retrieve UserAuth: %s", err.Error()))
 	}
+	auth.end()
 
-	u.backupOneUser(user, &ret)
+	// User-scoped tables for this single user; strip live session IDs.
+	u.streamUserScoped(s, addErr, true, true, func(fn func(*happydns.User)) {
+		fn(user)
+	})
 
-	// Strip session IDs — they are live credentials, not portable data.
-	for _, s := range ret.Sessions {
-		s.Id = ""
-	}
+	watches, err := u.store.ListDomainWatchesByUser(user.Id)
+	streamSliceField(s, "DomainWatches", "DomainWatches", watches, err, addErr)
 
-	// Same reasoning for the API keys and passwords a user entrusted to their
-	// providers: this file leaves happyDomain, so it must not carry anything
-	// that still opens a door. The administrative Backup() keeps them, as
-	// Restore has to put working providers back.
-	for i, pm := range ret.Providers {
-		redacted, err := redactProviderMessage(pm)
-		if err != nil {
-			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to redact Provider %s: %s", pm.Id.String(), err.Error()))
-			// Fail closed: an unredactable body is exported without its
-			// settings rather than in clear.
-			stripped := *pm
-			stripped.Provider = json.RawMessage("{}")
-			ret.Providers[i] = &stripped
-			continue
-		}
-		ret.Providers[i] = redacted
-	}
+	// Only their own: the global templates belong to no one.
+	templates, err := u.store.ListZoneTemplatesByUser(user.Id)
+	streamSliceField(s, "ZoneTemplates", "ZoneTemplates", templates, err, addErr)
 
-	// Notification channels, minus their secrets, and the preferences
-	// pointing at them.
+	// Notification channels, minus their secrets, and the preferences, states
+	// and records attached to them.
+	channels := s.arrayField("NotificationChannels")
 	if u.redactor != nil {
 		if chs, err := u.store.ListChannelsByUser(user.Id); err != nil {
-			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationChannels: %s", err.Error()))
+			addErr(fmt.Sprintf("unable to retrieve NotificationChannels: %s", err.Error()))
 		} else {
 			for _, ch := range chs {
 				redacted, err := u.redactor.RedactChannelForExport(ch)
 				if err != nil {
-					ret.Errors = append(ret.Errors, fmt.Sprintf("unable to redact NotificationChannel %s: %s", ch.Id.String(), err.Error()))
+					addErr(fmt.Sprintf("unable to redact NotificationChannel %s: %s", ch.Id.String(), err.Error()))
 					continue
 				}
-				ret.NotificationChannels = append(ret.NotificationChannels, redacted)
+				channels.item(redacted)
 			}
 		}
 	}
-	if watches, err := u.store.ListDomainWatchesByUser(user.Id); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve DomainWatches: %s", err.Error()))
-	} else {
-		ret.DomainWatches = append(ret.DomainWatches, watches...)
-	}
-	// Only their own: the global templates belong to no one.
-	if templates, err := u.store.ListZoneTemplatesByUser(user.Id); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve ZoneTemplates: %s", err.Error()))
-	} else {
-		ret.ZoneTemplates = append(ret.ZoneTemplates, templates...)
-	}
-	if prefs, err := u.store.ListPreferencesByUser(user.Id); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationPreferences: %s", err.Error()))
-	} else {
-		ret.NotificationPreferences = append(ret.NotificationPreferences, prefs...)
-	}
-	if states, err := u.store.ListStatesByUser(user.Id); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationStates: %s", err.Error()))
-	} else {
-		ret.NotificationStates = append(ret.NotificationStates, states...)
-	}
-	if recs, err := u.store.ListRecordsByUser(user.Id, 0); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationRecords: %s", err.Error()))
-	} else {
-		ret.NotificationRecords = append(ret.NotificationRecords, recs...)
-	}
+	channels.end()
 
-	// Checker configurations scoped to this user.
-	if cfgIter, err := u.store.ListAllCheckerConfigurations(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve CheckerConfigurations: %s", err.Error()))
-	} else {
-		defer cfgIter.Close()
-		for cfgIter.Next() {
-			cfg := cfgIter.Item()
-			if cfg.UserId != nil && cfg.UserId.Equals(user.Id) {
-				// Withheld as the API does: the export leaves happyDomain.
-				redacted := *cfg
-				redacted.Options = checkerUC.RedactOptions(cfg.CheckName, cfg.Options)
-				ret.CheckerConfigurations = append(ret.CheckerConfigurations, &redacted)
-			}
+	prefs, err := u.store.ListPreferencesByUser(user.Id)
+	streamSliceField(s, "NotificationPreferences", "NotificationPreferences", prefs, err, addErr)
+
+	states, err := u.store.ListStatesByUser(user.Id)
+	streamSliceField(s, "NotificationStates", "NotificationStates", states, err, addErr)
+
+	recs, err := u.store.ListRecordsByUser(user.Id, 0)
+	streamSliceField(s, "NotificationRecords", "NotificationRecords", recs, err, addErr)
+
+	// Global tables filtered to records owned by this user. The checker
+	// options are withheld as the API does: the export leaves happyDomain.
+	cfgIter, err := u.store.ListAllCheckerConfigurations()
+	streamIteratorField(s, "CheckerConfigurations", "CheckerConfigurations", cfgIter, err, addErr, func(cfg *happydns.CheckerOptionsPositional) bool {
+		if cfg.UserId == nil || !cfg.UserId.Equals(user.Id) {
+			return false
 		}
-	}
+		cfg.Options = checkerUC.RedactOptions(cfg.CheckName, cfg.Options)
+		return true
+	})
 
-	// Check plans scoped to this user (indexed lookup).
-	if plans, err := u.store.ListCheckPlansByUser(user.Id); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve CheckPlans: %s", err.Error()))
-	} else {
-		ret.CheckPlans = append(ret.CheckPlans, plans...)
-	}
+	// Check plans and executions use indexed per-user lookups.
+	plans, err := u.store.ListCheckPlansByUser(user.Id)
+	streamSliceField(s, "CheckPlans", "CheckPlans", plans, err, addErr)
 
-	// Check evaluations scoped to this user.
-	if evalIter, err := u.store.ListAllEvaluations(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve CheckEvaluations: %s", err.Error()))
-	} else {
-		defer evalIter.Close()
-		for evalIter.Next() {
-			eval := evalIter.Item()
-			if eval.Target.UserId == uid {
-				ret.CheckEvaluations = append(ret.CheckEvaluations, eval)
-			}
-		}
-	}
+	evalIter, err := u.store.ListAllEvaluations()
+	streamIteratorField(s, "CheckEvaluations", "CheckEvaluations", evalIter, err, addErr, func(eval *happydns.CheckEvaluation) bool {
+		return eval.Target.UserId == uid
+	})
 
-	// Executions scoped to this user (indexed lookup, no limit).
-	if execs, err := u.store.ListExecutionsByUser(user.Id, 0, nil); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Executions: %s", err.Error()))
-	} else {
-		ret.Executions = append(ret.Executions, execs...)
-	}
+	execs, err := u.store.ListExecutionsByUser(user.Id, 0, nil)
+	streamSliceField(s, "Executions", "Executions", execs, err, addErr)
 
-	// Discovery entries scoped to this user.
-	if entryIter, err := u.store.ListAllDiscoveryEntries(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve DiscoveryEntries: %s", err.Error()))
-	} else {
-		defer entryIter.Close()
-		for entryIter.Next() {
-			entry := entryIter.Item()
-			if entry.Target.UserId == uid {
-				ret.DiscoveryEntries = append(ret.DiscoveryEntries, entry)
-			}
-		}
-	}
+	entryIter, err := u.store.ListAllDiscoveryEntries()
+	streamIteratorField(s, "DiscoveryEntries", "DiscoveryEntries", entryIter, err, addErr, func(entry *happydns.StoredDiscoveryEntry) bool {
+		return entry.Target.UserId == uid
+	})
 
-	// Discovery observation refs scoped to this user.
-	if refIter, err := u.store.ListAllDiscoveryObservationRefs(); err != nil {
-		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve DiscoveryObservationRefs: %s", err.Error()))
-	} else {
-		defer refIter.Close()
-		for refIter.Next() {
-			ref := refIter.Item()
-			if ref.Target.UserId == uid {
-				ret.DiscoveryObservationRefs = append(ret.DiscoveryObservationRefs, ref)
-			}
-		}
-	}
+	refIter, err := u.store.ListAllDiscoveryObservationRefs()
+	streamIteratorField(s, "DiscoveryObservationRefs", "DiscoveryObservationRefs", refIter, err, addErr, func(ref *happydns.DiscoveryObservationRef) bool {
+		return ref.Target.UserId == uid
+	})
 
-	return ret
+	s.beginField("Errors")
+	s.marshal(errs)
+
+	s.raw("}")
+
+	if s.err != nil {
+		return s.err
+	}
+	return s.w.Flush()
 }
 
 func (u *Usecase) Restore(ctx context.Context, backup *happydns.Backup) error {

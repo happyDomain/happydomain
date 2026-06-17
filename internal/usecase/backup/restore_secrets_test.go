@@ -91,7 +91,7 @@ func TestBackupCopiesStoredSecretsVerbatim(t *testing.T) {
 		id2.String(): `{"host":"h","apikey":"hds:1:AQ:c2VhbGVk"}`,
 	}
 
-	ret := uc.Backup()
+	ret := dumpAll(t, uc)
 	found := 0
 	for _, pm := range ret.Providers {
 		w, ok := want[pm.Id.String()]
@@ -180,7 +180,7 @@ func TestBackupUserRedactsSecretType(t *testing.T) {
 		t.Fatalf("Restore: %v", err)
 	}
 
-	ret := uc.BackupUser(user)
+	ret := dumpUser(t, uc, user)
 	if len(ret.Errors) > 0 {
 		t.Fatalf("export errors: %v", ret.Errors)
 	}
@@ -230,7 +230,7 @@ func TestBackupRestoreSafes(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	dump := backup.NewUsecase(src, srcSecrets).Backup()
+	dump := dumpAll(t, backup.NewUsecase(src, srcSecrets))
 	if len(dump.Safes) != 1 || !dump.Safes[0].Owner.Equals(owner) {
 		t.Fatalf("backup safes = %+v, want the owner's safe", dump.Safes)
 	}
@@ -293,7 +293,7 @@ func TestBackupRestoreSafes(t *testing.T) {
 	}
 
 	// The user export carries no safe.
-	if u := backup.NewUsecase(src, srcSecrets).BackupUser(&happydns.User{Id: owner}); len(u.Safes) != 0 {
+	if u := dumpUser(t, backup.NewUsecase(src, srcSecrets), &happydns.User{Id: owner}); len(u.Safes) != 0 {
 		t.Error("the user export carries safes")
 	}
 }
@@ -326,7 +326,7 @@ func TestRestoreRefusesSafesOfAnotherKeyset(t *testing.T) {
 	if err := src.UpdateProvider(p); err != nil {
 		t.Fatal(err)
 	}
-	dump := backup.NewUsecase(src, srcSecrets).Backup()
+	dump := dumpAll(t, backup.NewUsecase(src, srcSecrets))
 	if len(dump.Safes) != 1 {
 		t.Fatalf("backup safes = %+v, want the owner's safe", dump.Safes)
 	}
@@ -406,7 +406,7 @@ func TestBackupRestoreDefaultKeystores(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	dump := backup.NewUsecase(src, plaintextSecrets(t)).Backup()
+	dump := dumpAll(t, backup.NewUsecase(src, plaintextSecrets(t)))
 	if len(dump.Errors) != 0 {
 		t.Fatalf("backup errors: %v", dump.Errors)
 	}
@@ -437,7 +437,7 @@ func TestBackupRestoreDefaultKeystores(t *testing.T) {
 	}
 
 	// The user export carries none: it leaves happyDomain.
-	if u := backup.NewUsecase(src, plaintextSecrets(t)).BackupUser(&happydns.User{Id: alice}); len(u.DefaultKeystores) != 0 {
+	if u := dumpUser(t, backup.NewUsecase(src, plaintextSecrets(t)), &happydns.User{Id: alice}); len(u.DefaultKeystores) != 0 {
 		t.Error("the user export carries default keystores")
 	}
 

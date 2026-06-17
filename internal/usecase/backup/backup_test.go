@@ -82,7 +82,7 @@ func seed(t *testing.T) (storage.Storage, *happydns.User) {
 func TestBackupUserRedactsProviderSecrets(t *testing.T) {
 	db, user := seed(t)
 
-	ret := backup.NewUsecase(db, plaintextSecrets(t)).BackupUser(user)
+	ret := dumpUser(t, backup.NewUsecase(db, plaintextSecrets(t)), user)
 
 	if len(ret.Errors) > 0 {
 		t.Fatalf("unexpected export errors: %v", ret.Errors)
@@ -115,9 +115,9 @@ func TestBackupKeepsProviderSecrets(t *testing.T) {
 	db, user := seed(t)
 
 	uc := backup.NewUsecase(db, plaintextSecrets(t))
-	_ = uc.BackupUser(user)
+	_ = dumpUser(t, uc, user)
 
-	ret := uc.Backup()
+	ret := dumpAll(t, uc)
 
 	if len(ret.Providers) != 1 {
 		t.Fatalf("exported %d providers, want 1", len(ret.Providers))
@@ -132,7 +132,7 @@ func TestBackupKeepsProviderSecrets(t *testing.T) {
 // another version say, is reported and skipped, the others still restored.
 func TestRestoreSkipsUnparsableProvider(t *testing.T) {
 	src, _ := seed(t)
-	dump := backup.NewUsecase(src, plaintextSecrets(t)).Backup()
+	dump := dumpAll(t, backup.NewUsecase(src, plaintextSecrets(t)))
 	if len(dump.Providers) != 1 {
 		t.Fatalf("backup carries %d providers, want 1", len(dump.Providers))
 	}
