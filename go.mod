@@ -24,7 +24,7 @@ require (
 	git.happydns.org/checker-legacy-records v0.1.0
 	git.happydns.org/checker-matrix v0.1.0
 	git.happydns.org/checker-ns-restrictions v0.1.0
-	git.happydns.org/checker-ping v0.2.0
+	git.happydns.org/checker-ping v0.3.0
 	git.happydns.org/checker-ptr v0.1.0
 	git.happydns.org/checker-resolver-propagation v0.2.0
 	git.happydns.org/checker-reverse-zone v0.1.0
