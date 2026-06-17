@@ -36,9 +36,20 @@ import (
 )
 
 // httpClient is a shared client with a sensible timeout for remote checker
-// endpoints.  The per-request context can shorten this further.
+// endpoints. The per-request context can shorten this further. The timeout
+// is configurable through Options.CheckerHTTPTimeout (see SetHTTPTimeout).
 var httpClient = &http.Client{
-	Timeout: 30 * time.Second,
+	Timeout: 120 * time.Second,
+}
+
+// SetHTTPTimeout configures the timeout of the shared client used to reach
+// remote (externalized) checker endpoints. It is wired from
+// Options.CheckerHTTPTimeout at startup. Non-positive values are ignored so
+// the generous default is preserved.
+func SetHTTPTimeout(d time.Duration) {
+	if d > 0 {
+		httpClient.Timeout = d
+	}
 }
 
 // maxErrorBodySize is the maximum number of bytes read from an error response

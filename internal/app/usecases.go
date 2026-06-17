@@ -22,6 +22,7 @@
 package app
 
 import (
+	checkerPkg "git.happydns.org/happyDomain/internal/dnschecker"
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
 	"git.happydns.org/happyDomain/internal/usecase"
 	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
@@ -123,6 +124,7 @@ func (app *App) initUsecases() {
 	)
 
 	// Checker system.
+	checkerPkg.SetHTTPTimeout(app.cfg.CheckerHTTPTimeout)
 	app.usecases.checkerOptionsUC = checkerUC.NewCheckerOptionsUsecase(app.store, app.store).
 		WithDiscoveryEntryStore(app.store).
 		WithAdminOptions(app.cfg.CheckerAdminOptions)

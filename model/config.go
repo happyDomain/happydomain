@@ -111,6 +111,12 @@ type Options struct {
 	// CheckerJanitorInterval is how often the retention janitor runs.
 	CheckerJanitorInterval time.Duration
 
+	// CheckerHTTPTimeout is the timeout applied to requests sent to remote
+	// (externalized) checker endpoints. Some checkers (e.g. DNSViz, which
+	// performs a full recursive DNSSEC analysis) routinely take well over a
+	// minute, so the default is generous.
+	CheckerHTTPTimeout time.Duration
+
 	// CheckerInactivityPauseDays is the system-wide default number of days
 	// without login after which the scheduler stops running checks for a
 	// user. 0 disables inactivity pausing globally; per-user UserQuota

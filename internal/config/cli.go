@@ -52,6 +52,7 @@ func declareFlags(o *happydns.Options) {
 	flag.IntVar(&o.CheckerMaxConcurrency, "checker-max-concurrency", runtime.NumCPU(), "Maximum number of checker jobs that can run simultaneously")
 	flag.IntVar(&o.CheckerRetentionDays, "checker-retention-days", 365, "System-wide default retention horizon for check execution history (overridable per user)")
 	flag.DurationVar(&o.CheckerJanitorInterval, "checker-janitor-interval", 6*time.Hour, "How often the checker retention janitor runs")
+	flag.DurationVar(&o.CheckerHTTPTimeout, "checker-http-timeout", 120*time.Second, "Timeout for requests sent to remote (externalized) checker endpoints")
 	flag.IntVar(&o.CheckerInactivityPauseDays, "checker-inactivity-pause-days", 90, "Pause checks for users that haven't logged in for this many days (0 disables, overridable per user)")
 	flag.IntVar(&o.CheckerMaxChecksPerDay, "checker-max-checks-per-day", 0, "System-wide default cap on scheduled checker executions per user per day; counter resets at 00:00 UTC and is in-memory only (0 = unlimited, overridable per user; see docs/checker-quotas.md)")
 	flag.BoolVar(&o.CheckerCountManualTriggers, "checker-count-manual-triggers", true, "When true (default), manual checker triggers count against UserQuota.MaxChecksPerDay and are refused with HTTP 429 once exhausted; when false, manual triggers bypass the quota entirely (see docs/checker-quotas.md)")
