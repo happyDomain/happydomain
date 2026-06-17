@@ -40,7 +40,7 @@ require (
 	github.com/DNSControl/dnscontrol/v4 v4.39.0
 	github.com/JGLTechnologies/gin-rate-limit v1.5.8
 	github.com/altcha-org/altcha-lib-go v1.0.0
-	github.com/coreos/go-oidc/v3 v3.18.0
+	github.com/coreos/go-oidc/v3 v3.19.0
 	github.com/earthboundkid/versioninfo/v2 v2.24.1
 	github.com/fatih/color v1.19.0
 	github.com/gin-contrib/sessions v1.1.0
