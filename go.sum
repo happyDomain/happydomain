@@ -56,6 +56,8 @@ git.happydns.org/checker-ping v0.2.0 h1:PniGo0EmABqNM5cAoZV7ssiCJfJmGeK7wU2hwz2u
 git.happydns.org/checker-ping v0.2.0/go.mod h1:AWL2OXvZQfdbaj4X2sE8e09ptlbBUqaf9tXhmVQutWQ=
 git.happydns.org/checker-ping v0.3.0 h1:/2AZrWej3MlY5pO3xCAVQO3B40B+wQfaGqOYSZ6WN6o=
 git.happydns.org/checker-ping v0.3.0/go.mod h1:AWL2OXvZQfdbaj4X2sE8e09ptlbBUqaf9tXhmVQutWQ=
+git.happydns.org/checker-ping v0.4.0 h1:GXfKJI4K7EEwTm0ADh1/5I/2qfAq9s30xnhzDNtGO2U=
+git.happydns.org/checker-ping v0.4.0/go.mod h1:09rzB4jAy9GBDTvG6NK8nH+idyKDUqUjbGH0V2JHNPs=
 git.happydns.org/checker-ptr v0.1.0 h1:B/oaeiNehMUtBcZXsuVW+lk+tbrIGKz6UiRkUpszKhw=
 git.happydns.org/checker-ptr v0.1.0/go.mod h1:jhi+CDu5K/pStNvL6TB6izjgxxiyjcEI/0uRnUMGKL4=
 git.happydns.org/checker-resolver-propagation v0.2.0 h1:AYAgmoKAsCKffVjXGArsTPIiYUqrvtYPHIQYK/YlVVg=
@@ -64,6 +66,8 @@ git.happydns.org/checker-reverse-zone v0.1.0 h1:hzYPJB/MB09GkZ8dY917bZtzM1yKOCRW
 git.happydns.org/checker-reverse-zone v0.1.0/go.mod h1:BaXNcqgrqd+0L3Tg3QuN4kbr5MiWjffz5TGoci7cE/E=
 git.happydns.org/checker-sdk-go v1.10.0 h1:2emO52iJ/ZsvfJgRBFA5P5wPvPxvc58P0up5cgb6Mi4=
 git.happydns.org/checker-sdk-go v1.10.0/go.mod h1:aNAcfYFfbhvH9kJhE0Njp5GX0dQbxdRB0rJ0KvSC5nI=
+git.happydns.org/checker-sdk-go v1.11.0 h1:+hs8OpcgvRMAoWyfqxih/Q0KYYUI1R8oFxO4RKioMLk=
+git.happydns.org/checker-sdk-go v1.11.0/go.mod h1:aNAcfYFfbhvH9kJhE0Njp5GX0dQbxdRB0rJ0KvSC5nI=
 git.happydns.org/checker-sip v0.2.0 h1:ZBYZO/ocBhdFKM70xEZOL/v4OJ36BWU6wPVBcS871NM=
 git.happydns.org/checker-sip v0.2.0/go.mod h1:B32Nq41GrRWHvWzueZXLFsDSqDvndocaGdEl59meMrM=
 git.happydns.org/checker-smtp v0.1.0 h1:Sa3adUCXvuI83p/clwq3+/M+6l+WiBppqcuw+nVtdP0=

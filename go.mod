@@ -24,11 +24,11 @@ require (
 	git.happydns.org/checker-legacy-records v0.1.0
 	git.happydns.org/checker-matrix v0.1.0
 	git.happydns.org/checker-ns-restrictions v0.1.0
-	git.happydns.org/checker-ping v0.3.0
+	git.happydns.org/checker-ping v0.4.0
 	git.happydns.org/checker-ptr v0.1.0
 	git.happydns.org/checker-resolver-propagation v0.2.0
 	git.happydns.org/checker-reverse-zone v0.1.0
-	git.happydns.org/checker-sdk-go v1.10.0
+	git.happydns.org/checker-sdk-go v1.11.0
 	git.happydns.org/checker-sip v0.2.0
 	git.happydns.org/checker-smtp v0.1.0
 	git.happydns.org/checker-srv v0.2.0
