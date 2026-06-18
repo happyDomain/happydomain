@@ -32,7 +32,7 @@ require (
 	git.happydns.org/checker-sip v0.2.0
 	git.happydns.org/checker-smtp v0.1.0
 	git.happydns.org/checker-srv v0.2.0
-	git.happydns.org/checker-ssh v0.2.0
+	git.happydns.org/checker-ssh v0.3.0
 	git.happydns.org/checker-stun-turn v0.2.0
 	git.happydns.org/checker-tls v0.7.0
 	git.happydns.org/checker-xmpp v0.2.0
