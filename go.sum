@@ -84,6 +84,8 @@ git.happydns.org/checker-stun-turn v0.2.0 h1:fJs9dlqh0WXyCh6EHmXZfFjk4BxngrFh1w4
 git.happydns.org/checker-stun-turn v0.2.0/go.mod h1:P8l1X4I+YMqF+2SkwmGFIYiXT/63HcoGAcc+qu2MtoQ=
 git.happydns.org/checker-tls v0.7.0 h1:mfNHYbHMGS40y+N2rudC2svT/xLK7KCiSa7V8/RhcTM=
 git.happydns.org/checker-tls v0.7.0/go.mod h1:wlY4UI3owvqMAtOcXLmskpTpZ7xPjuiV6M42+rFZDQo=
+git.happydns.org/checker-tls v0.8.0 h1:lDNbO/mD4ny2L0EDLeSOxiwrtEi5N2FHFT9C7slhtnc=
+git.happydns.org/checker-tls v0.8.0/go.mod h1:Aj4sEpgNoQOEumLFJ9kK0JGXNZzGLgGZwNIgQY+YJlc=
 git.happydns.org/checker-xmpp v0.2.0 h1:p8c15zEBoWxoYkZ2fmRx42f209WBPMpD00wbH02/lYk=
 git.happydns.org/checker-xmpp v0.2.0/go.mod h1:Mrq1QxtkwZiYCDDlPf+r3pE+NT8wpqReBDhD7eGs0R4=
 git.happydns.org/checker-zonemaster v0.1.0 h1:1Qa0HtAGTfNU/3XvHhxDNJR9Td8DLQa8PrcNbexoeyI=

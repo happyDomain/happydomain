@@ -34,7 +34,7 @@ require (
 	git.happydns.org/checker-srv v0.2.0
 	git.happydns.org/checker-ssh v0.3.0
 	git.happydns.org/checker-stun-turn v0.2.0
-	git.happydns.org/checker-tls v0.7.0
+	git.happydns.org/checker-tls v0.8.0
 	git.happydns.org/checker-xmpp v0.2.0
 	git.happydns.org/checker-zonemaster v0.1.0
 	github.com/DNSControl/dnscontrol/v4 v4.39.0
