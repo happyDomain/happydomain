@@ -472,6 +472,8 @@ github.com/libdns/ionos v1.2.0 h1:FQ2xQTBfsjc7aMArRBBCs9l48Squt76GHXbxDsqOKgw=
 github.com/libdns/ionos v1.2.0/go.mod h1:g/JYno/+VXdujTGPBDMDeCfeLF0PJyJynsCrFu+2EFQ=
 github.com/libdns/libdns v1.1.1 h1:wPrHrXILoSHKWJKGd0EiAVmiJbFShguILTg9leS/P/U=
 github.com/libdns/libdns v1.1.1/go.mod h1:4Bj9+5CQiNMVGf87wjX4CY3HQJypUHRuLvlsfsZqLWQ=
+github.com/libdns/scaleway v0.3.1 h1:PngueHmCpZi/dBcm6aZDr6aIkCDecW0ZFAHvL295XqM=
+github.com/libdns/scaleway v0.3.1/go.mod h1:5Qvycz5Y3ROh5HPhcP452yW10wuFFViymcr3nR3mLKM=
 github.com/libdns/spaceship v1.0.0 h1:v+O5e4mNyfns/H73nrM3+bYpIc4y1nuxv3dgBcCtJII=
 github.com/libdns/spaceship v1.0.0/go.mod h1:jNt+tmiQRPE8iY8mtriyPuT3+G+AEFr29C1uVcx3hd8=
 github.com/likexian/gokit v0.25.16 h1:wwBeUIN/OdoPp6t00xTnZE8Di/+s969Bl5N2Kw6bzP8=
@@ -592,6 +594,8 @@ github.com/rrivera/identicon v0.0.0-20240116195454-d5ba35832c0d h1:l3+2LWCbVxn5i
 github.com/rrivera/identicon v0.0.0-20240116195454-d5ba35832c0d/go.mod h1:TbpErkob6SY7cyozRVSGoB3OlO2qOAgVN8O3KAJ4fMI=
 github.com/sagikazarmark/locafero v0.12.0 h1:/NQhBAkUb4+fH1jivKHWusDYFjMOOKU88eegjfxfHb4=
 github.com/sagikazarmark/locafero v0.12.0/go.mod h1:sZh36u/YSZ918v0Io+U9ogLYQJ9tLLBmM4eneO6WwsI=
+github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36 h1:ObX9hZmK+VmijreZO/8x9pQ8/P/ToHD/bdSb4Eg4tUo=
+github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36/go.mod h1:LEsDu4BubxK7/cWhtlQWfuxwL4rf/2UEpxXz1o1EMtM=
 github.com/shopspring/decimal v1.4.0 h1:bxl37RwXBklmTi0C79JfXCEBD1cqqHt0bbgBAGFp81k=
 github.com/shopspring/decimal v1.4.0/go.mod h1:gawqmDU56v4yIKSwfBSFip1HdCCXN8/+DMd9qYNcwME=
 github.com/smartystreets/assertions v1.2.0 h1:42S6lae5dvLc7BrLu/0ugRtcFVjoJNMC/N3yZFZkDFs=

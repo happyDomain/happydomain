@@ -54,6 +54,7 @@ require (
 	github.com/libdns/godaddy v1.1.0
 	github.com/libdns/ionos v1.2.0
 	github.com/libdns/libdns v1.1.1
+	github.com/libdns/scaleway v0.3.1
 	github.com/libdns/spaceship v1.0.0
 	github.com/miekg/dns v1.1.72
 	github.com/mileusna/useragent v1.3.5
@@ -101,6 +102,7 @@ require (
 	github.com/redis/go-redis/v9 v9.18.0 // indirect
 	github.com/refraction-networking/utls v1.8.2 // indirect
 	github.com/sagikazarmark/locafero v0.12.0 // indirect
+	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36 // indirect
 	github.com/sony/gobreaker/v2 v2.4.0 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
@@ -113,6 +115,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.1 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
 require (
