@@ -38,7 +38,7 @@
         configureLink?: string;
         detailsLink?: string;
         historyLink?: string;
-        message?: string;
+        messages?: string[];
         startedAt?: Date | string;
         scope?: CheckerScope;
         checkerId?: string;
@@ -53,7 +53,7 @@
         configureLink,
         detailsLink,
         historyLink,
-        message,
+        messages,
         startedAt,
         scope,
         checkerId,
@@ -104,9 +104,9 @@
                 </a>
             {/if}
         </div>
-        {#if message}
-            <p class="check-message">{message}</p>
-        {/if}
+        {#each messages ?? [] as msg}
+            <p class="small text-body-secondary mb-0">{msg}</p>
+        {/each}
         {#if startedAt || historyLink}
             <p class="small text-body-secondary mb-0">
                 {#if startedAt}
