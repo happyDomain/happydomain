@@ -209,6 +209,7 @@ func (e *Engine) RunExecution(ctx context.Context, exec *happydns.Execution, pla
 	exec.Status = happydns.ExecutionDone
 	exec.EndedAt = &endTime
 	exec.Result = result
+	exec.Messages = collectMessages(eval.States)
 	exec.EvaluationID = &eval.Id
 	if err := e.execStore.UpdateExecution(exec); err != nil {
 		log.Printf("CheckerEngine: failed to update execution: %v", err)
@@ -380,6 +381,19 @@ func (e *Engine) runPipeline(ctx context.Context, def *happydns.CheckerDefinitio
 	}
 
 	return result, eval, nil
+}
+
+// collectMessages gathers the non-empty per-rule messages from the evaluation
+// states into a flat slice, preserving order. It is the array-shaped
+// counterpart to the joined Result.Message summary.
+func collectMessages(states []happydns.CheckState) []string {
+	var msgs []string
+	for _, s := range states {
+		if s.Message != "" {
+			msgs = append(msgs, s.Message)
+		}
+	}
+	return msgs
 }
 
 // RecoverStaleExecutions scans all executions and marks any still in Pending

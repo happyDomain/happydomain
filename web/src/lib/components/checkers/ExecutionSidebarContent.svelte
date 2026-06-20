@@ -172,11 +172,13 @@
                             </Badge>
                         </td>
                     </tr>
-                    {#if $currentExecution.result?.message}
+                    {#if $currentExecution.messages && $currentExecution.messages.length > 0}
                         <tr>
                             <th>{$t("checkers.result.field.status-message")}</th>
-                            <td class="text-truncate" style="max-width: 0">
-                                {$currentExecution.result.message}
+                            <td>
+                                {#each $currentExecution.messages as msg}
+                                    <div>{msg}</div>
+                                {/each}
                             </td>
                         </tr>
                     {/if}

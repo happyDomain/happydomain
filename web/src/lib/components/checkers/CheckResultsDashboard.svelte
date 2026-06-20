@@ -324,7 +324,7 @@
                                     ? item.links.execution!(checker.id!, exec.id!)
                                     : undefined}
                                 historyLink={item.links.executions!(checker.id!)}
-                                message={exec?.result?.message}
+                                messages={exec?.messages}
                                 startedAt={exec?.startedAt}
                                 scope={item.scope}
                                 checkerId={checker.id}

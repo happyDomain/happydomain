@@ -320,6 +320,7 @@ type Execution struct {
 	Status       ExecutionStatus `json:"status" binding:"required" readonly:"true"`
 	Error        string          `json:"error,omitempty" readonly:"true"`
 	Result       CheckState      `json:"result" readonly:"true"`
+	Messages     []string        `json:"messages,omitempty" readonly:"true"`
 	EvaluationID *Identifier     `json:"evaluationId,omitempty" swaggertype:"string" readonly:"true"`
 }
 
