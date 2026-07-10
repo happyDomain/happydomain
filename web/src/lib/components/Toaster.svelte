@@ -48,7 +48,19 @@
     });
 </script>
 
-<div class="toast-container position-fixed top-0 end-0 p-3 mt-5" class:page-hidden={hidden} style="z-index: 1060">
+<!--
+     The container is a persistent ARIA live region so that toasts pushed after
+     an action (create/update/delete, errors, ...) are announced to screen
+     readers as soon as they appear (WCAG 2.2 AA, 4.1.3 Status Messages).
+-->
+<div
+    class="toast-container position-fixed top-0 end-0 p-3 mt-5"
+    class:page-hidden={hidden}
+    style="z-index: 1060"
+    role="status"
+    aria-live="polite"
+    aria-atomic="false"
+>
     {#each $toasts as toast}
         <Toast onmouseenter={() => toast.pause()} onmouseleave={() => toast.resume()}>
             <ToastHeader toggle={() => toast.dismiss()} icon={toast.getColor()}>

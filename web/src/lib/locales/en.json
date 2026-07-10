@@ -446,6 +446,8 @@
         "another": "Use another provider",
         "associations": "{{count:eq; 0:no domain associated; 1:{{count}} domain associated; default:{{count}} domains associated}}",
         "check-config": "Check your provider configuration",
+        "deleted": "The domain provider “{{name}}” was deleted.",
+        "delete-failed": "Could not delete the domain provider “{{name}}”: {{error}}",
         "features-table-caption": "Supported capabilities for each DNS provider",
         "description": "Manage your DNS provider connections and credentials",
         "delete": "Delete this domain provider",

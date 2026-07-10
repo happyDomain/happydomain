@@ -37,6 +37,7 @@
     } from "$lib/components/modals/NewProvider.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { Provider } from "$lib/model/provider";
+    import { toasts } from "$lib/stores/toasts";
     import { domains, refreshDomains } from "$lib/stores/domains";
     import {
         providers,
@@ -106,7 +107,21 @@
             }
         }
 
-        await deleteProvider(item._id);
+        const providerName =
+            item._comment || $providersSpecs?.[item._srctype]?.name || item._srctype;
+        try {
+            await deleteProvider(item._id);
+            toasts.addToast({
+                message: $t("provider.deleted", { name: providerName }),
+                type: "success",
+                timeout: 5000,
+            });
+        } catch (error) {
+            toasts.addErrorToast({
+                message: $t("provider.delete-failed", { name: providerName, error: String(error) }),
+                timeout: 10000,
+            });
+        }
         refreshProviders();
     }
 </script>
