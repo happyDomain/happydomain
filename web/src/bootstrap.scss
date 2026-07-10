@@ -731,6 +731,14 @@ $theme-colors: map-merge($theme-colors, $custom-theme-colors);
     --bs-card-border-color: var(--hd-border-1);
 }
 
+// Links embedded in an alert must not rely on colour alone to be recognised
+// as links (WCAG 2.2 AA, 1.4.1 Use of Color) — always underline them so they
+// stand out from the surrounding tinted body text.
+.alert a:not(.btn) {
+    text-decoration: underline;
+    font-weight: 500;
+}
+
 // Alerts: tint background + colored border to match diff/semantic system
 .alert-success {
     background-color: var(--hd-success-bg);
