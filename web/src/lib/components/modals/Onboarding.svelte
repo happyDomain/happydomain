@@ -449,7 +449,7 @@
     }
 
     .step-item.active {
-        color: var(--bs-primary);
+        color: var(--hd-accent-text);
         background-color: var(--bs-primary-bg-subtle);
     }
 
@@ -472,12 +472,12 @@
 
     .step-item.active .step-number {
         background-color: var(--bs-primary);
-        color: var(--bs-white);
+        color: var(--hd-accent-fg);
     }
 
     .step-item.completed .step-number {
         background-color: var(--bs-primary);
-        color: var(--bs-white);
+        color: var(--hd-accent-fg);
     }
 
     .step-label {
@@ -513,7 +513,7 @@
     .feature-link {
         font-size: 0.75rem;
         font-weight: 500;
-        color: var(--bs-primary);
+        color: var(--hd-accent-text);
         text-decoration: none;
         display: flex;
         align-items: center;

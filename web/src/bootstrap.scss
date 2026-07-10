@@ -69,25 +69,35 @@ $hd-bg-inset: #eeeeef;
 
 $hd-fg-1: #0a0a0b;
 $hd-fg-2: #3f3f46;
-$hd-fg-3: #71717a;
-$hd-fg-4: #a1a1aa;
+$hd-fg-3: #5f5f68; // secondary / muted — AA (>=4.5) on light surfaces
+$hd-fg-4: #6f6f77; // placeholder — AA (>=4.5) on light surfaces
+$hd-fg-disabled: #a1a1aa; // disabled controls ONLY — exempt from contrast
 
 $hd-border-1: #e4e4e7;
 $hd-border-2: #d1d1d6;
 $hd-border-3: #a1a1aa;
 
-// — Semantic ─────────────────────────────────────────────────────────────────
-$hd-success: $hd-green-500;
+// — Semantic (text/icon shades, tuned for AA on light surfaces) ───────────────
+$hd-success: $hd-green-800; // #0d7254 — AA on light
 $hd-success-bg: $hd-green-50;
-$hd-danger: #e5484d;
+$hd-danger: #b8262d;
 $hd-danger-bg: #fff1f2;
-$hd-warning: #f59e0b;
+$hd-warning: #945707; // AA amber (bright #f59e0b = large graphics only)
 $hd-warning-bg: #fffbeb;
-$hd-info: #0ea5e9;
+$hd-info: #0b6aa3;
 $hd-info-bg: #f0f9ff;
+
+// — Accent (green — precise use only). The brand mark green (#1cb487) fails as
+//   an interactive fill, so the FILL is a darker teal that clears AA with white
+//   text; green as TEXT uses a deeper shade still. ─────────────────────────────
+$hd-accent-fill: #158866; // interactive fill — white text 5.9:1
+$hd-accent-fill-hover: #12795b;
+$hd-accent-fg: #ffffff; // white text on the accent fill
+$hd-accent-text: #0b6349; // green as TEXT on white/subtle — AA 7.2:1
 
 // — Focus ring ───────────────────────────────────────────────────────────────
 $hd-focus-ring: rgba(28, 180, 135, 0.22);
+$hd-focus: $hd-green-800; // #0d7254 solid visible-focus outline (2.4.7)
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  3. BOOTSTRAP VARIABLE OVERRIDES
@@ -97,9 +107,9 @@ $hd-focus-ring: rgba(28, 180, 135, 0.22);
 // ── Color system ────────────────────────────────────────────────────────────
 // Re-point Bootstrap's $green to our brand ramp so the generated utilities
 // (`text-success`, `bg-success`, etc) match exactly.
-$primary: $hd-green-500;
+$primary: $hd-accent-fill; // #158866 interactive fill (brand mark green = graphics only)
 $secondary: $hd-fg-3;
-$success: $hd-green-500;
+$success: $hd-accent-fill;
 $info: $hd-info;
 $warning: $hd-warning;
 $danger: $hd-danger;
@@ -122,7 +132,7 @@ $black: #000000;
 // Custom theme color: "accent" — same green but available as a separate slot
 // so designers can use `.btn-accent`, `.text-accent`, etc.
 $custom-theme-colors: (
-    "accent": $hd-green-500,
+    "accent": $hd-accent-fill,
     "brand": $hd-green-500,
     "plum": $hd-plum-500,
 );
@@ -148,8 +158,10 @@ $border-radius-xxl: 12px;
 $border-radius-pill: 9999px;
 
 // ── Links ───────────────────────────────────────────────────────────────────
-$link-color: $hd-green-500;
-$link-hover-color: $hd-green-700;
+// green-500 (#1cb487) on white is only 2.6:1 — fails WCAG AA (1.4.3). Use the
+// accessible green-as-text shade (#0b6349, ~7.2:1) for link/body text.
+$link-color: $hd-accent-text;
+$link-hover-color: $hd-accent-fill-hover;
 $link-decoration: none;
 $link-hover-decoration: underline;
 
@@ -278,7 +290,7 @@ $input-border-radius-lg: $border-radius-lg;
 $input-padding-y: 0.5rem;
 $input-padding-x: 0.75rem;
 $input-placeholder-color: $hd-fg-4;
-$input-focus-border-color: $hd-green-400;
+$input-focus-border-color: $hd-accent-fill;
 $input-focus-box-shadow: $focus-ring-box-shadow;
 $input-box-shadow: $box-shadow-inset;
 
@@ -287,7 +299,7 @@ $form-label-font-weight: 500;
 $form-label-font-size: $font-size-sm;
 
 $form-check-input-border: 1px solid $hd-border-2;
-$form-check-input-checked-bg-color: $hd-green-500;
+$form-check-input-checked-bg-color: $hd-accent-fill;
 $form-check-input-focus-box-shadow: $focus-ring-box-shadow;
 
 // Cards
@@ -305,7 +317,7 @@ $card-spacer-x: 1.25rem;
 $navbar-padding-y: 0.75rem;
 $navbar-light-color: $hd-fg-2;
 $navbar-light-hover-color: $hd-fg-1;
-$navbar-light-active-color: $hd-green-700;
+$navbar-light-active-color: $hd-accent-text;
 $navbar-light-brand-color: $hd-fg-1;
 $navbar-light-brand-hover-color: $hd-fg-1;
 
@@ -316,7 +328,7 @@ $dropdown-border-radius: $border-radius-lg;
 $dropdown-box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 $dropdown-link-hover-bg: $hd-bg-subtle;
 $dropdown-link-active-bg: $hd-green-50;
-$dropdown-link-active-color: $hd-green-700;
+$dropdown-link-active-color: $hd-accent-text;
 
 // Modals
 $modal-content-bg: $hd-bg-canvas;
@@ -346,8 +358,9 @@ $table-striped-bg: $hd-bg-subtle;
 $table-hover-bg: $hd-bg-subtle;
 $table-color: $hd-fg-2;
 
-// Code
-$code-color: $hd-green-700;
+// Code — use the accessible green-as-text shade (#0b6349) for AA on the subtle
+// code background.
+$code-color: $hd-accent-text;
 $code-font-size: 0.9em;
 $kbd-bg: $hd-fg-1;
 $pre-color: $hd-fg-2;
@@ -419,6 +432,18 @@ $theme-colors: map-merge($theme-colors, $custom-theme-colors);
 
 :root,
 [data-bs-theme="light"] {
+    // Green text must clear 4.5:1 on light surfaces — re-point Bootstrap's
+    // emphasis/link tokens at the accessible green-as-text shade (#0b6349).
+    --bs-primary-text-emphasis: #{$hd-accent-text};
+    --bs-success-text-emphasis: #{$hd-accent-text};
+    --bs-link-color: #{$hd-accent-text};
+    --bs-link-color-rgb:
+        #{red($hd-accent-text)}, #{green($hd-accent-text)}, #{blue($hd-accent-text)};
+    --bs-link-hover-color: #{$hd-accent-fill-hover};
+    --bs-link-hover-color-rgb:
+        #{red($hd-accent-fill-hover)}, #{green($hd-accent-fill-hover)},
+        #{blue($hd-accent-fill-hover)};
+
     // Plum ramp
     --hd-plum-50: #{$hd-plum-50};
     --hd-plum-100: #{$hd-plum-100};
@@ -463,6 +488,7 @@ $theme-colors: map-merge($theme-colors, $custom-theme-colors);
     --hd-fg-2: #{$hd-fg-2};
     --hd-fg-3: #{$hd-fg-3};
     --hd-fg-4: #{$hd-fg-4};
+    --hd-fg-disabled: #{$hd-fg-disabled};
     --hd-fg-inverse: #ffffff;
 
     // Borders
@@ -471,13 +497,19 @@ $theme-colors: map-merge($theme-colors, $custom-theme-colors);
     --hd-border-3: #{$hd-border-3};
 
     // Accent
-    --hd-accent: #{$hd-green-500};
-    --hd-accent-hover: #{$hd-green-600};
-    --hd-accent-fg: #ffffff;
+    --hd-accent: #{$hd-accent-fill}; // #158866 interactive fill
+    --hd-accent-hover: #{$hd-accent-fill-hover};
+    // Text drawn ON the accent fill (buttons, badges, fills). White on #158866
+    // clears 5.9:1 (WCAG AA, 1.4.3).
+    --hd-accent-fg: #{$hd-accent-fg};
+    // Accessible green for green TEXT on light surfaces (links, .text-primary,
+    // headings). The fill fails as text, so use #0b6349 (~7.2:1).
+    --hd-accent-text: #{$hd-accent-text};
     --hd-accent-subtle: #{$hd-green-50};
     --hd-accent-muted: #{$hd-green-100};
     --hd-accent-border: #{$hd-green-200};
     --hd-focus-ring: #{$hd-focus-ring};
+    --hd-focus: #{$hd-focus}; // solid visible-focus outline (2.4.7)
 
     // Semantic
     --hd-success: #{$hd-success};
@@ -501,8 +533,11 @@ $theme-colors: map-merge($theme-colors, $custom-theme-colors);
 
     // Fonts
     --hd-font-brand: "Quicksand Variable", "Quicksand", sans-serif;
-    --hd-font-ui: "DM Sans", system-ui, -apple-system, sans-serif;
-    --hd-font-mono: "DM Mono", "SFMono-Regular", Consolas, monospace;
+    --hd-font-ui: "Hanken Grotesk Variable", "Hanken Grotesk", system-ui, -apple-system, sans-serif;
+    --hd-font-mono:
+        "JetBrains Mono Variable", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+    // Logo + wordmark ONLY — Fortheenas is not webfont-licensed (raster/SVG exports).
+    --hd-font-logo: "Fortheenas", "Quicksand", "Nunito", sans-serif;
 
     // Radii
     --hd-radius-none: 0;
@@ -533,7 +568,7 @@ $theme-colors: map-merge($theme-colors, $custom-theme-colors);
     --bs-emphasis-color: #f4f7f6;
     --bs-secondary-color: #7a9189;
     --bs-secondary-bg: #181d1b;
-    --bs-tertiary-color: #4a5e58;
+    --bs-tertiary-color: #79918a;
     --bs-tertiary-bg: #1e2422;
     --bs-dark: #f4f7f6;
     --bs-dark-rgb: 244, 247, 246;
@@ -574,7 +609,8 @@ $theme-colors: map-merge($theme-colors, $custom-theme-colors);
     --hd-fg-1: #f4f7f6;
     --hd-fg-2: #b8c4bf;
     --hd-fg-3: #7a9189;
-    --hd-fg-4: #4a5e58;
+    --hd-fg-4: #79918a; // placeholder — AA on dark surfaces
+    --hd-fg-disabled: #4a5e58; // disabled ONLY — exempt
     --hd-fg-inverse: #0c0f0e;
 
     --hd-border-1: #1f2c27;
@@ -584,10 +620,13 @@ $theme-colors: map-merge($theme-colors, $custom-theme-colors);
     --hd-accent: #22d3a3;
     --hd-accent-hover: #1cb487;
     --hd-accent-fg: #0c0f0e;
+    // On dark surfaces the bright green is the accessible text colour.
+    --hd-accent-text: #22d3a3;
     --hd-accent-subtle: #0d2a22;
     --hd-accent-muted: #0f3329;
     --hd-accent-border: #1a5c47;
     --hd-focus-ring: rgba(34, 211, 163, 0.25);
+    --hd-focus: #22d3a3; // solid visible-focus outline (2.4.7)
 
     --hd-success: #22d3a3;
     --hd-success-bg: #0d2a22;
@@ -648,6 +687,25 @@ $theme-colors: map-merge($theme-colors, $custom-theme-colors);
     letter-spacing: -0.02em;
 }
 
+// Green text utilities: the interactive fill fails 4.5:1 as text on light
+// surfaces, so route them through the accessible green-as-text token (#0b6349
+// in light mode, the bright green on dark surfaces). Buttons use the fill
+// (#158866) with white text (below).
+.text-primary,
+.text-success,
+.link-primary,
+.link-success {
+    color: var(--hd-accent-text) !important;
+}
+
+// Bootstrap derives .text-bg-primary/.text-bg-success text colour via
+// color-contrast(); at the #158866 fill's luminance it chooses black, but white
+// is the intended (and AA, 5.9:1) pairing on the accent fill. Force it.
+.text-bg-primary,
+.text-bg-success {
+    color: #fff !important;
+}
+
 // Tighten button hover — flat system, no shadow lift
 .btn-primary,
 .btn-success {
@@ -700,6 +758,19 @@ $theme-colors: map-merge($theme-colors, $custom-theme-colors);
     box-shadow: none;
 }
 
+// List group: the selected item used the saturated #158866 fill, which read as
+// a heavy dark row. Use a subtle accent tint + accent-text + an inset accent
+// bar instead (adapts to dark mode via the --hd-accent-* tokens). The bar keeps
+// "active" perceivable without relying on colour alone (WCAG 1.4.1).
+.list-group {
+    --bs-list-group-active-bg: var(--hd-accent-subtle);
+    --bs-list-group-active-border-color: var(--hd-accent-border);
+    --bs-list-group-active-color: var(--hd-accent-text);
+}
+.list-group-item.active {
+    font-weight: 500;
+}
+
 [data-bs-theme="dark"] .offcanvas,
 [data-bs-theme="dark"] .offcanvas-sm,
 [data-bs-theme="dark"] .offcanvas-md,
@@ -743,22 +814,22 @@ $theme-colors: map-merge($theme-colors, $custom-theme-colors);
 .alert-success {
     background-color: var(--hd-success-bg);
     border-color: var(--hd-accent-border);
-    color: #0d6651;
+    color: var(--hd-success);
 }
 .alert-danger {
     background-color: var(--hd-danger-bg);
     border-color: var(--hd-diff-del-line);
-    color: #9b2c2f;
+    color: var(--hd-danger);
 }
 .alert-warning {
     background-color: var(--hd-warning-bg);
     border-color: #fcd34d;
-    color: #92400e;
+    color: var(--hd-warning);
 }
 .alert-info {
     background-color: var(--hd-info-bg);
     border-color: #bae6fd;
-    color: #075985;
+    color: var(--hd-info);
 }
 
 [data-bs-theme="dark"] {

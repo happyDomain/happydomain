@@ -76,7 +76,7 @@
     .page-title-domain {
         font-size: 0.9rem;
         font-weight: 600;
-        color: var(--bs-primary);
+        color: var(--hd-accent-text);
         letter-spacing: 0.06em;
         text-transform: lowercase;
         margin-top: 0.5rem;
