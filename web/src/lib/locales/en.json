@@ -48,6 +48,7 @@
         "copy-clipboard": "Copy to clipboard",
         "supported": "Supported",
         "not-supported": "Not supported",
+        "skip-to-content": "Skip to main content",
         "continue": "Continue",
         "create-thing": "Create {{thing}}",
         "delete": "Delete",

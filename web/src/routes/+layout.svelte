@@ -95,6 +95,7 @@
     });
 </script>
 
+<a href="#main-content" class="skip-link">{$t("common.skip-to-content")}</a>
 {#if $appConfig.msg_header}
     <div
         class={"text-center fw-semibold py-1 " +
@@ -112,7 +113,11 @@
 <NavigationProgress />
 <Header />
 
-<main class="flex-fill d-flex flex-column justify-content-center bg-body">
+<main
+    id="main-content"
+    tabindex="-1"
+    class="flex-fill d-flex flex-column justify-content-center bg-body"
+>
     {@render children?.()}
 </main>
 

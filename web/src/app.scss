@@ -1910,6 +1910,33 @@ body {
     flex-direction: column;
     min-height: 100%;
 }
+
+// Skip link (WCAG 2.2 AA, 2.4.1 Bypass Blocks): the first focusable element,
+// hidden off-screen until focused, letting keyboard users jump past the header.
+.skip-link {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1080;
+    margin: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--hd-bg-canvas);
+    color: var(--hd-accent-text);
+    border: 1px solid var(--hd-accent);
+    border-radius: var(--hd-radius);
+    font-weight: 600;
+    transform: translateY(-200%);
+    transition: transform 0.15s ease-in-out;
+}
+.skip-link:focus {
+    transform: translateY(0);
+    box-shadow: var(--hd-shadow-focus);
+    outline: none;
+}
+// The main landmark is focusable via the skip link but should not show a ring.
+#main-content:focus {
+    outline: none;
+}
 #app {
     display: flex;
     flex: 1 1 auto;
