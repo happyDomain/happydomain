@@ -34,10 +34,51 @@
 
     let instancename = $state("");
     let showCard = $state(false);
+    let cardEl: HTMLDivElement | undefined = $state();
+    let buttonEl: HTMLButtonElement | undefined = $state();
 
     onMount(() => {
         instancename = encodeURIComponent(window.location.hostname);
     });
+
+    // When the card opens, move keyboard focus into it (WCAG 2.2 AA, 2.4.3 /
+    // 2.1.1) instead of leaving it on the toggle behind the panel.
+    $effect(() => {
+        if (showCard && cardEl) {
+            const first = cardEl.querySelector<HTMLElement>("a, button");
+            first?.focus();
+        }
+    });
+
+    function closeCard(returnFocus = true) {
+        showCard = false;
+        if (returnFocus) buttonEl?.focus();
+    }
+
+    function onCardKeydown(event: KeyboardEvent) {
+        if (event.key === "Escape") {
+            event.preventDefault();
+            closeCard();
+            return;
+        }
+        if (event.key !== "Tab" || !cardEl) return;
+
+        // Keep Tab focus cycling within the open panel.
+        const focusables = Array.from(
+            cardEl.querySelectorAll<HTMLElement>("a, button"),
+        ).filter((el) => !el.hasAttribute("disabled"));
+        if (focusables.length === 0) return;
+
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+        }
+    }
 </script>
 
 {#if showCard}
@@ -45,10 +86,16 @@
         role="presentation"
         class="vox-backdrop"
         transition:fade={{ duration: 200 }}
-        onclick={() => (showCard = false)}
+        onclick={() => closeCard(false)}
     ></div>
     <div
+        bind:this={cardEl}
         class="card vox-card"
+        role="dialog"
+        aria-modal="true"
+        aria-label={$t("common.survey")}
+        tabindex="-1"
+        onkeydown={onCardKeydown}
         transition:fly={{ x: 380, duration: 300, easing: cubicOut }}
     >
         <div class="card-body">
@@ -115,13 +162,14 @@
 {/if}
 <button
     id="voxpeople"
+    bind:this={buttonEl}
     title={$t("common.survey")}
     aria-label={$t("common.survey")}
     aria-expanded={showCard}
     class="d-flex btn justify-content-center align-items-center"
     class:vox-open={showCard}
     data-umami-event="vox-people"
-    onclick={() => (showCard = !showCard)}
+    onclick={() => (showCard ? closeCard(false) : (showCard = true))}
 >
     <Icon name={showCard ? "x-lg" : "chat-right-text"} />
 </button>
@@ -184,6 +232,13 @@
         transform: scale(1.08);
         filter: brightness(0.95);
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    /* The #id selector outweighs the global :focus-visible ring, so the button
+       showed no visible focus (WCAG 2.2 AA, 2.4.7). Restore it explicitly. */
+    #voxpeople:focus-visible {
+        outline: none;
+        box-shadow: var(--hd-shadow-focus);
     }
 
     .vox-open {
