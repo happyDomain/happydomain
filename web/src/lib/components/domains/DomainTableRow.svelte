@@ -72,7 +72,7 @@
                 <Icon name="eye" />
             </Button>
             <Button
-                color="outline-danger"
+                color="danger"
                 title={$t("domains.stop")}
                 onclick={(e) => ondelete(e, domain)}
             >

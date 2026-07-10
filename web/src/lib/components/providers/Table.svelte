@@ -189,7 +189,7 @@
                                 <Icon name="pencil" />
                             </Button>
                             <Button
-                                color="outline-danger"
+                                color="danger"
                                 title={$t("provider.delete")}
                                 onclick={(e) => delProvider(e, item)}
                             >
