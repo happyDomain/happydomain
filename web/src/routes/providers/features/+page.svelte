@@ -56,11 +56,16 @@
     {:then providers}
         <div class="features-wrapper">
             <Table hover>
+                <caption class="visually-hidden">
+                    {$t("provider.features-table-caption")}
+                </caption>
                 <thead>
                     <tr>
-                        <th class="provider-col"></th>
+                        <th class="provider-col" scope="col">
+                            <span class="visually-hidden">{$t("provider.title")}</span>
+                        </th>
                         {#each capabilities as cap}
-                            <th class="cap-col">
+                            <th class="cap-col" scope="col">
                                 {#if cap == "rr-1-A"}
                                     {$t("record.common-records")}
                                 {:else if cap.startsWith("rr-")}
@@ -76,22 +81,27 @@
                     {#each Object.keys(providers) as ptype (ptype)}
                         {@const provider = providers[ptype]}
                         <tr>
-                            <td class="provider-cell">
+                            <th scope="row" class="provider-cell fw-normal">
                                 <ImgProvider {ptype} style="max-width: 100%; max-height: 1.2em" />
                                 <strong title={provider.name}>
                                     {provider.name}
                                 </strong>
-                            </td>
+                            </th>
                             {#each capabilities as cap}
+                                {@const supported = provider.capabilities.includes(cap)}
                                 <td
                                     class="align-middle text-center"
-                                    class:table-danger={!provider.capabilities.includes(cap)}
-                                    class:table-success={provider.capabilities.includes(cap)}
+                                    class:table-danger={!supported}
+                                    class:table-success={supported}
                                 >
-                                    {#if provider.capabilities.includes(cap)}
-                                        <Icon name="check-lg" />
+                                    {#if supported}
+                                        <Icon name="check-lg" aria-hidden="true" />
+                                        <span class="visually-hidden">{$t("common.supported")}</span>
                                     {:else}
-                                        <Icon name="x-lg" />
+                                        <Icon name="x-lg" aria-hidden="true" />
+                                        <span class="visually-hidden"
+                                            >{$t("common.not-supported")}</span
+                                        >
                                     {/if}
                                 </td>
                             {/each}

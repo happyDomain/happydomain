@@ -116,6 +116,8 @@
 <button
     id="voxpeople"
     title={$t("common.survey")}
+    aria-label={$t("common.survey")}
+    aria-expanded={showCard}
     class="d-flex btn justify-content-center align-items-center"
     class:vox-open={showCard}
     data-umami-event="vox-people"

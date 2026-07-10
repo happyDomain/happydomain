@@ -593,6 +593,8 @@
                 "intro": "C'est une version βéta! 🏗️",
                 "part1": "HappyDomain est fonctionnel mais comporte encore de nombreux bugs. Si quelque chose ne fonctionne pas comme vous l'attendez, s'il vous plaît",
                 "report": "dites-le nous",
+                "report-github": "Signaler un problème sur GitHub",
+                "report-gitlab": "Signaler un problème sur GitLab",
                 "part2": ". Nous sommes super réactifs et chaque bug signalé permet d'améliorer l'outil pour tous. Un grand merci par avance 🙏"
             },
             "purpose": "HappyDomain rend la gestion des domaines simple et intuitive. Que vous ayez un seul domaine ou des centaines, notre plateforme vous offre un moyen centralisé de les gérer tous.",
