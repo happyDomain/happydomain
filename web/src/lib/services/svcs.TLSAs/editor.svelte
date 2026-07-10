@@ -438,7 +438,7 @@
                     </label>
                     <button
                         type="button"
-                        class="btn btn-sm btn-outline-danger ms-auto"
+                        class="btn btn-sm btn-danger ms-auto"
                         onclick={() => removeRecord(i)}
                     >
                         Remove
