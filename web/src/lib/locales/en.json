@@ -43,6 +43,8 @@
         "cancel": "Cancel",
         "close": "Close",
         "copy-clipboard": "Copy to clipboard",
+        "supported": "Supported",
+        "not-supported": "Not supported",
         "continue": "Continue",
         "create-thing": "Create {{thing}}",
         "delete": "Delete",
@@ -142,6 +144,7 @@
         "removal": "Confirm Domain Removal",
         "save-modifications": "Save those modifications",
         "stop": "Stop managing this domain",
+        "stop-named": "Stop managing the domain “{{name}}”",
         "view": {
             "cancel-title": "Keep my domain in happyDomain",
             "description": "Review the modifications that will be applied to {{domain}}",
@@ -326,6 +329,8 @@
                 "intro": "It's beta software! 🏗️",
                 "part1": "happyDomain is functional but still very much a work in progress.  If something doesn't work, please",
                 "report": "tell us what's wrong",
+                "report-github": "Report an issue on GitHub",
+                "report-gitlab": "Report an issue on GitLab",
                 "part2": ". We're highly responsive and each reported bug helps us improve the tool for everyone. Thanks in advance 🙏"
             },
             "purpose": "{{happyDomain}} makes domain management simple and intuitive. Whether you have one domain or hundreds, our platform gives you a centralized way to manage them all.",
@@ -431,6 +436,7 @@
         "close-all": "Terminate all sessions",
         "create": "Create API key",
         "current": "current session",
+        "delete-named": "Delete the session “{{name}}”",
         "description": "Name your session",
         "secret": "Session secret",
         "usage": "Here is an example on how to use the generated secret:"
@@ -440,6 +446,7 @@
         "another": "Use another provider",
         "associations": "{{count:eq; 0:no domain associated; 1:{{count}} domain associated; default:{{count}} domains associated}}",
         "check-config": "Check your provider configuration",
+        "features-table-caption": "Supported capabilities for each DNS provider",
         "description": "Manage your DNS provider connections and credentials",
         "delete": "Delete this domain provider",
         "empty": "You have no provider defined currently. Try {{action}}!",
@@ -458,7 +465,9 @@
         "new-form": "New domain provider form",
         "linked-domains": "Linked domains",
         "update": "Update domain provider",
-        "website": "Visit provider's website"
+        "website": "Visit provider's website",
+        "update-named": "Update the domain provider “{{name}}”",
+        "delete-named": "Delete the domain provider “{{name}}”"
     },
     "upgrade": {
         "title": "An update is available!",

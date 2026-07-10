@@ -74,6 +74,7 @@
             <Button
                 color="danger"
                 title={$t("domains.stop")}
+                aria-label={$t("domains.stop-named", { name: domain.domain })}
                 onclick={(e) => ondelete(e, domain)}
             >
                 <Icon name="trash" />

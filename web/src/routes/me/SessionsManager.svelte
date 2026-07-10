@@ -183,6 +183,8 @@
                                 deleting_sessions.has(session.id) ||
                                 is_closing_sessions}
                             outline
+                            title={$t("sessions.delete-named", { name: session.description })}
+                            aria-label={$t("sessions.delete-named", { name: session.description })}
                             on:click={() => del(session)}
                         >
                             {#if deleting_sessions.has(session.id)}

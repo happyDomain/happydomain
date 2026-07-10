@@ -150,7 +150,8 @@
     {color}
     {size}
     class={className}
-    {title}
+    title={title ?? $t("common.help")}
+    aria-label={title ?? $t("common.help")}
     data-umami-event="help"
     data-umami-event-href={href.substring(href.lastIndexOf("/") - 2)}
 >

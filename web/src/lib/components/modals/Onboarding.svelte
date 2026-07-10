@@ -192,12 +192,17 @@
                         <a href="https://git.happyDomain.org/happydomain/-/issues" target="_blank"
                             >{$t("onboarding.welcome.beta.report")}</a
                         >
-                        <a href="https://github.com/happyDomain/happydomain/issues" target="_blank"
+                        <a
+                            href="https://github.com/happyDomain/happydomain/issues"
+                            target="_blank"
+                            aria-label={$t("onboarding.welcome.beta.report-github")}
                             ><Icon name="github" /></a
                         >
                         <a
                             href="https://gitlab.com/happyDomain/happydomain/-/issues"
-                            target="_blank"><Icon name="gitlab" /></a
+                            target="_blank"
+                            aria-label={$t("onboarding.welcome.beta.report-gitlab")}
+                            ><Icon name="gitlab" /></a
                         >{$t("onboarding.welcome.beta.part2")}
                     </Alert>
                     <Row cols={{ sm: 1, md: 2, xl: 4 }}>

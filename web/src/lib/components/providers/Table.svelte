@@ -184,6 +184,9 @@
                             <Button
                                 color="outline-secondary"
                                 title={$t("provider.update")}
+                                aria-label={$t("provider.update-named", {
+                                    name: item._comment || $providersSpecs?.[item._srctype]?.name || item._srctype,
+                                })}
                                 onclick={(e) => updateProvider(e, item)}
                             >
                                 <Icon name="pencil" />
@@ -191,6 +194,9 @@
                             <Button
                                 color="danger"
                                 title={$t("provider.delete")}
+                                aria-label={$t("provider.delete-named", {
+                                    name: item._comment || $providersSpecs?.[item._srctype]?.name || item._srctype,
+                                })}
                                 onclick={(e) => delProvider(e, item)}
                             >
                                 <Icon name="trash" />
