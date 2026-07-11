@@ -91,7 +91,7 @@
 </script>
 
 <form bind:this={formElm} onsubmit={goSignUp}>
-    <FormGroup floating label={$t("email.address")}>
+    <FormGroup floating>
         <Input
             aria-describedby="emailHelpBlock"
             aria-label={$t("email.address")}
@@ -107,6 +107,7 @@
             bind:value={signupForm.email}
             on:change={() => (emailState = signupForm.email!.indexOf("@") > 0)}
         />
+        <label for="email-input">{$t("email.address")}</label>
     </FormGroup>
     <div id="emailHelpBlock" class="form-text mb-3 mt-n2">
         {$t("account.signup.address-why", {
@@ -114,7 +115,7 @@
             "security-operations": $t("account.signup.security-operations"),
         })}
     </div>
-    <FormGroup floating label={$t("common.password")}>
+    <FormGroup floating>
         <Input
             aria-label={$t("common.password")}
             autocomplete="new-password"
@@ -128,8 +129,9 @@
             bind:value={signupForm.password}
             on:change={() => (passwordState = checkWeakPassword(signupForm.password!))}
         />
+        <label for="password-input">{$t("common.password")}</label>
     </FormGroup>
-    <FormGroup floating label={$t("password.confirmation")}>
+    <FormGroup floating>
         <Input
             aria-label={$t("password.confirmation")}
             feedback={!passwordConfirmState ? $t("errors.password-match") : null}
@@ -146,6 +148,7 @@
                     passwordConfirmation,
                 ))}
         />
+        <label for="passwordconfirm-input">{$t("password.confirmation")}</label>
     </FormGroup>
     <FormGroup class="mb-3">
         <Input

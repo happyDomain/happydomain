@@ -155,7 +155,7 @@
 </script>
 
 <form bind:this={formElm} onsubmit={testLogin}>
-    <FormGroup floating label={$t("email.address")}>
+    <FormGroup floating>
         <Input
             aria-describedby="emailHelpBlock"
             aria-label={$t("email.address")}
@@ -170,8 +170,9 @@
             bind:value={loginForm.email}
             on:change={() => (emailState = loginForm.email.indexOf("@") > 0)}
         />
+        <label for="email-input">{$t("email.address")}</label>
     </FormGroup>
-    <FormGroup floating label={$t("common.password")}>
+    <FormGroup floating>
         <Input
             aria-label={$t("common.password")}
             autocomplete="current-password"
@@ -183,6 +184,7 @@
             valid={passwordState}
             bind:value={loginForm.password}
         />
+        <label for="password-input">{$t("common.password")}</label>
     </FormGroup>
     <div class="d-flex justify-content-end mb-3">
         <button type="button" class="btn btn-link btn-sm text-body-secondary p-0 text-decoration-none" onclick={handleForgottenPassword}>
