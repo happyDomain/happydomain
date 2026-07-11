@@ -102,11 +102,11 @@
 </script>
 
 <Modal {isOpen} size="xl" scrollable {toggle}>
-    <ModalHeader {toggle} class="bg-primary-subtle ps-4 pt-4 align-items-start">
+    <ModalHeader {toggle} class="onboarding-header bg-primary-subtle ps-4 pt-4 align-items-start">
         <h3 class="fw-bolder text-primary mb-1">
             {$t("common.welcome")}
         </h3>
-        <p class="text-muted mb-2" style="font-size: 0.85em">
+        <p class="mb-2" style="font-size: 0.85em">
             {$t("onboarding.intro")}
         </p>
     </ModalHeader>
@@ -422,6 +422,12 @@
 </Modal>
 
 <style>
+    @media (max-width: 400px) {
+        :global(.onboarding-header) {
+            display: none;
+        }
+    }
+
     .onboarding-steps {
         background-color: var(--bs-secondary-bg);
         border-right: 1px solid var(--bs-border-color);
