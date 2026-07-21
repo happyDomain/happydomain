@@ -58,11 +58,21 @@ func GenAccountRecoveryHash(recoveryKey []byte, previous bool) string {
 
 // CanRecoverAccount checks if the given key is a valid recovery hash.
 func CanRecoverAccount(u *happydns.UserAuth, key string) error {
+	invalid := fmt.Errorf("The account recovery link you follow is invalid or has expired (it is valid during %d hours)", AccountRecoveryHashValidity/time.Hour)
+
+	// Never authenticate when there is no active recovery request (no
+	// recovery key set) or when no key was submitted. Otherwise an empty
+	// submitted key would match the empty hash returned for an empty
+	// recovery key, allowing an unauthenticated password reset.
+	if len(u.PasswordRecoveryKey) == 0 || key == "" {
+		return invalid
+	}
+
 	if key == GenAccountRecoveryHash(u.PasswordRecoveryKey, false) || key == GenAccountRecoveryHash(u.PasswordRecoveryKey, true) {
 		return nil
 	}
 
-	return fmt.Errorf("The account recovery link you follow is invalid or has expired (it is valid during %d hours)", AccountRecoveryHashValidity/time.Hour)
+	return invalid
 }
 
 // RecoverAccountUsecase handles account recovery operations.
