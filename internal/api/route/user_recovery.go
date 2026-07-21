@@ -22,7 +22,10 @@
 package route
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
+	"golang.org/x/time/rate"
 
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
@@ -32,9 +35,16 @@ import (
 func DeclareUserRecoveryRoutes(router *gin.RouterGroup, authUserUC happydns.AuthUserUsecase, auc *controller.AuthUserController) *controller.UserRecoveryController {
 	urc := controller.NewUserRecoveryController(authUserUC)
 
-	router.PATCH("/users", urc.UserRecoveryOperations)
+	// Throttle sensitive unauthenticated endpoints (account recovery and
+	// email validation) to slow down brute-force and timing attacks against
+	// the recovery/validation hashes. Allow occasional legitimate retries
+	// through a small burst while capping the sustained rate per client IP.
+	recoveryLimiter := middleware.NewIPRateLimiter(rate.Every(time.Minute), 5)
+
+	router.PATCH("/users", recoveryLimiter.Middleware(), urc.UserRecoveryOperations)
 
 	apiUserRoutes := router.Group("/users/:uid")
+	apiUserRoutes.Use(recoveryLimiter.Middleware())
 	apiUserRoutes.Use(middleware.AuthUserHandler(authUserUC))
 
 	apiUserRoutes.POST("/email", urc.ValidateUserAddress)
