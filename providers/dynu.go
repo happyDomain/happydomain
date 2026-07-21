@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2025 happyDomain
+// Copyright (c) 2020-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -22,36 +22,36 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	_ "github.com/DNSControl/dnscontrol/v4/providers/hetznerv2"
+	_ "github.com/DNSControl/dnscontrol/v4/providers/dynu"
 
 	"git.happydns.org/happyDomain/internal/adapters"
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 	"git.happydns.org/happyDomain/model"
 )
 
-type HetznerAPI struct {
-	APIToken string `json:"api_token,omitempty" happydomain:"label=API Token,placeholder=xxxxxxxxxx,required,secret,description=Hetzner API token from the Cloud Console"`
+type DynuAPI struct {
+	APIKey string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,secret,description=Get your API Key in the API Credentials section at https://www.dynu.com/en-US/ControlPanel/APICredentials"`
 }
 
-func (s *HetznerAPI) DNSControlName() string {
-	return "HETZNER_V2"
+func (s *DynuAPI) DNSControlName() string {
+	return "DYNU"
 }
 
-func (s *HetznerAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+func (s *DynuAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 	return adapter.NewDNSControlProviderAdapter(s)
 }
 
-func (s *HetznerAPI) ToDNSControlConfig() (map[string]string, error) {
+func (s *DynuAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"api_token": s.APIToken,
+		"api_key": s.APIKey,
 	}, nil
 }
 
 func init() {
 	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
-		return &HetznerAPI{}
+		return &DynuAPI{}
 	}, happydns.ProviderInfos{
-		Name:        "Hetzner DNS",
-		Description: "German hosting provider with DNS services.",
+		Name:        "Dynu",
+		Description: "Dynamic DNS and domain hosting provider.",
 	}, providerReg.RegisterProvider)
 }

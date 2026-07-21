@@ -22,7 +22,7 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	"github.com/libdns/scaleway"
+	_ "github.com/DNSControl/dnscontrol/v4/providers/scaleway"
 
 	"git.happydns.org/happyDomain/internal/adapters"
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
@@ -30,23 +30,29 @@ import (
 )
 
 type ScalewayAPI struct {
+	AccessKey      string `json:"access_key,omitempty" happydomain:"label=Access Key,placeholder=SCWXXXXXXXXXXXXXXXXX,required,description=Your Scaleway API access key"`
 	SecretKey      string `json:"secret_key,omitempty" happydomain:"label=Secret Key,secret,required,description=Your Scaleway API secret key"`
-	OrganizationID string `json:"organization_id,omitempty" happydomain:"label=Organization ID,description=Your Scaleway Organization or Project ID"`
+	OrganizationID string `json:"organization_id,omitempty" happydomain:"label=Project ID,description=Your Scaleway Project ID (optional)"`
 }
 
-func (s *ScalewayAPI) LibdnsProvider() any {
-	return &scaleway.Provider{
-		SecretKey:      s.SecretKey,
-		OrganizationID: s.OrganizationID,
-	}
+func (s *ScalewayAPI) DNSControlName() string {
+	return "SCALEWAY"
 }
 
 func (s *ScalewayAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
-	return adapter.NewLibdnsProviderAdapter(s)
+	return adapter.NewDNSControlProviderAdapter(s)
+}
+
+func (s *ScalewayAPI) ToDNSControlConfig() (map[string]string, error) {
+	return map[string]string{
+		"access_key": s.AccessKey,
+		"secret_key": s.SecretKey,
+		"project_id": s.OrganizationID,
+	}, nil
 }
 
 func init() {
-	adapter.RegisterLibdnsProviderAdapter(func() happydns.ProviderBody {
+	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
 		return &ScalewayAPI{}
 	}, happydns.ProviderInfos{
 		Name:        "Scaleway",

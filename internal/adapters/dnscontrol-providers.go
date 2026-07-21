@@ -301,7 +301,7 @@ func (p *DNSControlAdapterNSProvider) CreateDomain(fqdn string) (err error) {
 		return
 	}
 
-	err = zc.EnsureZoneExists(strings.TrimSuffix(fqdn, "."), nil)
+	err = zc.EnsureZoneExists(&models.DomainConfig{Name: strings.TrimSuffix(fqdn, ".")})
 	return
 }
 

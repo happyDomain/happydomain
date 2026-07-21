@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2025 happyDomain
+// Copyright (c) 2020-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -22,36 +22,40 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	_ "github.com/DNSControl/dnscontrol/v4/providers/hetznerv2"
+	_ "github.com/DNSControl/dnscontrol/v4/providers/openwrt"
 
 	"git.happydns.org/happyDomain/internal/adapters"
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 	"git.happydns.org/happyDomain/model"
 )
 
-type HetznerAPI struct {
-	APIToken string `json:"api_token,omitempty" happydomain:"label=API Token,placeholder=xxxxxxxxxx,required,secret,description=Hetzner API token from the Cloud Console"`
+type OpenWRTAPI struct {
+	Host     string `json:"host,omitempty" happydomain:"label=Host,placeholder=http://192.168.1.1,required,description=URL of your OpenWRT router (http:// is assumed if no scheme is given)"`
+	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=root,required,description=OpenWRT LuCI username"`
+	Password string `json:"password,omitempty" happydomain:"label=Password,required,secret,description=OpenWRT LuCI password"`
 }
 
-func (s *HetznerAPI) DNSControlName() string {
-	return "HETZNER_V2"
+func (s *OpenWRTAPI) DNSControlName() string {
+	return "OPENWRT"
 }
 
-func (s *HetznerAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
+func (s *OpenWRTAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 	return adapter.NewDNSControlProviderAdapter(s)
 }
 
-func (s *HetznerAPI) ToDNSControlConfig() (map[string]string, error) {
+func (s *OpenWRTAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"api_token": s.APIToken,
+		"host":     s.Host,
+		"username": s.Username,
+		"password": s.Password,
 	}, nil
 }
 
 func init() {
 	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
-		return &HetznerAPI{}
+		return &OpenWRTAPI{}
 	}, happydns.ProviderInfos{
-		Name:        "Hetzner DNS",
-		Description: "German hosting provider with DNS services.",
+		Name:        "OpenWRT",
+		Description: "DNS records hosted on an OpenWRT router.",
 	}, providerReg.RegisterProvider)
 }
