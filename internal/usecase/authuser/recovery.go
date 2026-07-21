@@ -68,7 +68,12 @@ func CanRecoverAccount(u *happydns.UserAuth, key string) error {
 		return invalid
 	}
 
-	if key == GenAccountRecoveryHash(u.PasswordRecoveryKey, false) || key == GenAccountRecoveryHash(u.PasswordRecoveryKey, true) {
+	current := GenAccountRecoveryHash(u.PasswordRecoveryKey, false)
+	previous := GenAccountRecoveryHash(u.PasswordRecoveryKey, true)
+
+	// Use a constant-time comparison to avoid leaking the expected hash
+	// through response timing.
+	if hmac.Equal([]byte(key), []byte(current)) || hmac.Equal([]byte(key), []byte(previous)) {
 		return nil
 	}
 
