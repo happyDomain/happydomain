@@ -135,10 +135,21 @@ In order to validate your account, please follow this link now:
 
 // Validate tries to validate the email address by comparing the given key to the expected one.
 func (uc *EmailValidationUsecase) Validate(user *happydns.UserAuth, form happydns.AddressValidationForm) error {
+	invalid := happydns.ValidationError{Msg: fmt.Sprintf("bad email validation key: the validation address link you follow is invalid or has expired (it is valid during %d hours)", RegistrationHashValidity/time.Hour)}
+
+	// Never validate when there is no key material to derive the hash from
+	// or when no key was submitted.
+	if len(user.PasswordRecoveryKey) == 0 || form.Key == "" {
+		return invalid
+	}
+
 	currentHash := GenRegistrationHash(user.CreatedAt, user.PasswordRecoveryKey, false)
 	previousHash := GenRegistrationHash(user.CreatedAt, user.PasswordRecoveryKey, true)
-	if currentHash == "" || (form.Key != currentHash && form.Key != previousHash) {
-		return happydns.ValidationError{Msg: fmt.Sprintf("bad email validation key: the validation address link you follow is invalid or has expired (it is valid during %d hours)", RegistrationHashValidity/time.Hour)}
+
+	// Use a constant-time comparison to avoid leaking the expected hash
+	// through response timing.
+	if !hmac.Equal([]byte(form.Key), []byte(currentHash)) && !hmac.Equal([]byte(form.Key), []byte(previousHash)) {
+		return invalid
 	}
 
 	now := time.Now()
