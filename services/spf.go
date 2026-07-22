@@ -23,6 +23,7 @@ package svcs
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -70,13 +71,7 @@ func (t *SPFFields) Analyze(txt string) error {
 
 	// Avoid doublon
 	for _, directive := range fields[1:] {
-		exists := false
-		for _, known := range t.Directives {
-			if known == directive {
-				exists = true
-				break
-			}
-		}
+		exists := slices.Contains(t.Directives, directive)
 
 		if !exists {
 			t.Directives = append(t.Directives, directive)

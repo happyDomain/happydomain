@@ -24,6 +24,7 @@ package mailer
 import (
 	"bytes"
 	"io"
+	"maps"
 	"net/mail"
 	"text/template"
 
@@ -104,10 +105,7 @@ func (r *Mailer) SendMail(to *mail.Address, subject, content string) (err error)
 	if err != nil {
 		return err
 	}
-	htmlData := map[string]string{}
-	for k, v := range tplData {
-		htmlData[k] = v
-	}
+	htmlData := maps.Clone(tplData)
 	htmlData["Content"] = buf.String()
 	m.AddAlternativeWriter("text/html", func(w io.Writer) error {
 		return htmlTpl.Execute(w, htmlData)

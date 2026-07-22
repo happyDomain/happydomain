@@ -24,6 +24,7 @@ package adapter
 import (
 	"context"
 	"net/netip"
+	"slices"
 	"testing"
 	"time"
 
@@ -303,13 +304,7 @@ func TestGetLibdnsProviderCapabilities(t *testing.T) {
 	caps := GetLibdnsProviderCapabilities(config)
 
 	// Should include ListDomains since mock implements ZoneLister
-	found := false
-	for _, c := range caps {
-		if c == "ListDomains" {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(caps, "ListDomains")
 	if !found {
 		t.Error("expected ListDomains capability")
 	}
@@ -317,13 +312,7 @@ func TestGetLibdnsProviderCapabilities(t *testing.T) {
 	// Should include common RR types
 	expectedTypes := []string{"rr-1-A", "rr-28-AAAA", "rr-5-CNAME", "rr-15-MX", "rr-16-TXT"}
 	for _, expected := range expectedTypes {
-		found = false
-		for _, c := range caps {
-			if c == expected {
-				found = true
-				break
-			}
-		}
+		found = slices.Contains(caps, expected)
 		if !found {
 			t.Errorf("expected capability %s", expected)
 		}

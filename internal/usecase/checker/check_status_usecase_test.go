@@ -273,7 +273,7 @@ func TestCheckStatusUsecase_DeleteExecutionsByChecker(t *testing.T) {
 	uid, _ := happydns.NewRandomIdentifier()
 	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		exec := &happydns.Execution{
 			CheckerID: "status_test_checker",
 			Target:    target,
@@ -303,7 +303,7 @@ func TestCheckStatusUsecase_ListExecutionsByChecker(t *testing.T) {
 	uid, _ := happydns.NewRandomIdentifier()
 	target := happydns.CheckTarget{UserId: uid.String(), DomainId: "d1"}
 
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		exec := &happydns.Execution{
 			CheckerID: "status_test_checker",
 			Target:    target,
@@ -800,7 +800,7 @@ func TestCheckStatusUsecase_GetMetricsByUser(t *testing.T) {
 	did, _ := happydns.NewRandomIdentifier()
 	target := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		exec := &happydns.Execution{
 			CheckerID: "status_test_checker",
 			Target:    target,
@@ -829,7 +829,7 @@ func TestCheckStatusUsecase_GetMetricsByDomain(t *testing.T) {
 	did, _ := happydns.NewRandomIdentifier()
 	target := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		exec := &happydns.Execution{
 			CheckerID: "status_test_checker",
 			Target:    target,
@@ -856,7 +856,7 @@ func TestCheckStatusUsecase_GetMetricsByUser_LimitApplied(t *testing.T) {
 	did, _ := happydns.NewRandomIdentifier()
 	target := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
 
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		exec := &happydns.Execution{
 			CheckerID: "status_test_checker",
 			Target:    target,

@@ -112,7 +112,7 @@ func (s *inMemoryZoneStorage) GetZone(zoneid happydns.Identifier) (*happydns.Zon
 
 func (s *inMemoryZoneStorage) CreateZone(zone *happydns.Zone) error {
 	if zone.Id == nil {
-		zone.Id = happydns.Identifier([]byte(fmt.Sprintf("zone-%d", len(s.zones))))
+		zone.Id = happydns.Identifier(fmt.Appendf(nil, "zone-%d", len(s.zones)))
 	}
 	s.zones[zone.Id.String()] = zone
 	return nil

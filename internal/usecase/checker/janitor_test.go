@@ -100,12 +100,12 @@ func (s *mockExecStore) ListExecutionsByDomain(happydns.Identifier, int, func(*h
 func (s *mockExecStore) GetExecution(happydns.Identifier) (*happydns.Execution, error) {
 	return nil, nil
 }
-func (s *mockExecStore) CreateExecution(*happydns.Execution) error                          { return nil }
-func (s *mockExecStore) UpdateExecution(*happydns.Execution) error                          { return nil }
-func (s *mockExecStore) RestoreExecution(*happydns.Execution) error                         { return nil }
-func (s *mockExecStore) DeleteExecutionsByChecker(string, happydns.CheckTarget) error       { return nil }
-func (s *mockExecStore) TidyExecutionIndexes() error                                        { return nil }
-func (s *mockExecStore) ClearExecutions() error                                             { return nil }
+func (s *mockExecStore) CreateExecution(*happydns.Execution) error                    { return nil }
+func (s *mockExecStore) UpdateExecution(*happydns.Execution) error                    { return nil }
+func (s *mockExecStore) RestoreExecution(*happydns.Execution) error                   { return nil }
+func (s *mockExecStore) DeleteExecutionsByChecker(string, happydns.CheckTarget) error { return nil }
+func (s *mockExecStore) TidyExecutionIndexes() error                                  { return nil }
+func (s *mockExecStore) ClearExecutions() error                                       { return nil }
 
 // --- mock user resolver ---
 
@@ -331,7 +331,7 @@ func TestJanitor_RunOnce_ContextCancellation(t *testing.T) {
 	es := newMockExecStore()
 
 	// Create many plans with expired executions.
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		id := fmt.Sprintf("plan%d", i)
 		plan := makePlan(id, "")
 		plans = append(plans, plan)
@@ -492,11 +492,11 @@ func (s *mockEvalStore) GetEvaluation(happydns.Identifier) (*happydns.CheckEvalu
 func (s *mockEvalStore) GetLatestEvaluation(happydns.Identifier) (*happydns.CheckEvaluation, error) {
 	return nil, nil
 }
-func (s *mockEvalStore) CreateEvaluation(*happydns.CheckEvaluation) error                    { return nil }
-func (s *mockEvalStore) RestoreEvaluation(*happydns.CheckEvaluation) error                   { return nil }
-func (s *mockEvalStore) DeleteEvaluationsByChecker(string, happydns.CheckTarget) error       { return nil }
-func (s *mockEvalStore) TidyEvaluationIndexes() error                                        { return nil }
-func (s *mockEvalStore) ClearEvaluations() error                                             { return nil }
+func (s *mockEvalStore) CreateEvaluation(*happydns.CheckEvaluation) error              { return nil }
+func (s *mockEvalStore) RestoreEvaluation(*happydns.CheckEvaluation) error             { return nil }
+func (s *mockEvalStore) DeleteEvaluationsByChecker(string, happydns.CheckTarget) error { return nil }
+func (s *mockEvalStore) TidyEvaluationIndexes() error                                  { return nil }
+func (s *mockEvalStore) ClearEvaluations() error                                       { return nil }
 
 // --- mock snapshot store for janitor tests ---
 

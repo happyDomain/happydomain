@@ -74,7 +74,7 @@ func (r *domainContactRule) ValidateOptions(opts happydns.CheckerOptions) error 
 
 	if v, ok := opts["checkRoles"].(string); ok && v != "" {
 		hasOne := false
-		for _, p := range strings.Split(v, ",") {
+		for p := range strings.SplitSeq(v, ",") {
 			role := strings.TrimSpace(p)
 			if role == "" {
 				continue

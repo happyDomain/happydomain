@@ -124,8 +124,8 @@ func (s *mockPlanStore) CreateCheckPlan(plan *happydns.CheckPlan) error {
 func (s *mockPlanStore) UpdateCheckPlan(plan *happydns.CheckPlan) error  { return nil }
 func (s *mockPlanStore) RestoreCheckPlan(plan *happydns.CheckPlan) error { return nil }
 func (s *mockPlanStore) DeleteCheckPlan(happydns.Identifier) error       { return nil }
-func (s *mockPlanStore) TidyCheckPlanIndexes() error                    { return nil }
-func (s *mockPlanStore) ClearCheckPlans() error                         { return nil }
+func (s *mockPlanStore) TidyCheckPlanIndexes() error                     { return nil }
+func (s *mockPlanStore) ClearCheckPlans() error                          { return nil }
 
 // --- mock domain lister ---
 
@@ -189,11 +189,11 @@ func (it *sliceIterator[T]) Next() bool {
 }
 func (it *sliceIterator[T]) NextWithError() bool { return it.Next() }
 func (it *sliceIterator[T]) Item() *T            { return it.cur }
-func (it *sliceIterator[T]) DropItem() error      { return nil }
-func (it *sliceIterator[T]) Key() string           { return "" }
-func (it *sliceIterator[T]) Raw() any              { return nil }
-func (it *sliceIterator[T]) Err() error            { return nil }
-func (it *sliceIterator[T]) Close()                {}
+func (it *sliceIterator[T]) DropItem() error     { return nil }
+func (it *sliceIterator[T]) Key() string         { return "" }
+func (it *sliceIterator[T]) Raw() any            { return nil }
+func (it *sliceIterator[T]) Err() error          { return nil }
+func (it *sliceIterator[T]) Close()              {}
 
 // --- helper to build a scheduler with mock deps ---
 
@@ -263,8 +263,7 @@ func TestScheduler_StartStop(t *testing.T) {
 	engine := &mockEngine{}
 	sched, _, _ := newTestScheduler(engine, nil)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	sched.Start(ctx)
 
@@ -348,8 +347,7 @@ func TestScheduler_Gate(t *testing.T) {
 		return false // block all jobs
 	}, nil)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	sched.Start(ctx)
 	defer sched.Stop()
@@ -672,7 +670,7 @@ func TestSpreadOverdueJobs(t *testing.T) {
 
 	// Add overdue jobs.
 	sched.mu.Lock()
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		heap.Push(&sched.queue, &SchedulerJob{
 			CheckerID: "overdue",
 			Target:    happydns.CheckTarget{UserId: "u", DomainId: "d"},

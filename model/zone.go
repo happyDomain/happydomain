@@ -23,6 +23,7 @@ package happydns
 
 import (
 	"fmt"
+	"maps"
 	"time"
 )
 
@@ -75,9 +76,7 @@ func (z *Zone) DerivateNew() *Zone {
 	newZone.ZoneMeta.LastModified = time.Now()
 	newZone.Services = map[Subdomain][]*Service{}
 
-	for subdomain, svcs := range z.Services {
-		newZone.Services[subdomain] = svcs
-	}
+	maps.Copy(newZone.Services, z.Services)
 
 	return newZone
 }

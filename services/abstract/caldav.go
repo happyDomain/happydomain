@@ -23,6 +23,7 @@ package abstract
 
 import (
 	"bytes"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -90,13 +91,7 @@ func (s *CalDAV) GenComment() string {
 		if p := protoOf(srv.Hdr.Name); p != "" {
 			e.protos[p] = true
 		}
-		seen := false
-		for _, pp := range e.ports {
-			if pp == srv.Port {
-				seen = true
-				break
-			}
-		}
+		seen := slices.Contains(e.ports, srv.Port)
 		if !seen {
 			e.ports = append(e.ports, srv.Port)
 		}

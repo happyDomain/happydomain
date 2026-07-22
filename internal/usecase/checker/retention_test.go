@@ -52,7 +52,7 @@ func TestDecide_FullDetailWindow(t *testing.T) {
 
 	// 20 executions in the first 20 minutes, all inside 0..1 day window.
 	var execs []*happydns.Execution
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		execs = append(execs, mkExec(fmt.Sprintf("e%d", i), time.Duration(i)*time.Minute, now))
 	}
 
@@ -72,7 +72,7 @@ func TestDecide_HourlyBucket(t *testing.T) {
 	// 6 executions in the same hour ~3 days ago (inside hourly window).
 	var execs []*happydns.Execution
 	base := 3*24*time.Hour + 30*time.Minute
-	for i := 0; i < 6; i++ {
+	for i := range 6 {
 		execs = append(execs, mkExec(fmt.Sprintf("e%d", i), base+time.Duration(i)*time.Minute, now))
 	}
 
@@ -91,7 +91,7 @@ func TestDecide_DailyBucket(t *testing.T) {
 
 	// 10 executions on the same day, ~10 days ago (inside daily window).
 	var execs []*happydns.Execution
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		execs = append(execs, mkExec(fmt.Sprintf("e%d", i), 10*24*time.Hour+time.Duration(i)*time.Hour, now))
 	}
 
@@ -111,7 +111,7 @@ func TestDecide_WeeklyBucket(t *testing.T) {
 	// 8 executions in the same ISO week, ~60 days ago (inside weekly window).
 	var execs []*happydns.Execution
 	base := 60 * 24 * time.Hour
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		execs = append(execs, mkExec(fmt.Sprintf("e%d", i), base+time.Duration(i)*time.Hour, now))
 	}
 
@@ -132,7 +132,7 @@ func TestDecide_MonthlyBucket(t *testing.T) {
 	// beyond weekly window which is 365/2 = 182 days).
 	var execs []*happydns.Execution
 	base := 300 * 24 * time.Hour
-	for i := 0; i < 6; i++ {
+	for i := range 6 {
 		execs = append(execs, mkExec(fmt.Sprintf("e%d", i), base+time.Duration(i)*time.Hour, now))
 	}
 
@@ -152,7 +152,7 @@ func TestDecide_ZeroBucketCountsClamped(t *testing.T) {
 
 	// 5 executions ~10 days ago (daily bucket).
 	var execs []*happydns.Execution
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		execs = append(execs, mkExec(fmt.Sprintf("e%d", i), 10*24*time.Hour+time.Duration(i)*time.Hour, now))
 	}
 
@@ -194,12 +194,12 @@ func TestDecide_SmallRetentionCollapseTiers(t *testing.T) {
 
 	var execs []*happydns.Execution
 	// 3 executions inside full-detail window (< 1 day).
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		execs = append(execs, mkExec(fmt.Sprintf("recent%d", i), time.Duration(i)*time.Minute, now))
 	}
 	// 4 executions in the same hour, ~2 days ago (hourly tier).
 	base := 2*24*time.Hour + 30*time.Minute
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		execs = append(execs, mkExec(fmt.Sprintf("hourly%d", i), base+time.Duration(i)*time.Minute, now))
 	}
 	// 1 execution beyond retention (5 days ago).
@@ -249,7 +249,7 @@ func TestDecide_GroupedByTarget(t *testing.T) {
 		}
 	}
 	var execs []*happydns.Execution
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		execs = append(execs, mk(fmt.Sprintf("a%d", i), "a.example"))
 		execs = append(execs, mk(fmt.Sprintf("b%d", i), "b.example"))
 	}

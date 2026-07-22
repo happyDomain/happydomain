@@ -86,12 +86,9 @@ func (rr *SPF) ToRR() dns.RR {
 	numSegments := (txtLen + TXT_SEGMENT_LEN - 1) / TXT_SEGMENT_LEN
 	txts := make([]string, numSegments)
 
-	for i := 0; i < numSegments; i++ {
+	for i := range numSegments {
 		start := i * TXT_SEGMENT_LEN
-		end := start + TXT_SEGMENT_LEN
-		if end > txtLen {
-			end = txtLen
-		}
+		end := min(start+TXT_SEGMENT_LEN, txtLen)
 		txts[i] = rr.Txt[start:end]
 	}
 
@@ -136,12 +133,9 @@ func (rr *TXT) ToRR() dns.RR {
 	numSegments := (txtLen + TXT_SEGMENT_LEN - 1) / TXT_SEGMENT_LEN
 	txts := make([]string, numSegments)
 
-	for i := 0; i < numSegments; i++ {
+	for i := range numSegments {
 		start := i * TXT_SEGMENT_LEN
-		end := start + TXT_SEGMENT_LEN
-		if end > txtLen {
-			end = txtLen
-		}
+		end := min(start+TXT_SEGMENT_LEN, txtLen)
 		txts[i] = rr.Txt[start:end]
 	}
 

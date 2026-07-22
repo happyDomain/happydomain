@@ -28,7 +28,8 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func ptr[T any](v T) *T { return &v }
+//go:fix inline
+func ptr[T any](v T) *T { return new(v) }
 
 func TestDecide(t *testing.T) {
 	noon := time.Date(2026, 4, 29, 12, 0, 0, 0, time.UTC)
@@ -69,7 +70,7 @@ func TestDecide(t *testing.T) {
 			wantClear:  true,
 		},
 		{
-			name: "preference disabled advances",
+			name:  "preference disabled advances",
 			state: happydns.NotificationState{LastStatus: happydns.StatusOK},
 			pref: &happydns.NotificationPreference{
 				Enabled:   false,
@@ -89,7 +90,7 @@ func TestDecide(t *testing.T) {
 			wantAction: actionAdvance,
 		},
 		{
-			name: "recovery suppressed when NotifyRecovery is false",
+			name:  "recovery suppressed when NotifyRecovery is false",
 			state: happydns.NotificationState{LastStatus: happydns.StatusCrit},
 			pref: &happydns.NotificationPreference{
 				Enabled:        true,
@@ -129,14 +130,14 @@ func TestDecide(t *testing.T) {
 			wantClear:  false,
 		},
 		{
-			name: "quiet hours suppress alert",
+			name:  "quiet hours suppress alert",
 			state: happydns.NotificationState{LastStatus: happydns.StatusOK},
 			pref: &happydns.NotificationPreference{
 				Enabled:        true,
 				MinStatus:      happydns.StatusWarn,
 				NotifyRecovery: true,
-				QuietStart:     ptr(22),
-				QuietEnd:       ptr(6),
+				QuietStart:     new(22),
+				QuietEnd:       new(6),
 			},
 			newStatus:  happydns.StatusCrit,
 			now:        night,
@@ -144,14 +145,14 @@ func TestDecide(t *testing.T) {
 			wantClear:  true,
 		},
 		{
-			name: "outside quiet hours notifies",
+			name:  "outside quiet hours notifies",
 			state: happydns.NotificationState{LastStatus: happydns.StatusOK},
 			pref: &happydns.NotificationPreference{
 				Enabled:        true,
 				MinStatus:      happydns.StatusWarn,
 				NotifyRecovery: true,
-				QuietStart:     ptr(22),
-				QuietEnd:       ptr(6),
+				QuietStart:     new(22),
+				QuietEnd:       new(6),
 			},
 			newStatus:  happydns.StatusCrit,
 			now:        noon,
@@ -185,13 +186,13 @@ func TestIsQuietHour(t *testing.T) {
 		expect bool
 	}{
 		{"no window", nil, nil, 3, false},
-		{"inside non-wrap (9-17)", ptr(9), ptr(17), 12, true},
-		{"outside non-wrap (9-17)", ptr(9), ptr(17), 18, false},
-		{"end-exclusive (9-17 at 17)", ptr(9), ptr(17), 17, false},
-		{"wrap inside before midnight (22-6)", ptr(22), ptr(6), 23, true},
-		{"wrap inside after midnight (22-6)", ptr(22), ptr(6), 3, true},
-		{"wrap outside (22-6)", ptr(22), ptr(6), 12, false},
-		{"wrap end-exclusive (22-6 at 6)", ptr(22), ptr(6), 6, false},
+		{"inside non-wrap (9-17)", new(9), new(17), 12, true},
+		{"outside non-wrap (9-17)", new(9), new(17), 18, false},
+		{"end-exclusive (9-17 at 17)", new(9), new(17), 17, false},
+		{"wrap inside before midnight (22-6)", new(22), new(6), 23, true},
+		{"wrap inside after midnight (22-6)", new(22), new(6), 3, true},
+		{"wrap outside (22-6)", new(22), new(6), 12, false},
+		{"wrap end-exclusive (22-6 at 6)", new(22), new(6), 6, false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -207,8 +208,8 @@ func TestIsQuietHourTimezone(t *testing.T) {
 	// 02:30 UTC == 12:30 Asia/Tokyo (UTC+9), so a 9-17 quiet window in Tokyo should fire while UTC says off-hours.
 	now := time.Date(2026, 4, 29, 2, 30, 0, 0, time.UTC)
 	pref := &happydns.NotificationPreference{
-		QuietStart: ptr(9),
-		QuietEnd:   ptr(17),
+		QuietStart: new(9),
+		QuietEnd:   new(17),
 		Timezone:   "Asia/Tokyo",
 	}
 	if !isQuietHour(pref, now) {

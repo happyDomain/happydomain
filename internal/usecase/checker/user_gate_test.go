@@ -270,7 +270,7 @@ func TestUserGater_UnlimitedByDefault(t *testing.T) {
 	g := NewUserGater(r, 90, 0) // default = 0 means unlimited
 	target := happydns.CheckTarget{UserId: uid}
 
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		if !g.Allow(target) {
 			t.Fatalf("expected unlimited quota to always allow, blocked at i=%d", i)
 		}
@@ -289,7 +289,7 @@ func TestUserGater_NegativeQuotaOptsOutPerUser(t *testing.T) {
 	g := NewUserGater(r, 90, 5) // default = 5 (tight)
 	target := happydns.CheckTarget{UserId: uid}
 
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		if !g.Allow(target) {
 			t.Fatalf("expected per-user opt-out (negative quota) to always allow, blocked at i=%d", i)
 		}
@@ -314,7 +314,7 @@ func TestUserGater_DailyQuotaEnforced(t *testing.T) {
 	target := happydns.CheckTarget{UserId: uid}
 
 	// User quota overrides default (5 < 100).
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		if !g.Allow(target) {
 			t.Fatalf("expected first 5 checks to be allowed, blocked at i=%d", i)
 		}
@@ -334,7 +334,7 @@ func TestUserGater_SystemDefaultEnforced(t *testing.T) {
 	g := NewUserGater(r, 90, 3)                             // default = 3
 	target := happydns.CheckTarget{UserId: uid}
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		if !g.Allow(target) {
 			t.Fatalf("expected first 3 checks to be allowed, blocked at i=%d", i)
 		}
@@ -352,7 +352,7 @@ func TestUserGater_IntervalThrottling(t *testing.T) {
 	target := happydns.CheckTarget{UserId: uid}
 
 	// Burn 80% of the budget (8 checks) — we are now in throttle mode.
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		if !g.AllowWithInterval(target, time.Minute) {
 			t.Fatalf("expected first 8 checks to be allowed, blocked at i=%d", i)
 		}
@@ -384,7 +384,7 @@ func TestUserGater_AllowTreatsZeroIntervalAsLong(t *testing.T) {
 	g := NewUserGater(r, 90, 0)
 	target := happydns.CheckTarget{UserId: uid}
 
-	for i := 0; i < 9; i++ {
+	for range 9 {
 		g.IncrementUsage(happydns.CheckTarget{UserId: uid})
 	}
 	// At 90% usage, Allow (interval=0) should still allow.
@@ -491,7 +491,7 @@ func TestUserGater_RateLimiterForSnapshot(t *testing.T) {
 	}
 
 	// Drive the live state into hard-limit territory.
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		g.IncrementUsage(happydns.CheckTarget{UserId: uid})
 	}
 	// The snapshot captured earlier must still allow; only a fresh snapshot
@@ -590,14 +590,14 @@ func TestUserGater_InvalidateDoesNotLoseIncrements(t *testing.T) {
 
 	go func() {
 		defer wg.Done()
-		for i := 0; i < increments; i++ {
+		for range increments {
 			g.IncrementUsage(happydns.CheckTarget{UserId: uid})
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
-		for i := 0; i < invalidations; i++ {
+		for range invalidations {
 			g.Invalidate(uid)
 		}
 	}()

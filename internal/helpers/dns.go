@@ -92,8 +92,8 @@ func DomainRelative(subdomain string, origin string) string {
 		origin += "."
 	}
 
-	if strings.HasSuffix(subdomain, origin) {
-		subdomain = strings.TrimSuffix(strings.TrimSuffix(subdomain, origin), ".")
+	if before, ok := strings.CutSuffix(subdomain, origin); ok {
+		subdomain = strings.TrimSuffix(before, ".")
 	}
 
 	if subdomain == "" {
@@ -143,8 +143,8 @@ func RRRelative(rr happydns.Record, origin string) happydns.Record {
 	}
 
 	// Make header relative
-	if strings.HasSuffix(rr.Header().Name, origin) {
-		rr.Header().Name = strings.TrimSuffix(strings.TrimSuffix(rr.Header().Name, origin), ".")
+	if before, ok := strings.CutSuffix(rr.Header().Name, origin); ok {
+		rr.Header().Name = strings.TrimSuffix(before, ".")
 	}
 
 	return RDataRelative(rr, origin)
@@ -159,8 +159,8 @@ func RRRelativeSubdomain(rr happydns.Record, origin, subdomain string) happydns.
 	subdomain = DomainFQDN(subdomain, origin)
 
 	// Make header relative
-	if strings.HasSuffix(rr.Header().Name, subdomain) {
-		rr.Header().Name = strings.TrimSuffix(strings.TrimSuffix(rr.Header().Name, subdomain), ".")
+	if before, ok := strings.CutSuffix(rr.Header().Name, subdomain); ok {
+		rr.Header().Name = strings.TrimSuffix(before, ".")
 	}
 
 	return RDataRelative(rr, origin)

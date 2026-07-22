@@ -425,7 +425,7 @@ func TestIsDNSSECTypeNonDNSSECTypes(t *testing.T) {
 func TestIsDNSSECTypeConsistency(t *testing.T) {
 	testType := dns.TypeNSEC
 
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		result := IsDNSSECType(testType)
 		if !result {
 			t.Errorf("IsDNSSECType returned inconsistent result on iteration %d", i)

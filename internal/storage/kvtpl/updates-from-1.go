@@ -140,8 +140,8 @@ func migrateFrom1_users_tree(s *KVStorage) (err error) {
 }
 
 func migrateFrom1_domains(s *KVStorage, oldUserId int64, newUserId string) (err error) {
-	oldIdStr := []byte(fmt.Sprintf("\"id_owner\":%d", oldUserId))
-	newIdStr := []byte(fmt.Sprintf("\"id_owner\":\"%s\"", newUserId))
+	oldIdStr := fmt.Appendf(nil, "\"id_owner\":%d", oldUserId)
+	newIdStr := fmt.Appendf(nil, "\"id_owner\":\"%s\"", newUserId)
 
 	iter := s.db.Search("domain-")
 	defer iter.Release()
@@ -174,8 +174,8 @@ func migrateFrom1_domains(s *KVStorage, oldUserId int64, newUserId string) (err 
 }
 
 func migrateFrom1_provider(s *KVStorage, oldUserId int64, newUserId string) (err error) {
-	oldIdStr := []byte(fmt.Sprintf("\"_ownerid\":%d", oldUserId))
-	newIdStr := []byte(fmt.Sprintf("\"_ownerid\":\"%s\"", newUserId))
+	oldIdStr := fmt.Appendf(nil, "\"_ownerid\":%d", oldUserId)
+	newIdStr := fmt.Appendf(nil, "\"_ownerid\":\"%s\"", newUserId)
 
 	iter := s.db.Search("provider-")
 	defer iter.Release()
@@ -208,8 +208,8 @@ func migrateFrom1_provider(s *KVStorage, oldUserId int64, newUserId string) (err
 }
 
 func migrateFrom1_zone(s *KVStorage, oldUserId int64, newUserId string) (err error) {
-	oldIdStr := []byte(fmt.Sprintf("\"id_author\":%d", oldUserId))
-	newIdStr := []byte(fmt.Sprintf("\"id_author\":\"%s\"", newUserId))
+	oldIdStr := fmt.Appendf(nil, "\"id_author\":%d", oldUserId)
+	newIdStr := fmt.Appendf(nil, "\"id_author\":\"%s\"", newUserId)
 
 	iter := s.db.Search("domain.zone-")
 	defer iter.Release()

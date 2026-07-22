@@ -111,7 +111,7 @@ func (ssu *serviceSpecsUsecase) InitializeService(svctype reflect.Type) (any, er
 				elemType := field.Type().Elem()
 
 				// Only initialize with one element if it's not a pointer or struct
-				if elemType.Kind() != reflect.Ptr && elemType.Kind() != reflect.Struct {
+				if elemType.Kind() != reflect.Pointer && elemType.Kind() != reflect.Struct {
 					slice := reflect.MakeSlice(field.Type(), 1, 1)
 					// Set the first element to zero value (e.g., "" for string)
 					slice.Index(0).Set(reflect.Zero(elemType))
@@ -172,7 +172,7 @@ func (ssu *serviceSpecsUsecase) initializeStructFields(v reflect.Value) {
 		case reflect.Map:
 			// Initialize maps as empty (non-nil)
 			field.Set(reflect.MakeMap(field.Type()))
-		case reflect.Ptr:
+		case reflect.Pointer:
 			// For pointer types, check if it's a DNS type first
 			elemType := field.Type().Elem()
 			if ssu.isDNSType(elemType) {
@@ -212,7 +212,7 @@ func (ssu *serviceSpecsUsecase) isDNSType(t reflect.Type) bool {
 	// These have a dns.RR_Header field named "Hdr"
 	if pkgPath == "git.happydns.org/happyDomain/model" && t.Kind() == reflect.Struct {
 		if field, ok := t.FieldByName("Hdr"); ok {
-			return field.Type == reflect.TypeOf(dns.RR_Header{})
+			return field.Type == reflect.TypeFor[dns.RR_Header]()
 		}
 	}
 
@@ -270,9 +270,9 @@ func (ssu *serviceSpecsUsecase) getSpecs(svcType reflect.Type) (*happydns.Servic
 		}
 
 		tag := svcType.Field(i).Tag.Get("happydomain")
-		tuples := strings.Split(tag, ",")
+		tuples := strings.SplitSeq(tag, ",")
 
-		for _, t := range tuples {
+		for t := range tuples {
 			kv := strings.SplitN(t, "=", 2)
 			if len(kv) > 1 {
 				switch strings.ToLower(kv[0]) {

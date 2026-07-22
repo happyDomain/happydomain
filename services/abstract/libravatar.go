@@ -62,10 +62,10 @@ func libavatar_analyze(a *svc.Analyzer) error {
 
 	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeSRV, Prefix: "_avatars"}) {
 		domain := ""
-		if strings.HasPrefix(record.Header().Name, "_avatars._tcp.") {
-			domain = strings.TrimPrefix(record.Header().Name, "_avatars._tcp.")
-		} else if strings.HasPrefix(record.Header().Name, "_avatars-sec._tcp.") {
-			domain = strings.TrimPrefix(record.Header().Name, "_avatars-sec._tcp.")
+		if after, ok := strings.CutPrefix(record.Header().Name, "_avatars._tcp."); ok {
+			domain = after
+		} else if after, ok := strings.CutPrefix(record.Header().Name, "_avatars-sec._tcp."); ok {
+			domain = after
 		} else {
 			continue
 		}

@@ -61,7 +61,7 @@ type ServiceInfos struct {
 	Categories   []string            `json:"categories" binding:"required"`
 	RecordTypes  []uint16            `json:"record_types" binding:"required"`
 	Tabs         bool                `json:"tabs,omitempty"`
-	Restrictions ServiceRestrictions `json:"restrictions,omitempty"`
+	Restrictions ServiceRestrictions `json:"restrictions"`
 }
 
 type ServiceNotFoundError struct {

@@ -110,8 +110,8 @@ func migrateFrom2_users_tree(s *KVStorage) (err error) {
 }
 
 func migrateFrom2_auth(s *KVStorage, oldUserId happydns.HexaString, newId happydns.Identifier, user userV2) (err error) {
-	oldIdStr := []byte(fmt.Sprintf("\"Id\":\"%s\"", base64.StdEncoding.EncodeToString(oldUserId)))
-	newIdStr := []byte(fmt.Sprintf("\"Id\":\"%s\"", newId.String()))
+	oldIdStr := fmt.Appendf(nil, "\"Id\":\"%s\"", base64.StdEncoding.EncodeToString(oldUserId))
+	newIdStr := fmt.Appendf(nil, "\"Id\":\"%s\"", newId.String())
 
 	oldAuthKey := fmt.Sprintf("auth-%x", oldUserId)
 
@@ -165,8 +165,8 @@ type sessionV2 struct {
 }
 
 func migrateFrom2_session(s *KVStorage, oldUserId happydns.HexaString, newUserId string) (err error) {
-	oldOwnerIdStr := []byte(fmt.Sprintf("\"login\":\"%x\"", oldUserId))
-	newOwnerIdStr := []byte(fmt.Sprintf("\"login\":\"%s\"", newUserId))
+	oldOwnerIdStr := fmt.Appendf(nil, "\"login\":\"%x\"", oldUserId)
+	newOwnerIdStr := fmt.Appendf(nil, "\"login\":\"%s\"", newUserId)
 
 	iter := s.db.Search("user.session-")
 	kvIter := NewKVIterator[json.RawMessage](s.db, iter)
@@ -184,8 +184,8 @@ func migrateFrom2_session(s *KVStorage, oldUserId happydns.HexaString, newUserId
 
 			newId := happydns.Identifier(session.Id)
 
-			oldIdStr := []byte(fmt.Sprintf("\"id\":\"%s\"", base64.StdEncoding.EncodeToString(session.Id)))
-			newIdStr := []byte(fmt.Sprintf("\"id\":\"%s\"", newId.String()))
+			oldIdStr := fmt.Appendf(nil, "\"id\":\"%s\"", base64.StdEncoding.EncodeToString(session.Id))
+			newIdStr := fmt.Appendf(nil, "\"id\":\"%s\"", newId.String())
 
 			migstr := bytes.Replace(usrstr, oldIdStr, newIdStr, 1)
 			migstr = bytes.Replace(migstr, oldOwnerIdStr, newOwnerIdStr, 1)
@@ -218,8 +218,8 @@ type providerV2 struct {
 }
 
 func migrateFrom2_provider(s *KVStorage, oldUserId happydns.HexaString, newUserId string) (err error) {
-	oldOwnerIdStr := []byte(fmt.Sprintf("\"_ownerid\":\"%x\"", oldUserId))
-	newOwnerIdStr := []byte(fmt.Sprintf("\"_ownerid\":\"%s\"", newUserId))
+	oldOwnerIdStr := fmt.Appendf(nil, "\"_ownerid\":\"%x\"", oldUserId)
+	newOwnerIdStr := fmt.Appendf(nil, "\"_ownerid\":\"%s\"", newUserId)
 
 	iter := s.db.Search("provider-")
 	kvIter := NewKVIterator[json.RawMessage](s.db, iter)
@@ -241,8 +241,8 @@ func migrateFrom2_provider(s *KVStorage, oldUserId happydns.HexaString, newUserI
 				return fmt.Errorf("unable to generate a new identifier for %s: %w", kvIter.Key(), err)
 			}
 
-			oldIdStr := []byte(fmt.Sprintf("\"_id\":%d", provider.Id))
-			newIdStr := []byte(fmt.Sprintf("\"_id\":\"%s\"", newId.String()))
+			oldIdStr := fmt.Appendf(nil, "\"_id\":%d", provider.Id)
+			newIdStr := fmt.Appendf(nil, "\"_id\":\"%s\"", newId.String())
 
 			migstr := bytes.Replace(domstr, oldIdStr, newIdStr, 1)
 			migstr = bytes.Replace(migstr, oldOwnerIdStr, newOwnerIdStr, 1)
@@ -289,10 +289,10 @@ type domainV2 struct {
 }
 
 func migrateFrom2_domains(s *KVStorage, oldUserId happydns.HexaString, newUserId string, oldProviderId int64, newProviderId string) (err error) {
-	oldProviderIdStr := []byte(fmt.Sprintf("\"id_provider\":%d", oldProviderId))
-	newProviderIdStr := []byte(fmt.Sprintf("\"id_provider\":\"%s\"", newProviderId))
-	oldOwnerIdStr := []byte(fmt.Sprintf("\"id_owner\":\"%x\"", oldUserId))
-	newOwnerIdStr := []byte(fmt.Sprintf("\"id_owner\":\"%s\"", newUserId))
+	oldProviderIdStr := fmt.Appendf(nil, "\"id_provider\":%d", oldProviderId)
+	newProviderIdStr := fmt.Appendf(nil, "\"id_provider\":\"%s\"", newProviderId)
+	oldOwnerIdStr := fmt.Appendf(nil, "\"id_owner\":\"%x\"", oldUserId)
+	newOwnerIdStr := fmt.Appendf(nil, "\"id_owner\":\"%s\"", newUserId)
 
 	iter := s.db.Search("domain-")
 	kvIter := NewKVIterator[json.RawMessage](s.db, iter)
@@ -314,8 +314,8 @@ func migrateFrom2_domains(s *KVStorage, oldUserId happydns.HexaString, newUserId
 				return fmt.Errorf("unable to generate a new identifier for %s: %w", kvIter.Key(), err)
 			}
 
-			oldIdStr := []byte(fmt.Sprintf("\"id\":%d", domain.Id))
-			newIdStr := []byte(fmt.Sprintf("\"id\":\"%s\"", newId.String()))
+			oldIdStr := fmt.Appendf(nil, "\"id\":%d", domain.Id)
+			newIdStr := fmt.Appendf(nil, "\"id\":\"%s\"", newId.String())
 
 			zoneOldStr := []byte("\"zone_history\":[")
 			zoneNewStr := []byte("\"zone_history\":[")
@@ -332,8 +332,8 @@ func migrateFrom2_domains(s *KVStorage, oldUserId happydns.HexaString, newUserId
 					return fmt.Errorf("unable to migrate domain.zone-%d: %w", zoneid, err)
 				}
 
-				zoneOldStr = append(zoneOldStr, []byte(fmt.Sprintf("%d,", zoneid))...)
-				zoneNewStr = append(zoneNewStr, []byte(fmt.Sprintf("\"%s\",", newZoneId.String()))...)
+				zoneOldStr = append(zoneOldStr, fmt.Appendf(nil, "%d,", zoneid)...)
+				zoneNewStr = append(zoneNewStr, fmt.Appendf(nil, "\"%s\",", newZoneId.String())...)
 			}
 			zoneOldStr[len(zoneOldStr)-1] = ']'
 			zoneNewStr[len(zoneNewStr)-1] = ']'
@@ -374,10 +374,10 @@ func migrateFrom2_domains(s *KVStorage, oldUserId happydns.HexaString, newUserId
 }
 
 func migrateFrom2_zone(s *KVStorage, oldUserId happydns.HexaString, newUserId string, oldZoneId int64, newZoneId string) (err error) {
-	oldIdStr := []byte(fmt.Sprintf("\"id\":%d", oldZoneId))
-	newIdStr := []byte(fmt.Sprintf("\"id\":\"%s\"", newZoneId))
-	oldIdOwnerStr := []byte(fmt.Sprintf("\"id_author\":%d", oldUserId))
-	newIdOwnerStr := []byte(fmt.Sprintf("\"id_author\":\"%s\"", newUserId))
+	oldIdStr := fmt.Appendf(nil, "\"id\":%d", oldZoneId)
+	newIdStr := fmt.Appendf(nil, "\"id\":\"%s\"", newZoneId)
+	oldIdOwnerStr := fmt.Appendf(nil, "\"id_author\":%d", oldUserId)
+	newIdOwnerStr := fmt.Appendf(nil, "\"id_author\":\"%s\"", newUserId)
 
 	oldZoneKey := fmt.Sprintf("domain.zone-%d", oldZoneId)
 

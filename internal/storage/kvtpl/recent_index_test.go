@@ -95,7 +95,7 @@ func TestExecutionRecentIndexFilterWithLimit(t *testing.T) {
 	target := happydns.CheckTarget{UserId: uid.String()}
 
 	base := time.Now().Truncate(time.Second)
-	for i := 0; i < 6; i++ {
+	for i := range 6 {
 		status := happydns.ExecutionDone
 		if i%2 == 0 {
 			status = happydns.ExecutionRunning

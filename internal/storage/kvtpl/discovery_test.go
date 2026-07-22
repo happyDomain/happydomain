@@ -131,12 +131,12 @@ type fakeIter struct {
 	idx  int
 }
 
-func (i *fakeIter) Release()      {}
-func (i *fakeIter) Next() bool    { i.idx++; return i.idx < len(i.keys) }
-func (i *fakeIter) Valid() bool   { return i.idx >= 0 && i.idx < len(i.keys) }
-func (i *fakeIter) Key() string   { return i.keys[i.idx] }
-func (i *fakeIter) Value() any    { return i.data[i.keys[i.idx]] }
-func (i *fakeIter) Err() error    { return nil }
+func (i *fakeIter) Release()    {}
+func (i *fakeIter) Next() bool  { i.idx++; return i.idx < len(i.keys) }
+func (i *fakeIter) Valid() bool { return i.idx >= 0 && i.idx < len(i.keys) }
+func (i *fakeIter) Key() string { return i.keys[i.idx] }
+func (i *fakeIter) Value() any  { return i.data[i.keys[i.idx]] }
+func (i *fakeIter) Err() error  { return nil }
 
 func newDiscoveryTestStore() *KVStorage {
 	return &KVStorage{db: newFakeKV()}
@@ -325,11 +325,9 @@ func TestPutDiscoveryObservationRefConcurrentSamePrimary(t *testing.T) {
 	const N = 16
 	var wg sync.WaitGroup
 	errs := make(chan error, N)
-	for i := 0; i < N; i++ {
+	for i := range N {
 		i := i
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			errs <- s.PutDiscoveryObservationRef(&happydns.DiscoveryObservationRef{
 				ProducerID:  "p",
 				Target:      target,
@@ -339,7 +337,7 @@ func TestPutDiscoveryObservationRefConcurrentSamePrimary(t *testing.T) {
 				SnapshotID:  happydns.Identifier{byte(i + 1)},
 				CollectedAt: time.Now(),
 			})
-		}()
+		})
 	}
 	wg.Wait()
 	close(errs)

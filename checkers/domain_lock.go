@@ -65,7 +65,7 @@ func (r *domainLockRule) ValidateOptions(opts happydns.CheckerOptions) error {
 	if !ok {
 		return fmt.Errorf("requiredStatuses must be a string")
 	}
-	for _, p := range strings.Split(s, ",") {
+	for p := range strings.SplitSeq(s, ",") {
 		if strings.TrimSpace(p) != "" {
 			return nil
 		}
@@ -89,7 +89,7 @@ func (r *domainLockRule) Evaluate(ctx context.Context, obs happydns.ObservationG
 	}
 
 	var required []string
-	for _, s := range strings.Split(requiredStr, ",") {
+	for s := range strings.SplitSeq(requiredStr, ",") {
 		s = strings.TrimSpace(s)
 		if s != "" {
 			required = append(required, s)

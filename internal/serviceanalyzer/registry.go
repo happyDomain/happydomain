@@ -92,7 +92,7 @@ func RegisterSubServices(t reflect.Type) {
 		for i := 0; i < t.NumField(); i += 1 {
 			RegisterSubServices(t.Field(i).Type)
 		}
-	} else if t.Kind() == reflect.Array || t.Kind() == reflect.Map || t.Kind() == reflect.Ptr || t.Kind() == reflect.Slice {
+	} else if t.Kind() == reflect.Array || t.Kind() == reflect.Map || t.Kind() == reflect.Pointer || t.Kind() == reflect.Slice {
 		RegisterSubServices(t.Elem())
 	} else if t.PkgPath() == pathToSvcsModule {
 		if _, ok := subServices[t.String()]; ok {

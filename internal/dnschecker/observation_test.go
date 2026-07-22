@@ -126,7 +126,7 @@ func TestObservationContext_DedupesSameKey(t *testing.T) {
 	const N = 8
 	var wg sync.WaitGroup
 	wg.Add(N)
-	for i := 0; i < N; i++ {
+	for range N {
 		go func() {
 			defer wg.Done()
 			var dst map[string]string

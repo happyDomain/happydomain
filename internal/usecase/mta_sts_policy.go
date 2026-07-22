@@ -141,18 +141,18 @@ func classifyFetchError(err error) (status, msg string) {
 // and fills the policy fields of resp.
 func parseMTASTSBody(body string, resp *happydns.MTASTSPolicyResponse) {
 	// Lines may be terminated by CRLF or LF; trim both.
-	lines := strings.Split(strings.ReplaceAll(body, "\r\n", "\n"), "\n")
-	for _, raw := range lines {
+	lines := strings.SplitSeq(strings.ReplaceAll(body, "\r\n", "\n"), "\n")
+	for raw := range lines {
 		line := strings.TrimSpace(raw)
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		idx := strings.IndexByte(line, ':')
-		if idx < 0 {
+		before, after, ok := strings.Cut(line, ":")
+		if !ok {
 			continue
 		}
-		key := strings.ToLower(strings.TrimSpace(line[:idx]))
-		value := strings.TrimSpace(line[idx+1:])
+		key := strings.ToLower(strings.TrimSpace(before))
+		value := strings.TrimSpace(after)
 		switch key {
 		case "version":
 			resp.Version = value

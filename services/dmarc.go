@@ -92,7 +92,7 @@ type DMARCFields struct {
 func analyseFields(txt string) map[string]string {
 	ret := map[string]string{}
 
-	for _, f := range strings.Split(txt, ";") {
+	for f := range strings.SplitSeq(txt, ";") {
 		f = strings.TrimSpace(f)
 
 		kv := strings.SplitN(f, "=", 2)

@@ -42,6 +42,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"maps"
 	"sync"
 	"time"
 
@@ -288,8 +289,6 @@ func (oc *ObservationContext) Data() map[happydns.ObservationKey]json.RawMessage
 	defer oc.mu.Unlock()
 
 	data := make(map[happydns.ObservationKey]json.RawMessage, len(oc.cache))
-	for k, v := range oc.cache {
-		data[k] = v
-	}
+	maps.Copy(data, oc.cache)
 	return data
 }
