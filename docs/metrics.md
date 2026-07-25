@@ -1,9 +1,16 @@
 # happyDomain Metrics
 
 happyDomain exposes Prometheus metrics at `GET /metrics` on the **admin
-socket only** (Unix socket or loopback). The admin socket is not
-authenticated; do not expose it to untrusted networks. The public HTTP API
-does **not** serve `/metrics`.
+socket only** (Unix socket or loopback). The public HTTP API does **not**
+serve `/metrics`.
+
+When no admin password is configured, the admin socket is unauthenticated; do
+not expose it to untrusted networks. When `HAPPYDOMAIN_ADMIN_PASSWORD_HASH` is
+set (mandatory for a bind on a non-loopback address), `/metrics` requires the same admin bearer
+token as the rest of the admin API, so a scraper must obtain one from
+`POST /api/admin-login`. Prometheus cannot refresh a short-lived token on its
+own, so scraping over TCP is best handled by an authenticating proxy; Unix
+socket scrapes need no password and are unaffected.
 
 All metric names are prefixed with `happydomain_`.
 
@@ -41,9 +48,13 @@ All metric names are prefixed with `happydomain_`.
 
 `/metrics` exposes business intelligence (entity counts, provider mix,
 latency profiles) and operational shape (queue depth, worker counts). It is
-intentionally only mounted on the admin socket (`internal/app/admin.go`).
-Bind that socket to a Unix path or `127.0.0.1` only — exposing it on a
-network interface will leak this information to anyone who can reach it.
+intentionally only mounted on the admin socket (`internal/app/admin.go`), and
+is gated by the admin auth middleware so it cannot be scraped anonymously on a
+password-protected bind. Prefer binding that socket to a Unix path or
+`127.0.0.1`; exposing it on a network interface without a configured admin
+password would leak this information to anyone who can reach it, so happyDomain
+refuses to start the admin listener in that case (the public API keeps running).
+A loopback bind without a password still starts, with a warning.
 
 ## Implementation notes
 

@@ -19,8 +19,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { type Load } from "@sveltejs/kit";
+import { redirect, type Load } from "@sveltejs/kit";
+import { get } from "svelte/store";
 
+import { isAdminTokenValid } from "$lib/stores/adminsession";
+import { appConfig } from "$lib/stores/config";
 import { config as tsConfig, locale, loadTranslations } from "$lib/translations";
 
 export const ssr = false;
@@ -36,6 +39,16 @@ export const load: Load = async ({ url }) => {
         "en";
 
     await loadTranslations(initLocale, url.pathname);
+
+    // Require a valid admin session on every page but the login page, but only
+    // when the backend enforces admin authentication (a password is set).
+    if (
+        get(appConfig).admin_auth_required &&
+        url.pathname !== "/login" &&
+        !isAdminTokenValid()
+    ) {
+        throw redirect(302, "/login?next=" + encodeURIComponent(url.pathname));
+    }
 
     return {};
 };

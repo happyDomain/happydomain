@@ -19,7 +19,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import { goto } from '$app/navigation';
+import { authLinks } from '$links';
+
 import type { CreateClientConfig } from './api-admin/client.gen';
+import { clearAdminToken, getAdminToken } from '$lib/stores/adminsession';
 
 export class NotAuthorizedError extends Error {
     constructor(message: string) {
@@ -32,7 +36,29 @@ async function customFetch(
     input: RequestInfo | URL,
     init?: RequestInit
 ): Promise<Response> {
+    // Attach the admin bearer token (when authentication is enabled) to every
+    // admin API call.
+    const token = getAdminToken();
+    if (token) {
+        const headers = new Headers(init?.headers);
+        headers.set("Authorization", "Bearer " + token);
+        init = { ...init, headers };
+    }
+
     const response = await fetch(input, init);
+
+    if (response.status === 401) {
+        clearAdminToken();
+        const login = authLinks().login();
+        if (typeof window !== "undefined" && window.location.pathname !== login) {
+            // The login path is already resolved; the one handed over to it is
+            // read from the address bar, base path included, so the login page
+            // can send the user back to it as is.
+            // eslint-disable-next-line svelte/no-navigation-without-resolve
+            goto(login + "?next=" + encodeURIComponent(window.location.pathname));
+        }
+        throw new NotAuthorizedError("Admin authentication required.");
+    }
 
     if (response.status === 400) {
         const json = await response.json();

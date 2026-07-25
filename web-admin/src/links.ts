@@ -49,7 +49,6 @@ export function providerLinks() {
 
 export function authLinks() {
     return {
-        // The admin has no login page of its own: it is reached authenticated.
-        login: () => resolve("/"),
+        login: () => resolve("/login"),
     };
 }

@@ -24,6 +24,8 @@ package route
 import (
 	"github.com/gin-gonic/gin"
 
+	"git.happydns.org/happyDomain/internal/api-admin/controller"
+	adminmw "git.happydns.org/happyDomain/internal/api-admin/middleware"
 	api "git.happydns.org/happyDomain/internal/api/route"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	happydns "git.happydns.org/happyDomain/model"
@@ -54,6 +56,15 @@ type Dependencies struct {
 
 func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, dep Dependencies) {
 	apiRoutes := router.Group("/api")
+
+	// The login endpoint must stay public so operators can obtain a session
+	// token; it is declared before the auth middleware is attached to the group.
+	authController := controller.NewAdminAuthController(cfg)
+	apiRoutes.POST("/admin-login", authController.Login)
+
+	// Every subsequent route requires a valid admin session (no-op when
+	// AdminPasswordHash is empty).
+	apiRoutes.Use(adminmw.AdminAuth(cfg))
 
 	declareBackupRoutes(apiRoutes, dep)
 	declareCheckersRoutes(apiRoutes, dep)

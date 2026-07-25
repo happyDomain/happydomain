@@ -22,7 +22,12 @@
 -->
 
 <script lang="ts">
+    import { goto } from '$app/navigation';
+    import { authLinks } from '$links';
+
     import { putBackupJson } from '$lib/api-admin';
+    import { clearAdminToken, getAdminToken } from '$lib/stores/adminsession';
+    import { downloadBlob } from '$lib/utils/checkers';
 
     let file: File | null = $state(null);
 
@@ -32,6 +37,41 @@
         const target = event.target as HTMLInputElement;
         if (target.files && target.files.length > 0) {
             file = target.files[0];
+        }
+    }
+
+    // downloadBackup fetches the full backup through a script-driven request so
+    // it carries the admin bearer token (a plain <form> POST would not), then
+    // triggers a client-side file download. It cannot go through the generated
+    // api-admin client, which parses responses as JSON, so it mirrors that
+    // client's expired-session handling explicitly.
+    async function downloadBackup() {
+        try {
+            const headers: Record<string, string> = {};
+            const token = getAdminToken();
+            if (token) headers["Authorization"] = "Bearer " + token;
+
+            const response = await fetch("/api/backup.json", { method: "POST", headers });
+
+            if (response.status === 401) {
+                clearAdminToken();
+                // The login path is already resolved; the one handed over to it
+                // is read from the address bar, base path included, so the
+                // login page can send the user back to it as is.
+                // eslint-disable-next-line svelte/no-navigation-without-resolve
+                goto(authLinks().login() + "?next=" + encodeURIComponent(window.location.pathname));
+                return;
+            }
+
+            if (!response.ok) {
+                alert("Backup failed!");
+                return;
+            }
+
+            downloadBlob(await response.blob(), "happydomain-backup.json", "application/json");
+        } catch (err) {
+            console.error("Error:", err);
+            alert("Backup failed!");
         }
     }
 
@@ -69,12 +109,10 @@
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-md-6">
-                    <form action="/api/backup.json" method="post">
-                        <button class="btn btn-primary w-100">
-                            <i class="bi bi-download me-2"></i>
-                            Download Database Backup
-                        </button>
-                    </form>
+                    <button type="button" class="btn btn-primary w-100" onclick={downloadBackup}>
+                        <i class="bi bi-download me-2"></i>
+                        Download Database Backup
+                    </button>
                 </div>
                 <div class="col-md-6">
                     <div class="input-group">
