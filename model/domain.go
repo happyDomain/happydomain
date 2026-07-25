@@ -79,6 +79,12 @@ func NewDomain(user *User, name string, providerID Identifier) (*Domain, error) 
 		return nil, errors.New("invalid domain name")
 	}
 
+	// Nothing more is checked here: a domain name is not a path, and RFC 2317
+	// classless reverse delegations (0/25.2.0.192.in-addr.arpa) legitimately
+	// contain characters that are separators on a file system. The providers
+	// turning a zone name into a file name, namely BIND, are the ones
+	// restricting it further.
+
 	d := &Domain{
 		Owner:      user.Id,
 		ProviderId: providerID,

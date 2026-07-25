@@ -155,16 +155,32 @@ func DNSControlRRtoRC(rrs []happydns.Record, origin string) (dnscontrol.Records,
 	return records, nil
 }
 
+// NewDNSControlDomainConfigName creates a DNSControl DomainConfig holding only
+// a zone name (with or without trailing dot).
+//
+// PostProcess is what fills the varieties of the name (raw, ASCII, unicode,
+// unique) and copies them into the Metadata map, where providers read them.
+// Building the struct by hand leaves them empty, and a provider substituting one
+// of them ends up with an empty zone name: the BIND provider, whose default file
+// name format is %c.zone, then reads and writes <directory>/.zone for every
+// zone.
+func NewDNSControlDomainConfigName(origin string) *dnscontrol.DomainConfig {
+	dc := &dnscontrol.DomainConfig{Name: strings.TrimSuffix(origin, ".")}
+	dc.PostProcess()
+
+	return dc
+}
+
 // NewDNSControlDomainConfig creates a DNSControl DomainConfig from happyDomain records.
 // This is used to represent a desired zone state when computing corrections or validating records.
 // The origin parameter specifies the zone name (with or without trailing dot).
 func NewDNSControlDomainConfig(origin string, rrs []happydns.Record) (*dnscontrol.DomainConfig, error) {
 	records, err := DNSControlRRtoRC(rrs, origin)
 
-	return &dnscontrol.DomainConfig{
-		Name:    strings.TrimSuffix(origin, "."),
-		Records: records,
-	}, err
+	dc := NewDNSControlDomainConfigName(origin)
+	dc.Records = records
+
+	return dc, err
 }
 
 // recordKey returns a canonical string for matching records by name, type, and rdata.

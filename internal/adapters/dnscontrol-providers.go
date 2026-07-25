@@ -188,7 +188,12 @@ func (p *DNSControlAdapterNSProvider) GetZoneRecords(domain string) (ret []happy
 		}
 	}()
 
-	records, err = p.DNSServiceProvider.GetZoneRecords(strings.TrimSuffix(domain, "."), nil)
+	// The metadata map is what dnscontrol substitutes the zone name from when
+	// building a file name (see NewDNSControlDomainConfigName): passing nil made
+	// the BIND provider read and write <directory>/.zone for every zone.
+	dc := NewDNSControlDomainConfigName(domain)
+
+	records, err = p.DNSServiceProvider.GetZoneRecords(dc.Name, dc.Metadata)
 	if err != nil {
 		return
 	}
@@ -231,7 +236,7 @@ func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []ha
 
 	// Retrieve current zone
 	var records models.Records
-	records, err = p.DNSServiceProvider.GetZoneRecords(strings.TrimSuffix(domain, "."), nil)
+	records, err = p.DNSServiceProvider.GetZoneRecords(dc.Name, dc.Metadata)
 	if err != nil {
 		return nil, nbCorrections, err
 	}
@@ -267,7 +272,9 @@ func (p *DNSControlAdapterNSProvider) CreateDomain(fqdn string) error {
 		return fmt.Errorf("Provider doesn't support domain creation.")
 	}
 
-	return zc.EnsureZoneExists(strings.TrimSuffix(fqdn, "."), nil)
+	dc := NewDNSControlDomainConfigName(fqdn)
+
+	return zc.EnsureZoneExists(dc.Name, dc.Metadata)
 }
 
 // ListZones retrieves a list of all zones (domains) managed by this provider.
