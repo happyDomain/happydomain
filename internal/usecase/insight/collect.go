@@ -77,7 +77,7 @@ func Collect(
 	data.Config.NbOidcProviders = len(cfg.OIDCClients)
 	data.Config.NoAuthActive = cfg.NoAuth
 	data.Config.NoMail = cfg.NoMail
-	data.Config.NonUnixAdminBind = strings.Contains(cfg.AdminBind, ":")
+	data.Config.NonUnixAdminBind = cfg.HasNetworkAdminBind()
 	data.Config.StorageEngine = string(cfg.StorageEngine)
 
 	// Database info

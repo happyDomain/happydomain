@@ -20,6 +20,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import type { CreateClientConfig } from './api-admin/client.gen';
+import { clearAdminToken, getAdminToken } from '$lib/stores/adminsession';
+import { navigate } from '$lib/stores/config';
 
 export class NotAuthorizedError extends Error {
     constructor(message: string) {
@@ -32,7 +34,24 @@ async function customFetch(
     input: RequestInfo | URL,
     init?: RequestInit
 ): Promise<Response> {
+    // Attach the admin bearer token (when authentication is enabled) to every
+    // admin API call.
+    const token = getAdminToken();
+    if (token) {
+        const headers = new Headers(init?.headers);
+        headers.set("Authorization", "Bearer " + token);
+        init = { ...init, headers };
+    }
+
     const response = await fetch(input, init);
+
+    if (response.status === 401) {
+        clearAdminToken();
+        if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+            navigate("/login?next=" + encodeURIComponent(window.location.pathname));
+        }
+        throw new NotAuthorizedError("Admin authentication required.");
+    }
 
     if (response.status === 400) {
         const json = await response.json();

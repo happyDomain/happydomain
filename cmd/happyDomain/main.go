@@ -49,6 +49,13 @@ var (
 func main() {
 	var err error
 
+	// Subcommands are handled before the flag parser runs, because positional
+	// arguments are otherwise treated as configuration filenames.
+	if len(os.Args) > 1 && os.Args[1] == "admin-hash" {
+		runAdminHash()
+		os.Exit(0)
+	}
+
 	controller.HDVersion = happydns.VersionResponse{
 		Version:    Version,
 		LastCommit: versioninfo.Revision,

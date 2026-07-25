@@ -51,6 +51,10 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.Engine) {
 		"version": controller.HDVersion,
 	}
 
+	if cfg.AdminPasswordHash != "" {
+		appConfig["admin_auth_required"] = true
+	}
+
 	if cfg.DisableProviders {
 		appConfig["disable_providers"] = true
 	}
@@ -108,6 +112,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.Engine) {
 	router.GET("/manifest.json", serveOrReverse("", cfg))
 
 	// Routes to virtual content
+	router.GET("/login", serveOrReverse("/", cfg))
 	router.GET("/auth_users/*_", serveOrReverse("/", cfg))
 	router.GET("/domains/*_", serveOrReverse("/", cfg))
 	router.GET("/providers/*_", serveOrReverse("/", cfg))

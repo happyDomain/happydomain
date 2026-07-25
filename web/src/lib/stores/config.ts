@@ -25,6 +25,7 @@ import { writable } from 'svelte/store';
 import type { Color } from "@sveltestrap/sveltestrap";
 
 interface AppConfig {
+    admin_auth_required?: boolean;
     captcha_provider?: string;
     captcha_site_key?: string;
     disable_embedded_login?: boolean;
@@ -40,6 +41,7 @@ interface AppConfig {
 }
 
 const defaultConfig: AppConfig = {
+    admin_auth_required: false,
     disable_embedded_login: false,
     disable_providers: false,
     disable_registration: false,
