@@ -74,6 +74,28 @@ func TestNewDomain(t *testing.T) {
 			domainName:  "domain_with_underscore.com",
 			expectError: false,
 		},
+		{
+			name:        "path pretending to be a domain",
+			domainName:  "../../etc/passwd",
+			expectError: true,
+		},
+		{
+			name:        "path with escaped separators",
+			domainName:  `..\057..\057etc\057passwd`,
+			expectError: true,
+		},
+		{
+			name:        "domain with an escaped dot",
+			domainName:  `a\.b.example.com`,
+			expectError: false,
+		},
+		{
+			// RFC 2317 classless reverse delegation: the slash is part of the
+			// name. Only the providers naming files after zones refuse those.
+			name:        "classless reverse delegation",
+			domainName:  "0/25.2.0.192.in-addr.arpa",
+			expectError: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -226,7 +248,6 @@ func TestNewDomainFQDN(t *testing.T) {
 		})
 	}
 }
-
 
 func TestNewDomainInitialization(t *testing.T) {
 	user := &happydns.User{

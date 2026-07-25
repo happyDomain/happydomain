@@ -229,7 +229,7 @@ func (p *DNSControlAdapterNSProvider) GetZoneRecords(domain string) (ret []happy
 		}
 	}()
 
-	records, err = p.DNSServiceProvider.GetZoneRecords(&models.DomainConfig{Name: strings.TrimSuffix(domain, ".")})
+	records, err = p.DNSServiceProvider.GetZoneRecords(NewDNSControlDomainConfigName(domain))
 	if err != nil {
 		return
 	}
@@ -341,7 +341,7 @@ func (p *DNSControlAdapterNSProvider) CreateDomain(fqdn string) (err error) {
 		return
 	}
 
-	err = zc.EnsureZoneExists(&models.DomainConfig{Name: strings.TrimSuffix(fqdn, ".")})
+	err = zc.EnsureZoneExists(NewDNSControlDomainConfigName(fqdn))
 	return
 }
 

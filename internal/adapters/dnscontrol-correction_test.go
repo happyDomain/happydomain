@@ -25,6 +25,7 @@ import (
 	"net"
 	"testing"
 
+	"github.com/DNSControl/dnscontrol/v4/models"
 	"github.com/miekg/dns"
 
 	adapter "git.happydns.org/happyDomain/internal/adapters"
@@ -275,5 +276,80 @@ func TestDNSControlDiffByRecord_NoChanges(t *testing.T) {
 
 	if len(corrections) != 0 {
 		t.Errorf("expected 0 corrections for identical zones, got %d", len(corrections))
+	}
+}
+
+// TestNewDNSControlDomainConfigName checks the name varieties reach the Metadata
+// map, as providers read the zone name from there and not only from Name.
+func TestNewDNSControlDomainConfigName(t *testing.T) {
+	tests := []struct {
+		origin      string
+		name        string
+		uniqueName  string
+		nameRaw     string
+		nameUnicode string
+	}{
+		{"example.com.", "example.com", "example.com", "example.com", "example.com"},
+		{"example.com", "example.com", "example.com", "example.com", "example.com"},
+		{"EXAMPLE.com.", "example.com", "example.com", "EXAMPLE.com", "example.com"},
+		{"2.0.192.in-addr.arpa.", "2.0.192.in-addr.arpa", "2.0.192.in-addr.arpa", "2.0.192.in-addr.arpa", "2.0.192.in-addr.arpa"},
+		{"xn--rf-viaa.com.", "xn--rf-viaa.com", "xn--rf-viaa.com", "xn--rf-viaa.com", "rääf.com"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.origin, func(t *testing.T) {
+			dc := adapter.NewDNSControlDomainConfigName(tt.origin)
+
+			if dc.Name != tt.name {
+				t.Errorf("Name = %q; want %q", dc.Name, tt.name)
+			}
+			if dc.UniqueName != tt.uniqueName {
+				t.Errorf("UniqueName = %q; want %q", dc.UniqueName, tt.uniqueName)
+			}
+
+			// The Metadata copies are the ones the BIND provider substitutes in
+			// the name of the zone file.
+			if got := dc.Metadata[models.DomainUniqueName]; got != tt.uniqueName {
+				t.Errorf("Metadata[uniquename] = %q; want %q", got, tt.uniqueName)
+			}
+			if got := dc.Metadata[models.DomainNameRaw]; got != tt.nameRaw {
+				t.Errorf("Metadata[nameraw] = %q; want %q", got, tt.nameRaw)
+			}
+			if got := dc.Metadata[models.DomainNameUnicode]; got != tt.nameUnicode {
+				t.Errorf("Metadata[nameunicode] = %q; want %q", got, tt.nameUnicode)
+			}
+		})
+	}
+}
+
+// TestNewDNSControlDomainConfigRecords checks the records of a desired zone keep
+// being expressed relatively to the zone name.
+func TestNewDNSControlDomainConfigRecords(t *testing.T) {
+	dc, err := adapter.NewDNSControlDomainConfig("example.com.", []happydns.Record{
+		makeA("example.com.", "1.2.3.4"),
+		makeA("www.example.com.", "1.2.3.5"),
+	})
+	if err != nil {
+		t.Fatalf("NewDNSControlDomainConfig() error = %v", err)
+	}
+
+	if dc.Name != "example.com" {
+		t.Errorf("Name = %q; want example.com", dc.Name)
+	}
+
+	wanted := map[string]string{"@": "1.2.3.4", "www": "1.2.3.5"}
+	for _, rc := range dc.Records {
+		want, ok := wanted[rc.Name]
+		if !ok {
+			t.Errorf("unexpected record %q", rc.Name)
+			continue
+		}
+		if got := rc.GetTargetField(); got != want {
+			t.Errorf("record %q targets %q; want %q", rc.Name, got, want)
+		}
+		delete(wanted, rc.Name)
+	}
+	for name := range wanted {
+		t.Errorf("record %q is missing", name)
 	}
 }

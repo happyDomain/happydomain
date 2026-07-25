@@ -211,6 +211,9 @@ func TestObserveProviderCall_CreateDomain_Success(t *testing.T) {
 	if creator.ensuredDomainConfig.Name != "example.com" {
 		t.Errorf("EnsureZoneExists() got name %q; want example.com", creator.ensuredDomainConfig.Name)
 	}
+	if got := creator.ensuredDomainConfig.Metadata[dnscontrolmodels.DomainUniqueName]; got != "example.com" {
+		t.Errorf("EnsureZoneExists() got metadata uniquename %q; want example.com", got)
+	}
 
 	if got := testutil.ToFloat64(metrics.ProviderAPICallsTotal.WithLabelValues("TEST_PROVIDER", "create_domain", "success")); got != 1 {
 		t.Errorf("expected success counter=1, got %v", got)
