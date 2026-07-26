@@ -22,6 +22,7 @@
 package captcha
 
 import (
+	"strings"
 	"sync"
 	"time"
 )
@@ -74,13 +75,32 @@ func (t *FailureTracker) RecordFailure(ip, email string) {
 	}
 }
 
-// RecordSuccess clears failure counts for the given IP and/or email.
+// RecordSuccess credits back a single failure for the given IP and/or email.
+//
+// It deliberately does not reset the counters: the IP bucket is keyed on a
+// network prefix, so it is shared by everyone behind the same NAT or IPv6 /64.
+// Zeroing it on success would let an attacker on such a network buy back a full
+// threshold worth of attempts with any legitimate login, their own or a
+// neighbour's. Decrementing keeps that gain to a single attempt while still
+// letting a user who mistyped their password work their way back below the
+// threshold.
 func (t *FailureTracker) RecordSuccess(ip, email string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
+	now := time.Now()
 	for _, key := range keysFor(ip, email) {
-		delete(t.entries, key)
+		e, ok := t.entries[key]
+		if !ok {
+			continue
+		}
+
+		if e.count <= 1 || e.expires.Before(now) {
+			delete(t.entries, key)
+			continue
+		}
+
+		e.count--
 	}
 }
 
@@ -133,7 +153,9 @@ func keysFor(ip, email string) []string {
 	if ip != "" {
 		keys = append(keys, "ip:"+ip)
 	}
-	if email != "" {
+	// Normalize the email so that varying the case or padding it with spaces
+	// doesn't hand the attacker a fresh bucket for the same account.
+	if email = strings.ToLower(strings.TrimSpace(email)); email != "" {
 		keys = append(keys, "email:"+email)
 	}
 	return keys
