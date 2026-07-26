@@ -74,7 +74,7 @@ func DeclareNotificationRoutes(
 		KeyFunc: func(c *gin.Context) string {
 			user := middleware.MyUser(c)
 			if user == nil {
-				return c.ClientIP()
+				return middleware.ClientKey(c)
 			}
 			return user.Id.String()
 		},

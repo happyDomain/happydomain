@@ -30,6 +30,7 @@ import (
 	ratelimit "github.com/JGLTechnologies/gin-rate-limit"
 
 	"git.happydns.org/happyDomain/internal/api/controller"
+	"git.happydns.org/happyDomain/internal/api/middleware"
 	happydns "git.happydns.org/happyDomain/model"
 )
 
@@ -52,9 +53,7 @@ func DeclareEmailAutoconfigRoutes(baseRoutes, apiRoutes *gin.RouterGroup, uc hap
 				Message: "Too many requests. Please try again later.",
 			})
 		},
-		KeyFunc: func(c *gin.Context) string {
-			return c.ClientIP()
-		},
+		KeyFunc: middleware.ClientKey,
 	})
 
 	ctrl := controller.NewEmailAutoconfigController(uc)

@@ -125,9 +125,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 				Message: "Too many requests. Please try again later.",
 			})
 		},
-		KeyFunc: func(c *gin.Context) string {
-			return c.ClientIP()
-		},
+		KeyFunc: middleware.ClientKey,
 	})
 	DeclareDomainInfoRoutes(apiRoutes.Group("/domaininfo/:domain", domainInfoRLMiddleware), dep.DomainInfo)
 	DeclareEmailAutoconfigRoutes(baseRoutes, apiRoutes, dep.EmailAutoconfig)
