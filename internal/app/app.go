@@ -255,7 +255,12 @@ func (app *App) setupRouter() {
 
 	gin.ForceConsoleColor()
 	app.router = gin.New()
-	app.router.Use(gin.Logger(), gin.Recovery(), sessions.Sessions(
+
+	if err := setupTrustedProxies(app.router, app.cfg); err != nil {
+		log.Fatalf("%s", err)
+	}
+
+	app.router.Use(gin.Logger(), gin.Recovery(), warnUntrustedForwardedHeaders(app.cfg), sessions.Sessions(
 		session.COOKIE_NAME,
 		session.NewSessionStore(app.cfg, app.store, []byte(app.cfg.JWTSecretKey)),
 	))

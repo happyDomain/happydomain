@@ -51,6 +51,14 @@ func NewAdmin(app *App) *Admin {
 
 	gin.ForceConsoleColor()
 	router := gin.New()
+
+	// Same rationale as the public engine: never let a caller pick the address
+	// it is logged under. Requests arriving on the unix socket are always
+	// trusted by gin, which is fine, that socket is already a privileged path.
+	if err := setupTrustedProxies(router, app.cfg); err != nil {
+		log.Fatalf("%s", err)
+	}
+
 	router.Use(gin.Logger(), gin.Recovery())
 
 	// Prepare usecases (admin uses unrestricted provider access)
