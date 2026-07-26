@@ -125,7 +125,7 @@ func (nc *NotificationController) CreateChannel(c *gin.Context) {
 
 	ch.UserId = user.Id
 
-	if _, err := nc.registry.DecodeChannelConfig(&ch); err != nil {
+	if _, err := nc.registry.AcceptChannelConfig(c.Request.Context(), &ch); err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}
@@ -189,7 +189,7 @@ func (nc *NotificationController) UpdateChannel(c *gin.Context) {
 	}
 	ch.Config = merged
 
-	if _, err := nc.registry.DecodeChannelConfig(&ch); err != nil {
+	if _, err := nc.registry.AcceptChannelConfig(c.Request.Context(), &ch); err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}

@@ -22,7 +22,12 @@
 package usecase
 
 import (
+	"fmt"
+	"net"
+	"net/url"
+	"os"
 	"strings"
+	"syscall"
 	"testing"
 
 	"git.happydns.org/happyDomain/model"
@@ -112,5 +117,86 @@ func TestFetchMTASTSPolicy_EmptyDomain(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "domain") {
 		t.Errorf("error %q does not mention domain", err)
+	}
+}
+
+// The errors built here mirror what the real stack produces: an *url.Error from
+// net/http, wrapping either netguard's own resolution message or a dial
+// failure. None of the results may name an address the caller did not supply.
+func TestSanitizeFetchError(t *testing.T) {
+	tests := []struct {
+		name   string
+		err    error
+		want   string
+		secret string
+	}{
+		{
+			name: "netguard resolution failure",
+			err: &url.Error{
+				Op:  "Get",
+				URL: "https://mta-sts.example.com/.well-known/mta-sts.txt",
+				Err: fmt.Errorf("unable to resolve %q: %w", "mta-sts.example.com", &net.DNSError{
+					Err:    "no such host",
+					Name:   "mta-sts.example.com",
+					Server: "10.0.0.53:53",
+				}),
+			},
+			want:   "lookup mta-sts.example.com: no such host",
+			secret: "10.0.0.53",
+		},
+		{
+			name: "bare resolver failure",
+			err: &net.DNSError{
+				Err:    "server misbehaving",
+				Server: "192.168.1.1:53",
+			},
+			want:   "server misbehaving",
+			secret: "192.168.1.1",
+		},
+		{
+			name: "dial failure",
+			err: &url.Error{
+				Op:  "Get",
+				URL: "https://mta-sts.example.com/.well-known/mta-sts.txt",
+				Err: &net.OpError{
+					Op:   "dial",
+					Net:  "tcp",
+					Addr: &net.TCPAddr{IP: net.ParseIP("10.0.0.1"), Port: 443},
+					Err:  os.NewSyscallError("connect", syscall.ECONNREFUSED),
+				},
+			},
+			want:   "connect: connection refused",
+			secret: "10.0.0.1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := sanitizeFetchError(tt.err)
+			if got != tt.want {
+				t.Errorf("sanitizeFetchError() = %q, want %q", got, tt.want)
+			}
+			if strings.Contains(got, tt.secret) {
+				t.Errorf("sanitizeFetchError() = %q, leaks %q", got, tt.secret)
+			}
+		})
+	}
+}
+
+// classifyFetchError must keep labelling a resolution failure as a DNS error
+// once the message no longer carries the resolver's own address.
+func TestClassifyFetchError_DNS(t *testing.T) {
+	err := fmt.Errorf("unable to resolve %q: %w", "mta-sts.example.com", &net.DNSError{
+		Err:    "no such host",
+		Name:   "mta-sts.example.com",
+		Server: "10.0.0.53:53",
+	})
+
+	status, msg := classifyFetchError(err)
+	if status != "dns-error" {
+		t.Errorf("status = %q, want dns-error", status)
+	}
+	if strings.Contains(msg, "10.0.0.53") {
+		t.Errorf("msg = %q, leaks the resolver address", msg)
 	}
 }

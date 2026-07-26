@@ -30,7 +30,7 @@ import (
 )
 
 type OpenWRTAPI struct {
-	Host     string `json:"host,omitempty" happydomain:"label=Host,placeholder=http://192.168.1.1,required,description=URL of your OpenWRT router (http:// is assumed if no scheme is given)"`
+	Host     string `json:"host,omitempty" happydomain:"label=Host,placeholder=http://192.168.1.1,required,description=URL of your OpenWRT router (http:// is assumed if no scheme is given),endpoint"`
 	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=root,required,description=OpenWRT LuCI username"`
 	Password string `json:"password,omitempty" happydomain:"label=Password,required,secret,description=OpenWRT LuCI password"`
 }

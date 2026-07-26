@@ -31,7 +31,7 @@ import (
 
 type DNScaleAPI struct {
 	ApiKey string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx,required,secret,description=Your DNScale API key"`
-	ApiURL string `json:"api_url,omitempty" happydomain:"label=API URL,placeholder=https://api.dnscale.eu/v1,description=Custom API endpoint if needed"`
+	ApiURL string `json:"api_url,omitempty" happydomain:"label=API URL,placeholder=https://api.dnscale.eu/v1,description=Custom API endpoint if needed,endpoint"`
 }
 
 func (s *DNScaleAPI) DNSControlName() string {

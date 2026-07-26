@@ -22,6 +22,7 @@
 package usecase
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -47,7 +48,7 @@ func (ru *resolverUsecase) CheckDMARCReportAuth(req happydns.DMARCReportAuthRequ
 	queried := dns.Fqdn(owner + "._report._dmarc." + external)
 	resp := &happydns.DMARCReportAuthResponse{QueriedName: strings.TrimSuffix(queried, ".")}
 
-	resolver, err := ru.pickResolver(req.Resolver, req.Custom)
+	resolver, err := ru.pickResolver(context.Background(), req.Resolver, req.Custom)
 	if err != nil {
 		return nil, err
 	}

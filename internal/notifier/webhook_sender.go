@@ -32,6 +32,7 @@ import (
 	"strings"
 	"time"
 
+	"git.happydns.org/happyDomain/internal/netguard"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -75,9 +76,6 @@ func (c WebhookConfig) Validate() error {
 	if c.URL == "" {
 		return errors.New("webhook URL is required")
 	}
-	if _, err := validateOutboundURL(c.URL); err != nil {
-		return fmt.Errorf("webhook URL: %w", err)
-	}
 	for k, v := range c.Headers {
 		if err := validateHeader(k, v); err != nil {
 			return fmt.Errorf("webhook header: %w", err)
@@ -92,14 +90,18 @@ type WebhookSender struct {
 	dashboardURL string
 }
 
-func NewWebhookSender(dashboardURL string) *WebhookSender {
+func NewWebhookSender(dashboardURL string, guard *netguard.Guard) *WebhookSender {
 	return &WebhookSender{
-		client:       newSafeHTTPClient(10 * time.Second),
+		client:       guard.HTTPClient(10 * time.Second),
 		dashboardURL: dashboardURL,
 	}
 }
 
 func (s *WebhookSender) Type() happydns.NotificationChannelType { return ChannelTypeWebhook }
+
+func (s *WebhookSender) Destinations(c WebhookConfig) []Destination {
+	return []Destination{{Label: "The webhook URL", URL: c.URL}}
+}
 
 func (s *WebhookSender) RedactConfig(cfg WebhookConfig) WebhookConfig {
 	cfg.HasSecret = cfg.Secret != ""

@@ -61,6 +61,10 @@ func buildHTTPPayload(p *NotificationPayload, dashboardURL string) httpJSONPaylo
 }
 
 // decorate runs after marshal so it can sign the exact bytes (e.g. HMAC).
+// maxResponseBodyBytes bounds the drain below: the body is unused, we only read
+// it so the connection can be reused.
+const maxResponseBodyBytes = 64 * 1024
+
 func postJSON(ctx context.Context, client *http.Client, url string, body any, decorate func(*http.Request, []byte)) error {
 	raw, err := json.Marshal(body)
 	if err != nil {

@@ -86,6 +86,7 @@ type Usecases struct {
 type App struct {
 	captchaVerifier happydns.CaptchaVerifier
 	cfg             *happydns.Options
+	guards          outboundGuards
 	failureTracker  *captcha.FailureTracker
 	insights        *insightsCollector
 	mailer          happydns.Mailer
@@ -101,6 +102,7 @@ func NewApp(cfg *happydns.Options) *App {
 		cfg: cfg,
 	}
 
+	app.initGuards()
 	app.initMailer()
 	app.initStorageEngine()
 	app.initNewsletter()
@@ -121,6 +123,7 @@ func NewAppWithStorage(cfg *happydns.Options, store storage.Storage) *App {
 		store: store,
 	}
 
+	app.initGuards()
 	app.initMailer()
 	app.initNewsletter()
 	if err := app.initPlugins(); err != nil {

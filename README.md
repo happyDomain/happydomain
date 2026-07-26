@@ -227,6 +227,13 @@ You just have to replace dash by underscore.
 happyDomain ignores `X-Forwarded-For` unless you declare which proxies may set
 it, with `-trusted-proxy`. See [docs/reverse-proxy.md](docs/reverse-proxy.md).
 
+#### DNS server or router on your own network?
+
+happyDomain only connects to publicly routable addresses. To manage a PowerDNS,
+BIND, AdGuard Home, OpenWrt, Mikrotik or UniFi instance you host yourself, name
+its address with `-outbound-allowed-target`. See
+[docs/outbound-targets.md](docs/outbound-targets.md).
+
 #### Need OVH API?
 
 OVH doesn't have simple API key or credentials. It depends on a web flow to retrieve the key.

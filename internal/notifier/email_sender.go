@@ -60,6 +60,10 @@ func NewEmailSender(mailer happydns.Mailer, baseURL string) *EmailSender {
 
 func (s *EmailSender) Type() happydns.NotificationChannelType { return ChannelTypeEmail }
 
+// The mailer dials the administrator-configured SMTP server, never an address
+// taken from the channel config.
+func (s *EmailSender) Destinations(EmailConfig) []Destination { return nil }
+
 func (s *EmailSender) Send(_ context.Context, c EmailConfig, payload *NotificationPayload) error {
 	addr := c.Address
 	if addr == "" {

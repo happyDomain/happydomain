@@ -31,6 +31,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
+	"git.happydns.org/happyDomain/internal/netguard"
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	notifUC "git.happydns.org/happyDomain/internal/usecase/notification"
@@ -49,6 +50,7 @@ type Dependencies struct {
 	DomainLog             happydns.DomainLogUsecase
 	EmailAutoconfig       happydns.EmailAutoconfigUsecase
 	FailureTracker        happydns.FailureTracker
+	OutboundGuard         *netguard.Guard
 	Provider              happydns.ProviderUsecase
 	ProviderSettings      happydns.ProviderSettingsUsecase
 	ProviderSpecs         happydns.ProviderSpecsUsecase
@@ -189,6 +191,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 		dep.CheckStatusUC,
 		dep.DomainInfo,
 		nc,
+		dep.OutboundGuard,
 	)
 	DeclareProviderRoutes(apiAuthRoutes, dep.Provider)
 	DeclareProviderSettingsRoutes(apiAuthRoutes, dep.ProviderSettings)

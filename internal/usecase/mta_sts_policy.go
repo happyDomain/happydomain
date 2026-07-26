@@ -34,6 +34,7 @@ import (
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/netguard"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -59,9 +60,11 @@ func (us *resolverUsecase) FetchMTASTSPolicy(req happydns.MTASTSPolicyRequest) (
 	client := &http.Client{
 		Timeout: mtaStsTotalDeadline,
 		Transport: &http.Transport{
-			DialContext: (&net.Dialer{
-				Timeout: mtaStsConnTimeout,
-			}).DialContext,
+			// The policy host is derived from a domain the caller supplies and
+			// this endpoint needs no account, so the dial has to be vetted:
+			// "mta-sts.<anything>" is otherwise a read primitive against any
+			// internal service listening on 443.
+			DialContext:           us.outboundGuard.DialContext,
 			TLSHandshakeTimeout:   mtaStsConnTimeout,
 			ResponseHeaderTimeout: mtaStsConnTimeout,
 		},
@@ -74,6 +77,11 @@ func (us *resolverUsecase) FetchMTASTSPolicy(req happydns.MTASTSPolicyRequest) (
 
 	httpResp, err := client.Get(url)
 	if err != nil {
+		if errors.Is(err, netguard.ErrBlocked) {
+			resp.Status = "fetch-error"
+			resp.ErrorMsg = us.outboundGuard.Refusal("The MTA-STS policy host")
+			return resp, nil
+		}
 		resp.Status, resp.ErrorMsg = classifyFetchError(err)
 		return resp, nil
 	}
@@ -118,7 +126,7 @@ func (us *resolverUsecase) FetchMTASTSPolicy(req happydns.MTASTSPolicyRequest) (
 }
 
 func classifyFetchError(err error) (status, msg string) {
-	msg = err.Error()
+	msg = sanitizeFetchError(err)
 	var netErr net.Error
 	if errors.As(err, &netErr) && netErr.Timeout() {
 		return "fetch-error", "timeout: " + msg
@@ -135,6 +143,37 @@ func classifyFetchError(err error) (status, msg string) {
 		return "dns-error", msg
 	}
 	return "fetch-error", msg
+}
+
+// sanitizeFetchError renders a fetch failure without the addresses involved.
+//
+// A *net.OpError stringifies as `dial tcp 10.0.0.1:443: connect: connection
+// refused`, and this response is echoed back to an unauthenticated caller: the
+// address and the outcome together turn the endpoint into a port scanner for
+// whatever the policy host happens to resolve to.
+//
+// A *net.DNSError likewise stringifies as `lookup foo on 10.0.0.53:53: no such
+// host`, naming the deployment's internal resolver. It is checked first because
+// netguard wraps it in a message of its own rather than in a *net.OpError, so
+// unwrapping only the latter would let the whole string through.
+func sanitizeFetchError(err error) string {
+	var dnsErr *net.DNSError
+	if errors.As(err, &dnsErr) {
+		reason := dnsErr.Err
+		if reason == "" {
+			reason = "DNS lookup failed"
+		}
+		if dnsErr.Name != "" {
+			return "lookup " + dnsErr.Name + ": " + reason
+		}
+		return reason
+	}
+
+	var opErr *net.OpError
+	if errors.As(err, &opErr) && opErr.Err != nil {
+		return opErr.Err.Error()
+	}
+	return err.Error()
 }
 
 // parseMTASTSBody parses the textual MTA-STS policy file (RFC 8461 sec. 3.2)

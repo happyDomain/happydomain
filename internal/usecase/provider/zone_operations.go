@@ -28,8 +28,8 @@ import (
 )
 
 // RetrieveZone retrieves the current zone records for the given domain from the provider.
-func (s *Service) RetrieveZone(_ context.Context, provider *happydns.Provider, name string) ([]happydns.Record, error) {
-	instance, err := instantiate(provider)
+func (s *Service) RetrieveZone(ctx context.Context, provider *happydns.Provider, name string) ([]happydns.Record, error) {
+	instance, err := s.instantiate(ctx, provider)
 	if err != nil {
 		return nil, err
 	}
@@ -38,8 +38,8 @@ func (s *Service) RetrieveZone(_ context.Context, provider *happydns.Provider, n
 }
 
 // ListZoneCorrections lists the corrections needed to synchronize the zone with the given records.
-func (s *Service) ListZoneCorrections(_ context.Context, provider *happydns.Provider, domain *happydns.Domain, records []happydns.Record) ([]*happydns.Correction, int, error) {
-	instance, err := instantiate(provider)
+func (s *Service) ListZoneCorrections(ctx context.Context, provider *happydns.Provider, domain *happydns.Domain, records []happydns.Record) ([]*happydns.Correction, int, error) {
+	instance, err := s.instantiate(ctx, provider)
 	if err != nil {
 		return nil, 0, err
 	}

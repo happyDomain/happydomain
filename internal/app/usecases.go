@@ -53,8 +53,8 @@ func (app *App) initUsecases() {
 		sessionService,
 	)
 	domainLogService := domainlogUC.NewService(app.store)
-	providerService := providerUC.NewRestrictedService(app.cfg, app.store)
-	providerAdminService := providerUC.NewService(app.store, nil)
+	providerService := providerUC.NewRestrictedService(app.cfg, app.store, app.guards.Outbound)
+	providerAdminService := providerUC.NewService(app.store, nil, app.guards.Outbound)
 	serviceService := serviceUC.NewServiceUsecases()
 	zoneService := zoneUC.NewZoneUsecases(app.store, serviceService)
 
@@ -108,7 +108,7 @@ func (app *App) initUsecases() {
 	app.usecases.authentication = usecase.NewAuthenticationUsecase(app.cfg, app.store, app.usecases.user)
 	app.usecases.authUser = authUserService
 	app.usecases.authUserAdmin = authUserService
-	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg)
+	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg, app.guards.Resolver, app.guards.Outbound)
 	app.usecases.session = sessionService
 
 	app.usecases.orchestrator = orchestrator.NewOrchestrator(
@@ -176,9 +176,9 @@ func (app *App) initUsecases() {
 	// channels (email/webhook/UnifiedPush) based on per-target preferences.
 	baseURL := app.cfg.GetBaseURL()
 	registry := notifPkg.NewRegistry()
-	registry.Register(notifPkg.Adapt(notifPkg.NewEmailSender(app.mailer, baseURL)))
-	registry.Register(notifPkg.Adapt(notifPkg.NewWebhookSender(baseURL)))
-	registry.Register(notifPkg.Adapt(notifPkg.NewUnifiedPushSender(baseURL)))
+	registry.Register(notifPkg.Adapt(notifPkg.NewEmailSender(app.mailer, baseURL), app.guards.Outbound))
+	registry.Register(notifPkg.Adapt(notifPkg.NewWebhookSender(baseURL, app.guards.Outbound), app.guards.Outbound))
+	registry.Register(notifPkg.Adapt(notifPkg.NewUnifiedPushSender(baseURL, app.guards.Outbound), app.guards.Outbound))
 	app.usecases.notificationRegistry = registry
 	resolver := notifUC.NewResolver(app.store, app.store)
 	pool := notifUC.NewPool(registry, app.store)

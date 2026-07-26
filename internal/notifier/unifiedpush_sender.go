@@ -24,10 +24,10 @@ package notifier
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
+	"git.happydns.org/happyDomain/internal/netguard"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -41,9 +41,6 @@ func (c UnifiedPushConfig) Validate() error {
 	if c.Endpoint == "" {
 		return errors.New("UnifiedPush endpoint is required")
 	}
-	if _, err := validateOutboundURL(c.Endpoint); err != nil {
-		return fmt.Errorf("UnifiedPush endpoint: %w", err)
-	}
 	return nil
 }
 
@@ -53,14 +50,18 @@ type UnifiedPushSender struct {
 	dashboardURL string
 }
 
-func NewUnifiedPushSender(dashboardURL string) *UnifiedPushSender {
+func NewUnifiedPushSender(dashboardURL string, guard *netguard.Guard) *UnifiedPushSender {
 	return &UnifiedPushSender{
-		client:       newSafeHTTPClient(10 * time.Second),
+		client:       guard.HTTPClient(10 * time.Second),
 		dashboardURL: dashboardURL,
 	}
 }
 
 func (s *UnifiedPushSender) Type() happydns.NotificationChannelType { return ChannelTypeUnifiedPush }
+
+func (s *UnifiedPushSender) Destinations(c UnifiedPushConfig) []Destination {
+	return []Destination{{Label: "The UnifiedPush endpoint", URL: c.Endpoint}}
+}
 
 func (s *UnifiedPushSender) Send(ctx context.Context, c UnifiedPushConfig, payload *NotificationPayload) error {
 	return postJSON(ctx, s.client, c.Endpoint, buildHTTPPayload(payload, s.dashboardURL), nil)

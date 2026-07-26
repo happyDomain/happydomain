@@ -26,6 +26,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
+	"git.happydns.org/happyDomain/internal/netguard"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/model"
 )
@@ -44,6 +45,7 @@ func DeclareDomainRoutes(
 	checkStatusUC *checkerUC.CheckStatusUsecase,
 	domainInfoUC happydns.DomainInfoUsecase,
 	nc *controller.NotificationController,
+	outboundGuard *netguard.Guard,
 ) {
 	dc := controller.NewDomainController(
 		domainUC,
@@ -68,7 +70,7 @@ func DeclareDomainRoutes(
 	apiDomainsRoutes.POST("/zone", dc.ImportZone)
 	apiDomainsRoutes.POST("/retrieve_zone", dc.RetrieveZone)
 
-	certCtrl := controller.NewCertificateController()
+	certCtrl := controller.NewCertificateController(outboundGuard)
 	apiDomainsRoutes.POST("/fetch-certificate", certCtrl.FetchCertificate)
 
 	emailIdCtrl := controller.NewEmailIdentifierController()

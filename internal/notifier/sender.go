@@ -27,6 +27,7 @@ import (
 	"errors"
 	"fmt"
 
+	"git.happydns.org/happyDomain/internal/netguard"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -38,15 +39,15 @@ type Recipient struct {
 
 // Senders receive only render-needed data — no user object, no server config — so adding a transport cannot leak privileged data.
 type NotificationPayload struct {
-	Recipient    Recipient
-	CheckerID    string
-	Target       happydns.CheckTarget
-	DomainName   string
+	Recipient     Recipient
+	CheckerID     string
+	Target        happydns.CheckTarget
+	DomainName    string
 	ServiceDomain string // FQDN of the specific service (subdomain.domain), empty when the check is domain-scoped
-	OldStatus    happydns.Status
-	NewStatus    happydns.Status
-	States       []happydns.CheckState
-	Annotation   string
+	OldStatus     happydns.Status
+	NewStatus     happydns.Status
+	States        []happydns.CheckState
+	Annotation    string
 }
 
 type ChannelConfig interface {
@@ -58,6 +59,9 @@ type ChannelConfig interface {
 type ChannelSender interface {
 	Type() happydns.NotificationChannelType
 	DecodeConfig(raw json.RawMessage) (ChannelConfig, error)
+	// Reserved for the administration path: it may perform network lookups, so
+	// it must never run while sending a notification.
+	CheckConfig(ctx context.Context, cfg ChannelConfig) error
 	Send(ctx context.Context, cfg ChannelConfig, payload *NotificationPayload) error
 	SendTest(ctx context.Context, cfg ChannelConfig, user *happydns.User) error
 	// Strip secrets to presence booleans before echoing config back to clients.
@@ -75,18 +79,43 @@ type ConfigMerger[C ChannelConfig] interface {
 	MergeForUpdate(existing, incoming C) C
 }
 
-// Strongly-typed contract; Adapt wraps it as ChannelSender, providing JSON decode, validation, type-asserted dispatch, and SendTest.
+// Destination is a URL a sender will dial, paired with the label naming the
+// field it came from so a refusal can point the user at what they filled in.
+type Destination struct {
+	// Subject of the refusal message, e.g. "The webhook URL".
+	Label string
+	URL   string
+}
+
+// Strongly-typed contract; Adapt wraps it as ChannelSender, providing JSON
+// decode, validation, address-policy checks, type-asserted dispatch and
+// SendTest.
 type TypedSender[C ChannelConfig] interface {
 	Type() happydns.NotificationChannelType
+
+	// Destinations lists every URL taken from the config that this sender will
+	// dial. The adapter holds each one against the URL shape rules and, on the
+	// administration path, against the instance address policy, neither of
+	// which ChannelConfig.Validate can do: it is a value method with nothing
+	// but the config in scope.
+	//
+	// Returning nil belongs to transports that dial nothing the user chose,
+	// such as email. It is not an opt-out: a sender that omits a URL it later
+	// dials sends happyDomain to an address its administrator never allowed.
+	Destinations(cfg C) []Destination
+
 	Send(ctx context.Context, cfg C, payload *NotificationPayload) error
 }
 
-func Adapt[C ChannelConfig](s TypedSender[C]) ChannelSender {
-	return &typedAdapter[C]{inner: s}
+// guard carries the instance address policy; it must not be nil unless the
+// sender returns no destination at all.
+func Adapt[C ChannelConfig](s TypedSender[C], guard *netguard.Guard) ChannelSender {
+	return &typedAdapter[C]{inner: s, guard: guard}
 }
 
 type typedAdapter[C ChannelConfig] struct {
 	inner TypedSender[C]
+	guard *netguard.Guard
 }
 
 func (a *typedAdapter[C]) Type() happydns.NotificationChannelType { return a.inner.Type() }
@@ -101,7 +130,33 @@ func (a *typedAdapter[C]) DecodeConfig(raw json.RawMessage) (ChannelConfig, erro
 	if err := c.Validate(); err != nil {
 		return nil, err
 	}
+	for _, d := range a.inner.Destinations(c) {
+		if _, err := netguard.ValidateURLShape(d.URL); err != nil {
+			return nil, fmt.Errorf("%s: %w", d.Label, err)
+		}
+	}
 	return c, nil
+}
+
+// CheckConfig resolves the destinations, so it only runs when a user submits a
+// channel. The send path relies on the dialer guard instead, otherwise a
+// resolver hiccup would drop notifications for an already accepted channel.
+func (a *typedAdapter[C]) CheckConfig(ctx context.Context, cfg ChannelConfig) error {
+	typed, ok := cfg.(C)
+	if !ok {
+		return fmt.Errorf("%s sender: unexpected config type %T", a.inner.Type(), cfg)
+	}
+	dests := a.inner.Destinations(typed)
+	if len(dests) > 0 && a.guard == nil {
+		// Fail closed: a sender that dials cannot be registered without a policy.
+		return fmt.Errorf("%s sender: registered without an outbound guard", a.inner.Type())
+	}
+	for _, d := range dests {
+		if _, err := a.guard.ValidateURL(ctx, d.URL); err != nil {
+			return errors.New(a.guard.Refusal(d.Label))
+		}
+	}
+	return nil
 }
 
 func (a *typedAdapter[C]) Send(ctx context.Context, cfg ChannelConfig, payload *NotificationPayload) error {
@@ -187,6 +242,25 @@ func (r *Registry) DecodeChannelConfig(ch *happydns.NotificationChannel) (Channe
 		return nil, fmt.Errorf("%w: %q", ErrUnknownChannelType, ch.Type)
 	}
 	return s.DecodeConfig(ch.Config)
+}
+
+// AcceptChannelConfig validates a channel a user is submitting: it decodes the
+// config, then checks its destination against runtime policy. Only use it on
+// the administration path; the send path must stick to DecodeChannelConfig, as
+// the destination check can hit the network.
+func (r *Registry) AcceptChannelConfig(ctx context.Context, ch *happydns.NotificationChannel) (ChannelConfig, error) {
+	s, ok := r.Get(ch.Type)
+	if !ok {
+		return nil, fmt.Errorf("%w: %q", ErrUnknownChannelType, ch.Type)
+	}
+	cfg, err := s.DecodeConfig(ch.Config)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.CheckConfig(ctx, cfg); err != nil {
+		return nil, err
+	}
+	return cfg, nil
 }
 
 // Channels of unknown types are returned unchanged so administrators can still observe legacy data.

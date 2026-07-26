@@ -71,6 +71,22 @@ func TestParseLine(t *testing.T) {
 		t.Fatalf(`parseLine("TRUSTED_PROXY=10.0.0.0/8,192.168.1.1") = %v, want [10.0.0.0/8 192.168.1.1]`, cfg.TrustedProxies)
 	}
 
+	err = parseLine(cfg, "HAPPYDOMAIN_OUTBOUND_ALLOWED_TARGET=127.0.0.1,192.168.1.0/24")
+	if err != nil {
+		t.Fatalf(`parseLine("OUTBOUND_ALLOWED_TARGET=127.0.0.1,192.168.1.0/24") => %v`, err.Error())
+	}
+	if len(cfg.OutboundAllowedTargets) != 2 || cfg.OutboundAllowedTargets[0] != "127.0.0.1" || cfg.OutboundAllowedTargets[1] != "192.168.1.0/24" {
+		t.Fatalf(`parseLine("OUTBOUND_ALLOWED_TARGET=127.0.0.1,192.168.1.0/24") = %v, want [127.0.0.1 192.168.1.0/24]`, cfg.OutboundAllowedTargets)
+	}
+
+	err = parseLine(cfg, "HAPPYDOMAIN_RESOLVER_ALLOWED_TARGET=10.0.0.53")
+	if err != nil {
+		t.Fatalf(`parseLine("RESOLVER_ALLOWED_TARGET=10.0.0.53") => %v`, err.Error())
+	}
+	if len(cfg.ResolverAllowedTargets) != 1 || cfg.ResolverAllowedTargets[0] != "10.0.0.53" {
+		t.Fatalf(`parseLine("RESOLVER_ALLOWED_TARGET=10.0.0.53") = %v, want [10.0.0.53]`, cfg.ResolverAllowedTargets)
+	}
+
 	err = parseLine(cfg, "NO_AUTH=true")
 	if err != nil {
 		t.Fatalf(`parseLine("NO_AUTH=true") => %v`, err.Error())

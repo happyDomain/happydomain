@@ -29,8 +29,8 @@ import (
 )
 
 // CreateDomainOnProvider creates a domain on the given provider.
-func (s *Service) CreateDomainOnProvider(_ context.Context, provider *happydns.Provider, fqdn string) error {
-	p, err := instantiate(provider)
+func (s *Service) CreateDomainOnProvider(ctx context.Context, provider *happydns.Provider, fqdn string) error {
+	p, err := s.instantiate(ctx, provider)
 	if err != nil {
 		return err
 	}
@@ -43,8 +43,8 @@ func (s *Service) CreateDomainOnProvider(_ context.Context, provider *happydns.P
 }
 
 // ListHostedDomains lists all domains hosted on the given provider.
-func (s *Service) ListHostedDomains(_ context.Context, provider *happydns.Provider) ([]string, error) {
-	p, err := instantiate(provider)
+func (s *Service) ListHostedDomains(ctx context.Context, provider *happydns.Provider) ([]string, error) {
+	p, err := s.instantiate(ctx, provider)
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +57,8 @@ func (s *Service) ListHostedDomains(_ context.Context, provider *happydns.Provid
 }
 
 // TestDomainExistence tests whether a domain exists on the given provider.
-func (s *Service) TestDomainExistence(_ context.Context, provider *happydns.Provider, name string) error {
-	instance, err := instantiate(provider)
+func (s *Service) TestDomainExistence(ctx context.Context, provider *happydns.Provider, name string) error {
+	instance, err := s.instantiate(ctx, provider)
 	if err != nil {
 		return err
 	}

@@ -30,7 +30,7 @@ import (
 )
 
 type MikrotikAPI struct {
-	Host      string `json:"host,omitempty" happydomain:"label=Host,placeholder=http://192.168.88.1:8080,required,description=RouterOS REST API endpoint"`
+	Host      string `json:"host,omitempty" happydomain:"label=Host,placeholder=http://192.168.88.1:8080,required,description=RouterOS REST API endpoint,endpoint"`
 	Username  string `json:"username,omitempty" happydomain:"label=Username,placeholder=admin,required"`
 	Password  string `json:"password,omitempty" happydomain:"label=Password,required,secret"`
 	ZoneHints string `json:"zonehints,omitempty" happydomain:"label=Zone Hints,placeholder=internal.corp.local\\,home.arpa,description=Comma-separated list of zone names to help identify multi-label zones"`

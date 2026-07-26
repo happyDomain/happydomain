@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"git.happydns.org/happyDomain/internal/netguard"
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 	"git.happydns.org/happyDomain/model"
 )
@@ -34,17 +35,22 @@ import (
 type Service struct {
 	store     ProviderStorage
 	validator ProviderValidator
+
+	// guard decides which endpoints a provider may be pointed at. A nil guard
+	// still refuses non-public destinations: see netguard.Guard.
+	guard *netguard.Guard
 }
 
 // NewService creates a new provider Service. If validator is nil,
-// the DefaultProviderValidator is used.
-func NewService(store ProviderStorage, validator ProviderValidator) *Service {
+// the DefaultProviderValidator is used, guarded by the same guard.
+func NewService(store ProviderStorage, validator ProviderValidator, guard *netguard.Guard) *Service {
 	if validator == nil {
-		validator = &DefaultProviderValidator{}
+		validator = NewValidator(guard)
 	}
 	return &Service{
 		store:     store,
 		validator: validator,
+		guard:     guard,
 	}
 }
 
@@ -62,8 +68,18 @@ func ParseProvider(msg *happydns.ProviderMessage) (p *happydns.Provider, err err
 	return
 }
 
-// instantiate is a helper that instantiates a provider and wraps errors consistently.
-func instantiate(p *happydns.Provider) (happydns.ProviderActuator, error) {
+// instantiate checks where the provider points, then instantiates it, wrapping
+// errors consistently.
+//
+// Every dial happyDomain makes on a provider's behalf starts here or in
+// DefaultProviderValidator, so these two are the only places the endpoint check
+// has to be made: creating a provider, editing it, and every later apply all
+// funnel through one of them.
+func (s *Service) instantiate(ctx context.Context, p *happydns.Provider) (happydns.ProviderActuator, error) {
+	if err := checkEndpoints(ctx, s.guard, p.Provider); err != nil {
+		return nil, err
+	}
+
 	instance, err := p.InstantiateProvider()
 	if err != nil {
 		return nil, fmt.Errorf("unable to instantiate provider: %w", err)
@@ -72,13 +88,13 @@ func instantiate(p *happydns.Provider) (happydns.ProviderActuator, error) {
 }
 
 // CreateProvider creates a new provider for the given user.
-func (s *Service) CreateProvider(_ context.Context, user *happydns.User, msg *happydns.ProviderMessage) (*happydns.Provider, error) {
+func (s *Service) CreateProvider(ctx context.Context, user *happydns.User, msg *happydns.ProviderMessage) (*happydns.Provider, error) {
 	provider, err := ParseProvider(msg)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse provider: %w", err)
 	}
 
-	if err := s.validator.Validate(provider); err != nil {
+	if err := s.validator.Validate(ctx, provider); err != nil {
 		return nil, fmt.Errorf("invalid provider: %w", err)
 	}
 
@@ -159,7 +175,7 @@ func (s *Service) UpdateProvider(ctx context.Context, providerID happydns.Identi
 		return happydns.ValidationError{Msg: "you cannot change the provider identifier"}
 	}
 
-	err = s.validator.Validate(provider)
+	err = s.validator.Validate(ctx, provider)
 	if err != nil {
 		return happydns.ValidationError{Msg: fmt.Sprintf("unable to validate provider attributes: %s", err.Error())}
 	}
@@ -213,9 +229,9 @@ type RestrictedService struct {
 }
 
 // NewRestrictedService creates a RestrictedService backed by the given configuration and storage.
-func NewRestrictedService(cfg *happydns.Options, store ProviderStorage) *RestrictedService {
+func NewRestrictedService(cfg *happydns.Options, store ProviderStorage, guard *netguard.Guard) *RestrictedService {
 	return &RestrictedService{
-		inner:  NewService(store, nil),
+		inner:  NewService(store, nil, guard),
 		config: cfg,
 	}
 }

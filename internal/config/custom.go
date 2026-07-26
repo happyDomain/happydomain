@@ -51,22 +51,31 @@ func (s *stringSlice) Set(value string) error {
 	return nil
 }
 
-// proxyList is a flag.Value that accumulates IP addresses and CIDR blocks of
-// trusted reverse proxies. It accepts both repeated flags and a single comma
-// separated value, as an environment variable can only be given once. Entries
-// are validated and canonicalized eagerly, so a typo fails at startup instead
-// of silently disabling the trust check, or silently trusting more than the
-// operator wrote.
+// ipList is a flag.Value that accumulates IP addresses and CIDR blocks. It
+// accepts both repeated flags and a single comma separated value, as an
+// environment variable can only be given once. Entries are validated and
+// canonicalized eagerly, so a typo fails at startup instead of silently
+// widening or disabling the check the list feeds.
 //
 // The keyword `none` empties the list. Because the config file, the
 // environment and the command line all feed this same flag.Value, a
 // lower-precedence source can otherwise only ever be widened: `none` is what
-// makes a trust list narrowable from the command line.
-type proxyList struct {
+// makes such a list narrowable from the command line.
+//
+// Three lists use it: the trusted reverse proxies, and the two outbound
+// destination allow-lists.
+type ipList struct {
 	stringSlice
+
+	// what names one entry, for the error messages ("trusted proxy").
+	what string
+
+	// legacyLocalHint, when set, is the explanation returned for the `local`
+	// keyword instead of letting it fail as an unparseable address.
+	legacyLocalHint string
 }
 
-func (p *proxyList) Set(value string) error {
+func (p *ipList) Set(value string) error {
 	for item := range strings.SplitSeq(value, ",") {
 		item = strings.TrimSpace(item)
 		if item == "" {
@@ -78,16 +87,11 @@ func (p *proxyList) Set(value string) error {
 			continue
 		}
 
-		// `local` used to expand to loopback plus every private range. That
-		// trusts the whole network the proxy sits on, not the proxy: on a
-		// container bridge or a LAN, any neighbour reaching the port directly
-		// could then pick the address it was throttled under. Point at the
-		// replacement rather than letting it fail as an unparseable address.
-		if strings.EqualFold(item, "local") {
-			return fmt.Errorf("%q is no longer accepted: it trusted every private range, so any host on the same network could forge X-Forwarded-For. Give the exact address of your proxy instead (eg. the container IP, or 127.0.0.1 for a proxy on the same host)", item)
+		if p.legacyLocalHint != "" && strings.EqualFold(item, "local") {
+			return fmt.Errorf("%q is no longer accepted: %s", item, p.legacyLocalHint)
 		}
 
-		entry, err := canonicalProxyEntry(item)
+		entry, err := canonicalIPEntry(item, p.what)
 		if err != nil {
 			return err
 		}
@@ -98,31 +102,31 @@ func (p *proxyList) Set(value string) error {
 	return nil
 }
 
-// canonicalProxyEntry validates one trusted proxy entry and returns the form
-// gin will actually match against, so that what the startup log reports is
-// what is really trusted.
+// canonicalIPEntry validates one entry and returns the form that will actually
+// be matched against, so that what the startup log reports is what really
+// applies.
 //
-// Two inputs are accepted by the naive parsers but mean something else to gin,
-// and both silently widen or misplace the trust boundary, so they are refused
-// rather than reinterpreted:
+// Two inputs are accepted by the naive parsers but mean something else to the
+// matchers, and both silently widen or misplace the boundary, so they are
+// refused rather than reinterpreted:
 //
-//   - a prefix with host bits set (`192.0.2.5/24`), which masks down to a whole
-//     subnet while reading like a single host;
-//   - an IPv4-mapped IPv6 literal (`::ffff:192.0.2.1`), which gin turns into
-//     `::/32`, leaving the intended proxy untrusted and `::1` trusted instead.
-func canonicalProxyEntry(item string) (string, error) {
+//   - a prefix with host bits set (`198.51.100.5/24`), which masks down to a
+//     whole subnet while reading like a single host;
+//   - an IPv4-mapped IPv6 literal (`::ffff:198.51.100.1`), which gin turns into
+//     `::/32`, leaving the intended address out and `::1` in instead.
+func canonicalIPEntry(item, what string) (string, error) {
 	if strings.Contains(item, "/") {
 		prefix, err := netip.ParsePrefix(item)
 		if err != nil {
-			return "", fmt.Errorf("%q is not a valid CIDR block: %w", item, err)
+			return "", fmt.Errorf("%s %q is not a valid CIDR block: %w", what, item, err)
 		}
 
 		if masked := prefix.Masked(); masked != prefix {
-			return "", fmt.Errorf("%q has bits set outside its /%d prefix: write %q to trust the whole block, or %q to trust that single address", item, prefix.Bits(), masked, prefix.Addr())
+			return "", fmt.Errorf("%s %q has bits set outside its /%d prefix: write %q for the whole block, or %q for that single address", what, item, prefix.Bits(), masked, prefix.Addr())
 		}
 
 		if prefix.Addr().Is4In6() {
-			return "", fmt.Errorf("%q is an IPv4-mapped IPv6 block: write it as an IPv4 block instead", item)
+			return "", fmt.Errorf("%s %q is an IPv4-mapped IPv6 block: write it as an IPv4 block instead", what, item)
 		}
 
 		return prefix.String(), nil
@@ -130,14 +134,38 @@ func canonicalProxyEntry(item string) (string, error) {
 
 	addr, err := netip.ParseAddr(item)
 	if err != nil {
-		return "", fmt.Errorf("%q is neither a valid IP address nor a CIDR block", item)
+		return "", fmt.Errorf("%s %q is neither a valid IP address nor a CIDR block", what, item)
 	}
 
 	if addr.Is4In6() {
-		return "", fmt.Errorf("%q is an IPv4-mapped IPv6 address: write it as %q instead", item, addr.Unmap())
+		return "", fmt.Errorf("%s %q is an IPv4-mapped IPv6 address: write it as %q instead", what, item, addr.Unmap())
 	}
 
 	return addr.String(), nil
+}
+
+// legacyLocalProxyHint explains why the `local` keyword disappeared from
+// -trusted-proxy. It used to expand to loopback plus every private range, which
+// trusts the whole network the proxy sits on rather than the proxy: on a
+// container bridge or a LAN, any neighbour reaching the port directly could
+// then pick the address it was throttled under.
+const legacyLocalProxyHint = "it trusted every private range, so any host on the same network could forge X-Forwarded-For. Give the exact address of your proxy instead (eg. the container IP, or 127.0.0.1 for a proxy on the same host)"
+
+// proxyList builds the flag.Value behind -trusted-proxy.
+func proxyList(values *[]string) *ipList {
+	return &ipList{
+		stringSlice:     stringSlice{values},
+		what:            "trusted proxy",
+		legacyLocalHint: legacyLocalProxyHint,
+	}
+}
+
+// targetList builds the flag.Value behind the two outbound allow-lists.
+func targetList(values *[]string, what string) *ipList {
+	return &ipList{
+		stringSlice: stringSlice{values},
+		what:        what,
+	}
 }
 
 // checkerOptionFlag is a flag.Value that writes the parsed flag value into a

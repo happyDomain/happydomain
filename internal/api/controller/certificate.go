@@ -22,11 +22,13 @@
 // Package controller exposes the "fetch certificate" endpoint used by the
 // TLSA editor to prefill Certificate hashes from a live TLS endpoint.
 //
-// Scoped to the domain the user owns (DomainHandler middleware + suffix
-// check) so it cannot be repurposed as an arbitrary TLS-probing proxy.
+// Scoped to the domain the user owns (DomainHandler middleware + label-aware
+// subdomain check) so it cannot be repurposed as an arbitrary TLS-probing
+// proxy.
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -35,18 +37,25 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/miekg/dns"
 
 	tls "git.happydns.org/checker-tls/checker"
 	"git.happydns.org/happyDomain/internal/api/middleware"
+	"git.happydns.org/happyDomain/internal/netguard"
 	"git.happydns.org/happyDomain/model"
 )
 
 const fetchCertificateTimeout = 10 * time.Second
 
-type CertificateController struct{}
+type CertificateController struct {
+	// guard vets the endpoint before it is probed. The suffix check below is
+	// authorization, not reachability: the caller owns the domain, so they also
+	// control what it resolves to, and can point it at an internal address.
+	guard *netguard.Guard
+}
 
-func NewCertificateController() *CertificateController {
-	return &CertificateController{}
+func NewCertificateController(guard *netguard.Guard) *CertificateController {
+	return &CertificateController{guard: guard}
 }
 
 // fetchCertificateRequest is the editor's selection. Host is the owner
@@ -64,6 +73,21 @@ type fetchCertificateRequest struct {
 type fetchCertificateResponse struct {
 	Endpoint string         `json:"endpoint"`
 	Chain    []tls.CertInfo `json:"chain"`
+}
+
+// isUnderDomain reports whether host is domain itself or one of its
+// subdomains. Names are compared canonically (lowercased, fully qualified) and
+// only at a label boundary, so "notexample.com" is not read as being under
+// "example.com".
+func isUnderDomain(host, domain string) bool {
+	canonHost := dns.CanonicalName(host)
+	canonDomain := dns.CanonicalName(domain)
+
+	if canonDomain == "." {
+		return false
+	}
+
+	return canonHost == canonDomain || strings.HasSuffix(canonHost, "."+canonDomain)
 }
 
 // FetchCertificate dials the requested endpoint and returns DANE-friendly
@@ -99,7 +123,8 @@ func (cc *CertificateController) FetchCertificate(c *gin.Context) {
 		return
 	}
 
-	// Authorization: the authenticated domain must be a suffix of Host. We
+	// Authorization: Host must be the authenticated domain itself or one of its
+	// subdomains, compared label by label, not as a raw byte suffix. We
 	// trust c.Get("domain") (set by DomainHandler), not the client-supplied
 	// Host, so the endpoint can't double as an arbitrary TLS-probing proxy.
 	domVal, ok := c.Get("domain")
@@ -113,12 +138,25 @@ func (cc *CertificateController) FetchCertificate(c *gin.Context) {
 		return
 	}
 	host := strings.TrimSpace(req.Host)
-	if !strings.HasSuffix(host, dom.DomainName) {
+	if _, ok := dns.IsDomainName(host); !ok || strings.ContainsAny(host, `/\`) {
+		middleware.ErrorResponse(c, http.StatusBadRequest, fmt.Errorf("invalid host %q", req.Host))
+		return
+	}
+	if !isUnderDomain(host, dom.DomainName) {
 		middleware.ErrorResponse(c, http.StatusForbidden, fmt.Errorf("host %q is not under %q", host, dom.DomainName))
 		return
 	}
 
-	host = strings.TrimSuffix(host, ".")
+	host = strings.TrimSuffix(dns.CanonicalName(host), ".")
+
+	// checker-tls' FetchChain takes no dialer, so the best available check is
+	// to resolve first and refuse a host that lands anywhere we are not allowed
+	// to reach. It re-resolves internally, leaving a one-TTL rebinding window
+	// we cannot close from here.
+	if _, err := cc.guard.ResolveAllowed(c.Request.Context(), host); err != nil {
+		middleware.ErrorResponse(c, http.StatusForbidden, errors.New(cc.guard.Refusal("This endpoint")))
+		return
+	}
 
 	starttls := req.STARTTLS
 	if starttls == "" {

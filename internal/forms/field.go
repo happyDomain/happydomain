@@ -61,6 +61,9 @@ func GenField(field reflect.StructField) (f *happydns.Field) {
 				f.Description = kv[1]
 			case "choices":
 				f.Choices = strings.Split(kv[1], ";")
+			case "endpoint":
+				f.Endpoint = true
+				f.EndpointDefault = kv[1]
 			}
 		} else {
 			switch strings.ToLower(kv[0]) {
@@ -72,12 +75,92 @@ func GenField(field reflect.StructField) (f *happydns.Field) {
 				f.Secret = true
 			case "textarea":
 				f.Textarea = true
+			case "endpoint":
+				// Needed even though it looks like a no-op next to the
+				// key=value form above: without a case here, the default below
+				// would turn the marker into the field's label.
+				f.Endpoint = true
 			default:
 				f.Label = kv[0]
 			}
 		}
 	}
 	return
+}
+
+// Endpoint is one destination a user typed into a form, ready to be checked
+// against the outbound allow-list.
+type Endpoint struct {
+	// Label names the field in the error shown to the user, so they know which
+	// input to fix.
+	Label string
+
+	// Value is what they entered, or the tag's default when they left it empty.
+	Value string
+}
+
+// Endpoints walks a provider (or service) body and returns every field tagged
+// `endpoint`, recursing into embedded and nested structs.
+//
+// It exists because the outbound destination of a provider is buried in a
+// struct whose shape differs for each of the 60+ backends, and because the
+// dial itself happens deep inside DNSControl or libdns, where no dialer of
+// ours can be injected. Reading the tags back is the only place we control.
+func Endpoints(data any) []Endpoint {
+	if data == nil {
+		return nil
+	}
+
+	v := reflect.Indirect(reflect.ValueOf(data))
+	if !v.IsValid() || v.Kind() != reflect.Struct {
+		return nil
+	}
+
+	var endpoints []Endpoint
+	t := v.Type()
+
+	for i := 0; i < t.NumField(); i++ {
+		sf := t.Field(i)
+		if sf.PkgPath != "" {
+			// Unexported: Interface() would panic, and no form ever fills one.
+			continue
+		}
+
+		fv := v.Field(i)
+
+		if sf.Anonymous || fv.Kind() == reflect.Struct || (fv.Kind() == reflect.Pointer && !fv.IsNil() && fv.Elem().Kind() == reflect.Struct) {
+			endpoints = append(endpoints, Endpoints(fv.Interface())...)
+			if sf.Anonymous {
+				continue
+			}
+		}
+
+		if fv.Kind() != reflect.String {
+			continue
+		}
+
+		field := GenField(sf)
+		if !field.Endpoint {
+			continue
+		}
+
+		value := fv.String()
+		if value == "" {
+			value = field.EndpointDefault
+		}
+		if value == "" {
+			continue
+		}
+
+		label := field.Label
+		if label == "" {
+			label = field.Id
+		}
+
+		endpoints = append(endpoints, Endpoint{Label: label, Value: value})
+	}
+
+	return endpoints
 }
 
 // ValidateStructValues validates the field values of a struct against the
