@@ -31,6 +31,14 @@ services:
       # Add more settings here
       # HAPPYDOMAIN_MAIL_SMTP_HOST: "mailer"
 
+      # If a reverse proxy fronts happyDomain, declare its exact address so
+      # that X-Forwarded-For is honoured (see docs/reverse-proxy.md). Left
+      # unset, forwarded headers are ignored and every client behind the proxy
+      # shares the proxy address. Give the address of the proxy itself, not the
+      # network it sits on: trusting the whole bridge would let any sibling
+      # container reaching port 8081 directly forge its client IP.
+      # HAPPYDOMAIN_TRUSTED_PROXY: "172.28.0.10"
+
     dns:
       - 172.28.0.53
     restart: unless-stopped

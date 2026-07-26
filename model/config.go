@@ -93,6 +93,14 @@ type Options struct {
 	// StorageEngine points to the storage engine used.
 	StorageEngine string
 
+	// TrustedProxies lists the IP addresses or CIDR blocks of the reverse
+	// proxies allowed to set client IP headers (X-Forwarded-For, X-Real-IP).
+	// Requests coming from any other peer have those headers ignored and are
+	// attributed to their real socket address. Empty (the default) means no
+	// proxy is trusted, which is the right value when happyDomain is exposed
+	// directly.
+	TrustedProxies []string
+
 	ListmonkURL url.URL
 	ListmonkID  int
 

@@ -43,7 +43,9 @@ get a valid certificate for `autoconfig.<user-domain>` and
 ## Endpoints exposed by happyDomain
 
 All three are public, rate-limited (30 req/min per client IP), and read-only.
-None require authentication.
+None require authentication. Since happyDomain is meant to be fronted by Caddy
+here, declare it with `-trusted-proxy` so the limiter sees the real client and
+not the proxy (see [reverse-proxy.md](reverse-proxy.md)).
 
 | Method  | Path                                | Purpose                                       |
 | ------- | ----------------------------------- | --------------------------------------------- |

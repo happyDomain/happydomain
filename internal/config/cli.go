@@ -39,6 +39,7 @@ func declareFlags(o *happydns.Options) {
 	flag.StringVar(&o.AdminBind, "admin-bind", o.AdminBind, "Bind port/socket for administration interface")
 	flag.StringVar(&o.AdminPasswordHash, "admin-password-hash", o.AdminPasswordHash, "Password (bcrypt hash from `happydomain admin-hash`, or cleartext) protecting the admin interface; required when -admin-bind is a TCP address")
 	flag.StringVar(&o.Bind, "bind", ":8081", "Bind port/socket")
+	flag.Var(&proxyList{stringSlice{&o.TrustedProxies}}, "trusted-proxy", "Exact IP address (or CIDR block) of a reverse proxy allowed to set X-Forwarded-For/X-Real-IP; may be repeated or comma separated; use \"none\" to clear what a config file or the environment already set; empty (default) trusts no proxy")
 	flag.BoolVar(&o.DisableProviders, "disable-providers-edit", o.DisableProviders, "Disallow all actions on provider (add/edit/delete)")
 	flag.BoolVar(&o.DisableRegistration, "disable-registration", o.DisableRegistration, "Forbids new account creation through public form/API (still allow registration from external services)")
 	flag.BoolVar(&o.DisableEmbeddedLogin, "disable-embedded-login", o.DisableEmbeddedLogin, "Disables the internal user/password login in favor of external-auth or OIDC")

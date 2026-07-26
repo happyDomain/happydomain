@@ -25,6 +25,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/mail"
+	"net/netip"
 	"net/url"
 	"strconv"
 	"strings"
@@ -48,6 +49,95 @@ func (s *stringSlice) String() string {
 func (s *stringSlice) Set(value string) error {
 	*s.Values = append(*s.Values, value)
 	return nil
+}
+
+// proxyList is a flag.Value that accumulates IP addresses and CIDR blocks of
+// trusted reverse proxies. It accepts both repeated flags and a single comma
+// separated value, as an environment variable can only be given once. Entries
+// are validated and canonicalized eagerly, so a typo fails at startup instead
+// of silently disabling the trust check, or silently trusting more than the
+// operator wrote.
+//
+// The keyword `none` empties the list. Because the config file, the
+// environment and the command line all feed this same flag.Value, a
+// lower-precedence source can otherwise only ever be widened: `none` is what
+// makes a trust list narrowable from the command line.
+type proxyList struct {
+	stringSlice
+}
+
+func (p *proxyList) Set(value string) error {
+	for item := range strings.SplitSeq(value, ",") {
+		item = strings.TrimSpace(item)
+		if item == "" {
+			continue
+		}
+
+		if strings.EqualFold(item, "none") {
+			*p.Values = nil
+			continue
+		}
+
+		// `local` used to expand to loopback plus every private range. That
+		// trusts the whole network the proxy sits on, not the proxy: on a
+		// container bridge or a LAN, any neighbour reaching the port directly
+		// could then pick the address it was throttled under. Point at the
+		// replacement rather than letting it fail as an unparseable address.
+		if strings.EqualFold(item, "local") {
+			return fmt.Errorf("%q is no longer accepted: it trusted every private range, so any host on the same network could forge X-Forwarded-For. Give the exact address of your proxy instead (eg. the container IP, or 127.0.0.1 for a proxy on the same host)", item)
+		}
+
+		entry, err := canonicalProxyEntry(item)
+		if err != nil {
+			return err
+		}
+
+		*p.Values = append(*p.Values, entry)
+	}
+
+	return nil
+}
+
+// canonicalProxyEntry validates one trusted proxy entry and returns the form
+// gin will actually match against, so that what the startup log reports is
+// what is really trusted.
+//
+// Two inputs are accepted by the naive parsers but mean something else to gin,
+// and both silently widen or misplace the trust boundary, so they are refused
+// rather than reinterpreted:
+//
+//   - a prefix with host bits set (`192.0.2.5/24`), which masks down to a whole
+//     subnet while reading like a single host;
+//   - an IPv4-mapped IPv6 literal (`::ffff:192.0.2.1`), which gin turns into
+//     `::/32`, leaving the intended proxy untrusted and `::1` trusted instead.
+func canonicalProxyEntry(item string) (string, error) {
+	if strings.Contains(item, "/") {
+		prefix, err := netip.ParsePrefix(item)
+		if err != nil {
+			return "", fmt.Errorf("%q is not a valid CIDR block: %w", item, err)
+		}
+
+		if masked := prefix.Masked(); masked != prefix {
+			return "", fmt.Errorf("%q has bits set outside its /%d prefix: write %q to trust the whole block, or %q to trust that single address", item, prefix.Bits(), masked, prefix.Addr())
+		}
+
+		if prefix.Addr().Is4In6() {
+			return "", fmt.Errorf("%q is an IPv4-mapped IPv6 block: write it as an IPv4 block instead", item)
+		}
+
+		return prefix.String(), nil
+	}
+
+	addr, err := netip.ParseAddr(item)
+	if err != nil {
+		return "", fmt.Errorf("%q is neither a valid IP address nor a CIDR block", item)
+	}
+
+	if addr.Is4In6() {
+		return "", fmt.Errorf("%q is an IPv4-mapped IPv6 address: write it as %q instead", item, addr.Unmap())
+	}
+
+	return addr.String(), nil
 }
 
 // checkerOptionFlag is a flag.Value that writes the parsed flag value into a

@@ -63,6 +63,14 @@ func TestParseLine(t *testing.T) {
 		t.Fatalf(`parseLine("DEFAULT_NS=42.42.42.42:3535") = %q, want "42.42.42.42:3535"`, cfg.DefaultNameServer)
 	}
 
+	err = parseLine(cfg, "HAPPYDOMAIN_TRUSTED_PROXY=10.0.0.0/8,192.168.1.1")
+	if err != nil {
+		t.Fatalf(`parseLine("TRUSTED_PROXY=10.0.0.0/8,192.168.1.1") => %v`, err.Error())
+	}
+	if len(cfg.TrustedProxies) != 2 || cfg.TrustedProxies[0] != "10.0.0.0/8" || cfg.TrustedProxies[1] != "192.168.1.1" {
+		t.Fatalf(`parseLine("TRUSTED_PROXY=10.0.0.0/8,192.168.1.1") = %v, want [10.0.0.0/8 192.168.1.1]`, cfg.TrustedProxies)
+	}
+
 	err = parseLine(cfg, "NO_AUTH=true")
 	if err != nil {
 		t.Fatalf(`parseLine("NO_AUTH=true") => %v`, err.Error())

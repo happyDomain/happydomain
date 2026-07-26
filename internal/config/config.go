@@ -137,6 +137,15 @@ func ConsolidateConfig() (opts *happydns.Options, err error) {
 		}
 	}
 
+	// Make the client IP trust posture explicit: it decides whether the
+	// per-source rate limiters and the login lockout can be bypassed by
+	// forging a X-Forwarded-For header.
+	if len(opts.TrustedProxies) > 0 {
+		log.Printf("Trusting client IP headers from: %s\n", strings.Join(opts.TrustedProxies, ", "))
+	} else {
+		log.Println("No trusted proxy configured: X-Forwarded-For and X-Real-IP headers are ignored, clients are identified by their socket address. If happyDomain runs behind a reverse proxy, declare it with -trusted-proxy (see docs/reverse-proxy.md).")
+	}
+
 	err = ExtendsConfigWithOIDC(opts)
 	if err != nil {
 		return

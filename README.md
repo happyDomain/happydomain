@@ -222,6 +222,11 @@ HAPPYDOMAIN_LEVELDB_PATH=/var/lib/happydomain/db/
 
 You just have to replace dash by underscore.
 
+#### Behind a reverse proxy?
+
+happyDomain ignores `X-Forwarded-For` unless you declare which proxies may set
+it, with `-trusted-proxy`. See [docs/reverse-proxy.md](docs/reverse-proxy.md).
+
 #### Need OVH API?
 
 OVH doesn't have simple API key or credentials. It depends on a web flow to retrieve the key.
