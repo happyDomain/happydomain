@@ -88,8 +88,11 @@ func (lc *LoginController) Login(c *gin.Context) {
 
 	// Enforce captcha when a provider is configured and the failure threshold
 	// is reached. Failure tracking runs unconditionally so it stays effective
-	// even on deployments without a captcha provider.
-	if lc.failureTracker.RequiresCaptcha(c.ClientIP(), request.Email) {
+	// even on deployments without a captcha provider. The tracker is keyed on
+	// ClientKey, not ClientIP, so a whole IPv6 /64 counts as one source.
+	clientKey := middleware.ClientKey(c)
+
+	if lc.failureTracker.RequiresCaptcha(clientKey, request.Email) {
 		if lc.captcha.Provider() != "" {
 			if request.CaptchaToken == "" {
 				c.JSON(http.StatusUnauthorized, happydns.LoginErrorResponse{
@@ -121,8 +124,8 @@ func (lc *LoginController) Login(c *gin.Context) {
 	if err != nil {
 		log.Printf("%s %s: %s", c.ClientIP(), request.Email, err.Error())
 
-		lc.failureTracker.RecordFailure(c.ClientIP(), request.Email)
-		if lc.failureTracker.RequiresCaptcha(c.ClientIP(), request.Email) {
+		lc.failureTracker.RecordFailure(clientKey, request.Email)
+		if lc.failureTracker.RequiresCaptcha(clientKey, request.Email) {
 			if lc.captcha.Provider() != "" {
 				c.JSON(http.StatusUnauthorized, happydns.LoginErrorResponse{
 					Message:         "Invalid username or password.",
@@ -141,7 +144,7 @@ func (lc *LoginController) Login(c *gin.Context) {
 		return
 	}
 
-	lc.failureTracker.RecordSuccess(c.ClientIP(), request.Email)
+	lc.failureTracker.RecordSuccess(clientKey, request.Email)
 
 	middleware.SessionLoginOK(c, user)
 
