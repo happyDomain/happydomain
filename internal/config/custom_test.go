@@ -99,7 +99,77 @@ func TestProxyListSet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var got []string
-			p := &proxyList{stringSlice{&got}}
+			p := proxyList(&got)
+
+			var err error
+			for _, value := range tt.values {
+				if err = p.Set(value); err != nil {
+					break
+				}
+			}
+
+			if tt.wantErr {
+				if err == nil {
+					t.Fatalf("Set(%v) = nil error, want an error", tt.values)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("Set(%v) => %s", tt.values, err.Error())
+			}
+			if !slices.Equal(got, tt.want) {
+				t.Fatalf("Set(%v) = %v, want %v", tt.values, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTargetListSet(t *testing.T) {
+	tests := []struct {
+		name    string
+		values  []string
+		want    []string
+		wantErr bool
+	}{
+		{
+			name:   "the common self-hosted case, a co-located server",
+			values: []string{"127.0.0.1"},
+			want:   []string{"127.0.0.1"},
+		},
+		{
+			name:   "a LAN block, comma separated as an environment variable must be",
+			values: []string{"192.168.1.0/24, fd00::/8"},
+			want:   []string{"192.168.1.0/24", "fd00::/8"},
+		},
+		{
+			name:   "none clears what a lower-precedence source set",
+			values: []string{"10.0.0.0/8", "none"},
+			want:   nil,
+		},
+		{
+			name:    "a hostname is refused: the list is matched after resolution",
+			values:  []string{"pdns.internal"},
+			wantErr: true,
+		},
+		{
+			name:    "prefix with host bits set is refused",
+			values:  []string{"192.168.1.5/24"},
+			wantErr: true,
+		},
+		{
+			// Unlike -trusted-proxy, `local` was never a keyword here, so it
+			// just fails as an unparseable address.
+			name:    "local is not a keyword",
+			values:  []string{"local"},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got []string
+			p := targetList(&got, "outbound target")
 
 			var err error
 			for _, value := range tt.values {

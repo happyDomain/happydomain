@@ -22,14 +22,14 @@
 package usecase
 
 import (
+	"context"
 	"fmt"
-	"math/rand"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/netguard"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -37,13 +37,25 @@ var (
 	RRToAskForANY = []uint16{dns.TypeSOA, dns.TypeA, dns.TypeAAAA, dns.TypeNS, dns.TypeMX, dns.TypeTXT}
 )
 
+// resolverLookupTimeout bounds the name resolution done before a DNS server is
+// contacted. The endpoints it protects are unauthenticated, so it stays short.
+const resolverLookupTimeout = 2 * time.Second
+
 type resolverUsecase struct {
 	config *happydns.Options
+
+	// resolverGuard vets the DNS server a caller asks us to query;
+	// outboundGuard vets the HTTP destinations these endpoints fetch, today
+	// only the MTA-STS policy file.
+	resolverGuard *netguard.Guard
+	outboundGuard *netguard.Guard
 }
 
-func NewResolverUsecase(cfg *happydns.Options) happydns.ResolverUsecase {
+func NewResolverUsecase(cfg *happydns.Options, resolverGuard, outboundGuard *netguard.Guard) happydns.ResolverUsecase {
 	return &resolverUsecase{
-		config: cfg,
+		config:        cfg,
+		resolverGuard: resolverGuard,
+		outboundGuard: outboundGuard,
 	}
 }
 
@@ -97,33 +109,21 @@ func resolverQuestion(client dns.Client, resolver string, dn string, rrType uint
 func (ru *resolverUsecase) ResolveQuestion(request happydns.ResolverRequest) (*dns.Msg, error) {
 	request.DomainName = dns.Fqdn(request.DomainName)
 
-	if request.Resolver == "custom" {
-		request.Resolver = request.Custom
-	} else if request.Resolver == "local" {
-		cConf, err := dns.ClientConfigFromFile("/etc/resolv.conf")
-		if err != nil {
-			return nil, happydns.InternalError{
-				Err:         fmt.Errorf("unable to load ClientConfigFromFile: %s", err.Error()),
-				UserMessage: "Sorry, we are currently unable to perform the request. Please try again later.",
-			}
-		}
-
-		request.Resolver = cConf.Servers[rand.Intn(len(cConf.Servers))]
-	}
-
-	if strings.Count(request.Resolver, ":") > 0 && request.Resolver[0] != '[' {
-		request.Resolver = "[" + request.Resolver + "]"
+	// The resolver choice, wherever it came from in the request, is picked and
+	// vetted in one place shared with the other resolver endpoints.
+	resolver, err := ru.pickResolver(context.Background(), request.Resolver, request.Custom)
+	if err != nil {
+		return nil, err
 	}
 
 	client := dns.Client{Timeout: time.Second * 5}
 
 	var r *dns.Msg
-	var err error
 	rrType := dns.StringToType[request.Type]
 	if rrType == dns.TypeANY {
-		r, err = resolverANYQuestion(client, request.Resolver+":53", request.DomainName)
+		r, err = resolverANYQuestion(client, resolver, request.DomainName)
 	} else {
-		r, err = resolverQuestion(client, request.Resolver+":53", request.DomainName, rrType)
+		r, err = resolverQuestion(client, resolver, request.DomainName, rrType)
 	}
 	if err != nil {
 		return nil, happydns.ValidationError{Msg: err.Error()}

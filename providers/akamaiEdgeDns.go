@@ -31,7 +31,7 @@ import (
 
 type AkamaiEdgeDnsAPI struct {
 	ClientSecret string `json:"clientsecret,omitempty" happydomain:"label=Client Secret,placeholder=xxxxxxxx,required,secret,description=Your Akamai Client Secret (You must enable API-Access for your account)."`
-	Host         string `json:"host,omitempty" happydomain:"label=Host,placeholder=akaa-xxxxxxxxxxx.xxxx.akamaiapis.net,required,description=Your Akamai Host."`
+	Host         string `json:"host,omitempty" happydomain:"label=Host,placeholder=akaa-xxxxxxxxxxx.xxxx.akamaiapis.net,required,description=Your Akamai Host.,endpoint"`
 	AccessToken  string `json:"accesstoken,omitempty" happydomain:"label=Access Token,placeholder=akaa-xxxxxxxxxxx,secret,description=Your Akamai Access Token."`
 	ClientToken  string `json:"clienttoken,omitempty" happydomain:"label=Client Token,placeholder=akaa-xxxxxxxxxxx,secret,description=Your Akamai Client Token"`
 	ContractId   string `json:"contractid,omitempty" happydomain:"label=Contract ID,placeholder=X-XXXX,description=Your Akamai Contract ID."`

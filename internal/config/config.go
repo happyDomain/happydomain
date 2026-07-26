@@ -146,6 +146,16 @@ func ConsolidateConfig() (opts *happydns.Options, err error) {
 		log.Println("No trusted proxy configured: X-Forwarded-For and X-Real-IP headers are ignored, clients are identified by their socket address. If happyDomain runs behind a reverse proxy, declare it with -trusted-proxy (see docs/reverse-proxy.md).")
 	}
 
+	// Unlike the trusted proxies, silence here means the safe default, so only
+	// the widened posture is worth a line. It is the one an operator needs to
+	// see in the logs when a provider suddenly refuses to reach their LAN.
+	if len(opts.OutboundAllowedTargets) > 0 {
+		log.Printf("Requests made on behalf of users may reach public addresses, plus: %s\n", strings.Join(opts.OutboundAllowedTargets, ", "))
+	}
+	if len(opts.ResolverAllowedTargets) > 0 {
+		log.Printf("The resolver tool may query public addresses, plus: %s\n", strings.Join(opts.ResolverAllowedTargets, ", "))
+	}
+
 	err = ExtendsConfigWithOIDC(opts)
 	if err != nil {
 		return

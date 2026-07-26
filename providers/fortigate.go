@@ -30,7 +30,7 @@ import (
 )
 
 type FortiGateAPI struct {
-	Host        string `json:"host,omitempty" happydomain:"label=Host,placeholder=https://fortigate.example.com,required"`
+	Host        string `json:"host,omitempty" happydomain:"label=Host,placeholder=https://fortigate.example.com,required,endpoint"`
 	VDOM        string `json:"vdom,omitempty" happydomain:"label=Virtual Domain,placeholder=root,required"`
 	APIKey      string `json:"apiKey,omitempty" happydomain:"label=API Key,required,secret"`
 	InsecureTLS bool   `json:"insecure_tls,omitempty" happydomain:"label=Insecure TLS,description=Skip TLS certificate verification"`

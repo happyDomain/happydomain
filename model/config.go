@@ -95,6 +95,30 @@ type Options struct {
 	// directly.
 	TrustedProxies []string
 
+	// OutboundAllowedTargets lists the IP addresses or CIDR blocks that
+	// requests made on a user's behalf may reach in addition to publicly
+	// routable ones: DNS provider API endpoints, certificate probes, MTA-STS
+	// policy fetches, webhook and UnifiedPush notifications.
+	//
+	// Entries are matched against every address a name resolves to, so a
+	// hostname cannot smuggle in an address that is not listed. Empty (the
+	// default) means only public addresses are reachable, which is what keeps
+	// those endpoints from being used to probe the network happyDomain runs
+	// on. Set it to the address of your co-located authoritative server or of
+	// the router hosting your zones.
+	OutboundAllowedTargets []string
+
+	// ResolverAllowedTargets is the same list for the DNS server a user picks
+	// in the resolver tool. It is separate from OutboundAllowedTargets because
+	// the resolver endpoints need no account at all, and because pointing the
+	// resolver at an internal DNS server is reasonable in a way that letting a
+	// webhook reach the same network is not.
+	//
+	// It does not apply to DefaultNameServer nor to the "local" resolver read
+	// from /etc/resolv.conf: those are operator-chosen, and both routinely
+	// point at loopback.
+	ResolverAllowedTargets []string
+
 	ListmonkURL url.URL
 	ListmonkID  int
 

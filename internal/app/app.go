@@ -74,6 +74,7 @@ type Usecases struct {
 type App struct {
 	captchaVerifier happydns.CaptchaVerifier
 	cfg             *happydns.Options
+	guards          outboundGuards
 	failureTracker  *captcha.FailureTracker
 	insights        *insightsCollector
 	mailer          happydns.Mailer
@@ -89,6 +90,7 @@ func NewApp(cfg *happydns.Options) *App {
 		cfg: cfg,
 	}
 
+	app.initGuards()
 	app.initMailer()
 	app.initStorageEngine()
 	app.initNewsletter()
@@ -106,6 +108,7 @@ func NewAppWithStorage(cfg *happydns.Options, store storage.Storage) *App {
 		store: store,
 	}
 
+	app.initGuards()
 	app.initMailer()
 	app.initNewsletter()
 	app.initUsecases()
@@ -195,8 +198,8 @@ func (app *App) initUsecases() {
 		sessionService,
 	)
 	domainLogService := domainlogUC.NewService(app.store)
-	providerService := providerUC.NewRestrictedService(app.cfg, app.store)
-	providerAdminService := providerUC.NewService(app.store, nil)
+	providerService := providerUC.NewRestrictedService(app.cfg, app.store, app.guards.Outbound)
+	providerAdminService := providerUC.NewService(app.store, nil, app.guards.Outbound)
 	serviceService := serviceUC.NewServiceUsecases()
 	zoneService := zoneUC.NewZoneUsecases(app.store, serviceService)
 
@@ -232,7 +235,7 @@ func (app *App) initUsecases() {
 	)
 	app.usecases.authentication = usecase.NewAuthenticationUsecase(app.cfg, app.store, app.usecases.user)
 	app.usecases.authUser = authUserService
-	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg)
+	app.usecases.resolver = usecase.NewResolverUsecase(app.cfg, app.guards.Resolver, app.guards.Outbound)
 	app.usecases.session = sessionService
 
 	app.usecases.orchestrator = orchestrator.NewOrchestrator(

@@ -104,6 +104,22 @@ type Field struct {
 
 	// Description stores an helpfull sentence describing the field.
 	Description string `json:"description,omitempty"`
+
+	// Endpoint marks a field holding a URL or a host that the server will
+	// connect to on the user's behalf, and that must therefore be checked
+	// against the outbound destination allow-list before any dial.
+	//
+	// Server side only: it is not part of the form contract sent to the
+	// client, which is why it carries no JSON name.
+	Endpoint bool `json:"-"`
+
+	// EndpointDefault is the host the provider falls back to when an Endpoint
+	// field is left empty (tag form `endpoint=127.0.0.1`).
+	//
+	// Without it, a blank field would read as "no endpoint to check" while the
+	// provider quietly dials loopback, which is precisely what the DDNS
+	// provider does (see providers/axfrddns.go).
+	EndpointDefault string `json:"-"`
 }
 
 type FormState struct {

@@ -30,7 +30,7 @@ import (
 )
 
 type UnifiAPI struct {
-	Host          string `json:"host,omitempty" happydomain:"label=Host,placeholder=https://192.168.1.1,description=Local UniFi controller URL (use either Host or Console ID)"`
+	Host          string `json:"host,omitempty" happydomain:"label=Host,placeholder=https://192.168.1.1,description=Local UniFi controller URL (use either Host or Console ID),endpoint"`
 	ConsoleID     string `json:"console_id,omitempty" happydomain:"label=Console ID,placeholder=28704E24...:1008810555,description=UniFi cloud console ID (use either Host or Console ID)"`
 	APIKey        string `json:"api_key,omitempty" happydomain:"label=API Key,required,secret"`
 	Site          string `json:"site,omitempty" happydomain:"label=Site,placeholder=default,description=UniFi site name (defaults to 'default')"`

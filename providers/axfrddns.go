@@ -33,7 +33,10 @@ import (
 )
 
 type DDNSServer struct {
-	Server  string `json:"server,omitempty" happydomain:"label=Server,placeholder=127.0.0.1"`
+	// The endpoint default mirrors ToDNSControlConfig below: an empty Server
+	// means 127.0.0.1, so the outbound guard has to see loopback rather than
+	// an empty field it would skip.
+	Server  string `json:"server,omitempty" happydomain:"label=Server,placeholder=127.0.0.1,endpoint=127.0.0.1"`
 	KeyName string `json:"keyname,omitempty" happydomain:"label=Key Name,placeholder=ddns,required"`
 	KeyAlgo string `json:"algorithm,omitempty" happydomain:"label=Key Algorithm,default=hmac-sha256,choices=hmac-md5;hmac-sha1;hmac-sha256;hmac-sha512,required"`
 	KeyBlob []byte `json:"keyblob,omitempty" happydomain:"label=Secret Key,placeholder=a0b1c2d3e4f5==,required,secret"`

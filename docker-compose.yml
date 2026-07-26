@@ -21,6 +21,14 @@ services:
       # container reaching port 8081 directly forge its client IP.
       # HAPPYDOMAIN_TRUSTED_PROXY: "172.28.0.10"
 
+      # happyDomain refuses to connect to anything that is not publicly
+      # routable, so a DNS server or a router on your own network has to be
+      # named explicitly (see docs/outbound-targets.md). The address below is
+      # the compose network's DNS server, which the resolver tool would
+      # otherwise be unable to query.
+      # HAPPYDOMAIN_OUTBOUND_ALLOWED_TARGET: "172.28.0.53"
+      # HAPPYDOMAIN_RESOLVER_ALLOWED_TARGET: "172.28.0.53"
+
     restart: unless-stopped
 
     volumes:

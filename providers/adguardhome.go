@@ -32,7 +32,7 @@ import (
 type AdGuardHomeAPI struct {
 	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=admin,required"`
 	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=,required,secret"`
-	Host     string `json:"host,omitempty" happydomain:"label=API Endpoint,placeholder=http://127.0.0.1:3000,required"`
+	Host     string `json:"host,omitempty" happydomain:"label=API Endpoint,placeholder=http://127.0.0.1:3000,required,endpoint"`
 }
 
 func (s *AdGuardHomeAPI) DNSControlName() string {
