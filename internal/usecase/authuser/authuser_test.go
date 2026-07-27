@@ -44,12 +44,20 @@ func (n *NoopMailer) SendMail(to *mail.Address, subject, content string) error {
 
 // MockCloseUserSessionsUsecase is a mock implementation of SessionCloserUsecase.
 type MockCloseUserSessionsUsecase struct {
-	CloseAllFunc func(user happydns.UserInfo) error
+	CloseAllFunc         func(user happydns.UserInfo) error
+	CloseInteractiveFunc func(user happydns.UserInfo) error
 }
 
 func (m *MockCloseUserSessionsUsecase) CloseAll(user happydns.UserInfo) error {
 	if m.CloseAllFunc != nil {
 		return m.CloseAllFunc(user)
+	}
+	return nil
+}
+
+func (m *MockCloseUserSessionsUsecase) CloseInteractive(user happydns.UserInfo) error {
+	if m.CloseInteractiveFunc != nil {
+		return m.CloseInteractiveFunc(user)
 	}
 	return nil
 }
@@ -313,6 +321,64 @@ func TestChangePassword(t *testing.T) {
 	}
 	if !updatedUser.CheckPassword(newPassword) {
 		t.Error("Expected password to be updated")
+	}
+}
+
+func TestChangePassword_ClosesInteractiveSessions(t *testing.T) {
+	store, _ := inmemory.Instantiate()
+	cfg := &happydns.Options{}
+
+	var closedFor happydns.Identifier
+	mockCloseSessions := &MockCloseUserSessionsUsecase{
+		CloseInteractiveFunc: func(user happydns.UserInfo) error {
+			closedFor = user.GetUserId()
+			return nil
+		},
+		CloseAllFunc: func(user happydns.UserInfo) error {
+			t.Error("CloseAll must not be called on a password change: it would revoke the machine sessions")
+			return nil
+		},
+	}
+	service := authuser.NewAuthUserUsecases(cfg, &NoopMailer{}, store, mockCloseSessions)
+
+	user := &happydns.UserAuth{
+		Email: "test@example.com",
+	}
+	user.DefinePassword("OldPassword123!")
+	if err := store.CreateAuthUser(user); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if err := service.ChangePassword(user, "NewPa$$w0rd"); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if !closedFor.Equals(user.Id) {
+		t.Errorf("expected sessions of user %v to be closed, got %v", user.Id, closedFor)
+	}
+}
+
+func TestChangePassword_SessionCloseFailure(t *testing.T) {
+	store, _ := inmemory.Instantiate()
+	cfg := &happydns.Options{}
+
+	mockCloseSessions := &MockCloseUserSessionsUsecase{
+		CloseInteractiveFunc: func(user happydns.UserInfo) error {
+			return fmt.Errorf("error closing sessions")
+		},
+	}
+	service := authuser.NewAuthUserUsecases(cfg, &NoopMailer{}, store, mockCloseSessions)
+
+	user := &happydns.UserAuth{
+		Email: "test@example.com",
+	}
+	user.DefinePassword("OldPassword123!")
+	if err := store.CreateAuthUser(user); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if err := service.ChangePassword(user, "NewPa$$w0rd"); err == nil {
+		t.Error("expected an error when sessions cannot be closed")
 	}
 }
 

@@ -385,6 +385,48 @@ func Test_CloseUserSessions(t *testing.T) {
 	}
 }
 
+func Test_CloseInteractive(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	sessionService := session.NewService(db)
+
+	user := createTestUser(t, db, "test@example.com")
+
+	// Sessions created through the API are machine sessions
+	machine, err := sessionService.CreateUserSession(user, "My script")
+	if err != nil {
+		t.Fatalf("unexpected error creating the machine session: %v", err)
+	}
+	if !machine.Machine {
+		t.Error("expected a session created through the API to be a machine session")
+	}
+
+	// Interactive sessions are written by the session store at login time
+	browser := &happydns.Session{
+		Id:        session.NewSessionID(),
+		IdUser:    user.Id,
+		IssuedAt:  time.Now(),
+		ExpiresOn: time.Now().Add(24 * time.Hour),
+	}
+	if err := db.UpdateSession(browser); err != nil {
+		t.Fatalf("unexpected error creating the browser session: %v", err)
+	}
+
+	if err := sessionService.CloseInteractive(user); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	sessions, err := sessionService.ListUserSessions(user)
+	if err != nil {
+		t.Fatalf("unexpected error listing sessions: %v", err)
+	}
+	if len(sessions) != 1 {
+		t.Fatalf("expected the machine session to survive, got %d remaining sessions", len(sessions))
+	}
+	if sessions[0].Id != machine.Id {
+		t.Errorf("expected session %q to remain, got %q", machine.Id, sessions[0].Id)
+	}
+}
+
 func Test_CloseUserSessions_MultipleUsers(t *testing.T) {
 	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)

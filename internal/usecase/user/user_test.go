@@ -69,6 +69,11 @@ func (m *mockSessionCloser) CloseAll(uinfo happydns.UserInfo) error {
 	return nil
 }
 
+func (m *mockSessionCloser) CloseInteractive(uinfo happydns.UserInfo) error {
+	m.closedUserIDs = append(m.closedUserIDs, uinfo.GetUserId())
+	return nil
+}
+
 type testUserInfo struct {
 	id             happydns.Identifier
 	email          string

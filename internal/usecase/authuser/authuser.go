@@ -125,7 +125,11 @@ func (s *Service) checkPasswordConstraints(password, confirmation string) error 
 	return nil
 }
 
-// ChangePassword changes the password of the given user.
+// ChangePassword changes the password of the given user and revokes their
+// interactive sessions, so that a session stolen before the change cannot
+// survive it. Machine sessions are deliberately kept: they are not obtained
+// through the password, and the user revokes them explicitly. Both the
+// self-service change and the account recovery reset go through this use case.
 func (s *Service) ChangePassword(user *happydns.UserAuth, newPassword string) error {
 	// Validate the new password according to application constraints
 	if err := s.checkPasswordConstraints(newPassword, ""); err != nil {
@@ -140,6 +144,13 @@ func (s *Service) ChangePassword(user *happydns.UserAuth, newPassword string) er
 	// Persist the updated user information
 	if err := s.store.UpdateAuthUser(user); err != nil {
 		return fmt.Errorf("unable to save new password: %w", err)
+	}
+
+	// Revoke the interactive sessions opened with the previous password.
+	// Machine sessions are left alive: they are not obtained through the
+	// password, and the user manages them explicitly.
+	if err := s.closeUserSessions.CloseInteractive(user); err != nil {
+		return fmt.Errorf("unable to close user sessions: %w", err)
 	}
 
 	return nil

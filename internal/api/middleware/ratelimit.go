@@ -39,9 +39,14 @@ type rateLimiterEntry struct {
 	lastSeen time.Time
 }
 
-// IPRateLimiter throttles requests per client IP using a token bucket. It is
-// meant to guard sensitive unauthenticated endpoints (account recovery, email
-// validation) against brute-force and timing attacks.
+// maxTrackedClients bounds the memory the per-client table may use. Once
+// reached, the least recently seen entry makes room for the newcomer: a client
+// that busy enough to matter is seen again long before it is evicted.
+const maxTrackedClients = 4096
+
+// IPRateLimiter throttles requests per client, keyed on [ClientKey], using a
+// token bucket. It is meant to guard sensitive unauthenticated endpoints
+// (account recovery, email validation) against brute-force and timing attacks.
 type IPRateLimiter struct {
 	mu      sync.Mutex
 	clients map[string]*rateLimiterEntry
@@ -85,6 +90,7 @@ func (l *IPRateLimiter) getLimiter(ip string) *rate.Limiter {
 
 	entry, ok := l.clients[ip]
 	if !ok {
+		l.evictLocked()
 		entry = &rateLimiterEntry{limiter: rate.NewLimiter(l.rate, l.burst)}
 		l.clients[ip] = entry
 	}
@@ -93,11 +99,33 @@ func (l *IPRateLimiter) getLimiter(ip string) *rate.Limiter {
 	return entry.limiter
 }
 
+// evictLocked makes room for a new client entry once the table is full, so a
+// flood of requests from many distinct sources cannot grow it without bound
+// between two cleanupLoop ticks. The caller must hold l.mu.
+func (l *IPRateLimiter) evictLocked() {
+	if len(l.clients) < maxTrackedClients {
+		return
+	}
+
+	var oldestKey string
+	var oldestSeen time.Time
+	for key, entry := range l.clients {
+		if oldestKey == "" || entry.lastSeen.Before(oldestSeen) {
+			oldestKey = key
+			oldestSeen = entry.lastSeen
+		}
+	}
+
+	if oldestKey != "" {
+		delete(l.clients, oldestKey)
+	}
+}
+
 // Middleware returns a gin handler that rejects requests exceeding the
 // configured rate with HTTP 429.
 func (l *IPRateLimiter) Middleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if !l.getLimiter(c.ClientIP()).Allow() {
+		if !l.getLimiter(ClientKey(c)).Allow() {
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, happydns.ErrorResponse{Message: "Too many requests, please try again later."})
 			return
 		}

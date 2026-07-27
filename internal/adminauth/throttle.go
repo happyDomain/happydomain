@@ -244,10 +244,14 @@ func (t *LoginThrottle) evictLocked(now time.Time) {
 // to. IPv6 clients are grouped by their /64 prefix: a single host is routinely
 // handed a whole /64, so counting failures per address would let it rotate out
 // of any lockout for free.
+// An address that cannot be parsed shares a single bucket rather than handing
+// out a fresh entry per garbage value, which would otherwise be a way to grow
+// the client table. This mirrors the UnknownClientKey fallback the API side
+// applies in internal/api/middleware.ClientKey; the two must stay in agreement.
 func clientKey(client string) string {
 	ip := net.ParseIP(client)
 	if ip == nil {
-		return client
+		return "unknown"
 	}
 
 	if ip.To4() != nil {
