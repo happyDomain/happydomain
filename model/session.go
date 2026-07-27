@@ -63,11 +63,6 @@ type SessionInput struct {
 	ExpiresOn time.Time `json:"exp" format:"date-time"`
 }
 
-// ClearSession removes all content from the Session.
-func (s *Session) ClearSession() {
-	s.Content = ""
-}
-
 // IsInteractive reports whether the Session was opened by a human through the
 // web interface, as opposed to a machine session created through the API.
 func (s *Session) IsInteractive() bool {
