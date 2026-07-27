@@ -74,10 +74,13 @@ func (m *mockZoneLister) ListZones() ([]string, error) {
 // mockZoneCreator extends mockDNSProvider with ZoneCreator.
 type mockZoneCreator struct {
 	mockDNSProvider
-	ensureErr error
+	ensureErr           error
+	ensuredDomainConfig *dnscontrolmodels.DomainConfig
 }
 
-func (m *mockZoneCreator) EnsureZoneExists(domain string, metadata map[string]string) error {
+func (m *mockZoneCreator) EnsureZoneExists(dc *dnscontrolmodels.DomainConfig) error {
+	m.ensuredDomainConfig = dc
+
 	return m.ensureErr
 }
 
@@ -198,10 +201,15 @@ func TestObserveProviderCall_CreateDomain_NotSupported(t *testing.T) {
 func TestObserveProviderCall_CreateDomain_Success(t *testing.T) {
 	metrics.ProviderAPICallsTotal.Reset()
 
-	a := newTestAdapter(&mockZoneCreator{})
+	creator := &mockZoneCreator{}
+	a := newTestAdapter(creator)
 	err := a.CreateDomain("example.com.")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if creator.ensuredDomainConfig.Name != "example.com" {
+		t.Errorf("EnsureZoneExists() got name %q; want example.com", creator.ensuredDomainConfig.Name)
 	}
 
 	if got := testutil.ToFloat64(metrics.ProviderAPICallsTotal.WithLabelValues("TEST_PROVIDER", "create_domain", "success")); got != 1 {
