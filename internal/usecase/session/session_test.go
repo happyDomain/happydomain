@@ -385,6 +385,64 @@ func Test_CloseUserSessions(t *testing.T) {
 	}
 }
 
+func Test_CloseInteractive(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	sessionService := session.NewService(db)
+
+	user := createTestUser(t, db, "test@example.com")
+
+	// Sessions created through the API are machine sessions
+	machine, err := sessionService.CreateUserSession(user, "My script")
+	if err != nil {
+		t.Fatalf("unexpected error creating the machine session: %v", err)
+	}
+	if !machine.Machine {
+		t.Error("expected a session created through the API to be a machine session")
+	}
+
+	// Interactive sessions are written by the session store at login time,
+	// which always fills Content with the encoded session values.
+	browser := &happydns.Session{
+		Id:        session.NewSessionID(),
+		IdUser:    user.Id,
+		IssuedAt:  time.Now(),
+		ExpiresOn: time.Now().Add(24 * time.Hour),
+		Content:   "encoded-session-values",
+	}
+	if err := db.UpdateSession(browser); err != nil {
+		t.Fatalf("unexpected error creating the browser session: %v", err)
+	}
+
+	// Sessions predating the Machine flag are recognised by their content:
+	// this one has none, so it is a machine session and must survive too.
+	legacyMachine := &happydns.Session{
+		Id:        session.NewSessionID(),
+		IdUser:    user.Id,
+		IssuedAt:  time.Now(),
+		ExpiresOn: time.Now().Add(24 * time.Hour),
+	}
+	if err := db.UpdateSession(legacyMachine); err != nil {
+		t.Fatalf("unexpected error creating the legacy machine session: %v", err)
+	}
+
+	if err := sessionService.CloseInteractive(user); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	sessions, err := sessionService.ListUserSessions(user)
+	if err != nil {
+		t.Fatalf("unexpected error listing sessions: %v", err)
+	}
+	if len(sessions) != 2 {
+		t.Fatalf("expected the machine sessions to survive, got %d remaining sessions", len(sessions))
+	}
+	for _, sess := range sessions {
+		if sess.Id != machine.Id && sess.Id != legacyMachine.Id {
+			t.Errorf("expected sessions %q and %q to remain, got %q", machine.Id, legacyMachine.Id, sess.Id)
+		}
+	}
+}
+
 func Test_CloseUserSessions_MultipleUsers(t *testing.T) {
 	db, _ := inmemory.Instantiate()
 	sessionService := session.NewService(db)

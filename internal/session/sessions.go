@@ -167,6 +167,13 @@ func (s *SessionStore) load(session *sessions.Session) error {
 	if len(mysession.Description) > 0 {
 		session.Values["description"] = mysession.Description
 	}
+	if !mysession.IsInteractive() {
+		// Carry the machine nature over, so that a write performed during a
+		// token authenticated request doesn't turn the session into an
+		// interactive one. Sessions predating the Machine flag get it recorded
+		// explicitly the first time they are saved here.
+		session.Values["machine"] = true
+	}
 	if _, ok := session.Values["created_on"].(time.Time); !ok && !mysession.IssuedAt.IsZero() {
 		session.Values["created_on"] = mysession.IssuedAt
 	}
@@ -201,6 +208,9 @@ func (s *SessionStore) save(session *sessions.Session, ua string) error {
 		session.Values["description"] = description
 	}
 	delete(session.Values, "description")
+
+	machine, _ := session.Values["machine"].(bool)
+	delete(session.Values, "machine")
 
 	crOn := session.Values["created_on"]
 	delete(session.Values, "created_on")
@@ -237,6 +247,7 @@ func (s *SessionStore) save(session *sessions.Session, ua string) error {
 		IssuedAt:    createdOn,
 		ExpiresOn:   expiresOn,
 		ModifiedOn:  time.Now(),
+		Machine:     machine,
 	}
 
 	return s.storage.UpdateSession(mysession)

@@ -54,7 +54,13 @@ func NewService(store SessionStorage) *Service {
 // CreateUserSession creates and persists a new session for user. The session
 // is assigned a random identifier, the current time as its issue date, and an
 // expiry of [SESSION_MAX_DURATION] from now. description is a human-readable
-// label that the user can use to identify the session (e.g. "browser login").
+// label that the user can use to identify the session (e.g. "my backup
+// script").
+//
+// Sessions created here are machine sessions: they are meant to be used as
+// long lived tokens by scripts and third party tools, and are therefore not
+// revoked when the user changes their password. Interactive sessions are
+// created by the session store during login instead.
 func (s *Service) CreateUserSession(user *happydns.User, description string) (*happydns.Session, error) {
 	sessid := NewSessionID()
 
@@ -64,6 +70,7 @@ func (s *Service) CreateUserSession(user *happydns.User, description string) (*h
 		Description: description,
 		IssuedAt:    time.Now(),
 		ExpiresOn:   time.Now().Add(SESSION_MAX_DURATION),
+		Machine:     true,
 	}
 
 	if err := s.store.UpdateSession(newsession); err != nil {
@@ -164,8 +171,9 @@ func (s *Service) CloseUserSessions(user *happydns.User) error {
 }
 
 // closeUserSessionsInternal is like [Service.CloseUserSessions] but accepts
-// the broader [happydns.UserInfo] interface.
-func (s *Service) closeUserSessionsInternal(user happydns.UserInfo) error {
+// the broader [happydns.UserInfo] interface. When keep is not nil, the
+// sessions for which it returns true are left untouched.
+func (s *Service) closeUserSessionsInternal(user happydns.UserInfo, keep func(*happydns.Session) bool) error {
 	sessions, err := s.listUserSessionsInternal(user)
 	if err != nil {
 		return fmt.Errorf("unable to retrieve user sessions: %w", err)
@@ -173,6 +181,10 @@ func (s *Service) closeUserSessionsInternal(user happydns.UserInfo) error {
 
 	var errs error
 	for _, sess := range sessions {
+		if keep != nil && keep(sess) {
+			continue
+		}
+
 		if err := s.store.DeleteSession(sess.Id); err != nil {
 			errs = errors.Join(errs, fmt.Errorf("unable to delete session %q: %w", sess.Id, err))
 		}
@@ -185,7 +197,16 @@ func (s *Service) closeUserSessionsInternal(user happydns.UserInfo) error {
 // SessionCloserUsecase interface and accepts the broader [happydns.UserInfo]
 // type so callers are not required to hold a full [happydns.User] value.
 func (s *Service) CloseAll(user happydns.UserInfo) error {
-	return s.closeUserSessionsInternal(user)
+	return s.closeUserSessionsInternal(user, nil)
+}
+
+// CloseInteractive deletes the sessions user opened through the web interface,
+// keeping the machine sessions, created through the API to be used as long
+// lived tokens, alive. It satisfies the SessionCloserUsecase interface.
+func (s *Service) CloseInteractive(user happydns.UserInfo) error {
+	return s.closeUserSessionsInternal(user, func(sess *happydns.Session) bool {
+		return !sess.IsInteractive()
+	})
 }
 
 // ByID deletes all sessions for the user identified by userID. It satisfies

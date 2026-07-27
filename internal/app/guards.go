@@ -58,4 +58,10 @@ func (app *App) initGuards() {
 	if err != nil {
 		log.Fatalf("Invalid -resolver-allowed-target: %s", err)
 	}
+
+	// Print the effective policy, so that an allow-list that parsed but does
+	// not say what the operator meant is visible at startup rather than at the
+	// first refused request.
+	log.Printf("Outbound destinations: %s", app.guards.Outbound.Describe())
+	log.Printf("Resolver destinations: %s", app.guards.Resolver.Describe())
 }

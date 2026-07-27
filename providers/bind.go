@@ -111,18 +111,39 @@ func (a *bindActuator) CreateDomain(fqdn string) error {
 // (0/25.2.0.192.in-addr.arpa) are valid domain names that simply cannot be
 // stored in a file named after them.
 func checkZoneName(domain string) error {
-	name := strings.TrimSuffix(domain, ".")
-
-	if strings.ContainsAny(name, `/\`) {
+	switch checkPathComponent(strings.TrimSuffix(domain, ".")) {
+	case issuePathSeparator:
 		return fmt.Errorf("%q cannot be handled by the BIND provider: it derives the name of the zone file from the name of the zone, which therefore cannot contain a path separator", domain)
-	}
-
-	switch filepath.Clean(name) {
-	case ".", "..":
+	case issueNotAFileName:
 		return fmt.Errorf("%q is not a valid zone name for the BIND provider", domain)
 	}
 
 	return nil
+}
+
+// pathComponentIssue tells why a string cannot serve as a single path
+// component. checkZoneName and checkFileformat both feed the directory
+// confinement, so the rule lives here once and each caller only supplies its
+// own wording.
+type pathComponentIssue int
+
+const (
+	pathComponentOK pathComponentIssue = iota
+	issuePathSeparator
+	issueNotAFileName
+)
+
+func checkPathComponent(s string) pathComponentIssue {
+	if strings.ContainsAny(s, `/\`) {
+		return issuePathSeparator
+	}
+
+	switch filepath.Clean(s) {
+	case ".", "..":
+		return issueNotAFileName
+	}
+
+	return pathComponentOK
 }
 
 func (s *BindServer) ToDNSControlConfig() (map[string]string, error) {
@@ -198,12 +219,10 @@ func resolveAllowedDirectory(directory string) (string, error) {
 // dnscontrol joins it to the directory with filepath.Join, which cleans the
 // result, any path separator or .. would escape the allowed directory.
 func checkFileformat(format string) error {
-	if strings.ContainsAny(format, `/\`) {
+	switch checkPathComponent(format) {
+	case issuePathSeparator:
 		return errors.New("the file format cannot contain a path separator")
-	}
-
-	switch filepath.Clean(format) {
-	case ".", "..":
+	case issueNotAFileName:
 		return errors.New("the file format is not a valid file name")
 	}
 

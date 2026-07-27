@@ -30,15 +30,20 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+const (
+	// sessionPrimaryPrefix is the key prefix under which sessions are stored.
+	sessionPrimaryPrefix = "user.session-"
+)
+
 // sessionKey generates a hashed database key for a session ID
 func sessionKey(id string) string {
 	hash := sha256.Sum256([]byte(id))
 	encoded := base64.RawURLEncoding.EncodeToString(hash[:])
-	return fmt.Sprintf("user.session-%s", encoded)
+	return fmt.Sprintf("%s%s", sessionPrimaryPrefix, encoded)
 }
 
 func (s *KVStorage) ListAllSessions() (happydns.Iterator[happydns.Session], error) {
-	iter := s.db.Search("user.session-")
+	iter := s.db.Search(sessionPrimaryPrefix)
 	return NewKVIterator[happydns.Session](s.db, iter), nil
 }
 
@@ -56,7 +61,7 @@ func (s *KVStorage) GetSession(id string) (session *happydns.Session, err error)
 }
 
 func (s *KVStorage) ListAuthUserSessions(user *happydns.UserAuth) (sessions []*happydns.Session, err error) {
-	iter := s.db.Search("user.session-")
+	iter := s.db.Search(sessionPrimaryPrefix)
 	defer iter.Release()
 
 	for iter.Next() {
@@ -79,7 +84,7 @@ func (s *KVStorage) ListAuthUserSessions(user *happydns.UserAuth) (sessions []*h
 }
 
 func (s *KVStorage) ListUserSessions(userid happydns.Identifier) (sessions []*happydns.Session, err error) {
-	iter := s.db.Search("user.session-")
+	iter := s.db.Search(sessionPrimaryPrefix)
 	defer iter.Release()
 
 	for iter.Next() {
@@ -110,7 +115,7 @@ func (s *KVStorage) DeleteSession(id string) error {
 }
 
 func (s *KVStorage) ClearSessions() error {
-	iter := s.db.Search("user.session-")
+	iter := s.db.Search(sessionPrimaryPrefix)
 	defer iter.Release()
 
 	for iter.Next() {

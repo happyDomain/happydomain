@@ -47,6 +47,11 @@ type Session struct {
 
 	// Content stores data filled by other modules.
 	Content string `json:"content,omitempty"`
+
+	// Machine tells the Session was created through the API, to be used as a
+	// long lived token by a script or a third party tool, as opposed to a
+	// Session opened by a human through the web interface.
+	Machine bool `json:"machine,omitempty" readonly:"true"`
 }
 
 // SessionInput is used for creating or updating a session.
@@ -63,8 +68,24 @@ func (s *Session) ClearSession() {
 	s.Content = ""
 }
 
+// IsInteractive reports whether the Session was opened by a human through the
+// web interface, as opposed to a machine session created through the API.
+//
+// Sessions written before the Machine flag existed carry no explicit nature,
+// so it is derived from their content: a session opened through the web
+// interface always holds the values encoded by the session store, whereas a
+// session created through the API to be used as a token has none.
+func (s *Session) IsInteractive() bool {
+	return !s.Machine && s.Content != ""
+}
+
 type SessionCloserUsecase interface {
 	CloseAll(user UserInfo) error
+
+	// CloseInteractive closes the sessions opened through the web interface,
+	// leaving the machine sessions of the user untouched.
+	CloseInteractive(user UserInfo) error
+
 	ByID(userID Identifier) error
 }
 

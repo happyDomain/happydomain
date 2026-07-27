@@ -104,3 +104,37 @@ func TestRateLimiter_PerIPIsolation(t *testing.T) {
 		t.Fatalf("first request for IP B should be allowed despite IP A being throttled, got %d", code)
 	}
 }
+
+// TestRateLimiter_GroupsIPv6BySubnet is the point of keying on ClientKey rather
+// than on the exact address: a client delegated a whole /64 must not be able to
+// rotate the low bits to buy itself a fresh bucket per request.
+func TestRateLimiter_GroupsIPv6BySubnet(t *testing.T) {
+	limiter := middleware.NewIPRateLimiter(rate.Every(time.Hour), 1)
+	r := gin.New()
+	r.Use(limiter.Middleware())
+	r.POST("/recovery", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	do := func(ip string) int {
+		req := httptest.NewRequest(http.MethodPost, "/recovery", nil)
+		req.RemoteAddr = "[" + ip + "]:12345"
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		return w.Code
+	}
+
+	if code := do("2001:db8:1:2::1"); code != http.StatusOK {
+		t.Fatalf("first request should be allowed, got %d", code)
+	}
+
+	// A different address inside the same /64 shares the bucket.
+	if code := do("2001:db8:1:2::dead"); code != http.StatusTooManyRequests {
+		t.Fatalf("rotating inside the same /64 must not reset the bucket, got %d", code)
+	}
+
+	// A genuinely different /64 keeps its own allowance.
+	if code := do("2001:db8:1:3::1"); code != http.StatusOK {
+		t.Fatalf("a different /64 should have its own bucket, got %d", code)
+	}
+}

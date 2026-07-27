@@ -27,6 +27,13 @@ import (
 	"time"
 )
 
+// maxTrackedEntries bounds the memory the failure table may use. The email
+// half of a key is attacker supplied and needs no valid account, so without a
+// ceiling a flood of failed logins with a fresh address each time would grow
+// the table unchecked until the next cleanup tick, a window as wide as the
+// tracking window itself.
+const maxTrackedEntries = 8192
+
 type failureEntry struct {
 	count   int
 	expires time.Time
@@ -63,15 +70,44 @@ func (t *FailureTracker) RecordFailure(ip, email string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	expires := time.Now().Add(t.window)
+	now := time.Now()
+	expires := now.Add(t.window)
 
 	for _, key := range keysFor(ip, email) {
 		if e, ok := t.entries[key]; ok {
 			e.count++
 			e.expires = expires
 		} else {
+			t.evictLocked(now)
 			t.entries[key] = &failureEntry{count: 1, expires: expires}
 		}
+	}
+}
+
+// evictLocked makes room for a new entry once the table is full: expired
+// entries first, then the one closest to expiring, which is also the one whose
+// failures are the most stale. The caller must hold t.mu.
+func (t *FailureTracker) evictLocked(now time.Time) {
+	if len(t.entries) < maxTrackedEntries {
+		return
+	}
+
+	var stalestKey string
+	var stalestExpiry time.Time
+	for key, e := range t.entries {
+		if e.expires.Before(now) {
+			delete(t.entries, key)
+			continue
+		}
+
+		if stalestKey == "" || e.expires.Before(stalestExpiry) {
+			stalestKey = key
+			stalestExpiry = e.expires
+		}
+	}
+
+	if len(t.entries) >= maxTrackedEntries && stalestKey != "" {
+		delete(t.entries, stalestKey)
 	}
 }
 
