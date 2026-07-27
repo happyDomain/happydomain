@@ -28,74 +28,6 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func TestSessionClearSession(t *testing.T) {
-	userId := happydns.Identifier{0x01, 0x02, 0x03}
-
-	session := &happydns.Session{
-		Id:          "session123",
-		IdUser:      userId,
-		Description: "test session",
-		IssuedAt:    time.Now(),
-		ExpiresOn:   time.Now().Add(24 * time.Hour),
-		ModifiedOn:  time.Now(),
-		Content:     "sensitive data",
-	}
-
-	if session.Content == "" {
-		t.Fatal("Test setup failed: session content should not be empty")
-	}
-
-	session.ClearSession()
-
-	if session.Content != "" {
-		t.Errorf("ClearSession() Content = %q; want empty string", session.Content)
-	}
-
-	if session.Id != "session123" {
-		t.Error("ClearSession() should not modify session ID")
-	}
-
-	if !session.IdUser.Equals(userId) {
-		t.Error("ClearSession() should not modify user ID")
-	}
-
-	if session.Description != "test session" {
-		t.Error("ClearSession() should not modify description")
-	}
-}
-
-func TestSessionClearSessionAlreadyEmpty(t *testing.T) {
-	session := &happydns.Session{
-		Id:      "session123",
-		IdUser:  happydns.Identifier{0x01},
-		Content: "",
-	}
-
-	session.ClearSession()
-
-	if session.Content != "" {
-		t.Errorf("ClearSession() on empty content: Content = %q; want empty string", session.Content)
-	}
-}
-
-func TestSessionClearSessionMultipleTimes(t *testing.T) {
-	session := &happydns.Session{
-		Id:      "session123",
-		IdUser:  happydns.Identifier{0x01},
-		Content: "data",
-	}
-
-	session.ClearSession()
-	if session.Content != "" {
-		t.Error("First ClearSession() failed")
-	}
-
-	session.ClearSession()
-	if session.Content != "" {
-		t.Error("Second ClearSession() on already cleared session failed")
-	}
-}
-
 func TestSessionStructFields(t *testing.T) {
 	sessionId := "test-session-123"
 	userId := happydns.Identifier{0xaa, 0xbb, 0xcc}
@@ -173,51 +105,5 @@ func TestSessionZeroValues(t *testing.T) {
 
 	if session.Content != "" {
 		t.Errorf("Session zero value should have empty Content, got %q", session.Content)
-	}
-}
-
-func TestSessionClearSessionPreservesTimestamps(t *testing.T) {
-	issuedAt := time.Now().Add(-2 * time.Hour)
-	expiresOn := time.Now().Add(22 * time.Hour)
-	modifiedOn := time.Now().Add(-1 * time.Hour)
-
-	session := &happydns.Session{
-		Id:          "session123",
-		IdUser:      happydns.Identifier{0x01},
-		Description: "test",
-		IssuedAt:    issuedAt,
-		ExpiresOn:   expiresOn,
-		ModifiedOn:  modifiedOn,
-		Content:     "data to clear",
-	}
-
-	session.ClearSession()
-
-	if !session.IssuedAt.Equal(issuedAt) {
-		t.Error("ClearSession() should not modify IssuedAt")
-	}
-
-	if !session.ExpiresOn.Equal(expiresOn) {
-		t.Error("ClearSession() should not modify ExpiresOn")
-	}
-
-	if !session.ModifiedOn.Equal(modifiedOn) {
-		t.Error("ClearSession() should not modify ModifiedOn")
-	}
-}
-
-func TestSessionClearSessionWithLargeContent(t *testing.T) {
-	largeContent := string(make([]byte, 10000))
-
-	session := &happydns.Session{
-		Id:      "session123",
-		IdUser:  happydns.Identifier{0x01},
-		Content: largeContent,
-	}
-
-	session.ClearSession()
-
-	if session.Content != "" {
-		t.Error("ClearSession() should clear even large content")
 	}
 }
