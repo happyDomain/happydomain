@@ -60,6 +60,7 @@ require (
 	github.com/oracle/nosql-go-sdk v1.4.8
 	github.com/ovh/go-ovh v1.9.0
 	github.com/rrivera/identicon v0.0.0-20240116195454-d5ba35832c0d
+	github.com/sbrunk/libdns-hostinger v0.1.2
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.1
 	github.com/swaggo/swag v1.16.6
