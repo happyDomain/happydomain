@@ -21,6 +21,7 @@
 
 import type { Color } from "@sveltestrap/sveltestrap";
 import { navigate } from "$lib/stores/config";
+import { randomUUID } from "$lib/utils/uuid";
 
 export interface NewToast {
     type?: "info" | "success" | "warning" | "error";
@@ -32,7 +33,7 @@ export interface NewToast {
 }
 
 export class Toast implements NewToast {
-    id: string = crypto.randomUUID();
+    id: string = randomUUID();
     type: "info" | "success" | "warning" | "error" = "info";
     title: string = "";
     message: string = "";

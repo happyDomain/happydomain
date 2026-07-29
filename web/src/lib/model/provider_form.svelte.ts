@@ -23,6 +23,7 @@ import { getProviderSettings } from "$lib/api/provider_settings";
 import type { CustomForm } from "$lib/model/custom_form.svelte";
 import { isProvider, type Provider } from "$lib/model/provider";
 import type { ProviderSettingsState } from "$lib/model/provider_settings";
+import { randomUUID } from "$lib/utils/uuid";
 
 export class ProviderForm {
     ptype: string = $state("");
@@ -44,7 +45,7 @@ export class ProviderForm {
     ) {
         this.ptype = ptype;
         this.state = -1;
-        this.providerId = providerId ? providerId : crypto.randomUUID();
+        this.providerId = providerId ? providerId : randomUUID();
         this.form = undefined;
         this.value = value ? value : { recall: this.providerId, state: this.state };
         this.on_done = on_done;
