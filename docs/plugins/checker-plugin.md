@@ -65,7 +65,7 @@ at once.
 // Command plugin is the happyDomain plugin entrypoint for the dummy checker.
 //
 // Build with:
-//   go build -buildmode=plugin -o checker-dummy.so ./plugin
+//   go build -buildmode=plugin -trimpath -o checker-dummy.so ./plugin
 package main
 
 import (
@@ -98,10 +98,21 @@ func NewCheckerPlugin() (*sdk.CheckerDefinition, sdk.ObservationProvider, error)
 Build and deploy:
 
 ```bash
-go build -buildmode=plugin -o checker-dummy.so ./plugin
+go build -buildmode=plugin -trimpath -tags netgo -o checker-dummy.so ./plugin
 sudo install -m 0644 -o happydomain checker-dummy.so /var/lib/happydomain/plugins/
 sudo systemctl restart happydomain
 ```
+
+`-trimpath` and `-tags netgo` are **mandatory**: official happyDomain binaries
+are built with both, and Go refuses to load a plugin whose packages were not
+built with the exact same flags. Omitting them fails at startup with:
+
+```
+plugin was built with a different version of package internal/goarch   (missing -trimpath)
+plugin was built with a different version of package net               (missing -tags netgo)
+```
+
+See [Build constraints and platform support](#build-constraints-and-platform-support).
 
 happyDomain will log:
 
@@ -120,6 +131,12 @@ Go's `plugin` package is unforgiving:
 - It **must use the same versions of every shared dependency**. Vendor the
   exact module versions happyDomain ships, or pin them in your `go.mod`
   with `replace` directives.
+- It **must be built with the same build flags as the host**, currently
+  `-trimpath -tags netgo`. These are part of the package build IDs Go
+  compares, so the check is all-or-nothing and symmetric: a plugin built
+  without `-trimpath` is rejected by an official binary, and a plugin built
+  with it is rejected by a binary built without. `netgo` matters because it
+  changes the stdlib `net` package, which both sides link.
 - `CGO_ENABLED=1` is required.
 - `GOOS`/`GOARCH` must match the host binary.
 

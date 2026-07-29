@@ -54,7 +54,7 @@ steps:
     image: golang:1-alpine
     commands:
       - apk add --no-cache git
-      - go build -ldflags '-s -w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - go build -trimpath -ldflags '-s -w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
       - ln deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
     environment:
       CGO_ENABLED: 0
@@ -68,7 +68,7 @@ steps:
     image: golang:1-alpine
     commands:
       - apk add --no-cache git
-      - go build -ldflags '-s -w -X main.Version=${DRONE_SEMVER} -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - go build -trimpath -ldflags '-s -w -X main.Version=${DRONE_SEMVER} -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
       - ln deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
       # Generate NOTICE file (merging Go + frontend)
       # renovate: datasource=go depName=github.com/google/go-licenses
@@ -94,7 +94,7 @@ steps:
     image: golang:1-alpine
     commands:
       - apk add --no-cache git
-      - go build -tags netgo,swagger,web,nomsgpack -ldflags '-s -w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - go build -tags netgo,swagger,web,nomsgpack -trimpath -ldflags '-s -w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
     environment:
       CGO_ENABLED: 0
       GOOS: darwin
@@ -108,7 +108,7 @@ steps:
     image: golang:1-alpine
     commands:
       - apk add --no-cache git
-      - go build -tags netgo,swagger,web,nomsgpack -ldflags '-s -w -X "main.Version=${DRONE_SEMVER}" -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - go build -tags netgo,swagger,web,nomsgpack -trimpath -ldflags '-s -w -X "main.Version=${DRONE_SEMVER}" -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
     environment:
       CGO_ENABLED: 0
       GOOS: darwin
@@ -285,7 +285,7 @@ steps:
     image: golang:1-alpine
     commands:
       - apk add --no-cache git
-      - go build -tags netgo,swagger,web,nomsgpack -ldflags '-s -w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - go build -tags netgo,swagger,web,nomsgpack -trimpath -ldflags '-s -w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
       - ln deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
     environment:
       CGO_ENABLED: 0
@@ -298,7 +298,7 @@ steps:
     image: golang:1-alpine
     commands:
       - apk add --no-cache git
-      - go build -tags netgo,swagger,web,nomsgpack -ldflags '-s -w -X main.Version=${DRONE_SEMVER} -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - go build -tags netgo,swagger,web,nomsgpack -trimpath -ldflags '-s -w -X main.Version=${DRONE_SEMVER} -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
       - ln deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
     environment:
       CGO_ENABLED: 0
@@ -319,7 +319,7 @@ steps:
     image: golang:1-alpine
     commands:
       - apk add --no-cache git
-      - go build -tags netgo,swagger,web,nomsgpack -ldflags '-s -w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - go build -tags netgo,swagger,web,nomsgpack -trimpath -ldflags '-s -w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}" -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
     environment:
       CGO_ENABLED: 0
       GOOS: darwin
@@ -333,7 +333,7 @@ steps:
     image: golang:1-alpine
     commands:
       - apk add --no-cache git
-      - go build -tags netgo,swagger,web,nomsgpack -ldflags '-s -w -X "main.Version=${DRONE_SEMVER}" -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - go build -tags netgo,swagger,web,nomsgpack -trimpath -ldflags '-s -w -X "main.Version=${DRONE_SEMVER}" -X main.build=${DRONE_BUILD_NUMBER}' -o deploy/happydomain-darwin-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
     environment:
       CGO_ENABLED: 0
       GOOS: darwin
