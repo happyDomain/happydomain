@@ -83,6 +83,18 @@ steps:
       event:
         - tag
 
+  # Plugin-capable variant
+  - name: backend-tag cgo
+    image: golang:1-bookworm
+    commands:
+      - go build -trimpath -ldflags '-s -w -X main.Version=${DRONE_SEMVER}' -o deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}-cgo ./cmd/happyDomain/
+    environment:
+      CGO_ENABLED: 1
+      GOFLAGS: "-tags=netgo,swagger,web,nomsgpack"
+    when:
+      event:
+        - tag
+
   - name: generate SBOM
     image: nemunaire/drone-syft
     settings:
@@ -302,6 +314,18 @@ steps:
       - ln deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain
     environment:
       CGO_ENABLED: 0
+    when:
+      event:
+        - tag
+
+  # Plugin-capable variant
+  - name: backend-tag cgo
+    image: golang:1-bookworm
+    commands:
+      - go build -trimpath -ldflags '-s -w -X main.Version=${DRONE_SEMVER}' -o deploy/happydomain-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}-cgo ./cmd/happyDomain/
+    environment:
+      CGO_ENABLED: 1
+      GOFLAGS: "-tags=netgo,swagger,web,nomsgpack"
     when:
       event:
         - tag
