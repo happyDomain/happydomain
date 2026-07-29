@@ -24,6 +24,7 @@
 <script lang="ts">
     import type { Domain } from "$lib/model/domain";
     import type { dnsResource, dnsRR } from "$lib/dns_rr";
+    import { digestHex, hasSubtleCrypto, toHex } from "$lib/utils/crypto";
 
     interface Props {
         dn: string;
@@ -156,6 +157,11 @@
     let fetching = $state<number | null>(null);
     let errorMsg = $state<string>("");
 
+    // Hashing an uploaded certificate needs a secure context, unavailable when
+    // served over plain HTTP. Fetching from the live server keeps working, as
+    // the hashes are computed server-side.
+    const canHash = hasSubtleCrypto();
+
     async function fetchLive(i: number) {
         fetching = i;
         errorMsg = "";
@@ -194,9 +200,7 @@
 
     function hexFromBase64(b64: string): string {
         const bin = atob(b64);
-        let out = "";
-        for (let i = 0; i < bin.length; i++) out += bin.charCodeAt(i).toString(16).padStart(2, "0");
-        return out;
+        return toHex(Array.from(bin, (c) => c.charCodeAt(0)));
     }
 
     // Accepts PEM (one or more "-----BEGIN CERTIFICATE-----" blocks) or raw
@@ -265,15 +269,16 @@
     }
     async function hashBytes(b: Uint8Array, matching: number): Promise<string> {
         if (matching === 0) {
-            let out = "";
-            for (let i = 0; i < b.length; i++) out += b[i].toString(16).padStart(2, "0");
-            return out;
+            return toHex(b);
         }
         const algo = matching === 2 ? "SHA-512" : "SHA-256";
-        const h = new Uint8Array(await crypto.subtle.digest(algo, b as BufferSource));
-        let out = "";
-        for (let i = 0; i < h.length; i++) out += h[i].toString(16).padStart(2, "0");
-        return out;
+        const h = await digestHex(algo, b as BufferSource);
+        if (h === undefined) {
+            throw new Error(
+                "hashing a certificate requires a secure connection (HTTPS or localhost)",
+            );
+        }
+        return h;
     }
 </script>
 
@@ -304,7 +309,11 @@
             </select>
         </div>
         <div class="col-sm-6 text-muted">
-            <small>TLSA owner: <code class="bg-light px-1 rounded">{fullDn}.{dn || origin.domain}</code></small>
+            <small
+                >TLSA owner: <code class="bg-light px-1 rounded"
+                    >{fullDn}.{dn || origin.domain}</code
+                ></small
+            >
         </div>
     </div>
 
@@ -333,7 +342,9 @@
 
             <div class="row g-3">
                 <div class="col-md-4">
-                    <label for="tlsa-usage-{i}" class="form-label fw-semibold mb-1">Certificate usage</label>
+                    <label for="tlsa-usage-{i}" class="form-label fw-semibold mb-1"
+                        >Certificate usage</label
+                    >
                     <select
                         id="tlsa-usage-{i}"
                         class="form-select form-select-sm"
@@ -344,7 +355,9 @@
                             <option value={u.v}>{u.v} — {u.label}</option>
                         {/each}
                     </select>
-                    <small class="form-text text-muted">{USAGE.find((x) => x.v === rec.Usage)?.hint || ""}</small>
+                    <small class="form-text text-muted"
+                        >{USAGE.find((x) => x.v === rec.Usage)?.hint || ""}</small
+                    >
                 </div>
                 <div class="col-md-4">
                     <label for="tlsa-sel-{i}" class="form-label fw-semibold mb-1">Selector</label>
@@ -358,10 +371,14 @@
                             <option value={s.v}>{s.v} — {s.label}</option>
                         {/each}
                     </select>
-                    <small class="form-text text-muted">{SELECTOR.find((x) => x.v === rec.Selector)?.hint || ""}</small>
+                    <small class="form-text text-muted"
+                        >{SELECTOR.find((x) => x.v === rec.Selector)?.hint || ""}</small
+                    >
                 </div>
                 <div class="col-md-4">
-                    <label for="tlsa-mt-{i}" class="form-label fw-semibold mb-1">Matching type</label>
+                    <label for="tlsa-mt-{i}" class="form-label fw-semibold mb-1"
+                        >Matching type</label
+                    >
                     <select
                         id="tlsa-mt-{i}"
                         class="form-select form-select-sm"
@@ -372,12 +389,16 @@
                             <option value={m.v}>{m.v} — {m.label}</option>
                         {/each}
                     </select>
-                    <small class="form-text text-muted">{MATCHING.find((x) => x.v === rec.MatchingType)?.hint || ""}</small>
+                    <small class="form-text text-muted"
+                        >{MATCHING.find((x) => x.v === rec.MatchingType)?.hint || ""}</small
+                    >
                 </div>
             </div>
 
             <div class="mt-3">
-                <label for="tlsa-cert-{i}" class="form-label fw-semibold mb-1">Certificate data (hex)</label>
+                <label for="tlsa-cert-{i}" class="form-label fw-semibold mb-1"
+                    >Certificate data (hex)</label
+                >
                 <textarea
                     id="tlsa-cert-{i}"
                     class="form-control font-monospace small"
@@ -399,11 +420,18 @@
                     >
                         {fetching === i ? "Fetching…" : "Fetch from live server"}
                     </button>
-                    <label class="btn btn-sm btn-outline-secondary mb-0">
+                    <label
+                        class="btn btn-sm btn-outline-secondary mb-0"
+                        class:disabled={!canHash && rec.MatchingType !== 0}
+                        title={canHash || rec.MatchingType === 0
+                            ? undefined
+                            : "Hashing a certificate in your browser requires a secure connection: access happyDomain over HTTPS (or from localhost) to enable it. Matching type 'Full' works without it."}
+                    >
                         <input
                             type="file"
                             accept=".pem,.crt,.cer,.der"
                             onchange={(e) => onUpload(i, e)}
+                            disabled={!canHash && rec.MatchingType !== 0}
                             hidden
                         />
                         Upload certificate (PEM/DER)
@@ -421,7 +449,11 @@
     {/each}
 
     {#if !readonly}
-        <button type="button" class="btn btn-sm btn-outline-primary align-self-start" onclick={addRecord}>
+        <button
+            type="button"
+            class="btn btn-sm btn-outline-primary align-self-start"
+            onclick={addRecord}
+        >
             + Add TLSA record
         </button>
     {/if}

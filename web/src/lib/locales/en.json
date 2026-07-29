@@ -244,7 +244,9 @@
         "base64": "Invalid base64 string.",
         "base64-illegal-char": "Illegal character used.",
         "base64-unfinished": "Unfinished string.",
-        "suggestion": "Did you mean: {{suggestion}}"
+        "suggestion": "Did you mean: {{suggestion}}",
+        "email-identifier": "Unable to compute the name hash from the username: {{error}}. You can fill it in manually below.",
+        "clipboard": "Unable to copy: select the text and copy it manually."
     },
     "history": {
         "committed-on": "Committed on",

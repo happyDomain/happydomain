@@ -22,7 +22,6 @@
 package abstract
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"strings"
 
@@ -53,9 +52,12 @@ func (s *OpenPGP) EnrichFromPrevious(old happydns.ServiceBody) {
 }
 
 func (s *OpenPGP) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	if s.Record == nil {
+		return nil, fmt.Errorf("no OPENPGPKEY record defined")
+	}
+
 	if s.Username != "" {
-		hash := sha256.Sum256([]byte(s.Username))
-		identifier := fmt.Sprintf("%x", hash[:28])
+		identifier := helpers.EmailIdentifier(s.Username)
 		if !strings.HasPrefix(domain, identifier) {
 			return nil, fmt.Errorf("Invalid prefix")
 		}
@@ -84,9 +86,12 @@ func (s *SMimeCert) EnrichFromPrevious(old happydns.ServiceBody) {
 }
 
 func (s *SMimeCert) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {
+	if s.Record == nil {
+		return nil, fmt.Errorf("no SMIMEA record defined")
+	}
+
 	if s.Username != "" {
-		hash := sha256.Sum256([]byte(s.Username))
-		identifier := fmt.Sprintf("%x", hash[:28])
+		identifier := helpers.EmailIdentifier(s.Username)
 		if !strings.HasPrefix(s.Record.Hdr.Name, identifier) {
 			return nil, fmt.Errorf("Invalid prefix")
 		}

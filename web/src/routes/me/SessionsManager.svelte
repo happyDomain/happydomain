@@ -49,6 +49,14 @@
 
     import type { Session } from "$lib/model/session";
     import { t } from "$lib/translations";
+    import { digestHex } from "$lib/utils/crypto";
+
+    // Outside a secure context (plain HTTP), digestHex gives up and the short
+    // identifier is simply omitted, the session stays identifiable by its
+    // description and dates.
+    function shortId(id: string): Promise<string | undefined> {
+        return digestHex("SHA-256", new TextEncoder().encode(id), 6);
+    }
 
     let current_session_req = getCurrentSession();
     let sessions_req = $state(listSessions());
@@ -87,11 +95,21 @@
         sessions_req = listSessions();
     }
 
-    let secretCopiedToClipboard: boolean | null = $state(false);
+    let secretCopiedToClipboard: boolean | null | "error" = $state(false);
     async function copySecretToClipboard() {
         secretCopiedToClipboard = null;
-        await navigator.clipboard.writeText(newSessionSecret);
-        secretCopiedToClipboard = true;
+        try {
+            // navigator.clipboard is only exposed in a secure context, so it is
+            // simply absent when happyDomain is served over plain HTTP.
+            if (!navigator.clipboard) throw new Error("clipboard unavailable");
+            await navigator.clipboard.writeText(newSessionSecret);
+            secretCopiedToClipboard = true;
+        } catch {
+            // Distinct from the idle state, which looks exactly like a button
+            // that was never clicked: the secret is shown once and only once,
+            // so the user has to be told to copy it off the screen by hand.
+            secretCopiedToClipboard = "error";
+        }
     }
 
     function Open(): void {
@@ -138,10 +156,8 @@
                         <div class="text-truncate">
                             {session.description}
                             <small class="text-muted">
-                                {#await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(session.id)) then sessid}
-                                    {Array.from(new Uint8Array(sessid).slice(0, 6))
-                                        .map((b) => b.toString(16).padStart(2, "0"))
-                                        .join("")}
+                                {#await shortId(session.id) then sessid}
+                                    {sessid ?? ""}
                                 {/await}
                             </small>
                             {#if session.id === current_session.id}
@@ -235,6 +251,8 @@
                     <Button color="info" on:click={copySecretToClipboard}>
                         {#if secretCopiedToClipboard === null}
                             <Spinner size="sm" />
+                        {:else if secretCopiedToClipboard === "error"}
+                            <i class="bi bi-clipboard-x" title={$t("errors.clipboard")}></i>
                         {:else if secretCopiedToClipboard}
                             <i class="bi bi-clipboard-check"></i>
                         {:else}

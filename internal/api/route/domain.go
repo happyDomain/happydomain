@@ -71,6 +71,9 @@ func DeclareDomainRoutes(
 	certCtrl := controller.NewCertificateController()
 	apiDomainsRoutes.POST("/fetch-certificate", certCtrl.FetchCertificate)
 
+	emailIdCtrl := controller.NewEmailIdentifierController()
+	apiDomainsRoutes.POST("/email-identifier", emailIdCtrl.ComputeEmailIdentifier)
+
 	// Mount domain-scoped checker routes.
 	if cc != nil {
 		DeclareScopedCheckerRoutes(apiDomainsRoutes, cc, nc)

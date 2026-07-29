@@ -244,7 +244,9 @@
         "base64": "Chaîne base64 invalide.",
         "base64-illegal-char": "Charactère incorrect utilisé.",
         "base64-unfinished": "La chaîne est incomplète.",
-        "suggestion": "Voulez-vous dire: {{suggestion}}"
+        "suggestion": "Voulez-vous dire: {{suggestion}}",
+        "email-identifier": "Impossible de calculer l'empreinte du nom depuis l'identifiant : {{error}}. Vous pouvez la renseigner manuellement ci-dessous.",
+        "clipboard": "Copie impossible : sélectionnez le texte et copiez-le manuellement."
     },
     "history": {
         "committed-on": "Enregistrée le",

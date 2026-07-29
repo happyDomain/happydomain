@@ -22,11 +22,15 @@
 -->
 
 <script lang="ts">
+    import { Alert } from "@sveltestrap/sveltestrap";
+
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import type { Domain } from "$lib/model/domain";
     import { domainJoin } from "$lib/dns";
     import type { dnsResource, dnsTypeOPENPGPKEY } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
+    import { t } from "$lib/translations";
+    import { createEmailIdentifierHasher } from "$lib/utils/email_identifier.svelte";
 
     interface Props {
         dn: string;
@@ -48,19 +52,6 @@
         value.username = "";
     }
 
-    // Compute SHA-224 hash from username
-    async function computeHash(username: string): Promise<string> {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(username);
-        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-        const hashArray = new Uint8Array(hashBuffer);
-        // Take first 28 bytes (224 bits) and convert to hex
-        const hash224 = hashArray.slice(0, 28);
-        return Array.from(hash224)
-            .map((b) => b.toString(16).padStart(2, "0"))
-            .join("");
-    }
-
     // Initial name hash: extract from existing Hdr.Name if present, else empty
     function initialNameHash(): string {
         const existing = value["openpgpkey"]?.Hdr?.Name;
@@ -73,26 +64,35 @@
         return "";
     }
 
-    let nameHash = $state(initialNameHash());
+    const hasher = createEmailIdentifierHasher(
+        () => value["username"],
+        () => origin.id,
+        initialNameHash(),
+        value["username"] ?? "",
+    );
 
-    // When username changes, recompute hash
+    // When the name hash changes, update the domain name. A hash that had to be
+    // dropped takes the owner name with it: keeping the old one would publish a
+    // prefix that contradicts the username, which the backend rejects.
     $effect(() => {
-        if (value["username"]) {
-            computeHash(value["username"]).then((hash) => {
-                nameHash = hash;
-            });
-        }
-    });
+        const hdr = value["openpgpkey"]?.Hdr;
+        if (!hdr) return;
 
-    // When name hash changes, update the domain name
-    $effect(() => {
-        if (nameHash && value["openpgpkey"]?.Hdr) {
-            value["openpgpkey"].Hdr.Name = domainJoin(nameHash, "_openpgpkey", dn);
+        if (hasher.hash) {
+            hdr.Name = domainJoin(hasher.hash, "_openpgpkey", dn);
+        } else if (hasher.dropped) {
+            hdr.Name = "";
         }
     });
 </script>
 
 <div>
+    {#if hasher.error && !hasher.hash}
+        <Alert color="warning" class="py-2 small mb-0 mt-3">
+            {$t("errors.email-identifier", { error: hasher.error })}
+        </Alert>
+    {/if}
+
     <BasicInput
         class="mt-3"
         edit
@@ -109,7 +109,7 @@
     />
 
     <BasicInput
-        edit={!value["username"]}
+        edit={!value["username"] || hasher.error !== ""}
         index="name-hash"
         specs={{
             id: "name-hash",
@@ -120,7 +120,7 @@
             type: "string",
             placeholder: "c93f1e400f26708f98cb19d936620da35eec8f72e57f9eec01c1afd6",
         }}
-        bind:value={nameHash}
+        bind:value={hasher.hash}
     />
 
     {#if value["openpgpkey"]}

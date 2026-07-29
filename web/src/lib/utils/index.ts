@@ -5,5 +5,6 @@
 export { toDatetimeLocal, fromDatetimeLocal, formatDuration } from './datetime';
 export { formatBytes } from './format';
 export { randomUUID } from './uuid';
+export { digestHex, hasSubtleCrypto, toHex } from './crypto';
 export { getStatusColor, getStatusIcon, getStatusI18nKey, getExecutionStatusColor, getExecutionStatusI18nKey, formatCheckDate, withInheritedPlaceholders, splitPositionalOptions, collectAutoFillKeys, downloadBlob, collectAllOptionDocs, availabilityBadges, getOrphanedOptionKeys, filterValidOptions, buildOptionGroupLayout } from './checkers';
 export type { CheckerPageScope, OptionGroup, KeyedOptionGroup } from './checkers';

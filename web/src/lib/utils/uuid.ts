@@ -19,6 +19,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import { toHex } from "./crypto";
+
 /**
  * `crypto.randomUUID()` and `crypto.getRandomValues()` are only exposed by
  * browsers in a secure context (HTTPS, or localhost/127.0.0.1). A self-hosted
@@ -43,20 +45,8 @@ export function randomUUID(): string {
     bytes[6] = (bytes[6] & 0x0f) | 0x40;
     bytes[8] = (bytes[8] & 0x3f) | 0x80;
 
-    const hex: Array<string> = [];
-    for (let i = 0; i < bytes.length; i++) {
-        hex.push(bytes[i].toString(16).padStart(2, "0"));
-    }
+    const hex = toHex(bytes);
 
-    return (
-        hex.slice(0, 4).join("") +
-        "-" +
-        hex.slice(4, 6).join("") +
-        "-" +
-        hex.slice(6, 8).join("") +
-        "-" +
-        hex.slice(8, 10).join("") +
-        "-" +
-        hex.slice(10, 16).join("")
-    );
+    // 8-4-4-4-12, in hex characters.
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }

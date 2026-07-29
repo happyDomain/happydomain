@@ -57,7 +57,10 @@ export function setRefreshingSession(val: boolean) {
     _isRefreshingSession = val;
 }
 
-async function customFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+export async function customFetch(
+    input: RequestInfo | URL,
+    init?: RequestInit,
+): Promise<Response> {
     const response = await fetch(input, init);
 
     // Handle 429 Too Many Requests — rate-limited without captcha provider
