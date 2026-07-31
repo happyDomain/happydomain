@@ -95,12 +95,12 @@ func DNSControlDiffByRecord(oldrrs []happydns.Record, newrrs []happydns.Record, 
 		id := sha256.Sum224([]byte(correction.MsgsJoined))
 
 		var oldRecords []happydns.Record
-		for _, rc := range correction.Old {
+		for _, rc := range dropPseudoRecords(correction.Old) {
 			oldRecords = append(oldRecords, rc.ToRR())
 		}
 
 		var newRecords []happydns.Record
-		for _, rc := range correction.New {
+		for _, rc := range dropPseudoRecords(correction.New) {
 			newRecords = append(newRecords, rc.ToRR())
 		}
 

@@ -211,8 +211,16 @@ func (p *DNSControlAdapterNSProvider) GetZoneRecords(domain string) (ret []happy
 	var records models.Records
 
 	defer p.observeProviderCall("get_zone_records")(&err)
+	// Turn into an error the panics raised by the provider implementation and
+	// by the record conversion below, so that malformed data coming from a
+	// provider degrades one request instead of the whole server.
+	//
+	// This says nothing about the records happyDomain cannot represent: those
+	// make DNSControl call log.Fatalf, hence os.Exit, which no recover() can
+	// intercept. Keeping them away from ToRR() is the job of dropPseudoRecords.
 	defer func() {
 		if a := recover(); a != nil {
+			ret = nil
 			err = fmt.Errorf("%s", a)
 		}
 	}()
@@ -222,7 +230,7 @@ func (p *DNSControlAdapterNSProvider) GetZoneRecords(domain string) (ret []happy
 		return
 	}
 
-	for _, rec := range records {
+	for _, rec := range dropPseudoRecords(records) {
 		// rec.ToRR() for modern types (DS, RP, …) returns the rtype wrapper
 		// (e.g. *rtype.DS) rather than the canonical *dns.DS. When these are
 		// later passed back through dnsrr.RRtoRC → DS.FromStruct, the type
@@ -242,23 +250,43 @@ func (p *DNSControlAdapterNSProvider) GetZoneRecords(domain string) (ret []happy
 func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []happydns.Record) (ret []*happydns.Correction, nbCorrections int, err error) {
 	defer p.observeProviderCall("get_zone_corrections")(&err)
 
+	// Same scope as in GetZoneRecords: catches the panics of the provider
+	// implementation, but not the log.Fatalf DNSControl raises on the record
+	// types it considers pseudo-types. Registered first, so that the record
+	// conversion and the auditor call below are covered too.
+	defer func() {
+		if a := recover(); a != nil {
+			ret = nil
+			err = fmt.Errorf("%s", a)
+		}
+	}()
+
 	var dc *models.DomainConfig
 	dc, err = NewDNSControlDomainConfig(strings.TrimSuffix(domain, "."), rrs)
 	if err != nil {
 		return
 	}
 
-	errs := p.RecordAuditor(dc.Records)
-	if errs != nil {
-		err = fmt.Errorf("some records are incompatibles with this NS provider: %w. Please fix those errors and retry.", errors.Join(errs...))
-		return
-	}
+	// Drop the records happyDomain cannot represent from the desired zone as
+	// well as from the current one below, so the diff stays symmetric: a record
+	// present on both sides yields no correction and is left untouched on the
+	// provider. Filtering only one side would make DNSControl take it for a
+	// record to delete, or, worse, for one to create: it would then reach
+	// RecordConfig.ToRR() and abort the whole process.
+	//
+	// This is not hypothetical for the desired zone: a zone file uploaded with
+	// a private-use type (TYPE65280) is stored as a dns.RFC3597, which
+	// DNSControl turns into a RecordConfig with an empty Type.
+	dc.Records = dropPseudoRecords(dc.Records)
 
-	defer func() {
-		if a := recover(); a != nil {
-			err = fmt.Errorf("%s", a)
+	// The auditor runs on the records that will actually be published.
+	if p.RecordAuditor != nil {
+		errs := p.RecordAuditor(dc.Records)
+		if errs != nil {
+			err = fmt.Errorf("some records are incompatibles with this NS provider: %w. Please fix those errors and retry.", errors.Join(errs...))
+			return
 		}
-	}()
+	}
 
 	// Retrieve current zone
 	var records models.Records
@@ -266,6 +294,8 @@ func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []ha
 	if err != nil {
 		return nil, nbCorrections, err
 	}
+
+	records = dropPseudoRecords(records)
 
 	// Compute needed corrections
 	var corrections []*models.Correction
