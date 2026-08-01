@@ -243,8 +243,9 @@ func RDataRelative(rr happydns.Record, origin string) happydns.Record {
 		lp.Fqdn = DomainRelative(lp.Fqdn, origin)
 	} else if prr, ok := rr.(*dns.PrivateRR); ok {
 		// Pseudo-types (ALIAS, R53_ALIAS, ...): their rdata is opaque to
-		// miekg/dns, so ask it for its target itself.
-		if rdata, ok := prr.Data.(happydns.TargetRdata); ok {
+		// miekg/dns, so ask it for its target itself. The ones whose target is
+		// not a domain name (AZURE_ALIAS carries a resource id) are left alone.
+		if rdata, ok := prr.Data.(happydns.TargetRdata); ok && rdata.TargetIsHostname() {
 			rdata.SetTarget(DomainRelative(rdata.GetTarget(), origin))
 		}
 	}
@@ -326,7 +327,7 @@ func RRAbsolute(rr happydns.Record, origin string) happydns.Record {
 	} else if lp, ok := rr.(*dns.LP); ok {
 		lp.Fqdn = DomainFQDN(lp.Fqdn, origin)
 	} else if prr, ok := rr.(*dns.PrivateRR); ok {
-		if rdata, ok := prr.Data.(happydns.TargetRdata); ok {
+		if rdata, ok := prr.Data.(happydns.TargetRdata); ok && rdata.TargetIsHostname() {
 			rdata.SetTarget(DomainFQDN(rdata.GetTarget(), origin))
 		}
 	}

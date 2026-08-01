@@ -110,8 +110,8 @@
             addAliasInProgress = true;
             addZoneService(origin, zone.id, new ServiceCombined({
                 _domain: value,
-                _svctype: "svcs.CNAME",
-                Service: { cname: { Hdr: { Rrtype: 5, Class: 1 }, Target: dn ? dn : "@" } },
+                _svctype: "svcs.Alias",
+                Service: { record: { Hdr: { Rrtype: 5, Class: 1 }, Target: dn ? dn : "@" } },
             })).then(
                 (z) => {
                     thisZone.set(z);

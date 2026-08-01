@@ -390,6 +390,28 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "single": true
         }
     },
+    "svcs.Alias": {
+        "name": "Alias",
+        "_svctype": "svcs.Alias",
+        "description": "Maps an alias to another (canonical) domain.",
+        "family": "",
+        "categories": [
+            "alias"
+        ],
+        "record_types": [
+            5,
+            39,
+            65280,
+            65281,
+            65284,
+            65282,
+            65283,
+            65285
+        ],
+        "restrictions": {
+            "single": true
+        }
+    },
     "svcs.BIMI": {
         "name": "BIMI",
         "_svctype": "svcs.BIMI",
@@ -422,25 +444,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
         "restrictions": {
             "needTypes": [
                 257
-            ],
-            "single": true
-        }
-    },
-    "svcs.CNAME": {
-        "name": "Alias",
-        "_svctype": "svcs.CNAME",
-        "description": "Maps an alias to another (canonical) domain.",
-        "family": "",
-        "categories": [
-            "alias"
-        ],
-        "record_types": [
-            5
-        ],
-        "restrictions": {
-            "alone": true,
-            "needTypes": [
-                5
             ],
             "single": true
         }

@@ -36,8 +36,15 @@ export const thisAliases = derived(thisZone, ($thisZone) => {
 
     Object.entries($thisZone.services).forEach(([dn, services]) => {
         services?.forEach((svc) => {
-            if (svc._svctype === "svcs.CNAME" && svc.Service && typeof svc.Service === "object") {
-                const target = (svc.Service as Record<string, unknown>).Target as string;
+            if (svc._svctype === "svcs.Alias" && svc.Service && typeof svc.Service === "object") {
+                const record = (svc.Service as Record<string, unknown>).record as
+                    | Record<string, any>
+                    | undefined;
+                // Only a CNAME really is an alias of the whole subdomain: the
+                // other kinds point at a target the provider resolves.
+                if (!record || record.Hdr?.Rrtype !== 5) return;
+
+                const target = record.Target as string;
                 aliases[target] = [...(aliases[target] || []), dn];
             }
         });

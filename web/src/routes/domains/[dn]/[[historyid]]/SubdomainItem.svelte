@@ -43,7 +43,7 @@
     let showResources = $state(false);
 
     function toggleShowResources() {
-        showResources = !showResources && (!dn || services.length > 1 || (services.length === 1 && services[0]._svctype !== "svcs.CNAME" && services[0]._svctype !== "svcs.PTR"));
+        showResources = !showResources && (!dn || services.length > 1 || (services.length === 1 && services[0]._svctype !== "svcs.Alias" && services[0]._svctype !== "svcs.PTR"));
     }
     toggleShowResources();
 </script>

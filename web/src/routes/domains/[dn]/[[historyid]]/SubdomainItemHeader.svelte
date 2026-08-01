@@ -61,11 +61,26 @@
     }: Props = $props();
 
     function isCNAME(services: Array<HappydnsService>) {
-        return services.length === 1 && services[0]._svctype === "svcs.CNAME";
+        return services.length === 1 && services[0]._svctype === "svcs.Alias";
     }
 
     function isPTR(services: Array<HappydnsService>) {
         return services.length === 1 && services[0]._svctype === "svcs.PTR";
+    }
+
+    // aliasTarget returns the name the alias or the pointer points at. An Alias
+    // holds the record the user picked: a CNAME and a DNAME carry their target
+    // at the root of the record, the pseudo-types carry it in their rdata.
+    function aliasTarget(services: Array<HappydnsService>): string {
+        const svcData = services[0]?.Service as Record<string, any> | undefined;
+
+        if (isPTR(services)) {
+            return (svcData?.Record?.Ptr as string) || "";
+        }
+
+        const record = svcData?.record as Record<string, any> | undefined;
+
+        return ((record?.Target ?? record?.Data?.Target) as string) || "";
     }
 
     let deleteServiceInProgress = $state(false);
@@ -118,19 +133,16 @@
         </span>
     </div>
     {#if isCNAME(services) || isPTR(services)}
-        {@const svcData = services[0].Service as Record<string, unknown> | undefined}
-        {@const dn = (isPTR(services)
-            ? (svcData?.Record as Record<string, unknown> | undefined)?.Ptr
-            : (svcData?.cname as Record<string, unknown> | undefined)?.Target) as string}
+        {@const target = aliasTarget(services)}
         <span class="text-truncate text-muted lead">
             <Icon name="arrow-right" />
             <span class="font-monospace">
-                {#if dn.endsWith(origin.domain)}
-                    {dn.substring(0, dn.length - origin.domain.length - 1)}<span
+                {#if target.endsWith(origin.domain)}
+                    {target.substring(0, target.length - origin.domain.length - 1)}<span
                         style="opacity: 0.5;">.{origin.domain}</span
                     >
                 {:else}
-                    {dn}
+                    {target}
                 {/if}
             </span>
         </span>

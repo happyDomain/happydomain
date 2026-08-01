@@ -32,8 +32,13 @@ import type { ServiceWithValue } from "$lib/model/service.svelte";
 
 const ORIGIN = { domain: "example.com." } as unknown as Domain;
 
-function svc(svctype: string): ServiceWithValue {
-    return { _svctype: svctype, Service: {} } as unknown as ServiceWithValue;
+function svc(svctype: string, service: Record<string, unknown> = {}): ServiceWithValue {
+    return { _svctype: svctype, Service: service } as unknown as ServiceWithValue;
+}
+
+// An Alias service holding a record of the given type.
+function alias(rrtype: number): ServiceWithValue {
+    return svc("svcs.Alias", { record: { Hdr: { Rrtype: rrtype } } });
 }
 
 function zone(services: Record<string, ServiceWithValue[]>): Zone {
@@ -97,9 +102,17 @@ describe("MX compliance: target validity", () => {
 
 describe("MX compliance: in-zone cross checks", () => {
     it("flags MX target that is a CNAME owner in the zone", () => {
-        const z = zone({ mail: [svc("svcs.CNAME")] });
+        const z = zone({ mail: [alias(5)] });
         const issues = run([MX("mail.example.com.")], z);
         expect(ids(issues)).toContain("mx.target-is-cname");
+    });
+    it("does not flag MX target that is an ALIAS owner in the zone", () => {
+        // An ALIAS is resolved into addresses by the provider, RFC 5321 sec.
+        // 5.1 does not stand in its way.
+        const z = zone({ mail: [alias(65280)] });
+        const issues = run([MX("mail.example.com.")], z);
+        expect(ids(issues)).not.toContain("mx.target-is-cname");
+        expect(ids(issues)).not.toContain("mx.target-no-address");
     });
     it("warns when in-zone target has no A/AAAA service", () => {
         const z = zone({});

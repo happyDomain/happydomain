@@ -19,7 +19,7 @@ describe('Zone Store', () => {
   it('should compute aliases correctly', () => {
     const zone = {
       services: {
-        'example.com': [new ServiceCombined({ _svctype: 'svcs.CNAME', _domain: 'example.com', Service: { Target: 'target.com' } })],
+        'example.com': [new ServiceCombined({ _svctype: 'svcs.Alias', _domain: 'example.com', Service: { record: { Hdr: { Rrtype: 5 }, Target: 'target.com' } } })],
       },
     } as unknown as Zone;
     thisZone.set(zone);

@@ -45,7 +45,14 @@ func (a ByWeight) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByWeight) Less(i, j int) bool { return a[i].Weight < a[j].Weight }
 
 var (
-	services         map[string]*Svc                       = map[string]*Svc{}
+	services map[string]*Svc = map[string]*Svc{}
+
+	// serviceAliases maps the former type names of a service to the service
+	// itself, so that the zones stored before a rename keep loading. They are
+	// kept apart from services: listing or analyzing them again would show the
+	// service twice in the UI and run its analyzer twice.
+	serviceAliases map[string]*Svc = map[string]*Svc{}
+
 	subServices      map[string]happydns.SubServiceCreator = map[string]happydns.SubServiceCreator{}
 	pathToSvcsModule string                                = "git.happydns.org/happyDomain/services"
 	ordered_services []*Svc
@@ -72,7 +79,7 @@ func RegisterService(creator happydns.ServiceCreator, analyzer ServiceAnalyzer, 
 
 	// Register aliases
 	for _, alias := range aliases {
-		services[alias] = svc
+		serviceAliases[alias] = svc
 	}
 
 	// Register sub types
@@ -128,14 +135,30 @@ func ListServices() *map[string]*Svc {
 func FindService(name string) (happydns.ServiceBody, error) {
 	svc, ok := services[name]
 	if !ok {
+		svc, ok = serviceAliases[name]
+	}
+	if !ok {
 		return nil, happydns.NewServiceNotFoundError(name)
 	}
 
 	return svc.Creator(), nil
 }
 
+// CanonicalServiceType resolves a former service type name to the one the
+// service goes by now, and returns the given name unchanged when it is already
+// the canonical one (or unknown).
+func CanonicalServiceType(name string) string {
+	if svc, ok := serviceAliases[name]; ok {
+		return svc.Infos.Type
+	}
+
+	return name
+}
+
 func FindSubService(name string) (any, error) {
 	if svc, ok := services[name]; ok {
+		return svc.Creator(), nil
+	} else if svc, ok := serviceAliases[name]; ok {
 		return svc.Creator(), nil
 	} else if ssvc, ok := subServices[name]; ok {
 		return ssvc(), nil

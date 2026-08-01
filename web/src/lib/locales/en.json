@@ -947,6 +947,16 @@
         "title": "Records compliance",
         "checking": "Checking…",
         "learn-more": "Learn more",
+        "alias": {
+            "cname-not-alone": {
+                "title": "A CNAME must be alone on \"{{subdomain}}\"",
+                "detail": "RFC 1034 sec. 3.6.2 forbids any other record next to a CNAME. Use an ALIAS instead if your provider supports it, it can live next to your other records."
+            },
+            "dname-not-alone": {
+                "title": "A DNAME conflicts with the other records of \"{{subdomain}}\"",
+                "detail": "A DNAME redirects a whole subtree, it cannot coexist with a CNAME at the same name (RFC 6672 sec. 2.4)."
+            }
+        },
         "dkim": {
             "missing-selector": {
                 "title": "Missing selector",

@@ -33,19 +33,19 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-// capabilityNone stands for the pseudo-types no provider ever declares. They are
-// read back from a zone, but never proposed to the user.
-const capabilityNone = dnscontrol.Capability(-1)
-
 // pseudoTypeAdapter tells how a pseudo-type happyDomain represents crosses the
 // DNSControl boundary.
 type pseudoTypeAdapter struct {
 	// rrtype is the private use type code happyDomain gives to this type.
 	rrtype uint16
 
-	// capability is the one a provider must declare to accept this type, or
-	// capabilityNone.
+	// capability is the one a provider must declare to accept this type.
 	capability dnscontrol.Capability
+
+	// neverProposed keeps the type out of the capabilities advertised to the
+	// frontend: it is the spelling a provider uses on its own side, which
+	// happyDomain reads back and hands over untouched, but never proposes.
+	neverProposed bool
 
 	// toRecord and toRecordConfig convert in both directions the types whose
 	// rdata does not fit in a RecordConfig target alone. They are nil for the
@@ -63,8 +63,11 @@ var supportedPseudoTypes = map[string]*pseudoTypeAdapter{
 	"AKAMAICDN": {rrtype: happydns.TypeAKAMAICDN, capability: dnscontrol.CanUseAKAMAICDN},
 
 	// ANAME is how dnsmadeeasy, namedotcom and cnr spell an ALIAS on their
-	// side: no capability stands for it, it is only ever read back.
-	"ANAME": {rrtype: happydns.TypeANAME, capability: capabilityNone},
+	// side: those three declare CanUseAlias and translate an ALIAS into an
+	// ANAME themselves, so that is the capability standing for it. It is never
+	// proposed, only read back from such a provider and handed over to it
+	// again, untouched.
+	"ANAME": {rrtype: happydns.TypeANAME, capability: dnscontrol.CanUseAlias, neverProposed: true},
 
 	"R53_ALIAS": {
 		rrtype:         happydns.TypeR53ALIAS,
@@ -136,7 +139,7 @@ func pseudoTypeCapabilities(providerName string) (caps []string) {
 
 	for _, name := range names {
 		adapter := supportedPseudoTypes[name]
-		if adapter.capability == capabilityNone {
+		if adapter.neverProposed {
 			continue
 		}
 
@@ -192,8 +195,7 @@ func checkPseudoTypesSupported(providerName string, rrs []happydns.Record) error
 		}
 
 		adapter, known := supportedPseudoTypes[pt.Name]
-		if !known || adapter.capability == capabilityNone ||
-			!dnscontrol.ProviderHasCapability(providerName, adapter.capability) {
+		if !known || !dnscontrol.ProviderHasCapability(providerName, adapter.capability) {
 			return fmt.Errorf("%s records are not supported by this provider", pt.Name)
 		}
 	}

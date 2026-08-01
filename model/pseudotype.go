@@ -62,12 +62,17 @@ const (
 // message.
 var ErrNoWireFormat = errors.New("this record type is a pseudo-type: it has no wire format")
 
-// TargetRdata is implemented by the pseudo-type rdata carrying a target domain
-// name, so that the callers relativizing or absolutizing a zone can handle them
-// all the same way.
+// TargetRdata is implemented by the pseudo-type rdata carrying a target, so
+// that the callers relativizing or absolutizing a zone can handle them all the
+// same way.
 type TargetRdata interface {
 	GetTarget() string
 	SetTarget(string)
+
+	// TargetIsHostname tells whether the target really is a domain name, and
+	// can therefore be relativized against the origin. An AZURE_ALIAS points at
+	// an Azure resource id instead, which must be carried verbatim.
+	TargetIsHostname() bool
 }
 
 // PseudoType describes a pseudo-type happyDomain is able to represent.
@@ -175,6 +180,7 @@ func newHostnameRdata() dns.PrivateRdata { return new(HostnameRdata) }
 
 func (rd *HostnameRdata) GetTarget() string          { return rd.Target }
 func (rd *HostnameRdata) SetTarget(t string)         { rd.Target = t }
+func (rd *HostnameRdata) TargetIsHostname() bool     { return true }
 func (rd *HostnameRdata) String() string             { return rd.Target }
 func (rd *HostnameRdata) Len() int                   { return len(rd.Target) + 1 }
 func (rd *HostnameRdata) Pack([]byte) (int, error)   { return 0, ErrNoWireFormat }
@@ -212,8 +218,9 @@ type R53AliasRdata struct {
 
 func newR53AliasRdata() dns.PrivateRdata { return new(R53AliasRdata) }
 
-func (rd *R53AliasRdata) GetTarget() string  { return rd.Target }
-func (rd *R53AliasRdata) SetTarget(t string) { rd.Target = t }
+func (rd *R53AliasRdata) GetTarget() string      { return rd.Target }
+func (rd *R53AliasRdata) SetTarget(t string)     { rd.Target = t }
+func (rd *R53AliasRdata) TargetIsHostname() bool { return true }
 
 // String returns the very representation DNSControl gives to a R53_ALIAS in
 // models.RecordConfig.GetTargetCombined, so that both sides of a comparison
@@ -261,6 +268,12 @@ func newAzureAliasRdata() dns.PrivateRdata { return new(AzureAliasRdata) }
 func (rd *AzureAliasRdata) GetTarget() string  { return rd.Target }
 func (rd *AzureAliasRdata) SetTarget(t string) { rd.Target = t }
 
+// TargetIsHostname reports false: an AZURE_ALIAS points at an Azure resource id
+// (/subscriptions/…/dnszones/example.com/A/www), not at a domain name. Appending
+// the origin to it, the way the relativization of a zone does for a hostname,
+// would corrupt it.
+func (rd *AzureAliasRdata) TargetIsHostname() bool { return false }
+
 // String returns the very representation DNSControl gives to an AZURE_ALIAS in
 // models.RecordConfig.GetTargetCombined.
 func (rd *AzureAliasRdata) String() string {
@@ -302,8 +315,9 @@ type AkamaiTLCRdata struct {
 
 func newAkamaiTLCRdata() dns.PrivateRdata { return new(AkamaiTLCRdata) }
 
-func (rd *AkamaiTLCRdata) GetTarget() string  { return rd.Target }
-func (rd *AkamaiTLCRdata) SetTarget(t string) { rd.Target = t }
+func (rd *AkamaiTLCRdata) GetTarget() string      { return rd.Target }
+func (rd *AkamaiTLCRdata) SetTarget(t string)     { rd.Target = t }
+func (rd *AkamaiTLCRdata) TargetIsHostname() bool { return true }
 
 // String returns the very representation DNSControl gives to an AKAMAITLC in
 // models.RecordConfig.GetTargetCombined, answer type first.

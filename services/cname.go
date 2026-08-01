@@ -29,22 +29,6 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-type CNAME struct {
-	Record *dns.CNAME `json:"cname"`
-}
-
-func (s *CNAME) GetNbResources() int {
-	return 1
-}
-
-func (s *CNAME) GenComment() string {
-	return s.Record.Target
-}
-
-func (s *CNAME) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, e error) {
-	return []happydns.Record{s.Record}, nil
-}
-
 type SpecialCNAME struct {
 	Record *dns.CNAME `json:"cname"`
 }
@@ -76,20 +60,6 @@ func specialalias_analyze(a *svc.Analyzer) error {
 	return nil
 }
 
-func alias_analyze(a *svc.Analyzer) error {
-	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeCNAME}) {
-		if cname, ok := record.(*dns.CNAME); ok {
-			domain := record.Header().Name
-			if err := a.UseRR(record, domain, &CNAME{
-				Record: helpers.RRRelativeSubdomain(cname, a.GetOrigin(), domain).(*dns.CNAME),
-			}); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 func init() {
 	svc.RegisterService(
 		func() happydns.ServiceBody {
@@ -110,29 +80,5 @@ func init() {
 			},
 		},
 		99999997,
-	)
-	svc.RegisterService(
-		func() happydns.ServiceBody {
-			return &CNAME{}
-		},
-		alias_analyze,
-		happydns.ServiceInfos{
-			Name:        "Alias",
-			Description: "Maps an alias to another (canonical) domain.",
-			Categories: []string{
-				"alias",
-			},
-			RecordTypes: []uint16{
-				dns.TypeCNAME,
-			},
-			Restrictions: happydns.ServiceRestrictions{
-				Alone:  true,
-				Single: true,
-				NeedTypes: []uint16{
-					dns.TypeCNAME,
-				},
-			},
-		},
-		99999998,
 	)
 }

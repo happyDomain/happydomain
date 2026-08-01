@@ -27,6 +27,7 @@ import (
 	"sort"
 	"strings"
 
+	intsvc "git.happydns.org/happyDomain/internal/serviceanalyzer"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -108,14 +109,17 @@ func ReassociateMetadata(oldServices, newServices map[happydns.Subdomain][]*happ
 			continue
 		}
 
-		// Group old services by type
+		// Group old services by type. Services stored under the former name of
+		// a renamed service must still match, otherwise their metadata (id,
+		// user comment, aliases) would be lost on the first re-analysis.
 		oldByType := map[string][]*happydns.Service{}
 		for _, svc := range oldSvcs {
-			oldByType[svc.Type] = append(oldByType[svc.Type], svc)
+			svcType := intsvc.CanonicalServiceType(svc.Type)
+			oldByType[svcType] = append(oldByType[svcType], svc)
 		}
 
 		for _, newSvc := range newSvcs {
-			candidates := oldByType[newSvc.Type]
+			candidates := oldByType[intsvc.CanonicalServiceType(newSvc.Type)]
 			if len(candidates) == 0 {
 				continue
 			}

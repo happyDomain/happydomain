@@ -588,6 +588,16 @@
         "title": "Conformité des enregistrements",
         "checking": "Vérification…",
         "learn-more": "En savoir plus",
+        "alias": {
+            "cname-not-alone": {
+                "title": "Un CNAME doit \u00eatre seul sur \u00ab\u202f{{subdomain}}\u202f\u00bb",
+                "detail": "La RFC 1034 \u00a7 3.6.2 interdit tout autre enregistrement \u00e0 c\u00f4t\u00e9 d'un CNAME. Utilisez plut\u00f4t un ALIAS si votre h\u00e9bergeur le g\u00e8re\u202f: il peut cohabiter avec vos autres enregistrements."
+            },
+            "dname-not-alone": {
+                "title": "Un DNAME entre en conflit avec les autres enregistrements de \u00ab\u202f{{subdomain}}\u202f\u00bb",
+                "detail": "Un DNAME redirige tout un sous-arbre, il ne peut pas cohabiter avec un CNAME portant le m\u00eame nom (RFC 6672 \u00a7 2.4)."
+            }
+        },
         "dkim": {
             "missing-selector": {
                 "title": "Sélecteur manquant",

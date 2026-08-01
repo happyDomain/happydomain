@@ -783,7 +783,9 @@ func migrateFrom7(s *KVStorage) error {
 			return nil, err
 		}
 
-		return json.Marshal(svcs.CNAME{Record: helpers.RRRelative(rr, "zZzZ").(*dns.CNAME)})
+		// The service kept its "svcs.CNAME" type, which the Alias service that
+		// replaced it is registered as an alias of.
+		return json.Marshal(svcs.Alias{Record: helpers.RRRelative(rr, "zZzZ")})
 	}
 
 	// svcs.DKIMRecord
@@ -825,7 +827,7 @@ func migrateFrom7(s *KVStorage) error {
 			return nil, err
 		}
 
-		return json.Marshal(svcs.CNAME{Record: helpers.RRRelative(rr, "zZzZ").(*dns.CNAME)})
+		return json.Marshal(svcs.SpecialCNAME{Record: helpers.RRRelative(rr, "zZzZ").(*dns.CNAME)})
 	}
 
 	// svcs.DMARC

@@ -142,8 +142,15 @@ function mxSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceIss
         const sub = inZoneSubdomain(norm, originFqdn);
         if (sub === null) return;
 
-        // RFC 5321 sec. 5.1: MX target must not be a CNAME.
-        const cnames = ctx.findServices(sub, "svcs.CNAME");
+        // RFC 5321 sec. 5.1: MX target must not be a CNAME. An ALIAS and its
+        // kin are fine: the provider resolves them into addresses. So is a
+        // DNAME, which redirects the subtree below its owner, not the owner
+        // itself.
+        const aliases = ctx.findServices(sub, "svcs.Alias");
+        const cnames = aliases.filter((s) => {
+            const record = (s.Service as Record<string, any> | undefined)?.record;
+            return record?.Hdr?.Rrtype === 5;
+        });
         if (cnames.length > 0) {
             issues.push({
                 id: "mx.target-is-cname",
@@ -156,7 +163,7 @@ function mxSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceIss
 
         // Heads-up when the in-zone target has no A/AAAA published.
         const servers = ctx.findServices(sub, "abstract.Server");
-        if (servers.length === 0 && cnames.length === 0) {
+        if (servers.length === 0 && aliases.length === 0) {
             issues.push({
                 id: "mx.target-no-address",
                 severity: "warning",

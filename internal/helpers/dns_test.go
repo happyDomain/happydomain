@@ -26,6 +26,8 @@ import (
 	"testing"
 
 	"github.com/miekg/dns"
+
+	"git.happydns.org/happyDomain/model"
 )
 
 func TestDomainFQDN(t *testing.T) {
@@ -1032,5 +1034,34 @@ func TestCopyRecord(t *testing.T) {
 				t.Error("Result is not a dns.RR")
 			}
 		})
+	}
+}
+
+// TestPseudoTypeTargetAbsolute locks how far the relativization of a zone is
+// allowed to touch the pseudo-types: the ones pointing at a domain name follow
+// the usual rule, while an AZURE_ALIAS carries an Azure resource id that must
+// come back verbatim.
+func TestPseudoTypeTargetAbsolute(t *testing.T) {
+	const origin = "example.com."
+	const resourceID = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg/providers/Microsoft.Network/dnszones/example.com/A/www"
+
+	alias := NewRecord("@", "ALIAS", 300, origin)
+	alias.(*dns.PrivateRR).Data.(*happydns.HostnameRdata).Target = "target"
+
+	if got := RRAbsolute(alias, origin).(*dns.PrivateRR).Data.(*happydns.HostnameRdata).Target; got != "target.example.com." {
+		t.Errorf("the ALIAS target came back as %q, want %q", got, "target.example.com.")
+	}
+
+	azure := NewRecord("www", "AZURE_ALIAS", 300, origin)
+	azure.(*dns.PrivateRR).Data.(*happydns.AzureAliasRdata).Target = resourceID
+
+	azure = RRAbsolute(azure, origin)
+	if got := azure.(*dns.PrivateRR).Data.(*happydns.AzureAliasRdata).Target; got != resourceID {
+		t.Errorf("the AZURE_ALIAS target came back as %q, want it untouched", got)
+	}
+
+	azure = RDataRelative(azure, origin)
+	if got := azure.(*dns.PrivateRR).Data.(*happydns.AzureAliasRdata).Target; got != resourceID {
+		t.Errorf("the AZURE_ALIAS target came back as %q after relativization, want it untouched", got)
 	}
 }

@@ -37,9 +37,13 @@
     let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
     const type = "svcs.PTR";
 
+    // The PTR service holds the record itself, under a key the generated
+    // dnsResource interface does not know about.
+    const service = value as Record<string, any>;
+
     // Initialize PTR record if needed
-    if (!value["ptr"]) {
-        value["ptr"] = newRR("", getRrtype("PTR")) as dnsTypePTR;
+    if (!service.Record) {
+        service.Record = newRR("", getRrtype("PTR")) as dnsTypePTR;
     }
 </script>
 
@@ -55,6 +59,6 @@
             type: "string",
             placeholder: "example.com.",
         }}
-        bind:value={value["ptr"]!.Ptr}
+        bind:value={service.Record.Ptr}
     />
 </div>

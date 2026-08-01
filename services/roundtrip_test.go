@@ -143,6 +143,19 @@ func TestRoundTrip_CNAME(t *testing.T) {
 	assertRoundTrip(t, origin, records)
 }
 
+// TestRoundTrip_Alias covers the whole alias family, pseudo-types included: they
+// have to survive the analysis, the relativization and the regeneration exactly
+// like a CNAME does.
+func TestRoundTrip_Alias(t *testing.T) {
+	origin := "example.com."
+	records := []happydns.Record{
+		mustNewRR(t, "example.com. 3600 IN ALIAS target.example.org."),
+		mustNewRR(t, "sub.example.com. 3600 IN DNAME target.example.org."),
+		mustNewRR(t, "cdn.example.com. 3600 IN AKAMAICDN target.example.org."),
+	}
+	assertRoundTrip(t, origin, records)
+}
+
 func TestRoundTrip_CAA(t *testing.T) {
 	origin := "example.com."
 	records := []happydns.Record{

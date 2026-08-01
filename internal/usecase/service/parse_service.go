@@ -41,6 +41,11 @@ func ParseService(msg *happydns.ServiceMessage) (svc *happydns.Service, err erro
 		return
 	}
 
+	// Services stored under the former name of a renamed service come back
+	// under the name it goes by now, so that whatever keys on the type (the
+	// frontend picks the editor by it) finds what it expects.
+	svc.Type = intsvc.CanonicalServiceType(msg.Type)
+
 	err = json.Unmarshal(msg.Service, &svc.Service)
 	if err != nil {
 		return
