@@ -35,7 +35,41 @@ import (
 	"strings"
 
 	"github.com/miekg/dns"
+
+	happydns "git.happydns.org/happyDomain/model"
 )
+
+// privateRdata returns the concrete rdata struct behind a private use type, and
+// whether ty is one.
+//
+// The pseudo-types happyDomain represents are all *dns.PrivateRR, whose
+// reflected struct is the same for every one of them (a header, the rdata behind
+// an interface, and an unexported generator). Their fields have to be looked up
+// in the rdata itself, and they live under Data in the JSON a record travels as.
+func privateRdata(ty uint16) (reflect.Type, bool) {
+	pt, ok := happydns.PseudoTypeByRrtype(ty)
+	if !ok {
+		return nil, false
+	}
+
+	return reflect.TypeOf(pt.New()).Elem(), true
+}
+
+// reflectedStruct returns the struct describing the shape a record of the given
+// type takes in JSON, ie. the one the TypeScript interfaces are built from.
+func reflectedStruct(ty uint16, rr func() dns.RR) reflect.Type {
+	rdata, isPrivate := privateRdata(ty)
+	if !isPrivate {
+		return reflect.TypeOf(rr()).Elem()
+	}
+
+	// dns.PrivateRR holds its rdata behind an interface, which reflection
+	// cannot walk: rebuild the shape it actually marshals to.
+	return reflect.StructOf([]reflect.StructField{
+		{Name: "Hdr", Type: reflect.TypeOf(dns.RR_Header{})},
+		{Name: "Data", Type: rdata},
+	})
+}
 
 // getSortedTypes returns DNS types sorted by their numeric value for reproducible output
 func getSortedTypes() []uint16 {
@@ -83,6 +117,18 @@ func newRR(fd io.Writer) {
 		}
 
 		if ty == dns.TypeNXNAME || ty == dns.TypeOPT || ty == dns.TypeANY {
+			continue
+		}
+
+		if rdata, isPrivate := privateRdata(ty); isPrivate {
+			fmt.Fprintf(fd, "        case %d: // %s\n            rec.Data = { ", ty, dns.TypeToString[ty])
+			for i := 0; i < rdata.NumField(); i++ {
+				if i > 0 {
+					fmt.Fprint(fd, ", ")
+				}
+				fmt.Fprintf(fd, `%s: ""`, rdata.Field(i).Name)
+			}
+			fmt.Fprint(fd, " };\n            return rec;\n")
 			continue
 		}
 
@@ -144,6 +190,22 @@ func rdatatostr(fd io.Writer) {
 		}
 
 		if ty == dns.TypeNXNAME || ty == dns.TypeOPT || ty == dns.TypeANY {
+			continue
+		}
+
+		if rdata, isPrivate := privateRdata(ty); isPrivate {
+			// An approximation of what the backend renders: the fields joined
+			// by a space. It is exact for the pseudo-types whose whole rdata is
+			// a target, which is all the user ever sees outside of the Alias
+			// service editor.
+			fmt.Fprintf(fd, `        case %d: { const rec = rr as dnsType%s; return [`, ty, strings.Replace(dns.TypeToString[ty], "-", "_", -1))
+			for i := 0; i < rdata.NumField(); i++ {
+				if i > 0 {
+					fmt.Fprint(fd, ", ")
+				}
+				fmt.Fprintf(fd, "quoteStringIfNeeded(rec.Data.%s.toString())", rdata.Field(i).Name)
+			}
+			fmt.Fprintf(fd, "].join(' '); } // %s\n", dns.TypeToString[ty])
 			continue
 		}
 
@@ -237,6 +299,14 @@ func rdataFields(fd io.Writer) {
 			continue
 		}
 
+		if _, isPrivate := privateRdata(ty); isPrivate {
+			// The generic record editor binds each field on the record itself,
+			// which cannot reach the ones nested under Data. The pseudo-types
+			// are edited through the Alias service editor instead.
+			fmt.Fprintf(fd, "        case %d: case %q: return []; // %s\n", ty, dns.TypeToString[ty], dns.TypeToString[ty])
+			continue
+		}
+
 		t := reflect.TypeOf(rr()).Elem()
 
 		if t.NumField() == 1 {
@@ -270,7 +340,7 @@ func dnsrr(fd io.Writer) {
 			continue
 		}
 
-		t := reflect.TypeOf(rr()).Elem()
+		t := reflectedStruct(ty, rr)
 
 		if t.NumField() == 1 {
 			// This is a redirection to another type
@@ -381,7 +451,7 @@ func main() {
 			continue
 		}
 
-		t := reflect.TypeOf(rr()).Elem()
+		t := reflectedStruct(ty, rr)
 
 		fmt.Fprint(fd, "export interface dnsType"+strings.Replace(dns.TypeToString[ty], "-", "_", -1))
 
@@ -402,7 +472,7 @@ func main() {
 			continue
 		}
 
-		t := reflect.TypeOf(rr()).Elem()
+		t := reflectedStruct(ty, rr)
 
 		if t.NumField() == 1 {
 			// This is a redirection to another type

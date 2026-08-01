@@ -120,6 +120,13 @@ func (ru *resolverUsecase) ResolveQuestion(request happydns.ResolverRequest) (*d
 	var r *dns.Msg
 	var err error
 	rrType := dns.StringToType[request.Type]
+	if _, isPseudo := happydns.PseudoTypeByRrtype(rrType); isPseudo {
+		// Pseudo-types are registered in dns.StringToType so that DNSControl
+		// handles them, but they only exist in the API of a provider: there is
+		// nothing to ask a resolver about.
+		return nil, happydns.ValidationError{Msg: fmt.Sprintf("%s is not a real DNS record type, it cannot be resolved.", request.Type)}
+	}
+
 	if rrType == dns.TypeANY {
 		r, err = resolverANYQuestion(client, request.Resolver+":53", request.DomainName)
 	} else {

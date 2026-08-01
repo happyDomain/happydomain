@@ -26,15 +26,27 @@ import (
 	"github.com/miekg/dns"
 )
 
-// IsPseudoRecordType reports whether rtype is one of DNSControl's pseudo-types:
-// a type used internally by DNSControl (ALIAS, IMPORT_TRANSFORM) or registered
-// by a provider for its own needs (R53_ALIAS, AZURE_ALIAS, URL, URL301, FRAME,
-// LUA, CF_WORKER_ROUTE, …), which has no counterpart in the DNS wire format.
+// IsPseudoRecordType reports whether models.RecordConfig.ToRR() is unable to
+// build a record of the given type.
 //
-// Such records must never reach models.RecordConfig.ToRR(): that function
-// resolves the type through dns.StringToType and calls log.Fatalf on a miss,
-// terminating the whole process instead of returning an error. Since log.Fatalf
-// calls os.Exit, no recover() can catch it.
+// Such records must never reach it: that function resolves the type through
+// dns.StringToType and calls log.Fatalf on a miss, terminating the whole process
+// instead of returning an error. Since log.Fatalf calls os.Exit, no recover()
+// can catch it.
+//
+// This is what DNSControl calls a pseudo-type: a type used internally by its
+// core (IMPORT_TRANSFORM) or registered by a provider for its own needs
+// (URL, URL301, FRAME, LUA, CF_WORKER_ROUTE, …), which has no counterpart in the
+// DNS wire format.
+//
+// The pseudo-types happyDomain represents are the exception, and they split in
+// two. The ones whose whole rdata is a target (ALIAS, ANAME, AKAMAICDN) are
+// registered in dns.StringToType as private use types, so this reports false for
+// them: ToRR() builds them through their zone file representation. The ones
+// carrying more fields (R53_ALIAS, AZURE_ALIAS, AKAMAITLC) are deliberately kept
+// out of it, so DNSControl keeps building their composite target, and this still
+// reports true although happyDomain represents them: see supportedPseudoTypes,
+// which owns their conversion.
 //
 // The test is a lookup miss rather than a list of known names, so it also covers
 // the pseudo-types DNSControl will introduce in future releases, the "UNKNOWN"
@@ -55,7 +67,7 @@ func IsPseudoRecordType(rtype string) bool {
 }
 
 // dropPseudoRecords returns records without the entries happyDomain is unable to
-// represent, ie. those carrying a pseudo-type.
+// represent, ie. those carrying a pseudo-type it does not support.
 //
 // Callers must apply it symmetrically to both sides of a comparison. Dropping
 // such a record from the zone read from a provider, while the desired zone was
@@ -63,11 +75,18 @@ func IsPseudoRecordType(rtype string) bool {
 // diff entirely: DNSControl generates no correction for it and leaves it
 // untouched on the provider. Dropping it from only one side would instead make
 // the diff engine believe the record has to be deleted.
+//
+// The supported pseudo-types (see supportedPseudoTypes) go through untouched:
+// happyDomain represents them, so they belong to the diff like any other record.
+// Testing IsPseudoRecordType first is redundant for the ones registered in
+// dns.StringToType, and deliberately so: were happyDomain ever linked without
+// the registration in the model package, such a record would fall back to being
+// dropped rather than reaching the log.Fatalf of ToRR().
 func dropPseudoRecords(records models.Records) models.Records {
 	ret := make(models.Records, 0, len(records))
 
 	for _, rec := range records {
-		if IsPseudoRecordType(rec.Type) {
+		if IsPseudoRecordType(rec.Type) && !isSupportedPseudoType(rec.Type) {
 			continue
 		}
 

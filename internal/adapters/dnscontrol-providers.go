@@ -113,6 +113,10 @@ func GetDNSControlProviderCapabilities(prvd DNSControlConfigAdapter) (caps []str
 		caps = append(caps, fmt.Sprintf("rr-%d-%s", dns.TypeOPENPGPKEY, dns.TypeToString[dns.TypeOPENPGPKEY]))
 	}
 
+	// Pseudo-types (ALIAS and friends), which happyDomain gives a private use
+	// type code to.
+	caps = append(caps, pseudoTypeCapabilities(prvd.DNSControlName())...)
+
 	return
 }
 
@@ -231,13 +235,14 @@ func (p *DNSControlAdapterNSProvider) GetZoneRecords(domain string) (ret []happy
 	}
 
 	for _, rec := range dropPseudoRecords(records) {
-		// rec.ToRR() for modern types (DS, RP, …) returns the rtype wrapper
-		// (e.g. *rtype.DS) rather than the canonical *dns.DS. When these are
-		// later passed back through dnsrr.RRtoRC → DS.FromStruct, the type
-		// assertion fields.(*dns.DS) fails, causing a nil-dereference panic.
-		// dns.Copy invokes the promoted copy() method from the embedded *dns.DS,
-		// which returns a canonical *dns.DS and eliminates the mismatch.
-		ret = append(ret, dns.Copy(rec.ToRR()))
+		var rr happydns.Record
+		rr, err = recordFromRecordConfig(rec)
+		if err != nil {
+			ret = nil
+			return
+		}
+
+		ret = append(ret, rr)
 	}
 
 	return
@@ -260,6 +265,11 @@ func (p *DNSControlAdapterNSProvider) GetZoneCorrections(domain string, rrs []ha
 			err = fmt.Errorf("%s", a)
 		}
 	}()
+
+	err = checkPseudoTypesSupported(p.providerName, rrs)
+	if err != nil {
+		return
+	}
 
 	var dc *models.DomainConfig
 	dc, err = NewDNSControlDomainConfig(strings.TrimSuffix(domain, "."), rrs)

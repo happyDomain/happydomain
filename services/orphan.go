@@ -48,30 +48,20 @@ func (s *Orphan) GetRecords(domain string, ttl uint32, origin string) ([]happydn
 }
 
 func (s *Orphan) UnmarshalJSON(b []byte) error {
-	var rrtype struct {
-		Record struct{ Hdr dns.RR_Header } `json:"record"`
-	}
-
-	err := json.Unmarshal(b, &rrtype)
-	if err != nil {
-		return err
-	}
-
 	var myOrphan struct {
-		Record dns.RR `json:"record"`
-	}
-	if newrr, ok := dns.TypeToRR[rrtype.Record.Hdr.Rrtype]; ok {
-		myOrphan.Record = newrr()
-	} else {
-		return fmt.Errorf("unknwon rr type %d", rrtype.Record.Hdr.Rrtype)
+		Record json.RawMessage `json:"record"`
 	}
 
-	err = json.Unmarshal(b, &myOrphan)
+	if err := json.Unmarshal(b, &myOrphan); err != nil {
+		return err
+	}
+
+	record, err := UnmarshalRecord(myOrphan.Record)
 	if err != nil {
 		return err
 	}
 
-	s.Record = myOrphan.Record
+	s.Record = record
 
 	return nil
 }

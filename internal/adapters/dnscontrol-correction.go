@@ -94,14 +94,14 @@ func DNSControlDiffByRecord(oldrrs []happydns.Record, newrrs []happydns.Record, 
 	for i, correction := range corrections {
 		id := sha256.Sum224([]byte(correction.MsgsJoined))
 
-		var oldRecords []happydns.Record
-		for _, rc := range dropPseudoRecords(correction.Old) {
-			oldRecords = append(oldRecords, rc.ToRR())
+		oldRecords, err := recordsFromRecordConfigs(correction.Old)
+		if err != nil {
+			return nil, nbCorrections, err
 		}
 
-		var newRecords []happydns.Record
-		for _, rc := range dropPseudoRecords(correction.New) {
-			newRecords = append(newRecords, rc.ToRR())
+		newRecords, err := recordsFromRecordConfigs(correction.New)
+		if err != nil {
+			return nil, nbCorrections, err
 		}
 
 		ret[i] = &happydns.Correction{
@@ -130,10 +130,19 @@ func DNSControlRRtoRC(rrs []happydns.Record, origin string) (dnscontrol.Records,
 			rr = record.ToRR()
 		}
 
+		// The pseudo-types carrying more than a target have no zone file form
+		// DNSControl could read back: build their RecordConfig ourselves.
+		pseudoRC, err := pseudoRecordConfigFromRecord(rr, origin)
+		if err != nil {
+			return nil, err
+		} else if pseudoRC != nil {
+			records[i] = pseudoRC
+			continue
+		}
+
 		typeName := dns.TypeToString[rr.Header().Rrtype]
 
 		var rc dnscontrol.RecordConfig
-		var err error
 
 		if _, ok := rtypecontrol.Func[typeName]; ok {
 			dcn := domaintags.MakeDomainNameVarieties(originNoTrailingDot)

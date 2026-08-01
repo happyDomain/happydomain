@@ -25,6 +25,7 @@ import (
 	"context"
 	"net/netip"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -316,5 +317,84 @@ func TestGetLibdnsProviderCapabilities(t *testing.T) {
 		if !found {
 			t.Errorf("expected capability %s", expected)
 		}
+	}
+}
+
+// TestLibdnsAdapterRefusesPseudoTypes covers the pseudo-types on the libdns
+// path: libdns carries a type name and its rdata as plain text, so nothing
+// tells whether the provider behind it gives ALIAS any meaning. None of them
+// declares the capability, and the frontend hides the kinds accordingly, but
+// the API is reachable on its own.
+func TestLibdnsAdapterRefusesPseudoTypes(t *testing.T) {
+	mock := &mockLibdnsProvider{}
+
+	config := &mockLibdnsConfig{provider: mock}
+	adapter, err := NewLibdnsProviderAdapter(config)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	aliasRR, err := dns.NewRR("example.com. 300 IN ALIAS target.example.net.")
+	if err != nil {
+		t.Fatalf("unable to build the ALIAS: %s", err)
+	}
+
+	_, _, err = adapter.GetZoneCorrections("example.com.", []happydns.Record{aliasRR})
+	if err == nil {
+		t.Fatal("GetZoneCorrections accepted an ALIAS, it must refuse it")
+	}
+	if !strings.Contains(err.Error(), "ALIAS") {
+		t.Errorf("the error does not name the offending type: %s", err)
+	}
+
+	if len(mock.appended) != 0 {
+		t.Errorf("the provider was handed %d records, want none", len(mock.appended))
+	}
+}
+
+// TestLibdnsAdapterSkipsPseudoTypesOnImport checks the other direction: a
+// pseudo-type already sitting in the zone must not break the whole import, and
+// must stay out of the diff, on both sides.
+func TestLibdnsAdapterSkipsPseudoTypesOnImport(t *testing.T) {
+	mock := &mockLibdnsProvider{
+		records: []libdns.Record{
+			libdns.Address{
+				Name: "www",
+				TTL:  300 * time.Second,
+				IP:   netip.MustParseAddr("192.0.2.1"),
+			},
+			libdns.RR{
+				Name: "@",
+				TTL:  300 * time.Second,
+				Type: "ALIAS",
+				Data: "target.example.net.",
+			},
+		},
+	}
+
+	config := &mockLibdnsConfig{provider: mock}
+	adapter, err := NewLibdnsProviderAdapter(config)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	records, err := adapter.GetZoneRecords("example.com.")
+	if err != nil {
+		t.Fatalf("GetZoneRecords returned an error: %s", err)
+	}
+
+	if len(records) != 1 {
+		t.Fatalf("GetZoneRecords returned %d records, want 1 (the ALIAS must be skipped)", len(records))
+	}
+
+	// The zone read back holds exactly what happyDomain knows about: no
+	// correction, and above all no deletion of the ALIAS.
+	aRR, _ := dns.NewRR("www.example.com. 300 IN A 192.0.2.1")
+	corrections, nb, err := adapter.GetZoneCorrections("example.com.", []happydns.Record{aRR})
+	if err != nil {
+		t.Fatalf("GetZoneCorrections returned an error: %s", err)
+	}
+	if nb != 0 || len(corrections) != 0 {
+		t.Errorf("got %d corrections, want none: %v", nb, corrections)
 	}
 }

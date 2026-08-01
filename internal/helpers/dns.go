@@ -104,7 +104,18 @@ func DomainRelative(subdomain string, origin string) string {
 }
 
 func NewRecord(domain string, rrtype string, ttl uint32, origin string) happydns.Record {
-	rdtype := dns.StringToType[rrtype]
+	rdtype, ok := dns.StringToType[rrtype]
+	if !ok {
+		// The pseudo-types DNSControl has to keep seeing as such are
+		// deliberately absent from dns.StringToType, but they do have a
+		// constructor in dns.TypeToRR.
+		pt, known := happydns.PseudoTypeByName(rrtype)
+		if !known {
+			return nil
+		}
+
+		rdtype = pt.Rrtype
+	}
 
 	rr := dns.TypeToRR[rdtype]()
 
@@ -230,6 +241,12 @@ func RDataRelative(rr happydns.Record, origin string) happydns.Record {
 		talink.NextName = DomainRelative(talink.NextName, origin)
 	} else if lp, ok := rr.(*dns.LP); ok {
 		lp.Fqdn = DomainRelative(lp.Fqdn, origin)
+	} else if prr, ok := rr.(*dns.PrivateRR); ok {
+		// Pseudo-types (ALIAS, R53_ALIAS, ...): their rdata is opaque to
+		// miekg/dns, so ask it for its target itself.
+		if rdata, ok := prr.Data.(happydns.TargetRdata); ok {
+			rdata.SetTarget(DomainRelative(rdata.GetTarget(), origin))
+		}
 	}
 
 	return rr
@@ -308,6 +325,10 @@ func RRAbsolute(rr happydns.Record, origin string) happydns.Record {
 		talink.NextName = DomainFQDN(talink.NextName, origin)
 	} else if lp, ok := rr.(*dns.LP); ok {
 		lp.Fqdn = DomainFQDN(lp.Fqdn, origin)
+	} else if prr, ok := rr.(*dns.PrivateRR); ok {
+		if rdata, ok := prr.Data.(happydns.TargetRdata); ok {
+			rdata.SetTarget(DomainFQDN(rdata.GetTarget(), origin))
+		}
 	}
 
 	return rr

@@ -165,7 +165,19 @@ func extractRdata(rrString string, rrType string) string {
 	return ""
 }
 
+// IsPseudoTypeRecord reports whether the given record carries one of the
+// pseudo-types happyDomain represents (ALIAS, R53_ALIAS, …).
+func IsPseudoTypeRecord(rr happydns.Record) bool {
+	_, ok := happydns.PseudoTypeByRrtype(rr.Header().Rrtype)
+	return ok
+}
+
 // libdnsRecordsToHappyDNS converts a slice of libdns Records to happydns Records.
+//
+// The pseudo-types are left out. libdns has no notion of them: it carries a type
+// name and its rdata as text, so nothing tells whether the provider behind it
+// gives ALIAS any meaning. Leaving them out on the way in is what keeps the diff
+// symmetric, since they cannot be created on the way out either.
 func libdnsRecordsToHappyDNS(recs []libdns.Record, zone string) ([]happydns.Record, error) {
 	result := make([]happydns.Record, 0, len(recs))
 	for _, rec := range recs {
@@ -173,6 +185,11 @@ func libdnsRecordsToHappyDNS(recs []libdns.Record, zone string) ([]happydns.Reco
 		if err != nil {
 			return nil, fmt.Errorf("converting libdns record %v: %w", rec.RR(), err)
 		}
+
+		if IsPseudoTypeRecord(hdr) {
+			continue
+		}
+
 		result = append(result, hdr)
 	}
 	return result, nil

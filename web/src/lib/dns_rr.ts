@@ -35,7 +35,20 @@ export interface dnsRR {
     Mb?: string;
     Mg?: string;
     Mr?: string;
-    Data?: string;
+    Data?: string | {
+        Target: string;
+    } | {
+        Target: string;
+        AType: string;
+        ZoneID: string;
+        EvaluateTargetHealth: string;
+    } | {
+        Target: string;
+        AType: string;
+    } | {
+        Target: string;
+        AnswerType: string;
+    };
     Ptr?: string;
     Cpu?: string;
     Os?: string;
@@ -1164,6 +1177,89 @@ export interface dnsTypeDLV {
     Digest: string;
 }
 
+export interface dnsTypeALIAS {
+    Hdr: {
+        Name: string;
+        Rrtype: number;
+        Class: number;
+        Ttl: number;
+        Rdlength: number;
+    };
+    Data: {
+        Target: string;
+    };
+}
+
+export interface dnsTypeANAME {
+    Hdr: {
+        Name: string;
+        Rrtype: number;
+        Class: number;
+        Ttl: number;
+        Rdlength: number;
+    };
+    Data: {
+        Target: string;
+    };
+}
+
+export interface dnsTypeR53_ALIAS {
+    Hdr: {
+        Name: string;
+        Rrtype: number;
+        Class: number;
+        Ttl: number;
+        Rdlength: number;
+    };
+    Data: {
+        Target: string;
+        AType: string;
+        ZoneID: string;
+        EvaluateTargetHealth: string;
+    };
+}
+
+export interface dnsTypeAZURE_ALIAS {
+    Hdr: {
+        Name: string;
+        Rrtype: number;
+        Class: number;
+        Ttl: number;
+        Rdlength: number;
+    };
+    Data: {
+        Target: string;
+        AType: string;
+    };
+}
+
+export interface dnsTypeAKAMAICDN {
+    Hdr: {
+        Name: string;
+        Rrtype: number;
+        Class: number;
+        Ttl: number;
+        Rdlength: number;
+    };
+    Data: {
+        Target: string;
+    };
+}
+
+export interface dnsTypeAKAMAITLC {
+    Hdr: {
+        Name: string;
+        Rrtype: number;
+        Class: number;
+        Ttl: number;
+        Rdlength: number;
+    };
+    Data: {
+        Target: string;
+        AnswerType: string;
+    };
+}
+
 export interface dnsResource {
     a?: dnsTypeA;
     ns?: dnsTypeNS | Array<dnsTypeNS>;
@@ -1245,6 +1341,12 @@ export interface dnsResource {
     resinfo?: dnsTypeRESINFO;
     ta?: dnsTypeTA;
     dlv?: dnsTypeDLV;
+    alias?: dnsTypeALIAS;
+    aname?: dnsTypeANAME;
+    r53_alias?: dnsTypeR53_ALIAS;
+    azure_alias?: dnsTypeAZURE_ALIAS;
+    akamaicdn?: dnsTypeAKAMAICDN;
+    akamaitlc?: dnsTypeAKAMAITLC;
 }
 
 export function getRrtype(input: string): number {
@@ -1510,6 +1612,24 @@ export function getRrtype(input: string): number {
         case "DLV":
         case "dlv":
             return 32769;
+        case "ALIAS":
+        case "alias":
+            return 65280;
+        case "ANAME":
+        case "aname":
+            return 65281;
+        case "R53_ALIAS":
+        case "r53_alias":
+            return 65282;
+        case "AZURE_ALIAS":
+        case "azure_alias":
+            return 65283;
+        case "AKAMAICDN":
+        case "akamaicdn":
+            return 65284;
+        case "AKAMAITLC":
+        case "akamaitlc":
+            return 65285;
         case "RESERVED":
         case "reserved":
             return 65535;
@@ -1896,6 +2016,24 @@ export function newRR(dn: string, rrtype: number): dnsRR {
             rec.DigestType = 0;
             rec.Digest = "";
             return rec;
+        case 65280: // ALIAS
+            rec.Data = { Target: "" };
+            return rec;
+        case 65281: // ANAME
+            rec.Data = { Target: "" };
+            return rec;
+        case 65282: // R53_ALIAS
+            rec.Data = { Target: "", AType: "", ZoneID: "", EvaluateTargetHealth: "" };
+            return rec;
+        case 65283: // AZURE_ALIAS
+            rec.Data = { Target: "", AType: "" };
+            return rec;
+        case 65284: // AKAMAICDN
+            rec.Data = { Target: "" };
+            return rec;
+        case 65285: // AKAMAITLC
+            rec.Data = { Target: "", AnswerType: "" };
+            return rec;
         default: return rec;
     }
 }
@@ -2163,6 +2301,24 @@ export function nsrrtype(input: number | string): string {
         case "32769":
         case 32769:
             return "DLV";
+        case "65280":
+        case 65280:
+            return "ALIAS";
+        case "65281":
+        case 65281:
+            return "ANAME";
+        case "65282":
+        case 65282:
+            return "R53_ALIAS";
+        case "65283":
+        case 65283:
+            return "AZURE_ALIAS";
+        case "65284":
+        case 65284:
+            return "AKAMAICDN";
+        case "65285":
+        case 65285:
+            return "AKAMAITLC";
         case "65535":
         case 65535:
             return "Reserved";
@@ -2266,6 +2422,12 @@ export function rdatatostr(rr: dnsRR): string {
         case 261: { const rec = rr as dnsTypeRESINFO; return quoteStringIfNeeded(rec.Txt.toString()); } // RESINFO
         case 32768: { const rec = rr as dnsTypeTA; return [rec.KeyTag.toString(), rec.Algorithm.toString(), rec.DigestType.toString(), quoteStringIfNeeded(rec.Digest.toString())].join(' '); } // TA
         case 32769: { const rec = rr as dnsTypeDLV; return [rec.KeyTag.toString(), rec.Algorithm.toString(), rec.DigestType.toString(), quoteStringIfNeeded(rec.Digest.toString())].join(' '); } // DLV
+        case 65280: { const rec = rr as dnsTypeALIAS; return [quoteStringIfNeeded(rec.Data.Target.toString())].join(' '); } // ALIAS
+        case 65281: { const rec = rr as dnsTypeANAME; return [quoteStringIfNeeded(rec.Data.Target.toString())].join(' '); } // ANAME
+        case 65282: { const rec = rr as dnsTypeR53_ALIAS; return [quoteStringIfNeeded(rec.Data.Target.toString()), quoteStringIfNeeded(rec.Data.AType.toString()), quoteStringIfNeeded(rec.Data.ZoneID.toString()), quoteStringIfNeeded(rec.Data.EvaluateTargetHealth.toString())].join(' '); } // R53_ALIAS
+        case 65283: { const rec = rr as dnsTypeAZURE_ALIAS; return [quoteStringIfNeeded(rec.Data.Target.toString()), quoteStringIfNeeded(rec.Data.AType.toString())].join(' '); } // AZURE_ALIAS
+        case 65284: { const rec = rr as dnsTypeAKAMAICDN; return [quoteStringIfNeeded(rec.Data.Target.toString())].join(' '); } // AKAMAICDN
+        case 65285: { const rec = rr as dnsTypeAKAMAITLC; return [quoteStringIfNeeded(rec.Data.Target.toString()), quoteStringIfNeeded(rec.Data.AnswerType.toString())].join(' '); } // AKAMAITLC
         default: return 'unknown #' + rr.Hdr.Rrtype
     }
 }
@@ -2349,6 +2511,12 @@ export function rdatafields(input: number | string): Array<string> {
         case 261: case "RESINFO": return ["Txt"]; // RESINFO
         case 32768: case "TA": return ["KeyTag", "Algorithm", "DigestType", "Digest"]; // TA
         case 32769: case "DLV": return ["KeyTag", "Algorithm", "DigestType", "Digest"]; // DLV
+        case 65280: case "ALIAS": return []; // ALIAS
+        case 65281: case "ANAME": return []; // ANAME
+        case 65282: case "R53_ALIAS": return []; // R53_ALIAS
+        case 65283: case "AZURE_ALIAS": return []; // AZURE_ALIAS
+        case 65284: case "AKAMAICDN": return []; // AKAMAICDN
+        case 65285: case "AKAMAITLC": return []; // AKAMAITLC
         default: return [];
     }
 }

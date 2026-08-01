@@ -33,6 +33,8 @@ import (
 	"text/template"
 
 	"github.com/miekg/dns"
+
+	happydns "git.happydns.org/happyDomain/model"
 )
 
 type DNSType struct {
@@ -71,6 +73,14 @@ func main() {
 	// Collect DNS types
 	var dnsTypes []DNSType
 	for _, ty := range getSortedTypes() {
+		// The pseudo-types happyDomain represents are all dns.PrivateRR, so
+		// they share a single Go type name and have no dns.TypeXXX constant.
+		// Services hold them behind the happydns.Record interface anyway, never
+		// as a *dns.XXX field this mapping would have to fill.
+		if _, isPseudo := happydns.PseudoTypeByRrtype(ty); isPseudo {
+			continue
+		}
+
 		typeName := dns.TypeToString[ty]
 		// Remove hyphens from constant names (e.g., "NSAP-PTR" -> "TypeNSAPPTR")
 		constantName := fmt.Sprintf("Type%s", strings.ReplaceAll(typeName, "-", ""))

@@ -171,6 +171,17 @@ func (p *LibdnsAdapterNSProvider) GetZoneRecords(domain string) ([]happydns.Reco
 func (p *LibdnsAdapterNSProvider) GetZoneCorrections(domain string, wantedRecords []happydns.Record) ([]*happydns.Correction, int, error) {
 	zone := normalizeZone(domain)
 
+	// A libdns provider declares none of the pseudo-types (see
+	// GetLibdnsProviderCapabilities), and libdns itself knows nothing about
+	// them: it would forward "ALIAS" and its target as plain text, to a
+	// provider that gives them no meaning. The frontend does not offer them for
+	// these providers, this refuses them for good.
+	for _, rr := range wantedRecords {
+		if IsPseudoTypeRecord(rr) {
+			return nil, 0, fmt.Errorf("%s records are not supported by this provider", dns.TypeToString[rr.Header().Rrtype])
+		}
+	}
+
 	// Step 1: Fetch current records from the provider.
 	currentLibdnsRecs, err := p.getter.GetRecords(context.TODO(), zone)
 	if err != nil {
