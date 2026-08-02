@@ -78,8 +78,9 @@
                             zoneDiffModified += 1;
                         } else if (c.kind == 3) {
                             zoneDiffDeleted += 1;
-                        } else if (c.kind == 99) {
                         }
+                        // CorrectionKindOther (99) is listed like the others,
+                        // but counts towards none of the three totals.
 
                         zoneDiff.push({
                             msg: c.msg,
