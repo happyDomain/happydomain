@@ -23,22 +23,23 @@
 
 <script lang="ts">
     import type { Domain } from "$lib/model/domain";
-    import type { dnsResource, dnsTypeTLSA } from "$lib/dns_rr";
+    import type { dnsTypeTLSA } from "$lib/dns_rr";
+    import type { SvcsTLSAsBody } from "$lib/services_bodies";
     import { digestHex, hasSubtleCrypto, toHex } from "$lib/utils/crypto";
 
     interface Props {
         dn: string;
         origin: Domain;
         readonly?: boolean;
-        value: dnsResource;
+        value: SvcsTLSAsBody;
     }
 
-    let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
+    let { dn, origin, readonly = false, value = $bindable({ tlsa: [] }) }: Props = $props();
 
-    if (!Array.isArray(value["tlsa"])) {
-        value["tlsa"] = [];
+    if (!Array.isArray(value.tlsa)) {
+        value.tlsa = [];
     }
-    const records = (): dnsTypeTLSA[] => value["tlsa"] as dnsTypeTLSA[];
+    const records = (): dnsTypeTLSA[] => value.tlsa;
 
     // Port + protocol are encoded in the owner name ("_443._tcp.host"). Parse
     // them out of the first record so an existing service opens with the
@@ -133,13 +134,13 @@
     ];
 
     function addRecord() {
-        const r = {
+        const r: dnsTypeTLSA = {
             Hdr: { Name: fullDn, Rrtype: 52, Class: 1, Ttl: 3600, Rdlength: 0 },
             Usage: 3,
             Selector: 1,
             MatchingType: 1,
             Certificate: "",
-        } as dnsTypeTLSA;
+        };
         records().push(r);
     }
     function removeRecord(i: number) {

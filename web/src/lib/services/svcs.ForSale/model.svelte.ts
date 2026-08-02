@@ -22,7 +22,14 @@
 // RFC 10023 "For Sale" TXT records: each record at the _for-sale leaf node
 // starts with the version tag and carries at most one tag-value pair.
 
-import { getRrtype, newRR, type dnsResource, type dnsTypeTXT } from "$lib/dns_rr";
+import { getRrtype, newRR, type dnsTypeTXT } from "$lib/dns_rr";
+import type { SvcsForSaleBody } from "$lib/services_bodies";
+
+/**
+ * The body as the editor may receive it: the API always sends the whole RRset,
+ * but a lone record is tolerated, as older zones may hold one.
+ */
+export type ForSaleValue = { txt?: SvcsForSaleBody["txt"] | dnsTypeTXT };
 
 export const FORSALE_LABEL = "_for-sale";
 export const FORSALE_VERSION = "v=FORSALE1;";
@@ -135,8 +142,8 @@ export interface ForSaleEntry {
 export class ForSaleService {
     records = $state<Array<dnsTypeTXT>>([]);
 
-    constructor(value: dnsResource) {
-        const txt = value["txt"] as dnsTypeTXT | Array<dnsTypeTXT> | undefined;
+    constructor(value: ForSaleValue) {
+        const txt = value.txt;
 
         if (txt) {
             this.records = Array.isArray(txt) ? txt : [txt];

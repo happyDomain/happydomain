@@ -25,6 +25,7 @@ import {
     FORSALE_LABEL,
     FORSALE_VERSION,
     ForSaleService,
+    type ForSaleValue,
     isForSaleTag,
     isValidAmount,
     isValidCurrency,
@@ -34,7 +35,7 @@ import {
     stringifyForSale,
     stringifyPrice,
 } from "./model.svelte";
-import type { dnsResource, dnsTypeTXT } from "$lib/dns_rr";
+import type { dnsTypeTXT } from "$lib/dns_rr";
 
 function txtRecord(txt: string): dnsTypeTXT {
     return {
@@ -161,15 +162,14 @@ describe("newForSaleRecord", () => {
 });
 
 describe("ForSaleService", () => {
-    const value = (): dnsResource =>
-        ({
-            txt: [
-                txtRecord("v=FORSALE1;fval=USD750"),
-                txtRecord("v=FORSALE1;ftxt=Call for info."),
-                txtRecord("v=FORSALE1;ftxt=Appelez-nous"),
-                txtRecord("v=FORSALE1;fxyz=future"),
-            ],
-        }) as unknown as dnsResource;
+    const value = (): ForSaleValue => ({
+        txt: [
+            txtRecord("v=FORSALE1;fval=USD750"),
+            txtRecord("v=FORSALE1;ftxt=Call for info."),
+            txtRecord("v=FORSALE1;ftxt=Appelez-nous"),
+            txtRecord("v=FORSALE1;fxyz=future"),
+        ],
+    });
 
     it("exposes every entry in RRset order, unknown tags included", () => {
         const svc = new ForSaleService(value());
@@ -181,7 +181,7 @@ describe("ForSaleService", () => {
     it("hides the bare version record from the editable entries", () => {
         const svc = new ForSaleService({
             txt: [txtRecord("v=FORSALE1;"), txtRecord("v=FORSALE1;fval=USD750")],
-        } as unknown as dnsResource);
+        });
 
         expect(svc.entries).toHaveLength(2);
         expect(svc.editableEntries.map((e) => e.index)).toEqual([1]);
@@ -190,7 +190,7 @@ describe("ForSaleService", () => {
     it("keeps a broken record editable so it can be repaired", () => {
         const svc = new ForSaleService({
             txt: [txtRecord("v=FORSALE1;garbage")],
-        } as unknown as dnsResource);
+        });
 
         expect(svc.editableEntries).toHaveLength(1);
 
@@ -201,7 +201,7 @@ describe("ForSaleService", () => {
     });
 
     it("accepts a single record instead of an array", () => {
-        const svc = new ForSaleService({ txt: txtRecord("v=FORSALE1;") } as unknown as dnsResource);
+        const svc = new ForSaleService({ txt: txtRecord("v=FORSALE1;") });
 
         expect(svc.records).toHaveLength(1);
         expect(svc.editableEntries).toHaveLength(0);
@@ -210,7 +210,7 @@ describe("ForSaleService", () => {
     it("replaces the bare version record when the first pair is added", () => {
         const svc = new ForSaleService({
             txt: [txtRecord("v=FORSALE1;")],
-        } as unknown as dnsResource);
+        });
 
         svc.add("fval", "USD750");
 
@@ -221,7 +221,7 @@ describe("ForSaleService", () => {
     it("falls back to a bare version record when the last pair is removed", () => {
         const svc = new ForSaleService({
             txt: [txtRecord("v=FORSALE1;fval=USD750")],
-        } as unknown as dnsResource);
+        });
 
         svc.remove(0);
 

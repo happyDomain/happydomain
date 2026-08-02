@@ -25,7 +25,6 @@
     import { Button, Icon, Input, InputGroup, InputGroupText } from "@sveltestrap/sveltestrap";
 
     import type { Domain } from "$lib/model/domain";
-    import type { dnsResource } from "$lib/dns_rr";
     import { t } from "$lib/translations";
     import {
         byteLength,
@@ -33,6 +32,7 @@
         FORSALE_TAGS,
         ForSaleService,
         type ForSaleTag,
+        type ForSaleValue,
         newForSaleRecord,
         parsePrice,
         stringifyPrice,
@@ -42,22 +42,19 @@
         dn: string;
         origin: Domain;
         readonly?: boolean;
-        value: dnsResource;
+        value: ForSaleValue;
     }
 
     let { readonly = false, value = $bindable({}) }: Props = $props();
 
     // The RRset is the source of truth; normalize it once so the class below can
-    // splice it in place. dnsResource types txt as a lone record, while a
-    // _for-sale node holds a whole RRset.
-    const resource = value as Record<string, unknown>;
-    const txt = resource["txt"];
-    if (!txt) {
-        resource["txt"] = [newForSaleRecord(null, "")];
-    } else if (!Array.isArray(txt)) {
-        resource["txt"] = [txt];
-    } else if (txt.length === 0) {
-        txt.push(newForSaleRecord(null, ""));
+    // splice it in place.
+    if (!value.txt) {
+        value.txt = [newForSaleRecord(null, "")];
+    } else if (!Array.isArray(value.txt)) {
+        value.txt = [value.txt];
+    } else if (value.txt.length === 0) {
+        value.txt.push(newForSaleRecord(null, ""));
     }
 
     let val = $derived(new ForSaleService(value));

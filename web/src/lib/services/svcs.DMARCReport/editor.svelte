@@ -25,26 +25,25 @@
     import { Button, Icon, Input } from "@sveltestrap/sveltestrap";
 
     import type { Domain } from "$lib/model/domain";
-    import type { dnsResource, dnsTypeTXT } from "$lib/dns_rr";
+    import type { dnsTypeTXT } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
+    import type { SvcsDMARCReportBody } from "$lib/services_bodies";
     import { t } from "$lib/translations";
 
     interface Props {
         dn: string;
         origin: Domain;
-        value: dnsResource;
+        value: SvcsDMARCReportBody;
     }
 
-    let { dn, origin, value = $bindable({}) }: Props = $props();
+    let { dn, origin, value = $bindable({ txt: [] }) }: Props = $props();
 
     const type = "svcs.DMARCReport";
     const SUFFIX = "._report._dmarc";
 
-    // The generated dnsResource declares txt as a single record, but this
-    // service body carries a list of them, hence the casts.
-    if (!Array.isArray(value["txt"])) value["txt"] = [] as unknown as dnsTypeTXT;
+    if (!Array.isArray(value.txt)) value.txt = [];
 
-    const records = (): dnsTypeTXT[] => value["txt"] as unknown as dnsTypeTXT[];
+    const records = (): dnsTypeTXT[] => value.txt;
 
     function getDomain(rr: dnsTypeTXT): string {
         const n = rr.Hdr?.Name ?? "";
