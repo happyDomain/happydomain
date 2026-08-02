@@ -27,4 +27,4 @@ export interface ProviderSettingsState extends FormState {
     Provider?: Record<string, unknown>;
 }
 
-export interface ProviderSettingsResponse extends FormResponse<ProviderSettingsState> {}
+export type ProviderSettingsResponse = FormResponse<ProviderSettingsState>;
