@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import { page } from "$app/state";
     import { goto } from "$app/navigation";
     import {
@@ -46,8 +47,8 @@
     } from "$lib/api-admin";
     import { toasts } from "$lib/stores/toasts";
 
-    const uid = $derived(page.params.uid);
-    const domainId = $derived(page.params.domain);
+    const uid = $derived(page.params.uid ?? "");
+    const domainId = $derived(page.params.domain ?? "");
     const zoneid = $derived(page.params.zoneid);
 
     let zoneQ = $derived(
@@ -76,7 +77,7 @@
                 timeout: 5000,
             });
 
-            goto(`/users/${uid}/domains/${domainId}`);
+            goto(resolve("/users/[uid]/domains/[domain]", { uid, domain: domainId }));
         } catch (error) {
             toasts.addErrorToast({
                 message: "Failed to delete zone: " + error,
@@ -132,7 +133,7 @@
                                         <dt class="col-sm-5">Author ID:</dt>
                                         <dd class="col-sm-7">
                                             {#if zone.id_author}
-                                                <a href="/users/{zone.id_author}">
+                                                <a href={resolve("/users/[uid]", { uid: zone.id_author ?? "" })}>
                                                     <code class="text-break">{zone.id_author}</code>
                                                 </a>
                                             {:else}
@@ -144,7 +145,7 @@
                                         <dd class="col-sm-7">
                                             {#if zone.parent}
                                                 <a
-                                                    href="/users/{uid}/domains/{domainId}/zones/{zone.parent}"
+                                                    href={resolve("/users/[uid]/domains/[domain]/zones/[zoneid]", { uid, domain: domainId, zoneid: zone.parent ?? "" })}
                                                 >
                                                     <code class="text-break">{zone.parent}</code>
                                                 </a>

@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { resolve } from "$app/paths";
+    import { domainLinks } from "$links";
     import { page } from "$app/state";
     import { onMount } from "svelte";
 
@@ -309,7 +309,7 @@
                                     {$t("onboarding.explore.history.description")}
                                 </p>
                                 {#if $domains && $domains.length}
-                                    <a href={resolve("/domains/[dn]/history", { dn: $domains[0].id })} class="feature-link"
+                                    <a href={domainLinks().history($domains[0].id)} class="feature-link"
                                         >{$t("onboarding.explore.history.link")}
                                         <Icon name="arrow-right-short" /></a
                                     >

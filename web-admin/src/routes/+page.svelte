@@ -277,7 +277,7 @@
                 </Col>
             </Row>
             <CardFooter class="bg-transparent text-muted small">
-                Source: <a href="/metrics" target="_blank" rel="noopener">/metrics</a> (Prometheus).
+                Source: <a href="/metrics" target="_blank" rel="external noopener">/metrics</a> (Prometheus).
             </CardFooter>
         </Card>
     </Collapse>

@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { providerLinks } from "$links";
     import { resolve } from "$app/paths";
     import { Icon, Spinner } from "@sveltestrap/sveltestrap";
 
@@ -57,7 +58,7 @@
                 {@const isActive = provider._id === currentProviderId}
                 <li>
                     <a
-                        href={resolve("/providers/[prvid]", { prvid: encodeURIComponent(provider._id) })}
+                        href={providerLinks().provider(encodeURIComponent(provider._id))}
                         class="provider-item d-flex align-items-center gap-2 py-2 px-2 rounded text-decoration-none {isActive
                             ? 'fw-bold text-primary active'
                             : 'text-muted'}"

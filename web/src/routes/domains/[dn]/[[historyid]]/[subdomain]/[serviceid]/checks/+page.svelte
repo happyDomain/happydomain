@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { domainCheckerLinks, serviceCheckerLinks } from "$links";
+    import { domainLink } from "$lib/stores/domains";
     import { page } from "$app/state";
 
     import { t } from "$lib/translations";
@@ -34,10 +36,20 @@
     let subdomain: string = $derived(page.data.subdomain);
     let serviceid: string = $derived(page.data.serviceid);
     let label = $derived(fqdn(subdomain, domain.domain));
+    const linksFor = (target?: { zoneId: string; subdomain: string; serviceId: string }) =>
+        target
+            ? serviceCheckerLinks(
+                  domainLink(domain.id),
+                  encodeURIComponent(target.zoneId),
+                  encodeURIComponent(target.subdomain),
+                  encodeURIComponent(target.serviceId),
+              )
+            : domainCheckerLinks(domainLink(domain.id));
 </script>
 
 <CheckResultsDashboard
     domainId={domain.id}
+    {linksFor}
     domainName={label}
     title={$t("checkers.list.title") + label}
     serviceTarget={{

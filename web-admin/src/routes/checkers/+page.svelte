@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import {
         Card,
         Col,
@@ -107,7 +108,7 @@
                                 </td>
                                 <td>
                                     <a
-                                        href="/checkers/{checkerId}"
+                                        href={resolve("/checkers/[checkerId]", { checkerId })}
                                         class="btn btn-sm btn-primary"
                                     >
                                         <Icon name="gear-fill"></Icon>

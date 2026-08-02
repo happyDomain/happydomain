@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import { goto } from '$app/navigation';
     import {
         Alert,
@@ -104,7 +105,7 @@
                 timeout: 5000,
             });
 
-            goto('/auth_users');
+            goto(resolve("/auth_users"));
         } catch (error) {
             errorMessage = 'Failed to update auth user: ' + error;
             toasts.addErrorToast({

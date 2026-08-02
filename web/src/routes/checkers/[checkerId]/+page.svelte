@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { globalCheckerLinks } from "$lib/checker_links";
+    import { globalCheckerLinks } from "$links";
     import { page } from "$app/state";
 
     import { t } from "$lib/translations";

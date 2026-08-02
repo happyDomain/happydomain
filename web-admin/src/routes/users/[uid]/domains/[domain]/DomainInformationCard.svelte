@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import { goto } from '$app/navigation';
     import {
         Alert,
@@ -89,7 +90,7 @@
                 timeout: 5000,
             });
 
-            goto('/domains');
+            goto(resolve("/domains"));
         } catch (error) {
             errorMessage = 'Failed to update domain: ' + error;
             toasts.addErrorToast({
@@ -102,7 +103,7 @@
     }
 
     function handleCancel() {
-        goto('/domains');
+        goto(resolve("/domains"));
     }
 </script>
 

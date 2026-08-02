@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { domainCheckerLinks, serviceCheckerLinks, type CheckerLinks } from "$lib/checker_links";
+    import type { CheckerLinks } from "$lib/checker_links";
     import { Alert, Badge, Card, Icon, Table } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
@@ -52,11 +52,14 @@
         title: string;
         /** When set, dashboard only lists this single service's checkers. */
         serviceTarget?: ServiceTarget & { zoneId: string };
+        /**
+         * Where the checkers of the domain, or of one of its services, live.
+         * Handed in because only the route knows: this component is shared.
+         */
+        linksFor: (target?: { zoneId: string; subdomain: string; serviceId: string }) => CheckerLinks;
     }
 
-    let { domainId, domainName, title, serviceTarget }: Props = $props();
-
-    let dn = $derived(domainLink(domainId));
+    let { domainId, domainName, title, serviceTarget, linksFor }: Props = $props();
 
     function serviceLabel(svc: { _id?: string; _svctype?: string }): string {
         return svc._svctype || svc._id || "service";
@@ -75,7 +78,7 @@
             const statuses = await listScopedCheckers(scope);
             sections.push({
                 title: serviceTarget.serviceLabel,
-                links: serviceCheckerLinks(dn, serviceTarget.zoneId, serviceTarget.subdomain, serviceTarget.serviceId),
+                links: linksFor(serviceTarget),
                 statuses,
             });
             return sections;
@@ -84,7 +87,7 @@
         const domainStatuses = await listScopedCheckers({ domainId });
         sections.push({
             title: domainName,
-            links: domainCheckerLinks(dn),
+            links: linksFor(),
             statuses: domainStatuses,
         });
 
@@ -118,7 +121,7 @@
             if (statuses.length === 0) return;
             sections.push({
                 title: tg.label,
-                links: serviceCheckerLinks(dn, zone.id!, tg.subdomain, tg.serviceId),
+                links: linksFor({ zoneId: zone.id!, subdomain: tg.subdomain, serviceId: tg.serviceId }),
                 statuses,
             });
         });

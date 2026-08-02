@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import {
         Button,
         Col,
@@ -105,7 +106,7 @@
                     {#each sorted as row}
                         <tr>
                             <td>
-                                <a href="/users/{row.user?.id}">{row.user?.email}</a>
+                                <a href={resolve("/users/[uid]", { uid: row.user?.id ?? "" })}>{row.user?.email}</a>
                             </td>
                             <td>{row.provider_count ?? 0}</td>
                             <td>{row.domain_count ?? 0}</td>

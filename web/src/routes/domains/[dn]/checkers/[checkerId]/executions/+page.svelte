@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { domainCheckerLinks } from "$lib/checker_links";
+    import { domainCheckerLinks } from "$links";
     import { page } from "$app/state";
 
     import type { Domain } from "$lib/model/domain";

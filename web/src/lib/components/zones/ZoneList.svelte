@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts" generics="T extends HappydnsDomain = HappydnsDomain">
-    import { resolve } from "$app/paths";
+    import { domainLinks } from "$links";
     import type { ResolvedPathname } from "$app/types";
     import { createEventDispatcher, type Snippet } from "svelte";
     import { fly, fade } from "svelte/transition";
@@ -154,9 +154,9 @@
     }
 
     function getDomainHref(domain: T): ResolvedPathname {
-        return resolve("/domains/[dn]/[[historyid]]", {
-            dn: encodeURIComponent($domains_idx[domain.domain] ? domain.domain : domain.id),
-        });
+        return domainLinks().zone(
+            encodeURIComponent($domains_idx[domain.domain] ? domain.domain : domain.id),
+        );
     }
 </script>
 

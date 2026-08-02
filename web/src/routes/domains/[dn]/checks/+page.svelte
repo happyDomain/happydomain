@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { domainCheckerLinks, serviceCheckerLinks } from "$links";
+    import { domainLink } from "$lib/stores/domains";
     import { page } from "$app/state";
 
     import { t } from "$lib/translations";
@@ -29,10 +31,20 @@
     import CheckResultsDashboard from "$lib/components/checkers/CheckResultsDashboard.svelte";
 
     let domain: Domain = $derived(page.data.domain);
+    const linksFor = (target?: { zoneId: string; subdomain: string; serviceId: string }) =>
+        target
+            ? serviceCheckerLinks(
+                  domainLink(domain.id),
+                  encodeURIComponent(target.zoneId),
+                  encodeURIComponent(target.subdomain),
+                  encodeURIComponent(target.serviceId),
+              )
+            : domainCheckerLinks(domainLink(domain.id));
 </script>
 
 <CheckResultsDashboard
     domainId={domain.id}
+    {linksFor}
     domainName={domain.domain}
     title={$t("checkers.list.title") + domain.domain}
 />
