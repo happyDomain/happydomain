@@ -1,0 +1,14 @@
+{
+    "compliance": {
+        "alias": {
+            "cname-not-alone": {
+                "title": "Un CNAME doit être seul sur « {{subdomain}} »",
+                "detail": "La RFC 1034 § 3.6.2 interdit tout autre enregistrement à côté d'un CNAME. Utilisez plutôt un ALIAS si votre hébergeur le gère : il peut cohabiter avec vos autres enregistrements."
+            },
+            "dname-not-alone": {
+                "title": "Un DNAME entre en conflit avec les autres enregistrements de « {{subdomain}} »",
+                "detail": "Un DNAME redirige tout un sous-arbre, il ne peut pas cohabiter avec un CNAME portant le même nom (RFC 6672 § 2.4)."
+            }
+        }
+    }
+}

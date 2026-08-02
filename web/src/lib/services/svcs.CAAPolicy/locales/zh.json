@@ -1,0 +1,28 @@
+{
+    "resources": {
+        "CAA": {
+            "all-issuers-title": "已授权所有颁发者。",
+            "all-issuers-body": "配置此参数后，所有证书颁发机构均可为该域名及其子域名签发证书。",
+            "all-wild-issuers-body": "配置此参数后，所有证书颁发机构均可为该域名及其子域名签发通配符证书。",
+            "auth-issuers": "授权颁发者",
+            "incident-response": "事件响应",
+            "incident-response-text": "若发生安全策略违规，希望如何通知您？",
+            "mail-issuers": "S/MIME证书签发",
+            "mail-all-allowed-title": "S/MIME证书签发无CA限制。",
+            "mail-all-allowed-body": "所有证书颁发机构均可为您的域名签发S/MIME证书。建议您限制或禁止特定CA。S/MIME证书用于邮件签名与加密。如无需此类证书，建议禁止签发。",
+            "no-issuers-hint": "禁止所有证书签发",
+            "no-issuers-title": "无授权颁发者。",
+            "no-issuers-body": "配置此参数后，禁止任何证书颁发机构为该子域名签发证书。",
+            "no-mail-hint": "禁止S/MIME证书签发",
+            "no-mail-title": "S/MIME证书无授权颁发者。",
+            "no-mail-body": "配置此参数后，禁止任何证书颁发机构为该域名及其子域名签发S/MIME证书。",
+            "no-wild-hint": "禁止通配符证书签发",
+            "no-wild-title": "无通配符授权颁发者。",
+            "no-wild-body": "配置此参数后，禁止任何证书颁发机构为该域名及其子域名签发通配符证书。以下设置可能覆盖此限制：",
+            "title": "证书授权",
+            "wild-issuers": "通配符证书签发",
+            "wild-same-title": "与常规证书签发规则相同。",
+            "wild-same-body": "配置此参数后，已授权签发常规证书的颁发者同样可以为该域名及其子域名签发通配符证书。"
+        }
+    }
+}

@@ -1,0 +1,78 @@
+{
+    "resources": {
+        "FORSALE": {
+            "intro": "Faites savoir aux acheteurs potentiels que ce nom de domaine est à vendre. Donnez autant de détails que vous le souhaitez.",
+            "fval": "Prix",
+            "ftxt": "Message",
+            "furi": "Lien",
+            "fcod": "Code",
+            "add": "Ajouter :",
+            "price-currency": "EUR",
+            "price-amount": "750",
+            "text-placeholder": "Contactez-nous pour toute information.",
+            "uri-placeholder": "https://example.com/a-vendre",
+            "code-placeholder": "EXCO-S2lscm95IHdhcyBoZXJl",
+            "too-long": "{{count}} octets, {{max}} au maximum"
+        }
+    },
+    "compliance": {
+        "forsale": {
+            "wrong-owner-name": {
+                "title": "Enregistrement publié sous « {{name}} » au lieu de _for-sale",
+                "detail": "La RFC 10023 impose que ces enregistrements TXT se trouvent sous un nœud feuille _for-sale."
+            },
+            "missing-version": {
+                "title": "Préfixe v=FORSALE1; manquant",
+                "detail": "Chaque enregistrement TXT _for-sale doit commencer par v=FORSALE1;. Ceux qui ne le font pas sont ignorés."
+            },
+            "malformed-content": {
+                "title": "« {{content}} » n'est pas un couple tag/valeur",
+                "detail": "Après le tag de version, un enregistrement ne contient rien, ou bien un unique couple tag=valeur."
+            },
+            "multiple-pairs": {
+                "title": "Plus d'un couple dans l'enregistrement {{tag}}",
+                "detail": "Un enregistrement TXT _for-sale ne doit pas porter plus d'un couple tag/valeur. Répartissez-les sur plusieurs enregistrements."
+            },
+            "duplicate-pair": {
+                "title": "Couple « {{pair}} » en double",
+                "detail": "Chaque couple tag/valeur du RRset doit être unique. Un même tag peut se répéter, mais avec une valeur différente."
+            },
+            "unknown-tag": {
+                "title": "Tag « {{tag}} » inconnu",
+                "detail": "Ce tag n'est pas défini par la RFC 10023. Il est publié tel quel, et sera ignoré par les consommateurs."
+            },
+            "empty-value": {
+                "title": "Valeur vide pour {{tag}}",
+                "detail": "Supprimez l'entrée ou complétez-la : un tag publié sans valeur n'apporte aucune information."
+            },
+            "value-too-long": {
+                "title": "La valeur {{tag}} fait {{length}} octets",
+                "detail": "La RFC 10023 limite les valeurs fcod et ftxt à {{max}} octets."
+            },
+            "invalid-price": {
+                "title": "« {{value}} » n'est pas un prix valide",
+                "detail": "Un prix est un code de devise en majuscules suivi d'un montant, par exemple EUR750 ou EUR1234.56."
+            },
+            "invalid-uri": {
+                "title": "« {{uri}} » n'est pas une URI valide",
+                "detail": "Le lien de contact doit être une URI absolue, par exemple https://example.com/a-vendre ou mailto:vente@example.com."
+            },
+            "unusual-uri-scheme": {
+                "title": "Schéma d'URI inhabituel : « {{scheme}} »",
+                "detail": "La RFC 10023 recommande http, https, mailto ou tel, afin qu'un humain puisse donner suite à {{uri}}."
+            },
+            "ttl-too-high": {
+                "title": "Le TTL de {{ttl}} secondes dépasse l'heure recommandée",
+                "detail": "La RFC 10023 recommande un TTL inférieur ou égal à 3600 secondes, afin de retirer rapidement l'annonce une fois le domaine vendu."
+            },
+            "inconsistent-ttl": {
+                "title": "Les enregistrements _for-sale n'ont pas tous le même TTL ({{ttls}})",
+                "detail": "Tous les enregistrements du RRset devraient porter le même TTL."
+            },
+            "no-content": {
+                "title": "Le domaine est annoncé à vendre sans aucun détail",
+                "detail": "Ajoutez un prix, un message, un lien de contact ou un code de courtier, afin qu'un acheteur sache comment vous joindre."
+            }
+        }
+    }
+}

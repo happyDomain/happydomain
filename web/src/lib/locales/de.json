@@ -368,32 +368,6 @@
         "success": "Sie können sich jetzt mit Ihrem neuen Passwort anmelden.",
         "success-change": "Das Passwort Ihres Kontos wurde erfolgreich geändert."
     },
-    "resources": {
-        "CAA": {
-            "all-issuers-title": "Alle Aussteller autorisiert.",
-            "all-issuers-body": "Mit diesen Parametern können alle Aussteller Zertifikate für diese Domain und Subdomain erstellen.",
-            "all-wild-issuers-body": "Mit diesen Parametern können alle Aussteller Wildcard-Zertifikate für diese Domain und Subdomain erstellen.",
-            "auth-issuers": "Autorisierte Aussteller",
-            "incident-response": "Vorfallsreaktion",
-            "incident-response-text": "Wie möchten Sie im Fall einer Verletzung der aktuellen Sicherheitsrichtlinie kontaktiert werden?",
-            "mail-issuers": "S/MIME-Zertifikatsausstellung",
-            "mail-all-allowed-title": "Keine CA-Einschränkung für S/MIME-Zertifikatsausstellung.",
-            "mail-all-allowed-body": "Alle CAs können S/MIME-Zertifikate für Ihre Domain ausstellen. Sie sollten dies verbieten oder auf bestimmte CAs beschränken. S/MIME-Zertifikate werden zum Beispiel verwendet, um E-Mail-Kommunikation zu signieren und zu verschlüsseln. Wenn Sie solche Zertifikate nicht verwenden, sollten Sie deren Ausstellung verbieten.",
-            "no-issuers-hint": "Jede Zertifikatsausstellung verbieten",
-            "no-issuers-title": "Kein Aussteller autorisiert.",
-            "no-issuers-body": "Mit diesen Parametern ist kein Aussteller berechtigt, Zertifikate für diese Subdomain zu erstellen.",
-            "no-mail-hint": "S/MIME-Zertifikatsausstellung verbieten",
-            "no-mail-title": "Kein Aussteller für S/MIME-Zertifikat autorisiert.",
-            "no-mail-body": "Mit diesen Parametern ist kein Aussteller berechtigt, S/MIME-Zertifikate für diese Domain und Subdomain zu erstellen.",
-            "no-wild-hint": "Wildcard-Zertifikatsausstellung verbieten",
-            "no-wild-title": "Kein Wildcard-Aussteller autorisiert.",
-            "no-wild-body": "Mit diesen Parametern ist kein Aussteller berechtigt, Wildcard-Zertifikate für diese Domain und Subdomain zu erstellen. Dies kann jedoch mit den folgenden Einstellungen überschrieben werden:",
-            "title": "Zertifikatsausstellung",
-            "wild-issuers": "Wildcard-Zertifikatsausstellung",
-            "wild-same-title": "Gleich wie bei regulärer Zertifikatsausstellung.",
-            "wild-same-body": "Mit diesen Parametern können alle für die Zertifikatsausstellung autorisierten Aussteller auch Wildcard-Zertifikate für diese Domain und Subdomain erstellen."
-        }
-    },
     "service": {
         "add": "Dienst hinzufügen",
         "all": "Alle",
@@ -458,8 +432,8 @@
         "retrieving-domains": "Abrufen Ihrer Domains...",
         "retrieving-provider": "Abrufen von Informationen zum Hosting-Anbieter...",
         "retrieving-providers": "Abrufen Ihrer Anbieter...",
-        "preparation": "Änderungen werden vorbereitet \u2026",
-        "propagation": "Ihre Änderungen werden veröffentlicht \u2026"
+        "preparation": "Änderungen werden vorbereitet …",
+        "propagation": "Ihre Änderungen werden veröffentlicht …"
     },
     "settings": {
         "subtitle": "Passen Sie Ihr happyDomain-Erlebnis an Ihre Bedürfnisse an",

@@ -35,8 +35,9 @@
         type ComplianceIssue,
         type Severity,
     } from "$lib/services/compliance";
-    // Side-effect import: each validator module self-registers when loaded.
-    import "$lib/services/compliance/registry";
+    // Side-effect import: every service folder shipping a compliance.ts
+    // self-registers its validators when loaded. Nothing to declare here.
+    import.meta.glob("$lib/services/*/compliance.ts", { eager: true });
 
     interface Props {
         dn: string;

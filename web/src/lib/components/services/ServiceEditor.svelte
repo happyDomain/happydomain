@@ -23,7 +23,7 @@
 
 <script lang="ts">
     import type { Domain } from "$lib/model/domain";
-    import OrphanEditor from '$lib/components/services/editors/svcs.Orphan.svelte';
+    import OrphanEditor from '$lib/services/svcs.Orphan/editor.svelte';
     import EditorCompliance from '$lib/components/services/EditorCompliance.svelte';
 
     interface Props {
@@ -35,17 +35,23 @@
 
     let { dn, origin, type, value = $bindable({}) }: Props = $props();
 
-    // Map of all editor modules (lazy loaded)
-    const editorModules = import.meta.glob('./editors/*.svelte');
+    // Map of all editor modules (lazy loaded). Each service owns a folder named
+    // after its service type, so the type resolves to a path directly.
+    const editorModules = import.meta.glob('$lib/services/*/editor.svelte');
+
+    // Index the editors by the name of the folder holding them, which is the
+    // service type, whatever shape the bundler gives to the glob keys.
+    const editors: Record<string, () => Promise<unknown>> = {};
+    for (const [path, load] of Object.entries(editorModules)) {
+        const svctype = path.split("/").at(-2);
+        if (svctype) editors[svctype] = load;
+    }
 
     // Dynamically load the appropriate editor component
     let componentPromise = $derived(
         (async () => {
-            const filename = `${type}.svelte`;
-            const path = `./editors/${filename}`;
-
-            if (editorModules[path]) {
-                const module = await editorModules[path]() as { default: typeof OrphanEditor };
+            if (editors[type]) {
+                const module = await editors[type]() as { default: typeof OrphanEditor };
                 return module.default;
             }
 

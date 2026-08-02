@@ -365,32 +365,6 @@
         "success": "Vi nun povas ensaluti per via nova pasvorto.",
         "success-change": "La pasvorto de via konto estis sukcese ŝanĝita."
     },
-    "resources": {
-        "CAA": {
-            "all-issuers-title": "Ĉiuj eldonantoj rajtigitaj.",
-            "all-issuers-body": "Kun ĉi tiuj parametroj, ĉiuj eldonantoj povas krei atestilon por ĉi tiu domajno kaj subdomajno.",
-            "all-wild-issuers-body": "Kun ĉi tiuj parametroj, ĉiuj eldonantoj povas krei ĵokeran atestilon por ĉi tiu domajno kaj subdomajno.",
-            "auth-issuers": "Rajtigitaj Eldonantoj",
-            "incident-response": "Incidenta Respondo",
-            "incident-response-text": "Kiel vi volus esti kontaktita en kazo de malobservo de la nuna sekureca politiko?",
-            "mail-issuers": "S/MIME-atestila eldonado",
-            "mail-all-allowed-title": "Neniu CA-limigo por S/MIME-atestila eldonado.",
-            "mail-all-allowed-body": "Ĉiuj CA povas eldoni S/MIME-atestilojn por via domajno. Vi devus malpermesi aŭ limigi al certaj CA. S/MIME-atestiloj estas uzataj ekzemple por subskribi kaj ĉifri retpoŝtajn komunikadojn. Se vi ne uzas tian atestilon, vi devus malpermesi ĝian eldonadon.",
-            "no-issuers-hint": "Malpermesi ĉiun atestilan eldonadon",
-            "no-issuers-title": "Neniuj rajtigitaj eldonantoj.",
-            "no-issuers-body": "Kun ĉi tiuj parametroj, neniuj atestilaj aŭtoritatoj povas eldoni atestilon por ĉi tiu subdomajno.",
-            "no-mail-hint": "Malpermesi S/MIME-atestilan eldonadon",
-            "no-mail-title": "Neniuj rajtigitaj eldonantoj por S/MIME-atestiloj.",
-            "no-mail-body": "Kun ĉi tiuj parametroj, neniuj atestilaj aŭtoritatoj povas eldoni S/MIME-atestilojn por ĉi tiu domajno kaj ĝiaj subdomajnoj.",
-            "no-wild-hint": "Malpermesi ĵokeran atestilan eldonadon",
-            "no-wild-title": "Neniuj rajtigitaj eldonantoj por ĵokeraj atestiloj.",
-            "no-wild-body": "Kun ĉi tiuj parametroj, neniuj atestilaj aŭtoritatoj povas eldoni ĵokerajn atestilojn por ĉi tiu domajno kaj ĝiaj subdomajnoj. La jenaj agordoj povas supersedi ĉi tiun limigon:",
-            "title": "Atestila Rajtigo",
-            "wild-issuers": "Ĵokera atestila eldonado",
-            "wild-same-title": "Same kiel regula atestila eldonado.",
-            "wild-same-body": "Kun ĉi tiuj parametroj, rajtigitaj eldonantoj de regula atestilo ankaŭ povas eldoni ĵokerajn atestilojn por ĉi tiu domajno kaj ĝiaj subdomajnoj."
-        }
-    },
     "service": {
         "add": "Aldoni servon",
         "all": "Ĉiuj",
