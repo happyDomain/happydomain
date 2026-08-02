@@ -67,7 +67,7 @@
                 error_response = null;
                 question = Object.assign({}, form);
                 if (response.answer) {
-                    responses = response.answer as unknown as Array<dnsRR>;
+                    responses = response.answer as Array<dnsRR>;
                 } else {
                     responses = "no-answer";
                 }

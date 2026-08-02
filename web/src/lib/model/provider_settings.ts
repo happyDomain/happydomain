@@ -20,10 +20,11 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import type { FormState, FormResponse } from "$lib/model/custom_form.svelte";
-import type { Provider } from "$lib/model/provider";
 
 export interface ProviderSettingsState extends FormState {
-    Provider?: Provider;
+    // The settings of the provider being configured, whose shape depends on
+    // its type: the form is what gives them a meaning.
+    Provider?: Record<string, unknown>;
 }
 
 export interface ProviderSettingsResponse extends FormResponse<ProviderSettingsState> {}

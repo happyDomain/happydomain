@@ -30,7 +30,7 @@ export const userSession: Writable<User> = writable({} as User);
 export async function refreshUserSession() {
     setRefreshingSession(true);
     try {
-        const user = unwrapSdkResponse(await getAuth()) as unknown as User;
+        const user = unwrapSdkResponse(await getAuth());
         userSession.set(user);
         return user;
     } catch (err) {

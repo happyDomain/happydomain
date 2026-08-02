@@ -63,7 +63,9 @@ type ProviderMinimal struct {
 	// Type is the string representation of the Provider's type.
 	Type string `json:"_srctype"`
 
-	Provider Provider `json:"Provider"`
+	// Provider holds the settings of the provider, whose shape depends on
+	// the type given above.
+	Provider json.RawMessage `json:"Provider" swaggertype:"object"`
 
 	// Comment is a string that helps user to distinguish the Provider.
 	Comment string `json:"_comment,omitempty"`

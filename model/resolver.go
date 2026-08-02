@@ -58,13 +58,13 @@ type ResolverResponse struct {
 	Question []DNSQuestion `json:"question"`
 
 	// Answer is the list of Answer records in the DNS response.
-	Answer []dns.RR `json:"answer" swaggertype:"object"`
+	Answer []dns.RR `json:"answer" swaggertype:"array,object"`
 
 	// Ns is the list of Authoritative records in the DNS response.
-	Ns []dns.RR `json:"ns" swaggertype:"object"`
+	Ns []dns.RR `json:"ns" swaggertype:"array,object"`
 
 	// Extra is the list of extra records in the DNS response.
-	Extra []dns.RR `json:"extra" swaggertype:"object"`
+	Extra []dns.RR `json:"extra" swaggertype:"array,object"`
 }
 
 // NewResolverResponseFromMsg converts a dns.Msg to a ResolverResponse.

@@ -28,7 +28,6 @@ import {
     putProvidersByProviderId,
     deleteProvidersByProviderId,
 } from "$lib/api-base/sdk.gen";
-import type { HappydnsProviderMinimal } from "$lib/api-base/types.gen";
 import type { Provider } from "$lib/model/provider";
 import { unwrapSdkResponse, unwrapEmptyResponse } from "./errors";
 
@@ -65,13 +64,13 @@ export async function updateProvider(provider: Provider): Promise<Provider> {
         return unwrapSdkResponse(
             await putProvidersByProviderId({
                 path: { providerId: provider._id },
-                body: provider as unknown as HappydnsProviderMinimal,
+                body: provider,
             }),
         ) as Provider;
     } else {
         return unwrapSdkResponse(
             await postProviders({
-                body: provider as unknown as HappydnsProviderMinimal,
+                body: provider,
             }),
         ) as Provider;
     }

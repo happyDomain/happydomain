@@ -80,7 +80,6 @@ export class ProviderForm {
                 const res = await getProviderSettings(this.ptype, toState, this.value);
                 this.state = toState;
                 if (res.values) {
-                    // @ts-ignore
                     this.value.Provider = { ...this.value.Provider, ...res.values };
                 }
                 this.form = res.form;

@@ -32,7 +32,14 @@
 
     let { data }: Props = $props();
 
-    let value: ProviderSettingsState = $derived({ ...data.provider, state: 0 } as unknown as ProviderSettingsState);
+    // Only the fields the settings form works with: the provider metadata
+    // that comes alongside them is not part of what it sends back.
+    let value: ProviderSettingsState = $derived({
+        _id: data.provider._id,
+        _comment: data.provider._comment,
+        Provider: data.provider.Provider,
+        state: 0,
+    });
 </script>
 
 <ProviderFormPage
