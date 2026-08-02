@@ -99,7 +99,7 @@ func ConsolidateConfig() (opts *happydns.Options, err error) {
 		opts.BasePath = ""
 	}
 	if opts.DevProxy != "" && opts.BasePath != "" {
-		err = fmt.Errorf("-base-path is not supported in -dev mode")
+		err = fmt.Errorf("-baseurl is not supported in -dev mode")
 		return
 	}
 
