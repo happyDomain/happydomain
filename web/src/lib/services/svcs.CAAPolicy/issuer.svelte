@@ -50,6 +50,9 @@
     }: Props = $props();
 
     // svelte-ignore state_referenced_locally
+    // The template binds into the fields of val, and a $derived is not a state
+    // proxy: those mutations would go untracked. Keep the state and resync it.
+    // eslint-disable-next-line svelte/prefer-writable-derived
     let val = $state(parseCAAIssuer(value, newone));
 
     $effect(() => {

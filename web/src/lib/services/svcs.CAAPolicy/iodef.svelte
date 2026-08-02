@@ -39,6 +39,9 @@
 
     let { flag = $bindable(0), newone = false, readonly = false, tag = $bindable(""), value = $bindable("") }: Props = $props();
 
+    // The template binds into the fields of val, and a $derived is not a state
+    // proxy: those mutations would go untracked. Keep the state and resync it.
+    // eslint-disable-next-line svelte/prefer-writable-derived
     let val = $state(parseCAAIodef(value));
 
     $effect(() => {
