@@ -73,7 +73,7 @@
             {#each Object.keys(issuers) as issuer}
                 <option value={issuers[issuer][0]}>{issuer}</option>
             {/each}
-            <option value={""}>{$t("common.other")}</option>
+            <option value="">{$t("common.other")}</option>
         </Input>
     {:else}
         <Input type="text" bind:value={val.IssuerDomainName} />

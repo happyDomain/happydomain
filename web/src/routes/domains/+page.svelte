@@ -54,6 +54,11 @@
 
     let searchQuery = $state("");
     let selectedProviderId = $state(page.url.searchParams.get("provider") ?? "");
+    // A group name no domain can carry, so the "all groups" entry of the
+    // filter cannot collide with a real one (the empty name is taken: it is
+    // the group of the domains that have none).
+    const ALL_GROUPS = "\x00";
+
     let selectedGroup = $state<string | null>(
         page.url.searchParams.has("group") ? page.url.searchParams.get("group") : null,
     );
@@ -146,10 +151,10 @@
                 value={selectedGroup ?? ""}
                 onchange={(e) => {
                     const v = (e.target as HTMLSelectElement).value;
-                    selectedGroup = v === "\x00" ? null : v;
+                    selectedGroup = v === ALL_GROUPS ? null : v;
                 }}
             >
-                <option value={"\x00"}>{$t("domaingroups.all")}</option>
+                <option value={ALL_GROUPS}>{$t("domaingroups.all")}</option>
                 {#each availableGroups as group (group)}
                     <option value={group}
                         >{group === "" ? $t("domaingroups.no-group") : group}</option
