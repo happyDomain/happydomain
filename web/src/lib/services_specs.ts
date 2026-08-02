@@ -520,6 +520,25 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             ]
         }
     },
+    "svcs.ForSale": {
+        "name": "Domain For Sale",
+        "_svctype": "svcs.ForSale",
+        "description": "Advertise that this domain name is for sale (RFC 10023): asking price, free-form message, contact URI and/or broker-specific code.",
+        "family": "",
+        "categories": [
+            "service"
+        ],
+        "record_types": [
+            16
+        ],
+        "restrictions": {
+            "nearAlone": true,
+            "needTypes": [
+                16
+            ],
+            "single": true
+        }
+    },
     "svcs.MTA_STS": {
         "name": "MTA-STS",
         "_svctype": "svcs.MTA_STS",

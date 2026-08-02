@@ -28,6 +28,7 @@ import "$lib/services/alias/compliance";
 import "$lib/services/bimi/compliance";
 import "$lib/services/dkim/compliance";
 import "$lib/services/dmarc/compliance";
+import "$lib/services/forsale/compliance";
 import "$lib/services/mta_sts/compliance";
 import "$lib/services/mx/compliance";
 import "$lib/services/spf";

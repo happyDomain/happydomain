@@ -406,6 +406,20 @@
             "contact-phone": "Contact Phone",
             "add-contact-email": "Add contact email",
             "add-contact-phone": "Add contact phone"
+        },
+        "FORSALE": {
+            "intro": "Let potential buyers know this domain name is for sale. Add as much or as little detail as you want.",
+            "fval": "Price",
+            "ftxt": "Message",
+            "furi": "Link",
+            "fcod": "Code",
+            "add": "Add:",
+            "price-currency": "USD",
+            "price-amount": "750",
+            "text-placeholder": "Call for info.",
+            "uri-placeholder": "https://example.com/for-sale",
+            "code-placeholder": "EXCO-S2lscm95IHdhcyBoZXJl",
+            "too-long": "{{count}} octets, {{max}} maximum"
         }
     },
     "service": {
@@ -1313,6 +1327,64 @@
             "target-no-address": {
                 "title": "MX target \"{{target}}\" has no A/AAAA in this zone",
                 "detail": "Add a Server entry for this name, or check that the target FQDN is correct."
+            }
+        },
+        "forsale": {
+            "wrong-owner-name": {
+                "title": "For-sale record published at \"{{name}}\" instead of _for-sale",
+                "detail": "RFC 10023 requires these TXT records to sit at a _for-sale leaf node."
+            },
+            "missing-version": {
+                "title": "Missing v=FORSALE1; prefix",
+                "detail": "Every _for-sale TXT record must begin with v=FORSALE1;. Records without it are ignored."
+            },
+            "malformed-content": {
+                "title": "\"{{content}}\" is not a tag-value pair",
+                "detail": "After the version tag, a record holds either nothing or a single tag=value pair."
+            },
+            "multiple-pairs": {
+                "title": "More than one pair in the {{tag}} record",
+                "detail": "A _for-sale TXT record must not carry more than one tag-value pair. Split them into separate records."
+            },
+            "duplicate-pair": {
+                "title": "Duplicated pair \"{{pair}}\"",
+                "detail": "Every tag-value pair of the RRset must be unique. The same tag may repeat, but only with a different value."
+            },
+            "unknown-tag": {
+                "title": "Unknown tag \"{{tag}}\"",
+                "detail": "This tag is not defined by RFC 10023. It is published as it is, and consumers will ignore it."
+            },
+            "empty-value": {
+                "title": "Empty value for {{tag}}",
+                "detail": "Remove the entry or fill it in: a tag published without a value carries no information."
+            },
+            "value-too-long": {
+                "title": "The {{tag}} value is {{length}} octets long",
+                "detail": "RFC 10023 limits fcod and ftxt values to {{max}} octets."
+            },
+            "invalid-price": {
+                "title": "\"{{value}}\" is not a valid price",
+                "detail": "A price is a currency code in capital letters followed by an amount, e.g. USD750 or EUR1234.56."
+            },
+            "invalid-uri": {
+                "title": "\"{{uri}}\" is not a valid URI",
+                "detail": "The contact link must be an absolute URI, e.g. https://example.com/for-sale or mailto:sales@example.com."
+            },
+            "unusual-uri-scheme": {
+                "title": "Unusual URI scheme \"{{scheme}}\"",
+                "detail": "RFC 10023 recommends http, https, mailto or tel, so that a human can act on {{uri}}."
+            },
+            "ttl-too-high": {
+                "title": "The TTL of {{ttl}} seconds is above the recommended hour",
+                "detail": "RFC 10023 recommends a TTL of 3600 seconds or less, so the announcement can be withdrawn quickly once the domain is sold."
+            },
+            "inconsistent-ttl": {
+                "title": "The _for-sale records do not share the same TTL ({{ttls}})",
+                "detail": "All the records of the RRset should carry the same TTL."
+            },
+            "no-content": {
+                "title": "The domain is announced for sale without any detail",
+                "detail": "Add an asking price, a message, a contact link or a broker code, so that a buyer knows how to reach you."
             }
         },
         "tlsrpt": {

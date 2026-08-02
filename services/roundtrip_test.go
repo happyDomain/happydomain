@@ -189,6 +189,19 @@ func TestRoundTrip_DMARC(t *testing.T) {
 	assertRoundTrip(t, origin, records)
 }
 
+// TestRoundTrip_ForSale exercises a whole RFC 10023 _for-sale RRset: the four
+// records have to collapse into a single service and come back untouched.
+func TestRoundTrip_ForSale(t *testing.T) {
+	origin := "example.com."
+	records := []happydns.Record{
+		mustNewRR(t, "_for-sale.example.com. 3600 IN TXT \"v=FORSALE1;fcod=EXCO-S2lscm95IHdhcyBoZXJl\""),
+		mustNewRR(t, "_for-sale.example.com. 3600 IN TXT \"v=FORSALE1;ftxt=Call for info.\""),
+		mustNewRR(t, "_for-sale.example.com. 3600 IN TXT \"v=FORSALE1;furi=https://example.com/fs\""),
+		mustNewRR(t, "_for-sale.example.com. 3600 IN TXT \"v=FORSALE1;fval=USD750\""),
+	}
+	assertRoundTrip(t, origin, records)
+}
+
 func TestRoundTrip_MultiSubdomain(t *testing.T) {
 	origin := "example.com."
 	records := []happydns.Record{
