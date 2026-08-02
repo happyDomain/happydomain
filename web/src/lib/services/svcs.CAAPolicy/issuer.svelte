@@ -42,9 +42,12 @@
     }
 
     let {
+        // A $bindable default reaches the parent, which the rule cannot see.
+        // eslint-disable-next-line no-useless-assignment
         flag = $bindable(0),
         newone = false,
         readonly = false,
+        // eslint-disable-next-line no-useless-assignment
         tag = $bindable(""),
         value = $bindable(""),
     }: Props = $props();

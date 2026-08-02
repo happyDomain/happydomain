@@ -37,6 +37,8 @@
         value?: string;
     }
 
+    // A $bindable default reaches the parent, which the rule cannot see.
+    // eslint-disable-next-line no-useless-assignment
     let { flag = $bindable(0), newone = false, readonly = false, tag = $bindable(""), value = $bindable("") }: Props = $props();
 
     // The template binds into the fields of val, and a $derived is not a state

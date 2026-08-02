@@ -25,6 +25,8 @@
     import { onMount } from "svelte";
     import { appConfig } from "$lib/stores/config";
 
+    // A $bindable default reaches the parent, which the rule cannot see.
+    // eslint-disable-next-line no-useless-assignment
     let { token = $bindable() }: { token: string | null } = $props();
 
     let container: HTMLDivElement | undefined = $state();

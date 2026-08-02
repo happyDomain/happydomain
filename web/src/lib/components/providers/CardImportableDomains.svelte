@@ -88,7 +88,7 @@
     });
 
     function haveDomain($domains_idx: Record<string, Domain>, name: string) {
-        let domains: Array<Domain> | undefined = undefined;
+        let domains: Array<Domain> | undefined;
         if (name[name.length - 1] == ".") {
             domains = $domains_by_name[name];
         } else {

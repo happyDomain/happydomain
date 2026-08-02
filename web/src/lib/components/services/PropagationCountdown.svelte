@@ -34,6 +34,8 @@
     }
 
     let {
+        // A $bindable default reaches the parent, which the rule cannot see.
+        // eslint-disable-next-line no-useless-assignment
         isPropagating = $bindable(false),
         propagatedAt,
         localeString = "service.propagation-remaining",
