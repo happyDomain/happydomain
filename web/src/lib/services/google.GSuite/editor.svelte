@@ -23,21 +23,22 @@
 
 <script lang="ts">
     import type { Domain } from "$lib/model/domain";
+    import type { GoogleGSuiteBody } from "$lib/services_bodies";
     import RecordLine from "$lib/components/services/RecordLine.svelte";
     import TableRecords from "$lib/components/records/TableRecords.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
     import BasicInput from "$lib/components/inputs/basic.svelte";
-    import type { dnsResource, dnsTypeMX } from "$lib/dns_rr";
+    import type { dnsTypeMX } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
 
     interface Props {
         dn: string;
         origin: Domain;
         readonly?: boolean;
-        value: dnsResource & { validationMX?: dnsTypeMX };
+        value: GoogleGSuiteBody;
     }
 
-    let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
+    let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
     const type = "google.GSuite";
 
     // Ensure mx is always an array at runtime
@@ -149,14 +150,6 @@
                     {/if}
                 {/snippet}
             </TableRecords>
-        </div>
-    {/if}
-
-    <!-- SPF TXT Record -->
-    {#if value["txt"]}
-        <div class="mb-4">
-            <h4 class="text-primary pb-1 border-bottom border-1">SPF Record</h4>
-            <RecordLine {dn} {origin} bind:rr={value["txt"]!} />
         </div>
     {/if}
 </div>

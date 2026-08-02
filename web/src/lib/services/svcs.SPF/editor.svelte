@@ -27,18 +27,19 @@
     import { Button, Icon, InputGroup, ListGroup, ListGroupItem } from "@sveltestrap/sveltestrap";
 
     import type { Domain } from "$lib/model/domain";
+    import type { SvcsSPFBody } from "$lib/services_bodies";
     import BasicInput from "$lib/components/inputs/basic.svelte";
-    import type { dnsResource, dnsTypeTXT } from "$lib/dns_rr";
+    import type { dnsTypeTXT } from "$lib/dns_rr";
     import { newRR } from "$lib/dns_rr";
     import { parseSPF, stringifySPF } from "./model";
 
     interface Props {
         dn: string;
         origin: Domain;
-        value: dnsResource;
+        value: SvcsSPFBody;
     }
 
-    let { dn, origin, value = $bindable({}) }: Props = $props();
+    let { dn, origin, value = $bindable() }: Props = $props();
 
     const DEFAULT_SPF = "v=spf1 -all";
     const ALL_RE = /^[-~?+]?all$/;

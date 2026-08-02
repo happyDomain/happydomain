@@ -25,21 +25,22 @@
     import TableRecords from "$lib/components/records/TableRecords.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { dnsResource, dnsTypeSRV } from "$lib/dns_rr";
+    import type { AbstractXMPPBody } from "$lib/services_bodies";
+    import type { dnsTypeSRV } from "$lib/dns_rr";
 
     interface Props {
         dn: string;
         origin: Domain;
         readonly?: boolean;
-        value: Record<string, any>;
+        value: AbstractXMPPBody;
     }
 
-    let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
+    let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
     const type = "abstract.XMPP";
 
-    // Type-safe wrapper for dynamic access to value
-    const valueData = value as dnsResource & {
-        records?: dnsTypeSRV[];
+        // The editor splits the RRset into one bucket per service, kept
+    // alongside the body. The API ignores those extra keys.
+    const valueData = value as AbstractXMPPBody & {
         "xmpp-client"?: dnsTypeSRV[];
         "xmpp-server"?: dnsTypeSRV[];
         "xmpps-client"?: dnsTypeSRV[];

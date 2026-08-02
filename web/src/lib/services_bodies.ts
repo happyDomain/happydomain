@@ -248,3 +248,7 @@ export interface ServiceBodies {
     "svcs.TXT": SvcsTXTBody;
     "svcs.UnknownSRV": SvcsUnknownSRVBody;
 }
+
+// The body of any service, for the places holding one before knowing
+// which service it belongs to.
+export type ServiceBody = ServiceBodies[keyof ServiceBodies];

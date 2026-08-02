@@ -25,16 +25,17 @@
     import TableRecords from "$lib/components/records/TableRecords.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { dnsResource, dnsTypeSRV } from "$lib/dns_rr";
+    import type { AbstractRFC6186Body } from "$lib/services_bodies";
+    import type { dnsTypeSRV } from "$lib/dns_rr";
 
     interface Props {
         dn: string;
         origin: Domain;
         readonly?: boolean;
-        value: dnsResource;
+        value: AbstractRFC6186Body;
     }
 
-    let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
+    let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
     const type = "abstract.RFC6186";
 
     // Initialize srv array if needed (treat as array despite type definition)

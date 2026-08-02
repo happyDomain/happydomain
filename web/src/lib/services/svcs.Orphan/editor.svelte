@@ -24,17 +24,17 @@
 <script lang="ts">
     import { getServiceSpec } from "$lib/api/service_specs";
     import type { ServiceSpec } from "$lib/model/service_specs.svelte";
+    import type { SvcsOrphanBody } from "$lib/services_bodies";
     import RecordEditor from "$lib/components/records/Editor.svelte";
     import type { Domain } from "$lib/model/domain";
     import { newRecord } from "$lib/model/service_specs.svelte";
-    import type { dnsResource } from "$lib/dns_rr";
 
     interface Props {
         dn: string;
         origin: Domain;
         readonly?: boolean;
         type?: string;
-        value: dnsResource;
+        value: SvcsOrphanBody;
     }
 
     let {
@@ -42,7 +42,7 @@
         origin,
         readonly = false,
         type = "svcs.Orphan",
-        value = $bindable({}),
+        value = $bindable(),
     }: Props = $props();
 
     let sspecs: ServiceSpec = {} as ServiceSpec;

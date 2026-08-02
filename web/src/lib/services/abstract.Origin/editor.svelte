@@ -23,6 +23,7 @@
 
 <script lang="ts">
     import type { Domain } from "$lib/model/domain";
+    import type { AbstractOriginBody } from "$lib/services_bodies";
     import SOA from "$lib/components/records/SOA.svelte";
     import TableRecords from "$lib/components/records/TableRecords.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
@@ -30,10 +31,10 @@
     interface Props {
         dn: string;
         origin: Domain;
-        value: Record<string, any>;
+        value: AbstractOriginBody;
     }
 
-    let { dn, origin, value = $bindable({}) }: Props = $props();
+    let { dn, origin, value = $bindable() }: Props = $props();
     const type = "abstract.Origin";
 </script>
 
@@ -51,7 +52,11 @@
             {/if}
         {/snippet}
         {#snippet field(idx: number, field: string)}
-            <RawInput edit index={idx.toString()} bind:value={value["ns"][idx][field]} />
+            <RawInput
+                edit
+                index={idx.toString()}
+                bind:value={(value["ns"][idx] as Record<string, any>)[field]}
+            />
         {/snippet}
     </TableRecords>
 </div>

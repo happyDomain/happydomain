@@ -26,16 +26,17 @@
     import RawInput from "$lib/components/inputs/raw.svelte";
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { dnsResource, dnsTypeSRV, dnsRR } from "$lib/dns_rr";
+    import type { SvcsUnknownSRVBody } from "$lib/services_bodies";
+    import type { dnsTypeSRV, dnsRR } from "$lib/dns_rr";
 
     interface Props {
         dn: string;
         origin: Domain;
         readonly?: boolean;
-        value: dnsResource;
+        value: SvcsUnknownSRVBody;
     }
 
-    let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
+    let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
     const type = "svcs.UnknownSRV";
 
     // Initialize srv array if needed (treat as array despite type definition)

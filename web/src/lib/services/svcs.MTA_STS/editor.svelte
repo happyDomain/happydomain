@@ -25,18 +25,18 @@
     import { untrack } from "svelte";
 
     import type { Domain } from "$lib/model/domain";
+    import type { SvcsMTASTSBody } from "$lib/services_bodies";
     import BasicInput from "$lib/components/inputs/basic.svelte";
-    import type { dnsResource } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
     import { parseMTASTS, stringifyMTASTS } from "./model";
 
     interface Props {
         dn: string;
         origin: Domain;
-        value: dnsResource;
+        value: SvcsMTASTSBody;
     }
 
-    let { dn, origin, value = $bindable({}) }: Props = $props();
+    let { dn, origin, value = $bindable() }: Props = $props();
 
     if (!value["txt"]) {
         value["txt"] = newRR(

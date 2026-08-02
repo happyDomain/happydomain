@@ -27,6 +27,7 @@
     import { Alert, FormGroup, Input, Label } from "@sveltestrap/sveltestrap";
 
     import type { Domain } from "$lib/model/domain";
+    import type { AbstractEmailAutoConfigBody } from "$lib/services_bodies";
     import type { dnsTypeSRV, dnsTypeCNAME } from "$lib/dns_rr";
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import { t } from "$lib/translations";
@@ -34,10 +35,10 @@
     interface Props {
         dn: string;
         origin: Domain;
-        value: Record<string, any>;
+        value: AbstractEmailAutoConfigBody;
     }
 
-    let { dn, origin, value = $bindable({}) }: Props = $props();
+    let { dn, origin, value = $bindable() }: Props = $props();
 
     // ── Parsing helpers (record → form fields) ────────────────────────────
 
@@ -66,11 +67,11 @@
     function isStubRecord(r: { Hdr?: { Name?: string } } | null | undefined): boolean {
         return r != null && (!r.Hdr || !r.Hdr.Name);
     }
-    if (isStubRecord(value.incomingSRV)) value.incomingSRV = null;
-    if (isStubRecord(value.outgoingSRV)) value.outgoingSRV = null;
-    if (isStubRecord(value.autoconfigCNAME)) value.autoconfigCNAME = null;
-    if (isStubRecord(value.autodiscoverCNAME)) value.autodiscoverCNAME = null;
-    if (isStubRecord(value.autodiscoverSRV)) value.autodiscoverSRV = null;
+    if (isStubRecord(value.incomingSRV)) value.incomingSRV = undefined;
+    if (isStubRecord(value.outgoingSRV)) value.outgoingSRV = undefined;
+    if (isStubRecord(value.autoconfigCNAME)) value.autoconfigCNAME = undefined;
+    if (isStubRecord(value.autodiscoverCNAME)) value.autodiscoverCNAME = undefined;
+    if (isStubRecord(value.autodiscoverSRV)) value.autodiscoverSRV = undefined;
 
     const incomingSRV = value.incomingSRV as dnsTypeSRV | undefined;
     const outgoingSRV = value.outgoingSRV as dnsTypeSRV | undefined;
@@ -187,7 +188,7 @@
                   baseIncomingPriority,
                   baseIncomingWeight,
               )
-            : null;
+            : undefined;
     });
 
     $effect(() => {
@@ -202,7 +203,7 @@
                   baseOutgoingPriority,
                   baseOutgoingWeight,
               )
-            : null;
+            : undefined;
     });
 
     // HTTP discovery — toggles add/remove the three records. The CNAME/SRV
@@ -219,9 +220,9 @@
             value.autodiscoverCNAME = makeCNAME("autodiscover", discoveryTarget);
             value.autodiscoverSRV = makeSRV("_autodiscover._tcp", 443, discoveryTarget, 0, 0, 0);
         } else {
-            value.autoconfigCNAME = null;
-            value.autodiscoverCNAME = null;
-            value.autodiscoverSRV = null;
+            value.autoconfigCNAME = undefined;
+            value.autodiscoverCNAME = undefined;
+            value.autodiscoverSRV = undefined;
         }
     });
 

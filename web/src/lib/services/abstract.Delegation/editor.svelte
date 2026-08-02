@@ -25,16 +25,16 @@
     import TableRecords from "$lib/components/records/TableRecords.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { dnsResource } from "$lib/dns_rr";
-
+    import type { AbstractDelegationBody } from "$lib/services_bodies";
+    
     interface Props {
         dn: string;
         origin: Domain;
         readonly?: boolean;
-        value: dnsResource;
+        value: AbstractDelegationBody;
     }
 
-    let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
+    let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
     const type = "abstract.Delegation";
 </script>
 

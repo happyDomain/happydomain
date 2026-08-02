@@ -22,7 +22,10 @@
 -->
 
 <script lang="ts">
+    import type { Component } from "svelte";
+
     import type { Domain } from "$lib/model/domain";
+    import type { ServiceBody } from "$lib/services_bodies";
     import OrphanEditor from '$lib/services/svcs.Orphan/editor.svelte';
     import EditorCompliance from '$lib/components/services/EditorCompliance.svelte';
 
@@ -30,10 +33,18 @@
         dn: string;
         origin: Domain;
         type: string;
-        value: Record<string, any>;
+        value: ServiceBody;
     }
 
     let { dn, origin, type, value = $bindable({}) }: Props = $props();
+
+    // Every editor takes these props, but the body it expects depends on the
+    // service type, which is only known here as a string: the pairing of a
+    // type with its body is what each editor declares for itself.
+    type ServiceEditorComponent = Component<Props & { readonly?: boolean }>;
+
+    // Shown for a service type no editor claims, and when loading one fails.
+    const FallbackEditor = OrphanEditor as ServiceEditorComponent;
 
     // Map of all editor modules (lazy loaded). Each service owns a folder named
     // after its service type, so the type resolves to a path directly.
@@ -51,12 +62,12 @@
     let componentPromise = $derived(
         (async () => {
             if (editors[type]) {
-                const module = await editors[type]() as { default: typeof OrphanEditor };
+                const module = await editors[type]() as { default: ServiceEditorComponent };
                 return module.default;
             }
 
             // Fallback to Orphan editor for unknown types
-            return OrphanEditor;
+            return FallbackEditor;
         })()
     );
 </script>
@@ -82,5 +93,5 @@
         <p>Failed to load editor for type: {type}</p>
         <p class="small text-muted">Error: {error.message}</p>
     </div>
-    <OrphanEditor {dn} {origin} {type} bind:value={value} />
+    <FallbackEditor {dn} {origin} {type} bind:value={value} />
 {/await}

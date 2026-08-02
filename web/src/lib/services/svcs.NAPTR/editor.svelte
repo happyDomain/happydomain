@@ -24,17 +24,17 @@
 <script lang="ts">
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { dnsResource } from "$lib/dns_rr";
+    import type { SvcsNAPTRBody } from "$lib/services_bodies";
     import { getRrtype, newRR } from "$lib/dns_rr";
 
     interface Props {
         dn: string;
         origin: Domain;
         readonly?: boolean;
-        value: dnsResource;
+        value: SvcsNAPTRBody;
     }
 
-    let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
+    let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
     const type = "svcs.NAPTR";
 
     // Initialize NAPTR record if needed

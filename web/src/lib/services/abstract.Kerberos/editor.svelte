@@ -25,16 +25,17 @@
     import TableRecords from "$lib/components/records/TableRecords.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { dnsResource, dnsTypeSRV } from "$lib/dns_rr";
+    import type { AbstractKerberosBody } from "$lib/services_bodies";
+    import type { dnsTypeSRV } from "$lib/dns_rr";
 
     interface Props {
         dn: string;
         origin: Domain;
         readonly?: boolean;
-        value: dnsResource;
+        value: AbstractKerberosBody;
     }
 
-    let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
+    let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
     const type = "abstract.Kerberos";
 
     // Each bucket maps to one field on the Go service body. The `key` here

@@ -27,8 +27,9 @@
     import { Button, Icon, Input } from "@sveltestrap/sveltestrap";
 
     import type { Domain } from "$lib/model/domain";
+    import type { SvcsTLSRPTBody } from "$lib/services_bodies";
     import BasicInput from "$lib/components/inputs/basic.svelte";
-    import type { dnsResource, dnsTypeTXT } from "$lib/dns_rr";
+    import type { dnsTypeTXT } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
     import { t } from "$lib/translations";
     import { TLSRPTPolicy } from "./model.svelte";
@@ -36,10 +37,10 @@
     interface Props {
         dn: string;
         origin: Domain;
-        value: dnsResource;
+        value: SvcsTLSRPTBody;
     }
 
-    let { dn, origin, value = $bindable({}) }: Props = $props();
+    let { dn, origin, value = $bindable() }: Props = $props();
 
     if (!value["txt"]) {
         value["txt"] = newRR(

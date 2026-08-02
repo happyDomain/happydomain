@@ -25,7 +25,9 @@
     import { Input } from "@sveltestrap/sveltestrap";
 
     import { getRrtype, newRR } from "$lib/dns_rr";
+    import type { dnsTypeA, dnsTypeAAAA, dnsTypeSSHFP } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";
+    import type { AbstractServerBody } from "$lib/services_bodies";
     import TableRecords from "$lib/components/records/TableRecords.svelte";
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
@@ -33,14 +35,15 @@
     interface Props {
         dn: string;
         origin: Domain;
-        value: Record<string, any>;
+        value: AbstractServerBody;
     }
 
-    let { dn, origin, value = $bindable({}) }: Props = $props();
+    let { dn, origin, value = $bindable() }: Props = $props();
 
-    if (!value["SSHFP"]) {
-        value["SSHFP"] = [];
-    }
+    // Read back through the body on each access: the state proxy hands out the
+    // reactive array, which a plain assignment expression would not.
+    if (!value.SSHFP) value.SSHFP = [];
+    const fingerprints = (): dnsTypeSSHFP[] => value.SSHFP ?? [];
 
     const type = "abstract.Server";
 </script>
@@ -61,8 +64,8 @@
         />
     {:else}
         <Input
-            onclick={() => (value["A"] = newRR(dn, getRrtype("A")))}
-            oninput={() => (value["A"] = newRR(dn, getRrtype("A")))}
+            onclick={() => (value["A"] = newRR(dn, getRrtype("A")) as dnsTypeA)}
+            oninput={() => (value["A"] = newRR(dn, getRrtype("A")) as dnsTypeA)}
         />
     {/if}
     {#if value["AAAA"]}
@@ -79,8 +82,8 @@
     {:else}
         <Input
             label="test"
-            onclick={() => (value["AAAA"] = newRR(dn, getRrtype("AAAA")))}
-            oninput={() => (value["AAAA"] = newRR(dn, getRrtype("AAAA")))}
+            onclick={() => (value["AAAA"] = newRR(dn, getRrtype("AAAA")) as dnsTypeAAAA)}
+            oninput={() => (value["AAAA"] = newRR(dn, getRrtype("AAAA")) as dnsTypeAAAA)}
         />
     {/if}
 </div>
@@ -91,7 +94,7 @@
         <small class="text-muted">Server's SSH fingerprint</small>
     </h4>
     <!--RecordsLines {dn} {origin} bind:rrs={value["ns"]} /-->
-    <TableRecords class="mt-3" {dn} edit {origin} rrs={value["SSHFP"]} rrtype="SSHFP">
+    <TableRecords class="mt-3" {dn} edit {origin} rrs={fingerprints()} rrtype="SSHFP">
         {#snippet header(field: string)}
             {#if field == "Algorithm"}
                 Algorithm
@@ -102,6 +105,7 @@
             {/if}
         {/snippet}
         {#snippet field(idx: number, field: string)}
+            {@const rr = fingerprints()[idx] as Record<string, any>}
             {#if field == "Algorithm"}
                 <RawInput
                     edit
@@ -110,7 +114,7 @@
                         id: "algorithm",
                         type: "uint",
                     }}
-                    bind:value={value["SSHFP"][idx][field]}
+                    bind:value={rr[field]}
                 />
             {:else if field == "Type"}
                 <RawInput
@@ -120,14 +124,10 @@
                         id: "type",
                         type: "uint",
                     }}
-                    bind:value={value["SSHFP"][idx][field]}
+                    bind:value={rr[field]}
                 />
             {:else if field == "FingerPrint"}
-                <RawInput
-                    edit
-                    index={"SSHFP-" + idx.toString()}
-                    bind:value={value["SSHFP"][idx][field]}
-                />
+                <RawInput edit index={"SSHFP-" + idx.toString()} bind:value={rr[field]} />
             {/if}
         {/snippet}
     </TableRecords>

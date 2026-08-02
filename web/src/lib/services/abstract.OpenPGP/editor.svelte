@@ -26,8 +26,9 @@
 
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import type { Domain } from "$lib/model/domain";
+    import type { AbstractOpenPGPBody } from "$lib/services_bodies";
     import { domainJoin } from "$lib/dns";
-    import type { dnsResource, dnsTypeOPENPGPKEY } from "$lib/dns_rr";
+    import type { dnsTypeOPENPGPKEY } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
     import { t } from "$lib/translations";
     import { createEmailIdentifierHasher } from "$lib/utils/email_identifier.svelte";
@@ -36,10 +37,10 @@
         dn: string;
         origin: Domain;
         readonly?: boolean;
-        value: dnsResource & { username?: string; openpgpkey?: dnsTypeOPENPGPKEY };
+        value: AbstractOpenPGPBody;
     }
 
-    let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
+    let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
     const type = "abstract.OpenPGP";
 
     // Initialize OPENPGPKEY record if needed

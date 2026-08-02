@@ -27,8 +27,8 @@
     import { Button, FormGroup, Icon, Input } from "@sveltestrap/sveltestrap";
 
     import type { Domain } from "$lib/model/domain";
+    import type { SvcsDMARCBody } from "$lib/services_bodies";
     import BasicInput from "$lib/components/inputs/basic.svelte";
-    import type { dnsResource } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
     import { t } from "$lib/translations";
     import { parseDMARC, stringifyDMARC } from "./model";
@@ -36,10 +36,10 @@
     interface Props {
         dn: string;
         origin: Domain;
-        value: dnsResource;
+        value: SvcsDMARCBody;
     }
 
-    let { dn, origin, value = $bindable({}) }: Props = $props();
+    let { dn, origin, value = $bindable() }: Props = $props();
 
     if (!value["txt"]) {
         value["txt"] = newRR(

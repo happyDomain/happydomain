@@ -222,7 +222,11 @@ func writeBodies(fd io.Writer) int {
 	for _, svctype := range svctypes {
 		fmt.Fprintf(fd, "    %q: %s;\n", svctype, bodyInterfaceName(svctype))
 	}
-	fmt.Fprint(fd, "}\n")
+	fmt.Fprint(fd, "}\n\n")
+
+	fmt.Fprint(fd, "// The body of any service, for the places holding one before knowing\n")
+	fmt.Fprint(fd, "// which service it belongs to.\n")
+	fmt.Fprint(fd, "export type ServiceBody = ServiceBodies[keyof ServiceBodies];\n")
 
 	return len(svctypes)
 }

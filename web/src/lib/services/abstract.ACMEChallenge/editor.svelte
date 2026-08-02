@@ -24,17 +24,18 @@
 <script lang="ts">
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { dnsResource, dnsTypeTXT } from "$lib/dns_rr";
+    import type { AbstractACMEChallengeBody } from "$lib/services_bodies";
+    import type { dnsTypeTXT } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
 
     interface Props {
         dn: string;
         origin: Domain;
         readonly?: boolean;
-        value: dnsResource;
+        value: AbstractACMEChallengeBody;
     }
 
-    let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
+    let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
     const type = "abstract.ACMEChallenge";
 
     // Initialize TXT record if needed

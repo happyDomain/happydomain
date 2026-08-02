@@ -24,17 +24,18 @@
 <script lang="ts">
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { dnsResource, dnsTypePTR } from "$lib/dns_rr";
+    import type { SvcsPTRBody } from "$lib/services_bodies";
+    import type { dnsTypePTR } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
 
     interface Props {
         dn: string;
         origin: Domain;
         readonly?: boolean;
-        value: dnsResource;
+        value: SvcsPTRBody;
     }
 
-    let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
+    let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
     const type = "svcs.PTR";
 
     // The PTR service holds the record itself, under a key the generated

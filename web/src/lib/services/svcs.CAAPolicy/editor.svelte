@@ -24,10 +24,10 @@
 <script lang="ts">
     import { Alert, Button, FormGroup, Icon, Input } from "@sveltestrap/sveltestrap";
 
-    import type { dnsResource } from "$lib/dns_rr";
     import CAAIssuer from "./issuer.svelte";
     import CAAIodef from "./iodef.svelte";
     import type { Domain } from "$lib/model/domain";
+    import type { SvcsCAAPolicyBody } from "$lib/services_bodies";
     import { t } from "$lib/translations";
     import { CAAPolicy, newCAARecord, type CAATag } from "./model.svelte";
 
@@ -35,10 +35,10 @@
         dn: string;
         origin: Domain;
         readonly?: boolean;
-        value: dnsResource;
+        value: SvcsCAAPolicyBody;
     }
 
-    let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
+    let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
 
     function addIssuer(tag: CAATag): (e: CustomEvent<string>) => void {
         return (e: CustomEvent<string>) => {

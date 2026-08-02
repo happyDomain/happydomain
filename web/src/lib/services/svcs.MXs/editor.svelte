@@ -23,17 +23,18 @@
 
 <script lang="ts">
     import type { Domain } from "$lib/model/domain";
+    import type { SvcsMXsBody } from "$lib/services_bodies";
     import TableRecords from "$lib/components/records/TableRecords.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
-    import type { dnsResource, dnsTypeMX } from "$lib/dns_rr";
+    import type { dnsTypeMX } from "$lib/dns_rr";
 
     interface Props {
         dn: string;
         origin: Domain;
-        value: dnsResource;
+        value: SvcsMXsBody;
     }
 
-    let { dn, origin, value = $bindable({}) }: Props = $props();
+    let { dn, origin, value = $bindable() }: Props = $props();
 
     const type = "svcs.MXs";
 

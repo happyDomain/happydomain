@@ -26,22 +26,23 @@
     import RawInput from "$lib/components/inputs/raw.svelte";
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { dnsResource, dnsTypeSRV, dnsTypeTXT } from "$lib/dns_rr";
+    import type { AbstractCardDAVBody } from "$lib/services_bodies";
+    import type { dnsTypeSRV, dnsTypeTXT } from "$lib/dns_rr";
     import { getRrtype, newRR } from "$lib/dns_rr";
 
     interface Props {
         dn: string;
         origin: Domain;
         readonly?: boolean;
-        value: Record<string, any>;
+        value: AbstractCardDAVBody;
     }
 
-    let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
+    let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
     const type = "abstract.CardDAV";
 
-    const valueData = value as dnsResource & {
-        records?: dnsTypeSRV[];
-        paths?: dnsTypeTXT[];
+    // The editor splits the RRset into one bucket per service, kept
+    // alongside the body. The API ignores those extra keys.
+    const valueData = value as AbstractCardDAVBody & {
         "carddavs-tcp"?: dnsTypeSRV[];
         "carddav-tcp"?: dnsTypeSRV[];
         [key: string]: any;

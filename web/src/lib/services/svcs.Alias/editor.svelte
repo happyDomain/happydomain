@@ -24,7 +24,8 @@
 <script lang="ts">
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import { getProviderSpec } from "$lib/api/provider_specs";
-    import type { dnsRR, dnsResource } from "$lib/dns_rr";
+    import type { dnsRR } from "$lib/dns_rr";
+    import type { SvcsAliasBody } from "$lib/services_bodies";
     import type { Domain } from "$lib/model/domain";
     import { getAvailableResourceTypes, type ProviderInfos } from "$lib/model/provider";
     import { getRrtype, newRR, nsrrtype } from "$lib/dns_rr";
@@ -34,10 +35,10 @@
         dn: string;
         origin: Domain;
         readonly?: boolean;
-        value: dnsResource;
+        value: SvcsAliasBody;
     }
 
-    let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
+    let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
 
     // The Alias service holds the record itself, under a key the generated
     // dnsResource interface does not know about.

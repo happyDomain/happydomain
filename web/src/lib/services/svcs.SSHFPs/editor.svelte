@@ -25,39 +25,31 @@
     import { Button, Icon, Input } from "@sveltestrap/sveltestrap";
     import { t } from "$lib/translations";
     import type { Domain } from "$lib/model/domain";
-    import type { dnsResource, dnsRR } from "$lib/dns_rr";
+    import type { SvcsSSHFPsBody } from "$lib/services_bodies";
+
+    type SSHFPEntry = NonNullable<SvcsSSHFPsBody["SSHFP"]>[number];
 
     interface Props {
         dn: string;
         origin: Domain;
         readonly?: boolean;
-        value: dnsResource;
+        value: SvcsSSHFPsBody;
     }
 
-    let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
+    let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
     const type = "svcs.SSHFPs";
 
-    // Initialize sshfp array if needed - cast to array type
-    if (!value["sshfp"]) {
-        value["sshfp"] = [] as any;
-    }
-
-    // Type-safe accessor for sshfp records as array
-    const getSSHFPArray = (): dnsRR[] => (value["sshfp"] as any) as dnsRR[];
+    // Read back through the body on each access: the state proxy hands out the
+    // reactive array, which a plain assignment expression would not.
+    if (!value.SSHFP) value.SSHFP = [];
+    const fingerprints = (): SSHFPEntry[] => value.SSHFP ?? [];
 
     function addSSHFP() {
-        const sshfpArray = getSSHFPArray();
-        if (!sshfpArray) {
-            value["sshfp"] = [] as any;
-        }
-        getSSHFPArray().push({ Algorithm: 1, Type: 1, FingerPrint: "" } as any);
+        fingerprints().push({ algorithm: 1, type: 1, fingerprint: "" });
     }
 
     function deleteSSHFP(idx: number) {
-        const sshfpArray = getSSHFPArray();
-        if (sshfpArray) {
-            sshfpArray.splice(idx, 1);
-        }
+        fingerprints().splice(idx, 1);
     }
 </script>
 
@@ -71,18 +63,17 @@
         </tr>
     </thead>
     <tbody>
-        {#if getSSHFPArray() && getSSHFPArray().length}
-            {@const sshfpArray = getSSHFPArray()}
-            {#each sshfpArray as sshfp, idx}
+        {#if fingerprints().length}
+            {#each fingerprints() as fingerprint, idx}
                 <tr>
                     <td>
-                        <Input type="number" bsSize="sm" bind:value={sshfpArray[idx].Algorithm} />
+                        <Input type="number" bsSize="sm" bind:value={fingerprint.algorithm} />
                     </td>
                     <td>
-                        <Input type="number" bsSize="sm" bind:value={sshfpArray[idx].Type} />
+                        <Input type="number" bsSize="sm" bind:value={fingerprint.type} />
                     </td>
                     <td>
-                        <Input bsSize="sm" bind:value={sshfpArray[idx].FingerPrint} />
+                        <Input bsSize="sm" bind:value={fingerprint.fingerprint} />
                     </td>
                     <td>
                         <Button
