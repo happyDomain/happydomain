@@ -30,17 +30,13 @@
 </script>
 
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
-
+    
     import NewSubdomainModal, {
         controls as ctrlNewSubdomainModal,
     } from "$lib/components/modals/NewSubdomain.svelte";
     import { controls as ctrlServicePath } from "$lib/components/services/NewServicePath.svelte";
     import type { Domain } from "$lib/model/domain";
-    import type { ServiceCombined } from "$lib/model/service.svelte";
-    import type { Zone } from "$lib/model/zone";
 
-    const dispatch = createEventDispatcher();
 
     interface Props {
         origin: Domain;

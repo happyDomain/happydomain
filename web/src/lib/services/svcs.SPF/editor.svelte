@@ -69,8 +69,6 @@
         value["txt"]!.Txt = stringifySPF({ v, f });
     });
 
-    const type = "svcs.SPF";
-
     let inputRefs: HTMLInputElement[] = $state([]);
 
     async function addDirective() {

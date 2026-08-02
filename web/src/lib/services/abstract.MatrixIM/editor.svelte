@@ -36,7 +36,6 @@
     }
 
     let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
-    const type = "abstract.MatrixIM";
 
     // Initialize records array if needed (treat as array despite type definition)
     if (!(value as any)["records"]) {

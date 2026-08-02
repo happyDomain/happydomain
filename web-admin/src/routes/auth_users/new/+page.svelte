@@ -52,7 +52,7 @@
         errorMessage = '';
 
         try {
-            const response = await postAuth({
+            await postAuth({
                 body: {
                     email: email,
                 }

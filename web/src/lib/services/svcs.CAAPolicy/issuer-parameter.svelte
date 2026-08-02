@@ -35,7 +35,7 @@
         value?: string;
     }
 
-    let { edit = $bindable(false), readonly = false, value = $bindable("") }: Props = $props();
+    let { edit = $bindable(false), value = $bindable("") }: Props = $props();
 
     // The template binds into the fields of val, and a $derived is not a state
     // proxy: those mutations would go untracked. Keep the state and resync it.

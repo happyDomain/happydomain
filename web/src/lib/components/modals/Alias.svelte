@@ -23,21 +23,17 @@
 
 <script module lang="ts">
     export const controls = {
-        Open(domain: string): void { },
+        Open(_domain: string): void { },
     };
 </script>
 
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
-
+    
     import { escape } from "html-escaper";
 
     import {
         Button,
         Icon,
-        Input,
-        InputGroup,
-        InputGroupText,
         Modal,
         ModalBody,
         ModalFooter,
@@ -48,13 +44,11 @@
     import { addZoneService } from "$lib/api/zone";
     import { ServiceCombined } from "$lib/model/service.svelte";
     import DomainInput from "$lib/components/inputs/Domain.svelte";
-    import { fqdn, validateDomain } from "$lib/dns";
+    import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
-    import type { Zone } from "$lib/model/zone";
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
 
-    const dispatch = createEventDispatcher();
 
     const toggle = () => (isOpen = !isOpen);
 

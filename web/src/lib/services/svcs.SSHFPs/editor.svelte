@@ -37,7 +37,6 @@
     }
 
     let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
-    const type = "svcs.SSHFPs";
 
     // Read back through the body on each access: the state proxy hands out the
     // reactive array, which a plain assignment expression would not.

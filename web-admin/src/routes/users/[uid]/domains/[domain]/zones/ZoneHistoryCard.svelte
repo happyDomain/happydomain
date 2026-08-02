@@ -24,7 +24,6 @@
 <script lang="ts">
     import {
         Badge,
-        Button,
         Card,
         CardBody,
         CardHeader,

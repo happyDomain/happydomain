@@ -23,7 +23,7 @@
 
 <script module lang="ts">
     export const controls = {
-        Open (domain: string): void { },
+        Open (_domain: string): void { },
     };
 </script>
 

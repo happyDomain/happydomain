@@ -34,7 +34,6 @@
 
     import { Button, Modal, ModalBody, ModalFooter, ModalHeader, Spinner } from "@sveltestrap/sveltestrap";
 
-    import { viewZone as APIViewZone } from "$lib/api/zone";
     import { t } from "$lib/translations";
 
     const dispatch = createEventDispatcher();

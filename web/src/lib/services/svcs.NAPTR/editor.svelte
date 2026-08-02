@@ -35,7 +35,6 @@
     }
 
     let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
-    const type = "svcs.NAPTR";
 
     // Initialize NAPTR record if needed
     if (!value["naptr"]) {

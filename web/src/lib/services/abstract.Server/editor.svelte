@@ -45,7 +45,6 @@
     if (!value.SSHFP) value.SSHFP = [];
     const fingerprints = (): dnsTypeSSHFP[] => value.SSHFP ?? [];
 
-    const type = "abstract.Server";
 </script>
 
 <div>

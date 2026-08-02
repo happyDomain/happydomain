@@ -30,7 +30,6 @@
     import { toasts } from "$lib/stores/toasts";
     import type {
         CheckerCheckerOptionDocumentation,
-        HappydnsCheckPlan,
         HappydnsCheckPlanWritable,
         HappydnsCheckerOptionsPositional,
     } from "$lib/api-base/types.gen";

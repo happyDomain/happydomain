@@ -50,7 +50,6 @@
 
     let val = $derived(new CAAPolicy(value));
 
-    const type = "svcs.CAAPolicy";
 </script>
 
 <h4 class="mt-4">{$t("resources.CAA.title")}</h4>

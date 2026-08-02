@@ -26,7 +26,6 @@
     import ProviderSelector from "$lib/components/forms/ProviderSelector.svelte";
     import type { Provider } from "$lib/model/provider";
     import type { ProviderForm } from "$lib/model/provider_form.svelte.ts";
-    import { t } from "$lib/translations";
 
     interface Props {
         /** Unique HTML form id — avoids conflicts when multiple modals coexist. */

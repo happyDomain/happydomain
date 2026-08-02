@@ -24,7 +24,7 @@
 <script lang="ts">
     import { page } from "$app/state";
 
-    import { Button, FormGroup, Input, Label, Spinner } from "@sveltestrap/sveltestrap";
+    import { Button, FormGroup, Input, Spinner } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
     import { getOidcProvider } from "$lib/api/auth";

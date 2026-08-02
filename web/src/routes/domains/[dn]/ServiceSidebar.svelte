@@ -26,7 +26,7 @@
     import type { Domain } from "$lib/model/domain";
     import { domainLink } from "$lib/stores/domains";
     import { serviceName } from "$lib/services/infos";
-    import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
+    import { servicesSpecs } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
 
     interface Props {

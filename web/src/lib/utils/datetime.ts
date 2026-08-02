@@ -13,7 +13,7 @@ export function toDatetimeLocal(isoString: string | null | undefined): string {
         const hours = String(date.getHours()).padStart(2, "0");
         const minutes = String(date.getMinutes()).padStart(2, "0");
         return `${year}-${month}-${day}T${hours}:${minutes}`;
-    } catch (e) {
+    } catch {
         return "";
     }
 }
@@ -75,7 +75,7 @@ export function fromDatetimeLocal(datetimeLocal: string): string | null {
     if (!datetimeLocal) return null;
     try {
         return new Date(datetimeLocal).toISOString();
-    } catch (e) {
+    } catch {
         return null;
     }
 }

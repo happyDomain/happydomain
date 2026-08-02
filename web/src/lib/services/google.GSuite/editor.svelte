@@ -39,7 +39,6 @@
     }
 
     let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
-    const type = "google.GSuite";
 
     // Ensure mx is always an array at runtime
     $effect(() => {

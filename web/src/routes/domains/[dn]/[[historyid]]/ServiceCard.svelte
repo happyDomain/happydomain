@@ -52,14 +52,13 @@
         zoneId: string;
     }
 
-    let { dn, origin, service, zoneId }: Props = $props();
+    let { dn, service }: Props = $props();
 
     // Will be changed by PropagationCountdown
     let isPropagating = $state(true);
 
     function openService() {
         if (service) {
-            const subdomainParam = dn === "" ? "@" : dn;
             ctrlServiceDetails.Open(service);
         } else {
             ctrlServicePath.Open(dn);

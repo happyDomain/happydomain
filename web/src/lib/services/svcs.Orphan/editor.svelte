@@ -55,7 +55,7 @@
 {#each Object.keys(value) as key}
     {@const valueKey = (value as any)[key]}
     {#if valueKey instanceof Array}
-        {#each valueKey as v, i}
+        {#each valueKey as _v, i}
             {#if i > 0}
                 <hr />
             {/if}

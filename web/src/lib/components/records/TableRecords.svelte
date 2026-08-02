@@ -48,7 +48,6 @@
         edit,
         field,
         header,
-        origin,
         rrs = $bindable([]),
         rrtype,
     }: Props = $props();
@@ -93,7 +92,7 @@
     </thead>
     <tbody>
         {#if rrs && rrs.length}
-            {#each rrs as rr, i}
+            {#each rrs as _rr, i}
                 <tr>
                     {#each rdatafields(rrtype) as f}
                         <td>

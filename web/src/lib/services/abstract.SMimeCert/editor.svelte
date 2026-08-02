@@ -41,7 +41,6 @@
     }
 
     let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
-    const type = "abstract.SMimeCert";
 
     // Initialize SMIMEA record if needed
     if (!value.smimea) {

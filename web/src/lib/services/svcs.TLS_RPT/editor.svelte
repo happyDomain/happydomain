@@ -51,7 +51,6 @@
 
     let val = $derived(new TLSRPTPolicy(value["txt"] as dnsTypeTXT));
 
-    const type = "svcs.TLS_RPT";
 </script>
 
 <div>
@@ -77,7 +76,7 @@
         </thead>
         <tbody>
             {#if val.rua && val.rua.length}
-                {#each val.rua as rua, idx}
+                {#each val.rua as _rua, idx}
                     <tr>
                         <td>
                             <Input

@@ -24,7 +24,7 @@
 <script lang="ts">
     import { navigate } from "$lib/stores/config";
 
-    import { Alert, Icon, Spinner } from "@sveltestrap/sveltestrap";
+    import { Alert, Spinner } from "@sveltestrap/sveltestrap";
 
     import PageTitle from "$lib/components/PageTitle.svelte";
     import type { Domain } from "$lib/model/domain";
@@ -50,7 +50,7 @@
                     },
                 );
             },
-            (e) => {},
+            () => {},
         );
     });
 </script>

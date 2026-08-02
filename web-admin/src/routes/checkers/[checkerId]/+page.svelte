@@ -214,7 +214,7 @@
                                 {/if}
                             </CardHeader>
                             <ListGroup flush>
-                                {#each checker.rules as rule, i}
+                                {#each checker.rules as rule, _i}
                                     {@const ruleOpts = rule.options?.adminOpts || []}
                                     <ListGroupItem>
                                         <div class="d-flex align-items-start gap-2 mb-1">

@@ -66,7 +66,6 @@
         }
     });
 
-    const type = "svcs.BIMI";
 </script>
 
 <div>

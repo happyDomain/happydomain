@@ -54,7 +54,6 @@
         value["txt"]!.Txt = stringifyDMARC(val, value["txt"]?.Txt || "");
     });
 
-    const type = "svcs.DMARC";
 </script>
 
 <div>
@@ -115,7 +114,7 @@
             </thead>
             <tbody>
                 {#if val.rua && val.rua.length}
-                    {#each val.rua as rua, idx}
+                    {#each val.rua as _rua, idx}
                         <tr>
                             <td>
                                 <Input type="text" bsSize="sm" bind:value={val.rua[idx]} />
@@ -171,7 +170,7 @@
             </thead>
             <tbody>
                 {#if val.ruf && val.ruf.length}
-                    {#each val.ruf as ruf, idx}
+                    {#each val.ruf as _ruf, idx}
                         <tr>
                             <td>
                                 <Input type="text" bsSize="sm" bind:value={val.ruf[idx]} />
@@ -255,7 +254,7 @@
             </thead>
             <tbody>
                 {#if val.fo && val.fo.length}
-                    {#each val.fo as fo, idx}
+                    {#each val.fo as _fo, idx}
                         <tr>
                             <td>
                                 <Input type="text" bsSize="sm" bind:value={val.fo[idx]} />
@@ -308,7 +307,7 @@
             </thead>
             <tbody>
                 {#if val.rf && val.rf.length}
-                    {#each val.rf as rf, idx}
+                    {#each val.rf as _rf, idx}
                         <tr>
                             <td>
                                 <Input type="text" bsSize="sm" bind:value={val.rf[idx]} />

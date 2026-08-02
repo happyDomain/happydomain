@@ -35,7 +35,6 @@
     }
 
     let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
-    const type = "abstract.Delegation";
 </script>
 
 <div class="mb-4">

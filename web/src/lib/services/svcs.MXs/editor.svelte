@@ -36,8 +36,6 @@
 
     let { dn, origin, value = $bindable() }: Props = $props();
 
-    const type = "svcs.MXs";
-
     if (value["mx"] && !Array.isArray(value["mx"])) {
         value["mx"] = [value["mx"]];
     }

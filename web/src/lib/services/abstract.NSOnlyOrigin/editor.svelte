@@ -34,7 +34,6 @@
     }
 
     let { dn, origin, value = $bindable() }: Props = $props();
-    const type = "abstract.Origin";
 </script>
 
 <div>

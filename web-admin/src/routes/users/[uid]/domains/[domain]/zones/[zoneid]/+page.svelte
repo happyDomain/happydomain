@@ -226,7 +226,7 @@
                                         </h5>
 
                                         <Accordion class="mb-3">
-                                            {#each services as service, idx}
+                                            {#each services as service, _idx}
                                                 {@const headerText = `${service._svctype || "Unknown"}${service._comment ? " - " + service._comment : ""}${service._tmp_hint_nb ? ` (${service._tmp_hint_nb} record${service._tmp_hint_nb > 1 ? "s" : ""})` : ""}`}
                                                 <AccordionItem header={headerText}>
                                                     <div class="small">

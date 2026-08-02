@@ -47,7 +47,7 @@
             let datajson;
             try {
                 datajson = JSON.parse(text);
-            } catch (e) {
+            } catch {
                 alert("The file is not valid JSON!");
                 return;
             }

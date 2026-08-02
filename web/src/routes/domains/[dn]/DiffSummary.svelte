@@ -34,7 +34,6 @@
     let zoneDiffCreated = $derived(zoneDiff.filter((c) => c.kind == 1).length);
     let zoneDiffModified = $derived(zoneDiff.filter((c) => c.kind == 2).length);
     let zoneDiffDeleted = $derived(zoneDiff.filter((c) => c.kind == 3).length);
-    let zoneDiffOther = $derived(zoneDiff.filter((c) => c.kind == 99).length);
 </script>
 
 {#if zoneDiff && zoneDiff.length}

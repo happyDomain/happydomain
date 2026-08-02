@@ -106,7 +106,7 @@
         </thead>
         <tbody>
             {#if value && value.length}
-                {#each value as v, idx}
+                {#each value as _v, idx}
                     <tr>
                         {#if linespecs && linespecs.length}
                             {#each linespecs as spec}

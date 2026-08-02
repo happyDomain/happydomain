@@ -56,7 +56,7 @@
         isOpen?: boolean;
     }
 
-    let { domain, selectedHistory = "", isOpen = $bindable(false) }: Props = $props();
+    let { domain, isOpen = $bindable(false) }: Props = $props();
 
     let uploadInProgress = $state(false);
     let zoneImportContent = $state("");

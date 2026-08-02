@@ -60,24 +60,7 @@
         deleteServiceInProgress = false,
     }: Props = $props();
 
-    let recordsHeight = 120;
-    let recordsHeightResize = $state(false);
-    function resizeRecordsHeight(e: MouseEvent) {
-        if (!recordsHeightResize) {
-            return;
-        }
-
-        e.preventDefault();
-        e.stopPropagation();
-        recordsHeight -= e.movementY;
-    }
 </script>
-
-<svelte:document
-    onmousemove={resizeRecordsHeight}
-    onmouseleave={() => (recordsHeightResize = false)}
-    onmouseup={() => (recordsHeightResize = false)}
-/>
 
 <ModalFooter>
     <div class="ms-auto"></div>

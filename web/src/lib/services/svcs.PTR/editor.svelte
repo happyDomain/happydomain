@@ -36,7 +36,6 @@
     }
 
     let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
-    const type = "svcs.PTR";
 
     // The PTR service holds the record itself, under a key the generated
     // dnsResource interface does not know about.

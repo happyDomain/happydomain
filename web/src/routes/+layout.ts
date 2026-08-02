@@ -99,7 +99,7 @@ export const load: Load = async ({ route, url }) => {
         if (!url.searchParams.has("lang") && user.settings && user.settings.language && get(locale) != user.settings.language) {
             locale.set(user.settings.language);
         }
-    } catch (err) {
+    } catch {
         if (route.id != null && route.id != "/login" && route.id != "/forgotten-password" && route.id != "/register" && !route.id.startsWith("/resolver") && !route.id.startsWith("/generator") && route.id != "/providers/features" && !route.id.startsWith("/email-validation")) {
             toasts.addToast({
                 type: 'error',

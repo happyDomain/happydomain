@@ -25,7 +25,6 @@
     import { createEventDispatcher } from "svelte";
 
     import Record from "$lib/components/domains/Record.svelte";
-    import type { ServiceRecord } from "$lib/model/zone";
 
     const dispatch = createEventDispatcher();
 

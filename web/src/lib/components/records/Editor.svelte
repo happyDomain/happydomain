@@ -141,8 +141,7 @@
 {#if record.Hdr.Rrtype && rdatafields(record.Hdr.Rrtype).length > 0}
     {#each rdatafields(record.Hdr.Rrtype) as k}
         {#if k != "Hdr"}
-            {@const v = (record as any)[k]}
-            <Row>
+                        <Row>
                 <label
                     for="rr-{k}"
                     class="col-md-4 col-form-label text-truncate text-md-right text-primary"

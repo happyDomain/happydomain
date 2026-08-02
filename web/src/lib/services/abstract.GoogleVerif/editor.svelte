@@ -36,7 +36,6 @@
     }
 
     let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
-    const type = "abstract.GoogleVerif";
 
     // Initialize TXT record if needed
     if (!value["txt"]) {

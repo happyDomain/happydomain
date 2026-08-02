@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { Badge, Button, Icon, Table, Spinner } from "@sveltestrap/sveltestrap";
+    import { Badge, Table, Spinner } from "@sveltestrap/sveltestrap";
 
     import { getDomainLogs } from "$lib/api/domains";
     import PageTitle from "$lib/components/PageTitle.svelte";

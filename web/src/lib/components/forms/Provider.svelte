@@ -24,7 +24,7 @@
 <script lang="ts">
     import { run, preventDefault } from "svelte/legacy";
 
-    import { createEventDispatcher, onMount } from "svelte";
+    import { createEventDispatcher } from "svelte";
 
     import CustomForm from "$lib/components/forms/CustomForm.svelte";
     import ResourceInput from "$lib/components/inputs/basic.svelte";

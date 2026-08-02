@@ -25,7 +25,7 @@
     import type { ServiceWithValue } from "$lib/model/service.svelte";
 
     export const controls = {
-        Open(service: ServiceWithValue): void {},
+        Open(_service: ServiceWithValue): void {},
     };
 </script>
 
@@ -172,7 +172,7 @@
         {#if service._svctype && service.Service}
             {#await getServiceSpec(service._svctype) then specs}
                 {@const rrs = collectRRs(specs.fields, service.Service as Record<string, unknown>)}
-                {#each rrs as rr, i}
+                {#each rrs as _rr, i}
                     <RecordLine
                         dn={service._domain || ""}
                         origin={domain}

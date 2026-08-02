@@ -35,7 +35,6 @@
         ModalBody,
         ModalFooter,
         ModalHeader,
-        Row,
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
@@ -112,12 +111,6 @@
         }
     }
 
-    function Open(): void {
-        newSessionSecret = "";
-        newSessionDescription = "";
-        newSessionSecretShown = false;
-        newSessionModalOpen = true;
-    }
 </script>
 
 <div class="d-flex flex-column flex-md-row justify-content-between mt-5 mb-3 mb-md-2 gap-1">

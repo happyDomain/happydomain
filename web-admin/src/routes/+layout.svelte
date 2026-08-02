@@ -25,7 +25,6 @@
     import "../app.scss";
     import "bootstrap-icons/font/bootstrap-icons.css";
 
-    import { goto } from "$app/navigation";
     import { page } from "$app/state";
 
     import {
@@ -41,12 +40,8 @@
 
     import Logo from "$lib/components/Logo.svelte";
     import Toaster from "$lib/components/Toaster.svelte";
-    import { appConfig } from "$lib/stores/config";
-    import { providers } from "$lib/stores/providers";
     import { toasts } from "$lib/stores/toasts";
-    import { t } from "$lib/translations";
 
-    const { MODE } = import.meta.env;
 
     let { children }: {
         children?: import('svelte').Snippet;

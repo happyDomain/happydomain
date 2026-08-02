@@ -27,7 +27,7 @@
     import { getDomain } from "$lib/api/domains";
     import DiffZone from "$lib/components/zones/DiffZone.svelte";
     import PageTitle from "$lib/components/PageTitle.svelte";
-    import type { Domain, ZoneHistory } from "$lib/model/domain";
+    import type { Domain } from "$lib/model/domain";
     import { getUser } from "$lib/stores/users";
     import { t } from "$lib/translations";
 

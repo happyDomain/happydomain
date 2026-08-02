@@ -24,7 +24,6 @@
 <script lang="ts">
     import {
         Button,
-        Card,
         Col,
         Container,
         Icon,

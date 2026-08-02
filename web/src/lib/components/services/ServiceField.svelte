@@ -35,7 +35,7 @@
 
 {#if type.startsWith("[]")}
     {#if value}
-        {#each value as row, i}
+        {#each value as _row, i}
             <SVCField {aservice} type={type.substring(2)} bind:value={value[i]} />
         {/each}
     {:else}

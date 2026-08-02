@@ -55,7 +55,7 @@
         errorMessage = '';
 
         try {
-            const response = await postDomains({
+            await postDomains({
                 body: {
                     domain: domain,
                     group: group || undefined,

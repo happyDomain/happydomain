@@ -23,18 +23,17 @@
 
 <script module lang="ts">
     export const controls = {
-        Open(domain: string): void { },
+        Open(_domain: string): void { },
     };
 </script>
 
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
 
-    import { Input, Modal, ModalBody } from "@sveltestrap/sveltestrap";
+    import { Modal, ModalBody } from "@sveltestrap/sveltestrap";
 
     import { getProviderSpec } from "$lib/api/provider_specs";
     import { initializeService } from "$lib/api/service_specs";
-    import { getRrtype, newRR } from "$lib/dns_rr";
     import ModalFooter from "$lib/components/modals/Footer.svelte";
     import ModalHeader from "$lib/components/modals/Header.svelte";
     import FilterServiceSelectorInput from "$lib/components/services/FilterServiceSelectorInput.svelte";

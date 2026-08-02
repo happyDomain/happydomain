@@ -54,7 +54,6 @@
         }
     });
 
-    const type = "svcs.DKIMRecord";
 </script>
 
 <div>
@@ -96,7 +95,7 @@
             </thead>
             <tbody>
                 {#if val.h && val.h.length}
-                    {#each val.h as rua, idx}
+                    {#each val.h as _rua, idx}
                         <tr>
                             <td>
                                 <Input bsSize="sm" bind:value={val.h[idx]} />
@@ -188,7 +187,7 @@
             </thead>
             <tbody>
                 {#if val.s && val.s.length}
-                    {#each val.s as rua, idx}
+                    {#each val.s as _rua, idx}
                         <tr>
                             <td>
                                 <Input bsSize="sm" bind:value={val.s[idx]} />
@@ -245,7 +244,7 @@
             </thead>
             <tbody>
                 {#if val.t && val.t.length}
-                    {#each val.t as rua, idx}
+                    {#each val.t as _rua, idx}
                         <tr>
                             <td>
                                 <Input bsSize="sm" bind:value={val.t[idx]} />

@@ -36,7 +36,6 @@
     }
 
     let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
-    const type = "abstract.Kerberos";
 
     // Each bucket maps to one field on the Go service body. The `key` here
     // matches the JSON tag set on the Kerberos struct (see

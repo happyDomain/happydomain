@@ -36,7 +36,6 @@
     }
 
     let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
-    const type = "abstract.XMPP";
 
         // The editor splits the RRset into one bucket per service, kept
     // alongside the body. The API ignores those extra keys.

@@ -37,7 +37,6 @@
     }
 
     let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
-    const type = "svcs.UnknownSRV";
 
     // Initialize srv array if needed (treat as array despite type definition)
     if (!value["srv"]) {

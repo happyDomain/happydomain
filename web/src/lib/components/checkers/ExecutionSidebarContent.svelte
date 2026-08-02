@@ -68,7 +68,7 @@
         scope: CheckerScope;
     }
 
-    let { domain, checkerId, execId, checksBase, scope }: Props = $props();
+    let { checkerId, execId, checksBase, scope }: Props = $props();
 
     let isRelaunching = $state(false);
 

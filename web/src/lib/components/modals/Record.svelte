@@ -25,25 +25,19 @@
     import type { dnsRR } from "$lib/dns_rr";
 
     export const controls = {
-        Open(record: dnsRR | null, dn: string) { },
+        Open(_record: dnsRR | null, _dn: string) { },
     };
 </script>
 
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
-
+    
     import {
         Button,
-        Col,
         Icon,
-        Input,
-        InputGroup,
-        InputGroupText,
         Modal,
         ModalBody,
         ModalFooter,
         ModalHeader,
-        Row,
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
@@ -55,7 +49,6 @@
     import { emptyRR } from "$lib/dns";
     import { t } from "$lib/translations";
 
-    const dispatch = createEventDispatcher();
 
     const toggle = () => (isOpen = !isOpen);
 

@@ -41,7 +41,6 @@
     }
 
     let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
-    const type = "abstract.OpenPGP";
 
     // Initialize OPENPGPKEY record if needed
     if (!value.openpgpkey) {

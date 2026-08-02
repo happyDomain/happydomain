@@ -21,12 +21,42 @@ export default function config({ svelteConfig, gitignorePath }) {
 			},
 			rules: {
 				'no-undef': 'off',
+				// A leading underscore is how the code already says a binding is
+				// there for its position, not for its value.
+				'@typescript-eslint/no-unused-vars': [
+					'error',
+					{
+						argsIgnorePattern: '^_',
+						varsIgnorePattern: '^_',
+						caughtErrorsIgnorePattern: '^_',
+						destructuredArrayIgnorePattern: '^_'
+					}
+				],
 				'no-restricted-syntax': [
 					'error',
 					{
 						selector: 'TSAsExpression[typeAnnotation.type="TSUnknownKeyword"]',
 						message:
 							'`as unknown as` turns off every check between the two types. Fix the type where it is declared, or narrow with a type guard.'
+					}
+				]
+			}
+		},
+		{
+			// Every service editor is handed the same props by the loader that
+			// mounts it, which knows the contract while the service does not:
+			// leaving out the ones a given editor has no use for would make each
+			// signature differ from the next for no reason.
+			files: ['**/lib/services/*/editor.svelte'],
+			rules: {
+				'svelte/no-unused-props': 'off',
+				'@typescript-eslint/no-unused-vars': [
+					'error',
+					{
+						varsIgnorePattern: '^(_|dn$|origin$|readonly$|type$)',
+						argsIgnorePattern: '^_',
+						caughtErrorsIgnorePattern: '^_',
+						destructuredArrayIgnorePattern: '^_'
 					}
 				]
 			}

@@ -38,7 +38,6 @@
 
     let { dn, origin, value = $bindable({ txt: [] }) }: Props = $props();
 
-    const type = "svcs.DMARCReport";
     const SUFFIX = "._report._dmarc";
 
     if (!Array.isArray(value.txt)) value.txt = [];

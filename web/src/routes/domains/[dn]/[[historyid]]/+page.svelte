@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { Button, Col, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
+    import { Icon, Spinner } from "@sveltestrap/sveltestrap";
 
     import AliasModal from "$lib/components/modals/Alias.svelte";
     import ChecksSummaryBadge from "$lib/components/checkers/ChecksSummaryBadge.svelte";
@@ -31,8 +31,7 @@
     import SubdomainList from "./SubdomainList.svelte";
     import UserResource from "./UserResource.svelte";
     import type { HappydnsDomainWithCheckStatus } from "$lib/api-base/types.gen";
-    import type { Zone } from "$lib/model/zone";
-    import { domainLink, domains_idx } from "$lib/stores/domains";
+    import { domainLink } from "$lib/stores/domains";
     import { sortedDomains, sortedDomainsWithIntermediate, thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
 

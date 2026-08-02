@@ -42,7 +42,6 @@
 
     import ZoneList from "$lib/components/zones/ZoneList.svelte";
     import { updateDomain } from "$lib/api/domains";
-    import type { Domain } from "$lib/model/domain";
     import { groups, domains, newlyGroups, refreshDomains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
     import type { HappydnsDomainUpdateInput } from "$lib/api-base";

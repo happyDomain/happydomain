@@ -113,7 +113,7 @@
 {#if !newone}
     <div class="d-flex align-items-center">
         {#if val.Parameters}
-            {#each val.Parameters as parameter, k}
+            {#each val.Parameters as _parameter, k}
                 <CAAIssuerParameter
                     edit={editable_parameters[k]}
                     {readonly}

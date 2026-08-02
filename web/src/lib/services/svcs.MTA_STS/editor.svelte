@@ -51,7 +51,6 @@
         value["txt"]!.Txt = stringifyMTASTS(val, value["txt"]?.Txt || "");
     });
 
-    const type = "svcs.MTA_STS";
 </script>
 
 <div>

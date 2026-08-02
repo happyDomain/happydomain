@@ -66,7 +66,7 @@
 
         if ($filteredProvider) {
             addDomain($filteredName, $filteredProvider).then(
-                (domain) => {
+                () => {
                     addingNewDomain = false;
                     filteredName.set("");
                     refreshDomains();
@@ -78,7 +78,7 @@
             );
         } else if ($providers && $providers.length == 1) {
             addDomain($filteredName, $providers[0]).then(
-                (domain) => {
+                () => {
                     addingNewDomain = false;
                     filteredName.set("");
                     refreshDomains();

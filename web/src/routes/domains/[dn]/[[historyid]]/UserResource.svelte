@@ -79,7 +79,7 @@
                             </tr>
                         {:then specs}
                             <Service {specs} bind:value={service.Service}>
-                                {#snippet aservice(type: string, rr: any)}
+                                {#snippet aservice(_type: string, rr: any)}
                                     {#if rr}
                                         <tr>
                                             <td

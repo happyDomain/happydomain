@@ -19,15 +19,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { redirect, type Load } from "@sveltejs/kit";
-import { get } from "svelte/store";
+import { type Load } from "@sveltejs/kit";
 
-import { config as tsConfig, locale, loadTranslations, t } from "$lib/translations";
+import { config as tsConfig, locale, loadTranslations } from "$lib/translations";
 
 export const ssr = false;
 
-export const load: Load = async ({ fetch, route, url }) => {
-    const { MODE } = import.meta.env;
+export const load: Load = async ({ url }) => {
 
     const initLocale =
         url.searchParams.get("lang") ||
