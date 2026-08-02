@@ -45,6 +45,9 @@
         value: ForSaleValue;
     }
 
+    // Every service editor is handed the same props, whether it reads them or
+    // not: the loader knows the contract, not the service.
+    // eslint-disable-next-line svelte/no-unused-props
     let { readonly = false, value = $bindable({}) }: Props = $props();
 
     // The RRset is the source of truth; normalize it once so the class below can

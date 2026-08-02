@@ -41,12 +41,8 @@
     const { MODE } = import.meta.env;
 
     let {
-        data,
         children,
     }: {
-        data: {
-            sw_state: { triedUpdate: boolean; hasUpdate: boolean };
-        };
         children?: import("svelte").Snippet;
     } = $props();
 
@@ -82,7 +78,7 @@
         </small>
     </div>
 {/if}
-<Header sw_state={data.sw_state} />
+<Header />
 
 <main class="flex-fill d-flex flex-column justify-content-center bg-light">
     {@render children?.()}

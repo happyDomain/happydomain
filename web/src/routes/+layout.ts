@@ -111,7 +111,7 @@ export const load: Load = async ({ route, url }) => {
         }
     }
 
-    return {
-        sw_state,
-    };
+    // sw_state drives the service worker update flow above; nothing on the
+    // page reads it.
+    return {};
 };

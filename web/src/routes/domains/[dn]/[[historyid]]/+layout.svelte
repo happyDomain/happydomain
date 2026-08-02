@@ -37,6 +37,9 @@
         data: { domain: Domain; history: string; definedhistory: boolean };
         children?: import('svelte').Snippet;
     }
+    // The shape is what load() returns; a page reading part of it is not a
+    // reason to describe it any less accurately.
+    // eslint-disable-next-line svelte/no-unused-props
     let { data, children }: Props = $props();
 
     let selectedDomain: string = $derived(data.domain.id);

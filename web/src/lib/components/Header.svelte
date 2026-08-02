@@ -47,10 +47,9 @@
 
     interface Props {
         class?: ClassValue;
-        sw_state: { triedUpdate: boolean; hasUpdate: boolean };
     }
 
-    let { class: className, sw_state }: Props = $props();
+    let { class: className }: Props = $props();
 
     function logout() {
         APILogout().then(

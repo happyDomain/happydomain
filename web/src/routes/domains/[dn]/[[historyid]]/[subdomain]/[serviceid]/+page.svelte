@@ -55,6 +55,9 @@
         };
     }
 
+    // The shape is what load() returns; a page reading part of it is not a
+    // reason to describe it any less accurately.
+    // eslint-disable-next-line svelte/no-unused-props
     let { data }: Props = $props();
 
     let svcType: string = $derived(page.url.searchParams.get("type") ?? "");
