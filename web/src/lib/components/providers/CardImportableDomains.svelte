@@ -214,17 +214,9 @@
                     <ListGroupItem class="text-center my-3">
                         {$t("errors.domain-list")}
                     </ListGroupItem>
-                {:else if !importableDomainsList || importableDomainsList.length === 0}
+                {:else}
                     <ListGroupItem class="text-center my-3">
                         {$t("errors.domain-have")}
-                    </ListGroupItem>
-                {:else if importableDomainsList.length === 0}
-                    <ListGroupItem class="text-center my-3">
-                        {#if $providersSpecs}
-                            {$t("errors.domain-all-imported", {
-                                provider: $providersSpecs[provider._srctype].name,
-                            })}
-                        {/if}
                     </ListGroupItem>
                 {/if}
             {:else}
