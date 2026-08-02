@@ -22,8 +22,9 @@
 -->
 
 <script lang="ts">
-    import { navigate } from "$lib/stores/config";
-
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
+    
     import { Button, Input, Spinner } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
@@ -61,7 +62,7 @@
                         timeout: 5000,
                         type: "success",
                     });
-                    navigate("/login");
+                    goto(resolve("/login"));
                 },
                 (error) => {
                     formSent = false;

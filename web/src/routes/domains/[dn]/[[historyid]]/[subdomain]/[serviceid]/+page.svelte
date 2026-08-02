@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
     import { onDestroy } from "svelte";
     import { page } from "$app/state";
 
@@ -40,8 +42,7 @@
     import { serviceDescription, serviceName } from "$lib/services/infos";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
-    import { navigate } from "$lib/stores/config";
-    import { t } from "$lib/translations";
+        import { t } from "$lib/translations";
     import { refreshDomains } from "$lib/stores/domains";
 
     interface Props {
@@ -101,8 +102,11 @@
     let addServiceInProgress = $state(false);
 
     function goBack(historyid?: string) {
-        navigate(
-            `/domains/${encodeURIComponent(domainLink(data.domain.id))}/${encodeURIComponent(historyid ? historyid : data.history)}`,
+        goto(
+            resolve("/domains/[dn]/[[historyid]]", {
+                dn: encodeURIComponent(domainLink(data.domain.id)),
+                historyid: encodeURIComponent(historyid ? historyid : data.history),
+            }),
         );
     }
 

@@ -26,7 +26,7 @@
     import { Alert, Badge, Button, Card, Icon, Table } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
-    import { base } from "$lib/stores/config";
+    import { base } from "$app/paths";
     import type { CheckerScope } from "$lib/api/checkers";
     import { listScopedCheckers } from "$lib/api/checkers";
     import { checkers } from "$lib/stores/checkers";

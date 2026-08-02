@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
     import { page } from "$app/state";
 
     import { Button, FormGroup, Input, Spinner } from "@sveltestrap/sveltestrap";
@@ -31,7 +33,7 @@
     import { authUser, cleanUserSession } from "$lib/api/user";
     import { CaptchaRequiredError, RateLimitedError } from "$lib/hey-api";
     import type { LoginForm } from "$lib/model/user";
-    import { appConfig, navigate } from "$lib/stores/config";
+    import { appConfig } from "$lib/stores/config";
     import { providers } from "$lib/stores/providers";
     import { toasts } from "$lib/stores/toasts";
     import { refreshUserSession } from "$lib/stores/usersession";
@@ -81,12 +83,15 @@
                         const decoded = decodeURIComponent(nextParam);
                         // Only allow same-origin relative paths to prevent open redirect
                         if (decoded.startsWith("/") && !decoded.startsWith("//")) {
-                            navigate(decoded);
+                            // A full path handed over by whoever sent the user
+                            // to log in, base path included.
+                            // eslint-disable-next-line svelte/no-navigation-without-resolve
+                            goto(decoded);
                         } else {
-                            navigate("/");
+                            goto(resolve("/"));
                         }
                     } else {
-                        navigate("/");
+                        goto(resolve("/"));
                     }
                 },
                 (error) => {
@@ -136,7 +141,7 @@
                 timeout: 10000,
             });
         } else {
-            navigate("/forgotten-password");
+            goto(resolve("/forgotten-password"));
         }
     }
 </script>

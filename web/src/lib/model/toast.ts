@@ -1,3 +1,4 @@
+import { goto } from "$app/navigation";
 // This file is part of the happyDomain (R) project.
 // Copyright (c) 2022-2024 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
@@ -20,7 +21,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import type { Color } from "@sveltestrap/sveltestrap";
-import { navigate } from "$lib/stores/config";
 import { randomUUID } from "$lib/utils/uuid";
 
 export interface NewToast {
@@ -53,7 +53,9 @@ export class Toast implements NewToast {
             const href = obj.href;
             this.onclick = () => {
                 if (href.startsWith('/')) {
-                    navigate(href);
+                    // A full path, as whoever raised the toast wrote it.
+                    // eslint-disable-next-line svelte/no-navigation-without-resolve
+                    goto(href);
                 } else {
                     window.location.href = href;
                 }

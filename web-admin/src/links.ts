@@ -36,11 +36,20 @@ export function domainLinks() {
         zone: (_dn: string) => resolve("/domains"),
         history: (_dn: string) => resolve("/domains"),
         checks: (_dn: string) => resolve("/domains"),
+        service: (_dn: string, _historyid: string, _subdomain: string, _serviceid: string) =>
+            resolve("/domains"),
     };
 }
 
 export function providerLinks() {
     return {
         provider: (_prvid: string) => resolve("/providers"),
+    };
+}
+
+export function authLinks() {
+    return {
+        // The admin has no login page of its own: it is reached authenticated.
+        login: () => resolve("/"),
     };
 }

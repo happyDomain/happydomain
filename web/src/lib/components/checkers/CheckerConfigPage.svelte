@@ -26,7 +26,7 @@
     import { Alert, Badge, Button, Card, CardBody, CardHeader, Col, Icon, Row } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
-    import { base } from "$lib/stores/config";
+    import { base } from "$app/paths";
     import { checkers } from "$lib/stores/checkers";
     import { toasts } from "$lib/stores/toasts";
     import type {

@@ -19,7 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { base } from "$lib/stores/config";
+import { base } from "$app/paths";
 import { refreshUserSession } from "$lib/stores/usersession";
 import type { CreateClientConfig } from "./api-base/client.gen";
 

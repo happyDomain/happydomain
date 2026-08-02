@@ -22,6 +22,9 @@
 -->
 
 <script lang="ts">
+    import { domainLinks } from "$links";
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
     import {
         Button,
         Icon,
@@ -35,8 +38,7 @@
     import { addDomain } from "$lib/api/domains";
     import PickProvider, { controls as pickProviderControls } from "$lib/components/modals/PickProvider.svelte";
     import { fqdn, validateDomain } from "$lib/dns";
-    import { navigate } from "$lib/stores/config";
-    import { domains, domains_by_name, refreshDomains } from "$lib/stores/domains";
+        import { domains, domains_by_name, refreshDomains } from "$lib/stores/domains";
     import { filteredName, filteredProvider } from "$lib/stores/home";
     import type { Provider } from "$lib/model/provider";
     import { providers } from "$lib/stores/providers";
@@ -57,7 +59,7 @@
         if (actionAddDomain) {
             addDomainToProvider();
         } else if (filteredDomains.length > 0) {
-            navigate("/domains/" + encodeURIComponent(filteredDomains[0].id));
+            goto(domainLinks().zone(encodeURIComponent(filteredDomains[0].id)));
         }
     }
 

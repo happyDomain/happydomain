@@ -22,8 +22,9 @@
 -->
 
 <script lang="ts">
-    import { navigate } from "$lib/stores/config";
-
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
+    
     import { Spinner } from "@sveltestrap/sveltestrap";
 
     import NewServicePath from "$lib/components/services/NewServicePath.svelte";
@@ -46,15 +47,15 @@
     let selectedHistory: string = $derived(data.history);
     function historyChange(history: string) {
         if (data.history != history) {
-            navigate(
-                "/domains/" +
-                    encodeURIComponent(
+            goto(
+                resolve("/domains/[dn]/[[historyid]]", {
+                    dn: encodeURIComponent(
                         $domains_idx[data.domain.domain]
                             ? $domains_idx[data.domain.domain].domain
                             : selectedDomain,
-                    ) +
-                    "/" +
-                    encodeURIComponent(selectedHistory),
+                    ),
+                    historyid: encodeURIComponent(selectedHistory),
+                }),
             );
         }
         if (history != selectedHistory) {

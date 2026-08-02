@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
     import { getServiceSpec } from "$lib/api/service_specs";
     import ServiceCard from "./ServiceCard.svelte";
     import ServiceBadges from "./ServiceBadges.svelte";
@@ -33,8 +35,7 @@
     import { ZoneViewList, ZoneViewRecords } from "$lib/model/usersettings";
     import { serviceDescription, serviceName } from "$lib/services/infos";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
-    import { navigate } from "$lib/stores/config";
-    import { userSession } from "$lib/stores/usersession";
+        import { userSession } from "$lib/stores/usersession";
     import { t } from "$lib/translations";
 
     interface Props {
@@ -49,8 +50,13 @@
     function openService(service: ServiceWithValue) {
         const subdomainParam =
             service._domain === "" || service._domain === "@" ? "@" : service._domain;
-        navigate(
-            `/domains/${encodeURIComponent(origin.domain)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(subdomainParam)}/${encodeURIComponent(service._id!)}`,
+        goto(
+            resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]", {
+                dn: encodeURIComponent(origin.domain),
+                historyid: encodeURIComponent(zoneId),
+                subdomain: encodeURIComponent(subdomainParam),
+                serviceid: encodeURIComponent(service._id!),
+            }),
         );
     }
 </script>

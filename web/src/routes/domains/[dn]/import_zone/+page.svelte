@@ -22,8 +22,9 @@
 -->
 
 <script lang="ts">
-    import { navigate } from "$lib/stores/config";
-
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
+    
     import { Alert, Spinner } from "@sveltestrap/sveltestrap";
 
     import PageTitle from "$lib/components/PageTitle.svelte";
@@ -44,8 +45,14 @@
             () => {
                 refreshDomains().then(
                     () => {
-                        navigate(
-                            `/domains/${encodeURIComponent($domains_idx[data.domain.domain] ? data.domain.domain : data.domain.id)}`,
+                        goto(
+                            resolve("/domains/[dn]/[[historyid]]", {
+                                dn: encodeURIComponent(
+                                    $domains_idx[data.domain.domain]
+                                        ? data.domain.domain
+                                        : data.domain.id,
+                                ),
+                            }),
                         );
                     },
                 );

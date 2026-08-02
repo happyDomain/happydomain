@@ -22,6 +22,8 @@
 -->
 
 <script module lang="ts">
+    import { goto } from "$app/navigation";
+    import { domainLinks } from "$links";
     export const controls = {
         Open (_domain: string): void { },
     };
@@ -33,8 +35,7 @@
     } from "$lib/components/modals/ServiceSelector.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { Zone } from "$lib/model/zone";
-    import { navigate } from "$lib/stores/config";
-
+    
     interface Props {
         origin: Domain;
         zone: Zone;
@@ -52,9 +53,16 @@
     function onShowNextModal(event: CustomEvent<{ _svctype: string; _domain: string }>) {
         const { _svctype, _domain } = event.detail;
         const subdomainParam = _domain === "" ? "@" : _domain;
-        navigate(
-            `/domains/${encodeURIComponent(origin.domain)}/${encodeURIComponent(historyId)}/${encodeURIComponent(subdomainParam)}/new?type=${encodeURIComponent(_svctype)}`,
+        // "new" is the service id the editor reads as "create one".
+        const path = domainLinks().service(
+            encodeURIComponent(origin.domain),
+            encodeURIComponent(historyId),
+            encodeURIComponent(subdomainParam),
+            "new",
         );
+        // The path is resolved above; only the query is appended here.
+        // eslint-disable-next-line svelte/no-navigation-without-resolve
+        goto(`${path}?type=${encodeURIComponent(_svctype)}`);
     }
 </script>
 

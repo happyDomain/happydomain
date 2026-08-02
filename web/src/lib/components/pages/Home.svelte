@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { goto } from "$app/navigation";
     import { page } from "$app/state";
     import { get } from "svelte/store";
     import { Col, Container, Row } from "@sveltestrap/sveltestrap";
@@ -29,7 +30,6 @@
     import DomainListSection from "$lib/components/pages/home/DomainListSection.svelte";
     import Logo from "$lib/components/Logo.svelte";
     import Sidebar from "$lib/components/pages/home/Sidebar.svelte";
-    import { navigate } from "$lib/stores/config";
     import { domains, refreshDomains } from "$lib/stores/domains";
     import { filteredGroup, filteredName, filteredProvider } from "$lib/stores/home";
     import {
@@ -90,7 +90,10 @@
         const currentSearch = window.location.search.replace(/^\?/, "");
         if (newSearch !== currentSearch) {
             const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : "");
-            navigate(newUrl, { replaceState: true, keepFocus: true, noScroll: true });
+            // Already a full path, taken from the address bar: it carries the base
+            // path, which navigate() used to add a second time.
+            // eslint-disable-next-line svelte/no-navigation-without-resolve
+            goto(newUrl, { replaceState: true, keepFocus: true, noScroll: true });
         }
     });
 </script>

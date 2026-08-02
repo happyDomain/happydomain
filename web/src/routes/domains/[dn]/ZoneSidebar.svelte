@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
     import {
         Button,
         Dropdown,
@@ -43,8 +45,7 @@
         thisZone,
     } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
-    import { navigate } from "$lib/stores/config";
-    import { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
+        import { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
     import { controls as ctrlDomainWhois } from "./ModalDomainWhois.svelte";
     import { controls as ctrlUploadZone } from "./ModalUploadZone.svelte";
     import { controls as ctrlNewSubdomain } from "./NewSubdomainPath.svelte";
@@ -69,7 +70,7 @@
 
     function viewZone(): void {
         if (!selectedHistory) return;
-        navigate(`/domains/${domainLink(selectedDomain)}/export`);
+        goto(resolve("/domains/[dn]/[[historyid]]/export", { dn: domainLink(selectedDomain) }));
     }
 </script>
 

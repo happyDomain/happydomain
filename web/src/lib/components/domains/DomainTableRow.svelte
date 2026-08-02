@@ -22,13 +22,13 @@
 -->
 
 <script lang="ts">
+    import { goto } from "$app/navigation";
     import { domainLinks } from "$links";
     import { Badge, Button, ButtonGroup, Icon } from "@sveltestrap/sveltestrap";
 
     import ProviderLink from "$lib/components/providers/ProviderLink.svelte";
     import type { HappydnsDomainWithCheckStatus } from "$lib/api-base/types.gen";
-    import { navigate } from "$lib/stores/config";
-    import { t } from "$lib/translations";
+        import { t } from "$lib/translations";
     import { getStatusColor, getStatusIcon } from "$lib/utils/checkers";
 
     interface Props {
@@ -41,7 +41,7 @@
 
 <tr
     style="cursor: pointer"
-    onclick={() => navigate("/domains/" + encodeURIComponent(domain.domain))}
+    onclick={() => goto(domainLinks().zone(encodeURIComponent(domain.domain)))}
 >
     <td class="fw-semibold">{domain.domain}</td>
     <td>{domain.group || ""}</td>
@@ -66,7 +66,7 @@
                 title={$t("domains.actions.view")}
                 onclick={(e) => {
                     e.stopPropagation();
-                    navigate("/domains/" + encodeURIComponent(domain.domain));
+                    goto(domainLinks().zone(encodeURIComponent(domain.domain)));
                 }}
             >
                 <Icon name="eye" />

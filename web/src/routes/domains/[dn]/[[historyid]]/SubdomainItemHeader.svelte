@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
     import { Badge, Button, Icon, Popover, Spinner } from "@sveltestrap/sveltestrap";
 
     import { deleteZoneService } from "$lib/api/zone";
@@ -32,8 +34,7 @@
     import type { Domain } from "$lib/model/domain";
     import type { HappydnsService } from "$lib/api-base/types.gen";
     import { ZoneViewGrid, ZoneViewRecords } from "$lib/model/usersettings";
-    import { navigate } from "$lib/stores/config";
-    import { serviceName } from "$lib/services/infos";
+        import { serviceName } from "$lib/services/infos";
     import { servicesSpecs } from "$lib/stores/services";
     import { thisAliases, thisZone } from "$lib/stores/thiszone";
     import { userSession } from "$lib/stores/usersession";
@@ -189,8 +190,13 @@
             title={$t("domains.edit-target")}
             on:click={() => {
                 const subdomainParam = dn === "" ? "@" : dn;
-                navigate(
-                    `/domains/${encodeURIComponent(origin.domain)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(subdomainParam)}/${encodeURIComponent(services[0]._id!)}`,
+                goto(
+                    resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]", {
+                        dn: encodeURIComponent(origin.domain),
+                        historyid: encodeURIComponent(zoneId),
+                        subdomain: encodeURIComponent(subdomainParam),
+                        serviceid: encodeURIComponent(services[0]._id!),
+                    }),
                 );
             }}
         >

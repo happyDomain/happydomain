@@ -22,14 +22,15 @@
 -->
 
 <script module lang="ts">
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
     export const controls = {
         Open(): void { },
     };
 </script>
 
 <script lang="ts">
-    import { navigate } from "$lib/stores/config";
-
+    
     import {
         Button,
         Input,
@@ -66,7 +67,7 @@
             type: "success",
             timeout: 5000,
         });
-        navigate("/login");
+        goto(resolve("/login"));
     }
 
     function deletionError(err: Error): void {

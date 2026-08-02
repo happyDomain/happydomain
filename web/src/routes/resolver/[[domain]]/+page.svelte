@@ -22,9 +22,9 @@
 -->
 
 <script lang="ts">
+    import { goto } from "$app/navigation";
     import { resolve as resolveRoute } from "$app/paths";
-    import { navigate } from "$lib/stores/config";
-    import { page } from "$app/state";
+        import { page } from "$app/state";
     import { untrack } from "svelte";
     import { fly, fade } from "svelte/transition";
     import { cubicOut } from "svelte/easing";
@@ -142,7 +142,7 @@
         if (form.domain === domain) {
             resolve(form);
         } else if (form.domain) {
-            navigate("/resolver/" + encodeURIComponent(form.domain), {
+            goto(resolveRoute("/resolver/[[domain]]", { domain: encodeURIComponent(form.domain) }), {
                 state: { form, showDNSSEC },
                 noScroll: true,
             });

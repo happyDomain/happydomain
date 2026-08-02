@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { goto } from "$app/navigation";
     import type { CheckerLinks } from "$lib/checker_links";
     import {
         Badge,
@@ -34,8 +35,7 @@
         Table,
     } from "@sveltestrap/sveltestrap";
 
-    import { navigate } from "$lib/stores/config";
-    import {
+        import {
         currentExecution,
         currentCheckInfo,
         currentObservations,
@@ -82,9 +82,7 @@
                 timeout: 5000,
             });
             if (execution.id) {
-                navigate(
-                    links.execution!(checkerId, execution.id!),
-                );
+                goto(links.execution!(checkerId, execution.id!));
             }
         } catch (error: any) {
             toasts.addErrorToast({
@@ -102,7 +100,7 @@
         isDeleting = true;
         try {
             await deleteScopedExecution(scope, checkerId, $currentExecution.id);
-            navigate(links.executions!(checkerId));
+            goto(links.executions!(checkerId));
         } catch (error: any) {
             toasts.addErrorToast({
                 message:

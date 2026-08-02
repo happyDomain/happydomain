@@ -19,7 +19,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { goto } from "$app/navigation";
 import { writable } from "svelte/store";
 
 import type { Color } from "@sveltestrap/sveltestrap";
@@ -69,11 +68,3 @@ const initialConfig = getConfigFromScriptTag() || defaultConfig;
 
 export const appConfig = writable<AppConfig>(initialConfig);
 
-export const base: string =
-    typeof document !== "undefined"
-        ? (document.querySelector("base")?.getAttribute("href") ?? "")
-        : "";
-
-export function navigate(url: string, opts?: Parameters<typeof goto>[1]) {
-    return goto(base + url, opts);
-}

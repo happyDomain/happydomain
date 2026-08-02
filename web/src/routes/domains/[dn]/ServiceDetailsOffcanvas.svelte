@@ -22,6 +22,7 @@
 -->
 
 <script module lang="ts">
+    import { resolve } from "$app/paths";
     import type { ServiceWithValue } from "$lib/model/service.svelte";
 
     export const controls = {
@@ -42,7 +43,7 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { invalidateAll } from "$app/navigation";
+    import { goto, invalidateAll } from "$app/navigation";
 
     import { listScopedCheckers } from "$lib/api/checkers";
     import { getServiceSpec } from "$lib/api/service_specs";
@@ -52,8 +53,7 @@
     import RecordLine from "$lib/components/services/RecordLine.svelte";
     import { collectRRs } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
-    import { navigate } from "$lib/stores/config";
-    import { checkers } from "$lib/stores/checkers";
+        import { checkers } from "$lib/stores/checkers";
     import { domainLink, refreshDomains } from "$lib/stores/domains";
     import { serviceDescription, serviceName } from "$lib/services/infos";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
@@ -286,8 +286,13 @@
                 outline
                 on:click={() => {
                     isOpen = false;
-                    navigate(
-                        `/domains/${encodeURIComponent(domainLink(domain.id))}/${encodeURIComponent(selectedHistory ?? "")}/${encodeURIComponent(service._domain ? service._domain : "@")}/${encodeURIComponent(service._id!)}`,
+                    goto(
+                        resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]", {
+                            dn: encodeURIComponent(domainLink(domain.id)),
+                            historyid: encodeURIComponent(selectedHistory ?? ""),
+                            subdomain: encodeURIComponent(service._domain ? service._domain : "@"),
+                            serviceid: encodeURIComponent(service._id!),
+                        }),
                     );
                 }}
             >

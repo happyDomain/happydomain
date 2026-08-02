@@ -88,11 +88,24 @@ export function domainLinks() {
         zone: (dn: string) => resolve("/domains/[dn]/[[historyid]]", { dn }),
         history: (dn: string) => resolve("/domains/[dn]/history", { dn }),
         checks: (dn: string) => resolve("/domains/[dn]/checks", { dn }),
+        service: (dn: string, historyid: string, subdomain: string, serviceid: string) =>
+            resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]", {
+                dn,
+                historyid,
+                subdomain,
+                serviceid,
+            }),
     };
 }
 
 export function providerLinks() {
     return {
         provider: (prvid: string) => resolve("/providers/[prvid]", { prvid }),
+    };
+}
+
+export function authLinks() {
+    return {
+        login: () => resolve("/login"),
     };
 }

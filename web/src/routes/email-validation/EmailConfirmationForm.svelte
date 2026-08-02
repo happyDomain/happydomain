@@ -22,8 +22,9 @@
 -->
 
 <script lang="ts">
-    import { navigate } from "$lib/stores/config";
-
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
+    
     import { Button, FormGroup, Input, Spinner } from "@sveltestrap/sveltestrap";
 
     import { resendValidationEmail } from "$lib/api/user";
@@ -59,7 +60,7 @@
                         timeout: 5000,
                         type: "success",
                     });
-                    navigate("/");
+                    goto(resolve("/"));
                 },
                 (error) => {
                     formSent = false;

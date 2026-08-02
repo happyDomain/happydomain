@@ -22,8 +22,9 @@
 -->
 
 <script lang="ts">
-    import { navigate } from "$lib/stores/config";
-
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
+    
     import { Button, ButtonGroup, Icon, Input, Spinner } from "@sveltestrap/sveltestrap";
 
     import { saveAccountSettings } from "$lib/api/user";
@@ -57,7 +58,7 @@
                         type: "success",
                     });
 
-                    navigate("/");
+                    goto(resolve("/"));
                 });
             },
             (error) => {

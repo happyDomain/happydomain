@@ -22,9 +22,9 @@
 -->
 
 <script lang="ts">
-    import { invalidateAll } from "$app/navigation";
-    import { navigate } from "$lib/stores/config";
-    import { page } from "$app/state";
+    import { resolve } from "$app/paths";
+    import { goto, invalidateAll } from "$app/navigation";
+        import { page } from "$app/state";
 
     import { Col, Container, Row } from "@sveltestrap/sveltestrap";
 
@@ -50,23 +50,7 @@
     let selectedDomain = $derived(data.domain.id);
     function domainChange(dn: string) {
         if (dn != data.domain.id) {
-            navigate(
-                "/domains/" +
-                    encodeURIComponent(domainLink(dn)) +
-                    (page.route.id
-                        ? page.route.id.startsWith("/domains/[dn]/checkers")
-                            ? "/checkers"
-                            : page.route.id.startsWith("/domains/[dn]/checks")
-                              ? "/checks"
-                              : page.route.id.startsWith("/domains/[dn]/logs")
-                                ? "/logs"
-                                : page.route.id.startsWith("/domains/[dn]/history")
-                                  ? "/history"
-                                  : page.route.id.startsWith("/domains/[dn]/[[historyid]]/export")
-                                    ? "/export"
-                                    : ""
-                        : ""),
-            );
+            goto(sameSectionOf(encodeURIComponent(domainLink(dn))));
         }
         if (selectedDomain != dn) {
             selectedDomain = dn;
@@ -78,11 +62,11 @@
     function retrieveZoneDone(zm: ZoneMeta): void {
         if (page.data.definedhistory) {
             refreshDomains().then(() => {
-                navigate(
-                    "/domains/" +
-                        encodeURIComponent(domainLink(selectedDomain)) +
-                        "/" +
-                        encodeURIComponent(zm.id),
+                goto(
+                    resolve("/domains/[dn]/[[historyid]]", {
+                        dn: encodeURIComponent(domainLink(selectedDomain)),
+                        historyid: encodeURIComponent(zm.id),
+                    }),
                 );
             });
         } else {
@@ -100,11 +84,11 @@
                 refreshDomains().then(
                     () => {
                         deleteInProgress = false;
-                        navigate("/domains");
+                        goto(resolve("/domains"));
                     },
                     () => {
                         deleteInProgress = false;
-                        navigate("/domains");
+                        goto(resolve("/domains"));
                     },
                 );
             },
@@ -120,6 +104,18 @@
     $effect(() => {
         domainChange(data.domain.id);
     });
+
+    // Switching domains keeps the user on the same section.
+    function sameSectionOf(dn: string) {
+        const id = page.route.id ?? "";
+        if (id.startsWith("/domains/[dn]/checkers")) return resolve("/domains/[dn]/checkers", { dn });
+        if (id.startsWith("/domains/[dn]/checks")) return resolve("/domains/[dn]/checks", { dn });
+        if (id.startsWith("/domains/[dn]/logs")) return resolve("/domains/[dn]/logs", { dn });
+        if (id.startsWith("/domains/[dn]/history")) return resolve("/domains/[dn]/history", { dn });
+        if (id.startsWith("/domains/[dn]/[[historyid]]/export"))
+            return resolve("/domains/[dn]/[[historyid]]/export", { dn });
+        return resolve("/domains/[dn]/[[historyid]]", { dn });
+    }
 </script>
 
 <svelte:head>

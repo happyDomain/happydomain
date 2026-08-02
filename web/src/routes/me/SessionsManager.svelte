@@ -22,8 +22,9 @@
 -->
 
 <script lang="ts">
-    import { navigate } from "$lib/stores/config";
-
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
+    
     import {
         Badge,
         Button,
@@ -75,7 +76,7 @@
         is_closing_sessions = true;
         await deleteSessions();
         is_closing_sessions = false;
-        navigate("/login");
+        goto(resolve("/login"));
     }
 
     let newSessionModalOpen = $state(false);

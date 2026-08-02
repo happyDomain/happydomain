@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
     import type { ClassValue } from "svelte/elements";
     import { Spinner } from "@sveltestrap/sveltestrap";
 
@@ -31,8 +33,7 @@
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
     import { ProviderForm } from "$lib/model/provider_form.svelte";
     import type { ProviderSettingsState } from "$lib/model/provider_settings";
-    import { navigate } from "$lib/stores/config";
-    import { providersSpecs, refreshProviders, refreshProvidersSpecs } from "$lib/stores/providers";
+        import { providersSpecs, refreshProviders, refreshProvidersSpecs } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 
     // Load required data
@@ -60,14 +61,14 @@
     function createProviderForm(ptype: string, providerId: string | undefined, value: ProviderSettingsState | undefined, edit: boolean): ProviderForm {
         const pf = new ProviderForm(
             ptype,
-            () => refreshProviders().then(() => navigate("/?newProvider")),
+            () => refreshProviders().then(() => goto(resolve("/?newProvider"))),
             providerId,
             value,
             () => {
                 if (edit) {
-                    navigate("/providers");
+                    goto(resolve("/providers"));
                 } else {
-                    navigate("/providers?newProvider");
+                    goto(resolve("/providers?newProvider"));
                 }
             },
         );

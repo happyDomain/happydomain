@@ -20,7 +20,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { customFetch } from "$lib/hey-api";
-import { base } from "$lib/stores/config";
+import { base } from "$app/paths";
 
 /**
  * Ask the backend for the OPENPGPKEY/SMIMEA owner name prefix of an email

@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
     import { page } from "$app/state";
     import {
         Button,
@@ -44,7 +46,6 @@
         controls as pickProviderControls,
     } from "$lib/components/modals/PickProvider.svelte";
     import type { Provider } from "$lib/model/provider";
-    import { navigate } from "$lib/stores/config";
     import { domains, refreshDomains } from "$lib/stores/domains";
     import { providers } from "$lib/stores/providers";
     import { toasts } from "$lib/stores/toasts";
@@ -85,7 +86,10 @@
         const currentSearch = window.location.search.replace(/^\?/, "");
         if (newSearch !== currentSearch) {
             const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : "");
-            navigate(newUrl, { replaceState: true, keepFocus: true, noScroll: true });
+            // Already a full path, taken from the address bar: it carries the base
+            // path, which navigate() used to add a second time.
+            // eslint-disable-next-line svelte/no-navigation-without-resolve
+            goto(newUrl, { replaceState: true, keepFocus: true, noScroll: true });
         }
     });
 
@@ -105,7 +109,7 @@
             timeout: 5000,
         });
         refreshDomains();
-        navigate("/domains/" + domain.domain);
+        goto(resolve("/domains/[dn]/[[historyid]]", { dn: domain.domain }));
     }
 </script>
 

@@ -22,8 +22,9 @@
 -->
 
 <script lang="ts">
-    import { navigate } from "$lib/stores/config";
-    import { untrack } from "svelte";
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
+        import { untrack } from "svelte";
     import { fly, fade } from "svelte/transition";
     import { cubicOut } from "svelte/easing";
 
@@ -66,7 +67,7 @@
         if (inputDomain === domain) {
             fetchDomainInfo(inputDomain, lookup);
         } else {
-            navigate("/whois/" + encodeURIComponent(inputDomain), { noScroll: true });
+            goto(resolve("/whois/[[domain]]", { domain: encodeURIComponent(inputDomain) }), { noScroll: true });
         }
     }
 

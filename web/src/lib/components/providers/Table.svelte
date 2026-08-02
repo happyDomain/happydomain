@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { providerLinks } from "$links";
+    import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import type { ClassValue } from "svelte/elements";
 
@@ -35,8 +37,7 @@
     } from "$lib/components/modals/NewProvider.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { Provider } from "$lib/model/provider";
-    import { navigate } from "$lib/stores/config";
-    import { domains, refreshDomains } from "$lib/stores/domains";
+        import { domains, refreshDomains } from "$lib/stores/domains";
     import {
         providers,
         providersSpecs,
@@ -81,7 +82,7 @@
     );
 
     function updateProvider(event: Event, item: Provider) {
-        navigate("/providers/" + encodeURIComponent(item._id));
+        goto(providerLinks().provider(encodeURIComponent(item._id)));
     }
 
     async function delProvider(event: Event, item: Provider) {
@@ -145,7 +146,7 @@
             {#each items as item (item._id)}
                 <tr
                     style="cursor: pointer"
-                    onclick={() => navigate("/providers/" + encodeURIComponent(item._id))}
+                    onclick={() => goto(providerLinks().provider(encodeURIComponent(item._id)))}
                 >
                     <td>
                         <div class="d-flex align-items-center gap-2">

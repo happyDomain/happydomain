@@ -22,6 +22,9 @@
 -->
 
 <script lang="ts">
+    import { providerLinks } from "$links";
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
     import { createEventDispatcher } from "svelte";
 
     import {
@@ -42,8 +45,7 @@
     import HListGroup from "$lib/components/ListGroup.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { Provider } from "$lib/model/provider";
-    import { navigate } from "$lib/stores/config";
-    import { domains, refreshDomains } from "$lib/stores/domains";
+        import { domains, refreshDomains } from "$lib/stores/domains";
     import {
         providers,
         providersSpecs,
@@ -112,7 +114,7 @@
 
     function updateProvider(event: Event, item: Provider) {
         event.stopPropagation();
-        navigate("/providers/" + encodeURIComponent(item._id));
+        goto(providerLinks().provider(encodeURIComponent(item._id)));
     }
 
     async function delProvider(event: Event, item: Provider) {

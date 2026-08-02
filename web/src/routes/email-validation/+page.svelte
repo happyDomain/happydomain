@@ -22,12 +22,13 @@
 -->
 
 <script lang="ts">
+    import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { Alert, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import Logo from "$lib/components/Logo.svelte";
     import { validateEmail } from "$lib/api/user";
-    import { appConfig, navigate } from "$lib/stores/config";
+    import { appConfig } from "$lib/stores/config";
     import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
     import EmailConfirmationForm from "./EmailConfirmationForm.svelte";
@@ -50,7 +51,7 @@
                             timeout: 5000,
                             type: "success",
                         });
-                        navigate("/login");
+                        goto(resolve("/login"));
                     },
                     (err) => {
                         error = err;

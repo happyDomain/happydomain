@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
     import { onMount } from "svelte";
     import "bootstrap-icons/font/bootstrap-icons.css";
     import "../app.scss";
@@ -29,7 +31,7 @@
     import Header from "$lib/components/Header.svelte";
     import Toaster from "$lib/components/Toaster.svelte";
     import VoxPeople from "$lib/components/VoxPeople.svelte";
-    import { appConfig, navigate } from "$lib/stores/config";
+    import { appConfig } from "$lib/stores/config";
     import { providers } from "$lib/stores/providers";
     import { toasts } from "$lib/stores/toasts";
     import { locale, t } from "$lib/translations";
@@ -49,7 +51,7 @@
     onMount(() => {
         window.onunhandledrejection = (e) => {
             if (e.reason.name == "NotAuthorizedError") {
-                navigate("/login");
+                goto(resolve("/login"));
                 providers.set(undefined);
                 toasts.addErrorToast({
                     title: $t("errors.session.title"),
