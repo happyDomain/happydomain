@@ -247,6 +247,35 @@ func errorHandler(status int, msg string) gin.HandlerFunc {
 	return func(c *gin.Context) { c.String(status, msg) }
 }
 
+// rebaseIndex moves the app shell under basePath, which is only known when the
+// server starts, while the frontend is built once.
+//
+// The three rewrites cover everything the shell points at:
+//
+//   - the assets it declares (stylesheets, icons, modulepreload) and the two
+//     modules that boot it, both written as root-absolute paths;
+//   - SvelteKit's own base, read at runtime out of the bootstrap object. That
+//     one is what $app/paths hands to resolve(), so it is what every link in
+//     the app is built from: without it the router serves a different site
+//     than the one the address bar shows.
+//
+// basePath carries no trailing slash, which is the form SvelteKit expects.
+func rebaseIndex(rendered []byte, basePath string) []byte {
+	for _, r := range []struct{ prefix, sep string }{
+		{`href="`, "/"},
+		{`import("`, "/"},
+		{`base: "`, ""},
+	} {
+		rendered = bytes.ReplaceAll(
+			rendered,
+			[]byte(r.prefix+r.sep),
+			[]byte(r.prefix+basePath+r.sep),
+		)
+	}
+
+	return rendered
+}
+
 // servePrerendered serves a document that is fixed for the lifetime of the
 // handler. It is always revalidated (no-cache) but carries an ETag computed
 // once, so revalidation returns a 304 instead of re-downloading the whole
@@ -349,23 +378,7 @@ func serveOrReverse(forced_url string, cfg *happydns.Options) gin.HandlerFunc {
 		rendered := []byte(strings.Replace(strings.Replace(string(v), "</head>", CustomHeadHTML+"</head>", 1), "</body>", CustomBodyHTML+"</body>", 1))
 
 		if cfg.BasePath != "" {
-			rendered = bytes.ReplaceAll(
-				bytes.ReplaceAll(
-					bytes.ReplaceAll(
-						bytes.ReplaceAll(
-							rendered,
-							[]byte(`href="/`),
-							append([]byte(`href="`), append([]byte(cfg.BasePath), '/')...),
-						),
-						[]byte(`import("/`),
-						append([]byte(`import("`), append([]byte(cfg.BasePath), '/')...),
-					),
-					[]byte(`base: "`),
-					append([]byte(`base: "`), []byte(cfg.BasePath)...),
-				),
-				[]byte("</head>"),
-				[]byte(`<base href="`+cfg.BasePath+`"></head>`),
-			)
+			rendered = rebaseIndex(rendered, cfg.BasePath)
 		}
 
 		return servePrerendered("index.html", "text/html; charset=utf-8", rendered)
