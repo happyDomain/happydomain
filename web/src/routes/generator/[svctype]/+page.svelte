@@ -50,8 +50,8 @@
     let generateDebounce: ReturnType<typeof setTimeout>;
 
     $effect(() => {
-        JSON.stringify(serviceValue); // track all changes
-        domain; // track domain changes
+        void JSON.stringify(serviceValue); // track all changes
+        void domain; // track domain changes
         clearTimeout(generateDebounce);
         generateDebounce = setTimeout(() => {
             recordsPromise = generateServiceRecords(

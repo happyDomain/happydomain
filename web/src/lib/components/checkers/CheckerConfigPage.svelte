@@ -84,7 +84,7 @@
 
     $effect(() => {
         // Reset state when switching checkers
-        checkerId;
+        void checkerId;
         plan = { enabled: {} };
         resolvedStatus = null;
         optionValues = {};
