@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import { page } from "$app/state";
     import { onMount } from "svelte";
 
@@ -308,7 +309,7 @@
                                     {$t("onboarding.explore.history.description")}
                                 </p>
                                 {#if $domains && $domains.length}
-                                    <a href="/domains/{$domains[0].id}/history" class="feature-link"
+                                    <a href={resolve("/domains/[dn]/history", { dn: $domains[0].id })} class="feature-link"
                                         >{$t("onboarding.explore.history.link")}
                                         <Icon name="arrow-right-short" /></a
                                     >
@@ -325,7 +326,8 @@
                                 <p class="feature-description">
                                     {$t("onboarding.explore.api.description")}
                                 </p>
-                                <a href="/swagger/index.html" class="feature-link"
+                                <!-- Served by the Go binary, not a route of this app. -->
+                                <a href="/swagger/index.html" rel="external" class="feature-link"
                                     >{$t("onboarding.explore.api.link")}
                                     <Icon name="arrow-right-short" /></a
                                 >

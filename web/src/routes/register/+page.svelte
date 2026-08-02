@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import { Col, Container, Row } from "@sveltestrap/sveltestrap";
 
     import Logo from "$lib/components/Logo.svelte";
@@ -51,7 +52,7 @@
                 <SignUpForm />
                 <div class="text-center mt-4 pt-3 border-top">
                     <span class="text-body-secondary">{$t("account.signup.already")}</span>
-                    <a href="/login" class="fw-semibold text-decoration-none ms-1">
+                    <a href={resolve("/login")} class="fw-semibold text-decoration-none ms-1">
                         {$t("common.go")}
                     </a>
                 </div>

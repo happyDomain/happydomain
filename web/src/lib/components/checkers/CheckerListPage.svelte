@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import type { CheckerLinks } from "$lib/checker_links";
     import { Alert, Badge, Button, Card, Icon, Table } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
@@ -37,13 +38,13 @@
 
     interface Props {
         scope: CheckerScope;
-        checksBase: string;
+        links: CheckerLinks;
         title: string;
         domainName: string;
         filterAvailability: "applyToDomain" | "applyToService";
     }
 
-    let { scope, checksBase, title, domainName, filterAvailability }: Props = $props();
+    let { scope, links, title, domainName, filterAvailability }: Props = $props();
 
     let checkersPromise = $derived(
         listScopedCheckers(scope, { withAvailables: true }),
@@ -166,17 +167,19 @@
                                 <td>
                                     <div class="d-flex gap-1">
                                         <a
-                                            href="{checksBase}/{checker.id}"
+                                            href={links.checker(checker.id!)}
                                             class="btn btn-sm btn-outline-primary"
                                         >
                                             {$t("checkers.list.configure")}
                                         </a>
-                                        <a
-                                            href="{checksBase}/{checker.id}/executions"
-                                            class="btn btn-sm btn-outline-secondary"
-                                        >
-                                            {$t("checkers.list.view-results")}
-                                        </a>
+                                        {#if links.executions}
+                                            <a
+                                                href={links.executions(checker.id!)}
+                                                class="btn btn-sm btn-outline-secondary"
+                                            >
+                                                {$t("checkers.list.view-results")}
+                                            </a>
+                                        {/if}
                                     </div>
                                 </td>
                             </tr>
@@ -196,14 +199,14 @@
         {#if unconfigured.length > 0}
             <h4 class="mt-4">{$t("checkers.other-checkers.title")}</h4>
             <p class="text-muted">{$t("checkers.other-checkers.description")}</p>
-            <CheckersAvailabilityTable checkers={unconfigured} basePath={checksBase} />
+            <CheckersAvailabilityTable checkers={unconfigured} {links} />
         {/if}
 
         {@const children = getChildrenCheckers(configuredIds)}
         {#if children.length > 0}
             <h4 class="mt-4">{$t("checkers.children-checkers.title")}</h4>
             <p class="text-muted">{$t("checkers.children-checkers.description")}</p>
-            <CheckersAvailabilityTable checkers={children} basePath={checksBase} />
+            <CheckersAvailabilityTable checkers={children} {links} />
         {/if}
     {:catch error}
         <Alert color="danger">

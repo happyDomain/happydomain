@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import { Icon, Spinner } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
@@ -36,7 +37,7 @@
 
 <div class="d-flex flex-column h-100">
     <a
-        href="/checkers"
+        href={resolve("/checkers")}
         class="sidebar-back d-flex align-items-center gap-1 mb-3 text-muted text-decoration-none fw-semibold"
     >
         <Icon name="chevron-left" />
@@ -48,7 +49,7 @@
             {#each Object.entries($checkers) as [checkerId, checkerInfo]}
                 <li>
                     <a
-                        href="/checkers/{encodeURIComponent(checkerId)}"
+                        href={resolve("/checkers/[checkerId]", { checkerId: encodeURIComponent(checkerId) })}
                         class="checker-item d-flex align-items-center gap-2 py-2 px-2 rounded text-decoration-none"
                         class:active={checkerId === currentCheckId}
                     >

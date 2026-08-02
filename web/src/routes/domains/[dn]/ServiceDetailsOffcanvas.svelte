@@ -30,6 +30,7 @@
 </script>
 
 <script lang="ts">
+    import { serviceCheckerLinks } from "$lib/checker_links";
     import {
         Badge,
         Button,
@@ -116,9 +117,14 @@
             ? listScopedCheckers({ domainId: domain.id, zoneId, subdomain, serviceId: service._id })
             : null,
     );
-    const serviceChecksPath = $derived(
+    const serviceLinks = $derived(
         service._id && zoneId
-            ? `/domains/${encodeURIComponent(domain.domain)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(service._domain || "@")}/${encodeURIComponent(service._id)}/checkers`
+            ? serviceCheckerLinks(
+                  encodeURIComponent(domain.domain),
+                  encodeURIComponent(zoneId),
+                  encodeURIComponent(service._domain || "@"),
+                  encodeURIComponent(service._id),
+              )
             : null,
     );
 
@@ -189,8 +195,8 @@
                     <small class="text-muted fw-semibold text-uppercase">
                         {$t("checkers.service-checks")}
                     </small>
-                    {#if serviceChecksPath}
-                        <a href={serviceChecksPath} class="small" onclick={() => (isOpen = false)}>
+                    {#if serviceLinks}
+                        <a href={serviceLinks.list} class="small" onclick={() => (isOpen = false)}>
                             {$t("checkers.view-all")} →
                         </a>
                     {/if}
@@ -205,10 +211,7 @@
                             {#each checkerStatuses as check}
                                 <div class="d-flex justify-content-between align-items-center">
                                     <a
-                                        href={serviceChecksPath +
-                                            "/" +
-                                            check.id +
-                                            "/executions"}
+                                        href={serviceLinks!.executions!(check.id!)}
                                         class="text-truncate me-2"
                                         onclick={() => (isOpen = false)}
                                     >

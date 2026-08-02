@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import { Icon, Spinner } from "@sveltestrap/sveltestrap";
 
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
@@ -39,7 +40,7 @@
 
 <nav class="provider-sidebar d-flex flex-column h-100">
     <a
-        href="/providers"
+        href={resolve("/providers")}
         class="sidebar-back d-flex align-items-center gap-1 mb-3 text-muted text-decoration-none fw-semibold"
     >
         <Icon name="chevron-left" />
@@ -56,7 +57,7 @@
                 {@const isActive = provider._id === currentProviderId}
                 <li>
                     <a
-                        href="/providers/{encodeURIComponent(provider._id)}"
+                        href={resolve("/providers/[prvid]", { prvid: encodeURIComponent(provider._id) })}
                         class="provider-item d-flex align-items-center gap-2 py-2 px-2 rounded text-decoration-none {isActive
                             ? 'fw-bold text-primary active'
                             : 'text-muted'}"

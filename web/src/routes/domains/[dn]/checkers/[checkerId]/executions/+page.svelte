@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { domainCheckerLinks } from "$lib/checker_links";
     import { page } from "$app/state";
 
     import type { Domain } from "$lib/model/domain";
@@ -30,12 +31,12 @@
 
     let domain: Domain = $derived(page.data.domain);
     let checkerId = $derived(page.params.checkerId!);
-    let checksBase = $derived(`/domains/${domainLink(domain.id)}/checkers`);
+    let links = $derived(domainCheckerLinks(domainLink(domain.id)));
 </script>
 
 <ExecutionListPage
     scope={{ domainId: domain.id }}
-    {checksBase}
+    {links}
     {checkerId}
     domainName={domain.domain}
 />

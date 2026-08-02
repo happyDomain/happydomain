@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import type { CheckerLinks } from "$lib/checker_links";
     import { Alert, Badge, Button, Card, CardBody, CardHeader, Col, Icon, Row } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
@@ -48,7 +49,7 @@
 
     interface Props {
         scope: CheckerScope;
-        checksBase: string;
+        links: CheckerLinks;
         checkerId: string;
         domainName: string;
         groups: (status: any) => { editableGroups: { label: string; opts: any[] }[]; readOnlyGroups: { key: string; label: string; opts: any[] }[] };
@@ -57,7 +58,7 @@
         showExecutions?: boolean;
     }
 
-    let { scope, checksBase, checkerId, domainName, groups, showSchedule = true, showCheckerInfo = false, showExecutions = true }: Props = $props();
+    let { scope, links, checkerId, domainName, groups, showSchedule = true, showCheckerInfo = false, showExecutions = true }: Props = $props();
 
     let checkStatusPromise = $derived(getScopedCheckStatus(scope, checkerId));
     let checkOptionsPromise = $derived(getScopedCheckOptions(scope, checkerId));
@@ -165,7 +166,7 @@
         {#if showExecutions && $checkers && (!$checkers[checkerId]?.availability || $checkers[checkerId].availability.applyToDomain || $checkers[checkerId].availability.applyToZone)}
             <Button
                 color="info"
-                href={`${checksBase}/${encodeURIComponent(checkerId)}/executions`}
+                href={links.executions!(checkerId)}
             >
                 <Icon name="bar-chart-fill"></Icon>
                 {$t("checkers.list.view-results")}

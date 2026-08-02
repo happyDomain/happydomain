@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { serviceCheckerLinks } from "$lib/checker_links";
     import { page } from "$app/state";
 
     import type { Domain } from "$lib/model/domain";
@@ -34,14 +35,19 @@
     let subdomain: string = $derived(page.data.subdomain);
     let serviceid: string = $derived(page.data.serviceid);
     let checkerId = $derived(page.params.checkerId!);
-    let checksBase = $derived(
-        `/domains/${domainLink(domain.id)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(page.params.subdomain!)}/${encodeURIComponent(serviceid)}/checkers`,
+    let links = $derived(
+        serviceCheckerLinks(
+            domainLink(domain.id),
+            encodeURIComponent(zoneId),
+            encodeURIComponent(page.params.subdomain!),
+            encodeURIComponent(serviceid),
+        ),
     );
 </script>
 
 <ExecutionListPage
     scope={{ domainId: domain.id, zoneId, subdomain, serviceId: serviceid }}
-    {checksBase}
+    {links}
     {checkerId}
     domainName={fqdn(subdomain, domain.domain)}
 />

@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { domainCheckerLinks } from "$lib/checker_links";
     import { page } from "$app/state";
 
     import { t } from "$lib/translations";
@@ -33,13 +34,13 @@
 
     let domain: Domain = $derived(page.data.domain);
     let checkerId = $derived(page.params.checkerId!);
-    let checksBase = $derived(`/domains/${domainLink(domain.id)}/checkers`);
+    let links = $derived(domainCheckerLinks(domainLink(domain.id)));
     let isDomainChecker = $derived(!!$checkers?.[checkerId]?.availability?.applyToDomain);
 </script>
 
 <CheckerConfigPage
     scope={{ domainId: domain.id }}
-    {checksBase}
+    {links}
     {checkerId}
     domainName={domain.domain}
     showSchedule={isDomainChecker}

@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import { Alert, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import Logo from "$lib/components/Logo.svelte";
@@ -108,7 +109,7 @@
                     <EmailConfirmationForm />
                 {/if}
                 <div class="text-center mt-4 pt-3 border-top">
-                    <a href="/login" class="text-body-secondary text-decoration-none small">
+                    <a href={resolve("/login")} class="text-body-secondary text-decoration-none small">
                         <Icon name="arrow-left" class="me-1" />
                         {$t("common.go-back")}
                     </a>

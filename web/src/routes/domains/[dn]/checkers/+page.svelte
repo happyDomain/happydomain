@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { domainCheckerLinks } from "$lib/checker_links";
     import { page } from "$app/state";
 
     import { t } from "$lib/translations";
@@ -30,12 +31,12 @@
     import CheckerListPage from "$lib/components/checkers/CheckerListPage.svelte";
 
     let domain: Domain = $derived(page.data.domain);
-    let checksBase = $derived(`/domains/${domainLink(domain.id)}/checkers`);
+    let links = $derived(domainCheckerLinks(domainLink(domain.id)));
 </script>
 
 <CheckerListPage
     scope={{ domainId: domain.id }}
-    {checksBase}
+    {links}
     title={$t("checkers.list.title") + domain.domain}
     domainName={domain.domain}
     filterAvailability="applyToDomain"

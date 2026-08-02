@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import type { CheckerLinks } from "$lib/checker_links";
     import {
         Badge,
         Button,
@@ -63,11 +64,11 @@
     interface Props {
         checkerId: string;
         execId: string;
-        checksBase: string;
+        links: CheckerLinks;
         scope: CheckerScope;
     }
 
-    let { checkerId, execId, checksBase, scope }: Props = $props();
+    let { checkerId, execId, links, scope }: Props = $props();
 
     let isRelaunching = $state(false);
 
@@ -82,7 +83,7 @@
             });
             if (execution.id) {
                 navigate(
-                    `${checksBase}/${encodeURIComponent(checkerId)}/executions/${execution.id}`,
+                    links.execution!(checkerId, execution.id!),
                 );
             }
         } catch (error: any) {
@@ -101,7 +102,7 @@
         isDeleting = true;
         try {
             await deleteScopedExecution(scope, checkerId, $currentExecution.id);
-            navigate(`${checksBase}/${encodeURIComponent(checkerId)}/executions`);
+            navigate(links.executions!(checkerId));
         } catch (error: any) {
             toasts.addErrorToast({
                 message:

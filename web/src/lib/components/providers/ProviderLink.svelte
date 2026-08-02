@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
     import { providers_idx, providersSpecs } from "$lib/stores/providers";
 
@@ -36,7 +37,7 @@
 {#if $providers_idx && $providers_idx[id_provider]}
     {@const provider = $providers_idx[id_provider]}
     <a
-        href="/providers/{encodeURIComponent(id_provider)}"
+        href={resolve("/providers/[prvid]", { prvid: encodeURIComponent(id_provider) })}
         class="d-flex align-items-center gap-2 text-decoration-none"
         {onclick}
     >

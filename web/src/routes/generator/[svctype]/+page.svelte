@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import { Col, Container, Input, Row, Spinner } from "@sveltestrap/sveltestrap";
 
     import { generateServiceRecords } from "$lib/api/service_specs";
@@ -88,7 +89,7 @@
     <Row class="justify-content-center">
         <Col lg="8" xl="7">
             <div class="mb-3">
-                <a href="/generator" class="text-body-secondary text-decoration-none small">
+                <a href={resolve("/generator")} class="text-body-secondary text-decoration-none small">
                     <i class="bi bi-arrow-left me-1"></i>
                     {$t("common.back")}
                 </a>
@@ -170,7 +171,7 @@
                             {$t("generator.svctype.cta-text")}
                         </p>
                     </div>
-                    <a href="/register" class="btn btn-primary flex-shrink-0">
+                    <a href={resolve("/register")} class="btn btn-primary flex-shrink-0">
                         {$t("generator.svctype.cta-button")}
                     </a>
                 </div>

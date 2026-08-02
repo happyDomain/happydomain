@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import { Icon, Spinner } from "@sveltestrap/sveltestrap";
 
     import AliasModal from "$lib/components/modals/Alias.svelte";
@@ -50,7 +51,9 @@
         !!data.history &&
         data.history !== data.domain.zone_history[0]
     );
-    let checksBase = $derived(`/domains/${encodeURIComponent(domainLink(data.domain.id))}/checks`);
+    let checksHref = $derived(
+        resolve("/domains/[dn]/checks", { dn: encodeURIComponent(domainLink(data.domain.id)) }),
+    );
 </script>
 
 {#if !data.domain}
@@ -71,7 +74,7 @@
 {:else}
     <div style="max-width: 100%;" class="w-100 pt-1 mb-5">
         <PageTitle title={$t("zones.viewer")} subtitle={$t("zones.viewer-subtitle")} domain={data.domain.domain}>
-            <ChecksSummaryBadge status={data.domain.last_check_status} {checksBase} />
+            <ChecksSummaryBadge status={data.domain.last_check_status} href={checksHref} />
             {#if isHistorical}
                 <span class="badge bg-warning text-dark">
                     <Icon name="clock-history" />

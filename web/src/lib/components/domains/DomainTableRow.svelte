@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import { Badge, Button, ButtonGroup, Icon } from "@sveltestrap/sveltestrap";
 
     import ProviderLink from "$lib/components/providers/ProviderLink.svelte";
@@ -49,7 +50,7 @@
     </td>
     <td>
         <a
-            href="/domains/{encodeURIComponent(domain.domain)}/checks"
+            href={resolve("/domains/[dn]/checks", { dn: encodeURIComponent(domain.domain) })}
             class="text-decoration-none"
             onclick={(e) => e.stopPropagation()}
         >

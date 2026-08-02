@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import { Icon } from "@sveltestrap/sveltestrap";
 
     import FilterDomainInput from "$lib/components/pages/home/FilterDomainInput.svelte";
@@ -64,7 +65,7 @@
     <ZoneList button display_by_groups domains={filteredDomains} links show_empty_groups>
         {#snippet badges({ domain })}
             <a
-                href="/domains/{encodeURIComponent(domain.domain)}/checks"
+                href={resolve("/domains/[dn]/checks", { dn: encodeURIComponent(domain.domain) })}
                 class={"text-" + getStatusColor(domain.last_check_status)}
             >
                 <Icon name={getStatusIcon(domain.last_check_status)} />

@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve as resolveRoute } from "$app/paths";
     import { navigate } from "$lib/stores/config";
     import { page } from "$app/state";
     import { untrack } from "svelte";
@@ -169,7 +170,7 @@
                     >
                         <div class="sidebar-header mb-4">
                             <a
-                                href="/resolver"
+                                href={resolveRoute("/resolver/[[domain]]", {})}
                                 class="text-body-secondary text-decoration-none d-inline-flex align-items-center gap-1 small mb-2"
                             >
                                 <i class="bi bi-arrow-left"></i>

@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import type { CheckerLinks } from "$lib/checker_links";
     import { page } from "$app/state";
     import type { ClassValue } from "svelte/elements";
     import { Icon, Spinner } from "@sveltestrap/sveltestrap";
@@ -32,7 +33,7 @@
         class?: ClassValue;
         domainName: string;
         currentCheckerName: string;
-        checksBase?: string;
+        links: CheckerLinks;
         scope?: "domain" | "service";
         serviceType?: string;
     }
@@ -41,14 +42,11 @@
         class: className,
         domainName,
         currentCheckerName,
-        checksBase: checksBaseProp = undefined,
+        links,
         scope = "domain",
         serviceType = undefined,
     }: Props = $props();
 
-    let checksBase = $derived(
-        checksBaseProp ?? `/domains/${encodeURIComponent(domainName)}/checkers`,
-    );
     let onResults = $derived(page.route.id?.includes("/executions") === true && !page.params.execId);
 
     function isCheckVisible(checkerInfo: NonNullable<typeof $checkers>[string]): boolean {
@@ -82,9 +80,9 @@
                                 : 'text-muted'}"
                         >
                             <a
-                                href="{checksBase}/{encodeURIComponent(checkerName)}{onResults
-                                    ? '/executions'
-                                    : ''}"
+                                href={onResults && links.executions
+                                    ? links.executions(checkerName)
+                                    : links.checker(checkerName)}
                                 class="text-truncate flex-fill text-decoration-none {isActive
                                     ? 'text-primary'
                                     : 'text-muted'}"
@@ -93,7 +91,7 @@
                             </a>
                             {#if onResults}
                                 <a
-                                    href="{checksBase}/{encodeURIComponent(checkerName)}"
+                                    href={links.checker(checkerName)}
                                     class="checker-action text-muted"
                                     title="Configure"
                                 >
@@ -101,7 +99,7 @@
                                 </a>
                             {:else}
                                 <a
-                                    href="{checksBase}/{encodeURIComponent(checkerName)}/executions"
+                                    href={links.executions!(checkerName)}
                                     class="checker-action text-muted"
                                     title="Results"
                                 >

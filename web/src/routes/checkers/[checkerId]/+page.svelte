@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { globalCheckerLinks } from "$lib/checker_links";
     import { page } from "$app/state";
 
     import { t } from "$lib/translations";
@@ -33,7 +34,7 @@
 
 <CheckerConfigPage
     scope={{}}
-    checksBase="/checkers"
+    links={globalCheckerLinks()}
     {checkerId}
     domainName={$t("checkers.title")}
     showSchedule={false}

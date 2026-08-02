@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import { Col, Container, Row } from "@sveltestrap/sveltestrap";
 
     import Logo from "$lib/components/Logo.svelte";
@@ -49,7 +50,7 @@
                 {#if !$appConfig.disable_registration}
                     <div class="text-center mt-4 pt-3 border-top">
                         <span class="text-body-secondary">{$t("account.ask-have")}</span>
-                        <a href="/register" class="fw-semibold text-decoration-none ms-1">
+                        <a href={resolve("/register")} class="fw-semibold text-decoration-none ms-1">
                             {$t("account.join")}
                         </a>
                     </div>

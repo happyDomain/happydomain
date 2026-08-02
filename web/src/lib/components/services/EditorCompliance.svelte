@@ -179,7 +179,7 @@
                                         class="small"
                                         href={issue.docUrl}
                                         target="_blank"
-                                        rel="noopener noreferrer"
+                                        rel="external noopener noreferrer"
                                     >
                                         {$t("compliance.learn-more")}
                                         <Icon name="box-arrow-up-right" />

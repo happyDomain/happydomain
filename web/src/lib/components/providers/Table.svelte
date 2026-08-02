@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import type { ClassValue } from "svelte/elements";
 
     import { Button, ButtonGroup, Icon, Spinner, Table } from "@sveltestrap/sveltestrap";
@@ -167,7 +168,7 @@
                         {/if}
                     </td>
                     <td>
-                        <a href="/domains?provider={encodeURIComponent(item._id)}">
+                        <a href="{resolve('/domains')}?provider={encodeURIComponent(item._id)}">
                             {domain_in_providers[item._id] ?? 0}
                         </a>
                     </td>

@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import type { ResolvedPathname } from "$app/types";
     import { Badge, Icon } from "@sveltestrap/sveltestrap";
 
     import type { HappydnsStatus } from "$lib/api-base/types.gen";
@@ -30,15 +31,15 @@
 
     interface Props {
         status: HappydnsStatus | undefined;
-        checksBase: string;
+        href: ResolvedPathname;
     }
 
-    let { status, checksBase }: Props = $props();
+    let { status, href }: Props = $props();
 </script>
 
 {#if status !== undefined}
     <a
-        href={checksBase}
+        {href}
         class="text-decoration-none"
         title={$t("domains.actions.checks")}
         aria-label={$t("domains.actions.checks")}

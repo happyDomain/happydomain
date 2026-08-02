@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts" generics="T extends HappydnsDomain = HappydnsDomain">
+    import { resolve } from "$app/paths";
+    import type { ResolvedPathname } from "$app/types";
     import { createEventDispatcher, type Snippet } from "svelte";
     import { fly, fade } from "svelte/transition";
     import { flip } from "svelte/animate";
@@ -151,15 +153,10 @@
         }
     }
 
-    function getDomainHref(domain: T): string | undefined {
-        if (links) {
-            if ($domains_idx[domain.domain]) {
-                return "/domains/" + encodeURIComponent(domain.domain);
-            } else {
-                return "/domains/" + encodeURIComponent(domain.id);
-            }
-        }
-        return undefined;
+    function getDomainHref(domain: T): ResolvedPathname {
+        return resolve("/domains/[dn]/[[historyid]]", {
+            dn: encodeURIComponent($domains_idx[domain.domain] ? domain.domain : domain.id),
+        });
     }
 </script>
 
@@ -244,7 +241,7 @@
                                 out:fade={{ duration: 150 }}
                                 animate:flip={{ duration: 250 }}
                             >
-                                {#if href}
+                                {#if links}
                                     <a
                                         class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-dark"
                                         class:draggable-item={display_by_groups}

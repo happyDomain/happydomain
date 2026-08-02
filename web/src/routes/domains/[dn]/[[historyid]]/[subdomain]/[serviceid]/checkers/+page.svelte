@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { serviceCheckerLinks } from "$lib/checker_links";
     import { page } from "$app/state";
 
     import { t } from "$lib/translations";
@@ -34,14 +35,19 @@
     let zoneId: string = $derived(page.data.zoneId);
     let subdomain: string = $derived(page.data.subdomain);
     let serviceid: string = $derived(page.data.serviceid);
-    let checksBase = $derived(
-        `/domains/${domainLink(domain.id)}/${encodeURIComponent(zoneId)}/${encodeURIComponent(page.params.subdomain!)}/${encodeURIComponent(serviceid)}/checkers`,
+    let links = $derived(
+        serviceCheckerLinks(
+            domainLink(domain.id),
+            encodeURIComponent(zoneId),
+            encodeURIComponent(page.params.subdomain!),
+            encodeURIComponent(serviceid),
+        ),
     );
 </script>
 
 <CheckerListPage
     scope={{ domainId: domain.id, zoneId, subdomain, serviceId: serviceid }}
-    {checksBase}
+    {links}
     title={$t("checkers.list.title") + fqdn(subdomain, domain.domain)}
     domainName={fqdn(subdomain, domain.domain)}
     filterAvailability="applyToService"

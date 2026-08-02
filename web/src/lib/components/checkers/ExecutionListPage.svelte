@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import type { CheckerLinks } from "$lib/checker_links";
     import { onDestroy } from "svelte";
     import { Alert, Badge, Button, Card, Icon, Table } from "@sveltestrap/sveltestrap";
 
@@ -50,12 +51,12 @@
 
     interface Props {
         scope: CheckerScope;
-        checksBase: string;
+        links: CheckerLinks;
         checkerId: string;
         domainName: string;
     }
 
-    let { scope, checksBase, checkerId, domainName }: Props = $props();
+    let { scope, links, checkerId, domainName }: Props = $props();
 
     let resolvedName = $state<string>("");
     let executions = $state<HappydnsExecution[]>([]);
@@ -163,7 +164,7 @@
         domain={domainName}
     >
         <div class="d-flex gap-2">
-            <Button color="dark" href="{checksBase}/{checkerId}">
+            <Button color="dark" href={links.checker(checkerId)}>
                 <Icon name="gear-fill"></Icon>
                 {$t("checkers.executions.configure")}
             </Button>
@@ -276,7 +277,7 @@
                             <td>
                                 <div class="d-flex gap-1">
                                     <a
-                                        href="{checksBase}/{checkerId}/executions/{execution.id}"
+                                        href={links.execution!(checkerId, execution.id!)}
                                         class="btn btn-sm btn-outline-primary"
                                         class:disabled={!execution.id && !isRunning}
                                     >

@@ -188,7 +188,7 @@
                         <a
                             href={info.registrar_url}
                             target="_blank"
-                            rel="noopener noreferrer"
+                            rel="external noopener noreferrer"
                             class="btn btn-outline-secondary btn-sm"
                         >
                             <i class="bi bi-box-arrow-up-right me-1"></i>

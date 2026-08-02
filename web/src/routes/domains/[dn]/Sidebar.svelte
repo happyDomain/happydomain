@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { domainCheckerLinks, serviceCheckerLinks } from "$lib/checker_links";
+    import { resolve } from "$app/paths";
     import { page } from "$app/state";
 
     import { Button, Icon, Spinner } from "@sveltestrap/sveltestrap";
@@ -82,12 +84,11 @@
     {#if page.route.id && page.route.id.startsWith("/domains/[dn]/checkers")}
         <ChecksSidebarContent
             {domain}
-            checksBase={"/domains/" + encodeURIComponent(domainLink(selectedDomain)) + "/checkers"}
-            backHref={"/domains/" + encodeURIComponent(domainLink(selectedDomain))}
+            links={domainCheckerLinks(encodeURIComponent(domainLink(selectedDomain)))}
         />
     {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/checks") || page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
         <a
-            href="/domains/{encodeURIComponent(domainLink(selectedDomain))}"
+            href={resolve("/domains/[dn]/[[historyid]]", { dn: encodeURIComponent(domainLink(selectedDomain)) })}
             class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
         >
             <Icon name="chevron-left" />
@@ -95,14 +96,12 @@
         </a>
     {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checks")}
         <a
-            href={"/domains/" +
-                encodeURIComponent(domainLink(selectedDomain)) +
-                "/" +
-                encodeURIComponent(page.data.history ?? "") +
-                "/" +
-                encodeURIComponent(page.params.subdomain ?? "") +
-                "/" +
-                encodeURIComponent(page.data.serviceid ?? "")}
+            href={resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]", {
+                dn: encodeURIComponent(domainLink(selectedDomain)),
+                historyid: encodeURIComponent(page.data.history ?? ""),
+                subdomain: encodeURIComponent(page.params.subdomain ?? ""),
+                serviceid: encodeURIComponent(page.data.serviceid ?? ""),
+            })}
             class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
         >
             <Icon name="chevron-left" />
@@ -111,23 +110,12 @@
     {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checkers")}
         <ChecksSidebarContent
             {domain}
-            checksBase={"/domains/" +
-                encodeURIComponent(domainLink(selectedDomain)) +
-                "/" +
-                encodeURIComponent(page.data.history ?? "") +
-                "/" +
-                encodeURIComponent(page.params.subdomain ?? "") +
-                "/" +
-                encodeURIComponent(page.data.serviceid ?? "") +
-                "/checkers"}
-            backHref={"/domains/" +
-                encodeURIComponent(domainLink(selectedDomain)) +
-                "/" +
-                encodeURIComponent(page.data.history ?? "") +
-                "/" +
-                encodeURIComponent(page.params.subdomain ?? "") +
-                "/" +
-                encodeURIComponent(page.data.serviceid ?? "")}
+            links={serviceCheckerLinks(
+                encodeURIComponent(domainLink(selectedDomain)),
+                encodeURIComponent(page.data.history ?? ""),
+                encodeURIComponent(page.params.subdomain ?? ""),
+                encodeURIComponent(page.data.serviceid ?? ""),
+            )}
             serviceContext={{
                 zoneId: page.data.zoneId ?? "",
                 subdomain: page.data.subdomain ?? "",

@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import type { CheckerLinks } from "$lib/checker_links";
     import { Badge, Table } from "@sveltestrap/sveltestrap";
     import type { CheckerCheckerDefinition } from "$lib/api-base/types.gen";
     import { t } from "$lib/translations";
@@ -29,10 +30,10 @@
 
     let {
         checkers,
-        basePath = "/checkers",
+        links,
     }: {
         checkers: [string, CheckerCheckerDefinition][];
-        basePath?: string;
+        links: CheckerLinks;
     } = $props();
 </script>
 
@@ -64,7 +65,7 @@
                         {/if}
                     </td>
                     <td>
-                        <a href="{basePath}/{checkerId}" class="btn btn-sm btn-primary">
+                        <a href={links.checker(checkerId)} class="btn btn-sm btn-primary">
                             {$t("checkers.table.manage")}
                         </a>
                     </td>

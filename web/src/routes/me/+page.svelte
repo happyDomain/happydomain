@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import { Container, ListGroup, Spinner } from "@sveltestrap/sveltestrap";
 
     import PageTitle from "$lib/components/PageTitle.svelte";
@@ -67,7 +68,7 @@
         <p class="lead">
             {$t("settings.notifications.description")}
         </p>
-        <a class="btn btn-outline-primary" href="/me/notifications">
+        <a class="btn btn-outline-primary" href={resolve("/me/notifications")}>
             {$t("settings.notifications.manage")}
         </a>
 

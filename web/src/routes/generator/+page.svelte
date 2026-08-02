@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import { Col, Icon, Row } from "@sveltestrap/sveltestrap";
 
     import PageTitle from "$lib/components/PageTitle.svelte";
@@ -63,7 +64,7 @@
                 {#each grouped[category] as svc (svc._svctype)}
                     <Col class="mb-3">
                         <a
-                            href="/generator/{encodeURIComponent(svc._svctype)}"
+                            href={resolve("/generator/[svctype]", { svctype: encodeURIComponent(svc._svctype) })}
                             class="card h-100 text-decoration-none text-reset generator-card"
                         >
                             <div class="card-body d-flex align-items-start gap-3">

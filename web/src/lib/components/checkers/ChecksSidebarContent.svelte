@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import type { CheckerLinks } from "$lib/checker_links";
     import { page } from "$app/state";
     import { Icon } from "@sveltestrap/sveltestrap";
 
@@ -34,8 +35,7 @@
 
     interface Props {
         domain: Domain;
-        checksBase: string;
-        backHref: string;
+        links: CheckerLinks;
         serviceContext?: {
             zoneId: string;
             subdomain: string;
@@ -43,7 +43,7 @@
         };
     }
 
-    let { domain, checksBase, backHref, serviceContext }: Props = $props();
+    let { domain, links, serviceContext }: Props = $props();
 
     let scope: CheckerScope = $derived(
         serviceContext
@@ -62,7 +62,7 @@
 
 {#if page.params.execId}
     <a
-        href={`${checksBase}/${encodeURIComponent(page.params.checkerId!)}/executions`}
+        href={links.executions!(page.params.checkerId!)}
         class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
     >
         <Icon name="chevron-left" />
@@ -71,12 +71,12 @@
     <ExecutionSidebarContent
         checkerId={page.params.checkerId!}
         execId={page.params.execId}
-        {checksBase}
+        {links}
         {scope}
     />
 {:else if page.params.checkerId}
     <a
-        href={checksBase}
+        href={links.list}
         class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
     >
         <Icon name="chevron-left" />
@@ -86,14 +86,14 @@
         class="mt-3"
         domainName={domain.domain}
         currentCheckerName={page.params.checkerId}
-        {checksBase}
+        {links}
         scope={serviceContext ? "service" : "domain"}
         {serviceType}
     />
     <div class="flex-fill"></div>
 {:else}
     <a
-        href={backHref}
+        href={links.back}
         class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
     >
         <Icon name="chevron-left" />

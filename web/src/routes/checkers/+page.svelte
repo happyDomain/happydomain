@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { globalCheckerLinks } from "$lib/checker_links";
     import {
         Card,
         Col,
@@ -99,7 +100,7 @@
         {:else}
             <CheckersAvailabilityTable
                 checkers={filteredCheckers}
-                basePath="/checkers"
+                links={globalCheckerLinks()}
             />
         {/if}
     {/if}

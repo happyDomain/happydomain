@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { resolve } from "$app/paths";
+    import type { ResolvedPathname } from "$app/types";
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import { domainLink } from "$lib/stores/domains";
@@ -62,12 +64,22 @@
         (subdomain === "" ? 0 : subdomain.split(".").length * 10) + 20 + "px",
     );
 
-    function subdomainLink(dn: string): string {
-        return `/domains/${domainLink(origin.id)}/${historyId}#${dn ? dn : "@"}`;
+    function subdomainLink(dn: string): ResolvedPathname {
+        const path = resolve("/domains/[dn]/[[historyid]]", {
+            dn: domainLink(origin.id),
+            historyid: historyId,
+        });
+        // The fragment is what scrolls the zone to that subdomain.
+        return `${path}#${dn ? dn : "@"}` as ResolvedPathname;
     }
 
-    function serviceLink(svc: { _id?: string }): string {
-        return `/domains/${domainLink(origin.id)}/${historyId}/${subdomain === "" ? "@" : subdomain}/${svc._id}`;
+    function serviceLink(svc: { _id?: string }): ResolvedPathname {
+        return resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]", {
+            dn: domainLink(origin.id),
+            historyid: historyId,
+            subdomain: subdomain === "" ? "@" : subdomain,
+            serviceid: svc._id!,
+        });
     }
 </script>
 

@@ -22,6 +22,7 @@
 -->
 
 <script lang="ts">
+    import { domainCheckerLinks, serviceCheckerLinks, type CheckerLinks } from "$lib/checker_links";
     import { Alert, Badge, Card, Icon, Table } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
@@ -41,7 +42,7 @@
 
     interface Section {
         title: string;
-        checkersBase: string;
+        links: CheckerLinks;
         statuses: HappydnsCheckerStatus[];
     }
 
@@ -55,11 +56,7 @@
 
     let { domainId, domainName, title, serviceTarget }: Props = $props();
 
-    let domainBase = $derived(`/domains/${domainLink(domainId)}`);
-
-    function serviceBase(zoneId: string, subdomain: string, serviceId: string): string {
-        return `${domainBase}/${encodeURIComponent(zoneId)}/${encodeURIComponent(subdomain)}/${encodeURIComponent(serviceId)}/checkers`;
-    }
+    let dn = $derived(domainLink(domainId));
 
     function serviceLabel(svc: { _id?: string; _svctype?: string }): string {
         return svc._svctype || svc._id || "service";
@@ -78,7 +75,7 @@
             const statuses = await listScopedCheckers(scope);
             sections.push({
                 title: serviceTarget.serviceLabel,
-                checkersBase: serviceBase(serviceTarget.zoneId, serviceTarget.subdomain, serviceTarget.serviceId),
+                links: serviceCheckerLinks(dn, serviceTarget.zoneId, serviceTarget.subdomain, serviceTarget.serviceId),
                 statuses,
             });
             return sections;
@@ -87,7 +84,7 @@
         const domainStatuses = await listScopedCheckers({ domainId });
         sections.push({
             title: domainName,
-            checkersBase: `${domainBase}/checkers`,
+            links: domainCheckerLinks(dn),
             statuses: domainStatuses,
         });
 
@@ -121,7 +118,7 @@
             if (statuses.length === 0) return;
             sections.push({
                 title: tg.label,
-                checkersBase: serviceBase(zone.id!, tg.subdomain, tg.serviceId),
+                links: serviceCheckerLinks(dn, zone.id!, tg.subdomain, tg.serviceId),
                 statuses,
             });
         });
@@ -194,20 +191,20 @@
                                             <div class="btn-group btn-group-sm" role="group">
                                                 {#if exec?.id}
                                                     <a
-                                                        href="{section.checkersBase}/{checker.id}/executions/{exec.id}"
+                                                        href={section.links.execution!(checker.id!, exec.id!)}
                                                         class="btn btn-outline-primary"
                                                     >
                                                         {$t("checkers.list.view-results")}
                                                     </a>
                                                 {/if}
                                                 <a
-                                                    href="{section.checkersBase}/{checker.id}/executions"
+                                                    href={section.links.executions!(checker.id!)}
                                                     class="btn btn-outline-secondary"
                                                 >
                                                     {$t("checkers.list.history")}
                                                 </a>
                                                 <a
-                                                    href="{section.checkersBase}/{checker.id}"
+                                                    href={section.links.checker(checker.id!)}
                                                     class="btn btn-outline-secondary"
                                                 >
                                                     {$t("checkers.list.configure")}
