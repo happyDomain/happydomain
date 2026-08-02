@@ -47,9 +47,7 @@
 
     interface Props {
         dn: string;
-        origin: Domain;
         service?: ServiceWithValue;
-        zoneId: string;
     }
 
     let { dn, service }: Props = $props();

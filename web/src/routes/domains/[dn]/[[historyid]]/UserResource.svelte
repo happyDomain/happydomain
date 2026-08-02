@@ -142,12 +142,12 @@
         {#each services as service}
             <div class="col mb-2 mb-md-3 px-2">
                 {#key service}
-                    <ServiceCard {dn} {origin} {service} {zoneId} />
+                    <ServiceCard {dn} {service} />
                 {/key}
             </div>
         {/each}
         <div class="col mb-2 mb-md-3 px-2 new-service-card">
-            <ServiceCard {dn} {origin} {zoneId} />
+            <ServiceCard {dn} />
         </div>
     </div>
 {/if}

@@ -61,7 +61,6 @@
     class="mt-3"
     dn="_matrix._tcp"
     edit
-    {origin}
     bind:rrs={(value as any)["records"]}
     rrtype="SRV"
 >

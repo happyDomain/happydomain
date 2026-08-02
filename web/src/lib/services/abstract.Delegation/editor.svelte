@@ -43,7 +43,6 @@
         class="mt-3"
         {dn}
         edit
-        {origin}
         bind:rrs={(value["ns"] as any)}
         rrtype="NS"
     >
@@ -71,7 +70,6 @@
             class="mt-3"
             {dn}
             edit
-            {origin}
             bind:rrs={(value["ds"] as any)}
             rrtype="DS"
         >

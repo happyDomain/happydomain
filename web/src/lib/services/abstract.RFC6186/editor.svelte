@@ -86,7 +86,6 @@
             class="mt-3"
             dn={service.prefix}
             edit
-            {origin}
             bind:rrs={(value as any)[service.key]}
             rrtype="SRV"
         >

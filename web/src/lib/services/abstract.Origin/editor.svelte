@@ -44,7 +44,7 @@
 <hr />
 <div>
     <h4 class="text-primary pb-1 border-bottom border-1">Zone's Name Servers (NS records)</h4>
-    <TableRecords class="mt-3" {dn} edit {origin} rrs={value["ns"]} rrtype="NS">
+    <TableRecords class="mt-3" {dn} edit rrs={value["ns"]} rrtype="NS">
         {#snippet header(field: string)}
             {#if field == "Ns"}
                 Name Servers

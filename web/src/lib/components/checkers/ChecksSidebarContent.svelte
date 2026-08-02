@@ -69,7 +69,6 @@
         {$t("zones.return-to-results")}
     </a>
     <ExecutionSidebarContent
-        {domain}
         checkerId={page.params.checkerId!}
         execId={page.params.execId}
         {checksBase}

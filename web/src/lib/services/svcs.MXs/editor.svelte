@@ -44,7 +44,7 @@
 <div>
     <h4 class="text-primary pb-1 border-bottom border-1">EMail Servers (MX records)</h4>
     {#if value["mx"]}
-        <TableRecords class="mt-3" {dn} edit {origin} rrs={value["mx"] as dnsTypeMX[]} rrtype="MX">
+        <TableRecords class="mt-3" {dn} edit rrs={value["mx"] as dnsTypeMX[]} rrtype="MX">
             {#snippet header(field: string)}
                 {#if field == "Mx"}
                     Target

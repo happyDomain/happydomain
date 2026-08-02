@@ -52,7 +52,6 @@
 
     interface Props {
         domain: Domain;
-        selectedHistory?: string;
         isOpen?: boolean;
     }
 

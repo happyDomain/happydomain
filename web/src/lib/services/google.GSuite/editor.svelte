@@ -116,7 +116,6 @@
                 class="mt-3"
                 {dn}
                 edit={!readonly}
-                {origin}
                 rrs={value["mx"] as dnsTypeMX[]}
                 rrtype="MX"
             >

@@ -78,7 +78,6 @@
             class="mt-3"
             dn={bucket.prefix}
             edit
-            {origin}
             bind:rrs={(value as any)[bucket.key]}
             rrtype="SRV"
         >

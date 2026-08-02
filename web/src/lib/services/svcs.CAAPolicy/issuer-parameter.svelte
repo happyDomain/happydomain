@@ -31,7 +31,6 @@
 
     interface Props {
         edit?: boolean;
-        readonly?: boolean;
         value?: string;
     }
 

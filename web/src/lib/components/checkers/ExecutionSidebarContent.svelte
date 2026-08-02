@@ -61,7 +61,6 @@
     import type { Domain } from "$lib/model/domain";
 
     interface Props {
-        domain: Domain;
         checkerId: string;
         execId: string;
         checksBase: string;

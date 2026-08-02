@@ -93,7 +93,7 @@
         <small class="text-muted">Server's SSH fingerprint</small>
     </h4>
     <!--RecordsLines {dn} {origin} bind:rrs={value["ns"]} /-->
-    <TableRecords class="mt-3" {dn} edit {origin} rrs={fingerprints()} rrtype="SSHFP">
+    <TableRecords class="mt-3" {dn} edit rrs={fingerprints()} rrtype="SSHFP">
         {#snippet header(field: string)}
             {#if field == "Algorithm"}
                 Algorithm

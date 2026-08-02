@@ -160,7 +160,6 @@
 
 <ModalUploadZone
     domain={data.domain}
-    {selectedHistory}
     on:retrieveZoneDone={(ev) => retrieveZoneDone(ev.detail)}
 />
 

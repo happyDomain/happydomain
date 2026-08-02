@@ -116,7 +116,6 @@
             {#each val.Parameters as _parameter, k}
                 <CAAIssuerParameter
                     edit={editable_parameters[k]}
-                    {readonly}
                     bind:value={val.Parameters[k]}
                     on:delete-parameter={() => val.Parameters.splice(k, 1)}
                 />

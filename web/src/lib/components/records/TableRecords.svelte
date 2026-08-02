@@ -37,7 +37,6 @@
         edit: boolean;
         field: Snippet<[number, string]>;
         header: Snippet<[string]>;
-        origin: Domain;
         rrs: Array<dnsRR>;
         rrtype: string;
     }

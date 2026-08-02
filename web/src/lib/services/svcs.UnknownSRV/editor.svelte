@@ -99,7 +99,6 @@
         class="mt-3"
         dn={fullDn}
         edit
-        {origin}
         bind:rrs={value["srv"] as any as dnsRR[]}
         rrtype="SRV"
     >
