@@ -22,7 +22,6 @@
 -->
 
 <script lang="ts">
-    // @ts-ignore
     import { escape } from "html-escaper";
     import { onDestroy } from "svelte";
     import { page } from "$app/state";

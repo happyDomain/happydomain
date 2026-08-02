@@ -30,7 +30,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
 
-    // @ts-ignore
     import { escape } from "html-escaper";
 
     import {

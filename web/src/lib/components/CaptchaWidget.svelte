@@ -28,8 +28,8 @@
     let { token = $bindable() }: { token: string | null } = $props();
 
     let container: HTMLDivElement | undefined = $state();
-    let altchaWidget: HTMLElement | undefined = $state();
-    let widgetId: unknown = $state(undefined);
+    let altchaWidget: AltchaWidgetElement | undefined = $state();
+    let widgetId: CaptchaWidgetId | undefined = $state();
 
     const provider = $derived($appConfig.captcha_provider);
     const siteKey = $derived($appConfig.captcha_site_key ?? "");
@@ -60,6 +60,8 @@
 
     async function renderWidget() {
         if (!provider) return;
+        // The container is only in the DOM for the providers rendering into
+        // one, which altcha, handled first below, is not.
 
         if (provider === "altcha") {
             await loadScript(
@@ -67,21 +69,18 @@
                 true,
             );
         } else if (provider === "hcaptcha") {
-            if (!siteKey) return;
+            if (!siteKey || !container) return;
             await loadScript("https://js.hcaptcha.com/1/api.js?render=explicit");
-            // @ts-ignore
             widgetId = hcaptcha.render(container, { sitekey: siteKey, callback: onToken });
         } else if (provider === "recaptchav2") {
-            if (!siteKey) return;
+            if (!siteKey || !container) return;
             await loadScript("https://www.google.com/recaptcha/api.js?render=explicit");
-            // @ts-ignore
             widgetId = grecaptcha.render(container, { sitekey: siteKey, callback: onToken });
         } else if (provider === "turnstile") {
-            if (!siteKey) return;
+            if (!siteKey || !container) return;
             await loadScript(
                 "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit",
             );
-            // @ts-ignore
             widgetId = turnstile.render(container, { sitekey: siteKey, callback: onToken });
         }
     }
@@ -90,7 +89,6 @@
         token = null;
         if (provider === "altcha") {
             if (altchaWidget) {
-                // @ts-ignore
                 altchaWidget.reset?.();
             }
             return;
@@ -98,13 +96,10 @@
         if (widgetId === undefined) return;
 
         if (provider === "hcaptcha") {
-            // @ts-ignore
             hcaptcha.reset(widgetId);
         } else if (provider === "recaptchav2") {
-            // @ts-ignore
             grecaptcha.reset(widgetId);
         } else if (provider === "turnstile") {
-            // @ts-ignore
             turnstile.reset(widgetId);
         }
     }

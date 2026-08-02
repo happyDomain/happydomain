@@ -235,7 +235,7 @@
                     {:else if responses != null}
                         {@const resByType = responseByType(
                             filteredResponses(
-                                /* @ts-ignore */ responses,
+                                responses,
                                 (page.state as ResolverPageState).showDNSSEC ?? false,
                             ),
                         )}
