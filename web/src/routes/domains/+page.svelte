@@ -68,6 +68,8 @@
     );
 
     $effect(() => {
+        // Built and read out within this scope, never kept as reactive state.
+        // eslint-disable-next-line svelte/prefer-svelte-reactivity
         const params = new URLSearchParams(window.location.search);
         if (selectedProviderId) {
             params.set("provider", selectedProviderId);

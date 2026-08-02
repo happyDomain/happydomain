@@ -37,6 +37,8 @@
 
     $effect(() => {
         activeDn = "";
+        // Built and read out within this scope, never kept as reactive state.
+        // eslint-disable-next-line svelte/prefer-svelte-reactivity
         const visibleElements = new Map<string, number>();
 
         const observer = new IntersectionObserver(

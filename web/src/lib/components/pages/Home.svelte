@@ -74,6 +74,8 @@
 
     // Sync filter stores to URL query params
     $effect(() => {
+        // Built and read out within this scope, never kept as reactive state.
+        // eslint-disable-next-line svelte/prefer-svelte-reactivity
         const params = new URLSearchParams();
         if ($filteredName) params.set("name", $filteredName);
         if ($filteredProvider) {

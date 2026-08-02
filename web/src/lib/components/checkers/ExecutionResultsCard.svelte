@@ -46,6 +46,8 @@
     let { evaluation }: Props = $props();
 
     const groups = $derived.by(() => {
+        // Built and read out within this scope, never kept as reactive state.
+        // eslint-disable-next-line svelte/prefer-svelte-reactivity
         const map = new Map<string, HappydnsCheckState[]>();
         for (const s of evaluation.states ?? []) {
             const key = s.rule ?? "";

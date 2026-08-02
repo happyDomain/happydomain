@@ -84,6 +84,8 @@
             points: { x: number; y: number }[];
         }
 
+        // Built and read out within this scope, never kept as reactive state.
+        // eslint-disable-next-line svelte/prefer-svelte-reactivity
         const seriesMap = new Map<SeriesKey, Series>();
         const seriesOrder: SeriesKey[] = [];
 

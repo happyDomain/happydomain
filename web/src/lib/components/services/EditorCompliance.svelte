@@ -128,6 +128,8 @@
     // only the first one is kept: repeating it adds no information, and a
     // duplicate key would tear down the whole editor.
     let sortedIssues = $derived.by(() => {
+        // Built and read out within this scope, never kept as reactive state.
+        // eslint-disable-next-line svelte/prefer-svelte-reactivity
         const seen = new Set<string>();
 
         return issues

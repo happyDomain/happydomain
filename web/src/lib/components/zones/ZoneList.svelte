@@ -103,6 +103,8 @@
     let dragOverGroup: string | null = $state(null);
 
     function toggleGroup(gname: string) {
+        // Built and read out within this scope, never kept as reactive state.
+        // eslint-disable-next-line svelte/prefer-svelte-reactivity
         const next = new Set(collapsedGroups);
         if (next.has(gname)) {
             next.delete(gname);
