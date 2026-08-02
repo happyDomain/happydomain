@@ -433,7 +433,7 @@ func main() {
 	// Helper function to quote strings containing special DNS characters
 	fmt.Fprintln(fd, "// Helper function to quote strings containing special DNS characters (spaces, quotes, semicolons, parentheses)")
 	fmt.Fprintln(fd, "function quoteStringIfNeeded(s: string): string {")
-	fmt.Fprintln(fd, "    if (s.match(/[\\s;()\\\"]/)) {")
+	fmt.Fprintln(fd, "    if (s.match(/[\\s;()\"]/)) {")
 	fmt.Fprintln(fd, "        return JSON.stringify(s);")
 	fmt.Fprintln(fd, "    }")
 	fmt.Fprintln(fd, "    return s;")

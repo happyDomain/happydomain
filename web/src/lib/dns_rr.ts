@@ -6,7 +6,7 @@ export interface EDNS0 {}
 
 // Helper function to quote strings containing special DNS characters (spaces, quotes, semicolons, parentheses)
 function quoteStringIfNeeded(s: string): string {
-    if (s.match(/[\s;()\"]/)) {
+    if (s.match(/[\s;()"]/)) {
         return JSON.stringify(s);
     }
     return s;
