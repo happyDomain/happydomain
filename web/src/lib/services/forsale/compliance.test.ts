@@ -138,4 +138,21 @@ describe("For Sale compliance", () => {
     it("returns no issue on an empty RRset", () => {
         expect(run([])).toEqual([]);
     });
+
+    // Two records sharing a defect must stay two distinguishable issues,
+    // otherwise the compliance panel renders duplicate keys and blows up.
+    it("points each issue at the record it comes from", () => {
+        const issues = run([
+            rr("v=FORSALE1;fval=USD750"),
+            rr("v=FORSALE1;furi="),
+            rr("v=FORSALE1;furi="),
+        ]);
+
+        expect(issues.map((i) => i.id)).toEqual([
+            "forsale.empty-value",
+            "forsale.duplicate-pair",
+            "forsale.empty-value",
+        ]);
+        expect(issues.map((i) => i.field)).toEqual(["txt[1]", "txt[2]", "txt[2]"]);
+    });
 });

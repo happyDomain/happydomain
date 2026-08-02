@@ -119,9 +119,25 @@
         warning: "exclamation-triangle-fill",
         info: "info-circle-fill",
     };
-    let sortedIssues = $derived(
-        [...issues].sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]),
-    );
+    function issueKey(issue: ComplianceIssue): string {
+        return issue.id + (issue.field ?? "") + JSON.stringify(issue.params ?? {});
+    }
+
+    // Two occurrences of the same problem render as the very same message, so
+    // only the first one is kept: repeating it adds no information, and a
+    // duplicate key would tear down the whole editor.
+    let sortedIssues = $derived.by(() => {
+        const seen = new Set<string>();
+
+        return issues
+            .filter((issue) => {
+                const key = issueKey(issue);
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            })
+            .sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
+    });
 
     function hasDetail(id: string): boolean {
         const key = `compliance.${id}.detail`;
@@ -142,7 +158,7 @@
         </h5>
         {#if sortedIssues.length > 0}
             <ul class="list-unstyled mb-0">
-                {#each sortedIssues as issue (issue.id + (issue.field ?? "") + JSON.stringify(issue.params ?? {}))}
+                {#each sortedIssues as issue (issueKey(issue))}
                     <li class="alert {severityClass[issue.severity]} py-2 px-3 mb-2">
                         <div class="d-flex align-items-start gap-2">
                             <Icon name={severityIcon[issue.severity]} />

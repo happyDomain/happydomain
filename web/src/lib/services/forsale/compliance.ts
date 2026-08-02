@@ -63,7 +63,11 @@ function forsaleSync(raw: Record<string, any>, _ctx: ComplianceContext): Complia
     const ttls = new Set<number>();
     let hasContent = false;
 
-    for (const record of records) {
+    for (let index = 0; index < records.length; index++) {
+        const record = records[index];
+        // Path of the record inside the edited value, so that two records
+        // sharing the same defect stay two distinct issues.
+        const field = `txt[${index}]`;
         const txt = typeof record?.Txt === "string" ? record.Txt : "";
         const name = typeof record?.Hdr?.Name === "string" ? record.Hdr.Name : "";
         const ttl = typeof record?.Hdr?.Ttl === "number" ? record.Hdr.Ttl : 0;
@@ -73,6 +77,7 @@ function forsaleSync(raw: Record<string, any>, _ctx: ComplianceContext): Complia
             issues.push({
                 id: "forsale.wrong-owner-name",
                 severity: "error",
+                field,
                 params: { name },
                 docUrl: RFC + "#section-2.6",
             });
@@ -84,6 +89,7 @@ function forsaleSync(raw: Record<string, any>, _ctx: ComplianceContext): Complia
                 issues.push({
                     id: "forsale.ttl-too-high",
                     severity: "warning",
+                    field,
                     params: { ttl },
                     docUrl: RFC + "#section-3.4",
                 });
@@ -95,6 +101,7 @@ function forsaleSync(raw: Record<string, any>, _ctx: ComplianceContext): Complia
             issues.push({
                 id: "forsale.missing-version",
                 severity: "error",
+                field,
                 params: { txt },
                 docUrl: RFC + "#section-2.1",
             });
@@ -107,6 +114,7 @@ function forsaleSync(raw: Record<string, any>, _ctx: ComplianceContext): Complia
             issues.push({
                 id: "forsale.malformed-content",
                 severity: "error",
+                field,
                 params: { content: pair.value },
                 docUrl: RFC + "#section-2.1",
             });
@@ -122,6 +130,7 @@ function forsaleSync(raw: Record<string, any>, _ctx: ComplianceContext): Complia
             issues.push({
                 id: "forsale.multiple-pairs",
                 severity: "error",
+                field,
                 params: { tag: pair.tag },
                 docUrl: RFC + "#section-2.1",
             });
@@ -133,6 +142,7 @@ function forsaleSync(raw: Record<string, any>, _ctx: ComplianceContext): Complia
             issues.push({
                 id: "forsale.duplicate-pair",
                 severity: "error",
+                field,
                 params: { pair: key },
                 docUrl: RFC + "#section-2.4",
             });
@@ -143,6 +153,7 @@ function forsaleSync(raw: Record<string, any>, _ctx: ComplianceContext): Complia
             issues.push({
                 id: "forsale.unknown-tag",
                 severity: "warning",
+                field,
                 params: { tag: pair.tag },
                 docUrl: RFC + "#section-2.2.5",
             });
@@ -153,7 +164,7 @@ function forsaleSync(raw: Record<string, any>, _ctx: ComplianceContext): Complia
             issues.push({
                 id: "forsale.empty-value",
                 severity: "error",
-                field: pair.tag,
+                field,
                 params: { tag: pair.tag },
                 docUrl: RFC + "#section-2.1",
             });
@@ -167,7 +178,7 @@ function forsaleSync(raw: Record<string, any>, _ctx: ComplianceContext): Complia
                 issues.push({
                     id: "forsale.value-too-long",
                     severity: "error",
-                    field: pair.tag,
+                    field,
                     params: { tag: pair.tag, length: len, max: FORSALE_MAX_VALUE_LEN },
                     docUrl: RFC + "#section-2.3",
                 });
@@ -180,7 +191,7 @@ function forsaleSync(raw: Record<string, any>, _ctx: ComplianceContext): Complia
                 issues.push({
                     id: "forsale.invalid-price",
                     severity: "error",
-                    field: "fval",
+                    field,
                     params: { value: pair.value },
                     docUrl: RFC + "#section-2.2.4",
                 });
@@ -195,7 +206,7 @@ function forsaleSync(raw: Record<string, any>, _ctx: ComplianceContext): Complia
                 issues.push({
                     id: "forsale.invalid-uri",
                     severity: "error",
-                    field: "furi",
+                    field,
                     params: { uri: pair.value },
                     docUrl: RFC + "#section-2.2.3",
                 });
@@ -205,7 +216,7 @@ function forsaleSync(raw: Record<string, any>, _ctx: ComplianceContext): Complia
                 issues.push({
                     id: "forsale.unusual-uri-scheme",
                     severity: "warning",
-                    field: "furi",
+                    field,
                     params: { scheme: scheme.replace(/:$/, ""), uri: pair.value },
                     docUrl: RFC + "#section-2.2.3",
                 });
