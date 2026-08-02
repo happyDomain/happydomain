@@ -40,6 +40,7 @@
     {#if update}
         {$t("service.update")}
     {:else}
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -- Translations ship with the app; interpolated values are literals or escaped -->
         {@html $t("service.form-new", {
             domain: `<span class="font-monospace">${escape(dn)}</span>`,
         })}

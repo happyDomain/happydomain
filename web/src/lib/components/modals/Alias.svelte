@@ -141,6 +141,7 @@
     <ModalBody>
         <form id="addAliasForm" onsubmit={submitAliasForm}>
             <p>
+                <!-- eslint-disable-next-line svelte/no-at-html-tags -- Translations ship with the app; interpolated values are literals or escaped -->
                 {@html $t("domains.alias-creation", {
                     domain: `<span class="font-monospace">${escape(fqdn(dn, origin.domain))}</span>`,
                 })}

@@ -78,6 +78,7 @@
     <ModalBody>
         <form id="addSubdomainForm" onsubmit={submitSubdomainForm}>
             <p>
+                <!-- eslint-disable-next-line svelte/no-at-html-tags -- Translations ship with the app; interpolated values are literals or escaped -->
                 {@html $t("domains.form-new-subdomain", {
                     domain: `<span class="font-monospace">${escape(origin.domain)}</span>`,
                 })}

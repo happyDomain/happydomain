@@ -72,6 +72,7 @@
         />
     </FormGroup>
     <div id="domainHelpBlock" class="form-text mb-3 mt-n2">
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -- Translations ship with the app; interpolated values are literals or escaped -->
         {@html $t("resolver.domain-description", {
             domain: `<a href="/resolver/wikipedia.org" class="font-monospace">wikipedia.org</a>`,
         })}

@@ -157,6 +157,7 @@
         <CardHeader>
             <div class="d-flex justify-content-between align-items-center">
                 <div>
+                    <!-- eslint-disable-next-line svelte/no-at-html-tags -- Translations ship with the app; interpolated values are literals or escaped -->
                     {@html $t("provider.provider", {
                         provider:
                             "<em>" +

@@ -169,6 +169,7 @@
 <Modal {isOpen} size="lg" scrollable {toggle}>
     {#if domain}
         <ModalHeader {toggle} class="bg-warning-subtle">
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -- Translations ship with the app; interpolated values are literals or escaped -->
             {@html $t("domains.view.description", {
                 domain: `<span class="font-monospace">${escape(domain.domain)}</span>`,
             })}

@@ -45,5 +45,6 @@
 </script>
 
 <div class={["text-truncate font-monospace", className]}>
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -- highlight.js escapes what it highlights and adds only its own markup -->
     {@html hljs.highlight(printRR(rr, dn, origin.domain), { language: "dns" }).value}
 </div>

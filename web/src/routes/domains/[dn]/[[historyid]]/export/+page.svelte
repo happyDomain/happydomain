@@ -91,6 +91,7 @@
             <p>{$t("wait.formating")}</p>
         </div>
     {:else}
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -- highlight.js escapes what it highlights and adds only its own markup -->
         <pre class="flex-fill mb-0"><code>{@html highlight(zoneContent)}</code></pre>
     {/if}
 </div>

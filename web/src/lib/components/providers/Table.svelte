@@ -124,6 +124,7 @@
                 newProviderControls.Open();
             }}
         >
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -- Translations ship with the app; interpolated values are literals or escaped -->
             {@html $t("provider.empty", {
                 action: `<button type="submit" class="btn btn-link p-0">${$t("provider.empty-action")}</button>`,
             })}

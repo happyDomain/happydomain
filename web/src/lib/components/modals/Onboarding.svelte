@@ -174,11 +174,13 @@
                         </Col>
                     </Row>
                     <p>
+                        <!-- eslint-disable-next-line svelte/no-at-html-tags -- Translations ship with the app; interpolated values are literals or escaped -->
                         {@html $t("onboarding.welcome.purpose", {
                             happyDomain: `happy<span class="fw-bold">Domain</span>`,
                         })}
                     </p>
                     <p>
+                        <!-- eslint-disable-next-line svelte/no-at-html-tags -- Translations ship with the app; interpolated values are literals or escaped -->
                         {@html $t("onboarding.welcome.use", {
                             happyDomain: `happy<span class="fw-bold">Domain</span>`,
                         })}
@@ -372,6 +374,7 @@
                         {$t("onboarding.no-sale.title")}
                     </h3>
                     <p class="text-justify text-indent mt-4 mb-3">
+                        <!-- eslint-disable-next-line svelte/no-at-html-tags -- Translations ship with the app; interpolated values are literals or escaped -->
                         {@html $t("onboarding.no-sale.description", {
                             happyDomain: `happy<span class="fw-bold">Domain</span>`,
                         })}
