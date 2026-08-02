@@ -315,7 +315,6 @@ func init() {
 		emailautoconfig_analyze,
 		happydns.ServiceInfos{
 			Name:        "Email Auto-configuration",
-			Description: "Publish IMAP/POP/SMTP settings for mail clients via RFC 6186, Mozilla Autoconfig, and Microsoft Autodiscover.",
 			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories:  []string{"email"},
 			RecordTypes: []uint16{dns.TypeSRV, dns.TypeCNAME},

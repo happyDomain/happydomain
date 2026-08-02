@@ -10,5 +10,13 @@
                 "detail": "A DNAME redirects a whole subtree, it cannot coexist with a CNAME at the same name (RFC 6672 sec. 2.4)."
             }
         }
+    },
+    "svcinfo": {
+        "svcs": {
+            "Alias": {
+                "name": "Alias",
+                "description": "Maps an alias to another (canonical) domain."
+            }
+        }
     }
 }

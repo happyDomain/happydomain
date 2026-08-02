@@ -28,6 +28,9 @@ import { hasValidators } from "$lib/services/compliance";
 // service type it implements.
 const editors = import.meta.glob("./*/editor.svelte");
 const validators = import.meta.glob("./*/compliance.ts", { eager: true });
+const english = import.meta.glob<{ default: Record<string, any> }>("./*/locales/en.json", {
+    eager: true,
+});
 
 function folders(paths: Record<string, unknown>): string[] {
     return Object.keys(paths).map((path) => path.split("/").at(-2)!);
@@ -46,5 +49,22 @@ describe("service folders", () => {
     it("registers the validators under the name of their folder", () => {
         const unregistered = folders(validators).filter((svctype) => !hasValidators(svctype));
         expect(unregistered).toEqual([]);
+    });
+
+    it("names and describes every service in English", () => {
+        const said: Record<string, any> = {};
+        for (const module of Object.values(english)) {
+            const svcinfo = module.default.svcinfo ?? {};
+            for (const [family, services] of Object.entries<any>(svcinfo)) {
+                for (const [name, infos] of Object.entries(services)) {
+                    said[`${family}.${name}`] = infos;
+                }
+            }
+        }
+
+        const undescribed = Object.keys(servicesSpecs).filter(
+            (svctype) => !said[svctype]?.name || !said[svctype]?.description,
+        );
+        expect(undescribed).toEqual([]);
     });
 });

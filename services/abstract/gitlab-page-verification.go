@@ -69,7 +69,6 @@ func init() {
 		gitlabverification_analyze,
 		happydns.ServiceInfos{
 			Name:        "Gitlab Pages Verification",
-			Description: "Temporary record to prove that you control the domain.",
 			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"verification",

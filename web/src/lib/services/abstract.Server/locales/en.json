@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "Server": {
+                "name": "Server",
+                "description": "A system to respond to specific requests."
+            }
+        }
+    }
+}

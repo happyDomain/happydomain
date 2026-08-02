@@ -76,7 +76,6 @@ func init() {
 		txt_analyze,
 		happydns.ServiceInfos{
 			Name:        "Text Record",
-			Description: "Publishes a text string in your zone.",
 			RecordTypes: []uint16{
 				dns.TypeTXT,
 			},

@@ -102,7 +102,6 @@ func init() {
 		srv_analyze,
 		happydns.ServiceInfos{
 			Name:        "Service Record",
-			Description: "Indicates to dedicated software the existance of the given service in the domain.",
 			Categories: []string{
 				"service",
 			},

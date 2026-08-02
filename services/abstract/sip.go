@@ -162,7 +162,6 @@ func init() {
 		sip_analyze,
 		happydns.ServiceInfos{
 			Name:        "SIP / VoIP",
-			Description: "Expose SIP/VoIP endpoints for your domain (voice, video, messaging).",
 			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"service",

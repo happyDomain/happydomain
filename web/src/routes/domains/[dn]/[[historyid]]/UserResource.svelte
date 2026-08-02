@@ -31,6 +31,7 @@
     import type { Domain } from "$lib/model/domain";
     import type { ServiceWithValue } from "$lib/model/service.svelte";
     import { ZoneViewList, ZoneViewRecords } from "$lib/model/usersettings";
+    import { serviceDescription, serviceName } from "$lib/services/infos";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { navigate } from "$lib/stores/config";
     import { userSession } from "$lib/stores/usersession";
@@ -92,7 +93,7 @@
                                                         class="text-muted"
                                                         style="white-space: nowrap"
                                                     >
-                                                        {$servicesSpecs[service._svctype].name}
+                                                        {$serviceName($servicesSpecs[service._svctype], service._svctype)}
                                                     </strong>
                                                 {/if}
                                             </td>
@@ -110,12 +111,13 @@
                             >
                                 <div style="min-width: 0" class="d-flex align-items-center gap-1">
                                     <strong
-                                        title={$servicesSpecs[service._svctype].description
-                                            ? $servicesSpecs[service._svctype].description
-                                            : null}
+                                        title={$serviceDescription(
+                                            $servicesSpecs[service._svctype],
+                                            service._svctype,
+                                        ) || null}
                                         style="white-space: nowrap"
                                     >
-                                        {$servicesSpecs[service._svctype].name}
+                                        {$serviceName($servicesSpecs[service._svctype], service._svctype)}
                                     </strong>
                                     {#if service._comment}
                                         <span

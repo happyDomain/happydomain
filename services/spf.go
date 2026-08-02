@@ -243,7 +243,6 @@ func init() {
 		spf_analyze,
 		happydns.ServiceInfos{
 			Name:        "SPF",
-			Description: "Sender Policy Framework, to authenticate domain name on email sending.",
 			Categories: []string{
 				"email",
 			},

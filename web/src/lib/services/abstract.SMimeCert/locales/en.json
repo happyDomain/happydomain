@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "SMimeCert": {
+                "name": "SMimeCert",
+                "description": "Publish S/MIME certificate."
+            }
+        }
+    }
+}

@@ -202,7 +202,6 @@ func init() {
 		carddav_analyze,
 		happydns.ServiceInfos{
 			Name:        "CardDAV (Address Book)",
-			Description: "Announce a CardDAV address book server for the domain via SRV records (RFC 6764).",
 			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"service",

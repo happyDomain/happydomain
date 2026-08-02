@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "NSOnlyOrigin": {
+                "name": "Origin",
+                "description": "This is the root of your domain."
+            }
+        }
+    }
+}

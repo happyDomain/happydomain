@@ -155,7 +155,6 @@ func init() {
 		origin_analyze,
 		happydns.ServiceInfos{
 			Name:        "Origin",
-			Description: "This is the root of your domain.",
 			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"domain name",
@@ -181,7 +180,6 @@ func init() {
 		nil,
 		happydns.ServiceInfos{
 			Name:        "Origin",
-			Description: "This is the root of your domain.",
 			Family:      happydns.SERVICE_FAMILY_HIDDEN,
 			Categories: []string{
 				"domain name",

@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "SIP": {
+                "name": "SIP / VoIP",
+                "description": "Expose SIP/VoIP endpoints for your domain (voice, video, messaging)."
+            }
+        }
+    }
+}

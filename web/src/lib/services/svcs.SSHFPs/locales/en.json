@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "svcs": {
+            "SSHFPs": {
+                "name": "SSHFP",
+                "description": "Store SSH key fingerprints in DNS."
+            }
+        }
+    }
+}

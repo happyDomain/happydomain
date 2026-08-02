@@ -39,6 +39,7 @@
     import { ServiceCombined } from "$lib/model/service.svelte";
     import { domainLink } from "$lib/stores/domains";
     import { helpLinkOverride } from "$lib/stores/help";
+    import { serviceDescription, serviceName } from "$lib/services/infos";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
     import { navigate } from "$lib/stores/config";
@@ -67,7 +68,9 @@
         if (!svc) return "";
         if (svc._id) {
             return $servicesSpecsLoaded && $servicesSpecs[svc._svctype]
-                ? $t("common.update-what", { what: $servicesSpecs[svc._svctype].name } as Record<string, string>)
+                ? $t("common.update-what", {
+                      what: $serviceName($servicesSpecs[svc._svctype], svc._svctype),
+                  } as Record<string, string>)
                 : $t("service.update");
         }
         return $t("service.add");
@@ -151,9 +154,8 @@
     <div class="flex-fill">
         <PageTitle
             title={serviceTitle}
-            subtitle={$servicesSpecs && $servicesSpecs[service._svctype]
-                ? $servicesSpecs[service._svctype].description
-                : undefined}
+            subtitle={$serviceDescription($servicesSpecs[service._svctype], service._svctype) ||
+                undefined}
             domain={fqdn(service._domain, data.domain.domain)}
         />
 

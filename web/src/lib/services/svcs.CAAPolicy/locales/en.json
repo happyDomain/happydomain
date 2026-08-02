@@ -36,5 +36,13 @@
             "add-contact-email": "Add contact email",
             "add-contact-phone": "Add contact phone"
         }
+    },
+    "svcinfo": {
+        "svcs": {
+            "CAAPolicy": {
+                "name": "Certification Authority Authorization",
+                "description": "Indicate to certificate authorities whether they are authorized to issue digital certificates for a particular domain name."
+            }
+        }
     }
 }

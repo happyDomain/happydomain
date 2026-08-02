@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "ACMEChallenge": {
+                "name": "ACME Challenge",
+                "description": "Temporary record to prove that you control the sub-domain."
+            }
+        }
+    }
+}

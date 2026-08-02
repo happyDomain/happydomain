@@ -21,5 +21,13 @@
             "display-short-name": "Short Name",
             "username-format": "Username Format"
         }
+    },
+    "svcinfo": {
+        "abstract": {
+            "EmailAutoConfig": {
+                "name": "Email Auto-configuration",
+                "description": "Publish IMAP/POP/SMTP settings for mail clients via RFC 6186, Mozilla Autoconfig, and Microsoft Autodiscover."
+            }
+        }
     }
 }

@@ -94,5 +94,13 @@
                 "detail": "The mechanism {{mechanism}} could not be fully evaluated."
             }
         }
+    },
+    "svcinfo": {
+        "svcs": {
+            "SPF": {
+                "name": "SPF",
+                "description": "Sender Policy Framework, to authenticate domain name on email sending."
+            }
+        }
     }
 }

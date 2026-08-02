@@ -237,7 +237,6 @@ func init() {
 		dmarc_analyze,
 		happydns.ServiceInfos{
 			Name:        "DMARC",
-			Description: "Domain-based Message Authentication, Reporting and Conformance.",
 			Categories: []string{
 				"email",
 			},

@@ -58,5 +58,13 @@
                 "detail": "Mail clients only honour BIMI when DMARC is set to quarantine or reject."
             }
         }
+    },
+    "svcinfo": {
+        "svcs": {
+            "BIMI": {
+                "name": "BIMI",
+                "description": "Brand Indicators for Message Identification, display brand logos in supporting mail clients."
+            }
+        }
     }
 }

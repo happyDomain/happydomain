@@ -266,7 +266,6 @@ func init() {
 		caa_analyze,
 		happydns.ServiceInfos{
 			Name:        "Certification Authority Authorization",
-			Description: "Indicate to certificate authorities whether they are authorized to issue digital certificates for a particular domain name.",
 			Categories: []string{
 				"security",
 			},

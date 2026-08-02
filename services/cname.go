@@ -68,7 +68,6 @@ func init() {
 		specialalias_analyze,
 		happydns.ServiceInfos{
 			Name:        "SubAlias",
-			Description: "A service alias to another domain/service.",
 			Categories: []string{
 				"alias",
 			},

@@ -38,6 +38,7 @@
     import { controls as ctrlServicePath } from "$lib/components/services/NewServicePath.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceWithValue } from "$lib/model/service.svelte";
+    import { serviceDescription, serviceName } from "$lib/services/infos";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
@@ -76,11 +77,15 @@
             <Spinner color="primary" />
         </div>
     {:else}
-        <CardBody title={service && $servicesSpecs[service._svctype] ? $servicesSpecs[service._svctype].name : undefined}>
+        <CardBody
+            title={service && $servicesSpecs[service._svctype]
+                ? $serviceName($servicesSpecs[service._svctype])
+                : undefined}
+        >
             <div class="d-flex justify-content-between gap-1 mb-2">
                 <CardTitle class="text-truncate mb-0">
                     {#if service}
-                        {$servicesSpecs[service._svctype]?.name ?? service._svctype}
+                        {$serviceName($servicesSpecs[service._svctype], service._svctype)}
                     {:else}
                         <Icon name="plus-circle" /> {$t("service.new")}
                     {/if}
@@ -110,7 +115,7 @@
             </div>
             <CardSubtitle class="mb-2 text-muted fst-italic">
                 {#if service}
-                    {$servicesSpecs[service._svctype]?.description ?? ""}
+                    {$serviceDescription($servicesSpecs[service._svctype], service._svctype)}
                 {:else}
                     {$t("service.new-description")}
                 {/if}

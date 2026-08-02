@@ -151,7 +151,6 @@ func init() {
 		openpgpkey_analyze,
 		happydns.ServiceInfos{
 			Name:        "PGP Key",
-			Description: "Let users retrieve PGP key automatically.",
 			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"email",
@@ -175,7 +174,6 @@ func init() {
 		smimea_analyze,
 		happydns.ServiceInfos{
 			Name:        "SMimeCert",
-			Description: "Publish S/MIME certificate.",
 			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"email",

@@ -33,6 +33,7 @@
     import type { HappydnsService } from "$lib/api-base/types.gen";
     import { ZoneViewGrid, ZoneViewRecords } from "$lib/model/usersettings";
     import { navigate } from "$lib/stores/config";
+    import { serviceName } from "$lib/services/infos";
     import { servicesSpecs } from "$lib/stores/services";
     import { thisAliases, thisZone } from "$lib/stores/thiszone";
     import { userSession } from "$lib/stores/usersession";
@@ -153,7 +154,7 @@
         <Popover dismissible placement="bottom" target={"popoversvc-" + dn.replace(".", "__")}>
             {#each services as service}
                 {#if $servicesSpecs[service._svctype]}
-                    <strong>{$servicesSpecs[service._svctype].name}:</strong>
+                    <strong>{$serviceName($servicesSpecs[service._svctype], service._svctype)}:</strong>
                 {/if}
                 <span class="text-muted">{service._comment}</span>
                 <br />

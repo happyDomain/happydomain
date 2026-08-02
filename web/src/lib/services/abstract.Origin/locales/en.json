@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "Origin": {
+                "name": "Origin",
+                "description": "This is the root of your domain."
+            }
+        }
+    }
+}

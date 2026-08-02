@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "RFC6186": {
+                "name": "E-Mail Services Discovery",
+                "description": "Low-level RFC 6186 SRV records. Most users should prefer the higher-level Email Auto-configuration service."
+            }
+        }
+    }
+}

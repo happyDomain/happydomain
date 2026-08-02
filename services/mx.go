@@ -125,7 +125,6 @@ func init() {
 		mx_analyze,
 		happydns.ServiceInfos{
 			Name:        "E-Mail servers",
-			Description: "Receives e-mail with this domain.",
 			Categories: []string{
 				"email",
 			},

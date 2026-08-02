@@ -208,7 +208,6 @@ func init() {
 		caldav_analyze,
 		happydns.ServiceInfos{
 			Name:        "CalDAV (Calendar)",
-			Description: "Announce a CalDAV calendar server for the domain via SRV records (RFC 6764).",
 			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"service",

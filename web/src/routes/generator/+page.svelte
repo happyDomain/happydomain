@@ -26,6 +26,7 @@
 
     import PageTitle from "$lib/components/PageTitle.svelte";
     import { SERVICE_FAMILY_HIDDEN } from "$lib/model/service_specs.svelte";
+    import { serviceDescription, serviceName } from "$lib/services/infos";
     import { servicesSpecs } from "$lib/services_specs";
     import type { ServiceInfos } from "$lib/model/service_specs.svelte";
     import { t } from "$lib/translations";
@@ -71,7 +72,7 @@
                                         src="/api/service_specs/{encodeURIComponent(
                                             svc._svctype,
                                         )}/icon.png"
-                                        alt={$t("generator.icon-alt", { name: svc.name })}
+                                        alt={$t("generator.icon-alt", { name: $serviceName(svc) })}
                                         width="32"
                                         height="32"
                                         class="svc-icon flex-shrink-0"
@@ -82,10 +83,10 @@
                                     </div>
                                 {/if}
                                 <div class="min-width-0">
-                                    <h3 class="h6 card-title mb-1">{svc.name}</h3>
-                                    {#if svc.description}
+                                    <h3 class="h6 card-title mb-1">{$serviceName(svc)}</h3>
+                                    {#if $serviceDescription(svc)}
                                         <p class="card-text small text-body-secondary mb-0">
-                                            {svc.description}
+                                            {$serviceDescription(svc)}
                                         </p>
                                     {/if}
                                 </div>

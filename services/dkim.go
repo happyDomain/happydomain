@@ -217,7 +217,6 @@ func init() {
 		dkim_analyze,
 		happydns.ServiceInfos{
 			Name:        "DKIM",
-			Description: "DomainKeys Identified Mail, authenticate outgoing emails.",
 			Categories: []string{
 				"email",
 			},
@@ -240,7 +239,6 @@ func init() {
 		dkimcname_analyze,
 		happydns.ServiceInfos{
 			Name:        "DKIM external",
-			Description: "DKIM record redirected to another resource.",
 			Categories: []string{
 				"email",
 			},

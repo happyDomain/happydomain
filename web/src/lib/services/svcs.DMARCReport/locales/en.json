@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "svcs": {
+            "DMARCReport": {
+                "name": "DMARC allow receiving reports",
+                "description": "Allow a domain to receive DMARC reports for another domain."
+            }
+        }
+    }
+}

@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "CardDAV": {
+                "name": "CardDAV (Address Book)",
+                "description": "Announce a CardDAV address book server for the domain via SRV records (RFC 6764)."
+            }
+        }
+    }
+}

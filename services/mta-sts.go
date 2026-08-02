@@ -123,7 +123,6 @@ func init() {
 		mtasts_analyze,
 		happydns.ServiceInfos{
 			Name:        "MTA-STS",
-			Description: "SMTP MTA Strict Transport Security.",
 			Categories: []string{
 				"email",
 			},

@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "Kerberos": {
+                "name": "Kerberos",
+                "description": "Advertise a Kerberos realm (KDC, kadmin, kpasswd) through DNS."
+            }
+        }
+    }
+}

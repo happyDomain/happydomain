@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "google": {
+            "GSuite": {
+                "name": "G Suite",
+                "description": "The suite of cloud computing, productivity and collaboration tools by Google."
+            }
+        }
+    }
+}

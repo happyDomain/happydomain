@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "CalDAV": {
+                "name": "CalDAV (Calendar)",
+                "description": "Announce a CalDAV calendar server for the domain via SRV records (RFC 6764)."
+            }
+        }
+    }
+}

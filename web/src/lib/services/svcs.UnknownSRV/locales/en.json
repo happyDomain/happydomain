@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "svcs": {
+            "UnknownSRV": {
+                "name": "Service Record",
+                "description": "Indicates to dedicated software the existance of the given service in the domain."
+            }
+        }
+    }
+}

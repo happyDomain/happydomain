@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "XMPP": {
+                "name": "XMPP IM",
+                "description": "Communicate over XMPP with your domain."
+            }
+        }
+    }
+}

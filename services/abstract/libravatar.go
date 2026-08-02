@@ -101,7 +101,6 @@ func init() {
 		libavatar_analyze,
 		happydns.ServiceInfos{
 			Name:        "Federated Avatar",
-			Description: "Declare a libravatar server for this subdomain.",
 			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"service",

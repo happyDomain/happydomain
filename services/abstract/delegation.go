@@ -113,7 +113,6 @@ func init() {
 		delegation_analyze,
 		happydns.ServiceInfos{
 			Name:        "Delegation",
-			Description: "Delegate this subdomain to another name server",
 			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"domain name",

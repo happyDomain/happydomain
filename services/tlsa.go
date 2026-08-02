@@ -137,7 +137,6 @@ func init() {
 		tlsa_analyze,
 		happydns.ServiceInfos{
 			Name:        "TLSA records",
-			Description: "Publish TLS certificates exposed by your services.",
 			Categories: []string{
 				"security",
 			},

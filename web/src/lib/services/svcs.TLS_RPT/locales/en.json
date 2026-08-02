@@ -34,5 +34,13 @@
                 "detail": "Expected mailto:user@example.com."
             }
         }
+    },
+    "svcinfo": {
+        "svcs": {
+            "TLS_RPT": {
+                "name": "TLS-RPT",
+                "description": "SMTP TLS Reporting."
+            }
+        }
     }
 }

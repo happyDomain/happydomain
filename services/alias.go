@@ -161,7 +161,6 @@ func init() {
 		alias_analyze,
 		happydns.ServiceInfos{
 			Name:        "Alias",
-			Description: "Maps an alias to another (canonical) domain.",
 			Categories: []string{
 				"alias",
 			},

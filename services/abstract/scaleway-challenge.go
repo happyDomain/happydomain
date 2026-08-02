@@ -69,7 +69,6 @@ func init() {
 		scalewaychallenge_analyze,
 		happydns.ServiceInfos{
 			Name:        "Scaleway Challenge",
-			Description: "Temporary record to prove that you control the domain.",
 			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"verification",

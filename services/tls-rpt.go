@@ -128,7 +128,6 @@ func init() {
 		tlsrpt_analyze,
 		happydns.ServiceInfos{
 			Name:        "TLS-RPT",
-			Description: "SMTP TLS Reporting.",
 			Categories: []string{
 				"email",
 			},

@@ -54,6 +54,7 @@
     import { navigate } from "$lib/stores/config";
     import { checkers } from "$lib/stores/checkers";
     import { domainLink, refreshDomains } from "$lib/stores/domains";
+    import { serviceDescription, serviceName } from "$lib/services/infos";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
@@ -142,7 +143,9 @@
 </script>
 
 <Offcanvas
-    header={service._svctype && $servicesSpecsLoaded ? $servicesSpecs[service._svctype].name : ""}
+    header={service._svctype && $servicesSpecsLoaded
+        ? $serviceName($servicesSpecs[service._svctype], service._svctype)
+        : ""}
     {isOpen}
     {toggle}
     body={false}
@@ -153,7 +156,7 @@
     <OffcanvasBody class="d-flex flex-column pt-0">
         {#if service._svctype && $servicesSpecsLoaded && $servicesSpecs[service._svctype]}
             <p class="text-muted mb-1">
-                {$servicesSpecs[service._svctype].description}
+                {$serviceDescription($servicesSpecs[service._svctype], service._svctype)}
             </p>
         {/if}
         <div class="d-flex justify-content-between mb-3">

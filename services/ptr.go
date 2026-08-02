@@ -72,7 +72,6 @@ func init() {
 		pointer_analyze,
 		happydns.ServiceInfos{
 			Name:        "Pointer",
-			Description: "A pointer to another domain.",
 			Categories: []string{
 				"domain name",
 			},

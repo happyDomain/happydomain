@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "MatrixIM": {
+                "name": "Matrix IM",
+                "description": "Communicate on Matrix using your domain."
+            }
+        }
+    }
+}

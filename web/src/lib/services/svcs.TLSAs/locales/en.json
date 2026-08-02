@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "svcs": {
+            "TLSAs": {
+                "name": "TLSA records",
+                "description": "Publish TLS certificates exposed by your services."
+            }
+        }
+    }
+}

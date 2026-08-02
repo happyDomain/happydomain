@@ -30,5 +30,13 @@
                 "detail": "Add a Server entry for this name, or check that the target FQDN is correct."
             }
         }
+    },
+    "svcinfo": {
+        "svcs": {
+            "MXs": {
+                "name": "E-Mail servers",
+                "description": "Receives e-mail with this domain."
+            }
+        }
     }
 }

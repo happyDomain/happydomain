@@ -160,7 +160,6 @@ func init() {
 		kerberos_analyze,
 		happydns.ServiceInfos{
 			Name:        "Kerberos",
-			Description: "Advertise a Kerberos realm (KDC, kadmin, kpasswd) through DNS.",
 			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"service",

@@ -21,7 +21,7 @@
 
 import { describe, it, expect } from "vitest";
 
-import { config } from "./translations";
+import { config, loadTranslations, t } from "./translations";
 
 async function load(locale: string, key = "") {
     const loader = config.loaders?.find((l) => l.locale === locale && l.key === key);
@@ -50,6 +50,14 @@ describe("translations", () => {
         const fr = await load("fr");
         expect(fr.compliance.forsale).toBeTruthy();
         expect(fr.resources.CAA).toBeTruthy();
+    });
+
+    it("gives the services their translations, and echoes back unknown keys", async () => {
+        await loadTranslations("en", "/");
+        // What $lib/services/infos.ts relies on to fall back on the name
+        // registered by the backend.
+        expect(t.get("svcinfo.svcs.NoSuchService.name")).toBe("svcinfo.svcs.NoSuchService.name");
+        expect(t.get("svcinfo.svcs.ForSale.name")).toBe("Domain For Sale");
     });
 
     it("does not mutate the application translations while merging", async () => {

@@ -134,7 +134,6 @@ func init() {
 		ldap_analyze,
 		happydns.ServiceInfos{
 			Name:        "LDAP Directory",
-			Description: "Expose an LDAP directory under your domain.",
 			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"service",

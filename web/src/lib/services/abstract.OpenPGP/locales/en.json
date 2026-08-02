@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "OpenPGP": {
+                "name": "PGP Key",
+                "description": "Let users retrieve PGP key automatically."
+            }
+        }
+    }
+}

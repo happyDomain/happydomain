@@ -134,7 +134,6 @@ func init() {
 		bimi_analyze,
 		happydns.ServiceInfos{
 			Name:        "BIMI",
-			Description: "Brand Indicators for Message Identification, display brand logos in supporting mail clients.",
 			Categories: []string{
 				"email",
 			},

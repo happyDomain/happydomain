@@ -120,7 +120,6 @@ func init() {
 		matrix_analyze,
 		happydns.ServiceInfos{
 			Name:        "Matrix IM",
-			Description: "Communicate on Matrix using your domain.",
 			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"service",

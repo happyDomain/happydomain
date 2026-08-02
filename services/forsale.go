@@ -255,7 +255,6 @@ func init() {
 		forsale_analyze,
 		happydns.ServiceInfos{
 			Name:        "Domain For Sale",
-			Description: "Advertise that this domain name is for sale (RFC 10023): asking price, free-form message, contact URI and/or broker-specific code.",
 			Categories: []string{
 				"service",
 			},

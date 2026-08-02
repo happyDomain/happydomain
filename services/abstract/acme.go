@@ -67,7 +67,6 @@ func init() {
 		acmechallenge_analyze,
 		happydns.ServiceInfos{
 			Name:        "ACME Challenge",
-			Description: "Temporary record to prove that you control the sub-domain.",
 			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"temporary",

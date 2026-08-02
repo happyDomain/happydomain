@@ -94,7 +94,6 @@ func init() {
 		dmarc_report_analyze,
 		happydns.ServiceInfos{
 			Name:        "DMARC allow receiving reports",
-			Description: "Allow a domain to receive DMARC reports for another domain.",
 			Categories: []string{
 				"email",
 			},

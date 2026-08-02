@@ -59,7 +59,6 @@ export class ServiceInfos {
     name = $state("");
     _svctype = $state("");
     _svcicon?: string = $state("");
-    description = $state("");
     family = $state("");
     categories?: Array<string> | null = $state([]);
     record_types?: Array<number> | null = $state([]);
@@ -71,7 +70,6 @@ export class ServiceInfos {
             this.name = data.name ?? "";
             this._svctype = data._svctype ?? "";
             this._svcicon = data._svcicon ?? "";
-            this.description = data.description ?? "";
             this.family = data.family ?? "";
             this.categories = data.categories ?? [];
             this.record_types = data.record_types ?? [];

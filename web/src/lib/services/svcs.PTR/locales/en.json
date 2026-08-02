@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "svcs": {
+            "PTR": {
+                "name": "Pointer",
+                "description": "A pointer to another domain."
+            }
+        }
+    }
+}

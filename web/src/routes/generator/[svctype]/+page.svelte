@@ -29,6 +29,7 @@
     import ServiceEditor from "$lib/components/services/ServiceEditor.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceInfos } from "$lib/model/service_specs.svelte";
+    import { serviceDescription, serviceName } from "$lib/services/infos";
     import { t } from "$lib/translations";
     import { printRR } from "$lib/dns";
     import type { dnsRR } from "$lib/dns_rr";
@@ -73,10 +74,10 @@
 
 <svelte:head>
     {#if svcSpec}
-        <title>{$t("generator.svctype.title", { name: svcSpec.name })} - happyDomain</title>
+        <title>{$t("generator.svctype.title", { name: $serviceName(svcSpec) })} - happyDomain</title>
         <meta
             name="description"
-            content={$t("generator.svctype.description", { name: svcSpec.name })}
+            content={$t("generator.svctype.description", { name: $serviceName(svcSpec) })}
         />
     {:else}
         <title>{$t("generator.svctype.page-title")} - happyDomain</title>
@@ -94,8 +95,8 @@
             </div>
 
             <PageTitle
-                title={$t("generator.svctype.title", { name: svcSpec.name })}
-                subtitle={svcSpec.description}
+                title={$t("generator.svctype.title", { name: $serviceName(svcSpec) })}
+                subtitle={$serviceDescription(svcSpec)}
             />
 
             <div class="step-card mb-4">

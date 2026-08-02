@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "LDAP": {
+                "name": "LDAP Directory",
+                "description": "Expose an LDAP directory under your domain."
+            }
+        }
+    }
+}

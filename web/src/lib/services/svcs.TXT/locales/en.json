@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "svcs": {
+            "TXT": {
+                "name": "Text Record",
+                "description": "Publishes a text string in your zone."
+            }
+        }
+    }
+}

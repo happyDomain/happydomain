@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "svcs": {
+            "NAPTR": {
+                "name": "Naming Authority Pointer",
+                "description": "Rewrite rules that turn a domain name into a URI or another domain name, for the services that rely on them such as ENUM or SIP (RFC 3403)."
+            }
+        }
+    }
+}

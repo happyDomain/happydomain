@@ -138,7 +138,6 @@ func init() {
 		xmpp_analyze,
 		happydns.ServiceInfos{
 			Name:        "XMPP IM",
-			Description: "Communicate over XMPP with your domain.",
 			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"service",

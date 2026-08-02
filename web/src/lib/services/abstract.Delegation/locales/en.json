@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "Delegation": {
+                "name": "Delegation",
+                "description": "Delegate this subdomain to another name server"
+            }
+        }
+    }
+}

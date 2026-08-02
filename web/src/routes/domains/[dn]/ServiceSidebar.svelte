@@ -25,6 +25,7 @@
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import { domainLink } from "$lib/stores/domains";
+    import { serviceName } from "$lib/services/infos";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
 
@@ -119,11 +120,7 @@
                     : 'text-muted'}"
                 style="max-width: none;"
             >
-                {#if $servicesSpecsLoaded && $servicesSpecs[service._svctype]}
-                    {$servicesSpecs[service._svctype].name}
-                {:else}
-                    {service._svctype}
-                {/if}
+                {$serviceName($servicesSpecs[service._svctype], service._svctype)}
                 {#if service._comment}
                     <span class="fst-italic text-muted" style="opacity: 0.6;">
                         {service._comment}

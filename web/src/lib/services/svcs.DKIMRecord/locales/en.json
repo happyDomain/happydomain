@@ -66,5 +66,13 @@
                 "detail": "Granularity was removed in RFC 6376; modern verifiers ignore it."
             }
         }
+    },
+    "svcinfo": {
+        "svcs": {
+            "DKIMRecord": {
+                "name": "DKIM",
+                "description": "DomainKeys Identified Mail, authenticate outgoing emails."
+            }
+        }
     }
 }

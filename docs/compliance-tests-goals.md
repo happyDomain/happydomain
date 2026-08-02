@@ -4,11 +4,12 @@
 
 Frontend-only, registry-based. `$lib/services/compliance.ts` defines the
 `ComplianceIssue` shape and exposes `registerValidators(svctype, …)`; each
-service module registers its checks and `compliance/registry.ts` is the single
-side-effect import point. `EditorCompliance.svelte` is mounted under every
-editor and stays hidden when no validator is registered or no issue is
-returned. Wiring a new service type should be one import plus one `register`
-call.
+service ships its checks in `$lib/services/<svctype>/compliance.ts`, which
+`EditorCompliance.svelte` picks up by globbing the service folders, so wiring a
+new service type is a single `register` call in the right folder. See
+[`adding-a-service.md`](adding-a-service.md) for the layout of a service.
+`EditorCompliance.svelte` is mounted under every editor and stays hidden when no
+validator is registered or no issue is returned.
 
 Validators come in two layers:
 

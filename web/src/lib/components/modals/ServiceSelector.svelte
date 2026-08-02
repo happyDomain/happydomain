@@ -40,6 +40,7 @@
     import FilterServiceSelectorInput from "$lib/components/services/FilterServiceSelectorInput.svelte";
     import ServiceSelector from "$lib/components/services/ServiceSelector.svelte";
     import { filterServices } from "$lib/components/services/service-filter";
+    import { t } from "$lib/translations";
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { HappydnsService } from "$lib/api-base/types.gen";
@@ -86,7 +87,15 @@
             if (!prvdspecs || !$servicesSpecsLoaded) return;
 
             // Use the shared filter function to get available services
-            const { available } = filterServices($servicesSpecsList, prvdspecs, zservices, dn, $filteredName);
+            const { available } = filterServices(
+                $servicesSpecsList,
+                prvdspecs,
+                zservices,
+                dn,
+                $filteredName,
+                null,
+                $t,
+            );
 
             // Select the first available service and submit
             if (available.length > 0) {

@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "svcs": {
+            "SpecialCNAME": {
+                "name": "SubAlias",
+                "description": "A service alias to another domain/service."
+            }
+        }
+    }
+}

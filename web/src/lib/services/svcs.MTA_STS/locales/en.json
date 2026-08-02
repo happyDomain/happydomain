@@ -106,5 +106,13 @@
                 "detail": "The pattern listed at {{url}} does not correspond to any MX record. Remove the entry or add the missing MX record."
             }
         }
+    },
+    "svcinfo": {
+        "svcs": {
+            "MTA_STS": {
+                "name": "MTA-STS",
+                "description": "SMTP MTA Strict Transport Security."
+            }
+        }
     }
 }

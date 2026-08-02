@@ -28,6 +28,7 @@
 
     import { nsrrtype } from "$lib/dns";
     import type { ServiceInfos } from "$lib/model/service_specs.svelte";
+    import { serviceDescription, serviceName } from "$lib/services/infos";
     import { userSession } from "$lib/stores/usersession";
 
     const dispatch = createEventDispatcher();
@@ -47,17 +48,17 @@
         <div class="d-inline-block align-self-center text-center" style="width: 75px;">
             <img
                 src={svc._svcicon}
-                alt={svc.name}
+                alt={$serviceName(svc)}
                 style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em"
             />
         </div>
     {/if}
     <div class="flex-fill">
-        <strong class="text-dark">{svc.name}</strong>
+        <strong class="text-dark">{$serviceName(svc)}</strong>
         {#if reason}
             <small class="font-italic text-danger">{reason}</small>
         {:else}
-            <small class="text-muted">{svc.description}</small>
+            <small class="text-muted">{$serviceDescription(svc)}</small>
         {/if}
         {#if svc.categories}
             {#each svc.categories as category}

@@ -5,7 +5,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.ACMEChallenge": {
         "name": "ACME Challenge",
         "_svctype": "abstract.ACMEChallenge",
-        "description": "Temporary record to prove that you control the sub-domain.",
         "family": "abstract",
         "categories": [
             "temporary",
@@ -19,7 +18,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.CalDAV": {
         "name": "CalDAV (Calendar)",
         "_svctype": "abstract.CalDAV",
-        "description": "Announce a CalDAV calendar server for the domain via SRV records (RFC 6764).",
         "family": "abstract",
         "categories": [
             "service",
@@ -38,7 +36,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.CardDAV": {
         "name": "CardDAV (Address Book)",
         "_svctype": "abstract.CardDAV",
-        "description": "Announce a CardDAV address book server for the domain via SRV records (RFC 6764).",
         "family": "abstract",
         "categories": [
             "service",
@@ -57,7 +54,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.Delegation": {
         "name": "Delegation",
         "_svctype": "abstract.Delegation",
-        "description": "Delegate this subdomain to another name server",
         "family": "abstract",
         "categories": [
             "domain name"
@@ -82,7 +78,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.EmailAutoConfig": {
         "name": "Email Auto-configuration",
         "_svctype": "abstract.EmailAutoConfig",
-        "description": "Publish IMAP/POP/SMTP settings for mail clients via RFC 6186, Mozilla Autoconfig, and Microsoft Autodiscover.",
         "family": "abstract",
         "categories": [
             "email"
@@ -102,7 +97,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.GithubOrgVerif": {
         "name": "GitHub Verification",
         "_svctype": "abstract.GithubOrgVerif",
-        "description": "Temporary record to prove that you control the domain.",
         "family": "abstract",
         "categories": [
             "verification"
@@ -115,7 +109,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.GitlabPageVerif": {
         "name": "Gitlab Pages Verification",
         "_svctype": "abstract.GitlabPageVerif",
-        "description": "Temporary record to prove that you control the domain.",
         "family": "abstract",
         "categories": [
             "verification"
@@ -128,7 +121,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.GoogleVerif": {
         "name": "Google Verification",
         "_svctype": "abstract.GoogleVerif",
-        "description": "Temporary record to prove that you control the domain.",
         "family": "abstract",
         "categories": [
             "verification"
@@ -139,7 +131,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.Kerberos": {
         "name": "Kerberos",
         "_svctype": "abstract.Kerberos",
-        "description": "Advertise a Kerberos realm (KDC, kadmin, kpasswd) through DNS.",
         "family": "abstract",
         "categories": [
             "service",
@@ -157,7 +148,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.KeybaseVerif": {
         "name": "Keybase Verification",
         "_svctype": "abstract.KeybaseVerif",
-        "description": "Temporary record to prove that you control the domain.",
         "family": "abstract",
         "categories": [
             "verification"
@@ -170,7 +160,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.LDAP": {
         "name": "LDAP Directory",
         "_svctype": "abstract.LDAP",
-        "description": "Expose an LDAP directory under your domain.",
         "family": "abstract",
         "categories": [
             "service"
@@ -187,7 +176,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.LibravatarServer": {
         "name": "Federated Avatar",
         "_svctype": "abstract.LibravatarServer",
-        "description": "Declare a libravatar server for this subdomain.",
         "family": "abstract",
         "categories": [
             "service"
@@ -198,7 +186,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.MatrixIM": {
         "name": "Matrix IM",
         "_svctype": "abstract.MatrixIM",
-        "description": "Communicate on Matrix using your domain.",
         "family": "abstract",
         "categories": [
             "service"
@@ -215,7 +202,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.NSOnlyOrigin": {
         "name": "Origin",
         "_svctype": "abstract.NSOnlyOrigin",
-        "description": "This is the root of your domain.",
         "family": "hidden",
         "categories": [
             "domain name"
@@ -234,7 +220,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.OpenPGP": {
         "name": "PGP Key",
         "_svctype": "abstract.OpenPGP",
-        "description": "Let users retrieve PGP key automatically.",
         "family": "abstract",
         "categories": [
             "email"
@@ -252,7 +237,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.Origin": {
         "name": "Origin",
         "_svctype": "abstract.Origin",
-        "description": "This is the root of your domain.",
         "family": "abstract",
         "categories": [
             "domain name"
@@ -272,7 +256,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.RFC6186": {
         "name": "E-Mail Services Discovery",
         "_svctype": "abstract.RFC6186",
-        "description": "Low-level RFC 6186 SRV records. Most users should prefer the higher-level Email Auto-configuration service.",
         "family": "abstract",
         "categories": [
             "email"
@@ -289,7 +272,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.SIP": {
         "name": "SIP / VoIP",
         "_svctype": "abstract.SIP",
-        "description": "Expose SIP/VoIP endpoints for your domain (voice, video, messaging).",
         "family": "abstract",
         "categories": [
             "service",
@@ -307,7 +289,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.SMimeCert": {
         "name": "SMimeCert",
         "_svctype": "abstract.SMimeCert",
-        "description": "Publish S/MIME certificate.",
         "family": "abstract",
         "categories": [
             "email"
@@ -325,7 +306,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.ScalewayChallenge": {
         "name": "Scaleway Challenge",
         "_svctype": "abstract.ScalewayChallenge",
-        "description": "Temporary record to prove that you control the domain.",
         "family": "abstract",
         "categories": [
             "verification"
@@ -338,7 +318,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.Server": {
         "name": "Server",
         "_svctype": "abstract.Server",
-        "description": "A system to respond to specific requests.",
         "family": "abstract",
         "categories": [
             "server"
@@ -355,7 +334,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "abstract.XMPP": {
         "name": "XMPP IM",
         "_svctype": "abstract.XMPP",
-        "description": "Communicate over XMPP with your domain.",
         "family": "abstract",
         "categories": [
             "service"
@@ -373,7 +351,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
         "name": "G Suite",
         "_svctype": "google.GSuite",
         "_svcicon": "/api/service_specs/google.GSuite/icon.png",
-        "description": "The suite of cloud computing, productivity and collaboration tools by Google.",
         "family": "provider",
         "categories": [
             "email"
@@ -393,7 +370,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.Alias": {
         "name": "Alias",
         "_svctype": "svcs.Alias",
-        "description": "Maps an alias to another (canonical) domain.",
         "family": "",
         "categories": [
             "alias"
@@ -415,7 +391,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.BIMI": {
         "name": "BIMI",
         "_svctype": "svcs.BIMI",
-        "description": "Brand Indicators for Message Identification, display brand logos in supporting mail clients.",
         "family": "",
         "categories": [
             "email"
@@ -433,7 +408,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.CAAPolicy": {
         "name": "Certification Authority Authorization",
         "_svctype": "svcs.CAAPolicy",
-        "description": "Indicate to certificate authorities whether they are authorized to issue digital certificates for a particular domain name.",
         "family": "",
         "categories": [
             "security"
@@ -451,7 +425,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.DKIMRecord": {
         "name": "DKIM",
         "_svctype": "svcs.DKIMRecord",
-        "description": "DomainKeys Identified Mail, authenticate outgoing emails.",
         "family": "",
         "categories": [
             "email"
@@ -469,7 +442,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.DKIMRedirection": {
         "name": "DKIM external",
         "_svctype": "svcs.DKIMRedirection",
-        "description": "DKIM record redirected to another resource.",
         "family": "",
         "categories": [
             "email"
@@ -487,7 +459,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.DMARC": {
         "name": "DMARC",
         "_svctype": "svcs.DMARC",
-        "description": "Domain-based Message Authentication, Reporting and Conformance.",
         "family": "",
         "categories": [
             "email"
@@ -505,7 +476,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.DMARCReport": {
         "name": "DMARC allow receiving reports",
         "_svctype": "svcs.DMARCReport",
-        "description": "Allow a domain to receive DMARC reports for another domain.",
         "family": "",
         "categories": [
             "email"
@@ -523,7 +493,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.ForSale": {
         "name": "Domain For Sale",
         "_svctype": "svcs.ForSale",
-        "description": "Advertise that this domain name is for sale (RFC 10023): asking price, free-form message, contact URI and/or broker-specific code.",
         "family": "",
         "categories": [
             "service"
@@ -542,7 +511,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.MTA_STS": {
         "name": "MTA-STS",
         "_svctype": "svcs.MTA_STS",
-        "description": "SMTP MTA Strict Transport Security.",
         "family": "",
         "categories": [
             "email"
@@ -560,7 +528,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.MXs": {
         "name": "E-Mail servers",
         "_svctype": "svcs.MXs",
-        "description": "Receives e-mail with this domain.",
         "family": "",
         "categories": [
             "email"
@@ -578,7 +545,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.NAPTR": {
         "name": "Naming Authority Pointer",
         "_svctype": "svcs.NAPTR",
-        "description": "",
         "family": "",
         "categories": [
             "telephony"
@@ -595,7 +561,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.Orphan": {
         "name": "Orphan Record",
         "_svctype": "svcs.Orphan",
-        "description": "A record not yet handled by happyDomain. Ask us to support it.",
         "family": "",
         "categories": [],
         "record_types": null,
@@ -604,7 +569,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.PTR": {
         "name": "Pointer",
         "_svctype": "svcs.PTR",
-        "description": "A pointer to another domain.",
         "family": "",
         "categories": [
             "domain name"
@@ -623,7 +587,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.SPF": {
         "name": "SPF",
         "_svctype": "svcs.SPF",
-        "description": "Sender Policy Framework, to authenticate domain name on email sending.",
         "family": "",
         "categories": [
             "email"
@@ -641,7 +604,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.SSHFPs": {
         "name": "SSHFP",
         "_svctype": "svcs.SSHFPs",
-        "description": "Store SSH key fingerprints in DNS.",
         "family": "",
         "categories": [
             "security"
@@ -658,7 +620,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.SpecialCNAME": {
         "name": "SubAlias",
         "_svctype": "svcs.SpecialCNAME",
-        "description": "A service alias to another domain/service.",
         "family": "",
         "categories": [
             "alias"
@@ -674,7 +635,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.TLSAs": {
         "name": "TLSA records",
         "_svctype": "svcs.TLSAs",
-        "description": "Publish TLS certificates exposed by your services.",
         "family": "",
         "categories": [
             "security"
@@ -693,7 +653,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.TLS_RPT": {
         "name": "TLS-RPT",
         "_svctype": "svcs.TLS_RPT",
-        "description": "SMTP TLS Reporting.",
         "family": "",
         "categories": [
             "email"
@@ -711,7 +670,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.TXT": {
         "name": "Text Record",
         "_svctype": "svcs.TXT",
-        "description": "Publishes a text string in your zone.",
         "family": "",
         "categories": null,
         "record_types": [
@@ -726,7 +684,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
     "svcs.UnknownSRV": {
         "name": "Service Record",
         "_svctype": "svcs.UnknownSRV",
-        "description": "Indicates to dedicated software the existance of the given service in the domain.",
         "family": "",
         "categories": [
             "service"

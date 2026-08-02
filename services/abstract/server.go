@@ -148,7 +148,6 @@ func init() {
 		server_analyze,
 		happydns.ServiceInfos{
 			Name:        "Server",
-			Description: "A system to respond to specific requests.",
 			Family:      happydns.SERVICE_FAMILY_ABSTRACT,
 			Categories: []string{
 				"server",

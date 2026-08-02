@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "svcs": {
+            "DKIMRedirection": {
+                "name": "DKIM external",
+                "description": "DKIM record redirected to another resource."
+            }
+        }
+    }
+}

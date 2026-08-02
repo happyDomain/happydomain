@@ -165,7 +165,6 @@ func init() {
 		gsuite_analyze,
 		happydns.ServiceInfos{
 			Name:        "G Suite",
-			Description: "The suite of cloud computing, productivity and collaboration tools by Google.",
 			Icon:        "/api/service_specs/google.GSuite/icon.png",
 			Family:      happydns.SERVICE_FAMILY_PROVIDER,
 			Categories: []string{

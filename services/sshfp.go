@@ -100,7 +100,6 @@ func init() {
 		sshfp_analyze,
 		happydns.ServiceInfos{
 			Name:        "SSHFP",
-			Description: "Store SSH key fingerprints in DNS.",
 			Categories: []string{
 				"security",
 			},

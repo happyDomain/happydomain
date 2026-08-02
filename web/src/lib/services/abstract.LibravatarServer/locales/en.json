@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "LibravatarServer": {
+                "name": "Federated Avatar",
+                "description": "Declare a libravatar server for this subdomain."
+            }
+        }
+    }
+}

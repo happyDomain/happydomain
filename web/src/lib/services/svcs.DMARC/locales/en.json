@@ -98,5 +98,13 @@
                 "detail": "Resolving {{queriedName}} failed: {{error}}"
             }
         }
+    },
+    "svcinfo": {
+        "svcs": {
+            "DMARC": {
+                "name": "DMARC",
+                "description": "Domain-based Message Authentication, Reporting and Conformance."
+            }
+        }
     }
 }
