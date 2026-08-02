@@ -26,21 +26,18 @@ import {
     getValidators,
     type ComplianceIssue,
 } from "$lib/services/compliance";
-import type { Domain } from "$lib/model/domain";
 import type { ServiceWithValue } from "$lib/model/service.svelte";
 import type { Zone } from "$lib/model/zone";
+import { makeDomain, makeService, makeZone } from "$lib/test-utils/fixtures";
 
-const ORIGIN = { domain: "example.com." } as unknown as Domain;
+const ORIGIN = makeDomain();
 
 function dmarcService(txt: string): ServiceWithValue {
-    return {
-        _svctype: "svcs.DMARC",
-        Service: { txt: { Txt: txt, Hdr: { Name: "_dmarc" } } },
-    } as unknown as ServiceWithValue;
+    return makeService("svcs.DMARC", { txt: { Txt: txt, Hdr: { Name: "_dmarc" } } });
 }
 
 function zoneWith(...services: ServiceWithValue[]): Zone {
-    return { services: { "": services } } as unknown as Zone;
+    return makeZone({ services: { "": services } });
 }
 
 function run(

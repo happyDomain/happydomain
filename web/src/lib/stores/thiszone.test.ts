@@ -4,8 +4,8 @@ import { get } from 'svelte/store';
 import { thisZone, thisAliases, sortedDomains, sortedDomainsWithIntermediate, getZone } from './thiszone';
 import type { Domain } from '$lib/model/domain';
 import { ServiceCombined } from '$lib/model/service.svelte';
-import type { Zone } from '$lib/model/zone';
 import { createMockResponse } from '$lib/test-utils/api-mocks';
+import { makeZone } from '$lib/test-utils/fixtures';
 
 describe('Zone Store', () => {
   beforeEach(() => {
@@ -17,33 +17,33 @@ describe('Zone Store', () => {
   });
 
   it('should compute aliases correctly', () => {
-    const zone = {
+    const zone = makeZone({
       services: {
         'example.com': [new ServiceCombined({ _svctype: 'svcs.Alias', _domain: 'example.com', Service: { record: { Hdr: { Rrtype: 5 }, Target: 'target.com' } } })],
       },
-    } as unknown as Zone;
+    });
     thisZone.set(zone);
     expect(get(thisAliases)).toEqual({ 'target.com': ['example.com'] });
   });
 
   it('should return sorted domains', () => {
-    const zone = {
+    const zone = makeZone({
       services: {
         'b.example.com': [],
         'a.example.com': [],
       },
-    } as unknown as Zone;
+    });
     thisZone.set(zone);
     expect(get(sortedDomains)).toEqual(['a.example.com', 'b.example.com']);
   });
 
   it('should return sorted domains with intermediate', () => {
-    const zone = {
+    const zone = makeZone({
       services: {
         'a.b.example.com': [],
         'b.example.com': [],
       },
-    } as unknown as Zone;
+    });
     thisZone.set(zone);
     const result = get(sortedDomainsWithIntermediate);
     expect(result).toContain('b.example.com');

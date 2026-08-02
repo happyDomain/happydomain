@@ -22,9 +22,9 @@
 import { describe, it, expect } from "vitest";
 import "./compliance";
 import { buildContext, getValidators, type ComplianceIssue } from "$lib/services/compliance";
-import type { Domain } from "$lib/model/domain";
+import { makeDomain } from "$lib/test-utils/fixtures";
 
-const ORIGIN = { domain: "example.com." } as unknown as Domain;
+const ORIGIN = makeDomain();
 const CTX = buildContext("_smtp._tls", ORIGIN, null);
 
 function run(txt: string, name = "_smtp._tls.example.com."): ComplianceIssue[] {

@@ -22,11 +22,10 @@
 import { describe, it, expect } from "vitest";
 import "./compliance";
 import { buildContext, getValidators, type ComplianceIssue } from "$lib/services/compliance";
-import type { Domain } from "$lib/model/domain";
-import type { ServiceWithValue } from "$lib/model/service.svelte";
 import type { Zone } from "$lib/model/zone";
+import { makeDomain, makeService, makeZone } from "$lib/test-utils/fixtures";
 
-const ORIGIN = { domain: "example.com." } as unknown as Domain;
+const ORIGIN = makeDomain();
 const CTX = buildContext("_dmarc", ORIGIN, null);
 
 function run(txt: string, name = "_dmarc.example.com."): ComplianceIssue[] {
@@ -35,12 +34,7 @@ function run(txt: string, name = "_dmarc.example.com."): ComplianceIssue[] {
     return v!.sync!({ txt: { Hdr: { Name: name }, Txt: txt } }, CTX);
 }
 
-function svc(svctype: string): ServiceWithValue {
-    return { _svctype: svctype, Service: {} } as unknown as ServiceWithValue;
-}
-function makeZone(services: Record<string, ServiceWithValue[]>): Zone {
-    return { services } as unknown as Zone;
-}
+const svc = (svctype: string) => makeService(svctype);
 function runWithZone(txt: string, zone: Zone): ComplianceIssue[] {
     const v = getValidators("svcs.DMARC");
     return v!.sync!(
@@ -179,31 +173,33 @@ describe("DMARC compliance: cross-checks with DKIM / SPF", () => {
         expect(ids(issues)).not.toContain("dmarc.no-alignment-source-enforcing");
     });
     it("flags adkim=s with no DKIM record in the zone", () => {
-        const zone = makeZone({ "": [svc("svcs.SPF")] });
+        const zone = makeZone({ services: { "": [svc("svcs.SPF")] } });
         const issues = runWithZone("v=DMARC1;p=reject;adkim=s", zone);
         expect(ids(issues)).toContain("dmarc.strict-dkim-no-record");
     });
     it("does not flag adkim=s when a DKIM record is present", () => {
         const zone = makeZone({
-            "": [svc("svcs.SPF")],
-            "selector1._domainkey": [svc("svcs.DKIMRecord")],
+            services: {
+                "": [svc("svcs.SPF")],
+                "selector1._domainkey": [svc("svcs.DKIMRecord")],
+            },
         });
         const issues = runWithZone("v=DMARC1;p=reject;adkim=s", zone);
         expect(ids(issues)).not.toContain("dmarc.strict-dkim-no-record");
     });
     it("flags an enforcing policy with no DKIM and no SPF", () => {
-        const zone = makeZone({});
+        const zone = makeZone();
         const issues = runWithZone("v=DMARC1;p=reject", zone);
         expect(ids(issues)).toContain("dmarc.no-alignment-source-enforcing");
     });
     it("warns on p=none with no DKIM and no SPF", () => {
-        const zone = makeZone({});
+        const zone = makeZone();
         const issues = runWithZone("v=DMARC1;p=none", zone);
         expect(ids(issues)).toContain("dmarc.no-alignment-source");
         expect(ids(issues)).not.toContain("dmarc.no-alignment-source-enforcing");
     });
     it("does not flag missing alignment when SPF is present", () => {
-        const zone = makeZone({ "": [svc("svcs.SPF")] });
+        const zone = makeZone({ services: { "": [svc("svcs.SPF")] } });
         const issues = runWithZone("v=DMARC1;p=reject", zone);
         expect(ids(issues)).not.toContain("dmarc.no-alignment-source-enforcing");
         expect(ids(issues)).not.toContain("dmarc.no-alignment-source");

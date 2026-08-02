@@ -23,11 +23,11 @@ import { describe, it, expect } from "vitest";
 import { countLocalLookups, parseSPF, stringifySPF } from "./model";
 import { validateSPF } from "./compliance";
 import type { ComplianceContext } from "$lib/services/compliance";
-import type { Domain } from "$lib/model/domain";
+import { makeDomain } from "$lib/test-utils/fixtures";
 
 const ctx: ComplianceContext = {
     dn: "@",
-    origin: { id: "test", domain: "example.com" } as unknown as Domain,
+    origin: makeDomain({ id: "test", domain: "example.com" }),
     zone: null,
     findServices: () => [],
     findAllServices: () => [],

@@ -27,12 +27,12 @@ vi.mock("$lib/api/resolver", () => ({
 
 import "./compliance";
 import { buildContext, getValidators, type ComplianceIssue } from "$lib/services/compliance";
-import type { Domain } from "$lib/model/domain";
 import type { ServiceWithValue } from "$lib/model/service.svelte";
 import type { Zone } from "$lib/model/zone";
+import { makeDomain, makeService, makeZone } from "$lib/test-utils/fixtures";
 import { fetchMTAStsPolicy } from "$lib/api/resolver";
 
-const ORIGIN = { domain: "example.com." } as unknown as Domain;
+const ORIGIN = makeDomain();
 const CTX = buildContext("_mta-sts", ORIGIN, null);
 
 function run(txt: string, name = "_mta-sts.example.com."): ComplianceIssue[] {
@@ -42,19 +42,18 @@ function run(txt: string, name = "_mta-sts.example.com."): ComplianceIssue[] {
 const ids = (issues: ComplianceIssue[]) => issues.map((i) => i.id);
 
 function mxSvc(targets: string[]): ServiceWithValue {
-    return {
-        _svctype: "svcs.MXs",
-        Service: { mx: targets.map((t, i) => ({ Mx: t, Preference: 10 + i })) },
-    } as unknown as ServiceWithValue;
+    return makeService("svcs.MXs", {
+        mx: targets.map((t, i) => ({ Mx: t, Preference: 10 + i })),
+    });
 }
-function makeZone(apexMx: string[]): Zone {
-    return { services: { "": [mxSvc(apexMx)] } } as unknown as Zone;
+function zoneWithMX(apexMx: string[]): Zone {
+    return makeZone({ services: { "": [mxSvc(apexMx)] } });
 }
 
 async function runAsync(zone: Zone | null, policyOverride: Record<string, any>): Promise<ComplianceIssue[]> {
     const v = getValidators("svcs.MTA_STS");
     expect(v?.async).toBeDefined();
-    (fetchMTAStsPolicy as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+    vi.mocked(fetchMTAStsPolicy).mockResolvedValueOnce({
         status: "ok",
         url: "https://mta-sts.example.com/.well-known/mta-sts.txt",
         version: "STSv1",
@@ -99,11 +98,11 @@ describe("MTA-STS compliance", () => {
 
 describe("MTA-STS cross-check: policy mx vs zone MX", () => {
     beforeEach(() => {
-        (fetchMTAStsPolicy as unknown as ReturnType<typeof vi.fn>).mockReset();
+        vi.mocked(fetchMTAStsPolicy).mockReset();
     });
 
     it("does not flag when every zone MX matches a policy pattern", async () => {
-        const issues = await runAsync(makeZone(["mx1.example.com.", "mx2.example.com."]), {
+        const issues = await runAsync(zoneWithMX(["mx1.example.com.", "mx2.example.com."]), {
             mx: ["mx1.example.com", "mx2.example.com"],
         });
         expect(ids(issues)).not.toContain("mta_sts.zone-mx-not-covered");
@@ -112,7 +111,7 @@ describe("MTA-STS cross-check: policy mx vs zone MX", () => {
     });
 
     it("flags zone MX not covered by any policy pattern (error in enforce)", async () => {
-        const issues = await runAsync(makeZone(["mx1.example.com.", "rogue.example.com."]), {
+        const issues = await runAsync(zoneWithMX(["mx1.example.com.", "rogue.example.com."]), {
             mode: "enforce",
             mx: ["mx1.example.com"],
         });
@@ -123,7 +122,7 @@ describe("MTA-STS cross-check: policy mx vs zone MX", () => {
     });
 
     it("downgrades to warning in testing mode", async () => {
-        const issues = await runAsync(makeZone(["rogue.example.com."]), {
+        const issues = await runAsync(zoneWithMX(["rogue.example.com."]), {
             mode: "testing",
             mx: ["mx1.example.com"],
         });
@@ -133,7 +132,7 @@ describe("MTA-STS cross-check: policy mx vs zone MX", () => {
 
     it("supports wildcard patterns (one label only)", async () => {
         const issues = await runAsync(
-            makeZone(["mx1.mail.example.com.", "deep.nested.mail.example.com."]),
+            zoneWithMX(["mx1.mail.example.com.", "deep.nested.mail.example.com."]),
             { mx: ["*.mail.example.com"] },
         );
         const flagged = issues.filter((i) => i.id === "mta_sts.zone-mx-not-covered");
@@ -142,7 +141,7 @@ describe("MTA-STS cross-check: policy mx vs zone MX", () => {
     });
 
     it("flags policy patterns that match no MX (info)", async () => {
-        const issues = await runAsync(makeZone(["mx1.example.com."]), {
+        const issues = await runAsync(zoneWithMX(["mx1.example.com."]), {
             mx: ["mx1.example.com", "ghost.example.com"],
         });
         const u = issues.find((i) => i.id === "mta_sts.policy-mx-unused");
@@ -151,12 +150,12 @@ describe("MTA-STS cross-check: policy mx vs zone MX", () => {
     });
 
     it("warns when policy lists mx but the zone has none", async () => {
-        const issues = await runAsync(makeZone([]), { mx: ["mx1.example.com"] });
+        const issues = await runAsync(zoneWithMX([]), { mx: ["mx1.example.com"] });
         expect(ids(issues)).toContain("mta_sts.zone-no-mx");
     });
 
     it("skips cross-check when mode is none", async () => {
-        const issues = await runAsync(makeZone(["rogue.example.com."]), {
+        const issues = await runAsync(zoneWithMX(["rogue.example.com."]), {
             mode: "none",
             mx: ["mx1.example.com"],
         });

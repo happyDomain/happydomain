@@ -26,24 +26,21 @@ import {
     getValidators,
     type ComplianceIssue,
 } from "$lib/services/compliance";
-import type { Domain } from "$lib/model/domain";
 import type { Zone } from "$lib/model/zone";
 import type { ServiceWithValue } from "$lib/model/service.svelte";
+import { makeDomain, makeService, makeZone } from "$lib/test-utils/fixtures";
 
-const ORIGIN = { domain: "example.com." } as unknown as Domain;
+const ORIGIN = makeDomain();
 
-function svc(svctype: string, service: Record<string, unknown> = {}): ServiceWithValue {
-    return { _svctype: svctype, Service: service } as unknown as ServiceWithValue;
-}
+const svc = (svctype: string, service: Record<string, unknown> = {}) =>
+    makeService(svctype, service);
 
 // An Alias service holding a record of the given type.
 function alias(rrtype: number): ServiceWithValue {
     return svc("svcs.Alias", { record: { Hdr: { Rrtype: rrtype } } });
 }
 
-function zone(services: Record<string, ServiceWithValue[]>): Zone {
-    return { services } as unknown as Zone;
-}
+const zone = (services: Record<string, ServiceWithValue[]>): Zone => makeZone({ services });
 
 function run(mx: unknown, z: Zone | null = null): ComplianceIssue[] {
     const ctx = buildContext("", ORIGIN, z);
